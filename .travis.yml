@@ -1,12 +1,10 @@
 language: python
 
-install: 
-  - python setup.py install
-  - pip install -r requirements.txt .
-  - pip install -e -r requirements.txt .
+install: python setup.py install
+#  - pip install -r requirements.txt .
 
-script: python -m unittest discover .
+script: python setup.py test
 
-virtualenv:
-    system_site_packages: true
-	
+env:
+#- REDPITAYA=192.168.1.100
+- REDPITAYA=localhost

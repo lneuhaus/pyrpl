@@ -17,7 +17,6 @@
 ###############################################################################
 
 
-from sshshell import SSHshell
 from time import sleep
 from matplotlib import pyplot
 import math
@@ -30,6 +29,7 @@ import rpyc
 from pylab import *
 import pandas
 
+from sshshell import SSHshell
 import monitor_client
 import redpitaya_modules as rp
 
@@ -186,8 +186,8 @@ class RedPitaya(SSHshell):
 
     def license(self):
         print """    pyrpl  Copyright (C) 2014-2016  Leonhard Neuhaus
-                This program comes with ABSOLUTELY NO WARRANTY; for details read the file
-                "LICENSE" in the source directory. This is free software, and you are
-                welcome to redistribute it under certain conditions; read the file
-                "LICENSE" in the source directory for details."""
+    This program comes with ABSOLUTELY NO WARRANTY; for details read the file
+    "LICENSE" in the source directory. This is free software, and you are
+    welcome to redistribute it under certain conditions; read the file
+    "LICENSE" in the source directory for details."""
 

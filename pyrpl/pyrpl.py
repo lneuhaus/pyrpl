@@ -30,8 +30,6 @@ import os
 import rpyc
 from pylab import *
 import pandas
-from redpitaya import RedPitaya
-from pyinstruments import CurveDB
 from PyQt4 import QtCore, QtGui
 import json
 import matplotlib
@@ -39,6 +37,8 @@ import matplotlib.pyplot as plt
 import sys
 import iir
 
+from redpitaya import RedPitaya
+from curvedb import CurveDB
 
 """  
 channels:
