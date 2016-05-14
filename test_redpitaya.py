@@ -10,10 +10,11 @@ class RedPitayaTestCase(unittest.TestCase):
         #del r
         pass
 		
-    def test_1(self):
-        import pyrplockbox.redpitaya
-        self.assertEqual(1, 1,
-                         '1 isnt equal to itself!')
+    def test_imports(self):
+        import pyrpl
+        from pyrpl import RedPitaya
+        from pyrpl import Pyrpl
+        
     def test_2(self):
         self.assertEqual(2, 2,
                          '2 isnt equal to itself!')
