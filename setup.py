@@ -58,7 +58,8 @@ setup(name='pyrpl',
       #package_dir={'pyrpl': ''},
       package_data={'pyrpl':['fpga/red_pitaya.bin',
                             'monitor_server/monitor_server']},
-      requires=["paramiko","scp","matplotlib"],
+      install_requires=["paramiko","scp","matplotlib","numpy"],
+      setup_requires=["paramiko","scp","matplotlib","numpy"],
       platforms='any',
 
       #stuff for unitary test with pytest

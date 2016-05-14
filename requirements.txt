@@ -2,3 +2,4 @@
 paramiko
 scp
 matplotlib
+numpy
