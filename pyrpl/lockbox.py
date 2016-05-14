@@ -14,7 +14,7 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-############################################################################### 
+###############################################################################
 
 
 from sshshell import SSHshell
@@ -33,31 +33,31 @@ import matplotlib.pyplot as plt
 
 
 CONSTANTS_DEFAULT = dict(
-        lockbox_name = "default_cavity",
-        verbosity = True,
-        lock_upper_threshold = 0.9,
-        lock_lower_threshold = 0.0,
-        lock_step = 50,
-        lock_range = 7000,
-        lock_predelay = 0.05,
-        lock_postdelay = 0.2,
-        find_signal = "reflection",
-        #find_signal = "pdh",
-        offset1 = 0,
-        offset2 = 0,
-        mean_reflection=100,
-        mean_pdh = 0,
-        redefine_means_on_sweep = True,
-        amplitude_reflection = 0.0,
-        amplitude_pdh = 0.0,
-        find_fine_offset = 0,
-        )
+    lockbox_name="default_cavity",
+    verbosity=True,
+    lock_upper_threshold=0.9,
+    lock_lower_threshold=0.0,
+    lock_step=50,
+    lock_range=7000,
+    lock_predelay=0.05,
+    lock_postdelay=0.2,
+    find_signal="reflection",
+    #find_signal = "pdh",
+    offset1=0,
+    offset2=0,
+    mean_reflection=100,
+    mean_pdh=0,
+    redefine_means_on_sweep=True,
+    amplitude_reflection=0.0,
+    amplitude_pdh=0.0,
+    find_fine_offset=0,
+)
 
 CONSTANTS = CONSTANTS_DEFAULT
 
 
-
 class Lockbox(object):
+
     def __init__(self, constants=None):
         """generic lockbox object, no implementation-dependent details here
         """
@@ -70,16 +70,18 @@ class Lockbox(object):
             print "Obtained the following constants from memory:"
             print c
             self.constants.update(c)
-        self.trace_reflection=np.zeros(0)
-        self.trace_pdh=np.zeros(0)
-        self.trace_time=np.zeros(0)
-        self.trace_outi=np.zeros(0)
-        self.trace_outq=np.zeros(0)
-        self.plotindex=0
-        
+        self.trace_reflection = np.zeros(0)
+        self.trace_pdh = np.zeros(0)
+        self.trace_time = np.zeros(0)
+        self.trace_outi = np.zeros(0)
+        self.trace_outq = np.zeros(0)
+        self.plotindex = 0
+
     def _get_constants(self):
         settings = QtCore.QSettings("rplockbox", "constants")
-        kwds_str = str(settings.value(self.constants["lockbox_name"]).toString())
+        kwds_str = str(
+            settings.value(
+                self.constants["lockbox_name"]).toString())
         kwds = dict()
         if kwds_str != "" and not kwds_str is None:
             kwds = json.loads(kwds_str)
@@ -94,103 +96,110 @@ class Lockbox(object):
         settings = QtCore.QSettings("rplockbox", "constants")
         write_constants = self._get_constants()
         write_constants.update(constants)
-        settings.setValue(self.constants["lockbox_name"], json.dumps(write_constants))
+        settings.setValue(
+            self.constants["lockbox_name"],
+            json.dumps(write_constants))
         self._get_constants()
 
-    def find_offsets(self,avg=100):
+    def find_offsets(self, avg=100):
         print "Make sure all light is off for this measurement"
         reflection = np.zeros(avg)
         pdh = np.zeros(avg)
         for i in range(len(reflection)):
             reflection[i] = self.reflection
             pdh[i] = self.pdh
-        constants = dict( offset_reflection = reflection.mean(),
-                          offset_pdh = pdh.mean())
+        constants = dict(offset_reflection=reflection.mean(),
+                         offset_pdh=pdh.mean())
         self.constants.update(constants)
         self._save_constants(constants)
-        
+
     """@property
     def reflection(self):
         return 0
     """
-    
-    def relative_reflection(self,refl=None):
+
+    def relative_reflection(self, refl=None):
         if refl is None:
             refl = self.reflection
-        return float(refl-self.constants["offset_reflection"])\
-               /float(self.constants["mean_reflection"]-self.constants["offset_reflection"])
-    
+        return float(refl - self.constants["offset_reflection"]) / float(
+            self.constants["mean_reflection"] - self.constants["offset_reflection"])
+
     """@property
     def pdh(self):
         return 0
     """
-    def align_acoustic(self,normalfrequency=10000.0,sosfrequency=2000,verbose=True):
+
+    def align_acoustic(
+            self,
+            normalfrequency=10000.0,
+            sosfrequency=2000,
+            verbose=True):
         from sound import sinus
         from time import sleep
         while True:
-            r =  self.relative_reflection()
+            r = self.relative_reflection()
             if verbose:
                 print r
             if r > 0.8:
                 df = sosfrequency
-                sinus(df,0.05)
-                sinus(df,0.05)
-                sinus(df,0.05)
+                sinus(df, 0.05)
+                sinus(df, 0.05)
+                sinus(df, 0.05)
                 sleep(0.2)
-                sinus(df,0.2)
-                sinus(df,0.2)
-                sinus(df,0.2)
+                sinus(df, 0.2)
+                sinus(df, 0.2)
+                sinus(df, 0.2)
                 sleep(0.2)
-                sinus(df,0.05)
-                sinus(df,0.05)
-                sinus(df,0.05)        
+                sinus(df, 0.05)
+                sinus(df, 0.05)
+                sinus(df, 0.05)
                 self.relock()
             else:
-                sinus(normalfrequency*r,0.05)
-        
-    @property 
+                sinus(normalfrequency * r, 0.05)
+
+    @property
     def coarse(self):
-        if hasattr(self,'_coarse') and not self._coarse is None:
+        if hasattr(self, '_coarse') and not self._coarse is None:
             return self._coarse
         else:
             if "lastcoarse" in self.constants:
                 self._coarse = self.constants["lastcoarse"]
-            else: 
+            else:
                 self._coarse = None
             return self._coarse
-    
+
     @coarse.setter
-    def coarse(self,v):
+    def coarse(self, v):
         """implement coarse setting here"""
         self._coarse = v
-        self._save_constants(dict(lastcoarse = v))
-        
-    @property 
+        self._save_constants(dict(lastcoarse=v))
+
+    @property
     def fine(self):
-        if hasattr(self,'_fine'):
+        if hasattr(self, '_fine'):
             return self._fine
         else:
             self._fine = None
             return self._fine
-    
+
     @fine.setter
-    def fine(self,v):
+    def fine(self, v):
         """implement fine setting here"""
         self._fine = v
-    
+
     def get_buffers(self):
         """fill the buffers of all trace_xxx variables with their current values"""
         pass
-    
+
     def sweep_setup(self):
         """setup for a sweep measurement, outputs one sin wave on fine output and prepares scope for acquisition """
         pass
-    
-    def sweep_trig(self,frequency=None,trigger_source=8):
+
+    def sweep_trig(self, frequency=None, trigger_source=8):
         """trigs one sweep measurement, optionally with changed frequency and trigger_source"""
         pass
-    
-    def sweep_acquire(self, plot=True, data_shorten=False,amplitude=None):
+
+    def sweep_acquire(self, plot=True, data_shorten=False, amplitude=None):
         """acquires the data of both inputs during one sweep"""
         if not amplitude is None:
             amplitude *= 8191.0
@@ -198,18 +207,18 @@ class Lockbox(object):
         sleep(self.sweep_trig())
         self.get_buffers(data_shorten=data_shorten)
         if self.constants["redefine_means_on_sweep"]:
-            constants = dict( mean_reflection = self.trace_reflection.mean(),
-                              mean_pdh = self.trace_pdh.mean(),
-                              max_pdh = self.trace_pdh.max(), 
-                              min_pdh = self.trace_pdh.min(),
-                              )
+            constants = dict(mean_reflection=self.trace_reflection.mean(),
+                             mean_pdh=self.trace_pdh.mean(),
+                             max_pdh=self.trace_pdh.max(),
+                             min_pdh=self.trace_pdh.min(),
+                             )
             self.constants.update(constants)
             self._save_constants(constants)
-        
+
         if plot:
-            self.plot(self.trace_time[:len(self.trace_outi)],self.trace_outi)
-            self.plot(self.trace_time,self.trace_pdh)
-            self.plot(self.trace_time,self.trace_reflection)
+            self.plot(self.trace_time[:len(self.trace_outi)], self.trace_outi)
+            self.plot(self.trace_time, self.trace_pdh)
+            self.plot(self.trace_time, self.trace_reflection)
 
     def pid_reset(self):
         """resets all integrator registers of pid but keeps pid on"""
@@ -226,14 +235,14 @@ class Lockbox(object):
     def pid_on(self):
         """turns pid on and boosts integrator gain"""
         pass
-    
+
     @property
     def pid_setpoint(self):
         """ setpoint for locking """
         return self._setpoint
-    
+
     @pid_setpoint.setter
-    def pid_setpoint(self,v):
+    def pid_setpoint(self, v):
         self._setpoint = v
 
     def find_setpoint(self):
@@ -244,39 +253,42 @@ class Lockbox(object):
     def find_fine(self):
         """ finds the fine offset of a resonance in range"""
         self.pid_off()
-        self.sweep_acquire(plot=True,data_shorten=True)
-        reflection = pandas.Series(self.trace_reflection,index=self.trace_outi)
-        xup = reflection.iloc[:len(reflection)//2].argmin()
-        xdown = reflection.iloc[len(reflection)//2:].argmin()
-        x0 = (xup + xdown)/2
+        self.sweep_acquire(plot=True, data_shorten=True)
+        reflection = pandas.Series(
+            self.trace_reflection,
+            index=self.trace_outi)
+        xup = reflection.iloc[:len(reflection) // 2].argmin()
+        xdown = reflection.iloc[len(reflection) // 2:].argmin()
+        x0 = (xup + xdown) / 2
         r0 = self.relative_reflection(reflection.min())
-        hysteresis = (xup - xdown)/2
-        print "x0: ",x0," hysteresis: ",hysteresis," R0: ",r0
-        if self.islocked(r0): 
-            return x0+self.constants["find_fine_offset"]
+        hysteresis = (xup - xdown) / 2
+        print "x0: ", x0, " hysteresis: ", hysteresis, " R0: ", r0
+        if self.islocked(r0):
+            return x0 + self.constants["find_fine_offset"]
         else:
             return None
-    
+
     def find_coarse(self):
         """ finds the coarse offset of a resonance in range """
         pass
-    
+
     def recenter(self):
         pass
-        
+
     def islocked(self, refl=None):
         if refl is None:
             refl = self.relative_reflection()
-        if refl < self.constants["lock_upper_threshold"] and refl > self.constants["lock_lower_threshold"]:
+        if refl < self.constants["lock_upper_threshold"] and refl > self.constants[
+                "lock_lower_threshold"]:
             return True
         else:
             return False
-    
-    def lock(self,detuning=0):
-        #reset PID
+
+    def lock(self, detuning=0):
+        # reset PID
         self.pid_off()
-        
-        #find out where the resonance is expected
+
+        # find out where the resonance is expected
         x0 = self.find_fine()
         if x0 is None:
             coarse = self.find_coarse()
@@ -290,14 +302,17 @@ class Lockbox(object):
                     print "No fine offset for resonance found"
                     return False
         self.pid_setpoint = self.find_setpoint() + detuning
-        islocked=False
-        for i in range(0,self.constants["lock_range"],self.constants["lock_step"]):
-            for j in [i,-i]:
+        islocked = False
+        for i in range(
+                0,
+                self.constants["lock_range"],
+                self.constants["lock_step"]):
+            for j in [i, -i]:
                 self.pid_off()
                 self.fine = x0 + j
                 sleep(self.constants["lock_predelay"])
                 if self.constants["verbosity"]:
-                    print "Trying to lock at offset ",self.fine,"..."
+                    print "Trying to lock at offset ", self.fine, "..."
                 self.pid_ilimit()
                 sleep(self.constants["lock_postdelay"])
                 islocked = self.islocked()
@@ -305,46 +320,60 @@ class Lockbox(object):
                     break
             if islocked:
                 break
-        
+
         if not self.islocked():
-                print "Unable to acquire lock"
-                return False
-        
+            print "Unable to acquire lock"
+            return False
+
         print "Lock acquired. Boosting integrator gain..."
         self.pid_on()
-        
+
         if not self.islocked():
-                print "Unable to boost integrator gain. Lock attempt failed."
-                return False
-        
+            print "Unable to boost integrator gain. Lock attempt failed."
+            return False
+
         print "Integrator gain boosted. Recentering fine offset..."
-        
+
         if self.constants["lock_auto_recenter"]:
             if self.recenter():
                 print "Recentered successfully"
-            else: 
-                print "Recentering failed" 
+            else:
+                print "Recentering failed"
                 return False
-        print "Locked. Relative reflection on resonance: %.2f"%self.relative_reflection()
+        print "Locked. Relative reflection on resonance: %.2f" % self.relative_reflection()
         return True
 
-    def plot(self,x,y,label=None):
-        self.plotindex +=1
-        mycolors=['blue','green','red','black','purple','orange','black','yellow','darkgreen','darkblue','brown','pink','blue','red']
-        BORDERS=0.08
-        FONTSIZE=16
-        LARGEFONTSIZE=20
-        OUTFILEDIR="plots/"
-        MARKERSIZE=1.0
-        #MARKER='+'
-        MARKER='.'
-        FILLSTYLE='bottom'
-        LINESTYLE='+'
-        LINEWIDTH=1
-        AXESLINEWIDTH=4
-        DPI=600
-        dat=plt.plot(x,y,'bo')  
-        plot_color = mycolors[self.plotindex%len(mycolors)]
+    def plot(self, x, y, label=None):
+        self.plotindex += 1
+        mycolors = [
+            'blue',
+            'green',
+            'red',
+            'black',
+            'purple',
+            'orange',
+            'black',
+            'yellow',
+            'darkgreen',
+            'darkblue',
+            'brown',
+            'pink',
+            'blue',
+            'red']
+        BORDERS = 0.08
+        FONTSIZE = 16
+        LARGEFONTSIZE = 20
+        OUTFILEDIR = "plots/"
+        MARKERSIZE = 1.0
+        # MARKER='+'
+        MARKER = '.'
+        FILLSTYLE = 'bottom'
+        LINESTYLE = '+'
+        LINEWIDTH = 1
+        AXESLINEWIDTH = 4
+        DPI = 600
+        dat = plt.plot(x, y, 'bo')
+        plot_color = mycolors[self.plotindex % len(mycolors)]
         plot_marker = MARKER
         plot_markersize = MARKERSIZE
         plot_linestyle = LINESTYLE
@@ -352,10 +381,19 @@ class Lockbox(object):
         plot_fillstyle = FILLSTYLE
         plot_continuous = False
         if plot_continuous:
-            markerstyle=''
+            markerstyle = ''
             linestyle = plot_linestyle
         else:
-            markerstyle= plot_marker
+            markerstyle = plot_marker
             linestyle = ''
-        plt.setp(dat,color=plot_color,ls=linestyle,lw=plot_linewidth,marker=markerstyle,markersize=plot_markersize,fillstyle=FILLSTYLE,antialiased=True,label=label)
+        plt.setp(
+            dat,
+            color=plot_color,
+            ls=linestyle,
+            lw=plot_linewidth,
+            marker=markerstyle,
+            markersize=plot_markersize,
+            fillstyle=FILLSTYLE,
+            antialiased=True,
+            label=label)
         plt.show()
