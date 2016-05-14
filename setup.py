@@ -11,7 +11,8 @@ setup(name='pyrpl',
       url='https://www.github.com/lneuhaus/pyrplockbox/',
       license='GPLv3',
       packages=['pyrpl'],
-      package_dir= {'pyrpl': ''},
+      package_dir={'pyrpl': ''},
       package_data={'pyrpl':['fpga/red_pitaya.bin',
-                                'monitor_server/monitor_server']}
+                                'monitor_server/monitor_server']},
+      requires=["paramiko","scp"]
       )

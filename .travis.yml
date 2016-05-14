@@ -1,5 +1,11 @@
 language: python
 
-install: python setup.py install
+install: 
+  - python setup.py install
+  - pip install -r requirements.txt .
+  - pip install -e -r requirements.txt .
 
-script: python -m unittest discover pyrpl
+script: python -m unittest discover .
+
+virtualenv:
+    system_site_packages: true
