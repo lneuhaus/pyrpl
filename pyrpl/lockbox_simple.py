@@ -14,7 +14,7 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-############################################################################### 
+###############################################################################
 
 
 from sshshell import SSHshell
@@ -31,5 +31,3 @@ from PyQt4 import QtCore, QtGui
 import json
 import matplotlib
 import matplotlib.pyplot as plt
-
-

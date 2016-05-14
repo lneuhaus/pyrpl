@@ -14,7 +14,7 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-############################################################################### 
+###############################################################################
 
 
 import paramiko
@@ -22,59 +22,70 @@ from time import sleep
 from scp import SCPClient
 import os
 
+
 class SSHshell(object):
-    def __init__(self,hostname='localhost',user='root',password='root',verbose=True):
+
+    def __init__(
+            self,
+            hostname='localhost',
+            user='root',
+            password='root',
+            verbose=True):
         self.verbose = verbose
-        self.delay=0.05
-        self.apprunning=False
-        self.hostname=hostname
-        self.user=user
-        self.password=password
-        self.port=22
+        self.delay = 0.05
+        self.apprunning = False
+        self.hostname = hostname
+        self.user = user
+        self.password = password
+        self.port = 22
         self.ssh = paramiko.SSHClient()
         self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        self.ssh.connect(hostname,username=self.user,password=self.password,port=self.port)
+        self.ssh.connect(
+            hostname,
+            username=self.user,
+            password=self.password,
+            port=self.port)
         self.channel = self.ssh.invoke_shell()
         self.scp = SCPClient(self.ssh.get_transport())
-        #self.sleep(0.1)
+        # self.sleep(0.1)
 
-    def write(self,text):
-        if self.channel.send_ready() and not text=="":
+    def write(self, text):
+        if self.channel.send_ready() and not text == "":
             return self.channel.send(text)
         else:
             return -1
 
-    def read_nbytes(self,nbytes):
+    def read_nbytes(self, nbytes):
         if self.channel.recv_ready():
             return self.channel.recv(nbytes)
         else:
             return ""
-    
+
     def read(self):
-        sumstring=""
+        sumstring = ""
         string = "1"
         while string != "":
             string = self.read_nbytes(1024)
             sumstring += string
         self.log(sumstring)
         return sumstring
-    
-    def askraw(self,question=""):
+
+    def askraw(self, question=""):
         self.write(question)
         sleep(self.delay)
         return self.read()
-  
-    def ask(self,question=""):
-        return self.askraw(question+'\n')
+
+    def ask(self, question=""):
+        return self.askraw(question + '\n')
 
     def __del__(self):
         self.endapp()
         self.channel.close()
         self.ssh.close()
-    
+
     def endapp(self):
         pass
-    
+
     def reboot(self):
         self.endapp()
         self.ask("shutdown -r now")
@@ -84,7 +95,7 @@ class SSHshell(object):
         self.endapp()
         self.ask("shutdown now")
         self.__del__()
-    
-    def log(self,text):
+
+    def log(self, text):
         if self.verbose:
             print text
