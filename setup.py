@@ -14,6 +14,12 @@ import codecs
 import os
 import sys
 
+
+requirements = ["paramiko","scp","matplotlib",
+                "numpy","scipy","pandas"]
+                #,"json","pickle,"math","PyQT4"]
+        
+
 here = os.path.abspath(os.path.dirname(__file__))
 def read(*filenames, **kwargs):
     encoding = kwargs.get('encoding', 'utf-8')
@@ -36,7 +42,7 @@ class PyTest(TestCommand):
         import pytest
         errcode = pytest.main(self.test_args)
         sys.exit(errcode)
-        
+
 from distutils.core import setup
 setup(name='pyrpl',
       version='0.9.0.0',
@@ -54,14 +60,16 @@ setup(name='pyrpl',
                     'Topic :: Scientific/Engineering :: Physics',
                     'Programming Language :: C'],
       keywords='RedPitaya DSP FPGA IIR PDH synchronous detection filter PID control lockbox servo feedback lock quantum optics',
+      platforms='any',
       packages=['pyrpl'],
       #package_dir={'pyrpl': ''},
       package_data={'pyrpl':['fpga/red_pitaya.bin',
                             'monitor_server/monitor_server']},
-      install_requires=["paramiko","scp","matplotlib","numpy"],
-      setup_requires=["paramiko","scp","matplotlib","numpy"],
-      platforms='any',
 
+      install_requires = requirements,
+      setup_requires = requirements,
+      requires = requirements, #needed on my local machine...
+      
       #stuff for unitary test with pytest
       tests_require=['pytest'],
       extras_require={'testing': ['pytest']},
