@@ -1,2 +1,2 @@
 from redpitaya import RedPitaya
-from pyrpl import Pyrpl
+#from pyrpl import Pyrpl

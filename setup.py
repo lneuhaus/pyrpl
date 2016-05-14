@@ -14,12 +14,10 @@ import codecs
 import os
 import sys
 
-
-requirements = ["paramiko","scp","matplotlib",
-                "numpy","scipy","pandas"]
-                #,"json","pickle,"math","PyQT4"]
+requirements = ["paramiko","scp","numpy"]
+                #,"matplotlib","numpy","scipy","pandas"] #harder to install
+                #,"json","pickle,"math","PyQT4"]         #impossible
         
-
 here = os.path.abspath(os.path.dirname(__file__))
 def read(*filenames, **kwargs):
     encoding = kwargs.get('encoding', 'utf-8')

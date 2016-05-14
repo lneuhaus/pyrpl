@@ -5,7 +5,7 @@ import os
 
 import pyrpl
 from pyrpl import RedPitaya
-from pyrpl import Pyrpl
+#from pyrpl import Pyrpl
 
 
 class RedPitayaTestCases(unittest.TestCase):
