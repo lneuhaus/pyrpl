@@ -1,13 +1,15 @@
 language: python
 
+before_install:
+    - pip install pep8
+
 install: 
-  - pip install flake8 .
   - python setup.py install
 #  - pip install -r requirements.txt .
 
 #before_script:
-#  - "flake8 --show-source --builtins=_ Teradata"
-  
+#  - find . -name \*.py -exec pep8 --ignore=E402 {} +
+
 script: python setup.py test
 
 env:
