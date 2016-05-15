@@ -21,17 +21,8 @@ requirements = ["paramiko", "scp", "numpy"]
 here = os.path.abspath(os.path.dirname(__file__))
 
 
-def read(*filenames, **kwargs):
-    encoding = kwargs.get('encoding', 'utf-8')
-    sep = kwargs.get('sep', '\n')
-    buf = []
-    for filename in filenames:
-        with io.open(filename, encoding=encoding) as f:
-            buf.append(f.read())
-    return sep.join(buf)
-
-long_description = read('README.md')  # , 'CHANGES.txt')
-
+def read(fname):
+    return open(os.path.join(os.path.dirname(__file__), fname)).read() 
 
 class PyTest(TestCommand):
     # user_options = [('pytest-args=', 'a', "192.168.1.100")] #not yet working
@@ -50,7 +41,7 @@ from distutils.core import setup
 setup(name='pyrpl',
       version='0.9.0.0',
       description='DSP servo controller for quantum optics with the RedPitaya',
-      long_description=long_description,
+      long_description=read('README.md'),
       author='Leonhard Neuhaus',
       author_email='neuhaus@spectro.jussieu.fr',
       url='https://www.github.com/lneuhaus/pyrplockbox/',
