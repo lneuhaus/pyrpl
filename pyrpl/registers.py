@@ -21,12 +21,12 @@ class Register(object):
     def from_python(self, value):
         return value
     
-    def __get(self, obj, objtype=None):
+    def __get__(self, obj, objtype=None):
         return self.to_python(obj._read(self.address))
     
     def __set__(self, obj, val):
-        obj._write(self.from_python(self.address,val))
-
+        obj._write(self.address,self.from_python(val))
+            
 class BoolRegister(Register):
     """Inteface for boolean values, 1: True, 0: False"""
     def __init__(self, address, bit=0, doc="", invert=False):
@@ -53,12 +53,13 @@ class IORegister(BoolRegister):
     """Interface for digital outputs
     
     if argument outputmode is True, output mode is set, else input mode"""
-    def __init__(self, read_address, write_address, direction_address, outputmode=True, bit=0, doc=""):
+    def __init__(self, read_address, write_address, direction_address, 
+                 outputmode=True, bit=0, doc=""):
         if outputmode:
             address = write_address
         else:
             address = read_address
-        super(BoolRegister,self).__init__(address=address, bit=bit, doc=doc)
+        super(IORegister,self).__init__(address=address, bit=bit, doc=doc)
         self.direction = BoolRegister(direction_address,bit=bit,
                                       doc=doc+" direction")
         self.direction = outputmode #set output direction
@@ -69,7 +70,7 @@ class SelectRegister(Register):
     def __init__(self, address, 
                  options={}, 
                  doc=""):
-        super(SelectRegister,self).__init__(address=address, doc=doc+"\n\n"+str(options))
+        super(SelectRegister,self).__init__(address=address, doc=doc+"\r\n"+str(options))
         self.options = Bijection(options)
         
     def to_python(self, value):
@@ -87,7 +88,13 @@ class FloatRegister(Register):
         super(FloatRegister,self).__init__(address=address, doc=doc)
         self.bits = bits
         self.norm = float(norm)
-        
+    
+    def __get__(self, obj, objtype=None):
+        return self.to_python(obj._read(self.address))
+
+    def __set__(self, obj, val):
+        obj._write(self.address,self.from_python(val))
+    
     def to_python(self, value):
         # 2's complement
         if value >= 2**(self.bits-1):
@@ -96,23 +103,22 @@ class FloatRegister(Register):
         return float(value)/self.norm
     
     def from_python(self, value):
+        # round and normalize
+        v = int(round(float(value)*self.norm)) 
         # make sure small float values are not rounded to zero
-        if (value == epsilon):
-            value = 1
-        elif (value == -epsilon):
-            value = -1
-        else:
-            # round and normalize
-            value = int(round(value*self.norm)) 
-        # 2's complement
-        if (value < 0):
-            value += 2**self.bits
+        if ( v==0 and value > 0):
+            v = 1
+        elif (v == 0 and value < 0):
+            v = -1
         # saturation
-        if (value >= 2**(self.bits-1)):
-            value = (2**self.bits-1)-1
-        elif (value < 2**(self.bits-1)):
-            value = -2**(self.bits-1)
-        return value
+        if (v >= 2**(self.bits-1)):
+            v = 2**(self.bits-1)-1
+        elif (v < -2**(self.bits-1)):
+            v = -2**(self.bits-1)
+        # 2's complement
+        if (v < 0):
+            v += 2**self.bits
+        return v
 
 class PhaseRegister(FloatRegister):
     """Registers that contain a phase as a float in units of degrees."""
@@ -120,8 +126,7 @@ class PhaseRegister(FloatRegister):
     def __init__(self, address, 
              bits=32, #total number of bits to represent on fpga
              doc=""):
-        super(PhaseRegister,self).__init__(address=address, doc=doc)
-        self.bits = bits
+        super(PhaseRegister,self).__init__(address=address, bits=bits, doc=doc)
         
     def from_python(self, value):
         # make sure small float values are not rounded to zero
@@ -130,15 +135,14 @@ class PhaseRegister(FloatRegister):
     def to_python(self, value):
         return float(value)/2**self.bits*360
     
-class FrequencyRegister(Register):
+class FrequencyRegister(FloatRegister):
     """Registers that contain a frequency as a float in units of Hz"""
     def __init__(self, address, 
              bits=32, #total number of bits to represent on fpga
              doc=""):
-        super(FrequencyRegister,self).__init__(address=address, doc=doc)
-        self.bits = bits
+        super(FrequencyRegister,self).__init__(address=address, bits=bits, doc=doc)
         
-    def __get(self, obj, objtype=None):
+    def __get__(self, obj, objtype=None):
         return self.to_python(obj._read(self.address), obj._frequency_correction)
 
     def __set__(self, obj, val):

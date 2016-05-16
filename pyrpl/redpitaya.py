@@ -51,7 +51,6 @@ class RedPitaya(SSHshell):
         self.subdirname, self.filename = os.path.split(self.filename)
         if dirname is None:
             self.dirname = os.path.dirname(inspect.getfile(rp))
-            print self.dirname
         if reloadfpga:
             self.update_fpga()
         if autostart:
@@ -128,7 +127,7 @@ class RedPitaya(SSHshell):
     def endserver(self):
         self.ask('\x03')
         if 'pitaya' in self.ask():
-            print 'Properly shut down the rpyc server!'
+            print 'Console ready!'
         self.serverrunning = False
 
     def killserver(self):
@@ -140,18 +139,17 @@ class RedPitaya(SSHshell):
         self.hk = rp.HK(self.client)
         self.ams = rp.AMS(self.client)
         self.scope = rp.Scope(self.client)
-        self.pid0 = rp.Pid(self.client, number=0)
-        self.pid1 = rp.Pid(self.client, number=1)
-        self.pid2 = rp.Pid(self.client, number=2)
-        self.pid3 = rp.Pid(self.client, number=3)
-        self.iir = rp.IIR(self.client, number=4)
-        self.iq0 = rp.IQ(self.client, number=5)
-        self.iq1 = rp.IQ(self.client, number=6)
-        self.iq2 = rp.IQ(self.client, number=7)
+        self.pid0 = rp.Pid(self.client, module='pid0')
+        self.pid1 = rp.Pid(self.client, module='pid1')
+        self.pid2 = rp.Pid(self.client, module='pid2')
+        self.pid3 = rp.Pid(self.client, module='pid3')
+        self.iir = rp.IIR(self.client, module='iir')
+        self.iq0 = rp.IQ(self.client, module='iq0')
+        self.iq1 = rp.IQ(self.client, module='iq1')
+        self.iq2 = rp.IQ(self.client, module='iq2')
         self.asg1 = rp.ASG(self.client, channel='A')
         self.asg2 = rp.ASG(self.client, channel='B')
-        temp = float(self.ams.temp)
-        print "Client started. FPGA temperature is", temp, "degrees"
+        print "Client started with success!"
 
     def endclient(self):
         del self.client
@@ -187,8 +185,8 @@ class RedPitaya(SSHshell):
         print "Restarted monitor_server"
 
     def license(self):
-        print """    pyrpl  Copyright (C) 2014-2016  Leonhard Neuhaus
+        print """\r\n    pyrpl  Copyright (C) 2014-2016  Leonhard Neuhaus
     This program comes with ABSOLUTELY NO WARRANTY; for details read the file
     "LICENSE" in the source directory. This is free software, and you are
     welcome to redistribute it under certain conditions; read the file
-    "LICENSE" in the source directory for details."""
+    "LICENSE" in the source directory for details.\r\n"""

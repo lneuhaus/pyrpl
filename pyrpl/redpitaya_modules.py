@@ -26,6 +26,7 @@ from registers import *
 from bijection import Bijection
 
 class BaseModule(object):
+    
     # factor to manually compensate 125 MHz oscillator frequency error
     # real_frequency = 125 MHz * _frequency_correction
     _frequency_correction = 1.0
@@ -40,7 +41,7 @@ class BaseModule(object):
             string = ""
             for key in type(self).__dict__.keys():
                 if isinstance( type(self).__dict__[key], Register):
-                    string += self.help(key)+'\n'
+                    string += key + ": " + self.help(key) + '\r\n'
             return string
         
     def __init__(self, client, addr_base=None):
@@ -52,19 +53,34 @@ class BaseModule(object):
         """
         self._client = client
         self._addr_base = addr_base
+        self.__doc__ = "Available registers: \r\n\r\n"+self.help()
 
     def _reads(self, addr, length):
-        return self._client.reads(self._addr_base + addr, length)
+        return self._client._reads(self._addr_base + addr, length)
 
     def _writes(self, addr, values):
-        self._client.writes(self._addr_base + addr, values)
+        self._client._writes(self._addr_base + addr, values)
 
     def _read(self, addr):
         return int(self._reads(addr, 1)[0])
 
     def _write(self, addr, value):
         self._writes(addr, [int(value)])
+    
+    def _to_pyint(self, v, bitlength=14):
+        v = v & (2**bitlength - 1)
+        if v >> (bitlength - 1):
+            v = v - 2**bitlength
+        return int(v)
 
+    def _from_pyint(self, v, bitlength=14):
+        v = int(v)
+        if v < 0:
+            v = v + 2**bitlength
+        v = (v & (2**bitlength - 1))
+        return np.uint32(v)
+    
+    
 class HK(BaseModule):
     def __init__(self, client):
         super(HK, self).__init__(client, addr_base=0x40000000)
@@ -161,9 +177,11 @@ class Scope(BaseModule):
     def input2(self, v):
         self._ch2.input = v
 
-    reset_writestate_machine = BoolRegister(0x0, 1, doc="Set to True to reset writestate machine")
+    reset_writestate_machine = BoolRegister(0x0, 1, 
+                            doc="Set to True to reset writestate machine. \
+                            Automatically goes back to false. ")
     
-    arm_trigger = BoolRegister(0x0, 0, "Set to True to arm trigger")
+    trigger_armed = BoolRegister(0x0, 0, "Set to True to arm trigger")
     
     def sw_trig(self):
         self.trigger_source = "immediately"
@@ -204,10 +222,10 @@ class Scope(BaseModule):
     decimation = SelectRegister(0x14, doc="decimation factor", 
                                 options=_decimations)
     
-    write_pointer_current = Register(0x18, 
+    _write_pointer_current = Register(0x18, 
                             doc="current write pointer position [samples]")
     
-    write_pointer_trigger = Register(0x1C, 
+    _write_pointer_trigger = Register(0x1C, 
                             doc="write pointer when trigger arrived [samples]")
     
     hysteresis_ch1 = FloatRegister(0x20, bits=14, norm=2**13, 
@@ -242,7 +260,7 @@ class Scope(BaseModule):
     @property
     def rawdata_ch1(self):
         """raw data from ch1"""
-        # return np.array([self.to_pyint(v) for v in self.reads(0x10000,
+        # return np.array([self.to_pyint(v) for v in self._reads(0x10000,
         # self.data_length)],dtype=np.int32)
         x = np.array(self._reads(0x10000, self.data_length), dtype=np.int16)
         x[x >= 2**13] -= 2**14
@@ -250,7 +268,7 @@ class Scope(BaseModule):
     @property
     def rawdata_ch2(self):
         """raw data from ch2"""
-        # return np.array([self.to_pyint(v) for v in self.reads(0x20000,
+        # return np.array([self.to_pyint(v) for v in self._reads(0x20000,
         # self.data_length)],dtype=np.int32)
         x = np.array(self._reads(0x20000, self.data_length), dtype=np.int32)
         x[x >= 2**13] -= 2**14
@@ -259,20 +277,20 @@ class Scope(BaseModule):
     @property
     def data_ch1(self):
         """ acquired (unnormalized) data from ch1"""
-        return np.roll(self.rawdata_ch1, -(self.write_pointer_trigger + 1))
+        return np.roll(self.rawdata_ch1, -(self._write_pointer_trigger + 1))
     @property
     def data_ch2(self):
         """ acquired (unnormalized) data from ch2"""
-        return np.roll(self.rawdata_ch2, -(self.write_pointer_trigger + 1))
+        return np.roll(self.rawdata_ch2, -(self._write_pointer_trigger + 1))
 
     @property
     def data_ch1_current(self):
         """ (unnormalized) data from ch1 while acquisition is still running"""
-        return np.roll(self.rawdata_ch1, -(self.write_pointer_current + 1))
+        return np.roll(self.rawdata_ch1, -(self._write_pointer_current + 1))
     @property
     def data_ch2_current(self):
         """ (unnormalized) data from ch2 while acquisition is still running"""
-        return np.roll(self.rawdata_ch2, -(self.write_pointer_current + 1))
+        return np.roll(self.rawdata_ch2, -(self._write_pointer_current + 1))
     
     
     @property
@@ -287,18 +305,16 @@ class Scope(BaseModule):
         trigger_source: the trigger source. see the options for the parameter separately
         average: use averaging or not when sampling is not performed at full rate.
                  similar to high-resolution mode in commercial scopes"""
-        self.reset_writestate_machine()
+        self.reset_writestate_machine = True
         self.trigger_delay = self.data_length
-        # self.arm_trigger(v=False)
         self.average = average
         self.duration = duration
         self.trigger_source = trigger_source
-        # self.reset_writestate_machine(v=False)
-        self.arm_trigger()
+        self.arm_trigger = True
 
     @property
     def sampling_time(self):
-        return 8e-9 * float(self.data_decimation)
+        return 8e-9 * float(self.decimation)
 
     @sampling_time.setter
     def sampling_time(self, v):
@@ -308,14 +324,14 @@ class Scope(BaseModule):
         factors = [65536, 8192, 1024, 64, 8, 1]
         for f in factors:
             if v >= tbase * float(f):
-                self.data_decimation = f
+                self.decimation = f
                 return
-        self.data_decimation = 1
+        self.decimation = 1
         print "Desired sampling time impossible to realize"
 
     @property
     def duration(self):
-        return self.duration_per_sample * float(self.data_length)
+        return self.sampling_time * float(self.data_length)
 
     @duration.setter
     def duration(self, v):
@@ -351,7 +367,7 @@ class ASG(BaseModule):
         """ phase in degrees of the function generator at the moment when the last scope trigger occured"""
         return np.float(
             self.to_pyint(
-                self.read(
+                self._read(
                     0x114 + self.value_offset),
                 bitlength=14)) / 2**14 * 360.0
 
@@ -400,7 +416,7 @@ class ASG(BaseModule):
     @property
     def advanced_trigger_delay(self):
         """ counter offset for trigged events = phase offset """
-        v = self.reads(self.value_offset + 0x118, 2)
+        v = self._reads(self.value_offset + 0x118, 2)
         return 8e-9 * (np.int(v[1]) * 2**32 + np.int(v[0]) + 1)
 
     @advanced_trigger_delay.setter
@@ -408,8 +424,8 @@ class ASG(BaseModule):
         v = np.round(v / 8e-9 - 1.0)
         mv = (int(v) >> 32) & 0x00000000FFFFFFFF
         lv = int(v) & 0x00000000FFFFFFFF
-        self.write(self.value_offset + 0x11C, mv)
-        self.write(self.value_offset + 0x118, lv)
+        self._write(self.value_offset + 0x11C, mv)
+        self._write(self.value_offset + 0x118, lv)
 
     def enable_advanced_trigger(
             self,
@@ -463,7 +479,7 @@ class ASG(BaseModule):
         3-external trigger negative edge
         4-advanced trigger from DIO0_P pin (output gated on trigger with hysteresis of advanced_trigger_delay in seconds)
         """
-        v = self.read(0x0)
+        v = self._read(0x0)
         return (v >> self.bit_offset) & 0x07
 
     @trigger_source.setter
@@ -471,12 +487,12 @@ class ASG(BaseModule):
         v = v & 0x7
         v = v << self.bit_offset
         mask = ~(0x7 << self.bit_offset)
-        v = (self.read(0x0) & mask) | v
-        self.write(0x0, v)
+        v = (self._read(0x0) & mask) | v
+        self._write(0x0, v)
 
     @property
     def offset(self):
-        v = self.read(self.value_offset + 0x4)
+        v = self._read(self.value_offset + 0x4)
         v = (v >> 16) & 0x00003FFF
         if (v & 2**13):
             v = v - 2**14
@@ -485,14 +501,14 @@ class ASG(BaseModule):
     @offset.setter
     def offset(self, v):
         v = self.from_pyint(v, 14) * 2**16 + self.scale
-        self.write(self.value_offset + 0x4, v)
+        self._write(self.value_offset + 0x4, v)
 
     @property
     def scale(self):
         """
         Amplitude scale. 0x2000 == multiply by 1. Unsigned
         """
-        v = self.read(self.value_offset + 0x4)
+        v = self._read(self.value_offset + 0x4)
         v = v & 0x00003FFF
         return int(v)
 
@@ -503,7 +519,7 @@ class ASG(BaseModule):
         if v < 0:
             v = 0
         v = int(v) + (self.offset * 2**16)
-        self.write(self.value_offset + 0x4, v)
+        self._write(self.value_offset + 0x4, v)
 
     @property
     def counter_wrap(self):
@@ -512,37 +528,37 @@ class ASG(BaseModule):
         2**16*(2**14-1)
         in order to exploit the full data buffer
         """
-        v = self.read(self.value_offset + 0x8)
+        v = self._read(self.value_offset + 0x8)
         return v & 0x3FFFFFFF
 
     @counter_wrap.setter
     def counter_wrap(self, v):
         v = v & 0x3FFFFFFF
-        self.write(self.value_offset + 0x8, v)
+        self._write(self.value_offset + 0x8, v)
 
     @property
     def counter_step(self):
         """Each clock cycle the counter_step is increases the internal counter modulo counter_wrap.
         The current counter step rightshifted by 16 bits is the index of the value that is chosen from the data table.
         """
-        v = self.read(self.value_offset + 0x10)
+        v = self._read(self.value_offset + 0x10)
         return v & 0x3FFFFFFF
 
     @counter_step.setter
     def counter_step(self, v):
         v = v & 0x3FFFFFFF
-        self.write(self.value_offset + 0x10, v)
+        self._write(self.value_offset + 0x10, v)
 
     @property
     def start_offset(self):
         """ counter offset for trigged events = phase offset """
-        v = self.read(self.value_offset + 0x0C)
+        v = self._read(self.value_offset + 0x0C)
         return v & 0x3FFFFFFF
 
     @start_offset.setter
     def start_offset(self, v):
         v = v & 0x3FFFFFFF
-        self.write(self.value_offset + 0x0C, v)
+        self._write(self.value_offset + 0x0C, v)
 
     @property
     def full_timescale(self):
@@ -557,7 +573,7 @@ class ASG(BaseModule):
     @property
     def data(self):
         x = np.array(
-            self.reads(
+            self._reads(
                 self.data_offset,
                 self.data_length),
             dtype=np.int32)
@@ -569,15 +585,15 @@ class ASG(BaseModule):
         data = np.array(data, dtype=np.int32)
         data[data >= 2**13] = 2**13 - 1
         data[data < 0] += 2**14
-        self.writes(self.data_offset, np.array(data, dtype=np.uint32))
+        self._writes(self.data_offset, np.array(data, dtype=np.uint32))
 
     @property
     def onedata(self):
-        return self.to_pyint(self.read(self.data_offset))
+        return self.to_pyint(self._read(self.data_offset))
 
     @onedata.setter
     def onedata(self, v):
-        self.write(self.data_offset, self.from_pyint(v))
+        self._write(self.data_offset, self.from_pyint(v))
 
     @property
     def lastpoint(self):
@@ -715,15 +731,15 @@ class ASG(BaseModule):
 
     @property
     def dio_override(self):
-        v = self.read(0x40)
+        v = self._read(0x40)
         v = (v >> self.bit_offset) & 0x0000FF
         return v
 
     @dio_override.setter
     def dio_override(self, v):
         v = v << self.bit_offset | (
-            self.read(0x40) & (~(0xFF << self.bit_offset)))
-        self.write(0x40, v)
+            self._read(0x40) & (~(0xFF << self.bit_offset)))
+        self._write(0x40, v)
 
 
 class DspModule(BaseModule):
@@ -756,7 +772,7 @@ class DspModule(BaseModule):
     input = SelectRegister(0x0, options=_inputs, 
                            doc="selects the input signal of the module")
     
-    output = SelectRegister(0x0, options=_outputs, 
+    output = SelectRegister(0x4, options=_outputs, 
                             doc="selects to which analog output the module \
                             signal is sent directly")    
 
@@ -765,7 +781,7 @@ class DspModule(BaseModule):
                                       is currently in saturation")
 
     def __init__(self, client, module='pid0'):
-        self.number = self._outputs[module]
+        self.number = self._inputs[module]
         super(DspModule, self).__init__(client,
             addr_base=0x40300000+self.number*0x10000)
     
@@ -775,15 +791,15 @@ class FilterModule(DspModule):
 
     @property
     def _FILTERSTAGES(self):
-        return self.read(0x220)
+        return self._read(0x220)
 
     @property
     def _SHIFTBITS(self):
-        return self.read(0x224)
+        return self._read(0x224)
 
     @property
     def _MINBW(self):
-        return self.read(0x228)
+        return self._read(0x228)
 
     @property
     def _ALPHABITS(self):
@@ -791,12 +807,12 @@ class FilterModule(DspModule):
 
     @property
     def _filter_shifts(self):
-        v = self.read(0x120)
+        v = self._read(0x120)
         return v
 
     @_filter_shifts.setter
     def _filter_shifts(self, val):
-        self.write(0x120, val)
+        self._write(0x120, val)
 
     @property
     def inputfilter(self):
@@ -857,103 +873,47 @@ class FilterModule(DspModule):
 
 
 class Pid(FilterModule):
+    _PSR = 12 # Register(0x200)
+
+    _ISR = 32 # Register(0x204)
+    
+    _DSR = 10 # Register(0x208)
+    
+    _GAINBITS = 24 #Register(0x20C)
 
     @property
     def ival(self):
-        return self.to_pyint(self.read(0x100), bitlength=32)
-
+        return float(self._to_pyint(self._read(0x100), bitlength=32))/2**13
+    
     @ival.setter
     def ival(self, v):
-        """set the value of the register holding the integrator's sum"""
-        return self.write(0x100, self.from_pyint(v, bitlength=16))
-
-    @property
-    def setpoint(self):
-        return self.to_pyint(self.read(0x104), bitlength=14)
-
-    @setpoint.setter
-    def setpoint(self, v):
-        return self.write(0x104, self.from_pyint(v, bitlength=14))
-
-    @property
-    def _p(self):
-        return self.to_pyint(self.read(0x108), bitlength=self._GAINBITS)
-
-    @_p.setter
-    def _p(self, v):
-        return self.write(0x108, self.from_pyint(v, bitlength=self._GAINBITS))
-
-    @property
-    def _i(self):
-        return self.to_pyint(self.read(0x10C), bitlength=self._GAINBITS)
-
-    @_i.setter
-    def _i(self, v):
-        return self.write(0x10C, self.from_pyint(v, bitlength=self._GAINBITS))
-
-    @property
-    def _d(self):
-        return self.to_pyint(self.read(0x110), bitlength=self._GAINBITS)
-
-    @_d.setter
-    def _d(self, v):
-        return self.write(0x110, self.from_pyint(v, bitlength=self._GAINBITS))
-
-    @property
-    def p(self):
-        return float(self._p) / 2**self._PSR
-
-    @p.setter
-    def p(self, v):
-        "proportional gain from input to output"
-        self._p = float(v) * 2**self._PSR
-
-    @property
-    def i(self):
-        return float(self._i) / (2**self._ISR * 2.0 * np.pi * 8e-9)
-
-    @i.setter
-    def i(self, v):
-        "unity-gain frequency of the integrator"
-        self._i = float(v) * 2**self._ISR * 2.0 * np.pi * 8e-9
-
+        """set the value of the register holding the integrator's sum [volts]"""
+        return self._write(0x100, self._from_pyint(int(round(v*2**13)), bitlength=16))
+    
+    setpoint = FloatRegister(0x104, bits=14, norm=2**13, 
+                             doc="pid setpoint [volts]")
+    
+    p = FloatRegister(0x108, bits=_GAINBITS, norm=2**_PSR, 
+                             doc="pid proportional gain [1]")
+    i = FloatRegister(0x10C, bits=_GAINBITS, norm=2**_ISR * 2.0 * np.pi * 8e-9, 
+                             doc="pid integral unity-gain frequency [Hz]")
+    
     @property
     def d(self):
-        d = float(self._d)
+        d = float(self._read(0x110))
         if d == 0:
             return d
         else:
             return (2**self._DSR / (2.0 * np.pi * 8e-9)) / float(d)
-
     @d.setter
     def d(self, v):
         "unity-gain frequency of the differentiator. turn off by setting to 0."
         if v == 0:
-            self._d = 0
+            w = 0
         else:
-            self._d = (2**self._DSR / (2.0 * np.pi * 8e-9)) / float(v)
-
-    @property
-    def _PSR(self):
-        return self.read(0x200)
-
-    @property
-    def _ISR(self):
-        return self.read(0x204)
-
-    @property
-    def _DSR(self):
-        return self.read(0x208)
-
-    @property
-    def _GAINBITS(self):
-        return self.read(0x20C)
-
-    # renaming of a number of functions for compatibility with oder code
-    @property
-    def pidnumber(self):
-        return self.number
-
+            w = (2**self._DSR / (2.0 * np.pi * 8e-9)) / float(v)
+        self.write(0x110,int(w))
+        
     @property
     def proportional(self):
         return self.p
@@ -1077,13 +1037,13 @@ class IQ(FilterModule):
 
     _LUTSZ = Register(0x200)
     _LUTBITS = Register(0x204)
-    _PHASEBITS = Register(0x208)
-    _GAINBITS = Register(0x20C)
-    _SIGNALBITS = Register(0x210)
-    _LPFBITS = Register(0x214)
-    _SHIFTBITS = Register(0x218)
+    _PHASEBITS = 32 #Register(0x208)
+    _GAINBITS = 18 #Register(0x20C)
+    _SIGNALBITS = 14 #Register(0x210)
+    _LPFBITS = 24 #Register(0x214)
+    _SHIFTBITS = 8 #Register(0x218)
     
-    pfd_integral = FloatRegister(0x150, bits=_SIGNALBITS, norm=2**_SIGNALBITS,
+    pfd_integral = FloatRegister(0x150, bits=_SIGNALBITS, norm=_SIGNALBITS,
                                  doc = "value of the pfd integral [volts]")
     
     phase = PhaseRegister(0x104, bits=_PHASEBITS,
@@ -1093,11 +1053,12 @@ class IQ(FilterModule):
     frequency = FrequencyRegister(0x108, bits=_PHASEBITS,
                                   doc="frequency of iq demodulation [Hz]")
 
-    _g1 = FloatRegister(0x110, bits=_GAINBITS, norm = 2**_SHIFTBITS, 
+    _g1 = FloatRegister(0x110, bits=_GAINBITS, norm=2**_SHIFTBITS, 
                         doc="gain1 of iq module [volts]")
     
-    _g2 = FloatRegister(0x114, bits=_GAINBITS, norm = 2**_SHIFTBITS, 
+    _g2 = FloatRegister(0x114, bits=_GAINBITS, norm=2**_SHIFTBITS, 
                         doc="gain2 of iq module [volts]")
+
     amplitude = FloatRegister(0x114, bits=_GAINBITS, norm = 2**_SHIFTBITS*4, 
                         doc="amplitude of coherent modulation [volts]")
 
@@ -1147,7 +1108,7 @@ class IQ(FilterModule):
 
     @property
     def nadata(self):
-        a, b, c, d = self.reads(0x140, 4)
+        a, b, c, d = self._reads(0x140, 4)
         if not (
             (a >> 31 == 0) and (
                 b >> 31 == 0) and (
@@ -1339,52 +1300,25 @@ class IIR(DspModule):
     @property
     def iir_rawdata(self):
         l = self.iir_datalength
-        return self.reads(0x8000, 1024)
+        return self._reads(0x8000, 1024)
 
-    @iir_loops.setter
+    @iir_rawdata.setter
     def iir_rawdata(self, v):
         l = self.iir_datalength
-        return self.write(0x8000, v)
-
-    @property
-    def iir_reset(self):
-        return not self.iir_on
-
-    @iir_reset.setter
-    def iir_reset(self, v):
-        self.iir_on = not v
-
-    @property
-    def iir_on(self):
-        return self.bitstate(0x104, 0)
-
-    @iir_on.setter
-    def iir_on(self, v):
-        self.changebit(0x104, 0, v)
-
-    @property
-    def iir_shortcut(self):
-        return self.bitstate(0x104, 1)
-
-    @iir_shortcut.setter
-    def iir_shortcut(self, v):
-        self.changebit(0x104, 1, v)
-
-    @property
-    def iir_copydata(self):
-        return self.bitstate(0x104, 2)
-
-    @iir_copydata.setter
-    def iir_copydata(self, v):
-        self.changebit(0x104, 2, v)
-
-    @property
-    def iir_overflow(self):
-        return self.read(0x108)
+        return self._write(0x8000, v)
+    
+    on = BoolRegister(0x104, 0, doc="IIR is on")
+    reset = BoolRegister(0x104, 0, doc="IIR is on", invert=True)
+    
+    shortcut = BoolRegister(0x104, 1, doc="IIR is bypassed")
+    copydata = BoolRegister(0x104, 2, 
+                        doc="If True: coefficients are updated from memory")
+    iir_overflow = Register(0x108, 
+                            doc="Bitmask for various overflow conditions")
 
     @property
     def iir_rawcoefficients(self):
-        data = np.array([v for v in self.reads(
+        data = np.array([v for v in self._reads(
             0x28000 + self.iir_channel * 0x1000, 8 * self.iir_loops)])
         #data = data[::2]*2**32+data[1::2]
         return data
@@ -1420,7 +1354,7 @@ class IIR(DspModule):
             return np.array([])
         elif l > self._IIRSTAGES:
             l = self._IIRSTAGES
-        data = np.array([v for v in self.reads(
+        data = np.array([v for v in self._reads(
             0x28000 + self.iir_channel * 0x1000, 8 * l)])
         coefficients = np.zeros((l, 6), dtype=np.float64)
         bitlength = self._IIRBITS
@@ -1478,7 +1412,7 @@ class IIR(DspModule):
                     data[i * 8 + k * 2 + 1] = hi
                     data[i * 8 + k * 2] = lo  # np.uint32(lo&((1<<32)-1))
         data = [int(d) for d in data]
-        self.writes(0x28000 + 0x10000 * self.iir_channel, data)
+        self._writes(0x28000 + 0x10000 * self.iir_channel, data)
 
     def iir_unity(self):
         c = np.zeros((self.iir_stages, 6), dtype=np.float64)
