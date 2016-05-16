@@ -22,12 +22,27 @@ import time
 from time import sleep
 import sys
 
+from registers import *
+from bijection import Bijection
 
 class BaseModule(object):
+    # factor to manually compensate 125 MHz oscillator frequency error
+    # real_frequency = 125 MHz * _frequency_correction
     _frequency_correction = 1.0
-    # fundamental functionality to read and write unsigned integer (32 bits
-    # wide) arrays
-
+    
+    def help(self, register=''):
+        """returns the docstring of the specified register name
+        
+           if register is an empty string, all available docstrings are returned"""
+        if register:
+            return type(self).__dict__[register].__doc__
+        else:
+            string = ""
+            for key in type(self).__dict__.keys():
+                if isinstance( type(self).__dict__[key], Register):
+                    string += self.help(key)+'\n'
+            return string
+        
     def __init__(self, client, addr_base=None):
         """ Creates the prototype of a RedPitaya Module interface
 
@@ -38,193 +53,37 @@ class BaseModule(object):
         self._client = client
         self._addr_base = addr_base
 
-    def reads(self, addr, length):
+    def _reads(self, addr, length):
         return self._client.reads(self._addr_base + addr, length)
 
-    def writes(self, addr, values):
+    def _writes(self, addr, values):
         self._client.writes(self._addr_base + addr, values)
 
-    # derived functions
-    def read(self, addr):
-        return self.reads(addr, 1)[0]
+    def _read(self, addr):
+        return int(self._reads(addr, 1)[0])
 
-    def write(self, addr, value):
-        self.writes(addr, [value])
-
-    def setbit(self, addr, bitnumber):
-        v = self.read(addr) | (0x00000001 << bitnumber)
-        self.write(addr, v)
-        return v
-
-    def clrbit(self, addr, bitnumber):
-        v = self.read(addr) & (~(0x00000001 << bitnumber))
-        self.write(addr, v)
-        return v
-
-    def changebit(self, addr, bitnumber, v):
-        if v:
-            return self.setbit(addr, bitnumber)
-        else:
-            return self.clrbit(addr, bitnumber)
-
-    def bitstate(self, addr, bitnumber):
-        return bool(self.read(addr) & (0x00000001 << bitnumber))
-
-    def to_pyint(self, v, bitlength=14):
-        v = v & (2**bitlength - 1)
-        if v >> (bitlength - 1):
-            v = v - 2**bitlength
-        return np.int32(v)
-
-    def from_pyint(self, v, bitlength=14):
-        v = int(v)
-        if v < 0:
-            v = v + 2**bitlength
-        v = (v & (2**bitlength - 1))
-        return np.uint32(v)
-
+    def _write(self, addr, value):
+        self._writes(addr, [int(value)])
 
 class HK(BaseModule):
-
     def __init__(self, client):
         super(HK, self).__init__(client, addr_base=0x40000000)
-
-    @property
-    def id(self):
-        r = self.read(0x0)
-        if r == 0:
-            return "prototype0"
-        elif r == 1:
-            return "release1"
-        else:
-            return "unknown"
-
-    @property
-    def digital_loop(self):
-        return self.bitstate(0x0C, 0)
-
-    @digital_loop.setter
-    def digital_loop(self, v):
-        self.changebit(0x0C, 0, v)
-
-    @property
-    def expansion_P_direction(self):
-        return self.read(0x10)
-
-    @expansion_P_direction.setter
-    def expansion_P_direction(self, v):
-        v = v & 0xFF
-        self.write(0x10, v)
-
-    @property
-    def expansion_P(self):
-        return self.read(0x18)
-
-    @expansion_P.setter
-    def expansion_P(self, v):
-        v = v & 0xFF
-        self.write(0x18, v)
-
-    @property
-    def do6p(self):
-        self.expansion_P_direction = self.expansion_P_direction | 0b01000000
-        return self.bitstate(0x18, 6)
-
-    @do6p.setter
-    def do6p(self, v):
-        self.expansion_P_direction = self.expansion_P_direction | 0b01000000
-        return self.changebit(0x18, 6, v)
-
-    @property
-    def do7p(self):
-        self.expansion_P_direction = self.expansion_P_direction | 0b10000000
-        return self.bitstate(0x18, 7)
-
-    @do7p.setter
-    def do7p(self, v):
-        self.expansion_P_direction = self.expansion_P_direction | 0b10000000
-        return self.changebit(0x18, 7, v)
-
-    @property
-    def led(self):
-        return self.read(0x30)
-
-    @led.setter
-    def led(self, v):
-        self.write(0x30, v)
-    #@property
-    # def expansion_N_direction(self):
-    #    return self.read(0x14)
-    #
-    # @property
-    # def expansion_N_direction(self):
-    #    return self.read(0x14)
-
-    @property
-    def advanced_trigger_delay(self):
-        """ counter offset for trigged events = phase offset """
-        v = self.reads(0x40, 2)
-        return 8e-9 * (np.int(v[1]) * 2**32 + np.int(v[0]) + 1)
-
-    @advanced_trigger_delay.setter
-    def advanced_trigger_delay(self, v):
-        v = np.round(v / 8e-9 - 1.0)
-        mv = (int(v) >> 32) & 0x00000000FFFFFFFF
-        lv = int(v) & 0x00000000FFFFFFFF
-        self.write(0x44, mv)
-        self.write(0x40, lv)
-
-    @property
-    def advanced_trigger_on(self):
-        """ counter offset for trigged events = phase offset """
-        v = self.read(0x48)
-        return not (v & 0b1)
-
-    @advanced_trigger_on.setter
-    def advanced_trigger_on(self, v):
-        if not v:
-            self.write(0x48, 0x01)
-        else:
-            self.write(0x48, 0x00)
-
+    
+    id = SelectRegister(0x0, doc="device ID", options={"prototype0": 0, "release1": 1})
+    digital_loop = Register(0x0C, doc="enables digital loop")
+    expansion_P = [IORegister(0x20, 0x18, 0x10, bit=i, outputmode=True,
+                             doc="positive digital io") for i in range(8)]
+    expansion_N = [IORegister(0x24, 0x1C, 0x14, bit=i, outputmode=True,
+                             doc="positive digital io") for i in range(8)]
+    led = Register(0x30,doc="LED control with bits 1:8")
+    # another option: access led as array of bools
+    # led = [BoolRegister(0x30,bit=i,doc="LED "+str(i)) for i in range(8)]
 
 class AMS(BaseModule):
-
+    """mostly deprecated module. do not use without understanding!!!"""
     def __init__(self, client):
         super(AMS, self).__init__(client, addr_base=0x40400000)
-
-    @property
-    def temp(self):
-        ADC_FULL_RANGE_CNT = 0xfff
-        raw = self.read(0x30)
-        return float(raw) * 503.975 / float(ADC_FULL_RANGE_CNT) - 273.15
-
-    def from_xadc(self, v):
-        # need to check in what convention data come, i.e. if 2's complement or (as the memory map suggests) unsinged int
-        #        return self.to_pyint(v,bitlength=12)
-        return v & (2**12 - 1)
-
-    @property
-    def aif0(self):
-        return self.from_xadc(self.read(0x0))
-
-    @property
-    def aif1(self):
-        return self.from_xadc(self.read(0x4))
-
-    @property
-    def aif2(self):
-        return self.from_xadc(self.read(0x8))
-
-    @property
-    def aif3(self):
-        return self.from_xadc(self.read(0xC))
-
-    @property
-    def aif4(self):
-        """this is the 5V power supply"""
-        return self.from_xadc(self.read(0x10))
-
+    
     @property
     def pwm_full(self):
         """PWM full variable from FPGA code"""
@@ -248,56 +107,32 @@ class AMS(BaseModule):
         return (v // 17, (2**(v % 17)) - 1)
 
     def setdac0(self, pwmvalue, bitselect):
-        self.write(0x20, self.to_dac(pwmvalue, bitselect))
+        self._write(0x20, self.to_dac(pwmvalue, bitselect))
 
     def setdac1(self, pwmvalue, bitselect):
-        self.write(0x24, self.to_dac(pwmvalue, bitselect))
+        self._write(0x24, self.to_dac(pwmvalue, bitselect))
 
     def setdac2(self, pwmvalue, bitselect):
-        self.write(0x28, self.to_dac(pwmvalue, bitselect))
+        self._write(0x28, self.to_dac(pwmvalue, bitselect))
 
     def setdac3(self, pwmvalue, bitselect):
-        self.write(0x2C, self.to_dac(pwmvalue, bitselect))
+        self._write(0x2C, self.to_dac(pwmvalue, bitselect))
 
     def reldac0(self, v):
         """max value = 1.0, min=0.0"""
-        self.write(0x20, self.rel_to_dac(v))
+        self._write(0x20, self.rel_to_dac(v))
 
     def reldac1(self, v):
         """max value = 1.0, min=0.0"""
-        self.write(0x24, self.rel_to_dac(v))
+        self._write(0x24, self.rel_to_dac(v))
 
     def reldac2(self, v):
         """max value = 1.0, min=0.0"""
-        self.write(0x28, self.rel_to_dac(v))
+        self._write(0x28, self.rel_to_dac(v))
 
     def reldac3(self, v):
         """max value = 1.0, min=0.0"""
-        self.write(0x2C, self.rel_to_dac(v))
-
-    @property
-    def vccpint(self):
-        return self.from_xadc(self.read(0x34))
-
-    @property
-    def vccpaux(self):
-        return self.from_xadc(self.read(0x38))
-
-    @property
-    def vccbram(self):
-        return self.from_xadc(self.read(0x3C))
-
-    @property
-    def vccint(self):
-        return self.from_xadc(self.read(0x40))
-
-    @property
-    def vccaux(self):
-        return self.from_xadc(self.read(0x44))
-
-    @property
-    def vccddr(self):
-        return self.from_xadc(self.read(0x48))
+        self._write(0x2C, self.rel_to_dac(v))
 
 
 class Scope(BaseModule):
@@ -306,8 +141,9 @@ class Scope(BaseModule):
     def __init__(self, client):
         super(Scope, self).__init__(client, addr_base=0x40100000)
         # dsp multiplexer channels for scope and asg are the same by default
-        self._ch1 = DSPModule(client, number='asg1')
-        self._ch2 = DSPModule(client, number='asg2')
+        self._ch1 = DspModule(client, module='asg1')
+        self._ch2 = DspModule(client, module='asg2')
+        self.inputs = self._ch1.inputs
 
     @property
     def input1(self):
@@ -325,196 +161,126 @@ class Scope(BaseModule):
     def input2(self, v):
         self._ch2.input = v
 
-    def reset_writestate_machine(self, v=True):
-        if v:
-            self.setbit(0x0, 1)
-        else:
-            self.clrbit(0x0, 1)
-
-    def arm_trigger(self, v=True):
-        if v:
-            self.setbit(0x0, 0)
-        else:
-            self.clrbit(0x0, 0)
-
+    reset_writestate_machine = BoolRegister(0x0, 1, doc="Set to True to reset writestate machine")
+    
+    arm_trigger = BoolRegister(0x0, 0, "Set to True to arm trigger")
+    
     def sw_trig(self):
-        self.trigger_source = 1
-
-    @property
-    def trigger_source(self):
-        """Trigger source:
-        1-trig immediately
-        2-ch A threshold positive edge
-        3-ch A threshold negative edge
-        4-ch B threshold positive edge
-        5-ch B threshold negative edge
-        6-external trigger positive edge - DIO0_P pin
-        7-external trigger negative edge
-        8-arbitrary wave generator application positive edge
-        9-arbitrary wave generator application negative edge
-        """
-        return self.read(0x4) & 0xF
-
-    @trigger_source.setter
-    def trigger_source(self, v):
-        v = v & 0xF
-        self.write(0x4, v)
-
-    @property
-    def threshold_ch1(self):
-        return self.to_pyint(self.read(0x8), bitlength=14)
-
-    @threshold_ch1.setter
-    def threshold_ch1(self, v):
-        self.write(0x8, self.from_pyint(v, bitlength=14))
-
-    @property
-    def threshold_ch2(self):
-        return self.to_pyint(self.read(0xC), bitlength=14)
-
-    @threshold_ch2.setter
-    def threshold_ch2(self, v):
-        self.write(0xC, self.from_pyint(v, bitlength=14))
-
-    @property
-    def trigger_delay(self):
-        """must be strictly above 0, else some functionality bugs, i.e. software trigger"""
-        return np.uint32(self.read(0x10))
-
-    @trigger_delay.setter
-    def trigger_delay(self, v):
-        self.write(0x10, self.from_pyint(v, bitlength=32))
-
-    @property
-    def data_decimation(self):
-        """
-        Data decimation, supports only this values:
-        1,8, 64,1024,8192,65536.
-        If other value is written data will NOT be correct.
-        """
-        return self.read(0x14)
-
-    @data_decimation.setter
-    def data_decimation(self, v):
-        self.write(0x14, v)
-
-    @property
-    def write_pointer_current(self):
-        return np.int32(self.read(0x18) & (2**14 - 1))
-
-    @property
-    def write_pointer_trigger(self):
-        return np.int32(self.read(0x1C) & (2**14 - 1))
-
-    @property
-    def hysteresis_ch1(self):
-        """
-        Ch A threshold hysteresis. Value must be outside to enable trigger again.
-        """
-        return self.to_pyint(self.read(0x20), bitlength=14)
-
-    @hysteresis_ch1.setter
-    def hysteresis_ch1(self, v):
-        """
-        Ch A threshold hysteresis. Value must be outside to enable trigger again.
-        """
-        self.write(0x20, self.from_pyint(v, bitlength=14))
-
-    @property
-    def hysteresis_ch2(self):
-        """
-        Ch B threshold hysteresis. Value must be outside to enable trigger again.
-        """
-        return self.to_pyint(self.read(0x24), bitlength=14)
-
-    @hysteresis_ch2.setter
-    def hysteresis_ch2(self, v):
-        """
-        Ch B threshold hysteresis. Value must be outside to enable trigger again.
-        """
-        self.write(0x24, self.from_pyint(v, bitlength=14))
-
-    @property
-    def average(self):
-        """
-        Enable signal average at decimation
-        """
-        return self.bitstate(0x28, 0)
-
-    @average.setter
-    def average(self, v):
-        self.changebit(0x28, 0, v)
-
+        self.trigger_source = "immediately"
+    
+    _trigger_sources = {"off": 0,
+                        "immediately": 1, 
+                        "ch1_positive_edge": 2,
+                        "ch1_negative_edge": 3, 
+                        "ch2_positive_edge": 4,
+                        "ch2_negative_edge": 5,
+                        "ext_positive_edge": 6, #DIO0_P pin
+                        "ext_negative_edge": 7, #DIO0_P pin
+                        "asg_positive_edge": 8, 
+                        "asg_negative_edge": 9}
+    
+    trigger_sources = _trigger_sources.keys() # help for the user
+    
+    trigger_source = SelectRegister(0x4, doc="Trigger source", 
+                                    options=_trigger_sources)
+    
+    threshold_ch1 = FloatRegister(0x8, bits=14, norm=2**13, 
+                                  doc="ch1 trigger threshold [volts]")
+    
+    threshold_ch2 = FloatRegister(0xC, bits=14, norm=2**13, 
+                                  doc="ch1 trigger threshold [volts]")
+    
+    trigger_delay = Register(0x10, doc="trigger delay [samples]")
+    
+    _decimations = {2**0: 2**0,
+                    2**3: 2**3,
+                    2**6: 2**6,
+                    2**10: 2**10,
+                    2**13: 2**13,
+                    2**16: 2**16}
+    
+    decimations = _decimations.keys() # help for the user
+    
+    decimation = SelectRegister(0x14, doc="decimation factor", 
+                                options=_decimations)
+    
+    write_pointer_current = Register(0x18, 
+                            doc="current write pointer position [samples]")
+    
+    write_pointer_trigger = Register(0x1C, 
+                            doc="write pointer when trigger arrived [samples]")
+    
+    hysteresis_ch1 = FloatRegister(0x20, bits=14, norm=2**13, 
+                                   doc="hysteresis for ch1 trigger [volts]")
+    
+    hysteresis_ch2 = FloatRegister(0x24, bits=14, norm=2**13, 
+                                   doc="hysteresis for ch2 trigger [volts]")
+    
+    average = BoolRegister(0x28,0,
+              doc="Enables averaging during decimation if set to True")
+    
     # equalization filter not implemented here
-
+    
+    adc1 = FloatRegister(0x154, bits=14, norm=2**13, 
+                         doc="ADC1 current value [volts]")
+    
+    adc2 = FloatRegister(0x158, bits=14, norm=2**13, 
+                         doc="ADC2 current value [volts]")
+    
+    dac1 = FloatRegister(0x164, bits=14, norm=2**13, 
+                         doc="DAC1 current value [volts]")
+    
+    dac2 = FloatRegister(0x168, bits=14, norm=2**13, 
+                         doc="DAC2 current value [volts]")
+    
+    ch1_point = FloatRegister(0x10000, bits=14, norm=2**13, 
+                              doc="1 sample of ch1 data [volts]")
+    
+    ch2_point = FloatRegister(0x20000, bits=14, norm=2**13, 
+                              doc="1 sample of ch2 data [volts]")
+    
     @property
     def rawdata_ch1(self):
+        """raw data from ch1"""
         # return np.array([self.to_pyint(v) for v in self.reads(0x10000,
         # self.data_length)],dtype=np.int32)
-        x = np.array(self.reads(0x10000, self.data_length), dtype=np.int16)
+        x = np.array(self._reads(0x10000, self.data_length), dtype=np.int16)
         x[x >= 2**13] -= 2**14
         return x
-
     @property
     def rawdata_ch2(self):
+        """raw data from ch2"""
         # return np.array([self.to_pyint(v) for v in self.reads(0x20000,
         # self.data_length)],dtype=np.int32)
-        x = np.array(self.reads(0x20000, self.data_length), dtype=np.int32)
+        x = np.array(self._reads(0x20000, self.data_length), dtype=np.int32)
         x[x >= 2**13] -= 2**14
         return x
 
     @property
     def data_ch1(self):
+        """ acquired (unnormalized) data from ch1"""
         return np.roll(self.rawdata_ch1, -(self.write_pointer_trigger + 1))
-
     @property
     def data_ch2(self):
+        """ acquired (unnormalized) data from ch2"""
         return np.roll(self.rawdata_ch2, -(self.write_pointer_trigger + 1))
 
     @property
     def data_ch1_current(self):
+        """ (unnormalized) data from ch1 while acquisition is still running"""
         return np.roll(self.rawdata_ch1, -(self.write_pointer_current + 1))
-
     @property
     def data_ch2_current(self):
+        """ (unnormalized) data from ch2 while acquisition is still running"""
         return np.roll(self.rawdata_ch2, -(self.write_pointer_current + 1))
-
-    @property
-    def adc1(self):
-        return self.to_pyint(self.read(0x154))
-
-    @property
-    def adc2(self):
-        return self.to_pyint(self.read(0x158))
-
-    @property
-    def dac1(self):
-        return self.to_pyint(self.read(0x164))
-
-    @property
-    def dac2(self):
-        return self.to_pyint(self.read(0x168))
-
-    @property
-    def onedata_ch1(self):
-        return self.to_pyint(self.read(0x10000))
-
-    @property
-    def onedata_ch2(self):
-        return self.to_pyint(self.read(0x20000))
-
+    
+    
     @property
     def times(self):
-        return np.linspace(
-            0.0,
-            8e-9 *
-            self.data_decimation *
-            float(
-                self.data_length),
-            self.data_length,
-            endpoint=False)
+        return np.linspace(0.0, 8e-9*self.decimation*self.data_length,
+                           self.data_length,endpoint=False)
 
-    def setup(self, duration=1.0, trigger_source=1, average=True):
+    def setup(self, duration=1.0, trigger_source="immediately", average=True):
         """sets up the scope for a new trace aquision including arming the trigger
 
         duration: the minimum duration in seconds to be recorded
@@ -525,41 +291,10 @@ class Scope(BaseModule):
         self.trigger_delay = self.data_length
         # self.arm_trigger(v=False)
         self.average = average
-        self.frequency = frequency
+        self.duration = duration
         self.trigger_source = trigger_source
         # self.reset_writestate_machine(v=False)
         self.arm_trigger()
-
-    def arm(self, frequency=None, trigger_source=1, trigger_delay=None):
-        if not frequency is None:
-            self.frequency = frequency
-        if trigger_delay is None:
-            self.trigger_delay = self.data_length
-        else:
-            # *self.data_length))
-            self.trigger_delay = np.int(np.round(trigger_delay))
-        self.trigger_source = trigger_source
-        self.arm_trigger()
-
-    @property
-    def frequency(self):
-        return 1.0 / self.duration
-
-    @frequency.setter
-    def frequency(self, v):
-        """
-        sets up the scope so that it resolves at least a full oscillation at this frequency.
-        The actual inverse record length should be found by performing a read-out of this value after setting it.
-        """
-        fbase = 125e6 / float(2**14)
-        factors = [1, 8, 64, 1024, 8192, 65536, 65537]
-        for f in factors:
-            if v > fbase / float(f):
-                self.data_decimation = f
-                break
-            if f == 65537:
-                self.data_decimation = 65536
-                print "Frequency too low: Impossible to sample the entire waveform"
 
     @property
     def sampling_time(self):
@@ -598,7 +333,6 @@ class Scope(BaseModule):
 
 
 class ASG(BaseModule):
-
     def __init__(self, client, channel='A'):
         super(ASG, self).__init__(client, addr_base=0x40200000)
         self._frequency_correction = 1.0
@@ -974,9 +708,7 @@ class ASG(BaseModule):
         self.output_zero = False
         self.sm_reset = False
 
-    def trig(self, frequency=None):
-        if not frequency is None:
-            self.frequency = frequency
+    def trig(self):
         self.start_offset = 0
         self.trigger_source = 1
         self.trigger_source = 0
@@ -995,7 +727,7 @@ class ASG(BaseModule):
 
 
 class DspModule(BaseModule):
-    _signal = dict(
+    _inputs = dict(
         pid0=0,
         pid1=1,
         pid2=2,
@@ -1012,77 +744,31 @@ class DspModule(BaseModule):
         adc2=11,
         dac1=12,
         dac2=13)
-
-    _output = dict(
+    inputs = _inputs.keys()
+    
+    _outputs = dict(
         off=0,
         out1=1,
         out2=2,
         both=3)
+    outputs = _outputs.keys()
+    
+    input = SelectRegister(0x0, options=_inputs, 
+                           doc="selects the input signal of the module")
+    
+    output = SelectRegister(0x0, options=_outputs, 
+                            doc="selects to which analog output the module \
+                            signal is sent directly")    
 
-    def __init__(self, client, number=0):
-        self._get_signal(number)
-        self.number = number % 16
-        super(
-            DspModule,
-            self).__init__(
-            client,
-            addr_base=0x40300000 +
-            self.number *
-            0x10000)
+    output_saturated = SelectRegister(0x8, options=_outputs, 
+                                      doc = "tells you which output \
+                                      is currently in saturation")
 
-    @property
-    def signals(self):
-        return list(self._signal.keys())
-
-    def _get_signal(self, number=0):
-        if isinstance(number, str):
-            return number
-        for signal, signalnumber in self._signal.iteritems():
-            if number == signalnumber:
-                return signal
-        return None
-
-    def _get_number(self, signal="pid0"):
-        if isinstance(signal, int):
-            return signal
-        if signal in self._signal.keys():
-            return self._signal[signal]
-        return None
-
-    def _get_output(self, number=1):
-        if isinstance(number, str):
-            return number
-        for signal, signalnumber in self._output.iteritems():
-            if number == signalnumber:
-                return signal
-        return None
-
-    def _get_outputnumber(self, signal="out1"):
-        if isinstance(signal, int):
-            return signal
-        if signal in self._output.keys():
-            return self._output[signal]
-        return None
-
-    @property
-    def input(self):
-        return self._get_signal(self.read(0x0))
-
-    @input.setter
-    def input(self, signal):
-        self.write(0x0, self._get_number(signal))
-
-    @property
-    def output(self):
-        return self._get_output(self.read(0x4))
-
-    @output.setter
-    def output(self, signal):
-        self.write(0x4, self._get_outputnumber(signal))
-
-    @property
-    def dac_saturated(self):
-        return self._get_output(self.read(0x8))
+    def __init__(self, client, module='pid0'):
+        self.number = self._outputs[module]
+        super(DspModule, self).__init__(client,
+            addr_base=0x40300000+self.number*0x10000)
+    
 
 
 class FilterModule(DspModule):
@@ -1302,59 +988,27 @@ class Pid(FilterModule):
 
 
 class IQ(FilterModule):
-    _output_select = dict(
+    _output_signals = dict(
         quadrature=0,
         output_direct=1,
         pfd=2,
         off=3)
-
-    def _get_output_select(self, number=1):
-        if isinstance(number, str):
-            return number
-        for signal, signalnumber in self._output_select.iteritems():
-            if number == signalnumber:
-                return signal
-        return None
-
-    def _get_output_selectnumber(self, signal="quadrature"):
-        if isinstance(signal, int):
-            return signal
-        if signal in self._output_select.keys():
-            return self._output_select[signal]
-        return None
-
-    @property
-    def output_select(self):
-        return self._get_output_select(self.read(0x10C))
-
-    @output_select.setter
-    def output_select(self, signal):
-        self.write(0x10C, self._get_output_selectnumber(signal))
-
-    @property
-    def _QUADRATUREFILTERSTAGES(self):
-        return self.read(0x230)
-
-    @property
-    def _QUADRATUREFILTERSHIFTBITS(self):
-        return self.read(0x234)
-
-    @property
-    def _QUADRATUREFILTERMINBW(self):
-        return self.read(0x238)
+    output_signals = _output_signals.keys()
+    output_signal = SelectRegister(0x10C, options=_output_signals,
+                           doc = "Signal to send back to DSP multiplexer")
+    
+    
+    _QUADRATUREFILTERSTAGES = Register(0x230)
+    
+    _QUADRATUREFILTERSHIFTBITS = Register(0x234)
+    
+    _QUADRATUREFILTERMINBW = Register(0x238)
 
     @property
     def _QUADRATUREFILTERALPHABITS(self):
         return int(np.ceil(np.log2(125000000 / self._QUADRATUREFILTERMINBW)))
-
-    @property
-    def _quadraturefilter_shifts(self):
-        v = self.read(0x124)
-        return v
-
-    @_quadraturefilter_shifts.setter
-    def _quadraturefilter_shifts(self, val):
-        self.write(0x124, val)
+    
+    _quadraturefilter_shifts = Register(0x124)
 
     @property
     def bandwidth(self):
@@ -1412,184 +1066,55 @@ class IQ(FilterModule):
                     shift += 2**6  # turn this filter into a highpass
                 filter_shifts += (shift) * 2**(8 * i)
         self._quadraturefilter_shifts = filter_shifts
+    
+    on = BoolRegister(0x100, 0, 
+                      doc="If set to False, turns off the module, e.g. to \
+                      re-synchronize the phases")
+    
+    on = BoolRegister(0x100, 1, 
+                      doc="If True: Turns on the PFD module,\
+                        if False: turns it off and resets integral")
 
-    @property
-    def on(self):
-        return self.bitstate(0x100, 0)
+    _LUTSZ = Register(0x200)
+    _LUTBITS = Register(0x204)
+    _PHASEBITS = Register(0x208)
+    _GAINBITS = Register(0x20C)
+    _SIGNALBITS = Register(0x210)
+    _LPFBITS = Register(0x214)
+    _SHIFTBITS = Register(0x218)
+    
+    pfd_integral = FloatRegister(0x150, bits=_SIGNALBITS, norm=2**_SIGNALBITS,
+                                 doc = "value of the pfd integral [volts]")
+    
+    phase = PhaseRegister(0x104, bits=_PHASEBITS,
+                          doc="Phase shift between modulation \
+                          and demodulation [degrees]")
+    
+    frequency = FrequencyRegister(0x108, bits=_PHASEBITS,
+                                  doc="frequency of iq demodulation [Hz]")
 
-    @on.setter
-    def on(self, val):
-        self.changebit(0x100, 0, val)
+    _g1 = FloatRegister(0x110, bits=_GAINBITS, norm = 2**_SHIFTBITS, 
+                        doc="gain1 of iq module [volts]")
+    
+    _g2 = FloatRegister(0x114, bits=_GAINBITS, norm = 2**_SHIFTBITS, 
+                        doc="gain2 of iq module [volts]")
+    amplitude = FloatRegister(0x114, bits=_GAINBITS, norm = 2**_SHIFTBITS*4, 
+                        doc="amplitude of coherent modulation [volts]")
 
-    @property
-    def pfd_on(self):
-        return self.bitstate(0x100, 1)
-
-    @pfd_on.setter
-    def pfd_on(self, val):
-        self.changebit(0x100, 1, val)
-
-    @property
-    def _LUTSZ(self):
-        return self.read(0x200)
-
-    @property
-    def _LUTBITS(self):
-        return self.read(0x204)
-
-    @property
-    def _PHASEBITS(self):
-        return self.read(0x208)
-
-    @property
-    def _GAINBITS(self):
-        return self.read(0x20C)
-
-    @property
-    def _SIGNALBITS(self):
-        return self.read(0x210)
-
-    @property
-    def _LPFBITS(self):
-        return self.read(0x214)
-
-    @property
-    def _SHIFTBITS(self):
-        return self.read(0x218)
-
-    @property
-    def pfd_integral(self):
-        return self.to_pyint(self.read(0x150))
-
-    @property
-    def _start_phase(self):
-        return self.read(0x104)
-
-    @_start_phase.setter
-    def _start_phase(self, v):
-        self.write(0x104, v)
-
-    @property
-    def _shift_phase(self):
-        return self.read(0x108)
-
-    @_shift_phase.setter
-    def _shift_phase(self, v):
-        self.write(0x108, v)
-
-    @property
-    def startphase_deg(self):
-        return float(self._start_phase) / (2**self._PHASEBITS) * 360.0
-
-    @startphase_deg.setter
-    def startphase_deg(self, v):
-        self._start_phase = int(
-            np.round(
-                (2**self._PHASEBITS) *
-                float(v) /
-                360.0))
-
-    @property
-    def _g1(self):
-        return float(self.to_pyint(self.read(0x110), bitlength=self._GAINBITS))
-
-    @_g1.setter
-    def _g1(self, v):
-        v = int(np.round(v))
-        self.write(0x110, self.from_pyint(v, bitlength=self._GAINBITS))
-
-    @property
-    def _g2(self):
-        return float(self.to_pyint(self.read(0x114), bitlength=self._GAINBITS))
-
-    @_g2.setter
-    def _g2(self, v):
-        v = int(np.round(v))
-        self.write(0x114, self.from_pyint(v, bitlength=self._GAINBITS))
-
-    @property
-    def _g3(self):
-        return float(self.to_pyint(self.read(0x118), bitlength=self._GAINBITS))
-
-    @_g3.setter
-    def _g3(self, v):
-        v = int(np.round(v))
-        self.write(0x118, self.from_pyint(v, bitlength=self._GAINBITS))
-
-    @property
-    def _g4(self):
-        return float(self.to_pyint(self.read(0x11C), bitlength=self._GAINBITS))
-
-    @_g4.setter
-    def _g4(self, v):
-        v = int(np.round(v))
-        self.write(0x11C, self.from_pyint(v, bitlength=self._GAINBITS))
-
-    @property
-    def _maxgain(self):
-        maxvalue = 2**(self._GAINBITS - 1) - 1
-        unityvalue = 2**self._SHIFTBITS
-        return float(maxvalue) / float(unityvalue)
-
-    @property
-    def _rawgain(self):
-        return float(self._g1) / 2**self._SHIFTBITS
-
-    @_rawgain.setter
-    def _rawgain(self, v):
-        maxvalue = 2**(self._GAINBITS - 1) - 1
-        unityvalue = 2**self._SHIFTBITS
-        g = int(np.round(float(v) * float(unityvalue)))
-        if g > maxvalue:
-            print "Reducing gain ", g, " to maximum allowed value of ", maxvalue, " for iq-channel ", self.iq_channel
-            g = maxvalue
-        self._g1 = g
-        self._g4 = g
-
+    _g3 = FloatRegister(0x118, bits=_GAINBITS, norm = 2**_SHIFTBITS, 
+                        doc="gain3 of iq module [volts]")
+    
+    _g4 = FloatRegister(0x11C, bits=_GAINBITS, norm = 2**_SHIFTBITS, 
+                        doc="gain4 of iq module [volts]")
+    
     @property
     def gain(self):
-        return self._rawgain * 0.039810
+        return self._g1 * 0.039810
 
     @gain.setter
     def gain(self, v):
-        self._rawgain = float(v) / 0.039810
-
-    @property
-    def amplitude(self):
-        return float(self._g2) / 2**self._SHIFTBITS / \
-            4.0  # same factor as in the setter
-
-    @amplitude.setter
-    def amplitude(self, v):
-        """v is output signal amplitude in Volts at 50 Ohm output impedance. Cannot be larger than 0.5V"""
-        v = float(
-            v) * 4.0  # experimentally found factor (could probably be calculated as well)
-        maxvalue = 2**(self._GAINBITS - 1) - 1
-        unityvalue = 2**self._SHIFTBITS
-        g = int(np.round(float(v) * float(unityvalue)))
-        if g > maxvalue:
-            print "Reducing gain ", g, " to maximum allowed value of ", maxvalue, " for iq-channel ", self.iq_channel
-            g = maxvalue
-        self._g2 = g
-
-    @property
-    def phase(self):
-        return self.startphase_deg
-
-    @phase.setter
-    def phase(self, v):
-        self.startphase_deg = v
-
-    @property
-    def frequency(self):
-        return 125e6 * float(self._shift_phase) / \
-            (2**self._PHASEBITS) * self._frequency_correction
-
-    @frequency.setter
-    def frequency(self, v):
-        v = float(v) / self._frequency_correction
-        self._shift_phase = int(
-            np.round(float(v) / 125e6 * (2**self._PHASEBITS)))
+        self._g1 = float(v) / 0.039810
+        self._g4 = float(v) / 0.039810
 
     def set(
             self,
@@ -1617,21 +1142,8 @@ class IQ(FilterModule):
         self.pfd_select = False
         self.on = True
 
-    @property
-    def na_averages(self):
-        return self.read(0x130)
-
-    @na_averages.setter
-    def na_averages(self, v):
-        return self.write(0x130, int(v))
-
-    @property
-    def na_sleepcycles(self):
-        return self.read(0x134)
-
-    @na_sleepcycles.setter
-    def na_sleepcycles(self, v):
-        return self.write(0x134, int(v))
+    na_averages = Register(0x130)
+    na_sleepcycles = Register(0x130)
 
     @property
     def nadata(self):
@@ -1812,33 +1324,17 @@ class IIR(DspModule):
     iir_channel = 0
     iir_invert = True  # invert denominator coefficients to convert from scipy notation to
     # the implemented notation (following Oppenheim and Schaefer: DSP)
-
-    @property
-    def _IIRBITS(self):
-        return self.read(0x200)
-
-    @property
-    def _IIRSHIFT(self):
-        return self.read(0x204)
-
-    @property
-    def _IIRSTAGES(self):
-        return self.read(0x208)
-
-    @property
+    
+    _IIRBITS = Register(0x200)
+    _IIRSHIFT = Register(0x204)
+    _IIRSTAGES = Register(0x208)
+    
     def iir_datalength(self):
         return 2 * 4 * self._IIRSTAGES
-
-    @property
-    def iir_loops(self):
-        v = self.read(0x100)
-        if v < 3:
-            print "WARNING: iir_loops must be at least 3 for proper filter behaviour."
-        return v
-
-    @iir_loops.setter
-    def iir_loops(self, v):
-        return self.write(0x100, int(v))
+    
+    iir_loops = Register(0x100, 
+                         doc="Decimation factor of IIR w.r.t. 125 MHz. \
+                         Must be at least 3. ")
 
     @property
     def iir_rawdata(self):

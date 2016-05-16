@@ -21,20 +21,21 @@ from time import sleep
 import socket
 import math
 import numpy as np
+import inspect
 
 from sshshell import SSHshell
 import monitor_client
 import redpitaya_modules as rp
 
-
 class RedPitaya(SSHshell):
-
-    def __init__(self, hostname='10.214.1.23', port=2222,
+    def __init__(self, hostname='192.168.1.100', port=2222,
                  user='root', password='root',
                  verbose=False, autostart=True, reloadfpga=True,
                  filename=None, dirname=None,
                  leds_off=True, frequency_correction=1.0):
         self.license()
+        super(RedPitaya, self).__init__(hostname=hostname, user=user,
+                                        password=password, verbose=verbose)
         self.serverdirname = "//opt//rplockbox//"
         self.serverrunning = False
         self.hostname = hostname
@@ -49,15 +50,8 @@ class RedPitaya(SSHshell):
             self.filename = filename
         self.subdirname, self.filename = os.path.split(self.filename)
         if dirname is None:
-            try:
-                import pyrpl.redpitaya as pyrp
-                self.dirname = os.path.dirname(pyrp.__file__)
-            except:
-                self.dirname = os.getcwd()
-            else:
-                self.dirname = dirname
-        super(RedPitaya, self).__init__(hostname=hostname, user=user,
-                                        password=password, verbose=verbose)
+            self.dirname = os.path.dirname(inspect.getfile(rp))
+            print self.dirname
         if reloadfpga:
             self.update_fpga()
         if autostart:
@@ -85,7 +79,7 @@ class RedPitaya(SSHshell):
 
     def compile_lib(self):
         self.end()
-        os.chdir(os.join(self.dirname, "monitor_server"))
+        os.chdir(os.path.join(self.dirname, "monitor_server"))
         os.system("make all")
         self.ask('rw')
         sleep(self.delay)
@@ -98,7 +92,7 @@ class RedPitaya(SSHshell):
         if filename is None:
             filename = self.filename
         self.end()
-        os.chdir(os.join(self.dirname, self.subdirname))
+        os.chdir(os.path.join(self.dirname, self.subdirname))
         self.ask('rw')
         sleep(self.delay)
         self.ask('mkdir ' + self.serverdirname)
@@ -108,7 +102,7 @@ class RedPitaya(SSHshell):
         self.ask('killall nginx')
         self.ask(
             'cat ' +
-            os.join(
+            os.path.join(
                 self.serverdirname,
                 filename) +
             ' > //dev//xdevcfg')
@@ -119,7 +113,7 @@ class RedPitaya(SSHshell):
     def startserver(self):
         if self.serverrunning:
             self.endserver()
-        os.chdir(os.join(self.dirname, "monitor_server//"))
+        os.chdir(os.path.join(self.dirname, "monitor_server//"))
         self.ask('rw')
         sleep(self.delay)
         self.ask('mkdir ' + self.serverdirname)
