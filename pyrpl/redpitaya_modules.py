@@ -43,10 +43,10 @@ class BaseModule(object):
                 if isinstance( type(self).__dict__[key], Register):
                     docstring = self.help(key)
                     if not docstring.startswith('_'): # mute internal registers
-                        string += key + ": " + docstring + '\r\n'
+                        string += key + ": " + docstring + '\r\n\r\n'
             return string
         
-    def __init__(self, client, addr_base=None):
+    def __init__(self, client, addr_base=0x40000000):
         """ Creates the prototype of a RedPitaya Module interface
 
         arguments: client must be a viable redpitaya memory client
@@ -278,21 +278,30 @@ class Scope(BaseModule):
 
     @property
     def data_ch1(self):
-        """ acquired (unnormalized) data from ch1"""
-        return np.roll(self.rawdata_ch1, -(self._write_pointer_trigger + 1))
+        """ acquired (normalized) data from ch1"""
+        return np.array(
+                    np.roll(self.rawdata_ch1, -(self._write_pointer_trigger + 1)),
+                    dtype = np.float)/2**13
     @property
     def data_ch2(self):
-        """ acquired (unnormalized) data from ch2"""
-        return np.roll(self.rawdata_ch2, -(self._write_pointer_trigger + 1))
+        """ acquired (normalized) data from ch2"""
+        return np.array(
+                    np.roll(self.rawdata_ch2, -(self._write_pointer_trigger + 1)),
+                    dtype = np.float)/2**13
 
     @property
     def data_ch1_current(self):
         """ (unnormalized) data from ch1 while acquisition is still running"""
-        return np.roll(self.rawdata_ch1, -(self._write_pointer_current + 1))
+        return np.array(
+                    np.roll(self.rawdata_ch1, -(self._write_pointer_current + 1)),
+                    dtype = np.float)/2**13
+
     @property
     def data_ch2_current(self):
         """ (unnormalized) data from ch2 while acquisition is still running"""
-        return np.roll(self.rawdata_ch2, -(self._write_pointer_current + 1))
+        return np.array(
+                    np.roll(self.rawdata_ch2, -(self._write_pointer_current + 1)),
+                    dtype = np.float)/2**13
     
     
     @property
@@ -413,7 +422,8 @@ def make_asg(channel=1):
                                norm=2**16*2**13, doc="output offset [volts]")
         
         scale = FloatRegister(0x4+_VALUE_OFFSET, bits=14, bitmask=0x3FFF, 
-                              norm=2**13, doc="amplitude of output waveform [volts]")
+                              norm=2**13, signed=False,  
+                              doc="amplitude of output waveform [volts]")
         
         start_phase = PhaseRegister(0xC+_VALUE_OFFSET, bits=30, 
                         doc="Phase at which to start triggered waveforms [degrees]")
@@ -855,12 +865,15 @@ class IQ(FilterModule):
     
     _g2 = FloatRegister(0x114, bits=_GAINBITS, norm=2**_SHIFTBITS, 
                         doc="gain2 of iq module [volts]")
-
     amplitude = FloatRegister(0x114, bits=_GAINBITS, norm = 2**_SHIFTBITS*4, 
                         doc="amplitude of coherent modulation [volts]")
 
     _g3 = FloatRegister(0x118, bits=_GAINBITS, norm = 2**_SHIFTBITS, 
                         doc="gain3 of iq module [volts]")
+    quadrature_factor = FloatRegister(0x118, 
+                                      bits=_GAINBITS, 
+                                      norm = 1.0, #2**_SHIFTBITS,  
+                        doc="amplification factor of demodulated signal [a.u.]")
     
     _g4 = FloatRegister(0x11C, bits=_GAINBITS, norm = 2**_SHIFTBITS, 
                         doc="gain4 of iq module [volts]")
@@ -900,30 +913,29 @@ class IQ(FilterModule):
         self.pfd_select = False
         self.on = True
 
-    na_averages = Register(0x130)
-    na_sleepcycles = Register(0x130)
+    na_averages = Register(0x130, 
+                    doc='number of cycles to perform na-averaging over')
+    na_sleepcycles = Register(0x130, 
+                    doc='number of cycles to wait before starting to average')
 
     @property
     def nadata(self):
         a, b, c, d = self._reads(0x140, 4)
         if not (
-            (a >> 31 == 0) and (
-                b >> 31 == 0) and (
-                c >> 31 == 0) and (
-                d >> 31 == 0)):
+            (a >> 31 == 0) and (b >> 31 == 0) 
+            and (c >> 31 == 0) and (d >> 31 == 0)):
             print "Averaging not finished. Impossible to estimate value"
             return 0 / 0
-        sum = np.complex128(self.to_pyint(a,
-                                          bitlength=31)) + np.complex128(self.to_pyint(b,
-                                                                                       bitlength=31) * 2**31) + 1j * np.complex128(self.to_pyint(c,
-                                                                                                                                                 bitlength=31)) + 1j * np.complex128(self.to_pyint(d,
-                                                                                                                                                                                                   bitlength=31) * 2**31)
-        return sum / float(self.iq_na_averages)
+        sum = np.complex128(self._to_pyint(a,bitlength=31)) 
+            + np.complex128(self._to_pyint(b,bitlength=31) * 2**31) 
+            + 1j * np.complex128(self._to_pyint(c, bitlength=31)) 
+            + 1j * np.complex128(self._to_pyint(d, bitlength=31) * 2**31)
+        return sum / float(self.na_averages)
 
     # formula to estimate the na measurement time
     def na_time(self, points=1001, rbw=100, avg=1.0, sleeptimes=0.5):
-        return float(avg + sleeptimes) * points / rbw  # +5*5ms*points
-
+        return float(avg + sleeptimes) * points / rbw 
+    
     def na_trace(
             self,
             start=0,
@@ -1068,14 +1080,6 @@ class IQ(FilterModule):
                 points,
                 endpoint=False)
         return x, y, z
-
-    @property
-    def quadrature_factor(self):
-        return self._g3
-
-    @quadrature_factor.setter
-    def quadrature_factor(self, v):
-        self._g3 = v
 
 
 class IIR(DspModule):

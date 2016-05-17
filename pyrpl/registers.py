@@ -33,7 +33,7 @@ class Register(object):
             obj._write(self.address,self.from_python(val))
         else:
             act = obj._read(self.address)
-            new = act&(~self.bitmask)|(int(self.from_python(val))&self.bitmask) 
+            new = act&(~self.bitmask)|(int(self.from_python(val))&self.bitmask)
             obj._write(self.address,new)
             
 class LongRegister(Register):
@@ -107,8 +107,9 @@ class SelectRegister(Register):
     """Implements a selection, such as for multiplexers"""
     def __init__(self, address, 
                  options={}, 
+                 doc="",
                  **kwargs):
-        super(SelectRegister,self).__init__(address=address, doc=doc+"\r\n"+str(options), **kwargs)
+        super(SelectRegister,self).__init__(address=address, doc=doc+"\r\nOptions:\r\n"+str(options), **kwargs)
         self.options = Bijection(options)
         
     def to_python(self, value):
@@ -122,21 +123,18 @@ class FloatRegister(Register):
     def __init__(self, address, 
                  bits=14, #total number of bits to represent on fpga
                  norm=1,  #fpga value corresponding to 1 in python
+                 signed=True, #otherwise unsigned
                  **kwargs):
         super(FloatRegister,self).__init__(address=address, **kwargs)
         self.bits = bits
         self.norm = float(norm)
-    
-    def __get__(self, obj, objtype=None):
-        return self.to_python(obj._read(self.address))
-
-    def __set__(self, obj, val):
-        obj._write(self.address,self.from_python(val))
-    
+        self.signed = signed
+        
     def to_python(self, value):
         # 2's complement
-        if value >= 2**(self.bits-1):
-            value -= 2**self.bits
+        if self.signed:
+            if value >= 2**(self.bits-1):
+                value -= 2**self.bits
         # normalization
         return float(value)/self.norm
     
@@ -148,14 +146,20 @@ class FloatRegister(Register):
             v = 1
         elif (v == 0 and value < 0):
             v = -1
-        # saturation
-        if (v >= 2**(self.bits-1)):
-            v = 2**(self.bits-1)-1
-        elif (v < -2**(self.bits-1)):
-            v = -2**(self.bits-1)
-        # 2's complement
-        if (v < 0):
-            v += 2**self.bits
+        if self.signed:
+            # saturation
+            if (v >= 2**(self.bits-1)):
+                v = 2**(self.bits-1)-1
+            elif (v < -2**(self.bits-1)):
+                v = -2**(self.bits-1)
+            # 2's complement
+            if (v < 0):
+                v += 2**self.bits
+        else:
+            v = abs(v) #take absolute value
+            #unsigned saturation
+            if v >= 2**self.bits:
+                v = 2**self.bits-1
         return v
 
 class PhaseRegister(FloatRegister):
@@ -173,6 +177,7 @@ class PhaseRegister(FloatRegister):
     
 class FrequencyRegister(FloatRegister):
     """Registers that contain a frequency as a float in units of Hz"""
+    # attention: no bitmask can be defined for frequencyregisters
     def __init__(self, address, 
              bits=32, #total number of bits to represent on fpga
              **kwargs):
