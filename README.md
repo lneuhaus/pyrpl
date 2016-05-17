@@ -1,6 +1,7 @@
-# pyrplockbox
+# pyrpl
 
 [logo]: https://github.com/lneuhaus/pyrpl/blob/master/logo.png "Logo Pyrpl"
+![alt text](https://github.com/lneuhaus/pyrpl/blob/master/logo.png "Ugly logo inline")
 
 pyrplockbox turns your RedPitaya into a powerful DSP device, especially suitable as a digital lockbox and measurement device in quantum optics experiments. 
 
