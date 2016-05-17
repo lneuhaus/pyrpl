@@ -37,6 +37,23 @@ class PyTest(TestCommand):
         errcode = pytest.main(self.test_args)
         sys.exit(errcode)
 
+def compile_fpga(): #vivado 2015.4 must be installed for this to work
+    cwd = os.getcwd()
+    try:
+        os.chdir("pyrpl//fpga")
+        os.system("make")
+    finally:
+        os.chdir(cwd)
+
+def compile_server(): #gcc crosscompiler must be installed for this to work
+    cwd = os.getcwd()
+    try:
+        os.chdir("pyrpl//monitor_server")
+        os.system("make clean")
+        os.system("make")
+    finally:
+        os.chdir(cwd)
+
 from distutils.core import setup
 setup(name='pyrpl',
       version='0.9.0.0',
@@ -67,5 +84,7 @@ setup(name='pyrpl',
       # stuff for unitary test with pytest
       tests_require=['pytest'],
       extras_require={'testing': ['pytest']},
-      cmdclass={'test': PyTest},
+
+      # install options
+      cmdclass={'test': PyTest, 'fpga': compile_fpga, 'server': compile_server},
       )
