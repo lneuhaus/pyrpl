@@ -41,7 +41,9 @@ class BaseModule(object):
             string = ""
             for key in type(self).__dict__.keys():
                 if isinstance( type(self).__dict__[key], Register):
-                    string += key + ": " + self.help(key) + '\r\n'
+                    docstring = self.help(key)
+                    if not docstring.startswith('_'): # mute internal registers
+                        string += key + ": " + docstring + '\r\n'
             return string
         
     def __init__(self, client, addr_base=None):
@@ -310,7 +312,7 @@ class Scope(BaseModule):
         self.average = average
         self.duration = duration
         self.trigger_source = trigger_source
-        self.arm_trigger = True
+        self.trigger_armed = True
 
     @property
     def sampling_time(self):
@@ -347,399 +349,194 @@ class Scope(BaseModule):
         self.data_decimation = 65536
         print "Desired duration too long to realize"
 
-
-class ASG(BaseModule):
-    def __init__(self, client, channel='A'):
-        super(ASG, self).__init__(client, addr_base=0x40200000)
-        self._frequency_correction = 1.0
-        self.data_length = 2**14
-        if channel == 'B':
-            self.data_offset = 0x20000
-            self.value_offset = 0x20
-            self.bit_offset = 16
-        else:  # this includes channel A
-            self.data_offset = 0x10000
-            self.value_offset = 0x00
-            self.bit_offset = 0
-
-    @property
-    def scopetrigger_phase(self):
-        """ phase in degrees of the function generator at the moment when the last scope trigger occured"""
-        return np.float(
-            self.to_pyint(
-                self._read(
-                    0x114 + self.value_offset),
-                bitlength=14)) / 2**14 * 360.0
-
-    @property
-    def output_zero(self):
-        return self.bitstate(0x0, self.bit_offset + 7)
-
-    @output_zero.setter
-    def output_zero(self, v):
-        self.changebit(0x0, self.bit_offset + 7, v)
-
-    @property
-    def sm_reset(self):
-        return self.bitstate(0x0, self.bit_offset + 6)
-
-    @sm_reset.setter
-    def sm_reset(self, v):
-        self.changebit(0x0, self.bit_offset + 6, v)
-
-    @property
-    def advanced_trigger_reset(self):
-        return self.bitstate(0x0, self.bit_offset + 9)
-
-    @advanced_trigger_reset.setter
-    def advanced_trigger_reset(self, v):
-        self.changebit(0x0, self.bit_offset + 9, v)
-
-    @property
-    def advanced_trigger_autorearm(self):
-        """ should the trigger remain armed after one trigger event?
-        If not, the trigger needs to be reset with a advanced_trigger_reset=True - ..=False sequence for the next event"""
-        return self.bitstate(0x0, self.bit_offset + 11)
-
-    @advanced_trigger_autorearm.setter
-    def advanced_trigger_autorearm(self, v):
-        self.changebit(0x0, self.bit_offset + 11, v)
-
-    @property
-    def advanced_trigger_invert(self):
-        return self.bitstate(0x0, self.bit_offset + 10)
-
-    @advanced_trigger_invert.setter
-    def advanced_trigger_invert(self, v):
-        self.changebit(0x0, self.bit_offset + 10, v)
-
-    @property
-    def advanced_trigger_delay(self):
-        """ counter offset for trigged events = phase offset """
-        v = self._reads(self.value_offset + 0x118, 2)
-        return 8e-9 * (np.int(v[1]) * 2**32 + np.int(v[0]) + 1)
-
-    @advanced_trigger_delay.setter
-    def advanced_trigger_delay(self, v):
-        v = np.round(v / 8e-9 - 1.0)
-        mv = (int(v) >> 32) & 0x00000000FFFFFFFF
-        lv = int(v) & 0x00000000FFFFFFFF
-        self._write(self.value_offset + 0x11C, mv)
-        self._write(self.value_offset + 0x118, lv)
-
-    def enable_advanced_trigger(
-            self,
-            frequency,
-            amplitude,
-            duration,
-            invert=False,
-            autorearm=False):
-        self.setup_cosine(
-            frequency=frequency,
-            amplitude=amplitude,
-            onetimetrigger=False,
-            offset=0,
-            data=True)
-        self.advanced_trigger_reset = True
-        self.advanced_trigger_autorearm = autorearm
-        self.advanced_trigger_invert = invert
-        self.advanced_trigger_delay = duration
-        self.sm_reset = False
-        self.trigger_source = 4
-        self.output_zero = False
-        self.advanced_trigger_reset = False
-
-    def disable_advanced_trigger(self):
-        self.advanced_trigger_reset = True
-        self.trigger_source = 1
-        self.sm_reset = True
-        self.output_zero = True
-
-    @property
-    def sm_onetimetrigger(self):
-        return self.bitstate(0x0, self.bit_offset + 5)
-
-    @sm_onetimetrigger.setter
-    def sm_onetimetrigger(self, v):
-        self.changebit(0x0, self.bit_offset + 5, v)
-
-    @property
-    def sm_wrappointer(self):
-        return self.bitstate(0x0, self.bit_offset + 4)
-
-    @sm_wrappointer.setter
-    def sm_wrappointer(self, v):
-        self.changebit(0x0, self.bit_offset + 4, v)
-
-    @property
-    def trigger_source(self):
-        """
-        1-trig immediately
-        2-external trigger positive edge - DIO0_P pin
-        3-external trigger negative edge
-        4-advanced trigger from DIO0_P pin (output gated on trigger with hysteresis of advanced_trigger_delay in seconds)
-        """
-        v = self._read(0x0)
-        return (v >> self.bit_offset) & 0x07
-
-    @trigger_source.setter
-    def trigger_source(self, v):
-        v = v & 0x7
-        v = v << self.bit_offset
-        mask = ~(0x7 << self.bit_offset)
-        v = (self._read(0x0) & mask) | v
-        self._write(0x0, v)
-
-    @property
-    def offset(self):
-        v = self._read(self.value_offset + 0x4)
-        v = (v >> 16) & 0x00003FFF
-        if (v & 2**13):
-            v = v - 2**14
-        return int(v)
-
-    @offset.setter
-    def offset(self, v):
-        v = self.from_pyint(v, 14) * 2**16 + self.scale
-        self._write(self.value_offset + 0x4, v)
-
-    @property
-    def scale(self):
-        """
-        Amplitude scale. 0x2000 == multiply by 1. Unsigned
-        """
-        v = self._read(self.value_offset + 0x4)
-        v = v & 0x00003FFF
-        return int(v)
-
-    @scale.setter
-    def scale(self, v):
-        if v >= 2**14:
-            v = 2**14 - 1
-        if v < 0:
-            v = 0
-        v = int(v) + (self.offset * 2**16)
-        self._write(self.value_offset + 0x4, v)
-
-    @property
-    def counter_wrap(self):
-        """
-        typically this value is set to
-        2**16*(2**14-1)
-        in order to exploit the full data buffer
-        """
-        v = self._read(self.value_offset + 0x8)
-        return v & 0x3FFFFFFF
-
-    @counter_wrap.setter
-    def counter_wrap(self, v):
-        v = v & 0x3FFFFFFF
-        self._write(self.value_offset + 0x8, v)
-
-    @property
-    def counter_step(self):
-        """Each clock cycle the counter_step is increases the internal counter modulo counter_wrap.
-        The current counter step rightshifted by 16 bits is the index of the value that is chosen from the data table.
-        """
-        v = self._read(self.value_offset + 0x10)
-        return v & 0x3FFFFFFF
-
-    @counter_step.setter
-    def counter_step(self, v):
-        v = v & 0x3FFFFFFF
-        self._write(self.value_offset + 0x10, v)
-
-    @property
-    def start_offset(self):
-        """ counter offset for trigged events = phase offset """
-        v = self._read(self.value_offset + 0x0C)
-        return v & 0x3FFFFFFF
-
-    @start_offset.setter
-    def start_offset(self, v):
-        v = v & 0x3FFFFFFF
-        self._write(self.value_offset + 0x0C, v)
-
-    @property
-    def full_timescale(self):
-        """not sure if there is an offset for counter_wrap, need to check code"""
-        return 8e-9 * float(self.counter_wrap + 2**16) / \
-            float(self.counter_step)
-
-    @property
-    def max_index(self):
-        return self.counter_wrap >> 16
-
-    @property
-    def data(self):
-        x = np.array(
-            self._reads(
-                self.data_offset,
-                self.data_length),
-            dtype=np.int32)
-        x[x >= 2**13] -= 2**14
-        return x
-
-    @data.setter
-    def data(self, data):
-        data = np.array(data, dtype=np.int32)
-        data[data >= 2**13] = 2**13 - 1
-        data[data < 0] += 2**14
-        self._writes(self.data_offset, np.array(data, dtype=np.uint32))
-
-    @property
-    def onedata(self):
-        return self.to_pyint(self._read(self.data_offset))
-
-    @onedata.setter
-    def onedata(self, v):
-        self._write(self.data_offset, self.from_pyint(v))
-
-    @property
-    def lastpoint(self):
-        """the last point before the output jumps back to the zero/wrapped index value"""
-        step = self.counter_step
-        if step == 0:
-            return 0
-        else:
-            return self.counter_wrap / step
-
-    @property
-    def frequency(self):
-        return float(self.counter_step) / float(self.counter_wrap + \
-                     2**16) / 8e-9 * self._frequency_correction
-
-    @frequency.setter
-    def frequency(self, v):
-        v = float(v) / self._frequency_correction
-        self.counter_step = np.long(
-            np.round(float(v) * 8e-9 * (float(self.counter_wrap + 2**16))))
-
-    def setup_cosine(
-            self,
-            frequency=1,
-            amplitude=1.0,
-            onetimetrigger=False,
-            offset=0,
-            data=True):
-        # corresponds to 2Vpp sine
-        self.mode = "cosine"
-        self.output_zero = True
-        self.sm_reset = True
-        self.trigger_source = 0
-        self.scale = int(amplitude * 2**13)
-        self.offset = offset
-
-        if data:
-            self.data = np.array(np.round(-(2**13 - 1) * np.cos(
-                np.linspace(0, 2.0 * np.pi, 2**14, endpoint=False))), dtype=np.int32)
-        self.start_offset = 0
-        self.counter_wrap = 2**16 * (2**14 - 1)
-        self.frequency = frequency
-
-        self.sm_onetimetrigger = onetimetrigger
-        self.sm_wrappointer = True
-        self.output_zero = False
-        self.sm_reset = False
-
-    def setup_ramp(
-            self,
-            frequency=1,
-            amplitude=1.0,
-            onetimetrigger=False,
-            offset=0,
-            data=True):
-        # corresponds to 2Vpp sine
-        self.mode = "cosine"
-        self.output_zero = True
-        self.sm_reset = True
-        self.trigger_source = 0
-        self.scale = int(amplitude * 2**13)
-        self.offset = offset
-
-        def ramp(phase):
-            return np.abs((phase / np.pi) % 2.0 - 1.0) * 2.0 - 1.0
-        if data:
-            self.d = np.zeros(2**14, dtype=np.long)
-            for i in range(len(self.d)):
-                self.d[i] = np.long(
-                    np.round(-(2**13 - 1) * ramp((float(i) / 2**14) * 2 * np.pi)))
-            self.data = self.d
-
-        self.start_offset = 0
-        self.counter_wrap = 2**16 * (2**14 - 1)
-        self.frequency = frequency
-
-        self.sm_onetimetrigger = onetimetrigger
-        self.sm_wrappointer = True
-        self.output_zero = False
-        self.sm_reset = False
-
-    def setup_halframp(
-            self,
-            frequency=1,
-            amplitude=1.0,
-            onetimetrigger=False,
-            offset=0,
-            data=True):
-        # corresponds to 2Vpp sine
-        self.mode = "cosine"
-        self.output_zero = True
-        self.sm_reset = True
-        self.trigger_source = 0
-        self.scale = int(amplitude * 2**13)
-        self.offset = offset
-        if data:
-            self.d = np.zeros(2**14, dtype=np.long)
-            for i in range(len(self.d)):
-                self.d[i] = np.long(i - 2**13)
-            self.data = self.d
-
-        self.start_offset = 0
-        self.counter_wrap = 2**16 * (2**14 - 1)
-        self.frequency = frequency
-
-        self.sm_onetimetrigger = onetimetrigger
-        self.sm_wrappointer = True
-        self.output_zero = False
-        self.sm_reset = False
-
-    def setup_offset(self, offset=0):
-        self.mode = "DC"
-        # corresponds to 2Vpp sine
-        self.sm_reset = True
-        self.trigger_source = 0
-        self.scale = 0
-        self.offset = 0
-
-        self.d = np.zeros(2**14, dtype=np.long)
-        self.data = self.d
-
-        self.start_offset = 0
-        self.counter_wrap = 2**16 * (2**14 - 1)
-        self.frequency = frequency
-
-        self.sm_onetimetrigger = onetimetrigger
-        self.sm_wrappointer = True
-        self.output_zero = False
-        self.sm_reset = False
-
-    def trig(self):
-        self.start_offset = 0
-        self.trigger_source = 1
-        self.trigger_source = 0
-
-    @property
-    def dio_override(self):
-        v = self._read(0x40)
-        v = (v >> self.bit_offset) & 0x0000FF
-        return v
-
-    @dio_override.setter
-    def dio_override(self, v):
-        v = v << self.bit_offset | (
-            self._read(0x40) & (~(0xFF << self.bit_offset)))
-        self._write(0x40, v)
+# ugly workaround, but realized too late that descriptors have this limit
+def make_asg(channel=1):
+    if channel == 1:
+        set_BIT_OFFSET = 0
+        set_VALUE_OFFSET = 0x00
+        set_DATA_OFFSET = 0x10000
+    else:
+        set_DATA_OFFSET = 0x20000
+        set_VALUE_OFFSET = 0x20
+        set_BIT_OFFSET = 16
+    
+    class Asg(BaseModule):
+        _DATA_OFFSET = set_DATA_OFFSET
+        _VALUE_OFFSET = set_VALUE_OFFSET
+        _BIT_OFFSET = set_BIT_OFFSET
+        
+        def __init__(self, client):
+            super(Asg, self).__init__(client, addr_base=0x40200000)
+            self._counter_wrap = 0x3FFFFFFF # correct value unless you know better
+            self._frequency_correction = 1.0
+            if self._BIT_OFFSET == 0:
+                self._dsp = DspModule(client, module='asg1')
+            else:
+                self._dsp = DspModule(client, module='asg2')
+            self.outputs = self._dsp.outputs
+        @property
+        def output(self):
+            return self._dsp.output
+    
+        @output.setter
+        def output(self, v):
+            self._dsp.output = v
+    
+        data_length = 2**14
+        
+        on = BoolRegister(0x0, 7+_BIT_OFFSET, doc='turns the output on or off', invert=True)
+    
+        sm_reset = BoolRegister(0x0, 6+_BIT_OFFSET, doc='resets the state machine')
+        
+        #formerly: onetimetrigger
+        periodic = BoolRegister(0x0, 5+_BIT_OFFSET, invert=True,
+                        doc='if False, fgen stops after performing one full waveform at its last value.')
+        
+        _sm_wrappointer = BoolRegister(0x0, 4+_BIT_OFFSET, 
+                        doc='If False, fgen starts from data[0] value after each cycle. If True, assumes that data is periodic and jumps to the naturally next index after full cycle.')
+        
+        _trigger_sources = {"off": 0 << _BIT_OFFSET,
+                            "immediately": 1 << _BIT_OFFSET,
+                            "ext_positive_edge": 2 << _BIT_OFFSET, #DIO0_P pin
+                            "ext_negative_edge": 3 << _BIT_OFFSET, #DIO0_P pin
+                            "advanced_trigger": 4 << _BIT_OFFSET} #4-advanced trigger from DIO0_P pin (output gated on trigger with hysteresis of advanced_trigger_delay in seconds)
+        
+        trigger_sources = _trigger_sources.keys()
+        
+        trigger_source = SelectRegister(0x0, bitmask=0x0007<<_BIT_OFFSET, 
+                                        options=_trigger_sources, 
+                                        doc="trigger source for triggered output")
+        
+        # offset is stored in bits 31:16 of the register. 
+        # This adaptaion to FloatRegister is a little subtle but should work nonetheless 
+        offset = FloatRegister(0x4+_VALUE_OFFSET, bits=14+16, bitmask=0x3FFF<<16, 
+                               norm=2**16*2**13, doc="output offset [volts]")
+        
+        scale = FloatRegister(0x4+_VALUE_OFFSET, bits=14, bitmask=0x3FFF, 
+                              norm=2**13, doc="amplitude of output waveform [volts]")
+        
+        start_phase = PhaseRegister(0xC+_VALUE_OFFSET, bits=30, 
+                        doc="Phase at which to start triggered waveforms [degrees]")
+    
+        frequency = FrequencyRegister(0x10+_VALUE_OFFSET, bits=30, 
+                                      doc="Frequency of the output waveform [Hz]")
+        
+        firstpoint = FloatRegister(_DATA_OFFSET, bits=14, norm=2**13, 
+                                doc="First value in output table [volts]")
+        
+        lastpoint = FloatRegister(_DATA_OFFSET+0x4*(data_length-1), 
+                                  bits=14, norm=2**13, 
+                                  doc="Last value in output table [volts]")
+    
+        _counter_wrap = Register(0x8+_VALUE_OFFSET, 
+                                doc="Raw phase value where counter wraps around. To be set to 2**16*(2**14-1) = 0x3FFFFFFF in virtually all cases. ") 
+    
+        _counter_step = Register(0x10+_VALUE_OFFSET,doc="""Each clock cycle the counter_step is increases the internal counter modulo counter_wrap.
+            The current counter step rightshifted by 16 bits is the index of the value that is chosen from the data table.
+            """)
+        
+        _start_offset = Register(0xC, 
+                        doc="counter offset for trigged events = phase offset ")
+    
+        def trig(self):
+            self.start_phase = 0
+            self.trigger_source = "immediately"
+            self.trigger_source = "off"
+    
+        @property
+        def data(self):
+            """array of 2**14 values that define the output waveform. 
+            
+            Values should lie between -1 and 1 such that the peak output amplitude is self.scale"""
+            x = np.array(
+                self._reads(_DATA_OFFSET, self.data_length),
+                         dtype=np.int32)
+            x[x >= 2**13] -= 2**14
+            return np.array(x, dtype=np.float)/2**13
+    
+        @data.setter
+        def data(self, data):
+            """array of 2**14 values that define the output waveform. 
+            
+            Values should lie between -1 and 1 such that the peak output amplitude is self.scale"""
+            data = np.array(np.round((2**13-1)*data), dtype=np.int32)
+            data[data >= 2**13] = 2**13 - 1
+            data[data < 0] += 2**14
+            #values that are still negativeare set to maximally negatuve
+            data[data < 0] = -2**13 
+            self._writes(_DATA_OFFSET, np.array(data, dtype=np.uint32))
+    
+        def setup(self, frequency=1, amplitude=1.0, periodic=True, offset=0, 
+                           waveform="cos", trigger_source=None):
+            """sets up the function generator. 
+            
+            waveform must be one of ['cos', 'ramp', 'DC', 'halframp']. 
+            amplitude and offset in volts, frequency in Hz. 
+            periodic = False outputs only one period. 
+            if trigger_source is None, it should be set manually """
+            self.on = False
+            self.sm_reset = True
+            self.trigger_source = 'off'
+            self.scale = amplitude
+            self.offset = offset
+            
+            if waveform == 'cos':
+                x = np.linspace(0, 2*np.pi, self.data_length, endpoint=False)
+                y = np.cos(x)
+            elif waveform == 'ramp':
+                y = np.linspace(-1.0,3.0, self.data_length, endpoint=False)
+                y[self.data_length//2:] = -1*y[:self.data_length//2]
+            elif waveform == 'halframp':
+                y = np.linspace(-1.0,1.0, self.data_length, endpoint=False)
+            elif waveform == 'DC':
+                y = np.zeros(self.data_length)
+    
+            self.start_phase = 0
+            self._counter_wrap = 2**16 * (2**14 - 1)
+            self.frequency = frequency
+            self.periodic = periodic
+            self._sm_wrappointer = True
+            self.on = True
+            self.sm_reset = False
+            if trigger_source is not None:
+                self.trigger_source = trigger_source
+    
+        #advanced trigger - added functionality
+        scopetriggerphase = PhaseRegister(0x114+_VALUE_OFFSET, bits=14, 
+                       doc="phase of ASG ch1 at the moment when the last scope trigger occured [degrees]")
+            
+        advanced_trigger_reset = BoolRegister(0x0, 9+16, doc='resets the fgen advanced trigger')
+        advanced_trigger_autorearm = BoolRegister(0x0, 11+16, doc='autorearm the fgen advanced trigger after a trigger event? If False, trigger needs to be reset with a sequence advanced_trigger_reset=True...advanced_trigger_reset=False after each trigger event.')
+        advanced_trigger_invert = BoolRegister(0x0, 10+16, doc='inverts the trigger signal for the advanced trigger if True')
+        
+        advanced_trigger_delay = LongRegister(0x118+0x20, bits=64, doc='delay of the advanced trigger - 1 [cycles]') 
+    
+        def enable_advanced_trigger(self, frequency, amplitude, duration,
+                                    invert=False, autorearm=False):
+            self.setup(
+                frequency=frequency,
+                amplitude=amplitude,
+                periodic=False,
+                offset=0)
+            self.advanced_trigger_reset = True
+            self.advanced_trigger_autorearm = autorearm
+            self.advanced_trigger_invert = invert
+            self.advanced_trigger_delay = np.round(duration/8e-9)
+            self.sm_reset = False
+            self.trigger_source = 'advanced_trigger'
+            self.output_zero = False
+            self.advanced_trigger_reset = False
+    
+        def disable_advanced_trigger(self):
+            self.advanced_trigger_reset = True
+            self.trigger_source = 'immediately'
+            self.sm_reset = True
+            self.output_zero = True
+    
+    return Asg
+    
+Asg1 = make_asg(channel=1)
+Asg2 = make_asg(channel=2)
 
 
 class DspModule(BaseModule):

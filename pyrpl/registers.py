@@ -11,26 +11,65 @@ epsilon = sys.float_info.epsilon
 #for now there is a workaround: call Module.help(register)
 class Register(object):
     """Interface for basic register of type int"""
-    def __init__(self, address, doc=""):
+    def __init__(self, address, doc="", bitmask=None):
         self.address = address
         self.__doc__ = doc
+        self.bitmask = bitmask
     
     def to_python(self, value):
-        return value
+        return int(value)
     
     def from_python(self, value):
-        return value
+        return int(value)
     
     def __get__(self, obj, objtype=None):
-        return self.to_python(obj._read(self.address))
+        if self.bitmask is None:
+            return self.to_python(obj._read(self.address))
+        else:
+            return self.to_python(obj._read(self.address)&self.bitmask)
     
     def __set__(self, obj, val):
-        obj._write(self.address,self.from_python(val))
+        if self.bitmask is None:
+            obj._write(self.address,self.from_python(val))
+        else:
+            act = obj._read(self.address)
+            new = act&(~self.bitmask)|(int(self.from_python(val))&self.bitmask) 
+            obj._write(self.address,new)
+            
+class LongRegister(Register):
+    """Interface for register of python type int with arbitrary length 'bits' (effectively unsigned)"""
+    def __init__(self, address, bits=64, **kwargs):
+        super(LongRegister,self).__init__(address=address, **kwargs)
+        self.bits = bits
+        self.size = (32+bits-bits%32)/32
+        
+    def __get__(self, obj, objtype=None):
+        values = obj._reads(self.address, self.size)
+        value = int(0)
+        for i in range(self.size):
+            value += int(values[i])<<(32*i)
+        if self.bitmask is None:
+            return self.to_python(value)
+        else:
+            return (self.to_python(value)&self.bitmask)
+    
+    def __set__(self, obj, val):
+        val = self.from_python(val)
+        values = np.zeros(self.size,dtype=np.uint32)
+        if self.bitmask is None:
+            for i in range(self.size):
+                values[i] = (val>>(32*i))&0xFFFFFFFF
+        else:
+            act = obj._reads(self.address, self.size)
+            for i in range(self.size):
+                localbitmask = (self.bitmask>>32*i)&0xFFFFFFFF
+                values[i] = ((val>>(32*i))&localbitmask)|(int(act[i])&(~localbitmask))
+        obj._writes(self.address,val)
             
 class BoolRegister(Register):
-    """Inteface for boolean values, 1: True, 0: False"""
-    def __init__(self, address, bit=0, doc="", invert=False):
-        super(BoolRegister,self).__init__(address=address, doc=doc)
+    """Inteface for boolean values, 1: True, 0: False. invert=True inverts the mapping"""
+    def __init__(self, address, bit=0, invert=False, **kwargs):
+        super(BoolRegister,self).__init__(address=address, **kwargs)
         self.bit = bit
         self.invert = invert
         
@@ -54,14 +93,13 @@ class IORegister(BoolRegister):
     
     if argument outputmode is True, output mode is set, else input mode"""
     def __init__(self, read_address, write_address, direction_address, 
-                 outputmode=True, bit=0, doc=""):
+                 outputmode=True, bit=0, **kwargs):
         if outputmode:
             address = write_address
         else:
             address = read_address
-        super(IORegister,self).__init__(address=address, bit=bit, doc=doc)
-        self.direction = BoolRegister(direction_address,bit=bit,
-                                      doc=doc+" direction")
+        super(IORegister,self).__init__(address=address, bit=bit, **kwargs)
+        self.direction = BoolRegister(direction_address,bit=bit, **kwargs)
         self.direction = outputmode #set output direction
         
         
@@ -69,8 +107,8 @@ class SelectRegister(Register):
     """Implements a selection, such as for multiplexers"""
     def __init__(self, address, 
                  options={}, 
-                 doc=""):
-        super(SelectRegister,self).__init__(address=address, doc=doc+"\r\n"+str(options))
+                 **kwargs):
+        super(SelectRegister,self).__init__(address=address, doc=doc+"\r\n"+str(options), **kwargs)
         self.options = Bijection(options)
         
     def to_python(self, value):
@@ -84,8 +122,8 @@ class FloatRegister(Register):
     def __init__(self, address, 
                  bits=14, #total number of bits to represent on fpga
                  norm=1,  #fpga value corresponding to 1 in python
-                 doc=""):
-        super(FloatRegister,self).__init__(address=address, doc=doc)
+                 **kwargs):
+        super(FloatRegister,self).__init__(address=address, **kwargs)
         self.bits = bits
         self.norm = float(norm)
     
@@ -123,10 +161,8 @@ class FloatRegister(Register):
 class PhaseRegister(FloatRegister):
     """Registers that contain a phase as a float in units of degrees."""
     """Registers that contain a frequency as a float in units of Hz"""
-    def __init__(self, address, 
-             bits=32, #total number of bits to represent on fpga
-             doc=""):
-        super(PhaseRegister,self).__init__(address=address, bits=bits, doc=doc)
+    def __init__(self, address, bits=32, **kwargs):
+        super(PhaseRegister,self).__init__(address=address, bits=bits, **kwargs)
         
     def from_python(self, value):
         # make sure small float values are not rounded to zero
@@ -139,8 +175,8 @@ class FrequencyRegister(FloatRegister):
     """Registers that contain a frequency as a float in units of Hz"""
     def __init__(self, address, 
              bits=32, #total number of bits to represent on fpga
-             doc=""):
-        super(FrequencyRegister,self).__init__(address=address, bits=bits, doc=doc)
+             **kwargs):
+        super(FrequencyRegister,self).__init__(address=address, bits=bits, **kwargs)
         
     def __get__(self, obj, objtype=None):
         return self.to_python(obj._read(self.address), obj._frequency_correction)

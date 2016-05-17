@@ -147,8 +147,8 @@ class RedPitaya(SSHshell):
         self.iq0 = rp.IQ(self.client, module='iq0')
         self.iq1 = rp.IQ(self.client, module='iq1')
         self.iq2 = rp.IQ(self.client, module='iq2')
-        self.asg1 = rp.ASG(self.client, channel='A')
-        self.asg2 = rp.ASG(self.client, channel='B')
+        self.asg1 = rp.Asg1(self.client)
+        self.asg2 = rp.Asg2(self.client)
         print "Client started with success!"
 
     def endclient(self):
