@@ -12,15 +12,16 @@ class RedPitayaTestCases(unittest.TestCase):
         
     def setUp(self):
         self.hostname = os.environ.get('REDPITAYA')
-        self.r = RedPitaya(hostname=self.hostname)
-        for key, module in self.r.__dict__.items():
-            if isinstance(module,BaseModule):
-                print "Scanning module",key,"..."
-                for rkey,reg in type(module).__dict__.items():
-                    if isinstance(reg,Register):
-                        print "Scanning register",rkey,"..."
-                        f = generatetest(module,reg,rkey)
-                        self.__dict__["test_"+key+"_"+rkey] = f
+        if self.hostname != 'localhost':
+            self.r = RedPitaya(hostname=self.hostname)
+            for key, module in self.r.__dict__.items():
+                if isinstance(module,BaseModule):
+                    print "Scanning module",key,"..."
+                    for rkey,reg in type(module).__dict__.items():
+                        if isinstance(reg,Register):
+                            print "Scanning register",rkey,"..."
+                            f = generatetest(module,reg,rkey)
+                            self.__dict__["test_"+key+"_"+rkey] = f
 
     def tearDown(self):
         pass
