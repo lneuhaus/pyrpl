@@ -1,6 +1,6 @@
 language: python
   - "2.7"
-  - "3.5"
+#  - "3.5"
   
 before_install:
 # finish installation
