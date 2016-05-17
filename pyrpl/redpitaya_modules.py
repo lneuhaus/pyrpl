@@ -97,61 +97,6 @@ class HK(BaseModule):
     # another option: access led as array of bools
     # led = [BoolRegister(0x30,bit=i,doc="LED "+str(i)) for i in range(8)]
 
-class AMS(BaseModule):
-    """mostly deprecated module. do not use without understanding!!!"""
-    def __init__(self, client):
-        super(AMS, self).__init__(client, addr_base=0x40400000)
-    
-    @property
-    def pwm_full(self):
-        """PWM full variable from FPGA code"""
-        return float(156.0)
-        # return 249 #also works fine!!
-
-    def to_dac(self, pwmvalue, bitselect):
-        """
-        PWM value (100% == 156)
-        Bit select for PWM repetition which have value PWM+1
-        """
-        return ((pwmvalue & 0xFF) << 16) + (bitselect & 0xFFFF)
-
-    def rel_to_dac(self, v):
-        v = np.long(np.round(v * (17 * (self.pwm_full + 1) - 1)))
-        return self.to_dac(v // 17, (2**(v % 17)) - 1)
-
-    def rel_to_dac_debug(self, v):
-        """max value = 1.0, min=0.0"""
-        v = np.long(np.round(v * (17 * (self.pwm_full + 1) - 1)))
-        return (v // 17, (2**(v % 17)) - 1)
-
-    def setdac0(self, pwmvalue, bitselect):
-        self._write(0x20, self.to_dac(pwmvalue, bitselect))
-
-    def setdac1(self, pwmvalue, bitselect):
-        self._write(0x24, self.to_dac(pwmvalue, bitselect))
-
-    def setdac2(self, pwmvalue, bitselect):
-        self._write(0x28, self.to_dac(pwmvalue, bitselect))
-
-    def setdac3(self, pwmvalue, bitselect):
-        self._write(0x2C, self.to_dac(pwmvalue, bitselect))
-
-    def reldac0(self, v):
-        """max value = 1.0, min=0.0"""
-        self._write(0x20, self.rel_to_dac(v))
-
-    def reldac1(self, v):
-        """max value = 1.0, min=0.0"""
-        self._write(0x24, self.rel_to_dac(v))
-
-    def reldac2(self, v):
-        """max value = 1.0, min=0.0"""
-        self._write(0x28, self.rel_to_dac(v))
-
-    def reldac3(self, v):
-        """max value = 1.0, min=0.0"""
-        self._write(0x2C, self.rel_to_dac(v))
-
 
 class Scope(BaseModule):
     data_length = 2**14
@@ -303,7 +248,6 @@ class Scope(BaseModule):
                     np.roll(self.rawdata_ch2, -(self._write_pointer_current + 1)),
                     dtype = np.float)/2**13
     
-    
     @property
     def times(self):
         return np.linspace(0.0, 8e-9*self.decimation*self.data_length,
@@ -357,6 +301,7 @@ class Scope(BaseModule):
                 return
         self.data_decimation = 65536
         print "Desired duration too long to realize"
+
 
 # ugly workaround, but realized too late that descriptors have this limit
 def make_asg(channel=1):
@@ -459,7 +404,7 @@ def make_asg(channel=1):
             
             Values should lie between -1 and 1 such that the peak output amplitude is self.scale"""
             x = np.array(
-                self._reads(_DATA_OFFSET, self.data_length),
+                self._reads(self._DATA_OFFSET, self.data_length),
                          dtype=np.int32)
             x[x >= 2**13] -= 2**14
             return np.array(x, dtype=np.float)/2**13
@@ -474,10 +419,10 @@ def make_asg(channel=1):
             data[data < 0] += 2**14
             #values that are still negativeare set to maximally negatuve
             data[data < 0] = -2**13 
-            self._writes(_DATA_OFFSET, np.array(data, dtype=np.uint32))
+            self._writes(self._DATA_OFFSET, np.array(data, dtype=np.uint32))
     
         def setup(self, frequency=1, amplitude=1.0, periodic=True, offset=0, 
-                           waveform="cos", trigger_source=None):
+                           waveform="cos", trigger_source='immediately'):
             """sets up the function generator. 
             
             waveform must be one of ['cos', 'ramp', 'DC', 'halframp']. 
@@ -500,7 +445,8 @@ def make_asg(channel=1):
                 y = np.linspace(-1.0,1.0, self.data_length, endpoint=False)
             elif waveform == 'DC':
                 y = np.zeros(self.data_length)
-    
+            self.data = y
+            
             self.start_phase = 0
             self._counter_wrap = 2**16 * (2**14 - 1)
             self.frequency = frequency
@@ -510,7 +456,8 @@ def make_asg(channel=1):
             self.sm_reset = False
             if trigger_source is not None:
                 self.trigger_source = trigger_source
-    
+        
+        
         #advanced trigger - added functionality
         scopetriggerphase = PhaseRegister(0x114+_VALUE_OFFSET, bits=14, 
                        doc="phase of ASG ch1 at the moment when the last scope trigger occured [degrees]")
@@ -527,7 +474,8 @@ def make_asg(channel=1):
                 frequency=frequency,
                 amplitude=amplitude,
                 periodic=False,
-                offset=0)
+                offset=0,
+                trigger_source = None)
             self.advanced_trigger_reset = True
             self.advanced_trigger_autorearm = autorearm
             self.advanced_trigger_invert = invert
@@ -547,6 +495,7 @@ def make_asg(channel=1):
     
 Asg1 = make_asg(channel=1)
 Asg2 = make_asg(channel=2)
+
 
 
 class DspModule(BaseModule):
@@ -926,10 +875,10 @@ class IQ(FilterModule):
             and (c >> 31 == 0) and (d >> 31 == 0)):
             print "Averaging not finished. Impossible to estimate value"
             return 0 / 0
-        sum = np.complex128(self._to_pyint(a,bitlength=31)) 
-            + np.complex128(self._to_pyint(b,bitlength=31) * 2**31) 
+        sum = (np.complex128(self._to_pyint(a,bitlength=31))  
+            + np.complex128(self._to_pyint(b,bitlength=31) * 2**31)  
             + 1j * np.complex128(self._to_pyint(c, bitlength=31)) 
-            + 1j * np.complex128(self._to_pyint(d, bitlength=31) * 2**31)
+            + 1j * np.complex128(self._to_pyint(d, bitlength=31) * 2**31))
         return sum / float(self.na_averages)
 
     # formula to estimate the na measurement time
@@ -1227,3 +1176,58 @@ class IIR(DspModule):
         c[:, 3] = 1.0
         self.iir_coefficients = c
         self.iir_loops = 1
+
+class AMS(BaseModule):
+    """mostly deprecated module. do not use without understanding!!!"""
+    def __init__(self, client):
+        super(AMS, self).__init__(client, addr_base=0x40400000)
+    
+    @property
+    def pwm_full(self):
+        """PWM full variable from FPGA code"""
+        return float(156.0)
+        # return 249 #also works fine!!
+
+    def to_dac(self, pwmvalue, bitselect):
+        """
+        PWM value (100% == 156)
+        Bit select for PWM repetition which have value PWM+1
+        """
+        return ((pwmvalue & 0xFF) << 16) + (bitselect & 0xFFFF)
+
+    def rel_to_dac(self, v):
+        v = np.long(np.round(v * (17 * (self.pwm_full + 1) - 1)))
+        return self.to_dac(v // 17, (2**(v % 17)) - 1)
+
+    def rel_to_dac_debug(self, v):
+        """max value = 1.0, min=0.0"""
+        v = np.long(np.round(v * (17 * (self.pwm_full + 1) - 1)))
+        return (v // 17, (2**(v % 17)) - 1)
+
+    def setdac0(self, pwmvalue, bitselect):
+        self._write(0x20, self.to_dac(pwmvalue, bitselect))
+
+    def setdac1(self, pwmvalue, bitselect):
+        self._write(0x24, self.to_dac(pwmvalue, bitselect))
+
+    def setdac2(self, pwmvalue, bitselect):
+        self._write(0x28, self.to_dac(pwmvalue, bitselect))
+
+    def setdac3(self, pwmvalue, bitselect):
+        self._write(0x2C, self.to_dac(pwmvalue, bitselect))
+
+    def reldac0(self, v):
+        """max value = 1.0, min=0.0"""
+        self._write(0x20, self.rel_to_dac(v))
+
+    def reldac1(self, v):
+        """max value = 1.0, min=0.0"""
+        self._write(0x24, self.rel_to_dac(v))
+
+    def reldac2(self, v):
+        """max value = 1.0, min=0.0"""
+        self._write(0x28, self.rel_to_dac(v))
+
+    def reldac3(self, v):
+        """max value = 1.0, min=0.0"""
+        self._write(0x2C, self.rel_to_dac(v))
