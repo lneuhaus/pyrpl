@@ -171,9 +171,9 @@ always @(posedge clk_i) begin
    presum1 = {(14+LOG_MODULES){1'b0}};
    presum2 = {(14+LOG_MODULES){1'b0}};
    for (i=0;i<MODULES;i=i+1) begin
-      if (|(output_select[i]&DAC1))
+      if (|(output_select[i]&OUT1))
          presum1 = presum1 + output_direct[i];
-      if (|(output_select[i]&DAC2))
+      if (|(output_select[i]&OUT2))
          presum2 = presum2 + output_direct[i];
    end
    // Some delay to leave enough time for the sum of up to 16 numbers
