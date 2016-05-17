@@ -1,6 +1,14 @@
 #!/bin/sh
 
 if (( $AUTOCORRECTPEP8 > 0 )); then
+  #finish installation
+  sudo apt-get update
+  sudo apt-get -y install python-pip
+  sudo pip install --upgrade pip
+  pip install --upgrade pip
+  pip install pep8
+  pip install autopep8
+
   # Run pep8 on all .py files in all subfolders
   # We must ignore E402 module level import not at top of file
   # because of use case sys.path.append('..'); import <module>
