@@ -48,9 +48,15 @@ class RedPitaya(SSHshell):
             self.filename = 'FPGA//red_pitaya.bin'
         else:
             self.filename = filename
-        self.subdirname, self.filename = os.path.split(self.filename)
         if dirname is None:
             self.dirname = os.path.dirname(inspect.getfile(rp))
+        if not os.path.exists(self.dirname):
+            if os.path.exists(os.path.join(self.dirname,'prypl')):
+                self.dirname = os.path.join(self.dirname,'prypl')
+            else:
+                raise IOError("Wrong dirname",
+                          "The directory of the pyrl package could not be found. Please try again calling RedPitaya with the additional argument dirname='c://github//pyrpl//pyrpl' adapted to your installation directory of pyrpl! Current dirname: "
+                           +self.dirname)
         if reloadfpga:
             self.update_fpga()
         if autostart:
@@ -76,35 +82,28 @@ class RedPitaya(SSHshell):
             "/value")
         sleep(self.delay)
 
-    def compile_lib(self):
-        self.end()
-        os.chdir(os.path.join(self.dirname, "monitor_server"))
-        os.system("make all")
-        self.ask('rw')
-        sleep(self.delay)
-        self.scp.put('monitor_server', self.serverdirname)
-        sleep(self.delay)
-        self.ask('chmod 755 ./monitor_server')
-        self.ask('ro')
-
     def update_fpga(self, filename=None):
         if filename is None:
             filename = self.filename
         self.end()
-        os.chdir(os.path.join(self.dirname, self.subdirname))
         self.ask('rw')
         sleep(self.delay)
         self.ask('mkdir ' + self.serverdirname)
         sleep(self.delay)
-        self.scp.put(filename, self.serverdirname)
+        source = os.path.join(self.dirname,filename)
+        if not os.path.isfile(source):
+            source = os.path.join(self.dirname,'fpga',filename)
+        if not os.path.isfile(source):
+            raise IOError("Wrong filename",
+              "The fpga bitfile was not found at the expected location. Try passing the arguments dirname=\"c://github//pyrpl//pyrpl//\" adapted to your installation directory of pyrpl and filename=\"red_pitaya.bin\"! Current dirname: "
+              +self.dirname
+              +" current filename: "+self.filename)
+        self.scp.put(source, self.serverdirname)
         sleep(self.delay)
         self.ask('killall nginx')
-        self.ask(
-            'cat ' +
-            os.path.join(
-                self.serverdirname,
-                filename) +
-            ' > //dev//xdevcfg')
+        self.ask('cat ' 
+                 + os.path.join(self.serverdirname, os.path.basename(filename)) 
+                 + ' > //dev//xdevcfg')
         self.ask("nginx -p //opt//www//")
         sleep(self.delay)
         self.ask('ro')
@@ -112,12 +111,11 @@ class RedPitaya(SSHshell):
     def startserver(self):
         if self.serverrunning:
             self.endserver()
-        os.chdir(os.path.join(self.dirname, "monitor_server//"))
         self.ask('rw')
         sleep(self.delay)
         self.ask('mkdir ' + self.serverdirname)
         sleep(self.delay)
-        self.scp.put('monitor_server', self.serverdirname)
+        self.scp.put(os.path.join(self.dirname, 'monitor_server//monitor_server'), self.serverdirname)
         self.ask("cd " + self.serverdirname)
         self.ask('chmod 755 ./monitor_server')
         self.ask('ro')
