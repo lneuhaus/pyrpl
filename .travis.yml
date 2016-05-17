@@ -3,7 +3,13 @@ language: python
   - "3.5"
   
 before_install:
-##- apt-get install libblas-dev liblapack-dev libatlas-base-dev gfortran
+# finish installation
+ - sudo apt-get update
+ - sudo apt-get -y install python-pip
+ - sudo pip install --upgrade pip
+ - sudo pip install pep8
+ - sudo pip install autopep8
+#- apt-get install libblas-dev liblapack-dev libatlas-base-dev gfortran
 
 install: 
   - python setup.py install
