@@ -49,7 +49,9 @@ class RedPitaya(SSHshell):
         else:
             self.filename = filename
         if dirname is None:
-            self.dirname = os.path.dirname(inspect.getfile(rp))
+            self.dirname = os.path.dirname(rp.__file__) #or inspect.getfile(rp)
+        else:
+            self.dirname = dirname
         if not os.path.exists(self.dirname):
             if os.path.exists(os.path.join(self.dirname,'prypl')):
                 self.dirname = os.path.join(self.dirname,'prypl')
