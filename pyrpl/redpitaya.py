@@ -49,12 +49,12 @@ class RedPitaya(SSHshell):
         else:
             self.filename = filename
         if dirname is None:
-            self.dirname = os.path.dirname(rp.__file__) #or inspect.getfile(rp)
+            self.dirname = os.path.abspath(os.path.dirname(rp.__file__)) #or inspect.getfile(rp)
         else:
             self.dirname = dirname
         if not os.path.exists(self.dirname):
-            if os.path.exists(os.path.join(self.dirname,'prypl')):
-                self.dirname = os.path.join(self.dirname,'prypl')
+            if os.path.exists(ps.path.abspath(os.path.join(self.dirname,'prypl'))):
+                self.dirname = ps.path.abspath(os.path.join(self.dirname,'prypl'))
             else:
                 raise IOError("Wrong dirname",
                           "The directory of the pyrl package could not be found. Please try again calling RedPitaya with the additional argument dirname='c://github//pyrpl//pyrpl' adapted to your installation directory of pyrpl! Current dirname: "
