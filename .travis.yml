@@ -17,8 +17,9 @@ install:
 
 before_script: ./autocorrectpep8_script.sh
 
-script: python setup.py test
+#script: python setup.py test
+script: python setup.py nosetests
 
 env:
 #- REDPITAYA=192.168.1.100 AUTOCORRECTPEP8=0
-- REDPITAYA=localhost AUTOCORRECTPEP8=0
+- REDPITAYA=unavailable AUTOCORRECTPEP8=0

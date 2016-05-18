@@ -18,7 +18,7 @@ class RedPitayaTestCases(unittest.TestCase):
         self.assertIsNotNone(
             self.hostname,
             msg="Set REDPITAYA=localhost or the ip of your board to proceed!")
-
+        
     def test_connect(self):
         if self.hostname != "localhost":
             r = RedPitaya(hostname=self.hostname)

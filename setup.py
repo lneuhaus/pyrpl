@@ -82,9 +82,10 @@ setup(name='pyrpl',
       requires=requirements,  # needed on my local machine...
 
       # stuff for unitary test with pytest
-      tests_require=['pytest'],
-      extras_require={'testing': ['pytest']},
-
+      tests_require=['nose>=1.0'],
+      #extras_require={'testing': ['pytest']},
+	  test_suite = 'nose.collector',
+	  
       # install options
       cmdclass={'test': PyTest, 'fpga': compile_fpga, 'server': compile_server},
       )

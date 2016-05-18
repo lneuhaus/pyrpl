@@ -198,10 +198,10 @@ class Scope(BaseModule):
     dac2 = FloatRegister(0x168, bits=14, norm=2**13, 
                          doc="DAC2 current value [volts]")
     
-    ch1_point = FloatRegister(0x10000, bits=14, norm=2**13, 
+    ch1_firstpoint = FloatRegister(0x10000, bits=14, norm=2**13, 
                               doc="1 sample of ch1 data [volts]")
     
-    ch2_point = FloatRegister(0x20000, bits=14, norm=2**13, 
+    ch2_firstpoint = FloatRegister(0x20000, bits=14, norm=2**13, 
                               doc="1 sample of ch2 data [volts]")
     
     @property
@@ -266,6 +266,8 @@ class Scope(BaseModule):
         self.duration = duration
         self.trigger_source = trigger_source
         self.trigger_armed = True
+        if trigger_source == 'immediately':
+            self.sw_trig()
 
     @property
     def sampling_time(self):
