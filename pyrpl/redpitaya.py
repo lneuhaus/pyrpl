@@ -121,7 +121,16 @@ class RedPitaya(SSHshell):
         self.ask("cd " + self.serverdirname)
         self.ask('chmod 755 ./monitor_server')
         self.ask('ro')
-        self.ask("./monitor_server " + str(self.port))
+        result = self.ask("./monitor_server " + str(self.port))
+        if "-bash" in result: # means we tried the wrong binary version
+            self.ask('rw')
+            self.scp.put(os.path.join(self.dirname, 'monitor_server//monitor_server_0.95'), self.serverdirname)
+            self.ask('chmod 755 ./monitor_server_0.95')
+            self.ask('ro')
+            result = self.ask("./monitor_server_0.95 " + str(self.port))
+        if "-bash" in result: # still not working?
+            raise Error("Could not start server", 
+                        "The server application could not be started. Try compiling it on your redpitaya and replace the file 'pyrpl//monitor_server//monitor_server' in the with the resulting binary.")
         self.serverrunning = True
 
     def endserver(self):
