@@ -163,38 +163,43 @@ generate for (j = 0; j < MODULES+EXTRAMODULES; j = j+1)
 endgenerate
 
 //sum together the direct outputs
+//
 //use a tree-like structure where at most 2 numbers are added per cycle (4 should be possible as well but lets go slow)
 //CHANNELS is the number of numbers to add, CHANNELS-1 the number of tree nodes (represented in presum)
 //presum... 0-7: sum of pairs of input signals (for 16 channels)
 //presum... 8 = 0+1, 9=2+3, 10=4+5 etc... => end result in presum[CHANNELS-1-1] 
 //right now we have an extra delay to go into sum, just to make sure that the slack is maximally positive
 
-localparam CHANNELS = 16;
+localparam CHANNELS = 2**LOG_MODULES; //not the same as MODULES+EXTRAMODULES
 reg  signed [   14+LOG_MODULES-1: 0] presum1 [CHANNELS-1-1:0]; 
-//only channel 1 for debugging
 reg  signed [   14+LOG_MODULES-1: 0] presum2 [CHANNELS-1-1:0]; 
 
 always @(posedge clk_i) begin
    if (rstn_i == 1'b0) begin
      for (i=0;i<CHANNELS;i=i+1) begin
         presum1[i] <= {14+LOG_MODULES{1'b0}};
+        presum2[i] <= {14+LOG_MODULES{1'b0}};
      end
      sum1 <= {14+LOG_MODULES{1'b0}};
      sum2 <= {14+LOG_MODULES{1'b0}};
    end
    else begin
      //first sum pairs if they are set to be summed
-     for (i=0;i<CHANNELS/2;i=i+1) begin
+     for (i=0;i<(MODULES+EXTRAMODULES)/2;i=i+1) begin
         presum1[i] <= ({14+LOG_MODULES{(|(output_select[2*i]&OUT1))}} & $signed(output_direct[2*i])) + ({14+LOG_MODULES{(|(output_select[2*i+1]&OUT1))}} & $signed(output_direct[2*i+1]));
+        presum2[i] <= ({14+LOG_MODULES{(|(output_select[2*i]&OUT2))}} & $signed(output_direct[2*i])) + ({14+LOG_MODULES{(|(output_select[2*i+1]&OUT2))}} & $signed(output_direct[2*i+1]));
      end
      //then sum the sums of pairs to go up the tree
      for (i=0;i<CHANNELS/2-1;i=i+1) begin
         presum1[8+i] <= presum1[2*i]+presum1[2*i+1];
+        presum2[8+i] <= presum2[2*i]+presum2[2*i+1];
      end
      //finally add some (probably unnecessary) delay
      sum1 <= presum1[CHANNELS-1-1];
+     sum2 <= presum2[CHANNELS-1-1];
    end
 end
+
 //saturation of outputs
 red_pitaya_saturate #( 
     .BITS_IN (14+LOG_MODULES), 
@@ -293,17 +298,7 @@ endgenerate
 
 //IIR module 
 generate for (j = 4; j < 5; j = j+1) begin
-    red_pitaya_iir_block #(
-        .IIRBITS(46),
-        .IIRSHIFT (30),
-        .IIRSTAGES (4),
-        .IIRSIGNALBITS (36),
-        .SIGNALBITS (14),
-        .SIGNALSHIFT (0),
-        .IIRCHANNEL (j)
-      )
-      iir
-      (
+    red_pitaya_iir_block iir (
 	     // data
 	     .clk_i        (  clk_i          ),  // clock
 	     .rstn_i       (  rstn_i         ),  // reset - active low

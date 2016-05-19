@@ -63,15 +63,13 @@
 // we thus have to compute 4 products
 //////////////////////////////////////////////////////////////////////////////////
 
-
 module red_pitaya_iir_block
-#(  parameter IIRBITS = 43,
-    parameter IIRSHIFT = 25,
-    parameter IIRSTAGES = 10,
-    parameter IIRSIGNALBITS = 24,
-    parameter SIGNALBITS = 14,
-    parameter SIGNALSHIFT = 2,
-    parameter IIRCHANNEL = 0
+#(  parameter IIRBITS = 46,         // iir coefficients represented with IIRBITS bits
+    parameter IIRSHIFT = 30,        // iir coefficients FIXED POINT at bit IIRSHIFT
+    parameter IIRSTAGES = 4,        // maximum number of parallel biquads 
+    parameter IIRSIGNALBITS = 36,   // internally represent calculated results with IIRSIGNALBITS bits (maybe overkill?)
+    parameter SIGNALBITS = 14,      // in- and output signal bitwidth
+    parameter SIGNALSHIFT = 0       // over-represent input by SIGNALSHIFT bits (e.g. once input averaging is implemented)
     )
     (
    // data
