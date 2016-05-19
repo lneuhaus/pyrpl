@@ -1,6 +1,0 @@
-module	name	address	type	size	description	gettable	settable	init
-HK	id	0x0	dict	32	True	False	"Design type" {0:"prototype0",1:"release1",default:"unknown"}
-HK	digital_loop	0x0C:0	bool	
-HK	expansion_P_direction
-HK	expansion_P
-HK	

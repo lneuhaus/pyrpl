@@ -148,12 +148,8 @@ assign output_signal[ADC2] = dat_b_i;
 assign output_signal[DAC1] = dat_a_o;
 assign output_signal[DAC2] = dat_b_o;
 
-reg  signed [   14+LOG_MODULES-1: 0] presum1; 
-reg  signed [   14+LOG_MODULES-1: 0] presum2; 
 reg  signed [   14+LOG_MODULES-1: 0] sum1; 
 reg  signed [   14+LOG_MODULES-1: 0] sum2; 
-reg  signed [   14+LOG_MODULES-1: 0] sum1a; 
-reg  signed [   14+LOG_MODULES-1: 0] sum2a; 
 
 wire dac_a_saturated; //high when dac_a is saturated
 wire dac_b_saturated; //high when dac_b is saturated
@@ -167,20 +163,37 @@ generate for (j = 0; j < MODULES+EXTRAMODULES; j = j+1)
 endgenerate
 
 //sum together the direct outputs
+//use a tree-like structure where at most 2 numbers are added per cycle (4 should be possible as well but lets go slow)
+//CHANNELS is the number of numbers to add, CHANNELS-1 the number of tree nodes (represented in presum)
+//presum... 0-7: sum of pairs of input signals (for 16 channels)
+//presum... 8 = 0+1, 9=2+3, 10=4+5 etc... => end result in presum[CHANNELS-1-1] 
+//right now we have an extra delay to go into sum, just to make sure that the slack is maximally positive
+
+localparam CHANNELS = 16;
+reg  signed [   14+LOG_MODULES-1: 0] presum1 [CHANNELS-1-1:0]; 
+//only channel 1 for debugging
+reg  signed [   14+LOG_MODULES-1: 0] presum2 [CHANNELS-1-1:0]; 
+
 always @(posedge clk_i) begin
-   presum1 = {(14+LOG_MODULES){1'b0}};
-   presum2 = {(14+LOG_MODULES){1'b0}};
-   for (i=0;i<MODULES;i=i+1) begin
-      if (|(output_select[i]&OUT1))
-         presum1 = presum1 + output_direct[i];
-      if (|(output_select[i]&DAC2))
-         presum2 = presum2 + output_direct[i];
+   if (rstn_i == 1'b0) begin
+     for (i=0;i<CHANNELS;i=i+1) begin
+        presum1[i] <= {14+LOG_MODULES{1'b0}};
+     end
+     sum1 <= {14+LOG_MODULES{1'b0}};
+     sum2 <= {14+LOG_MODULES{1'b0}};
    end
-   // Some delay to leave enough time for the sum of up to 16 numbers
-   sum1a <= presum1;
-   sum2a <= presum2;
-   sum1 <= sum1a;
-   sum2 <= sum2a;
+   else begin
+     //first sum pairs if they are set to be summed
+     for (i=0;i<CHANNELS/2;i=i+1) begin
+        presum1[i] <= ({14+LOG_MODULES{(|(output_select[2*i]&OUT1))}} & $signed(output_direct[2*i])) + ({14+LOG_MODULES{(|(output_select[2*i+1]&OUT1))}} & $signed(output_direct[2*i+1]));
+     end
+     //then sum the sums of pairs to go up the tree
+     for (i=0;i<CHANNELS/2-1;i=i+1) begin
+        presum1[8+i] <= presum1[2*i]+presum1[2*i+1];
+     end
+     //finally add some (probably unnecessary) delay
+     sum1 <= presum1[CHANNELS-1-1];
+   end
 end
 //saturation of outputs
 red_pitaya_saturate #( 
