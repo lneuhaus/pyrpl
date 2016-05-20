@@ -27,6 +27,15 @@ var/
 *.egg-info/
 .installed.cfg
 *.egg
+# vivado windows stuff
+#pyrpl/fpga/.srcs
+pyrpl/fpga/.*
+#pyrpl/fpga/.Xil
+pyrpl/fpga/out
+pyrpl/fpga/sdk
+pyrpl/fpga/*.html
+pyrpl/fpga/*.xml
+
 
 #fpga-related
 fpga/out/

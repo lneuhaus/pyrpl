@@ -156,6 +156,11 @@ class Scope(BaseModule):
                                   doc="ch1 trigger threshold [volts]")
     
     trigger_delay = Register(0x10, doc="trigger delay [samples]")
+
+    trigger_timestamp = LongRegister(0x15C,
+                                     bits=64,
+                                     doc=["An absolute counter ", 
+                                         "for the trigger time [cycles]"])
     
     _decimations = {2**0: 2**0,
                     2**3: 2**3,
