@@ -34,7 +34,7 @@ module red_pitaya_iq_block #(
 	  //input filter parameters
 	  parameter INPUTFILTERSTAGES    = 1,  //how many cascaded first-order input filters
 	  parameter INPUTFILTERSHIFTBITS = 4,  // up to 2^4 different cutoff frequencies
-	  parameter INPUTFILTERMINBW = 50,  // up to 2^4 different cutoff frequencies
+	  parameter INPUTFILTERMINBW = 50,  // minimum realizable filter bandwidth - within factor of 2pi
 
 	  //fgen for sin/cos creation parameters
 	  parameter LUTSZ     =  11,   //log2 of number of LUT entries
@@ -280,7 +280,7 @@ reg    [32-1:0] na_sleepcycles;  //cycles to wait before averaging starts
 reg    [32-1:0] na_averages_remaining;
 reg    [32-1:0] na_sleep_remaining;
 
-//last 1 means iq_channel_1 frequency was changed = trigger event
+//last one means iq_channel_1 frequency was changed = trigger event
 always @(posedge clk_i) begin
     if (rstn_i == 1'b0) begin //reset
         iq_i_sum <= {62{1'b0}};

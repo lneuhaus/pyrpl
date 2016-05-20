@@ -36,7 +36,12 @@ class MonitorClient(object):
         self._address = address
         self._port = port
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.connect((address, port))
+        try:
+            self.socket.connect((self._address, self._port))
+        except socket.error:
+            "Socket error during connection." # mostly because of bad port
+            self._port = self._restartserver() # try a different port here by putting port=-1
+            self.socket.connect((address, self._port))
         self.socket.settimeout(1.0)  # 1 second timeout for socket operations
 
     def close(self):
@@ -56,13 +61,15 @@ class MonitorClient(object):
 
     def __del__(self):
         self.close()
-
+        
+    #the public methods to use which will recover from connection problems
     def reads(self, addr, length):
         return self.trytwice(self._reads, addr, length)
 
     def writes(self, addr, values):
         return self.trytwice(self._writes, addr, values)
-
+    
+    #the actual code
     def _reads(self, addr, length):
         if length > 65535:
             length = 65535
@@ -117,8 +124,22 @@ class MonitorClient(object):
 
     def restart(self):
         self.close()
-        self._restartserver()
+        port = self._restartserver()
         self.__init__(
             address=self._address,
-            port=self._port,
+            port=port,
             restartserver=self._restartserver)
+
+class DummyClient(object):
+    
+    def reads(self, addr, length):
+        return np.zeros(length, dtype=np.uint32)
+
+    def writes(self, addr, values):
+        return True
+    
+    def restart(self):
+        pass
+    
+    def close(self):
+        pass

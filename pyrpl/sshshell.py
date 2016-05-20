@@ -19,7 +19,7 @@
 
 import paramiko
 from time import sleep
-from scp import SCPClient
+from scp import SCPClient, SCPException
 import os
 
 
@@ -30,9 +30,10 @@ class SSHshell(object):
             hostname='localhost',
             user='root',
             password='root',
-            verbose=True):
+            verbose=True,
+            delay=0.05):
         self.verbose = verbose
-        self.delay = 0.05
+        self.delay = delay
         self.apprunning = False
         self.hostname = hostname
         self.user = user
@@ -46,9 +47,13 @@ class SSHshell(object):
             password=self.password,
             port=self.port)
         self.channel = self.ssh.invoke_shell()
-        self.scp = SCPClient(self.ssh.get_transport())
+        self.startscp()
         # self.sleep(0.1)
-
+   
+    def startscp(self):
+        self.scp = SCPClient(self.ssh.get_transport())
+        
+    
     def write(self, text):
         if self.channel.send_ready() and not text == "":
             return self.channel.send(text)
