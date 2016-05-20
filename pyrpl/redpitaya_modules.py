@@ -128,7 +128,7 @@ class Scope(BaseModule):
                             doc="Set to True to reset writestate machine. \
                             Automatically goes back to false. ")
     
-    trigger_armed = BoolRegister(0x0, 0, "Set to True to arm trigger")
+    trigger_armed = BoolRegister(0x0, 0, doc="Set to True to arm trigger")
     
     def sw_trig(self):
         self.trigger_source = "immediately"
