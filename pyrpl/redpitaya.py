@@ -156,7 +156,7 @@ class RedPitaya(SSHshell):
             result = self.ask("./monitor_server " + str(self.port))
             sleep(self.delay)
             result += self.ask()
-            if not "bash" in result: 
+            if not "sh" in result: 
                 print "Server application started on port",self.port
                 return self.port
             else: # means we tried the wrong binary version. make sure server is not running and try again with next file
@@ -175,7 +175,7 @@ class RedPitaya(SSHshell):
         self.endserver()
         sleep(self.delay)
         result = self.ask(self.serverdirname+"/monitor_server " + str(self.port))
-        if not "-bash" in result: # means we tried the wrong binary version
+        if not "sh" in result: # means we tried the wrong binary version
             print "Server application started on port",self.port
             self.serverrunning = True
             return self.port
