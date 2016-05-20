@@ -160,12 +160,13 @@ class Scope(BaseModule):
     current_timestamp = LongRegister(0x15C,
                                      bits=64,
                                      doc="An absolute counter " \
-                                         + "for the trigger time [cycles]")
+                                         + "for the time [cycles]")
+    
+
     trigger_timestamp = LongRegister(0x164,
                                      bits=64,
                                      doc= "An absolute counter " \
                                          +"for the trigger time [cycles]")
-
     
     _decimations = {2**0: 2**0,
                     2**3: 2**3,
