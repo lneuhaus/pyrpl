@@ -27,6 +27,8 @@ import random
 
 from sshshell import SSHshell
 from scp import SCPException
+from paramiko import SSHException
+
 import monitor_client
 import redpitaya_modules as rp
 
@@ -45,10 +47,11 @@ class RedPitaya(SSHshell):
         super(RedPitaya, self).__init__(hostname=hostname, user=user,
                                         password=password, verbose=verbose,
                                         delay = delay)
-        self.serverdirname = "//opt//rplockbox//"
+        self.serverdirname = "//opt//pyrpl//"
         self.serverrunning = False
         self.hostname = hostname
         self.port = port
+        self.defaultport = port # sometimes we randomly pick another port to bypass problems of the linux on redpitaya
         self.conn = None
         self.client = None
         self.frequency_correction = frequency_correction
@@ -114,7 +117,7 @@ class RedPitaya(SSHshell):
               +" current filename: "+self.filename)
         try:
             self.scp.put(source, self.serverdirname)
-        except SCPException:
+        except SCPException, SSHException:
             # try again before failing
             self.startscp()
             sleep(self.delay)
@@ -141,7 +144,7 @@ class RedPitaya(SSHshell):
             sleep(self.delay)
             try:
                 self.scp.put(os.path.join(self.dirname, 'monitor_server', serverfile), self.serverdirname+"monitor_server")
-            except SCPException:
+            except SCPException,SSHException:
                 print "Upload error. Try again after rebooting your RedPitaya.."
             sleep(self.delay)
             self.ask('chmod 755 ./monitor_server')
@@ -157,8 +160,8 @@ class RedPitaya(SSHshell):
                 self.endserver()
         
         #try once more on a different port
-        if self.port == 2222:
-            self.port = random.randint(2223,50000)
+        if self.port == self.defaultport:
+            self.port = random.randint(self.defaultport,50000)
             print "Problems to start the server application. Trying again with a different port number",self.port
             return self.installserver()
         
@@ -168,14 +171,11 @@ class RedPitaya(SSHshell):
     def startserver(self):
         self.endserver()
         sleep(self.delay)
-        self.ask("cd " + self.serverdirname)
-        sleep(self.delay)
-        if 'monitor_server' in self.ask('ls'):
-            result = self.ask("./monitor_server " + str(self.port))
-            if not "-bash" in result: # means we tried the wrong binary version
-                print "Server application started on port",self.port
-                self.serverrunning = True
-                return self.port
+        result = self.ask(self.serverdirname+"/monitor_server " + str(self.port))
+        if not "-bash" in result: # means we tried the wrong binary version
+            print "Server application started on port",self.port
+            self.serverrunning = True
+            return self.port
         #something went wrong
         return self.installserver()
     
