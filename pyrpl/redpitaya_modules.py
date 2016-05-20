@@ -58,10 +58,10 @@ class BaseModule(object):
         self.__doc__ = "Available registers: \r\n\r\n"+self.help()
 
     def _reads(self, addr, length):
-        return self._client._reads(self._addr_base + addr, length)
+        return self._client.reads(self._addr_base + addr, length)
 
     def _writes(self, addr, values):
-        self._client._writes(self._addr_base + addr, values)
+        self._client.writes(self._addr_base + addr, values)
 
     def _read(self, addr):
         return int(self._reads(addr, 1)[0])

@@ -18,24 +18,33 @@
 
 import os
 from time import sleep
+import time
 import socket
 import math
 import numpy as np
 import inspect
+import random
 
 from sshshell import SSHshell
+from scp import SCPException
 import monitor_client
 import redpitaya_modules as rp
 
 class RedPitaya(SSHshell):
     def __init__(self, hostname='192.168.1.100', port=2222,
                  user='root', password='root',
-                 verbose=False, autostart=True, reloadfpga=True,
+                 verbose=False, delay=0.05, 
+                 autostart=True, reloadfpga=True, reloadserver=False, 
                  filename=None, dirname=None,
-                 leds_off=True, frequency_correction=1.0):
+                 leds_off=True, frequency_correction=1.0,
+                 ):
+        """installs and starts the interface on the RedPitaya at hostname that allows remote control
+        
+        if you are experiencing problems, try to increase delay, set verbose to True and change the port number"""
         self.license()
         super(RedPitaya, self).__init__(hostname=hostname, user=user,
-                                        password=password, verbose=verbose)
+                                        password=password, verbose=verbose,
+                                        delay = delay)
         self.serverdirname = "//opt//rplockbox//"
         self.serverrunning = False
         self.hostname = hostname
@@ -61,6 +70,8 @@ class RedPitaya(SSHshell):
                            +self.dirname)
         if reloadfpga:
             self.update_fpga()
+        if reloadserver:
+            self.installserver()
         if autostart:
             self.start()
 
@@ -88,6 +99,7 @@ class RedPitaya(SSHshell):
         if filename is None:
             filename = self.filename
         self.end()
+        sleep(self.delay)
         self.ask('rw')
         sleep(self.delay)
         self.ask('mkdir ' + self.serverdirname)
@@ -100,7 +112,13 @@ class RedPitaya(SSHshell):
               "The fpga bitfile was not found at the expected location. Try passing the arguments dirname=\"c://github//pyrpl//pyrpl//\" adapted to your installation directory of pyrpl and filename=\"red_pitaya.bin\"! Current dirname: "
               +self.dirname
               +" current filename: "+self.filename)
-        self.scp.put(source, self.serverdirname)
+        try:
+            self.scp.put(source, self.serverdirname)
+        except SCPException:
+            # try again before failing
+            self.startscp()
+            sleep(self.delay)
+            self.scp = SCPClient(self.ssh.get_transport())
         sleep(self.delay)
         self.ask('killall nginx')
         self.ask('cat ' 
@@ -110,38 +128,66 @@ class RedPitaya(SSHshell):
         sleep(self.delay)
         self.ask('ro')
 
-    def startserver(self):
-        if self.serverrunning:
-            self.endserver()
+    def installserver(self):
+        self.endserver()
+        sleep(self.delay)
         self.ask('rw')
         sleep(self.delay)
         self.ask('mkdir ' + self.serverdirname)
         sleep(self.delay)
-        self.scp.put(os.path.join(self.dirname, 'monitor_server//monitor_server'), self.serverdirname)
         self.ask("cd " + self.serverdirname)
-        self.ask('chmod 755 ./monitor_server')
-        self.ask('ro')
-        result = self.ask("./monitor_server " + str(self.port))
-        if "-bash" in result: # means we tried the wrong binary version
-            self.ask('rw')
-            self.scp.put(os.path.join(self.dirname, 'monitor_server//monitor_server_0.95'), self.serverdirname)
-            self.ask('chmod 755 ./monitor_server_0.95')
+        #try both versions
+        for serverfile in ['monitor_server','monitor_server_0.95']:
+            sleep(self.delay)
+            try:
+                self.scp.put(os.path.join(self.dirname, 'monitor_server', serverfile), self.serverdirname+"monitor_server")
+            except SCPException:
+                print "Upload error. Try again after rebooting your RedPitaya.."
+            sleep(self.delay)
+            self.ask('chmod 755 ./monitor_server')
+            sleep(self.delay)
             self.ask('ro')
-            result = self.ask("./monitor_server_0.95 " + str(self.port))
-        if "-bash" in result: # still not working?
-            raise Error("Could not start server", 
-                        "The server application could not be started. Try compiling it on your redpitaya and replace the file 'pyrpl//monitor_server//monitor_server' in the with the resulting binary.")
-        self.serverrunning = True
-
+            result = self.ask("./monitor_server " + str(self.port))
+            sleep(self.delay)
+            result += self.ask()
+            if not "bash" in result: 
+                print "Server application started on port",self.port
+                return self.port
+            else: # means we tried the wrong binary version. make sure server is not running and try again with next file
+                self.endserver()
+        
+        #try once more on a different port
+        if self.port == 2222:
+            self.port = random.randint(2223,50000)
+            print "Problems to start the server application. Trying again with a different port number",self.port
+            return self.installserver()
+        
+        print "Server application could not be started. Try to recompile monitor_server on your RedPitaya (see manual). "
+        return None
+    
+    def startserver(self):
+        self.endserver()
+        sleep(self.delay)
+        self.ask("cd " + self.serverdirname)
+        sleep(self.delay)
+        if 'monitor_server' in self.ask('ls'):
+            result = self.ask("./monitor_server " + str(self.port))
+            if not "-bash" in result: # means we tried the wrong binary version
+                print "Server application started on port",self.port
+                self.serverrunning = True
+                return self.port
+        #something went wrong
+        return self.installserver()
+    
     def endserver(self):
-        self.ask('\x03')
+        self.ask('\x03') #exit running server application
         if 'pitaya' in self.ask():
-            print 'Console ready!'
+            print '>' # formerly 'console ready'
+        sleep(self.delay)
+        # make sure no other monitor_server blocks the port
+        self.ask('killall monitor_server') 
         self.serverrunning = False
-
-    def killserver(self):
-        return self.ask('killall monitor_server')
-
+        
     def startclient(self):
         self.client = monitor_client.MonitorClient(
             self.hostname, self.port, restartserver=self.restartserver)
@@ -158,14 +204,13 @@ class RedPitaya(SSHshell):
         self.iq2 = rp.IQ(self.client, module='iq2')
         self.asg1 = rp.Asg1(self.client)
         self.asg2 = rp.Asg2(self.client)
-        print "Client started with success!"
+        print "Client started with success"
 
     def endclient(self):
         del self.client
         self.client = None
 
     def start(self):
-        self.killserver()
         if self.leds_off:
             self.switch_led(gpiopin=0, state=False)
             self.switch_led(gpiopin=7, state=False)
@@ -176,7 +221,6 @@ class RedPitaya(SSHshell):
     def end(self):
         self.endserver()
         self.endclient()
-        self.killserver()
 
     def __del__(self):
         self.end()
@@ -186,12 +230,13 @@ class RedPitaya(SSHshell):
         self.end()
         self.start()
 
-    def restartserver(self):
+    def restartserver(self, port=None):
         """restart the server. usually executed when client encounters an error"""
-        self.endserver()
-        self.ask("./monitor_server " + str(self.port))
-        self.serverrunning = True
-        print "Restarted monitor_server"
+        if port is not None:
+            if self.port < 0: #code to try a random port
+                self.port = random.randint(2223,50000)
+            self.port = port
+        return self.startserver()
 
     def license(self):
         print """\r\n    pyrpl  Copyright (C) 2014-2016  Leonhard Neuhaus
@@ -199,3 +244,4 @@ class RedPitaya(SSHshell):
     "LICENSE" in the source directory. This is free software, and you are
     welcome to redistribute it under certain conditions; read the file
     "LICENSE" in the source directory for details.\r\n"""
+
