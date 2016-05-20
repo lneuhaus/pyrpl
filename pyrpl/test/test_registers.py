@@ -4,8 +4,8 @@ import os
 import numpy as np
 
 from pyrpl import RedPitaya
-from pyrpl.pyrpl.redpitaya_modules import *
-from pyrpl.pyrpl.registers import *
+from pyrpl.redpitaya_modules import *
+from pyrpl.registers import *
 
 
 
@@ -37,12 +37,12 @@ class TestClass(object):
             # try to read
             value = module.__getattribute__(regkey)
             if type(value) != int: #make sure Register represents an int
-                assert False
+                assert False, 'wrong type: int != %s'%str(type(value))
         if type(reg)==LongRegister:
             # try to read
             value = module.__getattribute__(regkey)
-            if type(value) != int: #make sure Register represents an int
-                assert False
+            if type(value) != int and type(value) != long: 
+                assert False, 'wrong type: int/long != %s'%str(type(value))#make sure Register represents an int
         if type(reg)==BoolRegister or type(reg)==IORegister:
             # try to read
             value = module.__getattribute__(regkey)

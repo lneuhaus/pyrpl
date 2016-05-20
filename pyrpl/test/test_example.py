@@ -22,4 +22,5 @@ class TestClass(object):
 			assert False
 			
     def test_example2(self):
+        if self.r.asg1.frequency < 0:
 			assert False
