@@ -40,7 +40,7 @@ class MonitorClient(object):
             self.socket.connect((self._address, self._port))
         except socket.error:
             "Socket error during connection." # mostly because of bad port
-            self._port = self._restartserver() # try to change port here by putting port=-1
+            self._port = self._restartserver() # try a different port here by putting port=-1
             self.socket.connect((address, self._port))
         self.socket.settimeout(1.0)  # 1 second timeout for socket operations
 
