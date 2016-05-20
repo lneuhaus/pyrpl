@@ -44,6 +44,9 @@ class RedPitaya(SSHshell):
         
         if you are experiencing problems, try to increase delay, set verbose to True and change the port number"""
         self.license()
+        if hostname == "unknown": # simulation mode - start without connecting
+            self.startdummyclient()
+            return
         super(RedPitaya, self).__init__(hostname=hostname, user=user,
                                         password=password, verbose=verbose,
                                         delay = delay)
@@ -188,24 +191,6 @@ class RedPitaya(SSHshell):
         self.ask('killall monitor_server') 
         self.serverrunning = False
         
-    def startclient(self):
-        self.client = monitor_client.MonitorClient(
-            self.hostname, self.port, restartserver=self.restartserver)
-        self.hk = rp.HK(self.client)
-        self.ams = rp.AMS(self.client)
-        self.scope = rp.Scope(self.client)
-        self.pid0 = rp.Pid(self.client, module='pid0')
-        self.pid1 = rp.Pid(self.client, module='pid1')
-        self.pid2 = rp.Pid(self.client, module='pid2')
-        self.pid3 = rp.Pid(self.client, module='pid3')
-        self.iir = rp.IIR(self.client, module='iir')
-        self.iq0 = rp.IQ(self.client, module='iq0')
-        self.iq1 = rp.IQ(self.client, module='iq1')
-        self.iq2 = rp.IQ(self.client, module='iq2')
-        self.asg1 = rp.Asg1(self.client)
-        self.asg2 = rp.Asg2(self.client)
-        print "Client started with success"
-
     def endclient(self):
         del self.client
         self.client = None
@@ -245,3 +230,39 @@ class RedPitaya(SSHshell):
     welcome to redistribute it under certain conditions; read the file
     "LICENSE" in the source directory for details.\r\n"""
 
+    def startclient(self):
+        self.client = monitor_client.MonitorClient(
+            self.hostname, self.port, restartserver=self.restartserver)
+        self.hk = rp.HK(self.client)
+        self.ams = rp.AMS(self.client)
+        self.scope = rp.Scope(self.client)
+        self.pid0 = rp.Pid(self.client, module='pid0')
+        self.pid1 = rp.Pid(self.client, module='pid1')
+        self.pid2 = rp.Pid(self.client, module='pid2')
+        self.pid3 = rp.Pid(self.client, module='pid3')
+        self.iir = rp.IIR(self.client, module='iir')
+        self.iq0 = rp.IQ(self.client, module='iq0')
+        self.iq1 = rp.IQ(self.client, module='iq1')
+        self.iq2 = rp.IQ(self.client, module='iq2')
+        self.asg1 = rp.Asg1(self.client)
+        self.asg2 = rp.Asg2(self.client)
+        print "Client started with success"
+
+    def startdummyclient(self):
+        self.client = monitor_client.DummyClient()
+        self.hk = rp.HK(self.client)
+        self.ams = rp.AMS(self.client)
+        self.scope = rp.Scope(self.client)
+        self.pid0 = rp.Pid(self.client, module='pid0')
+        self.pid1 = rp.Pid(self.client, module='pid1')
+        self.pid2 = rp.Pid(self.client, module='pid2')
+        self.pid3 = rp.Pid(self.client, module='pid3')
+        self.iir = rp.IIR(self.client, module='iir')
+        self.iq0 = rp.IQ(self.client, module='iq0')
+        self.iq1 = rp.IQ(self.client, module='iq1')
+        self.iq2 = rp.IQ(self.client, module='iq2')
+        self.asg1 = rp.Asg1(self.client)
+        self.asg2 = rp.Asg2(self.client)
+        print "Dummy mode started..."
+
+    

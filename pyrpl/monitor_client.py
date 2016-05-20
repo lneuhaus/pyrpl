@@ -129,3 +129,17 @@ class MonitorClient(object):
             address=self._address,
             port=port,
             restartserver=self._restartserver)
+
+class DummyClient(object):
+    
+    def reads(self, addr, length):
+        return np.zeros(length, dtype=np.uint32)
+
+    def writes(self, addr, values):
+        return True
+    
+    def restart(self):
+        pass
+    
+    def close(self):
+        pass
