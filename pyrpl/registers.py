@@ -71,6 +71,7 @@ class BoolRegister(Register):
     def __init__(self, address, bit=0, invert=False, **kwargs):
         super(BoolRegister,self).__init__(address=address, **kwargs)
         self.bit = bit
+        assert type(invert)==bool
         self.invert = invert
         
     def to_python(self, value):

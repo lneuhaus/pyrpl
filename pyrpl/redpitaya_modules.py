@@ -128,7 +128,7 @@ class Scope(BaseModule):
                             doc="Set to True to reset writestate machine. \
                             Automatically goes back to false. ")
     
-    trigger_armed = BoolRegister(0x0, 0, "Set to True to arm trigger")
+    trigger_armed = BoolRegister(0x0, 0, doc="Set to True to arm trigger")
     
     def sw_trig(self):
         self.trigger_source = "immediately"
@@ -162,6 +162,7 @@ class Scope(BaseModule):
                                      doc="An absolute counter " \
                                          + "for the time [cycles]")
     
+
     trigger_timestamp = LongRegister(0x164,
                                      bits=64,
                                      doc= "An absolute counter " \
@@ -235,27 +236,27 @@ class Scope(BaseModule):
     def data_ch1(self):
         """ acquired (normalized) data from ch1"""
         return np.array(
-                    np.roll(self.rawdata_ch1, -(self._write_pointer_trigger + 1)),
+                    np.roll(self.rawdata_ch1, -(self._write_pointer_trigger + self.trigger_delay - 3)),
                     dtype = np.float)/2**13
     @property
     def data_ch2(self):
         """ acquired (normalized) data from ch2"""
         return np.array(
-                    np.roll(self.rawdata_ch2, -(self._write_pointer_trigger + 1)),
+                    np.roll(self.rawdata_ch2, -(self._write_pointer_trigger + self.trigger_delay - 3)),
                     dtype = np.float)/2**13
 
     @property
     def data_ch1_current(self):
         """ (unnormalized) data from ch1 while acquisition is still running"""
         return np.array(
-                    np.roll(self.rawdata_ch1, -(self._write_pointer_current + 1)),
+                    np.roll(self.rawdata_ch1, -(self._write_pointer_current - 1)),
                     dtype = np.float)/2**13
 
     @property
     def data_ch2_current(self):
         """ (unnormalized) data from ch2 while acquisition is still running"""
         return np.array(
-                    np.roll(self.rawdata_ch2, -(self._write_pointer_current + 1)),
+                    np.roll(self.rawdata_ch2, -(self._write_pointer_current - 1)),
                     dtype = np.float)/2**13
     
     @property
