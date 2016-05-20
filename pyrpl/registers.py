@@ -37,12 +37,12 @@ class Register(object):
             obj._write(self.address,new)
             
 class LongRegister(Register):
-    """Interface for register of python type int with arbitrary length 'bits' (effectively unsigned)"""
+    """Interface for register of python type int/long with arbitrary length 'bits' (effectively unsigned)"""
     def __init__(self, address, bits=64, **kwargs):
         super(LongRegister,self).__init__(address=address, **kwargs)
         self.bits = bits
         self.size = (32+bits-bits%32)/32
-        
+
     def __get__(self, obj, objtype=None):
         values = obj._reads(self.address, self.size)
         value = int(0)
