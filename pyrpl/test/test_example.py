@@ -7,7 +7,7 @@ from pyrpl import RedPitaya
 
 
 class TestClass(object):
-    
+        
     @classmethod
     def setUpAll(self):
         hostname = os.environ.get('REDPITAYA')
@@ -22,5 +22,4 @@ class TestClass(object):
 			assert False
 			
     def test_example2(self):
-        if r.asg.frequency < 0:
 			assert False
