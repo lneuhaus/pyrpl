@@ -69,6 +69,7 @@
 module red_pitaya_scope #(
   parameter RSZ = 14  // RAM size 2^RSZ
 )(
+
    // ADC
    input                 adc_clk_i       ,  // ADC clock
    input                 adc_rstn_i      ,  // ADC reset - active low
@@ -133,6 +134,7 @@ reg  [ 18-1: 0] set_b_filt_aa  ;
 reg  [ 25-1: 0] set_b_filt_bb  ;
 reg  [ 25-1: 0] set_b_filt_kk  ;
 reg  [ 25-1: 0] set_b_filt_pp  ;
+
 
 
 // bypass the filtering for the scope in order to spare the DSP slices for other stuff, 
@@ -239,12 +241,17 @@ reg    [ 20-1: 0] set_deb_len   ; // debouncing length (glitch free time after a
 
 reg               triggered    ;
 
+reg   [ 64 - 1:0] timestamp_trigger;
+reg   [ 64 - 1:0] ctr_value        ;
+
 // Write
 always @(posedge adc_clk_i) begin
    if (adc_rstn_i == 1'b0) begin
       adc_wp      <= {RSZ{1'b0}};
       adc_we      <=  1'b0      ;
       adc_wp_trig <= {RSZ{1'b0}};
+	  timestamp_trigger <= 64'h0;
+	  ctr_value <=         64'h0;
       adc_wp_cur  <= {RSZ{1'b0}};
       adc_we_cnt  <= 32'h0      ;
       adc_dly_cnt <= 32'h0      ;
@@ -252,6 +259,7 @@ always @(posedge adc_clk_i) begin
       triggered   <=  1'b0      ;
    end
    else begin
+      ctr_value <= ctr_value + 1'b1;
       if (adc_arm_do)
          adc_we <= 1'b1 ;
       else if (((adc_dly_do || adc_trig) && (adc_dly_cnt == 32'h0) && ~adc_we_keep) || adc_rst_do) //delayed reached or reset
@@ -268,11 +276,13 @@ always @(posedge adc_clk_i) begin
       else if (adc_we && adc_dv)
          adc_wp <= adc_wp + 1;
 
-      if (adc_rst_do)
+      if (adc_rst_do) begin
          adc_wp_trig <= {RSZ{1'b0}};
-      else if (adc_trig && !adc_dly_do)
+		 timestamp_trigger <= ctr_value ;
+      end else if (adc_trig && !adc_dly_do) begin
          adc_wp_trig <= adc_wp_cur ; // save write pointer at trigger arrival
-
+		 timestamp_trigger <= ctr_value ;
+	  end
       if (adc_rst_do)
          adc_wp_cur <= {RSZ{1'b0}};
       else if (adc_we && adc_dv)
@@ -294,9 +304,6 @@ always @(posedge adc_clk_i) begin
          triggered <= 1'b1     ; //communicate the precise moment of the trigger to the main module
       else if ((adc_dly_do && (adc_dly_cnt == 32'b0)) || adc_rst_do || adc_arm_do) //delayed reached or reset
          triggered <= 1'b0     ; 
-
-         
-         
 
    end
 end
@@ -846,12 +853,45 @@ end else begin
     
      20'h00154 : begin sys_ack <= sys_en;          sys_rdata <= {{32-14{1'b0}}, adc_a_i }         ; end
      20'h00158 : begin sys_ack <= sys_en;          sys_rdata <= {{32-14{1'b0}}, adc_b_i }         ; end
+	 
+	 //My first line of Verilog !
+	 20'h0015c : begin sys_ack <= sys_en;          sys_rdata <= ctr_value[32-1:0]     		    ; end
+	 20'h00160 : begin sys_ack <= sys_en;          sys_rdata <= ctr_value[64-1:32]			    ; end
+	 
+	 20'h00164 : begin sys_ack <= sys_en;          sys_rdata <= timestamp_trigger[32-1:0]       ; end
+	 20'h00168 : begin sys_ack <= sys_en;          sys_rdata <= timestamp_trigger[64-1:32]	    ; end
 
      20'h1???? : begin sys_ack <= adc_rd_dv;       sys_rdata <= {16'h0, 2'h0,adc_a_rd}              ; end
      20'h2???? : begin sys_ack <= adc_rd_dv;       sys_rdata <= {16'h0, 2'h0,adc_b_rd}              ; end
+	 
+	 
 
        default : begin sys_ack <= sys_en;          sys_rdata <=  32'h0                              ; end
    endcase
 end
 
 endmodule
+
+
+/*
+// COUNTER MODULE
+module counter_64_bit #(
+    parameter COUNTERSZ = 64
+)
+(
+    input           dac_clk_i,
+    input           reset_i,
+    output [COUNTERSZ-1:0] value_o
+    );
+
+always @(posedge dac_clk_i) begin
+    //reset
+    if (reset_i == 1'b1) begin
+        value_o <= COUNTERSZ'b0;
+       end
+	value_0 <= value_0 + 1'b1;
+end
+
+endmodule
+
+*/

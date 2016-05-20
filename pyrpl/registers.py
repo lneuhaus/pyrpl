@@ -79,6 +79,7 @@ class SelectRegister(Register):
     def from_python(self, value):
         return self.options[value]
 
+
 class FloatRegister(Register):
     """Implements a fixed point register, seen like a (signed) float from python"""
     def __init__(self, address, 
