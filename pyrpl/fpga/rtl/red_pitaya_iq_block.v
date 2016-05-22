@@ -316,7 +316,7 @@ end
 wire [SIGNALBITS-1:0] pfd_integral;
 
 reg pfd_on;
-red_pitaya_pfd_block #(.ISR (0)) pfd_block (
+red_pitaya_pfd_block pfd_block (
 	.rstn_i(pfd_on),
 	.clk_i (clk_i),
 	.s1 (dat_i_filtered[SIGNALBITS-1]), //sign bit of input signal as clock source

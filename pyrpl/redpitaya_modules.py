@@ -21,9 +21,11 @@ import numpy as np
 import time
 from time import sleep
 import sys
+import matplotlib.pyplot as plt
 
 from registers import *
 from bijection import Bijection
+import iir
 
 class BaseModule(object):
     
@@ -827,7 +829,7 @@ class IQ(FilterModule):
                       doc="If set to False, turns off the module, e.g. to \
                       re-synchronize the phases")
     
-    on = BoolRegister(0x100, 1, 
+    pfd_on = BoolRegister(0x100, 1, 
                       doc="If True: Turns on the PFD module,\
                         if False: turns it off and resets integral")
 
@@ -912,12 +914,14 @@ class IQ(FilterModule):
 
     @property
     def _nadata(self):
+        attempt = 0
         a, b, c, d = self._reads(0x140, 4)
-        if not (
-            (a >> 31 == 0) and (b >> 31 == 0) 
-            and (c >> 31 == 0) and (d >> 31 == 0)):
-            print "Averaging not finished. Impossible to estimate value"
-            return 0 / 0
+        while not ((a >> 31 == 0) and (b >> 31 == 0) 
+                   and (c >> 31 == 0) and (d >> 31 == 0)):
+            a, b, c, d = self._reads(0x140, 4)
+            attempt += 1
+            if attempt > 10:
+                raise Exception("Trying to recover NA data while averaging is not finished. Some setting is wrong. ")
         sum = (np.complex128(self._to_pyint(a,bitlength=31))  
             + np.complex128(self._to_pyint(b,bitlength=31) * 2**31)  
             + 1j * np.complex128(self._to_pyint(c, bitlength=31)) 
@@ -941,6 +945,7 @@ class IQ(FilterModule):
             maxamplitude=1.0, # amplitude can be limited
             ): #
         print "Estimated acquisition time:", float(avg + sleeptimes) * points / rbw , "s"
+        sys.stdout.flush() # make sure the time is shown        
         if logscale:
             x = np.logspace(
                 np.log10(start),
@@ -965,14 +970,17 @@ class IQ(FilterModule):
                  input=input, 
                  output_direct=output_direct,
                  output_signal='output_direct')
+        # take the discretized rbw (only using first filter cutoff)
+        rbw = self.bandwidth[0]
+        # setup averaging
         self._na_averages = np.int(np.round(125e6 / rbw * avg))
         self._na_sleepcycles = np.int(np.round(125e6 / rbw * sleeptimes))
+        # compute rescaling factor
         rescale = 2.0**(-self._LPFBITS)*4.0 # 4 is artefact of fpga code
         # obtained by measuring transfer function with bnc cable - could replace the inverse of 4 above
         #unityfactor = 0.23094044589192711
-                
         for i in range(points):
-            self.frequency = x[i]
+            self.frequency = x[i] #this triggers the NA acquisition
             sleep(1.0 / rbw * (avg + sleeptimes))
             x[i] = self.frequency # get the actual (discretized) frequency
             y[i] = self._nadata
@@ -1005,80 +1013,53 @@ class IQ(FilterModule):
 
 
 class IIR(DspModule):
-    iir_channel = 0
-    iir_invert = True  # invert denominator coefficients to convert from scipy notation to
-    # the implemented notation (following Oppenheim and Schaefer: DSP)
+    # invert denominator coefficients to convert from scipy notation to
+    # the fpga-implemented notation (following Oppenheim and Schaefer: DSP)
+    _invert = True
     
     _IIRBITS = Register(0x200)
+    
     _IIRSHIFT = Register(0x204)
+
     _IIRSTAGES = Register(0x208)
-    
-    def iir_datalength(self):
-        return 2 * 4 * self._IIRSTAGES
-    
-    iir_loops = Register(0x100, 
-                         doc="Decimation factor of IIR w.r.t. 125 MHz. \
-                         Must be at least 3. ")
+        
+    loops = Register(0x100, doc="Decimation factor of IIR w.r.t. 125 MHz. "\
+                                +"Must be at least 3. ")
 
-    @property
-    def iir_rawdata(self):
-        l = self.iir_datalength
-        return self._reads(0x8000, 1024)
-
-    @iir_rawdata.setter
-    def iir_rawdata(self, v):
-        l = self.iir_datalength
-        return self._write(0x8000, v)
-    
     on = BoolRegister(0x104, 0, doc="IIR is on")
-    reset = BoolRegister(0x104, 0, doc="IIR is on", invert=True)
     
     shortcut = BoolRegister(0x104, 1, doc="IIR is bypassed")
+    
     copydata = BoolRegister(0x104, 2, 
-                        doc="If True: coefficients are updated from memory")
-    iir_overflow = Register(0x108, 
+                doc="If True: coefficients are being copied from memory")
+    
+    overflow = Register(0x108, 
                             doc="Bitmask for various overflow conditions")
 
-    @property
-    def iir_rawcoefficients(self):
-        data = np.array([v for v in self._reads(
-            0x28000 + self.iir_channel * 0x1000, 8 * self.iir_loops)])
-        #data = data[::2]*2**32+data[1::2]
-        return data
-
-    @iir_rawcoefficients.setter
-    def iir_rawcoefficients(self, v):
-        pass
-
-    def from_double(self, v, bitlength=64, shift=0):
-        print v
+    def _from_double(self, v, bitlength=64, shift=0):
         v = int(np.round(v * 2**shift))
         v = v & (2**bitlength - 1)
         hi = (v >> 32) & ((1 << 32) - 1)
         lo = (v >> 0) & ((1 << 32) - 1)
-        print hi, lo
         return hi, lo
 
-    def to_double(self, hi, lo, bitlength=64, shift=0):
-        print hi, lo
+    def _to_double(self, hi, lo, bitlength=64, shift=0):
         hi = int(hi) & ((1 << (bitlength - 32)) - 1)
         lo = int(lo) & ((1 << 32) - 1)
         v = int((hi << 32) + lo)
         if v >> (bitlength - 1) != 0:  # sign bit is set
             v = v - 2**bitlength
-        print v
         v = np.float64(v) / 2**shift
         return v
 
     @property
-    def iir_coefficients(self):
-        l = self.iir_loops
+    def coefficients(self):
+        l = self.loops
         if l == 0:
             return np.array([])
         elif l > self._IIRSTAGES:
             l = self._IIRSTAGES
-        data = np.array([v for v in self._reads(
-            0x28000 + self.iir_channel * 0x1000, 8 * l)])
+        data = np.array([v for v in self._reads(0x8000, 8 * l)])
         coefficients = np.zeros((l, 6), dtype=np.float64)
         bitlength = self._IIRBITS
         shift = self._IIRSHIFT
@@ -1093,65 +1074,196 @@ class IIR(DspModule):
                         k = j - 2
                     else:
                         k = j
-                    coefficients[
-                        i,
-                        j] = self.to_double(
-                        data[
-                            i * 8 + 2 * k + 1],
-                        data[
-                            i * 8 + 2 * k],
+                    coefficients[i, j] = self._to_double(
+                        data[i * 8 + 2 * k + 1],
+                        data[i * 8 + 2 * k],
                         bitlength=bitlength,
                         shift=shift)
-                    if j > 3 and self.iir_invert:
+                    if j > 3 and self._invert:
                         coefficients[i, j] *= -1
         return coefficients
 
-    @iir_coefficients.setter
-    def iir_coefficients(self, v):
-        v = np.array([vv for vv in v], dtype=np.float64)
-        l = len(v)
-        if l > self._IIRSTAGES:
-            print "Error: Filter contains too many sections to be implemented"
+    @coefficients.setter
+    def coefficients(self, v):
         bitlength = self._IIRBITS
         shift = self._IIRSHIFT
-        data = np.zeros(self.iir_stages * 8, dtype=np.uint32)
+        stages = self._IIRSTAGES
+        v = np.array([vv for vv in v], dtype=np.float64)
+        l = len(v)
+        if l > stages:
+            raise Exception(
+                "Error: Filter contains too many sections to be implemented")
+        data = np.zeros(stages * 8, dtype=np.uint32)
         for i in range(l):
             for j in range(6):
                 if j == 2:
                     if v[i, j] != 0:
-                        print "Attention: b_2 (" + str(i) + ") is not zero but " + str(v[i, j])
+                        print "Attention: b_2 (" + str(i) \
+                            + ") is not zero but " + str(v[i, j])
                 elif j == 3:
                     if v[i, j] != 1:
-                        print "Attention: a_0 (" + str(i) + ") is not one but " + str(v[i, j])
+                        print "Attention: a_0 (" + str(i) \
+                            + ") is not one but " + str(v[i, j])
                 else:
                     if j > 3:
                         k = j - 2
-                        if self.iir_invert:
+                        if self._invert:
                             v[i, j] *= -1
                     else:
                         k = j
-                    hi, lo = self.from_double(
+                    hi, lo = self._from_double(
                         v[i, j], bitlength=bitlength, shift=shift)
                     data[i * 8 + k * 2 + 1] = hi
-                    data[i * 8 + k * 2] = lo  # np.uint32(lo&((1<<32)-1))
+                    data[i * 8 + k * 2] = lo
         data = [int(d) for d in data]
-        self._writes(0x28000 + 0x10000 * self.iir_channel, data)
+        self._writes(0x8000, data)
 
-    def iir_unity(self):
-        c = np.zeros((self.iir_stages, 6), dtype=np.float64)
+    def _setup_unity(self):
+        """sets the IIR filter transfer function unity"""
+        c = np.zeros((self._IIRSTAGES, 6), dtype=np.float64)
         c[0, 0] = 1.0
         c[:, 3] = 1.0
-        self.iir_coefficients = c
-        self.iir_loops = 1
+        self.coefficients = c
+        self.loops = 1
 
-    def iir_zero(self):
-        c = np.zeros((self.iir_stages, 6), dtype=np.float64)
+    def _setup_zero(self):
+        """sets the IIR filter transfer function zero"""
+        c = np.zeros((self._IIRSTAGES, 6), dtype=np.float64)
         c[:, 3] = 1.0
-        self.iir_coefficients = c
-        self.iir_loops = 1
+        self.coefficients = c
+        self.loops = 1
+
+    def setup(
+            self,
+            z,
+            p,
+            g=1.0,
+            input='adc1',
+            output_direct='off',
+            loops=None,
+            plot=False,
+            #save=False,
+            turn_on=True,
+            verbose=False,
+            tol=1e-3):
+        """Setup an IIR filter
+        
+        the transfer function of the filter will be (k ensures DC-gain = g):
+
+                  (s-2*pi*z[0])*(s-2*pi*z[1])...
+        H(s) = k*-------------------
+                  (s-2*pi*p[0])*(s-2*pi*p[1])...
+        
+        parameters
+        --------------------------------------------------
+        z:             list of zeros in the complex plane, maximum 16
+        p:             list of zeros in the complex plane, maxumum 16
+        g:             DC-gain
+        input:         input signal
+        output_direct: send directly to an analog output?
+        loops:         clock cycles per loop of the filter. must be at least 3 and at most 255. set None for autosetting loops
+        turn_on:       automatically turn on the filter after setup
+        plot:          if True, plots the theoretical and implemented transfer functions
+        verbose:       print filter implementation information during computation 
+        tol:           tolerance for matching conjugate poles or zeros into pairs, 1e-3 is okay
+
+        returns:       data to be passed to iir.bodeplot to plot the realized transfer function
+        """
+        if self._IIRSTAGES == 0:
+            raise Exception(
+                "Error: This FPGA bitfile does not support IIR filters! "\
+                +"Please use an IIR version!")
+        self.on = False
+        self.shortcut = False
+        self.copydata = False
+        iirbits = self._IIRBITS
+        iirshift = self._IIRSHIFT
+        # pre-scale coefficients
+        z = [zz * 2 * np.pi for zz in z]
+        p = [pp * 2 * np.pi for pp in p]
+        k = g
+        for pp in p:
+            if pp != 0:
+                k *= np.abs(pp)
+        for zz in z:
+            if zz != 0:
+                k /= np.abs(zz)
+        sys = (z,p,k)
+        # try to find out how many loops must be done
+        preliminary_loops = int(max([len(p), len(z)])+1) / 2
+        c = iir.get_coeff(sys, dt=preliminary_loops * 8e-9,
+                          totalbits=iirbits, shiftbits=iirshift,
+                          tol=tol, finiteprecision=False,
+                          verbose=verbose)
+        minimum_loops = len(c)
+        if minimum_loops < 3:
+            minimum_loops = 3
+        if minimum_loops > self._IIRSTAGES:
+            raise Exception("Error: desired filter order is too high to "\
+                            +"be implemented.")
+        if loops is None:
+            loops = 3
+        elif loops > 255:
+            loops = 255
+        loops = max([loops, minimum_loops])
+        # transform zeros and poles into coefficients
+        dt = loops * 8e-9 / self._frequency_correction
+        c = iir.get_coeff(sys, dt=dt,
+                          totalbits=iirbits, shiftbits=iirshift,
+                          tol=tol, finiteprecision=False, 
+                          verbose=verbose)
+        self.coefficients = c
+        self.loops = loops
+        f = np.array(self.coefficients)
+        # load the coefficients into the filter - all simultaneously
+        self.copydata = True
+        self.copydata = False
+        self.on = turn_on
+        # Diagnostics here
+        if plot: # or save:
+            if isinstance(plot, int):
+                plt.figure(plot)
+            else:
+                plt.figure()
+        tfs = iir.psos2plot(c, sys, n=2**16, maxf=5e6, dt=dt,
+                name="discrete system (dt=" + str(int(dt * 1e9)) + "ns)",
+                plot=False)
+        tfs += iir.psos2plot(f, None, n=2**16, maxf=5e6,
+                dt=dt, name="implemented system",plot=False)
+            
+        #if save:
+        #    if not plot:
+        #        plt.close()
+        #    curves = list()
+        #    for tf in tfs:
+        #        w, h, name = tf
+        #        curve = CurveDB.create(w, h)
+        #        curve.name = name
+        #        z, p, k = sys
+        #        curve.params["iir_loops"] = loops
+        #        curve.params["iir_zeros"] = str(z)
+        #        curve.params["iir_poles"] = str(p)
+        #        curve.params["iir_k"] = k
+        #        curve.save()
+        #        curves.append(curve)
+        #    for curve in curves[:-1]:
+        #        curves[-1].add_child(curve)
+        print "IIR filter ready"
+        print "Maximum deviation from design coefficients: ", max((f[0:len(c)] - c).flatten())
+        print "Overflow pattern: ", bin(self.overflow)
+        #        if save:
+        #            return f, curves[-1]
+        #        else:
+        #            return f
+        if plot:
+            iir.bodeplot(tfs, xlog=True)
+        return tfs
+
+# current work pointer: here
 
 class AMS(BaseModule):
-    """mostly deprecated module. do not use without understanding!!!"""
+    """mostly deprecated module (redpitaya has removed adc support. 
+    needs to be cleaned out again!!!"""
     def __init__(self, client):
         super(AMS, self).__init__(client, addr_base=0x40400000)
     

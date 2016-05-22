@@ -159,10 +159,10 @@ always @(posedge clk_i) begin
 end
 
 //LUT ROM
-//created by (unpolished) python code:
+//created by this (unpolished) python code:
 /*
-LUTSZ = 11     //number of LUT entries
-LUTBITS = 17   //LUT word size
+LUTSZ = 11     #number of LUT entries
+LUTBITS = 17   #LUT word size
 def from_pyint(v,bitlength=14):
     v = int(v)
     if v < 0:
