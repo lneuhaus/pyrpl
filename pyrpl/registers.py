@@ -1,10 +1,10 @@
-from bijection import Bijection
+import numpy as np
 import sys
-
 #way to represent the smallest positive value
 #needed to set floats to minimum count above zero
 epsilon = sys.float_info.epsilon
 
+from bijection import Bijection
 
 #docstring does not work yet, see: 
 #http://stackoverflow.com/questions/37255109/python-docstring-for-descriptors
@@ -45,7 +45,7 @@ class LongRegister(Register):
 
     def __get__(self, obj, objtype=None):
         values = obj._reads(self.address, self.size)
-        value = int(0)
+        value = long(0)
         for i in range(self.size):
             value += int(values[i])<<(32*i)
         if self.bitmask is None:

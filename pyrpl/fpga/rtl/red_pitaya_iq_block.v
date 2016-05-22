@@ -289,7 +289,7 @@ always @(posedge clk_i) begin
         na_sleep_remaining <= {32{1'b0}};
         do_averaging <= 1'b0;
     end
-    else if (wen && addr[16-1:0]==16'h0008) begin //start new averaging series when iq1 frequency is changed
+    else if (wen && addr[16-1:0]==16'h0108) begin //start new averaging series when iq1 frequency is changed
         iq_i_sum <= {63{1'b0}};
         iq_q_sum <= {63{1'b0}};
         na_averages_remaining <= na_averages;
@@ -316,7 +316,7 @@ end
 wire [SIGNALBITS-1:0] pfd_integral;
 
 reg pfd_on;
-red_pitaya_pfd_block #(.ISR (0)) pfd_block (
+red_pitaya_pfd_block pfd_block (
 	.rstn_i(pfd_on),
 	.clk_i (clk_i),
 	.s1 (dat_i_filtered[SIGNALBITS-1]), //sign bit of input signal as clock source

@@ -740,8 +740,8 @@ assign asg_trig_n = (asg_trig_dn == 2'b10) ;
 always @(posedge adc_clk_i)
 if (adc_rstn_i == 1'b0) begin
    adc_we_keep   <=   1'b0      ;
-   set_a_tresh   <=  14'd5000   ;
-   set_b_tresh   <= -14'd5000   ;
+   set_a_tresh   <=  14'd0000   ;
+   set_b_tresh   <=  14'd0000   ;
    set_dly       <=  32'd0      ;
    set_dec       <=  17'd1      ;
    set_a_hyst    <=  14'd20     ;

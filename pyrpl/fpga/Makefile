@@ -22,4 +22,4 @@ clean:
 
 $(FPGA_BIN):
 	$(VIVADO) -source red_pitaya_vivado.tcl
-	cp $(FPGA_BIN) ./red_pitaya.bin
+	# cp $(FPGA_BIN) ./red_pitaya.bin

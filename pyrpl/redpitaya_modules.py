@@ -21,9 +21,11 @@ import numpy as np
 import time
 from time import sleep
 import sys
+import matplotlib.pyplot as plt
 
 from registers import *
 from bijection import Bijection
+import iir
 
 class BaseModule(object):
     
@@ -146,6 +148,10 @@ class Scope(BaseModule):
     
     trigger_sources = _trigger_sources.keys() # help for the user
     
+    _trigger_debounce = Register(0x90, doc="Trigger debounce time [cycles]")
+    trigger_debounce = FloatRegister(0x90, bits=20, norm=125e6, 
+                                     doc = "Trigger debounce time [s]")
+    
     trigger_source = SelectRegister(0x4, doc="Trigger source", 
                                     options=_trigger_sources)
     
@@ -155,13 +161,20 @@ class Scope(BaseModule):
     threshold_ch2 = FloatRegister(0xC, bits=14, norm=2**13, 
                                   doc="ch1 trigger threshold [volts]")
     
-    trigger_delay = Register(0x10, doc="trigger delay [samples]")
-
+    _trigger_delay = Register(0x10, doc="trigger delay [samples]")
+    @property
+    def trigger_delay(self):
+        return self._trigger_delay
+    @trigger_delay.setter
+    def trigger_delay(self, delay):
+        if delay == 0:
+            delay = 1 # bug in scope code: 0 does not work
+        self._trigger_delay = delay
+        
     current_timestamp = LongRegister(0x15C,
                                      bits=64,
                                      doc="An absolute counter " \
-                                         + "for the time [cycles]")
-    
+                                         + "for the time [cycles]")    
 
     trigger_timestamp = LongRegister(0x164,
                                      bits=64,
@@ -197,10 +210,10 @@ class Scope(BaseModule):
     
     # equalization filter not implemented here
     
-    adc1 = FloatRegister(0x154, bits=14, norm=2**13, 
+    voltage1 = FloatRegister(0x154, bits=14, norm=2**13, 
                          doc="ADC1 current value [volts]")
     
-    adc2 = FloatRegister(0x158, bits=14, norm=2**13, 
+    voltage2 = FloatRegister(0x158, bits=14, norm=2**13, 
                          doc="ADC2 current value [volts]")
     
     dac1 = FloatRegister(0x164, bits=14, norm=2**13, 
@@ -236,32 +249,34 @@ class Scope(BaseModule):
     def data_ch1(self):
         """ acquired (normalized) data from ch1"""
         return np.array(
-                    np.roll(self.rawdata_ch1, -(self._write_pointer_trigger + self.trigger_delay - 3)),
+                    np.roll(self.rawdata_ch1, -(self._write_pointer_trigger + self.trigger_delay + 1)),
                     dtype = np.float)/2**13
     @property
     def data_ch2(self):
         """ acquired (normalized) data from ch2"""
         return np.array(
-                    np.roll(self.rawdata_ch2, -(self._write_pointer_trigger + self.trigger_delay - 3)),
+                    np.roll(self.rawdata_ch2, -(self._write_pointer_trigger + self.trigger_delay + 1)),
                     dtype = np.float)/2**13
 
     @property
     def data_ch1_current(self):
         """ (unnormalized) data from ch1 while acquisition is still running"""
         return np.array(
-                    np.roll(self.rawdata_ch1, -(self._write_pointer_current - 1)),
+                    np.roll(self.rawdata_ch1, -(self._write_pointer_current + 1)),
                     dtype = np.float)/2**13
 
     @property
     def data_ch2_current(self):
         """ (unnormalized) data from ch2 while acquisition is still running"""
         return np.array(
-                    np.roll(self.rawdata_ch2, -(self._write_pointer_current - 1)),
+                    np.roll(self.rawdata_ch2, -(self._write_pointer_current + 1)),
                     dtype = np.float)/2**13
     
     @property
     def times(self):
-        return np.linspace(0.0, 8e-9*self.decimation*self.data_length,
+        duration = 8e-9*self.decimation*self.data_length
+        endtime = duration*self.trigger_delay/self.data_length
+        return np.linspace(endtime-duration, endtime,
                            self.data_length,endpoint=False)
 
     def setup(self, duration=1.0, trigger_source="immediately", average=True):
@@ -322,15 +337,18 @@ def make_asg(channel=1):
         set_BIT_OFFSET = 0
         set_VALUE_OFFSET = 0x00
         set_DATA_OFFSET = 0x10000
+        set_default_output_direct = 'out1'
     else:
         set_DATA_OFFSET = 0x20000
         set_VALUE_OFFSET = 0x20
         set_BIT_OFFSET = 16
+        set_default_output_direct = 'out2'
     
     class Asg(BaseModule):
         _DATA_OFFSET = set_DATA_OFFSET
         _VALUE_OFFSET = set_VALUE_OFFSET
         _BIT_OFFSET = set_BIT_OFFSET
+        default_output_direct = set_default_output_direct
         
         def __init__(self, client):
             super(Asg, self).__init__(client, addr_base=0x40200000)
@@ -340,14 +358,14 @@ def make_asg(channel=1):
                 self._dsp = DspModule(client, module='asg1')
             else:
                 self._dsp = DspModule(client, module='asg2')
-            self.outputs = self._dsp.outputs
+            self.output_directs = self._dsp.output_directs
         @property
-        def output(self):
-            return self._dsp.output
+        def output_direct(self):
+            return self._dsp.output_direct
     
-        @output.setter
-        def output(self, v):
-            self._dsp.output = v
+        @output_direct.setter
+        def output_direct(self, v):
+            self._dsp.output_direct = v
     
         data_length = 2**14
         
@@ -434,13 +452,21 @@ def make_asg(channel=1):
             data[data < 0] = -2**13 
             self._writes(self._DATA_OFFSET, np.array(data, dtype=np.uint32))
     
-        def setup(self, frequency=1, amplitude=1.0, periodic=True, offset=0, 
-                           waveform="cos", trigger_source='immediately'):
+        def setup(self, 
+                  waveform='cos', 
+                  frequency=1, 
+                  amplitude=1.0, 
+                  start_phase=0, 
+                  periodic=True, 
+                  offset=0, 
+                  trigger_source='immediately',
+                  output_direct = default_output_direct):
             """sets up the function generator. 
             
             waveform must be one of ['cos', 'ramp', 'DC', 'halframp']. 
             amplitude and offset in volts, frequency in Hz. 
             periodic = False outputs only one period. 
+            start_phase is the start phase in degrees
             if trigger_source is None, it should be set manually """
             self.on = False
             self.sm_reset = True
@@ -458,15 +484,18 @@ def make_asg(channel=1):
                 y = np.linspace(-1.0,1.0, self.data_length, endpoint=False)
             elif waveform == 'DC':
                 y = np.zeros(self.data_length)
+            else: 
+                y = self.data
+                print "Warning: waveform name %s not recognized. Specify waveform manually"%waveform
             self.data = y
             
-            self.start_phase = 0
+            self.start_phase = start_phase
             self._counter_wrap = 2**16 * (2**14 - 1)
             self.frequency = frequency
             self.periodic = periodic
             self._sm_wrappointer = True
-            self.on = True
             self.sm_reset = False
+            self.on = True
             if trigger_source is not None:
                 self.trigger_source = trigger_source
         
@@ -531,23 +560,23 @@ class DspModule(BaseModule):
         dac2=13)
     inputs = _inputs.keys()
     
-    _outputs = dict(
+    _output_directs = dict(
         off=0,
         out1=1,
         out2=2,
         both=3)
-    outputs = _outputs.keys()
+    output_directs = _output_directs.keys()
     
     input = SelectRegister(0x0, options=_inputs, 
                            doc="selects the input signal of the module")
     
-    output = SelectRegister(0x4, options=_outputs, 
+    output_direct = SelectRegister(0x4, options=_output_directs, 
                             doc="selects to which analog output the module \
                             signal is sent directly")    
 
-    output_saturated = SelectRegister(0x8, options=_outputs, 
-                                      doc = "tells you which output \
-                                      is currently in saturation")
+    out1_saturated = BoolRegister(0x8,0,doc="True if out1 is saturated")
+    
+    out2_saturated = BoolRegister(0x8,1,doc="True if out2 is saturated")
 
     def __init__(self, client, module='pid0'):
         self.number = self._inputs[module]
@@ -800,7 +829,7 @@ class IQ(FilterModule):
                       doc="If set to False, turns off the module, e.g. to \
                       re-synchronize the phases")
     
-    on = BoolRegister(0x100, 1, 
+    pfd_on = BoolRegister(0x100, 1, 
                       doc="If True: Turns on the PFD module,\
                         if False: turns it off and resets integral")
 
@@ -848,18 +877,20 @@ class IQ(FilterModule):
     def gain(self, v):
         self._g1 = float(v) / 0.039810
         self._g4 = float(v) / 0.039810
-
-    def set(
+        
+    def setup(
             self,
             frequency,
             bandwidth=[0],
             gain=1.0,
             phase=0,
             Q=None,
-            inpuacbandwidth=50.,
+            acbandwidth=50.,
             amplitude=0.0,
-            inputport=1,
-            outputport=1):
+            input='adc1',
+            output_direct='out1',
+            output_signal='quadrature', 
+            quadrature_factor=1.0):
         self.on = False
         self.frequency = frequency
         if Q is None:
@@ -871,55 +902,50 @@ class IQ(FilterModule):
         self.inputfilter = -acbandwidth
         self.amplitude = amplitude
         self.input = input
-        self.output = output
-        self.pfd_select = False
+        self.output_direct = output_direct
+        self.output_signal = output_signal
+        self.quadrature_factor = quadrature_factor
         self.on = True
 
-    na_averages = Register(0x130, 
+    _na_averages = Register(0x130, 
                     doc='number of cycles to perform na-averaging over')
-    na_sleepcycles = Register(0x130, 
+    _na_sleepcycles = Register(0x130, 
                     doc='number of cycles to wait before starting to average')
 
     @property
-    def nadata(self):
+    def _nadata(self):
+        attempt = 0
         a, b, c, d = self._reads(0x140, 4)
-        if not (
-            (a >> 31 == 0) and (b >> 31 == 0) 
-            and (c >> 31 == 0) and (d >> 31 == 0)):
-            print "Averaging not finished. Impossible to estimate value"
-            return 0 / 0
+        while not ((a >> 31 == 0) and (b >> 31 == 0) 
+                   and (c >> 31 == 0) and (d >> 31 == 0)):
+            a, b, c, d = self._reads(0x140, 4)
+            attempt += 1
+            if attempt > 10:
+                raise Exception("Trying to recover NA data while averaging is not finished. Some setting is wrong. ")
         sum = (np.complex128(self._to_pyint(a,bitlength=31))  
             + np.complex128(self._to_pyint(b,bitlength=31) * 2**31)  
             + 1j * np.complex128(self._to_pyint(c, bitlength=31)) 
             + 1j * np.complex128(self._to_pyint(d, bitlength=31) * 2**31))
-        return sum / float(self.na_averages)
-
-    # formula to estimate the na measurement time
-    def na_time(self, points=1001, rbw=100, avg=1.0, sleeptimes=0.5):
-        return float(avg + sleeptimes) * points / rbw 
+        return sum / float(self._na_averages)
     
     def na_trace(
             self,
-            start=0,
-            stop=100e3,
-            points=1001,
-            rbw=100,
-            avg=1.0,
-            amplitude=1.0,
-            input=1,
-            output=1,
-            acbandwidth=0.0,
-            sleeptimes=0.5,
-            logscale=False,
-            raw=False):
-        # sleeptimes*1/rbw is the stall time after changing frequency before
-        # averaging the quadratures
-        # obtained by measuring transfer function with bnc cable
-        unityfactor = 0.23094044589192711
-        if rbw < 1 / 34.0:
-            print "Sorry, no less than 1/34s bandwidth possible with 32 bit resolution"
-        # if self.constants["verbosity"]:
-        print "Estimated acquisition time:", self.na_time(points=points, rbw=rbw, avg=avg, sleeptimes=sleeptimes), "s"
+            start=0,     # start frequency
+            stop=100e3,  # stop frequency
+            points=1001, # number of points
+            rbw=100,     # resolution bandwidth, can be a list of 2 as well for second-order
+            avg=1.0,     # averages
+            amplitude=0.1, #output amplitude in volts
+            input='adc1', # input signal
+            output_direct='off', # output signal
+            acbandwidth=0, # ac filter bandwidth, 0 disables filter, negative values represent lowpass
+            sleeptimes=0.5, # wait sleeptimes/rbw for quadratures to stabilize
+            logscale=False, # make a logarithmic frequency sweep
+            stabilize=None, # if a float, output amplitude is adjusted dynamically that input amplitude is stabilize 
+            maxamplitude=1.0, # amplitude can be limited
+            ): #
+        print "Estimated acquisition time:", float(avg + sleeptimes) * points / rbw , "s"
+        sys.stdout.flush() # make sure the time is shown        
         if logscale:
             x = np.logspace(
                 np.log10(start),
@@ -929,196 +955,111 @@ class IQ(FilterModule):
         else:
             x = np.linspace(start, stop, points, endpoint=True)
         y = np.zeros(points, dtype=np.complex128)
-        self.set(frequency=x[0], bandwidth=rbw, gain=0, phase=0,
-                 acbandwidth=acbandwidth,
+        amplitudes = np.zeros(points, dtype=np.float64)
+        # preventive saturation
+        maxamplitude = abs(maxamplitude)
+        amplitude = abs(amplitude)
+        if abs(amplitude)>maxamplitude:
+            amplitude = maxamplitude
+        self.setup(frequency=x[0], 
+                 bandwidth=rbw, 
+                 gain=0, 
+                 phase=0,
+                 acbandwidth=-np.array(acbandwidth),
                  amplitude=amplitude,
-                 input=input, output=output)
-        self.na_averages = np.int(np.round(125e6 / rbw * avg))
-        self.na_sleepcycles = np.int(np.round(125e6 / rbw * sleeptimes))
+                 input=input, 
+                 output_direct=output_direct,
+                 output_signal='output_direct')
+        # take the discretized rbw (only using first filter cutoff)
+        rbw = self.bandwidth[0]
+        # setup averaging
+        self._na_averages = np.int(np.round(125e6 / rbw * avg))
+        self._na_sleepcycles = np.int(np.round(125e6 / rbw * sleeptimes))
+        # compute rescaling factor
+        rescale = 2.0**(-self._LPFBITS)*4.0 # 4 is artefact of fpga code
+        # obtained by measuring transfer function with bnc cable - could replace the inverse of 4 above
+        #unityfactor = 0.23094044589192711
         for i in range(points):
-            self.frequency = x[i]
+            self.frequency = x[i] #this triggers the NA acquisition
             sleep(1.0 / rbw * (avg + sleeptimes))
-            x[i] = self.frequency
-            y[i] = self.nadata
-        amplitude = self.amplitude
-        self.amplitude = 0
-        if amplitude == 0:
-            amplitude = 1.0  # avoid division by zero
-        if raw:
-            rescale = 2.0**(-self._LPFBITS) / amplitude
-        else:
-            rescale = 2.0**(-self._LPFBITS) / amplitude / unityfactor
-        y *= rescale
-        # in zero-span mode, change x-axis to approximate time. Time is very
-        # rudely approximated here..
-        if start == stop:
-            x = np.linspace(
-                0,
-                self.na_time(
-                    points=points,
-                    rbw=rbw,
-                    avg=avg,
-                    sleeptimes=sleeptimes),
-                points,
-                endpoint=False)
-        return x, y
-
-    def na_trace_stabilized(
-            self,
-            start=0,
-            stop=100e3,
-            points=1001,
-            rbw=100,
-            avg=1.0,
-            stabilized=0.1,
-            amplitude=0.1,
-            maxamplitude=1.0,
-            input=1,
-            output=1,
-            acbandwidth=50.0,
-            sleeptimes=0.5,
-            logscale=False,
-            raw=False):
-        """takes a NA trace with stabilized drive amplitude such that the return voltage remains close to the specified value of "stabilized"
-            maxamplitude is the maximum allowed output amplitude, amplitude the one for the first point"""
-        # sleeptimes*1/rbw is the stall time after changing frequency before
-        # averaging the quadratures
-        # obtained by measuring transfer function with bnc cable. nominally 1/4
-        unityfactor = 0.23094044589192711
-        if rbw < self._QUADRATUREFILTERMINBW:
-            print "Sorry, no less than 1/34s bandwidth possible with 32 bit resolution. change the code to allow for more bits"
-        # if self.constants["verbosity"]:
-        print "Estimated acquisition time:", self.na_time(points=points, rbw=rbw, avg=avg, sleeptimes=sleeptimes), "s"
-        if logscale:
-            x = np.logspace(
-                np.log10(start),
-                np.log10(stop),
-                points,
-                endpoint=True)
-        else:
-            x = np.linspace(start, stop, points, endpoint=True)
-        y = np.zeros(points, dtype=np.complex128)
-        z = np.zeros(points, dtype=np.complex128)
-
-        self.set(frequency=x[0], bandwidth=rbw, gain=0, phase=0,
-                 acbandwidth=acbandwidth,
-                 amplitude=amplitude,
-                 input=input, output=output)
-        self.na_averages = np.int(np.round(125e6 / rbw * avg))
-        self.na_sleepcycles = np.int(np.round(125e6 / rbw * sleeptimes))
-
-        if raw:
-            rescale = 2.0**(-self._LPFBITS)
-        else:
-            rescale = 2.0**(-self._LPFBITS) / unityfactor
-
-        for i in range(points):
-            self.iq_frequency = x[i]
-            sleep(1.0 / rbw * (avg + sleeptimes))
-            x[i] = self.iq_frequency
-            y[i] = self.iq_nadata
-            amplitude = self.amplitude
-            z[i] = amplitude
-            if amplitude == 0:
+            x[i] = self.frequency # get the actual (discretized) frequency
+            y[i] = self._nadata
+            amplitudes[i] = self.amplitude
+            #normalize immediately
+            if amplitudes[i] == 0:
                 y[i] *= rescale  # avoid division by zero
             else:
-                y[i] *= float(rescale / float(amplitude))
-            amplitude = stabilized / np.abs(y[i])
+                y[i] *= rescale / self.amplitude
+            # set next amplitude if it has to change
+            if stabilize is not None:
+                amplitude = stabilize / np.abs(y[i])
             if amplitude > maxamplitude:
                 amplitude = maxamplitude
             self.amplitude = amplitude
-
-        self.amplitude = 0
+        # turn off the output signql
+        self.amplitude = 0            
         # in zero-span mode, change x-axis to approximate time. Time is very
         # rudely approximated here..
         if start == stop:
             x = np.linspace(
                 0,
-                self.na_time(
-                    points=points,
-                    rbw=rbw,
-                    avg=avg,
-                    sleeptimes=sleeptimes),
+                1.0 / rbw * (avg + sleeptimes),
                 points,
                 endpoint=False)
-        return x, y, z
+        if stabilize is None:
+            return x, y
+        else:
+            return x,y,amplitudes
 
 
 class IIR(DspModule):
-    iir_channel = 0
-    iir_invert = True  # invert denominator coefficients to convert from scipy notation to
-    # the implemented notation (following Oppenheim and Schaefer: DSP)
+    # invert denominator coefficients to convert from scipy notation to
+    # the fpga-implemented notation (following Oppenheim and Schaefer: DSP)
+    _invert = True
     
     _IIRBITS = Register(0x200)
+    
     _IIRSHIFT = Register(0x204)
+
     _IIRSTAGES = Register(0x208)
-    
-    def iir_datalength(self):
-        return 2 * 4 * self._IIRSTAGES
-    
-    iir_loops = Register(0x100, 
-                         doc="Decimation factor of IIR w.r.t. 125 MHz. \
-                         Must be at least 3. ")
+        
+    loops = Register(0x100, doc="Decimation factor of IIR w.r.t. 125 MHz. "\
+                                +"Must be at least 3. ")
 
-    @property
-    def iir_rawdata(self):
-        l = self.iir_datalength
-        return self._reads(0x8000, 1024)
-
-    @iir_rawdata.setter
-    def iir_rawdata(self, v):
-        l = self.iir_datalength
-        return self._write(0x8000, v)
-    
     on = BoolRegister(0x104, 0, doc="IIR is on")
-    reset = BoolRegister(0x104, 0, doc="IIR is on", invert=True)
     
     shortcut = BoolRegister(0x104, 1, doc="IIR is bypassed")
+    
     copydata = BoolRegister(0x104, 2, 
-                        doc="If True: coefficients are updated from memory")
-    iir_overflow = Register(0x108, 
+                doc="If True: coefficients are being copied from memory")
+    
+    overflow = Register(0x108, 
                             doc="Bitmask for various overflow conditions")
 
-    @property
-    def iir_rawcoefficients(self):
-        data = np.array([v for v in self._reads(
-            0x28000 + self.iir_channel * 0x1000, 8 * self.iir_loops)])
-        #data = data[::2]*2**32+data[1::2]
-        return data
-
-    @iir_rawcoefficients.setter
-    def iir_rawcoefficients(self, v):
-        pass
-
-    def from_double(self, v, bitlength=64, shift=0):
-        print v
+    def _from_double(self, v, bitlength=64, shift=0):
         v = int(np.round(v * 2**shift))
         v = v & (2**bitlength - 1)
         hi = (v >> 32) & ((1 << 32) - 1)
         lo = (v >> 0) & ((1 << 32) - 1)
-        print hi, lo
         return hi, lo
 
-    def to_double(self, hi, lo, bitlength=64, shift=0):
-        print hi, lo
+    def _to_double(self, hi, lo, bitlength=64, shift=0):
         hi = int(hi) & ((1 << (bitlength - 32)) - 1)
         lo = int(lo) & ((1 << 32) - 1)
         v = int((hi << 32) + lo)
         if v >> (bitlength - 1) != 0:  # sign bit is set
             v = v - 2**bitlength
-        print v
         v = np.float64(v) / 2**shift
         return v
 
     @property
-    def iir_coefficients(self):
-        l = self.iir_loops
+    def coefficients(self):
+        l = self.loops
         if l == 0:
             return np.array([])
         elif l > self._IIRSTAGES:
             l = self._IIRSTAGES
-        data = np.array([v for v in self._reads(
-            0x28000 + self.iir_channel * 0x1000, 8 * l)])
+        data = np.array([v for v in self._reads(0x8000, 8 * l)])
         coefficients = np.zeros((l, 6), dtype=np.float64)
         bitlength = self._IIRBITS
         shift = self._IIRSHIFT
@@ -1133,65 +1074,196 @@ class IIR(DspModule):
                         k = j - 2
                     else:
                         k = j
-                    coefficients[
-                        i,
-                        j] = self.to_double(
-                        data[
-                            i * 8 + 2 * k + 1],
-                        data[
-                            i * 8 + 2 * k],
+                    coefficients[i, j] = self._to_double(
+                        data[i * 8 + 2 * k + 1],
+                        data[i * 8 + 2 * k],
                         bitlength=bitlength,
                         shift=shift)
-                    if j > 3 and self.iir_invert:
+                    if j > 3 and self._invert:
                         coefficients[i, j] *= -1
         return coefficients
 
-    @iir_coefficients.setter
-    def iir_coefficients(self, v):
-        v = np.array([vv for vv in v], dtype=np.float64)
-        l = len(v)
-        if l > self._IIRSTAGES:
-            print "Error: Filter contains too many sections to be implemented"
+    @coefficients.setter
+    def coefficients(self, v):
         bitlength = self._IIRBITS
         shift = self._IIRSHIFT
-        data = np.zeros(self.iir_stages * 8, dtype=np.uint32)
+        stages = self._IIRSTAGES
+        v = np.array([vv for vv in v], dtype=np.float64)
+        l = len(v)
+        if l > stages:
+            raise Exception(
+                "Error: Filter contains too many sections to be implemented")
+        data = np.zeros(stages * 8, dtype=np.uint32)
         for i in range(l):
             for j in range(6):
                 if j == 2:
                     if v[i, j] != 0:
-                        print "Attention: b_2 (" + str(i) + ") is not zero but " + str(v[i, j])
+                        print "Attention: b_2 (" + str(i) \
+                            + ") is not zero but " + str(v[i, j])
                 elif j == 3:
                     if v[i, j] != 1:
-                        print "Attention: a_0 (" + str(i) + ") is not one but " + str(v[i, j])
+                        print "Attention: a_0 (" + str(i) \
+                            + ") is not one but " + str(v[i, j])
                 else:
                     if j > 3:
                         k = j - 2
-                        if self.iir_invert:
+                        if self._invert:
                             v[i, j] *= -1
                     else:
                         k = j
-                    hi, lo = self.from_double(
+                    hi, lo = self._from_double(
                         v[i, j], bitlength=bitlength, shift=shift)
                     data[i * 8 + k * 2 + 1] = hi
-                    data[i * 8 + k * 2] = lo  # np.uint32(lo&((1<<32)-1))
+                    data[i * 8 + k * 2] = lo
         data = [int(d) for d in data]
-        self._writes(0x28000 + 0x10000 * self.iir_channel, data)
+        self._writes(0x8000, data)
 
-    def iir_unity(self):
-        c = np.zeros((self.iir_stages, 6), dtype=np.float64)
+    def _setup_unity(self):
+        """sets the IIR filter transfer function unity"""
+        c = np.zeros((self._IIRSTAGES, 6), dtype=np.float64)
         c[0, 0] = 1.0
         c[:, 3] = 1.0
-        self.iir_coefficients = c
-        self.iir_loops = 1
+        self.coefficients = c
+        self.loops = 1
 
-    def iir_zero(self):
-        c = np.zeros((self.iir_stages, 6), dtype=np.float64)
+    def _setup_zero(self):
+        """sets the IIR filter transfer function zero"""
+        c = np.zeros((self._IIRSTAGES, 6), dtype=np.float64)
         c[:, 3] = 1.0
-        self.iir_coefficients = c
-        self.iir_loops = 1
+        self.coefficients = c
+        self.loops = 1
+
+    def setup(
+            self,
+            z,
+            p,
+            g=1.0,
+            input='adc1',
+            output_direct='off',
+            loops=None,
+            plot=False,
+            #save=False,
+            turn_on=True,
+            verbose=False,
+            tol=1e-3):
+        """Setup an IIR filter
+        
+        the transfer function of the filter will be (k ensures DC-gain = g):
+
+                  (s-2*pi*z[0])*(s-2*pi*z[1])...
+        H(s) = k*-------------------
+                  (s-2*pi*p[0])*(s-2*pi*p[1])...
+        
+        parameters
+        --------------------------------------------------
+        z:             list of zeros in the complex plane, maximum 16
+        p:             list of zeros in the complex plane, maxumum 16
+        g:             DC-gain
+        input:         input signal
+        output_direct: send directly to an analog output?
+        loops:         clock cycles per loop of the filter. must be at least 3 and at most 255. set None for autosetting loops
+        turn_on:       automatically turn on the filter after setup
+        plot:          if True, plots the theoretical and implemented transfer functions
+        verbose:       print filter implementation information during computation 
+        tol:           tolerance for matching conjugate poles or zeros into pairs, 1e-3 is okay
+
+        returns:       data to be passed to iir.bodeplot to plot the realized transfer function
+        """
+        if self._IIRSTAGES == 0:
+            raise Exception(
+                "Error: This FPGA bitfile does not support IIR filters! "\
+                +"Please use an IIR version!")
+        self.on = False
+        self.shortcut = False
+        self.copydata = False
+        iirbits = self._IIRBITS
+        iirshift = self._IIRSHIFT
+        # pre-scale coefficients
+        z = [zz * 2 * np.pi for zz in z]
+        p = [pp * 2 * np.pi for pp in p]
+        k = g
+        for pp in p:
+            if pp != 0:
+                k *= np.abs(pp)
+        for zz in z:
+            if zz != 0:
+                k /= np.abs(zz)
+        sys = (z,p,k)
+        # try to find out how many loops must be done
+        preliminary_loops = int(max([len(p), len(z)])+1) / 2
+        c = iir.get_coeff(sys, dt=preliminary_loops * 8e-9,
+                          totalbits=iirbits, shiftbits=iirshift,
+                          tol=tol, finiteprecision=False,
+                          verbose=verbose)
+        minimum_loops = len(c)
+        if minimum_loops < 3:
+            minimum_loops = 3
+        if minimum_loops > self._IIRSTAGES:
+            raise Exception("Error: desired filter order is too high to "\
+                            +"be implemented.")
+        if loops is None:
+            loops = 3
+        elif loops > 255:
+            loops = 255
+        loops = max([loops, minimum_loops])
+        # transform zeros and poles into coefficients
+        dt = loops * 8e-9 / self._frequency_correction
+        c = iir.get_coeff(sys, dt=dt,
+                          totalbits=iirbits, shiftbits=iirshift,
+                          tol=tol, finiteprecision=False, 
+                          verbose=verbose)
+        self.coefficients = c
+        self.loops = loops
+        f = np.array(self.coefficients)
+        # load the coefficients into the filter - all simultaneously
+        self.copydata = True
+        self.copydata = False
+        self.on = turn_on
+        # Diagnostics here
+        if plot: # or save:
+            if isinstance(plot, int):
+                plt.figure(plot)
+            else:
+                plt.figure()
+        tfs = iir.psos2plot(c, sys, n=2**16, maxf=5e6, dt=dt,
+                name="discrete system (dt=" + str(int(dt * 1e9)) + "ns)",
+                plot=False)
+        tfs += iir.psos2plot(f, None, n=2**16, maxf=5e6,
+                dt=dt, name="implemented system",plot=False)
+            
+        #if save:
+        #    if not plot:
+        #        plt.close()
+        #    curves = list()
+        #    for tf in tfs:
+        #        w, h, name = tf
+        #        curve = CurveDB.create(w, h)
+        #        curve.name = name
+        #        z, p, k = sys
+        #        curve.params["iir_loops"] = loops
+        #        curve.params["iir_zeros"] = str(z)
+        #        curve.params["iir_poles"] = str(p)
+        #        curve.params["iir_k"] = k
+        #        curve.save()
+        #        curves.append(curve)
+        #    for curve in curves[:-1]:
+        #        curves[-1].add_child(curve)
+        print "IIR filter ready"
+        print "Maximum deviation from design coefficients: ", max((f[0:len(c)] - c).flatten())
+        print "Overflow pattern: ", bin(self.overflow)
+        #        if save:
+        #            return f, curves[-1]
+        #        else:
+        #            return f
+        if plot:
+            iir.bodeplot(tfs, xlog=True)
+        return tfs
+
+# current work pointer: here
 
 class AMS(BaseModule):
-    """mostly deprecated module. do not use without understanding!!!"""
+    """mostly deprecated module (redpitaya has removed adc support. 
+    needs to be cleaned out again!!!"""
     def __init__(self, client):
         super(AMS, self).__init__(client, addr_base=0x40400000)
     

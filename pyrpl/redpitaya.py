@@ -43,7 +43,7 @@ class RedPitaya(SSHshell):
         """installs and starts the interface on the RedPitaya at hostname that allows remote control
         
         if you are experiencing problems, try to increase delay, set verbose to True and change the port number"""
-        self.license()
+        #self.license()
         if hostname == "unknown": # simulation mode - start without connecting
             self.startdummyclient()
             return
