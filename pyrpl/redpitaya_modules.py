@@ -995,11 +995,7 @@ class IQ(FilterModule):
         if start == stop:
             x = np.linspace(
                 0,
-                self.na_time(
-                    points=points,
-                    rbw=rbw,
-                    avg=avg,
-                    sleeptimes=sleeptimes),
+                1.0 / rbw * (avg + sleeptimes),
                 points,
                 endpoint=False)
         if stabilize is None:

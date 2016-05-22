@@ -289,7 +289,7 @@ always @(posedge clk_i) begin
         na_sleep_remaining <= {32{1'b0}};
         do_averaging <= 1'b0;
     end
-    else if (wen && addr[16-1:0]==16'h0008) begin //start new averaging series when iq1 frequency is changed
+    else if (wen && addr[16-1:0]==16'h0108) begin //start new averaging series when iq1 frequency is changed
         iq_i_sum <= {63{1'b0}};
         iq_q_sum <= {63{1'b0}};
         na_averages_remaining <= na_averages;
