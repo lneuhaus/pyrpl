@@ -146,6 +146,10 @@ class Scope(BaseModule):
     
     trigger_sources = _trigger_sources.keys() # help for the user
     
+    _trigger_debounce = Register(0x90, doc="Trigger debounce time [cycles]")
+    trigger_debounce = FloatRegister(0x90, bits=20, norm=125e6, 
+                                     doc = "Trigger debounce time [s]")
+    
     trigger_source = SelectRegister(0x4, doc="Trigger source", 
                                     options=_trigger_sources)
     
@@ -155,13 +159,20 @@ class Scope(BaseModule):
     threshold_ch2 = FloatRegister(0xC, bits=14, norm=2**13, 
                                   doc="ch1 trigger threshold [volts]")
     
-    trigger_delay = Register(0x10, doc="trigger delay [samples]")
-
+    _trigger_delay = Register(0x10, doc="trigger delay [samples]")
+    @property
+    def trigger_delay(self):
+        return self._trigger_delay
+    @trigger_delay.setter
+    def trigger_delay(self, delay):
+        if delay == 0:
+            delay = 1 # bug in scope code: 0 does not work
+        self._trigger_delay = delay
+        
     current_timestamp = LongRegister(0x15C,
                                      bits=64,
                                      doc="An absolute counter " \
-                                         + "for the time [cycles]")
-    
+                                         + "for the time [cycles]")    
 
     trigger_timestamp = LongRegister(0x164,
                                      bits=64,
@@ -197,10 +208,10 @@ class Scope(BaseModule):
     
     # equalization filter not implemented here
     
-    adc1 = FloatRegister(0x154, bits=14, norm=2**13, 
+    voltage1 = FloatRegister(0x154, bits=14, norm=2**13, 
                          doc="ADC1 current value [volts]")
     
-    adc2 = FloatRegister(0x158, bits=14, norm=2**13, 
+    voltage2 = FloatRegister(0x158, bits=14, norm=2**13, 
                          doc="ADC2 current value [volts]")
     
     dac1 = FloatRegister(0x164, bits=14, norm=2**13, 
@@ -236,32 +247,34 @@ class Scope(BaseModule):
     def data_ch1(self):
         """ acquired (normalized) data from ch1"""
         return np.array(
-                    np.roll(self.rawdata_ch1, -(self._write_pointer_trigger + self.trigger_delay - 3)),
+                    np.roll(self.rawdata_ch1, -(self._write_pointer_trigger + self.trigger_delay + 1)),
                     dtype = np.float)/2**13
     @property
     def data_ch2(self):
         """ acquired (normalized) data from ch2"""
         return np.array(
-                    np.roll(self.rawdata_ch2, -(self._write_pointer_trigger + self.trigger_delay - 3)),
+                    np.roll(self.rawdata_ch2, -(self._write_pointer_trigger + self.trigger_delay + 1)),
                     dtype = np.float)/2**13
 
     @property
     def data_ch1_current(self):
         """ (unnormalized) data from ch1 while acquisition is still running"""
         return np.array(
-                    np.roll(self.rawdata_ch1, -(self._write_pointer_current - 1)),
+                    np.roll(self.rawdata_ch1, -(self._write_pointer_current + 1)),
                     dtype = np.float)/2**13
 
     @property
     def data_ch2_current(self):
         """ (unnormalized) data from ch2 while acquisition is still running"""
         return np.array(
-                    np.roll(self.rawdata_ch2, -(self._write_pointer_current - 1)),
+                    np.roll(self.rawdata_ch2, -(self._write_pointer_current + 1)),
                     dtype = np.float)/2**13
     
     @property
     def times(self):
-        return np.linspace(0.0, 8e-9*self.decimation*self.data_length,
+        duration = 8e-9*self.decimation*self.data_length
+        endtime = duration*self.trigger_delay/self.data_length
+        return np.linspace(endtime-duration, endtime,
                            self.data_length,endpoint=False)
 
     def setup(self, duration=1.0, trigger_source="immediately", average=True):
@@ -322,15 +335,18 @@ def make_asg(channel=1):
         set_BIT_OFFSET = 0
         set_VALUE_OFFSET = 0x00
         set_DATA_OFFSET = 0x10000
+        set_default_output_direct = 'out1'
     else:
         set_DATA_OFFSET = 0x20000
         set_VALUE_OFFSET = 0x20
         set_BIT_OFFSET = 16
+        set_default_output_direct = 'out2'
     
     class Asg(BaseModule):
         _DATA_OFFSET = set_DATA_OFFSET
         _VALUE_OFFSET = set_VALUE_OFFSET
         _BIT_OFFSET = set_BIT_OFFSET
+        default_output_direct = set_default_output_direct
         
         def __init__(self, client):
             super(Asg, self).__init__(client, addr_base=0x40200000)
@@ -340,14 +356,14 @@ def make_asg(channel=1):
                 self._dsp = DspModule(client, module='asg1')
             else:
                 self._dsp = DspModule(client, module='asg2')
-            self.outputs = self._dsp.outputs
+            self.output_directs = self._dsp.output_directs
         @property
-        def output(self):
-            return self._dsp.output
+        def output_direct(self):
+            return self._dsp.output_direct
     
-        @output.setter
-        def output(self, v):
-            self._dsp.output = v
+        @output_direct.setter
+        def output_direct(self, v):
+            self._dsp.output_direct = v
     
         data_length = 2**14
         
@@ -434,13 +450,21 @@ def make_asg(channel=1):
             data[data < 0] = -2**13 
             self._writes(self._DATA_OFFSET, np.array(data, dtype=np.uint32))
     
-        def setup(self, frequency=1, amplitude=1.0, periodic=True, offset=0, 
-                           waveform="cos", trigger_source='immediately'):
+        def setup(self, 
+                  waveform='cos', 
+                  frequency=1, 
+                  amplitude=1.0, 
+                  start_phase=0, 
+                  periodic=True, 
+                  offset=0, 
+                  trigger_source='immediately',
+                  output_direct = default_output_direct):
             """sets up the function generator. 
             
             waveform must be one of ['cos', 'ramp', 'DC', 'halframp']. 
             amplitude and offset in volts, frequency in Hz. 
             periodic = False outputs only one period. 
+            start_phase is the start phase in degrees
             if trigger_source is None, it should be set manually """
             self.on = False
             self.sm_reset = True
@@ -458,15 +482,18 @@ def make_asg(channel=1):
                 y = np.linspace(-1.0,1.0, self.data_length, endpoint=False)
             elif waveform == 'DC':
                 y = np.zeros(self.data_length)
+            else: 
+                y = self.data
+                print "Warning: waveform name %s not recognized. Specify waveform manually"%waveform
             self.data = y
             
-            self.start_phase = 0
+            self.start_phase = start_phase
             self._counter_wrap = 2**16 * (2**14 - 1)
             self.frequency = frequency
             self.periodic = periodic
             self._sm_wrappointer = True
-            self.on = True
             self.sm_reset = False
+            self.on = True
             if trigger_source is not None:
                 self.trigger_source = trigger_source
         
@@ -531,23 +558,23 @@ class DspModule(BaseModule):
         dac2=13)
     inputs = _inputs.keys()
     
-    _outputs = dict(
+    _output_directs = dict(
         off=0,
         out1=1,
         out2=2,
         both=3)
-    outputs = _outputs.keys()
+    output_directs = _output_directs.keys()
     
     input = SelectRegister(0x0, options=_inputs, 
                            doc="selects the input signal of the module")
     
-    output = SelectRegister(0x4, options=_outputs, 
+    output_direct = SelectRegister(0x4, options=_output_directs, 
                             doc="selects to which analog output the module \
                             signal is sent directly")    
 
-    output_saturated = SelectRegister(0x8, options=_outputs, 
-                                      doc = "tells you which output \
-                                      is currently in saturation")
+    out1_saturated = BoolRegister(0x8,0,doc="True if out1 is saturated")
+    
+    out2_saturated = BoolRegister(0x8,1,doc="True if out2 is saturated")
 
     def __init__(self, client, module='pid0'):
         self.number = self._inputs[module]
@@ -848,18 +875,20 @@ class IQ(FilterModule):
     def gain(self, v):
         self._g1 = float(v) / 0.039810
         self._g4 = float(v) / 0.039810
-
-    def set(
+        
+    def setup(
             self,
             frequency,
             bandwidth=[0],
             gain=1.0,
             phase=0,
             Q=None,
-            inpuacbandwidth=50.,
+            acbandwidth=50.,
             amplitude=0.0,
-            inputport=1,
-            outputport=1):
+            input='adc1',
+            output_direct='out1',
+            output_signal='quadrature', 
+            quadrature_factor=1.0):
         self.on = False
         self.frequency = frequency
         if Q is None:
@@ -871,17 +900,18 @@ class IQ(FilterModule):
         self.inputfilter = -acbandwidth
         self.amplitude = amplitude
         self.input = input
-        self.output = output
-        self.pfd_select = False
+        self.output_direct = output_direct
+        self.output_signal = output_signal
+        self.quadrature_factor = quadrature_factor
         self.on = True
 
-    na_averages = Register(0x130, 
+    _na_averages = Register(0x130, 
                     doc='number of cycles to perform na-averaging over')
-    na_sleepcycles = Register(0x130, 
+    _na_sleepcycles = Register(0x130, 
                     doc='number of cycles to wait before starting to average')
 
     @property
-    def nadata(self):
+    def _nadata(self):
         a, b, c, d = self._reads(0x140, 4)
         if not (
             (a >> 31 == 0) and (b >> 31 == 0) 
@@ -892,34 +922,25 @@ class IQ(FilterModule):
             + np.complex128(self._to_pyint(b,bitlength=31) * 2**31)  
             + 1j * np.complex128(self._to_pyint(c, bitlength=31)) 
             + 1j * np.complex128(self._to_pyint(d, bitlength=31) * 2**31))
-        return sum / float(self.na_averages)
-
-    # formula to estimate the na measurement time
-    def na_time(self, points=1001, rbw=100, avg=1.0, sleeptimes=0.5):
-        return float(avg + sleeptimes) * points / rbw 
+        return sum / float(self._na_averages)
     
     def na_trace(
             self,
-            start=0,
-            stop=100e3,
-            points=1001,
-            rbw=100,
-            avg=1.0,
-            amplitude=1.0,
-            input=1,
-            output=1,
-            acbandwidth=0.0,
-            sleeptimes=0.5,
-            logscale=False,
-            raw=False):
-        # sleeptimes*1/rbw is the stall time after changing frequency before
-        # averaging the quadratures
-        # obtained by measuring transfer function with bnc cable
-        unityfactor = 0.23094044589192711
-        if rbw < 1 / 34.0:
-            print "Sorry, no less than 1/34s bandwidth possible with 32 bit resolution"
-        # if self.constants["verbosity"]:
-        print "Estimated acquisition time:", self.na_time(points=points, rbw=rbw, avg=avg, sleeptimes=sleeptimes), "s"
+            start=0,     # start frequency
+            stop=100e3,  # stop frequency
+            points=1001, # number of points
+            rbw=100,     # resolution bandwidth, can be a list of 2 as well for second-order
+            avg=1.0,     # averages
+            amplitude=0.1, #output amplitude in volts
+            input='adc1', # input signal
+            output_direct='off', # output signal
+            acbandwidth=0, # ac filter bandwidth, 0 disables filter, negative values represent lowpass
+            sleeptimes=0.5, # wait sleeptimes/rbw for quadratures to stabilize
+            logscale=False, # make a logarithmic frequency sweep
+            stabilize=None, # if a float, output amplitude is adjusted dynamically that input amplitude is stabilize 
+            maxamplitude=1.0, # amplitude can be limited
+            ): #
+        print "Estimated acquisition time:", float(avg + sleeptimes) * points / rbw , "s"
         if logscale:
             x = np.logspace(
                 np.log10(start),
@@ -929,106 +950,46 @@ class IQ(FilterModule):
         else:
             x = np.linspace(start, stop, points, endpoint=True)
         y = np.zeros(points, dtype=np.complex128)
-        self.set(frequency=x[0], bandwidth=rbw, gain=0, phase=0,
-                 acbandwidth=acbandwidth,
+        amplitudes = np.zeros(points, dtype=np.float64)
+        # preventive saturation
+        maxamplitude = abs(maxamplitude)
+        amplitude = abs(amplitude)
+        if abs(amplitude)>maxamplitude:
+            amplitude = maxamplitude
+        self.setup(frequency=x[0], 
+                 bandwidth=rbw, 
+                 gain=0, 
+                 phase=0,
+                 acbandwidth=-np.array(acbandwidth),
                  amplitude=amplitude,
-                 input=input, output=output)
-        self.na_averages = np.int(np.round(125e6 / rbw * avg))
-        self.na_sleepcycles = np.int(np.round(125e6 / rbw * sleeptimes))
+                 input=input, 
+                 output_direct=output_direct,
+                 output_signal='output_direct')
+        self._na_averages = np.int(np.round(125e6 / rbw * avg))
+        self._na_sleepcycles = np.int(np.round(125e6 / rbw * sleeptimes))
+        rescale = 2.0**(-self._LPFBITS)*4.0 # 4 is artefact of fpga code
+        # obtained by measuring transfer function with bnc cable - could replace the inverse of 4 above
+        #unityfactor = 0.23094044589192711
+                
         for i in range(points):
             self.frequency = x[i]
             sleep(1.0 / rbw * (avg + sleeptimes))
-            x[i] = self.frequency
-            y[i] = self.nadata
-        amplitude = self.amplitude
-        self.amplitude = 0
-        if amplitude == 0:
-            amplitude = 1.0  # avoid division by zero
-        if raw:
-            rescale = 2.0**(-self._LPFBITS) / amplitude
-        else:
-            rescale = 2.0**(-self._LPFBITS) / amplitude / unityfactor
-        y *= rescale
-        # in zero-span mode, change x-axis to approximate time. Time is very
-        # rudely approximated here..
-        if start == stop:
-            x = np.linspace(
-                0,
-                self.na_time(
-                    points=points,
-                    rbw=rbw,
-                    avg=avg,
-                    sleeptimes=sleeptimes),
-                points,
-                endpoint=False)
-        return x, y
-
-    def na_trace_stabilized(
-            self,
-            start=0,
-            stop=100e3,
-            points=1001,
-            rbw=100,
-            avg=1.0,
-            stabilized=0.1,
-            amplitude=0.1,
-            maxamplitude=1.0,
-            input=1,
-            output=1,
-            acbandwidth=50.0,
-            sleeptimes=0.5,
-            logscale=False,
-            raw=False):
-        """takes a NA trace with stabilized drive amplitude such that the return voltage remains close to the specified value of "stabilized"
-            maxamplitude is the maximum allowed output amplitude, amplitude the one for the first point"""
-        # sleeptimes*1/rbw is the stall time after changing frequency before
-        # averaging the quadratures
-        # obtained by measuring transfer function with bnc cable. nominally 1/4
-        unityfactor = 0.23094044589192711
-        if rbw < self._QUADRATUREFILTERMINBW:
-            print "Sorry, no less than 1/34s bandwidth possible with 32 bit resolution. change the code to allow for more bits"
-        # if self.constants["verbosity"]:
-        print "Estimated acquisition time:", self.na_time(points=points, rbw=rbw, avg=avg, sleeptimes=sleeptimes), "s"
-        if logscale:
-            x = np.logspace(
-                np.log10(start),
-                np.log10(stop),
-                points,
-                endpoint=True)
-        else:
-            x = np.linspace(start, stop, points, endpoint=True)
-        y = np.zeros(points, dtype=np.complex128)
-        z = np.zeros(points, dtype=np.complex128)
-
-        self.set(frequency=x[0], bandwidth=rbw, gain=0, phase=0,
-                 acbandwidth=acbandwidth,
-                 amplitude=amplitude,
-                 input=input, output=output)
-        self.na_averages = np.int(np.round(125e6 / rbw * avg))
-        self.na_sleepcycles = np.int(np.round(125e6 / rbw * sleeptimes))
-
-        if raw:
-            rescale = 2.0**(-self._LPFBITS)
-        else:
-            rescale = 2.0**(-self._LPFBITS) / unityfactor
-
-        for i in range(points):
-            self.iq_frequency = x[i]
-            sleep(1.0 / rbw * (avg + sleeptimes))
-            x[i] = self.iq_frequency
-            y[i] = self.iq_nadata
-            amplitude = self.amplitude
-            z[i] = amplitude
-            if amplitude == 0:
+            x[i] = self.frequency # get the actual (discretized) frequency
+            y[i] = self._nadata
+            amplitudes[i] = self.amplitude
+            #normalize immediately
+            if amplitudes[i] == 0:
                 y[i] *= rescale  # avoid division by zero
             else:
-                y[i] *= float(rescale / float(amplitude))
-            amplitude = stabilized / np.abs(y[i])
+                y[i] *= rescale / self.amplitude
+            # set next amplitude if it has to change
+            if stabilize is not None:
+                amplitude = stabilize / np.abs(y[i])
             if amplitude > maxamplitude:
                 amplitude = maxamplitude
             self.amplitude = amplitude
-
-        self.amplitude = 0
+        # turn off the output signql
+        self.amplitude = 0            
         # in zero-span mode, change x-axis to approximate time. Time is very
         # rudely approximated here..
         if start == stop:
@@ -1041,7 +1002,10 @@ class IQ(FilterModule):
                     sleeptimes=sleeptimes),
                 points,
                 endpoint=False)
-        return x, y, z
+        if stabilize is None:
+            return x, y
+        else:
+            return x,y,amplitudes
 
 
 class IIR(DspModule):
