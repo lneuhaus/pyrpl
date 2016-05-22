@@ -186,8 +186,8 @@ always @(posedge clk_i) begin
    else begin
      //first sum pairs if they are set to be summed
      for (i=0;i<(MODULES+EXTRAMODULES)/2;i=i+1) begin
-        presum1[i] <= ({14+LOG_MODULES{(|(output_select[2*i]&OUT1))}} & $signed(output_direct[2*i])) + ({14+LOG_MODULES{(|(output_select[2*i+1]&OUT1))}} & $signed(output_direct[2*i+1]));
-        presum2[i] <= ({14+LOG_MODULES{(|(output_select[2*i]&OUT2))}} & $signed(output_direct[2*i])) + ({14+LOG_MODULES{(|(output_select[2*i+1]&OUT2))}} & $signed(output_direct[2*i+1]));
+        presum1[i] <= ({14+LOG_MODULES{(|(output_select[2*i]&OUT1))}} & {{LOG_MODULES{output_direct[2*i][14-1]}},output_direct[2*i]}) + ({14+LOG_MODULES{(|(output_select[2*i+1]&OUT1))}} & {{LOG_MODULES{output_direct[2*i+1][14-1]}},output_direct[2*i+1]});
+        presum2[i] <= ({14+LOG_MODULES{(|(output_select[2*i]&OUT2))}} & {{LOG_MODULES{output_direct[2*i][14-1]}},output_direct[2*i]}) + ({14+LOG_MODULES{(|(output_select[2*i+1]&OUT2))}} & {{LOG_MODULES{output_direct[2*i+1][14-1]}},output_direct[2*i+1]});
      end
      //then sum the sums of pairs to go up the tree
      for (i=0;i<CHANNELS/2-1;i=i+1) begin
