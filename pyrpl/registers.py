@@ -39,16 +39,16 @@ class Register(object):
             obj._write(self.address,new)
     
     def _writes(self, addr, v):
-        self.parent._writes(addr,v)
+        return self.parent._writes(addr,v)
     
     def _reads(self, addr, l):
-        self.parent._reads(addr,l)
+        return self.parent._reads(addr,l)
 
     def _write(self, addr, v):
-        self.parent._write(addr,v)
+        return self.parent._write(addr,v)
     
-    def _read(self, addr, l):
-        self.parent._read(addr,l)
+    def _read(self, addr):
+        return self.parent._read(addr)
     
     
 class LongRegister(Register):
@@ -115,10 +115,27 @@ class IORegister(BoolRegister):
         else:
             address = read_address
         super(IORegister,self).__init__(address=address, bit=bit, **kwargs)
-        self.direction = BoolRegister(direction_address,bit=bit, **kwargs)
-        self.direction = outputmode #set output direction
-        
-        
+        self.direction_address = direction_address
+        #self.direction = BoolRegister(direction_address,bit=bit, **kwargs)
+        self.outputmode = outputmode #set output direction
+    
+    def direction(self, v=None):
+        if v is None:
+            v = self.outputmode
+        if v:
+            v = self._read(self.address)|(1<<self.bit)
+        else:
+            v = self._read(self.direction_address)&(~(1<<self.bit))
+        self._write(self.direction_address,v)
+    
+    def to_python(self, value):
+        self.direction()
+        return value
+
+    def fom_python(self, value):
+        self.direction()
+        return value
+    
 class SelectRegister(Register):
     """Implements a selection, such as for multiplexers"""
     def __init__(self, address, 
@@ -224,9 +241,21 @@ class FilterRegister(Register):
     """Interface for up to 4 low-/highpass filters in series (filter_block.v)"""
     def __init__(self, address,  filterstages, shiftbits, minbw, **kwargs):
         super(FilterRegister,self).__init__(address=address, **kwargs)
-        self._FILTERSTAGES = Register(filterstages)
-        self._SHIFTBITS = Register(shiftbits)
-        self._MINBW = Register(minbw)
+        self.filterstages = filterstages
+        self.shiftbits = shiftbits
+        self.minbw = minbw
+    
+    @property
+    def _FILTERSTAGES(self):
+        return self._read(self.filterstages)
+    
+    @property
+    def _SHIFTBITS(self):
+        return self._read(self.shiftbits)
+    
+    @property
+    def _MINBW(self):
+        return self._read(self.minbw)
         
     @property
     def _ALPHABITS(self):
@@ -286,3 +315,4 @@ class FilterRegister(Register):
                     shift += 2**6  # turn this filter into a highpass
                 filter_shifts += (shift) * 2**(8 * i)
         return filter_shifts
+        
