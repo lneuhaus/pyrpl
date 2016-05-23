@@ -23,19 +23,34 @@ class Register(object):
         return int(value)
     
     def __get__(self, obj, objtype=None):
+        self.parent = obj #store obj in memory
         if self.bitmask is None:
             return self.to_python(obj._read(self.address))
         else:
             return self.to_python(obj._read(self.address)&self.bitmask)
     
     def __set__(self, obj, val):
+        self.parent = obj #store obj in memory
         if self.bitmask is None:
             obj._write(self.address,self.from_python(val))
         else:
             act = obj._read(self.address)
             new = act&(~self.bitmask)|(int(self.from_python(val))&self.bitmask)
             obj._write(self.address,new)
-            
+    
+    def _writes(self, addr, v):
+        self.parent._writes(addr,v)
+    
+    def _reads(self, addr, l):
+        self.parent._reads(addr,l)
+
+    def _write(self, addr, v):
+        self.parent._write(addr,v)
+    
+    def _read(self, addr, l):
+        self.parent._read(addr,l)
+    
+    
 class LongRegister(Register):
     """Interface for register of python type int/long with arbitrary length 'bits' (effectively unsigned)"""
     def __init__(self, address, bits=64, **kwargs):
@@ -204,3 +219,70 @@ class FrequencyRegister(FloatRegister):
     def to_python(self, value, frequency_correction):
         return 125e6/2**self.bits*float(value)*frequency_correction
     
+
+class FilterRegister(Register):
+    """Interface for up to 4 low-/highpass filters in series (filter_block.v)"""
+    def __init__(self, address,  filterstages, shiftbits, minbw, **kwargs):
+        super(FilterRegister,self).__init__(address=address, **kwargs)
+        self._FILTERSTAGES = Register(filterstages)
+        self._SHIFTBITS = Register(shiftbits)
+        self._MINBW = Register(minbw)
+        
+    @property
+    def _ALPHABITS(self):
+        return int(np.ceil(np.log2(125000000 / self._MINBW)))
+
+    def to_python(self, value):
+        """returns a list of bandwidths for the low-pass filter cascade before the module
+           negative bandwidth stands for high-pass instead of lowpass, 0 bandwidth for bypassing the filter
+        """
+        filter_shifts = value
+        shiftbits = self._SHIFTBITS
+        alphabits = self._ALPHABITS
+        bandwidths = []
+        for i in range(self._FILTERSTAGES):
+            v = (filter_shifts >> (i * 8)) & 0xFF
+            shift = v & (2**shiftbits - 1)
+            filter_on = ((v >> 7) == 0x1)
+            highpass = (((v >> 6) & 0x1) == 0x1)
+            if filter_on:
+                bandwidth = float(2**shift) / \
+                    (2**alphabits) * 125e6 / 2 / np.pi
+                if highpass:
+                    bandwidth *= -1.0
+            else:
+                bandwidth = 0
+            bandwidths.append(bandwidth)
+        if len(bandwidths) == 1:
+            return bandwidths[0]
+        else:
+            return bandwidths
+    
+    def from_python(self, value):
+        filterstages = self._FILTERSTAGES
+        try:
+            v = list(value)[:filterstages]
+        except TypeError:
+            v = list([value])[:filterstages]
+        filter_shifts = 0
+        shiftbits = self._SHIFTBITS
+        alphabits = self._ALPHABITS
+        for i in range(filterstages):
+            if len(v) <= i:
+                bandwidth = 0
+            else:
+                bandwidth = float(v[i])
+            if bandwidth == 0:
+                continue
+            else:
+                shift = int(np.round(np.log2(np.abs(bandwidth) * \
+                            (2**alphabits) * 2 * np.pi / 125e6)))
+                if shift < 0:
+                    shift = 0
+                elif shift > (2**shiftbits - 1):
+                    shift = (2**shiftbits - 1)
+                shift += 2**7  # turn this filter stage on
+                if bandwidth < 0:
+                    shift += 2**6  # turn this filter into a highpass
+                filter_shifts += (shift) * 2**(8 * i)
+        return filter_shifts
