@@ -60,7 +60,7 @@ class RedPitaya(SSHshell):
         self.frequency_correction = frequency_correction
         self.leds_off = leds_off
         if filename is None:
-            self.filename = 'FPGA//red_pitaya.bin'
+            self.filename = 'fpga//red_pitaya.bin'
         else:
             self.filename = filename
         if dirname is None:
