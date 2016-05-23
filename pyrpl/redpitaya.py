@@ -93,12 +93,8 @@ class RedPitaya(SSHshell):
             state = "1"
         else:
             state = "0"
-        self.ask(
-            "echo " +
-            state +
-            " > /sys/class/gpio/gpio" +
-            str(gpiopin) +
-            "/value")
+        self.ask( "echo " + state + " > /sys/class/gpio/gpio" +
+            str(gpiopin) + "/value")
         sleep(self.delay)
 
     def update_fpga(self, filename=None):
@@ -127,10 +123,12 @@ class RedPitaya(SSHshell):
             self.scp = SCPClient(self.ssh.get_transport())
         sleep(self.delay)
         self.ask('killall nginx')
+        self.ask('systemctl stop redpitaya_nginx') # for 0.94 and higher
         self.ask('cat ' 
                  + os.path.join(self.serverdirname, os.path.basename(filename)) 
                  + ' > //dev//xdevcfg')
         self.ask("nginx -p //opt//www//")
+        self.ask('systemctl start redpitaya_nginx') # for 0.94 and higher #needs test
         sleep(self.delay)
         self.ask('ro')
 
