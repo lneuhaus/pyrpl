@@ -49,7 +49,7 @@ module red_pitaya_iq_block #(
 
 	  //quadrature low-pass parameter
 	  parameter QUADRATUREFILTERSTAGES = 2,
-      parameter QUADRATUREFILTERSHIFTBITS = 4,
+      parameter QUADRATUREFILTERSHIFTBITS = 5,
       parameter QUADRATUREFILTERMINBW = 10
 )
 (

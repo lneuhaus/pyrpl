@@ -72,7 +72,7 @@ module red_pitaya_pid_block #(
    
    //parameters for input pre-filter
    parameter     FILTERSTAGES = 4 ,
-   parameter     FILTERSHIFTBITS = 4,
+   parameter     FILTERSHIFTBITS = 5,
    parameter     FILTERMINBW = 20
 )
 (
