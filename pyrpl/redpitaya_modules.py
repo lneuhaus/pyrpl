@@ -922,10 +922,8 @@ class IQ(FilterModule):
             attempt += 1
             if attempt > 10:
                 raise Exception("Trying to recover NA data while averaging is not finished. Some setting is wrong. ")
-        sum = (np.complex128(self._to_pyint(a,bitlength=31))  
-            + np.complex128(self._to_pyint(b,bitlength=31) * 2**31)  
-            + 1j * np.complex128(self._to_pyint(c, bitlength=31)) 
-            + 1j * np.complex128(self._to_pyint(d, bitlength=31) * 2**31))
+        sum = np.complex128(self._to_pyint(int(a)+(int(b)<<31),bitlength=62)) \
+            + np.complex128(self._to_pyint(int(c)+(int(d)<<31), bitlength=62))*1j  
         return sum / float(self._na_averages)
     
     def na_trace(
@@ -943,9 +941,7 @@ class IQ(FilterModule):
             logscale=False, # make a logarithmic frequency sweep
             stabilize=None, # if a float, output amplitude is adjusted dynamically that input amplitude is stabilize 
             maxamplitude=1.0, # amplitude can be limited
-            ): #
-        print "Estimated acquisition time:", float(avg + sleeptimes) * points / rbw , "s"
-        sys.stdout.flush() # make sure the time is shown        
+            ): 
         if logscale:
             x = np.logspace(
                 np.log10(start),
@@ -972,6 +968,8 @@ class IQ(FilterModule):
                  output_signal='output_direct')
         # take the discretized rbw (only using first filter cutoff)
         rbw = self.bandwidth[0]
+        print "Estimated acquisition time:", float(avg + sleeptimes) * points / rbw , "s"
+        sys.stdout.flush() # make sure the time is shown        
         # setup averaging
         self._na_averages = np.int(np.round(125e6 / rbw * avg))
         self._na_sleepcycles = np.int(np.round(125e6 / rbw * sleeptimes))

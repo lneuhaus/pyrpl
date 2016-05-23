@@ -181,7 +181,10 @@ class RedPitaya(SSHshell):
         return self.installserver()
     
     def endserver(self):
-        self.ask('\x03') #exit running server application
+        try:
+            self.ask('\x03') #exit running server application
+        except:
+            print "Server not responding..."
         if 'pitaya' in self.ask():
             print '>' # formerly 'console ready'
         sleep(self.delay)
