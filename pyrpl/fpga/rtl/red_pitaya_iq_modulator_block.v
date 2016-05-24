@@ -92,7 +92,7 @@ reg signed [OUTBITS-1:0] secondproduct_out;
 //summation and saturation management
 always @(posedge clk_i) begin
     secondproduct_reg <= secondproduct1 + secondproduct2;
-    secondproduct_out <= secondproduct_reg[OUTBITS+SINBITS-1:SINBITS]; //can boost the gain here because no overflow is possible if the sin does not exceed 2**l(utsize-1)-1
+    secondproduct_out <= secondproduct_reg[OUTBITS+SINBITS-1:SINBITS]; //can boost the gain here because no overflow is possible if the sin does not exceed 2**(lutsize-1)-1
 end
 assign dat_o = secondproduct_out;
 

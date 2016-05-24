@@ -1,7 +1,7 @@
 //`timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
+// Company: LKB
+// Engineer: Leonhard Neuhaus
 // 
 // Create Date: 27.11.2014 14:15:43
 // Design Name: 
@@ -10,8 +10,11 @@
 // Target Devices: 
 // Tool Versions: 
 // Description: 
-// 
-// Dependencies: 
+//  
+// This module outputs 4 signed signals: 
+// sin(f*t), cos(f*t),sin(f*t+phi), cos(f*t+phi)
+// The maximally positive signal is 2**(LUTBITS-1)-1
+// The maximally negative signal is -(2**(LUTBITS-1)-1)
 // 
 // Revision:
 // Revision 0.01 - File Created
@@ -40,8 +43,8 @@
 
 
 module red_pitaya_iq_fgen_block #(
-    parameter     LUTSZ     = 14,  
-    parameter     LUTBITS   = 16,  
+    parameter     LUTSZ     = 11,  
+    parameter     LUTBITS   = 17,  
     parameter     PHASEBITS = 32 
 )
 (
