@@ -158,10 +158,12 @@ class FloatRegister(Register):
                  bits=14, #total number of bits to represent on fpga
                  norm=1,  #fpga value corresponding to 1 in python
                  signed=True, #otherwise unsigned
+                 invert=False, # if False: FPGA=norm*python, if True: FPGA=norm/python
                  **kwargs):
         super(FloatRegister,self).__init__(address=address, **kwargs)
         self.bits = bits
         self.norm = float(norm)
+        self.invert = invert
         self.signed = signed
         
     def to_python(self, value):
@@ -170,11 +172,23 @@ class FloatRegister(Register):
             if value >= 2**(self.bits-1):
                 value -= 2**self.bits
         # normalization
-        return float(value)/self.norm
+        if self.invert:
+            if value == 0:
+                return float(0)
+            else:
+                return 1.0/float(value)/self.norm
+        else:
+            return float(value)/self.norm
     
     def from_python(self, value):
         # round and normalize
-        v = int(round(float(value)*self.norm)) 
+        if self.invert:
+            if value == 0:
+                v = 0
+            else:
+                v = int(round(1.0/float(value)*self.norm))
+        else:
+            v = int(round(float(value)*self.norm)) 
         # make sure small float values are not rounded to zero
         if ( v==0 and value > 0):
             v = 1

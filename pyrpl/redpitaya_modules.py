@@ -618,23 +618,10 @@ class Pid(FilterModule):
                              doc="pid proportional gain [1]")
     i = FloatRegister(0x10C, bits=_GAINBITS, norm=2**_ISR * 2.0 * np.pi * 8e-9, 
                              doc="pid integral unity-gain frequency [Hz]")
+    d = FloatRegister(0x110, bits=_GAINBITS, norm=2**self._DSR/(2.0*np.pi*8e-9),
+                     invert=True, 
+                     doc="pid derivative unity-gain frequency [Hz]. Off when 0.")
     
-    @property
-    def d(self):
-        d = float(self._read(0x110))
-        if d == 0:
-            return d
-        else:
-            return (2**self._DSR / (2.0 * np.pi * 8e-9)) / float(d)
-    @d.setter
-    def d(self, v):
-        "unity-gain frequency of the differentiator. turn off by setting to 0."
-        if v == 0:
-            w = 0
-        else:
-            w = (2**self._DSR / (2.0 * np.pi * 8e-9)) / float(v)
-        self.write(0x110,int(w))
-        
     @property
     def proportional(self):
         return self.p
