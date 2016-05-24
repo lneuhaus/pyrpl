@@ -72,7 +72,7 @@ module red_pitaya_pid_block #(
    
    //parameters for input pre-filter
    parameter     FILTERSTAGES = 4 ,
-   parameter     FILTERSHIFTBITS = 4,
+   parameter     FILTERSHIFTBITS = 5,
    parameter     FILTERMINBW = 20
 )
 (
@@ -236,8 +236,13 @@ assign int_shr = $signed(int_reg[IBW-1:ISR]) ;
 //---------------------------------------------------------------------------------
 //  Derivative
 
-//generate 
-/*	if (DERIVATIVE == 1) begin
+wire  [    39-1: 0] kd_mult       ;
+reg   [39-DSR-1: 0] kd_reg        ; 
+reg   [39-DSR-1: 0] kd_reg_r      ;
+reg   [39-DSR  : 0] kd_reg_s      ;
+
+generate 
+	if (DERIVATIVE == 1) begin
 		wire  [15+GAINBITS-1: 0] kd_mult;
 		reg   [15+GAINBITS-DSR-1: 0] kd_reg;
 		reg   [15+GAINBITS-DSR-1: 0] kd_reg_r;
@@ -256,11 +261,11 @@ assign int_shr = $signed(int_reg[IBW-1:ISR]) ;
 		end
 		assign kd_mult = $signed(error) * $signed(set_kd) ;
 	end
-	else begin*/
+	else begin
 		wire [15+GAINBITS-DSR:0] kd_reg_s;
 		assign kd_reg_s = {15+GAINBITS-DSR+1{1'b0}};
-	/*end*/  
-//endgenerate 
+	end
+endgenerate 
 
 //---------------------------------------------------------------------------------
 //  Sum together - saturate output

@@ -586,89 +586,12 @@ class DspModule(BaseModule):
 
 
 class FilterModule(DspModule):
-
-    @property
-    def _FILTERSTAGES(self):
-        return self._read(0x220)
-
-    @property
-    def _SHIFTBITS(self):
-        return self._read(0x224)
-
-    @property
-    def _MINBW(self):
-        return self._read(0x228)
-
-    @property
-    def _ALPHABITS(self):
-        return int(np.ceil(np.log2(125000000 / self._MINBW)))
-
-    @property
-    def _filter_shifts(self):
-        v = self._read(0x120)
-        return v
-
-    @_filter_shifts.setter
-    def _filter_shifts(self, val):
-        self._write(0x120, val)
-
-    @property
-    def inputfilter(self):
-        """returns a list of bandwidths for the low-pass filter cascade before the module
-           negative bandwidth stands for high-pass instead of lowpass, 0 bandwidth for bypassing the filter
-        """
-        filter_shifts = self._filter_shifts
-        shiftbits = self._SHIFTBITS
-        alphabits = self._ALPHABITS
-        bandwidths = []
-        for i in range(self._FILTERSTAGES):
-            v = (filter_shifts >> (i * 8)) & 0xFF
-            shift = v & (2**shiftbits - 1)
-            filter_on = ((v >> 7) == 0x1)
-            highpass = (((v >> 6) & 0x1) == 0x1)
-            if filter_on:
-                bandwidth = float(2**shift) / \
-                    (2**alphabits) * 125e6 / 2 / np.pi
-                if highpass:
-                    bandwidth *= -1.0
-            else:
-                bandwidth = 0
-            bandwidths.append(bandwidth)
-        if len(bandwidths) == 1:
-            return bandwidths[0]
-        else:
-            return bandwidths
-
-    @inputfilter.setter
-    def inputfilter(self, v):
-        filterstages = self._FILTERSTAGES
-        try:
-            v = list(v)[:filterstages]
-        except TypeError:
-            v = list([v])[:filterstages]
-        filter_shifts = 0
-        shiftbits = self._SHIFTBITS
-        alphabits = self._ALPHABITS
-        for i in range(filterstages):
-            if len(v) <= i:
-                bandwidth = 0
-            else:
-                bandwidth = float(v[i])
-            if bandwidth == 0:
-                continue
-            else:
-                shift = int(np.round(np.log2(np.abs(bandwidth) * \
-                            (2**alphabits) * 2 * np.pi / 125e6)))
-                if shift < 0:
-                    shift = 0
-                elif shift > (2**shiftbits - 1):
-                    shift = (2**shiftbits - 1)
-                shift += 2**7  # turn this filter stage on
-                if bandwidth < 0:
-                    shift += 2**6  # turn this filter into a highpass
-                filter_shifts += (shift) * 2**(8 * i)
-        self._filter_shifts = filter_shifts
-
+    inputfilter = FilterRegister(0x120, 
+                                 filterstages=0x220,
+                                 shiftbits=0x224,
+                                 minbw=0x228,
+                                 doc="Input filter bandwidths [Hz]."\
+                                 "0 = off, negative bandwidth = highpass")
 
 class Pid(FilterModule):
     _PSR = 12 # Register(0x200)
@@ -695,23 +618,10 @@ class Pid(FilterModule):
                              doc="pid proportional gain [1]")
     i = FloatRegister(0x10C, bits=_GAINBITS, norm=2**_ISR * 2.0 * np.pi * 8e-9, 
                              doc="pid integral unity-gain frequency [Hz]")
+    d = FloatRegister(0x110, bits=_GAINBITS, norm=2**self._DSR/(2.0*np.pi*8e-9),
+                     invert=True, 
+                     doc="pid derivative unity-gain frequency [Hz]. Off when 0.")
     
-    @property
-    def d(self):
-        d = float(self._read(0x110))
-        if d == 0:
-            return d
-        else:
-            return (2**self._DSR / (2.0 * np.pi * 8e-9)) / float(d)
-    @d.setter
-    def d(self, v):
-        "unity-gain frequency of the differentiator. turn off by setting to 0."
-        if v == 0:
-            w = 0
-        else:
-            w = (2**self._DSR / (2.0 * np.pi * 8e-9)) / float(v)
-        self.write(0x110,int(w))
-        
     @property
     def proportional(self):
         return self.p
@@ -755,75 +665,12 @@ class IQ(FilterModule):
     output_signal = SelectRegister(0x10C, options=_output_signals,
                            doc = "Signal to send back to DSP multiplexer")
     
-    
-    _QUADRATUREFILTERSTAGES = Register(0x230)
-    
-    _QUADRATUREFILTERSHIFTBITS = Register(0x234)
-    
-    _QUADRATUREFILTERMINBW = Register(0x238)
-
-    @property
-    def _QUADRATUREFILTERALPHABITS(self):
-        return int(np.ceil(np.log2(125000000 / self._QUADRATUREFILTERMINBW)))
-    
-    _quadraturefilter_shifts = Register(0x124)
-
-    @property
-    def bandwidth(self):
-        """returns a list of bandwidths for the low-pass filter cascade applied to the two quadratures
-           negative bandwidth stands for high-pass instead of lowpass, 0 bandwidth for bypassing the filter
-        """
-        filter_shifts = self._quadraturefilter_shifts
-        shiftbits = self._QUADRATUREFILTERSHIFTBITS
-        alphabits = self._QUADRATUREFILTERALPHABITS
-        bandwidths = []
-        for i in range(self._QUADRATUREFILTERSTAGES):
-            v = (filter_shifts >> (i * 8)) & 0xFF
-            shift = v & (2**shiftbits - 1)
-            filter_on = ((v >> 7) == 0x1)
-            highpass = (((v >> 6) & 0x1) == 0x1)
-            if filter_on:
-                bandwidth = float(2**shift) / \
-                    (2**alphabits) * 125e6 / 2 / np.pi
-                if highpass:
-                    bandwidth *= -1.0
-            else:
-                bandwidth = 0
-            bandwidths.append(bandwidth)
-        if len(bandwidths) == 1:
-            return bandwidths[0]
-        else:
-            return bandwidths
-
-    @bandwidth.setter
-    def bandwidth(self, v):
-        filterstages = self._QUADRATUREFILTERSTAGES
-        try:
-            v = list(v)[:filterstages]
-        except TypeError:
-            v = list([v])[:filterstages]
-        filter_shifts = 0
-        shiftbits = self._QUADRATUREFILTERSHIFTBITS
-        alphabits = self._QUADRATUREFILTERALPHABITS
-        for i in range(filterstages):
-            if len(v) <= i:
-                bandwidth = 0
-            else:
-                bandwidth = float(v[i])
-            if bandwidth == 0:
-                continue
-            else:
-                shift = int(np.round(np.log2(np.abs(bandwidth) * \
-                            (2**alphabits) * 2 * np.pi / 125e6)))
-                if shift < 0:
-                    shift = 0
-                elif shift > (2**shiftbits - 1):
-                    shift = (2**shiftbits - 1)
-                shift += 2**7  # turn this filter stage on
-                if bandwidth < 0:
-                    shift += 2**6  # turn this filter into a highpass
-                filter_shifts += (shift) * 2**(8 * i)
-        self._quadraturefilter_shifts = filter_shifts
+    bandwidth = FilterRegister(0x124, 
+                               filterstages=0x230,
+                               shiftbits=0x234,
+                               minbw=0x238,
+                               doc="Quadrature filter bandwidths [Hz]."\
+                                    "0 = off, negative bandwidth = highpass")
     
     on = BoolRegister(0x100, 0, 
                       doc="If set to False, turns off the module, e.g. to \

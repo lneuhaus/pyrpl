@@ -33,7 +33,7 @@
 module red_pitaya_iq_block #(
 	  //input filter parameters
 	  parameter INPUTFILTERSTAGES    = 1,  //how many cascaded first-order input filters
-	  parameter INPUTFILTERSHIFTBITS = 4,  // up to 2^4 different cutoff frequencies
+	  parameter INPUTFILTERSHIFTBITS = 5,  // up to 2^4 different cutoff frequencies
 	  parameter INPUTFILTERMINBW = 50,  // minimum realizable filter bandwidth - within factor of 2pi
 
 	  //fgen for sin/cos creation parameters
@@ -49,7 +49,7 @@ module red_pitaya_iq_block #(
 
 	  //quadrature low-pass parameter
 	  parameter QUADRATUREFILTERSTAGES = 2,
-      parameter QUADRATUREFILTERSHIFTBITS = 4,
+      parameter QUADRATUREFILTERSHIFTBITS = 5,
       parameter QUADRATUREFILTERMINBW = 10
 )
 (
