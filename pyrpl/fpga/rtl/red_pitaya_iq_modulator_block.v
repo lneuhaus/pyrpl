@@ -99,16 +99,16 @@ assign dat_o = secondproduct_out;
 red_pitaya_product_sat  #( 
 	.BITS_IN1(INBITS), 
 	.BITS_IN2(GAINBITS), 
-	.SHIFT(INBITS-OUTBITS), 
+	.SHIFT(SHIFTBITS), 
 	.BITS_OUT(OUTBITS))
 i0_product_and_sat (
   .factor1_i(signal1_i),
   .factor2_i(g3),
-  .product_o(p_by0_full),
+  .product_o(i0_product),
   .overflow ()
 );   
 //output the scaled quadrature
-wire signed [GAINBITS+INBITS-1:0] i0_product;
+wire signed [OUTBITS-1:0] i0_product;
 reg signed [OUTBITS-1:0] i0_product_reg;
 always @(posedge clk_i) 
     i0_product_reg <= i0_product;
