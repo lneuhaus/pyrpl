@@ -32,6 +32,14 @@ class BaseModule(object):
     # factor to manually compensate 125 MHz oscillator frequency error
     # real_frequency = 125 MHz * _frequency_correction
     _frequency_correction = 1.0
+
+    # prevent the user from setting a nonexisting attribute
+    def __setattr__(self, name, value):
+        if hasattr(self,name) or name.startswith('_'):
+            super(BaseModule, self).__setattr__(name, value)
+        else:
+            raise ValueError("New module attributes may not be set at runtime. Attribute "
+                             +name+" is not defined in class "+self.__class__.__name__)
     
     def help(self, register=''):
         """returns the docstring of the specified register name
@@ -102,7 +110,8 @@ class HK(BaseModule):
 
 class Scope(BaseModule):
     data_length = 2**14
-
+    inputs = None
+    
     def __init__(self, client):
         super(Scope, self).__init__(client, addr_base=0x40100000)
         # dsp multiplexer channels for scope and asg are the same by default
@@ -349,6 +358,7 @@ def make_asg(channel=1):
         _VALUE_OFFSET = set_VALUE_OFFSET
         _BIT_OFFSET = set_BIT_OFFSET
         default_output_direct = set_default_output_direct
+        output_directs = None
         
         def __init__(self, client):
             super(Asg, self).__init__(client, addr_base=0x40200000)
@@ -579,9 +589,9 @@ class DspModule(BaseModule):
     out2_saturated = BoolRegister(0x8,1,doc="True if out2 is saturated")
 
     def __init__(self, client, module='pid0'):
-        self.number = self._inputs[module]
+        self._number = self._inputs[module]
         super(DspModule, self).__init__(client,
-            addr_base=0x40300000+self.number*0x10000)
+            addr_base=0x40300000+self._number*0x10000)
     
 
 class AuxOutput(DspModule):
@@ -631,7 +641,7 @@ class Pid(FilterModule):
                              doc="pid proportional gain [1]")
     i = FloatRegister(0x10C, bits=_GAINBITS, norm=2**_ISR * 2.0 * np.pi * 8e-9, 
                              doc="pid integral unity-gain frequency [Hz]")
-    d = FloatRegister(0x110, bits=_GAINBITS, norm=2**self._DSR/(2.0*np.pi*8e-9),
+    d = FloatRegister(0x110, bits=_GAINBITS, norm=2**_DSR/(2.0*np.pi*8e-9),
                      invert=True, 
                      doc="pid derivative unity-gain frequency [Hz]. Off when 0.")
     
