@@ -614,6 +614,11 @@ class Pid(FilterModule):
     setpoint = FloatRegister(0x104, bits=14, norm=2**13, 
                              doc="pid setpoint [volts]")
     
+    min_voltage = FloatRegister(0x124, bits=14, norm=2**13, 
+                             doc="minimum output signal [volts]")
+    max_voltage = FloatRegister(0x128, bits=14, norm=2**13, 
+                             doc="maximum output signal [volts]")
+    
     p = FloatRegister(0x108, bits=_GAINBITS, norm=2**_PSR, 
                              doc="pid proportional gain [1]")
     i = FloatRegister(0x10C, bits=_GAINBITS, norm=2**_ISR * 2.0 * np.pi * 8e-9, 
@@ -641,7 +646,7 @@ class Pid(FilterModule):
     @proportional.setter
     def proportional(self, v):
         self.p = v
-
+    
     @integral.setter
     def integral(self, v):
         self.i = v
