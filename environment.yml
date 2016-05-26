@@ -1,0 +1,15 @@
+name: pyrpl
+dependencies:
+- python=2.7
+- numpy
+- scipy
+- pandas
+- matplotlib
+- ipython
+- jupyter
+- paramiko
+- nose
+- pip
+- pip:
+    - scp
+    - rpyc
