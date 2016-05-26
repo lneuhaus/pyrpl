@@ -76,7 +76,7 @@ module red_pitaya_iir_block
    input                 clk_i           ,  // clock
    input                 rstn_i          ,  // reset - active low
    input      [ 14-1: 0] dat_i           ,  // input data
-   output     [ 14-1: 0] dat_o           ,  // output data
+   output reg [ 14-1: 0] dat_o           ,  // output data
 
    // communication with PS
    input      [ 16-1: 0] addr,
@@ -346,8 +346,7 @@ always @(posedge clk_i) begin
         //z1_i[stage5] <= z0;
         signal_o <= dat_o_full;
     end
+    dat_o <= (shortcut==1'b1) ? dat_i : signal_o;
 end
-
-assign dat_o = (shortcut==1'b1) ? dat_i : signal_o; 
 
 endmodule

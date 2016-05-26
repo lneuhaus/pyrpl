@@ -502,6 +502,11 @@ red_pitaya_dsp i_dsp (
   .asg2_i          (  asg_b                  ),
   .scope1_o        (  to_scope_a             ),
   .scope2_o        (  to_scope_b             ),
+	
+  .pwm0            (  pwm_signals[0]         ),
+  .pwm1            (  pwm_signals[1]         ),
+  .pwm2            (  pwm_signals[2]         ),
+  .pwm3            (  pwm_signals[3]         ),
   
   // System bus
   .sys_addr        (  sys_addr                   ),  // address
@@ -514,6 +519,10 @@ red_pitaya_dsp i_dsp (
   .sys_ack         (  sys_ack[3]                 )   // acknowledge signal
 );
 
+// the ams module has been obsoleted by PWM control via DSP module (outputs)
+// and by the fact that RedPitaya has migrated aux. inputs to be PS controlled
+// we keep the module to go back to FPGA controlled aux. inputs if needed
+/*
 //---------------------------------------------------------------------------------
 //  Analog mixed signals
 //  XADC and slow PWM DAC control
@@ -542,13 +551,16 @@ red_pitaya_ams i_ams (
   .sys_err         (  sys_err[4]                 ),  // error indicator
   .sys_ack         (  sys_ack[4]                 )   // acknowledge signal
 );
+*/
 
+wire  [ 14-1: 0] pwm_signals[4-1:0];
 red_pitaya_pwm pwm [4-1:0] (
   // system signals
   .clk   (pwm_clk ),
   .rstn  (pwm_rstn),
   // configuration
-  .cfg   ({pwm_cfg_d, pwm_cfg_c, pwm_cfg_b, pwm_cfg_a}),
+  //.cfg   ({pwm_cfg_d, pwm_cfg_c, pwm_cfg_b, pwm_cfg_a}),
+  .signal_i ({pwm_signals[3],pwm_signals[2],pwm_signals[1],pwm_signals[0]}),
   // PWM outputs
   .pwm_o (dac_pwm_o),
   .pwm_s ()
