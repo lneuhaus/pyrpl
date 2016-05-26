@@ -247,6 +247,8 @@ class RedPitaya(SSHshell):
         self.iq2 = rp.IQ(self.client, module='iq2')
         self.asg1 = rp.Asg1(self.client)
         self.asg2 = rp.Asg2(self.client)
+        self.pwm0 = rp.AuxOutput(self.client,module='pwm0')
+        self.pwm1 = rp.AuxOutput(self.client,module='pwm1')
         print "Client started with success"
 
     def startdummyclient(self):

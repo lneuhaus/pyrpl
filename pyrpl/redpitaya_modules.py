@@ -554,7 +554,7 @@ class DspModule(BaseModule):
         asg2=9,
         # scope1 = 8, #same as asg1 by design
         # scope2 = 9, #same as asg2 by design
-        adc1=10,
+        adc1=10, #same as asg
         adc2=11,
         dac1=12,
         dac2=13)
@@ -584,6 +584,14 @@ class DspModule(BaseModule):
             addr_base=0x40300000+self.number*0x10000)
     
 
+class AuxOutput(DspModule):
+    def __init__(self, client, output='pwm0'):
+        pwm_to_module = dict(pwm0 = 'adc1', pwm1='adc2')
+        # future options: , pwm2 = 'dac1', pwm3='dac2')
+        super(AuxOutput, self).__init__(client,module=pwm_to_module["output"])
+    output_direct = None
+    output_directs = None
+    _output_directs = None
 
 class FilterModule(DspModule):
     inputfilter = FilterRegister(0x120, 
