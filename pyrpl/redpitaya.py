@@ -50,6 +50,14 @@ class RedPitaya(SSHshell):
         super(RedPitaya, self).__init__(hostname=hostname, user=user,
                                         password=password, verbose=verbose,
                                         delay = delay)
+        # test ssh connection for exceptions
+        try:
+            self.ask()
+        except socket.error:
+                # try again before anything else
+                super(RedPitaya, self).__init__(hostname=hostname, user=user,
+                                        password=password, verbose=verbose,
+                                        delay = delay)
         self.serverdirname = "//opt//pyrpl//"
         self.serverrunning = False
         self.hostname = hostname
