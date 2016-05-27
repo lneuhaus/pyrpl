@@ -227,7 +227,7 @@ class RedPitaya(SSHshell):
     def restartserver(self, port=None):
         """restart the server. usually executed when client encounters an error"""
         if port is not None:
-            if self.port < 0: #code to try a random port
+            if port < 0: #code to try a random port
                 self.port = random.randint(2223,50000)
             self.port = port
         return self.startserver()
