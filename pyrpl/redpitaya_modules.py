@@ -29,6 +29,8 @@ import iir
 
 class TimeoutError(ValueError):
     pass
+class NotReadyError(ValueError):
+    pass
 
 class BaseModule(object):
     
@@ -158,8 +160,8 @@ class Scope(BaseModule):
                         "ch2_negative_edge": 5,
                         "ext_positive_edge": 6, #DIO0_P pin
                         "ext_negative_edge": 7, #DIO0_P pin
-                        "asg_positive_edge": 8, 
-                        "asg_negative_edge": 9}
+                        "asg1": 8, 
+                        "asg2": 9}
     
     trigger_sources = _trigger_sources.keys() # help for the user
     
@@ -190,7 +192,7 @@ class Scope(BaseModule):
 
     @property
     def trigger_delay(self):
-        return self._trigger_delay*self.sampling_time
+        return (self._trigger_delay - self.data_length//2)*self.sampling_time
     
     @trigger_delay.setter
     def trigger_delay(self, delay):
@@ -293,7 +295,7 @@ class Scope(BaseModule):
     def _data_ch2(self):
         """ acquired (normalized) data from ch2"""
         return np.array(
-                    np.roll(self._rawdata_ch2, -(self._write_pointer_trigger + self.trigger_delay + 1)),
+                    np.roll(self._rawdata_ch2, -(self._write_pointer_trigger + self._trigger_delay + 1)),
                     dtype = np.float)/2**13
 
     @property
@@ -312,9 +314,12 @@ class Scope(BaseModule):
     
     @property
     def times(self):
-        duration = 8e-9*self.decimation*self.data_length
-        endtime = duration*self.trigger_delay/self.data_length
-        return np.linspace(endtime-duration, endtime,
+        #duration = 8e-9*self.decimation*self.data_length
+        #endtime = duration*
+        duration = self.duration
+        trigger_delay = self.trigger_delay
+        return np.linspace(trigger_delay - duration/2.,
+                           trigger_delay + duration/2.,
                            self.data_length,endpoint=False)
 
 
@@ -336,7 +341,6 @@ class Scope(BaseModule):
         if a parameter is None, the current attribute value is used"""
         self._setup_called = True
         self._reset_writestate_machine = True
-        self.trigger_delay = self.data_length
         if average is not None:
             self.average = average
         else:
@@ -347,6 +351,7 @@ class Scope(BaseModule):
             self.trigger_source = trigger_source
         else:
             self.trigger_source = self.trigger_source
+            #print self.trigger_source
         if threshold is not None:
             if ch==1:
                 self.threshold_ch1 = threshold
@@ -383,7 +388,7 @@ class Scope(BaseModule):
         the data from the buffer is returned directly.
         """
         if not self._setup_called:
-            raise ValueError("setup has never been called")
+            raise NotReadyError("setup has never been called")
         SLEEP_TIME = 0.001
         total_sleep = 0
         if trigger_timeout>0:

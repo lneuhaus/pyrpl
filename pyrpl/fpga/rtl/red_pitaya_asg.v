@@ -75,7 +75,7 @@ module red_pitaya_asg (
   input                 dac_rstn_i,  // DAC reset - active low
   input                 trig_a_i  ,  // starting trigger CHA
   input                 trig_b_i  ,  // starting trigger CHB
-  output                trig_out_o,  // notification trigger
+  output     [  2-1: 0] trig_out_o,  // notification trigger
  
   input                 trig_scope_i    ,  // trigger from the scope
   
@@ -209,8 +209,7 @@ begin
    buf_b_addr <= sys_addr[RSZ+1:2] ;  // can change only synchronous to write clock
 end
 
-//assign trig_out_o = trig_a_done ;
-assign trig_out_o = trig_a_done | trig_b_done ;
+assign trig_out_o = {trig_b_done,trig_a_done};
 
 //---------------------------------------------------------------------------------
 //
@@ -311,7 +310,7 @@ end else begin
 end
 
 wire [32-1: 0] r0_rd = {4'h0,at_autorearm_b,at_invert_b,at_reset_b,set_b_rgate, set_b_zero,set_b_rst,set_b_once,set_b_wrap, 1'b0,trig_b_src,
-                        4'h0,at_autorearm_a,at_invert_a,at_reset_a,set_a_rgate, set_a_zero,set_a_rst,set_a_once,set_a_wrap, 1'b0,trig_a_src }; //trig_a_src and trig_b_src are 3 bits wide
+                        4'h0,at_autorearm_a,at_invert_a,at_reset_a,set_a_rgate, set_a_zero,set_a_rst,set_a_once,set_a_wrap, 1'b0,trig_a_src };
 
 wire sys_en;
 assign sys_en = sys_wen | sys_ren;
@@ -350,7 +349,7 @@ end else begin
      20'h00134 : begin sys_ack <= sys_en;          sys_rdata <= {{32-RSZ-2{1'b0}},trigbuf_rp_b}    ; end
      20'h00138 : begin sys_ack <= sys_en;          sys_rdata <= at_counts_b[32-1:0]     ; end
      20'h0013C : begin sys_ack <= sys_en;          sys_rdata <= at_counts_b[64-1:32]     ; end
-
+	 20'h00140 : begin sys_ack <= sys_en;          sys_rdata <= {{32-2{1'b0}},trig_b_done,trig_a_done}; end
      20'h1zzzz : begin sys_ack <= ack_dly;         sys_rdata <= {{32-14{1'b0}},buf_a_rdata}        ; end
      20'h2zzzz : begin sys_ack <= ack_dly;         sys_rdata <= {{32-14{1'b0}},buf_b_rdata}        ; end
 
