@@ -38,7 +38,7 @@
  * 
  */
 
-module red_pitaya_ams #(int unsigned CCW = 24)(  // configuration counter width (resolution)
+module red_pitaya_ams (
    // ADC
    input                 clk_i           ,  // clock
    input                 rstn_i          ,  // reset - active low
@@ -139,6 +139,9 @@ end
 
 // its not clear at all if the timing will be right here since we work at 250 MHz in this module
 // if something doesnt work, parts of the logic must be transferred down to 125 MHz
+
+localparam CCW = 24; // configuration bitwidth for pwm module
+
 reg [CCW-1:0] cfg;
 wire b3;
 wire b2;
