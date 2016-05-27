@@ -8,6 +8,7 @@ class RedPitayaTestCases(unittest.TestCase):
 
     def setUp(self):
         self.hostname = os.environ.get('REDPITAYA')
+        self.password = os.environ.get('RP_PASSWORD') or 'root'
 
     def tearDown(self):
         pass
