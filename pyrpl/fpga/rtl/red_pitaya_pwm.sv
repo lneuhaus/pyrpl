@@ -37,65 +37,13 @@ module red_pitaya_pwm #(
   input  logic           clk ,  // clock
   input  logic           rstn,  // reset
   // configuration
-  
-  //input  logic [CCW-1:0] cfg ,  // no configuration but signal_i
-  input          [ 14-1:0] signal_i, // 14 bit inputs for compatibility and future upgrades;
-  									 // right now only 12 bits are used  
+  input  logic [CCW-1:0] cfg ,  // no configuration but signal_i
+
   // PWM outputs
   output logic           pwm_o ,  // PWM output - driving RC
   output logic           pwm_s    // PWM synchronization
 );
 
-
-// conversion of input signal into config register:
-// bits 4-11 are the duty cycle
-// bits 0-3 configure the duty cycle modulation
-// therefore fundamental switch frequency is 
-// 250 MHz/2**8 = 488.28125 kHz
-// the duty cycle is modulated over a period of 16 PWM cycles
-// -> lowest frequency is 30.51757812 kHz
-// we need to convert bits 0-3 into a bit sequence that 
-// will prolong the duty cycle by 1 if the bit is set 
-// and 0 if it is not set. The 16 bits will be sequentially 
-// interrogated by the PWM
-// we will encode bits 0-3 as follows:
-// bit3 = 16'b0101010101010101
-// bit2 = 16'b0010001000100010
-// bit1 = 16'b0000100000001000
-// bit0 = 16'b0000000010000000
-// resp. bit:  323132303231323
-// as you can see, each row except for the first can be filled
-// with exactly one bit, therefore our method is exclusive
-// and will always lead to a modulation duty cycle in the interval [0:1[
-
-// on top of all this, we need to convert the incoming signal from signed to unsigned
-// and from 14 bits to 12
-// the former is easy: just bitshift by 2
-// the latter is easy as well: 
-// maxnegative = 0b1000000 ->        0
-// maxnegative + 1 = 0b10000001 ->   1
-// ...
-// -1 = 0b1111111111 -> 0b01111111111
-// therefore: only need to invert the sign bit
-// works as well for positive numbers:
-// 0 -> 0b1000000000
-// 1 -> 0b1000000001
-//maxpositive = 0111111111 -> 11111111111
-
-// its not clear at all if the timing will be right here since we work at 250 MHz in this module
-// if something doesnt work, parts of the logic must be transferred down to 125 MHz
-reg [CCW-1:0] cfg;
-wire b3;
-wire b2;
-wire b1;
-wire b0;
-assign {b3,b2,b1,b0} = signal_i[5:2];
-always @(posedge clk)
-if (~rstn) begin
-   cfg   <=  {CCW{1'b0}};
-end else begin
-   cfg  <= {!signal_i[13],signal_i[13-1:6],0'b0,b3,b2,b3,b1,b3,b2,b3,b0,b3,b2,b3,b1,b3,b2,b3};
-end
 
 // main part of PWM
 reg  [ 4-1: 0] bcnt  ;
