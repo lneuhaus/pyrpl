@@ -10,6 +10,7 @@ class RedPitayaTestCases(unittest.TestCase):
 
     def setUp(self):
         self.hostname = os.environ.get('REDPITAYA')
+        self.password = os.environ.get('RP_PASSWORD') or 'root'
 
     def tearDown(self):
         pass
@@ -18,9 +19,14 @@ class RedPitayaTestCases(unittest.TestCase):
         self.assertIsNotNone(
             self.hostname,
             msg="Set REDPITAYA=localhost or the ip of your board to proceed!")
+
+    def test_password(self):
+        self.assertIsNotNone(
+            self.password,
+            msg="Set RP_PASSWORD=<your redpitaya password> to proceed!")
         
     def test_connect(self):
         if self.hostname != "localhost":
-            r = RedPitaya(hostname=self.hostname)
+            r = RedPitaya(hostname=self.hostname, password=self.password)
             self.assertEqual(r.hk.led, 0)
     
