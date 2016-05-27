@@ -210,13 +210,14 @@ end else begin
    if (set_rst_i || (dac_trig && !dac_do)) // manual reset or start
       dac_pnt <= set_ofs_i;
    else if (dac_do) begin
-      if (~dac_npnt_sub_neg)  dac_pnt <= set_wrap_i ? dac_npnt_sub : set_ofs_i; // wrap or go to start
+      if (~dac_npnt_sub_neg)
+	      dac_pnt <= set_wrap_i ? dac_npnt_sub : set_ofs_i; // wrap or go to start
       else                    dac_pnt <= dac_npnt[RSZ+15:0]; // normal increase
    end
 end
 
 assign dac_npnt = dac_pnt + set_step_i;
-assign trig_done_o = !dac_rep && trig_in;
+assign trig_done_o = (!dac_rep && trig_in) | dac_npnt_sub_neg;
 
 //---------------------------------------------------------------------------------
 //

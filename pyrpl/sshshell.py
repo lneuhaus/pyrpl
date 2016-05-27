@@ -45,7 +45,8 @@ class SSHshell(object):
             hostname,
             username=self.user,
             password=self.password,
-            port=self.port)
+            port=self.port,
+            timeout=1)
         self.channel = self.ssh.invoke_shell()
         self.startscp()
         # self.sleep(0.1)
