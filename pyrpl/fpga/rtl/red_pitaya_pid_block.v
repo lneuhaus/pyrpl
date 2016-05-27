@@ -116,7 +116,7 @@ always @(posedge clk_i) begin
       set_filter <= 32'd0;
       ival_write <= 1'b0;
       out_min <= {1'b1,{14-1{1'b0}}};
-      out_max <= {0'b1,{14-1{1'b1}}};
+      out_max <= {1'b0,{14-1{1'b1}}};
    end
    else begin
       if (wen) begin
