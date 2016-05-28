@@ -1,5 +1,8 @@
 import numpy as np
 import sys
+import logging
+logger = logging.getLogger(name=__name__)
+
 #way to represent the smallest positive value
 #needed to set floats to minimum count above zero
 epsilon = sys.float_info.epsilon
@@ -329,4 +332,28 @@ class FilterRegister(Register):
                     shift += 2**6  # turn this filter into a highpass
                 filter_shifts += (shift) * 2**(8 * i)
         return filter_shifts
-        
+    
+class PWMRegister(FloatRegister):
+        @property
+    def pwm_full(self):
+        """PWM full variable from FPGA code"""
+        return float(255.0)
+
+    def to_dac(self, pwmvalue, bitselect):
+        """
+        PWM value (100% == 156)
+        Bit select for PWM repetition which have value PWM+1
+        """
+        return ((pwmvalue & 0xFF) << 16) + (bitselect & 0xFFFF)
+
+    def rel_to_dac(self, v):
+        v = np.long(np.round(v * (17 * (self.pwm_full + 1) - 1)))
+        return self.to_dac(v // 17, (2**(v % 17)) - 1)
+
+    def rel_to_dac_debug(self, v):
+        """max value = 1.0, min=0.0"""
+        v = np.long(np.round(v * (17 * (self.pwm_full + 1) - 1)))
+        return (v // 17, (2**(v % 17)) - 1)
+
+    def setdac0(self, pwmvalue, bitselect):
+        self._write(0x20, self.to_dac(pwmvalue, bitselect))

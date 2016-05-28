@@ -24,6 +24,7 @@ import math
 import numpy as np
 import inspect
 import random
+import logging
 
 from sshshell import SSHshell
 from scp import SCPException
@@ -35,38 +36,38 @@ import redpitaya_modules as rp
 class RedPitaya(SSHshell):
     def __init__(self, hostname='192.168.1.100', port=2222,
                  user='root', password='root',
-                 verbose=False, delay=0.05, 
+                 delay=0.05, 
                  autostart=True, reloadfpga=True, reloadserver=False, 
                  filename=None, dirname=None,
                  leds_off=True, frequency_correction=1.0,
                  ):
         """installs and starts the interface on the RedPitaya at hostname that allows remote control
         
-        if you are experiencing problems, try to increase delay, set verbose to True and change the port number"""
+        if you are experiencing problems, try to increase delay, or try logging.getLogger().setLevel(logging.DEBUG)"""
+        self.logger = logging.getLogger(name=__name__)
         #self.license()
-        if hostname == "unknown": # simulation mode - start without connecting
-            self.startdummyclient()
-            return
-        super(RedPitaya, self).__init__(hostname=hostname, user=user,
-                                        password=password, verbose=verbose,
-                                        delay = delay)
-        # test ssh connection for exceptions
-        try:
-            self.ask()
-        except socket.error:
-                # try again before anything else
-                super(RedPitaya, self).__init__(hostname=hostname, user=user,
-                                        password=password, verbose=verbose,
-                                        delay = delay)
         self.serverdirname = "//opt//pyrpl//"
         self.serverrunning = False
         self.hostname = hostname
+        self.user = user
+        self.password = password
+        self.delay = delay
         self.port = port
         self.defaultport = port # sometimes we randomly pick another port to bypass problems of the linux on redpitaya
         self.conn = None
         self.client = None
         self.frequency_correction = frequency_correction
         self.leds_off = leds_off
+        # get parameters from os.environment variables
+        for k in ["hostname","port","user","password","delay"]:
+            if "REDPITAYA_"+k.upper in os.environ:
+                newvalue = os.environ["REDPITAYA_"+k.upper]
+                self.logger.warning("Variable %s with value %s overwritten by "
+                                    +"environment variable REDPITAYA_%s with "
+                                    +"value %s", k, self.__getattribute__(k),
+                                    k.upper(), newvalue) 
+                self.__setattr__(k, newvalue) 
+        # check filenames - should work without specifying them
         if filename is None:
             self.filename = 'fpga//red_pitaya.bin'
         else:
@@ -82,6 +83,24 @@ class RedPitaya(SSHshell):
                 raise IOError("Wrong dirname",
                           "The directory of the pyrl package could not be found. Please try again calling RedPitaya with the additional argument dirname='c://github//pyrpl//pyrpl' adapted to your installation directory of pyrpl! Current dirname: "
                            +self.dirname)
+        # start ssh connection
+        if hostname == "unknown": # simulation mode - start without connecting
+            self.startdummyclient()
+            return
+        super(RedPitaya, self).__init__(hostname=self.hostname, 
+                                        user=self.user,
+                                        password=self.password, 
+                                        delay = self.delay)
+        # test ssh connection for exceptions
+        try:
+            self.ask()
+        except socket.error:
+                # try again before anything else
+                super(RedPitaya, self).__init__(hostname=self.hostname, 
+                                                user=self.user,
+                                                password=self.password, 
+                                                delay=self.delay)
+        # start other stuff
         if reloadfpga:
             self.update_fpga()
         if reloadserver:
@@ -154,7 +173,7 @@ class RedPitaya(SSHshell):
             try:
                 self.scp.put(os.path.join(self.dirname, 'monitor_server', serverfile), self.serverdirname+"monitor_server")
             except SCPException,SSHException:
-                print "Upload error. Try again after rebooting your RedPitaya.."
+                self.logger.exception("Upload error. Try again after rebooting your RedPitaya..")
             sleep(self.delay)
             self.ask('chmod 755 ./monitor_server')
             sleep(self.delay)
@@ -163,7 +182,7 @@ class RedPitaya(SSHshell):
             sleep(self.delay)
             result += self.ask()
             if not "sh" in result: 
-                print "Server application started on port",self.port
+                self.logger.info("Server application started on port %d",self.port)
                 return self.port
             else: # means we tried the wrong binary version. make sure server is not running and try again with next file
                 self.endserver()
@@ -171,10 +190,10 @@ class RedPitaya(SSHshell):
         #try once more on a different port
         if self.port == self.defaultport:
             self.port = random.randint(self.defaultport,50000)
-            print "Problems to start the server application. Trying again with a different port number",self.port
+            self.logger.warning("Problems to start the server application. Trying again with a different port number %d",self.port)
             return self.installserver()
         
-        print "Server application could not be started. Try to recompile monitor_server on your RedPitaya (see manual). "
+        self.logger.error("Server application could not be started. Try to recompile monitor_server on your RedPitaya (see manual). ")
         return None
     
     def startserver(self):
@@ -182,7 +201,7 @@ class RedPitaya(SSHshell):
         sleep(self.delay)
         result = self.ask(self.serverdirname+"/monitor_server " + str(self.port))
         if not "sh" in result: # means we tried the wrong binary version
-            print "Server application started on port",self.port
+            self.logger.info("Server application started on port %d",self.port)
             self.serverrunning = True
             return self.port
         #something went wrong
@@ -192,7 +211,7 @@ class RedPitaya(SSHshell):
         try:
             self.ask('\x03') #exit running server application
         except:
-            print "Server not responding..."
+            self.logger.exception("Server not responding...")
         if 'pitaya' in self.ask():
             print '>' # formerly 'console ready'
         sleep(self.delay)
@@ -233,11 +252,11 @@ class RedPitaya(SSHshell):
         return self.startserver()
 
     def license(self):
-        print """\r\n    pyrpl  Copyright (C) 2014-2016  Leonhard Neuhaus
+        self.logger.info("""\r\n    pyrpl  Copyright (C) 2014-2016  Leonhard Neuhaus
     This program comes with ABSOLUTELY NO WARRANTY; for details read the file
     "LICENSE" in the source directory. This is free software, and you are
     welcome to redistribute it under certain conditions; read the file
-    "LICENSE" in the source directory for details.\r\n"""
+    "LICENSE" in the source directory for details.\r\n""")
 
     def startclient(self):
         self.client = monitor_client.MonitorClient(
@@ -257,7 +276,7 @@ class RedPitaya(SSHshell):
         self.asg2 = rp.Asg2(self.client)
         self.pwm0 = rp.AuxOutput(self.client,output='pwm0')
         self.pwm1 = rp.AuxOutput(self.client,output='pwm1')
-        print "Client started with success"
+        self.logger.info("Client started with success")
 
     def startdummyclient(self):
         self.client = monitor_client.DummyClient()
@@ -274,6 +293,5 @@ class RedPitaya(SSHshell):
         self.iq2 = rp.IQ(self.client, module='iq2')
         self.asg1 = rp.Asg1(self.client)
         self.asg2 = rp.Asg2(self.client)
-        print "Dummy mode started..."
-
+        self.logger.warning("Dummy mode started...")
     

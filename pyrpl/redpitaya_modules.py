@@ -22,6 +22,7 @@ import time
 from time import sleep
 import sys
 import matplotlib.pyplot as plt
+import logging
 
 from registers import *
 from bijection import Bijection
@@ -54,7 +55,8 @@ class BaseModule(object):
                     docstring = self.help(key)
                     if not docstring.startswith('_'): # mute internal registers
                         string += key + ": " + docstring + '\r\n\r\n'
-            return string
+            self.logger.info(string)
+            #return string
         
     def __init__(self, client, addr_base=0x40000000):
         """ Creates the prototype of a RedPitaya Module interface
@@ -63,6 +65,7 @@ class BaseModule(object):
                    addr_base is the base address of the module, such as 0x40300000
                    for the PID module
         """
+        self.logger = logging.getLogger(name=__name__)
         self._client = client
         self._addr_base = addr_base
         self.__doc__ = "Available registers: \r\n\r\n"+self.help()
@@ -319,7 +322,7 @@ class Scope(BaseModule):
                 self.decimation = f
                 return
         self.decimation = 1
-        print "Desired sampling time impossible to realize"
+        self.logger.error("Desired sampling time impossible to realize")
 
     @property
     def duration(self):
@@ -337,7 +340,7 @@ class Scope(BaseModule):
                 self.data_decimation = f
                 return
         self.data_decimation = 65536
-        print "Desired duration too long to realize"
+        self.logger.error("Desired duration too long to realize")
 
 
 # ugly workaround, but realized too late that descriptors have this limit
@@ -496,7 +499,7 @@ def make_asg(channel=1):
                 y = np.zeros(self.data_length)
             else: 
                 y = self.data
-                print "Warning: waveform name %s not recognized. Specify waveform manually"%waveform
+                self.logger.error("Waveform name %s not recognized. Specify waveform manually"%waveform)
             self.data = y
             
             self.start_phase = start_phase
@@ -858,7 +861,7 @@ class IQ(FilterModule):
                  output_signal='output_direct')
         # take the discretized rbw (only using first filter cutoff)
         rbw = self.bandwidth[0]
-        print "Estimated acquisition time:", float(avg + sleeptimes) * points / rbw , "s"
+        self.logger.info("Estimated acquisition time:", float(avg + sleeptimes) * points / rbw , "s")
         sys.stdout.flush() # make sure the time is shown        
         # setup averaging
         self._na_averages = np.int(np.round(125e6 / rbw * avg))
@@ -986,12 +989,12 @@ class IIR(DspModule):
             for j in range(6):
                 if j == 2:
                     if v[i, j] != 0:
-                        print "Attention: b_2 (" + str(i) \
-                            + ") is not zero but " + str(v[i, j])
+                        self.logger.warning("Attention: b_2 (" + str(i) \
+                            + ") is not zero but " + str(v[i, j]))
                 elif j == 3:
                     if v[i, j] != 1:
-                        print "Attention: a_0 (" + str(i) \
-                            + ") is not one but " + str(v[i, j])
+                        self.logger.warning("Attention: a_0 (" + str(i) \
+                            + ") is not one but " + str(v[i, j]))
                 else:
                     if j > 3:
                         k = j - 2
@@ -1032,7 +1035,6 @@ class IIR(DspModule):
             plot=False,
             #save=False,
             turn_on=True,
-            verbose=False,
             tol=1e-3):
         """Setup an IIR filter
         
@@ -1052,7 +1054,6 @@ class IIR(DspModule):
         loops:         clock cycles per loop of the filter. must be at least 3 and at most 255. set None for autosetting loops
         turn_on:       automatically turn on the filter after setup
         plot:          if True, plots the theoretical and implemented transfer functions
-        verbose:       print filter implementation information during computation 
         tol:           tolerance for matching conjugate poles or zeros into pairs, 1e-3 is okay
 
         returns:       data to be passed to iir.bodeplot to plot the realized transfer function
@@ -1081,8 +1082,7 @@ class IIR(DspModule):
         preliminary_loops = int(max([len(p), len(z)])+1) / 2
         c = iir.get_coeff(sys, dt=preliminary_loops * 8e-9,
                           totalbits=iirbits, shiftbits=iirshift,
-                          tol=tol, finiteprecision=False,
-                          verbose=verbose)
+                          tol=tol, finiteprecision=False)
         minimum_loops = len(c)
         if minimum_loops < 3:
             minimum_loops = 3
@@ -1098,8 +1098,7 @@ class IIR(DspModule):
         dt = loops * 8e-9 / self._frequency_correction
         c = iir.get_coeff(sys, dt=dt,
                           totalbits=iirbits, shiftbits=iirshift,
-                          tol=tol, finiteprecision=False, 
-                          verbose=verbose)
+                          tol=tol, finiteprecision=False)
         self.coefficients = c
         self.loops = loops
         f = np.array(self.coefficients)
@@ -1136,9 +1135,9 @@ class IIR(DspModule):
         #        curves.append(curve)
         #    for curve in curves[:-1]:
         #        curves[-1].add_child(curve)
-        print "IIR filter ready"
-        print "Maximum deviation from design coefficients: ", max((f[0:len(c)] - c).flatten())
-        print "Overflow pattern: ", bin(self.overflow)
+        self.logger.info("IIR filter ready")
+        self.logger.info("Maximum deviation from design coefficients: %f", max((f[0:len(c)] - c).flatten()))
+        self.logger.info("Overflow pattern: %b", bin(self.overflow))
         #        if save:
         #            return f, curves[-1]
         #        else:
@@ -1155,11 +1154,12 @@ class AMS(BaseModule):
     def __init__(self, client):
         super(AMS, self).__init__(client, addr_base=0x40400000)
     
+    #_dac0 = Register()
+    
     @property
     def pwm_full(self):
         """PWM full variable from FPGA code"""
-        return float(156.0)
-        # return 249 #also works fine!!
+        return float(255.0)
 
     def to_dac(self, pwmvalue, bitselect):
         """

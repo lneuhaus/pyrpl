@@ -2,6 +2,8 @@ from nose.tools import with_setup
 from unittest import TestCase
 import os
 import numpy as np
+import logging
+logging.getLogger(name=__name__)
 
 from pyrpl import RedPitaya
 from pyrpl.redpitaya_modules import *

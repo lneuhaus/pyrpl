@@ -21,7 +21,7 @@ import paramiko
 from time import sleep
 from scp import SCPClient, SCPException
 import os
-
+import logging
 
 class SSHshell(object):
 
@@ -30,9 +30,8 @@ class SSHshell(object):
             hostname='localhost',
             user='root',
             password='root',
-            verbose=True,
             delay=0.05):
-        self.verbose = verbose
+        self.logger = logging.getLogger(name=__name__)
         self.delay = delay
         self.apprunning = False
         self.hostname = hostname
@@ -72,7 +71,7 @@ class SSHshell(object):
         while string != "":
             string = self.read_nbytes(1024)
             sumstring += string
-        self.log(sumstring)
+        self.logger.debug(text)
         return sumstring
 
     def askraw(self, question=""):
@@ -100,7 +99,4 @@ class SSHshell(object):
         self.endapp()
         self.ask("shutdown now")
         self.__del__()
-
-    def log(self, text):
-        if self.verbose:
-            print text
+        
