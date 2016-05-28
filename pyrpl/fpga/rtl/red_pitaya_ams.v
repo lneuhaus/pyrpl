@@ -74,10 +74,8 @@ if (rstn_i == 1'b0) begin
    dac_d_o     <= 24'h9C_0000 ;
 end else begin
    if (sys_wen) begin
-      if (sys_addr[19:0]==16'h20)   dac_a_o <= sys_wdata[24-1: 0] ;
-      else 							dac_a_o <= cfg;
-      if (sys_addr[19:0]==16'h24)   dac_b_o <= sys_wdata[24-1: 0] ;
-      else 							dac_a_o <= cfg_b;
+   	  dac_a_o <= cfg;
+   	  dac_b_o <= cfg_b;
       if (sys_addr[19:0]==16'h28)   dac_c_o <= sys_wdata[24-1: 0] ;
       if (sys_addr[19:0]==16'h2C)   dac_d_o <= sys_wdata[24-1: 0] ;
    end
@@ -152,7 +150,7 @@ always @(posedge clk_i)
 if (rstn_i == 1'b0) begin
    cfg   <=  {CCW{1'b0}};
 end else begin
-   cfg  <= {!pwm0_i[13],pwm0_i[13-1:6],0'b0,b3,b2,b3,b1,b3,b2,b3,b0,b3,b2,b3,b1,b3,b2,b3};
+   cfg  <= {~pwm0_i[13],pwm0_i[13-1:6],0'b0,b3,b2,b3,b1,b3,b2,b3,b0,b3,b2,b3,b1,b3,b2,b3};
 end
 
 reg [CCW-1:0] cfg_b;
@@ -165,7 +163,7 @@ always @(posedge clk_i)
 if (rstn_i == 1'b0) begin
    cfg_b   <=  {CCW{1'b0}};
 end else begin
-   cfg_b  <= {!pwm1_i[13],pwm1_i[13-1:6],0'b0,b3_b,b2_b,b3_b,b1_b,b3_b,b2_b,b3_b,b0_b,b3_b,b2_b,b3_b,b1_b,b3_b,b2_b,b3_b};
+   cfg_b  <= {~pwm1_i[13],pwm1_i[13-1:6],0'b0,b3_b,b2_b,b3_b,b1_b,b3_b,b2_b,b3_b,b0_b,b3_b,b2_b,b3_b,b1_b,b3_b,b2_b,b3_b};
 end
 
 endmodule
