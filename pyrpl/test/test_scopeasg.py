@@ -2,6 +2,8 @@ from nose.tools import with_setup
 from unittest import TestCase
 import os
 import numpy as np
+import logging
+logger = logging.getLogger(name=__name__)
 
 from pyrpl import RedPitaya
 
@@ -10,12 +12,8 @@ class TestClass(object):
     
     @classmethod
     def setUpAll(self):
-        hostname = os.environ.get('REDPITAYA')
-        if hostname != 'unavailable':
-            self.r = RedPitaya(hostname=hostname)
-        else:
-            self.r = None
-    
+        self.r = RedPitaya(hostname=hostname)
+   
     #you are invited to change the following two silly tests to something useful
     def test_example(self):
         assert self.r.scope.dac1==0

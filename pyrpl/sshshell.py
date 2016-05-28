@@ -37,14 +37,13 @@ class SSHshell(object):
         self.hostname = hostname
         self.user = user
         self.password = password
-        self.port = 22
         self.ssh = paramiko.SSHClient()
         self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         self.ssh.connect(
             hostname,
             username=self.user,
             password=self.password,
-            port=self.port)
+            port=22)
         self.channel = self.ssh.invoke_shell()
         self.startscp()
         # self.sleep(0.1)
@@ -71,7 +70,7 @@ class SSHshell(object):
         while string != "":
             string = self.read_nbytes(1024)
             sumstring += string
-        self.logger.debug(text)
+        self.logger.debug(sumstring)
         return sumstring
 
     def askraw(self, question=""):

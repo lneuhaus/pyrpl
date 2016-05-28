@@ -47,7 +47,8 @@ class BaseModule(object):
         
            if register is an empty string, all available docstrings are returned"""
         if register:
-            return type(self).__dict__[register].__doc__
+            string = type(self).__dict__[register].__doc__
+            return string
         else:
             string = ""
             for key in type(self).__dict__.keys():
@@ -55,8 +56,7 @@ class BaseModule(object):
                     docstring = self.help(key)
                     if not docstring.startswith('_'): # mute internal registers
                         string += key + ": " + docstring + '\r\n\r\n'
-            self.logger.info(string)
-            #return string
+            return string
         
     def __init__(self, client, addr_base=0x40000000):
         """ Creates the prototype of a RedPitaya Module interface
@@ -65,7 +65,7 @@ class BaseModule(object):
                    addr_base is the base address of the module, such as 0x40300000
                    for the PID module
         """
-        self.logger = logging.getLogger(name=__name__)
+        self._logger = logging.getLogger(name=__name__)
         self._client = client
         self._addr_base = addr_base
         self.__doc__ = "Available registers: \r\n\r\n"+self.help()
@@ -322,7 +322,7 @@ class Scope(BaseModule):
                 self.decimation = f
                 return
         self.decimation = 1
-        self.logger.error("Desired sampling time impossible to realize")
+        self._logger.error("Desired sampling time impossible to realize")
 
     @property
     def duration(self):
@@ -340,7 +340,7 @@ class Scope(BaseModule):
                 self.data_decimation = f
                 return
         self.data_decimation = 65536
-        self.logger.error("Desired duration too long to realize")
+        self._logger.error("Desired duration too long to realize")
 
 
 # ugly workaround, but realized too late that descriptors have this limit
@@ -499,7 +499,7 @@ def make_asg(channel=1):
                 y = np.zeros(self.data_length)
             else: 
                 y = self.data
-                self.logger.error("Waveform name %s not recognized. Specify waveform manually"%waveform)
+                self._logger.error("Waveform name %s not recognized. Specify waveform manually"%waveform)
             self.data = y
             
             self.start_phase = start_phase
@@ -861,7 +861,7 @@ class IQ(FilterModule):
                  output_signal='output_direct')
         # take the discretized rbw (only using first filter cutoff)
         rbw = self.bandwidth[0]
-        self.logger.info("Estimated acquisition time:", float(avg + sleeptimes) * points / rbw , "s")
+        self._logger.info("Estimated acquisition time:", float(avg + sleeptimes) * points / rbw , "s")
         sys.stdout.flush() # make sure the time is shown        
         # setup averaging
         self._na_averages = np.int(np.round(125e6 / rbw * avg))
@@ -989,11 +989,11 @@ class IIR(DspModule):
             for j in range(6):
                 if j == 2:
                     if v[i, j] != 0:
-                        self.logger.warning("Attention: b_2 (" + str(i) \
+                        self._logger.warning("Attention: b_2 (" + str(i) \
                             + ") is not zero but " + str(v[i, j]))
                 elif j == 3:
                     if v[i, j] != 1:
-                        self.logger.warning("Attention: a_0 (" + str(i) \
+                        self._logger.warning("Attention: a_0 (" + str(i) \
                             + ") is not one but " + str(v[i, j]))
                 else:
                     if j > 3:
@@ -1135,9 +1135,9 @@ class IIR(DspModule):
         #        curves.append(curve)
         #    for curve in curves[:-1]:
         #        curves[-1].add_child(curve)
-        self.logger.info("IIR filter ready")
-        self.logger.info("Maximum deviation from design coefficients: %f", max((f[0:len(c)] - c).flatten()))
-        self.logger.info("Overflow pattern: %b", bin(self.overflow))
+        self._logger.info("IIR filter ready")
+        self._logger.info("Maximum deviation from design coefficients: %f", max((f[0:len(c)] - c).flatten()))
+        self._logger.info("Overflow pattern: %b", bin(self.overflow))
         #        if save:
         #            return f, curves[-1]
         #        else:

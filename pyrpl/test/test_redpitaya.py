@@ -2,6 +2,8 @@
 
 import unittest
 import os
+import logging
+logger = logging.getLogger(name=__name__)
 
 from pyrpl import RedPitaya
 
@@ -9,18 +11,17 @@ from pyrpl import RedPitaya
 class RedPitayaTestCases(unittest.TestCase):
 
     def setUp(self):
-        self.hostname = os.environ.get('REDPITAYA')
+        pass
 
     def tearDown(self):
         pass
 
     def test_hostname(self):
-        self.assertIsNotNone(
-            self.hostname,
-            msg="Set REDPITAYA=localhost or the ip of your board to proceed!")
+        self.assertIsTrue(
+            "REDPITAYA_HOSTNAME" in os.environ,
+            msg="Set REDPITAYA_HOSTNAME=unavailable or the ip of your board to proceed!")
         
     def test_connect(self):
-        if self.hostname != "localhost":
-            r = RedPitaya(hostname=self.hostname)
-            self.assertEqual(r.hk.led, 0)
+        r = RedPitaya()
+        self.assertEqual(r.hk.led, 0)
     

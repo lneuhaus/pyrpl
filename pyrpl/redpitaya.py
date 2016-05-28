@@ -60,7 +60,7 @@ class RedPitaya(SSHshell):
         self.leds_off = leds_off
         # get parameters from os.environment variables
         for k in ["hostname","port","user","password","delay"]:
-            if "REDPITAYA_"+k.upper in os.environ:
+            if "REDPITAYA_"+k.upper() in os.environ:
                 newvalue = os.environ["REDPITAYA_"+k.upper]
                 self.logger.warning("Variable %s with value %s overwritten by "
                                     +"environment variable REDPITAYA_%s with "
@@ -98,7 +98,7 @@ class RedPitaya(SSHshell):
                 # try again before anything else
                 super(RedPitaya, self).__init__(hostname=self.hostname, 
                                                 user=self.user,
-                                                password=self.password, 
+                                                password=self.password,
                                                 delay=self.delay)
         # start other stuff
         if reloadfpga:
@@ -213,7 +213,7 @@ class RedPitaya(SSHshell):
         except:
             self.logger.exception("Server not responding...")
         if 'pitaya' in self.ask():
-            print '>' # formerly 'console ready'
+            self.logger.info('>') # formerly 'console ready'
         sleep(self.delay)
         # make sure no other monitor_server blocks the port
         self.ask('killall monitor_server') 

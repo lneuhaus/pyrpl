@@ -3,7 +3,7 @@ from unittest import TestCase
 import os
 import numpy as np
 import logging
-logging.getLogger(name=__name__)
+logger = logging.getLogger(name=__name__)
 
 from pyrpl import RedPitaya
 from pyrpl.redpitaya_modules import *
@@ -15,11 +15,7 @@ class TestClass(object):
     
     @classmethod
     def setUpAll(self):
-        hostname = os.environ.get('REDPITAYA')
-        if hostname != 'unavailable':
-            self.r = RedPitaya(hostname=hostname)
-        else:
-            self.r = None
+        self.r = RedPitaya(hostname=hostname)
     
     def test_generator(self):
         if self.r is None:

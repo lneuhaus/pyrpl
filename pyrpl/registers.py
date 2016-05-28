@@ -333,17 +333,25 @@ class FilterRegister(Register):
                 filter_shifts += (shift) * 2**(8 * i)
         return filter_shifts
     
-class PWMRegister(FloatRegister):
-        @property
-    def pwm_full(self):
-        """PWM full variable from FPGA code"""
-        return float(255.0)
+"""
+class PWMRegister(Register):
+    # FloatRegister that defines the PWM voltage similar to setting a float
+    def __init__(self, address, PWM_FULL=255.0, CFG_BITS=24, **kwargs):
+        super(LongRegister,self).__init__(address=address, **kwargs)
+        self.PWM_FULL = PWM_FULL
+        self.CFG_BITS = CFGBITS
+
+    def to_python(self, value)
+        
+    def from_python(self, value):
+        # upper 8 bits - can only be set to MAX-1
+        value = 
+        v = np.long(np.round(v * (17 * (self.pwm_full + 1) - 1)))
+        return (v // 17, (2**(v % 17)) - 1)
 
     def to_dac(self, pwmvalue, bitselect):
-        """
-        PWM value (100% == 156)
-        Bit select for PWM repetition which have value PWM+1
-        """
+        # PWM value (100% == 156)
+        # Bit select for PWM repetition which have value PWM+1
         return ((pwmvalue & 0xFF) << 16) + (bitselect & 0xFFFF)
 
     def rel_to_dac(self, v):
@@ -351,9 +359,8 @@ class PWMRegister(FloatRegister):
         return self.to_dac(v // 17, (2**(v % 17)) - 1)
 
     def rel_to_dac_debug(self, v):
-        """max value = 1.0, min=0.0"""
-        v = np.long(np.round(v * (17 * (self.pwm_full + 1) - 1)))
-        return (v // 17, (2**(v % 17)) - 1)
-
+        # max value = 1.0, min=0.0
+        
     def setdac0(self, pwmvalue, bitselect):
         self._write(0x20, self.to_dac(pwmvalue, bitselect))
+"""
