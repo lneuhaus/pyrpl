@@ -20,15 +20,14 @@ class RedPitayaTestCases(unittest.TestCase):
     def test_hostname(self):
         self.assertIsNotNone(
             self.hostname,
-            msg="Set REDPITAYA=localhost or the ip of your board to proceed!")
+            msg="Set REDPITAYA_HOSTNAME=unavailable or the ip of your board to proceed!")
 
     def test_password(self):
         self.assertIsNotNone(
             self.password,
-            msg="Set RP_PASSWORD=<your redpitaya password> to proceed!")
+            msg="Set REDPITAYA_PASSWORD=<your redpitaya password> to proceed!")
         
     def test_connect(self):
-        if self.hostname != "localhost":
-            r = RedPitaya(hostname=self.hostname, password=self.password)
-            self.assertEqual(r.hk.led, 0)
+        r = RedPitaya(hostname=self.hostname, password=self.password)
+        self.assertEqual(r.hk.led, 0)
     

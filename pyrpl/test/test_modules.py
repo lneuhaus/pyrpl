@@ -15,7 +15,11 @@ class TestClass(object):
     
     @classmethod
     def setUpAll(self):
-        self.r = RedPitaya()
+        # these tests wont succeed without the hardware
+        if os.environ['REDPITAYA_HOSTNAME'] == 'unavailable':
+            self.r = None
+        else:
+            self.r = RedPitaya()
     
     def test_asg(self):
         if self.r is None:
@@ -43,7 +47,7 @@ class TestClass(object):
             expect[asg.data_length//2:] = -1*expect[:asg.data_length//2]
             self.r.scope.input1 = Bijection(self.r.scope._ch1._inputs).inverse[asg._dsp._number]
             self.r.scope.input2 = self.r.scope.input1
-            self.r.scope.setup(trigger_source=self.r.scope.input1) # the asg trigger
+            self.r.scope.setup(trigger_source=self.r.scope.input1,duration=0.1) # the asg trigger
             asg.trig()
             measured = self.r.scope.curve(ch=1)
             if np.max(measured-expect) > 0.1:

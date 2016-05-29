@@ -21,7 +21,7 @@ import numpy as np
 import time
 from time import sleep
 import socket
-
+from collections import defaultdict
 
 class MonitorClient(object):
 
@@ -131,12 +131,23 @@ class MonitorClient(object):
             restartserver=self._restartserver)
 
 class DummyClient(object):
+    """Class for unitary tests without RedPitaya hardware available"""
+    class fpgadict(dict):
+        def __missing__(self,key):
+            return 0
+    fpgamemory = fpgadict({
+                        str(0x40100014): 1,  # scope decimation initial value 
+                        })
     
     def reads(self, addr, length):
-        return np.zeros(length, dtype=np.uint32)
-
+        val = []
+        for i in range(length):
+            val.append(self.fpgamemory[str(addr+0x4*i)])
+        return np.array(val,dtype=np.uint32)
+    
     def writes(self, addr, values):
-        return True
+        for i, v in enumerate(values):
+            self.fpgamemory[str(addr+0x4*i)]=v
     
     def restart(self):
         pass

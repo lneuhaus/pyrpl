@@ -84,10 +84,11 @@ class RedPitaya(SSHshell):
                 raise IOError("Wrong dirname",
                           "The directory of the pyrl package could not be found. Please try again calling RedPitaya with the additional argument dirname='c://github//pyrpl//pyrpl' adapted to your installation directory of pyrpl! Current dirname: "
                            +self.dirname)
-        # start ssh connection
-        if hostname == "unknown": # simulation mode - start without connecting
+        if self.hostname == "unavailable": # simulation mode - start without connecting
+            self.logger.warning("Starting client in dummy mode...")
             self.startdummyclient()
             return
+        # start ssh connection
         super(RedPitaya, self).__init__(hostname=self.hostname, 
                                         user=self.user,
                                         password=self.password, 
@@ -251,7 +252,8 @@ class RedPitaya(SSHshell):
         if port is not None:
             if port < 0: #code to try a random port
                 self.port = random.randint(2223,50000)
-            self.port = port
+            else:
+                self.port = port
         return self.startserver()
 
     def license(self):
