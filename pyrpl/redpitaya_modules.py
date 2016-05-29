@@ -832,7 +832,7 @@ class IQ(FilterModule):
             acbandwidth=0, # ac filter bandwidth, 0 disables filter, negative values represent lowpass
             sleeptimes=0.5, # wait sleeptimes/rbw for quadratures to stabilize
             logscale=False, # make a logarithmic frequency sweep
-            stabilize=None, # if a float, output amplitude is adjusted dynamically that input amplitude is stabilize 
+            stabilize=None, # if a float, output amplitude is adjusted dynamically so that input amplitude [V]=stabilize 
             maxamplitude=1.0, # amplitude can be limited
             ): 
         if logscale:
@@ -855,13 +855,13 @@ class IQ(FilterModule):
                  gain=0, 
                  phase=0,
                  acbandwidth=-np.array(acbandwidth),
-                 amplitude=amplitude,
+                 amplitude=0,
                  input=input, 
                  output_direct=output_direct,
                  output_signal='output_direct')
         # take the discretized rbw (only using first filter cutoff)
         rbw = self.bandwidth[0]
-        self._logger.info("Estimated acquisition time:", float(avg + sleeptimes) * points / rbw , "s")
+        self._logger.info("Estimated acquisition time: %.1f s", float(avg + sleeptimes) * points / rbw)
         sys.stdout.flush() # make sure the time is shown        
         # setup averaging
         self._na_averages = np.int(np.round(125e6 / rbw * avg))
@@ -870,25 +870,32 @@ class IQ(FilterModule):
         rescale = 2.0**(-self._LPFBITS)*4.0 # 4 is artefact of fpga code
         # obtained by measuring transfer function with bnc cable - could replace the inverse of 4 above
         #unityfactor = 0.23094044589192711
-        for i in range(points):
-            self.frequency = x[i] #this triggers the NA acquisition
-            sleep(1.0 / rbw * (avg + sleeptimes))
-            x[i] = self.frequency # get the actual (discretized) frequency
-            y[i] = self._nadata
-            amplitudes[i] = self.amplitude
-            #normalize immediately
-            if amplitudes[i] == 0:
-                y[i] *= rescale  # avoid division by zero
-            else:
-                y[i] *= rescale / self.amplitude
-            # set next amplitude if it has to change
-            if stabilize is not None:
-                amplitude = stabilize / np.abs(y[i])
-            if amplitude > maxamplitude:
-                amplitude = maxamplitude
-            self.amplitude = amplitude
-        # turn off the output signql
-        self.amplitude = 0            
+        try:
+            self.amplitude = amplitude # turn on NA inside try..except block
+            for i in range(points):
+                self.frequency = x[i] #this triggers the NA acquisition
+                sleep(1.0 / rbw * (avg + sleeptimes))
+                x[i] = self.frequency # get the actual (discretized) frequency
+                y[i] = self._nadata
+                amplitudes[i] = self.amplitude
+                #normalize immediately
+                if amplitudes[i] == 0:
+                    y[i] *= rescale  # avoid division by zero
+                else:
+                    y[i] *= rescale / self.amplitude
+                # set next amplitude if it has to change
+                if stabilize is not None:
+                    amplitude = stabilize / np.abs(y[i])
+                if amplitude > maxamplitude:
+                    amplitude = maxamplitude
+                self.amplitude = amplitude
+        # turn off the NA output, even in the case of exception (e.g. KeyboardInterrupt)
+        except:
+            self.amplitude = 0
+            self._logger.info("NA output turned off due to an exception")
+            raise
+        else:
+            self.amplitude = 0
         # in zero-span mode, change x-axis to approximate time. Time is very
         # rudely approximated here..
         if start == stop:
@@ -1149,58 +1156,11 @@ class IIR(DspModule):
 # current work pointer: here
 
 class AMS(BaseModule):
-    """mostly deprecated module (redpitaya has removed adc support. 
-    needs to be cleaned out again!!!"""
+    """mostly deprecated module (redpitaya has removed adc support). 
+    only here for dac2 and dac3"""
     def __init__(self, client):
-        super(AMS, self).__init__(client, addr_base=0x40400000)
-    
-    #_dac0 = Register()
-    
-    @property
-    def pwm_full(self):
-        """PWM full variable from FPGA code"""
-        return float(255.0)
-
-    def to_dac(self, pwmvalue, bitselect):
-        """
-        PWM value (100% == 156)
-        Bit select for PWM repetition which have value PWM+1
-        """
-        return ((pwmvalue & 0xFF) << 16) + (bitselect & 0xFFFF)
-
-    def rel_to_dac(self, v):
-        v = np.long(np.round(v * (17 * (self.pwm_full + 1) - 1)))
-        return self.to_dac(v // 17, (2**(v % 17)) - 1)
-
-    def rel_to_dac_debug(self, v):
-        """max value = 1.0, min=0.0"""
-        v = np.long(np.round(v * (17 * (self.pwm_full + 1) - 1)))
-        return (v // 17, (2**(v % 17)) - 1)
-
-    def setdac0(self, pwmvalue, bitselect):
-        self._write(0x20, self.to_dac(pwmvalue, bitselect))
-
-    def setdac1(self, pwmvalue, bitselect):
-        self._write(0x24, self.to_dac(pwmvalue, bitselect))
-
-    def setdac2(self, pwmvalue, bitselect):
-        self._write(0x28, self.to_dac(pwmvalue, bitselect))
-
-    def setdac3(self, pwmvalue, bitselect):
-        self._write(0x2C, self.to_dac(pwmvalue, bitselect))
-
-    def reldac0(self, v):
-        """max value = 1.0, min=0.0"""
-        self._write(0x20, self.rel_to_dac(v))
-
-    def reldac1(self, v):
-        """max value = 1.0, min=0.0"""
-        self._write(0x24, self.rel_to_dac(v))
-
-    def reldac2(self, v):
-        """max value = 1.0, min=0.0"""
-        self._write(0x28, self.rel_to_dac(v))
-
-    def reldac3(self, v):
-        """max value = 1.0, min=0.0"""
-        self._write(0x2C, self.rel_to_dac(v))
+        super(AMS, self).__init__(client, addr_base=0x40400000)        
+    dac0 = PWMRegister(0x20, doc="PWM output 0 [V]")
+    dac1 = PWMRegister(0x24, doc="PWM output 1 [V]")
+    dac2 = PWMRegister(0x28, doc="PWM output 2 [V]")
+    dac3 = PWMRegister(0x2C, doc="PWM output 3 [V]")

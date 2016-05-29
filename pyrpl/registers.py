@@ -333,34 +333,34 @@ class FilterRegister(Register):
                 filter_shifts += (shift) * 2**(8 * i)
         return filter_shifts
     
-"""
+
 class PWMRegister(Register):
     # FloatRegister that defines the PWM voltage similar to setting a float
-    def __init__(self, address, PWM_FULL=255.0, CFG_BITS=24, **kwargs):
-        super(LongRegister,self).__init__(address=address, **kwargs)
-        self.PWM_FULL = PWM_FULL
-        self.CFG_BITS = CFGBITS
+    # see FPGA code for more detailed description on how the PWM works
+    def __init__(self, address, CFG_BITS=24, PWM_BITS=8, **kwargs):
+        super(PWMRegister,self).__init__(address=address, **kwargs)
+        self.CFG_BITS = int(CFG_BITS)
+        self.PWM_BITS = int(PWM_BITS)
 
-    def to_python(self, value)
-        
+    def to_python(self, value):
+        value = int(value)
+        pwm = float(value>>(self.CFG_BITS-self.PWM_BITS)&(2**self.PWM_BITS-1))
+        mod = value & (2**(self.CFG_BITS-self.PWM_BITS)-1)
+        postcomma = float(bin(mod).count('1'))/(self.CFG_BITS-self.PWM_BITS)
+        voltage = 1.8 * (pwm + postcomma) / 2**self.PWM_BITS
+        if voltage > 1.8:
+            logger.error("Readout value from PWM (%h) yields wrong voltage %f",
+                         value, voltage)
+        return voltage
+           
     def from_python(self, value):
-        # upper 8 bits - can only be set to MAX-1
-        value = 
-        v = np.long(np.round(v * (17 * (self.pwm_full + 1) - 1)))
-        return (v // 17, (2**(v % 17)) - 1)
-
-    def to_dac(self, pwmvalue, bitselect):
-        # PWM value (100% == 156)
-        # Bit select for PWM repetition which have value PWM+1
-        return ((pwmvalue & 0xFF) << 16) + (bitselect & 0xFFFF)
-
-    def rel_to_dac(self, v):
-        v = np.long(np.round(v * (17 * (self.pwm_full + 1) - 1)))
-        return self.to_dac(v // 17, (2**(v % 17)) - 1)
-
-    def rel_to_dac_debug(self, v):
-        # max value = 1.0, min=0.0
-        
-    def setdac0(self, pwmvalue, bitselect):
-        self._write(0x20, self.to_dac(pwmvalue, bitselect))
-"""
+        # here we don't bother to minimize the PWM noise
+        # room for improvement is in the low -> towrite conversion
+        value = 0 if (value < 0) else float(value)/1.8*(2**self.PWM_BITS)
+        high = np.floor(value)
+        if (high >= 2**self.PWM_BITS):
+            high = 2**self.PWM_BITS-1
+        low = int(np.round((value-high)*(self.CFG_BITS-self.PWM_BITS)))
+        towrite = int(high)<<(self.CFG_BITS-self.PWM_BITS)
+        towrite += ((1<<low)-1)&((1<<self.CFG_BITS)-1)
+        return towrite

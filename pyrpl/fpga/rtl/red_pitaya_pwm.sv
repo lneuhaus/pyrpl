@@ -49,11 +49,12 @@ module red_pitaya_pwm #(
 reg  [ 4-1: 0] bcnt  ;
 reg  [16-1: 0] b     ;
 reg  [ 8-1: 0] vcnt, vcnt_r;
-reg  [ 8-1: 0] v   , v_r   ;
+reg  [ 8-1: 0] v   ;
+reg  [ 9-1: 0] v_r ; #needs an extra bit to avoid overflow
 
 // short description of what is going on:
 
-// vcnt counts from 1, 2, 3, ..., FULL, 1, 2, 3
+// vcnt counts from 0, 1, 2, 3, ..., 255, 0, 1, 2, 3
 // vcnt_r = last cycle's vcnt
 
 // bcnt goes like {FULL x 0}, {FULL x 1},..., {FULL x 15}, {FULL x 0}
@@ -72,7 +73,7 @@ if (~rstn) begin
    bcnt  <=  4'h0 ;
    pwm_o <=  1'b0 ;
 end else begin
-   vcnt   <= (vcnt == FULL) ? 8'h0 : (vcnt + 8'd1) ;
+   vcnt   <= vcnt + 8'd1 ;
    vcnt_r <= vcnt;
    v_r    <= (v + b[0]) ; // add decimal bit to current value
    if (vcnt == FULL) begin
@@ -81,7 +82,7 @@ end else begin
       b    <= (bcnt == 4'hF) ? cfg[16-1:0] : {1'b0,b[15:1]} ; // shift right
    end
    // make PWM duty cycle
-   pwm_o <= (vcnt_r <= v_r) ;
+   pwm_o <= ({1'b0,vcnt_r} < v_r) ;
 end
 
 assign pwm_s = (bcnt == 4'hF) && (vcnt == (FULL-1)) ; // latch one before
