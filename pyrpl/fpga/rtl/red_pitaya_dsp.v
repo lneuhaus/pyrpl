@@ -87,7 +87,7 @@ module red_pitaya_dsp #(
 
 localparam EXTRAMODULES = 2; //need two extra control registers for scope/asg
 localparam EXTRAINPUTS = 4; //four extra input signals for dac(2)/adc(2)
-localparam EXTRAOUTPUTS = 4; //two extra output signals for pwm channels
+localparam EXTRAOUTPUTS = 2; //two extra output signals for pwm channels
 localparam LOG_MODULES = 4;// ceil(log2(EXTRAINPUTS+EXTRAOUTPUTS+MODULES))
 
 //Module numbers
@@ -128,7 +128,6 @@ localparam OFF  = 2'b00;
 // the selected input signal of each module: modules and extramodules have inputs
 // extraoutputs are treated like extramodules that do not provide their own output_signal
 wire [14-1:0] input_signal [MODULES+EXTRAMODULES+EXTRAOUTPUTS-1:0];
-
 // the selected input signal NUMBER of each module
 reg [LOG_MODULES-1:0] input_select [MODULES+EXTRAMODULES+EXTRAOUTPUTS-1:0];
 
@@ -137,7 +136,6 @@ wire [14-1:0] output_signal [MODULES+EXTRAMODULES+EXTRAINPUTS-1:0];
 
 // the output of each module that is added to the chosen DAC
 wire [14-1:0] output_direct [MODULES+EXTRAMODULES-1:0];
-
 // the channel that the module's output_direct is added to (bit0: DAC1, bit 1: DAC2) 
 reg [2-1:0] output_select [MODULES+EXTRAMODULES-1:0]; 
 
@@ -162,8 +160,8 @@ assign output_signal[DAC1] = dat_a_o;
 assign output_signal[DAC2] = dat_b_o;
 
 //connect only two pwm to internal signals (should be enough)
-assign pwm0 = input_select[PWM0] == NONE ? 14'h0 : output_signal[input_select[PWM0]];
-assign pwm1 = input_select[PWM1] == NONE ? 14'h0 : output_signal[input_select[PWM1]];
+assign pwm0 = (input_select[PWM0] == NONE) ? 14'h0 : output_signal[input_select[PWM0]];
+assign pwm1 = (input_select[PWM1] == NONE) ? 14'h0 : output_signal[input_select[PWM1]];
 assign pwm2 = 14'b0;
 assign pwm1 = 14'b0;
 

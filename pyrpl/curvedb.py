@@ -30,7 +30,7 @@
 import pandas
 import pickle
 import os
-
+import logging
 
 class CurveDB(object):
 
@@ -42,6 +42,7 @@ class CurveDB(object):
         - data   = pandas.Series() object to hold any data
         - params = dict() with all kinds of parameters
         """
+        self.logger = logging.getLogger(name=__name__)
         self.params = dict()
         self.data = pandas.Series()
         self.name = name
@@ -84,8 +85,6 @@ class CurveDB(object):
             with open(self._dirname + str(self.pk) + '.p', 'r') as f:
                 curve = pickle.load(f)
             return curve
-        print "Could not retrieve curve ", curve, "- not implemented yet!"
-        return None
 
     def save(self):
         with open(self._dirname + str(self.pk) + '.p', 'w') as f:
@@ -101,17 +100,17 @@ class CurveDB(object):
 # structure for curves
     @property
     def childs(self):
-        print "Hierarchy not implemented."
+        self.logger.error("Hierarchy not implemented.")
         return []
 
     @property
     def parent(self):
-        print "Hierarchy not implemented."
+        self.logger.error("Hierarchy not implemented.")
         return None
 
     def add_child(self, child_curve):
-        print child_curve.name, "should be child of", self.name
-        print "Curve hierarchy not implemented yet"
+        self.logger.error("%s should be child of", child_curve.name, self.name)
+        self.logger.error("Curve hierarchy not implemented yet")
 
     @property
     def pk(self):

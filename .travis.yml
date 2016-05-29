@@ -5,8 +5,12 @@ env:
 language: python
 python:
   - "2.7"
+  - "3.3"
+  - "3.4"
   - "3.5"
+
 # lots of stuff here comes from https://gist.github.com/dan-blanchard/7045057
+  
 notifications:
   email: false
 
@@ -40,17 +44,20 @@ before_install:
 ##- apt-get install libblas-dev liblapack-dev libatlas-base-dev gfortran
 
 install:
-  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION numpy scipy paramiko scp matplotlib
-  - conda install --yes -c dan_blanchard python-coveralls nose-cov
+  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION numpy scipy paramiko matplotlib pandas nose pip
+  - source activate test-environment
+  - pip install scp
+  # there are some bugs in the installation of these packages in higher python versions
+  - if [[ "$TRAVIS_PYTHON_VERSION" != "3.5" ]] && [[ "$TRAVIS_PYTHON_VERSION" != "3.4" ]]; then
+      conda install --yes -c dan_blanchard python-coveralls nose-cov; 
+    fi
   - python setup.py install
 
 #before_script: ./autocorrectpep8_script.sh
   
 # Run test
 script:
-  - nosetests --with-cov --cov pyrpl --cov-config .coveragerc --logging-level=INFO
-#script: python setup.py test
-#script: python setup.py nosetests
+  - nosetests --with-coverage --cover-package=pyrpl --logging-level=INFO
 
 # Calculate coverage
 after_success:

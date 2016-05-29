@@ -26,12 +26,12 @@ import inspect
 import random
 import logging
 
-from sshshell import SSHshell
 from scp import SCPException
 from paramiko import SSHException
 
-import monitor_client
-import redpitaya_modules as rp
+from .sshshell import SSHshell
+from . import monitor_client
+from . import redpitaya_modules as rp
 
 class RedPitaya(SSHshell):
     def __init__(self, hostname='192.168.1.100', port=2222,
@@ -84,10 +84,11 @@ class RedPitaya(SSHshell):
                 raise IOError("Wrong dirname",
                           "The directory of the pyrl package could not be found. Please try again calling RedPitaya with the additional argument dirname='c://github//pyrpl//pyrpl' adapted to your installation directory of pyrpl! Current dirname: "
                            +self.dirname)
-        # start ssh connection
-        if hostname == "unknown": # simulation mode - start without connecting
+        if self.hostname == "unavailable": # simulation mode - start without connecting
+            self.logger.warning("Starting client in dummy mode...")
             self.startdummyclient()
             return
+        # start ssh connection
         super(RedPitaya, self).__init__(hostname=self.hostname, 
                                         user=self.user,
                                         password=self.password, 
@@ -146,7 +147,7 @@ class RedPitaya(SSHshell):
               +" current filename: "+self.filename)
         try:
             self.scp.put(source, self.serverdirname)
-        except SCPException, SSHException:
+        except (SCPException, SSHException):
             # try again before failing
             self.startscp()
             sleep(self.delay)
@@ -175,7 +176,7 @@ class RedPitaya(SSHshell):
             sleep(self.delay)
             try:
                 self.scp.put(os.path.join(self.dirname, 'monitor_server', serverfile), self.serverdirname+"monitor_server")
-            except SCPException,SSHException:
+            except (SCPException, SSHException):
                 self.logger.exception("Upload error. Try again after rebooting your RedPitaya..")
             sleep(self.delay)
             self.ask('chmod 755 ./monitor_server')
@@ -251,7 +252,8 @@ class RedPitaya(SSHshell):
         if port is not None:
             if port < 0: #code to try a random port
                 self.port = random.randint(2223,50000)
-            self.port = port
+            else:
+                self.port = port
         return self.startserver()
 
     def license(self):
