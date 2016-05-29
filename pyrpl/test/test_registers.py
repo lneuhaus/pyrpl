@@ -30,7 +30,7 @@ class TestClass(object):
     
 
     def register_validation(self, module, modulekey, reg, regkey):
-        self.logger.debug("%s %s", modulekey, regkey)
+        logger.debug("%s %s", modulekey, regkey)
         if type(reg)==Register:
             # try to read
             value = module.__getattribute__(regkey)
@@ -105,8 +105,9 @@ class TestClass(object):
             if regkey not in ['scopetriggerphase']:
                 for phase in np.linspace(-1234,5678,90):
                     module.__setattr__(regkey, phase)
-                    if abs(module.__getattribute__(regkey)-(phase%360))>1e-6:
-                        assert False
+                    diff = abs(module.__getattribute__(regkey)-(phase%360))
+                    if diff >1e-6:
+                        assert False, "at phase "+str(phase)+": diff = "+str(diff)
             #set back original value
             module.__setattr__(regkey, value)
             if value != module.__getattribute__(regkey):
@@ -120,8 +121,9 @@ class TestClass(object):
             if regkey not in []:
                 for freq in [0,1,10,1e2,1e3,1e4,1e5,1e6,1e7,1e8]:
                     module.__setattr__(regkey, freq)
-                    if abs(module.__getattribute__(regkey)-freq)>0.1:
-                        assert False
+                    diff = abs(module.__getattribute__(regkey)-freq)
+                    if diff>0.1:
+                        assert False, "at freq "+str(freq)+": diff = "+str(diff)
             #set back original value
             module.__setattr__(regkey, value)
             if value != module.__getattribute__(regkey):
