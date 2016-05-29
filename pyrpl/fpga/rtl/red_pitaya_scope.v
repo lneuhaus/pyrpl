@@ -77,7 +77,7 @@ module red_pitaya_scope #(
    input      [ 14-1: 0] adc_b_i         ,  // ADC data CHB
    // trigger sources
    input                 trig_ext_i      ,  // external trigger
-   input                 trig_asg_i      ,  // ASG trigger
+   input      [  2-1: 0] trig_asg_i      ,  // ASG trigger
    
    output                trig_scope_o    ,  // copy of scope trigger
 
@@ -661,7 +661,8 @@ reg  [  2-1: 0] ext_trig_dp    ;
 reg  [  2-1: 0] ext_trig_dn    ;
 reg  [ 20-1: 0] ext_trig_debp  ;
 reg  [ 20-1: 0] ext_trig_debn  ;
-reg  [  3-1: 0] asg_trig_in    ;
+reg  [  3-1: 0] asg_trig_in_ch1;
+reg  [  3-1: 0] asg_trig_in_ch2;
 reg  [  2-1: 0] asg_trig_dp    ;
 reg  [  2-1: 0] asg_trig_dn    ;
 reg  [ 20-1: 0] asg_trig_debp  ;
@@ -674,7 +675,8 @@ if (adc_rstn_i == 1'b0) begin
    ext_trig_dn   <=  2'h0 ;
    ext_trig_debp <= 20'h0 ;
    ext_trig_debn <= 20'h0 ;
-   asg_trig_in   <=  3'h0 ;
+   asg_trig_in_ch1 <=  3'h0 ;
+   asg_trig_in_ch2 <=  3'h0 ;
    asg_trig_dp   <=  2'h0 ;
    asg_trig_dn   <=  2'h0 ;
    asg_trig_debp <= 20'h0 ;
@@ -704,17 +706,19 @@ end else begin
    if (ext_trig_debn == 20'h0)
       ext_trig_dn[0] <= ext_trig_in[1] ;
 
-   //----------- ASG trigger
+   //----------- ASG trigger - instead of pos/neg. edge we use ch1 pos edge / ch2 pos edge
    // synchronize FFs
-   asg_trig_in <= {asg_trig_in[1:0],trig_asg_i} ;
+   asg_trig_in_ch1 <= {asg_trig_in_ch1[1:0],trig_asg_i[0]} ;
+   asg_trig_in_ch2 <= {asg_trig_in_ch2[1:0],trig_asg_i[1]} ;
 
-   // look for input changes
-   if ((asg_trig_debp == 20'h0) && (asg_trig_in[1] && !asg_trig_in[2]))
+   // look for input changes -ch1
+   if ((asg_trig_debp == 20'h0) && (asg_trig_in_ch1[1] && !asg_trig_in_ch1[2]))
       asg_trig_debp <= set_deb_len ; // ~0.5ms
    else if (asg_trig_debp != 20'h0)
       asg_trig_debp <= asg_trig_debp - 20'd1 ;
 
-   if ((asg_trig_debn == 20'h0) && (!asg_trig_in[1] && asg_trig_in[2]))
+   // look for input changes - ch2
+   if ((asg_trig_debn == 20'h0) && (asg_trig_in_ch2[1] && !asg_trig_in_ch2[2]))
       asg_trig_debn <= set_deb_len ; // ~0.5ms
    else if (asg_trig_debn != 20'h0)
       asg_trig_debn <= asg_trig_debn - 20'd1 ;
@@ -722,17 +726,17 @@ end else begin
    // update output values
    asg_trig_dp[1] <= asg_trig_dp[0] ;
    if (asg_trig_debp == 20'h0)
-      asg_trig_dp[0] <= asg_trig_in[1] ;
+      asg_trig_dp[0] <= asg_trig_in_ch1[1] ;
 
    asg_trig_dn[1] <= asg_trig_dn[0] ;
    if (asg_trig_debn == 20'h0)
-      asg_trig_dn[0] <= asg_trig_in[1] ;
+      asg_trig_dn[0] <= asg_trig_in_ch2[1] ;
 end
 
 assign ext_trig_p = (ext_trig_dp == 2'b01) ;
 assign ext_trig_n = (ext_trig_dn == 2'b10) ;
 assign asg_trig_p = (asg_trig_dp == 2'b01) ;
-assign asg_trig_n = (asg_trig_dn == 2'b10) ;
+assign asg_trig_n = (asg_trig_dn == 2'b01) ;
 
 //---------------------------------------------------------------------------------
 //  System bus connection
@@ -742,7 +746,7 @@ if (adc_rstn_i == 1'b0) begin
    adc_we_keep   <=   1'b0      ;
    set_a_tresh   <=  14'd0000   ;
    set_b_tresh   <=  14'd0000   ;
-   set_dly       <=  32'd0      ;
+   set_dly       <=  2**(RSZ-1);
    set_dec       <=  17'd1      ;
    set_a_hyst    <=  14'd20     ;
    set_b_hyst    <=  14'd20     ;

@@ -20,24 +20,23 @@
 import scipy.signal as sig
 import matplotlib.pyplot as plt
 import numpy as np
+import logging
+logger = logging.getLogger(name=__name__)
 
-
-def rpk2psos(r, p, k, tol=0, verbose=False):
-    if verbose:
-        print "r/p/k:"
-        print r, p, k
+def rpk2psos(r, p, k, tol=0):
+    logger.debug("r/p/k:")
+    logger.debug("%s %s %s", r, p, k)
     r = list(r)
     p = list(p)
     if len(k) > 1:
-        print "Warning: k too long. Ignoring rest of the list"
+        logger.warning("k too long. Ignoring rest of the list")
     linp = list()
     linr = list()
     quadsections = list()
     while len(p) > 0:
         pp = p.pop(0)
         rr = r.pop(0)
-        if verbose:
-            print "r/p = ", rr, "/", pp
+        logger.debug("r/p = %s / %s", rr, pp)
         if np.imag(pp) == 0.0:
             linp.append(pp)
             linr.append(rr)
@@ -46,22 +45,20 @@ def rpk2psos(r, p, k, tol=0, verbose=False):
             ppc = None
             for i in range(0, len(p)):
                 if np.abs(np.conjugate(pp) - p[i]) <= tol:
-                    if verbose:
-                        print "found and removed conjugate for p =", pp
+                    logger.debug("found and removed conjugate for p = %s", pp)
                     ppc = p.pop(i)
                     break
             for i in range(0, len(r)):
                 if np.abs(np.conjugate(rr) - r[i]) <= tol:
-                    if verbose:
-                        print "found and removed conjugate for r =", rr
+                    logger.debug("found and removed conjugate for r = %s", rr)
                     rrc = r.pop(i)
                     break
             # quadsections.append([rr,pp])
             if rrc is None:
-                print "Error: Not enough conjugates found. Dont know what to do with complex parameter rrc"
+                logger.warning("Not enough conjugates found. Dont know what to do with complex parameter rrc")
                 rrc = np.conjugate(rr)
             if ppc is None:
-                print "Error: Not enough conjugates found. Dont know what to do with complex parameter ppc"
+                logger.warning("Not enough conjugates found. Dont know what to do with complex parameter ppc")
                 ppc = np.conjugate(pp)
             b, a = sig.invresz([rr, rrc], [pp, ppc], [])
             b = list(np.real(b))
@@ -69,19 +66,18 @@ def rpk2psos(r, p, k, tol=0, verbose=False):
             while len(b) < 3:
                 b.append(0)
             if len(b) > 3:
-                print "Warning: Quadsection too long. b=", b
+                logger.warning("Quadsection too long. b=%s", b)
                 b = b[:3]
             while len(a) < 3:
                 a.append(0)
             if len(a) > 3:
-                print "Warning: Quadsection too long. a=", a
+                logger.warning("Warning: Quadsection too long. a=%s", a)
                 a = a[:3]
             quadsections.append(np.array(b + a))
 
-    if verbose:
-        print "Quadsections:", quadsections
-        print "linr:", linr
-        print "linp:", linp
+    logger.debug("Quadsections: %s", quadsections)
+    logger.debug("linr: %s", linr)
+    logger.debug("linp: %s", linp)
     if len(linr) == 0:
         result = quadsections
     else:
@@ -101,13 +97,12 @@ def rpk2psos(r, p, k, tol=0, verbose=False):
             for rrr in rr:
                 linr.remove(rrr)
             if len(pp) > 3:
-                print "WARNING: More than 2-fold occurence of real poles:", pp
+                logger.warning("More than 2-fold occurence of real poles: %s", pp)
             b, a = sig.invresz(rr, pp, [])
             linsections.append(np.array(sig.tf2sos(b, a)[0]))  # if there were
         # now all multiple occurences of poles should have disappeared from
         # linp
-        if verbose:
-            print "Unique residues and poles: ", linr, linp
+        logger.debug("Unique residues and poles: %s %s", linr, linp)
         while len(linr) > 2:
                 # first extract double poles
             rr = [linr.pop(0), linr.pop(0)]
@@ -122,8 +117,7 @@ def rpk2psos(r, p, k, tol=0, verbose=False):
             b, a = sig.invresz(rr, pp, k)
             linsections[-1] = np.array(sig.tf2sos(b, a)[0])
         linsections = np.array(linsections)
-        if verbose:
-            print "Linsections:", linsections
+        logger.debug("Linsections: %s", linsections)
         if len(quadsections) == 0:
             result = linsections
         else:
@@ -183,13 +177,13 @@ def finiteprecision(coeff, totalbits=32, shiftbits=16):
         xr = np.round(x * 2**shiftbits)
         xmax = 2**(totalbits - 1)
         if xr == 0 and xr != 0:
-            print "One value was rounded off to zero: Increase shiftbits!"
+            logger.warning("One value was rounded off to zero: Increase shiftbits!")
         elif xr > xmax - 1:
             xr = xmax - 1
-            print "One value saturates positively: Increase totalbits!"
+            logger.warning("One value saturates positively: Increase totalbits!")
         elif xr < -xmax:
             xr = -xmax
-            print "One value saturates negatively: Increase totalbits!"
+            logger.warning("One value saturates negatively: Increase totalbits!")
         x[...] = 2**(-shiftbits) * xr
     return res
 
@@ -203,7 +197,7 @@ def get_coeff_old(
         finiteprecision=False):
     zc, pc, kc = sys
     if zc == [] and pc == []:
-        print "No poles or zeros defined, only constant multiplication!"
+        logger.warning("No poles or zeros defined, only constant multiplication!")
         coeff = np.zeros((1, 6), dtype=np.float64)
         coeff[0, 0] = kc
         coeff[:, 3] = 1.0
@@ -213,13 +207,13 @@ def get_coeff_old(
     b = b[0]
     r, p, k = sig.residuez(b, a, tol=tol)
     coeff = rpk2psos(r, p, k, tol=tol)
-    print "Coefficients: ", coeff
+    logger.debug("Coefficients: %s", coeff)
     if finiteprecision:
         fcoeff = finiteprecision(
             coeff,
             totalbits=totalbits,
             shiftbits=shiftbits)
-        print "Rounded coefficients: ", fcoeff
+        logger.debug("Rounded coefficients: %s", fcoeff)
         return fcoeff
     else:
         return coeff
@@ -231,8 +225,7 @@ def get_coeff(
         totalbits=64,
         shiftbits=32,
         tol=0,
-        finiteprecision=False,
-        verbose=False):
+        finiteprecision=False):
     """
     Allowed systems in zpk form (otherwise problems arise):
         - no complex poles or zeros without conjugate partner (otherwise the conjugate pole will be added)
@@ -245,29 +238,25 @@ def get_coeff(
     """
     zc, pc, kc = sys
     if zc == [] and pc == []:
-        print "Warning: No poles or zeros defined, only constant multiplication!"
+        logger.warning("Warning: No poles or zeros defined, only constant multiplication!")
         coeff = np.zeros((1, 6), dtype=np.float64)
         coeff[0, 0] = kc
         coeff[:, 3] = 1.0
         return coeff
     bb, aa = sig.zpk2tf(zc, pc, kc)
-    if verbose:
-        print "Continuous polynome: ", bb, aa
+    logger.debug("Continuous polynome: %s %s", bb, aa)
     b, a, dtt = sig.cont2discrete((bb, aa), dt)
     b = b[0]
-    if verbose:
-        print "Discrete polynome: ", b, a
+    logger.debug("Discrete polynome: %s %s", b, a)
     r, p, k = sig.residuez(b, a, tol=tol)
     coeff = rpk2psos(r, p, k, tol=tol, verbose=verbose)
-    if verbose:
-        print "Coefficients: ", coeff
+    logger.debug("Coefficients: %s", coeff)
     if finiteprecision:
         fcoeff = finiteprecision(
             coeff,
             totalbits=totalbits,
             shiftbits=shiftbits)
-        if verbose:
-            print "Rounded coefficients: ", fcoeff
+        logger.debug("Rounded coefficients: %s", fcoeff)
         return fcoeff
     else:
         return coeff

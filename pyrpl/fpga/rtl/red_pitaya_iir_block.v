@@ -76,7 +76,7 @@ module red_pitaya_iir_block
    input                 clk_i           ,  // clock
    input                 rstn_i          ,  // reset - active low
    input      [ 14-1: 0] dat_i           ,  // input data
-   output     [ 14-1: 0] dat_o           ,  // output data
+   output reg [ 14-1: 0] dat_o           ,  // output data
 
    // communication with PS
    input      [ 16-1: 0] addr,
@@ -120,7 +120,10 @@ always @(posedge clk_i) begin
 		 16'h204 : begin ack <= wen|ren; rdata <= IIRSHIFT; end
 		 16'h208 : begin ack <= wen|ren; rdata <= IIRSTAGES; end
 		 
-		 16'b1zzzzzzzzzzzzzzz: 	 begin ack <= wen|ren; rdata <= iir_coefficients[addr[12-1:2]]; end    
+		 // disable read-back of coefficients to save resources
+		 // this makes a big difference since it will allow the implementation of 
+		 // the coefficients ass RAM and not as registers
+		 // 16'b1zzzzzzzzzzzzzzz: 	 begin ack <= wen|ren; rdata <= iir_coefficients[addr[12-1:2]]; end    
 
 	     default: begin ack <= wen|ren;  rdata <=  32'h0; end 
 	  endcase	     
@@ -346,8 +349,7 @@ always @(posedge clk_i) begin
         //z1_i[stage5] <= z0;
         signal_o <= dat_o_full;
     end
+    dat_o <= (shortcut==1'b1) ? dat_i : signal_o;
 end
-
-assign dat_o = (shortcut==1'b1) ? dat_i : signal_o; 
 
 endmodule

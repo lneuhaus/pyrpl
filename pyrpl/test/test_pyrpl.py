@@ -2,13 +2,14 @@
 
 import unittest
 import os
+import logging
+logger = logging.getLogger(name=__name__)
 
 
 class RedPitayaTestCases(unittest.TestCase):
 
     def setUp(self):
-        self.hostname = os.environ.get('REDPITAYA')
-        self.password = os.environ.get('RP_PASSWORD') or 'root'
+        pass
 
     def tearDown(self):
         pass

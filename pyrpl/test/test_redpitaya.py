@@ -2,6 +2,8 @@
 
 import unittest
 import os
+import logging
+logger = logging.getLogger(name=__name__)
 
 from pyrpl import RedPitaya
 
@@ -9,8 +11,8 @@ from pyrpl import RedPitaya
 class RedPitayaTestCases(unittest.TestCase):
 
     def setUp(self):
-        self.hostname = os.environ.get('REDPITAYA')
-        self.password = os.environ.get('RP_PASSWORD') or 'root'
+        self.hostname = os.environ.get('REDPITAYA_HOSTNAME')
+        self.password = os.environ.get('REDPITAYA_PASSWORD')
 
     def tearDown(self):
         pass
