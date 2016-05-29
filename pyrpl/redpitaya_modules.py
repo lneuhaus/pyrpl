@@ -127,7 +127,6 @@ class Scope(BaseModule):
         self._ch2 = DspModule(client, module='asg2')
         self.inputs = self._ch1.inputs
         self._setup_called = False
-        self.trigger_source = 'immediately'
 
     @property
     def input1(self):
@@ -172,14 +171,17 @@ class Scope(BaseModule):
     
     @property
     def trigger_source(self):
-        return self._trigger_source_memory
-
+        if hasattr(self,"_trigger_source_memory"):
+            return self._trigger_source_memory
+        else:
+            self._trigger_source_memory = self._trigger_source
+            return self._trigger_source_memory
+        
     @trigger_source.setter
     def trigger_source(self, val):
-        self._trigger_source_memory = val
         self._trigger_source = val
-        return val
-
+        self._trigger_source_memory = val
+        
     _trigger_debounce = Register(0x90, doc="Trigger debounce time [cycles]")
 
     trigger_debounce = FloatRegister(0x90, bits=20, norm=125e6, 
@@ -343,8 +345,6 @@ class Scope(BaseModule):
         self._reset_writestate_machine = True
         if average is not None:
             self.average = average
-        else:
-            self.average
         if duration is not None:
             self.duration = duration
         if trigger_source is not None:
@@ -360,7 +360,6 @@ class Scope(BaseModule):
         if trigger_delay is not None:
             self.trigger_delay = trigger_delay
         self._trigger_armed = True
-        
         if self.trigger_source == 'immediately':
             self.sw_trig()
 
