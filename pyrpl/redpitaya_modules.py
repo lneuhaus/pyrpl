@@ -28,6 +28,11 @@ from registers import *
 from bijection import Bijection
 import iir
 
+class TimeoutError(ValueError):
+    pass
+class NotReadyError(ValueError):
+    pass
+
 class BaseModule(object):
     
     # factor to manually compensate 125 MHz oscillator frequency error
@@ -121,6 +126,7 @@ class Scope(BaseModule):
         self._ch1 = DspModule(client, module='asg1')
         self._ch2 = DspModule(client, module='asg2')
         self.inputs = self._ch1.inputs
+        self._setup_called = False
 
     @property
     def input1(self):
@@ -138,14 +144,11 @@ class Scope(BaseModule):
     def input2(self, v):
         self._ch2.input = v
 
-    reset_writestate_machine = BoolRegister(0x0, 1, 
+    _reset_writestate_machine = BoolRegister(0x0, 1, 
                             doc="Set to True to reset writestate machine. \
                             Automatically goes back to false. ")
     
-    trigger_armed = BoolRegister(0x0, 0, doc="Set to True to arm trigger")
-    
-    def sw_trig(self):
-        self.trigger_source = "immediately"
+    _trigger_armed = BoolRegister(0x0, 0, doc="Set to True to arm trigger")
     
     _trigger_sources = {"off": 0,
                         "immediately": 1, 
@@ -155,17 +158,34 @@ class Scope(BaseModule):
                         "ch2_negative_edge": 5,
                         "ext_positive_edge": 6, #DIO0_P pin
                         "ext_negative_edge": 7, #DIO0_P pin
-                        "asg_positive_edge": 8, 
-                        "asg_negative_edge": 9}
+                        "asg1": 8, 
+                        "asg2": 9}
     
     trigger_sources = _trigger_sources.keys() # help for the user
     
+    _trigger_source = SelectRegister(0x4, doc="Trigger source", 
+                                    options=_trigger_sources)
+    
+    def sw_trig(self):
+        self.trigger_source = "immediately"
+    
+    @property
+    def trigger_source(self):
+        if hasattr(self,"_trigger_source_memory"):
+            return self._trigger_source_memory
+        else:
+            self._trigger_source_memory = self._trigger_source
+            return self._trigger_source_memory
+        
+    @trigger_source.setter
+    def trigger_source(self, val):
+        self._trigger_source = val
+        self._trigger_source_memory = val
+        
     _trigger_debounce = Register(0x90, doc="Trigger debounce time [cycles]")
+
     trigger_debounce = FloatRegister(0x90, bits=20, norm=125e6, 
                                      doc = "Trigger debounce time [s]")
-    
-    trigger_source = SelectRegister(0x4, doc="Trigger source", 
-                                    options=_trigger_sources)
     
     threshold_ch1 = FloatRegister(0x8, bits=14, norm=2**13, 
                                   doc="ch1 trigger threshold [volts]")
@@ -174,15 +194,26 @@ class Scope(BaseModule):
                                   doc="ch1 trigger threshold [volts]")
     
     _trigger_delay = Register(0x10, doc="trigger delay [samples]")
+
     @property
     def trigger_delay(self):
-        return self._trigger_delay
+        return (self._trigger_delay - self.data_length//2)*self.sampling_time
+    
     @trigger_delay.setter
     def trigger_delay(self, delay):
-        if delay == 0:
+        delay = int(np.round(delay/self.sampling_time)) + self.data_length//2
+        if delay <= 0:
             delay = 1 # bug in scope code: 0 does not work
+        elif delay > self.data_length-1:
+            delay = self.data_length-1
         self._trigger_delay = delay
-        
+
+    _trigger_delay_running = BoolRegister(0x0, 2, doc="trigger delay running (register adc_dly_do)")
+
+    _adc_we_keep = BoolRegister(0x0, 3, doc="Scope resets trigger automatically (adc_we_keep)")
+
+    _adc_we_cnt = Register(0x2C, doc="Number of samles that have passed since trigger was armed (adc_we_cnt)")
+   
     current_timestamp = LongRegister(0x15C,
                                      bits=64,
                                      doc="An absolute counter " \
@@ -241,15 +272,16 @@ class Scope(BaseModule):
                               doc="1 sample of ch2 data [volts]")
     
     @property
-    def rawdata_ch1(self):
+    def _rawdata_ch1(self):
         """raw data from ch1"""
         # return np.array([self.to_pyint(v) for v in self._reads(0x10000,
         # self.data_length)],dtype=np.int32)
         x = np.array(self._reads(0x10000, self.data_length), dtype=np.int16)
         x[x >= 2**13] -= 2**14
         return x
+
     @property
-    def rawdata_ch2(self):
+    def _rawdata_ch2(self):
         """raw data from ch2"""
         # return np.array([self.to_pyint(v) for v in self._reads(0x20000,
         # self.data_length)],dtype=np.int32)
@@ -258,54 +290,110 @@ class Scope(BaseModule):
         return x
 
     @property
-    def data_ch1(self):
+    def _data_ch1(self):
         """ acquired (normalized) data from ch1"""
         return np.array(
-                    np.roll(self.rawdata_ch1, -(self._write_pointer_trigger + self.trigger_delay + 1)),
+                    np.roll(self._rawdata_ch1, -(self._write_pointer_trigger + self._trigger_delay + 1)),
                     dtype = np.float)/2**13
     @property
-    def data_ch2(self):
+    def _data_ch2(self):
         """ acquired (normalized) data from ch2"""
         return np.array(
-                    np.roll(self.rawdata_ch2, -(self._write_pointer_trigger + self.trigger_delay + 1)),
+                    np.roll(self._rawdata_ch2, -(self._write_pointer_trigger + self._trigger_delay + 1)),
                     dtype = np.float)/2**13
 
     @property
-    def data_ch1_current(self):
+    def _data_ch1_current(self):
         """ (unnormalized) data from ch1 while acquisition is still running"""
         return np.array(
-                    np.roll(self.rawdata_ch1, -(self._write_pointer_current + 1)),
+                    np.roll(self._rawdata_ch1, -(self._write_pointer_current + 1)),
                     dtype = np.float)/2**13
 
     @property
-    def data_ch2_current(self):
+    def _data_ch2_current(self):
         """ (unnormalized) data from ch2 while acquisition is still running"""
         return np.array(
-                    np.roll(self.rawdata_ch2, -(self._write_pointer_current + 1)),
+                    np.roll(self._rawdata_ch2, -(self._write_pointer_current + 1)),
                     dtype = np.float)/2**13
     
     @property
     def times(self):
-        duration = 8e-9*self.decimation*self.data_length
-        endtime = duration*self.trigger_delay/self.data_length
-        return np.linspace(endtime-duration, endtime,
+        #duration = 8e-9*self.decimation*self.data_length
+        #endtime = duration*
+        duration = self.duration
+        trigger_delay = self.trigger_delay
+        return np.linspace(trigger_delay - duration/2.,
+                           trigger_delay + duration/2.,
                            self.data_length,endpoint=False)
 
-    def setup(self, duration=1.0, trigger_source="immediately", average=True):
+    def setup(self,
+              duration=None,
+              trigger_source=None,
+              average=None,
+              threshold=None,
+              hysteresis=None,
+              trigger_delay=None):
         """sets up the scope for a new trace aquision including arming the trigger
 
         duration: the minimum duration in seconds to be recorded
         trigger_source: the trigger source. see the options for the parameter separately
         average: use averaging or not when sampling is not performed at full rate.
-                 similar to high-resolution mode in commercial scopes"""
-        self.reset_writestate_machine = True
-        self.trigger_delay = self.data_length
-        self.average = average
-        self.duration = duration
-        self.trigger_source = trigger_source
-        self.trigger_armed = True
-        if trigger_source == 'immediately':
+                 similar to high-resolution mode in commercial scopes
+
+        if a parameter is None, the current attribute value is used"""
+        self._setup_called = True
+        self._reset_writestate_machine = True
+        if average is not None:
+            self.average = average
+        if duration is not None:
+            self.duration = duration
+        if trigger_source is not None:
+            self.trigger_source = trigger_source
+        else:
+            self.trigger_source = self.trigger_source
+        if threshold is not None:
+            self.threshold_ch1 = threshold
+            self.threshold_ch2 = threshold
+        if hysteresis is not None:
+            self.hysteresis_ch1 = hysteresis
+            self.hysteresis_ch2 = hysteresis
+        if trigger_delay is not None:
+            self.trigger_delay = trigger_delay
+        self._trigger_armed = True
+        if self.trigger_source == 'immediately':
             self.sw_trig()
+
+    def curve_ready(self):
+        """
+        Returns True if trigger has been triggered
+        """
+        return (not self._trigger_armed) and self._setup_called
+
+    def _get_ch(self, ch):
+        if not ch in [1,2]:
+            raise ValueError("channel should be 1 or 2, got " + str(ch))
+        return self._data_ch1 if ch==1 else self._data_ch2
+    
+    def curve(self, ch=1, trigger_timeout=1.):
+        """
+        Takes a curve from channel ch as soon as the trigger is valid.
+        If no trigger occurs after timeout seconds, raises TimeoutError.
+        If trigger_timeout <= 0, then no check for trigger is done and
+        the data from the buffer is returned directly.
+        """
+        if not self._setup_called:
+            raise NotReadyError("setup has never been called")
+        SLEEP_TIME = 0.001
+        total_sleep = 0
+        if trigger_timeout>0:
+            while(total_sleep<trigger_timeout):
+                if self.curve_ready():
+                    return self._get_ch(ch)
+                total_sleep+=SLEEP_TIME
+                sleep(SLEEP_TIME)
+        else:
+            return self._get_ch(ch)
+        raise TimeoutError("scope wasn't trigged within timeout")
 
     @property
     def sampling_time(self):
@@ -337,9 +425,9 @@ class Scope(BaseModule):
         factors = [1, 8, 64, 1024, 8192, 65536]
         for f in factors:
             if v <= tbase * float(f):
-                self.data_decimation = f
+                self.decimation = f
                 return
-        self.data_decimation = 65536
+        self.decimation = 65536
         self._logger.error("Desired duration too long to realize")
 
 
@@ -381,18 +469,26 @@ def make_asg(channel=1):
             self._dsp.output_direct = v
     
         data_length = 2**14
-        
+
+        # register set_a_zero
         on = BoolRegister(0x0, 7+_BIT_OFFSET, doc='turns the output on or off', invert=True)
-    
+
+        # register set_a_rst
         sm_reset = BoolRegister(0x0, 6+_BIT_OFFSET, doc='resets the state machine')
         
-        #formerly: onetimetrigger
+        # register set_a/b_once
         periodic = BoolRegister(0x0, 5+_BIT_OFFSET, invert=True,
                         doc='if False, fgen stops after performing one full waveform at its last value.')
         
+        # register set_a/b_wrap
         _sm_wrappointer = BoolRegister(0x0, 4+_BIT_OFFSET, 
                         doc='If False, fgen starts from data[0] value after each cycle. If True, assumes that data is periodic and jumps to the naturally next index after full cycle.')
-        
+
+        # register set_a_rgate
+        _counter_wrap = Register(0x8+_VALUE_OFFSET, 
+                                doc="Raw phase value where counter wraps around. To be set to 2**16*(2**14-1) = 0x3FFFFFFF in virtually all cases. ") 
+    
+        # register trig_a/b_src
         _trigger_sources = {"off": 0 << _BIT_OFFSET,
                             "immediately": 1 << _BIT_OFFSET,
                             "ext_positive_edge": 2 << _BIT_OFFSET, #DIO0_P pin
@@ -426,10 +522,6 @@ def make_asg(channel=1):
         lastpoint = FloatRegister(_DATA_OFFSET+0x4*(data_length-1), 
                                   bits=14, norm=2**13, 
                                   doc="Last value in output table [volts]")
-    
-        _counter_wrap = Register(0x8+_VALUE_OFFSET, 
-                                doc="Raw phase value where counter wraps around. To be set to 2**16*(2**14-1) = 0x3FFFFFFF in virtually all cases. ") 
-    
         _counter_step = Register(0x10+_VALUE_OFFSET,doc="""Each clock cycle the counter_step is increases the internal counter modulo counter_wrap.
             The current counter step rightshifted by 16 bits is the index of the value that is chosen from the data table.
             """)
@@ -517,11 +609,11 @@ def make_asg(channel=1):
         scopetriggerphase = PhaseRegister(0x114+_VALUE_OFFSET, bits=14, 
                        doc="phase of ASG ch1 at the moment when the last scope trigger occured [degrees]")
             
-        advanced_trigger_reset = BoolRegister(0x0, 9+16, doc='resets the fgen advanced trigger')
-        advanced_trigger_autorearm = BoolRegister(0x0, 11+16, doc='autorearm the fgen advanced trigger after a trigger event? If False, trigger needs to be reset with a sequence advanced_trigger_reset=True...advanced_trigger_reset=False after each trigger event.')
-        advanced_trigger_invert = BoolRegister(0x0, 10+16, doc='inverts the trigger signal for the advanced trigger if True')
+        advanced_trigger_reset = BoolRegister(0x0, 9+_BIT_OFFSET, doc='resets the fgen advanced trigger')
+        advanced_trigger_autorearm = BoolRegister(0x0, 11+_BIT_OFFSET, doc='autorearm the fgen advanced trigger after a trigger event? If False, trigger needs to be reset with a sequence advanced_trigger_reset=True...advanced_trigger_reset=False after each trigger event.')
+        advanced_trigger_invert = BoolRegister(0x0, 10+_BIT_OFFSET, doc='inverts the trigger signal for the advanced trigger if True')
         
-        advanced_trigger_delay = LongRegister(0x118+0x20, bits=64, doc='delay of the advanced trigger - 1 [cycles]') 
+        advanced_trigger_delay = LongRegister(0x118+_VALUE_OFFSET, bits=64, doc='delay of the advanced trigger - 1 [cycles]') 
     
         def enable_advanced_trigger(self, frequency, amplitude, duration,
                                     invert=False, autorearm=False):
@@ -855,7 +947,7 @@ class IQ(FilterModule):
                  gain=0, 
                  phase=0,
                  acbandwidth=-np.array(acbandwidth),
-                 amplitude=amplitude,
+                 amplitude=0,
                  input=input, 
                  output_direct=output_direct,
                  output_signal='output_direct')
@@ -871,6 +963,7 @@ class IQ(FilterModule):
         # obtained by measuring transfer function with bnc cable - could replace the inverse of 4 above
         #unityfactor = 0.23094044589192711
         try:
+            self.amplitude = amplitude # turn on NA inside try..except block
             for i in range(points):
                 self.frequency = x[i] #this triggers the NA acquisition
                 sleep(1.0 / rbw * (avg + sleeptimes))
@@ -889,9 +982,12 @@ class IQ(FilterModule):
                     amplitude = maxamplitude
                 self.amplitude = amplitude
         # turn off the NA output, even in the case of exception (e.g. KeyboardInterrupt)
-        finally:
+        except:
             self.amplitude = 0
             self._logger.info("NA output turned off due to an exception")
+            raise
+        else:
+            self.amplitude = 0
         # in zero-span mode, change x-axis to approximate time. Time is very
         # rudely approximated here..
         if start == stop:
@@ -953,7 +1049,13 @@ class IIR(DspModule):
             return np.array([])
         elif l > self._IIRSTAGES:
             l = self._IIRSTAGES
-        data = np.array([v for v in self._reads(0x8000, 8 * l)])
+        # data = np.array([v for v in self._reads(0x8000, 8 * l)])
+        # coefficient readback has been disabled to save FPGA resources.
+        if hasattr(self,'_writtendata'):
+            data = self._writtendata
+        else:
+            raise ValueError("Readback of coefficients not enabled. " \
+                             +"You must set coefficients before reading it.")
         coefficients = np.zeros((l, 6), dtype=np.float64)
         bitlength = self._IIRBITS
         shift = self._IIRSHIFT
@@ -1011,6 +1113,7 @@ class IIR(DspModule):
                     data[i * 8 + k * 2] = lo
         data = [int(d) for d in data]
         self._writes(0x8000, data)
+        self._writtendata = data
 
     def _setup_unity(self):
         """sets the IIR filter transfer function unity"""
@@ -1152,58 +1255,11 @@ class IIR(DspModule):
 # current work pointer: here
 
 class AMS(BaseModule):
-    """mostly deprecated module (redpitaya has removed adc support. 
-    needs to be cleaned out again!!!"""
+    """mostly deprecated module (redpitaya has removed adc support). 
+    only here for dac2 and dac3"""
     def __init__(self, client):
-        super(AMS, self).__init__(client, addr_base=0x40400000)
-    
-    #_dac0 = Register()
-    
-    @property
-    def pwm_full(self):
-        """PWM full variable from FPGA code"""
-        return float(255.0)
-
-    def to_dac(self, pwmvalue, bitselect):
-        """
-        PWM value (100% == 156)
-        Bit select for PWM repetition which have value PWM+1
-        """
-        return ((pwmvalue & 0xFF) << 16) + (bitselect & 0xFFFF)
-
-    def rel_to_dac(self, v):
-        v = np.long(np.round(v * (17 * (self.pwm_full + 1) - 1)))
-        return self.to_dac(v // 17, (2**(v % 17)) - 1)
-
-    def rel_to_dac_debug(self, v):
-        """max value = 1.0, min=0.0"""
-        v = np.long(np.round(v * (17 * (self.pwm_full + 1) - 1)))
-        return (v // 17, (2**(v % 17)) - 1)
-
-    def setdac0(self, pwmvalue, bitselect):
-        self._write(0x20, self.to_dac(pwmvalue, bitselect))
-
-    def setdac1(self, pwmvalue, bitselect):
-        self._write(0x24, self.to_dac(pwmvalue, bitselect))
-
-    def setdac2(self, pwmvalue, bitselect):
-        self._write(0x28, self.to_dac(pwmvalue, bitselect))
-
-    def setdac3(self, pwmvalue, bitselect):
-        self._write(0x2C, self.to_dac(pwmvalue, bitselect))
-
-    def reldac0(self, v):
-        """max value = 1.0, min=0.0"""
-        self._write(0x20, self.rel_to_dac(v))
-
-    def reldac1(self, v):
-        """max value = 1.0, min=0.0"""
-        self._write(0x24, self.rel_to_dac(v))
-
-    def reldac2(self, v):
-        """max value = 1.0, min=0.0"""
-        self._write(0x28, self.rel_to_dac(v))
-
-    def reldac3(self, v):
-        """max value = 1.0, min=0.0"""
-        self._write(0x2C, self.rel_to_dac(v))
+        super(AMS, self).__init__(client, addr_base=0x40400000)        
+    dac0 = PWMRegister(0x20, doc="PWM output 0 [V]")
+    dac1 = PWMRegister(0x24, doc="PWM output 1 [V]")
+    dac2 = PWMRegister(0x28, doc="PWM output 2 [V]")
+    dac3 = PWMRegister(0x2C, doc="PWM output 3 [V]")

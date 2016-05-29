@@ -293,5 +293,7 @@ class RedPitaya(SSHshell):
         self.iq2 = rp.IQ(self.client, module='iq2')
         self.asg1 = rp.Asg1(self.client)
         self.asg2 = rp.Asg2(self.client)
+        self.pwm0 = rp.AuxOutput(self.client,output='pwm0')
+        self.pwm1 = rp.AuxOutput(self.client,output='pwm1')
         self.logger.warning("Dummy mode started...")
     

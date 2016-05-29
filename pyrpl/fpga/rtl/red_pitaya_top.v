@@ -423,7 +423,7 @@ IOBUF i_iobufn [8-1:0] (.O(exp_n_in), .IO(exp_n_io), .I(exp_n_out), .T(~exp_n_di
 //---------------------------------------------------------------------------------
 //  Oscilloscope application
 
-wire trig_asg_out ;
+wire    [  2-1:0] trig_asg_out;
 wire trig_scope_out;
 wire    [14-1: 0] to_scope_a;
 wire    [14-1: 0] to_scope_b;
@@ -556,6 +556,7 @@ red_pitaya_ams i_ams (
 
 
 wire  [ 14-1: 0] pwm_signals[4-1:0];
+
 red_pitaya_pwm pwm [4-1:0] (
   // system signals
   .clk   (pwm_clk ),
