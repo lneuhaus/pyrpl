@@ -47,6 +47,7 @@ install:
   - source activate test-environment
 #  - conda install --yes -c dan_blanchard python-coveralls nose-cov
   - if [[ "$TRAVIS_PYTHON_VERSION" != "3.5" ]]; then
+	  conda install --yes -c dan_blanchard python-coveralls nose-cov; 
 	fi
   - python setup.py install
 
