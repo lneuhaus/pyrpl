@@ -63,7 +63,7 @@ class LongRegister(Register):
 
     def __get__(self, obj, objtype=None):
         values = obj._reads(self.address, self.size)
-        value = long(0)
+        value = int(0)
         for i in range(self.size):
             value += int(values[i])<<(32*i)
         if self.bitmask is None:
