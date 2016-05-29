@@ -147,7 +147,7 @@ class RedPitaya(SSHshell):
               +" current filename: "+self.filename)
         try:
             self.scp.put(source, self.serverdirname)
-        except SCPException, SSHException:
+        except (SCPException, SSHException):
             # try again before failing
             self.startscp()
             sleep(self.delay)
@@ -176,7 +176,7 @@ class RedPitaya(SSHshell):
             sleep(self.delay)
             try:
                 self.scp.put(os.path.join(self.dirname, 'monitor_server', serverfile), self.serverdirname+"monitor_server")
-            except SCPException,SSHException:
+            except (SCPException, SSHException):
                 self.logger.exception("Upload error. Try again after rebooting your RedPitaya..")
             sleep(self.delay)
             self.ask('chmod 755 ./monitor_server')
