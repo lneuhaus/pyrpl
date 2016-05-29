@@ -131,7 +131,7 @@ class TestClass(object):
         if type(reg)==SelectRegister:
             # try to read
             value = module.__getattribute__(regkey)
-            if type(value) != type(reg.options.keys()[0]): #make sure Register represents an int
+            if type(value) != type(list(reg.options.keys())[0]): #make sure Register represents an int
                 assert False
             #exclude read-only registers
             if regkey in []:
