@@ -26,7 +26,7 @@ import logging
 
 from .registers import *
 from .bijection import Bijection
-import .iir
+from . import iir
 
 class TimeoutError(ValueError):
     pass
