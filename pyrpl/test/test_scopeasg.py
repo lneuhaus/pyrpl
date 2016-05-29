@@ -11,8 +11,9 @@ class TestClass(object):
     @classmethod
     def setUpAll(self):
         hostname = os.environ.get('REDPITAYA')
+        self.password = os.environ.get('RP_PASSWORD') or 'root'
         if hostname != 'unavailable':
-            self.r = RedPitaya(hostname=hostname)
+            self.r = RedPitaya(hostname=hostname, password=self.password)
         else:
             self.r = None
     
