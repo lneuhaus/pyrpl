@@ -68,14 +68,14 @@ module red_pitaya_ams (
 
 always @(posedge clk_i)
 if (rstn_i == 1'b0) begin
-   dac_a_o     <= 24'h0F_0000 ;
-   dac_b_o     <= 24'h4E_0000 ;
-   dac_c_o     <= 24'h75_0000 ;
-   dac_d_o     <= 24'h9C_0000 ;
+   dac_a_o     <= 24'h00_0000 ;
+   dac_b_o     <= 24'h00_0000 ;
+   dac_c_o     <= 24'h00_0000 ;
+   dac_d_o     <= 24'h00_0000 ;
 end else begin
+   dac_a_o <= cfg;
+   dac_b_o <= cfg_b;
    if (sys_wen) begin
-   	  dac_a_o <= cfg;
-   	  dac_b_o <= cfg_b;
       if (sys_addr[19:0]==16'h28)   dac_c_o <= sys_wdata[24-1: 0] ;
       if (sys_addr[19:0]==16'h2C)   dac_d_o <= sys_wdata[24-1: 0] ;
    end
