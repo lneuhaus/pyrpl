@@ -12,8 +12,8 @@ class TestClass(object):
     
     @classmethod
     def setUpAll(self):
-        self.r = RedPitaya(hostname=hostname)
-   
+        self.r = RedPitaya()
+
     #you are invited to change the following two silly tests to something useful
     def test_example(self):
         assert self.r.scope.dac1==0

@@ -15,7 +15,7 @@ class TestClass(object):
     
     @classmethod
     def setUpAll(self):
-        self.r = RedPitaya(hostname=hostname)
+        self.r = RedPitaya()
     
     def test_asg(self):
         if self.r is None:
