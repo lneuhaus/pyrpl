@@ -216,7 +216,7 @@ end else begin
 end
 
 assign dac_npnt = dac_pnt + set_step_i;
-assign trig_done_o = !dac_rep && trig_in;
+assign trig_done_o = (!dac_rep && trig_in) | (~dac_npnt_sub_neg);
 
 //---------------------------------------------------------------------------------
 //
