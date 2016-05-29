@@ -47,9 +47,9 @@ module red_pitaya_ams (
    output reg [ 24-1: 0] dac_b_o         ,  // conversion into PWM signal
    output reg [ 24-1: 0] dac_c_o         ,  // 
    output reg [ 24-1: 0] dac_d_o         ,  // 
-   input      [ 14-1:0]  pwm0_i          ,  // 14 bit inputs for compatibility and future upgrades;
+   input      [ 14-1: 0] pwm0_i          ,  // 14 bit inputs for compatibility and future upgrades;
   								  	        // right now only 12 bits are used  
-   input      [ 14-1:0]  pwm1_i          ,  
+   input      [ 14-1: 0] pwm1_i          ,  
    
    // system bus
    input      [ 32-1: 0] sys_addr        ,  // bus address
@@ -68,10 +68,10 @@ module red_pitaya_ams (
 
 always @(posedge clk_i)
 if (rstn_i == 1'b0) begin
-   dac_a_o     <= 24'h00_0000 ;
-   dac_b_o     <= 24'h00_0000 ;
-   dac_c_o     <= 24'h00_0000 ;
-   dac_d_o     <= 24'h00_0000 ;
+   dac_a_o     <= 24'h000000 ;
+   dac_b_o     <= 24'h000000 ;
+   dac_c_o     <= 24'h000000 ;
+   dac_d_o     <= 24'h000000 ;
 end else begin
    dac_a_o <= cfg;
    dac_b_o <= cfg_b;
@@ -140,30 +140,30 @@ end
 
 localparam CCW = 24; // configuration bitwidth for pwm module
 
-reg [CCW-1:0] cfg;
-wire b3;
-wire b2;
-wire b1;
-wire b0;
-assign {b3,b2,b1,b0} = pwm0_i[5:2];
+reg [24-1:0] cfg;
+wire bit3;
+wire bit2;
+wire bit1;
+wire bit0;
+assign {bit3,bit2,bit1,bit0} = pwm0_i[5:2];
 always @(posedge clk_i)
 if (rstn_i == 1'b0) begin
    cfg   <=  {CCW{1'b0}};
 end else begin
-   cfg  <= {~pwm0_i[13],pwm0_i[13-1:6],1'b0,b3,b2,b3,b1,b3,b2,b3,b0,b3,b2,b3,b1,b3,b2,b3};
+   cfg  <= {~pwm0_i[13],pwm0_i[13-1:6],1'b0,bit3,bit2,bit3,bit1,bit3,bit2,bit3,bit0,bit3,bit2,bit3,bit1,bit3,bit2,bit3};
 end
 
-reg [CCW-1:0] cfg_b;
-wire b3_b;
-wire b2_b;
-wire b1_b;
-wire b0_b;
-assign {b3_b,b2_b,b1_b,b0_b} = pwm1_i[5:2];
+reg [24-1:0] cfg_b;
+wire bit3_b;
+wire bit2_b;
+wire bit1_b;
+wire bit0_b;
+assign {bit3_b,bit2_b,bit1_b,bit0_b} = pwm1_i[5:2];
 always @(posedge clk_i)
 if (rstn_i == 1'b0) begin
    cfg_b   <=  {CCW{1'b0}};
 end else begin
-   cfg_b  <= {~pwm1_i[13],pwm1_i[13-1:6],1'b0,b3_b,b2_b,b3_b,b1_b,b3_b,b2_b,b3_b,b0_b,b3_b,b2_b,b3_b,b1_b,b3_b,b2_b,b3_b};
+   cfg_b  <= {~pwm1_i[13],pwm1_i[13-1:6],1'b0,bit3_b,bit2_b,bit3_b,bit1_b,bit3_b,bit2_b,bit3_b,bit0_b,bit3_b,bit2_b,bit3_b,bit1_b,bit3_b,bit2_b,bit3_b};
 end
 
 endmodule

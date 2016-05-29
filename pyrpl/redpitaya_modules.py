@@ -1243,7 +1243,7 @@ class IIR(DspModule):
         #        curves[-1].add_child(curve)
         self._logger.info("IIR filter ready")
         self._logger.info("Maximum deviation from design coefficients: %f", max((f[0:len(c)] - c).flatten()))
-        self._logger.info("Overflow pattern: %b", bin(self.overflow))
+        self._logger.info("Overflow pattern: %s", bin(self.overflow))
         #        if save:
         #            return f, curves[-1]
         #        else:
