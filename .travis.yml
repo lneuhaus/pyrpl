@@ -44,10 +44,10 @@ before_install:
 ##- apt-get install libblas-dev liblapack-dev libatlas-base-dev gfortran
 
 install:
-#  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION numpy scipy paramiko matplotlib
-#  - source activate test-environment
-  - conda create -y -q --file environment.yml python=$TRAVIS_PYTHON_VERSION
-  - source activate pyrpl
+  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION numpy scipy paramiko matplotlib pandas nose pip
+  - source activate test-environment
+  - pip install scp
+  # there are some bugs in the installation of these packages in higher python versions
   - if [[ "$TRAVIS_PYTHON_VERSION" != "3.5" ]]; then
       conda install --yes -c dan_blanchard python-coveralls nose-cov; 
     fi
