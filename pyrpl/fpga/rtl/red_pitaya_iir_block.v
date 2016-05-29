@@ -120,7 +120,10 @@ always @(posedge clk_i) begin
 		 16'h204 : begin ack <= wen|ren; rdata <= IIRSHIFT; end
 		 16'h208 : begin ack <= wen|ren; rdata <= IIRSTAGES; end
 		 
-		 16'b1zzzzzzzzzzzzzzz: 	 begin ack <= wen|ren; rdata <= iir_coefficients[addr[12-1:2]]; end    
+		 // disable read-back of coefficients to save resources
+		 // this makes a big difference since it will allow the implementation of 
+		 // the coefficients ass RAM and not as registers
+		 // 16'b1zzzzzzzzzzzzzzz: 	 begin ack <= wen|ren; rdata <= iir_coefficients[addr[12-1:2]]; end    
 
 	     default: begin ack <= wen|ren;  rdata <=  32'h0; end 
 	  endcase	     

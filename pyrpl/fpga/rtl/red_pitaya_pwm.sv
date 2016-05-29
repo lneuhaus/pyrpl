@@ -50,7 +50,7 @@ reg  [ 4-1: 0] bcnt  ;
 reg  [16-1: 0] b     ;
 reg  [ 8-1: 0] vcnt, vcnt_r;
 reg  [ 8-1: 0] v   ;
-reg  [ 9-1: 0] v_r ; #needs an extra bit to avoid overflow
+reg  [ 9-1: 0] v_r ; // needs an extra bit to avoid overflow
 
 // short description of what is going on:
 

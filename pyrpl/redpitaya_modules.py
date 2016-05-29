@@ -1049,7 +1049,13 @@ class IIR(DspModule):
             return np.array([])
         elif l > self._IIRSTAGES:
             l = self._IIRSTAGES
-        data = np.array([v for v in self._reads(0x8000, 8 * l)])
+        # data = np.array([v for v in self._reads(0x8000, 8 * l)])
+        # coefficient readback has been disabled to save FPGA resources.
+        if hasattr(self,'_writtendata'):
+            data = self._writtendata
+        else:
+            raise ValueError("Readback of coefficients not enabled. " \
+                             +"You must set coefficients before reading it.")
         coefficients = np.zeros((l, 6), dtype=np.float64)
         bitlength = self._IIRBITS
         shift = self._IIRSHIFT
@@ -1107,6 +1113,7 @@ class IIR(DspModule):
                     data[i * 8 + k * 2] = lo
         data = [int(d) for d in data]
         self._writes(0x8000, data)
+        self._writtendata = data
 
     def _setup_unity(self):
         """sets the IIR filter transfer function unity"""

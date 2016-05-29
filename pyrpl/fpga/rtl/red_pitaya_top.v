@@ -556,6 +556,7 @@ red_pitaya_ams i_ams (
 
 
 wire  [ 14-1: 0] pwm_signals[4-1:0];
+
 red_pitaya_pwm pwm [4-1:0] (
   // system signals
   .clk   (pwm_clk ),
