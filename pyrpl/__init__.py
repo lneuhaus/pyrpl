@@ -5,7 +5,7 @@ import logging
 #logging.getLogger(name=__name__).setLevel(logging.DEBUG)
 logging.getLogger(name=__name__).setLevel(logging.INFO) # normal setting
 
-from redpitaya import RedPitaya
-from redpitaya_modules import *
-from registers import *
-#from pyrpl import Pyrpl
+from .redpitaya import RedPitaya
+from .redpitaya_modules import *
+from .registers import *
+#from .pyrpl import Pyrpl

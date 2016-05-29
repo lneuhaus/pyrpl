@@ -7,7 +7,7 @@ logger = logging.getLogger(name=__name__)
 #needed to set floats to minimum count above zero
 epsilon = sys.float_info.epsilon
 
-from bijection import Bijection
+from .bijection import Bijection
 
 #docstring does not work yet, see: 
 #http://stackoverflow.com/questions/37255109/python-docstring-for-descriptors

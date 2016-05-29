@@ -24,9 +24,9 @@ import sys
 import matplotlib.pyplot as plt
 import logging
 
-from registers import *
-from bijection import Bijection
-import iir
+from .registers import *
+from .bijection import Bijection
+import .iir
 
 class TimeoutError(ValueError):
     pass
