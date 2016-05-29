@@ -4,7 +4,7 @@ env:
 
 language: python
   - "2.7"
-#  - "3.5"
+  - "3.5"
  
 # lots of stuff here comes from https://gist.github.com/dan-blanchard/7045057
 notifications:
