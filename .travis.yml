@@ -48,7 +48,7 @@ install:
   - source activate test-environment
   - pip install scp
   # there are some bugs in the installation of these packages in higher python versions
-  - if [[ "$TRAVIS_PYTHON_VERSION" != "3.5" ] && [ "$TRAVIS_PYTHON_VERSION" != "3.4" ]]; then
+  - if [[ "$TRAVIS_PYTHON_VERSION" != "3.5" ]] && [[ "$TRAVIS_PYTHON_VERSION" != "3.4" ]]; then
       conda install --yes -c dan_blanchard python-coveralls nose-cov; 
     fi
   - python setup.py install
