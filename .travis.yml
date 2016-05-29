@@ -51,7 +51,7 @@ install:
   
 # Run test
 script:
-  - nosetests --with-coverage --cover-package=pyrpl --cover-config-file=.coveragerc --logging-level=INFO
+  - nosetests --with-coverage --cover-package=pyrpl --logging-level=INFO --cover-config-file=.coveragerc
 
 # Calculate coverage
 after_success:
