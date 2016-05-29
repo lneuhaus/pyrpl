@@ -45,7 +45,9 @@ before_install:
 install:
   - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION numpy scipy paramiko matplotlib
   - source activate test-environment
-  - conda install --yes -c dan_blanchard python-coveralls nose-cov
+#  - conda install --yes -c dan_blanchard python-coveralls nose-cov
+  - if [[ "$TRAVIS_PYTHON_VERSION" != "3.5" ]]; then
+	fi
   - python setup.py install
 
 #before_script: ./autocorrectpep8_script.sh
