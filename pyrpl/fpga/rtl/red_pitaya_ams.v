@@ -150,7 +150,7 @@ always @(posedge clk_i)
 if (rstn_i == 1'b0) begin
    cfg   <=  {CCW{1'b0}};
 end else begin
-   cfg  <= {~pwm0_i[13],pwm0_i[13-1:6],0'b0,b3,b2,b3,b1,b3,b2,b3,b0,b3,b2,b3,b1,b3,b2,b3};
+   cfg  <= {~pwm0_i[13],pwm0_i[13-1:6],1'b0,b3,b2,b3,b1,b3,b2,b3,b0,b3,b2,b3,b1,b3,b2,b3};
 end
 
 reg [CCW-1:0] cfg_b;
@@ -163,7 +163,7 @@ always @(posedge clk_i)
 if (rstn_i == 1'b0) begin
    cfg_b   <=  {CCW{1'b0}};
 end else begin
-   cfg_b  <= {~pwm1_i[13],pwm1_i[13-1:6],0'b0,b3_b,b2_b,b3_b,b1_b,b3_b,b2_b,b3_b,b0_b,b3_b,b2_b,b3_b,b1_b,b3_b,b2_b,b3_b};
+   cfg_b  <= {~pwm1_i[13],pwm1_i[13-1:6],1'b0,b3_b,b2_b,b3_b,b1_b,b3_b,b2_b,b3_b,b0_b,b3_b,b2_b,b3_b,b1_b,b3_b,b2_b,b3_b};
 end
 
 endmodule
