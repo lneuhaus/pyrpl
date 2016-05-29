@@ -1,2 +1,5 @@
-from pyrpl_gui import RedPitayaGui
-
+try:
+	from pyrpl_gui import RedPitayaGui
+except:
+	pass
+	
