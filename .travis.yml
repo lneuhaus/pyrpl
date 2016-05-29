@@ -6,7 +6,9 @@ language: python
 python:
   - "2.7"
   - "3.5"
+
 # lots of stuff here comes from https://gist.github.com/dan-blanchard/7045057
+  
 notifications:
   email: false
 
@@ -41,7 +43,7 @@ before_install:
 
 install:
   - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION numpy scipy paramiko matplotlib
-  - conda install --yes -c dan_blanchard python-coveralls nose-cov
+  - conda install --yes python-coveralls nose-cov
   - source activate test-environment
   - python setup.py install
 
@@ -49,9 +51,7 @@ install:
   
 # Run test
 script:
-  - nosetests --with-coverage --cover-package=pyrpl --cover-config-file=.coveragerc --logging-level=DEBUG
-#  - nosetests --with-coverage --cover-package=pyrpl --cover-config-file=.coveragerc --logging-level=INFO
-#script: python setup.py nosetests
+  - nosetests --with-coverage --cover-package=pyrpl --cover-config-file=.coveragerc --logging-level=INFO
 
 # Calculate coverage
 after_success:
