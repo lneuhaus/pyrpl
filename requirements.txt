@@ -3,3 +3,4 @@ paramiko
 scp
 matplotlib
 numpy
+scipy
