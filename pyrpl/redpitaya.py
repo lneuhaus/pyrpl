@@ -26,10 +26,10 @@ import inspect
 import random
 import logging
 
-from sshshell import SSHshell
 from scp import SCPException
 from paramiko import SSHException
 
+from .sshshell import SSHshell
 from . import monitor_client
 from . import redpitaya_modules as rp
 

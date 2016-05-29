@@ -22,15 +22,15 @@ class TestClass(object):
             assert False
         for modulekey, module in self.r.__dict__.items():
             if isinstance(module,BaseModule):
-                print "Scanning module",modulekey,"..."
+                logger.info("Scanning module %s...",modulekey)
                 for regkey,regclass in type(module).__dict__.items():
                     if isinstance(regclass,Register):
-                        print "Scanning register",regkey,"..."
+                        logger.info("Scanning register %s...",regkey)
                         yield self.register_validation, module, modulekey, regclass, regkey
     
 
     def register_validation(self, module, modulekey, reg, regkey):
-        print modulekey, regkey
+        self.logger.debug("%s %s", modulekey, regkey)
         if type(reg)==Register:
             # try to read
             value = module.__getattribute__(regkey)

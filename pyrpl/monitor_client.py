@@ -22,6 +22,7 @@ import time
 from time import sleep
 import socket
 from collections import defaultdict
+import logging
 
 class MonitorClient(object):
 
@@ -32,6 +33,7 @@ class MonitorClient(object):
         port:    the port that the server is running on. 2222 by default
         restartserver: a function to call that restarts the server in case of problems
         """
+        self.logger = logging.getLogger(name=__name__)
         self._restartserver = restartserver
         self._address = address
         self._port = port
@@ -73,7 +75,7 @@ class MonitorClient(object):
     def _reads(self, addr, length):
         if length > 65535:
             length = 65535
-            print "Maximum read-length is ", length
+            self.logger.warning("Maximum read-length is %d", length)
         header = 'r' + chr(0) + chr(length & 0xFF) + chr((length >> 8) & 0xFF) + chr(
             addr & 0xFF) + chr((addr >> 8) & 0xFF) + chr((addr >> 16) & 0xFF) + chr((addr >> 24) & 0xFF)
         self.socket.send(header)
@@ -83,7 +85,7 @@ class MonitorClient(object):
         if data[:8] == header:  # check for in-sync transmission
             return np.frombuffer(data[8:], dtype=np.uint32)
         else:  # error handling
-            print "Error: wrong control sequence from server: ", data[:8]
+            self.logger.error("Wrong control sequence from server: %s", data[:8])
             self.emptybuffer()
             return None
 
@@ -98,7 +100,7 @@ class MonitorClient(object):
         if self.socket.recv(8) == header:  # check for in-sync transmission
             return True  # indicate successful write
         else:  # error handling
-            print "Error: wrong control sequence from server"
+            self.logger.error("Error: wrong control sequence from server")
             self.emptybuffer()
             return None
 
@@ -107,17 +109,17 @@ class MonitorClient(object):
             n = len(self.socket.recv(16384))
             if (n <= 0):
                 return
-            print "Read %d bytes from socket..." % n
+            self.logger.debug("Read %d bytes from socket...", n)
 
     def trytwice(self, function, addr, value):
         try:
             value = function(addr, value)
         except (socket.timeout, socket.error):
-            print "Timeout or socket error."
+            self.logger.error("Timeout or socket error.")
         else:
             if value is not None:
                 return value
-        print "Error occured. Trying a second time to read from redpitaya. "
+        self.logger.error("Error occured. Trying a second time to read from redpitaya. ")
         if self._restartserver is not None:
             self.restart()
         return function(addr, value)
