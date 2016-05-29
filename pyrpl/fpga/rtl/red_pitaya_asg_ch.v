@@ -100,9 +100,9 @@ end
 always @(posedge dac_clk_i)
 if (buf_we_i)  dac_buf[buf_addr_i] <= buf_wdata_i[14-1:0] ;
 
-// read-back
-always @(posedge dac_clk_i)
-buf_rdata_o <= dac_buf[buf_addr_i] ;
+// read-back disabled
+//always @(posedge dac_clk_i)
+//buf_rdata_o <= dac_buf[buf_addr_i] ;
 
 // scale and offset
 always @(posedge dac_clk_i)
