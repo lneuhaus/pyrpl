@@ -45,9 +45,9 @@ before_install:
 
 install:
 #  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION numpy scipy paramiko matplotlib
-  - conda create -y -q -n test-environment python=$TRAVIS_PYTHON_VERSION --file environment.yml
-  - source activate test-environment
-#  - conda install --yes -c dan_blanchard python-coveralls nose-cov
+#  - source activate test-environment
+  - conda create -y -q --file environment.yml python=$TRAVIS_PYTHON_VERSION
+  - source activate pyrpl
   - if [[ "$TRAVIS_PYTHON_VERSION" != "3.5" ]]; then
       conda install --yes -c dan_blanchard python-coveralls nose-cov; 
     fi
