@@ -15,7 +15,7 @@ class TestClass(object):
     
     @classmethod
     def setUpAll(self):
-        self.r = RedPitaya(hostname=hostname)
+        self.r = RedPitaya()
     
     def test_generator(self):
         if self.r is None:
@@ -47,8 +47,9 @@ class TestClass(object):
             if type(value) != bool: #make sure Register represents an int
                 assert False
             #exclude read-only registers
-            if regkey in ['reset_writestate_machine',
-                          'trigger_armed']:
+            if regkey in ['_reset_writestate_machine',
+                          '_trigger_armed',
+                          '_trigger_delay_running']:
                 return
             #write opposite value and confirm it has changed
             module.__setattr__(regkey, not value)
@@ -69,8 +70,9 @@ class TestClass(object):
                           'ch2_firstpoint',
                           'dac1',
                           'dac2',
-                          'adc1',
-                          'adc2']:
+                          'voltage1',
+                          'voltage2',
+                          ]:
                 return
             #write something different and confirm change
             if value == 0:

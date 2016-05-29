@@ -39,7 +39,7 @@ class RedPitaya(SSHshell):
                  delay=0.05, 
                  autostart=True, reloadfpga=True, reloadserver=False, 
                  filename=None, dirname=None,
-                 leds_off=True, frequency_correction=1.0,
+                 leds_off=True, frequency_correction=1.0, timeout = 3
                  ):
         """installs and starts the interface on the RedPitaya at hostname that allows remote control
         
@@ -58,10 +58,11 @@ class RedPitaya(SSHshell):
         self.client = None
         self.frequency_correction = frequency_correction
         self.leds_off = leds_off
+        self.timeout = timeout
         # get parameters from os.environment variables
-        for k in ["hostname","port","user","password","delay"]:
+        for k in ["hostname","port","user","password","delay", "timeout"]:
             if "REDPITAYA_"+k.upper() in os.environ:
-                newvalue = os.environ["REDPITAYA_"+k.upper]
+                newvalue = os.environ["REDPITAYA_"+k.upper()]
                 self.logger.warning("Variable %s with value %s overwritten by "
                                     +"environment variable REDPITAYA_%s with "
                                     +"value %s", k, self.__getattribute__(k),
@@ -90,7 +91,8 @@ class RedPitaya(SSHshell):
         super(RedPitaya, self).__init__(hostname=self.hostname, 
                                         user=self.user,
                                         password=self.password, 
-                                        delay = self.delay)
+                                        delay = self.delay, 
+                                        timeout = self.timeout)
         # test ssh connection for exceptions
         try:
             self.ask()
@@ -99,7 +101,8 @@ class RedPitaya(SSHshell):
                 super(RedPitaya, self).__init__(hostname=self.hostname, 
                                                 user=self.user,
                                                 password=self.password,
-                                                delay=self.delay)
+                                                delay=self.delay, 
+                                                timeout = self.timeout)
         # start other stuff
         if reloadfpga:
             self.update_fpga()
