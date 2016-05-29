@@ -832,7 +832,7 @@ class IQ(FilterModule):
             acbandwidth=0, # ac filter bandwidth, 0 disables filter, negative values represent lowpass
             sleeptimes=0.5, # wait sleeptimes/rbw for quadratures to stabilize
             logscale=False, # make a logarithmic frequency sweep
-            stabilize=None, # if a float, output amplitude is adjusted dynamically that input amplitude is stabilize 
+            stabilize=None, # if a float, output amplitude is adjusted dynamically so that input amplitude [V]=stabilize 
             maxamplitude=1.0, # amplitude can be limited
             ): 
         if logscale:
@@ -861,7 +861,7 @@ class IQ(FilterModule):
                  output_signal='output_direct')
         # take the discretized rbw (only using first filter cutoff)
         rbw = self.bandwidth[0]
-        self._logger.info("Estimated acquisition time:", float(avg + sleeptimes) * points / rbw , "s")
+        self._logger.info("Estimated acquisition time: %.1f s", float(avg + sleeptimes) * points / rbw)
         sys.stdout.flush() # make sure the time is shown        
         # setup averaging
         self._na_averages = np.int(np.round(125e6 / rbw * avg))
@@ -870,25 +870,28 @@ class IQ(FilterModule):
         rescale = 2.0**(-self._LPFBITS)*4.0 # 4 is artefact of fpga code
         # obtained by measuring transfer function with bnc cable - could replace the inverse of 4 above
         #unityfactor = 0.23094044589192711
-        for i in range(points):
-            self.frequency = x[i] #this triggers the NA acquisition
-            sleep(1.0 / rbw * (avg + sleeptimes))
-            x[i] = self.frequency # get the actual (discretized) frequency
-            y[i] = self._nadata
-            amplitudes[i] = self.amplitude
-            #normalize immediately
-            if amplitudes[i] == 0:
-                y[i] *= rescale  # avoid division by zero
-            else:
-                y[i] *= rescale / self.amplitude
-            # set next amplitude if it has to change
-            if stabilize is not None:
-                amplitude = stabilize / np.abs(y[i])
-            if amplitude > maxamplitude:
-                amplitude = maxamplitude
-            self.amplitude = amplitude
-        # turn off the output signql
-        self.amplitude = 0            
+        try:
+            for i in range(points):
+                self.frequency = x[i] #this triggers the NA acquisition
+                sleep(1.0 / rbw * (avg + sleeptimes))
+                x[i] = self.frequency # get the actual (discretized) frequency
+                y[i] = self._nadata
+                amplitudes[i] = self.amplitude
+                #normalize immediately
+                if amplitudes[i] == 0:
+                    y[i] *= rescale  # avoid division by zero
+                else:
+                    y[i] *= rescale / self.amplitude
+                # set next amplitude if it has to change
+                if stabilize is not None:
+                    amplitude = stabilize / np.abs(y[i])
+                if amplitude > maxamplitude:
+                    amplitude = maxamplitude
+                self.amplitude = amplitude
+        # turn off the NA output, even in the case of exception (e.g. KeyboardInterrupt)
+        finally:
+            self.amplitude = 0
+            self._logger.info("NA output turned off due to an exception")
         # in zero-span mode, change x-axis to approximate time. Time is very
         # rudely approximated here..
         if start == stop:
