@@ -5,7 +5,7 @@ env:
 language: python
 python:
   - "2.7"
-  - "3.5"
+  - "3.3"
 
 # lots of stuff here comes from https://gist.github.com/dan-blanchard/7045057
   
@@ -43,8 +43,8 @@ before_install:
 
 install:
   - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION numpy scipy paramiko matplotlib
-  - conda install --yes python-coveralls nose-cov
   - source activate test-environment
+  - conda install -c --yes dan_blanchard python-coveralls nose-cov
   - python setup.py install
 
 #before_script: ./autocorrectpep8_script.sh
