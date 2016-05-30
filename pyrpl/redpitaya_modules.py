@@ -539,9 +539,15 @@ def make_asg(channel=1):
             """array of 2**14 values that define the output waveform. 
             
             Values should lie between -1 and 1 such that the peak output amplitude is self.scale"""
-            x = np.array(
-                self._reads(self._DATA_OFFSET, self.data_length),
-                         dtype=np.int32)
+            if hasattr(self,'_writtendata'):
+                x = self._writtendata
+            else:
+                raise ValueError("Readback of coefficients not enabled. " \
+                                 +"You must set coefficients before reading it.")
+            #data readback disabled for fpga performance reasons
+            #x = np.array(
+            #    self._reads(self._DATA_OFFSET, self.data_length),
+            #             dtype=np.int32)
             x[x >= 2**13] -= 2**14
             return np.array(x, dtype=np.float)/2**13
     
@@ -555,7 +561,10 @@ def make_asg(channel=1):
             data[data < 0] += 2**14
             #values that are still negativeare set to maximally negatuve
             data[data < 0] = -2**13 
-            self._writes(self._DATA_OFFSET, np.array(data, dtype=np.uint32))
+            data = np.array(data, dtype=np.uint32)
+            self._writes(self._DATA_OFFSET, data)
+            # memorize the data on host PC since we have disabled readback from fpga
+            self._writtendata = data
     
         def setup(self, 
                   waveform='cos', 
