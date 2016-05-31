@@ -193,7 +193,7 @@ class Scope(BaseModule):
     threshold_ch2 = FloatRegister(0xC, bits=14, norm=2**13, 
                                   doc="ch1 trigger threshold [volts]")
     
-    _trigger_delay = Register(0x10, doc="trigger delay [samples]")
+    _trigger_delay = Register(0x10, doc="number of decimated data after trigger written into memory [samples]")
 
     @property
     def trigger_delay(self):
@@ -324,7 +324,7 @@ class Scope(BaseModule):
         trigger_delay = self.trigger_delay
         return np.linspace(trigger_delay - duration/2.,
                            trigger_delay + duration/2.,
-                           self.data_length,endpoint=False)
+                           self.data_length, endpoint=False)
 
     def setup(self,
               duration=None,
@@ -365,9 +365,11 @@ class Scope(BaseModule):
 
     def curve_ready(self):
         """
-        Returns True if trigger has been triggered
+        Returns True if new data is ready for transfer
         """
-        return (not self._trigger_armed) and self._setup_called
+        return (not self._trigger_armed)\
+                and (not _trigger_delay_running)\
+                and self._setup_called
 
     def _get_ch(self, ch):
         if not ch in [1,2]:
@@ -540,7 +542,7 @@ def make_asg(channel=1):
             
             Values should lie between -1 and 1 such that the peak output amplitude is self.scale"""
             if hasattr(self,'_writtendata'):
-                x = self._writtendata
+                x = np.array(self._writtendata, dtype=np.int32)
             else:
                 raise ValueError("Readback of coefficients not enabled. " \
                                  +"You must set coefficients before reading it.")
@@ -570,9 +572,9 @@ def make_asg(channel=1):
                   waveform='cos', 
                   frequency=1, 
                   amplitude=1.0, 
+                  offset=0.0,
                   start_phase=0, 
                   periodic=True, 
-                  offset=0, 
                   trigger_source='immediately',
                   output_direct = default_output_direct):
             """sets up the function generator. 
