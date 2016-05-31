@@ -131,6 +131,7 @@ class Scope(BaseModule):
         self.inputs = self._ch1.inputs
         self._setup_called = False
         self._parent = parent
+        self._trigger_source_memory = "immediately"
 
     @property
     def input1(self):
@@ -170,8 +171,8 @@ class Scope(BaseModule):
     _trigger_source = SelectRegister(0x4, doc="Trigger source", 
                                     options=_trigger_sources)
     
-    def sw_trig(self):
-        self.trigger_source = "immediately"
+    #def sw_trig(self):
+    #    self.trigger_source = "immediately"
     
     @property
     def trigger_source(self):
@@ -275,6 +276,10 @@ class Scope(BaseModule):
     ch2_firstpoint = FloatRegister(0x20000, bits=14, norm=2**13, 
                               doc="1 sample of ch2 data [volts]")
     
+    pretrig_ok =  BoolRegister(0x16c,0,
+              doc="True if enough data have been acquired to fill " + \
+              "the pretrig buffer")
+    
     @property
     def _rawdata_ch1(self):
         """raw data from ch1"""
@@ -368,10 +373,13 @@ class Scope(BaseModule):
         self.trigger_source = the_trigger_source
         self._trigger_armed = True
 
-        
 
+        
         if self.trigger_source == 'immediately':
-            self.sw_trig()
+            while(not self.pretrig_ok):
+                sleep(0.001)
+            self.trigger_source = 'immediately'# write state machine
+            #reset has changed the value of the FPGA register#_sw_trig()
 
 
     def curve_ready(self):
@@ -387,7 +395,7 @@ class Scope(BaseModule):
             raise ValueError("channel should be 1 or 2, got " + str(ch))
         return self._data_ch1 if ch==1 else self._data_ch2
     
-    def curve(self, ch=1, rearm=True, timeout=1.):
+    def curve(self, ch=1, timeout=1.):
         """
         Takes a curve from channel ch:
             If timeout>0: runs until data is ready or timeout expires
@@ -404,6 +412,7 @@ class Scope(BaseModule):
                     return self._get_ch(ch)
                 total_sleep+=SLEEP_TIME
                 sleep(SLEEP_TIME)
+            raise TimeoutError("Scope wasn't trigged during timeout")
         else:
             return self._get_ch(ch)
 
