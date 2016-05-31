@@ -368,7 +368,7 @@ class Scope(BaseModule):
         Returns True if new data is ready for transfer
         """
         return (not self._trigger_armed)\
-                and (not _trigger_delay_running)\
+                and (not self._trigger_delay_running)\
                 and self._setup_called
 
     def _get_ch(self, ch):
