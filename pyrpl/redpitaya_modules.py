@@ -166,7 +166,7 @@ class Scope(BaseModule):
                         "asg1": 8, 
                         "asg2": 9}
     
-    trigger_sources = _trigger_sources.keys() # help for the user
+    trigger_sources = sorted(_trigger_sources.keys()) # help for the user
     
     _trigger_source = SelectRegister(0x4, doc="Trigger source", 
                                     options=_trigger_sources)
@@ -236,7 +236,7 @@ class Scope(BaseModule):
                     2**13: 2**13,
                     2**16: 2**16}
     
-    decimations = _decimations.keys() # help for the user
+    decimations = sorted(_decimations.keys()) # help for the user
     
     decimation = SelectRegister(0x14, doc="decimation factor", 
                                 options=_decimations)
@@ -279,6 +279,8 @@ class Scope(BaseModule):
     pretrig_ok =  BoolRegister(0x16c,0,
               doc="True if enough data have been acquired to fill " + \
               "the pretrig buffer")
+    
+    
     
     @property
     def _rawdata_ch1(self):
@@ -463,8 +465,14 @@ class Scope(BaseModule):
         self._logger.error("Desired sampling time impossible to realize")
 
     @property
+    def durations(self):
+        return [8e-9*self.data_length*dec for dec in self.decimations]
+    
+    
+    @property
     def duration(self):
         return self.sampling_time * float(self.data_length)
+    
 
     @duration.setter
     def duration(self, v):
