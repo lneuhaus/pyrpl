@@ -193,7 +193,7 @@ class Scope(BaseModule):
     threshold_ch2 = FloatRegister(0xC, bits=14, norm=2**13, 
                                   doc="ch1 trigger threshold [volts]")
     
-    _trigger_delay = Register(0x10, doc="trigger delay [samples]")
+    _trigger_delay = Register(0x10, doc="number of decimated data after trigger written into memory [samples]")
 
     @property
     def trigger_delay(self):
@@ -324,7 +324,7 @@ class Scope(BaseModule):
         trigger_delay = self.trigger_delay
         return np.linspace(trigger_delay - duration/2.,
                            trigger_delay + duration/2.,
-                           self.data_length,endpoint=False)
+                           self.data_length, endpoint=False)
 
     def setup(self,
               duration=None,
@@ -347,10 +347,6 @@ class Scope(BaseModule):
             self.average = average
         if duration is not None:
             self.duration = duration
-        if trigger_source is not None:
-            self.trigger_source = trigger_source
-        else:
-            self.trigger_source = self.trigger_source
         if threshold is not None:
             self.threshold_ch1 = threshold
             self.threshold_ch2 = threshold
@@ -359,15 +355,23 @@ class Scope(BaseModule):
             self.hysteresis_ch2 = hysteresis
         if trigger_delay is not None:
             self.trigger_delay = trigger_delay
+        if trigger_source is None:
+            trigger_source = self.trigger_source
+        self.trigger_source = 'off'
         self._trigger_armed = True
-        if self.trigger_source == 'immediately':
-            self.sw_trig()
+        sleep(self.duration-self.trigger_delay)
+        self.trigger_source = trigger_source
+        #self._trigger_armed = True
+        #if self.trigger_source == 'immediately':
+        #    self.sw_trig()
 
     def curve_ready(self):
         """
-        Returns True if trigger has been triggered
+        Returns True if new data is ready for transfer
         """
-        return (not self._trigger_armed) and self._setup_called
+        return (not self._trigger_armed)\
+                and (not self._trigger_delay_running)\
+                and self._setup_called
 
     def _get_ch(self, ch):
         if not ch in [1,2]:
@@ -393,7 +397,7 @@ class Scope(BaseModule):
                 sleep(SLEEP_TIME)
         else:
             return self._get_ch(ch)
-        raise TimeoutError("scope wasn't trigged within timeout")
+        raise TimeoutError("scope wasn't trigged within trigger_timeout")
 
     @property
     def sampling_time(self):
@@ -539,11 +543,9 @@ def make_asg(channel=1):
             """array of 2**14 values that define the output waveform. 
             
             Values should lie between -1 and 1 such that the peak output amplitude is self.scale"""
-            if hasattr(self,'_writtendata'):
-                x = self._writtendata
-            else:
-                raise ValueError("Readback of coefficients not enabled. " \
-                                 +"You must set coefficients before reading it.")
+            if not hasattr(self,'_writtendata'):
+                self._writtendata = np.zeros(self.data_length, dtype=np.int32)
+            x = np.array(self._writtendata, dtype=np.int32)
             #data readback disabled for fpga performance reasons
             #x = np.array(
             #    self._reads(self._DATA_OFFSET, self.data_length),
@@ -570,9 +572,9 @@ def make_asg(channel=1):
                   waveform='cos', 
                   frequency=1, 
                   amplitude=1.0, 
+                  offset=0.0,
                   start_phase=0, 
                   periodic=True, 
-                  offset=0, 
                   trigger_source='immediately',
                   output_direct = default_output_direct):
             """sets up the function generator. 
