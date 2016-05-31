@@ -35,13 +35,13 @@ pyrpl/fpga/out
 pyrpl/fpga/sdk
 pyrpl/fpga/*.html
 pyrpl/fpga/*.xml
-
+pyrpl/fpga/red_pitaya.prm
 
 #fpga-related
 fpga/out/
 fpga/sdk/
 fpga/ip/
-fpga/red_pitaya.prm
+
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
