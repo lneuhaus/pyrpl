@@ -1,10 +1,13 @@
 import numpy as np
 import sys
+import logging
+logger = logging.getLogger(name=__name__)
+
 #way to represent the smallest positive value
 #needed to set floats to minimum count above zero
 epsilon = sys.float_info.epsilon
 
-from bijection import Bijection
+from .bijection import Bijection
 
 #docstring does not work yet, see: 
 #http://stackoverflow.com/questions/37255109/python-docstring-for-descriptors
@@ -56,11 +59,11 @@ class LongRegister(Register):
     def __init__(self, address, bits=64, **kwargs):
         super(LongRegister,self).__init__(address=address, **kwargs)
         self.bits = bits
-        self.size = (32+bits-bits%32)/32
+        self.size = int((32+bits-bits%32)/32)
 
     def __get__(self, obj, objtype=None):
         values = obj._reads(self.address, self.size)
-        value = long(0)
+        value = int(0)
         for i in range(self.size):
             value += int(values[i])<<(32*i)
         if self.bitmask is None:
@@ -329,4 +332,35 @@ class FilterRegister(Register):
                     shift += 2**6  # turn this filter into a highpass
                 filter_shifts += (shift) * 2**(8 * i)
         return filter_shifts
-        
+    
+
+class PWMRegister(Register):
+    # FloatRegister that defines the PWM voltage similar to setting a float
+    # see FPGA code for more detailed description on how the PWM works
+    def __init__(self, address, CFG_BITS=24, PWM_BITS=8, **kwargs):
+        super(PWMRegister,self).__init__(address=address, **kwargs)
+        self.CFG_BITS = int(CFG_BITS)
+        self.PWM_BITS = int(PWM_BITS)
+
+    def to_python(self, value):
+        value = int(value)
+        pwm = float(value>>(self.CFG_BITS-self.PWM_BITS)&(2**self.PWM_BITS-1))
+        mod = value & (2**(self.CFG_BITS-self.PWM_BITS)-1)
+        postcomma = float(bin(mod).count('1'))/(self.CFG_BITS-self.PWM_BITS)
+        voltage = 1.8 * (pwm + postcomma) / 2**self.PWM_BITS
+        if voltage > 1.8:
+            logger.error("Readout value from PWM (%h) yields wrong voltage %f",
+                         value, voltage)
+        return voltage
+           
+    def from_python(self, value):
+        # here we don't bother to minimize the PWM noise
+        # room for improvement is in the low -> towrite conversion
+        value = 0 if (value < 0) else float(value)/1.8*(2**self.PWM_BITS)
+        high = np.floor(value)
+        if (high >= 2**self.PWM_BITS):
+            high = 2**self.PWM_BITS-1
+        low = int(np.round((value-high)*(self.CFG_BITS-self.PWM_BITS)))
+        towrite = int(high)<<(self.CFG_BITS-self.PWM_BITS)
+        towrite += ((1<<low)-1)&((1<<self.CFG_BITS)-1)
+        return towrite

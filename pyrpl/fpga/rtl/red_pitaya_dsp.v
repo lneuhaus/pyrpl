@@ -68,6 +68,12 @@ module red_pitaya_dsp #(
    input      [ 14-1: 0] asg1_i,
    input      [ 14-1: 0] asg2_i,
    
+   // pwm outputs
+   output     [ 14-1: 0] pwm0,
+   output     [ 14-1: 0] pwm1,
+   output     [ 14-1: 0] pwm2,
+   output     [ 14-1: 0] pwm3,
+   
    // system bus
    input      [ 32-1: 0] sys_addr        ,  //!< bus address
    input      [ 32-1: 0] sys_wdata       ,  //!< bus write data
@@ -80,7 +86,8 @@ module red_pitaya_dsp #(
 );
 
 localparam EXTRAMODULES = 2; //need two extra control registers for scope/asg
-localparam EXTRAINPUTS = 4; //four extra input signals for dac/adc
+localparam EXTRAINPUTS = 4; //four extra input signals for dac(2)/adc(2)
+localparam EXTRAOUTPUTS = 2; //two extra output signals for pwm channels
 localparam LOG_MODULES = 4;// ceil(log2(EXTRAINPUTS+EXTRAOUTPUTS+MODULES))
 
 //Module numbers
@@ -93,6 +100,7 @@ localparam IQ0   = 'd5; //for PDH signal generation
 localparam IQ1   = 'd6; //for NA functionality
 localparam IQ2   = 'd7; //for PFD error signal
 //localparam CUSTOM1 = 'd8; //available slots
+localparam NONE = 2**LOG_MODULES-1; //code for no module; only used to switch off PWM outputs
 
 //EXTRAMODULE numbers
 localparam ASG1   = MODULES; //scope and asg can have the same number
@@ -104,6 +112,11 @@ localparam ADC1  = MODULES+2;
 localparam ADC2  = MODULES+3;
 localparam DAC1  = MODULES+4;
 localparam DAC2  = MODULES+5;
+//EXTRAOUTPUT numbers
+localparam PWM0  = MODULES+2;
+localparam PWM1  = MODULES+3;
+localparam PWM3  = MODULES+4;
+localparam PWM4  = MODULES+5;
 
 //output states
 localparam BOTH = 2'b11;
@@ -112,25 +125,23 @@ localparam OUT2 = 2'b10;
 localparam OFF  = 2'b00;
 
 
-// the selected input signal of each module
-wire [14-1:0] input_signal [MODULES+EXTRAMODULES-1:0];
-  
- // the selected input signal NUMBER of each module
-reg [LOG_MODULES-1:0] input_select [MODULES+EXTRAMODULES-1:0];  
+// the selected input signal of each module: modules and extramodules have inputs
+// extraoutputs are treated like extramodules that do not provide their own output_signal
+wire [14-1:0] input_signal [MODULES+EXTRAMODULES+EXTRAOUTPUTS-1:0];
+// the selected input signal NUMBER of each module
+reg [LOG_MODULES-1:0] input_select [MODULES+EXTRAMODULES+EXTRAOUTPUTS-1:0];
 
 // the output of each module for internal routing, including 'virtual outputs' for the EXTRAINPUTS
 wire [14-1:0] output_signal [MODULES+EXTRAMODULES+EXTRAINPUTS-1:0]; 
 
 // the output of each module that is added to the chosen DAC
 wire [14-1:0] output_direct [MODULES+EXTRAMODULES-1:0];
-
 // the channel that the module's output_direct is added to (bit0: DAC1, bit 1: DAC2) 
 reg [2-1:0] output_select [MODULES+EXTRAMODULES-1:0]; 
 
 // bus read data of individual modules (only needed for 'real' modules)
 wire [ 32-1: 0] module_rdata [MODULES-1:0];  
 wire            module_ack    [MODULES-1:0];
-
 
 //connect scope
 assign scope1_o = input_signal[SCOPE1];
@@ -147,6 +158,12 @@ assign output_signal[ADC1] = dat_a_i;
 assign output_signal[ADC2] = dat_b_i;
 assign output_signal[DAC1] = dat_a_o;
 assign output_signal[DAC2] = dat_b_o;
+
+//connect only two pwm to internal signals (should be enough)
+assign pwm0 = (input_select[PWM0] == NONE) ? 14'h0 : output_signal[input_select[PWM0]];
+assign pwm1 = (input_select[PWM1] == NONE) ? 14'h0 : output_signal[input_select[PWM1]];
+assign pwm2 = 14'b0;
+assign pwm1 = 14'b0;
 
 reg  signed [   14+LOG_MODULES-1: 0] sum1; 
 reg  signed [   14+LOG_MODULES-1: 0] sum2; 
@@ -243,6 +260,10 @@ always @(posedge clk_i) begin
       input_select [SCOPE2] <= ADC2;
       output_select[ASG1] <= OUT1;
       output_select[ASG2] <= OUT2;
+      
+      input_select [PWM0] <= NONE;
+      input_select [PWM1] <= NONE;
+      
    end
    else begin
       if (sys_wen) begin

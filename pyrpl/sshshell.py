@@ -21,7 +21,7 @@ import paramiko
 from time import sleep
 from scp import SCPClient, SCPException
 import os
-
+import logging
 
 class SSHshell(object):
 
@@ -30,22 +30,23 @@ class SSHshell(object):
             hostname='localhost',
             user='root',
             password='root',
-            verbose=True,
-            delay=0.05):
-        self.verbose = verbose
+            delay=0.05, 
+            timeout = 3):
+        self.logger = logging.getLogger(name=__name__)
         self.delay = delay
         self.apprunning = False
         self.hostname = hostname
         self.user = user
         self.password = password
-        self.port = 22
+        self.timeout= timeout
         self.ssh = paramiko.SSHClient()
         self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         self.ssh.connect(
             hostname,
             username=self.user,
             password=self.password,
-            port=self.port)
+            port=22,
+            timeout = timeout)
         self.channel = self.ssh.invoke_shell()
         self.startscp()
         # self.sleep(0.1)
@@ -72,7 +73,7 @@ class SSHshell(object):
         while string != "":
             string = self.read_nbytes(1024)
             sumstring += string
-        self.log(sumstring)
+        self.logger.debug(sumstring)
         return sumstring
 
     def askraw(self, question=""):
@@ -100,7 +101,4 @@ class SSHshell(object):
         self.endapp()
         self.ask("shutdown now")
         self.__del__()
-
-    def log(self, text):
-        if self.verbose:
-            print text
+        

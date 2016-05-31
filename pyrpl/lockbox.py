@@ -30,7 +30,7 @@ from PyQt4 import QtCore, QtGui
 import json
 import matplotlib
 import matplotlib.pyplot as plt
-
+import logging
 
 CONSTANTS_DEFAULT = dict(
     lockbox_name="default_cavity",
@@ -61,14 +61,14 @@ class Lockbox(object):
     def __init__(self, constants=None):
         """generic lockbox object, no implementation-dependent details here
         """
+        self.logger = logging.getLogger(name=__name__)
         if constants is None:
             self.constants = CONSTANTS
         else:
             self.constants = constants
         c = self._get_constants()
         if not c == dict():
-            print "Obtained the following constants from memory:"
-            print c
+            self.logger.info("Obtained the following constants from memory: %s", c)
             self.constants.update(c)
         self.trace_reflection = np.zeros(0)
         self.trace_pdh = np.zeros(0)
@@ -102,7 +102,7 @@ class Lockbox(object):
         self._get_constants()
 
     def find_offsets(self, avg=100):
-        print "Make sure all light is off for this measurement"
+        self.logger.warning("Make sure all light is off for this measurement")
         reflection = np.zeros(avg)
         pdh = np.zeros(avg)
         for i in range(len(reflection)):
@@ -139,7 +139,7 @@ class Lockbox(object):
         while True:
             r = self.relative_reflection()
             if verbose:
-                print r
+                self.logger.debug(r)
             if r > 0.8:
                 df = sosfrequency
                 sinus(df, 0.05)
@@ -262,7 +262,7 @@ class Lockbox(object):
         x0 = (xup + xdown) / 2
         r0 = self.relative_reflection(reflection.min())
         hysteresis = (xup - xdown) / 2
-        print "x0: ", x0, " hysteresis: ", hysteresis, " R0: ", r0
+        self.logger.info("x0: %s hysteresis: %s R0: %s", x0, hysteresis, r0)
         if self.islocked(r0):
             return x0 + self.constants["find_fine_offset"]
         else:
@@ -293,13 +293,13 @@ class Lockbox(object):
         if x0 is None:
             coarse = self.find_coarse()
             if coarse is None:
-                print "No coarse offset for resonance found"
+                self.logger.error("No coarse offset for resonance found")
                 return False
             else:
                 self.coarse = coarse
                 x0 = self.find_fine()
                 if x0 is None:
-                    print "No fine offset for resonance found"
+                    self.logger.error("No fine offset for resonance found")
                     return False
         self.pid_setpoint = self.find_setpoint() + detuning
         islocked = False
@@ -312,7 +312,7 @@ class Lockbox(object):
                 self.fine = x0 + j
                 sleep(self.constants["lock_predelay"])
                 if self.constants["verbosity"]:
-                    print "Trying to lock at offset ", self.fine, "..."
+                    self.logger.info("Trying to lock at offset %s...", self.fine)
                 self.pid_ilimit()
                 sleep(self.constants["lock_postdelay"])
                 islocked = self.islocked()
@@ -322,25 +322,25 @@ class Lockbox(object):
                 break
 
         if not self.islocked():
-            print "Unable to acquire lock"
+            self.logger.error("Unable to acquire lock")
             return False
 
-        print "Lock acquired. Boosting integrator gain..."
+        self.logger.info("Lock acquired. Boosting integrator gain...")
         self.pid_on()
 
         if not self.islocked():
-            print "Unable to boost integrator gain. Lock attempt failed."
+            self.logger.error( "Unable to boost integrator gain. Lock attempt failed.")
             return False
 
-        print "Integrator gain boosted. Recentering fine offset..."
+        self.logger.error( "Integrator gain boosted. Recentering fine offset..."
 
         if self.constants["lock_auto_recenter"]:
             if self.recenter():
-                print "Recentered successfully"
+                self.logger.info("Recentered successfully")
             else:
-                print "Recentering failed"
+                self.logger.error("Recentering failed")
                 return False
-        print "Locked. Relative reflection on resonance: %.2f" % self.relative_reflection()
+        self.logger.info("Locked. Relative reflection on resonance: %.2f" % self.relative_reflection())
         return True
 
     def plot(self, x, y, label=None):

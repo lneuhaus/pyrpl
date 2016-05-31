@@ -2,6 +2,8 @@ from nose.tools import with_setup
 from unittest import TestCase
 import os
 import numpy as np
+import logging
+logger = logging.getLogger(name=__name__)
 
 from pyrpl import RedPitaya
 
@@ -10,12 +12,7 @@ class TestClass(object):
         
     @classmethod
     def setUpAll(self):
-        hostname = os.environ.get('REDPITAYA')
-        self.password = os.environ.get('RP_PASSWORD') or 'root'
-        if hostname != 'unavailable':
-            self.r = RedPitaya(hostname=hostname, password=self.password)
-        else:
-            self.r = None
+        self.r = RedPitaya()
     
     #you are invited to change the following two silly tests to something useful
     def test_example(self):

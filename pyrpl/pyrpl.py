@@ -38,8 +38,8 @@ import matplotlib.pyplot as plt
 import sys
 import iir
 
-from redpitaya import RedPitaya
-from curvedb import CurveDB
+from .redpitaya import RedPitaya
+from .curvedb import CurveDB
 
 """
 channels:

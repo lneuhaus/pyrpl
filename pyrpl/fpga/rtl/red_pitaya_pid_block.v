@@ -73,7 +73,10 @@ module red_pitaya_pid_block #(
    //parameters for input pre-filter
    parameter     FILTERSTAGES = 4 ,
    parameter     FILTERSHIFTBITS = 5,
-   parameter     FILTERMINBW = 20
+   parameter     FILTERMINBW = 20,
+   
+   //enable arbitrary output saturation or not
+   parameter     ARBITRARY_SATURATION = 1
 )
 (
    // data
@@ -98,6 +101,9 @@ reg [ GAINBITS-1: 0] set_kp;   // Kp
 reg [ GAINBITS-1: 0] set_ki;   // Ki
 reg [ GAINBITS-1: 0] set_kd;   // Kd
 reg [ 32-1: 0] set_filter;   // filter setting
+// limits if arbitrary saturation is enabled
+reg signed [ 14-1:0] out_max;
+reg signed [ 14-1:0] out_min;
 
 //  System bus connection
 always @(posedge clk_i) begin
@@ -109,6 +115,8 @@ always @(posedge clk_i) begin
       set_kd <= {GAINBITS{1'b0}};
       set_filter <= 32'd0;
       ival_write <= 1'b0;
+      out_min <= {1'b1,{14-1{1'b0}}};
+      out_max <= {1'b0,{14-1{1'b1}}};
    end
    else begin
       if (wen) begin
@@ -118,6 +126,8 @@ always @(posedge clk_i) begin
          if (addr==16'h10C)   set_ki  <= wdata[GAINBITS-1:0];
          if (addr==16'h110)   set_kd  <= wdata[GAINBITS-1:0];
          if (addr==16'h120)   set_filter  <= wdata;
+         if (addr==16'h124)   out_min  <= wdata;
+         if (addr==16'h128)   out_max  <= wdata;
       end
       if (addr==16'h100 && wen)
          ival_write <= 1'b1;
@@ -131,6 +141,8 @@ always @(posedge clk_i) begin
 	     16'h10C : begin ack <= wen|ren; rdata <= {{32-GAINBITS{1'b0}},set_ki}; end
 	     16'h110 : begin ack <= wen|ren; rdata <= {{32-GAINBITS{1'b0}},set_kd}; end
 	     16'h120 : begin ack <= wen|ren; rdata <= set_filter; end
+	     16'h124 : begin ack <= wen|ren; rdata <= {{32-14{1'b0}},out_min}; end
+	     16'h128 : begin ack <= wen|ren; rdata <= {{32-14{1'b0}},out_max}; end
 	     
 	     16'h200 : begin ack <= wen|ren; rdata <= PSR; end
 	     16'h204 : begin ack <= wen|ren; rdata <= ISR; end
@@ -271,28 +283,41 @@ endgenerate
 //  Sum together - saturate output
 
 localparam MAXBW = 35;
-wire  [   MAXBW-1: 0] pid_sum     ; 
-reg   [   14-1: 0] pid_out     ;
+wire        [   MAXBW-1: 0] pid_sum     ; 
+reg signed  [   14-1: 0] pid_out     ;
 
-always @(posedge clk_i) begin
-   if (rstn_i == 1'b0) begin
-      pid_out    <= 14'b0 ;
-   end
-   else begin
-      if ({pid_sum[MAXBW-1],|pid_sum[MAXBW-2:13]} == 2'b01) //positive overflow
-         pid_out <= 14'h1FFF ;
-      else if ({pid_sum[MAXBW-1],&pid_sum[MAXBW-2:13]} == 2'b10) //negative overflow
-         pid_out <= 14'h2000 ;
-      else
-         pid_out <= pid_sum[14-1:0] ;
-   end
-end
-
+		always @(posedge clk_i) begin
+		   if (rstn_i == 1'b0) begin
+		      pid_out    <= 14'b0 ;
+		   end
+		   else begin
+		      if ({pid_sum[MAXBW-1],|pid_sum[MAXBW-2:13]} == 2'b01) //positive overflow
+		         pid_out <= 14'h1FFF ;
+		      else if ({pid_sum[MAXBW-1],&pid_sum[MAXBW-2:13]} == 2'b10) //negative overflow
+		         pid_out <= 14'h2000 ;
+		      else
+		         pid_out <= pid_sum[14-1:0] ;
+		   end
+		end
 assign pid_sum = $signed(kp_reg) + $signed(int_shr) + $signed(kd_reg_s) ;
 
+generate 
+	if (ARBITRARY_SATURATION == 0)
+		assign dat_o = pid_out ;
+	else begin
+		reg signed [ 14-1:0] out_buffer;
+		always @(posedge clk_i) begin
+			if (pid_out >= out_max)
+				out_buffer <= out_max;
+			else if (pid_out <= out_min)
+				out_buffer <= out_min;
+			else
+				out_buffer <= pid_out;
+		end
+		assign dat_o = out_buffer; 
+	end
+endgenerate
 
-
-assign dat_o = pid_out ;
 
 endmodule
 

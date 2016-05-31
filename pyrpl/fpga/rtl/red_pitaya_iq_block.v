@@ -311,10 +311,8 @@ always @(posedge clk_i) begin
     end
 end
 
-//pfd functionality (optional)
-
+// pfd functionality (optional)
 wire [SIGNALBITS-1:0] pfd_integral;
-
 reg pfd_on;
 red_pitaya_pfd_block pfd_block (
 	.rstn_i(pfd_on),
@@ -324,6 +322,7 @@ red_pitaya_pfd_block pfd_block (
 	.integral_o(pfd_integral)
 );
 
+// output_signal multiplexer 
 assign signal_o = (output_select==QUADRATURE) ? quadrature_o 
 				: (output_select==OUTPUT_DIRECT) ? dat_o 
 				: (output_select==PFD) ? pfd_integral 

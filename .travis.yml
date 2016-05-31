@@ -1,25 +1,64 @@
-language: python
-  - "2.7"
-#  - "3.5"
-  
-before_install:
-# finish installation
- - sudo apt-get update
- - sudo apt-get -y install python-pip
- - sudo pip install --upgrade pip
- - sudo pip install pep8
- - sudo pip install autopep8
-#- apt-get install libblas-dev liblapack-dev libatlas-base-dev gfortran
-
-install: 
-  - python setup.py install
-#  - pip install -r requirements.txt .
-
-before_script: ./autocorrectpep8_script.sh
-
-#script: python setup.py test
-script: python setup.py nosetests
-
 env:
-#- REDPITAYA=192.168.1.100 AUTOCORRECTPEP8=0
-- REDPITAYA=unavailable AUTOCORRECTPEP8=0
+#- REDPITAYA_HOSTNAME=192.168.1.100 AUTOCORRECTPEP8=0
+- REDPITAYA_HOSTNAME=unavailable REDPITAYA_PASSWORD=root AUTOCORRECTPEP8=0
+
+language: python
+python:
+  - "2.7"
+  - "3.3"
+  - "3.4"
+  - "3.5"
+
+# lots of stuff here comes from https://gist.github.com/dan-blanchard/7045057
+  
+notifications:
+  email: false
+
+before_install:
+  - sudo apt-get update
+  # We do this conditionally because it saves us some downloading if the
+  # version is the same.
+  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
+      wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
+    else
+      wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+    fi
+  - chmod +x miniconda.sh
+  - bash miniconda.sh -b -p $HOME/miniconda
+  - export PATH="$HOME/miniconda/bin:$PATH"
+  - hash -r
+  - conda config --set always_yes yes --set changeps1 no
+  - conda update -q conda
+  # Useful for debugging any issues with conda
+  - conda info -a
+  # The next couple lines fix a crash with multiprocessing on Travis and are not specific to using Miniconda
+  - sudo rm -rf /dev/shm
+  - sudo ln -s /run/shm /dev/shm
+#before_install:
+# - sudo apt-get update
+# - sudo apt-get -y install python-pip
+# - sudo pip install --upgrade pip
+# - sudo pip install pep8
+# - sudo pip install autopep8
+# - sudo pip install -r requirements.txt .
+##- apt-get install libblas-dev liblapack-dev libatlas-base-dev gfortran
+
+install:
+  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION numpy scipy paramiko matplotlib pandas nose pip
+  - source activate test-environment
+  - pip install scp
+  # there are some bugs in the installation of these packages in higher python versions
+  - if [[ "$TRAVIS_PYTHON_VERSION" != "3.5" ]] && [[ "$TRAVIS_PYTHON_VERSION" != "3.4" ]]; then
+      conda install --yes -c dan_blanchard python-coveralls nose-cov; 
+    fi
+  - python setup.py install
+
+#before_script: ./autocorrectpep8_script.sh
+  
+# Run test
+script:
+  - nosetests --with-coverage --cover-package=pyrpl --logging-level=INFO
+
+# Calculate coverage
+after_success:
+  - coveralls --config_file .coveragerc
