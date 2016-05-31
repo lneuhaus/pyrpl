@@ -2,7 +2,7 @@ from pyrpl import RedPitaya
 from pyrpl.redpitaya_modules import NotReadyError
 from pyqtgraph.Qt import QtGui, QtCore
 import pyqtgraph as pg
-
+import numpy as np
 
 class ScopeWidget(QtGui.QWidget):
     def __init__(self, parent=None, redpitaya=None):
@@ -25,7 +25,8 @@ class ScopeWidget(QtGui.QWidget):
 
     def display_channel(self, ch):
         try:
-           self.curves[ch-1].setData(self.rp.scope.times, self.rp.scope.curve(ch))
+           self.curves[ch-1].setData(self.rp.scope.times, 
+                                     self.rp.scope.curve(ch))
         except NotReadyError:
             pass
         
@@ -55,7 +56,7 @@ class ScopeWidget(QtGui.QWidget):
             self.rp.scope.setup()
             #print "after setup"
         self.timer.start()
-        
+
     def run_continuous(self):
         if str(self.rp.scope_widget.button_continuous.text())\
                    =="Run continuous":

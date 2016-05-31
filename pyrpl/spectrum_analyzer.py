@@ -68,10 +68,15 @@ class SpectrumAnalyzer(object):
               span=100,
               window='gauss',
               scope_ch=1,
-              iq_nr=1):
+              iq_nr=0,
+              input='adc1'):
         self._setup = True
         self.window = window
-
+        self.configure_signal_chain(input,iq_nr)
+        
+    def configure_signal_chain(self):
+        iq = getattr(self.)
+        
     @property
     def n_points(self):
         return 16392#self.scope.data_length
@@ -89,8 +94,17 @@ class SpectrumAnalyzer(object):
                          self.n_points,
                          True)
             return exp(-(x*BW.points_per_bw)**2)
+    
+    def multiplexer_cos(self):
+        return self.scope.curve(self.scope_ch)*cos(self.filter_window.x*FREQUENCY)
+    
+    def multiplexer_sin(self):
+        return self.scope.curve(self.scope_ch)*sin(self.filter_window.x*FREQUENCY)
+
 
     def curve(self):
         if not self._setup:
             raise NotReadyError("Setup was never called")
         return np.fft(self.scope.curve(self.scope_ch)*self.filter_window)
+    
+    

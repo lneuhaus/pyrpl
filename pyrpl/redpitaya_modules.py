@@ -41,11 +41,11 @@ class BaseModule(object):
 
     # prevent the user from setting a nonexisting attribute
     def __setattr__(self, name, value):
-        if hasattr(self,name) or name.startswith('_'):
+        if hasattr(self, name) or name.startswith('_') or hasattr(type(self), name):
             super(BaseModule, self).__setattr__(name, value)
         else:
             raise ValueError("New module attributes may not be set at runtime. Attribute "
-                             +name+" is not defined in class "+self.__class__.__name__)
+                             + name + " is not defined in class " + self.__class__.__name__)
     
     def help(self, register=''):
         """returns the docstring of the specified register name
@@ -116,17 +116,21 @@ class HK(BaseModule):
     # led = [BoolRegister(0x30,bit=i,doc="LED "+str(i)) for i in range(8)]
 
 
+
+
+
 class Scope(BaseModule):
     data_length = 2**14
     inputs = None
     
-    def __init__(self, client):
+    def __init__(self, client, parent):
         super(Scope, self).__init__(client, addr_base=0x40100000)
         # dsp multiplexer channels for scope and asg are the same by default
         self._ch1 = DspModule(client, module='asg1')
         self._ch2 = DspModule(client, module='asg2')
         self.inputs = self._ch1.inputs
         self._setup_called = False
+        self._parent = parent
 
     @property
     def input1(self):
@@ -348,9 +352,9 @@ class Scope(BaseModule):
         if duration is not None:
             self.duration = duration
         if trigger_source is not None:
-            self.trigger_source = trigger_source
+            the_trigger_source = trigger_source
         else:
-            self.trigger_source = self.trigger_source
+            the_trigger_source = self.trigger_source
         if threshold is not None:
             self.threshold_ch1 = threshold
             self.threshold_ch2 = threshold
@@ -359,7 +363,16 @@ class Scope(BaseModule):
             self.hysteresis_ch2 = hysteresis
         if trigger_delay is not None:
             self.trigger_delay = trigger_delay
+        
+        #self.trigger_source = 'off'
+        self.trigger_source = the_trigger_source
         self._trigger_armed = True
+        """
+        import time
+        time.sleep(0.1)
+        """
+        
+
         if self.trigger_source == 'immediately':
             self.sw_trig()
 
@@ -374,19 +387,19 @@ class Scope(BaseModule):
             raise ValueError("channel should be 1 or 2, got " + str(ch))
         return self._data_ch1 if ch==1 else self._data_ch2
     
-    def curve(self, ch=1, trigger_timeout=1.):
+    def curve(self, ch=1, rearm=True, timeout=1.):
         """
-        Takes a curve from channel ch as soon as the trigger is valid.
-        If no trigger occurs after timeout seconds, raises TimeoutError.
-        If trigger_timeout <= 0, then no check for trigger is done and
-        the data from the buffer is returned directly.
+        Takes a curve from channel ch:
+            If timeout>0: runs until data is ready or timeout expires
+            If timeout<=0: returns immediately the current buffer without
+            checking for trigger status.
         """
         if not self._setup_called:
             raise NotReadyError("setup has never been called")
         SLEEP_TIME = 0.001
         total_sleep = 0
-        if trigger_timeout>0:
-            while(total_sleep<trigger_timeout):
+        if timeout>0:
+            while(total_sleep<timeout):
                 if self.curve_ready():
                     return self._get_ch(ch)
                 total_sleep+=SLEEP_TIME
@@ -394,7 +407,35 @@ class Scope(BaseModule):
         else:
             return self._get_ch(ch)
         raise TimeoutError("scope wasn't trigged within timeout")
-
+    
+    def spectrum(self,
+                  center, 
+                  span, 
+                  avg, 
+                  input="adc1", 
+                  window="flattop", 
+                  acbandwidth=50.0,
+                  iq='iq2'):
+        points_per_bw=10
+        iq_module = self.configure_signal_chain(input, iq)
+        iq_module.frequency = center
+        bw = span*points_per_bw/self.data_length
+        self.duration = 1./bw
+        self._parent.iq2.bandwidth = [span, span]
+        self.setup(trigger_source='immediately',
+                   average=False,
+                   trigger_delay=0)
+        y = self.curve()
+        return y
+        
+    def configure_signal_chain(self, input, iq):
+        iq_module = getattr(self._parent, iq)
+        iq_module.input = input
+        iq_module.output_signal = 'quadrature'
+        iq_module.quadrature_factor=1.0
+        self.input1 = iq
+        return iq_module
+        
     @property
     def sampling_time(self):
         return 8e-9 * float(self.decimation)
@@ -450,10 +491,11 @@ def make_asg(channel=1):
         _BIT_OFFSET = set_BIT_OFFSET
         default_output_direct = set_default_output_direct
         output_directs = None
-        
+                
         def __init__(self, client):
             super(Asg, self).__init__(client, addr_base=0x40200000)
             self._counter_wrap = 0x3FFFFFFF # correct value unless you know better
+            self._writtendata = np.zeros(self.data_length)
             self._frequency_correction = 1.0
             if self._BIT_OFFSET == 0:
                 self._dsp = DspModule(client, module='asg1')
@@ -516,12 +558,6 @@ def make_asg(channel=1):
         frequency = FrequencyRegister(0x10+_VALUE_OFFSET, bits=30, 
                                       doc="Frequency of the output waveform [Hz]")
         
-        firstpoint = FloatRegister(_DATA_OFFSET, bits=14, norm=2**13, 
-                                doc="First value in output table [volts]")
-        
-        lastpoint = FloatRegister(_DATA_OFFSET+0x4*(data_length-1), 
-                                  bits=14, norm=2**13, 
-                                  doc="Last value in output table [volts]")
         _counter_step = Register(0x10+_VALUE_OFFSET,doc="""Each clock cycle the counter_step is increases the internal counter modulo counter_wrap.
             The current counter step rightshifted by 16 bits is the index of the value that is chosen from the data table.
             """)
@@ -540,7 +576,7 @@ def make_asg(channel=1):
             
             Values should lie between -1 and 1 such that the peak output amplitude is self.scale"""
             if hasattr(self,'_writtendata'):
-                x = self._writtendata
+                x = np.array(self._writtendata, dtype=np.int32)
             else:
                 raise ValueError("Readback of coefficients not enabled. " \
                                  +"You must set coefficients before reading it.")
