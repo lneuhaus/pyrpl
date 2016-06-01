@@ -243,6 +243,8 @@ reg               triggered    ;
 
 reg   [ 64 - 1:0] timestamp_trigger;
 reg   [ 64 - 1:0] ctr_value        ;
+reg   [ 14 - 1:0] pretrig_data_min; // make sure this amount of data has been acquired before trig
+reg 			  pretrig_ok;
 
 // Write
 always @(posedge adc_clk_i) begin
@@ -257,9 +259,12 @@ always @(posedge adc_clk_i) begin
       adc_dly_cnt <= 32'h0      ;
       adc_dly_do  <=  1'b0      ;
       triggered   <=  1'b0      ;
+      pretrig_data_min <= 2**RSZ - set_dly;
+      pretrig_ok <= 1'b0; // goes to 1 when enough data has been acquired pretrigger
    end
    else begin
       ctr_value <= ctr_value + 1'b1;
+      pretrig_ok <= adc_we_cnt>pretrig_data_min;
       if (adc_arm_do)
          adc_we <= 1'b1 ;
       else if (((adc_dly_do || adc_trig) && (adc_dly_cnt == 32'h0) && ~adc_we_keep) || adc_rst_do) //delayed reached or reset
@@ -279,7 +284,7 @@ always @(posedge adc_clk_i) begin
       if (adc_rst_do) begin
          adc_wp_trig <= {RSZ{1'b0}};
 		 timestamp_trigger <= ctr_value ;
-      end else if (adc_trig && !adc_dly_do) begin
+      end else if (adc_trig && !adc_dly_do && pretrig_ok) begin //last condition added to make sure pretrig data is available
          adc_wp_trig <= adc_wp_cur ; // save write pointer at trigger arrival
 		 timestamp_trigger <= ctr_value ;
 	  end
@@ -288,10 +293,10 @@ always @(posedge adc_clk_i) begin
       else if (adc_we && adc_dv)
          adc_wp_cur <= adc_wp ; // save current write pointer
 
-
-      if (adc_trig)
+      if (adc_trig) begin
+      	if(pretrig_ok) 
          adc_dly_do  <= 1'b1 ;
-      else if ((adc_dly_do && (adc_dly_cnt == 32'b0)) || adc_rst_do || adc_arm_do) //delayed reached or reset
+      end else if ((adc_dly_do && (adc_dly_cnt == 32'b0)) || adc_rst_do || adc_arm_do) //delayed reached or reset
          adc_dly_do  <= 1'b0 ;
 
       if (adc_dly_do && adc_we && adc_dv)
@@ -858,12 +863,13 @@ end else begin
      20'h00154 : begin sys_ack <= sys_en;          sys_rdata <= {{32-14{1'b0}}, adc_a_i }         ; end
      20'h00158 : begin sys_ack <= sys_en;          sys_rdata <= {{32-14{1'b0}}, adc_b_i }         ; end
 	 
-	 //My first line of Verilog !
 	 20'h0015c : begin sys_ack <= sys_en;          sys_rdata <= ctr_value[32-1:0]     		    ; end
 	 20'h00160 : begin sys_ack <= sys_en;          sys_rdata <= ctr_value[64-1:32]			    ; end
 	 
 	 20'h00164 : begin sys_ack <= sys_en;          sys_rdata <= timestamp_trigger[32-1:0]       ; end
 	 20'h00168 : begin sys_ack <= sys_en;          sys_rdata <= timestamp_trigger[64-1:32]	    ; end
+     
+     20'h0016c : begin sys_ack <= sys_en;          sys_rdata <= {{32-1{1'b0}}, pretrig_ok}       ; end
 
      20'h1???? : begin sys_ack <= adc_rd_dv;       sys_rdata <= {16'h0, 2'h0,adc_a_rd}              ; end
      20'h2???? : begin sys_ack <= adc_rd_dv;       sys_rdata <= {16'h0, 2'h0,adc_b_rd}              ; end
