@@ -5,6 +5,18 @@ import pyqtgraph as pg
 import numpy as np
 
 
+
+def property_factory(scope_widget, prop):
+    if hasattr(scope_widget.rp.scope, prop + 's'):
+        new_prop = ComboProperty(prop, scope_widget)
+    elif hasattr(scope_widget.rp.scope, prop[:-1] + 's'): # for instance inputs for input1
+        new_prop = ComboProperty(prop, scope_widget, prop[:-1] + 's')
+    elif isinstance(getattr(scope_widget.rp.scope, prop), bool):
+        new_prop = BoolProperty(prop, scope_widget)
+    else:
+        new_prop = NumberProperty(prop, scope_widget)
+    return new_prop
+
 class BaseProperty(object):
     def __init__(self, name, scope_widget):
         self.scope_widget = scope_widget
@@ -37,6 +49,13 @@ class NumberProperty(BaseProperty):
         
             
 class ComboProperty(BaseProperty):
+    def __init__(self, name, scope_widget, defaults=None):
+        if defaults is not None:
+            self.defaults = defaults
+        else:
+            self.defaults = name + 's'
+        super(ComboProperty, self).__init__(name, scope_widget)
+
     def set_widget(self):
         self.widget = QtGui.QComboBox()
         self.widget.addItems(map(str, self.options))
@@ -44,7 +63,7 @@ class ComboProperty(BaseProperty):
     
     @property
     def options(self):
-        return getattr(self.scope, self.name + 's')
+        return getattr(self.scope, self.defaults)
     
     def write(self):
         setattr(self.scope, self.name, str(self.widget.currentText()))
@@ -66,11 +85,13 @@ class BoolProperty(BaseProperty):
 
 
 class ScopeWidget(QtGui.QWidget):
-    property_names = ["trigger_source",
+    property_names = ["input1",
+                      "input2",
                       "duration",
+                      "average",
+                      "trigger_source",
                       "threshold_ch1",
-                      "threshold_ch2",  
-                      "average"]
+                      "threshold_ch2"]
     def __init__(self, parent=None, redpitaya=None):
         super(ScopeWidget, self).__init__(parent)
         self.rp = redpitaya
@@ -104,9 +125,9 @@ class ScopeWidget(QtGui.QWidget):
         for i in (1,2):
             if self.cb_ch[i-1].checkState()==2:
                 self.display_channel(i)
-                self.curves[i-1].setEnabled(True)
+                self.curves[i-1].setVisible(True)
             else:
-                self.curves[i-1].setEnabled(False)
+                self.curves[i-1].setVisible(False)
 
     def run_single(self):
         self.rp.scope.setup()
@@ -170,14 +191,9 @@ class ScopeWidget(QtGui.QWidget):
         self.property_layout = QtGui.QHBoxLayout()
         self.main_layout.addLayout(self.property_layout)
         self.properties = []
+
         for prop in self.property_names:
-            if hasattr(self.rp.scope, prop + 's'):
-                new_prop = ComboProperty(prop, self)
-            elif isinstance(getattr(self.rp.scope, prop), bool):
-                new_prop = BoolProperty(prop, self)
-            else:
-                new_prop = NumberProperty(prop, self)
-            self.properties.append(new_prop)
+            self.properties.append(property_factory(self, prop))
                 
     def update_properties(self):
         for prop in self.properties:
