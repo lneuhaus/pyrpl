@@ -141,7 +141,7 @@ reg [2-1:0] output_select [MODULES+EXTRAMODULES-1:0];
 
 // bus read data of individual modules (only needed for 'real' modules)
 wire [ 32-1: 0] module_rdata [MODULES-1:0];  
-wire            module_ack    [MODULES-1:0];
+wire            module_ack   [MODULES-1:0];
 
 //connect scope
 assign scope1_o = input_signal[SCOPE1];

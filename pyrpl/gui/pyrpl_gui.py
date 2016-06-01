@@ -39,6 +39,8 @@ class BaseProperty(object):
 class NumberProperty(BaseProperty):
     def set_widget(self):
         self.widget = QtGui.QDoubleSpinBox()
+        self.widget.setDecimals(4)
+        self.widget.setSingleStep(0.01)
         self.widget.valueChanged.connect(self.write)
     
     def write(self):
