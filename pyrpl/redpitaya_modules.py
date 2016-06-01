@@ -41,11 +41,11 @@ class BaseModule(object):
 
     # prevent the user from setting a nonexisting attribute
     def __setattr__(self, name, value):
-        if hasattr(self,name) or name.startswith('_'):
+        if hasattr(self, name) or name.startswith('_') or hasattr(type(self), name):
             super(BaseModule, self).__setattr__(name, value)
         else:
             raise ValueError("New module attributes may not be set at runtime. Attribute "
-                             +name+" is not defined in class "+self.__class__.__name__)
+                             + name + " is not defined in class " + self.__class__.__name__)
     
     def help(self, register=''):
         """returns the docstring of the specified register name
@@ -100,7 +100,6 @@ class BaseModule(object):
         v = (v & (2**bitlength - 1))
         return np.uint32(v)
     
-    
 class HK(BaseModule):
     def __init__(self, client):
         super(HK, self).__init__(client, addr_base=0x40000000)
@@ -120,13 +119,15 @@ class Scope(BaseModule):
     data_length = 2**14
     inputs = None
     
-    def __init__(self, client):
+    def __init__(self, client, parent):
         super(Scope, self).__init__(client, addr_base=0x40100000)
         # dsp multiplexer channels for scope and asg are the same by default
         self._ch1 = DspModule(client, module='asg1')
         self._ch2 = DspModule(client, module='asg2')
         self.inputs = self._ch1.inputs
         self._setup_called = False
+        self._parent = parent
+        self._trigger_source_memory = "immediately"
 
     @property
     def input1(self):
@@ -161,13 +162,10 @@ class Scope(BaseModule):
                         "asg1": 8, 
                         "asg2": 9}
     
-    trigger_sources = _trigger_sources.keys() # help for the user
+    trigger_sources = sorted(_trigger_sources.keys()) # help for the user
     
     _trigger_source = SelectRegister(0x4, doc="Trigger source", 
                                     options=_trigger_sources)
-    
-    def sw_trig(self):
-        self.trigger_source = "immediately"
     
     @property
     def trigger_source(self):
@@ -231,7 +229,7 @@ class Scope(BaseModule):
                     2**13: 2**13,
                     2**16: 2**16}
     
-    decimations = _decimations.keys() # help for the user
+    decimations = sorted(_decimations.keys()) # help for the user
     
     decimation = SelectRegister(0x14, doc="decimation factor", 
                                 options=_decimations)
@@ -271,6 +269,49 @@ class Scope(BaseModule):
     ch2_firstpoint = FloatRegister(0x20000, bits=14, norm=2**13, 
                               doc="1 sample of ch2 data [volts]")
     
+    pretrig_ok =  BoolRegister(0x16c,0,
+              doc="True if enough data have been acquired to fill " + \
+              "the pretrig buffer")
+    
+    @property
+    def sampling_time(self):
+        return 8e-9 * float(self.decimation)
+
+    @sampling_time.setter
+    def sampling_time(self, v):
+        """sets or returns the time separation between two subsequent points of a scope trace
+        the rounding makes sure that the actual value is shorter or equal to the set value"""
+        tbase = 8e-9
+        factors = [65536, 8192, 1024, 64, 8, 1]
+        for f in factors:
+            if v >= tbase * float(f):
+                self.decimation = f
+                return
+        self.decimation = 1
+        self._logger.error("Desired sampling time impossible to realize")
+
+    @property
+    def durations(self):
+        return [8e-9*self.data_length*dec for dec in self.decimations]
+    
+    @property
+    def duration(self):
+        return self.sampling_time * float(self.data_length)
+
+    @duration.setter
+    def duration(self, v):
+        """sets returns the duration of a full scope sequence
+        the rounding makes sure that the actual value is longer or equal to the set value"""
+        v = float(v) / self.data_length
+        tbase = 8e-9
+        factors = [1, 8, 64, 1024, 8192, 65536]
+        for f in factors:
+            if v <= tbase * float(f):
+                self.decimation = f
+                return
+        self.decimation = 65536
+        self._logger.error("Desired duration too long to realize")
+
     @property
     def _rawdata_ch1(self):
         """raw data from ch1"""
@@ -347,6 +388,11 @@ class Scope(BaseModule):
             self.average = average
         if duration is not None:
             self.duration = duration
+        if trigger_source is not None:
+            the_trigger_source = trigger_source
+        else:
+            the_trigger_source = self.trigger_source
+
         if threshold is not None:
             self.threshold_ch1 = threshold
             self.threshold_ch2 = threshold
@@ -354,13 +400,17 @@ class Scope(BaseModule):
             self.hysteresis_ch1 = hysteresis
             self.hysteresis_ch2 = hysteresis
         if trigger_delay is not None:
-            self.trigger_delay = trigger_delay
-        if trigger_source is None:
-            trigger_source = self.trigger_source
-        self.trigger_source = 'off'
+            self.trigger_delay = trigger_delay      
+        if trigger_source is not None:
+            self.trigger_source = trigger_source
+        else:
+            self.trigger_source = self.trigger_source
         self._trigger_armed = True
-        sleep(self.duration-self.trigger_delay)
-        self.trigger_source = trigger_source
+        if self.trigger_source == 'immediately':
+            while(not self.pretrig_ok):
+                sleep(0.001)
+            self.trigger_source = 'immediately'# write state machine
+            #reset has changed the value of the FPGA register#_sw_trig()
 
     def curve_ready(self):
         """
@@ -375,61 +425,55 @@ class Scope(BaseModule):
             raise ValueError("channel should be 1 or 2, got " + str(ch))
         return self._data_ch1 if ch==1 else self._data_ch2
     
-    def curve(self, ch=1, trigger_timeout=1.):
+    def curve(self, ch=1, timeout=1.):
         """
-        Takes a curve from channel ch as soon as the trigger is valid.
-        If no trigger occurs after timeout seconds, raises TimeoutError.
-        If trigger_timeout <= 0, then no check for trigger is done and
-        the data from the buffer is returned directly.
+        Takes a curve from channel ch:
+            If timeout>0: runs until data is ready or timeout expires
+            If timeout<=0: returns immediately the current buffer without
+            checking for trigger status.
         """
         if not self._setup_called:
             raise NotReadyError("setup has never been called")
         SLEEP_TIME = 0.001
         total_sleep = 0
-        if trigger_timeout>0:
-            while(total_sleep<trigger_timeout):
+        if timeout>0:
+            while(total_sleep<timeout):
                 if self.curve_ready():
                     return self._get_ch(ch)
                 total_sleep+=SLEEP_TIME
                 sleep(SLEEP_TIME)
+            raise TimeoutError("Scope wasn't trigged during timeout")
         else:
             return self._get_ch(ch)
-        raise TimeoutError("scope wasn't trigged within trigger_timeout")
 
-    @property
-    def sampling_time(self):
-        return 8e-9 * float(self.decimation)
-
-    @sampling_time.setter
-    def sampling_time(self, v):
-        """sets or returns the time separation between two subsequent points of a scope trace
-        the rounding makes sure that the actual value is shorter or equal to the set value"""
-        tbase = 8e-9
-        factors = [65536, 8192, 1024, 64, 8, 1]
-        for f in factors:
-            if v >= tbase * float(f):
-                self.decimation = f
-                return
-        self.decimation = 1
-        self._logger.error("Desired sampling time impossible to realize")
-
-    @property
-    def duration(self):
-        return self.sampling_time * float(self.data_length)
-
-    @duration.setter
-    def duration(self, v):
-        """sets returns the duration of a full scope sequence
-        the rounding makes sure that the actual value is longer or equal to the set value"""
-        v = float(v) / self.data_length
-        tbase = 8e-9
-        factors = [1, 8, 64, 1024, 8192, 65536]
-        for f in factors:
-            if v <= tbase * float(f):
-                self.decimation = f
-                return
-        self.decimation = 65536
-        self._logger.error("Desired duration too long to realize")
+    ### unfunctional so far
+    def spectrum(self,
+                  center, 
+                  span, 
+                  avg, 
+                  input="adc1", 
+                  window="flattop", 
+                  acbandwidth=50.0,
+                  iq='iq2'):
+        points_per_bw=10
+        iq_module = self.configure_signal_chain(input, iq)
+        iq_module.frequency = center
+        bw = span*points_per_bw/self.data_length
+        self.duration = 1./bw
+        self._parent.iq2.bandwidth = [span, span]
+        self.setup(trigger_source='immediately',
+                   average=False,
+                   trigger_delay=0)
+        y = self.curve()
+        return y
+        
+    def configure_signal_chain(self, input, iq):
+        iq_module = getattr(self._parent, iq)
+        iq_module.input = input
+        iq_module.output_signal = 'quadrature'
+        iq_module.quadrature_factor=1.0
+        self.input1 = iq
+        return iq_module
 
 
 # ugly workaround, but realized too late that descriptors have this limit
@@ -451,10 +495,11 @@ def make_asg(channel=1):
         _BIT_OFFSET = set_BIT_OFFSET
         default_output_direct = set_default_output_direct
         output_directs = None
-        
+                
         def __init__(self, client):
             super(Asg, self).__init__(client, addr_base=0x40200000)
             self._counter_wrap = 0x3FFFFFFF # correct value unless you know better
+            self._writtendata = np.zeros(self.data_length)
             self._frequency_correction = 1.0
             if self._BIT_OFFSET == 0:
                 self._dsp = DspModule(client, module='asg1')
@@ -517,12 +562,6 @@ def make_asg(channel=1):
         frequency = FrequencyRegister(0x10+_VALUE_OFFSET, bits=30, 
                                       doc="Frequency of the output waveform [Hz]")
         
-        firstpoint = FloatRegister(_DATA_OFFSET, bits=14, norm=2**13, 
-                                doc="First value in output table [volts]")
-        
-        lastpoint = FloatRegister(_DATA_OFFSET+0x4*(data_length-1), 
-                                  bits=14, norm=2**13, 
-                                  doc="Last value in output table [volts]")
         _counter_step = Register(0x10+_VALUE_OFFSET,doc="""Each clock cycle the counter_step is increases the internal counter modulo counter_wrap.
             The current counter step rightshifted by 16 bits is the index of the value that is chosen from the data table.
             """)
@@ -543,6 +582,7 @@ def make_asg(channel=1):
             if not hasattr(self,'_writtendata'):
                 self._writtendata = np.zeros(self.data_length, dtype=np.int32)
             x = np.array(self._writtendata, dtype=np.int32)
+
             #data readback disabled for fpga performance reasons
             #x = np.array(
             #    self._reads(self._DATA_OFFSET, self.data_length),
@@ -612,8 +652,7 @@ def make_asg(channel=1):
             if trigger_source is not None:
                 self.trigger_source = trigger_source
         
-        
-        #advanced trigger - added functionality
+        #advanced trigger - alpha version functionality
         scopetriggerphase = PhaseRegister(0x114+_VALUE_OFFSET, bits=14, 
                        doc="phase of ASG ch1 at the moment when the last scope trigger occured [degrees]")
             
@@ -650,7 +689,6 @@ def make_asg(channel=1):
     
 Asg1 = make_asg(channel=1)
 Asg2 = make_asg(channel=2)
-
 
 
 class DspModule(BaseModule):
@@ -1260,13 +1298,16 @@ class IIR(DspModule):
             iir.bodeplot(tfs, xlog=True)
         return tfs
 
-# current work pointer: here
 
 class AMS(BaseModule):
     """mostly deprecated module (redpitaya has removed adc support). 
     only here for dac2 and dac3"""
     def __init__(self, client):
-        super(AMS, self).__init__(client, addr_base=0x40400000)        
+        super(AMS, self).__init__(client, addr_base=0x40400000)
+    # attention: writing to dac0 and dac1 has no effect
+    # only write to dac2 and 3 to set output voltages
+    # to modify dac0 and dac1, connect a r.pwm0.input='pid0' 
+    # and let the pid module determine the voltage 
     dac0 = PWMRegister(0x20, doc="PWM output 0 [V]")
     dac1 = PWMRegister(0x24, doc="PWM output 1 [V]")
     dac2 = PWMRegister(0x28, doc="PWM output 2 [V]")
