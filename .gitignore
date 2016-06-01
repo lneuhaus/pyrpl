@@ -36,6 +36,7 @@ pyrpl/fpga/sdk
 pyrpl/fpga/*.html
 pyrpl/fpga/*.xml
 pyrpl/fpga/red_pitaya.prm
+pyrpl/.idea
 
 #fpga-related
 fpga/out/
