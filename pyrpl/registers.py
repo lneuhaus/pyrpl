@@ -221,7 +221,7 @@ class PhaseRegister(FloatRegister):
         
     def from_python(self, value):
         # make sure small float values are not rounded to zero
-        return int(round((float(value)%360)/360*2**self.bits)) 
+        return int(round((float(value)%360)/360*2**self.bits)% 2**self.bits) 
         
     def to_python(self, value):
         return float(value)/2**self.bits*360
