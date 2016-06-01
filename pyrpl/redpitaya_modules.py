@@ -361,9 +361,6 @@ class Scope(BaseModule):
         self._trigger_armed = True
         sleep(self.duration-self.trigger_delay)
         self.trigger_source = trigger_source
-        #self._trigger_armed = True
-        #if self.trigger_source == 'immediately':
-        #    self.sw_trig()
 
     def curve_ready(self):
         """
