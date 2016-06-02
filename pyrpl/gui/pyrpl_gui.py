@@ -261,6 +261,105 @@ class AllAsgGui(QtGui.QWidget):
             self.layout.setStretchFactor(widget, 0)
 
 
+class NaGui(ModuleWidget):
+    property_names = ["input1",
+                      "input2",
+                      "duration",
+                      "average",
+                      "trigger_source",
+                      "threshold_ch1",
+                      "threshold_ch2"]
+
+
+    def display_channel(self, ch):
+        try:
+            self.curves[ch - 1].setData(self.module.times,
+                                        self.module.curve(ch))
+        except NotReadyError:
+            pass
+
+
+    def display_curves(self):
+        for i in (1, 2):
+            if self.cb_ch[i - 1].checkState() == 2:
+                self.display_channel(i)
+                self.curves[i - 1].setVisible(True)
+            else:
+                self.curves[i - 1].setVisible(False)
+
+
+    def run_single(self):
+        self.module.setup()
+        self.plot_item.enableAutoRange('xy', True)
+        self.display_curves()
+
+
+    def do_run_continuous(self):
+        if self.module.curve_ready():
+            # print "before"
+            self.display_curves()
+            # print "after"
+            if self.first_shot_of_continuous:
+                self.first_shot_of_continuous = False
+                self.plot_item.enableAutoRange('xy', False)
+            # print "before setup"
+            self.module.setup()
+            # print "after setup"
+        self.timer.start()
+
+
+    def run_continuous(self):
+        if str(self.button_continuous.text()) \
+                == "Run continuous":
+            self.button_continuous.setText("Stop")
+            self.button_single.setEnabled(False)
+            self.module.setup()
+            self.plot_item.enableAutoRange('xy', True)
+            self.first_shot_of_continuous = True
+            self.timer.start()
+        else:
+            self.button_continuous.setText("Run continuous")
+            self.timer.stop()
+            self.button_single.setEnabled(True)
+
+
+    def init_gui(self):
+        self.ch_col = ('blue', 'red')
+        self.main_layout = QtGui.QVBoxLayout()
+        self.init_property_layout()
+        self.button_layout = QtGui.QHBoxLayout()
+        self.setLayout(self.main_layout)
+        self.setWindowTitle("Scope")
+        self.win = pg.GraphicsWindow(title="Scope")
+        self.plot_item = self.win.addPlot(title="Scope")
+        self.button_single = QtGui.QPushButton("Run single")
+        self.button_continuous = QtGui.QPushButton("Run continuous")
+        self.curves = [self.plot_item.plot(pen=color[0]) \
+                       for color in self.ch_col]
+        self.main_layout.addWidget(self.win)
+        self.button_layout.addWidget(self.button_single)
+        self.button_layout.addWidget(self.button_continuous)
+        self.main_layout.addLayout(self.button_layout)
+        self.cb_ch = []
+        for i in (1, 2):
+            self.cb_ch.append(QtGui.QCheckBox("Channel " + str(i)))
+            self.button_layout.addWidget(self.cb_ch[-1])
+
+        self.button_single.clicked.connect(self.run_single)
+        self.button_continuous.clicked.connect(self.run_continuous)
+        self.timer = QtCore.QTimer()
+        self.timer.setInterval(10)
+        self.timer.setSingleShot(True)
+
+        self.timer.timeout.connect(self.do_run_continuous)
+
+        for cb, col in zip(self.cb_ch, self.ch_col):
+            cb.setCheckState(2)
+            cb.setStyleSheet('color: ' + col)
+        for cb in self.cb_ch:
+            cb.stateChanged.connect(self.display_curves)
+
+
 class RedPitayaGui(RedPitaya):
     def gui(self):
         self.gui_timer = QtCore.QTimer()

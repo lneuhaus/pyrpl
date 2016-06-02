@@ -508,7 +508,6 @@ def make_asg(channel=1):
             self.output_directs = self._dsp.output_directs
             self.waveform = "cos"
 
-
         @property
         def output_direct(self):
             return self._dsp.output_direct
@@ -743,6 +742,7 @@ class DspModule(BaseModule):
         adc2=11,
         dac1=12,
         dac2=13,
+        iq2_2=14,
         off=15)
     inputs = _inputs.keys()
     

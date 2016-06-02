@@ -52,7 +52,7 @@ should not be used.
 
 
 module red_pitaya_dsp #(
-	parameter MODULES = 8
+	parameter MODULES = 8, START_IQ = 5
 )
 (
    // signals
@@ -132,7 +132,7 @@ wire [14-1:0] input_signal [MODULES+EXTRAMODULES+EXTRAOUTPUTS-1:0];
 reg [LOG_MODULES-1:0] input_select [MODULES+EXTRAMODULES+EXTRAOUTPUTS-1:0];
 
 // the output of each module for internal routing, including 'virtual outputs' for the EXTRAINPUTS
-wire [14-1:0] output_signal [MODULES+EXTRAMODULES+EXTRAINPUTS-1:0]; 
+wire [14-1:0] output_signal [MODULES+EXTRAMODULES+EXTRAINPUTS-1+1:0];
 
 // the output of each module that is added to the chosen DAC
 wire [14-1:0] output_direct [MODULES+EXTRAMODULES-1:0];
@@ -338,8 +338,8 @@ generate for (j = 4; j < 5; j = j+1) begin
 end endgenerate
 
 
-//IQ modules 
-generate for (j = 5; j < 8; j = j+1) begin
+//IQ modules
+generate for (j = START_IQ; j < 7; j = j+1) begin
     red_pitaya_iq_block 
       iq
       (
@@ -349,6 +349,7 @@ generate for (j = 5; j < 8; j = j+1) begin
 	     .dat_i        (  input_signal [j] ),  // input data
 	     .dat_o        (  output_direct[j]),  // output data
 		 .signal_o     (  output_signal[j]),  // output signal
+         //.signal_o2    (  output_signal2[j]),  // output signal
 
 		 //communincation with PS
 		 .addr ( sys_addr[16-1:0] ),
@@ -360,6 +361,28 @@ generate for (j = 5; j < 8; j = j+1) begin
       );
 
 end endgenerate
+
+
+red_pitaya_iq_block_2_outputs
+  iq
+  (
+     // data
+     .clk_i        (  clk_i          ),  // clock
+     .rstn_i       (  rstn_i         ),  // reset - active low
+     .dat_i        (  input_signal [7] ),  // input data
+     .dat_o        (  output_direct[7]),  // output data
+     .signal_o     (  output_signal[7]),  // output signal
+     .signal_o2    (  output_signal[14]),  // output signal
+
+     //communincation with PS
+     .addr ( sys_addr[16-1:0] ),
+     .wen  ( sys_wen & (sys_addr[20-1:16]==j) ),
+     .ren  ( sys_ren & (sys_addr[20-1:16]==j) ),
+     .ack  ( module_ack[j] ),
+     .rdata (module_rdata[j]),
+     .wdata (sys_wdata)
+  );
+
 
 
 endmodule
