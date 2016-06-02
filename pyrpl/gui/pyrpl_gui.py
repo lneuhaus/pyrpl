@@ -52,7 +52,8 @@ class NumberProperty(BaseProperty):
         self.module_widget.property_changed.emit()
 
     def update(self):
-        self.widget.setValue(float(getattr(self.module, self.name)))
+        if not self.widget.isActiveWindow():
+            self.widget.setValue(float(getattr(self.module, self.name)))
         
             
 class ComboProperty(BaseProperty):
