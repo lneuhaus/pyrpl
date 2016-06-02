@@ -6,6 +6,10 @@ import numpy as np
 
 
 
+APP = QtGui.QApplication.instance()
+if APP is None:
+    APP = QtGui.QApplication(["pyrpl_gui"])
+
 def property_factory(scope_widget, prop):
     if hasattr(scope_widget.rp.scope, prop + 's'):
         new_prop = ComboProperty(prop, scope_widget)
