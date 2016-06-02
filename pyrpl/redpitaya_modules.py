@@ -506,6 +506,9 @@ def make_asg(channel=1):
             else:
                 self._dsp = DspModule(client, module='asg2')
             self.output_directs = self._dsp.output_directs
+            self.waveform = "cos"
+
+
         @property
         def output_direct(self):
             return self._dsp.output_direct
@@ -568,7 +571,24 @@ def make_asg(channel=1):
         
         _start_offset = Register(0xC, 
                         doc="counter offset for trigged events = phase offset ")
-    
+
+
+        @property
+        def waveform(self):
+            return self._waveform
+
+        @property
+        def waveforms(self):
+            return ['cos', 'ramp', 'halframp', 'DC']
+
+        @waveform.setter
+        def waveform(self, val):
+            if not val in self.waveforms:
+                raise ValueError("waveform shourd be either " + self.waveforms)
+            self._waveform = val
+            self.setup()
+            return val
+
         def trig(self):
             self.start_phase = 0
             self.trigger_source = "immediately"
@@ -606,13 +626,13 @@ def make_asg(channel=1):
             self._writtendata = data
     
         def setup(self, 
-                  waveform='cos', 
-                  frequency=1, 
-                  amplitude=1.0, 
-                  offset=0.0,
+                  waveform=None,
+                  frequency=None,
+                  amplitude=None,
+                  offset=None,
                   start_phase=0, 
                   periodic=True, 
-                  trigger_source='immediately',
+                  trigger_source=None,
                   output_direct = default_output_direct):
             """sets up the function generator. 
             
@@ -620,13 +640,27 @@ def make_asg(channel=1):
             amplitude and offset in volts, frequency in Hz. 
             periodic = False outputs only one period. 
             start_phase is the start phase in degrees
-            if trigger_source is None, it should be set manually """
+            if trigger_source is None, it should be set manually
+            If None, then current value is used"""
+
+            if waveform is None:
+                waveform = self.waveform
+            if frequency is None:
+                frequency = self.frequency
+            if amplitude is None:
+                amplitude = self.scale
+            if offset is None:
+                offset = self.offset
+            if trigger_source is None:
+                trigger_source = self.trigger_source
+
             self.on = False
             self.sm_reset = True
             self.trigger_source = 'off'
             self.scale = amplitude
             self.offset = offset
-            
+
+
             if waveform == 'cos':
                 x = np.linspace(0, 2*np.pi, self.data_length, endpoint=False)
                 y = np.cos(x)
