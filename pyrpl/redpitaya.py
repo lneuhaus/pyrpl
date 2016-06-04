@@ -29,9 +29,9 @@ import logging
 from scp import SCPException
 from paramiko import SSHException
 
-from .sshshell import SSHshell
-from .monitor_client import *
-from .redpitaya_modules import *
+from sshshell import SSHshell
+import monitor_client
+import redpitaya_modules as rp
 
 class RedPitaya(SSHshell):
     def __init__(self, hostname='192.168.1.100', port=2222,
