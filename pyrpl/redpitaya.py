@@ -30,8 +30,8 @@ from scp import SCPException
 from paramiko import SSHException
 
 from .sshshell import SSHshell
-from . import monitor_client
-from . import redpitaya_modules as rp
+from .monitor_client import *
+from .redpitaya_modules import *
 
 class RedPitaya(SSHshell):
     def __init__(self, hostname='192.168.1.100', port=2222,
