@@ -62,49 +62,90 @@ class SpectrumAnalyzer(object):
     A spectrum analyzer is composed of an IQ demodulator, followed by a scope.
     The spectrum analyzer connections are made upon calling the function setup  
     """
-    _setup = False
+
+    #_setup = False
+    def __init__(self, rp=None):
+        self.rp = rp
+        self.iq_name = 'iq2'
+        self.start = 1e6
+        self.stop = 1.1e6
+        self.points = 1001
+        self.rbw = 100
+        self.avg = 1
+        self.input = 'adc1'
+        self.acbandwidth = 0
+        self.logscale = False
+        self.window = "gauss"
+        self._setup = False
+
     def setup(self,
-              center=1e6,
-              span=100,
-              window='gauss',
-              scope_ch=1,
-              iq_nr=0,
+              start=None,
+              stop=None,
+              rbw=None,
+              points=None,
+              avg=None,
+              window=None,
+              acbandwidth=None,
+              logscale=None,
               input='adc1'):
         self._setup = True
-        self.window = window
-        self.configure_signal_chain(input,iq_nr)
-        
-    def configure_signal_chain(self):
-        iq = getattr(self.iq)
-        
+        if start is not None:
+            self.start = start
+        if stop is not None:
+            self.stop = stop
+        if points is not None:
+            self.points = points
+        if rbw is not None:
+            self.rbw = rbw
+        if avg is not None:
+            self.avg = avg
+        if window is not None:
+            self.window = window
+        if acbandwidth is not None:
+            self.acbandwidth = acbandwidth
+        if logscale is not None:
+            self.logscale = logscale
+        if input is not None:
+            self.input = input
+
+        self.rp.scope.input1 = 'iq2'
+        self.rp.scope.input2 = 'iq2_2'
+
+        self.rp.iq2.input = self.input
+        self.rp.iq2.frequency = (self.start + self.stop)/2
+        self.rp.iq2.output_signal = "quadrature"
+        self.rp.iq2.quadrature_factor = 0.001
+        self.rp.iq2.bandwidth = self.stop - self.start
+
+        self.rp.scope.sampling_time = 1./(self.stop - self.start)
+
+        self.rp.scope.trigger_source = "immediately"
+        self.rp.scope.setup()
+
+    """
     @property
     def n_points(self):
         return 16392#self.scope.data_length
+    """
 
     """
     span and bw are linked together
     """
-    span = Span()
-    bw = BW()
+    #span = Span()
+    #bw = BW()
 
     def filter_window(self):
         if self.window=='gauss':
-            x = linspace(-1,
+            x = np.linspace(-1,
                          1,
-                         self.n_points,
+                         self.rp.scope.data_length,
                          True)
-            return exp(-(x*BW.points_per_bw)**2)
-    
-    def multiplexer_cos(self):
-        return self.scope.curve(self.scope_ch)*cos(self.filter_window.x*FREQUENCY)
-    
-    def multiplexer_sin(self):
-        return self.scope.curve(self.scope_ch)*sin(self.filter_window.x*FREQUENCY)
+            return np.exp(-(x*self.rbw)**2)
 
 
     def curve(self):
         if not self._setup:
             raise NotReadyError("Setup was never called")
-        return np.fft(self.scope.curve(self.scope_ch)*self.filter_window)
+        return np.fft.fft((self.rp.scope.curve(1) + 1j*self.rp.scope.curve(2))*self.filter_window())
     
     

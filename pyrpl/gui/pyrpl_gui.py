@@ -14,12 +14,17 @@ if APP is None:
 def property_factory(module_widget, prop):
     if hasattr(module_widget.module, prop + 's'):
         new_prop = ComboProperty(prop, module_widget)
-    elif hasattr(module_widget.module, prop[:-1] + 's') and (prop[:-1] + 's')!=prop: # for instance inputs for input1
+    elif hasattr(module_widget.module, prop[:-1] + 's')\
+            and (prop[:-1] + 's')!=prop: # for instance inputs for input1
         new_prop = ComboProperty(prop, module_widget, prop[:-1] + 's')
-    elif isinstance(getattr(module_widget.module, prop), bool):
-        new_prop = BoolProperty(prop, module_widget)
     else:
-        new_prop = NumberProperty(prop, module_widget)
+        attr = getattr(module_widget.module, prop)
+        if isinstance(attr, bool):
+           new_prop = BoolProperty(prop, module_widget)
+        elif isinstance(attr, (int, long)):
+            new_prop = IntProperty(prop, module_widget)
+        else:
+            new_prop = FloatProperty(prop, module_widget)
     return new_prop
 
 class BaseProperty(object):
@@ -42,19 +47,33 @@ class BaseProperty(object):
         self.widget.blockSignals(False)
 
 class NumberProperty(BaseProperty):
-    def set_widget(self):
-        self.widget = QtGui.QDoubleSpinBox()
-        self.widget.setDecimals(4)
-        self.widget.setSingleStep(0.01)
-        self.widget.valueChanged.connect(self.write)
-    
     def write(self):
         setattr(self.module, self.name, self.widget.value())
         self.module_widget.property_changed.emit()
 
     def update(self):
         if not self.widget.isActiveWindow():
-            self.widget.setValue(float(getattr(self.module, self.name)))
+            self.widget.setValue(self.module_value())
+
+class IntProperty(NumberProperty):
+    def set_widget(self):
+        self.widget = QtGui.QSpinBox()
+        self.widget.setSingleStep(1)
+        self.widget.valueChanged.connect(self.write)
+
+    def module_value(self):
+        return int(getattr(self.module, self.name))
+
+class FloatProperty(NumberProperty):
+    def set_widget(self):
+        self.widget = QtGui.QDoubleSpinBox()
+        self.widget.setDecimals(4)
+        self.widget.setSingleStep(0.01)
+        self.widget.valueChanged.connect(self.write)
+
+
+    def module_value(self):
+        return float(getattr(self.module, self.name))
         
             
 class ComboProperty(BaseProperty):
@@ -276,9 +295,10 @@ class NaGui(ModuleWidget):
                       "start",
                       "stop",
                       "rbw",
-                      #"points",
+                      "points",
                       "amplitude",
-                      "logscale"]
+                      "logscale",
+                      "avg"]
 
     def init_gui(self):
         self.main_layout = QtGui.QVBoxLayout()
@@ -292,60 +312,153 @@ class NaGui(ModuleWidget):
         self.plot_item_phase = self.win_phase.addPlot(title="Phase")
         self.plot_item_phase.setXLink(self.plot_item)
         self.button_single = QtGui.QPushButton("Run single")
+        self.button_single.my_label = "Single"
         self.button_continuous = QtGui.QPushButton("Run continuous")
+        self.button_continuous.my_label = "Continuous"
+        self.button_restart_averaging = QtGui.QPushButton('Restart averaging')
         self.curve = self.plot_item.plot(pen='b')
         self.curve_phase = self.plot_item_phase.plot(pen='b')
         self.main_layout.addWidget(self.win)
         self.main_layout.addWidget(self.win_phase)
         self.button_layout.addWidget(self.button_single)
         self.button_layout.addWidget(self.button_continuous)
+        self.button_layout.addWidget(self.button_restart_averaging)
         self.main_layout.addLayout(self.button_layout)
 
         self.button_single.clicked.connect(self.run_single)
         self.button_continuous.clicked.connect(self.run_continuous)
+        self.button_restart_averaging.clicked.connect(self.ask_restart_and_do_it)
         self.timer = QtCore.QTimer()
         self.timer.setInterval(10)
         self.timer.setSingleShot(True)
 
+        self.continuous = True
+        self.paused = True
+        self.need_restart = True
+
+        self.property_changed.connect(self.ask_restart)
+
         self.timer.timeout.connect(self.add_one_point)
 
-        self.data = np.empty(self.module.points, dtype=complex)
-        self.x = np.empty(self.module.points)
-        self.phase = np.empty(self.module.points)
-        self.amp_abs = np.empty(self.module.points)
+        self.paused = True
+        self.restart_averaging()
 
         for prop in self.properties:
             if prop.name in ["start", "stop", "rbw"]:
                 spin_box = prop.widget
-                spin_box.setDecimals(1)
+                #spin_box.setDecimals(1)
                 spin_box.setMaximum(100e6)
                 spin_box.setMinimum(-100e6)
                 spin_box.setSingleStep(100)
+            if prop.name in ["points", "avg"]:
+                spin_box = prop.widget
+                spin_box.setMaximum(1e6)
+                spin_box.setMinimum(0)
 
+
+    def init_data(self):
+        self.data = np.zeros(self.module.points, dtype=complex)
+        self.x = np.empty(self.module.points)
+        self.phase = np.empty(self.module.points)
+        self.amp_abs = np.empty(self.module.points)
+        self.post_average = 0
+
+    def ask_restart(self):
+        self.set_state(continuous=self.continuous, paused=True, need_restart=True, n_av=0)
+
+    def ask_restart_and_do_it(self):
+        if not self.paused:
+            self.timer.stop()
+            self.restart_averaging()
+            self.new_run()
+            self.timer.start()
+            self.set_state(continuous=self.continuous, paused=self.paused, need_restart=False, n_av=0)
+        else:
+            self.set_state(continuous=self.continuous, paused=self.paused, need_restart=True, n_av=0)
+
+    def restart_averaging(self):
+        self.init_data()
+        self.timer.setInterval(self.module.time_per_point * 1000)
+        self.new_run()
 
     def run_single(self):
+        if self.paused:
+            if self.continuous or self.need_restart:
+                self.restart_averaging()
+                self.new_run()
+            self.set_state(continuous=False, paused=False, need_restart=False)
+            self.timer.start()
+        else:
+            self.set_state(continuous=False, paused=True, need_restart=False)
+
+
+    def new_run(self):
         self.module.setup()
         self.values = self.module.values()
-        self.timer.setInterval(self.module.time_per_point*1000)
-        self.timer.start()
+
+    def set_state(self, continuous, paused, need_restart, n_av=0):
+        self.continuous = continuous
+        self.paused = paused
+        self.need_restart = need_restart
+        active_button = self.button_continuous if continuous else self.button_single
+        inactive_button = self.button_single if continuous else self.button_continuous
+        self.button_restart_averaging.setEnabled(not need_restart)
+        active_button.setEnabled(True)
+        inactive_button.setEnabled(self.paused)
+        first_word = 'Run ' if need_restart else 'Continue '
+        if self.paused:
+            self.button_single.setText("Run single")
+            self.button_continuous.setText(first_word + "(%i averages)"%n_av)
+        else:
+            if active_button == self.button_single:
+                active_button.setText('Pause')
+            else:
+                active_button.setText('Pause (%i averages)'%n_av)
 
     def add_one_point(self):
+        if self.paused:
+            return
         cur = self.module.current_point
         try:
             x, y, amp = self.values.next()
         except StopIteration:
+            self.post_average += 1
+            if self.continuous:
+                self.new_run()
+                self.set_state(continuous=True, paused=False, need_restart=False, n_av=self.post_average)
+                self.timer.start()
+            else:
+                self.set_state(continuous=True, paused=True, need_restart=False, n_av=self.post_average) # 1
+                self.button_single.setText("Run single")
             return
-        self.data[cur] = y
-        self.phase[cur] = np.angle(y, deg=True)
-        self.amp_abs[cur] = abs(y)
+        self.data[cur] = (self.data[cur]*self.post_average + y)/(self.post_average + 1)
+
+        self.phase[cur] = np.angle(self.data[cur], deg=True)
+        self.amp_abs[cur] = abs(self.data[cur])
         self.x[cur] = x
-        self.curve.setData(self.x[:cur], self.amp_abs[:cur])
-        self.curve_phase.setData(self.x[:cur], self.phase[:cur])
+        if self.post_average>0:
+            max_point = self.module.points
+        else:
+            max_point = cur
+        self.curve.setData(self.x[:max_point], self.amp_abs[:max_point])
+        self.curve_phase.setData(self.x[:max_point], self.phase[:max_point])
         self.timer.start()
 
-    def run_continuous(self): pass
+    def run_continuous(self):
+        if self.paused:
+            if self.need_restart:
+                self.restart_averaging()
+                self.new_run()
+            self.set_state(continuous=True, paused=False, need_restart=False, n_av=self.post_average)
+            self.timer.start()
+        else:
+            self.set_state(continuous=True, paused=True, need_restart=False, n_av=self.post_average)
+    """
+    def restart_averaging(self):
+        self.init_data()
+        self.run()
+    """
 
-    def do_run_continuous(self): pass
 
 
 class RedPitayaGui(RedPitaya):

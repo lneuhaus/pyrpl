@@ -10,7 +10,7 @@ class NetworkAnalyzer(object):
     def __init__(self, rp):
         self.rp = rp
         self.iq_name = 'iq1'
-        self.start = 0
+        self.start = 1
         self.stop = 100000
         self.points = 1001
         self.rbw = 100
@@ -123,7 +123,7 @@ class NetworkAnalyzer(object):
         rbw = self.iq.bandwidth[0]
         #self.iq._logger.info("Estimated acquisition time: %.1f s",
         #                  float(self.avg + self.sleeptimes) * self.points / self.rbw)
-        sys.stdout.flush()  # make sure the time is shown
+        #sys.stdout.flush()  # make sure the time is shown
         # setup averaging
         self.iq._na_averages = np.int(np.round(125e6 / self.rbw * self.avg))
         self._na_sleepcycles = np.int(np.round(125e6 / self.rbw * self.sleeptimes))
