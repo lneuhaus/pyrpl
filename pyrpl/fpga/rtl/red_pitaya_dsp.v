@@ -258,8 +258,8 @@ always @(posedge clk_i) begin
 
       input_select [SCOPE1] <= ADC1;
       input_select [SCOPE2] <= ADC2;
-      output_select[ASG1] <= OUT1;
-      output_select[ASG2] <= OUT2;
+      output_select[ASG1] <= OFF; //OUT1 is it OK Léo or compatibility issues with existing scripts ?
+      output_select[ASG2] <= OFF; //OUT2
       
       input_select [PWM0] <= NONE;
       input_select [PWM1] <= NONE;

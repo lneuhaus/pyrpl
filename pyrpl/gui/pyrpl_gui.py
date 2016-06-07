@@ -3,6 +3,7 @@ from pyrpl.redpitaya_modules import NotReadyError
 from pyqtgraph.Qt import QtGui, QtCore
 import pyqtgraph as pg
 import numpy as np
+from pyrpl.network_analyzer import NetworkAnalyzer
 
 
 
@@ -13,7 +14,7 @@ if APP is None:
 def property_factory(module_widget, prop):
     if hasattr(module_widget.module, prop + 's'):
         new_prop = ComboProperty(prop, module_widget)
-    elif hasattr(module_widget.module, prop[:-1] + 's'): # for instance inputs for input1
+    elif hasattr(module_widget.module, prop[:-1] + 's') and (prop[:-1] + 's')!=prop: # for instance inputs for input1
         new_prop = ComboProperty(prop, module_widget, prop[:-1] + 's')
     elif isinstance(getattr(module_widget.module, prop), bool):
         new_prop = BoolProperty(prop, module_widget)
@@ -218,7 +219,12 @@ class ScopeWidget(ModuleWidget):
         
 
 class AsgGui(ModuleWidget):
-    property_names = ["waveform", "scale", "offset", "frequency", "trigger_source"]
+    property_names = ["waveform",
+                      "scale",
+                      "offset",
+                      "frequency",
+                      "trigger_source",
+                      "output_direct"]
     def init_gui(self):
         self.main_layout = QtGui.QVBoxLayout()
         self.init_property_layout()
@@ -253,6 +259,7 @@ class AllAsgGui(QtGui.QWidget):
         nr = 1
         self.layout.setAlignment(QtCore.Qt.AlignTop)
 
+
         while hasattr(self.rp, "asg" + str(nr)):
             widget = AsgGui(parent=None,
                     module=getattr(self.rp, "asg" + str(nr)))
@@ -263,88 +270,36 @@ class AllAsgGui(QtGui.QWidget):
 
 
 class NaGui(ModuleWidget):
-    property_names = ["input1",
-                      "input2",
-                      "duration",
-                      "average",
-                      "trigger_source",
-                      "threshold_ch1",
-                      "threshold_ch2"]
-
-
-    def display_channel(self, ch):
-        try:
-            self.curves[ch - 1].setData(self.module.times,
-                                        self.module.curve(ch))
-        except NotReadyError:
-            pass
-
-
-    def display_curves(self):
-        for i in (1, 2):
-            if self.cb_ch[i - 1].checkState() == 2:
-                self.display_channel(i)
-                self.curves[i - 1].setVisible(True)
-            else:
-                self.curves[i - 1].setVisible(False)
-
-
-    def run_single(self):
-        self.module.setup()
-        self.plot_item.enableAutoRange('xy', True)
-        self.display_curves()
-
-
-    def do_run_continuous(self):
-        if self.module.curve_ready():
-            # print "before"
-            self.display_curves()
-            # print "after"
-            if self.first_shot_of_continuous:
-                self.first_shot_of_continuous = False
-                self.plot_item.enableAutoRange('xy', False)
-            # print "before setup"
-            self.module.setup()
-            # print "after setup"
-        self.timer.start()
-
-
-    def run_continuous(self):
-        if str(self.button_continuous.text()) \
-                == "Run continuous":
-            self.button_continuous.setText("Stop")
-            self.button_single.setEnabled(False)
-            self.module.setup()
-            self.plot_item.enableAutoRange('xy', True)
-            self.first_shot_of_continuous = True
-            self.timer.start()
-        else:
-            self.button_continuous.setText("Run continuous")
-            self.timer.stop()
-            self.button_single.setEnabled(True)
-
+    property_names = ["iq_name",
+                      "input",
+                      "output_direct",
+                      "start",
+                      "stop",
+                      "rbw",
+                      #"points",
+                      "amplitude",
+                      "logscale"]
 
     def init_gui(self):
-        self.ch_col = ('blue', 'red')
         self.main_layout = QtGui.QVBoxLayout()
         self.init_property_layout()
         self.button_layout = QtGui.QHBoxLayout()
         self.setLayout(self.main_layout)
-        self.setWindowTitle("Scope")
-        self.win = pg.GraphicsWindow(title="Scope")
-        self.plot_item = self.win.addPlot(title="Scope")
+        self.setWindowTitle("NA")
+        self.win = pg.GraphicsWindow(title="Amplitude")
+        self.win_phase = pg.GraphicsWindow(title="Phase")
+        self.plot_item = self.win.addPlot(title="Amplitude")
+        self.plot_item_phase = self.win_phase.addPlot(title="Phase")
+        self.plot_item_phase.setXLink(self.plot_item)
         self.button_single = QtGui.QPushButton("Run single")
         self.button_continuous = QtGui.QPushButton("Run continuous")
-        self.curves = [self.plot_item.plot(pen=color[0]) \
-                       for color in self.ch_col]
+        self.curve = self.plot_item.plot(pen='b')
+        self.curve_phase = self.plot_item_phase.plot(pen='b')
         self.main_layout.addWidget(self.win)
+        self.main_layout.addWidget(self.win_phase)
         self.button_layout.addWidget(self.button_single)
         self.button_layout.addWidget(self.button_continuous)
         self.main_layout.addLayout(self.button_layout)
-        self.cb_ch = []
-        for i in (1, 2):
-            self.cb_ch.append(QtGui.QCheckBox("Channel " + str(i)))
-            self.button_layout.addWidget(self.cb_ch[-1])
 
         self.button_single.clicked.connect(self.run_single)
         self.button_continuous.clicked.connect(self.run_continuous)
@@ -352,13 +307,45 @@ class NaGui(ModuleWidget):
         self.timer.setInterval(10)
         self.timer.setSingleShot(True)
 
-        self.timer.timeout.connect(self.do_run_continuous)
+        self.timer.timeout.connect(self.add_one_point)
 
-        for cb, col in zip(self.cb_ch, self.ch_col):
-            cb.setCheckState(2)
-            cb.setStyleSheet('color: ' + col)
-        for cb in self.cb_ch:
-            cb.stateChanged.connect(self.display_curves)
+        self.data = np.empty(self.module.points, dtype=complex)
+        self.x = np.empty(self.module.points)
+        self.phase = np.empty(self.module.points)
+        self.amp_abs = np.empty(self.module.points)
+
+        for prop in self.properties:
+            if prop.name in ["start", "stop", "rbw"]:
+                spin_box = prop.widget
+                spin_box.setDecimals(1)
+                spin_box.setMaximum(100e6)
+                spin_box.setMinimum(-100e6)
+                spin_box.setSingleStep(100)
+
+
+    def run_single(self):
+        self.module.setup()
+        self.values = self.module.values()
+        self.timer.setInterval(self.module.time_per_point*1000)
+        self.timer.start()
+
+    def add_one_point(self):
+        cur = self.module.current_point
+        try:
+            x, y, amp = self.values.next()
+        except StopIteration:
+            return
+        self.data[cur] = y
+        self.phase[cur] = np.angle(y, deg=True)
+        self.amp_abs[cur] = abs(y)
+        self.x[cur] = x
+        self.curve.setData(self.x[:cur], self.amp_abs[:cur])
+        self.curve_phase.setData(self.x[:cur], self.phase[:cur])
+        self.timer.start()
+
+    def run_continuous(self): pass
+
+    def do_run_continuous(self): pass
 
 
 class RedPitayaGui(RedPitaya):
@@ -369,6 +356,8 @@ class RedPitayaGui(RedPitaya):
         self.tab_widget.addTab(self.scope_widget, "Scope")
         self.all_asg_widget = AllAsgGui(parent=None, rp=self)
         self.tab_widget.addTab(self.all_asg_widget, "Asg")
+        self.na_widget = NaGui(parent=None, module=NetworkAnalyzer(self))
+        self.tab_widget.addTab(self.na_widget, "NA")
         self.tab_widget.show()
 
         

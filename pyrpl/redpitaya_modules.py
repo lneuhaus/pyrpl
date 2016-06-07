@@ -1045,7 +1045,7 @@ class IQ(FilterModule):
         try:
             self.amplitude = amplitude # turn on NA inside try..except block
             for i in range(points):
-                self.frequency = x[i] #this triggers the NA acquisition
+                self.frequency = x[i] # this triggers the NA acquisition
                 sleep(1.0 / rbw * (avg + sleeptimes))
                 x[i] = self.frequency # get the actual (discretized) frequency
                 y[i] = self._nadata

@@ -75,7 +75,7 @@ class SpectrumAnalyzer(object):
         self.configure_signal_chain(input,iq_nr)
         
     def configure_signal_chain(self):
-        iq = getattr(self.)
+        iq = getattr(self.iq)
         
     @property
     def n_points(self):
