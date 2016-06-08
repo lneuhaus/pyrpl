@@ -22,15 +22,15 @@ class TestClass(object):
             assert False
         for modulekey, module in self.r.__dict__.items():
             if isinstance(module,BaseModule):
-                print "Scanning module",modulekey,"..."
+                logger.info("Scanning module %s...",modulekey)
                 for regkey,regclass in type(module).__dict__.items():
                     if isinstance(regclass,Register):
-                        print "Scanning register",regkey,"..."
+                        logger.info("Scanning register %s...",regkey)
                         yield self.register_validation, module, modulekey, regclass, regkey
     
 
     def register_validation(self, module, modulekey, reg, regkey):
-        print modulekey, regkey
+        logger.debug("%s %s", modulekey, regkey)
         if type(reg)==Register:
             # try to read
             value = module.__getattribute__(regkey)
@@ -47,8 +47,10 @@ class TestClass(object):
             if type(value) != bool: #make sure Register represents an int
                 assert False
             #exclude read-only registers
-            if regkey in ['reset_writestate_machine',
-                          'trigger_armed']:
+            if regkey in ['_reset_writestate_machine',
+                          '_trigger_armed',
+                          '_trigger_delay_running',
+                          'pretrig_ok']:
                 return
             #write opposite value and confirm it has changed
             module.__setattr__(regkey, not value)
@@ -69,8 +71,11 @@ class TestClass(object):
                           'ch2_firstpoint',
                           'dac1',
                           'dac2',
-                          'adc1',
-                          'adc2']:
+                          'voltage1',
+                          'voltage2',
+                          'firstpoint',
+                          'lastpoint'
+                          ]:
                 return
             #write something different and confirm change
             if value == 0:
@@ -103,8 +108,9 @@ class TestClass(object):
             if regkey not in ['scopetriggerphase']:
                 for phase in np.linspace(-1234,5678,90):
                     module.__setattr__(regkey, phase)
-                    if abs(module.__getattribute__(regkey)-(phase%360))>1e-6:
-                        assert False
+                    diff = abs(module.__getattribute__(regkey)-(phase%360))
+                    if diff >1e-6:
+                        assert False, "at phase "+str(phase)+": diff = "+str(diff)
             #set back original value
             module.__setattr__(regkey, value)
             if value != module.__getattribute__(regkey):
@@ -118,8 +124,9 @@ class TestClass(object):
             if regkey not in []:
                 for freq in [0,1,10,1e2,1e3,1e4,1e5,1e6,1e7,1e8]:
                     module.__setattr__(regkey, freq)
-                    if abs(module.__getattribute__(regkey)-freq)>0.1:
-                        assert False
+                    diff = abs(module.__getattribute__(regkey)-freq)
+                    if diff>0.1:
+                        assert False, "at freq "+str(freq)+": diff = "+str(diff)
             #set back original value
             module.__setattr__(regkey, value)
             if value != module.__getattribute__(regkey):
@@ -127,7 +134,7 @@ class TestClass(object):
         if type(reg)==SelectRegister:
             # try to read
             value = module.__getattribute__(regkey)
-            if type(value) != type(reg.options.keys()[0]): #make sure Register represents an int
+            if type(value) != type(list(reg.options.keys())[0]): #make sure Register represents an int
                 assert False
             #exclude read-only registers
             if regkey in []:

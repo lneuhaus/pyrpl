@@ -300,10 +300,11 @@ end else begin
       
    end
 
-   if (sys_ren) begin
-      buf_a_rpnt_rd <= {{32-RSZ-2{1'b0}},buf_a_rpnt,2'h0};
-      buf_b_rpnt_rd <= {{32-RSZ-2{1'b0}},buf_b_rpnt,2'h0};
-   end
+   // disabled to improve fpga timing and space
+   //if (sys_ren) begin
+   //   buf_a_rpnt_rd <= {{32-RSZ-2{1'b0}},buf_a_rpnt,2'h0};
+   //   buf_b_rpnt_rd <= {{32-RSZ-2{1'b0}},buf_b_rpnt,2'h0};
+   //end
 
    ren_dly <= {ren_dly[3-2:0], sys_ren};
    ack_dly <=  ren_dly[3-1] || sys_wen ;

@@ -30,20 +30,23 @@ class SSHshell(object):
             hostname='localhost',
             user='root',
             password='root',
-            delay=0.05):
+            delay=0.05, 
+            timeout = 3):
         self.logger = logging.getLogger(name=__name__)
         self.delay = delay
         self.apprunning = False
         self.hostname = hostname
         self.user = user
         self.password = password
+        self.timeout= timeout
         self.ssh = paramiko.SSHClient()
         self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         self.ssh.connect(
             hostname,
             username=self.user,
             password=self.password,
-            port=22)
+            port=22,
+            timeout = timeout)
         self.channel = self.ssh.invoke_shell()
         self.startscp()
         # self.sleep(0.1)
@@ -62,14 +65,15 @@ class SSHshell(object):
         if self.channel.recv_ready():
             return self.channel.recv(nbytes)
         else:
-            return ""
+            return b""
 
     def read(self):
         sumstring = ""
-        string = "1"
-        while string != "":
-            string = self.read_nbytes(1024)
+        while True:
+            string = self.read_nbytes(1024).decode('utf-8')
             sumstring += string
+            if not string:
+                break
         self.logger.debug(sumstring)
         return sumstring
 

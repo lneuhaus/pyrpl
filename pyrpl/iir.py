@@ -249,7 +249,7 @@ def get_coeff(
     b = b[0]
     logger.debug("Discrete polynome: %s %s", b, a)
     r, p, k = sig.residuez(b, a, tol=tol)
-    coeff = rpk2psos(r, p, k, tol=tol, verbose=verbose)
+    coeff = rpk2psos(r, p, k, tol=tol)
     logger.debug("Coefficients: %s", coeff)
     if finiteprecision:
         fcoeff = finiteprecision(
@@ -262,19 +262,17 @@ def get_coeff(
         return coeff
 
 """
-def get_coeff_continuous(sys,dt=8e-9,totalbits=64,shiftbits=32,tol=0,verbose=False):
+def get_coeff_continuous(sys,dt=8e-9,totalbits=64,shiftbits=32,tol=0):
     zc,pc,kc = sys
     bb,aa = sig.zpk2tf(zc,pc,kc)
     rr,pp,kk = sig.residue(bb,aa,tol=tol)
-    coeffc = rpk2psos(rr,pp,kk,tol=tol,verbose=verbose)
+    coeffc = rpk2psos(rr,pp,kk,tol=tol)
     coeff = list()
     for c in list(coeffc):
-        if verbose:
-            print "Section coefficients (continuous):",c
+        print "Section coefficients (continuous):",c
         b,a,dtt  = sig.cont2discrete((c[0:3],c[3:6]),dt)
         b = b[0]
-        if verbose:
-            print "Discrete a,b:", b,a
+        print "Discrete a,b:", b,a
         cd=np.zeros(6,dtype=np.complex128)
         for i in range(6):
             if i<3 and i<len(b):
@@ -283,8 +281,7 @@ def get_coeff_continuous(sys,dt=8e-9,totalbits=64,shiftbits=32,tol=0,verbose=Fal
                 cd[i] = a[i-3]
             else:
                 cd[i] = 0
-        if verbose:
-            print "Section coefficients (discrete):",cd
+        print "Section coefficients (discrete):",cd
         coeff.append(cd)
     coeff = np.array(coeff)
     fcoeff = coeff#finiteprecision(coeff,totalbits=totalbits,shiftbits=shiftbits)

@@ -7,7 +7,7 @@ logger = logging.getLogger(name=__name__)
 #needed to set floats to minimum count above zero
 epsilon = sys.float_info.epsilon
 
-from bijection import Bijection
+from .bijection import Bijection
 
 #docstring does not work yet, see: 
 #http://stackoverflow.com/questions/37255109/python-docstring-for-descriptors
@@ -59,11 +59,11 @@ class LongRegister(Register):
     def __init__(self, address, bits=64, **kwargs):
         super(LongRegister,self).__init__(address=address, **kwargs)
         self.bits = bits
-        self.size = (32+bits-bits%32)/32
+        self.size = int((32+bits-bits%32)/32)
 
     def __get__(self, obj, objtype=None):
         values = obj._reads(self.address, self.size)
-        value = long(0)
+        value = int(0)
         for i in range(self.size):
             value += int(values[i])<<(32*i)
         if self.bitmask is None:
@@ -221,7 +221,7 @@ class PhaseRegister(FloatRegister):
         
     def from_python(self, value):
         # make sure small float values are not rounded to zero
-        return int(round((float(value)%360)/360*2**self.bits)) 
+        return int(round((float(value)%360)/360*2**self.bits)% 2**self.bits) 
         
     def to_python(self, value):
         return float(value)/2**self.bits*360
