@@ -15,7 +15,7 @@ class NetworkAnalyzer(object):
         self.points = 1001
         self.rbw = 100
         self.avg = 1
-        self.amplitude = 0.1
+        self.amplitude = 0.01
         self.input = 'adc1'
         self.output_direct = 'out1'
         self.acbandwidth = 0
@@ -25,6 +25,20 @@ class NetworkAnalyzer(object):
         #input amplitude is kept at a constant voltage
         self.maxamplitude = 1.0
         self._setup = False
+
+    @property
+    def params(self):
+        return dict(start=self.start,
+                    stop=self.stop,
+                    avg=self.avg,
+                    rbw=self.rbw,
+                    points=self.points,
+                    input=self.input,
+                    output_direct=self.output_direct,
+                    stabilize=self.stabilize,
+                    acbandwidth=self.acbandwidth,
+                    amplitude=self.amplitude,
+                    logscale=self.logscale)
 
     @property
     def iq(self):
@@ -137,10 +151,20 @@ class NetworkAnalyzer(object):
 
         self._rescale = 2.0 ** (-self.iq._LPFBITS) * 4.0  # 4 is artefact of fpga code
         self.current_point = 0
-        self.iq.amplitude = self.amplitude  # turn on NA inside try..except block
+
+        #self.iq.amplitude = self.amplitude  # turn on NA inside try..except block
         self.iq.frequency = self.x[0]  # this triggers the NA acquisition
         self.time_last_point = time()
 
+    @property
+    def amplitude(self):
+        return self._amplitude
+
+    @amplitude.setter
+    def amplitude(self, val):
+        self.iq.amplitude = val
+        self._amplitude = self.iq.amplitude
+        return val
 
     @property
     def iq_names(self):

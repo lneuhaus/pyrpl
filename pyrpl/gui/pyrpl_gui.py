@@ -210,11 +210,13 @@ class ScopeWidget(ModuleWidget):
         self.plot_item = self.win.addPlot(title="Scope")
         self.button_single = QtGui.QPushButton("Run single")
         self.button_continuous = QtGui.QPushButton("Run continuous")
+        self.button_save = QtGui.QPushButton("Save curve")
         self.curves = [self.plot_item.plot(pen=color[0]) \
                        for color in self.ch_col]
         self.main_layout.addWidget(self.win)
         self.button_layout.addWidget(self.button_single)
         self.button_layout.addWidget(self.button_continuous)
+        self.button_layout.addWidget(self.button_save)
         self.main_layout.addLayout(self.button_layout)
         self.cb_ch = []
         for i in (1,2):
@@ -223,6 +225,7 @@ class ScopeWidget(ModuleWidget):
 
         self.button_single.clicked.connect(self.run_single)
         self.button_continuous.clicked.connect(self.run_continuous)
+        self.button_save.clicked.connect(self.save)
         self.timer = QtCore.QTimer()
         self.timer.setInterval(10)
         self.timer.setSingleShot(True)
@@ -235,7 +238,25 @@ class ScopeWidget(ModuleWidget):
         for cb in self.cb_ch:
             cb.stateChanged.connect(self.display_curves)
 
-        
+    @property
+    def params(self):
+        # type: () -> dict
+        return dict(average=self.module.average,
+                    trigger_source=self.module.trigger_source,
+                    threshold_ch1=self.module.threshold_ch1,
+                    threshold_ch2=self.module.threshold_ch2,
+                    input1=self.module.input1,
+                    input2=self.module.input2)
+
+    def save(self):
+        from pyrpl import CurveDB
+        for ch in [1,2]:
+            d = self.params
+            d.update(ch=ch)
+            c = CurveDB.create(self.module.times,
+                               self.module.curve(ch),
+                               **d)
+
 
 class AsgGui(ModuleWidget):
     property_names = ["waveform",
@@ -316,6 +337,9 @@ class NaGui(ModuleWidget):
         self.button_continuous = QtGui.QPushButton("Run continuous")
         self.button_continuous.my_label = "Continuous"
         self.button_restart_averaging = QtGui.QPushButton('Restart averaging')
+
+        self.button_save = QtGui.QPushButton("Save curve")
+
         self.curve = self.plot_item.plot(pen='b')
         self.curve_phase = self.plot_item_phase.plot(pen='b')
         self.main_layout.addWidget(self.win)
@@ -323,11 +347,13 @@ class NaGui(ModuleWidget):
         self.button_layout.addWidget(self.button_single)
         self.button_layout.addWidget(self.button_continuous)
         self.button_layout.addWidget(self.button_restart_averaging)
+        self.button_layout.addWidget(self.button_save)
         self.main_layout.addLayout(self.button_layout)
 
         self.button_single.clicked.connect(self.run_single)
         self.button_continuous.clicked.connect(self.run_continuous)
         self.button_restart_averaging.clicked.connect(self.ask_restart_and_do_it)
+        self.button_save.clicked.connect(self.save)
         self.timer = QtCore.QTimer()
         self.timer.setInterval(10)
         self.timer.setSingleShot(True)
@@ -355,6 +381,23 @@ class NaGui(ModuleWidget):
                 spin_box.setMaximum(1e6)
                 spin_box.setMinimum(0)
 
+    def save_current_params(self):
+        self.current_params = dict(start=self.module.start,
+                                   stop=self.module.stop,
+                                   rbw=self.module.rbw,
+                                   input=self.module.input,
+                                   output_direct=self.module.output_direct,
+                                   points=self.module.points,
+                                   amplitude=self.module.amplitude,
+                                   logscale=self.module.logscale,
+                                   avg=self.module.avg,
+                                   post_average=self.post_average)
+
+    def save(self):
+        from pyrpl import CurveDB
+        c = CurveDB.create(self.x[:self.last_valid_point],
+                           self.data[:self.last_valid_point],
+                           **self.current_params)
 
     def init_data(self):
         self.data = np.zeros(self.module.points, dtype=complex)
@@ -395,6 +438,7 @@ class NaGui(ModuleWidget):
     def new_run(self):
         self.module.setup()
         self.values = self.module.values()
+        self.save_current_params()
 
     def set_state(self, continuous, paused, need_restart, n_av=0):
         self.continuous = continuous
@@ -414,6 +458,14 @@ class NaGui(ModuleWidget):
                 active_button.setText('Pause')
             else:
                 active_button.setText('Pause (%i averages)'%n_av)
+
+    @property
+    def last_valid_point(self):
+        if self.post_average>0:
+            max_point = self.module.points
+        else:
+            max_point = self.module.current_point
+        return max_point
 
     def add_one_point(self):
         if self.paused:
@@ -436,12 +488,11 @@ class NaGui(ModuleWidget):
         self.phase[cur] = np.angle(self.data[cur], deg=True)
         self.amp_abs[cur] = abs(self.data[cur])
         self.x[cur] = x
-        if self.post_average>0:
-            max_point = self.module.points
-        else:
-            max_point = cur
-        self.curve.setData(self.x[:max_point], self.amp_abs[:max_point])
-        self.curve_phase.setData(self.x[:max_point], self.phase[:max_point])
+
+        self.curve.setData(self.x[:self.last_valid_point],
+                           self.amp_abs[:self.last_valid_point])
+        self.curve_phase.setData(self.x[:self.last_valid_point],
+                                 self.phase[:self.last_valid_point])
         self.timer.start()
 
     def run_continuous(self):
@@ -474,7 +525,9 @@ class RedPitayaGui(RedPitaya):
         self.tab_widget.show()
 
         
-
+    @property
+    def na(self):
+        return self.na_widget.module
 
 
 

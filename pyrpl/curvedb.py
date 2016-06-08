@@ -31,6 +31,7 @@ import pandas
 import pickle
 import os
 import logging
+import numpy
 
 class CurveDB(object):
 
@@ -50,7 +51,7 @@ class CurveDB(object):
     @classmethod
     def create(cls, *args, **kwds):
         """
-        Creates a new curve, first arguments should be either Series(y,index=x) or x, y
+        Creates a new curve, first arguments should be either Series(y, index=x) or x, y
         kwds will be passed to self.params
         """
         if len(args) == 1:
@@ -68,7 +69,7 @@ class CurveDB(object):
         obj = cls()
         obj.data = ser
         obj.params = kwds
-        pk = self.pk  # make a pk
+        #pk = self.pk  # make a pk
         obj.save()
         return obj
 
@@ -88,8 +89,7 @@ class CurveDB(object):
 
     def save(self):
         with open(self._dirname + str(self.pk) + '.p', 'w') as f:
-            pickle.dump(self, f)
-            f.close()
+            numpy.save(f, self.data)
         # print "Save method not implemented yet. Therefore we will just plot the curve..."
         # self.plot()
 
@@ -114,10 +114,10 @@ class CurveDB(object):
 
     @property
     def pk(self):
-        if hasattr("_pk", self):
+        if hasattr( self, "_pk"):
             return self._pk
         else:
-            pks = [int(split(f, '.p')[0])
+            pks = [int(f.split('.p')[0])
                    for f in os.listdir(self._dirname) if f.endswith('.p')]
             if len(pks) == 0:
                 self._pk = 1
@@ -131,7 +131,9 @@ class CurveDB(object):
         # a proper implementation will assign the database primary key for pk
         # the primary key is used to load a curve from the storage into memory
 
-    @property
-    def _dirname(self):
-        import CurveDB
-        return os.path.dirname(CurveDB.__file__) + "//curves//"
+
+    _dirname = os.path.dirname(__file__) + "//curves//"
+
+
+if not os.path.exists(CurveDB._dirname):
+    os.mkdir(CurveDB._dirname)
