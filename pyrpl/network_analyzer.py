@@ -93,6 +93,7 @@ class NetworkAnalyzer(object):
         """
         if start is not None: self.start = start
         if stop is not None: self.stop = stop
+        if points is not None: self.points = points
         if rbw is not None: self.rbw = rbw
         if avg is not None: self.avg = avg
         if amplitude is not None: self.amplitude = amplitude
@@ -156,6 +157,20 @@ class NetworkAnalyzer(object):
         self.iq.frequency = self.x[0]  # this triggers the NA acquisition
         self.time_last_point = time()
 
+
+    @property
+    def current_freq(self):
+        return self.iq.frequency
+
+    @property
+    def rbw(self):
+        return self.iq.bandwidth[0]
+
+    @rbw.setter
+    def rbw(self, val):
+        self.iq.bandwidth = val
+        return val
+
     @property
     def amplitude(self):
         return self._amplitude
@@ -191,7 +206,7 @@ class NetworkAnalyzer(object):
             y *= self._rescale / amp
         return x, y, amp
 
-    def prepare_for_next_point(self, last_normalized_val, next_point):
+    def prepare_for_next_point(self, last_normalized_val):
         """
         set everything for next point
         """
@@ -202,9 +217,9 @@ class NetworkAnalyzer(object):
         if amplitude_next > self.maxamplitude:
             amplitude_next = self.maxamplitude
         self.iq.amplitude = amplitude_next
-        self.current_point+=1
-        if next_point < self.points:
-            self.iq.frequency = self.x[next_point]
+        self.current_point += 1
+        if self.current_point < self.points:
+            self.iq.frequency = self.x[self.current_point]
         self.time_last_point = time()  # check averaging time from now
 
     def values(self):
@@ -223,10 +238,13 @@ class NetworkAnalyzer(object):
         values are made of a triplet (freq, complex_amplitude, amplitude)
         """
         try:
-            for point in xrange(self.points):
-                self.current_point = point
+            #for point in xrange(self.points):
+            while self.current_point<self.points:
+                #self.current_point = point
                 x, y, amp = self.get_current_point()
-                self.prepare_for_next_point(y, point+1)
+                if self.start == self.stop:
+                    x = time()
+                self.prepare_for_next_point(y)
                 yield (x, y, amp)
         except Exception as e:
             self.iq._logger.info("NA output turned off due to an exception")

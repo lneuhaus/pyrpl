@@ -1,9 +1,13 @@
+from time import time
+
 from pyrpl import RedPitaya
 from pyrpl.redpitaya_modules import NotReadyError
 from pyqtgraph.Qt import QtGui, QtCore
 import pyqtgraph as pg
 import numpy as np
 from pyrpl.network_analyzer import NetworkAnalyzer
+
+
 
 
 
@@ -124,7 +128,7 @@ class ModuleWidget(QtGui.QWidget):
 
     def init_property_layout(self):
         self.property_watch_timer = QtCore.QTimer()
-        self.property_watch_timer.setInterval(1000)
+        self.property_watch_timer.setInterval(100)
         self.property_watch_timer.start()
 
         self.property_layout = QtGui.QHBoxLayout()
@@ -354,9 +358,14 @@ class NaGui(ModuleWidget):
         self.button_continuous.clicked.connect(self.run_continuous)
         self.button_restart_averaging.clicked.connect(self.ask_restart_and_do_it)
         self.button_save.clicked.connect(self.save)
-        self.timer = QtCore.QTimer()
+        self.timer = QtCore.QTimer() # timer for point acquisition
         self.timer.setInterval(10)
         self.timer.setSingleShot(True)
+
+        self.update_timer = QtCore.QTimer() # timer for plot update
+        self.update_timer.setInterval(50) # 50 ms refreshrate max
+        self.update_timer.timeout.connect(self.update_plot)
+        self.update_timer.setSingleShot(True)
 
         self.continuous = True
         self.paused = True
@@ -422,6 +431,7 @@ class NaGui(ModuleWidget):
     def restart_averaging(self):
         self.init_data()
         self.timer.setInterval(self.module.time_per_point * 1000)
+        self.update_timer.setInterval(10)
         self.new_run()
 
     def run_single(self):
@@ -467,12 +477,49 @@ class NaGui(ModuleWidget):
             max_point = self.module.current_point
         return max_point
 
+    def threshold_hook(self, current_val):
+        """
+        A convenience function to stop the run upon some condition
+        (such as reaching of a threshold. current_val is the complex amplitude
+        of the last data point).
+
+        To be overwritten in derived class...
+        Parameters
+        ----------
+        current_val
+
+        Returns
+        -------
+
+        """
+        pass
+
+    def update_plot(self):
+        """
+        Update plot only every 10 ms max...
+
+        Returns
+        -------
+        """
+        #plot_time_start = time()
+        self.curve.setData(self.x[:self.last_valid_point],
+                           self.amp_abs[:self.last_valid_point])
+
+        self.curve_phase.setData(self.x[:self.last_valid_point],
+                             self.phase[:self.last_valid_point])
+        #plot_time = time() - plot_time_start # actually not working, because done latter
+        #self.update_timer.setInterval(plot_time*10*1000) # make sure plotting
+                                                         # is only marginally slowing
+                                                         # down the measurement...
+        self.update_timer.setInterval(self.last_valid_point/100)
+
     def add_one_point(self):
         if self.paused:
             return
         cur = self.module.current_point
         try:
             x, y, amp = self.values.next()
+            self.threshold_hook(y)
         except StopIteration:
             self.post_average += 1
             if self.continuous:
@@ -489,10 +536,10 @@ class NaGui(ModuleWidget):
         self.amp_abs[cur] = abs(self.data[cur])
         self.x[cur] = x
 
-        self.curve.setData(self.x[:self.last_valid_point],
-                           self.amp_abs[:self.last_valid_point])
-        self.curve_phase.setData(self.x[:self.last_valid_point],
-                                 self.phase[:self.last_valid_point])
+        if not self.update_timer.isActive():
+            self.update_timer.start()
+
+        self.timer.setInterval(self.module.time_per_point*1000)
         self.timer.start()
 
     def run_continuous(self):
@@ -513,18 +560,54 @@ class NaGui(ModuleWidget):
 
 
 class RedPitayaGui(RedPitaya):
+    def __init__(self, *args, **kwds):
+        super(RedPitayaGui, self).__init__(*args, **kwds)
+        self.na_widget = NaGui(parent=None, module=NetworkAnalyzer(self))
+        self.scope_widget = ScopeWidget(parent=None, module=self.scope)
+        self.all_asg_widget = AllAsgGui(parent=None, rp=self)
+
+        self.customize_scope()
+        self.customize_na()
+        self.custom_setup()
+
     def gui(self):
         self.gui_timer = QtCore.QTimer()
         self.tab_widget = QtGui.QTabWidget()
-        self.scope_widget = ScopeWidget(parent=None, module=self.scope)
         self.tab_widget.addTab(self.scope_widget, "Scope")
-        self.all_asg_widget = AllAsgGui(parent=None, rp=self)
         self.tab_widget.addTab(self.all_asg_widget, "Asg")
-        self.na_widget = NaGui(parent=None, module=NetworkAnalyzer(self))
         self.tab_widget.addTab(self.na_widget, "NA")
         self.tab_widget.show()
 
-        
+    def customize_scope(self):
+        """
+        Convenience hook for user functionality upon subclassing RedPitayaGui
+        Returns
+        -------
+
+        """
+
+        pass
+
+    def customize_na(self):
+        """
+        Convenience hook for user functionality upon subclassing RedPitayaGui
+        Returns
+        -------
+
+        """
+
+        pass
+
+
+    def custom_setup(self):
+        """
+        Convenience hook for user functionality upon subclassing RedPitayaGui
+        Returns
+        -------
+
+        """
+        pass
+
     @property
     def na(self):
         return self.na_widget.module
