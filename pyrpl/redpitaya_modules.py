@@ -228,9 +228,15 @@ class Scope(BaseModule):
                     2**10: 2**10,
                     2**13: 2**13,
                     2**16: 2**16}
+
+
     
     decimations = sorted(_decimations.keys()) # help for the user
-    
+    sampling_times = [8e-9 * dec for dec in decimations]
+    durations = [s_times * data_length for s_times in sampling_times]
+
+
+
     decimation = SelectRegister(0x14, doc="decimation factor", 
                                 options=_decimations)
     
@@ -290,9 +296,7 @@ class Scope(BaseModule):
         self.decimation = 1
         self._logger.error("Desired sampling time impossible to realize")
 
-    @property
-    def durations(self):
-        return [8e-9*self.data_length*dec for dec in self.decimations]
+
     
     @property
     def duration(self):

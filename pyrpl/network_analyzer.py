@@ -2,7 +2,6 @@ import numpy as np
 import sys
 from time import sleep, time
 
-from spectrum_analyzer import Span, BW
 from redpitaya_modules import NotReadyError
 
 

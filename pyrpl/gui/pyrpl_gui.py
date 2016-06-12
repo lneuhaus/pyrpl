@@ -6,10 +6,9 @@ from pyqtgraph.Qt import QtGui, QtCore
 import pyqtgraph as pg
 import numpy as np
 from pyrpl.network_analyzer import NetworkAnalyzer
+from pyrpl.spectrum_analyzer import SpectrumAnalyzer
 
-
-
-
+from collections import OrderedDict
 
 APP = QtGui.QApplication.instance()
 if APP is None:
@@ -56,7 +55,7 @@ class NumberProperty(BaseProperty):
         self.module_widget.property_changed.emit()
 
     def update(self):
-        if not self.widget.isActiveWindow():
+        if not self.widget.hasFocus():
             self.widget.setValue(self.module_value())
 
 class IntProperty(NumberProperty):
@@ -129,21 +128,22 @@ class ModuleWidget(QtGui.QWidget):
     def init_property_layout(self):
         self.property_watch_timer = QtCore.QTimer()
         self.property_watch_timer.setInterval(100)
+        self.property_watch_timer.timeout.connect(self.update_properties)
         self.property_watch_timer.start()
 
         self.property_layout = QtGui.QHBoxLayout()
         self.main_layout.addLayout(self.property_layout)
-        self.properties = []
+        self.properties = OrderedDict()
 
         for prop_name in self.property_names:
             prop = property_factory(self, prop_name)
-            self.properties.append(prop)
+            self.properties[prop_name] = prop
 
     def init_gui(self):
         raise NotImplementedError()
 
     def update_properties(self):
-        for prop in self.properties:
+        for prop in self.properties.values():
             prop.update_widget()
 
 class ScopeWidget(ModuleWidget):
@@ -283,10 +283,8 @@ class AsgGui(ModuleWidget):
         """
         self.main_layout.addLayout(self.button_layout)
         self.cb_ch = []
-        for prop in self.properties:
-            if prop.name == "frequency":
-                break
-        freq_spin_box = prop.widget
+
+        freq_spin_box = self.properties["frequency"].widget
         freq_spin_box.setDecimals(1)
         freq_spin_box.setMaximum(100e6)
         freq_spin_box.setMinimum(-100e6)
@@ -378,17 +376,18 @@ class NaGui(ModuleWidget):
         self.paused = True
         self.restart_averaging()
 
-        for prop in self.properties:
-            if prop.name in ["start", "stop", "rbw"]:
-                spin_box = prop.widget
-                #spin_box.setDecimals(1)
-                spin_box.setMaximum(100e6)
-                spin_box.setMinimum(-100e6)
-                spin_box.setSingleStep(100)
-            if prop.name in ["points", "avg"]:
-                spin_box = prop.widget
-                spin_box.setMaximum(1e6)
-                spin_box.setMinimum(0)
+        for prop in (self.properties["start"],
+                     self.properties["stop"],
+                     self.properties["rbw"]):
+            spin_box = prop.widget
+            #spin_box.setDecimals(1)
+            spin_box.setMaximum(100e6)
+            spin_box.setMinimum(-100e6)
+            spin_box.setSingleStep(100)
+        for prop in (self.properties["points"], self.properties["avg"]):
+            spin_box = prop.widget
+            spin_box.setMaximum(1e6)
+            spin_box.setMinimum(0)
 
     def save_current_params(self):
         self.current_params = dict(start=self.module.start,
@@ -551,12 +550,117 @@ class NaGui(ModuleWidget):
             self.timer.start()
         else:
             self.set_state(continuous=True, paused=True, need_restart=False, n_av=self.post_average)
-    """
-    def restart_averaging(self):
-        self.init_data()
-        self.run()
-    """
 
+
+class SpecAnGui(ModuleWidget):
+    property_names = ["input",
+                      "center",
+                      "span",
+                      "points",
+                      "rbw_auto",
+                      "rbw",
+                      "window",
+                      #"avg",
+                      "acbandwidth"]
+
+    def init_gui(self):
+        self.main_layout = QtGui.QVBoxLayout()
+        self.init_property_layout()
+        self.button_layout = QtGui.QHBoxLayout()
+        self.setLayout(self.main_layout)
+        self.setWindowTitle("Spec. An.")
+        self.win = pg.GraphicsWindow(title="PSD")
+        self.plot_item = self.win.addPlot(title="PSD")
+        self.button_single = QtGui.QPushButton("Run single")
+        self.button_continuous = QtGui.QPushButton("Run continuous")
+        self.button_restart_averaging = QtGui.QPushButton('Restart averaging')
+
+        self.button_save = QtGui.QPushButton("Save curve")
+
+        self.curve = self.plot_item.plot(pen='b')
+
+        self.main_layout.addWidget(self.win)
+
+        self.button_layout.addWidget(self.button_single)
+        self.button_layout.addWidget(self.button_continuous)
+        self.button_layout.addWidget(self.button_restart_averaging)
+        self.button_layout.addWidget(self.button_save)
+        self.main_layout.addLayout(self.button_layout)
+
+        self.button_single.clicked.connect(self.run_single)
+        self.button_continuous.clicked.connect(self.run_continuous)
+        self.button_restart_averaging.clicked.connect(self.restart_averaging)
+        self.button_save.clicked.connect(self.save)
+
+        self.timer = QtCore.QTimer()
+        self.timer.setSingleShot(True)
+        self.timer.setInterval(0)
+        self.timer.timeout.connect(self.acquire_one_curve)
+
+        self.running = False
+        self.property_changed.connect(self.restart_averaging)
+
+        for prop in self.properties["center"], self.properties["rbw"]:
+            prop.widget.setMaximum(100e6)
+            prop.widget.setDecimals(0)
+        self.properties["points"].widget.setMaximum(16384)
+
+    def save(self):
+        from pyrpl import CurveDB
+        d = self.current_params()
+        c = CurveDB.create(self.x_data,
+                               self.y_data,
+                               **d)
+
+    def update_properties(self):
+        super(SpecAnGui, self).update_properties()
+        self.properties["rbw"].widget.setEnabled(not self.module.rbw_auto)
+
+    def run_single(self):
+        self.button_continuous.setEnabled(False)
+        self.restart_averaging()
+        self.acquire_one_curve()
+        self.button_continuous.setEnabled(True)
+
+    def update_display(self):
+        self.curve.setData(self.x_data, self.y_data)
+        if self.running:
+            self.button_continuous.setText('Stop (%i)'%self.current_average)
+    def acquire_one_curve(self):
+        self.module.setup()
+        self.current_average += 1
+        self.y_data = (self.current_average*self.y_data \
+                       + self.module.curve())/(self.current_average + 1)
+        self.update_display()
+        if self.running:
+            self.timer.start()
+
+    def run_continuous(self):
+        if self.running:
+            self.button_continuous.setText("Run continuous")
+            self.running = False
+            self.button_single.setEnabled(True)
+            self.timer.stop()
+        else:
+            self.running = True
+            self.button_single.setEnabled(False)
+            self.button_continuous.setText("Stop")
+            self.restart_averaging()
+            self.timer.start()
+
+    def restart_averaging(self):
+        self.y_data = np.zeros(self.module.points)
+        self.x_data = self.module.freqs()
+        self.current_average = 0
+
+    def current_params(self):
+        return dict(center=self.module.center,
+                   span=self.module.span,
+                   rbw=self.module.rbw,
+                   input=self.module.input,
+                   points=self.module.points,
+                   avg=self.module.avg,
+                   acbandwidth=self.module.acbandwidth)
 
 
 class RedPitayaGui(RedPitaya):
@@ -565,6 +669,8 @@ class RedPitayaGui(RedPitaya):
         self.na_widget = NaGui(parent=None, module=NetworkAnalyzer(self))
         self.scope_widget = ScopeWidget(parent=None, module=self.scope)
         self.all_asg_widget = AllAsgGui(parent=None, rp=self)
+        self.sa_widget = SpecAnGui(parent=None, module=SpectrumAnalyzer(self))
+
 
         self.customize_scope()
         self.customize_na()
@@ -576,6 +682,7 @@ class RedPitayaGui(RedPitaya):
         self.tab_widget.addTab(self.scope_widget, "Scope")
         self.tab_widget.addTab(self.all_asg_widget, "Asg")
         self.tab_widget.addTab(self.na_widget, "NA")
+        self.tab_widget.addTab(self.sa_widget, "Spec. An.")
         self.tab_widget.show()
 
     def customize_scope(self):
@@ -612,9 +719,9 @@ class RedPitayaGui(RedPitaya):
     def na(self):
         return self.na_widget.module
 
-
-
-
+    @property
+    def spec_an(self):
+        return self.sa_widget.module
 
 
 
