@@ -594,7 +594,7 @@ class SpecAnGui(ModuleWidget):
 
         self.timer = QtCore.QTimer()
         self.timer.setSingleShot(True)
-        self.timer.setInterval(0)
+        self.timer.setInterval(10)
         self.timer.timeout.connect(self.acquire_one_curve)
 
         self.running = False
@@ -626,11 +626,12 @@ class SpecAnGui(ModuleWidget):
         self.curve.setData(self.x_data, self.y_data)
         if self.running:
             self.button_continuous.setText('Stop (%i)'%self.current_average)
+
     def acquire_one_curve(self):
         self.module.setup()
-        self.current_average += 1
         self.y_data = (self.current_average*self.y_data \
-                       + self.module.curve())/(self.current_average + 1)
+                     + self.module.curve())/(self.current_average + 1)
+        self.current_average += 1
         self.update_display()
         if self.running:
             self.timer.start()

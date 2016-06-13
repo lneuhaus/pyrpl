@@ -21,6 +21,7 @@ from time import sleep
 from matplotlib import pyplot
 import math
 import numpy
+from numpy import pi, linspace
 import numpy as np
 import os
 from pylab import *
@@ -189,9 +190,9 @@ class SpectrumAnalyzer(object):
         return self.iq_data()*self.filter_window()
 
     def useful_index(self):
-        middle = self.data_length/2
-        length = self.data_length/self.nyquist_margin
-        return slice(middle - length/2, middle + length/2)
+        middle = int(self.data_length/2)
+        length = self.points#self.data_length/self.nyquist_margin
+        return slice(middle - length/2, middle + length/2 + 1)
 
     def curve(self):
         if not self._setup:
