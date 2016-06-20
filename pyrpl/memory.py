@@ -1,37 +1,48 @@
 import os
-import yaml
 from collections import OrderedDict
 from shutil import copyfile
 
 import logging
 logger = logging.getLogger(name=__name__)
 
-# ordered load and dump for yaml files. From
-# http://stackoverflow.com/questions/5121931/in-python-how-can-you-load-yaml-mappings-as-ordereddicts
-def ordered_load(stream, Loader=yaml.Loader, object_pairs_hook=OrderedDict):
-    class OrderedLoader(Loader):
-        pass
-    def construct_mapping(loader, node):
-        loader.flatten_mapping(node)
-        return object_pairs_hook(loader.construct_pairs(node))
-    OrderedLoader.add_constructor(
-        yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
-        construct_mapping)
-    return yaml.load(stream, OrderedLoader)
-
-def ordered_dump(data, stream=None, Dumper=yaml.Dumper, **kwds):
-    class OrderedDumper(Dumper):
-        pass
-    def _dict_representer(dumper, data):
-        return dumper.represent_mapping(
+try:
+    import ruamel.yaml
+    def load(f):
+        return ruamel.yaml.load(f, ruamel.yaml.RoundTripLoader)
+    def save(data, stream=None  ):
+        return ruamel.yaml.dump(data, stream=stream, Dumper=ruamel.yaml.RoundTripDumper, default_flow_style = False)
+    def isbranch(obj):
+        return isinstance(obj, OrderedDict) #type is ruamel.yaml.comments.CommentedMap
+except:
+    logger.warning("ruamel.yaml could not be found. Using yaml instead. Comments in config files will be lost.")
+    import yaml
+    # ordered load and dump for yaml files. From
+    # http://stackoverflow.com/questions/5121931/in-python-how-can-you-load-yaml-mappings-as-ordereddicts
+    def load(stream, Loader=yaml.SafeLoader, object_pairs_hook=OrderedDict):
+        class OrderedLoader(Loader):
+            pass
+        def construct_mapping(loader, node):
+            loader.flatten_mapping(node)
+            return object_pairs_hook(loader.construct_pairs(node))
+        OrderedLoader.add_constructor(
             yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
-            data.items())
-    OrderedDumper.add_representer(OrderedDict, _dict_representer)
-    return yaml.dump(data, stream, OrderedDumper, **kwds)
-
-# usage example:
-# ordered_load(stream, yaml.SafeLoader)
-# ordered_dump(data, Dumper=yaml.SafeDumper)
+            construct_mapping)
+        return yaml.load(stream, OrderedLoader)
+    def save(data, stream=None, Dumper=yaml.SafeDumper, default_flow_style=False, **kwds):
+        class OrderedDumper(Dumper):
+            pass
+        def _dict_representer(dumper, data):
+            return dumper.represent_mapping(
+                yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
+                data.items())
+        OrderedDumper.add_representer(OrderedDict, _dict_representer)
+        return yaml.dump(data, stream, OrderedDumper,
+                         default_flow_style=default_flow_style, **kwds)
+    def isbranch(obj):
+        return type(obj) == OrderedDict
+    # usage example:
+    # load(stream, yaml.SafeLoader)
+    # save(data, stream=f, Dumper=yaml.SafeDumper)
 
 class MemoryBranch(object):
     """Represents a branch of a memoryTree"""
@@ -57,7 +68,7 @@ class MemoryBranch(object):
             # make sure data is up-to-date
             self._reload()
             # if subbranch, return MemoryBranch object
-            if type(self._data[name]) == OrderedDict:
+            if isbranch(self._data[name]):
                 # test if we have a LemoryLeaf
                 if 'value' in self._data[name]:
                     return self._data[name]['value']
@@ -72,7 +83,7 @@ class MemoryBranch(object):
         if name.startswith('_') or name not in self._data:
             super(MemoryBranch, self).__setattr__(name, value)
         else:
-            if type(self._data[name]) == OrderedDict and 'value' in self._data[name]:
+            if isbranch(self._data[name]) and 'value' in self._data[name]:
                 ro = self._data[name]["ro"] or False
                 if ro:
                     logger.info("Attribute %s is read-only. New value %s cannot be written to config file",
@@ -100,7 +111,7 @@ class MemoryTree(MemoryBranch):
 
     def _load(self):
         with open(self._filename) as f:
-            self._data = ordered_load(f, Loader=yaml.SafeLoader)
+            self._data = load(f)
         # update dict of the object
         for name in self.__dict__:
             if not name.startswith('_') and name not in self._data:
@@ -121,7 +132,7 @@ class MemoryTree(MemoryBranch):
         copyfile(self._filename,self._filename+".bak")
         try:
             f = open(self._filename, mode='w')
-            ordered_dump(self._data, stream=f, Dumper=yaml.SafeDumper, default_flow_style=False)
+            save(self._data, stream=f)
             f.close()
         except:
             copyfile(self._filename+".bak",self._filename)

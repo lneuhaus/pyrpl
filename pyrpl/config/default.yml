@@ -1,17 +1,18 @@
 model:
   type: fabry-perot
   cavity:
-    length: 0.8
+    length: 0.5
     finesse: 5000
     actuator:
       type: pzt
       lowpass: 10.0
       gain: 5555
       iir:
-        value: 2.4+1j
-        descroption: iir filter coefficients
-        ro: False
+        value: 2.4+1j #test 
+        description: iir filter coefficients
+        ro: false
 general:
   hostname: 192.168.1.100
-  user: root
+  user: toor
   password: toor
+
