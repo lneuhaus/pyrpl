@@ -1,18 +1,33 @@
+redpitaya:
+  hostname: 192.168.1.100
+  user: root
+  password: root
+  port: 2222
+  frequency_correction: 1.000
+  filename: fpga/red_pitaya.bin
+  reloadfpga: True
+
+general:
+  loglevel: debug # longterm: warning
+  name: default_cavity
+
 model:
   type: fabry-perot
   cavity:
     length: 0.5
     finesse: 5000
     actuator:
-      type: pzt
-      lowpass: 10.0
-      gain: 5555
-      iir:
-        value: 2.4+1j #test 
-        description: iir filter coefficients
-        ro: false
-general:
-  hostname: 192.168.1.100
-  user: toor
-  password: toor
 
+modelconstants:
+  lock_upper_threshold=0.9
+  lock_lower_threshold=0.0
+  # detect that laser is off -> abort locking attempts
+  relative_reflection_off=0.01
+
+
+stages:
+  PDHSTAGE = 4
+  SOFSTAGE = 3
+  DRIFTSTAGE = 2
+  COARSEFINDSTAGE = 1
+  UNLOCKEDSTAGE = 0

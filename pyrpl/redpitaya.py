@@ -204,7 +204,7 @@ class RedPitaya(SSHshell):
         self.endserver()
         sleep(self.delay)
         result = self.ask(self.serverdirname+"/monitor_server " + str(self.port))
-        if not "sh" in result: # means we tried the wrong binary version
+        if not "sh" in result: # sh in result means we tried the wrong binary version
             self.logger.info("Server application started on port %d",self.port)
             self.serverrunning = True
             return self.port

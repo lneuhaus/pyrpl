@@ -34,6 +34,7 @@ import os
 import logging
 
 class CurveDB(object):
+    _dirname = os.path.join(os.path.dirname(__file__),"curves")
 
     def __init__(self, name="some_curve"):
         """
@@ -133,4 +134,9 @@ class CurveDB(object):
         # a proper implementation will assign the database primary key for pk
         # the primary key is used to load a curve from the storage into memory
 
-    _dirname = os.path.dirname(__file__) + "//curves//"
+    def sort(self):
+        """numerically sorts the data series so that indexing can be used"""
+        X, Y = self.data.inde.values, self.data.values
+        xs = np.array([x for (x, y) in sorted(zip(X, Y))], dtype=np.float64)
+        ys = np.array([y for (x, y) in sorted(zip(X, Y))], dtype=np.float64)
+        self.data = pandas.Series(ys, index=xs)

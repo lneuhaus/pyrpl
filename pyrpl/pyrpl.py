@@ -21,25 +21,20 @@
 # set to 0 or 1
 
 
-from sshshell import SSHshell
 from time import sleep, time
-from matplotlib import pyplot
 import math
 import numpy
 import numpy as np
 import os
-import rpyc
-from pylab import *
 import pandas
-from PyQt4 import QtCore, QtGui
-import json
-import matplotlib
 import matplotlib.pyplot as plt
 import sys
+import os
 import iir
 
 from .redpitaya import RedPitaya
 from .curvedb import CurveDB
+from .memory import MemoryTree
 
 """
 channels:
@@ -114,23 +109,7 @@ You start off by copying the example CONSTANTS_FPF2 and changing FPF2 to your ca
     In case you really want to set up a PDH detection, continue here. Otherwise go to the last paragraph.
 """
 
-"""
-useful relations:
-----------------------------------
-i_real = i_set * isr_correction
-slope_times_i_real = i_optimal_real * slope = i_optimal_set * isr_correction * slope
-i_set = i_opt * sof
-therefore:
-sof = i_set/i_opt = _iset * slope * isr_correction / slope_times_i_real
----------------------------------
-"""
 
-
-PDHSTAGE = 4
-SOFSTAGE = 3
-DRIFTSTAGE = 2
-COARSEFINDSTAGE = 1
-UNLOCKEDSTAGE = 0
 
 CONSTANTS_DEFAULT = dict(
     lockbox_name="default_cavity",
@@ -143,19 +122,23 @@ CONSTANTS_DEFAULT = dict(
 
 )
 
-CONSTANTS = {'default': CONSTANTS_DEFAULT}
-
-
 class Lockbox(object):
+    _dirname = os.path.join(os.path.dirname(__file__), "config")
+
     def __init__(self, config="default"):
         """generic lockbox object, no implementation-dependent details here
-        """
-        self.c = MemoryTree(config=config)
 
-    def _sortedseries(self, X, Y):
-        xs = np.array([x for (x, y) in sorted(zip(X, Y))], dtype=np.float64)
-        ys = np.array([y for (x, y) in sorted(zip(X, Y))], dtype=np.float64)
-        return pandas.Series(ys, index=xs)
+        A lockbox has a MemoryTree to remember information. The memoryTree furthermore defines
+        one model of the physical system that is controlled.
+
+        Each model is composed of a state, that unambiguously defines the theoretical state of the
+        physical system, and an arbitrary number of signals that describe the dependent variables as
+        a function of the state. Signals can be settable, thereby defining the state of the system from
+        experimental parameters.
+        """
+
+        # configuration is retrieved from config file
+        self.c = MemoryTree(os.path.join(self._dirname, config, ".yml"))
 
     def _fastparams(self):
         return self._params(*args, **kwargs)
@@ -166,7 +149,7 @@ class Lockbox(object):
     def fastparams(self, postfix=""):
         dic = self._fastparams()
         params = dict()
-        for key in dic.keys():
+        for key in self.m.keys():
             params[key + postfix] = dic[key]
         return params
 
