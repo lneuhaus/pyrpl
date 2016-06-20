@@ -147,46 +147,10 @@ CONSTANTS = {'default': CONSTANTS_DEFAULT}
 
 
 class Lockbox(object):
-
-    def __init__(self, constants=None, cavity="default"):
+    def __init__(self, config="default"):
         """generic lockbox object, no implementation-dependent details here
         """
-        # load constants
-        # use default constants dictionary CONSTANTS[cavity]
-        # override defaults with values from constants argument (dict)
-        self.cavity = cavity
-        self.constants = CONSTANTS[cavity]
-        if not constants is None:
-            self.constants.update(constants)
-        c = self._get_constants()
-        if not c == dict():
-            print "Obtained the following constants from memory:"
-            print c
-            self.constants.update(c)
-
-    def _get_constants(self):
-        settings = QtCore.QSettings("rplockbox", "constants")
-        kwds_str = str(
-            settings.value(
-                self.constants["lockbox_name"]).toString())
-        kwds = dict()
-        if kwds_str != "" and not kwds_str is None:
-            kwds = json.loads(kwds_str)
-            if kwds is None:
-                kwds = dict()
-            for k in kwds.keys():
-                if k in self.constants:
-                    self.constants[k] = kwds[k]
-        return kwds
-
-    def _save_constants(self, constants):
-        settings = QtCore.QSettings("rplockbox", "constants")
-        write_constants = self._get_constants()
-        write_constants.update(constants)
-        settings.setValue(
-            self.constants["lockbox_name"],
-            json.dumps(write_constants))
-        self._get_constants()
+        self.c = MemoryTree(config=config)
 
     def _sortedseries(self, X, Y):
         xs = np.array([x for (x, y) in sorted(zip(X, Y))], dtype=np.float64)

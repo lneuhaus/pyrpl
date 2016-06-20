@@ -27,6 +27,7 @@
 # For full performance, download pyinstruments to replace this class
 # otherwise you can custimize here what is to be done to your data
 #
+import numpy as np
 import pandas
 import pickle
 import os
@@ -50,25 +51,25 @@ class CurveDB(object):
     @classmethod
     def create(cls, *args, **kwds):
         """
-        Creates a new curve, first arguments should be either Series(y,index=x) or x, y
+        Creates a new curve, first arguments should be either Series(y, index=x) or x, y
         kwds will be passed to self.params
         """
         if len(args) == 1:
             if isinstance(args[0], pandas.Series):
                 ser = args[0]
             else:
-                y = numpy.array(args[0])
+                y = nu.array(args[0])
                 ser = pandas.Series(y)
         elif len(args) == 2:
-            x = numpy.array(args[0])
-            y = numpy.array(args[1])
+            x = np.array(args[0])
+            y = np.array(args[1])
             ser = pandas.Series(y, index=x)
         else:
             raise ValueError("first arguments should be either x or x, y")
         obj = cls()
         obj.data = ser
         obj.params = kwds
-        pk = self.pk  # make a pk
+        pk = obj.pk  # make a pk
         obj.save()
         return obj
 
@@ -82,13 +83,14 @@ class CurveDB(object):
         if isinstance(curve, CurveDB):
             return curve
         else:
-            with open(self._dirname + str(self.pk) + '.p', 'r') as f:
-                curve = pickle.load(f)
+            with open(CurveDB._dirname + str(curve) + '.p', 'r') as f:
+                curve = CurveDB()
+                curve._pk, curve.data, curve.params = pickle.load(f)
             return curve
 
     def save(self):
         with open(self._dirname + str(self.pk) + '.p', 'w') as f:
-            pickle.dump(self, f)
+            pickle.dump((self.pk,self.data,self.params), f)
             f.close()
         # print "Save method not implemented yet. Therefore we will just plot the curve..."
         # self.plot()
@@ -114,10 +116,10 @@ class CurveDB(object):
 
     @property
     def pk(self):
-        if hasattr("_pk", self):
+        if hasattr(self, "_pk"):
             return self._pk
         else:
-            pks = [int(split(f, '.p')[0])
+            pks = [int(f.split('.p')[0]) or -1
                    for f in os.listdir(self._dirname) if f.endswith('.p')]
             if len(pks) == 0:
                 self._pk = 1
@@ -131,7 +133,4 @@ class CurveDB(object):
         # a proper implementation will assign the database primary key for pk
         # the primary key is used to load a curve from the storage into memory
 
-    @property
-    def _dirname(self):
-        import CurveDB
-        return os.path.dirname(CurveDB.__file__) + "//curves//"
+    _dirname = os.path.dirname(__file__) + "//curves//"

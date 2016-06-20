@@ -8,4 +8,5 @@ logging.getLogger(name=__name__).setLevel(logging.INFO) # normal setting
 from .redpitaya import RedPitaya
 from .redpitaya_modules import *
 from .registers import *
+from .curvedb import *
 #from .pyrpl import Pyrpl
