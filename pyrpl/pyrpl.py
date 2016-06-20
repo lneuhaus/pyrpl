@@ -123,7 +123,7 @@ CONSTANTS_DEFAULT = dict(
 )
 
 class Lockbox(object):
-    _dirname = os.path.join(os.path.dirname(__file__), "config")
+    _configdir = os.path.join(os.path.dirname(__file__), "config")
 
     def __init__(self, config="default"):
         """generic lockbox object, no implementation-dependent details here
@@ -136,48 +136,48 @@ class Lockbox(object):
         a function of the state. Signals can be settable, thereby defining the state of the system from
         experimental parameters.
         """
-
         # configuration is retrieved from config file
-        self.c = MemoryTree(os.path.join(self._dirname, config, ".yml"))
+        self.c = MemoryTree(os.path.join(self._configdir, config+".yml"))
 
     def _fastparams(self):
-        return self._params(*args, **kwargs)
-
-    def _params(self):
+        """ implement custom fastparams here """
         return dict()
 
-    def fastparams(self, postfix=""):
-        dic = self._fastparams()
-        params = dict()
-        for key in self.m.keys():
-            params[key + postfix] = dic[key]
+    def _params(self):
+        """ implement custom params here """
+        params = {}
+        params.update(self._fastparams())
         return params
+
+    def _deriveddict(self, original, prefix="", postfix=""):
+        """ adds a pre- and postfix to keys of original dict and flattens hierarchical dicts"""
+        result = {}
+        for key in original.keys():
+            if isinstance(original[key], dict):
+                result.update(self._deriveddict(original[key], prefix=prefix+key+".", postfix=postfix))
+            else:
+                result[prefix+key+postfix] = original[key]
+        return result
+
+    def fastparams(self, postfix=""):
+        """ returns a dict with fastparams as defined in _fastparams """
+        return self._deriveddict(self._fastparams(), postfix=postfix)
 
     def params(self, postfix=""):
-        dic = dict()
-        dic.update(self._params())
-        for k in self.constants.keys():
-            dic["rp_constants_" + k] = self.constants[k]
-        params = dict()
-        for key in dic.keys():
-            params[key + postfix] = dic[key]
-        return params
-
+        """returns a dict with params as defined in _params
+        and all configuration data"""
+        params = self._params()
+        params.update(self._deriveddict(self.c._data, prefix="c."))
+        return self._deriveddict(params, postfix=postfix)
 
 class Pyrpl(Lockbox):
-
-    def __init__(self, constants=None, cavity='FPF2', reloadfpga=True):
+    def __init__(self, config="default", *args, **kwargs):
         """red pitaya lockbox object"""
-        super(Pyrpl, self).__init__(constants=constants, cavity=cavity)
+        super(Pyrpl, self).__init__(self, config=config, *args, **kwargs)
         # initialize RedPitaya object
-        self.rp = RedPitaya(
-            hostname=self.constants["hostname"],
-            autostart=True,
-            reloadfpga=reloadfpga,
-            filename=self.constants["fpgafile"],
-            dirname=self.constants["fpgadir"],
-            frequency_correction=self.constants["frequency_correction"])
-        self.constants["reloadfpga"] = reloadfpga
+        self.rp = RedPitaya(**self.c.redpitaya)
+
+    def bla(self):
         # shortcuts
         self.fa = self.rp.asga  # output channel 1
         self.fb = self.rp.asgb  # output channel 2
@@ -193,10 +193,12 @@ class Pyrpl(Lockbox):
             print "Lock output will be used for coarse sweep"
         else:
             print "Coarse output >2 not implemented yet!!!"
+
         self.s = self.rp.scope
         self.hk = self.rp.hk
         self.ams = self.rp.ams
         self.iq = self.rp.pid11  # for iq it can be any one..
+
         # initialize pid attribution depending on configuration
         self.sof = self._get_pid(
             input=self.constants["reflection_input"],
@@ -219,40 +221,9 @@ class Pyrpl(Lockbox):
         for i in range(100):
             self.coarse = self.coarse  # set coarse to its last value
         t1 = time()
-        self.commdelay = max([(t1 - t0) / 100.0, 1e-5])
-        print "Communication time estimate: ", self.commdelay * 1e3, "ms"
-        print "FPGA at %.2f degrees celsius" % self.rp.ams.temp
         print self.constants["lockbox_name"], "initialized!"
 
-    def _get_pid(self, input=1, output=1):
-        pid = self._get_pid_item(input=input, output=output)
-        if "pid_filter" in self.constants:
-            pid.filter = self.constants["pid_filter"]
-        return pid
-
-    def _get_pid_item(self, input=1, output=1):
-        if input == 1 and output == 1:
-            return self.rp.pid11
-        elif input == 1 and output == 2:
-            return self.rp.pid21
-        elif input == 2 and output == 1:
-            return self.rp.pid12
-        elif input == 2 and output == 2:
-            return self.rp.pid22
-        elif input == 3 and output == 1:
-            if self.rp.pid11.inputiq:
-                return self.rp.pid11
-            elif self.rp.pid12.inputiq:
-                return self.rp.pid12
-        elif input == 3 and output == 2:
-            if self.rp.pid22.inputiq:
-                return self.rp.pid22
-            elif self.rp.pid21.inputiq:
-                return self.rp.pid21
-        return None  # no pid found
-
     """auxiliary functions for signal treatment"""
-
     def _get_min_step(self, output="coarse"):
         if output == "coarse":
             if (self.constants["coarse_output"] ==

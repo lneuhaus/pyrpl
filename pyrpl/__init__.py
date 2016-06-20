@@ -9,4 +9,4 @@ from .redpitaya import RedPitaya
 from .redpitaya_modules import *
 from .registers import *
 from .curvedb import *
-#from .pyrpl import Pyrpl
+from .pyrpl import *
