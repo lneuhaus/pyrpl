@@ -88,3 +88,7 @@ docs/my_notebooks/
 
 *.pydevproject
 *.project
+
+#pycharm
+.idea/
+.idea/vcs.xml
