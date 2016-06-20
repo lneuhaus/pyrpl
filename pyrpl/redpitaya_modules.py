@@ -373,14 +373,21 @@ class Scope(BaseModule):
               average=None,
               threshold=None,
               hysteresis=None,
-              trigger_delay=None):
+              trigger_delay=None,
+              input1=None,
+              input2=None):
         """sets up the scope for a new trace aquision including arming the trigger
 
         duration: the minimum duration in seconds to be recorded
         trigger_source: the trigger source. see the options for the parameter separately
         average: use averaging or not when sampling is not performed at full rate.
                  similar to high-resolution mode in commercial scopes
-
+        threshold: Trigger threshold in V
+        hysteresis: signal hysteresis needed to enable trigger in V. 
+                    Should be larger than the rms-noise of the signal
+        trigger_delay: trigger_delay in s
+        input1/2: set the inputs of channel 1/2
+        
         if a parameter is None, the current attribute value is used"""
         self._setup_called = True
         self._reset_writestate_machine = True
@@ -388,17 +395,16 @@ class Scope(BaseModule):
             self.average = average
         if duration is not None:
             self.duration = duration
-        if trigger_source is not None:
-            the_trigger_source = trigger_source
-        else:
-            the_trigger_source = self.trigger_source
-
         if threshold is not None:
             self.threshold_ch1 = threshold
             self.threshold_ch2 = threshold
         if hysteresis is not None:
             self.hysteresis_ch1 = hysteresis
             self.hysteresis_ch2 = hysteresis
+        if input1 is not None:
+            self.input1 = input1
+        if input2 is not None:
+            self.input2 = input2
         if trigger_delay is not None:
             self.trigger_delay = trigger_delay      
         if trigger_source is not None:
