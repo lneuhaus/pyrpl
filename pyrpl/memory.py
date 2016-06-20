@@ -125,3 +125,4 @@ class MemoryTree(MemoryBranch):
             f.close()
         except:
             copyfile(self._filename+".bak",self._filename)
+            logger.error("Error writing to file. Backup version was restored.")
