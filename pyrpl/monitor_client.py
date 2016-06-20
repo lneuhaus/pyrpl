@@ -49,14 +49,7 @@ class MonitorClient(object):
     def close(self):
         try:
             self.socket.send(
-                'c' +
-                chr(0) +
-                chr(0) +
-                chr(0) +
-                chr(0) +
-                chr(0) +
-                chr(0) +
-                chr(0))
+                b'c' + bytes(bytearray([0, 0, 0, 0, 0, 0, 0])))
             self.socket.close()
         except socket.error:
             return
@@ -76,8 +69,9 @@ class MonitorClient(object):
         if length > 65535:
             length = 65535
             self.logger.warning("Maximum read-length is %d", length)
-        header = 'r' + chr(0) + chr(length & 0xFF) + chr((length >> 8) & 0xFF) + chr(
-            addr & 0xFF) + chr((addr >> 8) & 0xFF) + chr((addr >> 16) & 0xFF) + chr((addr >> 24) & 0xFF)
+        header = b'r' + bytes(bytearray([0,
+                                         length & 0xFF, (length >> 8) & 0xFF,
+                                         addr & 0xFF, (addr >> 8) & 0xFF, (addr >> 16) & 0xFF, (addr >> 24) & 0xFF]))
         self.socket.send(header)
         data = self.socket.recv(length * 4 + 8)
         while (len(data) < length * 4 + 8):
@@ -92,11 +86,12 @@ class MonitorClient(object):
     def _writes(self, addr, values):
         values = values[:65535 - 2]
         length = len(values)
-        header = 'w' + chr(0) + chr(length & 0xFF) + chr((length >> 8) & 0xFF) + chr(
-            addr & 0xFF) + chr((addr >> 8) & 0xFF) + chr((addr >> 16) & 0xFF) + chr((addr >> 24) & 0xFF)
+        header = b'w' + bytes(bytearray([0,
+                                         length & 0xFF, (length >> 8) & 0xFF,
+                                         addr & 0xFF, (addr >> 8) & 0xFF, (addr >> 16) & 0xFF, (addr >> 24) & 0xFF]))
         # send header+body
         self.socket.send(header +
-                         str(np.getbuffer(np.array(values, dtype=np.uint32))))
+                         np.array(values, dtype=np.uint32).tobytes())
         if self.socket.recv(8) == header:  # check for in-sync transmission
             return True  # indicate successful write
         else:  # error handling

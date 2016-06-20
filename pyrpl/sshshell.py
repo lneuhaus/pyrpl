@@ -65,14 +65,15 @@ class SSHshell(object):
         if self.channel.recv_ready():
             return self.channel.recv(nbytes)
         else:
-            return ""
+            return b""
 
     def read(self):
         sumstring = ""
-        string = "1"
-        while string != "":
-            string = self.read_nbytes(1024)
+        while True:
+            string = self.read_nbytes(1024).decode('utf-8')
             sumstring += string
+            if not string:
+                break
         self.logger.debug(sumstring)
         return sumstring
 

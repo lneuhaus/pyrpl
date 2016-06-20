@@ -49,7 +49,8 @@ class TestClass(object):
             #exclude read-only registers
             if regkey in ['_reset_writestate_machine',
                           '_trigger_armed',
-                          '_trigger_delay_running']:
+                          '_trigger_delay_running',
+                          'pretrig_ok']:
                 return
             #write opposite value and confirm it has changed
             module.__setattr__(regkey, not value)
@@ -72,6 +73,8 @@ class TestClass(object):
                           'dac2',
                           'voltage1',
                           'voltage2',
+                          'firstpoint',
+                          'lastpoint'
                           ]:
                 return
             #write something different and confirm change
