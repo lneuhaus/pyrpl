@@ -63,10 +63,16 @@ class RedPitaya(SSHshell):
         for k in ["hostname","port","user","password","delay", "timeout"]:
             if "REDPITAYA_"+k.upper() in os.environ:
                 newvalue = os.environ["REDPITAYA_"+k.upper()]
-                self.logger.warning("Variable %s with value %s overwritten by "
+                if k != "password":
+                    self.logger.warning("Variable %s with value %s overwritten by "
                                     +"environment variable REDPITAYA_%s with "
                                     +"value %s", k, self.__getattribute__(k),
-                                    k.upper(), newvalue) 
+                                    k.upper(), newvalue)
+                else:
+                    self.logger.warning("Variable %s with value %s overwritten by "
+                                        + "environment variable REDPITAYA_%s with "
+                                        + "value %s", k, self.__getattribute__(k),
+                                        k.upper(), "*"*len(newvalue))
                 self.__setattr__(k, newvalue) 
         # check filenames - should work without specifying them
         if filename is None:
