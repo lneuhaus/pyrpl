@@ -63,17 +63,13 @@ class RedPitaya(SSHshell):
         for k in ["hostname","port","user","password","delay", "timeout"]:
             if "REDPITAYA_"+k.upper() in os.environ:
                 newvalue = os.environ["REDPITAYA_"+k.upper()]
-                if k != "password":
-                    self.logger.warning("Variable %s with value %s overwritten by "
+                self.__setattr__(k, newvalue)
+                if k == "password": # do not show the password on the screen
+                    newvalue = "*"*(len(newvalue)%8)
+                self.logger.warning("Variable %s with value %s overwritten by "
                                     +"environment variable REDPITAYA_%s with "
                                     +"value %s", k, self.__getattribute__(k),
                                     k.upper(), newvalue)
-                else:
-                    self.logger.warning("Variable %s with value %s overwritten by "
-                                        + "environment variable REDPITAYA_%s with "
-                                        + "value %s", k, self.__getattribute__(k),
-                                        k.upper(), "*"*len(newvalue))
-                self.__setattr__(k, newvalue) 
         # check filenames - should work without specifying them
         if filename is None:
             self.filename = 'fpga//red_pitaya.bin'
