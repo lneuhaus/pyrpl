@@ -63,11 +63,7 @@ class RedPitaya(SSHshell):
         for k in ["hostname","port","user","password","delay", "timeout"]:
             if "REDPITAYA_"+k.upper() in os.environ:
                 newvalue = os.environ["REDPITAYA_"+k.upper()]
-                if k in ["delay", "timeout"]:
-                    newvalue = float(newvalue)
-                elif k in ["port"]:
-                    newvalue = int(newvalue)
-                self.__setattr__(k, newvalue)
+                self.__setattr__(k, type(self.__getattribute__(k))(newvalue))
                 if k == "password": # do not show the password on the screen
                     newvalue = "*"*(len(newvalue)%8)
                 self.logger.warning("Variable %s with value %s overwritten by "
