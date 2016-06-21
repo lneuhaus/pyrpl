@@ -60,7 +60,7 @@ class RedPitaya(SSHshell):
         self.leds_off = leds_off
         self.timeout = timeout
         # get parameters from os.environment variables
-        for k in ["hostname","port","user","password","delay", "timeout"]:
+        for k in ["hostname","port","user","password","delay","timeout"]:
             if "REDPITAYA_"+k.upper() in os.environ:
                 newvalue = os.environ["REDPITAYA_"+k.upper()]
                 oldvalue = self.__getattribute__(k)
