@@ -256,6 +256,7 @@ class Lockbox(object):
         # configuration is retrieved from config file
         self.c = MemoryTree(os.path.join(self._configdir, config+".yml"))
         self.model = getmodel(self.c.model.type)(self)
+        self.model.setup()
 
     def _fastparams(self):
         """ implement custom fastparams here """
@@ -291,9 +292,11 @@ class Lockbox(object):
 class Pyrpl(Lockbox):
     def __init__(self, config="default", *args, **kwargs):
         """red pitaya lockbox object"""
-        super(Pyrpl, self).__init__(self, config=config, *args, **kwargs)
+        self.c = MemoryTree(os.path.join(self._configdir, config+".yml"))
         # initialize RedPitaya object
         self.rp = RedPitaya(**self.c.redpitaya)
+        # create and initialize model of controlled system
+        self.model = getmodel(self.c.model.type)(self)
         self.model.setup()
 
     def bla(self):
