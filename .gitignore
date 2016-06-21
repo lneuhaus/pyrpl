@@ -88,3 +88,5 @@ docs/my_notebooks/
 
 *.pydevproject
 *.project
+
+.idea/
