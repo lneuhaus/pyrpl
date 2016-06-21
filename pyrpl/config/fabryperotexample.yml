@@ -1,0 +1,63 @@
+redpitaya:
+  hostname: 192.168.1.100
+  user: root
+  password: root
+  port: 2222
+  frequency_correction: 1.0
+  filename: fpga//red_pitaya.bin
+  reloadfpga: true
+general:
+  loglevel: debug
+  name: fabryperot_example_cavity
+
+inputs:
+  in1: reflection
+  in2: transmission
+  # also possible
+  # in2: pdh # for externally generated pdh
+outputs:
+  out1:
+    # we insert a bias-T with separation frequency around 1 MHz behind out1
+    # this allows us to use the fast output for both the piezo and PDH
+    modulator:
+      amplitude: 0.1
+      frequency: 50000000.0
+    cavitypiezo:
+      # piezo specification: 7 micron/1000V
+      # amplifier gain: 50
+      # therefore effective DC gain: 350nm/V
+      m_per_V: 3.5e-07
+      bandwidth: 100.0
+  out2:
+    laserpiezo:
+      Hz_per_V: 5000000.0
+      bandwidth: 1000.0
+  pwm1:
+    temperature:
+      m_per_V: 1.8e-05
+      bandwidth: 0.1
+model:
+  type: fabryperot
+  wavelength: 1.064e-06
+  finesse: 4999
+  # round-trip length in m (= twice the length for ordinary Fabry-Perot)
+  length: 0.72
+  lock: # lock methods in order of preferrence
+    order: pdh reflection transmission
+    # when approaching a resonance, we can either abruptly jump or smoothly
+    # ramp from one error signal to another. We specify our preferrence with
+    # the order of keywords after transition
+    transition: [ramp, jump]
+    # target value for our lock. The API provides many ways to adjust this at
+    # runtime
+    target:
+      detuning: 0
+  # search algorithms to use in order of preferrence, as available in model
+  search: drift bounce
+
+stages:
+  UNLOCKEDSTAGE: 0
+  COARSEFINDSTAGE: 1
+  DRIFTSTAGE: 2
+  SOFSTAGE: 3
+  PDHSTAGE: 4

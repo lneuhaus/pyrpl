@@ -35,6 +35,7 @@ import iir
 from .redpitaya import RedPitaya
 from .curvedb import CurveDB
 from .memory import MemoryTree
+from .model import getmodel
 
 """
 channels:
@@ -109,18 +110,134 @@ You start off by copying the example CONSTANTS_FPF2 and changing FPF2 to your ca
     In case you really want to set up a PDH detection, continue here. Otherwise go to the last paragraph.
 """
 
+"""
+pyrpl.py - high-level lockbox functionality
+
+A lockbox is a device that converts a number of input signals into a number of
+output signals suitable to stabilize a physical system in a desired state. This
+task is generally divided into two steps:
+1) bring the system close the desired state where it can be linearized
+2) keep it there using linear control.
+
+The task is further divided into several subtasks:
+0a) Condition the input signals so that they are suitable for the next steps
+ - offset removal
+ - input filters
+ - demodulation / lockin
+ - inversion
+0b) Estimate the system state from the past and present history of input and
+output signals.
+0c) Build a filter for the output signals such that they can be conveniently
+addressed with higher-level lockbox logic.
+
+1) As above: apply reasonable action to the outputs to approach the system to
+the desired state. We generally call this the 'search' step.
+- provide a number of algorithms/recipes to do this
+
+2) As above: Turn on linear feedback. We call this the 'lock' step.
+- connect the input signals with appropriate gain to the outputs
+- the gain depends on the state of the system, so internal state representation
+will remain useful here
+
+This naturally divides the lockbox object into 3 subcomponents:
+a) inputs
+b) internal model
+c) outputs
+
+which will be interconnected by the algorithms that come with the model and
+make optimal use of the available inputs and outputs. The job of the
+configuration file is to provide a maximum of information about the inputs,
+outputs and the physical system (=internal model) so that the lockbox is
+effective and robust. The lockbox will usually require both a coarse-tuning
+and an optimization step for optimum performance, which will both adjust the
+various parameters for the best match between model and real system.
+
+Let's make this reasoning more clear with an example:
+
+A Fabry-Perot cavity is to be locked near resonance using a PDH scheme. The
+incident laser beam goes through a phase modulator. The cavity contains a piezo
+with estimated bandwidth 10 kHz (appearance of first resonance) and
+a displacement of 350 nm/V that goes into the piezo amplifier. To limit the
+effect of amplifier noise, we have inserted an RC lowpass between amplifier and
+piezo with a cutoff frequency of 100 Hz. The laser contains another piezo with
+estimated bandwidth of 50 kHz that changes the laser frequency by 5 MHz/V. An
+RC filter provides a lowpass with 1kHz cutoff. Finally, the cavity can be tuned
+through its temperature with a bandwidth slower than 0.1 Hz. We estimate from
+thermal expansion coefficients that 1 V to the Peltier amplifier leading to 3 K
+heating of the cavity spacer should lead to 30ppm/K*20cm*3K/V = 18 micron/V
+length change. Both reflection and transmission of the cavity are available
+error signals. The finesse of the cavity is 5000, and therefore there are
+large regions of output signals where no useful error signal can be obtained.
+
+We first generate a clean list of available inputs and outputs and some
+parameters of the cavity that we know already:
+
+inputs:
+  in1:
+    reflection
+  in2:
+    transmission
+  # also possible
+  # in2: pdh # for externally generated pdh
+outputs:
+  out1:
+    # we insert a bias-T with separation frequency around 1 MHz behind out1
+    # this allows us to use the fast output for both the piezo and PDH
+    modulator:
+      amplitude: 0.1
+      frequency: 50e6
+    cavitypiezo:
+      # piezo specification: 7 micron/1000V
+      # amplifier gain: 50
+      # therefore effective DC gain: 350nm/V
+      m_per_V: 350e-9
+      bandwidth: 100.0
+  out2:
+    laserpiezo:
+      Hz_per_V: 5e6
+      bandwidth: 1e3
+  pwm1:
+    temperature:
+      m_per_V: 18e-6
+      bandwidth: 0.1
+model:
+  type: fabryperot
+  wavelength: 1064e-9
+  finesse: 5000
+  # round-trip length in m (= twice the length for ordinary Fabry-Perot)
+  length: 0.72
+  lock: # lock methods in order of preferrence
+    order:
+      pdh
+      reflection
+      transmission
+    # when approaching a resonance, we can either abruptly jump or smoothly
+    # ramp from one error signal to another. We specify our preferrence with
+    # the order of keywords after transition
+    transition: [ramp, jump]
+    # target value for our lock. The API provides many ways to adjust this at
+    # runtime
+    target:
+      detuning: 0
+  # search algorithms to use in order of preferrence, as available in model
+  search:
+    drift
+    bounce
+
+Having selected fabryperot as modeltype, the code will automatically search
+for a class named fabryperot in the file model.py to provide for the internal
+state representation and all algorithms. You can create your own model by
+adding other classes to this file, or by inheriting from existing ones and
+adding further functionality. The naming of all other configuration parameters
+is linked to the model, since all functionality that makes use of these para-
+meters is implemented there. Another very often used model type is
+"interferometer". The only difference is here that
 
 
-CONSTANTS_DEFAULT = dict(
-    lockbox_name="default_cavity",
-    verbosity=True,
-    lock_upper_threshold=0.9,
-    lock_lower_threshold=0.0,
-    # detect that laser is off and return immediately for relock of prior
-    # cavities
-    relative_reflection_off=0.01,
 
-)
+
+"""
+
 
 class Lockbox(object):
     _configdir = os.path.join(os.path.dirname(__file__), "config")
@@ -138,6 +255,7 @@ class Lockbox(object):
         """
         # configuration is retrieved from config file
         self.c = MemoryTree(os.path.join(self._configdir, config+".yml"))
+        self.model = getmodel(self.c.model.type)(self)
 
     def _fastparams(self):
         """ implement custom fastparams here """
@@ -176,6 +294,7 @@ class Pyrpl(Lockbox):
         super(Pyrpl, self).__init__(self, config=config, *args, **kwargs)
         # initialize RedPitaya object
         self.rp = RedPitaya(**self.c.redpitaya)
+        self.model.setup()
 
     def bla(self):
         # shortcuts

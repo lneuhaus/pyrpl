@@ -97,6 +97,14 @@ class MemoryBranch(object):
             else:
                 return self._data[name]
 
+    # getitem bypasses the higher-level __getattribute__ function and provides
+    # direct low-level access to the underlying dictionary.
+    # This is much faster, as long as no changes have been made to the config
+    # file.
+    def __getitem__(self, item):
+        self._reload()
+        return self._data[item]
+
     def __setattr__(self, name, value):
         if name.startswith('_') or name not in self._data:
             super(MemoryBranch, self).__setattr__(name, value)
@@ -111,6 +119,31 @@ class MemoryBranch(object):
             else:
                 self._data[name] = value
             self._save()
+
+    # creates a new entry, overriding the protection provided by dot notation
+    # if the value of this entry is of type dict, it becomes a MemoryBranch
+    # new values can be added to the branch in the same manner
+    def __setitem__(self, item, value):
+        if item in self._data:
+            self.__setattr__(item, value)
+        else:
+            self._data[item] = value
+            self._save()
+
+    # remove an item from the config file by typing memory - 'key"
+    def __sub__(self, name):
+        ro = isbranch(self._data[name]) and 'value' in self._data[name] and \
+             (self._data[name]["ro"] or False)
+        if ro:
+            logger.info(
+                "Attribute %s is read-only and cannot be deleted", name)
+        else:
+            self.__dict__.pop(name)
+            self._data.pop(name)
+            self._save()
+
+    def __repr__(self):
+        return "MemoryBranch("+str(self._data.keys())+")"
 
 class MemoryTree(MemoryBranch):
     _data = OrderedDict()

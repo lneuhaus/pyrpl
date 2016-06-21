@@ -9,11 +9,14 @@ redpitaya:
 general:
   loglevel: debug
   name: default_cavity
+
 inputs:
   reflection: adc1
+
 outputs:
   slowpzt: out1
   fastpzt: out2
+
 model:
   type: fabry-perot
   cavity:
@@ -24,6 +27,7 @@ model:
     lock_upper_threshold: 0.9
     lock_lower_threshold: 0.0
     relative_reflection_off: 0.01
+
 stages:
   UNLOCKEDSTAGE: 0
   COARSEFINDSTAGE: 1
