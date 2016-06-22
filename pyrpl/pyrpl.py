@@ -237,6 +237,12 @@ meters is implemented there. Another very often used model type is
 
 
 """
+def pyrpl(config="default"):
+    """ returns a Pyrpl object based on configfile 'config' """
+    c = MemoryTree(os.path.join(os.path.join(os.path.dirname(__file__),
+                                             "config"), config + ".yml"))
+    model = getmodel(c.model.modeltype)
+    return type("Pyrpl", (Lockbox, model), {})(config=onfig)
 
 
 class Lockbox(object):
@@ -255,7 +261,7 @@ class Lockbox(object):
         """
         # configuration is retrieved from config file
         self.c = MemoryTree(os.path.join(self._configdir, config+".yml"))
-        self.model = getmodel(self.c.model.type)(self)
+        self.model = getmodel(self.c.model.modeltype)(self)
         self.model.setup()
 
     def _fastparams(self):
@@ -296,7 +302,7 @@ class Pyrpl(Lockbox):
         # initialize RedPitaya object
         self.rp = RedPitaya(**self.c.redpitaya)
         # create and initialize model of controlled system
-        self.model = getmodel(self.c.model.type)(self)
+        self.model = getmodel(self.c.model.modeltype)(self)
         self.model.setup()
 
     def bla(self):

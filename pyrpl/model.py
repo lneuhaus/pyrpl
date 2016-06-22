@@ -2,8 +2,8 @@ import logging
 
 
 
-def getmodel(type):
-    return globals()[type]
+def getmodel(modeltype):
+    return globals()[modeltype]
 
 class Model(object):
     " general model object that will make smart use of  its inputs and outputs"

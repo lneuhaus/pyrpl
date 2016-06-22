@@ -37,7 +37,7 @@ outputs:
       m_per_V: 1.8e-05
       bandwidth: 0.1
 model:
-  type: fabryperot
+  modeltype: fabryperot
   wavelength: 1.064e-06
   finesse: 4999
   # round-trip length in m (= twice the length for ordinary Fabry-Perot)
