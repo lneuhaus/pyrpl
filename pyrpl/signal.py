@@ -91,7 +91,28 @@ class Signal(object):
     def min(self):
         return self._values.min()
 
+    @property
+    def curve(self):
+        """ returns a curve with recent data and a lot of useful parameters"""
+        # important: call _values first in order to get the _times
+        # corresponding to the measurement setup of _values
+        values = self._values
+        times = self._times
+        return CurveDB.create(times, values,
+                              name=self._name,
+                              mean=self.mean,
+                              rms=self.rms,
+                              max=self.max,
+                              min=self.min,
+                              average=self._config.average,
+                              unit=self.unit,
+                              unit_per_V=self.unit_per_V,
+                              acquiretime=self._acquiretime,
+                              autosave=self._config.autosave
+                              )
+
     def get_offset(self):
+        """ acquires and saves the offset of the signal """
         oldoffset = self._offset
         # make sure data are fresh
         self._acquire()
@@ -114,26 +135,6 @@ class Signal(object):
         self._config["peak"] = self.mean
         logger.debug("New peak value for signal %s is %s",
                      self._name, self._config.offset)
-
-    @property
-    def curve(self):
-        """ returns a curve with recent data and a lot of useful parameters"""
-        # important: call _values first in order to get the _times
-        # corresponding to the measurement setup of _values
-        values = self._values
-        times = self._times
-        return CurveDB.create(times, values,
-                              name=self._name,
-                              mean=self.mean,
-                              rms=self.rms,
-                              max=self.max,
-                              min=self.min,
-                              average=self._config.average,
-                              unit=self.unit,
-                              unit_per_V=self.unit_per_V,
-                              acquiretime=self._acquiretime,
-                              autosave=self._config.autosave
-                              )
 
 
 class RPSignal(Signal):

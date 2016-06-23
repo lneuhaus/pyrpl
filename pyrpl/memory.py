@@ -24,6 +24,7 @@ import logging
 logger = logging.getLogger(name=__name__)
 
 try:
+    raise Exception
     import ruamel.yaml
     def load(f):
         return ruamel.yaml.load(f, ruamel.yaml.RoundTripLoader)
