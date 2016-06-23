@@ -69,20 +69,24 @@ class CurveDB(object):
             raise ValueError("first arguments should be either x or x, y")
         obj = cls()
         obj.data = ser
+
         obj.params = kwds
         pk = obj.pk  # make a pk
-        obj.save()
+        autosave = kwds["autosave"] or True  # autosave True by default:
+        if autosave:
+            obj.save()
         return obj
 
     def plot(self):
         self.data.plot()
 
-
-# Implement the following methods if you want to save curves permanently
+    # Implement the following methods if you want to save curves permanently
     @classmethod
     def get(cls, curve):
         if isinstance(curve, CurveDB):
             return curve
+        elif isinstance(curve, list):
+            return [CurveDB.get(c) for c in curve]
         else:
             with open(CurveDB._dirname + str(curve) + '.p', 'r') as f:
                 curve = CurveDB()
@@ -91,29 +95,49 @@ class CurveDB(object):
 
     def save(self):
         with open(self._dirname + str(self.pk) + '.p', 'w') as f:
-            pickle.dump((self.pk,self.data,self.params), f)
+            pickle.dump((self.pk, self.data, self.params), f)
             f.close()
-        # print "Save method not implemented yet. Therefore we will just plot the curve..."
-        # self.plot()
 
     def delete(self):
+        # remove the file
         os.remove(self._dirname + str(self.pk) + '.p')
+        # remove dependencies.. do this at last so the curve is deleted if an
+        # error occurs (i know..). The alternative would be to iterate over all
+        # curves to find dependencies which could be slow without database.
+        # Heavy users should really use pyinstruments.
+        self.logger.warning("Make sure curve %s was not parent of another " +
+                            "curve.")
+        parent = self.parent
+        if parent:
+            parentchilds = parent.childs
+            parentchilds.remove(self.pk)
+            parent.childs = parentchilds
+            parent.save()
 
-# Implement the following methods if you want to use a hierarchical
-# structure for curves
+    # Implement the following methods if you want to use a hierarchical
+    # structure for curves
     @property
     def childs(self):
-        self.logger.error("Hierarchy not implemented.")
-        return []
+        try:
+            return CurveDB.get(self.params["childs"])
+        except KeyError:
+            return []
 
     @property
     def parent(self):
-        self.logger.error("Hierarchy not implemented.")
-        return None
+        try:
+            return CurveDB.get(self.params["parent"])
+        except KeyError:
+            self.logger.info("No parent found.")
+            return None
 
     def add_child(self, child_curve):
-        self.logger.error("%s should be child of", child_curve.name, self.name)
-        self.logger.error("Curve hierarchy not implemented yet")
+        child = CurveDB.get(child_curve)
+        child.params["parent"] = self.pk
+        child.save()
+        childs = self.params["childs"] or []
+        self.params["childs"] = list(childs+[child.pk])
+        self.save()
 
     @property
     def pk(self):

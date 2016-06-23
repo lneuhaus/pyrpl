@@ -914,7 +914,7 @@ class IQ(FilterModule):
     def gain(self, v):
         self._g1 = float(v) / 0.039810
         self._g4 = float(v) / 0.039810
-        
+
     def setup(
             self,
             frequency,

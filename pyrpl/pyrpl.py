@@ -31,11 +31,13 @@ import matplotlib.pyplot as plt
 import sys
 import os
 import iir
+import logging
 
 from .redpitaya import RedPitaya
 from .curvedb import CurveDB
 from .memory import MemoryTree
-from .model import getmodel
+from .model import getmodel, Model
+from .signal import *
 
 """
 channels:
@@ -233,20 +235,20 @@ is linked to the model, since all functionality that makes use of these para-
 meters is implemented there. Another very often used model type is
 "interferometer". The only difference is here that
 
-
-
-
 """
+
+
 def pyrpl(config="default"):
     """ returns a Pyrpl object based on configfile 'config' """
     c = MemoryTree(os.path.join(os.path.join(os.path.dirname(__file__),
                                              "config"), config + ".yml"))
     model = getmodel(c.model.modeltype)
-    return type("Pyrpl", (Lockbox, model), {})(config=onfig)
+    return type("Pyrpl", (Lockbox, model), {})(config=config)
 
 
 class Lockbox(object):
     _configdir = os.path.join(os.path.dirname(__file__), "config")
+    _signalinit = Signal, {}
 
     def __init__(self, config="default"):
         """generic lockbox object, no implementation-dependent details here
@@ -259,10 +261,28 @@ class Lockbox(object):
         a function of the state. Signals can be settable, thereby defining the state of the system from
         experimental parameters.
         """
+        self.logger = logging.getLogger(name=__name__)
         # configuration is retrieved from config file
         self.c = MemoryTree(os.path.join(self._configdir, config+".yml"))
+        # find and setup the model
         self.model = getmodel(self.c.model.modeltype)(self)
+        self._makesignals()
         self.model.setup()
+
+    def _makesignals(self, *args, **kwargs):
+        """ Instantiates all signals from config file.
+        Optional arguments are passed to the signal class initialization. """
+        for signaltype in ["inputs", "outputs"]:
+            # generalized version of: self.inputs = self.c.inputs
+            self.__setattr__(signaltype, self.c[signaltype].keys())
+            for k in self.__getattribute__(signaltype):
+                self.logger.debug("Creating %s signal %s...", signaltype, k)
+                # generalization of:
+                # self.reflection = Signal(self.c, "inputs.reflection")
+                signalclass, signalparameters = self._signalinit
+                self.__setattr__(k, signalclass(self.c,
+                                                signaltype+"."+k,
+                                                **signalparameters))
 
     def _fastparams(self):
         """ implement custom fastparams here """
@@ -296,15 +316,19 @@ class Lockbox(object):
         return self._deriveddict(params, postfix=postfix)
 
 class Pyrpl(Lockbox):
-    def __init__(self, config="default", *args, **kwargs):
+    def __init__(self, config="default"):
         """red pitaya lockbox object"""
+        # we need the configuration for RedPitaya initialization
         self.c = MemoryTree(os.path.join(self._configdir, config+".yml"))
-        # initialize RedPitaya object
-        self.rp = RedPitaya(**self.c.redpitaya)
-        # create and initialize model of controlled system
-        self.model = getmodel(self.c.model.modeltype)(self)
-        self.model.setup()
+        # initialize RedPitaya object with the configured parameters
+        self.rp = RedPitaya(**self.c.redpitaya._dict)
+        # signal class and optional arguments are passed through this argument
+        self._signalinit = RPSignal, {"redpitaya": self.rp}
+        # Lockbox initialization
+        super(Pyrpl, self).__init__(config=config)
 
+
+class Trash(object):
     def bla(self):
         # shortcuts
         self.fa = self.rp.asga  # output channel 1
@@ -351,7 +375,7 @@ class Pyrpl(Lockbox):
         t1 = time()
         print self.constants["lockbox_name"], "initialized!"
 
-    """auxiliary functions for signal treatment"""
+    # auxiliary functions for signal treatment
     def _get_min_step(self, output="coarse"):
         if output == "coarse":
             if (self.constants["coarse_output"] ==
@@ -383,180 +407,6 @@ class Pyrpl(Lockbox):
             steps = 2
         return steps, delay
 
-    def _get_one_signal(self, signal_number=1, type="input"):
-        if type == "input" and signal_number == 1:
-            return self.s.adc1
-        elif type == "input" and signal_number == 2:
-            return self.s.adc2
-        elif type == "quadrature" and signal_number == 1:
-            return self.s.iq1
-        elif type == "quadrature" and signal_number == 2:
-            return self.s.iq2
-        elif type == "output" and signal_number == 1:
-            return self.s.dac1
-        elif type == "output" and signal_number == 2:
-            return self.s.dac2
-        else:
-            return None
-
-    def _get_signal(
-            self,
-            signal_number,
-            type='input',
-            avg=0,
-            do_rms=False,
-            minmax=False,
-            trace=False,
-            trace_frequency=10e3):
-        # avg = 0: take a whole scope trace of coherent data
-        # avg >0: take avg individual samples, not necessarily uniformly spaced
-        # in time
-        if avg == 1:
-            return self._get_one_signal(signal_number=signal_number, type=type)
-        if type == 'output':  # swap signal 1 and 2 as scope channel 2 records output 1 and the other way around
-            if signal_number == 1:
-                signal_number = 2
-            elif signal_number == 2:
-                signal_number = 1
-        self.scope_reset()
-        beforestate = [
-            self.s.dac2_on_ch1,
-            self.s.quadrature_on_ch1,
-            self.s.dac1_on_ch2,
-            self.s.quadrature_on_ch2]
-        if signal_number == 1:
-            if type == 'input':
-                self.s.dac2_on_ch1 = False
-            elif type == 'output':
-                self.s.dac2_on_ch1 = True
-            elif type == 'quadrature':
-                self.s.quadrature_on_ch1 = True
-        elif signal_number == 2:
-            if type == 'input':
-                self.s.dac1_on_ch2 = False
-            elif type == 'output':
-                self.s.dac1_on_ch2 = True
-            elif type == 'quadrature':
-                self.s.quadrature_on_ch2 = True
-        if trace:
-            data = self.rp.getbuffer(self.s.rawdata_ch2)
-            self.s.arm(frequency=trace_frequency, trigger_source=1)
-            sleep(1.0 / self.s.frequency)
-            if signal_number == 1:
-                data = self.rp.getbuffer(self.s.data_ch1)
-            else:
-                data = self.rp.getbuffer(self.s.data_ch2)
-        if avg == 0:
-            self.s.arm(
-                frequency=self.constants["mean_measurement_frequency"],
-                trigger_source=1)
-            sleep(1.0 / self.s.frequency)
-            if signal_number == 1:
-                data = self.rp.getbuffer(self.s.rawdata_ch1)
-            else:
-                data = self.rp.getbuffer(self.s.rawdata_ch2)
-        else:
-            data = np.zeros(avg, dtype=np.float)
-            for i in range(avg):
-                if signal_number == 1:
-                    data[i] = self.s.onedata_ch1
-                else:
-                    data[i] = self.s.onedata_ch2
-        self.s.dac2_on_ch1 = beforestate[0]
-        self.s.quadrature_on_ch1 = beforestate[1]
-        self.s.dac1_on_ch2 = beforestate[2]
-        self.s.quadrature_on_ch2 = beforestate[3]
-
-        if trace:
-            times = self.rp.getbuffer(self.s.times)
-            return pandas.Series(data, index=times)
-        mean = data.mean()
-        if do_rms and not minmax:
-            rms = np.sqrt((data**2).mean() - mean**2)
-            return mean, rms
-        elif minmax and not do_rms:
-            min = data.min()
-            max = data.max()
-            return mean, min, max
-        elif minmax and do_rms:
-            rms = np.sqrt((data**2).mean() - mean**2)
-            min = data.min()
-            max = data.max()
-            return mean, rms, min, max
-        else:
-            return mean
-
-    def get_mean(self, signal="reflection", avg=0, rms=False, minmax=False):
-        if signal == 1 or signal == 2:
-            return self._get_signal(
-                signal_number=signal,
-                type="input",
-                avg=avg,
-                do_rms=rms,
-                minmax=minmax)
-        elif signal == 3:
-            return self._get_signal(
-                signal_number=1,
-                type="quadrature",
-                avg=avg,
-                do_rms=rms,
-                minmax=minmax)
-        elif signal == "reflection":
-            return self._get_signal(
-                signal_number=self.constants["reflection_input"],
-                type="input",
-                avg=avg,
-                do_rms=rms,
-                minmax=minmax)
-        elif signal == "pdh" or signal == "lock":
-            channel = self.constants[signal + "_input"]
-            if channel == 3:
-                return self._get_signal(
-                    signal_number=1,
-                    type="quadrature",
-                    avg=avg,
-                    do_rms=rms,
-                    minmax=minmax)
-            else:
-                return self._get_signal(
-                    signal_number=channel,
-                    type="input",
-                    avg=avg,
-                    do_rms=rms,
-                    minmax=minmax)
-        elif signal == "output":
-            channel = self.constants["lock_output"]
-            return self._get_signal(
-                signal_number=channel,
-                type="output",
-                avg=avg,
-                do_rms=rms,
-                minmax=minmax)
-        else:
-            return None
-
-    @property
-    def reflection(self):
-        return self.get_mean("reflection", avg=1)
-
-    @property
-    def reflection_V(self):
-        return self.get_mean("reflection", avg=1) / 8191.0
-
-    @property
-    def reflection_mW(self):
-        return (
-            self.get_mean(
-                "reflection",
-                avg=1) - self.constants["dark_reflection"]) * self.constants["calibration_slope"]
-
-    def _relative_reflection(self, refl):
-        return float(refl - self.constants["dark_reflection"]) / float(
-            self.constants["offres_reflection"] - self.constants["dark_reflection"])
-
-    @property
-    def relative_reflection(self):
-        return self._relative_reflection(self.reflection)
 
     @property
     def laser_off(self):

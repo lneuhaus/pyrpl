@@ -36,7 +36,7 @@ except:
     import yaml
     # ordered load and dump for yaml files. From
     # http://stackoverflow.com/questions/5121931/in-python-how-can-you-load-yaml-mappings-as-ordereddicts
-    def load(stream, Loader=yaml.SafeLoader, object_pairs_hook=OrderedDict):
+    def load(stream, Loader=yaml.Loader, object_pairs_hook=OrderedDict):
         class OrderedLoader(Loader):
             pass
         def construct_mapping(loader, node):
@@ -46,7 +46,7 @@ except:
             yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
             construct_mapping)
         return yaml.load(stream, OrderedLoader)
-    def save(data, stream=None, Dumper=yaml.SafeDumper, default_flow_style=False, **kwds):
+    def save(data, stream=None, Dumper=yaml.Dumper, default_flow_style=False, **kwds):
         class OrderedDumper(Dumper):
             pass
         def _dict_representer(dumper, data):
@@ -63,15 +63,70 @@ except:
     # save(data, stream=f, Dumper=yaml.SafeDumper)
 
 class MemoryBranch(object):
-    """Represents a branch of a memoryTree"""
-    def __init__(self, parent, branch):
+    """Represents a branch of a memoryTree
+
+    All methods are preceded by an underscore to guarantee that tab expansion
+    of a memory branch only displays the available subbranches or leaves.
+    """
+    def __init__(self, parent, branch, defaults=[]):
+        """ parent is the parent MemoryBranch, branch is a string with the
+        name of the branch to create, defaults is a list of default branches
+        that are used if requested data is not found in the current branch """
         self._branch = branch
         self._parent = parent
-        self.__dict__.update(self._data)
+        self._defaults = defaults
+
+    @property
+    def _defaults(self):
+        """ defaults allows to define a list of default branches to fall back
+        upon if the desired kay is not found in the current branch """
+        return self.__defaults
+
+    @_defaults.setter
+    def _defaults(self, value):
+        if isinstance(value, list):
+            self.__defaults = list(value)
+        else:
+            self.__defaults = [value]
+        # update __dict__ with inherited values from new defaults
+        self.__dict__.update(self._dict)
+
+    @property
+    def _root(self):
+        """ returns the parent highest in hierarchy (the MemoryTree object)"""
+        parent = self
+        while parent != parent._parent:
+            parent = parent._parent
+        return parent
+
+    @property
+    def _fullbranchname(self):
+        parent = self._parent
+        branchname = self._branch
+        while parent != parent._parent:
+            branchname = parent._branch + '.' + branchname
+            parent = parent._parent
+        return branchname
+
+    def _getbranch(self, branchname, defaults=[]):
+        branch = self._root
+        for subbranch in branchname.split('.'):
+            branch = branch.__getattribute__(subbranch)
+        branch._defaults = defaults
+        return branch
 
     @property
     def _data(self):
         return self._parent._data[self._branch]
+
+    @property
+    def _dict(self):
+        " return a dict containing the memory branch data"
+        d = {}
+        for defaultdict in reversed(self._defaults):
+            d.update(defaultdict._dict)
+        d.update(self._data)
+        return d
 
     def _reload(self):
         self._parent._reload()
@@ -80,22 +135,21 @@ class MemoryBranch(object):
         self._parent._save()
 
     def __getattribute__(self, name):
-        if name.startswith('_') or name not in self._data:
+        if name.startswith('_'):
             return super(MemoryBranch, self).__getattribute__(name)
         else:
-            # make sure data is up-to-date
-            self._reload()
             # if subbranch, return MemoryBranch object
-            if isbranch(self._data[name]):
+            if isbranch(self[name]):
                 # test if we have a LemoryLeaf
-                if 'value' in self._data[name]:
-                    return self._data[name]['value']
-                    #return MemoryLeaf(self, name)
+                if 'value' in self[name]:
+                    return self[name]['value']
+                    # return MemoryLeaf(self, name) # maybe for the future
                 # otherwise create a MemoryBranch object
                 else:
                     return MemoryBranch(self, name)
+            # otherwise return whatever we find in the data dict
             else:
-                return self._data[name]
+                return self[name]
 
     # getitem bypasses the higher-level __getattribute__ function and provides
     # direct low-level access to the underlying dictionary.
@@ -103,10 +157,16 @@ class MemoryBranch(object):
     # file.
     def __getitem__(self, item):
         self._reload()
-        return self._data[item]
+        try:
+            return self._data[item]
+        except KeyError:
+            for defaultbranch in self._defaults:
+                if item in defaultbranch._data:
+                    return defaultbranch._data[item]
+            raise
 
     def __setattr__(self, name, value):
-        if name.startswith('_') or name not in self._data:
+        if name.startswith('_'):
             super(MemoryBranch, self).__setattr__(name, value)
         else:
             if isbranch(self._data[name]) and 'value' in self._data[name]:
@@ -130,20 +190,26 @@ class MemoryBranch(object):
             self._data[item] = value
             self._save()
 
-    # remove an item from the config file by typing memory - 'key"
-    def __sub__(self, name):
+    # remove an item from the config file
+    def _pop(self, name):
         ro = isbranch(self._data[name]) and 'value' in self._data[name] and \
              (self._data[name]["ro"] or False)
         if ro:
             logger.info(
                 "Attribute %s is read-only and cannot be deleted", name)
+            return None
         else:
             self.__dict__.pop(name)
-            self._data.pop(name)
+            value = self._data.pop(name)
             self._save()
+            return value
 
     def __repr__(self):
-        return "MemoryBranch("+str(self._data.keys())+")"
+        return "MemoryBranch("+str(self._dict.keys())+")"
+
+    def _keys(self):
+        return self._data.keys()
+
 
 class MemoryTree(MemoryBranch):
     _data = OrderedDict()
@@ -157,8 +223,7 @@ class MemoryTree(MemoryBranch):
             with open(self._filename, mode="w") as f:
                 pass
         self._load()
-        self._branch = ""
-        self._parent = self
+        super(MemoryTree, self).__init__(self, "")
 
     def _load(self):
         with open(self._filename) as f:
@@ -177,14 +242,15 @@ class MemoryTree(MemoryBranch):
 
     def _save(self):
         if self._mtime != os.path.getmtime(self._filename):
-            logger.warning("Config file has recently been changed. These "\
-                           +"changes might have been overwritten now.")
+            logger.warning("Config file has recently been changed on your " +
+                           "harddisk. These changes might have been " +
+                           "overwritten now.")
         logger.debug("Saving config file %s", self._filename)
-        copyfile(self._filename,self._filename+".bak")
+        copyfile(self._filename, self._filename+".bak")
         try:
             f = open(self._filename, mode='w')
             save(self._data, stream=f)
             f.close()
         except:
-            copyfile(self._filename+".bak",self._filename)
+            copyfile(self._filename+".bak", self._filename)
             logger.error("Error writing to file. Backup version was restored.")
