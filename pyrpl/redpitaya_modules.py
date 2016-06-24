@@ -636,7 +636,7 @@ def make_asg(channel=1):
                   start_phase=0, 
                   periodic=True, 
                   trigger_source=None,
-                  output_direct = default_output_direct):
+                  output_direct=None):
             """sets up the function generator. 
             
             waveform must be one of ['cos', 'ramp', 'DC', 'halframp']. 
@@ -656,23 +656,28 @@ def make_asg(channel=1):
                 offset = self.offset
             if trigger_source is None:
                 trigger_source = self.trigger_source
+            if output_direct is None:
+                output_direct = self.output_direct
+
+
 
             self.on = False
             self.sm_reset = True
             self.trigger_source = 'off'
             self.scale = amplitude
             self.offset = offset
+            #self.waveform = waveform
+            self.output_direct = output_direct
 
-
-            if waveform == 'cos':
+            if waveform=='cos':
                 x = np.linspace(0, 2*np.pi, self.data_length, endpoint=False)
                 y = np.cos(x)
-            elif waveform == 'ramp':
+            elif waveform=='ramp':
                 y = np.linspace(-1.0,3.0, self.data_length, endpoint=False)
                 y[self.data_length//2:] = -1*y[:self.data_length//2]
-            elif waveform == 'halframp':
+            elif waveform=='halframp':
                 y = np.linspace(-1.0,1.0, self.data_length, endpoint=False)
-            elif waveform == 'DC':
+            elif waveform=='DC':
                 y = np.zeros(self.data_length)
             else: 
                 y = self.data

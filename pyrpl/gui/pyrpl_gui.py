@@ -242,6 +242,9 @@ class ScopeWidget(ModuleWidget):
         for cb in self.cb_ch:
             cb.stateChanged.connect(self.display_curves)
 
+
+
+
     @property
     def params(self):
         # type: () -> dict
@@ -289,6 +292,10 @@ class AsgGui(ModuleWidget):
         freq_spin_box.setMaximum(100e6)
         freq_spin_box.setMinimum(-100e6)
         freq_spin_box.setSingleStep(100)
+
+        self.properties["offset"].widget.setMaximum(1)
+        self.properties["offset"].widget.setMinimum(-1)
+
         self.property_changed.connect(self.module.setup)
 
 class AllAsgGui(QtGui.QWidget):
@@ -684,7 +691,17 @@ class RedPitayaGui(RedPitaya):
         self.tab_widget.addTab(self.all_asg_widget, "Asg")
         self.tab_widget.addTab(self.na_widget, "NA")
         self.tab_widget.addTab(self.sa_widget, "Spec. An.")
+        self.custom_gui_setup()
         self.tab_widget.show()
+
+    def custom_gui_setup(self):
+        """
+        Convenience hook for user functionality upon subclassing RedPitayaGui
+        Returns
+        -------
+        """
+
+        pass
 
     def customize_scope(self):
         """

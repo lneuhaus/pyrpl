@@ -59,7 +59,7 @@ class LongRegister(Register):
     def __init__(self, address, bits=64, **kwargs):
         super(LongRegister,self).__init__(address=address, **kwargs)
         self.bits = bits
-        self.size = int((32+bits-bits%32)/32)
+        self.size = int(np.ceil(float(bits)/32))
 
     def __get__(self, obj, objtype=None):
         values = obj._reads(self.address, self.size)
