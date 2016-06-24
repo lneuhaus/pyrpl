@@ -736,7 +736,10 @@ class DspModule(BaseModule):
     
     out2_saturated = BoolRegister(0x8,1,doc="True if out2 is saturated")
 
+    name = "dspmodule"
+
     def __init__(self, client, module='pid0'):
+        self.name = module
         self._number = self._inputs[module]
         super(DspModule, self).__init__(client,
             addr_base=0x40300000+self._number*0x10000)

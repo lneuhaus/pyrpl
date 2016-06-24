@@ -38,6 +38,9 @@ class Signal(object):
 
     unit = ExposedConfigParameter("unit")
 
+    def __repr__(self):
+        return self._name
+
     @property
     def unit_per_V(self):
         return self._config[self.unit+"_per_V"]
@@ -67,7 +70,7 @@ class Signal(object):
     # placeholder for acquired data sample implementation (faster)
     @property
     def sample(self):
-        return np.random.normal() * self.unit_per_V
+        return (np.random.normal() - self.offset) * self.unit_per_V
 
     # derived quantities from here on, no need to modify in derived class
     @property
@@ -77,23 +80,20 @@ class Signal(object):
             # take new data then
             self._acquire()
         # return scaled numbers (slower to do it here but nicer code)
-        return (self._lastvalues - self._offset) * self.unit_per_V
+        return (self._lastvalues - self.offset) * self.unit_per_V
 
     @property
-    def mean(self):
-        return self._values.mean()
+    def mean(self): return self._values.mean()
 
     @property
     def rms(self):
         return np.sqrt(((self._values - self._values.mean())**2).mean())
 
     @property
-    def max(self):
-        return self._values.max()
+    def max(self): return self._values.max()
 
     @property
-    def min(self):
-        return self._values.min()
+    def min(self): return self._values.min()
 
     @property
     def curve(self):
@@ -118,17 +118,17 @@ class Signal(object):
 
     def get_offset(self):
         """ acquires and saves the offset of the signal """
-        oldoffset = self._offset
+        oldoffset = self.offset
         # make sure data are fresh
         self._acquire()
         self._config["offset"] = self._lastvalues.mean()
-        newoffset = self._offset
+        newoffset = self.offset
         logger.debug("Offset for signal %s changed from %s to %s",
                      self._name, oldoffset, newoffset)
         return newoffset
 
     @property
-    def _offset(self):
+    def offset(self):
         if self._config.offset_subtraction:
             return self._config.offset or 0
         else:
@@ -140,6 +140,15 @@ class Signal(object):
         self._config["peak"] = self.mean
         logger.debug("New peak value for signal %s is %s",
                      self._name, self._config.offset)
+
+    @property
+    def peak(self):
+        """ peak signal value, as present when get_peak was last called"""
+        return self._config.peak
+
+    @property
+    def redpitaya_input(self): return self._config.redpitaya_input
+
 
 class RPSignal(Signal):
     # a signal that lives inside the RedPitaya
@@ -154,20 +163,72 @@ class RPSignal(Signal):
                              average=self._config.average,
                              trigger_delay=0,
                              input1=self._config.redpitaya_input)
-        self._lastvalues = (
-            self._rp.scope.curve(ch=1, timeout=self._config.duration*5)
-            - self._offset) * self.unit_per_V
+        self._lastvalues = \
+                (self._rp.scope.curve(ch=1, timeout=self._config.duration*5)
+                - self.offset) * self.unit_per_V
         self._acquiretime = time.time()
 
     @property
-    def _times(self):
-        return self._rp.scope.times
+    def _times(self): return self._rp.scope.times
 
     @property
     def sample(self):
         self._rp.scope.input1 = self._config.redpitaya_input
-        return (self._rp.scope.voltage1 - self._offset) * self.unit_per_V
+        return (self._rp.scope.voltage1 - self.offset) * self.unit_per_V
 
     @property
-    def nyquist_frequency(self):
-        return 1.0 / self._rp.scope.sampling_time / 2
+    def nyquist_frequency(self): return 1.0 / self._rp.scope.sampling_time / 2
+
+class RPOutputSignal(RPSignal):
+    def __init__(self, config, branch, redpitaya):
+        super(RPOutputSignal, self).__init__(config, branch, redpitaya)
+
+        # each output is associated with a pid
+        self.pid = self._rp.pids.pop()
+        try:
+            self.pid.output_direct = self._config.redpitaya_output_direct
+        except KeyError:
+            try:
+                out = self._rp.__getattribute__(self._config.redpitaya_output)
+                out.input = self.pid.name
+                self.pid.output_direct = "off"
+            except KeyError:
+                logger.error("Output port for signal signal %s could not be "
+                             + "identified.", self._name)
+                raise
+
+        # each pid's input is the global error signal
+        self.pid.input = "off"
+
+        # configure inputfilter
+        try:
+            self.pid.inputfilter = self._config.inputfilter
+        except KeyError:
+            logger.debug("No inputfilter was defined for output %s. ",
+                         self._name)
+        # save the current inputfilter to the config file
+        self._config["inputfilter"] = self.pid.inputfilter
+
+        # configure iir if desired
+        self._loadiir()
+
+    def lock_off(self):
+        self.pid.p = 0
+        self.pid.i = 0
+        self.pid.d = 0
+
+    def lock_opt(self, slope=None, errorsignal=None, setpoint=None, factor=1.0):
+        pass
+    def _loadiir(self):
+        try:
+            # workaround for complex numbers from yaml
+            iirzeros = [complex(n) for n in self._config.iir.zeros]
+            iirpoles = [complex(n) for n in self._config.iir.poles]
+            iirgain = self._config.iir.gain
+        except KeyError:
+            logger.debug("No iir filter was defined for output %s. ",
+                         self._name)
+            return
+        if not hasattr(self, "iir"):
+            self.iir = self._rp.iirs.pop()
+

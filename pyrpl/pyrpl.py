@@ -248,7 +248,7 @@ def pyrpl(config="default"):
 
 class Lockbox(object):
     _configdir = os.path.join(os.path.dirname(__file__), "config")
-    _signalinit = Signal, {}
+    _signalinit = {"inputs": Signal, "outputs": Signal}, {}
 
     def __init__(self, config="default"):
         """generic lockbox object, no implementation-dependent details here
@@ -272,17 +272,20 @@ class Lockbox(object):
     def _makesignals(self, *args, **kwargs):
         """ Instantiates all signals from config file.
         Optional arguments are passed to the signal class initialization. """
-        for signaltype in ["inputs", "outputs"]:
-            # generalized version of: self.inputs = self.c.inputs
-            self.__setattr__(signaltype, self.c[signaltype].keys())
-            for k in self.__getattribute__(signaltype):
+        signalclasses, signalparameters = self._signalinit
+        for signaltype, signalclass in signalclasses.items():
+            # generalized version of: self.inputs = [reflection, transmission]
+            signallist = list()
+            self.__setattr__(signaltype, signallist)
+            for k in self.c[signaltype].keys():
                 self.logger.debug("Creating %s signal %s...", signaltype, k)
                 # generalization of:
                 # self.reflection = Signal(self.c, "inputs.reflection")
-                signalclass, signalparameters = self._signalinit
-                self.__setattr__(k, signalclass(self.c,
-                                                signaltype+"."+k,
-                                                **signalparameters))
+                signal = signalclass(self.c,
+                                     signaltype+"."+k,
+                                     **signalparameters)
+                signallist.append(signal)
+                self.__setattr__(k, signal)
 
     def _fastparams(self):
         """ implement custom fastparams here """
@@ -299,7 +302,9 @@ class Lockbox(object):
         result = {}
         for key in original.keys():
             if isinstance(original[key], dict):
-                result.update(self._deriveddict(original[key], prefix=prefix+key+".", postfix=postfix))
+                result.update(self._deriveddict(original[key],
+                                                prefix=prefix+key+".",
+                                                postfix=postfix))
             else:
                 result[prefix+key+postfix] = original[key]
         return result
@@ -323,10 +328,10 @@ class Pyrpl(Lockbox):
         # initialize RedPitaya object with the configured parameters
         self.rp = RedPitaya(**self.c.redpitaya._dict)
         # signal class and optional arguments are passed through this argument
-        self._signalinit = RPSignal, {"redpitaya": self.rp}
+        self._signalinit = {"inputs": RPSignal, "outputs": RPOutputSignal}, \
+                           {"redpitaya": self.rp}
         # Lockbox initialization
         super(Pyrpl, self).__init__(config=config)
-
 
 class Trash(object):
     def bla(self):
@@ -774,9 +779,7 @@ class Trash(object):
 
     def scope_trace(
             self,
-            input=[
-                1,
-                2],
+            input = [1, 2],
             frequency=1000.0,
             trigger_source=1,
             name_prefix="",
@@ -962,119 +965,6 @@ class Trash(object):
         c.save()
         return c
 
-    def na_trace(
-            self,
-            input=1,
-            output=1,
-            start=0,
-            stop=100e3,
-            points=1001,
-            rbw=100,
-            avg=1.0,
-            amplitude=0.1,
-            autosave=True,
-            name="rpna_curve",
-            sleeptimes=0.5,
-            stabilized=None,
-            maxamplitude=0.2):
-        """records the complex transfer function between start and stop frequency, returns a pandas series"""
-        print "Estimated acquisition time:", self.iq.na_time(points=points, rbw=rbw, avg=avg), "s"
-        sys.stdout.flush()  # flush the message to the screen
-        if stabilized is None:
-            x, y = self.iq.na_trace(input=input, output=output, start=start, stop=stop,
-                                    points=points, rbw=rbw, avg=avg, amplitude=amplitude, sleeptimes=sleeptimes)
-        else:
-            x, y, z = self.iq.na_trace_stabilized(input=input, output=output, start=start, stop=stop, points=points, rbw=rbw,
-                                                  avg=avg, amplitude=amplitude, sleeptimes=sleeptimes, maxamplitude=maxamplitude, stabilized=stabilized)
-            zz = self.rp.getbuffer(z)
-        xx = self.rp.getbuffer(x)
-        yy = self.rp.getbuffer(y)
-        saturation_db = -20. * np.log10(amplitude)
-        if autosave:
-            c = CurveDB.create(xx, yy)
-            c.name = name
-            d = dict(
-                start=start,
-                stop=stop,
-                input=input,
-                output=output,
-                points=points,
-                rbw=rbw,
-                avg=avg,
-                amplitude=amplitude,
-                saturation_db=saturation_db,
-                hostname=self.constants["hostname"],
-                stabilized=stabilized,
-                maxamplitude=maxamplitude,
-                type="RPNAcurve")
-            c.params.update(d)
-            c.save()
-            if not stabilized is None:
-                d = CurveDB.create(xx, zz, name="amplitudes")
-                d.save()
-                c.add_child(d)
-            return c
-        else:
-            return pandas.Series(yy, index=xx)
-
-    def na_reset(self):
-        self.iq.iq_channel = 1
-        self.iq.iq_constantgain = 0
-
-    def optimize_gain(
-            self,
-            output=None,
-            deviation=0.3,
-            p_or_i="p",
-            points=31,
-            avg=0):
-        if not self.islocked:
-            self.relock()
-        if output is None:
-            output = self.constants["lock_output"]
-        if self.stage == PDHSTAGE:
-            input = self.constants["pdh_input"]
-        else:
-            input = self.constants["reflection_input"]
-        pid = self._get_pid(input=input, output=output)
-        # proportional part
-        gains = list()
-        rrms = list()
-        prms = list()
-        if p_or_i == "i":
-            center = pid.integral
-        else:
-            center = pid.proportional
-        if self.constants["verbosity"]:
-            print "Input:", input, "Output:", output, "Actual", p_or_i, "gain:", center
-        for g in np.linspace(0, 1, points / 2 + 1, endpoint=True):
-            for sign in [1.0, -1.0]:
-                self.relock()
-                gain = np.round(center * (1.0 + deviation * g * sign))
-                if p_or_i == "i":
-                    pid.integral = gain
-                else:
-                    pid.proportional = gain
-                if self.islocked:
-                    if input == self.constants["pdh_input"]:
-                        p, pms = self.get_mean(signal="pdh", avg=avg, rms=True)
-                        prms.append(pms)
-                    r, rms = self.get_mean(
-                        signal="reflection", avg=avg, rms=True)
-                    rrms.append(rms)
-                    gains.append(gain)
-        if p_or_i == "i":
-            pid.integral = center
-        else:
-            pid.proportional = center
-        norm_r = self.constants["offres_reflection"] - \
-            self.constants["dark_reflection"]
-        data_refl = self._sortedseries(gains, rrms) / norm_r
-        if input == self.constants["pdh_input"]:
-            norm_p = self.pdh_max - self.constants["offset_pdh"]
-            data_pdh = self._sortedseries(gains, prms) / norm_p
-            return data_pdh, data_refl
-        return data_refl
 
     @property
     def pdhon(self):
@@ -1203,143 +1093,6 @@ class Trash(object):
             return self.pidpdh.integral
         else:
             return self.sof.integral
-
-# IIR section
-    def setup_iir(
-            self,
-            sys,
-            input=1,
-            output=1,
-            acbandwidth=None,
-            loops=None,
-            plot=True,
-            save=False,
-            turn_on=True,
-            tol=1e-6):
-        """Setup an IIR filter
-        -----------------------------
-        sys = (z,p,k)
-        z = list of zeros in the complex plane, maximum 16
-        p = list of zeros in the complex plane, maxumum 16
-        k = overall gain
-        the transfer function of the filter will be:
-                  (z-z_0)*(z-z_1)...
-        H(s) = k*-------------------
-                  (z-p_0)*(z-p_1)...
-        input:        input channel
-        output:       output channel. If set to 0, direct output is disabled (for passing through PID module)
-        acbandwidth:  if none, direct input is used, otherwise a high-pass is inserted before
-        loops:        clock cycles per loop of the filter. must be at least 3
-        turn_on:      automatically turn on the filter after setup
-        plot:         if True, plots the theoretical and implemented transfer functions
-        save:         if True, saves the predicted transfer functions to the database
-        tol:          tolerance for matching conjugate poles or zeros into pairs, 1e-6 is okay
-        """
-        iq = self.iq
-        if iq.iir_stages == 0:
-            print "Error: This FPGA bitfile does not support IIR filters! Please use an IIR version!"
-        iq.iir_channel = 0
-        ch = iq.iq_channel
-        iq.iq_channel = iq.iq_channels
-        iq.iq_reset = True
-        iq.iir_shortcut = False
-        iq.iir_copydata = True
-
-        # nasty bugfix here: needs cleanup of fpga code. avoids disconnecting
-        # iq0 from its real input
-        if input == 3 or input == 4:
-            iq.iq_channel = 0
-            if iq.iq_inputchannel == 1:
-                input = 4
-            elif iq.iq_inputchannel == 2:
-                input = 3
-            iq.iq_channel = iq.iq_channels
-
-        iq.iq_advanced_inputchannel = input
-        if output == 0:
-            iq.iq_outputchannel = 1
-            iq.iq_direct = False
-        else:
-            iq.iq_outputchannel = output
-            iq.iq_direct = True
-        if acbandwidth is None:
-            iq.iq_accoupled = False
-        else:
-            iq.iq_accoupled = True
-            if input == 2:
-                iq.iq_acbandwidth2 = acbandwidth
-            else:
-                iq.iq_acbandwidth1 = acbandwidth
-
-        iirbits = iq.iir_bits
-        iirshift = iq.iir_shift
-        z, p, k = sys
-        preliminary_loops = int(max([len(p), len(z)]) + 1 / 2)
-        if preliminary_loops > iq.iir_stages:
-            print "Error: desired filter order cannot be implemented."
-        c = iir.get_coeff(sys, dt=preliminary_loops * 8e-9,
-                          totalbits=iirbits, shiftbits=iirshift,
-                          tol=tol, finiteprecision=False)
-        minimum_loops = len(c)
-        if minimum_loops < 3:
-            minimum_loops = 3
-        if loops is None:
-            loops = 3
-        elif loops > 255:
-            loops = 255
-        loops = max([loops, minimum_loops])
-        dt = loops * 8e-9 / iq._frequency_correction
-        c = iir.get_coeff(sys, dt=dt,
-                          totalbits=iirbits, shiftbits=iirshift,
-                          tol=tol, finiteprecision=False)
-        iq.iir_coefficients = c
-        iq.iir_loops = loops
-        f = np.array(self.rp.getbuffer(iq.iir_coefficients))
-        self.iir_on = turn_on
-        iq.iq_channel = ch
-        # Diagnostics here
-        if plot or save:
-            if isinstance(plot, int):
-                plt.figure(plot)
-            else:
-                plt.figure()
-            tfs = iir.psos2plot(c, sys, n=2**16, maxf=5e6, dt=dt,
-                                name="discrete system (dt=" + str(int(dt * 1e9)) + "ns)")
-            tfs += iir.psos2plot(f, None, n=2**16, maxf=5e6,
-                                 dt=dt, name="implemented system")
-            plt.legend()
-        if save:
-            if not plot:
-                plt.close()
-            curves = list()
-            for tf in tfs:
-                w, h, name = tf
-                curve = CurveDB.create(w, h)
-                curve.name = name
-                z, p, k = sys
-                curve.params["iir_loops"] = loops
-                curve.params["iir_zeros"] = str(z)
-                curve.params["iir_poles"] = str(p)
-                curve.params["iir_k"] = k
-                curve.save()
-                curves.append(curve)
-            for curve in curves[:-1]:
-                curves[-1].add_child(curve)
-        print "IIR filter ready"
-        print "Maximum deviation from design coefficients: ", max((f[0:len(c)] - c).flatten())
-        print "Overflow pattern: ", bin(iq.iir_overflow)
-        if save:
-            return f, curves[-1]
-        else:
-            return f
-
-    @property
-    def iir_on(self):
-        return not self.iq.iir_reset
-
-    @iir_on.setter
-    def iir_on(self, v):
-        self.iq.iir_reset = not v
 
     def init_iir(
             self,

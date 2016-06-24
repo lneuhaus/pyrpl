@@ -67,6 +67,11 @@ outputs:
     amplitude: 0.1
     frequency: 50000000.0
     redpitaya_output_direct: out1
+    inputfilter:
+    - 0
+    - 0
+    - 0
+    - 0
   cavitypiezo:
     # piezo specification: 7 micron/1000V
     # amplifier gain: 50
@@ -76,15 +81,30 @@ outputs:
     redpitaya_output_direct: out1
     max_voltage: 0.7
     min_voltage: -0.5
+    inputfilter:
+    - 0
+    - 0
+    - 0
+    - 0
   laserpiezo:
     Hz_per_V: 5000000.0
     bandwidth: 1000.0
     redpitaya_output_direct: out2
+    inputfilter:
+    - 0
+    - 0
+    - 0
+    - 0
   temperature:
     m_per_V: 1.8e-05
     bandwidth: 0.1
     redpitaya_output: pwm1
 
+    inputfilter:
+    - 0
+    - 0
+    - 0
+    - 0
 model:
   modeltype: fabryperot
   wavelength: 1.064e-06
