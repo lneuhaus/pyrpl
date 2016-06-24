@@ -52,7 +52,8 @@ class CurveDB(object):
     @classmethod
     def create(cls, *args, **kwds):
         """
-        Creates a new curve, first arguments should be either Series(y, index=x) or x, y
+        Creates a new curve, first arguments should be either
+        Series(y, index=x) or x, y.
         kwds will be passed to self.params
         """
         if len(args) == 1:
@@ -72,8 +73,7 @@ class CurveDB(object):
 
         obj.params = kwds
         pk = obj.pk  # make a pk
-        autosave = kwds["autosave"] or True  # autosave True by default:
-        if autosave:
+        if ("autosave" not in kwds) or (kwds["autosave"]):
             obj.save()
         return obj
 
@@ -151,7 +151,8 @@ class CurveDB(object):
             else:
                 self._pk = max(pks) + 1
             # create the file to make this pk choice persistent
-            with open(self._dirname + str(self._pk) + ".p", 'w') as f:
+            with open(os.path.join(self._dirname,
+                                   str(self._pk) + ".p"), 'w') as f:
                 f.close()
             return self._pk
         return -1
