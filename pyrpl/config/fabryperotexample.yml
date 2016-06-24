@@ -17,7 +17,11 @@ signal:
   unit: V # can be any of m, Hz, V, raw, ... as long as unit_per_V is defined
   V_per_V: 1.0 # default unit is V
   raw_per_V: 8192.0 # raw units from the FPGA
-  duration: 0.001 # minimum trace duration in seconds
+  # minimum trace duration in seconds
+  # be aware that this number affects both the sampling rate and the minimum
+  # frequency that can be resolved. Usually, you want to keep duration as long
+  # as you can stand to wait for new signal data, typically 10-100 ms.
+  duration: 0.001
   # selects whether scope is to be used in average mode
   # false is strongly suggested for duration-independent estimation of rms
   # true is preferred only when we want to get an extremely good mean estimate
@@ -29,7 +33,7 @@ signal:
   # timeout determines the time interval within which we do not take another
   # data trace if several parameters are requested. To always obtain fresh
   # data, set this to -1. To enable manual acquisition control with the acquire
-  # function '_acquire()', set this to a very large value.
+  # function '_acquire()', set this to a very large value or to '.inf'.
   timeout: 0.1
   # if true, the offset is subtraced. Calibrate with signal.get_offset()
   offset_subtraction: true
@@ -41,11 +45,11 @@ signal:
 # all signals that are inputs of the lockbox
 inputs:
   reflection:
-    unit: mW
+    unit: V
     mW_per_V: 2.5
     redpitaya_input: adc1
     trigger: None
-    offset: 1.0
+    offset: -0.00032560527324676514
   transmission:
     unit: V
     redpitaya_input: adc2

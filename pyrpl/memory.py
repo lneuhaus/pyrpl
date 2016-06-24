@@ -19,16 +19,23 @@
 import os
 from collections import OrderedDict
 from shutil import copyfile
+import numpy as np
+import time
 
 import logging
 logger = logging.getLogger(name=__name__)
 
 try:
-    raise Exception
     import ruamel.yaml
+
+    #ruamel.yaml.add_implicit_resolver()
+    ruamel.yaml.RoundTripDumper.add_representer(np.float64,
+                lambda dumper, data: dumper.represent_float(float(data)))
+    ruamel.yaml.RoundTripDumper.add_representer(complex,
+                lambda dumper, data: dumper.represent_str(str(data)))
     def load(f):
         return ruamel.yaml.load(f, ruamel.yaml.RoundTripLoader)
-    def save(data, stream=None  ):
+    def save(data, stream=None):
         return ruamel.yaml.dump(data, stream=stream, Dumper=ruamel.yaml.RoundTripDumper, default_flow_style = False)
     def isbranch(obj):
         return isinstance(obj, OrderedDict) #type is ruamel.yaml.comments.CommentedMap
@@ -37,7 +44,7 @@ except:
     import yaml
     # ordered load and dump for yaml files. From
     # http://stackoverflow.com/questions/5121931/in-python-how-can-you-load-yaml-mappings-as-ordereddicts
-    def load(stream, Loader=yaml.Loader, object_pairs_hook=OrderedDict):
+    def load(stream, Loader=yaml.SafeLoader, object_pairs_hook=OrderedDict):
         class OrderedLoader(Loader):
             pass
         def construct_mapping(loader, node):
@@ -47,7 +54,7 @@ except:
             yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
             construct_mapping)
         return yaml.load(stream, OrderedLoader)
-    def save(data, stream=None, Dumper=yaml.Dumper, default_flow_style=False, **kwds):
+    def save(data, stream=None, Dumper=yaml.SafeDumper, default_flow_style=False, **kwds):
         class OrderedDumper(Dumper):
             pass
         def _dict_representer(dumper, data):
@@ -55,6 +62,13 @@ except:
                 yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
                 data.items())
         OrderedDumper.add_representer(OrderedDict, _dict_representer)
+
+        OrderedDumper.add_representer(np.float64,
+                    lambda dumper, data: dumper.represent_float(float(data)))
+
+        OrderedDumper.add_representer(complex,
+                    lambda dumper, data: dumper.represent_str(str(data)))
+
         return yaml.dump(data, stream, OrderedDumper,
                          default_flow_style=default_flow_style, **kwds)
     def isbranch(obj):
@@ -214,6 +228,9 @@ class MemoryBranch(object):
 
 class MemoryTree(MemoryBranch):
     _data = OrderedDict()
+    # never reload more frequently than every 2 s because this is the principal
+    # cause of slowing down the code
+    _reloaddeadtime = 2
 
     def __init__(self, filename):
         if os.path.isfile(filename):
@@ -227,6 +244,7 @@ class MemoryTree(MemoryBranch):
         super(MemoryTree, self).__init__(self, "")
 
     def _load(self):
+        logger.debug("Loading config file %s", self._filename)
         with open(self._filename) as f:
             self._data = load(f)
         # update dict of the object
@@ -235,11 +253,15 @@ class MemoryTree(MemoryBranch):
                 self.__dict__.pop(name)
         self.__dict__.update(self._data)
         self._mtime = os.path.getmtime(self._filename)
+        self._lastreload = time.time()
 
     def _reload(self):
-        if self._mtime != os.path.getmtime(self._filename):
-            logger.debug("Reloading config file %s", self._filename)
-            self._load()
+        # first check if a reload was not performed recently (speed up reasons)
+        if self._lastreload + self._reloaddeadtime < time.time():
+            logger.debug("Checking change time of config file...")
+            self._lastreload = time.time()
+            if self._mtime != os.path.getmtime(self._filename):
+                self._load()
 
     def _save(self):
         if self._mtime != os.path.getmtime(self._filename):
@@ -255,3 +277,6 @@ class MemoryTree(MemoryBranch):
         except:
             copyfile(self._filename+".bak", self._filename)
             logger.error("Error writing to file. Backup version was restored.")
+            raise
+        self._mtime = os.path.getmtime(self._filename)
+

@@ -46,11 +46,11 @@ class Signal(object):
     def unit_per_V(self, value):
         self._config[self.unit+"_per_V"] = value
 
-    # placeholder for acquired data implementation
+    # placeholder for acquired data implementation, in default units (V)
     def _acquire(self):
         logger.debug("acquire() of signal %s was called! ", self._name)
-        self._lastvalues = (np.random.normal(size=self._config.points) \
-                           -self._offset) * self.unit_per_V
+        # get data
+        self._lastvalues = np.random.normal(size=self._config.points)
         self._acquiretime = time.time()
 
     # placeholder for acquired timetrace implementation
@@ -60,6 +60,9 @@ class Signal(object):
                            self._config.traceduration,
                            self._config.points,
                            endpoint=False)
+    @property
+    def nyquist_frequency(self):
+        return self._config.points / self._config.traceduration / 2
 
     # placeholder for acquired data sample implementation (faster)
     @property
@@ -73,11 +76,12 @@ class Signal(object):
         if self._acquiretime + self._config.timeout < time.time():
             # take new data then
             self._acquire()
-        return self._lastvalues
+        # return scaled numbers (slower to do it here but nicer code)
+        return (self._lastvalues - self._offset) * self.unit_per_V
 
     @property
     def mean(self):
-        return self._values.mean() # already scaled in _values
+        return self._values.mean()
 
     @property
     def rms(self):
@@ -107,6 +111,7 @@ class Signal(object):
                               average=self._config.average,
                               unit=self.unit,
                               unit_per_V=self.unit_per_V,
+                              nyquist_frequency = self.nyquist_frequency,
                               acquiretime=self._acquiretime,
                               autosave=self._config.autosave
                               )
@@ -116,10 +121,10 @@ class Signal(object):
         oldoffset = self._offset
         # make sure data are fresh
         self._acquire()
-        newoffset = self.mean + oldoffset
-        self._config["offset"] = newoffset
-        logger.debug("New offset for signal %s is %s",
-                     self._name, newoffset)
+        self._config["offset"] = self._lastvalues.mean()
+        newoffset = self._offset
+        logger.debug("Offset for signal %s changed from %s to %s",
+                     self._name, oldoffset, newoffset)
         return newoffset
 
     @property
@@ -136,7 +141,6 @@ class Signal(object):
         logger.debug("New peak value for signal %s is %s",
                      self._name, self._config.offset)
 
-
 class RPSignal(Signal):
     # a signal that lives inside the RedPitaya
     def __init__(self, config, branch, redpitaya):
@@ -150,9 +154,9 @@ class RPSignal(Signal):
                              average=self._config.average,
                              trigger_delay=0,
                              input1=self._config.redpitaya_input)
-        self._lastvalues = \
-            self._rp.scope.curve(ch=1, timeout=self._config.duration*5) \
-            * self.unit_per_V
+        self._lastvalues = (
+            self._rp.scope.curve(ch=1, timeout=self._config.duration*5)
+            - self._offset) * self.unit_per_V
         self._acquiretime = time.time()
 
     @property
@@ -162,4 +166,8 @@ class RPSignal(Signal):
     @property
     def sample(self):
         self._rp.scope.input1 = self._config.redpitaya_input
-        return self._rp.scope.voltage1 * self.unit_per_V
+        return (self._rp.scope.voltage1 - self._offset) * self.unit_per_V
+
+    @property
+    def nyquist_frequency(self):
+        return 1.0 / self._rp.scope.sampling_time / 2
