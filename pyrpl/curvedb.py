@@ -94,10 +94,10 @@ class CurveDB(object):
             return curve
 
     def save(self):
-        with open(self._dirname + str(self.pk) + '.p', 'w') as f:
+        with open(os.path.join(self._dirname, str(self.pk) + '.p'), 'w') as f:
             pickle.dump((self.pk, self.data, self.params), f)
             f.close()
-
+    
     def delete(self):
         # remove the file
         os.remove(self._dirname + str(self.pk) + '.p')
