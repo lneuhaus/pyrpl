@@ -73,6 +73,8 @@ class TestClass(object):
                           'dac2',
                           'voltage1',
                           'voltage2',
+                          'firstpoint',
+                          'lastpoint'
                           ]:
                 return
             #write something different and confirm change

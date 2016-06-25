@@ -87,4 +87,10 @@ target/
 docs/my_notebooks/
 
 *.pydevproject
+<<<<<<< HEAD
 *.project
+=======
+*.project
+
+.idea/
+>>>>>>> master

@@ -5,10 +5,13 @@ from pyrpl.redpitaya_modules import NotReadyError
 from pyqtgraph.Qt import QtGui, QtCore
 import pyqtgraph as pg
 import numpy as np
+
 from pyrpl.network_analyzer import NetworkAnalyzer
 from pyrpl.spectrum_analyzer import SpectrumAnalyzer
 
+
 from collections import OrderedDict
+
 
 APP = QtGui.QApplication.instance()
 if APP is None:
@@ -669,7 +672,6 @@ class SpecAnGui(ModuleWidget):
                    points=self.module.points,
                    avg=self.module.avg,
                    acbandwidth=self.module.acbandwidth)
-
 
 class RedPitayaGui(RedPitaya):
     def __init__(self, *args, **kwds):

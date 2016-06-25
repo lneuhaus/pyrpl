@@ -1,6 +1,6 @@
 env:
-#- REDPITAYA_HOSTNAME=192.168.1.100 AUTOCORRECTPEP8=0
-- REDPITAYA_HOSTNAME=unavailable REDPITAYA_PASSWORD=root AUTOCORRECTPEP8=0
+- AUTOCORRETPEP8=0
+# REDPITAYA variables are defined in travis account (encrypted)
 
 language: python
 python:

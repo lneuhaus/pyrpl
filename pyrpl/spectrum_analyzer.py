@@ -21,6 +21,7 @@ from time import sleep
 from matplotlib import pyplot
 import math
 import numpy
+
 from numpy import pi, linspace
 import numpy as np
 import os
@@ -33,8 +34,6 @@ import matplotlib.pyplot as plt
 import logging
 
 from redpitaya_modules import NotReadyError, Scope, IQ
-
-
 
 class SpectrumAnalyzer(object):
     """
@@ -193,6 +192,7 @@ class SpectrumAnalyzer(object):
         middle = int(self.data_length/2)
         length = self.points#self.data_length/self.nyquist_margin
         return slice(middle - length/2, middle + length/2 + 1)
+
 
     def curve(self):
         if not self._setup:
