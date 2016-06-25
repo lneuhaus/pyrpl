@@ -6,6 +6,25 @@ from redpitaya_modules import NotReadyError
 
 
 class NetworkAnalyzer(object):
+    """
+    Using an IQ module, the network analyzer can measure the complex coherent response between an output and
+    any signal in the redpitaya. (It would be nice not to be limited to an output_direct)
+
+    2 ways to use the NetworkAnalyzer:
+      exemple 1:
+            r = RedPitaya("1.1.1.1")
+            na = NetworkAnalyzer(r)
+            curve = na.curve(iq_name='iq1', start=100, stop=1000, rbw=10...)
+      exemple 2:
+            na.start = 100
+            na.stop = 1000
+            curve = na.curve(rbw=10)
+      exemple 3:
+            na.setup(start=100, stop=1000, ...)
+            for freq, response, amplitude in na.values():
+                print response
+    """
+
     def __init__(self, rp):
         self.rp = rp
         self.iq_name = 'iq1'
@@ -27,6 +46,10 @@ class NetworkAnalyzer(object):
 
     @property
     def params(self):
+        """
+        Parameters to save.
+        """
+
         return dict(start=self.start,
                     stop=self.stop,
                     avg=self.avg,
@@ -41,6 +64,10 @@ class NetworkAnalyzer(object):
 
     @property
     def iq(self):
+        """
+        underlying iq module.
+        """
+
         return getattr(self.rp, self.iq_name)
 
     @property
@@ -71,25 +98,27 @@ class NetworkAnalyzer(object):
 
         Parameters
         ----------
-        iq_name
-        start
-        stop
-        points
-        rbw
-        avg
-        amplitude
-        input
-        output_direct
-        acbandwidth
-        sleeptimes
-        logscale
-        stabilize
-        maxamplitude
+        iq_name: name of the underlying iq_module e.g.: iq1
+        start: frequency start
+        stop: frequency stop
+        points: number of points
+        rbw: inverse averaging time per point
+        avg: number of points to average before moving to the next
+        amplitude: output amplitude (V)
+        input: input signal
+        output_direct: output drive
+        acbandwidth: bandwidth of the input high pass filter
+        sleeptimes: ?
+        logscale: should the frequency scan be distributed logarythmically?
+        stabilize: if float stabilizes the drive amplitude such that the input remain constant
+        at input [V]=stabilize. If False, then no stabilization
+        maxamplitude: limit to the output amplitude
 
         Returns
         -------
         None
         """
+
         if start is not None: self.start = start
         if stop is not None: self.stop = stop
         if points is not None: self.points = points
@@ -114,9 +143,6 @@ class NetworkAnalyzer(object):
                 endpoint=True)
         else:
             self.x = np.linspace(self.start, self.stop, self.points, endpoint=True)
-
-        #self.y = np.zeros(self.points, dtype=np.complex128)
-        #self.drive_amplitudes = np.zeros(self.points, dtype=np.float64)
 
         # preventive saturation
         maxamplitude = abs(self.maxamplitude)
@@ -159,10 +185,17 @@ class NetworkAnalyzer(object):
 
     @property
     def current_freq(self):
+        """
+        current frequency during the scan
+        """
+
         return self.iq.frequency
 
     @property
     def rbw(self):
+        """
+        rbw of the underlying iq
+        """
         return self.iq.bandwidth[0]
 
     @rbw.setter
@@ -189,7 +222,12 @@ class NetworkAnalyzer(object):
         return 1.0 / self.rbw * (self.avg + self.sleeptimes)
 
     def get_current_point(self):
-        """blocks until time_per_point is reached"""
+        """
+        This function fetches the current point on the redpitaya.
+        The function blocks until the time since the last point has reached
+        time_per_point
+        """
+
         current_time = time()
         duration = current_time - self.time_last_point
         remaining = self.time_per_point - duration
@@ -207,8 +245,9 @@ class NetworkAnalyzer(object):
 
     def prepare_for_next_point(self, last_normalized_val):
         """
-        set everything for next point
+        Sets everything for next point
         """
+
         if self.stabilize is not False:
             amplitude_next = self.stabilize / np.abs(y)
         else:
@@ -229,13 +268,14 @@ class NetworkAnalyzer(object):
         The generator can be used in a for loop:
         for val in na.values():
             print val
-        or individual values can be fetched succesively by calling
+        or individual values can be fetched successively by calling
         values = na.values()
         val1 = values.next()
         val2 = values.next()
 
-        values are made of a triplet (freq, complex_amplitude, amplitude)
+        values are made of a triplet (freq, complex_response, amplitude)
         """
+
         try:
             #for point in xrange(self.points):
             while self.current_point<self.points:
@@ -252,15 +292,47 @@ class NetworkAnalyzer(object):
             self.iq.amplitude = 0
             self.iq.frequency = self.x[0]
 
-    def curve(self):
+    def curve(self,
+              iq_name=None,
+              start=None,  # start frequency
+              stop=None,  # stop frequency
+              points=None,  # number of points
+              rbw=None,  # resolution bandwidth, can be a list of 2 as well for second-order
+              avg=None,  # averages
+              amplitude=None,  # output amplitude in volts
+              input=None,  # input signal
+              output_direct=None,  # output signal
+              acbandwidth=None,  # ac filter bandwidth, 0 disables filter, negative values represent lowpass
+              sleeptimes=None,  # wait sleeptimes/rbw for quadratures to stabilize
+              logscale=None,  # make a logarithmic frequency sweep
+              stabilize=None,
+              # if a float, output amplitude is adjusted dynamically so that input amplitude [V]=stabilize
+              maxamplitude=None):  # amplitude can be limited):
         """
-        Once setup has been called, this acquires a curve.
+        High level function: this sets up the na and acquires a curve. See setup for the explanation of parameters.
+
         Returns
         -------
         (array of frequencies, array of complex ampl, array of amplitudes)
         """
-        if not self._setup:
-            raise NotReadyError("call setup() before first curve")
+
+        self.setup( iq_name=iq_name,
+                    start=start,  # start frequency
+                    stop=stop,  # stop frequency
+                    points=points,  # number of points
+                    rbw=rbw,  # resolution bandwidth, can be a list of 2 as well for second-order
+                    avg=avg,  # averages
+                    amplitude=amplitude,  # output amplitude in volts
+                    input=input,  # input signal
+                    output_direct=output_direct,  # output signal
+                    acbandwidth=acbandwidth,  # ac filter bandwidth, 0 disables filter, negative values represent lowpass
+                    sleeptimes=sleeptimes,  # wait sleeptimes/rbw for quadratures to stabilize
+                    logscale=logscale,  # make a logarithmic frequency sweep
+                    stabilize=stabilize,
+                    # if a float, output amplitude is adjusted dynamically so that input amplitude [V]=stabilize
+                    maxamplitude=maxamplitude)
+        #if not self._setup:
+        #    raise NotReadyError("call setup() before first curve")
         xs = np.zeros(self.points, dtype=float)
         ys = np.zeros(self.points, dtype=complex)
         amps = np.zeros(self.points, dtype=float)

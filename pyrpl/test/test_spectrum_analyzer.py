@@ -22,12 +22,16 @@ class TestClass(object):
         else:
             self.r = RedPitaya()
 
+
     def test_spec_an(self):
         if self.r is None:
             return
         sa = SpectrumAnalyzer(self.r)
-        sa.input = self.r.asg1
-        sa.setup(start=1e6, stop=2e6, rbw=1e5)
-        x, y, amp = na.curve()
+        sa.input = "asg1"
+        self.r.asg1.frequency = 1e6
+        self.r.asg1.trigger_source = 'immediately'
+
+        sa.setup(center=1e6, span=1e5)
+        curve = sa.curve()
         #Assumes out1 is connected with adc1...
-        assert(max(abs(y) - 1)<0.2)
+        assert(curve.argmax()==500)

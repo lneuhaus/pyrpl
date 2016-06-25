@@ -38,7 +38,23 @@ from redpitaya_modules import NotReadyError, Scope, IQ
 class SpectrumAnalyzer(object):
     """
     A spectrum analyzer is composed of an IQ demodulator, followed by a scope.
-    The spectrum analyzer connections are made upon calling the function setup  
+    The spectrum analyzer connections are made upon calling the function setup.
+
+    Example 1:
+      r = RedPitayaGui("1.1.1.1")
+      sa = SpectrumAnalyzer(r)
+      sa.setup(span=1000, center=100000)
+      curve = sa.curve()
+      freqs = sa.freqs()
+
+    Example 2:
+      r = RedPitayaGui("1.1.1.1")
+      sa = SpectrumAnalyzer(r)
+      sa.span = 1000
+      sa.center = 100000
+      sa.setup()
+      curve = sa.curve()
+      freqs = sa.freqs()
     """
 
     nyquist_margin = 2*pi #it looks like bandwidth of filters are then perfect
@@ -141,6 +157,16 @@ class SpectrumAnalyzer(object):
               window=None,
               acbandwidth=None,
               input=None):
+        """
+        :param span: span of the analysis
+        :param center: center frequency
+        :param data_length: number of points
+        :param avg: not in use now
+        :param window: "gauss" for now
+        :param acbandwidth: bandwidth of the input highpass filter
+        :param input: input channel
+        :return:
+        """
         self._setup = True
         if span is not None:
             self.span = span
@@ -176,31 +202,53 @@ class SpectrumAnalyzer(object):
 
     @property
     def sampling_time(self):
+        """
+        :return: scope sampling time
+        """
         return self.scope.sampling_time
 
     def filter_window(self):
+        """
+        :return: filter window
+        """
         return self._filter_windows[self.window](self.data_length, self.rbw, self.sampling_time)
 
     def iq_data(self):
+        """
+        :return: complex iq time trace
+        """
         res = self.scope.curve(1) + 1j * self.scope.curve(2) + 0.00012206662865236316*(1+1j)
         return res[:self.data_length]
 
     def filtered_iq_data(self):
+        """
+        :return: the product between the complex iq data and the filter_window
+        """
         return self.iq_data()*self.filter_window()
 
     def useful_index(self):
+        """
+        :return: a slice containing the portion of the spectrum between start and stop
+        """
         middle = int(self.data_length/2)
         length = self.points#self.data_length/self.nyquist_margin
         return slice(middle - length/2, middle + length/2 + 1)
 
 
     def curve(self):
+        """
+        Get a spectrum from the device. It is mandatory to call setup() before curve()
+        :return:
+        """
         if not self._setup:
             raise NotReadyError("Setup was never called")
         return 20*np.log10(np.roll(np.abs(np.fft.fft(self.filtered_iq_data())), self.data_length/2))\
                     [self.useful_index()]
 
     def freqs(self):
+        """
+        :return: frequency array
+        """
         return self.center + np.roll(np.fft.fftfreq(self.data_length,
                                                     self.sampling_time),
                                      self.data_length/2) \

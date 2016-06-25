@@ -6,11 +6,7 @@ import logging
 logging.getLogger(name=__name__).setLevel(logging.INFO) # normal setting
 
 
-try:
-    from pyinstruments import CurveDB
-except ImportError:
-    from .curvedb import CurveDB
-
+from .curvedb import CurveDB
 from .redpitaya import RedPitaya
 from .redpitaya_modules import *
 from .registers import *
