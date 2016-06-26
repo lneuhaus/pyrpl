@@ -23,11 +23,12 @@ class Model(object):
     outputs = {}
 
     def __init__(self, parent=None):
+        self.logger = logging.getLogger(__name__)
         if parent is None:
             self._parent = self
         else:
             self._parent = parent
-        self.logger = logging.getLogger(__name__)
+        self._config = self._parent.c.model
 
     def setup(self):
         pass
@@ -40,6 +41,9 @@ class Model(object):
 
 
 class Interferometer(Model):
+    def reflection(self, variable):
+        return variable
+
     pass
 
 
