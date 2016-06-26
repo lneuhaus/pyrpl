@@ -32,6 +32,8 @@ from paramiko import SSHException
 from .sshshell import SSHshell
 from . import monitor_client
 from . import redpitaya_modules as rp
+from network_analyzer import NetworkAnalyzer
+from spectrum_analyzer import SpectrumAnalyzer
 
 class RedPitaya(SSHshell):
     def __init__(self, hostname='192.168.1.100', port=2222,
@@ -59,6 +61,7 @@ class RedPitaya(SSHshell):
         self.frequency_correction = frequency_correction
         self.leds_off = leds_off
         self.timeout = timeout
+
         # get parameters from os.environment variables
         for k in ["hostname","port","user","password","delay","timeout"]:
             if "REDPITAYA_"+k.upper() in os.environ:
@@ -272,14 +275,20 @@ class RedPitaya(SSHshell):
         self.hk = rp.HK(self.client)
         self.ams = rp.AMS(self.client)
         self.scope = rp.Scope(self.client, self)
+
         self.pid0 = rp.Pid(self.client, module='pid0')
         self.pid1 = rp.Pid(self.client, module='pid1')
         self.pid2 = rp.Pid(self.client, module='pid2')
         self.pid3 = rp.Pid(self.client, module='pid3')
+
         self.iir = rp.IIR(self.client, module='iir')
         self.iq0 = rp.IQ(self.client, module='iq0')
         self.iq1 = rp.IQ(self.client, module='iq1')
         self.iq2 = rp.IQ(self.client, module='iq2')
+
+        self.na = NetworkAnalyzer(self)
+        self.spec_an = SpectrumAnalyzer(self)
+
         self.asg1 = rp.Asg1(self.client)
         self.asg2 = rp.Asg2(self.client)
         self.pwm0 = rp.AuxOutput(self.client,output='pwm0')
@@ -299,6 +308,10 @@ class RedPitaya(SSHshell):
         self.iq0 = rp.IQ(self.client, module='iq0')
         self.iq1 = rp.IQ(self.client, module='iq1')
         self.iq2 = rp.IQ(self.client, module='iq2')
+
+        self.na = NetworkAnalyzer(self)
+        self.spec_an = SpectrumAnalyzer(self)
+
         self.asg1 = rp.Asg1(self.client)
         self.asg2 = rp.Asg2(self.client)
         self.pwm0 = rp.AuxOutput(self.client,output='pwm0')

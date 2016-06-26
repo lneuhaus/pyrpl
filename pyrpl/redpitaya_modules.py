@@ -28,10 +28,12 @@ from .registers import *
 from .bijection import Bijection
 from . import iir
 
+
 class TimeoutError(ValueError):
     pass
 class NotReadyError(ValueError):
     pass
+
 
 class BaseModule(object):
     
@@ -939,7 +941,10 @@ class IQ(FilterModule):
     
     _g4 = FloatRegister(0x11C, bits=_GAINBITS, norm = 2**_SHIFTBITS, 
                         doc="gain4 of iq module [volts]")
-    
+
+    def __init__(self, *args, **kwds):
+        super(IQ, self).__init__(*args, **kwds)
+
     @property
     def gain(self):
         return self._g1 * 0.039810
@@ -996,7 +1001,8 @@ class IQ(FilterModule):
         sum = np.complex128(self._to_pyint(int(a)+(int(b)<<31),bitlength=62)) \
             + np.complex128(self._to_pyint(int(c)+(int(d)<<31), bitlength=62))*1j  
         return sum / float(self._na_averages)
-    
+
+    """
     def na_trace(
             self,
             start=0,     # start frequency
@@ -1012,7 +1018,8 @@ class IQ(FilterModule):
             logscale=False, # make a logarithmic frequency sweep
             stabilize=None, # if a float, output amplitude is adjusted dynamically so that input amplitude [V]=stabilize 
             maxamplitude=1.0, # amplitude can be limited
-            ): 
+            ):
+
         if logscale:
             x = np.logspace(
                 np.log10(start),
@@ -1086,7 +1093,7 @@ class IQ(FilterModule):
             return x, y
         else:
             return x,y,amplitudes
-
+    """
 
 class IIR(DspModule):
     # invert denominator coefficients to convert from scipy notation to

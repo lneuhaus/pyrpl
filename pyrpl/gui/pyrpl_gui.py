@@ -1062,10 +1062,10 @@ class RedPitayaGui(RedPitaya):
 
     def __init__(self, *args, **kwds):
         super(RedPitayaGui, self).__init__(*args, **kwds)
-        self.na_widget = NaGui(parent=None, module=NetworkAnalyzer(self))
+        self.na_widget = NaGui(parent=None, module=self.na)
         self.scope_widget = ScopeWidget(parent=None, module=self.scope)
         self.all_asg_widget = AllAsgGui(parent=None, rp=self)
-        self.sa_widget = SpecAnGui(parent=None, module=SpectrumAnalyzer(self))
+        self.sa_widget = SpecAnGui(parent=None, module=self.spec_an)
 
         self.customize_scope()
         self.customize_na()
@@ -1123,18 +1123,3 @@ class RedPitayaGui(RedPitaya):
         """
         pass
 
-    @property
-    def na(self):
-        """
-        The na module that is accessible via self.na_widget.module is also accessible directly.
-        """
-
-        return self.na_widget.module
-
-    @property
-    def spec_an(self):
-        """
-        The na module that is accessible via self.na_widget.module is also accessible directly.
-        """
-
-        return self.sa_widget.module
