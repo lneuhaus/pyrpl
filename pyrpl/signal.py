@@ -39,15 +39,15 @@ class Signal(object):
     unit = ExposedConfigParameter("unit")
 
     def __repr__(self):
-        return self._name
+        return str(self.__class__)+"("+self._name+")"
 
     @property
     def unit_per_V(self):
-        return self._config[self.unit+"_per_V"]
+        return self._config[self.unit + "_per_V"]
 
     @unit_per_V.setter
     def unit_per_V(self, value):
-        self._config[self.unit+"_per_V"] = value
+        self._config[self.unit + "_per_V"] = value
 
     # placeholder for acquired data implementation, in default units (V)
     def _acquire(self):
@@ -111,7 +111,7 @@ class Signal(object):
                               average=self._config.average,
                               unit=self.unit,
                               unit_per_V=self.unit_per_V,
-                              nyquist_frequency = self.nyquist_frequency,
+                              nyquist_frequency=self.nyquist_frequency,
                               acquiretime=self._acquiretime,
                               autosave=self._config.autosave
                               )
@@ -183,21 +183,25 @@ class RPOutputSignal(RPSignal):
     def __init__(self, config, branch, redpitaya):
         super(RPOutputSignal, self).__init__(config, branch, redpitaya)
 
-        # each output is associated with a pid
-        self.pid = self._rp.pids.pop()
-        try:
-            self.pid.output_direct = self._config.redpitaya_output_direct
-        except KeyError:
-            try:
-                out = self._rp.__getattribute__(self._config.redpitaya_output)
-                out.input = self.pid.name
-                self.pid.output_direct = "off"
-            except KeyError:
-                logger.error("Output port for signal signal %s could not be "
-                             + "identified.", self._name)
-                raise
+        # each output gets its own pid
+        if not hasattr(self, "pid"):
+            self.pid = self._rp.pids.pop()
 
-        # each pid's input is the global error signal
+        # routing of output
+        try:
+            out = self._config.redpitaya_output
+        except KeyError:
+            logger.error("Output port for signal signal %s could not be "
+                         + "identified.", self._name)
+            raise
+        if out.startswith("pwm"):
+            out = self._rp.__getattribute__(out)
+            out.input = self.pid.name
+            self.pid.output_direct = "off"
+        else:
+            self.pid.output_direct = out
+
+        # input off for now
         self.pid.input = "off"
 
         # configure inputfilter
@@ -212,13 +216,6 @@ class RPOutputSignal(RPSignal):
         # configure iir if desired
         self._loadiir()
 
-    def lock_off(self):
-        self.pid.p = 0
-        self.pid.i = 0
-        self.pid.d = 0
-
-    def lock_opt(self, slope=None, errorsignal=None, setpoint=None, factor=1.0):
-        pass
     def _loadiir(self):
         try:
             # workaround for complex numbers from yaml
@@ -231,4 +228,13 @@ class RPOutputSignal(RPSignal):
             return
         if not hasattr(self, "iir"):
             self.iir = self._rp.iirs.pop()
+
+
+    def lock_off(self):
+        self.pid.p = 0
+        self.pid.i = 0
+        self.pid.d = 0
+
+    def lock_opt(self, slope=None, errorsignal=None, setpoint=None, factor=1.0):
+        pass
 

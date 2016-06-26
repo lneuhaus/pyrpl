@@ -4,7 +4,16 @@ redpitaya:
   user: root
   password: dmhvs30NDEBD
   port: 2222
-  frequency_correction: 0.999
+  frequency_correction: 1.0
+  filename: fpga//red_pitaya.bin
+  reloadfpga: true
+redpitaya:
+  #hostname: 192.168.1.100
+  hostname: redpitaya.ddns.net
+  user: root
+  password: dmhvs30NDEBD
+  port: 2222
+  frequency_correction: 1.0
   filename: fpga//red_pitaya.bin
   reloadfpga: true
 
@@ -60,25 +69,20 @@ inputs:
   # in2: pdh # for externally generated pdh
 
 # all devices that are connected to the redpitaya outputs
-outputs:
-  # we insert a bias-T with separation frequency around 1 MHz behind out1
+# we insert a bias-T with separation frequency around 1 MHz behind out1
   # this allows us to use the fast output for both the piezo and PDH
-  modulator:
-    amplitude: 0.1
-    frequency: 50000000.0
-    redpitaya_output_direct: out1
-    inputfilter:
-    - 0
-    - 0
-    - 0
-    - 0
+modulators:
+  amplitude: 0.1
+  frequency: 50000000.0
+  redpitaya_output: out1
+outputs:
   cavitypiezo:
     # piezo specification: 7 micron/1000V
     # amplifier gain: 50
     # therefore effective DC gain: 350nm/V
     m_per_V: 3.5e-07
     bandwidth: 100.0
-    redpitaya_output_direct: out1
+    redpitaya_output: out1
     max_voltage: 0.7
     min_voltage: -0.5
     inputfilter:
@@ -89,7 +93,7 @@ outputs:
   laserpiezo:
     Hz_per_V: 5000000.0
     bandwidth: 1000.0
-    redpitaya_output_direct: out2
+    redpitaya_output: out2
     inputfilter:
     - 0
     - 0
