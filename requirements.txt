@@ -1,6 +1,13 @@
 ###### Requirements without Version Specifiers ######
-paramiko
 scp
 matplotlib
-numpy
 scipy
+pandas
+nose
+ruamel.yaml
+pyqtgraph
+
+###### Requirements with Version Specifiers ######
+#   See https://www.python.org/dev/peps/pep-0440/#version-specifiers
+numpy >= 1.9
+paramiko >= 2.0

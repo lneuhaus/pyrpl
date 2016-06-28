@@ -39,10 +39,11 @@ class RedPitaya(SSHshell):
                  delay=0.05, 
                  autostart=True, reloadfpga=True, reloadserver=False, 
                  filename=None, dirname=None,
-                 leds_off=True, frequency_correction=1.0, timeout = 3
+                 leds_off=True, frequency_correction=1.0, timeout = 3,
+                 gui=False
                  ):
         """installs and starts the interface on the RedPitaya at hostname that allows remote control
-        
+
         if you are experiencing problems, try to increase delay, or try logging.getLogger().setLevel(logging.DEBUG)"""
         self.logger = logging.getLogger(name=__name__)
         #self.license()
@@ -114,6 +115,10 @@ class RedPitaya(SSHshell):
             self.installserver()
         if autostart:
             self.start()
+        if gui:
+            from .gui import RedPitayaGui
+            self.__class__ = RedPitayaGui
+            self.gui()
 
     def switch_led(self, gpiopin=0, state=False):
         self.ask("echo " + str(gpiopin) + " > /sys/class/gpio/export")

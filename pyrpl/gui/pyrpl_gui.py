@@ -201,11 +201,12 @@ class ScopeWidget(QtGui.QWidget):
         
 
 class RedPitayaGui(RedPitaya):
-    def gui(self):
+    def gui(self, runcontinuous=True):
         self.gui_timer = QtCore.QTimer()
         self.scope_widget = ScopeWidget(parent=None, redpitaya=self)
         self.scope_widget.show()
-        
+        if runcontinuous:
+            self.scope_widget.run_continuous()
 
 
 

@@ -1,0 +1,132 @@
+redpitaya:
+  #hostname: 192.168.1.100
+  #hostname: redpitaya.ddns.net
+  hostname: 10.214.1.9
+  password: root
+  user: root
+  #password: dmhvs30NDEBD
+  port: 2222
+  frequency_correction: 1.0
+  filename: fpga//red_pitaya.bin
+  reloadfpga: true
+  # autostart gui?
+  gui: false
+
+general:
+  loglevel: debug
+  name: fabryperot_example_cavity
+
+# default properties for signal acquisition
+signal:
+  unit: V # can be any of m, Hz, V, raw, ... as long as unit_per_V is defined
+  V_per_V: 1.0 # default unit is V
+  raw_per_V: 8192.0 # raw units from the FPGA
+  # minimum trace duration in seconds
+  # be aware that this number affects both the sampling rate and the minimum
+  # frequency that can be resolved. Usually, you want to keep duration as long
+  # as you can stand to wait for new signal data, typically 10-100 ms.
+  duration: 0.001
+  # selects whether scope is to be used in average mode
+  # false is strongly suggested for duration-independent estimation of rms
+  # true is preferred only when we want to get an extremely good mean estimate
+  average: false
+  # if true, the signal.curve command automatically saves the data to CurveDB
+  autosave: false
+  # number of points per curve; also the number of points used for mean and rms
+  points: 16384
+  # timeout determines the time interval within which we do not take another
+  # data trace if several parameters are requested. To always obtain fresh
+  # data, set this to -1. To enable manual acquisition control with the acquire
+  # function '_acquire()', set this to a very large value or to '.inf'.
+  timeout: 0.1
+  # if true, the offset is subtraced. Calibrate with signal.get_offset()
+  offset_subtraction: true
+  offset: 0
+  # peak is a reserved place to store the peak value, for example offresonant
+  # reflection from a cavity
+  peak: 0
+
+# all signals that are inputs of the lockbox
+inputs:
+  reflection:
+    unit: mW
+    mW_per_V: 2.5
+    redpitaya_input: adc1
+    trigger: None
+    offset: -0.00032560527324676514
+  transmission:
+    unit: V
+    redpitaya_input: adc2
+  pdh:
+    unit: V
+
+  # also possible
+  # in2: pdh # for externally generated pdh
+
+# all devices that are connected to the redpitaya outputs
+# we insert a bias-T with separation frequency around 1 MHz behind out1
+  # this allows us to use the fast output for both the piezo and PDH
+modulators:
+  amplitude: 0.1
+  frequency: 50000000.0
+  redpitaya_output: out1
+
+outputs:
+  cavitypiezo:
+    # piezo specification: 7 micron/1000V
+    # amplifier gain: 50
+    # therefore effective DC gain: 350nm/V
+    m_per_V: 3.5e-07
+    bandwidth: 100.0
+    redpitaya_output: out1
+    max_voltage: 0.7
+    min_voltage: -0.5
+    inputfilter:
+    - 0
+    - 0
+    - 0
+    - 0
+  laserpiezo:
+    Hz_per_V: 5000000.0
+    bandwidth: 1000.0
+    redpitaya_output: out2
+    inputfilter:
+    - 0
+    - 0
+    - 0
+    - 0
+  temperature:
+    m_per_V: 1.8e-05
+    bandwidth: 0.1
+    redpitaya_output: pwm1
+
+    inputfilter:
+    - 0
+    - 0
+    - 0
+    - 0
+model:
+  modeltype: fabryperot
+  wavelength: 1.064e-06
+  finesse: 4999
+  # round-trip length in m (= twice the length for ordinary Fabry-Perot)
+  length: 0.72
+  lock: # lock methods in order of preferrence
+    order: pdh reflection transmission
+    # when approaching a resonance, we can either abruptly jump or smoothly
+    # ramp from one error signal to another. We specify our preferrence with
+    # the order of keywords after transition
+    transition: [ramp, jump]
+    # target value for our lock. The API provides many ways to adjust this at
+    # runtime
+    target:
+      detuning: 0
+  # search algorithms to use in order of preferrence, as available in model
+  search: drift bounce
+
+stages:
+  UNLOCKEDSTAGE: 0
+  COARSEFINDSTAGE: 1
+  DRIFTSTAGE: 2
+  SOFSTAGE: 3
+  PDHSTAGE: 4
