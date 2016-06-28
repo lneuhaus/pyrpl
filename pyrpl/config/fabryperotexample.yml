@@ -1,21 +1,16 @@
 redpitaya:
   #hostname: 192.168.1.100
-  hostname: redpitaya.ddns.net
+  #hostname: redpitaya.ddns.net
+  hostname: 10.214.1.9
+  password: root
   user: root
-  password: dmhvs30NDEBD
+  #password: dmhvs30NDEBD
   port: 2222
   frequency_correction: 1.0
   filename: fpga//red_pitaya.bin
   reloadfpga: true
-redpitaya:
-  #hostname: 192.168.1.100
-  hostname: redpitaya.ddns.net
-  user: root
-  password: dmhvs30NDEBD
-  port: 2222
-  frequency_correction: 1.0
-  filename: fpga//red_pitaya.bin
-  reloadfpga: true
+  # autostart gui?
+  gui: false
 
 general:
   loglevel: debug
@@ -54,7 +49,7 @@ signal:
 # all signals that are inputs of the lockbox
 inputs:
   reflection:
-    unit: V
+    unit: mW
     mW_per_V: 2.5
     redpitaya_input: adc1
     trigger: None
@@ -75,6 +70,7 @@ modulators:
   amplitude: 0.1
   frequency: 50000000.0
   redpitaya_output: out1
+
 outputs:
   cavitypiezo:
     # piezo specification: 7 micron/1000V

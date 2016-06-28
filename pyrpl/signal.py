@@ -35,7 +35,6 @@ class Signal(object):
         # signal name = branch name
         self._name = self._config._branch
         self._acquiretime = 0
-
     unit = ExposedConfigParameter("unit")
 
     def __repr__(self):
@@ -138,6 +137,7 @@ class Signal(object):
         # make sure data are fresh
         self._acquire()
         self._config["peak"] = self.mean
+
         logger.debug("New peak value for signal %s is %s",
                      self._name, self._config.offset)
 
@@ -156,13 +156,17 @@ class RPSignal(Signal):
         self._rp = redpitaya
         super(RPSignal, self).__init__(config, branch)
 
+    @property
+    def _redpitaya_input(self):
+        return self._config.redpitaya_input
+
     def _acquire(self):
         logger.debug("acquire() of signal %s was called! ", self._name)
         self._rp.scope.setup(duration=self._config.duration,
-                             trigger_source='immediately',
+                             trigger_source=self._config.trigger_source,
                              average=self._config.average,
                              trigger_delay=0,
-                             input1=self._config.redpitaya_input)
+                             input1=self._redpitaya_input)
         self._lastvalues = \
                 (self._rp.scope.curve(ch=1, timeout=self._config.duration*5)
                 - self.offset) * self.unit_per_V
@@ -173,7 +177,7 @@ class RPSignal(Signal):
 
     @property
     def sample(self):
-        self._rp.scope.input1 = self._config.redpitaya_input
+        self._rp.scope.input1 = self.redpitaya_input
         return (self._rp.scope.voltage1 - self.offset) * self.unit_per_V
 
     @property
@@ -186,6 +190,16 @@ class RPOutputSignal(RPSignal):
         # each output gets its own pid
         if not hasattr(self, "pid"):
             self.pid = self._rp.pids.pop()
+
+        # set voltage limits
+        try:
+            self.pid.max_voltage = self._config.max_voltage
+        except KeyError:
+            self._config["max_voltage"] = self.pid.max_voltage
+        try:
+            self.pid.min_voltage = self._config.min_voltage
+        except KeyError:
+            self._config["min_voltage"] = self.pid.min_voltage
 
         # routing of output
         try:
@@ -201,8 +215,11 @@ class RPOutputSignal(RPSignal):
         else:
             self.pid.output_direct = out
 
-        # input off for now
-        self.pid.input = "off"
+        # set input if specified
+        try:
+            self.pid.input = self._config.redpitaya_input
+        except KeyError:
+            self.pid.input = "off"
 
         # configure inputfilter
         try:
@@ -216,6 +233,17 @@ class RPOutputSignal(RPSignal):
         # configure iir if desired
         self._loadiir()
 
+        # make sure the units of calibration make sense
+        if not 'calibrationunits' in self._config._keys():
+            calibrations = [k for k in self._config._keys() if k.endswith("_per_V")]
+            if not calibrations or len(calibrations) > 1:
+                raise ValueError("Too few / too many calibrations for output "
+                                 +self._name+" are specified in config file: "
+                                 +str(calibrations)
+                                 +". Remove all but one to continue.")
+            else:
+                self._config['calibrationunits'] = calibrations[0]
+
     def _loadiir(self):
         try:
             # workaround for complex numbers from yaml
@@ -228,13 +256,137 @@ class RPOutputSignal(RPSignal):
             return
         if not hasattr(self, "iir"):
             self.iir = self._rp.iirs.pop()
+        logger.error("IIR setup not implemented at the time being.")
 
+    @property
+    def _redpitaya_input(self):
+        return self.pid.name
 
-    def lock_off(self):
+    def off(self):
+        """ Turns off all feedback or sweep """
         self.pid.p = 0
         self.pid.i = 0
         self.pid.d = 0
+        self.pid.ival = 0
 
-    def lock_opt(self, slope=None, errorsignal=None, setpoint=None, factor=1.0):
-        pass
+    def lock(self,
+             slope,
+             setpoint,
+             input=None,
+             factor=1.0,
+             offset=None):
+        """
+        Enables feedback with this output. The realized transfer function of
+        the pid plus specified external analog filters is a pure integrator,
+        to within the limits imposed by the knowledge of the external filters.
+        The desored unity gain frequency is stored in the config file.
 
+        Parameters
+        ----------
+        slope: float
+            The slope of the input error signal. If the output is specified in
+            units of m_per_V, the slope must come in units of V_per_m.
+        setpoint: float
+            The lock setpoint in V.
+        input: RPSignal or str
+            The input signal of the pid. None leaves the currend pid input.
+        factor: float
+            An extra factor to multiply the gain with for debugging purposes.
+        offset:
+            The output offset (V) when the lock is enabled.
+
+        Returns
+        -------
+        None
+        """
+
+        # compute integrator unity gain frequency
+        if slope == 0:
+            raise ValueError("Cannot lock on a zero slope!")
+        integrator_ugf = self._config.unity_gain_frequency * factor
+        integrator_ugf /= (self._config[self._config.calibrationunits] * slope)
+
+        # if gain is disabled somewhere, return
+        if integrator_ugf == 0:
+            self.off()
+            logger.warning("Lock called with zero gain! ")
+            return
+
+        # if analog lowpass filters are present, also use proportional
+        # (first-order lowpass) and derivative (for second-order lowpass) gain
+        try:
+            lowpass = sorted(self._config.analogfilter.lowpass)
+        except KeyError:
+            self._config['analogfilter']= {'lowpass': []}
+            lowpass = sorted(self._config.analogfilter.lowpass)
+
+        if len(lowpass) >= 0:
+            # no analog lowpass -> pure integrator lock
+            proportional = 0
+            differentiator_ugf = 0
+        if len(lowpass) >= 1:
+            # set PI corner at first lowpass cutoff
+            proportional = integrator_ugf / lowpass[0]
+        if len(lowpass) >= 2:
+            # set PD corner at second lowpass cutoff if present
+            differentiator_ugf = lowpass[1] / proportional
+        if len(lowpass) >= 3:
+            logger.warning("Output %s: Don't know how to handle >= 3rd order "
+                           +"analog filter. Consider IIR design. ")
+
+        if input:
+            if isinstance(input, RPSignal):
+                self.pid.input = input._config.redpitaya_input
+                # correct setpoint for input offset
+                setpoint += input.offset
+            else:  # probably a string
+                self.pid.input = input
+
+        if offset:
+            # must turn off gains before setting the offset
+            self.off()
+            # offset is internal integral value
+            self.pid.ival = offset
+            # sleep for the lowest analog lowpass damping time to let the
+            # offset settle analogically
+            if lowpass:
+                time.sleep(1.0/lowpass[0])
+
+        # rapidly turn on all gains
+        self.pid.setpoint = setpoint
+        self.pid.i = integrator_ugf
+        self.pid.p = proportional
+        self.pid.d = differentiator_ugf
+
+        # set the offset once more in case the lack of synchronou gain enabling
+        # messed up the offset
+        if offset:
+            self.pid.ival = offset
+
+        # issue a warning if some gain could not be implemented
+        for act, set, name in [(self.pid.i, integrator_ugf, "integrator"),
+                           (self.pid.p, proportional, "proportional"),
+                           (self.pid.d, differentiator_ugf, "differentiator"),
+                           (self.pid.setpoint, setpoint, "setpoint")]:
+            if set != 0 and (act / set < 0.9 or act / set > 1.1):
+                logger.warning("Implemented value for %s of output %s has "
+                            + "saturated more than 10%% away from desired "
+                            + "value. Try to modify analog gains.",
+                            name, self._name)
+
+    def sweep(self, frequency=None, amplitude=None, waveform=None):
+        kwargs = self._config.sweep._dict
+        if frequency:
+            kwargs["frequency"] = frequency
+        if waveform:
+            kwargs["waveform"] = waveform
+        if amplitude:
+            kwargs["amplitude"] = amplitude
+
+        # set asg amplitude always to 1.0 and feed sweep through pid instead
+        amplitude = kwargs["amplitude"]
+        kwargs["amplitude"] = 1.0
+        kwargs["output_direct"] = "off"
+        self._rp.asg1.setup(**kwargs)
+        self.pid.p = amplitude
+        return self._rp.asg1.frequency

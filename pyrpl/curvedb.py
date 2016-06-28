@@ -33,135 +33,145 @@ import pickle
 import os
 import logging
 
-class CurveDB(object):
-    _dirname = os.path.join(os.path.dirname(__file__),"curves")
 
-    def __init__(self, name="some_curve"):
-        """
-        A CurveDB object has
-        - name   = string to give the curve a name
-        - pk     = integer to uniquely identify the curve (the database primary key)
-        - data   = pandas.Series() object to hold any data
-        - params = dict() with all kinds of parameters
-        """
-        self.logger = logging.getLogger(name=__name__)
-        self.params = dict()
-        self.data = pandas.Series()
-        self.name = name
+# optional override of CurveDB class with custom module, as defined in
+# ./pyrpl/config/global_config.yml
+try:
+    from .memory import MemoryTree
+    _configdir = os.path.join(os.path.dirname(__file__), "config")
+    mt = MemoryTree(os.path.join(_configdir, "global_config.yml"))
+    global CurveDB
+    CurveDB = __import__(mt.general.curvedb).CurveDB
+except:
+    class CurveDB(object):
+        _dirname = os.path.join(os.path.dirname(__file__),"curves")
 
-    @classmethod
-    def create(cls, *args, **kwds):
-        """
-        Creates a new curve, first arguments should be either
-        Series(y, index=x) or x, y.
-        kwds will be passed to self.params
-        """
-        if len(args) == 1:
-            if isinstance(args[0], pandas.Series):
-                ser = args[0]
+        def __init__(self, name="some_curve"):
+            """
+            A CurveDB object has
+            - name   = string to give the curve a name
+            - pk     = integer to uniquely identify the curve (the database primary key)
+            - data   = pandas.Series() object to hold any data
+            - params = dict() with all kinds of parameters
+            """
+            self.logger = logging.getLogger(name=__name__)
+            self.params = dict()
+            self.data = pandas.Series()
+            self.name = name
+
+        @classmethod
+        def create(cls, *args, **kwds):
+            """
+            Creates a new curve, first arguments should be either
+            Series(y, index=x) or x, y.
+            kwds will be passed to self.params
+            """
+            if len(args) == 1:
+                if isinstance(args[0], pandas.Series):
+                    ser = args[0]
+                else:
+                    y = nu.array(args[0])
+                    ser = pandas.Series(y)
+            elif len(args) == 2:
+                x = np.array(args[0])
+                y = np.array(args[1])
+                ser = pandas.Series(y, index=x)
             else:
-                y = nu.array(args[0])
-                ser = pandas.Series(y)
-        elif len(args) == 2:
-            x = np.array(args[0])
-            y = np.array(args[1])
-            ser = pandas.Series(y, index=x)
-        else:
-            raise ValueError("first arguments should be either x or x, y")
-        obj = cls()
-        obj.data = ser
+                raise ValueError("first arguments should be either x or x, y")
+            obj = cls()
+            obj.data = ser
 
-        obj.params = kwds
-        pk = obj.pk  # make a pk
-        if ("autosave" not in kwds) or (kwds["autosave"]):
-            obj.save()
-        return obj
+            obj.params = kwds
+            pk = obj.pk  # make a pk
+            if ("autosave" not in kwds) or (kwds["autosave"]):
+                obj.save()
+            return obj
 
-    def plot(self):
-        self.data.plot()
+        def plot(self):
+            self.data.plot()
 
-    # Implement the following methods if you want to save curves permanently
-    @classmethod
-    def get(cls, curve):
-        if isinstance(curve, CurveDB):
-            return curve
-        elif isinstance(curve, list):
-            return [CurveDB.get(c) for c in curve]
-        else:
-            with open(CurveDB._dirname + str(curve) + '.p', 'r') as f:
-                curve = CurveDB()
-                curve._pk, curve.data, curve.params = pickle.load(f)
-            return curve
-
-    def save(self):
-        with open(os.path.join(self._dirname, str(self.pk) + '.p'), 'w') as f:
-            pickle.dump((self.pk, self.data, self.params), f)
-            f.close()
-
-    def delete(self):
-        # remove the file
-        os.remove(self._dirname + str(self.pk) + '.p')
-        # remove dependencies.. do this at last so the curve is deleted if an
-        # error occurs (i know..). The alternative would be to iterate over all
-        # curves to find dependencies which could be slow without database.
-        # Heavy users should really use pyinstruments.
-        self.logger.warning("Make sure curve %s was not parent of another " +
-                            "curve.")
-        parent = self.parent
-        if parent:
-            parentchilds = parent.childs
-            parentchilds.remove(self.pk)
-            parent.childs = parentchilds
-            parent.save()
-
-    # Implement the following methods if you want to use a hierarchical
-    # structure for curves
-    @property
-    def childs(self):
-        try:
-            return CurveDB.get(self.params["childs"])
-        except KeyError:
-            return []
-
-    @property
-    def parent(self):
-        try:
-            return CurveDB.get(self.params["parent"])
-        except KeyError:
-            self.logger.info("No parent found.")
-            return None
-
-    def add_child(self, child_curve):
-        child = CurveDB.get(child_curve)
-        child.params["parent"] = self.pk
-        child.save()
-        childs = self.params["childs"] or []
-        self.params["childs"] = list(childs+[child.pk])
-        self.save()
-
-    @property
-    def pk(self):
-        if hasattr(self, "_pk"):
-            return self._pk
-        else:
-            pks = [int(f.split('.p')[0]) or -1
-                   for f in os.listdir(self._dirname) if f.endswith('.p')]
-            if len(pks) == 0:
-                self._pk = 1
+        # Implement the following methods if you want to save curves permanently
+        @classmethod
+        def get(cls, curve):
+            if isinstance(curve, CurveDB):
+                return curve
+            elif isinstance(curve, list):
+                return [CurveDB.get(c) for c in curve]
             else:
-                self._pk = max(pks) + 1
-            # create the file to make this pk choice persistent
-            with open(os.path.join(self._dirname,
-                                   str(self._pk) + ".p"), 'w') as f:
+                with open(CurveDB._dirname + str(curve) + '.p', 'r') as f:
+                    curve = CurveDB()
+                    curve._pk, curve.data, curve.params = pickle.load(f)
+                return curve
+
+        def save(self):
+            with open(os.path.join(self._dirname, str(self.pk) + '.p'), 'w') as f:
+                pickle.dump((self.pk, self.data, self.params), f)
                 f.close()
-            return self._pk
-        return -1
-        # a proper implementation will assign the database primary key for pk
-        # the primary key is used to load a curve from the storage into memory
 
-    def sort(self):
-        """numerically sorts the data series so that indexing can be used"""
-        X, Y = self.data.inde.values, self.data.values
-        xs = np.array([x for (x, y) in sorted(zip(X, Y))], dtype=np.float64)
-        ys = np.array([y for (x, y) in sorted(zip(X, Y))], dtype=np.float64)
-        self.data = pandas.Series(ys, index=xs)
+        def delete(self):
+            # remove the file
+            os.remove(self._dirname + str(self.pk) + '.p')
+            # remove dependencies.. do this at last so the curve is deleted if an
+            # error occurs (i know..). The alternative would be to iterate over all
+            # curves to find dependencies which could be slow without database.
+            # Heavy users should really use pyinstruments.
+            self.logger.warning("Make sure curve %s was not parent of another " +
+                                "curve.")
+            parent = self.parent
+            if parent:
+                parentchilds = parent.childs
+                parentchilds.remove(self.pk)
+                parent.childs = parentchilds
+                parent.save()
+
+        # Implement the following methods if you want to use a hierarchical
+        # structure for curves
+        @property
+        def childs(self):
+            try:
+                return CurveDB.get(self.params["childs"])
+            except KeyError:
+                return []
+
+        @property
+        def parent(self):
+            try:
+                return CurveDB.get(self.params["parent"])
+            except KeyError:
+                self.logger.info("No parent found.")
+                return None
+
+        def add_child(self, child_curve):
+            child = CurveDB.get(child_curve)
+            child.params["parent"] = self.pk
+            child.save()
+            childs = self.params["childs"] or []
+            self.params["childs"] = list(childs+[child.pk])
+            self.save()
+
+        @property
+        def pk(self):
+            if hasattr(self, "_pk"):
+                return self._pk
+            else:
+                pks = [int(f.split('.p')[0]) or -1
+                       for f in os.listdir(self._dirname) if f.endswith('.p')]
+                if len(pks) == 0:
+                    self._pk = 1
+                else:
+                    self._pk = max(pks) + 1
+                # create the file to make this pk choice persistent
+                with open(os.path.join(self._dirname,
+                                       str(self._pk) + ".p"), 'w') as f:
+                    f.close()
+                return self._pk
+            return -1
+            # a proper implementation will assign the database primary key for pk
+            # the primary key is used to load a curve from the storage into memory
+
+        def sort(self):
+            """numerically sorts the data series so that indexing can be used"""
+            X, Y = self.data.inde.values, self.data.values
+            xs = np.array([x for (x, y) in sorted(zip(X, Y))], dtype=np.float64)
+            ys = np.array([y for (x, y) in sorted(zip(X, Y))], dtype=np.float64)
+            self.data = pandas.Series(ys, index=xs)

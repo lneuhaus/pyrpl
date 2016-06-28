@@ -238,12 +238,12 @@ meters is implemented there. Another very often used model type is
 """
 
 
-def pyrpl(config="default"):
-    """ returns a Pyrpl object based on configfile 'config' """
-    c = MemoryTree(os.path.join(os.path.join(os.path.dirname(__file__),
-                                             "config"), config + ".yml"))
-    model = getmodel(c.model.modeltype)
-    return type("Pyrpl", (Lockbox, model), {})(config=config)
+#def pyrpl(config="default"):
+#    """ returns a Pyrpl object based on configfile 'config' """
+#    c = MemoryTree(os.path.join(os.path.join(os.path.dirname(__file__),
+#                                             "config"), config + ".yml"))
+#    model = getmodel(c.model.modeltype)
+#    return type("Pyrpl", (Lockbox, model), {})(config=config)
 
 
 class Lockbox(object):
@@ -261,13 +261,36 @@ class Lockbox(object):
         a function of the state. Signals can be settable, thereby defining the state of the system from
         experimental parameters.
         """
-        self.logger = logging.getLogger(name=__name__)
         # configuration is retrieved from config file
         self.c = MemoryTree(os.path.join(self._configdir, config+".yml"))
+        # logger initialisation
+        self.logger = logging.getLogger(name=__name__)
+        # set global logging level if specified in config file
+        self._setloglevel()
+        # make input and output signals
+        self._makesignals()
         # find and setup the model
         self.model = getmodel(self.c.model.modeltype)(self)
-        self._makesignals()
-        self.model.setup()
+        # create shortcuts for public model functions
+        for fname in self.model.export_to_parent:
+            self.__setattr__(fname, self.model.__getattribute__(fname))
+
+    def _setloglevel(self):
+        """ sets the log level to the one specified in config file"""
+        try:
+            level = self.c.general.loglevel
+            loglevels = {"notset": logging.NOTSET,
+                         "debug": logging.DEBUG,
+                         "info": logging.INFO,
+                         "warning": logging.WARNING,
+                         "error": logging.ERROR,
+                         "critical": logging.CRITICAL}
+            level = loglevels[level]
+        except:
+            pass
+        else:
+            logging.getLogger(name='pyrpl').setLevel(level)
+
 
     def _makesignals(self, *args, **kwargs):
         """ Instantiates all signals from config file.
@@ -325,6 +348,8 @@ class Pyrpl(Lockbox):
         """red pitaya lockbox object"""
         # we need the configuration for RedPitaya initialization
         self.c = MemoryTree(os.path.join(self._configdir, config+".yml"))
+        # set loglevel if specified in file
+        self._setloglevel()
         # initialize RedPitaya object with the configured parameters
         self.rp = RedPitaya(**self.c.redpitaya._dict)
         # signal class and optional arguments are passed through this argument
@@ -332,6 +357,13 @@ class Pyrpl(Lockbox):
                            {"redpitaya": self.rp}
         # Lockbox initialization
         super(Pyrpl, self).__init__(config=config)
+        # initialize scope with predefined parameters
+        self._setupscope()
+
+    def _setupscope(self):
+        if "scope" in self.c._dict:
+            self.rp.scope.setup(**self.c.scope._dict)
+
 
 class Trash(object):
     def bla(self):

@@ -91,3 +91,6 @@ docs/my_notebooks/
 
 #pycharm
 .idea/
+
+#config backups
+pyrpl/config/*.bak

@@ -488,12 +488,12 @@ def make_asg(channel=1):
         set_BIT_OFFSET = 0
         set_VALUE_OFFSET = 0x00
         set_DATA_OFFSET = 0x10000
-        set_default_output_direct = 'out1'
+        set_default_output_direct = 'off'
     else:
         set_DATA_OFFSET = 0x20000
         set_VALUE_OFFSET = 0x20
         set_BIT_OFFSET = 16
-        set_default_output_direct = 'out2'
+        set_default_output_direct = 'off'
     
     class Asg(BaseModule):
         _DATA_OFFSET = set_DATA_OFFSET
@@ -619,7 +619,7 @@ def make_asg(channel=1):
                   start_phase=0, 
                   periodic=True, 
                   trigger_source='immediately',
-                  output_direct = default_output_direct):
+                  output_direct=default_output_direct):
             """sets up the function generator. 
             
             waveform must be one of ['cos', 'ramp', 'DC', 'halframp']. 
@@ -632,7 +632,8 @@ def make_asg(channel=1):
             self.trigger_source = 'off'
             self.scale = amplitude
             self.offset = offset
-            
+            self.output_direct = output_direct
+
             if waveform == 'cos':
                 x = np.linspace(0, 2*np.pi, self.data_length, endpoint=False)
                 y = np.cos(x)
