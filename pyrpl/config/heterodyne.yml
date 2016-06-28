@@ -31,6 +31,10 @@ model:
   # only needed parameter is wavelength
   # (to convert piezo displacement into gain)
   wavelength: 1.064e-06
+  # maximum tolerated error of the internal variable
+  # for interferometer, this is the phase error in radians
+  # this value is uniquely needed for the function 'islocked'
+  maxerror: 0.1
 
 # all signals that are inputs of the lockbox. Must be signal names understood
 # by the model
@@ -43,8 +47,8 @@ inputs:
     unit: V
     redpitaya_input: adc1
     offset: -0.000342048704624176
-    max: 0.15034230053424835
-    min: -0.18132273852825165
+    max: 0.14851124584674835
+    min: -0.17924754321575165
 
 # All output signals. Names of outputs are arbitrary.
 outputs:

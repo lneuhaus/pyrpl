@@ -20,8 +20,7 @@ class Model(object):
     " generic model object that will make smart use of its inputs and outputs"
     export_to_parent = []
 
-    state = {'theoretical': {},
-             'experimental': {},
+    state = {'actual': {},
              'set': {}}
 
     def __init__(self, parent=None):
@@ -33,7 +32,7 @@ class Model(object):
         self.inputs = self._parent.inputs
         self.outputs = self._parent.outputs
         self._config = self._parent.c.model
-        self._make_slopes()
+        self._make_helpers()
 
     def setup(self):
         pass
@@ -52,7 +51,42 @@ class Model(object):
                                      args=args,
                                      order=3)
 
-    def _make_slopes(self):
+    def _inverse(self, func, y, x0, args=()):
+        """
+        Finds a solution x to the equation y = func(x) in the
+        vicinity of x0.
+
+        Parameters
+        ----------
+        func: function
+            the function
+        y: float
+            the desired value of the function
+        x0: float
+            the starting point for the search
+        args: tuple
+            optional arguments to pass to func
+
+        Returns
+        -------
+        x: float
+            the solution. None if no inverse could be found.
+        """
+        def myfunc(x, *args):
+            return func(x, *args) - y
+        solution, infodict, ier, mesg = scipy.optimize.fsolve(
+                                     myfunc,
+                                     x0,
+                                     args=args,
+                                     xtol=1e-9,
+                                     full_output=True)
+        if ier == 1:  # means solution was found
+            return solution
+        else:
+            return None
+
+    def _make_helpers(self):
+        # create any missing slope and inverse functions
         for inp in self.inputs:
             # test if the slope was defined in the model
             if not hasattr(self, inp._name+"_slope"):
@@ -60,12 +94,22 @@ class Model(object):
                 def fn_slope(x, *args):
                     return self._derivative(fn, x, args=args)
                 self.__setattr__(inp._name+"_slope", fn_slope)
+            if not hasattr(self, inp._name + "_inverse"):
+                fn = self.__getattribute__(inp._name)
+                def fn_inverse(x, x0, *args):
+                    return self._inverse(fn, x, x0, args=args)
+                self.__setattr__(inp._name + "_inverse", fn_inverse)
+
 
 class Interferometer(Model):
     """ simplest type of optical interferometer with one photodiode """
 
     # declare here the public functions that are exported to the Pyrpl class
     export_to_parent = ['lock', 'unlock', 'islocked', 'calibrate', 'sweep']
+
+    # the internal state memory
+    state = {'set': {'phase': 0},
+             'actual': {'phase': 0}}
 
     # theoretical model for input signal 'port1'
     def port1(self, phase):
@@ -77,6 +121,17 @@ class Interferometer(Model):
     @property
     def phase_per_m(self):
         return 2*np.pi/self._config.wavelength
+
+    @property
+    def phase(self):
+        act = self._parent.port1.mean
+        set = self.state["set"]["phase"]
+        phase = self.port1_inverse(act, set)
+        if phase is not None:
+            return phase%(2*np.pi)
+        else:
+            logger.warning("Phase could not be estimated. Run a calibration!")
+            return None
 
     # lock algorithm
     def lock(self, phase=0, factor=1.0):
@@ -93,6 +148,8 @@ class Interferometer(Model):
         -------
         True if locked successfully, else false
         """
+        self.state["set"]["phase"] = phase
+        self.state["set"]["factor"] = factor
         input = self._parent.port1
         for o in self.outputs:
             # trivial to lock: just enable all gains
@@ -109,9 +166,18 @@ class Interferometer(Model):
         for o in self.outputs:
             o.off()
 
-    # verification whether the system is locked
-    @property
     def islocked(self):
+        """ returns True if interferometer is locked, else False"""
+        # check phase error
+        dphase = abs(self.phase - self.state["set"]["phase"])
+        if dphase > self._config.maxerror:
+            return False
+        else:
+            # test for output saturation
+            for o in self.outputs:
+                if o.issaturated:
+                    return False
+        # lock seems ok (but not a failsafe criterion without additional info)
         return True
 
     def sweep(self):
@@ -153,7 +219,7 @@ class Interferometer(Model):
             inp._config["min"] = mi
         # turn off sweeps
         self.unlock()
-        self._parent._setupscope()
+        #self._parent._setupscope()
         return curves
 
 class FabryPerot(Model):

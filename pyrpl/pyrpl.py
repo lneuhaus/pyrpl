@@ -354,7 +354,8 @@ class Pyrpl(Lockbox):
         self.rp = RedPitaya(**self.c.redpitaya._dict)
         # signal class and optional arguments are passed through this argument
         self._signalinit = {"inputs": RPSignal, "outputs": RPOutputSignal}, \
-                           {"redpitaya": self.rp}
+                           {"redpitaya": self.rp,
+                            "restartscope": self._setupscope}
         # Lockbox initialization
         super(Pyrpl, self).__init__(config=config)
         # initialize scope with predefined parameters

@@ -152,8 +152,9 @@ class Signal(object):
 
 class RPSignal(Signal):
     # a signal that lives inside the RedPitaya
-    def __init__(self, config, branch, redpitaya):
+    def __init__(self, config, branch, redpitaya, restartscope=lambda: None):
         self._rp = redpitaya
+        self._restartscope = restartscope
         super(RPSignal, self).__init__(config, branch)
 
     @property
@@ -171,6 +172,7 @@ class RPSignal(Signal):
                 (self._rp.scope.curve(ch=1, timeout=self._config.duration*5)
                 - self.offset) * self.unit_per_V
         self._acquiretime = time.time()
+        self._restartscope()
 
     @property
     def _times(self): return self._rp.scope.times
@@ -184,8 +186,11 @@ class RPSignal(Signal):
     def nyquist_frequency(self): return 1.0 / self._rp.scope.sampling_time / 2
 
 class RPOutputSignal(RPSignal):
-    def __init__(self, config, branch, redpitaya):
-        super(RPOutputSignal, self).__init__(config, branch, redpitaya)
+    def __init__(self, config, branch, redpitaya, restartscope):
+        super(RPOutputSignal, self).__init__(config,
+                                             branch,
+                                             redpitaya,
+                                             restartscope)
 
         # each output gets its own pid
         if not hasattr(self, "pid"):
@@ -261,6 +266,16 @@ class RPOutputSignal(RPSignal):
     @property
     def _redpitaya_input(self):
         return self.pid.name
+
+    @property
+    def issaturated(self):
+        # tells us if the output has saturated
+        ival, max, min = self.pid.ival, self.pid.max_voltage, \
+                         self.pid.min_voltage
+        if ival > max or ival < min:
+            return True
+        else:
+            return False
 
     def off(self):
         """ Turns off all feedback or sweep """
