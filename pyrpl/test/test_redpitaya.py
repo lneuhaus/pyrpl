@@ -22,6 +22,7 @@ class RedPitayaTestCases(unittest.TestCase):
             self.hostname,
             msg="Set REDPITAYA_HOSTNAME=unavailable or the ip of your board to proceed!")
 
+
     # This test is not strictly required as the password may be unchanged 'root'
     #def test_password(self):
     #    self.assertIsNotNone(
@@ -31,4 +32,3 @@ class RedPitayaTestCases(unittest.TestCase):
     def test_connect(self):
         r = RedPitaya(hostname=self.hostname)
         self.assertEqual(r.hk.led, 0)
-    
