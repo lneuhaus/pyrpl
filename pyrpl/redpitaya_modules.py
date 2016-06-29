@@ -515,7 +515,7 @@ def make_asg(channel=1):
             else:
                 self._dsp = DspModule(client, module='asg2')
             self.output_directs = self._dsp.output_directs
-            self.waveform = 'dc'
+            self.waveform = 'sin'
             self.trigger_source = 'immediately'
             self.output_direct = self.default_output_direct
 
