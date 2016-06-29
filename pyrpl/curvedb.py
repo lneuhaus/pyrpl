@@ -32,6 +32,7 @@ import pandas
 import pickle
 import os
 import logging
+import numpy
 
 
 # optional override of CurveDB class with custom module, as defined in

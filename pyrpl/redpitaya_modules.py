@@ -28,10 +28,12 @@ from .registers import *
 from .bijection import Bijection
 from . import iir
 
+
 class TimeoutError(ValueError):
     pass
 class NotReadyError(ValueError):
     pass
+
 
 class BaseModule(object):
     
@@ -228,9 +230,14 @@ class Scope(BaseModule):
                     2**10: 2**10,
                     2**13: 2**13,
                     2**16: 2**16}
+
+
     
     decimations = sorted(_decimations.keys()) # help for the user
-    
+
+    sampling_times = [8e-9 * dec for dec in decimations]
+    durations = [s_times * data_length for s_times in sampling_times]
+
     decimation = SelectRegister(0x14, doc="decimation factor", 
                                 options=_decimations)
     
@@ -290,10 +297,6 @@ class Scope(BaseModule):
         self.decimation = 1
         self._logger.error("Desired sampling time impossible to realize")
 
-    @property
-    def durations(self):
-        return [8e-9*self.data_length*dec for dec in self.decimations]
-    
     @property
     def duration(self):
         return self.sampling_time * float(self.data_length)
@@ -512,6 +515,10 @@ def make_asg(channel=1):
             else:
                 self._dsp = DspModule(client, module='asg2')
             self.output_directs = self._dsp.output_directs
+            self.waveform = 'sin'
+            self.trigger_source = 'immediately'
+            self.output_direct = self.default_output_direct
+
         @property
         def output_direct(self):
             return self._dsp.output_direct
@@ -574,7 +581,46 @@ def make_asg(channel=1):
         
         _start_offset = Register(0xC, 
                         doc="counter offset for trigged events = phase offset ")
-    
+
+
+        @property
+        def waveform(self):
+            return self._waveform
+
+        @property
+        def waveforms(self):
+            return ['sin', 'cos', 'ramp', 'halframp', 'dc']
+
+        @waveform.setter
+        def waveform(self, waveform):
+            waveform = waveform.lower()
+            if not waveform in self.waveforms:
+                raise ValueError("waveform shourd be one of " + self.waveforms)
+            else:
+                if waveform == 'sin':
+                    x = np.linspace(0, 2 * np.pi, self.data_length,
+                                    endpoint=False)
+                    y = np.sin(x)
+                elif waveform == 'cos':
+                    x = np.linspace(0, 2 * np.pi, self.data_length,
+                                    endpoint=False)
+                    y = np.cos(x)
+                elif waveform == 'ramp':
+                    y = np.linspace(-1.0, 3.0, self.data_length,
+                                    endpoint=False)
+                    y[self.data_length // 2:] = -1 * y[:self.data_length // 2]
+                elif waveform == 'halframp':
+                    y = np.linspace(-1.0, 1.0, self.data_length,
+                                    endpoint=False)
+                elif waveform == 'dc':
+                    y = np.zeros(self.data_length)
+                else:
+                    y = self.data
+                    self._logger.error(
+                        "Waveform name %s not recognized. Specify waveform manually" % waveform)
+                self.data = y
+                self._waveform = waveform
+
         def trig(self):
             self.start_phase = 0
             self.trigger_source = "immediately"
@@ -612,43 +658,43 @@ def make_asg(channel=1):
             self._writtendata = data
     
         def setup(self, 
-                  waveform='cos', 
-                  frequency=1, 
-                  amplitude=1.0, 
-                  offset=0.0,
+                  waveform=None,
+                  frequency=None,
+                  amplitude=None,
+                  offset=None,
                   start_phase=0, 
                   periodic=True, 
-                  trigger_source='immediately',
-                  output_direct=default_output_direct):
-            """sets up the function generator. 
+                  trigger_source=None,
+                  output_direct=None):
+            """sets up the function generator.
             
             waveform must be one of ['cos', 'ramp', 'DC', 'halframp']. 
             amplitude and offset in volts, frequency in Hz. 
             periodic = False outputs only one period. 
             start_phase is the start phase in degrees
-            if trigger_source is None, it should be set manually """
+            if trigger_source is None, it should be set manually
+            If None, then current value is used"""
+
+            if waveform is None:
+                waveform = self.waveform
+            if frequency is None:
+                frequency = self.frequency
+            if amplitude is None:
+                amplitude = self.scale
+            if offset is None:
+                offset = self.offset
+            if trigger_source is None:
+                trigger_source = self.trigger_source
+            if output_direct is None:
+                output_direct = self.output_direct
+
             self.on = False
             self.sm_reset = True
             self.trigger_source = 'off'
             self.scale = amplitude
             self.offset = offset
             self.output_direct = output_direct
-
-            if waveform == 'cos':
-                x = np.linspace(0, 2*np.pi, self.data_length, endpoint=False)
-                y = np.cos(x)
-            elif waveform == 'ramp':
-                y = np.linspace(-1.0,3.0, self.data_length, endpoint=False)
-                y[self.data_length//2:] = -1*y[:self.data_length//2]
-            elif waveform == 'halframp':
-                y = np.linspace(-1.0,1.0, self.data_length, endpoint=False)
-            elif waveform == 'DC':
-                y = np.zeros(self.data_length)
-            else: 
-                y = self.data
-                self._logger.error("Waveform name %s not recognized. Specify waveform manually"%waveform)
-            self.data = y
-            
+            self.waveform = waveform
             self.start_phase = start_phase
             self._counter_wrap = 2**16 * (2**14 - 1)
             self.frequency = frequency
@@ -664,7 +710,8 @@ def make_asg(channel=1):
                        doc="phase of ASG ch1 at the moment when the last scope trigger occured [degrees]")
             
         advanced_trigger_reset = BoolRegister(0x0, 9+_BIT_OFFSET, doc='resets the fgen advanced trigger')
-        advanced_trigger_autorearm = BoolRegister(0x0, 11+_BIT_OFFSET, doc='autorearm the fgen advanced trigger after a trigger event? If False, trigger needs to be reset with a sequence advanced_trigger_reset=True...advanced_trigger_reset=False after each trigger event.')
+        advanced_trigger_autorearm = BoolRegister(0x0, 11+_BIT_OFFSET,
+                doc='autorearm the fgen advanced trigger after a trigger event? If False, trigger needs to be reset with a sequence advanced_trigger_reset=True...advanced_trigger_reset=False after each trigger event.')
         advanced_trigger_invert = BoolRegister(0x0, 10+_BIT_OFFSET, doc='inverts the trigger signal for the advanced trigger if True')
         
         advanced_trigger_delay = LongRegister(0x118+_VALUE_OFFSET, bits=64, doc='delay of the advanced trigger - 1 [cycles]') 
@@ -716,6 +763,7 @@ class DspModule(BaseModule):
         adc2=11,
         dac1=12,
         dac2=13,
+        iq2_2=14,
         off=15)
     inputs = _inputs.keys()
     
@@ -909,7 +957,10 @@ class IQ(FilterModule):
     
     _g4 = FloatRegister(0x11C, bits=_GAINBITS, norm = 2**_SHIFTBITS, 
                         doc="gain4 of iq module [volts]")
-    
+
+    def __init__(self, *args, **kwds):
+        super(IQ, self).__init__(*args, **kwds)
+
     @property
     def gain(self):
         return self._g1 * 0.039810
@@ -966,7 +1017,8 @@ class IQ(FilterModule):
         sum = np.complex128(self._to_pyint(int(a)+(int(b)<<31),bitlength=62)) \
             + np.complex128(self._to_pyint(int(c)+(int(d)<<31), bitlength=62))*1j  
         return sum / float(self._na_averages)
-    
+
+    """
     def na_trace(
             self,
             start=0,     # start frequency
@@ -982,7 +1034,8 @@ class IQ(FilterModule):
             logscale=False, # make a logarithmic frequency sweep
             stabilize=None, # if a float, output amplitude is adjusted dynamically so that input amplitude [V]=stabilize 
             maxamplitude=1.0, # amplitude can be limited
-            ): 
+            ):
+
         if logscale:
             x = np.logspace(
                 np.log10(start),
@@ -1021,7 +1074,7 @@ class IQ(FilterModule):
         try:
             self.amplitude = amplitude # turn on NA inside try..except block
             for i in range(points):
-                self.frequency = x[i] #this triggers the NA acquisition
+                self.frequency = x[i] # this triggers the NA acquisition
                 sleep(1.0 / rbw * (avg + sleeptimes))
                 x[i] = self.frequency # get the actual (discretized) frequency
                 y[i] = self._nadata
@@ -1056,7 +1109,7 @@ class IQ(FilterModule):
             return x, y
         else:
             return x,y,amplitudes
-
+    """
 
 class IIR(DspModule):
     # invert denominator coefficients to convert from scipy notation to

@@ -32,6 +32,8 @@ from paramiko import SSHException
 from .sshshell import SSHshell
 from . import monitor_client
 from . import redpitaya_modules as rp
+from network_analyzer import NetworkAnalyzer
+from spectrum_analyzer import SpectrumAnalyzer
 
 class RedPitaya(SSHshell):
     def __init__(self, hostname='192.168.1.100', port=2222,
@@ -60,6 +62,7 @@ class RedPitaya(SSHshell):
         self.frequency_correction = frequency_correction
         self.leds_off = leds_off
         self.timeout = timeout
+
         # get parameters from os.environment variables
         for k in ["hostname","port","user","password","delay","timeout"]:
             if "REDPITAYA_"+k.upper() in os.environ:
@@ -118,6 +121,7 @@ class RedPitaya(SSHshell):
         if gui:
             from .gui import RedPitayaGui
             self.__class__ = RedPitayaGui
+            self.setup_gui()
             self.gui()
 
     def switch_led(self, gpiopin=0, state=False):
@@ -306,3 +310,10 @@ class RedPitaya(SSHshell):
                 thislist.append(thismodule)
                 # to be deprecated
                 self.__setattr__(thisname, thismodule)
+        # iq2 is special: two outputs for scope/specAn. This special treatment
+        # should soon be made more general. For thsi reason, we already
+        # exclude it from the iqs list, such that it cannot be popped away..
+        self.iq2 = rp.IQ(self.client, module='iq2')
+        # higher functionality modules
+        self.na = NetworkAnalyzer(self)
+        self.spec_an = SpectrumAnalyzer(self)

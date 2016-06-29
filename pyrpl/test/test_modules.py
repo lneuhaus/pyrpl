@@ -26,7 +26,7 @@ class TestClass(object):
             return
         for asg in [self.r.asg1,self.r.asg2]:
             asg.setup(frequency=12345.)
-            expect = 1./8191*np.round(8191.*np.cos( 
+            expect = 1./8191*np.round(8191.*np.sin(
                                 np.linspace(
                                     0, 
                                     2*np.pi, 
@@ -56,10 +56,6 @@ class TestClass(object):
             
             measured = self.r.scope.curve(ch=1, timeout=4)
             if np.max(np.abs(measured-expect)) > 0.001:
-                import matplotlib.pyplot as p
-                p.plot(measured)
-                p.plot(expect)
-                p.show()
                 assert False            #    assert False
                 
     def test_scope_trigger_immediately(self):

@@ -46,6 +46,7 @@ before_install:
 install:
   - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION numpy scipy paramiko matplotlib pandas nose pip
   - source activate test-environment
+  - conda install -c ufechner pyqtgraph
   - pip install scp
   # there are some bugs in the installation of these packages in higher python versions
   - if [[ "$TRAVIS_PYTHON_VERSION" != "3.5" ]] && [[ "$TRAVIS_PYTHON_VERSION" != "3.4" ]]; then
