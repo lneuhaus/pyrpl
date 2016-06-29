@@ -131,7 +131,7 @@ class Interferometer(Model):
 
     # declare here the public functions that are exported to the Pyrpl class
     export_to_parent = ['lock', 'unlock', 'islocked', 'calibrate', 'sweep',
-                        'help', 'set_optimal_gain']
+                        'help', 'set_optimal_gain', 'phase']
 
     # the internal state memory
     state = {'set': {'phase': 0},
@@ -249,10 +249,14 @@ class Interferometer(Model):
 
 
 class FabryPerot(Model):
-    def _lorentz(self, x):
-        return 1.0/(1.0 + x**2)
+    # the internal state memory
+    state = {'set': {'detuning': 0},
+             'actual': {'detuning': 0}}
 
-    #def transmission(self, x):
+    def _lorentz(self, x):
+        return 1.0 / (1.0 + x ** 2)
+
+    # def transmission(self, x):
     #    " relative transmission. Max transmission will be calibrated as peak"
     #    return self._lorentz(x/self.bandwidth)
 
@@ -261,9 +265,123 @@ class FabryPerot(Model):
 
     def reflection(self, x):
         " relative reflection"
-        return 1.0 - (1.0-self._config.R0)*self._lorentz(x/self.FWHM)
+        return 1.0 - (1.0 - self._config.R0) * self._lorentz(x / self.FWHM)
 
 
 
-    def reflection_slope(self):
-        pass
+class FabryPerot_Reflection(FabryPerot):
+    # declare here the public functions that are exported to the Pyrpl class
+    export_to_parent = ['lock', 'unlock', 'islocked', 'calibrate', 'sweep',
+                        'help', 'set_optimal_gain']
+
+    # theoretical model for input signal 'port1'
+    def reflection(self, detuning):
+        """ photocurrent at port1 of an ideal interferometer vs phase (rad)"""
+        return self._parent.reflection.peak * self._lorentz(detuning)
+
+    def pdh(self, detuning):
+        return self.reflection_slope(detuning)
+
+    @property
+    def detuning_per_m(self):
+        return self._config.finesse / self._config.wavelength / 2
+
+    @property
+    def detuning(self):
+        act = self._parent.reflection.mean
+        set = self.state["set"]["detuning"]
+        detuning = self.reflection_inverse(act, set)
+        if detuning is not None:
+            return detuning
+        else:
+            logger.warning("Detuning could not be estimated. "
+                            +"Re-run a calibration!")
+            return None
+
+    # lock algorithm
+    def lock(self, detuning=1, factor=1.0):
+        """
+        Locks the cavity
+        Parameters
+        ----------
+        phase: float
+            phase (rad) of the quadrature to be locked at
+        factor: float
+            optional gain multiplier for debugging
+
+        Returns
+        -------
+        True if locked successfully, else false
+        """
+        self.state["set"]["phase"] = phase
+        self.state["set"]["factor"] = factor
+        input = self._parent.port1
+        for o in self.outputs:
+            # trivial to lock: just enable all gains
+            unit = o._config.calibrationunits.split("_per_V")[0]
+            phase_per_unit = self.__getattribute__("phase_per_"+unit)
+            o.lock(slope=self.port1_slope(phase)*phase_per_unit,
+                   setpoint=self.port1(phase),
+                   input=input._config.redpitaya_input,
+                   offset=0,
+                   factor=factor)
+
+    def islocked(self):
+        """ returns True if interferometer is locked, else False"""
+        # check phase error
+        dphase = abs(self.detuning - self.state["set"]["detuning"])
+        if dphase > self._config.maxerror:
+            return False
+        else:
+            # test for output saturation
+            for o in self.outputs:
+                if o.issaturated:
+                    return False
+        # lock seems ok (but not a failsafe criterion without additional info)
+        return True
+
+    def calibrate(self):
+        self.unlock()
+        duration = self.sweep()
+        curves = []
+        for inp in self.inputs:
+            try:
+                inp._config._data["trigger_source"] = "asg1"
+                inp._config._data["duration"] = duration
+                inp._acquire()
+                # when signal: autosave is enabled, each calibration will
+                # automatically save a curve
+                if inp._config.autosave:
+                    curve, ma, mi = inp.curve, inp.max, inp.min
+                    curves.append(curve)
+                else:
+                    ma, mi = inp.max, inp.min
+            finally:
+                # make sure to reload config file here so that the modified
+                # scope parameters are not written to config file
+                self._parent.c._load()
+            inp._config["max"] = ma
+            inp._config["min"] = mi
+        # turn off sweeps
+        self.unlock()
+        return curves
+
+    def help(self):
+        self.logger.info("Fabry-Perot\n-------------------\n"
+                         +"Usage: \n"
+                         +"Create Pyrpl object: p = Pyrpl('myconfigfile')"
+                         +"Turn off the laser and execute: \n"
+                         +"p.get_offset()\n"
+                         +"Turn the laser back on and execute:\n"
+                         +"p.calibrate()\n"
+                         +"(everytime power or alignment has changed). Then: "
+                         +"p.lock(factor=1.0)\n"
+                         +"The interferometer should be locked now. Play \n"
+                         +"with the value of factor until you find a \n"
+                         +"reasonable lock performance and save this as \n"
+                         +"the new default with p.set_optimal_gain(). \n"
+                         +"Now simply call p.lock(phase=myphase) to lock \n"
+                         +"at arbitrary phase 'myphase' (rad). "
+                         +"Assert if locked with p.islocked() and unlock \n"
+                         +"with p.unlock(). ")
+
