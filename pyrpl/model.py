@@ -336,18 +336,18 @@ class FabryPerot_Reflection(FabryPerot):
 
         """
 
-    self.state["set"]["phase"] = phase
-    self.state["set"]["factor"] = factor
-    input = self._parent.port1
-    for o in self.outputs:
-        # trivial to lock: just enable all gains
-        unit = o._config.calibrationunits.split("_per_V")[0]
-        phase_per_unit = self.__getattribute__("phase_per_" + unit)
-        o.lock(slope=self.port1_slope(phase) * phase_per_unit,
-               setpoint=self.port1(phase),
-               input=input._config.redpitaya_input,
-               offset=0,
-               factor=factor)
+        self.state["set"]["detuning"] = detuning
+        self.state["set"]["factor"] = factor
+        input = self._parent.port1
+        for o in self.outputs:
+            # trivial to lock: just enable all gains
+            unit = o._config.calibrationunits.split("_per_V")[0]
+            detuning_per_unit = self.__getattribute__("detuning_per_" + unit)
+            o.lock(slope=self.port1_slope(detuning) * detuning_per_unit,
+                   setpoint=self.port1(detuning),
+                   input=input._config.redpitaya_input,
+                   offset=0,
+                   factor=factor)
 
 
     def islocked(self):
