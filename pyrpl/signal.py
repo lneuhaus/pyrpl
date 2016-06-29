@@ -367,6 +367,10 @@ class RPOutputSignal(RPSignal):
             if lowpass:
                 time.sleep(1.0/lowpass[0])
 
+        # reset inputfilter - allows configuration from configfile in
+        # near real time
+        self.pid.inputfilter = self._config.inputfilter
+
         # rapidly turn on all gains
         self.pid.setpoint = setpoint
         self.pid.i = integrator_ugf
@@ -405,3 +409,7 @@ class RPOutputSignal(RPSignal):
         self._rp.asg1.setup(**kwargs)
         self.pid.p = amplitude
         return self._rp.asg1.frequency
+
+    def set_optimal_gain(self, factor):
+        self._config.unity_gain_frequency *= factor
+        self._config.inputfilter = self.pid.inputfilter

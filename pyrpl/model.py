@@ -100,12 +100,38 @@ class Model(object):
                     return self._inverse(fn, x, x0, args=args)
                 self.__setattr__(inp._name + "_inverse", fn_inverse)
 
+    def set_optimal_gain(self):
+        factor = self.state["set"]["factor"]
+        for output in self.outputs:
+            output.set_optimal_gain(factor)
+
+    # unlock algorithm
+    def unlock(self):
+        for o in self.outputs:
+            o.off()
+
+    def sweep(self):
+        """
+        Enables the pre-configured sweep on all outputs.
+
+        Returns
+        -------
+        duration: float
+            The duration of one sweep period, as it is useful to setup the
+            scope.
+        """
+        frequency = None
+        for o in self.outputs:
+            frequency = o.sweep()
+        return 1.0 / frequency
+
 
 class Interferometer(Model):
     """ simplest type of optical interferometer with one photodiode """
 
     # declare here the public functions that are exported to the Pyrpl class
-    export_to_parent = ['lock', 'unlock', 'islocked', 'calibrate', 'sweep']
+    export_to_parent = ['lock', 'unlock', 'islocked', 'calibrate', 'sweep',
+                        'help', 'set_optimal_gain']
 
     # the internal state memory
     state = {'set': {'phase': 0},
@@ -161,11 +187,6 @@ class Interferometer(Model):
                    offset=0,
                    factor=factor)
 
-    # unlock algorithm
-    def unlock(self):
-        for o in self.outputs:
-            o.off()
-
     def islocked(self):
         """ returns True if interferometer is locked, else False"""
         # check phase error
@@ -179,21 +200,6 @@ class Interferometer(Model):
                     return False
         # lock seems ok (but not a failsafe criterion without additional info)
         return True
-
-    def sweep(self):
-        """
-        Enables the pre-configured sweep on all outputs.
-
-        Returns
-        -------
-        duration: float
-            The duration of one sweep period, as it is useful to setup the
-            scope.
-        """
-        frequency = None
-        for o in self.outputs:
-            frequency = o.sweep()
-        return 1.0/frequency
 
     def calibrate(self):
         self.unlock()
@@ -221,6 +227,26 @@ class Interferometer(Model):
         self.unlock()
         #self._parent._setupscope()
         return curves
+
+    def help(self):
+        self.logger.info("Interferometer\n-------------------\n"
+                         +"Usage: \n"
+                         +"Create Pyrpl object: p = Pyrpl('myconfigfile')"
+                         +"Turn off the laser and execute: \n"
+                         +"p.get_offset()\n"
+                         +"Turn the laser back on and execute:\n"
+                         +"p.calibrate()\n"
+                         +"(everytime power or alignment has changed). Then: "
+                         +"p.lock(factor=1.0)\n"
+                         +"The interferometer should be locked now. Play \n"
+                         +"with the value of factor until you find a \n"
+                         +"reasonable lock performance and save this as \n"
+                         +"the new default with p.set_optimal_gain(). \n"
+                         +"Now simply call p.lock(phase=myphase) to lock \n"
+                         +"at arbitrary phase 'myphase' (rad). "
+                         +"Assert if locked with p.islocked() and unlock \n"
+                         +"with p.unlock(). ")
+
 
 class FabryPerot(Model):
     def _lorentz(self, x):

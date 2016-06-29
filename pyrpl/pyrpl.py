@@ -32,6 +32,7 @@ import sys
 import os
 import iir
 import logging
+from shutil import copyfile
 
 from .redpitaya import RedPitaya
 from .curvedb import CurveDB
@@ -250,21 +251,41 @@ class Lockbox(object):
     _configdir = os.path.join(os.path.dirname(__file__), "config")
     _signalinit = {"inputs": Signal, "outputs": Signal}, {}
 
-    def __init__(self, config="default"):
+    def _getpath(self, filename):
+        p, f = os.path.split(filename)
+        if not p:  # no path specified -> search in configdir
+            filename = os.path.join(self._configdir, filename)
+        if not filename.endswith(".yml"):
+            filename = filename + ".yml"
+        return filename
+
+    def __init__(self, config="default", source=None):
         """generic lockbox object, no implementation-dependent details here
 
-        A lockbox has a MemoryTree to remember information. The memoryTree furthermore defines
-        one model of the physical system that is controlled.
+        A lockbox has a MemoryTree to remember information. The memoryTree
+        furthermore defines one model of the physical system that is controlled.
 
-        Each model is composed of a state, that unambiguously defines the theoretical state of the
-        physical system, and an arbitrary number of signals that describe the dependent variables as
-        a function of the state. Signals can be settable, thereby defining the state of the system from
-        experimental parameters.
+        Parameters
+        ----------
+        config: str
+            Name of the config file. No .yml extension is needed. The file
+            should be located in the config directory.
+        source: str
+            If None, it is ignored. Else, the file 'source' is taken as a
+            template config file and copied to 'config' if that file does
+            not exist.
         """
-        # configuration is retrieved from config file
-        self.c = MemoryTree(os.path.join(self._configdir, config+".yml"))
         # logger initialisation
         self.logger = logging.getLogger(name=__name__)
+        config = self._getpath(config)
+        if source is not None:
+            if os.path.isfile(config):
+               self.logger.warning("Config file already exists. Source file "
+                                   +"specification is ignored")
+            else:
+                copyfile(getpath(source), config)
+        # configuration is retrieved from config file
+        self.c = MemoryTree(config)
         # set global logging level if specified in config file
         self._setloglevel()
         # make input and output signals
@@ -313,6 +334,10 @@ class Lockbox(object):
     def _fastparams(self):
         """ implement custom fastparams here """
         return dict()
+
+    def get_offset(self):
+        for input in self.inputs:
+            input.get_offset()
 
     def _params(self):
         """ implement custom params here """
