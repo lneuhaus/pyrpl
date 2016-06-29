@@ -376,14 +376,21 @@ class Scope(BaseModule):
               average=None,
               threshold=None,
               hysteresis=None,
-              trigger_delay=None):
+              trigger_delay=None,
+              input1=None,
+              input2=None):
         """sets up the scope for a new trace aquision including arming the trigger
 
         duration: the minimum duration in seconds to be recorded
         trigger_source: the trigger source. see the options for the parameter separately
         average: use averaging or not when sampling is not performed at full rate.
                  similar to high-resolution mode in commercial scopes
-
+        threshold: Trigger threshold in V
+        hysteresis: signal hysteresis needed to enable trigger in V. 
+                    Should be larger than the rms-noise of the signal
+        trigger_delay: trigger_delay in s
+        input1/2: set the inputs of channel 1/2
+        
         if a parameter is None, the current attribute value is used"""
         self._setup_called = True
         self._reset_writestate_machine = True
@@ -391,17 +398,16 @@ class Scope(BaseModule):
             self.average = average
         if duration is not None:
             self.duration = duration
-        if trigger_source is not None:
-            the_trigger_source = trigger_source
-        else:
-            the_trigger_source = self.trigger_source
-
         if threshold is not None:
             self.threshold_ch1 = threshold
             self.threshold_ch2 = threshold
         if hysteresis is not None:
             self.hysteresis_ch1 = hysteresis
             self.hysteresis_ch2 = hysteresis
+        if input1 is not None:
+            self.input1 = input1
+        if input2 is not None:
+            self.input2 = input2
         if trigger_delay is not None:
             self.trigger_delay = trigger_delay      
         if trigger_source is not None:
@@ -485,12 +491,12 @@ def make_asg(channel=1):
         set_BIT_OFFSET = 0
         set_VALUE_OFFSET = 0x00
         set_DATA_OFFSET = 0x10000
-        set_default_output_direct = 'out1'
+        set_default_output_direct = 'off'
     else:
         set_DATA_OFFSET = 0x20000
         set_VALUE_OFFSET = 0x20
         set_BIT_OFFSET = 16
-        set_default_output_direct = 'out2'
+        set_default_output_direct = 'off'
     
     class Asg(BaseModule):
         _DATA_OFFSET = set_DATA_OFFSET
@@ -509,7 +515,9 @@ def make_asg(channel=1):
             else:
                 self._dsp = DspModule(client, module='asg2')
             self.output_directs = self._dsp.output_directs
-            self.waveform = "cos"
+            self.waveform = 'dc'
+            self.trigger_source = 'immediately'
+            self.output_direct = self.default_output_direct
 
         @property
         def output_direct(self):
@@ -581,15 +589,38 @@ def make_asg(channel=1):
 
         @property
         def waveforms(self):
-            return ['cos', 'ramp', 'halframp', 'DC']
+            return ['sin', 'cos', 'ramp', 'halframp', 'dc']
 
         @waveform.setter
         def waveform(self, val):
+            val = val.lower()
             if not val in self.waveforms:
-                raise ValueError("waveform shourd be either " + self.waveforms)
-            self._waveform = val
-            self.setup()
-            return val
+                raise ValueError("waveform shourd be one of " + self.waveforms)
+            else:
+                if waveform == 'sin':
+                    x = np.linspace(0, 2 * np.pi, self.data_length,
+                                    endpoint=False)
+                    y = np.sin(x)
+                elif waveform == 'cos':
+                    x = np.linspace(0, 2 * np.pi, self.data_length,
+                                    endpoint=False)
+                    y = np.cos(x)
+                elif waveform == 'ramp':
+                    y = np.linspace(-1.0, 3.0, self.data_length,
+                                    endpoint=False)
+                    y[self.data_length // 2:] = -1 * y[:self.data_length // 2]
+                elif waveform == 'halframp':
+                    y = np.linspace(-1.0, 1.0, self.data_length,
+                                    endpoint=False)
+                elif waveform == 'dc':
+                    y = np.zeros(self.data_length)
+                else:
+                    y = self.data
+                    self._logger.error(
+                        "Waveform name %s not recognized. Specify waveform manually" % waveform)
+                self.data = y
+                self._waveform = val
+                return val
 
         def trig(self):
             self.start_phase = 0
@@ -636,7 +667,7 @@ def make_asg(channel=1):
                   periodic=True, 
                   trigger_source=None,
                   output_direct=None):
-            """sets up the function generator. 
+            """sets up the function generator.
             
             waveform must be one of ['cos', 'ramp', 'DC', 'halframp']. 
             amplitude and offset in volts, frequency in Hz. 
@@ -658,31 +689,13 @@ def make_asg(channel=1):
             if output_direct is None:
                 output_direct = self.output_direct
 
-
-
             self.on = False
             self.sm_reset = True
             self.trigger_source = 'off'
             self.scale = amplitude
             self.offset = offset
-            #self.waveform = waveform
             self.output_direct = output_direct
-
-            if waveform=='cos':
-                x = np.linspace(0, 2*np.pi, self.data_length, endpoint=False)
-                y = np.cos(x)
-            elif waveform=='ramp':
-                y = np.linspace(-1.0,3.0, self.data_length, endpoint=False)
-                y[self.data_length//2:] = -1*y[:self.data_length//2]
-            elif waveform=='halframp':
-                y = np.linspace(-1.0,1.0, self.data_length, endpoint=False)
-            elif waveform=='DC':
-                y = np.zeros(self.data_length)
-            else: 
-                y = self.data
-                self._logger.error("Waveform name %s not recognized. Specify waveform manually"%waveform)
-            self.data = y
-            
+            self.waveform = waveform
             self.start_phase = start_phase
             self._counter_wrap = 2**16 * (2**14 - 1)
             self.frequency = frequency
@@ -698,7 +711,8 @@ def make_asg(channel=1):
                        doc="phase of ASG ch1 at the moment when the last scope trigger occured [degrees]")
             
         advanced_trigger_reset = BoolRegister(0x0, 9+_BIT_OFFSET, doc='resets the fgen advanced trigger')
-        advanced_trigger_autorearm = BoolRegister(0x0, 11+_BIT_OFFSET, doc='autorearm the fgen advanced trigger after a trigger event? If False, trigger needs to be reset with a sequence advanced_trigger_reset=True...advanced_trigger_reset=False after each trigger event.')
+        advanced_trigger_autorearm = BoolRegister(0x0, 11+_BIT_OFFSET,
+                doc='autorearm the fgen advanced trigger after a trigger event? If False, trigger needs to be reset with a sequence advanced_trigger_reset=True...advanced_trigger_reset=False after each trigger event.')
         advanced_trigger_invert = BoolRegister(0x0, 10+_BIT_OFFSET, doc='inverts the trigger signal for the advanced trigger if True')
         
         advanced_trigger_delay = LongRegister(0x118+_VALUE_OFFSET, bits=64, doc='delay of the advanced trigger - 1 [cycles]') 
@@ -772,7 +786,10 @@ class DspModule(BaseModule):
     
     out2_saturated = BoolRegister(0x8,1,doc="True if out2 is saturated")
 
+    name = "dspmodule"
+
     def __init__(self, client, module='pid0'):
+        self.name = module
         self._number = self._inputs[module]
         super(DspModule, self).__init__(client,
             addr_base=0x40300000+self._number*0x10000)
@@ -953,7 +970,7 @@ class IQ(FilterModule):
     def gain(self, v):
         self._g1 = float(v) / 0.039810
         self._g4 = float(v) / 0.039810
-        
+
     def setup(
             self,
             frequency,

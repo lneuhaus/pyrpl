@@ -549,8 +549,7 @@ class NaGui(ModuleWidget):
     """
     Network Analyzer Tab.
     """
-    property_names = ["iq_name",
-                      "input",
+    property_names = ["input",
                       "output_direct",
                       "start",
                       "stop",
@@ -1059,9 +1058,11 @@ class RedPitayaGui(RedPitaya):
     """
     Widget for the main RedPitayaGui window.
     """
-
     def __init__(self, *args, **kwds):
         super(RedPitayaGui, self).__init__(*args, **kwds)
+        self.setup_gui()
+
+    def setup_gui(self):
         self.na_widget = NaGui(parent=None, module=self.na)
         self.scope_widget = ScopeWidget(parent=None, module=self.scope)
         self.all_asg_widget = AllAsgGui(parent=None, rp=self)
@@ -1071,11 +1072,10 @@ class RedPitayaGui(RedPitaya):
         self.customize_na()
         self.custom_setup()
 
-    def gui(self):
+    def gui(self, runcontinuous=True):
         """
         Opens the graphical user interface.
         """
-
         self.gui_timer = QtCore.QTimer()
         self.tab_widget = QtGui.QTabWidget()
         self.tab_widget.addTab(self.scope_widget, "Scope")
@@ -1084,6 +1084,8 @@ class RedPitayaGui(RedPitaya):
         self.tab_widget.addTab(self.sa_widget, "Spec. An.")
         self.custom_gui_setup()
         self.tab_widget.show()
+        if runcontinuous:
+            self.scope_widget.run_continuous()
 
     def custom_gui_setup(self):
         """
@@ -1091,7 +1093,6 @@ class RedPitayaGui(RedPitaya):
         Returns
         -------
         """
-
         pass
 
     def customize_scope(self):
@@ -1101,7 +1102,6 @@ class RedPitayaGui(RedPitaya):
         -------
 
         """
-
         pass
 
     def customize_na(self):
@@ -1111,7 +1111,6 @@ class RedPitayaGui(RedPitaya):
         -------
 
         """
-
         pass
 
     def custom_setup(self):
@@ -1122,4 +1121,3 @@ class RedPitayaGui(RedPitaya):
 
         """
         pass
-
