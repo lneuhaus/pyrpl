@@ -1,6 +1,7 @@
 import numpy as np
 import scipy
 import logging
+import time
 logger = logging.getLogger(name=__name__)
 
 
@@ -85,20 +86,29 @@ class Model(object):
         else:
             return None
 
+    def _make_slope(self, fn):
+        def fn_slope(x, *args):
+            return self._derivative(fn, x, args=args)
+        return fn_slope
+
+    def _make_inverse(self, fn):
+        def fn_inverse(x, *args):
+            return self._inverse(fn, x, args=args)
+        return fn_inverse
+
     def _make_helpers(self):
         # create any missing slope and inverse functions
         for inp in self.inputs:
             # test if the slope was defined in the model
             if not hasattr(self, inp._name+"_slope"):
+                self.logger.debug("Making slope function for input %s", inp._name)
                 fn = self.__getattribute__(inp._name)
-                def fn_slope(x, *args):
-                    return self._derivative(fn, x, args=args)
-                self.__setattr__(inp._name+"_slope", fn_slope)
+                # bug removed a la http://stackoverflow.com/questions/3431676/creating-functions-in-a-loop
+                self.__setattr__(inp._name+"_slope", self._make_slope(fn))
             if not hasattr(self, inp._name + "_inverse"):
+                self.logger.debug("Making inverse function for input %s", inp._name)
                 fn = self.__getattribute__(inp._name)
-                def fn_inverse(x, x0, *args):
-                    return self._inverse(fn, x, x0, args=args)
-                self.__setattr__(inp._name + "_inverse", fn_inverse)
+                self.__setattr__(inp._name + "_inverse", self._make_inverse(fn))
 
     def set_optimal_gain(self):
         factor = self.state["set"]["factor"]
@@ -249,8 +259,16 @@ class Interferometer(Model):
 
 
 class FabryPerot(Model):
+    #export_to_parent = ['lock', 'unlock', 'islocked', 'calibrate', 'sweep',
+    #                    'help', 'set_optimal_gain']
+    export_to_parent = ['unlock', 'sweep',
+                        'set_optimal_gain']
+
     def _lorentz(self, x):
-        return 1.0/(1.0 + x**2)
+        return 1.0 / (1.0 + x ** 2)
+
+    def _lorentz_slope(self, x):
+        return -2.0*x / (1.0 + x ** 2)**2
 
     #def transmission(self, x):
     #    " relative transmission. Max transmission will be calibrated as peak"
@@ -258,12 +276,143 @@ class FabryPerot(Model):
 
     def FWHM(self):
         return self._config.linewidth / 2
-
     def reflection(self, x):
         " relative reflection"
-        return 1.0 - (1.0-self._config.R0)*self._lorentz(x/self.FWHM)
+        return 1.0 - self._lorentz(x)
+
+#    def reflection(self, x):
+#        " relative reflection"
+#        return 1.0 - (1.0-self._config.R0)*self._lorentz(x/self.FWHM)
+
+    def transmission(self, x):
+        return self._lorentz(x)
 
 
+class TEM02FabryPerot(FabryPerot):
+    export_to_parent = ['unlock', 'sweep', 'islocked',
+                        'set_optimal_gain', 'calibrate',
+                        'lock_tilt', 'lock_transmission', 'lock']
 
-    def reflection_slope(self):
-        pass
+    def tilt(self, detuning):
+        return self._lorentz_slope(detuning)/0.6495 *self._parent.tilt._config.slope_sign \
+               * 0.5 * (self._parent.tilt._config.max-self._parent.tilt._config.min)
+
+    def transmission(self, detuning):
+        return self._lorentz(detuning)*self._parent.transmission._config.max \
+               + self._parent.transmission._config.min
+
+    def calibrate(self):
+        self.unlock()
+        duration = self.sweep()
+        # input signal calibration
+        for input in self.inputs:
+            try:
+                input._config._data["trigger_source"] = "asg1"
+                input._config._data["duration"] = duration
+                input._acquire()
+                curve, ma, mi = input.curve, input.max, input.min
+                input._config._data["trigger_source"] = "ch1_positive_edge"
+                input._config._data["threshold"] = ma*self._config.calibration_threshold
+                input._config._data["trigger_delay"] = 0
+                # input._config._data["hysteresis_ch1"] = ma / 20
+                input._config._data["duration"] = duration/self._config.calibration_zoom
+                input._config._data["timeout"] = duration*5
+                input._acquire()
+                curve, ma, mi = input.curve, input.max, input.min
+            finally:
+                # make sure to reload config file here so that the modified
+                # scope parameters are not written to config file
+                self._parent.c._load()
+            input._config["max"] = ma
+            input._config["min"] = mi
+
+        # turn off sweeps
+        self.unlock()
+
+    @property
+    def detuning_per_m(self):
+        return 1./(self._config.wavelength/2/self._config.finesse/2)
+
+    def lock_transmission(self, detuning=1, factor=1.0):
+        """
+        Locks on transmission
+        Parameters
+        ----------
+        detuning: float
+            detuning (HWHM) to be locked at
+        factor: float
+            optional gain multiplier for debugging
+
+        Returns
+        -------
+        True if locked successfully, else false
+        """
+        self.state["set"]["detuning"] = detuning
+        self.state["set"]["factor"] = factor
+        input = self._parent.transmission
+        for o in self.outputs:
+            # trivial to lock: just enable all gains
+            unit = o._config.calibrationunits.split("_per_V")[0]
+            detuning_per_unit = self.__getattribute__("detuning_per_" + unit)
+            o.lock(slope=self.transmission_slope(detuning) * detuning_per_unit,
+                   setpoint=self.transmission(detuning),
+                   input=input._config.redpitaya_input,
+                   offset=None,
+                   factor=factor)
+        return self.islocked()
+
+    def lock_tilt(self, detuning=1, factor=1.0):
+        """
+        Locks on transmission
+        Parameters
+        ----------
+        detuning: float
+            detuning (HWHM) to be locked at
+        factor: float
+            optional gain multiplier for debugging
+
+        Returns
+        -------
+        True if locked successfully, else false
+        """
+        self.state["set"]["detuning"] = detuning
+        self.state["set"]["factor"] = factor
+        input = self._parent.tilt
+        for o in self.outputs:
+            # trivial to lock: just enable all gains
+            unit = o._config.calibrationunits.split("_per_V")[0]
+            detuning_per_unit = self.__getattribute__("detuning_per_" + unit)
+            o.lock(slope=self.tilt_slope(detuning) * detuning_per_unit,
+                   setpoint=self.tilt(detuning),
+                   input=input._config.redpitaya_input,
+                   offset=None,
+                   factor=factor)
+
+    def lock(self, detuning=0, factor=1.0, stop=False):
+        while not self.islocked():
+            self._parent.piezo.pid.ival = self._config.lock.drift_offset
+            self.lock_transmission(factor=factor, detuning=self._config.lock.drift_detuning)
+            time.sleep(self._config.lock.drift_timeout)
+        if stop: return
+        return self.lock_tilt(detuning=detuning, factor=factor)
+
+    @property
+    def relative_transmission(self):
+        return (self._parent.transmission.mean - self._parent.transmission._config.min)\
+               / (self._parent.transmission._config.max-self._parent.transmission._config.min)
+
+    def islocked(self):
+        """ returns True if interferometer is locked, else False"""
+        # check phase error
+        rel_t = self.relative_transmission
+        self.logger.debug("Relative transmission: %s", rel_t)
+        if rel_t < self._config.lock.relative_transmission_threshold:
+            # lock seems ok (but not a failsafe criterion without additional info)
+            return False
+        else:
+            # test for output saturation
+            for o in self.outputs:
+                if o.issaturated:
+                    self.logger.debug("Output %s is saturated!", o._name)
+                    return False
+        return True
