@@ -11,16 +11,13 @@ redpitaya:
 
 general:
   # name of this device
-  name: heterodyne
+  name: my_inferferometer
   # level of logged information.
   # 'debug' outputs everything
   # 'infi' is default level
   # 'warning' only shows warnings and errors
   # 'error' only shows errors
   loglevel: info
-  # import CurveDB class from which module? if missing, it's pyrpl.curvedb
-  #curvedb: pyrpl
-  curvedb: pyinstruments
 
 # most important section that defines how the lockbox understands the
 # real-world system
@@ -46,9 +43,6 @@ inputs:
   port1:
     unit: V
     redpitaya_input: adc1
-    offset: -0.000342048704624176
-    max: 0.15620167553424835
-    min: -0.18437449634075165
 
 # All output signals. Names of outputs are arbitrary.
 outputs:
@@ -85,11 +79,6 @@ outputs:
     # of 1 kHz and will later increase this value (automatically done after
     # lock optimisation)
     unity_gain_frequency: 5000.0
-    inputfilter:
-    - 50000
-    - 500000
-    - 0
-    - 0
     sweep:
       waveform: ramp
       frequency: 1.0
