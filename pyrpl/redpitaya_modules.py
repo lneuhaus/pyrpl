@@ -592,9 +592,9 @@ def make_asg(channel=1):
             return ['sin', 'cos', 'ramp', 'halframp', 'dc']
 
         @waveform.setter
-        def waveform(self, val):
-            val = val.lower()
-            if not val in self.waveforms:
+        def waveform(self, waveform):
+            waveform = waveform.lower()
+            if not waveform in self.waveforms:
                 raise ValueError("waveform shourd be one of " + self.waveforms)
             else:
                 if waveform == 'sin':
@@ -619,8 +619,7 @@ def make_asg(channel=1):
                     self._logger.error(
                         "Waveform name %s not recognized. Specify waveform manually" % waveform)
                 self.data = y
-                self._waveform = val
-                return val
+                self._waveform = waveform
 
         def trig(self):
             self.start_phase = 0
