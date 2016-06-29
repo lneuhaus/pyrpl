@@ -19,10 +19,13 @@ def getmodel(modeltype):
 
 class Model(object):
     " generic model object that will make smart use of its inputs and outputs"
-    export_to_parent = []
+    export_to_parent = ["sweep", "calibrate", "set_optimal_gains",
+                        "unlock", "islocked", "lock", "help"]
 
-    state = {'actual': {},
-             'set': {}}
+    # independent variable that specifies the state of the system
+    _variable = 'x'
+    state = {'actual': {_variable: 0},
+             'set':    {_variable: 0}}
 
     def __init__(self, parent=None):
         self.logger = logging.getLogger(__name__)
@@ -34,15 +37,7 @@ class Model(object):
         self.outputs = self._parent.outputs
         self._config = self._parent.c.model
         self._make_helpers()
-
-    def setup(self):
-        pass
-
-    def search(self, *args, **kwargs):
-        pass
-
-    def lock(self, *args, **kwargs):
-        pass
+        self.__setattr__(self._variable, self._variable_getter)
 
     def _derivative(self, func, x, n=1, args=()):
         return scipy.misc.derivative(func,
@@ -110,10 +105,44 @@ class Model(object):
                 fn = self.__getattribute__(inp._name)
                 self.__setattr__(inp._name + "_inverse", self._make_inverse(fn))
 
+    @property
+    def variable(self):
+        inputname, input = self.inputs.values.items()[0]
+        act = input.mean
+        set = self.state["set"][self._variable]
+        variable = self.__getattribute__(inputname+'_inverse')(act, set)
+        if variable is not None:
+            return variable
+        else:
+            logger.warning("%s could not be estimated. Run a calibration!",
+                           self._variable)
+            return None
+
     def set_optimal_gain(self):
         factor = self.state["set"]["factor"]
         for output in self.outputs:
             output.set_optimal_gain(factor)
+
+    def calibrate(self):
+        pass
+
+    def islocked(self):
+        """ returns True if locked, else False"""
+        if hasattr(self, self._variable):
+            variable = self.__getattribute__(self._variable)
+        else:
+            variable = self.variable
+        diff = variable - self.state["set"][self._variable]
+        # first check if parameter error exceeds threshold
+        if abs(diff) > self._config.lock.error_threshold:
+            return False
+        else:
+            # test for output saturation
+            for o in self.outputs:
+                if o.issaturated:
+                    return False
+        # lock seems ok
+        return True
 
     # unlock algorithm
     def unlock(self):
@@ -136,82 +165,61 @@ class Model(object):
         return 1.0 / frequency
 
 
-class Interferometer(Model):
-    """ simplest type of optical interferometer with one photodiode """
-
-    # declare here the public functions that are exported to the Pyrpl class
-    export_to_parent = ['lock', 'unlock', 'islocked', 'calibrate', 'sweep',
-                        'help', 'set_optimal_gain', 'phase']
-
-    # the internal state memory
-    state = {'set': {'phase': 0},
-             'actual': {'phase': 0}}
-
-    # theoretical model for input signal 'port1'
-    def port1(self, phase):
-        """ photocurrent at port1 of an ideal interferometer vs phase (rad)"""
-        amplitude = (self._parent.port1._config.max
-                     - self._parent.port1._config.min) / 2
-        return np.sin(phase) * amplitude
-
-    @property
-    def phase_per_m(self):
-        return 2*np.pi/self._config.wavelength
-
-    @property
-    def phase(self):
-        act = self._parent.port1.mean
-        set = self.state["set"]["phase"]
-        phase = self.port1_inverse(act, set)
-        if phase is not None:
-            return phase%(2*np.pi)
-        else:
-            logger.warning("Phase could not be estimated. Run a calibration!")
-            return None
-
-    # lock algorithm
-    def lock(self, phase=0, factor=1.0):
+    def _lock(self, input=None, factor=1.0, offset=None, **kwargs):
         """
-        Locks the interferometer
+        Locks all outputs to input.
         Parameters
         ----------
-        phase: float
-            phase (rad) of the quadrature to be locked at
+        input: Signal
+          the input signal that provides the error signal
         factor: float
             optional gain multiplier for debugging
+        offset:
+            offset to start locking from. Not touched upon if None
+        kwargs must contain a pair _variable = setpoint, where variable
+        is the name of the variable of the model, as specified in the
+        class attribute _variable.
 
         Returns
         -------
-        True if locked successfully, else false
+        None
         """
-        self.state["set"]["phase"] = phase
+        self.state["set"].update(kwargs)
         self.state["set"]["factor"] = factor
-        input = self._parent.port1
-        for o in self.outputs:
-            # trivial to lock: just enable all gains
+        if input is None:
+            input = self.inputs.values[0]
+        inputname = input._name
+        variable = kwargs[self._variable]
+        setpoint = self.__getattribute__(inputname)(variable)
+        slope = self.__getattribute__(inputname+'_slope')(variable)
+
+        # trivial to lock: just enable all gains
+        for o in self.outputs.values():
+            # get unit of output calibration factor
             unit = o._config.calibrationunits.split("_per_V")[0]
-            phase_per_unit = self.__getattribute__("phase_per_"+unit)
-            o.lock(slope=self.port1_slope(phase)*phase_per_unit,
-                   setpoint=self.port1(phase),
-                   input=input._config.redpitaya_input,
-                   offset=0,
+            #get calibration factor
+            variable_per_unit = self.__getattribute__(self._variable
+                                                      + "_per_" + unit)
+            # enable lock of the output
+            o.lock(slope=slope*variable_per_unit,
+                   setpoint=setpoint,
+                   input=input,
+                   offset=offset,
                    factor=factor)
 
-    def islocked(self):
-        """ returns True if interferometer is locked, else False"""
-        # check phase error
-        dphase = abs(self.phase - self.state["set"]["phase"])
-        if dphase > self._config.maxerror:
-            return False
-        else:
-            # test for output saturation
-            for o in self.outputs:
-                if o.issaturated:
-                    return False
-        # lock seems ok (but not a failsafe criterion without additional info)
-        return True
+    def lock(self, variable):
+        self._lock(x=variable)
 
     def calibrate(self):
+        """
+        Calibrates by performing a sweep as defined for the outputs and
+        recording and saving min and max of each input.
+
+        Returns
+        -------
+        curves: list
+            list of curves of the inputsignals
+        """
         self.unlock()
         duration = self.sweep()
         curves = []
@@ -235,27 +243,48 @@ class Interferometer(Model):
             inp._config["min"] = mi
         # turn off sweeps
         self.unlock()
-        #self._parent._setupscope()
         return curves
 
     def help(self):
         self.logger.info("Interferometer\n-------------------\n"
-                         +"Usage: \n"
-                         +"Create Pyrpl object: p = Pyrpl('myconfigfile')"
-                         +"Turn off the laser and execute: \n"
-                         +"p.get_offset()\n"
-                         +"Turn the laser back on and execute:\n"
-                         +"p.calibrate()\n"
-                         +"(everytime power or alignment has changed). Then: "
-                         +"p.lock(factor=1.0)\n"
-                         +"The interferometer should be locked now. Play \n"
-                         +"with the value of factor until you find a \n"
-                         +"reasonable lock performance and save this as \n"
-                         +"the new default with p.set_optimal_gain(). \n"
-                         +"Now simply call p.lock(phase=myphase) to lock \n"
-                         +"at arbitrary phase 'myphase' (rad). "
-                         +"Assert if locked with p.islocked() and unlock \n"
-                         +"with p.unlock(). ")
+                         + "Usage: \n"
+                         + "Create Pyrpl object: p = Pyrpl('myconfigfile')"
+                         + "Turn off the laser and execute: \n"
+                         + "p.get_offset()\n"
+                         + "Turn the laser back on and execute:\n"
+                         + "p.calibrate()\n"
+                         + "(everytime power or alignment has changed). Then: "
+                         + "p.lock(factor=1.0)\n"
+                         + "The device should be locked now. Play \n"
+                         + "with the value of factor until you find a \n"
+                         + "reasonable lock performance and save this as \n"
+                         + "the new default with p.set_optimal_gain(). \n"
+                         + "Now simply call p.lock() to lock.  \n"
+                         + "Assert if locked with p.islocked() and unlock \n"
+                         + "with p.unlock(). ")
+
+
+class Interferometer(Model):
+    """ simplest type of optical interferometer with one photodiode """
+    _variable = "phase"
+
+    # theoretical model for input signal 'transmission'
+    def transmission(self, phase):
+        """ photocurrent at port1 of an ideal interferometer vs phase (rad)"""
+        amplitude = (self._parent.port1._config.max
+                     - self._parent.port1._config.min) / 2
+        mean = (self._parent.port1._config.max
+                     + self._parent.port1._config.min) / 2
+        return np.sin(phase) * amplitude + mean
+
+    # how phase converts to other units
+    @property
+    def phase_per_m(self):
+        return 2*np.pi/self._config.wavelength
+
+    @property
+    def phase(self):
+        return self.variable % (2*np.pi)
 
 
 class FabryPerot(Model):
@@ -263,8 +292,6 @@ class FabryPerot(Model):
     state = {'set': {'detuning': 0},
              'actual': {'detuning': 0}}
 
-    #export_to_parent = ['lock', 'unlock', 'islocked', 'calibrate', 'sweep',
-    #                    'help', 'set_optimal_gain']
     export_to_parent = ['unlock', 'sweep',
                         'set_optimal_gain']
 
@@ -287,8 +314,10 @@ class FabryPerot(Model):
     #   return 1.0 - self._lorentz(x)
 
     def transmission(self, x):
-        return self._lorentz(x)
+        return self._lorentz(x)*self.signals.transmission
 
+    def islocked(self):
+        if self.inputs.reflection.mean
 
 class FabryPerot_Reflection(FabryPerot):
     # declare here the public functions that are exported to the Pyrpl class

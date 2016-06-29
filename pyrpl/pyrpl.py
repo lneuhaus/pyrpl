@@ -295,6 +295,7 @@ class Lockbox(object):
         # create shortcuts for public model functions
         for fname in self.model.export_to_parent:
             self.__setattr__(fname, self.model.__getattribute__(fname))
+        self.logger.info("Lockbox '%s' initialized!", self.c.general.name)
 
     def _setloglevel(self):
         """ sets the log level to the one specified in config file"""
@@ -319,7 +320,7 @@ class Lockbox(object):
         signalclasses, signalparameters = self._signalinit
         for signaltype, signalclass in signalclasses.items():
             # generalized version of: self.inputs = [reflection, transmission]
-            signallist = list()
+            signaldict = dict()
             self.__setattr__(signaltype, signallist)
             for k in self.c[signaltype].keys():
                 self.logger.debug("Creating %s signal %s...", signaltype, k)
@@ -328,7 +329,7 @@ class Lockbox(object):
                 signal = signalclass(self.c,
                                      signaltype+"."+k,
                                      **signalparameters)
-                signallist.append(signal)
+                signaldict[k] = signal
                 self.__setattr__(k, signal)
 
     def _fastparams(self):
@@ -369,6 +370,9 @@ class Lockbox(object):
         return self._deriveddict(params, postfix=postfix)
 
 class Pyrpl(Lockbox):
+    """
+    Python RedPitaya Lockbox object
+    """
     def __init__(self, config="default"):
         """red pitaya lockbox object"""
         # we need the configuration for RedPitaya initialization
@@ -392,51 +396,6 @@ class Pyrpl(Lockbox):
 
 
 class Trash(object):
-    def bla(self):
-        # shortcuts
-        self.fa = self.rp.asga  # output channel 1
-        self.fb = self.rp.asgb  # output channel 2
-        if self.constants["coarse_output"] == 1:
-            self.f = self.fa
-        elif self.constants["coarse_output"] == 2:
-            self.f = self.fb
-        elif self.constants["lock_output"] == 1:
-            self.f = self.fa
-            print "Lock output will be used for coarse sweep"
-        elif self.constants["lock_output"] == 2:
-            self.f = self.fb
-            print "Lock output will be used for coarse sweep"
-        else:
-            print "Coarse output >2 not implemented yet!!!"
-
-        self.s = self.rp.scope
-        self.hk = self.rp.hk
-        self.ams = self.rp.ams
-        self.iq = self.rp.pid11  # for iq it can be any one..
-
-        # initialize pid attribution depending on configuration
-        self.sof = self._get_pid(
-            input=self.constants["reflection_input"],
-            output=self.constants["lock_output"])
-        if "lock_aux_output" in self.constants and self.constants[
-                "lock_aux_output"] != 0:
-            self.sof_aux = self._get_pid(
-                input=self.constants["reflection_input"],
-                output=self.constants["lock_aux_output"])
-        else:
-            self.sof_aux = None
-        self.setup_pdh(turn_off=True)
-        self.setup_pdh(turn_off=False)  # creates the objets for pdh
-        self.setup_pdh(turn_off=True)
-        self.stage = -1  # means the cavity was never locked
-        self.alarmtime = 0
-        # lockbox-related initialization
-        self.scope_reset()
-        t0 = time()
-        for i in range(100):
-            self.coarse = self.coarse  # set coarse to its last value
-        t1 = time()
-        print self.constants["lockbox_name"], "initialized!"
 
     # auxiliary functions for signal treatment
     def _get_min_step(self, output="coarse"):
