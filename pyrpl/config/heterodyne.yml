@@ -86,8 +86,8 @@ outputs:
     # lock optimisation)
     unity_gain_frequency: 5000.0
     inputfilter:
-    - 50000
-    - 500000
+    - 38856.18727829476
+    - 621698.9964527162
     - 0
     - 0
     sweep:
