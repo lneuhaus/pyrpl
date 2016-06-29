@@ -50,7 +50,7 @@ class RedPitaya(SSHshell):
         if you are experiencing problems, try to increase delay, or try logging.getLogger().setLevel(logging.DEBUG)"""
         self.logger = logging.getLogger(name=__name__)
         #self.license()
-        self.slaves = []
+        self._slaves = []
         self.serverdirname = "//opt//pyrpl//"
         self.serverrunning = False
         self.hostname = hostname
@@ -334,10 +334,10 @@ class RedPitaya(SSHshell):
 
     def make_a_slave(self, port=None, monitor_server_name=None):
         if port is None:
-            port = self.port + len(self.slaves) + 1
+            port = self.port + len(self._slaves) + 1
         if monitor_server_name is None:
             monitor_server_name = self.monitor_server_name + str(port)
-        return RedPitaya(hostname=self.hostname,
+        r = RedPitaya(hostname=self.hostname,
                          port=port,
                          user=self.user,
                          password=self.password,
@@ -352,3 +352,6 @@ class RedPitaya(SSHshell):
                          timeout=self.timeout,
                          monitor_server_name=monitor_server_name,
                          silence_env=True)
+        r._master = self
+        self._slaves.append(r)
+        return r
