@@ -38,7 +38,7 @@ try:
     def save(data, stream=None):
         return ruamel.yaml.dump(data, stream=stream, Dumper=ruamel.yaml.RoundTripDumper, default_flow_style = False)
     def isbranch(obj):
-        return isinstance(obj, OrderedDict) #type is ruamel.yaml.comments.CommentedMap
+        return isinstance(obj, dict) #type is ruamel.yaml.comments.CommentedMap
 except:
     logger.warning("ruamel.yaml could not be found. Using yaml instead. Comments in config files will be lost.")
     import yaml

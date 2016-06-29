@@ -166,10 +166,16 @@ class RPSignal(Signal):
         self._rp.scope.setup(duration=self._config.duration,
                              trigger_source=self._config.trigger_source,
                              average=self._config.average,
+                             threshold=self._config.threshold,
+                             hysteresis=self._config.hysteresis,
                              trigger_delay=0,
                              input1=self._redpitaya_input)
+        try:
+            timeout = self._config.timeout
+        except KeyError:
+            timeout = self._config.duration*5
         self._lastvalues = \
-                (self._rp.scope.curve(ch=1, timeout=self._config.duration*5)
+                (self._rp.scope.curve(ch=1, timeout=timeout)
                 - self.offset) * self.unit_per_V
         self._acquiretime = time.time()
         self._restartscope()
@@ -318,7 +324,7 @@ class RPOutputSignal(RPSignal):
         # compute integrator unity gain frequency
         if slope == 0:
             raise ValueError("Cannot lock on a zero slope!")
-        integrator_ugf = self._config.unity_gain_frequency * factor
+        integrator_ugf = self._config.unity_gain_frequency * factor * -1
         integrator_ugf /= (self._config[self._config.calibrationunits] * slope)
 
         # if gain is disabled somewhere, return
@@ -407,6 +413,7 @@ class RPOutputSignal(RPSignal):
         kwargs["amplitude"] = 1.0
         kwargs["output_direct"] = "off"
         self._rp.asg1.setup(**kwargs)
+        self.pid.input = "asg1"
         self.pid.p = amplitude
         return self._rp.asg1.frequency
 
