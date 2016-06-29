@@ -42,13 +42,15 @@ class RedPitaya(SSHshell):
                  autostart=True, reloadfpga=True, reloadserver=False, 
                  filename=None, dirname=None,
                  leds_off=True, frequency_correction=1.0, timeout = 3,
-                 monitor_server_name='monitor_server', gui=False
+                 monitor_server_name='monitor_server', gui=False,
+                 silence_env = False
                  ):
         """installs and starts the interface on the RedPitaya at hostname that allows remote control
 
         if you are experiencing problems, try to increase delay, or try logging.getLogger().setLevel(logging.DEBUG)"""
         self.logger = logging.getLogger(name=__name__)
         #self.license()
+        self.slaves = []
         self.serverdirname = "//opt//pyrpl//"
         self.serverrunning = False
         self.hostname = hostname
@@ -65,23 +67,24 @@ class RedPitaya(SSHshell):
         self.monitor_server_name = monitor_server_name
 
         # get parameters from os.environment variables
-        for k in ["hostname",
-                  "port",
-                  "user",
-                  "password",
-                  "delay",
-                  "timeout",
-                  "monitor_server_name"]:
-            if "REDPITAYA_"+k.upper() in os.environ:
-                newvalue = os.environ["REDPITAYA_"+k.upper()]
-                oldvalue = self.__getattribute__(k)
-                self.__setattr__(k, type(oldvalue)(newvalue))
-                if k == "password": # do not show the password on the screen
-                    newvalue = "*"*(len(newvalue)%8)
-                self.logger.warning("Variable %s with value %s overwritten by "
-                                    +"environment variable REDPITAYA_%s with "
-                                    +"value %s", k, oldvalue,
-                                    k.upper(), newvalue)
+        if not silence_env:
+            for k in ["hostname",
+                      "port",
+                      "user",
+                      "password",
+                      "delay",
+                      "timeout",
+                      "monitor_server_name"]:
+                if "REDPITAYA_"+k.upper() in os.environ:
+                    newvalue = os.environ["REDPITAYA_"+k.upper()]
+                    oldvalue = self.__getattribute__(k)
+                    self.__setattr__(k, type(oldvalue)(newvalue))
+                    if k == "password": # do not show the password on the screen
+                        newvalue = "*"*(len(newvalue)%8)
+                    self.logger.warning("Variable %s with value %s overwritten by "
+                                        +"environment variable REDPITAYA_%s with "
+                                        +"value %s", k, oldvalue,
+                                        k.upper(), newvalue)
         # check filenames - should work without specifying them
         if filename is None:
             self.filename = 'fpga//red_pitaya.bin'
@@ -327,3 +330,25 @@ class RedPitaya(SSHshell):
         # higher functionality modules
         self.na = NetworkAnalyzer(self)
         self.spec_an = SpectrumAnalyzer(self)
+
+
+    def make_a_slave(self, port=None, monitor_server_name=None):
+        if port is None:
+            port = self.port + len(self.slaves) + 1
+        if monitor_server_name is None:
+            monitor_server_name = self.monitor_server_name + str(port)
+        return RedPitaya(hostname=self.hostname,
+                         port=port,
+                         user=self.user,
+                         password=self.password,
+                         delay=self.delay,
+                         autostart=True,
+                         reloadfpga=False,
+                         reloadserver=False,
+                         filename=self.filename,
+                         dirname=self.dirname,
+                         leds_off=self.leds_off,
+                         frequency_correction=self.frequency_correction,
+                         timeout=self.timeout,
+                         monitor_server_name=monitor_server_name,
+                         silence_env=True)

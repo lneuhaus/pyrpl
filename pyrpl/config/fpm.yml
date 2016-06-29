@@ -2,7 +2,7 @@ redpitaya:
   hostname: 10.214.1.9
   password: root
   user: root
-  port: 2225
+  port: 2222
   frequency_correction: 1.0
   filename: fpga//red_pitaya.bin
   reloadfpga: true
