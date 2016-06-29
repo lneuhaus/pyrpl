@@ -41,10 +41,11 @@ class RedPitaya(SSHshell):
                  delay=0.05, 
                  autostart=True, reloadfpga=True, reloadserver=False, 
                  filename=None, dirname=None,
-                 leds_off=True, frequency_correction=1.0, timeout = 3
+                 leds_off=True, frequency_correction=1.0, timeout = 3,
+                 gui=False
                  ):
         """installs and starts the interface on the RedPitaya at hostname that allows remote control
-        
+
         if you are experiencing problems, try to increase delay, or try logging.getLogger().setLevel(logging.DEBUG)"""
         self.logger = logging.getLogger(name=__name__)
         #self.license()
@@ -117,6 +118,11 @@ class RedPitaya(SSHshell):
             self.installserver()
         if autostart:
             self.start()
+        if gui:
+            from .gui import RedPitayaGui
+            self.__class__ = RedPitayaGui
+            self.setup_gui()
+            self.gui()
 
     def switch_led(self, gpiopin=0, state=False):
         self.ask("echo " + str(gpiopin) + " > /sys/class/gpio/export")
@@ -210,7 +216,7 @@ class RedPitaya(SSHshell):
         self.endserver()
         sleep(self.delay)
         result = self.ask(self.serverdirname+"/monitor_server " + str(self.port))
-        if not "sh" in result: # means we tried the wrong binary version
+        if not "sh" in result: # sh in result means we tried the wrong binary version
             self.logger.info("Server application started on port %d",self.port)
             self.serverrunning = True
             return self.port
@@ -272,49 +278,37 @@ class RedPitaya(SSHshell):
     def startclient(self):
         self.client = monitor_client.MonitorClient(
             self.hostname, self.port, restartserver=self.restartserver)
-        self.hk = rp.HK(self.client)
-        self.ams = rp.AMS(self.client)
-        self.scope = rp.Scope(self.client, self)
-
-        self.pid0 = rp.Pid(self.client, module='pid0')
-        self.pid1 = rp.Pid(self.client, module='pid1')
-        self.pid2 = rp.Pid(self.client, module='pid2')
-        self.pid3 = rp.Pid(self.client, module='pid3')
-
-        self.iir = rp.IIR(self.client, module='iir')
-        self.iq0 = rp.IQ(self.client, module='iq0')
-        self.iq1 = rp.IQ(self.client, module='iq1')
-        self.iq2 = rp.IQ(self.client, module='iq2')
-
-        self.na = NetworkAnalyzer(self)
-        self.spec_an = SpectrumAnalyzer(self)
-
-        self.asg1 = rp.Asg1(self.client)
-        self.asg2 = rp.Asg2(self.client)
-        self.pwm0 = rp.AuxOutput(self.client,output='pwm0')
-        self.pwm1 = rp.AuxOutput(self.client,output='pwm1')
+        self.makemodules()
         self.logger.info("Client started with success")
 
     def startdummyclient(self):
         self.client = monitor_client.DummyClient()
+        self.makemodules()
+        self.logger.warning("Dummy mode started...")
+
+    def makemodules(self):
         self.hk = rp.HK(self.client)
         self.ams = rp.AMS(self.client)
         self.scope = rp.Scope(self.client, self)
-        self.pid0 = rp.Pid(self.client, module='pid0')
-        self.pid1 = rp.Pid(self.client, module='pid1')
-        self.pid2 = rp.Pid(self.client, module='pid2')
-        self.pid3 = rp.Pid(self.client, module='pid3')
-        self.iir = rp.IIR(self.client, module='iir')
-        self.iq0 = rp.IQ(self.client, module='iq0')
-        self.iq1 = rp.IQ(self.client, module='iq1')
-        self.iq2 = rp.IQ(self.client, module='iq2')
-
-        self.na = NetworkAnalyzer(self)
-        self.spec_an = SpectrumAnalyzer(self)
-
         self.asg1 = rp.Asg1(self.client)
         self.asg2 = rp.Asg2(self.client)
         self.pwm0 = rp.AuxOutput(self.client,output='pwm0')
         self.pwm1 = rp.AuxOutput(self.client,output='pwm1')
-        self.logger.warning("Dummy mode started...")
-    
+        for name, module, number in [("pid", rp.Pid, 4),
+                                     ("iir", rp.IIR, 1),
+                                     ("iq", rp.IQ, 2)]:
+            # make a list for each kind of module
+            thislist = []
+            self.__setattr__(name+'s', thislist)
+            # fill it with the modules
+            for i in range(number):
+                if number > 1:
+                    thisname = name + str(i)
+                else:
+                    thisname = name
+                thismodule = module(self.client, module=thisname)
+                thislist.append(thismodule)
+                # to be deprecated
+                self.__setattr__(thisname, thismodule)
+        self.na = NetworkAnalyzer(self)
+        self.spec_an = SpectrumAnalyzer(self)

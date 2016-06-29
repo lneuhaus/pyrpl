@@ -1,0 +1,104 @@
+redpitaya:
+  hostname: 10.214.1.15
+  password: root
+  user: root
+  port: 2222
+  frequency_correction: 1.0
+  filename: fpga//red_pitaya.bin
+  reloadfpga: true
+  # autostart gui?
+  gui: true
+
+general:
+  loglevel: debug
+  name: heterodyne
+
+# most important section that defines how the lockbox understands the
+# real-world systel
+model:
+  # use class Interferometer for internal model and lock algorithms
+  # upper- or lowercase spelling is accepted if there is no ambiguity
+  modeltype: interferometer
+  # only needed parameter is wavelength
+  # (to convert piezo displacement into gain)
+  wavelength: 1.064e-06
+
+# all signals that are inputs of the lockbox
+inputs:
+  # only 1 photodiode since we use an imbalanced detection scheme
+  # i.e. 90% signal + 10% LO incident on a fast photodiode
+  pd1:
+    unit: V
+    redpitaya_input: adc1
+    offset: -0.00032560527324676514
+
+outputs:
+  lopiezo:
+    # output channel where the lopiezo is connected
+    redpitaya_output: out1
+    # voltage limits
+    max_voltage: 1.0
+    min_voltage: -1.0
+    # piezo: P-016.00H
+    # from http://www.piceramic.com/product-detail-page/p-010xxh-p-025xxh-102800.html
+    # piezo specification: 5 micron / 1000 V
+    # piezo amplifier gain: 500 V / V
+    # therefore effective DC gain of piezo:
+    # 2.5 micron / V
+    m_per_V: 2.5e-06
+    # PZT Capacity: 42nF
+    # Output impedance of HV amplifier: 100 kOhm
+    # RC cutoff < 144 kHz: 1/2piRC = 37.9 Hz
+    # therefore the analog filter can be well approximated by a first order
+    # lowpass with corner frequency 37.9 Hz
+    analogfilter:
+      lowpass:
+      - 37.9
+    # the piezo manufacturer specifies the first resonance at 144 kHz
+    # however, the mounting structure is expected to have resonances starting
+    # from 15 kHz. To be safe, we start by demanding a unity-gain frequency
+    # of 1 kHz and will later increase this value (automatically done after
+    # lock optimisation)
+    unity_gain_frequency: 5e3
+
+##############################################################################
+###  Configuration parameters that rarely need to be modified ################
+##############################################################################
+
+# default parameters for scope.setup() at startup
+scope:
+  input1: adc1
+  input2: dac1
+  duration: 0.1
+  trigger_source: immediately
+
+# default properties for signal acquisition
+signal:
+  unit: V # can be any of m, Hz, V, raw, ... as long as unit_per_V is defined
+  V_per_V: 1.0 # default unit is V
+  raw_per_V: 8192.0 # raw units from the FPGA
+  # minimum trace duration in seconds
+  # be aware that this number affects both the sampling rate and the minimum
+  # frequency that can be resolved. Usually, you want to keep duration as long
+  # as you can stand to wait for new signal data, typically 10-100 ms.
+  duration: 0.1
+  # selects whether scope is to be used in average mode
+  # false is strongly suggested for duration-independent estimation of rms
+  # true is preferred only when we want to get an extremely good mean estimate
+  average: false
+  # if true, the signal.curve command automatically saves the data to CurveDB
+  autosave: false
+  # number of points per curve; also the number of points used for mean and rms
+  points: 16384
+  # timeout determines the time interval within which we do not take another
+  # data trace if several parameters are requested. To always obtain fresh
+  # data, set this to -1. To enable manual acquisition control with the acquire
+  # function '_acquire()', set this to a very large value or to '.inf'.
+  timeout: 0.3
+  # if true, the offset is subtraced. Calibrate with signal.get_offset()
+  offset_subtraction: true
+  offset: 0
+  # peak is a reserved place to store the peak value, for example offresonant
+  # reflection from a cavity
+  peak: 0
+

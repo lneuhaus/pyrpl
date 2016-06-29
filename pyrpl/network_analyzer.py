@@ -14,7 +14,7 @@ class NetworkAnalyzer(object):
       exemple 1:
             r = RedPitaya("1.1.1.1")
             na = NetworkAnalyzer(r)
-            curve = na.curve(iq_name='iq1', start=100, stop=1000, rbw=10...)
+            curve = na.curve(start=100, stop=1000, rbw=10...)
       exemple 2:
             na.start = 100
             na.stop = 1000
@@ -27,7 +27,6 @@ class NetworkAnalyzer(object):
 
     def __init__(self, rp):
         self.rp = rp
-        self.iq_name = 'iq1'
         self.start = 1
         self.stop = 100000
         self.points = 1001
@@ -67,8 +66,9 @@ class NetworkAnalyzer(object):
         """
         underlying iq module.
         """
-
-        return getattr(self.rp, self.iq_name)
+        if not hasattr(self, '_iq'):
+            self._iq = self.rp.iqs.pop()
+        return self._iq
 
     @property
     def output_directs(self):
@@ -79,7 +79,6 @@ class NetworkAnalyzer(object):
         return self.iq.inputs
 
     def setup(  self,
-                iq_name=None,
                 start=None,     # start frequency
                 stop=None,  # stop frequency
                 points=None, # number of points
@@ -98,7 +97,6 @@ class NetworkAnalyzer(object):
 
         Parameters
         ----------
-        iq_name: name of the underlying iq_module e.g.: iq1
         start: frequency start
         stop: frequency stop
         points: number of points
@@ -214,10 +212,6 @@ class NetworkAnalyzer(object):
         return val
 
     @property
-    def iq_names(self):
-        return ["iq0", "iq1", "iq2"]
-
-    @property
     def time_per_point(self):
         return 1.0 / self.rbw * (self.avg + self.sleeptimes)
 
@@ -293,7 +287,6 @@ class NetworkAnalyzer(object):
             self.iq.frequency = self.x[0]
 
     def curve(self,
-              iq_name=None,
               start=None,  # start frequency
               stop=None,  # stop frequency
               points=None,  # number of points
@@ -316,8 +309,7 @@ class NetworkAnalyzer(object):
         (array of frequencies, array of complex ampl, array of amplitudes)
         """
 
-        self.setup( iq_name=iq_name,
-                    start=start,  # start frequency
+        self.setup( start=start,  # start frequency
                     stop=stop,  # stop frequency
                     points=points,  # number of points
                     rbw=rbw,  # resolution bandwidth, can be a list of 2 as well for second-order
