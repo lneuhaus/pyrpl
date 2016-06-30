@@ -371,19 +371,21 @@ class ScopeWidget(ModuleWidget):
                     self.first_shot_of_continuous = False  # autoscale only upon first curve
                     self.plot_item.enableAutoRange('xy', False)
                 self.module.setup()
-            self.timer.start()
         else:
             wp0 = self.module._write_pointer_current
             datas = []
             for ch in (1,2):
                 if self.cb_ch[ch-1].checkState()==2:
-                    datas.append(self.module._get_ch(ch))
+                    datas.append(self.module._get_ch_no_roll(ch))
             wp1 = self.module._write_pointer_current
             for index, data in enumerate(datas):
-                data = data.roll(wp0)[wp0 - wp1:]
-                self.curves[index+1].setData(self.module.times, data)
-
-
+                to_discard = (wp1 - wp0)%self.module.data_length
+                data = np.roll(data, self.module.data_length - wp0)[to_discard:]
+                data = np.concatenate([[np.nan]*to_discard, data])
+                times = self.module.times
+                times-= times[-1]
+                self.curves[index].setData(times , data)
+        self.timer.start()
 
     def run_continuous(self):
         """
@@ -394,6 +396,9 @@ class ScopeWidget(ModuleWidget):
         self.button_continuous.setText("Stop")
         self.button_single.setEnabled(False)
         self.module.setup()
+        if self.rolling_mode:
+            self.module._trigger_source = 'off'
+            self.module._trigger_armed = True
         self.plot_item.enableAutoRange('xy', True)
         self.first_shot_of_continuous = True
         self.timer.start()
@@ -461,22 +466,40 @@ class ScopeWidget(ModuleWidget):
         for cb in self.cb_ch:
             cb.stateChanged.connect(self.display_curves)
 
-        self.rolling_checkbox = QtGui.QCheckBox("Rolling mode")
-        self.property_layout.addWidget(self.rolling_checkbox)
+
+        self.rolling_group = QtGui.QGroupBox("Trigger mode")
+        self.checkbox_normal = QtGui.QRadioButton("Normal")
+        self.checkbox_untrigged = QtGui.QRadioButton("Untrigged (rolling)")
+        self.checkbox_normal.setChecked(True)
+        self.lay_radio = QtGui.QVBoxLayout()
+        self.lay_radio.addWidget(self.checkbox_normal)
+        self.lay_radio.addWidget(self.checkbox_untrigged)
+        self.rolling_group.setLayout(self.lay_radio)
+        self.property_layout.insertWidget(self.property_names.index("trigger_source"), self.rolling_group)
 
     @property
     def rolling_mode(self):
-        return ((self.rolling_checkbox.checkState()==2) and \
-               self.rolling_checkbox.isEnabled())
+        return ((self.checkbox_untrigged.isChecked()) and \
+                 self.rolling_group.isEnabled())
 
     @rolling_mode.setter
     def rolling_mode(self, val):
-        self.rolling_checkbox.setCheckable(val*2)
+        if val:
+            self.checkbox_untrigged.setChecked(True)
+            self.module._trigger_source = 'off'
+        else:
+            self.checkbox_normal.setChecked(True)
+            self.module.trigger_source = self.module.trigger_source
         return val
 
-    def update(self):
-        super(ScopeWidget, self).update()
-        self.rolling_checkbox.setEnabled(self.module.duration>1)
+    def update_properties(self):
+        super(ScopeWidget, self).update_properties()
+
+        self.rolling_group.setEnabled(self.module.duration>1)
+        self.properties['trigger_source'].widget.setEnabled(not self.rolling_mode)
+        self.properties['threshold_ch1'].widget.setEnabled(not self.rolling_mode)
+        self.properties['threshold_ch2'].widget.setEnabled(not self.rolling_mode)
+        self.button_single.setEnabled(not self.rolling_mode)
 
     @property
     def params(self):

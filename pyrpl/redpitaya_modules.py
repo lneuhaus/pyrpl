@@ -459,6 +459,11 @@ class Scope(BaseModule):
         if not ch in [1,2]:
             raise ValueError("channel should be 1 or 2, got " + str(ch))
         return self._data_ch1 if ch==1 else self._data_ch2
+
+    def _get_ch_no_roll(self, ch):
+        if not ch in [1,2]:
+            raise ValueError("channel should be 1 or 2, got " + str(ch))
+        return self._rawdata_ch1*1./2**13 if ch==1 else self._rawdata_ch2*1./2**13
     
     def curve(self, ch=1, timeout=1.):
         """
