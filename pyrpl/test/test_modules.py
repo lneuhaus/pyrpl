@@ -10,6 +10,8 @@ from pyrpl.redpitaya_modules import *
 from pyrpl.registers import *
 from pyrpl.bijection import Bijection
 
+import time
+
 
 class TestClass(object):
     
@@ -65,4 +67,20 @@ class TestClass(object):
         self.r.scope.duration = 0.1
         self.r.scope.setup()
         self.r.scope.curve()
+
+
+    def test_scope_pretrigg_ok(self):
+        """
+        Make sure that pretrig_ok arrives quickly if the curve delay is set close to duration/2
+        """
+        if self.r is None:
+            return
+
+        self.r.asg1.trigger_source = "immediately"
+        self.r.asg1.frequency = 1e5
+        self.r.scope.trigger_source = "asg1"
+        self.r.scope.duration = 8.
+        self.r.scope.setup()
+        time.sleep(0.01)
+        assert(self.scope.pretrig_ok)
         

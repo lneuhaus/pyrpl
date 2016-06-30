@@ -19,7 +19,7 @@
 
 import numpy as np
 import time
-from time import sleep
+import pyrpl_utils
 import sys
 import matplotlib.pyplot as plt
 import logging
@@ -380,7 +380,7 @@ class Scope(BaseModule):
               trigger_delay=None,
               input1=None,
               input2=None):
-        """sets up the scope for a new trace aquision including arming the trigger
+        """sets up the scope for a new trace aquisition including arming the trigger
 
         duration: the minimum duration in seconds to be recorded
         trigger_source: the trigger source. see the options for the parameter separately
@@ -417,10 +417,13 @@ class Scope(BaseModule):
             self.trigger_source = self.trigger_source
         self._trigger_armed = True
         if self.trigger_source == 'immediately':
-            while(not self.pretrig_ok):
-                sleep(0.001)
+            self.wait_for_pretrig_ok()
             self.trigger_source = 'immediately'# write state machine
             #reset has changed the value of the FPGA register#_sw_trig()
+
+    def wait_for_pretrig_ok(self):
+        while not self.pretrig_ok:
+            pyrpl_utils.sleep(0.001)
 
     def curve_ready(self):
         """

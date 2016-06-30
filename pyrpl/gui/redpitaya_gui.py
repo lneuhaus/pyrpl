@@ -363,13 +363,27 @@ class ScopeWidget(ModuleWidget):
         2/ If so, plots them on the graph
         3/ Restarts the timer.
         """
-        if self.module.curve_ready():
-            self.display_curves()
-            if self.first_shot_of_continuous:
-                self.first_shot_of_continuous = False  # autoscale only upon first curve
-                self.plot_item.enableAutoRange('xy', False)
-            self.module.setup()
-        self.timer.start()
+
+        if not self.rolling_mode:
+            if self.module.curve_ready():
+                self.display_curves()
+                if self.first_shot_of_continuous:
+                    self.first_shot_of_continuous = False  # autoscale only upon first curve
+                    self.plot_item.enableAutoRange('xy', False)
+                self.module.setup()
+            self.timer.start()
+        else:
+            wp0 = self.module._write_pointer_current
+            datas = []
+            for ch in (1,2):
+                if self.cb_ch[ch-1].checkState()==2:
+                    datas.append(self.module._get_ch(ch))
+            wp1 = self.module._write_pointer_current
+            for index, data in enumerate(datas):
+                data = data.roll(wp0)[wp0 - wp1:]
+                self.curves[index+1].setData(self.module.times, data)
+
+
 
     def run_continuous(self):
         """
@@ -446,6 +460,23 @@ class ScopeWidget(ModuleWidget):
             cb.setStyleSheet('color: ' + col)
         for cb in self.cb_ch:
             cb.stateChanged.connect(self.display_curves)
+
+        self.rolling_checkbox = QtGui.QCheckBox("Rolling mode")
+        self.property_layout.addWidget(self.rolling_button)
+
+    @property
+    def rolling_mode(self):
+        return ((self.rolling_checkbox.checkState()==2) and \
+               self.rolling_checkbox.isEnabled())
+
+    @rolling_mode.setter
+    def rolling_mode(self, val):
+        self.rolling_checkbox.setCheckable(val*2)
+        return val
+
+    def update(self):
+        super(ScopeWidget, self).update()
+        self.rolling_checkbox.setEnabled(self.module.duration>1)
 
     @property
     def params(self):
