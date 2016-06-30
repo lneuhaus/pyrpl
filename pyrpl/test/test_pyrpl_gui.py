@@ -3,7 +3,7 @@ from unittest import TestCase
 import os
 import numpy as np
 import logging
-from pyrpl.gui.pyrpl_gui import ComboProperty, BoolProperty, \
+from pyrpl.gui.redpitaya_gui import ComboProperty, BoolProperty, \
                                 APP, NumberProperty
 
 logger = logging.getLogger(name=__name__)
