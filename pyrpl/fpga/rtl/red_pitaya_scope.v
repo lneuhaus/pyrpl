@@ -81,6 +81,7 @@ module red_pitaya_scope #(
    
    output                trig_scope_o    ,  // copy of scope trigger
 
+   /*
    // AXI0 master
    output                axi0_clk_o      ,  // global clock
    output                axi0_rstn_o     ,  // global reset
@@ -104,7 +105,8 @@ module red_pitaya_scope #(
    output                axi1_wfixed_o   ,  // system write burst type (fixed / incremental)
    input                 axi1_werr_i     ,  // system write error
    input                 axi1_wrdy_i     ,  // system write ready
-  
+   */
+
    // System bus
    input      [ 32-1: 0] sys_addr      ,  // bus saddress
    input      [ 32-1: 0] sys_wdata     ,  // bus write data
@@ -341,6 +343,8 @@ end
 
 
 
+//////////////// AXI IS DISABLED SINCE WE ARE NOT USING IT /////////////////////
+/*
 
 //---------------------------------------------------------------------------------
 //
@@ -558,6 +562,10 @@ axi_wr_fifo #(
 assign axi1_clk_o  = adc_clk_i ;
 assign axi1_rstn_o = adc_rstn_i;
 
+*/
+////////////// END AXI DISABLING ////////////////////
+
+
 //---------------------------------------------------------------------------------
 //  Trigger source selector
 
@@ -765,8 +773,8 @@ if (adc_rstn_i == 1'b0) begin
    set_b_filt_kk <=  25'hFFFFFF ;
    set_b_filt_pp <=  25'h0      ;
    set_deb_len   <=  20'd62500  ;
-   set_a_axi_en  <=   1'b0      ;
-   set_b_axi_en  <=   1'b0      ;
+   //set_a_axi_en  <=   1'b0      ;
+   //set_b_axi_en  <=   1'b0      ;
 end else begin
    if (sys_wen) begin
       if (sys_addr[19:0]==20'h00)   adc_we_keep   <= sys_wdata[     3] ;
@@ -788,6 +796,7 @@ end else begin
       if (sys_addr[19:0]==20'h48)   set_b_filt_kk <= sys_wdata[25-1:0] ;
       if (sys_addr[19:0]==20'h4C)   set_b_filt_pp <= sys_wdata[25-1:0] ;
 
+      /*
       if (sys_addr[19:0]==20'h50)   set_a_axi_start <= sys_wdata[32-1:0] ;
       if (sys_addr[19:0]==20'h54)   set_a_axi_stop  <= sys_wdata[32-1:0] ;
       if (sys_addr[19:0]==20'h58)   set_a_axi_dly   <= sys_wdata[32-1:0] ;
@@ -797,6 +806,7 @@ end else begin
       if (sys_addr[19:0]==20'h74)   set_b_axi_stop  <= sys_wdata[32-1:0] ;
       if (sys_addr[19:0]==20'h78)   set_b_axi_dly   <= sys_wdata[32-1:0] ;
       if (sys_addr[19:0]==20'h7C)   set_b_axi_en    <= sys_wdata[     0] ;
+      */
 
       if (sys_addr[19:0]==20'h90)   set_deb_len <= sys_wdata[20-1:0] ;
    end
@@ -844,6 +854,7 @@ end else begin
      20'h00048 : begin sys_ack <= sys_en;          sys_rdata <= {{32-25{1'b0}}, set_b_filt_kk}      ; end
      20'h0004C : begin sys_ack <= sys_en;          sys_rdata <= {{32-25{1'b0}}, set_b_filt_pp}      ; end
 
+     /*
      20'h00050 : begin sys_ack <= sys_en;          sys_rdata <=                 set_a_axi_start     ; end
      20'h00054 : begin sys_ack <= sys_en;          sys_rdata <=                 set_a_axi_stop      ; end
      20'h00058 : begin sys_ack <= sys_en;          sys_rdata <=                 set_a_axi_dly       ; end
@@ -857,6 +868,7 @@ end else begin
      20'h0007C : begin sys_ack <= sys_en;          sys_rdata <= {{32- 1{1'b0}}, set_b_axi_en}       ; end
      20'h00080 : begin sys_ack <= sys_en;          sys_rdata <=                 set_b_axi_trig      ; end
      20'h00084 : begin sys_ack <= sys_en;          sys_rdata <=                 set_b_axi_cur       ; end
+     */
 
      20'h00090 : begin sys_ack <= sys_en;          sys_rdata <= {{32-20{1'b0}}, set_deb_len}        ; end
     

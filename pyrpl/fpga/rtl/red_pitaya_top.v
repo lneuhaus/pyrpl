@@ -208,6 +208,7 @@ red_pitaya_ps i_ps (
   .sys_err_i     (ps_sys_err  ),  // system error indicator
   .sys_ack_i     (ps_sys_ack  ),  // system acknowledge signal
   // AXI masters
+  /*
   .axi1_clk_i    (axi1_clk    ),  .axi0_clk_i    (axi0_clk    ),  // global clock
   .axi1_rstn_i   (axi1_rstn   ),  .axi0_rstn_i   (axi0_rstn   ),  // global reset
   .axi1_waddr_i  (axi1_waddr  ),  .axi0_waddr_i  (axi0_waddr  ),  // system write address
@@ -218,6 +219,18 @@ red_pitaya_ps i_ps (
   .axi1_wfixed_i (axi1_wfixed ),  .axi0_wfixed_i (axi0_wfixed ),  // system write burst type (fixed / incremental)
   .axi1_werr_o   (axi1_werr   ),  .axi0_werr_o   (axi0_werr   ),  // system write error
   .axi1_wrdy_o   (axi1_wrdy   ),  .axi0_wrdy_o   (axi0_wrdy   )   // system write ready
+  */
+  .axi1_clk_i    (),  .axi0_clk_i    (),  // global clock
+  .axi1_rstn_i   (),  .axi0_rstn_i   (),  // global reset
+  .axi1_waddr_i  (),  .axi0_waddr_i  (),  // system write address
+  .axi1_wdata_i  (),  .axi0_wdata_i  (),  // system write data
+  .axi1_wsel_i   (),  .axi0_wsel_i   (),  // system write byte select
+  .axi1_wvalid_i (),  .axi0_wvalid_i (),  // system write data valid
+  .axi1_wlen_i   (),  .axi0_wlen_i   (),  // system write burst length
+  .axi1_wfixed_i (),  .axi0_wfixed_i (),  // system write burst type (fixed / incremental)
+  .axi1_werr_o   (),  .axi0_werr_o   (),  // system write error
+  .axi1_wrdy_o   (),  .axi0_wrdy_o   ()   // system write ready
+
 );
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -439,6 +452,7 @@ red_pitaya_scope i_scope (
 
   .trig_scope_o    (  trig_scope_out             ),  // scope trigger to feed other instruments
 
+  /*
   // AXI0 master                 // AXI1 master
   .axi0_clk_o    (axi0_clk   ),  .axi1_clk_o    (axi1_clk   ),
   .axi0_rstn_o   (axi0_rstn  ),  .axi1_rstn_o   (axi1_rstn  ),
@@ -450,6 +464,8 @@ red_pitaya_scope i_scope (
   .axi0_wfixed_o (axi0_wfixed),  .axi1_wfixed_o (axi1_wfixed),
   .axi0_werr_i   (axi0_werr  ),  .axi1_werr_i   (axi1_werr  ),
   .axi0_wrdy_i   (axi0_wrdy  ),  .axi1_wrdy_i   (axi1_wrdy  ),
+  */
+
   // System bus
   .sys_addr        (  sys_addr                   ),  // address
   .sys_wdata       (  sys_wdata                  ),  // write data

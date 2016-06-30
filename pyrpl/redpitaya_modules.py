@@ -231,8 +231,6 @@ class Scope(BaseModule):
                     2**13: 2**13,
                     2**16: 2**16}
 
-
-    
     decimations = sorted(_decimations.keys()) # help for the user
 
     sampling_times = [8e-9 * dec for dec in decimations]

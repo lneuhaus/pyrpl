@@ -52,7 +52,7 @@ should not be used.
 
 
 module red_pitaya_dsp #(
-	parameter MODULES = 8, START_IQ = 5
+	parameter MODULES = 8
 )
 (
    // signals
@@ -258,8 +258,8 @@ always @(posedge clk_i) begin
 
       input_select [SCOPE1] <= ADC1;
       input_select [SCOPE2] <= ADC2;
-      output_select[ASG1] <= OFF; //OUT1 is it OK Léo or compatibility issues with existing scripts ?
-      output_select[ASG2] <= OFF; //OUT2
+      output_select[ASG1] <= OFF;
+      output_select[ASG2] <= OFF;
       
       input_select [PWM0] <= NONE;
       input_select [PWM1] <= NONE;
@@ -316,7 +316,7 @@ generate for (j = 0; j < 4; j = j+1) begin
 end
 endgenerate
 
-
+/*
 //IIR module 
 generate for (j = 4; j < 5; j = j+1) begin
     red_pitaya_iir_block iir (
@@ -336,10 +336,10 @@ generate for (j = 4; j < 5; j = j+1) begin
       );
 	  assign output_signal[j] = output_direct[j];
 end endgenerate
-
+*/
 
 //IQ modules
-generate for (j = START_IQ; j < 7; j = j+1) begin
+generate for (j = 5; j < 7; j = j+1) begin
     red_pitaya_iq_block 
       iq
       (
@@ -359,30 +359,29 @@ generate for (j = START_IQ; j < 7; j = j+1) begin
 		 .rdata (module_rdata[j]),
 	     .wdata (sys_wdata)
       );
-
 end endgenerate
 
+// IQ with two outputs
+generate for (j = 7; j < 8; j = j+1) begin
+    red_pitaya_iq_block_2_outputs
+      iq
+      (
+         // data
+         .clk_i        (  clk_i          ),  // clock
+         .rstn_i       (  rstn_i         ),  // reset - active low
+         .dat_i        (  input_signal [j] ),  // input data
+         .dat_o        (  output_direct[j]),  // output data
+         .signal_o     (  output_signal[j]),  // output signal
+         .signal_o2    (  output_signal[j*2]),  // output signal
 
-red_pitaya_iq_block_2_outputs
-  iq
-  (
-     // data
-     .clk_i        (  clk_i          ),  // clock
-     .rstn_i       (  rstn_i         ),  // reset - active low
-     .dat_i        (  input_signal [7] ),  // input data
-     .dat_o        (  output_direct[7]),  // output data
-     .signal_o     (  output_signal[7]),  // output signal
-     .signal_o2    (  output_signal[14]),  // output signal
-
-     //communincation with PS
-     .addr ( sys_addr[16-1:0] ),
-     .wen  ( sys_wen & (sys_addr[20-1:16]==j) ),
-     .ren  ( sys_ren & (sys_addr[20-1:16]==j) ),
-     .ack  ( module_ack[j] ),
-     .rdata (module_rdata[j]),
-     .wdata (sys_wdata)
-  );
-
-
+         //communincation with PS
+         .addr ( sys_addr[16-1:0] ),
+         .wen  ( sys_wen & (sys_addr[20-1:16]==j) ),
+         .ren  ( sys_ren & (sys_addr[20-1:16]==j) ),
+         .ack  ( module_ack[j] ),
+         .rdata (module_rdata[j]),
+         .wdata (sys_wdata)
+      );
+end endgenerate
 
 endmodule

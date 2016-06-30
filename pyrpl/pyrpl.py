@@ -389,7 +389,8 @@ class Pyrpl(Lockbox):
         # Lockbox initialization
         super(Pyrpl, self).__init__(config=config)
         # initialize scope with predefined parameters
-        self._setupscope()
+        if self.c.redpitaya.gui:
+            self._setupscope()
 
     def _setupscope(self):
         if "scope" in self.c._dict:
@@ -439,22 +440,6 @@ class Trash(object):
             return True
         else:
             return False
-
-    @property
-    def pdh(self):
-        return self.get_mean("pdh", avg=1)
-
-    @property
-    def pdh_V(self):
-        return self.get_mean("pdh", avg=1) / 8191.0
-
-    def _relative_pdh(self, pdh):
-        return float(pdh - self.constants["offset_pdh"])\
-            / float(self.pdh_max - self.constants["offset_pdh"])
-
-    @property
-    def relative_pdh(self):
-        return self._relative_pdh(self.pdh)
 
     @property
     def d(self):  # diagnostics
@@ -517,22 +502,6 @@ class Trash(object):
                 pk=self.constants["last_calibration_pdh"]).add_child(c3)
 
     @property
-    def output(self):
-        return self.get_mean("output", avg=1)
-
-    @property
-    def output_V(self):
-        return self.get_mean("output", avg=1) / 8191.0
-
-    @output.setter
-    def output(self, v):
-        v = int(np.round(v))
-        self.f.onedata = 0
-        self.f.trigger_source = 0
-        self.f.sm_reset = True
-        self.f.offset = v
-
-    @property
     def coarse(self):
         if hasattr(self, '_coarse') and not self._coarse is None:
             return self._coarse
@@ -571,42 +540,6 @@ class Trash(object):
         f.sm_reset = True
         f.offset = set
         self._coarse = v
-
-    def darknoise(self, avg=0):
-        print "Make sure all light is off for this measurement"
-        reflection = self.get_mean("reflection", avg=avg)
-        pdh = self.get_mean("pdh", avg=avg)
-        constants = dict(
-            last_dark_reflection=self.constants["dark_reflection"],
-            last_dark_pdh=self.constants["dark_pdh"],
-            dark_reflection=reflection,
-            dark_pdh=pdh)
-        self.constants.update(constants)
-        self._save_constants(constants)
-        print "execute _pdh_offset(avg=0) for", self.constants["lockbox_name"], "manually please!"
-        # if "laststage" in self.constants and self.constants["laststage"]>=PDHSTAGE:
-        #    pdhstate=self.pdhon
-        #    self.setup_pdh()
-        #    self._pdh_offset(avg=avg) #optional, but very useful here
-        #    self.setup_pdh(turn_off=(not pdhstate))
-        print "Darknoise of", self.constants["lockbox_name"], "successfully acquired!"
-
-    def offresonant(self, avg=0, override_laseroff=False):
-        print "make sure cavity is unlocked here"
-        if self.laser_off and not override_laseroff:
-            if self.reflection < 500:
-                return
-        reflection = self.get_mean("reflection", avg=avg)
-        pdh = self.get_mean("pdh", avg=avg)
-        constants = dict(offres_reflection=reflection,
-                         offres_pdh=pdh)
-        self.setup_pdh(turn_off=True)
-        self.setup_pdh()
-        pdh = self.get_mean("pdh", avg=avg)
-        self.setup_pdh(turn_off=True)
-        constants.update(dict(offset_pdh=pdh))
-        self.constants.update(constants)
-        self._save_constants(constants)
 
     def calibrate_power(self, power):
         """
@@ -650,71 +583,6 @@ class Trash(object):
         self.constants.update(constants)
         self._save_constants(constants)
 
-    @property
-    def _outlen(self):
-        decimation = self.s.data_decimation
-        lastpoint = self.f.lastpoint
-        return np.round(float(self.f.lastpoint + 1) /
-                        float(self.s.data_decimation)) % self.s.data_length
-
-    @property
-    def _outi(self):
-        points = self._outlen
-        d = np.cos(np.linspace(0.0, 2 * np.pi, points,
-                               endpoint=False)) * float(-(2**13 - 1))
-        return d
-
-    @property
-    def _outq(self):
-        decimation = self.s.data_decimation
-        lastpoint = self.f.lastpoint
-        points = np.long(
-            np.round(
-                float(
-                    self.f.lastpoint +
-                    1) /
-                float(
-                    self.s.data_decimation)))
-        d = np.sin(np.linspace(0.0, 2 * np.pi, points,
-                               endpoint=False)) * float(-(2**13 - 1))
-        return d
-
-    def _outsin(self, amplitude=None):
-        if amplitude is None:
-            amplitude = self.constants["sweep_amplitude"]
-        points = self._outlen
-        d = amplitude * np.cos(np.linspace(0.0, 2 * np.pi,
-                                           points, endpoint=False)) * float(-(2**13 - 1))
-        return d
-
-    def _outramp(self, amplitude=None):
-        if amplitude is None:
-            amplitude = self.constants["sweep_amplitude"]
-        points = self._outlen
-        d = amplitude * (np.abs((np.linspace(-2.0, 2.0, points,
-                                             endpoint=False))) - 1.0) * float(-(2**13 - 1))
-        return d
-
-    def _outhalframp(self, amplitude=None):
-        if amplitude is None:
-            amplitude = self.constants["sweep_amplitude"]
-        points = self._outlen
-        d = amplitude * np.linspace(-8192.0, 8191.0, points, endpoint=True)
-        return d
-
-    def _get_buffers(self, data_shorten=False):
-        """fill the buffers of all trace_xxx variables with their current values"""
-        self.trace_1 = self.rp.getbuffer(self.s.data_ch1_current)
-        self.trace_2 = self.rp.getbuffer(self.s.data_ch2_current)
-        self.trace_time = self.rp.getbuffer(self.s.times)
-        self.trace_outi = self._outi
-        if data_shorten:
-            data_length = self._outlen
-            self.trace_1 = self.trace_1[0:data_length]
-            self.trace_2 = self.trace_2[0:data_length]
-            self.trace_time = self.trace_time[0:data_length]
-        # self.scope_reset()
-
     def _sweep_setup(self, amplitude=None, frequency=None, dacmode=0):
         """setup for a sweep measurement, outputs one sin wave on fine output and prepares scope for acquisition """
         if amplitude is None:
@@ -728,55 +596,6 @@ class Trash(object):
             amplitude=amplitude,
             onetimetrigger=True)
         self.s.setup(frequency=frequency, trigger_source=8, dacmode=dacmode)
-
-    def sweep_coarse(
-            self,
-            amplitude=None,
-            frequency=None,
-            waveform="ramp",
-            offset=None,
-            onetimetrigger=False):
-        """waveform is either ramp or sine
-           amplitude = 1.0 corresponds to full coarse range
-        """
-        self.unlock(jump=0)
-        if amplitude is None:
-            amplitude = self.constants["sweep_amplitude"]
-        mi = self.constants["coarse_min_volt"]
-        ma = self.constants["coarse_max_volt"]
-        if offset is None:
-            self.coarse = (ma + mi) / 4.0 + 0.5
-        else:
-            self.coarse = offset
-        rel_amplitude = np.abs(ma - mi) / 2.0 * amplitude
-        if frequency is None:
-            frequency = self.constants["sweep_frequency"]
-
-        if self.constants["coarse_output"] == 1:
-            f = self.fa
-        elif self.constants["coarse_output"] == 2:
-            f = self.fb
-        else:
-            print "Coarse sweep for output", self.constants["coarse_output"], "not implemented!"
-            return
-        if waveform == "ramp":
-            f.setup_ramp(
-                frequency=frequency,
-                amplitude=amplitude,
-                onetimetrigger=onetimetrigger,
-                offset=f.offset)
-        else:
-            f.setup_cosine(
-                frequency=frequency,
-                amplitude=amplitude,
-                onetimetrigger=onetimetrigger,
-                offset=f.offset)
-        f.trig(frequency=frequency)
-        return (1.0 / f.frequency)
-
-    def sweep_coarse_quit(self):
-        self.coarse = self._coarse
-        self.f.scale = 0
 
     def scope_reset(self):
         self.s.setup(

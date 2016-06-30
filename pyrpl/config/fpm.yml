@@ -1,13 +1,14 @@
 redpitaya:
-  hostname: 10.214.1.9
+  hostname: 10.214.1.32
   password: root
   user: root
   port: 2222
   frequency_correction: 1.0
   filename: fpga//red_pitaya.bin
-  reloadfpga: true
+  reloadfpga: false #true
   # autostart gui?
-  gui: true
+  #gui: true
+  gui: false
   monitor_server_name: monitor_server
 
 general:
