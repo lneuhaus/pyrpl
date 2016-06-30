@@ -376,6 +376,7 @@ always @(posedge axi0_clk_o) begin
       axi_a_dly_cnt <= 32'h0 ;
       axi_a_dly_do  <=  1'b0 ;
    end
+   /*
    else begin
       if (adc_arm_do && set_a_axi_en)
          axi_a_we <= 1'b1 ;
@@ -396,7 +397,7 @@ always @(posedge axi0_clk_o) begin
          axi_a_dat_sel <= 2'h0 ;
       else if (axi_a_we && adc_dv)
          axi_a_dat_sel <= axi_a_dat_sel + 2'h1 ;
-
+    
       axi_a_dat_dv <= axi_a_we && (axi_a_dat_sel == 2'b11) && adc_dv ;
    end
 
@@ -416,9 +417,9 @@ always @(posedge axi0_clk_o) begin
       set_a_axi_cur <= set_a_axi_start ;
    else if (axi0_wvalid_o)
       set_a_axi_cur <= axi_a_cur_addr ;
-
+*/
 end
-
+/*
 axi_wr_fifo #(
   .DW  (  64    ), // data width (8,16,...,1024)
   .AW  (  32    ), // address width
@@ -450,7 +451,7 @@ axi_wr_fifo #(
   .stat_cur_addr_o    (  axi_a_cur_addr    ), // current write address
   .stat_write_data_o  (                    )  // write data indicator
 );
-
+*/
 assign axi0_clk_o  = adc_clk_i ;
 assign axi0_rstn_o = adc_rstn_i;
 
@@ -485,7 +486,7 @@ always @(posedge axi1_clk_o) begin
       axi_b_dly_cnt <= 32'h0 ;
       axi_b_dly_do  <=  1'b0 ;
    end
-   else begin
+/*   else begin
       if (adc_arm_do && set_b_axi_en)
          axi_b_we <= 1'b1 ;
       else if (((axi_b_dly_do || adc_trig) && (axi_b_dly_cnt == 32'h0)) || adc_rst_do) //delayed reached or reset
@@ -525,8 +526,9 @@ always @(posedge axi1_clk_o) begin
       set_b_axi_cur <= set_b_axi_start ;
    else if (axi1_wvalid_o)
       set_b_axi_cur <= axi_b_cur_addr ;
+    */
 end
-
+/*
 axi_wr_fifo #(
   .DW  (  64    ), // data width (8,16,...,1024)
   .AW  (  32    ), // address width
@@ -558,7 +560,7 @@ axi_wr_fifo #(
   .stat_cur_addr_o    (  axi_b_cur_addr    ), // current write address
   .stat_write_data_o  (                    )  // write data indicator
 );
-
+*/
 assign axi1_clk_o  = adc_clk_i ;
 assign axi1_rstn_o = adc_rstn_i;
 
