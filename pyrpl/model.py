@@ -19,13 +19,11 @@ def getmodel(modeltype):
 
 class Model(object):
     " generic model object that will make smart use of its inputs and outputs"
-    export_to_parent = ["sweep", "calibrate", "set_optimal_gains",
+    export_to_parent = ["sweep", "calibrate", "set_optimal_gain",
                         "unlock", "islocked", "lock", "help"]
 
     # independent variable that specifies the state of the system
     _variable = 'x'
-    state = {'actual': {_variable: 0},
-             'set':    {_variable: 0}}
 
     def __init__(self, parent=None):
         self.logger = logging.getLogger(__name__)
@@ -37,7 +35,8 @@ class Model(object):
         self.outputs = self._parent.outputs
         self._config = self._parent.c.model
         self._make_helpers()
-        self.__setattr__(self._variable, self._variable_getter)
+        self.state = {'actual': {self._variable: 0},
+                      'set': {self._variable: 0}}
 
     def _derivative(self, func, x, n=1, args=()):
         return scipy.misc.derivative(func,
@@ -87,30 +86,37 @@ class Model(object):
         return fn_slope
 
     def _make_inverse(self, fn):
-        def fn_inverse(x, *args):
-            return self._inverse(fn, x, args=args)
+        def fn_inverse(y, x0, *args):
+            return self._inverse(fn, y, x0, args=args)
         return fn_inverse
 
     def _make_helpers(self):
         # create any missing slope and inverse functions
-        for inp in self.inputs:
+        for input in self.inputs.values():
             # test if the slope was defined in the model
-            if not hasattr(self, inp._name+"_slope"):
-                self.logger.debug("Making slope function for input %s", inp._name)
-                fn = self.__getattribute__(inp._name)
+            if not hasattr(self, input._name+"_slope"):
+                self.logger.debug("Making slope function for input %s",
+                                  input._name)
+                fn = self.__getattribute__(input._name)
                 # bug removed a la http://stackoverflow.com/questions/3431676/creating-functions-in-a-loop
-                self.__setattr__(inp._name+"_slope", self._make_slope(fn))
-            if not hasattr(self, inp._name + "_inverse"):
-                self.logger.debug("Making inverse function for input %s", inp._name)
-                fn = self.__getattribute__(inp._name)
-                self.__setattr__(inp._name + "_inverse", self._make_inverse(fn))
+                self.__setattr__(input._name+"_slope",
+                                 self._make_slope(fn))
+            if not hasattr(self, input._name + "_inverse"):
+                self.logger.debug("Making inverse function for input %s",
+                                  input._name)
+                fn = self.__getattribute__(input._name)
+                self.__setattr__(input._name + "_inverse",
+                                 self._make_inverse(fn))
 
     @property
     def variable(self):
-        inputname, input = self.inputs.values.items()[0]
+        """ returns an estimate of the variable defined in _variable """
+        inputname, input = self.inputs.items()[0]
         act = input.mean
         set = self.state["set"][self._variable]
         variable = self.__getattribute__(inputname+'_inverse')(act, set)
+        # save in state buffer
+        self.state["actual"][self._variable] = variable
         if variable is not None:
             return variable
         else:
@@ -122,9 +128,6 @@ class Model(object):
         factor = self.state["set"]["factor"]
         for output in self.outputs:
             output.set_optimal_gain(factor)
-
-    def calibrate(self):
-        pass
 
     def islocked(self):
         """ returns True if locked, else False"""
@@ -138,7 +141,7 @@ class Model(object):
             return False
         else:
             # test for output saturation
-            for o in self.outputs:
+            for o in self.outputs.values():
                 if o.issaturated:
                     return False
         # lock seems ok
@@ -146,7 +149,7 @@ class Model(object):
 
     # unlock algorithm
     def unlock(self):
-        for o in self.outputs:
+        for o in self.outputs.values():
             o.off()
 
     def sweep(self):
@@ -160,7 +163,7 @@ class Model(object):
             scope.
         """
         frequency = None
-        for o in self.outputs:
+        for o in self.outputs.values():
             frequency = o.sweep()
         return 1.0 / frequency
 
@@ -176,7 +179,7 @@ class Model(object):
             optional gain multiplier for debugging
         offset:
             offset to start locking from. Not touched upon if None
-        kwargs must contain a pair _variable = setpoint, where variable
+        kwargs must contain a pair _variable = setpoint, where _variable
         is the name of the variable of the model, as specified in the
         class attribute _variable.
 
@@ -187,7 +190,9 @@ class Model(object):
         self.state["set"].update(kwargs)
         self.state["set"]["factor"] = factor
         if input is None:
-            input = self.inputs.values[0]
+            input = self.inputs.values()[0]
+        elif isinstance(input, str):
+            input = self.inputs[input]
         inputname = input._name
         variable = kwargs[self._variable]
         setpoint = self.__getattribute__(inputname)(variable)
@@ -223,24 +228,24 @@ class Model(object):
         self.unlock()
         duration = self.sweep()
         curves = []
-        for inp in self.inputs:
+        for input in self.inputs.values():
             try:
-                inp._config._data["trigger_source"] = "asg1"
-                inp._config._data["duration"] = duration
-                inp._acquire()
+                input._config._data["trigger_source"] = "asg1"
+                input._config._data["duration"] = duration
+                input._acquire()
                 # when signal: autosave is enabled, each calibration will
                 # automatically save a curve
-                if inp._config.autosave:
-                    curve, ma, mi = inp.curve, inp.max, inp.min
+                if input._config.autosave:
+                    curve, ma, mi = input.curve, input.max, input.min
                     curves.append(curve)
                 else:
-                    ma, mi = inp.max, inp.min
+                    ma, mi = input.max, input.min
             finally:
                 # make sure to reload config file here so that the modified
                 # scope parameters are not written to config file
                 self._parent.c._load()
-            inp._config["max"] = ma
-            inp._config["min"] = mi
+            input._config["max"] = ma
+            input._config["min"] = mi
         # turn off sweeps
         self.unlock()
         return curves
@@ -248,7 +253,7 @@ class Model(object):
     def help(self):
         self.logger.info("Interferometer\n-------------------\n"
                          + "Usage: \n"
-                         + "Create Pyrpl object: p = Pyrpl('myconfigfile')"
+                         + "Create Pyrpl object: p = Pyrpl('myconfigfile')\n"
                          + "Turn off the laser and execute: \n"
                          + "p.get_offset()\n"
                          + "Turn the laser back on and execute:\n"
@@ -266,26 +271,34 @@ class Model(object):
 
 class Interferometer(Model):
     """ simplest type of optical interferometer with one photodiode """
+
+    # the variable which we would like to control
     _variable = "phase"
 
     # theoretical model for input signal 'transmission'
     def transmission(self, phase):
-        """ photocurrent at port1 of an ideal interferometer vs phase (rad)"""
-        amplitude = (self._parent.port1._config.max
-                     - self._parent.port1._config.min) / 2
-        mean = (self._parent.port1._config.max
-                     + self._parent.port1._config.min) / 2
+        """ photocurrent of an ideal interferometer vs phase (rad)"""
+        amplitude = (self.inputs['transmission']._config.max
+                     - self.inputs['transmission']._config.min) / 2
+        mean = (self.inputs['transmission']._config.max
+                     + self.inputs['transmission']._config.min) / 2
         return np.sin(phase) * amplitude + mean
 
-    # how phase converts to other units
+    # how phase converts to other units that are used in the configfile
     @property
     def phase_per_m(self):
         return 2*np.pi/self._config.wavelength
 
+    # how to estimate the actual phase
     @property
     def phase(self):
         return self.variable % (2*np.pi)
 
+    def lock(self, phase=0, factor=1):
+        return self._lock(phase=phase,
+                          input='transmission',
+                          offset=0,
+                          factor=factor)
 
 class FabryPerot(Model):
     # the internal state memory
@@ -317,7 +330,8 @@ class FabryPerot(Model):
         return self._lorentz(x)*self.signals.transmission
 
     def islocked(self):
-        if self.inputs.reflection.mean
+        if self.inputs.reflection.mean:
+            return False
 
 class FabryPerot_Reflection(FabryPerot):
     # declare here the public functions that are exported to the Pyrpl class
@@ -368,7 +382,7 @@ class FabryPerot_Reflection(FabryPerot):
         self.state["set"]["detuning"] = detuning
         self.state["set"]["factor"] = factor
         input = self._parent.port1
-        for o in self.outputs:
+        for o in self.outputs.values():
             # trivial to lock: just enable all gains
             unit = o._config.calibrationunits.split("_per_V")[0]
             detuning_per_unit = self.__getattribute__("detuning_per_" + unit)
@@ -387,7 +401,7 @@ class FabryPerot_Reflection(FabryPerot):
             return False
         else:
             # test for output saturation
-            for o in self.outputs:
+            for o in self.outputs.values():
                 if o.issaturated:
                     return False
         # lock seems ok (but not a failsafe criterion without additional info)
@@ -398,24 +412,24 @@ class FabryPerot_Reflection(FabryPerot):
         self.unlock()
         duration = self.sweep()
         curves = []
-        for inp in self.inputs:
+        for input in self.inputs.values():
             try:
-                inp._config._data["trigger_source"] = "asg1"
-                inp._config._data["duration"] = duration
-                inp._acquire()
+                input._config._data["trigger_source"] = "asg1"
+                input._config._data["duration"] = duration
+                input._acquire()
                 # when signal: autosave is enabled, each calibration will
                 # automatically save a curve
-                if inp._config.autosave:
-                    curve, ma, mi = inp.curve, inp.max, inp.min
+                if input._config.autosave:
+                    curve, ma, mi = input.curve, input.max, input.min
                     curves.append(curve)
                 else:
-                    ma, mi = inp.max, inp.min
+                    ma, mi = input.max, input.min
             finally:
                 # make sure to reload config file here so that the modified
                 # scope parameters are not written to config file
                 self._parent.c._load()
-            inp._config["max"] = ma
-            inp._config["min"] = mi
+            input._config["max"] = ma
+            input._config["min"] = mi
         # turn off sweeps
         self.unlock()
         return curves
@@ -458,7 +472,7 @@ class TEM02FabryPerot(FabryPerot):
         self.unlock()
         duration = self.sweep()
         # input signal calibration
-        for input in self.inputs:
+        for input in self.inputs.values():
             try:
                 input._config._data["trigger_source"] = "asg1"
                 input._config._data["duration"] = duration
@@ -503,7 +517,7 @@ class TEM02FabryPerot(FabryPerot):
         self.state["set"]["detuning"] = detuning
         self.state["set"]["factor"] = factor
         input = self._parent.transmission
-        for o in self.outputs:
+        for o in self.outputs.values():
             # trivial to lock: just enable all gains
             unit = o._config.calibrationunits.split("_per_V")[0]
             detuning_per_unit = self.__getattribute__("detuning_per_" + unit)
@@ -531,7 +545,7 @@ class TEM02FabryPerot(FabryPerot):
         self.state["set"]["detuning"] = detuning
         self.state["set"]["factor"] = factor
         input = self._parent.tilt
-        for o in self.outputs:
+        for o in self.outputs.values():
             # trivial to lock: just enable all gains
             unit = o._config.calibrationunits.split("_per_V")[0]
             detuning_per_unit = self.__getattribute__("detuning_per_" + unit)
@@ -564,7 +578,7 @@ class TEM02FabryPerot(FabryPerot):
             return False
         else:
             # test for output saturation
-            for o in self.outputs:
+            for o in self.outputs.values():
                 if o.issaturated:
                     self.logger.debug("Output %s is saturated!", o._name)
                     return False

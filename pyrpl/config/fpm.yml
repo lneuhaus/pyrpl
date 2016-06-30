@@ -142,7 +142,7 @@ signal:
   # data trace if several parameters are requested. To always obtain fresh
   # data, set this to -1. To enable manual acquisition control with the acquire
   # function '_acquire()', set this to a very large value or to '.inf'.
-  timeout: 0.5
+  acquire_timeout: 0.5
   # if true, the offset is subtraced. Calibrate with signal.get_offset()
   offset_subtraction: true
   offset: 0

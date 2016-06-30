@@ -332,9 +332,9 @@ class RedPitaya(SSHshell):
         self.spec_an = SpectrumAnalyzer(self)
 
 
-    def make_a_slave(self, port=None, monitor_server_name=None):
+    def make_a_slave(self, port=None, monitor_server_name=None, gui=False):
         if port is None:
-            port = self.port + len(self._slaves) + 1
+            port = self.port + len(self._slaves)*10 + 1
         if monitor_server_name is None:
             monitor_server_name = self.monitor_server_name + str(port)
         r = RedPitaya(hostname=self.hostname,
@@ -351,7 +351,8 @@ class RedPitaya(SSHshell):
                          frequency_correction=self.frequency_correction,
                          timeout=self.timeout,
                          monitor_server_name=monitor_server_name,
-                         silence_env=True)
+                         silence_env=True,
+                         gui=gui)
         r._master = self
         self._slaves.append(r)
         return r

@@ -32,6 +32,7 @@ import sys
 import os
 import iir
 import logging
+from collections import OrderedDict
 from shutil import copyfile
 
 from .redpitaya import RedPitaya
@@ -320,8 +321,8 @@ class Lockbox(object):
         signalclasses, signalparameters = self._signalinit
         for signaltype, signalclass in signalclasses.items():
             # generalized version of: self.inputs = [reflection, transmission]
-            signaldict = dict()
-            self.__setattr__(signaltype, signallist)
+            signaldict = OrderedDict()
+            self.__setattr__(signaltype, signaldict)
             for k in self.c[signaltype].keys():
                 self.logger.debug("Creating %s signal %s...", signaltype, k)
                 # generalization of:
