@@ -236,7 +236,8 @@ class Scope(BaseModule):
     decimations = sorted(_decimations.keys()) # help for the user
 
     sampling_times = [8e-9 * dec for dec in decimations]
-    durations = [s_times * data_length for s_times in sampling_times]
+
+    durations = [s_times*data_length for s_times in sampling_times]
 
     decimation = SelectRegister(0x14, doc="decimation factor", 
                                 options=_decimations)
