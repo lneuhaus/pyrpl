@@ -20,7 +20,7 @@ def getmodel(modeltype):
 class Model(object):
     " generic model object that will make smart use of its inputs and outputs"
     export_to_parent = ["sweep", "calibrate", "save_current_gain",
-                        "unlock", "islocked", "lock", "help"]
+                        "unlock", "islocked", "lock", "help", "calib_lock"]
 
     # independent variable that specifies the state of the system
     _variable = 'x'
@@ -269,6 +269,11 @@ class Model(object):
         # turn off sweeps
         self.unlock()
         return curves
+
+    def calib_lock(self):
+        self.calibrate()
+        self.lock()
+        return self.islocked()
 
     def help(self):
         self.logger.info("PyRP Lockbox\n-------------------\n"

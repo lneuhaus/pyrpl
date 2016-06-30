@@ -123,11 +123,12 @@ reg             adc_rst_do   ;
 
 //---------------------------------------------------------------------------------
 //  Input filtering
-/*
+
 wire [ 14-1: 0] adc_a_filt_in  ;
 wire [ 14-1: 0] adc_a_filt_out ;
 wire [ 14-1: 0] adc_b_filt_in  ;
 wire [ 14-1: 0] adc_b_filt_out ;
+/*
 reg  [ 18-1: 0] set_a_filt_aa  ;
 reg  [ 25-1: 0] set_a_filt_bb  ;
 reg  [ 25-1: 0] set_a_filt_kk  ;
@@ -207,12 +208,33 @@ end else begin
    case (set_dec & {17{set_avg_en}})
       17'h0     : begin adc_a_dat <= adc_a_filt_out;            adc_b_dat <= adc_b_filt_out;        end
       17'h1     : begin adc_a_dat <= adc_a_sum[15+0 :  0];      adc_b_dat <= adc_b_sum[15+0 :  0];  end
+      17'h2     : begin adc_a_dat <= adc_a_sum[15+1 :  1];      adc_b_dat <= adc_b_sum[15+1 :  1];  end
+      17'h4     : begin adc_a_dat <= adc_a_sum[15+2 :  2];      adc_b_dat <= adc_b_sum[15+2 :  2];  end
+      17'h8     : begin adc_a_dat <= adc_a_sum[15+3 :  3];      adc_b_dat <= adc_b_sum[15+3 :  3];  end
+      17'h10    : begin adc_a_dat <= adc_a_sum[15+4 :  4];      adc_b_dat <= adc_b_sum[15+4 :  4];  end
+      17'h20    : begin adc_a_dat <= adc_a_sum[15+5 :  5];      adc_b_dat <= adc_b_sum[15+5 :  5];  end
+      17'h40    : begin adc_a_dat <= adc_a_sum[15+6 :  6];      adc_b_dat <= adc_b_sum[15+6 :  6];  end
+      17'h80    : begin adc_a_dat <= adc_a_sum[15+7 :  7];      adc_b_dat <= adc_b_sum[15+7 :  7];  end
+      17'h100   : begin adc_a_dat <= adc_a_sum[15+8 :  8];      adc_b_dat <= adc_b_sum[15+8 :  8];  end
+      17'h200   : begin adc_a_dat <= adc_a_sum[15+9 :  9];      adc_b_dat <= adc_b_sum[15+9 :  9];  end
+      17'h400   : begin adc_a_dat <= adc_a_sum[15+10: 10];      adc_b_dat <= adc_b_sum[15+10: 10];  end
+      17'h800   : begin adc_a_dat <= adc_a_sum[15+11: 11];      adc_b_dat <= adc_b_sum[15+11: 11];  end
+      17'h1000  : begin adc_a_dat <= adc_a_sum[15+12: 12];      adc_b_dat <= adc_b_sum[15+12: 12];  end
+      17'h2000  : begin adc_a_dat <= adc_a_sum[15+13: 13];      adc_b_dat <= adc_b_sum[15+13: 13];  end
+      17'h4000  : begin adc_a_dat <= adc_a_sum[15+14: 14];      adc_b_dat <= adc_b_sum[15+14: 14];  end
+      17'h8000  : begin adc_a_dat <= adc_a_sum[15+15: 15];      adc_b_dat <= adc_b_sum[15+15: 15];  end
+      17'h10000 : begin adc_a_dat <= adc_a_sum[15+16: 16];      adc_b_dat <= adc_b_sum[15+16: 16];  end
+      default   : begin adc_a_dat <= adc_a_sum[15+0 :  0];      adc_b_dat <= adc_b_sum[15+0 :  0];  end
+/*
+      17'h0     : begin adc_a_dat <= adc_a_filt_out;            adc_b_dat <= adc_b_filt_out;        end
+      17'h1     : begin adc_a_dat <= adc_a_sum[15+0 :  0];      adc_b_dat <= adc_b_sum[15+0 :  0];  end
       17'h8     : begin adc_a_dat <= adc_a_sum[15+3 :  3];      adc_b_dat <= adc_b_sum[15+3 :  3];  end
       17'h40    : begin adc_a_dat <= adc_a_sum[15+6 :  6];      adc_b_dat <= adc_b_sum[15+6 :  6];  end
       17'h400   : begin adc_a_dat <= adc_a_sum[15+10: 10];      adc_b_dat <= adc_b_sum[15+10: 10];  end
       17'h2000  : begin adc_a_dat <= adc_a_sum[15+13: 13];      adc_b_dat <= adc_b_sum[15+13: 13];  end
       17'h10000 : begin adc_a_dat <= adc_a_sum[15+16: 16];      adc_b_dat <= adc_b_sum[15+16: 16];  end
       default   : begin adc_a_dat <= adc_a_sum[15+0 :  0];      adc_b_dat <= adc_b_sum[15+0 :  0];  end
+*/
    endcase
 end
 
@@ -397,7 +419,7 @@ always @(posedge axi0_clk_o) begin
          axi_a_dat_sel <= 2'h0 ;
       else if (axi_a_we && adc_dv)
          axi_a_dat_sel <= axi_a_dat_sel + 2'h1 ;
-    
+
       axi_a_dat_dv <= axi_a_we && (axi_a_dat_sel == 2'b11) && adc_dv ;
    end
 
@@ -765,14 +787,14 @@ if (adc_rstn_i == 1'b0) begin
    set_a_hyst    <=  14'd20     ;
    set_b_hyst    <=  14'd20     ;
    set_avg_en    <=   1'b1      ;
-   set_a_filt_aa <=  18'h0      ;
+/*   set_a_filt_aa <=  18'h0      ;
    set_a_filt_bb <=  25'h0      ;
    set_a_filt_kk <=  25'hFFFFFF ;
    set_a_filt_pp <=  25'h0      ;
    set_b_filt_aa <=  18'h0      ;
    set_b_filt_bb <=  25'h0      ;
    set_b_filt_kk <=  25'hFFFFFF ;
-   set_b_filt_pp <=  25'h0      ;
+   set_b_filt_pp <=  25'h0      ;*/
    set_deb_len   <=  20'd62500  ;
    set_a_axi_en  <=   1'b0      ;
    set_b_axi_en  <=   1'b0      ;

@@ -316,7 +316,7 @@ generate for (j = 0; j < 4; j = j+1) begin
 end
 endgenerate
 
-/*
+
 //IIR module 
 generate for (j = 4; j < 5; j = j+1) begin
     red_pitaya_iir_block iir (
@@ -336,7 +336,7 @@ generate for (j = 4; j < 5; j = j+1) begin
       );
 	  assign output_signal[j] = output_direct[j];
 end endgenerate
-*/
+
 
 //IQ modules
 generate for (j = 5; j < 7; j = j+1) begin
