@@ -215,37 +215,57 @@ class Model(object):
     def lock(self, variable):
         self._lock(x=variable)
 
-    def calibrate(self):
+    def calibrate(self, inputs=None, scopeparams={}):
         """
         Calibrates by performing a sweep as defined for the outputs and
         recording and saving min and max of each input.
 
+        Parameters
+        -------
+        inputs: list
+            list of input signals to calibrate. All inputs are used if None.
+        scopeparams: dict
+            optional parameters for signal acquisition during calibration
+            that are temporarily written to _config
+
         Returns
         -------
         curves: list
-            list of curves of the inputsignals
+            list of all acquired curves
         """
         self.unlock()
         duration = self.sweep()
         curves = []
-        for input in self.inputs.values():
+        if not inputs:
+            inputs = self.inputs.values()
+        for input in inputs:
             try:
                 input._config._data["trigger_source"] = "asg1"
                 input._config._data["duration"] = duration
+                input._config._data.update(scopeparams)
                 input._acquire()
                 # when signal: autosave is enabled, each calibration will
                 # automatically save a curve
-                if input._config.autosave:
-                    curve, ma, mi = input.curve, input.max, input.min
-                    curves.append(curve)
-                else:
-                    ma, mi = input.max, input.min
+                curve, ma, mi, mean, rms = input.curve, input.max, input.min, \
+                                           input.mean, input.rms
+                curves.append(curve)
+                try:
+                    secondsignal = scopeparams["secondsignal"]
+                    input2 = self.inputs[secondsignal]
+                    curve2 = input2.curve
+                    curve.add_child(curve2)
+                except KeyError:
+                    # no secondsignal was specified
+                    pass
             finally:
                 # make sure to reload config file here so that the modified
                 # scope parameters are not written to config file
                 self._parent.c._load()
+            # save all parameters to config
             input._config["max"] = ma
             input._config["min"] = mi
+            input._config["mean"] = mean
+            input._config["rms"] = rms
         # turn off sweeps
         self.unlock()
         return curves
@@ -300,23 +320,41 @@ class Interferometer(Model):
                           offset=0,
                           factor=factor)
 
+    def calibrate(self):
+        return  super(Interferometer, self).calibrate(
+            scopeparams={'secondsignal': 'piezo'})
+
+
 class FabryPerot(Model):
-    # the internal state memory
-    state = {'set': {'detuning': 0},
-             'actual': {'detuning': 0}}
+    # the internal variable for state specification
+    _variable = 'detuning'
 
-    export_to_parent = ['unlock', 'sweep',
-                        'set_optimal_gain']
-
+    # lorentzian functions
     def _lorentz(self, x):
         return 1.0 / (1.0 + x ** 2)
 
     def _lorentz_slope(self, x):
         return -2.0*x / (1.0 + x ** 2)**2
 
-    # def transmission(self, x):
-    #    " relative transmission. Max transmission will be calibrated as peak"
-    #    return self._lorentz(x/self.bandwidth)
+    def _lorentz_slope_normalized(self, x):
+        # max slope occurs at x +- sqrt(3)
+        return  self._lorentz_slope(x) / abs(self._lorentz_slope(np.sqrt(3)))
+
+    def _lorentz_slope_slope(self, x):
+        return (-2.0+6.0*x**2) / (1.0 + x ** 2)**3
+
+    def _lorentz_slope_normalized_slope(self, x):
+        """ slope of normalized slope (!= normalized slope of slope) """
+        return (-2.0+6.0*x**2) / (1.0 + x ** 2)**3  \
+               / abs(self._lorentz_slope(np.sqrt(3)))
+
+    def transmission(self, x):
+        " relative transmission. Max transmission will be calibrated as peak"
+        return self._lorentz(x) * self._config.resonant_transmission
+
+    def reflection(self, x):
+        " relative transmission. Max transmission will be calibrated as peak"
+        return self._config.offresonant_reflection * self._lorentz(x) * self._config.resonant_transmission
 
     def FWHM(self):
         return self._config.linewidth / 2

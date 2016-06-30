@@ -184,6 +184,11 @@ class RPSignal(Signal):
         except KeyError:
             timeout = self._config.duration*5
         self._saverawdata(self._rp.scope.curve(ch=1, timeout=timeout))
+        if secondsignal is None:
+            try:
+                secondsignal = self._config.secondsignal
+            except KeyError:
+                pass
         if secondsignal is not None:
             secondsignal._saverawdata(self._rp.scope.curve(ch=2, timeout=-1))
         self._restartscope()

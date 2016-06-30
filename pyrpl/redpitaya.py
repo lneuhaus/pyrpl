@@ -36,6 +36,8 @@ from network_analyzer import NetworkAnalyzer
 from spectrum_analyzer import SpectrumAnalyzer
 
 class RedPitaya(SSHshell):
+    _binfilename = 'fpga.bin'
+
     def __init__(self, hostname='192.168.1.100', port=2222,
                  user='root', password='root',
                  delay=0.05, 
@@ -168,22 +170,50 @@ class RedPitaya(SSHshell):
               +self.dirname
               +" current filename: "+self.filename)
         try:
-            self.scp.put(source, self.serverdirname)
+            self.scp.put(source,
+                         os.path.join(self.serverdirname,self._binfilename))
         except (SCPException, SSHException):
             # try again before failing
             self.startscp()
             sleep(self.delay)
             self.scp = SCPClient(self.ssh.get_transport())
         sleep(self.delay)
+        # kill all other servers to prevent reading while fpga is flashed
+        self.end()
         self.ask('killall nginx')
         self.ask('systemctl stop redpitaya_nginx') # for 0.94 and higher
         self.ask('cat ' 
-                 + os.path.join(self.serverdirname, os.path.basename(filename)) 
+                 + os.path.join(self.serverdirname, self._binfilename)
                  + ' > //dev//xdevcfg')
+        sleep(self.delay)
+        self.ask('rm -f '+ os.path.join(self.serverdirname, self._binfilename))
         self.ask("nginx -p //opt//www//")
         self.ask('systemctl start redpitaya_nginx') # for 0.94 and higher #needs test
         sleep(self.delay)
         self.ask('ro')
+
+    def fpgarecentlyflashed(self):
+        self.ask()
+        result =self.ask("echo $(($(date +%s) - $(date +%s -r \""
+        + os.path.join(self.serverdirname, self._binfilename) +"\")))")
+        age = None
+        for line in result.split('\n'):
+            try:
+                age = int(line.strip())
+            except:
+                pass
+            else:
+                break
+        if not age:
+            self.logger.debug("Could not retrieve bitfile age from: %s",
+                            result)
+            return False
+        elif age > 10:
+            self.logger.debug("Found expired bitfile. Age: %s", age)
+            return False
+        else:
+            self.logger.debug("Found recent bitfile. Age: %s", age)
+            return True
 
     def installserver(self):
         self.endserver()
@@ -227,6 +257,9 @@ class RedPitaya(SSHshell):
     def startserver(self):
         self.endserver()
         sleep(self.delay)
+        if self.fpgarecentlyflashed():
+            self.logger.info("FPGA is being flashed. Please wait for 2 seconds.")
+            sleep(2.0)
         result = self.ask(self.serverdirname+"/"+self.monitor_server_name
                           +" "+ str(self.port))
         if not "sh" in result: # sh in result means we tried the wrong binary version
@@ -245,7 +278,7 @@ class RedPitaya(SSHshell):
             self.logger.info('>') # formerly 'console ready'
         sleep(self.delay)
         # make sure no other monitor_server blocks the port
-        self.ask('killall '+self.monitor_server_name)
+        self.ask('killall ' + self.monitor_server_name)
         self.serverrunning = False
         
     def endclient(self):
