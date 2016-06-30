@@ -36,19 +36,23 @@ from network_analyzer import NetworkAnalyzer
 from spectrum_analyzer import SpectrumAnalyzer
 
 class RedPitaya(SSHshell):
+    _binfilename = 'fpga.bin'
+
     def __init__(self, hostname='192.168.1.100', port=2222,
                  user='root', password='root',
                  delay=0.05, 
                  autostart=True, reloadfpga=True, reloadserver=False, 
                  filename=None, dirname=None,
                  leds_off=True, frequency_correction=1.0, timeout = 3,
-                 gui=False
+                 monitor_server_name='monitor_server', gui=False,
+                 silence_env = False
                  ):
         """installs and starts the interface on the RedPitaya at hostname that allows remote control
 
         if you are experiencing problems, try to increase delay, or try logging.getLogger().setLevel(logging.DEBUG)"""
         self.logger = logging.getLogger(name=__name__)
         #self.license()
+        self._slaves = []
         self.serverdirname = "//opt//pyrpl//"
         self.serverrunning = False
         self.hostname = hostname
@@ -62,19 +66,27 @@ class RedPitaya(SSHshell):
         self.frequency_correction = frequency_correction
         self.leds_off = leds_off
         self.timeout = timeout
+        self.monitor_server_name = monitor_server_name
 
         # get parameters from os.environment variables
-        for k in ["hostname","port","user","password","delay","timeout"]:
-            if "REDPITAYA_"+k.upper() in os.environ:
-                newvalue = os.environ["REDPITAYA_"+k.upper()]
-                oldvalue = self.__getattribute__(k)
-                self.__setattr__(k, type(oldvalue)(newvalue))
-                if k == "password": # do not show the password on the screen
-                    newvalue = "*"*(len(newvalue)%8)
-                self.logger.warning("Variable %s with value %s overwritten by "
-                                    +"environment variable REDPITAYA_%s with "
-                                    +"value %s", k, oldvalue,
-                                    k.upper(), newvalue)
+        if not silence_env:
+            for k in ["hostname",
+                      "port",
+                      "user",
+                      "password",
+                      "delay",
+                      "timeout",
+                      "monitor_server_name"]:
+                if "REDPITAYA_"+k.upper() in os.environ:
+                    newvalue = os.environ["REDPITAYA_"+k.upper()]
+                    oldvalue = self.__getattribute__(k)
+                    self.__setattr__(k, type(oldvalue)(newvalue))
+                    if k == "password": # do not show the password on the screen
+                        newvalue = "*"*(len(newvalue)%8)
+                    self.logger.warning("Variable %s with value %s overwritten by "
+                                        +"environment variable REDPITAYA_%s with "
+                                        +"value %s", k, oldvalue,
+                                        k.upper(), newvalue)
         # check filenames - should work without specifying them
         if filename is None:
             self.filename = 'fpga//red_pitaya.bin'
@@ -158,22 +170,50 @@ class RedPitaya(SSHshell):
               +self.dirname
               +" current filename: "+self.filename)
         try:
-            self.scp.put(source, self.serverdirname)
+            self.scp.put(source,
+                         os.path.join(self.serverdirname,self._binfilename))
         except (SCPException, SSHException):
             # try again before failing
             self.startscp()
             sleep(self.delay)
             self.scp = SCPClient(self.ssh.get_transport())
         sleep(self.delay)
+        # kill all other servers to prevent reading while fpga is flashed
+        self.end()
         self.ask('killall nginx')
         self.ask('systemctl stop redpitaya_nginx') # for 0.94 and higher
         self.ask('cat ' 
-                 + os.path.join(self.serverdirname, os.path.basename(filename)) 
+                 + os.path.join(self.serverdirname, self._binfilename)
                  + ' > //dev//xdevcfg')
+        sleep(self.delay)
+        self.ask('rm -f '+ os.path.join(self.serverdirname, self._binfilename))
         self.ask("nginx -p //opt//www//")
         self.ask('systemctl start redpitaya_nginx') # for 0.94 and higher #needs test
         sleep(self.delay)
         self.ask('ro')
+
+    def fpgarecentlyflashed(self):
+        self.ask()
+        result =self.ask("echo $(($(date +%s) - $(date +%s -r \""
+        + os.path.join(self.serverdirname, self._binfilename) +"\")))")
+        age = None
+        for line in result.split('\n'):
+            try:
+                age = int(line.strip())
+            except:
+                pass
+            else:
+                break
+        if not age:
+            self.logger.debug("Could not retrieve bitfile age from: %s",
+                            result)
+            return False
+        elif age > 10:
+            self.logger.debug("Found expired bitfile. Age: %s", age)
+            return False
+        else:
+            self.logger.debug("Found recent bitfile. Age: %s", age)
+            return True
 
     def installserver(self):
         self.endserver()
@@ -187,14 +227,16 @@ class RedPitaya(SSHshell):
         for serverfile in ['monitor_server','monitor_server_0.95']:
             sleep(self.delay)
             try:
-                self.scp.put(os.path.join(self.dirname, 'monitor_server', serverfile), self.serverdirname+"monitor_server")
+                self.scp.put(
+                    os.path.join(self.dirname, 'monitor_server', serverfile),
+                    self.serverdirname+self.monitor_server_name)
             except (SCPException, SSHException):
                 self.logger.exception("Upload error. Try again after rebooting your RedPitaya..")
             sleep(self.delay)
-            self.ask('chmod 755 ./monitor_server')
+            self.ask('chmod 755 ./'+self.monitor_server_name)
             sleep(self.delay)
             self.ask('ro')
-            result = self.ask("./monitor_server " + str(self.port))
+            result = self.ask("./"+self.monitor_server_name+" "+ str(self.port))
             sleep(self.delay)
             result += self.ask()
             if not "sh" in result: 
@@ -215,7 +257,11 @@ class RedPitaya(SSHshell):
     def startserver(self):
         self.endserver()
         sleep(self.delay)
-        result = self.ask(self.serverdirname+"/monitor_server " + str(self.port))
+        if self.fpgarecentlyflashed():
+            self.logger.info("FPGA is being flashed. Please wait for 2 seconds.")
+            sleep(2.0)
+        result = self.ask(self.serverdirname+"/"+self.monitor_server_name
+                          +" "+ str(self.port))
         if not "sh" in result: # sh in result means we tried the wrong binary version
             self.logger.info("Server application started on port %d",self.port)
             self.serverrunning = True
@@ -232,7 +278,7 @@ class RedPitaya(SSHshell):
             self.logger.info('>') # formerly 'console ready'
         sleep(self.delay)
         # make sure no other monitor_server blocks the port
-        self.ask('killall monitor_server') 
+        self.ask('killall ' + self.monitor_server_name)
         self.serverrunning = False
         
     def endclient(self):
@@ -317,3 +363,29 @@ class RedPitaya(SSHshell):
         # higher functionality modules
         self.na = NetworkAnalyzer(self)
         self.spec_an = SpectrumAnalyzer(self)
+
+
+    def make_a_slave(self, port=None, monitor_server_name=None, gui=False):
+        if port is None:
+            port = self.port + len(self._slaves)*10 + 1
+        if monitor_server_name is None:
+            monitor_server_name = self.monitor_server_name + str(port)
+        r = RedPitaya(hostname=self.hostname,
+                         port=port,
+                         user=self.user,
+                         password=self.password,
+                         delay=self.delay,
+                         autostart=True,
+                         reloadfpga=False,
+                         reloadserver=False,
+                         filename=self.filename,
+                         dirname=self.dirname,
+                         leds_off=self.leds_off,
+                         frequency_correction=self.frequency_correction,
+                         timeout=self.timeout,
+                         monitor_server_name=monitor_server_name,
+                         silence_env=True,
+                         gui=gui)
+        r._master = self
+        self._slaves.append(r)
+        return r

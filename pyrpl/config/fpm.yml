@@ -1,5 +1,5 @@
 redpitaya:
-  hostname: 10.214.1.15
+  hostname: 10.214.1.9
   password: root
   user: root
   port: 2222
@@ -7,101 +7,113 @@ redpitaya:
   filename: fpga//red_pitaya.bin
   reloadfpga: true
   # autostart gui?
-  gui: false
-  monitor_server_name: pyrpl
+  gui: true
+  monitor_server_name: monitor_server
 
 general:
   # name of this device
-  name: heterodyne
+  name: fpm
   # level of logged information.
   # 'debug' outputs everything
   # 'infi' is default level
   # 'warning' only shows warnings and errors
   # 'error' only shows errors
-  loglevel: info
+  loglevel: debug
   # import CurveDB class from which module? if missing, it's pyrpl.curvedb
+  #curvedb: pyrpl
+  curvedb: pyinstruments
 
 # most important section that defines how the lockbox understands the
 # real-world system
 model:
   # use class Interferometer for internal model and lock algorithms
   # upper- or lowercase spelling is accepted if there is no ambiguity
-  modeltype: interferometer
+  modeltype: fabryperot_reflection
   # only needed parameter is wavelength
   # (to convert piezo displacement into gain)
   wavelength: 1.064e-06
   # maximum tolerated error of the internal variable
   # for interferometer, this is the phase error in radians
   # this value is uniquely needed for the function 'islocked'
-  lock:
-    error_threshold: 0.1
+  maxerror: 0.1
 
 # all signals that are inputs of the lockbox. Must be signal names understood
 # by the model
 inputs:
-  # Only 1 photodiode at interferometer port 1 is used here.
-  # For this inteferometer, we use an imbalanced detection scheme
-  # i.e. 90% signal + 10% LO incident on a fast photodiode whos DC port is
-  # connected to redpitaya input 1
-  transmission:
-    unit: V
+  # the reflection photodiode
+  reflection:
+    redpitaya_input: adc2
+  # the photodiode for the external pdh signal
+  pdh:
     redpitaya_input: adc1
-    offset: -0.000342048704624176
-    max: 0.14851124584674835
-    min: -0.18168894946575165
 
 # All output signals. Names of outputs are arbitrary.
 outputs:
-  # we only have 1 actuator in this interferometer, the piezo in the LO arm
-  piezo:
-    # output channel where the lopiezo is connected
-    redpitaya_output: out1
-    # voltage limits
+  # the very coarse piezo. at the moment, it is controlled manually
+  slow:
+    redpitaya_output: pwm0
     max_voltage: 1.0
     min_voltage: -1.0
+    # amplitier gain complicated - calibrate manually. at the moment
+    m_per_V: 1.0
+    analogfilter:
+      # yes: there is a 10 mHz filter behind pwm output
+      lowpass:
+      - 0.01
+  # we only have 1 actuator in this interferometer, the piezo in the LO arm
+    inputfilter:
+    - 0
+    - 0
+    - 0
+    - 0
+    calibrationunits: m_per_V
+  piezo:
+    redpitaya_output: out2
     # we will calibrate the piezo response in units of m_per_V (not a necessary
     # parameter as it can be automatically filled in by the code)
     calibrationunits: m_per_V
-    # piezo: P-016.00H
-    # from http://www.piceramic.com/product-detail-page/p-010xxh-p-025xxh-102800.html
-    # piezo specification: 5 micron / 1000 V
-    # piezo amplifier gain: 500 V / V
+    # piezo: PD080.31
+    # piezo specification: 2 micron / 100 V
+    # cryogenic penalty factor: 6
+    # piezo amplifier gain: 1 V / V
     # therefore effective DC gain of piezo:
-    # 2.5 micron / V
+    # 3.1 nm / V
     # light is reflected from this mirror at 45 degrees
     # this decreases the effective displacement by a factor of sqrt(2) to 1.77
-    m_per_V: 1.77e-06
-    # PZT Capacity: 42nF
-    # Output impedance of HV amplifier: 100 kOhm
-    # RC cutoff < 144 kHz: 1/2piRC = 37.9 Hz
+    m_per_V: 3.1e-09
+    # PZT parallel capacity: 1 uF
+    # Series resistance: 50 Ohm + 10 kOhm
+    # RC cutoff 1/2piRC = 37.9 Hz
     # therefore the analog filter can be well approximated by a first order
     # lowpass with corner frequency 37.9 Hz
     analogfilter:
       lowpass:
-      - 37.9
+      - 15.8
     # the piezo manufacturer specifies the first resonance at 144 kHz
     # however, the mounting structure is expected to have resonances starting
     # from 15 kHz. To be safe, we start by demanding a unity-gain frequency
     # of 1 kHz and will later increase this value (automatically done after
     # lock optimisation)
-    unity_gain_frequency: 5000.0
+    unity_gain_frequency: 1000.0
     inputfilter:
-    - 38856.18727829476
-    - 621698.9964527162
-    - 0
-    - 0
+    - 4857.023409786845
+    - 4857.023409786845
+    - 4857.023409786845
+    - 4857.023409786845
     sweep:
-      waveform: ramp
-      frequency: 1.0
-      amplitude: 1.0
+      waveform: sin
+      frequency: 25.0
+      amplitude: 0.85
 
+    max_voltage: 0.9998779296875
+    min_voltage: -1.0
 ##############################################################################
 ###  Configuration parameters that rarely need to be modified ################
 ##############################################################################
 
 scope:
-  input1: adc1
-  input2: dac1
+  input1: adc2
+  input2: dac2
   duration: 0.1
   trigger_source: immediately
   average: false
@@ -130,12 +142,11 @@ signal:
   # data trace if several parameters are requested. To always obtain fresh
   # data, set this to -1. To enable manual acquisition control with the acquire
   # function '_acquire()', set this to a very large value or to '.inf'.
-  acquire_timeout: 0.3
+  acquire_timeout: 0.5
   # if true, the offset is subtraced. Calibrate with signal.get_offset()
   offset_subtraction: true
   offset: 0
   # peak is a reserved place to store the peak value, for example offresonant
   # reflection from a cavity
   peak: 0
-  threshold: 0
-  hysteresis: 0.002
+
