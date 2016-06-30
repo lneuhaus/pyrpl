@@ -75,7 +75,7 @@ class Signal(object):
     @property
     def _values(self):
         # has the timeout expired?
-        if self._acquiretime + self._config.timeout < time.time():
+        if self._acquiretime + self._config.acquire_timeout < time.time():
             # take new data then
             self._acquire()
         # return scaled numbers (slower to do it here but nicer code)
@@ -161,23 +161,31 @@ class RPSignal(Signal):
     def _redpitaya_input(self):
         return self._config.redpitaya_input
 
-    def _acquire(self):
+    def _saverawdata(self, data):
+        self._lastvalues = (data - self.offset) * self.unit_per_V
+        self._acquiretime = time.time()
+
+    def _acquire(self, secondsignal=None):
         logger.debug("acquire() of signal %s was called! ", self._name)
+        if secondsignal is not None:
+            input2 = secondsignal._redpitaya_input
+        else:
+            input2 = None
         self._rp.scope.setup(duration=self._config.duration,
                              trigger_source=self._config.trigger_source,
                              average=self._config.average,
                              threshold=self._config.threshold,
                              hysteresis=self._config.hysteresis,
                              trigger_delay=0,
-                             input1=self._redpitaya_input)
+                             input1=self._redpitaya_input,
+                             input2=input2)
         try:
             timeout = self._config.timeout
         except KeyError:
             timeout = self._config.duration*5
-        self._lastvalues = \
-                (self._rp.scope.curve(ch=1, timeout=timeout)
-                - self.offset) * self.unit_per_V
-        self._acquiretime = time.time()
+        self._saverawdata(self._rp.scope.curve(ch=1, timeout=timeout))
+        if secondsignal is not None:
+            secondsignal._saverawdata(self._rp.scope.curve(ch=2, timeout=-1))
         self._restartscope()
 
     @property
@@ -394,7 +402,10 @@ class RPOutputSignal(RPSignal):
                            (self.pid.d, differentiator_ugf, "differentiator"),
                            (self.pid.setpoint, setpoint, "setpoint")]:
             if set != 0 and (act / set < 0.9 or act / set > 1.1):
-                logger.warning("Implemented value for %s of output %s has "
+                # the next condition is to avoid diverging quotients setpoints
+                # near zero
+                if not (name == 'setpoint' and abs(act-set) < 1e-3):
+                    logger.warning("Implemented value for %s of output %s has "
                             + "saturated more than 10%% away from desired "
                             + "value. Try to modify analog gains.",
                             name, self._name)
@@ -417,6 +428,6 @@ class RPOutputSignal(RPSignal):
         self.pid.p = amplitude
         return self._rp.asg1.frequency
 
-    def set_optimal_gain(self, factor):
+    def save_current_gain(self, factor):
         self._config.unity_gain_frequency *= factor
         self._config.inputfilter = self.pid.inputfilter
