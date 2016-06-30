@@ -130,6 +130,7 @@ class Scope(BaseModule):
         self._setup_called = False
         self._parent = parent
         self._trigger_source_memory = "immediately"
+        self._trigger_delay_memory = self.data_length/2
 
     @property
     def input1(self):
@@ -181,6 +182,10 @@ class Scope(BaseModule):
     def trigger_source(self, val):
         self._trigger_source = val
         self._trigger_source_memory = val
+        if val=='immediately':
+            self._trigger_delay = self.data_length
+        else:
+            self._trigger_delay = self._trigger_delay_memory
         
     _trigger_debounce = Register(0x90, doc="Trigger debounce time [cycles]")
 
@@ -202,11 +207,17 @@ class Scope(BaseModule):
     @trigger_delay.setter
     def trigger_delay(self, delay):
         delay = int(np.round(delay/self.sampling_time)) + self.data_length//2
+        self._trigger_delay_memory = delay  # when user requires some value, it should be set whenever
+        # trigger is not anymore on immediately.
+        if self.trigger_source=='immediately':
+            self._trigger_delay = self.data_length
+            return delay
         if delay <= 0:
             delay = 1 # bug in scope code: 0 does not work
         elif delay > self.data_length-1:
             delay = self.data_length-1
         self._trigger_delay = delay
+        return delay
 
     _trigger_delay_running = BoolRegister(0x0, 2, doc="trigger delay running (register adc_dly_do)")
 
@@ -392,7 +403,12 @@ class Scope(BaseModule):
         trigger_delay: trigger_delay in s
         input1/2: set the inputs of channel 1/2
         
-        if a parameter is None, the current attribute value is used"""
+        if a parameter is None, the current attribute value is used
+
+        In case trigger_source is set to "immediately", trigger_delay is disregarded and
+        trace starts at t=0
+        """
+
         self._setup_called = True
         self._reset_writestate_machine = True
         if average is not None:
@@ -410,11 +426,17 @@ class Scope(BaseModule):
         if input2 is not None:
             self.input2 = input2
         if trigger_delay is not None:
-            self.trigger_delay = trigger_delay      
+            self.trigger_delay = trigger_delay
         if trigger_source is not None:
             self.trigger_source = trigger_source
         else:
             self.trigger_source = self.trigger_source
+
+        if self.trigger_source=='immediately':
+            self._trigger_delay = self.data_length
+        else:
+            self.trigger_delay = self.trigger_delay
+
         self._trigger_armed = True
         if self.trigger_source == 'immediately':
             self.wait_for_pretrig_ok()
@@ -423,7 +445,7 @@ class Scope(BaseModule):
 
     def wait_for_pretrig_ok(self):
         while not self.pretrig_ok:
-            pyrpl_utils.sleep(0.001)
+            time.sleep(0.001)
 
     def curve_ready(self):
         """
@@ -454,7 +476,7 @@ class Scope(BaseModule):
                 if self.curve_ready():
                     return self._get_ch(ch)
                 total_sleep+=SLEEP_TIME
-                sleep(SLEEP_TIME)
+                time.sleep(SLEEP_TIME)
             raise TimeoutError("Scope wasn't trigged during timeout")
         else:
             return self._get_ch(ch)

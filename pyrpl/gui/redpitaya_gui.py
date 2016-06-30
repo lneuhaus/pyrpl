@@ -462,7 +462,7 @@ class ScopeWidget(ModuleWidget):
             cb.stateChanged.connect(self.display_curves)
 
         self.rolling_checkbox = QtGui.QCheckBox("Rolling mode")
-        self.property_layout.addWidget(self.rolling_button)
+        self.property_layout.addWidget(self.rolling_checkbox)
 
     @property
     def rolling_mode(self):
@@ -504,7 +504,6 @@ class ScopeWidget(ModuleWidget):
             self.save_curve(self.module.times,
                             self.module.curve(ch),
                             **d)
-
 
 class AsgGui(ModuleWidget):
     """

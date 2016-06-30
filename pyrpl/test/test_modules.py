@@ -79,8 +79,9 @@ class TestClass(object):
         self.r.asg1.trigger_source = "immediately"
         self.r.asg1.frequency = 1e5
         self.r.scope.trigger_source = "asg1"
-        self.r.scope.duration = 8.
+        self.r.scope.duration = 8
+        self.r.scope.trigger_delay = self.r.scope.duration
         self.r.scope.setup()
         time.sleep(0.01)
-        assert(self.scope.pretrig_ok)
+        assert(self.r.scope.pretrig_ok)
         
