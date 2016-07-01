@@ -624,8 +624,8 @@ class NaGui(ModuleWidget):
         self.setWindowTitle("NA")
         self.win = pg.GraphicsWindow(title="Amplitude")
         self.win_phase = pg.GraphicsWindow(title="Phase")
-        self.plot_item = self.win.addPlot(title="Amplitude")
-        self.plot_item_phase = self.win_phase.addPlot(title="Phase")
+        self.plot_item = self.win.addPlot(title="Magnitude (dB)")
+        self.plot_item_phase = self.win_phase.addPlot(title="Phase (deg)")
         self.plot_item_phase.setXLink(self.plot_item)
         self.button_single = QtGui.QPushButton("Run single")
         self.button_single.my_label = "Single"
@@ -635,8 +635,8 @@ class NaGui(ModuleWidget):
 
         self.button_save = QtGui.QPushButton("Save curve")
 
-        self.curve = self.plot_item.plot(pen='b')
-        self.curve_phase = self.plot_item_phase.plot(pen='b')
+        self.curve = self.plot_item.plot(pen='y')
+        self.curve_phase = self.plot_item_phase.plot(pen='y')
         self.main_layout.addWidget(self.win)
         self.main_layout.addWidget(self.win_phase)
         self.button_layout.addWidget(self.button_single)
@@ -860,7 +860,7 @@ class NaGui(ModuleWidget):
         """
         # plot_time_start = time()
         self.curve.setData(self.x[:self.last_valid_point],
-                           self.amp_abs[:self.last_valid_point])
+                           20*np.log10(self.amp_abs[:self.last_valid_point]))
 
         self.curve_phase.setData(self.x[:self.last_valid_point],
                                  self.phase[:self.last_valid_point])

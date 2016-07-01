@@ -386,7 +386,7 @@ class FabryPerot(Model):
     def detuning_per_m(self):
         " detuning of +-1 corresponds to the half-maximum intracavity power "
         linewidth = self._config.wavelength / 2 / self._config.finesse
-        return linewidth / 2
+        return 1.0 / (linewidth / 2)
 
     @property
     def detuning(self):

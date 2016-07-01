@@ -18,7 +18,7 @@ general:
   # 'infi' is default level
   # 'warning' only shows warnings and errors
   # 'error' only shows errors
-  loglevel: debug
+  loglevel: info #debug
   # import CurveDB class from which module? if missing, it's pyrpl.curvedb
   #curvedb: pyrpl
   curvedb: pyinstruments
@@ -36,8 +36,8 @@ model:
   # for interferometer, this is the phase error in radians
   # this value is uniquely needed for the function 'islocked'
   maxerror: 0.1
-  offresonant_reflection: 0.24176768213510513
-  resonant_reflection: 0.016059674322605133
+  offresonant_reflection: 0.23871592432260513
+  resonant_reflection: 0.015205182135105133
   finesse: 90000
   # signals in order of their preferrence
   #signalpreference:
@@ -51,10 +51,10 @@ inputs:
   reflection:
     redpitaya_input: adc2
     offset: 0.013481341302394867
-    max: 0.24176768213510513
-    min: 0.016059674322605133
-    mean: 0.22539330273866653
-    rms: 0.020231614222967435
+    max: 0.23871592432260513
+    min: 0.015205182135105133
+    mean: 0.22288598120212555
+    rms: 0.018908728390279284
   # the photodiode for the external pdh signal
   #transmission:
   #  redpitaya_input: adc1

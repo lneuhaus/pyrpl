@@ -382,7 +382,7 @@ class Pyrpl(Lockbox):
     """
     Python RedPitaya Lockbox object
     """
-    def __init__(self, config="default"):
+    def __init__(self, config="default", source=None):
         """red pitaya lockbox object"""
         # we need the configuration for RedPitaya initialization
         self.c = MemoryTree(os.path.join(self._configdir, config+".yml"))
