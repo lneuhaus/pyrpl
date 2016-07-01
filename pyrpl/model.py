@@ -402,7 +402,6 @@ class FabryPerot(Model):
 
     lock = lock_reflection
 
-
     def calibrate(self):
         curves = super(FabryPerot, self).calibrate(
             scopeparams={'secondsignal': 'piezo'})
