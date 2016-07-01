@@ -19,7 +19,7 @@
 
 import numpy as np
 import time
-from time import sleep
+import pyrpl_utils
 import sys
 import matplotlib.pyplot as plt
 import logging
@@ -130,6 +130,7 @@ class Scope(BaseModule):
         self._setup_called = False
         self._parent = parent
         self._trigger_source_memory = "immediately"
+        self._trigger_delay_memory = self.data_length/2
 
     @property
     def input1(self):
@@ -181,6 +182,10 @@ class Scope(BaseModule):
     def trigger_source(self, val):
         self._trigger_source = val
         self._trigger_source_memory = val
+        if val=='immediately':
+            self._trigger_delay = self.data_length
+        else:
+            self._trigger_delay = self._trigger_delay_memory
         
     _trigger_debounce = Register(0x90, doc="Trigger debounce time [cycles]")
 
@@ -202,11 +207,17 @@ class Scope(BaseModule):
     @trigger_delay.setter
     def trigger_delay(self, delay):
         delay = int(np.round(delay/self.sampling_time)) + self.data_length//2
+        self._trigger_delay_memory = delay  # when user requires some value, it should be set whenever
+        # trigger is not anymore on immediately.
+        if self.trigger_source=='immediately':
+            self._trigger_delay = self.data_length
+            return delay
         if delay <= 0:
             delay = 1 # bug in scope code: 0 does not work
         elif delay > self.data_length-1:
             delay = self.data_length-1
         self._trigger_delay = delay
+        return delay
 
     _trigger_delay_running = BoolRegister(0x0, 2, doc="trigger delay running (register adc_dly_do)")
 
@@ -224,19 +235,13 @@ class Scope(BaseModule):
                                      doc= "An absolute counter " \
                                          +"for the trigger time [cycles]")
     
-    _decimations = {2**0: 2**0,
-                    2**3: 2**3,
-                    2**6: 2**6,
-                    2**10: 2**10,
-                    2**13: 2**13,
-                    2**16: 2**16}
+    _decimations = {2**n: 2**n for n in range(0,17)}
 
-
-    
     decimations = sorted(_decimations.keys()) # help for the user
 
     sampling_times = [8e-9 * dec for dec in decimations]
-    durations = [s_times * data_length for s_times in sampling_times]
+
+    durations = [s_times*data_length for s_times in sampling_times]
 
     decimation = SelectRegister(0x14, doc="decimation factor", 
                                 options=_decimations)
@@ -289,7 +294,7 @@ class Scope(BaseModule):
         """sets or returns the time separation between two subsequent points of a scope trace
         the rounding makes sure that the actual value is shorter or equal to the set value"""
         tbase = 8e-9
-        factors = [65536, 8192, 1024, 64, 8, 1]
+        factors = [2**n for n in reversed(range(0,17))]
         for f in factors:
             if v >= tbase * float(f):
                 self.decimation = f
@@ -307,7 +312,7 @@ class Scope(BaseModule):
         the rounding makes sure that the actual value is longer or equal to the set value"""
         v = float(v) / self.data_length
         tbase = 8e-9
-        factors = [1, 8, 64, 1024, 8192, 65536]
+        factors = [2**n for n in range(0,17)]
         for f in factors:
             if v <= tbase * float(f):
                 self.decimation = f
@@ -379,7 +384,7 @@ class Scope(BaseModule):
               trigger_delay=None,
               input1=None,
               input2=None):
-        """sets up the scope for a new trace aquision including arming the trigger
+        """sets up the scope for a new trace aquisition including arming the trigger
 
         duration: the minimum duration in seconds to be recorded
         trigger_source: the trigger source. see the options for the parameter separately
@@ -391,7 +396,12 @@ class Scope(BaseModule):
         trigger_delay: trigger_delay in s
         input1/2: set the inputs of channel 1/2
         
-        if a parameter is None, the current attribute value is used"""
+        if a parameter is None, the current attribute value is used
+
+        In case trigger_source is set to "immediately", trigger_delay is disregarded and
+        trace starts at t=0
+        """
+
         self._setup_called = True
         self._reset_writestate_machine = True
         if average is not None:
@@ -409,17 +419,26 @@ class Scope(BaseModule):
         if input2 is not None:
             self.input2 = input2
         if trigger_delay is not None:
-            self.trigger_delay = trigger_delay      
+            self.trigger_delay = trigger_delay
         if trigger_source is not None:
             self.trigger_source = trigger_source
         else:
             self.trigger_source = self.trigger_source
+
+        if self.trigger_source=='immediately':
+            self._trigger_delay = self.data_length
+        else:
+            self.trigger_delay = self.trigger_delay
+
         self._trigger_armed = True
         if self.trigger_source == 'immediately':
-            while(not self.pretrig_ok):
-                sleep(0.001)
+            self.wait_for_pretrig_ok()
             self.trigger_source = 'immediately'# write state machine
             #reset has changed the value of the FPGA register#_sw_trig()
+
+    def wait_for_pretrig_ok(self):
+        while not self.pretrig_ok:
+            time.sleep(0.001)
 
     def curve_ready(self):
         """
@@ -433,6 +452,11 @@ class Scope(BaseModule):
         if not ch in [1,2]:
             raise ValueError("channel should be 1 or 2, got " + str(ch))
         return self._data_ch1 if ch==1 else self._data_ch2
+
+    def _get_ch_no_roll(self, ch):
+        if not ch in [1,2]:
+            raise ValueError("channel should be 1 or 2, got " + str(ch))
+        return self._rawdata_ch1*1./2**13 if ch==1 else self._rawdata_ch2*1./2**13
     
     def curve(self, ch=1, timeout=1.):
         """
@@ -450,7 +474,7 @@ class Scope(BaseModule):
                 if self.curve_ready():
                     return self._get_ch(ch)
                 total_sleep+=SLEEP_TIME
-                sleep(SLEEP_TIME)
+                time.sleep(SLEEP_TIME)
             raise TimeoutError("Scope wasn't trigged during timeout")
         else:
             return self._get_ch(ch)
@@ -815,7 +839,7 @@ class AuxOutput(DspModule):
     Currently, only pwm0 and pwm1 are available.
     """
     def __init__(self, client, output='pwm0'):
-        pwm_to_module = dict(pwm0 = 'adc1', pwm1='adc2')
+        pwm_to_module = dict(pwm0='adc1', pwm1='adc2')
         # future options: , pwm2 = 'dac1', pwm3='dac2')
         super(AuxOutput, self).__init__(client,module=pwm_to_module[output])
     output_direct = None

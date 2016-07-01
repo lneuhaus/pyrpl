@@ -1,5 +1,5 @@
 env:
-- AUTOCORRETPEP8=0
+- AUTOCORRETPEP8=0 REDPITAYA_SKIPGUITEST=1
 # REDPITAYA variables are defined in travis account (encrypted)
 
 language: python
@@ -58,6 +58,9 @@ install:
   
 # Run test
 script:
+  #see: https://github.com/rtfd/readthedocs.org/issues/1951
+  - export DISPLAY=:99.0
+  - sh -e /etc/init.d/xvfb start
   - nosetests --with-coverage --cover-package=pyrpl --logging-level=INFO
 
 # Calculate coverage

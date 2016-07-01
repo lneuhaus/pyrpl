@@ -11,6 +11,7 @@ logger = logging.getLogger(name=__name__)
 from pyrpl.gui import RedPitayaGui
 from PyQt4.QtTest import QTest
 from PyQt4.QtCore import Qt, QPoint
+import os
 
 class TestClass(object):
     @classmethod
@@ -19,8 +20,22 @@ class TestClass(object):
         #if os.environ['REDPITAYA_HOSTNAME'] == 'unavailable':
         #    self.r = None
         #else:
-        self.r = RedPitayaGui()
-        self.r.gui()
+
+        ## these tests currently do not run on travis.
+        ## our workaround is this: detect from environment variable
+        ## if tests are executed on travis and refuse the gui tests
+        try:
+            skip = os.environ["REDPITAYA_SKIPGUITEST"]
+        except KeyError:
+            self.do_gui_tests = True
+        else:
+            self.do_gui_tests = False
+
+        if self.do_gui_tests:
+            self.r = RedPitayaGui()
+            self.r.gui()
+        else:
+            self.r = None
 
     def test_scope_gui(self):
         if self.r is None:
@@ -51,6 +66,8 @@ class TestClass(object):
 
 
     def try_gui_module(self, module_widget): # name should not start with test
+        if not self.do_gui_tests:
+            return
         module = module_widget.module
         for prop in module_widget.properties:
             if isinstance(prop, ComboProperty):

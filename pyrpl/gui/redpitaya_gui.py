@@ -363,12 +363,28 @@ class ScopeWidget(ModuleWidget):
         2/ If so, plots them on the graph
         3/ Restarts the timer.
         """
-        if self.module.curve_ready():
-            self.display_curves()
-            if self.first_shot_of_continuous:
-                self.first_shot_of_continuous = False  # autoscale only upon first curve
-                self.plot_item.enableAutoRange('xy', False)
-            self.module.setup()
+
+        if not self.rolling_mode:
+            if self.module.curve_ready():
+                self.display_curves()
+                if self.first_shot_of_continuous:
+                    self.first_shot_of_continuous = False  # autoscale only upon first curve
+                    self.plot_item.enableAutoRange('xy', False)
+                self.module.setup()
+        else:
+            wp0 = self.module._write_pointer_current
+            datas = []
+            for ch in (1,2):
+                if self.cb_ch[ch-1].checkState()==2:
+                    datas.append(self.module._get_ch_no_roll(ch))
+            wp1 = self.module._write_pointer_current
+            for index, data in enumerate(datas):
+                to_discard = (wp1 - wp0)%self.module.data_length
+                data = np.roll(data, self.module.data_length - wp0)[to_discard:]
+                data = np.concatenate([[np.nan]*to_discard, data])
+                times = self.module.times
+                times-= times[-1]
+                self.curves[index].setData(times , data)
         self.timer.start()
 
     def run_continuous(self):
@@ -380,6 +396,9 @@ class ScopeWidget(ModuleWidget):
         self.button_continuous.setText("Stop")
         self.button_single.setEnabled(False)
         self.module.setup()
+        if self.rolling_mode:
+            self.module._trigger_source = 'off'
+            self.module._trigger_armed = True
         self.plot_item.enableAutoRange('xy', True)
         self.first_shot_of_continuous = True
         self.timer.start()
@@ -447,6 +466,41 @@ class ScopeWidget(ModuleWidget):
         for cb in self.cb_ch:
             cb.stateChanged.connect(self.display_curves)
 
+
+        self.rolling_group = QtGui.QGroupBox("Trigger mode")
+        self.checkbox_normal = QtGui.QRadioButton("Normal")
+        self.checkbox_untrigged = QtGui.QRadioButton("Untrigged (rolling)")
+        self.checkbox_normal.setChecked(True)
+        self.lay_radio = QtGui.QVBoxLayout()
+        self.lay_radio.addWidget(self.checkbox_normal)
+        self.lay_radio.addWidget(self.checkbox_untrigged)
+        self.rolling_group.setLayout(self.lay_radio)
+        self.property_layout.insertWidget(self.property_names.index("trigger_source"), self.rolling_group)
+
+    @property
+    def rolling_mode(self):
+        return ((self.checkbox_untrigged.isChecked()) and \
+                 self.rolling_group.isEnabled())
+
+    @rolling_mode.setter
+    def rolling_mode(self, val):
+        if val:
+            self.checkbox_untrigged.setChecked(True)
+            self.module._trigger_source = 'off'
+        else:
+            self.checkbox_normal.setChecked(True)
+            self.module.trigger_source = self.module.trigger_source
+        return val
+
+    def update_properties(self):
+        super(ScopeWidget, self).update_properties()
+
+        self.rolling_group.setEnabled(self.module.duration>0.1)
+        self.properties['trigger_source'].widget.setEnabled(not self.rolling_mode)
+        self.properties['threshold_ch1'].widget.setEnabled(not self.rolling_mode)
+        self.properties['threshold_ch2'].widget.setEnabled(not self.rolling_mode)
+        self.button_single.setEnabled(not self.rolling_mode)
+
     @property
     def params(self):
         """
@@ -473,7 +527,6 @@ class ScopeWidget(ModuleWidget):
             self.save_curve(self.module.times,
                             self.module.curve(ch),
                             **d)
-
 
 class AsgGui(ModuleWidget):
     """
@@ -571,8 +624,8 @@ class NaGui(ModuleWidget):
         self.setWindowTitle("NA")
         self.win = pg.GraphicsWindow(title="Amplitude")
         self.win_phase = pg.GraphicsWindow(title="Phase")
-        self.plot_item = self.win.addPlot(title="Amplitude")
-        self.plot_item_phase = self.win_phase.addPlot(title="Phase")
+        self.plot_item = self.win.addPlot(title="Magnitude (dB)")
+        self.plot_item_phase = self.win_phase.addPlot(title="Phase (deg)")
         self.plot_item_phase.setXLink(self.plot_item)
         self.button_single = QtGui.QPushButton("Run single")
         self.button_single.my_label = "Single"
@@ -582,8 +635,8 @@ class NaGui(ModuleWidget):
 
         self.button_save = QtGui.QPushButton("Save curve")
 
-        self.curve = self.plot_item.plot(pen='b')
-        self.curve_phase = self.plot_item_phase.plot(pen='b')
+        self.curve = self.plot_item.plot(pen='y')
+        self.curve_phase = self.plot_item_phase.plot(pen='y')
         self.main_layout.addWidget(self.win)
         self.main_layout.addWidget(self.win_phase)
         self.button_layout.addWidget(self.button_single)
@@ -807,7 +860,7 @@ class NaGui(ModuleWidget):
         """
         # plot_time_start = time()
         self.curve.setData(self.x[:self.last_valid_point],
-                           self.amp_abs[:self.last_valid_point])
+                           20*np.log10(self.amp_abs[:self.last_valid_point]))
 
         self.curve_phase.setData(self.x[:self.last_valid_point],
                                  self.phase[:self.last_valid_point])

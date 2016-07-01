@@ -20,7 +20,8 @@ def getmodel(modeltype):
 class Model(object):
     " generic model object that will make smart use of its inputs and outputs"
     export_to_parent = ["sweep", "calibrate", "save_current_gain",
-                        "unlock", "islocked", "lock", "help"]
+                        "unlock", "islocked", "lock", "help", "calib_lock"]
+
 
     # independent variable that specifies the state of the system
     _variable = 'x'
@@ -37,6 +38,10 @@ class Model(object):
         self._make_helpers()
         self.state = {'actual': {self._variable: 0},
                       'set': {self._variable: 0}}
+
+    def setup(self):
+        """ Custom setup function """
+        pass
 
     def _derivative(self, func, x, n=1, args=()):
         return scipy.misc.derivative(func,
@@ -150,7 +155,7 @@ class Model(object):
     # unlock algorithm
     def unlock(self):
         for o in self.outputs.values():
-            o.off()
+            o.unlock()
 
     def sweep(self):
         """
@@ -162,9 +167,10 @@ class Model(object):
             The duration of one sweep period, as it is useful to setup the
             scope.
         """
+        self.unlock()
         frequency = None
         for o in self.outputs.values():
-            frequency = o.sweep()
+            frequency = o.sweep() or frequency
         return 1.0 / frequency
 
 
@@ -213,46 +219,71 @@ class Model(object):
                    offset=offset,
                    factor=factor)
 
-    def lock(self, variable):
-        self._lock(x=variable)
+    def lock(self, variable, factor=1.0):
+        self._lock(x=variable, factor=factor)
 
-    def calibrate(self):
+    def calibrate(self, inputs=None, scopeparams={}):
         """
         Calibrates by performing a sweep as defined for the outputs and
         recording and saving min and max of each input.
 
+        Parameters
+        -------
+        inputs: list
+            list of input signals to calibrate. All inputs are used if None.
+        scopeparams: dict
+            optional parameters for signal acquisition during calibration
+            that are temporarily written to _config
+
         Returns
         -------
         curves: list
-            list of curves of the inputsignals
+            list of all acquired curves
         """
         self.unlock()
         duration = self.sweep()
         curves = []
-        for input in self.inputs.values():
+        if not inputs:
+            inputs = self.inputs.values()
+        for input in inputs:
             try:
                 input._config._data["trigger_source"] = "asg1"
                 input._config._data["duration"] = duration
+                input._config._data.update(scopeparams)
                 input._acquire()
                 # when signal: autosave is enabled, each calibration will
                 # automatically save a curve
-                if input._config.autosave:
-                    curve, ma, mi = input.curve, input.max, input.min
-                    curves.append(curve)
-                else:
-                    ma, mi = input.max, input.min
+                curve, ma, mi, mean, rms = input.curve, input.max, input.min, \
+                                           input.mean, input.rms
+                curves.append(curve)
+                try:
+                    secondsignal = scopeparams["secondsignal"]
+                    input2 = self.inputs[secondsignal]
+                    curve2 = input2.curve
+                    curve.add_child(curve2)
+                except KeyError:
+                    # no secondsignal was specified
+                    pass
             finally:
                 # make sure to reload config file here so that the modified
                 # scope parameters are not written to config file
                 self._parent.c._load()
+            # save all parameters to config
             input._config["max"] = ma
             input._config["min"] = mi
+            input._config["mean"] = mean
+            input._config["rms"] = rms
         # turn off sweeps
         self.unlock()
         return curves
 
+    def calib_lock(self):
+        self.calibrate()
+        self.lock()
+        return self.islocked()
+
     def help(self):
-        self.logger.info("Interferometer\n-------------------\n"
+        self.logger.info("PyRP Lockbox\n-------------------\n"
                          + "Usage: \n"
                          + "Create Pyrpl object: p = Pyrpl('myconfigfile')\n"
                          + "Turn off the laser and execute: \n"
@@ -301,159 +332,112 @@ class Interferometer(Model):
                           offset=0,
                           factor=factor)
 
+    def calibrate(self):
+        return  super(Interferometer, self).calibrate(
+            scopeparams={'secondsignal': 'piezo'})
+
+
 class FabryPerot(Model):
-    # the internal state memory
-    state = {'set': {'detuning': 0},
-             'actual': {'detuning': 0}}
+    # the internal variable for state specification
+    _variable = 'detuning'
 
-    export_to_parent = ['unlock', 'sweep',
-                        'save_current_gain']
 
+    export_to_parent = Model.export_to_parent + ['R0']
+
+    # lorentzian functions
     def _lorentz(self, x):
         return 1.0 / (1.0 + x ** 2)
 
     def _lorentz_slope(self, x):
         return -2.0*x / (1.0 + x ** 2)**2
 
-    # def transmission(self, x):
-    #    " relative transmission. Max transmission will be calibrated as peak"
-    #    return self._lorentz(x/self.bandwidth)
+    def _lorentz_slope_normalized(self, x):
+        # max slope occurs at x +- sqrt(3)
+        return  self._lorentz_slope(x) / abs(self._lorentz_slope(np.sqrt(3)))
 
-    def FWHM(self):
-        return self._config.linewidth / 2
+    def _lorentz_slope_slope(self, x):
+        return (-2.0+6.0*x**2) / (1.0 + x ** 2)**3
 
-    def reflection(self, x):
-        " relative reflection"
-        return 1.0 - (1.0 - self._config.R0) * self._lorentz(x / self.FWHM)
-    #   return 1.0 - self._lorentz(x)
+    def _lorentz_slope_normalized_slope(self, x):
+        """ slope of normalized slope (!= normalized slope of slope) """
+        return (-2.0+6.0*x**2) / (1.0 + x ** 2)**3  \
+               / abs(self._lorentz_slope(np.sqrt(3)))
 
     def transmission(self, x):
-        return self._lorentz(x)*self.signals.transmission
+        " transmission of the Fabry-Perot "
+        return self._lorentz(x) * self._config.resonant_transmission
 
-    def islocked(self):
-        if self.inputs.reflection.mean:
-            return False
 
-class FabryPerot_Reflection(FabryPerot):
-    # declare here the public functions that are exported to the Pyrpl class
-    export_to_parent = ['lock', 'unlock', 'islocked', 'calibrate', 'sweep',
-                        'help', 'save_current_gain']
+    def reflection(self, x):
+        " reflection of the Fabry-Perot"
+        offres = self._config.offresonant_reflection
+        res = self._config.resonant_reflection
+        return (res-offres) * self._lorentz(x) + offres
 
-    # theoretical model for input signal 'port1'
-    def reflection(self, detuning):
-        """ photocurrent at port1 of an ideal interferometer vs phase (rad)"""
-        return self._parent.reflection.peak * self._lorentz(detuning)
+    @property
+    def R0(self):
+        " reflection coefficient on resonance "
+        return self._config.resonant_reflection / \
+               self._config.offresonant_reflection
 
-    def pdh(self, detuning):
-        return self.reflection_slope(detuning)
+    @property
+    def T0(self):
+        " transmission coefficient on resonance "
+        return self._config.resonant_reflection / \
+               self._config.offresonant_reflection
 
     @property
     def detuning_per_m(self):
-        return self._config.finesse / self._config.wavelength / 2
+        " detuning of +-1 corresponds to the half-maximum intracavity power "
+        linewidth = self._config.wavelength / 2 / self._config.finesse
+        return 1.0 / (linewidth / 2)
 
     @property
     def detuning(self):
-        act = self._parent.reflection.mean
-        set = self.state["set"]["detuning"]
-        detuning = self.reflection_inverse(act, set)
-        if detuning is not None:
-            return detuning
-        else:
-            logger.warning("Detuning could not be estimated. "
-                            +"Re-run a calibration!")
-            return None
+        return self.variable
 
-    # lock algorithm
-    def lock(self, detuning=1, factor=1.0):
-        """
-        Locks the cavity
-        Parameters
-        ----------
-        phase: float
-            phase (rad) of the quadrature to be locked at
-        factor: float
-            optional gain multiplier for debugging
+    # simplest possible lock algorithm
+    def lock_reflection(self, detuning=1, factor=1.0):
+        # self.unlock()
+        self._lock(input=self.inputs["reflection"],
+                   detuning=detuning,
+                   factor=factor,
+                   offset=1.0*np.sign(detuning))
 
-        Returns
-        -------
-        True if locked successfully, else false
-
-        """
-
-        self.state["set"]["detuning"] = detuning
-        self.state["set"]["factor"] = factor
-        input = self._parent.port1
-        for o in self.outputs.values():
-            # trivial to lock: just enable all gains
-            unit = o._config.calibrationunits.split("_per_V")[0]
-            detuning_per_unit = self.__getattribute__("detuning_per_" + unit)
-            o.lock(slope=self.port1_slope(detuning) * detuning_per_unit,
-                   setpoint=self.port1(detuning),
-                   input=input._config.redpitaya_input,
-                   offset=0,
-                   factor=factor)
-
-
-    def islocked(self):
-        """ returns True if interferometer is locked, else False"""
-        # check phase error
-        dphase = abs(self.detuning - self.state["set"]["detuning"])
-        if dphase > self._config.maxerror:
-            return False
-        else:
-            # test for output saturation
-            for o in self.outputs.values():
-                if o.issaturated:
-                    return False
-        # lock seems ok (but not a failsafe criterion without additional info)
-        return True
-
+    lock = lock_reflection
 
     def calibrate(self):
-        self.unlock()
-        duration = self.sweep()
-        curves = []
-        for input in self.inputs.values():
-            try:
-                input._config._data["trigger_source"] = "asg1"
-                input._config._data["duration"] = duration
-                input._acquire()
-                # when signal: autosave is enabled, each calibration will
-                # automatically save a curve
-                if input._config.autosave:
-                    curve, ma, mi = input.curve, input.max, input.min
-                    curves.append(curve)
-                else:
-                    ma, mi = input.max, input.min
-            finally:
-                # make sure to reload config file here so that the modified
-                # scope parameters are not written to config file
-                self._parent.c._load()
-            input._config["max"] = ma
-            input._config["min"] = mi
-        # turn off sweeps
-        self.unlock()
+        curves = super(FabryPerot, self).calibrate(
+            scopeparams={'secondsignal': 'piezo'})
+        duration = curves[0].params["duration"]
+
+        # pick our favourite available signal
+        for sig in self.inputs.values():
+            # make a zoom calibration over roughly 10 linewidths
+            duration *= (1.0 - sig._config.mean/sig._config.max) * 10
+            curves = super(FabryPerot, self).calibrate(
+                inputs=[sig],
+                scopeparams={'secondsignal': 'piezo',
+                             'trigger_source': 'ch1_positive_edge',
+                             'threshold': (sig._config.max+sig._config.min)/2,
+                             'duration': duration,
+                             'timeout': 10*duration})
+            if sig._name == 'reflection':
+                self._config["offresonant_reflection"] = sig._config.max
+                self._config["resonant_reflection"] = sig._config.min
+            if sig._name == 'transmission':
+                self._config["resonant_transmission"] = sig._config.max
         return curves
 
+class FPM(FabryPerot):
+    def setup(self):
+        o = self.outputs["slow"]
+        o.output_offset = o._config.lastoffset
 
-    def help(self):
-        self.logger.info("Fabry-Perot\n-------------------\n"
-                         + "Usage: \n"
-                         + "Create Pyrpl object: p = Pyrpl('myconfigfile')"
-                         + "Turn off the laser and execute: \n"
-                         + "p.get_offset()\n"
-                         + "Turn the laser back on and execute:\n"
-                         + "p.calibrate()\n"
-                         + "(everytime power or alignment has changed). Then: "
-                         + "p.lock(factor=1.0)\n"
-                         + "The interferometer should be locked now. Play \n"
-                         + "with the value of factor until you find a \n"
-                         + "reasonable lock performance and save this as \n"
-                         + "the new default with p.save_current_gain(). \n"
-                         + "Now simply call p.lock(phase=myphase) to lock \n"
-                         + "at arbitrary phase 'myphase' (rad). "
-                         + "Assert if locked with p.islocked() and unlock \n"
-                         + "with p.unlock(). ")
+    def sweep(self):
+        duration = super(FPM, self).sweep()
+        self._parent.   rp.scope.setup(trigger_source='asg1',
+                                    duration=duration)
 
 
 class TEM02FabryPerot(FabryPerot):
