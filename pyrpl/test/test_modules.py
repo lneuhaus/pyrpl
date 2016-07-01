@@ -9,7 +9,13 @@ from pyrpl import RedPitaya
 from pyrpl.redpitaya_modules import *
 from pyrpl.registers import *
 from pyrpl.bijection import Bijection
+<<<<<<< HEAD
+
+import time
+
+=======
 from pyrpl import CurveDB
+>>>>>>> 27a0ba5dfceca7b08f178801bec618541a26023d
 
 class TestClass(object):
     
@@ -70,6 +76,22 @@ class TestClass(object):
         self.r.scope.setup()
         self.r.scope.curve()
 
+    def test_scope_pretrigg_ok(self):
+        """
+        Make sure that pretrig_ok arrives quickly if the curve delay is set close to duration/2
+        """
+        if self.r is None:
+            return
+
+        self.r.asg1.trigger_source = "immediately"
+        self.r.asg1.frequency = 1e5
+        self.r.scope.trigger_source = "asg1"
+        self.r.scope.duration = 8
+        self.r.scope.trigger_delay = self.r.scope.duration
+        self.r.scope.setup()
+        time.sleep(0.01)
+        assert(self.r.scope.pretrig_ok)
+        
     def test_amspwm(self):
         threshold = 0.0005
         if self.r is None:
@@ -111,4 +133,3 @@ class TestClass(object):
         # reset offset to protect other tests
         asg.offset = 0
         asg.scale=1
-
