@@ -495,7 +495,7 @@ class ScopeWidget(ModuleWidget):
     def update_properties(self):
         super(ScopeWidget, self).update_properties()
 
-        self.rolling_group.setEnabled(self.module.duration>1)
+        self.rolling_group.setEnabled(self.module.duration>0.1)
         self.properties['trigger_source'].widget.setEnabled(not self.rolling_mode)
         self.properties['threshold_ch1'].widget.setEnabled(not self.rolling_mode)
         self.properties['threshold_ch2'].widget.setEnabled(not self.rolling_mode)
