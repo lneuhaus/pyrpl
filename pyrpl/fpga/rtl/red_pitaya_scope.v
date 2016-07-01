@@ -104,7 +104,7 @@ module red_pitaya_scope #(
    output                axi1_wfixed_o   ,  // system write burst type (fixed / incremental)
    input                 axi1_werr_i     ,  // system write error
    input                 axi1_wrdy_i     ,  // system write ready
-  
+
    // System bus
    input      [ 32-1: 0] sys_addr      ,  // bus saddress
    input      [ 32-1: 0] sys_wdata     ,  // bus write data
@@ -119,6 +119,8 @@ module red_pitaya_scope #(
 reg             adc_arm_do   ;
 reg             adc_rst_do   ;
 
+// input filter is disabled
+
 //---------------------------------------------------------------------------------
 //  Input filtering
 
@@ -126,6 +128,7 @@ wire [ 14-1: 0] adc_a_filt_in  ;
 wire [ 14-1: 0] adc_a_filt_out ;
 wire [ 14-1: 0] adc_b_filt_in  ;
 wire [ 14-1: 0] adc_b_filt_out ;
+/*
 reg  [ 18-1: 0] set_a_filt_aa  ;
 reg  [ 25-1: 0] set_a_filt_bb  ;
 reg  [ 25-1: 0] set_a_filt_kk  ;
@@ -134,7 +137,7 @@ reg  [ 18-1: 0] set_b_filt_aa  ;
 reg  [ 25-1: 0] set_b_filt_bb  ;
 reg  [ 25-1: 0] set_b_filt_kk  ;
 reg  [ 25-1: 0] set_b_filt_pp  ;
-
+*/
 
 
 // bypass the filtering for the scope in order to spare the DSP slices for other stuff, 
@@ -205,12 +208,33 @@ end else begin
    case (set_dec & {17{set_avg_en}})
       17'h0     : begin adc_a_dat <= adc_a_filt_out;            adc_b_dat <= adc_b_filt_out;        end
       17'h1     : begin adc_a_dat <= adc_a_sum[15+0 :  0];      adc_b_dat <= adc_b_sum[15+0 :  0];  end
+      17'h2     : begin adc_a_dat <= adc_a_sum[15+1 :  1];      adc_b_dat <= adc_b_sum[15+1 :  1];  end
+      17'h4     : begin adc_a_dat <= adc_a_sum[15+2 :  2];      adc_b_dat <= adc_b_sum[15+2 :  2];  end
+      17'h8     : begin adc_a_dat <= adc_a_sum[15+3 :  3];      adc_b_dat <= adc_b_sum[15+3 :  3];  end
+      17'h10    : begin adc_a_dat <= adc_a_sum[15+4 :  4];      adc_b_dat <= adc_b_sum[15+4 :  4];  end
+      17'h20    : begin adc_a_dat <= adc_a_sum[15+5 :  5];      adc_b_dat <= adc_b_sum[15+5 :  5];  end
+      17'h40    : begin adc_a_dat <= adc_a_sum[15+6 :  6];      adc_b_dat <= adc_b_sum[15+6 :  6];  end
+      17'h80    : begin adc_a_dat <= adc_a_sum[15+7 :  7];      adc_b_dat <= adc_b_sum[15+7 :  7];  end
+      17'h100   : begin adc_a_dat <= adc_a_sum[15+8 :  8];      adc_b_dat <= adc_b_sum[15+8 :  8];  end
+      17'h200   : begin adc_a_dat <= adc_a_sum[15+9 :  9];      adc_b_dat <= adc_b_sum[15+9 :  9];  end
+      17'h400   : begin adc_a_dat <= adc_a_sum[15+10: 10];      adc_b_dat <= adc_b_sum[15+10: 10];  end
+      17'h800   : begin adc_a_dat <= adc_a_sum[15+11: 11];      adc_b_dat <= adc_b_sum[15+11: 11];  end
+      17'h1000  : begin adc_a_dat <= adc_a_sum[15+12: 12];      adc_b_dat <= adc_b_sum[15+12: 12];  end
+      17'h2000  : begin adc_a_dat <= adc_a_sum[15+13: 13];      adc_b_dat <= adc_b_sum[15+13: 13];  end
+      17'h4000  : begin adc_a_dat <= adc_a_sum[15+14: 14];      adc_b_dat <= adc_b_sum[15+14: 14];  end
+      17'h8000  : begin adc_a_dat <= adc_a_sum[15+15: 15];      adc_b_dat <= adc_b_sum[15+15: 15];  end
+      17'h10000 : begin adc_a_dat <= adc_a_sum[15+16: 16];      adc_b_dat <= adc_b_sum[15+16: 16];  end
+      default   : begin adc_a_dat <= adc_a_sum[15+0 :  0];      adc_b_dat <= adc_b_sum[15+0 :  0];  end
+/*
+      17'h0     : begin adc_a_dat <= adc_a_filt_out;            adc_b_dat <= adc_b_filt_out;        end
+      17'h1     : begin adc_a_dat <= adc_a_sum[15+0 :  0];      adc_b_dat <= adc_b_sum[15+0 :  0];  end
       17'h8     : begin adc_a_dat <= adc_a_sum[15+3 :  3];      adc_b_dat <= adc_b_sum[15+3 :  3];  end
       17'h40    : begin adc_a_dat <= adc_a_sum[15+6 :  6];      adc_b_dat <= adc_b_sum[15+6 :  6];  end
       17'h400   : begin adc_a_dat <= adc_a_sum[15+10: 10];      adc_b_dat <= adc_b_sum[15+10: 10];  end
       17'h2000  : begin adc_a_dat <= adc_a_sum[15+13: 13];      adc_b_dat <= adc_b_sum[15+13: 13];  end
       17'h10000 : begin adc_a_dat <= adc_a_sum[15+16: 16];      adc_b_dat <= adc_b_sum[15+16: 16];  end
       default   : begin adc_a_dat <= adc_a_sum[15+0 :  0];      adc_b_dat <= adc_b_sum[15+0 :  0];  end
+*/
    endcase
 end
 
@@ -342,6 +366,7 @@ end
 
 
 
+//////////////// AXI IS DISABLED SINCE WE ARE NOT USING IT /////////////////////
 
 //---------------------------------------------------------------------------------
 //
@@ -374,6 +399,7 @@ always @(posedge axi0_clk_o) begin
       axi_a_dly_cnt <= 32'h0 ;
       axi_a_dly_do  <=  1'b0 ;
    end
+   /*
    else begin
       if (adc_arm_do && set_a_axi_en)
          axi_a_we <= 1'b1 ;
@@ -414,8 +440,9 @@ always @(posedge axi0_clk_o) begin
       set_a_axi_cur <= set_a_axi_start ;
    else if (axi0_wvalid_o)
       set_a_axi_cur <= axi_a_cur_addr ;
+*/
 end
-
+/*
 axi_wr_fifo #(
   .DW  (  64    ), // data width (8,16,...,1024)
   .AW  (  32    ), // address width
@@ -447,7 +474,7 @@ axi_wr_fifo #(
   .stat_cur_addr_o    (  axi_a_cur_addr    ), // current write address
   .stat_write_data_o  (                    )  // write data indicator
 );
-
+*/
 assign axi0_clk_o  = adc_clk_i ;
 assign axi0_rstn_o = adc_rstn_i;
 
@@ -482,7 +509,7 @@ always @(posedge axi1_clk_o) begin
       axi_b_dly_cnt <= 32'h0 ;
       axi_b_dly_do  <=  1'b0 ;
    end
-   else begin
+/*   else begin
       if (adc_arm_do && set_b_axi_en)
          axi_b_we <= 1'b1 ;
       else if (((axi_b_dly_do || adc_trig) && (axi_b_dly_cnt == 32'h0)) || adc_rst_do) //delayed reached or reset
@@ -522,8 +549,9 @@ always @(posedge axi1_clk_o) begin
       set_b_axi_cur <= set_b_axi_start ;
    else if (axi1_wvalid_o)
       set_b_axi_cur <= axi_b_cur_addr ;
+    */
 end
-
+/*
 axi_wr_fifo #(
   .DW  (  64    ), // data width (8,16,...,1024)
   .AW  (  32    ), // address width
@@ -555,9 +583,12 @@ axi_wr_fifo #(
   .stat_cur_addr_o    (  axi_b_cur_addr    ), // current write address
   .stat_write_data_o  (                    )  // write data indicator
 );
-
+*/
 assign axi1_clk_o  = adc_clk_i ;
 assign axi1_rstn_o = adc_rstn_i;
+
+////////////// END AXI DISABLING ////////////////////
+
 
 //---------------------------------------------------------------------------------
 //  Trigger source selector
@@ -757,14 +788,14 @@ if (adc_rstn_i == 1'b0) begin
    set_a_hyst    <=  14'd20     ;
    set_b_hyst    <=  14'd20     ;
    set_avg_en    <=   1'b1      ;
-   set_a_filt_aa <=  18'h0      ;
+/*   set_a_filt_aa <=  18'h0      ;
    set_a_filt_bb <=  25'h0      ;
    set_a_filt_kk <=  25'hFFFFFF ;
    set_a_filt_pp <=  25'h0      ;
    set_b_filt_aa <=  18'h0      ;
    set_b_filt_bb <=  25'h0      ;
    set_b_filt_kk <=  25'hFFFFFF ;
-   set_b_filt_pp <=  25'h0      ;
+   set_b_filt_pp <=  25'h0      ;*/
    set_deb_len   <=  20'd62500  ;
    set_a_axi_en  <=   1'b0      ;
    set_b_axi_en  <=   1'b0      ;
@@ -780,6 +811,7 @@ end else begin
       if (sys_addr[19:0]==20'h24)   set_b_hyst    <= sys_wdata[14-1:0] ;
       if (sys_addr[19:0]==20'h28)   set_avg_en    <= sys_wdata[     0] ;
 
+      /*
       if (sys_addr[19:0]==20'h30)   set_a_filt_aa <= sys_wdata[18-1:0] ;
       if (sys_addr[19:0]==20'h34)   set_a_filt_bb <= sys_wdata[25-1:0] ;
       if (sys_addr[19:0]==20'h38)   set_a_filt_kk <= sys_wdata[25-1:0] ;
@@ -788,7 +820,8 @@ end else begin
       if (sys_addr[19:0]==20'h44)   set_b_filt_bb <= sys_wdata[25-1:0] ;
       if (sys_addr[19:0]==20'h48)   set_b_filt_kk <= sys_wdata[25-1:0] ;
       if (sys_addr[19:0]==20'h4C)   set_b_filt_pp <= sys_wdata[25-1:0] ;
-
+      */
+      /*
       if (sys_addr[19:0]==20'h50)   set_a_axi_start <= sys_wdata[32-1:0] ;
       if (sys_addr[19:0]==20'h54)   set_a_axi_stop  <= sys_wdata[32-1:0] ;
       if (sys_addr[19:0]==20'h58)   set_a_axi_dly   <= sys_wdata[32-1:0] ;
@@ -798,7 +831,7 @@ end else begin
       if (sys_addr[19:0]==20'h74)   set_b_axi_stop  <= sys_wdata[32-1:0] ;
       if (sys_addr[19:0]==20'h78)   set_b_axi_dly   <= sys_wdata[32-1:0] ;
       if (sys_addr[19:0]==20'h7C)   set_b_axi_en    <= sys_wdata[     0] ;
-
+      */
       if (sys_addr[19:0]==20'h90)   set_deb_len <= sys_wdata[20-1:0] ;
    end
 end
@@ -836,6 +869,7 @@ end else begin
 
      20'h0002C : begin sys_ack <= sys_en;          sys_rdata <=                 adc_we_cnt          ; end
 
+     /*
      20'h00030 : begin sys_ack <= sys_en;          sys_rdata <= {{32-18{1'b0}}, set_a_filt_aa}      ; end
      20'h00034 : begin sys_ack <= sys_en;          sys_rdata <= {{32-25{1'b0}}, set_a_filt_bb}      ; end
      20'h00038 : begin sys_ack <= sys_en;          sys_rdata <= {{32-25{1'b0}}, set_a_filt_kk}      ; end
@@ -844,7 +878,8 @@ end else begin
      20'h00044 : begin sys_ack <= sys_en;          sys_rdata <= {{32-25{1'b0}}, set_b_filt_bb}      ; end
      20'h00048 : begin sys_ack <= sys_en;          sys_rdata <= {{32-25{1'b0}}, set_b_filt_kk}      ; end
      20'h0004C : begin sys_ack <= sys_en;          sys_rdata <= {{32-25{1'b0}}, set_b_filt_pp}      ; end
-
+     */
+     /*
      20'h00050 : begin sys_ack <= sys_en;          sys_rdata <=                 set_a_axi_start     ; end
      20'h00054 : begin sys_ack <= sys_en;          sys_rdata <=                 set_a_axi_stop      ; end
      20'h00058 : begin sys_ack <= sys_en;          sys_rdata <=                 set_a_axi_dly       ; end
@@ -858,6 +893,7 @@ end else begin
      20'h0007C : begin sys_ack <= sys_en;          sys_rdata <= {{32- 1{1'b0}}, set_b_axi_en}       ; end
      20'h00080 : begin sys_ack <= sys_en;          sys_rdata <=                 set_b_axi_trig      ; end
      20'h00084 : begin sys_ack <= sys_en;          sys_rdata <=                 set_b_axi_cur       ; end
+     */
 
      20'h00090 : begin sys_ack <= sys_en;          sys_rdata <= {{32-20{1'b0}}, set_deb_len}        ; end
     
@@ -882,27 +918,3 @@ end else begin
 end
 
 endmodule
-
-
-/*
-// COUNTER MODULE
-module counter_64_bit #(
-    parameter COUNTERSZ = 64
-)
-(
-    input           dac_clk_i,
-    input           reset_i,
-    output [COUNTERSZ-1:0] value_o
-    );
-
-always @(posedge dac_clk_i) begin
-    //reset
-    if (reset_i == 1'b1) begin
-        value_o <= COUNTERSZ'b0;
-       end
-	value_0 <= value_0 + 1'b1;
-end
-
-endmodule
-
-*/
