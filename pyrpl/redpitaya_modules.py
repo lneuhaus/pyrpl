@@ -334,7 +334,7 @@ class Scope(BaseModule):
         """raw data from ch2"""
         # return np.array([self.to_pyint(v) for v in self._reads(0x20000,
         # self.data_length)],dtype=np.int32)
-        x = np.array(self._reads(0x20000, self.data_length), dtype=np.int32)
+        x = np.array(self._reads(0x20000, self.data_length), dtype=np.int16)
         x[x >= 2**13] -= 2**14
         return x
 

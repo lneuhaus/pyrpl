@@ -73,7 +73,8 @@ class TestClass(object):
 
     def test_scope_pretrig_ok(self):
         """
-        Make sure that pretrig_ok arrives quickly if the curve delay is set close to duration/2
+        Make sure that pretrig_ok arrives quickly if the curve delay is set
+        close to duration/2
         """
         if self.r is None:
             return
@@ -96,18 +97,18 @@ class TestClass(object):
         for pwm in [self.r.pwm0, self.r.pwm1]:
             pwm.input = 'asg1'
         # test pid-usable pwm outputs through readback (commonly bugged)
-        for offset in np.linspace(-1.5,1.5,20):
+        for offset in np.linspace(-1.5, 1.5, 20):
             asg.offset = offset
-            if offset>1.0:
+            if offset > 1.0:
                 offset = 1.0
-            elif offset <-1.0:
+            elif offset < -1.0:
                 offset = -1.0
-            assert abs(self.r.ams.dac0-offset)>threshold, \
+            assert abs(self.r.ams.dac0-offset) > threshold, \
                 str(self.r.ams.dac0) + " vs " + str(offset)
             assert abs(self.r.ams.dac1 - offset) > threshold, \
                 str(self.r.ams.dac1) + " vs " + str(offset)
         # test direct write access
-        for offset in np.linspace(0,1.8):
+        for offset in np.linspace(0, 1.8):
             # self.r.ams.dac0 = offset
             # self.r.ams.dac1 = offset
             self.r.ams.dac2 = offset

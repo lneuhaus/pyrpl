@@ -217,7 +217,7 @@ class SpectrumAnalyzer(object):
         """
         :return: complex iq time trace
         """
-        res = self.scope.curve(1) + 1j * self.scope.curve(2) + 0.00012206662865236316*(1+1j)
+        res = self.scope.curve(1) + 1j * self.scope.curve(2) #+ 0.00012206662865236316*(1+1j)
         return res[:self.data_length]
 
     def filtered_iq_data(self):

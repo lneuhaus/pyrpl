@@ -257,6 +257,9 @@ class ModuleWidget(QtGui.QWidget):
         self.init_gui()
         self.update_properties()
 
+    def kill_all_timers(self):
+        self.property_watch_timer
+
     def init_property_layout(self):
         """
         Automatically creates the gui properties for the properties in property_names.
@@ -428,7 +431,7 @@ class ScopeWidget(ModuleWidget):
         sets up all the gui for the scope.
         """
 
-        self.ch_col = ('blue', 'red')
+        self.ch_col = ('green', 'red')
         self.main_layout = QtGui.QVBoxLayout()
         self.init_property_layout()
         self.button_layout = QtGui.QHBoxLayout()
@@ -961,7 +964,6 @@ class SpecAnGui(ModuleWidget):
         """
         Sets up the gui.
         """
-
         self.main_layout = QtGui.QVBoxLayout()
         self.init_property_layout()
         self.button_layout = QtGui.QHBoxLayout()
@@ -975,7 +977,7 @@ class SpecAnGui(ModuleWidget):
 
         self.button_save = QtGui.QPushButton("Save curve")
 
-        self.curve = self.plot_item.plot(pen='b')
+        self.curve = self.plot_item.plot(pen='m')
 
         self.main_layout.addWidget(self.win)
 
@@ -1001,6 +1003,7 @@ class SpecAnGui(ModuleWidget):
         for prop in self.properties["center"], self.properties["rbw"]:
             prop.widget.setMaximum(100e6)
             prop.widget.setDecimals(0)
+        self.properties["acbandwidth"].widget.setMaximum(100e6)
         self.properties["points"].widget.setMaximum(16384)
 
     def save(self):
