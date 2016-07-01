@@ -391,7 +391,7 @@ class RPOutputSignal(RPSignal):
         self.pid.p = proportional
         self.pid.d = differentiator_ugf
 
-        # set the offset once more in case the lack of synchronou gain enabling
+        # set the offset once more in case the lack of synchronous gain enabling
         # messed up the offset
         if offset:
             self.pid.ival = offset

@@ -19,7 +19,7 @@ def getmodel(modeltype):
 
 class Model(object):
     " generic model object that will make smart use of its inputs and outputs"
-    export_to_parent = ["sweep", "calibrate", "set_optimal_gain",
+    export_to_parent = ["sweep", "calibrate", "save_current_gain",
                         "unlock", "islocked", "lock", "help"]
 
     # independent variable that specifies the state of the system
@@ -124,10 +124,10 @@ class Model(object):
                            self._variable)
             return None
 
-    def set_optimal_gain(self):
+    def save_current_gain(self):
         factor = self.state["set"]["factor"]
-        for output in self.outputs:
-            output.set_optimal_gain(factor)
+        for output in self.outputs.values():
+            output.save_current_gain(factor)
 
     def islocked(self):
         """ returns True if locked, else False"""
@@ -171,6 +171,7 @@ class Model(object):
     def _lock(self, input=None, factor=1.0, offset=None, **kwargs):
         """
         Locks all outputs to input.
+
         Parameters
         ----------
         input: Signal
@@ -263,7 +264,7 @@ class Model(object):
                          + "The device should be locked now. Play \n"
                          + "with the value of factor until you find a \n"
                          + "reasonable lock performance and save this as \n"
-                         + "the new default with p.set_optimal_gain(). \n"
+                         + "the new default with p.save_current_gain(). \n"
                          + "Now simply call p.lock() to lock.  \n"
                          + "Assert if locked with p.islocked() and unlock \n"
                          + "with p.unlock(). ")
@@ -306,7 +307,7 @@ class FabryPerot(Model):
              'actual': {'detuning': 0}}
 
     export_to_parent = ['unlock', 'sweep',
-                        'set_optimal_gain']
+                        'save_current_gain']
 
     def _lorentz(self, x):
         return 1.0 / (1.0 + x ** 2)
@@ -336,7 +337,7 @@ class FabryPerot(Model):
 class FabryPerot_Reflection(FabryPerot):
     # declare here the public functions that are exported to the Pyrpl class
     export_to_parent = ['lock', 'unlock', 'islocked', 'calibrate', 'sweep',
-                        'help', 'set_optimal_gain']
+                        'help', 'save_current_gain']
 
     # theoretical model for input signal 'port1'
     def reflection(self, detuning):
@@ -448,7 +449,7 @@ class FabryPerot_Reflection(FabryPerot):
                          + "The interferometer should be locked now. Play \n"
                          + "with the value of factor until you find a \n"
                          + "reasonable lock performance and save this as \n"
-                         + "the new default with p.set_optimal_gain(). \n"
+                         + "the new default with p.save_current_gain(). \n"
                          + "Now simply call p.lock(phase=myphase) to lock \n"
                          + "at arbitrary phase 'myphase' (rad). "
                          + "Assert if locked with p.islocked() and unlock \n"
@@ -457,7 +458,7 @@ class FabryPerot_Reflection(FabryPerot):
 
 class TEM02FabryPerot(FabryPerot):
     export_to_parent = ['unlock', 'sweep', 'islocked',
-                        'set_optimal_gain', 'calibrate',
+                        'save_current_gain', 'calibrate',
                         'lock_tilt', 'lock_transmission', 'lock']
 
     def tilt(self, detuning):
@@ -561,6 +562,8 @@ class TEM02FabryPerot(FabryPerot):
             self.lock_transmission(factor=factor, detuning=self._config.lock.drift_detuning)
             time.sleep(self._config.lock.drift_timeout)
         if stop: return
+        self.lock_transmission(detuning = self._config.lock.drift_detuning*0.66)
+        time.sleep(0.01)
         return self.lock_tilt(detuning=detuning, factor=factor)
 
     @property
