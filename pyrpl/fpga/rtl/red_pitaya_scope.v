@@ -288,7 +288,8 @@ always @(posedge adc_clk_i) begin
    end
    else begin
       ctr_value <= ctr_value + 1'b1;
-      pretrig_ok <= adc_we_cnt>pretrig_data_min;
+      pretrig_data_min <= (2**RSZ) - set_dly;
+      pretrig_ok <= (adc_we_cnt > pretrig_data_min);
       if (adc_arm_do)
          adc_we <= 1'b1 ;
       else if (((adc_dly_do || adc_trig) && (adc_dly_cnt == 32'h0) && ~adc_we_keep) || adc_rst_do) //delayed reached or reset

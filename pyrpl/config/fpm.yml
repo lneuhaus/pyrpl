@@ -63,6 +63,7 @@ inputs:
   #  min: -0.002716563642024994
   #  mean: -0.00014547258615493774
   #  rms: 0.0006782362843540166
+
 # All output signals. Names of outputs are arbitrary.
 outputs:
   # the very coarse piezo. at the moment, it is controlled manually
