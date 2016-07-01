@@ -293,6 +293,7 @@ class Lockbox(object):
         self._makesignals()
         # find and setup the model
         self.model = getmodel(self.c.model.modeltype)(self)
+        self.model.setup()
         # create shortcuts for public model functions
         for fname in self.model.export_to_parent:
             self.__setattr__(fname, self.model.__getattribute__(fname))
@@ -332,13 +333,20 @@ class Lockbox(object):
                                      **signalparameters)
                 signaldict[k] = signal
                 self.__setattr__(k, signal)
+    @property
+    def signals(self):
+        sigdict = dict()
+        signals, _ = self._signalinit
+        for s in signals.keys():
+            sigdict.update(self.__getattribute__(s))
+        return sigdict
 
     def _fastparams(self):
         """ implement custom fastparams here """
         return dict()
 
     def get_offset(self):
-        for input in self.inputs:
+        for input in self.inputs.values():
             input.get_offset()
 
     def _params(self):
@@ -374,7 +382,7 @@ class Pyrpl(Lockbox):
     """
     Python RedPitaya Lockbox object
     """
-    def __init__(self, config="default"):
+    def __init__(self, config="default", source=None):
         """red pitaya lockbox object"""
         # we need the configuration for RedPitaya initialization
         self.c = MemoryTree(os.path.join(self._configdir, config+".yml"))
@@ -384,7 +392,7 @@ class Pyrpl(Lockbox):
         self.rp = RedPitaya(**self.c.redpitaya._dict)
         # signal class and optional arguments are passed through this argument
         self._signalinit = {"inputs": RPSignal, "outputs": RPOutputSignal}, \
-                           {"redpitaya": self.rp,
+                           {"parent": self,
                             "restartscope": self._setupscope}
         # Lockbox initialization
         super(Pyrpl, self).__init__(config=config)

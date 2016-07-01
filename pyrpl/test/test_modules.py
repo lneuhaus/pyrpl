@@ -9,13 +9,11 @@ from pyrpl import RedPitaya
 from pyrpl.redpitaya_modules import *
 from pyrpl.registers import *
 from pyrpl.bijection import Bijection
-<<<<<<< HEAD
 
 import time
 
-=======
 from pyrpl import CurveDB
->>>>>>> 27a0ba5dfceca7b08f178801bec618541a26023d
+
 
 class TestClass(object):
     
@@ -76,7 +74,7 @@ class TestClass(object):
         self.r.scope.setup()
         self.r.scope.curve()
 
-    def test_scope_pretrigg_ok(self):
+    def test_scope_pretrig_ok(self):
         """
         Make sure that pretrig_ok arrives quickly if the curve delay is set close to duration/2
         """
@@ -132,4 +130,4 @@ class TestClass(object):
                 str(self.r.ams.dac3) + " vs " + str(offset)
         # reset offset to protect other tests
         asg.offset = 0
-        asg.scale=1
+        asg.scale = 1
