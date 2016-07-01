@@ -334,6 +334,10 @@ class RPOutputSignal(RPSignal):
         None
         """
 
+        # if output is disabled for locking, skip the rest
+        if 'lock' in self._config._data and not self._config.lock:
+            return
+
         # compute integrator unity gain frequency
         if slope == 0:
             raise ValueError("Cannot lock on a zero slope!")

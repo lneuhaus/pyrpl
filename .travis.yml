@@ -1,5 +1,5 @@
 env:
-- AUTOCORRETPEP8=0
+- AUTOCORRETPEP8=0 REDPITAYA_SKIPGUITEST=1
 # REDPITAYA variables are defined in travis account (encrypted)
 
 language: python

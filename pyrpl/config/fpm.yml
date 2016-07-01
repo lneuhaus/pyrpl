@@ -28,7 +28,7 @@ general:
 model:
   # use class Interferometer for internal model and lock algorithms
   # upper- or lowercase spelling is accepted if there is no ambiguity
-  modeltype: fabryperot_reflection
+  modeltype: fabryperot
   # only needed parameter is wavelength
   # (to convert piezo displacement into gain)
   wavelength: 1.064e-06
@@ -44,14 +44,15 @@ inputs:
   reflection:
     redpitaya_input: adc2
   # the photodiode for the external pdh signal
-  pdh:
+  transmission:
     redpitaya_input: adc1
 
 # All output signals. Names of outputs are arbitrary.
 outputs:
   # the very coarse piezo. at the moment, it is controlled manually
   slow:
-    redpitaya_output: pwm0
+    lock: false
+    redpitaya_output: pwm1
     max_voltage: 1.0
     min_voltage: -1.0
     # amplitier gain complicated - calibrate manually. at the moment

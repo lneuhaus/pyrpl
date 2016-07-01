@@ -224,19 +224,13 @@ class Scope(BaseModule):
                                      doc= "An absolute counter " \
                                          +"for the trigger time [cycles]")
     
-    _decimations = {2**0: 2**0,
-                    2**3: 2**3,
-                    2**6: 2**6,
-                    2**10: 2**10,
-                    2**13: 2**13,
-                    2**16: 2**16}
+    _decimations = {2**n: 2**n for n in range(0,17)}
 
-
-    
     decimations = sorted(_decimations.keys()) # help for the user
 
     sampling_times = [8e-9 * dec for dec in decimations]
-    durations = [s_times * data_length for s_times in sampling_times]
+
+    durations = [s_times*data_length for s_times in sampling_times]
 
     decimation = SelectRegister(0x14, doc="decimation factor", 
                                 options=_decimations)
@@ -289,7 +283,7 @@ class Scope(BaseModule):
         """sets or returns the time separation between two subsequent points of a scope trace
         the rounding makes sure that the actual value is shorter or equal to the set value"""
         tbase = 8e-9
-        factors = [65536, 8192, 1024, 64, 8, 1]
+        factors = [2**n for n in reversed(range(0,17))]
         for f in factors:
             if v >= tbase * float(f):
                 self.decimation = f
@@ -307,7 +301,7 @@ class Scope(BaseModule):
         the rounding makes sure that the actual value is longer or equal to the set value"""
         v = float(v) / self.data_length
         tbase = 8e-9
-        factors = [1, 8, 64, 1024, 8192, 65536]
+        factors = [2**n for n in range(0,17)]
         for f in factors:
             if v <= tbase * float(f):
                 self.decimation = f
@@ -815,7 +809,7 @@ class AuxOutput(DspModule):
     Currently, only pwm0 and pwm1 are available.
     """
     def __init__(self, client, output='pwm0'):
-        pwm_to_module = dict(pwm0 = 'adc1', pwm1='adc2')
+        pwm_to_module = dict(pwm0='adc1', pwm1='adc2')
         # future options: , pwm2 = 'dac1', pwm3='dac2')
         super(AuxOutput, self).__init__(client,module=pwm_to_module[output])
     output_direct = None
