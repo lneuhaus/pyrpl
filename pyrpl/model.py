@@ -22,6 +22,7 @@ class Model(object):
     export_to_parent = ["sweep", "calibrate", "save_current_gain",
                         "unlock", "islocked", "lock", "help", "calib_lock"]
 
+
     # independent variable that specifies the state of the system
     _variable = 'x'
 
@@ -130,7 +131,7 @@ class Model(object):
 
     def save_current_gain(self):
         factor = self.state["set"]["factor"]
-        for output in self.outputs:
+        for output in self.outputs.values():
             output.save_current_gain(factor)
 
     def islocked(self):
@@ -176,6 +177,7 @@ class Model(object):
     def _lock(self, input=None, factor=1.0, offset=None, **kwargs):
         """
         Locks all outputs to input.
+
         Parameters
         ----------
         input: Signal
@@ -339,7 +341,8 @@ class FabryPerot(Model):
     # the internal variable for state specification
     _variable = 'detuning'
 
-    #export_to_parent = super(FabryPerot).export_to_parent + ['R0']
+
+    export_to_parent = Model.export_to_parent + ['R0']
 
     # lorentzian functions
     def _lorentz(self, x):
@@ -363,6 +366,7 @@ class FabryPerot(Model):
     def transmission(self, x):
         " transmission of the Fabry-Perot "
         return self._lorentz(x) * self._config.resonant_transmission
+
 
     def reflection(self, x):
         " reflection of the Fabry-Perot"
@@ -434,6 +438,7 @@ class FPM(FabryPerot):
         duration = super(FPM, self).sweep()
         self._parent.   rp.scope.setup(trigger_source='asg1',
                                     duration=duration)
+
 
 class TEM02FabryPerot(FabryPerot):
     export_to_parent = ['unlock', 'sweep', 'islocked',
@@ -541,6 +546,8 @@ class TEM02FabryPerot(FabryPerot):
             self.lock_transmission(factor=factor, detuning=self._config.lock.drift_detuning)
             time.sleep(self._config.lock.drift_timeout)
         if stop: return
+        self.lock_transmission(detuning = self._config.lock.drift_detuning*0.66)
+        time.sleep(0.01)
         return self.lock_tilt(detuning=detuning, factor=factor)
 
     @property
