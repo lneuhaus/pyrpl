@@ -112,8 +112,7 @@ class Signal(object):
                               unit_per_V=self.unit_per_V,
                               nyquist_frequency=self.nyquist_frequency,
                               acquiretime=self._acquiretime,
-                              autosave=self._config.autosave
-                              )
+                              autosave=self._config.autosave)
 
     def get_offset(self):
         """ acquires and saves the offset of the signal """
@@ -152,8 +151,9 @@ class Signal(object):
 
 class RPSignal(Signal):
     # a signal that lives inside the RedPitaya
-    def __init__(self, config, branch, redpitaya, restartscope=lambda: None):
-        self._rp = redpitaya
+    def __init__(self, config, branch, parent, restartscope=lambda: None):
+        self._parent = parent
+        self._rp = parent.rp
         self._restartscope = restartscope
         super(RPSignal, self).__init__(config, branch)
 
@@ -162,11 +162,18 @@ class RPSignal(Signal):
         return self._config.redpitaya_input
 
     def _saverawdata(self, data):
-        self._lastvalues = (data - self.offset) * self.unit_per_V
+        self._lastvalues = data
         self._acquiretime = time.time()
 
     def _acquire(self, secondsignal=None):
         logger.debug("acquire() of signal %s was called! ", self._name)
+        if secondsignal is None:
+            try:
+                secondsignal = self._config.secondsignal
+            except KeyError:
+                pass
+        if isinstance(secondsignal, str):
+            secondsignal = self._parent.signals[secondsignal]
         if secondsignal is not None:
             input2 = secondsignal._redpitaya_input
         else:
@@ -182,13 +189,8 @@ class RPSignal(Signal):
         try:
             timeout = self._config.timeout
         except KeyError:
-            timeout = self._config.duration*5
+            timeout = self._rp.scope.duration*5
         self._saverawdata(self._rp.scope.curve(ch=1, timeout=timeout))
-        if secondsignal is None:
-            try:
-                secondsignal = self._config.secondsignal
-            except KeyError:
-                pass
         if secondsignal is not None:
             secondsignal._saverawdata(self._rp.scope.curve(ch=2, timeout=-1))
         self._restartscope()
@@ -204,11 +206,22 @@ class RPSignal(Signal):
     @property
     def nyquist_frequency(self): return 1.0 / self._rp.scope.sampling_time / 2
 
+    @property
+    def curve(self):
+        curve = super(RPSignal, self).curve
+        extraparams = dict(
+            trigger_timestamp = self._rp.scope.trigger_timestamp,
+            duration = self._rp.scope.duration)
+        curve.params.update(extraparams)
+        curve.save()
+        return curve
+
+
 class RPOutputSignal(RPSignal):
-    def __init__(self, config, branch, redpitaya, restartscope):
+    def __init__(self, config, branch, parent, restartscope):
         super(RPOutputSignal, self).__init__(config,
                                              branch,
-                                             redpitaya,
+                                             parent,
                                              restartscope)
 
         # each output gets its own pid
@@ -302,6 +315,12 @@ class RPOutputSignal(RPSignal):
         self.pid.i = 0
         self.pid.d = 0
         self.pid.ival = 0
+
+    def unlock(self):
+        if 'lock' in self._config._data and not self._config.lock:
+            return
+        else:
+            self.off()
 
     def lock(self,
              slope,
@@ -420,7 +439,11 @@ class RPOutputSignal(RPSignal):
                             name, self._name)
 
     def sweep(self, frequency=None, amplitude=None, waveform=None):
-        kwargs = self._config.sweep._dict
+        try:
+            kwargs = self._config.sweep._dict
+        except KeyError:
+            logger.debug("Sweep for output '%s' is disabled.", self._name)
+            return None
         if frequency:
             kwargs["frequency"] = frequency
         if waveform:
@@ -432,11 +455,30 @@ class RPOutputSignal(RPSignal):
         amplitude = kwargs["amplitude"]
         kwargs["amplitude"] = 1.0
         kwargs["output_direct"] = "off"
-        self._rp.asg1.setup(**kwargs)
-        self.pid.input = "asg1"
+        if 'asg' in kwargs:
+            asgname = kwargs.pop("asg")
+        else:
+            asgname = 'asg1'
+        asg = self._rp.__getattribute__(asgname)
+        asg.setup(**kwargs)
+        self.pid.input = asgname
         self.pid.p = amplitude
-        return self._rp.asg1.frequency
+        return asg.frequency
 
     def save_current_gain(self, factor):
         self._config.unity_gain_frequency *= factor
         self._config.inputfilter = self.pid.inputfilter
+
+    @property
+    def output_offset(self):
+        return self.pid.ival
+
+    @output_offset.setter
+    def output_offset(self, value):
+        self.pid.ival = value
+        offset = self.pid.ival
+        if offset > self._config.max_voltage:
+            offset = self._config.max_voltage
+        elif offset < self._config.min_voltage:
+            offset = self._config.min_voltage
+        self._config['lastoffset'] = offset

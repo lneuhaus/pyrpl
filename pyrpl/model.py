@@ -38,6 +38,10 @@ class Model(object):
         self.state = {'actual': {self._variable: 0},
                       'set': {self._variable: 0}}
 
+    def setup(self):
+        """ Custom setup function """
+        pass
+
     def _derivative(self, func, x, n=1, args=()):
         return scipy.misc.derivative(func,
                                      x,
@@ -150,7 +154,7 @@ class Model(object):
     # unlock algorithm
     def unlock(self):
         for o in self.outputs.values():
-            o.off()
+            o.unlock()
 
     def sweep(self):
         """
@@ -162,9 +166,10 @@ class Model(object):
             The duration of one sweep period, as it is useful to setup the
             scope.
         """
+        self.unlock()
         frequency = None
         for o in self.outputs.values():
-            frequency = o.sweep()
+            frequency = o.sweep() or frequency
         return 1.0 / frequency
 
 
@@ -212,8 +217,8 @@ class Model(object):
                    offset=offset,
                    factor=factor)
 
-    def lock(self, variable):
-        self._lock(x=variable)
+    def lock(self, variable, factor=1.0):
+        self._lock(x=variable, factor=factor)
 
     def calibrate(self, inputs=None, scopeparams={}):
         """
@@ -399,8 +404,37 @@ class FabryPerot(Model):
 
 
     def calibrate(self):
-        return  super(FabryPerot, self).calibrate(
+        curves = super(FabryPerot, self).calibrate(
             scopeparams={'secondsignal': 'piezo'})
+        duration = curves[0].params["duration"]
+
+        # pick our favourite available signal
+        for sig in self.inputs.values():
+            # make a zoom calibration over roughly 10 linewidths
+            duration *= (1.0 - sig._config.mean/sig._config.max) * 10
+            curves = super(FabryPerot, self).calibrate(
+                inputs=[sig],
+                scopeparams={'secondsignal': 'piezo',
+                             'trigger_source': 'ch1_positive_edge',
+                             'threshold': (sig._config.max+sig._config.min)/2,
+                             'duration': duration,
+                             'timeout': 10*duration})
+            if sig._name == 'reflection':
+                self._config["offresonant_reflection"] = sig._config.max
+                self._config["resonant_reflection"] = sig._config.min
+            if sig._name == 'transmission':
+                self._config["resonant_transmission"] = sig._config.max
+        return curves
+
+class FPM(FabryPerot):
+    def setup(self):
+        o = self.outputs["slow"]
+        o.output_offset = o._config.lastoffset
+
+    def sweep(self):
+        duration = super(FPM, self).sweep()
+        self._parent.   rp.scope.setup(trigger_source='asg1',
+                                    duration=duration)
 
 class TEM02FabryPerot(FabryPerot):
     export_to_parent = ['unlock', 'sweep', 'islocked',
