@@ -9,13 +9,8 @@ from pyrpl import RedPitaya
 from pyrpl.redpitaya_modules import *
 from pyrpl.registers import *
 from pyrpl.bijection import Bijection
-<<<<<<< HEAD
-
 import time
-
-=======
 from pyrpl import CurveDB
->>>>>>> 27a0ba5dfceca7b08f178801bec618541a26023d
 
 class TestClass(object):
     
