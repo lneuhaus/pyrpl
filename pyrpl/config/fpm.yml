@@ -7,7 +7,7 @@ redpitaya:
   filename: fpga//red_pitaya.bin
   reloadfpga: true
   # autostart gui?
-  gui: true
+  gui: false #true
   monitor_server_name: monitor_server
 
 general:
@@ -22,6 +22,7 @@ general:
   # import CurveDB class from which module? if missing, it's pyrpl.curvedb
   #curvedb: pyrpl
   curvedb: pyinstruments
+  pdh_generator: AFG_EVA
 
 # most important section that defines how the lockbox understands the
 # real-world system
@@ -85,7 +86,7 @@ outputs:
     - 0
     - 0
     calibrationunits: m_per_V
-    lastoffset: 0.140625
+    lastoffset: 0.1397705078125
   piezo:
     redpitaya_output: out2
     # we will calibrate the piezo response in units of m_per_V (not a necessary

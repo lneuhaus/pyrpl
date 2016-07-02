@@ -38,8 +38,9 @@ from shutil import copyfile
 from .redpitaya import RedPitaya
 from .curvedb import CurveDB
 from .memory import MemoryTree
-from .model import getmodel, Model
+from .model import Model
 from .signal import *
+from .models import *
 
 """
 channels:
@@ -246,6 +247,23 @@ meters is implemented there. Another very often used model type is
 #                                             "config"), config + ".yml"))
 #    model = getmodel(c.model.modeltype)
 #    return type("Pyrpl", (Lockbox, model), {})(config=config)
+
+
+def getmodel(modeltype):
+    try:
+        m = globals()[modeltype]
+        if type(m) == type:
+            return m
+    except KeyError:
+        pass
+    # try to find a similar model with lowercase spelling
+    for k in globals():
+        if k.lower() == modeltype.lower():
+            m = globals()[k]
+            if type(m) == type:
+                return m
+    logger.error("Model %s not found in model definition file %s",
+                 modeltype, __file__)
 
 
 class Lockbox(object):
