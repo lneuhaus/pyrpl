@@ -148,6 +148,15 @@ class Signal(object):
     @property
     def redpitaya_input(self): return self._config.redpitaya_input
 
+    @property
+    def transfer_function(self):
+        try:
+            pk = self._config.transfer_function.open_loop
+        except KeyError:
+            logger.error("No transfer functions available for this output")
+            return None
+        return CurveDB.get(pk)
+
 
 class RPSignal(Signal):
     # a signal that lives inside the RedPitaya

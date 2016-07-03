@@ -700,7 +700,8 @@ class NaGui(ModuleWidget):
                                    amplitude=self.module.amplitude,
                                    logscale=self.module.logscale,
                                    avg=self.module.avg,
-                                   post_average=self.post_average)
+                                   post_average=self.post_average,
+                                   name="pyrpl_na")
 
     def save(self):
         """
