@@ -176,6 +176,8 @@ class RPSignal(Signal):
             secondsignal = self._parent.signals[secondsignal]
         if secondsignal is not None:
             input2 = secondsignal._redpitaya_input
+            logger.debug("Second signal '%s' for acquisition set up.",
+                         secondsignal)
         else:
             input2 = None
         self._rp.scope.setup(duration=self._config.duration,

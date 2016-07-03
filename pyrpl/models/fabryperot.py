@@ -131,20 +131,21 @@ class FabryPerot(Model):
         # pick our favourite available signal
         for sig in self.inputs.values():
             # make a zoom calibration over roughly 10 linewidths
-            duration *= (1.0 - sig._config.mean/sig._config.max)\
-                        * self._config.calibration.zoomfactor
             curves = super(FabryPerot, self).calibrate(
                 inputs=[sig],
                 scopeparams={'secondsignal': 'piezo',
                              'trigger_source': 'ch1_positive_edge',
-                             'threshold': (sig._config.max+sig._config.min) *
+                             'threshold': sig._config.max *
                                   self._config.calibration.relative_threshold,
-                             'duration': duration,
-                             'timeout': 10*duration})
+                             'duration': duration
+                                         * self._config.calibration.zoomfactor,
+                             'timeout': duration*10})
             if sig._name == 'reflection':
                 self._config["offresonant_reflection"] = sig._config.max
                 self._config["resonant_reflection"] = sig._config.min
             if sig._name == 'transmission':
                 self._config["resonant_transmission"] = sig._config.max
+            if sig._name == 'pdh':
+                self._config["peak"] = (sig._config.max - sig._config.min)/2
         return curves
 

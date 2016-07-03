@@ -18,7 +18,7 @@ general:
   # 'infi' is default level
   # 'warning' only shows warnings and errors
   # 'error' only shows errors
-  loglevel: info #debug
+  loglevel: debug
   # import CurveDB class from which module? if missing, it's pyrpl.curvedb
   #curvedb: pyrpl
   curvedb: pyinstruments
@@ -36,8 +36,8 @@ model:
   # for interferometer, this is the phase error in radians
   # this value is uniquely needed for the function 'islocked'
   maxerror: 0.1
-  offresonant_reflection: 0.19684580713510513
-  resonant_reflection: 0.06159190088510513
+  offresonant_reflection: 0.19574717432260513
+  resonant_reflection: 0.06195811182260513
   finesse: 92000.0
   length: 5.61e-05
   # signals in order of their preferrence
@@ -47,7 +47,7 @@ model:
   lock:
     error_threshold: 0.1
   calibration:
-    zoomfactor: 0.2
+    zoomfactor: 0.03
     relative_threshold: 0.9
 
 # all signals that are inputs of the lockbox. Must be signal names understood
@@ -58,16 +58,16 @@ inputs:
   reflection:
     redpitaya_input: adc2
     offset: 0.013481341302394867
-    max: 0.19806651026010513
-    min: 0.06610850244760513
-    mean: 0.18222111463546753
-    rms: 0.012057569672841205
+    max: 0.19574717432260513
+    min: 0.06195811182260513
+    mean: 0.16869647055864334
+    rms: 0.024811255865794444
   pdh:
     redpitaya_input: adc1
-    max: 0.06884765625
-    min: -0.0640869140625
-    mean: 0.0024619102478027344
-    rms: 0.011727941023374188
+    max: 0.0694580078125
+    min: -0.0662841796875
+    mean: 0.00023931264877319336
+    rms: 0.02715465139939615
     setup:
       phase: 5.0
       amplitude: 4.0
@@ -158,7 +158,14 @@ scope:
   trigger_source: immediately
   average: false
 
-# default properties for signal acquisition
+scopegui:
+  coordinates:
+  - 0
+  - 0
+  - 882
+  - 639
+  auto_run_continuous: true
+
 signal:
   unit: V # can be any of m, Hz, V, raw, ... as long as unit_per_V is defined
   V_per_V: 1.0 # default unit is V
@@ -192,10 +199,3 @@ signal:
   # peak is a reserved place to store the peak value, for example offresonant
   # reflection from a cavity
   peak: 0
-
-scopegui:
-  coordinates:
-  - 0
-  - 0
-  - 882
-  - 639

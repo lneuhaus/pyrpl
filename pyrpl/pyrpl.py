@@ -422,6 +422,9 @@ class Pyrpl(Lockbox):
     def _setupscope(self):
         if "scope" in self.c._dict:
             self.rp.scope.setup(**self.c.scope._dict)
+        if "sccopegui" in self.c._dict:
+            if self.c.scopegui.auto_run_continuous:
+                r.rp.scope_widget.run_continuous()
 
     def _lock_window_position(self):
         try:

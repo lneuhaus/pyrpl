@@ -23,6 +23,7 @@ class Model(object):
             self._parent = parent
         self.inputs = self._parent.inputs
         self.outputs = self._parent.outputs
+        self.signals = self._parent.signals
         self._config = self._parent.c.model
         self._make_helpers()
         self.state = {'actual': {self._variable: 0},
@@ -169,6 +170,9 @@ class Model(object):
         frequency = None
         for o in self.outputs.values():
             frequency = o.sweep() or frequency
+        if "sccopegui" in self._parent.c._dict:
+            if self._parent.c.scopegui.auto_run_continuous:
+                self._parent.rp.scope_widget.run_continuous()
         return 1.0 / frequency
 
 
@@ -256,12 +260,14 @@ class Model(object):
                 curves.append(curve)
                 try:
                     secondsignal = scopeparams["secondsignal"]
-                    input2 = self.inputs[secondsignal]
+                    input2 = self.signals[secondsignal]
                     curve2 = input2.curve
                     curve.add_child(curve2)
+                    self.logger.debug("Secondsignal %s successfully acquired.",
+                                      secondsignal)
                 except KeyError:
-                    # no secondsignal was specified
-                    pass
+                    self.logger.debug("No secondsignal was specified for %s",
+                                      input._name)
             finally:
                 # make sure to reload config file here so that the modified
                 # scope parameters are not written to config file
