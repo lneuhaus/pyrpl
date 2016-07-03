@@ -19,13 +19,15 @@ model:
   resonant_transmission: 0.15478515625
   offresonant_reflection: 0.57373046875
   resonant_reflection: 0.334228515625
-  offset_pdh: 0.015611618757247925
+  offset_pdh: -0.00339469313621521
   phase_pdh: 0
-  ampl_pdh: 0.34417724609375
+  ampl_pdh: 0.3182373046875
   cavity_length: 0.014
   mod_pdh: 20000000
   finesse: 5000
   duration_zoom: 0.001
+  test: 0.4
+  trigger_delay_zoom: 0.040542207999999996
 inputs:
   pdh:
     redpitaya_input: iq0
@@ -33,24 +35,33 @@ inputs:
     redpitaya_mod_input: adc2
     redpitaya_quadrature_factor: 0.02
     mod_amplitude_v: 0.5
-    phase: 63.75
+    phase: 279.375
     bandwidth: 5000000
-    max: 0.3560791015625
-    min: -0.332275390625
-    mean: 0.015611618757247925
-    rms: 0.046130135979759145
+    max: 0.3338623046875
+    min: -0.3026123046875
+    mean: -0.00339469313621521
+    rms: 0.0282456149920448
+    trigger_source: asg1
+    duration: 0.03995318414883721
+    trigger_delay: 0
   transmission:
     redpitaya_input: adc1
-    max: 0.14794921875
-    min: -0.023681640625
-    mean: -0.018594026565551758
-    rms: 0.00850030715385263
+    max: 0.137939453125
+    min: -0.024169921875
+    mean: -0.019209817051887512
+    rms: 0.00637071071082627
+    trigger_source: asg1
+    duration: 0.03995318414883721
+    trigger_delay: 0
   reflection:
     redpitaya_input: adc2
-    max: 0.55615234375
-    min: 0.3155517578125
-    mean: 0.5292094871401787
-    rms: 0.010509556323040067
+    max: 0.53857421875
+    min: 0.3167724609375
+    mean: 0.5130747556686401
+    rms: 0.007832710768630347
+    trigger_source: asg1
+    duration: 0.03995318414883721
+    trigger_delay: 0
 outputs:
   piezo:
     unity_gain_frequency: 1000.0
@@ -68,7 +79,7 @@ outputs:
     - 0
     calibrationunits: m_per_V
     sweep:
-      waveform: halframp
+      waveform: ramp
       frequency: 25.0
       amplitude: 0.8
   fastpiezo:

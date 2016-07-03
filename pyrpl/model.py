@@ -239,6 +239,7 @@ class Model(object):
         curves: list
             list of all acquired curves
         """
+
         self.unlock()
         duration = self.sweep()
         curves = []
@@ -478,8 +479,9 @@ class FPMembranes(FabryPerot):
         if hasattr(self._config, 'duration_zoom'):
             return self._config.duration_zoom
         else:
-            self._config.duration_zoom = 5*self.duration_sweep/self._config.finesse
+            self._config["duration_zoom"] = 5*self.duration_sweep/self._config.finesse
             return self._config.duration_zoom
+
 
     @property
     def duration_sweep(self):
@@ -504,10 +506,10 @@ class FPMembranes(FabryPerot):
                                 inputs=[sig],
                                 scopeparams=dict(secondsignal='transmission',
                                                  duration=self.duration_zoom,
-                                                 trigger_source='ch2_positive_edge',
+                                                 trigger_delay=self._config["trigger_delay_zoom"],
                                                  threshold=0.1,
                                                  average=True,
-                                                 timeout=self.duration_sweep))[0]
+                                                 timeout=self.duration_sweep*2))[0]
         score = self.pdh_score(curve.data)
         curve.params["phi_pdh"] = phi
         curve.params["score"] = score
@@ -523,30 +525,33 @@ class FPMembranes(FabryPerot):
         :param n:
         :return:
         """
-
-        print 'phi_step', phi_step
         if phi_step<phi_accuracy:
             return phi
         for new_phi in (phi + phi_step, phi - phi_step):
             new_val, curve = self.acquire_pdh_phase(new_phi, parent)
+            self.logger.info("phi_pdh: %i -> %i", new_phi, new_val)
             if new_val>val:
                 return self.search_pdh_phase(new_phi, new_val, phi_step/2, phi_accuracy, parent)
         # best result was for phi
         return self.search_pdh_phase(phi, val, phi_step/2, phi_accuracy, parent)
 
     def calibrate(self):
-        curves = Model.calibrate(self)
+        duration = self.sweep()
+        curves = Model.calibrate(self,
+                               inputs=[self.inputs['reflection']],
+                               scopeparams=dict(duration=duration,
+                                                trigger_delay=duration/2.))
         last_duration = curves[0].params["duration"]
         self.sweep()
-        threshold = 0.9*self.inputs["transmission"]._config.max
-        timeout=last_duration * 10
+        self._config["trigger_delay_zoom"] = curves[0].data.argmin()
+
+        timeout = last_duration * 3
         for sig in self.inputs.values():
             curves += Model.calibrate(self,
                             inputs=[sig],
-                            scopeparams=dict(secondsignal='transmission',
+                            scopeparams=dict(secondsignal='piezo',
                                              duration=self.duration_zoom,
-                                             trigger_source='ch2_positive_edge',
-                                             threshold=0.1,
+                                             trigger_delay=self._config["trigger_delay_zoom"],
                                              timeout=timeout))
             if sig._name == 'pdh':
                 parent = curves[-1]
@@ -584,6 +589,7 @@ class FPMembranes(FabryPerot):
         duration = super(FPMembranes, self).sweep()
         self._parent.rp.scope.setup(trigger_source='asg1',
                                     duration=duration)
+        return duration
 
 
 
