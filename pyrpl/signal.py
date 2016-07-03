@@ -333,7 +333,7 @@ class RPOutputSignal(RPSignal):
         Enables feedback with this output. The realized transfer function of
         the pid plus specified external analog filters is a pure integrator,
         to within the limits imposed by the knowledge of the external filters.
-        The desored unity gain frequency is stored in the config file.
+        The desired unity gain frequency is stored in the config file.
 
         Parameters
         ----------

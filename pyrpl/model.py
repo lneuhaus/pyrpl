@@ -459,20 +459,40 @@ class FPMembranes(FabryPerot):
 
         return ret
 
-    def lock_pdh(self, detuning=1., factor=1.):
+    def lock_pdh(self, factor=1.):
+        """
+        initial_detuning = 0.2
+        for index, output in enumerate(self.outputs.values()):
+            if index==0:
+                offset = 1
+            else:
+                offset = None
+            output.lock(self.pdh_slope(initial_detuning)*self.detuning_per_m, initial_detuning, self.inputs['pdh'], factor=1, offset=offset)
+        """
         self._lock(input=self.inputs["pdh"],
                    factor=factor,
-                   detuning=detuning,
+                   detuning=-0.2,
                    offset=1.)
 
     lock = lock_pdh
+
+    def change_detuning(self, detuning):
+        """
+        Dirty and temporary: need to check with Leo how we should proceed
+        :return:
+        """
+
+        for index, output in enumerate(self.outputs.values()):
+            output.lock(self.pdh_slope(detuning) * self.detuning_per_m, detuning, self.inputs['pdh'])
+
 
     def pdh_score(self, data):
         """
         This score should be maximised to improve the phase of the demodulation
         :return:
         """
-        return (data.max() - data.min()) / (data.argmax() - data.argmin())
+
+        return (data.max() - data.min()) / (data.argmin() - data.argmax())
 
     @property
     def duration_zoom(self):
@@ -482,10 +502,9 @@ class FPMembranes(FabryPerot):
             self._config["duration_zoom"] = 5*self.duration_sweep/self._config.finesse
             return self._config.duration_zoom
 
-
     @property
-    def duration_sweep(self):
-        return self._parent.c.scope.duration
+    def duration_ramp(self):
+        return self._config.duration_ramp
 
     def acquire_pdh_phase(self, phi, parent=None):
         """
@@ -504,12 +523,12 @@ class FPMembranes(FabryPerot):
         # sure curve is only acquired when ramp is rising
         curve = Model.calibrate(self,
                                 inputs=[sig],
-                                scopeparams=dict(secondsignal='transmission',
+                                scopeparams=dict(secondsignal='piezo',
                                                  duration=self.duration_zoom,
                                                  trigger_delay=self._config["trigger_delay_zoom"],
                                                  threshold=0.1,
                                                  average=True,
-                                                 timeout=self.duration_sweep*2))[0]
+                                                 timeout=self.duration_ramp*4))[0]
         score = self.pdh_score(curve.data)
         curve.params["phi_pdh"] = phi
         curve.params["score"] = score
@@ -536,16 +555,16 @@ class FPMembranes(FabryPerot):
         return self.search_pdh_phase(phi, val, phi_step/2, phi_accuracy, parent)
 
     def calibrate(self):
-        duration = self.sweep()
+        self._config["duration_ramp"] = self.sweep()/2
         curves = Model.calibrate(self,
                                inputs=[self.inputs['reflection']],
-                               scopeparams=dict(duration=duration,
-                                                trigger_delay=duration/2.))
+                               scopeparams=dict(duration=self.duration_ramp*2,
+                                                trigger_delay=self.duration_ramp/2.))
         last_duration = curves[0].params["duration"]
         self.sweep()
-        self._config["trigger_delay_zoom"] = curves[0].data.argmin()
+        self._config["trigger_delay_zoom"] = curves[0].data[0:self.duration_ramp].argmin()
 
-        timeout = last_duration * 3
+        timeout = last_duration * 6
         for sig in self.inputs.values():
             curves += Model.calibrate(self,
                             inputs=[sig],
