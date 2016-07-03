@@ -4,6 +4,7 @@ import logging
 import time
 logger = logging.getLogger(name=__name__)
 
+from scipy.constants import c
 
 def getmodel(modeltype):
     try:
@@ -260,7 +261,6 @@ class Model(object):
                     curve2 = input2.curve
                     curve.add_child(curve2)
                 except KeyError:
-                    # no secondsignal was specified
                     pass
             finally:
                 # make sure to reload config file here so that the modified
@@ -400,6 +400,12 @@ class FabryPerot(Model):
                    factor=factor,
                    offset=1.0*np.sign(detuning))
 
+    def lock_transmission(self, detuning=1, factor=1.0):
+        self._lock(input=self.inputs["transmission"],
+                   detuning=detuning,
+                   factor=factor,
+                   offset=1.0 * np.sign(detuning))
+
     lock = lock_reflection
 
     def calibrate(self):
@@ -434,6 +440,152 @@ class FPM(FabryPerot):
         duration = super(FPM, self).sweep()
         self._parent.   rp.scope.setup(trigger_source='asg1',
                                     duration=duration)
+
+class FPMembranes(FabryPerot):
+    def pdh(self, detuning):
+        offset = self._config.offset_pdh
+        phi = self._config.phase_pdh
+        ampl = self._config.ampl_pdh
+        width = c/(4*self._config.cavity_length*self._config.finesse)
+        mod = self._config.mod_pdh
+
+        detuning = detuning*width
+
+        f1 = 2 * ampl * detuning * width * (mod ** 2)
+        numer = ((detuning ** 2 + width ** 2 - mod ** 2) * np.cos(phi) - 2 * width * mod * np.sin(phi))
+        denom = ((detuning ** 2 + width ** 2) * (width ** 2 + (detuning - mod) ** 2) * (width ** 2 + (detuning + mod) ** 2))
+        ret = offset + f1 * numer / denom
+
+        return ret
+
+    def lock_pdh(self, detuning=1., factor=1.):
+        self._lock(input=self.inputs["pdh"],
+                   factor=factor,
+                   detuning=detuning,
+                   offset=1.)
+
+    lock = lock_pdh
+
+    def pdh_score(self, data):
+        """
+        This score should be maximised to improve the phase of the demodulation
+        :return:
+        """
+        return (data.max() - data.min()) / (data.argmax() - data.argmin())
+
+    @property
+    def duration_zoom(self):
+        if hasattr(self._config, 'duration_zoom'):
+            return self._config.duration_zoom
+        else:
+            self._config.duration_zoom = 5*self.duration_sweep/self._config.finesse
+            return self._config.duration_zoom
+
+    @property
+    def duration_sweep(self):
+        return self._parent.c.scope.duration
+
+    def acquire_pdh_phase(self, phi, parent=None):
+        """
+        Acquires one pdh phase
+        :param phi: pdh phase to acquire.
+        parent: parent curve to store calibration curve.
+        :return: score, phase
+        score: the pdh_score to maximize
+        curve: the calibration curve
+        """
+
+        sig = self.inputs["pdh"]
+        self.inputs["pdh"]._config.phase = phi
+        self.setup()
+        self.sweep() # it would be cleaner to have a periodic=False in asg to make
+        # sure curve is only acquired when ramp is rising
+        curve = Model.calibrate(self,
+                                inputs=[sig],
+                                scopeparams=dict(secondsignal='transmission',
+                                                 duration=self.duration_zoom,
+                                                 trigger_source='ch2_positive_edge',
+                                                 threshold=0.1,
+                                                 average=True,
+                                                 timeout=self.duration_sweep))[0]
+        score = self.pdh_score(curve.data)
+        curve.params["phi_pdh"] = phi
+        curve.params["score"] = score
+        if sig._config.autosave and parent is not None:
+            curve.move(parent)
+        return score, curve
+
+    def search_pdh_phase(self, phi, val, phi_step, phi_accuracy, parent=None):
+        """
+        Looks for best score by n dichotomy steps between phi1 and phi2
+        :param phi1:
+        :param phi2:
+        :param n:
+        :return:
+        """
+
+        print 'phi_step', phi_step
+        if phi_step<phi_accuracy:
+            return phi
+        for new_phi in (phi + phi_step, phi - phi_step):
+            new_val, curve = self.acquire_pdh_phase(new_phi, parent)
+            if new_val>val:
+                return self.search_pdh_phase(new_phi, new_val, phi_step/2, phi_accuracy, parent)
+        # best result was for phi
+        return self.search_pdh_phase(phi, val, phi_step/2, phi_accuracy, parent)
+
+    def calibrate(self):
+        curves = Model.calibrate(self)
+        last_duration = curves[0].params["duration"]
+        self.sweep()
+        threshold = 0.9*self.inputs["transmission"]._config.max
+        timeout=last_duration * 10
+        for sig in self.inputs.values():
+            curves += Model.calibrate(self,
+                            inputs=[sig],
+                            scopeparams=dict(secondsignal='transmission',
+                                             duration=self.duration_zoom,
+                                             trigger_source='ch2_positive_edge',
+                                             threshold=0.1,
+                                             timeout=timeout))
+            if sig._name == 'pdh':
+                parent = curves[-1]
+                scores = []
+                phis = (0., 120., 240.)
+                for phi in phis:
+                    score, curve = self.acquire_pdh_phase(phi, parent)
+                    scores.append(score)
+                    #look for optimal phase between phi_guess +- 45 deg
+                tab = [(val, phi) for (val, phi) in zip(scores, phis)]
+                (val, phi) = sorted(tab)[-1]
+                #delta_phi = phi2 - phi1
+                #delta_phi = (delta_phi + 180.) % (360.) - 180.
+                #phi2 = phi1 + delta_phi
+                sig._config.phase = self.search_pdh_phase(phi, val, phi_step=60., phi_accuracy=1., parent=parent)
+                self._config.offset_pdh = sig._config.mean
+                self._config.ampl_pdh = (sig._config.max - sig._config.min)/2
+        return curves
+
+    def setup(self):
+        self._parent.rp.iq0.setup(frequency=self._config.mod_pdh,
+                                  bandwidth=[self.inputs['pdh']._config.bandwidth, self.inputs['pdh']._config.bandwidth],
+                                  gain=0,
+                                  phase=self.inputs["pdh"]._config.phase,
+                                  acbandwidth=500000,
+                                  amplitude=self.inputs['pdh']._config.mod_amplitude_v,
+                                  input=self.inputs['pdh']._config.redpitaya_mod_input,
+                                  output_direct=self.inputs['pdh']._config.redpitaya_mod_output,
+                                  output_signal='quadrature',
+                                  quadrature_factor=self.inputs['pdh']._config.redpitaya_quadrature_factor)
+        #o = self.outputs["slow"]
+        #o.output_offset = o._config.lastoffset
+
+    def sweep(self):
+        duration = super(FPMembranes, self).sweep()
+        self._parent.rp.scope.setup(trigger_source='asg1',
+                                    duration=duration)
+
+
 
 class TEM02FabryPerot(FabryPerot):
     export_to_parent = ['unlock', 'sweep', 'islocked',

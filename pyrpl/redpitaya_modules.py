@@ -420,17 +420,20 @@ class Scope(BaseModule):
             self.input2 = input2
         if trigger_delay is not None:
             self.trigger_delay = trigger_delay
+
         if trigger_source is not None:
             self.trigger_source = trigger_source
         else:
             self.trigger_source = self.trigger_source
 
-        if self.trigger_source=='immediately':
+        if self.trigger_source == 'immediately':
             self._trigger_delay = self.data_length
         else:
             self.trigger_delay = self.trigger_delay
 
         self._trigger_armed = True
+        self.trigger_source = self.trigger_source
+
         if self.trigger_source == 'immediately':
             self.wait_for_pretrig_ok()
             self.trigger_source = 'immediately'# write state machine
