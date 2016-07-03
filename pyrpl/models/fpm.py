@@ -13,7 +13,8 @@ class FPM(FabryPerot):
         # instantiate the function generator for pdh - may take a few tries..
         from pyinstruments.pyhardwaredb import instrument
         from visa import VisaIOError
-        pdh_instrument = self._config._root.general.pdh_generator
+        signal = self.inputs["pdh"]
+        pdh_instrument = signal._config.setup.generator
         for i in range(5):
             try:
                 self._generator = instrument(pdh_instrument)
@@ -28,61 +29,62 @@ class FPM(FabryPerot):
             name="fpm_2p_coarse[V]")  # logbook for coarse voltage to estimate drift rates for example
         self._pdh_rms_log = SensingDevice(
             name="pdh_rms_rel")  # logbook for pdh rms
-
-
+        self._enable_pdh()
 
     def sweep(self):
         duration = super(FPM, self).sweep()
-        self._parent.   rp.scope.setup(trigger_source='asg1',
+        self._parent.rp.scope.setup(trigger_source='asg1',
                                     duration=duration)
 
-
     @property
-    def pdhon(self):
-        self._pdh.channel_idx = 1
-        return self._pdh.output_enabled
+    def pdh_enabled(self):
+        self._generator.channel_idx = 1
+        return self._generator.output_enabled
 
-    def _setup_pdh(self, phase=None, frequency=None):
-        if not self.pdhon:
-            if frequency is None:
-                frequency = self.constants["pdh_frequency"]
-            if phase is None:
-                phase = self.constants["pdh_phase"]
-            phase = phase % 360.0
-            # self.constants = { "pdh_phase": phase,
-            #                   "pdh_frequency": frequency}
-            # set fgen clock to external
-            self._pdh.recall(1)
-            self._pdh.phaseinit()  # realign the phase of the two generators just in case (once problems were observed after a few weeks)
+    def _enable_pdh(self, phase=None, frequency=None):
+        signal = self.inputs["pdh"]
+        if phase is None:
+            phase = signal._config.setup.phase
+        phase = phase % 360.0
+        if frequency is None:
+            frequency = signal._config.setup.frequency
+        if not self.pdh_enabled or phase != self._generator.phase\
+                or frequency != self._generator.frequency:
+            self._generator.recall(1)
+            self._generator.phaseinit()
+            # realign the phase of the two generators just in case
+            # (once problems were observed after a few weeks)
             for i in range(2):
-                self._pdh.channel_idx = i + 1
-                self._pdh.output_enabled = False
-                self._pdh.waveform = "SIN"
-                self._pdh.impedance = 50
-                self._pdh.offset = 0
-                self._pdh.frequency = frequency
+                self._generator.channel_idx = i + 1
+                self._generator.output_enabled = False
+                self._generator.waveform = "SIN"
+                self._generator.impedance = 50
+                self._generator.offset = 0
+                self._generator.frequency = frequency
                 if i == 0:  # modulator output to EOM
-                    self._pdh.phase = 0
-                    self._pdh.amplitude = 4.0
+                    self._generator.phase = 0
+                    self._generator.amplitude = \
+                        signal._config.setup.amplitude
                 else:  # demodulator output
-                    self._pdh.phase = phase
-                    self._pdh.amplitude = 1.4
-                self._pdh.output_enabled = True
-                self._pdh.phaseinit()
+                    self._generator.phase = phase
+                    self._generator.amplitude = 1.4
+                self._generator.output_enabled = True
+                self._generator.phaseinit()
         #return super(RPLockbox_FPM, self)._setup_pdh()
 
-
     def _disable_pdh(self, sbfreq=None):
+        signal = self.inputs["pdh"]
         for i in range(2):
-            self._pdh.channel_idx = i + 1
-            self._pdh.output_enabled = False
+            self._generator.channel_idx = i + 1
+            self._generator.output_enabled = False
         if not sbfreq is None:
-            self._pdh.channel_idx = 1
-            self._pdh.waveform = "SIN"
-            self._pdh.impedance = 50
-            self._pdh.offset = 0
-            self._pdh.frequency = sbfreq
-            self._pdh.phase = 0
-            self._pdh.amplitude = 3.5
-            self._pdh.output_enabled = True
+            self._generator.channel_idx = 1
+            self._generator.waveform = "SIN"
+            self._generator.impedance = 50
+            self._generator.offset = 0
+            self._generator.frequency = sbfreq
+            self._generator.phase = 0
+            self._generator.amplitude = \
+                signal._config.setup.amplitude_for_finesse
+            self._generator.output_enabled = True
         #return super(RPLockbox_FPM, self)._disable_pdh()

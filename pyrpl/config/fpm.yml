@@ -22,7 +22,6 @@ general:
   # import CurveDB class from which module? if missing, it's pyrpl.curvedb
   #curvedb: pyrpl
   curvedb: pyinstruments
-  pdh_generator: AFG_EVA
 
 # most important section that defines how the lockbox understands the
 # real-world system
@@ -37,25 +36,46 @@ model:
   # for interferometer, this is the phase error in radians
   # this value is uniquely needed for the function 'islocked'
   maxerror: 0.1
-  offresonant_reflection: 0.23871592432260513
-  resonant_reflection: 0.015205182135105133
-  finesse: 90000
+  offresonant_reflection: 0.19684580713510513
+  resonant_reflection: 0.06159190088510513
+  finesse: 92000.0
+  length: 5.61e-05
   # signals in order of their preferrence
   #signalpreference:
   #- reflection
   #- transmission
+  lock:
+    error_threshold: 0.1
+  calibration:
+    zoomfactor: 0.2
+    relative_threshold: 0.9
 
 # all signals that are inputs of the lockbox. Must be signal names understood
-# by the model
+# by the model. The order of signals indicates their preferrence as error
+# signals.
 inputs:
   # the reflection photodiode
   reflection:
     redpitaya_input: adc2
     offset: 0.013481341302394867
-    max: 0.23871592432260513
-    min: 0.015205182135105133
-    mean: 0.22288598120212555
-    rms: 0.018908728390279284
+    max: 0.19806651026010513
+    min: 0.06610850244760513
+    mean: 0.18222111463546753
+    rms: 0.012057569672841205
+  pdh:
+    redpitaya_input: adc1
+    max: 0.06884765625
+    min: -0.0640869140625
+    mean: 0.0024619102478027344
+    rms: 0.011727941023374188
+    setup:
+      phase: 5.0
+      amplitude: 4.0
+      amplitude_for_finesse: 3.5
+      frequency: 80000000.0
+      generator: AFG_EVA
+
+
   # the photodiode for the external pdh signal
   #transmission:
   #  redpitaya_input: adc1
@@ -86,7 +106,7 @@ outputs:
     - 0
     - 0
     calibrationunits: m_per_V
-    lastoffset: 0.1397705078125
+    lastoffset: 0.128662109375
   piezo:
     redpitaya_output: out2
     # we will calibrate the piezo response in units of m_per_V (not a necessary
@@ -173,3 +193,9 @@ signal:
   # reflection from a cavity
   peak: 0
 
+scopegui:
+  coordinates:
+  - 0
+  - 0
+  - 882
+  - 639

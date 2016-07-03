@@ -49,7 +49,7 @@ class Model(object):
         ----------
         func: function
             the function
-        y: float
+        y: float or np.array(,dtype=float)
             the desired value of the function
         x0: float
             the starting point for the search
@@ -61,18 +61,27 @@ class Model(object):
         x: float
             the solution. None if no inverse could be found.
         """
-        def myfunc(x, *args):
-            return func(x, *args) - y
-        solution, infodict, ier, mesg = scipy.optimize.fsolve(
-                                     myfunc,
-                                     x0,
-                                     args=args,
-                                     xtol=1e-9,
-                                     full_output=True)
-        if ier == 1:  # means solution was found
-            return solution
-        else:
-            return None
+        try:
+            inverse = [self._inverse(func, yy, x0, args=args) for yy in y]
+            if len(inverse) == 1:
+                return inverse[0]
+            else:
+                return inverse
+        except TypeError:
+            def myfunc(x, *args):
+                return func(x, *args) - y
+            solution, infodict, ier, mesg = scipy.optimize.fsolve(
+                         myfunc,
+                         x0,
+                         args=args,
+                         xtol=1e-6,
+                         epsfcn=1e-8,
+                         fprime=self.__getattribute__(func.__name__+'_slope'),
+                         full_output=True)
+            if ier == 1:  # means solution was found
+                return solution[0]
+            else:
+                return None
 
     def _make_slope(self, fn):
         def fn_slope(x, *args):
@@ -124,7 +133,7 @@ class Model(object):
             output.save_current_gain(factor)
 
     def islocked(self):
-        """ returns True if locked, else False"""
+        """ returns True if locked, else False """
         if hasattr(self, self._variable):
             variable = self.__getattribute__(self._variable)
         else:

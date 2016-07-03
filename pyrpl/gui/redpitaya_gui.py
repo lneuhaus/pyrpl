@@ -1177,3 +1177,18 @@ class RedPitayaGui(RedPitaya):
 
         """
         pass
+
+    @property
+    def window_position(self):
+        xy = self.tab_widget.pos()
+        x = xy.x()
+        y = xy.y()
+        dxdy = self.tab_widget.size()
+        dx = dxdy.width()
+        dy = dxdy.height()
+        return [x, y, dx, dy]
+
+    @window_position.setter
+    def window_position(self, coords):
+        self.tab_widget.move(coords[0], coords[1])
+        self.tab_widget.resize(coords[2], coords[3])

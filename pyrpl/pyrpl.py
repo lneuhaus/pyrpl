@@ -417,11 +417,32 @@ class Pyrpl(Lockbox):
         # initialize scope with predefined parameters
         if self.c.redpitaya.gui:
             self._setupscope()
+            self._set_window_position()
 
     def _setupscope(self):
         if "scope" in self.c._dict:
             self.rp.scope.setup(**self.c.scope._dict)
 
+    def _lock_window_position(self):
+        try:
+            _ = self.c.scopegui
+        except KeyError:
+            self.c["scopegui"] = dict()
+        try:
+            self.c.scopegui["coordinates"] = self.rp.window_position
+        except:
+            self.logger.warning("Gui is not started. Cannot save position.")
+
+    def _set_window_position(self):
+        try:
+            coordinates = self.c["scopegui"]["coordinates"]
+        except KeyError:
+            coordinates = [0, 0, 800, 600]
+        try:
+            self.rp.window_position = coordinates
+            self._lock_window_position()
+        except:
+            self.logger.warning("Gui is not started. Cannot save position.")
 
 class Trash(object):
 
