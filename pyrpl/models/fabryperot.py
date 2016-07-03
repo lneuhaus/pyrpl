@@ -35,7 +35,7 @@ class FabryPerot(Model):
         return (-2.0+6.0*x**2) / (1.0 + x ** 2)**3  \
                / abs(self._lorentz_slope(np.sqrt(3)))
 
-    def _pdh_normalized(x, sbfreq=10.0, phase=0, eta=1):
+    def _pdh_normalized(self, x, sbfreq=10.0, phase=0, eta=1):
         # pdh only has appreciable slope for detunings between -0.5 and 0.5
         # unless you are using it for very exotic purposes..
         # incident beam: laser field
@@ -72,9 +72,10 @@ class FabryPerot(Model):
         return (res-offres) * self._lorentz(x) + offres
 
     def pdh(self, x):
-        sbfreq = self._config.sidebandfrequency * self.detuning_per_Hz
+        sbfreq = self.signals["pdh"]._config.setup.frequency \
+                 * self.detuning_per_Hz
         return self._pdh_normalized(x, sbfreq=sbfreq) \
-               * self.signals['pdh']._config.peak
+               * self._config.peak_pdh
 
     @property
     def R0(self):
@@ -146,6 +147,5 @@ class FabryPerot(Model):
             if sig._name == 'transmission':
                 self._config["resonant_transmission"] = sig._config.max
             if sig._name == 'pdh':
-                self._config["peak"] = (sig._config.max - sig._config.min)/2
+                self._config["peak_pdh"] = (sig._config.max - sig._config.min)/2
         return curves
-

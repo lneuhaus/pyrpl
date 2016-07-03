@@ -9,7 +9,8 @@ class Model(object):
     baseclass for all other models """
 
     export_to_parent = ["sweep", "calibrate", "save_current_gain",
-                        "unlock", "islocked", "lock", "help", "calib_lock"]
+                        "unlock", "islocked", "lock", "help", "calib_lock",
+                        "_lock"]
 
 
     # independent variable that specifies the state of the system
@@ -170,11 +171,7 @@ class Model(object):
         frequency = None
         for o in self.outputs.values():
             frequency = o.sweep() or frequency
-        if "sccopegui" in self._parent.c._dict:
-            if self._parent.c.scopegui.auto_run_continuous:
-                self._parent.rp.scope_widget.run_continuous()
         return 1.0 / frequency
-
 
     def _lock(self, input=None, factor=1.0, offset=None, **kwargs):
         """

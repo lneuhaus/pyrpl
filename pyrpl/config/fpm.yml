@@ -36,8 +36,8 @@ model:
   # for interferometer, this is the phase error in radians
   # this value is uniquely needed for the function 'islocked'
   maxerror: 0.1
-  offresonant_reflection: 0.19574717432260513
-  resonant_reflection: 0.06195811182260513
+  offresonant_reflection: 0.19562510401010513
+  resonant_reflection: 0.05951670557260513
   finesse: 92000.0
   length: 5.61e-05
   # signals in order of their preferrence
@@ -46,10 +46,29 @@ model:
   #- transmission
   lock:
     error_threshold: 0.1
+    stages:
+      drift:
+        input: reflection
+        detuning: 1.5
+        factor: 5
+        time: 0.5
+        offset: 0.5
+      sof:
+        input: reflection
+        detuning: 1.0
+        factor: 1.0
+        time: 0.1
+      pdh:
+        input: pdh
+        detuning: 0
+        factor: 1
+
   calibration:
     zoomfactor: 0.03
     relative_threshold: 0.9
 
+  peak: 0.07061767578125
+  peak_pdh: 0.06817626953125
 # all signals that are inputs of the lockbox. Must be signal names understood
 # by the model. The order of signals indicates their preferrence as error
 # signals.
@@ -57,17 +76,17 @@ inputs:
   # the reflection photodiode
   reflection:
     redpitaya_input: adc2
-    offset: 0.013481341302394867
-    max: 0.19574717432260513
-    min: 0.06195811182260513
-    mean: 0.16869647055864334
-    rms: 0.024811255865794444
+    offset: 0.012691982090473175
+    max: 0.19562510401010513
+    min: 0.05951670557260513
+    mean: 0.17279966920614243
+    rms: 0.02174562686364253
   pdh:
     redpitaya_input: adc1
-    max: 0.0694580078125
-    min: -0.0662841796875
-    mean: 0.00023931264877319336
-    rms: 0.02715465139939615
+    max: 0.0728759765625
+    min: -0.0634765625
+    mean: 0.0027536749839782715
+    rms: 0.022109805028956906
     setup:
       phase: 5.0
       amplitude: 4.0
@@ -76,6 +95,7 @@ inputs:
       generator: AFG_EVA
 
 
+    offset: 0.0025617554783821106
   # the photodiode for the external pdh signal
   #transmission:
   #  redpitaya_input: adc1
@@ -106,7 +126,7 @@ outputs:
     - 0
     - 0
     calibrationunits: m_per_V
-    lastoffset: 0.128662109375
+    lastoffset: 0.129150390625
   piezo:
     redpitaya_output: out2
     # we will calibrate the piezo response in units of m_per_V (not a necessary
@@ -134,7 +154,7 @@ outputs:
     # from 15 kHz. To be safe, we start by demanding a unity-gain frequency
     # of 1 kHz and will later increase this value (automatically done after
     # lock optimisation)
-    unity_gain_frequency: 1000.0
+    unity_gain_frequency: 100.0
     inputfilter:
     - 4857.023409786845
     - 4857.023409786845

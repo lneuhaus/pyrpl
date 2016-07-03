@@ -468,7 +468,12 @@ class RPOutputSignal(RPSignal):
         return asg.frequency
 
     def save_current_gain(self, factor):
-        self._config.unity_gain_frequency *= factor
+        try:
+            ugf = self._config.unity_gain_frequency
+        except KeyError:
+            pass
+        else:
+            self._config.unity_gain_frequency = ugf * factor
         self._config.inputfilter = self.pid.inputfilter
 
     @property
