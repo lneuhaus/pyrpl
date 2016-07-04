@@ -235,7 +235,9 @@ class RPOutputSignal(RPSignal):
                                              branch,
                                              parent,
                                              restartscope)
+        self.setup()
 
+    def setup(self, **kwargs):
         # each output gets its own pid
         if not hasattr(self, "pid"):
             self.pid = self._rp.pids.pop()
@@ -272,12 +274,15 @@ class RPOutputSignal(RPSignal):
 
         # configure inputfilter
         try:
-            self.pid.inputfilter = self._config.inputfilter
-        except KeyError:
+            self.pid.inputfilter = self._config.lock.inputfilter
+        except (KeyError, AttributeError):
             logger.debug("No inputfilter was defined for output %s. ",
                          self._name)
         # save the current inputfilter to the config file
-        self._config["inputfilter"] = self.pid.inputfilter
+        try:
+            self._config["lock"]["inputfilter"] = self.pid.inputfilter
+        except KeyError:
+            self._config["lock"] = {"inputfilter": self.pid.inputfilter}
 
         # configure iir if desired
         self._loadiir()
@@ -366,13 +371,15 @@ class RPOutputSignal(RPSignal):
         """
 
         # if output is disabled for locking, skip the rest
-        if 'lock' in self._config._data and not self._config.lock:
+        if ('lock' not in self._config._keys()) or \
+                ("skip" in self._config.lock._keys() and
+                 self._config.lock.skip):
             return
 
         # compute integrator unity gain frequency
         if slope == 0:
             raise ValueError("Cannot lock on a zero slope!")
-        integrator_ugf = self._config.unity_gain_frequency * factor * -1
+        integrator_ugf = self._config.lock.unity_gain_frequency * factor * -1
         integrator_ugf /= (self._config[self._config.calibrationunits] * slope)
 
         # if gain is disabled somewhere, return
@@ -423,7 +430,7 @@ class RPOutputSignal(RPSignal):
 
         # reset inputfilter - allows configuration from configfile in
         # near real time
-        self.pid.inputfilter = self._config.inputfilter
+        self.pid.inputfilter = self._config.lock.inputfilter
 
         # rapidly turn on all gains
         self.pid.setpoint = setpoint
@@ -483,8 +490,8 @@ class RPOutputSignal(RPSignal):
         except KeyError:
             pass
         else:
-            self._config.unity_gain_frequency = ugf * factor
-        self._config.inputfilter = self.pid.inputfilter
+            self._config.lock.unity_gain_frequency = ugf * factor
+        self._config.lock.inputfilter = self.pid.inputfilter
 
     @property
     def output_offset(self):

@@ -36,8 +36,8 @@ model:
   # for interferometer, this is the phase error in radians
   # this value is uniquely needed for the function 'islocked'
   maxerror: 0.1
-  offresonant_reflection: 0.22326993197202682
-  resonant_reflection: 0.07507657259702682
+  offresonant_reflection: 0.20752286165952682
+  resonant_reflection: 0.06360196322202682
   finesse: 92000.0
   length: 5.61e-05
   # signals in order of their preferrence
@@ -68,63 +68,50 @@ model:
     relative_threshold: 0.9
 
   peak: 0.07061767578125
-  peak_pdh: 0.07769775390625
+  peak_pdh: 0.01593017578125
 # all signals that are inputs of the lockbox. Must be signal names understood
-# by the model. The order of signals indicates their preferrence as error
-# signals.
+# by the model.
 inputs:
-  # the reflection photodiode
   reflection:
     redpitaya_input: adc2
     offset: 0.012691982090473175
-    max: 0.22326993197202682
-    min: 0.07507657259702682
-    mean: 0.19852319359779358
-    rms: 0.023765577177146398
+    max: 0.20752286165952682
+    min: 0.06360196322202682
+    mean: 0.17391381412744522
+    rms: 0.029260771393737207
   pdh:
     redpitaya_input: adc1
-    max: 0.07800465077161789
-    min: -0.07739085704088211
-    mean: -0.00024902820587158203
-    rms: 0.025083397034254398
+    max: 0.01562672108411789
+    min: -0.01623363047838211
+    mean: 2.8468668460845947e-05
+    rms: 0.004271276915859901
     setup:
-      phase: 5.0
+      phase: -5.0
       amplitude: 4.0
       amplitude_for_finesse: 3.5
       frequency: 80000000.0
       generator: AFG_EVA
-
-
     offset: 0.0025617554783821106
-  # the photodiode for the external pdh signal
-  #transmission:
-  #  redpitaya_input: adc1
-  #  offset: 0.002350352704524994
-  #  max: 0.002410389482975006
-  #  min: -0.002716563642024994
-  #  mean: -0.00014547258615493774
-  #  rms: 0.0006782362843540166
-
-# All output signals. Names of outputs are arbitrary.
+# All output signals. Names of outputs are arbitrary. if the 'lock' tab is
+# missing or false, the output will not be used for locking
 outputs:
   # the very coarse piezo. at the moment, it is controlled manually
   slow:
-    lock: false
+    lock:
+      skip: true
+      inputfilter:
+      - 0
+      - 0
+      - 0
+      - 0
     redpitaya_output: pwm1
     max_voltage: 0.3
     min_voltage: -0.3
     # amplitier gain complicated - calibrate manually. at the moment
     m_per_V: 1.0
     analogfilter:
-      # yes: there is a 10 mHz filter behind pwm output
       lowpass:
       - 0.01
-  # we only have 1 actuator in this interferometer, the piezo in the LO arm
-    inputfilter:
-    - 0
-    - 0
-    - 0
-    - 0
     calibrationunits: m_per_V
     lastoffset: 0.127197265625
   piezo:
@@ -147,19 +134,15 @@ outputs:
     # therefore the analog filter can be well approximated by a first order
     # lowpass with corner frequency 37.9 Hz
     analogfilter:
-      lowpass:
-      - 15.8
-    # the piezo manufacturer specifies the first resonance at 144 kHz
-    # however, the mounting structure is expected to have resonances starting
-    # from 15 kHz. To be safe, we start by demanding a unity-gain frequency
-    # of 1 kHz and will later increase this value (automatically done after
-    # lock optimisation)
-    unity_gain_frequency: 100.0
-    inputfilter:
-    - 4857.023409786845
-    - 4857.023409786845
-    - 4857.023409786845
-    - 4857.023409786845
+      lowpass: [15.8]
+    lock:
+      unity_gain_frequency: 100.0
+      double_integrator: false
+      inputfilter:
+      - 4857.023409786845
+      - 4857.023409786845
+      - 4857.023409786845
+      - 4857.023409786845
     sweep:
       waveform: sin
       frequency: 25.0
@@ -168,7 +151,7 @@ outputs:
     max_voltage: 0.9998779296875
     min_voltage: -1.0
     transfer_function:
-      open_loop: 254631
+      open_loop: 254634
 
 ##############################################################################
 ###  Configuration parameters that rarely need to be modified ################
@@ -222,3 +205,4 @@ signal:
   # peak is a reserved place to store the peak value, for example offresonant
   # reflection from a cavity
   peak: 0
+  trigger_delay: 0
