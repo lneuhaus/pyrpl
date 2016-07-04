@@ -9,8 +9,11 @@ from pyrpl import RedPitaya
 from pyrpl.redpitaya_modules import *
 from pyrpl.registers import *
 from pyrpl.bijection import Bijection
+
 import time
+
 from pyrpl import CurveDB
+
 
 class TestClass(object):
     
@@ -128,4 +131,4 @@ class TestClass(object):
                 str(self.r.ams.dac3) + " vs " + str(offset)
         # reset offset to protect other tests
         asg.offset = 0
-        asg.scale=1
+        asg.scale = 1

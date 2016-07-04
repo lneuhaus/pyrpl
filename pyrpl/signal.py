@@ -170,8 +170,9 @@ class RPSignal(Signal):
     def _redpitaya_input(self):
         return self._config.redpitaya_input
 
-    def _saverawdata(self, data):
+    def _saverawdata(self, data, times):
         self._lastvalues = data
+        self._lasttimes = times
         self._acquiretime = time.time()
 
     def _acquire(self, secondsignal=None):
@@ -194,20 +195,20 @@ class RPSignal(Signal):
                              average=self._config.average,
                              threshold=self._config.threshold,
                              hysteresis=self._config.hysteresis,
-                             trigger_delay=0,
+                             trigger_delay=self._config.trigger_delay,
                              input1=self._redpitaya_input,
                              input2=input2)
         try:
             timeout = self._config.timeout
         except KeyError:
             timeout = self._rp.scope.duration*5
-        self._saverawdata(self._rp.scope.curve(ch=1, timeout=timeout))
+        self._saverawdata(self._rp.scope.curve(ch=1, timeout=timeout), self._rp.scope.times)
         if secondsignal is not None:
-            secondsignal._saverawdata(self._rp.scope.curve(ch=2, timeout=-1))
+            secondsignal._saverawdata(self._rp.scope.curve(ch=2, timeout=-1), self._rp.scope.times)
         self._restartscope()
 
     @property
-    def _times(self): return self._rp.scope.times
+    def _times(self): return self._lasttimes#self._rp.scope.times
 
     @property
     def sample(self):
@@ -343,7 +344,7 @@ class RPOutputSignal(RPSignal):
         Enables feedback with this output. The realized transfer function of
         the pid plus specified external analog filters is a pure integrator,
         to within the limits imposed by the knowledge of the external filters.
-        The desored unity gain frequency is stored in the config file.
+        The desired unity gain frequency is stored in the config file.
 
         Parameters
         ----------

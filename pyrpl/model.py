@@ -239,6 +239,7 @@ class Model(object):
         curves: list
             list of all acquired curves
         """
+
         self.unlock()
         duration = self.sweep()
         curves = []
@@ -300,3 +301,4 @@ class Model(object):
                          + "Now simply call p.lock() to lock.  \n"
                          + "Assert if locked with p.islocked() and unlock \n"
                          + "with p.unlock(). ")
+

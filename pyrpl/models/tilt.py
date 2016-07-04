@@ -111,7 +111,8 @@ class TEM02FabryPerot(FabryPerot):
             self._parent.piezo.pid.ival = self._config.lock.drift_offset
             self.lock_transmission(factor=factor, detuning=self._config.lock.drift_detuning)
             time.sleep(self._config.lock.drift_timeout)
-        if stop: return
+        if stop:
+            return
         self.lock_transmission(detuning = self._config.lock.drift_detuning*0.66)
         time.sleep(0.01)
         return self.lock_tilt(detuning=detuning, factor=factor)
