@@ -1,6 +1,6 @@
 redpitaya:
-  hostname: 10.214.1.32
-  password: root
+  hostname: redpitaya.ddns.net
+  password: dmhvs30NDEBD
   user: root
   port: 2222
   frequency_correction: 1.0
@@ -84,3 +84,9 @@ signal:
   offset_subtraction: true
   offset: 0
   peak: 0
+scopegui:
+  coordinates:
+  - 0
+  - 0
+  - 800
+  - 600
