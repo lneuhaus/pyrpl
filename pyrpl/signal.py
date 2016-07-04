@@ -354,7 +354,7 @@ class RPOutputSignal(RPSignal):
         setpoint: float
             The lock setpoint in V.
         input: RPSignal or str
-            The input signal of the pid. None leaves the currend pid input.
+            The input signal of the pid. None leaves the current pid input.
         factor: float
             An extra factor to multiply the gain with for debugging purposes.
         offset:

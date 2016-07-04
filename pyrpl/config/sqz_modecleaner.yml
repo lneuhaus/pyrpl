@@ -37,7 +37,7 @@ model:
   # this value is uniquely needed for the function 'islocked'
   maxerror: 0.1
   finesse: 60.0
-  length: 0.5
+  length: 0.425
   # signals in order of their preferrence
   #signalpreference:
   #- reflection
@@ -58,12 +58,12 @@ model:
       #  time: 0.1
       prepdh:
         input: pdh
-        detuning: 0
+        detuning: 0.25
         factor: 1
         time: 0.01
       pdh:
         input: pdh
-        detuning: 0
+        detuning: 0.1
         factor: 1
 
   calibration:
@@ -72,8 +72,8 @@ model:
 
   resonant_reflection: -0.08322671800851822
   offresonant_reflection: 0.08339925855398178
-  peak_pdh: 0.1905517578125
-  resonant_transmission: 0.17962361127138138
+  peak_pdh: 0.23974609375
+  resonant_transmission: 0.19524861127138138
 # all signals that are inputs of the lockbox. Must be signal names understood
 # by the model. The order of signals indicates their preferrence as error
 # signals.
@@ -89,10 +89,10 @@ inputs:
   transmission:
     redpitaya_input: adc2
 
-    max: 0.17962361127138138
-    min: -0.0014066621661186218
-    mean: 0.012129709124565125
-    rms: 0.02969457142577704
+    max: 0.19524861127138138
+    min: -0.0011625215411186218
+    mean: 0.010687261819839478
+    rms: 0.029277261590318432
     offset: -0.004574783146381378
   pdh:
     setup:
@@ -105,15 +105,15 @@ inputs:
       output_signal: quadrature
       quadrature_factor: 0.05
       bandwidth:
-      - 50000.0
-      - 50000.0
+      - 200000.0
+      - 500000.0
       acbandwidth: 100000.0
 
     redpitaya_input: iq0
-    max: 0.21127045154571533
-    min: -0.16983306407928467
-    mean: 0.008511252701282501
-    rms: 0.06392398118935155
+    max: 0.22933685779571533
+    min: -0.25015532970428467
+    mean: -0.01912904530763626
+    rms: 0.06832484363890941
     offset: 0.021029353141784668
 # All output signals. Names of outputs are arbitrary.
 outputs:
@@ -141,7 +141,7 @@ outputs:
     # from 15 kHz. To be safe, we start by demanding a unity-gain frequency
     # of 1 kHz and will later increase this value (automatically done after
     # lock optimisation)
-    unity_gain_frequency: 250.0
+    unity_gain_frequency: 2500.0
     sweep:
       waveform: ramp
       frequency: 10.0
@@ -150,8 +150,8 @@ outputs:
     inputfilter:
     - 19428.09363914738
     - 19428.09363914738
-    - 0
-    - 0
+    - 5000
+    - 5000
 scope:
   input1: adc2
   input2: dac1

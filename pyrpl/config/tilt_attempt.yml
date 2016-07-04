@@ -146,3 +146,9 @@ signal:
   threshold: 0
   # default trigger hysteresis
   hysteresis: 0.002
+scopegui:
+  coordinates:
+  - 0
+  - 0
+  - 800
+  - 600
