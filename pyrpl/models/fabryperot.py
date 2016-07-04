@@ -128,8 +128,6 @@ class FabryPerot(Model):
                    factor=factor,
                    offset=1.0 * np.sign(detuning))
 
-    lock = lock_reflection
-
     def calibrate(self):
         curves = super(FabryPerot, self).calibrate(
             scopeparams={'secondsignal': 'piezo'})
@@ -163,7 +161,6 @@ class FabryPerot(Model):
         pdh.iq.setup(**kwargs)
         pdh._config['redpitaya_input'] = pdh.iq.name
 
-
     def sweep(self):
         duration = super(type(self), self).sweep()
         self._parent.rp.scope.setup(trigger_source='asg1',
@@ -171,3 +168,20 @@ class FabryPerot(Model):
         if "scopegui" in self._parent.c._dict:
             if self._parent.c.scopegui.auto_run_continuous:
                 self._parent.rp.scope_widget.run_continuous()
+
+    def relative_reflection(self):
+        self.inputs["reflection"]._acquire()
+        return self.inputs["reflection"].mean / self.reflection(1000)
+
+    def relative_pdh_rms(self, avg = 1):
+        if avg > 1:
+            sum = 0
+            for i in range(avg):
+                sum += self.relative_pdh_rms()**2
+            return np.sqrt(sum/avg)
+        else:
+            self.signals["pdh"]._acquire()
+            rms = self.signals["pdh"].rms
+            relrms = rms / self._config.peak_pdh
+            self._pdh_rms_log.log(relrms)
+            return relrms

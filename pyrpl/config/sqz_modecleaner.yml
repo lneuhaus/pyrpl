@@ -46,29 +46,34 @@ model:
     error_threshold: 0.1
     stages:
       drift:
-        input: reflection
-        detuning: 1.5
-        factor: 5
-        time: 0.5
-        offset: 0.5
-      sof:
-        input: reflection
-        detuning: 1.0
+        input: transmission
+        detuning: 0.5
         factor: 1.0
-        time: 0.1
+        time: 1.0
+        offset: 1.0
+      #sof:
+      #  input: transmission
+      #  detuning: 1.0
+      #  factor: 1.0
+      #  time: 0.1
+      prepdh:
+        input: pdh
+        detuning: 0
+        factor: 1
+        time: 0.01
       pdh:
         input: pdh
         detuning: 0
         factor: 1
 
   calibration:
-    zoomfactor: 0.03
+    zoomfactor: 0.07
     relative_threshold: 0.9
 
   resonant_reflection: -0.08322671800851822
   offresonant_reflection: 0.08339925855398178
-  peak_pdh: 0.19586181640625
-  resonant_transmission: 0.17950154095888138
+  peak_pdh: 0.1905517578125
+  resonant_transmission: 0.17962361127138138
 # all signals that are inputs of the lockbox. Must be signal names understood
 # by the model. The order of signals indicates their preferrence as error
 # signals.
@@ -84,10 +89,10 @@ inputs:
   transmission:
     redpitaya_input: adc2
 
-    max: 0.17950154095888138
-    min: 0.003476150333881378
-    mean: 0.040292710065841675
-    rms: 0.04792653929942987
+    max: 0.17962361127138138
+    min: -0.0014066621661186218
+    mean: 0.012129709124565125
+    rms: 0.02969457142577704
     offset: -0.004574783146381378
   pdh:
     setup:
@@ -105,11 +110,11 @@ inputs:
       acbandwidth: 100000.0
 
     redpitaya_input: iq0
-    max: 0.0006482228636741638
-    min: 0.0006482228636741638
-    mean: 0.0006482228636741638
-    rms: 0.0
-    offset: -0.0006482228636741638
+    max: 0.21127045154571533
+    min: -0.16983306407928467
+    mean: 0.008511252701282501
+    rms: 0.06392398118935155
+    offset: 0.021029353141784668
 # All output signals. Names of outputs are arbitrary.
 outputs:
   # the very coarse piezo. at the moment, it is controlled manually
@@ -130,14 +135,13 @@ outputs:
     # therefore the analog filter can be well approximated by a first order
     # lowpass with corner frequency 37.9 Hz
     analogfilter:
-      lowpass:
-      - 20.0
+      lowpass: []
     # the piezo manufacturer specifies the first resonance at 144 kHz
     # however, the mounting structure is expected to have resonances starting
     # from 15 kHz. To be safe, we start by demanding a unity-gain frequency
     # of 1 kHz and will later increase this value (automatically done after
     # lock optimisation)
-    unity_gain_frequency: 12500.0
+    unity_gain_frequency: 250.0
     sweep:
       waveform: ramp
       frequency: 10.0
