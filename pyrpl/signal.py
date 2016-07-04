@@ -334,10 +334,19 @@ class RPOutputSignal(RPSignal):
         self.pid.ival = 0
 
     def unlock(self):
-        if 'lock' in self._config._data and not self._config.lock:
+        if self.skiplock:
             return
         else:
             self.off()
+
+    @property
+    def skiplock(self):
+        if 'lock' not in self._config._keys():
+            return True
+        if "skip" in self._config.lock._keys():
+            if self._config.lock.skip:
+                return True
+        return False
 
     def lock(self,
              slope,
@@ -371,11 +380,9 @@ class RPOutputSignal(RPSignal):
         """
 
         # if output is disabled for locking, skip the rest
-        if ('lock' not in self._config._keys()) or \
-                ("skip" in self._config.lock._keys() and
-                 self._config.lock.skip):
+        if self.skiplock:
             return
-
+        
         # compute integrator unity gain frequency
         if slope == 0:
             raise ValueError("Cannot lock on a zero slope!")
