@@ -431,8 +431,10 @@ class Scope(BaseModule):
         else:
             self.trigger_delay = self.trigger_delay
 
-        self._trigger_armed = True
+        self._trigger_source = 'off'
         self.trigger_source = self.trigger_source
+        self._trigger_armed = True
+
 
         if self.trigger_source == 'immediately':
             self.wait_for_pretrig_ok()
