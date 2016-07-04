@@ -41,6 +41,7 @@ class Model(object):
                 params = dict()
             try:
                 self.__getattribute__("setup_"+s._name)(**params)
+                self.logger.debug("Calling setup_%s!", s._name)
             except AttributeError:
                 pass
 
