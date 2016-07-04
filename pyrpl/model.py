@@ -4,23 +4,13 @@ import logging
 import time
 logger = logging.getLogger(name=__name__)
 
-
-def getmodel(modeltype):
-    try:
-        return globals()[modeltype]
-    except KeyError:
-        # try to find a similar model with lowercase spelling
-        for k in globals():
-            if k.lower() == modeltype.lower():
-                return globals()[k]
-        logger.error("Model %s not found in model definition file %s",
-                     modeltype, __file__)
-
-
 class Model(object):
-    " generic model object that will make smart use of its inputs and outputs"
+    """ generic model object that makes smart use of its inputs and outputs
+    baseclass for all other models """
+
     export_to_parent = ["sweep", "calibrate", "save_current_gain",
-                        "unlock", "islocked", "lock", "help", "calib_lock"]
+                        "unlock", "islocked", "lock", "help", "calib_lock",
+                        "_lock"]
 
 
     # independent variable that specifies the state of the system
@@ -34,6 +24,7 @@ class Model(object):
             self._parent = parent
         self.inputs = self._parent.inputs
         self.outputs = self._parent.outputs
+        self.signals = self._parent.signals
         self._config = self._parent.c.model
         self._make_helpers()
         self.state = {'actual': {self._variable: 0},
@@ -60,7 +51,7 @@ class Model(object):
         ----------
         func: function
             the function
-        y: float
+        y: float or np.array(,dtype=float)
             the desired value of the function
         x0: float
             the starting point for the search
@@ -72,18 +63,27 @@ class Model(object):
         x: float
             the solution. None if no inverse could be found.
         """
-        def myfunc(x, *args):
-            return func(x, *args) - y
-        solution, infodict, ier, mesg = scipy.optimize.fsolve(
-                                     myfunc,
-                                     x0,
-                                     args=args,
-                                     xtol=1e-9,
-                                     full_output=True)
-        if ier == 1:  # means solution was found
-            return solution
-        else:
-            return None
+        try:
+            inverse = [self._inverse(func, yy, x0, args=args) for yy in y]
+            if len(inverse) == 1:
+                return inverse[0]
+            else:
+                return inverse
+        except TypeError:
+            def myfunc(x, *args):
+                return func(x, *args) - y
+            solution, infodict, ier, mesg = scipy.optimize.fsolve(
+                         myfunc,
+                         x0,
+                         args=args,
+                         xtol=1e-6,
+                         epsfcn=1e-8,
+                         fprime=self.__getattribute__(func.__name__+'_slope'),
+                         full_output=True)
+            if ier == 1:  # means solution was found
+                return solution[0]
+            else:
+                return None
 
     def _make_slope(self, fn):
         def fn_slope(x, *args):
@@ -135,7 +135,7 @@ class Model(object):
             output.save_current_gain(factor)
 
     def islocked(self):
-        """ returns True if locked, else False"""
+        """ returns True if locked, else False """
         if hasattr(self, self._variable):
             variable = self.__getattribute__(self._variable)
         else:
@@ -172,7 +172,6 @@ class Model(object):
         for o in self.outputs.values():
             frequency = o.sweep() or frequency
         return 1.0 / frequency
-
 
     def _lock(self, input=None, factor=1.0, offset=None, **kwargs):
         """
@@ -240,6 +239,7 @@ class Model(object):
         curves: list
             list of all acquired curves
         """
+
         self.unlock()
         duration = self.sweep()
         curves = []
@@ -258,12 +258,14 @@ class Model(object):
                 curves.append(curve)
                 try:
                     secondsignal = scopeparams["secondsignal"]
-                    input2 = self.inputs[secondsignal]
+                    input2 = self.signals[secondsignal]
                     curve2 = input2.curve
                     curve.add_child(curve2)
+                    self.logger.debug("Secondsignal %s successfully acquired.",
+                                      secondsignal)
                 except KeyError:
-                    # no secondsignal was specified
-                    pass
+                    self.logger.debug("No secondsignal was specified for %s",
+                                      input._name)
             finally:
                 # make sure to reload config file here so that the modified
                 # scope parameters are not written to config file
@@ -300,273 +302,3 @@ class Model(object):
                          + "Assert if locked with p.islocked() and unlock \n"
                          + "with p.unlock(). ")
 
-
-class Interferometer(Model):
-    """ simplest type of optical interferometer with one photodiode """
-
-    # the variable which we would like to control
-    _variable = "phase"
-
-    # theoretical model for input signal 'transmission'
-    def transmission(self, phase):
-        """ photocurrent of an ideal interferometer vs phase (rad)"""
-        amplitude = (self.inputs['transmission']._config.max
-                     - self.inputs['transmission']._config.min) / 2
-        mean = (self.inputs['transmission']._config.max
-                     + self.inputs['transmission']._config.min) / 2
-        return np.sin(phase) * amplitude + mean
-
-    # how phase converts to other units that are used in the configfile
-    @property
-    def phase_per_m(self):
-        return 2*np.pi/self._config.wavelength
-
-    # how to estimate the actual phase
-    @property
-    def phase(self):
-        return self.variable % (2*np.pi)
-
-    def lock(self, phase=0, factor=1):
-        return self._lock(phase=phase,
-                          input='transmission',
-                          offset=0,
-                          factor=factor)
-
-    def calibrate(self):
-        return  super(Interferometer, self).calibrate(
-            scopeparams={'secondsignal': 'piezo'})
-
-
-class FabryPerot(Model):
-    # the internal variable for state specification
-    _variable = 'detuning'
-
-
-    export_to_parent = Model.export_to_parent + ['R0']
-
-    # lorentzian functions
-    def _lorentz(self, x):
-        return 1.0 / (1.0 + x ** 2)
-
-    def _lorentz_slope(self, x):
-        return -2.0*x / (1.0 + x ** 2)**2
-
-    def _lorentz_slope_normalized(self, x):
-        # max slope occurs at x +- sqrt(3)
-        return  self._lorentz_slope(x) / abs(self._lorentz_slope(np.sqrt(3)))
-
-    def _lorentz_slope_slope(self, x):
-        return (-2.0+6.0*x**2) / (1.0 + x ** 2)**3
-
-    def _lorentz_slope_normalized_slope(self, x):
-        """ slope of normalized slope (!= normalized slope of slope) """
-        return (-2.0+6.0*x**2) / (1.0 + x ** 2)**3  \
-               / abs(self._lorentz_slope(np.sqrt(3)))
-
-    def transmission(self, x):
-        " transmission of the Fabry-Perot "
-        return self._lorentz(x) * self._config.resonant_transmission
-
-
-    def reflection(self, x):
-        " reflection of the Fabry-Perot"
-        offres = self._config.offresonant_reflection
-        res = self._config.resonant_reflection
-        return (res-offres) * self._lorentz(x) + offres
-
-    @property
-    def R0(self):
-        " reflection coefficient on resonance "
-        return self._config.resonant_reflection / \
-               self._config.offresonant_reflection
-
-    @property
-    def T0(self):
-        " transmission coefficient on resonance "
-        return self._config.resonant_reflection / \
-               self._config.offresonant_reflection
-
-    @property
-    def detuning_per_m(self):
-        " detuning of +-1 corresponds to the half-maximum intracavity power "
-        linewidth = self._config.wavelength / 2 / self._config.finesse
-        return 1.0 / (linewidth / 2)
-
-    @property
-    def detuning(self):
-        return self.variable
-
-    # simplest possible lock algorithm
-    def lock_reflection(self, detuning=1, factor=1.0):
-        # self.unlock()
-        self._lock(input=self.inputs["reflection"],
-                   detuning=detuning,
-                   factor=factor,
-                   offset=1.0*np.sign(detuning))
-
-    lock = lock_reflection
-
-    def calibrate(self):
-        curves = super(FabryPerot, self).calibrate(
-            scopeparams={'secondsignal': 'piezo'})
-        duration = curves[0].params["duration"]
-
-        # pick our favourite available signal
-        for sig in self.inputs.values():
-            # make a zoom calibration over roughly 10 linewidths
-            duration *= (1.0 - sig._config.mean/sig._config.max) * 10
-            curves = super(FabryPerot, self).calibrate(
-                inputs=[sig],
-                scopeparams={'secondsignal': 'piezo',
-                             'trigger_source': 'ch1_positive_edge',
-                             'threshold': (sig._config.max+sig._config.min)/2,
-                             'duration': duration,
-                             'timeout': 10*duration})
-            if sig._name == 'reflection':
-                self._config["offresonant_reflection"] = sig._config.max
-                self._config["resonant_reflection"] = sig._config.min
-            if sig._name == 'transmission':
-                self._config["resonant_transmission"] = sig._config.max
-        return curves
-
-class FPM(FabryPerot):
-    def setup(self):
-        o = self.outputs["slow"]
-        o.output_offset = o._config.lastoffset
-
-    def sweep(self):
-        duration = super(FPM, self).sweep()
-        self._parent.   rp.scope.setup(trigger_source='asg1',
-                                    duration=duration)
-
-
-class TEM02FabryPerot(FabryPerot):
-    export_to_parent = ['unlock', 'sweep', 'islocked',
-                        'save_current_gain', 'calibrate',
-                        'lock_tilt', 'lock_transmission', 'lock']
-
-    def tilt(self, detuning):
-        return self._lorentz_slope(detuning)/0.6495 *self._parent.tilt._config.slope_sign \
-               * 0.5 * (self._parent.tilt._config.max-self._parent.tilt._config.min)
-
-    def transmission(self, detuning):
-        return self._lorentz(detuning)*self._parent.transmission._config.max \
-               + self._parent.transmission._config.min
-
-    def calibrate(self):
-        self.unlock()
-        duration = self.sweep()
-        # input signal calibration
-        for input in self.inputs.values():
-            try:
-                input._config._data["trigger_source"] = "asg1"
-                input._config._data["duration"] = duration
-                input._acquire()
-                curve, ma, mi = input.curve, input.max, input.min
-                input._config._data["trigger_source"] = "ch1_positive_edge"
-                input._config._data["threshold"] = ma*self._config.calibration_threshold
-                input._config._data["trigger_delay"] = 0
-                # input._config._data["hysteresis_ch1"] = ma / 20
-                input._config._data["duration"] = duration/self._config.calibration_zoom
-                input._config._data["timeout"] = duration*5
-                input._acquire()
-                curve, ma, mi = input.curve, input.max, input.min
-            finally:
-                # make sure to reload config file here so that the modified
-                # scope parameters are not written to config file
-                self._parent.c._load()
-            input._config["max"] = ma
-            input._config["min"] = mi
-
-        # turn off sweeps
-        self.unlock()
-
-    @property
-    def detuning_per_m(self):
-        return 1./(self._config.wavelength/2/self._config.finesse/2)
-
-    def lock_transmission(self, detuning=1, factor=1.0):
-        """
-        Locks on transmission
-        Parameters
-        ----------
-        detuning: float
-            detuning (HWHM) to be locked at
-        factor: float
-            optional gain multiplier for debugging
-
-        Returns
-        -------
-        True if locked successfully, else false
-        """
-        self.state["set"]["detuning"] = detuning
-        self.state["set"]["factor"] = factor
-        input = self._parent.transmission
-        for o in self.outputs.values():
-            # trivial to lock: just enable all gains
-            unit = o._config.calibrationunits.split("_per_V")[0]
-            detuning_per_unit = self.__getattribute__("detuning_per_" + unit)
-            o.lock(slope=self.transmission_slope(detuning) * detuning_per_unit,
-                   setpoint=self.transmission(detuning),
-                   input=input._config.redpitaya_input,
-                   offset=None,
-                   factor=factor)
-        return self.islocked()
-
-    def lock_tilt(self, detuning=1, factor=1.0):
-        """
-        Locks on transmission
-        Parameters
-        ----------
-        detuning: float
-            detuning (HWHM) to be locked at
-        factor: float
-            optional gain multiplier for debugging
-
-        Returns
-        -------
-        True if locked successfully, else false
-        """
-        self.state["set"]["detuning"] = detuning
-        self.state["set"]["factor"] = factor
-        input = self._parent.tilt
-        for o in self.outputs.values():
-            # trivial to lock: just enable all gains
-            unit = o._config.calibrationunits.split("_per_V")[0]
-            detuning_per_unit = self.__getattribute__("detuning_per_" + unit)
-            o.lock(slope=self.tilt_slope(detuning) * detuning_per_unit,
-                   setpoint=self.tilt(detuning),
-                   input=input._config.redpitaya_input,
-                   offset=None,
-                   factor=factor)
-
-    def lock(self, detuning=0, factor=1.0, stop=False):
-        while not self.islocked():
-            self._parent.piezo.pid.ival = self._config.lock.drift_offset
-            self.lock_transmission(factor=factor, detuning=self._config.lock.drift_detuning)
-            time.sleep(self._config.lock.drift_timeout)
-        if stop: return
-        self.lock_transmission(detuning = self._config.lock.drift_detuning*0.66)
-        time.sleep(0.01)
-        return self.lock_tilt(detuning=detuning, factor=factor)
-
-    @property
-    def relative_transmission(self):
-        return (self._parent.transmission.mean - self._parent.transmission._config.min)\
-               / (self._parent.transmission._config.max-self._parent.transmission._config.min)
-
-    def islocked(self):
-        """ returns True if interferometer is locked, else False"""
-        # check phase error
-        rel_t = self.relative_transmission
-        self.logger.debug("Relative transmission: %s", rel_t)
-        if rel_t < self._config.lock.relative_transmission_threshold:
-            # lock seems ok (but not a failsafe criterion without additional info)
-            return False
-        else:
-            # test for output saturation
-            for o in self.outputs.values():
-                if o.issaturated:
-                    self.logger.debug("Output %s is saturated!", o._name)
-                    return False
-        return True
