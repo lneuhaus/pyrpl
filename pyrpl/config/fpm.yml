@@ -36,8 +36,8 @@ model:
   # for interferometer, this is the phase error in radians
   # this value is uniquely needed for the function 'islocked'
   maxerror: 0.1
-  offresonant_reflection: 0.19562510401010513
-  resonant_reflection: 0.05951670557260513
+  offresonant_reflection: 0.22326993197202682
+  resonant_reflection: 0.07507657259702682
   finesse: 92000.0
   length: 5.61e-05
   # signals in order of their preferrence
@@ -68,7 +68,7 @@ model:
     relative_threshold: 0.9
 
   peak: 0.07061767578125
-  peak_pdh: 0.06817626953125
+  peak_pdh: 0.07769775390625
 # all signals that are inputs of the lockbox. Must be signal names understood
 # by the model. The order of signals indicates their preferrence as error
 # signals.
@@ -77,16 +77,16 @@ inputs:
   reflection:
     redpitaya_input: adc2
     offset: 0.012691982090473175
-    max: 0.19562510401010513
-    min: 0.05951670557260513
-    mean: 0.17279966920614243
-    rms: 0.02174562686364253
+    max: 0.22326993197202682
+    min: 0.07507657259702682
+    mean: 0.19852319359779358
+    rms: 0.023765577177146398
   pdh:
     redpitaya_input: adc1
-    max: 0.0728759765625
-    min: -0.0634765625
-    mean: 0.0027536749839782715
-    rms: 0.022109805028956906
+    max: 0.07800465077161789
+    min: -0.07739085704088211
+    mean: -0.00024902820587158203
+    rms: 0.025083397034254398
     setup:
       phase: 5.0
       amplitude: 4.0
@@ -126,7 +126,7 @@ outputs:
     - 0
     - 0
     calibrationunits: m_per_V
-    lastoffset: 0.129150390625
+    lastoffset: 0.126220703125
   piezo:
     redpitaya_output: out2
     # we will calibrate the piezo response in units of m_per_V (not a necessary
