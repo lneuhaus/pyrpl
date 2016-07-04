@@ -59,13 +59,13 @@ inputs:
   tilt:
     redpitaya_input: adc2
     slope_sign: 1
-    max: 0.10009765625
-    min: -0.1123046875
+    max: 0.0975341796875
+    min: -0.111083984375
   transmission:
     redpitaya_input: adc1
 
-    max: 0.1124267578125
-    min: -0.029296875
+    max: 0.1134033203125
+    min: -0.0301513671875
 # All output signals. Names of outputs are arbitrary.
 outputs:
   # we only have 1 actuator in this interferometer, the piezo in the LO arm

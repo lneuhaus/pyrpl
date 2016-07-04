@@ -38,8 +38,9 @@ from shutil import copyfile
 from .redpitaya import RedPitaya
 from .curvedb import CurveDB
 from .memory import MemoryTree
-from .model import getmodel, Model
+from .model import Model
 from .signal import *
+from .models import *
 
 """
 channels:
@@ -248,6 +249,23 @@ meters is implemented there. Another very often used model type is
 #    return type("Pyrpl", (Lockbox, model), {})(config=config)
 
 
+def getmodel(modeltype):
+    try:
+        m = globals()[modeltype]
+        if type(m) == type:
+            return m
+    except KeyError:
+        pass
+    # try to find a similar model with lowercase spelling
+    for k in globals():
+        if k.lower() == modeltype.lower():
+            m = globals()[k]
+            if type(m) == type:
+                return m
+    logger.error("Model %s not found in model definition file %s",
+                 modeltype, __file__)
+
+
 class Lockbox(object):
     _configdir = os.path.join(os.path.dirname(__file__), "config")
     _signalinit = {"inputs": Signal, "outputs": Signal}, {}
@@ -399,11 +417,35 @@ class Pyrpl(Lockbox):
         # initialize scope with predefined parameters
         if self.c.redpitaya.gui:
             self._setupscope()
+            self._set_window_position()
 
     def _setupscope(self):
         if "scope" in self.c._dict:
             self.rp.scope.setup(**self.c.scope._dict)
+        if "sccopegui" in self.c._dict:
+            if self.c.scopegui.auto_run_continuous:
+                r.rp.scope_widget.run_continuous()
 
+    def _lock_window_position(self):
+        try:
+            _ = self.c.scopegui
+        except KeyError:
+            self.c["scopegui"] = dict()
+        try:
+            self.c.scopegui["coordinates"] = self.rp.window_position
+        except:
+            self.logger.warning("Gui is not started. Cannot save position.")
+
+    def _set_window_position(self):
+        try:
+            coordinates = self.c["scopegui"]["coordinates"]
+        except KeyError:
+            coordinates = [0, 0, 800, 600]
+        try:
+            self.rp.window_position = coordinates
+            self._lock_window_position()
+        except:
+            self.logger.warning("Gui is not started. Cannot save position.")
 
 class Trash(object):
 
@@ -458,97 +500,6 @@ class Trash(object):
         print "rel. pdh signal      = {0} +- {1}".format(p / self.pdh_max, prms / self.pdh_max)
         return r, rrms, p, prms
 
-    def errorsignals(self, frequency=None):
-        input = list()
-        inputnames = list()
-        dacmode = False
-        if self.constants["reflection_input"] == 1 or self.constants[
-                "reflection_input"] == 2:
-            input.append(self.constants["reflection_input"])
-            inputnames.append("error reflection")
-        if self.constants["pdh_input"] == 1 or self.constants[
-                "pdh_input"] == 2:
-            input.append(self.constants["pdh_input"])
-            inputnames.append("error pdh")
-        elif self.constants["pdh_input"] == 3:
-            pdhinput = 3 - self.constants["reflection_input"]
-            input.append(pdhinput)
-            inputnames.append("error pdh")
-            dacmode = True
-            if pdhinput == 1:
-                self.s.quadratures_on_ch1 = True
-            elif pdhinput == 2:
-                self.s.quadratures_on_ch2 = True
-        if frequency is None:
-            frequency = 1000.0
-        c2, c3 = self.scope_trace(input=input,
-                                  frequency=frequency,
-                                  trigger_source=1,
-                                  name_prefix=inputnames,
-                                  dacmode=dacmode)
-        c2.data -= np.float(self.constants["dark_reflection"]) / 8192.0
-        c3.data -= np.float(self.constants["offset_pdh"]) / 8192.0
-        fp = self.fastparams()
-        c2.params.update(fp)
-        c3.params.update(fp)
-        c2.save()
-        c3.save()
-        if "last_sbreflection_curve" in self.constants:
-            CurveDB.objects.get(
-                pk=self.constants["last_sbreflection_curve"]).add_child(c2)
-        elif "last_reflection_curve" in self.constants:
-            CurveDB.objects.get(
-                pk=self.constants["last_reflection_curve"]).add_child(c2)
-        if "last_pdh_curve" in self.constants:
-            CurveDB.objects.get(
-                pk=self.constants["last_pdh_curve"]).add_child(c3)
-        if "last_calibration_reflection" in self.constants:
-            CurveDB.objects.get(
-                pk=self.constants["last_calibration_reflection"]).add_child(c2)
-        if "last_calibration_pdh" in self.constants:
-            CurveDB.objects.get(
-                pk=self.constants["last_calibration_pdh"]).add_child(c3)
-
-    @property
-    def coarse(self):
-        if hasattr(self, '_coarse') and not self._coarse is None:
-            return self._coarse
-        else:
-            if "lastcoarse" in self.constants:
-                self._coarse = self.constants["lastcoarse"]
-            else:
-                self._coarse = None
-            return self._coarse
-
-    @coarse.setter
-    def coarse(self, v):
-        """minimum allowed = 0, maximul =1, default coarse output is Out2"""
-        if v > 1.0:
-            v = 1.0
-        elif v < 0.0:
-            v = 0.0
-        self._coarse_setter(v)
-
-    def _coarse_setter(self, v):
-        setV = self.constants["coarse_min_volt"] * \
-            (1.0 - v) + self.constants["coarse_max_volt"] * v
-        set = int(np.round(setV * 8191))
-        # if self.constants["verbosity"]:
-        # print "Setting coarse to %.2f"%setV+" V == %d"%set
-        """implement coarsesetting here"""
-        if self.constants["coarse_output"] == 1:
-            f = self.fa
-        elif self.constants["coarse_output"] == 2:
-            f = self.fb
-        else:
-            print "coarse_output > 2 not yet implemented.. Coarse does not work in this configuration."
-            return
-        f.onedata = 0
-        f.trigger_source = 0
-        f.sm_reset = True
-        f.offset = set
-        self._coarse = v
-
     def calibrate_power(self, power):
         """
         calibrates everything in units of power
@@ -562,254 +513,6 @@ class Trash(object):
         self.constants.update(constants)
         self._save_constants(constants)
         print "Lockbox input will saturate around ", self.constants["calibration_slope"] * 8191.5, "mW"
-
-    @property
-    def power(self):
-        r = self.get_mean(signal="reflection") - \
-            self.constants["dark_reflection"]
-        return r * self.constants["calibration_slope"]
-
-    @property
-    def power_offresonant(self):
-        r = self.constants["offres_reflection"] - \
-            self.constants["dark_reflection"]
-        return r * self.constants["calibration_slope"]
-
-    def resonant(self, avg=0):
-        print "make sure cavity is locked here"
-        reflection = self.get_mean("reflection", avg=avg)
-        pdh = self.get_mean("pdh", avg=avg)
-        constants = dict(res_reflection=reflection,
-                         res_pdh=pdh)
-        self.constants.update(constants)
-        self._save_constants(constants)
-
-    def _pdh_offset(self, avg=0):
-        print "taking new pdh offsets"
-        pdh = self.get_mean("pdh", avg=avg)
-        constants = dict(offset_pdh=pdh)
-        self.constants.update(constants)
-        self._save_constants(constants)
-
-    def _sweep_setup(self, amplitude=None, frequency=None, dacmode=0):
-        """setup for a sweep measurement, outputs one sin wave on fine output and prepares scope for acquisition """
-        if amplitude is None:
-            amplitude = self.constants["sweep_amplitude"]
-        else:
-            amplitude = amplitude / 8191.0
-        if frequency is None:
-            frequency = self.constants["sweep_frequency"]
-        self.f.setup_cosine(
-            frequency=frequency,
-            amplitude=amplitude,
-            onetimetrigger=True)
-        self.s.setup(frequency=frequency, trigger_source=8, dacmode=dacmode)
-
-    def scope_reset(self):
-        self.s.setup(
-            frequency=self.constants["mean_measurement_frequency"],
-            trigger_source=1,
-            dacmode=False)
-
-    def scope_curves(self, name_prefix=""):
-        self._get_buffers()
-        c1 = CurveDB.create(self.trace_time, self.trace_1 / 8192.)
-        c2 = CurveDB.create(self.trace_time, self.trace_2 / 8192.)
-        c1.name = name_prefix + "channel1"
-        c1.save()
-        c2.name = name_prefix + "channel2"
-        c2.save()
-        # c1.add_child(c2)
-        return c1, c2
-
-    def scope_trace(
-            self,
-            input = [1, 2],
-            frequency=1000.0,
-            trigger_source=1,
-            name_prefix="",
-            dacmode=False):
-        """
-        acquires the data of an input during one sweep
-        input is the number of input, can be a list of two
-        """
-        if isinstance(input, list):
-            input = input[:2]
-        else:
-            input = [input]
-        if isinstance(name_prefix, list):
-            name_prefix = name_prefix[:2]
-        else:
-            name_prefix = [name_prefix]
-        if len(name_prefix) < len(input):
-            name_prefix.append(name_prefix[0])
-        self.s.setup(
-            frequency=frequency,
-            trigger_source=trigger_source,
-            dacmode=dacmode)
-        self.s.arm(
-            trigger_source=trigger_source,
-            trigger_delay=int(
-                self.s.data_length / 2))
-        if trigger_source == 1:
-            sleep(0.5 / self.s.frequency)
-            self.s.sw_trig()
-        sleep(1.0 / self.s.frequency)
-        t0 = time()
-        while (self.s.trigger_source != 0):
-            sleep(0.01)
-            if time() - t0 > 20:
-                break
-        curves = list()
-        self._get_buffers()
-        for i in range(len(input)):
-            if input[i] == 1:
-                c = CurveDB.create(self.trace_time, self.trace_1 / 8192.)
-            else:
-                c = CurveDB.create(self.trace_time, self.trace_2 / 8192.)
-            c.name = name_prefix[i] + " channel " + str(input[i])
-            c.params.update(
-                dict(
-                    input=input[i],
-                    frequency=frequency,
-                    trigger_source=trigger_source))
-            c.save()
-            curves.append(c)
-        return tuple(curves)
-
-    def sweep_acquire(
-            self,
-            input=1,
-            output=1,
-            frequency=None,
-            amplitude=None,
-            waveform=None,
-            data_shorten=True):
-        """
-        acquires the data of an input during one sweep
-        """
-        if output == 2:
-            f = self.fb
-        else:
-            f = self.fa
-
-        if amplitude is None:
-            amplitude = self.constants["sweep_amplitude"]
-        # amplitude *= 8191.0 #convert from volts to counts - now this is
-        # implemented in monitor.py already
-        if frequency is None:
-            frequency = self.constants["sweep_frequency"]
-        if waveform is None:
-            waveform = self.constants["sweep_waveform"]
-        if waveform == "ramp":
-            f.setup_ramp(
-                frequency=frequency,
-                amplitude=amplitude,
-                onetimetrigger=True)
-        elif waveform == "halframp":
-            f.setup_halframp(
-                frequency=frequency,
-                amplitude=amplitude,
-                onetimetrigger=True)
-        else:  # "sine"
-            f.setup_cosine(
-                frequency=frequency,
-                amplitude=amplitude,
-                onetimetrigger=True)
-
-        self.s.setup(frequency=frequency, trigger_source=8, dacmode=False)
-        if input == output or input - 2 == output:
-            if output == 1:
-                self.s.dac1_on_ch2 = True
-            elif output == 2:
-                self.s.dac2_on_ch1 = True
-        if input == 3:
-            self.s.quadrature_on_ch1 = True
-            input = 1
-        elif input == 4:
-            self.s.quadrature_on_ch2 = True
-            input = 2
-        self.s.arm(frequency=frequency, trigger_source=8)
-        f.trig(frequency=frequency)
-        sleep(1.0 / self.s.frequency)
-        if data_shorten:
-            data_length = self._outlen
-        else:
-            data_length = None  # means unlimited for np.arrays
-        if input == 1:
-            indata = self.rp.getbuffer(self.s.data_ch1_current)[0:data_length]
-        elif input == 2:
-            indata = self.rp.getbuffer(self.s.data_ch2_current)[0:data_length]
-        if input == 1 and output == 1:
-            outdata = self.rp.getbuffer(self.s.data_ch2_current)[0:data_length]
-        elif input == 2 and output == 2:
-            outdata = self.rp.getbuffer(self.s.data_ch1_current)[0:data_length]
-        else:
-            if waveform == "ramp":
-                outdata = self._outramp(amplitude=amplitude)
-            elif waveform == "halframp":
-                outdata = self._outhalframp(amplitude=amplitude)
-            else:
-                outdata = self._outsin(amplitude=amplitude)
-        return self._sortedseries(outdata, indata)
-
-    def quadratures_acquire(self, frequency=None, times=False):
-        if frequency is None:
-            frequency = self.constants["mean_measurement_frequency"]
-        self.s.setup(frequency=frequency, trigger_source=0)
-        self.s.quadrature_on_ch1 = True
-        self.s.quadrature_on_ch2 = True
-        self.s.trigger_source = 1
-        sleep(1.0 / self.s.frequency)
-        q1 = np.roll(self.rp.getbuffer(self.s.rawdata_ch1), -
-                     (self.s.write_pointer_current + 1))
-        q2 = np.roll(self.rp.getbuffer(self.s.rawdata_ch2), -
-                     (self.s.write_pointer_current + 1))
-        if times:
-            t = self.rp.getbuffer(self.s.times)
-        # self.s.arm(frequency=frequency,trigger_source=1)
-        if times:
-            return (q1, q2, t)
-        else:
-            return (q1, q2)
-
-    def spectrum_trace(
-            self,
-            name="rp_spectrum",
-            input=1,
-            frequency=1e3,
-            kaiserbeta=15.0,
-            avg=1):
-        sumspectrum = None
-        for i in range(avg):
-            self.s.setup(frequency=frequency, trigger_source=0)
-            self.s.trigger_source = 1
-            sleep(1.0 / self.s.frequency)
-            if input == 1:
-                data = np.roll(self.rp.getbuffer(
-                    self.s.rawdata_ch1), -(self.s.write_pointer_current + 1))
-            else:
-                data = np.roll(self.rp.getbuffer(
-                    self.s.rawdata_ch2), -(self.s.write_pointer_current + 1))
-            dt = 8e-9 * self.s.data_decimation
-            wdata = data * np.kaiser(len(data), kaiserbeta)
-            spectrum = np.fft.rfft(wdata)**2
-            if sumspectrum is None:
-                sumspectrum = spectrum
-            else:
-                sumspectrum += spectrum
-        frequencies = np.fft.rfftfreq(len(data), d=dt)
-        sumspectrum /= avg
-        c = CurveDB.create(frequencies, sumspectrum)
-        c.name = name
-        c.params.update(dict(rp_input=input,
-                             rp_frequency=self.s.frequency,
-                             rp_kaiserbeta=kaiserbeta,
-                             rp_avg=avg
-                             ))
-        c.save()
-        return c
-
 
     @property
     def pdhon(self):
@@ -836,41 +539,6 @@ class Trash(object):
 
     def _disable_pdh(self):
         pass
-
-    @property
-    def islocked(self):
-        return self._islocked(verbose=False)
-
-    def _islocked(self, refl=None, verbose=True):
-        return (not self.issaturated)
-
-    @property
-    def issaturated(self):
-        """returns true if any of the outputs have reached saturation since the last call of this function"""
-        return (self.rp.pid11.saturated or self.rp.pid22.saturated)
-
-    def unlock(self, jump=None):
-        #self.stage = UNLOCKEDSTAGE
-        # unlock and make a coarse jump away from the resonance if desired
-        for pid in [
-                self.rp.pid11,
-                self.rp.pid12,
-                self.rp.pid21,
-                self.rp.pid22]:
-            pid.reset = True
-            pid.integral = 0
-            pid.proportional = 0
-            pid.derivative = 0
-            pid.reset = False
-        self.na_reset()
-        self.setup_pdh(turn_off=True)
-        # self.iq.iq_set(channel=1,frequency=0,phase=180,bandwidth=0.5e3,gain=0.00)
-        # self.iq.iq_channel=0
-        self.output = 0
-        if jump is None:
-            self.coarse += self.constants["unlock_jump"]
-        else:
-            self.coarse += jump
 
     def _params(self):
         r, rrms, rmin, rmax = self.get_mean(
@@ -924,20 +592,6 @@ class Trash(object):
                      "rp_gain_p": self.gain_p,
                      "rp_gain_i": self.gain_i,
                      })
-
-    @property
-    def gain_p(self):
-        if self.stage >= SOFSTAGE:
-            return self.pidpdh.proportional
-        else:
-            return self.sof.proportional
-
-    @property
-    def gain_i(self):
-        if self.stage >= SOFSTAGE:
-            return self.pidpdh.integral
-        else:
-            return self.sof.integral
 
     def init_iir(
             self,
@@ -1005,6 +659,8 @@ class Trash(object):
             c.params.update(self.fastparams())
             c.save()
         return ret
+
+    # interface for bodeplot_susceptibility5
 
     def tune_relock(self, fast=False):
         self.relock()

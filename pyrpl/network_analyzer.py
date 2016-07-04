@@ -27,10 +27,10 @@ class NetworkAnalyzer(object):
 
     def __init__(self, rp):
         self.rp = rp
-        self.start = 1
-        self.stop = 100000
+        self.start = 200
+        self.stop = 50000
         self.points = 1001
-        self.rbw = 100
+        self.rbw = 200
         self.avg = 1
         self.amplitude = 0.01
         self.input = 'adc1'
@@ -198,6 +198,10 @@ class NetworkAnalyzer(object):
 
     @rbw.setter
     def rbw(self, val):
+        try:
+            val = list(val)
+        except:
+            val = [val, val]  # preferentially choose second order filter
         self.iq.bandwidth = val
         return val
 
