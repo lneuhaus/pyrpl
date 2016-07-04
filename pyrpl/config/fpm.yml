@@ -36,8 +36,8 @@ model:
   # for interferometer, this is the phase error in radians
   # this value is uniquely needed for the function 'islocked'
   maxerror: 0.1
-  offresonant_reflection: 0.20752286165952682
-  resonant_reflection: 0.06360196322202682
+  offresonant_reflection: 0.13525723665952682
+  resonant_reflection: 0.06604336947202682
   finesse: 92000.0
   length: 5.61e-05
   # signals in order of their preferrence
@@ -68,23 +68,23 @@ model:
     relative_threshold: 0.9
 
   peak: 0.07061767578125
-  peak_pdh: 0.01593017578125
+  peak_pdh: 0.03326416015625
 # all signals that are inputs of the lockbox. Must be signal names understood
 # by the model.
 inputs:
   reflection:
     redpitaya_input: adc2
     offset: 0.012691982090473175
-    max: 0.20752286165952682
-    min: 0.06360196322202682
-    mean: 0.17391381412744522
-    rms: 0.029260771393737207
+    max: 0.13525723665952682
+    min: 0.06604336947202682
+    mean: 0.11628730595111847
+    rms: 0.011084075448708708
   pdh:
     redpitaya_input: adc1
-    max: 0.01562672108411789
-    min: -0.01623363047838211
-    mean: 2.8468668460845947e-05
-    rms: 0.004271276915859901
+    max: 0.03174000233411789
+    min: -0.03478831797838211
+    mean: -0.0005714744329452515
+    rms: 0.010645246485354207
     setup:
       phase: -5.0
       amplitude: 4.0
@@ -137,12 +137,16 @@ outputs:
       lowpass: [15.8]
     lock:
       unity_gain_frequency: 100.0
-      double_integrator: false
+      second_integrator_crossover: 10
       inputfilter:
-      - 4857.023409786845
-      - 4857.023409786845
-      - 4857.023409786845
-      - 4857.023409786845
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
+      - 0
     sweep:
       waveform: sin
       frequency: 25.0
