@@ -110,38 +110,38 @@ reg [LUTBITS-1:0] phase2;
 reg [LUTBITS-1:0] phase3;
 reg [LUTBITS-1:0] phase4;
 
-assign wwphase1 = phase;
+assign wwphase1 = phase; // wwphase1 ready in cycle n
 assign wwphase2 = phase + QSHIFT;
 assign wwphase3 = phase + start_phase;
 assign wwphase4 = phase + start_phase + QSHIFT;
-assign wphase1 = wwphase1[PHASEBITS-2-1:PHASEBITS-2-LUTSZ];
+assign wphase1 = wwphase1[PHASEBITS-2-1:PHASEBITS-2-LUTSZ]; //wwphase1 ready in cycle n
 assign wphase2 = wwphase2[PHASEBITS-2-1:PHASEBITS-2-LUTSZ];
 assign wphase3 = wwphase3[PHASEBITS-2-1:PHASEBITS-2-LUTSZ];
 assign wphase4 = wwphase4[PHASEBITS-2-1:PHASEBITS-2-LUTSZ];
-assign invertphase1  = wwphase1[PHASEBITS-1-1]; 
+assign invertphase1  = wwphase1[PHASEBITS-1-1];  //invertphase1 ready in cycle n
 assign invertphase2  = wwphase2[PHASEBITS-1-1]; 
 assign invertphase3  = wwphase3[PHASEBITS-1-1]; 
 assign invertphase4  = wwphase4[PHASEBITS-1-1]; 
-assign invertsignal1 = wwphase1[PHASEBITS-1];
+assign invertsignal1 = wwphase1[PHASEBITS-1]; //invertsignal1 ready in cycle n
 assign invertsignal2 = wwphase2[PHASEBITS-1];
 assign invertsignal3 = wwphase3[PHASEBITS-1];
 assign invertsignal4 = wwphase4[PHASEBITS-1];
 
 //main loop
 always @(posedge clk_i) begin
-    phase1 <= invertphase1 ? (~wphase1) : wphase1;
+    phase1 <= invertphase1 ? (~wphase1) : wphase1;  //phase1 ready in cycle n+1
     phase2 <= invertphase2 ? (~wphase2) : wphase2;
     phase3 <= invertphase3 ? (~wphase3) : wphase3;
     phase4 <= invertphase4 ? (~wphase4) : wphase4;
-    invertsignal1_reg <= invertsignal1;
+    invertsignal1_reg <= invertsignal1; //invertsignal1_reg ready in cycle n+1
     invertsignal2_reg <= invertsignal2;
     invertsignal3_reg <= invertsignal3;
     invertsignal4_reg <= invertsignal4;
-    invertsignal1_reg_reg <= invertsignal1_reg;
+    invertsignal1_reg_reg <= invertsignal1_reg; //invertsignal1_reg_reg ready in cycle n+2
     invertsignal2_reg_reg <= invertsignal2_reg;
     invertsignal3_reg_reg <= invertsignal3_reg;
     invertsignal4_reg_reg <= invertsignal4_reg;
-    sin_reg <= lutrom[phase1];    
+    sin_reg <= lutrom[phase1];    //sin_reg ready in cycle n+2
     cos_reg <= lutrom[phase2];
     sin_shifted_reg <= lutrom[phase3];
     cos_shifted_reg <= lutrom[phase4];
@@ -153,8 +153,8 @@ always @(posedge clk_i) begin
         cos_shifted <= {LUTBITS{1'b0}};
     end 
     else begin 
-        phase <= phase + shift_phase;
-        sin <= invertsignal1_reg_reg ? ((~sin_reg)+'b1) : sin_reg;    
+        phase <= phase + shift_phase; // new phase is ready in (arbitrary) cycle n
+        sin <= invertsignal1_reg_reg ? ((~sin_reg)+'b1) : sin_reg;    //sin ready in cycle n+3  - based purely on signals that are ready in cycle n+2 -> timing correct, latency 3 cycles
         cos <= invertsignal2_reg_reg ? ((~cos_reg)+'b1) : cos_reg; 
         sin_shifted <= invertsignal3_reg_reg ? ((~sin_shifted_reg)+'b1) : sin_shifted_reg;  
         cos_shifted <= invertsignal4_reg_reg ? ((~cos_shifted_reg)+'b1) : cos_shifted_reg;   

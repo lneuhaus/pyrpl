@@ -334,7 +334,7 @@ class Scope(BaseModule):
         """raw data from ch2"""
         # return np.array([self.to_pyint(v) for v in self._reads(0x20000,
         # self.data_length)],dtype=np.int32)
-        x = np.array(self._reads(0x20000, self.data_length), dtype=np.int32)
+        x = np.array(self._reads(0x20000, self.data_length), dtype=np.int16)
         x[x >= 2**13] -= 2**14
         return x
 
@@ -420,17 +420,20 @@ class Scope(BaseModule):
             self.input2 = input2
         if trigger_delay is not None:
             self.trigger_delay = trigger_delay
+
         if trigger_source is not None:
             self.trigger_source = trigger_source
         else:
             self.trigger_source = self.trigger_source
 
-        if self.trigger_source=='immediately':
+        if self.trigger_source == 'immediately':
             self._trigger_delay = self.data_length
         else:
             self.trigger_delay = self.trigger_delay
 
         self._trigger_armed = True
+        self.trigger_source = self.trigger_source
+
         if self.trigger_source == 'immediately':
             self.wait_for_pretrig_ok()
             self.trigger_source = 'immediately'# write state machine

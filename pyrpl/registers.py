@@ -138,14 +138,18 @@ class IORegister(BoolRegister):
     def fom_python(self, value):
         self.direction()
         return value
-    
+
+
 class SelectRegister(Register):
     """Implements a selection, such as for multiplexers"""
     def __init__(self, address, 
-                 options={}, 
+                 options={},
                  doc="",
                  **kwargs):
-        super(SelectRegister,self).__init__(address=address, doc=doc+"\r\nOptions:\r\n"+str(options), **kwargs)
+        super(SelectRegister, self).__init__(
+                                    address=address,
+                                    doc=doc+"\r\nOptions:\r\n"+str(options),
+                                    **kwargs)
         self.options = Bijection(options)
         
     def to_python(self, value):

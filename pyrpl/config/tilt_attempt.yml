@@ -17,7 +17,7 @@ general:
   # 'infi' is default level
   # 'warning' only shows warnings and errors
   # 'error' only shows errors
-  loglevel: debug
+  loglevel: error
   # import CurveDB class from which module? if missing, it's pyrpl.curvedb
   #curvedb: pyrpl
   curvedb: pyinstruments
@@ -40,7 +40,7 @@ model:
   #
   calibration_zoom: 20
   #
-  finesse: 1000
+  finesse: 1100
 
 
   lock:
@@ -54,18 +54,18 @@ model:
 inputs:
   # Only 1 photodiode at interferometer port 1 is used here.
   # For this inteferometer, we use an imbalanced detection scheme
-  # i.e. 90% signal + 10% LO incident on a fast photodiode whos DC port is
+  # i.e. 90% signal + 10% LO incident on a fast photodiode whose DC port is
   # connected to redpitaya input 1
   tilt:
     redpitaya_input: adc2
     slope_sign: 1
-    max: 0.0926513671875
-    min: -0.0946044921875
+    max: 0.0975341796875
+    min: -0.111083984375
   transmission:
     redpitaya_input: adc1
 
-    max: 0.1121826171875
-    min: -0.029541015625
+    max: 0.1134033203125
+    min: -0.0301513671875
 # All output signals. Names of outputs are arbitrary.
 outputs:
   # we only have 1 actuator in this interferometer, the piezo in the LO arm
@@ -100,11 +100,10 @@ outputs:
       amplitude: 1.0
 
     inputfilter:
-    - 20000
-    - 20000
+    - 19428.09363914738
+    - 19428.09363914738
     - 0
     - 0
-
 scope:
   input1: adc1
   input2: dac1
@@ -136,7 +135,7 @@ signal:
   # data trace if several parameters are requested. To always obtain fresh
   # data, set this to -1. To enable manual acquisition control with the acquire
   # function '_acquire()', set this to a very large value or to '.inf'.
-  timeout: 0.3
+  acquire_timeout: 0.3
   # if true, the offset is subtraced. Calibrate with signal.get_offset()
   offset_subtraction: true
   offset: 0

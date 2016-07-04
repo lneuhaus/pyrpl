@@ -1,0 +1,120 @@
+redpitaya:
+  hostname: 10.214.1.28
+  password: root
+  user: root
+  port: 2222
+  frequency_correction: 1.0
+  filename: fpga//red_pitaya.bin
+  reloadfpga: true
+  gui: true
+  monitor_server_name: monitor_server
+general:
+  name: cavity_membrane
+  loglevel: info
+  curvedb: pyinstruments
+model:
+  modeltype: fpmembranes
+  wavelength: 1.064e-06
+  maxerror: 0.1
+  resonant_transmission: 0.15478515625
+  offresonant_reflection: 0.57373046875
+  resonant_reflection: 0.334228515625
+  offset_pdh: -0.005601242184638977
+  phase_pdh: 0
+  ampl_pdh: 0.40899658203125
+  cavity_length: 0.014
+  mod_pdh: 20000000
+  finesse: 5000
+  duration_zoom: 0.001
+  test: 0.4
+  trigger_delay_zoom: 0.011427840000000002
+  duration_ramp: 0.019976592074418605
+inputs:
+  pdh:
+    redpitaya_input: iq0
+    redpitaya_mod_output: out2
+    redpitaya_mod_input: adc2
+    redpitaya_quadrature_factor: 0.02
+    mod_amplitude_v: 0.5
+    phase: 270.0
+    bandwidth: 5000000
+    max: 0.3795166015625
+    min: -0.4384765625
+    mean: -0.005601242184638977
+    rms: 0.03706656660856237
+    trigger_source: asg1
+    duration: 0.03995318414883721
+    trigger_delay: 0
+  transmission:
+    redpitaya_input: adc1
+    max: 0.1365966796875
+    min: -0.0238037109375
+    mean: -0.019099734723567963
+    rms: 0.006374339152777098
+    trigger_source: asg1
+    duration: 0.03995318414883721
+    trigger_delay: 0
+  reflection:
+    redpitaya_input: adc2
+    max: 0.5538330078125
+    min: 0.3140869140625
+    mean: 0.5214473828673363
+    rms: 0.008199542719765071
+    trigger_source: asg1
+    duration: 0.03995318414883721
+    trigger_delay: 0
+outputs:
+  piezo:
+    unity_gain_frequency: 5000.0
+    redpitaya_output: out2
+    max_voltage: 0.8
+    min_voltage: -0.8
+    m_per_V: 5.0e-07
+    analogfilter:
+      lowpass:
+      - 50
+    inputfilter:
+    - 0
+    - 0
+    - 0
+    - 0
+    calibrationunits: m_per_V
+    sweep:
+      waveform: ramp
+      frequency: 25.0
+      amplitude: 0.8
+  fastpiezo:
+    redpitaya_output: out1
+    calibrationunits: m_per_V
+    m_per_V: 1.0e-08
+    analogfilter:
+      lowpass: []
+    inputfilter:
+    - 9714.04681957369
+    - 0
+    - 0
+    - 0
+    unity_gain_frequency: 100.0
+    max_voltage: 0.9998779296875
+    min_voltage: -1.0
+scope:
+  input1: adc2
+  input2: dac2
+  duration: 0.1
+  trigger_source: immediately
+  average: false
+signal:
+  unit: V
+  V_per_V: 1.0
+  raw_per_V: 8192.0
+  duration: 0.1
+  average: false
+  autosave: true
+  points: 16384
+  trigger_source: immediately
+  acquire_timeout: 0.5
+  offset_subtraction: true
+  offset: 0
+  peak: 0
+  threshold: 0.45
+  hysteresis: 0.002
