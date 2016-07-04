@@ -88,7 +88,6 @@ inputs:
   #  offset: -0.01687093824148178
   transmission:
     redpitaya_input: adc2
-
     max: 0.19524861127138138
     min: -0.0011625215411186218
     mean: 0.010687261819839478

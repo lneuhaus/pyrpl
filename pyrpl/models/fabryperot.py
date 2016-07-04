@@ -162,7 +162,7 @@ class FabryPerot(Model):
         pdh._config['redpitaya_input'] = pdh.iq.name
 
     def sweep(self):
-        duration = super(type(self), self).sweep()
+        duration = super(FabryPerot, self).sweep()
         self._parent.rp.scope.setup(trigger_source='asg1',
                                     duration=duration)
         if "scopegui" in self._parent.c._dict:
