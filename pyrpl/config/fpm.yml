@@ -126,7 +126,7 @@ outputs:
     - 0
     - 0
     calibrationunits: m_per_V
-    lastoffset: 0.126220703125
+    lastoffset: 0.127197265625
   piezo:
     redpitaya_output: out2
     # we will calibrate the piezo response in units of m_per_V (not a necessary

@@ -2,6 +2,8 @@ import numpy as np
 import scipy
 import logging
 import time
+import threading
+
 logger = logging.getLogger(name=__name__)
 
 class Model(object):
@@ -31,8 +33,16 @@ class Model(object):
                       'set': {self._variable: 0}}
 
     def setup(self):
-        """ Custom setup function """
-        pass
+        # setup all signals
+        for s in self.signals.values():
+            try:
+                params = self._config.setup._dict
+            except KeyError:
+                params = dict()
+            try:
+                self.__getattribute__("setup_"+s._name)(**params)
+            except AttributeError:
+                pass
 
     def _derivative(self, func, x, n=1, args=()):
         return scipy.misc.derivative(func,
@@ -218,8 +228,51 @@ class Model(object):
                    offset=offset,
                    factor=factor)
 
-    def lock(self, variable, factor=1.0):
-        self._lock(x=variable, factor=factor)
+    def lock(self,
+             detuning=None,
+             factor=None,
+             firststage=None,
+             laststage=None,
+             thread=False):
+
+        # firststage will allow timer-based recursive iteration over stages
+        # i.e. calling lock(firststage = nexstage) from within this code
+        stages = self._config.lock.stages._keys()
+        if firststage:
+            if not firststage in stages:
+                self.logger.error("Firststage %s not found in stages: %s",
+                                  firstage, stages)
+            else:
+                stages = stages[stages.index(firststage):]
+        for stage in stages:
+            self.logger.debug("Lock stage: %s", stage)
+            parameters = dict(detuning=detuning, factor=factor)
+            parameters.update((self._config.lock.stages[stage]))
+            try:
+                stime = parameters.pop("time")
+            except KeyError:
+                stime = 0
+            if stage == laststage or stage == stages[-1]:
+                if detuning:
+                    parameters['detuning'] = detuning
+                if factor:
+                    parameters['factor'] = factor
+                return self._lock(**parameters)
+            else:
+                if thread:
+                    nextstage = stages[stages.index(stage) + 1]
+                    t = threading.Timer(stime,
+                                        self.lock,
+                                        kwargs=dict(
+                                            detuning=detuning,
+                                            factor=factor,
+                                            firststage=nextstage,
+                                            laststage=laststage,
+                                            thread=thread))
+                    return t.start()
+                else:
+                    self._lock(**parameters)
+                    time.sleep(stime)
 
     def calibrate(self, inputs=None, scopeparams={}):
         """
