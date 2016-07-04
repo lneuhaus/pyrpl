@@ -96,18 +96,12 @@ class FPM(FabryPerot):
             self._generator.output_enabled = True
         #return super(RPLockbox_FPM, self)._disable_pdh()
 
-    def relative_pdh_rms(self):
-        rms = self.signals["pdh"].rms
-        relrms = rms / self._config.peak_pdh
-        self._pdh_rms_log.log(relrms)
-        return relrms
-
     def lock(self,
              detuning=None,
              factor=None,
              firststage= None,
              laststage=None,
-             thread=True):
+             thread=False):
         # firststage will allow timer-based recursive iteration over stages
         # i.e. calling lock(firststage = nexstage) from within this code
         stages = self._config.lock.stages._keys()
@@ -148,9 +142,25 @@ class FPM(FabryPerot):
                     time.sleep(stime)
 
     def relative_reflection(self):
+        self.inputs["reflection"]._acquire()
         return self.inputs["reflection"].mean / self.reflection(1000)
 
     def islocked(self):
+        self.inputs["reflection"]._acquire()
         mean = self.inputs["reflection"].mean
         set = abs(self.state["set"][self._variable])
         return (mean <= self.reflection(set+1.0))
+
+    def relative_pdh_rms(self, avg = 1):
+        if avg > 1:
+            sum = 0
+            for i in range(avg):
+                sum += self.relative_pdh_rms()**2
+            return np.sqrt(sum/avg)
+        else:
+            self.signals["pdh"]._acquire()
+            rms = self.signals["pdh"].rms
+            relrms = rms / self._config.peak_pdh
+            self._pdh_rms_log.log(relrms)
+            return relrms
+
