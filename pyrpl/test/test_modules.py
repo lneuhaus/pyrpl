@@ -81,6 +81,8 @@ class TestClass(object):
         """
         if self.r is None:
             return
+        # update fpga
+        # self.r.update_fpga()
 
         self.r.asg1.trigger_source = "immediately"
         self.r.asg1.frequency = 1e5
@@ -88,7 +90,8 @@ class TestClass(object):
         self.r.scope.duration = 8
         self.r.scope.trigger_delay = self.r.scope.duration
         self.r.scope.setup()
-        time.sleep(0.01)
+        time.sleep(0.05) # increased from 0.01 because of
+        # systematic failure on remote server
         assert(self.r.scope.pretrig_ok)
         
     def test_amspwm(self):
