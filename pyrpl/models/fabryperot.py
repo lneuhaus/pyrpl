@@ -154,6 +154,21 @@ class FabryPerot(Model):
                 self._config["peak_pdh"] = (sig._config.max - sig._config.min)/2
         return curves
 
+    def setup_pdh(self, **kwargs):
+        pdh = self.inputs["pdh"]
+        if not hasattr(pdh, 'iq'):
+            pdh.iq = self._parent.rp.iqs.pop()
+        pdh.iq.setup(**kwargs)
+        pdh._config['redpitaya_input'] = pdh.iq.name
+
+    def sweep(self):
+        duration = super(type(self), self).sweep()
+        self._parent.rp.scope.setup(trigger_source='asg1',
+                                    duration=duration)
+        if "scopegui" in self._parent.c._dict:
+            if self._parent.c.scopegui.auto_run_continuous:
+                self._parent.rp.scope_widget.run_continuous()
+
     def relative_reflection(self):
         self.inputs["reflection"]._acquire()
         return self.inputs["reflection"].mean / self.reflection(1000)
@@ -170,4 +185,3 @@ class FabryPerot(Model):
             relrms = rms / self._config.peak_pdh
             self._pdh_rms_log.log(relrms)
             return relrms
-

@@ -1,5 +1,5 @@
 redpitaya:
-  hostname: 10.214.1.30
+  hostname: 10.214.1.33
   password: root
   user: root
   port: 2222
@@ -8,16 +8,17 @@ redpitaya:
   reloadfpga: true
   # autostart gui?
   gui: true
+  monitor_server_name: monitor_server
 
 general:
   # name of this device
-  name: heterodyne
+  name: sqz_modecleaner
   # level of logged information.
   # 'debug' outputs everything
   # 'infi' is default level
   # 'warning' only shows warnings and errors
   # 'error' only shows errors
-  loglevel: error
+  loglevel: debug
   # import CurveDB class from which module? if missing, it's pyrpl.curvedb
   #curvedb: pyrpl
   curvedb: pyinstruments
@@ -27,7 +28,7 @@ general:
 model:
   # use class Interferometer for internal model and lock algorithms
   # upper- or lowercase spelling is accepted if there is no ambiguity
-  modeltype: TEM02FabryPerot
+  modeltype: fabryperot
   # only needed parameter is wavelength
   # (to convert piezo displacement into gain)
   wavelength: 1.064e-06
@@ -35,40 +36,88 @@ model:
   # for interferometer, this is the phase error in radians
   # this value is uniquely needed for the function 'islocked'
   maxerror: 0.1
-  #
-  calibration_threshold: 0.5
-  #
-  calibration_zoom: 20
-  #
-  finesse: 1100
-
-
+  finesse: 60.0
+  length: 0.5
+  # signals in order of their preferrence
+  #signalpreference:
+  #- reflection
+  #- transmission
   lock:
-    drift_detuning: -2
-    drift_offset: -1.0
-    drift_timeout: 0.1
-    relative_transmission_threshold: 0.06
+    error_threshold: 0.1
+    stages:
+      drift:
+        input: transmission
+        detuning: 0.5
+        factor: 1.0
+        time: 1.0
+        offset: 1.0
+      #sof:
+      #  input: transmission
+      #  detuning: 1.0
+      #  factor: 1.0
+      #  time: 0.1
+      prepdh:
+        input: pdh
+        detuning: 0
+        factor: 1
+        time: 0.01
+      pdh:
+        input: pdh
+        detuning: 0
+        factor: 1
 
+  calibration:
+    zoomfactor: 0.07
+    relative_threshold: 0.9
+
+  resonant_reflection: -0.08322671800851822
+  offresonant_reflection: 0.08339925855398178
+  peak_pdh: 0.1905517578125
+  resonant_transmission: 0.17962361127138138
 # all signals that are inputs of the lockbox. Must be signal names understood
-# by the model
+# by the model. The order of signals indicates their preferrence as error
+# signals.
 inputs:
-  # Only 1 photodiode at interferometer port 1 is used here.
-  # For this inteferometer, we use an imbalanced detection scheme
-  # i.e. 90% signal + 10% LO incident on a fast photodiode whose DC port is
-  # connected to redpitaya input 1
-  tilt:
-    redpitaya_input: adc2
-    slope_sign: 1
-    max: 0.0975341796875
-    min: -0.111083984375
+  # the reflection photodiode
+  #reflection:
+  #  redpitaya_input: adc1
+  #  max: 0.08339925855398178
+  #  min: -0.08322671800851822
+  #  mean: 0.00011261552572250366
+  #  rms: 0.018204451214235966
+  #  offset: -0.01687093824148178
   transmission:
-    redpitaya_input: adc1
+    redpitaya_input: adc2
 
-    max: 0.1134033203125
-    min: -0.0301513671875
+    max: 0.17962361127138138
+    min: -0.0014066621661186218
+    mean: 0.012129709124565125
+    rms: 0.02969457142577704
+    offset: -0.004574783146381378
+  pdh:
+    setup:
+      input: adc1
+      phase: 120.0
+      amplitude: 1
+      output_direct: out2
+      frequency: 19950000.0
+      gain: 0
+      output_signal: quadrature
+      quadrature_factor: 0.05
+      bandwidth:
+      - 50000.0
+      - 50000.0
+      acbandwidth: 100000.0
+
+    redpitaya_input: iq0
+    max: 0.21127045154571533
+    min: -0.16983306407928467
+    mean: 0.008511252701282501
+    rms: 0.06392398118935155
+    offset: 0.021029353141784668
 # All output signals. Names of outputs are arbitrary.
 outputs:
-  # we only have 1 actuator in this interferometer, the piezo in the LO arm
+  # the very coarse piezo. at the moment, it is controlled manually
   piezo:
     # output channel where the lopiezo is connected
     redpitaya_output: out1
@@ -86,14 +135,13 @@ outputs:
     # therefore the analog filter can be well approximated by a first order
     # lowpass with corner frequency 37.9 Hz
     analogfilter:
-      lowpass:
-      - 20.0
+      lowpass: []
     # the piezo manufacturer specifies the first resonance at 144 kHz
     # however, the mounting structure is expected to have resonances starting
     # from 15 kHz. To be safe, we start by demanding a unity-gain frequency
     # of 1 kHz and will later increase this value (automatically done after
     # lock optimisation)
-    unity_gain_frequency: 12500.0
+    unity_gain_frequency: 250.0
     sweep:
       waveform: ramp
       frequency: 10.0
@@ -105,13 +153,20 @@ outputs:
     - 0
     - 0
 scope:
-  input1: adc1
+  input1: adc2
   input2: dac1
   duration: 0.1
   trigger_source: immediately
   average: false
 
-# default properties for signal acquisition
+scopegui:
+  coordinates:
+  - 0
+  - 0
+  - 637
+  - 712
+  auto_run_continuous: true
+
 signal:
   unit: V # can be any of m, Hz, V, raw, ... as long as unit_per_V is defined
   V_per_V: 1.0 # default unit is V
@@ -131,18 +186,18 @@ signal:
   points: 16384
   # default trigger source
   trigger_source: immediately
+  # default trigger threshold and hysteresis
+  threshold: 0
+  hysteresis: 0.002
   # timeout determines the time interval within which we do not take another
   # data trace if several parameters are requested. To always obtain fresh
   # data, set this to -1. To enable manual acquisition control with the acquire
   # function '_acquire()', set this to a very large value or to '.inf'.
-  acquire_timeout: 0.3
+  acquire_timeout: 0.5
   # if true, the offset is subtraced. Calibrate with signal.get_offset()
   offset_subtraction: true
   offset: 0
   # peak is a reserved place to store the peak value, for example offresonant
   # reflection from a cavity
   peak: 0
-  # default trigger threshold
-  threshold: 0
-  # default trigger hysteresis
-  hysteresis: 0.002
+  trigger_delay: 0

@@ -34,14 +34,14 @@ class Model(object):
 
     def setup(self):
         # setup all signals
-        for s in self.signals.values():
+        for signal in self.signals.values():
             try:
-                params = self._config.setup._dict
+                params = signal._config.setup._dict
             except KeyError:
                 params = dict()
             try:
-                self.__getattribute__("setup_"+s._name)(**params)
-                self.logger.debug("Calling setup_%s!", s._name)
+                self.__getattribute__("setup_"+signal._name)(**params)
+                self.logger.debug("Calling setup_%s!", signal._name)
             except AttributeError:
                 pass
 
