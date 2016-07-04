@@ -35,14 +35,6 @@ class FPM(FabryPerot):
             name="pdh_rms_rel")  # logbook for pdh rms
         self._enable_pdh()
 
-    def sweep(self):
-        duration = super(FPM, self).sweep()
-        self._parent.rp.scope.setup(trigger_source='asg1',
-                                    duration=duration)
-        if "scopegui" in self._parent.c._dict:
-            if self._parent.c.scopegui.auto_run_continuous:
-               self._parent.rp.scope_widget.run_continuous()
-
     @property
     def pdh_enabled(self):
         self._generator.channel_idx = 1

@@ -1,0 +1,199 @@
+redpitaya:
+  hostname: 10.214.1.33
+  password: root
+  user: root
+  port: 2222
+  frequency_correction: 1.0
+  filename: fpga//red_pitaya.bin
+  reloadfpga: true
+  # autostart gui?
+  gui: true
+  monitor_server_name: monitor_server
+
+general:
+  # name of this device
+  name: sqz_modecleaner
+  # level of logged information.
+  # 'debug' outputs everything
+  # 'infi' is default level
+  # 'warning' only shows warnings and errors
+  # 'error' only shows errors
+  loglevel: debug
+  # import CurveDB class from which module? if missing, it's pyrpl.curvedb
+  #curvedb: pyrpl
+  curvedb: pyinstruments
+
+# most important section that defines how the lockbox understands the
+# real-world system
+model:
+  # use class Interferometer for internal model and lock algorithms
+  # upper- or lowercase spelling is accepted if there is no ambiguity
+  modeltype: fabryperot
+  # only needed parameter is wavelength
+  # (to convert piezo displacement into gain)
+  wavelength: 1.064e-06
+  # maximum tolerated error of the internal variable
+  # for interferometer, this is the phase error in radians
+  # this value is uniquely needed for the function 'islocked'
+  maxerror: 0.1
+  finesse: 60.0
+  length: 0.5
+  # signals in order of their preferrence
+  #signalpreference:
+  #- reflection
+  #- transmission
+  lock:
+    error_threshold: 0.1
+    stages:
+      drift:
+        input: reflection
+        detuning: 1.5
+        factor: 5
+        time: 0.5
+        offset: 0.5
+      sof:
+        input: reflection
+        detuning: 1.0
+        factor: 1.0
+        time: 0.1
+      pdh:
+        input: pdh
+        detuning: 0
+        factor: 1
+
+  calibration:
+    zoomfactor: 0.03
+    relative_threshold: 0.9
+
+  resonant_reflection: -0.08322671800851822
+  offresonant_reflection: 0.08339925855398178
+  peak_pdh: 0.19586181640625
+  resonant_transmission: 0.17950154095888138
+# all signals that are inputs of the lockbox. Must be signal names understood
+# by the model. The order of signals indicates their preferrence as error
+# signals.
+inputs:
+  # the reflection photodiode
+  #reflection:
+  #  redpitaya_input: adc1
+  #  max: 0.08339925855398178
+  #  min: -0.08322671800851822
+  #  mean: 0.00011261552572250366
+  #  rms: 0.018204451214235966
+  #  offset: -0.01687093824148178
+  transmission:
+    redpitaya_input: adc2
+
+    max: 0.17950154095888138
+    min: 0.003476150333881378
+    mean: 0.040292710065841675
+    rms: 0.04792653929942987
+    offset: -0.004574783146381378
+  pdh:
+    setup:
+      input: adc1
+      phase: 120.0
+      amplitude: 1
+      output_direct: out2
+      frequency: 19950000.0
+      gain: 0
+      output_signal: quadrature
+      quadrature_factor: 0.05
+      bandwidth:
+      - 50000.0
+      - 50000.0
+      acbandwidth: 100000.0
+
+    redpitaya_input: iq0
+    max: 0.0006482228636741638
+    min: 0.0006482228636741638
+    mean: 0.0006482228636741638
+    rms: 0.0
+    offset: -0.0006482228636741638
+# All output signals. Names of outputs are arbitrary.
+outputs:
+  # the very coarse piezo. at the moment, it is controlled manually
+  piezo:
+    # output channel where the lopiezo is connected
+    redpitaya_output: out1
+    # voltage limits
+    max_voltage: 1.0
+    min_voltage: -1.0
+    # we will calibrate the piezo response in units of m_per_V (not a necessary
+    # parameter as it can be automatically filled in by the code)
+    calibrationunits: m_per_V
+    # sweep with 2Vpp input to amplifier gives 1 FSR (532nm) =>
+    m_per_V: 2.66e-07
+    # PZT Capacity: 42nF
+    # Output impedance of HV amplifier: 100 kOhm
+    # RC cutoff < 144 kHz: 1/2piRC = 37.9 Hz
+    # therefore the analog filter can be well approximated by a first order
+    # lowpass with corner frequency 37.9 Hz
+    analogfilter:
+      lowpass:
+      - 20.0
+    # the piezo manufacturer specifies the first resonance at 144 kHz
+    # however, the mounting structure is expected to have resonances starting
+    # from 15 kHz. To be safe, we start by demanding a unity-gain frequency
+    # of 1 kHz and will later increase this value (automatically done after
+    # lock optimisation)
+    unity_gain_frequency: 12500.0
+    sweep:
+      waveform: ramp
+      frequency: 10.0
+      amplitude: 1.0
+
+    inputfilter:
+    - 19428.09363914738
+    - 19428.09363914738
+    - 0
+    - 0
+scope:
+  input1: adc2
+  input2: dac1
+  duration: 0.1
+  trigger_source: immediately
+  average: false
+
+scopegui:
+  coordinates:
+  - 0
+  - 0
+  - 637
+  - 712
+  auto_run_continuous: true
+
+signal:
+  unit: V # can be any of m, Hz, V, raw, ... as long as unit_per_V is defined
+  V_per_V: 1.0 # default unit is V
+  raw_per_V: 8192.0 # raw units from the FPGA
+  # minimum trace duration in seconds
+  # be aware that this number affects both the sampling rate and the minimum
+  # frequency that can be resolved. Usually, you want to keep duration as long
+  # as you can stand to wait for new signal data, typically 10-100 ms.
+  duration: 0.1
+  # selects whether scope is to be used in average mode
+  # false is strongly suggested for duration-independent estimation of rms
+  # true is preferred only when we want to get an extremely good mean estimate
+  average: false
+  # if true, the signal.curve command automatically saves the data to CurveDB
+  autosave: true
+  # number of points per curve; also the number of points used for mean and rms
+  points: 16384
+  # default trigger source
+  trigger_source: immediately
+  # default trigger threshold and hysteresis
+  threshold: 0
+  hysteresis: 0.002
+  # timeout determines the time interval within which we do not take another
+  # data trace if several parameters are requested. To always obtain fresh
+  # data, set this to -1. To enable manual acquisition control with the acquire
+  # function '_acquire()', set this to a very large value or to '.inf'.
+  acquire_timeout: 0.5
+  # if true, the offset is subtraced. Calibrate with signal.get_offset()
+  offset_subtraction: true
+  offset: 0
+  # peak is a reserved place to store the peak value, for example offresonant
+  # reflection from a cavity
+  peak: 0
+  trigger_delay: 0
