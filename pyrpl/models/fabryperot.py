@@ -173,7 +173,10 @@ class FabryPerot(Model):
         self.inputs["reflection"]._acquire()
         return self.inputs["reflection"].mean / self.reflection(1000)
 
-    def relative_pdh_rms(self, avg = 1):
+    def relative_pdh_rms(self, avg=1):
+        """ Returns the pdh rms normalized by the peak amplitude of pdh.
+        With fpm cavity settings (typical), avg=50 yields values that
+        scatter less than a percent. Best way to optimize a pdh lock. """
         if avg > 1:
             sum = 0
             for i in range(avg):

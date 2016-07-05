@@ -235,7 +235,9 @@ class RPOutputSignal(RPSignal):
                                              branch,
                                              parent,
                                              restartscope)
+        self.setup()
 
+    def setup(self, **kwargs):
         # each output gets its own pid
         if not hasattr(self, "pid"):
             self.pid = self._rp.pids.pop()
@@ -264,20 +266,46 @@ class RPOutputSignal(RPSignal):
         else:
             self.pid.output_direct = out
 
+        # is a second pid needed?
+        if self._pid2_filter or self._second_integrator_crossover > 0:
+            # if we already have a pid2, let's return it to the stack first
+            if hasattr(self, 'pid2'):
+                self.pid2.p = 0
+                self.pid2.i = 0
+                self.pid2.d = 0
+                self.pid2.ival = 0
+                self._rp.pids.append(self.pid2)
+            # self.pid has been configured on the output side. Therfore we
+            # rename it to pid2 and create a new self.pid for the intput
+            # configuration to be compatible with the single-pid code.
+            self.pid2 = self.pid
+            self.pid = self._rp.pids.pop()
+            logger.debug("Second PID %s acquired for output %s.",
+                         self.pid.name, self._name)
+            self.pid2.inputfilter = self._pid2_filter
+            self.pid2.input = self.pid.name
+            self.pid.max_voltage = 1
+            self.pid.min_voltage = -1
+            self.pid.p = 1.0
+
+        # configure inputfilter
+        try:
+            self.pid.inputfilter = self._config.lock.inputfilter
+        except (KeyError, AttributeError):
+            logger.debug("No inputfilter was defined for output %s. ",
+                         self._name)
+
+        # save the current inputfilter to the config file
+        try:
+            self._config["lock"]["inputfilter"] = self._inputfilter
+        except KeyError:
+            self._config["lock"] = {"inputfilter": self._inputfilter}
+
         # set input if specified
         try:
             self.pid.input = self._config.redpitaya_input
         except KeyError:
             self.pid.input = "off"
-
-        # configure inputfilter
-        try:
-            self.pid.inputfilter = self._config.inputfilter
-        except KeyError:
-            logger.debug("No inputfilter was defined for output %s. ",
-                         self._name)
-        # save the current inputfilter to the config file
-        self._config["inputfilter"] = self.pid.inputfilter
 
         # configure iir if desired
         self._loadiir()
@@ -327,9 +355,14 @@ class RPOutputSignal(RPSignal):
         self.pid.i = 0
         self.pid.d = 0
         self.pid.ival = 0
+        if hasattr(self, 'pid2'):
+            self.pid2.i = 0
+            self.pid2.p = 1
+            self.pid2.d = 0
+            self.pid2.ival = 0
 
     def unlock(self):
-        if 'lock' in self._config._data and not self._config.lock:
+        if self._skiplock:
             return
         else:
             self.off()
@@ -339,7 +372,8 @@ class RPOutputSignal(RPSignal):
              setpoint,
              input=None,
              factor=1.0,
-             offset=None):
+             offset=None,
+             second_integrator=0):
         """
         Enables feedback with this output. The realized transfer function of
         the pid plus specified external analog filters is a pure integrator,
@@ -348,17 +382,22 @@ class RPOutputSignal(RPSignal):
 
         Parameters
         ----------
-        slope: float
+        slope: float or None
             The slope of the input error signal. If the output is specified in
-            units of m_per_V, the slope must come in units of V_per_m.
-        setpoint: float
-            The lock setpoint in V.
-        input: RPSignal or str
-            The input signal of the pid. None leaves the currend pid input.
+            units of m_per_V, the slope must come in units of V_per_m. None
+            leaves the current slope unchanged (also ignores factor).
+        setpoint: float or None
+            The lock setpoint in V. None leaves the setpoint unchanged
+        input: RPSignal or str or None
+            The input signal of the pid, either as RPSignal object or as str
+            containing the signal's name.  None leaves the currend pid input.
         factor: float
             An extra factor to multiply the gain with for debugging purposes.
-        offset:
+        offset: float or None
             The output offset (V) when the lock is enabled.
+        second_integrator: float
+            Factor to multiply a predefined second integrator gain with. Useful
+            for ramping up the second integrator in a smooth fashion.
 
         Returns
         -------
@@ -366,14 +405,17 @@ class RPOutputSignal(RPSignal):
         """
 
         # if output is disabled for locking, skip the rest
-        if 'lock' in self._config._data and not self._config.lock:
+        if self._skiplock:
             return
 
         # compute integrator unity gain frequency
-        if slope == 0:
-            raise ValueError("Cannot lock on a zero slope!")
-        integrator_ugf = self._config.unity_gain_frequency * factor * -1
-        integrator_ugf /= (self._config[self._config.calibrationunits] * slope)
+        if slope is None:
+            integrator_ugf = self.pid.i
+        else:
+            if slope == 0:
+                raise ValueError("Cannot lock on a zero slope!")
+            integrator_ugf = self._config.lock.unity_gain_frequency * factor * -1
+            integrator_ugf /= (self._config[self._config.calibrationunits] * slope)
 
         # if gain is disabled somewhere, return
         if integrator_ugf == 0:
@@ -389,7 +431,7 @@ class RPOutputSignal(RPSignal):
             self._config['analogfilter']= {'lowpass': []}
             lowpass = sorted(self._config.analogfilter.lowpass)
 
-        if len(lowpass) >= 0:
+        if len(lowpass) >= 0:  # i.e. always
             # no analog lowpass -> pure integrator lock
             proportional = 0
             differentiator_ugf = 0
@@ -423,18 +465,30 @@ class RPOutputSignal(RPSignal):
 
         # reset inputfilter - allows configuration from configfile in
         # near real time
-        self.pid.inputfilter = self._config.inputfilter
+        self.pid.inputfilter = self._config.lock.inputfilter
+        if hasattr(self, 'pid2'):
+            self.pid2.inputfilter = self._pid2_filter
 
         # rapidly turn on all gains
-        self.pid.setpoint = setpoint
+        if setpoint is None:
+            setpoint = self.pid.setpoint
+        else:
+            self.pid.setpoint = setpoint
         self.pid.i = integrator_ugf
         self.pid.p = proportional
         self.pid.d = differentiator_ugf
+        if second_integrator != 0:
+            if hasattr(self, 'pid2'):
+                self.pid2.i = self._second_integrator_crossover\
+                              * second_integrator
+                self.pid2.p = 1.0
 
         # set the offset once more in case the lack of synchronous gain enabling
         # messed up the offset
         if offset:
             self.pid.ival = offset
+            if hasattr(self, 'pid2'):
+                self.pid2.ival = 0
 
         # issue a warning if some gain could not be implemented
         for act, set, name in [(self.pid.i, integrator_ugf, "integrator"),
@@ -477,14 +531,17 @@ class RPOutputSignal(RPSignal):
         self.pid.p = amplitude
         return asg.frequency
 
-    def save_current_gain(self, factor):
+    def save_current_gain(self, factor=1):
         try:
-            ugf = self._config.unity_gain_frequency
+            ugf = self._config.lock.unity_gain_frequency
         except KeyError:
             pass
         else:
-            self._config.unity_gain_frequency = ugf * factor
-        self._config.inputfilter = self.pid.inputfilter
+            self._config.lock.unity_gain_frequency = ugf * factor
+        self._config.lock.inputfilter = self._inputfilter
+        if hasattr(self, 'pid2'):
+            self._config.lock['second_integrator_crossover'] = \
+                self.pid2.i / self.pid2.p
 
     @property
     def output_offset(self):
@@ -499,3 +556,37 @@ class RPOutputSignal(RPSignal):
         elif offset < self._config.min_voltage:
             offset = self._config.min_voltage
         self._config['lastoffset'] = offset
+
+    @property
+    def _skiplock(self):
+        if 'lock' not in self._config._keys():
+            return True
+        if 'skip' in self._config.lock._keys():
+            if self._config.lock.skip:
+                return True
+        return False
+
+    @property
+    def _pid2_filter(self):
+        # this is a method to get the pid2 filter coefficients
+        # future implementation might change where this value is stored
+        try:
+            return self._config.lock.inputfilter[len(self.pid.inputfilter):]
+        except KeyError:
+            return []
+
+    @property
+    def _inputfilter(self):
+        if hasattr(self, 'pid2'):
+            return self.pid.inputfilter + self.pid2.inputfilter
+        else:
+            return self.pid.inputfilter
+
+    @property
+    def _second_integrator_crossover(self):
+        try:
+            sic = self._config.lock.second_integrator_crossover
+        except KeyError:
+            sic = 0
+        return sic
+
