@@ -137,15 +137,15 @@ outputs:
       lowpass: [15.8]
     lock:
       unity_gain_frequency: 100.0
-      second_integrator_crossover: 10
+      second_integrator_crossover: 0
       inputfilter:
-      - 0
-      - 0
-      - 0
-      - 0
-      - 0
-      - 0
-      - 0
+      - 10e3
+      - 10e3
+      - 10e3
+      - 10e3
+      - 10e3
+      - 10e3
+      - 10e3
       - 0
     sweep:
       waveform: sin
