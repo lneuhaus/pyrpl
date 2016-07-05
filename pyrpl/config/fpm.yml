@@ -183,6 +183,7 @@ outputs:
     transfer_function:
       open_loop: 254634
   fastpiezo:
+    redpitaya_output: out1
     calibrationunits: m_per_V
     m_per_V: 3.0e-10
     # PZT parallel capacity: 1 uF
