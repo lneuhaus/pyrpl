@@ -10,6 +10,10 @@ class FPM(FabryPerot):
     export_to_parent = FabryPerot.export_to_parent \
                        + ["relative_pdh_rms", "relative_reflection"]
 
+    def setup(self):
+        super(FPM, self).setup()
+        self._parent.constants = self._parent.c.constants
+
     def setup_pdh(self, **kwargs):
         o = self.outputs["slow"]
         o.output_offset = o._config.lastoffset

@@ -64,7 +64,7 @@ model:
         detuning: 0
         factor: 1
         time: 0.01
-      call_islocked: {}
+      #call_islocked: {}
   calibration:
     zoomfactor: 0.03
     relative_threshold: 0.9
@@ -212,3 +212,7 @@ signal:
   # reflection from a cavity
   peak: 0
   trigger_delay: 0
+
+# fpm related stuff
+constants:
+  pdh_marker_frequency: 3600000.0
