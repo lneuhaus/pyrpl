@@ -249,6 +249,16 @@ class Model(object):
                 stages = stages[stages.index(firststage):]
         for stage in stages:
             self.logger.debug("Lock stage: %s", stage)
+            if stage.startswith("call_"):
+                try:
+                    lockfn = self.__getattribute__(stage[len('call_'):])
+                except AttributeError:
+                    logger.error("Lock stage %s: model has no function %s.",
+                                 stage, stage[len('call_'):])
+                    raise
+            else:
+                # use _lock by default
+                lockfn = self._lock
             parameters = dict(detuning=detuning, factor=factor)
             parameters.update((self._config.lock.stages[stage]))
             try:
@@ -260,11 +270,17 @@ class Model(object):
                     parameters['detuning'] = detuning
                 if factor:
                     parameters['factor'] = factor
-                return self._lock(**parameters)
+                return lockfn(**parameters)
             else:
                 if thread:
+                    # immediately execute current step (in another thread)
+                    t0 = threading.Timer(0,
+                                        lockfn,
+                                        kwargs=parameters)
+                    t0.start()
+                    # and launch timer for nextstage
                     nextstage = stages[stages.index(stage) + 1]
-                    t = threading.Timer(stime,
+                    t1 = threading.Timer(stime,
                                         self.lock,
                                         kwargs=dict(
                                             detuning=detuning,
@@ -272,9 +288,10 @@ class Model(object):
                                             firststage=nextstage,
                                             laststage=laststage,
                                             thread=thread))
-                    return t.start()
+                    t1.start()
+                    return None
                 else:
-                    self._lock(**parameters)
+                    lockfn(**parameters)
                     time.sleep(stime)
 
     def calibrate(self, inputs=None, scopeparams={}):
