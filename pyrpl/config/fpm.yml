@@ -67,12 +67,6 @@ model:
         input: pdh
         detuning: 0
         factor: 1
-        second_integrator: 0.02
-        time: 0.5
-      secondintegrator1:
-        input: pdh
-        detuning: 0
-        factor: 1
         second_integrator: 0.2
         time: 0.5
       pdh:
@@ -155,7 +149,7 @@ outputs:
       lowpass: [15.8]
     lock:
       unity_gain_frequency: 100.0
-      second_integrator_crossover: 2
+      second_integrator_crossover: 0
       inputfilter:
       - 9714.04681957369
       - 9714.04681957369
