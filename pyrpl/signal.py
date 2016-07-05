@@ -290,7 +290,7 @@ class RPOutputSignal(RPSignal):
 
         # configure inputfilter
         try:
-            self.pid.inputfilter = self._inputfilter
+            self.pid.inputfilter = self._config.lock.inputfilter
         except (KeyError, AttributeError):
             logger.debug("No inputfilter was defined for output %s. ",
                          self._name)
@@ -373,7 +373,7 @@ class RPOutputSignal(RPSignal):
              input=None,
              factor=1.0,
              offset=None,
-             second_integrator=True):
+             second_integrator=0):
         """
         Enables feedback with this output. The realized transfer function of
         the pid plus specified external analog filters is a pure integrator,
@@ -382,19 +382,22 @@ class RPOutputSignal(RPSignal):
 
         Parameters
         ----------
-        slope: float
+        slope: float or None
             The slope of the input error signal. If the output is specified in
-            units of m_per_V, the slope must come in units of V_per_m.
-        setpoint: float
-            The lock setpoint in V.
+            units of m_per_V, the slope must come in units of V_per_m. None
+            leaves the current slope unchanged (also ignores factor).
+        setpoint: float or None
+            The lock setpoint in V. None leaves the setpoint unchanged
         input: RPSignal or str or None
-            The input signal of the pid. None leaves the currend pid input.
+            The input signal of the pid, either as RPSignal object or as str
+            containing the signal's name.  None leaves the currend pid input.
         factor: float
             An extra factor to multiply the gain with for debugging purposes.
         offset: float or None
             The output offset (V) when the lock is enabled.
-        second_integrator: bool
-            If True, a second integrator is enabled if it has been configured.
+        second_integrator: float
+            Factor to multiply a predefined second integrator gain with. Useful
+            for ramping up the second integrator in a smooth fashion.
 
         Returns
         -------
@@ -406,10 +409,13 @@ class RPOutputSignal(RPSignal):
             return
 
         # compute integrator unity gain frequency
-        if slope == 0:
-            raise ValueError("Cannot lock on a zero slope!")
-        integrator_ugf = self._config.lock.unity_gain_frequency * factor * -1
-        integrator_ugf /= (self._config[self._config.calibrationunits] * slope)
+        if slope is None:
+            integrator_ugf = self.pid.i
+        else:
+            if slope == 0:
+                raise ValueError("Cannot lock on a zero slope!")
+            integrator_ugf = self._config.lock.unity_gain_frequency * factor * -1
+            integrator_ugf /= (self._config[self._config.calibrationunits] * slope)
 
         # if gain is disabled somewhere, return
         if integrator_ugf == 0:
@@ -425,7 +431,7 @@ class RPOutputSignal(RPSignal):
             self._config['analogfilter']= {'lowpass': []}
             lowpass = sorted(self._config.analogfilter.lowpass)
 
-        if len(lowpass) >= 0:
+        if len(lowpass) >= 0:  # i.e. always
             # no analog lowpass -> pure integrator lock
             proportional = 0
             differentiator_ugf = 0
@@ -464,13 +470,17 @@ class RPOutputSignal(RPSignal):
             self.pid2.inputfilter = self._pid2_filter
 
         # rapidly turn on all gains
-        self.pid.setpoint = setpoint
+        if setpoint is None:
+            setpoint = self.pid.setpoint
+        else:
+            self.pid.setpoint = setpoint
         self.pid.i = integrator_ugf
         self.pid.p = proportional
         self.pid.d = differentiator_ugf
-        if second_integrator:
+        if second_integrator != 0:
             if hasattr(self, 'pid2'):
-                self.pid2.i = self._second_integrator_crossover
+                self.pid2.i = self._second_integrator_crossover\
+                              * second_integrator
                 self.pid2.p = 1.0
 
         # set the offset once more in case the lack of synchronous gain enabling

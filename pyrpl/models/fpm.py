@@ -102,4 +102,4 @@ class FPM(FabryPerot):
 
     @coarse.setter
     def coarse(self, v):
-        self.slow.output_offset = v
+        self._parent.slow.output_offset = v
