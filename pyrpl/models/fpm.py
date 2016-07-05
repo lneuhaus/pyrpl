@@ -88,14 +88,6 @@ class FPM(FabryPerot):
             self._generator.output_enabled = True
         #return super(RPLockbox_FPM, self)._disable_pdh()
 
-
-    def islocked(self):
-        self.inputs["reflection"]._acquire()
-        mean = self.inputs["reflection"].mean
-        set = abs(self.state["set"][self._variable])
-        return (mean <= self.reflection(set + 1.0))
-
-
     @property
     def coarse(self):
         return self._parent.slow.output_offset

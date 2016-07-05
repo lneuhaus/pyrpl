@@ -36,8 +36,8 @@ model:
   # for interferometer, this is the phase error in radians
   # this value is uniquely needed for the function 'islocked'
   maxerror: 0.1
-  offresonant_reflection: 0.15210293978452682
-  resonant_reflection: 0.07348965853452682
+  offresonant_reflection: 0.16968106478452682
+  resonant_reflection: 0.07556485384702682
   finesse: 92000.0
   length: 5.61e-05
   # signals in order of their preferrence
@@ -45,8 +45,9 @@ model:
   #- reflection
   #- transmission
   lock:
-    error_threshold: 0.1
+    error_threshold: 1
     stages:
+      #call_calibrate: {}
       drift:
         input: reflection
         detuning: 1.5
@@ -58,45 +59,34 @@ model:
         detuning: 0.7
         factor: 1.0
         time: 0.1
-      prepdh:
-        input: pdh
-        detuning: 0
-        factor: 1
-        time: 0.05
-      secondintegrator1:
-        input: pdh
-        detuning: 0
-        factor: 1
-        second_integrator: 0.2
-        time: 0.5
       pdh:
         input: pdh
         detuning: 0
         factor: 1
-        second_integrator: 1
         time: 0.01
+      call_islocked: {}
   calibration:
     zoomfactor: 0.03
     relative_threshold: 0.9
 
   peak: 0.07061767578125
-  peak_pdh: 0.04217529296875
+  peak_pdh: 0.04083251953125
 # all signals that are inputs of the lockbox. Must be signal names understood
 # by the model.
 inputs:
   reflection:
     redpitaya_input: adc2
     offset: 0.012691982090473175
-    max: 0.15210293978452682
-    min: 0.07348965853452682
-    mean: 0.11551889032125473
-    rms: 0.020345045960116888
+    max: 0.16968106478452682
+    min: 0.07556485384702682
+    mean: 0.14635373651981354
+    rms: 0.01577879208144797
   pdh:
     redpitaya_input: adc1
-    max: 0.04020614176988602
-    min: -0.04414444416761398
-    mean: -0.004462599754333496
-    rms: 0.018767742842354274
+    max: 0.03971786051988602
+    min: -0.04194717854261398
+    mean: -0.0007639750838279724
+    rms: 0.014915477739293703
     setup:
       phase: -5.0
       amplitude: 4.0
@@ -149,7 +139,7 @@ outputs:
       lowpass: [15.8]
     lock:
       unity_gain_frequency: 100.0
-      second_integrator_crossover: 0.5
+      second_integrator_crossover: 0.0
       inputfilter:
       - 9714.04681957369
       - 9714.04681957369

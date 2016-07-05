@@ -270,14 +270,17 @@ class Model(object):
                     parameters['detuning'] = detuning
                 if factor:
                     parameters['factor'] = factor
-                return lockfn(**parameters)
+                try:
+                    return lockfn(**parameters)
+                except TypeError:  # function doesnt accept kwargs
+                    return lockfn()
             else:
                 if thread:
                     # immediately execute current step (in another thread)
                     t0 = threading.Timer(0,
                                         lockfn,
                                         kwargs=parameters)
-                    t0.start()
+                    t0.start() # bug here: lockfn must accept kwargs
                     # and launch timer for nextstage
                     nextstage = stages[stages.index(stage) + 1]
                     t1 = threading.Timer(stime,
@@ -291,7 +294,10 @@ class Model(object):
                     t1.start()
                     return None
                 else:
-                    lockfn(**parameters)
+                    try:
+                        lockfn(**parameters)
+                    except TypeError:  # function doesnt accept kwargs
+                        lockfn()
                     time.sleep(stime)
 
     def calibrate(self, inputs=None, scopeparams={}):
