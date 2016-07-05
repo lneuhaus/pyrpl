@@ -47,11 +47,11 @@ inputs:
     unit: V
     redpitaya_input: adc1
     offset: -0.000342048704624176
-    max: 0.14597193151712418
-    min: -0.17934545129537582
+    max: 0.001684822142124176
+    min: -0.037743888795375824
 
-    mean: -0.004177264869213104
-    rms: 0.11727120495309659
+    mean: -0.0193270742893219
+    rms: 0.005569407582442067
 # All output signals. Names of outputs are arbitrary.
 outputs:
   # we only have 1 actuator in this interferometer, the piezo in the LO arm

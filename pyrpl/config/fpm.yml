@@ -36,8 +36,8 @@ model:
   # for interferometer, this is the phase error in radians
   # this value is uniquely needed for the function 'islocked'
   maxerror: 0.1
-  offresonant_reflection: 0.16968106478452682
-  resonant_reflection: 0.07556485384702682
+  offresonant_reflection: 0.18030118197202682
+  resonant_reflection: 0.08496426790952682
   finesse: 92000.0
   length: 5.61e-05
   # signals in order of their preferrence
@@ -59,34 +59,58 @@ model:
         detuning: 0.7
         factor: 1.0
         time: 0.1
+      prepdh:
+        input: pdh
+        detuning: 0
+        factor: 1
+        time: 0.05
+      integratorboost1:
+        input: pdh
+        detuning: 0
+        factor: 1
+        time: 0.5
+        second_integrator: 0.02
+      integratorboost2:
+        input: pdh
+        detuning: 0
+        factor: 1
+        time: 0.5
+        second_integrator: 0.1
+      integratorboost3:
+        input: pdh
+        detuning: 0
+        factor: 1
+        time: 0.5
+        second_integrator: 0.7
       pdh:
         input: pdh
         detuning: 0
         factor: 1
         time: 0.01
+        second_integrator: 1.0
       #call_islocked: {}
   calibration:
     zoomfactor: 0.03
     relative_threshold: 0.9
 
   peak: 0.07061767578125
-  peak_pdh: 0.04083251953125
+  peak_pdh: 0.04022216796875
 # all signals that are inputs of the lockbox. Must be signal names understood
 # by the model.
 inputs:
   reflection:
     redpitaya_input: adc2
     offset: 0.012691982090473175
-    max: 0.16968106478452682
-    min: 0.07556485384702682
-    mean: 0.14635373651981354
-    rms: 0.01577879208144797
+    max: 0.18030118197202682
+    min: 0.08496426790952682
+    mean: 0.16044815629720688
+    rms: 0.01379790967222776
   pdh:
     redpitaya_input: adc1
-    max: 0.03971786051988602
-    min: -0.04194717854261398
-    mean: -0.0007639750838279724
-    rms: 0.014915477739293703
+    max: 0.04069442301988602
+    min: -0.03974991291761398
+    mean: -5.135685205459595e-05
+    rms: 0.01219596061013391
     setup:
       phase: -5.0
       amplitude: 4.0
@@ -115,7 +139,7 @@ outputs:
       lowpass:
       - 0.01
     calibrationunits: m_per_V
-    lastoffset: 0.126220703125
+    lastoffset: 0.125244140625
   piezo:
     redpitaya_output: out2
     # we will calibrate the piezo response in units of m_per_V (not a necessary
@@ -139,7 +163,7 @@ outputs:
       lowpass: [15.8]
     lock:
       unity_gain_frequency: 100.0
-      second_integrator_crossover: 0.0
+      second_integrator_crossover: 5.0
       inputfilter:
       - 9714.04681957369
       - 9714.04681957369
@@ -147,8 +171,8 @@ outputs:
       - 9714.04681957369
       - 9714.04681957369
       - 9714.04681957369
-      - 19428.09363914738
-      - 19428.09363914738
+      - 9714.04681957369
+      - 9714.04681957369
     sweep:
       waveform: sin
       frequency: 25.0
@@ -158,7 +182,28 @@ outputs:
     min_voltage: -1.0
     transfer_function:
       open_loop: 254634
-
+  fastpiezo:
+    calibrationunits: m_per_V
+    m_per_V: 3.0e-10
+    # PZT parallel capacity: 1 uF
+    # Series resistance: 50 Ohm + 10 kOhm
+    # RC cutoff 1/2piRC = 37.9 Hz
+    # therefore the analog filter can be well approximated by a first order
+    # lowpass with corner frequency 37.9 Hz
+    analogfilter:
+      lowpass: []
+    lock:
+      #skip: true
+      proportional_gain: 0.0
+      inputfilter:
+      - 19428.09363914738
+      - 38856.18727829476
+      - 621698.9964527162
+      - 0
+    max_voltage: 0.9998779296875
+    min_voltage: -1.0
+    transfer_function:
+      open_loop: none
 ##############################################################################
 ###  Configuration parameters that rarely need to be modified ################
 ##############################################################################
@@ -172,10 +217,10 @@ scope:
 
 scopegui:
   coordinates:
-  - 0
-  - 0
-  - 882
-  - 639
+  - -586
+  - 452
+  - 546
+  - 438
   auto_run_continuous: true
 
 signal:
