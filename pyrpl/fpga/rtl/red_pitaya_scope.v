@@ -288,7 +288,7 @@ always @(posedge adc_clk_i) begin
    end
    else begin
       ctr_value <= ctr_value + 1'b1;
-      pretrig_data_min <= 2**RSZ - set_dly;
+      pretrig_data_min <= 2**RSZ - set_dly; // next line takes care of negative overflow (when set_dly > 2**RSZ)
       // ready for trigger when enough samples are acquired or trigger delay is longer than buffer duration
       pretrig_ok <= (adc_we_cnt > pretrig_data_min) || (|(set_dly[32-1:RSZ]));
 
