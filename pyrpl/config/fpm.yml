@@ -3,7 +3,7 @@ redpitaya:
   password: root
   user: root
   port: 2222
-  frequency_correction: 1.0
+  frequency_correction: 0.9999801526493788
   filename: fpga//red_pitaya.bin
   reloadfpga: true
   # autostart gui?
@@ -36,8 +36,8 @@ model:
   # for interferometer, this is the phase error in radians
   # this value is uniquely needed for the function 'islocked'
   maxerror: 0.1
-  offresonant_reflection: 0.14880704134702682
-  resonant_reflection: 0.06738614290952682
+  offresonant_reflection: 0.15210293978452682
+  resonant_reflection: 0.07348965853452682
   finesse: 92000.0
   length: 5.61e-05
   # signals in order of their preferrence
@@ -80,23 +80,23 @@ model:
     relative_threshold: 0.9
 
   peak: 0.07061767578125
-  peak_pdh: 0.0379638671875
+  peak_pdh: 0.04217529296875
 # all signals that are inputs of the lockbox. Must be signal names understood
 # by the model.
 inputs:
   reflection:
     redpitaya_input: adc2
     offset: 0.012691982090473175
-    max: 0.14880704134702682
-    min: 0.06738614290952682
-    mean: 0.13183597475290298
-    rms: 0.010962956792015168
+    max: 0.15210293978452682
+    min: 0.07348965853452682
+    mean: 0.11551889032125473
+    rms: 0.020345045960116888
   pdh:
     redpitaya_input: adc1
-    max: 0.03629989176988602
-    min: -0.03962784260511398
-    mean: 0.00048141926527023315
-    rms: 0.010203426966821886
+    max: 0.04020614176988602
+    min: -0.04414444416761398
+    mean: -0.004462599754333496
+    rms: 0.018767742842354274
     setup:
       phase: -5.0
       amplitude: 4.0
@@ -125,7 +125,7 @@ outputs:
       lowpass:
       - 0.01
     calibrationunits: m_per_V
-    lastoffset: 0.125244140625
+    lastoffset: 0.126220703125
   piezo:
     redpitaya_output: out2
     # we will calibrate the piezo response in units of m_per_V (not a necessary
@@ -149,7 +149,7 @@ outputs:
       lowpass: [15.8]
     lock:
       unity_gain_frequency: 100.0
-      second_integrator_crossover: 0
+      second_integrator_crossover: 0.5
       inputfilter:
       - 9714.04681957369
       - 9714.04681957369
