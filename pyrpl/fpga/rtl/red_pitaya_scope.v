@@ -283,13 +283,15 @@ always @(posedge adc_clk_i) begin
       adc_dly_cnt <= 32'h0      ;
       adc_dly_do  <=  1'b0      ;
       triggered   <=  1'b0      ;
-      pretrig_data_min <= (|(set_dly[32-1:RSZ])) ? 14'h0 : (2**RSZ - set_dly);
+      pretrig_data_min <=  2**RSZ - set_dly;
       pretrig_ok <= 1'b0; // goes to 1 when enough data has been acquired pretrigger
    end
    else begin
       ctr_value <= ctr_value + 1'b1;
-      pretrig_data_min <= (2**RSZ) - set_dly;
-      pretrig_ok <= (adc_we_cnt > pretrig_data_min);
+      pretrig_data_min <= 2**RSZ - set_dly;
+      // ready for trigger when enough samples are acquired or trigger delay is longer than buffer duration
+      pretrig_ok <= (adc_we_cnt > pretrig_data_min) || (|(set_dly[32-1:RSZ]));
+
       if (adc_arm_do)
          adc_we <= 1'b1 ;
       else if (((adc_dly_do || adc_trig) && (adc_dly_cnt == 32'h0) && ~adc_we_keep) || adc_rst_do) //delayed reached or reset
