@@ -35,20 +35,35 @@ model:
   # for interferometer, this is the phase error in radians
   # this value is uniquely needed for the function 'islocked'
   maxerror: 0.1
-  #
-  calibration_threshold: 0.5
-  #
-  calibration_zoom: 20
-  #
+  calibration:
+    zoomfactor: 0.05
+    relative_threshold: 0.5
   finesse: 1100
-
-
   lock:
-    drift_detuning: -2
-    drift_offset: -1.0
-    drift_timeout: 0.1
-    relative_transmission_threshold: 0.06
+    error_threshold: 0.1
+    stages:
+      drift:
+        input: transmission
+        detuning: -1.6
+        factor: 1.0
+        time: 0.2
+        offset: -1.0
+      sof:
+        input: transmission
+        detuning: -1.33
+        factor: 1
+        time: 0.1
+      pretilt:
+        input: tilt
+        detuning: 0.0
+        factor: 1
+        time: 0.01
+      tilt:
+        input: tilt
+        detuning: 0.0
+        factor: 1
 
+  resonant_transmission: 0.14513342827558517
 # all signals that are inputs of the lockbox. Must be signal names understood
 # by the model
 inputs:
@@ -59,13 +74,18 @@ inputs:
   tilt:
     redpitaya_input: adc2
     slope_sign: 1
-    max: 0.0975341796875
-    min: -0.111083984375
+    max: 0.09538460522890091
+    min: -0.09602164477109909
+    mean: 0.0011208653450012207
+    rms: 0.01216167937565646
+    offset: -0.0002918317914009094
   transmission:
     redpitaya_input: adc1
-
-    max: 0.1134033203125
-    min: -0.0301513671875
+    max: 0.14513342827558517
+    min: -0.0030599310994148254
+    mean: 0.0010583773255348206
+    rms: 0.008900711843878615
+    offset: -0.026359014213085175
 # All output signals. Names of outputs are arbitrary.
 outputs:
   # we only have 1 actuator in this interferometer, the piezo in the LO arm
@@ -135,6 +155,7 @@ signal:
   # data trace if several parameters are requested. To always obtain fresh
   # data, set this to -1. To enable manual acquisition control with the acquire
   # function '_acquire()', set this to a very large value or to '.inf'.
+  trigger_delay: 0
   acquire_timeout: 0.3
   # if true, the offset is subtraced. Calibrate with signal.get_offset()
   offset_subtraction: true
@@ -150,5 +171,7 @@ scopegui:
   coordinates:
   - 0
   - 0
-  - 800
-  - 600
+  - 637
+  - 712
+  auto_run_continuous: true
+
