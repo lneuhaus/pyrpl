@@ -1,0 +1,36 @@
+redpitaya:
+  hostname: 192.168.1.100
+  user: root
+  password: root
+  port: 2222
+  frequency_correction: 1.0
+  filename: fpga//red_pitaya.bin
+  reloadfpga: true
+general:
+  loglevel: debug
+  name: default_cavity
+
+inputs:
+  reflection: adc1
+
+outputs:
+  slowpzt: out1
+  fastpzt: out2
+
+model:
+  type: fabry-perot
+  cavity:
+    length: 0.5
+    finesse: 5000
+    actuator: null
+  modelconstants:
+    lock_upper_threshold: 0.9
+    lock_lower_threshold: 0.0
+    relative_reflection_off: 0.01
+
+stages:
+  UNLOCKEDSTAGE: 0
+  COARSEFINDSTAGE: 1
+  DRIFTSTAGE: 2
+  SOFSTAGE: 3
+  PDHSTAGE: 4

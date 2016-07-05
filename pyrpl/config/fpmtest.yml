@@ -1,0 +1,92 @@
+redpitaya:
+  hostname: redpitaya.ddns.net
+  password: dmhvs30NDEBD
+  user: root
+  port: 2222
+  frequency_correction: 1.0
+  filename: fpga//red_pitaya.bin
+  reloadfpga: true
+  gui: true
+  monitor_server_name: monitor_server
+general:
+  name: fpm
+  loglevel: info
+  curvedb: pyinstruments
+model:
+  modeltype: fpm
+  wavelength: 1.064e-06
+  maxerror: 0.1
+  offresonant_reflection: 0.23871592432260513
+  resonant_reflection: 0.015205182135105133
+  finesse: 90000
+inputs:
+  reflection:
+    redpitaya_input: adc2
+    offset: 0.013481341302394867
+    max: 0.23871592432260513
+    min: 0.015205182135105133
+    mean: 0.22288598120212555
+    rms: 0.018908728390279284
+outputs:
+  slow:
+    lock: false
+    redpitaya_output: pwm1
+    max_voltage: 0.3
+    min_voltage: -0.3
+    m_per_V: 1.0
+    analogfilter:
+      lowpass:
+      - 0.01
+    inputfilter:
+    - 0
+    - 0
+    - 0
+    - 0
+    calibrationunits: m_per_V
+    lastoffset: 0.1416015625
+  piezo:
+    redpitaya_output: out2
+    calibrationunits: m_per_V
+    m_per_V: 3.1e-09
+    analogfilter:
+      lowpass:
+      - 15.8
+    unity_gain_frequency: 1000.0
+    inputfilter:
+    - 4857.023409786845
+    - 4857.023409786845
+    - 4857.023409786845
+    - 4857.023409786845
+    sweep:
+      waveform: sin
+      frequency: 25.0
+      amplitude: 0.8
+    max_voltage: 0.9998779296875
+    min_voltage: -1.0
+scope:
+  input1: adc2
+  input2: dac2
+  duration: 0.1
+  trigger_source: immediately
+  average: false
+signal:
+  unit: V
+  V_per_V: 1.0
+  raw_per_V: 8192.0
+  duration: 0.1
+  average: false
+  autosave: true
+  points: 16384
+  trigger_source: immediately
+  threshold: 0
+  hysteresis: 0.002
+  acquire_timeout: 0.5
+  offset_subtraction: true
+  offset: 0
+  peak: 0
+scopegui:
+  coordinates:
+  - 0
+  - 0
+  - 800
+  - 600

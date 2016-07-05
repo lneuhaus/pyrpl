@@ -19,7 +19,7 @@
 
 import numpy as np
 import time
-from time import sleep
+import pyrpl_utils
 import sys
 import matplotlib.pyplot as plt
 import logging
@@ -28,10 +28,12 @@ from .registers import *
 from .bijection import Bijection
 from . import iir
 
+
 class TimeoutError(ValueError):
     pass
 class NotReadyError(ValueError):
     pass
+
 
 class BaseModule(object):
     
@@ -128,6 +130,7 @@ class Scope(BaseModule):
         self._setup_called = False
         self._parent = parent
         self._trigger_source_memory = "immediately"
+        self._trigger_delay_memory = self.data_length/2
 
     @property
     def input1(self):
@@ -179,6 +182,10 @@ class Scope(BaseModule):
     def trigger_source(self, val):
         self._trigger_source = val
         self._trigger_source_memory = val
+        if val=='immediately':
+            self._trigger_delay = self.data_length
+        else:
+            self._trigger_delay = self._trigger_delay_memory
         
     _trigger_debounce = Register(0x90, doc="Trigger debounce time [cycles]")
 
@@ -200,11 +207,17 @@ class Scope(BaseModule):
     @trigger_delay.setter
     def trigger_delay(self, delay):
         delay = int(np.round(delay/self.sampling_time)) + self.data_length//2
+        self._trigger_delay_memory = delay  # when user requires some value, it should be set whenever
+        # trigger is not anymore on immediately.
+        if self.trigger_source=='immediately':
+            self._trigger_delay = self.data_length
+            return delay
         if delay <= 0:
             delay = 1 # bug in scope code: 0 does not work
         elif delay > self.data_length-1:
             delay = self.data_length-1
         self._trigger_delay = delay
+        return delay
 
     _trigger_delay_running = BoolRegister(0x0, 2, doc="trigger delay running (register adc_dly_do)")
 
@@ -222,15 +235,14 @@ class Scope(BaseModule):
                                      doc= "An absolute counter " \
                                          +"for the trigger time [cycles]")
     
-    _decimations = {2**0: 2**0,
-                    2**3: 2**3,
-                    2**6: 2**6,
-                    2**10: 2**10,
-                    2**13: 2**13,
-                    2**16: 2**16}
-    
+    _decimations = {2**n: 2**n for n in range(0,17)}
+
     decimations = sorted(_decimations.keys()) # help for the user
-    
+
+    sampling_times = [8e-9 * dec for dec in decimations]
+
+    durations = [s_times*data_length for s_times in sampling_times]
+
     decimation = SelectRegister(0x14, doc="decimation factor", 
                                 options=_decimations)
     
@@ -282,7 +294,7 @@ class Scope(BaseModule):
         """sets or returns the time separation between two subsequent points of a scope trace
         the rounding makes sure that the actual value is shorter or equal to the set value"""
         tbase = 8e-9
-        factors = [65536, 8192, 1024, 64, 8, 1]
+        factors = [2**n for n in reversed(range(0,17))]
         for f in factors:
             if v >= tbase * float(f):
                 self.decimation = f
@@ -290,10 +302,6 @@ class Scope(BaseModule):
         self.decimation = 1
         self._logger.error("Desired sampling time impossible to realize")
 
-    @property
-    def durations(self):
-        return [8e-9*self.data_length*dec for dec in self.decimations]
-    
     @property
     def duration(self):
         return self.sampling_time * float(self.data_length)
@@ -304,7 +312,7 @@ class Scope(BaseModule):
         the rounding makes sure that the actual value is longer or equal to the set value"""
         v = float(v) / self.data_length
         tbase = 8e-9
-        factors = [1, 8, 64, 1024, 8192, 65536]
+        factors = [2**n for n in range(0,17)]
         for f in factors:
             if v <= tbase * float(f):
                 self.decimation = f
@@ -326,7 +334,7 @@ class Scope(BaseModule):
         """raw data from ch2"""
         # return np.array([self.to_pyint(v) for v in self._reads(0x20000,
         # self.data_length)],dtype=np.int32)
-        x = np.array(self._reads(0x20000, self.data_length), dtype=np.int32)
+        x = np.array(self._reads(0x20000, self.data_length), dtype=np.int16)
         x[x >= 2**13] -= 2**14
         return x
 
@@ -373,44 +381,67 @@ class Scope(BaseModule):
               average=None,
               threshold=None,
               hysteresis=None,
-              trigger_delay=None):
-        """sets up the scope for a new trace aquision including arming the trigger
+              trigger_delay=None,
+              input1=None,
+              input2=None):
+        """sets up the scope for a new trace aquisition including arming the trigger
 
         duration: the minimum duration in seconds to be recorded
         trigger_source: the trigger source. see the options for the parameter separately
         average: use averaging or not when sampling is not performed at full rate.
                  similar to high-resolution mode in commercial scopes
+        threshold: Trigger threshold in V
+        hysteresis: signal hysteresis needed to enable trigger in V. 
+                    Should be larger than the rms-noise of the signal
+        trigger_delay: trigger_delay in s
+        input1/2: set the inputs of channel 1/2
+        
+        if a parameter is None, the current attribute value is used
 
-        if a parameter is None, the current attribute value is used"""
+        In case trigger_source is set to "immediately", trigger_delay is disregarded and
+        trace starts at t=0
+        """
+
         self._setup_called = True
         self._reset_writestate_machine = True
         if average is not None:
             self.average = average
         if duration is not None:
             self.duration = duration
-        if trigger_source is not None:
-            the_trigger_source = trigger_source
-        else:
-            the_trigger_source = self.trigger_source
-
         if threshold is not None:
             self.threshold_ch1 = threshold
             self.threshold_ch2 = threshold
         if hysteresis is not None:
             self.hysteresis_ch1 = hysteresis
             self.hysteresis_ch2 = hysteresis
+        if input1 is not None:
+            self.input1 = input1
+        if input2 is not None:
+            self.input2 = input2
         if trigger_delay is not None:
-            self.trigger_delay = trigger_delay      
+            self.trigger_delay = trigger_delay
+
         if trigger_source is not None:
             self.trigger_source = trigger_source
         else:
             self.trigger_source = self.trigger_source
-        self._trigger_armed = True
+
         if self.trigger_source == 'immediately':
-            while(not self.pretrig_ok):
-                sleep(0.001)
+            self._trigger_delay = self.data_length
+        else:
+            self.trigger_delay = self.trigger_delay
+
+        self._trigger_armed = True
+        self.trigger_source = self.trigger_source
+
+        if self.trigger_source == 'immediately':
+            self.wait_for_pretrig_ok()
             self.trigger_source = 'immediately'# write state machine
             #reset has changed the value of the FPGA register#_sw_trig()
+
+    def wait_for_pretrig_ok(self):
+        while not self.pretrig_ok:
+            time.sleep(0.001)
 
     def curve_ready(self):
         """
@@ -424,6 +455,11 @@ class Scope(BaseModule):
         if not ch in [1,2]:
             raise ValueError("channel should be 1 or 2, got " + str(ch))
         return self._data_ch1 if ch==1 else self._data_ch2
+
+    def _get_ch_no_roll(self, ch):
+        if not ch in [1,2]:
+            raise ValueError("channel should be 1 or 2, got " + str(ch))
+        return self._rawdata_ch1*1./2**13 if ch==1 else self._rawdata_ch2*1./2**13
     
     def curve(self, ch=1, timeout=1.):
         """
@@ -441,7 +477,7 @@ class Scope(BaseModule):
                 if self.curve_ready():
                     return self._get_ch(ch)
                 total_sleep+=SLEEP_TIME
-                sleep(SLEEP_TIME)
+                time.sleep(SLEEP_TIME)
             raise TimeoutError("Scope wasn't trigged during timeout")
         else:
             return self._get_ch(ch)
@@ -482,12 +518,12 @@ def make_asg(channel=1):
         set_BIT_OFFSET = 0
         set_VALUE_OFFSET = 0x00
         set_DATA_OFFSET = 0x10000
-        set_default_output_direct = 'out1'
+        set_default_output_direct = 'off'
     else:
         set_DATA_OFFSET = 0x20000
         set_VALUE_OFFSET = 0x20
         set_BIT_OFFSET = 16
-        set_default_output_direct = 'out2'
+        set_default_output_direct = 'off'
     
     class Asg(BaseModule):
         _DATA_OFFSET = set_DATA_OFFSET
@@ -506,6 +542,10 @@ def make_asg(channel=1):
             else:
                 self._dsp = DspModule(client, module='asg2')
             self.output_directs = self._dsp.output_directs
+            self.waveform = 'sin'
+            self.trigger_source = 'immediately'
+            self.output_direct = self.default_output_direct
+
         @property
         def output_direct(self):
             return self._dsp.output_direct
@@ -568,7 +608,46 @@ def make_asg(channel=1):
         
         _start_offset = Register(0xC, 
                         doc="counter offset for trigged events = phase offset ")
-    
+
+
+        @property
+        def waveform(self):
+            return self._waveform
+
+        @property
+        def waveforms(self):
+            return ['sin', 'cos', 'ramp', 'halframp', 'dc']
+
+        @waveform.setter
+        def waveform(self, waveform):
+            waveform = waveform.lower()
+            if not waveform in self.waveforms:
+                raise ValueError("waveform shourd be one of " + self.waveforms)
+            else:
+                if waveform == 'sin':
+                    x = np.linspace(0, 2 * np.pi, self.data_length,
+                                    endpoint=False)
+                    y = np.sin(x)
+                elif waveform == 'cos':
+                    x = np.linspace(0, 2 * np.pi, self.data_length,
+                                    endpoint=False)
+                    y = np.cos(x)
+                elif waveform == 'ramp':
+                    y = np.linspace(-1.0, 3.0, self.data_length,
+                                    endpoint=False)
+                    y[self.data_length // 2:] = -1 * y[:self.data_length // 2]
+                elif waveform == 'halframp':
+                    y = np.linspace(-1.0, 1.0, self.data_length,
+                                    endpoint=False)
+                elif waveform == 'dc':
+                    y = np.zeros(self.data_length)
+                else:
+                    y = self.data
+                    self._logger.error(
+                        "Waveform name %s not recognized. Specify waveform manually" % waveform)
+                self.data = y
+                self._waveform = waveform
+
         def trig(self):
             self.start_phase = 0
             self.trigger_source = "immediately"
@@ -606,42 +685,43 @@ def make_asg(channel=1):
             self._writtendata = data
     
         def setup(self, 
-                  waveform='cos', 
-                  frequency=1, 
-                  amplitude=1.0, 
-                  offset=0.0,
+                  waveform=None,
+                  frequency=None,
+                  amplitude=None,
+                  offset=None,
                   start_phase=0, 
                   periodic=True, 
-                  trigger_source='immediately',
-                  output_direct = default_output_direct):
-            """sets up the function generator. 
+                  trigger_source=None,
+                  output_direct=None):
+            """sets up the function generator.
             
             waveform must be one of ['cos', 'ramp', 'DC', 'halframp']. 
             amplitude and offset in volts, frequency in Hz. 
             periodic = False outputs only one period. 
             start_phase is the start phase in degrees
-            if trigger_source is None, it should be set manually """
+            if trigger_source is None, it should be set manually
+            If None, then current value is used"""
+
+            if waveform is None:
+                waveform = self.waveform
+            if frequency is None:
+                frequency = self.frequency
+            if amplitude is None:
+                amplitude = self.scale
+            if offset is None:
+                offset = self.offset
+            if trigger_source is None:
+                trigger_source = self.trigger_source
+            if output_direct is None:
+                output_direct = self.output_direct
+
             self.on = False
             self.sm_reset = True
             self.trigger_source = 'off'
             self.scale = amplitude
             self.offset = offset
-            
-            if waveform == 'cos':
-                x = np.linspace(0, 2*np.pi, self.data_length, endpoint=False)
-                y = np.cos(x)
-            elif waveform == 'ramp':
-                y = np.linspace(-1.0,3.0, self.data_length, endpoint=False)
-                y[self.data_length//2:] = -1*y[:self.data_length//2]
-            elif waveform == 'halframp':
-                y = np.linspace(-1.0,1.0, self.data_length, endpoint=False)
-            elif waveform == 'DC':
-                y = np.zeros(self.data_length)
-            else: 
-                y = self.data
-                self._logger.error("Waveform name %s not recognized. Specify waveform manually"%waveform)
-            self.data = y
-            
+            self.output_direct = output_direct
+            self.waveform = waveform
             self.start_phase = start_phase
             self._counter_wrap = 2**16 * (2**14 - 1)
             self.frequency = frequency
@@ -657,7 +737,8 @@ def make_asg(channel=1):
                        doc="phase of ASG ch1 at the moment when the last scope trigger occured [degrees]")
             
         advanced_trigger_reset = BoolRegister(0x0, 9+_BIT_OFFSET, doc='resets the fgen advanced trigger')
-        advanced_trigger_autorearm = BoolRegister(0x0, 11+_BIT_OFFSET, doc='autorearm the fgen advanced trigger after a trigger event? If False, trigger needs to be reset with a sequence advanced_trigger_reset=True...advanced_trigger_reset=False after each trigger event.')
+        advanced_trigger_autorearm = BoolRegister(0x0, 11+_BIT_OFFSET,
+                doc='autorearm the fgen advanced trigger after a trigger event? If False, trigger needs to be reset with a sequence advanced_trigger_reset=True...advanced_trigger_reset=False after each trigger event.')
         advanced_trigger_invert = BoolRegister(0x0, 10+_BIT_OFFSET, doc='inverts the trigger signal for the advanced trigger if True')
         
         advanced_trigger_delay = LongRegister(0x118+_VALUE_OFFSET, bits=64, doc='delay of the advanced trigger - 1 [cycles]') 
@@ -709,6 +790,7 @@ class DspModule(BaseModule):
         adc2=11,
         dac1=12,
         dac2=13,
+        iq2_2=14,
         off=15)
     inputs = _inputs.keys()
     
@@ -730,7 +812,10 @@ class DspModule(BaseModule):
     
     out2_saturated = BoolRegister(0x8,1,doc="True if out2 is saturated")
 
+    name = "dspmodule"
+
     def __init__(self, client, module='pid0'):
+        self.name = module
         self._number = self._inputs[module]
         super(DspModule, self).__init__(client,
             addr_base=0x40300000+self._number*0x10000)
@@ -757,7 +842,7 @@ class AuxOutput(DspModule):
     Currently, only pwm0 and pwm1 are available.
     """
     def __init__(self, client, output='pwm0'):
-        pwm_to_module = dict(pwm0 = 'adc1', pwm1='adc2')
+        pwm_to_module = dict(pwm0='adc1', pwm1='adc2')
         # future options: , pwm2 = 'dac1', pwm3='dac2')
         super(AuxOutput, self).__init__(client,module=pwm_to_module[output])
     output_direct = None
@@ -899,7 +984,10 @@ class IQ(FilterModule):
     
     _g4 = FloatRegister(0x11C, bits=_GAINBITS, norm = 2**_SHIFTBITS, 
                         doc="gain4 of iq module [volts]")
-    
+
+    def __init__(self, *args, **kwds):
+        super(IQ, self).__init__(*args, **kwds)
+
     @property
     def gain(self):
         return self._g1 * 0.039810
@@ -908,7 +996,7 @@ class IQ(FilterModule):
     def gain(self, v):
         self._g1 = float(v) / 0.039810
         self._g4 = float(v) / 0.039810
-        
+
     def setup(
             self,
             frequency,
@@ -956,7 +1044,8 @@ class IQ(FilterModule):
         sum = np.complex128(self._to_pyint(int(a)+(int(b)<<31),bitlength=62)) \
             + np.complex128(self._to_pyint(int(c)+(int(d)<<31), bitlength=62))*1j  
         return sum / float(self._na_averages)
-    
+
+    """
     def na_trace(
             self,
             start=0,     # start frequency
@@ -972,7 +1061,8 @@ class IQ(FilterModule):
             logscale=False, # make a logarithmic frequency sweep
             stabilize=None, # if a float, output amplitude is adjusted dynamically so that input amplitude [V]=stabilize 
             maxamplitude=1.0, # amplitude can be limited
-            ): 
+            ):
+
         if logscale:
             x = np.logspace(
                 np.log10(start),
@@ -1011,7 +1101,7 @@ class IQ(FilterModule):
         try:
             self.amplitude = amplitude # turn on NA inside try..except block
             for i in range(points):
-                self.frequency = x[i] #this triggers the NA acquisition
+                self.frequency = x[i] # this triggers the NA acquisition
                 sleep(1.0 / rbw * (avg + sleeptimes))
                 x[i] = self.frequency # get the actual (discretized) frequency
                 y[i] = self._nadata
@@ -1046,7 +1136,7 @@ class IQ(FilterModule):
             return x, y
         else:
             return x,y,amplitudes
-
+    """
 
 class IIR(DspModule):
     # invert denominator coefficients to convert from scipy notation to

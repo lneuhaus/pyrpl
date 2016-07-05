@@ -88,3 +88,9 @@ docs/my_notebooks/
 
 *.pydevproject
 *.project
+
+#pycharm
+.idea/
+
+#config backups
+pyrpl/config/*.bak

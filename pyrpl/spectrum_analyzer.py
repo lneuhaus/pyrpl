@@ -16,12 +16,13 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###############################################################################
 
-
 from sshshell import SSHshell
 from time import sleep
 from matplotlib import pyplot
 import math
 import numpy
+
+from numpy import pi, linspace
 import numpy as np
 import os
 from pylab import *
@@ -32,79 +33,223 @@ import matplotlib
 import matplotlib.pyplot as plt
 import logging
 
-from redpitaya_modules import NotReadyError
-
-class Span(object):
-    def __init__(self, default=100):
-        self.default = default
-        
-    def __set__(self, obj, val):
-        obj._span = val
-        return val
-
-    def __get__(self, obj, objtype=None):
-        if not hasattr(obj, "_span"):
-            obj._span = self.default
-        return obj._span
-
-class BW(object):
-    points_per_bw = 10
-    def __get__(self, obj, objtype=None):
-        return obj.span*1./(self.points_per_bw*obj.n_points)
-
-    def __set__(self, obj, val):
-        obj.span = val*(self.points_per_bw*obj.n_points)
-        return val
-
+from redpitaya_modules import NotReadyError, Scope, IQ
 
 class SpectrumAnalyzer(object):
     """
     A spectrum analyzer is composed of an IQ demodulator, followed by a scope.
-    The spectrum analyzer connections are made upon calling the function setup  
-    """
-    _setup = False
-    def setup(self,
-              center=1e6,
-              span=100,
-              window='gauss',
-              scope_ch=1,
-              iq_nr=0,
-              input='adc1'):
-        self._setup = True
-        self.window = window
-        self.configure_signal_chain(input,iq_nr)
-        
-    def configure_signal_chain(self):
-        iq = getattr(self.)
-        
-    @property
-    def n_points(self):
-        return 16392#self.scope.data_length
+    The spectrum analyzer connections are made upon calling the function setup.
 
+    Example 1:
+      r = RedPitayaGui("1.1.1.1")
+      sa = SpectrumAnalyzer(r)
+      sa.setup(span=1000, center=100000)
+      curve = sa.curve()
+      freqs = sa.freqs()
+
+    Example 2:
+      r = RedPitayaGui("1.1.1.1")
+      sa = SpectrumAnalyzer(r)
+      sa.span = 1000
+      sa.center = 100000
+      sa.setup()
+      curve = sa.curve()
+      freqs = sa.freqs()
     """
-    span and bw are linked together
-    """
-    span = Span()
-    bw = BW()
+
+    nyquist_margin = 2*pi #it looks like bandwidth of filters are then perfect
+
+    spans = [1./nyquist_margin/s_time for s_time in Scope.sampling_times]
+
+    def gauss(data_length, rbw, sampling_time):
+        return np.exp(-(linspace(-sampling_time*rbw*data_length*pi,
+                               sampling_time*rbw*data_length*pi,
+                               data_length)) ** 2)
+
+    _filter_windows = dict(gauss=gauss,
+                           none=lambda points, rbw, sampling_time: np.ones(points))
+    windows = _filter_windows.keys()
+    inputs = IQ.inputs
+
+    #_setup = False
+    def __init__(self, rp=None):
+        self.rp = rp
+        self.center = 1e6
+        self.avg = 1
+        self.input = 'adc1'
+        self.acbandwidth = 0
+        self.window = "gauss"
+
+        self._rbw = 0
+        self._rbw_auto = False
+
+        self.points = 1001
+        self.span = 1e5
+        self.rbw_auto = True
+        self._setup = False
+
+    @property
+    def data_length(self):
+        return int(self.points*self.nyquist_margin)
+
+    @property
+    def span(self):
+        """
+        Span can only be given by 1./sampling_time where sampling
+        time is a valid scope sampling time.
+        """
+
+        return 1./self.nyquist_margin/self.scope.sampling_time
+
+    @span.setter
+    def span(self, val):
+        val = float(val)
+        self.scope.sampling_time = 1./self.nyquist_margin/val
+        self.iq.bandwidth = [val, val]
+        return val
+
+    @property
+    def rbw_auto(self):
+        return self._rbw_auto
+
+    @rbw_auto.setter
+    def rbw_auto(self, val):
+        self._rbw_auto = val
+        if val:
+            self.span = self.span
+        return val
+
+    @property
+    def center(self):
+        return self.iq.frequency
+
+    @center.setter
+    def center(self, val):
+        self.iq.frequency = val
+        return val
+
+    @property
+    def rbw(self):
+        if self.rbw_auto:
+            self._rbw = self.span/self.points
+        return self._rbw
+
+    @rbw.setter
+    def rbw(self, val):
+        if not self.rbw_auto:
+            self._rbw = val
+        return val
+
+    @property
+    def input(self):
+        return self.iq.input
+
+    @input.setter
+    def input(self, val):
+        self.iq.input = val
+        return val
+
+    def setup(self,
+              span=None,
+              center=None,
+              data_length=None,
+              avg=None,
+              window=None,
+              acbandwidth=None,
+              input=None):
+        """
+        :param span: span of the analysis
+        :param center: center frequency
+        :param data_length: number of points
+        :param avg: not in use now
+        :param window: "gauss" for now
+        :param acbandwidth: bandwidth of the input highpass filter
+        :param input: input channel
+        :return:
+        """
+        self._setup = True
+        if span is not None:
+            self.span = span
+        if center is not None:
+            self.center = center
+        if data_length is not None:
+            self.data_length = data_length
+        if avg is not None:
+            self.avg = avg
+        if window is not None:
+            self.window = window
+        if acbandwidth is not None:
+            self.acbandwidth = acbandwidth
+        if input is not None:
+            self.input = input
+
+        self.scope.input1 = 'iq2'
+        self.scope.input2 = 'iq2_2'
+
+        self.iq.output_signal = "quadrature"
+        self.iq.quadrature_factor = 0.001
+
+        self.scope.trigger_source = "immediately"
+        self.scope.setup()
+
+    @property
+    def scope(self):
+        return self.rp.scope
+
+    @property
+    def iq(self):
+        return self.rp.iq2
+
+    @property
+    def sampling_time(self):
+        """
+        :return: scope sampling time
+        """
+        return self.scope.sampling_time
 
     def filter_window(self):
-        if self.window=='gauss':
-            x = linspace(-1,
-                         1,
-                         self.n_points,
-                         True)
-            return exp(-(x*BW.points_per_bw)**2)
-    
-    def multiplexer_cos(self):
-        return self.scope.curve(self.scope_ch)*cos(self.filter_window.x*FREQUENCY)
-    
-    def multiplexer_sin(self):
-        return self.scope.curve(self.scope_ch)*sin(self.filter_window.x*FREQUENCY)
+        """
+        :return: filter window
+        """
+        return self._filter_windows[self.window](self.data_length, self.rbw, self.sampling_time)
+
+    def iq_data(self):
+        """
+        :return: complex iq time trace
+        """
+        res = self.scope.curve(1) + 1j * self.scope.curve(2) #+ 0.00012206662865236316*(1+1j)
+        return res[:self.data_length]
+
+    def filtered_iq_data(self):
+        """
+        :return: the product between the complex iq data and the filter_window
+        """
+        return self.iq_data()*self.filter_window()
+
+    def useful_index(self):
+        """
+        :return: a slice containing the portion of the spectrum between start and stop
+        """
+        middle = int(self.data_length/2)
+        length = self.points#self.data_length/self.nyquist_margin
+        return slice(middle - length/2, middle + length/2 + 1)
 
 
     def curve(self):
+        """
+        Get a spectrum from the device. It is mandatory to call setup() before curve()
+        :return:
+        """
         if not self._setup:
             raise NotReadyError("Setup was never called")
-        return np.fft(self.scope.curve(self.scope_ch)*self.filter_window)
-    
-    
+        return 20*np.log10(np.roll(np.abs(np.fft.fft(self.filtered_iq_data())), self.data_length/2))\
+                    [self.useful_index()]
+
+    def freqs(self):
+        """
+        :return: frequency array
+        """
+        return self.center + np.roll(np.fft.fftfreq(self.data_length,
+                                                    self.sampling_time),
+                                     self.data_length/2) \
+                                    [self.useful_index()]
