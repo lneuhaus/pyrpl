@@ -16,7 +16,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###############################################################################
 
-from sshshell import SSHshell
+from .sshshell import SSHshell
 from time import sleep
 from matplotlib import pyplot
 import math
@@ -33,7 +33,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import logging
 
-from redpitaya_modules import NotReadyError, Scope, IQ
+from .redpitaya_modules import NotReadyError, Scope, IQ
 
 class SpectrumAnalyzer(object):
     """

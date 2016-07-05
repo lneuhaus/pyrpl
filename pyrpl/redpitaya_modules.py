@@ -118,8 +118,8 @@ class HK(BaseModule):
 
 
 class Scope(BaseModule):
-    # data_length = 2**14
-    # inputs = None
+    #data_length = 2**14
+    #inputs = None
     
     def __init__(self, client, parent):
         super(Scope, self).__init__(client, addr_base=0x40100000)
@@ -132,6 +132,7 @@ class Scope(BaseModule):
         self._trigger_source_memory = "immediately"
         self._trigger_delay_memory = self.data_length/2
         self.data_length = 2**14
+        self.durations = [s_times * self.data_length for s_times in sampling_times]
 
     @property
     def input1(self):
@@ -245,9 +246,9 @@ class Scope(BaseModule):
     # very ugly workaround for list comprehension scope in Python 3
     # cf. http://stackoverflow.com/questions/13905741/accessing-class-variables-from-a-list-comprehension-in-the-class-definition
     # DOESN'T WORK YET
-    def _durations(self, sampling_times):
-        return [s_times * self.data_length for s_times in sampling_times]
-    durations = _durations(sampling_times)
+    #def _durations(self, sampling_times):
+    #    return [s_times * self.data_length for s_times in sampling_times]
+    #durations = [s_times * data_length for s_times in sampling_times]
 
     decimation = SelectRegister(0x14, doc="decimation factor", 
                                 options=_decimations)

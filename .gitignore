@@ -43,6 +43,7 @@ pyrpl/.idea
 fpga/out/
 fpga/sdk/
 fpga/ip/
+test.py
 
 
 # PyInstaller

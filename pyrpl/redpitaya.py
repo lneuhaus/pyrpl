@@ -31,9 +31,10 @@ from paramiko import SSHException
 
 from .sshshell import SSHshell
 from . import monitor_client
+#import monitor_client
 from . import redpitaya_modules as rp
-from network_analyzer import NetworkAnalyzer
-from spectrum_analyzer import SpectrumAnalyzer
+from .network_analyzer import NetworkAnalyzer
+from .spectrum_analyzer import SpectrumAnalyzer
 
 class RedPitaya(SSHshell):
     _binfilename = 'fpga.bin'

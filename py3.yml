@@ -1,0 +1,15 @@
+name: pyrpl3
+dependencies:
+- python=3.5
+- numpy
+- scipy
+- pandas
+- matplotlib
+- ipython
+- jupyter
+- paramiko
+- nose
+- pip
+- pip:
+    - scp
+    - ruamel.yaml
