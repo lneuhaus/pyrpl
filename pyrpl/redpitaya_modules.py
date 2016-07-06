@@ -120,11 +120,11 @@ class HK(BaseModule):
 # data_length must be defined outside of class body for python 3
 # compatibility since otherwise it is not available in the class level
 # namespace
-scope_data_length = 2**14
+data_length = 2**14
 
 
 class Scope(BaseModule):
-    data_length = scope_data_length  # see definition and explanation above
+    data_length = data_length  # see definition and explanation above
     inputs = None
 
     def __init__(self, client, parent):
