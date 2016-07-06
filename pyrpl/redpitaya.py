@@ -363,7 +363,8 @@ class RedPitaya(SSHshell):
         self.iq2 = rp.IQ(self.client, module='iq2')
         # higher functionality modules
         self.na = NetworkAnalyzer(self)
-        self.spec_an = SpectrumAnalyzer(self)
+        #self.spec_an = SpectrumAnalyzer(self)
+        #Something still wrong with the SpectrumAnalyzer -_-
 
 
     def make_a_slave(self, port=None, monitor_server_name=None, gui=False):
