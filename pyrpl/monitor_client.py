@@ -59,10 +59,10 @@ class MonitorClient(object):
         
     #the public methods to use which will recover from connection problems
     def reads(self, addr, length):
-        return self.trytwice(self._reads, addr, length)
+        return self.try_n_times(self._reads, addr, length)
 
     def writes(self, addr, values):
-        return self.trytwice(self._writes, addr, values)
+        return self.try_n_times(self._writes, addr, values)
     
     #the actual code
     def _reads(self, addr, length):
@@ -106,18 +106,20 @@ class MonitorClient(object):
                 return
             self.logger.debug("Read %d bytes from socket...", n)
 
-    def trytwice(self, function, addr, value):
-        try:
-            value = function(addr, value)
-        except (socket.timeout, socket.error):
-            self.logger.error("Timeout or socket error.")
-        else:
-            if value is not None:
-                return value
-        self.logger.error("Error occured. Trying a second time to read from redpitaya. ")
-        if self._restartserver is not None:
-            self.restart()
-        return function(addr, value)
+    def try_n_times(self, function, addr, value, n=5):
+        for i in range(n):
+            try:
+                value = function(addr, value)
+            except (socket.timeout, socket.error):
+                self.logger.error("Timeout or socket error.")
+                self.logger.error(
+                "Error occured in reading attempt %s. Trying another time to "
+                "read from redpitaya. ", i)
+                if self._restartserver is not None:
+                    self.restart()
+            else:
+                if value is not None:
+                    return value
 
     def restart(self):
         self.close()
