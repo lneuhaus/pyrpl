@@ -136,3 +136,66 @@ class TestClass(object):
         # reset offset to protect other tests
         asg.offset = 0
         asg.scale = 1
+
+    def test_scope_trigger_delay(self):
+        """
+        Make sure taking a curve in immediately is instantaneous
+        :return:
+        """
+        if self.r is None:
+            return
+        asg = self.r.asg1
+        asg.setup(amplitude=0, offset=0)
+
+        self.r.scope.trigger_source = "immediately"
+        self.r.scope.duration = 0.001
+        self.r.scope.trigger_delay = 1.
+        tic = time.time()
+        self.r.scope.setup()
+        self.r.scope.curve()
+        assert(time.time() - tic<0.1)
+
+    def test_scope_trigger_delay_not_forgotten(self):
+        """
+        Makes sure switching from some trigger_source to immediately and back
+        doesn't forget the trigger_delay
+        :return:
+        """
+        if self.r is None:
+            return
+        asg = self.r.asg1
+        asg.setup(amplitude=0, offset=0, frequency=1000)
+
+        self.r.scope.trigger_source = "asg1"
+        self.r.scope.duration = 0.001
+        self.r.scope.trigger_delay = 0.01
+        self.r.scope.setup()
+        assert(self.r.scope.times[self.r.scope.data_length/2]==0.01)
+
+        self.r.scope.trigger_source = "immediately"
+        self.r.scope.duration = 0.001
+        self.r.scope.trigger_delay = 0.01
+        assert (self.r.scope.times[0] == 0)
+
+        self.r.scope.trigger_source = "asg1"
+        self.r.scope.duration = 0.001
+        self.r.scope.trigger_delay = 0.01
+        assert (self.r.scope.times[self.r.scope.data_length/2]==0.01)
+
+    def test_scope_duration_autosetting(self):
+        # tests if trigger delay doesnt change when duration is altered
+        if self.r is None:
+            return
+        self.r.scope.setup(duration=0.001, trigger_source='asg1',
+                           trigger_delay= 0.1)
+        centertime = self.r.scope.times[self.r.scope.data_length / 2]
+        # actual value of centertime is rather 0.099999744
+        assert abs(centertime - 0.1) < 1e-5, centertime
+        self.r.scope.setup(duration=0.1, trigger_source='asg1',
+                           trigger_delay=0.1)
+        centertime = self.r.scope.times[self.r.scope.data_length / 2]
+        assert abs(centertime - 0.1) < 1e-5, centertime
+        self.r.scope.setup(duration=0.001, trigger_source='asg1',
+                           trigger_delay=0.1)
+        centertime = self.r.scope.times[self.r.scope.data_length / 2]
+        assert abs(centertime-0.1)<1e-5, centertime
