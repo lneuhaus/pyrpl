@@ -30,7 +30,7 @@ import pandas
 import matplotlib.pyplot as plt
 import sys
 import os
-import iir
+from . import iir
 import logging
 from collections import OrderedDict
 from shutil import copyfile
@@ -486,7 +486,7 @@ class Trash(object):
     def laser_off(self):
         if (self.relative_reflection < self.constants[
                 "relative_reflection_off"]):
-            print "Laser is off, aborting..."
+            print ("Laser is off, aborting...")
             return True
         else:
             return False
@@ -495,9 +495,9 @@ class Trash(object):
     def d(self):  # diagnostics
         r, rrms = self.get_mean("reflection", avg=0, rms=True)
         p, prms = self.get_mean("pdh", avg=0, rms=True)
-        print "rel. reflection = {0} +- {1}".format(self._relative_reflection(r), self._relative_reflection(rrms + self.constants["dark_reflection"]))
-        print "pdh signal      = {0} +- {1}".format(p, prms)
-        print "rel. pdh signal      = {0} +- {1}".format(p / self.pdh_max, prms / self.pdh_max)
+        print ("rel. reflection = {0} +- {1}".format(self._relative_reflection(r), self._relative_reflection(rrms + self.constants["dark_reflection"])))
+        print ("pdh signal      = {0} +- {1}".format(p, prms))
+        print ("rel. pdh signal      = {0} +- {1}".format(p / self.pdh_max, prms / self.pdh_max))
         return r, rrms, p, prms
 
     def calibrate_power(self, power):
@@ -512,7 +512,7 @@ class Trash(object):
             calibration_slope=power / r)
         self.constants.update(constants)
         self._save_constants(constants)
-        print "Lockbox input will saturate around ", self.constants["calibration_slope"] * 8191.5, "mW"
+        print ("Lockbox input will saturate around ", self.constants["calibration_slope"] * 8191.5, "mW")
 
     @property
     def pdhon(self):
@@ -687,7 +687,7 @@ class Trash(object):
         # sof_aux_i = self.sof_aux.integral,sof_aux_p =
         # self.sof_aux.proportional)
         if self.sof.integral != 0 or self.sof.proportional != 0:
-            print "Estimating gains from sof lock..."
+            print ("Estimating gains from sof lock...")
             if isinstance(self.slope, float) or isinstance(self.slope, double):
                 slope = self.slope
             else:
@@ -703,8 +703,8 @@ class Trash(object):
                     self.sof.proportional) *
                 slope,
                 slope_optimum=slope)
-            print "lock_i_times_slope: ", float(self.sof.integral) * slope * self.constants["isr_correction"]
-            print "lock_p_times_slope: ", float(self.sof.proportional) * slope
+            print ("lock_i_times_slope: ", float(self.sof.integral) * slope * self.constants["isr_correction"])
+            print ("lock_p_times_slope: ", float(self.sof.proportional) * slope)
             if not self.sof_aux is None:
                 d.update(
                     dict(
@@ -715,10 +715,10 @@ class Trash(object):
                         lock_aux_p_times_slope=float(
                             self.sof_aux.proportional) *
                         slope))
-                print "lock_aux_i_times_slope: ", float(self.sof_aux.integral) * slope * self.constants["isr_correction"]
-                print "lock_aux_p_times_slope: ", float(self.sof_aux.proportional) * slope
+                print ("lock_aux_i_times_slope: ", float(self.sof_aux.integral) * slope * self.constants["isr_correction"])
+                print ("lock_aux_p_times_slope: ", float(self.sof_aux.proportional) * slope)
         elif self.pidpdh.integral != 0 or self.pidpdh.proportional != 0:
-            print "Estimating gains from PDH lock..."
+            print ("Estimating gains from PDH lock...")
             slope = self.slope(signal="pdh", value=self.pidpdh.setpoint)
             d = dict(
                 lock_i_times_slope=float(
@@ -729,8 +729,8 @@ class Trash(object):
                     self.pidpdh.proportional) *
                 slope,
                 slope_optimum=slope)
-            print "lock_i_times_slope: ", float(self.pidpdh.integral) * slope * self.constants["isr_correction"]
-            print "lock_p_times_slope: ", float(self.pidpdh.proportional) * slope
+            print ("lock_i_times_slope: ", float(self.pidpdh.integral) * slope * self.constants["isr_correction"])
+            print ("lock_p_times_slope: ", float(self.pidpdh.proportional) * slope)
             if not self.sof_aux is None:
                 d.update(
                     dict(
@@ -741,10 +741,10 @@ class Trash(object):
                         lock_aux_p_times_slope=float(
                             self.pidpdh_aux.proportional) *
                         slope))
-                print "lock_aux_i_times_slope: ", float(self.pidpdh_aux.integral) * slope * self.constants["isr_correction"]
-                print "lock_aux_p_times_slope: ", float(self.pidpdh_aux.proportional) * slope
+                print ("lock_aux_i_times_slope: ", float(self.pidpdh_aux.integral) * slope * self.constants["isr_correction"])
+                print ("lock_aux_p_times_slope: ", float(self.pidpdh_aux.proportional) * slope)
         else:
-            print "The cavity must be locked in order to set optimum gains!"
+            print ("The cavity must be locked in order to set optimum gains!")
         if save:
             self.constants.update(d)
             self._save_constants(d)
@@ -763,7 +763,7 @@ class Pyrpl_FP(Pyrpl):
 
         searchtime = self.constants["coarse_searchtime"]
 
-        print "Waiting for coarse value to settle..."
+        print ("Waiting for coarse value to settle...")
         self.unlock()
         self.coarse = start
         sleep(initial_delay)
@@ -783,25 +783,25 @@ class Pyrpl_FP(Pyrpl):
                 self.constants["dark_reflection"]))
         if self.constants["reflection_input"] == 2:
             self.s.threshold_ch2 = find_coarse_threshold
-            print "Coarse threshold set to %d" % self.s.threshold_ch2
+            print ("Coarse threshold set to %d" % self.s.threshold_ch2)
             trigger_source = 5
         elif self.constants["reflection_input"] == 1:
             self.s.threshold_ch1 = find_coarse_threshold
-            print "Coarse threshold set to %d" % self.s.threshold_ch1
+            print ("Coarse threshold set to %d" % self.s.threshold_ch1)
             trigger_source = 3
 
-        print "Starting resonance search..."
+        print ("Starting resonance search...")
         for act_iteration in range(
                 self.constants["find_coarse_max_iterations"]):
             # upwards search
             self.s.arm(trigger_source=trigger_source)
-            print "sweeping upwards..."
+            print ("sweeping upwards...")
             steps, delay = self._get_stepdelay(
                 "coarse", stop - start, searchtime)
             for c in np.linspace(start, stop, steps):
                 if (self.s.trigger_source == 0):
                     """resonance passed in positive direction"""
-                    print "Passed upwards at %.4f" % c
+                    print ("Passed upwards at %.4f" % c)
                     break
                 else:
                     self.coarse = c
@@ -817,13 +817,13 @@ class Pyrpl_FP(Pyrpl):
                 #searchtime *= self.constants["find_coarse_slowdown"]
             # downwards
             self.s.arm(trigger_source=trigger_source)
-            print "sweeping downwards..."
+            print ("sweeping downwards...")
             steps, delay = self._get_stepdelay(
                 "coarse", stop - start, searchtime)
             for c in np.linspace(stop, start, steps):
                 if (self.s.trigger_source == 0):
                     """resonance passed in negativedirection"""
-                    print "Passed downwards at %.4f" % c
+                    print ("Passed downwards at %.4f" % c)
                     break
                 else:
                     self.coarse = c
@@ -839,7 +839,7 @@ class Pyrpl_FP(Pyrpl):
                 #searchtime *= self.constants["find_coarse_slowdown"]
             if (stop - start) < stopinterval:
                 self.coarse = (stop + start) / 2
-                print "Resonance located at %.4f" % self.coarse
+                print ("Resonance located at %.4f" % self.coarse)
                 self.scope_reset()
                 return self.coarse
         # if we arrive here, the search must have failed...
@@ -859,11 +859,11 @@ class Pyrpl_FP(Pyrpl):
         self.s.frequency = 10e6
         if self.constants["reflection_input"] == 2:
             self.s.threshold_ch2 = threshold
-            print "Coarse threshold set to %d" % self.s.threshold_ch2
+            print ("Coarse threshold set to %d" % self.s.threshold_ch2)
             trigger_source = 4  # ch2 pos edge
         elif self.constants["reflection_input"] == 1:
             self.s.threshold_ch1 = threshold
-            print "Coarse threshold set to %d" % self.s.threshold_ch1
+            print ("Coarse threshold set to %d" % self.s.threshold_ch1)
             trigger_source = 2  # ch1 pos edge
         self.s.arm(trigger_source=trigger_source)
         self.alarmtime = time()
@@ -889,14 +889,14 @@ class Pyrpl_FP(Pyrpl):
             refl = self.relative_reflection
         if verbose:
             r, rms = self.get_mean("reflection", avg=0, rms=True)
-            print "rel. reflection = {0} +- {1}".format(self._relative_reflection(r), self._relative_reflection(rms + self.constants["dark_reflection"]))
+            print ("rel. reflection = {0} +- {1}".format(self._relative_reflection(r), self._relative_reflection(rms + self.constants["dark_reflection"])))
         if refl <= self.constants["lock_upper_threshold"] and refl >= self.constants[
                 "lock_lower_threshold"]:
             return True
         elif (self.sof.integral != 0) and self.stage > COARSEFINDSTAGE \
                 and (self._relative_reflection(self.sof.setpoint) > self.constants["lock_upper_threshold"])\
                 and (refl < 0.5 + 0.5 * self._relative_reflection(self.sof.setpoint)):
-            print "Locked very far from resonance, beyond lock thresholds..."
+            print ("Locked very far from resonance, beyond lock thresholds...")
             return True
         else:
             return False
@@ -1094,7 +1094,7 @@ class Pyrpl_FP(Pyrpl):
             steps, delay = self._get_stepdelay(
                 output="pid", range=8192.0, duration=time, instructions=instructions)
             if self.constants["verbosity"]:
-                print "SOF-SP,I,P,PDH-SP,I,P:"
+                print ("SOF-SP,I,P,PDH-SP,I,P:")
             for f in linspace(0.0, 1.0, steps, endpoint=True):
                 self.lock_opt(detuning=f *
                               detuning +
@@ -1111,7 +1111,7 @@ class Pyrpl_FP(Pyrpl):
                               actpdh, time=-
                               1)
                 if self.constants["verbosity"]:
-                    print self.sof.setpoint, self.sof.integral, self.sof.proportional, self.pidpdh.setpoint, self.pidpdh.integral, self.pidpdh.proportional
+                    print (self.sof.setpoint, self.sof.integral, self.sof.proportional, self.pidpdh.setpoint, self.pidpdh.integral, self.pidpdh.proportional)
                 sleep(delay)
             return
 
@@ -1139,13 +1139,13 @@ class Pyrpl_FP(Pyrpl):
         if self.stage == laststage:
             return True
         self.stage += 1  # coarse search
-        print "Stage", self.stage, "- Coarse search"
+        print ("Stage", self.stage, "- Coarse search")
         self.find_coarse()
 
         if self.stage == laststage:
             return True
         self.stage += 1  # drift into resonance
-        print "Stage", self.stage, "- Drift into resonance"
+        print ("Stage", self.stage, "- Drift into resonance")
         # *self.get_min_step("coarse") #go on high_voltage side of the resonance
         self.coarse += self.constants["drift_jump"]
 
@@ -1170,19 +1170,19 @@ class Pyrpl_FP(Pyrpl):
             else:
                 sleep(self.commdelay)
         self._islocked(verbose=True)
-        print "Drift completed"
+        print ("Drift completed")
 
         if self.stage == laststage:
             self._set_unlockalarm()
             return True
         self.stage += 1  # lock on the fringe
-        print "Stage", self.stage, "- Side Of Fringe lock"
+        print ("Stage", self.stage, "- Side Of Fringe lock")
         if laststage > self.stage:  # is this an intermediary step? -> in this case we need sof lock within monotonous pdh region
             sofdetuning = 1.0
         else:
             sofdetuning = detuning
         self.lock_opt(detuning=sofdetuning, time=self.constants["sof_time"])
-        print "Final sof lock reached"
+        print ("Final sof lock reached")
         self._islocked(verbose=True)
 
         if self.stage == laststage:
@@ -1190,7 +1190,7 @@ class Pyrpl_FP(Pyrpl):
             return True
         self.stage += 1  # pdh lock
 
-        print "Stage", self.stage, "- PDH lock"
+        print ("Stage", self.stage, "- PDH lock")
         self.setup_pdh()
         p0 = self.get_mean(signal="pdh")
         self.lock_opt(detuning=0.7, time=self.constants["pdh_time"] * 0.25)
@@ -1207,7 +1207,7 @@ class Pyrpl_FP(Pyrpl):
             pdh=1.0,
             time=self.constants["pdh_time"] *
             0.75)
-        print "Final pdh lock reached. Lock completed"
+        print ("Final pdh lock reached. Lock completed")
         self._set_unlockalarm()
         return self._islocked(verbose=True)
 
@@ -1237,7 +1237,7 @@ class Pyrpl_FP(Pyrpl):
             self.lock_opt(detuning=detuning, sof=sof, pdh=pdh,
                           time=self.constants["relocktime"])
         for i in range(5):
-            print "Relock iteration:", i
+            print ("Relock iteration:", i)
             if self.laser_off:
                 return False
             if self.islocked:
@@ -1287,13 +1287,13 @@ class Pyrpl_FP(Pyrpl):
         if self.stage == laststage:
             return
         self.stage += 1  # coarse search
-        print "Stage", self.stage, "- Coarse search"
+        print ("Stage", self.stage, "- Coarse search")
         self.find_coarse()
 
         if self.stage == laststage:
             return
         self.stage += 1  # drift into resonance
-        print "Stage", self.stage, "- Drift into resonance"
+        print ("Stage", self.stage, "- Drift into resonance")
         # *self.get_min_step("coarse") #go on high_voltage side of the resonance
         self.coarse += self.constants["drift_jump"]
         rd = self.constants["dark_reflection"]
@@ -1305,7 +1305,7 @@ class Pyrpl_FP(Pyrpl):
         self.sof.setpoint = r0 - rms
         #drift_sp = (r0-rd)*drift_sp+rd
         #self.pid.setpoint = drift_sp
-        print "Drift setpoint set to", self.sof.setpoint
+        print ("Drift setpoint set to", self.sof.setpoint)
         if drift_i is None:
             drift_i = self.constants["drift_i"]
         if drift_p is None:
@@ -1340,7 +1340,7 @@ class Pyrpl_FP(Pyrpl):
             self._set_unlockalarm()
             return
         self.stage += 1  # lock on the fringe
-        print "Stage", self.stage, "- Side Of Fringe lock"
+        print ("Stage", self.stage, "- Side Of Fringe lock")
         if sof_sp is None:
             sof_sp = self.constants["sof_sp"]
         sof_sp = sof_sp * (r0 - rd) + rd
@@ -1361,7 +1361,7 @@ class Pyrpl_FP(Pyrpl):
         # linearly ramp up all signals
         steps, delay = self._get_stepdelay(
             output="pid", range=sof_sp - drift_sp, duration=sof_time, instructions=3 + extrainstructions)
-        print "Approaching sof setpoint ", sof_sp, "in", steps, "steps of", delay * 1e3, "ms"
+        print ("Approaching sof setpoint ", sof_sp, "in", steps, "steps of", delay * 1e3, "ms")
 
         for f in linspace(0.0, 1.0, steps, endpoint=True):
             self.sof.setpoint = np.round(f * sof_sp + (1.0 - f) * drift_sp)
@@ -1374,9 +1374,9 @@ class Pyrpl_FP(Pyrpl):
                 self.sof_aux.proportional = np.round(
                     f * sof_aux_p + (1.0 - f) * drift_aux_p)
             if self.constants["verbosity"]:
-                print "SP,I,P:", self.sof.setpoint, self.sof.integral, self.sof.proportional
+                print ("SP,I,P:", self.sof.setpoint, self.sof.integral, self.sof.proportional)
             sleep(delay)
-        print "Final sof lock reached"
+        print ("Final sof lock reached")
         self._islocked(verbose=True)
 
         if self.stage == laststage:
@@ -1384,7 +1384,7 @@ class Pyrpl_FP(Pyrpl):
             return
         self.stage += 1  # pdh lock
 
-        print "Stage", self.stage, "- PDH lock"
+        print ("Stage", self.stage, "- PDH lock")
         self.setup_pdh()
         self.pidpdh.reset = False
         if "lock_aux_output" in self.constants and self.constants[
@@ -1416,8 +1416,8 @@ class Pyrpl_FP(Pyrpl):
         else:
             inverted = 1
         if p0 * inverted < 0:
-            print "Please check that the sign of PDH gain is correct! It is probably wrong..."
-        print "Approaching pdh setpoint ", pdh_sp, "from", p0, "in", steps, "steps of", delay * 1e3, "ms"
+            print ("Please check that the sign of PDH gain is correct! It is probably wrong...")
+        print ("Approaching pdh setpoint ", pdh_sp, "from", p0, "in", steps, "steps of", delay * 1e3, "ms")
         for f in linspace(0.0, 1.0, steps, endpoint=True):
             self.pidpdh.setpoint = np.round(f * pdh_sp + (1.0 - f) * p0)
             self.pidpdh.integral = np.round(f * pdh_i)
@@ -1433,9 +1433,9 @@ class Pyrpl_FP(Pyrpl):
                 self.sof_aux.integral = np.round((1.0 - f) * sof_aux_i)
                 self.sof_aux.proportional = np.round((1.0 - f) * sof_aux_p)
             if self.constants["verbosity"]:
-                print "SP,I,P:", self.pidpdh.setpoint, self.pidpdh.integral, self.pidpdh.proportional
+                print ("SP,I,P:", self.pidpdh.setpoint, self.pidpdh.integral, self.pidpdh.proportional)
             sleep(delay)
-        print "Final pdh lock reached. Lock completed"
+        print ("Final pdh lock reached. Lock completed")
         self._set_unlockalarm()
         return self._islocked(verbose=True)
 
@@ -1561,7 +1561,7 @@ class Pyrpl_FP(Pyrpl):
         amplitudes2 = phases * 0
         for i, p in enumerate(phases):
             if self.constants["verbosity"]:
-                print "Measuring signals for phase=", p
+                print ("Measuring signals for phase=", p)
             self.constants["pdh_phase"] = p - phasecorrection
             self.setup_pdh()
             self.s.arm(trigger_source=trigger_source, trigger_delay=0.5)
@@ -1572,7 +1572,7 @@ class Pyrpl_FP(Pyrpl):
                     scopetrigphase = self.f.scopetrigger_phase
                     if fgenphase is None:  # if it was not defined
                         fgenphase = (scopetrigphase - 90.0) % 180.0
-                        print "fgenphase has been auto-set to", fgenphase, "degrees"
+                        print ("fgenphase has been auto-set to", fgenphase, "degrees")
                     if (fgenphase <= scopetrigphase) and (
                             scopetrigphase < fgenphase + 180.0):
                         break
@@ -1614,10 +1614,10 @@ class Pyrpl_FP(Pyrpl):
         self.constants["pdh_phase"] = optphase
         self.setup_pdh()
 
-        print "Optimal parameters recommendation:"
-        print "pdh_phase:  ", optphase
-        print "pdh_factor: ", optgain
-        print "current pdh_max", amplitudes1.max() * 8192.0
+        print ("Optimal parameters recommendation:")
+        print ("pdh_phase:  ", optphase)
+        print ("pdh_factor: ", optgain)
+        print ("current pdh_max", amplitudes1.max() * 8192.0)
 
     def align_acoustic(
             self,
@@ -1628,7 +1628,7 @@ class Pyrpl_FP(Pyrpl):
         while True:
             r = self.relative_reflection
             if verbose:
-                print r
+                print (r)
             if r > 0.8:
                 df = sosfrequency
                 sinus(df, 0.02)
