@@ -36,8 +36,8 @@ model:
   # for interferometer, this is the phase error in radians
   # this value is uniquely needed for the function 'islocked'
   maxerror: 0.1
-  offresonant_reflection: 0.18030118197202682
-  resonant_reflection: 0.08496426790952682
+  offresonant_reflection: 0.2799105569720268
+  resonant_reflection: 0.14075040072202682
   finesse: 92000.0
   length: 5.61e-05
   # signals in order of their preferrence
@@ -53,7 +53,7 @@ model:
         detuning: 1.5
         factor: 5
         time: 0.5
-        offset: 0.5
+        offset: 1
       sof:
         input: reflection
         detuning: 0.7
@@ -64,53 +64,53 @@ model:
         detuning: 0
         factor: 1
         time: 0.05
-      integratorboost1:
-        input: pdh
-        detuning: 0
-        factor: 1
-        time: 0.5
-        second_integrator: 0.02
-      integratorboost2:
-        input: pdh
-        detuning: 0
-        factor: 1
-        time: 0.5
-        second_integrator: 0.1
-      integratorboost3:
-        input: pdh
-        detuning: 0
-        factor: 1
-        time: 0.5
-        second_integrator: 0.7
+      #integratorboost1:
+      #  input: pdh
+      #  detuning: 0
+      #  factor: 1
+      #  time: 0.5
+      #  second_integrator: 0.02
+      #integratorboost2:
+      #  input: pdh
+      #  detuning: 0
+      #  factor: 1
+      #  time: 0.5
+      #  second_integrator: 0.1
+      #integratorboost3:
+      #  input: pdh
+      #  detuning: 0
+      #  factor: 1
+      #  time: 0.5
+      #   second_integrator: 0.7
       pdh:
         input: pdh
         detuning: 0
         factor: 1
         time: 0.01
-        second_integrator: 1.0
+        #second_integrator: 1.0
       #call_islocked: {}
   calibration:
     zoomfactor: 0.03
     relative_threshold: 0.9
 
   peak: 0.07061767578125
-  peak_pdh: 0.04022216796875
+  peak_pdh: 0.06451416015625
 # all signals that are inputs of the lockbox. Must be signal names understood
 # by the model.
 inputs:
   reflection:
     redpitaya_input: adc2
     offset: 0.012691982090473175
-    max: 0.18030118197202682
-    min: 0.08496426790952682
-    mean: 0.16044815629720688
-    rms: 0.01379790967222776
+    max: 0.2799105569720268
+    min: 0.14075040072202682
+    mean: 0.2582077980041504
+    rms: 0.01884869933470406
   pdh:
     redpitaya_input: adc1
-    max: 0.04069442301988602
-    min: -0.03974991291761398
-    mean: -5.135685205459595e-05
-    rms: 0.01219596061013391
+    max: 0.06669539958238602
+    min: -0.06233292073011398
+    mean: 0.0002442076802253723
+    rms: 0.017088120749226107
     setup:
       phase: -5.0
       amplitude: 4.0
@@ -139,7 +139,7 @@ outputs:
       lowpass:
       - 0.01
     calibrationunits: m_per_V
-    lastoffset: 0.125244140625
+    lastoffset: 0.0
   piezo:
     redpitaya_output: out2
     # we will calibrate the piezo response in units of m_per_V (not a necessary
@@ -195,7 +195,7 @@ outputs:
       lowpass: []
     lock:
       #skip: true
-      proportional_gain: 0.0
+      proportional_gain: 0
       inputfilter:
       - 19428.09363914738
       - 38856.18727829476
