@@ -63,7 +63,7 @@ script:
   #see: https://github.com/rtfd/readthedocs.org/issues/1951
   - export DISPLAY=:99.0
   - sh -e /etc/init.d/xvfb start
-  - nosetests --with-coverage --cover-package=pyrpl --logging-level=INFO
+  - nosetests --with-coverage --cover-package=pyrpl --logging-level=DEBUG
 
 # Calculate coverage
 after_success:

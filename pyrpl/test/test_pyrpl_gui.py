@@ -15,10 +15,6 @@ from PyQt4.QtCore import Qt, QPoint
 class TestClass(object):
     @classmethod
     def setUpAll(self):
-        # these tests wont succeed without the hardware
-        #if os.environ['REDPITAYA_HOSTNAME'] == 'unavailable':
-        #    self.r = None
-        #else:
         self.r = RedPitayaGui()
         self.r.gui()
 
