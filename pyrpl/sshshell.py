@@ -87,7 +87,10 @@ class SSHshell(object):
 
     def __del__(self):
         self.endapp()
-        self.channel.close()
+        try:
+            self.channel.close()
+        except AttributeError:
+            pass  # already broken
         self.ssh.close()
 
     def endapp(self):

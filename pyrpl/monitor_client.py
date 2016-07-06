@@ -38,12 +38,18 @@ class MonitorClient(object):
         self._address = address
         self._port = port
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        try:
-            self.socket.connect((self._address, self._port))
-        except socket.error:
-            "Socket error during connection." # mostly because of bad port
-            self._port = self._restartserver() # try a different port here by putting port=-1
-            self.socket.connect((address, self._port))
+        # try to connect at least 5 times
+        for i in range(5):
+            try:
+                self.socket.connect((self._address, self._port))
+            except socket.error:  # mostly because port is still closed
+                self.logger.warning("Socket error during connection "
+                                    "attempt %s.", i)
+                sleep(0.5)
+                self._port = self._restartserver()  # try a different port
+                                                    # here by putting port=-1
+            else:
+                break
         self.socket.settimeout(1.0)  # 1 second timeout for socket operations
 
     def close(self):

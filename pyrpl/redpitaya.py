@@ -82,7 +82,7 @@ class RedPitaya(SSHshell):
                     oldvalue = self.__getattribute__(k)
                     self.__setattr__(k, type(oldvalue)(newvalue))
                     if k == "password": # do not show the password on the screen
-                        newvalue = "*"*(len(newvalue)%8)
+                        newvalue = "********"
                     self.logger.warning("Variable %s with value %s overwritten by "
                                         +"environment variable REDPITAYA_%s with "
                                         +"value %s", k, oldvalue,
