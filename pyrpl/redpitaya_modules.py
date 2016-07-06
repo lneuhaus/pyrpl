@@ -130,7 +130,7 @@ class Scope(BaseModule):
         self._setup_called = False
         self._parent = parent
         self._trigger_source_memory = "immediately"
-        self._trigger_delay_memory = self.data_length/2
+        self._trigger_delay_memory = 0
 
     @property
     def input1(self):
@@ -182,10 +182,8 @@ class Scope(BaseModule):
     def trigger_source(self, val):
         self._trigger_source = val
         self._trigger_source_memory = val
-        if val == 'immediately':
-            self._trigger_delay = self.data_length
-        else:
-            self._trigger_delay = self._trigger_delay_memory
+        # passing between immediately and other sources possibly requires trigger delay change
+        self.trigger_delay = self._trigger_delay_memory
         
     _trigger_debounce = Register(0x90, doc="Trigger debounce time [cycles]")
 
@@ -208,9 +206,12 @@ class Scope(BaseModule):
     
     @trigger_delay.setter
     def trigger_delay(self, delay):
+        # memorize the setting
+        self._trigger_delay_memory = delay
+        # convert float delay into counts
         delay = int(np.round(delay/self.sampling_time)) + self.data_length//2
-        self._trigger_delay_memory = delay  # when user requires some value, it should be set whenever
-        # trigger is not anymore on immediately.
+        # in mode "immediately", trace goes from 0 to duration,
+        # but trigger_delay_memory is not overwritten
         if self.trigger_source=='immediately':
             self._trigger_delay = self.data_length
             return delay
@@ -221,11 +222,14 @@ class Scope(BaseModule):
         self._trigger_delay = delay
         return delay
 
-    _trigger_delay_running = BoolRegister(0x0, 2, doc="trigger delay running (register adc_dly_do)")
+    _trigger_delay_running = BoolRegister(0x0, 2,
+                        doc="trigger delay running (register adc_dly_do)")
 
-    _adc_we_keep = BoolRegister(0x0, 3, doc="Scope resets trigger automatically (adc_we_keep)")
+    _adc_we_keep = BoolRegister(0x0, 3,
+                        doc="Scope resets trigger automatically (adc_we_keep)")
 
-    _adc_we_cnt = Register(0x2C, doc="Number of samles that have passed since trigger was armed (adc_we_cnt)")
+    _adc_we_cnt = Register(0x2C, doc="Number of samles that have passed since "
+                                     "trigger was armed (adc_we_cnt)")
    
     current_timestamp = LongRegister(0x15C,
                                      bits=64,
@@ -423,27 +427,29 @@ class Scope(BaseModule):
         if trigger_delay is not None:
             self.trigger_delay = trigger_delay
 
-        if trigger_source is not None:
-            self.trigger_source = trigger_source
+        # trigger logic - set source
+        if trigger_source is None:
+            self.trigger_source = self.trigger_source
         else:
+            self.trigger_source = trigger_source
+        # arm trigger
+        self._trigger_armed = True
+        # mode 'immediately' must receive software trigger after arming to
+        # start acquisition. The software trigger must occur after
+        # pretrig_ok, but we do not need to worry about this because it is
+        # taken care of in the trigger_source setter in this class (the
+        # trigger_delay section of it).
+        if self.trigger_source == 'immediately':
+            # self.wait_for_pretrig_ok()
             self.trigger_source = self.trigger_source
 
-        if self.trigger_source == 'immediately':
-            self._trigger_delay = self.data_length
-        else:
-            self.trigger_delay = self.trigger_delay
-
-        self._trigger_source = 'off'
-        self.trigger_source = self.trigger_source
-        self._trigger_armed = True
+        #if self.trigger_source == 'immediately':
+        #    self.wait_for_pretrig_ok()
+        #    self.trigger_source = 'immediately'# write state machine
 
 
-        if self.trigger_source == 'immediately':
-            self.wait_for_pretrig_ok()
-            self.trigger_source = 'immediately'# write state machine
-            #reset has changed the value of the FPGA register#_sw_trig()
-
-    def wait_for_pretrig_ok(self):
+    def wait_for_pretrigger(self):
+        """ sleeps until scope trigger is ready (buffer has enough new data) """
         while not self.pretrig_ok:
             time.sleep(0.001)
 
