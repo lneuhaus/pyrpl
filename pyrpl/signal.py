@@ -394,6 +394,7 @@ class RPOutputSignal(RPSignal):
             The lock setpoint in V. None leaves the setpoint unchanged
         input: RPSignal or str or None
             The input signal of the pid, either as RPSignal object or as str
+            containing the signal's name.  None leaves the currend pid input.
         factor: float
             An extra factor to multiply the gain with for debugging purposes.
         offset: float or None
@@ -616,4 +617,3 @@ class RPOutputSignal(RPSignal):
         except KeyError:
             sic = 0
         return sic
-

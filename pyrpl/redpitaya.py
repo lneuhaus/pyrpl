@@ -31,9 +31,10 @@ from paramiko import SSHException
 
 from .sshshell import SSHshell
 from . import monitor_client
+#import monitor_client
 from . import redpitaya_modules as rp
-from network_analyzer import NetworkAnalyzer
-from spectrum_analyzer import SpectrumAnalyzer
+from .network_analyzer import NetworkAnalyzer
+from .spectrum_analyzer import SpectrumAnalyzer
 
 class RedPitaya(SSHshell):
     _binfilename = 'fpga.bin'
@@ -363,7 +364,6 @@ class RedPitaya(SSHshell):
         # higher functionality modules
         self.na = NetworkAnalyzer(self)
         self.spec_an = SpectrumAnalyzer(self)
-
 
     def make_a_slave(self, port=None, monitor_server_name=None, gui=False):
         if port is None:

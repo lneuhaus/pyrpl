@@ -19,7 +19,7 @@
 
 import numpy as np
 import time
-import pyrpl_utils
+from . import pyrpl_utils
 import sys
 import matplotlib.pyplot as plt
 import logging
@@ -126,7 +126,7 @@ scope_data_length = 2**14
 class Scope(BaseModule):
     data_length = scope_data_length  # see definition and explanation above
     inputs = None
-    
+
     def __init__(self, client, parent):
         super(Scope, self).__init__(client, addr_base=0x40100000)
         # dsp multiplexer channels for scope and asg are the same by default
@@ -190,7 +190,7 @@ class Scope(BaseModule):
         self._trigger_source_memory = val
         # passing between immediately and other sources possibly requires trigger delay change
         self.trigger_delay = self._trigger_delay_memory
-        
+
     _trigger_debounce = Register(0x90, doc="Trigger debounce time [cycles]")
 
     trigger_debounce = FloatRegister(0x90, bits=20, norm=125e6, 
@@ -254,6 +254,7 @@ class Scope(BaseModule):
     sampling_times = [8e-9 * dec for dec in decimations]
 
     # price to pay for Python 3 compatibility: list comprehension workaround
+    # cf. http://stackoverflow.com/questions/13905741/accessing-class-variables-from-a-list-comprehension-in-the-class-definition
     durations = [st * data_length for st in sampling_times]
 
     decimation = SelectRegister(0x14, doc="decimation factor",

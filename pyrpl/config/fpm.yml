@@ -205,6 +205,7 @@ outputs:
     min_voltage: -1.0
     transfer_function:
       open_loop: none
+
 ##############################################################################
 ###  Configuration parameters that rarely need to be modified ################
 ##############################################################################

@@ -30,7 +30,7 @@ import pandas
 import matplotlib.pyplot as plt
 import sys
 import os
-import iir
+from . import iir
 import logging
 from collections import OrderedDict
 from shutil import copyfile
@@ -456,6 +456,7 @@ class Pyrpl(Lockbox):
             self.logger.warning("Gui is not started. Cannot save position.")
 
 class Trash(object):
+
     def _params(self):
         r, rrms, rmin, rmax = self.get_mean(
             signal="reflection", rms=True, minmax=True)
@@ -595,7 +596,6 @@ class Trash(object):
             self.bode.output = output
 
 class Trash_Pyrpl_FP(Pyrpl):
-
     def find_coarse(self, start=0.0, stop=1.0):
         """ finds the coarse offset of a resonance in range """
         # define search parameters
@@ -607,7 +607,7 @@ class Trash_Pyrpl_FP(Pyrpl):
 
         searchtime = self.constants["coarse_searchtime"]
 
-        print "Waiting for coarse value to settle..."
+        print ("Waiting for coarse value to settle...")
         self.unlock()
         self.coarse = start
         sleep(initial_delay)
@@ -627,25 +627,25 @@ class Trash_Pyrpl_FP(Pyrpl):
                 self.constants["dark_reflection"]))
         if self.constants["reflection_input"] == 2:
             self.s.threshold_ch2 = find_coarse_threshold
-            print "Coarse threshold set to %d" % self.s.threshold_ch2
+            print ("Coarse threshold set to %d" % self.s.threshold_ch2)
             trigger_source = 5
         elif self.constants["reflection_input"] == 1:
             self.s.threshold_ch1 = find_coarse_threshold
-            print "Coarse threshold set to %d" % self.s.threshold_ch1
+            print ("Coarse threshold set to %d" % self.s.threshold_ch1)
             trigger_source = 3
 
-        print "Starting resonance search..."
+        print ("Starting resonance search...")
         for act_iteration in range(
                 self.constants["find_coarse_max_iterations"]):
             # upwards search
             self.s.arm(trigger_source=trigger_source)
-            print "sweeping upwards..."
+            print ("sweeping upwards...")
             steps, delay = self._get_stepdelay(
                 "coarse", stop - start, searchtime)
             for c in np.linspace(start, stop, steps):
                 if (self.s.trigger_source == 0):
                     """resonance passed in positive direction"""
-                    print "Passed upwards at %.4f" % c
+                    print ("Passed upwards at %.4f" % c)
                     break
                 else:
                     self.coarse = c
@@ -661,13 +661,13 @@ class Trash_Pyrpl_FP(Pyrpl):
                 #searchtime *= self.constants["find_coarse_slowdown"]
             # downwards
             self.s.arm(trigger_source=trigger_source)
-            print "sweeping downwards..."
+            print ("sweeping downwards...")
             steps, delay = self._get_stepdelay(
                 "coarse", stop - start, searchtime)
             for c in np.linspace(stop, start, steps):
                 if (self.s.trigger_source == 0):
                     """resonance passed in negativedirection"""
-                    print "Passed downwards at %.4f" % c
+                    print ("Passed downwards at %.4f" % c)
                     break
                 else:
                     self.coarse = c
@@ -683,13 +683,12 @@ class Trash_Pyrpl_FP(Pyrpl):
                 #searchtime *= self.constants["find_coarse_slowdown"]
             if (stop - start) < stopinterval:
                 self.coarse = (stop + start) / 2
-                print "Resonance located at %.4f" % self.coarse
+                print ("Resonance located at %.4f" % self.coarse)
                 self.scope_reset()
                 return self.coarse
         # if we arrive here, the search must have failed...
         self.scope_reset()
         return None
-
 
     def relock(self, detuning=None, sof=0, pdh=0):
         """
@@ -717,7 +716,7 @@ class Trash_Pyrpl_FP(Pyrpl):
             self.lock_opt(detuning=detuning, sof=sof, pdh=pdh,
                           time=self.constants["relocktime"])
         for i in range(5):
-            print "Relock iteration:", i
+            print ("Relock iteration:", i)
             if self.laser_off:
                 return False
             if self.islocked:
@@ -800,7 +799,7 @@ class Trash_Pyrpl_FP(Pyrpl):
         amplitudes2 = phases * 0
         for i, p in enumerate(phases):
             if self.constants["verbosity"]:
-                print "Measuring signals for phase=", p
+                print ("Measuring signals for phase=", p)
             self.constants["pdh_phase"] = p - phasecorrection
             self.setup_pdh()
             self.s.arm(trigger_source=trigger_source, trigger_delay=0.5)
@@ -811,7 +810,7 @@ class Trash_Pyrpl_FP(Pyrpl):
                     scopetrigphase = self.f.scopetrigger_phase
                     if fgenphase is None:  # if it was not defined
                         fgenphase = (scopetrigphase - 90.0) % 180.0
-                        print "fgenphase has been auto-set to", fgenphase, "degrees"
+                        print ("fgenphase has been auto-set to", fgenphase, "degrees")
                     if (fgenphase <= scopetrigphase) and (
                             scopetrigphase < fgenphase + 180.0):
                         break
@@ -853,10 +852,10 @@ class Trash_Pyrpl_FP(Pyrpl):
         self.constants["pdh_phase"] = optphase
         self.setup_pdh()
 
-        print "Optimal parameters recommendation:"
-        print "pdh_phase:  ", optphase
-        print "pdh_factor: ", optgain
-        print "current pdh_max", amplitudes1.max() * 8192.0
+        print ("Optimal parameters recommendation:")
+        print ("pdh_phase:  ", optphase)
+        print ("pdh_factor: ", optgain)
+        print ("current pdh_max", amplitudes1.max() * 8192.0)
 
     def align_acoustic(
             self,
@@ -867,7 +866,7 @@ class Trash_Pyrpl_FP(Pyrpl):
         while True:
             r = self.relative_reflection
             if verbose:
-                print r
+                print (r)
             if r > 0.8:
                 df = sosfrequency
                 sinus(df, 0.02)

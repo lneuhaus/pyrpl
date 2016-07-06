@@ -103,7 +103,6 @@ class FPM(FabryPerot):
     def coarse(self, v):
         self._parent.slow.output_offset = v
 
-
     def setup_ringdown(self,
                        frequency=3.578312e6,
                        amplitude=0.1,
