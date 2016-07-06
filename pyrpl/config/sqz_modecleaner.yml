@@ -36,7 +36,7 @@ model:
   # for interferometer, this is the phase error in radians
   # this value is uniquely needed for the function 'islocked'
   maxerror: 0.1
-  finesse: 60.0
+  finesse: 5000.0
   length: 0.425
   # signals in order of their preferrence
   #signalpreference:
@@ -63,7 +63,7 @@ model:
         time: 0.01
       pdh:
         input: pdh
-        detuning: 0.1
+        detuning: 0.0
         factor: 1
 
   calibration:
@@ -72,8 +72,8 @@ model:
 
   resonant_reflection: -0.08322671800851822
   offresonant_reflection: 0.08339925855398178
-  peak_pdh: 0.23974609375
-  resonant_transmission: 0.19524861127138138
+  peak_pdh: 0.806396484375
+  resonant_transmission: 0.3936128690838814
 # all signals that are inputs of the lockbox. Must be signal names understood
 # by the model. The order of signals indicates their preferrence as error
 # signals.
@@ -88,10 +88,10 @@ inputs:
   #  offset: -0.01687093824148178
   transmission:
     redpitaya_input: adc2
-    max: 0.19524861127138138
-    min: -0.0011625215411186218
-    mean: 0.010687261819839478
-    rms: 0.029277261590318432
+    max: 0.3936128690838814
+    min: -0.010195724666118622
+    mean: -0.006628789007663727
+    rms: 0.009746833439971993
     offset: -0.004574783146381378
   pdh:
     setup:
@@ -104,15 +104,15 @@ inputs:
       output_signal: quadrature
       quadrature_factor: 0.05
       bandwidth:
-      - 200000.0
+      - 1000000.0
       - 500000.0
       acbandwidth: 100000.0
 
     redpitaya_input: iq0
-    max: 0.22933685779571533
-    min: -0.25015532970428467
-    mean: -0.01912904530763626
-    rms: 0.06832484363890941
+    max: 0.9788485765457153
+    min: -0.6339443922042847
+    mean: -0.022984981536865234
+    rms: 0.048513391826473906
     offset: 0.021029353141784668
 # All output signals. Names of outputs are arbitrary.
 outputs:
@@ -134,13 +134,13 @@ outputs:
     # therefore the analog filter can be well approximated by a first order
     # lowpass with corner frequency 37.9 Hz
     analogfilter:
-      lowpass: []
+      lowpass: [20]
     # the piezo manufacturer specifies the first resonance at 144 kHz
     # however, the mounting structure is expected to have resonances starting
     # from 15 kHz. To be safe, we start by demanding a unity-gain frequency
     # of 1 kHz and will later increase this value (automatically done after
     # lock optimisation)
-    unity_gain_frequency: 2500.0
+    unity_gain_frequency: 1000.0
     sweep:
       waveform: ramp
       frequency: 10.0
@@ -149,8 +149,8 @@ outputs:
     inputfilter:
     - 19428.09363914738
     - 19428.09363914738
-    - 5000
-    - 5000
+    - 19428.09363914738
+    - 19428.09363914738
 scope:
   input1: adc2
   input2: dac1
