@@ -118,8 +118,13 @@ class HK(BaseModule):
 
 
 class Scope(BaseModule):
-    #data_length = 2**14
-    #inputs = None
+    # Because of BaseModule, Variable have to "declare" outside __init__
+    data_length = 0
+    inputs = None
+    _decimations = {}
+    decimations = [] # help for the user
+    sampling_times=[]
+    durations=[]
     
     def __init__(self, client, parent):
         super(Scope, self).__init__(client, addr_base=0x40100000)
@@ -130,9 +135,12 @@ class Scope(BaseModule):
         self._setup_called = False
         self._parent = parent
         self._trigger_source_memory = "immediately"
-        self._trigger_delay_memory = self.data_length/2
         self.data_length = 2**14
-        self.durations = [s_times * self.data_length for s_times in sampling_times]
+        self._trigger_delay_memory = self.data_length/2
+        self._decimations = {2**n: 2**n for n in range(0,17)}
+        self.decimations = sorted(self._decimations.keys()) # help for the user
+        self.sampling_times = [8e-9 * dec for dec in self.decimations]
+        self.durations = [s_times * self.data_length for s_times in self.sampling_times]
 
     @property
     def input1(self):
@@ -237,11 +245,11 @@ class Scope(BaseModule):
                                      doc= "An absolute counter " \
                                          +"for the trigger time [cycles]")
     
-    _decimations = {2**n: 2**n for n in range(0,17)}
+    #_decimations = {2**n: 2**n for n in range(0,17)}
 
-    decimations = sorted(_decimations.keys()) # help for the user
+    #decimations = sorted(_decimations.keys()) # help for the user
 
-    sampling_times = [8e-9 * dec for dec in decimations]
+    #sampling_times = [8e-9 * dec for dec in decimations]
 
     # very ugly workaround for list comprehension scope in Python 3
     # cf. http://stackoverflow.com/questions/13905741/accessing-class-variables-from-a-list-comprehension-in-the-class-definition
