@@ -117,8 +117,14 @@ class HK(BaseModule):
     # led = [BoolRegister(0x30,bit=i,doc="LED "+str(i)) for i in range(8)]
 
 
+# data_length must be defined outside of class body for python 3
+# compatibility since otherwise it is not available in the class level
+# namespace
+scope_data_length = 2**14
+
+
 class Scope(BaseModule):
-    data_length = 2**14
+    data_length = scope_data_length  # see definition and explanation above
     inputs = None
     
     def __init__(self, client, parent):
@@ -243,13 +249,14 @@ class Scope(BaseModule):
     
     _decimations = {2**n: 2**n for n in range(0,17)}
 
-    decimations = sorted(_decimations.keys()) # help for the user
+    decimations = sorted(_decimations.keys())  # help for the user
 
     sampling_times = [8e-9 * dec for dec in decimations]
 
-    durations = [s_times*data_length for s_times in sampling_times]
+    # price to pay for Python 3 compatibility: list comprehension workaround
+    durations = [st * data_length for st in sampling_times]
 
-    decimation = SelectRegister(0x14, doc="decimation factor", 
+    decimation = SelectRegister(0x14, doc="decimation factor",
                                 options=_decimations)
     
     _write_pointer_current = Register(0x18, 
@@ -300,12 +307,11 @@ class Scope(BaseModule):
         """sets or returns the time separation between two subsequent points of a scope trace
         the rounding makes sure that the actual value is shorter or equal to the set value"""
         tbase = 8e-9
-        factors = [2**n for n in reversed(range(0,17))]
-        for f in factors:
-            if v >= tbase * float(f):
-                self.decimation = f
+        for d in reversed(self.decimations):
+            if v >= tbase * d:
+                self.decimation = d
                 return
-        self.decimation = 1
+        self.decimation = min(self.decimations)
         self._logger.error("Desired sampling time impossible to realize")
 
     @property
@@ -318,12 +324,11 @@ class Scope(BaseModule):
         the rounding makes sure that the actual value is longer or equal to the set value"""
         v = float(v) / self.data_length
         tbase = 8e-9
-        factors = [2**n for n in range(0,17)]
-        for f in factors:
-            if v <= tbase * float(f):
-                self.decimation = f
+        for d in self.decimations:
+            if v <= tbase * float(d):
+                self.decimation = d
                 return
-        self.decimation = 65536
+        self.decimation = max(self.decimations)
         self._logger.error("Desired duration too long to realize")
 
     @property
