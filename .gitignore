@@ -43,7 +43,7 @@ pyrpl/.idea
 fpga/out/
 fpga/sdk/
 fpga/ip/
-test.py
+
 
 
 # PyInstaller
@@ -95,3 +95,9 @@ docs/my_notebooks/
 
 #config backups
 pyrpl/config/*.bak
+
+#test files made by Xueshi
+test_import.py
+run.py
+rpiq_gui.py
+rpiq.ui
