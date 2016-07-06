@@ -1,9 +1,11 @@
+# please do not do any crazy stuff here, i.e. only put packages or comments
 ###### Requirements without Version Specifiers ######
 scp
 matplotlib
 scipy
 pandas
 nose
+yaml
 ruamel.yaml
 pyqtgraph
 

@@ -16,11 +16,6 @@ import os
 class TestClass(object):
     @classmethod
     def setUpAll(self):
-        # these tests wont succeed without the hardware
-        #if os.environ['REDPITAYA_HOSTNAME'] == 'unavailable':
-        #    self.r = None
-        #else:
-
         ## these tests currently do not run on travis.
         ## our workaround is this: detect from environment variable
         ## if tests are executed on travis and refuse the gui tests
@@ -63,7 +58,6 @@ class TestClass(object):
             return
         for asg_widget in self.r.all_asg_widget.asg_widgets:
             self.try_gui_module(asg_widget)
-
 
     def try_gui_module(self, module_widget): # name should not start with test
         if not self.do_gui_tests:
