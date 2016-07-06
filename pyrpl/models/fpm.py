@@ -95,3 +95,11 @@ class FPM(FabryPerot):
         set = abs(self.state["set"][self._variable])
         return (mean <= self.reflection(set + 1.0))
 
+
+    @property
+    def coarse(self):
+        return self._parent.slow.output_offset
+
+    @coarse.setter
+    def coarse(self, v):
+        self._parent.slow.output_offset = v

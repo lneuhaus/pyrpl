@@ -192,7 +192,7 @@ class Scope(BaseModule):
     def trigger_source(self, val):
         self._trigger_source = val
         self._trigger_source_memory = val
-        if val=='immediately':
+        if val == 'immediately':
             self._trigger_delay = self.data_length
         else:
             self._trigger_delay = self._trigger_delay_memory
@@ -200,7 +200,7 @@ class Scope(BaseModule):
     _trigger_debounce = Register(0x90, doc="Trigger debounce time [cycles]")
 
     trigger_debounce = FloatRegister(0x90, bits=20, norm=125e6, 
-                                     doc = "Trigger debounce time [s]")
+                                     doc="Trigger debounce time [s]")
     
     threshold_ch1 = FloatRegister(0x8, bits=14, norm=2**13, 
                                   doc="ch1 trigger threshold [volts]")
@@ -208,7 +208,9 @@ class Scope(BaseModule):
     threshold_ch2 = FloatRegister(0xC, bits=14, norm=2**13, 
                                   doc="ch1 trigger threshold [volts]")
     
-    _trigger_delay = Register(0x10, doc="number of decimated data after trigger written into memory [samples]")
+    _trigger_delay = Register(0x10,
+                              doc="number of decimated data after trigger "
+                                  "written into memory [samples]")
 
     @property
     def trigger_delay(self):
@@ -223,9 +225,9 @@ class Scope(BaseModule):
             self._trigger_delay = self.data_length
             return delay
         if delay <= 0:
-            delay = 1 # bug in scope code: 0 does not work
-        elif delay > self.data_length-1:
-            delay = self.data_length-1
+            delay = 1  # bug in scope code: 0 does not work
+        elif delay > 2**32-1: #self.data_length-1:
+            delay = 2**32-1  # self.data_length-1
         self._trigger_delay = delay
         return delay
 
@@ -446,8 +448,10 @@ class Scope(BaseModule):
         else:
             self.trigger_delay = self.trigger_delay
 
-        self._trigger_armed = True
+        self._trigger_source = 'off'
         self.trigger_source = self.trigger_source
+        self._trigger_armed = True
+
 
         if self.trigger_source == 'immediately':
             self.wait_for_pretrig_ok()

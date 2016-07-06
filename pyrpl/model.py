@@ -15,6 +15,7 @@ class Model(object):
                         "_lock"]
 
 
+
     # independent variable that specifies the state of the system
     _variable = 'x'
 
@@ -211,7 +212,7 @@ class Model(object):
         elif isinstance(input, str):
             input = self.inputs[input]
         inputname = input._name
-        variable = kwargs[self._variable]
+        variable = kwargs.pop(self._variable)
         setpoint = self.__getattribute__(inputname)(variable)
         slope = self.__getattribute__(inputname+'_slope')(variable)
 
@@ -227,7 +228,8 @@ class Model(object):
                    setpoint=setpoint,
                    input=input,
                    offset=offset,
-                   factor=factor)
+                   factor=factor,
+                   **kwargs)
 
     def lock(self,
              detuning=None,
@@ -355,4 +357,3 @@ class Model(object):
                          + "Now simply call p.lock() to lock.  \n"
                          + "Assert if locked with p.islocked() and unlock \n"
                          + "with p.unlock(). ")
-
