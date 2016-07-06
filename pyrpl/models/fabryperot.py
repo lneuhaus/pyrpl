@@ -188,3 +188,22 @@ class FabryPerot(Model):
             relrms = rms / self._config.peak_pdh
             self._pdh_rms_log.log(relrms)
             return relrms
+
+    def islocked(self):
+        """ returns True if cavity is locked """
+        input = None
+        for i in self.inputs.keys():
+            if i == "reflection" or i == "transmission":
+                input = i
+                break
+        if input is None:
+            raise KeyError("No transmission or reflection signal found.")
+        self.inputs[input]._acquire()
+        mean = self.inputs[input].mean
+        set = abs(self.state["set"][self._variable])
+        error_threshold = self._config.lock.error_threshold
+        thresholdvalue = self.__getattribute__(input)(set + error_threshold)
+        if input == "reflection":
+            return (mean <= thresholdvalue)
+        else:
+            return (mean >= thresholdvalue)

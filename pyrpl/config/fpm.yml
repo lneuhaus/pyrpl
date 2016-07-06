@@ -3,7 +3,7 @@ redpitaya:
   password: root
   user: root
   port: 2222
-  frequency_correction: 1.0
+  frequency_correction: 0.9999801526493788
   filename: fpga//red_pitaya.bin
   reloadfpga: true
   # autostart gui?
@@ -36,8 +36,8 @@ model:
   # for interferometer, this is the phase error in radians
   # this value is uniquely needed for the function 'islocked'
   maxerror: 0.1
-  offresonant_reflection: 0.14880704134702682
-  resonant_reflection: 0.06738614290952682
+  offresonant_reflection: 0.24194668978452682
+  resonant_reflection: 0.10754727572202682
   finesse: 92000.0
   length: 5.61e-05
   # signals in order of their preferrence
@@ -45,14 +45,15 @@ model:
   #- reflection
   #- transmission
   lock:
-    error_threshold: 0.1
+    error_threshold: 1
     stages:
+      #call_calibrate: {}
       drift:
         input: reflection
         detuning: 1.5
         factor: 5
         time: 0.5
-        offset: 0.5
+        offset: 1
       sof:
         input: reflection
         detuning: 0.7
@@ -63,40 +64,53 @@ model:
         detuning: 0
         factor: 1
         time: 0.05
-      secondintegrator1:
-        input: pdh
-        detuning: 0
-        factor: 1
-        second_integrator: 0.2
-        time: 0.5
+      #integratorboost1:
+      #  input: pdh
+      #  detuning: 0
+      #  factor: 1
+      #  time: 0.5
+      #  second_integrator: 0.02
+      #integratorboost2:
+      #  input: pdh
+      #  detuning: 0
+      #  factor: 1
+      #  time: 0.5
+      #  second_integrator: 0.1
+      #integratorboost3:
+      #  input: pdh
+      #  detuning: 0
+      #  factor: 1
+      #  time: 0.5
+      #   second_integrator: 0.7
       pdh:
         input: pdh
         detuning: 0
         factor: 1
-        second_integrator: 1
         time: 0.01
+        #second_integrator: 1.0
+      #call_islocked: {}
   calibration:
     zoomfactor: 0.03
     relative_threshold: 0.9
 
   peak: 0.07061767578125
-  peak_pdh: 0.0379638671875
+  peak_pdh: 0.0672607421875
 # all signals that are inputs of the lockbox. Must be signal names understood
 # by the model.
 inputs:
   reflection:
     redpitaya_input: adc2
     offset: 0.012691982090473175
-    max: 0.14880704134702682
-    min: 0.06738614290952682
-    mean: 0.13183597475290298
-    rms: 0.010962956792015168
+    max: 0.24194668978452682
+    min: 0.10754727572202682
+    mean: 0.22155462950468063
+    rms: 0.01862858309755808
   pdh:
     redpitaya_input: adc1
-    max: 0.03629989176988602
-    min: -0.03962784260511398
-    mean: 0.00048141926527023315
-    rms: 0.010203426966821886
+    max: 0.07218856364488602
+    min: -0.06233292073011398
+    mean: 0.002142690122127533
+    rms: 0.01711348193311359
     setup:
       phase: -5.0
       amplitude: 4.0
@@ -125,7 +139,7 @@ outputs:
       lowpass:
       - 0.01
     calibrationunits: m_per_V
-    lastoffset: 0.125244140625
+    lastoffset: -0.2049560546875
   piezo:
     redpitaya_output: out2
     # we will calibrate the piezo response in units of m_per_V (not a necessary
@@ -149,7 +163,7 @@ outputs:
       lowpass: [15.8]
     lock:
       unity_gain_frequency: 100.0
-      second_integrator_crossover: 0
+      second_integrator_crossover: 5.0
       inputfilter:
       - 9714.04681957369
       - 9714.04681957369
@@ -157,8 +171,8 @@ outputs:
       - 9714.04681957369
       - 9714.04681957369
       - 9714.04681957369
-      - 19428.09363914738
-      - 19428.09363914738
+      - 9714.04681957369
+      - 9714.04681957369
     sweep:
       waveform: sin
       frequency: 25.0
@@ -168,6 +182,29 @@ outputs:
     min_voltage: -1.0
     transfer_function:
       open_loop: 254634
+  fastpiezo:
+    redpitaya_output: out1
+    calibrationunits: m_per_V
+    m_per_V: 3.0e-10
+    # PZT parallel capacity: 1 uF
+    # Series resistance: 50 Ohm + 10 kOhm
+    # RC cutoff 1/2piRC = 37.9 Hz
+    # therefore the analog filter can be well approximated by a first order
+    # lowpass with corner frequency 37.9 Hz
+    analogfilter:
+      lowpass: []
+    lock:
+      #skip: true
+      proportional_gain: 0
+      inputfilter:
+      - 19428.09363914738
+      - 38856.18727829476
+      - 621698.9964527162
+      - 0
+    max_voltage: 0.9998779296875
+    min_voltage: -1.0
+    transfer_function:
+      open_loop: none
 
 ##############################################################################
 ###  Configuration parameters that rarely need to be modified ################
@@ -182,10 +219,10 @@ scope:
 
 scopegui:
   coordinates:
-  - 0
-  - 0
-  - 882
-  - 639
+  - -586
+  - 452
+  - 546
+  - 438
   auto_run_continuous: true
 
 signal:
@@ -222,3 +259,7 @@ signal:
   # reflection from a cavity
   peak: 0
   trigger_delay: 0
+
+# fpm related stuff
+constants:
+  pdh_marker_frequency: 3600000.0

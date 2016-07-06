@@ -2,7 +2,7 @@ import numpy as np
 import sys
 from time import sleep, time
 
-from redpitaya_modules import NotReadyError
+from .redpitaya_modules import NotReadyError
 
 
 class NetworkAnalyzer(object):

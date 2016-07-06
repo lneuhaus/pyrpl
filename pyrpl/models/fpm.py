@@ -7,8 +7,15 @@ from . import *
 
 
 class FPM(FabryPerot):
+    """ custom class for the measurement fabry perot of the ZPM experiment """
+
     export_to_parent = FabryPerot.export_to_parent \
-                       + ["relative_pdh_rms", "relative_reflection"]
+                       + ["relative_pdh_rms", "relative_reflection",
+                          "setup_ringdown", "teardown_ringdown"]
+
+    def setup(self):
+        super(FPM, self).setup()
+        self._parent.constants = self._parent.c.constants
 
     def setup_pdh(self, **kwargs):
         o = self.outputs["slow"]
@@ -88,14 +95,6 @@ class FPM(FabryPerot):
             self._generator.output_enabled = True
         #return super(RPLockbox_FPM, self)._disable_pdh()
 
-
-    def islocked(self):
-        self.inputs["reflection"]._acquire()
-        mean = self.inputs["reflection"].mean
-        set = abs(self.state["set"][self._variable])
-        return (mean <= self.reflection(set + 1.0))
-
-
     @property
     def coarse(self):
         return self._parent.slow.output_offset
@@ -103,3 +102,17 @@ class FPM(FabryPerot):
     @coarse.setter
     def coarse(self, v):
         self._parent.slow.output_offset = v
+
+    def setup_ringdown(self,
+                       frequency=3.578312e6,
+                       amplitude=0.1,
+                       duration=1.0,
+                       invert=False):
+        self._parent.rp.asg2.enable_advanced_trigger(
+            frequency=frequency,
+            amplitude=amplitude,
+            duration=duration,
+            invert=invert)
+
+    def teardown_ringdown(self):
+        self._parent.rp.asg2.disable_advanced_trigger()

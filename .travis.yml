@@ -46,7 +46,9 @@ before_install:
 install:
   - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION numpy scipy paramiko matplotlib pandas nose pip
   - source activate test-environment
-  - conda install -c ufechner pyqtgraph
+  - if [[ "$TRAVIS_PYTHON_VERSION" != "3.3" ]]; then
+      conda install -c ufechner pyqtgraph;
+    fi
   - pip install scp
   # there are some bugs in the installation of these packages in higher python versions
   - if [[ "$TRAVIS_PYTHON_VERSION" != "3.5" ]] && [[ "$TRAVIS_PYTHON_VERSION" != "3.4" ]]; then
@@ -61,7 +63,7 @@ script:
   #see: https://github.com/rtfd/readthedocs.org/issues/1951
   - export DISPLAY=:99.0
   - sh -e /etc/init.d/xvfb start
-  - nosetests --with-coverage --cover-package=pyrpl --logging-level=INFO
+  - nosetests --with-coverage --cover-package=pyrpl --logging-level=DEBUG
 
 # Calculate coverage
 after_success:

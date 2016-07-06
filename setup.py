@@ -14,12 +14,17 @@ import codecs
 import os
 import sys
 
-requirements = ["paramiko", "scp", "numpy"]
-#,"matplotlib","numpy","scipy","pandas"] #harder to install
-#,"json","pickle,"math","PyQT4"]         #impossible
-
 here = os.path.abspath(os.path.dirname(__file__))
 
+# read requirements
+# from http://stackoverflow.com/questions/14399534/how-can-i-reference-requirements-txt-for-the-install-requires-kwarg-in-setuptool
+requirements = []
+with open(os.path.join(here, 'requirements.txt')) as f:
+    lines = f.readlines()
+    for line in lines:
+        line = line.strip()
+        if '#' not in line and line:
+            requirements.append(line.strip())
 
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read() 

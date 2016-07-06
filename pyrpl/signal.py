@@ -376,9 +376,13 @@ class RPOutputSignal(RPSignal):
              second_integrator=0):
         """
         Enables feedback with this output. The realized transfer function of
-        the pid plus specified external analog filters is a pure integrator,
-        to within the limits imposed by the knowledge of the external filters.
-        The desired unity gain frequency is stored in the config file.
+        the pid plus specified external analog filters is a pure integrator if
+        the config file defines unity_gain_frequency for the output, or a pure
+        proportional gain if the config file defines proportional_gain for the
+        output. This transfer function can be further refined by defining
+        setting the fields 'inputfilter' and 'iir' for the output in the config
+        file. An incorrect specification of the external analog filter will
+        result in an imperfect transfer function.
 
         Parameters
         ----------
@@ -408,28 +412,52 @@ class RPOutputSignal(RPSignal):
         if self._skiplock:
             return
 
-        # compute integrator unity gain frequency
+        # design the loop shape
+        loopshape = self._config.lock._dict  # maybe rename the branch to loopshape
+        if ("unity_gain_frequency" in loopshape
+                                and "proportional_gain" in loopshape):
+            raise ValueError("Output " + self._name + " loopshape is "
+                    "overdefined. Defines either unity_gain_frequency or "
+                    "proportional_gain, but not both!")
         if slope is None:
-            integrator_ugf = self.pid.i
+            if "unity_gain_frequency" in loopshape:
+                integrator_on = True
+                gain = self.pid.i
+            else:  # "proportional" in loopshape:
+                integrator_on = False
+                gain = self.pid.p
+        elif slope == 0:
+                    raise ValueError("Cannot lock on a zero slope!")
         else:
-            if slope == 0:
-                raise ValueError("Cannot lock on a zero slope!")
-            integrator_ugf = self._config.lock.unity_gain_frequency * factor * -1
-            integrator_ugf /= (self._config[self._config.calibrationunits] * slope)
+            if "unity_gain_frequency" in loopshape:
+                integrator_on = True
+                gain = self._config.lock.unity_gain_frequency
+            else:  # "proportional" in loopshape:
+                integrator_on = False
+                gain = self._config.lock.proportional_gain
+            gain *= factor * -1 / slope
+            gain /= self._config[self._config.calibrationunits]
 
         # if gain is disabled somewhere, return
-        if integrator_ugf == 0:
+        if gain == 0:
             self.off()
             logger.warning("Lock called with zero gain! ")
             return
 
-        # if analog lowpass filters are present, also use proportional
-        # (first-order lowpass) and derivative (for second-order lowpass) gain
+        # if analog lowpass filters are present, try to adjust transfer
+        # function in order to compensate for it with PID
         try:
             lowpass = sorted(self._config.analogfilter.lowpass)
         except KeyError:
             self._config['analogfilter']= {'lowpass': []}
             lowpass = sorted(self._config.analogfilter.lowpass)
+        if integrator_on:
+            integrator_ugf = gain
+        else:
+            integrator_ugf = 0
+            # pretending there was a 1Hz analog filter will get us the right
+            # proportional gain with or without integrator in the next block
+            lowpass = [1.0] + lowpass
 
         if len(lowpass) >= 0:  # i.e. always
             # no analog lowpass -> pure integrator lock
@@ -437,7 +465,7 @@ class RPOutputSignal(RPSignal):
             differentiator_ugf = 0
         if len(lowpass) >= 1:
             # set PI corner at first lowpass cutoff
-            proportional = integrator_ugf / lowpass[0]
+            proportional = gain / lowpass[0]
         if len(lowpass) >= 2:
             # set PD corner at second lowpass cutoff if present
             differentiator_ugf = lowpass[1] / proportional
@@ -589,4 +617,3 @@ class RPOutputSignal(RPSignal):
         except KeyError:
             sic = 0
         return sic
-

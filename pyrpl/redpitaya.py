@@ -26,14 +26,14 @@ import inspect
 import random
 import logging
 
-from scp import SCPException
+from scp import SCPClient, SCPException
 from paramiko import SSHException
 
 from .sshshell import SSHshell
 from . import monitor_client
 from . import redpitaya_modules as rp
-from network_analyzer import NetworkAnalyzer
-from spectrum_analyzer import SpectrumAnalyzer
+from .network_analyzer import NetworkAnalyzer
+from .spectrum_analyzer import SpectrumAnalyzer
 
 class RedPitaya(SSHshell):
     _binfilename = 'fpga.bin'
@@ -299,7 +299,11 @@ class RedPitaya(SSHshell):
 
     def __del__(self):
         self.end()
-        self.ssh.close()
+        try:
+            self.ssh.close()
+        except socket.error:
+            self.logger.warning("__del__ tried to close a socket that "
+                                "already was closed. ")
 
     def restart(self):
         self.end()
@@ -363,7 +367,6 @@ class RedPitaya(SSHshell):
         # higher functionality modules
         self.na = NetworkAnalyzer(self)
         self.spec_an = SpectrumAnalyzer(self)
-
 
     def make_a_slave(self, port=None, monitor_server_name=None, gui=False):
         if port is None:

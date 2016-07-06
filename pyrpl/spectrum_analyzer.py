@@ -16,7 +16,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###############################################################################
 
-from sshshell import SSHshell
+from .sshshell import SSHshell
 from time import sleep
 from matplotlib import pyplot
 import math
@@ -33,7 +33,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import logging
 
-from redpitaya_modules import NotReadyError, Scope, IQ
+from .redpitaya_modules import NotReadyError, Scope, IQ
 
 class SpectrumAnalyzer(object):
     """
@@ -57,9 +57,9 @@ class SpectrumAnalyzer(object):
       freqs = sa.freqs()
     """
 
-    nyquist_margin = 2*pi #it looks like bandwidth of filters are then perfect
+    # nyquist_margin = 2*pi #it looks like bandwidth of filters are then perfect
 
-    spans = [1./nyquist_margin/s_time for s_time in Scope.sampling_times]
+    # spans = [1./nyquist_margin/s_time for s_time in Scope.sampling_times]
 
     def gauss(data_length, rbw, sampling_time):
         return np.exp(-(linspace(-sampling_time*rbw*data_length*pi,
@@ -73,6 +73,12 @@ class SpectrumAnalyzer(object):
 
     #_setup = False
     def __init__(self, rp=None):
+    
+        #it looks like bandwidth of filters are then perfect
+        self.nyquist_margin = 2*pi
+        self.spans = [1. / self.nyquist_margin / s_time
+                      for s_time in Scope.sampling_times]
+        
         self.rp = rp
         self.center = 1e6
         self.avg = 1
