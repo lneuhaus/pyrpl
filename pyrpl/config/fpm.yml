@@ -36,8 +36,8 @@ model:
   # for interferometer, this is the phase error in radians
   # this value is uniquely needed for the function 'islocked'
   maxerror: 0.1
-  offresonant_reflection: 0.24194668978452682
-  resonant_reflection: 0.10754727572202682
+  offresonant_reflection: 0.17517422884702682
+  resonant_reflection: 0.06665372103452682
   finesse: 92000.0
   length: 5.61e-05
   # signals in order of their preferrence
@@ -94,23 +94,23 @@ model:
     relative_threshold: 0.9
 
   peak: 0.07061767578125
-  peak_pdh: 0.0672607421875
+  peak_pdh: 0.05389404296875
 # all signals that are inputs of the lockbox. Must be signal names understood
 # by the model.
 inputs:
   reflection:
     redpitaya_input: adc2
     offset: 0.012691982090473175
-    max: 0.24194668978452682
-    min: 0.10754727572202682
-    mean: 0.22155462950468063
-    rms: 0.01862858309755808
+    max: 0.17517422884702682
+    min: 0.06665372103452682
+    mean: 0.1568288803100586
+    rms: 0.016677298053333494
   pdh:
     redpitaya_input: adc1
-    max: 0.07218856364488602
-    min: -0.06233292073011398
-    mean: 0.002142690122127533
-    rms: 0.01711348193311359
+    max: 0.05741805583238602
+    min: -0.05037003010511398
+    mean: 0.0034707114100456238
+    rms: 0.016696190916774167
     setup:
       phase: -5.0
       amplitude: 4.0
@@ -131,15 +131,17 @@ outputs:
       - 0
       - 0
     redpitaya_output: pwm1
+    # attention: output voltage is inversed w.r.t. redpitaya voltage because of
+    # inverting amplifier behind pwm1
     max_voltage: 0.3
-    min_voltage: -0.3
+    min_voltage: -1.0
     # amplitier gain complicated - calibrate manually. at the moment
     m_per_V: 1.0
     analogfilter:
       lowpass:
       - 0.01
     calibrationunits: m_per_V
-    lastoffset: -0.2049560546875
+    lastoffset: -0.4229736328125
   piezo:
     redpitaya_output: out2
     # we will calibrate the piezo response in units of m_per_V (not a necessary
