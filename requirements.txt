@@ -5,7 +5,7 @@ matplotlib
 scipy
 pandas
 nose
-yaml
+pyyaml
 ruamel.yaml
 pyqtgraph
 
