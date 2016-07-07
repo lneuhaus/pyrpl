@@ -35,12 +35,23 @@ class TestClass(object):
             # make sure Register represents an int
             if not isinstance(value, int):
                 assert False, 'wrong type: int != %s' % str(type(value))
+            # write back to it to test setter
+            module.__setattr__(regkey, value)
+            newvalue = module.__getattribute__(regkey)
+            assert value == newvalue, \
+                "Mismatch: value=" + str(value) + " new value = " + str(newvalue)
         if type(reg) is LongRegister:
             # try to read
             value = module.__getattribute__(regkey)
             # make sure Register represents an int
             if not isinstance(value, int) and not isinstance(value, long):
                 assert False, 'wrong type: int/long != %s' % str(type(value))
+            # write back to it to test setter
+            module.__setattr__(regkey,value)
+            newvalue = module.__getattribute__(regkey)
+            if regkey not in ["current_timestamp"]:
+                assert value == newvalue, "Mismatch: value=" + str(value) \
+                                          + " new value = " + str(newvalue)
         if type(reg) is BoolRegister or type(reg) is IORegister:
             # try to read
             value = module.__getattribute__(regkey)
