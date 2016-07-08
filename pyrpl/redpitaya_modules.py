@@ -579,6 +579,7 @@ def make_asg(channel=1):
         sm_reset = BoolRegister(0x0, 6+_BIT_OFFSET, doc='resets the state machine')
         
         # register set_a/b_once
+        # deprecated since redpitaya v0.94
         periodic = BoolRegister(0x0, 5+_BIT_OFFSET, invert=True,
                         doc='if False, fgen stops after performing one full waveform at its last value.')
         
@@ -595,8 +596,9 @@ def make_asg(channel=1):
                             "immediately": 1 << _BIT_OFFSET,
                             "ext_positive_edge": 2 << _BIT_OFFSET, #DIO0_P pin
                             "ext_negative_edge": 3 << _BIT_OFFSET, #DIO0_P pin
-                            "advanced_trigger": 4 << _BIT_OFFSET} #4-advanced trigger from DIO0_P pin (output gated on trigger with hysteresis of advanced_trigger_delay in seconds)
-        
+                            "ext_raw": 4 << _BIT_OFFSET, #4- raw DIO0_P pin
+                            "high": 5 << _BIT_OFFSET}  # 5 - constant high
+
         trigger_sources = _trigger_sources.keys()
         
         trigger_source = SelectRegister(0x0, bitmask=0x0007<<_BIT_OFFSET, 
@@ -625,6 +627,17 @@ def make_asg(channel=1):
         _start_offset = Register(0xC, 
                         doc="counter offset for trigged events = phase offset ")
 
+        # novel burst / pulsed mode parameters
+        cycles_per_burst = Register(0x18+_VALUE_OFFSET,
+                    doc="Number of repeats of table readout. 0=infinite. 32 "
+                        "bits.")
+
+        bursts = Register(0x1C+_VALUE_OFFSET,
+                    doc="Number of bursts (1 burst = 'cycles' periods of "
+                        "waveform + delay_between_bursts. 0=disabled")
+
+        delay_between_bursts = Register(0x20+_VALUE_OFFSET,
+                    doc="Delay between repetitions [us]. Granularity=1us")
 
         @property
         def waveform(self):
@@ -757,31 +770,36 @@ def make_asg(channel=1):
                 doc='autorearm the fgen advanced trigger after a trigger event? If False, trigger needs to be reset with a sequence advanced_trigger_reset=True...advanced_trigger_reset=False after each trigger event.')
         advanced_trigger_invert = BoolRegister(0x0, 10+_BIT_OFFSET, doc='inverts the trigger signal for the advanced trigger if True')
         
-        advanced_trigger_delay = LongRegister(0x118+_VALUE_OFFSET, bits=64, doc='delay of the advanced trigger - 1 [cycles]') 
+        advanced_trigger_delay = LongRegister(0x118+_VALUE_OFFSET, bits=64,
+                              doc='delay of the advanced trigger - 1 [cycles]')
     
-        def enable_advanced_trigger(self, frequency, amplitude, duration,
-                                    invert=False, autorearm=False):
-            self.setup(
-                frequency=frequency,
-                amplitude=amplitude,
-                periodic=False,
-                offset=0,
-                trigger_source=None)
+        def enable_advanced_trigger(self,
+                                    frequency,
+                                    amplitude,
+                                    duration,
+                                    invert=False,
+                                    autorearm=False,
+                                    output_direct='out1'):
             self.advanced_trigger_reset = True
             self.advanced_trigger_autorearm = autorearm
             self.advanced_trigger_invert = invert
-            self.advanced_trigger_delay = np.round(duration/8e-9)
-            self.sm_reset = False
-            self.trigger_source = 'advanced_trigger'
-            self.output_zero = False
+            self.advanced_trigger_delay = int(np.round(duration / 8e-9))
+            self.setup(
+                waveform="sin",
+                frequency=frequency,
+                amplitude=amplitude,
+                offset=0,
+                periodic=True,
+                trigger_source='advanced_trigger',
+                output_direct=output_direct)
             self.advanced_trigger_reset = False
     
         def disable_advanced_trigger(self):
+            self.on = False
             self.advanced_trigger_reset = True
             self.trigger_source = 'immediately'
             self.sm_reset = True
-            self.output_zero = True
-    
+
     return Asg
     
 Asg1 = make_asg(channel=1)

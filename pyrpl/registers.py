@@ -65,24 +65,25 @@ class LongRegister(Register):
         values = obj._reads(self.address, self.size)
         value = int(0)
         for i in range(self.size):
-            value += int(values[i])<<(32*i)
+            value += int(values[i]) << (32*i)
         if self.bitmask is None:
             return self.to_python(value)
         else:
-            return (self.to_python(value)&self.bitmask)
+            return (self.to_python(value) & self.bitmask)
     
     def __set__(self, obj, val):
         val = self.from_python(val)
-        values = np.zeros(self.size,dtype=np.uint32)
+        values = np.zeros(self.size, dtype=np.uint32)
         if self.bitmask is None:
             for i in range(self.size):
-                values[i] = (val>>(32*i))&0xFFFFFFFF
+                values[i] = (val >> (32*i)) & 0xFFFFFFFF
         else:
             act = obj._reads(self.address, self.size)
             for i in range(self.size):
-                localbitmask = (self.bitmask>>32*i)&0xFFFFFFFF
-                values[i] = ((val>>(32*i))&localbitmask)|(int(act[i])&(~localbitmask))
-        obj._writes(self.address,val)
+                localbitmask = (self.bitmask >> 32*i) & 0xFFFFFFFF
+                values[i] = ((val >> (32*i)) & localbitmask) | \
+                            (int(act[i]) & (~localbitmask))
+        obj._writes(self.address, values)
             
 class BoolRegister(Register):
     """Inteface for boolean values, 1: True, 0: False. invert=True inverts the mapping"""

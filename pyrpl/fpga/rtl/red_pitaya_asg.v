@@ -105,7 +105,7 @@ reg               set_a_wrap   , set_b_wrap   ;
 reg   [  14-1: 0] set_a_amp    , set_b_amp    ;
 reg   [  14-1: 0] set_a_dc     , set_b_dc     ;
 reg               set_a_zero   , set_b_zero   ;
-reg   [  16-1: 0] set_a_ncyc   , set_b_ncyc   ;
+reg   [  32-1: 0] set_a_ncyc   , set_b_ncyc   ;
 reg   [  16-1: 0] set_a_rnum   , set_b_rnum   ;
 reg   [  32-1: 0] set_a_rdly   , set_b_rdly   ;
 reg               set_a_rgate  , set_b_rgate  ;
@@ -231,7 +231,7 @@ if (dac_rstn_i == 1'b0) begin
    set_a_size  <= {RSZ+16{1'b1}} ;
    set_a_ofs   <= {RSZ+16{1'b0}} ;
    set_a_step  <={{RSZ+15{1'b0}},1'b0} ;
-   set_a_ncyc  <= 16'h0    ;
+   set_a_ncyc  <= 32'h0    ;
    set_a_rnum  <= 16'h0    ;
    set_a_rdly  <= 32'h0    ;
    set_a_rgate <=  1'b0    ;
@@ -246,7 +246,7 @@ if (dac_rstn_i == 1'b0) begin
    set_b_size  <= {RSZ+16{1'b1}} ;
    set_b_ofs   <= {RSZ+16{1'b0}} ;
    set_b_step  <={{RSZ+15{1'b0}},1'b0} ;
-   set_b_ncyc  <= 16'h0    ;
+   set_b_ncyc  <= 32'h0    ;
    set_b_rnum  <= 16'h0    ;
    set_b_rdly  <= 32'h0    ;
    set_b_rgate <=  1'b0    ;
@@ -280,7 +280,7 @@ end else begin
       if (sys_addr[19:0]==20'h8)   set_a_size <= sys_wdata[RSZ+15: 0] ;
       if (sys_addr[19:0]==20'hC)   set_a_ofs  <= sys_wdata[RSZ+15: 0] ;
       if (sys_addr[19:0]==20'h10)  set_a_step <= sys_wdata[RSZ+15: 0] ;
-      if (sys_addr[19:0]==20'h18)  set_a_ncyc <= sys_wdata[  16-1: 0] ;
+      if (sys_addr[19:0]==20'h18)  set_a_ncyc <= sys_wdata[  32-1: 0] ;
       if (sys_addr[19:0]==20'h1C)  set_a_rnum <= sys_wdata[  16-1: 0] ;
       if (sys_addr[19:0]==20'h20)  set_a_rdly <= sys_wdata[  32-1: 0] ;
 
@@ -289,7 +289,7 @@ end else begin
       if (sys_addr[19:0]==20'h28)  set_b_size <= sys_wdata[RSZ+15: 0] ;
       if (sys_addr[19:0]==20'h2C)  set_b_ofs  <= sys_wdata[RSZ+15: 0] ;
       if (sys_addr[19:0]==20'h30)  set_b_step <= sys_wdata[RSZ+15: 0] ;
-      if (sys_addr[19:0]==20'h38)  set_b_ncyc <= sys_wdata[  16-1: 0] ;
+      if (sys_addr[19:0]==20'h38)  set_b_ncyc <= sys_wdata[  32-1: 0] ;
       if (sys_addr[19:0]==20'h3C)  set_b_rnum <= sys_wdata[  16-1: 0] ;
       if (sys_addr[19:0]==20'h40)  set_b_rdly <= sys_wdata[  32-1: 0] ;
 
@@ -331,7 +331,7 @@ end else begin
      20'h0000C : begin sys_ack <= sys_en;          sys_rdata <= {{32-RSZ-16{1'b0}},set_a_ofs}      ; end
      20'h00010 : begin sys_ack <= sys_en;          sys_rdata <= {{32-RSZ-16{1'b0}},set_a_step}     ; end
      20'h00014 : begin sys_ack <= sys_en;          sys_rdata <= buf_a_rpnt_rd                      ; end
-     20'h00018 : begin sys_ack <= sys_en;          sys_rdata <= {{32-16{1'b0}},set_a_ncyc}         ; end
+     20'h00018 : begin sys_ack <= sys_en;          sys_rdata <= set_a_ncyc                         ; end
      20'h0001C : begin sys_ack <= sys_en;          sys_rdata <= {{32-16{1'b0}},set_a_rnum}         ; end
      20'h00020 : begin sys_ack <= sys_en;          sys_rdata <= set_a_rdly                         ; end
 
@@ -340,7 +340,7 @@ end else begin
      20'h0002C : begin sys_ack <= sys_en;          sys_rdata <= {{32-RSZ-16{1'b0}},set_b_ofs}      ; end
      20'h00030 : begin sys_ack <= sys_en;          sys_rdata <= {{32-RSZ-16{1'b0}},set_b_step}     ; end
      20'h00034 : begin sys_ack <= sys_en;          sys_rdata <= buf_b_rpnt_rd                      ; end
-     20'h00038 : begin sys_ack <= sys_en;          sys_rdata <= {{32-16{1'b0}},set_b_ncyc}         ; end
+     20'h00038 : begin sys_ack <= sys_en;          sys_rdata <= set_b_ncyc                         ; end
      20'h0003C : begin sys_ack <= sys_en;          sys_rdata <= {{32-16{1'b0}},set_b_rnum}         ; end
      20'h00040 : begin sys_ack <= sys_en;          sys_rdata <= set_b_rdly                         ; end
 

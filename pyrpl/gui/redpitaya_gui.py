@@ -18,7 +18,7 @@ else:
 
 APP = QtGui.QApplication.instance()
 if APP is None:
-    APP = QtGui.QApplication(["pyrpl_gui"])
+    APP = QtGui.QApplication(["redpitaya_gui"])
 
 
 def property_factory(module_widget, prop):
@@ -54,6 +54,7 @@ class BaseProperty(object):
     def __init__(self, name, module_widget):
         self.module_widget = module_widget
         self.name = name
+        self.acquisition_property = True  # property affects signal acquisition
         self.layout_v = QtGui.QVBoxLayout()
         self.label = QtGui.QLabel(name)
         self.layout_v.addWidget(self.label)
@@ -96,7 +97,8 @@ class NumberProperty(BaseProperty):
 
     def write(self):
         setattr(self.module, self.name, self.widget.value())
-        self.module_widget.property_changed.emit()
+        if self.acquisition_property:
+            self.module_widget.property_changed.emit()
 
     def update(self):
         """
@@ -200,7 +202,8 @@ class ComboProperty(BaseProperty):
         """
 
         setattr(self.module, self.name, str(self.widget.currentText()))
-        self.module_widget.property_changed.emit()
+        if self.acquisition_property:
+            self.module_widget.property_changed.emit()
 
     def update(self):
         """
@@ -236,7 +239,8 @@ class BoolProperty(BaseProperty):
         """
 
         setattr(self.module, self.name, self.widget.checkState() == 2)
-        self.module_widget.property_changed.emit()
+        if self.acquisition_property:
+            self.module_widget.property_changed.emit()
 
     def update(self):
         """
@@ -263,8 +267,12 @@ class ModuleWidget(QtGui.QWidget):
         self.init_gui()
         self.update_properties()
 
-    def kill_all_timers(self):
-        self.property_watch_timer
+    def stop_all_timers(self):
+        self.property_watch_timer.stop()
+        try:
+            self.timer.stop()
+        except AttributeError:
+            pass
 
     def init_property_layout(self):
         """
@@ -383,17 +391,18 @@ class ScopeWidget(ModuleWidget):
         else:
             wp0 = self.module._write_pointer_current
             datas = []
-            for ch in (1,2):
-                if self.cb_ch[ch-1].checkState()==2:
+            for ch in (1, 2):
+                if self.cb_ch[ch - 1].checkState() == 2:
                     datas.append(self.module._get_ch_no_roll(ch))
             wp1 = self.module._write_pointer_current
             for index, data in enumerate(datas):
-                to_discard = (wp1 - wp0)%self.module.data_length
-                data = np.roll(data, self.module.data_length - wp0)[to_discard:]
-                data = np.concatenate([[np.nan]*to_discard, data])
+                to_discard = (wp1 - wp0) % self.module.data_length
+                data = np.roll(data, self.module.data_length - wp0)[
+                       to_discard:]
+                data = np.concatenate([[np.nan] * to_discard, data])
                 times = self.module.times
-                times-= times[-1]
-                self.curves[index].setData(times , data)
+                times -= times[-1]
+                self.curves[index].setData(times, data)
         self.timer.start()
 
     def run_continuous(self):
@@ -475,7 +484,6 @@ class ScopeWidget(ModuleWidget):
         for cb in self.cb_ch:
             cb.stateChanged.connect(self.display_curves)
 
-
         self.rolling_group = QtGui.QGroupBox("Trigger mode")
         self.checkbox_normal = QtGui.QRadioButton("Normal")
         self.checkbox_untrigged = QtGui.QRadioButton("Untrigged (rolling)")
@@ -484,12 +492,22 @@ class ScopeWidget(ModuleWidget):
         self.lay_radio.addWidget(self.checkbox_normal)
         self.lay_radio.addWidget(self.checkbox_untrigged)
         self.rolling_group.setLayout(self.lay_radio)
-        self.property_layout.insertWidget(self.property_names.index("trigger_source"), self.rolling_group)
+        self.property_layout.insertWidget(
+            self.property_names.index("trigger_source"), self.rolling_group)
+
+        # minima maxima
+        for prop in (self.properties["threshold_ch1"],
+                     self.properties["threshold_ch1"]):
+            spin_box = prop.widget
+            spin_box.setDecimals(4)
+            spin_box.setMaximum(1)
+            spin_box.setMinimum(-1)
+            spin_box.setSingleStep(0.01)
 
     @property
     def rolling_mode(self):
         return ((self.checkbox_untrigged.isChecked()) and \
-                 self.rolling_group.isEnabled())
+                self.rolling_group.isEnabled())
 
     @rolling_mode.setter
     def rolling_mode(self, val):
@@ -504,10 +522,13 @@ class ScopeWidget(ModuleWidget):
     def update_properties(self):
         super(ScopeWidget, self).update_properties()
 
-        self.rolling_group.setEnabled(self.module.duration>0.1)
-        self.properties['trigger_source'].widget.setEnabled(not self.rolling_mode)
-        self.properties['threshold_ch1'].widget.setEnabled(not self.rolling_mode)
-        self.properties['threshold_ch2'].widget.setEnabled(not self.rolling_mode)
+        self.rolling_group.setEnabled(self.module.duration > 0.1)
+        self.properties['trigger_source'].widget.setEnabled(
+            not self.rolling_mode)
+        self.properties['threshold_ch1'].widget.setEnabled(
+            not self.rolling_mode)
+        self.properties['threshold_ch2'].widget.setEnabled(
+            not self.rolling_mode)
         self.button_single.setEnabled(not self.rolling_mode)
 
     @property
@@ -536,6 +557,7 @@ class ScopeWidget(ModuleWidget):
             self.save_curve(self.module.times,
                             self.module.curve(ch),
                             **d)
+
 
 class AsgGui(ModuleWidget):
     """
@@ -619,12 +641,15 @@ class NaGui(ModuleWidget):
                       "points",
                       "amplitude",
                       "logscale",
+                      "infer_open_loop_tf",
                       "avg"]
 
     def init_gui(self):
         """
         Sets up the gui
         """
+        # add this new display parameter to module na
+        self.module.infer_open_loop_tf = False
 
         self.main_layout = QtGui.QVBoxLayout()
         self.init_property_layout()
@@ -656,7 +681,8 @@ class NaGui(ModuleWidget):
 
         self.button_single.clicked.connect(self.run_single_clicked)
         self.button_continuous.clicked.connect(self.run_continuous_clicked)
-        self.button_restart_averaging.clicked.connect(self.ask_restart_and_do_it)
+        self.button_restart_averaging.clicked.connect(
+            self.ask_restart_and_do_it)
         self.button_save.clicked.connect(self.save)
         self.timer = QtCore.QTimer()  # timer for point acquisition
         self.timer.setInterval(10)
@@ -691,6 +717,8 @@ class NaGui(ModuleWidget):
             spin_box.setMaximum(1e6)
             spin_box.setMinimum(0)
 
+        self.properties["infer_open_loop_tf"].acquisition_property = False
+
     def save_current_params(self):
         """
         Stores the params in a dictionary self.current_params.
@@ -707,6 +735,7 @@ class NaGui(ModuleWidget):
                                    logscale=self.module.logscale,
                                    avg=self.module.avg,
                                    post_average=self.post_average,
+                                   infer_open_loop_tf=self.module.infer_open_loop_tf,
                                    name="pyrpl_na")
 
     def save(self):
@@ -726,18 +755,18 @@ class NaGui(ModuleWidget):
 
         self.data = np.zeros(self.module.points, dtype=complex)
         self.x = np.empty(self.module.points)
-        self.phase = np.empty(self.module.points)
-        self.amp_abs = np.empty(self.module.points)
         self.post_average = 0
 
     def ask_restart(self):
         """
-        Called whenever a property is changed: the execution should stop and when the user wants to acquire more,
-        the acquisition should restart from scratch. However, the current curve is not immediately
-        erased in case the user would like to save it.
+        Called whenever a property is changed: the execution should stop and
+        when the user wants to acquire more, the acquisition should restart
+        from scratch. However, the current curve is not immediately erased in
+        case the user would like to save it.
         """
 
-        self.set_state(continuous=self.continuous, paused=True, need_restart=True, n_av=0)
+        self.set_state(continuous=self.continuous, paused=True,
+                       need_restart=True, n_av=0)
 
     def ask_restart_and_do_it(self):
         """
@@ -749,9 +778,11 @@ class NaGui(ModuleWidget):
             self.restart_averaging()
             self.new_run()
             self.timer.start()
-            self.set_state(continuous=self.continuous, paused=self.paused, need_restart=False, n_av=0)
+            self.set_state(continuous=self.continuous, paused=self.paused,
+                           need_restart=False, n_av=0)
         else:
-            self.set_state(continuous=self.continuous, paused=self.paused, need_restart=True, n_av=0)
+            self.set_state(continuous=self.continuous, paused=self.paused,
+                           need_restart=True, n_av=0)
 
     def restart_averaging(self):
         """
@@ -782,7 +813,8 @@ class NaGui(ModuleWidget):
             if self.continuous or self.need_restart:  # restart from scratch
                 self.run_single()
             else:  # continue with the previously started scan
-                self.set_state(continuous=False, paused=False, need_restart=False)
+                self.set_state(continuous=False, paused=False,
+                               need_restart=False)
                 self.timer.start()
         else:  # If already running, then set to paused
             self.set_state(continuous=False, paused=True, need_restart=False)
@@ -792,7 +824,8 @@ class NaGui(ModuleWidget):
         Stop the current execution (part of the public interface).
         """
 
-        self.set_state(continuous=self.continuous, paused=True, need_restart=self.need_restart)
+        self.set_state(continuous=self.continuous, paused=True,
+                       need_restart=self.need_restart)
 
     def new_run(self):
         """
@@ -869,11 +902,16 @@ class NaGui(ModuleWidget):
         -------
         """
         # plot_time_start = time()
-        self.curve.setData(self.x[:self.last_valid_point],
-                           20*np.log10(self.amp_abs[:self.last_valid_point]))
+        x = self.x[:self.last_valid_point]
+        y = self.data[:self.last_valid_point]
 
-        self.curve_phase.setData(self.x[:self.last_valid_point],
-                                 self.phase[:self.last_valid_point])
+        # check if we shall display open loop tf
+        if self.properties["infer_open_loop_tf"].widget.checkState() == 2:
+            y = y / (1.0 + y)
+        mag = 20 * np.log10(np.abs(y)   )
+        phase = np.angle(y, deg=True)
+        self.curve.setData(x, mag)
+        self.curve_phase.setData(x, phase)
         # plot_time = time() - plot_time_start # actually not working, because done latter
         # self.update_timer.setInterval(plot_time*10*1000) # make sure plotting
         # is only marginally slowing
@@ -896,17 +934,21 @@ class NaGui(ModuleWidget):
             self.post_average += 1
             if self.continuous:
                 self.new_run()
-                self.set_state(continuous=True, paused=False, need_restart=False, n_av=self.post_average)
+                self.set_state(continuous=True, paused=False,
+                               need_restart=False, n_av=self.post_average)
                 self.timer.start()
             else:
-                self.set_state(continuous=True, paused=True, need_restart=False, n_av=self.post_average)  # 1
+                self.set_state(continuous=True, paused=True,
+                               need_restart=False, n_av=self.post_average)  # 1
                 self.button_single.setText("Run single")
             return
-        self.data[cur] = (self.data[cur] * self.post_average + y) / (self.post_average + 1)
-
-        self.phase[cur] = np.angle(self.data[cur], deg=True)
-        self.amp_abs[cur] = abs(self.data[cur])
+        self.data[cur] = (self.data[cur] * self.post_average + y) / (
+        self.post_average + 1)
         self.x[cur] = x
+        # fomerly, we had buffers for both phase and magnitude. This was faster
+        # but more messy. We could restore them once the display get
+        # exceedingly slow. In that case, they should be calculated right
+        # after acquisition, i.e. here.
 
         if not self.update_timer.isActive():
             self.update_timer.start()
@@ -922,7 +964,8 @@ class NaGui(ModuleWidget):
 
         self.restart_averaging()
         self.new_run()
-        self.set_state(continuous=True, paused=False, need_restart=False, n_av=self.post_average)
+        self.set_state(continuous=True, paused=False, need_restart=False,
+                       n_av=self.post_average)
         self.timer.start()
 
     def resume_acquisition(self):
@@ -932,7 +975,8 @@ class NaGui(ModuleWidget):
         """
 
         if self.need_restart:
-            raise AveragingError("""parameters have changed in the mean time, cannot average with previous data""")
+            raise AveragingError(
+                """parameters have changed in the mean time, cannot average with previous data""")
         else:
             self.set_state(continuous=self.continuous,
                            paused=False,
@@ -947,10 +991,12 @@ class NaGui(ModuleWidget):
             if self.need_restart:
                 self.run_continuous()
             else:
-                self.set_state(continuous=True, paused=False, need_restart=False, n_av=self.post_average)
+                self.set_state(continuous=True, paused=False,
+                               need_restart=False, n_av=self.post_average)
                 self.timer.start()
         else:
-            self.set_state(continuous=True, paused=True, need_restart=False, n_av=self.post_average)
+            self.set_state(continuous=True, paused=True, need_restart=False,
+                           n_av=self.post_average)
 
 
 class SpecAnGui(ModuleWidget):
@@ -1121,6 +1167,7 @@ class RedPitayaGui(RedPitaya):
     """
     Widget for the main RedPitayaGui window.
     """
+
     def __init__(self, *args, **kwds):
         super(RedPitayaGui, self).__init__(*args, **kwds)
         self.setup_gui()
@@ -1149,6 +1196,13 @@ class RedPitayaGui(RedPitaya):
         self.tab_widget.show()
         if runcontinuous:
             self.scope_widget.run_continuous()
+
+    def stop_all_timers(self):
+        for tabnr in range(self.tab_widget.count()):
+            try:
+                self.tab_widget.widget(tabnr).stop_all_timers()
+            except AttributeError:
+                pass
 
     def custom_gui_setup(self):
         """
