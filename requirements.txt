@@ -11,5 +11,8 @@ pyqtgraph
 
 ###### Requirements with Version Specifiers ######
 #   See https://www.python.org/dev/peps/pep-0440/#version-specifiers
-numpy>=1.9
-paramiko>=2.0
+numpy
+paramiko
+# bugs appear if requirements are defined with version numbers
+#numpy>=1.9
+#paramiko>=2.0

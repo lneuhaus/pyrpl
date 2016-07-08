@@ -12,7 +12,7 @@ from collections import OrderedDict
 
 APP = QtGui.QApplication.instance()
 if APP is None:
-    APP = QtGui.QApplication(["pyrpl_gui"])
+    APP = QtGui.QApplication(["redpitaya_gui"])
 
 
 def property_factory(module_widget, prop):
