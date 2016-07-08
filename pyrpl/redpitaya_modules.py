@@ -719,17 +719,48 @@ def make_asg(channel=1):
                   amplitude=None,
                   offset=None,
                   start_phase=0, 
-                  periodic=True, 
                   trigger_source=None,
-                  output_direct=None):
-            """sets up the function generator.
-            
-            waveform must be one of ['cos', 'ramp', 'DC', 'halframp']. 
-            amplitude and offset in volts, frequency in Hz. 
-            periodic = False outputs only one period. 
-            start_phase is the start phase in degrees
-            if trigger_source is None, it should be set manually
-            If None, then current value is used"""
+                  output_direct=None,
+                  cycles_per_burst=None,
+                  bursts = None,
+                  delay_between_bursts = None):
+            """
+            Sets up the function generator
+
+            Parameters
+            ----------
+            waveform: str
+                must be one of ['sin", cos', 'ramp', 'DC', 'halframp']
+            frequency: float
+                waveform frequency in Hz.
+            amplitude: float
+                amplitude of the waveform in Volts. Between 0 and 1.
+            offset: float
+            start_phase: float
+                the phase of the waveform where the function generator starts.
+            trigger_source: str
+                must be one of self.trigger_sources
+            output_direct: str
+                must be one of self.outputs_direct
+            cycles_per_burst: int
+                number of repetitions of the waveform per burst. 0 = infinite.
+                by default, only 1 burst is executed. Maximum 2**32-1.
+            bursts: int
+                number of bursts to output - 1, i.e. 0 = one burst sequence.
+                Each burst consists of cycles_per_burst full periods of the
+                waveform and a delay of delay_between_bursts. If delay=0, any
+                setting of bursts other than zero outputs infinitely many
+                cycles. That is, if you do not want a delay, leave bursts=0
+                and define the number of periods to output with
+                cycles_per_burst. Maximum 2**16-1
+            delay_between_bursts: int
+                delay between bursts in multiples of 1 microseconds. Maximum
+                2**32-1 us.
+
+            Returns
+            -------
+            None
+            """
 
             if waveform is None:
                 waveform = self.waveform
@@ -743,6 +774,10 @@ def make_asg(channel=1):
                 trigger_source = self.trigger_source
             if output_direct is None:
                 output_direct = self.output_direct
+            cycles_per_burst = cycles_per_burst or self.cycles_per_burst
+            bursts = bursts or self.bursts
+            delay_between_bursts = delay_between_bursts \
+                                   or self.delay_between_bursts
 
             self.on = False
             self.sm_reset = True
@@ -754,8 +789,10 @@ def make_asg(channel=1):
             self.start_phase = start_phase
             self._counter_wrap = 2**16 * (2**14 - 1)
             self.frequency = frequency
-            self.periodic = periodic
             self._sm_wrappointer = True
+            self.cycles_per_burst = cycles_per_burst
+            self.bursts = bursts
+            self.delay_between_bursts = delay_between_bursts
             self.sm_reset = False
             self.on = True
             if trigger_source is not None:
