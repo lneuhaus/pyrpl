@@ -1178,6 +1178,13 @@ class RedPitayaGui(RedPitaya):
         self.all_asg_widget = AllAsgGui(parent=None, rp=self)
         self.sa_widget = SpecAnGui(parent=None, module=self.spec_an)
 
+        self.tab_widget = QtGui.QTabWidget()
+        self.tab_widget.addTab(self.scope_widget, "Scope")
+        self.tab_widget.addTab(self.all_asg_widget, "Asg")
+        self.tab_widget.addTab(self.na_widget, "NA")
+        self.tab_widget.addTab(self.sa_widget, "Spec. An.")
+        self.custom_gui_setup()
+
         self.customize_scope()
         self.customize_na()
         self.custom_setup()
@@ -1187,12 +1194,7 @@ class RedPitayaGui(RedPitaya):
         Opens the graphical user interface.
         """
         self.gui_timer = QtCore.QTimer()
-        self.tab_widget = QtGui.QTabWidget()
-        self.tab_widget.addTab(self.scope_widget, "Scope")
-        self.tab_widget.addTab(self.all_asg_widget, "Asg")
-        self.tab_widget.addTab(self.na_widget, "NA")
-        self.tab_widget.addTab(self.sa_widget, "Spec. An.")
-        self.custom_gui_setup()
+
         self.tab_widget.show()
         if runcontinuous:
             self.scope_widget.run_continuous()
