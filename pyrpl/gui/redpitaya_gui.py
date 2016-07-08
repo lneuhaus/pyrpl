@@ -390,12 +390,15 @@ class ScopeWidget(ModuleWidget):
                 self.module.setup()
         else:
             wp0 = self.module._write_pointer_current
-            datas = []
+            datas = [None, None]
             for ch in (1, 2):
                 if self.cb_ch[ch - 1].checkState() == 2:
-                    datas.append(self.module._get_ch_no_roll(ch))
+                    datas[ch-1] = self.module._get_ch_no_roll(ch)
             wp1 = self.module._write_pointer_current
             for index, data in enumerate(datas):
+                if data is None:
+                    self.curves[index].setVisible(False)
+                    continue
                 to_discard = (wp1 - wp0) % self.module.data_length
                 data = np.roll(data, self.module.data_length - wp0)[
                        to_discard:]
@@ -403,6 +406,7 @@ class ScopeWidget(ModuleWidget):
                 times = self.module.times
                 times -= times[-1]
                 self.curves[index].setData(times, data)
+                self.curves[index].setVisible(True)
         self.timer.start()
 
     def run_continuous(self):
