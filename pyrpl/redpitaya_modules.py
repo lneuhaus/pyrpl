@@ -722,8 +722,8 @@ def make_asg(channel=1):
                   trigger_source=None,
                   output_direct=None,
                   cycles_per_burst=None,
-                  bursts = None,
-                  delay_between_bursts = None):
+                  bursts=None,
+                  delay_between_bursts=None):
             """
             Sets up the function generator
 
@@ -774,10 +774,12 @@ def make_asg(channel=1):
                 trigger_source = self.trigger_source
             if output_direct is None:
                 output_direct = self.output_direct
-            cycles_per_burst = cycles_per_burst or self.cycles_per_burst
-            bursts = bursts or self.bursts
-            delay_between_bursts = delay_between_bursts \
-                                   or self.delay_between_bursts
+            if cycles_per_burst is None:
+                cycles_per_burst = self.cycles_per_burst
+            if bursts is None:
+                bursts = self.bursts
+            if delay_between_bursts is None:
+                delay_between_bursts = self.delay_between_bursts
 
             self.on = False
             self.sm_reset = True
@@ -800,9 +802,11 @@ def make_asg(channel=1):
         
         #advanced trigger - alpha version functionality
         scopetriggerphase = PhaseRegister(0x114+_VALUE_OFFSET, bits=14, 
-                       doc="phase of ASG ch1 at the moment when the last scope trigger occured [degrees]")
+                       doc="phase of ASG ch1 at the moment when the last scope "
+                           "trigger occured [degrees]")
             
-        advanced_trigger_reset = BoolRegister(0x0, 9+_BIT_OFFSET, doc='resets the fgen advanced trigger')
+        advanced_trigger_reset = BoolRegister(0x0, 9+_BIT_OFFSET,
+                        doc='resets the fgen advanced trigger')
         advanced_trigger_autorearm = BoolRegister(0x0, 11+_BIT_OFFSET,
                 doc='autorearm the fgen advanced trigger after a trigger event? If False, trigger needs to be reset with a sequence advanced_trigger_reset=True...advanced_trigger_reset=False after each trigger event.')
         advanced_trigger_invert = BoolRegister(0x0, 10+_BIT_OFFSET, doc='inverts the trigger signal for the advanced trigger if True')
