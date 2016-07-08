@@ -10,6 +10,12 @@ import pyqtgraph as pg
 import numpy as np
 from collections import OrderedDict
 
+import sys
+if sys.version_info < (3,):
+    integer_types = (int, long)
+else:
+    integer_types = (int,)
+
 APP = QtGui.QApplication.instance()
 if APP is None:
     APP = QtGui.QApplication(["redpitaya_gui"])
@@ -33,7 +39,7 @@ def property_factory(module_widget, prop):
         attr = getattr(module_widget.module, prop)
         if isinstance(attr, bool):
             new_prop = BoolProperty(prop, module_widget)
-        elif isinstance(attr, (int, long)):
+        elif isinstance(attr, integer_types):
             new_prop = IntProperty(prop, module_widget)
         else:
             new_prop = FloatProperty(prop, module_widget)
@@ -176,7 +182,7 @@ class ComboProperty(BaseProperty):
         """
 
         self.widget = QtGui.QComboBox()
-        self.widget.addItems(map(str, self.options))
+        self.widget.addItems(list(map(str, self.options)))
         self.widget.currentIndexChanged.connect(self.write)
 
     @property
