@@ -212,7 +212,7 @@ class ComboProperty(BaseProperty):
         :return:
         """
 
-        index = self.options.index(getattr(self.module, self.name))
+        index = list(self.options).index(getattr(self.module, self.name))
         self.widget.setCurrentIndex(index)
 
 
