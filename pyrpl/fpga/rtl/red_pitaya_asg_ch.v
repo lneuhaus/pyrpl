@@ -35,7 +35,8 @@
  */
 
 module red_pitaya_asg_ch #(
-   parameter RSZ = 14
+   parameter RSZ = 14,
+   parameter CYCLE_BITS = 32
 )(
    // DAC
    output reg [ 14-1: 0] dac_o           ,  //!< dac data output
@@ -64,7 +65,7 @@ module red_pitaya_asg_ch #(
    input     [  14-1: 0] set_amp_i       ,  //!< set amplitude scale
    input     [  14-1: 0] set_dc_i        ,  //!< set output offset
    input                 set_zero_i      ,  //!< set output to zero
-   input     [  16-1: 0] set_ncyc_i      ,  //!< set number of cycle
+   input     [  CYCLE_BITS-1: 0] set_ncyc_i      ,  //!< set number of cycle
    input     [  16-1: 0] set_rnum_i      ,  //!< set number of repetitions
    input     [  32-1: 0] set_rdly_i      ,  //!< set delay between repetitions
    input                 set_rgate_i        //!< set external gated repetition
@@ -123,7 +124,7 @@ reg              trig_in      ;
 wire             ext_trig_p   ;
 wire             ext_trig_n   ;
 
-reg  [  16-1: 0] cyc_cnt      ;
+reg  [  32-1: 0] cyc_cnt      ;
 reg  [  16-1: 0] rep_cnt      ;
 reg  [  32-1: 0] dly_cnt      ;
 reg  [   8-1: 0] dly_tick     ;
@@ -136,7 +137,7 @@ reg              dac_trigr    ;
 // state machine
 always @(posedge dac_clk_i) begin
    if (dac_rstn_i == 1'b0) begin
-      cyc_cnt   <= 16'h0 ;
+      cyc_cnt   <= {CYCLE_BITS{1'b0}} ;
       rep_cnt   <= 16'h0 ;
       dly_cnt   <= 32'h0 ;
       dly_tick  <=  8'h0 ;
@@ -173,20 +174,23 @@ always @(posedge dac_clk_i) begin
       if (dac_trig)
          cyc_cnt <= set_ncyc_i ;
       else if (!dac_trigr && |cyc_cnt && ({1'b0,dac_pntp} > {1'b0,dac_pnt}))
-         cyc_cnt <= cyc_cnt - 16'h1 ;
+         cyc_cnt <= cyc_cnt - 32'h1 ;
 
       // trigger arrived
       case (trig_src_i)
           3'd1 : trig_in <= trig_sw_i   ; // sw
           3'd2 : trig_in <= ext_trig_p  ; // external positive edge
           3'd3 : trig_in <= ext_trig_n  ; // external negative edge
+          3'd4 : trig_in <= trig_ext_i  ; // unprocessed ext trigger
+          3'd5 : trig_in <= 1'b1  ;       // always high
+
        default : trig_in <= 1'b0        ;
       endcase
 
       // in cycle mode
       if (dac_trig && !set_rst_i)
          dac_do <= 1'b1 ;
-      else if (set_rst_i || ((cyc_cnt==16'h1) && ~dac_npnt_sub_neg) )
+      else if (set_rst_i || ((cyc_cnt==32'h1) && ~dac_npnt_sub_neg) )
          dac_do <= 1'b0 ;
 
       // in repetition mode

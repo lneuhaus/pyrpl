@@ -44,7 +44,8 @@ before_install:
 ##- apt-get install libblas-dev liblapack-dev libatlas-base-dev gfortran
 
 install:
-  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION numpy scipy paramiko matplotlib pandas nose pip
+  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION numpy
+  scipy paramiko matplotlib pandas nose pip
   - source activate test-environment
   - if [[ "$TRAVIS_PYTHON_VERSION" != "3.3" ]]; then
       conda install -c ufechner pyqtgraph;

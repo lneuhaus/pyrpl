@@ -98,6 +98,6 @@ always @(posedge dac_clk_i) begin
     end
 end
 
-assign trig_o = invert_i ^ triggered;
+assign trig_o = reset_i ? trig_i : (invert_i ^ triggered);
 
 endmodule
