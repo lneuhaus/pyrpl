@@ -106,15 +106,14 @@ class FPM(FabryPerot):
     def setup_ringdown(self,
                        frequency=3.578312e6,
                        amplitude=0.1,
-                       duration=1.0,
-                       invert=False):
+                       duration=1.0):
         output = self._config._root.outputs.fastpiezo.redpitaya_output
-        self._parent.rp.asg1.enable_advanced_trigger(
+        self._parent.rp.asg1.setup(
             frequency=frequency,
             amplitude=amplitude,
-            duration=duration,
-            invert=invert,
-            output_direct = output)
+            cycles_per_burst=int(np.round(frequency/duration)),
+            output_direct=output,
+            trigger_source="ext_positive_edge")
 
     def teardown_ringdown(self):
         self._parent.rp.asg1.disable_advanced_trigger()
