@@ -248,7 +248,7 @@ class SpectrumAnalyzer(object):
         """
         if not self._setup:
             raise NotReadyError("Setup was never called")
-        return 20*np.log10(np.roll(np.abs(np.fft.fft(self.filtered_iq_data())), self.data_length/2))\
+        return 20*np.log10(np.roll(np.abs(np.fft.fft(self.filtered_iq_data())), int(self.data_length/2)))\
                     [self.useful_index()]
 
     def freqs(self):
