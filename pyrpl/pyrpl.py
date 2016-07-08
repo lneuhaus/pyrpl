@@ -421,8 +421,9 @@ class Pyrpl(Lockbox):
         from .gui import RedPitayaGui
         if not isinstance(self.rp, RedPitayaGui):
             self.rp.__class__ = RedPitayaGui
+            print "seting_up gui"
             self.rp.setup_gui()
-        self.rp.gui()
+            self.rp.gui()
         self._setupscope()
         self._set_window_position()
         self.rp.tab_widget.setWindowTitle(self.c.general.name)
