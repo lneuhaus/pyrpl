@@ -153,12 +153,6 @@ class Model(object):
                            self._variable)
             return None
 
-    def save_current_gain(self):
-        """ saves the current gain setting as default one (for all outputs) """
-        factor = self.state["set"]["factor"]
-        for output in self.outputs.values():
-            output.save_current_gain(factor)
-
     def islocked(self):
         """ returns True if locked, else False """
         if hasattr(self, self._variable):
@@ -200,7 +194,7 @@ class Model(object):
         return 1.0 / frequency
 
     def _lock(self, input=None, factor=1.0, offset=None, outputs=None,
-              **kwargs):
+              _savegain=False, **kwargs):
         """
         Locks all outputs to input.
 
@@ -215,6 +209,8 @@ class Model(object):
         outputs: list or None
             if None, all outputs with lock configuration are enabled.
             if list of RPOutputSignal, only the specified outputs are touched.
+        _savegain: bool
+            option for automatic gain configuration, leave False
         kwargs must contain a pair _variable = setpoint, where _variable
         is the name of the variable of the model, as specified in the
         class attribute _variable.
@@ -223,7 +219,8 @@ class Model(object):
         -------
         None
         """
-        self.state["set"].update(kwargs)
+        if kwargs:
+            self.state["set"].update(kwargs)
         self.state["set"]["factor"] = factor
         if input is None:
             input = self.inputs.values()[0]
@@ -245,13 +242,21 @@ class Model(object):
             #get calibration factor
             variable_per_unit = self.__getattribute__(self._variable
                                                       + "_per_" + unit)
-            # enable lock of the output
-            o.lock(slope=slope*variable_per_unit,
-                   setpoint=setpoint,
-                   input=input,
-                   offset=offset,
-                   factor=factor,
-                   **kwargs)
+            if not savegain:
+                # enable lock of the output
+                o.lock(slope=slope*variable_per_unit,
+                       setpoint=setpoint,
+                       input=input,
+                       offset=offset,
+                       factor=factor,
+                       **kwargs)
+            else: # special option: instead of locking, write the gain
+                o.save_current_gain(slope=slope*variable_per_unit)
+
+    def save_current_gain(self, outputs=None):
+        """ saves the current gain setting as default one (for all outputs
+        unless a list of outputs is given, similar to _lock) """
+        self._lock(outputs=outputs, _savegain=True)
 
     def lock(self,
              detuning=None,
@@ -259,7 +264,6 @@ class Model(object):
              firststage=None,
              laststage=None,
              thread=False):
-
         # firststage will allow timer-based recursive iteration over stages
         # i.e. calling lock(firststage = nexstage) from within this code
         stages = self._config.lock.stages._keys()

@@ -496,7 +496,7 @@ class RPOutputSignal(RPSignal):
 
     def lock(self,
              slope,
-             setpoint,
+             setpoint=None,
              input=None,
              factor=1.0,
              offset=None,
@@ -539,6 +539,9 @@ class RPOutputSignal(RPSignal):
         if self._skiplock:
             return
 
+        # normalize slope to our units
+        slope *= self._config[self._config.calibrationunits]
+
         # design the loop shape
         loopshape = self._config.lock._dict  # maybe rename the branch to loopshape
         if ("unity_gain_frequency" in loopshape
@@ -563,7 +566,6 @@ class RPOutputSignal(RPSignal):
                 integrator_on = False
                 gain = self._config.lock.proportional_gain
             gain *= factor * -1 / slope
-            gain /= self._config[self._config.calibrationunits]
 
         # if gain is disabled somewhere, return
         if gain == 0:
@@ -659,6 +661,67 @@ class RPOutputSignal(RPSignal):
                             + "value. Try to modify analog gains.",
                             name, self._name)
 
+    def save_current_gain(self, slope=1.0):
+        """ converts the current transfer function of the output into its
+        default transfer function by updating relevant settings in the
+        config file.
+
+        Parameters
+        ----------
+        slope: float
+            the slope that lock would receive at the current setpoint.
+
+        Returns
+        -------
+        None
+        """
+        # normalize slope to our units
+        slope *= self._config[self._config.calibrationunits]
+        # save inputfilters
+        self._config.lock.inputfilter = self._inputfilter
+        if hasattr(self, 'pid2'):
+        # save new pid gains
+        newgains = {"p": self.pid.p,
+                    "i": self.pid.i,
+                    "d": self.pid.d}
+        # first take care of pid2 if it exists
+        if hasattr(self, "pid2"):
+            newgains['p'] *= self.pid2.p
+            if self.pid2.d != 0:
+                if newgains["d"] == 0:
+                    newgains["d"] = self.pid2.d
+                else:
+                    logger.error('Nonzero differential gain in pid2 '
+                                 'of output %s detected. No method '
+                                 'implemented to record this gain in the '
+                                 'config file. Please modify '
+                                 'RPOutputsignal.save_current_gain '
+                                 'accordingly! ')
+            if self.pid2.i != 0:
+                self._config.lock['second_integrator_crossover'] = \
+                    self.pid2.i / self.pid2.p
+        # now we only need to transcribe newgains into the config file
+        lowpass = []
+        if newgains['i'] == 0:  # means config file cannot have
+            # unity_gain_frequency entry
+            if "unity_gain_frequency" in self._config.lock._keys():
+                self._config.lock._data.pop("unity_gain_frequency")
+            self._config.lock.proportional_gain = newgains["p"] * -1 * slope
+        else:
+            # remove possible occurrence of proportional_gain
+            if "proportional_gain" in self._config.lock._keys():
+                self._config.lock._data.pop("proportional_gain")
+            self._config.lock.unity_gain_frequency = newgains["i"] * -1 * slope
+            if newgains['p'] != 0:
+                lowpass.append(newgains['i']/newgains['p'])
+            elif newgains['d'] != 0:  # strange case where d != 0 and p ==0
+                lowpass.append(1e20)
+        if newgains['d'] != 0:
+            lowpass.append(newgains['d'] * newgains['p'])
+        # save lowpass setting
+        self._config['analogfilter']['lowpass'] = lowpass
+
+
     def sweep(self, frequency=None, amplitude=None, waveform=None):
         """ If the signal configuration contains a sweep section, this one
         is executed here to provide the predefined sweep at the output. """
@@ -687,21 +750,6 @@ class RPOutputSignal(RPSignal):
         self.pid.input = asgname
         self.pid.p = amplitude
         return asg.frequency
-
-    def save_current_gain(self, factor=1):
-        """ converts the current transfer function of the output into its
-        default transfer function by updating relevant settings in the
-        config file. """
-        try:
-            ugf = self._config.lock.unity_gain_frequency
-        except KeyError:
-            pass
-        else:
-            self._config.lock.unity_gain_frequency = ugf * factor
-        self._config.lock.inputfilter = self._inputfilter
-        if hasattr(self, 'pid2'):
-            self._config.lock['second_integrator_crossover'] = \
-                self.pid2.i / self.pid2.p
 
     @property
     def output_offset(self):
