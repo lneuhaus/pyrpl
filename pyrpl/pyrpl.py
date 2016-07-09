@@ -350,8 +350,11 @@ class Lockbox(object):
                                      **signalparameters)
                 signaldict[k] = signal
                 self.__setattr__(k, signal)
+
     @property
     def signals(self):
+        """ returns a dictionary containing all signals, i.e. all inputs and
+        outputs """
         sigdict = dict()
         signals, _ = self._signalinit
         for s in signals.keys():
@@ -363,6 +366,12 @@ class Lockbox(object):
         return dict()
 
     def get_offset(self):
+        """ Execute this function to record the offsets for all input
+        signals. If signal.offset_subtraction is true in the config file,
+        the signal value 0 will from then on correspond to the measured
+        offset. Before any locking configuration, this function should be
+        executed in order to take the analog offsets of redpitaya inputs
+        into account. """
         for input in self.inputs.values():
             input.get_offset()
 
@@ -385,19 +394,22 @@ class Lockbox(object):
         return result
 
     def fastparams(self, postfix=""):
-        """ returns a dict with fastparams as defined in _fastparams """
+        """ returns a dict with fastparams as defined in _fastparams. This
+        is typically of interest when the significant lockbox settings are
+        to be saved along with some acquired data. """
         return self._deriveddict(self._fastparams(), postfix=postfix)
 
     def params(self, postfix=""):
         """returns a dict with params as defined in _params
-        and all configuration data"""
+        and all configuration data. This is intended to produce a record of
+        all lockbox settings at the moment of acquisition. """
         params = self._params()
         params.update(self._deriveddict(self.c._data, prefix="c."))
         return self._deriveddict(params, postfix=postfix)
 
 class Pyrpl(Lockbox):
     """
-    Python RedPitaya Lockbox object
+    Python RedPitaya Lockbox object. 
     """
     def __init__(self, config="default", source=None):
         """red pitaya lockbox object"""
