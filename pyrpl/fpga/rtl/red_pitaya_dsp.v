@@ -366,7 +366,7 @@ end endgenerate
 
 // IQ with two outputs
 generate for (j = 7; j < 8; j = j+1) begin
-    red_pitaya_iq_block_2_outputs
+    red_pitaya_iq_block
       iq
       (
          // data

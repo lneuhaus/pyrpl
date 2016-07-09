@@ -30,7 +30,7 @@
 */
 
 
-module red_pitaya_iq_block_2_outputs #(
+module red_pitaya_iq_block #(
 	  //input filter parameters
 	  parameter INPUTFILTERSTAGES    = 1,  //how many cascaded first-order input filters
 	  parameter INPUTFILTERSHIFTBITS = 5,  // up to 2^4 different cutoff frequencies
