@@ -1,7 +1,7 @@
 Copyright 1986-2015 Xilinx, Inc. All Rights Reserved.
 ----------------------------------------------------------------------------------------
 | Tool Version     : Vivado v.2015.4 (lin64) Build 1412921 Wed Nov 18 09:44:32 MST 2015
-| Date             : Sat Jul  9 17:40:35 2016
+| Date             : Sat Jul  9 18:03:04 2016
 | Host             : ubuntu running 64-bit Ubuntu 14.04.4 LTS
 | Command          : report_power -file out/post_synth_power.rpt
 | Design           : red_pitaya_top
@@ -50,16 +50,16 @@ Table of Contents
 | On-Chip                  | Power (W) | Used     | Available | Utilization (%) |
 +--------------------------+-----------+----------+-----------+-----------------+
 | Clocks                   |     0.081 |       15 |       --- |             --- |
-| Slice Logic              |     0.133 |    35768 |       --- |             --- |
-|   LUT as Logic           |     0.112 |    15397 |     17600 |           87.48 |
-|   CARRY4                 |     0.015 |     1378 |      4400 |           31.32 |
+| Slice Logic              |     0.133 |    36036 |       --- |             --- |
+|   LUT as Logic           |     0.112 |    15613 |     17600 |           88.71 |
+|   CARRY4                 |     0.015 |     1434 |      4400 |           32.59 |
 |   Register               |     0.006 |    14706 |     35200 |           41.78 |
 |   F7/F8 Muxes            |    <0.001 |      381 |     17600 |            2.16 |
 |   LUT as Shift Register  |    <0.001 |       71 |      6000 |            1.18 |
-|   Others                 |     0.000 |      424 |       --- |             --- |
+|   Others                 |     0.000 |      420 |       --- |             --- |
 |   BUFG                   |     0.000 |        1 |        32 |            3.13 |
 |   LUT as Distributed RAM |     0.000 |       24 |      6000 |            0.40 |
-| Signals                  |     0.130 |    30323 |       --- |             --- |
+| Signals                  |     0.130 |    30591 |       --- |             --- |
 | Block RAM                |     0.103 |       34 |        60 |           56.67 |
 | PLL                      |     0.097 |        1 |         2 |           50.00 |
 | DSPs                     |     0.042 |       56 |        80 |           70.00 |
@@ -165,7 +165,7 @@ Table of Contents
 +----------------------------------------------------------------------------------+-----------+
 | Name                                                                             | Power (W) |
 +----------------------------------------------------------------------------------+-----------+
-| red_pitaya_top                                                                   |     2.169 |
+| red_pitaya_top                                                                   |     2.170 |
 |   i_ams                                                                          |     0.001 |
 |   i_asg                                                                          |     0.058 |
 |     adv_trig_a                                                                   |     0.002 |
