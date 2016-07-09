@@ -267,6 +267,21 @@ def getmodel(modeltype):
 
 
 class Lockbox(object):
+    """generic lockbox object, no implementation-dependent details here
+
+    A lockbox has a MemoryTree to remember information. The memoryTree
+    furthermore defines one model of the physical system that is controlled.
+
+    Parameters
+    ----------
+    config: str
+        Name of the config file. No .yml extension is needed. The file
+        should be located in the config directory.
+    source: str
+        If None, it is ignored. Else, the file 'source' is taken as a
+        template config file and copied to 'config' if that file does
+        not exist.
+    """
     _configdir = os.path.join(os.path.dirname(__file__), "config")
     _signalinit = {"inputs": Signal, "outputs": Signal}, {}
 
@@ -279,21 +294,6 @@ class Lockbox(object):
         return filename
 
     def __init__(self, config="default", source=None):
-        """generic lockbox object, no implementation-dependent details here
-
-        A lockbox has a MemoryTree to remember information. The memoryTree
-        furthermore defines one model of the physical system that is controlled.
-
-        Parameters
-        ----------
-        config: str
-            Name of the config file. No .yml extension is needed. The file
-            should be located in the config directory.
-        source: str
-            If None, it is ignored. Else, the file 'source' is taken as a
-            template config file and copied to 'config' if that file does
-            not exist.
-        """
         # logger initialisation
         self.logger = logging.getLogger(name=__name__)
         config = self._getpath(config)
@@ -409,10 +409,24 @@ class Lockbox(object):
 
 class Pyrpl(Lockbox):
     """
-    Python RedPitaya Lockbox object. 
+    The fundamental Python RedPitaya Lockbox API object. After having
+    created your configuration file "myconfig.yml", create the lockbox
+    object with lockbox = Pyrpl("myconfig"). Please refer to the
+    tutorial for a much more thorough discussion of the Pyrpl class.
+
+    Parameters
+    ----------
+    config: str
+        The filename of the config file. No .yml extension is needed. By
+        default, Pyrpl will search the config file in the config
+        subdirectory of the pyrpl module.
+    source: str
+        If you specify a source filename, Pyrpl will copy the source to
+        the filename specified through the config parameter if that
+        file does not exist yet. If the config parameter points to a
+        valid file, the source argument is ignored.
     """
     def __init__(self, config="default", source=None):
-        """red pitaya lockbox object"""
         # we need the configuration for RedPitaya initialization
         self.c = MemoryTree(os.path.join(self._configdir, config+".yml"))
         # set loglevel if specified in file
