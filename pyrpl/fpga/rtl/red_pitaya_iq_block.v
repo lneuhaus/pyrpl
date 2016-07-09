@@ -220,8 +220,8 @@ red_pitaya_iq_demodulator_block #(
     demodulator
     (
         .clk_i (clk_i),
-        .sin   (sin),
-        .cos   (cos),
+        .sin   (sin_shifted),
+        .cos   (cos_shifted),
         .signal_i (dat_i_filtered),
         .signal1_o (quadrature1_hf),
         .signal2_o (quadrature2_hf)
@@ -261,8 +261,8 @@ red_pitaya_iq_modulator_block #(
     modulator
     (
         .clk_i (clk_i),
-        .sin   (sin_shifted),
-        .cos   (cos_shifted),
+        .sin   (sin),
+        .cos   (cos),
         .g1      (g1) ,
         .g2      (g2) ,
         .g3      (g3) ,

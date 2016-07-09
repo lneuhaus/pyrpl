@@ -1033,8 +1033,9 @@ class IQ(FilterModule):
     
     pfd_integral = FloatRegister(0x150, bits=_SIGNALBITS, norm=_SIGNALBITS,
                                  doc = "value of the pfd integral [volts]")
-    
-    phase = PhaseRegister(0x104, bits=_PHASEBITS,
+
+    # for the phase to have the right sign, it must be inverted
+    phase = PhaseRegister(0x104, bits=_PHASEBITS, invert=True,
                           doc="Phase shift between modulation \
                           and demodulation [degrees]")
     
