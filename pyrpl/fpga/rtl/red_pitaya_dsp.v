@@ -366,8 +366,8 @@ end endgenerate
 
 // IQ with two outputs
 generate for (j = 7; j < 8; j = j+1) begin
-    red_pitaya_iq_block
-      iq
+    red_pitaya_iq_block   #( .QUADRATUREFILTERSTAGES (4) )
+      iq_2_outputs
       (
          // data
          .clk_i        (  clk_i          ),  // clock
