@@ -16,6 +16,9 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###############################################################################
 
+""" All modules are extensively discussed in the Tutorial. Please refer to
+there for more information. """
+
 import numpy as np
 import time
 from . import pyrpl_utils
