@@ -4,17 +4,27 @@ import logging
 import time
 import threading
 
+from .signal import *
+
 logger = logging.getLogger(name=__name__)
 
 class Model(object):
-    """ generic model object that makes smart use of its inputs and outputs
-    baseclass for all other models """
+    """ A generic model object that makes smart use of its inputs and outputs.
+    This is the baseclass for all other models, such as interferometer,
+    fabryperot and custom ones.
 
+    Parameters
+    ----------
+    parent: Pyrpl
+        The pyrpl object that instantiates this model. The model will
+        retrieve many items from the pyrpl object, such as the redpitaya
+        instance and various signals. It will also create new attributes in
+        parent to provide the most important API functions that the model
+        allows.
+    """
     export_to_parent = ["sweep", "calibrate", "save_current_gain",
                         "unlock", "islocked", "lock", "help", "calib_lock",
                         "_lock"]
-
-
 
     # independent variable that specifies the state of the system
     _variable = 'x'
@@ -34,7 +44,7 @@ class Model(object):
                       'set': {self._variable: 0}}
 
     def setup(self):
-        # setup all signals
+        """ sets up all signals """
         for signal in self.signals.values():
             try:
                 params = signal._config.setup._dict
@@ -97,6 +107,8 @@ class Model(object):
             else:
                 return None
 
+    # helpers that create inverse and slope function of the model functions
+    # corresponding to input signals
     def _make_slope(self, fn):
         def fn_slope(x, *args):
             return self._derivative(fn, x, args=args)
@@ -142,6 +154,7 @@ class Model(object):
             return None
 
     def save_current_gain(self):
+        """ saves the current gain setting as default one (for all outputs) """
         factor = self.state["set"]["factor"]
         for output in self.outputs.values():
             output.save_current_gain(factor)
@@ -166,6 +179,7 @@ class Model(object):
 
     # unlock algorithm
     def unlock(self):
+        """ unlocks the cavity"""
         for o in self.outputs.values():
             o.unlock()
 
@@ -185,7 +199,8 @@ class Model(object):
             frequency = o.sweep() or frequency
         return 1.0 / frequency
 
-    def _lock(self, input=None, factor=1.0, offset=None, **kwargs):
+    def _lock(self, input=None, factor=1.0, offset=None, outputs=None,
+              **kwargs):
         """
         Locks all outputs to input.
 
@@ -195,8 +210,11 @@ class Model(object):
           the input signal that provides the error signal
         factor: float
             optional gain multiplier for debugging
-        offset:
+        offset: float or None
             offset to start locking from. Not touched upon if None
+        outputs: list or None
+            if None, all outputs with lock configuration are enabled.
+            if list of RPOutputSignal, only the specified outputs are touched.
         kwargs must contain a pair _variable = setpoint, where _variable
         is the name of the variable of the model, as specified in the
         class attribute _variable.
@@ -217,7 +235,11 @@ class Model(object):
         slope = self.__getattribute__(inputname+'_slope')(variable)
 
         # trivial to lock: just enable all gains
-        for o in self.outputs.values():
+        if outputs is None:
+            outputs = self.outputs.values()
+        for o in outputs:
+            if not isinstance(o, RPOutputSignal):
+                o = self.outputs[o]
             # get unit of output calibration factor
             unit = o._config.calibrationunits.split("_per_V")[0]
             #get calibration factor
@@ -359,11 +381,13 @@ class Model(object):
         return curves
 
     def calib_lock(self):
+        """ shortcut to call calibrate(), lock() and return islocked()"""
         self.calibrate()
         self.lock()
         return self.islocked()
 
     def help(self):
+        """ provides some help to get started. """
         self.logger.info("PyRP Lockbox\n-------------------\n"
                          + "Usage: \n"
                          + "Create Pyrpl object: p = Pyrpl('myconfigfile')\n"
