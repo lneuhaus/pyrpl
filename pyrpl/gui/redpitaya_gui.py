@@ -706,7 +706,7 @@ class NaGui(ModuleWidget):
         self.timer.timeout.connect(self.add_one_point)
 
         self.paused = True
-        self.restart_averaging()
+        # self.restart_averaging() # why would you want to do that? Comment?
 
         for prop in (self.properties["start"],
                      self.properties["stop"],
@@ -830,6 +830,7 @@ class NaGui(ModuleWidget):
 
         self.set_state(continuous=self.continuous, paused=True,
                        need_restart=self.need_restart)
+        self.module.iq.amplitude = 0
 
     def new_run(self):
         """
@@ -864,6 +865,7 @@ class NaGui(ModuleWidget):
         if self.paused:
             self.button_single.setText("Run single")
             self.button_continuous.setText(first_word + "(%i averages)" % n_av)
+            self.module.iq.amplitude = 0
         else:
             if active_button == self.button_single:
                 active_button.setText('Pause')
@@ -922,7 +924,7 @@ class NaGui(ModuleWidget):
             self.curve_phase.setLogMode(xMode=False, yMode=None)
         self.curve.setData(x, mag)
         self.curve_phase.setData(x, phase)
-        # plot_time = time() - plot_time_start # actually not working, because done latter
+        # plot_time = time() - plot_time_start # actually not working, because done later
         # self.update_timer.setInterval(plot_time*10*1000) # make sure plotting
         # is only marginally slowing
         # down the measurement...
