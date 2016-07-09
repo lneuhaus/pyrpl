@@ -227,14 +227,14 @@ class PhaseRegister(FloatRegister):
     def from_python(self, value):
         # make sure small float values are not rounded to zero
         if self.invert:
-            phase *= -1
+            value = float(value)*(-1)
         return int(round((float(value)%360)/360*2**self.bits)% 2**self.bits) 
         
     def to_python(self, value):
         phase = float(value)/2**self.bits*360
         if self.invert:
             phase *= -1
-        return phase
+        return phase%360.0
     
 class FrequencyRegister(FloatRegister):
     """Registers that contain a frequency as a float in units of Hz"""
