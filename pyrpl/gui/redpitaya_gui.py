@@ -569,7 +569,7 @@ class AsgGui(ModuleWidget):
     """
 
     property_names = ["waveform",
-                      "scale",
+                      "amplitude",
                       "offset",
                       "frequency",
                       "trigger_source",

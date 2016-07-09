@@ -135,7 +135,7 @@ class TestClass(object):
                 str(self.r.ams.dac3) + " vs " + str(offset)
         # reset offset to protect other tests
         asg.offset = 0
-        asg.scale = 1
+        asg.amplitude = 1
 
     def test_scope_trigger_delay(self):
         """
