@@ -69,26 +69,31 @@ always @(posedge clk_i) begin
     firstproduct_reg <= signal_i;
 end
 
-wire signed [SINBITS+INBITS-1:0] product1_unrounded;
-wire signed [SINBITS+INBITS-1:0] product2_unrounded;
-assign product1_unrounded = firstproduct_reg * sin;
-assign product2_unrounded = firstproduct_reg * cos;
 
-// soft implementation of symmetric rounding
 reg signed [SINBITS+INBITS-1:0] product1;
 reg signed [SINBITS+INBITS-1:0] product2;
 
-wire signed [SINBITS+INBITS-1:0] product1_roundoffset;
-wire signed [SINBITS+INBITS-1:0] product2_roundoffset;
-assign product1_roundoffset = (product1_unrounded[SINBITS+INBITS-1]) ? {{(OUTBITS+SHIFTBITS+1){1'b0}},{1'b1},{(SINBITS+INBITS-OUTBITS-SHIFTBITS-2){1'b0}}}
-                            : {{(OUTBITS+SHIFTBITS+1){1'b0}},{1'b0},{(SINBITS+INBITS-OUTBITS-SHIFTBITS-2){1'b1}}};
-assign product2_roundoffset = (product2_unrounded[SINBITS+INBITS-1]) ? {{(OUTBITS+SHIFTBITS+1){1'b0}},{1'b1},{(SINBITS+INBITS-OUTBITS-SHIFTBITS-2){1'b0}}}
-                            : {{(OUTBITS+SHIFTBITS+1){1'b0}},{1'b0},{(SINBITS+INBITS-OUTBITS-SHIFTBITS-2){1'b1}}};
+// soft implementation of symmetric rounding
+//wire signed [SINBITS+INBITS-1:0] product1_unrounded;
+//wire signed [SINBITS+INBITS-1:0] product2_unrounded;
+//assign product1_unrounded = firstproduct_reg * sin;
+//assign product2_unrounded = firstproduct_reg * cos;
+//wire signed [SINBITS+INBITS-1:0] product1_roundoffset;
+//wire signed [SINBITS+INBITS-1:0] product2_roundoffset;
+//assign product1_roundoffset = (product1_unrounded[SINBITS+INBITS-1]) ? {{(OUTBITS+SHIFTBITS+1){1'b0}},{1'b1},{(SINBITS+INBITS-OUTBITS-SHIFTBITS-2){1'b0}}}
+//                            : {{(OUTBITS+SHIFTBITS+1){1'b0}},{1'b0},{(SINBITS+INBITS-OUTBITS-SHIFTBITS-2){1'b1}}};
+//
+//assign product2_roundoffset = (product2_unrounded[SINBITS+INBITS-1]) ? {{(OUTBITS+SHIFTBITS+1){1'b0}},{1'b1},{(SINBITS+INBITS-OUTBITS-SHIFTBITS-2){1'b0}}}
+//                            : {{(OUTBITS+SHIFTBITS+1){1'b0}},{1'b0},{(SINBITS+INBITS-OUTBITS-SHIFTBITS-2){1'b1}}};
+
+// after some problems, we choose asymmetric rounding for now - at least
+// some rounding
 
 always @(posedge clk_i) begin
-
-    product1 <= product1_unrounded + product1_roundoffset;
-    product2 <= product2_unrounded + product2_roundoffset;
+//    product1 <= product1_unrounded + product1_roundoffset;
+//    product2 <= product2_unrounded + product2_roundoffset;
+    product1 <= firstproduct_reg * sin + $signed(1 << (SINBITS+INBITS-OUTBITS-SHIFTBITS-1));
+    product2 <= firstproduct_reg * cos + $signed(1 << (SINBITS+INBITS-OUTBITS-SHIFTBITS-1));
 end
 
 assign signal1_o = product1[SINBITS+INBITS-1-SHIFTBITS:SINBITS+INBITS-OUTBITS-SHIFTBITS];
