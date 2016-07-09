@@ -610,8 +610,9 @@ def make_asg(channel=1):
         # This adaptaion to FloatRegister is a little subtle but should work nonetheless 
         offset = FloatRegister(0x4+_VALUE_OFFSET, bits=14+16, bitmask=0x3FFF<<16, 
                                norm=2**16*2**13, doc="output offset [volts]")
-        
-        scale = FloatRegister(0x4+_VALUE_OFFSET, bits=14, bitmask=0x3FFF, 
+
+        # formerly scale
+        amplitude = FloatRegister(0x4+_VALUE_OFFSET, bits=14, bitmask=0x3FFF,
                               norm=2**13, signed=False,  
                               doc="amplitude of output waveform [volts]")
         
@@ -687,7 +688,8 @@ def make_asg(channel=1):
         def data(self):
             """array of 2**14 values that define the output waveform. 
             
-            Values should lie between -1 and 1 such that the peak output amplitude is self.scale"""
+            Values should lie between -1 and 1 such that the peak output
+            amplitude is self.amplitude """
             if not hasattr(self,'_writtendata'):
                 self._writtendata = np.zeros(self.data_length, dtype=np.int32)
             x = np.array(self._writtendata, dtype=np.int32)
@@ -703,7 +705,8 @@ def make_asg(channel=1):
         def data(self, data):
             """array of 2**14 values that define the output waveform. 
             
-            Values should lie between -1 and 1 such that the peak output amplitude is self.scale"""
+            Values should lie between -1 and 1 such that the peak output
+            amplitude is self.amplitude"""
             data = np.array(np.round((2**13-1)*data), dtype=np.int32)
             data[data >= 2**13] = 2**13 - 1
             data[data < 0] += 2**14
@@ -768,7 +771,7 @@ def make_asg(channel=1):
             if frequency is None:
                 frequency = self.frequency
             if amplitude is None:
-                amplitude = self.scale
+                amplitude = self.amplitude
             if offset is None:
                 offset = self.offset
             if trigger_source is None:
@@ -785,7 +788,7 @@ def make_asg(channel=1):
             self.on = False
             self.sm_reset = True
             self.trigger_source = 'off'
-            self.scale = amplitude
+            self.amplitude = amplitude
             self.offset = offset
             self.output_direct = output_direct
             self.waveform = waveform
