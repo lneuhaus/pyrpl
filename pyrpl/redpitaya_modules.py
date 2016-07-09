@@ -1051,7 +1051,7 @@ class IQ(FilterModule):
     _SHIFTBITS = 8 #Register(0x218)
     
     pfd_integral = FloatRegister(0x150, bits=_SIGNALBITS, norm=_SIGNALBITS,
-                                 doc = "value of the pfd integral [volts]")
+                                 doc="value of the pfd integral [volts]")
 
     # for the phase to have the right sign, it must be inverted
     phase = PhaseRegister(0x104, bits=_PHASEBITS, invert=True,
@@ -1066,17 +1066,17 @@ class IQ(FilterModule):
     
     _g2 = FloatRegister(0x114, bits=_GAINBITS, norm=2**_SHIFTBITS, 
                         doc="gain2 of iq module [volts]")
-    amplitude = FloatRegister(0x114, bits=_GAINBITS, norm=2**_SHIFTBITS*4,
+    amplitude = FloatRegister(0x114, bits=_GAINBITS, norm=2**(_GAINBITS-1),
                         doc="amplitude of coherent modulation [volts]")
 
-    _g3 = FloatRegister(0x118, bits=_GAINBITS, norm = 2**_SHIFTBITS, 
+    _g3 = FloatRegister(0x118, bits=_GAINBITS, norm=2**_SHIFTBITS,
                         doc="gain3 of iq module [volts]")
     quadrature_factor = FloatRegister(0x118, 
                                       bits=_GAINBITS, 
-                                      norm = 2**_SHIFTBITS,  
+                                      norm=2**_SHIFTBITS,
                         doc="amplification factor of demodulated signal [a.u.]")
     
-    _g4 = FloatRegister(0x11C, bits=_GAINBITS, norm = 2**_SHIFTBITS, 
+    _g4 = FloatRegister(0x11C, bits=_GAINBITS, norm=2**_SHIFTBITS,
                         doc="gain4 of iq module [volts]")
 
     def __init__(self, *args, **kwds):

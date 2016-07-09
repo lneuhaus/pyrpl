@@ -61,7 +61,7 @@ module red_pitaya_iq_modulator_block #(
 
 wire signed [GAINBITS+INBITS-1:0] firstproduct1;
 wire signed [GAINBITS+INBITS-1:0] firstproduct2;
-assign firstproduct1 = signal1_i * g1 + (g2 <<<INBITS);
+assign firstproduct1 = signal1_i * g1; // + (g2 <<<INBITS);
 assign firstproduct2 = signal2_i * g4;
 
 reg signed [OUTBITS-1:0] firstproduct1_reg;
@@ -72,8 +72,10 @@ always @(posedge clk_i) begin
      else if ({firstproduct1[GAINBITS+INBITS-1],&firstproduct1[GAINBITS+INBITS-2:GAINBITS+INBITS-SHIFTBITS-1]} == 2'b10) //negative overflow
         firstproduct1_reg <= {1'b1,{OUTBITS-1{1'b0}}};
      else
-        firstproduct1_reg <= firstproduct1[GAINBITS+INBITS-SHIFTBITS-1:GAINBITS+INBITS-SHIFTBITS-OUTBITS];
-     
+        // firstproduct1_reg <= firstproduct1[GAINBITS+INBITS-SHIFTBITS-1:GAINBITS+INBITS-SHIFTBITS-OUTBITS];
+        // fixes issue with maximum amplitude <= 0.5 V. Attention: no
+        // saturation implemented when gain*amplitude != 0 in python code
+        firstproduct1_reg <= firstproduct1[GAINBITS+INBITS-SHIFTBITS-1:GAINBITS+INBITS-SHIFTBITS-OUTBITS] + $signed(g2>>>(GAINBITS-OUTBITS));
      if ({firstproduct2[GAINBITS+INBITS-1],|firstproduct2[GAINBITS+INBITS-2:GAINBITS+INBITS-SHIFTBITS-1]} == 2'b01) //positive overflow
         firstproduct2_reg <= {1'b0,{OUTBITS-1{1'b1}}};
      else if ({firstproduct2[GAINBITS+INBITS-1],&firstproduct2[GAINBITS+INBITS-2:GAINBITS+INBITS-SHIFTBITS-1]} == 2'b10) //negative overflow
