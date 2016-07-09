@@ -231,7 +231,7 @@ class PhaseRegister(FloatRegister):
         return int(round((float(value)%360)/360*2**self.bits)% 2**self.bits) 
         
     def to_python(self, value):
-        phase float(value)/2**self.bits*360
+        phase = float(value)/2**self.bits*360
         if self.invert:
             phase *= -1
         return phase
