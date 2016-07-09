@@ -914,6 +914,12 @@ class NaGui(ModuleWidget):
             y = y / (1.0 + y)
         mag = 20 * np.log10(np.abs(y)   )
         phase = np.angle(y, deg=True)
+        if self.module.logscale:
+            self.curve.setLogMode(xMode=True, yMode=None)
+            self.curve_phase.setLogMode(xMode=True, yMode=None)
+        else:
+            self.curve.setLogMode(xMode=False, yMode=None)
+            self.curve_phase.setLogMode(xMode=False, yMode=None)
         self.curve.setData(x, mag)
         self.curve_phase.setData(x, phase)
         # plot_time = time() - plot_time_start # actually not working, because done latter
