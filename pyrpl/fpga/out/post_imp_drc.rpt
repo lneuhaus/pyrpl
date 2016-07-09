@@ -1,7 +1,7 @@
 Copyright 1986-2015 Xilinx, Inc. All Rights Reserved.
 ------------------------------------------------------------------------------------
 | Tool Version : Vivado v.2015.4 (lin64) Build 1412921 Wed Nov 18 09:44:32 MST 2015
-| Date         : Sat Jul  9 18:12:09 2016
+| Date         : Sat Jul  9 19:31:06 2016
 | Host         : ubuntu running 64-bit Ubuntu 14.04.4 LTS
 | Command      : report_drc
 ------------------------------------------------------------------------------------
@@ -426,77 +426,77 @@ Related violations: <none>
 
 DPIP-1#77 Warning
 Input pipelining  
-DSP i_dsp/genblk5[7].iq/demodulator/product1_reg input i_dsp/genblk5[7].iq/demodulator/product1_reg/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk5[7].iq_2_outputs/demodulator/product1_reg input i_dsp/genblk5[7].iq_2_outputs/demodulator/product1_reg/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#78 Warning
 Input pipelining  
-DSP i_dsp/genblk5[7].iq/demodulator/product2_reg input i_dsp/genblk5[7].iq/demodulator/product2_reg/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk5[7].iq_2_outputs/demodulator/product2_reg input i_dsp/genblk5[7].iq_2_outputs/demodulator/product2_reg/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#79 Warning
 Input pipelining  
-DSP i_dsp/genblk5[7].iq/modulator/firstproduct1 input i_dsp/genblk5[7].iq/modulator/firstproduct1/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk5[7].iq_2_outputs/modulator/firstproduct1 input i_dsp/genblk5[7].iq_2_outputs/modulator/firstproduct1/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#80 Warning
 Input pipelining  
-DSP i_dsp/genblk5[7].iq/modulator/firstproduct1 input i_dsp/genblk5[7].iq/modulator/firstproduct1/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk5[7].iq_2_outputs/modulator/firstproduct1 input i_dsp/genblk5[7].iq_2_outputs/modulator/firstproduct1/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#81 Warning
 Input pipelining  
-DSP i_dsp/genblk5[7].iq/modulator/firstproduct1 input i_dsp/genblk5[7].iq/modulator/firstproduct1/C[47:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk5[7].iq_2_outputs/modulator/firstproduct1 input i_dsp/genblk5[7].iq_2_outputs/modulator/firstproduct1/C[47:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#82 Warning
 Input pipelining  
-DSP i_dsp/genblk5[7].iq/modulator/firstproduct2 input i_dsp/genblk5[7].iq/modulator/firstproduct2/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk5[7].iq_2_outputs/modulator/firstproduct2 input i_dsp/genblk5[7].iq_2_outputs/modulator/firstproduct2/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#83 Warning
 Input pipelining  
-DSP i_dsp/genblk5[7].iq/modulator/firstproduct2 input i_dsp/genblk5[7].iq/modulator/firstproduct2/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk5[7].iq_2_outputs/modulator/firstproduct2 input i_dsp/genblk5[7].iq_2_outputs/modulator/firstproduct2/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#84 Warning
 Input pipelining  
-DSP i_dsp/genblk5[7].iq/modulator/i0_product_and_sat/product input i_dsp/genblk5[7].iq/modulator/i0_product_and_sat/product/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk5[7].iq_2_outputs/modulator/i0_product_and_sat/product input i_dsp/genblk5[7].iq_2_outputs/modulator/i0_product_and_sat/product/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#85 Warning
 Input pipelining  
-DSP i_dsp/genblk5[7].iq/modulator/i0_product_and_sat/product input i_dsp/genblk5[7].iq/modulator/i0_product_and_sat/product/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk5[7].iq_2_outputs/modulator/i0_product_and_sat/product input i_dsp/genblk5[7].iq_2_outputs/modulator/i0_product_and_sat/product/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#86 Warning
 Input pipelining  
-DSP i_dsp/genblk5[7].iq/modulator/q0_product_and_sat/product input i_dsp/genblk5[7].iq/modulator/q0_product_and_sat/product/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk5[7].iq_2_outputs/modulator/q0_product_and_sat/product input i_dsp/genblk5[7].iq_2_outputs/modulator/q0_product_and_sat/product/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#87 Warning
 Input pipelining  
-DSP i_dsp/genblk5[7].iq/modulator/q0_product_and_sat/product input i_dsp/genblk5[7].iq/modulator/q0_product_and_sat/product/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk5[7].iq_2_outputs/modulator/q0_product_and_sat/product input i_dsp/genblk5[7].iq_2_outputs/modulator/q0_product_and_sat/product/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#88 Warning
 Input pipelining  
-DSP i_dsp/genblk5[7].iq/modulator/secondproduct1 input i_dsp/genblk5[7].iq/modulator/secondproduct1/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk5[7].iq_2_outputs/modulator/secondproduct1 input i_dsp/genblk5[7].iq_2_outputs/modulator/secondproduct1/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#89 Warning
 Input pipelining  
-DSP i_dsp/genblk5[7].iq/modulator/secondproduct1 input i_dsp/genblk5[7].iq/modulator/secondproduct1/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk5[7].iq_2_outputs/modulator/secondproduct1 input i_dsp/genblk5[7].iq_2_outputs/modulator/secondproduct1/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#90 Warning
 Input pipelining  
-DSP i_dsp/genblk5[7].iq/modulator/secondproduct_reg_reg input i_dsp/genblk5[7].iq/modulator/secondproduct_reg_reg/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk5[7].iq_2_outputs/modulator/secondproduct_reg_reg input i_dsp/genblk5[7].iq_2_outputs/modulator/secondproduct_reg_reg/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#91 Warning
 Input pipelining  
-DSP i_dsp/genblk5[7].iq/modulator/secondproduct_reg_reg input i_dsp/genblk5[7].iq/modulator/secondproduct_reg_reg/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk5[7].iq_2_outputs/modulator/secondproduct_reg_reg input i_dsp/genblk5[7].iq_2_outputs/modulator/secondproduct_reg_reg/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPOP-1#1 Warning
@@ -661,22 +661,22 @@ Related violations: <none>
 
 DPOP-1#33 Warning
 PREG Output pipelining  
-DSP i_dsp/genblk5[7].iq/modulator/firstproduct1 output i_dsp/genblk5[7].iq/modulator/firstproduct1/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
+DSP i_dsp/genblk5[7].iq_2_outputs/modulator/firstproduct1 output i_dsp/genblk5[7].iq_2_outputs/modulator/firstproduct1/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
 Related violations: <none>
 
 DPOP-1#34 Warning
 PREG Output pipelining  
-DSP i_dsp/genblk5[7].iq/modulator/firstproduct2 output i_dsp/genblk5[7].iq/modulator/firstproduct2/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
+DSP i_dsp/genblk5[7].iq_2_outputs/modulator/firstproduct2 output i_dsp/genblk5[7].iq_2_outputs/modulator/firstproduct2/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
 Related violations: <none>
 
 DPOP-1#35 Warning
 PREG Output pipelining  
-DSP i_dsp/genblk5[7].iq/modulator/i0_product_and_sat/product output i_dsp/genblk5[7].iq/modulator/i0_product_and_sat/product/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
+DSP i_dsp/genblk5[7].iq_2_outputs/modulator/i0_product_and_sat/product output i_dsp/genblk5[7].iq_2_outputs/modulator/i0_product_and_sat/product/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
 Related violations: <none>
 
 DPOP-1#36 Warning
 PREG Output pipelining  
-DSP i_dsp/genblk5[7].iq/modulator/q0_product_and_sat/product output i_dsp/genblk5[7].iq/modulator/q0_product_and_sat/product/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
+DSP i_dsp/genblk5[7].iq_2_outputs/modulator/q0_product_and_sat/product output i_dsp/genblk5[7].iq_2_outputs/modulator/q0_product_and_sat/product/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
 Related violations: <none>
 
 DPOP-2#1 Warning
@@ -901,37 +901,37 @@ Related violations: <none>
 
 DPOP-2#45 Warning
 MREG Output pipelining  
-DSP i_dsp/genblk5[7].iq/demodulator/product1_reg multiplier stage i_dsp/genblk5[7].iq/demodulator/product1_reg/P[47:0] is not pipelined (MREG=0). Pipelining the multiplier function will improve performance and will save significant power so it is suggested whenever possible to fully pipeline this function.  If this multiplier was inferred, it is suggested to describe an additional register stage after this function.  If there is no registered adder/accumulator following the multiply function, two pipeline stages are suggested to allow both the MREG and PREG registers to be used.  If the DSP48 was instantiated in the design, it is suggested to set both the MREG and PREG attributes to 1 when performing multiply functions.
+DSP i_dsp/genblk5[7].iq_2_outputs/demodulator/product1_reg multiplier stage i_dsp/genblk5[7].iq_2_outputs/demodulator/product1_reg/P[47:0] is not pipelined (MREG=0). Pipelining the multiplier function will improve performance and will save significant power so it is suggested whenever possible to fully pipeline this function.  If this multiplier was inferred, it is suggested to describe an additional register stage after this function.  If there is no registered adder/accumulator following the multiply function, two pipeline stages are suggested to allow both the MREG and PREG registers to be used.  If the DSP48 was instantiated in the design, it is suggested to set both the MREG and PREG attributes to 1 when performing multiply functions.
 Related violations: <none>
 
 DPOP-2#46 Warning
 MREG Output pipelining  
-DSP i_dsp/genblk5[7].iq/demodulator/product2_reg multiplier stage i_dsp/genblk5[7].iq/demodulator/product2_reg/P[47:0] is not pipelined (MREG=0). Pipelining the multiplier function will improve performance and will save significant power so it is suggested whenever possible to fully pipeline this function.  If this multiplier was inferred, it is suggested to describe an additional register stage after this function.  If there is no registered adder/accumulator following the multiply function, two pipeline stages are suggested to allow both the MREG and PREG registers to be used.  If the DSP48 was instantiated in the design, it is suggested to set both the MREG and PREG attributes to 1 when performing multiply functions.
+DSP i_dsp/genblk5[7].iq_2_outputs/demodulator/product2_reg multiplier stage i_dsp/genblk5[7].iq_2_outputs/demodulator/product2_reg/P[47:0] is not pipelined (MREG=0). Pipelining the multiplier function will improve performance and will save significant power so it is suggested whenever possible to fully pipeline this function.  If this multiplier was inferred, it is suggested to describe an additional register stage after this function.  If there is no registered adder/accumulator following the multiply function, two pipeline stages are suggested to allow both the MREG and PREG registers to be used.  If the DSP48 was instantiated in the design, it is suggested to set both the MREG and PREG attributes to 1 when performing multiply functions.
 Related violations: <none>
 
 DPOP-2#47 Warning
 MREG Output pipelining  
-DSP i_dsp/genblk5[7].iq/modulator/firstproduct1 multiplier stage i_dsp/genblk5[7].iq/modulator/firstproduct1/P[47:0] is not pipelined (MREG=0). Pipelining the multiplier function will improve performance and will save significant power so it is suggested whenever possible to fully pipeline this function.  If this multiplier was inferred, it is suggested to describe an additional register stage after this function.  If there is no registered adder/accumulator following the multiply function, two pipeline stages are suggested to allow both the MREG and PREG registers to be used.  If the DSP48 was instantiated in the design, it is suggested to set both the MREG and PREG attributes to 1 when performing multiply functions.
+DSP i_dsp/genblk5[7].iq_2_outputs/modulator/firstproduct1 multiplier stage i_dsp/genblk5[7].iq_2_outputs/modulator/firstproduct1/P[47:0] is not pipelined (MREG=0). Pipelining the multiplier function will improve performance and will save significant power so it is suggested whenever possible to fully pipeline this function.  If this multiplier was inferred, it is suggested to describe an additional register stage after this function.  If there is no registered adder/accumulator following the multiply function, two pipeline stages are suggested to allow both the MREG and PREG registers to be used.  If the DSP48 was instantiated in the design, it is suggested to set both the MREG and PREG attributes to 1 when performing multiply functions.
 Related violations: <none>
 
 DPOP-2#48 Warning
 MREG Output pipelining  
-DSP i_dsp/genblk5[7].iq/modulator/firstproduct2 multiplier stage i_dsp/genblk5[7].iq/modulator/firstproduct2/P[47:0] is not pipelined (MREG=0). Pipelining the multiplier function will improve performance and will save significant power so it is suggested whenever possible to fully pipeline this function.  If this multiplier was inferred, it is suggested to describe an additional register stage after this function.  If there is no registered adder/accumulator following the multiply function, two pipeline stages are suggested to allow both the MREG and PREG registers to be used.  If the DSP48 was instantiated in the design, it is suggested to set both the MREG and PREG attributes to 1 when performing multiply functions.
+DSP i_dsp/genblk5[7].iq_2_outputs/modulator/firstproduct2 multiplier stage i_dsp/genblk5[7].iq_2_outputs/modulator/firstproduct2/P[47:0] is not pipelined (MREG=0). Pipelining the multiplier function will improve performance and will save significant power so it is suggested whenever possible to fully pipeline this function.  If this multiplier was inferred, it is suggested to describe an additional register stage after this function.  If there is no registered adder/accumulator following the multiply function, two pipeline stages are suggested to allow both the MREG and PREG registers to be used.  If the DSP48 was instantiated in the design, it is suggested to set both the MREG and PREG attributes to 1 when performing multiply functions.
 Related violations: <none>
 
 DPOP-2#49 Warning
 MREG Output pipelining  
-DSP i_dsp/genblk5[7].iq/modulator/i0_product_and_sat/product multiplier stage i_dsp/genblk5[7].iq/modulator/i0_product_and_sat/product/P[47:0] is not pipelined (MREG=0). Pipelining the multiplier function will improve performance and will save significant power so it is suggested whenever possible to fully pipeline this function.  If this multiplier was inferred, it is suggested to describe an additional register stage after this function.  If there is no registered adder/accumulator following the multiply function, two pipeline stages are suggested to allow both the MREG and PREG registers to be used.  If the DSP48 was instantiated in the design, it is suggested to set both the MREG and PREG attributes to 1 when performing multiply functions.
+DSP i_dsp/genblk5[7].iq_2_outputs/modulator/i0_product_and_sat/product multiplier stage i_dsp/genblk5[7].iq_2_outputs/modulator/i0_product_and_sat/product/P[47:0] is not pipelined (MREG=0). Pipelining the multiplier function will improve performance and will save significant power so it is suggested whenever possible to fully pipeline this function.  If this multiplier was inferred, it is suggested to describe an additional register stage after this function.  If there is no registered adder/accumulator following the multiply function, two pipeline stages are suggested to allow both the MREG and PREG registers to be used.  If the DSP48 was instantiated in the design, it is suggested to set both the MREG and PREG attributes to 1 when performing multiply functions.
 Related violations: <none>
 
 DPOP-2#50 Warning
 MREG Output pipelining  
-DSP i_dsp/genblk5[7].iq/modulator/q0_product_and_sat/product multiplier stage i_dsp/genblk5[7].iq/modulator/q0_product_and_sat/product/P[47:0] is not pipelined (MREG=0). Pipelining the multiplier function will improve performance and will save significant power so it is suggested whenever possible to fully pipeline this function.  If this multiplier was inferred, it is suggested to describe an additional register stage after this function.  If there is no registered adder/accumulator following the multiply function, two pipeline stages are suggested to allow both the MREG and PREG registers to be used.  If the DSP48 was instantiated in the design, it is suggested to set both the MREG and PREG attributes to 1 when performing multiply functions.
+DSP i_dsp/genblk5[7].iq_2_outputs/modulator/q0_product_and_sat/product multiplier stage i_dsp/genblk5[7].iq_2_outputs/modulator/q0_product_and_sat/product/P[47:0] is not pipelined (MREG=0). Pipelining the multiplier function will improve performance and will save significant power so it is suggested whenever possible to fully pipeline this function.  If this multiplier was inferred, it is suggested to describe an additional register stage after this function.  If there is no registered adder/accumulator following the multiply function, two pipeline stages are suggested to allow both the MREG and PREG registers to be used.  If the DSP48 was instantiated in the design, it is suggested to set both the MREG and PREG attributes to 1 when performing multiply functions.
 Related violations: <none>
 
 DPOP-2#51 Warning
 MREG Output pipelining  
-DSP i_dsp/genblk5[7].iq/modulator/secondproduct_reg_reg multiplier stage i_dsp/genblk5[7].iq/modulator/secondproduct_reg_reg/P[47:0] is not pipelined (MREG=0). Pipelining the multiplier function will improve performance and will save significant power so it is suggested whenever possible to fully pipeline this function.  If this multiplier was inferred, it is suggested to describe an additional register stage after this function.  If there is no registered adder/accumulator following the multiply function, two pipeline stages are suggested to allow both the MREG and PREG registers to be used.  If the DSP48 was instantiated in the design, it is suggested to set both the MREG and PREG attributes to 1 when performing multiply functions.
+DSP i_dsp/genblk5[7].iq_2_outputs/modulator/secondproduct_reg_reg multiplier stage i_dsp/genblk5[7].iq_2_outputs/modulator/secondproduct_reg_reg/P[47:0] is not pipelined (MREG=0). Pipelining the multiplier function will improve performance and will save significant power so it is suggested whenever possible to fully pipeline this function.  If this multiplier was inferred, it is suggested to describe an additional register stage after this function.  If there is no registered adder/accumulator following the multiply function, two pipeline stages are suggested to allow both the MREG and PREG registers to be used.  If the DSP48 was instantiated in the design, it is suggested to set both the MREG and PREG attributes to 1 when performing multiply functions.
 Related violations: <none>
 
 PLIO-7#1 Warning
