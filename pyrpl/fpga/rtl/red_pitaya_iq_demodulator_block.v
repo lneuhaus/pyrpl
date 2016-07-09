@@ -54,7 +54,6 @@ module red_pitaya_iq_demodulator_block #(
     // the product with SINBITS+INBITS-2 bits, including the sign bit.
     // That makes SHIFTBITS = -1 (see below). OUTBITS only determines how many
     // LSB's we cut off.
-
 )
 (
     input clk_i,
@@ -88,8 +87,8 @@ assign product2_roundoffset = (product2_unrounded[SINBITS+INBITS-1]) ? {{(OUTBIT
 
 always @(posedge clk_i) begin
 
-    product1 <= product_1_unrounded + product1_roundoffset;
-    product2 <= product_2_unrounded + product2_roundoffset;
+    product1 <= product1_unrounded + product1_roundoffset;
+    product2 <= product2_unrounded + product2_roundoffset;
 end
 
 assign signal1_o = product1[SINBITS+INBITS-1-SHIFTBITS:SINBITS+INBITS-OUTBITS-SHIFTBITS];

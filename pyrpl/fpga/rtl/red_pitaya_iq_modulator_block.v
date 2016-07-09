@@ -97,6 +97,10 @@ always @(posedge clk_i) begin
 end
 assign dat_o = secondproduct_out;
 
+//output the scaled quadrature
+wire signed [OUTBITS-1:0] q1_product;
+wire signed [OUTBITS-1:0] q2_product;
+
 //output first quadrature to scope etc.
 red_pitaya_product_sat  #(
 	.BITS_IN1(INBITS),
@@ -121,13 +125,10 @@ q0_product_and_sat (
   .product_o(q2_product),
   .overflow ()
 );
-//output the scaled quadrature
-wire signed [OUTBITS-1:0] q1_product;
+
+// pipeline products
 reg signed [OUTBITS-1:0] q1_product_reg;
-
-wire signed [OUTBITS-1:0] q2_product;
 reg signed [OUTBITS-1:0] q2_product_reg;
-
 always @(posedge clk_i) begin
     q1_product_reg <= q1_product;
     q2_product_reg <= q2_product;
