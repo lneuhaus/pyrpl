@@ -506,7 +506,7 @@ class RPOutputSignal(RPSignal):
         the pid plus specified external analog filters is a pure integrator if
         the config file defines unity_gain_frequency for the output, or a pure
         proportional gain if the config file defines proportional_gain for the
-        output. This transfer function can be further refined by defining
+        output. This transfer function can be further refined by
         setting the fields 'inputfilter' and 'iir' for the output in the config
         file. An incorrect specification of the external analog filter will
         result in an imperfect transfer function.
@@ -554,7 +554,7 @@ class RPOutputSignal(RPSignal):
                 integrator_on = False
                 gain = self.pid.p
         elif slope == 0:
-                    raise ValueError("Cannot lock on a zero slope!")
+            raise ValueError("Cannot lock on a zero slope!")
         else:
             if "unity_gain_frequency" in loopshape:
                 integrator_on = True

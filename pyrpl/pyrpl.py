@@ -412,7 +412,9 @@ class Pyrpl(Lockbox):
     The fundamental Python RedPitaya Lockbox API object. After having
     created your configuration file "myconfig.yml", create the lockbox
     object with lockbox = Pyrpl("myconfig"). Please refer to the
-    tutorial for a much more thorough discussion of the Pyrpl class.
+    tutorial for a much more thorough discussion of the Pyrpl class, because
+    its most useful attributes are created dynamically depending on the
+    configuration file settings.
 
     Parameters
     ----------
