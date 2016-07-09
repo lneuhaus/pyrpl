@@ -386,6 +386,33 @@ class Model(object):
         self.lock()
         return self.islocked()
 
+    def setup_iq(self, input='iq', **kwargs):
+        """
+        Sets up an input signal derived from demodultaion of another input.
+        The config file must contain an input signal named like the the
+        parameter input with a section 'setup' whose entries are directly
+        passed to redpitaya_modules.IQ.setup().
+
+        Parameters
+        ----------
+        input: str
+        kwargs: dict
+            optionally override config files setup section by passing
+            the arguments as kwargs here
+
+        Returns
+        -------
+        None
+        """
+        if not isinstance(iq, Signal):
+            iq = self.inputs[input]
+        if not kwargs:
+            kwargs = pdh._config.setup._dict
+        if not hasattr(iq, 'iq'):
+            iq.iq = self._parent.rp.iqs.pop()
+        iq.iq.setup(**kwargs)
+        iq._config['redpitaya_input'] = iq.iq.name
+
     def help(self):
         """ provides some help to get started. """
         self.logger.info("PyRP Lockbox\n-------------------\n"
