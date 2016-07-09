@@ -1047,7 +1047,7 @@ class IQ(FilterModule):
     
     _g2 = FloatRegister(0x114, bits=_GAINBITS, norm=2**_SHIFTBITS, 
                         doc="gain2 of iq module [volts]")
-    amplitude = FloatRegister(0x114, bits=_GAINBITS, norm = 2**_SHIFTBITS*4, 
+    amplitude = FloatRegister(0x114, bits=_GAINBITS, norm = 2**_SHIFTBITS*2,
                         doc="amplitude of coherent modulation [volts]")
 
     _g3 = FloatRegister(0x118, bits=_GAINBITS, norm = 2**_SHIFTBITS, 

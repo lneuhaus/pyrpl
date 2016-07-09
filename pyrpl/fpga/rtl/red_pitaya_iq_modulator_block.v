@@ -61,7 +61,7 @@ module red_pitaya_iq_modulator_block #(
 
 wire signed [GAINBITS+INBITS-1:0] firstproduct1;
 wire signed [GAINBITS+INBITS-1:0] firstproduct2;
-assign firstproduct1 = signal1_i * g1 + (g2 <<<INBITS);
+assign firstproduct1 = signal1_i * g1 + (g2 <<<(INBITS+1));
 assign firstproduct2 = signal2_i * g4;
 
 reg signed [OUTBITS-1:0] firstproduct1_reg;

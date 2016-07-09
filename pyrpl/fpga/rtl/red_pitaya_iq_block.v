@@ -215,8 +215,9 @@ red_pitaya_iq_demodulator_block #(
         .INBITS   (SIGNALBITS),
         .OUTBITS  (LPFBITS),
         .SINBITS  (LUTBITS),
-        .SHIFTBITS (1) //never change unless you document it!!! This setting of 1 just prevents saturation! especially do not set to SHIFTBITS
-    )
+        .SHIFTBITS (1) //never change unless you know what you are doing!!!
+        //This setting of 1 just prevents saturation! especially do not set to SHIFTBITS
+        )
     demodulator
     (
         .clk_i (clk_i),
@@ -226,7 +227,6 @@ red_pitaya_iq_demodulator_block #(
         .signal1_o (quadrature1_hf),
         .signal2_o (quadrature2_hf)
     );
-
 
 //low-passing
 wire signed [LPFBITS-1:0] quadrature1;
