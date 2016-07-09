@@ -1133,7 +1133,9 @@ class IQ(FilterModule):
             + np.complex128(self._to_pyint(int(c)+(int(d)<<31), bitlength=62))*1j  
         return sum / float(self._na_averages)
 
-    """
+    # the implementation of network_analyzer is not identical to na_trace
+    # there are still many bugs in it, which is why we will keep this function
+    # in the gui
     def na_trace(
             self,
             start=0,     # start frequency
@@ -1224,7 +1226,7 @@ class IQ(FilterModule):
             return x, y
         else:
             return x,y,amplitudes
-    """
+
 
 class IIR(DspModule):
     # invert denominator coefficients to convert from scipy notation to
