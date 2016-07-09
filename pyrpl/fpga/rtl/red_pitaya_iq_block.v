@@ -1,4 +1,4 @@
-/* 
+/*
  * $Id: red_pitaya_iq_block.v $
  *
  * @brief Red Pitaya IQ demodulator - modulator with variable amplitude and phase
@@ -26,11 +26,11 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-############################################################################### 
+###############################################################################
 */
 
 
-module red_pitaya_iq_block #(
+module red_pitaya_iq_block_2_outputs #(
 	  //input filter parameters
 	  parameter INPUTFILTERSTAGES    = 1,  //how many cascaded first-order input filters
 	  parameter INPUTFILTERSHIFTBITS = 5,  // up to 2^4 different cutoff frequencies
@@ -59,6 +59,7 @@ module red_pitaya_iq_block #(
    input      [ 14-1: 0] dat_i           ,  // input data
    output     [ 14-1: 0] dat_o           ,  // output data
    output     [ 14-1: 0] signal_o        ,  // output data
+   output     [ 14-1: 0] signal2_o       ,  // output data 2 (orthogonal quadrature)
 
    // communication with PS
    input      [ 16-1: 0] addr,
@@ -142,7 +143,7 @@ always @(posedge clk_i) begin
          16'h148 : begin ack <= wen|ren; rdata <= {do_averaging,iq_q_sum[31-1:0]};end
          16'h14C : begin ack <= wen|ren; rdata <= {do_averaging,iq_q_sum[62-1:31]};end
 	     16'h150 : begin ack <= wen|ren; rdata <= {{32-SIGNALBITS{1'b0}},pfd_integral};end
-	     
+
 	     16'h200 : begin ack <= wen|ren; rdata <= LUTSZ; end
 	     16'h204 : begin ack <= wen|ren; rdata <= LUTBITS; end
 	     16'h208 : begin ack <= wen|ren; rdata <= PHASEBITS; end
@@ -156,9 +157,9 @@ always @(posedge clk_i) begin
 	     16'h230 : begin ack <= wen|ren; rdata <= QUADRATUREFILTERSTAGES; end
 	     16'h234 : begin ack <= wen|ren; rdata <= QUADRATUREFILTERSHIFTBITS; end
 	     16'h238 : begin ack <= wen|ren; rdata <= QUADRATUREFILTERMINBW; end
-	     
-	     default: begin ack <= wen|ren;  rdata <=  32'h0; end 
-	  endcase	     
+
+	     default: begin ack <= wen|ren;  rdata <=  32'h0; end
+	  endcase
    end
 end
 
@@ -175,7 +176,7 @@ red_pitaya_filter_block #(
   (
   .clk_i(clk_i),
   .rstn_i(rstn_i),
-  .set_filter(input_filter), 
+  .set_filter(input_filter),
   .dat_i(dat_i),
   .dat_o(dat_i_filtered)
   );
@@ -196,14 +197,14 @@ iq_fgen
 (
    // data
   .clk_i          (  clk_i          ),  // clock
-  .rstn_i         (  rstn_i         ),  
-  .on             (  on             ),  
-  .start_phase    (  start_phase    ),   
-  .shift_phase    (  shift_phase    ),   
-  .sin_o          (  sin            ),  
-  .cos_o          (  cos            ),  
-  .sin_shifted_o  (  sin_shifted    ),  
-  .cos_shifted_o  (  cos_shifted    )  
+  .rstn_i         (  rstn_i         ),
+  .on             (  on             ),
+  .start_phase    (  start_phase    ),
+  .shift_phase    (  shift_phase    ),
+  .sin_o          (  sin            ),
+  .cos_o          (  cos            ),
+  .sin_shifted_o  (  sin_shifted    ),
+  .cos_shifted_o  (  cos_shifted    )
   );
 
 
@@ -219,18 +220,19 @@ red_pitaya_iq_demodulator_block #(
     demodulator
     (
         .clk_i (clk_i),
-        .sin   (sin), 
-        .cos   (cos), 
+        .sin   (sin),
+        .cos   (cos),
         .signal_i (dat_i_filtered),
-        .signal1_o (quadrature1_hf),            
-        .signal2_o (quadrature2_hf)            
+        .signal1_o (quadrature1_hf),
+        .signal2_o (quadrature2_hf)
     );
 
 
 //low-passing
 wire signed [LPFBITS-1:0] quadrature1;
 wire signed [LPFBITS-1:0] quadrature2;
-wire signed [SIGNALBITS-1:0] quadrature_o;
+wire signed [SIGNALBITS-1:0] quadrature1_o;
+wire signed [SIGNALBITS-1:0] quadrature2_o;
 
 //option 1: Several low-pass filters without multipliers (bw is power of 2)
 red_pitaya_filter_block #(
@@ -243,9 +245,9 @@ red_pitaya_filter_block #(
   (
    .clk_i     (  {clk_i,clk_i}    ),
    .rstn_i    (  {rstn_i,rstn_i}  ),
-   .set_filter(  {quadrature_filter, quadrature_filter}  ), 
+   .set_filter(  {quadrature_filter, quadrature_filter}  ),
    .dat_i  ( {quadrature1_hf,quadrature2_hf}  ),
-   .dat_o  ( {quadrature1,quadrature2}  )            
+   .dat_o  ( {quadrature1,quadrature2}  )
   );
 
 //modulation, summing and direct output
@@ -254,21 +256,22 @@ red_pitaya_iq_modulator_block #(
         .OUTBITS  (SIGNALBITS),
         .SINBITS  (LUTBITS),
         .GAINBITS (GAINBITS),
-        .SHIFTBITS (SHIFTBITS)  
+        .SHIFTBITS (SHIFTBITS)
     )
     modulator
     (
         .clk_i (clk_i),
-        .sin   (sin_shifted), 
-        .cos   (cos_shifted), 
+        .sin   (sin_shifted),
+        .cos   (cos_shifted),
         .g1      (g1) ,
         .g2      (g2) ,
         .g3      (g3) ,
         .g4      (g4) ,
         .signal1_i (quadrature1),
         .signal2_i (quadrature2),
-        .dat_o     (dat_o),            
-        .signal_o  (quadrature_o)            
+        .dat_o     (dat_o),
+        .signal_q1_o  (quadrature1_o),
+        .signal_q2_o  (quadrature2_o)
     );
 
 //NA functionality
@@ -301,13 +304,13 @@ always @(posedge clk_i) begin
     end
     else if (na_sleep_remaining == {32{1'b0}} ) begin //averaging in progress
         na_averages_remaining <= na_averages_remaining - 32'b1;
-        do_averaging <= 1'b1; 
+        do_averaging <= 1'b1;
         iq_i_sum <= iq_i_sum + quadrature1;
         iq_q_sum <= iq_q_sum + quadrature2;
     end
     else begin  //sleep has not finished yet, count down sleep cycle register
         na_sleep_remaining <= na_sleep_remaining - 32'b1;
-        do_averaging <= 1'b1; 
+        do_averaging <= 1'b1;
     end
 end
 
@@ -322,10 +325,12 @@ red_pitaya_pfd_block pfd_block (
 	.integral_o(pfd_integral)
 );
 
-// output_signal multiplexer 
-assign signal_o = (output_select==QUADRATURE) ? quadrature_o 
-				: (output_select==OUTPUT_DIRECT) ? dat_o 
-				: (output_select==PFD) ? pfd_integral 
+// output_signal multiplexer
+assign signal_o = (output_select==QUADRATURE) ? quadrature1_o
+				: (output_select==OUTPUT_DIRECT) ? dat_o
+				: (output_select==PFD) ? pfd_integral
 				: {SIGNALBITS{1'b0}};
+
+assign signal2_o = quadrature2_o;
 
 endmodule

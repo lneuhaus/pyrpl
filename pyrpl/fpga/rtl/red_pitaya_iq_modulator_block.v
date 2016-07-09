@@ -55,7 +55,8 @@ module red_pitaya_iq_modulator_block #(
     input signed [INBITS-1:0] signal1_i,
     input signed [INBITS-1:0] signal2_i,
     output signed [OUTBITS-1:0] dat_o,            
-    output signed [OUTBITS-1:0] signal_o //the i-quadrature
+    output signed [OUTBITS-1:0] signal_q1_o, //the i-quadrature
+    output signed [OUTBITS-1:0] signal_q2_o  //the q-quadrature
 );
 
 wire signed [GAINBITS+INBITS-1:0] firstproduct1;
@@ -96,22 +97,43 @@ always @(posedge clk_i) begin
 end
 assign dat_o = secondproduct_out;
 
-red_pitaya_product_sat  #( 
-	.BITS_IN1(INBITS), 
-	.BITS_IN2(GAINBITS), 
-	.SHIFT(SHIFTBITS), 
+//output first quadrature to scope etc.
+red_pitaya_product_sat  #(
+	.BITS_IN1(INBITS),
+	.BITS_IN2(GAINBITS),
+	.SHIFT(SHIFTBITS),
 	.BITS_OUT(OUTBITS))
 i0_product_and_sat (
   .factor1_i(signal1_i),
   .factor2_i(g3),
-  .product_o(i0_product),
+  .product_o(q1_product),
   .overflow ()
-);   
+);
+// output second quatrature to scope etc.
+red_pitaya_product_sat  #(
+	.BITS_IN1(INBITS),
+	.BITS_IN2(GAINBITS),
+	.SHIFT(SHIFTBITS),
+	.BITS_OUT(OUTBITS))
+q0_product_and_sat (
+  .factor1_i(signal2_i),
+  .factor2_i(g3),
+  .product_o(q2_product),
+  .overflow ()
+);
 //output the scaled quadrature
-wire signed [OUTBITS-1:0] i0_product;
-reg signed [OUTBITS-1:0] i0_product_reg;
-always @(posedge clk_i) 
-    i0_product_reg <= i0_product;
-assign signal_o = i0_product_reg;
+wire signed [OUTBITS-1:0] q1_product;
+reg signed [OUTBITS-1:0] q1_product_reg;
+
+wire signed [OUTBITS-1:0] q2_product;
+reg signed [OUTBITS-1:0] q2_product_reg;
+
+always @(posedge clk_i) begin
+    q1_product_reg <= q1_product;
+    q2_product_reg <= q2_product;
+end
+
+assign signal_q1_o = q1_product_reg;
+assign signal_q2_o = q2_product_reg;
 
 endmodule

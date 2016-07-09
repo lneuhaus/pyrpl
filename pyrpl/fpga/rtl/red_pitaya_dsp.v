@@ -349,7 +349,10 @@ generate for (j = 5; j < 7; j = j+1) begin
 	     .dat_i        (  input_signal [j] ),  // input data
 	     .dat_o        (  output_direct[j]),  // output data
 		 .signal_o     (  output_signal[j]),  // output signal
-         //.signal_o2    (  output_signal2[j]),  // output signal
+
+         // not using 2nd quadrature for most iq's: multipliers will be
+         // synthesized away by Vivado
+         //.signal2_o  (  output_signal[j*2]),  // output signal
 
 		 //communincation with PS
 		 .addr ( sys_addr[16-1:0] ),
@@ -372,7 +375,7 @@ generate for (j = 7; j < 8; j = j+1) begin
          .dat_i        (  input_signal [j] ),  // input data
          .dat_o        (  output_direct[j]),  // output data
          .signal_o     (  output_signal[j]),  // output signal
-         .signal_o2    (  output_signal[j*2]),  // output signal
+         .signal2_o    (  output_signal[j*2]),  // output signal 2
 
          //communincation with PS
          .addr ( sys_addr[16-1:0] ),

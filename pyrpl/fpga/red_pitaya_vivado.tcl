@@ -89,8 +89,6 @@ read_verilog                      $path_rtl/red_pitaya_pfd_block.v
 #read_verilog                      $path_rtl/red_pitaya_iq_hpf_block.v
 read_verilog                      $path_rtl/red_pitaya_iq_fgen_block.v
 read_verilog                      $path_rtl/red_pitaya_iq_block.v
-read_verilog                      $path_rtl/red_pitaya_iq_block_2_outputs.v
-read_verilog                      $path_rtl/red_pitaya_iq_modulator_block_2_outputs.v
 
 #constraints
 read_xdc                          $path_sdc/red_pitaya.xdc
