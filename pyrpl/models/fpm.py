@@ -117,3 +117,12 @@ class FPM(FabryPerot):
 
     def teardown_ringdown(self):
         self._parent.rp.asg1.disable_advanced_trigger()
+
+    def center_on_resonance(self, start = -1, coarse='slow'):
+        self.unlock()
+        self.sweep()
+        coarsepid = self.outputs[coarse].pid
+        coarse.ival = -1
+        coarsebw =  sorted(self.outputs[
+                               coarse]._config.analogfilter.lowpass)
+
