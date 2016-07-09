@@ -534,19 +534,21 @@ def make_asg(channel=1):
         set_VALUE_OFFSET = 0x00
         set_DATA_OFFSET = 0x10000
         set_default_output_direct = 'off'
+        set_name = 'asg1'
     else:
         set_DATA_OFFSET = 0x20000
         set_VALUE_OFFSET = 0x20
         set_BIT_OFFSET = 16
         set_default_output_direct = 'off'
-    
+        set_name = 'asg2'
     class Asg(BaseModule):
         _DATA_OFFSET = set_DATA_OFFSET
         _VALUE_OFFSET = set_VALUE_OFFSET
         _BIT_OFFSET = set_BIT_OFFSET
         default_output_direct = set_default_output_direct
         output_directs = None
-                
+        name = set_name
+
         def __init__(self, client):
             super(Asg, self).__init__(client, addr_base=0x40200000)
             self._counter_wrap = 0x3FFFFFFF # correct value unless you know better
@@ -875,9 +877,20 @@ class DspModule(BaseModule):
         both=3)
     output_directs = _output_directs.keys()
     
-    input = SelectRegister(0x0, options=_inputs, 
+    _input = SelectRegister(0x0, options=_inputs,
                            doc="selects the input signal of the module")
-    
+    @property
+    def input(self):
+        "selects the input signal of the module"
+        return self._input
+    @input.setter
+    def input(self, value):
+        # allow to directly pass another dspmodule as input
+        if isinstance(value, DspModule) and hasattr(value, 'name'):
+            self._input = value.name
+        else:
+            self._input = value
+
     output_direct = SelectRegister(0x4, options=_output_directs, 
                             doc="selects to which analog output the module \
                             signal is sent directly")    
