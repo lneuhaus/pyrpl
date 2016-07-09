@@ -342,7 +342,6 @@ class FilterRegister(Register):
                     shift += 2**6  # turn this filter into a highpass
                 filter_shifts += (shift) * 2**(8 * i)
         return filter_shifts
-    
 
 class PWMRegister(Register):
     # FloatRegister that defines the PWM voltage similar to setting a float
