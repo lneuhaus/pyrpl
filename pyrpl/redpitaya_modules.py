@@ -1093,31 +1093,41 @@ class IQ(FilterModule):
 
     def setup(
             self,
-            frequency,
-            bandwidth=[0],
-            gain=1.0,
-            phase=0,
+            frequency=None,
+            bandwidth=None,
+            gain=None,
+            phase=None,
             Q=None,
-            acbandwidth=50.,
-            amplitude=0.0,
-            input='adc1',
-            output_direct='out1',
-            output_signal='quadrature', 
-            quadrature_factor=1.0):
+            acbandwidth=None,
+            amplitude=None,
+            input=None,
+            output_direct=None,
+            output_signal=None,
+            quadrature_factor=None):
         self.on = False
-        self.frequency = frequency
+        if frequency is not None:
+            self.frequency = frequency
         if Q is None:
-            self.bandwidth = bandwidth
+            if bandwidth:
+                self.bandwidth = bandwidth
         else:
             self.bandwidth = self.frequency / Q / 2
-        self.gain = gain
-        self.phase = phase
-        self.inputfilter = -acbandwidth
-        self.amplitude = amplitude
-        self.input = input
-        self.output_direct = output_direct
-        self.output_signal = output_signal
-        self.quadrature_factor = quadrature_factor
+        if input is not None:
+            self.input = input
+        if gain is not None:
+            self.gain = gain
+        if phase is not None:
+            self.phase = phase
+        if acbandwidth is not None:
+            self.inputfilter = -acbandwidth
+        if amplitude is not None:
+            self.amplitude = amplitude
+        if output_direct is not None:
+            self.output_direct = output_direct
+        if output_signal is not None:
+            self.output_signal = output_signal
+        if quadrature_factor is not None:
+            self.quadrature_factor = quadrature_factor
         self.on = True
 
     _na_averages = Register(0x130, 
