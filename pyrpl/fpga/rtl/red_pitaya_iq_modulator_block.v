@@ -60,52 +60,54 @@ module red_pitaya_iq_modulator_block #(
 );
 
 // firstproduct
-wire signed [GAINBITS+INBITS-1:0] firstproduct1;
-wire signed [GAINBITS+INBITS-1:0] firstproduct2;
+wire signed [OUTBITS-1:0] firstproduct1;
+wire signed [OUTBITS-1:0] firstproduct2;
+
 red_pitaya_product_sat  #(
 	.BITS_IN1(INBITS),
 	.BITS_IN2(GAINBITS),
-	.SHIFT(SHIFTBITS),
+	.SHIFT(GAINBITS+INBITS-OUTBITS-SHIFTBITS),
 	.BITS_OUT(OUTBITS))
-firstproduct[1:0] (
-  .factor1_i({signal2_i, signal1_i}),
-  .factor2_i({g4, g1}),
-  .product_o({firstproduct2, firstproduct1}),
-  .overflow ()
+firstproduct_saturation [1:0]
+( .factor1_i  (  {signal2_i, signal1_i} ),
+  .factor2_i  (  {       g4,        g1} ),
+  .product_o  (  {firstproduct2, firstproduct1})
 );
 
-// buffering
-reg signed [OUTBITS-1+1:0] firstproduct1_reg;
-reg signed [OUTBITS-1+1:0] firstproduct2_reg;
+// buffering - one extra bit for the sum with g2
+reg signed [OUTBITS+1-1:0] firstproduct1_reg;
+reg signed [OUTBITS+1-1:0] firstproduct2_reg;
 always @(posedge clk_i) begin
-    firstproduct1_reg <= firstproduct1 + $signed((g2>>>(GAINBITS-OUTBITS)));
-    firstproduct2_reg <= firstproduct2;
+    firstproduct1_reg <= $signed(firstproduct1) + $signed(g2[GAINBITS-1:GAINBITS-OUTBITS]);
+    firstproduct2_reg <= $signed(firstproduct2);
 end
 
-wire signed [OUTBITS+SINBITS-1+1:0] secondproduct1;
-wire signed [OUTBITS+SINBITS-1+1:0] secondproduct2;
+wire signed [OUTBITS+1+SINBITS-1-1:0] secondproduct1;
+wire signed [OUTBITS+1+SINBITS-1-1:0] secondproduct2;
 assign secondproduct1 = firstproduct1_reg * sin;
 assign secondproduct2 = firstproduct2_reg * cos;
 
-reg signed [OUTBITS+SINBITS-1+2:0] secondproduct_reg;
+//sum of second product has an extra bit
+reg signed [OUTBITS+1+SINBITS-1:0] secondproduct_sum;
 reg signed [OUTBITS-1:0] secondproduct_out;
-wire signed [OUTBITS-1:0] secondproduct;
+wire signed [OUTBITS-1:0] secondproduct_sat;
 
-//summation and saturation management
+//summation and saturation management, and buffering
 always @(posedge clk_i) begin
-    secondproduct_reg <= secondproduct1 + secondproduct2;
-    secondproduct_out <= secondproduct;
+    secondproduct_sum <= secondproduct1 + secondproduct2;
+    secondproduct_out <= secondproduct_sat;
 end
 
+// SHIFT to compensate: sin multiplication (2**SINBITS-1 is the largest number)
 red_pitaya_saturate
     #( .BITS_IN(OUTBITS+SINBITS+1),
        .BITS_OUT(OUTBITS),
-       .SHIFT(1)
+       .SHIFT(SINBITS-1)
     )
     sumsaturation
     (
-    .input_i(secondproduct_reg),
-    .output_o(secondproduct)
+    .input_i(secondproduct_sum),
+    .output_o(secondproduct_sat)
     );
 
 assign dat_o = secondproduct_out;
