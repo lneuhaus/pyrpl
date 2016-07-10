@@ -33,7 +33,7 @@ import pickle
 import os
 import logging
 
-from . import fitting
+#from . import fitting
 
 # optional override of CurveDB class with custom module, as defined in
 # ./pyrpl/config/global_config.yml

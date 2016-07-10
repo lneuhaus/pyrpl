@@ -9,6 +9,7 @@
 from __future__ import print_function
 from setuptools import setup, find_packages
 from setuptools.command.test import test as TestCommand
+from distutils.core import setup
 import io
 import codecs
 import os
@@ -59,7 +60,6 @@ def compile_server(): #gcc crosscompiler must be installed for this to work
     finally:
         os.chdir(cwd)
 
-from distutils.core import setup
 setup(name='pyrpl',
       version='0.9.0.0',
       description='DSP servo controller for quantum optics with the RedPitaya',
@@ -78,7 +78,7 @@ setup(name='pyrpl',
       keywords='RedPitaya DSP FPGA IIR PDH synchronous detection filter PID control lockbox servo feedback lock quantum optics',
       platforms='any',
       packages=['pyrpl'],
-      #package_dir={'pyrpl': ''},
+      # package_dir={'pyrpl': ''},
       package_data={'pyrpl': ['fpga/red_pitaya.bin',
                               'monitor_server/monitor_server',
                               'monitor_server/monitor_server_0.95']},
@@ -89,9 +89,9 @@ setup(name='pyrpl',
 
       # stuff for unitary test with pytest
       tests_require=['nose>=1.0'],
-      #extras_require={'testing': ['pytest']},
-	  test_suite = 'nose.collector',
-	  
+      # extras_require={'testing': ['pytest']},
+	  test_suite='nose.collector',
       # install options
-      cmdclass={'test': PyTest, 'fpga': compile_fpga, 'server': compile_server},
+      cmdclass={'test': PyTest, 'fpga': compile_fpga,
+                'server': compile_server},
       )

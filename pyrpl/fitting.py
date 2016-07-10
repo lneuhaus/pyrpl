@@ -1,4 +1,4 @@
-
+"""
 import pandas
 import scipy.optimize
 import numpy
@@ -94,7 +94,7 @@ class Fit(object):
 
                     
     def error_vector(self, args):
-        """returns a vector containing the difference between fit and data - not the square of it!"""
+        "returns a vector containing the difference between fit and data - not the square of it!"
         # unfold the list of parameters back into the dictionary 
         for index, key in enumerate(self.fit_params):
             self.fit_params[key] = float(args[index])
@@ -109,7 +109,7 @@ class Fit(object):
         return self.sqerror_vector
 
     def log_error_vector(self, args):
-        """returns a vector containing the difference between log(fit) and log(data) - not the square of it!"""
+        "returns a vector containing the difference between log(fit) and log(data) - not the square of it!"
         # unfold the list of parameters back into the dictionary 
         for index, key in enumerate(self.fit_params):
             self.fit_params[key] = float(args[index])
@@ -231,3 +231,4 @@ class Fit(object):
                                      index=self.x(), \
                                      name='fitfunction: ' + self.func)
         return values
+"""
