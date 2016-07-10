@@ -679,7 +679,6 @@ class RPOutputSignal(RPSignal):
         slope *= self._config[self._config.calibrationunits]
         # save inputfilters
         self._config.lock.inputfilter = self._inputfilter
-        if hasattr(self, 'pid2'):
         # save new pid gains
         newgains = {"p": self.pid.p,
                     "i": self.pid.i,
