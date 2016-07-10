@@ -16,6 +16,8 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###############################################################################
 
+""" All modules are extensively discussed in the Tutorial. Please refer to
+there for more information. """
 
 import numpy as np
 import time
@@ -535,19 +537,21 @@ def make_asg(channel=1):
         set_VALUE_OFFSET = 0x00
         set_DATA_OFFSET = 0x10000
         set_default_output_direct = 'off'
+        set_name = 'asg1'
     else:
         set_DATA_OFFSET = 0x20000
         set_VALUE_OFFSET = 0x20
         set_BIT_OFFSET = 16
         set_default_output_direct = 'off'
-    
+        set_name = 'asg2'
     class Asg(BaseModule):
         _DATA_OFFSET = set_DATA_OFFSET
         _VALUE_OFFSET = set_VALUE_OFFSET
         _BIT_OFFSET = set_BIT_OFFSET
         default_output_direct = set_default_output_direct
         output_directs = None
-                
+        name = set_name
+
         def __init__(self, client):
             super(Asg, self).__init__(client, addr_base=0x40200000)
             self._counter_wrap = 0x3FFFFFFF # correct value unless you know better
@@ -609,8 +613,9 @@ def make_asg(channel=1):
         # This adaptaion to FloatRegister is a little subtle but should work nonetheless 
         offset = FloatRegister(0x4+_VALUE_OFFSET, bits=14+16, bitmask=0x3FFF<<16, 
                                norm=2**16*2**13, doc="output offset [volts]")
-        
-        scale = FloatRegister(0x4+_VALUE_OFFSET, bits=14, bitmask=0x3FFF, 
+
+        # formerly scale
+        amplitude = FloatRegister(0x4+_VALUE_OFFSET, bits=14, bitmask=0x3FFF,
                               norm=2**13, signed=False,  
                               doc="amplitude of output waveform [volts]")
         
@@ -686,7 +691,8 @@ def make_asg(channel=1):
         def data(self):
             """array of 2**14 values that define the output waveform. 
             
-            Values should lie between -1 and 1 such that the peak output amplitude is self.scale"""
+            Values should lie between -1 and 1 such that the peak output
+            amplitude is self.amplitude """
             if not hasattr(self,'_writtendata'):
                 self._writtendata = np.zeros(self.data_length, dtype=np.int32)
             x = np.array(self._writtendata, dtype=np.int32)
@@ -702,7 +708,8 @@ def make_asg(channel=1):
         def data(self, data):
             """array of 2**14 values that define the output waveform. 
             
-            Values should lie between -1 and 1 such that the peak output amplitude is self.scale"""
+            Values should lie between -1 and 1 such that the peak output
+            amplitude is self.amplitude"""
             data = np.array(np.round((2**13-1)*data), dtype=np.int32)
             data[data >= 2**13] = 2**13 - 1
             data[data < 0] += 2**14
@@ -767,7 +774,7 @@ def make_asg(channel=1):
             if frequency is None:
                 frequency = self.frequency
             if amplitude is None:
-                amplitude = self.scale
+                amplitude = self.amplitude
             if offset is None:
                 offset = self.offset
             if trigger_source is None:
@@ -784,7 +791,7 @@ def make_asg(channel=1):
             self.on = False
             self.sm_reset = True
             self.trigger_source = 'off'
-            self.scale = amplitude
+            self.amplitude = amplitude
             self.offset = offset
             self.output_direct = output_direct
             self.waveform = waveform
@@ -876,9 +883,20 @@ class DspModule(BaseModule):
         both=3)
     output_directs = _output_directs.keys()
     
-    input = SelectRegister(0x0, options=_inputs, 
+    _input = SelectRegister(0x0, options=_inputs,
                            doc="selects the input signal of the module")
-    
+    @property
+    def input(self):
+        "selects the input signal of the module"
+        return self._input
+    @input.setter
+    def input(self, value):
+        # allow to directly pass another dspmodule as input
+        if isinstance(value, DspModule) and hasattr(value, 'name'):
+            self._input = value.name
+        else:
+            self._input = value
+
     output_direct = SelectRegister(0x4, options=_output_directs, 
                             doc="selects to which analog output the module \
                             signal is sent directly")    
@@ -1033,9 +1051,10 @@ class IQ(FilterModule):
     _SHIFTBITS = 8 #Register(0x218)
     
     pfd_integral = FloatRegister(0x150, bits=_SIGNALBITS, norm=_SIGNALBITS,
-                                 doc = "value of the pfd integral [volts]")
-    
-    phase = PhaseRegister(0x104, bits=_PHASEBITS,
+                                 doc="value of the pfd integral [volts]")
+
+    # for the phase to have the right sign, it must be inverted
+    phase = PhaseRegister(0x104, bits=_PHASEBITS, invert=True,
                           doc="Phase shift between modulation \
                           and demodulation [degrees]")
     
@@ -1047,17 +1066,17 @@ class IQ(FilterModule):
     
     _g2 = FloatRegister(0x114, bits=_GAINBITS, norm=2**_SHIFTBITS, 
                         doc="gain2 of iq module [volts]")
-    amplitude = FloatRegister(0x114, bits=_GAINBITS, norm = 2**_SHIFTBITS*4, 
+    amplitude = FloatRegister(0x114, bits=_GAINBITS, norm=2**(_GAINBITS-1),
                         doc="amplitude of coherent modulation [volts]")
 
-    _g3 = FloatRegister(0x118, bits=_GAINBITS, norm = 2**_SHIFTBITS, 
+    _g3 = FloatRegister(0x118, bits=_GAINBITS, norm=2**_SHIFTBITS,
                         doc="gain3 of iq module [volts]")
     quadrature_factor = FloatRegister(0x118, 
                                       bits=_GAINBITS, 
-                                      norm = 2**_SHIFTBITS,  
+                                      norm=2**_SHIFTBITS,
                         doc="amplification factor of demodulated signal [a.u.]")
     
-    _g4 = FloatRegister(0x11C, bits=_GAINBITS, norm = 2**_SHIFTBITS, 
+    _g4 = FloatRegister(0x11C, bits=_GAINBITS, norm=2**_SHIFTBITS,
                         doc="gain4 of iq module [volts]")
 
     def __init__(self, *args, **kwds):
@@ -1074,31 +1093,41 @@ class IQ(FilterModule):
 
     def setup(
             self,
-            frequency,
-            bandwidth=[0],
-            gain=1.0,
-            phase=0,
+            frequency=None,
+            bandwidth=None,
+            gain=None,
+            phase=None,
             Q=None,
-            acbandwidth=50.,
-            amplitude=0.0,
-            input='adc1',
-            output_direct='out1',
-            output_signal='quadrature', 
-            quadrature_factor=1.0):
+            acbandwidth=None,
+            amplitude=None,
+            input=None,
+            output_direct=None,
+            output_signal=None,
+            quadrature_factor=None):
         self.on = False
-        self.frequency = frequency
+        if frequency is not None:
+            self.frequency = frequency
         if Q is None:
-            self.bandwidth = bandwidth
+            if bandwidth:
+                self.bandwidth = bandwidth
         else:
             self.bandwidth = self.frequency / Q / 2
-        self.gain = gain
-        self.phase = phase
-        self.inputfilter = -acbandwidth
-        self.amplitude = amplitude
-        self.input = input
-        self.output_direct = output_direct
-        self.output_signal = output_signal
-        self.quadrature_factor = quadrature_factor
+        if input is not None:
+            self.input = input
+        if gain is not None:
+            self.gain = gain
+        if phase is not None:
+            self.phase = phase
+        if acbandwidth is not None:
+            self.inputfilter = -acbandwidth
+        if amplitude is not None:
+            self.amplitude = amplitude
+        if output_direct is not None:
+            self.output_direct = output_direct
+        if output_signal is not None:
+            self.output_signal = output_signal
+        if quadrature_factor is not None:
+            self.quadrature_factor = quadrature_factor
         self.on = True
 
     _na_averages = Register(0x130, 
@@ -1120,7 +1149,9 @@ class IQ(FilterModule):
             + np.complex128(self._to_pyint(int(c)+(int(d)<<31), bitlength=62))*1j  
         return sum / float(self._na_averages)
 
-    """
+    # the implementation of network_analyzer is not identical to na_trace
+    # there are still many bugs in it, which is why we will keep this function
+    # in the gui
     def na_trace(
             self,
             start=0,     # start frequency
@@ -1211,7 +1242,7 @@ class IQ(FilterModule):
             return x, y
         else:
             return x,y,amplitudes
-    """
+
 
 class IIR(DspModule):
     # invert denominator coefficients to convert from scipy notation to

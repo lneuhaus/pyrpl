@@ -111,7 +111,7 @@ class SpectrumAnalyzer(object):
     def span(self, val):
         val = float(val)
         self.scope.sampling_time = 1./self.nyquist_margin/val
-        self.iq.bandwidth = [val, val]
+        self.iq.bandwidth = [val, val, val, val]
         return val
 
     @property
@@ -223,7 +223,7 @@ class SpectrumAnalyzer(object):
         """
         :return: complex iq time trace
         """
-        res = self.scope.curve(1) + 1j * self.scope.curve(2) #+ 0.00012206662865236316*(1+1j)
+        res = self.scope.curve(1) + 1j * self.scope.curve(2)
         return res[:self.data_length]
 
     def filtered_iq_data(self):
@@ -239,7 +239,6 @@ class SpectrumAnalyzer(object):
         middle = int(self.data_length/2)
         length = self.points#self.data_length/self.nyquist_margin
         return slice(middle - length/2, middle + length/2 + 1)
-
 
     def curve(self):
         """

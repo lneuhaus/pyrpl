@@ -25,9 +25,14 @@ import time
 import logging
 logger = logging.getLogger(name=__name__)
 
+# the config file is read through a yaml interface. The preferred one is
+# ruamel.yaml, since it allows to preserve comments and whitespace in the
+# config file through roundtrips (the config file is rewritten every time a
+# parameter is changed). If ruamel.yaml is not installed, the program will
+# issue a warning and use pyyaml (=yaml= instead). Comments are lost in this
+#  case.
 try:
     import ruamel.yaml
-
     #ruamel.yaml.add_implicit_resolver()
     ruamel.yaml.RoundTripDumper.add_representer(np.float64,
                 lambda dumper, data: dumper.represent_float(float(data)))
@@ -77,16 +82,25 @@ except:
     # load(stream, yaml.SafeLoader)
     # save(data, stream=f, Dumper=yaml.SafeDumper)
 
+
 class MemoryBranch(object):
     """Represents a branch of a memoryTree
 
     All methods are preceded by an underscore to guarantee that tab expansion
     of a memory branch only displays the available subbranches or leaves.
+
+
+    Parameters
+    ----------
+    parent: MemoryBranch
+        parent is the parent MemoryBranch
+    branch: str
+        branch is a string with the name of the branch to create
+    defaults: list
+        list of default branches that are used if requested data is not
+        found in the current branch
     """
     def __init__(self, parent, branch, defaults=[]):
-        """ parent is the parent MemoryBranch, branch is a string with the
-        name of the branch to create, defaults is a list of default branches
-        that are used if requested data is not found in the current branch """
         self._branch = branch
         self._parent = parent
         self._defaults = defaults
@@ -124,6 +138,9 @@ class MemoryBranch(object):
         return branchname
 
     def _getbranch(self, branchname, defaults=[]):
+        """ returns a Memory branch from the same MemoryTree with
+        branchname.
+        Example: branchname = 'level1.level2.mybranch' """
         branch = self._root
         for subbranch in branchname.split('.'):
             branch = branch.__getattribute__(subbranch)
@@ -132,6 +149,7 @@ class MemoryBranch(object):
 
     @property
     def _data(self):
+        """ The raw data (OrderedDict) or Mapping of the branch """
         return self._parent._data[self._branch]
 
     @property
@@ -144,12 +162,16 @@ class MemoryBranch(object):
         return d
 
     def _reload(self):
+        """ reload data from file"""
         self._parent._reload()
 
     def _save(self):
+        """ write data to file"""
         self._parent._save()
 
     def __getattribute__(self, name):
+        """ implements the dot notation.
+        Example: self.subbranch.leaf returns the item 'leaf' of 'subbranch' """
         if name.startswith('_'):
             return super(MemoryBranch, self).__getattribute__(name)
         else:
@@ -227,6 +249,16 @@ class MemoryBranch(object):
 
 
 class MemoryTree(MemoryBranch):
+    """
+    The highest level of a MemoryBranch construct. All attributes of this
+    object that do not start with '_' are other MemoryBranch objects or
+    Leaves, i.e. key - value pairs.
+
+    Parameters
+    ----------
+    filename: str
+        The filename of the .yml file defining the MemoryTree structure.
+    """
     _data = OrderedDict()
     # never reload more frequently than every 2 s because this is the principal
     # cause of slowing down the code
@@ -244,6 +276,7 @@ class MemoryTree(MemoryBranch):
         super(MemoryTree, self).__init__(self, "")
 
     def _load(self):
+        """ loads data from file """
         logger.debug("Loading config file %s", self._filename)
         with open(self._filename) as f:
             self._data = load(f)
@@ -256,6 +289,7 @@ class MemoryTree(MemoryBranch):
         self._lastreload = time.time()
 
     def _reload(self):
+        """" reloads data from file if file has changed recently """
         # first check if a reload was not performed recently (speed up reasons)
         if self._lastreload + self._reloaddeadtime < time.time():
             logger.debug("Checking change time of config file...")
@@ -264,6 +298,7 @@ class MemoryTree(MemoryBranch):
                 self._load()
 
     def _save(self):
+        """ writes current tree structure and data to file """
         if self._mtime != os.path.getmtime(self._filename):
             logger.warning("Config file has recently been changed on your " +
                            "harddisk. These changes might have been " +

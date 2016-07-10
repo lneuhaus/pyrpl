@@ -155,11 +155,7 @@ class FabryPerot(Model):
         return curves
 
     def setup_pdh(self, **kwargs):
-        pdh = self.inputs["pdh"]
-        if not hasattr(pdh, 'iq'):
-            pdh.iq = self._parent.rp.iqs.pop()
-        pdh.iq.setup(**kwargs)
-        pdh._config['redpitaya_input'] = pdh.iq.name
+        return super(FabryPerot, self).setup_iq(input='pdh', **kwargs)
 
     def sweep(self):
         duration = super(FabryPerot, self).sweep()

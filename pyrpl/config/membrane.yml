@@ -1,0 +1,136 @@
+redpitaya:
+  hostname: 10.214.1.28
+  password: root
+  user: root
+  port: 2222
+  frequency_correction: 1.0
+  filename: fpga//red_pitaya.bin
+  reloadfpga: true
+  monitor_server_name: monitor_server
+  gui: true
+general:
+  name: membrane
+  loglevel: info
+  curvedb: pyinstruments
+model:
+  modeltype: fabryperot
+  wavelength: 1.064e-06
+  finesse: 3000.0
+  length: 0.02
+  lock:
+    error_threshold: 1.0
+    stages:
+      drift:
+        input: transmission
+        detuning: 2.0
+        factor: 1.0
+        time: 3.0
+        offset: 0.5
+      sof:
+        input: transmission
+        detuning: 1.0
+        factor: 1
+        time: 0.01
+      pdh:
+        input: pdh
+        detuning: 0
+        factor: 1
+  calibration:
+    zoomfactor: 0.01
+    relative_threshold: 0.7
+  resonant_reflection: 0.0546875
+  offresonant_reflection: 0.217529296875
+  resonant_transmission: 1.0213445127010345
+  peak_pdh: 0.33526611328125
+inputs:
+  transmission:
+    redpitaya_input: adc1
+    max: 1.0213445127010345
+    min: -0.011370331048965454
+    mean: 0.002864822745323181
+    rms: 0.02792120285076671
+    offset: -0.021466583013534546
+  pdh:
+    setup:
+      input: adc1
+      phase: 0.0
+      amplitude: 0.2
+      output_direct: out2
+      frequency: 50000000.0
+      gain: 0
+      output_signal: quadrature
+      quadrature_factor: 0.1
+      bandwidth:
+      - 500000.0
+      - 500000.0
+      acbandwidth: 100000.0
+    redpitaya_input: iq0
+    max: 0.357177734375
+    min: -0.3133544921875
+    mean: -0.00047831982374191284
+    rms: 0.027148613011115687
+outputs:
+  piezo:
+    redpitaya_output: out2
+    max_voltage: 0.5
+    min_voltage: -0.5
+    Hz_per_V: 1792572653.8004928
+    analogfilter:
+      lowpass:
+      - 50
+    sweep:
+      waveform: ramp
+      frequency: 25.0
+      amplitude: 0.6
+    lock:
+      unity_gain_frequency: 50.0
+      inputfilter:
+      - 0
+      - 0
+      - 0
+      - 0
+    calibrationunits: Hz_per_V
+  current:
+    redpitaya_output: out1
+    max_voltage: 1.0
+    min_voltage: -1.0
+    Hz_per_V: 20000000000.0
+    lock:
+      proportional_gain: 800000
+      inputfilter:
+      - 0
+      - 0
+      - 0
+      - 0
+    analogfilter:
+      lowpass: []
+    calibrationunits: Hz_per_V
+scope:
+  input1: adc1
+  input2: dac2
+  duration: 0.1
+  trigger_source: immediately
+  average: true
+scopegui:
+  coordinates:
+  - 0
+  - 0
+  - 637
+  - 712
+  auto_run_continuous: true
+signal:
+  unit: V
+  V_per_V: 1.0
+  raw_per_V: 8192.0
+  duration: 0.1
+  average: false
+  autosave: true
+  points: 16384
+  trigger_source: immediately
+  threshold: 0
+  hysteresis: 0.002
+  acquire_timeout: 0.5
+  offset_subtraction: true
+  offset: 0
+  peak: 0
+  trigger_delay: 0

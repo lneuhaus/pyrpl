@@ -390,12 +390,15 @@ class ScopeWidget(ModuleWidget):
                 self.module.setup()
         else:
             wp0 = self.module._write_pointer_current
-            datas = []
+            datas = [None, None]
             for ch in (1, 2):
                 if self.cb_ch[ch - 1].checkState() == 2:
-                    datas.append(self.module._get_ch_no_roll(ch))
+                    datas[ch-1] = self.module._get_ch_no_roll(ch)
             wp1 = self.module._write_pointer_current
             for index, data in enumerate(datas):
+                if data is None:
+                    self.curves[index].setVisible(False)
+                    continue
                 to_discard = (wp1 - wp0) % self.module.data_length
                 data = np.roll(data, self.module.data_length - wp0)[
                        to_discard:]
@@ -403,6 +406,7 @@ class ScopeWidget(ModuleWidget):
                 times = self.module.times
                 times -= times[-1]
                 self.curves[index].setData(times, data)
+                self.curves[index].setVisible(True)
         self.timer.start()
 
     def run_continuous(self):
@@ -565,7 +569,7 @@ class AsgGui(ModuleWidget):
     """
 
     property_names = ["waveform",
-                      "scale",
+                      "amplitude",
                       "offset",
                       "frequency",
                       "trigger_source",
@@ -702,7 +706,7 @@ class NaGui(ModuleWidget):
         self.timer.timeout.connect(self.add_one_point)
 
         self.paused = True
-        self.restart_averaging()
+        # self.restart_averaging() # why would you want to do that? Comment?
 
         for prop in (self.properties["start"],
                      self.properties["stop"],
@@ -826,6 +830,7 @@ class NaGui(ModuleWidget):
 
         self.set_state(continuous=self.continuous, paused=True,
                        need_restart=self.need_restart)
+        self.module.iq.amplitude = 0
 
     def new_run(self):
         """
@@ -860,6 +865,7 @@ class NaGui(ModuleWidget):
         if self.paused:
             self.button_single.setText("Run single")
             self.button_continuous.setText(first_word + "(%i averages)" % n_av)
+            self.module.iq.amplitude = 0
         else:
             if active_button == self.button_single:
                 active_button.setText('Pause')
@@ -910,9 +916,15 @@ class NaGui(ModuleWidget):
             y = y / (1.0 + y)
         mag = 20 * np.log10(np.abs(y)   )
         phase = np.angle(y, deg=True)
+        if self.module.logscale:
+            self.curve.setLogMode(xMode=True, yMode=None)
+            self.curve_phase.setLogMode(xMode=True, yMode=None)
+        else:
+            self.curve.setLogMode(xMode=False, yMode=None)
+            self.curve_phase.setLogMode(xMode=False, yMode=None)
         self.curve.setData(x, mag)
         self.curve_phase.setData(x, phase)
-        # plot_time = time() - plot_time_start # actually not working, because done latter
+        # plot_time = time() - plot_time_start # actually not working, because done later
         # self.update_timer.setInterval(plot_time*10*1000) # make sure plotting
         # is only marginally slowing
         # down the measurement...
@@ -1178,6 +1190,13 @@ class RedPitayaGui(RedPitaya):
         self.all_asg_widget = AllAsgGui(parent=None, rp=self)
         self.sa_widget = SpecAnGui(parent=None, module=self.spec_an)
 
+        self.tab_widget = QtGui.QTabWidget()
+        self.tab_widget.addTab(self.scope_widget, "Scope")
+        self.tab_widget.addTab(self.all_asg_widget, "Asg")
+        self.tab_widget.addTab(self.na_widget, "NA")
+        self.tab_widget.addTab(self.sa_widget, "Spec. An.")
+        self.custom_gui_setup()
+
         self.customize_scope()
         self.customize_na()
         self.custom_setup()
@@ -1187,12 +1206,7 @@ class RedPitayaGui(RedPitaya):
         Opens the graphical user interface.
         """
         self.gui_timer = QtCore.QTimer()
-        self.tab_widget = QtGui.QTabWidget()
-        self.tab_widget.addTab(self.scope_widget, "Scope")
-        self.tab_widget.addTab(self.all_asg_widget, "Asg")
-        self.tab_widget.addTab(self.na_widget, "NA")
-        self.tab_widget.addTab(self.sa_widget, "Spec. An.")
-        self.custom_gui_setup()
+
         self.tab_widget.show()
         if runcontinuous:
             self.scope_widget.run_continuous()

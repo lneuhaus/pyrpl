@@ -7,8 +7,8 @@ from .redpitaya_modules import NotReadyError
 
 class NetworkAnalyzer(object):
     """
-    Using an IQ module, the network analyzer can measure the complex coherent response between an output and
-    any signal in the redpitaya. (It would be nice not to be limited to an output_direct)
+    Using an IQ module, the network analyzer can measure the complex coherent
+    response between an output and any signal in the redpitaya.
 
     2 ways to use the NetworkAnalyzer:
       exemple 1:
@@ -38,7 +38,7 @@ class NetworkAnalyzer(object):
         self.acbandwidth = 0
         self.sleeptimes = 0.5
         self.logscale = False
-        self.stabilize = False # if False, no stabilization, if float,
+        self.stabilize = False  # if False, no stabilization, if float,
         #input amplitude is kept at a constant voltage
         self.maxamplitude = 1.0
         self._setup = False
@@ -48,7 +48,6 @@ class NetworkAnalyzer(object):
         """
         Parameters to save.
         """
-
         return dict(start=self.start,
                     stop=self.stop,
                     avg=self.avg,
@@ -106,9 +105,11 @@ class NetworkAnalyzer(object):
         input: input signal
         output_direct: output drive
         acbandwidth: bandwidth of the input high pass filter
-        sleeptimes: ?
-        logscale: should the frequency scan be distributed logarythmically?
-        stabilize: if float stabilizes the drive amplitude such that the input remain constant
+        sleeptimes: the number of averages to wait before acquiring new data
+                    for the next point.
+        logscale: should the frequency scan be distributed logarithmically?
+        stabilize: if float, stabilizes the drive amplitude such that the
+                    input remains constant
         at input [V]=stabilize. If False, then no stabilization
         maxamplitude: limit to the output amplitude
 
@@ -145,17 +146,17 @@ class NetworkAnalyzer(object):
         # preventive saturation
         maxamplitude = abs(self.maxamplitude)
         amplitude = abs(self.amplitude)
-        if amplitude>maxamplitude:
+        if amplitude > maxamplitude:
             amplitude = maxamplitude
         self.iq.setup(frequency=self.x[0],
-                 bandwidth=self.rbw,
-                 gain=0,
-                 phase=0,
-                 acbandwidth=-np.array(self.acbandwidth),
-                 amplitude=amplitude,
-                 input=self.input,
-                 output_direct=self.output_direct,
-                 output_signal='output_direct')
+                      bandwidth=self.rbw,
+                      gain=0,
+                      phase=0,
+                      acbandwidth=-np.array(self.acbandwidth),
+                      amplitude=amplitude,
+                      input=self.input,
+                      output_direct=self.output_direct,
+                      output_signal='output_direct')
 
         # take the discretized rbw (only using first filter cutoff)
         rbw = self.iq.bandwidth[0]
@@ -166,20 +167,12 @@ class NetworkAnalyzer(object):
         self.iq._na_averages = np.int(np.round(125e6 / self.rbw * self.avg))
         self._na_sleepcycles = np.int(np.round(125e6 / self.rbw * self.sleeptimes))
         # compute rescaling factor
-        rescale = 2.0 ** (-self.iq._LPFBITS) * 4.0  # 4 is artefact of fpga code
         # obtained by measuring transfer function with bnc cable - could replace the inverse of 4 above
         # unityfactor = 0.23094044589192711
-
-        #try:
-
-
         self._rescale = 2.0 ** (-self.iq._LPFBITS) * 4.0  # 4 is artefact of fpga code
         self.current_point = 0
-
-        #self.iq.amplitude = self.amplitude  # turn on NA inside try..except block
         self.iq.frequency = self.x[0]  # this triggers the NA acquisition
         self.time_last_point = time()
-
 
     @property
     def current_freq(self):
@@ -211,9 +204,10 @@ class NetworkAnalyzer(object):
 
     @amplitude.setter
     def amplitude(self, val):
-        self.iq.amplitude = val
-        self._amplitude = self.iq.amplitude
-        return val
+        # the na easily messes up other functionaliy by outputting a sine.
+        # self.iq.amplitude = val
+        #self._amplitude = self.iq.amplitude
+        self._amplitude = val
 
     @property
     def time_per_point(self):
@@ -247,7 +241,7 @@ class NetworkAnalyzer(object):
         """
 
         if self.stabilize is not False:
-            amplitude_next = self.stabilize / np.abs(y)
+            amplitude_next = self.stabilize / np.abs(last_normalized_val)
         else:
             amplitude_next = self.amplitude
         if amplitude_next > self.maxamplitude:
@@ -255,7 +249,11 @@ class NetworkAnalyzer(object):
         self.iq.amplitude = amplitude_next
         self.current_point += 1
         if self.current_point < self.points:
+            # writing to iq.frequency triggers the acquisition
             self.iq.frequency = self.x[self.current_point]
+        else:
+            # turn off the modulation when done
+            self.iq.amplitude = 0
         self.time_last_point = time()  # check averaging time from now
 
     def values(self):
@@ -276,7 +274,7 @@ class NetworkAnalyzer(object):
 
         try:
             #for point in xrange(self.points):
-            while self.current_point<self.points:
+            while self.current_point < self.points:
                 #self.current_point = point
                 x, y, amp = self.get_current_point()
                 if self.start == self.stop:

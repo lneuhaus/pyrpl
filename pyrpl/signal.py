@@ -26,8 +26,16 @@ class Signal(object):
     same data trace. This is done by setting a timeout within
     which the signals can be requested, roughly corresponding to the required
     acquisition time. The recommended syntax for simultaneous acquisition is:
-
     mean, rms = signal.mean, signal.rms
+
+    Parameters
+    ----------
+    config: MemoryBranch
+        Any memorybranch of the MemoryTree object corresponding to the
+        config file that defines this signal.
+    branch: str
+        The branch name that defines the signal.
+        Example: "mysignals.myinputs.myinput"
     """
     def __init__(self, config, branch):
         # get the relevant config branch from config tree
@@ -35,6 +43,8 @@ class Signal(object):
         # signal name = branch name
         self._name = self._config._branch
         self._acquiretime = 0
+
+    # The units in which the signal will be calibrated
     unit = ExposedConfigParameter("unit")
 
     def __repr__(self):
@@ -42,6 +52,9 @@ class Signal(object):
 
     @property
     def unit_per_V(self):
+        """ The factor to convert this signal from Volts to the units as
+        specified in the config file. Setting this property will affect the
+        config file. """
         return self._config[self.unit + "_per_V"]
 
     @unit_per_V.setter
@@ -50,6 +63,16 @@ class Signal(object):
 
     # placeholder for acquired data implementation, in default units (V)
     def _acquire(self):
+        """
+        Acquires new data for the signal. Automatically called
+        once the buffered data are older than the timeout specified in the
+        signal configuration, but it can often be useful to manually enforce
+        a new acquisition through this function.
+
+        Returns
+        -------
+        None
+        """
         logger.debug("acquire() of signal %s was called! ", self._name)
         # get data
         self._lastvalues = np.random.normal(size=self._config.points)
@@ -64,11 +87,15 @@ class Signal(object):
                            endpoint=False)
     @property
     def nyquist_frequency(self):
+        """ Returns the nyquist frequency of the predefined measurements
+        such as mean, rms, curve, min, max """
         return self._config.points / self._config.traceduration / 2
 
     # placeholder for acquired data sample implementation (faster)
     @property
     def sample(self):
+        """ Returns one most recent sample of the signal. Does not rely on
+        self._acquire. """
         return (np.random.normal() - self.offset) * self.unit_per_V
 
     # derived quantities from here on, no need to modify in derived class
@@ -82,17 +109,24 @@ class Signal(object):
         return (self._lastvalues - self.offset) * self.unit_per_V
 
     @property
-    def mean(self): return self._values.mean()
+    def mean(self):
+        """ Returns the mean of the last signal acquisition """
+        return self._values.mean()
 
     @property
     def rms(self):
+        """ Returns the rms of the last signal acquisition """
         return np.sqrt(((self._values - self._values.mean())**2).mean())
 
     @property
-    def max(self): return self._values.max()
+    def max(self):
+        """ Returns the maximum of the last signal acquisition """
+        return self._values.max()
 
     @property
-    def min(self): return self._values.min()
+    def min(self):
+        """ Returns the minimum of the last signal acquisition """
+        return self._values.min()
 
     @property
     def curve(self):
@@ -146,9 +180,6 @@ class Signal(object):
         return self._config.peak
 
     @property
-    def redpitaya_input(self): return self._config.redpitaya_input
-
-    @property
     def transfer_function(self):
         try:
             pk = self._config.transfer_function.open_loop
@@ -159,7 +190,26 @@ class Signal(object):
 
 
 class RPSignal(Signal):
-    # a signal that lives inside the RedPitaya
+    """
+    A Signal that corresponds to an inputsignal of the DSPModule inside
+    the RedPitaya
+
+    Parameters
+    ----------
+    config: MemoryBranch
+        Any memorybranch of the MemoryTree object corresponding to the
+        config file that defines this signal.
+    branch: str
+        The branch name that defines the signal.
+        Example: "mysignals.myinputs.myinput"
+    parent: Pyrpl
+        The Pyrpl object hosting this signal. In principle, any object
+        containing an attribute 'rp' referring to a RedPitaya object can be
+        parent.
+    restartscope: function
+        The function that the signal calls after acquisition to reset the
+        scope to its orignal state.
+    """
     def __init__(self, config, branch, parent, restartscope=lambda: None):
         self._parent = parent
         self._rp = parent.rp
@@ -167,7 +217,13 @@ class RPSignal(Signal):
         super(RPSignal, self).__init__(config, branch)
 
     @property
-    def _redpitaya_input(self):
+    def redpitaya_input(self):
+        """
+        Returns
+        -------
+        input: str
+            The DSPModule name of the input signal corresponding to this
+            signal in the redpitaya """
         return self._config.redpitaya_input
 
     def _saverawdata(self, data, times):
@@ -176,6 +232,24 @@ class RPSignal(Signal):
         self._acquiretime = time.time()
 
     def _acquire(self, secondsignal=None):
+        """
+        Acquires new data for the signal. Automatically called
+        once the buffered data are older than the timeout specified in the
+        signal configuration, but it can often be useful to manually enforce
+        a new acquisition through this function.
+
+        Parameters
+        ----------
+        secondsignal: Signal or str
+            Signal or name of signal that should be recorded simultaneously
+            with this signal. The result will be directly stored in the second
+            signal and can be retrieved through properties like curve or
+            mean of the second signal.
+
+        Returns
+        -------
+        None
+        """
         logger.debug("acquire() of signal %s was called! ", self._name)
         if secondsignal is None:
             try:
@@ -208,18 +282,24 @@ class RPSignal(Signal):
         self._restartscope()
 
     @property
-    def _times(self): return self._lasttimes#self._rp.scope.times
+    def _times(self):
+        return self._lasttimes#self._rp.scope.times
 
     @property
     def sample(self):
+        """ Returns a single sample of the signal"""
         self._rp.scope.input1 = self.redpitaya_input
         return (self._rp.scope.voltage1 - self.offset) * self.unit_per_V
 
     @property
-    def nyquist_frequency(self): return 1.0 / self._rp.scope.sampling_time / 2
+    def nyquist_frequency(self):
+        """ Returns the nyquist frequency of the predefined measurements
+        such as mean, rms, curve, min, max """
+        return 1.0 / self._rp.scope.sampling_time / 2
 
     @property
     def curve(self):
+        """ Returns a CurveDB object with the last result of _acquitision """
         curve = super(RPSignal, self).curve
         extraparams = dict(
             trigger_timestamp = self._rp.scope.trigger_timestamp,
@@ -230,6 +310,31 @@ class RPSignal(Signal):
 
 
 class RPOutputSignal(RPSignal):
+    """
+    A Signal that drives an output of the RedPitaya. It shares all
+    properties of RPSignal (an input signal), but furthermore reserves a PID
+    module to forward its input to an output of the redpitaya. Proper
+    configuration in the config file leads to almost automatic locking
+    behaviour: If the output signal knows its transfer function, it can
+    adjust the PID parameters to provide an ideal proportional or integral
+    transfer function.
+
+    Parameters
+    ----------
+    config: MemoryBranch
+        Any memorybranch of the MemoryTree object corresponding to the
+        config file that defines this signal.
+    branch: str
+        The branch name that defines the signal.
+        Example: "mysignals.myinputs.myinput"
+    parent: Pyrpl
+        The Pyrpl object hosting this signal. In principle, any object
+        containing an attribute 'rp' referring to a RedPitaya object can be
+        parent.
+    restartscope: function
+        The function that the signal calls after acquisition to reset the
+        scope to its orignal state.
+    """
     def __init__(self, config, branch, parent, restartscope):
         super(RPOutputSignal, self).__init__(config,
                                              branch,
@@ -238,6 +343,20 @@ class RPOutputSignal(RPSignal):
         self.setup()
 
     def setup(self, **kwargs):
+        """
+        Sets up the output according to the config file specifications.
+
+        Parameters
+        ----------
+        kwargs: dict
+            Not used here, but present to ease overwriting in derived signal
+            classes since the API typically passes all setup parameters of the
+            signal here.
+
+        Returns
+        -------
+        None
+        """
         # each output gets its own pid
         if not hasattr(self, "pid"):
             self.pid = self._rp.pids.pop()
@@ -341,7 +460,13 @@ class RPOutputSignal(RPSignal):
 
     @property
     def issaturated(self):
-        # tells us if the output has saturated
+        """
+        Returns
+        -------
+
+        True: if the output has saturated
+        False: otherwise
+        """
         ival, max, min = self.pid.ival, self.pid.max_voltage, \
                          self.pid.min_voltage
         if ival > max or ival < min:
@@ -350,7 +475,8 @@ class RPOutputSignal(RPSignal):
             return False
 
     def off(self):
-        """ Turns off all feedback or sweep """
+        """ Turns off all feedback gains, sweeps and sets the offset to
+        zero. """
         self.pid.p = 0
         self.pid.i = 0
         self.pid.d = 0
@@ -362,6 +488,7 @@ class RPOutputSignal(RPSignal):
             self.pid2.ival = 0
 
     def unlock(self):
+        """ Turns the signal lock off if the signal is used for locking """
         if self._skiplock:
             return
         else:
@@ -369,7 +496,7 @@ class RPOutputSignal(RPSignal):
 
     def lock(self,
              slope,
-             setpoint,
+             setpoint=None,
              input=None,
              factor=1.0,
              offset=None,
@@ -379,7 +506,7 @@ class RPOutputSignal(RPSignal):
         the pid plus specified external analog filters is a pure integrator if
         the config file defines unity_gain_frequency for the output, or a pure
         proportional gain if the config file defines proportional_gain for the
-        output. This transfer function can be further refined by defining
+        output. This transfer function can be further refined by
         setting the fields 'inputfilter' and 'iir' for the output in the config
         file. An incorrect specification of the external analog filter will
         result in an imperfect transfer function.
@@ -412,6 +539,9 @@ class RPOutputSignal(RPSignal):
         if self._skiplock:
             return
 
+        # normalize slope to our units
+        slope *= self._config[self._config.calibrationunits]
+
         # design the loop shape
         loopshape = self._config.lock._dict  # maybe rename the branch to loopshape
         if ("unity_gain_frequency" in loopshape
@@ -427,7 +557,7 @@ class RPOutputSignal(RPSignal):
                 integrator_on = False
                 gain = self.pid.p
         elif slope == 0:
-                    raise ValueError("Cannot lock on a zero slope!")
+            raise ValueError("Cannot lock on a zero slope!")
         else:
             if "unity_gain_frequency" in loopshape:
                 integrator_on = True
@@ -436,7 +566,6 @@ class RPOutputSignal(RPSignal):
                 integrator_on = False
                 gain = self._config.lock.proportional_gain
             gain *= factor * -1 / slope
-            gain /= self._config[self._config.calibrationunits]
 
         # if gain is disabled somewhere, return
         if gain == 0:
@@ -532,7 +661,69 @@ class RPOutputSignal(RPSignal):
                             + "value. Try to modify analog gains.",
                             name, self._name)
 
+    def save_current_gain(self, slope=1.0):
+        """ converts the current transfer function of the output into its
+        default transfer function by updating relevant settings in the
+        config file.
+
+        Parameters
+        ----------
+        slope: float
+            the slope that lock would receive at the current setpoint.
+
+        Returns
+        -------
+        None
+        """
+        # normalize slope to our units
+        slope *= self._config[self._config.calibrationunits]
+        # save inputfilters
+        self._config.lock.inputfilter = self._inputfilter
+        # save new pid gains
+        newgains = {"p": self.pid.p,
+                    "i": self.pid.i,
+                    "d": self.pid.d}
+        # first take care of pid2 if it exists
+        if hasattr(self, "pid2"):
+            newgains['p'] *= self.pid2.p
+            if self.pid2.d != 0:
+                if newgains["d"] == 0:
+                    newgains["d"] = self.pid2.d
+                else:
+                    logger.error('Nonzero differential gain in pid2 '
+                                 'of output %s detected. No method '
+                                 'implemented to record this gain in the '
+                                 'config file. Please modify '
+                                 'RPOutputsignal.save_current_gain '
+                                 'accordingly! ')
+            if self.pid2.i != 0:
+                self._config.lock['second_integrator_crossover'] = \
+                    self.pid2.i / self.pid2.p
+        # now we only need to transcribe newgains into the config file
+        lowpass = []
+        if newgains['i'] == 0:  # means config file cannot have
+            # unity_gain_frequency entry
+            if "unity_gain_frequency" in self._config.lock._keys():
+                self._config.lock._data.pop("unity_gain_frequency")
+            self._config.lock.proportional_gain = newgains["p"] * -1 * slope
+        else:
+            # remove possible occurrence of proportional_gain
+            if "proportional_gain" in self._config.lock._keys():
+                self._config.lock._data.pop("proportional_gain")
+            self._config.lock.unity_gain_frequency = newgains["i"] * -1 * slope
+            if newgains['p'] != 0:
+                lowpass.append(newgains['i']/newgains['p'])
+            elif newgains['d'] != 0:  # strange case where d != 0 and p ==0
+                lowpass.append(1e20)
+        if newgains['d'] != 0:
+            lowpass.append(newgains['d'] * newgains['p'])
+        # save lowpass setting
+        self._config['analogfilter']['lowpass'] = lowpass
+
+
     def sweep(self, frequency=None, amplitude=None, waveform=None):
+        """ If the signal configuration contains a sweep section, this one
+        is executed here to provide the predefined sweep at the output. """
         try:
             kwargs = self._config.sweep._dict
         except KeyError:
@@ -559,20 +750,10 @@ class RPOutputSignal(RPSignal):
         self.pid.p = amplitude
         return asg.frequency
 
-    def save_current_gain(self, factor=1):
-        try:
-            ugf = self._config.lock.unity_gain_frequency
-        except KeyError:
-            pass
-        else:
-            self._config.lock.unity_gain_frequency = ugf * factor
-        self._config.lock.inputfilter = self._inputfilter
-        if hasattr(self, 'pid2'):
-            self._config.lock['second_integrator_crossover'] = \
-                self.pid2.i / self.pid2.p
-
     @property
     def output_offset(self):
+        """ The output offset of the output signal. At the moment simply a
+        pointer to self.pid.ival """
         return self.pid.ival
 
     @output_offset.setter

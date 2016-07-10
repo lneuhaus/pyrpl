@@ -4,17 +4,27 @@ import logging
 import time
 import threading
 
+from .signal import *
+
 logger = logging.getLogger(name=__name__)
 
 class Model(object):
-    """ generic model object that makes smart use of its inputs and outputs
-    baseclass for all other models """
+    """ A generic model object that makes smart use of its inputs and outputs.
+    This is the baseclass for all other models, such as interferometer,
+    fabryperot and custom ones.
 
+    Parameters
+    ----------
+    parent: Pyrpl
+        The pyrpl object that instantiates this model. The model will
+        retrieve many items from the pyrpl object, such as the redpitaya
+        instance and various signals. It will also create new attributes in
+        parent to provide the most important API functions that the model
+        allows.
+    """
     export_to_parent = ["sweep", "calibrate", "save_current_gain",
                         "unlock", "islocked", "lock", "help", "calib_lock",
                         "_lock"]
-
-
 
     # independent variable that specifies the state of the system
     _variable = 'x'
@@ -34,7 +44,7 @@ class Model(object):
                       'set': {self._variable: 0}}
 
     def setup(self):
-        # setup all signals
+        """ sets up all signals """
         for signal in self.signals.values():
             try:
                 params = signal._config.setup._dict
@@ -97,6 +107,8 @@ class Model(object):
             else:
                 return None
 
+    # helpers that create inverse and slope function of the model functions
+    # corresponding to input signals
     def _make_slope(self, fn):
         def fn_slope(x, *args):
             return self._derivative(fn, x, args=args)
@@ -141,11 +153,6 @@ class Model(object):
                            self._variable)
             return None
 
-    def save_current_gain(self):
-        factor = self.state["set"]["factor"]
-        for output in self.outputs.values():
-            output.save_current_gain(factor)
-
     def islocked(self):
         """ returns True if locked, else False """
         if hasattr(self, self._variable):
@@ -166,6 +173,7 @@ class Model(object):
 
     # unlock algorithm
     def unlock(self):
+        """ unlocks the cavity"""
         for o in self.outputs.values():
             o.unlock()
 
@@ -185,7 +193,8 @@ class Model(object):
             frequency = o.sweep() or frequency
         return 1.0 / frequency
 
-    def _lock(self, input=None, factor=1.0, offset=None, **kwargs):
+    def _lock(self, input=None, factor=1.0, offset=None, outputs=None,
+              _savegain=False, **kwargs):
         """
         Locks all outputs to input.
 
@@ -195,8 +204,13 @@ class Model(object):
           the input signal that provides the error signal
         factor: float
             optional gain multiplier for debugging
-        offset:
+        offset: float or None
             offset to start locking from. Not touched upon if None
+        outputs: list or None
+            if None, all outputs with lock configuration are enabled.
+            if list of RPOutputSignal, only the specified outputs are touched.
+        _savegain: bool
+            option for automatic gain configuration, leave False
         kwargs must contain a pair _variable = setpoint, where _variable
         is the name of the variable of the model, as specified in the
         class attribute _variable.
@@ -205,7 +219,8 @@ class Model(object):
         -------
         None
         """
-        self.state["set"].update(kwargs)
+        if kwargs:
+            self.state["set"].update(kwargs)
         self.state["set"]["factor"] = factor
         if input is None:
             input = self.inputs.values()[0]
@@ -217,19 +232,31 @@ class Model(object):
         slope = self.__getattribute__(inputname+'_slope')(variable)
 
         # trivial to lock: just enable all gains
-        for o in self.outputs.values():
+        if outputs is None:
+            outputs = self.outputs.values()
+        for o in outputs:
+            if not isinstance(o, RPOutputSignal):
+                o = self.outputs[o]
             # get unit of output calibration factor
             unit = o._config.calibrationunits.split("_per_V")[0]
             #get calibration factor
             variable_per_unit = self.__getattribute__(self._variable
                                                       + "_per_" + unit)
-            # enable lock of the output
-            o.lock(slope=slope*variable_per_unit,
-                   setpoint=setpoint,
-                   input=input,
-                   offset=offset,
-                   factor=factor,
-                   **kwargs)
+            if not savegain:
+                # enable lock of the output
+                o.lock(slope=slope*variable_per_unit,
+                       setpoint=setpoint,
+                       input=input,
+                       offset=offset,
+                       factor=factor,
+                       **kwargs)
+            else: # special option: instead of locking, write the gain
+                o.save_current_gain(slope=slope*variable_per_unit)
+
+    def save_current_gain(self, outputs=None):
+        """ saves the current gain setting as default one (for all outputs
+        unless a list of outputs is given, similar to _lock) """
+        self._lock(outputs=outputs, _savegain=True)
 
     def lock(self,
              detuning=None,
@@ -237,7 +264,6 @@ class Model(object):
              firststage=None,
              laststage=None,
              thread=False):
-
         # firststage will allow timer-based recursive iteration over stages
         # i.e. calling lock(firststage = nexstage) from within this code
         stages = self._config.lock.stages._keys()
@@ -359,11 +385,40 @@ class Model(object):
         return curves
 
     def calib_lock(self):
+        """ shortcut to call calibrate(), lock() and return islocked()"""
         self.calibrate()
         self.lock()
         return self.islocked()
 
+    def setup_iq(self, input='iq', **kwargs):
+        """
+        Sets up an input signal derived from demodultaion of another input.
+        The config file must contain an input signal named like the the
+        parameter input with a section 'setup' whose entries are directly
+        passed to redpitaya_modules.IQ.setup().
+
+        Parameters
+        ----------
+        input: str
+        kwargs: dict
+            optionally override config files setup section by passing
+            the arguments as kwargs here
+
+        Returns
+        -------
+        None
+        """
+        if not isinstance(iq, Signal):
+            iq = self.inputs[input]
+        if not kwargs:
+            kwargs = pdh._config.setup._dict
+        if not hasattr(iq, 'iq'):
+            iq.iq = self._parent.rp.iqs.pop()
+        iq.iq.setup(**kwargs)
+        iq._config['redpitaya_input'] = iq.iq.name
+
     def help(self):
+        """ provides some help to get started. """
         self.logger.info("PyRP Lockbox\n-------------------\n"
                          + "Usage: \n"
                          + "Create Pyrpl object: p = Pyrpl('myconfigfile')\n"
