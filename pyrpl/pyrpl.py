@@ -449,7 +449,7 @@ class Pyrpl(Lockbox):
         from .gui import RedPitayaGui
         if not isinstance(self.rp, RedPitayaGui):
             self.rp.__class__ = RedPitayaGui
-            print "seting_up gui"
+            self.logger.debug("Seting up gui")
             self.rp.setup_gui()
             self.rp.gui()
         self._setupscope()
