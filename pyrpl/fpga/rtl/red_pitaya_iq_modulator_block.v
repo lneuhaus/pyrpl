@@ -59,44 +59,55 @@ module red_pitaya_iq_modulator_block #(
     output signed [OUTBITS-1:0] signal_q2_o  //the q-quadrature
 );
 
+// firstproduct
 wire signed [GAINBITS+INBITS-1:0] firstproduct1;
 wire signed [GAINBITS+INBITS-1:0] firstproduct2;
-assign firstproduct1 = signal1_i * g1; // + (g2 <<<INBITS);
-assign firstproduct2 = signal2_i * g4;
+red_pitaya_product_sat  #(
+	.BITS_IN1(INBITS),
+	.BITS_IN2(GAINBITS),
+	.SHIFT(SHIFTBITS),
+	.BITS_OUT(OUTBITS))
+firstproduct[1:0] (
+  .factor1_i({signal2_i, signal1_i}),
+  .factor2_i({g4, g1}),
+  .product_o({firstproduct2, firstproduct1}),
+  .overflow ()
+);
 
-reg signed [OUTBITS-1:0] firstproduct1_reg;
-reg signed [OUTBITS-1:0] firstproduct2_reg;
+// buffering
+reg signed [OUTBITS-1+1:0] firstproduct1_reg;
+reg signed [OUTBITS-1+1:0] firstproduct2_reg;
 always @(posedge clk_i) begin
-    if ({firstproduct1[GAINBITS+INBITS-1],|firstproduct1[GAINBITS+INBITS-2:GAINBITS+INBITS-SHIFTBITS-1]} == 2'b01) //positive overflow
-        firstproduct1_reg <= {1'b0,{OUTBITS-1{1'b1}}};
-     else if ({firstproduct1[GAINBITS+INBITS-1],&firstproduct1[GAINBITS+INBITS-2:GAINBITS+INBITS-SHIFTBITS-1]} == 2'b10) //negative overflow
-        firstproduct1_reg <= {1'b1,{OUTBITS-1{1'b0}}};
-     else
-        // firstproduct1_reg <= firstproduct1[GAINBITS+INBITS-SHIFTBITS-1:GAINBITS+INBITS-SHIFTBITS-OUTBITS];
-        // fixes issue with maximum amplitude <= 0.5 V. Attention: no
-        // saturation implemented when gain*amplitude != 0 in python code
-        firstproduct1_reg <= firstproduct1[GAINBITS+INBITS-SHIFTBITS-1:GAINBITS+INBITS-SHIFTBITS-OUTBITS] + $signed(g2>>>(GAINBITS-OUTBITS));
-     if ({firstproduct2[GAINBITS+INBITS-1],|firstproduct2[GAINBITS+INBITS-2:GAINBITS+INBITS-SHIFTBITS-1]} == 2'b01) //positive overflow
-        firstproduct2_reg <= {1'b0,{OUTBITS-1{1'b1}}};
-     else if ({firstproduct2[GAINBITS+INBITS-1],&firstproduct2[GAINBITS+INBITS-2:GAINBITS+INBITS-SHIFTBITS-1]} == 2'b10) //negative overflow
-        firstproduct2_reg <= {1'b1,{OUTBITS-1{1'b0}}};
-     else
-        firstproduct2_reg <= firstproduct2[GAINBITS+INBITS-SHIFTBITS-1:GAINBITS+INBITS-SHIFTBITS-OUTBITS];
+    firstproduct1_reg <= firstproduct1 + $signed((g2>>>(GAINBITS-OUTBITS)));
+    firstproduct2_reg <= firstproduct2;
 end
 
-wire signed [OUTBITS+SINBITS-1:0] secondproduct1;
-wire signed [OUTBITS+SINBITS-1:0] secondproduct2;
+wire signed [OUTBITS+SINBITS-1+1:0] secondproduct1;
+wire signed [OUTBITS+SINBITS-1+1:0] secondproduct2;
 assign secondproduct1 = firstproduct1_reg * sin;
 assign secondproduct2 = firstproduct2_reg * cos;
 
-reg signed [OUTBITS+SINBITS-1:0] secondproduct_reg;
+reg signed [OUTBITS+SINBITS-1+2:0] secondproduct_reg;
 reg signed [OUTBITS-1:0] secondproduct_out;
+wire signed [OUTBITS-1:0] secondproduct;
 
 //summation and saturation management
 always @(posedge clk_i) begin
     secondproduct_reg <= secondproduct1 + secondproduct2;
-    secondproduct_out <= secondproduct_reg[OUTBITS+SINBITS-1:SINBITS]; //can boost the gain here because no overflow is possible if the sin does not exceed 2**(lutsize-1)-1
+    secondproduct_out <= secondproduct;
 end
+
+red_pitaya_saturate
+    #( .BITS_IN(OUTBITS+SINBITS+1),
+       .BITS_OUT(OUTBITS),
+       .SHIFT(1)
+    )
+    sumsaturation
+    (
+    .input_i(secondproduct_reg),
+    .output_o(secondproduct)
+    );
+
 assign dat_o = secondproduct_out;
 
 //output the scaled quadrature
