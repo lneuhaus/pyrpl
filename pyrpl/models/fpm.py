@@ -111,7 +111,7 @@ class FPM(FabryPerot):
         self._parent.rp.asg1.setup(
             frequency=frequency,
             amplitude=amplitude,
-            cycles_per_burst=int(np.round(frequency/duration)),
+            cycles_per_burst=int(np.round(frequency*duration)),
             output_direct=output,
             trigger_source="ext_positive_edge")
 

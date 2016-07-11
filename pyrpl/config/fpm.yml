@@ -3,7 +3,8 @@ redpitaya:
   password: root
   user: root
   port: 2222
-  frequency_correction: 0.9999801526493788
+  frequency_correction: 1.00004121095
+  #0.9999801526493788
   filename: fpga//red_pitaya.bin
   reloadfpga: true
   # autostart gui?
@@ -36,8 +37,8 @@ model:
   # for interferometer, this is the phase error in radians
   # this value is uniquely needed for the function 'islocked'
   maxerror: 0.1
-  offresonant_reflection: 0.3264292851090431
-  resonant_reflection: 0.12061873823404312
+  offresonant_reflection: 0.15357772260904312
+  resonant_reflection: 0.05445662885904312
   finesse: 92000.0
   length: 5.61e-05
   # signals in order of their preferrence
@@ -94,25 +95,25 @@ model:
     relative_threshold: 0.9
 
   peak: 0.07061767578125
-  peak_pdh: 0.103515625
+  peak_pdh: 0.050048828125
 # all signals that are inputs of the lockbox. Must be signal names understood
 # by the model.
 inputs:
   reflection:
     redpitaya_input: adc2
     offset: 0.013536535203456879
-    max: 0.3264292851090431
-    min: 0.12061873823404312
-    mean: 0.30763110518455505
-    rms: 0.02096453246895727
+    max: 0.15357772260904312
+    min: 0.05445662885904312
+    mean: 0.14032438397407532
+    rms: 0.009151323807230445
   pdh:
     redpitaya_input: adc1
-    max: 0.10479386895895004
-    min: -0.10223738104104996
-    mean: 0.00013869255781173706
-    rms: 0.018262576383667562
+    max: 0.04998429864645004
+    min: -0.05011335760354996
+    mean: -0.0004187151789665222
+    rms: 0.008926723700425429
     setup:
-      phase: -5.0
+      phase: -5.0 #-5
       amplitude: 4.0
       amplitude_for_finesse: 3.5
       frequency: 80000000.0
@@ -141,7 +142,7 @@ outputs:
       lowpass:
       - 0.01
     calibrationunits: m_per_V
-    lastoffset: -0.5450439453125
+    lastoffset: -0.5469970703125
   piezo:
     redpitaya_output: out2
     # we will calibrate the piezo response in units of m_per_V (not a necessary
