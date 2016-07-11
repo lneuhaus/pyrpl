@@ -259,7 +259,7 @@ class RPSignal(Signal):
         if isinstance(secondsignal, str):
             secondsignal = self._parent.signals[secondsignal]
         if secondsignal is not None:
-            input2 = secondsignal._redpitaya_input
+            input2 = secondsignal.redpitaya_input
             logger.debug("Second signal '%s' for acquisition set up.",
                          secondsignal)
         else:
@@ -270,7 +270,7 @@ class RPSignal(Signal):
                              threshold=self._config.threshold,
                              hysteresis=self._config.hysteresis,
                              trigger_delay=self._config.trigger_delay,
-                             input1=self._redpitaya_input,
+                             input1=self.redpitaya_input,
                              input2=input2)
         try:
             timeout = self._config.timeout
@@ -453,10 +453,6 @@ class RPOutputSignal(RPSignal):
         if not hasattr(self, "iir"):
             self.iir = self._rp.iirs.pop()
         logger.error("IIR setup not implemented at the time being.")
-
-    @property
-    def _redpitaya_input(self):
-        return self.pid.name
 
     @property
     def issaturated(self):
@@ -798,3 +794,15 @@ class RPOutputSignal(RPSignal):
         except KeyError:
             sic = 0
         return sic
+
+
+    @property
+    def redpitaya_input(self):
+        """
+        Returns
+        -------
+        input: str
+            The DSPModule name of the input signal corresponding to this
+            signal in the redpitaya """
+        return self.pid.name
+
