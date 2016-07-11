@@ -21,6 +21,7 @@ there for more information. """
 
 import numpy as np
 import time
+from time import sleep
 from . import pyrpl_utils
 import sys
 import matplotlib.pyplot as plt
