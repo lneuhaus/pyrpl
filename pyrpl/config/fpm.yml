@@ -37,8 +37,8 @@ model:
   # for interferometer, this is the phase error in radians
   # this value is uniquely needed for the function 'islocked'
   maxerror: 0.1
-  offresonant_reflection: 0.3158091679215431
-  resonant_reflection: 0.10938826948404312
+  offresonant_reflection: 0.18421737104654312
+  resonant_reflection: 0.05848494917154312
   finesse: 92000.0
   length: 5.61e-05
   # signals in order of their preferrence
@@ -96,7 +96,7 @@ model:
         time: 0.01
         outputs:
         - piezo
-        - fastpiezo
+        #- fastpiezo
         setup_iir: true
         #second_integrator: 1.0
       #call_islocked: {}
@@ -105,25 +105,25 @@ model:
     relative_threshold: 0.9
 
   peak: 0.07061767578125
-  peak_pdh: 0.100830078125
+  peak_pdh: 0.06298828125
 # all signals that are inputs of the lockbox. Must be signal names understood
 # by the model.
 inputs:
   reflection:
     redpitaya_input: adc2
     offset: 0.013536535203456879
-    max: 0.3158091679215431
-    min: 0.10938826948404312
-    mean: 0.29647160321474075
-    rms: 0.021936986802552357
+    max: 0.18421737104654312
+    min: 0.05848494917154312
+    mean: 0.16080574691295624
+    rms: 0.019732003111850055
   pdh:
     redpitaya_input: adc1
-    max: 0.10332902520895004
-    min: -0.09833113104104996
-    mean: -0.00010203570127487183
-    rms: 0.020428170656044818
+    max: 0.06341203302145004
+    min: -0.06256452947854996
+    mean: -0.000102214515209198
+    rms: 0.018896118897273623
     setup:
-      phase: -5.0 #-5
+      phase: -5
       amplitude: 4.0
       amplitude_for_finesse: 3.5
       frequency: 80000000.0
@@ -152,7 +152,7 @@ outputs:
       lowpass:
       - 0.01
     calibrationunits: m_per_V
-    lastoffset: -0.5537109375
+    lastoffset: -0.5517578125
   piezo:
     redpitaya_output: out2
     # we will calibrate the piezo response in units of m_per_V (not a necessary
@@ -184,8 +184,8 @@ outputs:
       - 9714.04681957369
       - 9714.04681957369
       - 9714.04681957369
-      - 9714.04681957369
-      - 9714.04681957369
+      #- 9714.04681957369
+      #- 9714.04681957369
     sweep:
       waveform: sin
       frequency: 25.0
