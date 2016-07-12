@@ -70,8 +70,13 @@ module red_pitaya_iir_block
     parameter IIRSIGNALBITS = 36, //32  // internally represent calculated results with IIRSIGNALBITS bits (maybe overkill?)
     parameter SIGNALBITS = 14,      // in- and output signal bitwidth
     parameter SIGNALSHIFT = 0       // over-represent input by SIGNALSHIFT bits (e.g. once input averaging is implemented)
-    )
-    (
+
+   //parameters for input pre-filter
+   parameter     FILTERSTAGES = 2,
+   parameter     FILTERSHIFTBITS = 4,
+   parameter     FILTERMINBW = 1000,
+   )
+   (
    // data
    input                 clk_i           ,  // clock
    input                 rstn_i          ,  // reset - active low
@@ -95,6 +100,7 @@ reg     		copydata;
 reg [32-1:0]    overflow;   // accumulated overflows
 wire [7-1:0]    overflow_i; // instantaneous overflows
 reg [32-1:0]    iir_coefficients [0:IIRSTAGES*4*2-1];
+reg [ 32-1: 0] set_filter;   // input filter setting
 
 always @(posedge clk_i) begin
    if (rstn_i == 1'b0) begin
@@ -102,6 +108,7 @@ always @(posedge clk_i) begin
       on <= 1'b0;
       shortcut <= 1'b0;
       copydata <= 1'b1;
+      set_filter <= 32'd0;
    end
    else begin
       if (wen) begin
@@ -115,7 +122,9 @@ always @(posedge clk_i) begin
 	     16'h100 : begin ack <= wen|ren; rdata <= {{32-8{1'b0}},loops}; end
 	     16'h104 : begin ack <= wen|ren; rdata <= {{32-1{1'b0}},copydata,shortcut,on}; end
 	     16'h108 : begin ack <= wen|ren; rdata <= overflow; end
-		 
+
+         16'h120 : begin ack <= wen|ren; rdata <= set_filter; end
+
 		 16'h200 : begin ack <= wen|ren; rdata <= IIRBITS; end
 		 16'h204 : begin ack <= wen|ren; rdata <= IIRSHIFT; end
 		 16'h208 : begin ack <= wen|ren; rdata <= IIRSTAGES; end
@@ -129,6 +138,25 @@ always @(posedge clk_i) begin
 	  endcase	     
    end
 end
+
+//-----------------------------
+// cascaded set of FILTERSTAGES low- or high-pass filters
+wire signed [SIGNALBITS+SIGNALSHIFT-1:0] dat_i_filtered;
+red_pitaya_filter_block #(
+     .STAGES(FILTERSTAGES),
+     .SHIFTBITS(FILTERSHIFTBITS),
+     .SIGNALBITS(SIGNALBITS),
+     .EXTRAOUTPUTBITS(SIGNALSHIFT),
+     .MINBW(FILTERMINBW)
+  )
+  iir_inputfilter
+  (
+  .clk_i(clk_i),
+  .rstn_i(rstn_i),
+  .set_filter(set_filter),
+  .dat_i(dat_i),
+  .dat_o(dat_i_filtered)
+  );
 
 
 /*
@@ -193,7 +221,7 @@ always @(posedge clk_i) begin
         if (stage0 == 8'h00)
             stage0 <= loops - 8'h01;
         else
-            stage0 <= stage0 - 8'h01; 
+            stage0 <= stage0 - 8'h01;
     end
     stage1 <= stage0;
     stage2 <= stage1;
@@ -210,7 +238,9 @@ reg signed [IIRBITS-1:0] b0;
 reg signed [IIRBITS-1:0] b1;
 
 wire signed [IIRSIGNALBITS-1:0] x0;
-assign x0 = {{IIRSIGNALBITS-SIGNALSHIFT-SIGNALBITS+1{dat_i[SIGNALBITS-1]}},dat_i[SIGNALBITS-2:0],{SIGNALSHIFT{1'b0}}};
+//assign x0 = {{IIRSIGNALBITS-SIGNALSHIFT-SIGNALBITS+1{dat_i[SIGNALBITS-1]}},dat_i[SIGNALBITS-2:0],{SIGNALSHIFT{1'b0}}};
+assign x0 = $signed(dat_i_filtered);
+
 //averaging in x0_sum below
 //reg signed [IIRSIGNALBITS-1:0] x0_sum;
 //reg signed [IIRSIGNALBITS-1:0] x0;
@@ -397,11 +427,13 @@ always @(posedge clk_i) begin
 
         // from step IIRSTAGES-1 to 0 (IIRSTAGES steps), increment the sum
         // start with a reset
-        if (stage5 == (IIRSTAGES-1)) begin
+        //if (stage5 == (IIRSTAGES-1)) begin
+        if (stage5 == (loops-1)) begin
             dat_o_sum <= z0;
         end
         // then increment
-        else if (stage5 < IIRSTAGES) begin
+        //else if (stage5 < IIRSTAGES) begin
+        else if (stage5 < loops) begin
             dat_o_sum <= dat_o_sum + z0;
         end
         // once cycle of 5 is complete, output the fresh sum (after saturation)

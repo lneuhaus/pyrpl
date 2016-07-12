@@ -42,6 +42,7 @@ module red_pitaya_lpf_block
 #(
     parameter     SHIFTBITS =     4,//shift can be from 0 to 15 bits
     parameter     SIGNALBITS   = 14, //bitwidth of signals
+    parameter     EXTRAOUTPUTBITS = 0, //extra bits for the output
     parameter     MINBW        = 10  //minimum allowed filter bandwidth
     )
 (
@@ -51,7 +52,7 @@ module red_pitaya_lpf_block
     input filter_on,
     input highpass,
     input signed  [SIGNALBITS-1:0] signal_i,
-    output signed [SIGNALBITS-1:0] signal_o
+    output signed [SIGNALBITS+EXTRAOUTPUTBITS-1:0] signal_o
 );
 
 `define CLOG2(x) \
@@ -91,27 +92,26 @@ module red_pitaya_lpf_block
    
 localparam MAXSHIFT = `CLOG2(125000000/MINBW);
 
-reg  signed [SIGNALBITS+MAXSHIFT-1:0]    y;
-reg  signed [SIGNALBITS+MAXSHIFT-1:0]    delta;   //we need this cumbersome imperfect implementation with a delta buffer to introduce some delay so the code works at 125 MHZ
-wire signed [SIGNALBITS+MAXSHIFT-1:0]    shifted_delta;
-wire signed [SIGNALBITS-1:0]  y_out;
+reg  signed [SIGNALBITS+MAXSHIFT+EXTRAOUTPUTBITS-1:0]    y;
+reg  signed [SIGNALBITS+1+EXTRAOUTPUTBITS-1:0]    delta;   //we need this cumbersome imperfect implementation with a delta buffer to introduce some delay so the code works at 125 MHZ
+wire signed [SIGNALBITS+MAXSHIFT+EXTRAOUTPUTBITS-1:0]    shifted_delta;
+wire signed [SIGNALBITS+EXTRAOUTPUTBITS-1:0]  y_out;
 wire filter_off;
 
-assign y_out = y[MAXSHIFT+SIGNALBITS-1:MAXSHIFT];
+assign y_out = y[MAXSHIFT+SIGNALBITS+EXTRAOUTPUTBITS-1:MAXSHIFT];
 assign shifted_delta = delta<<shift;
 
 always @(posedge clk_i) begin
     if (rstn_i == 1'b0) begin
-        y <=            {MAXSHIFT+SIGNALBITS{1'b0}};
-        delta <=        {MAXSHIFT+SIGNALBITS{1'b0}};
+        y <=            {MAXSHIFT+SIGNALBITS+EXTRAOUTPUTBITS{1'b0}};
+        delta <=        {MAXSHIFT+SIGNALBITS+EXTRAOUTPUTBITS{1'b0}};
     end
     else begin
-        delta <= signal_i-y_out;
+        delta <= (signal_i<<EXTRAOUTPUTBITS)-y_out;
         y <= y + shifted_delta;
     end
 end
   
-assign signal_o = (filter_on == 1'b0) ? signal_i : ( (highpass==1'b0) ? y_out : delta);
-
+assign signal_o = (filter_on == 1'b0) ? {signal_i, {EXTRAOUTPUTBITS{1'b0}}} : ( (highpass==1'b0) ? y_out : delta);
 
 endmodule
