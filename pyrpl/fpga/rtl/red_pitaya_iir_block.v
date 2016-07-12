@@ -74,7 +74,7 @@ module red_pitaya_iir_block
    //parameters for input pre-filter
    parameter     FILTERSTAGES = 2,
    parameter     FILTERSHIFTBITS = 4,
-   parameter     FILTERMINBW = 1000,
+   parameter     FILTERMINBW = 1000
    )
    (
    // data
