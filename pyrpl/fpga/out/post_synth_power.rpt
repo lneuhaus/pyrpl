@@ -1,7 +1,7 @@
 Copyright 1986-2015 Xilinx, Inc. All Rights Reserved.
 ----------------------------------------------------------------------------------------
 | Tool Version     : Vivado v.2015.4 (lin64) Build 1412921 Wed Nov 18 09:44:32 MST 2015
-| Date             : Tue Jul 12 20:58:56 2016
+| Date             : Tue Jul 12 22:26:22 2016
 | Host             : ubuntu running 64-bit Ubuntu 14.04.4 LTS
 | Command          : report_power -file out/post_synth_power.rpt
 | Design           : red_pitaya_top
@@ -50,16 +50,16 @@ Table of Contents
 | On-Chip                  | Power (W) | Used     | Available | Utilization (%) |
 +--------------------------+-----------+----------+-----------+-----------------+
 | Clocks                   |     0.072 |       15 |       --- |             --- |
-| Slice Logic              |     0.142 |    38947 |       --- |             --- |
-|   LUT as Logic           |     0.121 |    17123 |     17600 |           97.29 |
+| Slice Logic              |     0.142 |    38970 |       --- |             --- |
+|   LUT as Logic           |     0.121 |    17136 |     17600 |           97.36 |
 |   CARRY4                 |     0.016 |     1490 |      4400 |           33.86 |
-|   Register               |     0.005 |    15311 |     35200 |           43.50 |
-|   F7/F8 Muxes            |    <0.001 |      798 |     17600 |            4.53 |
+|   Register               |     0.005 |    15313 |     35200 |           43.50 |
+|   F7/F8 Muxes            |    <0.001 |      805 |     17600 |            4.57 |
 |   LUT as Shift Register  |    <0.001 |       74 |      6000 |            1.23 |
 |   Others                 |     0.000 |      449 |       --- |             --- |
 |   BUFG                   |     0.000 |        1 |        32 |            3.13 |
 |   LUT as Distributed RAM |     0.000 |       24 |      6000 |            0.40 |
-| Signals                  |     0.130 |    31904 |       --- |             --- |
+| Signals                  |     0.130 |    31913 |       --- |             --- |
 | Block RAM                |     0.103 |       34 |        60 |           56.67 |
 | PLL                      |     0.097 |        1 |         2 |           50.00 |
 | DSPs                     |     0.043 |       48 |        80 |           60.00 |
@@ -67,7 +67,7 @@ Table of Contents
 | XADC                     |     0.004 |        1 |       --- |             --- |
 | PS7                      |     1.292 |        1 |       --- |             --- |
 | Static Power             |     0.152 |          |           |                 |
-| Total                    |     2.323 |          |           |                 |
+| Total                    |     2.324 |          |           |                 |
 +--------------------------+-----------+----------+-----------+-----------------+
 
 
@@ -77,7 +77,7 @@ Table of Contents
 +-----------+-------------+-----------+-------------+------------+
 | Source    | Voltage (V) | Total (A) | Dynamic (A) | Static (A) |
 +-----------+-------------+-----------+-------------+------------+
-| Vccint    |       1.000 |     0.499 |       0.488 |      0.011 |
+| Vccint    |       1.000 |     0.499 |       0.489 |      0.011 |
 | Vccaux    |       1.800 |     0.069 |       0.057 |      0.012 |
 | Vcco33    |       3.300 |     0.085 |       0.084 |      0.001 |
 | Vcco25    |       2.500 |     0.001 |       0.000 |      0.001 |
@@ -289,7 +289,7 @@ Table of Contents
 |       axi_awfifo_reg_0_15_30_35                                                  |    <0.001 |
 |       axi_awfifo_reg_0_15_36_36                                                  |    <0.001 |
 |       axi_wfifo_reg_0_15_60_65                                                   |    <0.001 |
-|     axi_slave_gp0                                                                |     0.001 |
+|     axi_slave_gp0                                                                |     0.002 |
 |     system_i                                                                     |     1.321 |
 |       system_i                                                                   |     1.321 |
 |         axi_protocol_converter_0                                                 |     0.017 |

@@ -100,7 +100,7 @@ reg     		copydata;
 reg [32-1:0]    overflow;   // accumulated overflows
 wire [7-1:0]    overflow_i; // instantaneous overflows
 reg [32-1:0]    iir_coefficients [0:IIRSTAGES*4*2-1];
-reg [ 32-1: 0] set_filter;   // input filter setting
+reg [ 32-1: 0]  set_filter;   // input filter setting
 
 always @(posedge clk_i) begin
    if (rstn_i == 1'b0) begin
@@ -128,10 +128,14 @@ always @(posedge clk_i) begin
 		 16'h200 : begin ack <= wen|ren; rdata <= IIRBITS; end
 		 16'h204 : begin ack <= wen|ren; rdata <= IIRSHIFT; end
 		 16'h208 : begin ack <= wen|ren; rdata <= IIRSTAGES; end
-		 
+
+         16'h220 : begin ack <= wen|ren; rdata <= FILTERSTAGES; end
+	     16'h224 : begin ack <= wen|ren; rdata <= FILTERSHIFTBITS; end
+	     16'h228 : begin ack <= wen|ren; rdata <= FILTERMINBW; end
+
 		 // disable read-back of coefficients to save resources
 		 // this makes a big difference since it will allow the implementation of 
-		 // the coefficients ass RAM and not as registers
+		 // the coefficients as RAM and not as registers
 		 // 16'b1zzzzzzzzzzzzzzz: 	 begin ack <= wen|ren; rdata <= iir_coefficients[addr[12-1:2]]; end    
 
 	     default: begin ack <= wen|ren;  rdata <=  32'h0; end 
@@ -379,7 +383,7 @@ always @(posedge clk_i) begin
         // the computation will stretch over several cycles. while each computation is performed once per cycle, we will 
         // follow the signal of one particular biquad element as its signals go through the different phases of computation
         // over subsequent cycles
-        
+
         //cycle n 
         if (stage0<IIRSTAGES) begin
             y1a <= y1_i[stage0];

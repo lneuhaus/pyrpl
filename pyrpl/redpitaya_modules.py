@@ -1258,7 +1258,7 @@ class IQ(FilterModule):
             return x,y,amplitudes
 
 
-class IIR(DspModule):
+class IIR(FilterModule):
     # invert denominator coefficients to convert from scipy notation to
     # the fpga-implemented notation (following Oppenheim and Schaefer: DSP)
     _invert = True
