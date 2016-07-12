@@ -158,15 +158,15 @@ wire signed [IIRBITS-1:0] b1_i [0:IIRSTAGES-1];
 wire signed [IIRBITS-1:0] a1_i [0:IIRSTAGES-1];
 wire signed [IIRBITS-1:0] a2_i [0:IIRSTAGES-1];
 
+integer i; // for later use
 genvar j;
 generate for (j=0; j<IIRSTAGES; j=j+1) begin
-    b0_i[j] <= {iir_coefficients[8*i+1],iir_coefficients[8*i+0]};
-    b1_i[j] <= {iir_coefficients[8*i+3],iir_coefficients[8*i+2]};
-    a1_i[j] <= {iir_coefficients[8*i+5],iir_coefficients[8*i+4]};
-    a2_i[j] <= {iir_coefficients[8*i+7],iir_coefficients[8*i+6]};
+    assign b0_i[j] = {iir_coefficients[8*j+1],iir_coefficients[8*j+0]};
+    assign b1_i[j] = {iir_coefficients[8*j+3],iir_coefficients[8*j+2]};
+    assign a1_i[j] = {iir_coefficients[8*j+5],iir_coefficients[8*j+4]};
+    assign a2_i[j] = {iir_coefficients[8*j+7],iir_coefficients[8*j+6]};
     end
 endgenerate
-
 
 // loop management - let stage0 repeatedly run from loops-1 to 0
 // stage_n contains the number stage0 with n cycles of delay
@@ -227,14 +227,14 @@ red_pitaya_product_sat #( .BITS_IN1(IIRSIGNALBITS), .BITS_IN2(IIRBITS), .SHIFT(I
   .factor2_i(a1),
   .product_o(p_ay1_full),
   .overflow (overflow_i[0])
-  );   
+  );
 red_pitaya_product_sat #( .BITS_IN1(IIRSIGNALBITS), .BITS_IN2(IIRBITS), .SHIFT(IIRSHIFT), .BITS_OUT(IIRSIGNALBITS))
    p_ay2_module (
     .factor1_i(y2a),
     .factor2_i(a2),
     .product_o(p_ay2_full),
     .overflow (overflow_i[1])
-    );   
+    );
 reg signed [IIRSIGNALBITS-1:0] p_ay1;
 reg signed [IIRSIGNALBITS-1:0] p_ay2;
 
@@ -246,7 +246,7 @@ red_pitaya_saturate #( .BITS_IN (IIRSIGNALBITS+2), .SHIFT(0), .BITS_OUT(IIRSIGNA
    .input_i(y0_sum),
    .output_o(y0_full),
    .overflow (overflow_i[2])
-    );   
+    );
 
 wire signed [IIRSIGNALBITS-1:0] p_by0_full;
 wire signed [IIRSIGNALBITS-1:0] p_by1_full;
@@ -256,14 +256,14 @@ red_pitaya_product_sat #( .BITS_IN1(IIRSIGNALBITS), .BITS_IN2(IIRBITS), .SHIFT(I
   .factor2_i(b0),
   .product_o(p_by0_full),
   .overflow (overflow_i[3])
-   );   
+   );
 red_pitaya_product_sat #( .BITS_IN1(IIRSIGNALBITS), .BITS_IN2(IIRBITS), .SHIFT(IIRSHIFT), .BITS_OUT(IIRSIGNALBITS))
    p_by1_module (
     .factor1_i(y1b),
     .factor2_i(b1),
     .product_o(p_by1_full),
     .overflow (overflow_i[4])
-     );   
+     );
 reg signed [IIRSIGNALBITS-1:0] p_by0;
 reg signed [IIRSIGNALBITS-1:0] p_by1;
 
@@ -312,7 +312,7 @@ always @(posedge clk_i) begin
         y1b <= {IIRSIGNALBITS{1'b0}};
         z1 <= {IIRSIGNALBITS{1'b0}};
         z0 <= {IIRSIGNALBITS{1'b0}};
-            
+
         a1 <= {IIRBITS{1'b0}};
         a2 <= {IIRBITS{1'b0}};
         b0 <= {IIRBITS{1'b0}};
@@ -345,7 +345,7 @@ always @(posedge clk_i) begin
             y2_i[stage1] <= y1a; //update y2 memory
         end
         //cycle n+2
-        if (stage2<IIRSTAGES) begin    
+        if (stage2<IIRSTAGES) begin
             y0 <= y0_full;//no saturation here, because y0 is two bits longer than other signals
             b0 <= b0_i[stage2];
             y1b <= y1_i[stage2];
@@ -353,7 +353,7 @@ always @(posedge clk_i) begin
             y1_i[stage2] <= y0_full; //update y1 memory
         end
         //cycle n+3
-        if (stage3<IIRSTAGES) begin        
+        if (stage3<IIRSTAGES) begin
             p_by0 <= p_by0_full;
             p_by1 <= p_by1_full;
             z1 <= z1_i[stage3];
