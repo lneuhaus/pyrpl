@@ -1457,6 +1457,7 @@ class IIR(DspModule):
             loops = 255
         loops = max([loops, minimum_loops])
         # transform zeros and poles into coefficients
+        sys = (zeros, poles, k)
         dt = loops * 8e-9 / self._frequency_correction
         c = iir.get_coeff(sys, dt=dt,
                           totalbits=iirbits, shiftbits=iirshift,
