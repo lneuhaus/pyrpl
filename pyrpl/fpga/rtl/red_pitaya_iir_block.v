@@ -64,10 +64,10 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 module red_pitaya_iir_block
-#(  parameter IIRBITS = 46,         // iir coefficients represented with IIRBITS bits
-    parameter IIRSHIFT = 30,        // iir coefficients FIXED POINT at bit IIRSHIFT
-    parameter IIRSTAGES = 8,        // maximum number of parallel biquads 
-    parameter IIRSIGNALBITS = 36,   // internally represent calculated results with IIRSIGNALBITS bits (maybe overkill?)
+#(  parameter IIRBITS = 46, //32        // iir coefficients represented with IIRBITS bits
+    parameter IIRSHIFT = 30, //26       // iir coefficients FIXED POINT at bit IIRSHIFT
+    parameter IIRSTAGES = 8, //16       // maximum number of parallel biquads
+    parameter IIRSIGNALBITS = 36, //32  // internally represent calculated results with IIRSIGNALBITS bits (maybe overkill?)
     parameter SIGNALBITS = 14,      // in- and output signal bitwidth
     parameter SIGNALSHIFT = 0       // over-represent input by SIGNALSHIFT bits (e.g. once input averaging is implemented)
     )
@@ -209,8 +209,11 @@ reg signed [IIRBITS-1:0] a2;
 reg signed [IIRBITS-1:0] b0;
 reg signed [IIRBITS-1:0] b1;
 
-wire signed [IIRSIGNALBITS-1:0] x0;
-assign x0 = {{IIRSIGNALBITS-SIGNALSHIFT-SIGNALBITS+1{dat_i[SIGNALBITS-1]}},dat_i[SIGNALBITS-2:0],{SIGNALSHIFT{1'b0}}};
+//wire signed [IIRSIGNALBITS-1:0] x0;
+//assign x0 = {{IIRSIGNALBITS-SIGNALSHIFT-SIGNALBITS+1{dat_i[SIGNALBITS-1]}},dat_i[SIGNALBITS-2:0],{SIGNALSHIFT{1'b0}}};
+//averaging in x0_sum below
+reg signed [IIRSIGNALBITS-1:0] x0_sum;
+reg signed [IIRSIGNALBITS-1:0] x0;
 
 reg signed [IIRSIGNALBITS-1:0] y0;
 reg signed [IIRSIGNALBITS-1:0] y1a;
@@ -354,6 +357,15 @@ always @(posedge clk_i) begin
             y2a <= y2_i[stage0];
             a2 <= a2_i[stage0];
         end
+        if (stage0 == IIRSTAGES) begin
+            // prepare x0 for cycle n+2
+            x0 <= x0_sum;
+            x0_sum <= dat_i;
+        end
+        else begin
+            x0_sum <= x0_sum + dat_i;
+        end
+
         //cycle n+1
         if (stage1<IIRSTAGES) begin
             p_ay1 <= p_ay1_full;
@@ -383,16 +395,16 @@ always @(posedge clk_i) begin
         // //z1_i[stage5] <= z0;
         //signal_o <= dat_o_full;
 
-        // set sum to zero while first value of z0 is computed
-        if (stage4 == 0) begin
-            dat_o_sum <= {(IIRSIGNALBITS+4){1'b0}};
-        end
-        // from step one to step IIRSTAGES (IIRSTAGES steps), increment the sum
-        else if (stage4 <= IIRSTAGES) begin
+        // from step IIRSTAGES-1 to 0 (IIRSTAGES steps), increment the sum
+        if (stage4 < IIRSTAGES) begin
             dat_o_sum <= dat_o_sum + z0;
         end
-        // one step later output the fresh sum (after saturation)
-        if (stage5 == IIRSTAGES) begin
+        // set sum to zero for the rest of the time
+        else begin
+            dat_o_sum <= {(IIRSIGNALBITS+4){1'b0}};
+        end
+        // once cycle of 4 is complete, output the fresh sum (after saturation)
+        if (stage5 == 0) begin
             signal_o <= dat_o_full;
         end
     end

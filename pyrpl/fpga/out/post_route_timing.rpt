@@ -1,7 +1,7 @@
 Copyright 1986-2015 Xilinx, Inc. All Rights Reserved.
 ----------------------------------------------------------------------------------------------------------------
 | Tool Version : Vivado v.2015.4 (lin64) Build 1412921 Wed Nov 18 09:44:32 MST 2015
-| Date         : Tue Jul 12 16:15:30 2016
+| Date         : Tue Jul 12 17:52:14 2016
 | Host         : ubuntu running 64-bit Ubuntu 14.04.4 LTS
 | Command      : report_timing -file out/post_route_timing.rpt -sort_by group -max_paths 100 -path_type summary
 | Design       : red_pitaya_top
@@ -13,779 +13,779 @@ Timing Report
 
 Startpoint                     Endpoint                       Slack(ns)     
 ----------------------------------------------------------------------------
-i_dsp/genblk3[4].iir/y0_reg[3]_replica/C
-                               i_dsp/genblk3[4].iir/overflow_reg[3]/D
-                                                              -7.583        
-i_dsp/genblk3[4].iir/b1_reg[1]/C
-                               i_dsp/genblk3[4].iir/overflow_reg[4]/D
-                                                              -7.546        
-i_dsp/genblk3[4].iir/a1_reg[13]/C
-                               i_dsp/genblk3[4].iir/p_ay1_reg[1]/D
-                                                              -7.393        
-i_dsp/genblk3[4].iir/a1_reg[13]/C
-                               i_dsp/genblk3[4].iir/p_ay1_reg[30]/D
-                                                              -7.379        
-i_dsp/genblk3[4].iir/b1_reg[1]/C
-                               i_dsp/genblk3[4].iir/p_by1_reg[8]/D
-                                                              -7.362        
-i_dsp/genblk3[4].iir/b1_reg[1]/C
-                               i_dsp/genblk3[4].iir/p_by1_reg[4]/D
-                                                              -7.360        
-i_dsp/genblk3[4].iir/y1a_reg[31]/C
+i_dsp/genblk3[4].iir/y1a_reg[35]_replica/C
                                i_dsp/genblk3[4].iir/overflow_reg[0]/D
-                                                              -7.302        
-i_dsp/genblk3[4].iir/y1a_reg[31]/C
-                               i_dsp/genblk3[4].iir/p_ay1_reg[25]/D
-                                                              -7.294        
-i_dsp/genblk3[4].iir/a1_reg[13]/C
-                               i_dsp/genblk3[4].iir/p_ay1_reg[26]/D
-                                                              -7.290        
-i_dsp/genblk3[4].iir/a1_reg[13]/C
-                               i_dsp/genblk3[4].iir/p_ay1_reg[31]/D
-                                                              -7.281        
-i_dsp/genblk3[4].iir/a1_reg[13]/C
-                               i_dsp/genblk3[4].iir/p_ay1_reg[0]/D
-                                                              -7.277        
-i_dsp/genblk3[4].iir/a1_reg[13]/C
-                               i_dsp/genblk3[4].iir/p_ay1_reg[21]/D
-                                                              -7.239        
-i_dsp/genblk3[4].iir/a1_reg[13]/C
-                               i_dsp/genblk3[4].iir/p_ay1_reg[24]/D
-                                                              -7.235        
-i_dsp/genblk3[4].iir/a1_reg[13]/C
-                               i_dsp/genblk3[4].iir/p_ay1_reg[29]/D
-                                                              -7.230        
-i_dsp/genblk3[4].iir/a1_reg[13]/C
-                               i_dsp/genblk3[4].iir/p_ay1_reg[32]/D
-                                                              -7.230        
-i_dsp/genblk3[4].iir/a1_reg[13]/C
-                               i_dsp/genblk3[4].iir/p_ay1_reg[28]/D
-                                                              -7.229        
-i_dsp/genblk3[4].iir/a1_reg[13]/C
-                               i_dsp/genblk3[4].iir/p_ay1_reg[2]/D
-                                                              -7.228        
-i_dsp/genblk3[4].iir/b1_reg[1]/C
-                               i_dsp/genblk3[4].iir/p_by1_reg[9]/D
-                                                              -7.223        
-i_dsp/genblk3[4].iir/b1_reg[1]/C
-                               i_dsp/genblk3[4].iir/p_by1_reg[7]/D
-                                                              -7.221        
-i_dsp/genblk3[4].iir/b1_reg[1]/C
-                               i_dsp/genblk3[4].iir/p_by1_reg[21]/D
-                                                              -7.220        
-i_dsp/genblk3[4].iir/b1_reg[1]/C
-                               i_dsp/genblk3[4].iir/p_by1_reg[20]/D
-                                                              -7.218        
-i_dsp/genblk3[4].iir/a1_reg[13]/C
-                               i_dsp/genblk3[4].iir/p_ay1_reg[27]/D
-                                                              -7.217        
-i_dsp/genblk3[4].iir/a1_reg[13]/C
-                               i_dsp/genblk3[4].iir/p_ay1_reg[23]/D
-                                                              -7.214        
-i_dsp/genblk3[4].iir/a1_reg[13]/C
-                               i_dsp/genblk3[4].iir/p_ay1_reg[22]/D
-                                                              -7.212        
-i_dsp/genblk3[4].iir/y1a_reg[31]/C
-                               i_dsp/genblk3[4].iir/p_ay1_reg[10]/D
-                                                              -7.208        
-i_dsp/genblk3[4].iir/y1a_reg[31]/C
-                               i_dsp/genblk3[4].iir/p_ay1_reg[18]/D
-                                                              -7.203        
-i_dsp/genblk3[4].iir/y1a_reg[31]/C
-                               i_dsp/genblk3[4].iir/p_ay1_reg[11]/D
-                                                              -7.203        
-i_dsp/genblk3[4].iir/y1a_reg[31]/C
-                               i_dsp/genblk3[4].iir/p_ay1_reg[16]/D
-                                                              -7.203        
-i_dsp/genblk3[4].iir/y1a_reg[31]/C
-                               i_dsp/genblk3[4].iir/p_ay1_reg[12]/D
-                                                              -7.200        
-i_dsp/genblk3[4].iir/y1a_reg[31]/C
-                               i_dsp/genblk3[4].iir/p_ay1_reg[17]/D
-                                                              -7.200        
-i_dsp/genblk3[4].iir/y1a_reg[31]/C
-                               i_dsp/genblk3[4].iir/p_ay1_reg[14]/D
-                                                              -7.198        
-i_dsp/genblk3[4].iir/y1a_reg[31]/C
-                               i_dsp/genblk3[4].iir/p_ay1_reg[15]/D
-                                                              -7.198        
-i_dsp/genblk3[4].iir/y1a_reg[31]/C
-                               i_dsp/genblk3[4].iir/p_ay1_reg[19]/D
-                                                              -7.195        
-i_dsp/genblk3[4].iir/b1_reg[1]/C
-                               i_dsp/genblk3[4].iir/p_by1_reg[6]/D
-                                                              -7.176        
-i_dsp/genblk3[4].iir/b1_reg[1]/C
-                               i_dsp/genblk3[4].iir/p_by1_reg[33]/D
-                                                              -7.174        
-i_dsp/genblk3[4].iir/b1_reg[1]/C
-                               i_dsp/genblk3[4].iir/p_by1_reg[5]/D
-                                                              -7.159        
-i_dsp/genblk3[4].iir/a1_reg[13]/C
-                               i_dsp/genblk3[4].iir/p_ay1_reg[33]/D
-                                                              -7.152        
-i_dsp/genblk3[4].iir/b1_reg[1]/C
-                               i_dsp/genblk3[4].iir/p_by1_reg[32]/D
-                                                              -7.137        
-i_dsp/genblk3[4].iir/b1_reg[1]/C
-                               i_dsp/genblk3[4].iir/p_by1_reg[29]/D
-                                                              -7.115        
-i_dsp/genblk3[4].iir/y2a_reg[35]/C
-                               i_dsp/genblk3[4].iir/overflow_reg[1]/D
-                                                              -7.113        
-i_dsp/genblk3[4].iir/b1_reg[1]/C
-                               i_dsp/genblk3[4].iir/p_by1_reg[3]/D
-                                                              -7.108        
-i_dsp/genblk3[4].iir/b1_reg[1]/C
-                               i_dsp/genblk3[4].iir/p_by1_reg[27]/D
-                                                              -7.108        
-i_dsp/genblk3[4].iir/a1_reg[13]/C
-                               i_dsp/genblk3[4].iir/p_ay1_reg[5]/D
-                                                              -7.101        
-i_dsp/genblk3[4].iir/b1_reg[1]/C
-                               i_dsp/genblk3[4].iir/p_by1_reg[23]/D
-                                                              -7.092        
-i_dsp/genblk3[4].iir/b1_reg[1]/C
-                               i_dsp/genblk3[4].iir/p_by1_reg[15]/D
-                                                              -7.090        
-i_dsp/genblk3[4].iir/b1_reg[1]/C
-                               i_dsp/genblk3[4].iir/p_by1_reg[14]/D
-                                                              -7.084        
-i_dsp/genblk3[4].iir/b1_reg[1]/C
-                               i_dsp/genblk3[4].iir/p_by1_reg[13]/D
-                                                              -7.080        
-i_dsp/genblk3[4].iir/a1_reg[13]/C
-                               i_dsp/genblk3[4].iir/p_ay1_reg[6]/D
-                                                              -7.079        
-i_dsp/genblk3[4].iir/a1_reg[13]/C
-                               i_dsp/genblk3[4].iir/p_ay1_reg[9]/D
-                                                              -7.074        
-i_dsp/genblk3[4].iir/b1_reg[1]/C
-                               i_dsp/genblk3[4].iir/p_by1_reg[18]/D
-                                                              -7.071        
-i_dsp/genblk3[4].iir/a1_reg[13]/C
-                               i_dsp/genblk3[4].iir/p_ay1_reg[4]/D
-                                                              -7.063        
-i_dsp/genblk3[4].iir/b1_reg[1]/C
-                               i_dsp/genblk3[4].iir/p_by1_reg[22]/D
-                                                              -7.060        
-i_dsp/genblk3[4].iir/b1_reg[1]/C
-                               i_dsp/genblk3[4].iir/p_by1_reg[25]/D
-                                                              -7.055        
-i_dsp/genblk3[4].iir/y1a_reg[31]/C
-                               i_dsp/genblk3[4].iir/p_ay1_reg[13]/D
-                                                              -7.055        
-i_dsp/genblk3[4].iir/y1a_reg[31]/C
-                               i_dsp/genblk3[4].iir/p_ay1_reg[8]/D
-                                                              -7.052        
-i_dsp/genblk3[4].iir/b1_reg[1]/C
-                               i_dsp/genblk3[4].iir/p_by1_reg[17]/D
-                                                              -7.050        
-i_dsp/genblk3[4].iir/y1a_reg[31]/C
-                               i_dsp/genblk3[4].iir/p_ay1_reg[3]/D
-                                                              -7.050        
-i_dsp/genblk3[4].iir/y1a_reg[31]/C
+                                                              -7.616        
+i_dsp/genblk3[4].iir/y1a_reg[35]_replica/C
                                i_dsp/genblk3[4].iir/p_ay1_reg[7]/D
-                                                              -7.050        
-i_dsp/genblk3[4].iir/y0_reg[3]_replica/C
-                               i_dsp/genblk3[4].iir/p_by0_reg[15]/D
-                                                              -7.022        
-i_dsp/genblk3[4].iir/y0_reg[3]_replica/C
-                               i_dsp/genblk3[4].iir/p_by0_reg[11]/D
-                                                              -7.015        
-i_dsp/genblk3[4].iir/b1_reg[1]/C
-                               i_dsp/genblk3[4].iir/p_by1_reg[31]/D
-                                                              -7.013        
-i_dsp/genblk3[4].iir/b1_reg[1]/C
-                               i_dsp/genblk3[4].iir/p_by1_reg[28]/D
-                                                              -7.007        
-i_dsp/genblk3[4].iir/b1_reg[1]/C
-                               i_dsp/genblk3[4].iir/p_by1_reg[2]/D
-                                                              -7.003        
-i_dsp/genblk3[4].iir/b1_reg[1]/C
-                               i_dsp/genblk3[4].iir/p_by1_reg[26]/D
-                                                              -7.003        
-i_dsp/genblk3[4].iir/y1a_reg[31]/C
+                                                              -7.418        
+i_dsp/genblk3[4].iir/y1a_reg[35]_replica/C
+                               i_dsp/genblk3[4].iir/p_ay1_reg[1]/D
+                                                              -7.406        
+i_dsp/genblk3[4].iir/y1a_reg[35]_replica/C
+                               i_dsp/genblk3[4].iir/p_ay1_reg[25]/D
+                                                              -7.390        
+i_dsp/genblk3[4].iir/y1a_reg[35]_replica/C
+                               i_dsp/genblk3[4].iir/p_ay1_reg[19]/D
+                                                              -7.373        
+i_dsp/genblk3[4].iir/y1a_reg[35]_replica/C
                                i_dsp/genblk3[4].iir/p_ay1_reg[20]/D
-                                                              -7.000        
-i_dsp/genblk3[4].iir/y1a_reg[31]/C
-                               i_dsp/genblk3[4].iir/p_ay1_reg[34]/D
-                                                              -6.996        
-i_dsp/genblk3[4].iir/b1_reg[1]/C
-                               i_dsp/genblk3[4].iir/p_by1_reg[12]/D
-                                                              -6.995        
-i_dsp/genblk3[4].iir/b1_reg[1]/C
-                               i_dsp/genblk3[4].iir/p_by1_reg[0]/D
-                                                              -6.993        
-i_dsp/genblk3[4].iir/b1_reg[1]/C
-                               i_dsp/genblk3[4].iir/p_by1_reg[16]/D
-                                                              -6.985        
-i_dsp/genblk3[4].iir/b1_reg[1]/C
-                               i_dsp/genblk3[4].iir/p_by1_reg[11]/D
-                                                              -6.983        
-i_dsp/genblk3[4].iir/b1_reg[1]/C
-                               i_dsp/genblk3[4].iir/p_by1_reg[1]/D
-                                                              -6.963        
-i_dsp/genblk3[4].iir/b1_reg[1]/C
-                               i_dsp/genblk3[4].iir/p_by1_reg[19]/D
-                                                              -6.961        
-i_dsp/genblk3[4].iir/b1_reg[1]/C
-                               i_dsp/genblk3[4].iir/p_by1_reg[10]/D
-                                                              -6.947        
-i_dsp/genblk3[4].iir/b1_reg[1]/C
-                               i_dsp/genblk3[4].iir/p_by1_reg[34]/D
-                                                              -6.942        
-i_dsp/genblk3[4].iir/b1_reg[1]/C
-                               i_dsp/genblk3[4].iir/p_by1_reg[24]/D
-                                                              -6.931        
-i_dsp/genblk3[4].iir/b1_reg[1]/C
-                               i_dsp/genblk3[4].iir/p_by1_reg[30]/D
-                                                              -6.926        
-i_dsp/genblk3[4].iir/y0_reg[3]_replica/C
-                               i_dsp/genblk3[4].iir/p_by0_reg[22]/D
-                                                              -6.923        
-i_dsp/genblk3[4].iir/y0_reg[3]_replica/C
-                               i_dsp/genblk3[4].iir/p_by0_reg[30]/D
-                                                              -6.894        
-i_dsp/genblk3[4].iir/y0_reg[3]_replica/C
-                               i_dsp/genblk3[4].iir/p_by0_reg[17]/D
-                                                              -6.890        
-i_dsp/genblk3[4].iir/y0_reg[3]_replica/C
-                               i_dsp/genblk3[4].iir/p_by0_reg[16]/D
-                                                              -6.886        
-i_dsp/genblk3[4].iir/y0_reg[3]_replica/C
-                               i_dsp/genblk3[4].iir/p_by0_reg[24]/D
-                                                              -6.866        
-i_dsp/genblk3[4].iir/y0_reg[3]_replica/C
-                               i_dsp/genblk3[4].iir/p_by0_reg[4]/D
-                                                              -6.855        
-i_dsp/genblk3[4].iir/y0_reg[3]_replica/C
-                               i_dsp/genblk3[4].iir/p_by0_reg[23]/D
-                                                              -6.849        
-i_dsp/genblk3[4].iir/y0_reg[3]_replica/C
+                                                              -7.371        
+i_dsp/genblk3[4].iir/y1a_reg[35]_replica/C
+                               i_dsp/genblk3[4].iir/p_ay1_reg[18]/D
+                                                              -7.370        
+i_dsp/genblk3[4].iir/y1a_reg[35]_replica/C
+                               i_dsp/genblk3[4].iir/p_ay1_reg[23]/D
+                                                              -7.344        
+i_dsp/genblk3[4].iir/b0_reg[14]/C
+                               i_dsp/genblk3[4].iir/p_by0_reg[11]/D
+                                                              -7.337        
+i_dsp/genblk3[4].iir/b0_reg[14]/C
                                i_dsp/genblk3[4].iir/p_by0_reg[12]/D
-                                                              -6.838        
-i_dsp/genblk3[4].iir/y0_reg[3]_replica/C
-                               i_dsp/genblk3[4].iir/p_by0_reg[32]/D
-                                                              -6.829        
-i_dsp/genblk3[4].iir/y0_reg[3]_replica/C
-                               i_dsp/genblk3[4].iir/p_by0_reg[33]/D
-                                                              -6.822        
-i_dsp/genblk3[4].iir/y0_reg[3]_replica/C
-                               i_dsp/genblk3[4].iir/p_by0_reg[10]/D
-                                                              -6.819        
-i_dsp/genblk3[4].iir/y0_reg[3]_replica/C
-                               i_dsp/genblk3[4].iir/p_by0_reg[14]/D
-                                                              -6.814        
-i_dsp/genblk3[4].iir/y0_reg[3]_replica/C
-                               i_dsp/genblk3[4].iir/p_by0_reg[13]/D
-                                                              -6.788        
-i_dsp/genblk3[4].iir/y0_reg[3]_replica/C
-                               i_dsp/genblk3[4].iir/p_by0_reg[31]/D
-                                                              -6.786        
-i_dsp/genblk3[4].iir/y0_reg[3]_replica/C
-                               i_dsp/genblk3[4].iir/p_by0_reg[29]/D
-                                                              -6.782        
-i_dsp/genblk3[4].iir/y0_reg[3]_replica/C
-                               i_dsp/genblk3[4].iir/p_by0_reg[2]/D
-                                                              -6.775        
-i_dsp/genblk3[4].iir/y2a_reg[35]/C
-                               i_dsp/genblk3[4].iir/p_ay2_reg[24]/D
-                                                              -6.772        
-i_dsp/genblk3[4].iir/y2a_reg[35]/C
-                               i_dsp/genblk3[4].iir/p_ay2_reg[0]/D
-                                                              -6.770        
-i_dsp/genblk3[4].iir/y0_reg[3]_replica/C
-                               i_dsp/genblk3[4].iir/p_by0_reg[0]/D
-                                                              -6.766        
-i_dsp/genblk3[4].iir/y2a_reg[35]/C
-                               i_dsp/genblk3[4].iir/p_ay2_reg[27]/D
-                                                              -6.763        
-i_dsp/genblk3[4].iir/y0_reg[3]_replica/C
+                                                              -7.332        
+i_dsp/genblk3[4].iir/y1a_reg[35]_replica/C
+                               i_dsp/genblk3[4].iir/p_ay1_reg[9]/D
+                                                              -7.325        
+i_dsp/genblk3[4].iir/y1a_reg[35]_replica/C
+                               i_dsp/genblk3[4].iir/p_ay1_reg[0]/D
+                                                              -7.323        
+i_dsp/genblk3[4].iir/y1a_reg[35]_replica/C
+                               i_dsp/genblk3[4].iir/p_ay1_reg[30]/D
+                                                              -7.320        
+i_dsp/genblk3[4].iir/y1a_reg[35]_replica/C
+                               i_dsp/genblk3[4].iir/p_ay1_reg[31]/D
+                                                              -7.318        
+i_dsp/genblk3[4].iir/y1a_reg[35]_replica/C
+                               i_dsp/genblk3[4].iir/p_ay1_reg[11]/D
+                                                              -7.312        
+i_dsp/genblk3[4].iir/y1a_reg[35]_replica/C
+                               i_dsp/genblk3[4].iir/p_ay1_reg[32]/D
+                                                              -7.308        
+i_dsp/genblk3[4].iir/b0_reg[14]/C
+                               i_dsp/genblk3[4].iir/p_by0_reg[7]/D
+                                                              -7.306        
+i_dsp/genblk3[4].iir/b0_reg[14]/C
+                               i_dsp/genblk3[4].iir/p_by0_reg[9]/D
+                                                              -7.305        
+i_dsp/genblk3[4].iir/b0_reg[14]/C
                                i_dsp/genblk3[4].iir/p_by0_reg[19]/D
-                                                              -6.762        
-i_dsp/genblk3[4].iir/y2a_reg[35]/C
-                               i_dsp/genblk3[4].iir/p_ay2_reg[5]/D
-                                                              -6.761        
-i_dsp/genblk3[4].iir/y0_reg[3]_replica/C
-                               i_dsp/genblk3[4].iir/p_by0_reg[8]/D
-                                                              -6.757        
-i_dsp/genblk3[4].iir/y0_reg[3]_replica/C
+                                                              -7.302        
+i_dsp/genblk3[4].iir/b0_reg[14]/C
+                               i_dsp/genblk3[4].iir/p_by0_reg[0]/D
+                                                              -7.299        
+i_dsp/genblk3[4].iir/y1a_reg[35]_replica/C
+                               i_dsp/genblk3[4].iir/p_ay1_reg[21]/D
+                                                              -7.299        
+i_dsp/genblk3[4].iir/b0_reg[14]/C
+                               i_dsp/genblk3[4].iir/p_by0_reg[6]/D
+                                                              -7.296        
+i_dsp/genblk3[4].iir/y1b_reg[35]/C
+                               i_dsp/genblk3[4].iir/p_by1_reg[2]/D
+                                                              -7.295        
+i_dsp/genblk3[4].iir/y1b_reg[35]/C
+                               i_dsp/genblk3[4].iir/p_by1_reg[30]/D
+                                                              -7.293        
+i_dsp/genblk3[4].iir/b0_reg[14]/C
+                               i_dsp/genblk3[4].iir/p_by0_reg[15]/D
+                                                              -7.291        
+i_dsp/genblk3[4].iir/y1a_reg[35]_replica/C
+                               i_dsp/genblk3[4].iir/p_ay1_reg[5]/D
+                                                              -7.290        
+i_dsp/genblk3[4].iir/y1a_reg[35]_replica/C
+                               i_dsp/genblk3[4].iir/p_ay1_reg[12]/D
+                                                              -7.289        
+i_dsp/genblk3[4].iir/b0_reg[14]/C
+                               i_dsp/genblk3[4].iir/p_by0_reg[27]/D
+                                                              -7.281        
+i_dsp/genblk3[4].iir/y1a_reg[35]_replica/C
+                               i_dsp/genblk3[4].iir/p_ay1_reg[15]/D
+                                                              -7.280        
+i_dsp/genblk3[4].iir/b0_reg[14]/C
+                               i_dsp/genblk3[4].iir/p_by0_reg[25]/D
+                                                              -7.277        
+i_dsp/genblk3[4].iir/y1b_reg[35]/C
+                               i_dsp/genblk3[4].iir/overflow_reg[4]/D
+                                                              -7.258        
+i_dsp/genblk3[4].iir/y1b_reg[35]/C
+                               i_dsp/genblk3[4].iir/p_by1_reg[3]/D
+                                                              -7.258        
+i_dsp/genblk3[4].iir/y1b_reg[35]/C
+                               i_dsp/genblk3[4].iir/p_by1_reg[4]/D
+                                                              -7.253        
+i_dsp/genblk3[4].iir/y1a_reg[35]_replica/C
+                               i_dsp/genblk3[4].iir/p_ay1_reg[27]/D
+                                                              -7.249        
+i_dsp/genblk3[4].iir/y1b_reg[35]/C
+                               i_dsp/genblk3[4].iir/p_by1_reg[34]/D
+                                                              -7.248        
+i_dsp/genblk3[4].iir/y1a_reg[35]_replica/C
+                               i_dsp/genblk3[4].iir/p_ay1_reg[16]/D
+                                                              -7.247        
+i_dsp/genblk3[4].iir/y1b_reg[35]/C
+                               i_dsp/genblk3[4].iir/p_by1_reg[33]/D
+                                                              -7.246        
+i_dsp/genblk3[4].iir/y1a_reg[35]_replica/C
+                               i_dsp/genblk3[4].iir/p_ay1_reg[8]/D
+                                                              -7.244        
+i_dsp/genblk3[4].iir/y1a_reg[35]_replica/C
+                               i_dsp/genblk3[4].iir/p_ay1_reg[34]/D
+                                                              -7.244        
+i_dsp/genblk3[4].iir/y1a_reg[35]_replica/C
+                               i_dsp/genblk3[4].iir/p_ay1_reg[3]/D
+                                                              -7.242        
+i_dsp/genblk3[4].iir/y1a_reg[35]_replica/C
+                               i_dsp/genblk3[4].iir/p_ay1_reg[6]/D
+                                                              -7.242        
+i_dsp/genblk3[4].iir/y1a_reg[35]_replica/C
+                               i_dsp/genblk3[4].iir/p_ay1_reg[29]/D
+                                                              -7.238        
+i_dsp/genblk3[4].iir/y1a_reg[35]_replica/C
+                               i_dsp/genblk3[4].iir/p_ay1_reg[4]/D
+                                                              -7.234        
+i_dsp/genblk3[4].iir/y1a_reg[35]_replica/C
+                               i_dsp/genblk3[4].iir/p_ay1_reg[2]/D
+                                                              -7.233        
+i_dsp/genblk3[4].iir/y1b_reg[35]/C
+                               i_dsp/genblk3[4].iir/p_by1_reg[18]/D
+                                                              -7.231        
+i_dsp/genblk3[4].iir/y1a_reg[35]_replica/C
+                               i_dsp/genblk3[4].iir/p_ay1_reg[28]/D
+                                                              -7.230        
+i_dsp/genblk3[4].iir/y1a_reg[35]_replica/C
+                               i_dsp/genblk3[4].iir/p_ay1_reg[17]/D
+                                                              -7.228        
+i_dsp/genblk3[4].iir/y1a_reg[35]_replica/C
+                               i_dsp/genblk3[4].iir/p_ay1_reg[33]/D
+                                                              -7.225        
+i_dsp/genblk3[4].iir/y1b_reg[35]/C
+                               i_dsp/genblk3[4].iir/p_by1_reg[27]/D
+                                                              -7.225        
+i_dsp/genblk3[4].iir/b0_reg[14]/C
+                               i_dsp/genblk3[4].iir/p_by0_reg[2]/D
+                                                              -7.223        
+i_dsp/genblk3[4].iir/y1a_reg[35]_replica/C
+                               i_dsp/genblk3[4].iir/p_ay1_reg[26]/D
+                                                              -7.223        
+i_dsp/genblk3[4].iir/y1b_reg[35]/C
+                               i_dsp/genblk3[4].iir/p_by1_reg[17]/D
+                                                              -7.222        
+i_dsp/genblk3[4].iir/y1b_reg[35]/C
+                               i_dsp/genblk3[4].iir/p_by1_reg[24]/D
+                                                              -7.221        
+i_dsp/genblk3[4].iir/b0_reg[14]/C
+                               i_dsp/genblk3[4].iir/p_by0_reg[31]/D
+                                                              -7.218        
+i_dsp/genblk3[4].iir/y1b_reg[35]/C
+                               i_dsp/genblk3[4].iir/p_by1_reg[26]/D
+                                                              -7.215        
+i_dsp/genblk3[4].iir/y1b_reg[35]/C
+                               i_dsp/genblk3[4].iir/p_by1_reg[25]/D
+                                                              -7.214        
+i_dsp/genblk3[4].iir/y1a_reg[35]_replica/C
+                               i_dsp/genblk3[4].iir/p_ay1_reg[13]/D
+                                                              -7.213        
+i_dsp/genblk3[4].iir/y1a_reg[35]_replica/C
+                               i_dsp/genblk3[4].iir/p_ay1_reg[14]/D
+                                                              -7.208        
+i_dsp/genblk3[4].iir/y1a_reg[35]_replica/C
+                               i_dsp/genblk3[4].iir/p_ay1_reg[24]/D
+                                                              -7.204        
+i_dsp/genblk3[4].iir/b0_reg[14]/C
+                               i_dsp/genblk3[4].iir/p_by0_reg[14]/D
+                                                              -7.190        
+i_dsp/genblk3[4].iir/b0_reg[14]/C
+                               i_dsp/genblk3[4].iir/p_by0_reg[30]/D
+                                                              -7.185        
+i_dsp/genblk3[4].iir/b0_reg[14]/C
+                               i_dsp/genblk3[4].iir/overflow_reg[3]/D
+                                                              -7.185        
+i_dsp/genblk3[4].iir/y1b_reg[35]/C
+                               i_dsp/genblk3[4].iir/p_by1_reg[7]/D
+                                                              -7.184        
+i_dsp/genblk3[4].iir/b0_reg[14]/C
+                               i_dsp/genblk3[4].iir/p_by0_reg[1]/D
+                                                              -7.180        
+i_dsp/genblk3[4].iir/y1b_reg[35]/C
+                               i_dsp/genblk3[4].iir/p_by1_reg[5]/D
+                                                              -7.177        
+i_dsp/genblk3[4].iir/y1b_reg[35]/C
+                               i_dsp/genblk3[4].iir/p_by1_reg[6]/D
+                                                              -7.175        
+i_dsp/genblk3[4].iir/b0_reg[14]/C
                                i_dsp/genblk3[4].iir/p_by0_reg[20]/D
-                                                              -6.756        
-i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/ar_cmd_fsm_0/state_reg[0]/C
-                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/cmd_translator_0/wrap_cmd_0/wrap_second_len_r_reg[0]/D
-                                                              -1.302        
-pwm[2]/v_r_reg[2]/C            pwm[2]/pwm_o_reg/D             -1.259        
+                                                              -7.175        
+i_dsp/genblk3[4].iir/b0_reg[14]/C
+                               i_dsp/genblk3[4].iir/p_by0_reg[18]/D
+                                                              -7.173        
+i_dsp/genblk3[4].iir/b0_reg[14]/C
+                               i_dsp/genblk3[4].iir/p_by0_reg[16]/D
+                                                              -7.163        
+i_dsp/genblk3[4].iir/y1b_reg[35]/C
+                               i_dsp/genblk3[4].iir/p_by1_reg[19]/D
+                                                              -7.163        
+i_dsp/genblk3[4].iir/y1b_reg[35]/C
+                               i_dsp/genblk3[4].iir/p_by1_reg[1]/D
+                                                              -7.161        
+i_dsp/genblk3[4].iir/y1b_reg[35]/C
+                               i_dsp/genblk3[4].iir/p_by1_reg[9]/D
+                                                              -7.158        
+i_dsp/genblk3[4].iir/b0_reg[14]/C
+                               i_dsp/genblk3[4].iir/p_by0_reg[8]/D
+                                                              -7.157        
+i_dsp/genblk3[4].iir/y1b_reg[35]/C
+                               i_dsp/genblk3[4].iir/p_by1_reg[28]/D
+                                                              -7.154        
+i_dsp/genblk3[4].iir/b0_reg[14]/C
+                               i_dsp/genblk3[4].iir/p_by0_reg[26]/D
+                                                              -7.153        
+i_dsp/genblk3[4].iir/y1b_reg[35]/C
+                               i_dsp/genblk3[4].iir/p_by1_reg[29]/D
+                                                              -7.149        
+i_dsp/genblk3[4].iir/b0_reg[14]/C
+                               i_dsp/genblk3[4].iir/p_by0_reg[13]/D
+                                                              -7.143        
+i_dsp/genblk3[4].iir/y1b_reg[35]/C
+                               i_dsp/genblk3[4].iir/p_by1_reg[14]/D
+                                                              -7.141        
+i_dsp/genblk3[4].iir/y1b_reg[35]/C
+                               i_dsp/genblk3[4].iir/p_by1_reg[20]/D
+                                                              -7.139        
+i_dsp/genblk3[4].iir/y1b_reg[35]/C
+                               i_dsp/genblk3[4].iir/p_by1_reg[21]/D
+                                                              -7.134        
+i_dsp/genblk3[4].iir/y1a_reg[35]_replica/C
+                               i_dsp/genblk3[4].iir/p_ay1_reg[22]/D
+                                                              -7.133        
+i_dsp/genblk3[4].iir/y2a_reg[35]/C
+                               i_dsp/genblk3[4].iir/p_ay2_reg[30]/D
+                                                              -7.129        
+i_dsp/genblk3[4].iir/y1a_reg[35]_replica/C
+                               i_dsp/genblk3[4].iir/p_ay1_reg[10]/D
+                                                              -7.128        
+i_dsp/genblk3[4].iir/y2a_reg[35]/C
+                               i_dsp/genblk3[4].iir/p_ay2_reg[2]/D
+                                                              -7.127        
+i_dsp/genblk3[4].iir/y1b_reg[35]/C
+                               i_dsp/genblk3[4].iir/p_by1_reg[22]/D
+                                                              -7.123        
+i_dsp/genblk3[4].iir/y1b_reg[35]/C
+                               i_dsp/genblk3[4].iir/p_by1_reg[10]/D
+                                                              -7.122        
+i_dsp/genblk3[4].iir/y1b_reg[35]/C
+                               i_dsp/genblk3[4].iir/p_by1_reg[23]/D
+                                                              -7.118        
+i_dsp/genblk3[4].iir/b0_reg[14]/C
+                               i_dsp/genblk3[4].iir/p_by0_reg[21]/D
+                                                              -7.112        
+i_dsp/genblk3[4].iir/b0_reg[14]/C
+                               i_dsp/genblk3[4].iir/p_by0_reg[23]/D
+                                                              -7.111        
+i_dsp/genblk3[4].iir/y2a_reg[35]/C
+                               i_dsp/genblk3[4].iir/p_ay2_reg[28]/D
+                                                              -7.111        
+i_dsp/genblk3[4].iir/b0_reg[14]/C
+                               i_dsp/genblk3[4].iir/p_by0_reg[33]/D
+                                                              -7.111        
+i_dsp/genblk3[4].iir/b0_reg[14]/C
+                               i_dsp/genblk3[4].iir/p_by0_reg[22]/D
+                                                              -7.110        
+i_dsp/genblk3[4].iir/b0_reg[14]/C
+                               i_dsp/genblk3[4].iir/p_by0_reg[34]/D
+                                                              -7.110        
+i_dsp/genblk3[4].iir/b0_reg[14]/C
+                               i_dsp/genblk3[4].iir/p_by0_reg[29]/D
+                                                              -7.110        
+i_dsp/genblk3[4].iir/b0_reg[14]/C
+                               i_dsp/genblk3[4].iir/p_by0_reg[3]/D
+                                                              -7.108        
+i_dsp/genblk3[4].iir/y2a_reg[35]/C
+                               i_dsp/genblk3[4].iir/p_ay2_reg[29]/D
+                                                              -7.106        
+i_dsp/genblk3[4].iir/b0_reg[14]/C
+                               i_dsp/genblk3[4].iir/p_by0_reg[24]/D
+                                                              -7.104        
+i_dsp/genblk3[4].iir/b0_reg[14]/C
+                               i_dsp/genblk3[4].iir/p_by0_reg[17]/D
+                                                              -7.101        
+i_dsp/genblk3[4].iir/y1b_reg[35]/C
+                               i_dsp/genblk3[4].iir/p_by1_reg[32]/D
+                                                              -7.100        
+i_dsp/genblk3[4].iir/b0_reg[14]/C
+                               i_dsp/genblk3[4].iir/p_by0_reg[5]/D
+                                                              -7.094        
+pwm[2]/v_r_reg[1]/C            pwm[2]/pwm_o_reg/D             -1.958        
 i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/INCLUDE_DPHASE_TIMER.dpto_cnt_reg[6]/C
                                i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/cmd_translator_0/incr_cmd_0/axaddr_incr_reg[11]/D
-                                                              -1.115        
-i_ps/system_i/system_i/xadc/inst/INTR_CTRLR_GEN_I.ip2bus_wrack_reg/C
+                                                              -1.617        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/aw_pipe/m_payload_i_reg[39]/C
                                i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/WR.aw_channel_0/cmd_translator_0/incr_cmd_0/axaddr_incr_reg[11]/D
-                                                              -1.089        
-i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/ar_pipe/m_payload_i_reg[5]/C
-                               i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/I_DECODER/GEN_BKEND_CE_REGISTERS[5].ce_out_i_reg[5]/D
-                                                              -1.069        
-i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/ar_pipe/m_payload_i_reg[5]/C
-                               i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/I_DECODER/GEN_BKEND_CE_REGISTERS[3].ce_out_i_reg[3]/D
-                                                              -1.048        
-pwm[3]/v_r_reg[2]/C            pwm[3]/pwm_o_reg/D             -1.002        
-i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/ar_pipe/m_payload_i_reg[5]/C
-                               i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/I_DECODER/GEN_BKEND_CE_REGISTERS[2].ce_out_i_reg[2]/D
-                                                              -1.001        
-i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/ar_pipe/m_payload_i_reg[2]/C
-                               i_ps/system_i/system_i/xadc/inst/AXI_XADC_CORE_I/XADC_INST/DADDR[0]
-                                                              -0.995        
-i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/ar_pipe/m_payload_i_reg[5]/C
-                               i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/I_DECODER/GEN_BKEND_CE_REGISTERS[1].ce_out_i_reg[1]/D
-                                                              -0.993        
-i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/ar_pipe/m_payload_i_reg[5]/C
-                               i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/I_DECODER/GEN_BKEND_CE_REGISTERS[7].ce_out_i_reg[7]/D
-                                                              -0.990        
-i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/ar_pipe/m_payload_i_reg[5]/C
-                               i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/I_DECODER/GEN_BKEND_CE_REGISTERS[6].ce_out_i_reg[6]/D
-                                                              -0.983        
-i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/ar_pipe/m_payload_i_reg[5]/C
-                               i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/I_DECODER/GEN_BKEND_CE_REGISTERS[0].ce_out_i_reg[0]/D
-                                                              -0.953        
-i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/ar_pipe/m_payload_i_reg[8]/C
-                               i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/I_DECODER/GEN_BKEND_CE_REGISTERS[8].ce_out_i_reg[8]/D
-                                                              -0.948        
-i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/ar_pipe/m_payload_i_reg[3]/C
+                                                              -1.495        
+pwm[3]/vcnt_r_reg[3]/C         pwm[3]/pwm_o_reg/D             -1.165        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/cmd_translator_0/incr_cmd_0/sel_first_reg/C
                                i_ps/system_i/system_i/xadc/inst/AXI_XADC_CORE_I/XADC_INST/DADDR[1]
-                                                              -0.941        
-i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/cmd_translator_0/wrap_cmd_0/axaddr_wrap_reg[4]/C
-                               i_ps/system_i/system_i/xadc/inst/AXI_XADC_CORE_I/XADC_INST/DADDR[2]
-                                                              -0.933        
-i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/ar_pipe/m_payload_i_reg[8]/C
-                               i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/I_DECODER/GEN_BKEND_CE_REGISTERS[23].ce_out_i_reg[23]/D
-                                                              -0.927        
-i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/ar_pipe/m_payload_i_reg[8]/C
-                               i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/I_DECODER/GEN_BKEND_CE_REGISTERS[9].ce_out_i_reg[9]/D
-                                                              -0.909        
-i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/ar_pipe/m_payload_i_reg[5]/C
-                               i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/I_DECODER/GEN_BKEND_CE_REGISTERS[4].ce_out_i_reg[4]/D
-                                                              -0.889        
-i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/INCLUDE_DPHASE_TIMER.dpto_cnt_reg[6]/C
-                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/cmd_translator_0/incr_cmd_0/axaddr_incr_reg[3]/D
-                                                              -0.856        
-i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/INCLUDE_DPHASE_TIMER.dpto_cnt_reg[1]/C
-                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/s_arid_r_reg[0]/CE
-                                                              -0.830        
-i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/INCLUDE_DPHASE_TIMER.dpto_cnt_reg[1]/C
-                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/s_arid_r_reg[11]/CE
-                                                              -0.830        
-i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/INCLUDE_DPHASE_TIMER.dpto_cnt_reg[1]/C
-                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/s_arid_r_reg[1]/CE
-                                                              -0.830        
-i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/INCLUDE_DPHASE_TIMER.dpto_cnt_reg[1]/C
-                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/s_arid_r_reg[2]/CE
-                                                              -0.830        
-i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/ar_pipe/m_payload_i_reg[8]/C
-                               i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/I_DECODER/GEN_BKEND_CE_REGISTERS[18].ce_out_i_reg[18]/D
-                                                              -0.823        
-i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/ar_pipe/m_payload_i_reg[8]/C
-                               i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/I_DECODER/GEN_BKEND_CE_REGISTERS[15].ce_out_i_reg[15]/D
-                                                              -0.821        
-i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/ar_pipe/m_payload_i_reg[8]/C
-                               i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/I_DECODER/GEN_BKEND_CE_REGISTERS[22].ce_out_i_reg[22]/D
-                                                              -0.818        
-i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/ar_pipe/m_payload_i_reg[8]/C
-                               i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/I_DECODER/GEN_BKEND_CE_REGISTERS[11].ce_out_i_reg[11]/D
-                                                              -0.814        
-i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/aw_pipe/m_payload_i_reg[7]/C
-                               i_ps/system_i/system_i/xadc/inst/AXI_XADC_CORE_I/XADC_INST/DADDR[5]
-                                                              -0.800        
-i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/ar_pipe/m_payload_i_reg[8]/C
-                               i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/I_DECODER/GEN_BKEND_CE_REGISTERS[19].ce_out_i_reg[19]/D
-                                                              -0.773        
-i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/ar_pipe/m_payload_i_reg[2]/C
-                               i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/I_DECODER/GEN_BKEND_CE_REGISTERS[13].ce_out_i_reg[13]/D
-                                                              -0.772        
-i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/ar_pipe/m_payload_i_reg[8]/C
-                               i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/I_DECODER/GEN_BKEND_CE_REGISTERS[16].ce_out_i_reg[16]/D
-                                                              -0.768        
-i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/ar_pipe/m_payload_i_reg[8]/C
-                               i_ps/system_i/system_i/xadc/inst/AXI_XADC_CORE_I/XADC_INST/DADDR[6]
-                                                              -0.735        
-i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/WR.aw_channel_0/aw_cmd_fsm_0/state_reg[1]/C
-                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/WR.aw_channel_0/cmd_translator_0/wrap_cmd_0/wrap_second_len_r_reg[0]/D
-                                                              -0.720        
-i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/ar_pipe/m_payload_i_reg[8]/C
-                               i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/I_DECODER/GEN_BKEND_CE_REGISTERS[10].ce_out_i_reg[10]/D
-                                                              -0.718        
-i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/ar_pipe/m_payload_i_reg[8]/C
-                               i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/I_DECODER/GEN_BKEND_CE_REGISTERS[20].ce_out_i_reg[20]/D
-                                                              -0.699        
-i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/ar_cmd_fsm_0/state_reg[0]/C
-                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/cmd_translator_0/wrap_cmd_0/wrap_cnt_r_reg[0]/D
-                                                              -0.696        
-i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/ar_pipe/m_payload_i_reg[8]/C
-                               i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/I_DECODER/GEN_BKEND_CE_REGISTERS[21].ce_out_i_reg[21]/D
-                                                              -0.688        
-i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/cmd_translator_0/wrap_cmd_0/sel_first_reg/C
-                               i_ps/system_i/system_i/xadc/inst/AXI_XADC_CORE_I/XADC_INST/DADDR[4]
-                                                              -0.686        
-i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/ar_pipe/m_payload_i_reg[8]/C
-                               i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/I_DECODER/GEN_BKEND_CE_REGISTERS[17].ce_out_i_reg[17]/D
-                                                              -0.686        
-i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/ar_pipe/m_payload_i_reg[8]/C
-                               i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/I_DECODER/GEN_BKEND_CE_REGISTERS[14].ce_out_i_reg[14]/D
-                                                              -0.680        
-i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/ar_pipe/m_payload_i_reg[8]/C
-                               i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/I_DECODER/GEN_BKEND_CE_REGISTERS[12].ce_out_i_reg[12]/D
-                                                              -0.673        
-i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.r_channel_0/rd_data_fifo_0/cnt_read_reg[0]_rep__2/C
-                               i_ps/system_i/system_i/xadc/inst/INTR_CTRLR_GEN_I.ip2bus_data_int_reg[26]/CE
-                                                              -0.671        
-i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.r_channel_0/rd_data_fifo_0/cnt_read_reg[0]_rep__2/C
-                               i_ps/system_i/system_i/xadc/inst/INTR_CTRLR_GEN_I.ip2bus_data_int_reg[29]/CE
-                                                              -0.671        
-i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/ar_pipe/m_payload_i_reg[5]/C
-                               i_ps/system_i/system_i/xadc/inst/AXI_XADC_CORE_I/XADC_INST/DADDR[3]
-                                                              -0.665        
-i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.r_channel_0/rd_data_fifo_0/cnt_read_reg[0]_rep__2/C
-                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.r_channel_0/rd_data_fifo_0/cnt_read_reg[4]/D
-                                                              -0.662        
-i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/ar_cmd_fsm_0/state_reg[0]/C
-                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/cmd_translator_0/wrap_cmd_0/wrap_cnt_r_reg[2]/D
-                                                              -0.656        
-i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/INCLUDE_DPHASE_TIMER.dpto_cnt_reg[1]/C
-                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/s_arid_r_reg[4]/CE
-                                                              -0.643        
-i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/INCLUDE_DPHASE_TIMER.dpto_cnt_reg[1]/C
-                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/s_arid_r_reg[5]/CE
-                                                              -0.643        
-i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/INCLUDE_DPHASE_TIMER.dpto_cnt_reg[1]/C
-                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/s_arid_r_reg[7]/CE
-                                                              -0.643        
-i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/INCLUDE_DPHASE_TIMER.dpto_cnt_reg[1]/C
-                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/s_arid_r_reg[8]/CE
-                                                              -0.643        
-i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/ar_cmd_fsm_0/state_reg[0]/C
-                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/cmd_translator_0/wrap_cmd_0/wrap_cnt_r_reg[3]/D
-                                                              -0.640        
-i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.r_channel_0/rd_data_fifo_0/cnt_read_reg[0]_rep__2/C
-                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.r_channel_0/rd_data_fifo_0/cnt_read_reg[4]_rep__2/D
-                                                              -0.635        
-i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.r_channel_0/rd_data_fifo_0/cnt_read_reg[0]_rep__2/C
-                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.r_channel_0/rd_data_fifo_0/cnt_read_reg[4]_rep__0/D
-                                                              -0.633        
-pwm[0]/vcnt_r_reg[5]/C         pwm[0]/pwm_o_reg/D             -0.614        
-i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.r_channel_0/rd_data_fifo_0/cnt_read_reg[0]_rep__2/C
-                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.r_channel_0/rd_data_fifo_0/cnt_read_reg[4]_rep/D
-                                                              -0.613        
-i_ps/system_i/system_i/processing_system7/inst/PS7_i/MAXIGP1ACLK
-                               i_ps/system_i/system_i/xadc/inst/INTR_CTRLR_GEN_I.ip2bus_wrack_reg/D
-                                                              -0.608        
-i_ps/system_i/system_i/xadc/inst/INTR_CTRLR_GEN_I.ip2bus_wrack_reg/C
-                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/WR.aw_channel_0/s_awid_r_reg[1]/CE
-                                                              -0.603        
-i_ps/system_i/system_i/xadc/inst/INTR_CTRLR_GEN_I.ip2bus_wrack_reg/C
-                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/WR.aw_channel_0/s_awid_r_reg[2]/CE
-                                                              -0.603        
-i_ps/system_i/system_i/xadc/inst/INTR_CTRLR_GEN_I.ip2bus_wrack_reg/C
-                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/WR.aw_channel_0/s_awid_r_reg[3]/CE
-                                                              -0.603        
+                                                              -1.024        
 i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/INCLUDE_DPHASE_TIMER.dpto_cnt_reg[6]/C
                                i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/cmd_translator_0/incr_cmd_0/axaddr_incr_reg[9]/D
-                                                              -0.536        
-i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/INCLUDE_DPHASE_TIMER.dpto_cnt_reg[1]/C
-                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/s_arid_r_reg[10]/CE
-                                                              -0.521        
-i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/INCLUDE_DPHASE_TIMER.dpto_cnt_reg[1]/C
-                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/s_arid_r_reg[3]/CE
-                                                              -0.521        
-i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/INCLUDE_DPHASE_TIMER.dpto_cnt_reg[1]/C
-                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/s_arid_r_reg[6]/CE
-                                                              -0.521        
-i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/INCLUDE_DPHASE_TIMER.dpto_cnt_reg[1]/C
-                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/s_arid_r_reg[9]/CE
-                                                              -0.521        
-i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/INCLUDE_DPHASE_TIMER.dpto_cnt_reg[1]/C
-                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/cmd_translator_0/wrap_cmd_0/wrap_cnt_r_reg[0]/CE
-                                                              -0.514        
-i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/INCLUDE_DPHASE_TIMER.dpto_cnt_reg[1]/C
-                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/cmd_translator_0/wrap_cmd_0/wrap_cnt_r_reg[1]/CE
-                                                              -0.514        
-i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/INCLUDE_DPHASE_TIMER.dpto_cnt_reg[1]/C
-                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/cmd_translator_0/wrap_cmd_0/wrap_cnt_r_reg[2]/CE
-                                                              -0.514        
-i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/INCLUDE_DPHASE_TIMER.dpto_cnt_reg[1]/C
-                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/cmd_translator_0/wrap_cmd_0/wrap_cnt_r_reg[3]/CE
-                                                              -0.514        
-pwm[1]/v_r_reg[0]/C            pwm[1]/pwm_o_reg/D             -0.508        
-i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.r_channel_0/rd_data_fifo_0/cnt_read_reg[0]_rep__2/C
-                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.r_channel_0/rd_data_fifo_0/cnt_read_reg[4]_rep__1/D
-                                                              -0.496        
-i_ps/system_i/system_i/xadc/inst/INTR_CTRLR_GEN_I.ip2bus_wrack_reg/C
-                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/WR.aw_channel_0/s_awid_r_reg[10]/CE
-                                                              -0.475        
-i_ps/system_i/system_i/xadc/inst/INTR_CTRLR_GEN_I.ip2bus_wrack_reg/C
-                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/WR.aw_channel_0/s_awid_r_reg[4]/CE
-                                                              -0.475        
-i_ps/system_i/system_i/xadc/inst/INTR_CTRLR_GEN_I.ip2bus_wrack_reg/C
-                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/WR.aw_channel_0/s_awid_r_reg[8]/CE
-                                                              -0.475        
-i_ps/system_i/system_i/xadc/inst/INTR_CTRLR_GEN_I.ip2bus_wrack_reg/C
-                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/WR.aw_channel_0/s_awid_r_reg[9]/CE
-                                                              -0.475        
-i_ps/system_i/system_i/xadc/inst/INTR_CTRLR_GEN_I.ip2bus_wrack_reg/C
-                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/WR.aw_channel_0/s_awid_r_reg[11]/CE
-                                                              -0.450        
-i_ps/system_i/system_i/xadc/inst/INTR_CTRLR_GEN_I.ip2bus_wrack_reg/C
-                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/WR.aw_channel_0/s_awid_r_reg[5]/CE
-                                                              -0.450        
-i_ps/system_i/system_i/xadc/inst/INTR_CTRLR_GEN_I.ip2bus_wrack_reg/C
-                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/WR.aw_channel_0/s_awid_r_reg[6]/CE
-                                                              -0.450        
-i_ps/system_i/system_i/xadc/inst/INTR_CTRLR_GEN_I.ip2bus_wrack_reg/C
-                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/WR.aw_channel_0/s_awid_r_reg[7]/CE
-                                                              -0.450        
-i_ps/system_i/system_i/xadc/inst/INTR_CTRLR_GEN_I.ip2bus_wrack_reg/C
-                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/WR.aw_channel_0/s_awid_r_reg[0]/CE
-                                                              -0.448        
+                                                              -1.008        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/aw_pipe/m_payload_i_reg[39]/C
+                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/WR.aw_channel_0/cmd_translator_0/incr_cmd_0/axaddr_incr_reg[9]/D
+                                                              -0.932        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.r_channel_0/rd_data_fifo_0/cnt_read_reg[2]_rep__2/C
+                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.r_channel_0/rd_data_fifo_0/cnt_read_reg[4]_rep__0/D
+                                                              -0.930        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/ar_pipe/m_payload_i_reg[6]/C
+                               i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/I_DECODER/GEN_BKEND_CE_REGISTERS[20].ce_out_i_reg[20]/D
+                                                              -0.914        
 i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/INCLUDE_DPHASE_TIMER.dpto_cnt_reg[6]/C
                                i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/cmd_translator_0/incr_cmd_0/axaddr_incr_reg[10]/D
-                                                              -0.441        
+                                                              -0.913        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/WR.aw_channel_0/aw_cmd_fsm_0/state_reg[0]/C
+                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/WR.aw_channel_0/cmd_translator_0/wrap_cmd_0/wrap_second_len_r_reg[0]/D
+                                                              -0.905        
 i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/INCLUDE_DPHASE_TIMER.dpto_cnt_reg[6]/C
                                i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/cmd_translator_0/incr_cmd_0/axaddr_incr_reg[8]/D
-                                                              -0.425        
-pwm_rstn_reg/C                 pwm[3]/v_reg[0]/CE             -0.425        
-pwm_rstn_reg/C                 pwm[3]/v_reg[1]/CE             -0.425        
-pwm_rstn_reg/C                 pwm[3]/v_reg[2]/CE             -0.425        
-pwm_rstn_reg/C                 pwm[3]/v_reg[3]/CE             -0.425        
-pwm_rstn_reg/C                 pwm[3]/v_reg[4]/CE             -0.425        
-pwm_rstn_reg/C                 pwm[3]/v_reg[5]/CE             -0.425        
-pwm_rstn_reg/C                 pwm[3]/v_reg[6]/CE             -0.425        
+                                                              -0.897        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/ar_pipe/m_payload_i_reg[6]/C
+                               i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/I_DECODER/GEN_BKEND_CE_REGISTERS[6].ce_out_i_reg[6]/D
+                                                              -0.882        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.r_channel_0/rd_data_fifo_0/cnt_read_reg[2]_rep__2/C
+                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.r_channel_0/rd_data_fifo_0/cnt_read_reg[4]_rep__1/D
+                                                              -0.878        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/cmd_translator_0/incr_cmd_0/sel_first_reg/C
+                               i_ps/system_i/system_i/xadc/inst/AXI_XADC_CORE_I/XADC_INST/DADDR[2]
+                                                              -0.860        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/ar_pipe/m_payload_i_reg[6]/C
+                               i_ps/system_i/system_i/xadc/inst/AXI_XADC_CORE_I/XADC_INST/DADDR[4]
+                                                              -0.859        
+pwm[1]/v_r_reg[2]/C            pwm[1]/pwm_o_reg/D             -0.847        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/ar_pipe/m_payload_i_reg[6]/C
+                               i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/I_DECODER/GEN_BKEND_CE_REGISTERS[7].ce_out_i_reg[7]/D
+                                                              -0.839        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/aw_pipe/m_payload_i_reg[39]/C
+                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/WR.aw_channel_0/cmd_translator_0/incr_cmd_0/axaddr_incr_reg[10]/D
+                                                              -0.837        
+pwm[0]/v_r_reg[2]/C            pwm[0]/pwm_o_reg/D             -0.835        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/ar_pipe/m_payload_i_reg[6]/C
+                               i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/I_DECODER/GEN_BKEND_CE_REGISTERS[0].ce_out_i_reg[0]/D
+                                                              -0.830        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/aw_pipe/m_payload_i_reg[39]/C
+                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/WR.aw_channel_0/cmd_translator_0/incr_cmd_0/axaddr_incr_reg[8]/D
+                                                              -0.821        
+pwm_rstn_reg/C                 pwm[2]/pwm_o_reg/R             -0.808        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/ar_pipe/m_payload_i_reg[6]/C
+                               i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/I_DECODER/GEN_BKEND_CE_REGISTERS[17].ce_out_i_reg[17]/D
+                                                              -0.802        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.r_channel_0/transaction_fifo_0/cnt_read_reg[1]_rep__0/C
+                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/s_arid_r_reg[6]/CE
+                                                              -0.791        
 i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/ar_cmd_fsm_0/state_reg[0]/C
-                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/cmd_translator_0/wrap_cmd_0/wrap_second_len_r_reg[3]/D
-                                                              -0.422        
-pwm_rstn_reg/C                 pwm[3]/b_reg[11]/CE            -0.421        
-pwm_rstn_reg/C                 pwm[3]/b_reg[12]/CE            -0.421        
-pwm_rstn_reg/C                 pwm[3]/b_reg[2]/CE             -0.421        
-i_ps/system_i/system_i/processing_system7/inst/PS7_i/MAXIGP1ACLK
-                               i_ps/system_i/system_i/xadc/inst/INTR_CTRLR_GEN_I.INTERRUPT_CONTROL_I/GEN_IP_IRPT_STATUS_REG[7].GEN_REG_STATUS.ip_irpt_status_reg_reg[7]/D
-                                                              -0.420        
-i_ps/system_i/system_i/xadc/inst/INTR_CTRLR_GEN_I.ip2bus_wrack_reg/C
-                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/WR.aw_channel_0/cmd_translator_0/incr_cmd_0/axaddr_incr_reg[1]/D
-                                                              -0.420        
+                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/cmd_translator_0/wrap_cmd_0/wrap_second_len_r_reg[0]/D
+                                                              -0.783        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/ar_pipe/m_payload_i_reg[6]/C
+                               i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/I_DECODER/GEN_BKEND_CE_REGISTERS[3].ce_out_i_reg[3]/D
+                                                              -0.768        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.r_channel_0/transaction_fifo_0/cnt_read_reg[1]_rep__0/C
+                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/s_arid_r_reg[5]/CE
+                                                              -0.765        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.r_channel_0/transaction_fifo_0/cnt_read_reg[1]_rep__0/C
+                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/s_arid_r_reg[8]/CE
+                                                              -0.765        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.r_channel_0/rd_data_fifo_0/cnt_read_reg[2]_rep__2/C
+                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.r_channel_0/rd_data_fifo_0/cnt_read_reg[4]/D
+                                                              -0.764        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/ar_pipe/m_payload_i_reg[6]/C
+                               i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/I_DECODER/GEN_BKEND_CE_REGISTERS[4].ce_out_i_reg[4]/D
+                                                              -0.761        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/ar_pipe/m_payload_i_reg[6]/C
+                               i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/I_DECODER/GEN_BKEND_CE_REGISTERS[1].ce_out_i_reg[1]/D
+                                                              -0.756        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/ar_pipe/m_payload_i_reg[6]/C
+                               i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/I_DECODER/GEN_BKEND_CE_REGISTERS[5].ce_out_i_reg[5]/D
+                                                              -0.753        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/ar_pipe/m_payload_i_reg[6]/C
+                               i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/I_DECODER/GEN_BKEND_CE_REGISTERS[2].ce_out_i_reg[2]/D
+                                                              -0.751        
 i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/INCLUDE_DPHASE_TIMER.dpto_cnt_reg[6]/C
                                i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/cmd_translator_0/incr_cmd_0/axaddr_incr_reg[5]/D
-                                                              -0.417        
-i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.r_channel_0/rd_data_fifo_0/cnt_read_reg[0]_rep__2/C
-                               i_ps/system_i/system_i/xadc/inst/INTR_CTRLR_GEN_I.ip2bus_data_int_reg[19]/CE
-                                                              -0.409        
-i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.r_channel_0/rd_data_fifo_0/cnt_read_reg[0]_rep__2/C
-                               i_ps/system_i/system_i/xadc/inst/INTR_CTRLR_GEN_I.ip2bus_data_int_reg[21]/CE
-                                                              -0.409        
-i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.r_channel_0/rd_data_fifo_0/cnt_read_reg[0]_rep__2/C
-                               i_ps/system_i/system_i/xadc/inst/INTR_CTRLR_GEN_I.ip2bus_data_int_reg[25]/CE
-                                                              -0.409        
-i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.r_channel_0/rd_data_fifo_0/cnt_read_reg[0]_rep__2/C
-                               i_ps/system_i/system_i/xadc/inst/INTR_CTRLR_GEN_I.ip2bus_data_int_reg[28]/CE
-                                                              -0.409        
-i_ps/system_i/system_i/xadc/inst/INTR_CTRLR_GEN_I.ip2bus_wrack_reg/C
-                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/WR.aw_channel_0/cmd_translator_0/incr_cmd_0/axaddr_incr_reg[9]/D
-                                                              -0.403        
+                                                              -0.736        
 i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/INCLUDE_DPHASE_TIMER.dpto_cnt_reg[6]/C
                                i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/cmd_translator_0/incr_cmd_0/axaddr_incr_reg[7]/D
-                                                              -0.396        
+                                                              -0.715        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.r_channel_0/rd_data_fifo_0/cnt_read_reg[2]_rep__2/C
+                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.r_channel_0/rd_data_fifo_0/cnt_read_reg[4]_rep/D
+                                                              -0.707        
+i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/INCLUDE_DPHASE_TIMER.dpto_cnt_reg[6]/C
+                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/cmd_translator_0/incr_cmd_0/axaddr_incr_reg[1]/D
+                                                              -0.707        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.r_channel_0/rd_data_fifo_0/cnt_read_reg[2]_rep__2/C
+                               i_ps/system_i/system_i/xadc/inst/INTR_CTRLR_GEN_I.ip2bus_data_int_reg[26]/CE
+                                                              -0.698        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.r_channel_0/rd_data_fifo_0/cnt_read_reg[2]_rep__2/C
+                               i_ps/system_i/system_i/xadc/inst/INTR_CTRLR_GEN_I.ip2bus_data_int_reg[30]/CE
+                                                              -0.698        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.r_channel_0/rd_data_fifo_0/cnt_read_reg[2]_rep__2/C
+                               i_ps/system_i/system_i/xadc/inst/INTR_CTRLR_GEN_I.ip2bus_data_int_reg[31]/CE
+                                                              -0.698        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/aw_pipe/m_payload_i_reg[39]/C
+                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/WR.aw_channel_0/cmd_translator_0/incr_cmd_0/axaddr_incr_reg[7]/D
+                                                              -0.687        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/aw_pipe/m_payload_i_reg[39]/C
+                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/WR.aw_channel_0/cmd_translator_0/incr_cmd_0/axaddr_incr_reg[5]/D
+                                                              -0.659        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/ar_pipe/m_payload_i_reg[6]/C
+                               i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/I_DECODER/GEN_BKEND_CE_REGISTERS[18].ce_out_i_reg[18]/D
+                                                              -0.655        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/ar_pipe/m_payload_i_reg[6]/C
+                               i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/I_DECODER/GEN_BKEND_CE_REGISTERS[19].ce_out_i_reg[19]/D
+                                                              -0.651        
+i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/INCLUDE_DPHASE_TIMER.dpto_cnt_reg[6]/C
+                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/cmd_translator_0/incr_cmd_0/axaddr_incr_reg[6]/D
+                                                              -0.641        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.r_channel_0/transaction_fifo_0/cnt_read_reg[1]_rep__0/C
+                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/s_arid_r_reg[11]/CE
+                                                              -0.631        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/aw_pipe/m_payload_i_reg[39]/C
+                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/WR.aw_channel_0/cmd_translator_0/incr_cmd_0/axaddr_incr_reg[6]/D
+                                                              -0.627        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/ar_pipe/m_payload_i_reg[6]/C
+                               i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/I_DECODER/GEN_BKEND_CE_REGISTERS[16].ce_out_i_reg[16]/D
+                                                              -0.625        
+i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/INCLUDE_DPHASE_TIMER.dpto_cnt_reg[6]/C
+                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/cmd_translator_0/incr_cmd_0/axaddr_incr_reg[4]/D
+                                                              -0.625        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/ar_pipe/m_payload_i_reg[7]/C
+                               i_ps/system_i/system_i/xadc/inst/AXI_XADC_CORE_I/XADC_INST/DADDR[5]
+                                                              -0.622        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/ar_pipe/m_payload_i_reg[6]/C
+                               i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/I_DECODER/GEN_BKEND_CE_REGISTERS[22].ce_out_i_reg[22]/D
+                                                              -0.621        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/cmd_translator_0/incr_cmd_0/sel_first_reg/C
+                               i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/I_DECODER/GEN_BKEND_CE_REGISTERS[21].ce_out_i_reg[21]/D
+                                                              -0.621        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/ar_pipe/m_payload_i_reg[6]/C
+                               i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/I_DECODER/GEN_BKEND_CE_REGISTERS[15].ce_out_i_reg[15]/D
+                                                              -0.615        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/ar_pipe/m_payload_i_reg[6]/C
+                               i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/I_DECODER/GEN_BKEND_CE_REGISTERS[9].ce_out_i_reg[9]/D
+                                                              -0.614        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/ar_pipe/m_payload_i_reg[6]/C
+                               i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/I_DECODER/GEN_BKEND_CE_REGISTERS[12].ce_out_i_reg[12]/D
+                                                              -0.613        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.r_channel_0/transaction_fifo_0/cnt_read_reg[1]_rep__0/C
+                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/cmd_translator_0/wrap_cmd_0/wrap_cnt_r_reg[0]/CE
+                                                              -0.612        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/ar_pipe/m_payload_i_reg[5]/C
+                               i_ps/system_i/system_i/xadc/inst/AXI_XADC_CORE_I/XADC_INST/DADDR[3]
+                                                              -0.611        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/ar_pipe/m_payload_i_reg[6]/C
+                               i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/I_DECODER/GEN_BKEND_CE_REGISTERS[8].ce_out_i_reg[8]/D
+                                                              -0.609        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/ar_pipe/m_payload_i_reg[6]/C
+                               i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/I_DECODER/GEN_BKEND_CE_REGISTERS[23].ce_out_i_reg[23]/D
+                                                              -0.603        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/ar_pipe/m_payload_i_reg[6]/C
+                               i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/I_DECODER/GEN_BKEND_CE_REGISTERS[10].ce_out_i_reg[10]/D
+                                                              -0.602        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/ar_pipe/m_payload_i_reg[6]/C
+                               i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/I_DECODER/GEN_BKEND_CE_REGISTERS[11].ce_out_i_reg[11]/D
+                                                              -0.599        
+i_ps/system_i/system_i/processing_system7/inst/PS7_i/MAXIGP1ACLK
+                               i_ps/system_i/system_i/xadc/inst/INTR_CTRLR_GEN_I.ip2bus_wrack_reg/D
+                                                              -0.593        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/ar_pipe/m_payload_i_reg[6]/C
+                               i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/I_DECODER/GEN_BKEND_CE_REGISTERS[13].ce_out_i_reg[13]/D
+                                                              -0.589        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/ar_pipe/m_payload_i_reg[8]/C
+                               i_ps/system_i/system_i/xadc/inst/AXI_XADC_CORE_I/XADC_INST/DADDR[6]
+                                                              -0.587        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/ar_cmd_fsm_0/state_reg[0]/C
+                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/cmd_translator_0/wrap_cmd_0/wrap_cnt_r_reg[2]/D
+                                                              -0.559        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/aw_pipe/m_payload_i_reg[39]/C
+                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/WR.aw_channel_0/cmd_translator_0/incr_cmd_0/axaddr_incr_reg[4]/D
+                                                              -0.548        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/ar_cmd_fsm_0/state_reg[0]/C
+                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/cmd_translator_0/wrap_cmd_0/wrap_cnt_r_reg[3]/D
+                                                              -0.544        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/cmd_translator_0/incr_cmd_0/sel_first_reg/C
+                               i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/I_DECODER/GEN_BKEND_CE_REGISTERS[14].ce_out_i_reg[14]/D
+                                                              -0.525        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/SI_REG/aw_pipe/m_payload_i_reg[2]/C
+                               i_ps/system_i/system_i/xadc/inst/AXI_XADC_CORE_I/XADC_INST/DADDR[0]
+                                                              -0.517        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.r_channel_0/rd_data_fifo_0/cnt_read_reg[2]_rep__2/C
+                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.r_channel_0/rd_data_fifo_0/cnt_read_reg[0]_rep/D
+                                                              -0.503        
+pwm_rstn_reg/C                 pwm[3]/bcnt_reg[0]/R           -0.501        
+pwm_rstn_reg/C                 pwm[3]/bcnt_reg[1]/R           -0.501        
+pwm_rstn_reg/C                 pwm[3]/bcnt_reg[2]/R           -0.501        
+pwm_rstn_reg/C                 pwm[3]/bcnt_reg[3]/R           -0.501        
 i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/INCLUDE_DPHASE_TIMER.dpto_cnt_reg[6]/C
                                i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/cmd_translator_0/incr_cmd_0/axaddr_incr_reg[0]/D
-                                                              -0.387        
-i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/ar_cmd_fsm_0/state_reg[0]/C
-                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/cmd_translator_0/wrap_cmd_0/wrap_second_len_r_reg[1]/D
-                                                              -0.376        
-i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.r_channel_0/rd_data_fifo_0/cnt_read_reg[0]_rep__2/C
-                               i_ps/system_i/system_i/xadc/inst/INTR_CTRLR_GEN_I.ip2bus_data_int_reg[0]/CE
-                                                              -0.369        
-i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.r_channel_0/rd_data_fifo_0/cnt_read_reg[0]_rep__2/C
-                               i_ps/system_i/system_i/xadc/inst/INTR_CTRLR_GEN_I.ip2bus_data_int_reg[17]/CE
-                                                              -0.369        
-i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.r_channel_0/rd_data_fifo_0/cnt_read_reg[0]_rep__2/C
+                                                              -0.495        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.r_channel_0/rd_data_fifo_0/cnt_read_reg[2]_rep__2/C
                                i_ps/system_i/system_i/xadc/inst/INTR_CTRLR_GEN_I.ip2bus_data_int_reg[23]/CE
-                                                              -0.369        
-i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.r_channel_0/rd_data_fifo_0/cnt_read_reg[0]_rep__2/C
+                                                              -0.489        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.r_channel_0/rd_data_fifo_0/cnt_read_reg[2]_rep__2/C
                                i_ps/system_i/system_i/xadc/inst/INTR_CTRLR_GEN_I.ip2bus_data_int_reg[24]/CE
-                                                              -0.369        
-i_ps/system_i/system_i/processing_system7/inst/PS7_i/MAXIGP1ACLK
-                               i_ps/system_i/system_i/xadc/inst/INTR_CTRLR_GEN_I.INTERRUPT_CONTROL_I/GEN_IP_IRPT_STATUS_REG[9].GEN_REG_STATUS.ip_irpt_status_reg_reg[9]/D
-                                                              -0.368        
-i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/INCLUDE_DPHASE_TIMER.dpto_cnt_reg[1]/C
+                                                              -0.489        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.r_channel_0/rd_data_fifo_0/cnt_read_reg[2]_rep__2/C
+                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.r_channel_0/rd_data_fifo_0/cnt_read_reg[4]_rep__2/D
+                                                              -0.486        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/WR.aw_channel_0/aw_cmd_fsm_0/state_reg[0]/C
+                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/WR.aw_channel_0/cmd_translator_0/wrap_cmd_0/wrap_cnt_r_reg[3]/D
+                                                              -0.482        
+i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/INCLUDE_DPHASE_TIMER.dpto_cnt_reg[6]/C
+                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/cmd_translator_0/incr_cmd_0/axaddr_incr_reg[2]/CE
+                                                              -0.469        
+i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/INCLUDE_DPHASE_TIMER.dpto_cnt_reg[6]/C
+                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/cmd_translator_0/incr_cmd_0/axaddr_incr_reg[3]/CE
+                                                              -0.469        
+i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/INCLUDE_DPHASE_TIMER.dpto_cnt_reg[6]/C
+                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/cmd_translator_0/incr_cmd_0/axaddr_incr_reg[3]/D
+                                                              -0.464        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.r_channel_0/transaction_fifo_0/cnt_read_reg[1]_rep__0/C
+                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/cmd_translator_0/wrap_cmd_0/wrap_cnt_r_reg[1]/CE
+                                                              -0.448        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.r_channel_0/transaction_fifo_0/cnt_read_reg[1]_rep__0/C
+                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/cmd_translator_0/wrap_cmd_0/wrap_cnt_r_reg[2]/CE
+                                                              -0.448        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.r_channel_0/transaction_fifo_0/cnt_read_reg[1]_rep__0/C
+                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/cmd_translator_0/wrap_cmd_0/wrap_cnt_r_reg[3]/CE
+                                                              -0.448        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.r_channel_0/transaction_fifo_0/cnt_read_reg[1]_rep__0/C
+                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/s_arid_r_reg[0]/CE
+                                                              -0.448        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.r_channel_0/transaction_fifo_0/cnt_read_reg[1]_rep__0/C
+                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/s_arid_r_reg[1]/CE
+                                                              -0.448        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.r_channel_0/transaction_fifo_0/cnt_read_reg[1]_rep__0/C
+                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/s_arid_r_reg[7]/CE
+                                                              -0.448        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/WR.aw_channel_0/aw_cmd_fsm_0/state_reg[0]/C
+                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/WR.aw_channel_0/cmd_translator_0/wrap_cmd_0/wrap_cnt_r_reg[2]/D
+                                                              -0.446        
+i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/INCLUDE_DPHASE_TIMER.dpto_cnt_reg[6]/C
+                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/cmd_translator_0/incr_cmd_0/axaddr_incr_reg[1]/CE
+                                                              -0.430        
+i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/INCLUDE_DPHASE_TIMER.dpto_cnt_reg[6]/C
+                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/cmd_translator_0/incr_cmd_0/axaddr_incr_reg[4]/CE
+                                                              -0.430        
+i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/INCLUDE_DPHASE_TIMER.dpto_cnt_reg[6]/C
+                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/cmd_translator_0/incr_cmd_0/axaddr_incr_reg[5]/CE
+                                                              -0.430        
+i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/INCLUDE_DPHASE_TIMER.dpto_cnt_reg[6]/C
+                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/cmd_translator_0/incr_cmd_0/axaddr_incr_reg[6]/CE
+                                                              -0.430        
+i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/INCLUDE_DPHASE_TIMER.dpto_cnt_reg[6]/C
+                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/cmd_translator_0/incr_cmd_0/axaddr_incr_reg[7]/CE
+                                                              -0.430        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.r_channel_0/rd_data_fifo_0/cnt_read_reg[2]_rep__2/C
+                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.r_channel_0/rd_data_fifo_0/cnt_read_reg[0]_rep__0/D
+                                                              -0.414        
+i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/INCLUDE_DPHASE_TIMER.dpto_cnt_reg[6]/C
+                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/cmd_translator_0/incr_cmd_0/axaddr_incr_reg[2]/D
+                                                              -0.404        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.r_channel_0/rd_data_fifo_0/cnt_read_reg[2]_rep__2/C
+                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.r_channel_0/rd_data_fifo_0/cnt_read_reg[0]_rep__1/D
+                                                              -0.401        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/WR.aw_channel_0/aw_cmd_fsm_0/state_reg[0]/C
+                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/WR.aw_channel_0/cmd_translator_0/wrap_cmd_0/wrap_cnt_r_reg[1]/D
+                                                              -0.399        
+pwm_rstn_reg/C                 pwm[1]/v_reg[0]/CE             -0.396        
+pwm_rstn_reg/C                 pwm[1]/v_reg[2]/CE             -0.396        
+pwm_rstn_reg/C                 pwm[1]/v_reg[3]/CE             -0.396        
+pwm_rstn_reg/C                 pwm[1]/v_reg[4]/CE             -0.396        
+i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/INCLUDE_DPHASE_TIMER.dpto_cnt_reg[6]/C
+                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/cmd_translator_0/incr_cmd_0/axaddr_incr_reg[10]/CE
+                                                              -0.381        
+i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/INCLUDE_DPHASE_TIMER.dpto_cnt_reg[6]/C
+                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/cmd_translator_0/incr_cmd_0/axaddr_incr_reg[8]/CE
+                                                              -0.381        
+i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/INCLUDE_DPHASE_TIMER.dpto_cnt_reg[6]/C
+                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/cmd_translator_0/incr_cmd_0/axaddr_incr_reg[9]/CE
+                                                              -0.381        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.r_channel_0/rd_data_fifo_0/cnt_read_reg[2]_rep__2/C
+                               i_ps/system_i/system_i/xadc/inst/INTR_CTRLR_GEN_I.ip2bus_data_int_reg[28]/CE
+                                                              -0.360        
+i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/INCLUDE_DPHASE_TIMER.dpto_cnt_reg[6]/C
+                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/cmd_translator_0/incr_cmd_0/axaddr_incr_reg[0]/CE
+                                                              -0.345        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.r_channel_0/transaction_fifo_0/cnt_read_reg[1]_rep__0/C
                                i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/cmd_translator_0/s_axburst_eq0_reg/CE
-                                                              -0.365        
-i_ps/system_i/system_i/xadc/inst/AXI_LITE_IPIF_I/I_SLAVE_ATTACHMENT/INCLUDE_DPHASE_TIMER.dpto_cnt_reg[1]/C
+                                                              -0.313        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.r_channel_0/transaction_fifo_0/cnt_read_reg[1]_rep__0/C
                                i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/cmd_translator_0/s_axburst_eq1_reg/CE
-                                                              -0.365        
-i_ps/system_i/system_i/processing_system7/inst/PS7_i/MAXIGP1ACLK
-                               i_ps/system_i/system_i/xadc/inst/INTR_CTRLR_GEN_I.INTERRUPT_CONTROL_I/GEN_IP_IRPT_STATUS_REG[11].GEN_REG_STATUS.ip_irpt_status_reg_reg[11]/D
-                                                              -0.364        
-i_ps/system_i/system_i/xadc/inst/INTR_CTRLR_GEN_I.ip2bus_wrack_reg/C
-                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/WR.aw_channel_0/s_awlen_r_reg[0]/CE
-                                                              -0.362        
-i_ps/system_i/system_i/xadc/inst/INTR_CTRLR_GEN_I.ip2bus_wrack_reg/C
-                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/WR.aw_channel_0/s_awlen_r_reg[1]/CE
-                                                              -0.362        
-pwm_rstn_reg/C                 pwm[2]/b_reg[15]/CE            -0.307        
-pwm_rstn_reg/C                 pwm[2]/b_reg[1]/CE             -0.307        
-pwm_rstn_reg/C                 pwm[2]/b_reg[7]/CE             -0.307        
-pwm_rstn_reg/C                 pwm[3]/v_reg[7]/CE             -0.278        
-pwm[0]/vcnt_reg[2]/C           pwm[0]/b_reg[2]/CE             -0.276        
-pwm[0]/vcnt_reg[2]/C           pwm[0]/b_reg[0]/CE             -0.273        
-pwm[0]/vcnt_reg[2]/C           pwm[0]/b_reg[7]/CE             -0.273        
-pwm[0]/vcnt_reg[2]/C           pwm[0]/b_reg[8]/CE             -0.273        
-pwm[0]/vcnt_reg[2]/C           pwm[0]/b_reg[9]/CE             -0.273        
-pwm[0]/vcnt_reg[2]/C           pwm[0]/b_reg[3]/CE             -0.237        
-pwm[0]/vcnt_reg[2]/C           pwm[0]/b_reg[4]/CE             -0.237        
-pwm[0]/vcnt_reg[2]/C           pwm[0]/b_reg[5]/CE             -0.237        
-pwm[0]/vcnt_reg[2]/C           pwm[0]/b_reg[6]/CE             -0.237        
-pwm[0]/vcnt_reg[2]/C           pwm[0]/bcnt_reg[0]/CE          -0.236        
-pwm[0]/vcnt_reg[2]/C           pwm[0]/bcnt_reg[1]/CE          -0.236        
-pwm[0]/vcnt_reg[2]/C           pwm[0]/bcnt_reg[2]/CE          -0.236        
-pwm[0]/vcnt_reg[2]/C           pwm[0]/bcnt_reg[3]/CE          -0.236        
-pwm[0]/vcnt_reg[2]/C           pwm[0]/b_reg[11]/CE            -0.231        
-pwm[0]/vcnt_reg[2]/C           pwm[0]/b_reg[12]/CE            -0.231        
-pwm[0]/vcnt_reg[2]/C           pwm[0]/b_reg[13]/CE            -0.231        
-pwm[0]/vcnt_reg[2]/C           pwm[0]/b_reg[1]/CE             -0.231        
-pwm_rstn_reg/C                 pwm[3]/b_reg[3]/CE             -0.196        
-pwm_rstn_reg/C                 pwm[3]/b_reg[4]/CE             -0.196        
-pwm_rstn_reg/C                 pwm[3]/b_reg[5]/CE             -0.196        
-pwm_rstn_reg/C                 pwm[3]/b_reg[6]/CE             -0.196        
-pwm[0]/vcnt_reg[2]/C           pwm[0]/b_reg[10]/CE            -0.195        
-pwm[0]/vcnt_reg[2]/C           pwm[0]/b_reg[14]/CE            -0.195        
-pwm[0]/bcnt_reg[3]/C           pwm[0]/v_reg[4]/CE             -0.195        
-pwm_rstn_reg/C                 pwm[2]/b_reg[0]/CE             -0.183        
-pwm_rstn_reg/C                 pwm[2]/b_reg[4]/CE             -0.183        
-pwm_rstn_reg/C                 pwm[2]/b_reg[5]/CE             -0.183        
-pwm_rstn_reg/C                 pwm[2]/b_reg[2]/CE             -0.153        
-pwm_rstn_reg/C                 pwm[2]/b_reg[3]/CE             -0.153        
-pwm_rstn_reg/C                 pwm[2]/b_reg[6]/CE             -0.153        
-pwm_rstn_reg/C                 pwm[2]/b_reg[10]/CE            -0.153        
-pwm_rstn_reg/C                 pwm[2]/b_reg[11]/CE            -0.153        
-pwm_rstn_reg/C                 pwm[2]/b_reg[8]/CE             -0.153        
-pwm_rstn_reg/C                 pwm[2]/b_reg[9]/CE             -0.153        
-pwm_rstn_reg/C                 pwm[3]/b_reg[7]/CE             -0.127        
-pwm_rstn_reg/C                 pwm[3]/b_reg[8]/CE             -0.127        
-pwm_rstn_reg/C                 pwm[3]/b_reg[9]/CE             -0.127        
-pwm[0]/bcnt_reg[3]/C           pwm[0]/v_reg[1]/CE             -0.127        
-pwm[0]/bcnt_reg[3]/C           pwm[0]/v_reg[5]/CE             -0.127        
-pwm[0]/bcnt_reg[3]/C           pwm[0]/v_reg[6]/CE             -0.127        
-pwm[0]/bcnt_reg[3]/C           pwm[0]/v_reg[7]/CE             -0.127        
-pwm_rstn_reg/C                 pwm[2]/b_reg[12]/CE            -0.101        
-pwm_rstn_reg/C                 pwm[2]/b_reg[13]/CE            -0.101        
-pwm_rstn_reg/C                 pwm[2]/b_reg[14]/CE            -0.101        
-pwm_rstn_reg/C                 pwm[1]/v_reg[2]/CE             -0.096        
-pwm_rstn_reg/C                 pwm[3]/b_reg[0]/CE             -0.084        
-pwm_rstn_reg/C                 pwm[3]/b_reg[1]/CE             -0.084        
-pwm[2]/bcnt_reg[1]/C           pwm[2]/v_reg[0]/CE             -0.083        
-pwm[2]/bcnt_reg[1]/C           pwm[2]/v_reg[1]/CE             -0.083        
-pwm[2]/bcnt_reg[1]/C           pwm[2]/v_reg[2]/CE             -0.083        
-pwm[2]/bcnt_reg[1]/C           pwm[2]/v_reg[3]/CE             -0.083        
-pwm[2]/bcnt_reg[1]/C           pwm[2]/v_reg[4]/CE             -0.083        
-pwm[2]/bcnt_reg[1]/C           pwm[2]/v_reg[5]/CE             -0.083        
-pwm[2]/bcnt_reg[1]/C           pwm[2]/v_reg[6]/CE             -0.083        
-pwm[2]/bcnt_reg[1]/C           pwm[2]/v_reg[7]/CE             -0.083        
-pwm_rstn_reg/C                 pwm[0]/bcnt_reg[0]/R           -0.003        
-pwm_rstn_reg/C                 pwm[0]/bcnt_reg[1]/R           -0.003        
-pwm_rstn_reg/C                 pwm[0]/bcnt_reg[2]/R           -0.003        
-pwm_rstn_reg/C                 pwm[0]/bcnt_reg[3]/R           -0.003        
-pwm_rstn_reg/C                 pwm[3]/vcnt_reg[6]/R           0.002         
-pwm_rstn_reg/C                 pwm[3]/vcnt_reg[7]/R           0.002         
-pwm_rstn_reg/C                 pwm[3]/bcnt_reg[0]/R           0.007         
-pwm_rstn_reg/C                 pwm[3]/bcnt_reg[1]/R           0.007         
-pwm_rstn_reg/C                 pwm[3]/bcnt_reg[2]/R           0.007         
-pwm_rstn_reg/C                 pwm[3]/bcnt_reg[3]/R           0.007         
-pwm_rstn_reg/C                 pwm[1]/v_reg[0]/CE             0.016         
-pwm_rstn_reg/C                 pwm[1]/v_reg[3]/CE             0.016         
-pwm[0]/bcnt_reg[3]/C           pwm[0]/v_reg[2]/CE             0.036         
-pwm_rstn_reg/C                 pwm[3]/b_reg[10]/CE            0.063         
-pwm_rstn_reg/C                 pwm[3]/b_reg[13]/CE            0.063         
-pwm_rstn_reg/C                 pwm[3]/b_reg[14]/CE            0.063         
-pwm_rstn_reg/C                 pwm[3]/b_reg[15]/CE            0.063         
-pwm[0]/bcnt_reg[3]/C           pwm[0]/v_reg[0]/CE             0.086         
-pwm[0]/bcnt_reg[3]/C           pwm[0]/v_reg[3]/CE             0.086         
-pwm_rstn_reg/C                 pwm[1]/v_reg[1]/CE             0.096         
-pwm_rstn_reg/C                 pwm[1]/v_reg[4]/CE             0.096         
-pwm_rstn_reg/C                 pwm[2]/bcnt_reg[0]/R           0.110         
-pwm_rstn_reg/C                 pwm[2]/bcnt_reg[1]/R           0.110         
-pwm_rstn_reg/C                 pwm[2]/bcnt_reg[2]/R           0.110         
-pwm_rstn_reg/C                 pwm[2]/bcnt_reg[3]/R           0.110         
-pwm_rstn_reg/C                 pwm[1]/bcnt_reg[0]/R           0.144         
-pwm_rstn_reg/C                 pwm[1]/bcnt_reg[1]/R           0.144         
-dac_rst_reg/C                  oddr_dac_dat[10]/R             0.587         
-dac_rst_reg/C                  oddr_dac_dat[7]/R              0.631         
-dac_rst_reg/C                  oddr_dac_dat[6]/R              0.637         
-dac_rst_reg/C                  oddr_dac_dat[13]/R             0.681         
-dac_rst_reg/C                  oddr_dac_dat[11]/R             0.726         
-dac_rst_reg/C                  oddr_dac_dat[8]/R              0.771         
-dac_rst_reg/C                  oddr_dac_dat[2]/R              0.791         
-dac_rst_reg/C                  oddr_dac_dat[12]/R             0.819         
-dac_rst_reg/C                  oddr_dac_dat[0]/R              0.875         
-dac_rst_reg/C                  oddr_dac_dat[9]/R              0.919         
-dac_rst_reg/C                  oddr_dac_dat[3]/R              0.929         
-dac_rst_reg/C                  oddr_dac_dat[1]/R              1.013         
-dac_rst_reg/C                  oddr_dac_dat[4]/R              1.075         
-dac_rst_reg/C                  oddr_dac_dat[5]/R              1.223         
-dac_rst_reg/C                  oddr_dac_sel/R                 1.232         
-dac_dat_a_reg[5]/C             oddr_dac_dat[5]/D2             1.662         
-dac_dat_a_reg[13]/C            oddr_dac_dat[13]/D2            1.680         
-dac_dat_a_reg[12]/C            oddr_dac_dat[12]/D2            1.725         
-dac_rst_reg/C                  oddr_dac_rst/D2                1.840         
-dac_dat_a_reg[2]/C             oddr_dac_dat[2]/D2             1.852         
-dac_dat_a_reg[1]/C             oddr_dac_dat[1]/D2             1.855         
-dac_dat_a_reg[9]/C             oddr_dac_dat[9]/D2             1.863         
-dac_dat_a_reg[3]/C             oddr_dac_dat[3]/D2             1.867         
-dac_dat_a_reg[6]/C             oddr_dac_dat[6]/D2             1.904         
-dac_dat_a_reg[10]/C            oddr_dac_dat[10]/D2            1.988         
-dac_dat_a_reg[7]/C             oddr_dac_dat[7]/D2             1.991         
-dac_dat_a_reg[11]/C            oddr_dac_dat[11]/D2            1.994         
-dac_dat_a_reg[8]/C             oddr_dac_dat[8]/D2             2.000         
-dac_dat_a_reg[0]/C             oddr_dac_dat[0]/D2             2.025         
-dac_dat_a_reg[4]/C             oddr_dac_dat[4]/D2             2.032         
-i_dsp/sum2_reg[15]/C           dac_dat_b_reg[12]/D            2.108         
-i_dsp/sum1_reg[14]/C           dac_dat_a_reg[12]/D            2.160         
-i_dsp/sum2_reg[15]/C           dac_dat_b_reg[4]/D             2.896         
-i_dsp/sum2_reg[15]/C           dac_dat_b_reg[9]/D             2.918         
-i_dsp/sum2_reg[15]/C           dac_dat_b_reg[1]/D             2.932         
-i_dsp/sum2_reg[15]/C           dac_dat_b_reg[2]/D             2.966         
-i_dsp/sum1_reg[14]/C           dac_dat_a_reg[4]/D             2.975         
-i_dsp/sum2_reg[17]/C           dac_dat_b_reg[3]/D             2.977         
-i_dsp/sum2_reg[14]/C           dac_dat_b_reg[8]/D             3.153         
-i_dsp/sum1_reg[13]/C           dac_dat_a_reg[2]/D             3.183         
-i_dsp/sum2_reg[14]/C           dac_dat_b_reg[10]/D            3.299         
-i_dsp/sum2_reg[14]/C           dac_dat_b_reg[7]/D             3.313         
-i_dsp/sum2_reg[15]/C           dac_dat_b_reg[0]/D             3.400         
-i_dsp/sum2_reg[15]/C           dac_dat_b_reg[11]/D            3.499         
-i_dsp/sum2_reg[15]/C           dac_dat_b_reg[5]/D             3.561         
-i_dsp/sum1_reg[14]/C           dac_dat_a_reg[0]/D             3.582         
-i_dsp/sum2_reg[14]/C           dac_dat_b_reg[6]/D             3.625         
-i_dsp/sum1_reg[13]/C           dac_dat_a_reg[5]/D             3.642         
-i_dsp/sum1_reg[13]/C           dac_dat_a_reg[3]/D             3.712         
-i_dsp/sum1_reg[14]/C           dac_dat_a_reg[1]/D             3.756         
-i_dsp/sum2_reg[17]/C           dac_dat_b_reg[13]/D            3.966         
-i_dsp/sum1_reg[14]/C           dac_dat_a_reg[9]/D             3.992         
-i_dsp/sum1_reg[14]/C           dac_dat_a_reg[8]/D             4.022         
-i_dsp/sum1_reg[13]/C           dac_dat_a_reg[10]/D            4.038         
-i_dsp/sum1_reg[15]/C           dac_dat_a_reg[6]/D             4.208         
-i_dsp/sum1_reg[11]/C           dac_dat_a_reg[11]/D            4.250         
-i_dsp/sum1_reg[15]/C           dac_dat_a_reg[7]/D             4.466         
-i_dsp/sum1_reg[17]/C           dac_dat_a_reg[13]/D            4.795         
-dac_rst_reg/C                  oddr_dac_rst/D1                5.542         
-dac_dat_b_reg[5]/C             oddr_dac_dat[5]/D1             5.593         
-dac_dat_b_reg[13]/C            oddr_dac_dat[13]/D1            5.696         
-dac_dat_b_reg[4]/C             oddr_dac_dat[4]/D1             5.724         
-dac_dat_b_reg[8]/C             oddr_dac_dat[8]/D1             5.773         
-dac_dat_b_reg[12]/C            oddr_dac_dat[12]/D1            5.837         
-dac_dat_b_reg[6]/C             oddr_dac_dat[6]/D1             5.852         
-dac_dat_b_reg[10]/C            oddr_dac_dat[10]/D1            5.854         
-dac_dat_b_reg[2]/C             oddr_dac_dat[2]/D1             5.854         
-dac_dat_b_reg[9]/C             oddr_dac_dat[9]/D1             5.861         
-dac_dat_b_reg[11]/C            oddr_dac_dat[11]/D1            5.862         
-dac_dat_b_reg[0]/C             oddr_dac_dat[0]/D1             5.945         
-dac_dat_b_reg[1]/C             oddr_dac_dat[1]/D1             5.946         
-dac_dat_b_reg[3]/C             oddr_dac_dat[3]/D1             5.998         
-dac_dat_b_reg[7]/C             oddr_dac_dat[7]/D1             6.000         
+                                                              -0.313        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.r_channel_0/transaction_fifo_0/cnt_read_reg[1]_rep__0/C
+                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/s_arid_r_reg[9]/CE
+                                                              -0.313        
+pwm_rstn_reg/C                 pwm[3]/vcnt_reg[1]/R           -0.303        
+pwm_rstn_reg/C                 pwm[3]/vcnt_reg[2]/R           -0.303        
+pwm_rstn_reg/C                 pwm[3]/vcnt_reg[3]/R           -0.303        
+pwm_rstn_reg/C                 pwm[3]/vcnt_reg[4]/R           -0.303        
+pwm_rstn_reg/C                 pwm[3]/vcnt_reg[5]/R           -0.303        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.r_channel_0/transaction_fifo_0/cnt_read_reg[1]_rep__0/C
+                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/s_arid_r_reg[10]/CE
+                                                              -0.303        
+i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.r_channel_0/transaction_fifo_0/cnt_read_reg[1]_rep__0/C
+                               i_ps/system_i/system_i/axi_protocol_converter_0/inst/gen_axilite.gen_b2s_conv.axilite_b2s/RD.ar_channel_0/s_arid_r_reg[2]/CE
+                                                              -0.303        
+pwm_rstn_reg/C                 pwm[2]/bcnt_reg[0]/R           -0.255        
+pwm_rstn_reg/C                 pwm[2]/bcnt_reg[1]/R           -0.255        
+pwm_rstn_reg/C                 pwm[2]/bcnt_reg[2]/R           -0.255        
+pwm_rstn_reg/C                 pwm[2]/bcnt_reg[3]/R           -0.255        
+pwm[0]/bcnt_reg[3]/C           pwm[0]/v_reg[0]/CE             -0.241        
+pwm[0]/bcnt_reg[3]/C           pwm[0]/v_reg[5]/CE             -0.241        
+pwm[0]/bcnt_reg[3]/C           pwm[0]/v_reg[6]/CE             -0.241        
+pwm[0]/bcnt_reg[3]/C           pwm[0]/v_reg[7]/CE             -0.241        
+pwm_rstn_reg/C                 pwm[2]/b_reg[11]/CE            -0.230        
+pwm_rstn_reg/C                 pwm[2]/b_reg[12]/CE            -0.230        
+pwm_rstn_reg/C                 pwm[2]/b_reg[13]/CE            -0.230        
+pwm[0]/bcnt_reg[3]/C           pwm[0]/v_reg[1]/CE             -0.220        
+pwm_rstn_reg/C                 pwm[3]/vcnt_reg[0]/R           -0.208        
+pwm_rstn_reg/C                 pwm[2]/vcnt_reg[0]/R           -0.177        
+pwm_rstn_reg/C                 pwm[2]/vcnt_reg[1]/R           -0.165        
+pwm_rstn_reg/C                 pwm[2]/vcnt_reg[2]/R           -0.165        
+pwm_rstn_reg/C                 pwm[2]/vcnt_reg[3]/R           -0.165        
+pwm_rstn_reg/C                 pwm[2]/vcnt_reg[4]/R           -0.165        
+pwm_rstn_reg/C                 pwm[2]/vcnt_reg[5]/R           -0.165        
+pwm_rstn_reg/C                 pwm[2]/vcnt_reg[6]/R           -0.165        
+pwm_rstn_reg/C                 pwm[2]/vcnt_reg[7]/R           -0.165        
+pwm_rstn_reg/C                 pwm[3]/vcnt_reg[6]/R           -0.164        
+pwm_rstn_reg/C                 pwm[3]/vcnt_reg[7]/R           -0.164        
+pwm_rstn_reg/C                 pwm[1]/bcnt_reg[0]/R           -0.104        
+pwm_rstn_reg/C                 pwm[1]/bcnt_reg[1]/R           -0.104        
+pwm_rstn_reg/C                 pwm[1]/bcnt_reg[2]/R           -0.104        
+pwm_rstn_reg/C                 pwm[1]/bcnt_reg[3]/R           -0.104        
+pwm_rstn_reg/C                 pwm[1]/v_reg[1]/CE             -0.090        
+pwm_rstn_reg/C                 pwm[1]/v_reg[5]/CE             -0.090        
+pwm_rstn_reg/C                 pwm[1]/v_reg[6]/CE             -0.090        
+pwm_rstn_reg/C                 pwm[1]/v_reg[7]/CE             -0.090        
+pwm_rstn_reg/C                 pwm[1]/b_reg[1]/CE             -0.076        
+pwm_rstn_reg/C                 pwm[1]/b_reg[2]/CE             -0.076        
+pwm_rstn_reg/C                 pwm[1]/b_reg[3]/CE             -0.076        
+pwm_rstn_reg/C                 pwm[1]/b_reg[4]/CE             -0.076        
+pwm[0]/bcnt_reg[3]/C           pwm[0]/v_reg[2]/CE             -0.074        
+pwm[0]/bcnt_reg[3]/C           pwm[0]/v_reg[3]/CE             -0.074        
+pwm[0]/bcnt_reg[3]/C           pwm[0]/v_reg[4]/CE             -0.069        
+pwm_rstn_reg/C                 pwm[1]/b_reg[5]/CE             -0.065        
+pwm_rstn_reg/C                 pwm[1]/b_reg[6]/CE             -0.065        
+pwm_rstn_reg/C                 pwm[1]/b_reg[7]/CE             -0.065        
+pwm_rstn_reg/C                 pwm[1]/b_reg[8]/CE             -0.065        
+pwm_rstn_reg/C                 pwm[1]/b_reg[0]/CE             -0.050        
+pwm_rstn_reg/C                 pwm[1]/b_reg[11]/CE            -0.050        
+pwm_rstn_reg/C                 pwm[1]/b_reg[12]/CE            -0.050        
+pwm_rstn_reg/C                 pwm[1]/b_reg[13]/CE            -0.050        
+pwm_rstn_reg/C                 pwm[1]/b_reg[14]/CE            -0.050        
+pwm_rstn_reg/C                 pwm[1]/vcnt_reg[1]/R           -0.019        
+pwm_rstn_reg/C                 pwm[1]/vcnt_reg[2]/R           -0.019        
+pwm_rstn_reg/C                 pwm[1]/vcnt_reg[3]/R           -0.019        
+pwm_rstn_reg/C                 pwm[1]/vcnt_reg[4]/R           -0.019        
+pwm_rstn_reg/C                 pwm[1]/vcnt_reg[5]/R           -0.019        
+pwm_rstn_reg/C                 pwm[1]/vcnt_reg[6]/R           -0.019        
+pwm_rstn_reg/C                 pwm[1]/vcnt_reg[7]/R           -0.019        
+pwm_rstn_reg/C                 pwm[0]/b_reg[5]/CE             -0.005        
+pwm_rstn_reg/C                 pwm[0]/b_reg[6]/CE             -0.005        
+pwm_rstn_reg/C                 pwm[0]/b_reg[9]/CE             -0.005        
+pwm_rstn_reg/C                 pwm[3]/pwm_o_reg/R             -0.004        
+pwm_rstn_reg/C                 pwm[0]/b_reg[7]/CE             0.033         
+pwm_rstn_reg/C                 pwm[0]/b_reg[8]/CE             0.033         
+pwm_rstn_reg/C                 pwm[2]/b_reg[15]/CE            0.052         
+pwm_rstn_reg/C                 pwm[2]/b_reg[3]/CE             0.052         
+pwm_rstn_reg/C                 pwm[2]/b_reg[4]/CE             0.052         
+pwm_rstn_reg/C                 pwm[2]/b_reg[5]/CE             0.052         
+pwm_rstn_reg/C                 pwm[2]/b_reg[6]/CE             0.052         
+pwm_rstn_reg/C                 pwm[1]/vcnt_reg[0]/R           0.076         
+pwm_rstn_reg/C                 pwm[1]/b_reg[10]/CE            0.078         
+pwm_rstn_reg/C                 pwm[1]/b_reg[9]/CE             0.078         
+pwm_rstn_reg/C                 pwm[2]/b_reg[0]/CE             0.088         
+pwm_rstn_reg/C                 pwm[2]/b_reg[14]/CE            0.088         
+pwm_rstn_reg/C                 pwm[2]/b_reg[1]/CE             0.088         
+pwm_rstn_reg/C                 pwm[2]/b_reg[2]/CE             0.088         
+pwm_rstn_reg/C                 pwm[2]/b_reg[10]/CE            0.090         
+pwm_rstn_reg/C                 pwm[2]/b_reg[7]/CE             0.090         
+pwm_rstn_reg/C                 pwm[2]/b_reg[8]/CE             0.090         
+pwm_rstn_reg/C                 pwm[2]/b_reg[9]/CE             0.090         
+pwm_rstn_reg/C                 pwm[2]/v_reg[0]/CE             0.101         
+pwm_rstn_reg/C                 pwm[2]/v_reg[1]/CE             0.101         
+pwm_rstn_reg/C                 pwm[2]/v_reg[2]/CE             0.101         
+pwm_rstn_reg/C                 pwm[2]/v_reg[3]/CE             0.101         
+pwm_rstn_reg/C                 pwm[2]/v_reg[4]/CE             0.101         
+pwm_rstn_reg/C                 pwm[2]/v_reg[5]/CE             0.101         
+dac_rst_reg/C                  oddr_dac_dat[3]/R              0.480         
+dac_rst_reg/C                  oddr_dac_dat[4]/R              0.514         
+dac_rst_reg/C                  oddr_dac_dat[0]/R              0.572         
+dac_rst_reg/C                  oddr_dac_dat[10]/R             0.580         
+dac_rst_reg/C                  oddr_dac_dat[1]/R              0.609         
+dac_rst_reg/C                  oddr_dac_dat[7]/R              0.624         
+dac_rst_reg/C                  oddr_dac_dat[5]/R              0.629         
+dac_rst_reg/C                  oddr_dac_dat[6]/R              0.630         
+dac_rst_reg/C                  oddr_dac_dat[13]/R             0.672         
+dac_rst_reg/C                  oddr_dac_dat[12]/R             0.674         
+dac_rst_reg/C                  oddr_dac_dat[2]/R              0.705         
+dac_rst_reg/C                  oddr_dac_dat[11]/R             0.719         
+dac_rst_reg/C                  oddr_dac_dat[8]/R              0.764         
+dac_rst_reg/C                  oddr_dac_dat[9]/R              0.912         
+dac_rst_reg/C                  oddr_dac_sel/R                 1.150         
+dac_dat_a_reg[13]/C            oddr_dac_dat[13]/D2            1.727         
+dac_dat_a_reg[7]/C             oddr_dac_dat[7]/D2             1.794         
+dac_dat_a_reg[12]/C            oddr_dac_dat[12]/D2            1.813         
+dac_dat_a_reg[5]/C             oddr_dac_dat[5]/D2             1.903         
+dac_rst_reg/C                  oddr_dac_rst/D2                1.906         
+dac_dat_a_reg[4]/C             oddr_dac_dat[4]/D2             1.908         
+dac_dat_a_reg[3]/C             oddr_dac_dat[3]/D2             1.911         
+dac_dat_a_reg[6]/C             oddr_dac_dat[6]/D2             1.944         
+dac_dat_a_reg[2]/C             oddr_dac_dat[2]/D2             2.001         
+dac_dat_a_reg[0]/C             oddr_dac_dat[0]/D2             2.001         
+dac_dat_a_reg[1]/C             oddr_dac_dat[1]/D2             2.013         
+dac_dat_a_reg[8]/C             oddr_dac_dat[8]/D2             2.041         
+dac_dat_a_reg[11]/C            oddr_dac_dat[11]/D2            2.042         
+dac_dat_a_reg[10]/C            oddr_dac_dat[10]/D2            2.047         
+dac_dat_a_reg[9]/C             oddr_dac_dat[9]/D2             2.053         
+i_dsp/sum2_reg[14]/C           dac_dat_b_reg[10]/D            3.687         
+i_dsp/sum2_reg[14]/C           dac_dat_b_reg[1]/D             3.696         
+i_dsp/sum2_reg[13]/C           dac_dat_b_reg[0]/D             3.725         
+i_dsp/sum2_reg[14]/C           dac_dat_b_reg[3]/D             3.790         
+i_dsp/sum2_reg[14]/C           dac_dat_b_reg[11]/D            3.918         
+i_dsp/sum2_reg[13]/C           dac_dat_b_reg[12]/D            3.919         
+i_dsp/sum1_reg[14]/C           dac_dat_a_reg[4]/D             3.982         
+i_dsp/sum1_reg[1]/C            dac_dat_a_reg[1]/D             3.988         
+i_dsp/sum2_reg[15]/C           dac_dat_b_reg[2]/D             4.043         
+i_dsp/sum2_reg[13]/C           dac_dat_b_reg[4]/D             4.078         
+i_dsp/sum1_reg[13]/C           dac_dat_a_reg[3]/D             4.238         
+i_dsp/sum1_reg[0]/C            dac_dat_a_reg[0]/D             4.329         
+i_dsp/sum2_reg[13]/C           dac_dat_b_reg[5]/D             4.342         
+i_dsp/sum1_reg[14]/C           dac_dat_a_reg[5]/D             4.417         
+i_dsp/sum1_reg[16]/C           dac_dat_a_reg[10]/D            4.460         
+i_dsp/sum2_reg[13]/C           dac_dat_b_reg[8]/D             4.480         
+i_dsp/sum1_reg[14]/C           dac_dat_a_reg[8]/D             4.506         
+i_dsp/sum2_reg[7]/C            dac_dat_b_reg[7]/D             4.532         
+i_dsp/sum2_reg[13]/C           dac_dat_b_reg[6]/D             4.532         
+i_dsp/sum1_reg[14]/C           dac_dat_a_reg[7]/D             4.596         
+i_dsp/sum1_reg[15]/C           dac_dat_a_reg[2]/D             4.600         
+i_dsp/sum2_reg[17]/C           dac_dat_b_reg[13]/D            4.624         
+i_dsp/sum2_reg[14]/C           dac_dat_b_reg[9]/D             4.651         
+i_dsp/sum1_reg[14]/C           dac_dat_a_reg[12]/D            4.754         
+i_dsp/sum1_reg[14]/C           dac_dat_a_reg[11]/D            4.759         
+i_dsp/sum1_reg[17]/C           dac_dat_a_reg[13]/D            4.764         
+i_dsp/sum1_reg[14]/C           dac_dat_a_reg[6]/D             4.833         
+i_dsp/sum1_reg[9]/C            dac_dat_a_reg[9]/D             4.994         
+dac_dat_b_reg[12]/C            oddr_dac_dat[12]/D1            5.717         
+dac_rst_reg/C                  oddr_dac_rst/D1                5.747         
+dac_dat_b_reg[7]/C             oddr_dac_dat[7]/D1             5.754         
+dac_dat_b_reg[6]/C             oddr_dac_dat[6]/D1             5.761         
+dac_dat_b_reg[4]/C             oddr_dac_dat[4]/D1             5.773         
+dac_dat_b_reg[9]/C             oddr_dac_dat[9]/D1             5.779         
+dac_dat_b_reg[1]/C             oddr_dac_dat[1]/D1             5.853         
+dac_dat_b_reg[13]/C            oddr_dac_dat[13]/D1            5.855         
+dac_dat_b_reg[0]/C             oddr_dac_dat[0]/D1             5.870         
+dac_dat_b_reg[5]/C             oddr_dac_dat[5]/D1             5.902         
+dac_dat_b_reg[3]/C             oddr_dac_dat[3]/D1             5.908         
+dac_dat_b_reg[2]/C             oddr_dac_dat[2]/D1             5.999         
+dac_dat_b_reg[8]/C             oddr_dac_dat[8]/D1             6.018         
+dac_dat_b_reg[11]/C            oddr_dac_dat[11]/D1            6.044         
+dac_dat_b_reg[10]/C            oddr_dac_dat[10]/D1            6.054         
 
 
 
