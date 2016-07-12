@@ -479,7 +479,8 @@ class RPOutputSignal(RPSignal):
              input=None,
              factor=1.0,
              offset=None,
-             second_integrator=0):
+             second_integrator=0,
+             setup_iir=False):
         """
         Enables feedback with this output. The realized transfer function of
         the pid plus specified external analog filters is a pure integrator if
@@ -508,6 +509,11 @@ class RPOutputSignal(RPSignal):
         second_integrator: float
             Factor to multiply a predefined second integrator gain with. Useful
             for ramping up the second integrator in a smooth fashion.
+        setup_iir: bool
+            If True, no iir filter is set up. Usually, it is enough to
+            switch on the iir filter only in the final step. This results in a
+            gain in speed and avoids saturation of internal degrees of
+            freedom of the IIR.
 
         Returns
         -------
@@ -585,7 +591,8 @@ class RPOutputSignal(RPSignal):
             if not isinstance(input, RPSignal):
                 logger.error("Input %s must be a RPSignal instance.", input)
             self.pid.input = input.redpitaya_input
-        elif hasattr(self, "iir"):
+        # if iir was used, input may be on the iir at the moment
+        elif (self.pid.input == 'iir') and hasattr(self, "iir"):
             self.pid.input = self.iir.input
 
         # get inputoffset
@@ -615,8 +622,10 @@ class RPOutputSignal(RPSignal):
             self.pid2.inputfilter = self._pid2_filter
 
         # setup iir filter if it is configured - this takes care of input
-        # signal routing
-        self.setup_iir()
+        # signal routing. To be executed, set 'setup_iir: true' in the
+        # appropriate lock stage in the config file
+        if setup_iir:
+            self.setup_iir()
 
         # rapidly turn on all gains
         if setpoint is None:
@@ -826,6 +835,8 @@ class RPOutputSignal(RPSignal):
             logger.debug("No iir filter was defined for output %s. ",
                          self._name)
             return
+        else:
+            logger.debug("Setting up IIR filter for output %s. ", self._name)
         # overwrite defaults with kwargs
         iirconfig.update(kwargs)
         # workaround for complex numbers from yaml
@@ -837,8 +848,10 @@ class RPOutputSignal(RPSignal):
             logger.debug("IIR filter retrieved for output %s. ", self._name)
         # output_direct off, since iir goes through pid
         iirconfig["output_direct"] = "off"
-        # input setting -> copy the pid input
-        iirconfig["input"] = self.pid.name
+        # input setting -> copy the pid input if it is not erroneously on iir
+        pidinput = self.pid.input
+        if pidinput != 'iir':
+            iirconfig["input"] = pidinput
         # setup
         self.iir.setup(**iirconfig)
         # route iir output through pid

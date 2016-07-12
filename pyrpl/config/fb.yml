@@ -1,19 +1,17 @@
 redpitaya:
-  hostname: 10.214.1.9
+  hostname: 10.214.1.23
   password: root
   user: root
   port: 2222
-  frequency_correction: 1.00004121095
-  #0.9999801526493788
+  frequency_correction: 1.0
   filename: fpga//red_pitaya.bin
   reloadfpga: true
-  # autostart gui?
-  gui: false #true
+  gui: false
   monitor_server_name: monitor_server
 
 general:
   # name of this device
-  name: fpm
+  name: fb
   # level of logged information.
   # 'debug' outputs everything
   # 'infi' is default level
@@ -29,7 +27,7 @@ general:
 model:
   # use class Interferometer for internal model and lock algorithms
   # upper- or lowercase spelling is accepted if there is no ambiguity
-  modeltype: fpm
+  modeltype: fabryperot
   # only needed parameter is wavelength
   # (to convert piezo displacement into gain)
   wavelength: 1.064e-06

@@ -1467,6 +1467,12 @@ class IIR(DspModule):
         # load the coefficients into the filter - all simultaneously
         self.copydata = True
         self.copydata = False
+        # connect the module
+        if input is not None:
+            self.input = input
+        if output_direct is not None:
+            self.output_direct = output_direct
+        # switch it on only once everything is set up
         self.on = turn_on
         # Diagnostics here
         if plot: # or save:
