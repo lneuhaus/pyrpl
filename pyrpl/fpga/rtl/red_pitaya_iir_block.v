@@ -176,6 +176,7 @@ reg [8-1:0] stage2;
 reg [8-1:0] stage3;
 reg [8-1:0] stage4;
 reg [8-1:0] stage5;
+//reg [8-1:0] stage6;
 always @(posedge clk_i) begin
     if (on==1'b0) begin
         overflow <= 32'h00000000;
@@ -185,6 +186,7 @@ always @(posedge clk_i) begin
         stage3 <= 8'h00;
         stage4 <= 8'h00;
         stage5 <= 8'h00;
+//        stage6 <= 8'h00;
     end
     else begin
         overflow <= overflow | overflow_i;
@@ -198,6 +200,7 @@ always @(posedge clk_i) begin
     stage3 <= stage2;
     stage4 <= stage3;
     stage5 <= stage4;
+//    stage6 <= stage5;
 end
 
 //actual signal treatment
@@ -216,7 +219,7 @@ reg signed [IIRSIGNALBITS-1:0] y1b;
 
 reg signed [IIRSIGNALBITS-1:0] y1_i [0:IIRSTAGES-1];
 reg signed [IIRSIGNALBITS-1:0] y2_i [0:IIRSTAGES-1];
-reg signed [IIRSIGNALBITS-1:0] z1_i [0:IIRSTAGES-1];
+//reg signed [IIRSIGNALBITS-1:0] z1_i [0:IIRSTAGES-1];
 
 wire signed [IIRSIGNALBITS-1:0] p_ay1_full;
 wire signed [IIRSIGNALBITS-1:0] p_ay2_full;
@@ -281,8 +284,9 @@ red_pitaya_saturate #(
    .overflow (overflow_i[5])
    );   
 reg signed [IIRSIGNALBITS-1:0] z0;
-reg signed [IIRSIGNALBITS-1:0] z1;
+//reg signed [IIRSIGNALBITS-1:0] z1;
 
+/* //former solution - adder tree (resource intensive)
 reg signed [IIRSIGNALBITS+4-1:0] dat_o_sum;
 always @(*) begin
    dat_o_sum = z1_i[0];
@@ -296,7 +300,17 @@ red_pitaya_saturate #( .BITS_IN (IIRSIGNALBITS+4), .SHIFT(SIGNALSHIFT), .BITS_OU
    .input_i(dat_o_sum),
    .output_o(dat_o_full),
    .overflow (overflow_i[6])
-   );   
+   );
+*/
+// better solution - incremental adding - see below, here only saturator
+wire [SIGNALBITS-1:0] dat_o_full;
+red_pitaya_saturate #( .BITS_IN (IIRSIGNALBITS+4), .SHIFT(SIGNALSHIFT), .BITS_OUT(SIGNALBITS))
+   s_dat_o_module (
+   .input_i(dat_o_sum),
+   .output_o(dat_o_full),
+   .overflow (overflow_i[6])
+   );
+
 reg signed [SIGNALBITS-1:0] signal_o;
 
 always @(posedge clk_i) begin
@@ -304,13 +318,13 @@ always @(posedge clk_i) begin
             for (i=0;i<IIRSTAGES;i=i+1) begin
                 y1_i[i] <= {IIRSIGNALBITS{1'b0}};
                 y2_i[i] <= {IIRSIGNALBITS{1'b0}};
-                z1_i[i] <= {IIRSIGNALBITS{1'b0}};
+//                z1_i[i] <= {IIRSIGNALBITS{1'b0}};
             end
         y0  <= {IIRSIGNALBITS{1'b0}};
         y1a <= {IIRSIGNALBITS{1'b0}};
         y2a <= {IIRSIGNALBITS{1'b0}};
         y1b <= {IIRSIGNALBITS{1'b0}};
-        z1 <= {IIRSIGNALBITS{1'b0}};
+//        z1 <= {IIRSIGNALBITS{1'b0}};
         z0 <= {IIRSIGNALBITS{1'b0}};
 
         a1 <= {IIRBITS{1'b0}};
@@ -356,16 +370,29 @@ always @(posedge clk_i) begin
         if (stage3<IIRSTAGES) begin
             p_by0 <= p_by0_full;
             p_by1 <= p_by1_full;
-            z1 <= z1_i[stage3];
+//            z1 <= z1_i[stage3];
         end
         //cycle n+4
         if (stage4<IIRSTAGES) begin
             z0 <= z0_full;
-            z1_i[stage4] <= z0_full;
+//            z1_i[stage4] <= z0_full;
         end
-        //cycle n+5
-        //z1_i[stage5] <= z0;
-        signal_o <= dat_o_full;
+        // //cycle n+5
+        // //z1_i[stage5] <= z0;
+        //signal_o <= dat_o_full;
+
+        // set sum to zero while first value of z0 is computed
+        if (stage4 == 0) begin
+            dat_o_sum <= {(IIRSIGNALBITS+4){1'b0}};
+        end
+        // from step one to step IIRSTAGES (IIRSTAGES steps), increment the sum
+        else if (stage4 <= IIRSTAGES) begin
+            dat_o_sum <= dat_o_sum + z0;
+        end
+        // one step later output the fresh sum (after saturation)
+        if (stage5 == IIRSTAGES) begin
+            signal_o <= dat_o_full;
+        end
     end
     dat_o <= (shortcut==1'b1) ? dat_i : signal_o;
 end
