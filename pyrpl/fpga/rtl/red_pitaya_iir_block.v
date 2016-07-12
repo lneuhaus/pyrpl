@@ -131,7 +131,7 @@ always @(posedge clk_i) begin
 end
 
 
-
+/*
 //coefficient management - update coefficients when requested by copydata high transition
 reg signed [IIRBITS-1:0] b0_i [0:IIRSTAGES-1];
 reg signed [IIRBITS-1:0] b1_i [0:IIRSTAGES-1];
@@ -149,6 +149,24 @@ always @(posedge clk_i) begin
         end
     end        
 end
+*/
+
+// coefficient management more resource-friendly - only one memory for
+// coefficients, update immediately -> requires reset after coefficient write
+wire signed [IIRBITS-1:0] b0_i [0:IIRSTAGES-1];
+wire signed [IIRBITS-1:0] b1_i [0:IIRSTAGES-1];
+wire signed [IIRBITS-1:0] a1_i [0:IIRSTAGES-1];
+wire signed [IIRBITS-1:0] a2_i [0:IIRSTAGES-1];
+
+genvar j;
+generate for (j=0; j<IIRSTAGES; j=j+1) begin
+    b0_i[j] <= {iir_coefficients[8*i+1],iir_coefficients[8*i+0]};
+    b1_i[j] <= {iir_coefficients[8*i+3],iir_coefficients[8*i+2]};
+    a1_i[j] <= {iir_coefficients[8*i+5],iir_coefficients[8*i+4]};
+    a2_i[j] <= {iir_coefficients[8*i+7],iir_coefficients[8*i+6]};
+    end
+endgenerate
+
 
 // loop management - let stage0 repeatedly run from loops-1 to 0
 // stage_n contains the number stage0 with n cycles of delay
