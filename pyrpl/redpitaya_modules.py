@@ -1388,9 +1388,9 @@ class IIR(DspModule):
 
     def setup(
             self,
-            z,
-            p,
-            g=1.0,
+            zeros,
+            poles,
+            gain=1.0,
             input='adc1',
             output_direct='off',
             loops=None,
@@ -1408,9 +1408,9 @@ class IIR(DspModule):
         
         parameters
         --------------------------------------------------
-        z:             list of zeros in the complex plane, maximum 16
-        p:             list of zeros in the complex plane, maxumum 16
-        g:             DC-gain
+        zeros:         list of zeros in the complex plane, maximum 16
+        poles:         list of zeros in the complex plane, maxumum 16
+        gain:          DC-gain
         input:         input signal
         output_direct: send directly to an analog output?
         loops:         clock cycles per loop of the filter. must be at least 3 and at most 255. set None for autosetting loops
@@ -1430,18 +1430,18 @@ class IIR(DspModule):
         iirbits = self._IIRBITS
         iirshift = self._IIRSHIFT
         # pre-scale coefficients
-        z = [zz * 2 * np.pi for zz in z]
-        p = [pp * 2 * np.pi for pp in p]
-        k = g
-        for pp in p:
+        zeros = [zz * 2 * np.pi for zz in zeros]
+        poles = [pp * 2 * np.pi for pp in poles]
+        k = gain
+        for pp in poles:
             if pp != 0:
                 k *= np.abs(pp)
-        for zz in z:
+        for zz in zeros:
             if zz != 0:
                 k /= np.abs(zz)
-        sys = (z,p,k)
+        sys = (zeros, poles, k)
         # try to find out how many loops must be done
-        preliminary_loops = int(max([len(p), len(z)])+1) / 2
+        preliminary_loops = int(max([len(poles), len(zeros)])+1) / 2
         c = iir.get_coeff(sys, dt=preliminary_loops * 8e-9,
                           totalbits=iirbits, shiftbits=iirshift,
                           tol=tol, finiteprecision=False)
@@ -1498,7 +1498,8 @@ class IIR(DspModule):
         #    for curve in curves[:-1]:
         #        curves[-1].add_child(curve)
         self._logger.info("IIR filter ready")
-        self._logger.info("Maximum deviation from design coefficients: %f", max((f[0:len(c)] - c).flatten()))
+        self._logger.info("Maximum deviation from design coefficients: %f",
+                          max((f[0:len(c)] - c).flatten()))
         self._logger.info("Overflow pattern: %s", bin(self.overflow))
         #        if save:
         #            return f, curves[-1]

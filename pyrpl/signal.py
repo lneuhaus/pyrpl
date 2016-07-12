@@ -838,7 +838,7 @@ class RPOutputSignal(RPSignal):
         # output_direct off, since iir goes through pid
         iirconfig["output_direct"] = "off"
         # input setting -> copy the pid input
-        iirconfig["input"] = self.pid.input.name
+        iirconfig["input"] = self.pid.name
         # setup
         self.iir.setup(**iirconfig)
         # route iir output through pid

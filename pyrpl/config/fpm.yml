@@ -37,8 +37,8 @@ model:
   # for interferometer, this is the phase error in radians
   # this value is uniquely needed for the function 'islocked'
   maxerror: 0.1
-  offresonant_reflection: 0.2802867069840431
-  resonant_reflection: 0.10755721479654312
+  offresonant_reflection: 0.3258189335465431
+  resonant_reflection: 0.11231795698404312
   finesse: 92000.0
   length: 5.61e-05
   # signals in order of their preferrence
@@ -95,23 +95,23 @@ model:
     relative_threshold: 0.9
 
   peak: 0.07061767578125
-  peak_pdh: 0.0478515625
+  peak_pdh: 0.10589599609375
 # all signals that are inputs of the lockbox. Must be signal names understood
 # by the model.
 inputs:
   reflection:
     redpitaya_input: adc2
     offset: 0.013536535203456879
-    max: 0.2802867069840431
-    min: 0.10755721479654312
-    mean: 0.26389453560113907
-    rms: 0.018611832419102435
+    max: 0.3258189335465431
+    min: 0.11231795698404312
+    mean: 0.30760426074266434
+    rms: 0.022336207446048438
   pdh:
     redpitaya_input: adc1
-    max: 0.07037004083395004
-    min: -0.025333084166049957
-    mean: -0.0009725466370582581
-    rms: 0.007946069229185388
+    max: 0.10723527520895004
+    min: -0.10455671697854996
+    mean: -0.00018391013145446777
+    rms: 0.019369762337066467
     setup:
       phase: -5.0 #-5
       amplitude: 4.0
@@ -142,7 +142,7 @@ outputs:
       lowpass:
       - 0.01
     calibrationunits: m_per_V
-    lastoffset: -0.5484619140625
+    lastoffset: -0.5531005859375
   piezo:
     redpitaya_output: out2
     # we will calibrate the piezo response in units of m_per_V (not a necessary
@@ -197,7 +197,7 @@ outputs:
       lowpass: []
     lock:
       #skip: true
-      proportional_gain: 0
+      proportional_gain: 1.0e-08
       inputfilter:
       - 19428.09363914738
       - 38856.18727829476
@@ -206,7 +206,34 @@ outputs:
     max_voltage: 0.9998779296875
     min_voltage: -1.0
     transfer_function:
-      open_loop: none
+      open_loop: 254744
+    iir:
+      loops: 200
+      gain: 1.0
+      plot: true
+      zeros:
+      - (-151.00000009999999-16271.516867390001j)
+      - (-151.00000009999999+16271.516867390001j)
+      - (-51.000000100000001-22342.54324816j)
+      - (-51.000000100000001+22342.54324816j)
+      - (-1.0000001000000001-30884.304061449999j)
+      - (-1.0000001000000001+30884.304061449999j)
+      - (-41.000000100000001-32732.524450659999j)
+      - (-41.000000100000001+32732.524450659999j)
+      - (-51.000000100000001-46953.00496993j)
+      - (-51.000000100000001+46953.00496993j)
+      poles:
+      - (-151.0000001-10101.3614529j)
+      - (-151.0000001+10101.3614529j)
+      - (-81.0000001-21828.9081776j)
+      - (-81.0000001+21828.9081776j)
+      - (-1.0000001-30156.73583j)
+      - (-1.0000001+30156.73583j)
+      - (-1.0000001-32063.2533145j)
+      - (-1.0000001+32063.2533145j)
+      - (-61.0000001-44654.6352456j)
+      - (-61.0000001+44654.6352456j)
+      - (-100e3)
 
 ##############################################################################
 ###  Configuration parameters that rarely need to be modified ################
