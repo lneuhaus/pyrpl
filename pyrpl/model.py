@@ -242,7 +242,7 @@ class Model(object):
             #get calibration factor
             variable_per_unit = self.__getattribute__(self._variable
                                                       + "_per_" + unit)
-            if not savegain:
+            if not _savegain:
                 # enable lock of the output
                 o.lock(slope=slope*variable_per_unit,
                        setpoint=setpoint,

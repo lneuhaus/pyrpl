@@ -337,13 +337,13 @@ class RedPitaya(SSHshell):
         self.logger.warning("Dummy mode started...")
 
     def makemodules(self):
-        self.hk = rp.HK(self.client)
-        self.ams = rp.AMS(self.client)
-        self.scope = rp.Scope(self.client, self)
-        self.asg1 = rp.Asg1(self.client)
-        self.asg2 = rp.Asg2(self.client)
-        self.pwm0 = rp.AuxOutput(self.client,output='pwm0')
-        self.pwm1 = rp.AuxOutput(self.client,output='pwm1')
+        self.hk = rp.HK(self.client, parent=self)
+        self.ams = rp.AMS(self.client, parent=self)
+        self.scope = rp.Scope(self.client, parent=self)
+        self.asg1 = rp.Asg1(self.client, parent=self)
+        self.asg2 = rp.Asg2(self.client, parent=self)
+        self.pwm0 = rp.AuxOutput(self.client,output='pwm0', parent=self)
+        self.pwm1 = rp.AuxOutput(self.client,output='pwm1', parent=self)
         for name, module, number in [("pid", rp.Pid, 4),
                                      ("iir", rp.IIR, 1),
                                      ("iq", rp.IQ, 2)]:
@@ -356,7 +356,7 @@ class RedPitaya(SSHshell):
                     thisname = name + str(i)
                 else:
                     thisname = name
-                thismodule = module(self.client, module=thisname)
+                thismodule = module(self.client, module=thisname, parent=self)
                 thislist.append(thismodule)
                 # to be deprecated
                 self.__setattr__(thisname, thismodule)

@@ -3,7 +3,8 @@ redpitaya:
   password: root
   user: root
   port: 2222
-  frequency_correction: 0.9999801526493788
+  frequency_correction: 1.00004121095
+  #0.9999801526493788
   filename: fpga//red_pitaya.bin
   reloadfpga: true
   # autostart gui?
@@ -36,8 +37,8 @@ model:
   # for interferometer, this is the phase error in radians
   # this value is uniquely needed for the function 'islocked'
   maxerror: 0.1
-  offresonant_reflection: 0.17517422884702682
-  resonant_reflection: 0.06665372103452682
+  offresonant_reflection: 0.15357772260904312
+  resonant_reflection: 0.05445662885904312
   finesse: 92000.0
   length: 5.61e-05
   # signals in order of their preferrence
@@ -90,34 +91,34 @@ model:
         #second_integrator: 1.0
       #call_islocked: {}
   calibration:
-    zoomfactor: 0.03
+    zoomfactor: 0.1
     relative_threshold: 0.9
 
   peak: 0.07061767578125
-  peak_pdh: 0.05389404296875
+  peak_pdh: 0.050048828125
 # all signals that are inputs of the lockbox. Must be signal names understood
 # by the model.
 inputs:
   reflection:
     redpitaya_input: adc2
-    offset: 0.012691982090473175
-    max: 0.17517422884702682
-    min: 0.06665372103452682
-    mean: 0.1568288803100586
-    rms: 0.016677298053333494
+    offset: 0.013536535203456879
+    max: 0.15357772260904312
+    min: 0.05445662885904312
+    mean: 0.14032438397407532
+    rms: 0.009151323807230445
   pdh:
     redpitaya_input: adc1
-    max: 0.05741805583238602
-    min: -0.05037003010511398
-    mean: 0.0034707114100456238
-    rms: 0.016696190916774167
+    max: 0.04998429864645004
+    min: -0.05011335760354996
+    mean: -0.0004187151789665222
+    rms: 0.008926723700425429
     setup:
-      phase: -5.0
+      phase: -5.0 #-5
       amplitude: 4.0
       amplitude_for_finesse: 3.5
       frequency: 80000000.0
       generator: AFG_EVA
-    offset: 0.002396397292613983
+    offset: 0.006534256041049957
 # All output signals. Names of outputs are arbitrary. if the 'lock' tab is
 # missing or false, the output will not be used for locking
 outputs:

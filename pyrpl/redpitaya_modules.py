@@ -38,10 +38,14 @@ class NotReadyError(ValueError):
 
 
 class BaseModule(object):
-    
     # factor to manually compensate 125 MHz oscillator frequency error
     # real_frequency = 125 MHz * _frequency_correction
-    _frequency_correction = 1.0
+    @property
+    def _frequency_correction(self):
+        try:
+            return self._parent.frequency_correction
+        except AttributeError:
+            return 1.0
 
     # prevent the user from setting a nonexisting attribute
     def __setattr__(self, name, value):
@@ -67,7 +71,10 @@ class BaseModule(object):
                         string += key + ": " + docstring + '\r\n\r\n'
             return string
         
-    def __init__(self, client, addr_base=0x40000000):
+    def __init__(self,
+                 client,
+                 addr_base=0x40000000,
+                 parent=None):
         """ Creates the prototype of a RedPitaya Module interface
 
         arguments: client must be a viable redpitaya memory client
@@ -78,6 +85,7 @@ class BaseModule(object):
         self._client = client
         self._addr_base = addr_base
         self.__doc__ = "Available registers: \r\n\r\n"+self.help()
+        self._parent = parent
 
     def _reads(self, addr, length):
         return self._client.reads(self._addr_base + addr, length)
@@ -105,8 +113,8 @@ class BaseModule(object):
         return np.uint32(v)
     
 class HK(BaseModule):
-    def __init__(self, client):
-        super(HK, self).__init__(client, addr_base=0x40000000)
+    def __init__(self, client, parent=None):
+        super(HK, self).__init__(client, addr_base=0x40000000, parent=parent)
     
     id = SelectRegister(0x0, doc="device ID", options={"prototype0": 0, "release1": 1})
     digital_loop = Register(0x0C, doc="enables digital loop")
@@ -129,14 +137,15 @@ class Scope(BaseModule):
     data_length = data_length  # see definition and explanation above
     inputs = None
 
-    def __init__(self, client, parent):
-        super(Scope, self).__init__(client, addr_base=0x40100000)
+    def __init__(self, client, parent=None):
+        super(Scope, self).__init__(client,
+                                    addr_base=0x40100000,
+                                    parent=parent)
         # dsp multiplexer channels for scope and asg are the same by default
         self._ch1 = DspModule(client, module='asg1')
         self._ch2 = DspModule(client, module='asg2')
         self.inputs = self._ch1.inputs
         self._setup_called = False
-        self._parent = parent
         self._trigger_source_memory = "immediately"
         self._trigger_delay_memory = 0
 
@@ -552,11 +561,12 @@ def make_asg(channel=1):
         output_directs = None
         name = set_name
 
-        def __init__(self, client):
-            super(Asg, self).__init__(client, addr_base=0x40200000)
+        def __init__(self, client, parent=None):
+            super(Asg, self).__init__(client,
+                                      addr_base=0x40200000,
+                                      parent=parent)
             self._counter_wrap = 0x3FFFFFFF # correct value unless you know better
             self._writtendata = np.zeros(self.data_length)
-            self._frequency_correction = 1.0
             if self._BIT_OFFSET == 0:
                 self._dsp = DspModule(client, module='asg1')
             else:
@@ -907,11 +917,12 @@ class DspModule(BaseModule):
 
     name = "dspmodule"
 
-    def __init__(self, client, module='pid0'):
+    def __init__(self, client, module='pid0', parent=None):
         self.name = module
         self._number = self._inputs[module]
         super(DspModule, self).__init__(client,
-            addr_base=0x40300000+self._number*0x10000)
+            addr_base=0x40300000+self._number*0x10000,
+            parent=parent)
 
 class AuxOutput(DspModule):
     """Auxiliary outputs. PWM0-3 correspond to pins 17-20 on E2 connector.
@@ -934,10 +945,12 @@ class AuxOutput(DspModule):
     
     Currently, only pwm0 and pwm1 are available.
     """
-    def __init__(self, client, output='pwm0'):
+    def __init__(self, client, output='pwm0', parent=None):
         pwm_to_module = dict(pwm0='adc1', pwm1='adc2')
         # future options: , pwm2 = 'dac1', pwm3='dac2')
-        super(AuxOutput, self).__init__(client,module=pwm_to_module[output])
+        super(AuxOutput, self).__init__(client,
+                                        module=pwm_to_module[output],
+                                        parent=parent)
     output_direct = None
     output_directs = None
     _output_directs = None
@@ -1103,7 +1116,7 @@ class IQ(FilterModule):
             input=None,
             output_direct=None,
             output_signal=None,
-            quadrature_factor=None):
+            quadrature_factor=1.0):
         self.on = False
         if frequency is not None:
             self.frequency = frequency
@@ -1498,8 +1511,10 @@ class IIR(DspModule):
 class AMS(BaseModule):
     """mostly deprecated module (redpitaya has removed adc support). 
     only here for dac2 and dac3"""
-    def __init__(self, client):
-        super(AMS, self).__init__(client, addr_base=0x40400000)
+    def __init__(self, client, parent=None):
+        super(AMS, self).__init__(client,
+                                  addr_base=0x40400000,
+                                  parent=parent)
     # attention: writing to dac0 and dac1 has no effect
     # only write to dac2 and 3 to set output voltages
     # to modify dac0 and dac1, connect a r.pwm0.input='pid0' 
