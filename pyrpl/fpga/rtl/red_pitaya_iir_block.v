@@ -303,6 +303,7 @@ red_pitaya_saturate #( .BITS_IN (IIRSIGNALBITS+4), .SHIFT(SIGNALSHIFT), .BITS_OU
    );
 */
 // better solution - incremental adding - see below, here only saturator
+reg signed [IIRSIGNALBITS+4-1:0] dat_o_sum;
 wire [SIGNALBITS-1:0] dat_o_full;
 red_pitaya_saturate #( .BITS_IN (IIRSIGNALBITS+4), .SHIFT(SIGNALSHIFT), .BITS_OUT(SIGNALBITS))
    s_dat_o_module (
@@ -310,6 +311,7 @@ red_pitaya_saturate #( .BITS_IN (IIRSIGNALBITS+4), .SHIFT(SIGNALSHIFT), .BITS_OU
    .output_o(dat_o_full),
    .overflow (overflow_i[6])
    );
+
 
 reg signed [SIGNALBITS-1:0] signal_o;
 
