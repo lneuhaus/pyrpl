@@ -24,6 +24,7 @@ class TestClass(object):
             self.r = None
         else:
             self.r = RedPitaya()
+        self.extradelay = 0.6*8e-9 # no idea where this comes from
 
     def test_asg(self):
         if self.r is None:
@@ -206,7 +207,7 @@ class TestClass(object):
             return
         else:
             r = self.r
-        extradelay = 0
+        extradelay = self.extradelay
         # shortcuts and na configuration
         na = r.na
         for iq in [r.iq0, r.iq1, r.iq2]:
@@ -215,7 +216,10 @@ class TestClass(object):
                      amplitude=0.1, input=na.iq, output_direct='off',
                      acbandwidth=1000, logscale=True)
             f, data, a = na.curve()
-            theory = na.transfer_function(f, extradelay=extradelay)
+            theory = np.array(f*0+1.0,
+                              dtype=np.complex)
+            # obsolete since na data now comes autocorrected
+            # theory = na.transfer_function(f, extradelay=extradelay)
             relerror = np.abs((data - theory)/theory)
             maxerror = np.max(relerror)
             if maxerror > error_threshold:
@@ -251,7 +255,7 @@ class TestClass(object):
 
             # specify extradelay for theory. 3.6 cycles is empirical, but not
             # far from what expects for NA delay (2 cycles for output, 2 for input)
-            extradelay = 3.6 * 8e-9 / pid._frequency_correction
+            extradelay = self.extradelay
 
             # proportional gain of 1, no inputfilter
             pid.p = 1.0
@@ -298,11 +302,11 @@ class TestClass(object):
 
             # specify extradelay for theory. 3.6 cycles is empirical, but not
             # far from what expects for NA delay (2 cycles for output, 2 for input)
-            extradelay = 3.6 * 8e-9 / pid._frequency_correction
+            extradelay = self.extradelay
 
             # proportional gain of 0.01, integral = 1 kHz
-            pid.p = 0.1
-            pid.i = 1000
+            pid.p = 0.05
+            pid.i = 500
             pid.d = 0
             pid.ival = 0
             pid.inputfilter = 0
@@ -350,7 +354,7 @@ class TestClass(object):
 
             # specify extradelay for theory. 3.6 cycles is empirical, but not
             # far from what expects for NA delay (2 cycles for output, 2 for input)
-            extradelay = 3.6 * 8e-9 / pid._frequency_correction
+            extradelay = self.extradelay
 
             # proportional gain of 10, inputfilter: 2kHz high-pass, 10 kHz
             # Lowpass, 50kHz lowpass

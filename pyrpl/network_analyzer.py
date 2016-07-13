@@ -243,6 +243,8 @@ class NetworkAnalyzer(object):
             y *= self._rescale  # avoid division by zero
         else:
             y *= self._rescale / amp
+        # correct for network analyzer transfer function (AC-filter and delay)
+        y /= self.transfer_function(x)
         return x, y, amp
 
     def prepare_for_next_point(self, last_normalized_val):
