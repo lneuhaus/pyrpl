@@ -98,7 +98,7 @@ reg     		on;
 reg     		shortcut;
 reg     		copydata;
 reg [32-1:0]    overflow;   // accumulated overflows
-wire [6-1:0]    overflow_i; // instantaneous overflows
+wire [7-1:0]    overflow_i; // instantaneous overflows
 reg [32-1:0]    iir_coefficients [0:IIRSTAGES*4*2-1];
 reg [ 32-1: 0]  set_filter;   // input filter setting
 
@@ -209,7 +209,6 @@ reg [8-1:0] stage3;
 reg [8-1:0] stage4;
 reg [8-1:0] stage5;
 reg [8-1:0] stage6;
-reg [8-1:0] stage7;
 always @(posedge clk_i) begin
     if (on==1'b0) begin
         overflow <= 32'h00000000;
@@ -220,7 +219,6 @@ always @(posedge clk_i) begin
         stage4 <= 8'h00;
         stage5 <= 8'h00;
         stage6 <= 8'h00;
-        stage7 <= 8'h00;
     end
     else begin
         overflow <= overflow | overflow_i;
@@ -235,7 +233,6 @@ always @(posedge clk_i) begin
     stage4 <= stage3;
     stage5 <= stage4;
     stage6 <= stage5;
-    stage7 <= stage6;
 end
 
 //actual signal treatment
@@ -244,16 +241,15 @@ reg signed [IIRBITS-1:0] a2;
 reg signed [IIRBITS-1:0] b0;
 reg signed [IIRBITS-1:0] b1;
 
-reg signed [IIRSIGNALBITS-1:0] x0;
+wire signed [IIRSIGNALBITS-1:0] x0;
 //assign x0 = {{IIRSIGNALBITS-SIGNALSHIFT-SIGNALBITS+1{dat_i[SIGNALBITS-1]}},dat_i[SIGNALBITS-2:0],{SIGNALSHIFT{1'b0}}};
-//assign x0 = $signed(dat_i_filtered);
+assign x0 = $signed(dat_i_filtered);
 
 //averaging in x0_sum below
 //reg signed [IIRSIGNALBITS-1:0] x0_sum;
 //reg signed [IIRSIGNALBITS-1:0] x0;
 
 reg signed [IIRSIGNALBITS-1:0] y0;
-reg signed [IIRSIGNALBITS+1-1:0] y0_1;
 reg signed [IIRSIGNALBITS-1:0] y1a;
 reg signed [IIRSIGNALBITS-1:0] y2a;
 reg signed [IIRSIGNALBITS-1:0] y1b;
@@ -283,14 +279,14 @@ reg signed [IIRSIGNALBITS-1:0] p_ay1;
 reg signed [IIRSIGNALBITS-1:0] p_ay2;
 
 wire signed [IIRSIGNALBITS+2-1:0] y0_sum;
-assign y0_sum = p_ay1 + y0_1;
+assign y0_sum = x0 + p_ay1 + p_ay2;
 wire signed [IIRSIGNALBITS-1:0] y0_full;
 red_pitaya_saturate #( .BITS_IN (IIRSIGNALBITS+2), .SHIFT(0), .BITS_OUT(IIRSIGNALBITS))
    s_y0_module (
    .input_i(y0_sum),
    .output_o(y0_full),
    .overflow (overflow_i[2])
-);
+    );
 
 wire signed [IIRSIGNALBITS-1:0] p_by0_full;
 wire signed [IIRSIGNALBITS-1:0] p_by1_full;
@@ -357,7 +353,6 @@ red_pitaya_saturate #( .BITS_IN (IIRSIGNALBITS+4), .SHIFT(SIGNALSHIFT), .BITS_OU
 reg signed [SIGNALBITS-1:0] signal_o;
 
 always @(posedge clk_i) begin
-    x0 <= $signed(dat_i_filtered);
     if (on==1'b0) begin
             for (i=0;i<IIRSTAGES;i=i+1) begin
                 y1_i[i] <= {IIRSIGNALBITS{1'b0}};
@@ -365,7 +360,6 @@ always @(posedge clk_i) begin
 //                z1_i[i] <= {IIRSIGNALBITS{1'b0}};
             end
         y0  <= {IIRSIGNALBITS{1'b0}};
-        y0_1  <= {IIRSIGNALBITS+1{1'b0}};
         y1a <= {IIRSIGNALBITS{1'b0}};
         y2a <= {IIRSIGNALBITS{1'b0}};
         y1b <= {IIRSIGNALBITS{1'b0}};
@@ -392,21 +386,29 @@ always @(posedge clk_i) begin
 
         //cycle n 
         if (stage0<IIRSTAGES) begin
+            y1a <= y1_i[stage0];
+            a1 <= a1_i[stage0];
             y2a <= y2_i[stage0];
             a2 <= a2_i[stage0];
         end
+        //if (stage0 == IIRSTAGES) begin
+        //    // prepare x0 for cycle n+2
+        //    x0 <= x0_sum;
+        //    x0_sum <= dat_i;
+        //end
+        //else begin
+        //    x0_sum <= x0_sum + dat_i;
+        //end
 
         //cycle n+1
         if (stage1<IIRSTAGES) begin
-            y1a <= y1_i[stage1];
-            a1 <= a1_i[stage1];
+            p_ay1 <= p_ay1_full;
             p_ay2 <= p_ay2_full;
             y2_i[stage1] <= y1a; //update y2 memory
         end
         //cycle n+2
         if (stage2<IIRSTAGES) begin
-            y0_1 <= p_ay2 + x0; //no saturation here, because y0 is one bit longer than other signals
-            p_ay1 <= p_ay1_full;
+            y0 <= y0_full;//no saturation here, because y0 is two bits longer than other signals
             b0 <= b0_i[stage2];
             y1b <= y1_i[stage2];
             b1 <= b1_i[stage2];
@@ -414,16 +416,12 @@ always @(posedge clk_i) begin
         end
         //cycle n+3
         if (stage3<IIRSTAGES) begin
-            y0 <= y0_full;
-        end
-        //cycle n+4
-        if (stage4<IIRSTAGES) begin
             p_by0 <= p_by0_full;
             p_by1 <= p_by1_full;
 //            z1 <= z1_i[stage3];
         end
-        //cycle n+5
-        if (stage5<IIRSTAGES) begin
+        //cycle n+4
+        if (stage4<IIRSTAGES) begin
             z0 <= z0_full;
 //            z1_i[stage4] <= z0_full;
         end
@@ -434,16 +432,16 @@ always @(posedge clk_i) begin
         // from step IIRSTAGES-1 to 0 (IIRSTAGES steps), increment the sum
         // start with a reset
         //if (stage5 == (IIRSTAGES-1)) begin
-        if (stage6 == (loops-1)) begin
+        if (stage5 == (loops-1)) begin
             dat_o_sum <= z0;
         end
         // then increment
         //else if (stage5 < IIRSTAGES) begin
-        else if (stage6 < loops) begin
+        else if (stage5 < loops) begin
             dat_o_sum <= dat_o_sum + z0;
         end
-        // once cycle of 6 is complete, output the fresh sum (after saturation)
-        if (stage7 == 0) begin
+        // once cycle of 5 is complete, output the fresh sum (after saturation)
+        if (stage6 == 0) begin
             signal_o <= dat_o_full;
         end
     end

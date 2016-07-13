@@ -15,6 +15,7 @@ class FPM(FabryPerot):
 
     def setup(self):
         super(FPM, self).setup()
+        # compatibility with other code
         self._parent.constants = self._parent.c.constants
 
     def setup_pdh(self, **kwargs):

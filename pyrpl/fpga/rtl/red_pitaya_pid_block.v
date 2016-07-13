@@ -160,7 +160,7 @@ end
 //-----------------------------
 // cascaded set of FILTERSTAGES low- or high-pass filters
 wire signed [14-1:0] dat_i_filtered;
-wire signed [14-1:0] dat_i_filtered_raw;
+wire signed [14+2-1:0] dat_i_filtered_raw;
 red_pitaya_filter_block #(
      .STAGES(FILTERSTAGES),
      .SHIFTBITS(FILTERSHIFTBITS),

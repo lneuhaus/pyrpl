@@ -1255,10 +1255,12 @@ class IQ(FilterModule):
         if stabilize is None:
             return x, y
         else:
-            return x,y,amplitudes
+            return x, y, amplitudes
 
 
 class IIR(FilterModule):
+    _minloops = 3  # minimum number of loops for correct behaviour
+
     # invert denominator coefficients to convert from scipy notation to
     # the fpga-implemented notation (following Oppenheim and Schaefer: DSP)
     _invert = True
@@ -1311,7 +1313,7 @@ class IIR(FilterModule):
             data = self._writtendata
         else:
             raise ValueError("Readback of coefficients not enabled. " \
-                             +"You must set coefficients before reading it.")
+                             +"You must set coefficients before reading them.")
         coefficients = np.zeros((l, 6), dtype=np.float64)
         bitlength = self._IIRBITS
         shift = self._IIRSHIFT
@@ -1446,13 +1448,13 @@ class IIR(FilterModule):
                           totalbits=iirbits, shiftbits=iirshift,
                           tol=tol, finiteprecision=False)
         minimum_loops = len(c)
-        if minimum_loops < 4:
-            minimum_loops = 4
+        if minimum_loops < self._minloops:
+            minimum_loops = self._minloops
         if minimum_loops > self._IIRSTAGES:
             raise Exception("Error: desired filter order is too high to "\
                             +"be implemented.")
         if loops is None:
-            loops = 4
+            loops = self._minloops
         elif loops > 255:
             loops = 255
         loops = max([loops, minimum_loops])
