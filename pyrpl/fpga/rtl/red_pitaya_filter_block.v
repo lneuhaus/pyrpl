@@ -68,11 +68,13 @@ generate for (j = 0; j < STAGES-1; j = j+1) begin
     assign filter_in[j+1] = filter_out[j];
 end endgenerate
 
+// first filter converts SIGNALBITS into SIGNALBITS+EXTRAOUTPUTBITS
+// all other filters are symmetric: SIGNALBITS+EXTRAOUTPUTBITS into the same
 generate for (j = 0; j < STAGES; j = j+1)
     red_pitaya_lpf_block #(
      .SHIFTBITS(SHIFTBITS),
      .SIGNALBITS((j==0)?SIGNALBITS:(SIGNALBITS+EXTRAOUTPUTBITS)),
-     .EXTRAOUTPUTBITS(EXTRAOUTPUTBITS),
+     .EXTRAOUTPUTBITS((j==0)?EXTRAOUTPUTBITS:0),
      .MINBW(MINBW)
   )
   lpf
