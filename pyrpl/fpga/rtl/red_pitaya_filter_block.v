@@ -57,7 +57,7 @@ module red_pitaya_filter_block
 //-----------------------------
 // cascaded set of FILTERSTAGES low- or high-pass filters
 
-wire signed [SIGNALBITS-1:0] filter_in[STAGES-1:0];
+wire signed [SIGNALBITS+EXTRAOUTPUTBITS-1:0] filter_in[STAGES-1:0];
 wire signed [SIGNALBITS+EXTRAOUTPUTBITS-1:0] filter_out[STAGES-1:0];
 
 assign filter_in[0] = dat_i;
@@ -71,7 +71,7 @@ end endgenerate
 generate for (j = 0; j < STAGES; j = j+1)
     red_pitaya_lpf_block #(
      .SHIFTBITS(SHIFTBITS),
-     .SIGNALBITS(SIGNALBITS),
+     .SIGNALBITS((j==0)?SIGNALBITS:(SIGNALBITS+EXTRAOUTPUTBITS)),
      .EXTRAOUTPUTBITS(EXTRAOUTPUTBITS),
      .MINBW(MINBW)
   )

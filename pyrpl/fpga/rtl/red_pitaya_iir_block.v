@@ -69,7 +69,7 @@ module red_pitaya_iir_block
     parameter IIRSTAGES = 20, //16       // maximum number of parallel biquads
     parameter IIRSIGNALBITS = 40, //36 //32  // internally represent calculated results with IIRSIGNALBITS bits (maybe overkill?)
     parameter SIGNALBITS = 14,      // in- and output signal bitwidth
-    parameter SIGNALSHIFT = 5,       // over-represent input by SIGNALSHIFT bits (e.g. once input averaging is implemented)
+    parameter SIGNALSHIFT = 5, //5,       // over-represent input by SIGNALSHIFT bits (e.g. once input averaging is implemented)
 
    //parameters for input pre-filter
    parameter     FILTERSTAGES = 2,

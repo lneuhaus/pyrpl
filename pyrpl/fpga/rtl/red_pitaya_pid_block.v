@@ -175,6 +175,7 @@ red_pitaya_filter_block #(
   .set_filter(set_filter), 
   .dat_i(dat_i),
   .dat_o(dat_i_filtered_raw)
+  //.dat_o(dat_i_filtered)
   );
 assign dat_i_filtered = dat_i_filtered_raw >>> 2;
 
