@@ -1,7 +1,7 @@
 Copyright 1986-2015 Xilinx, Inc. All Rights Reserved.
 ----------------------------------------------------------------------------------------
 | Tool Version     : Vivado v.2015.4 (lin64) Build 1412921 Wed Nov 18 09:44:32 MST 2015
-| Date             : Wed Jul 13 16:19:55 2016
+| Date             : Wed Jul 13 16:52:51 2016
 | Host             : ubuntu running 64-bit Ubuntu 14.04.4 LTS
 | Command          : report_power -file out/post_synth_power.rpt
 | Design           : red_pitaya_top
@@ -30,12 +30,12 @@ Table of Contents
 ----------
 
 +--------------------------+-------+
-| Total On-Chip Power (W)  | 2.348 |
-| Dynamic (W)              | 2.195 |
+| Total On-Chip Power (W)  | 2.344 |
+| Dynamic (W)              | 2.192 |
 | Device Static (W)        | 0.153 |
 | Effective TJA (C/W)      | 11.5  |
-| Max Ambient (C)          | 57.9  |
-| Junction Temperature (C) | 52.1  |
+| Max Ambient (C)          | 58.0  |
+| Junction Temperature (C) | 52.0  |
 | Confidence Level         | Low   |
 | Setting File             | ---   |
 | Simulation Activity File | ---   |
@@ -50,16 +50,16 @@ Table of Contents
 | On-Chip                  | Power (W) | Used     | Available | Utilization (%) |
 +--------------------------+-----------+----------+-----------+-----------------+
 | Clocks                   |     0.077 |       15 |       --- |             --- |
-| Slice Logic              |     0.149 |    39326 |       --- |             --- |
-|   LUT as Logic           |     0.127 |    17331 |     17600 |           98.47 |
-|   CARRY4                 |     0.017 |     1529 |      4400 |           34.75 |
-|   Register               |     0.006 |    15663 |     35200 |           44.50 |
+| Slice Logic              |     0.147 |    39050 |       --- |             --- |
+|   LUT as Logic           |     0.125 |    17173 |     17600 |           97.57 |
+|   CARRY4                 |     0.016 |     1513 |      4400 |           34.39 |
+|   Register               |     0.006 |    15595 |     35200 |           44.30 |
 |   F7/F8 Muxes            |    <0.001 |      586 |     17600 |            3.33 |
 |   LUT as Shift Register  |    <0.001 |       73 |      6000 |            1.22 |
-|   Others                 |     0.000 |      452 |       --- |             --- |
+|   Others                 |     0.000 |      451 |       --- |             --- |
 |   BUFG                   |     0.000 |        1 |        32 |            3.13 |
 |   LUT as Distributed RAM |     0.000 |       24 |      6000 |            0.40 |
-| Signals                  |     0.142 |    32515 |       --- |             --- |
+| Signals                  |     0.140 |    32345 |       --- |             --- |
 | Block RAM                |     0.103 |       34 |        60 |           56.67 |
 | PLL                      |     0.097 |        1 |         2 |           50.00 |
 | DSPs                     |     0.043 |       48 |        80 |           60.00 |
@@ -67,7 +67,7 @@ Table of Contents
 | XADC                     |     0.004 |        1 |       --- |             --- |
 | PS7                      |     1.292 |        1 |       --- |             --- |
 | Static Power             |     0.153 |          |           |                 |
-| Total                    |     2.348 |          |           |                 |
+| Total                    |     2.344 |          |           |                 |
 +--------------------------+-----------+----------+-----------+-----------------+
 
 
@@ -77,7 +77,7 @@ Table of Contents
 +-----------+-------------+-----------+-------------+------------+
 | Source    | Voltage (V) | Total (A) | Dynamic (A) | Static (A) |
 +-----------+-------------+-----------+-------------+------------+
-| Vccint    |       1.000 |     0.523 |       0.512 |      0.011 |
+| Vccint    |       1.000 |     0.519 |       0.508 |      0.011 |
 | Vccaux    |       1.800 |     0.069 |       0.057 |      0.012 |
 | Vcco33    |       3.300 |     0.085 |       0.084 |      0.001 |
 | Vcco25    |       2.500 |     0.001 |       0.000 |      0.001 |
@@ -165,36 +165,36 @@ Table of Contents
 +----------------------------------------------------------------------------------+-----------+
 | Name                                                                             | Power (W) |
 +----------------------------------------------------------------------------------+-----------+
-| red_pitaya_top                                                                   |     2.195 |
+| red_pitaya_top                                                                   |     2.191 |
 |   i_ams                                                                          |     0.001 |
 |   i_asg                                                                          |     0.057 |
 |     adv_trig_a                                                                   |     0.002 |
 |     adv_trig_b                                                                   |     0.002 |
 |     ch[0]                                                                        |     0.025 |
 |     ch[1]                                                                        |     0.025 |
-|   i_dsp                                                                          |     0.351 |
+|   i_dsp                                                                          |     0.348 |
 |     dac_saturate[0]                                                              |    <0.001 |
 |     dac_saturate[1]                                                              |    <0.001 |
 |     genblk2[0].i_pid                                                             |     0.023 |
-|       pidfilter                                                                  |     0.012 |
+|       pidfilter                                                                  |     0.011 |
 |         genblk2[0].lpf                                                           |     0.003 |
 |         genblk2[1].lpf                                                           |     0.003 |
 |         genblk2[2].lpf                                                           |     0.003 |
 |         genblk2[3].lpf                                                           |     0.003 |
-|     genblk2[1].i_pid                                                             |     0.023 |
-|       pidfilter                                                                  |     0.012 |
+|     genblk2[1].i_pid                                                             |     0.022 |
+|       pidfilter                                                                  |     0.011 |
 |         genblk2[0].lpf                                                           |     0.003 |
 |         genblk2[1].lpf                                                           |     0.003 |
 |         genblk2[2].lpf                                                           |     0.003 |
 |         genblk2[3].lpf                                                           |     0.003 |
 |     genblk2[2].i_pid                                                             |     0.023 |
-|       pidfilter                                                                  |     0.012 |
+|       pidfilter                                                                  |     0.011 |
 |         genblk2[0].lpf                                                           |     0.003 |
 |         genblk2[1].lpf                                                           |     0.003 |
 |         genblk2[2].lpf                                                           |     0.003 |
 |         genblk2[3].lpf                                                           |     0.003 |
-|     genblk2[3].i_pid                                                             |     0.023 |
-|       pidfilter                                                                  |     0.012 |
+|     genblk2[3].i_pid                                                             |     0.022 |
+|       pidfilter                                                                  |     0.011 |
 |         genblk2[0].lpf                                                           |     0.003 |
 |         genblk2[1].lpf                                                           |     0.003 |
 |         genblk2[2].lpf                                                           |     0.003 |
