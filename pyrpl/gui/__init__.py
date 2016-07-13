@@ -7,3 +7,4 @@ try:
 except:
     logger.warning("Could not import gui. Please make sure that all "\
                    +"necessary packages are installed")
+from .redpitaya_gui import RedPitayaGui

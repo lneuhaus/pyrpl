@@ -67,7 +67,7 @@ generate for (j = 0; j < STAGES-1; j = j+1) begin
     assign filter_in[j+1] = filter_out[j];
 end endgenerate
 
-generate for (j = 1; j < STAGES; j = j+1)
+generate for (j = 0; j < STAGES; j = j+1)
     red_pitaya_lpf_block #(
      .SHIFTBITS(SHIFTBITS),
      .SIGNALBITS(SIGNALBITS),

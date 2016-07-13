@@ -160,11 +160,10 @@ end
 //-----------------------------
 // cascaded set of FILTERSTAGES low- or high-pass filters
 wire signed [14-1:0] dat_i_filtered;
-wire signed [14+2-1:0] dat_i_filtered_raw;
 red_pitaya_filter_block #(
      .STAGES(FILTERSTAGES),
      .SHIFTBITS(FILTERSHIFTBITS),
-     .SIGNALBITS(14+2),
+     .SIGNALBITS(14),
      .MINBW(FILTERMINBW)
   )
   pidfilter
@@ -172,14 +171,12 @@ red_pitaya_filter_block #(
   .clk_i(clk_i),
   .rstn_i(rstn_i),
   .set_filter(set_filter), 
-  .dat_i(dat_i<<2),
-  .dat_o(dat_i_filtered_raw)
-  //.dat_o(dat_i_filtered)
+  .dat_i(dat_i),
+  .dat_o(dat_i_filtered)
   );
-assign dat_i_filtered = dat_i_filtered_raw >>> 2;
 
 //---------------------------------------------------------------------------------
-//  Set point error calculation
+//  Set point error calculation - 1 cycle delay
 
 reg  [ 15-1: 0] error        ;
 
@@ -196,7 +193,7 @@ end
 
 
 //---------------------------------------------------------------------------------
-//  Proportional part
+//  Proportional part - 1 cycle delay
 
 reg   [15+GAINBITS-PSR-1: 0] kp_reg        ;
 wire  [15+GAINBITS-1: 0] kp_mult       ;
@@ -215,7 +212,9 @@ assign kp_mult = $signed(error) * $signed(set_kp);
 
 
 //---------------------------------------------------------------------------------
-//  Integrator
+// Integrator - 2 cycles delay (but treat similar to proportional since it
+// will become negligible at high frequencies where delay is important)
+
 localparam IBW = 64; //integrator bit-width. Over-represent the integral sum to record longterm drifts
 reg   [15+GAINBITS-1: 0] ki_mult  ;
 wire  [IBW  : 0] int_sum       ;
@@ -248,7 +247,8 @@ assign int_shr = $signed(int_reg[IBW-1:ISR]) ;
 
 
 //---------------------------------------------------------------------------------
-//  Derivative
+//  Derivative - 2 cycles delay (but treat as 1 cycle because its not
+//  functional at the moment
 
 wire  [    39-1: 0] kd_mult       ;
 reg   [39-DSR-1: 0] kd_reg        ; 
@@ -282,7 +282,7 @@ generate
 endgenerate 
 
 //---------------------------------------------------------------------------------
-//  Sum together - saturate output
+//  Sum together - saturate output - 1 cycle delay
 
 localparam MAXBW = 35;
 wire        [   MAXBW-1: 0] pid_sum     ; 

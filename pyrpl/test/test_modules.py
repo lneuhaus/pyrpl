@@ -204,6 +204,8 @@ class TestClass(object):
         # Let's check the transfer function of the pid module with the integrated NA
         if self.r is None:
             return
+        else:
+            r = self.r
         plotdata = []
 
         # shortcuts and na configuration
@@ -225,12 +227,9 @@ class TestClass(object):
         pid.inputfilter = 0
         f, data, amplitudes = na.curve()
         plotdata.append((f, data, 'p=1'))
-
-        # need to implement this!!!
-        ##nominal = pid.transfer_function(f)
-        ##maxerror = np.abs(data - nominal)
-        #assert maxerror < 0.01
-
+        theory = pid.transfer_function(f)
+        maxerror = np.abs(data - theory)
+        assert maxerror < 0.01, maxerror
         # proportional gain of 0.01, integral = 1 kHz
         pid.p = 0.1
         pid.i = 1000
@@ -239,11 +238,14 @@ class TestClass(object):
         pid.inputfilter = 0
         f, data, amplitudes = na.curve()
         plotdata.append((f, data, 'p=1e-1, i=1e3'))
-
+        theory = pid.transfer_function(f)
+        maxerror = np.abs(data - theory)
+        assert maxerror < 0.01, maxerror
         # check that no saturation has occured
         print ("Integral value after measurement: ", pid.ival)
         if abs(pid.ival) >= 1.0:
             print("Saturation has occured. Data not reliable.")
+        assert abs(pid.ival)<=1.0, pid.ival
 
         # proportional gain of 10, inputfilter: 2kHz high-pass, 10 kHz
         # Lowpass, 50kHz lowpass
@@ -255,6 +257,9 @@ class TestClass(object):
         print("Actual inputfilter after rounding: ", pid.inputfilter)
         f, data, amplitudes = na.curve()
         plotdata.append((f, data, 'p=10 + filter'))
+        theory = pid.transfer_function(f)
+        maxerror = np.abs(data - theory)
+        assert maxerror < 0.01, maxerror
 
         # reset
         pid.setpoint = 0
