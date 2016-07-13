@@ -326,6 +326,7 @@ def bodeplot(data, xlog=False):
         ax1.legend(loc='best')
     plt.show()
 
+
 # Example
 def example():
     plt.close()

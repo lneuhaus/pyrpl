@@ -1242,7 +1242,9 @@ class IQ(FilterModule):
             stabilize=None, # if a float, output amplitude is adjusted dynamically so that input amplitude [V]=stabilize 
             maxamplitude=1.0, # amplitude can be limited
             ):
-
+        self.logger.info("This function will become obsolete in the distant "
+                         "future. Start using the module RedPitaya.na "
+                         "instead!")
         if logscale:
             x = np.logspace(
                 np.log10(start),

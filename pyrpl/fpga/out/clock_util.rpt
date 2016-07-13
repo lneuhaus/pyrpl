@@ -1,7 +1,7 @@
 Copyright 1986-2015 Xilinx, Inc. All Rights Reserved.
 -----------------------------------------------------------------------------------------
 | Tool Version      : Vivado v.2015.4 (lin64) Build 1412921 Wed Nov 18 09:44:32 MST 2015
-| Date              : Wed Jul 13 17:02:57 2016
+| Date              : Wed Jul 13 21:31:27 2016
 | Host              : ubuntu running 64-bit Ubuntu 14.04.4 LTS
 | Command           : report_clock_utilization -file out/clock_util.rpt
 | Design            : red_pitaya_top
@@ -52,10 +52,10 @@ Table of Contents
 +-------+----------------------------------------------------------------------------------+----------------------------------------------------------+-------+-------+-------+
 |     1 | bufg_dac_clk_2p                                                                  | dac_clk_2p                                               |     1 |     1 |    no |
 |     2 | bufg_dac_clk_2x                                                                  | dac_clk_2x                                               |     1 |     1 |    no |
-|     3 | bufg_dac_clk_1x                                                                  | dac_clk_1x                                               |    45 |    26 |    no |
-|     4 | bufg_pwm_clk                                                                     | pwm_clk                                                  |   215 |    73 |    no |
-|     5 | i_ps/system_i/system_i/processing_system7/inst/buffer_fclk_clk_3.FCLK_CLK_3_BUFG | i_ps/system_i/system_i/processing_system7/inst/FCLK_CLK3 |   851 |   212 |    no |
-|     6 | bufg_adc_clk                                                                     | adc_clk                                                  | 14544 |  4133 |    no |
+|     3 | bufg_dac_clk_1x                                                                  | dac_clk_1x                                               |    45 |    29 |    no |
+|     4 | bufg_pwm_clk                                                                     | pwm_clk                                                  |   215 |    66 |    no |
+|     5 | i_ps/system_i/system_i/processing_system7/inst/buffer_fclk_clk_3.FCLK_CLK_3_BUFG | i_ps/system_i/system_i/processing_system7/inst/FCLK_CLK3 |   851 |   225 |    no |
+|     6 | bufg_adc_clk                                                                     | adc_clk                                                  | 13738 |  3931 |    no |
 +-------+----------------------------------------------------------------------------------+----------------------------------------------------------+-------+-------+-------+
 
 
@@ -103,10 +103,10 @@ Table of Contents
 +-------------------+------+-------+------+-------+------+-------+------+-------+------+-------+------+-------+------+-------+------+-------+------+-------+------+-------+------+-------+------+-------+------+-------+------+-------+------+-------+
 | Clock Region Name | Used | Avail | Used | Avail | Used | Avail | Used | Avail | Used | Avail | Used | Avail | Used | Avail | Used | Avail | Used | Avail | Used | Avail | Used | Avail | Used | Avail | Used | Avail | Used | Avail | Used | Avail |
 +-------------------+------+-------+------+-------+------+-------+------+-------+------+-------+------+-------+------+-------+------+-------+------+-------+------+-------+------+-------+------+-------+------+-------+------+-------+------+-------+
-| X0Y0              |    3 |    12 |    0 |     0 |    0 |     0 |    0 |     0 |    0 |     0 |    0 |     0 |    0 |     0 |    0 |     0 |    0 |     0 |    0 |     0 | 3961 |  8800 |   74 |  1600 |    0 |    20 |    7 |    10 |    9 |    20 |
-| X1Y0              |    3 |    12 |    0 |     4 |    0 |     2 |    0 |     4 |    0 |     1 |    1 |     1 |    0 |     0 |    0 |     0 |   28 |    50 |    4 |    50 | 3492 |  8800 |    1 |  1400 |    0 |    40 |   11 |    20 |    8 |    20 |
-| X0Y1              |    2 |    12 |    0 |     0 |    0 |     0 |    0 |     0 |    0 |     0 |    0 |     0 |    0 |     0 |    0 |     0 |    0 |     0 |    0 |     0 | 4057 |  8800 |   46 |  1600 |    0 |    20 |    2 |    10 |   17 |    20 |
-| X1Y1              |    5 |    12 |    0 |     4 |    0 |     2 |    0 |     4 |    0 |     1 |    0 |     1 |    0 |     0 |    0 |     0 |    0 |    50 |   18 |    50 | 3917 |  8800 |    0 |  1400 |    0 |    40 |   14 |    20 |   14 |    20 |
+| X0Y0              |    1 |    12 |    0 |     0 |    0 |     0 |    0 |     0 |    0 |     0 |    0 |     0 |    0 |     0 |    0 |     0 |    0 |     0 |    0 |     0 | 4091 |  8800 |   48 |  1600 |    0 |    20 |    6 |    10 |   18 |    20 |
+| X1Y0              |    2 |    12 |    0 |     4 |    0 |     2 |    0 |     4 |    0 |     1 |    1 |     1 |    0 |     0 |    0 |     0 |   28 |    50 |    4 |    50 | 3643 |  8800 |    0 |  1400 |    0 |    40 |    5 |    20 |   16 |    20 |
+| X0Y1              |    2 |    12 |    0 |     0 |    0 |     0 |    0 |     0 |    0 |     0 |    0 |     0 |    0 |     0 |    0 |     0 |    0 |     0 |    0 |     0 | 3702 |  8800 |   75 |  1600 |    0 |    20 |   10 |    10 |    6 |    20 |
+| X1Y1              |    6 |    12 |    0 |     4 |    0 |     2 |    0 |     4 |    0 |     1 |    0 |     1 |    0 |     0 |    0 |     0 |    0 |    50 |   18 |    50 | 3183 |  8800 |    0 |  1400 |    0 |    40 |   13 |    20 |    8 |    20 |
 +-------------------+------+-------+------+-------+------+-------+------+-------+------+-------+------+-------+------+-------+------+-------+------+-------+------+-------+------+-------+------+-------+------+-------+------+-------+------+-------+
 * RAMB36 site can be used as two RAMB18/FIFO18 sites.
 
@@ -114,25 +114,22 @@ Table of Contents
 8. Net wise resources used in clock region X0Y0
 -----------------------------------------------
 
-+-------------+--------------+-------+-----------+----------+---------+-----------+---------+---------+------+-------+----------+----------------------------------------------------------+
-| Source Type | BUFHCE Site  | Fixed | MMCM Pins | PLL Pins | GT Pins | BRAM Pins | ILOGICs | OLOGICs |  FFs | LUTMs | DSP48E1s |                      Clock Net Name                      |
-+-------------+--------------+-------+-----------+----------+---------+-----------+---------+---------+------+-------+----------+----------------------------------------------------------+
-| BUFG        | BUFHCE_X0Y10 |   no  |         0 |        0 |       0 |         0 |       0 |       0 |   17 |     0 |        0 | pwm_clk                                                  |
-| BUFG        | BUFHCE_X0Y8  |   no  |         0 |        0 |       0 |         0 |       0 |       0 |  253 |    26 |        0 | i_ps/system_i/system_i/processing_system7/inst/FCLK_CLK3 |
-| BUFG        | BUFHCE_X0Y9  |   no  |         0 |        0 |       0 |        14 |       0 |       0 | 3691 |    48 |        4 | adc_clk                                                  |
-+-------------+--------------+-------+-----------+----------+---------+-----------+---------+---------+------+-------+----------+----------------------------------------------------------+
++-------------+-------------+-------+-----------+----------+---------+-----------+---------+---------+------+-------+----------+----------------+
+| Source Type | BUFHCE Site | Fixed | MMCM Pins | PLL Pins | GT Pins | BRAM Pins | ILOGICs | OLOGICs |  FFs | LUTMs | DSP48E1s | Clock Net Name |
++-------------+-------------+-------+-----------+----------+---------+-----------+---------+---------+------+-------+----------+----------------+
+| BUFG        | BUFHCE_X0Y8 |   no  |         0 |        0 |       0 |        12 |       0 |       0 | 4091 |    48 |        7 | adc_clk        |
++-------------+-------------+-------+-----------+----------+---------+-----------+---------+---------+------+-------+----------+----------------+
 
 
 9. Net wise resources used in clock region X1Y0
 -----------------------------------------------
 
-+-------------+--------------+-------+-----------+----------+---------+-----------+---------+---------+------+-------+----------+----------------------------------------------------------+
-| Source Type | BUFHCE Site  | Fixed | MMCM Pins | PLL Pins | GT Pins | BRAM Pins | ILOGICs | OLOGICs |  FFs | LUTMs | DSP48E1s |                      Clock Net Name                      |
-+-------------+--------------+-------+-----------+----------+---------+-----------+---------+---------+------+-------+----------+----------------------------------------------------------+
-| BUFG        | BUFHCE_X1Y8  |   no  |         0 |        0 |       0 |         0 |       0 |       0 |   22 |     0 |        0 | i_ps/system_i/system_i/processing_system7/inst/FCLK_CLK3 |
-| BUFG        | BUFHCE_X1Y10 |   no  |         0 |        0 |       0 |         0 |       0 |       4 |  194 |     0 |        0 | pwm_clk                                                  |
-| BUFG        | BUFHCE_X1Y11 |   no  |         0 |        0 |       0 |        22 |      28 |       0 | 3276 |     1 |        4 | adc_clk                                                  |
-+-------------+--------------+-------+-----------+----------+---------+-----------+---------+---------+------+-------+----------+----------------------------------------------------------+
++-------------+--------------+-------+-----------+----------+---------+-----------+---------+---------+------+-------+----------+----------------+
+| Source Type | BUFHCE Site  | Fixed | MMCM Pins | PLL Pins | GT Pins | BRAM Pins | ILOGICs | OLOGICs |  FFs | LUTMs | DSP48E1s | Clock Net Name |
++-------------+--------------+-------+-----------+----------+---------+-----------+---------+---------+------+-------+----------+----------------+
+| BUFG        | BUFHCE_X1Y10 |   no  |         0 |        0 |       0 |         0 |       0 |       4 |   42 |     0 |        0 | pwm_clk        |
+| BUFG        | BUFHCE_X1Y11 |   no  |         0 |        0 |       0 |        10 |      28 |       0 | 3601 |     0 |        4 | adc_clk        |
++-------------+--------------+-------+-----------+----------+---------+-----------+---------+---------+------+-------+----------+----------------+
 
 
 10. Net wise resources used in clock region X0Y1
@@ -141,8 +138,8 @@ Table of Contents
 +-------------+--------------+-------+-----------+----------+---------+-----------+---------+---------+------+-------+----------+----------------------------------------------------------+
 | Source Type | BUFHCE Site  | Fixed | MMCM Pins | PLL Pins | GT Pins | BRAM Pins | ILOGICs | OLOGICs |  FFs | LUTMs | DSP48E1s |                      Clock Net Name                      |
 +-------------+--------------+-------+-----------+----------+---------+-----------+---------+---------+------+-------+----------+----------------------------------------------------------+
-| BUFG        | BUFHCE_X0Y20 |   no  |         0 |        0 |       0 |         0 |       0 |       0 |  405 |    44 |        0 | i_ps/system_i/system_i/processing_system7/inst/FCLK_CLK3 |
-| BUFG        | BUFHCE_X0Y21 |   no  |         0 |        0 |       0 |         4 |       0 |       0 | 3652 |     2 |        4 | adc_clk                                                  |
+| BUFG        | BUFHCE_X0Y20 |   no  |         0 |        0 |       0 |         0 |       0 |       0 |  777 |    70 |        0 | i_ps/system_i/system_i/processing_system7/inst/FCLK_CLK3 |
+| BUFG        | BUFHCE_X0Y21 |   no  |         0 |        0 |       0 |        20 |       0 |       0 | 2925 |     5 |        4 | adc_clk                                                  |
 +-------------+--------------+-------+-----------+----------+---------+-----------+---------+---------+------+-------+----------+----------------------------------------------------------+
 
 
@@ -154,9 +151,10 @@ Table of Contents
 +-------------+--------------+-------+-----------+----------+---------+-----------+---------+---------+------+-------+----------+----------------------------------------------------------+
 | BUFG        | BUFHCE_X1Y23 |   no  |         0 |        0 |       0 |         0 |       0 |       1 |    0 |     0 |        0 | dac_clk_2p                                               |
 | BUFG        | BUFHCE_X1Y22 |   no  |         0 |        0 |       0 |         0 |       0 |       1 |    0 |     0 |        0 | dac_clk_2x                                               |
+| BUFG        | BUFHCE_X1Y20 |   no  |         0 |        0 |       0 |         0 |       0 |       0 |    2 |     0 |        0 | i_ps/system_i/system_i/processing_system7/inst/FCLK_CLK3 |
 | BUFG        | BUFHCE_X1Y19 |   no  |         0 |        0 |       0 |         0 |       0 |      16 |   29 |     0 |        0 | dac_clk_1x                                               |
-| BUFG        | BUFHCE_X1Y20 |   no  |         0 |        0 |       0 |         0 |       0 |       0 |   99 |     0 |        0 | i_ps/system_i/system_i/processing_system7/inst/FCLK_CLK3 |
-| BUFG        | BUFHCE_X1Y21 |   no  |         0 |        0 |       0 |        28 |       0 |       0 | 3789 |     0 |       10 | adc_clk                                                  |
+| BUFG        | BUFHCE_X1Y12 |   no  |         0 |        0 |       0 |         0 |       0 |       0 |  169 |     0 |        0 | pwm_clk                                                  |
+| BUFG        | BUFHCE_X1Y21 |   no  |         0 |        0 |       0 |        26 |       0 |       0 | 2983 |     0 |        7 | adc_clk                                                  |
 +-------------+--------------+-------+-----------+----------+---------+-----------+---------+---------+------+-------+----------+----------------------------------------------------------+
 
 
@@ -216,7 +214,7 @@ add_cells_to_pblock [get_pblocks  {CLKAG_dac_clk_2x}] [get_cells -filter { PRIMI
 resize_pblock [get_pblocks {CLKAG_dac_clk_2x}] -add {CLOCKREGION_X1Y1:CLOCKREGION_X1Y1}
 #endgroup
 
-# Clock net "i_hk/dna_clk" driven by instance "i_hk/dna_clk_reg" located at site "SLICE_X15Y28"
+# Clock net "i_hk/dna_clk" driven by instance "i_hk/dna_clk_reg" located at site "SLICE_X15Y61"
 #startgroup
 create_pblock {CLKAG_i_hk/dna_clk}
 add_cells_to_pblock [get_pblocks  {CLKAG_i_hk/dna_clk}] [get_cells -filter { PRIMITIVE_GROUP != I/O && IS_PRIMITIVE==1 && PRIMITIVE_LEVEL !=INTERNAL } -of_object [get_pins -filter {DIRECTION==IN} -of_objects [get_nets -hierarchical -filter {PARENT=="i_hk/dna_clk"}]]]
@@ -227,12 +225,12 @@ resize_pblock [get_pblocks {CLKAG_i_hk/dna_clk}] -add {CLOCKREGION_X0Y0:CLOCKREG
 #startgroup
 create_pblock {CLKAG_i_ps/system_i/system_i/processing_system7/inst/FCLK_CLK3}
 add_cells_to_pblock [get_pblocks  {CLKAG_i_ps/system_i/system_i/processing_system7/inst/FCLK_CLK3}] [get_cells -filter { PRIMITIVE_GROUP != I/O && IS_PRIMITIVE==1 && PRIMITIVE_LEVEL !=INTERNAL } -of_object [get_pins -filter {DIRECTION==IN} -of_objects [get_nets -hierarchical -filter {PARENT=="i_ps/system_i/system_i/processing_system7/inst/FCLK_CLK3"}]]]
-resize_pblock [get_pblocks {CLKAG_i_ps/system_i/system_i/processing_system7/inst/FCLK_CLK3}] -add {CLOCKREGION_X0Y0:CLOCKREGION_X0Y0 CLOCKREGION_X0Y1:CLOCKREGION_X0Y1 CLOCKREGION_X1Y0:CLOCKREGION_X1Y0 CLOCKREGION_X1Y1:CLOCKREGION_X1Y1}
+resize_pblock [get_pblocks {CLKAG_i_ps/system_i/system_i/processing_system7/inst/FCLK_CLK3}] -add {CLOCKREGION_X0Y1:CLOCKREGION_X0Y1 CLOCKREGION_X1Y1:CLOCKREGION_X1Y1}
 #endgroup
 
 # Clock net "pwm_clk" driven by instance "bufg_pwm_clk" located at site "BUFGCTRL_X0Y2"
 #startgroup
 create_pblock {CLKAG_pwm_clk}
 add_cells_to_pblock [get_pblocks  {CLKAG_pwm_clk}] [get_cells -filter { PRIMITIVE_GROUP != I/O && IS_PRIMITIVE==1 && PRIMITIVE_LEVEL !=INTERNAL } -of_object [get_pins -filter {DIRECTION==IN} -of_objects [get_nets -hierarchical -filter {PARENT=="pwm_clk"}]]]
-resize_pblock [get_pblocks {CLKAG_pwm_clk}] -add {CLOCKREGION_X0Y0:CLOCKREGION_X0Y0 CLOCKREGION_X1Y0:CLOCKREGION_X1Y0}
+resize_pblock [get_pblocks {CLKAG_pwm_clk}] -add {CLOCKREGION_X1Y0:CLOCKREGION_X1Y0 CLOCKREGION_X1Y1:CLOCKREGION_X1Y1}
 #endgroup
