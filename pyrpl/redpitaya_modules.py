@@ -1446,13 +1446,13 @@ class IIR(FilterModule):
                           totalbits=iirbits, shiftbits=iirshift,
                           tol=tol, finiteprecision=False)
         minimum_loops = len(c)
-        if minimum_loops < 3:
-            minimum_loops = 3
+        if minimum_loops < 4:
+            minimum_loops = 4
         if minimum_loops > self._IIRSTAGES:
             raise Exception("Error: desired filter order is too high to "\
                             +"be implemented.")
         if loops is None:
-            loops = 3
+            loops = 4
         elif loops > 255:
             loops = 255
         loops = max([loops, minimum_loops])
