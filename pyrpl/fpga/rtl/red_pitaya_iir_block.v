@@ -253,6 +253,7 @@ reg signed [IIRSIGNALBITS-1:0] x0;
 //reg signed [IIRSIGNALBITS-1:0] x0;
 
 reg signed [IIRSIGNALBITS-1:0] y0;
+reg signed [IIRSIGNALBITS+1-1:0] y0_1;
 reg signed [IIRSIGNALBITS-1:0] y1a;
 reg signed [IIRSIGNALBITS-1:0] y2a;
 reg signed [IIRSIGNALBITS-1:0] y1b;
