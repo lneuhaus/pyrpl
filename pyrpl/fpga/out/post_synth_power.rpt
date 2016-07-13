@@ -1,7 +1,7 @@
 Copyright 1986-2015 Xilinx, Inc. All Rights Reserved.
 ----------------------------------------------------------------------------------------
 | Tool Version     : Vivado v.2015.4 (lin64) Build 1412921 Wed Nov 18 09:44:32 MST 2015
-| Date             : Tue Jul 12 22:26:22 2016
+| Date             : Tue Jul 12 23:07:07 2016
 | Host             : ubuntu running 64-bit Ubuntu 14.04.4 LTS
 | Command          : report_power -file out/post_synth_power.rpt
 | Design           : red_pitaya_top
@@ -51,7 +51,7 @@ Table of Contents
 +--------------------------+-----------+----------+-----------+-----------------+
 | Clocks                   |     0.072 |       15 |       --- |             --- |
 | Slice Logic              |     0.142 |    38970 |       --- |             --- |
-|   LUT as Logic           |     0.121 |    17136 |     17600 |           97.36 |
+|   LUT as Logic           |     0.121 |    17138 |     17600 |           97.38 |
 |   CARRY4                 |     0.016 |     1490 |      4400 |           33.86 |
 |   Register               |     0.005 |    15313 |     35200 |           43.50 |
 |   F7/F8 Muxes            |    <0.001 |      805 |     17600 |            4.57 |
@@ -59,7 +59,7 @@ Table of Contents
 |   Others                 |     0.000 |      449 |       --- |             --- |
 |   BUFG                   |     0.000 |        1 |        32 |            3.13 |
 |   LUT as Distributed RAM |     0.000 |       24 |      6000 |            0.40 |
-| Signals                  |     0.130 |    31913 |       --- |             --- |
+| Signals                  |     0.130 |    31914 |       --- |             --- |
 | Block RAM                |     0.103 |       34 |        60 |           56.67 |
 | PLL                      |     0.097 |        1 |         2 |           50.00 |
 | DSPs                     |     0.043 |       48 |        80 |           60.00 |

@@ -44,7 +44,6 @@ module red_pitaya_filter_block
     parameter     SHIFTBITS = 4, //shift can be from 0 to 15 bits
     parameter     SIGNALBITS   = 14, //bit width of the signals
     parameter     EXTRAOUTPUTBITS  = 0, //additional bits of the output
-
     parameter     MINBW        = 10
     )
 (
@@ -73,6 +72,7 @@ generate for (j = 0; j < STAGES; j = j+1)
     red_pitaya_lpf_block #(
      .SHIFTBITS(SHIFTBITS),
      .SIGNALBITS(SIGNALBITS),
+     .EXTRAOUTPUTBITS(EXTRAOUTPUTBITS),
      .MINBW(MINBW)
   )
   lpf
