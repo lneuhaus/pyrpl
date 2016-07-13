@@ -1,6 +1,7 @@
 import numpy as np
 import sys
 from time import sleep, time
+import logging
 
 from .redpitaya_modules import NotReadyError
 
@@ -26,6 +27,7 @@ class NetworkAnalyzer(object):
     """
 
     def __init__(self, rp):
+        self._logger = logging.getLogger(__name__)
         self.rp = rp
         self.start = 200
         self.stop = 50000
@@ -330,6 +332,11 @@ class NetworkAnalyzer(object):
         xs = np.zeros(self.points, dtype=float)
         ys = np.zeros(self.points, dtype=complex)
         amps = np.zeros(self.points, dtype=float)
+
+        self._logger.info("Estimated acquisition time: %.1f s",
+                          self.time_per_point * self.points)
+        sys.stdout.flush()  # make sure the time is shown immediately
+
         for index, (x, y, amp) in enumerate(self.values()):
             xs[index] = x
             ys[index] = y
