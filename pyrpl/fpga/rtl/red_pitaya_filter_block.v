@@ -43,7 +43,6 @@ module red_pitaya_filter_block
     parameter     STAGES = 1,    //max. 4 stages
     parameter     SHIFTBITS = 4, //shift can be from 0 to 15 bits
     parameter     SIGNALBITS   = 14, //bit width of the signals
-    parameter     EXTRAOUTPUTBITS  = 0, //additional bits of the output
     parameter     MINBW        = 10
     )
 (
@@ -51,14 +50,14 @@ module red_pitaya_filter_block
     input rstn_i  ,
     input [32-1:0] set_filter, 
     input signed [SIGNALBITS-1:0] dat_i,
-    output signed [(SIGNALBITS+EXTRAOUTPUTBITS-1):0] dat_o
+    output signed [SIGNALBITS-1:0] dat_o
 );
 
 //-----------------------------
 // cascaded set of FILTERSTAGES low- or high-pass filters
 
-wire signed [SIGNALBITS+EXTRAOUTPUTBITS-1:0] filter_in[STAGES-1:0];
-wire signed [SIGNALBITS+EXTRAOUTPUTBITS-1:0] filter_out[STAGES-1:0];
+wire signed [SIGNALBITS-1:0] filter_in[STAGES-1:0];
+wire signed [SIGNALBITS-1:0] filter_out[STAGES-1:0];
 
 assign filter_in[0] = dat_i;
 assign dat_o = filter_out[STAGES-1];
@@ -68,13 +67,10 @@ generate for (j = 0; j < STAGES-1; j = j+1) begin
     assign filter_in[j+1] = filter_out[j];
 end endgenerate
 
-// first filter converts SIGNALBITS into SIGNALBITS+EXTRAOUTPUTBITS
-// all other filters are symmetric: SIGNALBITS+EXTRAOUTPUTBITS into the same
-generate for (j = 0; j < STAGES; j = j+1)
+generate for (j = 1; j < STAGES; j = j+1)
     red_pitaya_lpf_block #(
      .SHIFTBITS(SHIFTBITS),
-     .SIGNALBITS((j==0)?SIGNALBITS:(SIGNALBITS+EXTRAOUTPUTBITS)),
-     .EXTRAOUTPUTBITS((j==0)?EXTRAOUTPUTBITS:0),
+     .SIGNALBITS(SIGNALBITS),
      .MINBW(MINBW)
   )
   lpf

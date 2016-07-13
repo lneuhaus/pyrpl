@@ -164,8 +164,7 @@ wire signed [14+2-1:0] dat_i_filtered_raw;
 red_pitaya_filter_block #(
      .STAGES(FILTERSTAGES),
      .SHIFTBITS(FILTERSHIFTBITS),
-     .SIGNALBITS(14),
-     .EXTRAOUTPUTBITS(2), //for testing only
+     .SIGNALBITS(14+2),
      .MINBW(FILTERMINBW)
   )
   pidfilter
@@ -173,7 +172,7 @@ red_pitaya_filter_block #(
   .clk_i(clk_i),
   .rstn_i(rstn_i),
   .set_filter(set_filter), 
-  .dat_i(dat_i),
+  .dat_i(dat_i<<2),
   .dat_o(dat_i_filtered_raw)
   //.dat_o(dat_i_filtered)
   );

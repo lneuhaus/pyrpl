@@ -149,8 +149,7 @@ wire signed [SIGNALBITS+SIGNALSHIFT-1:0] dat_i_filtered;
 red_pitaya_filter_block #(
      .STAGES(FILTERSTAGES),
      .SHIFTBITS(FILTERSHIFTBITS),
-     .SIGNALBITS(SIGNALBITS),
-     .EXTRAOUTPUTBITS(SIGNALSHIFT),
+     .SIGNALBITS(SIGNALBITS+SIGNALSHIFT),
      .MINBW(FILTERMINBW)
   )
   iir_inputfilter
@@ -158,10 +157,9 @@ red_pitaya_filter_block #(
   .clk_i(clk_i),
   .rstn_i(rstn_i),
   .set_filter(set_filter),
-  .dat_i(dat_i),
+  .dat_i({dat_i,{SIGNALSHIFT{1'b0}}}),
   .dat_o(dat_i_filtered)
   );
-
 
 /*
 //coefficient management - update coefficients when requested by copydata high transition

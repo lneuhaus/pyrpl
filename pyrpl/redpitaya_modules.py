@@ -1030,6 +1030,23 @@ class Pid(FilterModule):
     def reg_integral(self, v):
         self.ival = v
 
+    def transfer_function(self, frequencies, delay=None):
+        if delay is None:
+            delay = 8e-9 * 20 # pid module has delay around 20 samples
+        frequencies = np.array(np.array(frequencies, dtype=float),
+                               dtype=np.complex)
+        tf = self.i/frequencies*1j + self.p
+        if self.d != 0:
+            tf += frequencies*1j/self.d
+        tf *= np.exp(-delay*frequencies)
+        for f in self.inputfilter:
+            if f == 0:
+                continue
+            elif f > 0: # lowpass
+                tf *= 1.0/(1.0 + 1j*frequencies/f)
+            elif f < 0: # highpass
+                tf *= 1 / (1.0 - 1j*f/frequencies )
+        return tf
 
 class IQ(FilterModule):
     _output_signals = dict(
