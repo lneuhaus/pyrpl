@@ -1035,7 +1035,7 @@ class Pid(FilterModule):
     def reg_integral(self, v):
         self.ival = v
 
-    def transfer_function(self, frequencies, delay=None):
+    def transfer_function(self, frequencies, extradelay=0):
         """
         Returns a complex np.array containing the transfer function of the
         current PID module setting for the given frequency array. The
@@ -1048,10 +1048,10 @@ class Pid(FilterModule):
         ----------
         frequencies: np.array or float
             Frequencies to compute the transfer function for
-        delay: float or None
-            delay of propagation through the PID module. If None is given,
-            the delay for internal propagation from input to output_signal
-            is used. If the PID module is fed through analog inputs and
+        extradelay: float
+            External delay to add to the transfer function (in s). If zero,
+            only the delay for internal propagation from input to
+            output_signal is used. If the module is fed to analog inputs and
             outputs, an extra delay of the order of 200 ns must be passed as
             an argument for the correct delay modelisation.
 
@@ -1061,31 +1061,32 @@ class Pid(FilterModule):
             The complex open loop transfer function of the module.
         """
         module_delay = self._delay
-        frequencies = np.array(np.array(frequencies, dtype=np.float),
-                               dtype=np.complex)
+        frequencies = np.array(frequencies, dtype=np.complex)
         # integrator with one cycle of extra delay
         tf = self.i/(frequencies*1j) \
-                * np.exp(-1 * 8e-9 * self._frequency_correction * frequencies)
+                * np.exp(-1j * 8e-9 * self._frequency_correction *
+                         frequencies * 2 * np.pi)
         # proportional (delay in self._delay included)
         tf += self.p
         # derivative action with one cycle of extra delay
-        if self.d != 0:
-            tf += frequencies*1j/self.d \
-                  * np.exp(-1 * 8e-9 * self._frequency_correction * frequencies)
+        #if self.d != 0:
+        #    tf += frequencies*1j/self.d \
+        #          * np.exp(-1j * 8e-9 * self._frequency_correction *
+        #                   frequencies * 2 * np.pi)
         # input filter modelisation
         for f in self.inputfilter:
             if f == 0:
                 continue
             elif f > 0:  # lowpass
-                tf *= 1.0/(1.0 + 1j*frequencies/f)
+                tf /= (1.0 + 1j*frequencies/f)
                 module_delay += 2  # two cycles extra delay per lowpass
             elif f < 0:  # highpass
-                tf *= 1 / (1.0 - 1j*f/frequencies)
+                tf /= (1.0 + 1j*f/frequencies)
+                # plus is correct here since f already has a minus sign
                 module_delay += 1  # one cycle extra delay per highpass
         # add delay
-        if delay is None:
-            delay = module_delay
-        tf *= np.exp(-delay*8e-9/self._frequency_correction*frequencies)
+        delay = module_delay * 8e-9 / self._frequency_correction + extradelay
+        tf *= np.exp(-1j*delay*frequencies*2*np.pi)
         return tf
 
 class IQ(FilterModule):
@@ -1316,12 +1317,12 @@ class IQ(FilterModule):
         else:
             return x, y, amplitudes
 
-    def transfer_function(self, frequencies, delay=None):
+    def transfer_function(self, frequencies, extradelay=0):
         """
         Returns a complex np.array containing the transfer function of the
         current IQ module setting for the given frequency array. The given
         transfer function is only relevant if the module is used as a
-        bandpass filter, i.e. with the setting (gain != 0). If delay = None,
+        bandpass filter, i.e. with the setting (gain != 0). If extradelay = 0,
         only the default delay is taken into account, i.e. the propagation
         delay from input to output_signal.
 
@@ -1329,10 +1330,12 @@ class IQ(FilterModule):
         ----------
         frequencies: np.array or float
             Frequencies to compute the transfer function for
-        delay: float or None
-            delay of propagation to assume. If None is given,
-            the delay for internal propagation from input to output_signal
-            is used.
+        extradelay: float
+            External delay to add to the transfer function (in s). If zero,
+            only the delay for internal propagation from input to
+            output_signal is used. If the module is fed to analog inputs and
+            outputs, an extra delay of the order of 200 ns must be passed as
+            an argument for the correct delay modelisation.
 
         Returns
         -------
@@ -1351,22 +1354,21 @@ class IQ(FilterModule):
                 tf *= 1.0 / (1.0 + 1j * (frequencies-self.frequency) / f)
                 module_delay += 2  # two cycles extra delay per lowpass
             elif f < 0:  # highpass
-                tf *= 1.0 / (1.0 - 1j * f / (frequencies-self.frequency))
+                tf *= 1.0 / (1.0 + 1j * f / (frequencies-self.frequency))
             module_delay += 1  # one cycle extra delay per highpass
         # input filter modelisation
         f = self.inputfilter  # no for loop here because only one filter stage
         if f > 0:  # lowpass
-            tf *= 1.0 / (1.0 + 1j * frequencies / f)
+            tf /= (1.0 + 1j * frequencies / f)
             module_delay += 2  # two cycles extra delay per lowpass
         elif f < 0:  # highpass
-            tf *= 1 / (1.0 - 1j * f / frequencies)
+            tf /= (1.0 + 1j * f / frequencies)
             module_delay += 1  # one cycle extra delay per highpass
         # add delay
-        if delay is None:
-            delay = module_delay
-        tf *= np.exp(-delay * 8e-9 / self._frequency_correction * frequencies)
-        # add delay from phase
-        tf *= np.exp(self.phase/180.0*np.pi)
+        delay = module_delay * 8e-9 / self._frequency_correction + extradelay
+        tf *= np.exp(-1j * delay * frequencies * 2 * np.pi)
+        # add delay from phase (incorrect formula or missing effect...)
+        tf *= np.exp(1j*self.phase/180.0*np.pi)
         return tf
 
 
