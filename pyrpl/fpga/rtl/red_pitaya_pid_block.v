@@ -160,10 +160,12 @@ end
 //-----------------------------
 // cascaded set of FILTERSTAGES low- or high-pass filters
 wire signed [14-1:0] dat_i_filtered;
+wire signed [14-1:0] dat_i_filtered_raw;
 red_pitaya_filter_block #(
      .STAGES(FILTERSTAGES),
      .SHIFTBITS(FILTERSHIFTBITS),
      .SIGNALBITS(14),
+     .EXTRAOUTPUTBITS(2), //for testing only
      .MINBW(FILTERMINBW)
   )
   pidfilter
@@ -172,9 +174,9 @@ red_pitaya_filter_block #(
   .rstn_i(rstn_i),
   .set_filter(set_filter), 
   .dat_i(dat_i),
-  .dat_o(dat_i_filtered)
+  .dat_o(dat_i_filtered_raw)
   );
-
+assign dat_i_filtered = dat_i_filtered_raw >>> 2;
 
 //---------------------------------------------------------------------------------
 //  Set point error calculation
