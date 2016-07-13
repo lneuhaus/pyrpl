@@ -199,3 +199,67 @@ class TestClass(object):
                            trigger_delay=0.1)
         centertime = self.r.scope.times[self.r.scope.data_length // 2]
         assert abs(centertime-0.1)<1e-5, centertime
+
+    def test_pid_na(self):
+        # Let's check the transfer function of the pid module with the integrated NA
+        if self.r is None:
+            return
+        plotdata = []
+
+        # shortcuts and na configuration
+        na = r.na
+        pid = r.pid0
+        na.setup(start=300, stop=1000e3, points=101, rbw=100, avg=1,
+                 amplitude=0.1, input=pid, output_direct='off', acbandwidth=0,
+                 logscale=True)
+
+        # setup pid: input is the network analyzer output.
+        pid.input = na.iq
+        pid.setpoint = 0
+
+        # proportional gain of 1, no inputfilter
+        pid.p = 1.0
+        pid.i = 0
+        pid.d = 0
+        pid.ival = 0
+        pid.inputfilter = 0
+        f, data, amplitudes = na.curve()
+        plotdata.append((f, data, 'p=1'))
+
+        # need to implement this!!!
+        ##nominal = pid.transfer_function(f)
+        ##maxerror = np.abs(data - nominal)
+        #assert maxerror < 0.01
+
+        # proportional gain of 0.01, integral = 1 kHz
+        pid.p = 0.1
+        pid.i = 1000
+        pid.d = 0
+        pid.ival = 0
+        pid.inputfilter = 0
+        f, data, amplitudes = na.curve()
+        plotdata.append((f, data, 'p=1e-1, i=1e3'))
+
+        # check that no saturation has occured
+        print ("Integral value after measurement: ", pid.ival)
+        if abs(pid.ival) >= 1.0:
+            print("Saturation has occured. Data not reliable.")
+
+        # proportional gain of 10, inputfilter: 2kHz high-pass, 10 kHz
+        # Lowpass, 50kHz lowpass
+        pid.p = 10
+        pid.i = 0
+        pid.d = 0
+        pid.ival = 0
+        pid.inputfilter = [-5e3, -10e3, 150e3, 300e3]
+        print("Actual inputfilter after rounding: ", pid.inputfilter)
+        f, data, amplitudes = na.curve()
+        plotdata.append((f, data, 'p=10 + filter'))
+
+        # reset
+        pid.setpoint = 0
+        pid.p = 0
+        pid.i = 0
+        pid.d = 0
+        pid.ival = 0
+        pid.inputfilter = 0
