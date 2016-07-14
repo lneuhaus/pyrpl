@@ -1385,6 +1385,11 @@ class IQ(FilterModule):
 class IIR(FilterModule):
     _minloops = 3  # minimum number of loops for correct behaviour
 
+    # the first biquad (self.coefficients[0] has _delay cycles of delay
+    # from input to output_signal. Biquad self.coefficients[i] has
+    # _delay+i cycles of delay.
+    _delay = 6
+
     # invert denominator coefficients to convert from scipy notation to
     # the fpga-implemented notation (following Oppenheim and Schaefer: DSP)
     _invert = True
@@ -1401,9 +1406,10 @@ class IIR(FilterModule):
     on = BoolRegister(0x104, 0, doc="IIR is on")
     
     shortcut = BoolRegister(0x104, 1, doc="IIR is bypassed")
-    
-    copydata = BoolRegister(0x104, 2, 
-                doc="If True: coefficients are being copied from memory")
+
+    # obsolete
+    #copydata = BoolRegister(0x104, 2,
+    #            doc="If True: coefficients are being copied from memory")
     
     overflow = Register(0x108, 
                             doc="Bitmask for various overflow conditions")
@@ -1552,48 +1558,47 @@ class IIR(FilterModule):
                 +"Please use an IIR version!")
         self.on = False
         self.shortcut = False
-        self.copydata = False
         iirbits = self._IIRBITS
         iirshift = self._IIRSHIFT
-        # pre-scale coefficients
-        zeros = [zz * 2 * np.pi for zz in zeros]
-        poles = [pp * 2 * np.pi for pp in poles]
-        k = gain
-        for pp in poles:
-            if pp != 0:
-                k *= np.abs(pp)
-        for zz in zeros:
-            if zz != 0:
-                k /= np.abs(zz)
-        sys = (zeros, poles, k)
-        # try to find out how many loops must be done
-        preliminary_loops = int(max([len(poles), len(zeros)])+1) / 2
-        c = iir.get_coeff(sys, dt=preliminary_loops * 8e-9,
-                          totalbits=iirbits, shiftbits=iirshift,
-                          tol=tol, finiteprecision=False)
-        minimum_loops = len(c)
-        if minimum_loops < self._minloops:
-            minimum_loops = self._minloops
-        if minimum_loops > self._IIRSTAGES:
+
+        # clean up the specified transfer function (add poles if needed)
+        # and find out how many loops are needed for implementation
+        zeros, poles, minloops = iir.make_proper_tf(zeros,
+                                                    poles,
+                                                    loops=loops,
+                                                    _minloops=self._minloops,
+                                                    tol=tol)
+        # make sure filter can be realized
+        if minloops > self._IIRSTAGES:
             raise Exception("Error: desired filter order is too high to "\
                             +"be implemented.")
-        if loops is None:
-            loops = self._minloops
+        if loops < minloops:  # warning has already be issued in make_proper_tf
+            loops = minloops
         elif loops > 255:
+            self._logger.warning("Maximum loops number is 255. This value "
+                                 "will be tried instead of specified value "
+                                 "%s.", loops)
             loops = 255
-        loops = max([loops, minimum_loops])
-        # transform zeros and poles into coefficients
-        sys = (zeros, poles, k)
-        dt = loops * 8e-9 / self._frequency_correction
-        c = iir.get_coeff(sys, dt=dt,
-                          totalbits=iirbits, shiftbits=iirshift,
-                          tol=tol, finiteprecision=False)
-        self.coefficients = c
         self.loops = loops
-        f = np.array(self.coefficients)
-        # load the coefficients into the filter - all simultaneously
-        self.copydata = True
-        self.copydata = False
+
+        # get scaling right for coefficients so that gain corresponds to dcgain
+        sys = iir.rescale(zeros, poles, gain)
+        self._sys = sys  #save system for debugging
+        # get coefficients
+        c = iir.get_coeff(sys,
+                          dt=self.sampling_time,
+                          totalbits=iirbits,
+                          shiftbits=iirshift,
+                          tol=tol,
+                          finiteprecision=False)
+        # write coefficients to fpga
+        self.coefficients = c
+        # save the full-precision coefficients for debugging
+        self._coefficients = c
+        # low-pass filter the input signal with a first order filter with
+        # cutoff near the sampling rate - decreases aliasing and achieves
+        # higher internal data precision (3 extra bits) through averaging
+        self.inputfilter = 125e6*self._frequency_correction / self.loops
         # connect the module
         if input is not None:
             self.input = input
@@ -1607,41 +1612,121 @@ class IIR(FilterModule):
                 plt.figure(plot)
             else:
                 plt.figure()
-        tfs = iir.psos2plot(c, sys, n=2**16, maxf=5e6, dt=dt,
-                name="discrete system (dt=" + str(int(dt * 1e9)) + "ns)",
-                plot=False)
-        tfs += iir.psos2plot(f, None, n=2**16, maxf=5e6,
-                dt=dt, name="implemented system",plot=False)
-            
-        #if save:
-        #    if not plot:
-        #        plt.close()
-        #    curves = list()
-        #    for tf in tfs:
-        #        w, h, name = tf
-        #        curve = CurveDB.create(w, h)
-        #        curve.name = name
-        #        z, p, k = sys
-        #        curve.params["iir_loops"] = loops
-        #        curve.params["iir_zeros"] = str(z)
-        #        curve.params["iir_poles"] = str(p)
-        #        curve.params["iir_k"] = k
-        #        curve.save()
-        #        curves.append(curve)
-        #    for curve in curves[:-1]:
-        #        curves[-1].add_child(curve)
         self._logger.info("IIR filter ready")
-        self._logger.info("Maximum deviation from design coefficients: %f",
-                          max((f[0:len(c)] - c).flatten()))
-        self._logger.info("Overflow pattern: %s", bin(self.overflow))
-        #        if save:
-        #            return f, curves[-1]
-        #        else:
-        #            return f
+        # compute design error
+        dev = (np.abs((self.coefficients[0:len(c)] - c).flatten()))
+        maxdev = max(dev)
+        reldev = maxdev / abs(c.flatten()[np.argmax(dev)])
+        if reldev > 0.05:
+            self._logger.warning(
+                "Maximum deviation from design coefficients: %.4g "
+                "(relative: %.4g)", maxdev, reldev)
+        else:
+            self._logger.debug("Maximum deviation from design coefficients: %.4g "
+                          "(relative: %.4g)", maxdev, reldev)
+        if bool(self.overflow):
+            self._logger.warning("Overflow detected. Pattern: %s",
+                                 bin(self.overflow))
+        else:
+            self._logger.warning("Overflow pattern: %s", bin(self.overflow))
         if plot:
-            iir.bodeplot(tfs, xlog=True)
-        return tfs
+            plotdata = []
+            maxf = 125e6/self.loops
+            fs = np.linspace(maxf/1000, maxf, 2001, endpoint=True)
+            for kind in ["continuous", "discrete", "implemented",
+                         "highprecision"]:
+                plotdata.append((f,
+                                 self.transfer_function(fs, kind=kind),
+                                 kind))
+            iir.bodeplot(plotdata, xlog=True)
+            return plotdata
+        else:
+            return None
 
+    @property
+    def sampling_time(self):
+        return 8e-9 / self._frequency_correction * self.loops
+
+    def transfer_function(self, frequencies, extradelay=0, kind='implemented'):
+        """
+        Returns a complex np.array containing the transfer function of the
+        current IIR module setting for the given frequency array. The
+        best-possible estimation of delays is automatically performed for
+        all kinds of transfer function. The setting of 'shortcut' is ignored
+        for this computation, i.e. the theoretical and measured transfer
+        functions can only agree if shortcut is False.
+
+        Parameters
+        ----------
+        frequencies: np.array or float
+            Frequencies to compute the transfer function for
+        extradelay: float
+            External delay to add to the transfer function (in s). If zero,
+            only the delay for internal propagation from input to
+            output_signal is used. If the module is fed to analog inputs and
+            outputs, an extra delay of the order of 150 ns must be passed as
+            an argument for the correct delay modelisation.
+        kind: str
+            The IIR filter design is composed of a number of steps. Each
+            step slightly modifies the transfer function to adapt it to
+            the implementation of the IIR. The various intermediate transfer
+            functions can be helpful to debug the iir filter.
+
+            kindshould be one of the following (default is 'implemented'):
+            - 'continuous': the designed transfer function in continuous time
+            - 'discrete': the transfer function after transformation to
+            discrete time
+            - 'highprecision': hypothetical transfer function assuming that
+            64 bit fixed point numbers were used in the fpga (decimal point
+            at bit 48)
+            - 'implemented': transfer function after rounding the
+            coefficients to the precision of the fpga
+
+        Returns
+        -------
+        tf: np.array(..., dtype=np.complex)
+            The complex open loop transfer function of the module.
+        """
+        frequencies = np.array(frequencies, dtype=np.float)
+        # take average delay to be half the loops since this is the
+        # expectation value for the delay (plus internal propagation delay)
+        module_delay = self._delay + self.loops / 2.0
+
+        if kind == "continuous":
+            tf = iir.tf_continuous(sys=self._sys,
+                                   frequencies=frequencies)
+        elif kind == "discrete":
+            # self._coefficients is a copy of full-precision coefficients
+            tf = iir.tf_discrete(coefficients=self._coefficients,
+                                 frequencies=frequencies,
+                                 dt=self.sampling_time)
+        elif kind == "highprecision":
+            tf = iir.tf_implemented(coefficients=self._coefficients,
+                                    frequencies=frequencies,
+                                    dt=self.sampling_time,
+                                    totalbits=64,
+                                    shiftbits=48)
+        else:  # default: kind == "implemented":
+            # self.coefficients are the coefficients as stored in the fpga
+            tf = iir.tf_implemented(coefficients=self.coefficients,
+                                    frequencies=frequencies,
+                                    dt=self.sampling_time,
+                                    totalbits=self._IIRBITS,
+                                    shiftbits=self._IIRSHIFT)
+        for f in [self.inputfilter]:  # only one filter at the moment
+            if f == 0:
+                continue
+            if f > 0:  # lowpass
+                tf /= (1.0 + 1j*frequencies/f)
+                module_delay += 2  # two cycles extra delay per lowpass
+            elif f < 0:  # highpass
+                tf /= (1.0 + 1j*f/frequencies)
+                # plus is correct here since f already has a minus sign
+                module_delay += 1  # one cycle extra delay per highpass
+        # add delay
+        delay = module_delay * 8e-9 / self._frequency_correction + extradelay
+        tf *= np.exp(-1j*delay*frequencies*2*np.pi)
+        return tf
 
 class AMS(BaseModule):
     """mostly deprecated module (redpitaya has removed adc support). 

@@ -1,7 +1,7 @@
 Copyright 1986-2015 Xilinx, Inc. All Rights Reserved.
 ----------------------------------------------------------------------------------------
 | Tool Version     : Vivado v.2015.4 (lin64) Build 1412921 Wed Nov 18 09:44:32 MST 2015
-| Date             : Wed Jul 13 21:22:54 2016
+| Date             : Thu Jul 14 20:41:34 2016
 | Host             : ubuntu running 64-bit Ubuntu 14.04.4 LTS
 | Command          : report_power -file out/post_synth_power.rpt
 | Design           : red_pitaya_top
@@ -30,8 +30,8 @@ Table of Contents
 ----------
 
 +--------------------------+-------+
-| Total On-Chip Power (W)  | 2.337 |
-| Dynamic (W)              | 2.185 |
+| Total On-Chip Power (W)  | 2.339 |
+| Dynamic (W)              | 2.186 |
 | Device Static (W)        | 0.153 |
 | Effective TJA (C/W)      | 11.5  |
 | Max Ambient (C)          | 58.0  |
@@ -50,16 +50,16 @@ Table of Contents
 | On-Chip                  | Power (W) | Used     | Available | Utilization (%) |
 +--------------------------+-----------+----------+-----------+-----------------+
 | Clocks                   |     0.076 |       15 |       --- |             --- |
-| Slice Logic              |     0.144 |    37913 |       --- |             --- |
-|   LUT as Logic           |     0.122 |    16636 |     17600 |           94.52 |
-|   CARRY4                 |     0.016 |     1513 |      4400 |           34.39 |
-|   Register               |     0.005 |    14752 |     35200 |           41.91 |
+| Slice Logic              |     0.145 |    37935 |       --- |             --- |
+|   LUT as Logic           |     0.122 |    16639 |     17600 |           94.54 |
+|   CARRY4                 |     0.016 |     1512 |      4400 |           34.36 |
+|   Register               |     0.006 |    14771 |     35200 |           41.96 |
 |   F7/F8 Muxes            |    <0.001 |      834 |     17600 |            4.74 |
 |   LUT as Shift Register  |    <0.001 |       75 |      6000 |            1.25 |
 |   Others                 |     0.000 |      451 |       --- |             --- |
 |   BUFG                   |     0.000 |        1 |        32 |            3.13 |
 |   LUT as Distributed RAM |     0.000 |       24 |      6000 |            0.40 |
-| Signals                  |     0.137 |    30458 |       --- |             --- |
+| Signals                  |     0.138 |    30528 |       --- |             --- |
 | Block RAM                |     0.103 |       34 |        60 |           56.67 |
 | PLL                      |     0.097 |        1 |         2 |           50.00 |
 | DSPs                     |     0.043 |       48 |        80 |           60.00 |
@@ -67,7 +67,7 @@ Table of Contents
 | XADC                     |     0.004 |        1 |       --- |             --- |
 | PS7                      |     1.292 |        1 |       --- |             --- |
 | Static Power             |     0.153 |          |           |                 |
-| Total                    |     2.337 |          |           |                 |
+| Total                    |     2.338 |          |           |                 |
 +--------------------------+-----------+----------+-----------+-----------------+
 
 
@@ -77,7 +77,7 @@ Table of Contents
 +-----------+-------------+-----------+-------------+------------+
 | Source    | Voltage (V) | Total (A) | Dynamic (A) | Static (A) |
 +-----------+-------------+-----------+-------------+------------+
-| Vccint    |       1.000 |     0.512 |       0.501 |      0.011 |
+| Vccint    |       1.000 |     0.514 |       0.503 |      0.011 |
 | Vccaux    |       1.800 |     0.069 |       0.057 |      0.012 |
 | Vcco33    |       3.300 |     0.085 |       0.084 |      0.001 |
 | Vcco25    |       2.500 |     0.001 |       0.000 |      0.001 |
@@ -165,14 +165,14 @@ Table of Contents
 +----------------------------------------------------------------------------------+-----------+
 | Name                                                                             | Power (W) |
 +----------------------------------------------------------------------------------+-----------+
-| red_pitaya_top                                                                   |     2.184 |
+| red_pitaya_top                                                                   |     2.185 |
 |   i_ams                                                                          |     0.001 |
 |   i_asg                                                                          |     0.057 |
 |     adv_trig_a                                                                   |     0.002 |
 |     adv_trig_b                                                                   |     0.002 |
 |     ch[0]                                                                        |     0.025 |
 |     ch[1]                                                                        |     0.025 |
-|   i_dsp                                                                          |     0.340 |
+|   i_dsp                                                                          |     0.341 |
 |     dac_saturate[0]                                                              |    <0.001 |
 |     dac_saturate[1]                                                              |    <0.001 |
 |     genblk2[0].i_pid                                                             |     0.023 |
@@ -199,7 +199,7 @@ Table of Contents
 |         genblk2[1].lpf                                                           |     0.003 |
 |         genblk2[2].lpf                                                           |     0.003 |
 |         genblk2[3].lpf                                                           |     0.003 |
-|     genblk3[4].iir                                                               |     0.029 |
+|     genblk3[4].iir                                                               |     0.031 |
 |       iir_inputfilter                                                            |     0.002 |
 |         genblk2[0].lpf                                                           |     0.002 |
 |       p_ay1_module                                                               |    <0.001 |
