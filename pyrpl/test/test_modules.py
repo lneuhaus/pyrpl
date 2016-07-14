@@ -433,3 +433,52 @@ class TestClass(object):
                                                name='test_iq_na-failed-relerror'))
                     #c.add_child(CurveDB.create(f,relerror,name='test_iq_na-failed-abserror'))
                     assert False, (maxerror, phase)
+
+
+    def test_iir_na(self):
+        # sets up a various iir filters and tests their transfer
+        # function w.r.t. to the predicted one
+        extradelay = 0
+        error_threshold = 0.07
+        # Let's check the transfer function of the pid module with the integrated NA
+        if self.r is None:
+            return
+        else:
+            r = self.r
+        # shortcut for na and bpf (bandpass filter)
+        na = r.na
+        iir = r.iir
+        na.setup(start=300e3, stop=700e3, points=201, rbw=1000, avg=3,
+                 acbandwidth=0, amplitude=0.2, output_direct='off', logscale=False)
+        for setting in [1000]:
+            iir.setup([],[-setting])
+            self.na_assertion(setting=setting,
+                              module=iir,
+                              error_threshold=error_threshold,
+                              extradelay=extradelay,
+                              relative=True)
+
+
+    def na_assertion(self, setting, module, error_threshold=0.1,
+                     extradelay=0, relative=False):
+        """ helper function: tests if module.transfer_function is withing
+        error_threshold to the measured transfer function of the module"""
+        self.r.na.input = module
+        f, data, ampl = self.r.na.curve()
+        theory = module.transfer_function(f, extradelay=extradelay)
+        error = np.abs(data - theory)
+        if relative:
+            error /= theory
+        maxerror = np.max(error)
+        if maxerror > error_threshold:
+            c = CurveDB.create(f, data,
+                           name='test_'+module.name+'_na-failed-data')
+            c.params["unittest_relative"] = relative
+            c.params["unittest_maxerror"] = maxerror
+            c.params["unittest_error_threshold"] = error_threshold
+            c.params["unittest_setting"] = setting
+            c.add_child(CurveDB.create(f, theory,
+                            name='test_'+module.name+'_na-failed-theory'))
+            c.add_child(CurveDB.create(f, error,
+                            name='test_'+module.name+'_na-failed-error'))
+            assert False, (maxerror, setting)

@@ -1388,7 +1388,7 @@ class IIR(FilterModule):
     # the first biquad (self.coefficients[0] has _delay cycles of delay
     # from input to output_signal. Biquad self.coefficients[i] has
     # _delay+i cycles of delay.
-    _delay = 5
+    _delay = 6
 
     # invert denominator coefficients to convert from scipy notation to
     # the fpga-implemented notation (following Oppenheim and Schaefer: DSP)
@@ -1406,9 +1406,10 @@ class IIR(FilterModule):
     on = BoolRegister(0x104, 0, doc="IIR is on")
     
     shortcut = BoolRegister(0x104, 1, doc="IIR is bypassed")
-    
-    copydata = BoolRegister(0x104, 2, 
-                doc="If True: coefficients are being copied from memory")
+
+    # obsolete
+    #copydata = BoolRegister(0x104, 2,
+    #            doc="If True: coefficients are being copied from memory")
     
     overflow = Register(0x108, 
                             doc="Bitmask for various overflow conditions")
@@ -1557,7 +1558,7 @@ class IIR(FilterModule):
                 +"Please use an IIR version!")
         self.on = False
         self.shortcut = False
-        self.copydata = False
+        #self.copydata = False
         iirbits = self._IIRBITS
         iirshift = self._IIRSHIFT
         # pre-scale coefficients
@@ -1602,8 +1603,8 @@ class IIR(FilterModule):
         self.loops = loops
         # load the coefficients into the filter - all simultaneously
         # obsolete
-        self.copydata = True
-        self.copydata = False
+        #self.copydata = True
+        #self.copydata = False
         # connect the module
         if input is not None:
             self.input = input
@@ -1662,7 +1663,9 @@ class IIR(FilterModule):
         Returns a complex np.array containing the transfer function of the
         current IIR module setting for the given frequency array. The
         best-possible estimation of delays is automatically performed for
-        all kinds of transfer function.
+        all kinds of transfer function. The setting of 'shortcut' is ignored
+        for this computation, i.e. the theoretical and measured transfer
+        functions can only agree if shortcut is False.
 
         Parameters
         ----------
