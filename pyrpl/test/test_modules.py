@@ -383,3 +383,53 @@ class TestClass(object):
             pid.d = 0
             pid.ival = 0
             pid.inputfilter = 0
+
+    def test_iq_na(self):
+        # sets up a bandpass filter with iq modules and tests its transfer
+        # function w.r.t. to the predicted one
+        extradelay = 0
+        error_threshold = 0.07
+        # Let's check the transfer function of the pid module with the integrated NA
+        if self.r is None:
+            return
+        else:
+            r = self.r
+        plotdata = []
+
+        # shortcut for na and bpf (bandpass filter)
+        na = r.na
+
+        for bpf in [r.iq0, r.iq2]:
+            plotdata = []
+            # setup na for measurement
+            na.setup(start=300e3, stop=700e3, points=201, rbw=1000, avg=3,
+                     acbandwidth=0, amplitude=0.2, input=bpf,
+                     output_direct='off', logscale=False)
+            # setup bandpass
+            bpf.setup(frequency=500e3, #center frequency
+                      Q=100.0,  # the filter quality factor
+                      acbandwidth=500, # ac filter to remove pot. input offsets
+                      phase=0,  # nominal phase at center frequency (
+                      # propagation phase lags not accounted for)
+                      gain=1.0,  # peak gain = +0 dB
+                      output_direct='off',
+                      output_signal='output_direct',
+                      input='iq1')
+
+            for phase in [-45, 0, 45, 90]:
+                bpf.phase = phase
+                # take transfer function
+                f, data, ampl = na.curve()
+                theory = bpf.transfer_function(f, extradelay=extradelay)
+                abserror = np.abs(data - theory)
+                maxerror = np.max(abserror)
+                #relerror = np.abs((data - theory) / theory)
+                #maxerror = np.max(relerror)
+                if maxerror > error_threshold:
+                    c = CurveDB.create(f, data, name='test_iq_na-failed-data')
+                    c.add_child(CurveDB.create(f, theory,
+                                               name='test_iq_na-failed-theory'))
+                    c.add_child(CurveDB.create(f, abserror,
+                                               name='test_iq_na-failed-relerror'))
+                    #c.add_child(CurveDB.create(f,relerror,name='test_iq_na-failed-abserror'))
+                    assert False, (maxerror, phase)
