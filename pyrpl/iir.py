@@ -328,6 +328,12 @@ def get_coeff(
         coeff[0, 0] = kc
         coeff[:, 3] = 1.0
         return coeff
+    # critical step: conversion through tf is main source of design error
+    # better algorithm (analytical) or higher numerical precision would help
+    # a lot here
+    zc = np.array(zc, dtype=np.complex128)
+    pc = np.array(pc, dtype=np.complex128)
+    kc = np.complex128(kc)
     bb, aa = sig.zpk2tf(zc, pc, kc)
     logger.debug("Continuous polynome: %s %s", bb, aa)
     b, a, dtt = sig.cont2discrete((bb, aa), dt)
