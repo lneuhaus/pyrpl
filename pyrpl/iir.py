@@ -160,7 +160,7 @@ def tf_continuous(sys, frequencies):
     wc, hc = sig.freqresp(sys, w=frequencies * 2 * np.pi)
     return hc
 
-def tf_discrete(coefficients, frequencies, dt=8e-9):
+def tf_discrete(coefficients, frequencies, dt=8e-9, delay_per_cycle=8e-9):
     """
     Returns the discrete transfer function realized by coefficients at
     frequencies.
@@ -168,7 +168,7 @@ def tf_discrete(coefficients, frequencies, dt=8e-9):
     Parameters
     ----------
     coefficients: np.array
-        coefficients as returned from iir module
+        coefficients as returned from iir module (array of biquad coefficients)
 
     frequencies: np.array
         frequencies to compute the transfer function for
@@ -176,18 +176,24 @@ def tf_discrete(coefficients, frequencies, dt=8e-9):
     dt: float
         discrete sampling time (seconds)
 
+    delay_per_cycle: float
+        the biquad at coefficients[i] experiences and extra
+        delay of i*delay_per_cycle
+
     Returns
     -------
     np.array(..., dtype=np.complex)
     """
-    frequencies = np.array(frequencies, dtype=np.float)
-    frequencies *= 2 * np.pi * dt
+    # the higher stages have progressively more delay to the output
+    delay_per_cycle = np.exp(-1j * delay_per_cycle * frequencies * 2 * np.pi)
+    # discrete frequency
+    w = np.array(frequencies, dtype=np.float) * 2 * np.pi * dt
     b, a = sig.sos2tf(np.array([coefficients[0]]))
-    w, h = sig.freqz(b, a, worN=frequencies)
+    w, h = sig.freqz(b, a, worN=w)
     for i in range(1, len(coefficients)):
         b, a = sig.sos2tf(np.array([coefficients[i]]))
-        w, hh = sig.freqz(b, a, worN=frequencies)
-        h += hh
+        w, hh = sig.freqz(b, a, worN=w)
+        h += hh*delay_per_cycle**i
     return h
 
 def tf_implemented(coefficients,
@@ -425,6 +431,105 @@ def example():
     psos2plot(c, sys, n=2**16, maxf=50e6, dt=8e-9, name="unrounded 8ns")
     psos2plot(f10, None, n=2**16, maxf=50e6, dt=200e-9, name="rounded 200ns")
     l = plt.legend()
+
+
+def make_proper_tf(zeros, poles, loops=None, _minloops=3, tol=1e-3):
+    """
+    Makes sure that a systel is strictly proper and that all complex
+    poles/zeros have conjugate parters.
+
+    Parameters
+    ----------
+    zeros: list of zeros
+    poles: list of poles
+    loops: number of loops to implement. Can be None for autodetection.
+    _minloops: minimum number of loops that is acceptable
+    tol: tolerance for matching complex conjugate partners
+
+    Returns
+    -------
+    (zeros, poles, minloops) - the corrected lists of poles/zeros and the
+    number of loops that are minimally needed for implementation
+    """
+    # part 1: make sure each complex pole/zero has a conjugate partner
+    results = []
+    minlooplist = []  #count at the same time how many biquads are needed
+    for data in [zeros, poles]:
+        minloops = 0
+        data = list(data)  # make a copy of the original data
+        gooddata = []
+        while data:
+            datum = data.pop()
+            gooddata.append(datum)
+            if np.imag(datum) == 0:
+                # real pole/zero -> needs half a biquad
+                loops += 0.5
+            else:
+                loops += 1
+                # find conjugate partner
+                found = False
+                for candidate in data:
+                    if np.abs(np.conjugate(datum)-candidate)<tol:
+                        # conjugate partner found - remove it from original
+                        # list and add it to the
+                        gooddata.append(data.pop(data.index(candidate)))
+                        found = True
+                        break
+                if not found:
+                    logger.debug("Pole/zero %s had no complex conjugate "
+                                 "partner. It was added automatically.",
+                                 datum)
+                    gooddata.append(np.conjugate(datum))
+        # overwrite original data with the corrected one
+        results.append(gooddata)
+        minlooplist.append(minloops)
+    zeros, poles = results[0], results[1]
+
+    # get the number of loops after anticipated pole addition (see part 2)
+    minloops = minlooplist[1]  # only need to reason w.r.t. poles
+    if len(zeros)-len(poles) >= 0:
+        # add half a biquad per excess zero
+        minloops += (len(zeros) - len(poles) + 1) * 0.5
+    minloops = int(np.ceil(minloops))
+    if minloops < _minloops: # absolute minimum for proper functioning
+        minloops = _minloops
+    if loops is None:
+        loops = minloops
+    elif minloops > loops:
+        logger.warning("Cannot implement filter with %s loops. "
+                       "Minimum of %s is needed! ", loops, minloops)
+        loops = minloops
+
+    # part 2: make sure the transfer function is strictly proper
+    # if we must add a pole, place it at the nyquist frequency
+    extrapole = -125e6 / loops
+    added = 0
+    while len(zeros) >= len(poles):
+        poles.append(extrapole)
+        logger.warning("Specified IIR transfer function was not "
+                       "strictly proper. Automatically added a pole at %s Hz.",
+                       -1*extrapole)
+        added += 1
+        # if more poles must be added, make sure we have no 2 poles at the
+        # same frequency
+        if added % 2 == 0:
+            extrapole /= 2
+    return zeros, poles, minloops
+
+
+def rescale(zeros, poles, gain):
+    """ rescales poles and zeros with 2pi and returns the prefactor
+    corresponding to dc-gain gain"""
+    zeros = [zz * 2 * np.pi for zz in zeros]
+    poles = [pp * 2 * np.pi for pp in poles]
+    k = gain
+    for pp in poles:
+        if pp != 0:
+            k *= np.abs(pp)
+    for zz in zeros:
+        if zz != 0:
+            k /= np.abs(zz)
+    return zeros, poles, k
 
 """Example from ipython notebook
 bp.poles=[(-12.0000000999999-19631.489456573287j),(-1000-100631j),(-10-500631j),-50000,(-500-22631j),-1e6]

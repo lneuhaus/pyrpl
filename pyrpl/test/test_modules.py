@@ -435,29 +435,50 @@ class TestClass(object):
                     assert False, (maxerror, phase)
 
 
-    def test_iir_na(self):
-        # sets up a various iir filters and tests their transfer
-        # function w.r.t. to the predicted one
+    def test_iirsimple_na(self):
+        # this test defines a simple transfer function that occupies 2
+        # biquads in the iir filter. It then shifts the coefficients through
+        # all available biquad spots and verifies that the transfer
+        # function, as obtained from a na measurement, is in agreement with
+        # the expected one. If something fails, the curves are saved to
+        # CurveDB.
         extradelay = 0
-        error_threshold = 0.07
-        # Let's check the transfer function of the pid module with the integrated NA
+        error_threshold = 0.2
         if self.r is None:
             return
         else:
             r = self.r
-        # shortcut for na and bpf (bandpass filter)
+        # setup na
         na = r.na
         iir = r.iir
-        na.setup(start=300e3, stop=700e3, points=201, rbw=1000, avg=3,
-                 acbandwidth=0, amplitude=0.2, output_direct='off', logscale=False)
-        for setting in [1000]:
-            iir.setup([],[-setting])
+        r.na.setup(start=3e3,
+                   stop=1e6,
+                   points=301,
+                   rbw=[1000, 1000],
+                   avg=1,
+                   amplitude=0.005,
+                   input=iir,
+                   output_direct='off',
+                   logscale=True)
+
+        # setup a simple iir transfer function
+        zeros = [1e5j - 3e3]
+        poles = [5e4j - 3e3]
+        gain = 1.0
+        iir.setup(zeros, poles, gain,
+                  loops=35,
+                  input=na.iq,
+                  output_direct='off')
+
+        for setting in range(iir._IIRSTAGES):
+            iir.on = False
+            iir.coefficients = np.roll(iir.coefficients, 6)
+            iir.on = True
             self.na_assertion(setting=setting,
                               module=iir,
                               error_threshold=error_threshold,
                               extradelay=extradelay,
                               relative=True)
-
 
     def na_assertion(self, setting, module, error_threshold=0.1,
                      extradelay=0, relative=False):
@@ -466,9 +487,11 @@ class TestClass(object):
         self.r.na.input = module
         f, data, ampl = self.r.na.curve()
         theory = module.transfer_function(f, extradelay=extradelay)
-        error = np.abs(data - theory)
+
         if relative:
-            error /= theory
+            error = np.abs((data - theory)/theory)
+        else:
+            error = np.abs(data - theory)
         maxerror = np.max(error)
         if maxerror > error_threshold:
             c = CurveDB.create(f, data,
@@ -477,6 +500,7 @@ class TestClass(object):
             c.params["unittest_maxerror"] = maxerror
             c.params["unittest_error_threshold"] = error_threshold
             c.params["unittest_setting"] = setting
+            c.save()
             c.add_child(CurveDB.create(f, theory,
                             name='test_'+module.name+'_na-failed-theory'))
             c.add_child(CurveDB.create(f, error,
