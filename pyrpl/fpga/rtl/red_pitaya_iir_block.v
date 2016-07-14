@@ -65,7 +65,7 @@
 module red_pitaya_iir_block
 #(  parameter IIRBITS = 32, //46        // iir coefficients represented with IIRBITS bits
     parameter IIRSHIFT = 29, //30       // iir coefficients FIXED POINT at bit IIRSHIFT
-    parameter IIRSTAGES = 16, //20       // maximum number of parallel biquads
+    parameter IIRSTAGES = 8, //20       // maximum number of parallel biquads
     parameter IIRSIGNALBITS = 40, //36 //32  // internally represent calculated results with IIRSIGNALBITS bits (maybe overkill?)
     parameter SIGNALBITS = 14,      // in- and output signal bitwidth
     parameter SIGNALSHIFT = 3, //5,       // over-represent input by SIGNALSHIFT bits (e.g. once input averaging is implemented)
