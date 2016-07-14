@@ -95,7 +95,7 @@ module red_pitaya_iir_block
 reg [8-1:0]     loops;
 reg     		on; 
 reg     		shortcut;
-reg     		copydata;
+//reg     		copydata;
 reg [32-1:0]    overflow;   // accumulated overflows
 wire [7-1:0]    overflow_i; // instantaneous overflows
 reg [32-1:0]    iir_coefficients [0:IIRSTAGES*4*2-1];
@@ -106,20 +106,22 @@ always @(posedge clk_i) begin
       loops <= 8'd0;
       on <= 1'b0;
       shortcut <= 1'b0;
-      copydata <= 1'b1;
+      //copydata <= 1'b1;
       set_filter <= 32'd0;
    end
    else begin
       if (wen) begin
          if (addr==16'h100)   loops <= wdata[8-1:0];
-         if (addr==16'h104)   {copydata,shortcut,on} <= wdata[3-1:0];
+         //if (addr==16'h104)   {copydata,shortcut,on} <= wdata[3-1:0];
+         if (addr==16'h104)   {shortcut,on} <= wdata[2-1:0];
          if (addr==16'h120)   set_filter  <= wdata;
          if (addr[16-1]==1'b1)   iir_coefficients[addr[12-1:2]] <= wdata;
       end
 
 	  casez (addr)
 	     16'h100 : begin ack <= wen|ren; rdata <= {{32-8{1'b0}},loops}; end
-	     16'h104 : begin ack <= wen|ren; rdata <= {{32-1{1'b0}},copydata,shortcut,on}; end
+	     //16'h104 : begin ack <= wen|ren; rdata <= {{32-3{1'b0}},copydata,shortcut,on}; end
+	     16'h104 : begin ack <= wen|ren; rdata <= {{32-3{1'b0}},shortcut,on}; end
 	     16'h108 : begin ack <= wen|ren; rdata <= overflow; end
 
          16'h120 : begin ack <= wen|ren; rdata <= set_filter; end
@@ -442,7 +444,7 @@ always @(posedge clk_i) begin
             signal_o <= dat_o_full;
         end
     end
-    dat_o <= (shortcut==1'b1) ? dat_i : signal_o;
+    dat_o <= (shortcut==1'b1) ? dat_i_filtered[SIGNALSHIFT+SIGNALBITS-1:SIGNALSHIFT] : signal_o;
 end
 
 endmodule

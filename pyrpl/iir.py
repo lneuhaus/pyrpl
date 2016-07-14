@@ -138,6 +138,86 @@ def rpk2psos(r, p, k, tol=0):
     plt.grid()
     plt.show()"""
 
+def tf_continuous(sys, frequencies):
+    """
+    Returns the continuous transfer function of sys at frequencies.
+
+    Parameters
+    ----------
+    sys: tuple
+        (zeros, poles, gain)
+        zeros: list of complex zeros
+        poles: list of complex poles
+        gain: float
+
+    frequencies: np.array
+        frequencies to compute the transfer function for
+    Returns
+    -------
+    np.array(..., dtype=np.complex)
+    """
+    frequencies = np.array(frequencies, dtype=np.complex)
+    wc, hc = sig.freqresp(sys, w=frequencies * 2 * np.pi)
+    return hc
+
+def tf_discrete(coefficients, frequencies, dt=8e-9):
+    """
+    Returns the discrete transfer function realized by coefficients at
+    frequencies.
+
+    Parameters
+    ----------
+    coefficients: np.array
+        coefficients as returned from iir module
+
+    frequencies: np.array
+        frequencies to compute the transfer function for
+
+    dt: float
+        discrete sampling time (seconds)
+
+    Returns
+    -------
+    np.array(..., dtype=np.complex)
+    """
+    frequencies = np.array(frequencies, dtype=np.float)
+    frequencies *= 2 * np.pi * dt
+    b, a = sig.sos2tf(np.array([coefficients[0]]))
+    w, h = sig.freqz(b, a, worN=frequencies)
+    for i in range(1, len(coefficients)):
+        b, a = sig.sos2tf(np.array([coefficients[i]]))
+        w, hh = sig.freqz(b, a, worN=frequencies)
+        h += hh
+    return h
+
+def tf_implemented(coefficients,
+                   frequencies,
+                   dt=8e-9,
+                   totalbits=32,
+                   shiftbits=16):
+    """
+    Returns the discrete transfer function realized by coefficients at
+    frequencies.
+
+    Parameters
+    ----------
+    coefficients: np.array
+        coefficients as returned from iir module
+
+    frequencies: np.array
+        frequencies to compute the transfer function for
+
+    dt: float
+        discrete sampling time (seconds)
+
+    Returns
+    -------
+    np.array(..., dtype=np.complex)
+    """
+    fcoefficients = finiteprecision(coefficients,
+                                    totalbits=totalbits,
+                                    shiftbits=shiftbits)
+    return tf_discrete(fcoefficients, frequencies, dt=dt)
 
 def psos2plot(sos, sys=None, dt=8e-9, n=2**14, maxf=1e6, minf=1000, name="", plot=False):
     toreturn = []
@@ -169,7 +249,6 @@ def psos2plot(sos, sys=None, dt=8e-9, n=2**14, maxf=1e6, minf=1000, name="", plo
         # plt.legend()
         plt.show()
     return toreturn
-
 
 def finiteprecision(coeff, totalbits=32, shiftbits=16):
     res = coeff * 0 + coeff
