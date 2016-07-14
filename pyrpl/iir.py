@@ -323,7 +323,8 @@ def bodeplot(data, xlog=False):
     ax2.set_ylabel('Phase [deg]');
     plt.tight_layout()
     if len(labels)>0:
-        ax1.legend(loc='best')
+        leg = ax1.legend(loc='best', framealpha=0.5)
+        leg.draggable(state=True)
     plt.show()
 
 

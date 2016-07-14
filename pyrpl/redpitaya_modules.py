@@ -1158,12 +1158,12 @@ class IQ(FilterModule):
 
     @property
     def gain(self):
-        return self._g1 * 0.039810
+        return self._g1 / 2**3
 
     @gain.setter
     def gain(self, v):
-        self._g1 = float(v) / 0.039810
-        self._g4 = float(v) / 0.039810
+        self._g1 = float(v) * 2**3
+        self._g4 = float(v) * 2**3
 
     def setup(
             self,
@@ -1344,9 +1344,11 @@ class IQ(FilterModule):
         tf: np.array(..., dtype=np.complex)
             The complex open loop transfer function of the module.
         """
-        module_delay = self._delay
-        frequencies = np.array(np.array(frequencies, dtype=np.float),
-                               dtype=np.complex)
+        quadrature_delay = 2  # the delay experienced by the signal when it
+        # is represented as a quadrature (=lower frequency, less phaseshift)
+        # the remaining delay of the module
+        module_delay = self._delay - quadrature_delay
+        frequencies = np.array(frequencies, dtype=np.complex)
         tf = np.array(frequencies*0, dtype=np.complex) + self.gain
         # bandpass filter
         for f in self.bandwidth:
@@ -1354,10 +1356,14 @@ class IQ(FilterModule):
                 continue
             elif f > 0:  # lowpass
                 tf *= 1.0 / (1.0 + 1j * (frequencies-self.frequency) / f)
-                module_delay += 2  # two cycles extra delay per lowpass
+                quadrature_delay += 2
             elif f < 0:  # highpass
                 tf *= 1.0 / (1.0 + 1j * f / (frequencies-self.frequency))
-            module_delay += 1  # one cycle extra delay per highpass
+                quadrature_delay += 1  # one cycle extra delay per highpass
+        # compute phase shift due to quadrature propagation delay
+        quadrature_delay *= 8e-9 / self._frequency_correction
+        tf *= np.exp(-1j * quadrature_delay * (frequencies - self.frequency) \
+                     * 2 * np.pi)
         # input filter modelisation
         f = self.inputfilter  # no for loop here because only one filter stage
         if f > 0:  # lowpass
@@ -1366,8 +1372,10 @@ class IQ(FilterModule):
         elif f < 0:  # highpass
             tf /= (1.0 + 1j * f / frequencies)
             module_delay += 1  # one cycle extra delay per highpass
-        # add delay
+        # compute delay
         delay = module_delay * 8e-9 / self._frequency_correction + extradelay
+        # add phase shift contribution - not working, see instead formula below
+        #delay -= self.phase/360.0/self.frequency
         tf *= np.exp(-1j * delay * frequencies * 2 * np.pi)
         # add delay from phase (incorrect formula or missing effect...)
         tf *= np.exp(1j*self.phase/180.0*np.pi)
