@@ -1388,9 +1388,12 @@ class IIR(FilterModule):
     # the first biquad (self.coefficients[0] has _delay cycles of delay
     # from input to output_signal. Biquad self.coefficients[i] has
     # _delay+i cycles of delay.
-    _delay = 6
+    _delay = 7
 
-    _alpha = 0.5  # alpha parameter for scipy.signal.cont2discrete
+    # parameters for scipy.signal.cont2discrete
+    _method = 'gbt'  # method to go from continuous to discrete coefficients
+    _alpha = 0.5  # alpha parameter for method (scipy.signal.cont2discrete)
+
     # invert denominator coefficients to convert from scipy notation to
     # the fpga-implemented notation (following Oppenheim and Schaefer: DSP)
     _invert = True
@@ -1547,8 +1550,7 @@ class IIR(FilterModule):
             designdata=False,
             turn_on=True,
             inputfilterbandwidth=None,
-            tol=1e-3,
-            alpha=0.5):
+            tol=1e-3):
         """Setup an IIR filter
         
         the transfer function of the filter will be (k ensures DC-gain = g):
@@ -1576,9 +1578,6 @@ class IIR(FilterModule):
                        frequency.
         tol:           tolerance for matching conjugate poles or zeros into
                        pairs, 1e-3 is okay
-        alpha:         weight parameter for bilinear transform from
-                       continuous to discrete system as in description of
-                       scipy.signal.cont2discrete.
 
         returns
         --------------------------------------------------
@@ -1618,11 +1617,10 @@ class IIR(FilterModule):
         sys = iir.rescale(zeros, poles, gain)
         self._sys = sys  # save system for debugging
         # get coefficients
-        if alpha is not None:
-            self._alpha = alpha
         c = iir.get_coeff(sys,
                           dt=self.sampling_time,
                           tol=tol,
+                          method=self._method,
                           alpha=self._alpha)
         # write coefficients to fpga
         self.coefficients = c
@@ -1778,32 +1776,36 @@ class IIR(FilterModule):
                                                frequencies=frequencies,
                                                dt=self.sampling_time,
                                                continuous=False,
-                                               method='gbt',
+                                               method=self._method,
                                                alpha=self._alpha)
         elif kind == "discrete":
             # self._coefficients is a copy of full-precision coefficients
             tf = iir.tf_discrete(coefficients=self._coefficients,
                                  frequencies=frequencies,
-                                 dt=self.sampling_time)
+                                 dt=self.sampling_time,
+                                 zoh=(self._method == 'zoh'))
         elif kind == "discrete_samplehold":
             # self._coefficients is a copy of full-precision coefficients
             tf = iir.tf_discrete(coefficients=self._coefficients,
                                  frequencies=frequencies,
                                  dt=self.sampling_time,
-                                 delay_per_cycle=0)
+                                 delay_per_cycle=0,
+                                 zoh=(self._method == 'zoh'))
         elif kind == "highprecision":
             tf = iir.tf_implemented(coefficients=self._coefficients,
                                     frequencies=frequencies,
                                     dt=self.sampling_time,
                                     totalbits=64,
-                                    shiftbits=48)
+                                    shiftbits=48,
+                                    zoh=(self._method == 'zoh'))
         else:  # default: kind == "implemented":
             # self.coefficients are the coefficients as stored in the fpga
             tf = iir.tf_implemented(coefficients=self.coefficients,
                                     frequencies=frequencies,
                                     dt=self.sampling_time,
                                     totalbits=self._IIRBITS,
-                                    shiftbits=self._IIRSHIFT)
+                                    shiftbits=self._IIRSHIFT,
+                                    zoh=(self._method == 'zoh'))
         for f in [self.inputfilter]:  # only one filter at the moment
             if f == 0:
                 continue

@@ -110,7 +110,7 @@ def rpk2psos(r, p, k, tol=0):
         # linp
         logger.debug("Unique residues and poles: %s %s", linr, linp)
         while len(linr) > 2:
-                # first extract double poles
+            # first extract double poles
             rr = [linr.pop(0), linr.pop(0)]
             pp = [linp.pop(0), linp.pop(0)]
             b, a = sig.invresz(rr, pp, [])
@@ -191,7 +191,8 @@ def tf_before_partialfraction(sys, frequencies, dt=8e-9, continuous=False,
         return h
 
 
-def tf_discrete(coefficients, frequencies, dt=8e-9, delay_per_cycle=8e-9):
+def tf_discrete(coefficients, frequencies, dt=8e-9, delay_per_cycle=8e-9,
+                zoh=True):
     """
     Returns the discrete transfer function realized by coefficients at
     frequencies.
@@ -208,15 +209,21 @@ def tf_discrete(coefficients, frequencies, dt=8e-9, delay_per_cycle=8e-9):
         discrete sampling time (seconds)
 
     delay_per_cycle: float
-        the biquad at coefficients[i] experiences and extra
+        the biquad at coefficients[i] experiences an extra
         delay of i*delay_per_cycle
+
+    zoh: bool
+        If true, zero-order hold implementation is assumed. Otherwise,
+        the delay is expected to depend on the index of biquad.
 
     Returns
     -------
     np.array(..., dtype=np.complex)
     """
     # the higher stages have progressively more delay to the output
-    delay_per_cycle = np.exp(-1j * delay_per_cycle * frequencies * 2 * np.pi)
+    logger.debug("ZOH is... %s", zoh)
+    delay_per_cycle_array = np.exp(-1j * delay_per_cycle * frequencies * 2 *
+                                np.pi)
     # discrete frequency
     w = np.array(frequencies, dtype=np.float) * 2 * np.pi * dt
     b, a = sig.sos2tf(np.array([coefficients[0]]))
@@ -224,7 +231,12 @@ def tf_discrete(coefficients, frequencies, dt=8e-9, delay_per_cycle=8e-9):
     for i in range(1, len(coefficients)):
         b, a = sig.sos2tf(np.array([coefficients[i]]))
         ww, hh = sig.freqz(b, a, worN=w)
-        h += hh*delay_per_cycle**i
+        if not zoh:
+            h += hh * delay_per_cycle_array **i  # minimum delay implementation
+        h += hh
+    if zoh:  # zero order hold implementation: biquad-independent delay
+        h *= np.exp(-1j * delay_per_cycle * frequencies * 2 * np.pi
+                             * len(coefficients))
     return h
 
 
@@ -232,7 +244,8 @@ def tf_implemented(coefficients,
                    frequencies,
                    dt=8e-9,
                    totalbits=32,
-                   shiftbits=16):
+                   shiftbits=16,
+                   zoh=False):
     """
     Returns the discrete transfer function realized by coefficients at
     frequencies.
@@ -248,6 +261,10 @@ def tf_implemented(coefficients,
     dt: float
         discrete sampling time (seconds)
 
+    zoh: bool
+        If true, zero-order hold implementation is assumed. Otherwise,
+        the delay is expected to depend on the index of biquad.
+
     Returns
     -------
     np.array(..., dtype=np.complex)
@@ -255,7 +272,7 @@ def tf_implemented(coefficients,
     fcoefficients = finiteprecision(coefficients,
                                     totalbits=totalbits,
                                     shiftbits=shiftbits)
-    return tf_discrete(fcoefficients, frequencies, dt=dt)
+    return tf_discrete(fcoefficients, frequencies, dt=dt, zoh=zoh)
 
 
 def finiteprecision(coeff, totalbits=32, shiftbits=16):
@@ -283,7 +300,8 @@ def get_coeff(
         dt=8e-9,
         tol=0,
         method="gbt",
-        alpha=0.5):
+        alpha=0.5,
+        mindelay=False):
     """
     Allowed systems in zpk form (otherwise problems arise):
         - no complex poles or zeros without conjugate partner (otherwise the
@@ -321,7 +339,44 @@ def get_coeff(
     r, p, k = sig.residuez(b, a, tol=tol)
     coeff = rpk2psos(r, p, k, tol=tol)
     logger.debug("Coefficients: %s", coeff)
-    return coeff
+    if mindelay:
+        # at last, minimize the delay of the filter by placing high frequency
+        # poles at slots with minimum delay
+        return minimize_delay(coeff)
+    else:
+        return coeff
+
+
+def minimize_delay(coefficients):
+    """
+    Minimizes the delay of coefficients by rearranging the biquads in an
+    optimal way (highest frequency poles get minimum delay.
+
+    Parameters
+    ----------
+    coefficients
+
+    Returns
+    -------
+    new coefficients
+    """
+    newcoefficients = list()
+
+    # make a copy of old coefficients as to not overwrite them
+    ranks = list()
+    for c in list(coefficients):
+        # empty sections (numerator is 0) are ranked 0
+        if (c[0:3] == 0).all():
+            ranks.append(0)
+        else:
+            z, p, k = sig.sos2zpk([c])
+            # compute something proportional to the frequency of the pole
+            f = np.max([np.abs(np.log(pp)) for pp in p if pp != 0])
+            ranks.append(f)
+        print ranks
+    newcoefficients = [c for (rank,c) in sorted(zip(ranks, list(coefficients)),
+                                                 key=lambda pair: -pair[0])]
+    return np.array(newcoefficients)
 
 
 def bodeplot(data, xlog=False):

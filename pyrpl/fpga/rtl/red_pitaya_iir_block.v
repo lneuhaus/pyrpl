@@ -353,6 +353,8 @@ red_pitaya_saturate #( .BITS_IN (IIRSIGNALBITS+4), .SHIFT(SIGNALSHIFT), .BITS_OU
 reg signed [SIGNALBITS-1:0] signal_o;
 
 always @(posedge clk_i) begin
+    // minimum delay implementation samples continuously new data
+    x0 <= dat_i_filtered;
     if (on==1'b0) begin
         for (i=0;i<IIRSTAGES;i=i+1) begin
             y1_i[i] <= {IIRSIGNALBITS{1'b0}};
@@ -374,7 +376,7 @@ always @(posedge clk_i) begin
         p_by0 <= {IIRSIGNALBITS{1'b0}};
         p_by1 <= {IIRSIGNALBITS{1'b0}};
         signal_o <= {SIGNALBITS{1'b0}};
-        x0 <= {SIGNALBITS{1'b0}};
+        x0 <= {IIRSIGNALBITS{1'b0}};
         end
     else begin
         // the computation will stretch over several cycles. while each computation is performed once per cycle, we will 
@@ -391,12 +393,14 @@ always @(posedge clk_i) begin
         end
         //cycle n+1
         if (stage1<IIRSTAGES) begin
-            //y2_i[stage1] <= y1a; //update y2 memory
             p_ay1 <= p_ay1_full;
             p_ay2 <= p_ay2_full;
         end
-        if (stage1 == (loops-1) || stage1 == (IIRSTAGES-1))
-            x0 <= dat_i_filtered;
+
+        // do this for zero-order hold
+        //if (stage1 == (loops-1) || stage1 == (IIRSTAGES-1))
+        //    x0 <= dat_i_filtered;
+
         //cycle n+2
         if (stage2<IIRSTAGES) begin
             y0 <= y0_full;//no saturation here, because y0 is two bits longer than other signals
