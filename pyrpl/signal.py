@@ -800,6 +800,7 @@ class RPOutputSignal(RPSignal):
             sic = 0
         return sic
 
+
     @property
     def redpitaya_input(self):
         """
