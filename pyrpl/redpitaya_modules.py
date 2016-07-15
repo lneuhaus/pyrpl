@@ -1383,12 +1383,12 @@ class IQ(FilterModule):
 
 
 class IIR(FilterModule):
-    _minloops = 3  # minimum number of loops for correct behaviour
+    _minloops = 5  # minimum number of loops for correct behaviour
 
     # the first biquad (self.coefficients[0] has _delay cycles of delay
     # from input to output_signal. Biquad self.coefficients[i] has
     # _delay+i cycles of delay.
-    _delay = 7
+    _delay = 5  # empirically found. Counting cycles gave me 7..
 
     # parameters for scipy.signal.cont2discrete
     _method = 'gbt'  # method to go from continuous to discrete coefficients
