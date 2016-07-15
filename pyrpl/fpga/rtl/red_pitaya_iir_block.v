@@ -65,7 +65,7 @@
 module red_pitaya_iir_block
 #(  parameter IIRBITS = 32, //46        // iir coefficients represented with IIRBITS bits
     parameter IIRSHIFT = 29, //30       // iir coefficients FIXED POINT at bit IIRSHIFT
-    parameter IIRSTAGES = 16, //20       // maximum number of parallel biquads
+    parameter IIRSTAGES = 20, //20       // maximum number of parallel biquads
     parameter IIRSIGNALBITS = 40, //36 //32  // internally represent calculated results with IIRSIGNALBITS bits (maybe overkill?)
     parameter SIGNALBITS = 14,      // in- and output signal bitwidth
     parameter SIGNALSHIFT = 3, //5,       // over-represent input by SIGNALSHIFT bits (e.g. once input averaging is implemented)
@@ -353,18 +353,17 @@ red_pitaya_saturate #( .BITS_IN (IIRSIGNALBITS+4), .SHIFT(SIGNALSHIFT), .BITS_OU
 reg signed [SIGNALBITS-1:0] signal_o;
 
 always @(posedge clk_i) begin
+    // minimum delay implementation samples continuously new data
     x0 <= dat_i_filtered;
     if (on==1'b0) begin
-            for (i=0;i<IIRSTAGES;i=i+1) begin
-                y1_i[i] <= {IIRSIGNALBITS{1'b0}};
-                y2_i[i] <= {IIRSIGNALBITS{1'b0}};
-//                z1_i[i] <= {IIRSIGNALBITS{1'b0}};
-            end
+        for (i=0;i<IIRSTAGES;i=i+1) begin
+            y1_i[i] <= {IIRSIGNALBITS{1'b0}};
+            y2_i[i] <= {IIRSIGNALBITS{1'b0}};
+        end
         y0  <= {IIRSIGNALBITS{1'b0}};
         y1a <= {IIRSIGNALBITS{1'b0}};
         y2a <= {IIRSIGNALBITS{1'b0}};
         y1b <= {IIRSIGNALBITS{1'b0}};
-//        z1 <= {IIRSIGNALBITS{1'b0}};
         z0 <= {IIRSIGNALBITS{1'b0}};
 
         a1 <= {IIRBITS{1'b0}};
@@ -376,9 +375,8 @@ always @(posedge clk_i) begin
         p_ay2 <= {IIRSIGNALBITS{1'b0}};
         p_by0 <= {IIRSIGNALBITS{1'b0}};
         p_by1 <= {IIRSIGNALBITS{1'b0}};
-        
         signal_o <= {SIGNALBITS{1'b0}};
-        
+        //x0 <= {IIRSIGNALBITS{1'b0}};
         end
     else begin
         // the computation will stretch over several cycles. while each computation is performed once per cycle, we will 
@@ -395,10 +393,14 @@ always @(posedge clk_i) begin
         end
         //cycle n+1
         if (stage1<IIRSTAGES) begin
-            //y2_i[stage1] <= y1a; //update y2 memory
             p_ay1 <= p_ay1_full;
             p_ay2 <= p_ay2_full;
         end
+
+        // do this for zero-order hold
+        //if (stage1 == (loops-1) || stage1 == (IIRSTAGES-1))
+        //    x0 <= dat_i_filtered;
+
         //cycle n+2
         if (stage2<IIRSTAGES) begin
             y0 <= y0_full;//no saturation here, because y0 is two bits longer than other signals

@@ -1383,12 +1383,16 @@ class IQ(FilterModule):
 
 
 class IIR(FilterModule):
-    _minloops = 3  # minimum number of loops for correct behaviour
+    _minloops = 5  # minimum number of loops for correct behaviour
 
     # the first biquad (self.coefficients[0] has _delay cycles of delay
     # from input to output_signal. Biquad self.coefficients[i] has
     # _delay+i cycles of delay.
-    _delay = 6
+    _delay = 5  # empirically found. Counting cycles gave me 7.
+
+    # parameters for scipy.signal.cont2discrete
+    _method = 'gbt'  # method to go from continuous to discrete coefficients
+    _alpha = 0.5  # alpha parameter for method (scipy.signal.cont2discrete)
 
     # invert denominator coefficients to convert from scipy notation to
     # the fpga-implemented notation (following Oppenheim and Schaefer: DSP)
@@ -1413,6 +1417,22 @@ class IIR(FilterModule):
     
     overflow = Register(0x108, 
                             doc="Bitmask for various overflow conditions")
+
+    @property
+    def output_saturation(self):
+        """ returns True if the output of the IIR filter has saturated since
+        the last reset """
+        return bool(self.overflow & 1 << 6)
+
+    @property
+    def internal_overflow(self):
+        """ returns True if the IIR filter has experienced an internal
+        overflow (leading to saturation) since the last reset"""
+        overflow = bool(self.overflow & 0b111111)
+        if overflow:
+            self._logger.info("Internal overflow has occured. Bit pattern "
+                              "%s", bin(self.overflow))
+        return overflow
 
     def _from_double(self, v, bitlength=64, shift=0):
         v = int(np.round(v * 2**shift))
@@ -1527,9 +1547,11 @@ class IIR(FilterModule):
             output_direct='off',
             loops=None,
             plot=False,
-            #save=False,
+            designdata=False,
             turn_on=True,
-            tol=1e-3):
+            inputfilterbandwidth=None,
+            tol=1e-3,
+            prewarp=True):
         """Setup an IIR filter
         
         the transfer function of the filter will be (k ensures DC-gain = g):
@@ -1545,17 +1567,28 @@ class IIR(FilterModule):
         gain:          DC-gain
         input:         input signal
         output_direct: send directly to an analog output?
-        loops:         clock cycles per loop of the filter. must be at least 3 and at most 255. set None for autosetting loops
+        loops:         clock cycles per loop of the filter. must be at least 3
+                       and at most 255. set None for autosetting loops
         turn_on:       automatically turn on the filter after setup
-        plot:          if True, plots the theoretical and implemented transfer functions
-        tol:           tolerance for matching conjugate poles or zeros into pairs, 1e-3 is okay
+        plot:          if True, plots the theoretical and implemented transfer
+                       functions
+        designdata:    if True, returns various design transfer functions in a
+                       format that can be passed to iir.bodeplot
+        inputfilterbandwidth: the bandwidth of the input filter for
+                       anti-aliasing. If None, it is set to the sampling
+                       frequency.
+        tol:           tolerance for matching conjugate poles or zeros into
+                       pairs, 1e-3 is okay
+        prewarp:       Enables prewarping of frequencies. Strongly recommended.
 
-        returns:       data to be passed to iir.bodeplot to plot the realized transfer function
+        returns
+        --------------------------------------------------
+        coefficients   data to be passed to iir.bodeplot to plot the
+                       realized transfer function
         """
         if self._IIRSTAGES == 0:
-            raise Exception(
-                "Error: This FPGA bitfile does not support IIR filters! "\
-                +"Please use an IIR version!")
+            raise Exception("Error: This FPGA bitfile does not support IIR "
+                            "filters! Please use an IIR version!")
         self.on = False
         self.shortcut = False
         iirbits = self._IIRBITS
@@ -1570,8 +1603,8 @@ class IIR(FilterModule):
                                                     tol=tol)
         # make sure filter can be realized
         if minloops > self._IIRSTAGES:
-            raise Exception("Error: desired filter order is too high to "\
-                            +"be implemented.")
+            raise Exception("Error: desired filter order is too high to "
+                            "be implemented.")
         if loops < minloops:  # warning has already be issued in make_proper_tf
             loops = minloops
         elif loops > 255:
@@ -1580,17 +1613,22 @@ class IIR(FilterModule):
                                  "%s.", loops)
             loops = 255
         self.loops = loops
-
+        self._logger.info("Filter sampling frequency is %.3s MHz",
+                          1e-6/self.sampling_time)
         # get scaling right for coefficients so that gain corresponds to dcgain
-        sys = iir.rescale(zeros, poles, gain)
-        self._sys = sys  #save system for debugging
+        self._sys = iir.rescale(zeros, poles, gain)
+        # prewarp coefficients to match specification (bilinear transform
+        # distorts frequencies of poles)
+        if prewarp:
+            sys = iir.prewarp(self._sys, dt=self.sampling_time)
+        else:
+            sys = self._sys
         # get coefficients
         c = iir.get_coeff(sys,
                           dt=self.sampling_time,
-                          totalbits=iirbits,
-                          shiftbits=iirshift,
                           tol=tol,
-                          finiteprecision=False)
+                          method=self._method,
+                          alpha=self._alpha)
         # write coefficients to fpga
         self.coefficients = c
         # save the full-precision coefficients for debugging
@@ -1598,7 +1636,12 @@ class IIR(FilterModule):
         # low-pass filter the input signal with a first order filter with
         # cutoff near the sampling rate - decreases aliasing and achieves
         # higher internal data precision (3 extra bits) through averaging
-        self.inputfilter = 125e6*self._frequency_correction / self.loops
+        if inputfilterbandwidth is None:
+            self.inputfilter = 125e6*self._frequency_correction / self.loops
+        else:
+            self.inputfilter = inputfilterbandwidth
+        self._logger.info("IIR anti-aliasing input filter set to: %s MHz",
+                          self.inputfilter * 1e-6)
         # connect the module
         if input is not None:
             self.input = input
@@ -1607,7 +1650,7 @@ class IIR(FilterModule):
         # switch it on only once everything is set up
         self.on = turn_on
         # Diagnostics here
-        if plot: # or save:
+        if plot:  # or save:
             if isinstance(plot, int):
                 plt.figure(plot)
             else:
@@ -1622,24 +1665,20 @@ class IIR(FilterModule):
                 "Maximum deviation from design coefficients: %.4g "
                 "(relative: %.4g)", maxdev, reldev)
         else:
-            self._logger.debug("Maximum deviation from design coefficients: %.4g "
-                          "(relative: %.4g)", maxdev, reldev)
+            self._logger.info("Maximum deviation from design coefficients: "
+                               "%.4g (relative: %.4g)", maxdev, reldev)
         if bool(self.overflow):
-            self._logger.warning("Overflow detected. Pattern: %s",
+            self._logger.warning("IIR Overflow detected. Pattern: %s",
                                  bin(self.overflow))
         else:
-            self._logger.warning("Overflow pattern: %s", bin(self.overflow))
-        if plot:
-            plotdata = []
+            self._logger.info("IIR Overflow pattern: %s", bin(self.overflow))
+        if designdata or plot:
             maxf = 125e6/self.loops
             fs = np.linspace(maxf/1000, maxf, 2001, endpoint=True)
-            for kind in ["continuous", "discrete", "implemented",
-                         "highprecision"]:
-                plotdata.append((f,
-                                 self.transfer_function(fs, kind=kind),
-                                 kind))
-            iir.bodeplot(plotdata, xlog=True)
-            return plotdata
+            designdata = self.transfer_function(fs, kind='all')
+            if plot:
+                iir.bodeplot(designdata, xlog=True)
+            return designdata
         else:
             return None
 
@@ -1672,47 +1711,108 @@ class IIR(FilterModule):
             the implementation of the IIR. The various intermediate transfer
             functions can be helpful to debug the iir filter.
 
-            kindshould be one of the following (default is 'implemented'):
+            kind should be one of the following (default is 'implemented'):
+            - 'all': returns a list of data to be passed to iir.bodeplot
+              with all important kinds of transfer functions for debugging
             - 'continuous': the designed transfer function in continuous time
+            - 'before_partialfraction_continuous': continuous filter just
+              before partial fraction expansion of the coefficients. The
+              partial fraction expansion introduces a large numerical error for
+              higher order filters, so this is a good place to check whether
+              this is a problem for a particular filter design
+            - 'before_partialfraction_discrete': discretized filter just before
+              partial fraction expansion of the coefficients. The partial
+              fraction expansion introduces a large numerical error for higher
+              order filters, so this is a good place to check whether this is
+              a problem for a particular filter design
+            - 'before_partialfraction_discrete_zoh': same as previous,
+              but zero order hold assumption is used to transform from
+              continuous to discrete
             - 'discrete': the transfer function after transformation to
-            discrete time
+              discrete time
+            - 'discrete_samplehold': same as discrete, but zero delay
+              between subsequent biquads is assumed
             - 'highprecision': hypothetical transfer function assuming that
-            64 bit fixed point numbers were used in the fpga (decimal point
-            at bit 48)
+              64 bit fixed point numbers were used in the fpga (decimal point
+              at bit 48)
             - 'implemented': transfer function after rounding the
-            coefficients to the precision of the fpga
+              coefficients to the precision of the fpga
 
         Returns
         -------
         tf: np.array(..., dtype=np.complex)
             The complex open loop transfer function of the module.
+        If kind=='all', a list of plotdata tuples is returned that can be
+        passed directly to iir.bodeplot().
         """
         frequencies = np.array(frequencies, dtype=np.float)
         # take average delay to be half the loops since this is the
         # expectation value for the delay (plus internal propagation delay)
         module_delay = self._delay + self.loops / 2.0
+        if kind == "all":
+            return [(frequencies,
+                     self.transfer_function(frequencies=frequencies,
+                                            extradelay=extradelay,
+                                            kind=k),
+                     k)
+                    for k in ["continuous",
+                              "before_partialfraction_continuous",
+                              "before_partialfraction_discrete",
+                              #"before_partialfraction_discrete_zoh",
+                              "discrete",
+                              #"discrete_samplehold",
+                              #"highprecision",
+                              "implemented"]]
 
-        if kind == "continuous":
+        elif kind == "continuous":
             tf = iir.tf_continuous(sys=self._sys,
                                    frequencies=frequencies)
+        elif kind == "before_partialfraction_continuous":
+            tf = iir.tf_before_partialfraction(sys=self._sys,
+                                               frequencies=frequencies,
+                                               dt=self.sampling_time,
+                                               continuous=True)
+        elif kind == "before_partialfraction_discrete_zoh":
+            tf = iir.tf_before_partialfraction(sys=self._sys,
+                                               frequencies=frequencies,
+                                               dt=self.sampling_time,
+                                               continuous=False,
+                                               method="zoh")
+        elif kind == "before_partialfraction_discrete":
+            tf = iir.tf_before_partialfraction(sys=self._sys,
+                                               frequencies=frequencies,
+                                               dt=self.sampling_time,
+                                               continuous=False,
+                                               method=self._method,
+                                               alpha=self._alpha)
         elif kind == "discrete":
             # self._coefficients is a copy of full-precision coefficients
             tf = iir.tf_discrete(coefficients=self._coefficients,
                                  frequencies=frequencies,
-                                 dt=self.sampling_time)
+                                 dt=self.sampling_time,
+                                 zoh=(self._method == 'zoh'))
+        elif kind == "discrete_samplehold":
+            # self._coefficients is a copy of full-precision coefficients
+            tf = iir.tf_discrete(coefficients=self._coefficients,
+                                 frequencies=frequencies,
+                                 dt=self.sampling_time,
+                                 delay_per_cycle=0,
+                                 zoh=(self._method == 'zoh'))
         elif kind == "highprecision":
             tf = iir.tf_implemented(coefficients=self._coefficients,
                                     frequencies=frequencies,
                                     dt=self.sampling_time,
                                     totalbits=64,
-                                    shiftbits=48)
+                                    shiftbits=48,
+                                    zoh=(self._method == 'zoh'))
         else:  # default: kind == "implemented":
             # self.coefficients are the coefficients as stored in the fpga
             tf = iir.tf_implemented(coefficients=self.coefficients,
                                     frequencies=frequencies,
                                     dt=self.sampling_time,
                                     totalbits=self._IIRBITS,
-                                    shiftbits=self._IIRSHIFT)
+                                    shiftbits=self._IIRSHIFT,
+                                    zoh=(self._method == 'zoh'))
         for f in [self.inputfilter]:  # only one filter at the moment
             if f == 0:
                 continue
@@ -1727,6 +1827,7 @@ class IIR(FilterModule):
         delay = module_delay * 8e-9 / self._frequency_correction + extradelay
         tf *= np.exp(-1j*delay*frequencies*2*np.pi)
         return tf
+
 
 class AMS(BaseModule):
     """mostly deprecated module (redpitaya has removed adc support). 

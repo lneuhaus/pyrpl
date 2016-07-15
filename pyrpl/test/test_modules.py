@@ -442,8 +442,11 @@ class TestClass(object):
         # the expected one. If something fails, the curves are saved to
         # CurveDB.
         extradelay = 0
-        error_threshold = 0.25  # room for improvement here (probably model
-        # slightly flawed)
+        error_threshold = 0.25  # this value is mainly so high because of
+        # ringing effects since we sweep over a resonance of the IIR filter
+        # over a timescale comparable to its bandwidth. We should implement
+        # another filter with very slow scan to test for model accuracy.
+        # This test is only to confirm that all of the biquads are working.
         if self.r is None:
             return
         else:
@@ -454,7 +457,7 @@ class TestClass(object):
         r.na.setup(start=3e3,
                    stop=1e6,
                    points=301,
-                   rbw=[1000, 1000],
+                   rbw=[500, 500],
                    avg=1,
                    amplitude=0.005,
                    input=iir,
@@ -472,6 +475,8 @@ class TestClass(object):
 
         for setting in range(iir._IIRSTAGES):
             iir.on = False
+            # shift coefficients into next pair of biquads (each biquad has
+            # 6 coefficients)
             iir.coefficients = np.roll(iir.coefficients, 6)
             iir.on = True
             #self.na_assertion(setting=setting,
