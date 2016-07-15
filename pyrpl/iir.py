@@ -221,7 +221,6 @@ def tf_discrete(coefficients, frequencies, dt=8e-9, delay_per_cycle=8e-9,
     np.array(..., dtype=np.complex)
     """
     # the higher stages have progressively more delay to the output
-    logger.debug("ZOH is... %s", zoh)
     delay_per_cycle_array = np.exp(-1j * delay_per_cycle * frequencies * 2 *
                                 np.pi)
     # discrete frequency
@@ -233,7 +232,8 @@ def tf_discrete(coefficients, frequencies, dt=8e-9, delay_per_cycle=8e-9,
         ww, hh = sig.freqz(b, a, worN=w)
         if not zoh:
             h += hh * delay_per_cycle_array **i  # minimum delay implementation
-        h += hh
+        else:
+            h += hh
     if zoh:  # zero order hold implementation: biquad-independent delay
         h *= np.exp(-1j * delay_per_cycle * frequencies * 2 * np.pi
                              * len(coefficients))
@@ -361,8 +361,6 @@ def minimize_delay(coefficients):
     new coefficients
     """
     newcoefficients = list()
-
-    # make a copy of old coefficients as to not overwrite them
     ranks = list()
     for c in list(coefficients):
         # empty sections (numerator is 0) are ranked 0
