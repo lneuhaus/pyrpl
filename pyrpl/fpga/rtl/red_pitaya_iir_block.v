@@ -354,7 +354,7 @@ reg signed [SIGNALBITS-1:0] signal_o;
 
 always @(posedge clk_i) begin
     // minimum delay implementation samples continuously new data
-    //x0 <= dat_i_filtered;
+    x0 <= dat_i_filtered;
     if (on==1'b0) begin
         for (i=0;i<IIRSTAGES;i=i+1) begin
             y1_i[i] <= {IIRSIGNALBITS{1'b0}};
@@ -376,7 +376,7 @@ always @(posedge clk_i) begin
         p_by0 <= {IIRSIGNALBITS{1'b0}};
         p_by1 <= {IIRSIGNALBITS{1'b0}};
         signal_o <= {SIGNALBITS{1'b0}};
-        x0 <= {IIRSIGNALBITS{1'b0}};
+        //x0 <= {IIRSIGNALBITS{1'b0}};
         end
     else begin
         // the computation will stretch over several cycles. while each computation is performed once per cycle, we will 
@@ -398,8 +398,8 @@ always @(posedge clk_i) begin
         end
 
         // do this for zero-order hold
-        if (stage1 == (loops-1) || stage1 == (IIRSTAGES-1))
-            x0 <= dat_i_filtered;
+        //if (stage1 == (loops-1) || stage1 == (IIRSTAGES-1))
+        //    x0 <= dat_i_filtered;
 
         //cycle n+2
         if (stage2<IIRSTAGES) begin
