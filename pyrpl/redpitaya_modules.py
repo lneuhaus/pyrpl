@@ -1550,7 +1550,8 @@ class IIR(FilterModule):
             designdata=False,
             turn_on=True,
             inputfilterbandwidth=None,
-            tol=1e-3):
+            tol=1e-3,
+            prewarp=True):
         """Setup an IIR filter
         
         the transfer function of the filter will be (k ensures DC-gain = g):
@@ -1578,6 +1579,7 @@ class IIR(FilterModule):
                        frequency.
         tol:           tolerance for matching conjugate poles or zeros into
                        pairs, 1e-3 is okay
+        prewarp:       Enables prewarping of frequencies. Strongly recommended.
 
         returns
         --------------------------------------------------
@@ -1614,8 +1616,13 @@ class IIR(FilterModule):
         self._logger.info("Filter sampling frequency is %.3s MHz",
                           1e-6/self.sampling_time)
         # get scaling right for coefficients so that gain corresponds to dcgain
-        sys = iir.rescale(zeros, poles, gain)
-        self._sys = sys  # save system for debugging
+        self._sys = iir.rescale(zeros, poles, gain)
+        # prewarp coefficients to match specification (bilinear transform
+        # distorts frequencies of poles)
+        if prewarp:
+            sys = iir.prewarp(self._sys, dt=self.sampling_time)
+        else:
+            sys = self._sys
         # get coefficients
         c = iir.get_coeff(sys,
                           dt=self.sampling_time,

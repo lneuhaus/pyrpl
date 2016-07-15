@@ -301,7 +301,7 @@ def get_coeff(
         tol=0,
         method="gbt",
         alpha=0.5,
-        mindelay=False):
+        mindelay=True):
     """
     Allowed systems in zpk form (otherwise problems arise):
         - no complex poles or zeros without conjugate partner (otherwise the
@@ -513,3 +513,39 @@ def rescale(zeros, poles, gain):
         if zz != 0:
             k /= np.abs(zz)
     return zeros, poles, k
+
+
+def prewarp(sys, dt=8e-9):
+    """ prewarps frequencies in order to correct warping effect in discrete
+    time conversion """
+    def timedilatation(w):
+        """ accounts for effective time dilatation due to warping effect """
+        freq = w / 2.0 / np.pi
+        if np.imag(freq) == 0:
+            freq = np.abs(freq)
+        else:
+            freq = np.abs(np.imag(freq))
+        if freq == 0:
+            return 1.0
+        else:
+            correction = np.tan(np.pi * freq * dt) / freq / np.pi / dt
+            if correction <= 0:
+                logger.warning("Negative correction factor %s obtained "
+                               "during prewarp for frequency %s. "
+                               "Setting correction factor to 1!",
+                               correction, freq)
+                return 1.0
+            else:
+                return correction
+    # apply timedilatation() to all zeros and poles
+    zeros, poles, k = sys
+    zc = list(zeros)  # make copies
+    pc = list(poles)
+    for x in [zc, pc]:
+        for i in range(len(x)):
+            correction = timedilatation(x[i])
+            logger.debug("Warp correction of %s at frequency %s "
+                         "automatically applied.",
+                         correction, x[i] / 2 / np.pi)
+            x[i] *= correction
+    return zc, pc, k
