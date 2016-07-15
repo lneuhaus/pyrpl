@@ -106,12 +106,11 @@ always @(posedge clk_i) begin
         delta <=        {MAXSHIFT+SIGNALBITS{1'b0}};
     end
     else begin
-        delta <= signal_i-y_out;
+        delta <= signal_i - y_out;
         y <= y + shifted_delta;
     end
 end
   
 assign signal_o = (filter_on == 1'b0) ? signal_i : ( (highpass==1'b0) ? y_out : delta);
-
 
 endmodule

@@ -1,6 +1,7 @@
 import numpy as np
 import sys
 from time import sleep, time
+import logging
 
 from .redpitaya_modules import NotReadyError
 
@@ -26,6 +27,7 @@ class NetworkAnalyzer(object):
     """
 
     def __init__(self, rp):
+        self._logger = logging.getLogger(__name__)
         self.rp = rp
         self.start = 200
         self.stop = 50000
@@ -76,6 +78,14 @@ class NetworkAnalyzer(object):
     @property
     def inputs(self):
         return self.iq.inputs
+
+    @property
+    def acbandwidth(self):
+        return self.iq.inputfilter*-1
+
+    @acbandwidth.setter
+    def acbandwidth(self, v):
+        self.iq.inputfilter = v*-1
 
     def setup(  self,
                 start=None,     # start frequency
@@ -233,6 +243,8 @@ class NetworkAnalyzer(object):
             y *= self._rescale  # avoid division by zero
         else:
             y *= self._rescale / amp
+        # correct for network analyzer transfer function (AC-filter and delay)
+        y /= self.transfer_function(x)
         return x, y, amp
 
     def prepare_for_next_point(self, last_normalized_val):
@@ -330,8 +342,67 @@ class NetworkAnalyzer(object):
         xs = np.zeros(self.points, dtype=float)
         ys = np.zeros(self.points, dtype=complex)
         amps = np.zeros(self.points, dtype=float)
+
+        self._logger.info("Estimated acquisition time: %.1f s",
+                          self.time_per_point * (self.points+1))
+        sys.stdout.flush()  # make sure the time is shown immediately
+
+        # set pseudo-acquisition of first point to supress transient effects
+        self.iq.amplitude = self.amplitude
+        self.iq.frequency = self.start
+        sleep(self.time_per_point)
+
         for index, (x, y, amp) in enumerate(self.values()):
             xs[index] = x
             ys[index] = y
             amps[index] = amp
         return xs, ys, amps
+
+    # delay observed with measurements of the na transfer function
+    # expected is something between 3 and 4, so it is okay
+    _delay = 3.0
+
+    def transfer_function(self, frequencies, extradelay=0):
+        """
+        Returns a complex np.array containing the transfer function of the
+        current IQ module setting for the given frequency array. The given
+        transfer function is only relevant if the module is used as a
+        bandpass filter, i.e. with the setting (gain != 0). If extradelay = 0,
+        only the default delay is taken into account, i.e. the propagation
+        delay from input to output_signal.
+
+        Parameters
+        ----------
+        frequencies: np.array or float
+            Frequencies to compute the transfer function for
+        extradelay: float
+            External delay to add to the transfer function (in s). If zero,
+            only the delay for internal propagation from input to
+            output_signal is used. If the module is fed to analog inputs and
+            outputs, an extra delay of the order of 200 ns must be passed as
+            an argument for the correct delay modelisation.
+
+        Returns
+        -------
+        tf: np.array(..., dtype=np.complex)
+            The complex open loop transfer function of the module.
+        """
+        module_delay = self._delay
+        frequencies = np.array(np.array(frequencies, dtype=np.float),
+                               dtype=np.complex)
+        tf = np.array(frequencies*0, dtype=np.complex) + 1.0
+        # input filter modelisation
+        f = self.iq.inputfilter  # no for loop here because only one filter
+        # stage
+        if f > 0:  # lowpass
+            tf /= (1.0 + 1j * frequencies / f)
+            module_delay += 2  # two cycles extra delay per lowpass
+        elif f < 0:  # highpass
+            tf /= (1.0 + 1j * f / frequencies)
+            module_delay += 1  # one cycle extra delay per highpass
+        # add delay
+        delay = module_delay * 8e-9 / self.iq._frequency_correction + \
+                extradelay
+        tf *= np.exp(-1j * delay * frequencies * 2 * np.pi)
+        # add delay from phase (incorrect formula or missing effect...)
+        return tf
