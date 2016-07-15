@@ -454,7 +454,7 @@ class TestClass(object):
         r.na.setup(start=3e3,
                    stop=1e6,
                    points=301,
-                   rbw=[1000, 1000],
+                   rbw=[500, 500],
                    avg=1,
                    amplitude=0.005,
                    input=iir,
@@ -472,6 +472,8 @@ class TestClass(object):
 
         for setting in range(iir._IIRSTAGES):
             iir.on = False
+            # shift coefficients into next pair of biquads (each biquad has
+            # 6 coefficients)
             iir.coefficients = np.roll(iir.coefficients, 6)
             iir.on = True
             #self.na_assertion(setting=setting,
