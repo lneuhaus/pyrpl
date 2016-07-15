@@ -442,8 +442,11 @@ class TestClass(object):
         # the expected one. If something fails, the curves are saved to
         # CurveDB.
         extradelay = 0
-        error_threshold = 0.25  # room for improvement here (probably model
-        # slightly flawed)
+        error_threshold = 0.25  # this value is mainly so high because of
+        # ringing effects since we sweep over a resonance of the IIR filter
+        # over a timescale comparable to its bandwidth. We should implement
+        # another filter with very slow scan to test for model accuracy.
+        # This test is only to confirm that all of the biquads are working.
         if self.r is None:
             return
         else:
