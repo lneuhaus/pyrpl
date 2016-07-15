@@ -1607,7 +1607,7 @@ class IIR(FilterModule):
         # switch it on only once everything is set up
         self.on = turn_on
         # Diagnostics here
-        if plot: # or save:
+        if plot:  # or save:
             if isinstance(plot, int):
                 plt.figure(plot)
             else:

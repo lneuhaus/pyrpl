@@ -469,9 +469,9 @@ def make_proper_tf(zeros, poles, loops=None, _minloops=3, tol=1e-3):
             gooddata.append(datum)
             if np.imag(datum) == 0:
                 # real pole/zero -> needs half a biquad
-                loops += 0.5
+                minloops += 0.5
             else:
-                loops += 1
+                minloops += 1
                 # find conjugate partner
                 found = False
                 for candidate in data:
