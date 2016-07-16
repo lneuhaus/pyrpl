@@ -980,7 +980,8 @@ class Pid(FilterModule):
 
     @property
     def ival(self):
-        return float(self._to_pyint(self._read(0x100), bitlength=32))/2**13
+        return float(self._to_pyint(self._read(0x100), bitlength=16))/2**13
+        # bitlength used to be 32 until 16/7/2016
     
     @ival.setter
     def ival(self, v):
