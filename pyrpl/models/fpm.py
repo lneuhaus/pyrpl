@@ -5,13 +5,13 @@ import time
 logger = logging.getLogger(name=__name__)
 from . import *
 
-
 class FPM(FabryPerot):
     """ custom class for the measurement fabry perot of the ZPM experiment """
 
     export_to_parent = FabryPerot.export_to_parent \
                        + ["relative_pdh_rms", "relative_reflection",
-                          "setup_ringdown", "teardown_ringdown"]
+                          "setup_ringdown", "teardown_ringdown", "lock_lmsd",
+                          "setup_lmsd"]
 
     def setup(self):
         super(FPM, self).setup()
@@ -119,11 +119,49 @@ class FPM(FabryPerot):
     def teardown_ringdown(self):
         self._parent.rp.asg1.disable_advanced_trigger()
 
-    def center_on_resonance(self, start = -1, coarse='slow'):
+    def center_on_resonance(self, start=-1, coarse='slow'):
         self.unlock()
         self.sweep()
         coarsepid = self.outputs[coarse].pid
         coarse.ival = -1
-        coarsebw =  sorted(self.outputs[
+        coarsebw = sorted(self.outputs[
                                coarse]._config.analogfilter.lowpass)
 
+    def setup_lmsd(self):
+        self._disable_pdh()
+        if not hasattr(self, 'lmsd'):
+            from pyrpl import Pyrpl
+            self.lmsd = Pyrpl('lmsd')
+        self.lmsd.unlock()
+        self.unlock()
+        self.outputs["piezo"].pid.input = 'adc1'
+        self.outputs["piezo"].pid.setpoint = 0.42
+        self.outputs["piezo"].pid.p = 2.0
+        self.lmsd.sweep()
+
+    @property
+    def lmsd_frequency(self):
+        return self.lmsd.lmsd.iq.frequency
+
+    @lmsd_frequency.setter
+    def lmsd_frequency(self, v):
+        self.lmsd.lmsd.iq.frequency = v
+        self.lmsd.lmsd._config.setup.frequency = v
+
+    def lock_lmsd(self, gain=0.01, sleeptime=1.0):
+        from time import sleep
+        self.unlock()
+        self.lmsd.unlock()
+        self.lmsd.piezo.pid.input="iq2"
+        self.lmsd.piezo.pid.setpoint = 0
+        self.lmsd.piezo.pid.i = 0
+        self.lmsd.piezo.pid.ival = 0
+        self.lmsd.piezo.pid.p = 1.0
+        self.piezo = self.outputs["piezo"]
+        self.piezo.pid.input = 'adc1'
+        self.piezo.pid.setpoint = 0.6
+        self.piezo.pid.ival = 3.0
+        sleep(0.03)
+        self.piezo.pid.i = gain
+        sleep(sleeptime)
+        self.piezo.pid.setpoint = 0.42

@@ -51,10 +51,16 @@ class Model(object):
             except KeyError:
                 params = dict()
             try:
-                self.__getattribute__("setup_"+signal._name)(**params)
-                self.logger.debug("Calling setup_%s!", signal._name)
+                setupfn = self.__getattribute__("setup_"+signal._name)
             except AttributeError:
                 pass
+            else:
+                self.logger.debug("Calling setup_%s!", signal._name)
+                try:
+                    return setupfn(**params)
+                except TypeError:  # means the setup function doesnt take
+                    # params
+                    return setupfn()
 
     def _derivative(self, func, x, n=1, args=()):
         return scipy.misc.derivative(func,
@@ -351,6 +357,8 @@ class Model(object):
         if not inputs:
             inputs = self.inputs.values()
         for input in inputs:
+            if not isinstance(input, Signal):
+                input = self.inputs[input]
             try:
                 input._config._data["trigger_source"] = "asg1"
                 input._config._data["duration"] = duration
@@ -361,6 +369,13 @@ class Model(object):
                 curve, ma, mi, mean, rms = input.curve, input.max, input.min, \
                                            input.mean, input.rms
                 curves.append(curve)
+                # add sweep phase at scope trigger to retrieve the scan
+                # direction afterwards
+                for o in self.outputs.values():
+                    if 'sweep' in o._config._keys():
+                        curve.params[o._name+'.sweep_triggerphase'] = \
+                            o.sweep_triggerphase
+                curve.save()
                 try:
                     secondsignal = scopeparams["secondsignal"]
                     input2 = self.signals[secondsignal]
@@ -408,14 +423,16 @@ class Model(object):
         -------
         None
         """
-        if not isinstance(iq, Signal):
-            iq = self.inputs[input]
+        if not isinstance(input, Signal):
+            input = self.inputs[input]
         if not kwargs:
-            kwargs = pdh._config.setup._dict
-        if not hasattr(iq, 'iq'):
-            iq.iq = self._parent.rp.iqs.pop()
-        iq.iq.setup(**kwargs)
-        iq._config['redpitaya_input'] = iq.iq.name
+            kwargs = input._config.setup._dict
+        if 'iq' in kwargs:  # we can request a particular iq number if needed
+            input.iq = self._parent.rp.__getattribute__(kwargs.pop('iq'))
+        elif not hasattr(iq, 'iq'):
+            input.iq = self._parent.rp.iqs.pop()
+        input.iq.setup(**kwargs)
+        input._config['redpitaya_input'] = input.iq.name
 
     def help(self):
         """ provides some help to get started. """

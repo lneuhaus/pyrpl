@@ -25,7 +25,8 @@ class FabryPerot(Model):
 
     def _lorentz_slope_normalized(self, x):
         # max slope occurs at x +- 1/sqrt(3)
-        return self._lorentz_slope(x) / abs(self._lorentz_slope(1/np.sqrt(3)))
+        return self._lorentz_slope(x) / \
+               np.abs(self._lorentz_slope(1/np.sqrt(3)))
 
     def _lorentz_slope_slope(self, x):
         return (-2.0+6.0*x**2) / (1.0 + x ** 2)**3
@@ -114,23 +115,53 @@ class FabryPerot(Model):
         else:
             return detuning
 
-    def calibrate(self):
-        curves = super(FabryPerot, self).calibrate(
-            scopeparams={'secondsignal': 'piezo'})
-        duration = curves[0].params["duration"]
+    def calibrate(self, inputs=None, scopeparams={}):
+        """
+        Calibrates by performing a sweep as defined for the outputs and
+        recording and saving min and max of each input. Then zooms in by
+        triggering a shorter acquisition on the error signal and finishes by
+        defining the extracted parameters for each of the scanned error
+        signals. See config file example for configuration.
 
-        # pick our favourite available signal
-        for sig in self.inputs.values():
-            # make a zoom calibration over roughly 10 linewidths
-            curves = super(FabryPerot, self).calibrate(
-                inputs=[sig],
-                scopeparams={'secondsignal': 'piezo',
-                             'trigger_source': 'ch1_positive_edge',
-                             'threshold': sig._config.max *
-                                  self._config.calibration.relative_threshold,
-                             'duration': duration
-                                         * self._config.calibration.zoomfactor,
-                             'timeout': duration*10})
+        Parameters
+        -------
+        inputs: list
+            list of input signals to calibrate. All inputs are used if None.
+        scopeparams: dict
+            optional parameters for signal acquisition during calibration
+            that are temporarily written to _config
+
+        Returns
+        -------
+        curves: list
+            list of all acquired curves
+        """
+        # decide which secondary signal is to be recorded along the input
+        if 'secondsignal' not in scopeparams:
+            # automatically find the first sweeping output
+            for o in self.outputs.values():
+                if 'sweep' in o._config._keys():
+                    scopeparams['secondsignal'] = o._name
+                    break
+        # coarse calibration as defined in model
+        coarsecurves = super(FabryPerot, self).calibrate(inputs, scopeparams)
+        # zoom in - basically another version of calibrate with zoom factors
+        # and triggering on the signal
+        duration = coarsecurves[0].params["duration"]  # for zooming
+        if inputs is None:
+            inputs = self.inputs.values()  # all inputs by default
+        curves=[]
+        for sig in inputs:
+            sigscopeparams = dict(scopeparams)
+            sigscopeparams.update({
+                    'trigger_source': 'ch1_positive_edge',
+                    'threshold': sig._config.max *
+                              self._config.calibrate.relative_threshold,
+                    'duration': duration
+                              * self._config.calibrate.zoomfactor,
+                    'timeout': duration*10})
+            curves.append(super(FabryPerot, self).calibrate(
+                inputs=[sig], scopeparams=sigscopeparams))
             if sig._name == 'reflection':
                 self._config["offresonant_reflection"] = sig._config.max
                 self._config["resonant_reflection"] = sig._config.min
@@ -138,6 +169,10 @@ class FabryPerot(Model):
                 self._config["resonant_transmission"] = sig._config.max
             if sig._name == 'pdh':
                 self._config["peak_pdh"] = (sig._config.max - sig._config.min)/2
+        for c in curves:
+            for cc in coarsecurves:
+                if cc.name == c.name:
+                    c.add_child(cc)
         return curves
 
     def setup_pdh(self, **kwargs):
@@ -202,3 +237,4 @@ class FabryPerot(Model):
             return (mean <= thresholdvalue)
         else:
             return (mean >= thresholdvalue)
+

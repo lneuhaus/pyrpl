@@ -39,6 +39,7 @@ class NotReadyError(ValueError):
 
 
 class BaseModule(object):
+    name = 'BaseModule'
     # factor to manually compensate 125 MHz oscillator frequency error
     # real_frequency = 125 MHz * _frequency_correction
     @property
@@ -46,6 +47,8 @@ class BaseModule(object):
         try:
             return self._parent.frequency_correction
         except AttributeError:
+            self._logger.warning("Warning: Parent of %s has no attribute "
+                                 "'frequency_correction'. ", self.name)
             return 1.0
 
     # prevent the user from setting a nonexisting attribute
@@ -114,6 +117,7 @@ class BaseModule(object):
         return np.uint32(v)
     
 class HK(BaseModule):
+    name = 'HK'
     def __init__(self, client, parent=None):
         super(HK, self).__init__(client, addr_base=0x40000000, parent=parent)
     
@@ -135,6 +139,7 @@ data_length = 2**14
 
 
 class Scope(BaseModule):
+    name = 'scope'
     data_length = data_length  # see definition and explanation above
     inputs = None
 

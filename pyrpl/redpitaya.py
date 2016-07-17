@@ -363,7 +363,7 @@ class RedPitaya(SSHshell):
         # iq2 is special: two outputs for scope/specAn. This special treatment
         # should soon be made more general. For thsi reason, we already
         # exclude it from the iqs list, such that it cannot be popped away..
-        self.iq2 = rp.IQ(self.client, module='iq2')
+        self.iq2 = rp.IQ(self.client, module='iq2', parent=self)
         # higher functionality modules
         self.na = NetworkAnalyzer(self)
         self.spec_an = SpectrumAnalyzer(self)

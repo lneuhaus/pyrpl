@@ -746,10 +746,38 @@ class RPOutputSignal(RPSignal):
         else:
             asgname = 'asg1'
         asg = self._rp.__getattribute__(asgname)
+        self._asg = asg  # for future reference
         asg.setup(**kwargs)
         self.pid.input = asgname
         self.pid.p = amplitude
         return asg.frequency
+
+    @property
+    def _sweep_triggerphase(self):
+        """ returns the last scopetriggerphase for the sweeping asg """
+        return self._asg.scopetriggerphase
+
+    def _analogfilter(self, frequencies):
+        tf = np.array(frequencies, dtype=np.complex)*0.0 + 1.0
+        try:
+            lp = self._config.analogfilter.lowpass
+        except KeyError:
+            return tf
+        else:
+            for p in lp:
+                tf /= (1.0 + 1j * frequencies / p)
+            return tf
+
+    @property
+    def sweep_triggerphase(self):
+        """ returns the last scopetriggerphase for the sweeping asg,
+        corrected for phase delay due to analog output filters of the output"""
+        if hasattr(self, '_asg') and self._asg.amplitude != 0:
+            f = self._asg.frequency
+            analogdelay = np.angle(self._analogfilter(f), deg=True)
+            return (self._sweep_triggerphase + analogdelay) % 360
+        else:
+            return 0
 
     @property
     def output_offset(self):
