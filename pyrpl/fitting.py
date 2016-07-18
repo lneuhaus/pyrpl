@@ -198,6 +198,5 @@ class Fit(object):
         self.logger.debug(dict(self.getparams()))
         # evaluate the performed fit in fitdata
         self.fitdata = pandas.Series(data=self.fn(**self.getparams()),
-                                     index=self.x(), \
-                                     name='fitfunction: ' + self.func)
+                                     index=self.x())
         return values

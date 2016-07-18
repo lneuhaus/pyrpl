@@ -755,6 +755,7 @@ class RPOutputSignal(RPSignal):
         self._asg = asg  # for future reference
         asg.setup(**kwargs)
         self.pid.input = asgname
+        self.pid.setpoint = 0
         self.pid.p = amplitude
         return asg.frequency
 

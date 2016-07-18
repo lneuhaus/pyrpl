@@ -4,6 +4,8 @@ import logging
 import time
 logger = logging.getLogger(name=__name__)
 from . import *
+from ..curvedb import CurveDB
+from .. import fitting
 
 class FPM(FabryPerot):
     """ custom class for the measurement fabry perot of the ZPM experiment """
@@ -127,11 +129,17 @@ class FPM(FabryPerot):
         coarsebw = sorted(self.outputs[
                                coarse]._config.analogfilter.lowpass)
 
+class FPM_LMSD(FPM):
+    #def setup(self):
+    #    super(FPM_LMSD, self).setup()
+    #    self._parent.constants = self._parent.c.constants
+
     def setup_lmsd(self):
         self._disable_pdh()
         if not hasattr(self, 'l'):
             from pyrpl import Pyrpl
             self.l = Pyrpl('lmsd')
+            self._parent.l = self.l
         self.unlock()
 
     @property
@@ -161,7 +169,14 @@ class FPM(FabryPerot):
         sleep(sleeptime)
         self.piezo.pid.setpoint = 0.42
 
-    def _lmsd(detuning, phi=0, xmax=10):
+    def _lmsd(self, detuning, phi=0, xmax=10):
+        try:
+            len(detuning)
+        except:
+            pass
+        else:
+            return np.array([self._lmsd(d, phi=phi, xmax=xmax) for d in \
+                    detuning])
         """ lmsd error signal"""
         N = 300
         t = np.linspace(0, 2*np.pi, N, endpoint=False)
@@ -171,17 +186,87 @@ class FPM(FabryPerot):
         errsig = np.mean(prod)
         return errsig
 
-    def _lmsd_normalized(detuning, phi=0, xmax=10):
-        if xmax>1.5:
-            return _lmsd(detuning, phi=phi, xmax=xmax) / _lmsd(xmax-0.5, phi=0, xmax=xmax)
-        elif xmax>0.5:
-            return _lmsd(detuning, phi=phi, xmax=xmax) / _lmsd(xmax, phi=0, xmax=xmax)
+    def _lmsd_normalized(self, detuning, phi=0, xmax=10):
+        if xmax > 1.5:
+            return self._lmsd(detuning, phi=phi, xmax=xmax) / \
+                   self._lmsd(xmax-0.5, phi=0, xmax=xmax)
+        elif xmax > 0.5:
+            return self._lmsd(detuning, phi=phi, xmax=xmax) / \
+                   self._lmsd(xmax, phi=0, xmax=xmax)
         else:
-            return _lmsd(detuning, phi=phi, xmax=xmax) / _lmsd(0.5, phi=0, xmax=xmax)
+            return self._lmsd(detuning, phi=phi, xmax=xmax) / \
+                   self._lmsd(0.5,  phi=0, xmax=xmax)
 
     def lmsd(self, detuning):
         return self._lmsd_normalized(detuning,
-                                     phi=self._config.lmsd.phi,
-                                     xmax=self._config.lmsd.xmax) \
-               * self._config.lmsd.peak
+                                     phi=self.inputs['lmsd']._config.phi,
+                                     xmax=self.inputs['lmsd']._config.xmax) \
+               * self.inputs['lmsd']._config.peak
 
+    def calibrate(self):
+        return super(FPM_LMSD, self).calibrate(inputs=['lmsd'])
+        self.fit('lmsd')
+
+    def fit_lmsd(self, manualfit=True, autoset=True):
+        """ attempts a fit of input's last calibration curve with the input's
+        model"""
+        input = 'lmsd'
+        if not isinstance(input, Signal):
+            input = self.inputs[input]
+        signalfn = self.__getattribute__('_'+input._name+'_normalized')
+        c = CurveDB.get(input._config.curve)
+        data = c.data
+        t = c.data.index.values
+        def fitfn(variable_per_time, t0, offset, scale, xmax, phi):
+            scale
+            variables = (t-t0) * variable_per_time
+            return np.array(offset + scale * signalfn(variables,
+                                                      phi=phi, xmax=xmax),
+                            dtype=np.double)
+        # a very naive guess - should be refined with 'input_guess' function
+        try:
+            v_per_t = self.inputs['lmsd']._config.variable_per_time
+        except:
+            v_per_t = 10.0 / (t.max() - t.min())
+        try:
+            t0 = self.inputs['lmsd']._config.t0
+        except:
+            t0 = 0
+        guess = {'variable_per_time': v_per_t,
+                 't0': t0,
+                 'offset': 0,
+                 'scale': self.inputs["lmsd"]._config.peak,
+                 'xmax': self.inputs["lmsd"]._config.xmax
+                 }
+        try:
+            guessfn = self.__getattribute__(input._name + '_guess')
+        except AttributeError:
+            self.logger.warning("No function %s to guess fit "
+                                "parameters is defined. Writing one will "
+                                "improve fit performance. ",
+                                input._name + '_guess')
+        else:
+            guess.update(guessfn())
+        fitter = fitting.Fit(data, fitfn, manualguess_params=guess,
+                    fixed_params={'offset': 0,
+                                  'phi': self.inputs['lmsd']._config.phi},
+                    graphicalfit=manualfit, autofit=True)
+        fitcurve = CurveDB.create(fitter.fitdata, name='fit_'+input._name)
+        fitcurve.params.update(fitter.getparams())
+        try:
+            postfn = self.__getattribute__(input._name + '_postfit')
+        except AttributeError:
+            self.logger.warning("No function %s to use fit "
+                                "parameters is defined. Writing one will "
+                                "improve calibration results. ",
+                                input._name + '_postfit')
+        else:
+            fitcurve.params.update(postfn())
+        fitcurve.save()
+        c.add_child(fitcurve)
+        if autoset and fitter.gfit_concluded:
+            self.inputs['lmsd']._config.peak = fitcurve.params["scale"]
+            self.inputs['lmsd']._config.xmax = fitcurve.params["xmax"]
+            self.inputs['lmsd']._config.variable_per_time = fitcurve.params[
+                "variable_per_time"]
+        return fitcurve

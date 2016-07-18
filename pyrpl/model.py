@@ -54,14 +54,16 @@ class Model(object):
             try:
                 setupfn = self.__getattribute__("setup_"+signal._name)
             except AttributeError:
-                pass
+                self.logger.debug("No signal setup function setup_%s was "
+                                  "found", signal._name)
+                continue
             else:
                 self.logger.debug("Calling setup_%s!", signal._name)
                 try:
-                    return setupfn(**params)
+                    setupfn(**params)
                 except TypeError:  # means the setup function doesnt take
                     # params
-                    return setupfn()
+                    setupfn()
 
     def _derivative(self, func, x, n=1, args=()):
         return scipy.misc.derivative(func,

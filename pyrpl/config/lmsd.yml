@@ -81,17 +81,17 @@ inputs:
     mean: -0.00010923296213150024
     rms: 0.006076612023449933
     setup:
-      phase: 124.46788390442198
-      amplitude: 0.5
-      frequency: 3578311.003756657
+      phase: 151.78104011526398
+      amplitude: 0.25
+      frequency: 3578310.596304364
       iq: iq2
-      quadrature_factor: 0.056723126699504196
+      quadrature_factor: 0.046900842392389674
       gain: 0
       output_direct: out1
       output_signal: quadrature
       input: adc2
       acbandwidth: 100000.0
-      bandwidth: [500000.0, 1000000.0, 1000000.0, 1000000.0]
+      bandwidth: [1000000.0, 1000000.0, 1000000.0, 1000000.0]
     offset: 0.0
     curve: 255902
   lmsd_quadrature:

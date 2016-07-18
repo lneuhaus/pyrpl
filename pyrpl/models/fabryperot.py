@@ -172,7 +172,7 @@ class FabryPerot(Model):
             if sig._name == 'pdh':
                 self._config["peak_pdh"] = (sig._config.max - sig._config.min)/2
             if sig._name == 'lmsd':
-                sig._config.peak = sig._config.max - sig._config.min)/2
+                sig._config.peak = (sig._config.max - sig._config.min)/2
         for c in curves:
             for cc in coarsecurves:
                 if cc.name == c.name:
