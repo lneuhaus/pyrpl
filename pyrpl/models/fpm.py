@@ -129,34 +129,29 @@ class FPM(FabryPerot):
 
     def setup_lmsd(self):
         self._disable_pdh()
-        if not hasattr(self, 'lmsd'):
+        if not hasattr(self, 'l'):
             from pyrpl import Pyrpl
-            self.lmsd = Pyrpl('lmsd')
-        self.lmsd.unlock()
+            self.l = Pyrpl('lmsd')
         self.unlock()
-        self.outputs["piezo"].pid.input = 'adc1'
-        self.outputs["piezo"].pid.setpoint = 0.42
-        self.outputs["piezo"].pid.p = 2.0
-        self.lmsd.sweep()
 
     @property
     def lmsd_frequency(self):
-        return self.lmsd.lmsd.iq.frequency
+        return self.l.lmsd.iq.frequency
 
     @lmsd_frequency.setter
     def lmsd_frequency(self, v):
-        self.lmsd.lmsd.iq.frequency = v
-        self.lmsd.lmsd._config.setup.frequency = v
+        self.l.lmsd.iq.frequency = v
+        self.l.lmsd._config.setup.frequency = v
 
     def lock_lmsd(self, gain=0.01, sleeptime=1.0):
         from time import sleep
         self.unlock()
-        self.lmsd.unlock()
-        self.lmsd.piezo.pid.input="iq2"
-        self.lmsd.piezo.pid.setpoint = 0
-        self.lmsd.piezo.pid.i = 0
-        self.lmsd.piezo.pid.ival = 0
-        self.lmsd.piezo.pid.p = 1.0
+        self.l.unlock()
+        self.l.piezo.pid.input="iq2"
+        self.l.piezo.pid.setpoint = 0
+        self.l.piezo.pid.i = 0
+        self.l.piezo.pid.ival = 0
+        self.l.piezo.pid.p = 1.0
         self.piezo = self.outputs["piezo"]
         self.piezo.pid.input = 'adc1'
         self.piezo.pid.setpoint = 0.6
@@ -165,3 +160,28 @@ class FPM(FabryPerot):
         self.piezo.pid.i = gain
         sleep(sleeptime)
         self.piezo.pid.setpoint = 0.42
+
+    def _lmsd(detuning, phi=0, xmax=10):
+        """ lmsd error signal"""
+        N = 300
+        t = np.linspace(0, 2*np.pi, N, endpoint=False)
+        x = np.sin(t)*xmax
+        R = self._lorentz(x-detuning)
+        prod = R*np.sin(t+phi/180.0*np.pi)
+        errsig = np.mean(prod)
+        return errsig
+
+    def _lmsd_normalized(detuning, phi=0, xmax=10):
+        if xmax>1.5:
+            return _lmsd(detuning, phi=phi, xmax=xmax) / _lmsd(xmax-0.5, phi=0, xmax=xmax)
+        elif xmax>0.5:
+            return _lmsd(detuning, phi=phi, xmax=xmax) / _lmsd(xmax, phi=0, xmax=xmax)
+        else:
+            return _lmsd(detuning, phi=phi, xmax=xmax) / _lmsd(0.5, phi=0, xmax=xmax)
+
+    def lmsd(self, detuning):
+        return self._lmsd_normalized(detuning,
+                                     phi=self._config.lmsd.phi,
+                                     xmax=self._config.lmsd.xmax) \
+               * self._config.lmsd.peak
+

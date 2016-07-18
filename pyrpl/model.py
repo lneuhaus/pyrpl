@@ -5,6 +5,7 @@ import time
 import threading
 
 from .signal import *
+from . import fitting
 
 logger = logging.getLogger(name=__name__)
 
@@ -395,6 +396,7 @@ class Model(object):
             input._config["min"] = mi
             input._config["mean"] = mean
             input._config["rms"] = rms
+            input._config["curve"] = curve.pk
         # turn off sweeps
         self.unlock()
         return curves
@@ -452,3 +454,49 @@ class Model(object):
                          + "Now simply call p.lock() to lock.  \n"
                          + "Assert if locked with p.islocked() and unlock \n"
                          + "with p.unlock(). ")
+
+    def fit(self, input, manualfit=True, **extra):
+        """ attempts a fit of input's last calibration curve with the input's
+        model"""
+        if not isinstance(input, Signal):
+            input = self.inputs[input]
+        signalfn = self.__getattribute__(input._name)
+        c = CurveDB.get(input._config.curve)
+        data = c.data
+        t = c.data.index.values
+        def fitfn(variable_per_time, t0, offset, scale, **kwds):
+            variables = (t-t0) * variable_per_time
+            return np.array(offset + scale * signalfn(variables, **kwds),
+                            dtype=np.double)
+        # a very naive guess - should be refined with 'input_guess' function
+        guess = {'variable_per_time': 10.0 / (t.max() - t.min()),
+                 't0': 0,
+                 'offset': 0,
+                 'scale': 1.0}
+        guess.update(extra)
+        try:
+            guessfn = self.__getattribute__(input._name + '_guess')
+        except AttributeError:
+            self.logger.warning("No function %s to guess fit "
+                                "parameters is defined. Writing one will "
+                                "improve fit performance. ",
+                                input._name + '_guess')
+        else:
+            guess.update(guessfn())
+        fitter = fitting.Fit(data, fitfn, manualguess_params=guess,
+                            fixed_params={'offset': 0},
+                            graphicalfit=manualfit, autofit=True)
+        fitcurve = CurveDB.create(fitter.fitdata, name='fit_'+input._name)
+        fitcurve.params.update(fitter.getparams())
+        try:
+            postfn = self.__getattribute__(input._name + '_postfit')
+        except AttributeError:
+            self.logger.warning("No function %s to use fit "
+                                "parameters is defined. Writing one will "
+                                "improve calibration results. ",
+                                input._name + '_postfit')
+        else:
+            fitcurve.params.update(postfn())
+        fitcurve.save()
+        c.add_child(fitcurve)
+        return fitcurve

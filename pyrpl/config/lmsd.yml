@@ -37,8 +37,8 @@ model:
   # for interferometer, this is the phase error in radians
   # this value is uniquely needed for the function 'islocked'
   maxerror: 0.1
-  offresonant_reflection: 0.3318003788590431
-  resonant_reflection: 0.11915389448404312
+  offresonant_reflection: 0.1445540115237236
+  resonant_reflection: 0.1133040115237236
   finesse: 92000.0
   length: 5.61e-05
   # signals in order of their preferrence
@@ -69,22 +69,23 @@ inputs:
   reflection:
     redpitaya_input: adc2
     offset: 0.006691105663776398
-    max: 0.1810530349612236
-    min: 0.009422175586223602
-    mean: 0.1620381698012352
-    rms: 0.014197750070297083
+    max: 0.1649397537112236
+    min: 0.019309870898723602
+    mean: 0.12662241607904434
+    rms: 0.011114162116642115
+    curve: 255900
   lmsd:
     redpitaya_input: iq2
-    max: 0.7083740234375
-    min: -0.705078125
-    mean: 0.00010535120964050293
-    rms: 0.08523153375496224
+    max: 0.02197265625
+    min: -0.024658203125
+    mean: -0.00010923296213150024
+    rms: 0.006076612023449933
     setup:
-      phase: 325
+      phase: 124.46788390442198
       amplitude: 0.5
-      frequency: 3578310.7036155695
+      frequency: 3578311.003756657
       iq: iq2
-      quadrature_factor: 0.04
+      quadrature_factor: 0.056723126699504196
       gain: 0
       output_direct: out1
       output_signal: quadrature
@@ -92,8 +93,14 @@ inputs:
       acbandwidth: 100000.0
       bandwidth: [500000.0, 1000000.0, 1000000.0, 1000000.0]
     offset: 0.0
+    curve: 255902
   lmsd_quadrature:
     redpitaya_input: iq2_2
+    max: 0.025146484375
+    min: -0.0245361328125
+    mean: 0.0007748976349830627
+    rms: 0.006006296362300168
+    curve: 255898
 # All output signals. Names of outputs are arbitrary. if the 'lock' tab is
 # missing or false, the output will not be used for locking
 outputs:
@@ -145,8 +152,10 @@ outputs:
 scope:
   input1: iq2
   input2: iq2_2
-  duration: 0.1
-  trigger_source: immediately
+  duration: 0.01
+  trigger_source: ch1_negative_edge
+  threshold: 0.2
+  hysteresis: 0.03
   average: false
 
 scopegui:
@@ -165,7 +174,7 @@ signal:
   # be aware that this number affects both the sampling rate and the minimum
   # frequency that can be resolved. Usually, you want to keep duration as long
   # as you can stand to wait for new signal data, typically 10-100 ms.
-  duration: 0.1
+  duration: 0.01
   # selects whether scope is to be used in average mode
   # false is strongly suggested for duration-independent estimation of rms
   # true is preferred only when we want to get an extremely good mean estimate
@@ -175,10 +184,10 @@ signal:
   # number of points per curve; also the number of points used for mean and rms
   points: 16384
   # default trigger source
-  trigger_source: immediately
+  trigger_source: ch1_positive_edge
   # default trigger threshold and hysteresis
-  threshold: 0
-  hysteresis: 0.002
+  threshold: 0.1
+  hysteresis: 0.02
   # timeout determines the time interval within which we do not take another
   # data trace if several parameters are requested. To always obtain fresh
   # data, set this to -1. To enable manual acquisition control with the acquire

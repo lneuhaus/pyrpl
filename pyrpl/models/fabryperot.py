@@ -4,7 +4,7 @@ import logging
 import time
 logger = logging.getLogger(name=__name__)
 from . import *
-
+from ..signal import Signal
 
 class FabryPerot(Model):
     """
@@ -150,8 +150,10 @@ class FabryPerot(Model):
         duration = coarsecurves[0].params["duration"]  # for zooming
         if inputs is None:
             inputs = self.inputs.values()  # all inputs by default
-        curves=[]
+        curves = []
         for sig in inputs:
+            if not isinstance(sig, Signal):
+                sig = self.signals[sig]
             sigscopeparams = dict(scopeparams)
             sigscopeparams.update({
                     'trigger_source': 'ch1_positive_edge',
@@ -160,8 +162,8 @@ class FabryPerot(Model):
                     'duration': duration
                               * self._config.calibrate.zoomfactor,
                     'timeout': duration*10})
-            curves.append(super(FabryPerot, self).calibrate(
-                inputs=[sig], scopeparams=sigscopeparams))
+            curves += super(FabryPerot, self).calibrate(
+                inputs=[sig], scopeparams=sigscopeparams)
             if sig._name == 'reflection':
                 self._config["offresonant_reflection"] = sig._config.max
                 self._config["resonant_reflection"] = sig._config.min
@@ -169,6 +171,8 @@ class FabryPerot(Model):
                 self._config["resonant_transmission"] = sig._config.max
             if sig._name == 'pdh':
                 self._config["peak_pdh"] = (sig._config.max - sig._config.min)/2
+            if sig._name == 'lmsd':
+                sig._config.peak = sig._config.max - sig._config.min)/2
         for c in curves:
             for cc in coarsecurves:
                 if cc.name == c.name:

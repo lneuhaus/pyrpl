@@ -103,14 +103,14 @@ model:
   calibrate:
     zoomfactor: 0.1
     relative_threshold: 0.9
-  peak: 0.07061767578125
+  #peak: 0.07061767578125
   peak_pdh: 0.1053466796875
 # all signals that are inputs of the lockbox. Must be signal names understood
 # by the model.
 inputs:
   reflection:
     redpitaya_input: adc2
-    offset: 0.013536535203456879
+    offset: -0.009436927735805511
     max: 0.3318003788590431
     min: 0.11915389448404312
     mean: 0.31450851261615753
@@ -127,7 +127,18 @@ inputs:
       amplitude_for_finesse: 3.5
       frequency: 80000000.0
       generator: AFG_EVA
-    offset: 0.006534256041049957
+    offset: 0.41716501861810684
+  lmsd:
+    redpitaya_input: adc1
+    peak: 0.5
+    x0: 10
+    phi: 0
+    offset: 0.4171678498387337
+    max: 0.3145216032862663
+    min: -0.2908250764012337
+    mean: -0.0024160444736480713
+    rms: 0.06390966337869076
+    curve: 255988
 # All output signals. Names of outputs are arbitrary. if the 'lock' tab is
 # missing or false, the output will not be used for locking
 outputs:
@@ -151,7 +162,7 @@ outputs:
       lowpass:
       - 0.01
     calibrationunits: m_per_V
-    lastoffset: -0.5556640625
+    lastoffset: -0.556640625
   piezo:
     redpitaya_output: out2
     # we will calibrate the piezo response in units of m_per_V (not a necessary
@@ -250,7 +261,7 @@ outputs:
 
 scope:
   input1: adc1 #adc2
-  input2: dac2
+  input2: adc2 #dac2
   duration: 0.1
   trigger_source: immediately
   average: false

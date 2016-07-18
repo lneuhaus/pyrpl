@@ -7,20 +7,27 @@ from . import *
 
 
 class LMSD(FabryPerot):
+    """ LMSD only serves for error signal generation, not as a lockbox
+    only functionality: iq demodulation, output the error signal to fpm,
+    autotune the phase and frequency of lmsd
+    """
     export_to_parent = ['unlock', 'sweep', 'islocked',
                         'save_current_gain', 'calibrate',
                         'lock']
 
     def setup_lmsd(self):
         curves = self.setup_iq(input='lmsd')
-        if 'lmsd_quadrature' in self.inputs:
-            return curves
-        else:
+        if 'lmsd_quadrature' not in self.inputs:
             self._config._root.inputs['lmsd_quadrature'] = {'redpitaya_input':
                                                          'iq2_2'}
             # execution of Pyrpl._makesignals is required here
             logger.error("LMSD Configuration was incomplete. Please restart "
                        "pyrpl now and the problem should disappear. ")
+        self.unlock()
+        self.outputs["piezo"].pid.input = self.inputs["lmsd"].redpitaya_input
+        self.outputs["piezo"].pid.p = 1.0
+        return curves
+
     def lmsd(self, detuning, amplitude=20.0):
         """
         LMSD error signal
@@ -51,15 +58,32 @@ class LMSD(FabryPerot):
     def lmsd_quadrature(self, detuning):
         return self.pdh(detuning, phase=np.pi/2)
 
-    def calibrate(self):
-        curves = super(FabryPerot, self).calibrate(inputs=['reflection'],
-                                                   scopeparams={
-                                                       'secondsignal':
-                                                           'piezo'})
-        curves += super(FabryPerot, self).calibrate(inputs=['lmsd'],
-                                scopeparams={'secondsignal':'lmsd_quadrature'})
-        return curves
-        #lmsd = curves[-1]
-        #lmsd_quadrature = list(lmsd.childs)[0]
-        #complex = lmsd
+    def calibrate(self, autoset=True):
+        """ sweep is provided by other lockbox"""
+        self.inputs['lmsd']._acquire(secondsignal='lmsd_quadrature')
+        lmsd = self.inputs['lmsd'].curve
+        lmsd_quadrature = self.inputs['lmsd_quadrature'].curve
+        complex_lmsd = lmsd.data + 1j * lmsd_quadrature.data
+        max = complex_lmsd.loc[complex_lmsd.abs().argmax()]
+        phase = np.angle(max, deg=True)
+        self.logger.info('Recommended phase correction for lmsd: %s degrees',
+                         phase)
+        qfactor = self.inputs['lmsd'].iq.quadrature_factor *0.8 / abs(max)
+        self.logger.info('Recommended quadrature factor: %s',
+                         qfactor)
+        if autoset:
+            self._config._root.inputs.lmsd.setup.phase -= phase
+            self._config._root.inputs.lmsd.setup.quadrature_factor = qfactor
+            self.setup_lmsd()
+            self.logger.info('Autoset of iq parameters was executed.')
+        return phase, qfactor
+
+    @property
+    def frequency(self):
+        return self.inputs["lmsd"].iq.frequency
+
+    @frequency.setter
+    def frequency(self, v):
+        self.inputs["lmsd"].iq.frequency = v
+        self.inputs["lmsd"]._config.setup.frequency = v
 

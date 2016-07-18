@@ -276,9 +276,11 @@ class RPSignal(Signal):
             timeout = self._config.timeout
         except KeyError:
             timeout = self._rp.scope.duration*5
-        self._saverawdata(self._rp.scope.curve(ch=1, timeout=timeout), self._rp.scope.times)
+        self._saverawdata(self._rp.scope.curve(ch=1, timeout=timeout),
+                          self._rp.scope.times)
         if secondsignal is not None:
-            secondsignal._saverawdata(self._rp.scope.curve(ch=2, timeout=-1), self._rp.scope.times)
+            secondsignal._saverawdata(self._rp.scope.curve(ch=2, timeout=-1),
+                                      self._rp.scope.times)
         self._restartscope()
 
     @property
@@ -302,11 +304,15 @@ class RPSignal(Signal):
         """ Returns a CurveDB object with the last result of _acquitision """
         curve = super(RPSignal, self).curve
         extraparams = dict(
-            trigger_timestamp = self._rp.scope.trigger_timestamp,
-            duration = self._rp.scope.duration)
+            trigger_timestamp=self._rp.scope.trigger_timestamp,
+            duration=self._rp.scope.duration)
         curve.params.update(extraparams)
         curve.save()
         return curve
+
+    def fit(self, *args, **kwargs):
+        """ shortcut to the function fit of the underlying model """
+        self._parent.fit(input=self, *args, **kwargs)
 
 
 class RPOutputSignal(RPSignal):
