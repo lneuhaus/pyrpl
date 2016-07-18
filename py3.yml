@@ -1,15 +1,16 @@
 name: pyrpl3
 dependencies:
-- python=3.5
-- numpy
+- python=3.5.2
+- numpy>=1.9
 - scipy
 - pandas
 - matplotlib
 - ipython
 - jupyter
-- paramiko
 - nose
+- pyqtgraph
 - pip
 - pip:
     - scp
+    - paramiko>=2.0
     - ruamel.yaml

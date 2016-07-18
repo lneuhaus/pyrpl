@@ -1,16 +1,16 @@
 name: pyrpl
 dependencies:
 - python=2.7
-- numpy
+- numpy>=1.9
 - scipy
 - pandas
 - matplotlib
 - ipython
 - jupyter
-- paramiko
 - nose
 - pyqtgraph
 - pip
 - pip:
     - scp
+    - paramiko>=2.0
     - ruamel.yaml
