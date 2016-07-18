@@ -96,29 +96,13 @@ inputs:
     peak: 0.30322265625
     xmax: 11.370978376182121
     phi: 0
-    offset: 0.0
+    offset: 0.4171678498387337
     max: 0.3129346892237663
     min: -0.2935106232762337
     mean: -0.0035892650485038757
     rms: 0.07346427173403569
     curve: 256020
     variable_per_time: 6120.24734567
-    setup:
-      phase: 151.78104011526398
-      amplitude: 0.25
-      frequency: 3578310.596304364
-      iq: iq2
-      quadrature_factor: 0.046900842392389674
-      gain: 0
-      output_direct: out2
-      output_signal: quadrature
-      input: adc2
-      acbandwidth: 100000.0
-      bandwidth: [1000000.0, 1000000.0, 1000000.0, 1000000.0]
-
-  lmsd_quadrature:
-    redpitaya_input: adc1
-
 # All output signals. Names of outputs are arbitrary. if the 'lock' tab is
 # missing or false, the output will not be used for locking
 outputs:
@@ -180,8 +164,8 @@ outputs:
       waveform: sin
       frequency: 25.0
       amplitude: 0.8
-    max_voltage: 0.75
-    min_voltage: -0.75
+    max_voltage: 0.9998779296875
+    min_voltage: -1.0
     transfer_function:
       open_loop: 254634
   fastpiezo:
