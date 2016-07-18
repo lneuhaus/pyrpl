@@ -16,7 +16,7 @@ class LMSD(FabryPerot):
                         'lock']
 
     def setup_lmsd(self):
-        curves = self.setup_iq(input='lmsd')
+        self.setup_iq(input='lmsd')
         if 'lmsd_quadrature' not in self.inputs:
             self._config._root.inputs['lmsd_quadrature'] = {'redpitaya_input':
                                                          'iq2_2'}
@@ -26,7 +26,6 @@ class LMSD(FabryPerot):
         self.unlock()
         self.outputs["piezo"].pid.input = self.inputs["lmsd"].redpitaya_input
         self.outputs["piezo"].pid.p = 1.0
-        return curves
 
     def lmsd(self, detuning, amplitude=20.0):
         """

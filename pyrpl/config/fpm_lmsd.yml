@@ -3,7 +3,7 @@ redpitaya:
   password: root
   user: root
   port: 2222
-  frequency_correction: 1.00004121095
+  frequency_correction: 0.9999802723463688
   #0.9999801526493788
   filename: fpga//red_pitaya.bin
   reloadfpga: true
@@ -73,7 +73,7 @@ model:
 inputs:
   reflection:
     redpitaya_input: adc2
-    offset: -0.009436927735805511
+    offset: -0.008418969810009003
     max: 0.3318003788590431
     min: 0.11915389448404312
     mean: 0.31450851261615753
@@ -90,13 +90,13 @@ inputs:
       amplitude_for_finesse: 3.5
       frequency: 80000000.0
       generator: AFG_EVA
-    offset: 0.41716501861810684
+    offset: -0.011245273053646088
   lmsd:
-    redpitaya_input: adc1
-    peak: 0.30322265625
+    redpitaya_input: iq2
+    peak: -0.7
     xmax: 11.370978376182121
     phi: 0
-    offset: 0.0
+    offset: 0.0004473179578781128
     max: 0.3129346892237663
     min: -0.2935106232762337
     mean: -0.0035892650485038757
@@ -104,21 +104,21 @@ inputs:
     curve: 256020
     variable_per_time: 6120.24734567
     setup:
-      phase: 151.78104011526398
+      phase: 279.0
       amplitude: 0.25
-      frequency: 3578310.596304364
+      frequency: 3578311.494579257  #3578311.5236825133
       iq: iq2
-      quadrature_factor: 0.046900842392389674
+      quadrature_factor: 0.05800179216185393
       gain: 0
       output_direct: out2
       output_signal: quadrature
       input: adc2
       acbandwidth: 100000.0
       bandwidth: [1000000.0, 1000000.0, 1000000.0, 1000000.0]
-
   lmsd_quadrature:
     redpitaya_input: adc1
 
+    offset: -0.01122669130563736
 # All output signals. Names of outputs are arbitrary. if the 'lock' tab is
 # missing or false, the output will not be used for locking
 outputs:
@@ -142,7 +142,7 @@ outputs:
       lowpass:
       - 0.01
     calibrationunits: m_per_V
-    lastoffset: -0.55712890625
+    lastoffset: -0.5400390625
   piezo:
     redpitaya_output: out2
     # we will calibrate the piezo response in units of m_per_V (not a necessary
@@ -179,7 +179,7 @@ outputs:
     sweep:
       waveform: sin
       frequency: 25.0
-      amplitude: 0.8
+      amplitude: 0.75
     max_voltage: 0.75
     min_voltage: -0.75
     transfer_function:
@@ -240,8 +240,8 @@ outputs:
 ##############################################################################
 
 scope:
-  input1: adc1 #adc2
-  input2: adc2 #dac2
+  input1: iq2 #adc2
+  input2: iq2_2 #dac2
   duration: 0.1
   trigger_source: immediately
   average: false

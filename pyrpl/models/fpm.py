@@ -6,6 +6,7 @@ logger = logging.getLogger(name=__name__)
 from . import *
 from ..curvedb import CurveDB
 from .. import fitting
+from pyqtgraph.Qt import QtCore
 
 class FPM(FabryPerot):
     """ custom class for the measurement fabry perot of the ZPM experiment """
@@ -135,6 +136,17 @@ class FPM_LMSD(FPM):
     #    self._parent.constants = self._parent.c.constants
 
     def setup_lmsd(self):
+        self._disable_pdh()
+        self.setup_iq(input='lmsd')
+        if 'lmsd_quadrature' not in self.inputs:
+            self._config._root.inputs['lmsd_quadrature'] = {'redpitaya_input':
+                                                                'iq2_2'}
+            # execution of Pyrpl._makesignals is required here
+            logger.error("LMSD Configuration was incomplete. Please restart "
+                         "pyrpl now and the problem should disappear. ")
+        self.unlock()
+
+    def setup_lmsd_external(self):
         self._disable_pdh()
         if not hasattr(self, 'l'):
             from pyrpl import Pyrpl
@@ -270,3 +282,146 @@ class FPM_LMSD(FPM):
             self.inputs['lmsd']._config.variable_per_time = fitcurve.params[
                 "variable_per_time"]
         return fitcurve
+
+    def lmsd_quadrature(self, detuning):
+        return self.pdh(detuning, phase=np.pi / 2)
+
+    def calibrate_lmsd(self, autoset=True):
+        """ sweep is provided by other lockbox"""
+        self.inputs['lmsd']._acquire(secondsignal='lmsd_quadrature')
+        lmsd = self.inputs['lmsd'].curve
+        lmsd_quadrature = self.inputs['lmsd_quadrature'].curve
+        complex_lmsd = lmsd.data + 1j * lmsd_quadrature.data
+        max = complex_lmsd.loc[complex_lmsd.abs().argmax()]
+        phase = np.angle(max, deg=True)
+        self.logger.info('Recommended phase correction for lmsd: %s degrees',
+                         phase)
+        qfactor = self.inputs['lmsd'].iq.quadrature_factor * 0.8 / abs(max)
+        self.logger.info('Recommended quadrature factor: %s',
+                         qfactor)
+        if autoset:
+            self._config._root.inputs.lmsd.setup.phase -= phase
+            self._config._root.inputs.lmsd.setup.quadrature_factor = qfactor
+            self.setup_lmsd()
+            self.logger.info('Autoset of iq parameters was executed.')
+        return phase, qfactor
+
+
+    @property
+    def frequency(self):
+        return self.inputs["lmsd"].iq.frequency
+
+    @frequency.setter
+    def frequency(self, v):
+        self.inputs["lmsd"].iq.frequency = v
+        self.inputs["lmsd"]._config.setup.frequency = v
+
+    def adjustfrequency(self, timeout=-1, minstep=None, threshold=None):
+        if hasattr(self, 'ftimer'):
+            if timeout > 0:
+                self.ftimer.stop()
+        else:
+            self.ftimer = QtCore.QTimer()
+        if not hasattr(self, 'fthreshold'):
+            self.fthreshold = threshold or 0.1
+        if not hasattr(self, 'fminstep'):
+            self.fminstep = minstep or 0.015
+        self._parent.rp.scope.setup()
+        c1 = self._parent.rp.scope.curve(ch=1)
+        c2 = self._parent.rp.scope.curve(ch=2)
+        c = c2/c1
+        rel = c[c is not np.nan].mean()
+        if rel > self.fthreshold:
+            self.inputs['lmsd'].iq.frequency += self.fminstep
+        elif rel < -self.fthreshold:
+            self.inputs['lmsd'].iq.frequency -= self.fminstep
+        print (rel, self.frequency)
+        if timeout == 0:
+            return
+        elif timeout > 0:
+            self.ftimeout = timeout
+            self.ftimer.timeout.connect(self.adjustfrequency)
+            self.ftimer.start(self.ftimeout)
+
+
+    def adjustphase(self, timeout=-1, minstep=None, threshold=None):
+        if not hasattr(self, 'lasttime'):
+            self.lasttime = 0
+        if not hasattr(self, 'ftimeout'):
+            self.ftimeout = 10000
+        if hasattr(self, 'ftimer'):
+            if timeout > 0:
+                self.ftimer.stop()
+        else:
+            self.ftimer = QtCore.QTimer()
+        if not hasattr(self, 'fthreshold'):
+            self.fthreshold = threshold or 0.1
+        if not hasattr(self, 'fminstep'):
+            self.fminstep = minstep or 3
+        from time import time
+        if time()-self.ftimeout/1000 < self.lasttime:
+            return
+        self._parent.rp.scope.setup()
+        c1 = self._parent.rp.scope.curve(ch=1)
+        c2 = self._parent.rp.scope.curve(ch=2)
+        c = c2 / c1
+        rel = c[c is not np.nan].mean()
+        if rel > self.fthreshold:
+            self.inputs['lmsd'].iq.phase += self.fminstep
+        elif rel < -self.fthreshold:
+            self.inputs['lmsd'].iq.phase -= self.fminstep
+        self.lasttime = time()
+        print (rel)
+        if timeout == 0:
+            return
+        elif timeout > 0:
+            self.ftimeout = timeout
+            self.ftimer.timeout.connect(self.adjustphase)
+            self.ftimer.start(self.ftimeout)
+
+    def setup_pll(self, timeout=1.0, gain=1, threshold=0.1,
+                  whileloop=False, sound=False):
+        self.pll_gain = gain or self.pll_gain
+        self.pll_threshold = threshold or self.pll_threshold
+        self.pll_timeout = timeout or 1.0
+        self.pll_sound = sound
+        iq = self.inputs['lmsd'].iq
+        t0 = time.time()
+        # setup na measurement of both quadratures
+        iq._na_averages = np.int(np.round(125e6*self.pll_timeout))
+        iq._na_sleepcycles = 0
+        # trigger
+        iq.frequency = iq.frequency
+        if whileloop:
+            while True:
+                if time.time()-self.pll_timeout < t0:
+                    time.sleep(0.001)
+                    continue
+                else:
+                    self.pll_step()
+                    t0 = time.time()
+        else:
+            if hasattr(self, 'timer'):
+                self.timer.stop()
+                self.timer.timeout.disconnect()
+            else:
+                self.timer = QtCore.QTimer()
+            self.timer.timeout.connect(self.pll_step)
+            self.timer.start(int(timeout*1000))
+
+    def pll_step(self):
+        iq = self.inputs['lmsd'].iq
+        # get data from accumulator
+        y = iq._nadata
+        if y != 0:
+            # stabilizing action
+            phase = np.angle(y, deg=True)
+            iq.phase -= self.pll_gain*phase
+        # diagnostics
+        if self.pll_sound:
+            from ..sound import sine
+            sine(2000, duration=0.05)
+            self.logger.info('y=%s, iqphase=%s, pllphase=%s',
+                             y, iq.phase, phase)
+        # trigger accumulator for next step
+        iq.frequency = iq.frequency

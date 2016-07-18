@@ -1212,7 +1212,7 @@ class IQ(FilterModule):
 
     _na_averages = Register(0x130, 
                     doc='number of cycles to perform na-averaging over')
-    _na_sleepcycles = Register(0x130, 
+    _na_sleepcycles = Register(0x134,
                     doc='number of cycles to wait before starting to average')
 
     @property
