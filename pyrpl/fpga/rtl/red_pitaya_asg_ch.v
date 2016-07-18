@@ -68,7 +68,12 @@ module red_pitaya_asg_ch #(
    input     [  CYCLE_BITS-1: 0] set_ncyc_i      ,  //!< set number of cycle
    input     [  16-1: 0] set_rnum_i      ,  //!< set number of repetitions
    input     [  32-1: 0] set_rdly_i      ,  //!< set delay between repetitions
-   input                 set_rgate_i        //!< set external gated repetition
+   input                 set_rgate_i     ,  //!< set external gated repetition
+
+
+   input                 rand_on_i     , // random number generator on
+   input     [RSZ-1:0]   rand_pnt_i      // random pointer for output data
+
 );
 
 //---------------------------------------------------------------------------------
@@ -92,7 +97,7 @@ reg   [  15-1: 0] dac_sum   ;
 always @(posedge dac_clk_i)
 begin
    buf_rpnt_o <= dac_pnt[RSZ+15:16];
-   dac_rp     <= dac_pnt[RSZ+15:16];
+   dac_rp     <= (rand_on_i == 1'b1) ? rand_pnt_i : dac_pnt[RSZ+15:16];
    dac_rd     <= dac_buf[dac_rp] ;
    dac_rdat   <= dac_rd ;  // improve timing
 end

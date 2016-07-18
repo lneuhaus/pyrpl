@@ -660,13 +660,19 @@ def make_asg(channel=1):
         delay_between_bursts = Register(0x20+_VALUE_OFFSET,
                     doc="Delay between repetitions [us]. Granularity=1us")
 
+        random_phase = BoolRegister(0x0, 11+_BIT_OFFSET,
+                        doc='If True, the phase of the asg will be '
+                            'pseudo-random with a period of 2**31-1 '
+                            'cycles. This is used for the generation of '
+                            'white noise. If false, asg behaves normally. ')
+
         @property
         def waveform(self):
             return self._waveform
 
         @property
         def waveforms(self):
-            return ['sin', 'cos', 'ramp', 'halframp', 'dc']
+            return ['sin', 'cos', 'ramp', 'halframp', 'dc', 'noise']
 
         @waveform.setter
         def waveform(self, waveform):
@@ -674,6 +680,9 @@ def make_asg(channel=1):
             if not waveform in self.waveforms:
                 raise ValueError("waveform shourd be one of " + self.waveforms)
             else:
+                if not waveform == 'noise':
+                    self.random_phase = False
+                    self._rmsamplitude = 0
                 if waveform == 'sin':
                     x = np.linspace(0, 2 * np.pi, self.data_length,
                                     endpoint=False)
@@ -691,6 +700,12 @@ def make_asg(channel=1):
                                     endpoint=False)
                 elif waveform == 'dc':
                     y = np.zeros(self.data_length)
+                elif waveform == 'noise:':
+                    self._rmsamplitude = self.amplitude
+                    y = np.random.normal(loc=0.0, scale=self._rmsamplitude,
+                                         size=self.data_length)
+                    self.amplitude = 1.0  # this may be confusing to the user..
+                    self.random_phase = True
                 else:
                     y = self.data
                     self._logger.error(
@@ -748,12 +763,12 @@ def make_asg(channel=1):
                   bursts=None,
                   delay_between_bursts=None):
             """
-            Sets up the function generator
+            Sets up the function generator.
 
             Parameters
             ----------
             waveform: str
-                must be one of ['sin", cos', 'ramp', 'DC', 'halframp']
+                must be one of ['sin', cos', 'ramp', 'DC', 'halframp']
             frequency: float
                 waveform frequency in Hz.
             amplitude: float
