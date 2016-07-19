@@ -184,7 +184,7 @@ red_pitaya_asg_ch  #(.RSZ (RSZ)) ch [1:0] (
   .set_rnum_i      ({set_b_rnum       , set_a_rnum       }),  // set number of repetitions
   .set_rdly_i      ({set_b_rdly       , set_a_rdly       }),  // set delay between repetitions
   .set_rgate_i     ({set_b_rgate      , set_a_rgate      }),  // set external gated repetition
-  .rand_on_i       ({rand_a_on        , rand_b_on        }),
+  .rand_on_i       ({rand_b_on        , rand_a_on        }),
   .rand_pnt_i      ({rand_pnt         , rand_pnt         })
 );
 
@@ -318,8 +318,8 @@ end else begin
    ack_dly <=  ren_dly[3-1] || sys_wen ;
 end
 
-wire [32-1: 0] r0_rd = {4'h0,at_autorearm_b,at_invert_b,at_reset_b,set_b_rgate, set_b_zero,set_b_rst,set_b_once,set_b_wrap, 1'b0,trig_b_src,
-                        4'h0,at_autorearm_a,at_invert_a,at_reset_a,set_a_rgate, set_a_zero,set_a_rst,set_a_once,set_a_wrap, 1'b0,trig_a_src };
+wire [32-1: 0] r0_rd = {3'h0,rand_b_on,at_autorearm_b,at_invert_b,at_reset_b,set_b_rgate, set_b_zero,set_b_rst,set_b_once,set_b_wrap, 1'b0,trig_b_src,
+                        3'h0,rand_a_on,at_autorearm_a,at_invert_a,at_reset_a,set_a_rgate, set_a_zero,set_a_rst,set_a_once,set_a_wrap, 1'b0,trig_a_src };
 
 wire sys_en;
 assign sys_en = sys_wen | sys_ren;
@@ -413,7 +413,7 @@ if (dac_rstn_i == 1'b0) begin
    b <= 31'd323485697;   // whatever
    xn <= 31'd901448241 ; // whatever
 end else begin
-   xn <= ((|xn_wire)==1'b1) ? 31'd0 : xn_wire; // = modulo 2**31-1
+   xn <= ((&xn_wire)==1'b1) ? 31'd0 : xn_wire; // = modulo 2**31-1
 end
 
 assign xn_wire = a * xn + b;

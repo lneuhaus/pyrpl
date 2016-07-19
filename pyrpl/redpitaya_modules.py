@@ -660,7 +660,7 @@ def make_asg(channel=1):
         delay_between_bursts = Register(0x20+_VALUE_OFFSET,
                     doc="Delay between repetitions [us]. Granularity=1us")
 
-        random_phase = BoolRegister(0x0, 11+_BIT_OFFSET,
+        random_phase = BoolRegister(0x0, 12+_BIT_OFFSET,
                         doc='If True, the phase of the asg will be '
                             'pseudo-random with a period of 2**31-1 '
                             'cycles. This is used for the generation of '
@@ -700,7 +700,7 @@ def make_asg(channel=1):
                                     endpoint=False)
                 elif waveform == 'dc':
                     y = np.zeros(self.data_length)
-                elif waveform == 'noise:':
+                elif waveform == 'noise':
                     self._rmsamplitude = self.amplitude
                     y = np.random.normal(loc=0.0, scale=self._rmsamplitude,
                                          size=self.data_length)
