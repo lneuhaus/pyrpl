@@ -13,8 +13,7 @@ class FPM(FabryPerot):
 
     export_to_parent = FabryPerot.export_to_parent \
                        + ["relative_pdh_rms", "relative_reflection",
-                          "setup_ringdown", "teardown_ringdown", "lock_lmsd",
-                          "setup_lmsd"]
+                          "setup_ringdown", "teardown_ringdown"]
 
     def setup(self):
         super(FPM, self).setup()
@@ -131,6 +130,8 @@ class FPM(FabryPerot):
                                coarse]._config.analogfilter.lowpass)
 
 class FPM_LMSD(FPM):
+    export_to_parent = FPM.export_to_parent \
+                       + ["lock_lmsd", "setup_lmsd"]
     #def setup(self):
     #    super(FPM_LMSD, self).setup()
     #    self._parent.constants = self._parent.c.constants

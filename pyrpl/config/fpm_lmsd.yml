@@ -105,7 +105,7 @@ inputs:
     variable_per_time: 6120.24734567
     setup:
       phase: 279.0
-      amplitude: 0.25
+      amplitude: 0.05
       frequency: 3578311.494579257  #3578311.5236825133
       iq: iq2
       quadrature_factor: 0.05800179216185393
@@ -142,7 +142,7 @@ outputs:
       lowpass:
       - 0.01
     calibrationunits: m_per_V
-    lastoffset: -0.989990234375
+    lastoffset: -0.4432373046875
   piezo:
     redpitaya_output: out2
     # we will calibrate the piezo response in units of m_per_V (not a necessary
