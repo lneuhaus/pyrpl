@@ -261,7 +261,10 @@ class BodeFit(BodePlot):
         sys = iir.rescale(zeros, poles, self.gain)
         if frequencies is None:
             frequencies = self.x
-        y = iir.tf_continuous(sys, frequencies=frequencies)
+        if not self.zeros and not self.poles:
+            y = np.array(frequencies, dtype=np.complex)*0j+self.gain
+        else:
+            y = iir.tf_continuous(sys, frequencies=frequencies)
         return pandas.Series(y, index=frequencies)
 
     def loadfit(self, id=None):
@@ -433,6 +436,20 @@ class BodeFitGui(BodeFit):
         elif event.key == 'f9':
             self.default()
             sine(5000, 0.1)
+            return
+        elif event.key == 'f5':
+            if not hasattr(self, 'iirplot'):
+                self.iirplot = True
+            if hasattr(self, 'lockbox') and not hasattr(self, 'iir'):
+                self.iir = self.lockbox.rp.iir
+            if hasattr(self, 'iir'):
+                self.iir.setup(zeros=self.zeros,
+                               poles=self.poles,
+                               gain=self.gain,
+                               loops=self.loops,
+                               plot=self.iirplot)
+            sine(1000, 0.1)
+            self.refresh()
             return
         elif event.key == 'd':
             if self.actpole is not None:
