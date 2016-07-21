@@ -459,18 +459,20 @@ class RPOutputSignal(RPSignal):
         else:
             return False
 
-    def off(self):
+    def off(self, ival=True):
         """ Turns off all feedback gains, sweeps and sets the offset to
-        zero. """
+        zero. If ival is false, ival is not included here"""
         self.pid.p = 0
         self.pid.i = 0
         self.pid.d = 0
-        self.pid.ival = 0
+        if ival:
+            self.pid.ival = 0
         if hasattr(self, 'pid2'):
             self.pid2.i = 0
             self.pid2.p = 1
             self.pid2.d = 0
-            self.pid2.ival = 0
+            if ival:
+                self.pid2.ival = 0
 
     def unlock(self):
         """ Turns the signal lock off if the signal is used for locking """
@@ -486,7 +488,8 @@ class RPOutputSignal(RPSignal):
              factor=1.0,
              offset=None,
              second_integrator=0,
-             setup_iir=False):
+             setup_iir=False,
+             skipskip=False):
         """
         Enables feedback with this output. The realized transfer function of
         the pid plus specified external analog filters is a pure integrator if
@@ -520,14 +523,15 @@ class RPOutputSignal(RPSignal):
             switch on the iir filter only in the final step. This results in a
             gain in speed and avoids saturation of internal degrees of
             freedom of the IIR.
-
+        skipskip: bool
+            overrides a 'skip' configuration of the output in case it is set
         Returns
         -------
         None
         """
 
         # if output is disabled for locking, skip the rest
-        if self._skiplock:
+        if self._skiplock and not skipskip:
             return
 
         # normalize slope to our units
@@ -603,11 +607,17 @@ class RPOutputSignal(RPSignal):
 
         # get inputoffset
         if input is None:
-            inputbranch = self._config._root.inputs["self.pid.input"]
-            if inputbranch.offset_subtraction:
-                inputoffset = inputbranch.offset
-            else:
+            try:
+                inputbranch = self._config._root.inputs[self.pid.input]
+            except KeyError:
                 inputoffset = 0
+                logger.warning("Inputbranch for %s wasn't found. No way to "
+                               "correct for its offset. ", self.pid.input)
+            else:
+                if inputbranch.offset_subtraction:
+                    inputoffset = inputbranch.offset
+                else:
+                    inputoffset = 0
         else:
             inputoffset = input.offset
 

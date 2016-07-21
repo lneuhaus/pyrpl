@@ -13,7 +13,7 @@ class FPM(FabryPerot):
 
     export_to_parent = FabryPerot.export_to_parent \
                        + ["relative_pdh_rms", "relative_reflection",
-                          "setup_ringdown", "teardown_ringdown"]
+                          "setup_ringdown", "teardown_ringdown", "sweep"]
 
     def setup(self):
         super(FPM, self).setup()
@@ -126,8 +126,82 @@ class FPM(FabryPerot):
         self.sweep()
         coarsepid = self.outputs[coarse].pid
         coarse.ival = -1
-        coarsebw = sorted(self.outputs[
-                               coarse]._config.analogfilter.lowpass)
+        coarsebw = sorted(self.outputs[coarse]._config.analogfilter.lowpass)
+
+    def find_coarse(self, actuator='slow', modulator='piezo', factor=0.5,
+                    quadrature_factor=0.25, duration=50.0, offset=0.8):
+        self.unlock()
+        modulator = self.outputs[modulator]
+        actuator = self.outputs[actuator]
+        # immediately put the actuator towards end rail so its capacitor can
+        # start charging
+        actuator.pid.ival = actuator._config.max_voltage
+
+        # turn off pdh
+        self._disable_pdh()
+
+        # generate modulation
+        if not hasattr(actuator, 'iq'):
+            actuator.iq = self._parent.rp.iqs.pop()
+        iq = actuator.iq
+        f = modulator._config.sweep.frequency
+        bw = f/2
+        acbw = 5
+        while bw < acbw * 2:
+            bw *= 2
+        # optimal phase for demodulation
+        p = -np.angle(modulator._analogfilter(f), deg=True)
+        iq.setup(frequency=f,
+                 phase=p,
+                 amplitude=modulator._config.sweep.amplitude,
+                 output_direct=modulator._config.redpitaya_output,
+                 output_signal="quadrature",
+                 quadrature_factor=quadrature_factor,
+                 input=self.inputs['reflection'].redpitaya_input,
+                 gain=0,
+                 acbandwidth=acbw,
+                 bandwidth=[bw, bw])
+
+        # setup the scope to show the interesting signals
+        self._parent.rp.scope.input1 = iq
+        self._parent.rp.scope.input2 = actuator.pid
+        self._parent.rp.scope.duration = 8.0
+        # the resulting signal in iq.name will be negative if the resonance
+        # is at the low end and positive at the high end of piezo
+        # this is inversed because the resonance dip goes towards negative
+        # voltage
+        # thus, we must apply positive gain as long as actuator and piezo
+        # move the cavity length in the same direction
+        # we must express slope in calibunits-reversed
+        calibunit = actuator._config.calibrationunits
+        span_per_V = modulator._config[calibunit]
+        span = modulator._config.sweep.amplitude * span_per_V
+        span *= abs(modulator._analogfilter(f))  # lowpass correction
+        # slope is 1V per span - roughly since we dont know the amplitude
+        slope = - 1.0/span  # inversion cause reflection is negative
+        # estimate integrator sweep rate - electrical i-gain
+        i_gain = -actuator._config.lock.unity_gain_frequency/slope
+        # sweep rate is 2*pi*i_gain*setpoint
+        # therefore duraton = 2V/sweeprate
+        setpoint = 0.05  # 1.0 / duration / np.pi / i_gain
+        # set input already here
+        actuator.pid.input = iq
+        actuator.lock(slope,
+                      setpoint=setpoint,
+                      input=None,  # no signal has been configured so we set
+                                   # input manually
+                      factor=factor,
+                      offset=offset,
+                      second_integrator=0,
+                      setup_iir=False,
+                      skipskip=True)
+
+    def sweep(self):
+        self._parent.slow.off(ival=False)
+        if hasattr(self._parent.slow, 'iq'):
+            self._parent.slow.iq.amplitude = 0
+        return super(FPM, self).sweep()
+
 
 class FPM_LMSD(FPM):
     export_to_parent = FPM.export_to_parent \
@@ -343,7 +417,6 @@ class FPM_LMSD(FPM):
             self.ftimeout = timeout
             self.ftimer.timeout.connect(self.adjustfrequency)
             self.ftimer.start(self.ftimeout)
-
 
     def adjustphase(self, timeout=-1, minstep=None, threshold=None):
         if not hasattr(self, 'lasttime'):
