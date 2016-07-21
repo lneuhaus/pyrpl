@@ -37,8 +37,8 @@ model:
   # for interferometer, this is the phase error in radians
   # this value is uniquely needed for the function 'islocked'
   maxerror: 0.1
-  offresonant_reflection: 0.3318003788590431
-  resonant_reflection: 0.11915389448404312
+  offresonant_reflection: 0.3990853652358055
+  resonant_reflection: 0.01651700586080551
   finesse: 92000.0
   length: 5.61e-05
   # signals in order of their preferrence
@@ -110,17 +110,18 @@ model:
 inputs:
   reflection:
     redpitaya_input: adc2
-    offset: -0.009436927735805511
-    max: 0.3318003788590431
-    min: 0.11915389448404312
-    mean: 0.31450851261615753
-    rms: 0.021067970069186565
+    offset: -0.011365257203578949
+    max: 0.3990853652358055
+    min: 0.01651700586080551
+    mean: 0.38292672485113144
+    rms: 0.032320779910977857
+    curve: 256396
   pdh:
     redpitaya_input: adc1
-    max: 0.10808976739645004
-    min: -0.10260359197854996
-    mean: -0.0013632923364639282
-    rms: 0.01862275802942001
+    max: -0.028544921875
+    min: -0.033793945312500004
+    mean: -0.031282831430435185
+    rms: 0.000591025224358589
     setup:
       phase: -5
       amplitude: 4.0
@@ -128,6 +129,7 @@ inputs:
       frequency: 80000000.0
       generator: AFG_EVA
     offset: 0.02
+    curve: 256382
 # All output signals. Names of outputs are arbitrary. if the 'lock' tab is
 # missing or false, the output will not be used for locking
 outputs:
@@ -155,7 +157,7 @@ outputs:
       lowpass:
       - 0.05
     calibrationunits: m_per_V
-    lastoffset: 0.300048828125
+    lastoffset: 0.54541015625
   piezo:
     redpitaya_output: out2
     # we will calibrate the piezo response in units of m_per_V (not a necessary
