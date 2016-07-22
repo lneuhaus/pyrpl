@@ -481,7 +481,7 @@ class FPM_LMSD(FPM):
 
     def correct_angle(self):
         angle = self.estimate_angle()
-        self.rrp.iq2.phase -= angle
+        self.rrp.iq2.phase -= angle*self._config.pll.angle_gain
         return angle
 
     def setup_pll(self, timeout=1.0):

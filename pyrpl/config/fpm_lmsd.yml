@@ -73,7 +73,8 @@ model:
     na_samples: 1000
     amp_gain: 0.0
     amp_setpoint: 1.0
-
+    angle_gain: 1.0
+    
 # all signals that are inputs of the lockbox. Must be signal names understood
 # by the model.
 inputs:
