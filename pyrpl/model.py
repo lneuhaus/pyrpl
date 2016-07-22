@@ -4,6 +4,7 @@ import logging
 import time
 import threading
 
+
 logger = logging.getLogger(name=__name__)
 
 class Model(object):

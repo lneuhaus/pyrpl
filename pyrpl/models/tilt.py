@@ -4,6 +4,7 @@ import logging
 import time
 logger = logging.getLogger(name=__name__)
 from . import *
+from pyinstruments import CurveDB
 
 
 class TEM02FabryPerot(FabryPerot):
@@ -11,13 +12,37 @@ class TEM02FabryPerot(FabryPerot):
                         'save_current_gain', 'calibrate',
                         'lock_tilt', 'lock_transmission', 'lock', 'get_tilt_offset']
 
+    #def tilt(self, detuning):
+    #    return self._lorentz_slope_normalized(detuning)*self._parent.tilt._config.slope_sign \
+    #           * 0.5 * (self._parent.tilt._config.max-self._parent.tilt._config.min)
+
+
+    def _tilt(self, detuning, scale=1.0, y0=0, phase=0, eta=1):
+        #detuning = (self.x()-x0)*detuning_per_time
+        #    return self._lorentz_slope_normalized(detuning)*scale+y0
+        #eta = 1.0
+        phase*=np.pi/180.0
+        def a_ref(x):
+            return 1 - eta / (1 + 1j * x)
+        x = detuning
+        return scale*np.real(a_ref(x) * np.exp(1j * phase)) - np.real(a_ref(100000) * np.exp(1j * phase))/eta+y0
+
     def tilt(self, detuning):
-        return self._lorentz_slope_normalized(detuning)*self._parent.tilt._config.slope_sign \
-               * 0.5 * (self._parent.tilt._config.max-self._parent.tilt._config.min)
+        id = self._config.tilt_fit
+        cp = CurveDB.get(id).params
+        params = dict()
+        for param in ['scale', 'y0', 'phase', 'eta']:
+            params[param] = cp[param]
+        return self._tilt(detuning, **params)
 
     def transmission(self, detuning):
         return self._lorentz(detuning)*self._parent.transmission._config.max \
                + self._parent.transmission._config.min
+
+    def _tilt_normalized(self, x, phase=0):
+        def a_ref(x):
+            return 1 - eta / (1 + 1j * x)
+        return np.real(a_ref(x) * np.exp(1j * phase))
 
     #def calibrate(self):
     #    self.unlock()
