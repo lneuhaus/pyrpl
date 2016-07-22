@@ -1405,7 +1405,7 @@ class IQ(FilterModule):
 
 class IIR(FilterModule):
     _minloops = 5  # minimum number of loops for correct behaviour
-
+    _maxloops = 1023
     # the first biquad (self.coefficients[0] has _delay cycles of delay
     # from input to output_signal. Biquad self.coefficients[i] has
     # _delay+i cycles of delay.
@@ -1628,11 +1628,11 @@ class IIR(FilterModule):
                             "be implemented.")
         if loops < minloops:  # warning has already be issued in make_proper_tf
             loops = minloops
-        elif loops > 255:
-            self._logger.warning("Maximum loops number is 255. This value "
+        elif loops > self._maxloops:
+            self._logger.warning("Maximum loops number is %s. This value "
                                  "will be tried instead of specified value "
-                                 "%s.", loops)
-            loops = 255
+                                 "%s.", self._maxloops, loops)
+            loops = self._maxloops
         self.loops = loops
         self._logger.info("Filter sampling frequency is %.3s MHz",
                           1e-6/self.sampling_time)
@@ -1778,11 +1778,11 @@ class IIR(FilterModule):
                      k)
                     for k in ["continuous",
                               "before_partialfraction_continuous",
-                              "before_partialfraction_discrete",
+                              #"before_partialfraction_discrete",
                               #"before_partialfraction_discrete_zoh",
                               "discrete",
                               #"discrete_samplehold",
-                              #"highprecision",
+                              "highprecision",
                               "implemented"]]
 
         elif kind == "continuous":

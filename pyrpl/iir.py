@@ -522,6 +522,7 @@ def prewarp(sys, dt=8e-9):
         freq = w / 2.0 / np.pi
         if np.imag(freq) == 0:
             freq = np.abs(freq)
+            return 1.0  # do not prewarm real poles/zeros
         else:
             freq = np.abs(np.imag(freq))
         if freq == 0:
@@ -532,6 +533,13 @@ def prewarp(sys, dt=8e-9):
                 logger.warning("Negative correction factor %s obtained "
                                "during prewarp for frequency %s. "
                                "Setting correction factor to 1!",
+                               correction, freq)
+                return 1.0
+            elif correction > 2.0:
+                logger.warning("Correction factor %s > 2 obtained"
+                               "during prewarp for frequency %s. "
+                               "Setting correction factor to 1 but this "
+                               "seems wrong!",
                                correction, freq)
                 return 1.0
             else:
