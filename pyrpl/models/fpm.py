@@ -7,6 +7,7 @@ from . import *
 from ..curvedb import CurveDB
 from .. import fitting
 from pyqtgraph.Qt import QtCore
+from pyinstruments.datalogger.models import SensingDevice
 
 class FPM(FabryPerot):
     """ custom class for the measurement fabry perot of the ZPM experiment """
@@ -453,22 +454,53 @@ class FPM_LMSD(FPM):
             self.ftimer.timeout.connect(self.adjustphase)
             self.ftimer.start(self.ftimeout)
 
-    def setup_pll(self, timeout=1.0, gain=1, threshold=0.1,
-                  whileloop=False, sound=False):
-        self.pll_gain = gain or self.pll_gain
-        self.pll_threshold = threshold or self.pll_threshold
+
+    def estimate_amplitude(self):
+        x, y = self.rrp.iq0.na_trace(input='iq2', output_direct='out2',
+                                start=688000,
+                     stop=690000, rbw=[75,75], points=101, amplitude=0.1,
+                     logscale=False, avg=1)
+        m = np.mean(y.abs())
+        self.amplogger.log(m)
+        return m
+
+    def correct_amplitude(self):
+        m = self.estimate_amplitude()
+        gain = self._config.pll.amp_gain
+        self.rrp.iq2.amplitude *= (m/self._config.pll.amp_setpoint)**gain
+        return m
+
+    def estimate_angle(self):
+        m = np.zeros(self._config.pll.na_samples, dtype=np.complex)
+        for i in range(len(m)):
+            self.rrp.iq2.frequency = self.rrp.iq2.frequency
+            m[i] = r.lmsd.iq._nadata
+        angle = (np.angle(m * 1j, deg=True) % 180 - 90).mean()
+        self.phaselogger.log(angle)
+        return angle
+
+    def correct_angle(self):
+        angle = self.estimate_angle()
+        self.rrp.iq2.phase -= angle
+        return angle
+
+    def setup_pll(self, timeout=1.0):
+        if not hasattr(self, 'rrp'):
+            #self._parent.rp.make_a_slave() # make a new interface to avoid conflicts
+            self.rrp = self._parent.rp
+        self.phaselogger = SensingDevice(name='pll_phase')
+        self.amplogger = SensingDevice(name='pll_amplitude')
         self.pll_timeout = timeout or 1.0
-        self.pll_sound = sound
-        iq = self.inputs['lmsd'].iq
+        iq = self.rrp.iq2
         t0 = time.time()
         # setup na measurement of both quadratures
-        iq._na_averages = np.int(np.round(125e6*self.pll_timeout))
-        iq._na_sleepcycles = 0
-        # trigger
-        iq.frequency = iq.frequency
+        p = self.estimate_angle()
+        a = self.estimate_amplitude()
+        print "Current phase: %f" % p
+        print "Current amplitude: %f" % a
         if whileloop:
             while True:
-                if time.time()-self.pll_timeout < t0:
+                if time.time() - self.pll_timeout < t0:
                     time.sleep(0.001)
                     continue
                 else:
@@ -481,21 +513,64 @@ class FPM_LMSD(FPM):
             else:
                 self.timer = QtCore.QTimer()
             self.timer.timeout.connect(self.pll_step)
-            self.timer.start(int(timeout*1000))
+            self.timer.start(int(timeout * 1000))
 
+    # stop the whole thing with:
+    # r.model.timer.stop()
     def pll_step(self):
-        iq = self.inputs['lmsd'].iq
-        # get data from accumulator
-        y = iq._nadata
-        if y != 0:
-            # stabilizing action
-            phase = np.angle(y, deg=True)
-            iq.phase -= self.pll_gain*phase
-        # diagnostics
+        p = self.correct_angle()
+        a = self.correct_amplitude()
         if self.pll_sound:
             from ..sound import sine
             sine(2000, duration=0.05)
-            self.logger.info('y=%s, iqphase=%s, pllphase=%s',
-                             y, iq.phase, phase)
-        # trigger accumulator for next step
-        iq.frequency = iq.frequency
+            self.logger.info('phase: %s, amplitude%s', p, a)
+
+
+    ################# old version ############################
+    #def setup_pll(self, timeout=1.0, gain=1, threshold=0.1,
+    #                  whileloop=False, sound=False):
+    #    self.pll_gain = gain or self.pll_gain
+    #    self.pll_threshold = threshold or self.pll_threshold
+    #    self.pll_timeout = timeout or 1.0
+    #    self.pll_sound = sound
+    #    iq = self.inputs['lmsd'].iq
+    #    t0 = time.time()
+    #    # setup na measurement of both quadratures
+    #    iq._na_averages = np.int(np.round(125e6 * self.pll_timeout))
+    #    iq._na_sleepcycles = 0
+    #    # trigger
+    #    iq.frequency = iq.frequency
+    #    if whileloop:
+    #        while True:
+    #            if time.time() - self.pll_timeout < t0:
+    #                time.sleep(0.001)
+    #                continue
+    #            else:
+    #                self.pll_step()
+    #                t0 = time.time()
+    #   else:
+    #       if hasattr(self, 'timer'):
+    #           self.timer.stop()
+    #           self.timer.timeout.disconnect()
+    #       else:
+    #           self.timer = QtCore.QTimer()
+    #       self.timer.timeout.connect(self.pll_step)
+    #       self.timer.start(int(timeout * 1000))
+
+    # r.model.timer.stop()
+    #def pll_step(self):
+    #    iq = self.inputs['lmsd'].iq
+    #    # get data from accumulator
+    #    y = iq._nadata
+    #    if y != 0:
+    #        # stabilizing action
+    #        phase = np.angle(y, deg=True)
+    #        iq.phase -= self.pll_gain * phase
+    #    # diagnostics
+    #    if self.pll_sound:
+    #        from ..sound import sine
+    #        sine(2000, duration=0.05)
+    #        self.logger.info('y=%s, iqphase=%s, pllphase=%s',
+    #                         y, iq.phase, phase)
+    #    # trigger accumulator for next step
+    #    iq.frequency = iq.frequency

@@ -68,6 +68,12 @@ model:
     relative_threshold: 0.9
   #peak: 0.07061767578125
   peak_pdh: 0.1053466796875
+  pll:
+    na_averages: 1000
+    na_samples: 1000
+    amp_gain: 0.0
+    amp_setpoint: 1.0
+
 # all signals that are inputs of the lockbox. Must be signal names understood
 # by the model.
 inputs:
