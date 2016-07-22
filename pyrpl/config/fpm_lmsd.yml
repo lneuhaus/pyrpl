@@ -65,16 +65,35 @@ model:
         - piezo
   calibrate:
     zoomfactor: 0.1
-    relative_threshold: 0.9
+    relative_threshold: 0.75
   #peak: 0.07061767578125
   peak_pdh: 0.1053466796875
   pll:
+    angle_gain: 1.0 #1.0
     na_averages: 1000
-    na_samples: 1000
-    amp_gain: 0.0
-    amp_setpoint: 1.0
-    angle_gain: 1.0
-    
+    na_samples: 100 #1000
+    amp_gain: 0.3 # 0.1
+    amp_dgain: 0.2
+    amp_setpoint: 0.015
+    amp_max: 0.35
+    amp_min: 0.025
+    amp_natrace:
+      start: 689000
+      stop: 689000
+      rbw: [75, 75]
+      points: 101
+      amplitude: 0.25
+      logscale: false
+    #  avg: 1
+    #amp_natrace:
+    #  start: 688000
+    #  stop: 690000
+    #  rbw: [75, 75]
+    #  points: 101
+    #  amplitude: 0.1
+    #  logscale: false
+    #  avg: 1
+
 # all signals that are inputs of the lockbox. Must be signal names understood
 # by the model.
 inputs:
@@ -112,11 +131,11 @@ inputs:
     curve: 256020
     variable_per_time: 6120.24734567
     setup:
-      phase: 458.937384857031
-      amplitude: 0.15
-      frequency: 3578312.519089971  #3578311.5236825133
+      phase: 458.9173788500501
+      amplitude: 0.25
+      frequency: 3578312.0525411265 #3578311.5236825133
       iq: iq2
-      quadrature_factor: 0.09058442494064275
+      quadrature_factor: 0.08636609128501176
       gain: 0
       output_direct: out2
       output_signal: quadrature
@@ -154,7 +173,7 @@ outputs:
       lowpass:
       - 0.05
     calibrationunits: m_per_V
-    lastoffset: 0.5435791015625
+    lastoffset: 0.5457763671875
   piezo:
     redpitaya_output: out2
     # we will calibrate the piezo response in units of m_per_V (not a necessary

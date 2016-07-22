@@ -206,7 +206,7 @@ class FPM(FabryPerot):
 
 class FPM_LMSD(FPM):
     export_to_parent = FPM.export_to_parent \
-                       + ["lock_lmsd", "setup_lmsd"]
+                       + ["lock_lmsd", "setup_lmsd", "setup_pll", "stop_pll"]
     #def setup(self):
     #    super(FPM_LMSD, self).setup()
     #    self._parent.constants = self._parent.c.constants
@@ -239,7 +239,7 @@ class FPM_LMSD(FPM):
         self.l.lmsd.iq.frequency = v
         self.l.lmsd._config.setup.frequency = v
 
-    def lock_lmsd(self, gain=0.01, sleeptime=1.0):
+    def lock_lmsd(self, gain=0.01, sleeptime=1.0): # obsolete
         from time import sleep
         self.unlock()
         self.l.unlock()
@@ -457,41 +457,63 @@ class FPM_LMSD(FPM):
 
     def estimate_amplitude(self):
         x, y = self.rrp.iq0.na_trace(input='iq2', output_direct='out2',
-                                start=688000,
-                     stop=690000, rbw=[75,75], points=101, amplitude=0.1,
-                     logscale=False, avg=1)
-        m = np.mean(y.abs())
+                                     **self._config.pll.amp_natrace._dict)
+        m = np.mean(np.abs(y))
         self.amplogger.log(m)
         return m
 
     def correct_amplitude(self):
         m = self.estimate_amplitude()
         gain = self._config.pll.amp_gain
-        self.rrp.iq2.amplitude *= (m/self._config.pll.amp_setpoint)**gain
+        if hasattr(self, 'lastm'):
+            diff = m - self.lastm
+        else:
+            diff = 0
+        self.lastm = m
+        amp = self.rrp.iq2.amplitude * \
+              (m / self._config.pll.amp_setpoint)**gain - \
+              self._config.pll.amp_dgain * diff
+        if abs(amp) > self._config.pll.amp_max:
+            amp = self._config.pll.amp_max
+        if abs(amp) < self._config.pll.amp_min:
+            amp = self._config.pll.amp_min
+        self.rrp.iq2.amplitude = amp
+        self.ampdrivelogger.log(self.rrp.iq2.amplitude)
         return m
 
     def estimate_angle(self):
         m = np.zeros(self._config.pll.na_samples, dtype=np.complex)
         for i in range(len(m)):
             self.rrp.iq2.frequency = self.rrp.iq2.frequency
-            m[i] = r.lmsd.iq._nadata
+            m[i] = self.rrp.iq2._nadata
         angle = (np.angle(m * 1j, deg=True) % 180 - 90).mean()
         self.phaselogger.log(angle)
         return angle
 
     def correct_angle(self):
+        """ 150 ms with 100 point measurement"""
         angle = self.estimate_angle()
         self.rrp.iq2.phase -= angle*self._config.pll.angle_gain
+        self.iqphaselogger.log(self.rrp.iq2.phase)
         return angle
 
-    def setup_pll(self, timeout=1.0):
+    def setup_pll(self, timeout=1.0, whileloop=False):
         if not hasattr(self, 'rrp'):
             #self._parent.rp.make_a_slave() # make a new interface to avoid conflicts
             self.rrp = self._parent.rp
-        self.phaselogger = SensingDevice(name='pll_phase')
-        self.amplogger = SensingDevice(name='pll_amplitude')
+        self.phaselogger = SensingDevice(name='pll_phase',
+                                         minval=-100000, maxval=100000)
+        self.amplogger = SensingDevice(name='pll_amplitude',
+                                       minval=-100000, maxval=100000)
+        self.ampdrivelogger = SensingDevice(name='pll_drive_amplitude',
+                                            minval=-100000, maxval=100000)
+        self.iqphaselogger = SensingDevice(name='pll_iq_phase',
+                                            minval=-100000, maxval=100000)
+
         self.pll_timeout = timeout or 1.0
         iq = self.rrp.iq2
+        iq._na_sleepcycles = 0
+        iq._na_averages = self._config.pll.na_averages
         t0 = time.time()
         # setup na measurement of both quadratures
         p = self.estimate_angle()
@@ -524,7 +546,6 @@ class FPM_LMSD(FPM):
             from ..sound import sine
             sine(2000, duration=0.05)
             self.logger.info('phase: %s, amplitude%s', p, a)
-
 
     ################# old version ############################
     #def setup_pll(self, timeout=1.0, gain=1, threshold=0.1,
@@ -574,3 +595,6 @@ class FPM_LMSD(FPM):
     #                         y, iq.phase, phase)
     #    # trigger accumulator for next step
     #    iq.frequency = iq.frequency
+
+    def stop_pll(self):
+        self.timer.stop()

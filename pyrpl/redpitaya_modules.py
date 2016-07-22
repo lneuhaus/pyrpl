@@ -1263,9 +1263,9 @@ class IQ(FilterModule):
             stabilize=None, # if a float, output amplitude is adjusted dynamically so that input amplitude [V]=stabilize 
             maxamplitude=1.0, # amplitude can be limited
             ):
-        self.logger.info("This function will become obsolete in the distant "
-                         "future. Start using the module RedPitaya.na "
-                         "instead!")
+        #logger.info("This function will become obsolete in the distant "
+        #                 "future. Start using the module RedPitaya.na "
+        #                 "instead!")
         if logscale:
             x = np.logspace(
                 np.log10(start),
@@ -1435,8 +1435,8 @@ class IIR(FilterModule):
     # obsolete
     #copydata = BoolRegister(0x104, 2,
     #            doc="If True: coefficients are being copied from memory")
-    
-    overflow = Register(0x108, 
+
+    overflow = Register(0x108,
                             doc="Bitmask for various overflow conditions")
 
     @property
