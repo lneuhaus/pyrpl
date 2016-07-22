@@ -19,7 +19,7 @@ general:
   # 'infi' is default level
   # 'warning' only shows warnings and errors
   # 'error' only shows errors
-  loglevel: debug
+  loglevel: info
   # import CurveDB class from which module? if missing, it's pyrpl.curvedb
   #curvedb: pyrpl
   curvedb: pyinstruments
@@ -59,10 +59,12 @@ model:
         time: 2
       lmsd:
         input: lmsd
-        detuning: 0
+        detuning: 1
         factor: 0.1
         outputs:
         - piezo
+      call_setup_pll:
+        timeout: 5
   calibrate:
     zoomfactor: 0.1
     relative_threshold: 0.75
@@ -70,13 +72,17 @@ model:
   peak_pdh: 0.1053466796875
   pll:
     angle_gain: 1.0 #1.0
+    quadraturefactor_gain: 1.0
     na_averages: 1000
     na_samples: 100 #1000
-    amp_gain: 0.3 # 0.1
-    amp_dgain: 0.2
+    amp_gain: 0.1 # 0.1
+    amp_dgain: 0.0
     amp_setpoint: 0.015
     amp_max: 0.35
     amp_min: 0.025
+    f_jump: 0.015
+    f_phasesetpoint: 330.0
+    f_phasethreshold: 45.0
     amp_natrace:
       start: 689000
       stop: 689000
@@ -131,9 +137,9 @@ inputs:
     curve: 256020
     variable_per_time: 6120.24734567
     setup:
-      phase: 458.9173788500501
+      phase: 330.0
       amplitude: 0.25
-      frequency: 3578312.0525411265 #3578311.5236825133
+      frequency: 3578312.1698508956 #3578311.5236825133
       iq: iq2
       quadrature_factor: 0.08636609128501176
       gain: 0
@@ -173,7 +179,7 @@ outputs:
       lowpass:
       - 0.05
     calibrationunits: m_per_V
-    lastoffset: 0.5457763671875
+    lastoffset: 0.544921875
   piezo:
     redpitaya_output: out2
     # we will calibrate the piezo response in units of m_per_V (not a necessary

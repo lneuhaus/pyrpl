@@ -540,7 +540,7 @@ class Scope(BaseModule):
         iq_module = getattr(self._parent, iq)
         iq_module.input = input
         iq_module.output_signal = 'quadrature'
-        iq_module.quadrature_factor=1.0
+        iq_module.quadrature_factor = 1.0
         self.input1 = iq
         return iq_module
 

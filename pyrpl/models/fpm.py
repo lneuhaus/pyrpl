@@ -465,11 +465,14 @@ class FPM_LMSD(FPM):
     def correct_amplitude(self):
         m = self.estimate_amplitude()
         gain = self._config.pll.amp_gain
+        qgain = self._config.pll.quadraturefactor_gain
         if hasattr(self, 'lastm'):
             diff = m - self.lastm
         else:
             diff = 0
         self.lastm = m
+        self.rrp.iq2.quadrature_factor /= (m /
+                                           self._config.pll.amp_setpoint)**qgain
         amp = self.rrp.iq2.amplitude * \
               (m / self._config.pll.amp_setpoint)**gain - \
               self._config.pll.amp_dgain * diff
@@ -479,6 +482,7 @@ class FPM_LMSD(FPM):
             amp = self._config.pll.amp_min
         self.rrp.iq2.amplitude = amp
         self.ampdrivelogger.log(self.rrp.iq2.amplitude)
+        self.quadraturefactorlogger.log(self.rrp.iq2.quadrature_factor)
         return m
 
     def estimate_angle(self):
@@ -494,19 +498,37 @@ class FPM_LMSD(FPM):
         """ 150 ms with 100 point measurement"""
         angle = self.estimate_angle()
         self.rrp.iq2.phase -= angle*self._config.pll.angle_gain
-        self.iqphaselogger.log(self.rrp.iq2.phase)
+        fjump = self._config.pll.f_jump
+        phasesetpoint = self._config.pll.f_phasesetpoint
+        phasethreshold = self._config.pll.f_phasethreshold
+        phase = self.rrp.iq2.phase
+        perr = ((phase - phasesetpoint + 180.0) % 360.0) - 180.0
+        if np.abs(perr) > phasethreshold:
+            self.rrp.iq2.frequency -= fjump * np.sign(perr)
+        self.phaseerrorlogger.log(perr)
+        self.iqphaselogger.log(phase)
+        self.frequencylogger.log(self.rrp.iq2.frequency)
         return angle
 
-    def setup_pll(self, timeout=1.0, whileloop=False):
+    def setup_pll(self, timeout=5.0, whileloop=False):
+        self.pll_sound = False
         if not hasattr(self, 'rrp'):
             #self._parent.rp.make_a_slave() # make a new interface to avoid conflicts
             self.rrp = self._parent.rp
         self.phaselogger = SensingDevice(name='pll_phase',
                                          minval=-100000, maxval=100000)
+        self.phaseerrorlogger = SensingDevice(name='pll_phase_error',
+                                         minval=-100000, maxval=100000)
         self.amplogger = SensingDevice(name='pll_amplitude',
                                        minval=-100000, maxval=100000)
         self.ampdrivelogger = SensingDevice(name='pll_drive_amplitude',
                                             minval=-100000, maxval=100000)
+        self.quadraturefactorlogger = SensingDevice(
+            name='pll_quadraturefactor', minval=-100000000,
+            maxval=100000000000000)
+        self.frequencylogger = SensingDevice(
+            name='pll_frequency', minval=0,
+            maxval=10000000000)
         self.iqphaselogger = SensingDevice(name='pll_iq_phase',
                                             minval=-100000, maxval=100000)
 
