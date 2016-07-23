@@ -454,8 +454,16 @@ class BodeFitGui(BodeFit):
         elif event.key == 'd':
             if self.actpole is not None:
                 self.poles.pop(self.actpole)
+                if self.poles:
+                    self.actpole = -1
+                else:
+                    self.actpole = None
             if self.actzero is not None:
                 self.zeros.pop(self.actzero)
+                if self.zeros:
+                    self.actzero = -1
+                else:
+                    self.actzero = None
             self.refresh()
             return
         elif event.key == 'w':

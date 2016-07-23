@@ -382,6 +382,10 @@ class FPM_LMSD(FPM):
             self.logger.info('Autoset of iq parameters was executed.')
         return phase, qfactor
 
+    def unlock(self):
+        if hasattr(self, 'timer'):
+            self.timer.stop()
+        super(FPM_LMSD, self).unlock()
 
     @property
     def frequency(self):
@@ -471,11 +475,11 @@ class FPM_LMSD(FPM):
         else:
             diff = 0
         self.lastm = m
-        self.rrp.iq2.quadrature_factor /= (m /
+        qf = self.rrp.iq2.quadrature_factor / (m /
                                            self._config.pll.amp_setpoint)**qgain
-        amp = self.rrp.iq2.amplitude * \
-              (m / self._config.pll.amp_setpoint)**gain - \
-              self._config.pll.amp_dgain * diff
+        self.rrp.iq2.quadrature_factor = qf
+        amp = self.rrp.iq2.amplitude / (qf /
+                                        self._config.pll.qf_setpoint)**gain
         if abs(amp) > self._config.pll.amp_max:
             amp = self._config.pll.amp_max
         if abs(amp) < self._config.pll.amp_min:
