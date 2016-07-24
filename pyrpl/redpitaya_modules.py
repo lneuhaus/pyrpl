@@ -1564,13 +1564,13 @@ class IIR(FilterModule):
             zeros,
             poles,
             gain=1.0,
-            input='adc1',
-            output_direct='off',
+            input=None,
+            output_direct=None,
             loops=None,
             plot=False,
             designdata=False,
             turn_on=True,
-            inputfilterbandwidth=None,
+            inputfilter=None,
             tol=1e-3,
             prewarp=True):
         """Setup an IIR filter
@@ -1595,9 +1595,8 @@ class IIR(FilterModule):
                        functions
         designdata:    if True, returns various design transfer functions in a
                        format that can be passed to iir.bodeplot
-        inputfilterbandwidth: the bandwidth of the input filter for
-                       anti-aliasing. If None, it is set to the sampling
-                       frequency.
+        inputfilter:   the bandwidth of the input filter for anti-aliasing.
+                       If None, it is set to the sampling frequency.
         tol:           tolerance for matching conjugate poles or zeros into
                        pairs, 1e-3 is okay
         prewarp:       Enables prewarping of frequencies. Strongly recommended.
@@ -1657,10 +1656,10 @@ class IIR(FilterModule):
         # low-pass filter the input signal with a first order filter with
         # cutoff near the sampling rate - decreases aliasing and achieves
         # higher internal data precision (3 extra bits) through averaging
-        if inputfilterbandwidth is None:
+        if inputfilter is None:
             self.inputfilter = 125e6*self._frequency_correction / self.loops
         else:
-            self.inputfilter = inputfilterbandwidth
+            self.inputfilter = inputfilter
         self._logger.info("IIR anti-aliasing input filter set to: %s MHz",
                           self.inputfilter * 1e-6)
         # connect the module

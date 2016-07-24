@@ -64,7 +64,7 @@ model:
         outputs:
         - piezo
       call_setup_pll:
-        timeout: 3
+        timeout: 0.5
   calibrate:
     zoomfactor: 0.1
     relative_threshold: 0.75
@@ -80,12 +80,12 @@ model:
     amp_dgain: 0.0 #0.0
     na_averages: 1000
     na_samples: 100 #1000
-    amp_setpoint: 0.03  # 0.015
+    amp_setpoint: 0.01 #0.03  # 0.015
     amp_max: 0.35
     amp_min: 0.025
     f_jump: 0.015
     f_phasesetpoint: 330.0
-    qf_setpoint: 0.2
+    qf_setpoint: 0.025
     amp_natrace:
       start: 689000
       stop: 689000
@@ -142,14 +142,14 @@ inputs:
     setup:
       phase: 330
       amplitude: 0.25
-      frequency: 3578312.519089971  #3578311.5236825133
+      frequency: 3578311.9652313576 #3578311.5236825133
       iq: iq2
       quadrature_factor: 0.2
       gain: 0
       output_direct: out2
       output_signal: quadrature
       input: adc2
-      acbandwidth: 100000.0
+      acbandwidth: 1000000.0
       bandwidth: [1000000.0, 1000000.0, 1000000.0, 1000000.0]
   lmsd_quadrature:
     redpitaya_input: adc1
@@ -182,7 +182,7 @@ outputs:
       lowpass:
       - 0.05
     calibrationunits: m_per_V
-    lastoffset: 0.5457763671875
+    lastoffset: 0.5458984375
   piezo:
     redpitaya_output: out2
     # we will calibrate the piezo response in units of m_per_V (not a necessary

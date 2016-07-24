@@ -131,6 +131,21 @@ def rpk2psos(r, p, k, tol=0):
     return np.array(result)
 
 
+def tf_inputfilter(frequencies, inputfilter):  # input filter modelisation
+    frequencies = np.array(frequencies, dtype=np.complex)
+    try:
+        len(inputfilter)
+    except:
+        inputfilter = [inputfilter]  # make it iterable
+    tf = frequencies*0 + 1.0
+    for f in inputfilter:
+        if f > 0:  # lowpass
+            tf /= (1.0 + 1j * frequencies / f)
+        elif f < 0:  # highpass
+            tf /= (1.0 + 1j * f / frequencies)
+    return tf
+
+
 def tf_continuous(sys, frequencies):
     """
     Returns the continuous transfer function of sys at frequencies.
@@ -522,7 +537,7 @@ def prewarp(sys, dt=8e-9):
         freq = w / 2.0 / np.pi
         if np.imag(freq) == 0:
             freq = np.abs(freq)
-            return 1.0  # do not prewarm real poles/zeros
+            #return 1.0  # do not prewarp real poles/zeros
         else:
             freq = np.abs(np.imag(freq))
         if freq == 0:

@@ -137,16 +137,18 @@ class BodePlot(object):
 
 class BodeFit(BodePlot):
     # all the properties that are saved with a fit (poles and zeros as well)
-    extraparams = ['loops', 'gain', 'invert', 'delta', 'actpole', 'actzero']
+    extraparams = ['loops', 'gain', 'invert', 'delta', 'actpole', 'actzero',
+                   'inputfilter']
 
     def __init__(self, id=None, xlog=True, invert=True,
-                 autogain=True, legend=True):
+                 autogain=True, legend=True, showstability=False):
         if id is not None:
             # id may only be None when the class is re-initialized so it
             # keeps its curve object
             self.c = CurveDB.get(id)
         self.default(autogain=autogain)
         self.invert = invert
+        self.showstability = showstability
         super(BodeFit, self).__init__(self.c.data, autoplot=False,
                                       xlog=xlog, legend=legend)
         self.refresh()
@@ -161,8 +163,8 @@ class BodeFit(BodePlot):
         self.loops = None
         if autogain:
             g0 = self.c.data.loc[:1000.0].mean()
-            #if invert:
-            #    g0 = 1.0/g0
+            if np.isnan(g0):
+                g0 = self.c.data.iloc[:10].mean()
             self._gain = abs(g0)
             a = np.angle(g0, deg=True)
             if a > 90 and a <= 270:
@@ -199,6 +201,13 @@ class BodeFit(BodePlot):
             self.data['zeros (active)'] = self.getpz([self.zeros[self.actzero]])
         else:
             self.data['zeros (active)'] = pandas.Series()
+        if self.showstability:
+            punstable = dataxfit[np.angle(dataxfit, deg=True) > 0.0]
+            gunstable = punstable[punstable.abs()>1.0]
+            self.data['phase unstable'] = punstable
+            self.datastyle['phase unstable'] = 'm.'
+            self.data['phase and gain unstable'] = gunstable
+            self.datastyle['phase and gain unstable'] = 'y.'
 
     def update_info(self):
         string = ""
@@ -255,6 +264,16 @@ class BodeFit(BodePlot):
     def gain(self, v):
         self._gain = v
 
+    @property
+    def inputfilter(self):
+        if not hasattr(self, '_inputfilter'):
+            self._inputfilter = None
+        return self._inputfilter
+
+    @inputfilter.setter
+    def inputfilter(self, v):
+        self._inputfilter = v
+
     def transfer_function(self, frequencies=None):
         zeros, poles, loops = iir.make_proper_tf(self.zeros, self.poles,
                                        loops=self.loops)
@@ -265,6 +284,9 @@ class BodeFit(BodePlot):
             y = np.array(frequencies, dtype=np.complex)*0j+self.gain
         else:
             y = iir.tf_continuous(sys, frequencies=frequencies)
+        if self.inputfilter is not None:
+            ifilter = iir.tf_inputfilter(frequencies, self.inputfilter)
+            y *= ifilter
         return pandas.Series(y, index=frequencies)
 
     def loadfit(self, id=None):
@@ -331,9 +353,10 @@ class BodeFit(BodePlot):
 
 class BodeFitGui(BodeFit):
     def __init__(self, id=None, xlog=True, invert=True, autogain=True,
-                 legend=False):
+                 legend=False, showstability=False):
         super(BodeFitGui, self).__init__(id=id, xlog=xlog, invert=invert,
-                                         autogain=autogain, legend=legend)
+                                         autogain=autogain, legend=legend,
+                                         showstability=showstability)
         self._tlast = 0
         self.loadfit()
         self.lockbox = None
@@ -429,6 +452,18 @@ class BodeFitGui(BodeFit):
             self.delta /= 2.0
             self.refresh()
             return
+        elif event.key == 'ctrl+alt+up':
+            self.gain *= 2.0
+            self.refresh()
+            return
+        elif event.key == 'ctrl+alt+down':
+            self.gain /= 2.0
+            self.refresh()
+            return
+        elif event.key == 'i':
+            self.gain *= -1.0
+            self.refresh()
+            return
         elif event.key == 'f6':
             self.savefit()
             sine(2000, 0.2)
@@ -446,6 +481,7 @@ class BodeFitGui(BodeFit):
                 self.iir.setup(zeros=self.zeros,
                                poles=self.poles,
                                gain=self.gain,
+                               inputfilter=self.inputfilter,
                                loops=self.loops,
                                plot=self.iirplot)
             sine(1000, 0.1)

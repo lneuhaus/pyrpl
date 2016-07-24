@@ -8,6 +8,7 @@ from ..curvedb import CurveDB
 from .. import fitting
 from pyqtgraph.Qt import QtCore
 from pyinstruments.datalogger.models import SensingDevice
+from ..bodefit import BodeFitGui
 
 class FPM(FabryPerot):
     """ custom class for the measurement fabry perot of the ZPM experiment """
@@ -624,3 +625,8 @@ class FPM_LMSD(FPM):
 
     def stop_pll(self):
         self.timer.stop()
+
+    def bodefitgui(self, id):
+        self.b = BodeFitGui(id=id, showstability=False, invert=False)
+        self.b.iir = self._parent.rp.iir
+        return self.b
