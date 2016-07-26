@@ -63,7 +63,7 @@ class SpectrumAnalyzer(object):
       freqs = sa.freqs()
     """
 
-    # nyquist_margin = 2*pi #it looks like bandwidth of filters are then perfect
+    nyquist_margin = 2 #*pi #it looks like bandwidth of filters are then # perfect
 
     # spans = [1./nyquist_margin/s_time for s_time in Scope.sampling_times]
 
@@ -84,7 +84,7 @@ class SpectrumAnalyzer(object):
         
         self.rp = rp
         self.center = 0
-        self.avg = 1000000
+        self.avg = 10
         self.input = 'adc1'
         self.acbandwidth = 0
         self.window = "flattop"
@@ -238,7 +238,8 @@ class SpectrumAnalyzer(object):
         """
         middle = int(self.data_length/2)
         length = self.points#self.data_length/self.nyquist_margin
-        return slice(middle - length/2, middle + length/2 + 1)
+        #return slice(middle - length/2, middle + length/2 + 1)
+        return slice(middle, middle + length / 2 + 1)
 
     def curve(self):
         """

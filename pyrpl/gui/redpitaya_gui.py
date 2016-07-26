@@ -1060,8 +1060,7 @@ class SpecAnGui(ModuleWidget):
     """
     Widget for the Spectrum Analyzer Tab.
     """
-    _display_max_frequency = 25  # max 25 Hz framerate so we dont overload
-    # the thread
+    _display_max_frequency = 25  # max 25 Hz framerate
 
     property_names = ["input",
                       "center",
@@ -1177,7 +1176,13 @@ class SpecAnGui(ModuleWidget):
             self.curve.setData(self.x_data,
                                self.module.data_to_dBm(self.y_data))
             if self.running:
-                self.button_continuous.setText('Stop (%i)' % self.current_average)
+                buttontext = 'Stop (%i' % self.current_average
+                if self.current_average >= self.module.avg:
+                    # shows a plus sign when number of averages is available
+                    buttontext += '+)'
+                else:
+                    buttontext += ')'
+                self.button_continuous.setText(buttontext)
 
     def acquire_one_curve(self):
         """
@@ -1225,9 +1230,8 @@ class SpecAnGui(ModuleWidget):
         """
         Restarts the curve averaging.
         """
-
-        self.y_data = np.zeros(self.module.points)
         self.x_data = self.module.freqs()
+        self.y_data = np.zeros(len(self.x_data))
         self.current_average = 0
 
     def params(self):
