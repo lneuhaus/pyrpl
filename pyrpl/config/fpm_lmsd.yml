@@ -66,12 +66,12 @@ model:
         - piezo
       call_setup_pll:
         timeout: 0.5
-      finish:  # problematic for lock acquisition
-        input: lmsd
-        detuning: 0
-        factor: 0.1
-        outputs:
-        - piezo
+      #finish:  # problematic for lock acquisition
+      #  input: lmsd
+      #  detuning: 0
+      #  factor: 0.1
+      #  outputs:
+      #  - piezo
   calibrate:
     zoomfactor: 0.1
     relative_threshold: 0.75
@@ -87,7 +87,7 @@ model:
     amp_dgain: 0.0 #0.0
     na_averages: 1000
     na_samples: 100 #1000
-    amp_setpoint: 0.1  #0.1 #0.03  # 0.015
+    amp_setpoint: 0.03  #0.1 #0.03  # 0.015
     amp_max: 0.35
     amp_min: 0.025
     f_jump: 0.015
@@ -149,7 +149,7 @@ inputs:
     setup:
       phase: 330
       amplitude: 0.25
-      frequency: 3578312.286263921  #3578311.5236825133
+      frequency: 3578312.5481932275 #3578311.5236825133
       iq: iq2
       quadrature_factor: 0.2
       gain: 0
@@ -189,7 +189,7 @@ outputs:
       lowpass:
       - 0.05
     calibrationunits: m_per_V
-    lastoffset: 0.5460205078125
+    lastoffset: 0.5482177734375
   piezo:
     redpitaya_output: out2
     # we will calibrate the piezo response in units of m_per_V (not a necessary
