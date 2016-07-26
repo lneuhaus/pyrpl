@@ -26,6 +26,7 @@ import matplotlib.pyplot as plt
 from collections import OrderedDict
 import numpy as np
 import os
+import logging
 import pandas
 from . import CurveDB
 from . import iir
@@ -56,6 +57,7 @@ class BodePlot(object):
 
     def __init__(self, data, datastyle={'data': 'b-'},
                  autoplot=True, xlog=True, legend=True):
+        self._logger = logging.getLogger(__name__)
         if isinstance(data, int):
             self.data = OrderedDict({'data': CurveDB.get(data).data})
         else:
@@ -516,9 +518,9 @@ class BodeFitGui(BodeFit):
                 self.refresh()
             return
         else:
+            self.otherkeyactions(event.key)
             self.refresh()
             return
-        print 'tet'
         realdelta = np.complex(self.delta) * np.complex(delta)
 
         print ("delta: "+str(realdelta))
@@ -535,3 +537,188 @@ class BodeFitGui(BodeFit):
             else:
                 self._zeros[izero] += realdelta
         self.refresh()
+
+    def otherkeyaction(self, key):
+        pass
+
+
+class BodeFitGuiOptimisation(BodeFitGui):
+    """ Numerical p-norm calculation of filter coefficients """
+    def __init__(self, id=None, xlog=True, invert=True, autogain=True,
+                 legend=False, showstability=False):
+        super(BodeFitGui, self).__init__(id=id, xlog=xlog, invert=invert,
+                                     autogain=autogain, legend=legend,
+                                     showstability=showstability)
+        self._tlast = 0
+        self.loadfit()
+        self.lockbox = None
+        self.pid = None
+        self.clickmode()
+        self.datastyle['target'] = 'ro'
+        self.data['target'] = pandas.Series()
+        self.setdefaulttarget()
+        self.p = 2  # p-norm is of the logarithmic error used to compute error
+        self.refresh()
+
+    def transfer_function_discrete(self, frequencies=None):
+        if frequencies is None:
+            frequencies = self.x
+        y = iir.tf_discrete_fast(self.coefficients, frequencies=frequencies,
+                                 dt=8e-9*self.loops)
+        return pandas.Series(y, index=frequencies)
+
+    def transfer_function_fast(self, frequencies):
+        return iir.tf_discrete_fast(self.coefficients, frequencies=frequencies,
+                                 dt=8e-9 * self.loops)
+    @property
+    def target(self):
+        return self.data['target']
+
+    @target.setter
+    def target(self, v):
+        self.data['target'] = v
+
+    def error(self):
+        f = self.target.index.values
+        err = np.abs(np.log(self.target.values-self.transfer_function_fast(f)))**self.p
+        return err
+
+    def otherkeyaction(self, key):
+        if key == 'f2':
+            print key, 'trying to fit...'
+
+    def setdefaulttarget(self):
+        fs = [6010.,11955.,22351.,41504.,56795.,112359.]
+        amps = [64,64,2,32,32,20]
+        phases = [55,63,120,102,-25,105]
+        t = np.array(amps, dtype=np.complex) * np.exp(1j * np.array(
+            phases) * np.pi / 180.0)
+        self.target = pandas.Series(t, index=fs)
+        return self.target
+
+    def minimize(self, coefficients=None, degree=None, initialize=False):
+        if initialize:
+            if coefficients is not None:
+                degree = len(coefficients)
+            else:
+                # try a random set of coefficients
+                if degree is None:
+                    degree = np.len(self.target)
+                coeff = np.zeros((degree, 6), dtype=np.float64)
+                coeff[0, 0] = kc
+                coeff[:, 3] = 1.0
+                return coeff
+        # actual optimisation
+        self.earliercoefficients = np.array(self.coefficients)
+        def error(*args):
+            pass
+
+    @property
+    def coefficients(self):
+        if not hasattr(self, '_coefficients'):
+            self._coefficients = self.unitycoefficients()
+        return self._coefficients
+
+    @coefficients.setter
+    def coefficients(self, v):
+        self._coefficients = v
+        self.data['discrete'] = self.transfer_function_discrete()
+        self.datastyle['discrete'] = 'm-'
+
+    @property
+    def loops(self):
+        if hasattr(self, '_loops') and self._loops is not None:
+            return self._loops
+        else:
+            return 16
+
+    @loops.setter
+    def loops(self, v):
+        self._loops = v
+
+    def unitycoefficients(self, degree=1, k=1):
+        coeff = np.zeros((degree, 6), dtype=np.float64)
+        coeff[0, 0] = k
+        coeff[:, 3] = 1.0
+        return coeff
+
+    def setcoefficients(self, num0s, num1s, den0s, den1s):
+        self.coefficients = np.zeros((len(num0s), 6), dtype=np.float64)
+        self.coefficients[:, 0] = num0s
+        self.coefficients[:, 1] = num1s
+        self.coefficients[:, 2] = 0
+        self.coefficients[:, 3] = 1
+        self.coefficients[:, 4] = den0s
+        self.coefficients[:, 5] = den1s
+        return self.coefficients
+
+    def randomcoefficients(self, degree=10, scale=4.0):
+        self.setcoefficients(
+            np.random.normal(scale=scale, size=degree),
+            np.random.normal(scale=scale, size=degree),
+            np.random.normal(scale=scale, size=degree),
+            np.random.normal(scale=scale, size=degree))
+        return self.coefficients
+
+    def nosorandomcoefficients(self, degree=10, scale=4.0):
+        self.setcoefficients(
+            np.random.normal(scale=scale, size=degree),
+            np.random.normal(scale=scale, size=degree),
+            np.random.normal(scale=scale, size=degree),
+            np.random.normal(scale=scale, size=degree))
+        return self.coefficients
+
+
+    _maxloops = 1023
+    _minloops = 4
+    _IIRSTAGES = 16
+    _method = 'gbt'
+    _alpha = 0.5
+
+    @property
+    def sampling_time(self):
+        return 8e-9 * self.loops
+
+    def getcoeff(self, prewarp=True, tol=1e-3):
+        loops = self.loops
+        zeros, poles, minloops = iir.make_proper_tf(self.zeros,
+                                                    self.poles,
+                                                    loops=loops,
+                                                    _minloops=self._minloops,
+                                                    tol=tol)
+        # make sure filter can be realized
+        if minloops > self._IIRSTAGES:
+            raise Exception("Error: desired filter order is too high to "
+                            "be implemented.")
+        if loops < minloops:  # warning has already be issued in
+            # make_proper_tf
+            loops = minloops
+        elif loops > self._maxloops:
+            self._logger.warning("Maximum loops number is %s. This value "
+                                 "will be tried instead of specified value "
+                                 "%s.", self._maxloops, loops)
+            loops = self._maxloops
+        self.loops = loops
+        self._logger.info("Filter sampling frequency is %.3s MHz",
+                          1e-6 / self.sampling_time)
+        # get scaling right for coefficients so that gain corresponds to dcgain
+        self._sys = iir.rescale(zeros, poles, self.gain)
+        # prewarp coefficients to match specification (bilinear transform
+        # distorts frequencies of poles)
+        if prewarp:
+            sys = iir.prewarp(self._sys, dt=self.sampling_time)
+        else:
+            sys = self._sys
+        # get coefficients
+        c = iir.get_coeff(sys,
+                          dt=self.sampling_time,
+                          tol=tol,
+                          method=self._method,
+                          alpha=self._alpha)
+        self.coefficients = c
+        return c
+
+    def refresh(self, updatecoefficients=True):
+        if updatecoefficients:
+            self.getcoeff()
+        super(BodeFitGuiOptimisation, self).refresh()
