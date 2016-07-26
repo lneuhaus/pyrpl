@@ -947,6 +947,7 @@ class DspModule(BaseModule):
             addr_base=0x40300000+self._number*0x10000,
             parent=parent)
 
+
 class AuxOutput(DspModule):
     """Auxiliary outputs. PWM0-3 correspond to pins 17-20 on E2 connector.
     
@@ -978,6 +979,7 @@ class AuxOutput(DspModule):
     output_directs = None
     _output_directs = None
 
+
 class FilterModule(DspModule):
     inputfilter = FilterRegister(0x120, 
                                  filterstages=0x220,
@@ -985,6 +987,7 @@ class FilterModule(DspModule):
                                  minbw=0x228,
                                  doc="Input filter bandwidths [Hz]."\
                                  "0 = off, negative bandwidth = highpass")
+
 
 class Pid(FilterModule):
     _delay = 3  # min delay in cycles from input to output_signal of the module
@@ -1110,6 +1113,7 @@ class Pid(FilterModule):
         tf *= np.exp(-1j*delay*frequencies*2*np.pi)
         return tf
 
+
 class IQ(FilterModule):
     _delay = 5  # bare delay of IQ module with no filters set (cycles)
 
@@ -1117,7 +1121,8 @@ class IQ(FilterModule):
         quadrature=0,
         output_direct=1,
         pfd=2,
-        off=3)
+        off=3,
+        quadrature_hf=4)
     output_signals = _output_signals.keys()
     output_signal = SelectRegister(0x10C, options=_output_signals,
                            doc = "Signal to send back to DSP multiplexer")
