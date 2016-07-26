@@ -254,6 +254,37 @@ def tf_discrete(coefficients, frequencies, dt=8e-9, delay_per_cycle=8e-9,
                              * len(coefficients))
     return h
 
+def tf_discrete_fast(coefficients, frequencies, dt=8e-9):
+    """
+    Returns the discrete transfer function realized by coefficients at
+    frequencies. For optimisation purpuses only (faster computation),
+    as not delay is taken into account.
+
+    Parameters
+    ----------
+    coefficients: np.array
+        coefficients as returned from iir module (array of biquad coefficients)
+
+    frequencies: np.array
+        frequencies to compute the transfer function for
+
+    dt: float
+        discrete sampling time (seconds)
+
+    Returns
+    -------
+    np.array(..., dtype=np.complex)
+    """
+    # discrete frequency
+    w = np.array(frequencies, dtype=np.float) * 2 * np.pi * dt
+    b, a = sig.sos2tf(np.array([coefficients[0]]))
+    ww, h = sig.freqz(b, a, worN=w)
+    for i in range(1, len(coefficients)):
+        b, a = sig.sos2tf(np.array([coefficients[i]]))
+        ww, hh = sig.freqz(b, a, worN=w)
+        h += hh
+    return h
+
 
 def tf_implemented(coefficients,
                    frequencies,
