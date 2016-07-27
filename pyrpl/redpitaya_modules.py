@@ -1616,30 +1616,23 @@ class IIR(FilterModule):
                             "filters! Please use an IIR version!")
         self.on = False
         self.shortcut = False
-        iirbits = self._IIRBITS
-        iirshift = self._IIRSHIFT
 
-        # clean up the specified transfer function (add poles if needed)
-        # and find out how many loops are needed for implementation
-        zeros, poles, minloops = iir.make_proper_tf(zeros,
-                                                    poles,
-                                                    loops=loops,
-                                                    _minloops=self._minloops,
-                                                    tol=tol)
-        # make sure filter can be realized
-        if minloops > self._IIRSTAGES:
-            raise Exception("Error: desired filter order is too high to "
-                            "be implemented.")
-        if loops < minloops:  # warning has already be issued in make_proper_tf
-            loops = minloops
-        elif loops > self._maxloops:
-            self._logger.warning("Maximum loops number is %s. This value "
-                                 "will be tried instead of specified value "
-                                 "%s.", self._maxloops, loops)
-            loops = self._maxloops
-        self.loops = loops
+        # save for future evaluation
+        self._sys = (zeros, poles, gain)
+
+        self._coefficients, self.loops = iir.get_coefficients(
+                                 sys,
+                                 loops,
+                                 minloops=self._minloops,
+                                 maxloops=self._maxloops,
+                                 iirstages=self._IIRSTAGES)
+        # write to the coefficients register (_coefficients is the full
+        # precision version)
+        self.coefficients = self._coefficients
         self._logger.info("Filter sampling frequency is %.3s MHz",
-                          1e-6/self.sampling_time)
+                          1e-6 / self.sampling_time)
+
+
         # get scaling right for coefficients so that gain corresponds to dcgain
         self._sys = iir.rescale(zeros, poles, gain)
         # prewarp coefficients to match specification (bilinear transform
@@ -1658,6 +1651,9 @@ class IIR(FilterModule):
         self.coefficients = c
         # save the full-precision coefficients for debugging
         self._coefficients = c
+
+
+
         # low-pass filter the input signal with a first order filter with
         # cutoff near the sampling rate - decreases aliasing and achieves
         # higher internal data precision (3 extra bits) through averaging
@@ -1674,15 +1670,12 @@ class IIR(FilterModule):
             self.output_direct = output_direct
         # switch it on only once everything is set up
         self.on = turn_on
-        # Diagnostics here
-        if plot:  # or save:
-            if isinstance(plot, int):
-                plt.figure(plot)
-            else:
-                plt.figure()
+
         self._logger.info("IIR filter ready")
         # compute design error
-        dev = (np.abs((self.coefficients[0:len(c)] - c).flatten()))
+        dev = (np.abs((self.coefficients[0:len(self._coefficients)] -
+                       self._coefficients).flatten()))
+
         maxdev = max(dev)
         reldev = maxdev / abs(c.flatten()[np.argmax(dev)])
         if reldev > 0.05:

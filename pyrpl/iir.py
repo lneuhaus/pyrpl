@@ -146,6 +146,41 @@ def tf_inputfilter(frequencies, inputfilter):  # input filter modelisation
     return tf
 
 
+def freqresp(sys, w):
+    """
+    This function computes the frequency response of a zpk system at an
+    array of frequencies.
+
+    It loosely mimicks scipy.signal.frequresp() with two differences.
+
+    Parameters
+    ----------
+    system: (zeros, poles, k)
+        zeros and poles both in rad/s, k is the actual coefficient, not DC gain
+    w: np.array
+        frequencies in rad/s
+
+    Returns
+    -------
+    np.array(..., dtype=np.complex) with the response
+    """
+    z, p, k = sys
+    s = np.array(w, dtype=np.complex128) * 1j
+    h = np.full(len(s), k, dtype=np.complex128)
+    for i in range(max([len(z), len(p)])):
+        # do multiplication and division alternatingly to avoid the unlikely
+        # event of numerical overflow
+        try:
+            h *= s - z[i]
+        except IndexError:
+            pass
+        try:
+            h /= s - p[i]
+        except IndexError:
+            pass
+    return h
+
+
 def tf_continuous(sys, frequencies):
     """
     Returns the continuous transfer function of sys at frequencies.
@@ -165,7 +200,7 @@ def tf_continuous(sys, frequencies):
     np.array(..., dtype=np.complex)
     """
     frequencies = np.array(frequencies, dtype=np.complex)
-    wc, hc = sig.freqresp(sys, w=frequencies * 2 * np.pi)
+    wc, hc = freqresp(sys, frequencies * 2 * np.pi)
     return hc
 
 
@@ -341,56 +376,277 @@ def finiteprecision(coeff, totalbits=32, shiftbits=16):
     return res
 
 
-def get_coeff(
+def get_coefficients(
         sys,
+        loops,
         dt=8e-9,
-        tol=0,
-        method="gbt",
-        alpha=0.5,
-        mindelay=True):
+        minloops=4,
+        maxloops=255,
+        iirstages=16,
+        tol=1e-3,
+        prewarp=False):
     """
-    Allowed systems in zpk form (otherwise problems arise):
-        - no complex poles or zeros without conjugate partner (otherwise the
-          conjugate pole will be added)
-        - no double complex poles or zeros
-        - no more than two real poles or zero within the tolerance interval
-          (impossible to implement with parallel SOS)
-        - to guarantee proper functioning, real poles (especially at low
-          frequency) shoud be spaced by a factor 2
-        - no crazy scaling factors
-        - scaling can be accomplished by choosing the loop number
-          appropriately: if f is the max. frequency, then
-          loops ~ 125 MHz / 10 / f  - the factor 10 is already the safety
-          margin to have negligible phase lag due to loops
+
+    Parameters
+    ----------
+    sys: (zeros, poles, gain)
+        zeros: list of complex zeros
+        poles: list of complex poles
+        gain:  DC-gain
+
+        zeros/poles with nonzero imaginary part should come in complex
+        conjugate pairs, otherwise the conjugate zero/pole will
+        automatically be added. After this, the number of poles should
+        exceed the number of zeros at least by one, otherwise a real pole
+        near the nyquist frequency will automatically be added until there
+        are more poles than zeros.
+
+    loops: int or None
+        the number of FPGA cycles per filter sample. None tries to
+        automatically find the value leading to the highest possible
+        sampling frequency. If the numerical precision of the filter
+        coefficients in the FPGA is the limiting, manually setting a higher
+        value of loops may improve the filter performance.
+
+    dt: float
+        the FPGA clock frequency. Should be very close to 8e-9
+
+    minoops: int
+        minimum number of loops (constant of the FPGA design)
+
+    maxloops: int
+        maximum number of loops (constant of the FPGA design)
+    tol: float
+        tolerancee for matching conjugate pole/zero pairs. 1e-3 is okay.
+
+    Returns
+    -------
+    coefficients, loops
+
+    coefficients is an array of float arrays of length six, which hold the
+    filter coefficients to be passed directly to the iir module
+
+    loops is the number of loops for the implemented design.
     """
-    zc, pc, kc = sys
-    if zc == [] and pc == []:
-        logger.warning("Warning: No poles or zeros defined, only constant "
-                       "multiplication!")
-        coeff = np.zeros((1, 6), dtype=np.float64)
-        coeff[0, 0] = kc
-        coeff[:, 3] = 1.0
-        return coeff
-    # critical step: conversion through tf is main source of design error
-    # better algorithm (analytical) or higher numerical precision would help
-    # a lot here
-    zc = np.array(zc, dtype=np.complex128)
-    pc = np.array(pc, dtype=np.complex128)
-    kc = np.complex128(kc)
-    bb, aa = sig.zpk2tf(zc, pc, kc)
-    logger.debug("Continuous polynome: %s %s", bb, aa)
-    b, a, dtt = sig.cont2discrete((bb, aa), dt, method=method, alpha=alpha)
-    b = b[0]
-    logger.debug("Discrete polynome: %s %s", b, a)
-    r, p, k = sig.residuez(b, a, tol=tol)
-    coeff = rpk2psos(r, p, k, tol=tol)
-    logger.debug("Coefficients: %s", coeff)
-    if mindelay:
-        # at last, minimize the delay of the filter by placing high frequency
-        # poles at slots with minimum delay
-        return minimize_delay(coeff)
-    else:
-        return coeff
+    zeros, poles, gain = sys
+
+    # clean the filter specification so we can work with it and find the
+    # right number of loops
+    zeros, poles, loops = make_proper_tf(zeros,
+                                         poles,
+                                         loops=loops,
+                                         minloops=minloops,
+                                         maxloops=maxloops,
+                                         iirstages=iirstages,
+                                         tol=tol)
+
+    # get factor in front of ratio of zeros and poles
+    # scale to angular frequencies
+    z, p, k = rescale(zeros, poles, gain)
+
+    # pre-account for frequency distortion of bilinear transformation
+    if prewarp:
+        z, p = prewarp(z, p, dt=loops*dt)
+
+    # perform the partial fraction expansion to get first order sections
+    r = residues(z, p, k)
+
+    # transform to discrete time
+    r, p = cont2discrete(r, p, dt=dt*loops)
+
+    # convert (r, p) into biquad coefficients
+    coefficients = rp2sos(r, p)
+
+    # rearrange second order sections for minimum delay
+    coefficients = minimize_delay(coefficients)
+
+    return coefficients
+
+
+def residues(z, p, k):
+    """ this function uses the residue method (Heaviside Cover-up method)
+        to perform the partial fraction expansion of a rational function
+        defined by zeros, poles and a prefactor k. No intermediate
+        conversion into a polynome is performed, which makes this function
+        less prone to finite precision issues. In the current version,
+        no pole value may occur twice and the number of poles must be
+        strictly greated than the number of zeros.
+
+        Returns
+        -------
+        np.array(dtype=np.complex128) containing the numerator array a of the
+        expansion
+
+            product_i( s - z[i] )               a[i]
+        k ------------------------- =  sum ( ---------- )
+            product_j( s - p[j] )             s - p[j]
+    """
+    # first we should ensure that there are no double poles
+    if len(np.unique(p)) < len(p):
+        raise ValueError("Residues received a list of poles where some "
+                         "values appear twice. This cannot be implemented "
+                         "at the time being.")
+    # actually doing the math (or checking wikipedia) reveals a simple formula
+    # for a[i] that is implemented here:
+    # https://en.wikipedia.org/wiki/Partial_fraction_decomposition#Residue_method
+    #
+    # Say the original fraction can be written as P(s) / Q(s), where
+    # P is the polynome of zeros, including the prefactor k, and Q the
+    # polynome of poles. Then
+    # a[i] = P(p[i])/Q'([p[i]). Furthermore, Q'(p[i]) is the value of the
+    # polynome Q without the factor that contains p[i].
+    a = np.full(len(p), k, dtype=np.complex128)
+    for i in range(len(a)):
+        for j in range(len(p)):
+            # do multiplication and division alternatingly to avoid the unlikely
+            # event of numerical overflow
+            try:
+                a *= p[i] - z[j]
+            except IndexError:
+                pass
+            if i != j:
+                a /= p[i] - p[j]
+    return a
+
+
+def cont2discrete(r, p, dt=8e-9):
+    """
+    Transforms residue and pole from continuous to discrete time
+
+    Parameters
+    ----------
+    r: residues
+    p: poles
+    dt: sampling time
+
+    Returns
+    -------
+    (r, p) with the transformation applied
+    """
+    r = r * dt
+    p = np.exp(p * dt)
+    return r, p
+
+
+def rp2sos(r, p, tol=0):
+    """
+    Pairs residues and corresponding poles into second order sections.
+
+    Parameters
+    ----------
+    r: array with numerator coefficient
+    p: array with poles
+    tol: tolerance for combining complex conjugate pairs.
+
+    Returns
+    -------
+    coefficients: array((N, 6), dtype=np.float64) where N is number of biquads
+    """
+    N = int(np.ceil(float(len(p)) / 2.0))  # needed biquads
+    if N == 0:
+        logger.warning("Warning: No poles or zeros defined. Filter will be "
+                       "turned off! ")
+        coefficients = np.zeros((1, 6), dtype=np.float64)
+        coefficients[0, 0] = 0
+        coefficients[:, 3] = 1.0
+        return coefficients
+
+    # prepare coefficient array
+    coefficients = np.zeros((N, 6), dtype=np.float64)
+    coefficients[0, 0] = 0
+    coefficients[:, 3] = 1.0
+
+    #  make lists
+    rc = list(r)
+    pc = list(p)
+    # separate poles and residues into ones with zero and with nonzero
+    # imaginary part, only counting imaginary poles and residues once
+    complexp = []
+    complexr = []
+    realp = []
+    realr = []
+    while(len(pc) > 0):
+        pp = pc.pop(0)
+        rr = rc.pop(0)
+        if np.imag(pp) == 0:
+            realp.append(pp)
+            realr.append(rr)
+        else:
+            complexp.append(pp)
+            complexr.append(rr)
+            if pc.pop(np.conjugate(pp)) is None:
+                logger.warning("Conjugate partner for pole %s not found", pp)
+            if rc.pop(np.conjugate(rr)) is None:
+                logger.warning("Conjugate partner for residue %s not found",
+                               rr)
+    complexp = np.asarray(complexp, dtype=np.complex128)
+    complexr = np.asarray(complexr, dtype=np.complex128)
+    # 1)  filter coefficients come as an array of 6-vectors
+    #     [b0, b1, 0.0, 1.0, a1, a2]
+    #
+    # 2)  each of the implemented biquad filters will output
+    #     y[n] = b0*x[n] + b1*x[n-1] + a1*y[n-1] + b2*y[n-2]
+    #     This can be rewritten
+    #     1.0*y[n] - a1*y[n-1] - b2*y[n-2] = b0*x[n] + b1*x[n-1] + 0*x[n-2]
+    #     this is equivalent to
+    #
+    #                          b0 + b1*z^-1
+    #     Y(z)/X(z) =  ----------------------------
+    #                     1.0 - a1*z^-1 - a2*z^-1
+    #
+    # 3) The design started in continuous time, where we have the partial
+    #    fraction expansion as a starting point:
+    #
+    #                                 a[k]
+    #     Y(s)/X(s) =  sum_(k=1)^N ----------
+    #                               s - p[k]
+    #
+    #  4) Oppenheim+Schaefer 1975 p 203 states that 3) is transformed to
+    #
+    #                                     dt * a[k]
+    #     Y(s)/X(s) =  sum_(k=1)^N ------------------------
+    #                                1 - exp(p[k]*dt)*z^-1
+    #
+    #  5) The previous transformation (in cont2discrete has already done this:
+    #        p -> exp(p*dt),   a -> a*dt, so we already have
+    #
+    #                                    a[k]
+    #     Y(z)/X(z) =  sum_(k=1)^N ------------------
+    #                                1 - p[k]*z^-1
+    #
+    #  6) Thus, we just have to merge two conjugate first-order sections into
+    #     one second order section. As can be easily verified, we multiply a
+    #     section from 5) by its complex conjugate and compare coefficients
+    #     with the ones from 2)::
+    #
+    #     b0 = 2.0*real(a)
+    #     b1 = -2.0 * real(a*conjugate(p))
+    #     a1 = 2.0*real(p)
+    #     a2 = -abs(p)**2
+    coefficients[:len(complexp), 0] = 2.0*np.real(complexr)
+    coefficients[:len(complexp), 1] = -2.0 * np.real(
+        complexr * np.conjugate(complexp))
+    coefficients[:len(complexp), 4] = 2.0 * np.real(complexp)
+    coefficients[:len(complexp), 5] = -1.0*np.abs(complexp)**2
+    # for a pair of real poles, residues (p1, p2) and (r1, r2), we find
+    #     b0 = r1 + r2
+    #     b1 = - r1*p2 - r2*p1
+    #     a1 = p1 + p2
+    #     a2 = -p1*p2
+    # make number of poles even
+    if len(realp) % 2 != 0:
+        realp.append(0)
+        realr.append(0)
+    # implement coefficients
+    for i in range(len(realp)//2):
+        p1, p2 = realp[2*i], realp[2*i+1]
+        r1, r2 = realr[2 * i], realr[2*i+1]
+        coefficients[len(complexp):, 0] = r1+r2
+        coefficients[len(complexp):, 1] = -r1*p2 -r2*p1
+        coefficients[len(complexp):, 4] = p1+p2
+        coefficients[len(complexp):, 5] = -p1*p2
+    # that finishes the design
+    return coefficients
 
 
 def minimize_delay(coefficients):
@@ -461,9 +717,10 @@ def bodeplot(data, xlog=False):
     plt.show()
 
 
-def make_proper_tf(zeros, poles, loops=None, _minloops=3, tol=1e-3):
+def make_proper_tf(zeros, poles, loops=None,
+                   minloops=4, maxloops=255, iirstages=16, tol=1e-3):
     """
-    Makes sure that a systel is strictly proper and that all complex
+    Makes sure that a system is strictly proper and that all complex
     poles/zeros have conjugate parters.
 
     Parameters
@@ -471,7 +728,9 @@ def make_proper_tf(zeros, poles, loops=None, _minloops=3, tol=1e-3):
     zeros: list of zeros
     poles: list of poles
     loops: number of loops to implement. Can be None for autodetection.
-    _minloops: minimum number of loops that is acceptable
+    minloops: minimum number of loops that is acceptable
+    maxloops: minimum number of loops that is acceptable
+    iirstages: number of biquads available for implementation
     tol: tolerance for matching complex conjugate partners
 
     Returns
@@ -514,35 +773,42 @@ def make_proper_tf(zeros, poles, loops=None, _minloops=3, tol=1e-3):
     zeros, poles = results[0], results[1]
 
     # get the number of loops after anticipated pole addition (see part 2)
-    minloops = minlooplist[1]  # only need to reason w.r.t. poles
+    _minloops = minlooplist[1]  # only need to reason w.r.t. poles
     if len(zeros)-len(poles) >= 0:
         # add half a biquad per excess zero
-        minloops += (len(zeros) - len(poles) + 1) * 0.5
-    minloops = int(np.ceil(minloops))
-    if minloops < _minloops: # absolute minimum for proper functioning
-        minloops = _minloops
+        _minloops += (len(zeros) - len(poles) + 1) * 0.5
+    # each pair of poles needs one biquad
+    _minloops = int(np.ceil(_minloops))
+    if _minloops < minloops:  # absolute minimum for proper functioning
+        _minloops = minloops
     if loops is None:
-        loops = minloops
+        loops = _minloops
     elif minloops > loops:
         logger.warning("Cannot implement filter with %s loops. "
                        "Minimum of %s is needed! ", loops, minloops)
         loops = minloops
+    if loops > maxloops:
+        self._logger.warning("Maximum loops number is %s. This value "
+                             "will be tried instead of specified value "
+                             "%s.", self._maxloops, loops)
+        loops = self._maxloops
+    # make sure filter can be realized
+    if loops > iirstages:
+        raise Exception("Error: desired filter order is too high to "
+                        "be implemented.")
 
     # part 2: make sure the transfer function is strictly proper
     # if we must add a pole, place it at the nyquist frequency
     extrapole = -125e6 / loops
-    added = 0
     while len(zeros) >= len(poles):
         poles.append(extrapole)
         logger.warning("Specified IIR transfer function was not "
                        "strictly proper. Automatically added a pole at %s Hz.",
                        -1*extrapole)
-        added += 1
         # if more poles must be added, make sure we have no 2 poles at the
         # same frequency
-        if added % 2 == 0:
-            extrapole /= 2
-    return zeros, poles, minloops
+        extrapole /= 2
+    return zeros, poles, loops
 
 
 def rescale(zeros, poles, gain):
@@ -560,40 +826,38 @@ def rescale(zeros, poles, gain):
     return zeros, poles, k
 
 
-def prewarp(sys, dt=8e-9):
+def prewarp(z, p, dt=8e-9):
     """ prewarps frequencies in order to correct warping effect in discrete
     time conversion """
     def timedilatation(w):
         """ accounts for effective time dilatation due to warping effect """
-        freq = w / 2.0 / np.pi
-        if np.imag(freq) == 0:
-            freq = np.abs(freq)
+        if np.imag(w) == 0:
+            w = np.abs(w)
             #return 1.0  # do not prewarp real poles/zeros
         else:
-            freq = np.abs(np.imag(freq))
-        if freq == 0:
+            w = np.abs(np.imag(w))
+        if w == 0:
             return 1.0
         else:
-            correction = np.tan(np.pi * freq * dt) / freq / np.pi / dt
+            correction = np.tan(w / 2 * dt) / w * 2.0 / dt
             if correction <= 0:
                 logger.warning("Negative correction factor %s obtained "
                                "during prewarp for frequency %s. "
                                "Setting correction factor to 1!",
-                               correction, freq)
+                               correction, w / 2 / np.pi)
                 return 1.0
             elif correction > 2.0:
                 logger.warning("Correction factor %s > 2 obtained"
                                "during prewarp for frequency %s. "
                                "Setting correction factor to 1 but this "
                                "seems wrong!",
-                               correction, freq)
+                               correction, w / 2 / np.pi)
                 return 1.0
             else:
                 return correction
     # apply timedilatation() to all zeros and poles
-    zeros, poles, k = sys
-    zc = list(zeros)  # make copies
-    pc = list(poles)
+    zc = list(z)  # make copies
+    pc = list(p)
     for x in [zc, pc]:
         for i in range(len(x)):
             correction = timedilatation(x[i])
@@ -601,4 +865,4 @@ def prewarp(sys, dt=8e-9):
                          "automatically applied.",
                          correction, x[i] / 2 / np.pi)
             x[i] *= correction
-    return zc, pc, k
+    return zc, pc
