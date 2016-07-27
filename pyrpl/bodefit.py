@@ -684,7 +684,9 @@ class BodeFitGuiOptimisation(BodeFitGui):
         zeros, poles, minloops = iir.make_proper_tf(self.zeros,
                                                     self.poles,
                                                     loops=loops,
-                                                    _minloops=self._minloops,
+                                                    minloops=self._minloops,
+                                                    maxloops=self._maxloops,
+                                                    iirstages=self._IIRSTAGES,
                                                     tol=tol)
         # make sure filter can be realized
         if minloops > self._IIRSTAGES:
@@ -706,15 +708,14 @@ class BodeFitGuiOptimisation(BodeFitGui):
         # prewarp coefficients to match specification (bilinear transform
         # distorts frequencies of poles)
         if prewarp:
-            sys = iir.prewarp(self._sys, dt=self.sampling_time)
+            z, p, k = self._sys
+            z, p = iir.prewarp(z, p, dt=self.sampling_time)
+            sys = z, p, k
         else:
             sys = self._sys
         # get coefficients
-        c = iir.get_coeff(sys,
-                          dt=self.sampling_time,
-                          tol=tol,
-                          method=self._method,
-                          alpha=self._alpha)
+        c = iir.get_coefficients(sys,
+                          dt=self.sampling_time)
         self.coefficients = c
         return c
 

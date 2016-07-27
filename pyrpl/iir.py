@@ -146,12 +146,12 @@ def tf_inputfilter(frequencies, inputfilter):  # input filter modelisation
     return tf
 
 
-def freqresp(sys, w):
+def freqs(sys, w):
     """
     This function computes the frequency response of a zpk system at an
     array of frequencies.
 
-    It loosely mimicks scipy.signal.frequresp() with two differences.
+    It loosely mimicks 'scipy.signal.freqs'.
 
     Parameters
     ----------
@@ -181,6 +181,66 @@ def freqresp(sys, w):
     return h
 
 
+def freqz(sys, w, dt=8e-9):
+    """
+    This function computes the frequency response of a discrete time zpk
+    system at an array of frequencies.
+
+    It loosely mimicks 'scipy.signal.frequresp'.
+
+    Parameters
+    ----------
+    system: (zeros, poles, k)
+        zeros and poles both in rad/s, k is the actual coefficient, not DC gain
+    w: np.array
+        frequencies in rad/s
+    dt: sampling time
+
+    Returns
+    -------
+    np.array(..., dtype=np.complex) with the response
+    """
+    z, p, k = sys
+    s = np.array(w, dtype=np.complex128) * 1j
+    h = np.full(len(s), k, dtype=np.complex128)
+    for i in range(max([len(z), len(p)])):
+        # do multiplication and division alternatingly to avoid the unlikely
+        # event of numerical overflow
+        try:
+            h *= s - np.log(z[i])/dt
+        except IndexError:
+            pass
+        try:
+            h /= s - np.log(p[i])/dt
+        except IndexError:
+            pass
+    return h
+
+def freqz_(sys, w, dt=8e-9):
+    """
+    This function computes the frequency response of a zpk system at an
+    array of frequencies.
+
+    It loosely mimicks 'scipy.signal.frequresp'.
+
+    Parameters
+    ----------
+    system: (zeros, poles, k)
+        zeros and poles both in rad/s, k is the actual coefficient, not DC gain
+    w: np.array
+        frequencies in rad/s
+    dt: sampling time
+
+    Returns
+    -------
+    np.array(..., dtype=np.complex) with the response
+    """
+    z, p, k = sys
+    b, a = sig.zpk2tf(z, p, k)
+    _, h = sig.freqz(b, a, worN=w*dt)
+    return h
+
+
 def tf_continuous(sys, frequencies):
     """
     Returns the continuous transfer function of sys at frequencies.
@@ -199,57 +259,48 @@ def tf_continuous(sys, frequencies):
     -------
     np.array(..., dtype=np.complex)
     """
-    frequencies = np.array(frequencies, dtype=np.complex)
-    wc, hc = freqresp(sys, frequencies * 2 * np.pi)
-    return hc
+    sys = get_coefficients(sys, intermediatereturn='continuous')
+    frequencies = np.asarray(frequencies, dtype=np.complex)
+    return freqs(sys, frequencies * 2 * np.pi)
 
 
-def tf_before_partialfraction(sys, frequencies, dt=8e-9, continuous=False,
-                              method="gbt", alpha=0.5):
-        """
-        Returns the transfer function just before the partial fraction
-        expansion for frequencies.
+def tf_partialfraction(sys, frequencies):
+    """
+    Returns the transfer function just before the partial fraction
+    expansion for frequencies.
 
-        Parameters
-        ----------
-        sys: (poles, zeros, k)
-        dt:  sampling time
-        continuous: if True, returns the transfer function in continuous
-                    time domain, if False converts to discrete one
-        method: method for scipy.signal.cont2discrete
-        alpha:  alpha for above method (see scipy documentation)
+    Parameters
+    ----------
+    sys: (poles, zeros, k)
+    dt:  sampling time
+    continuous: if True, returns the transfer function in continuous
+                time domain, if False converts to discrete one
+    method: method for scipy.signal.cont2discrete
+    alpha:  alpha for above method (see scipy documentation)
 
-        Returns
-        -------
-        np.array(..., dtype=np.complex)
-        """
-        # this code is more or less a direct copy of get_coeff()
-        # frequencies = np.array(frequencies, dtype=np.complex)
-        zc, pc, kc = sys
-        zc = np.array(zc, dtype=np.complex128)
-        pc = np.array(pc, dtype=np.complex128)
-        kc = np.complex128(kc)
-        bb, aa = sig.zpk2tf(zc, pc, kc)
-        if continuous:
-            w = np.array(frequencies, dtype=np.float) * 2 * np.pi  # * dt
-            ww, h = sig.freqs(bb, aa, worN=w)
-            return h
-        b, a, dtt = sig.cont2discrete((bb, aa), dt, method=method, alpha=alpha)
-        b = b[0]
-        w = np.array(frequencies, dtype=np.float) * 2 * np.pi * dt
-        ww, h = sig.freqz(b, a, worN=w)
-        return h
+    Returns
+    -------
+    np.array(..., dtype=np.complex)
+    """
+    # this code is more or less a direct copy of get_coeff()
+    # frequencies = np.array(frequencies, dtype=np.complex)
+    r, p, loops = get_coefficients(sys,
+                           intermediatereturn='partialfraction')
+    h = np.zeros(len(frequencies), dtype=np.complex128)
+    for i in range(len(p)):
+        h += freqs(([], [p[i]], r[i]), 2*np.pi*frequencies)
+    return h
 
 
-def tf_discrete(coefficients, frequencies, dt=8e-9, delay_per_cycle=8e-9,
-                zoh=True):
+def tf_discrete(sys, frequencies, dt=8e-9, delay_per_cycle=8e-9,
+                     zoh=True):
     """
     Returns the discrete transfer function realized by coefficients at
     frequencies.
 
     Parameters
     ----------
-    coefficients: np.array
+    rpz: np.array
         coefficients as returned from iir module (array of biquad coefficients)
 
     frequencies: np.array
@@ -270,24 +321,24 @@ def tf_discrete(coefficients, frequencies, dt=8e-9, delay_per_cycle=8e-9,
     -------
     np.array(..., dtype=np.complex)
     """
-    # the higher stages have progressively more delay to the output
-    delay_per_cycle_array = np.exp(-1j * delay_per_cycle * frequencies * 2 *
-                                np.pi)
-    # discrete frequency
-    w = np.array(frequencies, dtype=np.float) * 2 * np.pi * dt
-    b, a = sig.sos2tf(np.array([coefficients[0]]))
-    ww, h = sig.freqz(b, a, worN=w)
-    for i in range(1, len(coefficients)):
-        b, a = sig.sos2tf(np.array([coefficients[i]]))
-        ww, hh = sig.freqz(b, a, worN=w)
-        if not zoh:
-            h += hh * delay_per_cycle_array **i  # minimum delay implementation
-        else:
-            h += hh
-    if zoh:  # zero order hold implementation: biquad-independent delay
-        h *= np.exp(-1j * delay_per_cycle * frequencies * 2 * np.pi
-                             * len(coefficients))
+    r, p = sys
+    w = np.array(frequencies, dtype=np.complex128) * 2 * np.pi
+    h = np.zeros(len(w), dtype=np.complex128)
+    for i in range(len(p)):
+        hh = freqz(([], [p[i]], r[i]), w, dt=dt)
+        h += hh
     return h
+
+def tf_discrete_(sys, frequencies, dt=8e-9, delay_per_cycle=8e-9,
+                               zoh=True):
+    r, p = sys
+    w = np.array(frequencies, dtype=np.complex128) * 2 * np.pi
+    h = np.zeros(len(w), dtype=np.complex128)
+    for i in range(len(p)):
+        hh = freqz(([], [p[i]], r[i]), w, dt=dt)
+        h += hh
+    return h
+
 
 def tf_discrete_fast(coefficients, frequencies, dt=8e-9):
     """
@@ -324,8 +375,9 @@ def tf_discrete_fast(coefficients, frequencies, dt=8e-9):
 def tf_implemented(coefficients,
                    frequencies,
                    dt=8e-9,
-                   totalbits=32,
-                   shiftbits=16,
+                   delay_per_cycle=8e-9,
+                   totalbits=320,
+                   shiftbits=280,
                    zoh=False):
     """
     Returns the discrete transfer function realized by coefficients at
@@ -350,10 +402,31 @@ def tf_implemented(coefficients,
     -------
     np.array(..., dtype=np.complex)
     """
-    fcoefficients = finiteprecision(coefficients,
-                                    totalbits=totalbits,
-                                    shiftbits=shiftbits)
-    return tf_discrete(fcoefficients, frequencies, dt=dt, zoh=zoh)
+    if totalbits is None:
+        fcoefficients = coefficients
+    else:
+        fcoefficients = finiteprecision(coefficients,
+                                        totalbits=totalbits,
+                                        shiftbits=shiftbits)
+
+    # the higher stages have progressively more delay to the output
+    delay_per_cycle_array = np.exp(-1j * delay_per_cycle * frequencies * 2 *
+                                np.pi)
+    # discrete frequency
+    w = np.array(frequencies, dtype=np.float) * 2 * np.pi * dt
+    b, a = sig.sos2tf(np.array([fcoefficients[0]]))
+    ww, h = sig.freqz(b, a, worN=w)
+    for i in range(1, len(coefficients)):
+        b, a = sig.sos2tf(np.array([fcoefficients[i]]))
+        ww, hh = sig.freqz(b, a, worN=w)
+        if not zoh:
+            h += hh * delay_per_cycle_array **i  # minimum delay implementation
+        else:
+            h += hh
+    if zoh:  # zero order hold implementation: biquad-independent delay
+        h *= np.exp(-1j * delay_per_cycle * frequencies * 2 * np.pi
+                             * len(fcoefficients))
+    return h
 
 
 def finiteprecision(coeff, totalbits=32, shiftbits=16):
@@ -378,13 +451,14 @@ def finiteprecision(coeff, totalbits=32, shiftbits=16):
 
 def get_coefficients(
         sys,
-        loops,
+        loops=None,
         dt=8e-9,
         minloops=4,
         maxloops=255,
         iirstages=16,
         tol=1e-3,
-        prewarp=False):
+        prewarp=False,
+        intermediatereturn=None):
     """
 
     Parameters
@@ -416,8 +490,14 @@ def get_coefficients(
 
     maxloops: int
         maximum number of loops (constant of the FPGA design)
+
     tol: float
         tolerancee for matching conjugate pole/zero pairs. 1e-3 is okay.
+
+    intermediatereturn: str or None
+        if set to a valid option, the algorithm will stop at the specified
+        step and return an intermediate result for debugging. Valid options are
+
 
     Returns
     -------
@@ -444,6 +524,9 @@ def get_coefficients(
     # scale to angular frequencies
     z, p, k = rescale(zeros, poles, gain)
 
+    if intermediatereturn == 'continuous':
+        return z, p, k
+
     # pre-account for frequency distortion of bilinear transformation
     if prewarp:
         z, p = prewarp(z, p, dt=loops*dt)
@@ -451,8 +534,14 @@ def get_coefficients(
     # perform the partial fraction expansion to get first order sections
     r = residues(z, p, k)
 
+    if intermediatereturn == 'partialfraction':
+        return r, p, loops
+
     # transform to discrete time
     r, p = cont2discrete(r, p, dt=dt*loops)
+
+    if intermediatereturn == 'discrete':
+        return r, p, loops
 
     # convert (r, p) into biquad coefficients
     coefficients = rp2sos(r, p)
@@ -460,7 +549,7 @@ def get_coefficients(
     # rearrange second order sections for minimum delay
     coefficients = minimize_delay(coefficients)
 
-    return coefficients
+    return coefficients, loops
 
 
 def residues(z, p, k):
@@ -501,11 +590,11 @@ def residues(z, p, k):
             # do multiplication and division alternatingly to avoid the unlikely
             # event of numerical overflow
             try:
-                a *= p[i] - z[j]
+                a[i] *= p[i] - z[j]
             except IndexError:
                 pass
             if i != j:
-                a /= p[i] - p[j]
+                a[i] /= p[i] - p[j]
     return a
 
 
@@ -523,8 +612,8 @@ def cont2discrete(r, p, dt=8e-9):
     -------
     (r, p) with the transformation applied
     """
-    r = r * dt
-    p = np.exp(p * dt)
+    r = np.asarray(r, dtype=np.complex128)
+    p = np.exp(np.asarray(p, dtype=np.complex128) * dt)
     return r, p
 
 
@@ -545,7 +634,7 @@ def rp2sos(r, p, tol=0):
     N = int(np.ceil(float(len(p)) / 2.0))  # needed biquads
     if N == 0:
         logger.warning("Warning: No poles or zeros defined. Filter will be "
-                       "turned off! ")
+                       "turned off!")
         coefficients = np.zeros((1, 6), dtype=np.float64)
         coefficients[0, 0] = 0
         coefficients[:, 3] = 1.0
@@ -561,6 +650,8 @@ def rp2sos(r, p, tol=0):
     pc = list(p)
     # separate poles and residues into ones with zero and with nonzero
     # imaginary part, only counting imaginary poles and residues once
+
+    # we should really migrate this to scipy.signal._cplxreal
     complexp = []
     complexr = []
     realp = []
@@ -572,15 +663,19 @@ def rp2sos(r, p, tol=0):
             realp.append(pp)
             realr.append(rr)
         else:
-            complexp.append(pp)
-            complexr.append(rr)
-            if pc.pop(np.conjugate(pp)) is None:
-                logger.warning("Conjugate partner for pole %s not found", pp)
-            if rc.pop(np.conjugate(rr)) is None:
-                logger.warning("Conjugate partner for residue %s not found",
-                               rr)
+            # find closest-matching index
+            diff = np.abs(np.asarray(pc) - np.conjugate(pp))
+            index = np.argmin(diff)
+            if diff[index] > tol:
+                logger.warning("Conjugate partner for pole %s deviates from "
+                               "expected value by %s > %s",
+                               pp, diff[index], tol)
+            complexp.append((pp + np.conjugate(pc.pop(index))) / 2.0)
+            complexr.append((rr + np.conjugate(rc.pop(index))) / 2.0)
     complexp = np.asarray(complexp, dtype=np.complex128)
     complexr = np.asarray(complexr, dtype=np.complex128)
+    realp = np.asarray(realp, dtype=np.complex128)
+    realr = np.asarray(realr, dtype=np.complex128)
     # 1)  filter coefficients come as an array of 6-vectors
     #     [b0, b1, 0.0, 1.0, a1, a2]
     #
@@ -740,9 +835,9 @@ def make_proper_tf(zeros, poles, loops=None,
     """
     # part 1: make sure each complex pole/zero has a conjugate partner
     results = []
-    minlooplist = []  # count at the same time how many biquads are needed
+    looplist = []  # count at the same time how many biquads are needed
     for data in [zeros, poles]:
-        minloops = 0
+        actloops = 0
         data = list(data)  # make a copy of the original data
         gooddata = []
         while data:
@@ -750,9 +845,9 @@ def make_proper_tf(zeros, poles, loops=None,
             gooddata.append(datum)
             if np.imag(datum) == 0:
                 # real pole/zero -> needs half a biquad
-                minloops += 0.5
+                actloops += 0.5
             else:
-                minloops += 1
+                actloops += 1
                 # find conjugate partner
                 found = False
                 for candidate in data:
@@ -767,35 +862,40 @@ def make_proper_tf(zeros, poles, loops=None,
                                  "partner. It was added automatically.",
                                  datum)
                     gooddata.append(np.conjugate(datum))
+                    # attention to an issue here: Often
+                    # datum != np.conjugate(np.conjugate(datum))
+                    # therefore we should consider replacing the original pole
+                    # by its double conjugate to have matched pairs (the
+                    # error only appears in the first conjugation)
         # overwrite original data with the corrected one
         results.append(gooddata)
-        minlooplist.append(minloops)
+        looplist.append(actloops)
     zeros, poles = results[0], results[1]
 
     # get the number of loops after anticipated pole addition (see part 2)
-    _minloops = minlooplist[1]  # only need to reason w.r.t. poles
+    actloops = looplist[1]  # only need to reason w.r.t. poles
     if len(zeros)-len(poles) >= 0:
         # add half a biquad per excess zero
-        _minloops += (len(zeros) - len(poles) + 1) * 0.5
+        actloops += (len(zeros) - len(poles) + 1) * 0.5
     # each pair of poles needs one biquad
-    _minloops = int(np.ceil(_minloops))
-    if _minloops < minloops:  # absolute minimum for proper functioning
-        _minloops = minloops
-    if loops is None:
-        loops = _minloops
-    elif minloops > loops:
-        logger.warning("Cannot implement filter with %s loops. "
-                       "Minimum of %s is needed! ", loops, minloops)
-        loops = minloops
-    if loops > maxloops:
-        self._logger.warning("Maximum loops number is %s. This value "
-                             "will be tried instead of specified value "
-                             "%s.", self._maxloops, loops)
-        loops = self._maxloops
-    # make sure filter can be realized
-    if loops > iirstages:
+    actloops = int(np.ceil(actloops))
+    if actloops > iirstages:
         raise Exception("Error: desired filter order is too high to "
                         "be implemented.")
+    if actloops < minloops:
+        actloops = minloops
+    # actloops now contains the necessary number of loops
+    if loops is None:
+        loops = actloops
+    elif loops < actloops:
+        logger.warning("Cannot implement filter with %s loops. "
+                       "Minimum of %s is needed! ", loops, actloops)
+        loops = actloops
+    if loops > maxloops:
+        logger.warning("Maximum loops number is %s. This value "
+                             "will be tried instead of specified value "
+                             "%s.", maxloops, loops)
+        loops = maxloops
 
     # part 2: make sure the transfer function is strictly proper
     # if we must add a pole, place it at the nyquist frequency
@@ -804,7 +904,7 @@ def make_proper_tf(zeros, poles, loops=None,
         poles.append(extrapole)
         logger.warning("Specified IIR transfer function was not "
                        "strictly proper. Automatically added a pole at %s Hz.",
-                       -1*extrapole)
+                       extrapole)
         # if more poles must be added, make sure we have no 2 poles at the
         # same frequency
         extrapole /= 2

@@ -1774,22 +1774,18 @@ class IIR(FilterModule):
                                             kind=k),
                      k)
                     for k in ["continuous",
-                              "before_partialfraction_continuous",
-                              #"before_partialfraction_discrete",
-                              #"before_partialfraction_discrete_zoh",
+                              "partialfraction_continuous",
                               "discrete",
-                              #"discrete_samplehold",
                               "highprecision",
                               "implemented"]]
 
         elif kind == "continuous":
             tf = iir.tf_continuous(sys=self._sys,
                                    frequencies=frequencies)
-        elif kind == "before_partialfraction_continuous":
-            tf = iir.tf_before_partialfraction(sys=self._sys,
+        elif kind == "partialfraction_continuous":
+            tf = iir.tf_partialfraction_continuous(sys=self._sys,
                                                frequencies=frequencies,
-                                               dt=self.sampling_time,
-                                               continuous=True)
+                                               dt=self.sampling_timee)
         elif kind == "before_partialfraction_discrete_zoh":
             tf = iir.tf_before_partialfraction(sys=self._sys,
                                                frequencies=frequencies,
