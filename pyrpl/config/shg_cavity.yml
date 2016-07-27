@@ -1,5 +1,5 @@
 redpitaya:
-  hostname: 10.214.1.33
+  hostname: 10.214.1.34
   password: root
   user: root
   port: 2222
@@ -18,7 +18,7 @@ general:
   # 'infi' is default level
   # 'warning' only shows warnings and errors
   # 'error' only shows errors
-  loglevel: infi
+  loglevel: info
   # import CurveDB class from which module? if missing, it's pyrpl.curvedb
   #curvedb: pyrpl
   curvedb: pyinstruments
@@ -72,8 +72,8 @@ model:
 
   resonant_reflection: -0.08322671800851822
   offresonant_reflection: 0.08339925855398178
-  peak_pdh: 0.79254150390625
-  resonant_transmission: 0.4008150175213814
+  peak_pdh: 0.38372802734375
+  resonant_transmission: 0.3909273222088814
 # all signals that are inputs of the lockbox. Must be signal names understood
 # by the model. The order of signals indicates their preferrence as error
 # signals.
@@ -88,15 +88,16 @@ inputs:
   #  offset: -0.01687093824148178
   transmission:
     redpitaya_input: adc2
-    max: 0.4008150175213814
-    min: -0.010195724666118622
-    mean: -0.006716527044773102
-    rms: 0.009417287072858584
+    max: 0.3909273222088814
+    min: 0.0005464628338813782
+    mean: 0.09113024175167084
+    rms: 0.10676386204666259
     offset: -0.004574783146381378
   pdh:
     setup:
-      input: adc1
-      phase: 120.0
+      #input: adc1
+      input: adc2
+      phase: 130.0
       amplitude: 1
       output_direct: out2
       frequency: 19950000.0
@@ -109,10 +110,10 @@ inputs:
       acbandwidth: 100000.0
 
     redpitaya_input: iq0
-    max: 0.9788485765457153
-    min: -0.6062344312667847
-    mean: -0.025842703878879547
-    rms: 0.04964212389566429
+    max: 0.37154877185821533
+    min: -0.39590728282928467
+    mean: -0.028247423470020294
+    rms: 0.1375395638680406
     offset: 0.021029353141784668
 # All output signals. Names of outputs are arbitrary.
 outputs:
@@ -122,7 +123,8 @@ outputs:
     redpitaya_output: out1
     # voltage limits
     max_voltage: 1.0
-    min_voltage: -1.0
+    #min_voltage: -1.0
+    min_voltage: -0.5
     # we will calibrate the piezo response in units of m_per_V (not a necessary
     # parameter as it can be automatically filled in by the code)
     calibrationunits: m_per_V
