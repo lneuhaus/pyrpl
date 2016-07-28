@@ -72,8 +72,8 @@ model:
 
   resonant_reflection: -0.08322671800851822
   offresonant_reflection: 0.08339925855398178
-  peak_pdh: 0.38372802734375
-  resonant_transmission: 0.3909273222088814
+  peak_pdh: 0.2044677734375
+  resonant_transmission: 0.2782564237713814
 # all signals that are inputs of the lockbox. Must be signal names understood
 # by the model. The order of signals indicates their preferrence as error
 # signals.
@@ -88,10 +88,10 @@ inputs:
   #  offset: -0.01687093824148178
   transmission:
     redpitaya_input: adc2
-    max: 0.3909273222088814
-    min: 0.0005464628338813782
-    mean: 0.09113024175167084
-    rms: 0.10676386204666259
+    max: 0.2782564237713814
+    min: -0.008486740291118622
+    mean: 0.03969451040029526
+    rms: 0.06909040713916954
     offset: -0.004574783146381378
   pdh:
     setup:
@@ -110,10 +110,10 @@ inputs:
       acbandwidth: 100000.0
 
     redpitaya_input: iq0
-    max: 0.37154877185821533
-    min: -0.39590728282928467
-    mean: -0.028247423470020294
-    rms: 0.1375395638680406
+    max: 0.18429291248321533
+    min: -0.22464263439178467
+    mean: -0.023815616965293884
+    rms: 0.06980208650126543
     offset: 0.021029353141784668
 # All output signals. Names of outputs are arbitrary.
 outputs:
@@ -124,7 +124,7 @@ outputs:
     # voltage limits
     max_voltage: 1.0
     #min_voltage: -1.0
-    min_voltage: -0.5
+    min_voltage: 0
     # we will calibrate the piezo response in units of m_per_V (not a necessary
     # parameter as it can be automatically filled in by the code)
     calibrationunits: m_per_V
@@ -142,11 +142,12 @@ outputs:
     # from 15 kHz. To be safe, we start by demanding a unity-gain frequency
     # of 1 kHz and will later increase this value (automatically done after
     # lock optimisation)
-    unity_gain_frequency: 1000.0
+    unity_gain_frequency: 500.0
     sweep:
       waveform: ramp
       frequency: 10.0
       amplitude: 1.0
+      offset: 0.5
 
     inputfilter:
     - 19428.09363914738
