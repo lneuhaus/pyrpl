@@ -1616,44 +1616,25 @@ class IIR(FilterModule):
                             "filters! Please use an IIR version!")
         self.on = False
         self.shortcut = False
-
-        # save for future evaluation
-        self._sys = (zeros, poles, gain)
-
-        self._coefficients, self.loops = iir.get_coefficients(
-                                 sys,
-                                 loops,
-                                 minloops=self._minloops,
-                                 maxloops=self._maxloops,
-                                 iirstages=self._IIRSTAGES)
-        # write to the coefficients register (_coefficients is the full
-        # precision version)
-        self.coefficients = self._coefficients
+        # design the filter
+        self.iirfilter = iir.IirFilter(zeros=zeros,
+                                       poles=poles,
+                                       gain=gain,
+                                       loops=loops,
+                                       dt=8e-9*self._frequency_correction,
+                                       minloops=self._minloops,
+                                       maxloops=self._maxloops,
+                                       iirstages=self._IIRSTAGES,
+                                       totalbits=self._IIRBITS,
+                                       shiftbits=self._IIRSHIFT,
+                                       inputfilter=0,
+                                       moduledelay=self._delay)
+        # set loops in fpga
+        self.loops = self.iirfilter.loops
+        # write to the coefficients register
+        self.coefficients = self.iirfilter.coefficients
         self._logger.info("Filter sampling frequency is %.3s MHz",
                           1e-6 / self.sampling_time)
-
-
-        # get scaling right for coefficients so that gain corresponds to dcgain
-        self._sys = iir.rescale(zeros, poles, gain)
-        # prewarp coefficients to match specification (bilinear transform
-        # distorts frequencies of poles)
-        if prewarp:
-            sys = iir.prewarp(self._sys, dt=self.sampling_time)
-        else:
-            sys = self._sys
-        # get coefficients
-        c = iir.get_coeff(sys,
-                          dt=self.sampling_time,
-                          tol=tol,
-                          method=self._method,
-                          alpha=self._alpha)
-        # write coefficients to fpga
-        self.coefficients = c
-        # save the full-precision coefficients for debugging
-        self._coefficients = c
-
-
-
         # low-pass filter the input signal with a first order filter with
         # cutoff near the sampling rate - decreases aliasing and achieves
         # higher internal data precision (3 extra bits) through averaging
@@ -1661,8 +1642,9 @@ class IIR(FilterModule):
             self.inputfilter = 125e6*self._frequency_correction / self.loops
         else:
             self.inputfilter = inputfilter
+        self.iirfilter.inputfilter = self.inputfilter  # update model
         self._logger.info("IIR anti-aliasing input filter set to: %s MHz",
-                          self.inputfilter * 1e-6)
+                          self.iirfilter.inputfilter * 1e-6)
         # connect the module
         if input is not None:
             self.input = input
@@ -1670,12 +1652,10 @@ class IIR(FilterModule):
             self.output_direct = output_direct
         # switch it on only once everything is set up
         self.on = turn_on
-
         self._logger.info("IIR filter ready")
         # compute design error
-        dev = (np.abs((self.coefficients[0:len(self._coefficients)] -
-                       self._coefficients).flatten()))
-
+        dev = (np.abs((self.coefficients[0:len(self.iirfilter.coefficients)] -
+                       self.iirfilter.coefficients).flatten()))
         maxdev = max(dev)
         reldev = maxdev / abs(c.flatten()[np.argmax(dev)])
         if reldev > 0.05:
@@ -1693,7 +1673,7 @@ class IIR(FilterModule):
         if designdata or plot:
             maxf = 125e6/self.loops
             fs = np.linspace(maxf/1000, maxf, 2001, endpoint=True)
-            designdata = self.transfer_function(fs, kind='all')
+            designdata = self.iirfilter.designdata
             if plot:
                 iir.bodeplot(designdata, xlog=True)
             return designdata
@@ -1704,6 +1684,7 @@ class IIR(FilterModule):
     def sampling_time(self):
         return 8e-9 / self._frequency_correction * self.loops
 
+    ### this function is pretty much obsolete now. use self.iirfilter.tf_...
     def transfer_function(self, frequencies, extradelay=0, kind='implemented'):
         """
         Returns a complex np.array containing the transfer function of the

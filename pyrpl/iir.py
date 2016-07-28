@@ -229,18 +229,20 @@ class IirFilter(object):
                  shiftbits=32,
                  tol=1e-3,
                  frequencies=None,
-                 inputfilter = 0):
+                 inputfilter=0,
+                 module_delay=5):
         self._sys = zeros, poles, gain
         self.loops = loops
         self.dt = dt
         self.minloops = minloops
         self.maxloops = maxloops
         self.iirstages = iirstages
-        self.totalbits=totalbits
-        self.shiftbits=shiftbits
+        self.totalbits = totalbits
+        self.shiftbits = shiftbits
         self.tol = tol
         self._frequencies = frequencies
         self.inputfilter = inputfilter
+        self.module_delay = module_delay
         _ = self.coefficients  # compute coefficients immediately
 
     @property
@@ -638,8 +640,10 @@ class IirFilter(object):
             realr.append(0)
         realp = np.asarray(realp, dtype=np.float64)
         realr = np.asarray(realr, dtype=np.float64)
-        print realr, realp
-        # implement coefficients
+        # implement coefficients - order is the one from specification of poles
+        # Some kind of sorting should be implemented but not clear which one.
+        # We will do this once problems with this procedure become visible
+        # in order to optimize the performance on an actual problem.
         for i in range(len(realp) // 2):
             p1, p2 = realp[2 * i], realp[2 * i + 1]
             r1, r2 = realr[2 * i], realr[2 * i + 1]
@@ -715,8 +719,8 @@ class IirFilter(object):
         return self._fcoefficients
 
     def tf_inputfilter(self, inputfilter=None, frequencies=None):  # input
-        # filter
-        # model
+        # anti aliasing filter and additional delay model
+        module_delay = self.module_delay + self.loops / 2.0
         if inputfilter is None:
             inputfilter = self.inputfilter
         if frequencies is None:
@@ -730,8 +734,13 @@ class IirFilter(object):
         for f in inputfilter:
             if f > 0:  # lowpass
                 tf /= (1.0 + 1j * frequencies / f)
+                module_delay += 1
             elif f < 0:  # highpass
                 tf /= (1.0 + 1j * f / frequencies)
+                module_delay += 2
+        # add delay
+        delay = module_delay * self.dt  # + extradelay
+        tf *= np.exp(-1j*delay*frequencies*2*np.pi)
         return tf
 
     @property
