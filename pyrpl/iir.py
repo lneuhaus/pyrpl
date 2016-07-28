@@ -573,7 +573,6 @@ class IirFilter(object):
                         "Conjugate partner for pole %s deviates from "
                         "expected value by %s > %s",
                         pp, diff[index], tol)
-                    raise
                 complexp.append((pp + np.conjugate(pc.pop(index))) / 2.0)
                 complexr.append((rr + np.conjugate(rc.pop(index))) / 2.0)
         complexp = np.asarray(complexp, dtype=np.complex128)
@@ -637,16 +636,17 @@ class IirFilter(object):
         if len(realp) % 2 != 0:
             realp.append(0)
             realr.append(0)
-        realp = np.asarray(realp, dtype=np.complex128)
-        realr = np.asarray(realr, dtype=np.complex128)
+        realp = np.asarray(realp, dtype=np.float64)
+        realr = np.asarray(realr, dtype=np.float64)
+        print realr, realp
         # implement coefficients
         for i in range(len(realp) // 2):
             p1, p2 = realp[2 * i], realp[2 * i + 1]
             r1, r2 = realr[2 * i], realr[2 * i + 1]
-            coefficients[len(complexp):, 0] = np.real(r1 + r2)
-            coefficients[len(complexp):, 1] = np.real(-r1 * p2 - r2 * p1)
-            coefficients[len(complexp):, 4] = np.real(p1 + p2) * invert
-            coefficients[len(complexp):, 5] = np.real(-p1 * p2) * invert
+            coefficients[len(complexp)+i:, 0] = r1 + r2
+            coefficients[len(complexp)+i:, 1] = -r1 * p2 - r2 * p1
+            coefficients[len(complexp)+i:, 4] = (p1 + p2) * invert
+            coefficients[len(complexp)+i:, 5] = (-p1 * p2) * invert
         # that finishes the design
         return coefficients
 
