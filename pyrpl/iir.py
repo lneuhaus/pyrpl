@@ -58,6 +58,15 @@ def freqs(sys, w):
             pass
     return h
 
+
+def freqs_rp(r, p, w):
+    """ same as freqs, but takes a list of residues and poles"""
+    h = np.zeros(len(w), dtype=np.complex128)
+    for i in range(len(p)):
+        h += freqs(([], [p[i]], r[i]), w)
+    return h
+
+
 # this one is not tested, so probably not working satisfactorily
 def freqz_(sys, w, dt=8e-9):
     """
@@ -216,14 +225,44 @@ class IirFilter(object):
                  minloops=4,
                  maxloops=255,
                  iirstages=16,
-                 tol=1e-3):
-        self.sys = zeros, poles, gain
+                 totalbits=64,
+                 shiftbits=32,
+                 tol=1e-3,
+                 frequencies=None,
+                 inputfilter = 0):
+        self._sys = zeros, poles, gain
         self.loops = loops
         self.dt = dt
         self.minloops = minloops
         self.maxloops = maxloops
         self.iirstages = iirstages
+        self.totalbits=totalbits
+        self.shiftbits=shiftbits
         self.tol = tol
+        self._frequencies = frequencies
+        self.inputfilter = inputfilter
+        _ = self.coefficients  # compute coefficients immediately
+
+    @property
+    def sys(self):
+        return self._sys
+
+    @sys.setter
+    def sys(self, v):
+        # it is easiest to just create a new object when the specification
+        # has changed
+        z, p, g = v
+        self = IirFilter(z, p, g,
+                         loops=self.loops,
+                         dt=self.dt,
+                         minloops=self.minloops,
+                         maxloops=self.maxloops,
+                         iirstages=self.iirstages,
+                         totalbits=self.totalbits,
+                         shiftbits=self.shiftbits,
+                         tol=self.tol,
+                         frequencies=self.frequencies)
+
 
     @property
     def coefficients(self):
@@ -282,31 +321,33 @@ class IirFilter(object):
 
         # clean the filter specification so we can work with it and find the
         # right number of loops
-        zeros, poles, self.loops = self.proper_sys
+        zeros, poles, gain = self.proper_sys
+        # this isnt really necessary as rescaled_sys will call proper_sys
 
         # get factor in front of ratio of zeros and poles
         # scale to angular frequencies
-        z, p, k = self.rescaled_sys
+        z, p, k = self.rescaled_sys  # 'tf_continuous'
 
         # pre-account for frequency distortion of bilinear transformation
-        #if prewarp:
+        # if prewarp:
         #    z, p = prewarp(z, p, dt=loops * dt)
 
         # perform the partial fraction expansion to get first order sections
         r = residues(z, p, k)
 
-        self.rp_continuous = r, p
+        self.rp_continuous = r, p  # 'tf_partialfraction'
 
         # transform to discrete time
         rd, pd = cont2discrete(r, p, dt=self.dt * self.loops)
-        self.rp_discrete = rd, pd
+        self.rp_discrete = rd, pd  # 'tf_discrete'
 
         # convert (r, p) into biquad coefficients
         coefficients = self.rp2coefficients(rd, pd, tol=self.tol)
 
         # rearrange second order sections for minimum delay
-        coefficients = self.minimize_delay(coefficients)
+        coefficients = self.minimize_delay(coefficients) # 'tf_implemented_perfect'
         self._coefficients = coefficients
+        _ = self.finiteprecision()  # 'tf_implemented'
         return coefficients
 
     @property
@@ -332,7 +373,8 @@ class IirFilter(object):
         """
         if hasattr(self, '_proper_sys'):
             return self._proper_sys
-        zeros, poles, loops = self.zeros, self.poles, self.loops
+        zeros, poles, gain = self.sys
+        loops = self.loops
         minloops, maxloops, iirstages, tol = self.minloops, self.maxloops, \
                                              self.iirstages, self.tol
         # part 1: make sure each complex pole/zero has a conjugate partner
@@ -401,7 +443,7 @@ class IirFilter(object):
 
         # part 2: make sure the transfer function is strictly proper
         # if we must add a pole, place it at the nyquist frequency
-        extrapole = -125e6 / loops
+        extrapole = -125e6 # / loops
         while len(zeros) >= len(poles):
             poles.append(extrapole)
             logger.warning("Specified IIR transfer function was not "
@@ -410,7 +452,9 @@ class IirFilter(object):
             # if more poles must be added, make sure we have no 2 poles at the
             # same frequency
             extrapole /= 2
-        return zeros, poles, loops
+        self.loops = loops
+        self._proper_sys = (zeros, poles, gain)
+        return self._proper_sys
 
     @property
     def rescaled_sys(self):
@@ -418,7 +462,7 @@ class IirFilter(object):
         corresponding to dc-gain gain"""
         if hasattr(self, '_rescaled_sys'):
             return self._rescaled_sys
-        zeros, poles, gain = self.sys
+        zeros, poles, gain = self.proper_sys
         zeros = [zz * 2 * np.pi for zz in zeros]
         poles = [pp * 2 * np.pi for pp in poles]
         k = gain
@@ -529,6 +573,7 @@ class IirFilter(object):
                         "Conjugate partner for pole %s deviates from "
                         "expected value by %s > %s",
                         pp, diff[index], tol)
+                    raise
                 complexp.append((pp + np.conjugate(pc.pop(index))) / 2.0)
                 complexr.append((rr + np.conjugate(rc.pop(index))) / 2.0)
         complexp = np.asarray(complexp, dtype=np.complex128)
@@ -640,7 +685,7 @@ class IirFilter(object):
         if coeff is None:
             coeff = self.coefficients
         if totalbits is None:
-            totalbis = self.totalbits
+            totalbits = self.totalbits
         if shiftbits is None:
             shiftbits = self.shiftbits
         res = coeff * 0 + coeff
@@ -649,15 +694,16 @@ class IirFilter(object):
             xmax = 2 ** (totalbits - 1)
             if xr == 0 and xr != 0:
                 logger.warning("One value was rounded off to zero: Increase "
-                               "shiftbits!")
+                               "shiftbits in fpga design if this is a "
+                               "problem!")
             elif xr > xmax - 1:
                 xr = xmax - 1
                 logger.warning("One value saturates positively: Increase "
-                               "totalbits!")
+                               "totalbits or decrease gain!")
             elif xr < -xmax:
                 xr = -xmax
                 logger.warning("One value saturates negatively: Increase "
-                               "totalbits!")
+                               "totalbits or decrease gain!")
             x[...] = 2 ** (-shiftbits) * xr
         return res
 
@@ -668,8 +714,14 @@ class IirFilter(object):
         self._fcoefficients = self.finiteprecision()
         return self._fcoefficients
 
-    def tf_inputfilter(self, frequencies, inputfilter):  # input filte model
-        frequencies = np.array(frequencies, dtype=np.complex)
+    def tf_inputfilter(self, inputfilter=None, frequencies=None):  # input
+        # filter
+        # model
+        if inputfilter is None:
+            inputfilter = self.inputfilter
+        if frequencies is None:
+            frequencies = self.frequencies
+        frequencies = np.asarray(frequencies, dtype=np.complex)
         try:
             len(inputfilter)
         except:
@@ -682,7 +734,20 @@ class IirFilter(object):
                 tf /= (1.0 + 1j * f / frequencies)
         return tf
 
-    def tf_continuous(self, frequencies):
+    @property
+    def designdata(self):
+        return [(self.frequencies, self.tf_continuous(), 'continuous'),
+                (self.frequencies, self.tf_partialfraction(),
+                 'partialfraction'),
+                (self.frequencies, self.tf_discrete(), 'discrete'),
+                (self.frequencies, self.tf_coefficients(),
+                    'coefficients'),
+                (self.frequencies, self.tf_rounded(), 'rounded'),
+                (self.frequencies, self.tf_delay(), 'rounded+delay'),
+                (self.frequencies, self.tf_filtered(),
+                 'rounded+delay+inputfilter')]
+
+    def tf_continuous(self, frequencies=None):
         """
         Returns the continuous transfer function of sys at frequencies.
 
@@ -700,10 +765,12 @@ class IirFilter(object):
         -------
         np.array(..., dtype=np.complex)
         """
+        if frequencies is None:
+            frequencies = self.frequencies
         frequencies = np.asarray(frequencies, dtype=np.complex)
         return freqs(self.rescaled_sys, frequencies * 2 * np.pi)
 
-    def tf_partialfraction(self, frequencies):
+    def tf_partialfraction(self, frequencies=None):
         """
         Returns the transfer function just before the partial fraction
         expansion for frequencies.
@@ -722,14 +789,13 @@ class IirFilter(object):
         np.array(..., dtype=np.complex)
         """
         # this code is more or less a direct copy of get_coeff()
+        if frequencies is None:
+            frequencies = self.frequencies
         # frequencies = np.array(frequencies, dtype=np.complex)
         r, p = self.rp_continuous
-        h = np.zeros(len(frequencies), dtype=np.complex128)
-        for i in range(len(p)):
-            h += freqs(([], [p[i]], r[i]), 2*np.pi*frequencies)
-        return h
+        return freqs_rp(r, p, np.asarray(frequencies)*2*np.pi)
 
-    def tf_discrete(self, frequencies):
+    def tf_discrete(self, frequencies=None):
         """
         Returns the discrete transfer function realized by coefficients at
         frequencies.
@@ -758,13 +824,11 @@ class IirFilter(object):
         -------
         np.array(..., dtype=np.complex)
         """
+        if frequencies is None:
+            frequencies = self.frequencies
         r, p = self.rp_discrete
-        w = np.array(frequencies, dtype=np.complex128) * 2 * np.pi
-        h = np.zeros(len(w), dtype=np.complex128)
-        for i in range(len(p)):
-            hh = freqz(([], [p[i]], r[i]), w, dt=self.dt * self.loops)
-            h += hh
-        return h
+        rc, pc = discrete2cont(r, p, dt=self.dt * self.loops)
+        return freqs_rp(rc, pc, np.asarray(frequencies) * 2 * np.pi)
 
     # not used at the moment
     #def tf_discrete_(self,
@@ -779,7 +843,7 @@ class IirFilter(object):
     #    return h
 
     # neiher used
-    def tf_discrete_fast(self, coefficients, frequencies, dt=8e-9):
+    def tf_discrete_fast(self, coefficients, frequencies=None, dt=8e-9):
         """
         Returns the discrete transfer function realized by coefficients at
         frequencies. For optimisation purpuses only (faster computation),
@@ -801,6 +865,8 @@ class IirFilter(object):
         np.array(..., dtype=np.complex)
         """
         # discrete frequency
+        if frequencies is None:
+            frequencies = self.frequencies
         w = np.array(frequencies, dtype=np.float) * 2 * np.pi * dt
         b, a = sig.sos2tf(np.array([coefficients[0]]))
         ww, h = sig.freqz(b, a, worN=w)
@@ -810,54 +876,8 @@ class IirFilter(object):
             h += hh
         return h
 
-    def tf_implemented(self, frequencies):
-        """
-        Returns the discrete transfer function realized by coefficients at
-        frequencies.
-
-        Parameters
-        ----------
-        coefficients: np.array
-            coefficients as returned from iir module
-
-        frequencies: np.array
-            frequencies to compute the transfer function for
-
-        dt: float
-            discrete sampling time (seconds)
-
-        zoh: bool
-            If true, zero-order hold implementation is assumed. Otherwise,
-            the delay is expected to depend on the index of biquad.
-
-        Returns
-        -------
-        np.array(..., dtype=np.complex)
-        """
-        if self.totalbits is None:
-            fcoefficients = self.coefficients
-        else:
-            fcoefficients = self.coefficients_rounded
-        # the higher stages have progressively more delay to the output
-        delay_per_cycle_array = np.exp(-1j * self.dt * frequencies * 2 * np.pi)
-        # discrete frequency
-        w = np.array(frequencies, dtype=np.float) * 2 * np.pi * self.dt
-        b, a = sig.sos2tf(np.asarray([fcoefficients[0]]))
-        ww, h = sig.freqz(b, a, worN=w)
-        for i in range(1, len(fcoefficients)):
-            b, a = sig.sos2tf(np.asarray([fcoefficients[i]]))
-            ww, hh = sig.freqz(b, a, worN=w)
-            if not zoh:
-                h += hh * delay_per_cycle_array**i  # minimum delay implementation
-            else:
-                h += hh
-        if zoh:  # zero order hold implementation: biquad-independent delay
-            h *= np.exp(-1j * self.dt * frequencies * 2 * np.pi * len(
-                fcoefficients))
-        return h
-
-
-    def tf_implemented_perfect(self, frequencies):
+    def tf_coefficients(self, frequencies=None, coefficients=None,
+                        delay=False):
         """
         computes implemented transfer function - assuming no delay and
         infinite precision (actually floating-point precision)
@@ -883,14 +903,120 @@ class IirFilter(object):
         -------
         np.array(..., dtype=np.complex)
         """
-        fcoefficients = self.coefficients
+        if frequencies is None:
+            frequencies = self.frequencies
+        if coefficients is None:
+            fcoefficients = self.coefficients
+        else:
+            fcoefficients = coefficients
         # the higher stages have progressively more delay to the output
+        if delay:
+            delay_per_cycle = np.exp(-1j * self.dt * frequencies * 2 * np.pi)
         # discrete frequency
-        w = np.array(frequencies, dtype=np.float) * 2 * np.pi * self.dt
+        w = np.array(frequencies, dtype=np.float) * 2 * np.pi * self.dt * \
+            self.loops
         b, a = sig.sos2tf(np.asarray([fcoefficients[0]]))
         ww, h = sig.freqz(b, a, worN=w)
         for i in range(1, len(fcoefficients)):
             b, a = sig.sos2tf(np.asarray([fcoefficients[i]]))
             ww, hh = sig.freqz(b, a, worN=w)
+            if delay:
+                hh *= delay_per_cycle ** i
             h += hh
         return h
+
+    def tf_rounded(self, frequencies=None):
+        """
+        Returns the discrete transfer function realized by coefficients at
+        frequencies.
+
+        Parameters
+        ----------
+        coefficients: np.array
+            coefficients as returned from iir module
+
+        frequencies: np.array
+            frequencies to compute the transfer function for
+
+        dt: float
+            discrete sampling time (seconds)
+
+        zoh: bool
+            If true, zero-order hold implementation is assumed. Otherwise,
+            the delay is expected to depend on the index of biquad.
+
+        Returns
+        -------
+        np.array(..., dtype=np.complex)
+        """
+        return self.tf_coefficients(frequencies=frequencies,
+                                    coefficients=self.coefficients_rounded)
+
+    def tf_delay(self, frequencies=None):
+        """
+        Returns the discrete transfer function realized by coefficients at
+        frequencies.
+
+        Parameters
+        ----------
+        coefficients: np.array
+            coefficients as returned from iir module
+
+        frequencies: np.array
+            frequencies to compute the transfer function for
+
+        dt: float
+            discrete sampling time (seconds)
+
+        zoh: bool
+            If true, zero-order hold implementation is assumed. Otherwise,
+            the delay is expected to depend on the index of biquad.
+
+        Returns
+        -------
+        np.array(..., dtype=np.complex)
+        """
+        return self.tf_coefficients(frequencies=frequencies,
+                                    coefficients=self.coefficients_rounded,
+                                    delay=True)
+
+    def tf_filtered(self, frequencies=None):
+        """
+        Returns the discrete transfer function realized by coefficients at
+        frequencies.
+
+        Parameters
+        ----------
+        coefficients: np.array
+            coefficients as returned from iir module
+
+        frequencies: np.array
+            frequencies to compute the transfer function for
+
+        dt: float
+            discrete sampling time (seconds)
+
+        zoh: bool
+            If true, zero-order hold implementation is assumed. Otherwise,
+            the delay is expected to depend on the index of biquad.
+
+        Returns
+        -------
+        np.array(..., dtype=np.complex)
+        """
+        return self.tf_delay(frequencies=frequencies) * self.tf_inputfilter(
+            frequencies=frequencies)
+
+    @property
+    def sampling_rate(self):
+        return 1.0/self.dt * self.loops
+
+    @property
+    def frequencies(self):
+        if hasattr(self, '_frequencies') and self._frequencies is not None:
+            return self._frequencies
+        self._frequencies = np.array(np.logspace(np.log10(
+                                        self.sampling_rate/1000),
+                                        np.log10(self.sampling_rate),
+                                        1001), dtype=np.complex128)
+        return self._frequencies
