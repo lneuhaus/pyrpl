@@ -1,27 +1,7 @@
-from time import sleep
-import matplotlib
-import math
-import matplotlib.pyplot as plt
-import numpy as np
-from scipy import signal
-from pyinstruments import CurveDB
-import pandas
-import copy
 import collections
-
-from scipy.interpolate import interp1d
 from scipy.optimize import leastsq
-from bodeplot import BP
 import json
-import sympy as sp
 import time
-
-s = sp.symbols('s')
-#sp.init_printing(use_unicode=False, wrap_line=False, no_global=True)
-
-from time import sleep
-import matplotlib
-import math
 import matplotlib.pyplot as plt
 from collections import OrderedDict
 import numpy as np
@@ -31,8 +11,6 @@ import pandas
 from . import CurveDB
 from . import iir
 from .sound import sine
-
-from scipy.interpolate import interp1d
 
 
 class BodePlot(object):
@@ -71,6 +49,10 @@ class BodePlot(object):
         if autoplot:
             self.plot()
 
+    @property
+    def x(self):
+        return np.asarray(self.data['data'].index.values, dtype=np.float)
+
     def plot(self, unwrap=False, newfigstyle='y-', label=""):
         # make a bode plot of the signal
         show = False
@@ -98,11 +80,13 @@ class BodePlot(object):
                 style = self.datastyle[label]
             except KeyError:
                 style = 'k-'
-            if not isinstance(data, pandas.Series):
-                x, y = data
-            else:
+            if isinstance(data, pandas.Series):
                 x = data.index.values
                 y = data.values
+            elif isinstance(data, (np.ndarray, np.generic)):
+                x, y = self.x, data
+            else:
+                x, y = data
             if unwrap:
                 angles = 180. / np.pi * np.unwrap(np.angle(y))
             else:
@@ -172,13 +156,12 @@ class BodeFit(BodePlot):
             if a > 90 and a <= 270:
                 self._gain *= -1
 
-
     def update_data(self):
         self.data['data'], self.datastyle['data'] = self.c.data, 'b-'
         self.data['fit'], self.datastyle['fit'] = \
             self.transfer_function(), 'r-'
         if self.invert:
-            dataxfit = self.data['data'] /self.data['fit']
+            dataxfit = self.data['data'] / self.data['fit']
         else:
             dataxfit = self.data['data'] * self.data['fit']
         self.data['data x fit'], self.datastyle['data x fit'] = dataxfit, 'g-'
@@ -211,7 +194,7 @@ class BodeFit(BodePlot):
             self.data['phase and gain unstable'] = gunstable
             self.datastyle['phase and gain unstable'] = 'y.'
 
-    def update_info(self):
+    def update_info(self, append=''):
         string = ""
         if self.actzero is not None:
             string += "Active zero: "
@@ -223,6 +206,7 @@ class BodeFit(BodePlot):
         string += "step=" + str(self.delta) + ", "
         string += "" + str(len(self.poles)) + " poles, "
         string += str(len(self.zeros)) + " zeros, "
+        string += append
         plt.title(string)
         self.info = string
 
@@ -241,10 +225,6 @@ class BodeFit(BodePlot):
                 freqs.append(np.abs(np.imag(p)))
         freqs = np.array(freqs)
         return self.transfer_function(freqs)
-
-    @property
-    def x(self):
-        return self.data['data'].index.values
 
     @property
     def poles(self):
@@ -269,7 +249,7 @@ class BodeFit(BodePlot):
     @property
     def inputfilter(self):
         if not hasattr(self, '_inputfilter'):
-            self._inputfilter = None
+            self._inputfilter = 0
         return self._inputfilter
 
     @inputfilter.setter
@@ -277,18 +257,16 @@ class BodeFit(BodePlot):
         self._inputfilter = v
 
     def transfer_function(self, frequencies=None):
-        zeros, poles, loops = iir.make_proper_tf(self.zeros, self.poles,
-                                       loops=self.loops)
-        sys = iir.rescale(zeros, poles, self.gain)
         if frequencies is None:
             frequencies = self.x
-        if not self.zeros and not self.poles:
-            y = np.array(frequencies, dtype=np.complex)*0j+self.gain
-        else:
-            y = iir.tf_continuous(sys, frequencies=frequencies)
-        if self.inputfilter is not None:
-            ifilter = iir.tf_inputfilter(frequencies, self.inputfilter)
-            y *= ifilter
+        self.iirfilter = iir.IirFilter(self.zeros,
+                                       self.poles,
+                                       self.gain,
+                                       loops=self.loops,
+                                       frequencies=frequencies,
+                                       inputfilter=self.inputfilter
+                                       )
+        y = self.iirfilter.tf_continuous()
         return pandas.Series(y, index=frequencies)
 
     def loadfit(self, id=None):
@@ -353,10 +331,29 @@ class BodeFit(BodePlot):
                     bbox_inches="tight")
 
 
-class BodeFitGui(BodeFit):
+class BodeFitIIR(BodeFit):
+    def update_data(self):
+        super(BodeFitIIR, self).update_data()
+        self.datastyle['discrete'] = 'y-'
+        self.datastyle['coefficients'] = 'c-'
+        self.datastyle['rounded'] = 'm-'
+        self.datastyle['rounded+delay+inputfilter'] = 'k-'
+        # self.iirfilter has been updated by BodeFitIIR.update_data
+        iirfilter = self.iirfilter
+        #self.data['discrete'] = iirfilter.tf_discrete(self.x)
+        self.data['coefficients'] = iirfilter.tf_coefficients(self.x)
+        self.data['rounded'] = iirfilter.tf_rounded(self.x)
+        self.data['rounded+delay+inputfilter'] = iirfilter.tf_filtered(self.x)
+
+    def update_info(self, append=''):
+        info = 'loops='+str(self.iirfilter.loops)+', '+append
+        return super(BodeFitIIR, self).update_info(append=info)
+
+
+class BodeFitIIRGui(BodeFitIIR):
     def __init__(self, id=None, xlog=True, invert=True, autogain=True,
                  legend=False, showstability=False):
-        super(BodeFitGui, self).__init__(id=id, xlog=xlog, invert=invert,
+        super(BodeFitIIRGui, self).__init__(id=id, xlog=xlog, invert=invert,
                                          autogain=autogain, legend=legend,
                                          showstability=showstability)
         self._tlast = 0
@@ -388,9 +385,10 @@ class BodeFitGui(BodeFit):
         return ibest
 
     def onclick(self, event):
-        if time.time()-self._tlast < 0.1:
+        if time.time()-self._tlast < 0.1 and event == self._evlast:
             return
         self._tlast = time.time()
+        self._evlast = event
         print "clicked with key",event.key
         self.event = event
         x = event.xdata
@@ -431,6 +429,10 @@ class BodeFitGui(BodeFit):
         self.refresh()
         
     def onkeypress(self, event):
+        if time.time()-self._tlast < 0.1 and event == self._evlast:
+            return
+        self._tlast = time.time()
+        self._evlast = event
         if not hasattr(event, "key"):
             class ev(object):
                 key = event
@@ -474,21 +476,6 @@ class BodeFitGui(BodeFit):
             self.default()
             sine(5000, 0.1)
             return
-        elif event.key == 'f5':
-            if not hasattr(self, 'iirplot'):
-                self.iirplot = True
-            if hasattr(self, 'lockbox') and not hasattr(self, 'iir'):
-                self.iir = self.lockbox.rp.iir
-            if hasattr(self, 'iir'):
-                self.iir.setup(zeros=self.zeros,
-                               poles=self.poles,
-                               gain=self.gain,
-                               inputfilter=self.inputfilter,
-                               loops=self.loops,
-                               plot=self.iirplot)
-            sine(1000, 0.1)
-            self.refresh()
-            return
         elif event.key == 'd':
             if self.actpole is not None:
                 self.poles.pop(self.actpole)
@@ -522,7 +509,6 @@ class BodeFitGui(BodeFit):
             self.refresh()
             return
         realdelta = np.complex(self.delta) * np.complex(delta)
-
         print ("delta: "+str(realdelta))
         if self.actpole is not None:
             ipole = self.actpole
@@ -538,15 +524,16 @@ class BodeFitGui(BodeFit):
                 self._zeros[izero] += realdelta
         self.refresh()
 
-    def otherkeyaction(self, key):
+    def otherkeyactions(self, key):
         pass
 
 
-class BodeFitGuiOptimisation(BodeFitGui):
+class BodeFitIIRGuiOptimisation(BodeFitIIRGui):
     """ Numerical p-norm calculation of filter coefficients """
-    def __init__(self, id=None, xlog=True, invert=True, autogain=True,
-                 legend=False, showstability=False):
-        super(BodeFitGui, self).__init__(id=id, xlog=xlog, invert=invert,
+    def __init__(self, id=None, xlog=True, invert=False, autogain=True,
+                 legend=True, showstability=False):
+        super(BodeFitIIRGuiOptimisation, self).__init__(id=id, xlog=xlog,
+                                     invert=invert,
                                      autogain=autogain, legend=legend,
                                      showstability=showstability)
         self._tlast = 0
@@ -560,16 +547,6 @@ class BodeFitGuiOptimisation(BodeFitGui):
         self.p = 2  # p-norm is of the logarithmic error used to compute error
         self.refresh()
 
-    def transfer_function_discrete(self, frequencies=None):
-        if frequencies is None:
-            frequencies = self.x
-        y = iir.tf_discrete_fast(self.coefficients, frequencies=frequencies,
-                                 dt=8e-9*self.loops)
-        return pandas.Series(y, index=frequencies)
-
-    def transfer_function_fast(self, frequencies):
-        return iir.tf_discrete_fast(self.coefficients, frequencies=frequencies,
-                                 dt=8e-9 * self.loops)
     @property
     def target(self):
         return self.data['target']
@@ -580,7 +557,7 @@ class BodeFitGuiOptimisation(BodeFitGui):
 
     def error(self):
         f = self.target.index.values
-        err = np.abs(np.log(self.target.values-self.transfer_function_fast(f)))**self.p
+        err = np.abs(np.log(self.target.values-self.iirfilter.tf_filtered(f)))**self.p
         return err
 
     def otherkeyaction(self, key):
@@ -621,16 +598,16 @@ class BodeFitGuiOptimisation(BodeFitGui):
 
     @coefficients.setter
     def coefficients(self, v):
-        self._coefficients = v
-        self.data['discrete'] = self.transfer_function_discrete()
+        self.iirfilter._coefficients = v
+        self.data['discrete'] = self.iirfilter.tf_discrete()
         self.datastyle['discrete'] = 'm-'
 
     @property
     def loops(self):
-        if hasattr(self, '_loops') and self._loops is not None:
+        if hasattr(self, '_loops'):
             return self._loops
         else:
-            return 16
+            return self._defaultloops
 
     @loops.setter
     def loops(self, v):
@@ -668,58 +645,67 @@ class BodeFitGuiOptimisation(BodeFitGui):
             np.random.normal(scale=scale, size=degree))
         return self.coefficients
 
-
-    _maxloops = 1023
-    _minloops = 4
-    _IIRSTAGES = 16
-    _method = 'gbt'
-    _alpha = 0.5
-
     @property
     def sampling_time(self):
         return 8e-9 * self.loops
 
-    def getcoeff(self, prewarp=True, tol=1e-3):
-        loops = self.loops
-        zeros, poles, minloops = iir.make_proper_tf(self.zeros,
-                                                    self.poles,
-                                                    loops=loops,
-                                                    minloops=self._minloops,
-                                                    maxloops=self._maxloops,
-                                                    iirstages=self._IIRSTAGES,
-                                                    tol=tol)
-        # make sure filter can be realized
-        if minloops > self._IIRSTAGES:
-            raise Exception("Error: desired filter order is too high to "
-                            "be implemented.")
-        if loops < minloops:  # warning has already be issued in
-            # make_proper_tf
-            loops = minloops
-        elif loops > self._maxloops:
-            self._logger.warning("Maximum loops number is %s. This value "
-                                 "will be tried instead of specified value "
-                                 "%s.", self._maxloops, loops)
-            loops = self._maxloops
-        self.loops = loops
-        self._logger.info("Filter sampling frequency is %.3s MHz",
-                          1e-6 / self.sampling_time)
-        # get scaling right for coefficients so that gain corresponds to dcgain
-        self._sys = iir.rescale(zeros, poles, self.gain)
-        # prewarp coefficients to match specification (bilinear transform
-        # distorts frequencies of poles)
-        if prewarp:
-            z, p, k = self._sys
-            z, p = iir.prewarp(z, p, dt=self.sampling_time)
-            sys = z, p, k
-        else:
-            sys = self._sys
-        # get coefficients
-        c = iir.get_coefficients(sys,
-                          dt=self.sampling_time)
-        self.coefficients = c
-        return c
+    _defaultloops = 16
 
-    def refresh(self, updatecoefficients=True):
-        if updatecoefficients:
-            self.getcoeff()
-        super(BodeFitGuiOptimisation, self).refresh()
+    def otherkeyactions(self, key):
+        if key == 'f7':  # na measurement
+            rp = self.redpitaya
+            if rp is not None:
+                # save previous state
+                iir = rp.iir
+                iir.on = False
+                iirinputfilter = iir.inputfilter
+                iircoeff = iir.coefficients
+                iirod = iir.output_direct
+                iirinput = iir.input
+                naod = rp.na.iq.output_direct
+                nainput = rp.na.iq.input
+                # set measurement state - na must be in the right setting (gui)
+                iir.output_direct = 'off'
+                iir.input = rp.na.iq
+                rp.na.iq = output_direct = 'off'
+                rp.na.input = 'iir'
+                iir.setup(self.zeros, self.poles, self.gain,
+                          loops=self.loops,
+                          inputfilter=self.inputfilter)
+                sine(1000, 0.1)
+                f, tf, _ = rp.na.curve()
+                # restore previous state
+                iir.on = False
+                self.data['measurement'] = pandas.Series(tf, index=f)
+                self.datastyle['measurement'] = 'r.'
+                iir.coefficients = iircoeff
+                iir.inputfilter = iirinputfilter
+                iir.output_direct = iirod
+                iir.input = iirinput
+                rp.na.iq.output_direct = naod
+                rp.na.input = nainput
+                iir.on = True
+        elif key == 'f5':
+            rp = self.redpitaya
+            if rp is not None:
+                rp.iir.setup(zeros=self.zeros,
+                               poles=self.poles,
+                               gain=self.gain,
+                               inputfilter=self.inputfilter,
+                               loops=self.loops)
+                sine(1000, 0.1)
+                self.refresh()
+                return
+
+    @property
+    def redpitaya(self):
+        from .redpitaya import RedPitaya
+        if hasattr(self, '_redpitaya'):
+            return self._redpitaya
+        elif hasattr(self, 'lockbox'):
+            if isinstance(self.lockbox, RedPitaya):
+                return self.lockbox
+            elif hasattr(self.lockbox, 'rp'):
+                return self.lockbox.rp
+        else:
+            return None

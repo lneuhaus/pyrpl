@@ -29,7 +29,7 @@ import logging
 
 from .registers import *
 from .bijection import Bijection
-from . import iir
+from . import iir, bodefit
 
 
 class TimeoutError(ValueError):
@@ -1409,6 +1409,7 @@ class IQ(FilterModule):
 
 
 class IIR(FilterModule):
+    iirfilter = None  # will be set by setup()
     _minloops = 5  # minimum number of loops for correct behaviour
     _maxloops = 1023
     # the first biquad (self.coefficients[0] has _delay cycles of delay
@@ -1657,7 +1658,8 @@ class IIR(FilterModule):
         dev = (np.abs((self.coefficients[0:len(self.iirfilter.coefficients)] -
                        self.iirfilter.coefficients).flatten()))
         maxdev = max(dev)
-        reldev = maxdev / abs(c.flatten()[np.argmax(dev)])
+        reldev = maxdev / \
+                 abs(self.iirfilter.coefficients.flatten()[np.argmax(dev)])
         if reldev > 0.05:
             self._logger.warning(
                 "Maximum deviation from design coefficients: %.4g "
@@ -1823,6 +1825,11 @@ class IIR(FilterModule):
         tf *= np.exp(-1j*delay*frequencies*2*np.pi)
         return tf
 
+    bf = None
+    def bodefit(self, id):
+        self.bf = bodefit.BodeFitIIRGuiOptimisation(id)
+        self.bf.lockbox = self._parent
+        self.bf.iir = self
 
 class AMS(BaseModule):
     """mostly deprecated module (redpitaya has removed adc support). 
