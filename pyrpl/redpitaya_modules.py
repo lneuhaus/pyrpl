@@ -1687,7 +1687,7 @@ class IIR(FilterModule):
         return 8e-9 / self._frequency_correction * self.loops
 
     ### this function is pretty much obsolete now. use self.iirfilter.tf_...
-    def transfer_function(self, frequencies, extradelay=0, kind='implemented'):
+    def transfer_function(self, frequencies, extradelay=0, kind='filtered'):
         """
         Returns a complex np.array containing the transfer function of the
         current IIR module setting for the given frequency array. The
@@ -1746,83 +1746,24 @@ class IIR(FilterModule):
         If kind=='all', a list of plotdata tuples is returned that can be
         passed directly to iir.bodeplot().
         """
-        frequencies = np.array(frequencies, dtype=np.float)
+        #frequencies = np.array(frequencies, dtype=np.float)
         # take average delay to be half the loops since this is the
         # expectation value for the delay (plus internal propagation delay)
-        module_delay = self._delay + self.loops / 2.0
-        if kind == "all":
-            return [(frequencies,
-                     self.transfer_function(frequencies=frequencies,
-                                            extradelay=extradelay,
-                                            kind=k),
-                     k)
-                    for k in ["continuous",
-                              "partialfraction_continuous",
-                              "discrete",
-                              "highprecision",
-                              "implemented"]]
-
-        elif kind == "continuous":
-            tf = iir.tf_continuous(sys=self._sys,
-                                   frequencies=frequencies)
-        elif kind == "partialfraction_continuous":
-            tf = iir.tf_partialfraction_continuous(sys=self._sys,
-                                               frequencies=frequencies,
-                                               dt=self.sampling_timee)
-        elif kind == "before_partialfraction_discrete_zoh":
-            tf = iir.tf_before_partialfraction(sys=self._sys,
-                                               frequencies=frequencies,
-                                               dt=self.sampling_time,
-                                               continuous=False,
-                                               method="zoh")
-        elif kind == "before_partialfraction_discrete":
-            tf = iir.tf_before_partialfraction(sys=self._sys,
-                                               frequencies=frequencies,
-                                               dt=self.sampling_time,
-                                               continuous=False,
-                                               method=self._method,
-                                               alpha=self._alpha)
-        elif kind == "discrete":
-            # self._coefficients is a copy of full-precision coefficients
-            tf = iir.tf_discrete(coefficients=self._coefficients,
-                                 frequencies=frequencies,
-                                 dt=self.sampling_time,
-                                 zoh=(self._method == 'zoh'))
-        elif kind == "discrete_samplehold":
-            # self._coefficients is a copy of full-precision coefficients
-            tf = iir.tf_discrete(coefficients=self._coefficients,
-                                 frequencies=frequencies,
-                                 dt=self.sampling_time,
-                                 delay_per_cycle=0,
-                                 zoh=(self._method == 'zoh'))
-        elif kind == "highprecision":
-            tf = iir.tf_implemented(coefficients=self._coefficients,
-                                    frequencies=frequencies,
-                                    dt=self.sampling_time,
-                                    totalbits=64,
-                                    shiftbits=48,
-                                    zoh=(self._method == 'zoh'))
-        else:  # default: kind == "implemented":
-            # self.coefficients are the coefficients as stored in the fpga
-            tf = iir.tf_implemented(coefficients=self.coefficients,
-                                    frequencies=frequencies,
-                                    dt=self.sampling_time,
-                                    totalbits=self._IIRBITS,
-                                    shiftbits=self._IIRSHIFT,
-                                    zoh=(self._method == 'zoh'))
-        for f in [self.inputfilter]:  # only one filter at the moment
-            if f == 0:
-                continue
-            if f > 0:  # lowpass
-                tf /= (1.0 + 1j*frequencies/f)
-                module_delay += 2  # two cycles extra delay per lowpass
-            elif f < 0:  # highpass
-                tf /= (1.0 + 1j*f/frequencies)
-                # plus is correct here since f already has a minus sign
-                module_delay += 1  # one cycle extra delay per highpass
-        # add delay
-        delay = module_delay * 8e-9 / self._frequency_correction + extradelay
-        tf *= np.exp(-1j*delay*frequencies*2*np.pi)
+        #module_delay = self._delay + self.loops / 2.0
+        tf = self.iirfilter.__getattribute__('tf_'+kind)(frequencies)
+        #for f in [self.inputfilter]:  # only one filter at the moment
+        #    if f == 0:
+        #        continue
+        #    if f > 0:  # lowpass
+        #        tf /= (1.0 + 1j*frequencies/f)
+        #        module_delay += 2  # two cycles extra delay per lowpass
+        #    elif f < 0:  # highpass
+        #        tf /= (1.0 + 1j*f/frequencies)
+        #        # plus is correct here since f already has a minus sign
+        #        module_delay += 1  # one cycle extra delay per highpass
+        ## add delay
+        #delay = module_delay * 8e-9 / self._frequency_correction + extradelay
+        #tf *= np.exp(-1j*delay*frequencies*2*np.pi)
         return tf
 
     bf = None
