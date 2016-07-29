@@ -433,7 +433,7 @@ class Model(object):
             kwargs = input._config.setup._dict
         if 'iq' in kwargs:  # we can request a particular iq number if needed
             input.iq = self._parent.rp.__getattribute__(kwargs.pop('iq'))
-        elif not hasattr(iq, 'iq'):
+        elif not hasattr(input  , 'iq'):
             input.iq = self._parent.rp.iqs.pop()
         input.iq.setup(**kwargs)
         input._config['redpitaya_input'] = input.iq.name
