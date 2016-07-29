@@ -1576,7 +1576,7 @@ class IIR(FilterModule):
             plot=False,
             designdata=False,
             turn_on=True,
-            inputfilter=None,
+            inputfilter=0,  # disabled by default
             tol=1e-3,
             prewarp=True):
         """Setup an IIR filter
