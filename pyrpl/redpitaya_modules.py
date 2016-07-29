@@ -1830,6 +1830,8 @@ class IIR(FilterModule):
         self.bf = bodefit.BodeFitIIRGuiOptimisation(id)
         self.bf.lockbox = self._parent
         self.bf.iir = self
+        return self.bf
+
 
 class AMS(BaseModule):
     """mostly deprecated module (redpitaya has removed adc support). 

@@ -79,23 +79,36 @@ model:
   peak_pdh: 0.1053466796875
   pll:
     # 4 principal feedback loops: frequency, angle, quadraturefactor, amplitude
+    #above phasethreshold, frequency is incremented by f_jump
     f_phasethreshold: 25.0  # 25.0
+    # the angle error times anglegain is added to the demodulation angle
     angle_gain: 1.0 #1.0
+    # nominal phase for the demodulation angle
+    f_phasesetpoint: 240.0
+    # the quadraturefactor error is exponentiated by quadraturefactor_gain and
+    # multiplied onto quadraturefactor
     quadraturefactor_gain: 1.0 #1.0
-    amp_gain: 0.1 # 0.1
+    # the amp error is exponentiated by amp_gain
+    # amp error is the ratio of quadraturefactor and qf_setpoint
+    amp_gain: 0.051 # 0.1
     # other stuff
     amp_dgain: 0.0 #0.0
-    na_averages: 1000
-    na_samples: 100 #1000
-    amp_setpoint: 0.03  #0.1 #0.03  # 0.015
+    # amp_setpoint is the setpoint for the mean result from amp_natrace
+    #this should be tuned after manually looking at the na trace with the
+    #corresponding parameters
+    amp_setpoint: 0.01 # 0.003  #0.1 #0.03  # 0.015
+    # qf setpoint is the stable value for quadrature factor and should be
+    # the same as at setup (giving a nice LMSD signal during sweeping)
+    qf_setpoint: 0.05 #0.025
+
     amp_max: 0.35
     amp_min: 0.025
     f_jump: 0.015
-    f_phasesetpoint: 330.0
-    qf_setpoint: 0.025
+    na_averages: 1000
+    na_samples: 100 #1000
     amp_natrace:
-      start: 689000
-      stop: 689000
+      start: 689200  #689000
+      stop: 689400  #689000
       rbw: [75, 75]
       points: 51
       amplitude: 0.25
@@ -147,9 +160,9 @@ inputs:
     curve: 256020
     variable_per_time: 6120.24734567
     setup:
-      phase: 330
+      phase: 240
       amplitude: 0.25
-      frequency: 3578312.5481932275 #3578311.5236825133
+      frequency: 3578312.5181932272 #3578311.5236825133
       iq: iq2
       quadrature_factor: 0.2
       gain: 0
@@ -189,7 +202,7 @@ outputs:
       lowpass:
       - 0.05
     calibrationunits: m_per_V
-    lastoffset: 0.5482177734375
+    lastoffset: 0.5477294921875
   piezo:
     redpitaya_output: out2
     # we will calibrate the piezo response in units of m_per_V (not a necessary

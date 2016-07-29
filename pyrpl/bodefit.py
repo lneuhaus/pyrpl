@@ -491,22 +491,8 @@ class BodeFitIIRGui(BodeFitIIR):
                     self.actzero = None
             self.refresh()
             return
-        elif event.key == 'w':
-            if not self.lockbox is None:
-                z,p,k=self.zpk
-                self.lockbox.constants["iir_zpg"]=(z,p,np.sign(k))
-                self.lockbox.constants["iir_loops"]=self.iirloops
-                f,curve=self.lockbox.init_iir(plot=self.fig.number+1,save=True,input=self.input,output=self.output)
-                self.lastiircurve = curve
-                if hasattr(self,"acquisition"):
-                    data=20.*np.log10(self.acquisition._vsa.get_curve().data)
-                    plt.figure(self.fig.number+1)
-                    plt.plot(data.index.values,data.values)
-                self.refresh()
-            return
         else:
             self.otherkeyactions(event.key)
-            self.refresh()
             return
         realdelta = np.complex(self.delta) * np.complex(delta)
         print ("delta: "+str(realdelta))
@@ -525,6 +511,7 @@ class BodeFitIIRGui(BodeFitIIR):
         self.refresh()
 
     def otherkeyactions(self, key):
+        print("No action defined for key %s"%key)
         pass
 
 
@@ -540,8 +527,7 @@ class BodeFitIIRGuiOptimisation(BodeFitIIRGui):
         self.loadfit()
         self.lockbox = None
         self.pid = None
-        self.clickmode()
-        self.datastyle['target'] = 'ro'
+        self.datastyle['target'] = 'yx'
         self.data['target'] = pandas.Series()
         self.setdefaulttarget()
         self.p = 2  # p-norm is of the logarithmic error used to compute error
@@ -562,12 +548,12 @@ class BodeFitIIRGuiOptimisation(BodeFitIIRGui):
 
     def otherkeyaction(self, key):
         if key == 'f2':
-            print key, 'trying to fit...'
+            print (key + 'trying to fit...')
 
     def setdefaulttarget(self):
-        fs = [6010.,11955.,22351.,41504.,56795.,112359.]
-        amps = [64,64,2,32,32,20]
-        phases = [55,63,120,102,-25,105]
+        fs = [6010., 11955., 22351., 41504., 56795., 112359.]
+        amps = [64, 64, 2, 32, 32, 20]
+        phases = [55, 63, 120, 102, -25, 105]
         t = np.array(amps, dtype=np.complex) * np.exp(1j * np.array(
             phases) * np.pi / 180.0)
         self.target = pandas.Series(t, index=fs)
@@ -652,7 +638,9 @@ class BodeFitIIRGuiOptimisation(BodeFitIIRGui):
     _defaultloops = 16
 
     def otherkeyactions(self, key):
+        self._logger.debug("Otherkeyactions reached")
         if key == 'f7':  # na measurement
+            print ('Measuring IIR filter response...')
             rp = self.redpitaya
             if rp is not None:
                 # save previous state
@@ -667,7 +655,7 @@ class BodeFitIIRGuiOptimisation(BodeFitIIRGui):
                 # set measurement state - na must be in the right setting (gui)
                 iir.output_direct = 'off'
                 iir.input = rp.na.iq
-                rp.na.iq = output_direct = 'off'
+                rp.na.iq.output_direct = 'off'
                 rp.na.input = 'iir'
                 iir.setup(self.zeros, self.poles, self.gain,
                           loops=self.loops,
@@ -685,7 +673,10 @@ class BodeFitIIRGuiOptimisation(BodeFitIIRGui):
                 rp.na.iq.output_direct = naod
                 rp.na.input = nainput
                 iir.on = True
+                self.refresh()
+                return
         elif key == 'f5':
+            print ('Updating IIR filter...')
             rp = self.redpitaya
             if rp is not None:
                 rp.iir.setup(zeros=self.zeros,
@@ -696,6 +687,26 @@ class BodeFitIIRGuiOptimisation(BodeFitIIRGui):
                 sine(1000, 0.1)
                 self.refresh()
                 return
+        elif key == 'f12':
+            print ('Setting up NA to default values..')
+            rp = self.redpitaya
+            if rp is not None:
+                p = self.c.params
+                setupparams = ['start', 'stop', 'amplitude', 'points', 'rbw',
+                               'input', 'output_direct', 'avg']
+                setupdict = {k: p[k] for k in setupparams}
+                rp.na.setup(**setupdict)
+                sine(1000, 0.1)
+                self.refresh()
+                return
+        elif key == 'ctrl+alt+left':
+            self.loops -= 1
+            self.refresh()
+            return
+        elif key == 'ctrl+alt+right':
+            self.loops += 1
+            self.refresh()
+            return
 
     @property
     def redpitaya(self):
