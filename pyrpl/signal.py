@@ -466,6 +466,8 @@ class RPOutputSignal(RPSignal):
         # set asg amplitude always to 1.0 and feed sweep through pid instead
         amplitude = kwargs["amplitude"]
         kwargs["amplitude"] = 1.0
+        offset = kwargs["offset"]
+        kwargs["offset"] = 0.0
         kwargs["output_direct"] = "off"
         if 'asg' in kwargs:
             asgname = kwargs.pop("asg")
@@ -474,6 +476,7 @@ class RPOutputSignal(RPSignal):
         asg = self._rp.__getattribute__(asgname)
         asg.setup(**kwargs)
         self.pid.input = asgname
+        self.pid.ival = offset
         self.pid.p = amplitude
         return asg.frequency
 

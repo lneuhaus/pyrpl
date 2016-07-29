@@ -72,8 +72,8 @@ model:
 
   resonant_reflection: -0.08322671800851822
   offresonant_reflection: 0.08339925855398178
-  peak_pdh: 0.2044677734375
-  resonant_transmission: 0.2782564237713814
+  peak_pdh: 0.5028076171875
+  resonant_transmission: 0.6962251737713814
 # all signals that are inputs of the lockbox. Must be signal names understood
 # by the model. The order of signals indicates their preferrence as error
 # signals.
@@ -88,16 +88,16 @@ inputs:
   #  offset: -0.01687093824148178
   transmission:
     redpitaya_input: adc2
-    max: 0.2782564237713814
-    min: -0.008486740291118622
-    mean: 0.03969451040029526
-    rms: 0.06909040713916954
+    max: 0.6962251737713814
+    min: 0.003354080021381378
+    mean: 0.11889440566301346
+    rms: 0.1747369471228424
     offset: -0.004574783146381378
   pdh:
     setup:
       #input: adc1
       input: adc2
-      phase: 130.0
+      phase: 140.0
       amplitude: 1
       output_direct: out2
       frequency: 19950000.0
@@ -110,10 +110,10 @@ inputs:
       acbandwidth: 100000.0
 
     redpitaya_input: iq0
-    max: 0.18429291248321533
-    min: -0.22464263439178467
-    mean: -0.023815616965293884
-    rms: 0.06980208650126543
+    max: 0.46969330310821533
+    min: -0.5359219312667847
+    mean: -0.02147502452135086
+    rms: 0.19233914544646102
     offset: 0.021029353141784668
 # All output signals. Names of outputs are arbitrary.
 outputs:
@@ -146,7 +146,7 @@ outputs:
     sweep:
       waveform: ramp
       frequency: 10.0
-      amplitude: 1.0
+      amplitude: 0.5
       offset: 0.5
 
     inputfilter:
