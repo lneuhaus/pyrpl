@@ -1114,6 +1114,16 @@ class Pid(FilterModule):
         return tf
 
 
+    normalization_on = BoolRegister(0x130, 0, doc="if True the PID is used "
+                                                  "as a normalizer")
+
+    # current normalization gain is p-register
+    normalization_i = FloatRegister(0x10C, bits=_GAINBITS, norm=2 ** _ISR *
+                                                              2.0 * np.pi *
+                                                   8e-9,
+                  doc="normalization unity-gain frequency [Hz]")
+
+
 class IQ(FilterModule):
     _delay = 5  # bare delay of IQ module with no filters set (cycles)
 
