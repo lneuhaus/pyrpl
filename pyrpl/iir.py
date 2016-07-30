@@ -240,7 +240,8 @@ class IirFilter(object):
         self.totalbits = totalbits
         self.shiftbits = shiftbits
         self.tol = tol
-        self._frequencies = np.asarray(frequencies, dtype=np.complex128)
+        if frequencies is not None:
+            self._frequencies = np.asarray(frequencies, dtype=np.complex128)
         if inputfilter is None:
             self.inputfilter = 0
         else:
