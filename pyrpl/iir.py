@@ -786,9 +786,9 @@ class IirFilter(object):
                 (self.frequencies, self.tf_coefficients(),
                     'coefficients'),
                 (self.frequencies, self.tf_rounded(), 'rounded'),
-                (self.frequencies, self.tf_delay(), 'rounded+delay'),
-                (self.frequencies, self.tf_filtered(),
-                 'rounded+delay+inputfilter')]
+                #(self.frequencies, self.tf_delay(), 'rounded+delay'),
+                (self.frequencies, self.tf_final(),
+                 'final')]
 
     def tf_continuous(self, frequencies=None):
         """
@@ -811,7 +811,8 @@ class IirFilter(object):
         if frequencies is None:
             frequencies = self.frequencies
         frequencies = np.asarray(frequencies, dtype=np.float64)
-        return freqs(self.rescaled_sys, frequencies * 2 * np.pi)
+        h = freqs(self.rescaled_sys, frequencies * 2 * np.pi)
+        return h * self.tf_inputfilter(frequencies=frequencies)
 
     def tf_partialfraction(self, frequencies=None):
         """
@@ -836,7 +837,8 @@ class IirFilter(object):
             frequencies = self.frequencies
         frequencies = np.asarray(frequencies, dtype=np.complex128)
         r, p, c = self.rp_continuous
-        return freqs_rp(r, p, c, frequencies*2*np.pi)
+        h = freqs_rp(r, p, c, frequencies*2*np.pi)
+        return h * self.tf_inputfilter(frequencies=frequencies)
 
     def tf_discrete(self, rp_discrete=None, frequencies=None):
         """
@@ -875,56 +877,8 @@ class IirFilter(object):
         else:
             r, p, c = rp_discrete
         rc, pc, cc = discrete2cont(r, p, c, dt=self.dt * self.loops)
-        return freqs_rp(rc, pc, cc, frequencies * 2 * np.pi)
-
-    def tf_coefficients_old(self, frequencies=None, coefficients=None,
-                        delay=False):
-        """
-        computes implemented transfer function - assuming no delay and
-        infinite precision (actually floating-point precision)
-        Returns the discrete transfer function realized by coefficients at
-        frequencies.
-
-        Parameters
-        ----------
-        coefficients: np.array
-            coefficients as returned from iir module
-
-        frequencies: np.array
-            frequencies to compute the transfer function for
-
-        dt: float
-            discrete sampling time (seconds)
-
-        zoh: bool
-            If true, zero-order hold implementation is assumed. Otherwise,
-            the delay is expected to depend on the index of biquad.
-
-        Returns
-        -------
-        np.array(..., dtype=np.complex)
-        """
-        if frequencies is None:
-            frequencies = self.frequencies
-        frequencies = np.asarray(frequencies, dtype=np.float64)
-        if coefficients is None:
-            fcoefficients = self.coefficients
-        else:
-            fcoefficients = coefficients
-        # discrete frequency
-        w = frequencies * 2 * np.pi * self.dt * self.loops
-        # the higher stages have progressively more delay to the output
-        if delay:
-            delay_per_cycle = np.exp(-1j * self.dt * frequencies * 2 * np.pi)
-        b, a = sig.sos2tf(np.asarray([fcoefficients[0]], dtype=np.float64))
-        ww, h = sig.freqz(b, a, worN=np.asarray(w, dtype=np.float64))
-        for i in range(1, len(fcoefficients)):
-            b, a = sig.sos2tf(np.asarray([fcoefficients[i]], dtype=np.float64))
-            ww, hh = sig.freqz(b, a, worN=np.asarray(w, dtype=np.float64))
-            if delay:
-                hh *= delay_per_cycle ** i
-            h += hh
-        return h
+        h = freqs_rp(rc, pc, cc, frequencies * 2 * np.pi)
+        return h * self.tf_inputfilter(frequencies=frequencies)
 
     def tf_coefficients(self, frequencies=None, coefficients=None,
                                 delay=False):
@@ -977,85 +931,7 @@ class IirFilter(object):
             h += hh
         return h
 
-    def tf_coefficients_prototype(self, frequencies=None, coefficients=None,
-                        delay=False):
-        """
-        computes implemented transfer function - assuming no delay and
-        infinite precision (actually floating-point precision)
-        Returns the discrete transfer function realized by coefficients at
-        frequencies.
-
-        Parameters
-        ----------
-        coefficients: np.array
-            coefficients as returned from iir module
-
-        frequencies: np.array
-            frequencies to compute the transfer function for
-
-        dt: float
-            discrete sampling time (seconds)
-
-        zoh: bool
-            If true, zero-order hold implementation is assumed. Otherwise,
-            the delay is expected to depend on the index of biquad.
-
-        Returns
-        -------
-        np.array(..., dtype=np.complex)
-        """
-        if frequencies is None:
-            frequencies = self.frequencies
-        frequencies = np.asarray(frequencies, dtype=np.complex128)
-        if coefficients is None:
-            fcoefficients = self.coefficients
-        else:
-            fcoefficients = coefficients
-        # discrete frequency
-        w = frequencies * 2 * np.pi * self.dt * self.loops
-        # the higher stages have progressively more delay to the output
-        if delay:
-            delay_per_cycle = np.exp(-1j * self.dt * frequencies * 2 * np.pi)
-
-        r, p, c = self.rp_discrete
-        aa = [fcoefficients[0]]
-        #ww, h = sig.freqz(b, a, worN=w)
-        #for i in range(1, len(fcoefficients)):
-        #    b, a = sig.sos2tf(np.asarray([fcoefficients[i]]))
-        #    ww, hh = sig.freqz(b, a, worN=w)
-        #    if delay:
-        #        hh *= delay_per_cycle ** i
-        #    h += hh
-        #return h
-
-    def tf_rounded(self, frequencies=None):
-        """
-        Returns the discrete transfer function realized by coefficients at
-        frequencies.
-
-        Parameters
-        ----------
-        coefficients: np.array
-            coefficients as returned from iir module
-
-        frequencies: np.array
-            frequencies to compute the transfer function for
-
-        dt: float
-            discrete sampling time (seconds)
-
-        zoh: bool
-            If true, zero-order hold implementation is assumed. Otherwise,
-            the delay is expected to depend on the index of biquad.
-
-        Returns
-        -------
-        np.array(..., dtype=np.complex)
-        """
-        return self.tf_coefficients(frequencies=frequencies,
-                                    coefficients=self.coefficients_rounded)
-
-    def tf_delay(self, frequencies=None):
+    def tf_rounded(self, frequencies=None, delay=False):
         """
         Returns the discrete transfer function realized by coefficients at
         frequencies.
@@ -1081,9 +957,9 @@ class IirFilter(object):
         """
         return self.tf_coefficients(frequencies=frequencies,
                                     coefficients=self.coefficients_rounded,
-                                    delay=True)
+                                    delay=delay)
 
-    def tf_filtered(self, frequencies=None):
+    def tf_final(self, frequencies=None):
         """
         Returns the discrete transfer function realized by coefficients at
         frequencies.
@@ -1107,8 +983,8 @@ class IirFilter(object):
         -------
         np.array(..., dtype=np.complex)
         """
-        return self.tf_delay(frequencies=frequencies) * self.tf_inputfilter(
-            frequencies=frequencies)
+        return self.tf_rounded(frequencies=frequencies, delay=True) * \
+               self.tf_inputfilter(frequencies=frequencies)
 
     @property
     def sampling_rate(self):

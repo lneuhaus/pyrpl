@@ -1697,7 +1697,7 @@ class IIR(FilterModule):
         return 8e-9 / self._frequency_correction * self.loops
 
     ### this function is pretty much obsolete now. use self.iirfilter.tf_...
-    def transfer_function(self, frequencies, extradelay=0, kind='filtered'):
+    def transfer_function(self, frequencies, extradelay=0, kind='final'):
         """
         Returns a complex np.array containing the transfer function of the
         current IIR module setting for the given frequency array. The

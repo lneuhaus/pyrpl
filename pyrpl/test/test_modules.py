@@ -435,7 +435,6 @@ class TestClass(object):
                     assert False, (maxerror, phase)
 
     def test_iirsimple_na_generator(self):
-        return
         # this test defines a simple transfer function that occupies 2
         # biquads in the iir filter. It then shifts the coefficients through
         # all available biquad spots and verifies that the transfer
@@ -468,7 +467,7 @@ class TestClass(object):
         # setup a simple iir transfer function
         zeros = [1e5j - 3e3]
         poles = [5e4j - 3e3]
-        gain = 1.0e-2
+        gain = 1.0
         iir.setup(zeros, poles, gain,
                   loops=35,
                   input=na.iq,
@@ -479,6 +478,7 @@ class TestClass(object):
             # shift coefficients into next pair of biquads (each biquad has
             # 6 coefficients)
             iir.coefficients = np.roll(iir.coefficients, 6)
+            iir.iirfilter._fcoefficients = iir.coefficients
             iir.on = True
             #self.na_assertion(setting=setting,
             #                  module=iir,
@@ -584,7 +584,7 @@ class TestClass(object):
                    logscale=True)
         error_threshold = 0.05  #[0.01, 0.03] works if avg=10 in naset
         params.append((z, p, g, loops, naset, "low_sampling", error_threshold,
-                       ['filtered', 'continuous']))
+                       ['final', 'continuous']))
 
         # setting 2 - minimum number of loops
         z = [1e5j - 3e3]
@@ -602,7 +602,7 @@ class TestClass(object):
                logscale=True)
         error_threshold = 0.05 # large because of phase error at high freq
         params.append((z, p, g, loops, naset, "loops_None", error_threshold,
-                       ['filtered', 'continuous']))
+                       ['final', 'continuous']))
 
         # setting 3 - complicated with well-defined loops (similar to 1)
         z, p, g = (
@@ -631,7 +631,7 @@ class TestClass(object):
                      logscale=True)
         error_threshold = 0.025
         params.append((z, p, g, loops, naset, "loops=80", error_threshold,
-                       ['filtered', 'continuous']))
+                       ['final', 'continuous']))
 
         # setting 4, medium complex transfer function
         z = [-4e4j - 300, +4e4j - 300, -2e5j - 3000, +2e5j - 3000]
@@ -650,7 +650,7 @@ class TestClass(object):
                      logscale=True)
         error_threshold = [0.03, 0.04]
         params.append((z, p, g, loops, naset, "4 - medium", error_threshold,
-                       ['filtered', 'continuous']))
+                       ['final', 'continuous']))
 
         # config na and iir and launch the na assertions
         for param in params[2:3]:
