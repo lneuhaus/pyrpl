@@ -236,7 +236,7 @@ always @(posedge clk_i) begin
          int_reg <= { {IBW-16-ISR{set_ival[16-1]}},set_ival[16-1:0],{ISR{1'b0}}};
       else if (int_sum[IBW+1-1:IBW+1-2] == 2'b01) // positive saturation
          int_reg <= {1'b0,{IBW-1{1'b1}}};
-      else if ((normalization_on) && (int_sum[IBW+1-1:IBW+1-2] == 2'b10)) // saturate at +1
+      else if ((normalization_on==1'b1) && (int_sum <= {{GAINBITS{1'b0}}, 1'b1, {IBW-GAINBITS-1{1'b0}}})) // saturate at +1
          int_reg <= {{GAINBITS-1{1'b0}}, 1'b1, {IBW-GAINBITS-1{1'b0}}};
       else if ((normalization_on==1'b0) && (int_sum[IBW+1-1:IBW+1-2] == 2'b10)) //normal negative saturation
          int_reg <= {1'b1,{IBW-1{1'b0}}};

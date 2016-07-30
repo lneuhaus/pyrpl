@@ -52,9 +52,9 @@ constant (and equal to the setpoint). */
 
 module red_pitaya_normalizer_block
 #(
-    parameter     ISR          = 32
+    parameter     ISR          = 24,
     parameter     SIGNALBITS   = 14, //bitwidth of signals
-    parameter     GAINBITS     = 14,  //minimum allowed filter bandwidth
+    parameter     GAINBITS     = 16  //minimum allowed filter bandwidth
     )
 (
     input clk_i,
@@ -65,7 +65,7 @@ module red_pitaya_normalizer_block
     input signed  [SIGNALBITS-1:0] signal_i,
     input signed  [SIGNALBITS-1:0] inputoffset_i,
     input [SIGNALBITS-2:0] setpoint_i,
-    input [SIGNALBITS-1:0] gain_i,
+    input signed [GAINBITS-1:0] gain_i,
     output signed [SIGNALBITS-1:0] signal_o
 );
 
@@ -91,7 +91,7 @@ end
 // so product goes from 0 to 2**(2*SIGNALBITS)-1, but MSB should be zero
 // we rescale product to product_done taking only the highest SIGNALBITS+1
 // bits, of which only SIGNALBITS carry any information
-reg  [SIGNALBITS-1:0] integral;
+wire  [SIGNALBITS-1:0] integral;
 wire [SIGNALBITS*2-1:0] product;
 assign product = input * integral; // no rounding since unsigned arithmetic
 wire [SIGNALBITS*2:0] product_signed;
@@ -109,38 +109,41 @@ end
 reg signed [SIGNALBITS-1:0] error_done;
 always @(posedge clk_i) begin
     // pos saturation
-    if ({(|(error[SIGNALBITS*2:SIGNALBITS*2-1])), error[SIGNALBITS*2:SIGNALBITS*2-2]} == 2'b01)
+    if ({error[SIGNALBITS*2], (|(error[SIGNALBITS*2-1:SIGNALBITS*2-2]))} == 2'b01)
         error_done <= {1'b0, {SIGNALBITS-1{1'b1}}};
-    else if ({(&(error[SIGNALBITS*2:SIGNALBITS*2-1])), error[SIGNALBITS*2:SIGNALBITS*2-2]} == 2'b10)
+    else if ({error[SIGNALBITS*2], (&(error[SIGNALBITS*2-1:SIGNALBITS*2-2]))} == 2'b10)
         error_done <= {1'b1, {SIGNALBITS-1{1'b0}}};
     else
-        error_done <= error[SIGNALBITS*2-2;SIGNALBITS-2];
+        error_done <= error[SIGNALBITS*2-2:SIGNALBITS-2];
 end
 
-assign signal_o = error_done;
+assign signal_o = filter_on ? error_done : signal_i;
 
+// gain calculation
+// negative gain because of error calculation (setpoint - product)
+// therefore just need a positive integrator
+reg signed [SIGNALBITS: 0] int_sum;
+always @(posedge clk_i) begin
+    int_sum <= $signed(int_sat) + $signed(error_done);
+end
 
-//abandoned here...
-
-
-//---------------------------------------------------------------------------------
 // Integrator - 2 cycles delay (but treat similar to proportional since it
 // will become negligible at high frequencies where delay is important)
 
-localparam IBW = ISR+16; //integrator bit-width. Over-represent the integral sum to record longterm drifts (overrepresented by 2 bits)
+localparam IBW = ISR+SIGNALBITS;
 
-reg   [15+GAINBITS-1: 0] ki_mult ;
-wire  [IBW  : 0] int_sum       ;
-reg   [IBW-1: 0] int_reg       ;
+reg   [SIGNALBITS+GAINBITS-1: 0] ki_mult ;
+wire  [IBW  : 0]     int_sum       ;
+reg   [IBW-1: 0]     int_reg       ;
 wire  [IBW-ISR-1: 0] int_shr   ;
 
 always @(posedge clk_i) begin
    if (rstn_i == 1'b0) begin
-      ki_mult  <= {15+GAINBITS{1'b0}};
+      ki_mult  <= {SIGNALBITS+GAINBITS{1'b0}};
       int_reg  <= {IBW{1'b0}};
    end
    else begin
-      ki_mult <= $signed(error) * $signed(set_ki) ;
+      ki_mult <= $signed(error_done) * $signed(gain_i) ;
       if (ival_write)
          int_reg <= { {IBW-16-ISR{set_ival[16-1]}},set_ival[16-1:0],{ISR{1'b0}}};
       else if (int_sum[IBW+1-1:IBW+1-2] == 2'b01) // positive saturation
