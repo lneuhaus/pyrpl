@@ -52,7 +52,7 @@ model:
       drift:
         input: reflection
         detuning: 2
-        factor: 1
+        factor: 0.5
         time: 3
         offset: 1
         outputs:
@@ -67,7 +67,7 @@ model:
       prepdh:
         input: pdh
         detuning: 0.1
-        factor: 0.1
+        factor: 0.5
         time: 0.05
         outputs:
         - piezo
@@ -174,17 +174,13 @@ outputs:
     analogfilter:
       lowpass: [15.8]
     lock:
-      unity_gain_frequency: 100.0
-      second_integrator_crossover: 5.0
+      unity_gain_frequency: 1200.0
+      #second_integrator_crossover: 5.0
       inputfilter:
+      - 5000
+      - 5000
       - 9714.04681957369
       - 9714.04681957369
-      - 9714.04681957369
-      - 9714.04681957369
-      - 4857.023409786845
-      - 4857.023409786845
-      - 0
-      - 0
     sweep:
       waveform: sin
       frequency: 25.0

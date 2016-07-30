@@ -14,7 +14,7 @@ class FabryPerot(Model):
     # the internal variable for state specification
     _variable = 'detuning'
 
-    export_to_parent = Model.export_to_parent + ['R0']
+    export_to_parent = Model.export_to_parent + ['R0', 'relative_pdh_rms']
 
     # lorentzian functions
     def _lorentz(self, x):
