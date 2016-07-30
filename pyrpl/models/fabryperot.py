@@ -214,13 +214,17 @@ class FabryPerot(Model):
         if avg > 1:
             sum = 0
             for i in range(avg):
-                sum += self.relative_pdh_rms()**2
+                sum += self.relative_pdh_rms(avg=1)**2
             return np.sqrt(sum/avg)
         else:
             self.signals["pdh"]._acquire()
             rms = self.signals["pdh"].rms
             relrms = rms / self._config.peak_pdh
-            self._pdh_rms_log.log(relrms)
+            if hasattr(self, '_pdh_rms_log'):
+                # this is a logger for the lock quality. It must be
+                # implemented by the user to fit into the local existing
+                # datalogging architecture.
+                self._pdh_rms_log.log(relrms)
             return relrms
 
     def islocked(self):

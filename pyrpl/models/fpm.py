@@ -630,3 +630,17 @@ class FPM_LMSD(FPM):
         self.b = BodeFitIIRGui(id=id, showstability=False, invert=False)
         self.b.iir = self._parent.rp.iir
         return self.b
+
+
+class FabryPerot_FPM(FabryPerot):
+    _pdh_rms_log = SensingDevice(
+        name="pdh_rms_rel")  # logbook for pdh rms
+
+    def pillar_feedback(self, **kwargs):
+        params = self._config.pillar_feedback._dict
+        params.update(kwargs)
+        self._parent.rp.iq2.setup(**params)
+
+    def unlock(self):
+        self._parent.rp.iq2.gain = 0
+        super(FabryPerot_FPM, self).unlock()

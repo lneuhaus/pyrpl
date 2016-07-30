@@ -29,7 +29,7 @@ general:
 model:
   # use class Interferometer for internal model and lock algorithms
   # upper- or lowercase spelling is accepted if there is no ambiguity
-  modeltype: fabryperot
+  modeltype: fabryperot_fpm
   # only needed parameter is wavelength
   # (to convert piezo displacement into gain)
   wavelength: 1.064e-06
@@ -37,8 +37,8 @@ model:
   # for interferometer, this is the phase error in radians
   # this value is uniquely needed for the function 'islocked'
   maxerror: 0.1
-  offresonant_reflection: 0.24816780537366867
-  resonant_reflection: 0.02331428974866867
+  offresonant_reflection: 0.18884163349866867
+  resonant_reflection: 0.01354866474866867
   finesse: 92000.0
   length: 5.61e-05
   # signals in order of their preferrence
@@ -51,7 +51,7 @@ model:
       #call_calibrate: {}
       drift:
         input: reflection
-        detuning: 1.5
+        detuning: 2
         factor: 1
         time: 3
         offset: 1
@@ -66,8 +66,8 @@ model:
       #  - piezo
       prepdh:
         input: pdh
-        detuning: 0.05
-        factor: -0.1
+        detuning: 0.1
+        factor: 0.1
         time: 0.05
         outputs:
         - piezo
@@ -89,6 +89,7 @@ model:
       #  factor: 1
       #  time: 0.5
       #   second_integrator: 0.7
+      call_pillar_feedback: {}
       pdh:
         input: pdh
         detuning: 0
@@ -104,27 +105,39 @@ model:
     zoomfactor: 0.07
     relative_threshold: 0.75
   #peak: 0.07061767578125
-  peak_pdh: 0.99993896484375
+  peak_pdh: 0.7462158203125
+  pillar_feedback:
+    frequency: 3578520.0
+    bandwidth:
+    - 10000.0
+    - 50000.0
+    phase: 90
+    acbandwidth: 500000.0
+    amplitude: 0
+    input: iq0
+    output_direct: out1
+    output_signal: quadrature
+    gain: 1
 # all signals that are inputs of the lockbox. Must be signal names understood
 # by the model.
 inputs:
   reflection:
     redpitaya_input: adc2
     offset: -0.01013069599866867
-    max: 0.24816780537366867
-    min: 0.02331428974866867
-    mean: 0.23390349000692368
-    rms: 0.020757397410511417
-    curve: 257187
+    max: 0.18884163349866867
+    min: 0.01354866474866867
+    mean: 0.1708034873008728
+    rms: 0.026206309799142843
+    curve: 257322
   pdh:
     redpitaya_input: iq0
-    max: 0.9988205283880234
-    min: -1.0010574012994766
-    mean: -0.001119963824748993
-    rms: 0.15505071715619792
+    max: 0.7242843955755234
+    min: -0.7681472450494766
+    mean: -0.00992419570684433
+    rms: 0.15737229243462586
     offset: 0.0010574012994766235
     setup:
-      phase: 130
+      phase: 307
       amplitude: 0.25
       frequency: 49670000.0
       gain: 0
@@ -134,7 +147,7 @@ inputs:
       output_direct: out2
       acbandwidth: 10000000.0
       bandwidth: [5000000.0, 10000000.0]
-    curve: 257189
+    curve: 257324
 # All output signals. Names of outputs are arbitrary. if the 'lock' tab is
 # missing or false, the output will not be used for locking
 outputs:
@@ -217,7 +230,7 @@ outputs:
 
 scope:
   input1: adc2 #adc2
-  input2: dac2 #dac2
+  input2: iq0 #dac2
   duration: 0.1
   trigger_source: immediately
   average: false

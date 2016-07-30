@@ -342,8 +342,8 @@ class BodeFitIIR(BodeFit):
         iirfilter = self.iirfilter
         #self.data['discrete'] = iirfilter.tf_discrete(self.x)
         self.data['coefficients'] = iirfilter.tf_coefficients(self.x)
-        self.data['rounded'] = iirfilter.tf_rounded(self.x)
-        self.data['rounded+delay+inputfilter'] = iirfilter.tf_filtered(self.x)
+        #self.data['rounded'] = iirfilter.tf_rounded(self.x)
+        self.data['final'] = iirfilter.tf_final(self.x)
 
     def update_info(self, append=''):
         info = 'loops='+str(self.iirfilter.loops)+', '+append
