@@ -999,7 +999,7 @@ class Pid(FilterModule):
     
     _DSR = 10  # Register(0x208)
     
-    _GAINBITS = 24 #Register(0x20C)
+    _GAINBITS = 24  #Register(0x20C)
 
     @property
     def ival(self):
@@ -1118,10 +1118,17 @@ class Pid(FilterModule):
                                                   "as a normalizer")
 
     # current normalization gain is p-register
-    normalization_i = FloatRegister(0x10C, bits=_GAINBITS, norm=2 ** _ISR *
-                                                              2.0 * np.pi *
-                                                   8e-9,
-                  doc="normalization unity-gain frequency [Hz]")
+    normalization_i = FloatRegister(0x10C, bits=_GAINBITS,
+                                    norm=2 **(_ISR) * 2.0 * np.pi * 8e-9/75.0,
+                                    # 75 is empirical value,
+                                    # no time to do the maths
+                                    doc="stablization crossover frequency [Hz]")
+
+    @property
+    def normalization_gain(self):
+        """ current gain in the normalization """
+        return self.p / 2**10
+
 
 
 class IQ(FilterModule):

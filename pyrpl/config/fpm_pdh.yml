@@ -37,8 +37,8 @@ model:
   # for interferometer, this is the phase error in radians
   # this value is uniquely needed for the function 'islocked'
   maxerror: 0.1
-  offresonant_reflection: 0.18884163349866867
-  resonant_reflection: 0.01354866474866867
+  offresonant_reflection: 0.5530994459986687
+  resonant_reflection: 0.05212288349866867
   finesse: 92000.0
   length: 5.61e-05
   # signals in order of their preferrence
@@ -49,6 +49,8 @@ model:
     error_threshold: 1
     stages:
       #call_calibrate: {}
+      # make sure normalizer is good
+      call_restart_normalized_reflection: {}
       drift:
         input: reflection
         detuning: 2
@@ -57,13 +59,13 @@ model:
         offset: 1
         outputs:
         - piezo
-      #sof:
-      #  input: reflection
-      #  detuning: 1
-      #  factor: 0.5
-      #  time: 0.1
-      #  outputs:
-      #  - piezo
+      sof:
+        input: reflection
+        detuning: 1
+        factor: 0.5
+        time: 0.01
+        outputs:
+        - piezo
       prepdh:
         input: pdh
         detuning: 0.1
@@ -105,7 +107,7 @@ model:
     zoomfactor: 0.07
     relative_threshold: 0.75
   #peak: 0.07061767578125
-  peak_pdh: 0.7462158203125
+  peak_pdh: 0.9976806640625
   pillar_feedback:
     frequency: 3578520.0
     bandwidth:
@@ -117,37 +119,43 @@ model:
     input: iq0
     output_direct: out1
     output_signal: quadrature
-    gain: 1
+    gain: 0.5
 # all signals that are inputs of the lockbox. Must be signal names understood
 # by the model.
 inputs:
   reflection:
     redpitaya_input: adc2
     offset: -0.01013069599866867
-    max: 0.18884163349866867
-    min: 0.01354866474866867
-    mean: 0.1708034873008728
-    rms: 0.026206309799142843
-    curve: 257322
+    max: 0.5530994459986687
+    min: 0.05212288349866867
+    mean: 0.5309063121676445
+    rms: 0.044650546530598204
+    curve: 257367
   pdh:
-    redpitaya_input: iq0
-    max: 0.7242843955755234
-    min: -0.7681472450494766
-    mean: -0.00992419570684433
-    rms: 0.15737229243462586
+    redpitaya_input: pid1
+    max: 0.9988205283880234
+    min: -0.9965407997369766
+    mean: -0.0008356869220733643
+    rms: 0.14623674377058507
     offset: 0.0010574012994766235
     setup:
       phase: 307
       amplitude: 0.25
       frequency: 49670000.0
       gain: 0
-      quadrature_factor: 0.1
+      quadrature_factor: 0.047
       input: adc2
       output_signal: quadrature
       output_direct: out2
       acbandwidth: 10000000.0
       bandwidth: [5000000.0, 10000000.0]
-    curve: 257324
+    curve: 257369
+  normalized_reflection:
+    redpitaya_input: adc2
+    offset: 0.0
+    crossover: 1000000.0
+    setpoint: 0.575
+
 # All output signals. Names of outputs are arbitrary. if the 'lock' tab is
 # missing or false, the output will not be used for locking
 outputs:
@@ -177,8 +185,8 @@ outputs:
       unity_gain_frequency: 1200.0
       #second_integrator_crossover: 5.0
       inputfilter:
-      - 5000
-      - 5000
+      - 4857.023409786845
+      - 4857.023409786845
       - 9714.04681957369
       - 9714.04681957369
     sweep:
