@@ -216,8 +216,8 @@ outputs:
 ##############################################################################
 
 scope:
-  input1: adc1 #adc2
-  input2: adc2 #dac2
+  input1: adc2 #adc2
+  input2: dac2 #dac2
   duration: 0.1
   trigger_source: immediately
   average: false
