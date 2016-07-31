@@ -654,6 +654,8 @@ class FabryPerot_FPM(FabryPerot):
         signal = self.signals["normalized_reflection"]
         if not hasattr(signal, 'pid'):
             signal.pid = self._parent.rp.pids.pop()
+        signal._config.redpitaya_input = \
+            self.signals['reflection'].redpitaya_input
         signal.pid.input = signal.redpitaya_input
         signal.pid.output_direct = 'off'
         signal.pid.ival = 0.5
@@ -663,13 +665,19 @@ class FabryPerot_FPM(FabryPerot):
         signal.pid.d = 0
         signal.pid.normalization_i = signal._config.crossover
         signal.pid.normalization_on = True
+        signal.pid.normalization_inputoffset = \
+            self.signals["reflection"]._config.offset
         modelerror = self.signals["reflection"].sample * \
                      signal.pid.normalization_gain / signal.pid.setpoint
         self.logger.info("Normalizer has been set up with a model error of 1 : "
                          "%s.", modelerror)
-        self._config._root.inputs.pdh.redpitaya_input = signal.pid.name
+        if signal._config.skip_forward_to_pdh:
+            pdhinput = self.signals['reflection'].redpitaya_input
+        else:
+            pdhinput = signal.pid.name
+        signal._config._root.inputs.pdh.setup.input = pdhinput
         try:
-            self.signals["pdh"].iq.input = signal.pid
+            pdh_iq = self.signals["pdh"].iq.input = pdhinput
         except AttributeError:
             logger.debug("Normalizer found no pdh signal (setup_pdh hasnt "
                          "been called yet?). Not a problem, pdh config is "

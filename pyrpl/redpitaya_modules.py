@@ -1119,16 +1119,20 @@ class Pid(FilterModule):
 
     # current normalization gain is p-register
     normalization_i = FloatRegister(0x10C, bits=_GAINBITS,
-                                    norm=2 **(_ISR) * 2.0 * np.pi * 8e-9/75.0,
-                                    # 75 is empirical value,
-                                    # no time to do the maths
+                                    norm=2 **(_ISR) * 2.0 * np.pi *
+                                         8e-9/2**13 / 1.5625 ,
+                                    # 1.5625 is empirical value,
+                                    # no time/idea to do the maths
                                     doc="stablization crossover frequency [Hz]")
 
     @property
     def normalization_gain(self):
         """ current gain in the normalization """
-        return self.p / 2**10
+        return self.p / 2.0
 
+    normalization_inputoffset = FloatRegister(0x110, bits=(14+_DSR),
+                                    norm=2 **(13+_DSR),
+                                    doc="normalization inputoffset [volts]")
 
 
 class IQ(FilterModule):

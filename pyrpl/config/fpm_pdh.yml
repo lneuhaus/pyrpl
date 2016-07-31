@@ -37,8 +37,8 @@ model:
   # for interferometer, this is the phase error in radians
   # this value is uniquely needed for the function 'islocked'
   maxerror: 0.1
-  offresonant_reflection: 0.5530994459986687
-  resonant_reflection: 0.05212288349866867
+  offresonant_reflection: 0.6368396803736687
+  resonant_reflection: 0.04614143818616867
   finesse: 92000.0
   length: 5.61e-05
   # signals in order of their preferrence
@@ -107,7 +107,7 @@ model:
     zoomfactor: 0.07
     relative_threshold: 0.75
   #peak: 0.07061767578125
-  peak_pdh: 0.9976806640625
+  peak_pdh: 0.35760498046875
   pillar_feedback:
     frequency: 3578520.0
     bandwidth:
@@ -126,36 +126,41 @@ inputs:
   reflection:
     redpitaya_input: adc2
     offset: -0.01013069599866867
-    max: 0.5530994459986687
-    min: 0.05212288349866867
-    mean: 0.5309063121676445
-    rms: 0.044650546530598204
-    curve: 257367
+    max: 0.6368396803736687
+    min: 0.04614143818616867
+    mean: 0.6120389476418495
+    rms: 0.052517338305337946
+    curve: 257529
   pdh:
-    redpitaya_input: pid1
-    max: 0.9988205283880234
-    min: -0.9965407997369766
-    mean: -0.0008356869220733643
-    rms: 0.14623674377058507
+    redpitaya_input: iq0
+    max: 0.3522140830755234
+    min: -0.3629958778619766
+    mean: -0.0018448755145072937
+    rms: 0.04589614336376083
     offset: 0.0010574012994766235
     setup:
-      phase: 307
+      phase: 275 # 307
       amplitude: 0.25
       frequency: 49670000.0
       gain: 0
-      quadrature_factor: 0.047
-      input: adc2
+      quadrature_factor: 0.016 # 0.0078125  #0.047
+      input: pid1
       output_signal: quadrature
       output_direct: out2
       acbandwidth: 10000000.0
       bandwidth: [5000000.0, 10000000.0]
-    curve: 257369
+    curve: 257531
   normalized_reflection:
     redpitaya_input: adc2
+    skip_forward_to_pdh: false
     offset: 0.0
-    crossover: 1000000.0
-    setpoint: 0.575
-
+    crossover: 2000000.0
+    setpoint: 0.15
+    max: 0.627197265625
+    min: 0.04248046875
+    mean: 0.6012958362698555
+    rms: 0.05075691432683328
+    curve: 257533
 # All output signals. Names of outputs are arbitrary. if the 'lock' tab is
 # missing or false, the output will not be used for locking
 outputs:

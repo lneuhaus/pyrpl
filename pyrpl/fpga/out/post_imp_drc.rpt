@@ -1,7 +1,7 @@
 Copyright 1986-2015 Xilinx, Inc. All Rights Reserved.
 ------------------------------------------------------------------------------------
 | Tool Version : Vivado v.2015.4 (lin64) Build 1412921 Wed Nov 18 09:44:32 MST 2015
-| Date         : Sat Jul 30 18:03:59 2016
+| Date         : Sun Jul 31 00:06:00 2016
 | Host         : ubuntu running 64-bit Ubuntu 14.04.4 LTS
 | Command      : report_drc
 ------------------------------------------------------------------------------------
@@ -20,7 +20,7 @@ Table of Contents
       Design limits: <entire design considered>
            Ruledeck: default
              Max violations: <unlimited>
-             Violations found: 191
+             Violations found: 187
 
 2. REPORT DETAILS
 -----------------
@@ -61,340 +61,335 @@ Related violations: <none>
 
 DPIP-1#4 Warning
 Input pipelining  
-DSP i_dsp/genblk2[1].i_pid/ki_mult_reg input i_dsp/genblk2[1].i_pid/ki_mult_reg/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk2[1].i_pid/p_1_in0 input i_dsp/genblk2[1].i_pid/p_1_in0/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#5 Warning
 Input pipelining  
-DSP i_dsp/genblk2[1].i_pid/p_1_in0 input i_dsp/genblk2[1].i_pid/p_1_in0/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk2[2].i_pid/ki_mult_reg input i_dsp/genblk2[2].i_pid/ki_mult_reg/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#6 Warning
 Input pipelining  
-DSP i_dsp/genblk2[2].i_pid/ki_mult_reg input i_dsp/genblk2[2].i_pid/ki_mult_reg/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk2[2].i_pid/p_1_in0 input i_dsp/genblk2[2].i_pid/p_1_in0/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#7 Warning
 Input pipelining  
-DSP i_dsp/genblk2[2].i_pid/p_1_in0 input i_dsp/genblk2[2].i_pid/p_1_in0/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk2[3].i_pid/p_1_in0 input i_dsp/genblk2[3].i_pid/p_1_in0/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#8 Warning
 Input pipelining  
-DSP i_dsp/genblk2[3].i_pid/p_1_in0 input i_dsp/genblk2[3].i_pid/p_1_in0/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk3[4].iir/p_ay1_module/product0 input i_dsp/genblk3[4].iir/p_ay1_module/product0/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#9 Warning
 Input pipelining  
-DSP i_dsp/genblk3[4].iir/p_ay1_module/product0 input i_dsp/genblk3[4].iir/p_ay1_module/product0/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk3[4].iir/p_ay1_module/product0 input i_dsp/genblk3[4].iir/p_ay1_module/product0/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#10 Warning
 Input pipelining  
-DSP i_dsp/genblk3[4].iir/p_ay1_module/product0 input i_dsp/genblk3[4].iir/p_ay1_module/product0/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk3[4].iir/p_ay1_module/product0__0 input i_dsp/genblk3[4].iir/p_ay1_module/product0__0/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#11 Warning
 Input pipelining  
-DSP i_dsp/genblk3[4].iir/p_ay1_module/product0__0 input i_dsp/genblk3[4].iir/p_ay1_module/product0__0/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk3[4].iir/p_ay1_module/product0__0 input i_dsp/genblk3[4].iir/p_ay1_module/product0__0/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#12 Warning
 Input pipelining  
-DSP i_dsp/genblk3[4].iir/p_ay1_module/product0__0 input i_dsp/genblk3[4].iir/p_ay1_module/product0__0/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk3[4].iir/p_ay1_module/product0__1 input i_dsp/genblk3[4].iir/p_ay1_module/product0__1/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#13 Warning
 Input pipelining  
-DSP i_dsp/genblk3[4].iir/p_ay1_module/product0__1 input i_dsp/genblk3[4].iir/p_ay1_module/product0__1/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk3[4].iir/p_ay1_module/product0__1 input i_dsp/genblk3[4].iir/p_ay1_module/product0__1/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#14 Warning
 Input pipelining  
-DSP i_dsp/genblk3[4].iir/p_ay1_module/product0__1 input i_dsp/genblk3[4].iir/p_ay1_module/product0__1/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk3[4].iir/p_ay1_module/product0__2 input i_dsp/genblk3[4].iir/p_ay1_module/product0__2/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#15 Warning
 Input pipelining  
-DSP i_dsp/genblk3[4].iir/p_ay1_module/product0__2 input i_dsp/genblk3[4].iir/p_ay1_module/product0__2/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk3[4].iir/p_ay2_module/product0 input i_dsp/genblk3[4].iir/p_ay2_module/product0/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#16 Warning
 Input pipelining  
-DSP i_dsp/genblk3[4].iir/p_ay2_module/product0 input i_dsp/genblk3[4].iir/p_ay2_module/product0/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk3[4].iir/p_ay2_module/product0 input i_dsp/genblk3[4].iir/p_ay2_module/product0/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#17 Warning
 Input pipelining  
-DSP i_dsp/genblk3[4].iir/p_ay2_module/product0 input i_dsp/genblk3[4].iir/p_ay2_module/product0/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk3[4].iir/p_ay2_module/product0__0 input i_dsp/genblk3[4].iir/p_ay2_module/product0__0/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#18 Warning
 Input pipelining  
-DSP i_dsp/genblk3[4].iir/p_ay2_module/product0__0 input i_dsp/genblk3[4].iir/p_ay2_module/product0__0/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk3[4].iir/p_ay2_module/product0__0 input i_dsp/genblk3[4].iir/p_ay2_module/product0__0/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#19 Warning
 Input pipelining  
-DSP i_dsp/genblk3[4].iir/p_ay2_module/product0__0 input i_dsp/genblk3[4].iir/p_ay2_module/product0__0/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk3[4].iir/p_ay2_module/product0__1 input i_dsp/genblk3[4].iir/p_ay2_module/product0__1/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#20 Warning
 Input pipelining  
-DSP i_dsp/genblk3[4].iir/p_ay2_module/product0__1 input i_dsp/genblk3[4].iir/p_ay2_module/product0__1/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk3[4].iir/p_ay2_module/product0__1 input i_dsp/genblk3[4].iir/p_ay2_module/product0__1/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#21 Warning
 Input pipelining  
-DSP i_dsp/genblk3[4].iir/p_ay2_module/product0__1 input i_dsp/genblk3[4].iir/p_ay2_module/product0__1/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk3[4].iir/p_ay2_module/product0__2 input i_dsp/genblk3[4].iir/p_ay2_module/product0__2/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#22 Warning
 Input pipelining  
-DSP i_dsp/genblk3[4].iir/p_ay2_module/product0__2 input i_dsp/genblk3[4].iir/p_ay2_module/product0__2/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk3[4].iir/p_by0_module/product0 input i_dsp/genblk3[4].iir/p_by0_module/product0/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#23 Warning
 Input pipelining  
-DSP i_dsp/genblk3[4].iir/p_by0_module/product0 input i_dsp/genblk3[4].iir/p_by0_module/product0/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk3[4].iir/p_by0_module/product0 input i_dsp/genblk3[4].iir/p_by0_module/product0/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#24 Warning
 Input pipelining  
-DSP i_dsp/genblk3[4].iir/p_by0_module/product0 input i_dsp/genblk3[4].iir/p_by0_module/product0/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk3[4].iir/p_by0_module/product0__0 input i_dsp/genblk3[4].iir/p_by0_module/product0__0/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#25 Warning
 Input pipelining  
-DSP i_dsp/genblk3[4].iir/p_by0_module/product0__0 input i_dsp/genblk3[4].iir/p_by0_module/product0__0/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk3[4].iir/p_by0_module/product0__0 input i_dsp/genblk3[4].iir/p_by0_module/product0__0/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#26 Warning
 Input pipelining  
-DSP i_dsp/genblk3[4].iir/p_by0_module/product0__0 input i_dsp/genblk3[4].iir/p_by0_module/product0__0/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk3[4].iir/p_by0_module/product0__1 input i_dsp/genblk3[4].iir/p_by0_module/product0__1/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#27 Warning
 Input pipelining  
-DSP i_dsp/genblk3[4].iir/p_by0_module/product0__1 input i_dsp/genblk3[4].iir/p_by0_module/product0__1/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk3[4].iir/p_by0_module/product0__1 input i_dsp/genblk3[4].iir/p_by0_module/product0__1/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#28 Warning
 Input pipelining  
-DSP i_dsp/genblk3[4].iir/p_by0_module/product0__1 input i_dsp/genblk3[4].iir/p_by0_module/product0__1/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk3[4].iir/p_by0_module/product0__2 input i_dsp/genblk3[4].iir/p_by0_module/product0__2/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#29 Warning
 Input pipelining  
-DSP i_dsp/genblk3[4].iir/p_by0_module/product0__2 input i_dsp/genblk3[4].iir/p_by0_module/product0__2/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk3[4].iir/p_by1_module/product0 input i_dsp/genblk3[4].iir/p_by1_module/product0/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#30 Warning
 Input pipelining  
-DSP i_dsp/genblk3[4].iir/p_by1_module/product0 input i_dsp/genblk3[4].iir/p_by1_module/product0/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk3[4].iir/p_by1_module/product0 input i_dsp/genblk3[4].iir/p_by1_module/product0/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#31 Warning
 Input pipelining  
-DSP i_dsp/genblk3[4].iir/p_by1_module/product0 input i_dsp/genblk3[4].iir/p_by1_module/product0/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk3[4].iir/p_by1_module/product0__0 input i_dsp/genblk3[4].iir/p_by1_module/product0__0/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#32 Warning
 Input pipelining  
-DSP i_dsp/genblk3[4].iir/p_by1_module/product0__0 input i_dsp/genblk3[4].iir/p_by1_module/product0__0/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk3[4].iir/p_by1_module/product0__0 input i_dsp/genblk3[4].iir/p_by1_module/product0__0/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#33 Warning
 Input pipelining  
-DSP i_dsp/genblk3[4].iir/p_by1_module/product0__0 input i_dsp/genblk3[4].iir/p_by1_module/product0__0/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk3[4].iir/p_by1_module/product0__1 input i_dsp/genblk3[4].iir/p_by1_module/product0__1/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#34 Warning
 Input pipelining  
-DSP i_dsp/genblk3[4].iir/p_by1_module/product0__1 input i_dsp/genblk3[4].iir/p_by1_module/product0__1/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk3[4].iir/p_by1_module/product0__1 input i_dsp/genblk3[4].iir/p_by1_module/product0__1/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#35 Warning
 Input pipelining  
-DSP i_dsp/genblk3[4].iir/p_by1_module/product0__1 input i_dsp/genblk3[4].iir/p_by1_module/product0__1/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk3[4].iir/p_by1_module/product0__2 input i_dsp/genblk3[4].iir/p_by1_module/product0__2/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#36 Warning
 Input pipelining  
-DSP i_dsp/genblk3[4].iir/p_by1_module/product0__2 input i_dsp/genblk3[4].iir/p_by1_module/product0__2/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk4[5].iq/demodulator/product1_reg input i_dsp/genblk4[5].iq/demodulator/product1_reg/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#37 Warning
 Input pipelining  
-DSP i_dsp/genblk4[5].iq/demodulator/product1_reg input i_dsp/genblk4[5].iq/demodulator/product1_reg/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk4[5].iq/demodulator/product2_reg input i_dsp/genblk4[5].iq/demodulator/product2_reg/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#38 Warning
 Input pipelining  
-DSP i_dsp/genblk4[5].iq/demodulator/product2_reg input i_dsp/genblk4[5].iq/demodulator/product2_reg/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk4[5].iq/modulator/firstproduct_saturation[0]/product input i_dsp/genblk4[5].iq/modulator/firstproduct_saturation[0]/product/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#39 Warning
 Input pipelining  
-DSP i_dsp/genblk4[5].iq/modulator/firstproduct_saturation[0]/product input i_dsp/genblk4[5].iq/modulator/firstproduct_saturation[0]/product/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk4[5].iq/modulator/firstproduct_saturation[0]/product input i_dsp/genblk4[5].iq/modulator/firstproduct_saturation[0]/product/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#40 Warning
 Input pipelining  
-DSP i_dsp/genblk4[5].iq/modulator/firstproduct_saturation[0]/product input i_dsp/genblk4[5].iq/modulator/firstproduct_saturation[0]/product/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk4[5].iq/modulator/firstproduct_saturation[1]/product input i_dsp/genblk4[5].iq/modulator/firstproduct_saturation[1]/product/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#41 Warning
 Input pipelining  
-DSP i_dsp/genblk4[5].iq/modulator/firstproduct_saturation[1]/product input i_dsp/genblk4[5].iq/modulator/firstproduct_saturation[1]/product/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk4[5].iq/modulator/firstproduct_saturation[1]/product input i_dsp/genblk4[5].iq/modulator/firstproduct_saturation[1]/product/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#42 Warning
 Input pipelining  
-DSP i_dsp/genblk4[5].iq/modulator/firstproduct_saturation[1]/product input i_dsp/genblk4[5].iq/modulator/firstproduct_saturation[1]/product/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk4[5].iq/modulator/i0_product_and_sat/product input i_dsp/genblk4[5].iq/modulator/i0_product_and_sat/product/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#43 Warning
 Input pipelining  
-DSP i_dsp/genblk4[5].iq/modulator/i0_product_and_sat/product input i_dsp/genblk4[5].iq/modulator/i0_product_and_sat/product/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk4[5].iq/modulator/i0_product_and_sat/product input i_dsp/genblk4[5].iq/modulator/i0_product_and_sat/product/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#44 Warning
 Input pipelining  
-DSP i_dsp/genblk4[5].iq/modulator/i0_product_and_sat/product input i_dsp/genblk4[5].iq/modulator/i0_product_and_sat/product/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk4[5].iq/modulator/secondproduct1 input i_dsp/genblk4[5].iq/modulator/secondproduct1/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#45 Warning
 Input pipelining  
-DSP i_dsp/genblk4[5].iq/modulator/secondproduct1 input i_dsp/genblk4[5].iq/modulator/secondproduct1/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk4[5].iq/modulator/secondproduct1 input i_dsp/genblk4[5].iq/modulator/secondproduct1/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#46 Warning
 Input pipelining  
-DSP i_dsp/genblk4[5].iq/modulator/secondproduct1 input i_dsp/genblk4[5].iq/modulator/secondproduct1/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk4[5].iq/modulator/secondproduct2 input i_dsp/genblk4[5].iq/modulator/secondproduct2/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#47 Warning
 Input pipelining  
-DSP i_dsp/genblk4[5].iq/modulator/secondproduct2 input i_dsp/genblk4[5].iq/modulator/secondproduct2/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk4[6].iq/demodulator/product1_reg input i_dsp/genblk4[6].iq/demodulator/product1_reg/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#48 Warning
 Input pipelining  
-DSP i_dsp/genblk4[6].iq/demodulator/product1_reg input i_dsp/genblk4[6].iq/demodulator/product1_reg/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk4[6].iq/demodulator/product2_reg input i_dsp/genblk4[6].iq/demodulator/product2_reg/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#49 Warning
 Input pipelining  
-DSP i_dsp/genblk4[6].iq/demodulator/product2_reg input i_dsp/genblk4[6].iq/demodulator/product2_reg/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk4[6].iq/modulator/firstproduct_saturation[0]/product input i_dsp/genblk4[6].iq/modulator/firstproduct_saturation[0]/product/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#50 Warning
 Input pipelining  
-DSP i_dsp/genblk4[6].iq/modulator/firstproduct_saturation[0]/product input i_dsp/genblk4[6].iq/modulator/firstproduct_saturation[0]/product/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk4[6].iq/modulator/firstproduct_saturation[0]/product input i_dsp/genblk4[6].iq/modulator/firstproduct_saturation[0]/product/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#51 Warning
 Input pipelining  
-DSP i_dsp/genblk4[6].iq/modulator/firstproduct_saturation[0]/product input i_dsp/genblk4[6].iq/modulator/firstproduct_saturation[0]/product/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk4[6].iq/modulator/firstproduct_saturation[1]/product input i_dsp/genblk4[6].iq/modulator/firstproduct_saturation[1]/product/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#52 Warning
 Input pipelining  
-DSP i_dsp/genblk4[6].iq/modulator/firstproduct_saturation[1]/product input i_dsp/genblk4[6].iq/modulator/firstproduct_saturation[1]/product/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk4[6].iq/modulator/firstproduct_saturation[1]/product input i_dsp/genblk4[6].iq/modulator/firstproduct_saturation[1]/product/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#53 Warning
 Input pipelining  
-DSP i_dsp/genblk4[6].iq/modulator/firstproduct_saturation[1]/product input i_dsp/genblk4[6].iq/modulator/firstproduct_saturation[1]/product/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk4[6].iq/modulator/i0_product_and_sat/product input i_dsp/genblk4[6].iq/modulator/i0_product_and_sat/product/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#54 Warning
 Input pipelining  
-DSP i_dsp/genblk4[6].iq/modulator/i0_product_and_sat/product input i_dsp/genblk4[6].iq/modulator/i0_product_and_sat/product/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk4[6].iq/modulator/i0_product_and_sat/product input i_dsp/genblk4[6].iq/modulator/i0_product_and_sat/product/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#55 Warning
 Input pipelining  
-DSP i_dsp/genblk4[6].iq/modulator/i0_product_and_sat/product input i_dsp/genblk4[6].iq/modulator/i0_product_and_sat/product/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk4[6].iq/modulator/secondproduct1 input i_dsp/genblk4[6].iq/modulator/secondproduct1/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#56 Warning
 Input pipelining  
-DSP i_dsp/genblk4[6].iq/modulator/secondproduct1 input i_dsp/genblk4[6].iq/modulator/secondproduct1/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk4[6].iq/modulator/secondproduct1 input i_dsp/genblk4[6].iq/modulator/secondproduct1/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#57 Warning
 Input pipelining  
-DSP i_dsp/genblk4[6].iq/modulator/secondproduct1 input i_dsp/genblk4[6].iq/modulator/secondproduct1/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk4[6].iq/modulator/secondproduct2 input i_dsp/genblk4[6].iq/modulator/secondproduct2/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#58 Warning
 Input pipelining  
-DSP i_dsp/genblk4[6].iq/modulator/secondproduct2 input i_dsp/genblk4[6].iq/modulator/secondproduct2/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk5[7].iq_2_outputs/demodulator/product1_reg input i_dsp/genblk5[7].iq_2_outputs/demodulator/product1_reg/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#59 Warning
 Input pipelining  
-DSP i_dsp/genblk5[7].iq_2_outputs/demodulator/product1_reg input i_dsp/genblk5[7].iq_2_outputs/demodulator/product1_reg/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk5[7].iq_2_outputs/demodulator/product2_reg input i_dsp/genblk5[7].iq_2_outputs/demodulator/product2_reg/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#60 Warning
 Input pipelining  
-DSP i_dsp/genblk5[7].iq_2_outputs/demodulator/product2_reg input i_dsp/genblk5[7].iq_2_outputs/demodulator/product2_reg/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk5[7].iq_2_outputs/modulator/firstproduct_saturation[0]/product input i_dsp/genblk5[7].iq_2_outputs/modulator/firstproduct_saturation[0]/product/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#61 Warning
 Input pipelining  
-DSP i_dsp/genblk5[7].iq_2_outputs/modulator/firstproduct_saturation[0]/product input i_dsp/genblk5[7].iq_2_outputs/modulator/firstproduct_saturation[0]/product/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk5[7].iq_2_outputs/modulator/firstproduct_saturation[0]/product input i_dsp/genblk5[7].iq_2_outputs/modulator/firstproduct_saturation[0]/product/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#62 Warning
 Input pipelining  
-DSP i_dsp/genblk5[7].iq_2_outputs/modulator/firstproduct_saturation[0]/product input i_dsp/genblk5[7].iq_2_outputs/modulator/firstproduct_saturation[0]/product/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk5[7].iq_2_outputs/modulator/firstproduct_saturation[1]/product input i_dsp/genblk5[7].iq_2_outputs/modulator/firstproduct_saturation[1]/product/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#63 Warning
 Input pipelining  
-DSP i_dsp/genblk5[7].iq_2_outputs/modulator/firstproduct_saturation[1]/product input i_dsp/genblk5[7].iq_2_outputs/modulator/firstproduct_saturation[1]/product/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk5[7].iq_2_outputs/modulator/firstproduct_saturation[1]/product input i_dsp/genblk5[7].iq_2_outputs/modulator/firstproduct_saturation[1]/product/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#64 Warning
 Input pipelining  
-DSP i_dsp/genblk5[7].iq_2_outputs/modulator/firstproduct_saturation[1]/product input i_dsp/genblk5[7].iq_2_outputs/modulator/firstproduct_saturation[1]/product/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk5[7].iq_2_outputs/modulator/i0_product_and_sat/product input i_dsp/genblk5[7].iq_2_outputs/modulator/i0_product_and_sat/product/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#65 Warning
 Input pipelining  
-DSP i_dsp/genblk5[7].iq_2_outputs/modulator/i0_product_and_sat/product input i_dsp/genblk5[7].iq_2_outputs/modulator/i0_product_and_sat/product/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk5[7].iq_2_outputs/modulator/i0_product_and_sat/product input i_dsp/genblk5[7].iq_2_outputs/modulator/i0_product_and_sat/product/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#66 Warning
 Input pipelining  
-DSP i_dsp/genblk5[7].iq_2_outputs/modulator/i0_product_and_sat/product input i_dsp/genblk5[7].iq_2_outputs/modulator/i0_product_and_sat/product/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk5[7].iq_2_outputs/modulator/q0_product_and_sat/product input i_dsp/genblk5[7].iq_2_outputs/modulator/q0_product_and_sat/product/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#67 Warning
 Input pipelining  
-DSP i_dsp/genblk5[7].iq_2_outputs/modulator/q0_product_and_sat/product input i_dsp/genblk5[7].iq_2_outputs/modulator/q0_product_and_sat/product/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk5[7].iq_2_outputs/modulator/q0_product_and_sat/product input i_dsp/genblk5[7].iq_2_outputs/modulator/q0_product_and_sat/product/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#68 Warning
 Input pipelining  
-DSP i_dsp/genblk5[7].iq_2_outputs/modulator/q0_product_and_sat/product input i_dsp/genblk5[7].iq_2_outputs/modulator/q0_product_and_sat/product/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk5[7].iq_2_outputs/modulator/secondproduct1 input i_dsp/genblk5[7].iq_2_outputs/modulator/secondproduct1/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#69 Warning
 Input pipelining  
-DSP i_dsp/genblk5[7].iq_2_outputs/modulator/secondproduct1 input i_dsp/genblk5[7].iq_2_outputs/modulator/secondproduct1/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
-Related violations: <none>
-
-DPIP-1#70 Warning
-Input pipelining  
 DSP i_dsp/genblk5[7].iq_2_outputs/modulator/secondproduct1 input i_dsp/genblk5[7].iq_2_outputs/modulator/secondproduct1/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
-DPIP-1#71 Warning
+DPIP-1#70 Warning
 Input pipelining  
 DSP i_dsp/genblk5[7].iq_2_outputs/modulator/secondproduct2 input i_dsp/genblk5[7].iq_2_outputs/modulator/secondproduct2/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
@@ -546,35 +541,30 @@ Related violations: <none>
 
 DPOP-1#30 Warning
 PREG Output pipelining  
-DSP i_dsp/genblk5[7].iq_2_outputs/demodulator/product2_reg output i_dsp/genblk5[7].iq_2_outputs/demodulator/product2_reg/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
+DSP i_dsp/genblk5[7].iq_2_outputs/modulator/firstproduct_saturation[0]/product output i_dsp/genblk5[7].iq_2_outputs/modulator/firstproduct_saturation[0]/product/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
 Related violations: <none>
 
 DPOP-1#31 Warning
 PREG Output pipelining  
-DSP i_dsp/genblk5[7].iq_2_outputs/modulator/firstproduct_saturation[0]/product output i_dsp/genblk5[7].iq_2_outputs/modulator/firstproduct_saturation[0]/product/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
+DSP i_dsp/genblk5[7].iq_2_outputs/modulator/firstproduct_saturation[1]/product output i_dsp/genblk5[7].iq_2_outputs/modulator/firstproduct_saturation[1]/product/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
 Related violations: <none>
 
 DPOP-1#32 Warning
 PREG Output pipelining  
-DSP i_dsp/genblk5[7].iq_2_outputs/modulator/firstproduct_saturation[1]/product output i_dsp/genblk5[7].iq_2_outputs/modulator/firstproduct_saturation[1]/product/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
+DSP i_dsp/genblk5[7].iq_2_outputs/modulator/i0_product_and_sat/product output i_dsp/genblk5[7].iq_2_outputs/modulator/i0_product_and_sat/product/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
 Related violations: <none>
 
 DPOP-1#33 Warning
 PREG Output pipelining  
-DSP i_dsp/genblk5[7].iq_2_outputs/modulator/i0_product_and_sat/product output i_dsp/genblk5[7].iq_2_outputs/modulator/i0_product_and_sat/product/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
+DSP i_dsp/genblk5[7].iq_2_outputs/modulator/q0_product_and_sat/product output i_dsp/genblk5[7].iq_2_outputs/modulator/q0_product_and_sat/product/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
 Related violations: <none>
 
 DPOP-1#34 Warning
 PREG Output pipelining  
-DSP i_dsp/genblk5[7].iq_2_outputs/modulator/q0_product_and_sat/product output i_dsp/genblk5[7].iq_2_outputs/modulator/q0_product_and_sat/product/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
-Related violations: <none>
-
-DPOP-1#35 Warning
-PREG Output pipelining  
 DSP i_dsp/genblk5[7].iq_2_outputs/modulator/secondproduct1 output i_dsp/genblk5[7].iq_2_outputs/modulator/secondproduct1/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
 Related violations: <none>
 
-DPOP-1#36 Warning
+DPOP-1#35 Warning
 PREG Output pipelining  
 DSP i_dsp/genblk5[7].iq_2_outputs/modulator/secondproduct2 output i_dsp/genblk5[7].iq_2_outputs/modulator/secondproduct2/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
 Related violations: <none>
@@ -1017,22 +1007,12 @@ Related violations: <none>
 
 REQP-24#1 Advisory
 enum_BREG_0_connects_CEB1_GND_connects_CEB2_GND  
-i_dsp/genblk2[1].i_pid/ki_mult_reg: When DSP48E1 attribute BREG is set to 0, the CEB1 and CEB2 pins should be tied to GND to save power.
-Related violations: <none>
-
-REQP-24#2 Advisory
-enum_BREG_0_connects_CEB1_GND_connects_CEB2_GND  
 i_dsp/genblk2[2].i_pid/ki_mult_reg: When DSP48E1 attribute BREG is set to 0, the CEB1 and CEB2 pins should be tied to GND to save power.
 Related violations: <none>
 
 REQP-31#1 Advisory
 enum_PREG_0_connects_CEP_GND  
 i_dsp/genblk5[7].iq_2_outputs/demodulator/product1_reg: When the DSP48E1 PREG attribute is set to 0, the CEP input pin should be tied to GND to save power.
-Related violations: <none>
-
-REQP-31#2 Advisory
-enum_PREG_0_connects_CEP_GND  
-i_dsp/genblk5[7].iq_2_outputs/demodulator/product2_reg: When the DSP48E1 PREG attribute is set to 0, the CEP input pin should be tied to GND to save power.
 Related violations: <none>
 
 

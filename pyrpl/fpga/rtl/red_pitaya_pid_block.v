@@ -216,7 +216,7 @@ assign kp_mult = normalization_on ? ($signed(dat_i_offset) * $signed(set_kp)) : 
 reg signed [14-1:0] dat_i_offset;
 reg signed [15-1:0] normalized_product;
 always @(posedge clk_i) begin
-    dat_i_offset = $signed(dat_i) - set_kd[DSR+14-1:DSR];
+    dat_i_offset <= $signed(dat_i) - $signed(set_kd[DSR+14-1:DSR]);
     if ({(|kp_reg[15+GAINBITS-PSR-1:15]),kp_reg[15-1]} == 2'b01)
         normalized_product <= {1'b0, {15-1{1'b1}}};
     else if ({(|kp_reg[15+GAINBITS-PSR-1:15]),kp_reg[15-1]} == 2'b11)
@@ -230,7 +230,6 @@ end
 // will become negligible at high frequencies where delay is important)
 
 localparam IBW = ISR+16; //integrator bit-width. Over-represent the integral sum to record longterm drifts (overrepresented by 2 bits)
-localparam IBOOST = 8;
 reg   [16+GAINBITS-1: 0] ki_mult ;
 wire  [IBW  : 0] int_sum       ;
 reg   [IBW-1: 0] int_reg       ;
@@ -245,13 +244,13 @@ always @(posedge clk_i) begin
       ki_mult <= $signed(error) * $signed(set_ki) ;
       if (ival_write)
          int_reg <= { {IBW-16-ISR{set_ival[16-1]}},set_ival[16-1:0],{ISR{1'b0}}};
-      else if ((normalization_on==1'b1) && ({(|int_sum[IBW-1:IBW-IBOOST]),int_sum[IBW-1-IBOOST]} == 2'b01))
+      else if ((normalization_on==1'b1) && ({(|int_sum[IBW:ISR-PSR+GAINBITS]),int_sum[ISR-PSR+GAINBITS-1]} == 2'b01))
        // positive saturation with normalization on
-         int_reg <= {{IBOOST{1'b0}}, {IBW-1-IBOOST{1'b1}}};
+         int_reg <= {{IBW-1-ISR+PSR-GAINBITS+1{1'b0}},{ISR-PSR+GAINBITS-1{1'b1}}};
       else if ((normalization_on==1'b0) && (int_sum[IBW+1-1:IBW+1-2] == 2'b01)) //normal positive saturation
          int_reg <= {1'b0,{IBW-1{1'b1}}};
-      else if ((normalization_on==1'b1) && ({(|int_sum[IBW-1:IBW-IBOOST]),int_sum[IBW-1-IBOOST]} == 2'b11)) // number is negative
-         int_reg <= {{IBOOST+12{1'b0}}, {IBW-1-IBOOST-12{1'b1}}}; // 12 = 15- 3
+      else if ((normalization_on==1'b1) && ({(|int_sum[IBW:ISR-PSR+GAINBITS]),int_sum[ISR-PSR+GAINBITS-1]} == 2'b11)) // number is negative
+         int_reg <= {{IBW-1-ISR+PSR-1{1'b0}},{ISR-PSR+1{1'b1}}};
          //int_reg <= {{GAINBITS-1{1'b0}}, 1'b1, {IBW-GAINBITS-1{1'b0}}};
       else if ((normalization_on==1'b0) && (int_sum[IBW+1-1:IBW+1-2] == 2'b10)) //normal negative saturation
          int_reg <= {1'b1,{IBW-1{1'b0}}};
@@ -264,7 +263,7 @@ assign int_sum = $signed(ki_mult) + $signed(int_reg) ;
 assign int_shr = $signed(int_reg[IBW-1:ISR]) ;
 
 wire  [GAINBITS-1: 0] norm_integral;
-assign norm_integral = $signed(int_reg[IBW-1-IBOOST:IBW-GAINBITS-IBOOST]);
+assign norm_integral = $signed(int_reg[IBW-1:ISR-PSR]);
 
 //---------------------------------------------------------------------------------
 //  Derivative - 2 cycles delay (but treat as 1 cycle because its not
