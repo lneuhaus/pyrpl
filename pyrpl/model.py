@@ -180,9 +180,11 @@ class Model(object):
         # lock seems ok
         return True
 
-    # unlock algorithm
+
     def unlock(self):
-        """ unlocks the cavity"""
+        """ unlocks the system"""
+        if hasattr(self, '_relocktimer'):  # stop relock timer if applicable
+            timer.stop()
         for o in self.outputs.values():
             o.unlock()
 
@@ -334,6 +336,27 @@ class Model(object):
                     except TypeError:  # function doesnt accept kwargs
                         lockfn()
                     time.sleep(stime)
+
+    def relock(self, *args, **kwargs):
+        """ executes 'lock' until 'islocked' returns true """
+        while not self.islocked():
+            self.lock(*args, **kwargs)
+
+    def autorelock(self, timeout=1.0):
+        """ sets up a timer that periodically calls relock() """
+        if not hasattr(self, '_relocktimer'):
+            from PyQt4.QtCore import QTimer
+            self._relocktimer = QTimer()
+        try:
+            self._relocktimer.disconnect()
+        except TypeError:
+            pass
+        self._relocktimer.timeout.connect(self.relock)
+        self._relocktimer.setSingleShot(False)
+        self._relocktimer.start(int(timeout*1000))
+
+    def stop_autolock(self):
+        self.timer.stop()
 
     def calibrate(self, inputs=None, scopeparams={}):
         """
