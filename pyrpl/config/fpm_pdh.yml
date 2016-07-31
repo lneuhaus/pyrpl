@@ -37,8 +37,8 @@ model:
   # for interferometer, this is the phase error in radians
   # this value is uniquely needed for the function 'islocked'
   maxerror: 0.1
-  offresonant_reflection: 0.24865608662366867
-  resonant_reflection: 0.05224495381116867
+  offresonant_reflection: 0.6096180006861687
+  resonant_reflection: 0.13183479756116867
   finesse: 92000.0
   length: 5.61e-05
   # signals in order of their preferrence
@@ -116,7 +116,7 @@ model:
     zoomfactor: 0.07
     relative_threshold: 0.75
   #peak: 0.07061767578125
-  peak_pdh: 0.68377685546875
+  peak_pdh: 0.6163330078125
   pillar_feedback:
     frequency: 3578520.0
     bandwidth:
@@ -135,41 +135,41 @@ inputs:
   reflection:
     redpitaya_input: adc2
     offset: -0.01013069599866867
-    max: 0.24865608662366867
-    min: 0.05224495381116867
-    mean: 0.2339741289615631
-    rms: 0.01909064826359631
-    curve: 257703
+    max: 0.6096180006861687
+    min: 0.13183479756116867
+    mean: 0.5858128517866135
+    rms: 0.04505098724392534
+    curve: 257758
   pdh:
     redpitaya_input: iq0
-    max: 0.7082931846380234
-    min: -0.6592605262994766
-    mean: 0.0006481334567070007
-    rms: 0.0790006245956994
+    max: 0.6551925987005234
+    min: -0.5774734169244766
+    mean: 0.00010139495134353638
+    rms: 0.07533677207188515
     offset: 0.0010574012994766235
     setup:
       phase: 275 # 307
       amplitude: 0.25
       frequency: 49670000.0
       gain: 0
-      quadrature_factor: 0.016 # 0.0078125  #0.047
+      quadrature_factor: 0.032 # 0.0078125  #0.047
       input: pid1
       output_signal: quadrature
       output_direct: out2
       acbandwidth: 10000000.0
       bandwidth: [5000000.0, 10000000.0]
-    curve: 257705
+    curve: 257760
   normalized_reflection:
     redpitaya_input: adc2
     skip_forward_to_pdh: false
     offset: 0.0
     crossover: 2000000.0
-    setpoint: 0.3
-    max: 0.2379150390625
-    min: 0.0430908203125
-    mean: 0.2230687439441681
-    rms: 0.019446355814872023
-    curve: 257707
+    setpoint: 0.15
+    max: 0.6029052734375
+    min: 0.1285400390625
+    mean: 0.5738870054483414
+    rms: 0.043514247401849435
+    curve: 257762
 # All output signals. Names of outputs are arbitrary. if the 'lock' tab is
 # missing or false, the output will not be used for locking
 outputs:
@@ -238,11 +238,13 @@ outputs:
       zeros:
       - -1201.0000001000008-9230.5473421477163j
       - -101.00000009999997-25546.12893277956j
+      - -26.000000099999966-11950.18975806313j
       poles:
       - -5267.3114353830388+0j
       - -2501.0000000999999-6030.5473421477163j
       - -1001.0000001-26631.897456083905j
-      gain: 0.08832043576826225
+      - -401.00000009999997-12592.081428854313j
+      gain: 0.176
       loops: 20
       inputfilter: -2428.5
 

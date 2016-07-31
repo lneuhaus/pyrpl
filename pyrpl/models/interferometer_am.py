@@ -9,7 +9,7 @@ class Interferometer_Am(Interferometer):
     """ simplest type of optical interferometer with one photodiode """
 
     # the variable which we would like to control
-    _variable = "transmission"
+    _variable = "phase"
 
     # theoretical model for input signal 'transmission'
     def transmission(self, phase):
