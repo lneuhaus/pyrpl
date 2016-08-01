@@ -633,6 +633,9 @@ class FPM_LMSD(FPM):
 
 
 class FabryPerot_FPM(FabryPerot):
+
+    export_to_parent = FabryPerot.export_to_parent + ["lock_p"]
+
     def setup(self):
         from .. import Pyrpl
         self._parent.p = Pyrpl('am')
@@ -691,7 +694,6 @@ class FabryPerot_FPM(FabryPerot):
     def restart_normalized_reflection(self):
         self.signals["normalized_reflection"].pid.normalization_on = False
         self.signals["normalized_reflection"].pid.normalization_on = True
-
 
     def lock_p(self, power=0):
         p = self._parent.p

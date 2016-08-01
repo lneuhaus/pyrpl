@@ -3,6 +3,7 @@ import logging
 import numpy as np
 
 from . import bodefit
+from . import CurveDB
 
 logger = logging.getLogger(__name__)
 

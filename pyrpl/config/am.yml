@@ -39,7 +39,9 @@ model:
       finish:
         input: transmission
         factor: 1.0
-        outputs: eom
+        phase: 0
+        outputs:
+        - eom
   unlock:
     time: 0.05
   shutter:

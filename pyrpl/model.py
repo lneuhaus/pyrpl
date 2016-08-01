@@ -275,11 +275,11 @@ class Model(object):
         self._lock(outputs=outputs, _savegain=True)
 
     def lock(self,
-             detuning=None,
              factor=None,
              firststage=None,
              laststage=None,
-             thread=False):
+             thread=False,
+             **kwargs):
         # firststage will allow timer-based recursive iteration over stages
         # i.e. calling lock(firststage = nexstage) from within this code
         stages = self._config.lock.stages._keys()
@@ -301,20 +301,23 @@ class Model(object):
             else:
                 # use _lock by default
                 lockfn = self._lock
-            parameters = dict(detuning=detuning, factor=factor)
+            parameters = dict(factor=factor)
+            if self._variable in kwargs:
+                parameters[self._variable] = kwargs[self._variable]
             parameters.update((self._config.lock.stages[stage]))
             try:
                 stime = parameters.pop("time")
             except KeyError:
                 stime = 0
             if stage == laststage or stage == stages[-1]:
-                if detuning:
-                    parameters['detuning'] = detuning
+                if self._variable in kwargs and kwargs[self._variable]:
+                    parameters[self._variable] = kwargs[self._variable]
                 if factor:
                     parameters['factor'] = factor
                 try:
                     return lockfn(**parameters)
                 except TypeError:  # function doesnt accept kwargs
+                    raise
                     return lockfn()
             else:
                 if thread:
@@ -325,14 +328,15 @@ class Model(object):
                     t0.start()  # bug here: lockfn must accept kwargs
                     # and launch timer for nextstage
                     nextstage = stages[stages.index(stage) + 1]
+                    parameters = dict(factor=factor,
+                                      firststage=nextstage,
+                                      laststage=laststage,
+                                      thread=thread)
+                    if self._variable in kwargs and kwargs[self._variable]:
+                        parameters[self._variable] = kwargs[self._variable]
                     t1 = threading.Timer(stime,
                                         self.lock,
-                                        kwargs=dict(
-                                            detuning=detuning,
-                                            factor=factor,
-                                            firststage=nextstage,
-                                            laststage=laststage,
-                                            thread=thread))
+                                        kwargs=parameters)
                     t1.start()
                     return None
                 else:

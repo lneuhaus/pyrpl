@@ -34,7 +34,14 @@ model:
   # for interferometer, this is the phase error in radians
   # this value is uniquely needed for the function 'islocked'
   lock:
-    error_threshold: 0.1
+    error_threshold: 11.0  # 1 degree works except for minimum_transmission!!
+    stages:
+      finish:
+        input: transmission
+        factor: 1.0
+        phase: 0
+        outputs:
+        - piezo
 
 # all signals that are inputs of the lockbox. Must be signal names understood
 # by the model
@@ -47,10 +54,11 @@ inputs:
     unit: V
     redpitaya_input: adc1
     offset: -0.000342048704624176
-    max: 0.001684822142124176
-    min: -0.037743888795375824
-    mean: -0.0193270742893219
-    rms: 0.005569407582442067
+    max: 0.13620630651712418
+    min: -0.16494115442037582
+    mean: -0.019661948084831238
+    rms: 0.10299457966891684
+    curve: 258008
 # All output signals. Names of outputs are arbitrary.
 outputs:
   # we only have 1 actuator in this interferometer, the piezo in the LO arm
@@ -108,6 +116,14 @@ scope:
   trigger_source: immediately
   average: false
 
+scopegui:
+  coordinates:
+  - -1647
+  - 405
+  - 800
+  - 600
+  auto_run_continuous: true
+
 # default properties for signal acquisition
 signal:
   unit: V # can be any of m, Hz, V, raw, ... as long as unit_per_V is defined
@@ -142,9 +158,3 @@ signal:
   peak: 0
   threshold: 0
   hysteresis: 0.002
-scopegui:
-  coordinates:
-  - 0
-  - 0
-  - 800
-  - 600
