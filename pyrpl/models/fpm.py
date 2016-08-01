@@ -698,4 +698,3 @@ class FabryPerot_FPM(FabryPerot):
         p.set_power(0)
         self.lock()
         return p.set_power(power)
-    

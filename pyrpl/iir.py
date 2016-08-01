@@ -22,6 +22,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import logging
 logger = logging.getLogger(name=__name__)
+from . import CurveDB
 
 # functions of general use
 def freqs(sys, w):
@@ -229,6 +230,29 @@ def bodeplot(data, xlog=False):
         leg = ax1.legend(loc='best', framealpha=0.5)
         leg.draggable(state=True)
     plt.show()
+
+
+def iirparams_from_curve(id):
+    c = CurveDB.get(id)
+    params = dict()
+    for e in ['loops', 'gain', 'invert', 'inputfilter']:
+        if e in c.params:
+            params[e] = c.params[e]
+    if "pole_real" in c.params:
+        params['poles'] = list(np.array(json.loads(c.params["pole_real"]),
+                                        dtype=np.complex128) +
+                               1j * np.array(json.loads(c.params["pole_imag"]),
+                                             dtype=np.complex128))
+    else:
+        params['poles'] = list()
+    if "zero_real" in c.params:
+        params['zeros'] = list(np.array(json.loads(c.params["zero_real"]),
+                                        dtype=np.complex128) +
+                               1j * np.array(json.loads(c.params["zero_imag"]),
+                                             dtype=np.complex128))
+    else:
+        params['zeros'] = list()
+    return params
 
 
 class IirFilter(object):
