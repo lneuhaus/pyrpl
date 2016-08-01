@@ -25,7 +25,7 @@ class Model(object):
     """
     export_to_parent = ["sweep", "calibrate", "save_current_gain",
                         "unlock", "islocked", "lock", "help", "calib_lock",
-                        "_lock"]
+                        "_lock", "get_offset"]
 
     # independent variable that specifies the state of the system
     _variable = 'x'
@@ -136,7 +136,8 @@ class Model(object):
                 self.logger.debug("Making slope function for input %s",
                                   input._name)
                 fn = self.__getattribute__(input._name)
-                # bug removed a la http://stackoverflow.com/questions/3431676/creating-functions-in-a-loop
+                # bug removed a la
+                # http://stackoverflow.com/questions/3431676/creating-functions-in-a-loop
                 self.__setattr__(input._name+"_slope",
                                  self._make_slope(fn))
             if not hasattr(self, input._name + "_inverse"):
@@ -150,6 +151,7 @@ class Model(object):
     def variable(self):
         """ returns an estimate of the variable defined in _variable """
         inputname, input = self.inputs.items()[0]
+        input._acquire()  # make sure data is fresh
         act = input.mean
         set = self.state["set"][self._variable]
         variable = self.__getattribute__(inputname+'_inverse')(act, set)
@@ -180,13 +182,12 @@ class Model(object):
         # lock seems ok
         return True
 
-
-    def unlock(self):
+    def unlock(self, ival=True):
         """ unlocks the system"""
         if hasattr(self, '_relocktimer'):  # stop relock timer if applicable
-            timer.stop()
+            self._relocktimer.stop()
         for o in self.outputs.values():
-            o.unlock()
+            o.unlock(ival=ival)
 
     def sweep(self):
         """
@@ -241,8 +242,12 @@ class Model(object):
         variable = kwargs.pop(self._variable)
         setpoint = self.__getattribute__(inputname)(variable)
         slope = self.__getattribute__(inputname+'_slope')(variable)
+        # setpoint, slope come in 'units' of the input. Convert to V
+        input_unit_per_V = input._config[input._config.unit+'_per_V']
+        setpoint /= input_unit_per_V
+        slope /= input_unit_per_V
 
-        # trivial to lock: just enable all gains
+        # trivial lock algorithm: just enable all gains
         if outputs is None:
             outputs = self.outputs.values()
         for o in outputs:
@@ -250,7 +255,7 @@ class Model(object):
                 o = self.outputs[o]
             # get unit of output calibration factor
             unit = o._config.calibrationunits.split("_per_V")[0]
-            #get calibration factor
+            # get calibration factor
             variable_per_unit = self.__getattribute__(self._variable
                                                       + "_per_" + unit)
             if not _savegain:
@@ -261,7 +266,7 @@ class Model(object):
                        offset=offset,
                        factor=factor,
                        **kwargs)
-            else: # special option: instead of locking, write the gain
+            else:  # special option: instead of locking, write the gain
                 o.save_current_gain(slope=slope*variable_per_unit)
 
     def save_current_gain(self, outputs=None):
@@ -317,7 +322,7 @@ class Model(object):
                     t0 = threading.Timer(0,
                                         lockfn,
                                         kwargs=parameters)
-                    t0.start() # bug here: lockfn must accept kwargs
+                    t0.start()  # bug here: lockfn must accept kwargs
                     # and launch timer for nextstage
                     nextstage = stages[stages.index(stage) + 1]
                     t1 = threading.Timer(stime,
@@ -432,7 +437,7 @@ class Model(object):
         self.lock()
         return self.islocked()
 
-    def setup_iq(self, input='iq', **kwargs):
+    def setup_iq(self, inputsignal='iq', **kwargs):
         """
         Sets up an input signal derived from demodultaion of another input.
         The config file must contain an input signal named like the the
@@ -450,13 +455,15 @@ class Model(object):
         -------
         None
         """
-        if not isinstance(input, Signal):
-            input = self.inputs[input]
+        if not isinstance(inputsignal, Signal):
+            input = self.inputs[inputsignal]
+        else:
+            input = inputsignal
         if not kwargs:
             kwargs = input._config.setup._dict
         if 'iq' in kwargs:  # we can request a particular iq number if needed
             input.iq = self._parent.rp.__getattribute__(kwargs.pop('iq'))
-        elif not hasattr(input  , 'iq'):
+        elif not hasattr(input , 'iq'):
             input.iq = self._parent.rp.iqs.pop()
         input.iq.setup(**kwargs)
         input._config['redpitaya_input'] = input.iq.name
@@ -525,3 +532,14 @@ class Model(object):
         fitcurve.save()
         c.add_child(fitcurve)
         return fitcurve
+
+    def get_offset(self):
+        """ Execute this function to record the offsets for all input
+        signals. If signal.offset_subtraction is true in the config file,
+        the signal value 0 will from then on correspond to the measured
+        offset. Before any locking configuration, this function should be
+        executed in order to take the analog offsets of redpitaya inputs
+        into account. """
+        for input in self.inputs.values():
+            input.get_offset()
+

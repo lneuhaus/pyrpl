@@ -16,7 +16,7 @@ class LMSD(FabryPerot):
                         'lock']
 
     def setup_lmsd(self):
-        self.setup_iq(input='lmsd')
+        self.setup_iq(inputsignal='lmsd')
         if 'lmsd_quadrature' not in self.inputs:
             self._config._root.inputs['lmsd_quadrature'] = {'redpitaya_input':
                                                          'iq2_2'}

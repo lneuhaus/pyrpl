@@ -474,12 +474,12 @@ class RPOutputSignal(RPSignal):
             if ival:
                 self.pid2.ival = 0
 
-    def unlock(self):
+    def unlock(self, ival=True):
         """ Turns the signal lock off if the signal is used for locking """
         if self._skiplock:
             return
         else:
-            self.off()
+            self.off(ival=ival)
 
     def lock(self,
              slope,

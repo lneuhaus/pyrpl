@@ -180,7 +180,7 @@ class FabryPerot(Model):
         return curves
 
     def setup_pdh(self, **kwargs):
-        return super(FabryPerot, self).setup_iq(input='pdh', **kwargs)
+        return super(FabryPerot, self).setup_iq(inputsignal='pdh', **kwargs)
 
     def sweep(self):
         duration = super(FabryPerot, self).sweep()
