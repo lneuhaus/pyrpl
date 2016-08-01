@@ -37,8 +37,8 @@ model:
   # for interferometer, this is the phase error in radians
   # this value is uniquely needed for the function 'islocked'
   maxerror: 0.1
-  offresonant_reflection: 0.37988167256116867
-  resonant_reflection: 0.05566292256116867
+  offresonant_reflection: 0.41247444599866867
+  resonant_reflection: 0.04601936787366867
   finesse: 92000.0
   length: 5.61e-05
   # signals in order of their preferrence
@@ -118,34 +118,35 @@ model:
   #peak: 0.07061767578125
   peak_pdh: 0.99993896484375
   pillar_feedback:
-    frequency: 3578520.0
+    frequency: 3578531.962800605 #3578520.0
     bandwidth:
     - 10000.0
     - 50000.0
-    phase: 90
+    phase: 150 #90
     acbandwidth: 500000.0
     amplitude: 0
     input: iq0
     output_direct: out1
     output_signal: quadrature
-    gain: -0.5
+    quadrature_factor: 0.01
+    gain: 1.0  # 0.1
 # all signals that are inputs of the lockbox. Must be signal names understood
 # by the model.
 inputs:
   reflection:
     redpitaya_input: adc2
     offset: -0.01013069599866867
-    max: 0.37988167256116867
-    min: 0.05566292256116867
-    mean: 0.36024215817451477
-    rms: 0.031711123719018956
-    curve: 257818
+    max: 0.41247444599866867
+    min: 0.04601936787366867
+    mean: 0.38509105145931244
+    rms: 0.03367820983339875
+    curve: 257969
   pdh:
     redpitaya_input: iq0
     max: 0.9988205283880234
     min: -1.0010574012994766
-    mean: -0.001041121780872345
-    rms: 0.08743036721579073
+    mean: 0.0012721195816993713
+    rms: 0.10898383937297419
     offset: 0.0010574012994766235
     setup:
       phase: 275 # 307
@@ -158,18 +159,18 @@ inputs:
       output_direct: out2
       acbandwidth: 10000000.0
       bandwidth: [5000000.0, 10000000.0]
-    curve: 257820
+    curve: 257971
   normalized_reflection:
     redpitaya_input: adc2
     skip_forward_to_pdh: false
     offset: 0.0
     crossover: 2000000.0
     setpoint: 0.15
-    max: 0.370849609375
-    min: 0.0504150390625
-    mean: 0.3510579839348793
-    rms: 0.031056131440533055
-    curve: 257822
+    max: 0.40576171875
+    min: 0.0374755859375
+    mean: 0.37802937626838684
+    rms: 0.030484132308948118
+    curve: 257973
 # All output signals. Names of outputs are arbitrary. if the 'lock' tab is
 # missing or false, the output will not be used for locking
 outputs:

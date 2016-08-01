@@ -7,7 +7,7 @@ redpitaya:
   filename: fpga//red_pitaya.bin
   reloadfpga: true
   # autostart gui?
-  gui: true
+  gui: false
   monitor_server_name: pyrpl
 
 general:

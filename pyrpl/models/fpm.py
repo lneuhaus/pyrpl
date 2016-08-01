@@ -633,6 +633,11 @@ class FPM_LMSD(FPM):
 
 
 class FabryPerot_FPM(FabryPerot):
+    def setup(self):
+        from .. import Pyrpl
+        self._parent.p = Pyrpl('am')
+        return super(FabryPerot_FPM, self).setup()
+
     _pdh_rms_log = SensingDevice(
         name="pdh_rms_rel")  # logbook for pdh rms
 
@@ -686,3 +691,11 @@ class FabryPerot_FPM(FabryPerot):
     def restart_normalized_reflection(self):
         self.signals["normalized_reflection"].pid.normalization_on = False
         self.signals["normalized_reflection"].pid.normalization_on = True
+
+
+    def lock_p(self, power=0):
+        p = self._parent.p
+        p.set_power(0)
+        self.lock()
+        return p.set_power(power)
+    
