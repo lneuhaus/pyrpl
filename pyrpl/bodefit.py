@@ -13,6 +13,33 @@ from . import iir
 from .sound import sine
 
 
+def iirparams_from_curve(id):
+    c = CurveDB.get(id)
+    return iirparams_from_curveparams(c.params)
+
+
+def iirparams_from_curveparams(curveparams):
+    params = dict()
+    for e in ['loops', 'gain', 'invert', 'inputfilter']:
+        if e in curveparams:
+            params[e] = curveparams[e]
+    if "pole_real" in c.params:
+        params['poles'] = list(np.array(json.loads(curveparams["pole_real"]),
+                                        dtype=np.complex128) +
+                               1j * np.array(json.loads(curveparams["pole_imag"]),
+                                             dtype=np.complex128))
+    else:
+        params['poles'] = list()
+    if "zero_real" in curveparams:
+        params['zeros'] = list(np.array(json.loads(curveparams["zero_real"]),
+                                        dtype=np.complex128) +
+                               1j * np.array(json.loads(curveparams["zero_imag"]),
+                                             dtype=np.complex128))
+    else:
+        params['zeros'] = list()
+    return params
+
+
 class BodePlot(object):
     """ Class that generates bodeplots from an OrderedDict of data +
     style specification

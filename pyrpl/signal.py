@@ -1,9 +1,10 @@
 import time
 import logging
 import numpy as np
+
+from . import bodefit
+
 logger = logging.getLogger(__name__)
-from . import iir
-from .curvedb import CurveDB
 
 
 class ExposedConfigParameter(object):
@@ -886,7 +887,7 @@ class RPOutputSignal(RPSignal):
         # overwrite defaults with kwargs
         iirconfig.update(kwargs)
         if 'curve' in iirconfig:
-            iirconfig.update(iir.iirparams_from_curve(
+            iirconfig.update(bodefit.iirparams_from_curve(
                                                     id=iirconfig.pop('curve')))
         else:
             # workaround for complex numbers from yaml
