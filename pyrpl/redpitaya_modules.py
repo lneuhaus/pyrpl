@@ -118,15 +118,29 @@ class BaseModule(object):
     
 class HK(BaseModule):
     name = 'HK'
+
+    def __new__(cls, *args, **kwargs):
+        """ make the needed input output registers. Workaround to make
+        descriptors work """
+        for i in range(8):
+            setattr(cls,
+                    'expansion_P' + str(i),
+                    IORegister(0x20, 0x18, 0x10, bit=i,
+                               outputmode=True,
+                               doc="positive digital io"))
+            setattr(cls,
+                    'expansion_N' + str(i),
+                    IORegister(0x24, 0x1C, 0x14, bit=i,
+                               outputmode=True,
+                               doc="positive digital io"))
+        return super(HK, cls).__new__(cls, *args, **kwargs)
+
     def __init__(self, client, parent=None):
         super(HK, self).__init__(client, addr_base=0x40000000, parent=parent)
     
-    id = SelectRegister(0x0, doc="device ID", options={"prototype0": 0, "release1": 1})
+    id = SelectRegister(0x0, doc="device ID", options={"prototype0": 0,
+                                                       "release1": 1})
     digital_loop = Register(0x0C, doc="enables digital loop")
-    expansion_P = [IORegister(0x20, 0x18, 0x10, bit=i, outputmode=True,
-                             doc="positive digital io") for i in range(8)]
-    expansion_N = [IORegister(0x24, 0x1C, 0x14, bit=i, outputmode=True,
-                             doc="positive digital io") for i in range(8)]
     led = Register(0x30,doc="LED control with bits 1:8")
     # another option: access led as array of bools
     # led = [BoolRegister(0x30,bit=i,doc="LED "+str(i)) for i in range(8)]
