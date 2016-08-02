@@ -2,9 +2,13 @@ import numpy as np
 import scipy
 import logging
 import time
-logger = logging.getLogger(name=__name__)
+import threading
+
 from . import *
 from ..signal import Signal
+
+logger = logging.getLogger(name=__name__)
+
 
 class FabryPerot(Model):
     """
@@ -114,6 +118,77 @@ class FabryPerot(Model):
             return detuning * -1
         else:
             return detuning
+
+    def lock(self,
+             detuning=None,
+             factor=None,
+             firststage=None,
+             laststage=None,
+             thread=False):
+
+        # firststage will allow timer-based recursive iteration over stages
+        # i.e. calling lock(firststage = nexstage) from within this code
+        stages = self._config.lock.stages._keys()
+        if firststage:
+            if not firststage in stages:
+                self.logger.error("Firststage %s not found in stages: %s",
+                                  firstage, stages)
+            else:
+                stages = stages[stages.index(firststage):]
+        for stage in stages:
+            self.logger.debug("Lock stage: %s", stage)
+            if stage.startswith("call_"):
+                try:
+                    lockfn = self.__getattribute__(stage[len('call_'):])
+                except AttributeError:
+                    logger.error("Lock stage %s: model has no function %s.",
+                                 stage, stage[len('call_'):])
+                    raise
+            else:
+                # use _lock by default
+                lockfn = self._lock
+            parameters = dict(detuning=detuning, factor=factor)
+            parameters.update((self._config.lock.stages[stage]))
+            try:
+                stime = parameters.pop("time")
+            except KeyError:
+                stime = 0
+            if stage == laststage or stage == stages[-1]:
+                if detuning:
+                    parameters['detuning'] = detuning
+                if factor:
+                    parameters['factor'] = factor
+                try:
+                    return lockfn(**parameters)
+                except TypeError:  # function doesnt accept kwargs
+                    raise
+                    return lockfn()
+
+            else:
+                if thread:
+                    # immediately execute current step (in another thread)
+                    t0 = threading.Timer(0,
+                                         lockfn,
+                                         kwargs=parameters)
+                    t0.start()  # bug here: lockfn must accept kwargs
+                    # and launch timer for nextstage
+                    nextstage = stages[stages.index(stage) + 1]
+                    t1 = threading.Timer(stime,
+                                         self.lock,
+                                         kwargs=dict(
+                                             detuning=detuning,
+                                             factor=factor,
+                                             firststage=nextstage,
+                                             laststage=laststage,
+                                             thread=thread))
+                    t1.start()
+                    return None
+                else:
+                    try:
+                        lockfn(**parameters)
+                    except TypeError:  # function doesnt accept kwargs
+                        lockfn()
+                    time.sleep(stime)
 
     def calibrate(self, inputs=None, scopeparams={}):
         """

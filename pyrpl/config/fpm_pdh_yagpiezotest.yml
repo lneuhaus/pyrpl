@@ -37,8 +37,8 @@ model:
   # for interferometer, this is the phase error in radians
   # this value is uniquely needed for the function 'islocked'
   maxerror: 0.1
-  offresonant_reflection: 0.05834846943616867
-  resonant_reflection: 0.00927620381116867
+  offresonant_reflection: 0.40930061787366867
+  resonant_reflection: 0.04577522724866867
   finesse: 92000.0
   length: 5.61e-05
   # signals in order of their preferrence
@@ -91,7 +91,7 @@ model:
       #  factor: 1
       #  time: 0.5
       #   second_integrator: 0.7
-      call_pillar_feedback: {}
+   #   #call_pillar_feedback: {}
       prepdh2:
         input: pdh
         detuning: 0.05
@@ -107,15 +107,16 @@ model:
         outputs:
         - piezo
         - am
-        setup_iir: true
+        setup_iir: false #true
         #- fastpiezo
+
         #second_integrator: 1.0
       #call_islocked: {}
   calibrate:
     zoomfactor: 0.07
     relative_threshold: 0.75
   #peak: 0.07061767578125
-  peak_pdh: 0.99993896484375
+  peak_pdh: 0.92376708984375
   pillar_feedback:
     frequency: 3578531.962800605 #3578520.0
     bandwidth:
@@ -135,41 +136,41 @@ inputs:
   reflection:
     redpitaya_input: adc2
     offset: -0.01013069599866867
-    max: 0.05834846943616867
-    min: 0.00927620381116867
-    mean: 0.05090596526861191
-    rms: 0.004008270376267286
-    curve: 258339
+    max: 0.40930061787366867
+    min: 0.04577522724866867
+    mean: 0.38786904513835907
+    rms: 0.032028612766872674
+    curve: 258050
   pdh:
     redpitaya_input: iq0
-    max: 0.9988205283880234
-    min: -1.0010574012994766
-    mean: -0.002873435616493225
-    rms: 0.1394931180310412
+    max: 0.9191086143255234
+    min: -0.9284255653619766
+    mean: -0.0050692930817604065
+    rms: 0.09162702826361398
     offset: 0.0010574012994766235
     setup:
-      phase: 305 #275 # 307
+      phase: 275 # 307
       amplitude: 0.25
       frequency: 49670000.0
       gain: 0
-      quadrature_factor: 0.064 # 0.032 # 0.0078125  #0.047
+      quadrature_factor: 0.032 # 0.0078125  #0.047
       input: pid1
       output_signal: quadrature
       output_direct: out2
       acbandwidth: 10000000.0
       bandwidth: [5000000.0, 10000000.0]
-    curve: 258341
+    curve: 258052
   normalized_reflection:
     redpitaya_input: adc2
     skip_forward_to_pdh: false
     offset: 0.0
     crossover: 2000000.0
     setpoint: 0.15
-    max: 0.050048828125
-    min: 0.0302734375
-    mean: 0.04158995300531387
-    rms: 0.0020255620792680486
-    curve: 258343
+    max: 0.3997802734375
+    min: 0.0372314453125
+    mean: 0.37922027707099915
+    rms: 0.03277885137078834
+    curve: 258054
 # All output signals. Names of outputs are arbitrary. if the 'lock' tab is
 # missing or false, the output will not be used for locking
 outputs:
@@ -224,7 +225,7 @@ outputs:
       lowpass: []
     lock:
       #skip: true
-      proportional_gain: 500  # -8
+      proportional_gain: 0 #500  # -8
       inputfilter:
       - 1243397.9929054324
       - 2486795.9858108647
