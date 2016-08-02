@@ -152,7 +152,7 @@ inputs:
       amplitude: 0.25
       frequency: 49670000.0
       gain: 0
-      quadrature_factor: 0.064 # 0.032 # 0.0078125  #0.047
+      quadrature_factor: 0.032 # 0.032 # 0.0078125  #0.047
       input: pid1
       output_signal: quadrature
       output_direct: out2
