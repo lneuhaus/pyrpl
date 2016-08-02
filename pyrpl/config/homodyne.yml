@@ -33,7 +33,7 @@ model:
   # maximum tolerated error of the internal variable
   # for interferometer, this is the phase error in radians
   # this value is uniquely needed for the function 'islocked'
-  lock:
+  lock0:
     error_threshold: 11.0  # 1 degree works except for minimum_transmission!!
     stages:
       call_unlock: {}
@@ -52,6 +52,26 @@ model:
         outputs:
         - piezo
         setup_iir: true
+  #lock_iq:
+  lock:
+    error_threshold: 11.0  # 1 degree works except for minimum_transmission!!
+    stages:
+      call_unlock: {}
+      start:
+        input: iq
+        factor: 0.1
+        phase: 90
+        outputs:
+        - piezo
+        setup_iir: true
+        time: 0.1
+      finish:
+        input: iq
+        factor: 1.0
+        phase: 90
+        outputs:
+        - piezo
+        setup_iir: true
 
 # all signals that are inputs of the lockbox. Must be signal names understood
 # by the model
@@ -63,12 +83,12 @@ inputs:
   transmission:
     unit: V
     redpitaya_input: adc2
-    offset: -0.011950388550758362
-    max: 0.22044648230075836
-    min: -0.18909941613674164
-    mean: 0.031389907002449036
-    rms: 0.13606550024825184
-    curve: 258379
+    offset: 0.002445228397846222
+    max: 0.006465904414653778
+    min: -0.009891517460346222
+    mean: -0.0011363551020622253
+    rms: 0.0021113122603931417
+    curve: 258777
   #transmission_rf:
   #  unit: V
   #  redpitaya_input: adc1
@@ -78,7 +98,24 @@ inputs:
   #  mean: -0.006110109388828278
   #  rms: 0.09669715565486804
   #  curve: 258021
-
+  iq:
+    redpitaya_input: iq0
+    setup:
+      frequency: 12121212.1
+      phase: 320.0
+      output_direct: out2
+      output_signal: quadrature
+      quadrature_factor: 0.016
+      input: adc1
+      gain: 0
+      amplitude: 0.5
+      acbandwidth: 2000000.0
+      bandwidth: [1000000, 500000]
+    max: 0.23486328125
+    min: -0.2386474609375
+    mean: -0.048695340752601624
+    rms: 0.13394937687917205
+    curve: 258779
 # All output signals. Names of outputs are arbitrary.
 outputs:
   # we only have 1 actuator in this interferometer, the piezo in the LO arm
@@ -114,7 +151,7 @@ outputs:
       - 0
       - 0
     iir:
-      curve: 258377
+      curve: 258527  # 258525  # 258377
     sweep:
       waveform: ramp
       frequency: 10.0

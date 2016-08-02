@@ -639,6 +639,7 @@ class FabryPerot_FPM(FabryPerot):
     def setup(self):
         from .. import Pyrpl
         self._parent.p = Pyrpl('am')
+        self._parent.h = Pyrpl('homodyne')
         return super(FabryPerot_FPM, self).setup()
 
     _pdh_rms_log = SensingDevice(
