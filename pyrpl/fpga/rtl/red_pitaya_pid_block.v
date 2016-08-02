@@ -32,8 +32,7 @@
 */
 
 
-
-/**
+/*
  * GENERAL DESCRIPTION:
  *
  * Proportional-integral-derivative (PID) controller.
@@ -68,7 +67,7 @@ module red_pitaya_pid_block #(
    parameter     ISR = 32         ,//official redpitaya: 18
    parameter     DSR = 10         ,
    parameter     GAINBITS = 24    ,
-   parameter     DERIVATIVE = 1   , //disables differential gain if 0
+   parameter     DERIVATIVE = 0   , //disables differential gain if 0
    
    //parameters for input pre-filter
    parameter     FILTERSTAGES = 4 ,
@@ -175,9 +174,8 @@ red_pitaya_filter_block #(
   .dat_o(dat_i_filtered)
   );
 
-
 //---------------------------------------------------------------------------------
-//  Set point error calculation
+//  Set point error calculation - 1 cycle delay
 
 reg  [ 15-1: 0] error        ;
 
@@ -192,9 +190,8 @@ always @(posedge clk_i) begin
 end
 
 
-
 //---------------------------------------------------------------------------------
-//  Proportional part
+//  Proportional part - 1 cycle delay
 
 reg   [15+GAINBITS-PSR-1: 0] kp_reg        ;
 wire  [15+GAINBITS-1: 0] kp_mult       ;
@@ -211,11 +208,13 @@ end
 assign kp_mult = $signed(error) * $signed(set_kp);
 
 
-
 //---------------------------------------------------------------------------------
-//  Integrator
-localparam IBW = 64; //integrator bit-width. Over-represent the integral sum to record longterm drifts
-reg   [15+GAINBITS-1: 0] ki_mult  ;
+// Integrator - 2 cycles delay (but treat similar to proportional since it
+// will become negligible at high frequencies where delay is important)
+
+localparam IBW = ISR+16; //integrator bit-width. Over-represent the integral sum to record longterm drifts (overrepresented by 2 bits)
+
+reg   [15+GAINBITS-1: 0] ki_mult ;
 wire  [IBW  : 0] int_sum       ;
 reg   [IBW-1: 0] int_reg       ;
 wire  [IBW-ISR-1: 0] int_shr   ;
@@ -242,11 +241,9 @@ assign int_sum = $signed(ki_mult) + $signed(int_reg) ;
 assign int_shr = $signed(int_reg[IBW-1:ISR]) ;
 
 
-
-
-
 //---------------------------------------------------------------------------------
-//  Derivative
+//  Derivative - 2 cycles delay (but treat as 1 cycle because its not
+//  functional at the moment
 
 wire  [    39-1: 0] kd_mult       ;
 reg   [39-DSR-1: 0] kd_reg        ; 
@@ -280,30 +277,30 @@ generate
 endgenerate 
 
 //---------------------------------------------------------------------------------
-//  Sum together - saturate output
+//  Sum together - saturate output - 1 cycle delay
 
-localparam MAXBW = 35;
-wire        [   MAXBW-1: 0] pid_sum     ; 
-reg signed  [   14-1: 0] pid_out     ;
+localparam MAXBW = 17; //maximum possible bitwidth for pid_sum
+wire        [   MAXBW-1: 0] pid_sum;
+reg signed  [   14-1: 0] pid_out;
 
 		always @(posedge clk_i) begin
 		   if (rstn_i == 1'b0) begin
-		      pid_out    <= 14'b0 ;
+		      pid_out    <= 14'b0;
 		   end
 		   else begin
 		      if ({pid_sum[MAXBW-1],|pid_sum[MAXBW-2:13]} == 2'b01) //positive overflow
-		         pid_out <= 14'h1FFF ;
+		         pid_out <= 14'h1FFF;
 		      else if ({pid_sum[MAXBW-1],&pid_sum[MAXBW-2:13]} == 2'b10) //negative overflow
-		         pid_out <= 14'h2000 ;
+		         pid_out <= 14'h2000;
 		      else
-		         pid_out <= pid_sum[14-1:0] ;
+		         pid_out <= pid_sum[14-1:0];
 		   end
 		end
-assign pid_sum = $signed(kp_reg) + $signed(int_shr) + $signed(kd_reg_s) ;
+assign pid_sum = $signed(kp_reg) + $signed(int_shr) + $signed(kd_reg_s);
 
 generate 
 	if (ARBITRARY_SATURATION == 0)
-		assign dat_o = pid_out ;
+		assign dat_o = pid_out;
 	else begin
 		reg signed [ 14-1:0] out_buffer;
 		always @(posedge clk_i) begin
@@ -318,6 +315,4 @@ generate
 	end
 endgenerate
 
-
 endmodule
-

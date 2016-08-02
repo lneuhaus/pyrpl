@@ -3,4 +3,5 @@ from .interferometer import *
 from .fabryperot import *
 from .fabryperotmembranes import *
 from .tilt import *
-from .fpm import FPM
+from .fpm import *
+from .lmsd import *

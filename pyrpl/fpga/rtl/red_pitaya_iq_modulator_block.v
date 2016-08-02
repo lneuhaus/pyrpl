@@ -55,63 +55,101 @@ module red_pitaya_iq_modulator_block #(
     input signed [INBITS-1:0] signal1_i,
     input signed [INBITS-1:0] signal2_i,
     output signed [OUTBITS-1:0] dat_o,            
-    output signed [OUTBITS-1:0] signal_o //the i-quadrature
+    output signed [OUTBITS-1:0] signal_q1_o, //the i-quadrature
+    output signed [OUTBITS-1:0] signal_q2_o  //the q-quadrature
 );
 
-wire signed [GAINBITS+INBITS-1:0] firstproduct1;
-wire signed [GAINBITS+INBITS-1:0] firstproduct2;
-assign firstproduct1 = signal1_i * g1 + (g2 <<<INBITS);
-assign firstproduct2 = signal2_i * g4;
+// firstproduct
+wire signed [OUTBITS-1:0] firstproduct1;
+wire signed [OUTBITS-1:0] firstproduct2;
 
-reg signed [OUTBITS-1:0] firstproduct1_reg;
-reg signed [OUTBITS-1:0] firstproduct2_reg;
+red_pitaya_product_sat  #(
+	.BITS_IN1(INBITS),
+	.BITS_IN2(GAINBITS),
+	.SHIFT(GAINBITS+INBITS-OUTBITS-SHIFTBITS),
+	.BITS_OUT(OUTBITS))
+firstproduct_saturation [1:0]
+( .factor1_i  (  {signal2_i, signal1_i} ),
+  .factor2_i  (  {       g4,        g1} ),
+  .product_o  (  {firstproduct2, firstproduct1})
+);
+
+// buffering - one extra bit for the sum with g2
+reg signed [OUTBITS+1-1:0] firstproduct1_reg;
+reg signed [OUTBITS+1-1:0] firstproduct2_reg;
 always @(posedge clk_i) begin
-    if ({firstproduct1[GAINBITS+INBITS-1],|firstproduct1[GAINBITS+INBITS-2:GAINBITS+INBITS-SHIFTBITS-1]} == 2'b01) //positive overflow
-        firstproduct1_reg <= {1'b0,{OUTBITS-1{1'b1}}};
-     else if ({firstproduct1[GAINBITS+INBITS-1],&firstproduct1[GAINBITS+INBITS-2:GAINBITS+INBITS-SHIFTBITS-1]} == 2'b10) //negative overflow
-        firstproduct1_reg <= {1'b1,{OUTBITS-1{1'b0}}};
-     else
-        firstproduct1_reg <= firstproduct1[GAINBITS+INBITS-SHIFTBITS-1:GAINBITS+INBITS-SHIFTBITS-OUTBITS];
-     
-     if ({firstproduct2[GAINBITS+INBITS-1],|firstproduct2[GAINBITS+INBITS-2:GAINBITS+INBITS-SHIFTBITS-1]} == 2'b01) //positive overflow
-        firstproduct2_reg <= {1'b0,{OUTBITS-1{1'b1}}};
-     else if ({firstproduct2[GAINBITS+INBITS-1],&firstproduct2[GAINBITS+INBITS-2:GAINBITS+INBITS-SHIFTBITS-1]} == 2'b10) //negative overflow
-        firstproduct2_reg <= {1'b1,{OUTBITS-1{1'b0}}};
-     else
-        firstproduct2_reg <= firstproduct2[GAINBITS+INBITS-SHIFTBITS-1:GAINBITS+INBITS-SHIFTBITS-OUTBITS];
+    firstproduct1_reg <= $signed(firstproduct1) + $signed(g2[GAINBITS-1:GAINBITS-OUTBITS]);
+    firstproduct2_reg <= $signed(firstproduct2);
 end
 
-wire signed [OUTBITS+SINBITS-1:0] secondproduct1;
-wire signed [OUTBITS+SINBITS-1:0] secondproduct2;
+wire signed [OUTBITS+1+SINBITS-1-1:0] secondproduct1;
+wire signed [OUTBITS+1+SINBITS-1-1:0] secondproduct2;
 assign secondproduct1 = firstproduct1_reg * sin;
 assign secondproduct2 = firstproduct2_reg * cos;
 
-reg signed [OUTBITS+SINBITS-1:0] secondproduct_reg;
+//sum of second product has an extra bit
+reg signed [OUTBITS+1+SINBITS-1:0] secondproduct_sum;
 reg signed [OUTBITS-1:0] secondproduct_out;
+wire signed [OUTBITS-1:0] secondproduct_sat;
 
-//summation and saturation management
+//summation and saturation management, and buffering
 always @(posedge clk_i) begin
-    secondproduct_reg <= secondproduct1 + secondproduct2;
-    secondproduct_out <= secondproduct_reg[OUTBITS+SINBITS-1:SINBITS]; //can boost the gain here because no overflow is possible if the sin does not exceed 2**(lutsize-1)-1
+    secondproduct_sum <= secondproduct1 + secondproduct2;
+    secondproduct_out <= secondproduct_sat;
 end
+
+// SHIFT to compensate: sin multiplication (2**SINBITS-1 is the largest number)
+red_pitaya_saturate
+    #( .BITS_IN(OUTBITS+SINBITS+1),
+       .BITS_OUT(OUTBITS),
+       .SHIFT(SINBITS-1)
+    )
+    sumsaturation
+    (
+    .input_i(secondproduct_sum),
+    .output_o(secondproduct_sat)
+    );
+
 assign dat_o = secondproduct_out;
 
-red_pitaya_product_sat  #( 
-	.BITS_IN1(INBITS), 
-	.BITS_IN2(GAINBITS), 
-	.SHIFT(SHIFTBITS), 
+//output the scaled quadrature
+wire signed [OUTBITS-1:0] q1_product;
+wire signed [OUTBITS-1:0] q2_product;
+
+//output first quadrature to scope etc.
+red_pitaya_product_sat  #(
+	.BITS_IN1(INBITS),
+	.BITS_IN2(GAINBITS),
+	.SHIFT(SHIFTBITS),
 	.BITS_OUT(OUTBITS))
 i0_product_and_sat (
   .factor1_i(signal1_i),
   .factor2_i(g3),
-  .product_o(i0_product),
+  .product_o(q1_product),
   .overflow ()
-);   
-//output the scaled quadrature
-wire signed [OUTBITS-1:0] i0_product;
-reg signed [OUTBITS-1:0] i0_product_reg;
-always @(posedge clk_i) 
-    i0_product_reg <= i0_product;
-assign signal_o = i0_product_reg;
+);
+// output second quatrature to scope etc.
+red_pitaya_product_sat  #(
+	.BITS_IN1(INBITS),
+	.BITS_IN2(GAINBITS),
+	.SHIFT(SHIFTBITS),
+	.BITS_OUT(OUTBITS))
+q0_product_and_sat (
+  .factor1_i(signal2_i),
+  .factor2_i(g3),
+  .product_o(q2_product),
+  .overflow ()
+);
+
+// pipeline products
+reg signed [OUTBITS-1:0] q1_product_reg;
+reg signed [OUTBITS-1:0] q2_product_reg;
+always @(posedge clk_i) begin
+    q1_product_reg <= q1_product;
+    q2_product_reg <= q2_product;
+end
+
+assign signal_q1_o = q1_product_reg;
+assign signal_q2_o = q2_product_reg;
 
 endmodule

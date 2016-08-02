@@ -16,9 +16,12 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###############################################################################
 
+""" All modules are extensively discussed in the Tutorial. Please refer to
+there for more information. """
 
 import numpy as np
 import time
+from time import sleep
 from . import pyrpl_utils
 import sys
 import matplotlib.pyplot as plt
@@ -36,10 +39,17 @@ class NotReadyError(ValueError):
 
 
 class BaseModule(object):
-    
+    name = 'BaseModule'
     # factor to manually compensate 125 MHz oscillator frequency error
     # real_frequency = 125 MHz * _frequency_correction
-    _frequency_correction = 1.0
+    @property
+    def _frequency_correction(self):
+        try:
+            return self._parent.frequency_correction
+        except AttributeError:
+            self._logger.warning("Warning: Parent of %s has no attribute "
+                                 "'frequency_correction'. ", self.name)
+            return 1.0
 
     # prevent the user from setting a nonexisting attribute
     def __setattr__(self, name, value):
@@ -65,7 +75,10 @@ class BaseModule(object):
                         string += key + ": " + docstring + '\r\n\r\n'
             return string
         
-    def __init__(self, client, addr_base=0x40000000):
+    def __init__(self,
+                 client,
+                 addr_base=0x40000000,
+                 parent=None):
         """ Creates the prototype of a RedPitaya Module interface
 
         arguments: client must be a viable redpitaya memory client
@@ -76,6 +89,7 @@ class BaseModule(object):
         self._client = client
         self._addr_base = addr_base
         self.__doc__ = "Available registers: \r\n\r\n"+self.help()
+        self._parent = parent
 
     def _reads(self, addr, length):
         return self._client.reads(self._addr_base + addr, length)
@@ -103,8 +117,9 @@ class BaseModule(object):
         return np.uint32(v)
     
 class HK(BaseModule):
-    def __init__(self, client):
-        super(HK, self).__init__(client, addr_base=0x40000000)
+    name = 'HK'
+    def __init__(self, client, parent=None):
+        super(HK, self).__init__(client, addr_base=0x40000000, parent=parent)
     
     id = SelectRegister(0x0, doc="device ID", options={"prototype0": 0, "release1": 1})
     digital_loop = Register(0x0C, doc="enables digital loop")
@@ -124,17 +139,19 @@ data_length = 2**14
 
 
 class Scope(BaseModule):
+    name = 'scope'
     data_length = data_length  # see definition and explanation above
     inputs = None
 
-    def __init__(self, client, parent):
-        super(Scope, self).__init__(client, addr_base=0x40100000)
+    def __init__(self, client, parent=None):
+        super(Scope, self).__init__(client,
+                                    addr_base=0x40100000,
+                                    parent=parent)
         # dsp multiplexer channels for scope and asg are the same by default
         self._ch1 = DspModule(client, module='asg1')
         self._ch2 = DspModule(client, module='asg2')
         self.inputs = self._ch1.inputs
         self._setup_called = False
-        self._parent = parent
         self._trigger_source_memory = "immediately"
         self._trigger_delay_memory = 0
 
@@ -523,7 +540,7 @@ class Scope(BaseModule):
         iq_module = getattr(self._parent, iq)
         iq_module.input = input
         iq_module.output_signal = 'quadrature'
-        iq_module.quadrature_factor=1.0
+        iq_module.quadrature_factor = 1.0
         self.input1 = iq
         return iq_module
 
@@ -535,24 +552,27 @@ def make_asg(channel=1):
         set_VALUE_OFFSET = 0x00
         set_DATA_OFFSET = 0x10000
         set_default_output_direct = 'off'
+        set_name = 'asg1'
     else:
         set_DATA_OFFSET = 0x20000
         set_VALUE_OFFSET = 0x20
         set_BIT_OFFSET = 16
         set_default_output_direct = 'off'
-    
+        set_name = 'asg2'
     class Asg(BaseModule):
         _DATA_OFFSET = set_DATA_OFFSET
         _VALUE_OFFSET = set_VALUE_OFFSET
         _BIT_OFFSET = set_BIT_OFFSET
         default_output_direct = set_default_output_direct
         output_directs = None
-                
-        def __init__(self, client):
-            super(Asg, self).__init__(client, addr_base=0x40200000)
+        name = set_name
+
+        def __init__(self, client, parent=None):
+            super(Asg, self).__init__(client,
+                                      addr_base=0x40200000,
+                                      parent=parent)
             self._counter_wrap = 0x3FFFFFFF # correct value unless you know better
             self._writtendata = np.zeros(self.data_length)
-            self._frequency_correction = 1.0
             if self._BIT_OFFSET == 0:
                 self._dsp = DspModule(client, module='asg1')
             else:
@@ -609,8 +629,9 @@ def make_asg(channel=1):
         # This adaptaion to FloatRegister is a little subtle but should work nonetheless 
         offset = FloatRegister(0x4+_VALUE_OFFSET, bits=14+16, bitmask=0x3FFF<<16, 
                                norm=2**16*2**13, doc="output offset [volts]")
-        
-        scale = FloatRegister(0x4+_VALUE_OFFSET, bits=14, bitmask=0x3FFF, 
+
+        # formerly scale
+        amplitude = FloatRegister(0x4+_VALUE_OFFSET, bits=14, bitmask=0x3FFF,
                               norm=2**13, signed=False,  
                               doc="amplitude of output waveform [volts]")
         
@@ -639,13 +660,19 @@ def make_asg(channel=1):
         delay_between_bursts = Register(0x20+_VALUE_OFFSET,
                     doc="Delay between repetitions [us]. Granularity=1us")
 
+        random_phase = BoolRegister(0x0, 12+_BIT_OFFSET,
+                        doc='If True, the phase of the asg will be '
+                            'pseudo-random with a period of 2**31-1 '
+                            'cycles. This is used for the generation of '
+                            'white noise. If false, asg behaves normally. ')
+
         @property
         def waveform(self):
             return self._waveform
 
         @property
         def waveforms(self):
-            return ['sin', 'cos', 'ramp', 'halframp', 'dc']
+            return ['sin', 'cos', 'ramp', 'halframp', 'dc', 'noise']
 
         @waveform.setter
         def waveform(self, waveform):
@@ -653,6 +680,9 @@ def make_asg(channel=1):
             if not waveform in self.waveforms:
                 raise ValueError("waveform shourd be one of " + self.waveforms)
             else:
+                if not waveform == 'noise':
+                    self.random_phase = False
+                    self._rmsamplitude = 0
                 if waveform == 'sin':
                     x = np.linspace(0, 2 * np.pi, self.data_length,
                                     endpoint=False)
@@ -670,6 +700,12 @@ def make_asg(channel=1):
                                     endpoint=False)
                 elif waveform == 'dc':
                     y = np.zeros(self.data_length)
+                elif waveform == 'noise':
+                    self._rmsamplitude = self.amplitude
+                    y = np.random.normal(loc=0.0, scale=self._rmsamplitude,
+                                         size=self.data_length)
+                    self.amplitude = 1.0  # this may be confusing to the user..
+                    self.random_phase = True
                 else:
                     y = self.data
                     self._logger.error(
@@ -686,7 +722,8 @@ def make_asg(channel=1):
         def data(self):
             """array of 2**14 values that define the output waveform. 
             
-            Values should lie between -1 and 1 such that the peak output amplitude is self.scale"""
+            Values should lie between -1 and 1 such that the peak output
+            amplitude is self.amplitude """
             if not hasattr(self,'_writtendata'):
                 self._writtendata = np.zeros(self.data_length, dtype=np.int32)
             x = np.array(self._writtendata, dtype=np.int32)
@@ -702,7 +739,8 @@ def make_asg(channel=1):
         def data(self, data):
             """array of 2**14 values that define the output waveform. 
             
-            Values should lie between -1 and 1 such that the peak output amplitude is self.scale"""
+            Values should lie between -1 and 1 such that the peak output
+            amplitude is self.amplitude"""
             data = np.array(np.round((2**13-1)*data), dtype=np.int32)
             data[data >= 2**13] = 2**13 - 1
             data[data < 0] += 2**14
@@ -719,43 +757,82 @@ def make_asg(channel=1):
                   amplitude=None,
                   offset=None,
                   start_phase=0, 
-                  periodic=True, 
                   trigger_source=None,
-                  output_direct=None):
-            """sets up the function generator.
-            
-            waveform must be one of ['cos', 'ramp', 'DC', 'halframp']. 
-            amplitude and offset in volts, frequency in Hz. 
-            periodic = False outputs only one period. 
-            start_phase is the start phase in degrees
-            if trigger_source is None, it should be set manually
-            If None, then current value is used"""
+                  output_direct=None,
+                  cycles_per_burst=None,
+                  bursts=None,
+                  delay_between_bursts=None):
+            """
+            Sets up the function generator.
+
+            Parameters
+            ----------
+            waveform: str
+                must be one of ['sin', cos', 'ramp', 'DC', 'halframp']
+            frequency: float
+                waveform frequency in Hz.
+            amplitude: float
+                amplitude of the waveform in Volts. Between 0 and 1.
+            offset: float
+            start_phase: float
+                the phase of the waveform where the function generator starts.
+            trigger_source: str
+                must be one of self.trigger_sources
+            output_direct: str
+                must be one of self.outputs_direct
+            cycles_per_burst: int
+                number of repetitions of the waveform per burst. 0 = infinite.
+                by default, only 1 burst is executed. Maximum 2**32-1.
+            bursts: int
+                number of bursts to output - 1, i.e. 0 = one burst sequence.
+                Each burst consists of cycles_per_burst full periods of the
+                waveform and a delay of delay_between_bursts. If delay=0, any
+                setting of bursts other than zero outputs infinitely many
+                cycles. That is, if you do not want a delay, leave bursts=0
+                and define the number of periods to output with
+                cycles_per_burst. Maximum 2**16-1
+            delay_between_bursts: int
+                delay between bursts in multiples of 1 microseconds. Maximum
+                2**32-1 us.
+
+            Returns
+            -------
+            None
+            """
 
             if waveform is None:
                 waveform = self.waveform
             if frequency is None:
                 frequency = self.frequency
             if amplitude is None:
-                amplitude = self.scale
+                amplitude = self.amplitude
             if offset is None:
                 offset = self.offset
             if trigger_source is None:
                 trigger_source = self.trigger_source
             if output_direct is None:
                 output_direct = self.output_direct
+            if cycles_per_burst is None:
+                cycles_per_burst = self.cycles_per_burst
+            if bursts is None:
+                bursts = self.bursts
+            if delay_between_bursts is None:
+                delay_between_bursts = self.delay_between_bursts
 
             self.on = False
             self.sm_reset = True
             self.trigger_source = 'off'
-            self.scale = amplitude
+            self.amplitude = amplitude
             self.offset = offset
             self.output_direct = output_direct
             self.waveform = waveform
             self.start_phase = start_phase
             self._counter_wrap = 2**16 * (2**14 - 1)
             self.frequency = frequency
-            self.periodic = periodic
             self._sm_wrappointer = True
+            self.cycles_per_burst = cycles_per_burst
+            self.bursts = bursts
+            self.delay_between_bursts = delay_between_bursts
             self.sm_reset = False
             self.on = True
             if trigger_source is not None:
@@ -763,9 +840,11 @@ def make_asg(channel=1):
         
         #advanced trigger - alpha version functionality
         scopetriggerphase = PhaseRegister(0x114+_VALUE_OFFSET, bits=14, 
-                       doc="phase of ASG ch1 at the moment when the last scope trigger occured [degrees]")
+                       doc="phase of ASG ch1 at the moment when the last scope "
+                           "trigger occured [degrees]")
             
-        advanced_trigger_reset = BoolRegister(0x0, 9+_BIT_OFFSET, doc='resets the fgen advanced trigger')
+        advanced_trigger_reset = BoolRegister(0x0, 9+_BIT_OFFSET,
+                        doc='resets the fgen advanced trigger')
         advanced_trigger_autorearm = BoolRegister(0x0, 11+_BIT_OFFSET,
                 doc='autorearm the fgen advanced trigger after a trigger event? If False, trigger needs to be reset with a sequence advanced_trigger_reset=True...advanced_trigger_reset=False after each trigger event.')
         advanced_trigger_invert = BoolRegister(0x0, 10+_BIT_OFFSET, doc='inverts the trigger signal for the advanced trigger if True')
@@ -807,6 +886,8 @@ Asg2 = make_asg(channel=2)
 
 
 class DspModule(BaseModule):
+    _delay = 0  # delay of the module from input to output_signal (in cycles)
+
     _inputs = dict(
         pid0=0,
         pid1=1,
@@ -835,9 +916,20 @@ class DspModule(BaseModule):
         both=3)
     output_directs = _output_directs.keys()
     
-    input = SelectRegister(0x0, options=_inputs, 
+    _input = SelectRegister(0x0, options=_inputs,
                            doc="selects the input signal of the module")
-    
+    @property
+    def input(self):
+        "selects the input signal of the module"
+        return self._input
+    @input.setter
+    def input(self, value):
+        # allow to directly pass another dspmodule as input
+        if isinstance(value, DspModule) and hasattr(value, 'name'):
+            self._input = value.name
+        else:
+            self._input = value
+
     output_direct = SelectRegister(0x4, options=_output_directs, 
                             doc="selects to which analog output the module \
                             signal is sent directly")    
@@ -848,11 +940,12 @@ class DspModule(BaseModule):
 
     name = "dspmodule"
 
-    def __init__(self, client, module='pid0'):
+    def __init__(self, client, module='pid0', parent=None):
         self.name = module
         self._number = self._inputs[module]
         super(DspModule, self).__init__(client,
-            addr_base=0x40300000+self._number*0x10000)
+            addr_base=0x40300000+self._number*0x10000,
+            parent=parent)
 
 class AuxOutput(DspModule):
     """Auxiliary outputs. PWM0-3 correspond to pins 17-20 on E2 connector.
@@ -875,10 +968,12 @@ class AuxOutput(DspModule):
     
     Currently, only pwm0 and pwm1 are available.
     """
-    def __init__(self, client, output='pwm0'):
+    def __init__(self, client, output='pwm0', parent=None):
         pwm_to_module = dict(pwm0='adc1', pwm1='adc2')
         # future options: , pwm2 = 'dac1', pwm3='dac2')
-        super(AuxOutput, self).__init__(client,module=pwm_to_module[output])
+        super(AuxOutput, self).__init__(client,
+                                        module=pwm_to_module[output],
+                                        parent=parent)
     output_direct = None
     output_directs = None
     _output_directs = None
@@ -892,17 +987,21 @@ class FilterModule(DspModule):
                                  "0 = off, negative bandwidth = highpass")
 
 class Pid(FilterModule):
-    _PSR = 12 # Register(0x200)
+    _delay = 3  # min delay in cycles from input to output_signal of the module
+    # with integrator and derivative gain, delay is rather 4 cycles
 
-    _ISR = 32 # Register(0x204)
+    _PSR = 12  # Register(0x200)
+
+    _ISR = 32  # Register(0x204)
     
-    _DSR = 10 # Register(0x208)
+    _DSR = 10  # Register(0x208)
     
     _GAINBITS = 24 #Register(0x20C)
 
     @property
     def ival(self):
-        return float(self._to_pyint(self._read(0x100), bitlength=32))/2**13
+        return float(self._to_pyint(self._read(0x100), bitlength=16))/2**13
+        # bitlength used to be 32 until 16/7/2016
     
     @ival.setter
     def ival(self, v):
@@ -957,8 +1056,63 @@ class Pid(FilterModule):
     def reg_integral(self, v):
         self.ival = v
 
+    def transfer_function(self, frequencies, extradelay=0):
+        """
+        Returns a complex np.array containing the transfer function of the
+        current PID module setting for the given frequency array. The
+        settings for p, i, d and inputfilter, as well as delay are aken into
+        account for the modelisation. There is a slight dependency of delay
+        on the setting of inputfilter, i.e. about 2 extracycles per filter
+        that is not set to 0, which is however taken into account.
+
+        Parameters
+        ----------
+        frequencies: np.array or float
+            Frequencies to compute the transfer function for
+        extradelay: float
+            External delay to add to the transfer function (in s). If zero,
+            only the delay for internal propagation from input to
+            output_signal is used. If the module is fed to analog inputs and
+            outputs, an extra delay of the order of 200 ns must be passed as
+            an argument for the correct delay modelisation.
+
+        Returns
+        -------
+        tf: np.array(..., dtype=np.complex)
+            The complex open loop transfer function of the module.
+        """
+        module_delay = self._delay
+        frequencies = np.array(frequencies, dtype=np.complex)
+        # integrator with one cycle of extra delay
+        tf = self.i/(frequencies*1j) \
+                * np.exp(-1j * 8e-9 * self._frequency_correction *
+                         frequencies * 2 * np.pi)
+        # proportional (delay in self._delay included)
+        tf += self.p
+        # derivative action with one cycle of extra delay
+        #if self.d != 0:
+        #    tf += frequencies*1j/self.d \
+        #          * np.exp(-1j * 8e-9 * self._frequency_correction *
+        #                   frequencies * 2 * np.pi)
+        # input filter modelisation
+        for f in self.inputfilter:
+            if f == 0:
+                continue
+            elif f > 0:  # lowpass
+                tf /= (1.0 + 1j*frequencies/f)
+                module_delay += 2  # two cycles extra delay per lowpass
+            elif f < 0:  # highpass
+                tf /= (1.0 + 1j*f/frequencies)
+                # plus is correct here since f already has a minus sign
+                module_delay += 1  # one cycle extra delay per highpass
+        # add delay
+        delay = module_delay * 8e-9 / self._frequency_correction + extradelay
+        tf *= np.exp(-1j*delay*frequencies*2*np.pi)
+        return tf
 
 class IQ(FilterModule):
+    _delay = 5  # bare delay of IQ module with no filters set (cycles)
+
     _output_signals = dict(
         quadrature=0,
         output_direct=1,
@@ -992,9 +1146,10 @@ class IQ(FilterModule):
     _SHIFTBITS = 8 #Register(0x218)
     
     pfd_integral = FloatRegister(0x150, bits=_SIGNALBITS, norm=_SIGNALBITS,
-                                 doc = "value of the pfd integral [volts]")
-    
-    phase = PhaseRegister(0x104, bits=_PHASEBITS,
+                                 doc="value of the pfd integral [volts]")
+
+    # for the phase to have the right sign, it must be inverted
+    phase = PhaseRegister(0x104, bits=_PHASEBITS, invert=True,
                           doc="Phase shift between modulation \
                           and demodulation [degrees]")
     
@@ -1006,17 +1161,17 @@ class IQ(FilterModule):
     
     _g2 = FloatRegister(0x114, bits=_GAINBITS, norm=2**_SHIFTBITS, 
                         doc="gain2 of iq module [volts]")
-    amplitude = FloatRegister(0x114, bits=_GAINBITS, norm = 2**_SHIFTBITS*4, 
+    amplitude = FloatRegister(0x114, bits=_GAINBITS, norm=2**(_GAINBITS-1),
                         doc="amplitude of coherent modulation [volts]")
 
-    _g3 = FloatRegister(0x118, bits=_GAINBITS, norm = 2**_SHIFTBITS, 
+    _g3 = FloatRegister(0x118, bits=_GAINBITS, norm=2**_SHIFTBITS,
                         doc="gain3 of iq module [volts]")
     quadrature_factor = FloatRegister(0x118, 
                                       bits=_GAINBITS, 
-                                      norm = 2**_SHIFTBITS,  
+                                      norm=2**_SHIFTBITS,
                         doc="amplification factor of demodulated signal [a.u.]")
     
-    _g4 = FloatRegister(0x11C, bits=_GAINBITS, norm = 2**_SHIFTBITS, 
+    _g4 = FloatRegister(0x11C, bits=_GAINBITS, norm=2**_SHIFTBITS,
                         doc="gain4 of iq module [volts]")
 
     def __init__(self, *args, **kwds):
@@ -1024,45 +1179,55 @@ class IQ(FilterModule):
 
     @property
     def gain(self):
-        return self._g1 * 0.039810
+        return self._g1 / 2**3
 
     @gain.setter
     def gain(self, v):
-        self._g1 = float(v) / 0.039810
-        self._g4 = float(v) / 0.039810
+        self._g1 = float(v) * 2**3
+        self._g4 = float(v) * 2**3
 
     def setup(
             self,
-            frequency,
-            bandwidth=[0],
-            gain=1.0,
-            phase=0,
+            frequency=None,
+            bandwidth=None,
+            gain=None,
+            phase=None,
             Q=None,
-            acbandwidth=50.,
-            amplitude=0.0,
-            input='adc1',
-            output_direct='out1',
-            output_signal='quadrature', 
+            acbandwidth=None,
+            amplitude=None,
+            input=None,
+            output_direct=None,
+            output_signal=None,
             quadrature_factor=1.0):
         self.on = False
-        self.frequency = frequency
+        if frequency is not None:
+            self.frequency = frequency
         if Q is None:
-            self.bandwidth = bandwidth
+            if bandwidth:
+                self.bandwidth = bandwidth
         else:
             self.bandwidth = self.frequency / Q / 2
-        self.gain = gain
-        self.phase = phase
-        self.inputfilter = -acbandwidth
-        self.amplitude = amplitude
-        self.input = input
-        self.output_direct = output_direct
-        self.output_signal = output_signal
-        self.quadrature_factor = quadrature_factor
+        if input is not None:
+            self.input = input
+        if gain is not None:
+            self.gain = gain
+        if phase is not None:
+            self.phase = phase
+        if acbandwidth is not None:
+            self.inputfilter = -acbandwidth
+        if amplitude is not None:
+            self.amplitude = amplitude
+        if output_direct is not None:
+            self.output_direct = output_direct
+        if output_signal is not None:
+            self.output_signal = output_signal
+        if quadrature_factor is not None:
+            self.quadrature_factor = quadrature_factor
         self.on = True
 
     _na_averages = Register(0x130, 
                     doc='number of cycles to perform na-averaging over')
-    _na_sleepcycles = Register(0x130, 
+    _na_sleepcycles = Register(0x134,
                     doc='number of cycles to wait before starting to average')
 
     @property
@@ -1079,7 +1244,9 @@ class IQ(FilterModule):
             + np.complex128(self._to_pyint(int(c)+(int(d)<<31), bitlength=62))*1j  
         return sum / float(self._na_averages)
 
-    """
+    # the implementation of network_analyzer is not identical to na_trace
+    # there are still many bugs in it, which is why we will keep this function
+    # in the gui
     def na_trace(
             self,
             start=0,     # start frequency
@@ -1096,7 +1263,9 @@ class IQ(FilterModule):
             stabilize=None, # if a float, output amplitude is adjusted dynamically so that input amplitude [V]=stabilize 
             maxamplitude=1.0, # amplitude can be limited
             ):
-
+        #logger.info("This function will become obsolete in the distant "
+        #                 "future. Start using the module RedPitaya.na "
+        #                 "instead!")
         if logscale:
             x = np.logspace(
                 np.log10(start),
@@ -1169,10 +1338,83 @@ class IQ(FilterModule):
         if stabilize is None:
             return x, y
         else:
-            return x,y,amplitudes
-    """
+            return x, y, amplitudes
 
-class IIR(DspModule):
+    def transfer_function(self, frequencies, extradelay=0):
+        """
+        Returns a complex np.array containing the transfer function of the
+        current IQ module setting for the given frequency array. The given
+        transfer function is only relevant if the module is used as a
+        bandpass filter, i.e. with the setting (gain != 0). If extradelay = 0,
+        only the default delay is taken into account, i.e. the propagation
+        delay from input to output_signal.
+
+        Parameters
+        ----------
+        frequencies: np.array or float
+            Frequencies to compute the transfer function for
+        extradelay: float
+            External delay to add to the transfer function (in s). If zero,
+            only the delay for internal propagation from input to
+            output_signal is used. If the module is fed to analog inputs and
+            outputs, an extra delay of the order of 200 ns must be passed as
+            an argument for the correct delay modelisation.
+
+        Returns
+        -------
+        tf: np.array(..., dtype=np.complex)
+            The complex open loop transfer function of the module.
+        """
+        quadrature_delay = 2  # the delay experienced by the signal when it
+        # is represented as a quadrature (=lower frequency, less phaseshift)
+        # the remaining delay of the module
+        module_delay = self._delay - quadrature_delay
+        frequencies = np.array(frequencies, dtype=np.complex)
+        tf = np.array(frequencies*0, dtype=np.complex) + self.gain
+        # bandpass filter
+        for f in self.bandwidth:
+            if f == 0:
+                continue
+            elif f > 0:  # lowpass
+                tf *= 1.0 / (1.0 + 1j * (frequencies-self.frequency) / f)
+                quadrature_delay += 2
+            elif f < 0:  # highpass
+                tf *= 1.0 / (1.0 + 1j * f / (frequencies-self.frequency))
+                quadrature_delay += 1  # one cycle extra delay per highpass
+        # compute phase shift due to quadrature propagation delay
+        quadrature_delay *= 8e-9 / self._frequency_correction
+        tf *= np.exp(-1j * quadrature_delay * (frequencies - self.frequency) \
+                     * 2 * np.pi)
+        # input filter modelisation
+        f = self.inputfilter  # no for loop here because only one filter stage
+        if f > 0:  # lowpass
+            tf /= (1.0 + 1j * frequencies / f)
+            module_delay += 2  # two cycles extra delay per lowpass
+        elif f < 0:  # highpass
+            tf /= (1.0 + 1j * f / frequencies)
+            module_delay += 1  # one cycle extra delay per highpass
+        # compute delay
+        delay = module_delay * 8e-9 / self._frequency_correction + extradelay
+        # add phase shift contribution - not working, see instead formula below
+        #delay -= self.phase/360.0/self.frequency
+        tf *= np.exp(-1j * delay * frequencies * 2 * np.pi)
+        # add delay from phase (incorrect formula or missing effect...)
+        tf *= np.exp(1j*self.phase/180.0*np.pi)
+        return tf
+
+
+class IIR(FilterModule):
+    _minloops = 5  # minimum number of loops for correct behaviour
+    _maxloops = 1023
+    # the first biquad (self.coefficients[0] has _delay cycles of delay
+    # from input to output_signal. Biquad self.coefficients[i] has
+    # _delay+i cycles of delay.
+    _delay = 5  # empirically found. Counting cycles gave me 7.
+
+    # parameters for scipy.signal.cont2discrete
+    _method = 'gbt'  # method to go from continuous to discrete coefficients
+    _alpha = 0.5  # alpha parameter for method (scipy.signal.cont2discrete)
+
     # invert denominator coefficients to convert from scipy notation to
     # the fpga-implemented notation (following Oppenheim and Schaefer: DSP)
     _invert = True
@@ -1189,12 +1431,29 @@ class IIR(DspModule):
     on = BoolRegister(0x104, 0, doc="IIR is on")
     
     shortcut = BoolRegister(0x104, 1, doc="IIR is bypassed")
-    
-    copydata = BoolRegister(0x104, 2, 
-                doc="If True: coefficients are being copied from memory")
-    
-    overflow = Register(0x108, 
+
+    # obsolete
+    #copydata = BoolRegister(0x104, 2,
+    #            doc="If True: coefficients are being copied from memory")
+
+    overflow = Register(0x108,
                             doc="Bitmask for various overflow conditions")
+
+    @property
+    def output_saturation(self):
+        """ returns True if the output of the IIR filter has saturated since
+        the last reset """
+        return bool(self.overflow & 1 << 6)
+
+    @property
+    def internal_overflow(self):
+        """ returns True if the IIR filter has experienced an internal
+        overflow (leading to saturation) since the last reset"""
+        overflow = bool(self.overflow & 0b111111)
+        if overflow:
+            self._logger.info("Internal overflow has occured. Bit pattern "
+                              "%s", bin(self.overflow))
+        return overflow
 
     def _from_double(self, v, bitlength=64, shift=0):
         v = int(np.round(v * 2**shift))
@@ -1225,7 +1484,7 @@ class IIR(DspModule):
             data = self._writtendata
         else:
             raise ValueError("Readback of coefficients not enabled. " \
-                             +"You must set coefficients before reading it.")
+                             +"You must set coefficients before reading them.")
         coefficients = np.zeros((l, 6), dtype=np.float64)
         bitlength = self._IIRBITS
         shift = self._IIRSHIFT
@@ -1302,16 +1561,18 @@ class IIR(DspModule):
 
     def setup(
             self,
-            z,
-            p,
-            g=1.0,
-            input='adc1',
-            output_direct='off',
+            zeros,
+            poles,
+            gain=1.0,
+            input=None,
+            output_direct=None,
             loops=None,
             plot=False,
-            #save=False,
+            designdata=False,
             turn_on=True,
-            tol=1e-3):
+            inputfilter=None,
+            tol=1e-3,
+            prewarp=True):
         """Setup an IIR filter
         
         the transfer function of the filter will be (k ensures DC-gain = g):
@@ -1322,112 +1583,279 @@ class IIR(DspModule):
         
         parameters
         --------------------------------------------------
-        z:             list of zeros in the complex plane, maximum 16
-        p:             list of zeros in the complex plane, maxumum 16
-        g:             DC-gain
+        zeros:         list of zeros in the complex plane, maximum 16
+        poles:         list of zeros in the complex plane, maxumum 16
+        gain:          DC-gain
         input:         input signal
         output_direct: send directly to an analog output?
-        loops:         clock cycles per loop of the filter. must be at least 3 and at most 255. set None for autosetting loops
+        loops:         clock cycles per loop of the filter. must be at least 3
+                       and at most 255. set None for autosetting loops
         turn_on:       automatically turn on the filter after setup
-        plot:          if True, plots the theoretical and implemented transfer functions
-        tol:           tolerance for matching conjugate poles or zeros into pairs, 1e-3 is okay
+        plot:          if True, plots the theoretical and implemented transfer
+                       functions
+        designdata:    if True, returns various design transfer functions in a
+                       format that can be passed to iir.bodeplot
+        inputfilter:   the bandwidth of the input filter for anti-aliasing.
+                       If None, it is set to the sampling frequency.
+        tol:           tolerance for matching conjugate poles or zeros into
+                       pairs, 1e-3 is okay
+        prewarp:       Enables prewarping of frequencies. Strongly recommended.
 
-        returns:       data to be passed to iir.bodeplot to plot the realized transfer function
+        returns
+        --------------------------------------------------
+        coefficients   data to be passed to iir.bodeplot to plot the
+                       realized transfer function
         """
         if self._IIRSTAGES == 0:
-            raise Exception(
-                "Error: This FPGA bitfile does not support IIR filters! "\
-                +"Please use an IIR version!")
+            raise Exception("Error: This FPGA bitfile does not support IIR "
+                            "filters! Please use an IIR version!")
         self.on = False
         self.shortcut = False
-        self.copydata = False
         iirbits = self._IIRBITS
         iirshift = self._IIRSHIFT
-        # pre-scale coefficients
-        z = [zz * 2 * np.pi for zz in z]
-        p = [pp * 2 * np.pi for pp in p]
-        k = g
-        for pp in p:
-            if pp != 0:
-                k *= np.abs(pp)
-        for zz in z:
-            if zz != 0:
-                k /= np.abs(zz)
-        sys = (z,p,k)
-        # try to find out how many loops must be done
-        preliminary_loops = int(max([len(p), len(z)])+1) / 2
-        c = iir.get_coeff(sys, dt=preliminary_loops * 8e-9,
-                          totalbits=iirbits, shiftbits=iirshift,
-                          tol=tol, finiteprecision=False)
-        minimum_loops = len(c)
-        if minimum_loops < 3:
-            minimum_loops = 3
-        if minimum_loops > self._IIRSTAGES:
-            raise Exception("Error: desired filter order is too high to "\
-                            +"be implemented.")
-        if loops is None:
-            loops = 3
-        elif loops > 255:
-            loops = 255
-        loops = max([loops, minimum_loops])
-        # transform zeros and poles into coefficients
-        dt = loops * 8e-9 / self._frequency_correction
-        c = iir.get_coeff(sys, dt=dt,
-                          totalbits=iirbits, shiftbits=iirshift,
-                          tol=tol, finiteprecision=False)
-        self.coefficients = c
+
+        # clean up the specified transfer function (add poles if needed)
+        # and find out how many loops are needed for implementation
+        zeros, poles, minloops = iir.make_proper_tf(zeros,
+                                                    poles,
+                                                    loops=loops,
+                                                    _minloops=self._minloops,
+                                                    tol=tol)
+        # make sure filter can be realized
+        if minloops > self._IIRSTAGES:
+            raise Exception("Error: desired filter order is too high to "
+                            "be implemented.")
+        if loops < minloops:  # warning has already be issued in make_proper_tf
+            loops = minloops
+        elif loops > self._maxloops:
+            self._logger.warning("Maximum loops number is %s. This value "
+                                 "will be tried instead of specified value "
+                                 "%s.", self._maxloops, loops)
+            loops = self._maxloops
         self.loops = loops
-        f = np.array(self.coefficients)
-        # load the coefficients into the filter - all simultaneously
-        self.copydata = True
-        self.copydata = False
+        self._logger.info("Filter sampling frequency is %.3s MHz",
+                          1e-6/self.sampling_time)
+        # get scaling right for coefficients so that gain corresponds to dcgain
+        self._sys = iir.rescale(zeros, poles, gain)
+        # prewarp coefficients to match specification (bilinear transform
+        # distorts frequencies of poles)
+        if prewarp:
+            sys = iir.prewarp(self._sys, dt=self.sampling_time)
+        else:
+            sys = self._sys
+        # get coefficients
+        c = iir.get_coeff(sys,
+                          dt=self.sampling_time,
+                          tol=tol,
+                          method=self._method,
+                          alpha=self._alpha)
+        # write coefficients to fpga
+        self.coefficients = c
+        # save the full-precision coefficients for debugging
+        self._coefficients = c
+        # low-pass filter the input signal with a first order filter with
+        # cutoff near the sampling rate - decreases aliasing and achieves
+        # higher internal data precision (3 extra bits) through averaging
+        if inputfilter is None:
+            self.inputfilter = 125e6*self._frequency_correction / self.loops
+        else:
+            self.inputfilter = inputfilter
+        self._logger.info("IIR anti-aliasing input filter set to: %s MHz",
+                          self.inputfilter * 1e-6)
+        # connect the module
+        if input is not None:
+            self.input = input
+        if output_direct is not None:
+            self.output_direct = output_direct
+        # switch it on only once everything is set up
         self.on = turn_on
         # Diagnostics here
-        if plot: # or save:
+        if plot:  # or save:
             if isinstance(plot, int):
                 plt.figure(plot)
             else:
                 plt.figure()
-        tfs = iir.psos2plot(c, sys, n=2**16, maxf=5e6, dt=dt,
-                name="discrete system (dt=" + str(int(dt * 1e9)) + "ns)",
-                plot=False)
-        tfs += iir.psos2plot(f, None, n=2**16, maxf=5e6,
-                dt=dt, name="implemented system",plot=False)
-            
-        #if save:
-        #    if not plot:
-        #        plt.close()
-        #    curves = list()
-        #    for tf in tfs:
-        #        w, h, name = tf
-        #        curve = CurveDB.create(w, h)
-        #        curve.name = name
-        #        z, p, k = sys
-        #        curve.params["iir_loops"] = loops
-        #        curve.params["iir_zeros"] = str(z)
-        #        curve.params["iir_poles"] = str(p)
-        #        curve.params["iir_k"] = k
-        #        curve.save()
-        #        curves.append(curve)
-        #    for curve in curves[:-1]:
-        #        curves[-1].add_child(curve)
         self._logger.info("IIR filter ready")
-        self._logger.info("Maximum deviation from design coefficients: %f", max((f[0:len(c)] - c).flatten()))
-        self._logger.info("Overflow pattern: %s", bin(self.overflow))
-        #        if save:
-        #            return f, curves[-1]
-        #        else:
-        #            return f
-        if plot:
-            iir.bodeplot(tfs, xlog=True)
-        return tfs
+        # compute design error
+        dev = (np.abs((self.coefficients[0:len(c)] - c).flatten()))
+        maxdev = max(dev)
+        reldev = maxdev / abs(c.flatten()[np.argmax(dev)])
+        if reldev > 0.05:
+            self._logger.warning(
+                "Maximum deviation from design coefficients: %.4g "
+                "(relative: %.4g)", maxdev, reldev)
+        else:
+            self._logger.info("Maximum deviation from design coefficients: "
+                               "%.4g (relative: %.4g)", maxdev, reldev)
+        if bool(self.overflow):
+            self._logger.warning("IIR Overflow detected. Pattern: %s",
+                                 bin(self.overflow))
+        else:
+            self._logger.info("IIR Overflow pattern: %s", bin(self.overflow))
+        if designdata or plot:
+            maxf = 125e6/self.loops
+            fs = np.linspace(maxf/1000, maxf, 2001, endpoint=True)
+            designdata = self.transfer_function(fs, kind='all')
+            if plot:
+                iir.bodeplot(designdata, xlog=True)
+            return designdata
+        else:
+            return None
+
+    @property
+    def sampling_time(self):
+        return 8e-9 / self._frequency_correction * self.loops
+
+    def transfer_function(self, frequencies, extradelay=0, kind='implemented'):
+        """
+        Returns a complex np.array containing the transfer function of the
+        current IIR module setting for the given frequency array. The
+        best-possible estimation of delays is automatically performed for
+        all kinds of transfer function. The setting of 'shortcut' is ignored
+        for this computation, i.e. the theoretical and measured transfer
+        functions can only agree if shortcut is False.
+
+        Parameters
+        ----------
+        frequencies: np.array or float
+            Frequencies to compute the transfer function for
+        extradelay: float
+            External delay to add to the transfer function (in s). If zero,
+            only the delay for internal propagation from input to
+            output_signal is used. If the module is fed to analog inputs and
+            outputs, an extra delay of the order of 150 ns must be passed as
+            an argument for the correct delay modelisation.
+        kind: str
+            The IIR filter design is composed of a number of steps. Each
+            step slightly modifies the transfer function to adapt it to
+            the implementation of the IIR. The various intermediate transfer
+            functions can be helpful to debug the iir filter.
+
+            kind should be one of the following (default is 'implemented'):
+            - 'all': returns a list of data to be passed to iir.bodeplot
+              with all important kinds of transfer functions for debugging
+            - 'continuous': the designed transfer function in continuous time
+            - 'before_partialfraction_continuous': continuous filter just
+              before partial fraction expansion of the coefficients. The
+              partial fraction expansion introduces a large numerical error for
+              higher order filters, so this is a good place to check whether
+              this is a problem for a particular filter design
+            - 'before_partialfraction_discrete': discretized filter just before
+              partial fraction expansion of the coefficients. The partial
+              fraction expansion introduces a large numerical error for higher
+              order filters, so this is a good place to check whether this is
+              a problem for a particular filter design
+            - 'before_partialfraction_discrete_zoh': same as previous,
+              but zero order hold assumption is used to transform from
+              continuous to discrete
+            - 'discrete': the transfer function after transformation to
+              discrete time
+            - 'discrete_samplehold': same as discrete, but zero delay
+              between subsequent biquads is assumed
+            - 'highprecision': hypothetical transfer function assuming that
+              64 bit fixed point numbers were used in the fpga (decimal point
+              at bit 48)
+            - 'implemented': transfer function after rounding the
+              coefficients to the precision of the fpga
+
+        Returns
+        -------
+        tf: np.array(..., dtype=np.complex)
+            The complex open loop transfer function of the module.
+        If kind=='all', a list of plotdata tuples is returned that can be
+        passed directly to iir.bodeplot().
+        """
+        frequencies = np.array(frequencies, dtype=np.float)
+        # take average delay to be half the loops since this is the
+        # expectation value for the delay (plus internal propagation delay)
+        module_delay = self._delay + self.loops / 2.0
+        if kind == "all":
+            return [(frequencies,
+                     self.transfer_function(frequencies=frequencies,
+                                            extradelay=extradelay,
+                                            kind=k),
+                     k)
+                    for k in ["continuous",
+                              "before_partialfraction_continuous",
+                              #"before_partialfraction_discrete",
+                              #"before_partialfraction_discrete_zoh",
+                              "discrete",
+                              #"discrete_samplehold",
+                              "highprecision",
+                              "implemented"]]
+
+        elif kind == "continuous":
+            tf = iir.tf_continuous(sys=self._sys,
+                                   frequencies=frequencies)
+        elif kind == "before_partialfraction_continuous":
+            tf = iir.tf_before_partialfraction(sys=self._sys,
+                                               frequencies=frequencies,
+                                               dt=self.sampling_time,
+                                               continuous=True)
+        elif kind == "before_partialfraction_discrete_zoh":
+            tf = iir.tf_before_partialfraction(sys=self._sys,
+                                               frequencies=frequencies,
+                                               dt=self.sampling_time,
+                                               continuous=False,
+                                               method="zoh")
+        elif kind == "before_partialfraction_discrete":
+            tf = iir.tf_before_partialfraction(sys=self._sys,
+                                               frequencies=frequencies,
+                                               dt=self.sampling_time,
+                                               continuous=False,
+                                               method=self._method,
+                                               alpha=self._alpha)
+        elif kind == "discrete":
+            # self._coefficients is a copy of full-precision coefficients
+            tf = iir.tf_discrete(coefficients=self._coefficients,
+                                 frequencies=frequencies,
+                                 dt=self.sampling_time,
+                                 zoh=(self._method == 'zoh'))
+        elif kind == "discrete_samplehold":
+            # self._coefficients is a copy of full-precision coefficients
+            tf = iir.tf_discrete(coefficients=self._coefficients,
+                                 frequencies=frequencies,
+                                 dt=self.sampling_time,
+                                 delay_per_cycle=0,
+                                 zoh=(self._method == 'zoh'))
+        elif kind == "highprecision":
+            tf = iir.tf_implemented(coefficients=self._coefficients,
+                                    frequencies=frequencies,
+                                    dt=self.sampling_time,
+                                    totalbits=64,
+                                    shiftbits=48,
+                                    zoh=(self._method == 'zoh'))
+        else:  # default: kind == "implemented":
+            # self.coefficients are the coefficients as stored in the fpga
+            tf = iir.tf_implemented(coefficients=self.coefficients,
+                                    frequencies=frequencies,
+                                    dt=self.sampling_time,
+                                    totalbits=self._IIRBITS,
+                                    shiftbits=self._IIRSHIFT,
+                                    zoh=(self._method == 'zoh'))
+        for f in [self.inputfilter]:  # only one filter at the moment
+            if f == 0:
+                continue
+            if f > 0:  # lowpass
+                tf /= (1.0 + 1j*frequencies/f)
+                module_delay += 2  # two cycles extra delay per lowpass
+            elif f < 0:  # highpass
+                tf /= (1.0 + 1j*f/frequencies)
+                # plus is correct here since f already has a minus sign
+                module_delay += 1  # one cycle extra delay per highpass
+        # add delay
+        delay = module_delay * 8e-9 / self._frequency_correction + extradelay
+        tf *= np.exp(-1j*delay*frequencies*2*np.pi)
+        return tf
 
 
 class AMS(BaseModule):
     """mostly deprecated module (redpitaya has removed adc support). 
     only here for dac2 and dac3"""
-    def __init__(self, client):
-        super(AMS, self).__init__(client, addr_base=0x40400000)
+    def __init__(self, client, parent=None):
+        super(AMS, self).__init__(client,
+                                  addr_base=0x40400000,
+                                  parent=parent)
     # attention: writing to dac0 and dac1 has no effect
     # only write to dac2 and 3 to set output voltages
     # to modify dac0 and dac1, connect a r.pwm0.input='pid0' 

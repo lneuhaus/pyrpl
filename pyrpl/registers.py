@@ -226,10 +226,15 @@ class PhaseRegister(FloatRegister):
         
     def from_python(self, value):
         # make sure small float values are not rounded to zero
+        if self.invert:
+            value = float(value)*(-1)
         return int(round((float(value)%360)/360*2**self.bits)% 2**self.bits) 
         
     def to_python(self, value):
-        return float(value)/2**self.bits*360
+        phase = float(value)/2**self.bits*360
+        if self.invert:
+            phase *= -1
+        return phase%360.0
     
 class FrequencyRegister(FloatRegister):
     """Registers that contain a frequency as a float in units of Hz"""
@@ -337,7 +342,6 @@ class FilterRegister(Register):
                     shift += 2**6  # turn this filter into a highpass
                 filter_shifts += (shift) * 2**(8 * i)
         return filter_shifts
-    
 
 class PWMRegister(Register):
     # FloatRegister that defines the PWM voltage similar to setting a float
