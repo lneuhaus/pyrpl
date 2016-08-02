@@ -407,7 +407,19 @@ class ScopeWidget(ModuleWidget):
                 times -= times[-1]
                 self.curves[index].setData(times, data)
                 self.curves[index].setVisible(True)
+        try:
+            self.curve_display_done()
+        except Exception as e:
+            print e
         self.timer.start()
+
+    def curve_display_done(self):
+        """
+        User may overwrite this function to implement custom functionality
+        at each graphical update.
+        :return:
+        """
+        pass
 
     def run_continuous(self):
         """

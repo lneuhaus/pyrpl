@@ -128,6 +128,9 @@ class FabryPerot(Model):
                    factor=factor,
                    offset=1.0 * np.sign(detuning))
 
+
+
+
     def calibrate(self):
         curves = super(FabryPerot, self).calibrate(
             scopeparams={'secondsignal': 'piezo'})
