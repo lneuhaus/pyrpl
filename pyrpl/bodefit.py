@@ -20,10 +20,10 @@ def iirparams_from_curve(id):
 
 def iirparams_from_curveparams(curveparams):
     params = dict()
-    for e in ['loops', 'gain', 'invert', 'inputfilter']:
+    for e in ['loops', 'gain', 'inputfilter']: #'invert', :
         if e in curveparams:
             params[e] = curveparams[e]
-    if "pole_real" in c.params:
+    if "pole_real" in curveparams:
         params['poles'] = list(np.array(json.loads(curveparams["pole_real"]),
                                         dtype=np.complex128) +
                                1j * np.array(json.loads(curveparams["pole_imag"]),

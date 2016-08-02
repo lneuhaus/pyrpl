@@ -37,8 +37,8 @@ model:
   # for interferometer, this is the phase error in radians
   # this value is uniquely needed for the function 'islocked'
   maxerror: 0.1
-  offresonant_reflection: 0.05834846943616867
-  resonant_reflection: 0.00927620381116867
+  offresonant_reflection: 0.05908089131116867
+  resonant_reflection: 0.00952034443616867
   finesse: 92000.0
   length: 5.61e-05
   # signals in order of their preferrence
@@ -135,17 +135,17 @@ inputs:
   reflection:
     redpitaya_input: adc2
     offset: -0.01013069599866867
-    max: 0.05834846943616867
-    min: 0.00927620381116867
-    mean: 0.05090596526861191
-    rms: 0.004008270376267286
-    curve: 258339
+    max: 0.05908089131116867
+    min: 0.00952034443616867
+    mean: 0.051039643585681915
+    rms: 0.004158818916276692
+    curve: 258351
   pdh:
     redpitaya_input: iq0
     max: 0.9988205283880234
     min: -1.0010574012994766
-    mean: -0.002873435616493225
-    rms: 0.1394931180310412
+    mean: 0.0014494210481643677
+    rms: 0.14154326369128836
     offset: 0.0010574012994766235
     setup:
       phase: 305 #275 # 307
@@ -158,18 +158,18 @@ inputs:
       output_direct: out2
       acbandwidth: 10000000.0
       bandwidth: [5000000.0, 10000000.0]
-    curve: 258341
+    curve: 258353
   normalized_reflection:
     redpitaya_input: adc2
     skip_forward_to_pdh: false
     offset: 0.0
     crossover: 2000000.0
     setpoint: 0.15
-    max: 0.050048828125
-    min: 0.0302734375
-    mean: 0.04158995300531387
-    rms: 0.0020255620792680486
-    curve: 258343
+    max: 0.0509033203125
+    min: -0.0013427734375
+    mean: 0.04092340171337128
+    rms: 0.004240767666956113
+    curve: 258355
 # All output signals. Names of outputs are arbitrary. if the 'lock' tab is
 # missing or false, the output will not be used for locking
 outputs:

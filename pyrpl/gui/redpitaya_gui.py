@@ -602,7 +602,7 @@ class ScopeWidget(ModuleWidget):
             d.update({'ch': ch,
                       'name': self.module.curve_name + ' ch' + str(ch)})
             self.save_curve(self.module.times,
-                            self.module.curve(ch),
+                            self.module.curve(ch, timeout=-1),
                             **d)
 
 

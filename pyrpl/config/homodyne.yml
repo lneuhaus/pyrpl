@@ -36,12 +36,23 @@ model:
   lock:
     error_threshold: 11.0  # 1 degree works except for minimum_transmission!!
     stages:
+      call_unlock: {}
+      start:
+        input: transmission
+        factor: 0.1
+        phase: 0
+        outputs:
+        - piezo
+        setup_iir: true
+        time: 0.1
       finish:
         input: transmission
         factor: 1.0
         phase: 0
         outputs:
         - piezo
+        setup_iir: true
+
 
 # all signals that are inputs of the lockbox. Must be signal names understood
 # by the model
@@ -54,11 +65,11 @@ inputs:
     unit: V
     redpitaya_input: adc2
     offset: -0.011950388550758362
-    max: 0.15428437292575836
-    min: -0.15797148644924164
-    mean: -0.006110109388828278
-    rms: 0.09669715565486804
-    curve: 258021
+    max: 0.22044648230075836
+    min: -0.18909941613674164
+    mean: 0.031389907002449036
+    rms: 0.13606550024825184
+    curve: 258379
   #transmission_rf:
   #  unit: V
   #  redpitaya_input: adc1
@@ -82,7 +93,7 @@ outputs:
     # parameter as it can be automatically filled in by the code)
     calibrationunits: m_per_V
     # 7 micron / 100V * 50V/V =
-    m_per_V:  3.5e-6
+    m_per_V: 3.5e-06
     # PZT Capacity: 42nF
     # Output impedance of HV amplifier: 100 kOhm
     # RC cutoff < 144 kHz: 1/2piRC = 37.9 Hz
@@ -90,17 +101,21 @@ outputs:
     # lowpass with corner frequency 37.9 Hz
     analogfilter:
       lowpass:
-      - 100
+      - 2000
     # the piezo manufacturer specifies the first resonance at 144 kHz
     # however, the mounting structure is expected to have resonances starting
     # from 15 kHz. To be safe, we start by demanding a unity-gain frequency
     # of 1 kHz and will later increase this value (automatically done after
     # lock optimisation)
     lock:
-      unity_gain_frequency: 1000.0
+      unity_gain_frequency: 100000.0
       inputfilter:
       - 0
       - 0
+      - 0
+      - 0
+    iir:
+      curve: 258377
     sweep:
       waveform: ramp
       frequency: 10.0
@@ -111,7 +126,7 @@ outputs:
 ##############################################################################
 
 scope:
-  input1: adc1
+  input1: adc2
   input2: dac1
   duration: 0.1
   trigger_source: immediately
