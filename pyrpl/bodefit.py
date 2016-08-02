@@ -20,7 +20,7 @@ def iirparams_from_curve(id):
 
 def iirparams_from_curveparams(curveparams):
     params = dict()
-    for e in ['loops', 'gain', 'inputfilter']: #'invert', :
+    for e in ['loops', 'gain', 'inputfilter']:
         if e in curveparams:
             params[e] = curveparams[e]
     if "pole_real" in curveparams:
@@ -37,6 +37,9 @@ def iirparams_from_curveparams(curveparams):
                                              dtype=np.complex128))
     else:
         params['zeros'] = list()
+    if 'invert' in curveparams and curveparams['invert']:
+        params['poles'], params['zeros'] = params['zeros'], params['poles']
+        params['gain'] = 1.0 / params['gain']
     return params
 
 

@@ -53,7 +53,6 @@ model:
         - piezo
         setup_iir: true
 
-
 # all signals that are inputs of the lockbox. Must be signal names understood
 # by the model
 inputs:
