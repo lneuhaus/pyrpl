@@ -128,7 +128,7 @@ model:
     output_direct: out1
     output_signal: quadrature
     quadrature_factor: 0.01
-    gain: 1.0  # 0.1
+    gain: 0.0  #1.0  # 0.1
 # all signals that are inputs of the lockbox. Must be signal names understood
 # by the model.
 inputs:
