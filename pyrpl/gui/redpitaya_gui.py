@@ -940,7 +940,7 @@ class NaGui(ModuleWidget):
             return
         cur = self.module.current_point
         try:
-            x, y, amp = self.values.next()
+            x, y, amp = next(self.values)
             self.threshold_hook(y)
         except StopIteration:
             self.post_average += 1

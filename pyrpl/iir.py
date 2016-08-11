@@ -371,7 +371,7 @@ def minimize_delay(coefficients):
             # compute something proportional to the frequency of the pole
             f = np.max([np.abs(np.log(pp)) for pp in p if pp != 0])
             ranks.append(f)
-        print ranks
+        print (ranks)
     newcoefficients = [c for (rank,c) in sorted(zip(ranks, list(coefficients)),
                                                  key=lambda pair: -pair[0])]
     return np.array(newcoefficients)
