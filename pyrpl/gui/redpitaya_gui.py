@@ -1210,6 +1210,7 @@ class RedPitayaGui(RedPitaya):
         self.tab_widget.show()
         if runcontinuous:
             self.scope_widget.run_continuous()
+        sys.exit(APP.exec_())
 
     def stop_all_timers(self):
         for tabnr in range(self.tab_widget.count()):

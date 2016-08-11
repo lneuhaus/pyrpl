@@ -102,7 +102,6 @@ pyrpl/config/*.bak
 
 #test files made by Xueshi
 test_import.py
-run.py
 rpiq_gui.py
 rpiq.ui
 pyrpl/config/c2gui.yml
