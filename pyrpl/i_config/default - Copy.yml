@@ -1,0 +1,12 @@
+redpitaya:
+  hostname: 10.54.4.53
+  password: root
+  user: root
+  port: 2222
+  frequency_correction: 1.0
+  filename: fpga//red_pitaya.bin
+  reloadfpga: true
+  # autostart gui?
+  gui: false
+  monitor_server_name: default_IL
+  silence_env: true
