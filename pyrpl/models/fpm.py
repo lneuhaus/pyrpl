@@ -8,7 +8,7 @@ from ..curvedb import CurveDB
 from .. import fitting
 from pyqtgraph.Qt import QtCore
 from pyinstruments.datalogger.models import SensingDevice
-from ..bodefit import BodeFitGui
+from ..bodefit import *
 
 class FPM(FabryPerot):
     """ custom class for the measurement fabry perot of the ZPM experiment """
@@ -627,6 +627,77 @@ class FPM_LMSD(FPM):
         self.timer.stop()
 
     def bodefitgui(self, id):
-        self.b = BodeFitGui(id=id, showstability=False, invert=False)
+        self.b = BodeFitIIRGui(id=id, showstability=False, invert=False)
         self.b.iir = self._parent.rp.iir
         return self.b
+
+
+class FabryPerot_FPM(FabryPerot):
+
+    export_to_parent = FabryPerot.export_to_parent + ["lock_p"]
+
+    def setup(self):
+        from .. import Pyrpl
+        self._parent.p = Pyrpl('am')
+        self._parent.h = Pyrpl('homodyne')
+        return super(FabryPerot_FPM, self).setup()
+
+    _pdh_rms_log = SensingDevice(
+        name="pdh_rms_rel")  # logbook for pdh rms
+
+    def pillar_feedback(self, **kwargs):
+        params = self._config.pillar_feedback._dict
+        params.update(kwargs)
+        self._parent.rp.iq2.setup(**params)
+
+    def unlock(self):
+        self._parent.rp.iq2.gain = 0
+        super(FabryPerot_FPM, self).unlock()
+
+    def normalized_reflection(self, detuning):
+        """ this is just a dummy function to avoid errors. The important
+        part is setup_normalized_reflection"""
+        return detuning
+
+    def setup_normalized_reflection(self):
+        signal = self.signals["normalized_reflection"]
+        if not hasattr(signal, 'pid'):
+            signal.pid = self._parent.rp.pids.pop()
+        signal._config.redpitaya_input = \
+            self.signals['reflection'].redpitaya_input
+        signal.pid.input = signal.redpitaya_input
+        signal.pid.output_direct = 'off'
+        signal.pid.ival = 0.5
+        signal.pid.inputfilter = 0
+        signal.pid.setpoint = signal._config.setpoint
+        signal.pid.p = -1.0
+        signal.pid.d = 0
+        signal.pid.normalization_i = signal._config.crossover
+        signal.pid.normalization_on = True
+        signal.pid.normalization_inputoffset = \
+            self.signals["reflection"]._config.offset
+        modelerror = self.signals["reflection"].sample * \
+                     signal.pid.normalization_gain / signal.pid.setpoint
+        self.logger.info("Normalizer has been set up with a model error of 1 : "
+                         "%s.", modelerror)
+        if signal._config.skip_forward_to_pdh:
+            pdhinput = self.signals['reflection'].redpitaya_input
+        else:
+            pdhinput = signal.pid.name
+        signal._config._root.inputs.pdh.setup.input = pdhinput
+        try:
+            pdh_iq = self.signals["pdh"].iq.input = pdhinput
+        except AttributeError:
+            logger.debug("Normalizer found no pdh signal (setup_pdh hasnt "
+                         "been called yet?). Not a problem, pdh config is "
+                         "up to date.")
+
+    def restart_normalized_reflection(self):
+        self.signals["normalized_reflection"].pid.normalization_on = False
+        self.signals["normalized_reflection"].pid.normalization_on = True
+
+    def lock_p(self, power=0):
+        p = self._parent.p
+        p.set_power(0)
+        self.lock()
+        return p.set_power(power)

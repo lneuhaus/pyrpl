@@ -9,9 +9,9 @@ epsilon = sys.float_info.epsilon
 
 from .bijection import Bijection
 
-#docstring does not work yet, see: 
-#http://stackoverflow.com/questions/37255109/python-docstring-for-descriptors
-#for now there is a workaround: call Module.help(register)
+# docstring does not work yet, see:
+# http://stackoverflow.com/questions/37255109/python-docstring-for-descriptors
+# for now there is a workaround: call Module.help(register)
 class Register(object):
     """Interface for basic register of type int"""
     def __init__(self, address, doc="", bitmask=None):
@@ -26,29 +26,29 @@ class Register(object):
         return int(value)
     
     def __get__(self, obj, objtype=None):
-        self.parent = obj #store obj in memory
+        self.parent = obj  #store obj in memory
         if self.bitmask is None:
             return self.to_python(obj._read(self.address))
         else:
-            return self.to_python(obj._read(self.address)&self.bitmask)
+            return self.to_python(obj._read(self.address) & self.bitmask)
     
     def __set__(self, obj, val):
-        self.parent = obj #store obj in memory
+        self.parent = obj  #store obj in memory
         if self.bitmask is None:
-            obj._write(self.address,self.from_python(val))
+            obj._write(self.address, self.from_python(val))
         else:
             act = obj._read(self.address)
             new = act&(~self.bitmask)|(int(self.from_python(val))&self.bitmask)
-            obj._write(self.address,new)
+            obj._write(self.address, new)
     
     def _writes(self, addr, v):
-        return self.parent._writes(addr,v)
+        return self.parent._writes(addr, v)
     
     def _reads(self, addr, l):
-        return self.parent._reads(addr,l)
+        return self.parent._reads(addr, l)
 
     def _write(self, addr, v):
-        return self.parent._write(addr,v)
+        return self.parent._write(addr, v)
     
     def _read(self, addr):
         return self.parent._read(addr)
@@ -85,32 +85,34 @@ class LongRegister(Register):
                             (int(act[i]) & (~localbitmask))
         obj._writes(self.address, values)
             
+
 class BoolRegister(Register):
-    """Inteface for boolean values, 1: True, 0: False. invert=True inverts the mapping"""
+    """Inteface for boolean values, 1: True, 0: False.
+    invert=True inverts the mapping"""
     def __init__(self, address, bit=0, invert=False, **kwargs):
-        super(BoolRegister,self).__init__(address=address, **kwargs)
+        super(BoolRegister, self).__init__(address=address, **kwargs)
         self.bit = bit
-        assert type(invert)==bool
+        assert type(invert) == bool
         self.invert = invert
         
     def to_python(self, value):
-        value = bool((value>>self.bit)&1)
+        value = bool((value >> self.bit) & 1)
         if self.invert:
             value = not value
         return value
-    
+
     def __set__(self, obj, val):
         if self.invert:
             val = not val
         if val:
-            v = obj._read(self.address)|(1<<self.bit)
+            v = obj._read(self.address) | (1 << self.bit)
         else:
-            v = obj._read(self.address)&(~(1<<self.bit))
-        obj._write(self.address,v)
+            v = obj._read(self.address) & (~(1 << self.bit))
+        obj._write(self.address, v)
+
 
 class IORegister(BoolRegister):
     """Interface for digital outputs
-    
     if argument outputmode is True, output mode is set, else input mode"""
     def __init__(self, read_address, write_address, direction_address, 
                  outputmode=True, bit=0, **kwargs):
@@ -118,27 +120,30 @@ class IORegister(BoolRegister):
             address = write_address
         else:
             address = read_address
-        super(IORegister,self).__init__(address=address, bit=bit, **kwargs)
+        super(IORegister, self).__init__(address=address, bit=bit, **kwargs)
         self.direction_address = direction_address
-        #self.direction = BoolRegister(direction_address,bit=bit, **kwargs)
-        self.outputmode = outputmode #set output direction
+        # self.direction = BoolRegister(direction_address,bit=bit, **kwargs)
+        self.outputmode = outputmode  # set output direction
     
     def direction(self, v=None):
+        """ sets the direction (inputmode/outputmode) for the Register """
         if v is None:
             v = self.outputmode
         if v:
-            v = self._read(self.address)|(1<<self.bit)
+            v = self._read(self.address) | (1 << self.bit)
         else:
-            v = self._read(self.direction_address)&(~(1<<self.bit))
-        self._write(self.direction_address,v)
+            v = self._read(self.direction_address) & (~(1 << self.bit))
+        self._write(self.direction_address, v)
     
-    def to_python(self, value):
+    def __get__(self, obj, objtype=None):
+        self.parent = obj  # store obj in memory
         self.direction()
-        return value
+        return super(IORegister, self).__get__(obj=obj, objtype=objtype)
 
-    def fom_python(self, value):
+    def __set__(self, obj, val):
+        self.parent = obj  # store obj in memory
         self.direction()
-        return value
+        return super(IORegister, self).__set__(obj=obj, val=val)
 
 
 class SelectRegister(Register):

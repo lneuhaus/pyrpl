@@ -1,9 +1,11 @@
 import time
 import logging
 import numpy as np
-logger = logging.getLogger(__name__)
 
-from .curvedb import CurveDB
+from . import bodefit
+from . import CurveDB
+
+logger = logging.getLogger(__name__)
 
 
 class ExposedConfigParameter(object):
@@ -474,12 +476,12 @@ class RPOutputSignal(RPSignal):
             if ival:
                 self.pid2.ival = 0
 
-    def unlock(self):
+    def unlock(self, ival=True):
         """ Turns the signal lock off if the signal is used for locking """
         if self._skiplock:
             return
         else:
-            self.off()
+            self.off(ival=ival)
 
     def lock(self,
              slope,
@@ -885,9 +887,13 @@ class RPOutputSignal(RPSignal):
             logger.debug("Setting up IIR filter for output %s. ", self._name)
         # overwrite defaults with kwargs
         iirconfig.update(kwargs)
-        # workaround for complex numbers from yaml
-        iirconfig["zeros"] = [complex(n) for n in iirconfig.pop("zeros")]
-        iirconfig["poles"]= [complex(n) for n in iirconfig.pop("poles")]
+        if 'curve' in iirconfig:
+            iirconfig.update(bodefit.iirparams_from_curve(
+                                                    id=iirconfig.pop('curve')))
+        else:
+            # workaround for complex numbers from yaml
+            iirconfig["zeros"] = [complex(n) for n in iirconfig.pop("zeros")]
+            iirconfig["poles"] = [complex(n) for n in iirconfig.pop("poles")]
         # get module
         if not hasattr(self, "iir"):
             self.iir = self._rp.iirs.pop()

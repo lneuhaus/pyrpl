@@ -3,7 +3,7 @@ redpitaya:
   password: root
   user: root
   port: 2222
-  frequency_correction: 0.9999802723463688
+  frequency_correction: 1.00004121095
   #0.9999801526493788
   filename: fpga//red_pitaya.bin
   reloadfpga: true
@@ -13,13 +13,13 @@ redpitaya:
 
 general:
   # name of this device
-  name: fpm_lmsd
+  name: fpm
   # level of logged information.
   # 'debug' outputs everything
   # 'infi' is default level
   # 'warning' only shows warnings and errors
   # 'error' only shows errors
-  loglevel: warning
+  loglevel: info
   # import CurveDB class from which module? if missing, it's pyrpl.curvedb
   #curvedb: pyrpl
   curvedb: pyinstruments
@@ -29,7 +29,7 @@ general:
 model:
   # use class Interferometer for internal model and lock algorithms
   # upper- or lowercase spelling is accepted if there is no ambiguity
-  modeltype: FPM_LMSD
+  modeltype: fabryperot_fpm
   # only needed parameter is wavelength
   # (to convert piezo displacement into gain)
   wavelength: 1.064e-06
@@ -37,8 +37,8 @@ model:
   # for interferometer, this is the phase error in radians
   # this value is uniquely needed for the function 'islocked'
   maxerror: 0.1
-  offresonant_reflection: 0.3318003788590431
-  resonant_reflection: 0.11915389448404312
+  offresonant_reflection: 0.40930061787366867
+  resonant_reflection: 0.04577522724866867
   finesse: 92000.0
   length: 5.61e-05
   # signals in order of their preferrence
@@ -49,160 +49,132 @@ model:
     error_threshold: 1
     stages:
       #call_calibrate: {}
+      # make sure normalizer is good
+      call_restart_normalized_reflection: {}
       drift:
-        input: lmsd
-        detuning: 1
-        factor: 1
-        offset: -1
+        input: reflection
+        detuning: 2
+        factor: 0.5
+        time: 3
+        offset: 1
         outputs:
         - piezo
-        time: 2
-      lmsd:
-        input: lmsd
+      sof:
+        input: reflection
         detuning: 1
-        factor: 0.1
-        time: 0.2
+        factor: 0.5
+        time: 0.01
         outputs:
         - piezo
-      call_setup_pll:
-        timeout: 0.5
-      #finish:  # problematic for lock acquisition
-      #  input: lmsd
+      prepdh:
+        input: pdh
+        detuning: 0.1
+        factor: 0.5
+        time: 0.05
+        outputs:
+        - piezo
+      #integratorboost1:
+      #  input: pdh
       #  detuning: 0
-      #  factor: 0.1
-      #  outputs:
-      #  - piezo
+      #  factor: 1
+      #  time: 0.5
+      #  second_integrator: 0.02
+      #integratorboost2:
+      #  input: pdh
+      #  detuning: 0
+      #  factor: 1
+      #  time: 0.5
+      #  second_integrator: 0.1
+      #integratorboost3:
+      #  input: pdh
+      #  detuning: 0
+      #  factor: 1
+      #  time: 0.5
+      #   second_integrator: 0.7
+   #   #call_pillar_feedback: {}
+      prepdh2:
+        input: pdh
+        detuning: 0.05
+        factor: 1
+        time: 0.05
+        outputs:
+        - piezo
+      pdh:
+        input: pdh
+        detuning: 0
+        factor: 1
+        time: 0.01
+        outputs:
+        - piezo
+        - am
+        setup_iir: false #true
+        #- fastpiezo
+
+        #second_integrator: 1.0
+      #call_islocked: {}
   calibrate:
-    zoomfactor: 0.1
+    zoomfactor: 0.07
     relative_threshold: 0.75
   #peak: 0.07061767578125
-  peak_pdh: 0.1053466796875
-  pll:
-    # 4 principal feedback loops: frequency, angle, quadraturefactor, amplitude
-    #above phasethreshold, frequency is incremented by f_jump
-    f_phasethreshold: 25.0  # 25.0
-    # the angle error times anglegain is added to the demodulation angle
-    angle_gain: 1.0 #1.0
-    # nominal phase for the demodulation angle
-    f_phasesetpoint: 240.0
-    # the quadraturefactor error is exponentiated by quadraturefactor_gain and
-    # multiplied onto quadraturefactor
-    quadraturefactor_gain: 1.0 #1.0
-    # the amp error is exponentiated by amp_gain
-    # amp error is the ratio of quadraturefactor and qf_setpoint
-    amp_gain: 0.051 # 0.1
-    # other stuff
-    amp_dgain: 0.0 #0.0
-    # amp_setpoint is the setpoint for the mean result from amp_natrace
-    #this should be tuned after manually looking at the na trace with the
-    #corresponding parameters
-    amp_setpoint: 0.01 # 0.003  #0.1 #0.03  # 0.015
-    # qf setpoint is the stable value for quadrature factor and should be
-    # the same as at setup (giving a nice LMSD signal during sweeping)
-    qf_setpoint: 0.05 #0.025
-
-    amp_max: 0.35
-    amp_min: 0.025
-    f_jump: 0.015
-    na_averages: 1000
-    na_samples: 100 #1000
-    amp_natrace:
-      start: 689200  #689000
-      stop: 689400  #689000
-      rbw: [75, 75]
-      points: 51
-      amplitude: 0.25
-      logscale: false
-    #  avg: 1
-    #amp_natrace:
-    #  start: 688000
-    #  stop: 690000
-    #  rbw: [75, 75]
-    #  points: 101
-    #  amplitude: 0.1
-    #  logscale: false
-    #  avg: 1
-
+  peak_pdh: 0.92376708984375
+  pillar_feedback:
+    frequency: 3578531.962800605 #3578520.0
+    bandwidth:
+    - 10000.0
+    - 50000.0
+    phase: 150 #90
+    acbandwidth: 500000.0
+    amplitude: 0
+    input: iq0
+    output_direct: out1
+    output_signal: quadrature
+    quadrature_factor: 0.01
+    gain: 1.0  # 0.1
 # all signals that are inputs of the lockbox. Must be signal names understood
 # by the model.
 inputs:
   reflection:
     redpitaya_input: adc2
-    offset: -0.011612139642238617
-    max: 0.06178303807973862
-    min: 0.017471514642238617
-    mean: 0.055541761219501495
-    rms: 0.004199783034511618
-    curve: 256431
+    offset: -0.01013069599866867
+    max: 0.40930061787366867
+    min: 0.04577522724866867
+    mean: 0.38786904513835907
+    rms: 0.032028612766872674
+    curve: 258050
   pdh:
-    redpitaya_input: adc1
-    max: 0.10808976739645004
-    min: -0.10260359197854996
-    mean: -0.0013632923364639282
-    rms: 0.01862275802942001
+    redpitaya_input: iq0
+    max: 0.9191086143255234
+    min: -0.9284255653619766
+    mean: -0.0050692930817604065
+    rms: 0.09162702826361398
+    offset: 0.0010574012994766235
     setup:
-      phase: -5
-      amplitude: 4.0
-      amplitude_for_finesse: 3.5
-      frequency: 80000000.0
-      generator: AFG_EVA
-    offset: -0.011245273053646088
-  lmsd:
-    redpitaya_input: iq2
-    peak: -0.7
-    xmax: 11.370978376182121
-    phi: 0
-    offset: 0.0004473179578781128
-    max: 0.3129346892237663
-    min: -0.2935106232762337
-    mean: -0.0035892650485038757
-    rms: 0.07346427173403569
-    curve: 256020
-    variable_per_time: 6120.24734567
-    setup:
-      phase: 240
+      phase: 275 # 307
       amplitude: 0.25
-      frequency: 3578312.838329047  #3578311.5236825133
-      iq: iq2
-      quadrature_factor: 0.2
+      frequency: 49670000.0
       gain: 0
-      output_direct: out2
+      quadrature_factor: 0.032 # 0.0078125  #0.047
+      input: pid1
       output_signal: quadrature
-      input: adc2
-      acbandwidth: 1000000.0
-      bandwidth: [1000000.0, 1000000.0, 1000000.0, 1000000.0]
-  lmsd_quadrature:
-    redpitaya_input: adc1
-
-    offset: -0.01122669130563736
+      output_direct: out2
+      acbandwidth: 10000000.0
+      bandwidth: [5000000.0, 10000000.0]
+    curve: 258052
+  normalized_reflection:
+    redpitaya_input: adc2
+    skip_forward_to_pdh: false
+    offset: 0.0
+    crossover: 2000000.0
+    setpoint: 0.15
+    max: 0.3997802734375
+    min: 0.0372314453125
+    mean: 0.37922027707099915
+    rms: 0.03277885137078834
+    curve: 258054
 # All output signals. Names of outputs are arbitrary. if the 'lock' tab is
 # missing or false, the output will not be used for locking
 outputs:
   # the very coarse piezo. at the moment, it is controlled manually
-  slow:
-    lock:
-      skip: true
-      unity_gain_frequency: 10.0
-      inputfilter:
-      - 0
-      - 0
-      - 0
-      - 0
-    redpitaya_output: pwm1
-    # attention: output voltage is inversed w.r.t. redpitaya voltage because of
-    # inverting amplifier behind pwm1
-    max_voltage: 0.7
-    min_voltage: -1.0
-    # amplitier gain complicated - calibrate manually. at the moment
-    # let's say 2V gives us a full FSR or better:
-    # amplifier gain 100V/V, 1 micron/100V, penalty 6, in principle twice as
-    # much cause 2 piezos are active
-    m_per_V: 3.2e-07
-    analogfilter:
-      lowpass:
-      - 0.05
-    calibrationunits: m_per_V
-    lastoffset: 0.5694580078125
   piezo:
     redpitaya_output: out2
     # we will calibrate the piezo response in units of m_per_V (not a necessary
@@ -225,17 +197,13 @@ outputs:
     analogfilter:
       lowpass: [15.8]
     lock:
-      unity_gain_frequency: 100.0
-      second_integrator_crossover: 5.0
+      unity_gain_frequency: 1200.0
+      #second_integrator_crossover: 5.0
       inputfilter:
+      - 4857.023409786845
+      - 4857.023409786845
       - 9714.04681957369
       - 9714.04681957369
-      - 9714.04681957369
-      - 9714.04681957369
-      - 9714.04681957369
-      - 9714.04681957369
-      - 0
-      - 0
     sweep:
       waveform: sin
       frequency: 25.0
@@ -244,7 +212,7 @@ outputs:
     min_voltage: -0.75
     transfer_function:
       open_loop: 254634
-  fastpiezo:
+  am:
     redpitaya_output: out1
     calibrationunits: m_per_V
     m_per_V: 3.0e-10
@@ -257,50 +225,37 @@ outputs:
       lowpass: []
     lock:
       #skip: true
-      proportional_gain: 1.0e-10
+      proportional_gain: 0 #500  # -8
       inputfilter:
-      - 1000000.0
-      - 1000000.0
+      - 1243397.9929054324
+      - 2486795.9858108647
+      - 0
+      - 0
     max_voltage: 0.9998779296875
     min_voltage: -1.0
     transfer_function:
       open_loop: 254744
     iir:
-      inputfilter: -150
-      loops: 200
-      gain: 1.0
-      plot: false
       zeros:
-      - (-151.00000009999999-16271.516867390001j)
-      - (-151.00000009999999+16271.516867390001j)
-      - (-51.000000100000001-22342.54324816j)
-      - (-51.000000100000001+22342.54324816j)
-      - (-1.0000001000000001-30884.304061449999j)
-      - (-1.0000001000000001+30884.304061449999j)
-      - (-41.000000100000001-32732.524450659999j)
-      - (-41.000000100000001+32732.524450659999j)
-      - (-51.000000100000001-46953.00496993j)
-      - (-51.000000100000001+46953.00496993j)
+      - -1201.0000001000008-9230.5473421477163j
+      - -101.00000009999997-25546.12893277956j
+      - -26.000000099999966-11950.18975806313j
       poles:
-      - (-151.0000001-10101.3614529j)
-      - (-151.0000001+10101.3614529j)
-      - (-81.0000001-21828.9081776j)
-      - (-81.0000001+21828.9081776j)
-      - (-1.0000001-30156.73583j)
-      - (-1.0000001+30156.73583j)
-      - (-1.0000001-32063.2533145j)
-      - (-1.0000001+32063.2533145j)
-      - (-61.0000001-44654.6352456j)
-      - (-61.0000001+44654.6352456j)
-      - (-100e3)
+      - -5267.3114353830388+0j
+      - -2501.0000000999999-6030.5473421477163j
+      - -1001.0000001-26631.897456083905j
+      - -401.00000009999997-12592.081428854313j
+      gain: 0.176
+      loops: 20
+      inputfilter: -2428.5
 
 ##############################################################################
 ###  Configuration parameters that rarely need to be modified ################
 ##############################################################################
 
 scope:
-  input1: iq2 #adc2
-  input2: iq2_2 #dac2
+  input1: iq0 #adc2
+  input2: adc2 #dac2
   duration: 0.1
   trigger_source: immediately
   average: false

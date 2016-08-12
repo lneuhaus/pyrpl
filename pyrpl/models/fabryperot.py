@@ -2,9 +2,13 @@ import numpy as np
 import scipy
 import logging
 import time
-logger = logging.getLogger(name=__name__)
+import threading
+
 from . import *
 from ..signal import Signal
+
+logger = logging.getLogger(name=__name__)
+
 
 class FabryPerot(Model):
     """
@@ -14,7 +18,7 @@ class FabryPerot(Model):
     # the internal variable for state specification
     _variable = 'detuning'
 
-    export_to_parent = Model.export_to_parent + ['R0']
+    export_to_parent = Model.export_to_parent + ['R0', 'relative_pdh_rms']
 
     # lorentzian functions
     def _lorentz(self, x):
@@ -115,6 +119,77 @@ class FabryPerot(Model):
         else:
             return detuning
 
+    def lock(self,
+             detuning=None,
+             factor=None,
+             firststage=None,
+             laststage=None,
+             thread=False):
+
+        # firststage will allow timer-based recursive iteration over stages
+        # i.e. calling lock(firststage = nexstage) from within this code
+        stages = self._config.lock.stages._keys()
+        if firststage:
+            if not firststage in stages:
+                self.logger.error("Firststage %s not found in stages: %s",
+                                  firstage, stages)
+            else:
+                stages = stages[stages.index(firststage):]
+        for stage in stages:
+            self.logger.debug("Lock stage: %s", stage)
+            if stage.startswith("call_"):
+                try:
+                    lockfn = self.__getattribute__(stage[len('call_'):])
+                except AttributeError:
+                    logger.error("Lock stage %s: model has no function %s.",
+                                 stage, stage[len('call_'):])
+                    raise
+            else:
+                # use _lock by default
+                lockfn = self._lock
+            parameters = dict(detuning=detuning, factor=factor)
+            parameters.update((self._config.lock.stages[stage]))
+            try:
+                stime = parameters.pop("time")
+            except KeyError:
+                stime = 0
+            if stage == laststage or stage == stages[-1]:
+                if detuning:
+                    parameters['detuning'] = detuning
+                if factor:
+                    parameters['factor'] = factor
+                try:
+                    return lockfn(**parameters)
+                except TypeError:  # function doesnt accept kwargs
+                    raise
+                    return lockfn()
+
+            else:
+                if thread:
+                    # immediately execute current step (in another thread)
+                    t0 = threading.Timer(0,
+                                         lockfn,
+                                         kwargs=parameters)
+                    t0.start()  # bug here: lockfn must accept kwargs
+                    # and launch timer for nextstage
+                    nextstage = stages[stages.index(stage) + 1]
+                    t1 = threading.Timer(stime,
+                                         self.lock,
+                                         kwargs=dict(
+                                             detuning=detuning,
+                                             factor=factor,
+                                             firststage=nextstage,
+                                             laststage=laststage,
+                                             thread=thread))
+                    t1.start()
+                    return None
+                else:
+                    try:
+                        lockfn(**parameters)
+                    except TypeError:  # function doesnt accept kwargs
+                        lockfn()
+                    time.sleep(stime)
+
     def calibrate(self, inputs=None, scopeparams={}):
         """
         Calibrates by performing a sweep as defined for the outputs and
@@ -180,7 +255,7 @@ class FabryPerot(Model):
         return curves
 
     def setup_pdh(self, **kwargs):
-        return super(FabryPerot, self).setup_iq(input='pdh', **kwargs)
+        return super(FabryPerot, self).setup_iq(inputsignal='pdh', **kwargs)
 
     def sweep(self):
         duration = super(FabryPerot, self).sweep()
@@ -214,13 +289,17 @@ class FabryPerot(Model):
         if avg > 1:
             sum = 0
             for i in range(avg):
-                sum += self.relative_pdh_rms()**2
+                sum += self.relative_pdh_rms(avg=1)**2
             return np.sqrt(sum/avg)
         else:
             self.signals["pdh"]._acquire()
             rms = self.signals["pdh"].rms
             relrms = rms / self._config.peak_pdh
-            self._pdh_rms_log.log(relrms)
+            if hasattr(self, '_pdh_rms_log'):
+                # this is a logger for the lock quality. It must be
+                # implemented by the user to fit into the local existing
+                # datalogging architecture.
+                self._pdh_rms_log.log(relrms)
             return relrms
 
     def islocked(self):
