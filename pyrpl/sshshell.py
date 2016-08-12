@@ -84,7 +84,7 @@ class SSHshell(object):
 
     def ask(self, question=""):
         return self.askraw(question + '\n')
-
+    '''
     def __del__(self):
         self.endapp()
         try:
@@ -92,7 +92,7 @@ class SSHshell(object):
         except AttributeError:
             pass  # already broken
         self.ssh.close()
-
+    '''
     def endapp(self):
         pass
 

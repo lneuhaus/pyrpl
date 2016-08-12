@@ -296,7 +296,7 @@ class RedPitaya(SSHshell):
     def end(self):
         self.endserver()
         self.endclient()
-
+    '''
     def __del__(self):
         self.end()
         try:
@@ -304,7 +304,7 @@ class RedPitaya(SSHshell):
         except socket.error:
             self.logger.warning("__del__ tried to close a socket that "
                                 "already was closed. ")
-
+    '''
     def restart(self):
         self.end()
         self.start()
