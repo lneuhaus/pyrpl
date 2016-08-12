@@ -84,11 +84,11 @@ inputs:
     unit: V
     redpitaya_input: adc2
     offset: 0.002445228397846222
-    max: 0.015621177852153778
-    min: -0.015506751835346222
-    mean: -0.0011671409010887146
-    rms: 0.004128026768722971
-    curve: 258803
+    max: 0.3116416856646538
+    min: -0.3134803846478462
+    mean: 0.01334187388420105
+    rms: 0.23080065416368709
+    curve: 259336
   #transmission_rf:
   #  unit: V
   #  redpitaya_input: adc1
@@ -111,11 +111,11 @@ inputs:
       amplitude: 0.5
       acbandwidth: 2000000.0
       bandwidth: [1000000, 500000]
-    max: 0.2327880859375
-    min: -0.23583984375
-    mean: -0.05467871576547623
-    rms: 0.13071093193979483
-    curve: 258805
+    max: 0.9998779296875
+    min: -1.0
+    mean: 0.1259268894791603
+    rms: 0.9309827650083359
+    curve: 259338
 # All output signals. Names of outputs are arbitrary.
 outputs:
   # we only have 1 actuator in this interferometer, the piezo in the LO arm

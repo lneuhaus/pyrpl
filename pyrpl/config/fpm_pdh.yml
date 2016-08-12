@@ -37,8 +37,8 @@ model:
   # for interferometer, this is the phase error in radians
   # this value is uniquely needed for the function 'islocked'
   maxerror: 0.1
-  offresonant_reflection: 0.11572151631116867
-  resonant_reflection: 0.02783089131116867
+  offresonant_reflection: 0.22961311787366867
+  resonant_reflection: 0.18005257099866867
   finesse: 92000.0
   length: 5.61e-05
   # signals in order of their preferrence
@@ -115,7 +115,7 @@ model:
     zoomfactor: 0.07
     relative_threshold: 0.75
   #peak: 0.07061767578125
-  peak_pdh: 0.99993896484375
+  peak_pdh: 0.16387939453125
   pillar_feedback:
     frequency: 3578531.962800605 #3578520.0
     bandwidth:
@@ -135,17 +135,17 @@ inputs:
   reflection:
     redpitaya_input: adc2
     offset: -0.01013069599866867
-    max: 0.11572151631116867
-    min: 0.02783089131116867
-    mean: 0.10532242059707642
-    rms: 0.008014771060397637
-    curve: 258771
+    max: 0.22961311787366867
+    min: 0.18005257099866867
+    mean: 0.21860474348068237
+    rms: 0.003976489882896554
+    curve: 259379
   pdh:
     redpitaya_input: iq0
-    max: 0.9988205283880234
-    min: -1.0010574012994766
-    mean: -0.0013656020164489746
-    rms: 0.10834419426455687
+    max: 0.16288302838802338
+    min: -0.16487576067447662
+    mean: -0.0013711079955101013
+    rms: 0.03732032275979676
     offset: 0.0010574012994766235
     setup:
       phase: 305 #275 # 307
@@ -158,18 +158,18 @@ inputs:
       output_direct: out2
       acbandwidth: 10000000.0
       bandwidth: [5000000.0, 10000000.0]
-    curve: 258773
+    curve: 259381
   normalized_reflection:
     redpitaya_input: adc2
     skip_forward_to_pdh: false
     offset: 0.0
     crossover: 2000000.0
     setpoint: 0.15
-    max: 0.1053466796875
-    min: 0.02197265625
-    mean: 0.09522882103919983
-    rms: 0.007259366215016301
-    curve: 258775
+    max: 0.2239990234375
+    min: 0.1671142578125
+    mean: 0.2096177265048027
+    rms: 0.0034078555056204773
+    curve: 259377
 # All output signals. Names of outputs are arbitrary. if the 'lock' tab is
 # missing or false, the output will not be used for locking
 outputs:
