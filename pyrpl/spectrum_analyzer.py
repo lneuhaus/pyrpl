@@ -236,9 +236,9 @@ class SpectrumAnalyzer(object):
         """
         :return: a slice containing the portion of the spectrum between start and stop
         """
-        middle = int(self.data_length/2)
+        middle = int(self.data_length//2)
         length = self.points#self.data_length/self.nyquist_margin
-        return slice(middle - length/2, middle + length/2 + 1)
+        return slice(middle - length//2, middle + length//2 + 1)
 
     def curve(self):
         """
@@ -254,6 +254,5 @@ class SpectrumAnalyzer(object):
         """
         :return: frequency array
         """
-        return self.center + np.roll(np.fft.fftfreq(self.data_length,
-                                                    self.sampling_time),
-                                     self.data_length/2)[self.useful_index()]
+        return self.center + np.roll(np.fft.fftfreq(self.data_length,self.sampling_time),
+                                     self.data_length//2)[self.useful_index()]
