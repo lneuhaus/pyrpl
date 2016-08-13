@@ -118,6 +118,9 @@ reg               trig_a_sw    , trig_b_sw    ;
 reg   [   3-1: 0] trig_a_src   , trig_b_src   ;
 wire              trig_a_done  , trig_b_done  ;
 
+reg               rand_a_on    , rand_b_on    ;
+wire  [ RSZ-1: 0] rand_pnt;
+
 //advanced triggers for both channels
 reg [64-1:0] at_counts_a;
 reg          at_reset_a;
@@ -180,7 +183,9 @@ red_pitaya_asg_ch  #(.RSZ (RSZ)) ch [1:0] (
   .set_ncyc_i      ({set_b_ncyc       , set_a_ncyc       }),  // set number of cycle
   .set_rnum_i      ({set_b_rnum       , set_a_rnum       }),  // set number of repetitions
   .set_rdly_i      ({set_b_rdly       , set_a_rdly       }),  // set delay between repetitions
-  .set_rgate_i     ({set_b_rgate      , set_a_rgate      })   // set external gated repetition
+  .set_rgate_i     ({set_b_rgate      , set_a_rgate      }),  // set external gated repetition
+  .rand_on_i       ({rand_b_on        , rand_a_on        }),
+  .rand_pnt_i      ({rand_pnt         , rand_pnt         })
 );
 
 
@@ -261,7 +266,10 @@ if (dac_rstn_i == 1'b0) begin
    at_reset_b <= 1'b1; 
    at_invert_b <= 1'b0;
    at_autorearm_b <= 1'b0;
-   
+
+   rand_a_on <= 1'b0;
+   rand_b_on <= 1'b0;
+
 end else begin
    trig_a_sw  <= sys_wen && (sys_addr[19:0]==20'h0) && sys_wdata[0]  ;
    if (sys_wen && (sys_addr[19:0]==20'h0))
@@ -272,8 +280,8 @@ end else begin
       trig_b_src <= sys_wdata[19:16] ;
 
    if (sys_wen) begin
-      if (sys_addr[19:0]==20'h0)   {at_autorearm_a, at_invert_a, at_reset_a, set_a_rgate, set_a_zero, set_a_rst, set_a_once, set_a_wrap} <= sys_wdata[11: 4] ;
-      if (sys_addr[19:0]==20'h0)   {at_autorearm_b, at_invert_b, at_reset_b, set_b_rgate, set_b_zero, set_b_rst, set_b_once, set_b_wrap} <= sys_wdata[27:20] ;
+      if (sys_addr[19:0]==20'h0)   {rand_a_on, at_autorearm_a, at_invert_a, at_reset_a, set_a_rgate, set_a_zero, set_a_rst, set_a_once, set_a_wrap} <= sys_wdata[12: 4] ;
+      if (sys_addr[19:0]==20'h0)   {rand_b_on, at_autorearm_b, at_invert_b, at_reset_b, set_b_rgate, set_b_zero, set_b_rst, set_b_once, set_b_wrap} <= sys_wdata[28:20] ;
 
       if (sys_addr[19:0]==20'h4)   set_a_amp  <= sys_wdata[  0+13: 0] ;
       if (sys_addr[19:0]==20'h4)   set_a_dc   <= sys_wdata[ 16+13:16] ;
@@ -297,7 +305,7 @@ end else begin
       if (sys_addr[19:0]==20'h11C)  at_counts_a[64-1:32] <= sys_wdata[32-1: 0] ;
       if (sys_addr[19:0]==20'h138)  at_counts_b[32-1:0]  <= sys_wdata[32-1: 0] ;
       if (sys_addr[19:0]==20'h13C)  at_counts_b[64-1:32] <= sys_wdata[32-1: 0] ;
-      
+
    end
 
    // disabled to improve fpga timing and space
@@ -310,8 +318,8 @@ end else begin
    ack_dly <=  ren_dly[3-1] || sys_wen ;
 end
 
-wire [32-1: 0] r0_rd = {4'h0,at_autorearm_b,at_invert_b,at_reset_b,set_b_rgate, set_b_zero,set_b_rst,set_b_once,set_b_wrap, 1'b0,trig_b_src,
-                        4'h0,at_autorearm_a,at_invert_a,at_reset_a,set_a_rgate, set_a_zero,set_a_rst,set_a_once,set_a_wrap, 1'b0,trig_a_src };
+wire [32-1: 0] r0_rd = {3'h0,rand_b_on,at_autorearm_b,at_invert_b,at_reset_b,set_b_rgate, set_b_zero,set_b_rst,set_b_once,set_b_wrap, 1'b0,trig_b_src,
+                        3'h0,rand_a_on,at_autorearm_a,at_invert_a,at_reset_a,set_a_rgate, set_a_zero,set_a_rst,set_a_once,set_a_wrap, 1'b0,trig_a_src };
 
 wire sys_en;
 assign sys_en = sys_wen | sys_ren;
@@ -357,5 +365,59 @@ end else begin
        default : begin sys_ack <= sys_en;          sys_rdata <=  32'h0                             ; end
    endcase
 end
+
+/*
+#58: Random noise generator
+open
+lneuhaus
+
+Original suggestion:
+x_{n+1} = (a x_n + b) modulo c
+
+    a=16807
+    b= plus ou moins n'importe quoi
+    c=2^31
+
+https://en.wikipedia.org/wiki/Lehmer_random_number_generator:
+
+In 1988, Park and Miller2 suggested a Lehmer RNG with particular parameters
+n = 231 − 1 = 2,147,483,647 (a Mersenne prime M31)
+Given the dynamic nature of the area, it is difficult for nonspecialists to
+make decisions about what generator to use. "Give me something I can understand,
+implement and port... it needn't be state-of-the-art, just make sure it's
+reasonably good and efficient." Our article and the associated minimal standard
+generator was an attempt to respond to this request. Five years later, we see
+no need to alter our response other than to suggest the use of the multiplier
+a = 48271 in place of 16807.
+
+Therefore:
+x_{n+1} = (a x_n + b) modulo c
+a=48271
+b= 2*18 1234 + 4 (or user override)
+c=2^31-1
+asg_phase_register <= 2*x_n (32 bits) in fpga
+
+asg.scale = 1.0
+http://docs.scipy.org/doc/numpy/reference/generated/numpy.random.normal.html
+asg.data = np.random.normal(loc=0.0, scale=sigma_in_volt, size=data_length)
+*/
+
+reg [31-1:0] xn;
+//wire [31-1:0] xn_wire;
+reg [31-1:0] b;
+reg [16-1:0] a;
+
+always @(posedge dac_clk_i)
+if (dac_rstn_i == 1'b0) begin
+   a <= 16'd48271 ;      // recommended by Park and Miller
+   b <= 31'd323485697;   // whatever
+   xn <= 31'd901448241 ; // whatever
+//end else begin
+//   xn <= ((&xn_wire)==1'b1) ? 31'd0 : xn_wire; // = modulo 2**31-1
+end
+
+//assign xn_wire = a * xn + b;
+assign rand_pnt = xn[31-1:31-RSZ];
+//rand_pnt will carry values between 0 and 2**(RSZ)-2
 
 endmodule

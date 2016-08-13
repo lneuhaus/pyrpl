@@ -1,9 +1,11 @@
 import time
 import logging
 import numpy as np
-logger = logging.getLogger(__name__)
 
-from .curvedb import CurveDB
+from . import bodefit
+from . import CurveDB
+
+logger = logging.getLogger(__name__)
 
 
 class ExposedConfigParameter(object):
@@ -276,9 +278,11 @@ class RPSignal(Signal):
             timeout = self._config.timeout
         except KeyError:
             timeout = self._rp.scope.duration*5
-        self._saverawdata(self._rp.scope.curve(ch=1, timeout=timeout), self._rp.scope.times)
+        self._saverawdata(self._rp.scope.curve(ch=1, timeout=timeout),
+                          self._rp.scope.times)
         if secondsignal is not None:
-            secondsignal._saverawdata(self._rp.scope.curve(ch=2, timeout=-1), self._rp.scope.times)
+            secondsignal._saverawdata(self._rp.scope.curve(ch=2, timeout=-1),
+                                      self._rp.scope.times)
         self._restartscope()
 
     @property
@@ -302,11 +306,15 @@ class RPSignal(Signal):
         """ Returns a CurveDB object with the last result of _acquitision """
         curve = super(RPSignal, self).curve
         extraparams = dict(
-            trigger_timestamp = self._rp.scope.trigger_timestamp,
-            duration = self._rp.scope.duration)
+            trigger_timestamp=self._rp.scope.trigger_timestamp,
+            duration=self._rp.scope.duration)
         curve.params.update(extraparams)
         curve.save()
         return curve
+
+    def fit(self, *args, **kwargs):
+        """ shortcut to the function fit of the underlying model """
+        self._parent.fit(input=self, *args, **kwargs)
 
 
 class RPOutputSignal(RPSignal):
@@ -453,25 +461,27 @@ class RPOutputSignal(RPSignal):
         else:
             return False
 
-    def off(self):
+    def off(self, ival=True):
         """ Turns off all feedback gains, sweeps and sets the offset to
-        zero. """
+        zero. If ival is false, ival is not included here"""
         self.pid.p = 0
         self.pid.i = 0
         self.pid.d = 0
-        self.pid.ival = 0
+        if ival:
+            self.pid.ival = 0
         if hasattr(self, 'pid2'):
             self.pid2.i = 0
             self.pid2.p = 1
             self.pid2.d = 0
-            self.pid2.ival = 0
+            if ival:
+                self.pid2.ival = 0
 
-    def unlock(self):
+    def unlock(self, ival=True):
         """ Turns the signal lock off if the signal is used for locking """
         if self._skiplock:
             return
         else:
-            self.off()
+            self.off(ival=ival)
 
     def lock(self,
              slope,
@@ -480,7 +490,8 @@ class RPOutputSignal(RPSignal):
              factor=1.0,
              offset=None,
              second_integrator=0,
-             setup_iir=False):
+             setup_iir=False,
+             skipskip=False):
         """
         Enables feedback with this output. The realized transfer function of
         the pid plus specified external analog filters is a pure integrator if
@@ -514,14 +525,15 @@ class RPOutputSignal(RPSignal):
             switch on the iir filter only in the final step. This results in a
             gain in speed and avoids saturation of internal degrees of
             freedom of the IIR.
-
+        skipskip: bool
+            overrides a 'skip' configuration of the output in case it is set
         Returns
         -------
         None
         """
 
         # if output is disabled for locking, skip the rest
-        if self._skiplock:
+        if self._skiplock and not skipskip:
             return
 
         # normalize slope to our units
@@ -597,11 +609,17 @@ class RPOutputSignal(RPSignal):
 
         # get inputoffset
         if input is None:
-            inputbranch = self._config._root.inputs["self.pid.input"]
-            if inputbranch.offset_subtraction:
-                inputoffset = inputbranch.offset
-            else:
+            try:
+                inputbranch = self._config._root.inputs[self.pid.input]
+            except KeyError:
                 inputoffset = 0
+                logger.warning("Inputbranch for %s wasn't found. No way to "
+                               "correct for its offset. ", self.pid.input)
+            else:
+                if inputbranch.offset_subtraction:
+                    inputoffset = inputbranch.offset
+                else:
+                    inputoffset = 0
         else:
             inputoffset = input.offset
 
@@ -746,10 +764,39 @@ class RPOutputSignal(RPSignal):
         else:
             asgname = 'asg1'
         asg = self._rp.__getattribute__(asgname)
+        self._asg = asg  # for future reference
         asg.setup(**kwargs)
         self.pid.input = asgname
+        self.pid.setpoint = 0
         self.pid.p = amplitude
         return asg.frequency
+
+    @property
+    def _sweep_triggerphase(self):
+        """ returns the last scopetriggerphase for the sweeping asg """
+        return self._asg.scopetriggerphase
+
+    def _analogfilter(self, frequencies):
+        tf = np.array(frequencies, dtype=np.complex)*0.0 + 1.0
+        try:
+            lp = self._config.analogfilter.lowpass
+        except KeyError:
+            return tf
+        else:
+            for p in lp:
+                tf /= (1.0 + 1j * frequencies / p)
+            return tf
+
+    @property
+    def sweep_triggerphase(self):
+        """ returns the last scopetriggerphase for the sweeping asg,
+        corrected for phase delay due to analog output filters of the output"""
+        if hasattr(self, '_asg') and self._asg.amplitude != 0:
+            f = self._asg.frequency
+            analogdelay = np.angle(self._analogfilter(f), deg=True)
+            return (self._sweep_triggerphase + analogdelay) % 360
+        else:
+            return 0
 
     @property
     def output_offset(self):
@@ -840,9 +887,13 @@ class RPOutputSignal(RPSignal):
             logger.debug("Setting up IIR filter for output %s. ", self._name)
         # overwrite defaults with kwargs
         iirconfig.update(kwargs)
-        # workaround for complex numbers from yaml
-        iirconfig["zeros"] = [complex(n) for n in iirconfig.pop("zeros")]
-        iirconfig["poles"]= [complex(n) for n in iirconfig.pop("poles")]
+        if 'curve' in iirconfig:
+            iirconfig.update(bodefit.iirparams_from_curve(
+                                                    id=iirconfig.pop('curve')))
+        else:
+            # workaround for complex numbers from yaml
+            iirconfig["zeros"] = [complex(n) for n in iirconfig.pop("zeros")]
+            iirconfig["poles"] = [complex(n) for n in iirconfig.pop("poles")]
         # get module
         if not hasattr(self, "iir"):
             self.iir = self._rp.iirs.pop()

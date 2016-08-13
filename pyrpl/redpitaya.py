@@ -33,7 +33,10 @@ from .sshshell import SSHshell
 from . import monitor_client
 from . import redpitaya_modules as rp
 from .network_analyzer import NetworkAnalyzer
-from .spectrum_analyzer import SpectrumAnalyzer
+# from .spectrum_analyzer import SpectrumAnalyzer
+# let's start debugging the spec an by taking data around 0 hz before we go
+# more complex
+from .spectrum_analyzer_noiq import SpectrumAnalyzer
 
 class RedPitaya(SSHshell):
     _binfilename = 'fpga.bin'
@@ -363,7 +366,7 @@ class RedPitaya(SSHshell):
         # iq2 is special: two outputs for scope/specAn. This special treatment
         # should soon be made more general. For thsi reason, we already
         # exclude it from the iqs list, such that it cannot be popped away..
-        self.iq2 = rp.IQ(self.client, module='iq2')
+        self.iq2 = rp.IQ(self.client, module='iq2', parent=self)
         # higher functionality modules
         self.na = NetworkAnalyzer(self)
         self.spec_an = SpectrumAnalyzer(self)

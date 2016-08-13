@@ -162,7 +162,7 @@ class NetworkAnalyzer(object):
                       bandwidth=self.rbw,
                       gain=0,
                       phase=0,
-                      acbandwidth=-np.array(self.acbandwidth),
+                      acbandwidth=self.acbandwidth,
                       amplitude=amplitude,
                       input=self.input,
                       output_direct=self.output_direct,

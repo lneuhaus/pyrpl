@@ -41,6 +41,8 @@ def property_factory(module_widget, prop):
             new_prop = BoolProperty(prop, module_widget)
         elif isinstance(attr, integer_types):
             new_prop = IntProperty(prop, module_widget)
+        elif isinstance(attr, str):
+            new_prop = StringProperty(prop, module_widget)
         else:
             new_prop = FloatProperty(prop, module_widget)
     return new_prop
@@ -88,6 +90,42 @@ class BaseProperty(object):
         """
 
         pass
+
+
+class StringProperty(BaseProperty):
+    """
+    Property for string values.
+    """
+
+    def set_widget(self):
+        """
+        Sets up the widget (here a QSpinBox)
+        :return:
+        """
+
+        self.widget = QtGui.QLineEdit()
+        self.widget.textChanged.connect(self.write)
+
+    def module_value(self):
+        """
+        returns the module value, with the good type conversion.
+
+        :return: str
+        """
+        return str(self.module.__getattribute__(self.name))
+
+    def write(self):
+        setattr(self.module, self.name, str(self.widget.text()))
+        if self.acquisition_property:
+            self.module_widget.property_changed.emit()
+
+    def update(self):
+        """
+        Updates the value displayed in the widget
+        :return:
+        """
+        if not self.widget.hasFocus():
+            self.widget.setText(self.module_value())
 
 
 class NumberProperty(BaseProperty):
@@ -339,7 +377,8 @@ class ScopeWidget(ModuleWidget):
                       "average",
                       "trigger_source",
                       "threshold_ch1",
-                      "threshold_ch2"]
+                      "threshold_ch2",
+                      "curve_name"]
 
     def display_channel(self, ch):
         """
@@ -407,7 +446,19 @@ class ScopeWidget(ModuleWidget):
                 times -= times[-1]
                 self.curves[index].setData(times, data)
                 self.curves[index].setVisible(True)
+        try:
+            self.curve_display_done()
+        except Exception as e:
+            print e
         self.timer.start()
+
+    def curve_display_done(self):
+        """
+        User may overwrite this function to implement custom functionality
+        at each graphical update.
+        :return:
+        """
+        pass
 
     def run_continuous(self):
         """
@@ -451,6 +502,7 @@ class ScopeWidget(ModuleWidget):
         """
 
         self.ch_col = ('green', 'red')
+        self.module.__dict__['curve_name'] = 'scope'
         self.main_layout = QtGui.QVBoxLayout()
         self.init_property_layout()
         self.button_layout = QtGui.QHBoxLayout()
@@ -508,6 +560,8 @@ class ScopeWidget(ModuleWidget):
             spin_box.setMinimum(-1)
             spin_box.setSingleStep(0.01)
 
+        self.properties["curve_name"].acquisition_property = False
+
     @property
     def rolling_mode(self):
         return ((self.checkbox_untrigged.isChecked()) and \
@@ -541,13 +595,13 @@ class ScopeWidget(ModuleWidget):
         Params to be saved within the curve (maybe we should consider removing this and instead
         use self.properties...
         """
-
         return dict(average=self.module.average,
                     trigger_source=self.module.trigger_source,
                     threshold_ch1=self.module.threshold_ch1,
                     threshold_ch2=self.module.threshold_ch2,
                     input1=self.module.input1,
-                    input2=self.module.input2)
+                    input2=self.module.input2,
+                    name=self.module.curve_name)
 
     def save(self):
         """
@@ -557,9 +611,10 @@ class ScopeWidget(ModuleWidget):
 
         for ch in [1, 2]:
             d = self.params
-            d.update(ch=ch)
+            d.update({'ch': ch,
+                      'name': self.module.curve_name + ' ch' + str(ch)})
             self.save_curve(self.module.times,
-                            self.module.curve(ch),
+                            self.module.curve(ch, timeout=-1),
                             **d)
 
 
@@ -646,7 +701,8 @@ class NaGui(ModuleWidget):
                       "amplitude",
                       "logscale",
                       "infer_open_loop_tf",
-                      "avg"]
+                      "avg",
+                      "curve_name"]
 
     def init_gui(self):
         """
@@ -654,7 +710,7 @@ class NaGui(ModuleWidget):
         """
         # add this new display parameter to module na
         self.module.infer_open_loop_tf = False
-
+        self.module.__dict__['curve_name'] = 'na trace'
         self.main_layout = QtGui.QVBoxLayout()
         self.init_property_layout()
         self.button_layout = QtGui.QHBoxLayout()
@@ -722,14 +778,15 @@ class NaGui(ModuleWidget):
             spin_box.setMinimum(0)
 
         self.properties["infer_open_loop_tf"].acquisition_property = False
+        self.properties["curve_name"].acquisition_property = False
 
-    def save_current_params(self):
+    def save_params(self):
         """
-        Stores the params in a dictionary self.current_params.
+        Stores the params in a dictionary self.params.
         We should consider using self.properties instead of manually iterating.
         """
 
-        self.current_params = dict(start=self.module.start,
+        self.params = dict(start=self.module.start,
                                    stop=self.module.stop,
                                    rbw=self.module.rbw,
                                    input=self.module.input,
@@ -740,7 +797,7 @@ class NaGui(ModuleWidget):
                                    avg=self.module.avg,
                                    post_average=self.post_average,
                                    infer_open_loop_tf=self.module.infer_open_loop_tf,
-                                   name="pyrpl_na")
+                                   name=self.module.curve_name)
 
     def save(self):
         """
@@ -750,7 +807,7 @@ class NaGui(ModuleWidget):
 
         self.save_curve(self.x[:self.last_valid_point],
                         self.data[:self.last_valid_point],
-                        **self.current_params)
+                        **self.params)
 
     def init_data(self):
         """
@@ -839,7 +896,7 @@ class NaGui(ModuleWidget):
 
         self.module.setup()
         self.values = self.module.values()
-        self.save_current_params()
+        self.save_params()
 
     def set_state(self, continuous, paused, need_restart, n_av=0):
         """
@@ -1015,6 +1072,8 @@ class SpecAnGui(ModuleWidget):
     """
     Widget for the Spectrum Analyzer Tab.
     """
+    _display_max_frequency = 25  # max 25 Hz framerate
+
     property_names = ["input",
                       "center",
                       "span",
@@ -1022,14 +1081,16 @@ class SpecAnGui(ModuleWidget):
                       "rbw_auto",
                       "rbw",
                       "window",
-                      # "avg",
-                      "acbandwidth"]
+                      "avg",
+                      "acbandwidth",
+                      "curve_name"]
 
     def init_gui(self):
         """
         Sets up the gui.
         """
         self.main_layout = QtGui.QVBoxLayout()
+        self.module.__dict__['curve_name'] = 'pyrpl spectrum'
         self.init_property_layout()
         self.button_layout = QtGui.QHBoxLayout()
         self.setLayout(self.main_layout)
@@ -1058,26 +1119,31 @@ class SpecAnGui(ModuleWidget):
         self.button_save.clicked.connect(self.save)
 
         self.timer = QtCore.QTimer()
-        self.timer.setSingleShot(True)
+        #self.timer.setSingleShot(True)
+        #  dont know why but this removes the bug with with freezing gui
+        self.timer.setSingleShot(False)
         self.timer.setInterval(10)
         self.timer.timeout.connect(self.acquire_one_curve)
 
         self.running = False
         self.property_changed.connect(self.restart_averaging)
 
-        for prop in self.properties["center"], self.properties["rbw"]:
-            prop.widget.setMaximum(100e6)
+        for prop in [self.properties[prop] for prop in
+                     ["center", "rbw"]]:
+            prop.widget.setMaximum(125e6)
             prop.widget.setDecimals(0)
         self.properties["acbandwidth"].widget.setMaximum(100e6)
         self.properties["points"].widget.setMaximum(16384)
+        self.properties["avg"].widget.setMaximum(1000000000)
+        self.properties["curve_name"].acquisition_property = False
 
     def save(self):
         """
         Saves the current curve.
         """
         self.save_curve(self.x_data,
-                        self.y_data,
-                        **self.current_params())
+                        self.module.data_to_dBm(self.y_data),
+                        **self.params())
 
     def update_properties(self):
         """
@@ -1087,6 +1153,19 @@ class SpecAnGui(ModuleWidget):
 
         super(SpecAnGui, self).update_properties()
         self.properties["rbw"].widget.setEnabled(not self.module.rbw_auto)
+
+    @property
+    def current_average(self):
+        return self._current_average
+
+    @current_average.setter
+    def current_average(self, v):
+        # putting a ceiling to the current average, together with the math
+        # in acquire_one_curve, automatically creates a lowpass-like
+        # averaging mode with a 'bandwidth' defined by avg
+        if v > self.module.avg:
+            v = self.module.avg
+        self._current_average = v
 
     def run_single(self):
         """
@@ -1100,25 +1179,34 @@ class SpecAnGui(ModuleWidget):
 
     def update_display(self):
         """
-        Updates the curve and the number of averages.
+        Updates the curve and the number of averages. Framerate has a ceiling.
         """
-
-        self.curve.setData(self.x_data, self.y_data)
-        if self.running:
-            self.button_continuous.setText('Stop (%i)' % self.current_average)
+        if not hasattr(self, '_lasttime') \
+                or (time() - 1.0/self._display_max_frequency) > self._lasttime:
+            self._lasttime = time()
+            # convert data from W to dBm
+            self.curve.setData(self.x_data,
+                               self.module.data_to_dBm(self.y_data))
+            if self.running:
+                buttontext = 'Stop (%i' % self.current_average
+                if self.current_average >= self.module.avg:
+                    # shows a plus sign when number of averages is available
+                    buttontext += '+)'
+                else:
+                    buttontext += ')'
+                self.button_continuous.setText(buttontext)
 
     def acquire_one_curve(self):
         """
         Acquires only one curve.
         """
-
         self.module.setup()
         self.y_data = (self.current_average * self.y_data \
                        + self.module.curve()) / (self.current_average + 1)
         self.current_average += 1
         self.update_display()
-        if self.running:
-            self.timer.start()
+        #if self.running:
+        #    self.timer.start()
 
     def run_continuous(self):
         """
@@ -1135,11 +1223,10 @@ class SpecAnGui(ModuleWidget):
         """
         Stops the current continuous acquisition (part of the public interface).
         """
-
+        self.timer.stop()
         self.button_continuous.setText("Run continuous")
         self.running = False
         self.button_single.setEnabled(True)
-        self.timer.stop()
 
     def run_continuous_clicked(self):
         """
@@ -1155,12 +1242,11 @@ class SpecAnGui(ModuleWidget):
         """
         Restarts the curve averaging.
         """
-
-        self.y_data = np.zeros(self.module.points)
         self.x_data = self.module.freqs()
+        self.y_data = np.zeros(len(self.x_data))
         self.current_average = 0
 
-    def current_params(self):
+    def params(self):
         """
         The current relevant parameters. We should consider switching to a systematic use of
         self.properties.
@@ -1172,7 +1258,8 @@ class SpecAnGui(ModuleWidget):
                     input=self.module.input,
                     points=self.module.points,
                     avg=self.module.avg,
-                    acbandwidth=self.module.acbandwidth)
+                    acbandwidth=self.module.acbandwidth,
+                    name=self.module.curve_name)
 
 
 class RedPitayaGui(RedPitaya):

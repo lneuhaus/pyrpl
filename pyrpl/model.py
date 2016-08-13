@@ -5,6 +5,7 @@ import time
 import threading
 
 from .signal import *
+from . import fitting
 
 logger = logging.getLogger(name=__name__)
 
@@ -24,7 +25,7 @@ class Model(object):
     """
     export_to_parent = ["sweep", "calibrate", "save_current_gain",
                         "unlock", "islocked", "lock", "help", "calib_lock",
-                        "_lock"]
+                        "_lock", "get_offset"]
 
     # independent variable that specifies the state of the system
     _variable = 'x'
@@ -51,10 +52,18 @@ class Model(object):
             except KeyError:
                 params = dict()
             try:
-                self.__getattribute__("setup_"+signal._name)(**params)
-                self.logger.debug("Calling setup_%s!", signal._name)
+                setupfn = self.__getattribute__("setup_"+signal._name)
             except AttributeError:
-                pass
+                self.logger.debug("No signal setup function setup_%s was "
+                                  "found", signal._name)
+                continue
+            else:
+                self.logger.debug("Calling setup_%s!", signal._name)
+                try:
+                    setupfn(**params)
+                except TypeError:  # means the setup function doesnt take
+                    # params
+                    setupfn()
 
     def _derivative(self, func, x, n=1, args=()):
         return scipy.misc.derivative(func,
@@ -127,7 +136,8 @@ class Model(object):
                 self.logger.debug("Making slope function for input %s",
                                   input._name)
                 fn = self.__getattribute__(input._name)
-                # bug removed a la http://stackoverflow.com/questions/3431676/creating-functions-in-a-loop
+                # bug removed a la
+                # http://stackoverflow.com/questions/3431676/creating-functions-in-a-loop
                 self.__setattr__(input._name+"_slope",
                                  self._make_slope(fn))
             if not hasattr(self, input._name + "_inverse"):
@@ -141,6 +151,7 @@ class Model(object):
     def variable(self):
         """ returns an estimate of the variable defined in _variable """
         inputname, input = self.inputs.items()[0]
+        input._acquire()  # make sure data is fresh
         act = input.mean
         set = self.state["set"][self._variable]
         variable = self.__getattribute__(inputname+'_inverse')(act, set)
@@ -171,11 +182,12 @@ class Model(object):
         # lock seems ok
         return True
 
-    # unlock algorithm
-    def unlock(self):
-        """ unlocks the cavity"""
+    def unlock(self, ival=True):
+        """ unlocks the system"""
+        if hasattr(self, '_relocktimer'):  # stop relock timer if applicable
+            self._relocktimer.stop()
         for o in self.outputs.values():
-            o.unlock()
+            o.unlock(ival=ival)
 
     def sweep(self):
         """
@@ -230,8 +242,12 @@ class Model(object):
         variable = kwargs.pop(self._variable)
         setpoint = self.__getattribute__(inputname)(variable)
         slope = self.__getattribute__(inputname+'_slope')(variable)
+        # setpoint, slope come in 'units' of the input. Convert to V
+        input_unit_per_V = input._config[input._config.unit+'_per_V']
+        setpoint /= input_unit_per_V
+        slope /= input_unit_per_V
 
-        # trivial to lock: just enable all gains
+        # trivial lock algorithm: just enable all gains
         if outputs is None:
             outputs = self.outputs.values()
         for o in outputs:
@@ -239,7 +255,7 @@ class Model(object):
                 o = self.outputs[o]
             # get unit of output calibration factor
             unit = o._config.calibrationunits.split("_per_V")[0]
-            #get calibration factor
+            # get calibration factor
             variable_per_unit = self.__getattribute__(self._variable
                                                       + "_per_" + unit)
             if not _savegain:
@@ -250,7 +266,7 @@ class Model(object):
                        offset=offset,
                        factor=factor,
                        **kwargs)
-            else: # special option: instead of locking, write the gain
+            else:  # special option: instead of locking, write the gain
                 o.save_current_gain(slope=slope*variable_per_unit)
 
     def save_current_gain(self, outputs=None):
@@ -259,11 +275,11 @@ class Model(object):
         self._lock(outputs=outputs, _savegain=True)
 
     def lock(self,
-             detuning=None,
              factor=None,
              firststage=None,
              laststage=None,
-             thread=False):
+             thread=False,
+             **kwargs):
         # firststage will allow timer-based recursive iteration over stages
         # i.e. calling lock(firststage = nexstage) from within this code
         stages = self._config.lock.stages._keys()
@@ -285,20 +301,23 @@ class Model(object):
             else:
                 # use _lock by default
                 lockfn = self._lock
-            parameters = dict(detuning=detuning, factor=factor)
+            parameters = dict(factor=factor)
+            if self._variable in kwargs:
+                parameters[self._variable] = kwargs[self._variable]
             parameters.update((self._config.lock.stages[stage]))
             try:
                 stime = parameters.pop("time")
             except KeyError:
                 stime = 0
             if stage == laststage or stage == stages[-1]:
-                if detuning:
-                    parameters['detuning'] = detuning
+                if self._variable in kwargs and kwargs[self._variable]:
+                    parameters[self._variable] = kwargs[self._variable]
                 if factor:
                     parameters['factor'] = factor
                 try:
                     return lockfn(**parameters)
                 except TypeError:  # function doesnt accept kwargs
+                    raise
                     return lockfn()
             else:
                 if thread:
@@ -306,17 +325,18 @@ class Model(object):
                     t0 = threading.Timer(0,
                                         lockfn,
                                         kwargs=parameters)
-                    t0.start() # bug here: lockfn must accept kwargs
+                    t0.start()  # bug here: lockfn must accept kwargs
                     # and launch timer for nextstage
                     nextstage = stages[stages.index(stage) + 1]
+                    parameters = dict(factor=factor,
+                                      firststage=nextstage,
+                                      laststage=laststage,
+                                      thread=thread)
+                    if self._variable in kwargs and kwargs[self._variable]:
+                        parameters[self._variable] = kwargs[self._variable]
                     t1 = threading.Timer(stime,
                                         self.lock,
-                                        kwargs=dict(
-                                            detuning=detuning,
-                                            factor=factor,
-                                            firststage=nextstage,
-                                            laststage=laststage,
-                                            thread=thread))
+                                        kwargs=parameters)
                     t1.start()
                     return None
                 else:
@@ -325,6 +345,27 @@ class Model(object):
                     except TypeError:  # function doesnt accept kwargs
                         lockfn()
                     time.sleep(stime)
+
+    def relock(self, *args, **kwargs):
+        """ executes 'lock' until 'islocked' returns true """
+        while not self.islocked():
+            self.lock(*args, **kwargs)
+
+    def autorelock(self, timeout=1.0):
+        """ sets up a timer that periodically calls relock() """
+        if not hasattr(self, '_relocktimer'):
+            from PyQt4.QtCore import QTimer
+            self._relocktimer = QTimer()
+        try:
+            self._relocktimer.disconnect()
+        except TypeError:
+            pass
+        self._relocktimer.timeout.connect(self.relock)
+        self._relocktimer.setSingleShot(False)
+        self._relocktimer.start(int(timeout*1000))
+
+    def stop_autolock(self):
+        self.timer.stop()
 
     def calibrate(self, inputs=None, scopeparams={}):
         """
@@ -351,6 +392,8 @@ class Model(object):
         if not inputs:
             inputs = self.inputs.values()
         for input in inputs:
+            if not isinstance(input, Signal):
+                input = self.inputs[input]
             try:
                 input._config._data["trigger_source"] = "asg1"
                 input._config._data["duration"] = duration
@@ -361,6 +404,13 @@ class Model(object):
                 curve, ma, mi, mean, rms = input.curve, input.max, input.min, \
                                            input.mean, input.rms
                 curves.append(curve)
+                # add sweep phase at scope trigger to retrieve the scan
+                # direction afterwards
+                for o in self.outputs.values():
+                    if 'sweep' in o._config._keys():
+                        curve.params[o._name+'.sweep_triggerphase'] = \
+                            o.sweep_triggerphase
+                curve.save()
                 try:
                     secondsignal = scopeparams["secondsignal"]
                     input2 = self.signals[secondsignal]
@@ -380,6 +430,7 @@ class Model(object):
             input._config["min"] = mi
             input._config["mean"] = mean
             input._config["rms"] = rms
+            input._config["curve"] = curve.pk
         # turn off sweeps
         self.unlock()
         return curves
@@ -390,7 +441,7 @@ class Model(object):
         self.lock()
         return self.islocked()
 
-    def setup_iq(self, input='iq', **kwargs):
+    def setup_iq(self, inputsignal='iq', **kwargs):
         """
         Sets up an input signal derived from demodultaion of another input.
         The config file must contain an input signal named like the the
@@ -408,14 +459,18 @@ class Model(object):
         -------
         None
         """
-        if not isinstance(iq, Signal):
-            iq = self.inputs[input]
+        if not isinstance(inputsignal, Signal):
+            input = self.inputs[inputsignal]
+        else:
+            input = inputsignal
         if not kwargs:
-            kwargs = pdh._config.setup._dict
-        if not hasattr(iq, 'iq'):
-            iq.iq = self._parent.rp.iqs.pop()
-        iq.iq.setup(**kwargs)
-        iq._config['redpitaya_input'] = iq.iq.name
+            kwargs = input._config.setup._dict
+        if 'iq' in kwargs:  # we can request a particular iq number if needed
+            input.iq = self._parent.rp.__getattribute__(kwargs.pop('iq'))
+        elif not hasattr(input , 'iq'):
+            input.iq = self._parent.rp.iqs.pop()
+        input.iq.setup(**kwargs)
+        input._config['redpitaya_input'] = input.iq.name
 
     def help(self):
         """ provides some help to get started. """
@@ -435,3 +490,60 @@ class Model(object):
                          + "Now simply call p.lock() to lock.  \n"
                          + "Assert if locked with p.islocked() and unlock \n"
                          + "with p.unlock(). ")
+
+    def fit(self, input, manualfit=True, **extra):
+        """ attempts a fit of input's last calibration curve with the input's
+        model"""
+        if not isinstance(input, Signal):
+            input = self.inputs[input]
+        signalfn = self.__getattribute__(input._name)
+        c = CurveDB.get(input._config.curve)
+        data = c.data
+        t = c.data.index.values
+        def fitfn(variable_per_time, t0, offset, scale, **kwds):
+            variables = (t-t0) * variable_per_time
+            return np.array(offset + scale * signalfn(variables, **kwds),
+                            dtype=np.double)
+        # a very naive guess - should be refined with 'input_guess' function
+        guess = {'variable_per_time': 10.0 / (t.max() - t.min()),
+                 't0': 0,
+                 'offset': 0,
+                 'scale': 1.0}
+        guess.update(extra)
+        try:
+            guessfn = self.__getattribute__(input._name + '_guess')
+        except AttributeError:
+            self.logger.warning("No function %s to guess fit "
+                                "parameters is defined. Writing one will "
+                                "improve fit performance. ",
+                                input._name + '_guess')
+        else:
+            guess.update(guessfn())
+        fitter = fitting.Fit(data, fitfn, manualguess_params=guess,
+                            fixed_params={'offset': 0},
+                            graphicalfit=manualfit, autofit=True)
+        fitcurve = CurveDB.create(fitter.fitdata, name='fit_'+input._name)
+        fitcurve.params.update(fitter.getparams())
+        try:
+            postfn = self.__getattribute__(input._name + '_postfit')
+        except AttributeError:
+            self.logger.warning("No function %s to use fit "
+                                "parameters is defined. Writing one will "
+                                "improve calibration results. ",
+                                input._name + '_postfit')
+        else:
+            fitcurve.params.update(postfn())
+        fitcurve.save()
+        c.add_child(fitcurve)
+        return fitcurve
+
+    def get_offset(self):
+        """ Execute this function to record the offsets for all input
+        signals. If signal.offset_subtraction is true in the config file,
+        the signal value 0 will from then on correspond to the measured
+        offset. Before any locking configuration, this function should be
+        executed in order to take the analog offsets of redpitaya inputs
+        into account. """
+        for input in self.inputs.values():
+            input.get_offset()
+

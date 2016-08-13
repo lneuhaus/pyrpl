@@ -114,19 +114,6 @@ inputs:
     min: 0.10938826948404312
     mean: 0.29647160321474075
     rms: 0.021936986802552357
-  pdh:
-    redpitaya_input: adc1
-    max: 0.10332902520895004
-    min: -0.09833113104104996
-    mean: -0.00010203570127487183
-    rms: 0.020428170656044818
-    setup:
-      phase: -5.0 #-5
-      amplitude: 4.0
-      amplitude_for_finesse: 3.5
-      frequency: 80000000.0
-      generator: AFG_EVA
-    offset: 0.006534256041049957
 # All output signals. Names of outputs are arbitrary. if the 'lock' tab is
 # missing or false, the output will not be used for locking
 outputs:
