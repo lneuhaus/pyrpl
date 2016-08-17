@@ -7,4 +7,5 @@ from . import *
 
 class FPMembranes(FabryPerot):
     def reset_ival(self):
-        self.outputs['current'].pid.ival = 0
+        pass
+        #self.outputs['current'].pid.ival = 0

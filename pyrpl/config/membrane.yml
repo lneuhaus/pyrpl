@@ -15,8 +15,8 @@ general:
 model:
   modeltype: FPMembranes
   wavelength: 1.064e-06
-  finesse: 3000.0
-  length: 0.02
+  finesse: 4500.0
+  length: 0.015
   lock:
     error_threshold: 1.0
     stages:
@@ -29,26 +29,26 @@ model:
       pdh:
         input: pdh
         detuning: 0
-        factor: 3
+        factor: 5.0
       call_reset_ival: {}
   calibration:
     zoomfactor: 0.01
     relative_threshold: 0.7
   resonant_reflection: 0.0546875
   offresonant_reflection: 0.217529296875
-  resonant_transmission: 0.7795232236385345
-  peak_pdh: 0.245849609375
+  resonant_transmission: 0.35300955176353455
+  peak_pdh: 0.68829345703125
 inputs:
   transmission:
     redpitaya_input: adc1
-    max: 0.7795232236385345
-    min: -0.012957245111465454
-    mean: 0.002258703112602234
-    rms: 0.019145124324053936
+    max: 0.35300955176353455
+    min: -0.010149627923965454
+    mean: 0.0016342326998710632
+    rms: 0.008994801842560836
     offset: -0.021466583013534546
   pdh:
     setup:
-      input: adc1
+      input: adc2
       phase: 180.0
       amplitude: 0.2
       output_direct: out2
@@ -61,10 +61,10 @@ inputs:
       - 500000.0
       acbandwidth: 100000.0
     redpitaya_input: iq0
-    max: 0.24462890625
-    min: -0.2470703125
-    mean: 0.0002413913607597351
-    rms: 0.020139967667201265
+    max: 0.828857421875
+    min: -0.5477294921875
+    mean: 0.0015541985630989075
+    rms: 0.04037741926329101
 outputs:
   piezo:
     redpitaya_output: out2
