@@ -42,7 +42,18 @@ module red_pitaya_iq_demodulator_block #(
     parameter     INBITS   = 14,
     parameter     OUTBITS   = 18,
     parameter     SINBITS   = 14,
-    parameter     SHIFTBITS  = 0
+    parameter     SHIFTBITS  = 1
+    // why SHIFTBITS SHOULD ALWAYS BE 1:
+    // the sin from fgen ranges from -2**(SINBITS-1)+1 to 2**(SINBITS-1)-1
+    // i.e. the strange number is excluded by definition. Including the
+    // strange number -2**(SINBITS-1), the product signal_i * sin / cos
+    // would be maximally
+    // 2**(SINBITS+INBITS-1-1). That is, including the sign bit it would
+    // occupy SINBITS+INBITS-1 bits. Excluding the strange number of the sin
+    // factor makes the maximum less than that, i.e. we can safely represent
+    // the product with SINBITS+INBITS-2 bits, including the sign bit.
+    // That makes SHIFTBITS = -1 (see below). OUTBITS only determines how many
+    // LSB's we cut off.
 )
 (
     input clk_i,
@@ -58,11 +69,31 @@ always @(posedge clk_i) begin
     firstproduct_reg <= signal_i;
 end
 
+
 reg signed [SINBITS+INBITS-1:0] product1;
 reg signed [SINBITS+INBITS-1:0] product2;
+
+// soft implementation of symmetric rounding
+//wire signed [SINBITS+INBITS-1:0] product1_unrounded;
+//wire signed [SINBITS+INBITS-1:0] product2_unrounded;
+//assign product1_unrounded = firstproduct_reg * sin;
+//assign product2_unrounded = firstproduct_reg * cos;
+//wire signed [SINBITS+INBITS-1:0] product1_roundoffset;
+//wire signed [SINBITS+INBITS-1:0] product2_roundoffset;
+//assign product1_roundoffset = (product1_unrounded[SINBITS+INBITS-1]) ? {{(OUTBITS+SHIFTBITS+1){1'b0}},{1'b1},{(SINBITS+INBITS-OUTBITS-SHIFTBITS-2){1'b0}}}
+//                            : {{(OUTBITS+SHIFTBITS+1){1'b0}},{1'b0},{(SINBITS+INBITS-OUTBITS-SHIFTBITS-2){1'b1}}};
+//
+//assign product2_roundoffset = (product2_unrounded[SINBITS+INBITS-1]) ? {{(OUTBITS+SHIFTBITS+1){1'b0}},{1'b1},{(SINBITS+INBITS-OUTBITS-SHIFTBITS-2){1'b0}}}
+//                            : {{(OUTBITS+SHIFTBITS+1){1'b0}},{1'b0},{(SINBITS+INBITS-OUTBITS-SHIFTBITS-2){1'b1}}};
+
+// after some problems, we choose asymmetric rounding for now - at least
+// some rounding
+
 always @(posedge clk_i) begin
-    product1 <= firstproduct_reg * sin;
-    product2 <= firstproduct_reg * cos;
+//    product1 <= product1_unrounded + product1_roundoffset;
+//    product2 <= product2_unrounded + product2_roundoffset;
+    product1 <= firstproduct_reg * sin + $signed(1 << (SINBITS+INBITS-OUTBITS-SHIFTBITS-1));
+    product2 <= firstproduct_reg * cos + $signed(1 << (SINBITS+INBITS-OUTBITS-SHIFTBITS-1));
 end
 
 assign signal1_o = product1[SINBITS+INBITS-1-SHIFTBITS:SINBITS+INBITS-OUTBITS-SHIFTBITS];

@@ -1,0 +1,206 @@
+redpitaya:
+  hostname: 10.214.1.23
+  password: root
+  user: root
+  port: 2222
+  frequency_correction: 0.9999967269326684
+  #0.9999801526493788
+  filename: fpga//red_pitaya.bin
+  reloadfpga: true
+  # autostart gui?
+  gui: true #true
+  monitor_server_name: monitor_server
+
+general:
+  # name of this device
+  name: fpm-lmsd
+  # level of logged information.
+  # 'debug' outputs everything
+  # 'infi' is default level
+  # 'warning' only shows warnings and errors
+  # 'error' only shows errors
+  loglevel: debug
+  # import CurveDB class from which module? if missing, it's pyrpl.curvedb
+  #curvedb: pyrpl
+  curvedb: pyinstruments
+
+# most important section that defines how the lockbox understands the
+# real-world system
+model:
+  # use class Interferometer for internal model and lock algorithms
+  # upper- or lowercase spelling is accepted if there is no ambiguity
+  modeltype: lmsd
+  # only needed parameter is wavelength
+  # (to convert piezo displacement into gain)
+  wavelength: 1.064e-06
+  # maximum tolerated error of the internal variable
+  # for interferometer, this is the phase error in radians
+  # this value is uniquely needed for the function 'islocked'
+  maxerror: 0.1
+  offresonant_reflection: 0.1445540115237236
+  resonant_reflection: 0.1133040115237236
+  finesse: 92000.0
+  length: 5.61e-05
+  # signals in order of their preferrence
+  #signalpreference:
+  #- reflection
+  #- transmission
+  lock:
+    error_threshold: 1
+    stages:
+      #call_calibrate: {}
+      drift:
+        input: reflection
+        detuning: 1.5
+        factor: 1
+        time: 3
+        offset: 1
+        outputs:
+        - piezo
+  calibrate:
+    zoomfactor: 0.1
+    relative_threshold: 0.9
+
+  peak: 0.07061767578125
+  peak_pdh: 0.1053466796875
+# all signals that are inputs of the lockbox. Must be signal names understood
+# by the model.
+inputs:
+  reflection:
+    redpitaya_input: adc2
+    offset: 0.006691105663776398
+    max: 0.1649397537112236
+    min: 0.019309870898723602
+    mean: 0.12662241607904434
+    rms: 0.011114162116642115
+    curve: 255900
+  lmsd:
+    redpitaya_input: iq2
+    max: 0.02197265625
+    min: -0.024658203125
+    mean: -0.00010923296213150024
+    rms: 0.006076612023449933
+    setup:
+      phase: 151.78104011526398
+      amplitude: 0.25
+      frequency: 3578310.596304364
+      iq: iq2
+      quadrature_factor: 0.046900842392389674
+      gain: 0
+      output_direct: out1
+      output_signal: quadrature
+      input: adc2
+      acbandwidth: 100000.0
+      bandwidth: [1000000.0, 1000000.0, 1000000.0, 1000000.0]
+    offset: 0.0
+    curve: 255902
+  lmsd_quadrature:
+    redpitaya_input: iq2_2
+    max: 0.025146484375
+    min: -0.0245361328125
+    mean: 0.0007748976349830627
+    rms: 0.006006296362300168
+    curve: 255898
+# All output signals. Names of outputs are arbitrary. if the 'lock' tab is
+# missing or false, the output will not be used for locking
+outputs:
+  # the very coarse piezo. at the moment, it is controlled manually
+  piezo:
+    redpitaya_output: out2
+    # we will calibrate the piezo response in units of m_per_V (not a necessary
+    # parameter as it can be automatically filled in by the code)
+    calibrationunits: m_per_V
+    # piezo: PD080.31
+    # piezo specification: 2 micron / 100 V
+    # cryogenic penalty factor: 6
+    # piezo amplifier gain: 1 V / V
+    # therefore effective DC gain of piezo:
+    # 3.1 nm / V
+    # light is reflected from this mirror at 45 degrees
+    # this decreases the effective displacement by a factor of sqrt(2) to 1.77
+    m_per_V: 3.1e-09
+    # PZT parallel capacity: 1 uF
+    # Series resistance: 50 Ohm + 10 kOhm
+    # RC cutoff 1/2piRC = 37.9 Hz
+    # therefore the analog filter can be well approximated by a first order
+    # lowpass with corner frequency 37.9 Hz
+    analogfilter:
+      lowpass: [15.8]
+    lock:
+      unity_gain_frequency: 100.0
+      second_integrator_crossover: 5.0
+      inputfilter:
+      - 9714.04681957369
+      - 9714.04681957369
+      - 9714.04681957369
+      - 9714.04681957369
+      - 9714.04681957369
+      - 9714.04681957369
+      - 0
+      - 0
+    sweep:
+      waveform: sin
+      frequency: 25.0
+      amplitude: 0.8
+    max_voltage: 0.9998779296875
+    min_voltage: -1.0
+
+##############################################################################
+###  Configuration parameters that rarely need to be modified ################
+##############################################################################
+
+scope:
+  input1: iq2
+  input2: iq2_2
+  duration: 0.01
+  trigger_source: ch1_negative_edge
+  threshold: 0.2
+  hysteresis: 0.03
+  average: false
+
+scopegui:
+  coordinates:
+  - -1140
+  - 456
+  - 546
+  - 438
+  auto_run_continuous: true
+
+signal:
+  unit: V # can be any of m, Hz, V, raw, ... as long as unit_per_V is defined
+  V_per_V: 1.0 # default unit is V
+  raw_per_V: 8192.0 # raw units from the FPGA
+  # minimum trace duration in seconds
+  # be aware that this number affects both the sampling rate and the minimum
+  # frequency that can be resolved. Usually, you want to keep duration as long
+  # as you can stand to wait for new signal data, typically 10-100 ms.
+  duration: 0.01
+  # selects whether scope is to be used in average mode
+  # false is strongly suggested for duration-independent estimation of rms
+  # true is preferred only when we want to get an extremely good mean estimate
+  average: false
+  # if true, the signal.curve command automatically saves the data to CurveDB
+  autosave: true
+  # number of points per curve; also the number of points used for mean and rms
+  points: 16384
+  # default trigger source
+  trigger_source: ch1_positive_edge
+  # default trigger threshold and hysteresis
+  threshold: 0.1
+  hysteresis: 0.02
+  # timeout determines the time interval within which we do not take another
+  # data trace if several parameters are requested. To always obtain fresh
+  # data, set this to -1. To enable manual acquisition control with the acquire
+  # function '_acquire()', set this to a very large value or to '.inf'.
+  acquire_timeout: 0.5
+  # if true, the offset is subtraced. Calibrate with signal.get_offset()
+  offset_subtraction: true
+  offset: 0
+  # peak is a reserved place to store the peak value, for example offresonant
+  # reflection from a cavity
+  peak: 0
+  trigger_delay: 0
+
+# fpm related stuff
+constants:
+  pdh_marker_frequency: 3600000.0

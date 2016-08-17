@@ -32,8 +32,8 @@ import pandas
 import pickle
 import os
 import logging
-import numpy
 
+#from . import fitting
 
 # optional override of CurveDB class with custom module, as defined in
 # ./pyrpl/config/global_config.yml
@@ -176,3 +176,25 @@ except:
             xs = np.array([x for (x, y) in sorted(zip(X, Y))], dtype=np.float64)
             ys = np.array([y for (x, y) in sorted(zip(X, Y))], dtype=np.float64)
             self.data = pandas.Series(ys, index=xs)
+
+        def fit(self):
+            """ prototype for fitting a curve """
+            self.logger.warning("Not implemented")
+            pass
+
+        def get_child(self, name):
+            """
+            Returns the child of the curve with name 'name'
+
+            ----------
+            name: str
+                Name of the child curve to be retrieved. If several childs
+                have the same name, the first one is returned.
+
+            Returns
+            -------
+            CurveDB: the child curve
+            """
+            for c in self.childs:
+                if c.name == name:
+                    return c

@@ -1,14 +1,15 @@
 import numpy as np
 import sys
 from time import sleep, time
+import logging
 
 from .redpitaya_modules import NotReadyError
 
 
 class NetworkAnalyzer(object):
     """
-    Using an IQ module, the network analyzer can measure the complex coherent response between an output and
-    any signal in the redpitaya. (It would be nice not to be limited to an output_direct)
+    Using an IQ module, the network analyzer can measure the complex coherent
+    response between an output and any signal in the redpitaya.
 
     2 ways to use the NetworkAnalyzer:
       exemple 1:
@@ -26,6 +27,7 @@ class NetworkAnalyzer(object):
     """
 
     def __init__(self, rp):
+        self._logger = logging.getLogger(__name__)
         self.rp = rp
         self.start = 200
         self.stop = 50000
@@ -38,7 +40,7 @@ class NetworkAnalyzer(object):
         self.acbandwidth = 0
         self.sleeptimes = 0.5
         self.logscale = False
-        self.stabilize = False # if False, no stabilization, if float,
+        self.stabilize = False  # if False, no stabilization, if float,
         #input amplitude is kept at a constant voltage
         self.maxamplitude = 1.0
         self._setup = False
@@ -48,7 +50,6 @@ class NetworkAnalyzer(object):
         """
         Parameters to save.
         """
-
         return dict(start=self.start,
                     stop=self.stop,
                     avg=self.avg,
@@ -78,6 +79,14 @@ class NetworkAnalyzer(object):
     def inputs(self):
         return self.iq.inputs
 
+    @property
+    def acbandwidth(self):
+        return self.iq.inputfilter*-1
+
+    @acbandwidth.setter
+    def acbandwidth(self, v):
+        self.iq.inputfilter = v*-1
+
     def setup(  self,
                 start=None,     # start frequency
                 stop=None,  # stop frequency
@@ -106,9 +115,11 @@ class NetworkAnalyzer(object):
         input: input signal
         output_direct: output drive
         acbandwidth: bandwidth of the input high pass filter
-        sleeptimes: ?
-        logscale: should the frequency scan be distributed logarythmically?
-        stabilize: if float stabilizes the drive amplitude such that the input remain constant
+        sleeptimes: the number of averages to wait before acquiring new data
+                    for the next point.
+        logscale: should the frequency scan be distributed logarithmically?
+        stabilize: if float, stabilizes the drive amplitude such that the
+                    input remains constant
         at input [V]=stabilize. If False, then no stabilization
         maxamplitude: limit to the output amplitude
 
@@ -145,17 +156,17 @@ class NetworkAnalyzer(object):
         # preventive saturation
         maxamplitude = abs(self.maxamplitude)
         amplitude = abs(self.amplitude)
-        if amplitude>maxamplitude:
+        if amplitude > maxamplitude:
             amplitude = maxamplitude
         self.iq.setup(frequency=self.x[0],
-                 bandwidth=self.rbw,
-                 gain=0,
-                 phase=0,
-                 acbandwidth=-np.array(self.acbandwidth),
-                 amplitude=amplitude,
-                 input=self.input,
-                 output_direct=self.output_direct,
-                 output_signal='output_direct')
+                      bandwidth=self.rbw,
+                      gain=0,
+                      phase=0,
+                      acbandwidth=self.acbandwidth,
+                      amplitude=amplitude,
+                      input=self.input,
+                      output_direct=self.output_direct,
+                      output_signal='output_direct')
 
         # take the discretized rbw (only using first filter cutoff)
         rbw = self.iq.bandwidth[0]
@@ -166,20 +177,12 @@ class NetworkAnalyzer(object):
         self.iq._na_averages = np.int(np.round(125e6 / self.rbw * self.avg))
         self._na_sleepcycles = np.int(np.round(125e6 / self.rbw * self.sleeptimes))
         # compute rescaling factor
-        rescale = 2.0 ** (-self.iq._LPFBITS) * 4.0  # 4 is artefact of fpga code
         # obtained by measuring transfer function with bnc cable - could replace the inverse of 4 above
         # unityfactor = 0.23094044589192711
-
-        #try:
-
-
         self._rescale = 2.0 ** (-self.iq._LPFBITS) * 4.0  # 4 is artefact of fpga code
         self.current_point = 0
-
-        #self.iq.amplitude = self.amplitude  # turn on NA inside try..except block
         self.iq.frequency = self.x[0]  # this triggers the NA acquisition
         self.time_last_point = time()
-
 
     @property
     def current_freq(self):
@@ -211,9 +214,10 @@ class NetworkAnalyzer(object):
 
     @amplitude.setter
     def amplitude(self, val):
-        self.iq.amplitude = val
-        self._amplitude = self.iq.amplitude
-        return val
+        # the na easily messes up other functionaliy by outputting a sine.
+        # self.iq.amplitude = val
+        #self._amplitude = self.iq.amplitude
+        self._amplitude = val
 
     @property
     def time_per_point(self):
@@ -239,6 +243,8 @@ class NetworkAnalyzer(object):
             y *= self._rescale  # avoid division by zero
         else:
             y *= self._rescale / amp
+        # correct for network analyzer transfer function (AC-filter and delay)
+        y /= self.transfer_function(x)
         return x, y, amp
 
     def prepare_for_next_point(self, last_normalized_val):
@@ -247,7 +253,7 @@ class NetworkAnalyzer(object):
         """
 
         if self.stabilize is not False:
-            amplitude_next = self.stabilize / np.abs(y)
+            amplitude_next = self.stabilize / np.abs(last_normalized_val)
         else:
             amplitude_next = self.amplitude
         if amplitude_next > self.maxamplitude:
@@ -255,7 +261,11 @@ class NetworkAnalyzer(object):
         self.iq.amplitude = amplitude_next
         self.current_point += 1
         if self.current_point < self.points:
+            # writing to iq.frequency triggers the acquisition
             self.iq.frequency = self.x[self.current_point]
+        else:
+            # turn off the modulation when done
+            self.iq.amplitude = 0
         self.time_last_point = time()  # check averaging time from now
 
     def values(self):
@@ -276,7 +286,7 @@ class NetworkAnalyzer(object):
 
         try:
             #for point in xrange(self.points):
-            while self.current_point<self.points:
+            while self.current_point < self.points:
                 #self.current_point = point
                 x, y, amp = self.get_current_point()
                 if self.start == self.stop:
@@ -332,8 +342,67 @@ class NetworkAnalyzer(object):
         xs = np.zeros(self.points, dtype=float)
         ys = np.zeros(self.points, dtype=complex)
         amps = np.zeros(self.points, dtype=float)
+
+        self._logger.info("Estimated acquisition time: %.1f s",
+                          self.time_per_point * (self.points+1))
+        sys.stdout.flush()  # make sure the time is shown immediately
+
+        # set pseudo-acquisition of first point to supress transient effects
+        self.iq.amplitude = self.amplitude
+        self.iq.frequency = self.start
+        sleep(self.time_per_point)
+
         for index, (x, y, amp) in enumerate(self.values()):
             xs[index] = x
             ys[index] = y
             amps[index] = amp
         return xs, ys, amps
+
+    # delay observed with measurements of the na transfer function
+    # expected is something between 3 and 4, so it is okay
+    _delay = 3.0
+
+    def transfer_function(self, frequencies, extradelay=0):
+        """
+        Returns a complex np.array containing the transfer function of the
+        current IQ module setting for the given frequency array. The given
+        transfer function is only relevant if the module is used as a
+        bandpass filter, i.e. with the setting (gain != 0). If extradelay = 0,
+        only the default delay is taken into account, i.e. the propagation
+        delay from input to output_signal.
+
+        Parameters
+        ----------
+        frequencies: np.array or float
+            Frequencies to compute the transfer function for
+        extradelay: float
+            External delay to add to the transfer function (in s). If zero,
+            only the delay for internal propagation from input to
+            output_signal is used. If the module is fed to analog inputs and
+            outputs, an extra delay of the order of 200 ns must be passed as
+            an argument for the correct delay modelisation.
+
+        Returns
+        -------
+        tf: np.array(..., dtype=np.complex)
+            The complex open loop transfer function of the module.
+        """
+        module_delay = self._delay
+        frequencies = np.array(np.array(frequencies, dtype=np.float),
+                               dtype=np.complex)
+        tf = np.array(frequencies*0, dtype=np.complex) + 1.0
+        # input filter modelisation
+        f = self.iq.inputfilter  # no for loop here because only one filter
+        # stage
+        if f > 0:  # lowpass
+            tf /= (1.0 + 1j * frequencies / f)
+            module_delay += 2  # two cycles extra delay per lowpass
+        elif f < 0:  # highpass
+            tf /= (1.0 + 1j * f / frequencies)
+            module_delay += 1  # one cycle extra delay per highpass
+        # add delay
+        delay = module_delay * 8e-9 / self.iq._frequency_correction + \
+                extradelay
+        tf *= np.exp(-1j * delay * frequencies * 2 * np.pi)
+        # add delay from phase (incorrect formula or missing effect...)
+        return tf

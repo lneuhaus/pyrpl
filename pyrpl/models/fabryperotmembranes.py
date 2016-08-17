@@ -9,3 +9,4 @@ class FPMembranes(FabryPerot):
     def reset_ival(self):
         pass
         #self.outputs['current'].pid.ival = 0
+
