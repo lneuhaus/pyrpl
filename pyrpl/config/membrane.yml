@@ -1,5 +1,5 @@
 redpitaya:
-  hostname: 10.214.1.28
+  hostname: 10.214.1.29
   password: root
   user: root
   port: 2222
@@ -22,6 +22,8 @@ model:
     stages:
       drift:
         input: transmission
+        outputs:
+        - piezo
         detuning: 2.0
         factor: 1.0
         time: 3.0
@@ -30,7 +32,6 @@ model:
         input: pdh
         detuning: 0
         factor: 5.0
-      call_reset_ival: {}
   calibration:
     zoomfactor: 0.01
     relative_threshold: 0.7
