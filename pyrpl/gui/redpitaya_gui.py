@@ -1075,6 +1075,7 @@ class SpecAnGui(ModuleWidget):
     _display_max_frequency = 25  # max 25 Hz framerate
 
     property_names = ["input",
+                      "baseband",
                       "center",
                       "span",
                       "points",
