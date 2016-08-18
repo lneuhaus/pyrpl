@@ -231,6 +231,7 @@ class Model(object):
         -------
         None
         """
+
         if kwargs:
             self.state["set"].update(kwargs)
         self.state["set"]["factor"] = factor
@@ -250,6 +251,10 @@ class Model(object):
         # trivial lock algorithm: just enable all gains
         if outputs is None:
             outputs = self.outputs.values()
+        # unlock all unused outputs, but leave ival unaffected
+        for o in [op for op in self.outputs.values() if op not in outputs]:
+            o.unlock(ival=False)
+        # engage lock on all desired outputs
         for o in outputs:
             if not isinstance(o, RPOutputSignal):
                 o = self.outputs[o]
