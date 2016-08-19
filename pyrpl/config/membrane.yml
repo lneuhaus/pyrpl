@@ -24,29 +24,37 @@ model:
         input: transmission
         outputs:
         - piezo
-        detuning: 2.0
-        factor: 1.0
+        detuning: 3
+        factor: 0.5
         time: 3.0
         offset: 0.8
+      pdh_piezo:
+        input: pdh
+        outputs:
+        - piezo
+        detuning: 0
+        factor: 0.1
+        time: 3.0
       pdh:
         input: pdh
         detuning: 0
-        factor: 5.0
-  calibration:
+        factor: 0.1
+  calibrate:
     zoomfactor: 0.01
     relative_threshold: 0.7
   resonant_reflection: 0.0546875
   offresonant_reflection: 0.217529296875
-  resonant_transmission: 0.35300955176353455
-  peak_pdh: 0.68829345703125
+  resonant_transmission: 0.39487966895103455
+  peak_pdh: 0.11114501953125
 inputs:
   transmission:
     redpitaya_input: adc1
-    max: 0.35300955176353455
-    min: -0.010149627923965454
-    mean: 0.0016342326998710632
-    rms: 0.008994801842560836
+    max: 0.39487966895103455
+    min: -0.0006281435489654541
+    mean: 0.011659577488899231
+    rms: 0.010073013281794128
     offset: -0.021466583013534546
+    curve: 223445
   pdh:
     setup:
       input: adc2
@@ -62,10 +70,11 @@ inputs:
       - 500000.0
       acbandwidth: 100000.0
     redpitaya_input: iq0
-    max: 0.828857421875
-    min: -0.5477294921875
-    mean: 0.0015541985630989075
-    rms: 0.04037741926329101
+    max: 0.1134033203125
+    min: -0.10888671875
+    mean: -0.0007909238338470459
+    rms: 0.0089702827709824
+    curve: 223447
 outputs:
   piezo:
     redpitaya_output: out2
@@ -80,7 +89,7 @@ outputs:
       frequency: 25.0
       amplitude: 0.8
     lock:
-      unity_gain_frequency: 50.0
+      unity_gain_frequency: 500.0
       inputfilter:
       - 0
       - 0
@@ -93,14 +102,15 @@ outputs:
     min_voltage: -1.0
     Hz_per_V: 20000000000.0
     lock:
-      proportional_gain: 40000
+      proportional_gain: 500
       inputfilter:
       - 0
       - 0
       - 0
       - 0
     analogfilter:
-      lowpass: []
+      lowpass:
+      - 10000
     calibrationunits: Hz_per_V
 scope:
   input1: adc1

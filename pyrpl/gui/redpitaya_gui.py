@@ -290,7 +290,7 @@ class BoolProperty(BaseProperty):
         self.widget.setCheckState(getattr(self.module, self.name) * 2)
 
 
-class ModuleWidget(QtGui.QWidget):
+class ModuleWidget(QtGui.QDockWidget):
     """
     Base class for a module Widget. In general, this is one of the Tab in the final RedPitayaGui object.
     """

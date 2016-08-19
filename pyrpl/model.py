@@ -6,6 +6,7 @@ import threading
 
 from .signal import *
 from . import fitting
+from . import pyrpl_utils
 
 logger = logging.getLogger(name=__name__)
 
@@ -349,7 +350,7 @@ class Model(object):
                         lockfn(**parameters)
                     except TypeError:  # function doesnt accept kwargs
                         lockfn()
-                    time.sleep(stime)
+                    pyrpl_utils.sleep(stime)
 
     def relock(self, *args, **kwargs):
         """ executes 'lock' until 'islocked' returns true """
