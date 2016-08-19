@@ -286,6 +286,10 @@ class Model(object):
              laststage=None,
              thread=False,
              **kwargs):
+        ### This function is almost a one-to-one duplicate of Model.lock (
+        # except for the **kwargs that is read online). This is a major
+        # source of bug !!!!
+
         # firststage will allow timer-based recursive iteration over stages
         # i.e. calling lock(firststage = nexstage) from within this code
         stages = self._config.lock.stages._keys()
@@ -350,7 +354,8 @@ class Model(object):
                         lockfn(**parameters)
                     except TypeError:  # function doesnt accept kwargs
                         lockfn()
-                    pyrpl_utils.sleep(stime)
+                    pyrpl_utils.sleep(stime) ## Changed to pyrpl_utils.sleep,
+                    #  which basically doesn't freeze the gui
 
     def relock(self, *args, **kwargs):
         """ executes 'lock' until 'islocked' returns true """

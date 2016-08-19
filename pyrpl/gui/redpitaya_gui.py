@@ -48,12 +48,14 @@ def property_factory(module_widget, prop):
     return new_prop
 
 
-class BaseProperty(object):
+class BaseProperty(QtCore.QObject):
     """
     Base class for GUI properties
     """
+    value_changed = QtCore.pyqtSignal()
 
     def __init__(self, name, module_widget):
+        super(BaseProperty, self).__init__()
         self.module_widget = module_widget
         self.name = name
         self.acquisition_property = True  # property affects signal acquisition
@@ -64,8 +66,20 @@ class BaseProperty(object):
         self.set_widget()
         self.layout_v.addWidget(self.widget)
         self.module_widget.property_layout.addLayout(self.layout_v)
-        self.module_widget.property_watch_timer.timeout. \
-            connect(self.update_widget)
+        self.value_changed.connect(self.emit_widget_value_changed)
+        #self.module_widget.property_watch_timer.timeout. \
+        #    connect(self.update_widget)
+
+    def editing(self):
+        """
+        User is editing the property graphically don't mess up with him
+        :return:
+        """
+        return False
+
+    def emit_widget_value_changed(self):
+        if self.acquisition_property:
+            self.module_widget.property_changed.emit()
 
     def update_widget(self):
         """
@@ -104,6 +118,7 @@ class StringProperty(BaseProperty):
         """
 
         self.widget = QtGui.QLineEdit()
+        self.widget.setMaximumWidth(200)
         self.widget.textChanged.connect(self.write)
 
     def module_value(self):
@@ -116,8 +131,8 @@ class StringProperty(BaseProperty):
 
     def write(self):
         setattr(self.module, self.name, str(self.widget.text()))
-        if self.acquisition_property:
-            self.module_widget.property_changed.emit()
+        self.value_changed.emit()
+
 
     def update(self):
         """
@@ -135,8 +150,10 @@ class NumberProperty(BaseProperty):
 
     def write(self):
         setattr(self.module, self.name, self.widget.value())
-        if self.acquisition_property:
-            self.module_widget.property_changed.emit()
+        self.value_changed.emit()
+
+    def editing(self):
+        return self.widget.line.hasFocus()
 
     def update(self):
         """
@@ -146,6 +163,98 @@ class NumberProperty(BaseProperty):
 
         if not self.widget.hasFocus():
             self.widget.setValue(self.module_value())
+
+
+class MyDoubleSpinBox(QtGui.QWidget):
+    value_changed = QtCore.pyqtSignal()
+
+    def __init__(self, label, min=-1, max=1, step=2.**(-13), parent=None):
+        super(MyDoubleSpinBox, self).__init__(parent)
+
+        self.min = min
+        self.max = max
+
+        self.lay = QtGui.QHBoxLayout()
+        self.lay.setContentsMargins(0,0,0,0)
+        self.lay.setSpacing(0)
+        self.setLayout(self.lay)
+
+        if label is not None:
+            self.label = QtGui.QLabel(label)
+            self.lay.addWidget(self.label)
+        self.step = step
+        self.decimals = 4
+
+        self.down = QtGui.QPushButton('<')
+        self.lay.addWidget(self.down)
+
+        self.line = QtGui.QLineEdit()
+        self.lay.addWidget(self.line)
+
+        self.up = QtGui.QPushButton('>')
+        self.lay.addWidget(self.up)
+        self.timer_arrow = QtCore.QTimer()
+        self.timer_arrow.setInterval(5)
+        self.timer_arrow.timeout.connect(self.make_step)
+
+        self.up.pressed.connect(self.timer_arrow.start)
+        self.down.pressed.connect(self.timer_arrow.start)
+
+        self.up.setMaximumWidth(15)
+        self.down.setMaximumWidth(15)
+
+        self.up.released.connect(self.timer_arrow.stop)
+        self.down.released.connect(self.timer_arrow.stop)
+
+        self.line.editingFinished.connect(self.validate)
+        self.val = 0
+
+        self.setMaximumWidth(200)
+        self.setMaximumHeight(20)
+
+    def sizeHint(self): #doesn t do anything, probably need to change sizePolicy
+        return QtCore.QSize(200, 20)
+
+    def setMaximum(self, val):
+        self.max = val
+
+    def setMinimum(self, val):
+        self.min = val
+
+    def setSingleStep(self, val):
+        self.step = val
+
+    def setValue(self, val):
+        self.val = val
+
+    def setDecimals(self, val):
+        self.decimals = val
+
+    def value(self):
+        return self.val
+
+    @property
+    def val(self):
+        return float(self.line.text())
+
+    @val.setter
+    def val(self, new_val):
+        self.line.setText(("%."+str(self.decimals) + "f")%new_val)
+        return new_val
+
+    def make_step(self):
+        if self.up.isDown():
+            self.val+=self.step
+        if self.down.isDown():
+            self.val-=self.step
+        self.validate()
+
+    def validate(self):
+        if self.val>self.max:
+            self.val = self.max
+        if self.val<self.min:
+            self.val = self.min
+        self.value_changed.emit()
 
 
 class IntProperty(NumberProperty):
@@ -159,9 +268,9 @@ class IntProperty(NumberProperty):
         :return:
         """
 
-        self.widget = QtGui.QSpinBox()
-        self.widget.setSingleStep(1)
-        self.widget.valueChanged.connect(self.write)
+        self.widget = MyDoubleSpinBox(None)#QtGui.QSpinBox()
+        #self.widget.setSingleStep(1)
+        self.widget.value_changed.connect(self.write)
 
     def module_value(self):
         """
@@ -184,10 +293,10 @@ class FloatProperty(NumberProperty):
         :return:
         """
 
-        self.widget = QtGui.QDoubleSpinBox()
-        self.widget.setDecimals(4)
-        self.widget.setSingleStep(0.01)
-        self.widget.valueChanged.connect(self.write)
+        self.widget = MyDoubleSpinBox(None)#QtGui.QDoubleSpinBox()
+        #self.widget.setDecimals(4)
+        #self.widget.setSingleStep(0.01)
+        self.widget.value_changed.connect(self.write)
 
     def module_value(self):
         """
@@ -241,7 +350,7 @@ class ComboProperty(BaseProperty):
 
         setattr(self.module, self.name, str(self.widget.currentText()))
         if self.acquisition_property:
-            self.module_widget.property_changed.emit()
+            self.value_changed.emit()
 
     def update(self):
         """
@@ -278,7 +387,8 @@ class BoolProperty(BaseProperty):
 
         setattr(self.module, self.name, self.widget.checkState() == 2)
         if self.acquisition_property:
-            self.module_widget.property_changed.emit()
+            self.value_changed.emit()
+
 
     def update(self):
         """
@@ -290,7 +400,7 @@ class BoolProperty(BaseProperty):
         self.widget.setCheckState(getattr(self.module, self.name) * 2)
 
 
-class ModuleWidget(QtGui.QDockWidget):
+class ModuleWidget(QtGui.QWidget):
     """
     Base class for a module Widget. In general, this is one of the Tab in the final RedPitayaGui object.
     """
@@ -364,7 +474,8 @@ class ModuleWidget(QtGui.QDockWidget):
         :return:
         """
         for prop in self.properties.values():
-            prop.update_widget()
+            if not prop.editing():
+                prop.update_widget()
 
 
 class ScopeWidget(ModuleWidget):
@@ -658,7 +769,10 @@ class AsgGui(ModuleWidget):
         self.properties["offset"].widget.setMaximum(1)
         self.properties["offset"].widget.setMinimum(-1)
 
-        self.property_changed.connect(self.module.setup)
+        self.properties['trigger_source'].value_changed.connect(
+                                                        self.module.setup)
+        self.properties['output_direct'].value_changed.connect(
+                                                        self.module.setup)
 
 
 class AllAsgGui(QtGui.QWidget):
@@ -1272,12 +1386,40 @@ class RedPitayaGui(RedPitaya):
         super(RedPitayaGui, self).__init__(*args, **kwds)
         self.setup_gui()
 
+    def add_dock_widget(self, widget, name):
+        dock_widget = QtGui.QDockWidget(name)
+        self.dock_widgets[name] =  dock_widget
+        dock_widget.setWidget(widget)
+        self.main_window.addDockWidget(QtCore.Qt.TopDockWidgetArea,
+                                       dock_widget)
+        if self.last_docked is not None:
+            self.main_window.tabifyDockWidget(self.last_docked, dock_widget)
+        self.last_docked = dock_widget
+
+
+
     def setup_gui(self):
         self.na_widget = NaGui(parent=None, module=self.na)
         self.scope_widget = ScopeWidget(parent=None, module=self.scope)
         self.all_asg_widget = AllAsgGui(parent=None, rp=self)
         self.sa_widget = SpecAnGui(parent=None, module=self.spec_an)
 
+        self.dock_widgets = {}
+        self.last_docked = None
+        self.main_window = QtGui.QMainWindow()
+        for widget, name in (self.scope_widget, "scope"), \
+                            (self.all_asg_widget, "asgs"), \
+                            (self.na_widget, "na"),\
+                            (self.sa_widget, "sa"):
+            self.add_dock_widget(widget, name)
+        self.main_window.setDockNestingEnabled(True) #DockWidgets can be stacked
+        # with one below the other one in the same column
+        self.dock_widgets["scope"].raise_() # select first tab
+
+#        self.main_window.tabifyDockWidget(self.na_widget_dock,
+ #                                         self.scope_widget_dock)
+
+        """
         self.tab_widget = QtGui.QTabWidget()
         self.tab_widget.addTab(self.scope_widget, "Scope")
         self.tab_widget.addTab(self.all_asg_widget, "Asg")
@@ -1288,6 +1430,7 @@ class RedPitayaGui(RedPitaya):
         self.customize_scope()
         self.customize_na()
         self.custom_setup()
+        """
 
     def gui(self, runcontinuous=True):
         """
@@ -1295,7 +1438,7 @@ class RedPitayaGui(RedPitaya):
         """
         self.gui_timer = QtCore.QTimer()
 
-        self.tab_widget.show()
+        self.main_window.show()
         if runcontinuous:
             self.scope_widget.run_continuous()
 

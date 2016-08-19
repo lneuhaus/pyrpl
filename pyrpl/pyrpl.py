@@ -454,7 +454,7 @@ class Pyrpl(Lockbox):
             self.rp.gui()
         self._setupscope()
         self._set_window_position()
-        self.rp.tab_widget.setWindowTitle(self.c.general.name)
+        self.rp.main_window.setWindowTitle(self.c.general.name)
 
     def _setupscope(self):
         if "scope" in self.c._dict:

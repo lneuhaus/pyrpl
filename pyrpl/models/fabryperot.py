@@ -6,6 +6,7 @@ import threading
 
 from . import *
 from ..signal import Signal
+from ..pyrpl_utils import sleep
 
 logger = logging.getLogger(name=__name__)
 
@@ -188,7 +189,8 @@ class FabryPerot(Model):
                         lockfn(**parameters)
                     except TypeError:  # function doesnt accept kwargs
                         lockfn()
-                    time.sleep(stime)
+                    sleep(stime) #time.## Changed to pyrpl_utils.sleep,
+                    #  which basically doesn't freeze the gui
 
     def calibrate(self, inputs=None, scopeparams={}):
         """
