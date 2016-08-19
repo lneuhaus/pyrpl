@@ -33,10 +33,10 @@ from .sshshell import SSHshell
 from . import monitor_client
 from . import redpitaya_modules as rp
 from .network_analyzer import NetworkAnalyzer
-# from .spectrum_analyzer import SpectrumAnalyzer
+from .spectrum_analyzer import SpectrumAnalyzer
 # let's start debugging the spec an by taking data around 0 hz before we go
 # more complex
-from .spectrum_analyzer_noiq import SpectrumAnalyzer
+#from .spectrum_analyzeroiq import SpectrumAnalyzer
 
 class RedPitaya(SSHshell):
     _binfilename = 'fpga.bin'
