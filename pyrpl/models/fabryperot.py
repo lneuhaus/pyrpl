@@ -126,6 +126,9 @@ class FabryPerot(Model):
              firststage=None,
              laststage=None,
              thread=False):
+        ### This function is almost a one-to-one duplicate of Model.lock (
+        # except for the **kwargs that is read online). This is a major
+        # source of bug !!!!
 
         # firststage will allow timer-based recursive iteration over stages
         # i.e. calling lock(firststage = nexstage) from within this code
@@ -138,6 +141,7 @@ class FabryPerot(Model):
                 stages = stages[stages.index(firststage):]
         for stage in stages:
             self.logger.debug("Lock stage: %s", stage)
+            self.current_stage = stage
             if stage.startswith("call_"):
                 try:
                     lockfn = self.__getattribute__(stage[len('call_'):])

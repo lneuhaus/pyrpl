@@ -33,6 +33,7 @@ class Model(object):
 
     def __init__(self, parent=None):
         self.logger = logging.getLogger(__name__)
+        self.current_stage = 'UNLOCK'
         if parent is None:
             self._parent = self
         else:
@@ -189,6 +190,7 @@ class Model(object):
             self._relocktimer.stop()
         for o in self.outputs.values():
             o.unlock(ival=ival)
+        self.current_stage = "UNLOCK"
 
     def sweep(self):
         """
@@ -200,10 +202,12 @@ class Model(object):
             The duration of one sweep period, as it is useful to setup the
             scope.
         """
+
         self.unlock()
         frequency = None
         for o in self.outputs.values():
             frequency = o.sweep() or frequency
+        self.current_stage = "SWEEP"
         return 1.0 / frequency
 
     def _lock(self, input=None, factor=1.0, offset=None, outputs=None,
@@ -286,7 +290,7 @@ class Model(object):
              laststage=None,
              thread=False,
              **kwargs):
-        ### This function is almost a one-to-one duplicate of Model.lock (
+        ### This function is almost a one-to-one duplicate of FabryPerot.lock (
         # except for the **kwargs that is read online). This is a major
         # source of bug !!!!
 
@@ -301,6 +305,7 @@ class Model(object):
                 stages = stages[stages.index(firststage):]
         for stage in stages:
             self.logger.debug("Lock stage: %s", stage)
+            self.current_stage = stage
             if stage.startswith("call_"):
                 try:
                     lockfn = self.__getattribute__(stage[len('call_'):])

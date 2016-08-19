@@ -41,6 +41,7 @@ from .memory import MemoryTree
 from .model import Model
 from .signal import *
 from .models import *
+from .gui.pyrpl_gui import PyrplGui
 
 """
 channels:
@@ -452,6 +453,9 @@ class Pyrpl(Lockbox):
             self.logger.debug("Seting up gui")
             self.rp.setup_gui()
             self.rp.gui()
+        self.pyrpl_control = PyrplGui(self)
+        self.rp.add_dock_widget(self.pyrpl_control, "Pyrpl control")
+
         self._setupscope()
         self._set_window_position()
         self.rp.main_window.setWindowTitle(self.c.general.name)
