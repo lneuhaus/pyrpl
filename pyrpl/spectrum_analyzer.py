@@ -83,6 +83,7 @@ class SpectrumAnalyzer(object):
                       for s_time in Scope.sampling_times]
 
         self.rp = rp
+        self._parent = rp
         self.baseband = False
         self.center = 0
         self.avg = 10

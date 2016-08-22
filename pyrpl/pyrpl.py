@@ -458,17 +458,25 @@ class Pyrpl(Lockbox):
 
         if "dock_positions" in self.c._keys():
             self.rp.main_window.restoreState(self.c.dock_positions)
-        self.timer_dock_positions = QtCore.QTimer()
-        self.timer_dock_positions.setInterval(1000)
-        self.timer_dock_positions.timeout.connect(self.save_dock_positions)
-        self.timer_dock_positions.start()
+            self._set_window_position()
+        self.timer_save_gui_params = QtCore.QTimer()
+        self.timer_save_gui_params.setInterval(1000)
+        self.timer_save_gui_params.timeout.connect(self.save_dock_positions)
+        self.timer_save_gui_params.timeout.connect(self.save_gui_params)
+        self.timer_save_gui_params.start()
 
         self._setupscope()
-        self._set_window_position()
         self.rp.main_window.setWindowTitle(self.c.general.name)
 
     def save_dock_positions(self):
         self.c["dock_positions"] = str(self.rp.main_window.saveState())
+        self._lock_window_position()
+
+    def save_gui_params(self):
+        pass # not sure if params should be autosaved or not ...
+        #for module in self.rp.all_gui_modules:
+        #    dic = module.get_state()
+        #    self.c[module.name] = dic
 
     def _setupscope(self):
         if "scope" in self.c._dict:

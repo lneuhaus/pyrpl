@@ -40,6 +40,11 @@ class NotReadyError(ValueError):
 
 class BaseModule(object):
     name = 'BaseModule'
+
+    # the list of parameters that constitute the "state" of the Module
+    parameter_names = []
+
+
     # factor to manually compensate 125 MHz oscillator frequency error
     # real_frequency = 125 MHz * _frequency_correction
     @property
@@ -58,7 +63,7 @@ class BaseModule(object):
         else:
             raise ValueError("New module attributes may not be set at runtime. Attribute "
                              + name + " is not defined in class " + self.__class__.__name__)
-    
+
     def help(self, register=''):
         """returns the docstring of the specified register name
         
@@ -115,7 +120,24 @@ class BaseModule(object):
             v = v + 2**bitlength
         v = (v & (2**bitlength - 1))
         return np.uint32(v)
-    
+
+    def get_state(self):
+        """Returns a dictionaty with all current values of the parameters
+        listed in parameter_names"""
+
+        res = dict()
+        for par in self.parameter_names:
+            res[par] = getattr(self, par)
+        return res
+
+    def set_state(self, dic):
+        """Sets all parameters to the values in dic. When necessary,
+        the function also calls setup()"""
+
+        res = dict()
+        for key, value in dic.iteritems():
+            setattr(self, key, value)
+
 class HK(BaseModule):
     name = 'HK'
 
@@ -156,6 +178,16 @@ class Scope(BaseModule):
     name = 'scope'
     data_length = data_length  # see definition and explanation above
     inputs = None
+    parameter_names = ["input1",
+              "input2",
+              "trigger_source",
+              "threshold_ch1",
+              "threshold_ch2",
+              "trigger_delay",
+              "duration",
+              "hysteresis_ch1",
+              "hysteresis_ch2",
+              "average"]
 
     def __init__(self, client, parent=None):
         super(Scope, self).__init__(client,
@@ -206,7 +238,11 @@ class Scope(BaseModule):
     
     _trigger_source = SelectRegister(0x4, doc="Trigger source", 
                                     options=_trigger_sources)
-    
+
+    def set_state(self, dic):
+        super(Scope, self).set_stat(dic)
+        self.setup()
+
     @property
     def trigger_source(self):
         if hasattr(self,"_trigger_source_memory"):
@@ -574,6 +610,20 @@ def make_asg(channel=1):
         set_default_output_direct = 'off'
         set_name = 'asg2'
     class Asg(BaseModule):
+        parameter_names = ["on",
+                           "periodic",
+                           "trigger_source",
+                           "offset",
+                           "amplitude",
+                           "start_phase",
+                           "frequency",
+                           "cycles_per_burst",
+                           "burst",
+                           "delay_between_bursts",
+                           "random_phase",
+                           "waveform",
+                           "output_direct"]
+
         _DATA_OFFSET = set_DATA_OFFSET
         _VALUE_OFFSET = set_VALUE_OFFSET
         _BIT_OFFSET = set_BIT_OFFSET
@@ -635,7 +685,7 @@ def make_asg(channel=1):
 
         trigger_sources = _trigger_sources.keys()
         
-        trigger_source = SelectRegister(0x0, bitmask=0x0007<<_BIT_OFFSET, 
+        trigger_source = SelectRegister(0x0, bitmask=0x0007<<_BIT_OFFSET,
                                         options=_trigger_sources, 
                                         doc="trigger source for triggered output")
         
@@ -1015,6 +1065,18 @@ class Pid(FilterModule):
     
     _GAINBITS = 24  #Register(0x20C)
 
+    parameter_names = ["p",
+                       "i",
+                       "d",
+                       "setpoint",
+                       "min_voltage",
+                       "max_voltage",
+                       "normalization_on",
+                       "normalization_i",
+                       "output_direct",
+                       "input",
+                       "ival"]
+
     @property
     def ival(self):
         return float(self._to_pyint(self._read(0x100), bitlength=16))/2**13
@@ -1158,6 +1220,20 @@ class IQ(FilterModule):
         pfd=2,
         off=3,
         quadrature_hf=4)
+    parameter_names = ["output_signal",
+                       "bandwidth",
+                       "on",
+                       "pfd_on",
+                       "pfd_integral",
+                       "phase",
+                       "frequency",
+                       "amplitude",
+                       "quadrature_factor",
+                       "gain",
+                       "acbandwidth",
+                       "output_direct",
+                       "input"]
+
     output_signals = _output_signals.keys()
     output_signal = SelectRegister(0x10C, options=_output_signals,
                            doc = "Signal to send back to DSP multiplexer")
@@ -1225,6 +1301,15 @@ class IQ(FilterModule):
     def gain(self, v):
         self._g1 = float(v) * 2**3
         self._g4 = float(v) * 2**3
+
+    @property
+    def acbandwidth(self):
+        return - self.inputfilter
+
+    @acbandwidth.setter
+    def acbandwidth(self, val):
+        self.inputfilter = -val
+        return val
 
     def setup(
             self,
@@ -1465,7 +1550,14 @@ class IIR(FilterModule):
     _IIRSHIFT = Register(0x204)
 
     _IIRSTAGES = Register(0x208)
-        
+
+    parameter_names = ["loops",
+                       "on",
+                       "shortcut",
+                       "coefficients",
+                       "input",
+                       "output_direct"]
+
     loops = Register(0x100, doc="Decimation factor of IIR w.r.t. 125 MHz. "\
                                 +"Must be at least 3. ")
 

@@ -409,11 +409,31 @@ class ModuleWidget(QtGui.QWidget):
     property_names = []
     curve_class = CurveDB
 
-    def __init__(self, parent=None, module=None):
+    def __init__(self, name, parent=None, module=None):
         super(ModuleWidget, self).__init__(parent)
+        self.name = name
         self.module = module
         self.init_gui()
         self.update_properties()
+        module._parent.all_gui_modules.append(self)
+
+    def get_state(self):
+        """returns a dictionary containing all properties listed in
+        property_names."""
+        #Not sure if we should also set the state of the underlying module
+
+        dic = dict()
+        for val in self.property_names:
+            dic[val] = getattr(self.module, val)
+        return dic
+
+    def set_state(self, dic):
+        """Sets the state using a dictionary"""
+
+        for key, val in dic.iteritems():
+            setattr(self.module, key, val)
+        self.module.setup()
+
 
     def stop_all_timers(self):
         self.property_watch_timer.stop()
@@ -478,6 +498,36 @@ class ModuleWidget(QtGui.QWidget):
                 prop.update_widget()
 
 
+class ScopeSaWidget(QtGui.QTabWidget):
+    """
+    A tab widget that prevents scope and sa to be open at the same time
+    """
+
+    def __init__(self, scope_widget, sa_widget):
+        super(ScopeSaWidget, self).__init__()
+        self.scope_widget = scope_widget
+        self.sa_widget = sa_widget
+
+        self.addTab(self.scope_widget, "Scope")
+        self.addTab(self.sa_widget, "Spec. an.")
+
+        self.scope_state = self.scope_widget.get_state()
+        self.sa_state = self.sa_widget.get_state()
+
+        self.currentChanged.connect(self.reload_state)
+
+
+
+    def reload_state(self):
+        if self.currentWidget()==self.scope_widget:
+            self.sa_state = self.sa_widget.get_state()
+            self.scope_widget.set_state(self.scope_state)
+            self.sa_widget.stop()
+        else:
+            self.scope_state = self.scope_widget.get_state()
+            self.sa_widget.set_state(self.sa_state)
+            self.scope_widget.stop()
+
 class ScopeWidget(ModuleWidget):
     """
     Widget for scope
@@ -487,6 +537,7 @@ class ScopeWidget(ModuleWidget):
                       "duration",
                       "average",
                       "trigger_source",
+                      "trigger_delay",
                       "threshold_ch1",
                       "threshold_ch2",
                       "curve_name"]
@@ -700,19 +751,22 @@ class ScopeWidget(ModuleWidget):
             not self.rolling_mode)
         self.button_single.setEnabled(not self.rolling_mode)
 
-    @property
-    def params(self):
-        """
-        Params to be saved within the curve (maybe we should consider removing this and instead
-        use self.properties...
-        """
-        return dict(average=self.module.average,
-                    trigger_source=self.module.trigger_source,
-                    threshold_ch1=self.module.threshold_ch1,
-                    threshold_ch2=self.module.threshold_ch2,
-                    input1=self.module.input1,
-                    input2=self.module.input2,
-                    name=self.module.curve_name)
+
+    #@property
+    #def params(self):
+    #    """
+    #    Params to be saved within the curve (maybe we should consider
+    #    # removing this and instead
+    #    use self.properties...
+    #    """
+    #    return dict(average=self.module.average,
+    #                trigger_source=self.module.trigger_source,
+    #                threshold_ch1=self.module.threshold_ch1,
+    #                threshold_ch2=self.module.threshold_ch2,
+    #                input1=self.module.input1,
+    #                input2=self.module.input2,
+    #                name=self.module.curve_name)
+
 
     def save(self):
         """
@@ -721,7 +775,7 @@ class ScopeWidget(ModuleWidget):
         """
 
         for ch in [1, 2]:
-            d = self.params
+            d = self.get_state()
             d.update({'ch': ch,
                       'name': self.module.curve_name + ' ch' + str(ch)})
             self.save_curve(self.module.times,
@@ -790,7 +844,8 @@ class AllAsgGui(QtGui.QWidget):
         self.layout.setAlignment(QtCore.Qt.AlignTop)
 
         while hasattr(self.rp, "asg" + str(nr)):
-            widget = AsgGui(parent=None,
+            widget = AsgGui(name="asg" + str(nr),
+                            parent=None,
                             module=getattr(self.rp, "asg" + str(nr)))
             self.asg_widgets.append(widget)
             self.layout.addWidget(widget)
@@ -900,6 +955,8 @@ class NaGui(ModuleWidget):
         We should consider using self.properties instead of manually iterating.
         """
 
+        self.params = self.get_state()
+        """
         self.params = dict(start=self.module.start,
                                    stop=self.module.stop,
                                    rbw=self.module.rbw,
@@ -912,7 +969,7 @@ class NaGui(ModuleWidget):
                                    post_average=self.post_average,
                                    infer_open_loop_tf=self.module.infer_open_loop_tf,
                                    name=self.module.curve_name)
-
+        """
     def save(self):
         """
         Save the current curve. If you would like to overwrite the save behavior, maybe you should
@@ -1258,7 +1315,7 @@ class SpecAnGui(ModuleWidget):
         """
         self.save_curve(self.x_data,
                         self.module.data_to_dBm(self.y_data),
-                        **self.params())
+                        **self.get_state())
 
     def update_properties(self):
         """
@@ -1361,20 +1418,21 @@ class SpecAnGui(ModuleWidget):
         self.y_data = np.zeros(len(self.x_data))
         self.current_average = 0
 
-    def params(self):
-        """
-        The current relevant parameters. We should consider switching to a systematic use of
-        self.properties.
-        """
-
-        return dict(center=self.module.center,
-                    span=self.module.span,
-                    rbw=self.module.rbw,
-                    input=self.module.input,
-                    points=self.module.points,
-                    avg=self.module.avg,
-                    acbandwidth=self.module.acbandwidth,
-                    name=self.module.curve_name)
+    #def params(self):
+    #    """
+    #    The current relevant parameters. We should consider switching to a
+    #    # systematic use of
+     #   self.properties.
+    #    """
+     #
+     #   return dict(center=self.module.center,
+     #               span=self.module.span,
+     #               rbw=self.module.rbw,
+     #               input=self.module.input,
+     #               points=self.module.points,
+     #               avg=self.module.avg,
+     #               acbandwidth=self.module.acbandwidth,
+     #               name=self.module.curve_name)
 
 
 class RedPitayaGui(RedPitaya):
@@ -1405,25 +1463,29 @@ class RedPitayaGui(RedPitaya):
             self.main_window.tabifyDockWidget(self.last_docked, dock_widget)
         self.last_docked = dock_widget
 
-
-
     def setup_gui(self):
-        self.na_widget = NaGui(parent=None, module=self.na)
-        self.scope_widget = ScopeWidget(parent=None, module=self.scope)
+        self.all_gui_modules = []
+        self.na_widget = NaGui(name="na", parent=None, module=self.na)
+        self.scope_widget = ScopeWidget(name="scope",
+                                        parent=None,
+                                        module=self.scope)
+        self.sa_widget = SpecAnGui(name="spec an",
+                                   parent=None,
+                                   module=self.spec_an)
+        self.scope_sa_widget = ScopeSaWidget(self.scope_widget,
+                                                 self.sa_widget)
         self.all_asg_widget = AllAsgGui(parent=None, rp=self)
-        self.sa_widget = SpecAnGui(parent=None, module=self.spec_an)
 
         self.dock_widgets = {}
         self.last_docked = None
         self.main_window = QtGui.QMainWindow()
-        for widget, name in (self.scope_widget, "scope"), \
-                            (self.all_asg_widget, "asgs"), \
-                            (self.na_widget, "na"),\
-                            (self.sa_widget, "sa"):
+        for widget, name in [(self.scope_sa_widget, "Scope/Spec. An."),
+                            (self.all_asg_widget, "Asgs"),
+                            (self.na_widget, "Na")]:
             self.add_dock_widget(widget, name)
         self.main_window.setDockNestingEnabled(True) #DockWidgets can be stacked
         # with one below the other one in the same column
-        self.dock_widgets["scope"].raise_() # select first tab
+        self.dock_widgets["Scope/Spec. An."].raise_() # select first tab
 
 
 #        self.main_window.tabifyDockWidget(self.na_widget_dock,
@@ -1496,15 +1558,15 @@ class RedPitayaGui(RedPitaya):
 
     @property
     def window_position(self):
-        xy = self.tab_widget.pos()
+        xy = self.main_window.pos()
         x = xy.x()
         y = xy.y()
-        dxdy = self.tab_widget.size()
+        dxdy = self.main_window.size()
         dx = dxdy.width()
         dy = dxdy.height()
         return [x, y, dx, dy]
 
     @window_position.setter
     def window_position(self, coords):
-        self.tab_widget.move(coords[0], coords[1])
-        self.tab_widget.resize(coords[2], coords[3])
+        self.main_window.move(coords[0], coords[1])
+        self.main_window.resize(coords[2], coords[3])

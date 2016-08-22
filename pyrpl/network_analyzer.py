@@ -29,6 +29,7 @@ class NetworkAnalyzer(object):
     def __init__(self, rp):
         self._logger = logging.getLogger(__name__)
         self.rp = rp
+        self._parent = rp
         self.start = 200
         self.stop = 50000
         self.points = 1001
