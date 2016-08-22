@@ -7,6 +7,7 @@ from pyrpl import CurveDB
 from time import time
 from pyqtgraph.Qt import QtGui, QtCore
 import pyqtgraph as pg
+import pyqtgraph.console
 import numpy as np
 from collections import OrderedDict
 
@@ -261,9 +262,10 @@ class ModuleWidget(QtGui.QWidget):
     property_names = []
     curve_class = CurveDB
 
-    def __init__(self, parent=None, module=None):
+    def __init__(self, parent=None, module=None, namespace=None):
         super(ModuleWidget, self).__init__(parent)
         self.module = module
+        self.namespace=namespace
         self.init_gui()
         self.update_properties()
 
@@ -507,6 +509,8 @@ class ScopeWidget(ModuleWidget):
             spin_box.setMaximum(1)
             spin_box.setMinimum(-1)
             spin_box.setSingleStep(0.01)
+        self.c = pyqtgraph.console.ConsoleWidget(namespace=self.namespace)
+        self.main_layout.addWidget(self.c)
 
     @property
     def rolling_mode(self):
@@ -1180,13 +1184,14 @@ class RedPitayaGui(RedPitaya):
     Widget for the main RedPitayaGui window.
     """
 
-    def __init__(self, *args, **kwds):
+    def __init__(self, console_ns=None, *args, **kwds):
         super(RedPitayaGui, self).__init__(*args, **kwds)
+        self.console_namespace=console_ns
         self.setup_gui()
 
     def setup_gui(self):
         self.na_widget = NaGui(parent=None, module=self.na)
-        self.scope_widget = ScopeWidget(parent=None, module=self.scope)
+        self.scope_widget = ScopeWidget(parent=None, module=self.scope, namespace=self.console_namespace)
         self.all_asg_widget = AllAsgGui(parent=None, rp=self)
         self.sa_widget = SpecAnGui(parent=None, module=self.spec_an)
 

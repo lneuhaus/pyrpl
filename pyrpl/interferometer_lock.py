@@ -3,7 +3,7 @@
 import os
 import numpy as np
 #
-from .redpitaya import RedPitaya
+from .gui import RedPitayaGui
 from .memory import MemoryTree
 #
 #####
@@ -12,9 +12,9 @@ class InterferometerLock():
         _configdir = os.path.join(os.path.dirname(__file__), "i_config")
         self._configfile = os.path.join(_configdir, config + '.yml')
         self.c = MemoryTree(self._configfile)
-        self.rp = RedPitaya(**self.c.redpitaya._dict)
+        self.rp = RedPitayaGui(**self.c.redpitaya._dict, console_ns={'l':self})
         self.connect_rp()
-        self.config_scope()
+        self.rp.gui()
     #
     def connect_rp(self):
         _config_asg = self.c.rp_mod_connection.asg
@@ -55,8 +55,6 @@ class InterferometerLock():
         self.rp.iq0.output_signal = output_signal['iq0']
         self.rp.iq1.output_signal = output_signal['iq1']
     #
-    def config_scope(self):
-        pass
     #
     def fringe_to_fit(self, t, slope=0.15, T=103.0, phi_s=0, Imean=0.5, Iamp=0.3):
         _cyc = t // (T / 2)
