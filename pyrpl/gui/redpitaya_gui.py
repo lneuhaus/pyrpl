@@ -1385,9 +1385,18 @@ class RedPitayaGui(RedPitaya):
     def __init__(self, *args, **kwds):
         super(RedPitayaGui, self).__init__(*args, **kwds)
         self.setup_gui()
+        self.timer_dock_positions = QtCore.QTimer()
+        self.timer_dock_positions.setInterval(1000)
+        self.timer_dock_positions.timeout.connect(self.save_dock_positions)
 
     def add_dock_widget(self, widget, name):
         dock_widget = QtGui.QDockWidget(name)
+        dock_widget.setObjectName(name)
+        dock_widget.setFeatures(
+            QtGui.QDockWidget.DockWidgetFloatable |
+            QtGui.QDockWidget.DockWidgetMovable |
+            QtGui.QDockWidget.DockWidgetVerticalTitleBar)
+
         self.dock_widgets[name] =  dock_widget
         dock_widget.setWidget(widget)
         self.main_window.addDockWidget(QtCore.Qt.TopDockWidgetArea,
@@ -1415,6 +1424,7 @@ class RedPitayaGui(RedPitaya):
         self.main_window.setDockNestingEnabled(True) #DockWidgets can be stacked
         # with one below the other one in the same column
         self.dock_widgets["scope"].raise_() # select first tab
+
 
 #        self.main_window.tabifyDockWidget(self.na_widget_dock,
  #                                         self.scope_widget_dock)

@@ -456,9 +456,19 @@ class Pyrpl(Lockbox):
         self.pyrpl_control = PyrplGui(self)
         self.rp.add_dock_widget(self.pyrpl_control, "Pyrpl control")
 
+        if "dock_positions" in self.c._keys():
+            self.rp.main_window.restoreState(self.c.dock_positions)
+        self.timer_dock_positions = QtCore.QTimer()
+        self.timer_dock_positions.setInterval(1000)
+        self.timer_dock_positions.timeout.connect(self.save_dock_positions)
+        self.timer_dock_positions.start()
+
         self._setupscope()
         self._set_window_position()
         self.rp.main_window.setWindowTitle(self.c.general.name)
+
+    def save_dock_positions(self):
+        self.c["dock_positions"] = str(self.rp.main_window.saveState())
 
     def _setupscope(self):
         if "scope" in self.c._dict:
