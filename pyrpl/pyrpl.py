@@ -469,7 +469,8 @@ class Pyrpl(Lockbox):
         self.rp.main_window.setWindowTitle(self.c.general.name)
 
     def save_dock_positions(self):
-        self.c["dock_positions"] = str(self.rp.main_window.saveState())
+        if self.c["dock_positions"]!=str(self.rp.main_window.saveState()):
+            self.c["dock_positions"] = str(self.rp.main_window.saveState())
         self._lock_window_position()
 
     def save_gui_params(self):
@@ -491,7 +492,8 @@ class Pyrpl(Lockbox):
         except KeyError:
             self.c["scopegui"] = dict()
         try:
-            self.c.scopegui["coordinates"] = self.rp.window_position
+            if self.c.scopegui["coordinates"]!=self.rp.window_position:
+                self.c.scopegui["coordinates"] = self.rp.window_position
         except:
             self.logger.warning("Gui is not started. Cannot save position.")
 

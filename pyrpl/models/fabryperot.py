@@ -142,6 +142,7 @@ class FabryPerot(Model):
         for stage in stages:
             self.logger.debug("Lock stage: %s", stage)
             self.current_stage = stage
+            self.stage_changed_hook(stage)  # Some hook function
             if stage.startswith("call_"):
                 try:
                     lockfn = self.__getattribute__(stage[len('call_'):])

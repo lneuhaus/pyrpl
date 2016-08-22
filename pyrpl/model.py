@@ -284,6 +284,11 @@ class Model(object):
         unless a list of outputs is given, similar to _lock) """
         self._lock(outputs=outputs, _savegain=True)
 
+    def stage_changed_hook(self, new_stage):
+        """Overwrite or monkey patch this function for custom action upon
+        new stage"""
+        pass
+
     def lock(self,
              factor=None,
              firststage=None,
@@ -306,6 +311,7 @@ class Model(object):
         for stage in stages:
             self.logger.debug("Lock stage: %s", stage)
             self.current_stage = stage
+            self.stage_changed_hook(stage) # Some hook function
             if stage.startswith("call_"):
                 try:
                     lockfn = self.__getattribute__(stage[len('call_'):])
