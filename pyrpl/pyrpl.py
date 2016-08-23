@@ -317,6 +317,11 @@ class Lockbox(object):
         for fname in self.model.export_to_parent:
             self.__setattr__(fname, self.model.__getattribute__(fname))
         self.logger.info("Lockbox '%s' initialized!", self.c.general.name)
+        self.persistent_props = [] # list of properties to monitor
+        self.timer_persistent_properties = QtCore.QTimer()
+        self.timer_persistent_properties.setInterval(1000)
+        self.timer_persistent_properties.timeout.connect(self.store_properties)
+        self.timer_persistent_properties.start()
 
     def _setloglevel(self):
         """ sets the log level to the one specified in config file"""
@@ -408,6 +413,50 @@ class Lockbox(object):
         params.update(self._deriveddict(self.c._data, prefix="c."))
         return self._deriveddict(params, postfix=postfix)
 
+    def register_persistent_properties(self,
+                                       module,
+                                       name,
+                                       properties,
+                                       retrieve_existing=True):
+        """
+        Stores the properties of an object in a config file for persistence
+        over several sessions.
+
+        module: object with some properties that we would like to monitor
+        name: name of the section to use in the config file
+        properties: list of properties (by name) to monitor
+        retrieve_existing: if values exist in the store, retrieves the
+        existing ones
+        """
+
+        self.persistent_props.append((module, name, properties))
+        if retrieve_existing:
+            try:
+                dic = self.c[name]
+            except KeyError:
+                pass
+            else:
+                for prop in properties:
+                    if prop in dic:
+                        print "setting ", module, prop, dic[prop]
+                        setattr(module, prop, dic[prop])
+
+    def store_properties(self):
+        for module, name, properties in self.persistent_props:
+            new_dic = OrderedDict()
+            for prop in properties:
+                new_dic[prop] = getattr(module, prop)
+            try:
+                dic = self.c[name]
+            except KeyError:
+                self.c[name] = {}
+                dic = {}
+            if dic!=new_dic:
+                for key, val in new_dic.iteritems():
+                    getattr(self.c, name)[key] = val # somehow self.c[name][key]
+                    #doesn't work
+
+
 class Pyrpl(Lockbox):
     """
     The fundamental Python RedPitaya Lockbox API object. After having
@@ -456,22 +505,15 @@ class Pyrpl(Lockbox):
         self.pyrpl_control = PyrplGui(self)
         self.rp.add_dock_widget(self.pyrpl_control, "Pyrpl control")
 
-        if "dock_positions" in self.c._keys():
-            self.rp.main_window.restoreState(self.c.dock_positions)
-            self._set_window_position()
+        self.set_window_position()
         self.timer_save_gui_params = QtCore.QTimer()
         self.timer_save_gui_params.setInterval(1000)
-        self.timer_save_gui_params.timeout.connect(self.save_dock_positions)
+        self.timer_save_gui_params.timeout.connect(self._save_window_position)
         self.timer_save_gui_params.timeout.connect(self.save_gui_params)
         self.timer_save_gui_params.start()
 
         self._setupscope()
         self.rp.main_window.setWindowTitle(self.c.general.name)
-
-    def save_dock_positions(self):
-        if self.c["dock_positions"]!=str(self.rp.main_window.saveState()):
-            self.c["dock_positions"] = str(self.rp.main_window.saveState())
-        self._lock_window_position()
 
     def save_gui_params(self):
         pass # not sure if params should be autosaved or not ...
@@ -486,7 +528,9 @@ class Pyrpl(Lockbox):
             if self.c.scopegui.auto_run_continuous:
                 r.rp.scope_widget.run_continuous()
 
-    def _lock_window_position(self):
+    def _save_window_position(self):
+        if self.c["dock_positions"]!=str(self.rp.main_window.saveState()):
+            self.c["dock_positions"] = str(self.rp.main_window.saveState())
         try:
             _ = self.c.scopegui
         except KeyError:
@@ -497,7 +541,9 @@ class Pyrpl(Lockbox):
         except:
             self.logger.warning("Gui is not started. Cannot save position.")
 
-    def _set_window_position(self):
+    def set_window_position(self):
+        if "dock_positions" in self.c._keys():
+            self.rp.main_window.restoreState(self.c.dock_positions)
         try:
             coordinates = self.c["scopegui"]["coordinates"]
         except KeyError:

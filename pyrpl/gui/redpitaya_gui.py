@@ -3,6 +3,7 @@ from pyrpl.redpitaya_modules import NotReadyError
 from pyrpl.network_analyzer import NetworkAnalyzer
 from pyrpl.spectrum_analyzer import SpectrumAnalyzer
 from pyrpl import CurveDB
+from pyrpl.pyrpl_utils import MyDoubleSpinBox
 
 from time import time
 from pyqtgraph.Qt import QtGui, QtCore
@@ -164,99 +165,6 @@ class NumberProperty(BaseProperty):
         if not self.widget.hasFocus():
             self.widget.setValue(self.module_value())
 
-
-class MyDoubleSpinBox(QtGui.QWidget):
-    value_changed = QtCore.pyqtSignal()
-
-    def __init__(self, label, min=-1, max=1, step=2.**(-13), parent=None):
-        super(MyDoubleSpinBox, self).__init__(parent)
-
-        self.min = min
-        self.max = max
-
-        self.lay = QtGui.QHBoxLayout()
-        self.lay.setContentsMargins(0,0,0,0)
-        self.lay.setSpacing(0)
-        self.setLayout(self.lay)
-
-        if label is not None:
-            self.label = QtGui.QLabel(label)
-            self.lay.addWidget(self.label)
-        self.step = step
-        self.decimals = 4
-
-        self.down = QtGui.QPushButton('<')
-        self.lay.addWidget(self.down)
-
-        self.line = QtGui.QLineEdit()
-        self.lay.addWidget(self.line)
-
-        self.up = QtGui.QPushButton('>')
-        self.lay.addWidget(self.up)
-        self.timer_arrow = QtCore.QTimer()
-        self.timer_arrow.setInterval(5)
-        self.timer_arrow.timeout.connect(self.make_step)
-
-        self.up.pressed.connect(self.timer_arrow.start)
-        self.down.pressed.connect(self.timer_arrow.start)
-
-        self.up.setMaximumWidth(15)
-        self.down.setMaximumWidth(15)
-
-        self.up.released.connect(self.timer_arrow.stop)
-        self.down.released.connect(self.timer_arrow.stop)
-
-        self.line.editingFinished.connect(self.validate)
-        self.val = 0
-
-        self.setMaximumWidth(200)
-        self.setMaximumHeight(20)
-
-    def sizeHint(self): #doesn t do anything, probably need to change sizePolicy
-        return QtCore.QSize(200, 20)
-
-    def setMaximum(self, val):
-        self.max = val
-
-    def setMinimum(self, val):
-        self.min = val
-
-    def setSingleStep(self, val):
-        self.step = val
-
-    def setValue(self, val):
-        self.val = val
-
-    def setDecimals(self, val):
-        self.decimals = val
-
-    def value(self):
-        return self.val
-
-    @property
-    def val(self):
-        return float(self.line.text())
-
-    @val.setter
-    def val(self, new_val):
-        self.line.setText(("%."+str(self.decimals) + "f")%new_val)
-        return new_val
-
-    def make_step(self):
-        if self.up.isDown():
-            self.val+=self.step
-        if self.down.isDown():
-            self.val-=self.step
-        self.validate()
-
-    def validate(self):
-        if self.val>self.max:
-            self.val = self.max
-        if self.val<self.min:
-            self.val = self.min
-        self.value_changed.emit()
-
-
 class IntProperty(NumberProperty):
     """
     Property for integer values.
@@ -402,20 +310,25 @@ class BoolProperty(BaseProperty):
 
 class ModuleWidget(QtGui.QWidget):
     """
-    Base class for a module Widget. In general, this is one of the Tab in the final RedPitayaGui object.
+    Base class for a module Widget. In general, this is one of the Tab in the
+    final RedPitayaGui object.
     """
 
     property_changed = QtCore.pyqtSignal()
     property_names = []
     curve_class = CurveDB
 
-    def __init__(self, name, parent=None, module=None):
+    def __init__(self, name, rp, parent=None, module=None):
         super(ModuleWidget, self).__init__(parent)
+        self.rp = rp
         self.name = name
+        if module is None:
+            module = self
+        self.properties = OrderedDict()
         self.module = module
         self.init_gui()
         self.update_properties()
-        module._parent.all_gui_modules.append(self)
+        self.rp.all_gui_modules.append(self)
 
     def get_state(self):
         """returns a dictionary containing all properties listed in
@@ -456,7 +369,6 @@ class ModuleWidget(QtGui.QWidget):
 
         self.property_layout = QtGui.QHBoxLayout()
         self.main_layout.addLayout(self.property_layout)
-        self.properties = OrderedDict()
 
         for prop_name in self.property_names:
             prop = property_factory(self, prop_name)
@@ -485,7 +397,10 @@ class ModuleWidget(QtGui.QWidget):
         :return:
         """
 
-        raise NotImplementedError()
+        self.main_layout = QtGui.QHBoxLayout()
+        self.setLayout(self.main_layout)
+        self.init_property_layout()
+
 
     def update_properties(self):
         """
@@ -672,6 +587,7 @@ class ScopeWidget(ModuleWidget):
         self.setWindowTitle("Scope")
         self.win = pg.GraphicsWindow(title="Scope")
         self.plot_item = self.win.addPlot(title="Scope")
+        self.plot_item.showGrid(y=True, alpha=1.)
         self.button_single = QtGui.QPushButton("Run single")
         self.button_continuous = QtGui.QPushButton("Run continuous")
         self.button_save = QtGui.QPushButton("Save curve")
@@ -845,6 +761,7 @@ class AllAsgGui(QtGui.QWidget):
 
         while hasattr(self.rp, "asg" + str(nr)):
             widget = AsgGui(name="asg" + str(nr),
+                            rp=self.rp,
                             parent=None,
                             module=getattr(self.rp, "asg" + str(nr)))
             self.asg_widgets.append(widget)
@@ -1465,16 +1382,22 @@ class RedPitayaGui(RedPitaya):
 
     def setup_gui(self):
         self.all_gui_modules = []
-        self.na_widget = NaGui(name="na", parent=None, module=self.na)
+        self.na_widget = NaGui(name="na",
+                               rp=self,
+                               parent=None,
+                               module=self.na)
         self.scope_widget = ScopeWidget(name="scope",
+                                        rp=self,
                                         parent=None,
                                         module=self.scope)
         self.sa_widget = SpecAnGui(name="spec an",
+                                   rp=self,
                                    parent=None,
                                    module=self.spec_an)
         self.scope_sa_widget = ScopeSaWidget(self.scope_widget,
                                                  self.sa_widget)
-        self.all_asg_widget = AllAsgGui(parent=None, rp=self)
+        self.all_asg_widget = AllAsgGui(parent=None,
+                                        rp=self)
 
         self.dock_widgets = {}
         self.last_docked = None
@@ -1570,3 +1493,26 @@ class RedPitayaGui(RedPitaya):
     def window_position(self, coords):
         self.main_window.move(coords[0], coords[1])
         self.main_window.resize(coords[2], coords[3])
+
+class UserModule(ModuleWidget):
+    """
+    Subclass this to make your own modules.
+    property_names is a list of properties to be created.
+    Make sure a default value is given to the class (e.g. length = 0.01 in
+    the class declaration.)
+
+    autosave is the list of properties that need to be monitored
+
+    overwrite init_gui for custom gui construction
+    """
+
+    property_names = ["dummy_example"]
+    autosave = []
+    dummy_example = 3.0
+
+    def __init__(self, pyrpl, name):
+        self.rp = pyrpl.rp
+        self.pyrpl = pyrpl
+        super(UserModule, self).__init__(rp=pyrpl.rp, name=name)
+        self.rp.add_dock_widget(self, name)
+        pyrpl.register_persistent_properties(self, self.name, self.autosave)
