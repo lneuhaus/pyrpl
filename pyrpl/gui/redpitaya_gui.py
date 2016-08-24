@@ -44,6 +44,8 @@ def property_factory(module_widget, prop):
             new_prop = IntProperty(prop, module_widget)
         elif isinstance(attr, str):
             new_prop = StringProperty(prop, module_widget)
+        elif np.iterable(attr):
+            new_prop = ListComboProperty(prop, module_widget, len(attr))
         else:
             new_prop = FloatProperty(prop, module_widget)
     return new_prop
@@ -216,6 +218,86 @@ class FloatProperty(NumberProperty):
         return float(getattr(self.module, self.name))
 
 
+class ListComboBox(QtGui.QWidget):
+    value_changed = QtCore.pyqtSignal()
+
+    def __init__(self, number, name):
+        super(ListComboBox, self).__init__()
+        self.lay = QtGui.QHBoxLayout()
+        self.combos = []
+        self._options = \
+                [str(int(-2.371593461809983*2**n)) for n in range(1, 27)] + \
+                [str(0)] + \
+                [str(int(2.371593461809983*2**n)) for n in range(1, 27)]
+        for i in range(number):
+            combo = QtGui.QComboBox()
+            self.combos.append(combo)
+            combo.addItems(self.options)
+            combo.currentIndexChanged.connect(self.value_changed)
+            self.lay.addWidget(combo)
+        self.setLayout(self.lay)
+
+    def get_list(self):
+        return [float(combo.currentText()) for combo in self.combos]
+
+    @property
+    def options(self):
+        return  self._options
+    def set_list(self, val):
+        for i, v in enumerate(val):
+            v = str(int(v))
+            index = self.options.index(v)
+            self.combos[i].setCurrentIndex(index)
+
+class ListComboProperty(BaseProperty):
+    """
+    Property for list of floats
+    """
+
+    def __init__(self, name, module_widget, number):
+        self.number = number
+        super(ListComboProperty, self).__init__(name, module_widget)
+
+    def set_widget(self):
+        """
+        Sets up the widget (here a QDoubleSpinBox)
+        :return:
+        """
+
+        self.widget = ListComboBox(self.number, "")#QtGui.QDoubleSpinBox()
+        #self.widget.setDecimals(4)
+        #self.widget.setSingleStep(0.01)
+        self.widget.value_changed.connect(self.write)
+
+    def write(self):
+        """
+        Sets the module property value from the current gui value
+
+        :return:
+        """
+
+        setattr(self.module, self.name, self.widget.get_list())
+        if self.acquisition_property:
+            self.value_changed.emit()
+
+    def module_value(self):
+        """
+        returns the module value, with the good type conversion.
+
+        :return: float
+        """
+
+        return self.widget.get_list()
+
+    def update(self):
+        """
+        Sets the gui value from the current module value
+
+        :return:
+        """
+
+        self.widget.set_list(getattr(self.module, self.name))
+
 class ComboProperty(BaseProperty):
     """
     Multiple choice property. Defaults is the name of the property
@@ -363,7 +445,8 @@ class ModuleWidget(QtGui.QWidget):
         """
 
         self.property_watch_timer = QtCore.QTimer()
-        self.property_watch_timer.setInterval(100)
+        self.property_watch_timer.setInterval(300) # Less would cause some
+        # deadlock whith the up/down arrow in log_increment
         self.property_watch_timer.timeout.connect(self.update_properties)
         self.property_watch_timer.start()
 
@@ -667,7 +750,10 @@ class ScopeWidget(ModuleWidget):
             not self.rolling_mode)
         self.button_single.setEnabled(not self.rolling_mode)
 
+    def autoscale(self):
+        """Autoscale pyqtgraph"""
 
+        self.plot_item.autoRange()
     #@property
     #def params(self):
     #    """
@@ -866,6 +952,13 @@ class NaGui(ModuleWidget):
         self.properties["infer_open_loop_tf"].acquisition_property = False
         self.properties["curve_name"].acquisition_property = False
 
+        self.arrow = pg.ArrowItem()
+        self.arrow.setVisible(False)
+        self.arrow_phase = pg.ArrowItem()
+        self.arrow_phase.setVisible(False)
+        self.plot_item.addItem(self.arrow)
+        self.plot_item_phase.addItem(self.arrow_phase)
+
     def save_params(self):
         """
         Stores the params in a dictionary self.params.
@@ -1061,14 +1154,23 @@ class NaGui(ModuleWidget):
             y = y / (1.0 + y)
         mag = 20 * np.log10(np.abs(y)   )
         phase = np.angle(y, deg=True)
-        if self.module.logscale:
-            self.curve.setLogMode(xMode=True, yMode=None)
-            self.curve_phase.setLogMode(xMode=True, yMode=None)
-        else:
-            self.curve.setLogMode(xMode=False, yMode=None)
-            self.curve_phase.setLogMode(xMode=False, yMode=None)
+        log_mod = self.module.logscale
+        self.curve.setLogMode(xMode=log_mod, yMode=None)
+        self.curve_phase.setLogMode(xMode=log_mod, yMode=None)
+        self.plot_item.setLogMode(x=log_mod, y=None) # this seems also needed
+        self.plot_item_phase.setLogMode(x=log_mod, y=None) ##
+
+
         self.curve.setData(x, mag)
         self.curve_phase.setData(x, phase)
+
+        cur = self.module.current_point - 1
+        visible = self.last_valid_point==self.module.points
+        if cur>0:
+            self.arrow.setPos(x[cur], mag[cur])
+            self.arrow.setVisible(visible)
+            self.arrow_phase.setPos(x[cur], phase[cur])
+            self.arrow_phase.setVisible(visible)
         # plot_time = time() - plot_time_start # actually not working, because done later
         # self.update_timer.setInterval(plot_time*10*1000) # make sure plotting
         # is only marginally slowing
@@ -1155,6 +1257,53 @@ class NaGui(ModuleWidget):
             self.set_state(continuous=True, paused=True, need_restart=False,
                            n_av=self.post_average)
 
+
+
+class PidGui(ModuleWidget):
+    """
+    Widget for a single PID.
+    """
+
+    property_names = ["input",
+                      "output_direct",
+                      "setpoint",
+                      "p",
+                      "i",
+                      "d",
+                      "ival",
+                      "inputfilter"]
+
+    def init_gui(self):
+        self.main_layout = QtGui.QVBoxLayout()
+        self.setLayout(self.main_layout)
+        self.init_property_layout()
+        layout = self.properties["inputfilter"].layout_v
+        self.property_layout.removeItem(layout)
+        self.main_layout.addLayout(layout)
+        for prop in 'p', 'i', 'd':
+            self.properties[prop].widget.set_log_increment()
+            self.properties[prop].widget.setMaximum(1000000)
+            self.properties[prop].widget.setMinimum(-1000000)
+
+class AllPidGui(QtGui.QWidget):
+    def __init__(self, parent=None, rp=None):
+        super(AllPidGui, self).__init__(parent)
+        self.rp = rp
+        self.pid_widgets = []
+        self.layout = QtGui.QVBoxLayout()
+        self.setLayout(self.layout)
+        nr = 0
+        self.layout.setAlignment(QtCore.Qt.AlignTop)
+
+        while hasattr(self.rp, "pid" + str(nr)):
+            widget = PidGui(name="pid" + str(nr),
+                            rp=self.rp,
+                            parent=None,
+                            module=getattr(self.rp, "pid" + str(nr)))
+            self.pid_widgets.append(widget)
+            self.layout.addWidget(widget)
+            nr += 1
+            self.layout.setStretchFactor(widget, 0)
 
 class SpecAnGui(ModuleWidget):
     """
@@ -1276,8 +1425,9 @@ class SpecAnGui(ModuleWidget):
                 or (time() - 1.0/self._display_max_frequency) > self._lasttime:
             self._lasttime = time()
             # convert data from W to dBm
-            self.curve.setData(self.x_data,
-                               self.module.data_to_dBm(self.y_data))
+            x = self.x_data
+            y = self.module.data_to_dBm(self.y_data)
+            self.curve.setData(x, y)
             if self.running:
                 buttontext = 'Stop (%i' % self.current_average
                 if self.current_average >= self.module.avg:
@@ -1406,12 +1556,15 @@ class RedPitayaGui(RedPitaya):
                                                  self.sa_widget)
         self.all_asg_widget = AllAsgGui(parent=None,
                                         rp=self)
+        self.all_pid_widget = AllPidGui(parent=None,
+                                        rp=self)
 
         self.dock_widgets = {}
         self.last_docked = None
         self.main_window = QtGui.QMainWindow()
         for widget, name in [(self.scope_sa_widget, "Scope/Spec. An."),
                             (self.all_asg_widget, "Asgs"),
+                            (self.all_pid_widget, "Pids"),
                             (self.na_widget, "Na")]:
             self.add_dock_widget(widget, name)
         self.main_window.setDockNestingEnabled(True) #DockWidgets can be stacked

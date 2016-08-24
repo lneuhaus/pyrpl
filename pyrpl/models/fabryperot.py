@@ -278,8 +278,10 @@ class FabryPerot(Model):
         dur = self.sweep()
         scope = self._parent.rp.scope
         curve = scope.curve()
-        scope.trigger_delay = scope.times[curve.argmax()]
+        curve_pos_times = curve[len(curve)/2:]
+        scope.trigger_delay = scope.times[len(curve)/2 + curve_pos_times.argmax()]
         scope.duration = scope.duration*10/self._config.finesse
+        self._parent.rp.scope_widget.run_continuous()
 
     def relative_reflection(self):
         self.inputs["reflection"]._acquire()
