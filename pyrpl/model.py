@@ -24,8 +24,9 @@ class Model(object):
         parent to provide the most important API functions that the model
         allows.
     """
-    gui_buttons = ["unlock", "sweep", "lock"] # These are used to generate
-    # buttons in the gui
+    gui_buttons = ["unlock", "sweep", "calibrate_all", "lock"] # These are used
+                                                        # to generate
+                                                        # buttons in the gui
 
     export_to_parent = ["sweep", "calibrate", "save_current_gain",
                         "unlock", "islocked", "lock", "help", "calib_lock",
@@ -391,6 +392,15 @@ class Model(object):
 
     def stop_autolock(self):
         self.timer.stop()
+
+    def calibrate_all(self):
+        """
+        When connecting a function to QPushButton.clicked, keyword arguments
+        are filled with a boolean value. So we need a function with no extra
+        kwds
+        :return:
+        """
+        return self.calibrate()
 
     def calibrate(self, inputs=None, scopeparams={}):
         """
