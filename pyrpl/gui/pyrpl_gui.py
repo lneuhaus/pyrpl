@@ -44,27 +44,32 @@ class PyrplGui(QtGui.QWidget):
         self.layout_manage_lock = QtGui.QVBoxLayout()
         self.lay.addLayout(self.layout_manage_lock)
 
+        self.buttons = []
+        for button_name in self.pyrpl.model.gui_buttons:
+            button = QtGui.QPushButton(button_name)
+            self.buttons.append(button_name)
+            self.layout_manage_lock.addWidget(button)
+            button.clicked.connect(getattr(self.pyrpl.model, button_name))
+            button.setSizePolicy(QtGui.QSizePolicy.Fixed,
+                                 QtGui.QSizePolicy.Expanding)
+        """
         self.button_unlock = QtGui.QPushButton("Unlock")
         self.button_unlock.clicked.connect(self.pyrpl.unlock)
         self.layout_manage_lock.addWidget(self.button_unlock)
         self.button_sweep = QtGui.QPushButton("Sweep")
         self.layout_manage_lock.addWidget(self.button_sweep)
-
+        """
         self.lock_layout = QtGui.QHBoxLayout()
-        self.button_run_all = QtGui.QPushButton("Run all >>>")
+        #self.button_run_all = QtGui.QPushButton("Run all >>>")
         self.button_reload = QtGui.QPushButton("Reload")
-        self.layout_manage_lock.addWidget(self.button_run_all)
+        #self.layout_manage_lock.addWidget(self.button_run_all)
         self.layout_manage_lock.addWidget(self.button_reload)
         self.button_reload.clicked.connect(self.display_lock)
-        # self.button_run_all.setMinimumHeight(60)
-        self.layout_manage_lock.addWidget(self.button_run_all)
+        self.button_reload.setSizePolicy(QtGui.QSizePolicy.Fixed,
+                             QtGui.QSizePolicy.Expanding)
+        #self.layout_manage_lock.addWidget(self.button_run_all)
+        #self.button_run_all.clicked.connect(self.pyrpl.model.lock)
 
-        self.button_run_all.clicked.connect(self.pyrpl.model.lock)
-
-        for button in self.button_sweep, self.button_unlock, \
-                      self.button_reload,self.button_run_all:
-            button.setSizePolicy(QtGui.QSizePolicy.Fixed,
-                                 QtGui.QSizePolicy.Expanding)
 
         self.lay.setSpacing(0)
         self.lay.addLayout(self.layout_manage_lock)
@@ -72,7 +77,7 @@ class PyrplGui(QtGui.QWidget):
 
         self.pyrpl.model.stage_changed_hook = self.update_buttons
 
-        self.button_sweep.clicked.connect(self.pyrpl.sweep)
+        #self.button_sweep.clicked.connect(self.pyrpl.sweep)
 
         self.stage_buttons = []
         self.display_lock()

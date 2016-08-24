@@ -502,8 +502,8 @@ class Pyrpl(Lockbox):
             self.logger.debug("Seting up gui")
             self.rp.setup_gui()
             self.rp.gui()
-        self.pyrpl_control = PyrplGui(self)
-        self.rp.add_dock_widget(self.pyrpl_control, "Pyrpl control")
+        self.pyrpl_model = PyrplGui(self)
+        self.rp.add_dock_widget(self.pyrpl_model, "Pyrpl model")
 
         self.set_window_position()
         self.timer_save_gui_params = QtCore.QTimer()

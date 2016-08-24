@@ -20,61 +20,69 @@ model:
   lock:
     error_threshold: 1.0
     stages:
+      pdh_piezo:
+        input: transmission
+        outputs:
+        - piezo
+        detuning: 3
+        factor: 5
+        time: 3.0
+        offset: 0.5
+      pdh_piezo_2:
+        input: pdh
+        outputs:
+        - piezo
+        detuning: 0
+        factor: 1
+        time: 3.0
+      pdh:
+        input: pdh
+        detuning: 0.0
+        factor: 150
       drift:
         input: transmission
         outputs:
         - piezo
-        detuning: 2
+        detuning: 3.5
         factor: 0.5
         time: 3.0
         offset: 0.8
-      pdh_piezo:
-        input: pdh
-        outputs:
-        - piezo
-        detuning: 0
-        factor: 0.1
-        time: 3.0
-      pdh:
-        input: pdh
-        detuning: 0
-        factor: 1
   calibrate:
     zoomfactor: 0.01
     relative_threshold: 0.7
   resonant_reflection: 0.0546875
   offresonant_reflection: 0.217529296875
-  resonant_transmission: 0.17600759863853455
-  peak_pdh: 0.29962158203125
+  resonant_transmission: 0.17271170020103455
+  peak_pdh: 0.743408203125
 inputs:
   transmission:
     redpitaya_input: adc1
-    max: 0.17600759863853455
-    min: -0.001970916986465454
-    mean: 0.01068972796201706
-    rms: 0.007263650621441482
+    max: 0.17271170020103455
+    min: -0.001360565423965454
+    mean: 0.010125376284122467
+    rms: 0.005992766915596236
     offset: -0.021466583013534546
-    curve: 223475
+    curve: 224440
   pdh:
     setup:
       input: adc2
       phase: 180.0
-      amplitude: 0.2
+      amplitude: 0.1
       output_direct: out2
       frequency: 50000000.0
       gain: 0
       output_signal: quadrature
       quadrature_factor: 0.1
       bandwidth:
-      - 500000.0
-      - 500000.0
+      - 5000000.0
+      - 5000000.0
       acbandwidth: 100000.0
     redpitaya_input: iq0
-    max: 0.2969970703125
-    min: -0.30224609375
-    mean: -0.004274927079677582
-    rms: 0.044262766453291746
-    curve: 223477
+    max: 0.8184814453125
+    min: -0.6683349609375
+    mean: 0.002877064049243927
+    rms: 0.045883220259757426
+    curve: 224442
 outputs:
   piezo:
     redpitaya_output: out2
@@ -89,12 +97,12 @@ outputs:
       frequency: 25.0
       amplitude: 0.8
     lock:
-      unity_gain_frequency: 500.0
+      unity_gain_frequency: 50
       inputfilter:
-      - 0
-      - 0
-      - 0
-      - 0
+      - 1214.2558524467113
+      - 1214.2558524467113
+      - 1214.2558524467113
+      - 1214.2558524467113
     calibrationunits: Hz_per_V
   current:
     redpitaya_output: out1
@@ -102,9 +110,9 @@ outputs:
     min_voltage: -1.0
     Hz_per_V: 20000000000.0
     lock:
-      proportional_gain: 500
+      proportional_gain: 100
       inputfilter:
-      - 0
+      - -37.94549538895973
       - 0
       - 0
       - 0
@@ -121,10 +129,10 @@ scope:
   trigger_source: immediately
 scopegui:
   coordinates:
-  - 0
-  - 0
-  - 1689
-  - 972
+  - -8
+  - -8
+  - 1680
+  - 988
   auto_run_continuous: true
 signal:
   unit: V
@@ -143,24 +151,25 @@ signal:
   peak: 0
   trigger_delay: 0
 dock_positions: !!binary |
-  AAAA/wAAAAD9AAAAAQAAAAIAAAaZAAADzPwBAAAAAfwAAAAAAAAGmQAABb8A/////AIAAAAD/AAA
+  AAAA/wAAAAD9AAAAAQAAAAIAAAaQAAAD3PwBAAAAAfwAAAAAAAAGkAAABb8A/////AIAAAAD/AAA
   AAAAAAIuAAAAAAD////6AAAAAAEAAAAD+wAAAAoAcwBjAG8AcABlAQAAAAD/////AAAAAAAAAAD7
   AAAABABuAGEBAAAAAP////8AAAAAAAAAAPsAAAAEAHMAYQEAAAAA/////wAAAAAAAAAA/AAAAAAA
-  AACqAAAAAAD////8AQAAAAH7AAAACABhAHMAZwBzAQAAAAAAAALqAAAAAAAAAAD8AAAAAAAAA8wA
-  AAIuAP////wBAAAAAvwAAAAAAAADHwAAAkUA/////AIAAAAF+wAAABoAUAB5AHIAcABsACAAYwBv
-  AG4AdAByAG8AbAEAAAAAAAAAbgAAAG4A////+wAAACAATABpAHYAZQAgAGYAaQB0ACAAZgBpAG4A
-  ZQBzAHMAZQEAAAByAAAAWgAAAFoA/////AAAAXYAAADQAAAAAAD////6AAAAAAIAAAAC+wAAACAA
+  AACqAAAAAAD////8AQAAAAH7AAAACABhAHMAZwBzAQAAAAAAAALqAAAAAAAAAAD8AAAAAAAAA9wA
+  AAG8AP////wBAAAAAvwAAAAAAAACfgAAAkUA/////AIAAAAF+wAAABoAUAB5AHIAcABsACAAYwBv
+  AG4AdAByAG8AbAEAAAAAAAAA7QAAAAAAAAAA+wAAACAATABpAHYAZQAgAGYAaQB0ACAAZgBpAG4A
+  ZQBzAHMAZQEAAAAAAAAAWgAAAFoA/////AAAAXYAAADQAAAAAAD////6AAAAAAIAAAAC+wAAACAA
   TABpAHYAZQBfAGYAaQB0AF8AZgBpAG4AZQBzAHMAZQEAAAAA/////wAAAAAAAAAA+wAAABQATQBv
-  AHQAbwByACAAUwBjAGEAbgEAAAAA/////wAAAAAAAAAA+wAAAAgAQQBzAGcAcwEAAADQAAACKAAA
-  AIoA////+wAAABQATQBvAHQAbwByACAAcwBjAGEAbgEAAAL8AAAA0AAAANAA/////AAAAyMAAAN2
-  AAADdgD////8AgAAAAL7AAAAIABMAGkAdgBlACAARgBpAHQAIABGAGkAbgBlAHMAcwBlAQAAAAAA
-  AACGAAAAAAAAAAD8AAAAAAAAA8wAAAEBAQAAFPoAAAABAQAAAAL7AAAABABOAGEBAAAAAP////8A
-  AAN2AP////sAAAAeAFMAYwBvAHAAZQAvAFMAcABlAGMALgAgAEEAbgAuAQAAAxoAAAN2AAADcwD/
-  //8AAAaZAAAAAAAAAAQAAAAEAAAACAAAAAj8AAAAAA==
+  AHQAbwByACAAUwBjAGEAbgEAAAAA/////wAAAAAAAAAA+wAAABQATQBvAHQAbwByACAAcwBjAGEA
+  bgEAAABeAAAA0AAAANAA////+wAAAAgAQQBzAGcAcwEAAAEyAAACqgAAAIoA/////AAAAoIAAAQO
+  AAADdgD////8AgAAAAP7AAAAIABMAGkAdgBlACAARgBpAHQAIABGAGkAbgBlAHMAcwBlAQAAAAAA
+  AACGAAAAAAAAAAD8AAAAAAAAA1EAAAEBAQAAFPoAAAAAAQAAAAL7AAAAHgBTAGMAbwBwAGUALwBT
+  AHAAZQBjAC4AIABBAG4ALgEAAAAA/////wAAA3MA////+wAAAAQATgBhAQAAAAD/////AAADdgD/
+  ///7AAAAFgBQAHkAcgBwAGwAIABtAG8AZABlAGwBAAADVQAAAIcAAACFAP///wAABpAAAAAAAAAA
+  BAAAAAQAAAAIAAAACPwAAAAA
 Live fit finesse:
   length: 0.0157
   mod_freq: 50000000.0
 Motor scan:
   lambda_start: 1055.0
-  lambda_stop: 1075.0
+  lambda_stop: 1080.0
   threshold: 0.05

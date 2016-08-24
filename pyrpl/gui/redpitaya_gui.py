@@ -1263,6 +1263,7 @@ class SpecAnGui(ModuleWidget):
 
         self.button_continuous.setEnabled(False)
         self.restart_averaging()
+        self.module.setup()
         self.acquire_one_curve()
         self.button_continuous.setEnabled(True)
 
@@ -1270,6 +1271,7 @@ class SpecAnGui(ModuleWidget):
         """
         Updates the curve and the number of averages. Framerate has a ceiling.
         """
+
         if not hasattr(self, '_lasttime') \
                 or (time() - 1.0/self._display_max_frequency) > self._lasttime:
             self._lasttime = time()
@@ -1289,11 +1291,15 @@ class SpecAnGui(ModuleWidget):
         """
         Acquires only one curve.
         """
-        self.module.setup()
+        #self.module.setup() ### For small BW, setup() then curve() takes
+        # several seconds... In the mean time, no other event can be
+        # treated. That's why the gui freezes...
         self.y_data = (self.current_average * self.y_data \
                        + self.module.curve()) / (self.current_average + 1)
         self.current_average += 1
         self.update_display()
+        if self.running:
+            self.module.setup()
         #if self.running:
         #    self.timer.start()
 
@@ -1306,6 +1312,8 @@ class SpecAnGui(ModuleWidget):
         self.button_single.setEnabled(False)
         self.button_continuous.setText("Stop")
         self.restart_averaging()
+        self.module.setup()
+        self.timer.setInterval(self.module.duration*1000)
         self.timer.start()
 
     def stop(self):

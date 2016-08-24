@@ -239,9 +239,16 @@ class SpectrumAnalyzer(object):
         self.scope.average = True
         self.scope.setup()
 
+    def curve_ready(self):
+        return self.scope.curve_ready()
+
     @property
     def scope(self):
         return self.rp.scope
+
+    @property
+    def duration(self):
+        return self.scope.duration
 
     @property
     def sampling_time(self):

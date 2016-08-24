@@ -24,6 +24,9 @@ class Model(object):
         parent to provide the most important API functions that the model
         allows.
     """
+    gui_buttons = ["unlock", "sweep", "lock"] # These are used to generate
+    # buttons in the gui
+
     export_to_parent = ["sweep", "calibrate", "save_current_gain",
                         "unlock", "islocked", "lock", "help", "calib_lock",
                         "_lock", "get_offset"]

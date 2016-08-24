@@ -19,6 +19,8 @@ class FabryPerot(Model):
     # the internal variable for state specification
     _variable = 'detuning'
 
+    gui_buttons = Model.gui_buttons + ["zoom"]
+
     export_to_parent = Model.export_to_parent + ['R0', 'relative_pdh_rms']
 
     # lorentzian functions
@@ -271,6 +273,13 @@ class FabryPerot(Model):
         if "scopegui" in self._parent.c._dict:
             if self._parent.c.scopegui.auto_run_continuous:
                 self._parent.rp.scope_widget.run_continuous()
+
+    def zoom(self):
+        dur = self.sweep()
+        scope = self._parent.rp.scope
+        curve = scope.curve()
+        scope.trigger_delay = scope.times[curve.argmax()]
+        scope.duration = scope.duration*10/self._config.finesse
 
     def relative_reflection(self):
         self.inputs["reflection"]._acquire()
