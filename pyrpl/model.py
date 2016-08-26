@@ -24,7 +24,9 @@ class Model(object):
         parent to provide the most important API functions that the model
         allows.
     """
-    gui_buttons = ["unlock", "sweep", "calibrate_all", "lock"] # These are used
+    gui_buttons = ["unlock", "sweep", "calibrate_all", "lock",
+                   "save_all_gains"] # These are
+    # used
                                                         # to generate
                                                         # buttons in the gui
 
@@ -282,6 +284,10 @@ class Model(object):
                        **kwargs)
             else:  # special option: instead of locking, write the gain
                 o.save_current_gain(slope=slope*variable_per_unit)
+
+    def save_all_gains(self):
+        """see save_current_gains, no kwds for gui integration"""
+        self.save_current_gain()
 
     def save_current_gain(self, outputs=None):
         """ saves the current gain setting as default one (for all outputs

@@ -199,6 +199,13 @@ class FabryPerot(Model):
                     sleep(stime) #time.## Changed to pyrpl_utils.sleep,
                     #  which basically doesn't freeze the gui
 
+    def save_current_gain(self, outputs=None):
+        """saves the current gain setting as default one (for all outputs
+        unless a list of outputs is given, similar to _lock) """
+
+        self._lock(outputs=outputs, _savegain=True, detuning=self.state[
+            'set']['detuning'])
+
     def calibrate(self, inputs=None, scopeparams={}):
         """
         Calibrates by performing a sweep as defined for the outputs and

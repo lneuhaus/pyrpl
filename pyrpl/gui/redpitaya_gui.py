@@ -225,10 +225,11 @@ class ListComboBox(QtGui.QWidget):
         super(ListComboBox, self).__init__()
         self.lay = QtGui.QHBoxLayout()
         self.combos = []
-        self._options = \
-                [str(int(-2.371593461809983*2**n)) for n in range(1, 27)] + \
-                [str(0)] + \
-                [str(int(2.371593461809983*2**n)) for n in range(1, 27)]
+        vals = [int(2.371593461809983*2**n) for n in range(1, 27)]
+        self._options = [0] + vals
+        vals = [-val for val in reversed(vals)]
+        self._options = vals + self._options
+        self._options = map(str, self._options)
         for i in range(number):
             combo = QtGui.QComboBox()
             self.combos.append(combo)
@@ -1165,11 +1166,14 @@ class NaGui(ModuleWidget):
         self.curve_phase.setData(x, phase)
 
         cur = self.module.current_point - 1
-        visible = self.last_valid_point==self.module.points
+        visible = self.last_valid_point!=cur + 1
+        logscale = self.properties["logscale"].widget.checkState()==2
+        freq = x[cur]
+        xpos = np.log10(freq) if logscale else freq
         if cur>0:
-            self.arrow.setPos(x[cur], mag[cur])
+            self.arrow.setPos(xpos, mag[cur])
             self.arrow.setVisible(visible)
-            self.arrow_phase.setPos(x[cur], phase[cur])
+            self.arrow_phase.setPos(xpos, phase[cur])
             self.arrow_phase.setVisible(visible)
         # plot_time = time() - plot_time_start # actually not working, because done later
         # self.update_timer.setInterval(plot_time*10*1000) # make sure plotting
@@ -1518,9 +1522,9 @@ class RedPitayaGui(RedPitaya):
     def __init__(self, *args, **kwds):
         super(RedPitayaGui, self).__init__(*args, **kwds)
         self.setup_gui()
-        self.timer_dock_positions = QtCore.QTimer()
-        self.timer_dock_positions.setInterval(1000)
-        self.timer_dock_positions.timeout.connect(self.save_dock_positions)
+        #self.timer_dock_positions = QtCore.QTimer()
+        #self.timer_dock_positions.setInterval(1000)
+        #self.timer_dock_positions.timeout.connect(self.save_dock_positions)
 
     def add_dock_widget(self, widget, name):
         dock_widget = QtGui.QDockWidget(name)
