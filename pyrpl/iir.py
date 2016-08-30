@@ -24,6 +24,44 @@ import logging
 logger = logging.getLogger(name=__name__)
 from . import CurveDB
 
+# this one is a copy-paste from scipy 18 for being compatible with lower
+# versions of scipy
+def sos2zpk(sos):
+    """
+    Return zeros, poles, and gain of a series of second-order sections
+
+    Parameters
+    ----------
+    sos : array_like
+        Array of second-order filter coefficients, must have shape
+        ``(n_sections, 6)``. See `sosfilt` for the SOS filter format
+        specification.
+
+    Returns
+    -------
+    z : ndarray
+        Zeros of the transfer function.
+    p : ndarray
+        Poles of the transfer function.
+    k : float
+        System gain.
+
+    Notes
+    -----
+    .. versionadded:: 0.16.0
+    """
+    sos = np.asarray(sos)
+    n_sections = sos.shape[0]
+    z = np.empty(n_sections*2, np.complex128)
+    p = np.empty(n_sections*2, np.complex128)
+    k = 1.
+    for section in range(n_sections):
+        zpk = tf2zpk(sos[section, :3], sos[section, 3:])
+        z[2*section:2*(section+1)] = zpk[0]
+        p[2*section:2*(section+1)] = zpk[1]
+        k *= zpk[2]
+    return z, p, k
+
 # functions of general use
 def freqs(sys, w):
     """
@@ -706,7 +744,7 @@ class IirFilter(object):
             if (c[0:3] == 0).all():
                 ranks.append(0)
             else:
-                z, p, k = sig.sos2zpk([c])
+                z, p, k = sos2zpk([c])
                 # compute something proportional to the frequency of the pole
                 ppp = [np.abs(np.log(pp)) for pp in p if pp != 0]
                 if not ppp:
