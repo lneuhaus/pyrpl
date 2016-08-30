@@ -33,4 +33,4 @@ class TestClass(object):
         sa.setup(center=1e6, span=1e5)
         curve = sa.curve()
         #Assumes out1 is connected with adc1...
-        assert(curve.argmax()==500.0), curve.argmax()
+        assert(curve.argmax()==len(curve)/2), curve.argmax()

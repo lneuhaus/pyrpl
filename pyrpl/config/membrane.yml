@@ -27,14 +27,14 @@ model:
         detuning: 1
         factor: 0.1
         time: 3
-        offset: 0.6
+        offset: -0.6
       pdh:
         input: pdh
         outputs:
         - piezo_direct
         - current
         detuning: 0
-        factor: -5
+        factor: 1
   calibrate:
     zoomfactor: 0.01
     relative_threshold: 0.7
@@ -45,7 +45,7 @@ model:
 inputs:
   transmission:
     redpitaya_input: adc1
-    max: 0.39
+    max: 0.14
     min: -0.001482635736465454
     mean: 0.009311310946941376
     rms: 0.0028937231198821645
@@ -60,7 +60,7 @@ inputs:
       frequency: 50000000.0
       gain: 0
       output_signal: quadrature
-      quadrature_factor: 0.1
+      quadrature_factor: 0.05
       bandwidth:
       - 5000000.0
       - 5000000.0
@@ -96,7 +96,7 @@ outputs:
     redpitaya_output: out2
     max_voltage: 0.8
     min_voltage: -0.8
-    Hz_per_V: 666666666
+    Hz_per_V: -666666666
     analogfilter:
       lowpass:
       - 400
@@ -105,7 +105,7 @@ outputs:
       frequency: 25
       amplitude: 1
     lock:
-      unity_gain_frequency: 500
+      unity_gain_frequency: 10000
       inputfilter:
       - 0
       - 0
@@ -118,10 +118,10 @@ outputs:
     min_voltage: -1.0
     Hz_per_V: 285714285 #20000000000.0
     lock:
-      proportional_gain: -40.0
+      proportional_gain: -12000.0
       inputfilter:
       - -9.486373847239932
-      - 0
+      - 151.7819815558389
       - 0
       - 0
     sweep:
@@ -167,17 +167,18 @@ dock_positions: !!binary |
   AAAAAAIuAAAAAAD////6AAAAAAEAAAAD+wAAAAoAcwBjAG8AcABlAQAAAAD/////AAAAAAAAAAD7
   AAAABABuAGEBAAAAAP////8AAAAAAAAAAPsAAAAEAHMAYQEAAAAA/////wAAAAAAAAAA/AAAAAAA
   AACqAAAAAAD////8AQAAAAH7AAAACABhAHMAZwBzAQAAAAAAAALqAAAAAAAAAAD8AAAAAAAAA9wA
-  AANJAP////wBAAAAAvwAAAAAAAADGQAAAmMA/////AIAAAAF+wAAABoAUAB5AHIAcABsACAAYwBv
+  AAO7AP////wBAAAAAvwAAAAAAAADEwAAAmMA/////AIAAAAF+wAAABoAUAB5AHIAcABsACAAYwBv
   AG4AdAByAG8AbAEAAAAAAAAA7QAAAAAAAAAA/AAAAXYAAADQAAAAAAD////6AAAAAAIAAAAC+wAA
   ACAATABpAHYAZQBfAGYAaQB0AF8AZgBpAG4AZQBzAHMAZQEAAAAA/////wAAAAAAAAAA+wAAABQA
-  TQBvAHQAbwByACAAUwBjAGEAbgEAAAAA/////wAAAAAAAAAA/AAAAAAAAAISAAACBAD////6AAAA
-  AgEAAAAD+wAAACAATABpAHYAZQAgAGYAaQB0ACAAZgBpAG4AZQBzAHMAZQEAAAAA/////wAAAAAA
-  AAAA+wAAABQATQBvAHQAbwByACAAcwBjAGEAbgEAAAAA/////wAAAAAAAAAA+wAAAAgAUABpAGQA
-  cwEAAAAAAAACYwAAAmMA////+wAAAAgAQQBzAGcAcwEAAAIWAAAAxAAAAIoA////+wAAABYAUAB5
-  AHIAcABsACAAbQBvAGQAZQBsAQAAAt4AAAD+AAAAswD////8AAADHQAAA3MAAANzAP////wCAAAA
-  A/sAAAAgAEwAaQB2AGUAIABGAGkAdAAgAEYAaQBuAGUAcwBzAGUBAAAAAAAAAIYAAAAAAAAAAPsA
-  AAAEAE4AYQMAAAaqAAAAKAAAA3YAAAOn+wAAAB4AUwBjAG8AcABlAC8AUwBwAGUAYwAuACAAQQBu
-  AC4BAAAAAAAAA9wAAADeAP///wAABpAAAAAAAAAABAAAAAQAAAAIAAAACPwAAAAA
+  TQBvAHQAbwByACAAUwBjAGEAbgEAAAAA/////wAAAAAAAAAA/AAAAAAAAAIrAAACGQEAABT6AAAA
+  AAEAAAAD+wAAAAgAUABpAGQAcwEAAAAA/////wAAAmMA////+wAAAAgAQQBzAGcAcwEAAAAA////
+  /wAAAkUA////+wAAACAATABpAHYAZQAgAGYAaQB0ACAAZgBpAG4AZQBzAHMAZQEAAAAA/////wAA
+  AhMA////+wAAABQATQBvAHQAbwByACAAcwBjAGEAbgEAAAIvAAAA1wAAANAA////+wAAABYAUAB5
+  AHIAcABsACAAbQBvAGQAZQBsAQAAAwoAAADSAAAAygD////8AAADFwAAA3kAAANzAP////wCAAAA
+  AvsAAAAgAEwAaQB2AGUAIABGAGkAdAAgAEYAaQBuAGUAcwBzAGUBAAAAAAAAAIYAAAAAAAAAAPwA
+  AAAAAAAD3AAAAN4A////+gAAAAEBAAAAAvsAAAAEAE4AYQMAAAmnAAAAcwAAA3kAAAMz+wAAAB4A
+  UwBjAG8AcABlAC8AUwBwAGUAYwAuACAAQQBuAC4BAAADFwAAA3kAAANzAP///wAABpAAAAAAAAAA
+  BAAAAAQAAAAIAAAACPwAAAAA
 Live fit finesse:
   length: 0.0157
   mod_freq: 50000000.0

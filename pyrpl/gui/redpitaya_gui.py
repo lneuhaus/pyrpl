@@ -541,127 +541,13 @@ class ScopeWidget(ModuleWidget):
                       "threshold_ch2",
                       "curve_name"]
 
-    def display_channel(self, ch):
-        """
-        Displays channel ch (1 or 2) on the graph
-        :param ch:
-        """
-        try:
-            self.curves[ch - 1].setData(self.module.times,
-                                        self.module.curve(ch))
-        except NotReadyError:
-            pass
-
-    def display_curves(self):
-        """
-        Displays all active channels on the graph.
-        """
-
-        for i in (1, 2):
-            if self.cb_ch[i - 1].checkState() == 2:
-                self.display_channel(i)
-                self.curves[i - 1].setVisible(True)
-            else:
-                self.curves[i - 1].setVisible(False)
-
-    def run_single(self):
-        """
-        When run_single is pressed, launches a single acquisition.
-        """
-
-        self.module.setup()
-        self.plot_item.enableAutoRange('xy', True)
-        self.display_curves()
-
-    def check_for_curves(self):
-        """
-        This function is called periodically by a timer when in run_continuous mode.
-        1/ Check if curves are ready.
-        2/ If so, plots them on the graph
-        3/ Restarts the timer.
-        """
-
-        if not self.rolling_mode:
-            if self.module.curve_ready():
-                self.display_curves()
-                if self.first_shot_of_continuous:
-                    self.first_shot_of_continuous = False  # autoscale only upon first curve
-                    self.plot_item.enableAutoRange('xy', False)
-                self.module.setup()
-        else:
-            wp0 = self.module._write_pointer_current
-            datas = [None, None]
-            for ch in (1, 2):
-                if self.cb_ch[ch - 1].checkState() == 2:
-                    datas[ch-1] = self.module._get_ch_no_roll(ch)
-            wp1 = self.module._write_pointer_current
-            for index, data in enumerate(datas):
-                if data is None:
-                    self.curves[index].setVisible(False)
-                    continue
-                to_discard = (wp1 - wp0) % self.module.data_length
-                data = np.roll(data, self.module.data_length - wp0)[
-                       to_discard:]
-                data = np.concatenate([[np.nan] * to_discard, data])
-                times = self.module.times
-                times -= times[-1]
-                self.curves[index].setData(times, data)
-                self.curves[index].setVisible(True)
-        try:
-            self.curve_display_done()
-        except Exception as e:
-            print e
-        self.timer.start()
-
-    def curve_display_done(self):
-        """
-        User may overwrite this function to implement custom functionality
-        at each graphical update.
-        :return:
-        """
-        pass
-
-    def run_continuous(self):
-        """
-        Toggles the button run_continuous to stop and starts the acquisition timer.
-        This function is part of the public interface.
-        """
-
-        self.button_continuous.setText("Stop")
-        self.button_single.setEnabled(False)
-        self.module.setup()
-        if self.rolling_mode:
-            self.module._trigger_source = 'off'
-            self.module._trigger_armed = True
-        self.plot_item.enableAutoRange('xy', True)
-        self.first_shot_of_continuous = True
-        self.timer.start()
-
-    def stop(self):
-        """
-        Toggles the button stop to run_continuous to stop and stops the acquisition timer
-        """
-
-        self.button_continuous.setText("Run continuous")
-        self.timer.stop()
-        self.button_single.setEnabled(True)
-
-    def run_continuous_clicked(self):
-        """
-        Toggles the button run_continuous to stop or vice versa and starts the acquisition timer
-        """
-
-        if str(self.button_continuous.text()) \
-                == "Run continuous":
-            self.run_continuous()
-        else:
-            self.stop()
-
     def init_gui(self):
         """
         sets up all the gui for the scope.
         """
 
+        self.datas = [None, None]
+        self.times = None
         self.ch_col = ('green', 'red')
         self.module.__dict__['curve_name'] = 'scope'
         self.main_layout = QtGui.QVBoxLayout()
@@ -712,6 +598,9 @@ class ScopeWidget(ModuleWidget):
         self.rolling_group.setLayout(self.lay_radio)
         self.property_layout.insertWidget(
             self.property_names.index("trigger_source"), self.rolling_group)
+        self.checkbox_normal.clicked.connect(self.rolling_mode_toggled)
+        self.checkbox_untrigged.clicked.connect(self.rolling_mode_toggled)
+        #self.checkbox_normal.enabledChange.connect(self.rolling_mode_toggled)
 
         # minima maxima
         for prop in (self.properties["threshold_ch1"],
@@ -724,6 +613,136 @@ class ScopeWidget(ModuleWidget):
 
         self.properties["curve_name"].acquisition_property = False
 
+    def display_channel(self, ch):
+        """
+        Displays channel ch (1 or 2) on the graph
+        :param ch:
+        """
+        try:
+            self.datas[ch-1] = self.module.curve(ch)
+            self.times = self.module.times
+            self.curves[ch - 1].setData(self.times,
+                                        self.datas[ch-1])
+        except NotReadyError:
+            pass
+
+    def display_curves(self):
+        """
+        Displays all active channels on the graph.
+        """
+
+        for i in (1, 2):
+            if self.cb_ch[i - 1].checkState() == 2:
+                self.display_channel(i)
+                self.curves[i - 1].setVisible(True)
+            else:
+                self.curves[i - 1].setVisible(False)
+
+    def run_single(self):
+        """
+        When run_single is pressed, launches a single acquisition.
+        """
+
+        self.module.setup()
+        self.plot_item.enableAutoRange('xy', True)
+        self.display_curves()
+
+    def check_for_curves(self):
+        """
+        This function is called periodically by a timer when in run_continuous mode.
+        1/ Check if curves are ready.
+        2/ If so, plots them on the graph
+        3/ Restarts the timer.
+        """
+
+        if not self.rolling_mode:
+            if self.module.curve_ready():
+                self.display_curves()
+                if self.first_shot_of_continuous:
+                    self.first_shot_of_continuous = False  # autoscale only upon first curve
+                    self.plot_item.enableAutoRange('xy', False)
+                self.module.setup()
+        else:
+            wp0 = self.module._write_pointer_current
+            self.datas = [None, None]
+            for ch in (1, 2):
+                if self.cb_ch[ch - 1].checkState() == 2:
+                    self.datas[ch-1] = self.module._get_ch_no_roll(ch)
+            wp1 = self.module._write_pointer_current
+            for index, data in enumerate(self.datas):
+                if data is None:
+                    self.curves[index].setVisible(False)
+                    continue
+                to_discard = (wp1 - wp0) % self.module.data_length
+                data = np.roll(data, self.module.data_length - wp0)[
+                       to_discard:]
+                data = np.concatenate([[np.nan] * to_discard, data])
+                times = self.module.times
+                times -= times[-1]
+                self.datas[index] = data
+                self.times = times
+                self.curves[index].setData(times, data)
+                self.curves[index].setVisible(True)
+        try:
+            self.curve_display_done()
+        except Exception as e:
+            print e
+        self.timer.start()
+
+    def curve_display_done(self):
+        """
+        User may overwrite this function to implement custom functionality
+        at each graphical update.
+        :return:
+        """
+        pass
+
+    @property
+    def state(self):
+        if self.button_continuous.text()=="Stop":
+            return "running"
+        else:
+            return "stopped"
+
+    def run_continuous(self):
+        """
+        Toggles the button run_continuous to stop and starts the acquisition timer.
+        This function is part of the public interface.
+        """
+
+        self.button_continuous.setText("Stop")
+        self.button_single.setEnabled(False)
+        self.module.setup()
+        if self.rolling_mode:
+            self.module._trigger_source = 'off'
+            self.module._trigger_armed = True
+        self.plot_item.enableAutoRange('xy', True)
+        self.first_shot_of_continuous = True
+        self.timer.start()
+
+    def stop(self):
+        """
+        Toggles the button stop to run_continuous to stop and stops the acquisition timer
+        """
+
+        self.button_continuous.setText("Run continuous")
+        self.timer.stop()
+        self.button_single.setEnabled(True)
+
+    def run_continuous_clicked(self):
+        """
+        Toggles the button run_continuous to stop or vice versa and starts the acquisition timer
+        """
+
+        if str(self.button_continuous.text()) \
+                == "Run continuous":
+            self.run_continuous()
+        else:
+            self.stop()
+
+    def rolling_mode_toggled(self):
+        self.rolling_mode = self.rolling_mode
+
     @property
     def rolling_mode(self):
         return ((self.checkbox_untrigged.isChecked()) and \
@@ -733,10 +752,11 @@ class ScopeWidget(ModuleWidget):
     def rolling_mode(self, val):
         if val:
             self.checkbox_untrigged.setChecked(True)
-            self.module._trigger_source = 'off'
         else:
             self.checkbox_normal.setChecked(True)
-            self.module.trigger_source = self.module.trigger_source
+        if self.state=='running':
+            self.stop()
+            self.run_continuous()
         return val
 
     def update_properties(self):
@@ -745,11 +765,14 @@ class ScopeWidget(ModuleWidget):
         self.rolling_group.setEnabled(self.module.duration > 0.1)
         self.properties['trigger_source'].widget.setEnabled(
             not self.rolling_mode)
+        old = self.properties['threshold_ch1'].widget.isEnabled()
         self.properties['threshold_ch1'].widget.setEnabled(
             not self.rolling_mode)
         self.properties['threshold_ch2'].widget.setEnabled(
             not self.rolling_mode)
         self.button_single.setEnabled(not self.rolling_mode)
+        if old==self.rolling_mode:
+            self.rolling_mode_toggled()
 
     def autoscale(self):
         """Autoscale pyqtgraph"""
@@ -781,8 +804,8 @@ class ScopeWidget(ModuleWidget):
             d = self.get_state()
             d.update({'ch': ch,
                       'name': self.module.curve_name + ' ch' + str(ch)})
-            self.save_curve(self.module.times,
-                            self.module.curve(ch, timeout=-1),
+            self.save_curve(self.times,
+                            self.datas[ch-1],
                             **d)
 
 
@@ -903,7 +926,7 @@ class NaGui(ModuleWidget):
         self.button_save = QtGui.QPushButton("Save curve")
 
         self.curve = self.plot_item.plot(pen='y')
-        self.curve_phase = self.plot_item_phase.plot(pen='y')
+        self.curve_phase = self.plot_item_phase.plot(pen=None, symbol='o')
         self.main_layout.addWidget(self.win)
         self.main_layout.addWidget(self.win_phase)
         self.button_layout.addWidget(self.button_single)
