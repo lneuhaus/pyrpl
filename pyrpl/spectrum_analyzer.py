@@ -83,6 +83,7 @@ class SpectrumAnalyzer(object):
                       for s_time in Scope.sampling_times]
 
         self.rp = rp
+        self._parent = rp
         self.baseband = False
         self.center = 0
         self.avg = 10
@@ -238,9 +239,16 @@ class SpectrumAnalyzer(object):
         self.scope.average = True
         self.scope.setup()
 
+    def curve_ready(self):
+        return self.scope.curve_ready()
+
     @property
     def scope(self):
         return self.rp.scope
+
+    @property
+    def duration(self):
+        return self.scope.duration
 
     @property
     def sampling_time(self):
