@@ -56,7 +56,7 @@ def sos2zpk(sos):
     p = np.empty(n_sections*2, np.complex128)
     k = 1.
     for section in range(n_sections):
-        zpk = tf2zpk(sos[section, :3], sos[section, 3:])
+        zpk = sig.tf2zpk(sos[section, :3], sos[section, 3:])
         z[2*section:2*(section+1)] = zpk[0]
         p[2*section:2*(section+1)] = zpk[1]
         k *= zpk[2]
