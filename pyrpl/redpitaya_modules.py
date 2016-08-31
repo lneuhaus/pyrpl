@@ -1013,25 +1013,21 @@ class DspModule(BaseModule):
             addr_base=0x40300000+self._number*0x10000,
             parent=parent)
 
+
 class Sampler(BaseModule):
     def __init__(self, client, parent=None):
         self.name = "sampler"
         super(Sampler, self).__init__(client,
             addr_base=0x40300000,
             parent=parent)
-
-    def __new__(cls, *args, **kwargs):
-        """ make the needed input output registers. Workaround to make
-        descriptors work """
-        for inp, num in dspinputs.items():
-            setattr(cls,
-                    inp,
-                    FloatRegister(
-                               0x10 + num*0x10000,
-                               bits=14,
-                               norm=2**13-1,
-                               doc="output signal "+str(i)))
-        return super(Sampler, cls).__new__(cls, *args, **kwargs)
+for inp, num in dspinputs.items():
+    setattr(Sampler,
+            inp,
+            FloatRegister(
+                0x10 + num * 0x10000,
+                bits=14,
+                norm=2 ** 13 - 1,
+                doc="output signal " + inp))
 
 
 class AuxOutput(DspModule):
