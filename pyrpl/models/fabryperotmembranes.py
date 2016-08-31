@@ -32,6 +32,7 @@ class FPMembranes(FabryPerot):
         pid3.input = "pid2"
         pid3.i = -0.0046
 
+
     def zoom(self):
         self.sweep_pzt_direct()
         rp = self._parent.rp
