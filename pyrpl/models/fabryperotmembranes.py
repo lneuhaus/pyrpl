@@ -19,9 +19,18 @@ class FPMembranes(FabryPerot):
 
         #rp.pid3.ival = old_val
         rp.pid2.p = 1
+        rp.pid2.input = 'asg1'
         rp.pid2.i = 0
+        rp.pid2.ival = 0
+
         rp.pid1.i = rp.pid1.p = 0
+
         rp.pid3.p = 0
+
+    def add_piezo_pwm(self, **kwds):
+        pid3 = self._parent.rp.pid3
+        pid3.input = "pid2"
+        pid3.i = -0.0046
 
     def zoom(self):
         self.sweep_pzt_direct()
