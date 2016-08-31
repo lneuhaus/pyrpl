@@ -285,7 +285,7 @@ end else begin
       20'h00 : begin sys_ack <= sys_en;          sys_rdata <= {{32- LOG_MODULES{1'b0}},input_select[sys_addr[16+LOG_MODULES-1:16]]}; end 
 	  20'h04 : begin sys_ack <= sys_en;          sys_rdata <= {{32- 2{1'b0}},output_select[sys_addr[16+LOG_MODULES-1:16]]}; end
 	  20'h08 : begin sys_ack <= sys_en;          sys_rdata <= {{32- 2{1'b0}},dat_b_saturated,dac_a_saturated}; end
-	   
+	  20'h10 : begin sys_ack <= sys_en;          sys_rdata <= {{32- 14{1'b0}},output_signal[sys_addr[16+LOG_MODULES-1:16]]} ; end
      default : begin sys_ack <= module_ack[sys_addr[16+LOG_MODULES-1:16]];    sys_rdata <=  module_rdata[sys_addr[16+LOG_MODULES-1:16]]  ; end
    endcase
 end
