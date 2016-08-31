@@ -240,7 +240,7 @@ class Scope(BaseModule):
                                     options=_trigger_sources)
 
     def set_state(self, dic):
-        super(Scope, self).set_stat(dic)
+        super(Scope, self).set_state(dic)
         self.setup()
 
     @property
@@ -1894,7 +1894,16 @@ class IIR(FilterModule):
         return tf
 
     bf = None
+
     def bodefit(self, id):
+        """ launches the gui to fit a transfer function and allows to use
+        the fit transfer function as IIR filter loop shape
+
+        Parameters
+        ----------
+        id: int
+          id of the curve containing the transfer function to work on
+        """
         self.bf = bodefit.BodeFitIIRGuiOptimisation(id)
         self.bf.lockbox = self._parent
         self.bf.iir = self
