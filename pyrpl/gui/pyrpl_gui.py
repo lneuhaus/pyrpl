@@ -18,7 +18,6 @@ class MyStateButton(QtGui.QPushButton):
                              #       }  """%(color, color))
         self.name = name
         self.setCheckable(True)
-        # self.setMinimumHeight(120)
         self.parent = parent
         self.toggled.connect(self.touched)
         self.setSizePolicy(QtGui.QSizePolicy.Expanding,
@@ -35,9 +34,7 @@ class MyStateButton(QtGui.QPushButton):
 class PyrplGui(QtGui.QWidget):
     def __init__(self, pyrpl, parent=None):
         super(PyrplGui, self).__init__(parent)
-
         self.pyrpl = pyrpl
-
         self.lay = QtGui.QHBoxLayout()
         self.setLayout(self.lay)
         self.layout_manage_lock = QtGui.QVBoxLayout()
@@ -59,23 +56,15 @@ class PyrplGui(QtGui.QWidget):
         self.layout_manage_lock.addWidget(self.button_sweep)
         """
         self.lock_layout = QtGui.QHBoxLayout()
-        # self.button_run_all = QtGui.QPushButton("Run all >>>")
         self.button_reload = QtGui.QPushButton("Reload")
-        # self.layout_manage_lock.addWidget(self.button_run_all)
         self.layout_manage_lock.addWidget(self.button_reload)
         self.button_reload.clicked.connect(self.display_lock)
         self.button_reload.setSizePolicy(QtGui.QSizePolicy.Fixed,
                              QtGui.QSizePolicy.Expanding)
-        # self.layout_manage_lock.addWidget(self.button_run_all)
-        # self.button_run_all.clicked.connect(self.pyrpl.model.lock)
-
         self.lay.setSpacing(0)
         self.lay.addLayout(self.layout_manage_lock)
         self.lay.addLayout(self.lock_layout)
-
         self.pyrpl.model.stage_changed_hook = self.update_buttons
-
-        # self.button_sweep.clicked.connect(self.pyrpl.sweep)
 
         self.stage_buttons = []
         self.display_lock()
@@ -90,11 +79,12 @@ class PyrplGui(QtGui.QWidget):
             self.stage_buttons.pop().deleteLater()
 
         tot = len(self.pyrpl.model._config.lock.stages._keys())
-        for index, stage in \
-                enumerate(self.pyrpl.model._config.lock.stages._keys()):
-            button = MyStateButton(stage,
-                                   "rgb(%i,%i,0)" % (255*(tot - index)/tot,
-                                                     255 * index/tot),
+
+        for index, stage in enumerate(self.pyrpl.model._config.lock.stages\
+                ._keys()):
+            button = MyStateButton(stage, "rgb(%i,%i,0)"%(255*(tot -
+                                                               index)/tot,
+                                                          255*index/tot),
                                    self)
             self.stage_buttons.append(button)
             self.lock_layout.addWidget(button)

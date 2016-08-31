@@ -1181,18 +1181,19 @@ class NaGui(ModuleWidget):
         log_mod = self.module.logscale
         self.curve.setLogMode(xMode=log_mod, yMode=None)
         self.curve_phase.setLogMode(xMode=log_mod, yMode=None)
-        self.plot_item.setLogMode(x=log_mod, y=None)  # this seems also needed
+
+        self.plot_item.setLogMode(x=log_mod, y=None) # this seems also needed
         self.plot_item_phase.setLogMode(x=log_mod, y=None)
 
         self.curve.setData(x, mag)
         self.curve_phase.setData(x, phase)
 
         cur = self.module.current_point - 1
-        visible = self.last_valid_point != cur + 1
-        logscale = self.properties["logscale"].widget.checkState() == 2
+        visible = self.last_valid_point!=cur + 1
+        logscale = self.properties["logscale"].widget.checkState()==2
         freq = x[cur]
         xpos = np.log10(freq) if logscale else freq
-        if cur > 0:
+        if cur>0:
             self.arrow.setPos(xpos, mag[cur])
             self.arrow.setVisible(visible)
             self.arrow_phase.setPos(xpos, phase[cur])
@@ -1333,6 +1334,7 @@ class AllPidGui(QtGui.QWidget):
             self.layout.setStretchFactor(widget, 0)
 
 
+
 class SpecAnGui(ModuleWidget):
     """
     Widget for the Spectrum Analyzer Tab.
@@ -1469,7 +1471,9 @@ class SpecAnGui(ModuleWidget):
         """
         Acquires only one curve.
         """
+
         # self.module.setup() ### For small BW, setup() then curve() takes
+
         # several seconds... In the mean time, no other event can be
         # treated. That's why the gui freezes...
         self.y_data = (self.current_average * self.y_data \
@@ -1478,8 +1482,6 @@ class SpecAnGui(ModuleWidget):
         self.update_display()
         if self.running:
             self.module.setup()
-        # if self.running:
-        #    self.timer.start()
 
     def run_continuous(self):
         """
@@ -1521,22 +1523,6 @@ class SpecAnGui(ModuleWidget):
         self.y_data = np.zeros(len(self.x_data))
         self.current_average = 0
 
-    # def params(self):
-    #    """
-    #    The current relevant parameters. We should consider switching to a
-    #    # systematic use of
-    #   self.properties.
-    #    """
-    #
-    #   return dict(center=self.module.center,
-    #               span=self.module.span,
-    #               rbw=self.module.rbw,
-    #               input=self.module.input,
-    #               points=self.module.points,
-    #               avg=self.module.avg,
-    #               acbandwidth=self.module.acbandwidth,
-    #               name=self.module.curve_name)
-
 
 class RedPitayaGui(RedPitaya):
     """
@@ -1546,9 +1532,6 @@ class RedPitayaGui(RedPitaya):
     def __init__(self, *args, **kwds):
         super(RedPitayaGui, self).__init__(*args, **kwds)
         self.setup_gui()
-        # self.timer_dock_positions = QtCore.QTimer()
-        # self.timer_dock_positions.setInterval(1000)
-        # self.timer_dock_positions.timeout.connect(self.save_dock_positions)
 
     def add_dock_widget(self, widget, name):
         dock_widget = QtGui.QDockWidget(name)
@@ -1557,7 +1540,6 @@ class RedPitayaGui(RedPitaya):
             QtGui.QDockWidget.DockWidgetFloatable |
             QtGui.QDockWidget.DockWidgetMovable |
             QtGui.QDockWidget.DockWidgetVerticalTitleBar)
-
         self.dock_widgets[name] = dock_widget
         dock_widget.setWidget(widget)
         self.main_window.addDockWidget(QtCore.Qt.TopDockWidgetArea,
@@ -1597,10 +1579,6 @@ class RedPitayaGui(RedPitaya):
         self.main_window.setDockNestingEnabled(True)  # DockWidgets can be
         # stacked with one below the other one in the same column
         self.dock_widgets["Scope/Spec. An."].raise_()  # select first tab
-
-
-        # self.main_window.tabifyDockWidget(self.na_widget_dock,
-        #                                   self.scope_widget_dock)
 
         """
         self.tab_widget = QtGui.QTabWidget()
