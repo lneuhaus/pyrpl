@@ -1105,8 +1105,8 @@ class NaGui(ModuleWidget):
 
     def set_state(self, continuous, paused, need_restart, n_av=0):
         """
-        The current state is composed of 3 flags and a number. This function updates the flags and
-        Reflects on the gui the required state.
+        The current state is composed of 3 flags and a number. This function
+        updates the flags and reflects on the gui the required state.
 
         :param continuous: True or False means continuous or single
         :param paused: True or False Whether the acquisition is running or stopped
@@ -1176,24 +1176,23 @@ class NaGui(ModuleWidget):
         # check if we shall display open loop tf
         if self.properties["infer_open_loop_tf"].widget.checkState() == 2:
             y = y / (1.0 + y)
-        mag = 20 * np.log10(np.abs(y)   )
+        mag = 20 * np.log10(np.abs(y))
         phase = np.angle(y, deg=True)
         log_mod = self.module.logscale
         self.curve.setLogMode(xMode=log_mod, yMode=None)
         self.curve_phase.setLogMode(xMode=log_mod, yMode=None)
-        self.plot_item.setLogMode(x=log_mod, y=None) # this seems also needed
-        self.plot_item_phase.setLogMode(x=log_mod, y=None) ##
-
+        self.plot_item.setLogMode(x=log_mod, y=None)  # this seems also needed
+        self.plot_item_phase.setLogMode(x=log_mod, y=None)
 
         self.curve.setData(x, mag)
         self.curve_phase.setData(x, phase)
 
         cur = self.module.current_point - 1
-        visible = self.last_valid_point!=cur + 1
-        logscale = self.properties["logscale"].widget.checkState()==2
+        visible = self.last_valid_point != cur + 1
+        logscale = self.properties["logscale"].widget.checkState() == 2
         freq = x[cur]
         xpos = np.log10(freq) if logscale else freq
-        if cur>0:
+        if cur > 0:
             self.arrow.setPos(xpos, mag[cur])
             self.arrow.setVisible(visible)
             self.arrow_phase.setPos(xpos, phase[cur])
@@ -1228,8 +1227,8 @@ class NaGui(ModuleWidget):
                                need_restart=False, n_av=self.post_average)  # 1
                 self.button_single.setText("Run single")
             return
-        self.data[cur] = (self.data[cur] * self.post_average + y) / (
-        self.post_average + 1)
+        self.data[cur] = (self.data[cur] * self.post_average + y) \
+                         / (self.post_average + 1)
         self.x[cur] = x
         # fomerly, we had buffers for both phase and magnitude. This was faster
         # but more messy. We could restore them once the display get
@@ -1262,7 +1261,8 @@ class NaGui(ModuleWidget):
 
         if self.need_restart:
             raise AveragingError(
-                """parameters have changed in the mean time, cannot average with previous data""")
+                """parameters have changed in the mean time, cannot average
+                with previous data""")
         else:
             self.set_state(continuous=self.continuous,
                            paused=False,
@@ -1283,7 +1283,6 @@ class NaGui(ModuleWidget):
         else:
             self.set_state(continuous=True, paused=True, need_restart=False,
                            n_av=self.post_average)
-
 
 
 class PidGui(ModuleWidget):
@@ -1312,6 +1311,7 @@ class PidGui(ModuleWidget):
             self.properties[prop].widget.setMaximum(1000000)
             self.properties[prop].widget.setMinimum(-1000000)
 
+
 class AllPidGui(QtGui.QWidget):
     def __init__(self, parent=None, rp=None):
         super(AllPidGui, self).__init__(parent)
@@ -1331,6 +1331,7 @@ class AllPidGui(QtGui.QWidget):
             self.layout.addWidget(widget)
             nr += 1
             self.layout.setStretchFactor(widget, 0)
+
 
 class SpecAnGui(ModuleWidget):
     """
@@ -1384,7 +1385,7 @@ class SpecAnGui(ModuleWidget):
         self.button_save.clicked.connect(self.save)
 
         self.timer = QtCore.QTimer()
-        #self.timer.setSingleShot(True)
+        # self.timer.setSingleShot(True)
         #  dont know why but this removes the bug with with freezing gui
         self.timer.setSingleShot(False)
         self.timer.setInterval(10)
@@ -1468,7 +1469,7 @@ class SpecAnGui(ModuleWidget):
         """
         Acquires only one curve.
         """
-        #self.module.setup() ### For small BW, setup() then curve() takes
+        # self.module.setup() ### For small BW, setup() then curve() takes
         # several seconds... In the mean time, no other event can be
         # treated. That's why the gui freezes...
         self.y_data = (self.current_average * self.y_data \
@@ -1477,7 +1478,7 @@ class SpecAnGui(ModuleWidget):
         self.update_display()
         if self.running:
             self.module.setup()
-        #if self.running:
+        # if self.running:
         #    self.timer.start()
 
     def run_continuous(self):
@@ -1520,21 +1521,21 @@ class SpecAnGui(ModuleWidget):
         self.y_data = np.zeros(len(self.x_data))
         self.current_average = 0
 
-    #def params(self):
+    # def params(self):
     #    """
     #    The current relevant parameters. We should consider switching to a
     #    # systematic use of
-     #   self.properties.
+    #   self.properties.
     #    """
-     #
-     #   return dict(center=self.module.center,
-     #               span=self.module.span,
-     #               rbw=self.module.rbw,
-     #               input=self.module.input,
-     #               points=self.module.points,
-     #               avg=self.module.avg,
-     #               acbandwidth=self.module.acbandwidth,
-     #               name=self.module.curve_name)
+    #
+    #   return dict(center=self.module.center,
+    #               span=self.module.span,
+    #               rbw=self.module.rbw,
+    #               input=self.module.input,
+    #               points=self.module.points,
+    #               avg=self.module.avg,
+    #               acbandwidth=self.module.acbandwidth,
+    #               name=self.module.curve_name)
 
 
 class RedPitayaGui(RedPitaya):
@@ -1545,9 +1546,9 @@ class RedPitayaGui(RedPitaya):
     def __init__(self, *args, **kwds):
         super(RedPitayaGui, self).__init__(*args, **kwds)
         self.setup_gui()
-        #self.timer_dock_positions = QtCore.QTimer()
-        #self.timer_dock_positions.setInterval(1000)
-        #self.timer_dock_positions.timeout.connect(self.save_dock_positions)
+        # self.timer_dock_positions = QtCore.QTimer()
+        # self.timer_dock_positions.setInterval(1000)
+        # self.timer_dock_positions.timeout.connect(self.save_dock_positions)
 
     def add_dock_widget(self, widget, name):
         dock_widget = QtGui.QDockWidget(name)
@@ -1557,7 +1558,7 @@ class RedPitayaGui(RedPitaya):
             QtGui.QDockWidget.DockWidgetMovable |
             QtGui.QDockWidget.DockWidgetVerticalTitleBar)
 
-        self.dock_widgets[name] =  dock_widget
+        self.dock_widgets[name] = dock_widget
         dock_widget.setWidget(widget)
         self.main_window.addDockWidget(QtCore.Qt.TopDockWidgetArea,
                                        dock_widget)
@@ -1579,8 +1580,7 @@ class RedPitayaGui(RedPitaya):
                                    rp=self,
                                    parent=None,
                                    module=self.spec_an)
-        self.scope_sa_widget = ScopeSaWidget(self.scope_widget,
-                                                 self.sa_widget)
+        self.scope_sa_widget = ScopeSaWidget(self.scope_widget, self.sa_widget)
         self.all_asg_widget = AllAsgGui(parent=None,
                                         rp=self)
         self.all_pid_widget = AllPidGui(parent=None,
@@ -1590,17 +1590,17 @@ class RedPitayaGui(RedPitaya):
         self.last_docked = None
         self.main_window = QtGui.QMainWindow()
         for widget, name in [(self.scope_sa_widget, "Scope/Spec. An."),
-                            (self.all_asg_widget, "Asgs"),
-                            (self.all_pid_widget, "Pids"),
-                            (self.na_widget, "Na")]:
+                             (self.all_asg_widget, "Asgs"),
+                             (self.all_pid_widget, "Pids"),
+                             (self.na_widget, "Na")]:
             self.add_dock_widget(widget, name)
-        self.main_window.setDockNestingEnabled(True) #DockWidgets can be stacked
-        # with one below the other one in the same column
-        self.dock_widgets["Scope/Spec. An."].raise_() # select first tab
+        self.main_window.setDockNestingEnabled(True)  # DockWidgets can be
+        # stacked with one below the other one in the same column
+        self.dock_widgets["Scope/Spec. An."].raise_()  # select first tab
 
 
-#        self.main_window.tabifyDockWidget(self.na_widget_dock,
- #                                         self.scope_widget_dock)
+        # self.main_window.tabifyDockWidget(self.na_widget_dock,
+        #                                   self.scope_widget_dock)
 
         """
         self.tab_widget = QtGui.QTabWidget()
@@ -1681,6 +1681,7 @@ class RedPitayaGui(RedPitaya):
     def window_position(self, coords):
         self.main_window.move(coords[0], coords[1])
         self.main_window.resize(coords[2], coords[3])
+
 
 class UserModule(ModuleWidget):
     """
