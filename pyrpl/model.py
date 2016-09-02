@@ -6,6 +6,7 @@ import threading
 
 from .signal import *
 from . import fitting
+from . import pyrpl_utils
 
 logger = logging.getLogger(name=__name__)
 
@@ -23,6 +24,12 @@ class Model(object):
         parent to provide the most important API functions that the model
         allows.
     """
+    gui_buttons = ["unlock", "sweep", "calibrate_all", "lock",
+                   "save_all_gains"] # These are
+    # used
+                                                        # to generate
+                                                        # buttons in the gui
+
     export_to_parent = ["sweep", "calibrate", "save_current_gain",
                         "unlock", "islocked", "lock", "help", "calib_lock",
                         "_lock", "get_offset"]
@@ -32,6 +39,7 @@ class Model(object):
 
     def __init__(self, parent=None):
         self.logger = logging.getLogger(__name__)
+        self.current_stage = 'UNLOCK'
         if parent is None:
             self._parent = self
         else:
@@ -188,6 +196,7 @@ class Model(object):
             self._relocktimer.stop()
         for o in self.outputs.values():
             o.unlock(ival=ival)
+        self.current_stage = "UNLOCK"
 
     def sweep(self):
         """
@@ -199,10 +208,12 @@ class Model(object):
             The duration of one sweep period, as it is useful to setup the
             scope.
         """
+
         self.unlock()
         frequency = None
         for o in self.outputs.values():
             frequency = o.sweep() or frequency
+        self.current_stage = "SWEEP"
         return 1.0 / frequency
 
     def _lock(self, input=None, factor=1.0, offset=None, outputs=None,
@@ -231,6 +242,7 @@ class Model(object):
         -------
         None
         """
+
         if kwargs:
             self.state["set"].update(kwargs)
         self.state["set"]["factor"] = factor
@@ -250,6 +262,10 @@ class Model(object):
         # trivial lock algorithm: just enable all gains
         if outputs is None:
             outputs = self.outputs.values()
+        # unlock all unused outputs, but leave ival unaffected
+        for o in [op for op in self.outputs.values() if op not in outputs]:
+            o.unlock(ival=False)
+        # engage lock on all desired outputs
         for o in outputs:
             if not isinstance(o, RPOutputSignal):
                 o = self.outputs[o]
@@ -269,10 +285,19 @@ class Model(object):
             else:  # special option: instead of locking, write the gain
                 o.save_current_gain(slope=slope*variable_per_unit)
 
+    def save_all_gains(self):
+        """see save_current_gains, no kwds for gui integration"""
+        self.save_current_gain()
+
     def save_current_gain(self, outputs=None):
         """ saves the current gain setting as default one (for all outputs
         unless a list of outputs is given, similar to _lock) """
         self._lock(outputs=outputs, _savegain=True)
+
+    def stage_changed_hook(self, new_stage):
+        """Overwrite or monkey patch this function for custom action upon
+        new stage"""
+        pass
 
     def lock(self,
              factor=None,
@@ -280,6 +305,10 @@ class Model(object):
              laststage=None,
              thread=False,
              **kwargs):
+        ### This function is almost a one-to-one duplicate of FabryPerot.lock (
+        # except for the **kwargs that is read online). This is a major
+        # source of bug !!!!
+
         # firststage will allow timer-based recursive iteration over stages
         # i.e. calling lock(firststage = nexstage) from within this code
         stages = self._config.lock.stages._keys()
@@ -291,6 +320,8 @@ class Model(object):
                 stages = stages[stages.index(firststage):]
         for stage in stages:
             self.logger.debug("Lock stage: %s", stage)
+            self.current_stage = stage
+            self.stage_changed_hook(stage) # Some hook function
             if stage.startswith("call_"):
                 try:
                     lockfn = self.__getattribute__(stage[len('call_'):])
@@ -344,7 +375,8 @@ class Model(object):
                         lockfn(**parameters)
                     except TypeError:  # function doesnt accept kwargs
                         lockfn()
-                    time.sleep(stime)
+                    pyrpl_utils.sleep(stime) ## Changed to pyrpl_utils.sleep,
+                    #  which basically doesn't freeze the gui
 
     def relock(self, *args, **kwargs):
         """ executes 'lock' until 'islocked' returns true """
@@ -366,6 +398,15 @@ class Model(object):
 
     def stop_autolock(self):
         self.timer.stop()
+
+    def calibrate_all(self):
+        """
+        When connecting a function to QPushButton.clicked, keyword arguments
+        are filled with a boolean value. So we need a function with no extra
+        kwds
+        :return:
+        """
+        return self.calibrate()
 
     def calibrate(self, inputs=None, scopeparams={}):
         """

@@ -6,6 +6,7 @@ import threading
 
 from . import *
 from ..signal import Signal
+from ..pyrpl_utils import sleep
 
 logger = logging.getLogger(name=__name__)
 
@@ -17,6 +18,8 @@ class FabryPerot(Model):
 
     # the internal variable for state specification
     _variable = 'detuning'
+
+    gui_buttons = Model.gui_buttons + ["zoom"]
 
     export_to_parent = Model.export_to_parent + ['R0', 'relative_pdh_rms']
 
@@ -125,6 +128,9 @@ class FabryPerot(Model):
              firststage=None,
              laststage=None,
              thread=False):
+        ### This function is almost a one-to-one duplicate of Model.lock (
+        # except for the **kwargs that is read online). This is a major
+        # source of bug !!!!
 
         # firststage will allow timer-based recursive iteration over stages
         # i.e. calling lock(firststage = nexstage) from within this code
@@ -137,6 +143,8 @@ class FabryPerot(Model):
                 stages = stages[stages.index(firststage):]
         for stage in stages:
             self.logger.debug("Lock stage: %s", stage)
+            self.current_stage = stage
+            self.stage_changed_hook(stage)  # Some hook function
             if stage.startswith("call_"):
                 try:
                     lockfn = self.__getattribute__(stage[len('call_'):])
@@ -188,7 +196,15 @@ class FabryPerot(Model):
                         lockfn(**parameters)
                     except TypeError:  # function doesnt accept kwargs
                         lockfn()
-                    time.sleep(stime)
+                    sleep(stime) #time.## Changed to pyrpl_utils.sleep,
+                    #  which basically doesn't freeze the gui
+
+    def save_current_gain(self, outputs=None):
+        """saves the current gain setting as default one (for all outputs
+        unless a list of outputs is given, similar to _lock) """
+
+        self._lock(outputs=outputs, _savegain=True, detuning=self.state[
+            'set']['detuning'])
 
     def calibrate(self, inputs=None, scopeparams={}):
         """
@@ -264,6 +280,15 @@ class FabryPerot(Model):
         if "scopegui" in self._parent.c._dict:
             if self._parent.c.scopegui.auto_run_continuous:
                 self._parent.rp.scope_widget.run_continuous()
+
+    def zoom(self):
+        dur = self.sweep()
+        scope = self._parent.rp.scope
+        curve = scope.curve()
+        curve_pos_times = curve[len(curve)/2:]
+        scope.trigger_delay = scope.times[len(curve)/2 + curve_pos_times.argmax()]
+        scope.duration = scope.duration*10/self._config.finesse
+        self._parent.rp.scope_widget.run_continuous()
 
     def relative_reflection(self):
         self.inputs["reflection"]._acquire()
