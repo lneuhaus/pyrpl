@@ -85,7 +85,7 @@ class MyDoubleSpinBox(QtGui.QWidget):
         self.val = 0
 
         self.setMaximumWidth(200)
-        self.setMaximumHeight(20)
+        self.setMaximumHeight(34)
 
 
     def set_log_increment(self):
