@@ -949,10 +949,7 @@ Asg1 = make_asg(channel=1)
 Asg2 = make_asg(channel=2)
 
 
-class DspModule(BaseModule):
-    _delay = 0  # delay of the module from input to output_signal (in cycles)
-
-    _inputs = dict(
+dspinputs = dict(
         pid0=0,
         pid1=1,
         pid2=2,
@@ -971,6 +968,11 @@ class DspModule(BaseModule):
         dac2=13,
         iq2_2=14,
         off=15)
+
+class DspModule(BaseModule):
+    _delay = 0  # delay of the module from input to output_signal (in cycles)
+
+    _inputs = dspinputs
     inputs = _inputs.keys()
     
     _output_directs = dict(
@@ -1010,6 +1012,22 @@ class DspModule(BaseModule):
         super(DspModule, self).__init__(client,
             addr_base=0x40300000+self._number*0x10000,
             parent=parent)
+
+
+class Sampler(BaseModule):
+    def __init__(self, client, parent=None):
+        self.name = "sampler"
+        super(Sampler, self).__init__(client,
+            addr_base=0x40300000,
+            parent=parent)
+for inp, num in dspinputs.items():
+    setattr(Sampler,
+            inp,
+            FloatRegister(
+                0x10 + num * 0x10000,
+                bits=14,
+                norm=2 ** 13 - 1,
+                doc="output signal " + inp))
 
 
 class AuxOutput(DspModule):
