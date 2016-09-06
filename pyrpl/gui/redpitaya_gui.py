@@ -1554,6 +1554,11 @@ class RedPitayaGui(RedPitaya):
                                rp=self,
                                parent=None,
                                module=self.na)
+        from pyrpl.gui.iq_gui import IqWidget
+        self.iq_widget = IqWidget(name="iq0",
+                                  rp=self,
+                                  parent=None,
+                                  module=self.iq0)
         self.scope_widget = ScopeWidget(name="scope",
                                         rp=self,
                                         parent=None,
@@ -1574,7 +1579,8 @@ class RedPitayaGui(RedPitaya):
         for widget, name in [(self.scope_sa_widget, "Scope/Spec. An."),
                              (self.all_asg_widget, "Asgs"),
                              (self.all_pid_widget, "Pids"),
-                             (self.na_widget, "Na")]:
+                             (self.na_widget, "Na"),
+                             (self.iq_widget, "Iq")]:
             self.add_dock_widget(widget, name)
         self.main_window.setDockNestingEnabled(True)  # DockWidgets can be
         # stacked with one below the other one in the same column

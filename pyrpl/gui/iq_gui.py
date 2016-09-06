@@ -5,7 +5,19 @@ from PyQt4 import QtCore, QtGui
 class MyLabelSignal(QtGui.QLabel):
     pass
 
-class IQWidget(ModuleWidget):
+class WidgetProp(QtGui.QWidget):
+    def __init__(self, label, widget):
+        super(WidgetProp, self).__init__()
+        self.layout = QtGui.QVBoxLayout()
+        self.setLayout(self.layout)
+        self.label = label
+        self.widget = widget
+        self.layout.addWidget(self.label)
+        self.layout.addWidget(self.widget)
+        self.setStyleSheet("background-color:white;")
+
+
+class IqWidget(ModuleWidget):
     """
     Widget for the IQ module
     """
@@ -14,22 +26,33 @@ class IQWidget(ModuleWidget):
                       "acbandwidth",
                       "frequency",
                       "bandwidth",
-                      "quadrature_factor"
+                      "quadrature_factor",
                       "output_signal",
                       "gain",
                       "amplitude",
                       "phase",
                       "output_direct"]
-    """
-    def __init__(self):
+
+    def init_gui(self):
+        super(IqWidget, self).init_gui()
+        ##Then remove properties from normal property layout
+        ## We will make a more fancy one !
         self.scene = QtGui.QGraphicsScene()
-        super(IQWidget, self).__init__(self.scene)
-        self.label_in = MyLabelSignal("in")
-        self.scene.addWidget(self.label_in)
-        self.label_in.move(0, 50)
-        self. = QtGui.QPushButton("coucou")
-        self.scene.addWidget(self.button)
-    """
+        self.view = QtGui.QGraphicsView(self.scene)
+        self.main_layout.addWidget(self.view)
+        for prop in self.properties.values():
+            layout = prop.layout_v
+            self.property_layout.removeItem(prop.layout_v)
+            prop.the_widget = WidgetProp(prop.label, prop.widget)
+            self.scene.addWidget(prop.the_widget)
+        self.move_widgets()
+
+    def get_widget(self, name):
+        return self.properties[name].the_widget
+
+    def move_widgets(self):
+        self.get_widget('output_direct').move(100,100)
+
 class Connection(QtGui.QGraphicsItem):
     arrow_height = 10
     arrow_width = 15
@@ -60,8 +83,8 @@ class Connection(QtGui.QGraphicsItem):
                                  QtCore.QPoint(x2 - self.widget_start.width()/2 - self.margin+ self.arrow_width, y2)])
         painter.drawPolygon(arrow)
         
-
-IQ_GUI = IQWidget()
+"""
+IQ_GUI = IqWidget()
 IQ_GUI.show()
 b = MyDoubleSpinBox("b")
 b2 = MyDoubleSpinBox("b2")
@@ -72,3 +95,4 @@ it = Connection(b, b2)
 IQ_GUI.scene.addItem(it)
 IQ_GUI.scene.addWidget(b)
 IQ_GUI.scene.addWidget(b2)
+"""
