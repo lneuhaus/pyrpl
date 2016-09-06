@@ -229,7 +229,7 @@ class ListComboBox(QtGui.QWidget):
         self._options = [0] + vals
         vals = [-val for val in reversed(vals)]
         self._options = vals + self._options
-        self._options = map(str, self._options)
+        self._options = list(map(str, self._options))
         for i in range(number):
             combo = QtGui.QComboBox()
             self.combos.append(combo)
@@ -244,6 +244,8 @@ class ListComboBox(QtGui.QWidget):
     @property
     def options(self):
         return  self._options
+
+
     def set_list(self, val):
         for i, v in enumerate(val):
             v = str(int(v))
@@ -686,7 +688,7 @@ class ScopeWidget(ModuleWidget):
         try:
             self.curve_display_done()
         except Exception as e:
-            print e
+            print(e)
         self.timer.start()
 
     def curve_display_done(self):

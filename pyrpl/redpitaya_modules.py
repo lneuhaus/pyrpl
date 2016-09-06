@@ -155,7 +155,7 @@ class HK(BaseModule):
                     IORegister(0x24, 0x1C, 0x14, bit=i,
                                outputmode=True,
                                doc="positive digital io"))
-        return super(HK, cls).__new__(cls, *args, **kwargs)
+        return super(HK, cls).__new__(cls) #, *args, **kwargs
 
     def __init__(self, client, parent=None):
         super(HK, self).__init__(client, addr_base=0x40000000, parent=parent)

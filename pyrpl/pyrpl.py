@@ -20,7 +20,7 @@
 # unspecified parameters should rather be left unchanged instead of being
 # set to 0 or 1
 
-
+from __future__ import print_function
 from time import sleep, time
 import math
 import numpy
@@ -438,7 +438,7 @@ class Lockbox(object):
             else:
                 for prop in properties:
                     if prop in dic:
-                        print "setting ", module, prop, dic[prop]
+                        print("setting ", module, prop, dic[prop])
                         setattr(module, prop, dic[prop])
 
     def store_properties(self):

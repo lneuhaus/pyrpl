@@ -1,3 +1,4 @@
+from __future__ import print_function #see http://python-future.org/compatible_idioms.html
 import collections
 from scipy.optimize import leastsq
 import json
@@ -399,12 +400,11 @@ class BodeFitIIRGui(BodeFitIIR):
                                                 self.onkeypress)
 
     def _getclosestindex(self, liste, value):
-        print "Searching closest pole/zero to frequency", value, "in", len(
-            liste), "-element list"
+        print("Searching closest pole/zero to frequency", value, "in", len(liste), "-element list")
         ibest = -1
         dbest = 99999999999999
         for i in range(len(liste)):
-            print i
+            print(i)
             if np.imag(liste[i]) == 0:
                 d = np.abs(value - np.abs(liste[i]))
             else:
@@ -419,29 +419,29 @@ class BodeFitIIRGui(BodeFitIIR):
             return
         self._tlast = time.time()
         self._evlast = event
-        print "clicked with key",event.key
+        print("clicked with key", event.key)
         self.event = event
         x = event.xdata
         y = event.ydata
         if event.key == "control":
             if event.button == 1:
-                print "adding double pole"
+                print("adding double pole")
                 self.poles.append(-1j*x-1.0000001)
                 self.actpole = -1
                 self.actzero = None
             elif event.button == 3:
-                print "adding double zero"
+                print("adding double zero")
                 self.zeros.append(-1j*x-1.0000001)
                 self.actpole = None
                 self.actzero = -1
         if event.key == "ctrl+shift":
             if event.button == 1:
-                print "adding signle pole"
+                print("adding signle pole")
                 self.poles.append(-x)
                 self.actpole = -1
                 self.actzero = None
             elif event.button == 3:
-                print "adding single zero"
+                print("adding single zero")
                 self.zeros.append(-x)
                 self.actpole = None
                 self.actzero = -1
@@ -449,13 +449,13 @@ class BodeFitIIRGui(BodeFitIIR):
             if event.button == 1:
                 self.actpole = self._getclosestindex(self.poles, x)
                 self.actzero = None
-                print "shifting pole: "
-                print self.poles[self.actpole]
+                print("shifting pole: ")
+                print(self.poles[self.actpole])
             if event.button == 3:
                 self.actpole = None
                 self.actzero = self._getclosestindex(self.zeros, x)
-                print "shifting zero: "
-                print self.zeros[self.actzero]
+                print("shifting zero: ")
+                print(self.zeros[self.actzero])
         self.refresh()
         
     def onkeypress(self, event):
@@ -468,7 +468,7 @@ class BodeFitIIRGui(BodeFitIIR):
                 key = event
             event = ev()
         self.event = event
-        print event.key
+        print(event.key)
         delta = 0
         if event.key == "alt+up":
             delta = 1
