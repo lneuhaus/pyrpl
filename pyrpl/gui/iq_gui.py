@@ -1,11 +1,17 @@
+import os.path as osp
+
 from pyrpl.pyrpl_utils import MyDoubleSpinBox
 from pyrpl.gui.redpitaya_gui import ModuleWidget
 from PyQt4 import QtCore, QtGui
 
+IMAGE_PATH = osp.join(osp.dirname(__file__), "images")
+
+
 class MyLabelSignal(QtGui.QLabel):
     pass
 
-class WidgetProp(QtGui.QWidget):
+"""
+class WidgetProp(QtGui.QFrame):
     def __init__(self, label, widget):
         super(WidgetProp, self).__init__()
         self.layout = QtGui.QVBoxLayout()
@@ -14,7 +20,189 @@ class WidgetProp(QtGui.QWidget):
         self.widget = widget
         self.layout.addWidget(self.label)
         self.layout.addWidget(self.widget)
-        self.setStyleSheet("background-color:white;")
+        self.setStyleSheet("WidgetProp{border: 1px solid black; border-radius: 10px; content-margins: 0,0,0,0}")
+        #self.setStyleSheet("QFrame{ border: 1px solid black; border-radius: 5px }")
+        #"background-color:white;")
+"""
+
+
+class MyItem(QtGui.QLabel):
+    def __init__(self, widget_name, y, label, parent, x_offset=0):
+        super(MyItem, self).__init__(label)
+        self.widget_name = widget_name
+        self.y = y
+        self.x_offset = x_offset
+        self.parent = parent
+        parent.graphic_items.append(self)
+        self.setStyleSheet(
+            "QLabel{border: 1px solid black; border-radius: 5px; font-size: 15px; background-color:white}")
+        parent.scene.addWidget(self)
+
+    def move_to_right_position(self):
+        widget = self.parent.iq_widgets[0].properties[self.widget_name].widget
+        x = widget.pos().x() + widget.width()/2 + self.x_offset - self.width()/2
+        y = self.y*self.parent.view.height() - self.height()/2
+        self.move(x, y)
+
+
+
+class MyLabel(MyItem):
+    pass
+
+
+class MyImage(MyItem):
+    def __init__(self, widget_name, y, filename, parent, x_offset=0):
+        super(MyImage, self).__init__(widget_name, y, "", parent, x_offset)
+        self.pixmap = QtGui.QPixmap(osp.join(IMAGE_PATH, filename))
+        self.setPixmap(self.pixmap)
+
+class Connection(object):
+    arrow_height = 10
+    arrow_width = 15
+    margin = 15
+
+    def __init__(self, widget1, widget2, h_first, parent):
+        self.parent = parent
+        self.widget_start = widget1
+        self.widget_stop = widget2
+        self.pen = QtGui.QPen(QtCore.Qt.black,
+                                      5,
+                                      QtCore.Qt.SolidLine,
+                                      QtCore.Qt.RoundCap,
+                                      QtCore.Qt.RoundJoin)
+
+
+        self.line1 = QtGui.QGraphicsLineItem()
+        self.line2 = QtGui.QGraphicsLineItem()
+
+        self.parent.scene.addItem(self.line1)
+        self.parent.scene.addItem(self.line2)
+        self.adjust()
+
+    def adjust(self):
+        x1 = self.widget_start.pos().x() + self.widget_start.width() / 2
+        x2 = self.widget_stop.pos().x() + self.widget_stop.width() / 2
+        y1 = self.widget_start.pos().y() + self.widget_start.height() / 2
+        y2 = self.widget_stop.pos().y() + self.widget_stop.height() / 2
+        self.line1.setLine(x1, y1, x1, y2)
+        self.line2.setLine(x1, y2, x2, y2)
+
+    """
+        def paint(self, painter, style, widget):
+
+
+            painter.drawLine(QtCore.QLine(x1, y1, x1, y2))
+            painter.drawLine(QtCore.QLine(x1, y2, x2, y2))
+
+            painter.setBrush(QtCore.Qt.black)
+            arrow = QtGui.QPolygonF(
+                [QtCore.QPoint(x2 - self.widget_start.width() / 2 - self.margin, y2 - self.arrow_height / 2),
+                 QtCore.QPoint(x2 - self.widget_start.width() / 2 - self.margin, y2 + self.arrow_height / 2),
+                 QtCore.QPoint(x2 - self.widget_start.width() / 2 - self.margin + self.arrow_width, y2)])
+            painter.drawPolygon(arrow)
+    """
+
+class AllIqWidgets(QtGui.QWidget):
+    """
+    The Tab widget containing all the Iqs
+    """
+
+    def __init__(self, parent=None, rp=None):
+        super(AllIqWidgets, self).__init__(parent)
+        self.rp = rp
+        self.iq_widgets = []
+        self.layout = QtGui.QVBoxLayout()
+        self.setLayout(self.layout)
+        nr = 0
+        self.layout.setAlignment(QtCore.Qt.AlignTop)
+
+        while hasattr(self.rp, "iq" + str(nr)):
+            widget = IqWidget(name="iq" + str(nr),
+                            rp=self.rp,
+                            parent=None,
+                            module=getattr(self.rp, "iq" + str(nr)))
+            self.iq_widgets.append(widget)
+            self.layout.addWidget(widget)
+            nr += 1
+            self.layout.setStretchFactor(widget, 0)
+        self.scene = QtGui.QGraphicsScene()
+        self.view = QtGui.QGraphicsView(self.scene)
+        col = self.palette().background().color().name()
+        self.view.setStyleSheet("border: 0px; background-color: " + col)
+        self.layout.addWidget(self.view)
+        self.make_drawing()
+        self.adjust_drawing()
+
+    def adjust_drawing(self):
+        for item in self.graphic_items:
+            item.move_to_right_position()
+        for conn in self.connections:
+            conn.adjust()
+
+    def make_drawing(self):
+        brush = QtGui.QBrush(QtCore.Qt.black)
+
+        row_center = 0.5
+        row_up = 0.25
+        row_down = 0.75
+        row_top = 0.1
+        row_center_up = 0.45
+        row_center_down = 0.55
+        self.graphic_items = []
+        self.input = MyLabel("input", row_center, "input", parent=self)
+
+        self.high_pass = MyImage('acbandwidth', row_center, "high_pass.bmp", parent=self)
+        self.low_pass1 = MyImage('bandwidth', row_up, "low_pass.bmp", parent=self, x_offset=-40)
+        self.low_pass2 = MyImage('bandwidth', row_down, "low_pass.bmp", parent=self, x_offset=-40)
+
+        self.x_sin1 = MyLabel("frequency", row_up, "x sin", parent=self)
+        self.x_cos1 = MyLabel("frequency", row_down, "x cos", parent=self)
+        self.x_sin2 = MyLabel("amplitude", row_up, "x sin", parent=self, x_offset=40)
+        self.x_cos2 = MyLabel("amplitude", row_down, "x cos", parent=self, x_offset=40)
+
+        self.na_real = MyLabel("bandwidth", row_center_up, "na real", parent=self, x_offset=20)
+        self.na_imag = MyLabel("bandwidth", row_center_down, "na imag", parent=self, x_offset=20)
+
+        self.x_1 = MyLabel("quadrature_factor", row_top, "X", parent=self)
+        self.x_2 = MyLabel("gain", row_up, "X", parent=self)
+        self.x_3 = MyLabel('gain', row_down, "X", parent=self)
+
+        self.plus = MyLabel("amplitude", row_up, "+", parent=self, x_offset=-30)
+
+        self.cte = MyLabel("amplitude", row_center_up, "Cte", parent=self, x_offset=-30)
+
+        self.plus_2 = MyLabel("amplitude", row_up, "+", parent=self, x_offset=30)
+
+        self.output_direct = MyLabel("output_signal", row_center, "output_direct", parent=self)
+        self.output_signal = MyLabel("output_signal", row_top, "output_signal", parent=self)
+
+        self.connections = []
+        self.connect(self.input, self.high_pass)
+        self.connect(self.high_pass, self.x_sin1)
+        self.connect(self.high_pass, self.x_cos1)
+        self.connect(self.x_sin1, self.low_pass1)
+        self.connect(self.x_cos1, self.low_pass2)
+        self.connect(self.low_pass1, self.na_real)
+        self.connect(self.low_pass2, self.na_imag)
+        self.connect(self.low_pass1, self.x_1)
+        self.connect(self.low_pass1, self.x_2)
+        self.connect(self.low_pass2, self.x_3)
+        self.connect(self.x_2, self.plus)
+        self.connect(self.plus, self.cte)
+        self.connect(self.plus, self.x_sin2)
+        self.connect(self.x_3, self.x_cos2)
+        self.connect(self.x_1, self.output_signal, h_first=False)
+        self.connect(self.x_sin2, self.plus_2, h_first=False)
+        self.connect(self.x_cos2, self.plus_2, h_first=False)
+        self.connect(self.plus_2, self.output_direct)
+
+
+    def connect(self, widget1, widget2, h_first=True):
+        self.connections.append(Connection(widget1, widget2, h_first, self))
+
+    def resizeEvent(self, event):
+        super(AllIqWidgets, self).resizeEvent(event)
+        self.adjust_drawing()
 
 
 class IqWidget(ModuleWidget):
@@ -37,51 +225,101 @@ class IqWidget(ModuleWidget):
         super(IqWidget, self).init_gui()
         ##Then remove properties from normal property layout
         ## We will make a more fancy one !
-        self.scene = QtGui.QGraphicsScene()
-        self.view = QtGui.QGraphicsView(self.scene)
-        self.main_layout.addWidget(self.view)
-        for prop in self.properties.values():
+
+
+        for key, prop in self.properties.items():
             layout = prop.layout_v
             self.property_layout.removeItem(prop.layout_v)
+            """
             prop.the_widget = WidgetProp(prop.label, prop.widget)
-            self.scene.addWidget(prop.the_widget)
-        self.move_widgets()
+            if key!='bandwidth':
+                prop.the_widget.setMaximumWidth(120)
+            """
+            #self.scene.addWidget(prop.the_widget)
 
+        self.properties["bandwidth"].widget.set_max_cols(2)
+        self.property_layout.addLayout(self.properties["input"].layout_v)
+        self.property_layout.addLayout(self.properties["acbandwidth"].layout_v)
+        self.property_layout.addLayout(self.properties["frequency"].layout_v)
+        self.properties["frequency"].layout_v.addLayout(self.properties["phase"].layout_v)
+        self.property_layout.addLayout(self.properties["bandwidth"].layout_v)
+        self.property_layout.addLayout(self.properties["quadrature_factor"].layout_v)
+        self.property_layout.addLayout(self.properties["gain"].layout_v)
+        self.property_layout.addLayout(self.properties["amplitude"].layout_v)
+        self.property_layout.addLayout(self.properties["output_signal"].layout_v)
+        self.properties["output_signal"].layout_v.addLayout(self.properties["output_direct"].layout_v)
+
+        property_acbw = self.properties["acbandwidth"]
+
+        def update():
+            """
+            Sets the gui value from the current module value
+
+            :return:
+            """
+
+            index = list(property_acbw.options).index(int(getattr(property_acbw.module,
+                                                                      property_acbw.name)))
+            property_acbw.widget.setCurrentIndex(index)
+
+        property_acbw.update = update
+
+        """
+        self.properties["frequency"].widget.setMaximum(1e9)
+        self.properties["frequency"].widget.setMinimum(0)
+        self.properties["phase"].widget.setMaximum(360)
+        self.properties["phase"].widget.setMinimum(-360)
+        self.properties["gain"].widget.setMaximum(1e9)
+        self.properties["gain"].widget.setMinimum(0)
+        self.properties["amplitude"].widget.setMaximum(1e9)
+        self.properties["amplitude"].widget.setMinimum(0)
+
+        self.multiplier_sin = QtGui.QLabel("x sin")
+        self.multiplier_sin.setStyleSheet(".QLabel{border: 1px solid black; border-radius: 10px; font-size: 15px}")
+        self.multiplier_sin.setFixedSize(40,30)
+        self.multiplier_sin.setAlignment(QtCore.Qt.AlignCenter)
+        self.scene.addWidget(self.multiplier_sin)
+
+        self.multiplier_cos = QtGui.QLabel("x cos")
+        self.multiplier_cos.setStyleSheet(".QLabel{border: 1px solid black; border-radius: 10px; font-size: 15px}")
+        self.multiplier_cos.setFixedSize(40,30)
+        self.multiplier_cos.setAlignment(QtCore.Qt.AlignCenter)
+        self.scene.addWidget(self.multiplier_cos)
+
+        self.move_widgets()
+        """
+    """
     def get_widget(self, name):
         return self.properties[name].the_widget
 
     def move_widgets(self):
-        self.get_widget('output_direct').move(100,100)
+        width = self.width()
+        height = self.height()
+        print(width, height)
+        n_cols = 10
+        n_rows = 7
+        col = [(width*i)/ n_cols for i in range(n_cols)]
+        row = [(height * i) / n_rows for i in range(n_rows)]
 
-class Connection(QtGui.QGraphicsItem):
-    arrow_height = 10
-    arrow_width = 15
-    margin = 15
-    
-    def __init__(self, widget_start, widget_stop):
-    
-        super(Connection, self).__init__()
-        self.widget_start = widget_start
-        self.widget_stop = widget_stop
+        self.get_widget('input').move(col[0], row[4])
+        self.get_widget('acbandwidth').move(col[1], row[4])
+        self.get_widget("phase").move(col[1], row[1])
+        self.get_widget("frequency").move(col[1], row[2])
+        self.get_widget("bandwidth").move(col[3], row[3])
+        self.get_widget("quadrature_factor").move(col[4], row[1])
+        self.get_widget("gain").move(col[5], row[4])
+        self.get_widget("amplitude").move(col[6], row[4])
+        self.get_widget("output_signal").move(col[8], row[1])
+        self.get_widget('output_direct').move(col[8], row[4])
 
-    def paint(self, painter, style, widget):
-        painter.setPen(QtGui.QPen(QtCore.Qt.black,
-                                  5,
-                                  QtCore.Qt.SolidLine,
-                                  QtCore.Qt.RoundCap,
-                                  QtCore.Qt.RoundJoin))
-        x1 = self.widget_start.pos().x() + self.widget_start.width()/2
-        x2 = self.widget_stop.pos().x() + self.widget_stop.width()/2
-        y1 = self.widget_start.pos().y() + self.widget_start.height()/2
-        y2 = self.widget_stop.pos().y() + self.widget_stop.height()/2
-        painter.drawLine(QtCore.QLine(x1, y1, x1, y2))
-        painter.drawLine(QtCore.QLine(x1, y2, x2, y2))
+        self.multiplier_sin.move(col[1], row[3])
+        self.multiplier_cos.move(col[1], row[5])
 
-        painter.setBrush(QtCore.Qt.black)
-        arrow = QtGui.QPolygonF([QtCore.QPoint(x2 - self.widget_start.width()/2 - self.margin, y2 - self.arrow_height/2),
-                                 QtCore.QPoint(x2 - self.widget_start.width()/2 - self.margin, y2 + self.arrow_height/2),
-                                 QtCore.QPoint(x2 - self.widget_start.width()/2 - self.margin+ self.arrow_width, y2)])
-        painter.drawPolygon(arrow)
+
+    """
+
+
+
         
 """
 IQ_GUI = IqWidget()

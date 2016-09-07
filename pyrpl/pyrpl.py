@@ -529,8 +529,8 @@ class Pyrpl(Lockbox):
                 r.rp.scope_widget.run_continuous()
 
     def _save_window_position(self):
-        if self.c["dock_positions"]!=str(self.rp.main_window.saveState()):
-            self.c["dock_positions"] = str(self.rp.main_window.saveState())
+        if self.c["dock_positions"]!=bytes(self.rp.main_window.saveState()):
+            self.c["dock_positions"] = bytes(self.rp.main_window.saveState())
         try:
             _ = self.c.scopegui
         except KeyError:
@@ -543,7 +543,9 @@ class Pyrpl(Lockbox):
 
     def set_window_position(self):
         if "dock_positions" in self.c._keys():
-            self.rp.main_window.restoreState(self.c.dock_positions)
+            if not self.rp.main_window.restoreState(self.c.dock_positions):
+                self.logger.warning("Sorry, " + \
+                    "there was a problem with the restoration of Dock positions")
         try:
             coordinates = self.c["scopegui"]["coordinates"]
         except KeyError:

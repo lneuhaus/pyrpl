@@ -245,6 +245,29 @@ class ListComboBox(QtGui.QWidget):
     def options(self):
         return  self._options
 
+    def set_max_cols(self, n_cols):
+        """
+        If more than n boxes are required, go to next line
+        """
+
+        if len(self.combos)<=n_cols:
+            return
+
+        for item in self.combos:
+            self.lay.removeWidget(item)
+        self.v_layouts = []
+        n = len(self.combos)
+        n_rows = int(np.ceil(n*1.0/n_cols))
+        j = 0
+        for i in range(n_cols):
+            layout = QtGui.QVBoxLayout()
+            self.lay.addLayout(layout)
+            for j in range(n_rows):
+                index = i*n_rows + j
+                if index>=n:
+                    break
+                layout.addWidget(self.combos[index])
+
 
     def set_list(self, val):
         for i, v in enumerate(val):
@@ -1556,11 +1579,9 @@ class RedPitayaGui(RedPitaya):
                                rp=self,
                                parent=None,
                                module=self.na)
-        from pyrpl.gui.iq_gui import IqWidget
-        self.iq_widget = IqWidget(name="iq0",
-                                  rp=self,
-                                  parent=None,
-                                  module=self.iq0)
+        from pyrpl.gui.iq_gui import AllIqWidgets
+        self.iq_widget = AllIqWidgets(rp=self,
+                                  parent=None)
         self.scope_widget = ScopeWidget(name="scope",
                                         rp=self,
                                         parent=None,

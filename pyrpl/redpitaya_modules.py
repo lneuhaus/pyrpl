@@ -1278,6 +1278,8 @@ class IQ(FilterModule):
     _SIGNALBITS = 14 #Register(0x210)
     _LPFBITS = 24 #Register(0x214)
     _SHIFTBITS = 8 #Register(0x218)
+
+    acbandwidths = [0] + [int(2.371593461809983*2**n) for n in range(1, 27)]
     
     pfd_integral = FloatRegister(0x150, bits=_SIGNALBITS, norm=_SIGNALBITS,
                                  doc="value of the pfd integral [volts]")
@@ -1326,6 +1328,7 @@ class IQ(FilterModule):
 
     @acbandwidth.setter
     def acbandwidth(self, val):
+        val = int(val)
         self.inputfilter = -val
         return val
 
