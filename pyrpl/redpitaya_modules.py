@@ -1070,6 +1070,8 @@ class FilterModule(DspModule):
                                  doc="Input filter bandwidths [Hz]."\
                                  "0 = off, negative bandwidth = highpass")
 
+    _valid_inputfilter_frequencies = inputfilter.valid_frequencies
+
 
 class Pid(FilterModule):
     _delay = 3  # min delay in cycles from input to output_signal of the module
@@ -1279,8 +1281,9 @@ class IQ(FilterModule):
     _LPFBITS = 24 #Register(0x214)
     _SHIFTBITS = 8 #Register(0x218)
 
-    acbandwidths = [0] + [int(2.371593461809983*2**n) for n in range(1, 27)]
-    
+    #acbandwidths = [0] + [int(2.371593461809983*2**n) for n in range(1, 27)]
+    acbandwidths = _valid_inputfilter_frequencies()
+
     pfd_integral = FloatRegister(0x150, bits=_SIGNALBITS, norm=_SIGNALBITS,
                                  doc="value of the pfd integral [volts]")
 

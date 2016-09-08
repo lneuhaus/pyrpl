@@ -276,7 +276,7 @@ class FilterRegister(Register):
         self.filterstages = filterstages
         self.shiftbits = shiftbits
         self.minbw = minbw
-    
+
     @property
     def _FILTERSTAGES(self):
         return self._read(self.filterstages)
@@ -292,6 +292,11 @@ class FilterRegister(Register):
     @property
     def _ALPHABITS(self):
         return int(np.ceil(np.log2(125000000 / self._MINBW)))
+
+    def valid_frequencies(self):
+        """ returns a list of all valid filter cutoff frequencies"""
+        valid_bits = range(0, 2**self._SHIFTBITS)
+        return list([self.to_python(b | 0x1 << 7) for b in valid_bits])
 
     def to_python(self, value):
         """returns a list of bandwidths for the low-pass filter cascade before the module
@@ -347,6 +352,7 @@ class FilterRegister(Register):
                     shift += 2**6  # turn this filter into a highpass
                 filter_shifts += (shift) * 2**(8 * i)
         return filter_shifts
+
 
 class PWMRegister(Register):
     # FloatRegister that defines the PWM voltage similar to setting a float
