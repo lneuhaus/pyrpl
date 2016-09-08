@@ -1070,6 +1070,10 @@ class FilterModule(DspModule):
                                  doc="Input filter bandwidths [Hz]."\
                                  "0 = off, negative bandwidth = highpass")
 
+    @property
+    def inputfilters(self):
+        return self._valid_inputfilter_frequencies()
+
     _valid_inputfilter_frequencies = inputfilter.valid_frequencies
 
 
@@ -1257,13 +1261,20 @@ class IQ(FilterModule):
     output_signals = _output_signals.keys()
     output_signal = SelectRegister(0x10C, options=_output_signals,
                            doc = "Signal to send back to DSP multiplexer")
-    
+
+
     bandwidth = FilterRegister(0x124, 
                                filterstages=0x230,
                                shiftbits=0x234,
                                minbw=0x238,
                                doc="Quadrature filter bandwidths [Hz]."\
                                     "0 = off, negative bandwidth = highpass")
+
+    _valid_bandwidths = bandwidth.valid_frequencies
+
+    @property
+    def bandwidths(self):
+        return self._valid_bandwidths()
     
     on = BoolRegister(0x100, 0, 
                       doc="If set to False, turns off the module, e.g. to \
@@ -1280,9 +1291,6 @@ class IQ(FilterModule):
     _SIGNALBITS = 14 #Register(0x210)
     _LPFBITS = 24 #Register(0x214)
     _SHIFTBITS = 8 #Register(0x218)
-
-    #acbandwidths = [0] + [int(2.371593461809983*2**n) for n in range(1, 27)]
-    acbandwidths = _valid_inputfilter_frequencies()
 
     pfd_integral = FloatRegister(0x150, bits=_SIGNALBITS, norm=_SIGNALBITS,
                                  doc="value of the pfd integral [volts]")
@@ -1315,6 +1323,11 @@ class IQ(FilterModule):
 
     def __init__(self, *args, **kwds):
         super(IQ, self).__init__(*args, **kwds)
+
+    @property
+    def  acbandwidths(self):
+        #acbandwidths = [0] + [int(2.371593461809983*2**n) for n in range(1, 27)]
+        return self._valid_inputfilter_frequencies()
 
     @property
     def gain(self):

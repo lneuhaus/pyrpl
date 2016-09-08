@@ -56,6 +56,7 @@ class MyImage(MyItem):
         super(MyImage, self).__init__(widget_name, y, "", parent, x_offset)
         self.pixmap = QtGui.QPixmap(osp.join(IMAGE_PATH, filename))
         self.setPixmap(self.pixmap)
+        self.setFixedSize(self.pixmap.size())
 
 class Connection(object):
     arrow_height = 10
@@ -225,7 +226,7 @@ class AllIqWidgets(QtGui.QWidget):
 
         self.plus = MyLabel("amplitude", row_up, "+", parent=self, x_offset=0)
 
-        self.cte = MyLabel("amplitude", row_center_up, "Cte", parent=self, x_offset=0)
+        self.cte = MyLabel("amplitude", row_center, "Cte", parent=self, x_offset=0)
 
         self.plus_2 = MyLabel("amplitude", row_center, "+", parent=self, x_offset=40)
 
@@ -257,12 +258,14 @@ class AllIqWidgets(QtGui.QWidget):
 
 
 
+
+
     def connect(self, widget1, widget2, h_first=True):
         self.connections.append(Connection(widget1, widget2, h_first, self))
 
     def resizeEvent(self, event):
-        self.adjust_drawing()
         super(AllIqWidgets, self).resizeEvent(event)
+        self.adjust_drawing()
 
 
 
@@ -324,74 +327,3 @@ class IqWidget(ModuleWidget):
             property_acbw.widget.setCurrentIndex(index)
 
         property_acbw.update = update
-
-        """
-        self.properties["frequency"].widget.setMaximum(1e9)
-        self.properties["frequency"].widget.setMinimum(0)
-        self.properties["phase"].widget.setMaximum(360)
-        self.properties["phase"].widget.setMinimum(-360)
-        self.properties["gain"].widget.setMaximum(1e9)
-        self.properties["gain"].widget.setMinimum(0)
-        self.properties["amplitude"].widget.setMaximum(1e9)
-        self.properties["amplitude"].widget.setMinimum(0)
-
-        self.multiplier_sin = QtGui.QLabel("x sin")
-        self.multiplier_sin.setStyleSheet(".QLabel{border: 1px solid black; border-radius: 10px; font-size: 15px}")
-        self.multiplier_sin.setFixedSize(40,30)
-        self.multiplier_sin.setAlignment(QtCore.Qt.AlignCenter)
-        self.scene.addWidget(self.multiplier_sin)
-
-        self.multiplier_cos = QtGui.QLabel("x cos")
-        self.multiplier_cos.setStyleSheet(".QLabel{border: 1px solid black; border-radius: 10px; font-size: 15px}")
-        self.multiplier_cos.setFixedSize(40,30)
-        self.multiplier_cos.setAlignment(QtCore.Qt.AlignCenter)
-        self.scene.addWidget(self.multiplier_cos)
-
-        self.move_widgets()
-        """
-    """
-    def get_widget(self, name):
-        return self.properties[name].the_widget
-
-    def move_widgets(self):
-        width = self.width()
-        height = self.height()
-        print(width, height)
-        n_cols = 10
-        n_rows = 7
-        col = [(width*i)/ n_cols for i in range(n_cols)]
-        row = [(height * i) / n_rows for i in range(n_rows)]
-
-        self.get_widget('input').move(col[0], row[4])
-        self.get_widget('acbandwidth').move(col[1], row[4])
-        self.get_widget("phase").move(col[1], row[1])
-        self.get_widget("frequency").move(col[1], row[2])
-        self.get_widget("bandwidth").move(col[3], row[3])
-        self.get_widget("quadrature_factor").move(col[4], row[1])
-        self.get_widget("gain").move(col[5], row[4])
-        self.get_widget("amplitude").move(col[6], row[4])
-        self.get_widget("output_signal").move(col[8], row[1])
-        self.get_widget('output_direct').move(col[8], row[4])
-
-        self.multiplier_sin.move(col[1], row[3])
-        self.multiplier_cos.move(col[1], row[5])
-
-
-    """
-
-
-
-        
-"""
-IQ_GUI = IqWidget()
-IQ_GUI.show()
-b = MyDoubleSpinBox("b")
-b2 = MyDoubleSpinBox("b2")
-b.move(100,100)
-b2.move(500, 500)
-it = Connection(b, b2)
-
-IQ_GUI.scene.addItem(it)
-IQ_GUI.scene.addWidget(b)
-IQ_GUI.scene.addWidget(b2)
-"""

@@ -296,7 +296,10 @@ class FilterRegister(Register):
     def valid_frequencies(self):
         """ returns a list of all valid filter cutoff frequencies"""
         valid_bits = range(0, 2**self._SHIFTBITS)
-        return list([self.to_python(b | 0x1 << 7) for b in valid_bits])
+        pos = list([self.to_python(b | 0x1 << 7) for b in valid_bits])
+        pos = [int(val) if not np.iterable(val) else int(val[0]) for val in pos]
+        neg = [-val for val in reversed(pos)]
+        return neg + [0] + pos
 
     def to_python(self, value):
         """returns a list of bandwidths for the low-pass filter cascade before the module
