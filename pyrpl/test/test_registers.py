@@ -88,7 +88,7 @@ class TestClass(object):
                           'voltage2',
                           'firstpoint',
                           'lastpoint'
-                          ]:
+                          ] or modulekey == 'sampler':
                 return
             # write something different and confirm change
             if value == 0:
