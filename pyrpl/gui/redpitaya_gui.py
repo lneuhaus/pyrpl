@@ -31,21 +31,30 @@ def property_factory(module_widget, prop):
     :param prop:
     :return: an instance of a class heritating from BaseProperty
     """
+    new_prop = None
+    attr = getattr(module_widget.module, prop)
+    def get_combo(attr, prop, with_s=False):
+        if with_s:
+            prop_name = prop[:-1] + 's'
+        else:
+            prop_name = None
+        if isinstance(attr, basestring) or not np.iterable(attr):
+            return ComboProperty(prop, module_widget, prop_name)
+        else:
+            return ListComboProperty(prop, module_widget, len(attr))
+
     if hasattr(module_widget.module, prop + 's'):
-        new_prop = ComboProperty(prop, module_widget)
+        return get_combo(attr, prop)
     elif hasattr(module_widget.module, prop[:-1] + 's') \
             and (prop[:-1] + 's') != prop:  # for instance inputs for input1
-        new_prop = ComboProperty(prop, module_widget, prop[:-1] + 's')
+        return get_combo(attr, prop, with_s=True)
     else:
-        attr = getattr(module_widget.module, prop)
         if isinstance(attr, bool):
             new_prop = BoolProperty(prop, module_widget)
         elif isinstance(attr, integer_types):
             new_prop = IntProperty(prop, module_widget)
         elif isinstance(attr, str):
             new_prop = StringProperty(prop, module_widget)
-        elif np.iterable(attr):
-            new_prop = ListComboProperty(prop, module_widget, len(attr))
         else:
             new_prop = FloatProperty(prop, module_widget)
     return new_prop
@@ -221,15 +230,18 @@ class FloatProperty(NumberProperty):
 class ListComboBox(QtGui.QWidget):
     value_changed = QtCore.pyqtSignal()
 
-    def __init__(self, number, name):
+    def __init__(self, number, name, options):
         super(ListComboBox, self).__init__()
         self.lay = QtGui.QHBoxLayout()
         self.combos = []
+        self.options = options
+        """
         vals = [int(2.371593461809983*2**n) for n in range(1, 27)]
         self._options = [0] + vals
         vals = [-val for val in reversed(vals)]
         self._options = vals + self._options
-        self._options = map(str, self._options)
+        self._options = list(map(str, self._options))
+        """
         for i in range(number):
             combo = QtGui.QComboBox()
             self.combos.append(combo)
@@ -240,10 +252,36 @@ class ListComboBox(QtGui.QWidget):
 
     def get_list(self):
         return [float(combo.currentText()) for combo in self.combos]
-
+    """
     @property
     def options(self):
         return  self._options
+    """
+
+    def set_max_cols(self, n_cols):
+        """
+        If more than n boxes are required, go to next line
+        """
+
+        if len(self.combos)<=n_cols:
+            return
+
+        for item in self.combos:
+            self.lay.removeWidget(item)
+        self.v_layouts = []
+        n = len(self.combos)
+        n_rows = int(np.ceil(n*1.0/n_cols))
+        j = 0
+        for i in range(n_cols):
+            layout = QtGui.QVBoxLayout()
+            self.lay.addLayout(layout)
+            for j in range(n_rows):
+                index = i*n_rows + j
+                if index>=n:
+                    break
+                layout.addWidget(self.combos[index])
+
+
     def set_list(self, val):
         for i, v in enumerate(val):
             v = str(int(v))
@@ -257,7 +295,17 @@ class ListComboProperty(BaseProperty):
 
     def __init__(self, name, module_widget, number):
         self.number = number
+        self.defaults = name + 's'
         super(ListComboProperty, self).__init__(name, module_widget)
+
+    @property
+    def options(self):
+        """
+        All possible options (as found in module.prop_name + 's')
+
+        :return:
+        """
+        return getattr(self.module, self.defaults)
 
     def set_widget(self):
         """
@@ -265,7 +313,7 @@ class ListComboProperty(BaseProperty):
         :return:
         """
 
-        self.widget = ListComboBox(self.number, "")#QtGui.QDoubleSpinBox()
+        self.widget = ListComboBox(self.number, "", list(map(str, self.options)))#QtGui.QDoubleSpinBox()
         #self.widget.setDecimals(4)
         #self.widget.setSingleStep(0.01)
         self.widget.value_changed.connect(self.write)
@@ -686,7 +734,7 @@ class ScopeWidget(ModuleWidget):
         try:
             self.curve_display_done()
         except Exception as e:
-            print e
+            print(e)
         self.timer.start()
 
     def curve_display_done(self):
@@ -1554,6 +1602,9 @@ class RedPitayaGui(RedPitaya):
                                rp=self,
                                parent=None,
                                module=self.na)
+        from pyrpl.gui.iq_gui import AllIqWidgets
+        self.iq_widget = AllIqWidgets(rp=self,
+                                  parent=None)
         self.scope_widget = ScopeWidget(name="scope",
                                         rp=self,
                                         parent=None,
@@ -1574,7 +1625,8 @@ class RedPitayaGui(RedPitaya):
         for widget, name in [(self.scope_sa_widget, "Scope/Spec. An."),
                              (self.all_asg_widget, "Asgs"),
                              (self.all_pid_widget, "Pids"),
-                             (self.na_widget, "Na")]:
+                             (self.na_widget, "Na"),
+                             (self.iq_widget, "Iq")]:
             self.add_dock_widget(widget, name)
         self.main_window.setDockNestingEnabled(True)  # DockWidgets can be
         # stacked with one below the other one in the same column
