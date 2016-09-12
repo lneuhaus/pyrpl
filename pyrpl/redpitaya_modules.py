@@ -1344,7 +1344,7 @@ class IQ(FilterModule):
 
     @acbandwidth.setter
     def acbandwidth(self, val):
-        val = int(val)
+        val = float(val)
         self.inputfilter = -val
         return val
 

@@ -142,9 +142,19 @@ class Connection(object):
 
 class MyFrame(QtGui.QFrame):
     def __init__(self ,parent):
-        super(MyFrame, self).__init__()
+        super(MyFrame, self).__init__(parent)
         self.setStyleSheet("background-color: white;")
         self.parent = parent
+        self.lower()
+        #self.proxy = self.parent.scene.addWidget(self)
+        #self.proxy.setZValue(-1)
+
+class MyFrameDrawing(QtGui.QFrame):
+    def __init__(self , parent):
+        super(MyFrameDrawing, self).__init__()
+        self.setStyleSheet("background-color: white;")
+        self.parent = parent
+        self.lower()
         self.proxy = self.parent.scene.addWidget(self)
         self.proxy.setZValue(-1)
 
@@ -191,8 +201,11 @@ class AllIqWidgets(QtGui.QWidget):
                      "bandwidth", "quadrature_factor", "gain",
                      "amplitude", "output_direct"][::2]):
             widget = iq.properties[prop].widget
-            self.frames[index].setFixedSize(widget.width(), self.view.height())
-            self.frames[index].move(widget.x(),0)
+            self.frames[index].setFixedSize(widget.width() + iq.main_layout.spacing(), self.height())
+            self.frames[index].move(widget.x() + iq.pos().x() - iq.main_layout.spacing()/2, 0)
+
+            self.frames_drawing[index].setFixedSize(widget.width() + iq.main_layout.spacing(), self.height())
+            self.frames_drawing[index].move(widget.x() + iq.pos().x() - self.view.pos().x() - iq.main_layout.spacing()/2, 0)
         self.scene.setSceneRect(QtCore.QRectF(self.view.rect()))
 
 
@@ -255,6 +268,8 @@ class AllIqWidgets(QtGui.QWidget):
         self.connect(self.output_direct, self.output_signal, h_first=False)
 
         self.frames = [MyFrame(self) for i in range(4)]
+        self.frames_drawing = [MyFrameDrawing(self) for i in range(4)]
+
 
 
 
