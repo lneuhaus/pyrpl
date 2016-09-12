@@ -201,7 +201,6 @@ class AllIqWidgets(QtGui.QWidget):
                      "bandwidth", "quadrature_factor", "gain",
                      "amplitude", "output_direct"][::2]):
             widget = iq.properties[prop].widget
-
             self.frames[index].setFixedSize(widget.width() + iq.main_layout.spacing(), self.height())
             self.frames[index].move(widget.x() + iq.pos().x() - iq.main_layout.spacing()/2, 0)
 
@@ -270,6 +269,7 @@ class AllIqWidgets(QtGui.QWidget):
 
         self.frames = [MyFrame(self) for i in range(4)]
         self.frames_drawing = [MyFrameDrawing(self) for i in range(4)]
+
 
 
 
