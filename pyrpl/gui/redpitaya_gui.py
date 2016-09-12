@@ -235,13 +235,6 @@ class ListComboBox(QtGui.QWidget):
         self.lay = QtGui.QHBoxLayout()
         self.combos = []
         self.options = options
-        """
-        vals = [int(2.371593461809983*2**n) for n in range(1, 27)]
-        self._options = [0] + vals
-        vals = [-val for val in reversed(vals)]
-        self._options = vals + self._options
-        self._options = list(map(str, self._options))
-        """
         for i in range(number):
             combo = QtGui.QComboBox()
             self.combos.append(combo)
