@@ -1191,7 +1191,10 @@ class RedPitayaGui(RedPitaya):
 
     def setup_gui(self):
         self.na_widget = NaGui(parent=None, module=self.na)
-        self.scope_widget = ScopeWidget(parent=None, module=self.scope, namespace=self.console_namespace)
+        if not hasattr(self, 'console_namespace'):
+            self.scope_widget = ScopeWidget(parent=None, module=self.scope)
+        else:
+            self.scope_widget = ScopeWidget(parent=None, module=self.scope, namespace=self.console_namespace)
         self.all_asg_widget = AllAsgGui(parent=None, rp=self)
         self.sa_widget = SpecAnGui(parent=None, module=self.spec_an)
 
