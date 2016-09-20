@@ -7,7 +7,11 @@ from . import *
 from ..curvedb import CurveDB
 from .. import fitting
 from pyqtgraph.Qt import QtCore
-from pyinstruments.datalogger.models import SensingDevice
+try:
+    from pyinstruments.datalogger.models import SensingDevice
+except ImportError:
+    SensingDevice = lambda name:None
+    print("pyinstruments not found, FPM model wont work")
 from ..bodefit import *
 
 class FPM(FabryPerot):
@@ -545,8 +549,8 @@ class FPM_LMSD(FPM):
         # setup na measurement of both quadratures
         p = self.estimate_angle()
         a = self.estimate_amplitude()
-        print "Current phase: %f" % p
-        print "Current amplitude: %f" % a
+        print("Current phase: %f" % p)
+        print("Current amplitude: %f" % a)
         if whileloop:
             while True:
                 if time.time() - self.pll_timeout < t0:

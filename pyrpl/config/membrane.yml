@@ -126,7 +126,7 @@ outputs:
     redpitaya_output: out1
     max_voltage: 1.0
     min_voltage: -1.0
-    Hz_per_V: 285714285 #20000000000.0
+    Hz_per_V: 285714285
     lock:
       proportional_gain: -42000.0
       inputfilter:

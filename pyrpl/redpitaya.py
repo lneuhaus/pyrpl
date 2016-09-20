@@ -343,6 +343,7 @@ class RedPitaya(SSHshell):
         self.hk = rp.HK(self.client, parent=self)
         self.ams = rp.AMS(self.client, parent=self)
         self.scope = rp.Scope(self.client, parent=self)
+        self.sampler = rp.Sampler(self.client, parent=self)
         self.asg1 = rp.Asg1(self.client, parent=self)
         self.asg2 = rp.Asg2(self.client, parent=self)
         self.pwm0 = rp.AuxOutput(self.client,output='pwm0', parent=self)
