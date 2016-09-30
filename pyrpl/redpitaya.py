@@ -133,7 +133,7 @@ class RedPitaya(SSHshell):
         if gui:
             from .gui import RedPitayaGui
             self.__class__ = RedPitayaGui
-            self.setup_gui()
+            self.setup_gui(CreatPyrpl=True)
             self.gui()
 
     def switch_led(self, gpiopin=0, state=False):

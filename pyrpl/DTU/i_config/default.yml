@@ -1,0 +1,68 @@
+redpitaya:
+  hostname: 10.54.4.57
+  password: bbcjpw93
+  user: root
+  port: 2222
+  frequency_correction: 1.0
+  filename: fpga//red_pitaya.bin
+  reloadfpga: true
+  monitor_server_name: default_IL
+  silence_env: true
+  
+rp_mod_connection:
+
+  # setup asg[1:2]
+  asg:
+    waveform:
+      asg1: ramp
+      asg2: ramp
+    frequency:
+      asg1: 37.0
+      asg2: 37.0
+    amplitude: 
+      asg1: 0.2
+      asg2: 0.2
+    offset:
+      asg1: 0
+      asg2: 0
+    output_direct:
+      asg1: off
+      asg2: off
+    
+  # setup pid[0:3]
+  pid:
+    # input can be: off, pid[0:3], dac[1:2], adc1[1:2], iq[0:1], iq2, asg[1:2], 'iir'
+    input:
+      pid0: adc1
+      pid1: iq0
+      pid2: adc2
+      pid3: iq1
+    # output_direct can be: off, out1, out2, both
+    output_direct:
+      pid0: out1
+      pid1: out1
+      pid2: out2
+      pid3: out2
+  # setup iq[0:1], iq2 is preserved for NA. and SA.
+  iq:
+    # off, pid[0:3], dac[1:2], adc1[1:2], iq[0:1], iq2, asg[1:2], 'iir'
+    input:
+      iq0: adc1
+      iq1: adc2
+    # output_direct can be: off, out1, out2, both
+    output_direct:
+      iq0: out1
+      iq1: out2
+    # output_signal can be: off, quadrature, output_direct, pfd (see IQmodule.png for details)
+    output_signal:
+      iq0: quadrature
+      iq1: quadrature
+    
+iq_setup:
+
+scopegui:
+  coordinates:
+  - 0
+  - 0
+  - 800
+  - 600

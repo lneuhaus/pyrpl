@@ -15,5 +15,4 @@ from .redpitaya_modules import *
 from .registers import *
 from .curvedb import *
 from .pyrpl import *
-from .interferometer_lock import InterferometerLock as IL
-
+from .DTU import *

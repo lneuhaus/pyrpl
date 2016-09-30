@@ -1184,15 +1184,17 @@ class RedPitayaGui(RedPitaya):
     Widget for the main RedPitayaGui window.
     """
 
-    def __init__(self, console_ns=None, *args, **kwds):
+    def __init__(self, console_ns={'dummy':'dummy'}, *args, **kwds):
         super(RedPitayaGui, self).__init__(*args, **kwds)
-        self.console_namespace=console_ns
+        self.console_namespace = console_ns
         self.setup_gui()
 
-    def setup_gui(self):
+    def setup_gui(self, CreatPyrpl=False):
+        if CreatPyrpl:
+            self.console_namespace={'dummy':'dummy'}
         self.na_widget = NaGui(parent=None, module=self.na)
-        # self.scope_widget = ScopeWidget(parent=None, module=self.scope, namespace=self.console_namespace)
-        self.scope_widget = ScopeWidget(parent=None, module=self.scope)
+        self.scope_widget = ScopeWidget(parent=None, module=self.scope, namespace=self.console_namespace)
+        #self.scope_widget = ScopeWidget(parent=None, module=self.scope)
         self.all_asg_widget = AllAsgGui(parent=None, rp=self)
         self.sa_widget = SpecAnGui(parent=None, module=self.spec_an)
 

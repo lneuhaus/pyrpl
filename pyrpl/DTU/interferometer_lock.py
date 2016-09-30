@@ -3,8 +3,8 @@
 import os
 import numpy as np
 #
-from .gui import RedPitayaGui
-from .memory import MemoryTree
+from ..gui import RedPitayaGui
+from ..memory import MemoryTree
 #
 #####
 class InterferometerLock():
