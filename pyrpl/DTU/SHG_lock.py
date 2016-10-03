@@ -122,7 +122,11 @@ class rp_SHGLock_GUI(QtGui.QWidget):
         self.console_ns=_console_ns
         self.rp=_rp
         # a scope and console with namespace contain SHGLock instance
-        self.scope_widget=ScopeWidget(parent=None, module=self.rp.scope, namespace=_console_ns)
+        self.scope_widget=ScopeWidget(name="SHG",
+                                      rp=_rp,
+                                      parent=None,
+                                      module=self.rp.scope,
+                                      namespace=_console_ns)
         # a ASG controller for scan and bias
         self.all_asg_widget = AllAsgGui(parent=None, rp=self.rp)
         # setup GUI layout here
