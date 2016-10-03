@@ -1580,17 +1580,7 @@ class RedPitayaGui(RedPitaya):
         super(RedPitayaGui, self).__init__(*args, **kwds)
         self.console_namespace = console_ns
         self.setup_gui()
-
-<<<<<<< HEAD
-    def setup_gui(self, CreatPyrpl=False):
-        if CreatPyrpl:
-            self.console_namespace={'dummy':'dummy'}
-        self.na_widget = NaGui(parent=None, module=self.na)
-        self.scope_widget = ScopeWidget(parent=None, module=self.scope, namespace=self.console_namespace)
-        #self.scope_widget = ScopeWidget(parent=None, module=self.scope)
-        self.all_asg_widget = AllAsgGui(parent=None, rp=self)
-        self.sa_widget = SpecAnGui(parent=None, module=self.spec_an)
-=======
+        
     def add_dock_widget(self, widget, name):
         dock_widget = QtGui.QDockWidget(name)
         dock_widget.setObjectName(name)
@@ -1606,7 +1596,9 @@ class RedPitayaGui(RedPitaya):
             self.main_window.tabifyDockWidget(self.last_docked, dock_widget)
         self.last_docked = dock_widget
 
-    def setup_gui(self):
+    def setup_gui(self, CreatPyrpl=False):
+        if CreatPyrpl:
+            self.console_namespace={'dummy':'dummy'}
         self.all_gui_modules = []
         self.na_widget = NaGui(name="na",
                                rp=self,
@@ -1618,7 +1610,8 @@ class RedPitayaGui(RedPitaya):
         self.scope_widget = ScopeWidget(name="scope",
                                         rp=self,
                                         parent=None,
-                                        module=self.scope)
+                                        module=self.scope,
+                                        namespace=self.console_namespace)
         self.sa_widget = SpecAnGui(name="spec an",
                                    rp=self,
                                    parent=None,
@@ -1641,7 +1634,6 @@ class RedPitayaGui(RedPitaya):
         self.main_window.setDockNestingEnabled(True)  # DockWidgets can be
         # stacked with one below the other one in the same column
         self.dock_widgets["Scope/Spec. An."].raise_()  # select first tab
->>>>>>> refs/remotes/origin/master
 
         """
         self.tab_widget = QtGui.QTabWidget()

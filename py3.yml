@@ -14,3 +14,5 @@ dependencies:
     - scp
     - paramiko>=2.0
     - ruamel.yaml
+    - pyaudio
+    - guiqwt
