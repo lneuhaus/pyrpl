@@ -74,6 +74,7 @@ module red_pitaya_iq_block #(
 localparam QUADRATURE    = 4'd0;
 localparam OUTPUT_DIRECT = 4'd1;
 localparam PFD 			 = 4'd2;
+localparam QUADRATURE_HF = 4'd4;
 
 // state registers
 reg [4-1:0] output_select;
@@ -327,6 +328,7 @@ red_pitaya_pfd_block pfd_block (
 
 // output_signal multiplexer
 assign signal_o = (output_select==QUADRATURE) ? quadrature1_o
+				//: (output_select==QUADRATURE_HF) ? quadrature1_hf[LPFBITS-1:LPFBITS-SIGNALBITS] // maybe for the future
 				: (output_select==OUTPUT_DIRECT) ? dat_o
 				: (output_select==PFD) ? pfd_integral
 				: {SIGNALBITS{1'b0}};

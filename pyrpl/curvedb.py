@@ -181,3 +181,20 @@ except:
             """ prototype for fitting a curve """
             self.logger.warning("Not implemented")
             pass
+
+        def get_child(self, name):
+            """
+            Returns the child of the curve with name 'name'
+
+            ----------
+            name: str
+                Name of the child curve to be retrieved. If several childs
+                have the same name, the first one is returned.
+
+            Returns
+            -------
+            CurveDB: the child curve
+            """
+            for c in self.childs:
+                if c.name == name:
+                    return c

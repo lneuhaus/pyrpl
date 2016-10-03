@@ -23,6 +23,8 @@ import math
 import numpy
 
 from numpy import pi, linspace
+import scipy.signal as sig
+import scipy.fftpack
 import numpy as np
 import os
 from pylab import *
@@ -33,7 +35,13 @@ import matplotlib
 import matplotlib.pyplot as plt
 import logging
 
-from .redpitaya_modules import NotReadyError, Scope, IQ
+from .redpitaya_modules import NotReadyError, Scope, DspModule
+
+
+# Some initial remarks about spectrum estimation:
+# Main source: Oppenheim + Schaefer, Digital Signal Processing, 1975
+
+
 
 class SpectrumAnalyzer(object):
     """
@@ -57,46 +65,57 @@ class SpectrumAnalyzer(object):
       freqs = sa.freqs()
     """
 
-    # nyquist_margin = 2*pi #it looks like bandwidth of filters are then perfect
+    nyquist_margin = 1.0
+    if_filter_bandwidth_per_span = 1.0
 
     # spans = [1./nyquist_margin/s_time for s_time in Scope.sampling_times]
+    quadrature_factor = 0.001
 
-    def gauss(data_length, rbw, sampling_time):
-        return np.exp(-(linspace(-sampling_time*rbw*data_length*pi,
-                               sampling_time*rbw*data_length*pi,
-                               data_length)) ** 2)
+    windows = ['blackman', 'flattop', 'boxcar', 'hamming']  # more can be
+    # added here (see http://docs.scipy.org/doc/scipy/reference/generated
+    # /scipy.signal.get_window.html#scipy.signal.get_window)
+    inputs = DspModule.inputs
 
-    _filter_windows = dict(gauss=gauss,
-                           none=lambda points, rbw, sampling_time: np.ones(points))
-    windows = _filter_windows.keys()
-    inputs = IQ.inputs
-
-    #_setup = False
+    # _setup = False
     def __init__(self, rp=None):
-    
-        #it looks like bandwidth of filters are then perfect
-        self.nyquist_margin = 2*pi
-        self.spans = [1. / self.nyquist_margin / s_time
+
+        self.spans = [np.ceil(1. / self.nyquist_margin / s_time)
                       for s_time in Scope.sampling_times]
-        
+
         self.rp = rp
-        self.center = 1e6
-        self.avg = 1
+        self._parent = rp
+        self.baseband = False
+        self.center = 0
+        self.avg = 10
         self.input = 'adc1'
         self.acbandwidth = 0
-        self.window = "gauss"
+        self.window = "flattop"
 
         self._rbw = 0
         self._rbw_auto = False
 
-        self.points = 1001
+        self.points = Scope.data_length
         self.span = 1e5
         self.rbw_auto = True
         self._setup = False
 
     @property
+    def iq(self):
+        return self.rp.iq2
+    iq_quadraturesignal = 'iq2_2'
+
+    @property
+    def baseband(self):
+        return self._baseband
+
+    @baseband.setter
+    def baseband(self, v):
+        self._baseband = v
+        return self.baseband
+
+    @property
     def data_length(self):
-        return int(self.points*self.nyquist_margin)
+        return int(self.points)  # *self.nyquist_margin)
 
     @property
     def span(self):
@@ -104,14 +123,12 @@ class SpectrumAnalyzer(object):
         Span can only be given by 1./sampling_time where sampling
         time is a valid scope sampling time.
         """
-
-        return 1./self.nyquist_margin/self.scope.sampling_time
+        return np.ceil(1. / self.nyquist_margin / self.scope.sampling_time)
 
     @span.setter
     def span(self, val):
         val = float(val)
-        self.scope.sampling_time = 1./self.nyquist_margin/val
-        self.iq.bandwidth = [val, val, val, val]
+        self.scope.sampling_time = 1. / self.nyquist_margin / val
         return val
 
     @property
@@ -127,17 +144,24 @@ class SpectrumAnalyzer(object):
 
     @property
     def center(self):
-        return self.iq.frequency
+        if self.baseband:
+            return 0.0
+        else:
+            return self.iq.frequency
 
     @center.setter
     def center(self, val):
-        self.iq.frequency = val
+        if self.baseband and val != 0:
+            raise ValueError("Nonzero center frequency not allowed in "
+                             "baseband mode.")
+        if not self.baseband:
+            self.iq.frequency = val
         return val
 
     @property
     def rbw(self):
         if self.rbw_auto:
-            self._rbw = self.span/self.points
+            self._rbw = self.span / self.points
         return self._rbw
 
     @rbw.setter
@@ -148,12 +172,18 @@ class SpectrumAnalyzer(object):
 
     @property
     def input(self):
-        return self.iq.input
+        return self._input
 
     @input.setter
     def input(self, val):
-        self.iq.input = val
-        return val
+        self._input = val
+        if self.baseband:
+            self.scope.input1 = self._input
+        else:
+            self.scope.input1 = self.iq
+            self.scope.input2 = self.iq_quadraturesignal
+            self.iq.input = self._input
+        return self._input
 
     def setup(self,
               span=None,
@@ -188,23 +218,37 @@ class SpectrumAnalyzer(object):
             self.acbandwidth = acbandwidth
         if input is not None:
             self.input = input
+        else:
+            self.input = self.input
 
-        self.scope.input1 = 'iq2'
-        self.scope.input2 = 'iq2_2'
-
-        self.iq.output_signal = "quadrature"
-        self.iq.quadrature_factor = 0.001
+        # setup iq module
+        if not self.baseband:
+            self.iq.setup(
+                frequency=None,
+                bandwidth=[self.span*self.if_filter_bandwidth_per_span]*4,
+                gain=0,
+                phase=0,
+                acbandwidth=self.acbandwidth,
+                amplitude=0,
+                input=None,
+                output_direct='off',
+                output_signal='quadrature',
+                quadrature_factor=self.quadrature_factor)
 
         self.scope.trigger_source = "immediately"
+        self.scope.average = True
         self.scope.setup()
+
+    def curve_ready(self):
+        return self.scope.curve_ready()
 
     @property
     def scope(self):
         return self.rp.scope
 
     @property
-    def iq(self):
-        return self.rp.iq2
+    def duration(self):
+        return self.scope.duration
 
     @property
     def sampling_time(self):
@@ -217,28 +261,42 @@ class SpectrumAnalyzer(object):
         """
         :return: filter window
         """
-        return self._filter_windows[self.window](self.data_length, self.rbw, self.sampling_time)
+        window = sig.get_window(self.window, self.data_length, fftbins=False)
+        # empirical value for scaling flattop to sqrt(W)/V
+        filterfactor = np.sqrt(50)
+        # norm by datalength, by sqrt(50 Ohm), and something related to
+        # filter
+        normfactor = 1.0 / self.data_length / np.sqrt(50.0) * filterfactor
+        return window * normfactor
 
     def iq_data(self):
         """
         :return: complex iq time trace
         """
-        res = self.scope.curve(1) + 1j * self.scope.curve(2)
+        timeout = self.scope.duration * 2 # leave some margin
+        res = np.asarray(self.scope.curve(1, timeout=timeout),
+                         dtype=np.complex)
+        if not self.baseband:
+            res += 1j*self.scope.curve(2, timeout=timeout)
         return res[:self.data_length]
 
     def filtered_iq_data(self):
         """
         :return: the product between the complex iq data and the filter_window
         """
-        return self.iq_data()*self.filter_window()
+        return self.iq_data() * np.asarray(self.filter_window(),
+                                           dtype=np.complex)
 
     def useful_index(self):
         """
         :return: a slice containing the portion of the spectrum between start and stop
         """
-        middle = int(self.data_length//2)
-        length = self.points#self.data_length/self.nyquist_margin
-        return slice(middle - length//2, middle + length//2 + 1)
+        middle = int(self.data_length // 2)
+        length = self.points  # self.data_length/self.nyquist_margin
+        if self.baseband:
+            return slice(middle, middle + length // 2 + 1)
+        else:
+            return slice(middle - length//2, middle + length//2 + 1)
 
     def curve(self):
         """
@@ -247,12 +305,16 @@ class SpectrumAnalyzer(object):
         """
         if not self._setup:
             raise NotReadyError("Setup was never called")
-        return 20*np.log10(np.roll(np.abs(np.fft.fft(self.filtered_iq_data())),
-                                int(self.data_length//2)))[self.useful_index()]
+        return scipy.fftpack.fftshift(np.abs(scipy.fftpack  .fft(self.filtered_iq_data())) ** 2)[self.useful_index()]
 
     def freqs(self):
         """
         :return: frequency array
         """
-        return self.center + np.roll(np.fft.fftfreq(self.data_length,self.sampling_time),
-                                     self.data_length//2)[self.useful_index()]
+        return self.center + scipy.fftpack.fftshift(scipy.fftpack.fftfreq(self.data_length,
+                                  self.sampling_time))[self.useful_index()]
+
+    def data_to_dBm(self, data):
+        # replace values whose log doesnt exist
+        data[data <= 0] = 1e-100
+        return 10.0 * np.log10(data) + 30.0

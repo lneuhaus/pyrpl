@@ -29,6 +29,7 @@ class NetworkAnalyzer(object):
     def __init__(self, rp):
         self._logger = logging.getLogger(__name__)
         self.rp = rp
+        self._parent = rp
         self.start = 200
         self.stop = 50000
         self.points = 1001
@@ -162,7 +163,7 @@ class NetworkAnalyzer(object):
                       bandwidth=self.rbw,
                       gain=0,
                       phase=0,
-                      acbandwidth=-np.array(self.acbandwidth),
+                      acbandwidth=self.acbandwidth,
                       amplitude=amplitude,
                       input=self.input,
                       output_direct=self.output_direct,
