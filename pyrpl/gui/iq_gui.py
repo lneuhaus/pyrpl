@@ -317,6 +317,7 @@ class IqWidget(ModuleWidget):
             #self.scene.addWidget(prop.the_widget)
 
         self.properties["bandwidth"].widget.set_max_cols(2)
+        self.properties["frequency"].widget.setMaximum(50000000)
         self.property_layout.addLayout(self.properties["input"].layout_v)
         self.property_layout.addLayout(self.properties["acbandwidth"].layout_v)
         self.property_layout.addLayout(self.properties["frequency"].layout_v)

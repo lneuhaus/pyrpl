@@ -8,7 +8,6 @@ from pyrpl.pyrpl_utils import MyDoubleSpinBox
 from time import time
 from pyqtgraph.Qt import QtGui, QtCore
 import pyqtgraph as pg
-import pyqtgraph.console
 import numpy as np
 from collections import OrderedDict
 
@@ -444,7 +443,7 @@ class ModuleWidget(QtGui.QWidget):
     curve_class = CurveDB
 
 
-    def __init__(self, name, rp, parent=None, module=None, namespace=None):
+    def __init__(self, name, rp, parent=None, module=None):
         super(ModuleWidget, self).__init__(parent)
         self.rp = rp
         self.name = name
@@ -452,10 +451,9 @@ class ModuleWidget(QtGui.QWidget):
             module = self
         self.properties = OrderedDict()
         self.module = module
-        self.namespace=namespace
         self.init_gui()
         self.update_properties()
-        self.rp.all_gui_modules.append(self)
+        #self.rp.all_gui_modules.append(self)
 
     def get_state(self):
         """returns a dictionary containing all properties listed in
@@ -568,7 +566,7 @@ class ScopeSaWidget(QtGui.QTabWidget):
             self.sa_widget.stop()
         else:
             self.scope_state = self.scope_widget.get_state()
-            self.sa_widget.set_state(self.sa_state)
+            #self.sa_widget.set_state(self.sa_state)
             self.scope_widget.stop()
 
 class ScopeWidget(ModuleWidget):
@@ -656,9 +654,6 @@ class ScopeWidget(ModuleWidget):
             spin_box.setSingleStep(0.01)
 
         self.properties["curve_name"].acquisition_property = False
-        # add a console
-        self.c = pyqtgraph.console.ConsoleWidget(namespace=self.namespace)
-        self.main_layout.addWidget(self.c)
 
     def display_channel(self, ch):
         """
@@ -1625,7 +1620,7 @@ class RedPitayaGui(RedPitaya):
         self.dock_widgets = {}
         self.last_docked = None
         self.main_window = QtGui.QMainWindow()
-        for widget, name in [(self.scope_sa_widget, "Scope/Spec. An."),
+        for widget, name in [(self.scope_widget, "Scope"),
                              (self.all_asg_widget, "Asgs"),
                              (self.all_pid_widget, "Pids"),
                              (self.na_widget, "Na"),
@@ -1633,7 +1628,7 @@ class RedPitayaGui(RedPitaya):
             self.add_dock_widget(widget, name)
         self.main_window.setDockNestingEnabled(True)  # DockWidgets can be
         # stacked with one below the other one in the same column
-        self.dock_widgets["Scope/Spec. An."].raise_()  # select first tab
+        self.dock_widgets["Scope"].raise_()  # select first tab
 
         """
         self.tab_widget = QtGui.QTabWidget()

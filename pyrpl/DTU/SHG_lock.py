@@ -4,9 +4,10 @@ import os
 import sys
 import numpy as np
 from pyqtgraph.Qt import QtGui, QtCore
+import pyqtgraph.console
 #
 from ..redpitaya import RedPitaya
-from ..gui import ScopeWidget, AllAsgGui
+from ..gui import ScopeWidget, AllAsgGui, PidGui, IqWidget
 from ..memory import MemoryTree
 #
 APP = QtGui.QApplication.instance()
@@ -116,28 +117,66 @@ class SHGLock():
         except:
             pass
 
-class rp_SHGLock_GUI(QtGui.QWidget):
+class rp_SHGLock_GUI(QtGui.QMainWindow):
     def __init__(self, _console_ns=None, _rp=None):
         super(rp_SHGLock_GUI, self).__init__()
+        self.setWindowTitle("SHG Lock for Teleportation Experiment")
         self.console_ns=_console_ns
         self.rp=_rp
-        # a scope and console with namespace contain SHGLock instance
+        # a scope
         self.scope_widget=ScopeWidget(name="SHG",
                                       rp=_rp,
                                       parent=None,
-                                      module=self.rp.scope,
-                                      namespace=_console_ns)
-        # a ASG controller for scan and bias
-        self.all_asg_widget = AllAsgGui(parent=None, rp=self.rp)
-        # setup GUI layout here
-        self.main_layout = QtGui.QVBoxLayout()
-        self.main_layout.addWidget(self.all_asg_widget)
-        self.main_layout.addWidget(self.scope_widget)
+                                      module=self.rp.scope
+                                      )
+        # add a console with namespace contain SHGLock instance
+        self.console_widget = pyqtgraph.console.ConsoleWidget(namespace=_console_ns)
+        # a ASG controller for "asg1" scan and "asg2" bias
+        self.asg_widget = AllAsgGui(parent=None, rp=self.rp)
+        # a PID controller for "pid0" here
+        self.pid_widget = PidGui(name="pid0",
+                                 rp=self.rp,
+                                 parent=None,
+                                 module=getattr(self.rp, "pid0")
+                                 )
+        # a IQ controller for "iq0" here
+        self.iq_widget = IqWidget(name="iq0",
+                                  rp=self.rp,
+                                  parent=None,
+                                  module=getattr(self.rp, "iq0")
+                                  )
+        # setup controller layout here
+        self.control_widget_layout = QtGui.QVBoxLayout()
+        self.control_widget_layout.addWidget(self.asg_widget)
+        self.control_widget_layout.addWidget(self.scope_widget)
+        self.control_widget_layout.addWidget(self.pid_widget)
+        self.control_widget_layout.addWidget(self.iq_widget)
         #
-        self.setLayout(self.main_layout)
+        self.control_widget=QtGui.QWidget()
+        self.control_widget.setLayout(self.control_widget_layout)
+        #------------#
+        # set dock_widgets for the main windows
+        self.dock_widgets = {}
+        self.last_docked = None
+        self.add_dock_widget(self.console_widget,'console')
+        self.add_dock_widget(self.control_widget,'controller')
+        #---------------------------#
         # setup timer and run the GUI
         self.gui_timer = QtCore.QTimer()
         self.run_gui()
+    def add_dock_widget(self, widget, name):
+        dock_widget = QtGui.QDockWidget(name)
+        dock_widget.setObjectName(name)
+        dock_widget.setFeatures(
+            QtGui.QDockWidget.DockWidgetFloatable |
+            QtGui.QDockWidget.DockWidgetMovable |
+            QtGui.QDockWidget.DockWidgetVerticalTitleBar)
+        self.dock_widgets[name] = dock_widget
+        dock_widget.setWidget(widget)
+        self.addDockWidget(QtCore.Qt.TopDockWidgetArea,dock_widget)
+        if self.last_docked is not None:
+            self.tabifyDockWidget(self.last_docked, dock_widget)
+        self.last_docked = dock_widget
 
     def run_gui(self):
         """
