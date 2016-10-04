@@ -105,7 +105,7 @@ except:
                 return curve
 
         def save(self):
-            with open(os.path.join(self._dirname, str(self.pk) + '.p'), 'w') as f:
+            with open(os.path.join(self._dirname, str(self.pk) + '.p'), 'wb') as f:
                 pickle.dump((self.pk, self.data, self.params), f)
                 f.close()
 
