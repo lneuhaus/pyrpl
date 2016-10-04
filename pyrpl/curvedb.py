@@ -107,6 +107,7 @@ except:
         def save(self):
             with open(os.path.join(self._dirname, str(self.pk) + '.p'), 'wb') as f:
                 pickle.dump((self.pk, self.data, self.params), f)
+                self.logger.warning(str(self.pk)+".p is saved to a pickle file")
                 f.close()
 
         def delete(self):
