@@ -11,15 +11,14 @@ from ..gui import ScopeWidget, AllAsgGui, PidGui, IqWidget
 from ..memory import MemoryTree
 #
 APP = QtGui.QApplication.instance()
-if APP is None:
-    APP = QtGui.QApplication(["redpitaya_gui"])
 #####
 class SHGLock():
     def __init__(self, config='SHG_default'):
         _configdir = os.path.join(os.path.dirname(__file__), "i_config")
         self._configfile = os.path.join(_configdir, config + '.yml')
         self.c = MemoryTree(self._configfile)
-        self.rp = RedPitaya(**self.c.redpitaya._dict)
+        self.rp = RedPitaya(**self.c.redpitayas.catlab3._dict)
+        self.rp1 = RedPitaya(**self.c.redpitayas.catlab2._dict)
         self.setup_rp()
     # all useful rp modules are renamed here to better understand the function
         self.scan = self.rp.asg1
@@ -27,7 +26,9 @@ class SHGLock():
         self.iq = self.rp.iq0
         self.pid = self.rp.pid0
     # start GUI and link the rp to the GUI
-        self.GUI=rp_SHGLock_GUI(_console_ns={'l': self}, _rp=self.rp)
+        self.GUI=rp_SHGLock_GUI(_console_ns={'l': self}, _rp=self.rp, another_rp=self.rp1)
+
+
     #
     def setup_rp(self):
         # setup up from config file
@@ -118,11 +119,12 @@ class SHGLock():
             pass
 
 class rp_SHGLock_GUI(QtGui.QMainWindow):
-    def __init__(self, _console_ns=None, _rp=None):
+    def __init__(self, _console_ns=None, _rp=None, another_rp=None):
         super(rp_SHGLock_GUI, self).__init__()
         self.setWindowTitle("SHG Lock for Teleportation Experiment")
         self.console_ns=_console_ns
         self.rp=_rp
+        self.another_rp=another_rp
         # a scope
         self.scope_widget=ScopeWidget(name="SHG",
                                       rp=_rp,
@@ -155,15 +157,24 @@ class rp_SHGLock_GUI(QtGui.QMainWindow):
         self.control_widget=QtGui.QWidget()
         self.control_widget.setLayout(self.control_widget_layout)
         #------------#
+        # a scope for another rp
+        self.another_scope_widget = ScopeWidget(name="another_SHG",
+                                                rp=another_rp,
+                                                parent=None,
+                                                module=self.another_rp.scope
+                                                )
+
         # set dock_widgets for the main windows
         self.dock_widgets = {}
         self.last_docked = None
         self.add_dock_widget(self.console_widget,'console')
         self.add_dock_widget(self.control_widget,'controller')
+        self.add_dock_widget(self.another_scope_widget, 'another')
         #---------------------------#
         # setup timer and run the GUI
         self.gui_timer = QtCore.QTimer()
         self.run_gui()
+
     def add_dock_widget(self, widget, name):
         dock_widget = QtGui.QDockWidget(name)
         dock_widget.setObjectName(name)

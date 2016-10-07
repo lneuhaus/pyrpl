@@ -1605,8 +1605,7 @@ class RedPitayaGui(RedPitaya):
         self.scope_widget = ScopeWidget(name="scope",
                                         rp=self,
                                         parent=None,
-                                        module=self.scope,
-                                        namespace=self.console_namespace)
+                                        module=self.scope)
         self.sa_widget = SpecAnGui(name="spec an",
                                    rp=self,
                                    parent=None,
