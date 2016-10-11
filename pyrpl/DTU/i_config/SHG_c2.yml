@@ -1,24 +1,14 @@
-redpitayas:
-  catlab3:
-    hostname: 10.54.4.57
-    password: bbcjpw93
-    user: root
-    port: 2223
-    frequency_correction: 1.0
-    filename: fpga//red_pitaya.bin
-    reloadfpga: false
-    monitor_server_name: catlab3
-    silence_env: true
-  catlab2:
-    hostname: 10.54.4.53
-    password: bbcjpw93
-    user: root
-    port: 2222
-    frequency_correction: 1.0
-    filename: fpga//red_pitaya.bin
-    reloadfpga: false
-    monitor_server_name: catlab2
-    silence_env: true
+redpitaya:
+  hostname: 10.54.4.53
+  password: bbcjpw93
+  user: root
+  port: 2222
+  frequency_correction: 1.0
+  filename: fpga//red_pitaya.bin
+  reloadfpga: true
+  monitor_server_name: SHG_catlab2
+  silence_env: true
+  
 rp_mod_connection:
 
   # setup asg[1:2]
@@ -81,3 +71,10 @@ rp_mod_connection:
       mixing_factor: 1
     # demodulation phase
       mixing_phase: 0
+
+scopegui:
+  coordinates:
+  - 0
+  - 0
+  - 800
+  - 600

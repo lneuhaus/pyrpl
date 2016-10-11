@@ -4,4 +4,4 @@ import pyrpl
 #l=pyrpl.pyrpl.Pyrpl(config='catlab3')
 #l=pyrpl.IL()
 #l=pyrpl.SL(config='SHG_c3')
-l=pyrpl.SL()
+l=pyrpl.Auto_SL()

@@ -5,6 +5,7 @@ import sys
 import numpy as np
 from pyqtgraph.Qt import QtGui, QtCore
 import pyqtgraph.console
+import time
 #
 from ..redpitaya import RedPitaya
 from ..gui import ScopeWidget, AllAsgGui, PidGui, IqWidget
@@ -18,7 +19,8 @@ class SHGLock():
         self._configfile = os.path.join(_configdir, config + '.yml')
         self.c = MemoryTree(self._configfile)
         self.rp = RedPitaya(**self.c.redpitayas.catlab3._dict)
-        self.rp1 = RedPitaya(**self.c.redpitayas.catlab2._dict)
+        time.sleep(2)
+        #self.rp1 = RedPitaya(**self.c.redpitayas.catlab2._dict)
         self.setup_rp()
     # all useful rp modules are renamed here to better understand the function
         self.scan = self.rp.asg1
@@ -26,7 +28,8 @@ class SHGLock():
         self.iq = self.rp.iq0
         self.pid = self.rp.pid0
     # start GUI and link the rp to the GUI
-        self.GUI=rp_SHGLock_GUI(_console_ns={'l': self}, _rp=self.rp, another_rp=self.rp1)
+        #self.GUI=rp_SHGLock_GUI(_console_ns={'l': self}, _rp=self.rp, another_rp=self.rp1)
+        self.GUI = rp_SHGLock_GUI(_console_ns={'l': self}, _rp=self.rp)
 
 
     #
@@ -74,49 +77,7 @@ class SHGLock():
                           output_direct=output_direct['iq0'],
                           output_signal=output_signal['iq0'],
                           quadrature_factor=1)
-    #
-    def scan(self, calibrate=True):
-        self.pid.output_direct='off'
-        if calibrate == True:
-            self.calibrate()
-    #
-    def fringe_to_fit(self, t, slope=0.15, T=103.0, phi_s=0, Imean=0.5, Iamp=0.3):
-        _cyc = t // (T / 2)
-        return Imean + Iamp * np.cos(
-            (_cyc % 2 * T / 2 * slope + (-1) ** (_cyc % 2) * (t - T / 2 * _cyc) * slope + phi_s))
-    #
-    '''
-    Calibrate a lock channel:
-        (1) Set PID, IQ to zero;
-        (2) Scan with sawtooth wave according to Config file. (with asg1 or asg2)
-        (3) Get data from scope, which is used to fit the interferometer fringe
-        (4) Fringe: defined in a lambda function inside calibrate methord
-        (5) Set asg to zero
-        (6) Return: max, min, fringe visibility , fitting accuricy
-    '''
-    def calibrate(self, ch=1, min_duration=0.1):
-        # the duration of scope is not continuous, the real duration is accessed by: self.rp.scope.duration
-        if not (ch==1 or ch==2):
-            raise KeyError('Scope channel should be 1 or 2 with int type')
-        _n=self.rp.scope.data_length
-        _trig = 'immediately'
-        _err_sig ={'1':'adc1','2':'adc2'}
-        _scan = {'1':'dac1','2':'dac2'}
-        self.rp.asg1.setup(waveform='ramp', frequency='37', amplitude=0.15, output_direct='out1')
-        self.rp.scope.setup(duration=min_duration, trigger_source=_trig, input1=_err_sig[str(ch)], input2=_scan[str(ch)])
-        _ch1_data=self.rp.scope.curve(1)
-        _ch2_data=self.rp.scope.curve(2)
-        _t= np.linspace(0,_n-1,_n)*self.rp.scope.duration/(_n-1)
-        self.rp.asg1.setup(waveform='ramp', frequency='37', amplitude=0.3, output_direct='off')
-        self.cal_result={'time':_t,'fringe':_ch1_data,'scan':_ch2_data}
-    #
-    def cal_txt(self):
-        try:
-            np.savetxt('t.txt', self.cal_result['time'])
-            np.savetxt('f.txt', self.cal_result['fringe'])
-            np.savetxt('s.txt', self.cal_result['scan'])
-        except:
-            pass
+
 
 class rp_SHGLock_GUI(QtGui.QMainWindow):
     def __init__(self, _console_ns=None, _rp=None, another_rp=None):
@@ -158,18 +119,19 @@ class rp_SHGLock_GUI(QtGui.QMainWindow):
         self.control_widget.setLayout(self.control_widget_layout)
         #------------#
         # a scope for another rp
+        '''
         self.another_scope_widget = ScopeWidget(name="another_SHG",
                                                 rp=another_rp,
                                                 parent=None,
                                                 module=self.another_rp.scope
                                                 )
-
+        '''
         # set dock_widgets for the main windows
         self.dock_widgets = {}
         self.last_docked = None
         self.add_dock_widget(self.console_widget,'console')
         self.add_dock_widget(self.control_widget,'controller')
-        self.add_dock_widget(self.another_scope_widget, 'another')
+        #self.add_dock_widget(self.another_scope_widget, 'another')
         #---------------------------#
         # setup timer and run the GUI
         self.gui_timer = QtCore.QTimer()

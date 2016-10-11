@@ -1,13 +1,24 @@
-redpitaya:
-  hostname: 10.54.4.57
-  password: bbcjpw93
-  user: root
-  port: 2222
-  frequency_correction: 1.0
-  filename: fpga//red_pitaya.bin
-  reloadfpga: true
-  monitor_server_name: default_IL
-  silence_env: true
+redpitayas:
+  catlab3:
+    hostname: 10.54.4.57
+    password: bbcjpw93
+    user: root
+    port: 2222
+    frequency_correction: 1.0
+    filename: fpga//red_pitaya.bin
+    reloadfpga: true
+    monitor_server_name: default_IL
+    silence_env: true
+  catlab2:
+    hostname: 10.54.4.53
+    password: bbcjpw93
+    user: root
+    port: 2222
+    frequency_correction: 1.0
+    filename: fpga//red_pitaya.bin
+    reloadfpga: true
+    monitor_server_name: default_IL
+    silence_env: true
   
 rp_mod_connection:
 
