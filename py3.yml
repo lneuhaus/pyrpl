@@ -1,6 +1,6 @@
 name: py3
 dependencies:
-- python>3.5
+- python>=3.5
 - numpy>=1.9
 - scipy
 - pandas
@@ -9,6 +9,7 @@ dependencies:
 - jupyter
 - nose
 - pyqtgraph
+- h5py
 - pip
 - pip:
     - scp

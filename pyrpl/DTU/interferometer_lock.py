@@ -1,11 +1,8 @@
 # Code in this file make a RedPitaya device into 2 channel interferometer lock, which can lock to arbitrary phase.
-#
 import os
 import numpy as np
-#
 from ..gui import RedPitayaGui
 from ..memory import MemoryTree
-#
 #####
 class InterferometerLock():
     def __init__(self, config='default'):

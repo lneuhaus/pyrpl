@@ -30,6 +30,7 @@ class SHGLock():
     # start GUI and link the rp to the GUI
         #self.GUI=rp_SHGLock_GUI(_console_ns={'l': self}, _rp=self.rp, another_rp=self.rp1)
         self.GUI = rp_SHGLock_GUI(_console_ns={'l': self}, _rp=self.rp)
+        sys.exit(APP.exec_())
 
 
     #
@@ -87,7 +88,7 @@ class rp_SHGLock_GUI(QtGui.QMainWindow):
         self.rp=_rp
         self.another_rp=another_rp
         # a scope
-        self.scope_widget=ScopeWidget(name="SHG",
+        self.scope_widget=SHG_Scope(name="SHG",
                                       rp=_rp,
                                       parent=None,
                                       module=self.rp.scope
@@ -157,4 +158,18 @@ class rp_SHGLock_GUI(QtGui.QMainWindow):
         """
         self.show()
         self.scope_widget.run_continuous()
-        sys.exit(APP.exec_())
+
+class SHG_Scope(ScopeWidget):
+    def save(self):
+        self.stop()
+        _duration = self.module.duration
+        _n = self.module.data_length
+        _t_array = np.linspace(0,_n-1,_n)*(_duration)/(_n-1)
+        _ch1_array = self.datas[0]
+        _ch2_array = self.datas[1]
+        np.savetxt('t.txt', _t_array)
+        np.savetxt('ch1.txt', _ch1_array)
+        np.savetxt('ch2.txt', _ch2_array)
+
+
+

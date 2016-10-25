@@ -41,7 +41,7 @@ from .memory import MemoryTree
 from .model import Model
 from .signal import *
 from .models import *
-from .gui.pyrpl_gui import PyrplGui
+#from .gui.pyrpl_gui import PyrplGui
 
 """
 channels:
