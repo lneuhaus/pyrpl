@@ -1,4 +1,5 @@
 from .SHG_lock import *
+from .SHG_locker_thread import SHGAutolocker
 import numpy as np
 from pyqtgraph.Qt import QtGui, QtCore
 import time
@@ -116,45 +117,5 @@ class SHGAutolock(SHGLock, QtCore.QObject):
             pass
 
 
-class SHGAutolocker(QtCore.QObject):
-
-    give_bias=QtCore.pyqtSignal(float)
-    ask_DC=QtCore.pyqtSignal()
-    start_pid=QtCore.pyqtSignal(list)
-
-    def __init__(self):
-        self.logger = logging.getLogger(name=__name__)
-        super(SHGAutolocker,self).__init__()
-        self.wait_flag=True
-
-    @QtCore.pyqtSlot()
-    def run_auto_lock(self, cal_data={'max':0.4,'min':0}):
-        for i in range(240):
-            self.give_bias.emit(i*0.004)
-            time.sleep(0.01)
-            self.wait_GUI()
-            self.ask_DC.emit()
-            self.wait_GUI()
-            if self.DC > cal_data['max']:
-                break
-            else:
-                continue
-        pid_list=[0.1, 1, 0]
-        self.start_pid.emit(pid_list)
-
-    def wait_GUI(self):
-        while self.wait_flag:
-            APP.processEvents()
-            time.sleep(0.01)
-        self.wait_flag=True
 
 
-
-    def change_wait_flag(self):
-        self.wait_flag=False
-
-
-    def renew_DC(self, DC=0):
-        self.DC=DC
-        self.logger.warning('get dc value')
-        self.change_wait_flag()
