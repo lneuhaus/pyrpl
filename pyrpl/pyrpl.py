@@ -529,7 +529,9 @@ class Pyrpl(Lockbox):
                 r.rp.scope_widget.run_continuous()
 
     def _save_window_position(self):
-        if self.c["dock_positions"]!=bytes(self.rp.main_window.saveState()):
+        if (not "dock_positions" in self.c._keys()) or \
+           (self.c["dock_positions"]!=bytes(
+                self.rp.main_window.saveState())):
             self.c["dock_positions"] = bytes(self.rp.main_window.saveState())
         try:
             _ = self.c.scopegui
@@ -538,8 +540,9 @@ class Pyrpl(Lockbox):
         try:
             if self.c.scopegui["coordinates"]!=self.rp.window_position:
                 self.c.scopegui["coordinates"] = self.rp.window_position
-        except:
-            self.logger.warning("Gui is not started. Cannot save position.")
+        except Exception as e:
+            self.logger.warning("Gui is not started. Cannot save position.\n"\
+                                + str(e))
 
     def set_window_position(self):
         if "dock_positions" in self.c._keys():
@@ -552,9 +555,10 @@ class Pyrpl(Lockbox):
             coordinates = [0, 0, 800, 600]
         try:
             self.rp.window_position = coordinates
-            self._lock_window_position()
-        except:
-            self.logger.warning("Gui is not started. Cannot save position.")
+        #self._lock_window_position()
+        except Exception as e:
+            self.logger.warning("Gui is not started. Cannot save position.\n"\
+                                +str(e))
 
 class Trash(object):
 
