@@ -208,7 +208,7 @@ end
 
 assign dac_trig = (!dac_rep && trig_in) || (dac_rep && |rep_cnt && (dly_cnt == 32'h0)) ;
 
-assign dac_npnt_sub = dac_npnt - {1'b0,set_size_i};// - 1;
+assign dac_npnt_sub = dac_npnt - {1'b0,set_size_i} - 2;
 assign dac_npnt_sub_neg = dac_npnt_sub[RSZ+16];
 
 // read pointer logic
