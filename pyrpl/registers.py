@@ -262,12 +262,14 @@ class FrequencyRegister(FloatRegister):
             value = 1
         else:
             # round and normalize
-            value = int(round(value/125e6*2**self.bits)) 
+            value = int(round(value/125e6*2**self.bits)) # Seems correct (should not be 2**bits -1): 125 MHz
+                                                         # out of reach because 2**bits is out of reach
         return value
     
     def to_python(self, value, frequency_correction):
-        return 125e6/2**self.bits*float(value)*frequency_correction
-    
+        return 125e6/2**self.bits*float(value)*frequency_correction # Seems correct (should not be 2**bits -1): 125 MHz
+                                                                    # out of reach because 2**bits is out of reach
+
 
 class FilterRegister(Register):
     """Interface for up to 4 low-/highpass filters in series (filter_block.v)"""
