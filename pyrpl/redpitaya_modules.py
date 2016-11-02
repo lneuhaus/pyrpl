@@ -891,7 +891,8 @@ def make_asg(channel=1):
             self.output_direct = output_direct
             self.waveform = waveform
             self.start_phase = start_phase
-            self._counter_wrap = 2**16 * (2**14 - 1)
+            self._counter_wrap = 2**16 * (2**14) - 1 # Bug found on 2016/11/2 (Samuel) previously 2**16 * (2**14 - 1)
+                                                     # ===> asg frequency was too fast by 1./2**16
             self.frequency = frequency
             self._sm_wrappointer = True
             self.cycles_per_burst = cycles_per_burst
