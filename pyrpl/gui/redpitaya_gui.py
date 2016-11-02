@@ -671,13 +671,13 @@ class ScopeWidget(ModuleWidget):
         """
         Displays all active channels on the graph.
         """
-
-        for i in (1, 2):
-            if self.cb_ch[i - 1].checkState() == 2:
-                self.display_channel(i)
-                self.curves[i - 1].setVisible(True)
-            else:
-                self.curves[i - 1].setVisible(False)
+        if not self.rolling_mode: # otherwise, evrything is handled in check_for_curves
+            for i in (1, 2):
+                if self.cb_ch[i - 1].checkState() == 2:
+                    self.display_channel(i)
+                    self.curves[i - 1].setVisible(True)
+                else:
+                    self.curves[i - 1].setVisible(False)
 
     def run_single(self):
         """
