@@ -321,6 +321,10 @@ class IqWidget(ModuleWidget):
         self.property_layout.addLayout(self.properties["acbandwidth"].layout_v)
         self.property_layout.addLayout(self.properties["frequency"].layout_v)
         self.properties["frequency"].layout_v.addLayout(self.properties["phase"].layout_v)
+        self.properties["frequency"].widget.setMaximum(125e6/2)
+        self.properties["frequency"].widget.step = 125e6/2**32
+        self.properties["phase"].widget.setMaximum(360)
+        self.properties["phase"].widget.step = 0.1
         self.property_layout.addLayout(self.properties["bandwidth"].layout_v)
         self.property_layout.addLayout(self.properties["quadrature_factor"].layout_v)
         self.property_layout.addLayout(self.properties["gain"].layout_v)
