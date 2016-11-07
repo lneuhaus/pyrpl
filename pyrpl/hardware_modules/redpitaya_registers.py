@@ -71,8 +71,18 @@ class BaseRegister(object):
     def _read(self, obj, addr):
         return obj._read(addr)
 
+class NumberRegister(BaseRegister):
+    def __init__(self, address, bits=64, **kwargs):
+        super(NumberRegister, self).__init__(address=address, **kwargs)
 
-class IntRegister(BaseRegister, IntAttribute):
+
+class IntRegister(NumberRegister, IntAttribute):
+    def __init__(self, address, bits=32, **kwargs):
+        super(IntRegister,self).__init__(address=address, **kwargs)
+        IntAttribute.__init__(self, min=0, max=2**bits, increment=1)
+        self.bits = bits
+        self.size = int(np.ceil(float(self.bits)/32))
+
     def to_python(self, value, obj):
         return int(value)
 
@@ -80,11 +90,13 @@ class IntRegister(BaseRegister, IntAttribute):
         return int(value)
 
 
-class LongRegister(BaseRegister, IntAttribute):
+
+
+class LongRegister(IntRegister, IntAttribute):
     """Interface for register of python type int/long with arbitrary length 'bits' (effectively unsigned)"""
     def __init__(self, address, bits=64, **kwargs):
         super(LongRegister,self).__init__(address=address, **kwargs)
-        IntAttribute.__init__(self, increment=1)
+        IntAttribute.__init__(self, min=0, max=2**bits, increment=1)
         self.bits = bits
         self.size = int(np.ceil(float(self.bits)/32))
 
@@ -450,44 +462,3 @@ class PWMRegister(BaseRegister, BaseAttribute):
         towrite = int(high)<<(self.CFG_BITS-self.PWM_BITS)
         towrite += ((1<<low)-1)&((1<<self.CFG_BITS)-1)
         return towrite
-
-
-class BaseProperty(object):
-    """
-    A Property is a special type of attribute that is not mapping a fpga value, but rather an attribute _attr_name
-    of the module. This is used mainly in SoftwareModules
-    """
-
-    def get_value(self, obj, obj_type):
-        if obj is None:
-            return self
-        if not hasattr(obj, '_' + self.name):
-            setattr(obj, '_' + self.name, self.default)
-        return getattr(obj, '_' + self.name)
-
-    def set_value(self, obj, val):
-        setattr(obj, '_' + self.name, val)
-        return val # maybe better with getattr... but more expensive
-
-
-class SelectProperty(SelectAttribute, BaseProperty): pass
-
-
-class StringProperty(StringAttribute, BaseProperty):
-    default = ""
-
-
-class PhaseProperty(PhaseAttribute, BaseProperty):
-    default = 0
-
-
-class FloatProperty(FloatAttribute, BaseProperty):
-    default = 0.
-
-
-class LongProperty(IntAttribute, BaseProperty):
-    default = 0
-
-
-class BoolProperty(BoolAttribute, BaseProperty):
-    default = False

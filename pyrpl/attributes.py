@@ -99,7 +99,19 @@ class BaseAttribute(object):
         return widget
 
 
-class FloatAttribute(BaseAttribute):
+class NumberAttribute(BaseAttribute):
+    """
+    Abstract class for ints and floats
+    """
+
+    def create_widget(self, module, name=None):
+        widget = super(NumberAttribute, self).create_widget(module, name=name)
+        widget.set_increment(self.increment)
+        widget.set_maximum(self.max)
+        widget.set_minimum(self.min)
+        return widget
+
+class FloatAttribute(NumberAttribute):
     """
     An attribute for a float value.
     """
@@ -111,23 +123,25 @@ class FloatAttribute(BaseAttribute):
         self.min = min
         self.max = max
 
-    def create_widget(self, module, name=None):
-        widget = super(FloatAttribute, self).create_widget(module, name=name)
-        widget.set_increment(self.increment)
-        widget.set_maximum(self.max)
-        widget.set_minimum(self.min)
-        return widget
+class FrequencyAttribute(FloatAttribute):
+    def __init__(self, default=None, increment=0.1, min=0, max=125e6/2, doc=""):
+        super(FloatAttribute, self).__init__(default=default, doc=doc)
+        self.increment = increment
+        self.min = min
+        self.max = max
 
 
-class IntAttribute(BaseAttribute):
+class IntAttribute(NumberAttribute):
     """
     An attribute for integer values
     """
     widget_class = IntRegisterWidget
 
-    def __init__(self, default=None, increment=1, doc=""):
+    def __init__(self, default=None, min=0, max=2**14, increment=1, doc=""):
         super(IntAttribute, self).__init__(default=default, doc=doc)
-        self.incement = increment
+        self.min = min
+        self.max = max
+        self.increment = increment
 
 
 class BoolAttribute(BaseAttribute):

@@ -3,17 +3,29 @@ import sys
 from time import sleep, time
 import logging
 from . import SoftwareModule
-from pyrpl.attributes import FloatAttribute
+from pyrpl.hardware_modules.redpitaya_modules import DspModule # just to get the
+                                                               # list of inputs
+from .properties import FloatProperty, SelectProperty, FrequencyProperty, \
+                        LongProperty, BoolProperty, StringProperty
+from pyrpl.attributes import FilterAttribute
+from pyrpl.module_widgets import NaWidget
 
-class AmplitudeAttribute(FloatAttribute):
+class RbwAttribute(FilterAttribute):
     def get_value(self, instance, owner):
         if instance is None:
             return self
-        return instance._amplitude
+        return instance.iq.bandwidth[0]
 
     def set_value(self, instance, val):
-        instance._amplitude = val
+        try:
+            val = list(val)
+        except:
+            val = [val, val]  # preferentially choose second order filter
+        instance.iq.bandwidth = val
         return val
+
+    def valid_frequencies(self, module):
+        return module.iq.__class__.bandwidth.valid_frequencies(module.iq)
 
 class NetworkAnalyzer(SoftwareModule):
     """
@@ -35,6 +47,7 @@ class NetworkAnalyzer(SoftwareModule):
                 print response
     """
 
+    widget_class = NaWidget
     gui_attributes = ["input",
                       "output_direct",
                       "start",
@@ -83,6 +96,18 @@ class NetworkAnalyzer(SoftwareModule):
                     acbandwidth=self.acbandwidth,
                     amplitude=self.amplitude,
                     logscale=self.logscale)
+
+    input = SelectProperty(DspModule.inputs)
+    output_direct = SelectProperty(DspModule.output_directs)
+    start = FrequencyProperty()
+    stop = FrequencyProperty()
+    rbw = RbwAttribute()
+    amplitude = FloatProperty(min=0, max=1, increment=1. / 2 ** 14)
+    points = LongProperty()
+    logscale = BoolProperty()
+    infer_open_loop_tf = BoolProperty()
+    avg = LongProperty(min=1)
+    curve_name = StringProperty()
 
     @property
     def iq(self):
@@ -214,32 +239,6 @@ class NetworkAnalyzer(SoftwareModule):
 
         return self.iq.frequency
 
-    @property
-    def rbw(self):
-        """
-        rbw of the underlying iq
-        """
-        return self.iq.bandwidth[0]
-
-    @rbw.setter
-    def rbw(self, val):
-        try:
-            val = list(val)
-        except:
-            val = [val, val]  # preferentially choose second order filter
-        self.iq.bandwidth = val
-        return val
-
-    @property
-    def amplitude(self):
-        return self._amplitude
-
-    @amplitude.setter
-    def amplitude(self, val):
-        # the na easily messes up other functionaliy by outputting a sine.
-        # self.iq.amplitude = val
-        #self._amplitude = self.iq.amplitude
-        self._amplitude = val
 
     @property
     def time_per_point(self):

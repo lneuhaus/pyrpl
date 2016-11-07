@@ -453,3 +453,396 @@ class PidWidget(ModuleWidget):
             self.attribute_widgets[prop].widget.setMaximum(1000000)
             self.attribute_widgets[prop].widget.setMinimum(-1000000)
 
+
+class NaWidget(ModuleWidget):
+    """
+    Network Analyzer Tab.
+    """
+
+    def init_gui(self):
+        """
+        Sets up the gui
+        """
+        # add this new display parameter to module na
+        self.module.infer_open_loop_tf = False
+        #self.module.__dict__['curve_name'] = 'na trace'
+        self.main_layout = QtGui.QVBoxLayout()
+        self.init_attribute_layout()
+        self.button_layout = QtGui.QHBoxLayout()
+        self.setLayout(self.main_layout)
+        self.setWindowTitle("NA")
+        self.win = pg.GraphicsWindow(title="Amplitude")
+        self.win_phase = pg.GraphicsWindow(title="Phase")
+        self.plot_item = self.win.addPlot(title="Magnitude (dB)")
+        self.plot_item_phase = self.win_phase.addPlot(title="Phase (deg)")
+        self.plot_item_phase.setXLink(self.plot_item)
+        self.button_single = QtGui.QPushButton("Run single")
+        self.button_single.my_label = "Single"
+        self.button_continuous = QtGui.QPushButton("Run continuous")
+        self.button_continuous.my_label = "Continuous"
+        self.button_restart_averaging = QtGui.QPushButton('Restart averaging')
+
+        self.button_save = QtGui.QPushButton("Save curve")
+
+        self.curve = self.plot_item.plot(pen='y')
+        self.curve_phase = self.plot_item_phase.plot(pen=None, symbol='o')
+        self.main_layout.addWidget(self.win)
+        self.main_layout.addWidget(self.win_phase)
+        self.button_layout.addWidget(self.button_single)
+        self.button_layout.addWidget(self.button_continuous)
+        self.button_layout.addWidget(self.button_restart_averaging)
+        self.button_layout.addWidget(self.button_save)
+        self.main_layout.addLayout(self.button_layout)
+
+        self.button_single.clicked.connect(self.run_single_clicked)
+        self.button_continuous.clicked.connect(self.run_continuous_clicked)
+        self.button_restart_averaging.clicked.connect(
+            self.ask_restart_and_do_it)
+        self.button_save.clicked.connect(self.save)
+        self.timer = QtCore.QTimer()  # timer for point acquisition
+        self.timer.setInterval(10)
+        self.timer.setSingleShot(True)
+
+        self.update_timer = QtCore.QTimer()  # timer for plot update
+        self.update_timer.setInterval(50)  # 50 ms refreshrate max
+        self.update_timer.timeout.connect(self.update_plot)
+        self.update_timer.setSingleShot(True)
+
+        self.continuous = True
+        self.paused = True
+        self.need_restart = True
+
+        self.attribute_changed.connect(self.ask_restart)
+
+        self.timer.timeout.connect(self.add_one_point)
+
+        self.paused = True
+        # self.restart_averaging() # why would you want to do that? Comment?
+
+        """
+        for prop in (self.attribute_widgets["start"],
+                     self.attribute_widgets["stop"],
+                     self.attribute_widgets["rbw"]):
+            spin_box = prop.widget
+            # spin_box.setDecimals(1)
+            spin_box.setMaximum(100e6)
+            spin_box.setMinimum(-100e6)
+            spin_box.setSingleStep(100)
+        for prop in (self.properties["points"], self.properties["avg"]):
+            spin_box = prop.widget
+            spin_box.setMaximum(1e6)
+            spin_box.setMinimum(0)
+        """
+
+        self.attribute_widgets["infer_open_loop_tf"].acquisition_property = False
+        self.attribute_widgets["curve_name"].acquisition_property = False
+
+        self.arrow = pg.ArrowItem()
+        self.arrow.setVisible(False)
+        self.arrow_phase = pg.ArrowItem()
+        self.arrow_phase.setVisible(False)
+        self.plot_item.addItem(self.arrow)
+        self.plot_item_phase.addItem(self.arrow_phase)
+
+    def save_params(self):
+        """
+        Stores the params in a dictionary self.params.
+        We should consider using self.properties instead of manually iterating.
+        """
+
+        self.params = self.get_state()
+        """
+        self.params = dict(start=self.module.start,
+                                   stop=self.module.stop,
+                                   rbw=self.module.rbw,
+                                   input=self.module.input,
+                                   output_direct=self.module.output_direct,
+                                   points=self.module.points,
+                                   amplitude=self.module.amplitude,
+                                   logscale=self.module.logscale,
+                                   avg=self.module.avg,
+                                   post_average=self.post_average,
+                                   infer_open_loop_tf=self.module.infer_open_loop_tf,
+                                   name=self.module.curve_name)
+        """
+    def save(self):
+        """
+        Save the current curve. If you would like to overwrite the save behavior, maybe you should
+        consider overwriting Module.save_curve or Module.curve_db rather than this function.
+        """
+
+        self.save_curve(self.x[:self.last_valid_point],
+                        self.data[:self.last_valid_point],
+                        **self.params)
+
+    def init_data(self):
+        """
+        Prepares empty arrays before starting the scan
+        """
+
+        self.data = np.zeros(self.module.points, dtype=complex)
+        self.x = np.empty(self.module.points)
+        self.post_average = 0
+
+    def ask_restart(self):
+        """
+        Called whenever a property is changed: the execution should stop and
+        when the user wants to acquire more, the acquisition should restart
+        from scratch. However, the current curve is not immediately erased in
+        case the user would like to save it.
+        """
+
+        self.set_state(continuous=self.continuous, paused=True,
+                       need_restart=True, n_av=0)
+
+    def ask_restart_and_do_it(self):
+        """
+        Restart is actually done immediately (Called when the user clicks on restart averaging)
+        """
+
+        if not self.paused:
+            self.timer.stop()
+            self.restart_averaging()
+            self.new_run()
+            self.timer.start()
+            self.set_state(continuous=self.continuous, paused=self.paused,
+                           need_restart=False, n_av=0)
+        else:
+            self.set_state(continuous=self.continuous, paused=self.paused,
+                           need_restart=True, n_av=0)
+
+    def restart_averaging(self):
+        """
+        Initializes the data, sets the timer, launches the run.
+        """
+
+        self.init_data()
+        self.timer.setInterval(self.module.time_per_point * 1000)
+        self.update_timer.setInterval(10)
+        self.new_run()
+
+    def run_single(self):
+        """
+        Launches a single run (part of the public interface).
+        Restarts averaging from scratch.
+        """
+
+        self.restart_averaging()
+        self.new_run()
+        self.set_state(continuous=False, paused=False, need_restart=False)
+        self.timer.start()
+
+    def run_single_clicked(self):
+        """
+        Toggles between pause and running.
+        """
+        if self.paused:
+            if self.continuous or self.need_restart:  # restart from scratch
+                self.run_single()
+            else:  # continue with the previously started scan
+                self.set_state(continuous=False, paused=False,
+                               need_restart=False)
+                self.timer.start()
+        else:  # If already running, then set to paused
+            self.set_state(continuous=False, paused=True, need_restart=False)
+
+    def stop(self):
+        """
+        Stop the current execution (part of the public interface).
+        """
+
+        self.set_state(continuous=self.continuous, paused=True,
+                       need_restart=self.need_restart)
+        self.module.iq.amplitude = 0
+
+    def new_run(self):
+        """
+        Sets up the fpga modules for a new run and save the run parameters.
+        """
+
+        self.module.setup()
+        self.values = self.module.values()
+        self.save_params()
+
+    def set_state(self, continuous, paused, need_restart, n_av=0):
+        """
+        The current state is composed of 3 flags and a number. This function
+        updates the flags and reflects on the gui the required state.
+
+        :param continuous: True or False means continuous or single
+        :param paused: True or False Whether the acquisition is running or stopped
+        :param need_restart: True or False: whether the current data could be averaged with upcoming ones
+        :param n_av: current number of averages
+        :return:
+        """
+
+        self.continuous = continuous
+        self.paused = paused
+        self.need_restart = need_restart
+        active_button = self.button_continuous if continuous else self.button_single
+        inactive_button = self.button_single if continuous else self.button_continuous
+        self.button_restart_averaging.setEnabled(not need_restart)
+        active_button.setEnabled(True)
+        inactive_button.setEnabled(self.paused)
+        first_word = 'Run ' if need_restart else 'Continue '
+        if self.paused:
+            self.button_single.setText("Run single")
+            self.button_continuous.setText(first_word + "(%i averages)" % n_av)
+            self.module.iq.amplitude = 0
+        else:
+            if active_button == self.button_single:
+                active_button.setText('Pause')
+            else:
+                active_button.setText('Pause (%i averages)' % n_av)
+
+    @property
+    def last_valid_point(self):
+        """
+        Index of the last point that contains more than 0 averages
+        """
+        if self.post_average > 0:
+            max_point = self.module.points
+        else:
+            max_point = self.module.current_point
+        return max_point
+
+    def threshold_hook(self, current_val):
+        """
+        A convenience function to stop the run upon some condition
+        (such as reaching of a threshold. current_val is the complex amplitude
+        of the last data point).
+
+        To be overwritten in derived class...
+        Parameters
+        ----------
+        current_val
+
+        Returns
+        -------
+
+        """
+        pass
+
+    def update_plot(self):
+        """
+        Update plot only every 10 ms max...
+
+        Returns
+        -------
+        """
+        # plot_time_start = time()
+        x = self.x[:self.last_valid_point]
+        y = self.data[:self.last_valid_point]
+
+        # check if we shall display open loop tf
+        if self.properties["infer_open_loop_tf"].widget.checkState() == 2:
+            y = y / (1.0 + y)
+        mag = 20 * np.log10(np.abs(y))
+        phase = np.angle(y, deg=True)
+        log_mod = self.module.logscale
+        self.curve.setLogMode(xMode=log_mod, yMode=None)
+        self.curve_phase.setLogMode(xMode=log_mod, yMode=None)
+
+        self.plot_item.setLogMode(x=log_mod, y=None) # this seems also needed
+        self.plot_item_phase.setLogMode(x=log_mod, y=None)
+
+        self.curve.setData(x, mag)
+        self.curve_phase.setData(x, phase)
+
+        cur = self.module.current_point - 1
+        visible = self.last_valid_point!=cur + 1
+        logscale = self.properties["logscale"].widget.checkState()==2
+        freq = x[cur]
+        xpos = np.log10(freq) if logscale else freq
+        if cur>0:
+            self.arrow.setPos(xpos, mag[cur])
+            self.arrow.setVisible(visible)
+            self.arrow_phase.setPos(xpos, phase[cur])
+            self.arrow_phase.setVisible(visible)
+        # plot_time = time() - plot_time_start # actually not working, because done later
+        # self.update_timer.setInterval(plot_time*10*1000) # make sure plotting
+        # is only marginally slowing
+        # down the measurement...
+        self.update_timer.setInterval(self.last_valid_point / 100)
+
+    def add_one_point(self):
+        """
+        This function is called by a timer periodically to add new points in the buffer.
+        Plotting is actually done by another independent loop.
+        """
+
+        if self.paused:
+            return
+        cur = self.module.current_point
+        try:
+            x, y, amp = self.values.next()
+            self.threshold_hook(y)
+        except StopIteration:
+            self.post_average += 1
+            if self.continuous:
+                self.new_run()
+                self.set_state(continuous=True, paused=False,
+                               need_restart=False, n_av=self.post_average)
+                self.timer.start()
+            else:
+                self.set_state(continuous=True, paused=True,
+                               need_restart=False, n_av=self.post_average)  # 1
+                self.button_single.setText("Run single")
+            return
+        self.data[cur] = (self.data[cur] * self.post_average + y) \
+                         / (self.post_average + 1)
+        self.x[cur] = x
+        # fomerly, we had buffers for both phase and magnitude. This was faster
+        # but more messy. We could restore them once the display get
+        # exceedingly slow. In that case, they should be calculated right
+        # after acquisition, i.e. here.
+
+        if not self.update_timer.isActive():
+            self.update_timer.start()
+
+        self.timer.setInterval(self.module.time_per_point * 1000)
+        self.timer.start()
+
+    def run_continuous(self):
+        """
+        Launch a continuous acquisition (part of the public interface).
+        Averages from scratch
+        """
+
+        self.restart_averaging()
+        self.new_run()
+        self.set_state(continuous=True, paused=False, need_restart=False,
+                       n_av=self.post_average)
+        self.timer.start()
+
+    def resume_acquisition(self):
+        """
+        Resumes the current acquisition (continuous or single) if it was stopped.
+        An AveragingError is launched if the parameters have changed in the mean time.
+        """
+
+        if self.need_restart:
+            raise AveragingError(
+                """parameters have changed in the mean time, cannot average
+                with previous data""")
+        else:
+            self.set_state(continuous=self.continuous,
+                           paused=False,
+                           need_restart=self.need_restart,
+                           n_av=self.post_average)
+
+    def run_continuous_clicked(self):
+        """
+        Toggles the run continuous button, and performs the required action.
+        """
+        if self.paused:
+            if self.need_restart:
+                self.run_continuous()
+            else:
+                self.set_state(continuous=True, paused=False,
+                               need_restart=False, n_av=self.post_average)
+                self.timer.start()
+        else:
+            self.set_state(continuous=True, paused=True, need_restart=False,
+                           n_av=self.post_average)
+

@@ -146,6 +146,16 @@ class NumberRegisterWidget(BaseRegisterWidget):
         if not self.widget.hasFocus():
             self.widget.setValue(self.module_value())
 
+    def set_increment(self, val):
+        self.widget.setSingleStep(val)
+
+    def set_maximum(self, val):
+        self.widget.setMaximum(val)
+
+    def set_minimum(self, val):
+        self.widget.setMinimum(val)
+
+
 class IntRegisterWidget(NumberRegisterWidget):
     """
     Property for integer values.
@@ -195,15 +205,6 @@ class FloatRegisterWidget(NumberRegisterWidget):
         """
 
         return float(getattr(self.module, self.name))
-
-    def set_increment(self, val):
-        self.widget.setSingleStep(val)
-
-    def set_maximum(self, val):
-        self.widget.setMaximum(val)
-
-    def set_minimum(self, val):
-        self.widget.setMinimum(val)
 
 
 class ListComboBox(QtGui.QWidget):

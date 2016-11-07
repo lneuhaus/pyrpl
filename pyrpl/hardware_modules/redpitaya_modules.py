@@ -29,7 +29,8 @@ from pyrpl import iir, bodefit
 from pyrpl.attributes import FilterAttribute, FloatAttribute, SelectAttribute
 from pyrpl.hardware_modules.redpitaya_registers import FloatRegister, BoolRegister, IntRegister, LongRegister, \
                                  FrequencyRegister, SelectRegister, PhaseRegister, PWMRegister, IORegister, \
-                                 StringProperty, FilterRegister
+                                 FilterRegister
+from pyrpl.software_modules.properties import StringProperty
 from pyrpl.modules import HardwareModule
 from pyrpl.errors import TimeoutError, NotReadyError
 from pyrpl.module_widgets import ScopeWidget, AsgWidget, IqWidget, PidWidget
