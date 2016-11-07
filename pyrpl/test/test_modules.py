@@ -1,13 +1,10 @@
-from nose.tools import with_setup
-from unittest import TestCase
-import os
-import numpy as np
 import logging
+import os
+
 logger = logging.getLogger(name=__name__)
 
 from pyrpl import RedPitaya
-from pyrpl.redpitaya_modules import *
-from pyrpl.redpitaya_registers import *
+from pyrpl.hardware_modules.redpitaya_registers import *
 from pyrpl.bijection import Bijection
 
 import time

@@ -16,24 +16,22 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###############################################################################
 
-import os
-from time import sleep
-import time
-import socket
-import math
-import numpy as np
-import inspect
-import random
 import logging
+import os
+import random
+import socket
+from time import sleep
 
-from scp import SCPClient, SCPException
 from paramiko import SSHException
+from pyrpl.software_modules.network_analyzer import NetworkAnalyzer
+from pyrpl.software_modules.spectrum_analyzer import SpectrumAnalyzer
+from scp import SCPClient, SCPException
 
-from .sshshell import SSHshell
 from . import monitor_client
-from . import redpitaya_modules as rp
-from .network_analyzer import NetworkAnalyzer
-from .spectrum_analyzer import SpectrumAnalyzer
+from . import hardware_modules as rp
+from .sshshell import SSHshell
+
+
 # let's start debugging the spec an by taking data around 0 hz before we go
 # more complex
 #from .spectrum_analyzeroiq import SpectrumAnalyzer
@@ -166,7 +164,7 @@ class RedPitaya(SSHshell):
         sleep(self.delay)
         source = os.path.join(self.dirname,filename)
         if not os.path.isfile(source):
-            source = os.path.join(self.dirname,'fpga',filename)
+            source = os.path.join(self.dirname,'fpga', filename)
         if not os.path.isfile(source):
             raise IOError("Wrong filename",
               "The fpga bitfile was not found at the expected location. Try passing the arguments dirname=\"c://github//pyrpl//pyrpl//\" adapted to your installation directory of pyrpl and filename=\"red_pitaya.bin\"! Current dirname: "

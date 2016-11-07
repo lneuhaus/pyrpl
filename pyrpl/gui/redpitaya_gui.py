@@ -1,17 +1,15 @@
-from pyrpl import RedPitaya
-from pyrpl.redpitaya_modules import NotReadyError
-from pyrpl.network_analyzer import NetworkAnalyzer
-from pyrpl.spectrum_analyzer import SpectrumAnalyzer
-from pyrpl import CurveDB
-from pyrpl.pyrpl_utils import MyDoubleSpinBox
-
-from time import time
-from pyqtgraph.Qt import QtGui, QtCore
-import pyqtgraph as pg
-import numpy as np
-from collections import OrderedDict
-
 import sys
+from collections import OrderedDict
+from time import time
+
+import numpy as np
+import pyqtgraph as pg
+from pyqtgraph.Qt import QtGui, QtCore
+from pyrpl import CurveDB
+from pyrpl import RedPitaya
+from pyrpl.pyrpl_utils import MyDoubleSpinBox
+from pyrpl.errors import NotReadyError
+
 if sys.version_info < (3,):
     integer_types = (int, long)
 else:

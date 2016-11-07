@@ -487,7 +487,7 @@ class Model(object):
         Sets up an input signal derived from demodultaion of another input.
         The config file must contain an input signal named like the the
         parameter input with a section 'setup' whose entries are directly
-        passed to redpitaya_modules.IQ.setup().
+        passed to hardware_modules.IQ.setup().
 
         Parameters
         ----------

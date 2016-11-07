@@ -52,15 +52,14 @@ class BaseAttribute(object):
     """
     widget_class = None
 
-    def __init__(self, default=None, doc=None):
+    def __init__(self, default=None, doc=""):
         """
         default: if provided, the value is initialized to it
         """
 
         if default is not None:
             self.value = default
-        if default is not None:
-            self.__doc__ = doc
+        self.__doc__ = doc
 
     def __set__(self, instance, value):
         """
@@ -106,7 +105,7 @@ class FloatAttribute(BaseAttribute):
     """
     widget_class = FloatRegisterWidget
 
-    def __init__(self, default=None, increment=0.001, min=-.1, max=1., doc=None):
+    def __init__(self, default=None, increment=0.001, min=-.1, max=1., doc=""):
         super(FloatAttribute, self).__init__(default=default, doc=doc)
         self.increment = increment
         self.min = min
@@ -120,14 +119,14 @@ class FloatAttribute(BaseAttribute):
         return widget
 
 
-class LongAttribute(BaseAttribute):
+class IntAttribute(BaseAttribute):
     """
     An attribute for integer values
     """
     widget_class = IntRegisterWidget
 
-    def __init__(self, default=None, increment=1, doc=None):
-        super(LongAttribute, self).__init__(default=default, doc=doc)
+    def __init__(self, default=None, increment=1, doc=""):
+        super(IntAttribute, self).__init__(default=default, doc=doc)
         self.incement = increment
 
 
@@ -145,7 +144,7 @@ class SelectAttribute(BaseAttribute):
     """
     widget_class = SelectRegisterWidget
 
-    def __init__(self, options, default=None, doc=None):
+    def __init__(self, options, default=None, doc=""):
         """
 
         :param options: either a list of strings if options are known at class declaration time
@@ -177,7 +176,7 @@ class StringAttribute(BaseAttribute):
 
 
 class PhaseAttribute(FloatAttribute):
-    def __init__(self, increment=1., min=0., max=360., doc=None):
+    def __init__(self, increment=1., min=0., max=360., doc=""):
         super(PhaseAttribute, self).__init__(increment=increment, min=min, max=max, doc=doc)
 
 

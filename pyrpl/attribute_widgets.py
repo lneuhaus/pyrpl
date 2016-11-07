@@ -5,11 +5,11 @@ The resulting widget is then saved as an attribute of the register
 """
 
 #from pyrpl import RedPitaya
-#from pyrpl.redpitaya_modules import NotReadyError
+#from pyrpl.hardware_modules import NotReadyError
 #from pyrpl.network_analyzer import NetworkAnalyzer
 #from pyrpl.spectrum_analyzer import SpectrumAnalyzer
 #from pyrpl import CurveDB
-from pyrpl.pyrpl_utils import MyDoubleSpinBox
+from pyrpl.pyrpl_utils import MyDoubleSpinBox, MyIntSpinBox
 
 from time import time
 from pyqtgraph.Qt import QtGui, QtCore
@@ -157,7 +157,7 @@ class IntRegisterWidget(NumberRegisterWidget):
         :return:
         """
 
-        self.widget = MyDoubleSpinBox(None)#QtGui.QSpinBox()
+        self.widget = MyIntSpinBox(None)#QtGui.QSpinBox()
         #self.widget.setSingleStep(1)
         self.widget.value_changed.connect(self.write)
 

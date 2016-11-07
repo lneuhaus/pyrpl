@@ -30,17 +30,16 @@ def sleep(time_s):
     else:
         time.sleep(time_s)
 
-class MyDoubleSpinBox(QtGui.QWidget):
+
+class MyNumberSpinBox(QtGui.QWidget, object):
     value_changed = QtCore.pyqtSignal()
-
     def __init__(self, label, min=-1, max=1, step=2.**(-13),
-                 log_increment=False, log_step=1.01):
-        super(MyDoubleSpinBox, self).__init__()
-
+                 log_increment=False, log_step=10):
+        super(MyNumberSpinBox, self).__init__(None)
         self.min = min
         self.max = max
         self._val = 0
-        self.log_step=log_step
+        self.log_step = log_step
         self.log_increment = False
 
         self.lay = QtGui.QHBoxLayout()
@@ -52,8 +51,6 @@ class MyDoubleSpinBox(QtGui.QWidget):
             self.label = QtGui.QLabel(label)
             self.lay.addWidget(self.label)
         self.step = step
-        self.decimals = 4
-
 
         if self.log_increment:
             self.up = QtGui.QPushButton('*')
@@ -87,7 +84,6 @@ class MyDoubleSpinBox(QtGui.QWidget):
         self.setMaximumWidth(200)
         self.setMaximumHeight(34)
 
-
     def set_log_increment(self):
         self.up.setText("*")
         self.down.setText("/")
@@ -113,18 +109,6 @@ class MyDoubleSpinBox(QtGui.QWidget):
 
     def value(self):
         return self.val
-
-    @property
-    def val(self):
-        if self.line.text()!=("%."+str(self.decimals) + "f")%self._val:
-            return float(self.line.text())
-        return self._val
-
-    @val.setter
-    def val(self, new_val):
-        self._val = new_val
-        self.line.setText(("%."+str(self.decimals) + "f")%new_val)
-        return new_val
 
     def step_up(self, factor=1):
         if self.log_increment:
@@ -161,6 +145,47 @@ class MyDoubleSpinBox(QtGui.QWidget):
             self.val = self.min
         self.value_changed.emit()
 
+
+class MyDoubleSpinBox(MyNumberSpinBox):
+    def __init__(self, label, min=-1, max=1, step=2.**(-13),
+                 log_increment=False, log_step=1.01):
+        self.decimals = 4
+        super(MyDoubleSpinBox, self).__init__(label, min, max, step, log_increment, log_step)
+
+    @property
+    def val(self):
+        if self.line.text()!=("%."+str(self.decimals) + "f")%self._val:
+            return float(self.line.text())
+        return self._val
+
+    @val.setter
+    def val(self, new_val):
+        self._val = new_val
+        self.line.setText(("%."+str(self.decimals) + "f")%new_val)
+        return new_val
+
+
+class MyIntSpinBox(MyNumberSpinBox):
+    def __init__(self, label, min=-2**13, max=2**13, step=1,
+                 log_increment=False, log_step=10):
+        super(MyIntSpinBox, self).__init__(label,
+                                           min,
+                                           max,
+                                           step,
+                                           log_increment,
+                                           log_step)
+
+    @property
+    def val(self):
+        if self.line.text()!=("%.i")%self._val:
+            return int(self.line.text())
+        return self._val
+
+    @val.setter
+    def val(self, new_val):
+        self._val = new_val
+        self.line.setText(("%.i")%new_val)
+        return new_val
 
 
 

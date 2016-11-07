@@ -9,7 +9,7 @@ from PyQt4 import QtCore, QtGui
 from pyrpl import CurveDB
 from collections import OrderedDict
 import pyqtgraph as pg
-from .redpitaya_modules import NotReadyError
+from .errors import NotReadyError
 
 class ModuleWidget(QtGui.QWidget):
     """
@@ -435,18 +435,21 @@ class IqWidget(ModuleWidget):
         self.attribute_layout.addLayout(self.attribute_widgets["output_signal"].layout_v)
         self.attribute_widgets["output_signal"].layout_v.addLayout(self.attribute_widgets["output_direct"].layout_v)
 
-        property_acbw = self.attribute_widgets["acbandwidth"]
 
+class PidWidget(ModuleWidget):
+    """
+    Widget for a single PID.
+    """
 
-        #def update():
-        #    """
-        #    Sets the gui value from the current module value
-#
-#            :return:
-#            """
-#
-#            index = list(property_acbw.options).index(int(getattr(property_acbw.module,
-#                                                                      property_acbw.name)))
-#            property_acbw.widget.setCurrentIndex(index)
-#
-#        property_acbw.update = update
+    def init_gui(self):
+        self.main_layout = QtGui.QVBoxLayout()
+        self.setLayout(self.main_layout)
+        self.init_attribute_layout()
+        layout = self.attribute_widgets["inputfilter"].layout_v
+        self.attribute_layout.removeItem(layout)
+        self.main_layout.addLayout(layout)
+        for prop in 'p', 'i', 'd':
+            self.attribute_widgets[prop].widget.set_log_increment()
+            self.attribute_widgets[prop].widget.setMaximum(1000000)
+            self.attribute_widgets[prop].widget.setMinimum(-1000000)
+
