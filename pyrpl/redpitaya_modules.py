@@ -19,6 +19,7 @@
 """ All modules are extensively discussed in the Tutorial. Please refer to
 there for more information. """
 
+from six import with_metaclass
 import numpy as np
 import time
 from time import sleep
@@ -27,23 +28,86 @@ import sys
 import matplotlib.pyplot as plt
 import logging
 
-from .registers import *
+from .redpitaya_registers import FloatRegister, BoolRegister, IntRegister, LongRegister, FilterRegister, \
+                                 FrequencyRegister, SelectRegister, PhaseRegister, PWMRegister, IORegister, \
+                                 StringProperty, BaseRegister
+from .attributes import  NamedDescriptorResolverMetaClass, FilterAttribute, FloatAttribute, SelectAttribute
 from .bijection import Bijection
 from . import iir, bodefit
-
-
 class TimeoutError(ValueError):
     pass
 class NotReadyError(ValueError):
     pass
+from .module_widgets import ScopeWidget, AsgWidget, ModuleWidget, IqWidget
+
+dspinputs = dict(
+        pid0=0,
+        pid1=1,
+        pid2=2,
+        pid3=3,
+        iir=4,
+        iq0=5,
+        iq1=6,
+        iq2=7,
+        asg1=8,
+        asg2=9,
+        # scope1 = 8, #same as asg1 by design
+        # scope2 = 9, #same as asg2 by design
+        adc1=10, #same as asg
+        adc2=11,
+        dac1=12,
+        dac2=13,
+        iq2_2=14,
+        off=15)
 
 
-class BaseModule(object):
+class BaseModule(with_metaclass(NamedDescriptorResolverMetaClass, object)):
+    # python 3-compatible way of using metaclass
+    # attributes have automatically their internal name set properly upon module creation
+    """
+    BaseModules have a create_gui function that returns a widget according to widget_class
+    """
+
     name = 'BaseModule'
-
+    widget_class = ModuleWidget # Change this to provide a custom graphical class
+    gui_attributes = [] # class inheriting from ModuleWidget can automatically generate gui from a list of attributes
+    widget = None # instance-level attribute created in create_widget
+    attribute_widgets = None # instance-level attribute created in create_widget
     # the list of parameters that constitute the "state" of the Module
     parameter_names = []
 
+    #def __new__(cls, *args, **kwds): # to be removed (only one descriptor, several module instances)...
+    #    new_instance = object.__new__(cls)
+    #    for obj in new_instance.__class__.__dict__.values():
+    #        if isinstance(obj, ModuleAttribute):
+    #            obj.module = new_instance
+    #    return new_instance
+
+    def help(self, register=''):
+        """returns the docstring of the specified register name
+
+           if register is an empty string, all available docstrings are returned"""
+        if register:
+            string = type(self).__dict__[register].__doc__
+            return string
+        else:
+            string = ""
+            for key in type(self).__dict__.keys():
+                if isinstance(type(self).__dict__[key], BaseRegister):
+                    docstring = self.help(key)
+                    if not docstring.startswith('_'):  # mute internal registers
+                        string += key + ": " + docstring + '\r\n\r\n'
+            return string
+
+    def create_widget(self):
+        self.attribute_widgets = dict()
+        self.widget = self.widget_class(self.name, self)
+        return self.widget
+
+class HardwareModule(BaseModule):
+    """
+    Module that directly maps a Redpitaya module.
+    """
 
     # factor to manually compensate 125 MHz oscillator frequency error
     # real_frequency = 125 MHz * _frequency_correction
@@ -64,22 +128,6 @@ class BaseModule(object):
             raise ValueError("New module attributes may not be set at runtime. Attribute "
                              + name + " is not defined in class " + self.__class__.__name__)
 
-    def help(self, register=''):
-        """returns the docstring of the specified register name
-        
-           if register is an empty string, all available docstrings are returned"""
-        if register:
-            string = type(self).__dict__[register].__doc__
-            return string
-        else:
-            string = ""
-            for key in type(self).__dict__.keys():
-                if isinstance( type(self).__dict__[key], Register):
-                    docstring = self.help(key)
-                    if not docstring.startswith('_'): # mute internal registers
-                        string += key + ": " + docstring + '\r\n\r\n'
-            return string
-        
     def __init__(self,
                  client,
                  addr_base=0x40000000,
@@ -138,7 +186,7 @@ class BaseModule(object):
         for key, value in dic.iteritems():
             setattr(self, key, value)
 
-class HK(BaseModule):
+class HK(HardwareModule):
     name = 'HK'
 
     def __new__(cls, *args, **kwargs):
@@ -162,8 +210,8 @@ class HK(BaseModule):
     
     id = SelectRegister(0x0, doc="device ID", options={"prototype0": 0,
                                                        "release1": 1})
-    digital_loop = Register(0x0C, doc="enables digital loop")
-    led = Register(0x30,doc="LED control with bits 1:8")
+    digital_loop = IntRegister(0x0C, doc="enables digital loop")
+    led = IntRegister(0x30,doc="LED control with bits 1:8")
     # another option: access led as array of bools
     # led = [BoolRegister(0x30,bit=i,doc="LED "+str(i)) for i in range(8)]
 
@@ -173,8 +221,93 @@ class HK(BaseModule):
 # namespace
 data_length = 2**14
 
+class TriggerDelay(FloatAttribute):
+    def __init__(self, attr_name):
+        super(TriggerDelay, self).__init__(attr_name, 0.001)
 
-class Scope(BaseModule):
+    def __get__(self, obj, obj_type):
+        if obj is None:
+            return self
+        return (obj._trigger_delay - obj.data_length//2)*obj.sampling_time
+
+    def __set__(self, obj, delay):
+        # memorize the setting
+        obj._trigger_delay_memory = delay
+        # convert float delay into counts
+        delay = int(np.round(delay/obj.sampling_time)) + obj.data_length//2
+        # in mode "immediately", trace goes from 0 to duration,
+        # but trigger_delay_memory is not overwritten
+        if obj.trigger_source=='immediately':
+            obj._trigger_delay = obj.data_length
+            return delay
+        if delay <= 0:
+            delay = 1  # bug in scope code: 0 does not work
+        elif delay > 2**32-1: #self.data_length-1:
+            delay = 2**32-1  # self.data_length-1
+        obj._trigger_delay = delay
+        return delay
+
+class DurationAttribute(SelectAttribute):
+    def get_value(self, instance, owner):
+        if instance is None:
+            return self
+        return instance.sampling_time * float(instance.data_length)
+
+    def set_value(self, instance, value):
+        """sets returns the duration of a full scope sequence
+        the rounding makes sure that the actual value is longer or equal to the set value"""
+        value = float(value) / instance.data_length
+        tbase = 8e-9
+        for d in instance.decimations:
+            if value <= tbase * float(d):
+                instance.decimation = d
+                return
+        instance.decimation = max(instance.decimations)
+        instance._logger.error("Desired duration too long to realize")
+
+class TriggerSourceAttribute(SelectAttribute):
+    def get_value(self, instance, owner):
+        if instance is None:
+            return self
+        if hasattr(instance, "_trigger_source_memory"):
+            return instance._trigger_source_memory
+        else:
+            instance._trigger_source_memory = instance._trigger_source
+            return instance._trigger_source_memory
+
+    def set_value(self, instance, value):
+        instance._trigger_source = value
+        instance._trigger_source_memory = value
+        # passing between immediately and other sources possibly requires trigger delay change
+        instance.trigger_delay = instance._trigger_delay_memory
+
+class ScopeInputAttribute(SelectAttribute):
+    def __init__(self, options, ch=1):
+        super(ScopeInputAttribute, self).__init__(options=options)
+        self.ch = ch
+
+    def get_value(self, instance, owner):
+        if instance is None:
+            return self
+        ch = getattr(instance, '_ch' + str(self.ch))
+        return ch.input
+
+    def set_value(self, instance, value):
+        ch = getattr(instance, '_ch' + str(self.ch))
+        setattr(ch, 'input', value)
+        return value
+
+class Scope(HardwareModule):
+    widget_class = ScopeWidget
+    gui_attributes = ["input1",
+                      "input2",
+                      "duration",
+                      "average",
+                      "trigger_source",
+                      "trigger_delay",
+                      "threshold_ch1",
+                      "threshold_ch2",
+                      "curve_name"]
     name = 'scope'
     data_length = data_length  # see definition and explanation above
     inputs = None
@@ -201,21 +334,22 @@ class Scope(BaseModule):
         self._trigger_source_memory = "immediately"
         self._trigger_delay_memory = 0
 
-    @property
-    def input1(self):
-        return self._ch1.input
+    input1 = ScopeInputAttribute(dspinputs.keys(), 1)
+    input2 = ScopeInputAttribute(dspinputs.keys(), 2)
+    #def input1(self):
+     #   return self._ch1.input
 
-    @input1.setter
-    def input1(self, v):
-        self._ch1.input = v
+    #@input1.setter
+    #def input1(self, v):
+    #    self._ch1.input = v
 
-    @property
-    def input2(self):
-        return self._ch2.input
+    #@property
+    #def input2(self):
+    #    return self._ch2.input
 
-    @input2.setter
-    def input2(self, v):
-        self._ch2.input = v
+    #@input2.setter
+    #def input2(self, v):
+    #    self._ch2.input = v
 
     _reset_writestate_machine = BoolRegister(0x0, 1, 
                             doc="Set to True to reset writestate machine. \
@@ -233,7 +367,9 @@ class Scope(BaseModule):
                         "ext_negative_edge": 7, #DIO0_P pin
                         "asg1": 8, 
                         "asg2": 9}
-    
+
+    curve_name = StringProperty('curve_name')
+
     trigger_sources = sorted(_trigger_sources.keys()) # help for the user
     
     _trigger_source = SelectRegister(0x4, doc="Trigger source", 
@@ -243,22 +379,9 @@ class Scope(BaseModule):
         super(Scope, self).set_state(dic)
         self.setup()
 
-    @property
-    def trigger_source(self):
-        if hasattr(self,"_trigger_source_memory"):
-            return self._trigger_source_memory
-        else:
-            self._trigger_source_memory = self._trigger_source
-            return self._trigger_source_memory
-        
-    @trigger_source.setter
-    def trigger_source(self, val):
-        self._trigger_source = val
-        self._trigger_source_memory = val
-        # passing between immediately and other sources possibly requires trigger delay change
-        self.trigger_delay = self._trigger_delay_memory
+    trigger_source = TriggerSourceAttribute(_trigger_sources.keys())
 
-    _trigger_debounce = Register(0x90, doc="Trigger debounce time [cycles]")
+    _trigger_debounce = IntRegister(0x90, doc="Trigger debounce time [cycles]")
 
     trigger_debounce = FloatRegister(0x90, bits=20, norm=125e6, 
                                      doc="Trigger debounce time [s]")
@@ -269,31 +392,11 @@ class Scope(BaseModule):
     threshold_ch2 = FloatRegister(0xC, bits=14, norm=2**13, 
                                   doc="ch1 trigger threshold [volts]")
     
-    _trigger_delay = Register(0x10,
+    _trigger_delay = IntRegister(0x10,
                               doc="number of decimated data after trigger "
                                   "written into memory [samples]")
 
-    @property
-    def trigger_delay(self):
-        return (self._trigger_delay - self.data_length//2)*self.sampling_time
-    
-    @trigger_delay.setter
-    def trigger_delay(self, delay):
-        # memorize the setting
-        self._trigger_delay_memory = delay
-        # convert float delay into counts
-        delay = int(np.round(delay/self.sampling_time)) + self.data_length//2
-        # in mode "immediately", trace goes from 0 to duration,
-        # but trigger_delay_memory is not overwritten
-        if self.trigger_source=='immediately':
-            self._trigger_delay = self.data_length
-            return delay
-        if delay <= 0:
-            delay = 1  # bug in scope code: 0 does not work
-        elif delay > 2**32-1: #self.data_length-1:
-            delay = 2**32-1  # self.data_length-1
-        self._trigger_delay = delay
-        return delay
+    trigger_delay = TriggerDelay("trigger_delay")
 
     _trigger_delay_running = BoolRegister(0x0, 2,
                         doc="trigger delay running (register adc_dly_do)")
@@ -301,7 +404,7 @@ class Scope(BaseModule):
     _adc_we_keep = BoolRegister(0x0, 3,
                         doc="Scope resets trigger automatically (adc_we_keep)")
 
-    _adc_we_cnt = Register(0x2C, doc="Number of samles that have passed since "
+    _adc_we_cnt = IntRegister(0x2C, doc="Number of samles that have passed since "
                                      "trigger was armed (adc_we_cnt)")
    
     current_timestamp = LongRegister(0x15C,
@@ -327,10 +430,10 @@ class Scope(BaseModule):
     decimation = SelectRegister(0x14, doc="decimation factor",
                                 options=_decimations)
     
-    _write_pointer_current = Register(0x18, 
+    _write_pointer_current = IntRegister(0x18,
                             doc="current write pointer position [samples]")
     
-    _write_pointer_trigger = Register(0x1C, 
+    _write_pointer_trigger = IntRegister(0x1C,
                             doc="write pointer when trigger arrived [samples]")
     
     hysteresis_ch1 = FloatRegister(0x20, bits=14, norm=2**13, 
@@ -382,22 +485,7 @@ class Scope(BaseModule):
         self.decimation = min(self.decimations)
         self._logger.error("Desired sampling time impossible to realize")
 
-    @property
-    def duration(self):
-        return self.sampling_time * float(self.data_length)
-
-    @duration.setter
-    def duration(self, v):
-        """sets returns the duration of a full scope sequence
-        the rounding makes sure that the actual value is longer or equal to the set value"""
-        v = float(v) / self.data_length
-        tbase = 8e-9
-        for d in self.decimations:
-            if v <= tbase * float(d):
-                self.decimation = d
-                return
-        self.decimation = max(self.decimations)
-        self._logger.error("Desired duration too long to realize")
+    duration = DurationAttribute(durations)
 
     @property
     def _rawdata_ch1(self):
@@ -595,6 +683,112 @@ class Scope(BaseModule):
         return iq_module
 
 
+class InputAttribute(SelectAttribute):
+    "selects the input signal of the module"
+    def get_value(self, instance, owner):
+        if instance is None:
+            return self
+        else:
+            return instance._input
+
+    def set_value(self, instance, value):
+        # allow to directly pass another dspmodule as input
+        if isinstance(value, DspModule) and hasattr(value, 'name'):
+            instance._input = value.name
+        else:
+            instance._input = value
+
+class DspModule(HardwareModule):
+    _delay = 0  # delay of the module from input to output_signal (in cycles)
+
+    _inputs = dspinputs
+    inputs = _inputs.keys()
+
+    _output_directs = dict(
+        off=0,
+        out1=1,
+        out2=2,
+        both=3)
+    output_directs = _output_directs.keys()
+
+    _input = SelectRegister(0x0, options=_inputs,
+                           doc="selects the input signal of the module")
+
+    input = InputAttribute(_inputs)
+
+    output_direct = SelectRegister(0x4, options=_output_directs,
+                            doc="selects to which analog output the module \
+                            signal is sent directly")
+
+    out1_saturated = BoolRegister(0x8,0,doc="True if out1 is saturated")
+
+    out2_saturated = BoolRegister(0x8,1,doc="True if out2 is saturated")
+
+    name = "dspmodule"
+
+    def __init__(self, client, module='pid0', parent=None):
+        self.name = module
+        self._number = self._inputs[module]
+        super(DspModule, self).__init__(client,
+            addr_base=0x40300000+self._number*0x10000,
+            parent=parent)
+
+
+class OutputDirectAttribute(SelectAttribute):
+    def get_value(self, instance, owner):
+        if instance is None:
+            return self
+        else:
+            return instance._dsp.output_direct
+
+    def set_value(self, instance, val):
+        instance._dsp.output_direct = val
+        return val
+
+class WaveformAttribute(SelectAttribute):
+    def get_value(self, instance, owner):
+        return instance._waveform
+
+    def set_value(self, instance, waveform):
+        waveform = waveform.lower()
+        if not waveform in instance.waveforms:
+            raise ValueError("waveform shourd be one of " + instance.waveforms)
+        else:
+            if not waveform == 'noise':
+                instance.random_phase = False
+                instance._rmsamplitude = 0
+            if waveform == 'sin':
+                x = np.linspace(0, 2 * np.pi, instance.data_length,
+                                endpoint=False)
+                y = np.sin(x)
+            elif waveform == 'cos':
+                x = np.linspace(0, 2 * np.pi, instance.data_length,
+                                endpoint=False)
+                y = np.cos(x)
+            elif waveform == 'ramp':
+                y = np.linspace(-1.0, 3.0, instance.data_length,
+                                endpoint=False)
+                y[instance.data_length // 2:] = -1 * y[:instance.data_length // 2]
+            elif waveform == 'halframp':
+                y = np.linspace(-1.0, 1.0, instance.data_length,
+                                endpoint=False)
+            elif waveform == 'dc':
+                y = np.zeros(instance.data_length)
+            elif waveform == 'noise':
+                instance._rmsamplitude = instance.amplitude
+                y = np.random.normal(loc=0.0, scale=instance._rmsamplitude,
+                                     size=instance.data_length)
+                instance.amplitude = 1.0  # this may be confusing to the user..
+                instance.random_phase = True
+            else:
+                y = instance.data
+                instance._logger.error(
+                    "Waveform name %s not recognized. Specify waveform manually" % waveform)
+            instance.data = y
+            instance._waveform = waveform
+        return waveform
+
+
 # ugly workaround, but realized too late that descriptors have this limit
 def make_asg(channel=1):
     if channel == 1:
@@ -609,7 +803,8 @@ def make_asg(channel=1):
         set_BIT_OFFSET = 16
         set_default_output_direct = 'off'
         set_name = 'asg2'
-    class Asg(BaseModule):
+    class Asg(HardwareModule):
+        widget_class = AsgWidget
         parameter_names = ["on",
                            "periodic",
                            "trigger_source",
@@ -623,6 +818,12 @@ def make_asg(channel=1):
                            "random_phase",
                            "waveform",
                            "output_direct"]
+        gui_attributes = ["waveform",
+                          "amplitude",
+                          "offset",
+                          "frequency",
+                          "trigger_source",
+                          "output_direct"]
 
         _DATA_OFFSET = set_DATA_OFFSET
         _VALUE_OFFSET = set_VALUE_OFFSET
@@ -646,13 +847,7 @@ def make_asg(channel=1):
             self.trigger_source = 'immediately'
             self.output_direct = self.default_output_direct
 
-        @property
-        def output_direct(self):
-            return self._dsp.output_direct
-    
-        @output_direct.setter
-        def output_direct(self, v):
-            self._dsp.output_direct = v
+        output_direct = OutputDirectAttribute(DspModule._output_directs)
     
         data_length = 2**14
 
@@ -672,7 +867,7 @@ def make_asg(channel=1):
                         doc='If False, fgen starts from data[0] value after each cycle. If True, assumes that data is periodic and jumps to the naturally next index after full cycle.')
 
         # register set_a_rgate
-        _counter_wrap = Register(0x8+_VALUE_OFFSET, 
+        _counter_wrap = IntRegister(0x8+_VALUE_OFFSET,
                                 doc="Raw phase value where counter wraps around. To be set to 2**16*(2**14-1) = 0x3FFFFFFF in virtually all cases. ") 
     
         # register trig_a/b_src
@@ -686,7 +881,7 @@ def make_asg(channel=1):
         trigger_sources = _trigger_sources.keys()
         
         trigger_source = SelectRegister(0x0, bitmask=0x0007<<_BIT_OFFSET,
-                                        options=_trigger_sources, 
+                                        options=_trigger_sources,
                                         doc="trigger source for triggered output")
         
         # offset is stored in bits 31:16 of the register. 
@@ -705,23 +900,23 @@ def make_asg(channel=1):
         frequency = FrequencyRegister(0x10+_VALUE_OFFSET, bits=30,
                                       doc="Frequency of the output waveform [Hz]")
         
-        _counter_step = Register(0x10+_VALUE_OFFSET,doc="""Each clock cycle the counter_step is increases the internal counter modulo counter_wrap.
+        _counter_step = IntRegister(0x10+_VALUE_OFFSET,doc="""Each clock cycle the counter_step is increases the internal counter modulo counter_wrap.
             The current counter step rightshifted by 16 bits is the index of the value that is chosen from the data table.
             """)
         
-        _start_offset = Register(0xC, 
+        _start_offset = IntRegister(0xC,
                         doc="counter offset for trigged events = phase offset ")
 
         # novel burst / pulsed mode parameters
-        cycles_per_burst = Register(0x18+_VALUE_OFFSET,
+        cycles_per_burst = IntRegister(0x18+_VALUE_OFFSET,
                     doc="Number of repeats of table readout. 0=infinite. 32 "
                         "bits.")
 
-        bursts = Register(0x1C+_VALUE_OFFSET,
+        bursts = IntRegister(0x1C+_VALUE_OFFSET,
                     doc="Number of bursts (1 burst = 'cycles' periods of "
                         "waveform + delay_between_bursts. 0=disabled")
 
-        delay_between_bursts = Register(0x20+_VALUE_OFFSET,
+        delay_between_bursts = IntRegister(0x20+_VALUE_OFFSET,
                     doc="Delay between repetitions [us]. Granularity=1us")
 
         random_phase = BoolRegister(0x0, 12+_BIT_OFFSET,
@@ -730,52 +925,10 @@ def make_asg(channel=1):
                             'cycles. This is used for the generation of '
                             'white noise. If false, asg behaves normally. ')
 
-        @property
-        def waveform(self):
-            return self._waveform
 
-        @property
-        def waveforms(self):
-            return ['sin', 'cos', 'ramp', 'halframp', 'dc', 'noise']
+        waveforms = ['sin', 'cos', 'ramp', 'halframp', 'dc', 'noise']
 
-        @waveform.setter
-        def waveform(self, waveform):
-            waveform = waveform.lower()
-            if not waveform in self.waveforms:
-                raise ValueError("waveform shourd be one of " + self.waveforms)
-            else:
-                if not waveform == 'noise':
-                    self.random_phase = False
-                    self._rmsamplitude = 0
-                if waveform == 'sin':
-                    x = np.linspace(0, 2 * np.pi, self.data_length,
-                                    endpoint=False)
-                    y = np.sin(x)
-                elif waveform == 'cos':
-                    x = np.linspace(0, 2 * np.pi, self.data_length,
-                                    endpoint=False)
-                    y = np.cos(x)
-                elif waveform == 'ramp':
-                    y = np.linspace(-1.0, 3.0, self.data_length,
-                                    endpoint=False)
-                    y[self.data_length // 2:] = -1 * y[:self.data_length // 2]
-                elif waveform == 'halframp':
-                    y = np.linspace(-1.0, 1.0, self.data_length,
-                                    endpoint=False)
-                elif waveform == 'dc':
-                    y = np.zeros(self.data_length)
-                elif waveform == 'noise':
-                    self._rmsamplitude = self.amplitude
-                    y = np.random.normal(loc=0.0, scale=self._rmsamplitude,
-                                         size=self.data_length)
-                    self.amplitude = 1.0  # this may be confusing to the user..
-                    self.random_phase = True
-                else:
-                    y = self.data
-                    self._logger.error(
-                        "Waveform name %s not recognized. Specify waveform manually" % waveform)
-                self.data = y
-                self._waveform = waveform
+        waveform = WaveformAttribute(waveforms)
 
         def trig(self):
             self.start_phase = 0
@@ -950,72 +1103,7 @@ Asg1 = make_asg(channel=1)
 Asg2 = make_asg(channel=2)
 
 
-dspinputs = dict(
-        pid0=0,
-        pid1=1,
-        pid2=2,
-        pid3=3,
-        iir=4,
-        iq0=5,
-        iq1=6,
-        iq2=7,
-        asg1=8,
-        asg2=9,
-        # scope1 = 8, #same as asg1 by design
-        # scope2 = 9, #same as asg2 by design
-        adc1=10, #same as asg
-        adc2=11,
-        dac1=12,
-        dac2=13,
-        iq2_2=14,
-        off=15)
-
-class DspModule(BaseModule):
-    _delay = 0  # delay of the module from input to output_signal (in cycles)
-
-    _inputs = dspinputs
-    inputs = _inputs.keys()
-    
-    _output_directs = dict(
-        off=0,
-        out1=1,
-        out2=2,
-        both=3)
-    output_directs = _output_directs.keys()
-    
-    _input = SelectRegister(0x0, options=_inputs,
-                           doc="selects the input signal of the module")
-    @property
-    def input(self):
-        "selects the input signal of the module"
-        return self._input
-    @input.setter
-    def input(self, value):
-        # allow to directly pass another dspmodule as input
-        if isinstance(value, DspModule) and hasattr(value, 'name'):
-            self._input = value.name
-        else:
-            self._input = value
-
-    output_direct = SelectRegister(0x4, options=_output_directs, 
-                            doc="selects to which analog output the module \
-                            signal is sent directly")    
-
-    out1_saturated = BoolRegister(0x8,0,doc="True if out1 is saturated")
-    
-    out2_saturated = BoolRegister(0x8,1,doc="True if out2 is saturated")
-
-    name = "dspmodule"
-
-    def __init__(self, client, module='pid0', parent=None):
-        self.name = module
-        self._number = self._inputs[module]
-        super(DspModule, self).__init__(client,
-            addr_base=0x40300000+self._number*0x10000,
-            parent=parent)
-
-
-class Sampler(BaseModule):
+class Sampler(HardwareModule):
     def __init__(self, client, parent=None):
         self.name = "sampler"
         super(Sampler, self).__init__(client,
@@ -1236,7 +1324,50 @@ class Pid(FilterModule):
                                     doc="normalization inputoffset [volts]")
 
 
+class IqGain(FloatAttribute):
+    """descriptor for the gain of the Iq module"""
+
+    def get_value(self, obj, objtype=None):
+        if obj is None:
+            return self
+        return obj._g1 / 2**3
+
+    def set_value(self, obj, val):
+        obj._g1 = float(val) * 2**3
+        obj._g4 = float(val) * 2**3
+        return val
+
+
+class IqAcbandwidth(FilterAttribute):
+    """descriptor for the acbandwidth of the Iq module"""
+
+    def valid_frequencies(self, module):
+        return [freq for freq in module.__class__.inputfilter.valid_frequencies(module) if freq>=0]
+
+    def get_value(self, instance, owner):
+        if instance is None:
+            return self
+        return - instance.inputfilter
+
+    def set_value(self, instance, val):
+        val = float(val)
+        instance.inputfilter = -val
+        return val
+
+
 class IQ(FilterModule):
+    widget_class = IqWidget
+    gui_attributes = ["input",
+                      "acbandwidth",
+                      "frequency",
+                      "bandwidth",
+                      "quadrature_factor",
+                      "output_signal",
+                      "gain",
+                      "amplitude",
+                      "phase",
+                      "output_direct"]
+
     _delay = 5  # bare delay of IQ module with no filters set (cycles)
 
     _output_signals = dict(
@@ -1275,7 +1406,7 @@ class IQ(FilterModule):
 
     @property
     def bandwidths(self):
-        return self._valid_bandwidths()
+        return self._valid_bandwidths(self)
     
     on = BoolRegister(0x100, 0, 
                       doc="If set to False, turns off the module, e.g. to \
@@ -1285,8 +1416,8 @@ class IQ(FilterModule):
                       doc="If True: Turns on the PFD module,\
                         if False: turns it off and resets integral")
 
-    _LUTSZ = Register(0x200)
-    _LUTBITS = Register(0x204)
+    _LUTSZ = IntRegister(0x200)
+    _LUTBITS = IntRegister(0x204)
     _PHASEBITS = 32 #Register(0x208)
     _GAINBITS = 18 #Register(0x20C)
     _SIGNALBITS = 14 #Register(0x210)
@@ -1325,29 +1456,16 @@ class IQ(FilterModule):
     def __init__(self, *args, **kwds):
         super(IQ, self).__init__(*args, **kwds)
 
-    @property
-    def  acbandwidths(self):
-        #acbandwidths = [0] + [int(2.371593461809983*2**n) for n in range(1, 27)]
-        return self._valid_inputfilter_frequencies()
+    #@property
+    #def acbandwidths(self):
+    acbandwidths = [0] + [int(2.371593461809983*2**n) for n in range(1, 27)] # only register that needs to be read to
+    # guess the options... we need to fix that...
+        #return self._valid_inputfilter_frequencies()
+    #acbandwidths = FilterModule.inputfilter.valid_frequencies()
 
-    @property
-    def gain(self):
-        return self._g1 / 2**3
+    gain = IqGain(_g1, doc="gain of the iq module (see drawing)")
 
-    @gain.setter
-    def gain(self, v):
-        self._g1 = float(v) * 2**3
-        self._g4 = float(v) * 2**3
-
-    @property
-    def acbandwidth(self):
-        return - self.inputfilter
-
-    @acbandwidth.setter
-    def acbandwidth(self, val):
-        val = float(val)
-        self.inputfilter = -val
-        return val
+    acbandwidth = IqAcbandwidth(doc="positive corner frequency of input high pass filter")
 
     def setup(
             self,
@@ -1388,9 +1506,9 @@ class IQ(FilterModule):
             self.quadrature_factor = quadrature_factor
         self.on = True
 
-    _na_averages = Register(0x130, 
+    _na_averages = IntRegister(0x130,
                     doc='number of cycles to perform na-averaging over')
-    _na_sleepcycles = Register(0x134,
+    _na_sleepcycles = IntRegister(0x134,
                     doc='number of cycles to wait before starting to average')
 
     @property
@@ -1583,11 +1701,11 @@ class IIR(FilterModule):
     # the fpga-implemented notation (following Oppenheim and Schaefer: DSP)
     _invert = True
     
-    _IIRBITS = Register(0x200)
+    _IIRBITS = IntRegister(0x200)
     
-    _IIRSHIFT = Register(0x204)
+    _IIRSHIFT = IntRegister(0x204)
 
-    _IIRSTAGES = Register(0x208)
+    _IIRSTAGES = IntRegister(0x208)
 
     parameter_names = ["loops",
                        "on",
@@ -1596,7 +1714,7 @@ class IIR(FilterModule):
                        "input",
                        "output_direct"]
 
-    loops = Register(0x100, doc="Decimation factor of IIR w.r.t. 125 MHz. "\
+    loops = IntRegister(0x100, doc="Decimation factor of IIR w.r.t. 125 MHz. "\
                                 +"Must be at least 3. ")
 
     on = BoolRegister(0x104, 0, doc="IIR is on")
@@ -1607,7 +1725,7 @@ class IIR(FilterModule):
     #copydata = BoolRegister(0x104, 2,
     #            doc="If True: coefficients are being copied from memory")
 
-    overflow = Register(0x108,
+    overflow = IntRegister(0x108,
                             doc="Bitmask for various overflow conditions")
 
     @property
@@ -1948,7 +2066,7 @@ class IIR(FilterModule):
         return self.bf
 
 
-class AMS(BaseModule):
+class AMS(HardwareModule):
     """mostly deprecated module (redpitaya has removed adc support). 
     only here for dac2 and dac3"""
     def __init__(self, client, parent=None):

@@ -947,7 +947,7 @@ class NaGui(ModuleWidget):
         """
         # add this new display parameter to module na
         self.module.infer_open_loop_tf = False
-        self.module.__dict__['curve_name'] = 'na trace'
+        #self.module.__dict__['curve_name'] = 'na trace'
         self.main_layout = QtGui.QVBoxLayout()
         self.init_property_layout()
         self.button_layout = QtGui.QHBoxLayout()

@@ -1,5 +1,5 @@
 redpitaya:
-  hostname: 10.214.1.29
+  hostname: 10.214.1.28
   password: root
   user: root
   port: 2222
@@ -7,7 +7,7 @@ redpitaya:
   filename: fpga//red_pitaya.bin
   reloadfpga: true
   # autostart gui?
-  gui: true
+  gui: false
   monitor_server_name: monitor_server
 
 general:
@@ -166,10 +166,10 @@ scope:
 
 scopegui:
   coordinates:
-  - -1840
-  - 188
-  - 1545
-  - 836
+  - 583
+  - 141
+  - 1069
+  - 600
   auto_run_continuous: true
 
 # default properties for signal acquisition
@@ -206,10 +206,11 @@ signal:
   peak: 0
   threshold: 0
   hysteresis: 0.002
+
 dock_positions: !!binary |
-  AAAA/wAAAAD9AAAAAQAAAAIAAAYJAAADRPwBAAAAAvwAAAAAAAACdwAAAncA/////AIAAAAD+wAA
-  AAgAQQBzAGcAcwEAAAAAAAAAkAAAAJAA////+wAAABYAUAB5AHIAcABsACAAbQBvAGQAZQBsAQAA
-  AJQAAACcAAAAnAD////7AAAACABQAGkAZABzAQAAATQAAAIQAAACEAD////8AAACewAAA44AAAOO
-  AP////oAAAABAQAAAAP7AAAAHgBTAGMAbwBwAGUALwBTAHAAZQBjAC4AIABBAG4ALgMAAAB0AAAB
-  HAAAA44AAAMZ+wAAAAQATgBhAQAAAAD/////AAADjgD////7AAAABABJAHEBAAAAAP////8AAAN5
-  AP///wAABgkAAAAAAAAABAAAAAQAAAAIAAAACPwAAAAA
+  AAAA/wAAAAD9AAAAAQAAAAIAAAQtAAACWPwBAAAAAfwAAAAAAAAELQAAA44A////+gAAAAABAAAA
+  BvsAAAAeAFMAYwBvAHAAZQAvAFMAcABlAGMALgAgAEEAbgAuAQAAAAD/////AAADfwD////7AAAA
+  CABBAHMAZwBzAQAAAAD/////AAACUQD////7AAAACABQAGkAZABzAQAAAAD/////AAACdwD////7
+  AAAABABOAGEBAAAAAP////8AAAOOAP////sAAAAEAEkAcQEAAAAA/////wAAA3kA////+wAAABYA
+  UAB5AHIAcABsACAAbQBvAGQAZQBsAQAAAAD/////AAABVwD///8AAAQtAAAAAAAAAAQAAAAEAAAA
+  CAAAAAj8AAAAAA==

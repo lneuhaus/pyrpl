@@ -7,7 +7,7 @@ logger = logging.getLogger(name=__name__)
 
 from pyrpl import RedPitaya
 from pyrpl.redpitaya_modules import *
-from pyrpl.registers import *
+from pyrpl.redpitaya_registers import *
 
 
 class TestClass(object):

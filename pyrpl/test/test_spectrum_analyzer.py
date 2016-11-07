@@ -8,7 +8,7 @@ logger = logging.getLogger(name=__name__)
 
 from pyrpl import RedPitaya
 from pyrpl.redpitaya_modules import *
-from pyrpl.registers import *
+from pyrpl.redpitaya_registers import *
 from pyrpl.bijection import Bijection
 
 from pyrpl.spectrum_analyzer import SpectrumAnalyzer
