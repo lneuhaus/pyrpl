@@ -7,7 +7,7 @@ import pyqtgraph as pg
 from pyqtgraph.Qt import QtGui, QtCore
 from pyrpl import CurveDB
 from pyrpl import RedPitaya
-from pyrpl.pyrpl_utils import MyDoubleSpinBox
+from pyrpl.attribute_widgets import MyDoubleSpinBox
 from pyrpl.errors import NotReadyError
 
 if sys.version_info < (3,):

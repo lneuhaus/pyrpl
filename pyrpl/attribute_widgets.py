@@ -4,18 +4,9 @@ An instance of Register can create its RegisterWidget counterPart by calling reg
 The resulting widget is then saved as an attribute of the register
 """
 
-#from pyrpl import RedPitaya
-#from pyrpl.hardware_modules import NotReadyError
-#from pyrpl.network_analyzer import NetworkAnalyzer
-#from pyrpl.spectrum_analyzer import SpectrumAnalyzer
-#from pyrpl import CurveDB
-from pyrpl.pyrpl_utils import MyDoubleSpinBox, MyIntSpinBox
-
-from time import time
 from pyqtgraph.Qt import QtGui, QtCore
-import pyqtgraph as pg
 import numpy as np
-from collections import OrderedDict
+import time
 
 import sys
 if sys.version_info < (3,):
@@ -26,6 +17,246 @@ else:
 APP = QtGui.QApplication.instance()
 if APP is None:
     APP = QtGui.QApplication(["redpitaya_gui"])
+
+
+
+class MyNumberSpinBox(QtGui.QWidget, object):
+    """
+    The button can be either in log_increment mode, or linear increment.
+       - In log_increment: the halflife_seconds value determines how long it takes, when the user stays clicked
+         on the "*"/"/" buttons to change the value by a factor 2. Since the underlying register is assumed to be
+         represented by an int, its values are separated by a minimal separation, called "increment". The time to
+         wait before refreshing the value is adjusted automatically so that the log behavior is still correct, even
+         when the value becomes comparable to the increment.
+       - In linear increment, the value is immediately incremented by the increment, then, nothing happens during
+        a time given by timer_initial_latency. Only after that, is the value incremented of "increment" every
+        timer_min_interval.
+    """
+    value_changed = QtCore.pyqtSignal()
+    timer_min_interval = 5 # don't go below 5 ms
+    timer_initial_latency = 500 # 100 ms before starting to update continuously.
+
+    def __init__(self, label, min=-1, max=1, increment=2.**(-13),
+                 log_increment=False, halflife_seconds=1.):
+        """
+        :param label: label of the button
+        :param min: min value
+        :param max: max value
+        :param increment: increment of the underlying register
+        :param log_increment: boolean: when buttons up/down are pressed, should the value change linearly or log
+        :param halflife_seconds: when button is in log, how long to change the value by a factor 2.
+        """
+        super(MyNumberSpinBox, self).__init__(None)
+        self.min = min
+        self.max = max
+        self._val = 0
+        self.halflife_seconds = halflife_seconds
+        self.log_increment = log_increment
+
+        self.lay = QtGui.QHBoxLayout()
+        self.lay.setContentsMargins(0,0,0,0)
+        self.lay.setSpacing(0)
+        self.setLayout(self.lay)
+
+        if label is not None:
+            self.label = QtGui.QLabel(label)
+            self.lay.addWidget(self.label)
+        self.increment = increment
+
+        if self.log_increment:
+            self.up = QtGui.QPushButton('*')
+            self.down = QtGui.QPushButton('/')
+        else:
+            self.up = QtGui.QPushButton('+')
+            self.down = QtGui.QPushButton('-')
+        self.lay.addWidget(self.down)
+
+        self.line = QtGui.QLineEdit()
+        self.lay.addWidget(self.line)
+
+
+        self.lay.addWidget(self.up)
+        self.timer_arrow = QtCore.QTimer()
+        self.timer_arrow.setSingleShot(True)
+        self.timer_arrow.setInterval(self.timer_min_interval)
+        self.timer_arrow.timeout.connect(self.make_step_continuous)
+
+        self.timer_arrow_latency = QtCore.QTimer()
+        self.timer_arrow_latency.setInterval(self.timer_initial_latency)
+        self.timer_arrow_latency.setSingleShot(True)
+        self.timer_arrow_latency.timeout.connect(self.make_step_continuous)
+
+        self.up.pressed.connect(self.first_increment)
+        self.down.pressed.connect(self.first_increment)
+
+        self.up.setMaximumWidth(15)
+        self.down.setMaximumWidth(15)
+
+        self.up.released.connect(self.timer_arrow.stop)
+        self.down.released.connect(self.timer_arrow.stop)
+
+        self.line.editingFinished.connect(self.validate)
+        self.val = 0
+
+        self.setMaximumWidth(200)
+        self.setMaximumHeight(34)
+
+    def first_increment(self):
+        """
+        Once +/- pressed for timer_initial_latency ms, start to update continuously
+        """
+
+        if self.log_increment:
+            self.last_time = time.time() # don't make a step, but store present time
+            self.timer_arrow.start()
+        else:
+            self.make_step()
+            self.timer_arrow_latency.start() # wait longer than average
+
+    def set_log_increment(self):
+        self.up.setText("*")
+        self.down.setText("/")
+        self.log_increment = True
+
+    def sizeHint(self): #doesn t do anything, probably need to change sizePolicy
+        return QtCore.QSize(200, 20)
+
+    def setMaximum(self, val):
+        self.max = val
+
+    def setMinimum(self, val):
+        self.min = val
+
+    def setSingleStep(self, val):
+        self.step = val
+
+    def setValue(self, val):
+        self.val = val
+
+    def setDecimals(self, val):
+        self.decimals = val
+
+    def value(self):
+        return self.val
+
+    def log_factor(self):
+        dt = self.timer_arrow.interval()  # time since last step
+        return 2**(dt*0.001/self.halflife_seconds)
+
+    def best_wait_time(self):
+        """
+        Time to wait until value should reach the next increment
+        If this time is shorter than self.timer_min_interval, then, returns timer_min_interval
+        :return:
+        """
+        if self.log_increment:
+            val = self.val
+            if self.is_sweeping_up():
+                next_val = val + self.increment
+                factor = next_val*1./val
+            if self.is_sweeping_down():
+                next_val = val - self.increment
+                factor = val*1.0/next_val
+            return int(np.ceil(max(self.timer_min_interval, 1000*np.log2(factor))))
+        else:
+            return self.timer_min_interval
+
+    def is_sweeping_up(self):
+        return self.up.isDown()
+
+    def is_sweeping_down(self):
+        return self.down.isDown()
+
+    def step_up(self, factor=1):
+        if self.log_increment:
+            res = self.val * self.log_factor() + self.increment/10. # to prevent rounding errors from
+                                                                         # blocking the increment
+            self.val = res#self.log_step**factor
+        else:
+            self.val += self.increment*factor
+
+    def step_down(self, factor=1):
+        if self.log_increment:
+            res = self.val / self.log_factor()- self.increment/10.  # to prevent rounding errors from
+                                                                         # blocking the increment
+            self.val = res #(self.log_step)**factor
+        else:
+            self.val -= self.increment*factor
+
+    def make_step_continuous(self):
+        """
+
+        :return:
+        """
+        self.make_step()
+        self.timer_arrow.start()
+        self.timer_arrow.setInterval(self.best_wait_time())
+
+    def make_step(self):
+        if self.is_sweeping_up():
+            self.step_up()
+        if self.is_sweeping_down():
+            self.step_down()
+        self.validate()
+
+    def keyPressEvent(self, event):
+        if event.key()==QtCore.Qt.Key_Up:
+            self.step_up(factor=5) ## To have roughly the same speed as with
+            # mouse
+        if event.key()==QtCore.Qt.Key_Down:
+            self.step_down(factor=5)  ## To have roughly the same speed as with
+            # mouse
+        self.validate()
+
+    def validate(self):
+        if self.val>self.max:
+            self.val = self.max
+        if self.val<self.min:
+            self.val = self.min
+        self.value_changed.emit()
+
+
+class MyDoubleSpinBox(MyNumberSpinBox):
+    def __init__(self, label, min=-1, max=1, step=2.**(-13),
+                 log_increment=False, log_step=1.01):
+        self.decimals = 4
+        super(MyDoubleSpinBox, self).__init__(label, min, max, step, log_increment, log_step)
+
+    @property
+    def val(self):
+        if self.line.text()!=("%."+str(self.decimals) + "f")%self._val:
+            return float(self.line.text())
+        return self._val
+
+    @val.setter
+    def val(self, new_val):
+        self._val = new_val
+        self.line.setText(("%."+str(self.decimals) + "f")%new_val)
+        return new_val
+
+
+class MyIntSpinBox(MyNumberSpinBox):
+    def __init__(self, label, min=-2**13, max=2**13, step=1,
+                 log_increment=False, log_step=10):
+        super(MyIntSpinBox, self).__init__(label,
+                                           min,
+                                           max,
+                                           step,
+                                           log_increment,
+                                           log_step)
+
+    @property
+    def val(self):
+        if self.line.text()!=("%.i")%self._val:
+            return int(self.line.text())
+        return self._val
+
+    @val.setter
+    def val(self, new_val):
+        self._val = new_val
+        self.line.setText(("%.i")%new_val)
+        return new_val
+
 
 
 class BaseRegisterWidget(QtCore.QObject):
