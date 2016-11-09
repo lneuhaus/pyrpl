@@ -2,7 +2,7 @@ import logging
 logger = logging.getLogger(name=__name__)
 
 from pyrpl import RedPitaya
-from pyrpl.hardware_modules.redpitaya_registers import *
+from pyrpl.attributes import *
 
 
 class TestClass(object):

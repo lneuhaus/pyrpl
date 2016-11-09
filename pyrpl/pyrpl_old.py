@@ -270,7 +270,8 @@ def getmodel(modeltype):
 class Lockbox(object):
     """generic lockbox object, no implementation-dependent details here
 
-    A lockbox has defines one model of the physical system that is controlled.
+    A lockbox has a MemoryTree to remember information. The memoryTree
+    furthermore defines one model of the physical system that is controlled.
 
     Parameters
     ----------

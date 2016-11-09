@@ -1,9 +1,6 @@
 import logging
 logger = logging.getLogger(name=__name__)
 
-from pyrpl.hardware_modules.redpitaya_registers import *
-
-
 class TestClass(object):
     @classmethod
     def setUpAll(self):

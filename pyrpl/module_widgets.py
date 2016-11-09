@@ -845,4 +845,3 @@ class NaWidget(ModuleWidget):
         else:
             self.set_state(continuous=True, paused=True, need_restart=False,
                            n_av=self.post_average)
-

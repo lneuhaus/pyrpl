@@ -12,7 +12,7 @@ logging.getLogger(name=__name__).setLevel(logging.DEBUG) # for debugging
 from .curvedb import CurveDB
 from .redpitaya import RedPitaya
 from .hardware_modules import *
-from pyrpl.hardware_modules.redpitaya_registers import *
+from .attributes import *
 from .curvedb import *
 from .pyrpl import *
 

@@ -4,7 +4,7 @@ import os
 logger = logging.getLogger(name=__name__)
 
 from pyrpl import RedPitaya
-from pyrpl.hardware_modules.redpitaya_registers import *
+from pyrpl.attributes import *
 from pyrpl.bijection import Bijection
 
 import time
