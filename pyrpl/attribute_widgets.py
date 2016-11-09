@@ -74,6 +74,9 @@ class MyNumberSpinBox(QtGui.QWidget, object):
         self.line = QtGui.QLineEdit()
         self.lay.addWidget(self.line)
 
+        self._button_up_down = False
+        self._button_down_down = False
+
 
         self.lay.addWidget(self.up)
         self.timer_arrow = QtCore.QTimer()
@@ -105,7 +108,6 @@ class MyNumberSpinBox(QtGui.QWidget, object):
         """
         Once +/- pressed for timer_initial_latency ms, start to update continuously
         """
-
         if self.log_increment:
             self.last_time = time.time() # don't make a step, but store present time
             self.timer_arrow.start()
@@ -152,24 +154,25 @@ class MyNumberSpinBox(QtGui.QWidget, object):
         if self.log_increment:
             val = self.val
             if self.is_sweeping_up():
-                next_val = val + self.increment
+                next_val = val + np.sign(val)*self.increment
                 factor = next_val*1./val
             if self.is_sweeping_down():
-                next_val = val - self.increment
+                next_val = val - np.sign(val)*self.increment
                 factor = val*1.0/next_val
             return int(np.ceil(max(self.timer_min_interval, 1000*np.log2(factor))))
         else:
             return self.timer_min_interval
 
     def is_sweeping_up(self):
-        return self.up.isDown()
+        return self.up.isDown() or self._button_up_down
 
     def is_sweeping_down(self):
-        return self.down.isDown()
+        return self.down.isDown() or self._button_down_down
 
     def step_up(self, factor=1):
         if self.log_increment:
-            res = self.val * self.log_factor() + self.increment/10. # to prevent rounding errors from
+            val = self.val
+            res = val * self.log_factor() + np.sign(val)*self.increment/10. # to prevent rounding errors from
                                                                          # blocking the increment
             self.val = res#self.log_step**factor
         else:
@@ -177,7 +180,8 @@ class MyNumberSpinBox(QtGui.QWidget, object):
 
     def step_down(self, factor=1):
         if self.log_increment:
-            res = self.val / self.log_factor()- self.increment/10.  # to prevent rounding errors from
+            val = self.val
+            res =  val / self.log_factor() - np.sign(val)*self.increment/10.  # to prevent rounding errors from
                                                                          # blocking the increment
             self.val = res #(self.log_step)**factor
         else:
@@ -200,13 +204,22 @@ class MyNumberSpinBox(QtGui.QWidget, object):
         self.validate()
 
     def keyPressEvent(self, event):
-        if event.key()==QtCore.Qt.Key_Up:
-            self.step_up(factor=5) ## To have roughly the same speed as with
-            # mouse
-        if event.key()==QtCore.Qt.Key_Down:
-            self.step_down(factor=5)  ## To have roughly the same speed as with
-            # mouse
-        self.validate()
+        if not event.isAutoRepeat():
+            if event.key()==QtCore.Qt.Key_Up:
+                self._button_up_down = True
+                # mouse
+            if event.key()==QtCore.Qt.Key_Down:
+                self._button_down_down = True
+            self.first_increment()
+
+    def keyReleaseEvent(self, event):
+        if not event.isAutoRepeat():
+            if event.key()==QtCore.Qt.Key_Up:
+                self._button_up_down = False
+                # mouse
+            if event.key()==QtCore.Qt.Key_Down:
+                self._button_down_down = False
+            self.timer_arrow.stop()
 
     def validate(self):
         if self.val>self.max:
