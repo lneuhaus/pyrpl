@@ -1,10 +1,8 @@
-import numpy as np
-import scipy
-import logging
-import time
 import threading
 
-from .signal import *
+import scipy
+from pyrpl.software_modules.lockbox.signal import *
+
 from . import fitting
 from . import pyrpl_utils
 

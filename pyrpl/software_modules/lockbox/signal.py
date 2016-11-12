@@ -2,8 +2,8 @@ import time
 import logging
 import numpy as np
 
-from . import bodefit
-from . import CurveDB
+from pyrpl import bodefit
+from pyrpl import CurveDB
 
 logger = logging.getLogger(__name__)
 

@@ -21,27 +21,16 @@
 # set to 0 or 1
 
 from __future__ import print_function
-from time import sleep, time
-import math
-import numpy
-import numpy as np
-import os
-import pandas
-import matplotlib.pyplot as plt
-import sys
-import os
-from . import iir
-import logging
-from collections import OrderedDict
-from shutil import copyfile
 
-from .redpitaya import RedPitaya
-from .curvedb import CurveDB
-from .memory import MemoryTree
-from .model import Model
-from .signal import *
-from .models import *
+from shutil import copyfile
+from time import sleep
+
+from pyrpl.software_modules.lockbox.signal import *
+
 from .gui.pyrpl_gui import PyrplGui
+from .memory import MemoryTree
+from .models import *
+from .redpitaya import RedPitaya
 
 """
 channels:

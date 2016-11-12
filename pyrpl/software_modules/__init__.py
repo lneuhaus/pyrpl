@@ -5,4 +5,8 @@ class SoftwareModule(BaseModule):
     Module that doesn't communicate with the Redpitaya directly.
     """
 
-    pass
+    @property
+    def shortname(self):
+        return self.__class__.__name__.lower()
+
+from .network_analyzer import NetworkAnalyzer

@@ -1,11 +1,6 @@
-import numpy as np
-import scipy
-import logging
-import time
-import threading
+from pyrpl.software_modules.lockbox.signal import Signal
 
 from . import *
-from ..signal import Signal
 from ..pyrpl_utils import sleep
 
 logger = logging.getLogger(name=__name__)
