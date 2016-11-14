@@ -1,8 +1,7 @@
 import os.path as osp
 
-from pyrpl.pyrpl_utils import MyDoubleSpinBox
-from pyrpl.gui.redpitaya_gui import ModuleWidget
 from PyQt4 import QtCore, QtGui
+from pyrpl.trash.gui import ModuleWidget
 
 IMAGE_PATH = osp.join(osp.dirname(__file__), "images")
 

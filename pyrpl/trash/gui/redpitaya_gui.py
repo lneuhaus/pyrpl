@@ -1593,7 +1593,7 @@ class RedPitayaGui(RedPitaya):
                                rp=self,
                                parent=None,
                                module=self.na)
-        from pyrpl.gui.iq_gui import AllIqWidgets
+        from pyrpl.trash.gui.iq_gui import AllIqWidgets
         self.iq_widget = AllIqWidgets(rp=self,
                                   parent=None)
         self.scope_widget = ScopeWidget(name="scope",

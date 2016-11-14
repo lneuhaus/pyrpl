@@ -25,12 +25,11 @@ from __future__ import print_function
 from shutil import copyfile
 from time import sleep
 
+from pyrpl.memory import MemoryTree
+from pyrpl.models import *
+from pyrpl.redpitaya import RedPitaya
 from pyrpl.software_modules.lockbox.signal import *
-
-from .gui.pyrpl_gui import PyrplGui
-from .memory import MemoryTree
-from .models import *
-from .redpitaya import RedPitaya
+from pyrpl.trash.gui import PyrplGui
 
 """
 channels:

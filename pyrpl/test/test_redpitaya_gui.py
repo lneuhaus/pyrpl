@@ -1,16 +1,13 @@
-from nose.tools import with_setup
-from unittest import TestCase
-import os
-import numpy as np
 import logging
-from pyrpl.gui.redpitaya_gui import ComboProperty, BoolProperty, \
-                                APP, NumberProperty
+
+from pyrpl.trash.gui import ComboProperty, BoolProperty, \
+    NumberProperty
 
 logger = logging.getLogger(name=__name__)
 
-from pyrpl.gui import RedPitayaGui
+from pyrpl.trash.gui import RedPitayaGui
 from PyQt4.QtTest import QTest
-from PyQt4.QtCore import Qt, QPoint
+from PyQt4.QtCore import Qt
 import os
 
 class TestClass(object):
