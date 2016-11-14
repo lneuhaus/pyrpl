@@ -108,6 +108,7 @@ class MyNumberSpinBox(QtGui.QWidget, object):
         """
         Once +/- pressed for timer_initial_latency ms, start to update continuously
         """
+
         if self.log_increment:
             self.last_time = time.time() # don't make a step, but store present time
             self.timer_arrow.start()
@@ -130,7 +131,7 @@ class MyNumberSpinBox(QtGui.QWidget, object):
         self.min = val
 
     def setSingleStep(self, val):
-        self.step = val
+        self.increment = val
 
     def setValue(self, val):
         self.val = val
@@ -176,7 +177,8 @@ class MyNumberSpinBox(QtGui.QWidget, object):
                                                                          # blocking the increment
             self.val = res#self.log_step**factor
         else:
-            self.val += self.increment*factor
+            res = self.val + self.increment*factor + self.increment/10.
+            self.val = res
 
     def step_down(self, factor=1):
         if self.log_increment:
@@ -185,16 +187,18 @@ class MyNumberSpinBox(QtGui.QWidget, object):
                                                                          # blocking the increment
             self.val = res #(self.log_step)**factor
         else:
-            self.val -= self.increment*factor
+            res = self.val - self.increment*factor - self.increment/10.
+            self.val = res
 
     def make_step_continuous(self):
         """
 
         :return:
         """
-        self.make_step()
-        self.timer_arrow.start()
-        self.timer_arrow.setInterval(self.best_wait_time())
+        if self.is_sweeping_down() or self.is_sweeping_up():
+            self.make_step()
+            self.timer_arrow.setInterval(self.best_wait_time())
+            self.timer_arrow.start()
 
     def make_step(self):
         if self.is_sweeping_up():
@@ -207,19 +211,21 @@ class MyNumberSpinBox(QtGui.QWidget, object):
         if not event.isAutoRepeat():
             if event.key()==QtCore.Qt.Key_Up:
                 self._button_up_down = True
-                # mouse
+                self.first_increment()
             if event.key()==QtCore.Qt.Key_Down:
                 self._button_down_down = True
-            self.first_increment()
+                self.first_increment()
+        return super(MyNumberSpinBox, self).keyPressEvent(event)
 
     def keyReleaseEvent(self, event):
         if not event.isAutoRepeat():
             if event.key()==QtCore.Qt.Key_Up:
                 self._button_up_down = False
-                # mouse
+                self.timer_arrow.stop()
             if event.key()==QtCore.Qt.Key_Down:
                 self._button_down_down = False
-            self.timer_arrow.stop()
+                self.timer_arrow.stop()
+        return super(MyNumberSpinBox, self).keyReleaseEvent(event)
 
     def validate(self):
         if self.val>self.max:
@@ -230,43 +236,43 @@ class MyNumberSpinBox(QtGui.QWidget, object):
 
 
 class MyDoubleSpinBox(MyNumberSpinBox):
-    def __init__(self, label, min=-1, max=1, step=2.**(-13),
+    def __init__(self, label, min=-1, max=1, increment=2.**(-13),
                  log_increment=False, log_step=1.01):
         self.decimals = 4
-        super(MyDoubleSpinBox, self).__init__(label, min, max, step, log_increment, log_step)
+        super(MyDoubleSpinBox, self).__init__(label, min, max, increment, log_increment, log_step)
 
     @property
     def val(self):
-        if self.line.text()!=("%."+str(self.decimals) + "f")%self._val:
+        #if self.line.text()!=("%."+str(self.decimals) + "f")%self._val:
             return float(self.line.text())
-        return self._val
+       # return self._val
 
     @val.setter
     def val(self, new_val):
-        self._val = new_val
+        #self._val = new_val
         self.line.setText(("%."+str(self.decimals) + "f")%new_val)
         return new_val
 
 
 class MyIntSpinBox(MyNumberSpinBox):
-    def __init__(self, label, min=-2**13, max=2**13, step=1,
+    def __init__(self, label, min=-2**13, max=2**13, increment=1,
                  log_increment=False, log_step=10):
         super(MyIntSpinBox, self).__init__(label,
                                            min,
                                            max,
-                                           step,
+                                           increment,
                                            log_increment,
                                            log_step)
 
     @property
     def val(self):
-        if self.line.text()!=("%.i")%self._val:
+        #if self.line.text()!=("%.i")%self._val:
             return int(self.line.text())
-        return self._val
+        #return self._val
 
     @val.setter
     def val(self, new_val):
-        self._val = new_val
+        #self._val = new_val
         self.line.setText(("%.i")%new_val)
         return new_val
 

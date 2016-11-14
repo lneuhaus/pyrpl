@@ -11,7 +11,9 @@ from collections import OrderedDict
 import pyqtgraph as pg
 from .errors import NotReadyError
 
-class ModuleWidget(QtGui.QWidget):
+import numpy as np
+
+class ModuleWidget(QtGui.QGroupBox):
     """
     Base class for a module Widget. In general, this is one of the Tab in the
     final RedPitayaGui object.
@@ -29,6 +31,8 @@ class ModuleWidget(QtGui.QWidget):
         self.attribute_widgets = OrderedDict()
         self.init_gui() # performs the automatic gui creation based on register_names
         self.update_attribute_widgets()
+        self.setStyleSheet("ModuleWidget{border:0;}")
+
 #        self.rp.all_gui_modules.append(self)
 
     # I don't see why it should be done at the gui level rather than module level. Let's remove it from here
@@ -72,7 +76,7 @@ class ModuleWidget(QtGui.QWidget):
             self.attribute_layout.addLayout(widget.layout_v)
             widget.value_changed.connect(self.attribute_changed)
 
-    def save_curve(self, x_values, y_values, **params):
+    def save_curve(self, x_values, y_values, **attributes):
         """
         Saves the curve in some database system.
         To change the database system, overwrite this function
@@ -80,12 +84,12 @@ class ModuleWidget(QtGui.QWidget):
 
         :param  x_values: numpy array with x values
         :param  y_values: numpy array with y values
-        :param  params: extra curve parameters (such as relevant module settings)
+        :param  attributes: extra curve parameters (such as relevant module settings)
         """
 
         c = self.curve_class.create(x_values,
                                     y_values,
-                                    **params)
+                                    **attributes)
         return c
 
     def init_gui(self):
@@ -362,21 +366,6 @@ class ScopeWidget(ModuleWidget):
         """Autoscale pyqtgraph"""
 
         self.plot_item.autoRange()
-    #@property
-    #def params(self):
-    #    """
-    #    Params to be saved within the curve (maybe we should consider
-    #    # removing this and instead
-    #    use self.properties...
-    #    """
-    #    return dict(average=self.module.average,
-    #                trigger_source=self.module.trigger_source,
-    #                threshold_ch1=self.module.threshold_ch1,
-    #                threshold_ch2=self.module.threshold_ch2,
-    #                input1=self.module.input1,
-    #                input2=self.module.input2,
-    #                name=self.module.curve_name)
-
 
     def save(self):
         """
@@ -385,7 +374,7 @@ class ScopeWidget(ModuleWidget):
         """
 
         for ch in [1, 2]:
-            d = self.get_state()
+            d = self.module.get_setup_attributes()
             d.update({'ch': ch,
                       'name': self.module.curve_name + ' ch' + str(ch)})
             self.save_curve(self.times,
@@ -463,8 +452,6 @@ class NaWidget(ModuleWidget):
         """
         Sets up the gui
         """
-        # add this new display parameter to module na
-        self.module.infer_open_loop_tf = False
         #self.module.__dict__['curve_name'] = 'na trace'
         self.main_layout = QtGui.QVBoxLayout()
         self.init_attribute_layout()
@@ -519,20 +506,6 @@ class NaWidget(ModuleWidget):
         self.paused = True
         # self.restart_averaging() # why would you want to do that? Comment?
 
-        """
-        for prop in (self.attribute_widgets["start"],
-                     self.attribute_widgets["stop"],
-                     self.attribute_widgets["rbw"]):
-            spin_box = prop.widget
-            # spin_box.setDecimals(1)
-            spin_box.setMaximum(100e6)
-            spin_box.setMinimum(-100e6)
-            spin_box.setSingleStep(100)
-        for prop in (self.properties["points"], self.properties["avg"]):
-            spin_box = prop.widget
-            spin_box.setMaximum(1e6)
-            spin_box.setMinimum(0)
-        """
 
         self.attribute_widgets["infer_open_loop_tf"].acquisition_property = False
         self.attribute_widgets["curve_name"].acquisition_property = False
@@ -544,27 +517,13 @@ class NaWidget(ModuleWidget):
         self.plot_item.addItem(self.arrow)
         self.plot_item_phase.addItem(self.arrow_phase)
 
-    def save_params(self):
+    def save_current_curve_attributes(self):
         """
-        Stores the params in a dictionary self.params.
-        We should consider using self.properties instead of manually iterating.
+        Stores the attributes in a dictionary self.current_curve_attributes.
         """
 
-        self.params = self.get_state()
-        """
-        self.params = dict(start=self.module.start,
-                                   stop=self.module.stop,
-                                   rbw=self.module.rbw,
-                                   input=self.module.input,
-                                   output_direct=self.module.output_direct,
-                                   points=self.module.points,
-                                   amplitude=self.module.amplitude,
-                                   logscale=self.module.logscale,
-                                   avg=self.module.avg,
-                                   post_average=self.post_average,
-                                   infer_open_loop_tf=self.module.infer_open_loop_tf,
-                                   name=self.module.curve_name)
-        """
+        self.current_curve_attributes = self.module.get_setup_attributes()
+
     def save(self):
         """
         Save the current curve. If you would like to overwrite the save behavior, maybe you should
@@ -573,7 +532,7 @@ class NaWidget(ModuleWidget):
 
         self.save_curve(self.x[:self.last_valid_point],
                         self.data[:self.last_valid_point],
-                        **self.params)
+                        **self.current_curve_attributes)
 
     def init_data(self):
         """
@@ -662,7 +621,7 @@ class NaWidget(ModuleWidget):
 
         self.module.setup()
         self.values = self.module.values()
-        self.save_params()
+        self.save_current_curve_attributes()
 
     def set_state(self, continuous, paused, need_restart, n_av=0):
         """
@@ -735,7 +694,7 @@ class NaWidget(ModuleWidget):
         y = self.data[:self.last_valid_point]
 
         # check if we shall display open loop tf
-        if self.properties["infer_open_loop_tf"].widget.checkState() == 2:
+        if self.module.infer_open_loop_tf:
             y = y / (1.0 + y)
         mag = 20 * np.log10(np.abs(y))
         phase = np.angle(y, deg=True)
@@ -751,7 +710,7 @@ class NaWidget(ModuleWidget):
 
         cur = self.module.current_point - 1
         visible = self.last_valid_point!=cur + 1
-        logscale = self.properties["logscale"].widget.checkState()==2
+        logscale = self.module.logscale
         freq = x[cur]
         xpos = np.log10(freq) if logscale else freq
         if cur>0:
@@ -775,7 +734,7 @@ class NaWidget(ModuleWidget):
             return
         cur = self.module.current_point
         try:
-            x, y, amp = self.values.next()
+            x, y, amp = next(self.values)
             self.threshold_hook(y)
         except StopIteration:
             self.post_average += 1
@@ -822,8 +781,7 @@ class NaWidget(ModuleWidget):
         """
 
         if self.need_restart:
-            raise AveragingError(
-                """parameters have changed in the mean time, cannot average
+            raise AveragingError("""parameters have changed in the mean time, cannot average
                 with previous data""")
         else:
             self.set_state(continuous=self.continuous,
@@ -845,3 +803,38 @@ class NaWidget(ModuleWidget):
         else:
             self.set_state(continuous=True, paused=True, need_restart=False,
                            n_av=self.post_average)
+
+class ModuleManagerWidget(ModuleWidget):
+    def init_gui(self):
+        self.main_layout = QtGui.QVBoxLayout()
+        self.module_widgets = []
+        for index, mod in enumerate(self.module.all_modules):
+            module_widget = mod.create_widget()
+            module_widget.setStyleSheet("ModuleWidget{border: 1px dashed gray;}")
+            #module_widget.show_ownership()".setTitle(module_widget.module.name)
+
+            self.module_widgets.append(module_widget)
+            self.main_layout.addWidget(module_widget)
+        self.setLayout(self.main_layout)
+        self.show_ownership()
+
+    def show_ownership(self):
+        for widget in self.module_widgets:
+            if widget.module.owner is not None:
+                widget.setEnabled(False)
+                widget.setTitle(widget.module.name + ' (' + widget.module.owner + ')')
+            else:
+                widget.setEnabled(True)
+                widget.setTitle(widget.module.name)
+
+
+class PidManagerWidget(ModuleManagerWidget):
+    pass
+
+
+class IqManagerWidget(ModuleManagerWidget):
+    pass
+
+
+class ScopeManagerWidget(ModuleManagerWidget):
+    pass

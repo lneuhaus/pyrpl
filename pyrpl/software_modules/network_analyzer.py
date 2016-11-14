@@ -47,6 +47,7 @@ class NetworkAnalyzer(SoftwareModule):
                 print response
     """
 
+    name = "network_analyzer"
     widget_class = NaWidget
     gui_attributes = ["input",
                       "output_direct",
@@ -59,11 +60,10 @@ class NetworkAnalyzer(SoftwareModule):
                       "infer_open_loop_tf",
                       "avg",
                       "curve_name"]
+    setup_attributes = list(gui_attributes)
 
-    def __init__(self, rp):
+    def init_module(self):
         self._logger = logging.getLogger(__name__)
-        self.rp = rp
-        self._parent = rp
         self.start = 200
         self.stop = 50000
         self.points = 1001
@@ -78,24 +78,9 @@ class NetworkAnalyzer(SoftwareModule):
         self.stabilize = False  # if False, no stabilization, if float,
         #input amplitude is kept at a constant voltage
         self.maxamplitude = 1.0
+        self.infer_open_loop_tf = False
+        self.curve_name = 'na_curve'
         self._setup = False
-
-    @property
-    def params(self):
-        """
-        Parameters to save.
-        """
-        return dict(start=self.start,
-                    stop=self.stop,
-                    avg=self.avg,
-                    rbw=self.rbw,
-                    points=self.points,
-                    input=self.input,
-                    output_direct=self.output_direct,
-                    stabilize=self.stabilize,
-                    acbandwidth=self.acbandwidth,
-                    amplitude=self.amplitude,
-                    logscale=self.logscale)
 
     input = SelectProperty(DspModule.inputs)
     output_direct = SelectProperty(DspModule.output_directs)
@@ -115,7 +100,7 @@ class NetworkAnalyzer(SoftwareModule):
         underlying iq module.
         """
         if not hasattr(self, '_iq'):
-            self._iq = self.rp.iqs.pop()
+            self._iq = self.pyrpl.iqs.pop(owner=self.name)
         return self._iq
 
     @property
@@ -134,6 +119,8 @@ class NetworkAnalyzer(SoftwareModule):
     def acbandwidth(self, v):
         self.iq.inputfilter = v*-1
 
+    # In principle, the first step of setup could be automatized using self.setup_attributes, however,
+    # doing it without using **kwds is challenging
     def setup(  self,
                 start=None,     # start frequency
                 stop=None,  # stop frequency
@@ -147,7 +134,9 @@ class NetworkAnalyzer(SoftwareModule):
                 sleeptimes=None, # wait sleeptimes/rbw for quadratures to stabilize
                 logscale=None, # make a logarithmic frequency sweep
                 stabilize=None, # if a float, output amplitude is adjusted dynamically so that input amplitude [V]=stabilize
-                maxamplitude=None): # amplitude can be limited):
+                maxamplitude=None,# amplitude can be limited
+                infer_open_loop_tf=None, # Calculates Y/(1 + Y) (gui only)
+                curve_name=None): # curve name when saved (gui only)
         """
         Sets up an acquisition (parameters with value None are left unchanged)
 
@@ -188,6 +177,9 @@ class NetworkAnalyzer(SoftwareModule):
         if logscale is not None: self.logscale = logscale
         if stabilize is not None: self.stabilize = stabilize
         if maxamplitude is not None: self.maxamplitude = maxamplitude
+        if infer_open_loop_tf is not None: self.infer_open_loop_tf = infer_open_loop_tf # for gui only
+        if curve_name is not None: self.curve_name = curve_name
+
 
         self._setup = True
 
@@ -299,8 +291,8 @@ class NetworkAnalyzer(SoftwareModule):
             print val
         or individual values can be fetched successively by calling
         values = na.values()
-        val1 = values.next()
-        val2 = values.next()
+        val1 = next(values) # avoid values.next() as it doesn't work with python 3
+        val2 = next(values)
 
         values are made of a triplet (freq, complex_response, amplitude)
         """
@@ -335,7 +327,7 @@ class NetworkAnalyzer(SoftwareModule):
               logscale=None,  # make a logarithmic frequency sweep
               stabilize=None,
               # if a float, output amplitude is adjusted dynamically so that input amplitude [V]=stabilize
-              maxamplitude=None):  # amplitude can be limited):
+              maxamplitude=None):  # amplitude can be limited
         """
         High level function: this sets up the na and acquires a curve. See setup for the explanation of parameters.
 

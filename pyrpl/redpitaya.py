@@ -45,7 +45,7 @@ class RedPitaya(SSHshell):
                  autostart=True, reloadfpga=True, reloadserver=False, 
                  filename=None, dirname=None,
                  leds_off=True, frequency_correction=1.0, timeout = 3,
-                 monitor_server_name='monitor_server', gui=False,
+                 monitor_server_name='monitor_server',
                  silence_env = False
                  ):
         """installs and starts the interface on the RedPitaya at hostname that allows remote control
@@ -131,11 +131,6 @@ class RedPitaya(SSHshell):
             self.installserver()
         if autostart:
             self.start()
-        if gui:
-            from .gui import RedPitayaGui
-            self.__class__ = RedPitayaGui
-            self.setup_gui()
-            self.gui()
 
     def switch_led(self, gpiopin=0, state=False):
         self.ask("echo " + str(gpiopin) + " > /sys/class/gpio/export")
@@ -367,8 +362,8 @@ class RedPitaya(SSHshell):
         # exclude it from the iqs list, such that it cannot be popped away..
         self.iq2 = rp.IQ(self.client, module='iq2', parent=self)
         # higher functionality modules
-        self.na = NetworkAnalyzer(self)
-        self.spec_an = SpectrumAnalyzer(self)
+        #self.na = NetworkAnalyzer(self)
+        #self.spec_an = SpectrumAnalyzer(self)
 
     def make_a_slave(self, port=None, monitor_server_name=None, gui=False):
         if port is None:
@@ -390,7 +385,7 @@ class RedPitaya(SSHshell):
                          timeout=self.timeout,
                          monitor_server_name=monitor_server_name,
                          silence_env=True,
-                         gui=gui)
+                         ) #gui=gui)
         r._master = self
         self._slaves.append(r)
         return r

@@ -26,7 +26,7 @@ from .attribute_widgets import BoolRegisterWidget, FloatRegisterWidget, FilterRe
 
 class NamedDescriptorResolverMetaClass(type):
     '''
-    Magic to retrieve the name of the registers and the module in the registers themselves
+    Magic to retrieve the name of the registers in the registers themselves.
     see http://code.activestate.com/recipes/577426-auto-named-decriptors/
     '''
 
@@ -75,8 +75,9 @@ class BaseAttribute(object):
         if instance.widget is not None: # update gui only if it exists
             if self.name in instance.widget.attribute_widgets:
                 self.update_gui(instance)
-        if self.name in instance.save_attributes:
-            self.save_attribute(instance)
+        if instance.owner is None: # don't save attributes of slave modules
+            if self.name in instance.setup_attributes:
+                self.save_attribute(instance, value)
         return value
 
     def __get__(self, instance, owner):
@@ -88,8 +89,8 @@ class BaseAttribute(object):
     def update_gui(self, module):
         module.widget.attribute_widgets[self.name].update_widget()
 
-    def save_attribute(self, module):
-        pass
+    def save_attribute(self, module, value):
+        module.c[self.name] = value
 
     def create_widget(self, module, name=None):
         if name is None:
@@ -417,7 +418,7 @@ class FloatRegister(BaseRegister, FloatAttribute):
         # if invert:
         #    raise NotImplementedError("increment not implemented for inverted registers")#return self.norm/2**self.bits
         # else:
-        increment = 1. / norm
+        increment =  1./norm
         FloatAttribute.__init__(self, increment=increment, min=-norm, max=norm)
         self.bits = bits
         self.norm = float(norm)

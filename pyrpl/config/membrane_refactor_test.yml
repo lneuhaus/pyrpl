@@ -1,0 +1,46 @@
+pyrpl: # General configuration of the software:
+  name: test_refactor
+  gui: true # autostart gui
+  loglevel: info
+  # level of logged information.
+  # 'debug' outputs everything
+  # 'infi' is default level
+  # 'warning' only shows warnings and errors
+  # 'error' only shows errors
+  modules: # SoftwareModules to load (in addition to IqManager, AsgManager, PidManager, ScopeManager)
+    - NetworkAnalyzer
+  dock_positions: !!binary |
+    AAAA/wAAAAD9AAAAAQAAAAIAAArEAAADmfwBAAAAA/wAAAAAAAADiQAAA4kA/////AIAAAAD+wAA
+    AAYAaQBxAHMBAAAAFQAAAWgAAAFoAP////sAAAAIAGEAcwBnAHMBAAABgQAAAJQAAACUAP////sA
+    AAAIAHAAaQBkAHMBAAACGQAAAZUAAAGVAP////sAAAAKAHMAYwBvAHAAZQEAAAONAAADjQAAA40A
+    ////+wAAACAAbgBlAHQAdwBvAHIAawBfAGEAbgBhAGwAeQB6AGUAcgEAAAceAAADpgAAA6YA////
+    AAAKxAAAAAAAAAAEAAAABAAAAAgAAAAI/AAAAAA=
+  window_position:
+  - 513
+  - 51
+  - 2756
+  - 942
+redpitaya:
+  hostname: 10.214.1.28
+  password: root
+  user: root
+  port: 2222
+  frequency_correction: 1.0
+  filename: fpga//red_pitaya.bin
+  reloadfpga: true
+  monitor_server_name: monitor_server
+
+
+network_analyzer:
+  stop: 330.0
+  points: 3
+  input: adc1
+  infer_open_loop_tf: false
+  rbw:
+  - 9
+  avg: 25
+  start: 314.0
+  output_direct: out2
+  amplitude: 0.123
+  logscale: true
+  curve_name: na_c

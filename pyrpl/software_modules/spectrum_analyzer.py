@@ -79,13 +79,13 @@ class SpectrumAnalyzer(SoftwareModule):
     inputs = DspModule.inputs
 
     # _setup = False
-    def __init__(self, rp=None):
+    def init_module(self):
 
         self.spans = [np.ceil(1. / self.nyquist_margin / s_time)
                       for s_time in Scope.sampling_times]
 
-        self.rp = rp
-        self._parent = rp
+        self.rp = self.pyrpl.rp
+        self._parent = self.rp # very weird, now the correct way would be to use the ModuleManagers...
         self.baseband = False
         self.center = 0
         self.avg = 10

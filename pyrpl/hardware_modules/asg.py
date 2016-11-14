@@ -161,14 +161,16 @@ def make_asg(channel=1):
                                         doc="trigger source for triggered output")
 
         # offset is stored in bits 31:16 of the register.
-        # This adaptaion to FloatRegister is a little subtle but should work nonetheless
+        # This adaptation to FloatRegister is a little subtle but should work nonetheless
         offset = FloatRegister(0x4 + _VALUE_OFFSET, bits=14 + 16, bitmask=0x3FFF << 16,
-                               norm=2 ** 16 * 2 ** 13, doc="output offset [volts]")
+                               norm=2 ** 16 * 2 ** 13, doc="output offset [volts]") # XXX Something has to be done about that
 
         # formerly scale
         amplitude = FloatRegister(0x4 + _VALUE_OFFSET, bits=14, bitmask=0x3FFF,
-                                  norm=2 ** 13, signed=False,
                                   doc="amplitude of output waveform [volts]")
+        """FloatRegister(0x4 + _VALUE_OFFSET, bits=14, bitmask=0x3FFF,
+                                  norm=2 ** 13, signed=False,
+                                  doc="amplitude of output waveform [volts]")"""
 
         start_phase = PhaseRegister(0xC + _VALUE_OFFSET, bits=30,
                                     doc="Phase at which to start triggered waveforms [degrees]")

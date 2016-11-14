@@ -2,6 +2,7 @@ from six import with_metaclass
 from pyrpl.attributes import NamedDescriptorResolverMetaClass, BaseAttribute
 from pyrpl.module_widgets import ModuleWidget
 import logging
+from .memory import MemoryBranch
 
 import numpy as np
 
@@ -9,13 +10,27 @@ class BaseModule(with_metaclass(NamedDescriptorResolverMetaClass, object)):
     # python 3-compatible way of using metaclass
     # attributes have automatically their internal name set properly upon module creation
     """
-    BaseModules have a create_gui function that returns a widget according to widget_class
+    Several fields need to be implemented in child class:
+      - widget_class: class of the widget to use to represent the module in the gui (a child of ModuleWidget)
+      - gui_attributes: attributes to be displayed by the widget
+      - setup_attributes: attributes that are touched by setup()/saved/restored upon module creation
+      - setup(**kwds): sets the module ready for acquisition/output. The kwds of the function are None by default, then
+      the corresponding attribute is left unchanged
+
+    BaseModules implements several functions itself:
+      - create_widget: returns a widget according to widget_class
+      - get_setup_attributes(): returns a dictionnary with setup_attribute key value pairs
     """
+    owner = None
+
+    #@property
+    #def shortname(self):
+    #    return self.__class__.__name__.lower()
 
     name = 'BaseModule'
     widget_class = ModuleWidget  # Change this to provide a custom graphical class
     gui_attributes = []  # class inheriting from ModuleWidget can automatically generate gui from a list of attributes
-    save_attributes = []  # attributes listed here will be saved in the config file everytime they are updated.
+    setup_attributes = []  # attributes listed here will be saved in the config file everytime they are updated.
     widget = None  # instance-level attribute created in create_widget
     attribute_widgets = None  # instance-level attribute created in create_widget
     # the list of parameters that constitute the "state" of the Module
@@ -27,6 +42,13 @@ class BaseModule(with_metaclass(NamedDescriptorResolverMetaClass, object)):
     #        if isinstance(obj, ModuleAttribute):
     #            obj.module = new_instance
     #    return new_instance
+
+    def get_setup_attributes(self):
+        kwds = dict()
+        for attr in self.setup_attributes:
+            kwds[attr] = getattr(self, attr)
+        return kwds
+
 
     def help(self, register=''):
         """returns the docstring of the specified register name
@@ -49,12 +71,17 @@ class BaseModule(with_metaclass(NamedDescriptorResolverMetaClass, object)):
         self.widget = self.widget_class(self.name, self)
         return self.widget
 
+    @property
+    def c(self):
+        if not self.name in self._parent.c._keys():
+            self._parent.c[self.name] = dict()
+        return getattr(self._parent.c, self.name)
+
 
 class HardwareModule(BaseModule):
     """
     Module that directly maps a Redpitaya module.
     """
-
     # factor to manually compensate 125 MHz oscillator frequency error
     # real_frequency = 125 MHz * _frequency_correction
     @property
@@ -89,6 +116,7 @@ class HardwareModule(BaseModule):
         self._addr_base = addr_base
         self.__doc__ = "Available registers: \r\n\r\n" + self.help()
         self._parent = parent
+        self.owner = None # A HardwareModule can be owned by a SoftwareModule
 
     def _reads(self, addr, length):
         return self._client.reads(self._addr_base + addr, length)
@@ -131,3 +159,21 @@ class HardwareModule(BaseModule):
         res = dict()
         for key, value in dic.iteritems():
             setattr(self, key, value)
+
+
+class SoftwareModule(BaseModule):
+    """
+    Module that doesn't communicate with the Redpitaya directly.
+    Child class needs to implement:
+      - init_module(pyrpl): initializes the module (attribute values aren't saved during that stage)
+      - setup_attributes: see BaseModule
+      - gui_attributes: see BaseModule
+      - setup(): see BaseModule, this function is called after module creation to reload stored attributes
+    """
+
+    def __init__(self, pyrpl):
+        self.pyrpl = pyrpl
+        self._parent = pyrpl
+        self.owner = "initialization" # attribute values are not overwritten in the config file
+        self.init_module()
+        self.owner = None

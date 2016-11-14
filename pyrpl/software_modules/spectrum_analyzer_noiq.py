@@ -74,7 +74,7 @@ class SpectrumAnalyzer(SoftwareModule):
     inputs = DspModule.inputs
 
     #_setup = False
-    def __init__(self, rp=None):
+    def init_module(self):
     
         #it looks like bandwidth of filters are then perfect
         self.nyquist_margin = 1.0 #2*pi - we will take care of the rbw
@@ -83,7 +83,7 @@ class SpectrumAnalyzer(SoftwareModule):
         self.spans = [np.ceil(1. / self.nyquist_margin / s_time)
                       for s_time in Scope.sampling_times]
         
-        self.rp = rp
+        self.rp = self.pyrpl.rp
         self.center = 0
         self.avg = 10
         self.input = 'adc1'

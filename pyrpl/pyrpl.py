@@ -27,6 +27,7 @@ from . import software_modules
 import logging
 from .redpitaya import RedPitaya
 from .pyrpl_widget import PyrplWidget
+from .software_modules import AsgManager, IqManager, PidManager
 
 import os
 from shutil import copyfile
@@ -261,7 +262,7 @@ class Pyrpl(object):
     def _setloglevel(self):
         """ sets the log level to the one specified in config file"""
         try:
-            level = self.c.general.loglevel
+            level = self.c.pyrpl.loglevel
             loglevels = {"notset": logging.NOTSET,
                          "debug": logging.DEBUG,
                          "info": logging.INFO,
@@ -295,55 +296,36 @@ class Pyrpl(object):
 
         # Eventually, could become optional...
         # initialize RedPitaya object with the configured parameters
-        self.rp = RedPitaya(**self.c.redpitaya._dict)
+        if 'redpitaya' in self.c._keys():
+            self.rp = RedPitaya(**self.c.redpitaya._dict)
 
+        self.software_modules = []
         self.load_software_modules()
 
-        if self.c.redpitaya.gui: # XXX Should be self.c.gui
+        if self.c.pyrpl.gui:
             widget = self.create_widget()
             widget.show()
 
     def load_software_modules(self):
-        if "software_modules" in self.c._keys():
-            soft_mod_names = self.c.software_modules["software_modules"]
-        else:
-            soft_mod_names = ['NetworkAnalyzer']
+        """
+        load all software modules defined as root element of the config file.
+        """
+
+        soft_mod_names = self.c.pyrpl.modules#[mod for mod in self.c._keys() if not mod in ("pyrpl", "redpitaya")]
+        soft_mod_names=  ['AsgManager',
+                          'IqManager',
+                          'PidManager',
+                          'ScopeManager'] + soft_mod_names
         for module_name in soft_mod_names:
             ModuleClass = getattr(software_modules, module_name)
-            module = ModuleClass(self.rp)
-            setattr(self, module.shortname, module) # todo --> use self instead
-
-    def _save_window_position(self):
-        if (not "dock_positions" in self.c._keys()) or \
-           (self.c["dock_positions"]!=bytes(
-                self.rp.main_window.saveState())):
-            self.c["dock_positions"] = bytes(self.rp.main_window.saveState())
-        try:
-            _ = self.c.scopegui
-        except KeyError:
-            self.c["scopegui"] = dict()
-        try:
-            if self.c.scopegui["coordinates"]!=self.rp.window_position:
-                self.c.scopegui["coordinates"] = self.rp.window_position
-        except Exception as e:
-            self.logger.warning("Gui is not started. Cannot save position.\n"\
-                                + str(e))
-
-    def set_window_position(self):
-        if "dock_positions" in self.c._keys():
-            if not self.rp.main_window.restoreState(self.c.dock_positions):
-                self.logger.warning("Sorry, " + \
-                    "there was a problem with the restoration of Dock positions")
-        try:
-            coordinates = self.c["scopegui"]["coordinates"]
-        except KeyError:
-            coordinates = [0, 0, 800, 600]
-        try:
-            self.rp.window_position = coordinates
-        #self._lock_window_position()
-        except Exception as e:
-            self.logger.warning("Gui is not started. Cannot save position.\n"\
-                                +str(e))
+            module = ModuleClass(self)
+            if module.name in self.c._keys():
+                kwds = self.c[module.name]
+                if kwds is None:
+                    kwds = dict()
+                module.setup(**kwds)
+            setattr(self, module.name, module) # todo --> use self instead
+            self.software_modules.append(module)
 
     def create_widget(self):
         """
