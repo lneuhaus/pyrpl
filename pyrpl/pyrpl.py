@@ -22,15 +22,15 @@
 
 from __future__ import print_function
 
-from .memory import MemoryTree
-from . import software_modules
 import logging
-from .redpitaya import RedPitaya
-from .pyrpl_widget import PyrplWidget
-from .software_modules import AsgManager, IqManager, PidManager
-
 import os
 from shutil import copyfile
+
+from pyrpl.widgets.pyrpl_widget import PyrplWidget
+
+from . import software_modules
+from .memory import MemoryTree
+from .redpitaya import RedPitaya
 
 
 

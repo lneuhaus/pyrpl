@@ -291,7 +291,6 @@ class MyIntSpinBox(MyNumberSpinBox):
         return new_val
 
 
-
 class BaseRegisterWidget(QtCore.QObject):
     """
     Base class for GUI properties

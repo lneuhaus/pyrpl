@@ -10,18 +10,19 @@ Of course, the gui/parameter file/actual values have to stay "in sync" each time
 changed. The necessary mechanisms are happening behind the scene, and they are coded in this file.
 """
 
-import numpy as np
-import sys
+from pyrpl.bijection import Bijection
+from pyrpl.widgets.attribute_widgets import BoolRegisterWidget, FloatRegisterWidget, FilterRegisterWidget, \
+                                            IntRegisterWidget, SelectRegisterWidget, StringRegisterWidget
+
 import logging
+import sys
+import numpy as np
+
 logger = logging.getLogger(name=__name__)
 
 #way to represent the smallest positive value
 #needed to set floats to minimum count above zero
 epsilon = sys.float_info.epsilon
-
-from .bijection import Bijection
-from .attribute_widgets import BoolRegisterWidget, FloatRegisterWidget, FilterRegisterWidget, IntRegisterWidget,\
-                              PhaseRegisterWidget, FrequencyRegisterWidget, SelectRegisterWidget, StringRegisterWidget
 
 
 class NamedDescriptorResolverMetaClass(type):
@@ -207,13 +208,6 @@ class FilterAttribute(BaseAttribute):
 # way to represent the smallest positive value
 # needed to set floats to minimum count above zero
 epsilon = sys.float_info.epsilon
-
-from pyrpl.attributes import BaseAttribute, IntAttribute, PhaseAttribute, FloatAttribute, StringAttribute, \
-    BoolAttribute, \
-    SelectAttribute
-from pyrpl.bijection import Bijection
-from pyrpl.attribute_widgets import BoolRegisterWidget, FloatRegisterWidget, FilterRegisterWidget, IntRegisterWidget, \
-    PhaseRegisterWidget, FrequencyRegisterWidget, SelectRegisterWidget, StringRegisterWidget
 
 
 # docstring does not work yet, see:

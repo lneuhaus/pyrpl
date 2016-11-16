@@ -1,10 +1,10 @@
-from six import with_metaclass
-from pyrpl.attributes import NamedDescriptorResolverMetaClass, BaseAttribute
-from pyrpl.module_widgets import ModuleWidget
 import logging
-from .memory import MemoryBranch
 
 import numpy as np
+from pyrpl.attributes import NamedDescriptorResolverMetaClass, BaseAttribute
+from pyrpl.widgets.module_widgets import ModuleWidget
+from six import with_metaclass
+
 
 class BaseModule(with_metaclass(NamedDescriptorResolverMetaClass, object)):
     # python 3-compatible way of using metaclass

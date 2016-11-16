@@ -1,11 +1,10 @@
+import numpy as np
 from pyrpl.attributes import FloatAttribute, SelectAttribute, BoolRegister, FloatRegister, SelectRegister, \
                              StringProperty, IntRegister, LongRegister
 from pyrpl.modules import HardwareModule
-from pyrpl.module_widgets import ScopeWidget
+from pyrpl.widgets.module_widgets import ScopeWidget
+
 from . import DSP_INPUTS, DspModule
-
-import numpy as np
-
 
 # data_length must be defined outside of class body for python 3
 # compatibility since otherwise it is not available in the class level

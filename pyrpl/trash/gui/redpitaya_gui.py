@@ -7,8 +7,8 @@ import pyqtgraph as pg
 from pyqtgraph.Qt import QtGui, QtCore
 from pyrpl import CurveDB
 from pyrpl import RedPitaya
-from pyrpl.attribute_widgets import MyDoubleSpinBox
 from pyrpl.errors import NotReadyError
+from pyrpl.widgets.attribute_widgets import MyDoubleSpinBox
 
 if sys.version_info < (3,):
     integer_types = (int, long)

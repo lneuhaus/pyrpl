@@ -1,10 +1,9 @@
-from . import SoftwareModule
-from pyrpl.redpitaya import RedPitaya
-from pyrpl.module_widgets import ModuleManagerWidget, IqManagerWidget,\
-                                 ScopeManagerWidget
-from pyrpl.hardware_modules import Scope
 import copy
-import numpy as np
+
+from pyrpl.widgets.module_widgets import ModuleManagerWidget, IqManagerWidget,\
+                                 ScopeManagerWidget
+
+from . import SoftwareModule
 
 
 class ModuleManager(SoftwareModule):

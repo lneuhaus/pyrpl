@@ -1,8 +1,8 @@
-from pyrpl.attributes import FloatAttribute, BoolRegister, FloatRegister, PhaseRegister
-from . import FilterModule
-from pyrpl.module_widgets import PidWidget
-
 import numpy as np
+from pyrpl.attributes import FloatAttribute, BoolRegister, FloatRegister
+from pyrpl.widgets.module_widgets import PidWidget
+
+from . import FilterModule
 
 
 class IValAttribute(FloatAttribute):

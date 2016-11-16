@@ -57,7 +57,7 @@ asg2:
   output_direct: off
   waveform: sin
   trigger_source: immediately
-  frequency: 100004.13749366999
+  frequency: 100799.95263367891
   amplitude: 0.2
 scope:
   input1: asg2
@@ -65,7 +65,7 @@ scope:
   threshold_ch1: 0.0
   trigger_delay: 0
   input2: iq1
-  duration: '0.008388608'
+  duration: '8.589934592'
   average: true
 iq0:
   frequency: 100003.70384659618
@@ -83,21 +83,25 @@ pid1:
   - 0.0
   - 0.0
   - 0.0
+  output_direct: off
 iq1:
   quadrature_factor: 0.001
-  frequency: 100200.0062726438
+  frequency: 100799.92061946541
   input: asg2
   bandwidth:
   - 151.0
   - 151.0
   gain: 0.0
   output_signal: quadrature
+  output_direct: off
 iq2:
   input: adc1
   bandwidth:
   - 0.0
   - 0.0
   output_signal: quadrature
+  quadrature_factor: 1.0
+  output_direct: off
 pid2:
   inputfilter:
   - 0.0
@@ -105,6 +109,7 @@ pid2:
   - 0.0
   - 0.0
   input: adc2
+  output_direct: off
 pid3:
   inputfilter:
   - 0.0
@@ -112,6 +117,7 @@ pid3:
   - 0.0
   - 0.0
   input: adc1
+  output_direct: off
 pid4:
   inputfilter:
   - 0.0
@@ -119,3 +125,4 @@ pid4:
   - 0.0
   - 0.0
   input: adc2
+  output_direct: off

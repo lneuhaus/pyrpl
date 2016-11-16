@@ -1,11 +1,12 @@
-from pyrpl.attributes import BoolRegister, FloatRegister, SelectRegister, IntRegister, \
-                             PhaseRegister, FrequencyRegister, FloatAttribute, FilterAttribute, FilterRegister
-from pyrpl.module_widgets import IqWidget
-from . import DspModule, FilterModule
-
-import numpy as np
 import sys
 from time import sleep
+
+import numpy as np
+from pyrpl.attributes import BoolRegister, FloatRegister, SelectRegister, IntRegister, \
+                             PhaseRegister, FrequencyRegister, FloatAttribute, FilterAttribute, FilterRegister
+from pyrpl.widgets.module_widgets import IqWidget
+
+from . import FilterModule
 
 
 class IqGain(FloatAttribute):

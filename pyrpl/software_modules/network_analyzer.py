@@ -1,14 +1,16 @@
-import numpy as np
+import logging
 import sys
 from time import sleep, time
-import logging
-from . import SoftwareModule
-from pyrpl.hardware_modules import DspModule # just to get the
-                                                               # list of inputs
+
+import numpy as np
+from pyrpl.attributes import FilterAttribute
 from pyrpl.attributes import FloatProperty, SelectProperty, FrequencyProperty, \
                         LongProperty, BoolProperty, StringProperty
-from pyrpl.attributes import FilterAttribute
-from pyrpl.module_widgets import NaWidget
+from pyrpl.hardware_modules import DspModule # just to get the
+from pyrpl.widgets.module_widgets import NaWidget
+
+from . import SoftwareModule
+
 
 class RbwAttribute(FilterAttribute):
     def get_value(self, instance, owner):

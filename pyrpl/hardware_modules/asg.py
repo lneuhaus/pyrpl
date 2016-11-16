@@ -1,11 +1,10 @@
+import numpy as np
 from pyrpl.attributes import SelectAttribute, BoolRegister, FloatRegister, SelectRegister, \
                              IntRegister, LongRegister, PhaseRegister, FrequencyRegister, FloatAttribute
 from pyrpl.modules import HardwareModule
-from pyrpl.module_widgets import AsgWidget
+from pyrpl.widgets.module_widgets import AsgWidget
+
 from . import DspModule
-
-
-import numpy as np
 
 
 class OutputDirectAttribute(SelectAttribute):

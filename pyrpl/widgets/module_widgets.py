@@ -9,7 +9,7 @@ from PyQt4 import QtCore, QtGui
 from pyrpl import CurveDB
 from collections import OrderedDict
 import pyqtgraph as pg
-from .errors import NotReadyError
+from pyrpl.errors import NotReadyError
 
 import numpy as np
 
@@ -313,6 +313,10 @@ class ScopeWidget(ModuleWidget):
 
     @property
     def rolling_mode(self):
+        # Note for future improvement: rolling mode should be a BoolAttribute of
+        # Scope rather than a dirty attribute of ScopeWidget. Parameter saving would also require to use it
+        # as a parameter of Scope.setup()
+
         return ((self.checkbox_untrigged.isChecked()) and \
                 self.rolling_group.isEnabled())
 
