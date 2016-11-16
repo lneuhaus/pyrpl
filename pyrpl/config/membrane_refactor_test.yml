@@ -10,16 +10,17 @@ pyrpl: # General configuration of the software:
   modules: # SoftwareModules to load (in addition to IqManager, AsgManager, PidManager, ScopeManager)
     - NetworkAnalyzer
   dock_positions: !!binary |
-    AAAA/wAAAAD9AAAAAQAAAAIAAArEAAADmfwBAAAAA/wAAAAAAAADiQAAA4kA/////AIAAAAD+wAA
-    AAYAaQBxAHMBAAAAFQAAAWgAAAFoAP////sAAAAIAGEAcwBnAHMBAAABgQAAAJQAAACUAP////sA
-    AAAIAHAAaQBkAHMBAAACGQAAAZUAAAGVAP////sAAAAKAHMAYwBvAHAAZQEAAAONAAADjQAAA40A
-    ////+wAAACAAbgBlAHQAdwBvAHIAawBfAGEAbgBhAGwAeQB6AGUAcgEAAAceAAADpgAAA6YA////
-    AAAKxAAAAAAAAAAEAAAABAAAAAgAAAAI/AAAAAA=
+    AAAA/wAAAAD9AAAAAQAAAAIAAAeAAAAD0PwBAAAAAvwAAAAAAAAD1gAAA4kA/////AIAAAAD+wAA
+    AAYAaQBxAHMBAAAAFQAAAWgAAAFoAP////sAAAAIAGEAcwBnAHMBAAABgQAAAMsAAACUAP////sA
+    AAAIAHAAaQBkAHMBAAACUAAAAZUAAAGVAP////wAAAPaAAADpgAAA6YA////+gAAAAACAAAAA/sA
+    AAAMAHMAYwBvAHAAZQBzAQAAAAD/////AAAA1wD////7AAAAIABuAGUAdAB3AG8AcgBrAF8AYQBu
+    AGEAbAB5AHoAZQByAQAAAAD/////AAAA/gD////7AAAACgBzAGMAbwBwAGUBAAAAAP////8AAAAA
+    AAAAAAAAB4AAAAAAAAAABAAAAAQAAAAIAAAACPwAAAAA
   window_position:
-  - 513
-  - 51
-  - 2756
-  - 942
+  - 26
+  - 41
+  - 1920
+  - 1017
 redpitaya:
   hostname: 10.214.1.28
   password: root
@@ -32,15 +33,44 @@ redpitaya:
 
 
 network_analyzer:
-  stop: 330.0
-  points: 3
-  input: adc1
+  stop: 10000.0
+  points: 1001
+  input: pid1
   infer_open_loop_tf: false
   rbw:
-  - 9
-  avg: 25
-  start: 314.0
-  output_direct: out2
-  amplitude: 0.123
+  - 4.0
+  avg: 1
+  start: 14.0
+  output_direct: out1
+  amplitude: 0.3
   logscale: true
   curve_name: na_c
+asg1:
+  output_direct: off
+  waveform: sin
+  trigger_source: immediately
+  amplitude: 1.0
+  offset: 0.0
+  frequency: 0.0
+asg2:
+  offset: 0.0
+  output_direct: off
+  waveform: sin
+  trigger_source: immediately
+  frequency: 100004.13749366999
+  amplitude: 0.2
+scope:
+  input1: asg2
+  trigger_source: asg2
+  threshold_ch1: 0.0
+  trigger_delay: 0
+  input2: iq0
+iq0:
+  frequency: 100003.70384659618
+  bandwidth:
+  - 18.0
+  - 18.0
+  amplitude: 0.0
+  quadrature_factor: 0.00390625
+  phase: 10.00000351946801
+  input: asg2

@@ -16,20 +16,21 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###############################################################################
 
+from . import monitor_client
+from . import hardware_modules as rp
+from .sshshell import SSHshell
+
 import logging
 import os
 import random
 import socket
 from time import sleep
+import numpy as np
 
 from paramiko import SSHException
 from pyrpl.software_modules.network_analyzer import NetworkAnalyzer
 from pyrpl.software_modules.spectrum_analyzer import SpectrumAnalyzer
 from scp import SCPClient, SCPException
-
-from . import monitor_client
-from . import hardware_modules as rp
-from .sshshell import SSHshell
 
 
 # let's start debugging the spec an by taking data around 0 hz before we go
@@ -38,6 +39,15 @@ from .sshshell import SSHshell
 
 class RedPitaya(SSHshell):
     _binfilename = 'fpga.bin'
+    module_dict = dict(hk=rp.HK,
+                       ams=rp.AMS,
+                       scope=rp.Scope,
+                       sampler=rp.Sampler,
+                       asg1=rp.Asg1,
+                       asg2=rp.Asg2,
+                       pwm=(rp.AuxOutput, 2), # dict key is (cls, number of instances)
+                       iq=(rp.IQ, 3),
+                       pid=(rp.Pid, 4))# redpitaya modules are automatically generated from this dict
 
     def __init__(self, hostname='192.168.1.100', port=2222,
                  user='root', password='root',
@@ -46,7 +56,7 @@ class RedPitaya(SSHshell):
                  filename=None, dirname=None,
                  leds_off=True, frequency_correction=1.0, timeout = 3,
                  monitor_server_name='monitor_server',
-                 silence_env = False
+                 silence_env = False, config=dict() # In general, config is the parent's memoryTree
                  ):
         """installs and starts the interface on the RedPitaya at hostname that allows remote control
 
@@ -68,6 +78,8 @@ class RedPitaya(SSHshell):
         self.leds_off = leds_off
         self.timeout = timeout
         self.monitor_server_name = monitor_server_name
+        self.c = config
+        self.modules = dict()
 
         # get parameters from os.environment variables
         if not silence_env:
@@ -332,15 +344,33 @@ class RedPitaya(SSHshell):
         self.makemodules()
         self.logger.warning("Dummy mode started...")
 
+    def makemodule(self, name, cls):
+        module = cls(self.client, name=name, parent=self)
+        setattr(self, name, module)
+        self.modules[name] = module
+
     def makemodules(self):
+        """
+        Automatically generates modules from the dict RedPitaya.module_dict
+        """
+
+        for name, cls in self.module_dict.items():
+            if np.iterable(cls): # dict key is (cls, number of instances)
+                cls, num = cls
+                for index in range(num):
+                    self.makemodule(name + str(index), cls)
+            else:
+                self.makemodule(name, cls)
+
+        """
         self.hk = rp.HK(self.client, parent=self)
         self.ams = rp.AMS(self.client, parent=self)
         self.scope = rp.Scope(self.client, parent=self)
         self.sampler = rp.Sampler(self.client, parent=self)
         self.asg1 = rp.Asg1(self.client, parent=self)
         self.asg2 = rp.Asg2(self.client, parent=self)
-        self.pwm0 = rp.AuxOutput(self.client,output='pwm0', parent=self)
-        self.pwm1 = rp.AuxOutput(self.client,output='pwm1', parent=self)
+        self.pwm0 = rp.AuxOutput(self.client, output='pwm0', parent=self)
+        self.pwm1 = rp.AuxOutput(self.client, output='pwm1', parent=self)
         for name, module, number in [("pid", rp.Pid, 4),
                                      ("iir", rp.IIR, 1),
                                      ("iq", rp.IQ, 2)]:
@@ -364,6 +394,7 @@ class RedPitaya(SSHshell):
         # higher functionality modules
         #self.na = NetworkAnalyzer(self)
         #self.spec_an = SpectrumAnalyzer(self)
+        """
 
     def make_a_slave(self, port=None, monitor_server_name=None, gui=False):
         if port is None:

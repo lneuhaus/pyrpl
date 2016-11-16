@@ -21,6 +21,8 @@ class BaseModule(with_metaclass(NamedDescriptorResolverMetaClass, object)):
       - create_widget: returns a widget according to widget_class
       - get_setup_attributes(): returns a dictionnary with setup_attribute key value pairs
     """
+
+    pyrpl_config = None
     owner = None
 
     #@property
@@ -73,9 +75,9 @@ class BaseModule(with_metaclass(NamedDescriptorResolverMetaClass, object)):
 
     @property
     def c(self):
-        if not self.name in self._parent.c._keys():
-            self._parent.c[self.name] = dict()
-        return getattr(self._parent.c, self.name)
+        if not self.name in self.pyrpl_config._keys():
+            self.pyrpl_config[self.name] = dict()
+        return getattr(self.pyrpl_config, self.name)
 
 
 class HardwareModule(BaseModule):
@@ -104,18 +106,21 @@ class HardwareModule(BaseModule):
     def __init__(self,
                  client,
                  addr_base=0x40000000,
-                 parent=None):
+                 parent=None,
+                 name=None):
         """ Creates the prototype of a RedPitaya Module interface
 
         arguments: client must be a viable redpitaya memory client
                    addr_base is the base address of the module, such as 0x40300000
                    for the PID module
         """
+        self.name = name
         self._logger = logging.getLogger(name=__name__)
         self._client = client
         self._addr_base = addr_base
         self.__doc__ = "Available registers: \r\n\r\n" + self.help()
         self._parent = parent
+        self.pyrpl_config = parent.c
         self.owner = None # A HardwareModule can be owned by a SoftwareModule
 
     def _reads(self, addr, length):
@@ -174,6 +179,7 @@ class SoftwareModule(BaseModule):
     def __init__(self, pyrpl):
         self.pyrpl = pyrpl
         self._parent = pyrpl
+        self.pyrpl_config = pyrpl.c
         self.owner = "initialization" # attribute values are not overwritten in the config file
         self.init_module()
         self.owner = None

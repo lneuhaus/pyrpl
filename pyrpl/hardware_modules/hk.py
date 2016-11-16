@@ -24,8 +24,8 @@ class HK(HardwareModule):
                                doc="positive digital io"))
         return super(HK, cls).__new__(cls)  # , *args, **kwargs
 
-    def __init__(self, client, parent=None):
-        super(HK, self).__init__(client, addr_base=0x40000000, parent=parent)
+    def __init__(self, client, name, parent):
+        super(HK, self).__init__(client, addr_base=0x40000000, parent=parent, name=name)
 
     id = SelectRegister(0x0, doc="device ID", options={"prototype0": 0,
                                                        "release1": 1})

@@ -17,12 +17,12 @@ class TriggerDelay(FloatAttribute):
     def __init__(self, attr_name):
         super(TriggerDelay, self).__init__(attr_name, 0.001)
 
-    def __get__(self, obj, obj_type):
+    def get_value(self, obj, obj_type):
         if obj is None:
             return self
         return (obj._trigger_delay - obj.data_length // 2) * obj.sampling_time
 
-    def __set__(self, obj, delay):
+    def set_value(self, obj, delay):
         # memorize the setting
         obj._trigger_delay_memory = delay
         # convert float delay into counts
@@ -104,9 +104,11 @@ class Scope(HardwareModule):
                       "threshold_ch1",
                       "threshold_ch2",
                       "curve_name"]
+    setup_attributes = gui_attributes
     name = 'scope'
     data_length = data_length  # see definition and explanation above
     inputs = None
+    """
     parameter_names = ["input1",
                        "input2",
                        "trigger_source",
@@ -117,14 +119,16 @@ class Scope(HardwareModule):
                        "hysteresis_ch1",
                        "hysteresis_ch2",
                        "average"]
+    """
 
-    def __init__(self, client, parent=None):
+    def __init__(self, client, name, parent):
         super(Scope, self).__init__(client,
                                     addr_base=0x40100000,
-                                    parent=parent)
+                                    parent=parent,
+                                    name=name)
         # dsp multiplexer channels for scope and asg are the same by default
-        self._ch1 = DspModule(client, module='asg1')
-        self._ch2 = DspModule(client, module='asg2')
+        self._ch1 = DspModule(client, name='asg1', parent=parent)
+        self._ch2 = DspModule(client, name='asg2', parent=parent)
         self.inputs = self._ch1.inputs
         self._setup_called = False
         self._trigger_source_memory = "immediately"
@@ -343,12 +347,13 @@ class Scope(HardwareModule):
               duration=None,
               trigger_source=None,
               average=None,
-              threshold=None,
+              threshold_ch1=None, # for consistency between setup function and setup_attributes
+              threshold_ch2=None, # I don't use a single threshold
               hysteresis=None,
               trigger_delay=None,
               input1=None,
               input2=None):
-        """sets up the scope for a new trace aquisition including arming the trigger
+        """sets up the scope for a new trace acquisition including arming the trigger
 
         duration: the minimum duration in seconds to be recorded
         trigger_source: the trigger source. see the options for the parameter separately
@@ -372,9 +377,10 @@ class Scope(HardwareModule):
             self.average = average
         if duration is not None:
             self.duration = duration
-        if threshold is not None:
-            self.threshold_ch1 = threshold
-            self.threshold_ch2 = threshold
+        if threshold_ch1 is not None:
+            self.threshold_ch1 = threshold_ch1
+        if threshold_ch2 is not None:
+            self.threshold_ch2 = threshold_ch2
         if hysteresis is not None:
             self.hysteresis_ch1 = hysteresis
             self.hysteresis_ch2 = hysteresis

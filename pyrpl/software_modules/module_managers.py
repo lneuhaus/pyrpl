@@ -1,7 +1,7 @@
 from . import SoftwareModule
-from pyrpl.module_widgets import ModuleManagerWidget, IqManagerWidget, \
+from pyrpl.module_widgets import ModuleManagerWidget, IqManagerWidget,\
                                  ScopeManagerWidget
-
+from pyrpl.hardware_modules import Scope
 import copy
 
 
@@ -63,7 +63,25 @@ class IqManager(ModuleManager):
     hardware_module_names = ['iq0', 'iq1', 'iq2']
 
 class ScopeManager(ModuleManager):
-    name = "scope"
+    """
+    Only one scope, but it should be protected by the slave/owner mechanism.
+    """
+
+    name = "scopes"
     widget_class = ScopeManagerWidget
     hardware_module_names = ['scope']
+
+#class ScopeWrapper(SoftwareModule):
+#    """
+#    Only useful to make the initializer respect the SoftwareModule convention
+#    """
+#
+#    def __new__(cls, *args, **kwargs):
+#        return
+#
+#    def __init__(self, pyrpl):
+#        super(ScopeWrapper, self).__init__(pyrpl)
+
+
+
 

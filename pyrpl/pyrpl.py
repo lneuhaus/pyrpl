@@ -297,10 +297,17 @@ class Pyrpl(object):
         # Eventually, could become optional...
         # initialize RedPitaya object with the configured parameters
         if 'redpitaya' in self.c._keys():
-            self.rp = RedPitaya(**self.c.redpitaya._dict)
+            self.rp = RedPitaya(config=self.c, **self.c.redpitaya._dict)
+        else:
+            self.rp = None
 
         self.software_modules = []
         self.load_software_modules()
+
+        for module in self.hardware_modules:  # setup hardware modules with config file keys
+            if module.owner is None: # (only modules that are not slaved by software modules)
+                if module.name in self.c._keys():
+                    module.setup(**self.c[module.name])
 
         if self.c.pyrpl.gui:
             widget = self.create_widget()
@@ -316,6 +323,7 @@ class Pyrpl(object):
                           'IqManager',
                           'PidManager',
                           'ScopeManager'] + soft_mod_names
+
         for module_name in soft_mod_names:
             ModuleClass = getattr(software_modules, module_name)
             module = ModuleClass(self)
@@ -323,9 +331,16 @@ class Pyrpl(object):
                 kwds = self.c[module.name]
                 if kwds is None:
                     kwds = dict()
-                module.setup(**kwds)
+                module.setup(**kwds) # first, setup software modules...
             setattr(self, module.name, module) # todo --> use self instead
             self.software_modules.append(module)
+
+    @property
+    def hardware_modules(self):
+        if self.rp is not None:
+            return self.rp.modules.values()
+        else:
+            return []
 
     def create_widget(self):
         """
@@ -335,3 +350,4 @@ class Pyrpl(object):
 
         self.widget = PyrplWidget(self)
         return self.widget
+

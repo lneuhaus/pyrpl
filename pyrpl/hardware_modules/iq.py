@@ -51,6 +51,7 @@ class IQ(FilterModule):
                       "amplitude",
                       "phase",
                       "output_direct"]
+    setup_attributes = gui_attributes
 
     _delay = 5  # bare delay of IQ module with no filters set (cycles)
 
@@ -136,8 +137,9 @@ class IQ(FilterModule):
     _g4 = FloatRegister(0x11C, bits=_GAINBITS, norm=2 ** _SHIFTBITS,
                         doc="gain4 of iq module [volts]")
 
-    def __init__(self, *args, **kwds):
-        super(IQ, self).__init__(*args, **kwds)
+
+    # def __init__(self, *args, **kwds): ## ?? I don't see the point ??
+    #    super(IQ, self).__init__(*args, **kwds)
 
     # @property
     # def acbandwidths(self):

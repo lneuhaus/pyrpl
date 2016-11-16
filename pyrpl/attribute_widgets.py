@@ -33,7 +33,7 @@ class MyNumberSpinBox(QtGui.QWidget, object):
         timer_min_interval.
     """
     value_changed = QtCore.pyqtSignal()
-    timer_min_interval = 5 # don't go below 5 ms
+    timer_min_interval = 1 # don't go below 5 ms
     timer_initial_latency = 500 # 100 ms before starting to update continuously.
 
     def __init__(self, label, min=-1, max=1, increment=2.**(-13),
@@ -47,6 +47,7 @@ class MyNumberSpinBox(QtGui.QWidget, object):
         :param halflife_seconds: when button is in log, how long to change the value by a factor 2.
         """
         super(MyNumberSpinBox, self).__init__(None)
+        self.setToolTip("Increment is %.5f\nmin value: %.1f\nmax value: %.1f\nPress up/down or mouse wheel to tune."%(increment, min, max))
         self.min = min
         self.max = max
         self._val = 0
@@ -103,6 +104,18 @@ class MyNumberSpinBox(QtGui.QWidget, object):
 
         self.setMaximumWidth(200)
         self.setMaximumHeight(34)
+
+    def wheelEvent(self, event):
+        """
+        Handle mouse wheel event. No distinction between linear and log.
+        :param event:
+        :return:
+        """
+
+        nsteps = int(event.delta()/120)
+        func = self.step_up if nsteps>0 else self.step_down
+        for i in range(abs(nsteps)):
+            func()
 
     def first_increment(self):
         """
@@ -243,13 +256,14 @@ class MyDoubleSpinBox(MyNumberSpinBox):
 
     @property
     def val(self):
-        #if self.line.text()!=("%."+str(self.decimals) + "f")%self._val:
+        if self.line.text()!=("%."+str(self.decimals) + "f")%self._val:
             return float(self.line.text())
-       # return self._val
+        return self._val # the value needs to be known to a precision better than the display to avoid deadlocks
+                         # in increments
 
     @val.setter
     def val(self, new_val):
-        #self._val = new_val
+        self._val = new_val # in case the line is not updated immediately
         self.line.setText(("%."+str(self.decimals) + "f")%new_val)
         return new_val
 
@@ -462,6 +476,9 @@ class ListComboBox(QtGui.QWidget):
 
     def __init__(self, number, name, options):
         super(ListComboBox, self).__init__()
+        self.setToolTip("First order filter frequencies \n"
+                        "negative values are for high-pass \n"
+                        "positive for low pass")
         self.lay = QtGui.QHBoxLayout()
         self.combos = []
         self.options = options
@@ -529,15 +546,6 @@ class FilterRegisterWidget(BaseRegisterWidget):
         #self.defaults = name + 's'
         self.options = getattr(module.__class__, name).valid_frequencies(module)
         super(FilterRegisterWidget, self).__init__(name, module)
-
-#    @property
-#    def options(self):
-#        """
-#        All possible options (as found in module.prop_name + 's')
-#
-#        :return:
-#        """
-#        return getattr(self.module, self.defaults)
 
     def set_widget(self):
         """

@@ -22,11 +22,11 @@ class AuxOutput(DspModule):
     Currently, only pwm0 and pwm1 are available.
     """
 
-    def __init__(self, client, output='pwm0', parent=None):
+    def __init__(self, client, name, parent): # name is 'pwm0' or 'pwm1'
         pwm_to_module = dict(pwm0='adc1', pwm1='adc2')
         # future options: , pwm2 = 'dac1', pwm3='dac2')
         super(AuxOutput, self).__init__(client,
-                                        module=pwm_to_module[output],
+                                        name=pwm_to_module[name],
                                         parent=parent)
 
     output_direct = None

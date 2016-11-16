@@ -14,8 +14,7 @@ class IValAttribute(FloatAttribute):
         return float(instance._to_pyint(instance._read(0x100), bitlength=16)) / 2 ** 13
         # bitlength used to be 32 until 16/7/2016
 
-
-    def ival(self, instance, value):
+    def set_value(self, instance, value):
         """set the value of the register holding the integrator's sum [volts]"""
         return instance._write(0x100, instance._from_pyint(int(round(value * 2 ** 13)), bitlength=16))
 
@@ -29,6 +28,8 @@ class Pid(FilterModule):
                       "d",
                       "ival",
                       "inputfilter"]
+
+    setup_attributes = gui_attributes
 
     _delay = 3  # min delay in cycles from input to output_signal of the module
     # with integrator and derivative gain, delay is rather 4 cycles
@@ -53,7 +54,7 @@ class Pid(FilterModule):
                        "input",
                        "ival"]
 
-    ival = IValAttribute(min=-4, max=4, increment= 8. / 2 **16)
+    ival = IValAttribute(min=-4, max=4, increment= 8. / 2**16)
 
     setpoint = FloatRegister(0x104, bits=14, norm= 2 **13,
                              doc="pid setpoint [volts]")

@@ -1,5 +1,5 @@
 from pyrpl.attributes import SelectAttribute, BoolRegister, FloatRegister, SelectRegister, \
-                             IntRegister, LongRegister, PhaseRegister, FrequencyRegister
+                             IntRegister, LongRegister, PhaseRegister, FrequencyRegister, FloatAttribute
 from pyrpl.modules import HardwareModule
 from pyrpl.module_widgets import AsgWidget
 from . import DspModule
@@ -64,6 +64,22 @@ class WaveformAttribute(SelectAttribute):
         return waveform
 
 
+class AsgOffsetAttribute(FloatAttribute):
+    def __init__(self):
+        super(AsgOffsetAttribute, self).__init__(default=0,
+                                                 increment=1./2**13,
+                                                 min=-1.,
+                                                 max=1.,
+                                                 doc="output offset [volts]")
+
+    def set_value(self, instance, val):
+        instance._offset_masked = val
+        return val
+
+    def get_value(self, instance, owner):
+        return instance._offset_masked
+
+
 # ugly workaround, but realized too late that descriptors have this limit
 def make_asg(channel=1):
     if channel == 1:
@@ -81,25 +97,13 @@ def make_asg(channel=1):
 
     class Asg(HardwareModule):
         widget_class = AsgWidget
-        parameter_names = ["on",
-                           "periodic",
-                           "trigger_source",
-                           "offset",
-                           "amplitude",
-                           "start_phase",
-                           "frequency",
-                           "cycles_per_burst",
-                           "burst",
-                           "delay_between_bursts",
-                           "random_phase",
-                           "waveform",
-                           "output_direct"]
         gui_attributes = ["waveform",
                           "amplitude",
                           "offset",
                           "frequency",
                           "trigger_source",
                           "output_direct"]
+        setup_attributes = gui_attributes
 
         _DATA_OFFSET = set_DATA_OFFSET
         _VALUE_OFFSET = set_VALUE_OFFSET
@@ -108,16 +112,17 @@ def make_asg(channel=1):
         output_directs = None
         name = set_name
 
-        def __init__(self, client, parent=None):
+        def __init__(self, client, name, parent):
             super(Asg, self).__init__(client,
                                       addr_base=0x40200000,
-                                      parent=parent)
+                                      parent=parent,
+                                      name=name)
             self._counter_wrap = 0x3FFFFFFF  # correct value unless you know better
             self._writtendata = np.zeros(self.data_length)
             if self._BIT_OFFSET == 0:
-                self._dsp = DspModule(client, module='asg1')
+                self._dsp = DspModule(client, name='asg1', parent=parent)
             else:
-                self._dsp = DspModule(client, module='asg2')
+                self._dsp = DspModule(client, name='asg2', parent=parent)
             self.output_directs = self._dsp.output_directs
             self.waveform = 'sin'
             self.trigger_source = 'immediately'
@@ -162,11 +167,16 @@ def make_asg(channel=1):
 
         # offset is stored in bits 31:16 of the register.
         # This adaptation to FloatRegister is a little subtle but should work nonetheless
-        offset = FloatRegister(0x4 + _VALUE_OFFSET, bits=14 + 16, bitmask=0x3FFF << 16,
-                               norm=2 ** 16 * 2 ** 13, doc="output offset [volts]") # XXX Something has to be done about that
+        _offset_masked = FloatRegister(0x4 + _VALUE_OFFSET, bits=14 + 16, bitmask=0x3FFF << 16,
+                                       norm=2 ** 16 * 2 ** 13, doc="output offset [volts]") # masked offset is hidden
+                                                                                            # behind AsgOffsetAttribute
+                                                                                            # to have the correct
+                                                                                            # increments and so on.
+        offset = AsgOffsetAttribute()
 
         # formerly scale
         amplitude = FloatRegister(0x4 + _VALUE_OFFSET, bits=14, bitmask=0x3FFF,
+                                  norm=2.**13, signed=False,
                                   doc="amplitude of output waveform [volts]")
         """FloatRegister(0x4 + _VALUE_OFFSET, bits=14, bitmask=0x3FFF,
                                   norm=2 ** 13, signed=False,

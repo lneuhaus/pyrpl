@@ -4,11 +4,12 @@ from . import DSP_INPUTS
 
 
 class Sampler(HardwareModule):
-    def __init__(self, client, parent=None):
+    def __init__(self, client, name, parent):
         self.name = "sampler"
         super(Sampler, self).__init__(client,
             addr_base=0x40300000,
-            parent=parent)
+            parent=parent,
+            name=name)
 for inp, num in DSP_INPUTS.items():
     setattr(Sampler,
             inp,

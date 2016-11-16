@@ -64,9 +64,8 @@ class DspModule(HardwareModule):
 
     name = "dspmodule"
 
-    def __init__(self, client, module='pid0', parent=None):
-        self.name = module
-        self._number = self._inputs[module]
+    def __init__(self, client, name, parent): # for consistency, all HardwareModule creators have the same signature
+        self._number = self._inputs[name]
         super(DspModule, self).__init__(client,
             addr_base=0x40300000+self._number*0x10000,
-            parent=parent)
+            parent=parent, name=name)
