@@ -2,14 +2,14 @@ from pyrpl.attributes import SelectAttribute, SelectRegister, BoolRegister
 from pyrpl.modules import HardwareModule
 
 DSP_INPUTS = dict(
-        pid0=0,
-        pid1=1,
-        pid2=2,
-        pid3=3,
+        pid1=0,
+        pid2=1,
+        pid3=2,
+        pid4=3,
         iir=4,
-        iq0=5,
-        iq1=6,
-        iq2=7,
+        iq1=5,
+        iq2=6,
+        iq3=7,
         asg1=8,
         asg2=9,
         # scope1 = 8, #same as asg1 by design

@@ -28,10 +28,8 @@ from time import sleep
 import numpy as np
 
 from paramiko import SSHException
-from pyrpl.software_modules.network_analyzer import NetworkAnalyzer
-from pyrpl.software_modules.spectrum_analyzer import SpectrumAnalyzer
 from scp import SCPClient, SCPException
-
+from _collections import OrderedDict
 
 # let's start debugging the spec an by taking data around 0 hz before we go
 # more complex
@@ -39,15 +37,15 @@ from scp import SCPClient, SCPException
 
 class RedPitaya(SSHshell):
     _binfilename = 'fpga.bin'
-    module_dict = dict(hk=rp.HK,
-                       ams=rp.AMS,
-                       scope=rp.Scope,
-                       sampler=rp.Sampler,
-                       asg1=rp.Asg1,
-                       asg2=rp.Asg2,
-                       pwm=(rp.AuxOutput, 2), # dict key is (cls, number of instances)
-                       iq=(rp.IQ, 3),
-                       pid=(rp.Pid, 4))# redpitaya modules are automatically generated from this dict
+    module_dict = OrderedDict( hk=rp.HK,
+                               ams=rp.AMS,
+                               scope=rp.Scope,
+                               sampler=rp.Sampler,
+                               asg1=rp.Asg1,
+                               asg2=rp.Asg2,
+                               pwm=(rp.AuxOutput, 2), # dict key is (cls, number of instances)
+                               iq=(rp.IQ, 3),
+                               pid=(rp.Pid, 4))# redpitaya modules are automatically generated from this dict
 
     def __init__(self, hostname='192.168.1.100', port=2222,
                  user='root', password='root',
@@ -79,7 +77,7 @@ class RedPitaya(SSHshell):
         self.timeout = timeout
         self.monitor_server_name = monitor_server_name
         self.c = config
-        self.modules = dict()
+        self.modules = OrderedDict()
 
         # get parameters from os.environment variables
         if not silence_env:
@@ -110,8 +108,8 @@ class RedPitaya(SSHshell):
         else:
             self.dirname = dirname
         if not os.path.exists(self.dirname):
-            if os.path.exists(ps.path.abspath(os.path.join(self.dirname,'prypl'))):
-                self.dirname = ps.path.abspath(os.path.join(self.dirname,'prypl'))
+            if os.path.exists(os.path.abspath(os.path.join(self.dirname,'prypl'))):
+                self.dirname = os.path.abspath(os.path.join(self.dirname,'prypl'))
             else:
                 raise IOError("Wrong dirname",
                           "The directory of the pyrl package could not be found. Please try again calling RedPitaya with the additional argument dirname='c://github//pyrpl//pyrpl' adapted to your installation directory of pyrpl! Current dirname: "
@@ -358,7 +356,7 @@ class RedPitaya(SSHshell):
             if np.iterable(cls): # dict key is (cls, number of instances)
                 cls, num = cls
                 for index in range(num):
-                    self.makemodule(name + str(index), cls)
+                    self.makemodule(name + str(index + 1), cls) # module have 1-based indices
             else:
                 self.makemodule(name, cls)
 

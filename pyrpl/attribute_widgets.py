@@ -309,6 +309,7 @@ class BaseRegisterWidget(QtCore.QObject):
         #self.module = self.module_widget.module
         self.set_widget()
         self.layout_v.addWidget(self.widget)
+        self.update()
 
         #self.module_widget.register_layout.addLayout(self.layout_v)
         #self.value_changed.connect(self.emit_widget_value_changed)

@@ -10,16 +10,16 @@ pyrpl: # General configuration of the software:
   modules: # SoftwareModules to load (in addition to IqManager, AsgManager, PidManager, ScopeManager)
     - NetworkAnalyzer
   dock_positions: !!binary |
-    AAAA/wAAAAD9AAAAAQAAAAIAAAeAAAAD0PwBAAAAAvwAAAAAAAAD1gAAA4kA/////AIAAAAD+wAA
-    AAYAaQBxAHMBAAAAFQAAAWgAAAFoAP////sAAAAIAGEAcwBnAHMBAAABgQAAAMsAAACUAP////sA
-    AAAIAHAAaQBkAHMBAAACUAAAAZUAAAGVAP////wAAAPaAAADpgAAA6YA////+gAAAAACAAAAA/sA
-    AAAMAHMAYwBvAHAAZQBzAQAAAAD/////AAAA1wD////7AAAAIABuAGUAdAB3AG8AcgBrAF8AYQBu
-    AGEAbAB5AHoAZQByAQAAAAD/////AAAA/gD////7AAAACgBzAGMAbwBwAGUBAAAAAP////8AAAAA
-    AAAAAAAAB4AAAAAAAAAABAAAAAQAAAAIAAAACPwAAAAA
+    AAAA/wAAAAD9AAAAAQAAAAIAAAd8AAAD0PwBAAAAAvwAAAAAAAAD0gAAAnkA/////AIAAAAC+wAA
+    AAgAcABpAGQAcwEAAAAVAAACsQAAAhgA////+wAAAAgAYQBzAGcAcwEAAALKAAABGwAAAJQA////
+    /AAAA9YAAAOmAAADpgD////8AgAAAAL8AAAAFQAAAmQAAAETAQAAFPoAAAAAAgAAAAP7AAAADABz
+    AGMAbwBwAGUAcwEAAAAA/////wAAANcA////+wAAACAAbgBlAHQAdwBvAHIAawBfAGEAbgBhAGwA
+    eQB6AGUAcgEAAAAA/////wAAAP4A////+wAAAAoAcwBjAG8AcABlAQAAAAD/////AAAAAAAAAAD7
+    AAAABgBpAHEAcwEAAAJ9AAABaAAAAWgA////AAAHfAAAAAAAAAAEAAAABAAAAAgAAAAI/AAAAAA=
   window_position:
-  - 26
-  - 41
-  - 1920
+  - -8
+  - -8
+  - 1916
   - 1017
 redpitaya:
   hostname: 10.214.1.28
@@ -61,10 +61,12 @@ asg2:
   amplitude: 0.2
 scope:
   input1: asg2
-  trigger_source: asg2
+  trigger_source: ch2_negative_edge
   threshold_ch1: 0.0
   trigger_delay: 0
-  input2: iq0
+  input2: iq1
+  duration: '0.008388608'
+  average: true
 iq0:
   frequency: 100003.70384659618
   bandwidth:
@@ -74,3 +76,46 @@ iq0:
   quadrature_factor: 0.00390625
   phase: 10.00000351946801
   input: asg2
+pid1:
+  input: adc1
+  inputfilter:
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+iq1:
+  quadrature_factor: 0.001
+  frequency: 100200.0062726438
+  input: asg2
+  bandwidth:
+  - 151.0
+  - 151.0
+  gain: 0.0
+  output_signal: quadrature
+iq2:
+  input: adc1
+  bandwidth:
+  - 0.0
+  - 0.0
+  output_signal: quadrature
+pid2:
+  inputfilter:
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  input: adc2
+pid3:
+  inputfilter:
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  input: adc1
+pid4:
+  inputfilter:
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  input: adc2

@@ -307,8 +307,10 @@ class Pyrpl(object):
         for module in self.hardware_modules:  # setup hardware modules with config file keys
             if module.owner is None: # (only modules that are not slaved by software modules)
                 if module.name in self.c._keys():
-                    module.setup(**self.c[module.name])
-
+                    try:
+                        module.setup(**self.c[module.name])
+                    except BaseException as e:
+                        self.logger.warning('Something went wrong when loading attributes of module "%s"'%module.name)
         if self.c.pyrpl.gui:
             widget = self.create_widget()
             widget.show()

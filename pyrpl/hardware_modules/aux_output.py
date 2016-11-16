@@ -19,11 +19,11 @@ class AuxOutput(DspModule):
     performance. Only recommended for temperature control or other
     slow actuators. Big noise peaks are expected around 480 kHz.
 
-    Currently, only pwm0 and pwm1 are available.
+    Currently, only pwm1 and pwm2 are available.
     """
 
     def __init__(self, client, name, parent): # name is 'pwm0' or 'pwm1'
-        pwm_to_module = dict(pwm0='adc1', pwm1='adc2')
+        pwm_to_module = dict(pwm1='adc1', pwm2='adc2')
         # future options: , pwm2 = 'dac1', pwm3='dac2')
         super(AuxOutput, self).__init__(client,
                                         name=pwm_to_module[name],

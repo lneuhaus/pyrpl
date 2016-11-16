@@ -30,7 +30,6 @@ class ModuleWidget(QtGui.QGroupBox):
         self.name = name
         self.attribute_widgets = OrderedDict()
         self.init_gui() # performs the automatic gui creation based on register_names
-        self.update_attribute_widgets()
         self.setStyleSheet("ModuleWidget{border:0;}")
 
 #        self.rp.all_gui_modules.append(self)
@@ -102,16 +101,6 @@ class ModuleWidget(QtGui.QGroupBox):
         self.main_layout = QtGui.QHBoxLayout()
         self.setLayout(self.main_layout)
         self.init_attribute_layout()
-
-    def update_attribute_widgets(self):
-        """
-        Updates all register_widgets listed in self.register_widgets
-
-        :return:
-        """
-        for reg in self.attribute_widgets.values():
-            if not reg.editing():
-                reg.update_widget()
 
 
 class ScopeWidget(ModuleWidget):
@@ -188,18 +177,9 @@ class ScopeWidget(ModuleWidget):
             list(self.attribute_widgets.keys()).index("trigger_source"), self.rolling_group)
         self.checkbox_normal.clicked.connect(self.rolling_mode_toggled)
         self.checkbox_untrigged.clicked.connect(self.rolling_mode_toggled)
-        #self.checkbox_normal.enabledChange.connect(self.rolling_mode_toggled)
+        self.update_rolling_mode_visibility()
+        self.attribute_widgets['duration'].value_changed.connect(self.update_rolling_mode_visibility)
 
-        # minima maxima
-        # for prop in (self.properties["threshold_ch1"],
-        #            self.properties["threshold_ch2"]):
-        #    spin_box = prop.widget
-        #    spin_box.setDecimals(4)
-        #    spin_box.setMaximum(1)
-        #    spin_box.setMinimum(-1)
-        #    spin_box.setSingleStep(0.01)
-
-        #self.properties["curve_name"].acquisition_property = False
 
     def display_channel(self, ch):
         """
@@ -347,8 +327,10 @@ class ScopeWidget(ModuleWidget):
             self.run_continuous()
         return val
 
-    def update_attribute_widgets(self):
-        super(ScopeWidget, self).update_attribute_widgets()
+    def update_rolling_mode_visibility(self):
+        """
+        hide rolling mode checkbox for duration < 100 ms
+        """
 
         self.rolling_group.setEnabled(self.module.duration > 0.1)
         self.attribute_widgets['trigger_source'].widget.setEnabled(

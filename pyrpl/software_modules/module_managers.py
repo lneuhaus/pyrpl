@@ -1,8 +1,10 @@
 from . import SoftwareModule
+from pyrpl.redpitaya import RedPitaya
 from pyrpl.module_widgets import ModuleManagerWidget, IqManagerWidget,\
                                  ScopeManagerWidget
 from pyrpl.hardware_modules import Scope
 import copy
+import numpy as np
 
 
 class ModuleManager(SoftwareModule):
@@ -18,7 +20,19 @@ class ModuleManager(SoftwareModule):
       back its gui if any).
     """
 
+    name = "some_modules"
     widget_class = ModuleManagerWidget
+
+    @property
+    def hardware_module_names(self):
+        """
+        Looks in RedPitaya.modules to find how many modules are present.
+        :return: list of all module names in redpitaya instance with a name looking like:
+          - some_module
+          - or some_module1, some_module2, some_module3 ...
+        """
+
+        return [key for key in self.pyrpl.rp.modules.keys() if key[:-1]==self.name[:-1] or key==self.name[:-1]]
 
     def init_module(self):
         module_list = [getattr(self.pyrpl.rp, name) for name in self.hardware_module_names]
@@ -28,9 +42,9 @@ class ModuleManager(SoftwareModule):
 
     def pop(self, owner=None):
         """
-        Owner is the name of the owner module for display (string)
-        :param owner:
-        :return:
+        returns the first available module (starting from the end of the list)
+        :param owner: (string): name of the module that is reserving the resource
+        leave None if the gui shouldn't be disabled
         """
         module = self.free_modules.pop()
         module.owner = owner
@@ -47,20 +61,21 @@ class ModuleManager(SoftwareModule):
         if self.widget is not None:
             self.widget.show_ownership()
 
+
 class AsgManager(ModuleManager):
     name = "asgs"
-    hardware_module_names = ['asg1', 'asg2']
-
+    # hardware_module_names = ["asg1", "asg2"]  # The same info would be duplicated from redpitaya.py
 
 class PidManager(ModuleManager):
     name = "pids"
-    hardware_module_names = ['pid1', 'pid2', 'pid3']
+    # hardware_module_names = ["pid1", "pid2", "pid3", "pid4"]  # The same info would be duplicated from redpitaya.py
 
 
 class IqManager(ModuleManager):
     name = "iqs"
     widget_class = IqManagerWidget
-    hardware_module_names = ['iq0', 'iq1', 'iq2']
+    # hardware_module_names = ["iq1", "iq2", "iq3"]  # The same info would be duplicated from redpitaya.py
+
 
 class ScopeManager(ModuleManager):
     """
@@ -69,19 +84,4 @@ class ScopeManager(ModuleManager):
 
     name = "scopes"
     widget_class = ScopeManagerWidget
-    hardware_module_names = ['scope']
-
-#class ScopeWrapper(SoftwareModule):
-#    """
-#    Only useful to make the initializer respect the SoftwareModule convention
-#    """
-#
-#    def __new__(cls, *args, **kwargs):
-#        return
-#
-#    def __init__(self, pyrpl):
-#        super(ScopeWrapper, self).__init__(pyrpl)
-
-
-
-
+    # hardware_module_names = ["scope"]  # The same info would be duplicated from redpitaya.py
