@@ -99,15 +99,18 @@ except:
             elif isinstance(curve, list):
                 return [CurveDB.get(c) for c in curve]
             else:
-                with open(CurveDB._dirname + str(curve) + '.p', 'r') as f:
+                with open(os.path.join(CurveDB._dirname, str(curve) + '.p'), 'rb') as f:
+                    # rb is for compatibility with python 3
+                    # see http://stackoverflow.com/questions/5512811/builtins-typeerror-must-be-str-not-bytes
                     curve = CurveDB()
                     curve._pk, curve.data, curve.params = pickle.load(f)
                 return curve
 
         def save(self):
-            with open(os.path.join(self._dirname, str(self.pk) + '.p'), 'w') as f:
+            with open(os.path.join(self._dirname, str(self.pk) + '.p'), 'wb') as f:
+                # wb is for compatibility with python 3
+                # see http://stackoverflow.com/questions/5512811/builtins-typeerror-must-be-str-not-bytes
                 pickle.dump((self.pk, self.data, self.params), f)
-                f.close()
 
         def delete(self):
             # remove the file

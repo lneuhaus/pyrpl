@@ -429,7 +429,16 @@ class PidWidget(ModuleWidget):
             self.attribute_widgets[prop].widget.set_log_increment()
             self.attribute_widgets[prop].widget.setMaximum(1000000)
             self.attribute_widgets[prop].widget.setMinimum(-1000000)
+        # can't avoid timer to update ival
+        self.timer_ival = QtCore.QTimer()
+        self.timer_ival.setInterval(100)
+        self.timer_ival.timeout.connect(self.update_ival)
+        self.timer_ival.start()
 
+    def update_ival(self):
+        widget = self.attribute_widgets['ival']
+        if self.isVisible(): # avoid unnecessary ssh traffic
+            widget.update()
 
 class NaWidget(ModuleWidget):
     """

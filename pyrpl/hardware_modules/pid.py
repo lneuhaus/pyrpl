@@ -31,6 +31,25 @@ class Pid(FilterModule):
 
     setup_attributes = gui_attributes
 
+    def setup(self,
+              input=None,
+              output_direct=None,
+              setpoint=None,
+              p=None,
+              i=None,
+              d=None,
+              ival=None,
+              inputfilter=None):
+
+        if input is not None: self.input = input
+        if output_direct is not None: self.output_direct = output_direct
+        if setpoint is not None: self.setpoint = setpoint
+        if p is not None: self.p = p
+        if i is not None: self.i = i
+        if d is not None: self.d = d
+        if ival is not None: self.ival = ival
+        if inputfilter is not None: self.inputfilter = inputfilter
+
     _delay = 3  # min delay in cycles from input to output_signal of the module
     # with integrator and derivative gain, delay is rather 4 cycles
 
@@ -42,6 +61,7 @@ class Pid(FilterModule):
 
     _GAINBITS = 24  # Register(0x20C)
 
+    """
     parameter_names = ["p",
                        "i",
                        "d",
@@ -53,6 +73,7 @@ class Pid(FilterModule):
                        "output_direct",
                        "input",
                        "ival"]
+    """
 
     ival = IValAttribute(min=-4, max=4, increment= 8. / 2**16)
 
