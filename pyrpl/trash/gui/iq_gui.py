@@ -145,8 +145,6 @@ class MyFrame(QtGui.QFrame):
         self.setStyleSheet("background-color: white;")
         self.parent = parent
         self.lower()
-        #self.proxy = self.parent.scene.addWidget(self)
-        #self.proxy.setZValue(-1)
 
 class MyFrameDrawing(QtGui.QFrame):
     def __init__(self , parent):
