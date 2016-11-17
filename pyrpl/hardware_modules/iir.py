@@ -1,6 +1,6 @@
 from pyrpl import iir, bodefit
 from . import FilterModule
-from pyrpl.attributes import IntRegister, BoolRegister
+from pyrpl.attributes import IntRegister, BoolRegister, ListFloatProperty
 
 import numpy as np
 
@@ -29,17 +29,30 @@ class IIR(FilterModule):
 
     _IIRSTAGES = IntRegister(0x208)
 
+
+    gui_attributes = [ "input",
+                       "loops",
+                       "on",
+                       "shortcut",
+                       "zeros",
+                       "poles",
+                       "output_direct"]
+    """
     parameter_names = ["loops",
                        "on",
                        "shortcut",
                        "coefficients",
                        "input",
                        "output_direct"]
+    """
 
     loops = IntRegister(0x100, doc="Decimation factor of IIR w.r.t. 125 MHz. " \
                                    + "Must be at least 3. ")
 
     on = BoolRegister(0x104, 0, doc="IIR is on")
+
+    zeros = ListFloatProperty()
+    poles = ListFloatProperty()
 
     shortcut = BoolRegister(0x104, 1, doc="IIR is bypassed")
 

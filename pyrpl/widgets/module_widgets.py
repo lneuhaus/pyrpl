@@ -823,6 +823,8 @@ class PidManagerWidget(ModuleManagerWidget):
 class ScopeManagerWidget(ModuleManagerWidget):
     pass
 
+class IirManagerWidget(ModuleManagerWidget):
+    pass
 
 class IqManagerWidget(ModuleManagerWidget):
     def init_gui(self):

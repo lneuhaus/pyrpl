@@ -1,7 +1,7 @@
 import copy
 
 from pyrpl.widgets.module_widgets import ModuleManagerWidget, IqManagerWidget,\
-                                 ScopeManagerWidget
+                                 ScopeManagerWidget, IirManagerWidget
 
 from . import SoftwareModule
 
@@ -84,3 +84,11 @@ class ScopeManager(ModuleManager):
     name = "scopes"
     widget_class = ScopeManagerWidget
     # hardware_module_names = ["scope"]  # The same info would be duplicated from redpitaya.py
+
+class IirManager(ModuleManager):
+    """
+    Only one iir, but it should be protected by the slave/owner mechanism.
+    """
+
+    name = "iirs"
+    widget_class = IirManagerWidget

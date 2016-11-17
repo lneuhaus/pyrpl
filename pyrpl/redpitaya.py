@@ -45,7 +45,8 @@ class RedPitaya(SSHshell):
                                asg2=rp.Asg2,
                                pwm=(rp.AuxOutput, 2), # dict key is (cls, number of instances)
                                iq=(rp.IQ, 3),
-                               pid=(rp.Pid, 4))# redpitaya modules are automatically generated from this dict
+                               pid=(rp.Pid, 4),
+                               iir=rp.IIR)# redpitaya modules are automatically generated from this dict
 
     def __init__(self, hostname='192.168.1.100', port=2222,
                  user='root', password='root',

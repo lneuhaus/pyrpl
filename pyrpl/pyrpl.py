@@ -324,7 +324,8 @@ class Pyrpl(object):
         soft_mod_names=  ['AsgManager',
                           'IqManager',
                           'PidManager',
-                          'ScopeManager'] + soft_mod_names
+                          'ScopeManager',
+                          'IirManager'] + soft_mod_names
 
         for module_name in soft_mod_names:
             ModuleClass = getattr(software_modules, module_name)

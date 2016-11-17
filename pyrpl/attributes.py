@@ -12,7 +12,8 @@ changed. The necessary mechanisms are happening behind the scene, and they are c
 
 from pyrpl.bijection import Bijection
 from pyrpl.widgets.attribute_widgets import BoolRegisterWidget, FloatRegisterWidget, FilterRegisterWidget, \
-                                            IntRegisterWidget, SelectRegisterWidget, StringRegisterWidget
+                                            IntRegisterWidget, SelectRegisterWidget, StringRegisterWidget, \
+                                            ListFloatRegisterWidget
 
 import logging
 import sys
@@ -204,6 +205,13 @@ class FilterAttribute(BaseAttribute):
 
     widget_class = FilterRegisterWidget
 
+
+class ListFloatAttribute(BaseAttribute):
+    """
+    An arbitrary length list of float
+    """
+
+    widget_class = ListFloatRegisterWidget
 
 # way to represent the smallest positive value
 # needed to set floats to minimum count above zero
@@ -703,3 +711,10 @@ class BoolProperty(BoolAttribute, BaseProperty):
 
 class FilterProperty(FilterAttribute, BaseProperty):
     default = 10
+
+class ListFloatProperty(ListFloatAttribute, BaseProperty):
+    """
+    An arbitrary number of floats
+    """
+
+    default = [0.]

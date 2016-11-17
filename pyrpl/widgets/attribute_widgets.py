@@ -7,6 +7,7 @@ The resulting widget is then saved as an attribute of the register
 from pyqtgraph.Qt import QtGui, QtCore
 import numpy as np
 import time
+import functools
 
 import sys
 if sys.version_info < (3,):
@@ -470,6 +471,131 @@ class FloatRegisterWidget(NumberRegisterWidget):
 
         return float(getattr(self.module, self.name))
 
+
+class ListFloatSpinBox(QtGui.QWidget):
+    value_changed = QtCore.pyqtSignal()
+
+    def __init__(self, number, label, min=-1., max=1., increment=0.001):
+        super(ListFloatSpinBox, self).__init__()
+        self.label = label
+        self.min = min
+        self.max = max
+        self.increment = increment
+        self.lay = QtGui.QVBoxLayout()
+        self.spins = []
+        self.button_removes = []
+        self.spin_lays = []
+        if label is not None:
+            self.label = QtGui.QLabel(self.name)
+            self.lay.addWidget(self.label)
+        for i in range(number):
+            self.add_spin()
+        self.button_add = QtGui.QPushButton("+")
+        self.button_add.clicked.connect(self.add_spin)
+        self.button_remove = QtGui.QPushButton("-")
+
+        self.lay.addWidget(self.button_add)
+        self.setLayout(self.lay)
+
+    def add_spin(self):
+        index = len(self.spins)
+        spin = MyDoubleSpinBox(label="", min=self.min, max=self.max, increment=self.increment)
+        self.spins.append(spin)
+        spin_lay = QtGui.QHBoxLayout()
+        self.spin_lays.append(spin_lay)
+        spin_lay.addWidget(spin)
+        button_remove = QtGui.QPushButton('-')
+        self.button_removes.append(button_remove)
+        spin_lay.addWidget(button_remove)
+        spin.value_changed.connect(self.value_changed)
+        button_remove.clicked.connect(functools.partial(self.remove_spin, button=button_remove))
+        self.lay.insertLayout(index + 1*(self.label is not None), spin_lay) #QLabel occupies the first row
+
+    def remove_spin(self, button):
+        index = self.button_removes.index(button)
+
+        button = self.button_removes.pop(index)
+        spin = self.spins.pop(index)
+        spin_lay = self.spin_lays.pop(index)
+
+        self.lay.removeItem(spin_lay)
+
+        spin.deleteLater()
+        button.deleteLater()
+        spin_lay.deleteLater()
+
+    def get_list(self):
+        return [spin.value() for spin in self.spins]
+
+    def set_list(self, list_val):
+        for index, val in enumerate(list_val):
+            if index>=len(self.spins):
+                self.add_spin()
+            self.spins[index].val = val
+
+        to_delete = []
+        for other_index in range(len(list_val), len(self.spins)):
+            to_delete.append(self.button_removes[other_index]) # don't loop on a list that is
+                                                                                 # shrinking !
+        for button in to_delete:
+            self.remove_spin(button)
+
+    def editing(self):
+        edit = False
+        for spin in self.spins:
+            edit = edit or spin.editing()
+        return edit()
+
+
+
+class ListFloatRegisterWidget(BaseRegisterWidget):
+    """
+    Attribute for arbitrary number for floats
+    """
+    def __init__(self, name, module):
+        val = getattr(module, name)
+        if np.iterable(val):
+            self.number = len(val)
+        else:
+            self.number = 1
+        #self.defaults = name + 's'
+        super(ListFloatRegisterWidget, self).__init__(name, module)
+
+    def write(self):
+        setattr(self.module, self.name, self.widget.get_list())
+        self.value_changed.emit()
+
+    def editing(self):
+        return self.widget.editing()
+
+    def update(self):
+        """
+        Updates the value displayed in the widget
+        :return:
+        """
+
+        if not self.widget.hasFocus():
+            self.widget.set_list(self.module_value())
+
+    def set_widget(self):
+        """
+        Sets up the widget (here a ListFloatSpinBox)
+        :return:
+        """
+
+        self.widget = ListFloatSpinBox(self.number, label=None, min=0, max=50e6, increment=0.01)#QtGui.QDoubleSpinBox()
+        #self.widget.setDecimals(4)
+        #self.widget.setSingleStep(0.01)
+        self.widget.value_changed.connect(self.write)
+
+    def module_value(self):
+        """
+        returns the module value, with the good type conversion.
+
+        :return: float
+        """
+
+        return self.widget.get_list()
 
 class ListComboBox(QtGui.QWidget):
     value_changed = QtCore.pyqtSignal()
