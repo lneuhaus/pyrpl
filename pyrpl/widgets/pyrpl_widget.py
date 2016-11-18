@@ -1,6 +1,6 @@
 from PyQt4 import QtCore, QtGui
 import sys
-from traceback import format_exception
+from traceback import format_exception, format_exception_only
 
 APP = QtGui.QApplication.instance() # try to retrieve the app (I think when Ipython is running, the app already exists)
 if APP is None: # Otherwise, create it
@@ -30,8 +30,9 @@ class ExceptionLauncher(QtCore.QObject):
     def show_all(self):
         self.timer.stop()
         for bar in self.status_bars:
-            bar.showMessage(str(self.etype) + ':' + str(self.evalue))
+            bar.showMessage(''.join(format_exception_only(self.etype, self.evalue)))
             bar.setStyleSheet('color: red;')
+            bar.setToolTip(''.join(format_exception(self.etype, self.evalue, self.tb)))
         self.timer.start()
 
     def vanish_all(self):
