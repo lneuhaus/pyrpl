@@ -18,3 +18,9 @@ class AMS(HardwareModule):
     dac1 = PWMRegister(0x24, doc="PWM output 1 [V]")
     dac2 = PWMRegister(0x28, doc="PWM output 2 [V]")
     dac3 = PWMRegister(0x2C, doc="PWM output 3 [V]")
+
+    def setup(self):
+        """
+        Not sure what this module does, but it needs to have a setup for loading from the gui.
+        """
+        pass

@@ -23,7 +23,6 @@ class BaseModule(with_metaclass(NamedDescriptorResolverMetaClass, object)):
     """
 
     pyrpl_config = None
-    owner = None
 
     #@property
     #def shortname(self):
@@ -86,6 +85,26 @@ class HardwareModule(BaseModule):
     """
     # factor to manually compensate 125 MHz oscillator frequency error
     # real_frequency = 125 MHz * _frequency_correction
+
+    _owner = None
+
+    @property
+    def owner(self):
+        return self._owner
+
+    @owner.setter
+    def owner(self, val):
+        """
+        Changing module ownership automagically:
+         - changes the visibility of the module_widget in the gui
+         - re-setups the module with the module attributes in the config-file if new ownership is None
+        """
+        self._owner = val
+        if self.widget is not None:
+            self.widget.show_ownership()
+        if val is None:
+            self.setup(**self.c._dict)
+
     @property
     def _frequency_correction(self):
         try:
@@ -121,7 +140,6 @@ class HardwareModule(BaseModule):
         self.__doc__ = "Available registers: \r\n\r\n" + self.help()
         self._parent = parent
         self.pyrpl_config = parent.c
-        self.owner = None # A HardwareModule can be owned by a SoftwareModule
 
     def _reads(self, addr, length):
         return self._client.reads(self._addr_base + addr, length)

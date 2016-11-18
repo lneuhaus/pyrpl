@@ -34,31 +34,24 @@ class ModuleManager(SoftwareModule):
         return [key for key in self.pyrpl.rp.modules.keys() if key[:-1]==self.name[:-1] or key==self.name[:-1]]
 
     def init_module(self):
-        module_list = [getattr(self.pyrpl.rp, name) for name in self.hardware_module_names]
-        self.all_modules = copy.copy(module_list)
-        self.free_modules = module_list
-        self.busy_modules = []
+        self.all_modules = [getattr(self.pyrpl.rp, name) for name in self.hardware_module_names]
 
     def pop(self, owner=None):
         """
         returns the first available module (starting from the end of the list)
         :param owner: (string): name of the module that is reserving the resource
-        leave None if the gui shouldn't be disabled
+        leave None if the gui shouldn't be disabled.
+        If no available module left, returns None.
         """
-        module = self.free_modules.pop()
-        module.owner = owner
-        self.busy_modules.append(module)
-        if self.widget is not None:
-            self.widget.show_ownership()
-        return module
+        for module in self.all_modules[-1::-1]: # start with largest index module
+            if module.owner is None:
+                module.owner = owner # this changes the visibility of the module
+                return module
+        return None
 
     def free(self, module):
-        if module in self.busy_modules:
+        if module.owner is not None:
             module.owner = None
-            self.busy_modules.remove(module)
-            self.free_modules.append(module)
-        if self.widget is not None:
-            self.widget.show_ownership()
 
 
 class AsgManager(ModuleManager):

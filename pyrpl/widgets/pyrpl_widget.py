@@ -31,7 +31,7 @@ class ExceptionLauncher(QtCore.QObject):
         self.timer.stop()
         for bar in self.status_bars:
             bar.showMessage(''.join(format_exception_only(self.etype, self.evalue)))
-            bar.setStyleSheet('color: red;')
+            bar.setStyleSheet('color: white;background-color: red;')
             bar.setToolTip(''.join(format_exception(self.etype, self.evalue, self.tb)))
         self.timer.start()
 
@@ -43,12 +43,14 @@ class ExceptionLauncher(QtCore.QObject):
 EL = ExceptionLauncher()
 # Exceptions raised by the event loop should be displayed in the MainWindow status_bar.
 # see http://stackoverflow.com/questions/40608610/exceptions-in-pyqt-event-loop-and-ipython
+# when running in ipython, we have to monkeypatch sys.excepthook in the qevent loop.
 """
 def new_except_hook(etype, evalue, tb):
     QtGui.QMessageBox.information(None,
                                   str('error'),
                                   ''.join(format_exception(etype, evalue, tb)))
 """
+
 def patch_excepthook():
     EL.old_except_hook = sys.excepthook
     sys.excepthook = EL.display_exception

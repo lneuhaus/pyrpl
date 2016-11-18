@@ -186,6 +186,7 @@ class SpectrumAnalyzer(SoftwareModule):
 
     # _setup = False
     def init_module(self):
+        self._iq = None
         self.rp = self.pyrpl.rp
         self._parent = self.rp # very weird, now the correct way would be to use the ModuleManagers...
         self.baseband = False
@@ -203,9 +204,13 @@ class SpectrumAnalyzer(SoftwareModule):
         self.rbw_auto = True
         self._setup = False
 
+
     @property
     def iq(self):
-        return self.rp.iq2
+        if self._iq is None:
+            self._iq = self.pyrpl.rp.iq2# can't use the normal pop mechanism because we specifically want the customized iq2
+            self._iq.owner = self.name
+        return self._iq
 
     iq_quadraturesignal = 'iq2_2'
 
@@ -252,6 +257,10 @@ class SpectrumAnalyzer(SoftwareModule):
         :return:
         """
         self._setup = True
+
+        if self.scope.owner != self.name:
+            self.pyrpl.scopes.pop(self.name)
+
         if span is not None:
             self.span = span
         if center is not None:
@@ -359,7 +368,9 @@ class SpectrumAnalyzer(SoftwareModule):
         """
         if not self._setup:
             raise NotReadyError("Setup was never called")
-        return scipy.fftpack.fftshift(np.abs(scipy.fftpack  .fft(self.filtered_iq_data())) ** 2)[self.useful_index()]
+        res = scipy.fftpack.fftshift(np.abs(scipy.fftpack  .fft(self.filtered_iq_data())) ** 2)[self.useful_index()]
+        self.pyrpl.scopes.free(self.scope)
+        return res
 
     def freqs(self):
         """

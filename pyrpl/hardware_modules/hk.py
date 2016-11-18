@@ -34,3 +34,6 @@ class HK(HardwareModule):
     # another option: access led as array of bools
     # led = [BoolRegister(0x30,bit=i,doc="LED "+str(i)) for i in range(8)]
 
+    def setup(self,
+              led=None):
+        if led is not None: self.led = led

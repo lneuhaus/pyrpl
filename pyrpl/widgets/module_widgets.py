@@ -35,33 +35,13 @@ class ModuleWidget(QtGui.QGroupBox):
         self.init_gui() # performs the automatic gui creation based on register_names
         self.setStyleSheet("ModuleWidget{border:0;}")
 
-#        self.rp.all_gui_modules.append(self)
-
-    # I don't see why it should be done at the gui level rather than module level. Let's remove it from here
-    #def get_state(self):
-    #    """returns a dictionary containing all properties listed in
-    #    property_names."""
-    #    #Not sure if we should also set the state of the underlying module
-
-    #   dic = dict()
-    #    for val in self.property_names:
-    #        dic[val] = getattr(self.module, val)
-    #    return dic
-
-    #def set_state(self, dic):
-    #    """Sets the state using a dictionary"""
-
-    #    for key, val in dic.iteritems():
-    #        setattr(self.module, key, val)
-    #    self.module.setup()
-
-
-    #def stop_all_timers(self):
-    #    self.property_watch_timer.stop()
-    #    try:
-    #        self.timer.stop()
-    #    except AttributeError:
-    #        pass
+    def show_ownership(self):
+        if self.module.owner is not None:
+            self.setEnabled(False)
+            self.setTitle(self.module.name + ' (' + self.module.owner + ')')
+        else:
+            self.setEnabled(True)
+            self.setTitle(self.module.name)
 
     def init_attribute_layout(self):
         """
@@ -814,16 +794,6 @@ class ModuleManagerWidget(ModuleWidget):
             self.module_widgets.append(module_widget)
             self.main_layout.addWidget(module_widget)
         self.setLayout(self.main_layout)
-        self.show_ownership()
-
-    def show_ownership(self):
-        for widget in self.module_widgets:
-            if widget.module.owner is not None:
-                widget.setEnabled(False)
-                widget.setTitle(widget.module.name + ' (' + widget.module.owner + ')')
-            else:
-                widget.setEnabled(True)
-                widget.setTitle(widget.module.name)
 
 
 class PidManagerWidget(ModuleManagerWidget):
@@ -1041,16 +1011,7 @@ class SpecAnWidget(ModuleWidget):
 
         self.attribute_widgets["rbw_auto"].value_changed.connect(self.update_rbw_visibility)
         self.update_rbw_visibility()
-        """
-        for attr in [self.properties[attr_name] for attr_name in
-                     ["center", "rbw"]]:
-            attr.widget.setMaximum(125e6)
-            attr.widget.setDecimals(0)
-        self.properties["acbandwidth"].widget.setMaximum(100e6)
-        self.properties["points"].widget.setMaximum(16384)
-        self.properties["avg"].widget.setMaximum(1000000000)
-        self.properties["curve_name"].acquisition_property = False
-        """
+
     def update_rbw_visibility(self):
         self.attribute_widgets["rbw"].widget.setEnabled(not self.module.rbw_auto)
 
@@ -1144,6 +1105,7 @@ class SpecAnWidget(ModuleWidget):
         self.button_continuous.setText("Run continuous")
         self.running = False
         self.button_single.setEnabled(True)
+        self.module.scope.owner = None # since the scope is between setup() and curve(). We have to free it manually
 
     def run_continuous_clicked(self):
         """
