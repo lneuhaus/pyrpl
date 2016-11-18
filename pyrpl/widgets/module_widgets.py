@@ -28,12 +28,13 @@ class ModuleWidget(QtGui.QGroupBox):
 
     def __init__(self, name, module, parent=None):
         super(ModuleWidget, self).__init__(parent)
-        #self.rp = rp
         self.module = module
         self.name = name
         self.attribute_widgets = OrderedDict()
         self.init_gui() # performs the automatic gui creation based on register_names
-        self.setStyleSheet("ModuleWidget{border:0;}")
+        self.setStyleSheet("ModuleWidget{border:0;color: transparent;}") # frames and title hidden for software_modules
+                                        # ModuleManagerWidget sets them visible for the HardwareModuleWidgets...
+        self.show_ownership()
 
     def show_ownership(self):
         if self.module.owner is not None:
@@ -788,8 +789,8 @@ class ModuleManagerWidget(ModuleWidget):
         self.module_widgets = []
         for index, mod in enumerate(self.module.all_modules):
             module_widget = mod.create_widget()
-            module_widget.setStyleSheet("ModuleWidget{border: 1px dashed gray;}")
-            #module_widget.show_ownership()".setTitle(module_widget.module.name)
+            # frames and titles visible only for sub-modules of Managers
+            module_widget.setStyleSheet("ModuleWidget{border: 1px dashed gray;color: black;}")
 
             self.module_widgets.append(module_widget)
             self.main_layout.addWidget(module_widget)

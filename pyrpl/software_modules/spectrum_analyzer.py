@@ -189,19 +189,20 @@ class SpectrumAnalyzer(SoftwareModule):
         self._iq = None
         self.rp = self.pyrpl.rp
         self._parent = self.rp # very weird, now the correct way would be to use the ModuleManagers...
-        self.baseband = False
-        self.center = 0
-        self.avg = 10
-        self.input = 'adc1'
-        self.acbandwidth = 0
-        self.window = "flattop"
 
         self._rbw = 0
         self._rbw_auto = False
-
+        self.acbandwidth = 0
+        self.baseband = False
+        self.center = 0
+        self.avg = 10
+        self.window = "flattop"
         self.points = Scope.data_length
+        """ # intializing stuffs while scope is not reserved modifies the parameters of the scope...
+        self.input = 'adc1'
         self.span = 1e5
         self.rbw_auto = True
+        """
         self._setup = False
 
 
