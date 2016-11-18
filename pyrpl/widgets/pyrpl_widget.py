@@ -1,51 +1,36 @@
 from PyQt4 import QtCore, QtGui
+import sys
+from traceback import format_exception
 
-#APP = MyApp.instance() # QtGui.QApplication.instance() # If ipython is running with the qt option, app already exists...
-#print('APP was not none')
-#print(APP)
-APP = None
+APP = QtGui.QApplication.instance() # try to retrieve the app (I think when Ipython is running, the app already exists)
 if APP is None: # Otherwise, create it
-    APP = QtGui.QApplication(["pyrpl"]) #MyApp(["pyrpl"])#
+    APP = QtGui.QApplication(["pyrpl"])
 
-    ## All the commented mess below is to try catch exceptions from the event loop.
-    ## see http://stackoverflow.com/questions/40608610/exceptions-in-pyqt-event-loop-and-ipython
-    """
-    old_notify = APP.notify
-    def notify(self, QObject, QEvent):
-        try:
-            import traceback
-            return_value = old_notify(QObject, QEvent)# super(MyApp, self).notify(QObject, QEvent)
-        except BaseException as e:
-            print('===========')
-            from sys import stdout
-            stdout.flush()
-        else:
-            pass
-        return return_value
-    APP.__class__.notify = notify
-    print("App was None")
-    """
 
-"""
 class ExceptionLauncher(QtCore.QObject):
     #Used to display exceptions in the status bar of PyrplWidgets
-
-
-    show_exception = QtCore.pyqtSignal()
+    _show_exception = QtCore.pyqtSignal() # use a signal to make sure no thread is messing up with gui
 
     def __init__(self):
         super(ExceptionLauncher, self).__init__()
-        self.show_exception.connect(self.show_all)
+        self._show_exception.connect(self.show_all)
         self.status_bars = []
         self.timer = QtCore.QTimer()
         self.timer.setInterval(1000)
         self.timer.setSingleShot(False)
         self.timer.timeout.connect(self.vanish_all)
 
+    def display_exception(self, etype, evalue, tb):
+        self.etype = etype
+        self.evalue = evalue
+        self.tb = tb
+        self._show_exception.emit()
+        self.old_except_hook(etype, evalue, tb)
+
     def show_all(self):
         self.timer.stop()
         for bar in self.status_bars:
-            bar.showMessage(str(self.exctype) + ':' + str(self.value))
+            bar.showMessage(str(self.etype) + ':' + str(self.evalue))
             bar.setStyleSheet('color: red;')
         self.timer.start()
 
@@ -55,38 +40,29 @@ class ExceptionLauncher(QtCore.QObject):
 
 
 EL = ExceptionLauncher()
+# Exceptions raised by the event loop should be displayed in the MainWindow status_bar.
+# see http://stackoverflow.com/questions/40608610/exceptions-in-pyqt-event-loop-and-ipython
+"""
+def new_except_hook(etype, evalue, tb):
+    QtGui.QMessageBox.information(None,
+                                  str('error'),
+                                  ''.join(format_exception(etype, evalue, tb)))
+"""
+def patch_excepthook():
+    EL.old_except_hook = sys.excepthook
+    sys.excepthook = EL.display_exception
 
-try: # excepthook is different when running in IPython
-    import IPython
-    IPYTHON = IPython.get_ipython()
-    if IPYTHON is None:
-        raise
-except:
-    IPYTHON = None
-    import sys
-    oldexcepthook = sys.excepthook
-    def new_except_hook(exctype, value, traceback):
-        EL.exctype = exctype
-        EL.value = value
-        EL.tb = traceback
-        EL.show_exception.emit()
-        return oldexcepthook(exctype, value, traceback)
-    sys.excepthook = new_except_hook
-else:
-    def new_except_hook(shell, etype, evalue, tb, tb_offset=None):
-        # do you own thing:
-        EL.exctype = etype
-        EL.value = evalue
-        EL.tb = tb
-        EL.show_exception.emit()
-        # also do what IPython would have done, if you want:
-        return shell.showtraceback((etype, evalue, tb), tb_offset=tb_offset)
-    IPYTHON.set_custom_exc((Exception,), new_except_hook)
+TIMER = QtCore.QTimer()
+TIMER.setSingleShot(True)
+TIMER.timeout.connect(patch_excepthook)
+TIMER.start()
 
 
-
+"""
 class FilterObject(QtCore.QObject):
     def eventFilter(self, obj, event):
+        import sys
+        sys.excepthook = lambda etype, evalue, tb:print('yo')
         try:
             res = QtCore.QObject.eventFilter(self, obj, event)
             if res:
@@ -129,7 +105,7 @@ class PyrplWidget(QtGui.QMainWindow):
         self.timer_save_pos.start()
 
         self.status_bar = self.statusBar()
-        #EL.status_bars.append(self.status_bar)
+        EL.status_bars.append(self.status_bar)
         self.setWindowTitle(self.parent.c.pyrpl.name)
 
     def add_dock_widget(self, widget, name):
