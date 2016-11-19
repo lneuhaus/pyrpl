@@ -99,11 +99,22 @@ class HardwareModule(BaseModule):
          - changes the visibility of the module_widget in the gui
          - re-setups the module with the module attributes in the config-file if new ownership is None
         """
+        old = self.owner
         self._owner = val
+        self.ownership_changed(old, val)
         if self.widget is not None:
             self.widget.show_ownership()
         if val is None:
             self.setup(**self.c._dict)
+
+    def ownership_changed(self, old, new):
+        """
+        This hook is there to make sure any ongoing measurement is stopped when the module get slaved
+        old: name of old owner (eventually None)
+        new: name of new owner (eventually None)
+        """
+
+        pass
 
     @property
     def _frequency_correction(self):

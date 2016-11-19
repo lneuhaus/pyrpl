@@ -73,11 +73,17 @@ class BaseAttribute(object):
         :return:
         """
 
-        self.set_value(instance, value)
-        if instance.widget is not None: # update gui only if it exists
+        self.set_value(instance, value) # sets the value internally
+        self.set_value_gui_config(instance, value) # update value in gui and config
+
+    def set_value_gui_config(self, instance, value):
+        """
+        Sets the value in the gui and config
+        """
+        if instance.widget is not None:  # update gui only if it exists
             if self.name in instance.widget.attribute_widgets:
                 self.update_gui(instance)
-        if instance.owner is None: # don't save attributes of slave modules
+        if instance.owner is None:  # don't save attributes of slave modules
             if self.name in instance.setup_attributes:
                 self.save_attribute(instance, value)
         return value

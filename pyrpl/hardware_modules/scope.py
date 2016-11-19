@@ -61,6 +61,34 @@ class DurationAttribute(SelectAttribute):
         instance._logger.error("Desired duration too long to realize")
 
 
+class DecimationRegister(SelectRegister):
+    """
+    Carreful: changing decimation changes duration and sampling_time as well
+    """
+    def set_value(self, instance, value):
+        super(DecimationRegister, self).set_value(instance, value)
+        instance.__class__.duration.set_value_gui_config(instance, instance.duration)
+        instance.__class__.sampling_time.set_value_gui_config(instance, instance.sampling_time)
+
+
+class SamplingTimeAttribute(SelectAttribute):
+    def get_value(self, instance, owner):
+        if instance is None:
+            return self
+        return 8e-9 * float(instance.decimation)
+
+    def set_value(self, instance, value):
+        """sets or returns the time separation between two subsequent points of a scope trace
+        the rounding makes sure that the actual value is shorter or equal to the set value"""
+        tbase = 8e-9
+        for d in reversed(instance.decimations):
+            if value >= tbase * d:
+                instance.decimation = d
+                return
+        instance.decimation = min(instance.decimations)
+        self._logger.error("Desired sampling time impossible to realize")
+
+
 class TriggerSourceAttribute(SelectAttribute):
     def get_value(self, instance, owner):
         if instance is None:
@@ -138,20 +166,6 @@ class Scope(HardwareModule):
 
     input1 = ScopeInputAttribute(DSP_INPUTS.keys(), 1)
     input2 = ScopeInputAttribute(DSP_INPUTS.keys(), 2)
-    # def input1(self):
-    #   return self._ch1.input
-
-    # @input1.setter
-    # def input1(self, v):
-    #    self._ch1.input = v
-
-    # @property
-    # def input2(self):
-    #    return self._ch2.input
-
-    # @input2.setter
-    # def input2(self, v):
-    #    self._ch2.input = v
 
     _reset_writestate_machine = BoolRegister(0x0, 1,
                                              doc="Set to True to reset writestate machine. \
@@ -229,7 +243,7 @@ class Scope(HardwareModule):
     # cf. http://stackoverflow.com/questions/13905741/accessing-class-variables-from-a-list-comprehension-in-the-class-definition
     durations = [st * data_length for st in sampling_times]
 
-    decimation = SelectRegister(0x14, doc="decimation factor",
+    decimation = DecimationRegister(0x14, doc="decimation factor", # customized to update duration and sampling_time
                                 options=_decimations)
 
     _write_pointer_current = IntRegister(0x18,
@@ -271,23 +285,18 @@ class Scope(HardwareModule):
                               doc="True if enough data have been acquired to fill " + \
                                   "the pretrig buffer")
 
-    @property
-    def sampling_time(self):
-        return 8e-9 * float(self.decimation)
-
-    @sampling_time.setter
-    def sampling_time(self, v):
-        """sets or returns the time separation between two subsequent points of a scope trace
-        the rounding makes sure that the actual value is shorter or equal to the set value"""
-        tbase = 8e-9
-        for d in reversed(self.decimations):
-            if v >= tbase * d:
-                self.decimation = d
-                return
-        self.decimation = min(self.decimations)
-        self._logger.error("Desired sampling time impossible to realize")
+    sampling_time = SamplingTimeAttribute(options=sampling_times)
 
     duration = DurationAttribute(durations)
+
+    def ownership_changed(self, old, new):
+        """
+        If the scope was in continuous mode when slaved, it has to stop!!
+        """
+        
+        if new is not None:
+            if self.widget is not None:
+                self.widget.stop()
 
     @property
     def _rawdata_ch1(self):
