@@ -183,7 +183,95 @@ class IIR(FilterModule):
         self.coefficients = c
         self.loops = 1
 
-    def setup(
+    def _setup(self):
+        """
+        Setup an IIR filter
+
+        the transfer function of the filter will be (k ensures DC-gain = g):
+
+                  (s-2*pi*z[0])*(s-2*pi*z[1])...
+        H(s) = k*-------------------
+                  (s-2*pi*p[0])*(s-2*pi*p[1])...
+
+        returns
+        --------------------------------------------------
+        coefficients   data to be passed to iir.bodeplot to plot the
+                       realized transfer function
+        """
+
+        if self._IIRSTAGES == 0:
+            raise Exception("Error: This FPGA bitfile does not support IIR "
+                            "filters! Please use an IIR version!")
+        self.on = False
+        self.shortcut = False
+        # design the filter
+        self.iirfilter = iir.IirFilter(zeros=self.zeros,
+                                       poles=self.poles,
+                                       gain=self.gain,
+                                       loops=self.loops,
+                                       dt=8e-9 * self._frequency_correction,
+                                       minloops=self._minloops,
+                                       maxloops=self._maxloops,
+                                       iirstages=self._IIRSTAGES,
+                                       totalbits=self._IIRBITS,
+                                       shiftbits=self._IIRSHIFT,
+                                       inputfilter=0,
+                                       moduledelay=self._delay)
+        # set loops in fpga
+        self.loops = self.iirfilter.loops
+        # write to the coefficients register
+        self.coefficients = self.iirfilter.coefficients
+        self._logger.info("Filter sampling frequency is %.3s MHz",
+                          1e-6 / self.sampling_time)
+        # low-pass filter the input signal with a first order filter with
+        # cutoff near the sampling rate - decreases aliasing and achieves
+        # higher internal data precision (3 extra bits) through averaging
+
+        #if inputfilter is None:
+        #    self.inputfilter = 125e6 * self._frequency_correction / self.loops
+        #else:
+        #    self.inputfilter = inputfilter
+        self.iirfilter.inputfilter = self.inputfilter  # update model
+        self._logger.info("IIR anti-aliasing input filter set to: %s MHz",
+                          self.iirfilter.inputfilter * 1e-6)
+        # connect the module
+        #if input is not None:
+        #    self.input = input
+        #if output_direct is not None:
+        #    self.output_direct = output_direct
+        # switch it on only once everything is set up
+        #self.on = turn_on ### Maybe have to do something with that?
+        self._logger.info("IIR filter ready")
+        # compute design error
+        dev = (np.abs((self.coefficients[0:len(self.iirfilter.coefficients)] -
+                       self.iirfilter.coefficients).flatten()))
+        maxdev = max(dev)
+        reldev = maxdev / \
+                 abs(self.iirfilter.coefficients.flatten()[np.argmax(dev)])
+        if reldev > 0.05:
+            self._logger.warning(
+                "Maximum deviation from design coefficients: %.4g "
+                "(relative: %.4g)", maxdev, reldev)
+        else:
+            self._logger.info("Maximum deviation from design coefficients: "
+                              "%.4g (relative: %.4g)", maxdev, reldev)
+        if bool(self.overflow):
+            self._logger.warning("IIR Overflow detected. Pattern: %s",
+                                 bin(self.overflow))
+        else:
+            self._logger.info("IIR Overflow pattern: %s", bin(self.overflow))
+        """ # obviously have something to do with that...
+        if designdata or plot:
+            maxf = 125e6 / self.loops
+            fs = np.linspace(maxf / 1000, maxf, 2001, endpoint=True)
+            designdata = self.iirfilter.designdata
+            if plot:
+                iir.bodeplot(designdata, xlog=True)
+            return designdata
+        else:
+            return None
+        """
+    def setup_old(
             self,
             zeros,
             poles,

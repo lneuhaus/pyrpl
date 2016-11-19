@@ -16,8 +16,8 @@ data_length = 2 ** 14
 
 
 class TriggerDelay(FloatAttribute):
-    def __init__(self, attr_name):
-        super(TriggerDelay, self).__init__(attr_name, 0.001)
+    # def __init__(self, attr_name, doc=""):
+    #   super(TriggerDelay, self).__init__(attr_name, 0.001, doc=doc)
 
     def get_value(self, obj, obj_type):
         if obj is None:
@@ -107,8 +107,8 @@ class TriggerSourceAttribute(SelectAttribute):
 
 
 class ScopeInputAttribute(SelectAttribute):
-    def __init__(self, options, ch=1):
-        super(ScopeInputAttribute, self).__init__(options=options)
+    def __init__(self, options, ch=1, doc=""):
+        super(ScopeInputAttribute, self).__init__(options=options, doc=doc)
         self.ch = ch
 
     def get_value(self, instance, owner):
@@ -212,7 +212,8 @@ class Scope(HardwareModule):
                                  doc="number of decimated data after trigger "
                                      "written into memory [samples]")
 
-    trigger_delay = TriggerDelay("trigger_delay")
+    trigger_delay = TriggerDelay("trigger_delay", doc="delay between trigger and acquisition start.\n"
+                                                      "negative values down to -duration are allowed for pretrigger")
 
     _trigger_delay_running = BoolRegister(0x0, 2,
                                           doc="trigger delay running (register adc_dly_do)")
@@ -293,7 +294,7 @@ class Scope(HardwareModule):
         """
         If the scope was in continuous mode when slaved, it has to stop!!
         """
-        
+
         if new is not None:
             if self.widget is not None:
                 self.widget.stop()
@@ -354,7 +355,31 @@ class Scope(HardwareModule):
                            trigger_delay + duration / 2.,
                            self.data_length, endpoint=False)
 
-    def setup(self,
+    def _setup(self):
+        """
+        sets up the scope for a new trace acquisition including arming the trigger.
+        In case trigger_source is set to "immediately", trigger_delay is disregarded and
+        trace starts at t=0
+        """
+        self._setup_called = True
+        self._reset_writestate_machine = True
+        # trigger logic - set source
+        if self.trigger_source is None:
+            self.trigger_source = self.trigger_source
+        ###else:
+        ###    self.trigger_source = trigger_source
+        # arm trigger
+        self._trigger_armed = True
+        # mode 'immediately' must receive software trigger after arming to
+        # start acquisition. The software trigger must occur after
+        # pretrig_ok, but we do not need to worry about this because it is
+        # taken care of in the trigger_source setter in this class (the
+        # trigger_delay section of it).
+        if self.trigger_source == 'immediately':
+            # self.wait_for_pretrig_ok()
+            self.trigger_source = self.trigger_source
+
+    def setup_old(self,
               duration=None,
               trigger_source=None,
               average=None,

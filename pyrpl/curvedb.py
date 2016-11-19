@@ -46,6 +46,8 @@ try:
 except:
     class CurveDB(object):
         _dirname = os.path.join(os.path.dirname(__file__),"curves")
+        if not os.path.exists(_dirname): # if _dirname doesn't exist, some unexpected errors will occur.
+            os.mkdir(_dirname)
 
         def __init__(self, name="some_curve"):
             """

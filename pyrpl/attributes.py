@@ -25,21 +25,6 @@ logger = logging.getLogger(name=__name__)
 #needed to set floats to minimum count above zero
 epsilon = sys.float_info.epsilon
 
-
-class NamedDescriptorResolverMetaClass(type):
-    '''
-    Magic to retrieve the name of the registers in the registers themselves.
-    see http://code.activestate.com/recipes/577426-auto-named-decriptors/
-    '''
-
-    def __new__(cls, classname, bases, classDict):
-        # Iterate through the new class' __dict__ and update all recognised NamedDescriptor member names
-        for name, attr in classDict.items():
-            if isinstance(attr, BaseAttribute):
-                attr.name = name
-        return type.__new__(cls, classname, bases, classDict)
-
-
 ## ModuleAttributes are here in case a layer between ModuleWidget attributes and registers is needed
 class BaseAttribute(object):
     """An attribute is a field that can be set or get by several means:
@@ -127,6 +112,7 @@ class FloatAttribute(NumberAttribute):
     widget_class = FloatRegisterWidget
 
     def __init__(self, default=None, increment=0.001, min=-.1, max=1., doc=""):
+        super(FloatAttribute, self).__init__(default=default, doc=doc)
         super(FloatAttribute, self).__init__(default=default, doc=doc)
         self.increment = increment
         self.min = min

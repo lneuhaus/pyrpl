@@ -19,8 +19,8 @@ class AMS(HardwareModule):
     dac2 = PWMRegister(0x28, doc="PWM output 2 [V]")
     dac3 = PWMRegister(0x2C, doc="PWM output 3 [V]")
 
-    def setup(self):
+    def _setup(self): # the function is here for its docstring to be used by the metaclass.
         """
-        Not sure what this module does, but it needs to have a setup for loading from the gui.
+        sets up the AMS (just setting the attributes is OK)
         """
         pass

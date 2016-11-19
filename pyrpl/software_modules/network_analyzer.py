@@ -82,7 +82,7 @@ class NetworkAnalyzer(SoftwareModule):
         self.maxamplitude = 1.0
         self.infer_open_loop_tf = False
         self.curve_name = 'na_curve'
-        self._setup = False
+        self._is_setup = False
 
     input = SelectProperty(DspModule.inputs)
     output_direct = SelectProperty(DspModule.output_directs)
@@ -123,7 +123,7 @@ class NetworkAnalyzer(SoftwareModule):
 
     # In principle, the first step of setup could be automatized using self.setup_attributes, however,
     # doing it without using **kwds is challenging
-    def setup(  self,
+    def setup_old(  self,
                 start=None,     # start frequency
                 stop=None,  # stop frequency
                 points=None, # number of points
@@ -183,7 +183,7 @@ class NetworkAnalyzer(SoftwareModule):
         if curve_name is not None: self.curve_name = curve_name
 
 
-        self._setup = True
+        self._is_setup = True
 
         if self.logscale:
             self.x = np.logspace(

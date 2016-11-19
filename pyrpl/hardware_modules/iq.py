@@ -51,7 +51,8 @@ class IQ(FilterModule):
                       "gain",
                       "amplitude",
                       "phase",
-                      "output_direct"]
+                      "output_direct",
+                      "on"]
     setup_attributes = gui_attributes
 
     _delay = 5  # bare delay of IQ module with no filters set (cycles)
@@ -62,6 +63,7 @@ class IQ(FilterModule):
         pfd=2,
         off=3,
         quadrature_hf=4)
+    """
     parameter_names = ["output_signal",
                        "bandwidth",
                        "on",
@@ -75,6 +77,7 @@ class IQ(FilterModule):
                        "acbandwidth",
                        "output_direct",
                        "input"]
+    """
 
     output_signals = _output_signals.keys()
     output_signal = SelectRegister(0x10C, options=_output_signals,
@@ -154,7 +157,15 @@ class IQ(FilterModule):
 
     acbandwidth = IqAcbandwidth(doc="positive corner frequency of input high pass filter")
 
-    def setup(
+    def _setup(self): # the function is here for its docstring to be used by the metaclass.
+        """
+        Sets up an iq demodulator, refer to the drawing in the GUI for an explanation of the IQ layout.
+        (just setting the attributes is OK).
+        """
+
+        pass
+
+    def setup_old(
             self,
             frequency=None,
             bandwidth=None,

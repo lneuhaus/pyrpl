@@ -1,12 +1,74 @@
 import logging
 
 import numpy as np
-from pyrpl.attributes import NamedDescriptorResolverMetaClass, BaseAttribute
+import copy
+from pyrpl.attributes import BaseAttribute
 from pyrpl.widgets.module_widgets import ModuleWidget
 from six import with_metaclass
+from functools import partial
 
 
-class BaseModule(with_metaclass(NamedDescriptorResolverMetaClass, object)):
+
+
+def get_setup_docstring(cls):
+    """
+    Returns a docstring for the function 'setup' that is composed of:
+      - the '_setup' docstring
+      - the list of all setup_attributes docstrings
+    """
+    if not hasattr(cls, "_setup"):
+        raise NotImplementedError("class '" + cls.__name__ + "' needs to implement a method '_setup'")
+    doc = cls._setup.__doc__ + '\n'
+    doc += "attributes\n=========="
+    for attr_name in cls.setup_attributes:
+        attr = getattr(cls, attr_name)
+        doc += "\n  " + attr_name + ": " + attr.__doc__
+    return doc
+
+def new_func_setup():
+    def setup(self, **kwds):
+        """
+        First: sets the attributes specified in kwds with set_setup_attributes(**kwds).
+        Second: setup the module with the current attributes (using _setup())
+
+        Many instances of this function will be created by the module's metaclass
+        (one per subclass having a setup_attribute) and each of these functions will have the present docstring
+        overwritten by a more descriptive one based on module attribute's docstrings.
+        """
+        self.set_setup_attributes(**kwds)
+        self._setup()
+    return setup
+
+
+class ModuleMetaClass(type):
+    '''
+    1. Magic to retrieve the name of the registers in the registers themselves.
+    see http://code.activestate.com/recipes/577426-auto-named-decriptors/
+
+    2. Builds the setup docstring by aggregating _setup's and setup_attributes's docstrings.
+    '''
+
+    def __new__(cls, classname, bases, classDict):
+        # Iterate through the new class' __dict__ and update all recognised NamedDescriptor member names
+        for name, attr in classDict.items():
+            if isinstance(attr, BaseAttribute):
+                attr.name = name
+        return type.__new__(cls, classname, bases, classDict)
+
+    def __init__(self, classname, bases, classDict):
+        super(ModuleMetaClass, self).__init__(classname, bases, classDict)
+        if hasattr(self, "setup_attributes"):
+            if not "setup" in self.__dict__:# function setup is inherited--> this is bad because we want a docstring
+                # different for each subclass
+                setattr(self, "setup", new_func_setup())
+                overwrite_docstring = True
+            else:
+                overwrite_docstring = (self.setup.__doc__=="") # keep the docstring if it was made manually
+            if overwrite_docstring:
+                self.setup.__doc__ = get_setup_docstring(self) # In a MetaClass, self is a class...
+
+
+class BaseModule(with_metaclass(ModuleMetaClass, object)):
     # python 3-compatible way of using metaclass
     # attributes have automatically their internal name set properly upon module creation
     """
@@ -37,19 +99,39 @@ class BaseModule(with_metaclass(NamedDescriptorResolverMetaClass, object)):
     # the list of parameters that constitute the "state" of the Module
     parameter_names = []
 
-    # def __new__(cls, *args, **kwds): # to be removed (only one descriptor, several module instances)...
-    #    new_instance = object.__new__(cls)
-    #    for obj in new_instance.__class__.__dict__.values():
-    #        if isinstance(obj, ModuleAttribute):
-    #            obj.module = new_instance
-    #    return new_instance
-
     def get_setup_attributes(self):
+        """
+        :return: a dict with the current values of the setup attributes
+        """
         kwds = dict()
         for attr in self.setup_attributes:
             kwds[attr] = getattr(self, attr)
         return kwds
 
+    def set_setup_attributes(self, **kwds):
+        """
+        Sets the values of the setup attributes.
+        """
+        for key, value in kwds.items():
+            if not key in self.setup_attributes:
+                raise ValueError("Attribute %s of module %s doesn't exist."%(key, self.name))
+            setattr(self, key, value)
+
+    def load_setup_attributes(self):
+        """
+         Load and sets all setup attributes from config file
+        """
+        dic = dict()
+        for key, value in self.c._dict.items():
+            if key in self.setup_attributes:
+                dic[key] = value
+        self.set_setup_attributes(**dic)
+
+    def _setup(self):
+        """
+        Sets the module up for acquisition with the current setup attribute values.
+        """
+        pass
 
     def help(self, register=''):
         """returns the docstring of the specified register name
@@ -113,7 +195,6 @@ class HardwareModule(BaseModule):
         old: name of old owner (eventually None)
         new: name of new owner (eventually None)
         """
-
         pass
 
     @property

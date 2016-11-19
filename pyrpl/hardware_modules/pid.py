@@ -31,7 +31,13 @@ class Pid(FilterModule):
 
     setup_attributes = gui_attributes
 
-    def setup(self,
+    def _setup(self): # the function is here for its docstring to be used by the metaclass.
+        """
+        sets up the pid (just setting the attributes is OK).
+        """
+        pass
+
+    def setup_old(self,
               input=None,
               output_direct=None,
               setpoint=None,

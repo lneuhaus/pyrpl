@@ -199,11 +199,12 @@ class SpectrumAnalyzer(SoftwareModule):
         self.window = "flattop"
         self.points = Scope.data_length
         """ # intializing stuffs while scope is not reserved modifies the parameters of the scope...
+
         self.input = 'adc1'
         self.span = 1e5
         self.rbw_auto = True
         """
-        self._setup = False
+        self._is_setup = False
 
 
     @property
@@ -257,7 +258,7 @@ class SpectrumAnalyzer(SoftwareModule):
         :param input: input channel
         :return:
         """
-        self._setup = True
+        self._is_setup = True
 
         if self.scope.owner != self.name:
             self.pyrpl.scopes.pop(self.name)
@@ -288,13 +289,11 @@ class SpectrumAnalyzer(SoftwareModule):
         # setup iq module
         if not self.baseband:
             self.iq.setup(
-                frequency=None,
                 bandwidth=[self.span*self.if_filter_bandwidth_per_span]*4,
                 gain=0,
                 phase=0,
                 acbandwidth=self.acbandwidth,
                 amplitude=0,
-                input=None,
                 output_direct='off',
                 output_signal='quadrature',
                 quadrature_factor=self.quadrature_factor)
@@ -367,7 +366,7 @@ class SpectrumAnalyzer(SoftwareModule):
         Get a spectrum from the device. It is mandatory to call setup() before curve()
         :return:
         """
-        if not self._setup:
+        if not self._is_setup:
             raise NotReadyError("Setup was never called")
         res = scipy.fftpack.fftshift(np.abs(scipy.fftpack  .fft(self.filtered_iq_data())) ** 2)[self.useful_index()]
         self.pyrpl.scopes.free(self.scope)
