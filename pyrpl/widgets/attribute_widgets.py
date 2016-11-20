@@ -711,7 +711,10 @@ class FilterRegisterWidget(BaseRegisterWidget):
         :return:
         """
 
-        self.widget.set_list(getattr(self.module, self.name))
+        val = getattr(self.module, self.name)
+        if isinstance(val, basestring) or not np.iterable(val): # only 1 element in the FilterAttribute, make a list for consistency
+            val = [val]
+        self.widget.set_list(val)
 
 class SelectRegisterWidget(BaseRegisterWidget):
     """

@@ -18,7 +18,7 @@
 
 from pyrpl.attributes import BoolProperty, FloatProperty, FloatAttribute, SelectAttribute, BoolAttribute, \
                              FrequencyAttribute, LongProperty, SelectProperty, FilterProperty, StringProperty, \
-                             FilterAttribute
+                             FilterAttribute, SelectProperty
 from pyrpl.sshshell import SSHshell
 from time import sleep
 from matplotlib import pyplot
@@ -47,6 +47,7 @@ from pyrpl.hardware_modules import Scope, DspModule
 # Some initial remarks about spectrum estimation:
 # Main source: Oppenheim + Schaefer, Digital Signal Processing, 1975
 
+"""
 class SpanAttribute(FilterAttribute):
     def valid_frequencies(self, instance):
         return instance.spans
@@ -63,6 +64,7 @@ class SpanAttribute(FilterAttribute):
             val = float(value)
         instance.scope.sampling_time = 1. / instance.nyquist_margin / val
         return val
+"""
 
 class RbwAttribute(FloatAttribute):
     def get_value(self, instance, owner):
@@ -77,6 +79,7 @@ class RbwAttribute(FloatAttribute):
             instance._rbw = val
         return val
 
+"""
 class SpecAnInputAttribute(SelectAttribute):
     def get_value(self, instance, owner):
         if instance is None:
@@ -84,6 +87,7 @@ class SpecAnInputAttribute(SelectAttribute):
         return instance._input
 
     def set_value(self, instance, value):
+        # Careful: the scope needs to be slaved for the time of this operation.
         instance._input = value
         if instance.baseband:
             instance.scope.input1 = instance._input
@@ -93,7 +97,7 @@ class SpecAnInputAttribute(SelectAttribute):
                                                                  # the implementation is likely to be temporary...
             instance.iq.input = instance._input
         return instance._input
-
+"""
 
 class RbwAutoAttribute(BoolAttribute):
     def get_value(self, instance, owner):
@@ -106,6 +110,7 @@ class RbwAutoAttribute(BoolAttribute):
         if value:
             instance.span = instance.span
         return value
+
 
 class CenterAttrbute(FrequencyAttribute):
     def get_value(self, instance, owner):
@@ -128,6 +133,19 @@ class CenterAttrbute(FrequencyAttribute):
 class SpecAnAcBandwidth(FilterProperty):
     def valid_frequencies(self, module):
         return [freq for freq in module.iq.__class__.inputfilter.valid_frequencies(module.iq) if freq >= 0]
+
+
+class SpanFilterProperty(FilterProperty):
+    def valid_frequencies(self, instance):
+        return instance.spans
+
+    def get_value(self, instance, owner):
+        val = super(SpanFilterProperty, self).get_value(instance, owner)
+        if np.iterable(val):
+            return val[0] # maybe this should be the default behavior for FilterAttributes... or make another Attribute type
+        else:
+            return val
+
 
 class SpectrumAnalyzer(SoftwareModule):
     """
@@ -166,25 +184,39 @@ class SpectrumAnalyzer(SoftwareModule):
                       "curve_name"]
     setup_attributes = gui_attributes
 
+    # numerical values
     nyquist_margin = 1.0
-    # see http://stackoverflow.com/questions/13905741/accessing-class-variables-from-a-list-comprehension-in-the-class-definition
+    if_filter_bandwidth_per_span = 1.0
+    quadrature_factor = 0.001
+
+    # select_attributes list of options
     def spans(nyquist_margin):
+        # see http://stackoverflow.com/questions/13905741/accessing-class-variables-from-a-list-comprehension-in-the-class-definition
         return [int(np.ceil(1. / nyquist_margin / s_time))
              for s_time in Scope.sampling_times]
     spans = spans(nyquist_margin)
-
-    if_filter_bandwidth_per_span = 1.0
-
-
-    # spans = [1./nyquist_margin/s_time for s_time in Scope.sampling_times]
-    quadrature_factor = 0.001
-
     windows = ['blackman', 'flattop', 'boxcar', 'hamming']  # more can be
     # added here (see http://docs.scipy.org/doc/scipy/reference/generated
     # /scipy.signal.get_window.html#scipy.signal.get_window)
     inputs = DspModule.inputs
 
-    # _setup = False
+    # attributes
+    baseband = BoolProperty()
+    span = SpanFilterProperty(doc="""
+        Span can only be given by 1./sampling_time where sampling
+        time is a valid scope sampling time.
+        """)
+    rbw_auto = RbwAutoAttribute()
+    center = CenterAttrbute()
+    points = LongProperty()
+    rbw = RbwAttribute()
+    window = SelectProperty(options=windows)
+    input = SelectProperty(options=inputs)
+    avg = LongProperty()
+    acbandwidth = SpecAnAcBandwidth()
+    curve_name = StringProperty()
+
+    # functions
     def init_module(self):
         self._iq = None
         self.rp = self.pyrpl.rp
@@ -206,7 +238,6 @@ class SpectrumAnalyzer(SoftwareModule):
         """
         self._is_setup = False
 
-
     @property
     def iq(self):
         if self._iq is None:
@@ -216,28 +247,38 @@ class SpectrumAnalyzer(SoftwareModule):
 
     iq_quadraturesignal = 'iq2_2'
 
-    baseband = BoolProperty()
-
     @property
     def data_length(self):
         return int(self.points)  # *self.nyquist_margin)
 
-    span = SpanAttribute(doc="""
-        Span can only be given by 1./sampling_time where sampling
-        time is a valid scope sampling time.
-        """)
+    def _setup(self):
+        """
+        Set things up for a spectrum acquisition. Between setup(**kwds) and curve(),
+        the spectrum analyzer takes ownership over the scope.
+        """
+        self._is_setup = True
+        # setup iq module
+        if not self.baseband:
+            self.iq.setup(
+                bandwidth=[self.span*self.if_filter_bandwidth_per_span]*4,
+                gain=0,
+                phase=0,
+                acbandwidth=self.acbandwidth,
+                amplitude=0,
+                output_direct='off',
+                output_signal='quadrature',
+                quadrature_factor=self.quadrature_factor)
+        # change scope ownership in order not to mess up with the scope configuration
+        if self.scope.owner != self.name:
+            self.pyrpl.scopes.pop(self.name)
+        # setup scope
+        self.scope.sampling_time = 1. / self.nyquist_margin / self.span # only duration can be used within setup
+        self.scope.setup(input1=self.iq,
+                         input2=self.iq_quadraturesignal,
+                         average=True,
+                         trigger_source="immediately")
 
-    rbw_auto = RbwAutoAttribute()
-    center = CenterAttrbute()
-    points = LongProperty()
-    rbw = RbwAttribute()
-    window = SelectProperty(options=windows)
-    input = SpecAnInputAttribute(options=inputs)
-    avg = LongProperty()
-    acbandwidth = SpecAnAcBandwidth()
-    curve_name = StringProperty()
-
-    def setup(self,
+    def setup_old(self,
               span=None,
               center=None,
               points=None,

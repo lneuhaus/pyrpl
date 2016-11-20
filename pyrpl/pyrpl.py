@@ -306,9 +306,9 @@ class Pyrpl(object):
 
         for module in self.hardware_modules:  # setup hardware modules with config file keys
             if module.owner is None: # (only modules that are not slaved by software modules)
-                if module.name in self.c._keys():
+                # if module.name in self.c._keys():
                     try:
-                        module.setup(**self.c[module.name])
+                        module.load_setup_attributes() # **self.c[module.name])
                     except BaseException as e:
                         self.logger.warning('Something went wrong when loading attributes of module "%s"'%module.name)
         if self.c.pyrpl.gui:
@@ -321,7 +321,7 @@ class Pyrpl(object):
         """
 
         soft_mod_names = self.c.pyrpl.modules#[mod for mod in self.c._keys() if not mod in ("pyrpl", "redpitaya")]
-        soft_mod_names=  ['AsgManager',
+        soft_mod_names = ['AsgManager',
                           'IqManager',
                           'PidManager',
                           'ScopeManager',
@@ -330,11 +330,14 @@ class Pyrpl(object):
         for module_name in soft_mod_names:
             ModuleClass = getattr(software_modules, module_name)
             module = ModuleClass(self)
+            module.load_setup_attributes() # attributes are loaded but the module is not "setup"
+            """
             if module.name in self.c._keys():
                 kwds = self.c[module.name]
                 if kwds is None:
                     kwds = dict()
-                module.setup(**kwds) # first, setup software modules...
+                module.load_setup_attributes(**kwds) # first, setup software modules...
+            """
             setattr(self, module.name, module) # todo --> use self instead
             self.software_modules.append(module)
 

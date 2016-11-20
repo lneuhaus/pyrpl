@@ -8,8 +8,6 @@ from six import with_metaclass
 from functools import partial
 
 
-
-
 def get_setup_docstring(cls):
     """
     Returns a docstring for the function 'setup' that is composed of:
@@ -32,8 +30,8 @@ def new_func_setup():
         Second: setup the module with the current attributes (using _setup())
 
         Many instances of this function will be created by the module's metaclass
-        (one per subclass having a setup_attribute) and each of these functions will have the present docstring
-        overwritten by a more descriptive one based on module attribute's docstrings.
+        (one per subclass having a setup_attributes field) and each of these functions will have the present docstring
+        overwritten by a more descriptive one based on _setup.__doc__ and module attributes docstrings.
         """
         self.set_setup_attributes(**kwds)
         self._setup()
@@ -49,13 +47,23 @@ class ModuleMetaClass(type):
     '''
 
     def __new__(cls, classname, bases, classDict):
-        # Iterate through the new class' __dict__ and update all recognised NamedDescriptor member names
+        """
+        Iterate through the new class' __dict__ and update the .name of all recognised BaseAttribute.
+        Otherwise, we would have to declare every attribute with the following unpleasantly redundant code:
+        foo = SomeAttribute(bits=14, min=0, max=1, name='foo')
+        """
         for name, attr in classDict.items():
             if isinstance(attr, BaseAttribute):
                 attr.name = name
         return type.__new__(cls, classname, bases, classDict)
 
     def __init__(self, classname, bases, classDict):
+        """
+        Takes care of creating the module's 'setup' function.
+        The setup function combines set_attributes(**kwds) with _setup().
+        We cannot use normal inheritance because we want a customized docstring for each module.
+        The docstring is created here by combining the module's _setup docstring and individual attributes' docstring.
+        """
         super(ModuleMetaClass, self).__init__(classname, bases, classDict)
         if hasattr(self, "setup_attributes"):
             if not "setup" in self.__dict__:# function setup is inherited--> this is bad because we want a docstring
@@ -72,30 +80,27 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
     # python 3-compatible way of using metaclass
     # attributes have automatically their internal name set properly upon module creation
     """
-    Several fields need to be implemented in child class:
-      - widget_class: class of the widget to use to represent the module in the gui (a child of ModuleWidget)
+    Several fields have to be implemented in child class:
+      - setup_attributes: attributes that are touched by setup(**kwds)/saved/restored upon module creation
       - gui_attributes: attributes to be displayed by the widget
-      - setup_attributes: attributes that are touched by setup()/saved/restored upon module creation
-      - setup(**kwds): sets the module ready for acquisition/output. The kwds of the function are None by default, then
-      the corresponding attribute is left unchanged
+      - widget_class: class of the widget to use to represent the module in the gui (a child of ModuleWidget)
+      - _setup(): sets the module ready for acquisition/output with the current attribute's values.
 
     BaseModules implements several functions itself:
       - create_widget: returns a widget according to widget_class
-      - get_setup_attributes(): returns a dictionnary with setup_attribute key value pairs
+      - get_setup_attributes(): returns a dictionnary with the current setup_attribute key value pairs
+      - load_setup_attributes(): loads setup_attributes from config file
+      - set_setup_attributes(**kwds): sets the provided setup_attributes
+
+    Finally, setup(**kwds) is created by ModuleMetaClass. it combines set_setup_attributes(**kwds) with _setup()
     """
-
     pyrpl_config = None
-
-    #@property
-    #def shortname(self):
-    #    return self.__class__.__name__.lower()
-
     name = 'BaseModule'
     widget_class = ModuleWidget  # Change this to provide a custom graphical class
     gui_attributes = []  # class inheriting from ModuleWidget can automatically generate gui from a list of attributes
     setup_attributes = []  # attributes listed here will be saved in the config file everytime they are updated.
     widget = None  # instance-level attribute created in create_widget
-    attribute_widgets = None  # instance-level attribute created in create_widget
+    # attribute_widgets = None  # instance-level attribute created in create_widget
     # the list of parameters that constitute the "state" of the Module
     parameter_names = []
 
@@ -150,12 +155,19 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
             return string
 
     def create_widget(self):
-        self.attribute_widgets = dict()
+        """
+        Creates the widget specified in widget_class. The attr
+        """
+        # self.attribute_widgets = dict() # XXX it looks like module widgets are created for some of them in here
+                                        # for others in module.widget.attribute_widgets. Need to clarify that...
         self.widget = self.widget_class(self.name, self)
         return self.widget
 
     @property
     def c(self):
+        """
+        The config file instance
+        """
         if not self.name in self.pyrpl_config._keys():
             self.pyrpl_config[self.name] = dict()
         return getattr(self.pyrpl_config, self.name)

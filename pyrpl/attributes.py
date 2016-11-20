@@ -86,11 +86,12 @@ class BaseAttribute(object):
         module.c[self.name] = value
 
     def create_widget(self, module, name=None):
+        """
+        Creates a widget to graphically rmanipulate the attribute.
+        """
         if name is None:
             name = self.name # attributed by the metaclass of module
-        widget = self.widget_class(name, module)
-        module.attribute_widgets[name] = widget
-        return widget
+        return self.widget_class(name, module)
 
 
 class NumberAttribute(BaseAttribute):
@@ -615,15 +616,6 @@ class FilterRegister(BaseRegister, BaseAttribute):
         return filter_shifts
 
 
-# def create_widget(self, name, parent):
-#        """
-#        returns a widget to control the register
-#        """
-
-#        self.widget = FilterRegisterWidget(name, parent)
-#        return self.widget
-
-
 class PWMRegister(BaseRegister, BaseAttribute):
     # FloatRegister that defines the PWM voltage similar to setting a float
     # see FPGA code for more detailed description on how the PWM works
@@ -661,7 +653,6 @@ class BaseProperty(object):
     A Property is a special type of attribute that is not mapping a fpga value, but rather an attribute _attr_name
     of the module. This is used mainly in SoftwareModules
     """
-
     def get_value(self, obj, obj_type):
         if obj is None:
             return self
@@ -674,7 +665,8 @@ class BaseProperty(object):
         return val # maybe better with getattr... but more expensive
 
 
-class SelectProperty(SelectAttribute, BaseProperty): pass
+class SelectProperty(SelectAttribute, BaseProperty):
+    pass
 
 
 class StringProperty(StringAttribute, BaseProperty):
@@ -683,6 +675,7 @@ class StringProperty(StringAttribute, BaseProperty):
 
 class PhaseProperty(PhaseAttribute, BaseProperty):
     default = 0
+
 
 class FloatProperty(FloatAttribute, BaseProperty):
     default = 0.
@@ -701,12 +694,13 @@ class LongProperty(IntAttribute, BaseProperty):
 class BoolProperty(BoolAttribute, BaseProperty):
     default = False
 
+
 class FilterProperty(FilterAttribute, BaseProperty):
     default = 10
+
 
 class ListFloatProperty(ListFloatAttribute, BaseProperty):
     """
     An arbitrary number of floats
     """
-
     default = [0.]
