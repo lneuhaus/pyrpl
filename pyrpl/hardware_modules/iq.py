@@ -51,8 +51,7 @@ class IQ(FilterModule):
                       "gain",
                       "amplitude",
                       "phase",
-                      "output_direct",
-                      "on"]
+                      "output_direct"] # "on"
     setup_attributes = gui_attributes
 
     _delay = 5  # bare delay of IQ module with no filters set (cycles)

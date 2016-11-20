@@ -121,6 +121,53 @@ class NetworkAnalyzer(SoftwareModule):
     def acbandwidth(self, v):
         self.iq.inputfilter = v*-1
 
+    def _setup(self):
+        """
+        Sets up the network analyzer of a run.
+        """
+        self._is_setup = True
+
+        if self.logscale:
+            self.x = np.logspace(
+                np.log10(self.start),
+                np.log10(self.stop),
+                self.points,
+                endpoint=True)
+        else:
+            self.x = np.linspace(self.start, self.stop, self.points, endpoint=True)
+
+        # preventive saturation
+        maxamplitude = abs(self.maxamplitude)
+        amplitude = abs(self.amplitude)
+        if amplitude > maxamplitude:
+            amplitude = maxamplitude
+        self.iq.setup(frequency=self.x[0],
+                      bandwidth=self.rbw,
+                      gain=0,
+                      phase=0,
+                      acbandwidth=self.acbandwidth,
+                      amplitude=amplitude,
+                      input=self.input,
+                      output_direct=self.output_direct,
+                      output_signal='output_direct')
+
+        # take the discretized rbw (only using first filter cutoff)
+        rbw = self.iq.bandwidth[0]
+        #self.iq._logger.info("Estimated acquisition time: %.1f s",
+        #                  float(self.avg + self.sleeptimes) * self.points / self.rbw)
+        #sys.stdout.flush()  # make sure the time is shown
+        # setup averaging
+        self.iq._na_averages = np.int(np.round(125e6 / self.rbw * self.avg))
+        self._na_sleepcycles = np.int(np.round(125e6 / self.rbw * self.sleeptimes))
+        # compute rescaling factor
+        # obtained by measuring transfer function with bnc cable - could replace the inverse of 4 above
+        # unityfactor = 0.23094044589192711
+        self._rescale = 2.0 ** (-self.iq._LPFBITS) * 4.0  # 4 is artefact of fpga code
+        self.current_point = 0
+        self.iq.frequency = self.x[0]  # this triggers the NA acquisition
+        self.time_last_point = time()
+
+
     # In principle, the first step of setup could be automatized using self.setup_attributes, however,
     # doing it without using **kwds is challenging
     def setup_old(  self,

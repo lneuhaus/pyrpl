@@ -351,6 +351,7 @@ class ScopeWidget(ModuleWidget):
                             self.datas[ch-1],
                             **d)
 
+
 class AsgWidget(ModuleWidget):
     def __init__(self, *args, **kwds):
         super(AsgWidget, self).__init__(*args, **kwds)
@@ -377,7 +378,6 @@ class IqWidget(ModuleWidget):
                 prop.the_widget.setMaximumWidth(120)
             """
             #self.scene.addWidget(prop.the_widget)
-
         self.attribute_widgets["bandwidth"].widget.set_max_cols(2)
         self.attribute_layout.addLayout(self.attribute_widgets["input"].layout_v)
         self.attribute_layout.addLayout(self.attribute_widgets["acbandwidth"].layout_v)
@@ -393,7 +393,7 @@ class IqWidget(ModuleWidget):
         self.attribute_layout.addLayout(self.attribute_widgets["amplitude"].layout_v)
         self.attribute_layout.addLayout(self.attribute_widgets["output_signal"].layout_v)
         self.attribute_widgets["output_signal"].layout_v.addLayout(self.attribute_widgets["output_direct"].layout_v)
-
+        # self.attribute_layout.addLayout(self.attribute_widgets["on"].layout_v)
 
 class PidWidget(ModuleWidget):
     """

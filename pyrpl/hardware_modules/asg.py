@@ -79,6 +79,17 @@ class AsgOffsetAttribute(FloatAttribute):
         return instance._offset_masked
 
 
+class TriggerSourceSelectRegister(SelectRegister):
+    """
+    Changing the trigger source requires to call _setup
+    """
+
+    def set_value(self, instance, val):
+        super(TriggerSourceSelectRegister, self).set_value(instance, val)
+        instance._setup()
+        return val
+
+
 # ugly workaround, but realized too late that descriptors have this limit
 def make_asg(channel=1):
     if channel == 1:
@@ -160,7 +171,7 @@ def make_asg(channel=1):
 
         trigger_sources = _trigger_sources.keys()
 
-        trigger_source = SelectRegister(0x0, bitmask=0x0007 << _BIT_OFFSET,
+        trigger_source = TriggerSourceSelectRegister(0x0, bitmask=0x0007 << _BIT_OFFSET, # changing trigger source requires a new _setup()
                                         options=_trigger_sources,
                                         doc="trigger source for triggered output")
 
@@ -256,29 +267,30 @@ def make_asg(channel=1):
 
         def _setup(self):
             """
-            Sets up the function generator.
+            Sets up the function generator. (just setting attributes is ok).
             """
 
+            old_trigger_source = self.trigger_source
             self.on = False
             self.sm_reset = True
-            self.trigger_source = 'off'
-            self.amplitude = self.amplitude
-            self.offset = self.offset
-            self.output_direct = self.output_direct
-            self.waveform = self.waveform
-            self.start_phase = self.start_phase
+            #self.trigger_source = 'off'
+            #self.amplitude = self.amplitude
+            #self.offset = self.offset
+            #self.output_direct = self.output_direct
+            #self.waveform = self.waveform
+            #self.start_phase = self.start_phase
             self._counter_wrap = 2 ** 16 * (
             2 ** 14) - 1  # Bug found on 2016/11/2 (Samuel) previously 2**16 * (2**14 - 1)
             # ===> asg frequency was too fast by 1./2**16
-            self.frequency = self.frequency
+            #self.frequency = self.frequency
             self._sm_wrappointer = True
-            self.cycles_per_burst = self.cycles_per_burst
-            self.bursts = self.bursts
-            self.delay_between_bursts = self.delay_between_bursts
+            #self.cycles_per_burst = self.cycles_per_burst
+            #self.bursts = self.bursts
+            #self.delay_between_bursts = self.delay_between_bursts
             self.sm_reset = False
             self.on = True
-            if self.trigger_source is not None:
-                self.trigger_source = self.trigger_source
+            #if self.trigger_source is not None:
+            #self.trigger_source = old_trigger_source # self.trigger_source
 
         def setup_old(self,
                   waveform=None,
