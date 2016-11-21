@@ -10,8 +10,8 @@ Of course, the gui/parameter file/actual values have to stay "in sync" each time
 changed. The necessary mechanisms are happening behind the scene, and they are coded in this file.
 """
 
-from pyrpl.bijection import Bijection
-from pyrpl.widgets.attribute_widgets import BoolRegisterWidget, FloatRegisterWidget, FilterRegisterWidget, \
+from .bijection import Bijection
+from .widgets.attribute_widgets import BoolRegisterWidget, FloatRegisterWidget, FilterRegisterWidget, \
                                             IntRegisterWidget, SelectRegisterWidget, StringRegisterWidget, \
                                             ListFloatRegisterWidget
 

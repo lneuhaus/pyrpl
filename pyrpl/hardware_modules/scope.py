@@ -1,8 +1,9 @@
-from pyrpl.errors import NotReadyError
-from pyrpl.attributes import FloatAttribute, SelectAttribute, BoolRegister, FloatRegister, SelectRegister, \
+from ..errors import NotReadyError, TimeoutError
+from ..attributes import FloatAttribute, SelectAttribute, BoolRegister, \
+    FloatRegister, SelectRegister, \
                              StringProperty, IntRegister, LongRegister
-from pyrpl.modules import HardwareModule
-from pyrpl.widgets.module_widgets import ScopeWidget
+from ..modules import HardwareModule
+from ..widgets.module_widgets import ScopeWidget
 
 from . import DSP_INPUTS, DspModule
 

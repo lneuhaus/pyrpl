@@ -1,5 +1,5 @@
-from pyrpl.attributes import SelectAttribute, SelectRegister, BoolRegister
-from pyrpl.modules import HardwareModule
+from ..attributes import SelectAttribute, SelectRegister, BoolRegister
+from ..modules import HardwareModule
 
 DSP_INPUTS = dict(
         pid1=0,

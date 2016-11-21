@@ -2,8 +2,8 @@ import logging
 
 import numpy as np
 import copy
-from pyrpl.attributes import BaseAttribute
-from pyrpl.widgets.module_widgets import ModuleWidget
+from .attributes import BaseAttribute
+from .widgets.module_widgets import ModuleWidget
 from six import with_metaclass
 from functools import partial
 
@@ -73,7 +73,8 @@ class ModuleMetaClass(type):
             else:
                 overwrite_docstring = (self.setup.__doc__=="") # keep the docstring if it was made manually
             if overwrite_docstring:
-                self.setup.__doc__ = get_setup_docstring(self) # In a MetaClass, self is a class...
+                self.setup.__func__.__doc__ = get_setup_docstring(self) # In a
+                # MetaClass, self is a class...
 
 
 class BaseModule(with_metaclass(ModuleMetaClass, object)):

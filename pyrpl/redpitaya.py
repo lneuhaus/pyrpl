@@ -29,7 +29,7 @@ import numpy as np
 
 from paramiko import SSHException
 from scp import SCPClient, SCPException
-from _collections import OrderedDict
+from collections import OrderedDict
 
 # let's start debugging the spec an by taking data around 0 hz before we go
 # more complex

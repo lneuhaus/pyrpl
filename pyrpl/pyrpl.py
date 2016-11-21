@@ -26,7 +26,7 @@ import logging
 import os
 from shutil import copyfile
 
-from pyrpl.widgets.pyrpl_widget import PyrplWidget
+from .widgets.pyrpl_widget import PyrplWidget
 
 from . import software_modules
 from .memory import MemoryTree
