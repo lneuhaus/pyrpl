@@ -73,8 +73,11 @@ class ModuleMetaClass(type):
             else:
                 overwrite_docstring = (self.setup.__doc__=="") # keep the docstring if it was made manually
             if overwrite_docstring:
-                self.setup.__func__.__doc__ = get_setup_docstring(self) # In a
+                if hasattr(self.setup, "__func__"): # Should evaluate to True in Python 2
+                    self.setup.__func__.__doc__ = get_setup_docstring(self) # In a
                 # MetaClass, self is a class...
+                else: #in python 3, __doc__ is directly an attribute of the function
+                    self.setup.__doc__ = get_setup_docstring(self)
 
 
 class BaseModule(with_metaclass(ModuleMetaClass, object)):
