@@ -54,11 +54,12 @@ class BaseAttribute(object):
     def __set__(self, instance, value):
         """
         This function is called for any BaseAttribute, such that all the gui updating, and saving to disk is done
-        automagically. The real work is delegated to self.set_value
-
-        :param instance:
-        :param value:
-        :return:
+        automagically. The real work is delegated to self.set_value.
+        TODO: instead of to_serializable (that should be taken care of in the RoundTripDumper of memory.py), the first
+        step should be:
+        value = self.validate(value)
+        For most class, this just takes the value as is (make sure it has the right type or throw exceptions)
+        for some class it would round the value to the nearest available register value.
         """
         value = self.to_serializable(value)
         self.set_value(instance, value) # sets the value internally
@@ -748,8 +749,10 @@ class FilterProperty(FilterAttribute, BaseProperty):
         one assigned in last has a better resolution than the first one.
         """
 
-        val = min([opt for opt in self.valid_frequencies(obj)], key=lambda x:abs(x-value))
-        return super(FilterProperty, self).set_value(obj, val)
+        if not np.iterable(value):
+            value = [value]
+        value = [min([opt for opt in self.valid_frequencies(obj)], key=lambda x: abs(x - val)) for val in value]
+        return super(FilterProperty, self).set_value(obj, value)
 
 
 class ListComplexProperty(ListComplexAttribute, BaseProperty):

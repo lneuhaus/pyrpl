@@ -11,21 +11,21 @@ pyrpl: # General configuration of the software:
     - NetworkAnalyzer
     - SpectrumAnalyzer
   dock_positions: !!binary |
-    AAAA/wAAAAD9AAAAAQAAAAIAAAd8AAAD3fwBAAAAAvwAAAAAAAADrAAAA40A/////AIAAAAD+wAA
-    AAwAcwBjAG8AcABlAHMBAAAAFQAAASQAAADXAP////sAAAAGAGkAcQBzAQAAAT0AAAHoAAABaAD/
-    ///7AAAACABhAHMAZwBzAQAAAykAAADJAAAAlAD////8AAADsAAAA8wAAAOmAP////wCAAAAAvwA
-    AAAVAAABugAAARMBAAAU+gAAAAACAAAAB/sAAAAEAG4AYQEAAAAA/////wAAAP4A////+wAAACIA
+    AAAA/wAAAAD9AAAAAQAAAAIAAAevAAAESPwBAAAAAvwAAAAAAAADjQAAA40A/////AIAAAAD+wAA
+    AAwAcwBjAG8AcABlAHMBAAAAFQAAAUQAAADXAP////sAAAAGAGkAcQBzAQAAAV0AAAIdAAABaAD/
+    ///7AAAACABhAHMAZwBzAQAAA34AAADfAAAAlAD////8AAADkQAABB4AAAQeAP////wCAAAAAvwA
+    AAAVAAAB6gAAARMBAAAU+gAAAAQCAAAAB/sAAAAEAG4AYQEAAAAA/////wAAAP4A////+wAAACIA
     cwBwAGUAYwB0AHIAdQBtAF8AYQBuAGEAbAB5AHoAZQByAQAAAAD/////AAAAswD////7AAAAIgBz
     AHAAZQBjAHQAcgB1AG0AIABhAG4AYQBsAHkAegBlAHIBAAAAAP////8AAAAAAAAAAPsAAAAUAEIA
     YQBzAGUATQBvAGQAdQBsAGUBAAAAAP////8AAAAAAAAAAPsAAAAIAGkAaQByAHMBAAAAAP////8A
-    AAB/AP////sAAAAgAG4AZQB0AHcAbwByAGsAXwBhAG4AYQBsAHkAegBlAHIBAAAAAP////8AAAAA
-    AAAAAPsAAAAKAHMAYwBvAHAAZQEAAAAA/////wAAAAAAAAAA+wAAAAgAcABpAGQAcwEAAAHTAAAC
-    HwAAAhgA////AAAHfAAAAAAAAAAEAAAABAAAAAgAAAAI/AAAAAA=
+    AACcAP////sAAAAgAG4AZQB0AHcAbwByAGsAXwBhAG4AYQBsAHkAegBlAHIBAAAAAP////8AAAAA
+    AAAAAPsAAAAKAHMAYwBvAHAAZQEAAAAA/////wAAAAAAAAAA+wAAAAgAcABpAGQAcwEAAAIDAAAC
+    WgAAAhgA////AAAHrwAAAAAAAAAEAAAABAAAAAgAAAAI/AAAAAA=
   window_position:
-  - -1928
-  - 117
-  - 1916
-  - 1030
+  - -8
+  - -8
+  - 1967
+  - 1137
 redpitaya:
   hostname: 10.214.1.28
   password: root
@@ -40,7 +40,7 @@ asg1:
   waveform: sin
   offset: 0.0
   output_direct: off
-  frequency: 1000000.0474974513
+  frequency: 0.0
   trigger_source: immediately
 asg2:
   amplitude: 1.0
@@ -55,11 +55,11 @@ pids: {}
 scopes: {}
 iirs: {}
 na:
-  start: 1000000.0
+  start: 100000.0
   input: adc1
   stop: 2000000.0
   rbw:
-  - 77712.0
+  - 9714.0
   output_direct: out1
   acbandwidth:
   - 0.0
@@ -67,7 +67,8 @@ na:
 spectrum_analyzer:
   window: flattop
   input: asg1
-  span: 100000.0
+  span:
+  - 122071.0
   center: 1000000.0
 hk: {}
 ams: {}
@@ -86,6 +87,7 @@ iq1:
   - 0.0
   - 0.0
   input: adc1
+  output_direct: off
 pid1:
   inputfilter:
   - 0.0
@@ -93,6 +95,7 @@ pid1:
   - 0.0
   - 0.0
   input: adc1
+  output_direct: off
 pid2:
   inputfilter:
   - 0.0
@@ -100,6 +103,7 @@ pid2:
   - 0.0
   - 0.0
   input: adc2
+  output_direct: off
 pid3:
   inputfilter:
   - 0.0
@@ -107,6 +111,7 @@ pid3:
   - 0.0
   - 0.0
   input: adc1
+  output_direct: off
 pid4:
   inputfilter:
   - 0.0
@@ -114,5 +119,15 @@ pid4:
   - 0.0
   - 0.0
   input: adc2
+  output_direct: off
 iir:
   input: adc1
+  output_direct: off
+  on: true
+  shortcut: false
+  loops: 5
+  zeros:
+  - (0.417+1.55j)
+  - (2.682+2.605j)
+  poles:
+  - (2.607+0.418j)

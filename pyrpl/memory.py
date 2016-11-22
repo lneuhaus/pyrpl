@@ -38,6 +38,8 @@ try:
                 lambda dumper, data: dumper.represent_float(float(data)))
     ruamel.yaml.RoundTripDumper.add_representer(complex,
                 lambda dumper, data: dumper.represent_str(str(data)))
+    ruamel.yaml.RoundTripDumper.add_representer(np.complex128,
+                lambda dumper, data: dumper.represent_str(str(data)))
     def load(f):
         return ruamel.yaml.load(f, ruamel.yaml.RoundTripLoader)
     def save(data, stream=None):
@@ -72,6 +74,9 @@ except:
                     lambda dumper, data: dumper.represent_float(float(data)))
 
         OrderedDumper.add_representer(complex,
+                    lambda dumper, data: dumper.represent_str(str(data)))
+
+        OrderedDumper.add_representer(np.complex128,
                     lambda dumper, data: dumper.represent_str(str(data)))
 
         return yaml.dump(data, stream, OrderedDumper,
@@ -306,9 +311,8 @@ class MemoryTree(MemoryBranch):
         logger.debug("Saving config file %s", self._filename)
         copyfile(self._filename, self._filename+".bak")
         try:
-            f = open(self._filename, mode='w')
-            save(self._data, stream=f)
-            f.close()
+            with open(self._filename, mode='w') as f:
+                save(self._data, stream=f)
         except:
             copyfile(self._filename+".bak", self._filename)
             logger.error("Error writing to file. Backup version was restored.")
