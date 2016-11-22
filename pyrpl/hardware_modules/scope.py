@@ -5,7 +5,7 @@ from ..attributes import FloatAttribute, SelectAttribute, BoolRegister, \
 from ..modules import HardwareModule
 from ..widgets.module_widgets import ScopeWidget
 
-from . import DSP_INPUTS, DspModule
+from . import DSP_INPUTS, DspModule, DspInputAttribute
 
 import numpy as np
 import time
@@ -101,15 +101,21 @@ class TriggerSourceAttribute(SelectAttribute):
             return instance._trigger_source_memory
 
     def set_value(self, instance, value):
+        if isinstance(value, HardwareModule):
+            value = value.name
         instance._trigger_source = value
         instance._trigger_source_memory = value
         # passing between immediately and other sources possibly requires trigger delay change
         instance.trigger_delay = instance._trigger_delay_memory
 
 
-class ScopeInputAttribute(SelectAttribute):
-    def __init__(self, options, ch=1, doc=""):
-        super(ScopeInputAttribute, self).__init__(options=options, doc=doc)
+class DspInputAttributeScope(DspInputAttribute):
+    """
+    Same as DspInput, except that it sets the value to instance._ch[index].input instead of instance.input
+    """
+    def __init__(self, ch=1, doc=""):
+        options = DSP_INPUTS.keys()
+        super(DspInputAttributeScope, self).__init__(options=options, doc=doc)
         self.ch = ch
 
     def get_value(self, instance, owner):
@@ -139,18 +145,6 @@ class Scope(HardwareModule):
     name = 'scope'
     data_length = data_length  # see definition and explanation above
     inputs = None
-    """
-    parameter_names = ["input1",
-                       "input2",
-                       "trigger_source",
-                       "threshold_ch1",
-                       "threshold_ch2",
-                       "trigger_delay",
-                       "duration",
-                       "hysteresis_ch1",
-                       "hysteresis_ch2",
-                       "average"]
-    """
 
     def __init__(self, client, name, parent):
         super(Scope, self).__init__(client,
@@ -165,8 +159,8 @@ class Scope(HardwareModule):
         self._trigger_source_memory = "immediately"
         self._trigger_delay_memory = 0
 
-    input1 = ScopeInputAttribute(DSP_INPUTS.keys(), 1)
-    input2 = ScopeInputAttribute(DSP_INPUTS.keys(), 2)
+    input1 = DspInputAttributeScope(1)
+    input2 = DspInputAttributeScope(2)
 
     _reset_writestate_machine = BoolRegister(0x0, 1,
                                              doc="Set to True to reset writestate machine. \
@@ -365,10 +359,7 @@ class Scope(HardwareModule):
         self._setup_called = True
         self._reset_writestate_machine = True
         # trigger logic - set source
-        if self.trigger_source is None:
-            self.trigger_source = self.trigger_source
-        ###else:
-        ###    self.trigger_source = trigger_source
+        self.trigger_source = self.trigger_source
         # arm trigger
         self._trigger_armed = True
         # mode 'immediately' must receive software trigger after arming to
