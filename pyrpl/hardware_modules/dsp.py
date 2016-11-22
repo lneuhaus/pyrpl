@@ -21,7 +21,7 @@ DSP_INPUTS = dict(
         iq2_2=14,
         off=15)
 
-class InputAttribute(SelectAttribute):
+class DspInputAttribute(SelectAttribute):
     "selects the input signal of the module"
     def get_value(self, instance, owner):
         if instance is None:
@@ -31,10 +31,11 @@ class InputAttribute(SelectAttribute):
 
     def set_value(self, instance, value):
         # allow to directly pass another dspmodule as input
-        if isinstance(value, DspModule) and hasattr(value, 'name'):
-            instance._input = value.name
-        else:
-            instance._input = value
+        # if isinstance(value, HardwareModule) and hasattr(value, 'name'): # (asg is HardwareModule but not DspModule)
+        #    instance._input = value.name
+        #else:
+        instance._input = value
+        return value
 
 class DspModule(HardwareModule):
     _delay = 0  # delay of the module from input to output_signal (in cycles)
@@ -52,7 +53,7 @@ class DspModule(HardwareModule):
     _input = SelectRegister(0x0, options=_inputs,
                            doc="selects the input signal of the module")
 
-    input = InputAttribute(_inputs)
+    input = DspInputAttribute(_inputs)
 
     output_direct = SelectRegister(0x4, options=_output_directs,
                             doc="selects to which analog output the module \

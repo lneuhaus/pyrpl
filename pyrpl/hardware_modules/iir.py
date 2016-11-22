@@ -1,6 +1,6 @@
 from pyrpl import iir, bodefit
 from . import FilterModule
-from pyrpl.attributes import IntRegister, BoolRegister, ListFloatProperty
+from pyrpl.attributes import IntRegister, BoolRegister, ListComplexProperty, FloatProperty
 
 import numpy as np
 
@@ -36,7 +36,9 @@ class IIR(FilterModule):
                        "shortcut",
                        "zeros",
                        "poles",
+                       "gain",
                        "output_direct"]
+    setup_attributes = gui_attributes
     """
     parameter_names = ["loops",
                        "on",
@@ -51,8 +53,9 @@ class IIR(FilterModule):
 
     on = BoolRegister(0x104, 0, doc="IIR is on")
 
-    zeros = ListFloatProperty()
-    poles = ListFloatProperty()
+    zeros = ListComplexProperty()
+    poles = ListComplexProperty()
+    gain =  FloatProperty()
 
     shortcut = BoolRegister(0x104, 1, doc="IIR is bypassed")
 
@@ -107,8 +110,9 @@ class IIR(FilterModule):
         if hasattr(self, '_writtendata'):
             data = self._writtendata
         else:
-            raise ValueError("Readback of coefficients not enabled. " \
-                             + "You must set coefficients before reading them.")
+            return None # raising an exception here will even screw-up things like hasattr(iir, "coefficients")
+            # raise ValueError("Readback of coefficients not enabled. " \
+            #                 + "You must set coefficients before reading them.")
         coefficients = np.zeros((l, 6), dtype=np.float64)
         bitlength = self._IIRBITS
         shift = self._IIRSHIFT
@@ -240,7 +244,7 @@ class IIR(FilterModule):
         #if output_direct is not None:
         #    self.output_direct = output_direct
         # switch it on only once everything is set up
-        #self.on = turn_on ### Maybe have to do something with that?
+        self.on = True ### wsa turnon before...
         self._logger.info("IIR filter ready")
         # compute design error
         dev = (np.abs((self.coefficients[0:len(self.iirfilter.coefficients)] -
@@ -260,7 +264,7 @@ class IIR(FilterModule):
                                  bin(self.overflow))
         else:
             self._logger.info("IIR Overflow pattern: %s", bin(self.overflow))
-        """ # obviously have something to do with that...
+        """ # obviously have to do something with that...
         if designdata or plot:
             maxf = 125e6 / self.loops
             fs = np.linspace(maxf / 1000, maxf, 2001, endpoint=True)

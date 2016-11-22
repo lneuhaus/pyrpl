@@ -273,24 +273,30 @@ def make_asg(channel=1):
             old_trigger_source = self.trigger_source
             self.on = False
             self.sm_reset = True
+
             #self.trigger_source = 'off'
-            #self.amplitude = self.amplitude
-            #self.offset = self.offset
-            #self.output_direct = self.output_direct
-            #self.waveform = self.waveform
-            #self.start_phase = self.start_phase
+            self.amplitude = self.amplitude
+            self.offset = self.offset
+            self.output_direct = self.output_direct
+            self.waveform = self.waveform
+            self.start_phase = self.start_phase
+
             self._counter_wrap = 2 ** 16 * (
             2 ** 14) - 1  # Bug found on 2016/11/2 (Samuel) previously 2**16 * (2**14 - 1)
             # ===> asg frequency was too fast by 1./2**16
-            #self.frequency = self.frequency
+
+            self.frequency = self.frequency
+
             self._sm_wrappointer = True
-            #self.cycles_per_burst = self.cycles_per_burst
-            #self.bursts = self.bursts
-            #self.delay_between_bursts = self.delay_between_bursts
+
+            self.cycles_per_burst = self.cycles_per_burst
+            self.bursts = self.bursts
+            self.delay_between_bursts = self.delay_between_bursts
+
             self.sm_reset = False
             self.on = True
             #if self.trigger_source is not None:
-            #self.trigger_source = old_trigger_source # self.trigger_source
+            self._trigger_source = old_trigger_source # self.trigger_source
 
         def setup_old(self,
                   waveform=None,

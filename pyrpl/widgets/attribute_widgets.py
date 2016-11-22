@@ -1,7 +1,6 @@
 """
-RegisterWidgets' hierarchy is parrallel to Registers' hierarchy
-An instance of Register can create its RegisterWidget counterPart by calling reg.create_widget(name, parent)
-The resulting widget is then saved as an attribute of the register
+AttributeWidgets' hierarchy is parallel to Attribute' hierarchy
+An instance attr of Attribute can create its AttributeWidget counterPart by calling attr.create_widget(name, parent)
 """
 
 from pyqtgraph.Qt import QtGui, QtCore
@@ -292,14 +291,14 @@ class MyIntSpinBox(MyNumberSpinBox):
         return new_val
 
 
-class BaseRegisterWidget(QtCore.QObject):
+class BaseAttributeWidget(QtCore.QObject):
     """
     Base class for GUI properties
     """
     value_changed = QtCore.pyqtSignal()
 
     def __init__(self, name, module):
-        super(BaseRegisterWidget, self).__init__()
+        super(BaseAttributeWidget, self).__init__()
         self.module = module
         self.name = name
         self.acquisition_property = True  # property affects signal acquisition
@@ -352,8 +351,14 @@ class BaseRegisterWidget(QtCore.QObject):
 
         pass
 
+    def module_value(self):
+        """
+        returns the module value, with the good type conversion.
+        """
+        return getattr(self.module, self.name)
 
-class StringRegisterWidget(BaseRegisterWidget):
+
+class StringAttributeWidget(BaseAttributeWidget):
     """
     Property for string values.
     """
@@ -390,7 +395,7 @@ class StringRegisterWidget(BaseRegisterWidget):
             self.widget.setText(self.module_value())
 
 
-class NumberRegisterWidget(BaseRegisterWidget):
+class NumberAttributeWidget(BaseAttributeWidget):
     """
     Base property for float and int.
     """
@@ -421,7 +426,7 @@ class NumberRegisterWidget(BaseRegisterWidget):
         self.widget.setMinimum(val)
 
 
-class IntRegisterWidget(NumberRegisterWidget):
+class IntAttributeWidget(NumberAttributeWidget):
     """
     Property for integer values.
     """
@@ -446,7 +451,7 @@ class IntRegisterWidget(NumberRegisterWidget):
         return int(getattr(self.module, self.name))
 
 
-class FloatRegisterWidget(NumberRegisterWidget):
+class FloatAttributeWidget(NumberAttributeWidget):
     """
     Property for float values
     """
@@ -472,17 +477,18 @@ class FloatRegisterWidget(NumberRegisterWidget):
         return float(getattr(self.module, self.name))
 
 
-class ListFloatSpinBox(QtGui.QWidget):
+class ListComplexSpinBox(QtGui.QWidget):
     value_changed = QtCore.pyqtSignal()
 
     def __init__(self, number, label, min=-1., max=1., increment=0.001):
-        super(ListFloatSpinBox, self).__init__()
+        super(ListComplexSpinBox, self).__init__()
         self.label = label
         self.min = min
         self.max = max
         self.increment = increment
         self.lay = QtGui.QVBoxLayout()
-        self.spins = []
+        self.spins_real = []
+        self.spins_imag = []
         self.button_removes = []
         self.spin_lays = []
         if label is not None:
@@ -498,16 +504,20 @@ class ListFloatSpinBox(QtGui.QWidget):
         self.setLayout(self.lay)
 
     def add_spin(self):
-        index = len(self.spins)
-        spin = MyDoubleSpinBox(label="", min=self.min, max=self.max, increment=self.increment)
-        self.spins.append(spin)
+        index = len(self.spins_real)
+        spin_real = MyDoubleSpinBox(label="", min=self.min, max=self.max, increment=self.increment)
+        spin_imag = MyDoubleSpinBox(label="", min=self.min, max=self.max, increment=self.increment)
+        self.spins_real.append(spin_real)
+        self.spins_imag.append(spin_imag)
         spin_lay = QtGui.QHBoxLayout()
         self.spin_lays.append(spin_lay)
-        spin_lay.addWidget(spin)
+        spin_lay.addWidget(spin_real)
+        spin_lay.addWidget(spin_imag)
         button_remove = QtGui.QPushButton('-')
         self.button_removes.append(button_remove)
         spin_lay.addWidget(button_remove)
-        spin.value_changed.connect(self.value_changed)
+        spin_real.value_changed.connect(self.value_changed)
+        spin_imag.value_changed.connect(self.value_changed)
         button_remove.clicked.connect(functools.partial(self.remove_spin, button=button_remove))
         self.lay.insertLayout(index + 1*(self.label is not None), spin_lay) #QLabel occupies the first row
 
@@ -515,26 +525,30 @@ class ListFloatSpinBox(QtGui.QWidget):
         index = self.button_removes.index(button)
 
         button = self.button_removes.pop(index)
-        spin = self.spins.pop(index)
+        spin_real = self.spins_real.pop(index)
+        spin_imag = self.spins_imag.pop(index)
         spin_lay = self.spin_lays.pop(index)
 
         self.lay.removeItem(spin_lay)
 
-        spin.deleteLater()
+        spin_real.deleteLater()
+        spin_imag.deleteLater()
         button.deleteLater()
         spin_lay.deleteLater()
 
     def get_list(self):
-        return [spin.value() for spin in self.spins]
+        return [spin_real.value() + 1j*spin_imag.value() for \
+                (spin_real, spin_imag) in zip(self.spins_real, self.spins_imag)]
 
     def set_list(self, list_val):
         for index, val in enumerate(list_val):
-            if index>=len(self.spins):
+            if index>=len(self.spins_real):
                 self.add_spin()
-            self.spins[index].val = val
+            self.spins_real[index].val = np.real(val)
+            self.spins_imag[index].val = np.imag(val)
 
         to_delete = []
-        for other_index in range(len(list_val), len(self.spins)):
+        for other_index in range(len(list_val), len(self.spins_real)):
             to_delete.append(self.button_removes[other_index]) # don't loop on a list that is
                                                                                  # shrinking !
         for button in to_delete:
@@ -548,7 +562,7 @@ class ListFloatSpinBox(QtGui.QWidget):
 
 
 
-class ListFloatRegisterWidget(BaseRegisterWidget):
+class ListFloatAttributeWidget(BaseAttributeWidget):
     """
     Attribute for arbitrary number for floats
     """
@@ -559,7 +573,7 @@ class ListFloatRegisterWidget(BaseRegisterWidget):
         else:
             self.number = 1
         #self.defaults = name + 's'
-        super(ListFloatRegisterWidget, self).__init__(name, module)
+        super(ListFloatAttributeWidget, self).__init__(name, module)
 
     def write(self):
         setattr(self.module, self.name, self.widget.get_list())
@@ -583,19 +597,11 @@ class ListFloatRegisterWidget(BaseRegisterWidget):
         :return:
         """
 
-        self.widget = ListFloatSpinBox(self.number, label=None, min=0, max=50e6, increment=0.01)#QtGui.QDoubleSpinBox()
+        self.widget = ListComplexSpinBox(self.number, label=None, min=0, max=50e6, increment=0.01)#QtGui.QDoubleSpinBox()
         #self.widget.setDecimals(4)
         #self.widget.setSingleStep(0.01)
         self.widget.value_changed.connect(self.write)
 
-    def module_value(self):
-        """
-        returns the module value, with the good type conversion.
-
-        :return: float
-        """
-
-        return self.widget.get_list()
 
 class ListComboBox(QtGui.QWidget):
     value_changed = QtCore.pyqtSignal()
@@ -657,7 +663,7 @@ class ListComboBox(QtGui.QWidget):
             self.combos[i].setCurrentIndex(index)
 
 
-class FilterRegisterWidget(BaseRegisterWidget):
+class FilterAttributeWidget(BaseAttributeWidget):
     """
     Property for list of floats (to be choosen in a list of valid_frequencies)
     The attribute descriptor needs to expose a function valid_frequencies(module)
@@ -671,7 +677,7 @@ class FilterRegisterWidget(BaseRegisterWidget):
             self.number = 1
         #self.defaults = name + 's'
         self.options = getattr(module.__class__, name).valid_frequencies(module)
-        super(FilterRegisterWidget, self).__init__(name, module)
+        super(FilterAttributeWidget, self).__init__(name, module)
 
     def set_widget(self):
         """
@@ -695,15 +701,6 @@ class FilterRegisterWidget(BaseRegisterWidget):
         if self.acquisition_property:
             self.value_changed.emit()
 
-    def module_value(self):
-        """
-        returns the module value, with the good type conversion.
-
-        :return: float
-        """
-
-        return self.widget.get_list()
-
     def update(self):
         """
         Sets the gui value from the current module value
@@ -716,7 +713,7 @@ class FilterRegisterWidget(BaseRegisterWidget):
             val = [val]
         self.widget.set_list(val)
 
-class SelectRegisterWidget(BaseRegisterWidget):
+class SelectAttributeWidget(BaseAttributeWidget):
     """
     Multiple choice property.
     """
@@ -726,7 +723,7 @@ class SelectRegisterWidget(BaseRegisterWidget):
             self.defaults = defaults
         else:
             self.defaults = name + 's'
-        super(SelectRegisterWidget, self).__init__(name, module)
+        super(SelectAttributeWidget, self).__init__(name, module)
 
     def set_widget(self):
         """
@@ -769,13 +766,13 @@ class SelectRegisterWidget(BaseRegisterWidget):
         index = list(self.options).index(getattr(self.module, self.name))
         self.widget.setCurrentIndex(index)
 
-class PhaseRegisterWidget(FloatRegisterWidget):
+class PhaseAttributeWidget(FloatAttributeWidget):
     pass
 
-class FrequencyRegisterWidget(FloatRegisterWidget):
+class FrequencyAttributeWidget(FloatAttributeWidget):
     pass
 
-class BoolRegisterWidget(BaseRegisterWidget):
+class BoolAttributeWidget(BaseAttributeWidget):
     """
     Boolean property
     """

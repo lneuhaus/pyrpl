@@ -11,13 +11,16 @@ changed. The necessary mechanisms are happening behind the scene, and they are c
 """
 
 from .bijection import Bijection
-from .widgets.attribute_widgets import BoolRegisterWidget, FloatRegisterWidget, FilterRegisterWidget, \
-                                            IntRegisterWidget, SelectRegisterWidget, StringRegisterWidget, \
-                                            ListFloatRegisterWidget
+from .widgets.attribute_widgets import BoolAttributeWidget, FloatAttributeWidget, FilterAttributeWidget, \
+                                            IntAttributeWidget, SelectAttributeWidget, StringAttributeWidget, \
+                                            ListFloatAttributeWidget
 
 import logging
 import sys
 import numpy as np
+import numbers
+import six
+
 
 logger = logging.getLogger(name=__name__)
 
@@ -57,9 +60,24 @@ class BaseAttribute(object):
         :param value:
         :return:
         """
-
+        value = self.to_serializable(value)
         self.set_value(instance, value) # sets the value internally
         self.set_value_gui_config(instance, value) # update value in gui and config
+
+    def to_serializable(self, value):
+        """
+        For an attribute value to go inside the gui and config file system, it has to be yml compatible.
+        In practice, some rare cases need to be treated here.
+        """
+        if hasattr(value, 'name'): # inputs of DspModules can be specified by the module object itself
+            return value.name
+        if type(value) == np.ndarray: # convert numpy arrays into list
+            if value.dtype==np.complex128:
+                return [complex(val) for val in value]
+            return list(value)
+        if not isinstance(value, (list, basestring, numbers.Number)):
+            raise ValueError("value %s can't be set to attribute %s (not serializable to yml)"%(str(value), self.name))
+        return value
 
     def set_value_gui_config(self, instance, value):
         """
@@ -110,7 +128,7 @@ class FloatAttribute(NumberAttribute):
     """
     An attribute for a float value.
     """
-    widget_class = FloatRegisterWidget
+    widget_class = FloatAttributeWidget
 
     def __init__(self, default=None, increment=0.001, min=-.1, max=1., doc=""):
         super(FloatAttribute, self).__init__(default=default, doc=doc)
@@ -131,7 +149,7 @@ class IntAttribute(NumberAttribute):
     """
     An attribute for integer values
     """
-    widget_class = IntRegisterWidget
+    widget_class = IntAttributeWidget
 
     def __init__(self, default=None, min=0, max=2**14, increment=1, doc=""):
         super(IntAttribute, self).__init__(default=default, doc=doc)
@@ -144,7 +162,7 @@ class BoolAttribute(BaseAttribute):
     """
     An attribute for booleans
     """
-    widget_class = BoolRegisterWidget
+    widget_class = BoolAttributeWidget
 
 
 class SelectAttribute(BaseAttribute):
@@ -152,7 +170,7 @@ class SelectAttribute(BaseAttribute):
     An attribute for a multiple choice value.
     The options have to be specified as a list at the time of attribute creation (Module declaration)
     """
-    widget_class = SelectRegisterWidget
+    widget_class = SelectAttributeWidget
 
     def __init__(self, options, default=None, doc=""):
         """
@@ -177,12 +195,12 @@ class SelectAttribute(BaseAttribute):
     def create_widget(self, module, name=None):
         if name is None:
             name = self.name
-        self.widget = SelectRegisterWidget(name, module, self.options(module))
+        self.widget = SelectAttributeWidget(name, module, self.options(module))
         return self.widget
 
 
 class StringAttribute(BaseAttribute):
-    widget_class = StringRegisterWidget
+    widget_class = StringAttributeWidget
 
 
 class PhaseAttribute(FloatAttribute):
@@ -196,15 +214,21 @@ class FilterAttribute(BaseAttribute):
     the options and the number of boxes are inferred from the value returned at runtime.
     """
 
-    widget_class = FilterRegisterWidget
+    widget_class = FilterAttributeWidget
 
 
-class ListFloatAttribute(BaseAttribute):
+class ListComplexAttribute(BaseAttribute):
     """
     An arbitrary length list of float
     """
 
-    widget_class = ListFloatRegisterWidget
+    widget_class = ListFloatAttributeWidget
+
+    def set_value(self, instance, value):
+        """
+        Since yml complex lists are loaded as string lists, allow for a conversion step here.
+        """
+        return super(ListComplexAttribute, self).set_value(instance, [complex(val) for val in value])
 
 # way to represent the smallest positive value
 # needed to set floats to minimum count above zero
@@ -294,12 +318,12 @@ class LongRegister(IntRegister, IntAttribute):
         for i in range(self.size):
             value += int(values[i]) << (32 * i)
         if self.bitmask is None:
-            return self.to_python(value)
+            return self.to_python(value, obj)
         else:
-            return (self.to_python(value) & self.bitmask)
+            return (self.to_python(value, obj) & self.bitmask)
 
     def set_value(self, obj, val):
-        val = self.from_python(val)
+        val = self.from_python(val, obj)
         values = np.zeros(self.size, dtype=np.uint32)
         if self.bitmask is None:
             for i in range(self.size):
@@ -361,22 +385,22 @@ class IORegister(BoolRegister):
         if v is None:
             v = self.outputmode
         if v:
-            v = self._read(self.address) | (1 << self.bit)
+            v = obj._read(self.address) | (1 << self.bit)
         else:
-            v = self._read(self.direction_address) & (~(1 << self.bit))
+            v = obj._read(self.direction_address) & (~(1 << self.bit))
         obj._write(self.direction_address, v)
 
     def get_value(self, obj, objtype=None):
         if obj is None:
             return self
-        self.parent = obj  # store obj in memory
+        # self.parent = obj  # store obj in memory <--- BAD, WHAT IF SEVERAL MODULES SHARE THE SAME REGISTER ?
         self.direction(obj)
-        return super(IORegister, self).__get__(obj=obj, objtype=objtype)
+        return super(IORegister, self).get_value(obj, objtype)
 
     def set_value(self, obj, val):
-        self.parent = obj  # store obj in memory
+        # self.parent = obj  # store obj in memory
         self.direction(obj)
-        return super(IORegister, self).__set__(obj=obj, val=val)
+        return super(IORegister, self).set_value(obj, val)
 
 
 class SelectRegister(BaseRegister, SelectAttribute):
@@ -530,7 +554,7 @@ class FilterRegister(BaseRegister, BaseAttribute):
     """
     Interface for up to 4 low-/highpass filters in series (filter_block.v)
     """
-    widget_class = FilterRegisterWidget
+    widget_class = FilterAttributeWidget
 
     def __init__(self, address, filterstages, shiftbits, minbw, **kwargs):
         super(FilterRegister, self).__init__(address=address, **kwargs)
@@ -666,7 +690,14 @@ class BaseProperty(object):
 
 
 class SelectProperty(SelectAttribute, BaseProperty):
-    pass
+    def get_value(self, obj, obj_type):
+        if obj is None:
+            return self
+        if not hasattr(obj, '_' + self.name):
+            # choose any value in the options as default.
+            default = sorted(self.options(obj))[0]
+            setattr(obj, '_' + self.name, default)
+        return getattr(obj, '_' + self.name)
 
 
 class StringProperty(StringAttribute, BaseProperty):
@@ -696,10 +727,32 @@ class BoolProperty(BoolAttribute, BaseProperty):
 
 
 class FilterProperty(FilterAttribute, BaseProperty):
-    default = 10
+    def get_value(self, obj, obj_type):
+        if obj is None:
+            return self
+        if not hasattr(obj, '_' + self.name):
+            # choose any value in the options as default.
+            default = self.valid_frequencies(obj)[0]
+            setattr(obj, '_' + self.name, default)
+        return getattr(obj, '_' + self.name)
+
+    def set_value(self, obj, value):
+        """
+        ***TODO***
+        Because rounding to the closest option is done in a weird place (FilterRegister.from_python), I have to redo it
+        here. A better solution would be to move the rounding in the higher-level FilterAttribute.set_value, or
+        even rename the to_serializable to something like format_value, that would generally take care of type
+        conversion and rounding. Also, this could lead to a generalized behavior for Attribute setters:
+        To return the actually rounded value such that one can write
+        iq.frequency = asg.frequency = 10e4 and indeed have the 2 modules tuned at the same frequency (as long as the
+        one assigned in last has a better resolution than the first one.
+        """
+
+        val = min([opt for opt in self.valid_frequencies(obj)], key=lambda x:abs(x-value))
+        return super(FilterProperty, self).set_value(obj, val)
 
 
-class ListFloatProperty(ListFloatAttribute, BaseProperty):
+class ListComplexProperty(ListComplexAttribute, BaseProperty):
     """
     An arbitrary number of floats
     """

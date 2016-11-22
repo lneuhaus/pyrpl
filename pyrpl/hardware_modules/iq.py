@@ -35,6 +35,8 @@ class IqAcbandwidth(FilterAttribute):
         return - instance.inputfilter
 
     def set_value(self, instance, val):
+        if np.iterable(val):
+            val = val[0]
         val = float(val)
         instance.inputfilter = -val
         return val

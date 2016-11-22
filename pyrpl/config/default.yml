@@ -22,7 +22,7 @@ model:
   cavity:
     length: 0.5
     finesse: 5000
-    actuator: null
+    actuator:
   modelconstants:
     lock_upper_threshold: 0.9
     lock_lower_threshold: 0.0
@@ -34,3 +34,17 @@ stages:
   DRIFTSTAGE: 2
   SOFSTAGE: 3
   PDHSTAGE: 4
+asg1:
+  trigger_source: immediately
+  output_direct: off
+  offset: 0.0
+  waveform: sin
+  amplitude: 1.0
+  frequency: 0.0
+asg2:
+  trigger_source: immediately
+  output_direct: off
+  offset: 0.0
+  waveform: sin
+  amplitude: 1.0
+  frequency: 0.0

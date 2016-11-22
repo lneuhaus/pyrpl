@@ -31,9 +31,21 @@ from paramiko import SSHException
 from scp import SCPClient, SCPException
 from collections import OrderedDict
 
-# let's start debugging the spec an by taking data around 0 hz before we go
-# more complex
-#from .spectrum_analyzeroiq import SpectrumAnalyzer
+
+class DummyMemoryTree(dict):
+    """
+    This class is there to emulate a MemoryTree, for users who would use RedPitaya object without Pyrpl object
+    """
+    @property
+    def _keys(self):
+        return self.keys
+
+    def __getattribute__(self, item):
+        try:
+            attr = super(DummyMemoryTree, self).__getattribute__(item)
+            return attr
+        except AttributeError:
+            return self[item]
 
 class RedPitaya(SSHshell):
     _binfilename = 'fpga.bin'
@@ -55,7 +67,7 @@ class RedPitaya(SSHshell):
                  filename=None, dirname=None,
                  leds_off=True, frequency_correction=1.0, timeout = 3,
                  monitor_server_name='monitor_server',
-                 silence_env = False, config=dict() # In general, config is the parent's memoryTree
+                 silence_env = False, config=DummyMemoryTree() # In general, config is the parent's memoryTree
                  ):
         """installs and starts the interface on the RedPitaya at hostname that allows remote control
 
@@ -303,7 +315,7 @@ class RedPitaya(SSHshell):
     def end(self):
         self.endserver()
         self.endclient()
-
+    """
     def __del__(self):
         self.end()
         try:
@@ -311,6 +323,8 @@ class RedPitaya(SSHshell):
         except socket.error:
             self.logger.warning("__del__ tried to close a socket that "
                                 "already was closed. ")
+        super(RedPitaya, self).__del__()
+    """
 
     def restart(self):
         self.end()

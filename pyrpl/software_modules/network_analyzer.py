@@ -12,6 +12,20 @@ from pyrpl.widgets.module_widgets import NaWidget
 from . import SoftwareModule
 
 
+
+class NaAcBandwidth(FilterAttribute):
+    def valid_frequencies(selfself, instance):
+        return instance.iq._valid_inputfilter_frequencies(instance.iq)
+
+    def get_value(self, instance, owner):
+        if instance is None:
+            return self
+        return instance.iq.inputfilter*-1
+
+    def set_value(self, instance, value):
+        instance.iq.inputfilter = value*-1
+        return value
+
 class RbwAttribute(FilterAttribute):
     def get_value(self, instance, owner):
         if instance is None:
@@ -49,9 +63,10 @@ class NetworkAnalyzer(SoftwareModule):
                 print response
     """
 
-    name = "network_analyzer"
+    name = "na"
     widget_class = NaWidget
     gui_attributes = ["input",
+                      "acbandwidth",
                       "output_direct",
                       "start",
                       "stop",
@@ -62,7 +77,8 @@ class NetworkAnalyzer(SoftwareModule):
                       "infer_open_loop_tf",
                       "avg",
                       "curve_name"]
-    setup_attributes = list(gui_attributes)
+    setup_attributes = list(gui_attributes) + ["maxamplitude",
+                                                    "stabilize"]
 
     def init_module(self):
         self._logger = logging.getLogger(__name__)
@@ -95,6 +111,9 @@ class NetworkAnalyzer(SoftwareModule):
     infer_open_loop_tf = BoolProperty()
     avg = LongProperty(min=1)
     curve_name = StringProperty()
+    acbandwidth = NaAcBandwidth(doc="Bandwidth of the input high-pass filter of the na.")
+    maxamplitude = FloatProperty(min=0, max=1, doc="If stabilize is True, then max amplitude allowed in transmission")
+    stabilize = BoolProperty(doc="Should the power be stabilized dto maintain a fixed power transmitted")
 
     @property
     def iq(self):
@@ -112,14 +131,6 @@ class NetworkAnalyzer(SoftwareModule):
     @property
     def inputs(self):
         return self.iq.inputs
-
-    @property
-    def acbandwidth(self):
-        return self.iq.inputfilter*-1
-
-    @acbandwidth.setter
-    def acbandwidth(self, v):
-        self.iq.inputfilter = v*-1
 
     def _setup(self):
         """
@@ -362,21 +373,7 @@ class NetworkAnalyzer(SoftwareModule):
             self.iq.amplitude = 0
             self.iq.frequency = self.x[0]
 
-    def curve(self,
-              start=None,  # start frequency
-              stop=None,  # stop frequency
-              points=None,  # number of points
-              rbw=None,  # resolution bandwidth, can be a list of 2 as well for second-order
-              avg=None,  # averages
-              amplitude=None,  # output amplitude in volts
-              input=None,  # input signal
-              output_direct=None,  # output signal
-              acbandwidth=None,  # ac filter bandwidth, 0 disables filter, negative values represent lowpass
-              sleeptimes=None,  # wait sleeptimes/rbw for quadratures to stabilize
-              logscale=None,  # make a logarithmic frequency sweep
-              stabilize=None,
-              # if a float, output amplitude is adjusted dynamically so that input amplitude [V]=stabilize
-              maxamplitude=None):  # amplitude can be limited
+    def curve(self, **kwds):  # amplitude can be limited
         """
         High level function: this sets up the na and acquires a curve. See setup for the explanation of parameters.
 
@@ -385,20 +382,7 @@ class NetworkAnalyzer(SoftwareModule):
         (array of frequencies, array of complex ampl, array of amplitudes)
         """
 
-        self.setup( start=start,  # start frequency
-                    stop=stop,  # stop frequency
-                    points=points,  # number of points
-                    rbw=rbw,  # resolution bandwidth, can be a list of 2 as well for second-order
-                    avg=avg,  # averages
-                    amplitude=amplitude,  # output amplitude in volts
-                    input=input,  # input signal
-                    output_direct=output_direct,  # output signal
-                    acbandwidth=acbandwidth,  # ac filter bandwidth, 0 disables filter, negative values represent lowpass
-                    sleeptimes=sleeptimes,  # wait sleeptimes/rbw for quadratures to stabilize
-                    logscale=logscale,  # make a logarithmic frequency sweep
-                    stabilize=stabilize,
-                    # if a float, output amplitude is adjusted dynamically so that input amplitude [V]=stabilize
-                    maxamplitude=maxamplitude)
+        self._setup(**kwds)
         #if not self._setup:
         #    raise NotReadyError("call setup() before first curve")
         xs = np.zeros(self.points, dtype=float)

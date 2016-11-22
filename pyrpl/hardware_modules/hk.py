@@ -8,21 +8,15 @@ class HK(HardwareModule):
     name = 'HK'
     gui_attributes = ["id", "led"]
 
-    def __new__(cls, *args, **kwargs):
-        """ make the needed input output registers. Workaround to make
-        descriptors work """
-        for i in range(8):
-            setattr(cls,
-                    'expansion_P' + str(i),
-                    IORegister(0x20, 0x18, 0x10, bit=i,
-                               outputmode=True,
-                               doc="positive digital io"))
-            setattr(cls,
-                    'expansion_N' + str(i),
-                    IORegister(0x24, 0x1C, 0x14, bit=i,
-                               outputmode=True,
-                               doc="positive digital io"))
-        return super(HK, cls).__new__(cls)  # , *args, **kwargs
+    # We need all attributes to be there when the interpreter is done reading the class (for metaclass to workout)
+    # see http://stackoverflow.com/questions/2265402/adding-class-attributes-using-a-for-loop-in-python
+    for i in range(8):
+        locals()['expansion_P' + str(i)] = IORegister(0x20, 0x18, 0x10, bit=i,
+                                                      outputmode=True,
+                                                      doc="positive digital io")
+        locals()['expansion_N' + str(i)] = IORegister(0x24, 0x1C, 0x14, bit=i,
+                                                      outputmode=True,
+                                                      doc="positive digital io")
 
     def __init__(self, client, name, parent):
         super(HK, self).__init__(client, addr_base=0x40000000, parent=parent, name=name)

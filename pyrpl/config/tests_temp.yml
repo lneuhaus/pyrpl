@@ -35,93 +35,64 @@ redpitaya:
   filename: fpga//red_pitaya.bin
   reloadfpga: true
   monitor_server_name: monitor_server
-
-
-network_analyzer:
-  stop: 10000.0
-  points: 1001
-  input: pid1
-  infer_open_loop_tf: false
-  rbw:
-  - 9.0
-  avg: 1
-  start: 100.0
-  output_direct: out1
-  amplitude: 0.01
-  logscale: true
-  curve_name: na_c
 asg1:
-  output_direct: off
-  waveform: sin
-  trigger_source: immediately
   amplitude: 1.0
+  waveform: sin
   offset: 0.0
-  frequency: 0.0
-  on: true
+  output_direct: off
+  frequency: 1000000.0474974513
+  trigger_source: immediately
 asg2:
+  amplitude: 1.0
+  waveform: sin
   offset: 0.0
   output_direct: off
-  waveform: sin
-  trigger_source: immediately
   frequency: 0.0
-  amplitude: 1.0
-  on: true
+  trigger_source: immediately
+asgs: {}
+iqs: {}
+pids: {}
+scopes: {}
+iirs: {}
+na:
+  start: 1000000.0
+  input: adc1
+  stop: 2000000.0
+  rbw:
+  - 77712.0
+  output_direct: out1
+  acbandwidth:
+  - 0.0
+  curve_name: na_curve
+spectrum_analyzer:
+  window: flattop
+  input: asg1
+  span: 100000.0
+  center: 1000000.0
+hk: {}
+ams: {}
 scope:
-  input1: asg1
-  trigger_source: ch1_negative_edge
-  threshold_ch1: 0.0
   trigger_delay: 0
-  input2: pid1
-  duration: '0.134217728'
+  trigger_source: immediately
+  input2: adc2
+  input1: adc1
   average: true
-iq0:
-  frequency: 100003.70384659618
+sampler: {}
+adc1: {}
+adc2: {}
+iq1:
+  output_signal: quadrature
   bandwidth:
-  - 18.0
-  - 18.0
-  amplitude: 0.0
-  quadrature_factor: 0.00390625
-  phase: 10.00000351946801
-  input: asg2
+  - 0.0
+  - 0.0
+  input: adc1
 pid1:
-  input: iq1
   inputfilter:
   - 0.0
   - 0.0
   - 0.0
   - 0.0
-  output_direct: off
-  i: 0.004632018480097623
-  p: 0.0
-  ival: 0
-  setpoint: 0.0
-  d: 0.0
-iq1:
-  quadrature_factor: 0.01171875
-  frequency: 100010.30750572681
-  input: asg1
-  bandwidth:
-  - 75.0
-  - 75.0
-  gain: 0.0
-  output_signal: quadrature
-  output_direct: off
-  phase: 0.09999996051192284
-  on: true
-  amplitude: 0.0
-iq2:
   input: adc1
-  bandwidth:
-  - 2486795.0
-  - 2486795.0
-  output_signal: quadrature
-  quadrature_factor: 0.001
-  output_direct: off
-  gain: 0
-  frequency: 9999.98883344233
-  phase: 0
-  amplitude: 0
-  on: true
 pid2:
   inputfilter:
   - 0.0
@@ -129,9 +100,6 @@ pid2:
   - 0.0
   - 0.0
   input: adc2
-  output_direct: off
-  i: 0.0
-  d: 0.0
 pid3:
   inputfilter:
   - 0.0
@@ -139,8 +107,6 @@ pid3:
   - 0.0
   - 0.0
   input: adc1
-  output_direct: off
-  i: 0.0
 pid4:
   inputfilter:
   - 0.0
@@ -148,27 +114,5 @@ pid4:
   - 0.0
   - 0.0
   input: adc2
-  output_direct: off
-spectrum_analyzer:
-  input: adc1
-  span: 31250000.0
-  rbw_auto: true
-  window: flattop
-  center: 9999.98883344233
-hk: {}
-ams: {}
-asgs: {}
-iqs: {}
-pids: {}
-scopes: {}
-iirs: {}
-sampler: {}
-adc1: {}
-adc2: {}
-iir: {}
-na:
-  rbw:
-  - 151.0
-  output_direct: off
-  curve_name: na_curve
+iir:
   input: adc1

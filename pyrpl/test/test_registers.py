@@ -2,6 +2,7 @@ import logging
 logger = logging.getLogger(name=__name__)
 
 from pyrpl import RedPitaya
+from pyrpl.modules import BaseModule
 from pyrpl.attributes import *
 
 
@@ -17,14 +18,14 @@ class TestClass(object):
             if isinstance(module, BaseModule):
                 logger.info("Scanning module %s...", modulekey)
                 for regkey, regclass in type(module).__dict__.items():
-                    if isinstance(regclass, Register):
+                    if isinstance(regclass, BaseRegister):
                         logger.info("Scanning register %s...", regkey)
                         yield self.register_validation, module, modulekey, \
                             regclass, regkey
     
     def register_validation(self, module, modulekey, reg, regkey):
         logger.debug("%s %s", modulekey, regkey)
-        if type(reg) is Register:
+        if type(reg) is BaseRegister:
             # try to read
             value = module.__getattribute__(regkey)
             # make sure Register represents an int
@@ -148,13 +149,13 @@ class TestClass(object):
             # try to read
             value = module.__getattribute__(regkey)
             # make sure Register represents an int
-            if not isinstance((list(reg.options.keys())[0]), type(value)):
+            if not isinstance((sorted(reg.options(module))[0]), type(value)):
                 assert False
             # exclude read-only registers
             if regkey in ["id"]:
                 return
             # try all options and confirm change that they are saved
-            for option in reg.options.keys():
+            for option in sorted(reg.options(module)):
                 module.__setattr__(regkey, option)
                 if option != module.__getattribute__(regkey):
                     assert False

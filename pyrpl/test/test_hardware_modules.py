@@ -3,7 +3,7 @@ import os
 
 logger = logging.getLogger(name=__name__)
 
-from pyrpl import RedPitaya
+from pyrpl import RedPitaya, Pyrpl
 from pyrpl.attributes import *
 from pyrpl.bijection import Bijection
 
@@ -11,16 +11,19 @@ import time
 
 from pyrpl import CurveDB
 
-
 class TestClass(object):
-    
     @classmethod
     def setUpAll(self):
         # these tests wont succeed without the hardware
         if os.environ['REDPITAYA_HOSTNAME'] == 'unavailable':
             self.r = None
         else:
-            self.r = RedPitaya()
+            # Delete
+            filename = os.path.join(os.path.split(os.path.dirname(__file__))[0], 'config', 'tests_temp.yml')
+            if os.path.exists(filename):
+                os.remove(filename)
+            self.pyrpl = Pyrpl(config="tests_temp", source="tests_source")
+            self.r = self.pyrpl.rp
         self.extradelay = 0.6*8e-9 # no idea where this comes from
 
     def test_asg(self):
@@ -52,7 +55,7 @@ class TestClass(object):
             expect = np.linspace(-1.0,3.0, asg.data_length, endpoint=False)
             expect[asg.data_length//2:] = -1*expect[:asg.data_length//2]
             expect*=-1
-            self.r.scope.input1 = Bijection(self.r.scope._ch1._inputs).inverse[asg._dsp._number]
+            self.r.scope.input1 = asg.name # Bijection(self.r.scope._ch1._inputs).inverse[asg._dsp._number]
             self.r.scope.input2 = self.r.scope.input1
             #asg.trig()
             self.r.scope.setup(trigger_source=self.r.scope.input1) # the asg trigger
@@ -99,7 +102,7 @@ class TestClass(object):
             return
         asg = self.r.asg1
         asg.setup(amplitude=0, offset=0)
-        for pwm in [self.r.pwm0, self.r.pwm1]:
+        for pwm in [self.r.pwm1, self.r.pwm2]:
             pwm.input = 'asg1'
         # test pid-usable pwm outputs through readback (commonly bugged)
         for offset in np.linspace(-1.5, 1.5, 20):
@@ -185,7 +188,7 @@ class TestClass(object):
         if self.r is None:
             return
         self.r.scope.setup(duration=0.001, trigger_source='asg1',
-                           trigger_delay= 0.1)
+                           trigger_delay=0.1)
         centertime = self.r.scope.times[self.r.scope.data_length // 2]
         # actual value of centertime is rather 0.099999744
         assert abs(centertime - 0.1) < 1e-5, centertime
@@ -199,17 +202,18 @@ class TestClass(object):
         assert abs(centertime-0.1)<1e-5, centertime
 
     def test_na(self):
-        error_threshold = 0.02  # (relative error, dominated by phase error)
+        error_threshold = 0.03  # (relative error, dominated by phase error)
         if self.r is None:
             return
         else:
             r = self.r
         extradelay = self.extradelay
         # shortcuts and na configuration
-        na = r.na
-        for iq in [r.iq0, r.iq1, r.iq2]:
+        na = self.pyrpl.na
+        for iq in [r.iq1, r.iq2, r.iq3]:
             na._iq = iq
-            na.setup(start=3000, stop=10e6, points=1001, rbw=1000, avg=1,
+            na.setup(start=3000, stop=10e6, points=101, rbw=1000, avg=1, # I reduced from 1001 to 101, is it normal that
+                     # it was taking ages ?
                      amplitude=0.1, input=na.iq, output_direct='off',
                      acbandwidth=1000, logscale=True)
             f, data, a = na.curve()
@@ -220,6 +224,7 @@ class TestClass(object):
             relerror = np.abs((data - theory)/theory)
             maxerror = np.max(relerror)
             if maxerror > error_threshold:
+                print(maxerror)
                 c = CurveDB.create(f, data, name='test_na-failed-data')
                 c.add_child(CurveDB.create(f, theory,
                                            name='test_na-failed-theory'))
@@ -231,7 +236,7 @@ class TestClass(object):
         # setup a pid module with a bunch of different settings and measure
         # its transfer function, and compare it to the model.
 
-        error_threshold = 0.02  # (relative error)
+        error_threshold = 0.03  # (relative error)
         # Let's check the transfer function of the pid module with the integrated NA
         if self.r is None:
             return
@@ -240,9 +245,9 @@ class TestClass(object):
         plotdata = []
 
         # shortcuts and na configuration
-        na = r.na
-        for pid in r.pids:
-            na.setup(start=1000, stop=1000e3, points=101, rbw=100, avg=1,
+        na = self.pyrpl.na
+        for pid in self.pyrpl.pids.all_modules:
+            na.setup(start=1000, stop=1000e3, points=11, rbw=100, avg=1, # points 101->11, it was taking ages
                      amplitude=0.1, input=pid, output_direct='off',
                      acbandwidth=0, logscale=True)
 
@@ -266,6 +271,7 @@ class TestClass(object):
             relerror = np.abs((data - theory) / theory)
             maxerror = np.max(relerror)
             if maxerror > error_threshold:
+                print(maxerror)
                 c = CurveDB.create(f, data, name='test_na_pid-failed-data')
                 c.add_child(CurveDB.create(f, theory,
                                            name='test_na_pid-failed-theory'))
@@ -277,7 +283,7 @@ class TestClass(object):
         # setup a pid module with a bunch of different settings and measure
         # its transfer function, and compare it to the model.
 
-        error_threshold = 0.02  # (relative error)
+        error_threshold = 0.03  # (relative error)
         # Let's check the transfer function of the pid module with the integrated NA
         if self.r is None:
             return
@@ -286,10 +292,10 @@ class TestClass(object):
         plotdata = []
 
         # shortcuts and na configuration
-        na = r.na
-        for pid in r.pids:
-            na.setup(start=1000, stop=1000e3, points=101, rbw=100,
-                     avg=1,
+        na = self.pyrpl.na
+        for pid in self.pyrpl.pids.all_modules:
+            na.setup(start=1000, stop=1000e3, points=11, rbw=100, # 101 points, 1 av->11 points, 7 av (taking ages)
+                     avg=7,
                      amplitude=0.1, input=pid, output_direct='off',
                      acbandwidth=0, logscale=True)
 
@@ -313,6 +319,7 @@ class TestClass(object):
             relerror = np.abs((data - theory) / theory)
             maxerror = np.max(relerror)
             if maxerror > error_threshold:
+                print(maxerror)
                 c = CurveDB.create(f, data, name='test_na_pid-failed-data')
                 c.add_child(CurveDB.create(f, theory,
                                            name='test_na_pid-failed-theory'))
@@ -338,10 +345,10 @@ class TestClass(object):
         plotdata = []
 
         # shortcuts and na configuration
-        na = r.na
-        for pid in r.pids:
-            na.setup(start=1000, stop=1000e3, points=101, rbw=100,
-                     avg=1,
+        na = self.pyrpl.na
+        for pid in self.pyrpl.pids.all_modules:
+            na.setup(start=1000, stop=1000e3, points=11, rbw=100,
+                     avg=10,
                      amplitude=0.1, input=pid, output_direct='off',
                      acbandwidth=0, logscale=True)
 
@@ -367,6 +374,7 @@ class TestClass(object):
             relerror = np.abs((data - theory) / theory)
             maxerror = np.max(relerror)
             if maxerror > error_threshold:
+                print(maxerror)
                 c = CurveDB.create(f, data, name='test_na_pid-failed-data')
                 c.add_child(CurveDB.create(f, theory,
                                            name='test_na_pid-failed-theory'))
@@ -394,24 +402,24 @@ class TestClass(object):
         plotdata = []
 
         # shortcut for na and bpf (bandpass filter)
-        na = r.na
+        na = self.pyrpl.na
 
-        for bpf in [r.iq0, r.iq2]:
+        for bpf in [r.iq1, r.iq2]:
             plotdata = []
             # setup na for measurement
-            na.setup(start=300e3, stop=700e3, points=201, rbw=1000, avg=3,
+            na.setup(start=300e3, stop=700e3, points=51, rbw=1000, avg=3,
                      acbandwidth=0, amplitude=0.2, input=bpf,
                      output_direct='off', logscale=False)
             # setup bandpass
             bpf.setup(frequency=500e3, #center frequency
-                      Q=100.0,  # the filter quality factor
+                      bandwidth=5000, # Q=100.0,  # the filter quality factor # sorry, I am dropping this...
                       acbandwidth=500, # ac filter to remove pot. input offsets
                       phase=0,  # nominal phase at center frequency (
                       # propagation phase lags not accounted for)
                       gain=1.0,  # peak gain = +0 dB
                       output_direct='off',
                       output_signal='output_direct',
-                      input='iq1')
+                      input=na.iq) # plug filter input to na output...
 
             for phase in [-45, 0, 45, 90]:
                 bpf.phase = phase
@@ -423,6 +431,7 @@ class TestClass(object):
                 #relerror = np.abs((data - theory) / theory)
                 #maxerror = np.max(relerror)
                 if maxerror > error_threshold:
+                    print(maxerror)
                     c = CurveDB.create(f, data, name='test_iq_na-failed-data')
                     c.add_child(CurveDB.create(f, theory,
                                                name='test_iq_na-failed-theory'))
@@ -449,23 +458,23 @@ class TestClass(object):
         else:
             r = self.r
         # setup na
-        na = r.na
-        iir = r.iir
-        r.na.setup(start=3e3,
-                   stop=1e6,
-                   points=301,
-                   rbw=[500, 500],
-                   avg=1,
-                   amplitude=0.005,
-                   input=iir,
-                   output_direct='off',
-                   logscale=True)
+        na = self.pyrpl.na
+        iir = self.pyrpl.rp.iir
+        self.pyrpl.na.setup(start=3e3,
+                           stop=1e6,
+                           points=301,
+                           rbw=[500, 500],
+                           avg=1,
+                           amplitude=0.005,
+                           input=iir,
+                           output_direct='off',
+                           logscale=True)
 
         # setup a simple iir transfer function
         zeros = [1e5j - 3e3]
         poles = [5e4j - 3e3]
         gain = 1.0
-        iir.setup(zeros, poles, gain,
+        iir.setup(zeros=zeros, poles=poles, gain=gain,
                   loops=35,
                   input=na.iq,
                   output_direct='off')
@@ -489,8 +498,8 @@ class TestClass(object):
                      extradelay=0, relative=False, mean=False, kinds=None):
         """ helper function: tests if module.transfer_function is withing
         error_threshold to the measured transfer function of the module"""
-        self.r.na.input = module
-        f, data, ampl = self.r.na.curve()
+        self.pyrpl.na.input = module
+        f, data, ampl = self.pyrpl.na.curve()
         extrastring = str(setting)
         if not kinds:
             kinds = [None]
@@ -530,7 +539,7 @@ class TestClass(object):
 
 
     def test_iircomplicated_na_generator(self):
-        # this test defines a number of complicated IIR transfer functions that
+        # this test defines a number of complicated IIR transfer functions
         # and tests whether the NA response of the filter corresponds to what's
         # expected.
         #
@@ -549,10 +558,10 @@ class TestClass(object):
         if self.r is None:
             return
         else:
-            r = self.r
+            pyrpl = self.pyrpl
         # setup na
-        na = r.na
-        iir = r.iir
+        na = pyrpl.na
+        iir = pyrpl.rp.iir
 
         params = []
         # setting 1
@@ -652,8 +661,8 @@ class TestClass(object):
         # config na and iir and launch the na assertions
         for param in params[2:3]:
             z, p, g, loops, naset, name, maxerror, kinds = param
-            r.na.setup(**naset)
-            iir.setup(z, p, g, loops=loops, input=na.iq, output_direct='off')
+            self.pyrpl.na.setup(**naset)
+            iir.setup(zeros=z, poles=p, gain=g, loops=loops, input=na.iq, output_direct='off')
             yield self.na_assertion, name, iir, maxerror, 0, True, True, kinds
             # default arguments of na_assertion:
             # setting, module, error_threshold=0.1,

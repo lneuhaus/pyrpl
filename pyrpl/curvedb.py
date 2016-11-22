@@ -62,6 +62,15 @@ except:
             self.data = pandas.Series()
             self.name = name
 
+        @property
+        def name(self):
+            return self.params["name"]
+
+        @name.setter
+        def name(self, val):
+            self.params["name"] = val
+            return val
+
         @classmethod
         def create(cls, *args, **kwds):
             """
@@ -86,6 +95,8 @@ except:
 
             obj.params = kwds
             pk = obj.pk  # make a pk
+            if ("childs" not in obj.params):
+                obj.params["childs"] = None
             if ("autosave" not in kwds) or (kwds["autosave"]):
                 obj.save()
             return obj

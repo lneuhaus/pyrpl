@@ -309,3 +309,9 @@ class SoftwareModule(BaseModule):
         self.owner = "initialization" # attribute values are not overwritten in the config file
         self.init_module()
         self.owner = None
+
+    def init_module(self):
+        """
+        To be reimplemented in child class.
+        """
+        pass

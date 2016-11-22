@@ -5,15 +5,19 @@ import numpy as np
 import logging
 logger = logging.getLogger(name=__name__)
 
-from pyrpl import RedPitaya
+from pyrpl import Pyrpl
 
 
 class TestClass(object):
         
     @classmethod
     def setUpAll(self):
-        self.r = RedPitaya()
-    
+        filename = os.path.join(os.path.split(os.path.dirname(__file__))[0], 'config', 'tests_temp.yml')
+        if os.path.exists(filename):
+            os.remove(filename)
+        self.pyrpl = Pyrpl(config="tests_temp", source="tests_source")
+        self.r = self.pyrpl.rp
+
     #you are invited to change the following two silly tests to something useful
     def test_example(self):
         if 1 > 2:
