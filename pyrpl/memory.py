@@ -40,6 +40,8 @@ try:
                 lambda dumper, data: dumper.represent_str(str(data)))
     ruamel.yaml.RoundTripDumper.add_representer(np.complex128,
                 lambda dumper, data: dumper.represent_str(str(data)))
+    ruamel.yaml.RoundTripDumper.add_representer(np.ndarray,
+                lambda dumper, data: dumper.represent_list(list(data)))
     def load(f):
         return ruamel.yaml.load(f, ruamel.yaml.RoundTripLoader)
     def save(data, stream=None):
@@ -69,16 +71,14 @@ except:
                 yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
                 data.items())
         OrderedDumper.add_representer(OrderedDict, _dict_representer)
-
         OrderedDumper.add_representer(np.float64,
                     lambda dumper, data: dumper.represent_float(float(data)))
-
         OrderedDumper.add_representer(complex,
                     lambda dumper, data: dumper.represent_str(str(data)))
-
         OrderedDumper.add_representer(np.complex128,
                     lambda dumper, data: dumper.represent_str(str(data)))
-
+        OrderedDumper.add_representer(np.ndarray,
+                    lambda dumper, data: dumper.represent_list(list(data)))
         return yaml.dump(data, stream, OrderedDumper,
                          default_flow_style=default_flow_style, **kwds)
     def isbranch(obj):

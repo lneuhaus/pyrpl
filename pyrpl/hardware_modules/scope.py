@@ -207,7 +207,7 @@ class Scope(HardwareModule):
                                  doc="number of decimated data after trigger "
                                      "written into memory [samples]")
 
-    trigger_delay = TriggerDelay("trigger_delay", doc="delay between trigger and acquisition start.\n"
+    trigger_delay = TriggerDelay("trigger_delay", min=-10, max=8e-9*2**30, doc="delay between trigger and acquisition start.\n"
                                                       "negative values down to -duration are allowed for pretrigger")
 
     _trigger_delay_running = BoolRegister(0x0, 2,

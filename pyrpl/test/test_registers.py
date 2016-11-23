@@ -135,7 +135,7 @@ class TestClass(object):
                 assert False
             # make sure any frequency has an error below 100 mHz!
             if regkey not in []:
-                for freq in [0, 1, 10, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8]:
+                for freq in [0, 1, 10, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 125e6/2]: # FrequencyRegisters are now limited.
                     module.__setattr__(regkey, freq)
                     diff = abs(module.__getattribute__(regkey)-freq)
                     if diff > 0.1:

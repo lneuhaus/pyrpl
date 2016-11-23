@@ -11,21 +11,21 @@ pyrpl: # General configuration of the software:
     - NetworkAnalyzer
     - SpectrumAnalyzer
   dock_positions: !!binary |
-    AAAA/wAAAAD9AAAAAQAAAAIAAAevAAAESPwBAAAAAvwAAAAAAAADjQAAA40A/////AIAAAAD+wAA
-    AAwAcwBjAG8AcABlAHMBAAAAFQAAAUQAAADXAP////sAAAAGAGkAcQBzAQAAAV0AAAIdAAABaAD/
-    ///7AAAACABhAHMAZwBzAQAAA34AAADfAAAAlAD////8AAADkQAABB4AAAQeAP////wCAAAAAvwA
-    AAAVAAAB6gAAARMBAAAU+gAAAAQCAAAAB/sAAAAEAG4AYQEAAAAA/////wAAAP4A////+wAAACIA
+    AAAA/wAAAAD9AAAAAQAAAAIAAAerAAAD0PwBAAAAAvwAAAAAAAADiQAAA4kA/////AIAAAAD+wAA
+    AAwAcwBjAG8AcABlAHMDAAABDgAAABQAAAONAAACVfsAAAAGAGkAcQBzAQAAABUAAAKxAAABaAD/
+    ///7AAAACABhAHMAZwBzAQAAAsoAAAEbAAAAlAD////8AAADjQAABB4AAAQeAP////wCAAAAAvwA
+    AAAVAAABtAAAARMBAAAU+gAAAAECAAAAB/sAAAAEAG4AYQEAAAAA/////wAAAP4A////+wAAACIA
     cwBwAGUAYwB0AHIAdQBtAF8AYQBuAGEAbAB5AHoAZQByAQAAAAD/////AAAAswD////7AAAAIgBz
     AHAAZQBjAHQAcgB1AG0AIABhAG4AYQBsAHkAegBlAHIBAAAAAP////8AAAAAAAAAAPsAAAAUAEIA
     YQBzAGUATQBvAGQAdQBsAGUBAAAAAP////8AAAAAAAAAAPsAAAAIAGkAaQByAHMBAAAAAP////8A
-    AACcAP////sAAAAgAG4AZQB0AHcAbwByAGsAXwBhAG4AYQBsAHkAegBlAHIBAAAAAP////8AAAAA
-    AAAAAPsAAAAKAHMAYwBvAHAAZQEAAAAA/////wAAAAAAAAAA+wAAAAgAcABpAGQAcwEAAAIDAAAC
-    WgAAAhgA////AAAHrwAAAAAAAAAEAAAABAAAAAgAAAAI/AAAAAA=
+    AAB/AP////sAAAAgAG4AZQB0AHcAbwByAGsAXwBhAG4AYQBsAHkAegBlAHIBAAAAAP////8AAAAA
+    AAAAAPsAAAAKAHMAYwBvAHAAZQEAAAAA/////wAAAAAAAAAA+wAAAAgAcABpAGQAcwEAAAHNAAAC
+    GAAAAhgA////AAAHqwAAAAAAAAAEAAAABAAAAAgAAAAI/AAAAAA=
   window_position:
   - -8
   - -8
-  - 1967
-  - 1137
+  - 1963
+  - 1017
 redpitaya:
   hostname: 10.214.1.28
   password: root
@@ -36,98 +36,36 @@ redpitaya:
   reloadfpga: true
   monitor_server_name: monitor_server
 asg1:
-  amplitude: 1.0
-  waveform: sin
   offset: 0.0
+  waveform: sin
   output_direct: off
-  frequency: 0.0
+  frequency: 100.000761449337
+  amplitude: 1.0
   trigger_source: immediately
 asg2:
-  amplitude: 1.0
-  waveform: sin
   offset: 0.0
+  waveform: sin
   output_direct: off
-  frequency: 0.0
+  frequency: 0
+  amplitude: 1.0
   trigger_source: immediately
 asgs: {}
 iqs: {}
 pids: {}
 scopes: {}
 iirs: {}
-na:
-  start: 100000.0
-  input: adc1
-  stop: 2000000.0
-  rbw:
-  - 9714.0
-  output_direct: out1
-  acbandwidth:
-  - 0.0
-  curve_name: na_curve
-spectrum_analyzer:
-  window: flattop
-  input: asg1
-  span:
-  - 122071.0
-  center: 1000000.0
+na: {acbandwidth: [0], output_direct: off, rbw: [151], curve_name: na_curve, input: adc1}
+spectrum_analyzer: {window: flattop, input: asg1, span: [122071], center: 1000000.0}
 hk: {}
 ams: {}
-scope:
-  trigger_delay: 0
-  trigger_source: immediately
-  input2: adc2
-  input1: adc1
-  average: true
+scope: {trigger_delay: 0.0, trigger_source: asg1, input2: adc2, average: true, duration: 0.067108864,
+  input1: adc1}
 sampler: {}
 adc1: {}
 adc2: {}
-iq1:
-  output_signal: quadrature
-  bandwidth:
-  - 0.0
-  - 0.0
-  input: adc1
-  output_direct: off
-pid1:
-  inputfilter:
-  - 0.0
-  - 0.0
-  - 0.0
-  - 0.0
-  input: adc1
-  output_direct: off
-pid2:
-  inputfilter:
-  - 0.0
-  - 0.0
-  - 0.0
-  - 0.0
-  input: adc2
-  output_direct: off
-pid3:
-  inputfilter:
-  - 0.0
-  - 0.0
-  - 0.0
-  - 0.0
-  input: adc1
-  output_direct: off
-pid4:
-  inputfilter:
-  - 0.0
-  - 0.0
-  - 0.0
-  - 0.0
-  input: adc2
-  output_direct: off
-iir:
-  input: adc1
-  output_direct: off
-  on: true
-  shortcut: false
-  loops: 5
-  zeros:
-  - (0.417+1.55j)
-  - (2.682+2.605j)
-  poles:
-  - (2.607+0.418j)
+iq1: {bandwidth: [0, 0], output_signal: quadrature, output_direct: off, input: adc1}
+pid1: {output_direct: off, inputfilter: [0, 0, 0, 0], input: adc1}
+pid2: {input: adc2, output_direct: off, inputfilter: [0, 0, 0, 0]}
+pid3: {output_direct: off, inputfilter: [0, 0, 0, 0], input: adc1}
+pid4: {input: adc2, output_direct: off, inputfilter: [0, 0, 0, 0]}
+iir: {output_direct: off, input: adc1}

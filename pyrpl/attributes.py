@@ -61,9 +61,21 @@ class BaseAttribute(object):
         For most class, this just takes the value as is (make sure it has the right type or throw exceptions)
         for some class it would round the value to the nearest available register value.
         """
-        value = self.to_serializable(value)
+        value = self.validate_and_normalize(value, instance) # self.to_serializable(value)
         self.set_value(instance, value) # sets the value internally
+        if value is None:
+            1/0
         self.set_value_gui_config(instance, value) # update value in gui and config
+
+    def validate_and_normalize(self, value, module):
+        """
+        This function should raise an exception if the value is incorrect.
+        Normalization can be:
+           - returning value.name if attribute "name" exists
+           - rounding to nearest multiple of step for float_registers
+           - rounding elements to nearest valid_frequencies for FilterAttributes
+        """
+        return value # by default any value is valid
 
     def to_serializable(self, value):
         """
@@ -72,11 +84,11 @@ class BaseAttribute(object):
         """
         if hasattr(value, 'name'): # inputs of DspModules can be specified by the module object itself
             return value.name
-        if type(value) == np.ndarray: # convert numpy arrays into list
-            if value.dtype==np.complex128:
-                return [complex(val) for val in value]
-            return list(value)
-        if not isinstance(value, (list, basestring, numbers.Number)):
+        # if type(value) == np.ndarray: # convert numpy arrays into list
+        #    if value.dtype==np.complex128:
+        #        return [complex(val) for val in value]
+        #    return list(value)
+        if not isinstance(value, (list, basestring, numbers.Number, np.ndarray)):
             raise ValueError("value %s can't be set to attribute %s (not serializable to yml)"%(str(value), self.name))
         return value
 
@@ -125,6 +137,13 @@ class NumberAttribute(BaseAttribute):
         widget.set_minimum(self.min)
         return widget
 
+    def validate_and_normalize(self, value, module):
+        """
+        Saturates value with min and max.
+        """
+        return max(min(value, self.max), self.min)
+
+
 class FloatAttribute(NumberAttribute):
     """
     An attribute for a float value.
@@ -138,12 +157,28 @@ class FloatAttribute(NumberAttribute):
         self.min = min
         self.max = max
 
+    def validate_and_normalize(self, value, module):
+        """
+        Try to convert to float, then saturates with min and max
+        """
+        return super(FloatAttribute, self).validate_and_normalize(float(value), module)
+
+
 class FrequencyAttribute(FloatAttribute):
+    """
+    An attribute for frequency values
+    """
     def __init__(self, default=None, increment=0.1, min=0, max=125e6/2, doc=""):
         super(FloatAttribute, self).__init__(default=default, doc=doc)
         self.increment = increment
         self.min = min
         self.max = max
+
+    def validate_and_normalize(self, value, module):
+        """
+        Same as FloatAttribute, except it saturates with 0.
+        """
+        return max(0, super(FrequencyAttribute, self).validate_and_normalize(value, module))
 
 
 class IntAttribute(NumberAttribute):
@@ -158,6 +193,12 @@ class IntAttribute(NumberAttribute):
         self.max = max
         self.increment = increment
 
+    def validate_and_normalize(self, value, module):
+        """
+        Accepts float, but rounds to integer
+        """
+        return super(IntAttribute, self).validate_and_normalize(int(round(value)), module)
+
 
 class BoolAttribute(BaseAttribute):
     """
@@ -165,11 +206,19 @@ class BoolAttribute(BaseAttribute):
     """
     widget_class = BoolAttributeWidget
 
+    def validate_and_normalize(self, value, module):
+        """
+        Converts value to bool.
+        """
+        return bool(value)
+
 
 class SelectAttribute(BaseAttribute):
     """
     An attribute for a multiple choice value.
-    The options have to be specified as a list at the time of attribute creation (Module declaration)
+    The options have to be specified as a list at the time of attribute creation (Module declaration).
+    If options are numbers (int or float), rounding to the closest value is performed during the validation
+    If options are strings, validation is strict.
     """
     widget_class = SelectAttributeWidget
 
@@ -199,28 +248,77 @@ class SelectAttribute(BaseAttribute):
         self.widget = SelectAttributeWidget(name, module, self.options(module))
         return self.widget
 
+    def validate_and_normalize(self, value, module):
+        """
+        Looks for attribute name, otherwise, converts to string and rejects if not in self.options
+        """
+        options = sorted(self.options(module))
+        if isinstance(options[0], basestring):
+            if hasattr(value, 'name'):
+                value = str(value.name)
+            else:
+                value = str(value)
+            if not (value in options):
+                raise ValueError("value %s is not an option for SelectAttribute %s of %s"%(value, self.name, module.name))
+            return value
+        elif isinstance(options[0], numbers.Number):
+            value = float(value)
+            return min([opt for opt in options], key=lambda x: abs(x - value))
+
 
 class StringAttribute(BaseAttribute):
+    """
+    An attribute for string (in practice, there is no StringRegister at this stage).
+    """
     widget_class = StringAttributeWidget
 
+    def validate_and_normalize(self, value, module):
+        """
+        Reject anything that is not a basestring
+        """
+        if not isinstance(value, basestring):
+            raise ValueError("value %s cannot be used for StringAttribute %s of module %s"%(str(value),
+                                                                                            self.name,
+                                                                                            module.name))
+        else:
+            return value
 
 class PhaseAttribute(FloatAttribute):
+    """
+    An attribute to represent a phase
+    """
     def __init__(self, increment=1., min=0., max=360., doc=""):
         super(PhaseAttribute, self).__init__(increment=increment, min=min, max=max, doc=doc)
+
+    def validate_and_normalize(self, value, module):
+        """
+        Rejects anything that is not float, and takes modulo 360
+        """
+        return super(PhaseAttribute, self).validate_and_normalize(value%360)
 
 
 class FilterAttribute(BaseAttribute):
     """
-    An attribute for a list of bandwidth. Each bandwidth is represented by a multiple choice box, however,
-    the options and the number of boxes are inferred from the value returned at runtime.
+    An attribute for a list of bandwidth. Each bandwidth has to be chosen in a list given by
+    self.valid_frequencies(module) (evaluated at runtime). If floats are provided, they are normalized to the
+    nearest values in the list. Individual floats are also normalized to a singleton.
+    The number of elements in the list are also defined at runtime.
     """
 
     widget_class = FilterAttributeWidget
 
+    def validate_and_normalize(self, value, module):
+        """
+        Returns a list with the closest elements in module.valid_frequencies
+        """
+        if not np.iterable(value):
+            value = [value]
+        return [min([opt for opt in self.valid_frequencies(module)], key=lambda x: abs(x - val)) for val in value]
+
 
 class ListComplexAttribute(BaseAttribute):
     """
-    An arbitrary length list of float
+    An arbitrary length list of complex numbers.
     """
 
     widget_class = ListFloatAttributeWidget
@@ -229,7 +327,16 @@ class ListComplexAttribute(BaseAttribute):
         """
         Since yml complex lists are loaded as string lists, allow for a conversion step here.
         """
-        return super(ListComplexAttribute, self).set_value(instance, [complex(val) for val in value])
+        return super(ListComplexAttribute, self).set_value(instance, value)
+
+    def validate_and_normalize(self, value, module):
+        """
+        Converts the value in a list of complex numbers.
+        """
+        if not np.iterable(value):
+            value = [value]
+        return [complex(val) for val in value]
+
 
 # way to represent the smallest positive value
 # needed to set floats to minimum count above zero
@@ -489,10 +596,15 @@ class FloatRegister(BaseRegister, FloatAttribute):
                 v = 2 ** self.bits - 1
         return v
 
+    def validate_and_normalize(self, value, module):
+        """
+        saturates to min/max, and rounds to the nearest value authorized by the register.
+        """
+        return super(FloatRegister, self).validate_and_normalize(int(round(value/self.increment))*self.increment, module)
+
 
 class PhaseRegister(FloatRegister, PhaseAttribute):
     """Registers that contain a phase as a float in units of degrees."""
-    """Registers that contain a frequency as a float in units of Hz"""
 
     def __init__(self, address, bits=32, **kwargs):
         super(PhaseRegister, self).__init__(address=address, bits=bits, **kwargs)
@@ -510,8 +622,14 @@ class PhaseRegister(FloatRegister, PhaseAttribute):
             phase *= -1
         return phase % 360.0
 
+    def validate_and_normalize(self, value, module):
+        """
+        Rounds to nearest authorized register value and take modulo 360
+        """
+        value = (int(round((float(value) % 360) / 360 * 2 ** self.bits)) / 2 ** self.bits)*360.
+        return value
 
-class FrequencyRegister(FloatRegister, FloatAttribute):
+class FrequencyRegister(FloatRegister, FrequencyAttribute):
     """Registers that contain a frequency as a float in units of Hz"""
     # attention: no bitmask can be defined for frequencyregisters
     CLOCK_FREQUENCY = 125e6
@@ -550,8 +668,16 @@ class FrequencyRegister(FloatRegister, FloatAttribute):
             value) * obj._frequency_correction  # Seems correct (should not be 2**bits -1): 125 MHz
         # out of reach because 2**bits is out of reach
 
+    def validate_and_normalize(self, value, module):
+        """
+        Same as FloatRegister, except the value should be positive.
+        """
+        return FrequencyAttribute.validate_and_normalize(self,
+                                                         FloatRegister.validate_and_normalize(self, value, module),
+                                                         module)
 
-class FilterRegister(BaseRegister, BaseAttribute):
+
+class FilterRegister(BaseRegister, FilterAttribute):
     """
     Interface for up to 4 low-/highpass filters in series (filter_block.v)
     """
@@ -672,6 +798,7 @@ class PWMRegister(BaseRegister, BaseAttribute):
         towrite += ((1 << low) - 1) & ((1 << self.CFG_BITS) - 1)
         return towrite
 
+    # I am not sure what the resolution is, anyone interested in writing the validate_and_normalize function ?
 
 class BaseProperty(object):
     """
@@ -748,10 +875,6 @@ class FilterProperty(FilterAttribute, BaseProperty):
         iq.frequency = asg.frequency = 10e4 and indeed have the 2 modules tuned at the same frequency (as long as the
         one assigned in last has a better resolution than the first one.
         """
-
-        if not np.iterable(value):
-            value = [value]
-        value = [min([opt for opt in self.valid_frequencies(obj)], key=lambda x: abs(x - val)) for val in value]
         return super(FilterProperty, self).set_value(obj, value)
 
 

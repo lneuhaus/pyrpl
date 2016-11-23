@@ -89,7 +89,7 @@ class TestClass(object):
         self.r.asg1.frequency = 1e5
         self.r.scope.trigger_source = "asg1"
         self.r.scope.duration = 8
-        # next line should wor for any value > duration/2
+        # next line should work for any value > duration/2
         self.r.scope.trigger_delay = self.r.scope.duration  # /2
         self.r.scope.setup()
         time.sleep(0.01) # increased from 0.01 because of
