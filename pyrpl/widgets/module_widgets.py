@@ -56,7 +56,7 @@ class ModuleWidget(QtGui.QGroupBox):
         for attr_name in self.module.gui_attributes:
             widget = getattr(self.module.__class__, attr_name).create_widget(self.module)
             self.attribute_widgets[attr_name] = widget
-            self.attribute_layout.addLayout(widget.layout_v)
+            self.attribute_layout.addWidget(widget)
             widget.value_changed.connect(self.attribute_changed)
 
     def save_curve(self, x_values, y_values, **attributes):
@@ -366,51 +366,38 @@ class IqWidget(ModuleWidget):
     def init_gui(self):
         super(IqWidget, self).init_gui()
         ##Then remove properties from normal property layout
-        ## We will make a more fancy one !
+        ## We will make one where buttons are stack on top of each others by functional column blocks
 
 
         for key, widget in self.attribute_widgets.items():
             layout = widget.layout_v
-            self.attribute_layout.removeItem(widget.layout_v)
-            """
-            prop.the_widget = WidgetProp(prop.label, prop.widget)
-            if key!='bandwidth':
-                prop.the_widget.setMaximumWidth(120)
-            """
-            #self.scene.addWidget(prop.the_widget)
+            self.attribute_layout.removeWidget(widget)
         self.attribute_widgets["bandwidth"].widget.set_max_cols(2)
-        self.attribute_layout.addLayout(self.attribute_widgets["input"].layout_v)
-        self.attribute_layout.addLayout(self.attribute_widgets["acbandwidth"].layout_v)
-        self.attribute_layout.addLayout(self.attribute_widgets["frequency"].layout_v)
-        self.attribute_widgets["frequency"].layout_v.addLayout(self.attribute_widgets["phase"].layout_v)
-        #self.attribute_widgets["frequency"].widget.setMaximum(125e6/2)
-        #self.attribute_widgets["frequency"].widget.step = 125e6/2**32
-        #self.attribute_widgets["phase"].widget.setMaximum(360)
-        #self.attribute_widgets["phase"].widget.step = 0.1
-        self.attribute_layout.addLayout(self.attribute_widgets["bandwidth"].layout_v)
-        self.attribute_layout.addLayout(self.attribute_widgets["quadrature_factor"].layout_v)
-        self.attribute_layout.addLayout(self.attribute_widgets["gain"].layout_v)
-        self.attribute_layout.addLayout(self.attribute_widgets["amplitude"].layout_v)
-        self.attribute_layout.addLayout(self.attribute_widgets["output_signal"].layout_v)
-        self.attribute_widgets["output_signal"].layout_v.addLayout(self.attribute_widgets["output_direct"].layout_v)
-        # self.attribute_layout.addLayout(self.attribute_widgets["on"].layout_v)
+        self.attribute_layout.addWidget(self.attribute_widgets["input"])
+        self.attribute_layout.addWidget(self.attribute_widgets["acbandwidth"])
+        self.attribute_layout.addWidget(self.attribute_widgets["frequency"])
+        self.attribute_widgets["frequency"].layout_v.addWidget(self.attribute_widgets["phase"])
+        self.attribute_layout.addWidget(self.attribute_widgets["bandwidth"])
+        self.attribute_layout.addWidget(self.attribute_widgets["quadrature_factor"])
+        self.attribute_layout.addWidget(self.attribute_widgets["gain"])
+        self.attribute_layout.addWidget(self.attribute_widgets["amplitude"])
+        self.attribute_layout.addWidget(self.attribute_widgets["output_signal"])
+        self.attribute_widgets["output_signal"].layout_v.addWidget(self.attribute_widgets["output_direct"])
+
 
 class PidWidget(ModuleWidget):
     """
     Widget for a single PID.
     """
-
     def init_gui(self):
         self.main_layout = QtGui.QVBoxLayout()
         self.setLayout(self.main_layout)
         self.init_attribute_layout()
-        layout = self.attribute_widgets["inputfilter"].layout_v
-        self.attribute_layout.removeItem(layout)
-        self.main_layout.addLayout(layout)
+        input_filter_widget = self.attribute_widgets["inputfilter"]
+        self.attribute_layout.removeWidget(input_filter_widget)
+        self.main_layout.addWidget(input_filter_widget)
         for prop in 'p', 'i', 'd':
             self.attribute_widgets[prop].widget.set_log_increment()
-            self.attribute_widgets[prop].widget.setMaximum(1000000)
-            self.attribute_widgets[prop].widget.setMinimum(-1000000)
         # can't avoid timer to update ival
         self.timer_ival = QtCore.QTimer()
         self.timer_ival.setInterval(100)
@@ -421,6 +408,7 @@ class PidWidget(ModuleWidget):
         widget = self.attribute_widgets['ival']
         if self.isVisible(): # avoid unnecessary ssh traffic
             widget.update()
+
 
 class NaWidget(ModuleWidget):
     """
@@ -871,7 +859,7 @@ class IqManagerWidget(ModuleManagerWidget):
         for index, prop in enumerate(["input", "acbandwidth", "frequency",
                                       "bandwidth", "quadrature_factor", "gain",
                                       "amplitude", "output_direct"][::2]):
-            widget = iq.attribute_widgets[prop].widget
+            widget = iq.attribute_widgets[prop]
             self.frames[index].setFixedSize(widget.width() + iq.main_layout.spacing(), self.height())
             self.frames[index].move(widget.x() + iq.pos().x() - iq.main_layout.spacing() / 2, 0)
 

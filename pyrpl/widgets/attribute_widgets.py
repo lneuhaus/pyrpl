@@ -47,9 +47,10 @@ class MyNumberSpinBox(QtGui.QWidget, object):
         :param halflife_seconds: when button is in log, how long to change the value by a factor 2.
         """
         super(MyNumberSpinBox, self).__init__(None)
-        self.setToolTip("Increment is %.5f\nmin value: %.1f\nmax value: %.1f\nPress up/down or mouse wheel to tune."%(increment, min, max))
         self.min = min
         self.max = max
+        self.increment = increment
+        self.update_tooltip()
         self._val = 0
         self.halflife_seconds = halflife_seconds
         self.log_increment = log_increment
@@ -102,8 +103,21 @@ class MyNumberSpinBox(QtGui.QWidget, object):
         self.line.editingFinished.connect(self.validate)
         self.val = 0
 
-        self.setMaximumWidth(200)
-        self.setMaximumHeight(34)
+        self.set_min_size()
+
+    def set_min_size(self):
+        """
+        sets the min size for content to fit.
+        """
+        font = QtGui.QFont("", 0)
+        font_metric = QtGui.QFontMetrics(font)
+        pixel_wide = font_metric.width("0"*self.max_num_letter())
+
+    def max_num_letter(self):
+        """
+        Returns the maximum number of letters
+        """
+        return 5
 
     def wheelEvent(self, event):
         """
@@ -137,11 +151,21 @@ class MyNumberSpinBox(QtGui.QWidget, object):
     def sizeHint(self): #doesn t do anything, probably need to change sizePolicy
         return QtCore.QSize(200, 20)
 
+    def update_tooltip(self):
+        """
+        The tooltip uses the values of min/max/increment...
+        """
+        string = "Increment is %.5f\nmin value: %.1f\nmax value: %.1f\n"%(self.increment, self.min, self.max)
+        string+="Press up/down or mouse wheel to tune."
+        self.setToolTip(string)
+
     def setMaximum(self, val):
         self.max = val
+        self.update_tooltip()
 
     def setMinimum(self, val):
         self.min = val
+        self.update_tooltip()
 
     def setSingleStep(self, val):
         self.increment = val
@@ -151,6 +175,7 @@ class MyNumberSpinBox(QtGui.QWidget, object):
 
     def setDecimals(self, val):
         self.decimals = val
+        self.set_min_size()
 
     def value(self):
         return self.val
@@ -267,6 +292,13 @@ class MyDoubleSpinBox(MyNumberSpinBox):
         self.line.setText(("%."+str(self.decimals) + "f")%new_val)
         return new_val
 
+    def max_num_letter(self):
+        """
+        Returns the maximum number of letters
+        """
+        return self.decimals + int(np.log10(self.max))
+
+
 
 class MyIntSpinBox(MyNumberSpinBox):
     def __init__(self, label, min=-2**13, max=2**13, increment=1,
@@ -290,24 +322,34 @@ class MyIntSpinBox(MyNumberSpinBox):
         self.line.setText(("%.i")%new_val)
         return new_val
 
+    def max_num_letter(self):
+        """
+        Maximum number of letters in line
+        """
+        return int(np.log10(self.max))
 
-class BaseAttributeWidget(QtCore.QObject):
+
+class BaseAttributeWidget(QtGui.QWidget):
     """
-    Base class for GUI properties
+    Base class for Attribute Widgets. The class usually contains a label,
+    and a widget, that is created by the function set_widget.
     """
     value_changed = QtCore.pyqtSignal()
 
     def __init__(self, name, module):
         super(BaseAttributeWidget, self).__init__()
+        self.setToolTip(getattr(module.__class__, name).__doc__)
         self.module = module
         self.name = name
         self.acquisition_property = True  # property affects signal acquisition
         self.layout_v = QtGui.QVBoxLayout()
         self.label = QtGui.QLabel(name)
         self.layout_v.addWidget(self.label)
+        self.layout_v.setContentsMargins(0, 0, 0, 0)
         #self.module = self.module_widget.module
         self.set_widget()
         self.layout_v.addWidget(self.widget)
+        self.setLayout(self.layout_v)
         self.update()
 
         #self.module_widget.register_layout.addLayout(self.layout_v)
@@ -348,7 +390,6 @@ class BaseAttributeWidget(QtCore.QObject):
         """
         To overwrite in base class.
         """
-
         pass
 
     def module_value(self):
@@ -438,7 +479,7 @@ class IntAttributeWidget(NumberAttributeWidget):
         """
 
         self.widget = MyIntSpinBox(None)#QtGui.QSpinBox()
-        #self.widget.setSingleStep(1)
+        self.widget.setMaximumWidth(200)
         self.widget.value_changed.connect(self.write)
 
     def module_value(self):
@@ -463,8 +504,6 @@ class FloatAttributeWidget(NumberAttributeWidget):
         """
 
         self.widget = MyDoubleSpinBox(None)#QtGui.QDoubleSpinBox()
-        #self.widget.setDecimals(4)
-        #self.widget.setSingleStep(0.01)
         self.widget.value_changed.connect(self.write)
 
     def module_value(self):

@@ -26,7 +26,7 @@ class MyItem(QtGui.QLabel):
         self.proxy.setZValue(2)
 
     def move_to_right_position(self):
-        widget = self.parent.module_widgets[0].attribute_widgets[self.widget_name].widget
+        widget = self.parent.module_widgets[0].attribute_widgets[self.widget_name]
         x = widget.pos().x() + widget.width()/2 + self.x_offset - self.width()/2
         y = self.y*self.parent.view.height() - self.height()/2
         self.move(x, y)

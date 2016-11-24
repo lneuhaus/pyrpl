@@ -11,21 +11,23 @@ pyrpl: # General configuration of the software:
     - NetworkAnalyzer
     - SpectrumAnalyzer
   dock_positions: !!binary |
-    AAAA/wAAAAD9AAAAAQAAAAIAAAd8AAAD3fwBAAAAAvwAAAAAAAADrAAAA40A/////AIAAAAD+wAA
-    AAwAcwBjAG8AcABlAHMBAAAAFQAAASQAAADXAP////sAAAAGAGkAcQBzAQAAAT0AAAHoAAABaAD/
-    ///7AAAACABhAHMAZwBzAQAAAykAAADJAAAAlAD////8AAADsAAAA8wAAAOmAP////wCAAAAAvwA
-    AAAVAAABugAAARMBAAAU+gAAAAACAAAAB/sAAAAEAG4AYQEAAAAA/////wAAAP4A////+wAAACIA
-    cwBwAGUAYwB0AHIAdQBtAF8AYQBuAGEAbAB5AHoAZQByAQAAAAD/////AAAAswD////7AAAAIgBz
-    AHAAZQBjAHQAcgB1AG0AIABhAG4AYQBsAHkAegBlAHIBAAAAAP////8AAAAAAAAAAPsAAAAUAEIA
-    YQBzAGUATQBvAGQAdQBsAGUBAAAAAP////8AAAAAAAAAAPsAAAAIAGkAaQByAHMBAAAAAP////8A
-    AAB/AP////sAAAAgAG4AZQB0AHcAbwByAGsAXwBhAG4AYQBsAHkAegBlAHIBAAAAAP////8AAAAA
-    AAAAAPsAAAAKAHMAYwBvAHAAZQEAAAAA/////wAAAAAAAAAA+wAAAAgAcABpAGQAcwEAAAHTAAAC
-    HwAAAhgA////AAAHfAAAAAAAAAAEAAAABAAAAAgAAAAI/AAAAAA=
+    AAAA/wAAAAD9AAAAAQAAAAIAAAeAAAAESPwBAAAAAvwAAAAAAAAHgAAABpsA/////AEAAAAC/AAA
+    AAAAAAMcAAACeQD////8AgAAAAL7AAAACABhAHMAZwBzAQAAABUAAACUAAAAlAD////7AAAACABw
+    AGkAZABzAQAAAK0AAAOwAAACGAD////8AAADIAAABGAAAAQeAP////wCAAAAA/wAAAAVAAABfQAA
+    AX0BAAAU+gAAAAABAAAAAvsAAAAGAGkAcQBzAQAAAAD/////AAADiQD////7AAAACABpAGkAcgBz
+    AQAAA18AAAQhAAAD7gD////7AAAABABuAGEBAAABlgAAAWkAAAD+AP////wAAAMDAAABWgAAAOwB
+    AAAU+gAAAAACAAAAAvsAAAAMAHMAYwBvAHAAZQBzAQAAAAD/////AAAA1wD////7AAAAIgBzAHAA
+    ZQBjAHQAcgB1AG0AXwBhAG4AYQBsAHkAegBlAHIBAAAAAP////8AAACzAP////wAAAPqAAADlgAA
+    AAAA////+gAAAAACAAAABPsAAAAiAHMAcABlAGMAdAByAHUAbQAgAGEAbgBhAGwAeQB6AGUAcgEA
+    AAAA/////wAAAAAAAAAA+wAAABQAQgBhAHMAZQBNAG8AZAB1AGwAZQEAAAAA/////wAAAAAAAAAA
+    +wAAACAAbgBlAHQAdwBvAHIAawBfAGEAbgBhAGwAeQB6AGUAcgEAAAAA/////wAAAAAAAAAA+wAA
+    AAoAcwBjAG8AcABlAQAAAAD/////AAAAAAAAAAAAAAeAAAAAAAAAAAQAAAAEAAAACAAAAAj8AAAA
+    AA==
   window_position:
-  - -1928
-  - 117
-  - 1916
-  - 1030
+  - -8
+  - -8
+  - 1920
+  - 1137
 redpitaya:
   hostname: 10.214.1.28
   password: root
@@ -36,90 +38,89 @@ redpitaya:
   reloadfpga: true
   monitor_server_name: monitor_server
 asg1:
-  frequency: 1000000.0474974513
-  offset: 0.0
+  frequency: 0
   waveform: sin
-  output_direct: off
   trigger_source: immediately
+  offset: 0.0
   amplitude: 1.0
+  output_direct: off
 asg2:
   frequency: 0
-  offset: 0.0
   waveform: sin
-  output_direct: off
   trigger_source: immediately
+  offset: 0.0
   amplitude: 1.0
+  output_direct: off
 asgs: {}
 iqs: {}
 pids: {}
 scopes: {}
 iirs: {}
 na:
-  input: adc1
-  stop: 2000000.0
-  start: 1000000.0
   acbandwidth:
   - 0
-  rbw:
-  - 77712
-  output_direct: out1
   curve_name: na_curve
+  rbw:
+  - 151
+  output_direct: off
+  input: adc1
+  stop: 50000.0
+  start: 200.0
 spectrum_analyzer:
-  input: asg1
   window: flattop
-  span:
-  - 122071
-  center: 1000000.0
+  input: adc1
 hk: {}
 ams: {}
 scope:
   input2: adc2
-  average: true
-  input1: adc1
-  trigger_source: immediately
   trigger_delay: 0.0
+  trigger_source: immediately
+  input1: adc1
+  average: true
 sampler: {}
 adc1: {}
 adc2: {}
 iq1:
-  input: adc1
-  output_direct: off
-  output_signal: quadrature
   bandwidth:
   - 0
   - 0
+  output_signal: quadrature_hf
+  output_direct: off
+  input: adc1
+  quadrature_factor: 0.0
 pid1:
-  input: adc1
   inputfilter:
   - 0
   - 0
   - 0
   - 0
   output_direct: off
+  input: adc1
+  setpoint: -0.00048828125
 pid2:
-  input: adc2
   inputfilter:
   - 0
   - 0
   - 0
   - 0
   output_direct: off
+  input: adc2
 pid3:
-  input: adc1
   inputfilter:
   - 0
   - 0
   - 0
   - 0
   output_direct: off
+  input: adc1
 pid4:
-  input: adc2
   inputfilter:
   - 0
   - 0
   - 0
   - 0
   output_direct: off
+  input: adc2
 iir:
-  input: adc1
   output_direct: off
+  input: adc1
