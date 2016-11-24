@@ -19,7 +19,6 @@ import logging
 import sys
 import numpy as np
 import numbers
-import six
 
 
 logger = logging.getLogger(name=__name__)
@@ -28,7 +27,6 @@ logger = logging.getLogger(name=__name__)
 #needed to set floats to minimum count above zero
 epsilon = sys.float_info.epsilon
 
-## ModuleAttributes are here in case a layer between ModuleWidget attributes and registers is needed
 class BaseAttribute(object):
     """An attribute is a field that can be set or get by several means:
       - programmatically: module.attribute = value
@@ -55,16 +53,9 @@ class BaseAttribute(object):
         """
         This function is called for any BaseAttribute, such that all the gui updating, and saving to disk is done
         automagically. The real work is delegated to self.set_value.
-        TODO: instead of to_serializable (that should be taken care of in the RoundTripDumper of memory.py), the first
-        step should be:
-        value = self.validate(value)
-        For most class, this just takes the value as is (make sure it has the right type or throw exceptions)
-        for some class it would round the value to the nearest available register value.
         """
         value = self.validate_and_normalize(value, instance) # self.to_serializable(value)
         self.set_value(instance, value) # sets the value internally
-        if value is None:
-            1/0
         self.set_value_gui_config(instance, value) # update value in gui and config
 
     def validate_and_normalize(self, value, module):
@@ -76,21 +67,6 @@ class BaseAttribute(object):
            - rounding elements to nearest valid_frequencies for FilterAttributes
         """
         return value # by default any value is valid
-
-    def to_serializable(self, value):
-        """
-        For an attribute value to go inside the gui and config file system, it has to be yml compatible.
-        In practice, some rare cases need to be treated here.
-        """
-        if hasattr(value, 'name'): # inputs of DspModules can be specified by the module object itself
-            return value.name
-        # if type(value) == np.ndarray: # convert numpy arrays into list
-        #    if value.dtype==np.complex128:
-        #        return [complex(val) for val in value]
-        #    return list(value)
-        if not isinstance(value, (list, basestring, numbers.Number, np.ndarray)):
-            raise ValueError("value %s can't be set to attribute %s (not serializable to yml)"%(str(value), self.name))
-        return value
 
     def set_value_gui_config(self, instance, value):
         """
@@ -111,14 +87,20 @@ class BaseAttribute(object):
         return val
 
     def update_gui(self, module):
+        """
+        Updates the widget with the module's value.
+        """
         module.widget.attribute_widgets[self.name].update_widget()
 
     def save_attribute(self, module, value):
+        """
+        Saves the module's value in the config file.
+        """
         module.c[self.name] = value
 
     def create_widget(self, module, name=None):
         """
-        Creates a widget to graphically rmanipulate the attribute.
+        Creates a widget to graphically manipulate the attribute.
         """
         if name is None:
             name = self.name # attributed by the metaclass of module
@@ -223,16 +205,11 @@ class SelectAttribute(BaseAttribute):
     widget_class = SelectAttributeWidget
 
     def __init__(self, options, default=None, doc=""):
-        """
-
-        :param options: either a list of strings if options are known at class declaration time
-                        or a function f(module) --> list-of-strings
-        :param default:
-        :param doc:
-        """
         super(SelectAttribute, self).__init__(default=default, doc=doc)
-        self._options = options
+        self.options = sorted(options) # usually, the user will pass a dictkeys object, which is not ordered and tricky
+                                       # to index
 
+    """ # I keep the comment here for a few commits for safety
     def options(self, obj):
         if callable(self._options):
             return self._options(obj)
@@ -241,25 +218,33 @@ class SelectAttribute(BaseAttribute):
                 return self._options.keys()
             else:
                 return self._options
+        """
+
 
     def create_widget(self, module, name=None):
+        """
+        This function is reimplemented to pass the options to the widget.
+        """
         if name is None:
             name = self.name
-        self.widget = SelectAttributeWidget(name, module, self.options(module))
+        self.widget = SelectAttributeWidget(name, module, self.options)
         return self.widget
+
 
     def validate_and_normalize(self, value, module):
         """
         Looks for attribute name, otherwise, converts to string and rejects if not in self.options
         """
-        options = sorted(self.options(module))
+        options = sorted(self.options) # (module)
         if isinstance(options[0], basestring):
             if hasattr(value, 'name'):
                 value = str(value.name)
             else:
                 value = str(value)
             if not (value in options):
-                raise ValueError("value %s is not an option for SelectAttribute %s of %s"%(value, self.name, module.name))
+                raise ValueError("value %s is not an option for SelectAttribute %s of %s"%(value,
+                                                                                           self.name,
+                                                                                           module.name))
             return value
         elif isinstance(options[0], numbers.Number):
             value = float(value)
@@ -338,17 +323,13 @@ class ListComplexAttribute(BaseAttribute):
         return [complex(val) for val in value]
 
 
-# way to represent the smallest positive value
-# needed to set floats to minimum count above zero
-epsilon = sys.float_info.epsilon
-
-
 # docstring does not work yet, see:
 # http://stackoverflow.com/questions/37255109/python-docstring-for-descriptors
 # for now there is a workaround: call Module.help(register)
 class BaseRegister(object):
     """Registers implement the necessary read/write logic for storing an attribute on the redpitaya.
-    Interface for basic register of type int"""
+    Interface for basic register of type int. To convert the value between register format and python readable
+    format, registers need to implement "from_python" and "to_python" functions"""
 
     def __init__(self, address, doc="", bitmask=None):
         self.address = address
@@ -356,6 +337,9 @@ class BaseRegister(object):
         self.bitmask = bitmask
 
     def get_value(self, obj, objtype=None):
+        """
+        Retrieves the value that is physically on the redpitaya device.
+        """
         if obj is None:
             return self  # allows to access the descriptor by calling class.Register
             # see http://nbviewer.jupyter.org/urls/gist.github.com/ChrisBeaumont/5758381/raw/descriptor_writeup.ipynb
@@ -366,6 +350,9 @@ class BaseRegister(object):
             return self.to_python(obj._read(self.address) & self.bitmask, obj)
 
     def set_value(self, obj, val):
+        """
+        Sets the value on the redpitaya device.
+        """
         # self.parent = obj  #store obj in memory<-- very bad practice: there is one Register for the class
         # and potentially many obj instances (think of having 2 redpitayas in the same python session), then
         # _read should use different clients depending on which obj is calling...)
@@ -391,11 +378,17 @@ class BaseRegister(object):
 
 
 class NumberRegister(BaseRegister):
+    """
+    Base register for numbers.
+    """
     def __init__(self, address, bits=64, **kwargs):
         super(NumberRegister, self).__init__(address=address, **kwargs)
 
 
 class IntRegister(NumberRegister, IntAttribute):
+    """
+    Register for integer values encoded on less than 32 bits.
+    """
     def __init__(self, address, bits=32, **kwargs):
         super(IntRegister, self).__init__(address=address, **kwargs)
         IntAttribute.__init__(self, min=0, max=2 ** bits, increment=1)
@@ -818,43 +811,68 @@ class BaseProperty(object):
 
 
 class SelectProperty(SelectAttribute, BaseProperty):
+    """
+    A property for multiple choice values, if options are numbers, rounding will be performed,
+    otherwise validator is strict.
+    """
     def get_value(self, obj, obj_type):
         if obj is None:
             return self
         if not hasattr(obj, '_' + self.name):
             # choose any value in the options as default.
-            default = sorted(self.options(obj))[0]
+            default = sorted(self.options)[0]
             setattr(obj, '_' + self.name, default)
         return getattr(obj, '_' + self.name)
 
 
 class StringProperty(StringAttribute, BaseProperty):
+    """
+    A property for a string value
+    """
     default = ""
 
 
 class PhaseProperty(PhaseAttribute, BaseProperty):
+    """
+    A property for a phase value
+    """
     default = 0
 
 
 class FloatProperty(FloatAttribute, BaseProperty):
+    """
+    A property for a float value
+    """
     default = 0.
 
 
 class FrequencyProperty(FrequencyAttribute, BaseProperty):
+    """
+    A property for a frequency value
+    """
     default = 0.
 
 
 class LongProperty(IntAttribute, BaseProperty):
+    """
+    A property for a long value
+    """
     def __init__(self, min=0, max=2**14, increment=1, doc=""):
         super(LongProperty, self).__init__(min=min, max=max, increment=increment, doc=doc)
     default = 0
 
 
 class BoolProperty(BoolAttribute, BaseProperty):
+    """
+    A property for a boolean value
+    """
     default = False
 
 
 class FilterProperty(FilterAttribute, BaseProperty):
+    """
+    A property for a list of float values to be chosen in valid_frequencies(module).
+    """
     def get_value(self, obj, obj_type):
         if obj is None:
             return self
@@ -865,21 +883,11 @@ class FilterProperty(FilterAttribute, BaseProperty):
         return getattr(obj, '_' + self.name)
 
     def set_value(self, obj, value):
-        """
-        ***TODO***
-        Because rounding to the closest option is done in a weird place (FilterRegister.from_python), I have to redo it
-        here. A better solution would be to move the rounding in the higher-level FilterAttribute.set_value, or
-        even rename the to_serializable to something like format_value, that would generally take care of type
-        conversion and rounding. Also, this could lead to a generalized behavior for Attribute setters:
-        To return the actually rounded value such that one can write
-        iq.frequency = asg.frequency = 10e4 and indeed have the 2 modules tuned at the same frequency (as long as the
-        one assigned in last has a better resolution than the first one.
-        """
         return super(FilterProperty, self).set_value(obj, value)
 
 
 class ListComplexProperty(ListComplexAttribute, BaseProperty):
     """
-    An arbitrary number of floats
+    A property for a list of complex values
     """
     default = [0.]

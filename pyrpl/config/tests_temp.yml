@@ -37,89 +37,84 @@ redpitaya:
   monitor_server_name: monitor_server
 asg1:
   frequency: 1000000.0474974513
-  offset: 0.0
   waveform: sin
-  output_direct: off
-  trigger_source: immediately
   amplitude: 1.0
+  trigger_source: immediately
+  output_direct: off
+  offset: 0.0
 asg2:
   frequency: 0
-  offset: 0.0
   waveform: sin
-  output_direct: off
-  trigger_source: immediately
   amplitude: 1.0
+  trigger_source: immediately
+  output_direct: off
+  offset: 0.0
 asgs: {}
 iqs: {}
 pids: {}
 scopes: {}
 iirs: {}
 na:
-  input: adc1
-  stop: 2000000.0
   start: 1000000.0
-  acbandwidth:
-  - 0
+  curve_name: na_curve
   rbw:
   - 77712
   output_direct: out1
-  curve_name: na_curve
+  stop: 2000000.0
+  input: adc1
+  acbandwidth:
+  - 0
 spectrum_analyzer:
-  input: asg1
   window: flattop
+  input: asg1
   span:
   - 122071
   center: 1000000.0
 hk: {}
 ams: {}
 scope:
-  input2: adc2
-  average: true
-  input1: adc1
   trigger_source: immediately
+  average: true
   trigger_delay: 0.0
+  input2: adc2
 sampler: {}
 adc1: {}
 adc2: {}
 iq1:
-  input: adc1
   output_direct: off
-  output_signal: quadrature
   bandwidth:
   - 0
   - 0
+  output_signal: quadrature
 pid1:
-  input: adc1
+  output_direct: off
   inputfilter:
   - 0
   - 0
   - 0
   - 0
-  output_direct: off
 pid2:
-  input: adc2
+  output_direct: off
   inputfilter:
   - 0
   - 0
   - 0
   - 0
-  output_direct: off
+  input: adc2
 pid3:
-  input: adc1
+  output_direct: off
   inputfilter:
   - 0
   - 0
   - 0
   - 0
-  output_direct: off
 pid4:
-  input: adc2
+  output_direct: off
   inputfilter:
   - 0
   - 0
   - 0
   - 0
-  output_direct: off
+  input: adc2
 iir:
-  input: adc1
   output_direct: off

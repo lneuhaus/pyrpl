@@ -149,13 +149,13 @@ class TestClass(object):
             # try to read
             value = module.__getattribute__(regkey)
             # make sure Register represents an int
-            if not isinstance((sorted(reg.options(module))[0]), type(value)):
+            if not isinstance((sorted(reg.options)[0]), type(value)):
                 assert False
             # exclude read-only registers
             if regkey in ["id"]:
                 return
             # try all options and confirm change that they are saved
-            for option in sorted(reg.options(module)):
+            for option in sorted(reg.options):
                 module.__setattr__(regkey, option)
                 if option != module.__getattribute__(regkey):
                     assert False

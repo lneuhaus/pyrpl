@@ -1,11 +1,20 @@
-import logging
+"""
+Modules are the basic building blocks of Pyrpl:
+  - The internal structure of the FPGA is made of individual modules performing a well defined task. Each of these
+    FPGA modules are represented in python by a HardwareModule.
+  - Higher-level operations, for instance those that need a coordinated operation of several HardwareModules is
+    performed by SoftwareModules.
+Both HardwareModules and SoftwareModules inherit BaseModule that give them basic capabilities such as displaying their
+attributes in the GUI having their state load and saved in the config file...
+"""
 
-import numpy as np
-import copy
 from .attributes import BaseAttribute
 from .widgets.module_widgets import ModuleWidget
+
+import logging
+import numpy as np
 from six import with_metaclass
-from functools import partial
+
 
 
 def get_setup_docstring(cls):
@@ -40,7 +49,7 @@ def new_func_setup():
 
 class ModuleMetaClass(type):
     '''
-    1. Magic to retrieve the name of the registers in the registers themselves.
+    1. Magic to retrieve the name of the attributes in the attributes themselves.
     see http://code.activestate.com/recipes/577426-auto-named-decriptors/
 
     2. Builds the setup docstring by aggregating _setup's and setup_attributes's docstrings.
@@ -104,9 +113,6 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
     gui_attributes = []  # class inheriting from ModuleWidget can automatically generate gui from a list of attributes
     setup_attributes = []  # attributes listed here will be saved in the config file everytime they are updated.
     widget = None  # instance-level attribute created in create_widget
-    # attribute_widgets = None  # instance-level attribute created in create_widget
-    # the list of parameters that constitute the "state" of the Module
-    parameter_names = []
 
     def get_setup_attributes(self):
         """
@@ -144,7 +150,6 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
 
     def help(self, register=''):
         """returns the docstring of the specified register name
-
            if register is an empty string, all available docstrings are returned"""
         if register:
             string = type(self).__dict__[register].__doc__
@@ -162,15 +167,14 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         """
         Creates the widget specified in widget_class. The attr
         """
-        # self.attribute_widgets = dict() # XXX it looks like module widgets are created for some of them in here
-                                        # for others in module.widget.attribute_widgets. Need to clarify that...
         self.widget = self.widget_class(self.name, self)
         return self.widget
 
     @property
     def c(self):
         """
-        The config file instance
+        The config file instance. In practice, writing values in here will write the values in the corresponding
+        section of the config file.
         """
         if not self.name in self.pyrpl_config._keys():
             self.pyrpl_config[self.name] = dict()
@@ -179,11 +183,8 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
 
 class HardwareModule(BaseModule):
     """
-    Module that directly maps a Redpitaya module.
+    Module that directly maps a FPGA module.
     """
-    # factor to manually compensate 125 MHz oscillator frequency error
-    # real_frequency = 125 MHz * _frequency_correction
-
     _owner = None
 
     @property
@@ -215,6 +216,10 @@ class HardwareModule(BaseModule):
 
     @property
     def _frequency_correction(self):
+        """
+        factor to manually compensate 125 MHz oscillator frequency error
+        real_frequency = 125 MHz * _frequency_correction
+        """
         try:
             return self._parent.frequency_correction
         except AttributeError:
@@ -222,8 +227,10 @@ class HardwareModule(BaseModule):
                                  "'frequency_correction'. ", self.name)
             return 1.0
 
-    # prevent the user from setting a nonexisting attribute
+
     def __setattr__(self, name, value):
+        # prevent the user from setting a nonexisting attribute (I am not sure anymore if it's not making everyone's
+        # life harder...)
         if hasattr(self, name) or name.startswith('_') or hasattr(type(self), name):
             super(BaseModule, self).__setattr__(name, value)
         else:
@@ -299,7 +306,8 @@ class SoftwareModule(BaseModule):
       - init_module(pyrpl): initializes the module (attribute values aren't saved during that stage)
       - setup_attributes: see BaseModule
       - gui_attributes: see BaseModule
-      - setup(): see BaseModule, this function is called after module creation to reload stored attributes
+      - _setup(): see BaseModule, this function is called when the user calls setup(**kwds) and should set the module
+      ready for acquisition/output with the current setup_attributes' values.
     """
 
     def __init__(self, pyrpl):

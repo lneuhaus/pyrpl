@@ -32,9 +32,7 @@ from . import software_modules
 from .memory import MemoryTree
 from .redpitaya import RedPitaya
 
-
-
-
+## Something has to be done with this docstring... I would like to wait for lockbox to be implemented before doing it...
 """
 channels:
 Any input or output channel can be set to 0. This disables the channel and
@@ -343,6 +341,9 @@ class Pyrpl(object):
 
     @property
     def hardware_modules(self):
+        """
+        List of all hardware modules loaded in this configuration.
+        """
         if self.rp is not None:
             return self.rp.modules.values()
         else:
@@ -351,7 +352,6 @@ class Pyrpl(object):
     def create_widget(self):
         """
         Creates the top-level widget
-        :return:
         """
 
         self.widget = PyrplWidget(self)
