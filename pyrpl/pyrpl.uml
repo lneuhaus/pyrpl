@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Diagram>
+  <ID>Python</ID>
+  <OriginalElement>#C:/Users/Samuel/Documents/GitHub/pyrpl/pyrpl/pyrpl.py</OriginalElement>
+  <nodes>
+    <node x="0.0" y="0.0">_abcoll.Hashable</node>
+    <node x="15.0" y="194.0">pyrpl.pyrpl.Pyrpl</node>
+    <node x="55.5" y="97.0">object</node>
+  </nodes>
+  <notes />
+  <edges>
+    <edge source="object" target="_abcoll.Hashable">
+      <point x="0.0" y="-23.5" />
+      <point x="0.0" y="23.5" />
+    </edge>
+    <edge source="pyrpl.pyrpl.Pyrpl" target="object">
+      <point x="0.0" y="-23.5" />
+      <point x="0.0" y="23.5" />
+    </edge>
+  </edges>
+  <settings layout="Hierarchic Group" zoom="1.0" x="105.5" y="120.5" />
+  <SelectedNodes>
+    <node>object</node>
+  </SelectedNodes>
+  <Categories />
+</Diagram>
+
