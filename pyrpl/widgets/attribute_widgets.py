@@ -19,7 +19,6 @@ if APP is None:
     APP = QtGui.QApplication(["redpitaya_gui"])
 
 
-
 class MyNumberSpinBox(QtGui.QWidget, object):
     """
     The button can be either in log_increment mode, or linear increment.
@@ -33,7 +32,7 @@ class MyNumberSpinBox(QtGui.QWidget, object):
         timer_min_interval.
     """
     value_changed = QtCore.pyqtSignal()
-    timer_min_interval = 1 # don't go below 5 ms
+    timer_min_interval = 20 # don't go below 20 ms
     timer_initial_latency = 500 # 100 ms before starting to update continuously.
 
     def __init__(self, label, min=-1, max=1, increment=2.**(-13),
@@ -233,6 +232,8 @@ class MyNumberSpinBox(QtGui.QWidget, object):
 
         :return:
         """
+        APP.processEvents() # Ugly, but has to be there, otherwise, it could be that this function is called forever
+        # because it takes the priority over released signal...
         if self.is_sweeping_down() or self.is_sweeping_up():
             self.make_step()
             self.timer_arrow.setInterval(self.best_wait_time())
@@ -275,9 +276,9 @@ class MyNumberSpinBox(QtGui.QWidget, object):
 
 class MyDoubleSpinBox(MyNumberSpinBox):
     def __init__(self, label, min=-1, max=1, increment=2.**(-13),
-                 log_increment=False, log_step=1.01):
-        self.decimals = 4
-        super(MyDoubleSpinBox, self).__init__(label, min, max, increment, log_increment, log_step)
+                 log_increment=False, halflife_seconds=1.0, decimals=3):
+        self.decimals = decimals
+        super(MyDoubleSpinBox, self).__init__(label, min, max, increment, log_increment, halflife_seconds)
 
     @property
     def val(self):
@@ -302,13 +303,13 @@ class MyDoubleSpinBox(MyNumberSpinBox):
 
 class MyIntSpinBox(MyNumberSpinBox):
     def __init__(self, label, min=-2**13, max=2**13, increment=1,
-                 log_increment=False, log_step=10):
+                 log_increment=False, halflife_seconds=1.):
         super(MyIntSpinBox, self).__init__(label,
                                            min,
                                            max,
                                            increment,
                                            log_increment,
-                                           log_step)
+                                           halflife_seconds)
 
     @property
     def val(self):
@@ -344,11 +345,12 @@ class BaseAttributeWidget(QtGui.QWidget):
         self.acquisition_property = True  # property affects signal acquisition
         self.layout_v = QtGui.QVBoxLayout()
         self.label = QtGui.QLabel(name)
-        self.layout_v.addWidget(self.label)
+        self.layout_v.addWidget(self.label, 0) # stretch=0
         self.layout_v.setContentsMargins(0, 0, 0, 0)
         #self.module = self.module_widget.module
         self.set_widget()
-        self.layout_v.addWidget(self.widget)
+        self.layout_v.addWidget(self.widget, 0) # stretch=0
+        self.layout_v.addStretch(1)
         self.setLayout(self.layout_v)
         self.update()
 
@@ -453,7 +455,6 @@ class NumberAttributeWidget(BaseAttributeWidget):
         Updates the value displayed in the widget
         :return:
         """
-
         if not self.widget.hasFocus():
             self.widget.setValue(self.module_value())
 
@@ -519,17 +520,21 @@ class FloatAttributeWidget(NumberAttributeWidget):
 class ListComplexSpinBox(QtGui.QWidget):
     value_changed = QtCore.pyqtSignal()
 
-    def __init__(self, number, label, min=-1., max=1., increment=0.001):
+    def __init__(self, number, label, min=-1., max=1., increment=0., log_increment=True, halflife_seconds=1.):
         super(ListComplexSpinBox, self).__init__()
         self.label = label
         self.min = min
         self.max = max
         self.increment = increment
+        self.halflife = halflife_seconds
+        self.log_increment = log_increment
+        self.incement = increment
         self.lay = QtGui.QVBoxLayout()
         self.spins_real = []
         self.spins_imag = []
         self.button_removes = []
         self.spin_lays = []
+        self.halflife = halflife_seconds
         if label is not None:
             self.label = QtGui.QLabel(self.name)
             self.lay.addWidget(self.label)
@@ -544,8 +549,20 @@ class ListComplexSpinBox(QtGui.QWidget):
 
     def add_spin(self):
         index = len(self.spins_real)
-        spin_real = MyDoubleSpinBox(label="", min=self.min, max=self.max, increment=self.increment)
-        spin_imag = MyDoubleSpinBox(label="", min=self.min, max=self.max, increment=self.increment)
+        spin_real = MyDoubleSpinBox(label="",
+                                    min=self.min,
+                                    max=self.max,
+                                    increment=self.increment,
+                                    log_increment=self.log_increment,
+                                    halflife_seconds=self.halflife,
+                                    decimals=0)
+        spin_imag = MyDoubleSpinBox(label="",
+                                    min=self.min,
+                                    max=self.max,
+                                    increment=self.increment,
+                                    log_increment=self.log_increment,
+                                    halflife_seconds=self.halflife,
+                                    decimals=0)
         self.spins_real.append(spin_real)
         self.spins_imag.append(spin_imag)
         spin_lay = QtGui.QHBoxLayout()
@@ -601,7 +618,7 @@ class ListComplexSpinBox(QtGui.QWidget):
 
 
 
-class ListFloatAttributeWidget(BaseAttributeWidget):
+class ListComplexAttributeWidget(BaseAttributeWidget):
     """
     Attribute for arbitrary number for floats
     """
@@ -612,7 +629,7 @@ class ListFloatAttributeWidget(BaseAttributeWidget):
         else:
             self.number = 1
         #self.defaults = name + 's'
-        super(ListFloatAttributeWidget, self).__init__(name, module)
+        super(ListComplexAttributeWidget, self).__init__(name, module)
 
     def write(self):
         setattr(self.module, self.name, self.widget.get_list())
@@ -626,7 +643,6 @@ class ListFloatAttributeWidget(BaseAttributeWidget):
         Updates the value displayed in the widget
         :return:
         """
-
         if not self.widget.hasFocus():
             self.widget.set_list(self.module_value())
 
@@ -636,7 +652,12 @@ class ListFloatAttributeWidget(BaseAttributeWidget):
         :return:
         """
 
-        self.widget = ListComplexSpinBox(self.number, label=None, min=0, max=50e6, increment=0.01)#QtGui.QDoubleSpinBox()
+        self.widget = ListComplexSpinBox(self.number,
+                                         label=None,
+                                         min=-65e6,
+                                         max=65e6,
+                                         log_increment=True,
+                                         halflife_seconds=1.)
         #self.widget.setDecimals(4)
         #self.widget.setSingleStep(0.01)
         self.widget.value_changed.connect(self.write)
@@ -651,6 +672,7 @@ class ListComboBox(QtGui.QWidget):
                         "negative values are for high-pass \n"
                         "positive for low pass")
         self.lay = QtGui.QHBoxLayout()
+        self.lay.setContentsMargins(0,0,0,0)
         self.combos = []
         self.options = options
         for i in range(number):

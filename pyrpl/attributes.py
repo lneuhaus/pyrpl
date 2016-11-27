@@ -13,7 +13,7 @@ changed. The necessary mechanisms are happening behind the scene, and they are c
 from .bijection import Bijection
 from .widgets.attribute_widgets import BoolAttributeWidget, FloatAttributeWidget, FilterAttributeWidget, \
                                             IntAttributeWidget, SelectAttributeWidget, StringAttributeWidget, \
-                                            ListFloatAttributeWidget
+                                            ListComplexAttributeWidget
 
 import logging
 import sys
@@ -57,6 +57,9 @@ class BaseAttribute(object):
         value = self.validate_and_normalize(value, instance) # self.to_serializable(value)
         self.set_value(instance, value) # sets the value internally
         self.set_value_gui_config(instance, value) # update value in gui and config
+        if self.name in instance.callback_attributes: # _setup should ne triggered...
+            if instance._callback_active: # un less a bunch of attributes are being changed together.
+                instance.callback()
 
     def validate_and_normalize(self, value, module):
         """
@@ -75,9 +78,9 @@ class BaseAttribute(object):
         if instance.widget is not None:  # update gui only if it exists
             if self.name in instance.widget.attribute_widgets:
                 self.update_gui(instance)
-        if instance.owner is None:  # don't save attributes of slave modules
+        if instance._autosave_active:  # (for instance, when module is slaved, don't save attributes)
             if self.name in instance.setup_attributes:
-                self.save_attribute(instance, value)
+                    self.save_attribute(instance, value)
         return value
 
     def __get__(self, instance, owner):
@@ -306,7 +309,7 @@ class ListComplexAttribute(BaseAttribute):
     An arbitrary length list of complex numbers.
     """
 
-    widget_class = ListFloatAttributeWidget
+    widget_class = ListComplexAttributeWidget
 
     def set_value(self, instance, value):
         """

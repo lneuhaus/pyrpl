@@ -376,13 +376,13 @@ class IqWidget(ModuleWidget):
         self.attribute_layout.addWidget(self.attribute_widgets["input"])
         self.attribute_layout.addWidget(self.attribute_widgets["acbandwidth"])
         self.attribute_layout.addWidget(self.attribute_widgets["frequency"])
-        self.attribute_widgets["frequency"].layout_v.addWidget(self.attribute_widgets["phase"])
+        self.attribute_widgets["frequency"].layout_v.insertWidget(2, self.attribute_widgets["phase"])
         self.attribute_layout.addWidget(self.attribute_widgets["bandwidth"])
         self.attribute_layout.addWidget(self.attribute_widgets["quadrature_factor"])
         self.attribute_layout.addWidget(self.attribute_widgets["gain"])
         self.attribute_layout.addWidget(self.attribute_widgets["amplitude"])
         self.attribute_layout.addWidget(self.attribute_widgets["output_signal"])
-        self.attribute_widgets["output_signal"].layout_v.addWidget(self.attribute_widgets["output_direct"])
+        self.attribute_widgets["output_signal"].layout_v.insertWidget(2, self.attribute_widgets["output_direct"])
 
 
 class PidWidget(ModuleWidget):
@@ -771,6 +771,50 @@ class NaWidget(ModuleWidget):
             self.set_state(continuous=True, paused=True, need_restart=False,
                            n_av=self.post_average)
 
+
+class IirWidget(ModuleWidget):
+    def init_gui(self):
+        self.main_layout = QtGui.QVBoxLayout()
+        self.setLayout(self.main_layout)
+        self.win = pg.GraphicsWindow(title="Amplitude")
+        self.win_phase = pg.GraphicsWindow(title="Phase")
+        self.plot_item = self.win.addPlot(title="Magnitude (dB)")
+        self.plot_item_phase = self.win_phase.addPlot(title="Phase (deg)")
+        self.plot_item_phase.setXLink(self.plot_item)
+
+        self.curve = self.plot_item.plot(pen='y')
+        self.curve_phase = self.plot_item_phase.plot(pen=None, symbol='o')
+
+        self.main_layout.addWidget(self.win)
+        self.main_layout.addWidget(self.win_phase)
+        self.init_attribute_layout()
+        for attribute_widget in self.attribute_widgets.values():
+            self.main_layout.setStretchFactor(attribute_widget, 0)
+
+        self.frequencies = np.logspace(1, np.log10(5e6), 5000)
+
+        self.curve.setLogMode(xMode=True, yMode=None)
+        self.curve_phase.setLogMode(xMode=True, yMode=None)
+
+        self.plot_item.setLogMode(x=True, y=None) # this seems also needed
+        self.plot_item_phase.setLogMode(x=True, y=None)
+
+        self.module.setup()
+        self.update_plot()
+        """
+        self.button_single = QtGui.QPushButton("Run single")
+        self.button_single.my_label = "Single"
+        self.button_continuous = QtGui.QPushButton("Run continuous")
+        self.button_continuous.my_label = "Continuous"
+        self.button_restart_averaging = QtGui.QPushButton('Restart averaging')
+        """
+
+    def update_plot(self):
+        tf = self.module.transfer_function(self.frequencies)
+        self.curve.setData(self.frequencies, abs(tf))
+        self.curve_phase.setData(self.frequencies, 180.*np.angle(tf)/np.pi)
+
+
 class ModuleManagerWidget(ModuleWidget):
     def init_gui(self):
         self.main_layout = QtGui.QVBoxLayout()
@@ -782,6 +826,7 @@ class ModuleManagerWidget(ModuleWidget):
 
             self.module_widgets.append(module_widget)
             self.main_layout.addWidget(module_widget)
+        self.main_layout.addStretch(5) # streth space between Managers preferentially.
         self.setLayout(self.main_layout)
 
 
@@ -792,8 +837,14 @@ class PidManagerWidget(ModuleManagerWidget):
 class ScopeManagerWidget(ModuleManagerWidget):
     pass
 
+
 class IirManagerWidget(ModuleManagerWidget):
     pass
+
+
+class IirManagerWidget(ModuleManagerWidget):
+    pass
+
 
 class IqManagerWidget(ModuleManagerWidget):
     def init_gui(self):

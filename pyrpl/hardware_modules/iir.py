@@ -1,9 +1,9 @@
 from pyrpl import iir, bodefit
 from . import FilterModule
 from pyrpl.attributes import IntRegister, BoolRegister, ListComplexProperty, FloatProperty
+from pyrpl.widgets.module_widgets import IirWidget
 
 import numpy as np
-
 
 
 class IIR(FilterModule):
@@ -29,6 +29,7 @@ class IIR(FilterModule):
 
     _IIRSTAGES = IntRegister(0x208)
 
+    widget_class = IirWidget
 
     gui_attributes = [ "input",
                        "loops",
@@ -37,8 +38,10 @@ class IIR(FilterModule):
                        "zeros",
                        "poles",
                        "gain",
-                       "output_direct"]
+                       "output_direct",
+                       "inputfilter"]
     setup_attributes = gui_attributes
+    callback_attributes = gui_attributes
     """
     parameter_names = ["loops",
                        "on",
@@ -264,6 +267,9 @@ class IIR(FilterModule):
                                  bin(self.overflow))
         else:
             self._logger.info("IIR Overflow pattern: %s", bin(self.overflow))
+
+        if self.widget is not None:
+            self.widget.update_plot()
         """ # obviously have to do something with that...
         if designdata or plot:
             maxf = 125e6 / self.loops

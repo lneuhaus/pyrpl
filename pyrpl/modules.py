@@ -42,8 +42,10 @@ def new_func_setup():
         (one per subclass having a setup_attributes field) and each of these functions will have the present docstring
         overwritten by a more descriptive one based on _setup.__doc__ and module attributes docstrings.
         """
+        self._callback_active = False
         self.set_setup_attributes(**kwds)
         self._setup()
+        self._callback_active = True
     return setup
 
 
@@ -112,7 +114,13 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
     widget_class = ModuleWidget  # Change this to provide a custom graphical class
     gui_attributes = []  # class inheriting from ModuleWidget can automatically generate gui from a list of attributes
     setup_attributes = []  # attributes listed here will be saved in the config file everytime they are updated.
+    callback_attributes = [] # Changing these attributes outside setup(**kwds) will trigger self.callback()
+    # standard callback defined in BaseModule is to call setup()
     widget = None  # instance-level attribute created in create_widget
+
+    _callback_active = True # This flag is used to desactivate callback during setup
+    _autosave_active = True # This flag is used to desactivate saving into file during init
+    _owner = None
 
     def get_setup_attributes(self):
         """
@@ -127,10 +135,14 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         """
         Sets the values of the setup attributes.
         """
-        for key, value in kwds.items():
-            if not key in self.setup_attributes:
-                raise ValueError("Attribute %s of module %s doesn't exist."%(key, self.name))
-            setattr(self, key, value)
+        self._autosetup_active = False
+        try:
+            for key, value in kwds.items():
+                if not key in self.setup_attributes:
+                    raise ValueError("Attribute %s of module %s doesn't exist."%(key, self.name))
+                setattr(self, key, value)
+        finally:
+            self._autosetup_active = True
 
     def load_setup_attributes(self):
         """
@@ -180,12 +192,11 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
             self.pyrpl_config[self.name] = dict()
         return getattr(self.pyrpl_config, self.name)
 
-
-class HardwareModule(BaseModule):
-    """
-    Module that directly maps a FPGA module.
-    """
-    _owner = None
+    def callback(self):
+        """
+        This function is called whenever an attribute listed in callback_attributes is changed outside setup()
+        """
+        self.setup()
 
     @property
     def owner(self):
@@ -200,11 +211,20 @@ class HardwareModule(BaseModule):
         """
         old = self.owner
         self._owner = val
+        if val==None:
+            self._autosave_active = True
+        else:
+            self._autosave_active = False # desactivate autosave for slave modules
         self.ownership_changed(old, val)
         if self.widget is not None:
             self.widget.show_ownership()
         if val is None:
             self.setup(**self.c._dict)
+
+class HardwareModule(BaseModule):
+    """
+    Module that directly maps a FPGA module.
+    """
 
     def ownership_changed(self, old, new):
         """
@@ -314,9 +334,9 @@ class SoftwareModule(BaseModule):
         self.pyrpl = pyrpl
         self._parent = pyrpl
         self.pyrpl_config = pyrpl.c
-        self.owner = "initialization" # attribute values are not overwritten in the config file
+        self._autosave_active = False # attribute values are not overwritten in the config file
         self.init_module()
-        self.owner = None
+        self._autosave_active = True
 
     def init_module(self):
         """

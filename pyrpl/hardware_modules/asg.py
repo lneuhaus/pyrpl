@@ -79,17 +79,6 @@ class AsgOffsetAttribute(FloatAttribute):
         return instance._offset_masked
 
 
-class TriggerSourceSelectRegister(SelectRegister):
-    """
-    Changing the trigger source requires to call _setup
-    """
-
-    def set_value(self, instance, val):
-        super(TriggerSourceSelectRegister, self).set_value(instance, val)
-        instance._setup()
-        return val
-
-
 # ugly workaround, but realized too late that descriptors have this limit
 def make_asg(channel=1):
     if channel == 1:
@@ -114,6 +103,7 @@ def make_asg(channel=1):
                           "trigger_source",
                           "output_direct"]
         setup_attributes = gui_attributes
+        callback_attributes = ["trigger_source"]
 
         _DATA_OFFSET = set_DATA_OFFSET
         _VALUE_OFFSET = set_VALUE_OFFSET
@@ -171,7 +161,7 @@ def make_asg(channel=1):
 
         trigger_sources = _trigger_sources.keys()
 
-        trigger_source = TriggerSourceSelectRegister(0x0, bitmask=0x0007 << _BIT_OFFSET, # changing trigger source requires a new _setup()
+        trigger_source = SelectRegister(0x0, bitmask=0x0007 << _BIT_OFFSET, # changing trigger source requires a new _setup()
                                         options=_trigger_sources,
                                         doc="trigger source for triggered output")
 
