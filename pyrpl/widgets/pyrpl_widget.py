@@ -119,9 +119,10 @@ class PyrplWidget(QtGui.QMainWindow):
         self.dock_widgets[name] = dock_widget
         self.addDockWidget(QtCore.Qt.TopDockWidgetArea,
                                            dock_widget)
-        # if self.last_docked is not None:
-        #    self.tabifyDockWidget(self.last_docked, dock_widget)
-        # self.last_docked = dock_widget
+        if self.last_docked is not None:
+            self.tabifyDockWidget(self.last_docked, dock_widget)
+        self.last_docked = dock_widget
+        self.last_docked.hide() # by default no widget is created...
 
         action = QtGui.QAction(name, self.menu_modules)
         action.setCheckable(True)
@@ -164,7 +165,7 @@ class PyrplWidget(QtGui.QMainWindow):
         #self._lock_window_position()
         except Exception as e:
             self.logger.warning("Gui is not started. Cannot save position.\n"\
-                                +str(e))
+                                + str(e))
 
     @property
     def window_position(self):

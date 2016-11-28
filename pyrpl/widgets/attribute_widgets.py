@@ -36,7 +36,7 @@ class MyNumberSpinBox(QtGui.QWidget, object):
     timer_initial_latency = 500 # 100 ms before starting to update continuously.
 
     def __init__(self, label, min=-1, max=1, increment=2.**(-13),
-                 log_increment=False, halflife_seconds=1.):
+                 log_increment=False, halflife_seconds=1., per_second=0.2):
         """
         :param label: label of the button
         :param min: min value
@@ -44,6 +44,7 @@ class MyNumberSpinBox(QtGui.QWidget, object):
         :param increment: increment of the underlying register
         :param log_increment: boolean: when buttons up/down are pressed, should the value change linearly or log
         :param halflife_seconds: when button is in log, how long to change the value by a factor 2.
+        :param per_second: when button is in lin, how long to change the value by 1 unit.
         """
         super(MyNumberSpinBox, self).__init__(None)
         self.min = min
@@ -53,6 +54,7 @@ class MyNumberSpinBox(QtGui.QWidget, object):
         self._val = 0
         self.halflife_seconds = halflife_seconds
         self.log_increment = log_increment
+        self.per_second = per_second
 
         self.lay = QtGui.QHBoxLayout()
         self.lay.setContentsMargins(0,0,0,0)
@@ -128,7 +130,7 @@ class MyNumberSpinBox(QtGui.QWidget, object):
         nsteps = int(event.delta()/120)
         func = self.step_up if nsteps>0 else self.step_down
         for i in range(abs(nsteps)):
-            func()
+            func(single_increment=True)
 
     def first_increment(self):
         """
@@ -139,7 +141,8 @@ class MyNumberSpinBox(QtGui.QWidget, object):
             self.last_time = time.time() # don't make a step, but store present time
             self.timer_arrow.start()
         else:
-            self.make_step()
+            self.last_time = None
+            self.make_step(single_increment=True) # start with a single_step, then make normal sweep...
             self.timer_arrow_latency.start() # wait longer than average
 
     def set_log_increment(self):
@@ -180,14 +183,23 @@ class MyNumberSpinBox(QtGui.QWidget, object):
         return self.val
 
     def log_factor(self):
+        """
+        Factor by which value should be divide/multiplied (in log mode) given the wait time since last step
+        """
         dt = time.time() - self.last_time # self.timer_arrow.interval()  # time since last step
         return 2.**(dt/self.halflife_seconds)
+
+    def lin_delta(self):
+        """
+        Quantity to add/subtract to value (in lin mode) given the wait time since last step
+        """
+        dt = time.time() - self.last_time  # self.timer_arrow.interval()  # time since last step
+        return dt*self.per_second
 
     def best_wait_time(self):
         """
         Time to wait until value should reach the next increment
         If this time is shorter than self.timer_min_interval, then, returns timer_min_interval
-        :return:
         """
         if self.log_increment:
             val = self.val
@@ -197,9 +209,10 @@ class MyNumberSpinBox(QtGui.QWidget, object):
             if self.is_sweeping_down():
                 next_val = val - np.sign(val)*self.increment
                 factor = val*1.0/next_val
-            return int(np.ceil(max(self.timer_min_interval, 1000*np.log2(factor))))
+            return int(np.ceil(max(self.timer_min_interval, 1000*np.log2(factor)))) # in log mode, wait long enough
+                                                                         # that next value is multiple of increment
         else:
-            return self.timer_min_interval
+            return int(np.ceil(max(self.timer_min_interval, self.increment*1000./self.per_second))) # in lin mode, idem
 
     def is_sweeping_up(self):
         return self.up.isDown() or self._button_up_down
@@ -207,24 +220,30 @@ class MyNumberSpinBox(QtGui.QWidget, object):
     def is_sweeping_down(self):
         return self.down.isDown() or self._button_down_down
 
-    def step_up(self, factor=1):
+    def step_up(self, single_increment=False):
+        if single_increment:
+            self.val += self.increment*1.1
+            return
         if self.log_increment:
             val = self.val
             res = val * self.log_factor() + np.sign(val)*self.increment/10. # to prevent rounding errors from
                                                                          # blocking the increment
             self.val = res#self.log_step**factor
         else:
-            res = self.val + self.increment*factor + self.increment/10.
+            res = self.val + self.lin_delta() + self.increment/10.
             self.val = res
 
-    def step_down(self, factor=1):
+    def step_down(self, single_increment=False):
+        if single_increment:
+            self.val -= self.increment*1.1
+            return
         if self.log_increment:
             val = self.val
-            res =  val / self.log_factor() - np.sign(val)*self.increment/10.  # to prevent rounding errors from
+            res = val / self.log_factor() - np.sign(val)*self.increment/10.  # to prevent rounding errors from
                                                                          # blocking the increment
             self.val = res #(self.log_step)**factor
         else:
-            res = self.val - self.increment*factor - self.increment/10.
+            res = self.val - self.lin_delta() - self.increment/10.
             self.val = res
 
     def make_step_continuous(self):
@@ -234,17 +253,19 @@ class MyNumberSpinBox(QtGui.QWidget, object):
         """
         APP.processEvents() # Ugly, but has to be there, otherwise, it could be that this function is called forever
         # because it takes the priority over released signal...
+        if self.last_time is None:
+            self.last_time = time.time()
         if self.is_sweeping_down() or self.is_sweeping_up():
             self.make_step()
             self.last_time = time.time()
             self.timer_arrow.setInterval(self.best_wait_time())
             self.timer_arrow.start()
 
-    def make_step(self):
+    def make_step(self, single_increment=False):
         if self.is_sweeping_up():
-            self.step_up()
+            self.step_up(single_increment=single_increment)
         if self.is_sweeping_down():
-            self.step_down()
+            self.step_down(single_increment=single_increment)
         self.validate()
 
     def keyPressEvent(self, event):
@@ -733,7 +754,6 @@ class ListComplexSpinBox(QtGui.QFrame):
                 return index
 
 
-
 class ListComplexAttributeWidget(BaseAttributeWidget):
     """
     Attribute for arbitrary number for floats
@@ -953,11 +973,14 @@ class SelectAttributeWidget(BaseAttributeWidget):
         index = list(self.options).index(getattr(self.module, self.name))
         self.widget.setCurrentIndex(index)
 
+
 class PhaseAttributeWidget(FloatAttributeWidget):
     pass
 
+
 class FrequencyAttributeWidget(FloatAttributeWidget):
     pass
+
 
 class BoolAttributeWidget(BaseAttributeWidget):
     """
