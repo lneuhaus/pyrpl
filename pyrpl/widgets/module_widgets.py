@@ -787,20 +787,24 @@ class MyGraphicsWindow(pg.GraphicsWindow):
 
     def mousePressEvent(self, *args, **kwds):
         event = args[0]
-        modifier = int(event.modifiers())
-        it = self.getItem(0, 0)
-        pos = it.mapToScene(event.pos()) #  + it.vb.pos()
-        point = it.vb.mapSceneToView(pos)
-        x, y = point.x(), point.y()
-        x = 10 ** x
-        new_z = -100 - 1.j * x
-        if modifier==QtCore.Qt.CTRL:
-            self.parent_widget.module.poles += [new_z]
-            self.parent_widget.attribute_widgets['poles'].set_selected(-1)
-        if modifier == QtCore.Qt.SHIFT:
-            self.parent_widget.module.zeros += [new_z]
-            self.parent_widget.attribute_widgets['zeros'].set_selected(-1)
-        return super(MyGraphicsWindow, self).mousePressEvent(*args, **kwds)
+        try:
+            modifier = int(event.modifiers())
+            it = self.getItem(0, 0)
+            pos = it.mapToScene(event.pos()) #  + it.vb.pos()
+            point = it.vb.mapSceneToView(pos)
+            x, y = point.x(), point.y()
+            x = 10 ** x
+            new_z = -100 - 1.j * x
+            if modifier==QtCore.Qt.CTRL:
+                self.parent_widget.module.poles += [new_z]
+                self.parent_widget.attribute_widgets['poles'].set_selected(-1)
+            if modifier == QtCore.Qt.SHIFT:
+                self.parent_widget.module.zeros += [new_z]
+                self.parent_widget.attribute_widgets['zeros'].set_selected(-1)
+        except BaseException as e:
+            self.parent_widget.module._logger.error(e)
+        finally:
+            return super(MyGraphicsWindow, self).mousePressEvent(*args, **kwds)
 
 
 class IirWidget(ModuleWidget):
@@ -843,10 +847,27 @@ class IirWidget(ModuleWidget):
         self.main_layout.addWidget(self.win)
         self.main_layout.addWidget(self.win_phase)
         self.init_attribute_layout()
+        self.second_attribute_layout = QtGui.QVBoxLayout()
+        self.attribute_layout.addLayout(self.second_attribute_layout)
+        self.third_attribute_layout = QtGui.QVBoxLayout()
+        self.attribute_layout.addLayout(self.third_attribute_layout)
+        index = 0
+        for key, widget in self.attribute_widgets.items():
+            index+=1
+            if index>3:
+                layout = self.third_attribute_layout
+            else:
+                layout = self.second_attribute_layout
+            if key!='poles' and key!='zeros':
+                self.attribute_layout.removeWidget(widget)
+                layout.addWidget(widget, stretch=0)
+
+        self.second_attribute_layout.addStretch(1)
+        self.third_attribute_layout.addStretch(1)
         for attribute_widget in self.attribute_widgets.values():
             self.main_layout.setStretchFactor(attribute_widget, 0)
 
-        self.frequencies = np.logspace(1, np.log10(5e6), 5000)
+        self.frequencies = np.logspace(1, np.log10(5e6), 2000)
 
 
         self.xlog = True
@@ -895,11 +916,12 @@ class IirWidget(ModuleWidget):
     """
 
     def select_pole(self, plot_item, spots):
-        print('selecting')
+        print('selecting pole')
         index = spots[0].data()
         self.attribute_widgets['poles'].set_selected(index)
 
     def select_zero(self, plot_item, spots):
+        print('selecting zero')
         index = spots[0].data()
         self.attribute_widgets['zeros'].set_selected(index)
         """

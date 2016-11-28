@@ -43,9 +43,11 @@ def new_func_setup():
         overwritten by a more descriptive one based on _setup.__doc__ and module attributes docstrings.
         """
         self._callback_active = False
-        self.set_setup_attributes(**kwds)
-        self._setup()
-        self._callback_active = True
+        try:
+            self.set_setup_attributes(**kwds)
+            self._setup()
+        finally:
+            self._callback_active = True
     return setup
 
 
@@ -133,16 +135,17 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
 
     def set_setup_attributes(self, **kwds):
         """
-        Sets the values of the setup attributes.
+        Sets the values of the setup attributes. Without calling any callbacks
         """
-        self._autosetup_active = False
+        old_callback_active = self._callback_active
+        self._callback_active = False
         try:
             for key, value in kwds.items():
                 if not key in self.setup_attributes:
                     raise ValueError("Attribute %s of module %s doesn't exist."%(key, self.name))
                 setattr(self, key, value)
         finally:
-            self._autosetup_active = True
+            self._callback_active = old_callback_active
 
     def load_setup_attributes(self):
         """

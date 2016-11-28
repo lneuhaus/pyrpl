@@ -32,7 +32,7 @@ class MyNumberSpinBox(QtGui.QWidget, object):
         timer_min_interval.
     """
     value_changed = QtCore.pyqtSignal()
-    timer_min_interval = 10 # don't go below 20 ms
+    timer_min_interval = 50 # don't go below 20 ms
     timer_initial_latency = 500 # 100 ms before starting to update continuously.
 
     def __init__(self, label, min=-1, max=1, increment=2.**(-13),
@@ -180,8 +180,8 @@ class MyNumberSpinBox(QtGui.QWidget, object):
         return self.val
 
     def log_factor(self):
-        dt = self.timer_arrow.interval()  # time since last step
-        return 2**(dt*0.001/self.halflife_seconds)
+        dt = time.time() - self.last_time # self.timer_arrow.interval()  # time since last step
+        return 2.**(dt/self.halflife_seconds)
 
     def best_wait_time(self):
         """
@@ -236,6 +236,7 @@ class MyNumberSpinBox(QtGui.QWidget, object):
         # because it takes the priority over released signal...
         if self.is_sweeping_down() or self.is_sweeping_up():
             self.make_step()
+            self.last_time = time.time()
             self.timer_arrow.setInterval(self.best_wait_time())
             self.timer_arrow.start()
 
@@ -276,7 +277,7 @@ class MyNumberSpinBox(QtGui.QWidget, object):
 
 class MyDoubleSpinBox(MyNumberSpinBox):
     def __init__(self, label, min=-1, max=1, increment=2.**(-13),
-                 log_increment=False, halflife_seconds=1.0, decimals=3):
+                 log_increment=False, halflife_seconds=2.0, decimals=4):
         self.decimals = decimals
         super(MyDoubleSpinBox, self).__init__(label, min, max, increment, log_increment, halflife_seconds)
 
@@ -291,6 +292,7 @@ class MyDoubleSpinBox(MyNumberSpinBox):
     def val(self, new_val):
         self._val = new_val # in case the line is not updated immediately
         self.line.setText(("%."+str(self.decimals) + "f")%new_val)
+        self.value_changed.emit()
         return new_val
 
     def max_num_letter(self):
@@ -321,6 +323,7 @@ class MyIntSpinBox(MyNumberSpinBox):
     def val(self, new_val):
         #self._val = new_val
         self.line.setText(("%.i")%new_val)
+        self.value_changed.emit()
         return new_val
 
     def max_num_letter(self):
@@ -534,6 +537,7 @@ class MyComplexSpinBox(QtGui.QFrame):
         self.halflife = halflife_seconds
         self.label = label
         self.lay = QtGui.QHBoxLayout()
+        self.lay.setContentsMargins(0, 0, 0, 0)
         self.real = MyDoubleSpinBox(label=label,
                                     min=min,
                                     max=max,
@@ -541,7 +545,6 @@ class MyComplexSpinBox(QtGui.QFrame):
                                     log_increment=log_increment,
                                     halflife_seconds=halflife_seconds,
                                     decimals=decimals)
-        self.real.timer_min_interval = 100 # no more than 100 ms interval for refresh
         self.real.value_changed.connect(self.value_changed)
         self.lay.addWidget(self.real)
         self.label = QtGui.QLabel(" + j")
@@ -553,7 +556,6 @@ class MyComplexSpinBox(QtGui.QFrame):
                                     log_increment=log_increment,
                                     halflife_seconds=halflife_seconds,
                                     decimals=decimals)
-        self.imag.timer_min_interval = 100 # no more than 100 ms interval for refresh
         self.imag.value_changed.connect(self.value_changed)
         self.lay.addWidget(self.imag)
         self.setLayout(self.lay)
@@ -649,6 +651,8 @@ class ListComplexSpinBox(QtGui.QFrame):
         self.button_add.clicked.connect(self.add_spin_and_select)
 
         self.lay.addWidget(self.button_add)
+        self.lay.addStretch(1)
+        self.lay.setContentsMargins(0,0,0,0)
         self.setLayout(self.lay)
         self.selected = None
 
