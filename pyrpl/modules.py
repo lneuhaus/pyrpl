@@ -182,7 +182,11 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         """
         Creates the widget specified in widget_class. The attr
         """
-        self.widget = self.widget_class(self.name, self)
+        self._callback_active = False
+        try:
+            self.widget = self.widget_class(self.name, self)
+        finally:
+            self._callback_active = True
         return self.widget
 
     @property

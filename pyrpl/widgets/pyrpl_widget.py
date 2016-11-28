@@ -61,27 +61,32 @@ TIMER.timeout.connect(patch_excepthook)
 TIMER.start()
 
 
-"""
-class FilterObject(QtCore.QObject):
-    def eventFilter(self, obj, event):
-        import sys
-        sys.excepthook = lambda etype, evalue, tb:print('yo')
-        try:
-            res = QtCore.QObject.eventFilter(self, obj, event)
-            if res:
-                print(res)
-            return res
-        except:
-            print("ERROR", res)
-            from sys import stdout
-            stdout.flush()
+class MyDockWidget(QtGui.QDockWidget):
+    """
+    A DockWidget where the inner widget is only created when needed (To reduce load times).
+    """
+    def __init__(self, create_widget_func, name):
+        """
+        create_widget_func is a function to create the widget.
+        """
+        super(MyDockWidget, self).__init__(name)
+        self.setObjectName(name)
+        self.setFeatures(
+            QtGui.QDockWidget.DockWidgetFloatable |
+            QtGui.QDockWidget.DockWidgetMovable |
+            QtGui.QDockWidget.DockWidgetVerticalTitleBar|
+            QtGui.QDockWidget.DockWidgetClosable)
+        self.create_widget_func = create_widget_func
+        self.widget = None
+
+    def showEvent(self, event):
+        if self.widget is None:
+            self.widget = self.create_widget_func()
+            self.setWidget(self.widget)
+        super(MyDockWidget, self).showEvent(event)
 
 
-        #Pass the event onto the parent window.
-
-FO = FilterObject()
-APP.installEventFilter(FO)
-"""
+        # self.setWidget(widget)
 
 
 class PyrplWidget(QtGui.QMainWindow):
@@ -89,8 +94,6 @@ class PyrplWidget(QtGui.QMainWindow):
         self.parent = pyrpl_instance
         self.logger = self.parent.logger
         super(PyrplWidget, self).__init__()
-        # self.filter = FilterObject()
-        #self.installEventFilter(self.filter)
         self.setDockNestingEnabled(True)
         self.dock_widgets = {}
         self.last_docked = None
@@ -99,7 +102,7 @@ class PyrplWidget(QtGui.QMainWindow):
         self.module_actions = []
 
         for module in self.parent.software_modules:
-            self.add_dock_widget(module.create_widget(), module.name)
+            self.add_dock_widget(module.create_widget, module.name)
 
         self.set_window_position()
         self.timer_save_pos = QtCore.QTimer()
@@ -111,21 +114,14 @@ class PyrplWidget(QtGui.QMainWindow):
         EL.status_bars.append(self.status_bar)
         self.setWindowTitle(self.parent.c.pyrpl.name)
 
-    def add_dock_widget(self, widget, name):
-        dock_widget = QtGui.QDockWidget(name)
-        dock_widget.setObjectName(name)
-        dock_widget.setFeatures(
-            QtGui.QDockWidget.DockWidgetFloatable |
-            QtGui.QDockWidget.DockWidgetMovable |
-            QtGui.QDockWidget.DockWidgetVerticalTitleBar|
-            QtGui.QDockWidget.DockWidgetClosable)
+    def add_dock_widget(self, create_widget, name):
+        dock_widget = MyDockWidget(create_widget, name)
         self.dock_widgets[name] = dock_widget
-        dock_widget.setWidget(widget)
         self.addDockWidget(QtCore.Qt.TopDockWidgetArea,
                                            dock_widget)
-        if self.last_docked is not None:
-            self.tabifyDockWidget(self.last_docked, dock_widget)
-        self.last_docked = dock_widget
+        # if self.last_docked is not None:
+        #    self.tabifyDockWidget(self.last_docked, dock_widget)
+        # self.last_docked = dock_widget
 
         action = QtGui.QAction(name, self.menu_modules)
         action.setCheckable(True)

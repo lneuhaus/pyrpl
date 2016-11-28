@@ -205,7 +205,6 @@ class IIR(FilterModule):
         coefficients   data to be passed to iir.bodeplot to plot the
                        realized transfer function
         """
-
         if self._IIRSTAGES == 0:
             raise Exception("Error: This FPGA bitfile does not support IIR "
                             "filters! Please use an IIR version!")
