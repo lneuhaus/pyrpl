@@ -4,6 +4,7 @@ from . import DSP_INPUTS
 
 
 class Sampler(HardwareModule):
+    name = 'sampler'
     def __init__(self, client, name, parent):
         self.name = "sampler"
         super(Sampler, self).__init__(client,

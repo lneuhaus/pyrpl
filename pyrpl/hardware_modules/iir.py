@@ -7,6 +7,7 @@ import numpy as np
 
 
 class IIR(FilterModule):
+    name = 'iir'
     iirfilter = None  # will be set by setup()
     _minloops = 5  # minimum number of loops for correct behaviour
     _maxloops = 1023
@@ -33,8 +34,6 @@ class IIR(FilterModule):
 
     gui_attributes = [ "input",
                        "loops",
-                       "on",
-                       "shortcut",
                        "zeros",
                        "poles",
                        "gain",

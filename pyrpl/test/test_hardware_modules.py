@@ -29,7 +29,7 @@ class TestClass(object):
     def test_asg(self):
         if self.r is None:
             return
-        for asg in [self.r.asg1,self.r.asg2]:
+        for asg in [self.r.asg1, self.r.asg2]:
             asg.setup(frequency=12345.)
             expect = 1./8191*np.round(8191.*np.sin(
                                 np.linspace(

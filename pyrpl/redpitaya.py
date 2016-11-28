@@ -19,6 +19,7 @@
 from . import monitor_client
 from . import hardware_modules as rp
 from .sshshell import SSHshell
+from .pyrpl_utils import get_unique_name_list_from_class_list
 
 import logging
 import os
@@ -49,6 +50,7 @@ class DummyMemoryTree(dict):
 
 class RedPitaya(SSHshell):
     _binfilename = 'fpga.bin'
+    """
     module_dict = OrderedDict([ ('hk', rp.HK), # careful: the initialization OrderedDict(a=x, b=y) looses the order
                                 ('ams', rp.AMS),
                                 ('scope', rp.Scope),
@@ -59,6 +61,9 @@ class RedPitaya(SSHshell):
                                 ('iq', (rp.IQ, 3)),
                                 ('pid', (rp.Pid, 4)),
                                 ('iir', rp.IIR)])# redpitaya modules are automatically generated from this dict
+    """
+    cls_modules = [rp.HK, rp.AMS, rp.Scope, rp.Sampler, rp.Asg1, rp.Asg2] + \
+                  [rp.AuxOutput]*2 + [rp.IQ]*3 + [rp.Pid]*4 + [rp.IIR]
 
     def __init__(self, hostname='192.168.1.100', port=2222,
                  user='root', password='root',
@@ -125,7 +130,9 @@ class RedPitaya(SSHshell):
                 self.dirname = os.path.abspath(os.path.join(self.dirname,'prypl'))
             else:
                 raise IOError("Wrong dirname",
-                          "The directory of the pyrl package could not be found. Please try again calling RedPitaya with the additional argument dirname='c://github//pyrpl//pyrpl' adapted to your installation directory of pyrpl! Current dirname: "
+                          "The directory of the pyrl package could not be found. Please try again calling RedPitaya"
+                          "with the additional argument dirname='c://github//pyrpl//pyrpl' adapted to your installation"
+                          " directory of pyrpl! Current dirname: "
                            +self.dirname)
         if self.hostname == "unavailable": # simulation mode - start without connecting
             self.logger.warning("Starting client in dummy mode...")
@@ -185,7 +192,9 @@ class RedPitaya(SSHshell):
             source = os.path.join(self.dirname,'fpga', filename)
         if not os.path.isfile(source):
             raise IOError("Wrong filename",
-              "The fpga bitfile was not found at the expected location. Try passing the arguments dirname=\"c://github//pyrpl//pyrpl//\" adapted to your installation directory of pyrpl and filename=\"red_pitaya.bin\"! Current dirname: "
+              "The fpga bitfile was not found at the expected location. Try passing the arguments "
+              "dirname=\"c://github//pyrpl//pyrpl//\" adapted to your installation directory of pyrpl "
+              "and filename=\"red_pitaya.bin\"! Current dirname: "
               +self.dirname
               +" current filename: "+self.filename)
         try:
@@ -364,9 +373,9 @@ class RedPitaya(SSHshell):
 
     def makemodules(self):
         """
-        Automatically generates modules from the dict RedPitaya.module_dict
+        Automatically generates modules from the list RedPitaya.cls_modules
         """
-
+        """
         for name, cls in self.module_dict.items():
             if np.iterable(cls): # dict key is (cls, number of instances)
                 cls, num = cls
@@ -374,6 +383,10 @@ class RedPitaya(SSHshell):
                     self.makemodule(name + str(index + 1), cls) # module have 1-based indices
             else:
                 self.makemodule(name, cls)
+        """
+        names = get_unique_name_list_from_class_list(self.cls_modules)
+        for cls, name in zip(self.cls_modules, names):
+            self.makemodule(name, cls)
 
         """
         self.hk = rp.HK(self.client, parent=self)

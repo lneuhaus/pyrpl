@@ -295,6 +295,9 @@ class MyNumberSpinBox(QtGui.QWidget, object):
             self.val = self.min
         self.value_changed.emit()
 
+    def set_per_second(self, val):
+        self.per_second = val
+
 
 class MyDoubleSpinBox(MyNumberSpinBox):
     def __init__(self, label, min=-1, max=1, increment=2.**(-13),
@@ -491,6 +494,9 @@ class NumberAttributeWidget(BaseAttributeWidget):
     def set_minimum(self, val):
         self.widget.setMinimum(val)
 
+    def set_per_second(self, val):
+        self.widget.set_per_second(val)
+
 
 class IntAttributeWidget(NumberAttributeWidget):
     """
@@ -504,7 +510,7 @@ class IntAttributeWidget(NumberAttributeWidget):
         """
 
         self.widget = MyIntSpinBox(None)#QtGui.QSpinBox()
-        self.widget.setMaximumWidth(200)
+        # self.widget.setMaximumWidth(200)
         self.widget.value_changed.connect(self.write)
 
     def module_value(self):
@@ -860,7 +866,6 @@ class ListComboBox(QtGui.QWidget):
                     break
                 layout.addWidget(self.combos[index])
 
-
     def set_list(self, val):
         if not np.iterable(val):
             val = [val]
@@ -919,6 +924,7 @@ class FilterAttributeWidget(BaseAttributeWidget):
         if isinstance(val, basestring) or not np.iterable(val): # only 1 element in the FilterAttribute, make a list for consistency
             val = [val]
         self.widget.set_list(val)
+
 
 class SelectAttributeWidget(BaseAttributeWidget):
     """
@@ -979,7 +985,9 @@ class PhaseAttributeWidget(FloatAttributeWidget):
 
 
 class FrequencyAttributeWidget(FloatAttributeWidget):
-    pass
+    def __init__(self, name, module):
+        super(FrequencyAttributeWidget, self).__init__(name, module)
+        self.set_per_second(10)
 
 
 class BoolAttributeWidget(BaseAttributeWidget):

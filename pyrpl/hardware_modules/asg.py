@@ -110,7 +110,7 @@ def make_asg(channel=1):
         _BIT_OFFSET = set_BIT_OFFSET
         default_output_direct = set_default_output_direct
         output_directs = None
-        name = set_name
+        name = 'asg' # duplicate name will be detected automatically at instanciation...
 
         def __init__(self, client, name, parent):
             super(Asg, self).__init__(client,

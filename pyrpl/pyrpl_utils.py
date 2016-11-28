@@ -30,7 +30,23 @@ def sleep(time_s):
     else:
         time.sleep(time_s)
 
-
+def get_unique_name_list_from_class_list(cls_list):
+    """
+    returns a list of names using cls.name if unique or cls.name1, cls.name2... otherwise.
+    Order of the name list matches order of cls_list, such that iterating over zip(cls_list, name_list) is OK
+    """
+    all_names = [cls.name for cls in cls_list]
+    names_set = set(all_names)
+    names = []
+    names_dict = dict(zip(names_set, [0]*len(names_set)))
+    for name in all_names:
+        if all_names.count(name) > 1:
+            names_dict[name] += 1
+            name += str(names_dict[name])
+            names.append(name)
+        else:
+            names.append(name)
+    return names
 
 
 

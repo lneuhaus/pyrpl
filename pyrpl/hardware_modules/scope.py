@@ -101,12 +101,13 @@ class TriggerSourceAttribute(SelectAttribute):
             return instance._trigger_source_memory
 
     def set_value(self, instance, value):
-        if isinstance(value, HardwareModule):
-            value = value.name
+        # if isinstance(value, HardwareModule):
+        #   value = value.name
         instance._trigger_source = value
-        instance._trigger_source_memory = value
-        # passing between immediately and other sources possibly requires trigger delay change
-        instance.trigger_delay = instance._trigger_delay_memory
+        if instance._trigger_source_memory != value:
+            instance._trigger_source_memory = value
+            # passing between immediately and other sources possibly requires trigger delay change
+            instance.trigger_delay = instance._trigger_delay_memory
 
 
 class DspInputAttributeScope(DspInputAttribute):
@@ -131,6 +132,7 @@ class DspInputAttributeScope(DspInputAttribute):
 
 
 class Scope(HardwareModule):
+    name = 'scope'
     widget_class = ScopeWidget
     gui_attributes = ["input1",
                       "input2",

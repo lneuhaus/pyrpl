@@ -13,7 +13,7 @@ changed. The necessary mechanisms are happening behind the scene, and they are c
 from .bijection import Bijection
 from .widgets.attribute_widgets import BoolAttributeWidget, FloatAttributeWidget, FilterAttributeWidget, \
                                             IntAttributeWidget, SelectAttributeWidget, StringAttributeWidget, \
-                                            ListComplexAttributeWidget
+                                            ListComplexAttributeWidget, FrequencyAttributeWidget
 
 import logging
 import sys
@@ -153,6 +153,8 @@ class FrequencyAttribute(FloatAttribute):
     """
     An attribute for frequency values
     """
+    widget_class = FrequencyAttributeWidget
+
     def __init__(self, default=None, increment=0.1, min=0, max=125e6/2, doc=""):
         super(FloatAttribute, self).__init__(default=default, doc=doc)
         self.increment = increment

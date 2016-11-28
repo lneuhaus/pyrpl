@@ -5,7 +5,7 @@ import numpy as np
 
 
 class HK(HardwareModule):
-    name = 'HK'
+    name = 'hk'
     gui_attributes = ["id", "led"]
 
     # We need all attributes to be there when the interpreter is done reading the class (for metaclass to workout)

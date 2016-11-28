@@ -121,7 +121,7 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
     widget = None  # instance-level attribute created in create_widget
 
     _callback_active = True # This flag is used to desactivate callback during setup
-    _autosave_active = True # This flag is used to desactivate saving into file during init
+    _autosave_active = False # This flag is used to desactivate saving into file during init
     _owner = None
 
     def get_setup_attributes(self):
@@ -182,11 +182,13 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         """
         Creates the widget specified in widget_class. The attr
         """
-        self._callback_active = False
+        self._callback_active = False # otherwise, saved values will be overwritten by default gui values
+        #self._autosave_active = False # otherwise, default gui values will be saved
         try:
             self.widget = self.widget_class(self.name, self)
         finally:
             self._callback_active = True
+            #self._autosave_active = True
         return self.widget
 
     @property
@@ -219,9 +221,9 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         old = self.owner
         self._owner = val
         if val==None:
-            self._autosave_active = True
+            pass# self._autosave_active = True
         else:
-            self._autosave_active = False # desactivate autosave for slave modules
+            pass # self._autosave_active = False # desactivate autosave for slave modules
         self.ownership_changed(old, val)
         if self.widget is not None:
             self.widget.show_ownership()
@@ -275,6 +277,7 @@ class HardwareModule(BaseModule):
                    addr_base is the base address of the module, such as 0x40300000
                    for the PID module
         """
+        self._autosave_active = False
         self.name = name
         self._logger = logging.getLogger(name=__name__)
         self._client = client
@@ -282,6 +285,7 @@ class HardwareModule(BaseModule):
         self.__doc__ = "Available registers: \r\n\r\n" + self.help()
         self._parent = parent
         self.pyrpl_config = parent.c
+        # self._autosave_active = True
 
     def _reads(self, addr, length):
         return self._client.reads(self._addr_base + addr, length)
@@ -337,7 +341,11 @@ class SoftwareModule(BaseModule):
       ready for acquisition/output with the current setup_attributes' values.
     """
 
-    def __init__(self, pyrpl):
+    def __init__(self, pyrpl, name):
+        """
+        Creates a module with given name.
+        """
+        self.name = name
         self.pyrpl = pyrpl
         self._parent = pyrpl
         self.pyrpl_config = pyrpl.c

@@ -31,6 +31,7 @@ from .widgets.pyrpl_widget import PyrplWidget
 from . import software_modules
 from .memory import MemoryTree
 from .redpitaya import RedPitaya
+from .pyrpl_utils import get_unique_name_list_from_class_list
 
 ## Something has to be done with this docstring... I would like to wait for lockbox to be implemented before doing it...
 """
@@ -311,23 +312,23 @@ class Pyrpl(object):
                         self.logger.warning('Something went wrong when loading attributes of module "%s"'%module.name)
         if self.c.pyrpl.gui:
             widget = self.create_widget()
-            widget.show()
+        widget.show()
 
     def load_software_modules(self):
         """
         load all software modules defined as root element of the config file.
         """
-
         soft_mod_names = self.c.pyrpl.modules#[mod for mod in self.c._keys() if not mod in ("pyrpl", "redpitaya")]
         soft_mod_names = ['AsgManager',
                           'IqManager',
                           'PidManager',
                           'ScopeManager',
                           'IirManager'] + soft_mod_names
-
-        for module_name in soft_mod_names:
-            ModuleClass = getattr(software_modules, module_name)
-            module = ModuleClass(self)
+        module_classes = [getattr(software_modules, cls_name) for cls_name in soft_mod_names]
+        module_names = get_unique_name_list_from_class_list(module_classes)
+        for cls, name in zip(module_classes, module_names):
+            # ModuleClass = getattr(software_modules, module_name)
+            module = cls(self, name)
             module.load_setup_attributes() # attributes are loaded but the module is not "setup"
             """
             if module.name in self.c._keys():
