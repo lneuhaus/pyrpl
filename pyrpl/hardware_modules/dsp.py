@@ -59,14 +59,25 @@ class DspModule(HardwareModule):
                             doc="selects to which analog output the module \
                             signal is sent directly")
 
-    out1_saturated = BoolRegister(0x8,0,doc="True if out1 is saturated")
+    out1_saturated = BoolRegister(0x8, 0, doc="True if out1 is saturated")
 
-    out2_saturated = BoolRegister(0x8,1,doc="True if out2 is saturated")
+    out2_saturated = BoolRegister(0x8, 1, doc="True if out2 is saturated")
 
     name = "dspmodule"
 
+    addr_base = None
+
+    def __init__(self, rp, name):
+        self._number = self._inputs[name]  # find address from name
+        self.addr_base = 0x40300000 + self._number * 0x10000
+        super(DspModule, self).__init__(rp, name)
+
+    def init_module(self):
+        pass
+    """
     def __init__(self, client, name, parent): # for consistency, all HardwareModule creators have the same signature
         self._number = self._inputs[name]
         super(DspModule, self).__init__(client,
             addr_base=0x40300000+self._number*0x10000,
             parent=parent, name=name)
+    """

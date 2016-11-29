@@ -51,16 +51,16 @@ class DummyMemoryTree(dict):
 class RedPitaya(SSHshell):
     _binfilename = 'fpga.bin'
     """
-    module_dict = OrderedDict([ ('hk', rp.HK), # careful: the initialization OrderedDict(a=x, b=y) looses the order
-                                ('ams', rp.AMS),
-                                ('scope', rp.Scope),
-                                ('sampler', rp.Sampler),
-                                ('asg1', rp.Asg1),
-                                ('asg2', rp.Asg2),
-                                ('pwm', (rp.AuxOutput, 2)), # dict key is (cls, number of instances)
-                                ('iq', (rp.IQ, 3)),
-                                ('pid', (rp.Pid, 4)),
-                                ('iir', rp.IIR)])# redpitaya modules are automatically generated from this dict
+    module_dict = OrderedDict([ ('hk', _rp.HK), # careful: the initialization OrderedDict(a=x, b=y) looses the order
+                                ('ams', _rp.AMS),
+                                ('scope', _rp.Scope),
+                                ('sampler', _rp.Sampler),
+                                ('asg1', _rp.Asg1),
+                                ('asg2', _rp.Asg2),
+                                ('pwm', (_rp.AuxOutput, 2)), # dict key is (cls, number of instances)
+                                ('iq', (_rp.IQ, 3)),
+                                ('pid', (_rp.Pid, 4)),
+                                ('iir', _rp.IIR)])# redpitaya modules are automatically generated from this dict
     """
     cls_modules = [rp.HK, rp.AMS, rp.Scope, rp.Sampler, rp.Asg1, rp.Asg2] + \
                   [rp.AuxOutput]*2 + [rp.IQ]*3 + [rp.Pid]*4 + [rp.IIR]
@@ -122,7 +122,7 @@ class RedPitaya(SSHshell):
         else:
             self.filename = filename
         if dirname is None:
-            self.dirname = os.path.abspath(os.path.dirname(rp.__file__)) #or inspect.getfile(rp)
+            self.dirname = os.path.abspath(os.path.dirname(rp.__file__)) #or inspect.getfile(_rp)
         else:
             self.dirname = dirname
         if not os.path.exists(self.dirname):
@@ -367,7 +367,7 @@ class RedPitaya(SSHshell):
         self.logger.warning("Dummy mode started...")
 
     def makemodule(self, name, cls):
-        module = cls(self.client, name=name, parent=self)
+        module = cls(self, name)
         setattr(self, name, module)
         self.modules[name] = module
 
@@ -389,17 +389,17 @@ class RedPitaya(SSHshell):
             self.makemodule(name, cls)
 
         """
-        self.hk = rp.HK(self.client, parent=self)
-        self.ams = rp.AMS(self.client, parent=self)
-        self.scope = rp.Scope(self.client, parent=self)
-        self.sampler = rp.Sampler(self.client, parent=self)
-        self.asg1 = rp.Asg1(self.client, parent=self)
-        self.asg2 = rp.Asg2(self.client, parent=self)
-        self.pwm0 = rp.AuxOutput(self.client, output='pwm0', parent=self)
-        self.pwm1 = rp.AuxOutput(self.client, output='pwm1', parent=self)
-        for name, module, number in [("pid", rp.Pid, 4),
-                                     ("iir", rp.IIR, 1),
-                                     ("iq", rp.IQ, 2)]:
+        self.hk = _rp.HK(self.client, parent=self)
+        self.ams = _rp.AMS(self.client, parent=self)
+        self.scope = _rp.Scope(self.client, parent=self)
+        self.sampler = _rp.Sampler(self.client, parent=self)
+        self.asg1 = _rp.Asg1(self.client, parent=self)
+        self.asg2 = _rp.Asg2(self.client, parent=self)
+        self.pwm0 = _rp.AuxOutput(self.client, output='pwm0', parent=self)
+        self.pwm1 = _rp.AuxOutput(self.client, output='pwm1', parent=self)
+        for name, module, number in [("pid", _rp.Pid, 4),
+                                     ("iir", _rp.IIR, 1),
+                                     ("iq", _rp.IQ, 2)]:
             # make a list for each kind of module
             thislist = []
             self.__setattr__(name+'s', thislist)
@@ -416,7 +416,7 @@ class RedPitaya(SSHshell):
         # iq2 is special: two outputs for scope/specAn. This special treatment
         # should soon be made more general. For thsi reason, we already
         # exclude it from the iqs list, such that it cannot be popped away..
-        self.iq2 = rp.IQ(self.client, module='iq2', parent=self)
+        self.iq2 = _rp.IQ(self.client, module='iq2', parent=self)
         # higher functionality modules
         #self.na = NetworkAnalyzer(self)
         #self.spec_an = SpectrumAnalyzer(self)

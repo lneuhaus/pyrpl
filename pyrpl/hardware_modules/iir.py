@@ -492,6 +492,6 @@ class IIR(FilterModule):
           id of the curve containing the transfer function to work on
         """
         self.bf = bodefit.BodeFitIIRGuiOptimisation(id)
-        self.bf.lockbox = self._parent
+        self.bf.lockbox = self._rp
         self.bf.iir = self
         return self.bf

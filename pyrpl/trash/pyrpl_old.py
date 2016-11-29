@@ -505,7 +505,7 @@ class Pyrpl(Lockbox):
 
     def save_gui_params(self):
         pass # not sure if params should be autosaved or not ...
-        #for module in self.rp.all_gui_modules:
+        #for module in self._rp.all_gui_modules:
         #    dic = module.get_state()
         #    self.c[module.name] = dic
 

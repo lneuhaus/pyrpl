@@ -746,7 +746,7 @@ class BodeFitIIRGuiOptimisation(BodeFitIIRGui):
         elif hasattr(self, 'lockbox'):
             if isinstance(self.lockbox, RedPitaya):
                 return self.lockbox
-            elif hasattr(self.lockbox, 'rp'):
+            elif hasattr(self.lockbox, '_rp'):
                 return self.lockbox.rp
         else:
             return None

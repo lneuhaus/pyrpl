@@ -121,7 +121,7 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
     widget = None  # instance-level attribute created in create_widget
 
     _callback_active = True # This flag is used to desactivate callback during setup
-    _autosave_active = False # This flag is used to desactivate saving into file during init
+    _autosave_active = True # This flag is used to desactivate saving into file during init
     _owner = None
 
     def get_setup_attributes(self):
@@ -183,12 +183,12 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         Creates the widget specified in widget_class. The attr
         """
         self._callback_active = False # otherwise, saved values will be overwritten by default gui values
-        #self._autosave_active = False # otherwise, default gui values will be saved
+        self._autosave_active = False # otherwise, default gui values will be saved
         try:
             self.widget = self.widget_class(self.name, self)
         finally:
             self._callback_active = True
-            #self._autosave_active = True
+            self._autosave_active = True
         return self.widget
 
     @property
@@ -221,9 +221,9 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         old = self.owner
         self._owner = val
         if val==None:
-            pass# self._autosave_active = True
+            self._autosave_active = True
         else:
-            pass # self._autosave_active = False # desactivate autosave for slave modules
+            self._autosave_active = False # desactivate autosave for slave modules
         self.ownership_changed(old, val)
         if self.widget is not None:
             self.widget.show_ownership()
@@ -232,7 +232,9 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
 
 class HardwareModule(BaseModule):
     """
-    Module that directly maps a FPGA module.
+    Module that directly maps a FPGA module. In addition to BaseModule's requirements, HardwareModule classes have to
+    possess the following class attributes
+      - addr_base: the base address of the module, such as 0x40300000
     """
 
     def ownership_changed(self, old, new):
@@ -250,7 +252,7 @@ class HardwareModule(BaseModule):
         real_frequency = 125 MHz * _frequency_correction
         """
         try:
-            return self._parent.frequency_correction
+            return self._rp.frequency_correction
         except AttributeError:
             self._logger.warning("Warning: Parent of %s has no attribute "
                                  "'frequency_correction'. ", self.name)
@@ -266,26 +268,28 @@ class HardwareModule(BaseModule):
             raise ValueError("New module attributes may not be set at runtime. Attribute "
                              + name + " is not defined in class " + self.__class__.__name__)
 
-    def __init__(self,
-                 client,
-                 addr_base=0x40000000,
-                 parent=None,
-                 name=None):
+    def __init__(self, redpitaya, name=None):
         """ Creates the prototype of a RedPitaya Module interface
 
-        arguments: client must be a viable redpitaya memory client
-                   addr_base is the base address of the module, such as 0x40300000
-                   for the PID module
+        if no name provided, will use cls.name
         """
         self._autosave_active = False
-        self.name = name
+        if name is not None:
+            self.name = name
         self._logger = logging.getLogger(name=__name__)
-        self._client = client
-        self._addr_base = addr_base
+        self._client = redpitaya.client
+        self._addr_base = self.addr_base # why ?
         self.__doc__ = "Available registers: \r\n\r\n" + self.help()
-        self._parent = parent
-        self.pyrpl_config = parent.c
-        # self._autosave_active = True
+        self._rp = redpitaya
+        self.pyrpl_config = redpitaya.c
+        self.init_module()
+        self._autosave_active = True
+
+    def init_module(self):
+        """
+        To implement in child class if needed.
+        """
+        pass
 
     def _reads(self, addr, length):
         return self._client.reads(self._addr_base + addr, length)
@@ -341,15 +345,16 @@ class SoftwareModule(BaseModule):
       ready for acquisition/output with the current setup_attributes' values.
     """
 
-    def __init__(self, pyrpl, name):
+    def __init__(self, pyrpl, name=None):
         """
-        Creates a module with given name.
+        Creates a module with given name. If name is None, uses cls.name.
         """
-        self.name = name
+        self._autosave_active = False  # attribute values are not overwritten in the config file
+        if name is None:
+            self.name = name
         self.pyrpl = pyrpl
         self._parent = pyrpl
         self.pyrpl_config = pyrpl.c
-        self._autosave_active = False # attribute values are not overwritten in the config file
         self.init_module()
         self._autosave_active = True
 

@@ -187,25 +187,25 @@ class PyrplWidget(QtGui.QMainWindow):
     def setup_gui(self):
         self.all_gui_modules = []
         self.na_widget = NaGui(name="na",
-                               rp=self,
+                               _rp=self,
                                parent=None,
                                module=self.na)
         from pyrpl.gui.iq_gui import AllIqWidgets
-        self.iq_widget = AllIqWidgets(rp=self,
+        self.iq_widget = AllIqWidgets(_rp=self,
                                   parent=None)
         self.scope_widget = ScopeWidget(name="scope",
-                                        rp=self,
+                                        _rp=self,
                                         parent=None,
                                         module=self.scope)
         self.sa_widget = SpecAnGui(name="spec an",
-                                   rp=self,
+                                   _rp=self,
                                    parent=None,
                                    module=self.spec_an)
         self.scope_sa_widget = ScopeSaWidget(self.scope_widget, self.sa_widget)
         self.all_asg_widget = AllAsgGui(parent=None,
-                                        rp=self)
+                                        _rp=self)
         self.all_pid_widget = AllPidGui(parent=None,
-                                        rp=self)
+                                        _rp=self)
 
         self.dock_widgets = {}
         self.last_docked = None

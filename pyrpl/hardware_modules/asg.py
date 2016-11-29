@@ -111,18 +111,15 @@ def make_asg(channel=1):
         default_output_direct = set_default_output_direct
         output_directs = None
         name = 'asg' # duplicate name will be detected automatically at instanciation...
+        addr_base = 0x40200000
 
-        def __init__(self, client, name, parent):
-            super(Asg, self).__init__(client,
-                                      addr_base=0x40200000,
-                                      parent=parent,
-                                      name=name)
+        def init_module(self):
             self._counter_wrap = 0x3FFFFFFF  # correct value unless you know better
             self._writtendata = np.zeros(self.data_length)
             if self._BIT_OFFSET == 0:
-                self._dsp = DspModule(client, name='asg1', parent=parent)
+                self._dsp = DspModule(self._rp, name='asg1')
             else:
-                self._dsp = DspModule(client, name='asg2', parent=parent)
+                self._dsp = DspModule(self._rp, name='asg2')
             self.output_directs = self._dsp.output_directs
             self.waveform = 'sin'
             self.trigger_source = 'immediately'

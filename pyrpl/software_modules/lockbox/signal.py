@@ -206,7 +206,7 @@ class RPSignal(Signal):
         Example: "mysignals.myinputs.myinput"
     parent: Pyrpl
         The Pyrpl object hosting this signal. In principle, any object
-        containing an attribute 'rp' referring to a RedPitaya object can be
+        containing an attribute '_rp' referring to a RedPitaya object can be
         parent.
     restartscope: function
         The function that the signal calls after acquisition to reset the
@@ -337,7 +337,7 @@ class RPOutputSignal(RPSignal):
         Example: "mysignals.myinputs.myinput"
     parent: Pyrpl
         The Pyrpl object hosting this signal. In principle, any object
-        containing an attribute 'rp' referring to a RedPitaya object can be
+        containing an attribute '_rp' referring to a RedPitaya object can be
         parent.
     restartscope: function
         The function that the signal calls after acquisition to reset the

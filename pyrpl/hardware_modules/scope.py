@@ -133,6 +133,7 @@ class DspInputAttributeScope(DspInputAttribute):
 
 class Scope(HardwareModule):
     name = 'scope'
+    addr_base = 0x40100000
     widget_class = ScopeWidget
     gui_attributes = ["input1",
                       "input2",
@@ -148,14 +149,10 @@ class Scope(HardwareModule):
     data_length = data_length  # see definition and explanation above
     inputs = None
 
-    def __init__(self, client, name, parent):
-        super(Scope, self).__init__(client,
-                                    addr_base=0x40100000,
-                                    parent=parent,
-                                    name=name)
+    def init_module(self):
         # dsp multiplexer channels for scope and asg are the same by default
-        self._ch1 = DspModule(client, name='asg1', parent=parent)
-        self._ch2 = DspModule(client, name='asg2', parent=parent)
+        self._ch1 = DspModule(self._rp, name='asg1')
+        self._ch2 = DspModule(self._rp, name='asg2')
         self.inputs = self._ch1.inputs
         self._setup_called = False
         self._trigger_source_memory = "immediately"
@@ -499,7 +496,7 @@ class Scope(HardwareModule):
         iq_module.frequency = center
         bw = span * points_per_bw / self.data_length
         self.duration = 1. / bw
-        self._parent.iq2.bandwidth = [span, span]
+        self._rp.iq2.bandwidth = [span, span]
         self.setup(trigger_source='immediately',
                    average=False,
                    trigger_delay=0)
@@ -507,7 +504,7 @@ class Scope(HardwareModule):
         return y
 
     def configure_signal_chain(self, input, iq):
-        iq_module = getattr(self._parent, iq)
+        iq_module = getattr(self._rp, iq)
         iq_module.input = input
         iq_module.output_signal = 'quadrature'
         iq_module.quadrature_factor = 1.0
