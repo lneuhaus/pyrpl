@@ -79,7 +79,7 @@ coverage.xml
 *.log
 
 # Sphinx documentation
-#docs/_build/
+!doc/sphinx/build/html
 
 # PyBuilder
 target/
@@ -89,7 +89,7 @@ target/
 
 
 #notebooks
-docs/my_notebooks/
+doc/my_notebooks/
 
 *.pydevproject
 *.project
