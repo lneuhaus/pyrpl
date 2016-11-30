@@ -15,16 +15,17 @@ from . import SoftwareModule
 
 class NaAcBandwidth(FilterAttribute):
     def valid_frequencies(selfself, instance):
-        return instance.iq._valid_inputfilter_frequencies(instance.iq)
+        return [freq for freq in instance.iq._valid_inputfilter_frequencies(instance.iq) if freq>=0]
 
     def get_value(self, instance, owner):
         if instance is None:
             return self
-        return instance.iq.inputfilter*-1
+        return -instance.iq.inputfilter
 
     def set_value(self, instance, value):
-        instance.iq.inputfilter = value*-1
+        instance.iq.inputfilter = [-value[0]]
         return value
+
 
 class RbwAttribute(FilterAttribute):
     def get_value(self, instance, owner):

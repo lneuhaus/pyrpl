@@ -346,9 +346,13 @@ class Pyrpl(object):
         List of all hardware modules loaded in this configuration.
         """
         if self.rp is not None:
-            return self.rp.modules.values()
+            return list(self.rp.modules.values())
         else:
             return []
+
+    @property
+    def modules(self):
+        return self.hardware_modules + self.software_modules
 
     def create_widget(self):
         """

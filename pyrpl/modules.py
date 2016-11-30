@@ -112,7 +112,7 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
     Finally, setup(**kwds) is created by ModuleMetaClass. it combines set_setup_attributes(**kwds) with _setup()
     """
     pyrpl_config = None
-    name = 'BaseModule'
+    name = 'basemodule'
     widget_class = ModuleWidget  # Change this to provide a custom graphical class
     gui_attributes = []  # class inheriting from ModuleWidget can automatically generate gui from a list of attributes
     setup_attributes = []  # attributes listed here will be saved in the config file everytime they are updated.
@@ -152,10 +152,36 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
          Load and sets all setup attributes from config file
         """
         dic = dict()
-        for key, value in self.c._dict.items():
-            if key in self.setup_attributes:
-                dic[key] = value
-        self.set_setup_attributes(**dic)
+        if self.c is not None:
+            for key, value in self.c._dict.items():
+                if key in self.setup_attributes:
+                    dic[key] = value
+            self.set_setup_attributes(**dic)
+
+    @property
+    def c_states(self):
+        """
+        Returns the config file branch corresponding to the "states" section
+        """
+        if not "states" in self.c._parent._keys():
+            self.c._parent["states"] = dict()
+        return self.c._parent.states
+
+    def save_state(self, name):
+        """Saves the current state under the name "name" in the config file"""
+        self.c_states[name] = self.get_setup_attributes()
+
+    def load_state(self, name):
+        """
+        Loads the state with name "name" from the config file.
+        """
+        if not name in self.c_states._keys():
+            raise KeyError("State %s doesn't exist for modules %s"%(name, self.__class__.name))
+        self.setup(**self.c_states[name])
+
+    @property
+    def states(self):
+        return list(self.c_states._keys())
 
     def _setup(self):
         """
@@ -197,9 +223,13 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         The config file instance. In practice, writing values in here will write the values in the corresponding
         section of the config file.
         """
-        if not self.name in self.pyrpl_config._keys():
-            self.pyrpl_config[self.name] = dict()
-        return getattr(self.pyrpl_config, self.name)
+        manager_section = self.__class__.name + "s" # for instance, iqs
+        if not manager_section in self.pyrpl_config._keys():
+            self.pyrpl_config[manager_section] = dict()
+        manager_section = getattr(self.pyrpl_config, manager_section)
+        if not self.name in manager_section._keys():
+            manager_section[self.name] = dict()
+        return getattr(manager_section, self.name)
 
     def callback(self):
         """
@@ -350,7 +380,7 @@ class SoftwareModule(BaseModule):
         Creates a module with given name. If name is None, uses cls.name.
         """
         self._autosave_active = False  # attribute values are not overwritten in the config file
-        if name is None:
+        if name is not None:
             self.name = name
         self.pyrpl = pyrpl
         self._parent = pyrpl

@@ -113,7 +113,7 @@ class MemoryBranch(object):
     @property
     def _defaults(self):
         """ defaults allows to define a list of default branches to fall back
-        upon if the desired kay is not found in the current branch """
+        upon if the desired key is not found in the current branch """
         return self.__defaults
 
     @_defaults.setter
@@ -159,7 +159,7 @@ class MemoryBranch(object):
 
     @property
     def _dict(self):
-        " return a dict containing the memory branch data"
+        """ return a dict containing the memory branch data"""
         d = {}
         for defaultdict in reversed(self._defaults):
             d.update(defaultdict._dict)

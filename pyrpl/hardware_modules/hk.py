@@ -7,6 +7,9 @@ import numpy as np
 class HK(HardwareModule):
     name = 'hk'
     gui_attributes = ["id", "led"]
+    setup_attributes = ["led"] + \
+                       ['expansion_P' + str(i) for i in range(8)] + \
+                       ['expansion_N' + str(i) for i in range(8)]
     addr_base = 0x40000000
     # We need all attributes to be there when the interpreter is done reading the class (for metaclass to workout)
     # see http://stackoverflow.com/questions/2265402/adding-class-attributes-using-a-for-loop-in-python

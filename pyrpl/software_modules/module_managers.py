@@ -53,6 +53,11 @@ class ModuleManager(SoftwareModule):
         if module.owner is not None:
             module.owner = None
 
+    @property
+    def c(self):
+        # no config file section for ModuleManagers
+        # otherwise, empty sections such as iqss->iqs would be created
+        return None
 
 class AsgManager(ModuleManager):
     name = "asgs"
