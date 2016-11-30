@@ -16,3 +16,10 @@ from .attributes import *
 from .curvedb import *
 from .pyrpl import *
 
+def coucou(self, cava=9):
+    """
+
+    :param self:
+    :param cava:
+    :return:
+    """
