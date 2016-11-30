@@ -4,6 +4,14 @@ pyrpl.test package
 Submodules
 ----------
 
+pyrpl.test.test_attribute_widgets module
+----------------------------------------
+
+.. automodule:: pyrpl.test.test_attribute_widgets
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 pyrpl.test.test_example module
 ------------------------------
 
@@ -12,10 +20,26 @@ pyrpl.test.test_example module
     :undoc-members:
     :show-inheritance:
 
-pyrpl.test.test_modules module
-------------------------------
+pyrpl.test.test_hardware_modules module
+---------------------------------------
 
-.. automodule:: pyrpl.test.test_modules
+.. automodule:: pyrpl.test.test_hardware_modules
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pyrpl.test.test_load_save module
+--------------------------------
+
+.. automodule:: pyrpl.test.test_load_save
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pyrpl.test.test_module_widgets module
+-------------------------------------
+
+.. automodule:: pyrpl.test.test_module_widgets
     :members:
     :undoc-members:
     :show-inheritance:
@@ -40,14 +64,6 @@ pyrpl.test.test_redpitaya module
 --------------------------------
 
 .. automodule:: pyrpl.test.test_redpitaya
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-pyrpl.test.test_redpitaya_gui module
-------------------------------------
-
-.. automodule:: pyrpl.test.test_redpitaya_gui
     :members:
     :undoc-members:
     :show-inheritance:

@@ -6,12 +6,23 @@ Subpackages
 
 .. toctree::
 
-    pyrpl.gui
+    pyrpl.hardware_modules
     pyrpl.models
+    pyrpl.software_modules
     pyrpl.test
+    pyrpl.trash
+    pyrpl.widgets
 
 Submodules
 ----------
+
+pyrpl.attributes module
+-----------------------
+
+.. automodule:: pyrpl.attributes
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
 pyrpl.bijection module
 ----------------------
@@ -21,10 +32,34 @@ pyrpl.bijection module
     :undoc-members:
     :show-inheritance:
 
+pyrpl.bodefit module
+--------------------
+
+.. automodule:: pyrpl.bodefit
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 pyrpl.curvedb module
 --------------------
 
 .. automodule:: pyrpl.curvedb
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pyrpl.errors module
+-------------------
+
+.. automodule:: pyrpl.errors
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pyrpl.fitting module
+--------------------
+
+.. automodule:: pyrpl.fitting
     :members:
     :undoc-members:
     :show-inheritance:
@@ -53,18 +88,18 @@ pyrpl.model module
     :undoc-members:
     :show-inheritance:
 
-pyrpl.monitor_client module
----------------------------
+pyrpl.modules module
+--------------------
 
-.. automodule:: pyrpl.monitor_client
+.. automodule:: pyrpl.modules
     :members:
     :undoc-members:
     :show-inheritance:
 
-pyrpl.network_analyzer module
------------------------------
+pyrpl.monitor_client module
+---------------------------
 
-.. automodule:: pyrpl.network_analyzer
+.. automodule:: pyrpl.monitor_client
     :members:
     :undoc-members:
     :show-inheritance:
@@ -93,34 +128,10 @@ pyrpl.redpitaya module
     :undoc-members:
     :show-inheritance:
 
-pyrpl.redpitaya_modules module
-------------------------------
+pyrpl.sound module
+------------------
 
-.. automodule:: pyrpl.redpitaya_modules
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-pyrpl.registers module
-----------------------
-
-.. automodule:: pyrpl.registers
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-pyrpl.signal module
--------------------
-
-.. automodule:: pyrpl.signal
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-pyrpl.spectrum_analyzer module
-------------------------------
-
-.. automodule:: pyrpl.spectrum_analyzer
+.. automodule:: pyrpl.sound
     :members:
     :undoc-members:
     :show-inheritance:

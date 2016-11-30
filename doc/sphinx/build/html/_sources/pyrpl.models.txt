@@ -20,6 +20,14 @@ pyrpl.models.fabryperotmembranes module
     :undoc-members:
     :show-inheritance:
 
+pyrpl.models.filter module
+--------------------------
+
+.. automodule:: pyrpl.models.filter
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 pyrpl.models.fpm module
 -----------------------
 
@@ -32,6 +40,22 @@ pyrpl.models.interferometer module
 ----------------------------------
 
 .. automodule:: pyrpl.models.interferometer
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pyrpl.models.interferometer_am module
+-------------------------------------
+
+.. automodule:: pyrpl.models.interferometer_am
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pyrpl.models.lmsd module
+------------------------
+
+.. automodule:: pyrpl.models.lmsd
     :members:
     :undoc-members:
     :show-inheritance:
