@@ -92,6 +92,9 @@
 <dt id="pyrpl.bijection.Bijection">
 <em class="property">class </em><tt class="descclassname">pyrpl.bijection.</tt><tt class="descname">Bijection</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pyrpl.bijection.Bijection" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">dict</span></tt></p>
+<p>This class defines a bijection object based on dict</p>
+<p>It can be used exactly like dict, but additionally has a property
+&#8216;inverse&#8217; which contains the inverted {value: key} dict.</p>
 <dl class="method">
 <dt id="pyrpl.bijection.Bijection.pop">
 <tt class="descname">pop</tt><big>(</big><em>key</em><big>)</big><a class="headerlink" href="#pyrpl.bijection.Bijection.pop" title="Permalink to this definition">¶</a></dt>
@@ -1876,7 +1879,7 @@ corrected for phase delay due to analog output filters of the output</p>
 
 <dl class="class">
 <dt id="pyrpl.signal.RPSignal">
-<em class="property">class </em><tt class="descclassname">pyrpl.signal.</tt><tt class="descname">RPSignal</tt><big>(</big><em>config</em>, <em>branch</em>, <em>parent</em>, <em>restartscope=&lt;function &lt;lambda&gt; at 0x0CA854B0&gt;</em><big>)</big><a class="headerlink" href="#pyrpl.signal.RPSignal" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pyrpl.signal.</tt><tt class="descname">RPSignal</tt><big>(</big><em>config</em>, <em>branch</em>, <em>parent</em>, <em>restartscope=&lt;function &lt;lambda&gt; at 0x0CDF1BB0&gt;</em><big>)</big><a class="headerlink" href="#pyrpl.signal.RPSignal" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#pyrpl.signal.Signal" title="pyrpl.signal.Signal"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.signal.Signal</span></tt></a></p>
 <p>A Signal that corresponds to an inputsignal of the DSPModule inside
 the RedPitaya</p>

@@ -1,9 +1,8 @@
-# defines a bijection object based on dict
-# can be used exactly like dict
-# additionally has a property 'inverse' which contains
-# the inverted {value: key} dict.
-
 class Bijection(dict):
+    """ This class defines a bijection object based on dict
+
+    It can be used exactly like dict, but additionally has a property
+    'inverse' which contains the inverted {value: key} dict. """
     def __init__(self, *args, **kwargs):
         super(Bijection,self).__init__(*args,**kwargs)
         self.inverse = {v: k for k, v in self.items()}
