@@ -137,7 +137,6 @@ class FloatAttribute(NumberAttribute):
 
     def __init__(self, default=None, increment=0.001, min=-.1, max=1., doc=""):
         super(FloatAttribute, self).__init__(default=default, doc=doc)
-        super(FloatAttribute, self).__init__(default=default, doc=doc)
         self.increment = increment
         self.min = min
         self.max = max
@@ -765,11 +764,11 @@ class FilterRegister(BaseRegister, FilterAttribute):
         return filter_shifts
 
 
-class PWMRegister(BaseRegister, BaseAttribute):
+class PWMRegister(FloatRegister, FloatAttribute):
     # FloatRegister that defines the PWM voltage similar to setting a float
     # see FPGA code for more detailed description on how the PWM works
     def __init__(self, address, CFG_BITS=24, PWM_BITS=8, **kwargs):
-        super(PWMRegister, self).__init__(address=address, **kwargs)
+        super(PWMRegister, self).__init__(address=address, bits=14, norm=1, **kwargs)
         self.CFG_BITS = int(CFG_BITS)
         self.PWM_BITS = int(PWM_BITS)
 
@@ -796,7 +795,7 @@ class PWMRegister(BaseRegister, BaseAttribute):
         towrite += ((1 << low) - 1) & ((1 << self.CFG_BITS) - 1)
         return towrite
 
-    # I am not sure what the resolution is, anyone interested in writing the validate_and_normalize function ?
+    # validate_and_normalize from FloatRegister is fine
 
 class BaseProperty(object):
     """
