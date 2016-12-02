@@ -925,6 +925,8 @@ class FilterAttributeWidget(BaseAttributeWidget):
             val = [val]
         self.widget.set_list(val)
 
+    def set_max_cols(self, n_cols):
+        self.widget.set_max_cols(n_cols)
 
 class SelectAttributeWidget(BaseAttributeWidget):
     """
@@ -964,20 +966,53 @@ class SelectAttributeWidget(BaseAttributeWidget):
 
         :return:
         """
-
         setattr(self.module, self.name, str(self.widget.currentText()))
-        if self.acquisition_property:
-            self.value_changed.emit()
+        #if self.acquisition_property:
+        self.value_changed.emit()
 
     def update(self):
         """
         Sets the gui value from the current module value
-
-        :return:
         """
 
         index = list(self.options).index(getattr(self.module, self.name))
         self.widget.setCurrentIndex(index)
+
+    def change_options(self, new_options):
+        """
+        The options of the combobox can be cahnged dynamically. new_options is a list of strings.
+        """
+        self.widget.blockSignals(True)
+        self.defaults = new_options
+        self.widget.clear()
+        self.widget.addItems(new_options)
+        self.widget.blockSignals(False)
+
+
+
+#class DynamicSelectAttributeWidget(SelectAttributeWidget):
+#    """
+#    Multiple choice property, with optiosn evaluated at run-time:
+#    the options in the combobox have to be filled upon click.
+#    """
+#    def __init__(self, name, module):
+#        BaseAttributeWidget.__init__(self, name, module) # don' t do the SelectAttributeWidget initialization.
+#
+#    def set_widget(self):
+#        """
+#        Sets up the widget (here a QComboBox).
+#        """
+#        self.widget = QtGui.QComboBox()
+#        self.widget.currentIndexChanged.connect(self.write)
+#
+#    @property
+#    def options(self):
+#        """
+#        All possible options.
+#        """
+#        return getattr(self.module.__class__, self.name).options(self.module)
+#
+#    def
 
 
 class PhaseAttributeWidget(FloatAttributeWidget):

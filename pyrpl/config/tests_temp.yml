@@ -11,20 +11,20 @@ pyrpl: # General configuration of the software:
     - NetworkAnalyzer
     - NetworkAnalyzer
   window_position:
-  - -8
-  - -8
+  - -7
+  - 0
   - 1916
-  - 1017
+  - 1008
   dock_positions: !!binary |
-    AAAA/wAAAAD9AAAAAQAAAAIAAAd8AAAD0PwBAAAAAfwAAAAAAAAHfAAABy8A/////AIAAAAD/AAA
-    ABUAAAHTAAABXwD////8AQAAAAL8AAAAAAAAA5AAAANDAP////oAAAACAQAAAAP7AAAAIgBzAHAA
+    AAAA/wAAAAD9AAAAAQAAAAIAAAd8AAADx/wBAAAAAfwAAAAAAAAHfAAAA0MA/////AIAAAAD/AAA
+    ABUAAAPHAAABSgD////8AQAAAAL8AAAAAAAAB3wAAANDAP////oAAAABAQAAAAP7AAAAIgBzAHAA
     ZQBjAHQAcgB1AG0AXwBhAG4AYQBsAHkAegBlAHIBAAAAAP////8AAAAAAAAAAPsAAAAGAGkAcQBz
-    AQAAAAD/////AAADQwD////7AAAACABhAHMAZwBzAQAAAAAAAAd8AAACMQD////8AAADlAAAA+gA
-    AAPoAP////oAAAAAAgAAAAL7AAAABgBuAGEAMgEAAAAA/////wAAAO0A////+wAAAAwAcwBjAG8A
-    cABlAHMBAAAAFQAAAdMAAADBAP////wAAAHsAAAB+QAAAcMA/////AEAAAAC+wAAAAgAaQBpAHIA
-    cwEAAAAAAAADjAAAAxQA/////AAAA5AAAAPsAAAD6AD////6AAAAAgIAAAAD+wAAAAYAbgBhADEB
-    AAAAAP////8AAADtAP////sAAAAEAG4AYQEAAAAA/////wAAAAAAAAAA+wAAAAgAcABpAGQAcwEA
-    AAJbAAABrgAAAa4A////+wAAAAQAbgBhAAAAA3UAAADoAAAAAAAAAAAAAAd8AAAAAAAAAAQAAAAE
+    AQAAAAD/////AAADQwD////7AAAACABhAHMAZwBzAAAAAAAAAAd8AAAAFgD////8AAAAAAAAB3wA
+    AAAAAP////r/////AgAAAAL7AAAABgBuAGEAMgAAAAAA/////wAAAFAA////+wAAAAwAcwBjAG8A
+    cABlAHMAAAAAFQAAAdMAAABQAP////wAAAAVAAADxwAAAAAA/////AEAAAAC+wAAAAgAaQBpAHIA
+    cwAAAAAAAAAHfAAAABYA/////AAAAAAAAAd8AAAAAAD////6AAAAAQIAAAAD+wAAAAYAbgBhADEA
+    AAAAAP////8AAABQAP////sAAAAEAG4AYQEAAAAA/////wAAAAAAAAAA+wAAAAgAcABpAGQAcwAA
+    AAJbAAABrgAAAFAA////+wAAAAQAbgBhAAAAA3UAAADoAAAAAAAAAAAAAAd8AAAAAAAAAAQAAAAE
     AAAACAAAAAj8AAAAAA==
 redpitaya:
   hostname: 10.214.1.28
@@ -72,8 +72,9 @@ pwms:
   pwm1: {}
   pwm2: {}
 iqs:
-  iq1: {output_signal: quadrature, bandwidth: [0, 0], input: adc1, frequency: 0, acbandwidth: [
-      0], phase: 180.0, quadrature_factor: 0.0, output_direct: off, gain: 0.0, amplitude: 0.0}
+  iq1: {output_signal: quadrature, bandwidth: [1214, 2428], input: adc1, frequency: 9999.98883344233,
+    acbandwidth: [0], phase: 180.0, quadrature_factor: 0.1015625, output_direct: out1,
+    gain: 0.0, amplitude: 0.09999847412109375}
   states: {yoyo: {output_direct: off, bandwidth: [0, 0], input: adc1, amplitude: 0.0,
       gain: 0.0, phase: 0.0, acbandwidth: 0, quadrature_factor: 0.0, output_signal: quadrature,
       frequency: 0.0}, phase90: {output_signal: quadrature, bandwidth: [0, 0], quadrature_factor: 0.0,
@@ -108,7 +109,7 @@ iqs:
 pids:
   pid3: {ival: 0.0}
   pid2: {ival: 0.0}
-  pid4: {ival: 0.0}
+  pid4: {ival: 0.0, p: 0.114501953125}
   pid1: {ival: 0.0, output_direct: off, d: 0.0, setpoint: 0.0, p: 0.0, inputfilter: [
       0, 0, 0, 0], input: adc1, i: 0.0}
   states: {iui: {output_direct: off, d: 0.0, setpoint: 0.0, p: 0.0, inputfilter: [
@@ -129,3 +130,5 @@ iirs:
       input: adc1
       zeros:
       - (-100-947.7629626775897j)
+lockboxs:
+  lockbox: {dummy_outputs: {dummy_output: {coucou: 3, p: 0.044885369873046886}}}

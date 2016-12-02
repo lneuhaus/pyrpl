@@ -1,85 +1,59 @@
-###############################################################################
-#    pyrpl - DSP servo controller for quantum optics with the RedPitaya
-#    Copyright (C) 2014-2016  Leonhard Neuhaus  (neuhaus@spectro.jussieu.fr)
-#
-#    This program is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU General Public License as published by
-#    the Free Software Foundation, either version 3 of the License, or
-#    (at your option) any later version.
-#
-#    This program is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU General Public License for more details.
-#
-#    You should have received a copy of the GNU General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-###############################################################################
+from pyrpl.modules import SoftwareModule
+from pyrpl.attributes import SelectProperty
+from .model import Model
+from .signals import OutputSignal
 
-# buglist: in lock_opt, it is inconvenient to always specify sof and pdh. unlocks when only pdh is changed
-# unspecified parameters should rather be left unchanged instead of being
-# set to 0 or 1
+from collections import OrderedDict
 
-from pyrpl.software_modules import SoftwareModule
-import logging
-from .signal import logger
-import os
 
-def getmodel(modeltype):
-    try:
-        m = globals()[modeltype]
-        if type(m) == type:
-            return m
-    except KeyError:
-        pass
-    # try to find a similar model with lowercase spelling
-    for k in globals():
-        if k.lower() == modeltype.lower():
-            m = globals()[k]
-            if type(m) == type:
-                return m
-    logger.error("Model %s not found in model definition file %s",
-                 modeltype, __file__)
+all_models = OrderedDict([(model.name, model) for model in Model.__subclasses__()])
+
 
 class Lockbox(SoftwareModule):
-    """generic lockbox object, no implementation-dependent details here
+    """
+    A Module that allows to perform feedback on systems that are well described by a physical model.
+    """
+    name = 'lockbox'
+    gui_attributes = ["model", "default_sweep_output"]
+    model = SelectProperty(options=all_models.keys())
+    default_sweep_output = SelectProperty(options=["dummy"])
 
-    A lockbox defines one model of the physical system that is controlled."""
-
-
-    def __init__(self, rp):
-        self.logger = logging.getLogger(name=__name__)
-        self.rp = rp
-        # make input and output signals
-        self._makesignals()
-        # find and setup the model
-        self.model = getmodel(self.c.model.modeltype)(self)
-        self.model.setup()
-
-    def _makesignals(self, *args, **kwargs):
-        """ Instantiates all signals from config file.
-        Optional arguments are passed to the signal class initialization. """
-        signalclasses, signalparameters = self._signalinit
-        for signaltype, signalclass in signalclasses.items():
-            # generalized version of: self.inputs = [reflection, transmission]
-            signaldict = OrderedDict()
-            self.__setattr__(signaltype, signaldict)
-            for k in self.c[signaltype].keys():
-                self.logger.debug("Creating %s signal %s...", signaltype, k)
-                # generalization of:
-                # self.reflection = Signal(self.c, "inputs.reflection")
-                signal = signalclass(self.c,
-                                     signaltype+"."+k,
-                                     **signalparameters)
-                signaldict[k] = signal
-                self.__setattr__(k, signal)
+    def init_module(self):
+        self.outputs = []
+        self._asg = None
 
     @property
-    def signals(self):
-        """ returns a dictionary containing all signals, i.e. all inputs and
-        outputs """
-        sigdict = dict()
-        signals, _ = self._signalinit
-        for s in signals.keys():
-            sigdict.update(self.__getattribute__(s))
-        return sigdict
+    def asg(self):
+        if self._asg==None:
+            self._asg = self.pyrpl.asgs.pop(self.name)
+        return self._asg
+
+    def sweep(self, output=None):
+        """
+        Performs a sweep of one of the output. If no output is specified, the default sweep_output is used.
+        """
+        self.unlock
+        if output is None:
+            output = self.default_sweep_output
+        self._asg.output = output
+
+    def add_output(self):
+        """
+        Outputs of the lockbox are added dynamically (for now, inputs are defined by the model).
+        """
+        output = OutputSignal(self)
+        self.outputs.append(output)
+        setattr(self, output.name, output)
+        self.__class__.default_sweep_output.change_options([output.name for output in self.outputs])
+
+    def unlock(self):
+        for output in self.outputs:
+            output.unlock()
+
+    def get_model(self):
+        return all_models[self.model](self)
+
+    def model_changed(self):
+        for output in self.outputs:
+            output.update_for_model()
+        self.inputs = self.get_model()

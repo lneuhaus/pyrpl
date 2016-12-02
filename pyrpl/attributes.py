@@ -39,6 +39,7 @@ class BaseAttribute(object):
       - a function get_value(instance, owner) that reads the value from wherever it is stored internally
     """
     widget_class = None
+    widget = None
 
     def __init__(self, default=None, doc=""):
         """
@@ -107,8 +108,8 @@ class BaseAttribute(object):
         """
         if name is None:
             name = self.name # attributed by the metaclass of module
-        return self.widget_class(name, module)
-
+        self.widget = self.widget_class(name, module)
+        return self.widget
 
 class NumberAttribute(BaseAttribute):
     """
@@ -120,6 +121,7 @@ class NumberAttribute(BaseAttribute):
         widget.set_increment(self.increment)
         widget.set_maximum(self.max)
         widget.set_minimum(self.min)
+        self.widget = widget
         return widget
 
     def validate_and_normalize(self, value, module):
@@ -223,7 +225,13 @@ class SelectAttribute(BaseAttribute):
             else:
                 return self._options
         """
-
+    def change_options(self, new_options):
+        """
+        Replace (dynamically) options by new_options.
+        """
+        self.options = new_options
+        if self.widget is not None:
+            self.widget.change_options(new_options)
 
     def create_widget(self, module, name=None):
         """
@@ -253,6 +261,32 @@ class SelectAttribute(BaseAttribute):
         elif isinstance(options[0], numbers.Number):
             value = float(value)
             return min([opt for opt in options], key=lambda x: abs(x - value))
+
+
+#class DynamicSelectAttribute(BaseAttribute):
+#    """
+#    An attribute for a multiple choice value.
+#    The options are evaluated at runtime by the function options(self, instance).
+#    Validation is strict (value should be one of the options())
+#    """
+#    widget_class = DynamicSelectAttributeWidget
+#
+#    def options(self, instance):
+#        """
+#        options are evaluated at run time. To be reimplemented in base class.
+#        """
+#        raise NotImplementedError("This function should be implemented in derived class.")
+#
+#    def validate_and_normalize(self, value, module):
+#        """
+#        value should evaluate to a string present in self.options(instance) at evaluation time.
+#        """
+#        value = str(value)
+#        if not (value in self.options(module)):
+#            raise ValueError("value %s is not an option for SelectAttribute %s of %s" % (value,
+#                                                                                         self.name,
+#                                                                                         module.name))
+#        return value
 
 
 class StringAttribute(BaseAttribute):

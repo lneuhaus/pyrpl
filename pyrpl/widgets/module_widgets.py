@@ -1399,3 +1399,63 @@ class SpecAnWidget(ModuleWidget):
         self.x_data = self.module.freqs()
         self.y_data = np.zeros(len(self.x_data))
         self.current_average = 0
+
+
+#=============Lockbox widgets========================#
+class OutputSignalWidget(ModuleWidget):
+    def init_gui(self):
+        self.main_layout = QtGui.QVBoxLayout()
+        self.setLayout(self.main_layout)
+        self.init_attribute_layout()
+        for widget in self.attribute_widgets.values():
+            self.main_layout.removeWidget(widget)
+        self.upper_layout = QtGui.QHBoxLayout()
+        self.main_layout.addLayout(self.upper_layout)
+        self.col1 = QtGui.QVBoxLayout()
+        self.col2 = QtGui.QVBoxLayout()
+        self.col3 = QtGui.QVBoxLayout()
+        self.col4 = QtGui.QVBoxLayout()
+        self.upper_layout.addLayout(self.col1)
+        self.upper_layout.addLayout(self.col2)
+        self.upper_layout.addLayout(self.col3)
+        self.upper_layout.addLayout(self.col4)
+
+        aws = self.attribute_widgets
+        self.col1.addWidget(aws["output_channel"])
+        self.col1.addWidget(aws["unit"])
+        self.col1.addWidget(aws["dc_gain"])
+        self.col1.addWidget(aws["tf_type"])
+        self.col1.addWidget(aws["tf_curve"])
+
+
+        self.col2.addWidget(aws["is_sweepable"])
+        self.col2.addWidget(aws["sweep_frequency"])
+        self.col2.addWidget(aws["sweep_amplitude"])
+        self.col2.addWidget(aws["sweep_offset"])
+        self.col2.addWidget(aws["sweep_waveform"])
+
+        self.col3.addWidget(aws["p"])
+        self.col3.addWidget(aws["i"])
+
+        # self.col3.addWidget(aws["tf_filter"])
+        self.col3.addWidget(aws["unity_gain_desired"])
+
+        self.col4.addWidget(aws["additional_filter"])
+        aws["additional_filter"].set_max_cols(2)
+        self.col4.addWidget(aws["extra_module"])
+        self.col4.addWidget(aws["extra_module_state"])
+
+        self.win = pg.GraphicsWindow(title="Amplitude")
+        self.win_phase = pg.GraphicsWindow(title="Phase")
+        self.plot_item = self.win.addPlot(title="Magnitude (dB)")
+        self.plot_item_phase = self.win_phase.addPlot(title="Phase (deg)")
+        self.plot_item_phase.setXLink(self.plot_item)
+
+        self.curve = self.plot_item.plot(pen='y')
+        self.curve_phase = self.plot_item_phase.plot(pen=None, symbol='o', symbolSize=1)
+
+        self.main_layout.addWidget(self.win)
+        self.main_layout.addWidget(self.win_phase)
+
+
+
