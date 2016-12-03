@@ -132,7 +132,7 @@ class DspInputAttributeScope(DspInputAttribute):
 
 
 class Scope(HardwareModule):
-    name = 'scope'
+    section_name = 'scope'
     addr_base = 0x40100000
     widget_class = ScopeWidget
     gui_attributes = ["input1",

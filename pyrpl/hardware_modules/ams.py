@@ -5,7 +5,7 @@ from pyrpl.attributes import PWMRegister
 class AMS(HardwareModule):
     """mostly deprecated module (redpitaya has removed adc support).
     only here for dac2 and dac3"""
-    name = 'ams'
+    section_name = 'ams'
     addr_base = 0x40400000
 
     def init_module(self):

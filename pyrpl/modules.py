@@ -113,7 +113,8 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
     Finally, setup(**kwds) is created by ModuleMetaClass. it combines set_setup_attributes(**kwds) with _setup()
     """
     pyrpl_config = None
-    name = 'basemodule'
+    name = None # instance-level attribute
+    section_name = 'basemodule' # name that is going to be used for the section in the config file (class-level)
     widget_class = ModuleWidget  # Change this to provide a custom graphical class
     gui_attributes = []  # class inheriting from ModuleWidget can automatically generate gui from a list of attributes
     setup_attributes = []  # attributes listed here will be saved in the config file everytime they are updated.
@@ -155,6 +156,7 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         dic = dict()
         if self.c is not None:
             for key, value in self.c._dict.items():
+                print(key, value)
                 if key in self.setup_attributes:
                     dic[key] = value
             self.set_setup_attributes(**dic)
@@ -224,7 +226,7 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         The config file instance. In practice, writing values in here will write the values in the corresponding
         section of the config file.
         """
-        manager_section = self.__class__.name + "s" # for instance, iqs
+        manager_section = self.section_name + "s" # for instance, iqs
         if not manager_section in self.parent.c._keys():
             self.parent.c[manager_section] = dict()
         manager_section = getattr(self.parent.c, manager_section)
@@ -267,6 +269,8 @@ class HardwareModule(BaseModule):
     possess the following class attributes
       - addr_base: the base address of the module, such as 0x40300000
     """
+
+    parent = None # parent will be redpitaya instance
 
     def ownership_changed(self, old, new):
         """
@@ -312,6 +316,7 @@ class HardwareModule(BaseModule):
         self._addr_base = self.addr_base # why ?
         self.__doc__ = "Available registers: \r\n\r\n" + self.help()
         self._rp = redpitaya
+        self.parent = redpitaya
         self.pyrpl_config = redpitaya.c
         self.init_module()
         self._autosave_active = True

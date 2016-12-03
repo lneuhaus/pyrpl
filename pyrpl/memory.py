@@ -232,6 +232,14 @@ class MemoryBranch(object):
             self._data[item] = value
             self._save()
 
+    def _rename(self, name):
+        parent = self._parent
+        if self._branch in parent._keys():
+            branch = parent._pop(self._branch)
+        else:
+            branch = dict()
+        parent[name] = branch
+
     # remove an item from the config file
     def _pop(self, name):
         ro = isbranch(self._data[name]) and 'value' in self._data[name] and \
@@ -241,7 +249,8 @@ class MemoryBranch(object):
                 "Attribute %s is read-only and cannot be deleted", name)
             return None
         else:
-            self.__dict__.pop(name)
+            if name in self.__dict__.keys():
+                self.__dict__.pop(name)
             value = self._data.pop(name)
             self._save()
             return value

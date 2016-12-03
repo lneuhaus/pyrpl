@@ -225,7 +225,7 @@ class SelectAttribute(BaseAttribute):
             else:
                 return self._options
         """
-    def change_options(self, new_options):
+    def change_options(self, module, new_options):
         """
         Replace (dynamically) options by new_options.
         """

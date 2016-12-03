@@ -168,7 +168,7 @@ class SpectrumAnalyzer(SoftwareModule):
       curve = sa.curve()
       freqs = sa.freqs()
     """
-    name = 'spectrum_analyzer'
+    section_name = 'spectrum_analyzer'
     widget_class = SpecAnWidget
 
     gui_attributes = ["input",

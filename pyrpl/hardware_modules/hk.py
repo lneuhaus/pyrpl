@@ -5,7 +5,7 @@ import numpy as np
 
 
 class HK(HardwareModule):
-    name = 'hk'
+    section_name = 'hk'
     gui_attributes = ["id", "led"]
     setup_attributes = ["led"] + \
                        ['expansion_P' + str(i) for i in range(8)] + \

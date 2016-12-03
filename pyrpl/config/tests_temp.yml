@@ -9,23 +9,25 @@ pyrpl: # General configuration of the software:
   # 'error' only shows errors
   modules: # SoftwareModules to load (in addition to IqManager, AsgManager, PidManager, ScopeManager)
     - NetworkAnalyzer
-    - NetworkAnalyzer
-  window_position:
-  - -7
-  - 0
-  - 1916
-  - 1008
+    - SpectrumAnalyzer
+    - Lockbox
   dock_positions: !!binary |
-    AAAA/wAAAAD9AAAAAQAAAAIAAAd8AAADx/wBAAAAAfwAAAAAAAAHfAAAA0MA/////AIAAAAD/AAA
-    ABUAAAPHAAABSgD////8AQAAAAL8AAAAAAAAB3wAAANDAP////oAAAABAQAAAAP7AAAAIgBzAHAA
-    ZQBjAHQAcgB1AG0AXwBhAG4AYQBsAHkAegBlAHIBAAAAAP////8AAAAAAAAAAPsAAAAGAGkAcQBz
-    AQAAAAD/////AAADQwD////7AAAACABhAHMAZwBzAAAAAAAAAAd8AAAAFgD////8AAAAAAAAB3wA
-    AAAAAP////r/////AgAAAAL7AAAABgBuAGEAMgAAAAAA/////wAAAFAA////+wAAAAwAcwBjAG8A
-    cABlAHMAAAAAFQAAAdMAAABQAP////wAAAAVAAADxwAAAAAA/////AEAAAAC+wAAAAgAaQBpAHIA
-    cwAAAAAAAAAHfAAAABYA/////AAAAAAAAAd8AAAAAAD////6AAAAAQIAAAAD+wAAAAYAbgBhADEA
-    AAAAAP////8AAABQAP////sAAAAEAG4AYQEAAAAA/////wAAAAAAAAAA+wAAAAgAcABpAGQAcwAA
-    AAJbAAABrgAAAFAA////+wAAAAQAbgBhAAAAA3UAAADoAAAAAAAAAAAAAAd8AAAAAAAAAAQAAAAE
-    AAAACAAAAAj8AAAAAA==
+    AAAA/wAAAAD9AAAAAgAAAAAAAAd8AAAD3fwCAAAAAfsAAAAGAGkAcQBzAAAAABUAAAPdAAAAUAD/
+    //8AAAACAAAHfAAAA9D8AQAAAAL8AAAAAAAABSEAAAH1AP////wCAAAAA/sAAAAMAHMAYwBvAHAA
+    ZQBzAAAAABUAAAPdAAAAUAD////7AAAACABhAHMAZwBzAAAAAykAAADJAAAAUAD////7AAAADgBs
+    AG8AYwBrAGIAbwB4AQAAABUAAAPQAAACIgD////8AAAFJQAAAlcAAAJXAP////wCAAAAAvwAAAAV
+    AAAD3QAAAAAA////+gAAAAICAAAAB/sAAAAEAG4AYQAAAAAA/////wAAAFAA////+wAAACIAcwBw
+    AGUAYwB0AHIAdQBtAF8AYQBuAGEAbAB5AHoAZQByAAAAAAD/////AAAAUAD////7AAAAIgBzAHAA
+    ZQBjAHQAcgB1AG0AIABhAG4AYQBsAHkAegBlAHIBAAAAAP////8AAAAAAAAAAPsAAAAUAEIAYQBz
+    AGUATQBvAGQAdQBsAGUBAAAAAP////8AAAAAAAAAAPsAAAAIAGkAaQByAHMAAAAAAP////8AAABQ
+    AP////sAAAAgAG4AZQB0AHcAbwByAGsAXwBhAG4AYQBsAHkAegBlAHIBAAAAAP////8AAAAAAAAA
+    APsAAAAKAHMAYwBvAHAAZQEAAAAA/////wAAAAAAAAAA+wAAAAgAcABpAGQAcwEAAAAVAAAD0AAA
+    Aa4A////AAAHfAAAAAAAAAAEAAAABAAAAAgAAAAI/AAAAAA=
+  window_position:
+  - -8
+  - -8
+  - 1916
+  - 1017
 redpitaya:
   hostname: 10.214.1.28
   password: root
@@ -37,24 +39,6 @@ redpitaya:
   monitor_server_name: monitor_server
 nas:
   na: {}
-  na1: {}
-  na2: {input: iir, logscale: true, stop: 500000.0, rbw: [607]}
-  states:
-    measure_iir:
-      input: iir
-      infer_open_loop_tf: false
-      curve_name: na_curve
-      rbw: 607.1279262233556
-      points: 1001
-      amplitude: 0.01
-      maxamplitude: 1.0
-      avg: 1
-      stop: 500000.0
-      logscale: true
-      start: 200.0
-      acbandwidth: 0
-      output_direct: off
-      stabilize: false
 spectrum_analyzers:
   spectrum_analyzer: {}
 hks:
@@ -62,73 +46,29 @@ hks:
 amss:
   ams: {}
 scopes:
-  scope: {trigger_source: immediately}
+  scope: {}
 samplers:
   sampler: {}
 asgs:
   asg2: {}
   asg1: {}
 pwms:
-  pwm1: {}
   pwm2: {}
+  pwm1: {}
 iqs:
-  iq1: {output_signal: quadrature, bandwidth: [1214, 2428], input: adc1, frequency: 9999.98883344233,
-    acbandwidth: [0], phase: 180.0, quadrature_factor: 0.1015625, output_direct: out1,
-    gain: 0.0, amplitude: 0.09999847412109375}
-  states: {yoyo: {output_direct: off, bandwidth: [0, 0], input: adc1, amplitude: 0.0,
-      gain: 0.0, phase: 0.0, acbandwidth: 0, quadrature_factor: 0.0, output_signal: quadrature,
-      frequency: 0.0}, phase90: {output_signal: quadrature, bandwidth: [0, 0], quadrature_factor: 0.0,
-      input: adc1, frequency: 0.0, acbandwidth: 0, phase: 90.0, output_direct: off,
-      gain: 0.0, amplitude: 0.0}, phase180: {output_signal: quadrature, bandwidth: [
-        0, 0], quadrature_factor: 0.0, input: adc1, frequency: 0.0, acbandwidth: 0,
-      phase: 180.0, output_direct: off, gain: 0.0, amplitude: 0.0}}
-  iq3:
-    amplitude: 0.0
-    gain: 0.0
-    output_signal: output_direct
-    output_direct: off
-    phase: 0.0
-    bandwidth:
-    - 151
-    input: adc1
-    acbandwidth:
-    - 0
-    frequency: 17879.006918519735
-  iq2:
-    frequency: 211.26470528542995
-    bandwidth:
-    - 607
-    gain: 0.0
-    input: iir
-    output_direct: off
-    amplitude: 0.0
-    acbandwidth:
-    - 0
-    phase: 0.0
-    output_signal: output_direct
+  iq1: {}
 pids:
-  pid3: {ival: 0.0}
-  pid2: {ival: 0.0}
-  pid4: {ival: 0.0, p: 0.114501953125}
-  pid1: {ival: 0.0, output_direct: off, d: 0.0, setpoint: 0.0, p: 0.0, inputfilter: [
-      0, 0, 0, 0], input: adc1, i: 0.0}
-  states: {iui: {output_direct: off, d: 0.0, setpoint: 0.0, p: 0.0, inputfilter: [
-        0, 0, 0, 0], input: adc1, ival: 0.0, i: 0.0}}
+  pid2:
+    ival: 0.0
+  pid4:
+    ival: 0.0
+  pid3:
+    ival: 0.0
+  pid1:
+    ival: 0.0
 iirs:
-  iir: {poles: [(-4991.050787419987-21899.69745048423j), (-1000-37552.162547706896j)],
-    loops: 5, gain: 0.02901415596008301, zeros: [(-100-947.7629626775897j)], output_direct: off,
-    inputfilter: [0], input: iq2}
-  states:
-    2poles1zero:
-      output_direct: off
-      poles:
-      - (-4790.056348998796-21899.69745048423j)
-      - (-1000-37552.162547706896j)
-      inputfilter: 0
-      gain: 0.02901415596008301
-      loops: 5
-      input: adc1
-      zeros:
-      - (-100-947.7629626775897j)
 lockboxs:
-  lockbox: {dummy_outputs: {dummy_output: {coucou: 3, p: 0.044885369873046886}}}
+  lockbox: {direct_inputs: {direct_input1: {adc: adc1}, direct_input2: {adc: adc2}},
+    outputs: {fast_piezo: {name: fast_piezo, dc_gain: -0.08492764892578127}, laser: {
+        name: laser, is_sweepable: false}, slow_piezo: {output_channel: dac2, name: slow_piezo,
+        dc_gain: 0.09710760307312014}}, models: {interferometer: {wavelength: 0.1064}}}

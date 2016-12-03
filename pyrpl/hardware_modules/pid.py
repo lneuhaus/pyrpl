@@ -19,7 +19,7 @@ class IValAttribute(FloatAttribute):
         return instance._write(0x100, instance._from_pyint(int(round(value * 2 ** 13)), bitlength=16))
 
 class Pid(FilterModule):
-    name = 'pid'
+    section_name = 'pid'
     widget_class = PidWidget
     gui_attributes = ["input",
                       "output_direct",

@@ -1403,6 +1403,14 @@ class SpecAnWidget(ModuleWidget):
 
 #=============Lockbox widgets========================#
 class OutputSignalWidget(ModuleWidget):
+    @property
+    def name(self):
+        return self.module.name
+
+    @name.setter
+    def name(self, value):
+        return value # only way to modify widget name is to change output.display_name
+
     def init_gui(self):
         self.main_layout = QtGui.QVBoxLayout()
         self.setLayout(self.main_layout)
@@ -1415,17 +1423,24 @@ class OutputSignalWidget(ModuleWidget):
         self.col2 = QtGui.QVBoxLayout()
         self.col3 = QtGui.QVBoxLayout()
         self.col4 = QtGui.QVBoxLayout()
+        self.upper_layout.addStretch(1)
         self.upper_layout.addLayout(self.col1)
+        self.upper_layout.addStretch(1)
         self.upper_layout.addLayout(self.col2)
+        self.upper_layout.addStretch(1)
         self.upper_layout.addLayout(self.col3)
+        self.upper_layout.addStretch(1)
         self.upper_layout.addLayout(self.col4)
+        self.upper_layout.addStretch(1)
 
         aws = self.attribute_widgets
+        self.col1.addWidget(aws["name"])
         self.col1.addWidget(aws["output_channel"])
-        self.col1.addWidget(aws["unit"])
+        # self.col1.addWidget(aws["unit"])
         self.col1.addWidget(aws["dc_gain"])
         self.col1.addWidget(aws["tf_type"])
         self.col1.addWidget(aws["tf_curve"])
+        self.col1.addStretch(5)
 
 
         self.col2.addWidget(aws["is_sweepable"])
@@ -1433,17 +1448,19 @@ class OutputSignalWidget(ModuleWidget):
         self.col2.addWidget(aws["sweep_amplitude"])
         self.col2.addWidget(aws["sweep_offset"])
         self.col2.addWidget(aws["sweep_waveform"])
+        self.col2.addStretch(5)
 
         self.col3.addWidget(aws["p"])
         self.col3.addWidget(aws["i"])
-
         # self.col3.addWidget(aws["tf_filter"])
         self.col3.addWidget(aws["unity_gain_desired"])
+        self.col3.addStretch(5)
 
         self.col4.addWidget(aws["additional_filter"])
         aws["additional_filter"].set_max_cols(2)
         self.col4.addWidget(aws["extra_module"])
         self.col4.addWidget(aws["extra_module_state"])
+        self.col4.addStretch(5)
 
         self.win = pg.GraphicsWindow(title="Amplitude")
         self.win_phase = pg.GraphicsWindow(title="Phase")
@@ -1457,5 +1474,122 @@ class OutputSignalWidget(ModuleWidget):
         self.main_layout.addWidget(self.win)
         self.main_layout.addWidget(self.win_phase)
 
+class InputsWidget(QtGui.QWidget):
+    """
+    A widget to represent all input signals on the same tab
+    """
+    name = 'inputs'
+    def __init__(self, all_sig_widget):
+        self.all_sig_widget = all_sig_widget
+        self.lb_widget = self.all_sig_widget.lb_widget
+        super(InputsWidget, self).__init__(all_sig_widget)
+        self.layout = QtGui.QHBoxLayout(self)
+        for signal in self.lb_widget.module.inputs:
+            widget = signal.create_widget()
+            self.layout.addWidget(widget)
+
+class PlusTab(QtGui.QWidget):
+    name = '+'
+
+
+class MyTabBar(QtGui.QTabBar):
+    def tabSizeHint(self, index):
+        """
+        Tab '+' and 'inputs' are smaller since they don't have a close button
+        """
+        size = super(MyTabBar, self).tabSizeHint(index)
+        #if index==0 or index==self.parent().count() - 1:
+        #    return QtCore.QSize(size.width() - 15, size.height())
+        #else:
+        return size
+
+class AllSignalsWidget(QtGui.QTabWidget):
+    """
+    A tab widget combining all inputs and outputs of the lockbox
+    """
+    def __init__(self, lockbox_widget):
+        super(AllSignalsWidget, self).__init__()
+        self.tab_bar = MyTabBar()
+        self.setTabBar(self.tab_bar)
+        self.setTabsClosable(True)
+        self.tabBar().setSelectionBehaviorOnRemove(QtGui.QTabBar.SelectLeftTab) # otherwise + tab could be selected by
+        # removing previous tab
+        self.output_widgets = []
+        self.lb_widget = lockbox_widget
+        self.inputs_widget = InputsWidget(self)
+        self.addTab(self.inputs_widget, "inputs")
+        self.tabBar().tabButton(0, QtGui.QTabBar.RightSide).resize(0, 0) # hide "close" for "inputs" tab
+        self.tab_plus = PlusTab()  # dummy widget that will never be displayed
+        self.addTab(self.tab_plus, "+")
+        self.tabBar().tabButton(self.count() - 1, QtGui.QTabBar.RightSide).resize(0, 0)  # hide "close" for "+" tab
+        for signal in self.lb_widget.module.outputs:
+            self.add_output(signal)
+        self.currentChanged.connect(self.tab_changed)
+        self.tabCloseRequested.connect(self.close_tab)
+
+        self.update_output_names()
+
+    def tab_changed(self, index):
+        print(index)
+        if index==self.count()-1: # tab "+" clicked
+            print('+ clicked')
+            self.lb_widget.module.add_output()
+            self.setCurrentIndex(self.count()-2) # bring created output tab on top
+
+    def add_output(self, signal):
+        """
+        signal is an instance of OutputSignal
+        """
+        widget = signal.create_widget()
+        self.output_widgets.append(widget)
+        self.insertTab(self.count() - 1, widget, widget.name)
+
+    def remove_output(self, output):
+        print(output)
+        tab_nr = self.output_widgets.index(output.widget) + 1  # count "inputs" tab
+        if output.widget in self.output_widgets:
+            output.widget.hide()
+            self.output_widgets.remove(output.widget)
+            self.removeTab(tab_nr)
+            output.widget.deleteLater()
+
+    def close_tab(self, index):
+        lockbox = self.lb_widget.module
+        lockbox.remove_output(lockbox.outputs[index-1])
+
+    def update_output_names(self):
+        for index in range(self.count()):
+            widget = self.widget(index)
+            self.setTabText(index, widget.name)
+
+
+class LockboxWidget(ModuleWidget):
+    """
+    The LockboxWidget combines the lockbox submodules widget: model, inputs, outputs, lockbox_control
+    """
+    def init_gui(self):
+        self.main_layout = QtGui.QVBoxLayout()
+        self.init_attribute_layout()
+        self.model_widget = self.module.get_model().create_widget()
+        self.main_layout.addWidget(self.model_widget)
+        self.all_sig_widget = AllSignalsWidget(self)
+        self.main_layout.addWidget(self.all_sig_widget)
+        self.main_layout.addStretch(5)
+        self.setLayout(self.main_layout)
+
+    def update_output_names(self):
+        self.all_sig_widget.update_output_names()
+
+    def add_output(self, output):
+        """
+        Adds an output to the widget
+        """
+        self.all_sig_widget.add_output(output)
+
+    def remove_output(self, output):
+        """
+        Removes an output to the widget
+        """
+        self.all_sig_widget.remove_output(output)
 
 
