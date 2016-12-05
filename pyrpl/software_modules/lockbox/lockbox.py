@@ -4,11 +4,22 @@ from .model import Model
 from .signals import OutputSignal, InputSignal
 from pyrpl.widgets.module_widgets import LockboxWidget
 from pyrpl.pyrpl_utils import  get_unique_name_list_from_class_list
+from .sequence import Sequence
 
 from collections import OrderedDict
 
 
 all_models = OrderedDict([(model.name, model) for model in Model.__subclasses__()])
+
+
+class ModelProperty(SelectProperty):
+    """
+    Lots of lockbox attributes need to be updated when model is changed
+    """
+    def set_value(self, obj, val):
+        super(ModelProperty, self).set_value(obj, val)
+        obj.model_changed()
+        return val
 
 
 class Lockbox(SoftwareModule):
@@ -19,13 +30,16 @@ class Lockbox(SoftwareModule):
     widget_class = LockboxWidget
     gui_attributes = ["model", "default_sweep_output"]
     setup_attributes = gui_attributes
-    model = SelectProperty(options=all_models.keys())
+    model = ModelProperty(options=all_models.keys())
     default_sweep_output = SelectProperty(options=["dummy"])
 
     def init_module(self):
         self.outputs = []
         self._asg = None
+        self.inputs = []
+        self.sequence = Sequence(self)
         self.model_changed()
+
 
     @property
     def asg(self):
@@ -65,9 +79,9 @@ class Lockbox(SoftwareModule):
         return output
 
     def rename_output(self, output, new_name):
-        setattr(self, new_name, output)
         if hasattr(self, output.name):
             delattr(self, output.name)
+        setattr(self, new_name, output)
         if output._autosave_active:
             output.c._rename(new_name)
         output._name = new_name
@@ -95,19 +109,41 @@ class Lockbox(SoftwareModule):
         return all_models[self.model](self)
 
     def model_changed(self):
+        ### model should be redisplayed
+        model = self.get_model()
+        model.load_setup_attributes()
+        if self.widget is not None:
+            self.widget.change_model(model)
+
+        ### outputs are only slightly affected by a change of model: only the unit of their DC-gain might become
+        ### obsolete, in which case, it needs to be changed to some value...
         for output in self.outputs:
             output.update_for_model()
-        self.inputs = []
-        # for name, input_cls in [(name, cls) for (name, cls) in self.get_model().__class__.__dict__.items() if \
-        #                 isinstance(cls, type) and issubclass(cls, InputSignal)]:
+
+        ### inputs are intimately linked to the model used. When the model is changed, the policy is:
+        ###  - keep inputs that have a name compatible with the new model.
+        ###  - remove inputs that have a name unexpected in the new model
+        ###  - add inputs from the new model that have a name not present in the old model
         model = self.get_model()
         names = get_unique_name_list_from_class_list(model.input_cls)
-        for name, cls in zip(names, model.input_cls):
-            self.inputs.append(cls(self, name))
+        intersect_names = []
 
-        #for name, output_cls in [(name, cls) for (name, cls) in self.get_model().__class__.__dict__.items() if \
-        #                   isinstance(cls, type) and issubclass(cls, OutputSignal)]:
-        #    self.outputs.append(output_cls(self, name))
+        to_remove = [] # never iterate on a list that is being deleted
+        for input in self.inputs:
+            if not input.name in names:
+                to_remove.append(input)
+            else:
+                intersect_names.append(input.name)
+        for input in to_remove:
+            self._remove_input(input)
+        for name, cls in zip(names, model.input_cls):
+            if not name in intersect_names:
+                input = cls(self, name)
+                self._add_input(input)
+                input.load_setup_attributes()
+
+        ### update stages: keep outputs unchanged, when input doesn't exist anymore, change it.
+
 
     def load_setup_attributes(self):
         """
@@ -120,11 +156,24 @@ class Lockbox(SoftwareModule):
                     if name!='states':
                         output = self.add_output()
                         output._autosave_active = False
-                        output.name = name
+                        self.rename_output(output, name)
                         output.load_setup_attributes()
                         output._autosave_active = True
         for input in self.inputs:
             input.load_setup_attributes()
+
+    def _remove_input(self, input):
+        input.clear()
+        if self.widget is not None:
+            self.widget.remove_input(input)
+        self.inputs.remove(input)
+
+    def _add_input(self, input):
+        self.inputs.append(input)
+        setattr(self, input.name, input)
+        if self.widget is not None:
+            self.widget.add_input(input)
+
 
     def _setup(self):
         """

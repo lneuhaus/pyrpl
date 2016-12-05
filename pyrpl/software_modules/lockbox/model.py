@@ -18,12 +18,14 @@ class Model(SoftwareModule):
 
 
 class InterferometerPort1(InputDirect):
+    name = 'port1'
     def expected_signal(self, phase):
         return self.parameters['mean'] + .5*(self.parameters['max'] - self.parameters['min']) * \
                                     np.sin(phase)
 
 
 class InterferometerPort2(InputDirect):
+    name = 'port2'
     def expected_signal(self, phase):
         return self.parameters['mean'] - .5*(self.parameters['max'] - self.parameters['min']) * \
                                     np.sin(phase)
@@ -53,3 +55,28 @@ class Inteferometer(Model):
         self._phase = val
         return val
     """
+
+class FPTransmission(InputDirect):
+    section_name = 'transmission'
+    def expected_signal(self, variable):
+        return self.parameters['min'] + (self.parameters['max'] - self.parameters['min'])*self.model.lorentz(variable)
+
+
+class FPReflection(InputDirect):
+    section_name = 'reflection'
+
+    def expected_signal(self, variable):
+        return self.parameters['max'] - (self.parameters['max'] - self.parameters['min'])*self.model.lorentz(variable)
+
+
+class FabryPerot(Model):
+    name = "FabryPerot"
+    units = ['m', 'MHz', 'nm']
+    gui_attributes = ["wavelength", "finesse", "length"]
+    setup_attributes = gui_attributes
+    wavelength = FloatProperty()
+    finesse = FloatProperty()
+    length = FloatProperty() # approximate length (not taking into account small variations of the order of wavelength)
+    variable = 'detuning'
+
+    input_cls = [FPReflection, FPTransmission, InputPdh]

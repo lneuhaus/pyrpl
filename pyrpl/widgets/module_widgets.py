@@ -1484,9 +1484,24 @@ class InputsWidget(QtGui.QWidget):
         self.lb_widget = self.all_sig_widget.lb_widget
         super(InputsWidget, self).__init__(all_sig_widget)
         self.layout = QtGui.QHBoxLayout(self)
+        self.input_widgets = []
+        #self.layout.addStretch(1)
         for signal in self.lb_widget.module.inputs:
-            widget = signal.create_widget()
-            self.layout.addWidget(widget)
+            self.add_input(signal)
+        #self.layout.addStretch(1)
+
+    def remove_input(self, input):
+        print(input)
+        if input.widget in self.input_widgets:
+            input.widget.hide()
+            self.input_widgets.remove(input.widget)
+            input.widget.deleteLater()
+
+    def add_input(self, input):
+        widget = input.create_widget()
+        self.input_widgets.append(widget)
+        self.layout.addWidget(widget, stretch=3)
+
 
 class PlusTab(QtGui.QWidget):
     name = '+'
@@ -1526,7 +1541,6 @@ class AllSignalsWidget(QtGui.QTabWidget):
             self.add_output(signal)
         self.currentChanged.connect(self.tab_changed)
         self.tabCloseRequested.connect(self.close_tab)
-
         self.update_output_names()
 
     def tab_changed(self, index):
@@ -1536,6 +1550,11 @@ class AllSignalsWidget(QtGui.QTabWidget):
             self.lb_widget.module.add_output()
             self.setCurrentIndex(self.count()-2) # bring created output tab on top
 
+    def close_tab(self, index):
+        lockbox = self.lb_widget.module
+        lockbox.remove_output(lockbox.outputs[index - 1])
+
+    ## Output Management
     def add_output(self, signal):
         """
         signal is an instance of OutputSignal
@@ -1545,7 +1564,6 @@ class AllSignalsWidget(QtGui.QTabWidget):
         self.insertTab(self.count() - 1, widget, widget.name)
 
     def remove_output(self, output):
-        print(output)
         tab_nr = self.output_widgets.index(output.widget) + 1  # count "inputs" tab
         if output.widget in self.output_widgets:
             output.widget.hide()
@@ -1553,14 +1571,58 @@ class AllSignalsWidget(QtGui.QTabWidget):
             self.removeTab(tab_nr)
             output.widget.deleteLater()
 
-    def close_tab(self, index):
-        lockbox = self.lb_widget.module
-        lockbox.remove_output(lockbox.outputs[index-1])
-
     def update_output_names(self):
         for index in range(self.count()):
             widget = self.widget(index)
             self.setTabText(index, widget.name)
+
+    ## Input Management
+    def add_input(self, input):
+        self.inputs_widget.add_input(input)
+
+    def remove_input(self, input):
+        self.inputs_widget.remove_input(input)
+
+
+
+class LockboxStageWidget(ModuleWidget):
+    """
+    A widget representing a single lockbox stage
+    """
+    def init_gui(self):
+        self.main_layout = QtGui.QVBoxLayout(self)
+        self.init_attribute_layout()
+        for name, attr in self.attribute_widgets.items():
+            self.attribute_layout.removeWidget(attr)
+            self.main_layout.addWidget(attr)
+
+
+class LockboxSequenceWidget(ModuleWidget):
+    """
+    A widget to represent all lockbox stages
+    """
+    def init_gui(self):
+        self.main_layout = QtGui.QHBoxLayout(self)
+        self.init_attribute_layout() # eventhough, I don't think there's any attribute
+        self.stage_widgets = []
+        for stage in self.module.stages:
+            self.add_stage(stage)
+        self.button_add = QtGui.QPushButton('+')
+        self.button_add.clicked.connect(self.module.add_stage)
+        self.main_layout.addWidget(self.button_add)
+
+    def add_stage(self, stage):
+        widget = stage.create_widget()
+        self.stage_widgets.append(widget)
+        self.main_layout.insertWidget(self.main_layout.indexOf(self.button_add)-1, widget)
+        return stage
+
+    def remove_stage(self, stage):
+        if stage.widget in self.stage_widgets:
+            stage.widget.hide()
+            self.stage_widgets.remove(stage.widget)
+            self.main_layout.removeWidget(stage.widget)
+            stage.widget.deleteLater()
 
 
 class LockboxWidget(ModuleWidget):
@@ -1574,10 +1636,31 @@ class LockboxWidget(ModuleWidget):
         self.main_layout.addWidget(self.model_widget)
         self.all_sig_widget = AllSignalsWidget(self)
         self.main_layout.addWidget(self.all_sig_widget)
+        self.sequence_widget = self.module.sequence.create_widget()
+        self.main_layout.addWidget(self.sequence_widget)
         self.main_layout.addStretch(5)
         self.setLayout(self.main_layout)
 
+    ## Input Management
+    def add_input(self, input):
+        """
+        Adds an input to the widget
+        """
+        print('adding: ' + str(input))
+        self.all_sig_widget.add_input(input)
+
+    def remove_input(self, input):
+        """
+        Remove an input to the widget
+        """
+        print("removing" + str(input))
+        self.all_sig_widget.remove_input(input)
+
+    ## Output Management
     def update_output_names(self):
+        """
+        Refresh all output name tabs in the widget
+        """
         self.all_sig_widget.update_output_names()
 
     def add_output(self, output):
@@ -1592,4 +1675,33 @@ class LockboxWidget(ModuleWidget):
         """
         self.all_sig_widget.remove_output(output)
 
+    ## Model management
+    def change_model(self, model):
+        """
+        displays the new model
+        """
+        self.model_widget.hide()
+        self.main_layout.removeWidget(self.model_widget)
+        self.model_widget.deleteLater()
+        widget = model.create_widget()
+        self.model_widget = widget
+        self.main_layout.insertWidget(1, widget)
 
+    ## Sequence Management
+    def add_stage(self, stage):
+        """
+        Adds a new stage to the widget
+        """
+        self.sequence_widget.add_stage(stage)
+
+    def remove_stage(self, stage):
+        """
+        Removes a stage to the model
+        """
+        self.sequence_widget.remove_stage(stage)
+
+   #def update_stage_names(self):
+    #    """
+    #    Refresh all stage tabs in the widget
+    #    """
+    #    self.sequence_widget.update_output_names()

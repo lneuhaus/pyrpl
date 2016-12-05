@@ -166,9 +166,9 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         """
         Returns the config file branch corresponding to the "states" section
         """
-        if not "states" in self.parent.c._keys():
-            self.parent.c["states"] = dict()
-        return self.parent.c.states
+        if not "states" in self.c._parent._keys():
+            self.c._parent["states"] = dict()
+        return self.c._parent.states
 
     def save_state(self, name):
         """Saves the current state under the name "name" in the config file"""
@@ -209,7 +209,7 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
 
     def create_widget(self):
         """
-        Creates the widget specified in widget_class. The attr
+        Creates the widget specified in widget_class.
         """
         self._callback_active = False # otherwise, saved values will be overwritten by default gui values
         self._autosave_active = False # otherwise, default gui values will be saved
@@ -226,10 +226,10 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         The config file instance. In practice, writing values in here will write the values in the corresponding
         section of the config file.
         """
-        manager_section = self.section_name + "s" # for instance, iqs
-        if not manager_section in self.parent.c._keys():
-            self.parent.c[manager_section] = dict()
-        manager_section = getattr(self.parent.c, manager_section)
+        manager_section_name = self.section_name + "s" # for instance, iqs
+        if not manager_section_name in self.parent.c._keys():
+            self.parent.c[manager_section_name] = dict()
+        manager_section = getattr(self.parent.c, manager_section_name)
         if not self.name in manager_section._keys():
             manager_section[self.name] = dict()
         return getattr(manager_section, self.name)

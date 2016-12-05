@@ -20,11 +20,18 @@ class InputSignal(SoftwareModule):
     adc = SelectProperty(options=['adc1', 'adc2']) # adc
     model_cls = None # Model class to which this input belongs.
 
+    """
+    def __init__(self, model):
+        self.model = model
+        super(InputSignal, self).__init__(model)
+    """
+
     def init_module(self):
         """
         lockbox is the lockbox instance to which this input belongs.
         """
         self.lockbox = self.parent
+        self.model = self.parent.model
         self.parameters = dict()
 
     def acquire(self):
@@ -91,6 +98,12 @@ class InputSignal(SoftwareModule):
             else:
                 return None
 
+    def clear(self):
+        """
+        Free all resources owned by this input
+        """
+        pass
+
     def variable(self):
         """
         Estimates the model variable from the current value of the input.
@@ -141,29 +154,67 @@ class PdhModOutputProperty(SelectProperty):
 
 class InputPdh(InputSignal):
     section_name = 'pdh'
+    gui_attributes = InputSignal.gui_attributes + ['mod_freq', 'mod_amp', 'mod_phase', 'mod_output']
+    setup_attributes = gui_attributes
     mod_freq   = PdhFrequencyProperty()
     mod_amp    = PdhAmplitudeProperty()
     mod_phase  = PdhPhaseProperty()
-    mod_output = PdhModOutputProperty(['dac1', 'dac2'])
+    mod_output = PdhModOutputProperty(['out1', 'out2'])
 
     def init_module(self):
         self._iq = None
 
+    def clear(self):
+        self.pyrpl.iqs.free(self.iq)
+
     @property
     def iq(self):
         if self._iq is None:
-            self._iq = self.pyrpl.pop(self.name)
-        return self.iq
+            self._iq = self.pyrpl.iqs.pop(self.name)
+        return self._iq
 
     def _setup(self):
         """
         setup a PDH error signal using the attribute values
         """
-        self.iq.setup(frequency=self.frequency,
-                      amplitude=self.amplitude,
-                      phase=self.phase,
+        self.iq.setup(frequency=self.mod_freq,
+                      amplitude=self.mod_amp,
+                      phase=self.mod_phase,
                       input=self.adc,
                       gain=0,
                       quadrature_factor=0.01,
-                      output='quadrature',
+                      output_signal='quadrature',
                       output_direct=self.mod_output)
+
+    def _pdh_normalized(self, x, sbfreq=10.0, phase=0, eta=1):
+        # pdh only has appreciable slope for detunings between -0.5 and 0.5
+        # unless you are using it for very exotic purposes..
+        # incident beam: laser field
+        # a at x,
+        # 1j*a*rel at x+sbfreq
+        # 1j*a*rel at x-sbfreq
+        # in the end we will only consider cross-terms so the parameter rel will be normalized out
+        # all three fields incident on cavity
+        # eta is ratio between input mirror transmission and total loss (including this transmission),
+        # i.e. between 0 and 1. While there is a residual dependence on eta, it is very weak and
+        # can be neglected for all practical purposes.
+        # intracavity field a_cav, incident field a_in, reflected field a_ref    #
+        # a_cav(x) = a_in(x)*sqrt(eta)/(1+1j*x)
+        # a_ref(x) = -1 + eta/(1+1j*x)
+        def a_ref(x):
+            return 1 - eta / (1 + 1j * x)
+
+        # reflected intensity = abs(sum_of_reflected_fields)**2
+        # components oscillating at sbfreq: cross-terms of central lorentz with either sideband
+        i_ref = np.conjugate(a_ref(x)) * 1j * a_ref(x + sbfreq) \
+                + a_ref(x) * np.conjugate(1j * a_ref(x - sbfreq))
+        # we demodulate with phase phi, i.e. multiply i_ref by e**(1j*phase), and take the real part
+        # normalization constant is very close to 1/eta
+        return np.real(i_ref * np.exp(1j * phase)) / eta
+
+    def expected_signal(self, variable):
+        return self.parameters['mean'] + (self.parameters['max'] - self.parameters['min'])*\
+                                         self._pdh_normalized(variable,
+                                                              self.model.mod_freq,
+                                                              self.model.phase,
+                                                              self.model.eta)

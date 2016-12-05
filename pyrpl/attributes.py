@@ -108,8 +108,8 @@ class BaseAttribute(object):
         """
         if name is None:
             name = self.name # attributed by the metaclass of module
-        self.widget = self.widget_class(name, module)
-        return self.widget
+        widget = self.widget_class(name, module)
+        return widget
 
 class NumberAttribute(BaseAttribute):
     """
@@ -121,7 +121,6 @@ class NumberAttribute(BaseAttribute):
         widget.set_increment(self.increment)
         widget.set_maximum(self.max)
         widget.set_minimum(self.min)
-        self.widget = widget
         return widget
 
     def validate_and_normalize(self, value, module):
@@ -225,13 +224,6 @@ class SelectAttribute(BaseAttribute):
             else:
                 return self._options
         """
-    def change_options(self, module, new_options):
-        """
-        Replace (dynamically) options by new_options.
-        """
-        self.options = new_options
-        if self.widget is not None:
-            self.widget.change_options(new_options)
 
     def create_widget(self, module, name=None):
         """
@@ -239,9 +231,8 @@ class SelectAttribute(BaseAttribute):
         """
         if name is None:
             name = self.name
-        self.widget = SelectAttributeWidget(name, module, self.options)
-        return self.widget
-
+        widget = SelectAttributeWidget(name, module, self.options)
+        return widget
 
     def validate_and_normalize(self, value, module):
         """
@@ -263,30 +254,48 @@ class SelectAttribute(BaseAttribute):
             return min([opt for opt in options], key=lambda x: abs(x - value))
 
 
-#class DynamicSelectAttribute(BaseAttribute):
-#    """
-#    An attribute for a multiple choice value.
-#    The options are evaluated at runtime by the function options(self, instance).
-#    Validation is strict (value should be one of the options())
-#    """
-#    widget_class = DynamicSelectAttributeWidget
-#
-#    def options(self, instance):
-#        """
-#        options are evaluated at run time. To be reimplemented in base class.
-#        """
-#        raise NotImplementedError("This function should be implemented in derived class.")
-#
-#    def validate_and_normalize(self, value, module):
-#        """
-#        value should evaluate to a string present in self.options(instance) at evaluation time.
-#        """
-#        value = str(value)
-#        if not (value in self.options(module)):
-#            raise ValueError("value %s is not an option for SelectAttribute %s of %s" % (value,
-#                                                                                         self.name,
-#                                                                                         module.name))
-#        return value
+class DynamicSelectAttribute(BaseAttribute):
+    """
+    An attribute for a multiple choice value.
+    The options are not stored in the descriptor, but in the instance of module itself (in __*name*_options).
+    In this way, options can be changed on a per-module basis at eun time, using change_options(instance, new_options)
+    """
+    widget_class = SelectAttributeWidget
+
+    def __init__(self, options=[], default=None, doc=""):
+        super(DynamicSelectAttribute, self).__init__(default=default, doc=doc)
+
+    def change_options(self, instance, new_options):
+        setattr(instance, '__' + self.name + '_' + 'options', new_options)
+        if instance.widget is not None:
+            if self.name in instance.widget.attribute_widgets:
+                instance.widget.attribute_widgets[self.name].change_options(new_options)
+
+    def options(self, instance):
+        """
+        options are evaluated at run time. To be reimplemented in base class.
+        """
+        return getattr(instance, '__' + self.name + '_' + 'options')
+
+    def validate_and_normalize(self, value, module):
+        """
+        value should evaluate to a string present in self.options(instance) at evaluation time.
+        """
+        value = str(value)
+        if not (value in self.options(module)):
+            raise ValueError("value %s is not an option for SelectAttribute %s of %s" % (value,
+                                                                                         self.name,
+                                                                                         module.name))
+        return value
+
+    def create_widget(self, module, name=None):
+        """
+        This function is reimplemented to pass the options to the widget.
+        """
+        if name is None:
+            name = self.name
+        widget = SelectAttributeWidget(name, module, self.options(module))
+        return widget
 
 
 class StringAttribute(BaseAttribute):
@@ -317,7 +326,7 @@ class PhaseAttribute(FloatAttribute):
         """
         Rejects anything that is not float, and takes modulo 360
         """
-        return super(PhaseAttribute, self).validate_and_normalize(value%360)
+        return super(PhaseAttribute, self).validate_and_normalize(value%360, module)
 
 
 class FilterAttribute(BaseAttribute):
@@ -859,6 +868,20 @@ class SelectProperty(SelectAttribute, BaseProperty):
         if not hasattr(obj, '_' + self.name):
             # choose any value in the options as default.
             default = sorted(self.options)[0]
+            setattr(obj, '_' + self.name, default)
+        return getattr(obj, '_' + self.name)
+
+
+class DynamicSelectProperty(DynamicSelectAttribute, BaseProperty):
+    """
+    A property for multiple choice values, the options can be set dynamically at runtime
+    """
+    def get_value(self, obj, obj_type):
+        if obj is None:
+            return self
+        if not hasattr(obj, '_' + self.name):
+            # choose any value in the options as default.
+            default = sorted(self.options(obj))[0]
             setattr(obj, '_' + self.name, default)
         return getattr(obj, '_' + self.name)
 
