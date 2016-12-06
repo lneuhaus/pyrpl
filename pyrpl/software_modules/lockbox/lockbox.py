@@ -37,9 +37,8 @@ class Lockbox(SoftwareModule):
         self.outputs = []
         self._asg = None
         self.inputs = []
-        self.sequence = Sequence(self)
+        self.sequence = Sequence(self, 'sequence')
         self.model_changed()
-
 
     @property
     def asg(self):
@@ -74,9 +73,20 @@ class Lockbox(SoftwareModule):
         self.outputs.append(output)
         setattr(self, output.name, output)
         # self.__class__.default_sweep_output.change_options([output.name for output in self.outputs])
+        self.sequence.update_outputs()
         if self.widget is not None:
             self.widget.add_output(output)
         return output
+
+    def remove_output(self, output):
+        output.clear()
+        self.outputs.remove(output)
+        self.sequence.update_outputs()
+        if 'outputs' in self.c._keys():
+            if output.name in self.c.outputs._keys():
+                self.c.outputs._pop(output.name)
+        if self.widget is not None:
+            self.widget.remove_output(output)
 
     def rename_output(self, output, new_name):
         if hasattr(self, output.name):
@@ -89,17 +99,12 @@ class Lockbox(SoftwareModule):
             output.pid.owner = new_name
             if output.pid.widget is not None:
                 output.pid.widget.show_ownership()
+        self.sequence.update_outputs()
         self.update_output_names()
 
     def update_output_names(self):
         if self.widget is not None:
             self.widget.update_output_names()
-
-    def remove_output(self, output):
-        output.clear()
-        self.outputs.remove(output)
-        if self.widget is not None:
-            self.widget.remove_output(output)
 
     def unlock(self):
         for output in self.outputs:
@@ -143,13 +148,17 @@ class Lockbox(SoftwareModule):
                 input.load_setup_attributes()
 
         ### update stages: keep outputs unchanged, when input doesn't exist anymore, change it.
+        self.sequence.update_inputs()
 
 
     def load_setup_attributes(self):
         """
         This function needs to be overwritten to retrieve the child module attributes as well
         """
+        # load normal attributes (model, default_sweep_output)
         super(Lockbox, self).load_setup_attributes()
+
+        # load outputs
         if self.c is not None:
             if 'outputs' in self.c._dict.keys():
                 for name, output in self.c.outputs._dict.items():
@@ -159,8 +168,13 @@ class Lockbox(SoftwareModule):
                         self.rename_output(output, name)
                         output.load_setup_attributes()
                         output._autosave_active = True
+
+        # load inputs
         for input in self.inputs:
             input.load_setup_attributes()
+
+        # load sequence
+        self.sequence.load_setup_attributes()
 
     def _remove_input(self, input):
         input.clear()

@@ -14,6 +14,7 @@ from .widgets.module_widgets import ModuleWidget
 import logging
 import numpy as np
 from six import with_metaclass
+from collections import OrderedDict
 
 
 
@@ -164,23 +165,29 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
     @property
     def c_states(self):
         """
-        Returns the config file branch corresponding to the "states" section
+        Returns the config file branch corresponding to the "states" section.
         """
         if not "states" in self.c._parent._keys():
             self.c._parent["states"] = dict()
         return self.c._parent.states
 
-    def save_state(self, name):
-        """Saves the current state under the name "name" in the config file"""
-        self.c_states[name] = self.get_setup_attributes()
+    def save_state(self, name, state_section=None):
+        """Saves the current state under the name "name" in the config file. If state_section is left unchanged,
+        uses the normal class_section.states convention."""
+        if state_section is None:
+            state_section = self.c_states
+        state_section[name] = self.get_setup_attributes()
 
-    def load_state(self, name):
+    def load_state(self, name, state_section=None):
         """
-        Loads the state with name "name" from the config file.
+        Loads the state with name "name" from the config file. If state_section is left unchanged, uses the normal
+        class_section.states convention.
         """
-        if not name in self.c_states._keys():
+        if state_section is None:
+            state_section = self.c_states
+        if not name in state_section._keys():
             raise KeyError("State %s doesn't exist for modules %s"%(name, self.__class__.name))
-        self.setup(**self.c_states[name])
+        self.setup(**state_section[name])
 
     @property
     def states(self):
@@ -228,10 +235,10 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         """
         manager_section_name = self.section_name + "s" # for instance, iqs
         if not manager_section_name in self.parent.c._keys():
-            self.parent.c[manager_section_name] = dict()
+            self.parent.c[manager_section_name] = OrderedDict()
         manager_section = getattr(self.parent.c, manager_section_name)
         if not self.name in manager_section._keys():
-            manager_section[self.name] = dict()
+            manager_section[self.name] = OrderedDict()
         return getattr(manager_section, self.name)
 
     def callback(self):

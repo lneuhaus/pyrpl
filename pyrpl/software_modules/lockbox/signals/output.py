@@ -115,10 +115,10 @@ class OutputSignal(Signal):
         self.lockbox = self.parent
         self.name = 'output' # will be updated in add_output of parent module
 
-    @property
-    def id(self): # it would be more convenient to compute name from output, but class attribute name can't be a
-                  # property since it used to define the save section
-        return int(self.name.strip('output'))
+ #   @property
+ #   def id(self): # it would be more convenient to compute name from output, but class attribute name can't be a
+ #                 # property since it used to define the save section
+ #       return int(self.name.strip('output'))
 
 
     @property

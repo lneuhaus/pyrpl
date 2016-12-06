@@ -974,7 +974,6 @@ class SelectAttributeWidget(BaseAttributeWidget):
         """
         Sets the gui value from the current module value
         """
-
         index = list(self.options).index(getattr(self.module, self.name))
         self.widget.setCurrentIndex(index)
 
@@ -989,6 +988,123 @@ class SelectAttributeWidget(BaseAttributeWidget):
         self.widget.blockSignals(False)
 
 
+class MyListStageOutputAttributeWidget(QtGui.QWidget):
+    value_changed = QtCore.pyqtSignal()
+    def __init__(self, parent=None):
+        super(MyListStageOutputAttributeWidget, self).__init__(parent)
+        self.layout = QtGui.QHBoxLayout(self)
+        self.layout1 = QtGui.QVBoxLayout()
+        self.layout2 = QtGui.QVBoxLayout()
+        self.layout3 = QtGui.QVBoxLayout()
+        self.layout.addLayout(self.layout1)
+        self.layout.addLayout(self.layout2)
+        self.layout.addLayout(self.layout3)
+
+        self.output_on = []
+        self.offset_enabled = []
+        self.offset = []
+
+    def set_dict(self, dic):
+        self.remove_lines()
+        index = 0
+        for key, val in dic.items():
+            if index<len(self.output_on):
+                self.set_line_name_value(index, key, val)
+                index += 1
+            else:
+                self.add_line(key, val)
+                index +=1
+        while(True):
+            try:
+                self.remove_line(index)
+            except IndexError:
+                break
+
+    def get_dict(self):
+        dic = dict()
+        for on, offset_enabled, offset in zip(self.output_on, self.offset_enabled, self.offset):
+            dic[on.text()] = (on.checkState()==2, offset_enabled.checkState()==2, offset.val)
+        return dic
+
+    def add_line(self, name, val):
+        (is_on, offset_enabled, offset) = val
+
+        on = QtGui.QCheckBox(name, self)
+        self.output_on.append(on)
+        on.setChecked(is_on)
+        on.stateChanged.connect(self.value_changed)
+        self.layout1.addWidget(on)
+
+        oe = QtGui.QCheckBox(self)
+        oe.setChecked(offset_enabled)
+        oe.stateChanged.connect(self.value_changed)
+        self.layout2.addWidget(oe)
+        self.offset_enabled.append(oe)
+
+        offs = MyDoubleSpinBox("")
+        offs.val = offset
+        offs.value_changed.connect(self.value_changed)
+        self.layout3.addWidget(offs)
+        self.offset.append(offs)
+
+    def set_line_name_value(self, index, name, val):
+        (is_on, offset_enabled, offset) = val
+        self.output_on[index].setText(name)
+        self.output_on[index].setChecked(is_on)
+        self.offset_enabled_on[index].setChecked(offset_enabled)
+        self.offset[index].val = offset
+
+    def get_line_value(self, index):
+        on = self.output_on[index].chekState()==2
+        offset_enabled = self.offset_enabled[index].checkState()==2
+        offset = self.offset[index].val
+        return (on, offset_enabled, offset)
+
+    def remove_line(self, index):
+        output_on = self.output_on.pop(index)
+        offset_on = self.offset_enabled.pop(index)
+        offset = self.offset.pop(index)
+        output_on.deleteLater()
+        offset_on.deleteLater()
+        offset.deleteLater()
+
+    def remove_lines(self):
+        while True:
+            try:
+                self.remove_line(0)
+            except IndexError:
+                break
+
+class ListStageOutputAttributeWidget(BaseAttributeWidget):
+    def set_widget(self):
+        """
+        Sets up the widget (here a MyListStageOutputAttributeWidget)
+        """
+        self.layout_v.setSpacing(0)
+        self.widget = MyListStageOutputAttributeWidget()
+        self.widget.value_changed.connect(self.write)
+        self.layout_col_names = QtGui.QHBoxLayout()
+        self.layout_v.insertLayout(0, self.layout_col_names)
+        self.layout_v.removeWidget(self.label)
+        self.label.deleteLater()
+        self.label_on = QtGui.QLabel("output_on")
+        self.layout_col_names.addWidget(self.label_on)
+        self.label_offset = QtGui.QLabel("start_offset")
+        self.layout_col_names.addWidget(self.label_offset)
+
+    def write(self):
+        """
+        Sets the module property value from the current gui value
+        """
+        setattr(self.module, self.name, self.widget.get_dict())
+        #if self.acquisition_property:
+        self.value_changed.emit()
+
+    def update(self):
+        """
+        Sets the gui value from the current module value
+        """
+        self.widget.set_dict(getattr(self.module, self.name))
 
 #class DynamicSelectAttributeWidget(SelectAttributeWidget):
 #    """

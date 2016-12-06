@@ -42,6 +42,9 @@ try:
                 lambda dumper, data: dumper.represent_str(str(data)))
     ruamel.yaml.RoundTripDumper.add_representer(np.ndarray,
                 lambda dumper, data: dumper.represent_list(list(data)))
+
+    # see http://stackoverflow.com/questions/13518819/avoid-references-in-pyyaml
+    ruamel.yaml.RoundTripDumper.ignore_aliases = lambda *args: True
     def load(f):
         return ruamel.yaml.load(f, ruamel.yaml.RoundTripLoader)
     def save(data, stream=None):
@@ -51,6 +54,10 @@ try:
 except:
     logger.warning("ruamel.yaml could not be found. Using yaml instead. Comments in config files will be lost.")
     import yaml
+
+    # see http://stackoverflow.com/questions/13518819/avoid-references-in-pyyaml
+    yaml.RoundTripDumper.ignore_aliases = lambda *args: True # NEVER TESTED
+
     # ordered load and dump for yaml files. From
     # http://stackoverflow.com/questions/5121931/in-python-how-can-you-load-yaml-mappings-as-ordereddicts
     def load(stream, Loader=yaml.SafeLoader, object_pairs_hook=OrderedDict):
@@ -160,7 +167,7 @@ class MemoryBranch(object):
     @property
     def _dict(self):
         """ return a dict containing the memory branch data"""
-        d = {}
+        d = OrderedDict()
         for defaultdict in reversed(self._defaults):
             d.update(defaultdict._dict)
         d.update(self._data)
@@ -237,7 +244,7 @@ class MemoryBranch(object):
         if self._branch in parent._keys():
             branch = parent._pop(self._branch)
         else:
-            branch = dict()
+            branch = OrderedDict()
         parent[name] = branch
 
     # remove an item from the config file

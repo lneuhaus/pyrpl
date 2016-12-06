@@ -33,8 +33,9 @@ class InterferometerPort2(InputDirect):
 
 class Inteferometer(Model):
     name = "interferometer"
+    section_name = "interferometer"
     units = ['m', 'deg', 'rad']
-    wavelength = FloatProperty()
+    wavelength = FloatProperty(max=10000, min=0)
     gui_attributes = ['wavelength']
     setup_attributes = gui_attributes
     variable = 'phase'
@@ -71,12 +72,14 @@ class FPReflection(InputDirect):
 
 class FabryPerot(Model):
     name = "FabryPerot"
+    section_name = "fabryperot"
     units = ['m', 'MHz', 'nm']
     gui_attributes = ["wavelength", "finesse", "length"]
     setup_attributes = gui_attributes
-    wavelength = FloatProperty()
-    finesse = FloatProperty()
-    length = FloatProperty() # approximate length (not taking into account small variations of the order of wavelength)
+    wavelength = FloatProperty(max=10000,min=0)
+    finesse = FloatProperty(max=1e7, min=0)
+    length = FloatProperty(max=10000, min=0)
+    # approximate length (not taking into account small variations of the order of wavelength)
     variable = 'detuning'
 
     input_cls = [FPReflection, FPTransmission, InputPdh]

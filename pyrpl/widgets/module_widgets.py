@@ -17,6 +17,8 @@ from time import time
 import numpy as np
 import functools
 
+APP = QtGui.QApplication.instance()
+
 class MyMenuLabel(QtGui.QLabel):
     """
     A label on top of the menu widget that is able to display save or load menu.
@@ -45,7 +47,7 @@ class LoadLabel(MyMenuLabel):
     """
     "Load" label
     """
-    text = "<Load...>"
+    text = "  .:Load:. "
     def func(self, state):
         self.module.load_state(state)
 
@@ -53,7 +55,7 @@ class SaveLabel(MyMenuLabel):
     """
     "Save" label
     """
-    text = "<Save...>"
+    text = " .:Save:."
 
     def __init__(self, module_widget):
         super(SaveLabel, self).__init__(module_widget)
@@ -77,12 +79,13 @@ class SaveLabel(MyMenuLabel):
                 raise ValueError("State %s of module %s already exists!"%(state, self.module.name))
             self.module.save_state(state)
 
+
 class ModuleWidget(QtGui.QGroupBox):
     """
     Base class for a module Widget. In general, this is one of the Tab in the
     final RedPitayaGui object.
     """
-    title_pos = (12, -8)
+    title_pos = (12, 0)
 
     attribute_changed = QtCore.pyqtSignal()
     # register_names = [] # a list of all register name to expose in the gui
@@ -91,6 +94,10 @@ class ModuleWidget(QtGui.QGroupBox):
     def set_title(self, title):
         if hasattr(self, "title_label"): # ModuleManagerWidgets don't have a title_label
             self.title_label.setText(title)
+            self.title_label.adjustSize()
+            self.title_label.move(*self.title_pos)
+            self.load_label.move(self.title_label.width() + self.title_pos[0], self.title_pos[1])
+            self.save_label.move(self.load_label.width() + self.load_label.pos().x(), self.title_pos[1])
 
     def __init__(self, name, module, parent=None):
         super(ModuleWidget, self).__init__(parent)
@@ -106,12 +113,13 @@ class ModuleWidget(QtGui.QGroupBox):
 
     def create_title_bar(self):
         self.title_label = QtGui.QLabel("yo", parent=self)
-        self.title_label.move(*self.title_pos) # title should be at the top-left corner of the widget
-        self.title_label.setFixedWidth(150)
+         # title should be at the top-left corner of the widget
         self.load_label = LoadLabel(self)
-        self.load_label.move(self.title_label.width() + self.title_pos[0], self.title_pos[1])
+        self.load_label.adjustSize()
+
         self.save_label = SaveLabel(self)
-        self.save_label.move(self.load_label.width() + self.load_label.pos().x(), self.title_pos[1])
+
+        self.save_label.adjustSize()
 
         # self.setStyleSheet("ModuleWidget{border: 1px dashed gray;color: black;}")
         self.setStyleSheet("ModuleWidget{margin: 0.1em; margin-top:0.6em; border: 1 dotted gray;border-radius:5}")
@@ -1583,18 +1591,60 @@ class AllSignalsWidget(QtGui.QTabWidget):
     def remove_input(self, input):
         self.inputs_widget.remove_input(input)
 
+class MyCloseButton(QtGui.QPushButton):
+    def __init__(self, parent=None):
+        super(MyCloseButton, self).__init__(parent)
+        style = APP.style()
+        close_icon = style.standardIcon(QtGui.QStyle.SP_TitleBarCloseButton)
+        self.setIcon(close_icon)
+        self.setFixedHeight(16)
+        self.setFixedWidth(16)
 
 
 class LockboxStageWidget(ModuleWidget):
     """
     A widget representing a single lockbox stage
     """
+    @property
+    def name(self):
+        return self.module.name
+
+    @name.setter
+    def name(self, value):
+        return value  # only way to modify widget name is to change output.display_name
+
     def init_gui(self):
         self.main_layout = QtGui.QVBoxLayout(self)
         self.init_attribute_layout()
         for name, attr in self.attribute_widgets.items():
             self.attribute_layout.removeWidget(attr)
-            self.main_layout.addWidget(attr)
+        self.lay_h1 = QtGui.QHBoxLayout()
+        self.main_layout.addLayout(self.lay_h1)
+        self.lay_v1 = QtGui.QVBoxLayout()
+        self.lay_h1.addLayout(self.lay_v1)
+        self.lay_v2 = QtGui.QVBoxLayout()
+        self.lay_h1.addLayout(self.lay_v2)
+        aws = self.attribute_widgets
+        self.lay_v1.addWidget(aws['name'])
+        self.lay_v1.addWidget(aws['input'])
+        self.lay_v2.addWidget(aws['duration'])
+        self.lay_v2.addWidget(aws['variable_value'])
+        self.main_layout.addWidget(aws['output_on'])
+
+        self.main_layout.addWidget(aws['function_call'])
+
+    def create_title_bar(self):
+        super(LockboxStageWidget, self).create_title_bar()
+        self.close_button = MyCloseButton(self)
+        self.close_button.clicked.connect(self.close)
+        self.close_button.move(self.width() - self.close_button.width(), self.title_pos[1] + 8)
+
+    def resizeEvent(self, evt):
+        super(LockboxStageWidget, self).resizeEvent(evt)
+        self.close_button.move(evt.size().width() - self.close_button.width(), self.title_pos[1])
+
+    def close(self):
+        self.module.parent.remove_stage(self.module)
 
 
 class LockboxSequenceWidget(ModuleWidget):
@@ -1605,16 +1655,19 @@ class LockboxSequenceWidget(ModuleWidget):
         self.main_layout = QtGui.QHBoxLayout(self)
         self.init_attribute_layout() # eventhough, I don't think there's any attribute
         self.stage_widgets = []
+        self.button_add = QtGui.QPushButton('+')
+        self.button_add.setSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Expanding)
+        self.button_add.setMinimumHeight(60)
         for stage in self.module.stages:
             self.add_stage(stage)
-        self.button_add = QtGui.QPushButton('+')
         self.button_add.clicked.connect(self.module.add_stage)
         self.main_layout.addWidget(self.button_add)
+        self.main_layout.addStretch(2)
 
     def add_stage(self, stage):
         widget = stage.create_widget()
         self.stage_widgets.append(widget)
-        self.main_layout.insertWidget(self.main_layout.indexOf(self.button_add)-1, widget)
+        self.main_layout.insertWidget(self.main_layout.indexOf(self.button_add), widget)
         return stage
 
     def remove_stage(self, stage):
@@ -1623,6 +1676,11 @@ class LockboxSequenceWidget(ModuleWidget):
             self.stage_widgets.remove(stage.widget)
             self.main_layout.removeWidget(stage.widget)
             stage.widget.deleteLater()
+
+    def update_stage_names(self):
+        for widget in self.stage_widgets:
+            print("setting title", widget.name)
+            widget.set_title(widget.name)
 
 
 class LockboxWidget(ModuleWidget):

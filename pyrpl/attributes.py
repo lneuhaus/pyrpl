@@ -13,7 +13,8 @@ changed. The necessary mechanisms are happening behind the scene, and they are c
 from .bijection import Bijection
 from .widgets.attribute_widgets import BoolAttributeWidget, FloatAttributeWidget, FilterAttributeWidget, \
                                             IntAttributeWidget, SelectAttributeWidget, StringAttributeWidget, \
-                                            ListComplexAttributeWidget, FrequencyAttributeWidget
+                                            ListComplexAttributeWidget, FrequencyAttributeWidget, \
+                                            ListStageOutputAttributeWidget
 
 import logging
 import sys
@@ -369,6 +370,25 @@ class ListComplexAttribute(BaseAttribute):
             value = [value]
         return [complex(val) for val in value]
 
+
+class ListStageOutputAttribute(BaseAttribute):
+    """
+    A list of str->bool mappings (used to map outputs on/off for each stage of a lockbox). Assignation can also be
+    done via lnba['my_piezo'] = True
+    """
+    widget_class = ListStageOutputAttributeWidget
+
+    def validate_and_normalize(self, value, module):
+        if not isinstance(value, dict):
+            raise ValueError("value %s for attribute %s is not a valid dictionary"%(value, self.name))
+        for key, (is_on, is_start_offset, start_offset) in value.items():
+            if not isinstance(is_on, bool):
+                raise ValueError("Value %s is not possible for output %s on/off property (stage %s)"%(is_on, key, self.name))
+            if not isinstance(is_start_offset, bool):
+                raise ValueError("value %s is not possible for output %s offset_enable (stage %s)"%(is_start_offset, key, self.name))
+            if not isinstance(start_offset, numbers.Number):
+                raise ValueError("value %s is not possible for output %s offset (stage %s)"%(start_offset, key, self.name))
+        return value
 
 # docstring does not work yet, see:
 # http://stackoverflow.com/questions/37255109/python-docstring-for-descriptors
@@ -952,3 +972,10 @@ class ListComplexProperty(ListComplexAttribute, BaseProperty):
     A property for a list of complex values
     """
     default = [0.]
+
+
+class ListStageOuputProperty(ListStageOutputAttribute, BaseProperty):
+    """
+    A property for a list named bool value (dict with str-bool mapping)
+    """
+    default = {}

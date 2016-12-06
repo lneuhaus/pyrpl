@@ -12,23 +12,22 @@ pyrpl: # General configuration of the software:
     - SpectrumAnalyzer
     - Lockbox
   dock_positions: !!binary |
-    AAAA/wAAAAD9AAAAAgAAAAAAAAO+AAABSvwCAAAAAfsAAAAGAGkAcQBzAAAAApMAAAFKAAAAUAD/
-    //8AAAACAAAD4QAAA8f8AQAAAAL8AAAAAAAAA+EAAAKZAP////wCAAAAAvsAAAAIAGEAcwBnAHMA
-    AAAAFQAAAHsAAABQAP////sAAAAOAGwAbwBjAGsAYgBvAHgBAAAAFQAAA8cAAANSAP////wAAANv
-    AAAEDQAAAAAA/////AIAAAAC/AAAABUAAANhAAAAAAD////6AAAAAgIAAAAG+wAAAAQAbgBhAAAA
-    AAD/////AAAAUAD////7AAAAIgBzAHAAZQBjAHQAcgB1AG0AXwBhAG4AYQBsAHkAegBlAHIAAAAA
-    AP////8AAABQAP////sAAAAiAHMAcABlAGMAdAByAHUAbQAgAGEAbgBhAGwAeQB6AGUAcgEAAAAA
-    /////wAAAAAAAAAA+wAAABQAQgBhAHMAZQBNAG8AZAB1AGwAZQEAAAAA/////wAAAAAAAAAA+wAA
-    ACAAbgBlAHQAdwBvAHIAawBfAGEAbgBhAGwAeQB6AGUAcgEAAAAA/////wAAAAAAAAAA+wAAAAoA
-    cwBjAG8AcABlAQAAAAD/////AAAAAAAAAAD8AAABfAAAAfoAAAAAAP////r/////AQAAAAP7AAAA
-    CABpAGkAcgBzAAAAAAD/////AAAAFgD////7AAAADABzAGMAbwBwAGUAcwAAAAAA/////wAAABYA
-    ////+wAAAAgAcABpAGQAcwAAAANvAAAEDQAAABYA////AAAD4QAAAAAAAAAEAAAABAAAAAgAAAAI
-    /AAAAAA=
+    AAAA/wAAAAD9AAAAAgAAAAAAAAeAAAABSvwCAAAAAfsAAAAGAGkAcQBzAgAAAAAAAALuAAAHgAAA
+    AUoAAAACAAADzQAAA/r8AQAAAAP7AAAADgBsAG8AYwBrAGIAbwB4AQAAAAAAAAPNAAADzQD////7
+    AAAACABhAHMAZwBzAAAAAAAAAAeAAAAAFgD////8AAAFrQAAAlcAAAAAAP////wCAAAAAvwAAAAV
+    AAADYQAAAAAA////+gAAAAICAAAABvsAAAAEAG4AYQAAAAAA/////wAAAFAA////+wAAACIAcwBw
+    AGUAYwB0AHIAdQBtAF8AYQBuAGEAbAB5AHoAZQByAAAAAAD/////AAAAUAD////7AAAAIgBzAHAA
+    ZQBjAHQAcgB1AG0AIABhAG4AYQBsAHkAegBlAHIBAAAAAP////8AAAAAAAAAAPsAAAAUAEIAYQBz
+    AGUATQBvAGQAdQBsAGUBAAAAAP////8AAAAAAAAAAPsAAAAgAG4AZQB0AHcAbwByAGsAXwBhAG4A
+    YQBsAHkAegBlAHIBAAAAAP////8AAAAAAAAAAPsAAAAKAHMAYwBvAHAAZQEAAAAA/////wAAAAAA
+    AAAA/AAAABUAAAQ/AAAAAAD////6/////wEAAAAD+wAAAAgAaQBpAHIAcwAAAAAA/////wAAABYA
+    ////+wAAAAwAcwBjAG8AcABlAHMAAAAAAP////8AAAAWAP////sAAAAIAHAAaQBkAHMAAAADbwAA
+    BA0AAAAWAP///wAAA80AAAAAAAAABAAAAAQAAAAIAAAACPwAAAAA
   window_position:
-  - -7
-  - 0
-  - 993
-  - 1008
+  - 4
+  - 35
+  - 973
+  - 1059
 redpitaya:
   hostname: 10.214.1.28
   password: root
@@ -93,6 +92,12 @@ lockboxs:
           mod_output: out1
           mod_amp: 0.0
           mod_phase: 0.0
+        coucou:
+          mod_freq: 3.360189132690429
+          adc: adc1
+          mod_output: out1
+          mod_amp: 0.0
+          mod_phase: 0.0
       pdh:
         mod_freq: 3.360189132690429
         adc: adc1
@@ -100,65 +105,123 @@ lockboxs:
         mod_amp: 0.0
         mod_phase: 0.0
     reflections:
-      reflection: {}
+      reflection: {adc: adc2}
     transmissions:
       transmission: {}
     model: FabryPerot
     direct_inputs:
       direct_input1: {}
-      direct_input2: {}
+      direct_input2: {adc: adc2}
     outputs:
       states:
         slow_today:
-          dc_gain: 0.05434940261840822
-          extra_module_state: None
-          extra_module: None
-          sweep_waveform: cos
-          is_sweepable: false
-          tf_type: curve
           additional_filter:
           - 0
           - 0
           - 0
           - 0
+          sweep_amplitude: 0.0
+          dc_gain: 0.038320936203002934
+          sweep_waveform: cos
           unity_gain_desired: 0.0
+          p: 0.0
+          tf_curve: 0
+          i: -0.0011
+          tf_type: curve
+          is_sweepable: false
+          name: slow_piezo
+          extra_module: None
           sweep_frequency: 0.0
           sweep_offset: 0.0
-          i: 0.0
           output_channel: dac1
+          extra_module_state: None
+        iuiu:
+          additional_filter:
+          - 0
+          - 0
+          - 0
+          - 0
           sweep_amplitude: 0.0
-          name: slow_piezo
-          tf_curve: 0
+          dc_gain: 0.038320936203002934
+          sweep_waveform: cos
+          unity_gain_desired: 0.0
           p: 0.0
-      fast_piezo:
-        output_channel: dac2
-        name: fast_piezo
-      slow_piezo:
-        dc_gain: 0.05434940261840822
-        extra_module_state: None
-        unity_gain_desired: 0.0
-        sweep_waveform: ramp
-        is_sweepable: false
-        tf_type: curve
-        extra_module: None
-        sweep_frequency: 0.22869599037170404
-        additional_filter:
-        - 0
-        - 0
-        - 0
-        - 0
-        sweep_offset: 0.06149474411010743
-        i: 0.0
-        output_channel: dac1
-        p: 0.0
-        name: slow_piezo
-        tf_curve: 0
-        sweep_amplitude: 0.08023628654479982
+          tf_curve: 0
+          i: -0.0011
+          tf_type: curve
+          is_sweepable: false
+          name: slow_piezo
+          extra_module: None
+          sweep_frequency: 0.0
+          sweep_offset: 0.0
+          output_channel: dac1
+          extra_module_state: None
+      slow_piezo: !!omap
+      - name: slow_piezo
+      output: !!omap
+      - is_sweepable: false
     models:
       interferometer:
         wavelength: 0.9
       FabryPerot:
-        finesse: 0.0
+        finesse: 1.0
         length: 1.0
-        wavelength: 0.2
-  states: {}
+        wavelength: 0.1064
+      states:
+        FPM:
+          wavelength: 0.1064
+          finesse: 1.0
+          length: 1.0
+    fabryperots: !!omap
+    - FabryPerot: !!omap
+      - wavelength: 1064.0
+      - finesse: 40000.0
+      - length: 0.001
+    - states:
+        FPM:
+          finesse: 40000.0
+          wavelength: 1064.0
+          length: 0.001
+    interferometers: !!omap
+    - interferometer: !!omap
+      - wavelength: 1064.0
+    - states:
+        mech_memnbrane:
+          wavelength: 1064.0
+
+    sequences: !!omap
+    - sequence: !!omap
+      - stages: !!omap
+        - stage1: !!omap
+          - output_on:
+              output:
+              - true
+              - false
+              - 0
+              slow_piezo:
+              - true
+              - false
+              - 0
+          - name: stage1
+        - stage3: !!omap
+          - output_on:
+              output:
+              - true
+              - false
+              - 0
+              slow_piezo:
+              - true
+              - false
+              - 0
+          - name: stage3
+        - stage4: !!omap
+          - output_on:
+              output:
+              - true
+              - false
+              - 0
+              slow_piezo:
+              - true
+              - false
+              - 0
+          - name: stage4
