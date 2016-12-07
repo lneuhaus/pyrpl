@@ -13,7 +13,7 @@ pyrpl: # General configuration of the software:
     - Lockbox
   dock_positions: !!binary |
     AAAA/wAAAAD9AAAAAgAAAAAAAAeAAAABSvwCAAAAAfsAAAAGAGkAcQBzAgAAAAAAAALuAAAHgAAA
-    AUoAAAACAAADzQAAA/r8AQAAAAP7AAAADgBsAG8AYwBrAGIAbwB4AQAAAAAAAAPNAAADzQD////7
+    AUoAAAACAAAE5gAAA8f8AQAAAAP7AAAADgBsAG8AYwBrAGIAbwB4AQAAAAAAAATmAAAE5gD////7
     AAAACABhAHMAZwBzAAAAAAAAAAeAAAAAFgD////8AAAFrQAAAlcAAAAAAP////wCAAAAAvwAAAAV
     AAADYQAAAAAA////+gAAAAICAAAABvsAAAAEAG4AYQAAAAAA/////wAAAFAA////+wAAACIAcwBw
     AGUAYwB0AHIAdQBtAF8AYQBuAGEAbAB5AHoAZQByAAAAAAD/////AAAAUAD////7AAAAIgBzAHAA
@@ -22,12 +22,12 @@ pyrpl: # General configuration of the software:
     YQBsAHkAegBlAHIBAAAAAP////8AAAAAAAAAAPsAAAAKAHMAYwBvAHAAZQEAAAAA/////wAAAAAA
     AAAA/AAAABUAAAQ/AAAAAAD////6/////wEAAAAD+wAAAAgAaQBpAHIAcwAAAAAA/////wAAABYA
     ////+wAAAAwAcwBjAG8AcABlAHMAAAAAAP////8AAAAWAP////sAAAAIAHAAaQBkAHMAAAADbwAA
-    BA0AAAAWAP///wAAA80AAAAAAAAABAAAAAQAAAAIAAAACPwAAAAA
+    BA0AAAAWAP///wAABOYAAAAAAAAABAAAAAQAAAAIAAAACPwAAAAA
   window_position:
-  - 4
-  - 35
-  - 973
-  - 1059
+  - -1927
+  - 125
+  - 1254
+  - 1008
 redpitaya:
   hostname: 10.214.1.28
   password: root
@@ -156,10 +156,28 @@ lockboxs:
           sweep_offset: 0.0
           output_channel: dac1
           extra_module_state: None
-      slow_piezo: !!omap
-      - name: slow_piezo
       output: !!omap
       - is_sweepable: false
+      - tf_type: filter
+      - extra_module: iir
+      - p: 0.05727552947998048
+      - i: 0.0012465007781982376
+      - analog_filter:
+        - 1371.6295934249456
+        - 0.0
+        - 0.0
+        - 0.0
+      slow_piezo: !!omap
+      - name: slow_piezo
+      - dc_gain: 0.0
+      - analog_filter:
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
+      - unity_gain_desired: 0.06380385932922364
+      - p: 0.0622656147003174
+      - i: 0.09783168029785158
     models:
       interferometer:
         wavelength: 0.9
@@ -194,34 +212,45 @@ lockboxs:
       - stages: !!omap
         - stage1: !!omap
           - output_on:
-              output:
+              slow_piezo:
               - true
               - false
               - 0
-              slow_piezo:
+              output:
               - true
               - false
               - 0
           - name: stage1
         - stage3: !!omap
           - output_on:
-              output:
+              slow_piezo:
               - true
               - false
               - 0
-              slow_piezo:
+              output:
               - true
               - false
               - 0
           - name: stage3
         - stage4: !!omap
           - output_on:
-              output:
-              - true
-              - false
-              - 0
               slow_piezo:
               - true
               - false
               - 0
+              output:
+              - true
+              - false
+              - 0
           - name: stage4
+        - stage5: !!omap
+          - output_on:
+              slow_piezo:
+              - true
+              - false
+              - 0
+              output:
+              - true
+              - false
+              - 0
+          - name: stage5

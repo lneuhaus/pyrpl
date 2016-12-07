@@ -1,6 +1,6 @@
 from . import Signal
 from pyrpl.attributes import BoolProperty, FloatProperty, SelectProperty, FloatAttribute, FilterAttribute, LongProperty,\
-                             StringProperty
+                             StringProperty, ListFloatProperty
 from pyrpl.hardware_modules.asg import Asg1
 from pyrpl.widgets.module_widgets import OutputSignalWidget
 
@@ -82,6 +82,7 @@ class OutputSignal(Signal):
                       'p',
                       'i',
                       'additional_filter',
+                      'analog_filter',
                       'extra_module',
                       'extra_module_state',
                       'unity_gain_desired',
@@ -101,6 +102,7 @@ class OutputSignal(Signal):
     output_channel = SelectProperty(options=['dac1', 'dac2']) # at some point, we should add pwms...
     p = ProportionalGainProperty()
     i = ProportionalGainProperty()
+    analog_filter = ListFloatProperty()
     additional_filter = AdditionalFilterAttribute()
     extra_module = SelectProperty(['None', 'iir', 'pid', 'iq'])
     extra_module_state = SelectProperty(options=["None"])
@@ -120,6 +122,11 @@ class OutputSignal(Signal):
  #                 # property since it used to define the save section
  #       return int(self.name.strip('output'))
 
+    def lock(self):
+        """
+        Closes the lock loop, using the required p and i parameters.
+        """
+        1/0
 
     @property
     def is_locked(self):

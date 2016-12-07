@@ -1,5 +1,5 @@
 from pyrpl.modules import SoftwareModule
-from pyrpl.attributes import SelectProperty
+from pyrpl.attributes import SelectProperty, BoolProperty
 from .model import Model
 from .signals import OutputSignal, InputSignal
 from pyrpl.widgets.module_widgets import LockboxWidget
@@ -28,9 +28,10 @@ class Lockbox(SoftwareModule):
     """
     section_name = 'lockbox'
     widget_class = LockboxWidget
-    gui_attributes = ["model", "default_sweep_output"]
+    gui_attributes = ["model", "default_sweep_output", "auto_relock"]
     setup_attributes = gui_attributes
     model = ModelProperty(options=all_models.keys())
+    auto_relock = BoolProperty()
     default_sweep_output = SelectProperty(options=["dummy"])
 
     def init_module(self):
@@ -63,6 +64,9 @@ class Lockbox(SoftwareModule):
 #        while i in [output.id for output in self.outputs]:
 #            i+=1
 #        return i
+
+    def lock(self):
+        1/0
 
     def add_output(self):
         """

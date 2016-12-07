@@ -386,6 +386,15 @@ class BaseAttributeWidget(QtGui.QWidget):
         #self.module_widget.property_watch_timer.timeout. \
         #    connect(self.update_widget)
 
+    def set_horizontal(self):
+        self.layout_v.removeWidget(self.label)
+        self.layout_v.removeWidget(self.widget)
+        self.layout_h = QtGui.QHBoxLayout()
+        self.layout_h.addWidget(self.label)
+        self.layout_h.addWidget(self.widget)
+
+        self.layout_v.addLayout(self.layout_h)
+
     def editing(self):
         """
         User is editing the property graphically don't mess up with him
@@ -652,6 +661,73 @@ class MyComplexSpinBox(QtGui.QFrame):
     def selected(self):
         return self.hasFocus()
 
+
+class ListFloatSpinBox(QtGui.QWidget):
+    """
+    No add or remove buttons yet (mainly used to represent analog filters)
+    """
+    value_changed = QtCore.pyqtSignal()
+
+    def __init__(self, label, n_spins=4, min=-65e6, max=65e6, increment=1., log_increment=True, halflife_seconds=1.):
+        super(ListFloatSpinBox, self).__init__()
+        self.label = label
+        self.min = min
+        self.max = max
+        self.increment = increment
+        self.halflife = halflife_seconds
+        self.log_increment = log_increment
+        self.increment = increment
+        self.lay = QtGui.QVBoxLayout(self)
+        self.lay_hs = [QtGui.QHBoxLayout()]
+        self.lay.addLayout(self.lay_hs[0])
+        self.lay.setContentsMargins(0, 0, 0, 0)
+        self.spins = []
+        for index in range(n_spins):
+            spin = MyDoubleSpinBox(label=None,
+                                   min=min,
+                                   max=max,
+                                   increment=increment,
+                                   log_increment=log_increment,
+                                   halflife_seconds=halflife_seconds)
+            spin.value_changed.connect(self.value_changed)
+            self.spins.append(spin)
+            self.lay_hs[0].addWidget(spin)
+
+        if label is not None:
+            self.label = QtGui.QLabel(self.label)
+            self.lay.addWidget(self.label)
+            self.setLayout(self.lay)
+
+    def get_list(self):
+        return [spin.val for spin in self.spins]
+
+    def set_list(self, list_val):
+        for index, val in enumerate(list_val):
+            self.spins[index].val = val
+
+        for i in range(index, len(self.spins)):
+            self.spins[i].val = 0
+
+    def remove_all_spins_from_layout(self):
+        widget = 1
+        while widget is not None:
+            widget = self.lay_hs[0].takeAt(0)
+
+    def set_max_cols(self, n):
+        index_col = 0
+        self.remove_all_spins_from_layout()
+        current_layout = self.lay_hs[0]
+        for spin in self.spins:
+            current_layout.addWidget(spin)
+            index_col+=1
+            if index_col>=n:
+                index_col = 0
+                current_layout = QtGui.QHBoxLayout()
+                self.lay_hs.append(current_layout)
+                self.lay.addLayout(current_layout)
+
+
+
 class ListComplexSpinBox(QtGui.QFrame):
     value_changed = QtCore.pyqtSignal()
 
@@ -759,10 +835,45 @@ class ListComplexSpinBox(QtGui.QFrame):
             if spin.hasFocus():
                 return index
 
+class ListFloatAttributeWidget(BaseAttributeWidget):
+    """
+    The number of values is fixed (to 4 for now)
+    """
+    def set_widget(self):
+        """
+        Sets up the widget (here a ListFloatSpinBox)
+        :return:
+        """
+
+        self.widget = ListFloatSpinBox(label=None,
+                                         min=-65e6,
+                                         max=65e6,
+                                         log_increment=True,
+                                         halflife_seconds=1.)
+        self.widget.value_changed.connect(self.write)
+
+    def write(self):
+        setattr(self.module, self.name, self.widget.get_list())
+        self.value_changed.emit()
+
+    def update(self):
+        """
+        Updates the value displayed in the widget
+        :return:
+        """
+        if not self.widget.hasFocus():
+            self.widget.set_list(self.module_value())
+
+    def set_max_cols(self, num):
+        """
+        sets the max number of columns of the widget (after that, spin boxes are stacked under each other)
+        """
+        self.widget.set_max_cols(num)
+
 
 class ListComplexAttributeWidget(BaseAttributeWidget):
     """
-    Attribute for arbitrary number for floats
+    Attribute for arbitrary number of complex. New values can be added/removed with buttons
     """
     def __init__(self, name, module):
         val = getattr(module, name)
@@ -786,7 +897,7 @@ class ListComplexAttributeWidget(BaseAttributeWidget):
 
     def set_widget(self):
         """
-        Sets up the widget (here a ListFloatSpinBox)
+        Sets up the widget (here a ListComplexSpinBox)
         :return:
         """
 
@@ -985,6 +1096,7 @@ class SelectAttributeWidget(BaseAttributeWidget):
         self.defaults = new_options
         self.widget.clear()
         self.widget.addItems(new_options)
+        self.update()
         self.widget.blockSignals(False)
 
 

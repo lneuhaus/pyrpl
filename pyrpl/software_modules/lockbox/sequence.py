@@ -164,4 +164,13 @@ class Stage(SoftwareModule):
         """
         Setup the lockbox parameters according to this stage
         """
-        pass
+        for output in self.lockbox.outputs:
+            (on, offset_enable, offset) = self.output_on[output.name]
+            if on:
+                if self.offset_enabled:
+                    output.set_ival(offset)
+                output.lock()
+            else:
+                output.unlock()
+
+

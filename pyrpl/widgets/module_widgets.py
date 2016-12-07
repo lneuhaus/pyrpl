@@ -1408,7 +1408,139 @@ class SpecAnWidget(ModuleWidget):
         self.y_data = np.zeros(len(self.x_data))
         self.current_average = 0
 
+class MainOutputProperties(QtGui.QGroupBox):
+    def __init__(self, parent):
+        super(MainOutputProperties, self).__init__(parent)
+        self.parent = parent
+        aws = self.parent.attribute_widgets
+        self.layout = QtGui.QHBoxLayout(self)
+        self.v1 = QtGui.QVBoxLayout()
+        self.layout.addLayout(self.v1)
+        self.v2 = QtGui.QVBoxLayout()
+        self.layout.addLayout(self.v2)
+        self.v1.addWidget(aws["name"])
+        self.v1.addWidget(aws['dc_gain'])
+        self.v2.addWidget(aws["output_channel"])
+        self.v2.addWidget(aws["tf_type"])
+        aws['tf_curve'].hide()
+        self.setTitle('main attributes')
 
+class SweepOutputProperties(QtGui.QGroupBox):
+    def __init__(self, parent):
+        super(SweepOutputProperties, self).__init__(parent)
+        self.parent = parent
+        aws = self.parent.attribute_widgets
+        self.layout = QtGui.QHBoxLayout(self)
+        self.v1 = QtGui.QVBoxLayout()
+        self.layout.addLayout(self.v1)
+        self.v2 = QtGui.QVBoxLayout()
+        self.layout.addLayout(self.v2)
+        self.v1.addWidget(aws["sweep_frequency"])
+        self.v1.addWidget(aws['sweep_amplitude'])
+        self.v2.addWidget(aws["sweep_offset"])
+        self.v2.addWidget(aws["sweep_waveform"])
+        aws['is_sweepable'].hide()
+        self.setTitle("sweep attributes")
+
+
+class WidgetManual(QtGui.QWidget):
+    def __init__(self, parent):
+        super(WidgetManual, self).__init__(parent)
+        self.parent = parent
+        self.layout = QtGui.QVBoxLayout(self)
+        self.p = parent.parent.attribute_widgets["p"]
+        self.i = parent.parent.attribute_widgets["i"]
+        self.p.set_horizontal()
+        self.i.set_horizontal()
+        self.layout.addWidget(self.p)
+        self.layout.addWidget(self.i)
+        self.i.label.setMinimumWidth(6)
+
+class WidgetAssisted(QtGui.QWidget):
+    def __init__(self, parent):
+        super(WidgetAssisted, self).__init__(parent)
+        self.parent = parent
+        self.layout = QtGui.QHBoxLayout(self)
+        self.v1 = QtGui.QVBoxLayout()
+        self.v2 = QtGui.QVBoxLayout()
+        self.layout.addLayout(self.v1)
+        self.layout.addLayout(self.v2)
+        self.desired = parent.parent.attribute_widgets["unity_gain_desired"]
+        self.analog_filter = parent.parent.attribute_widgets["analog_filter"]
+        #self.analog_filter.set_horizontal()
+        # self.analog_filter.layout_v.setSpacing(0)
+        # self.analog_filter.layout_v.setContentsMargins(0, 0, 0, 0)
+        self.analog_filter.set_max_cols(2)
+        self.v1.addWidget(self.desired)
+        self.v2.addWidget(self.analog_filter)
+
+class PidProperties(QtGui.QGroupBox):
+    def __init__(self, parent):
+        super(PidProperties, self).__init__(parent)
+        self.parent = parent
+        aws = self.parent.attribute_widgets
+        self.layout = QtGui.QHBoxLayout(self)
+        self.v1 = QtGui.QVBoxLayout()
+        self.layout.addLayout(self.v1)
+        self.v2 = QtGui.QVBoxLayout()
+        self.layout.addLayout(self.v2)
+
+        self.radio_group = QtGui.QButtonGroup()
+        self.manual = QtGui.QRadioButton('manual design')
+        self.assisted = QtGui.QRadioButton('assisted design')
+        self.radio_group.addButton(self.manual)
+        self.radio_group.addButton(self.assisted)
+        self.assisted.clicked.connect(self.toggle_mode)
+        self.manual.clicked.connect(self.toggle_mode)
+
+        self.manual_widget = WidgetManual(self)
+        self.v1.addWidget(self.manual)
+        self.v1.addWidget(self.manual_widget)
+        # self.col3.addWidget(aws["tf_filter"])
+
+        self.assisted_widget = WidgetAssisted(self)
+        self.v2.insertWidget(0, self.assisted)
+        self.v2.addWidget(self.assisted_widget)
+        self.v2.addStretch(5)
+
+        self.setTitle("Pid control")
+
+        for v in (self.v1, self.v2, self.layout):
+            v.setSpacing(0)
+            v.setContentsMargins(5, 1, 0, 0)
+
+
+    def toggle_mode(self):
+        if self.manual.isChecked():
+            self.set_manual()
+        else:
+            self.set_assisted()
+
+    def set_assisted(self):
+        self.manual_widget.setEnabled(False)
+        self.assisted_widget.setEnabled(True)
+
+    def set_manual(self):
+        self.manual_widget.setEnabled(True)
+        self.assisted_widget.setEnabled(False)
+
+class PostFiltering(QtGui.QGroupBox):
+    def __init__(self, parent):
+        super(PostFiltering, self).__init__(parent)
+        self.parent = parent
+        aws = self.parent.attribute_widgets
+        self.layout = QtGui.QVBoxLayout(self)
+
+        aws = self.parent.attribute_widgets
+        self.layout.addWidget(aws["additional_filter"])
+
+        self.mod_layout = QtGui.QHBoxLayout()
+        self.mod_layout.addWidget(aws["extra_module"])
+        self.mod_layout.addWidget(aws["extra_module_state"])
+        self.layout.addLayout(self.mod_layout)
+        self.layout.setSpacing(12)
+
+        self.setTitle("post filtering")
 #=============Lockbox widgets========================#
 class OutputSignalWidget(ModuleWidget):
     @property
@@ -1442,6 +1574,10 @@ class OutputSignalWidget(ModuleWidget):
         self.upper_layout.addStretch(1)
 
         aws = self.attribute_widgets
+        self.main_props = MainOutputProperties(self)
+        self.col1.addWidget(self.main_props)
+        self.col1.addStretch(5)
+        """
         self.col1.addWidget(aws["name"])
         self.col1.addWidget(aws["output_channel"])
         # self.col1.addWidget(aws["unit"])
@@ -1449,25 +1585,35 @@ class OutputSignalWidget(ModuleWidget):
         self.col1.addWidget(aws["tf_type"])
         self.col1.addWidget(aws["tf_curve"])
         self.col1.addStretch(5)
+        """
 
-
+        self.sweep_props = SweepOutputProperties(self)
+        self.col2.addWidget(self.sweep_props)
+        self.col2.addStretch(5)
+        """
         self.col2.addWidget(aws["is_sweepable"])
         self.col2.addWidget(aws["sweep_frequency"])
         self.col2.addWidget(aws["sweep_amplitude"])
         self.col2.addWidget(aws["sweep_offset"])
         self.col2.addWidget(aws["sweep_waveform"])
         self.col2.addStretch(5)
+        """
 
+        self.pid_props = PidProperties(self)
+        self.col3.addWidget(self.pid_props)
+
+        self.col3.addStretch(5)
+        """
         self.col3.addWidget(aws["p"])
         self.col3.addWidget(aws["i"])
         # self.col3.addWidget(aws["tf_filter"])
         self.col3.addWidget(aws["unity_gain_desired"])
         self.col3.addStretch(5)
+        """
 
-        self.col4.addWidget(aws["additional_filter"])
-        aws["additional_filter"].set_max_cols(2)
-        self.col4.addWidget(aws["extra_module"])
-        self.col4.addWidget(aws["extra_module_state"])
+        self.post_props = PostFiltering(self)
+        self.col4.addWidget(self.post_props)
+
         self.col4.addStretch(5)
 
         self.win = pg.GraphicsWindow(title="Amplitude")
@@ -1633,6 +1779,10 @@ class LockboxStageWidget(ModuleWidget):
 
         self.main_layout.addWidget(aws['function_call'])
 
+        self.button_goto = QtGui.QPushButton('Goto stage')
+        self.button_goto.clicked.connect(self.module.setup)
+        self.main_layout.addWidget(self.button_goto)
+
     def create_title_bar(self):
         super(LockboxStageWidget, self).create_title_bar()
         self.close_button = MyCloseButton(self)
@@ -1690,6 +1840,13 @@ class LockboxWidget(ModuleWidget):
     def init_gui(self):
         self.main_layout = QtGui.QVBoxLayout()
         self.init_attribute_layout()
+        self.button_lock = QtGui.QPushButton("Lock")
+        self.button_lock.clicked.connect(self.module.lock)
+        self.attribute_layout.addWidget(self.button_lock)
+        self.button_sweep = QtGui.QPushButton("Sweep")
+        self.button_sweep.clicked.connect(self.module.sweep)
+        self.attribute_layout.addWidget(self.button_sweep)
+
         self.model_widget = self.module.get_model().create_widget()
         self.main_layout.addWidget(self.model_widget)
         self.all_sig_widget = AllSignalsWidget(self)

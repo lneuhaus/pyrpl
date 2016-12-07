@@ -14,7 +14,7 @@ from .bijection import Bijection
 from .widgets.attribute_widgets import BoolAttributeWidget, FloatAttributeWidget, FilterAttributeWidget, \
                                             IntAttributeWidget, SelectAttributeWidget, StringAttributeWidget, \
                                             ListComplexAttributeWidget, FrequencyAttributeWidget, \
-                                            ListStageOutputAttributeWidget
+                                            ListStageOutputAttributeWidget, ListFloatAttributeWidget
 
 import logging
 import sys
@@ -349,18 +349,29 @@ class FilterAttribute(BaseAttribute):
         return [min([opt for opt in self.valid_frequencies(module)], key=lambda x: abs(x - val)) for val in value]
 
 
+class ListFloatAttribute(BaseAttribute):
+    """
+    An arbitrary length list of float numbers.
+    """
+    widget_class = ListFloatAttributeWidget
+
+    def validate_and_normalize(self, value, module):
+        """
+        Converts the value in a list of float numbers.
+        """
+        if not np.iterable(value):
+            value = [value]
+        return [float(val) for val in value]
+
+
+
+
 class ListComplexAttribute(BaseAttribute):
     """
     An arbitrary length list of complex numbers.
     """
 
     widget_class = ListComplexAttributeWidget
-
-    def set_value(self, instance, value):
-        """
-        Since yml complex lists are loaded as string lists, allow for a conversion step here.
-        """
-        return super(ListComplexAttribute, self).set_value(instance, value)
 
     def validate_and_normalize(self, value, module):
         """
@@ -965,6 +976,13 @@ class FilterProperty(FilterAttribute, BaseProperty):
 
     def set_value(self, obj, value):
         return super(FilterProperty, self).set_value(obj, value)
+
+
+class ListFloatProperty(ListFloatAttribute, BaseProperty):
+    """
+    A property for list of float values
+    """
+    default = [0,0,0,0]
 
 
 class ListComplexProperty(ListComplexAttribute, BaseProperty):
