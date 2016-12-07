@@ -13,7 +13,7 @@ pyrpl: # General configuration of the software:
     - Lockbox
   dock_positions: !!binary |
     AAAA/wAAAAD9AAAAAgAAAAAAAAeAAAABSvwCAAAAAfsAAAAGAGkAcQBzAgAAAAAAAALuAAAHgAAA
-    AUoAAAACAAAE5gAAA8f8AQAAAAP7AAAADgBsAG8AYwBrAGIAbwB4AQAAAAAAAATmAAAE5gD////7
+    AUoAAAACAAAE6QAAA8f8AQAAAAP7AAAADgBsAG8AYwBrAGIAbwB4AQAAAAAAAATpAAAE5gD////7
     AAAACABhAHMAZwBzAAAAAAAAAAeAAAAAFgD////8AAAFrQAAAlcAAAAAAP////wCAAAAAvwAAAAV
     AAADYQAAAAAA////+gAAAAICAAAABvsAAAAEAG4AYQAAAAAA/////wAAAFAA////+wAAACIAcwBw
     AGUAYwB0AHIAdQBtAF8AYQBuAGEAbAB5AHoAZQByAAAAAAD/////AAAAUAD////7AAAAIgBzAHAA
@@ -22,11 +22,11 @@ pyrpl: # General configuration of the software:
     YQBsAHkAegBlAHIBAAAAAP////8AAAAAAAAAAPsAAAAKAHMAYwBvAHAAZQEAAAAA/////wAAAAAA
     AAAA/AAAABUAAAQ/AAAAAAD////6/////wEAAAAD+wAAAAgAaQBpAHIAcwAAAAAA/////wAAABYA
     ////+wAAAAwAcwBjAG8AcABlAHMAAAAAAP////8AAAAWAP////sAAAAIAHAAaQBkAHMAAAADbwAA
-    BA0AAAAWAP///wAABOYAAAAAAAAABAAAAAQAAAAIAAAACPwAAAAA
+    BA0AAAAWAP///wAABOkAAAAAAAAABAAAAAQAAAAIAAAACPwAAAAA
   window_position:
-  - -1927
-  - 125
-  - 1254
+  - 227
+  - 57
+  - 1257
   - 1008
 redpitaya:
   hostname: 10.214.1.28
@@ -254,3 +254,14 @@ lockboxs:
               - false
               - 0
           - name: stage5
+        - stage2: !!omap
+          - output_on:
+              slow_piezo:
+              - true
+              - false
+              - 0
+              output:
+              - true
+              - false
+              - 0
+          - name: stage2

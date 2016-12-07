@@ -1424,6 +1424,8 @@ class MainOutputProperties(QtGui.QGroupBox):
         self.v2.addWidget(aws["tf_type"])
         aws['tf_curve'].hide()
         self.setTitle('main attributes')
+        for v in self.v1, self.v2:
+            v.setSpacing(9)
 
 class SweepOutputProperties(QtGui.QGroupBox):
     def __init__(self, parent):
@@ -1627,6 +1629,24 @@ class OutputSignalWidget(ModuleWidget):
 
         self.main_layout.addWidget(self.win)
         self.main_layout.addWidget(self.win_phase)
+
+class LockboxInputWidget(ModuleWidget):
+    """
+    A widget to represent a single lockbox input
+    """
+    def init_gui(self):
+        self.main_layout = QtGui.QVBoxLayout(self)
+        self.init_attribute_layout()
+
+        self.win = pg.GraphicsWindow(title="Expected signal")
+        self.plot_item = self.win.addPlot(title='Expected ' + self.module.name)
+        self.plot_item.showGrid(y=True, x=True, alpha=1.)
+        self.main_layout.addWidget(self.win)
+
+        self.button_calibrate = QtGui.QPushButton('Calibrate')
+
+        self.main_layout.addWidget(self.button_calibrate)
+        self.button_calibrate.clicked.connect(self.module.calibrate)
 
 class InputsWidget(QtGui.QWidget):
     """

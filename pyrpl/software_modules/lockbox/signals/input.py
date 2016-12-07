@@ -1,6 +1,7 @@
 from pyrpl.modules import SoftwareModule
 from . import Signal
 from pyrpl.attributes import SelectAttribute, SelectProperty, FloatProperty, FrequencyProperty, PhaseProperty
+from pyrpl.widgets.module_widgets import LockboxInputWidget
 
 import scipy
 import logging
@@ -19,6 +20,7 @@ class InputSignal(SoftwareModule):
     setup_attributes = gui_attributes
     adc = SelectProperty(options=['adc1', 'adc2']) # adc
     model_cls = None # Model class to which this input belongs.
+    widget_class = LockboxInputWidget
 
     """
     def __init__(self, model):
