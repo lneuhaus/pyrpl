@@ -157,7 +157,6 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         dic = dict()
         if self.c is not None:
             for key, value in self.c._dict.items():
-                print(key, value)
                 if key in self.setup_attributes:
                     dic[key] = value
             self.set_setup_attributes(**dic)
@@ -409,7 +408,7 @@ class SoftwareModule(BaseModule):
         """
         Recursively looks through patent modules untill pyrpl instance is reached.
         """
-        from pyrpl.pyrpl import Pyrpl
+        from .pyrpl import Pyrpl
         parent = self.parent
         while(not isinstance(parent, Pyrpl)):
             parent = parent.parent

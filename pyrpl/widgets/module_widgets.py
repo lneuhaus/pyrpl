@@ -1006,21 +1006,12 @@ class IirWidget(ModuleWidget):
     """
 
     def select_pole(self, plot_item, spots):
-        print('selecting pole')
         index = spots[0].data()
         self.attribute_widgets['poles'].set_selected(index)
 
     def select_zero(self, plot_item, spots):
-        print('selecting zero')
         index = spots[0].data()
         self.attribute_widgets['zeros'].set_selected(index)
-        """
-        self.button_single = QtGui.QPushButton("Run single")
-        self.button_single.my_label = "Single"
-        self.button_continuous = QtGui.QPushButton("Run continuous")
-        self.button_continuous.my_label = "Continuous"
-        self.button_restart_averaging = QtGui.QPushButton('Restart averaging')
-        """
 
     def update_plot(self):
         tf = self.module.transfer_function(self.frequencies)
@@ -1688,7 +1679,6 @@ class InputsWidget(QtGui.QWidget):
         #self.layout.addStretch(1)
 
     def remove_input(self, input):
-        print(input)
         if input.widget in self.input_widgets:
             input.widget.hide()
             self.input_widgets.remove(input.widget)
@@ -1741,9 +1731,7 @@ class AllSignalsWidget(QtGui.QTabWidget):
         self.update_output_names()
 
     def tab_changed(self, index):
-        print(index)
         if index==self.count()-1: # tab "+" clicked
-            print('+ clicked')
             self.lb_widget.module.add_output()
             self.setCurrentIndex(self.count()-2) # bring created output tab on top
 
@@ -1876,7 +1864,6 @@ class LockboxSequenceWidget(ModuleWidget):
 
     def update_stage_names(self):
         for widget in self.stage_widgets:
-            print("setting title", widget.name)
             widget.set_title(widget.name)
 
 
@@ -1916,14 +1903,12 @@ class LockboxWidget(ModuleWidget):
         """
         Adds an input to the widget
         """
-        print('adding: ' + str(input))
         self.all_sig_widget.add_input(input)
 
     def remove_input(self, input):
         """
         Remove an input to the widget
         """
-        print("removing" + str(input))
         self.all_sig_widget.remove_input(input)
 
     ## Output Management
@@ -1971,7 +1956,6 @@ class LockboxWidget(ModuleWidget):
         self.sequence_widget.remove_stage(stage)
 
     def set_state(self, val):
-        print(val)
         if val=='unlock':
             self.set_button_green(self.button_unlock)
             return

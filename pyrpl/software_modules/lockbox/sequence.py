@@ -17,7 +17,6 @@ class Sequence(SoftwareModule):
         """
         Stages can be added at will.
         """
-        print('adding stage')
         stage = Stage(self)
         stage._autosave_active = False
         stage.update_inputs()
@@ -145,14 +144,12 @@ class Stage(SoftwareModule):
         """
 
         output_names = [output.name for output in self.lockbox.outputs]
-        print('updating', output_names)
         new_output_on = dict()
         for name in output_names:
             if not name in self.output_on:
                 new_output_on[name] = (True, False, 0)
             else:
                 new_output_on[name] = self.output_on[name]
-        print(new_output_on)
         self.output_on = new_output_on
 
     def set_setup_attributes(self, **kwds):
