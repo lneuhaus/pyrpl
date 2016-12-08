@@ -68,12 +68,12 @@ model:
 
   calibration:
     zoomfactor: 0.07
-    relative_threshold: 0.9
+    relative_threshold: 0.8
 
   resonant_reflection: -0.08322671800851822
   offresonant_reflection: 0.08339925855398178
-  peak_pdh: 0.5028076171875
-  resonant_transmission: 0.6962251737713814
+  peak_pdh: 0.234375
+  resonant_transmission: 0.22967243939638138
 # all signals that are inputs of the lockbox. Must be signal names understood
 # by the model. The order of signals indicates their preferrence as error
 # signals.
@@ -88,10 +88,10 @@ inputs:
   #  offset: -0.01687093824148178
   transmission:
     redpitaya_input: adc2
-    max: 0.6962251737713814
-    min: 0.003354080021381378
-    mean: 0.11889440566301346
-    rms: 0.1747369471228424
+    max: 0.22967243939638138
+    min: -0.009585373103618622
+    mean: 0.006327584385871887
+    rms: 0.03840908018573394
     offset: -0.004574783146381378
   pdh:
     setup:
@@ -110,10 +110,10 @@ inputs:
       acbandwidth: 100000.0
 
     redpitaya_input: iq0
-    max: 0.46969330310821533
-    min: -0.5359219312667847
-    mean: -0.02147502452135086
-    rms: 0.19233914544646102
+    max: 0.20394623279571533
+    min: -0.26480376720428467
+    mean: -0.021391823887825012
+    rms: 0.04892903702363317
     offset: 0.021029353141784668
 # All output signals. Names of outputs are arbitrary.
 outputs:
@@ -123,8 +123,7 @@ outputs:
     redpitaya_output: out1
     # voltage limits
     max_voltage: 1.0
-    #min_voltage: -1.0
-    min_voltage: 0
+    min_voltage: -1.0
     # we will calibrate the piezo response in units of m_per_V (not a necessary
     # parameter as it can be automatically filled in by the code)
     calibrationunits: m_per_V
@@ -136,18 +135,18 @@ outputs:
     # therefore the analog filter can be well approximated by a first order
     # lowpass with corner frequency 37.9 Hz
     analogfilter:
-      lowpass: [40.5]
+      lowpass: [31.0]
     # the piezo manufacturer specifies the first resonance at 144 kHz
     # however, the mounting structure is expected to have resonances starting
     # from 15 kHz. To be safe, we start by demanding a unity-gain frequency
     # of 1 kHz and will later increase this value (automatically done after
     # lock optimisation)
-    unity_gain_frequency: 500.0
+    unity_gain_frequency: 20.0
     sweep:
       waveform: ramp
       frequency: 10.0
-      amplitude: 0.5
-      offset: 0.5
+      amplitude: 1.0
+      offset: 0.0
 
     inputfilter:
     - 19428.09363914738
