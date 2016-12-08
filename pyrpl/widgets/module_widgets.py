@@ -1641,12 +1641,35 @@ class LockboxInputWidget(ModuleWidget):
         self.win = pg.GraphicsWindow(title="Expected signal")
         self.plot_item = self.win.addPlot(title='Expected ' + self.module.name)
         self.plot_item.showGrid(y=True, x=True, alpha=1.)
+        self.curve = self.plot_item.plot(pen='y')
+        self.curve_slope = self.plot_item.plot(pen=pg.mkPen('b', width=5))
+        self.symbol = self.plot_item.plot(pen='b', symbol='o')
         self.main_layout.addWidget(self.win)
 
         self.button_calibrate = QtGui.QPushButton('Calibrate')
 
         self.main_layout.addWidget(self.button_calibrate)
         self.button_calibrate.clicked.connect(self.module.calibrate)
+
+    def hide_lock(self):
+        self.curve_slope.setData([], [])
+        self.symbol.setData([], [])
+        self.plot_item.enableAutoRange(enable=True)
+
+    def show_lock(self, input, variable_value):
+        signal = self.module.expected_signal(variable_value)
+        slope = self.module.expected_slope(variable_value)
+        dx = 1
+        self.plot_item.enableAutoRange(enable=False)
+        self.curve_slope.setData([variable_value - dx, variable_value + dx],
+                                 [signal - slope * dx, signal + slope*dx])
+        self.symbol.setData([variable_value], [signal])
+
+    def show_graph(self, x, y):
+        """
+        x, y are two 1D arrays.
+        """
+        self.curve.setData(x, y)
 
 class InputsWidget(QtGui.QWidget):
     """
@@ -1816,6 +1839,10 @@ class LockboxStageWidget(ModuleWidget):
     def close(self):
         self.module.parent.remove_stage(self.module)
 
+    def show_lock(self):
+        self.parent().parent().set_button_green(self.button_goto)
+
+
 
 class LockboxSequenceWidget(ModuleWidget):
     """
@@ -1861,13 +1888,21 @@ class LockboxWidget(ModuleWidget):
         self.main_layout = QtGui.QVBoxLayout()
         self.init_attribute_layout()
         self.button_lock = QtGui.QPushButton("Lock")
+        self.button_unlock = QtGui.QPushButton("Unlock")
+        self.button_green = self.button_unlock
+        self.set_button_green(self.button_green)
         self.button_lock.clicked.connect(self.module.lock)
         self.attribute_layout.addWidget(self.button_lock)
+        self.attribute_layout.addWidget(self.button_unlock)
+        self.button_unlock.clicked.connect(self.module.unlock)
         self.button_sweep = QtGui.QPushButton("Sweep")
         self.button_sweep.clicked.connect(self.module.sweep)
         self.attribute_layout.addWidget(self.button_sweep)
+        self.button_calibrate_all = QtGui.QPushButton("Calibrate all inputs")
+        self.attribute_layout.addWidget(self.button_calibrate_all)
+        self.button_calibrate_all.clicked.connect(self.module.calibrate_all)
 
-        self.model_widget = self.module.get_model().create_widget()
+        self.model_widget = self.module.model.create_widget()
         self.main_layout.addWidget(self.model_widget)
         self.all_sig_widget = AllSignalsWidget(self)
         self.main_layout.addWidget(self.all_sig_widget)
@@ -1934,6 +1969,37 @@ class LockboxWidget(ModuleWidget):
         Removes a stage to the model
         """
         self.sequence_widget.remove_stage(stage)
+
+    def set_state(self, val):
+        print(val)
+        if val=='unlock':
+            self.set_button_green(self.button_unlock)
+            return
+        if val=='sweep':
+            self.set_button_green(self.button_sweep)
+            return
+        index = self.module.stage_names.index(val)
+        self.set_button_green(self.sequence_widget.stage_widgets[index].button_goto)
+
+    def set_button_green(self, button):
+        """
+        Only one colored button can exist at a time
+        """
+        self.button_green.setStyleSheet("")
+        button.setStyleSheet("background-color:green")
+        self.button_green = button
+
+    def show_lock(self, stage):
+        """
+        The button of the stage widget becomes green, the expected signal graph of input show the lock point and slope
+        """
+        if stage.widget is not None:
+            stage.widget.show_lock()
+        for input_widget in self.all_sig_widget.inputs_widget.input_widgets:
+            input_widget.hide_lock()
+        input_widget = self.module.get_input(stage.input).widget
+        if input_widget is not None:
+            input_widget.show_lock(stage.input, stage.variable_value)
 
    #def update_stage_names(self):
     #    """

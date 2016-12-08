@@ -19,6 +19,7 @@ class Sequence(SoftwareModule):
         """
         print('adding stage')
         stage = Stage(self)
+        stage._autosave_active = False
         stage.update_inputs()
         stage.update_outputs()
         stage.name = "stage" + str(len(self.stages) + 1)
@@ -27,6 +28,7 @@ class Sequence(SoftwareModule):
         # self.__class__.default_sweep_output.change_options([output.name for output in self.outputs])
         if self.widget is not None:
             self.widget.add_stage(stage)
+        stage._autosave_active = True
         return stage
 
     def rename_stage(self, stage, new_name):
@@ -60,7 +62,7 @@ class Sequence(SoftwareModule):
     def load_setup_attributes(self):
         if self.c is not None:
             if 'stages' in self.c._dict.keys():
-                for name, output in self.c.stages._dict.items():
+                for name, stage in self.c.stages._dict.items():
                     if name!='states':
                         stage = self.add_stage()
                         stage._autosave_active = False
@@ -121,8 +123,8 @@ class Stage(SoftwareModule):
     widget_class = LockboxStageWidget
     input = DynamicSelectProperty()
     output_on = ListStageOuputProperty()
-    variable_value = FloatProperty()
-    duration = FloatProperty()
+    variable_value = FloatProperty(min=-1e6, max=1e6)
+    duration = FloatProperty(min=0, max=1e6)
     function_call = StringProperty()
 
     def init_module(self):
@@ -167,10 +169,11 @@ class Stage(SoftwareModule):
         for output in self.lockbox.outputs:
             (on, offset_enable, offset) = self.output_on[output.name]
             if on:
-                if self.offset_enabled:
+                if offset_enable:
                     output.set_ival(offset)
-                output.lock()
+                output.lock(self.input, self.variable_value)
             else:
                 output.unlock()
-
-
+        self.lockbox.state = self.name
+        if self.lockbox.widget is not None:
+            self.lockbox.widget.show_lock(self)

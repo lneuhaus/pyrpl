@@ -1,6 +1,6 @@
 from . import Signal
 from pyrpl.attributes import BoolProperty, FloatProperty, SelectProperty, FloatAttribute, FilterAttribute, LongProperty,\
-                             StringProperty, ListFloatProperty
+                             StringProperty, ListFloatProperty, FrequencyProperty
 from pyrpl.hardware_modules.asg import Asg1
 from pyrpl.widgets.module_widgets import OutputSignalWidget
 
@@ -11,8 +11,9 @@ class ProportionalGainProperty(FloatProperty):
     """
     def set_value(self, instance, value):
         super(ProportionalGainProperty, self).set_value(instance, value)
-        if instance.is_locked:
-            instance.pid.p = value
+        if instance.mode=='lock':
+            instance.update_pid_gains(instance.current_input_lock,
+                                      instance.current_variable_value)
 
 
 class IntegralGainProperty(FloatProperty):
@@ -21,8 +22,9 @@ class IntegralGainProperty(FloatProperty):
     """
     def set_value(self, instance, value):
         super(IntegralGainProperty, self).set_value(instance, value)
-        if instance.is_locked:
-            instance.pid.i = value
+        if instance.mode=='lock':
+            instance.update_pid_gains(instance.current_input_lock,
+                                      instance.current_variable_value)
 
 
 class PIcornerAttribute(FloatAttribute):
@@ -96,10 +98,10 @@ class OutputSignal(Signal):
     is_sweepable = BoolProperty()
     sweep_amplitude = FloatProperty()
     sweep_offset = FloatProperty()
-    sweep_frequency = FloatProperty()
+    sweep_frequency = FrequencyProperty()
     sweep_waveform = SelectProperty(options=Asg1.waveforms)
     dc_gain = FloatProperty() # gain for the conversion V-->model variable in *unit*
-    output_channel = SelectProperty(options=['dac1', 'dac2']) # at some point, we should add pwms...
+    output_channel = SelectProperty(options=['out1', 'out2']) # at some point, we should add pwms...
     p = ProportionalGainProperty()
     i = ProportionalGainProperty()
     analog_filter = ListFloatProperty()
@@ -114,6 +116,9 @@ class OutputSignal(Signal):
     def init_module(self):
         self.display_name = "my_output"
         self._pid = None
+        self._mode = "unlock"
+        self.current_input_lock = None
+        self.current_variable_value = 0
         self.lockbox = self.parent
         self.name = 'output' # will be updated in add_output of parent module
 
@@ -121,12 +126,48 @@ class OutputSignal(Signal):
  #   def id(self): # it would be more convenient to compute name from output, but class attribute name can't be a
  #                 # property since it used to define the save section
  #       return int(self.name.strip('output'))
+    def update_pid_gains(self, input, variable_value):
+        """
+        If current mode is "lock", updates the gains of the underlying pid module such that:
+            - input.gain * pid.p * output.dc_gain = output.p
+            - input.gain * pid.i * output.dc_gain = output.i
+        """
+        if isinstance(input, basestring):
+            input = self.lockbox.get_input(input)
+        self.pid.setpoint = input.expected_signal(variable_value)
+        input_gain = input.expected_slope(variable_value)
+        self.pid.p = self.p/(input_gain*self.dc_gain)
+        self.pid.i = self.i/(input_gain*self.dc_gain)
 
-    def lock(self):
+    @property
+    def mode(self):
+        """
+        returns "unlock", "sweep", or "lock"
+        """
+        return self._mode
+
+    @mode.setter
+    def mode(self, val):
+        """
+        val should be in ["unlock", "sweep", "lock" ]
+        """
+        if not val in ["unlock", "sweep", "lock" ]:
+            raise ValueError("mode of output %s can only be "
+                             "set to 'unlock', 'sweep', or 'lock', not %s"%(self.name, val))
+        self._mode = val
+        return val
+
+    def lock(self, input, variable_value):
         """
         Closes the lock loop, using the required p and i parameters.
         """
-        1/0
+        if isinstance(input, basestring):
+            input = self.lockbox.get_input(input)
+        self.mode = 'lock'
+        self.current_input_lock = input
+        self.current_variable_value = variable_value
+        self.update_pid_gains(input, variable_value)
+        self.pid.input = input.signal()
 
     @property
     def is_locked(self):
@@ -142,17 +183,24 @@ class OutputSignal(Signal):
         return self._pid
 
     def unlock(self):
+        self.mode = 'unlock'
         self.pid.p = self.pid.i = 0
 
     def sweep(self):
+        self.mode = 'sweep'
+        self.is_sweepable = True # ... not handled in the gui for now
         if not self.is_sweepable:
             raise ValueError("output '%s' is not sweepable"%self.name)
         self.unlock()
+        self.pid.i = 0
+        self.pid.ival = 0
         self.pid.p = 1.
         self.lockbox.asg.setup(amplitude=self.sweep_amplitude,
                                offset=self.sweep_offset,
                                frequency=self.sweep_frequency,
                                waveform=self.sweep_waveform)
+        self.pid.input = self.lockbox.asg
+        self.pid.output_direct = self.output_channel
 
     def clear(self):
         """

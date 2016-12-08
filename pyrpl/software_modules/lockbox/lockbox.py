@@ -1,5 +1,5 @@
 from pyrpl.modules import SoftwareModule
-from pyrpl.attributes import SelectProperty, BoolProperty
+from pyrpl.attributes import SelectProperty, BoolProperty, DynamicSelectProperty
 from .model import Model
 from .signals import OutputSignal, InputSignal
 from pyrpl.widgets.module_widgets import LockboxWidget
@@ -7,6 +7,7 @@ from pyrpl.pyrpl_utils import  get_unique_name_list_from_class_list
 from .sequence import Sequence
 
 from collections import OrderedDict
+from PyQt4 import QtCore
 
 
 all_models = OrderedDict([(model.name, model) for model in Model.__subclasses__()])
@@ -28,18 +29,24 @@ class Lockbox(SoftwareModule):
     """
     section_name = 'lockbox'
     widget_class = LockboxWidget
-    gui_attributes = ["model", "default_sweep_output", "auto_relock"]
+    gui_attributes = ["model_name", "default_sweep_output", "auto_relock"]
     setup_attributes = gui_attributes
-    model = ModelProperty(options=all_models.keys())
+    model_name = ModelProperty(options=all_models.keys())
     auto_relock = BoolProperty()
-    default_sweep_output = SelectProperty(options=["dummy"])
+    default_sweep_output = DynamicSelectProperty(options=[])
 
     def init_module(self):
         self.outputs = []
+        self.__class__.default_sweep_output.change_options(self, ['dummy']) # dirty... something needs to be done with this attribute class
         self._asg = None
         self.inputs = []
         self.sequence = Sequence(self, 'sequence')
+        self.model_name = sorted(all_models.keys())[0]
         self.model_changed()
+        self.state = "unlock"
+        self.timer_lock = QtCore.QTimer()
+        self.timer_lock.timeout.connect(self.goto_next)
+        self.timer_lock.setSingleShot(True)
 
     @property
     def asg(self):
@@ -47,14 +54,20 @@ class Lockbox(SoftwareModule):
             self._asg = self.pyrpl.asgs.pop(self.name)
         return self._asg
 
-    def sweep(self, output=None):
+    @property
+    def output_names(self):
+        return [output.name for output in self.outputs]
+
+    def sweep(self):
         """
-        Performs a sweep of one of the output. If no output is specified, the default sweep_output is used.
+        Performs a sweep of one of the output. No output default kwds to avoid problems when use as a slot.
         """
-        self.unlock
-        if output is None:
-            output = self.default_sweep_output
-        self._asg.output = output
+        self.unlock()
+        # if output is None:
+        index = self.output_names.index(self.default_sweep_output)
+        output = self.outputs[index]
+        output.sweep()
+        self.state = "sweep"
 
 #    def get_unique_output_id(self):
 #        """
@@ -65,8 +78,48 @@ class Lockbox(SoftwareModule):
 #            i+=1
 #        return i
 
+    @property
+    def state(self):
+        return self._state
+
+    @state.setter
+    def state(self, val):
+        if not val in ['unlock', 'sweep'] + [stage.name for stage in self.sequence.stages]:
+            raise ValueError("State should be either unlock, or a valid stage name")
+        self._state = val
+        if self.widget is not None:
+            self.widget.set_state(val)
+        return val
+
+    @property
+    def stage_names(self):
+        return [stage.name for stage in self.sequence.stages]
+
+    def goto_next(self):
+        """
+        Goes to the stage immediately after the current one
+        """
+        if self.state=='sweep' or self.state=='unlock':
+            index = 0
+        else:
+            index = self.stage_names.index(self.state) + 1
+        stage = self.stage_names[index]
+        self.goto(stage)
+        self.timer_lock.setInterval(self.get_stage(stage).duration*1000)
+        if index + 1 < len(self.sequence.stages):
+            self.timer_lock.start()
+
+    def goto(self, stage_name):
+        """
+        Sets up the lockbox to the stage named stage_name
+        """
+        self.get_stage(stage_name).setup()
+
     def lock(self):
-        1/0
+        """
+        Launches the full lock sequence, stage by stage until the end.
+        """
+        self.goto_next()
 
     def add_output(self):
         """
@@ -78,6 +131,8 @@ class Lockbox(SoftwareModule):
         setattr(self, output.name, output)
         # self.__class__.default_sweep_output.change_options([output.name for output in self.outputs])
         self.sequence.update_outputs()
+
+        self.__class__.default_sweep_output.change_options(self, [out.name for out in self.outputs])
         if self.widget is not None:
             self.widget.add_output(output)
         return output
@@ -89,6 +144,7 @@ class Lockbox(SoftwareModule):
         if 'outputs' in self.c._keys():
             if output.name in self.c.outputs._keys():
                 self.c.outputs._pop(output.name)
+        self.__class__.default_sweep_output.change_options([output.name for output in self.outputs])
         if self.widget is not None:
             self.widget.remove_output(output)
 
@@ -109,20 +165,22 @@ class Lockbox(SoftwareModule):
     def update_output_names(self):
         if self.widget is not None:
             self.widget.update_output_names()
+        self.__class__.default_sweep_output.change_options(self, [out.name for out in self.outputs])
 
     def unlock(self):
+        """
+        Unlocks all outputs, without touching the integrator value.
+        """
+        self.state = 'unlock'
         for output in self.outputs:
             output.unlock()
 
-    def get_model(self):
-        return all_models[self.model](self)
-
     def model_changed(self):
         ### model should be redisplayed
-        model = self.get_model()
-        model.load_setup_attributes()
+        self.model = all_models[self.model_name](self)
+        self.model.load_setup_attributes()
         if self.widget is not None:
-            self.widget.change_model(model)
+            self.widget.change_model(self.model)
 
         ### outputs are only slightly affected by a change of model: only the unit of their DC-gain might become
         ### obsolete, in which case, it needs to be changed to some value...
@@ -133,8 +191,7 @@ class Lockbox(SoftwareModule):
         ###  - keep inputs that have a name compatible with the new model.
         ###  - remove inputs that have a name unexpected in the new model
         ###  - add inputs from the new model that have a name not present in the old model
-        model = self.get_model()
-        names = get_unique_name_list_from_class_list(model.input_cls)
+        names = get_unique_name_list_from_class_list(self.model.input_cls)
         intersect_names = []
 
         to_remove = [] # never iterate on a list that is being deleted
@@ -145,7 +202,7 @@ class Lockbox(SoftwareModule):
                 intersect_names.append(input.name)
         for input in to_remove:
             self._remove_input(input)
-        for name, cls in zip(names, model.input_cls):
+        for name, cls in zip(names, self.model.input_cls):
             if not name in intersect_names:
                 input = cls(self, name)
                 self._add_input(input)
@@ -175,10 +232,14 @@ class Lockbox(SoftwareModule):
 
         # load inputs
         for input in self.inputs:
+            input._autosave_active = False
             input.load_setup_attributes()
+            input._autosave_active = True
 
         # load sequence
+        self.sequence._autosave_active = False
         self.sequence.load_setup_attributes()
+        self.sequence._autosave_active = True
 
     def _remove_input(self, input):
         input.clear()
@@ -192,7 +253,6 @@ class Lockbox(SoftwareModule):
         if self.widget is not None:
             self.widget.add_input(input)
 
-
     def _setup(self):
         """
         Sets up the lockbox
@@ -200,3 +260,30 @@ class Lockbox(SoftwareModule):
         for output in self.outputs:
             output._setup()
 
+    def get_input(self, name):
+        """
+        retrieves an input by name
+        """
+        return self.inputs[[input.name for input in self.inputs].index(name)]
+
+
+    def get_output(self, name):
+        """
+        retrieves an output by name
+        """
+        return self.outputs[[output.name for output in self.outputs].index(name)]
+
+    def get_stage(self, name):
+        """
+        retieves a stage by name
+        """
+        if not name in self.stage_names:
+            raise ValueError(stage_name + " is not a valid stage name")
+        return self.sequence.stages[self.stage_names.index(name)]
+
+    def calibrate_all(self):
+        """
+        Calibrates successively all inputs
+        """
+        for input in self.inputs:
+            input.calibrate()

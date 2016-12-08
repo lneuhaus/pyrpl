@@ -4,6 +4,7 @@ from pyrpl.attributes import SelectAttribute, SelectProperty, FloatProperty, Fre
 from pyrpl.widgets.module_widgets import LockboxInputWidget
 
 import scipy
+import numpy as np
 import logging
 
 logger = logging.getLogger(__name__)
@@ -35,19 +36,36 @@ class InputSignal(SoftwareModule):
         self.lockbox = self.parent
         self.model = self.parent.model
         self.parameters = dict()
+        self.plot_range = np.linspace(-5, 5, 200)
 
     def acquire(self):
         """
         returns an experimental curve in V obtained from a sweep of the lockbox.
         """
         self.lockbox.sweep()
+        scope = self.pyrpl.scopes.pop(self.name)
+        scope.load_state("sweep")
+        scope.setup(input1=self.signal(), input2=self.lockbox.asg)
+        curve = scope.curve(ch=1)
+        self.pyrpl.scopes.free(scope)
+        return curve
 
     def calibrate(self):
         """
         This function should be reimplemented to measure whatever property of the curve is needed by expected_signal
         """
         curve = self.acquire()
-        self.parameters = dict(mean=curve.mean(), rms=curve.rms())
+        self.parameters = dict(mean=curve.mean(), rms=curve.std(), min=curve.min(), max=curve.max())
+
+
+        if self.widget is not None:
+            self.update_graph()
+
+    def update_graph(self):
+        if self.widget is not None:
+            y = self.expected_signal(self.plot_range )
+            self.widget.show_graph(self.plot_range , y)
+
 
     def expected_signal(self, variable):
         """
@@ -56,6 +74,16 @@ class InputSignal(SoftwareModule):
         """
         raise NotImplementedError("Formula relating variable and parameters to output should be implemented in derived "
                                   "class")
+
+    def expected_slope(self, variable):
+        """
+        Returns the slope of the expected signal wrt variable at a given value of the variable.
+        """
+        return scipy.misc.derivative(self.expected_signal,
+                                     variable,
+                                     dx=1e-9,
+                                     n=1, #first derivative
+                                     order=3)
 
     def inverse(self, func, y, x0, args=()):
         """
@@ -125,6 +153,9 @@ class InputSignal(SoftwareModule):
 class InputDirect(InputSignal):
     section_name = 'direct_input'
 
+    def signal(self):
+        return self.adc
+
 
 class PdhFrequencyProperty(FrequencyProperty):
     def set_value(self, instance, value):
@@ -164,10 +195,15 @@ class InputPdh(InputSignal):
     mod_output = PdhModOutputProperty(['out1', 'out2'])
 
     def init_module(self):
+        super(InputPdh, self).init_module()
         self._iq = None
+        self.setup()
 
     def clear(self):
         self.pyrpl.iqs.free(self.iq)
+
+    def signal(self):
+        return self.iq
 
     @property
     def iq(self):
@@ -217,6 +253,6 @@ class InputPdh(InputSignal):
     def expected_signal(self, variable):
         return self.parameters['mean'] + (self.parameters['max'] - self.parameters['min'])*\
                                          self._pdh_normalized(variable,
-                                                              self.model.mod_freq,
-                                                              self.model.phase,
+                                                              self.mod_freq,
+                                                              self.mod_phase,
                                                               self.model.eta)
