@@ -294,6 +294,11 @@ class MemoryTree(MemoryBranch):
             with open(self._filename, mode="w") as f:
                 pass
         self._load()
+        # make a temporary file to ensure modification of config file is atomic (double-buffering like operation...)
+        tmp_dir = os.path.join(os.path.dirname(self._filename), "tmp")
+        if not os.path.isdir(tmp_dir):
+            os.mkdir(tmp_dir)
+        self._buffer_filename = os.path.join(tmp_dir, 'tmp.yml')
         super(MemoryTree, self).__init__(self, "")
 
     def _load(self):
@@ -327,8 +332,17 @@ class MemoryTree(MemoryBranch):
         logger.debug("Saving config file %s", self._filename)
         copyfile(self._filename, self._filename+".bak")
         try:
-            with open(self._filename, mode='w') as f:
-                save(self._data, stream=f)
+            f = open(self._buffer_filename, mode='w')
+            save(self._data, stream=f)
+            f.flush()
+            os.fsync(f.fileno())
+            f.close()
+            # config file writing should be atomic! I am not 100% sure the following line guarantees atomicity on windows
+            # but it's already much better than lettin the yaml dumper save on the final config file
+            # see http://stackoverflow.com/questions/2333872/atomic-writing-to-file-with-python
+            # or https://bugs.python.org/issue8828
+            os.unlink(self._filename)
+            os.rename(self._buffer_filename, self._filename)
         except:
             copyfile(self._filename+".bak", self._filename)
             logger.error("Error writing to file. Backup version was restored.")

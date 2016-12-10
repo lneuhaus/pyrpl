@@ -312,7 +312,7 @@ class Pyrpl(object):
                         self.logger.warning('Something went wrong when loading attributes of module "%s"'%module.name)
         if self.c.pyrpl.gui:
             widget = self.create_widget()
-        widget.show()
+            widget.show()
 
     def load_software_modules(self):
         """
