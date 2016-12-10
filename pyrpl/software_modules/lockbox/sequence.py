@@ -172,5 +172,5 @@ class Stage(SoftwareModule):
             else:
                 output.unlock()
         self.lockbox.state = self.name
-        if self.lockbox.widget is not None:
-            self.lockbox.widget.show_lock(self)
+        #if self.lockbox.widget is not None:
+        #    self.lockbox.widget.show_lock(self)

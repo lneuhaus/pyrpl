@@ -1958,12 +1958,15 @@ class LockboxWidget(ModuleWidget):
     def set_state(self, val):
         if val=='unlock':
             self.set_button_green(self.button_unlock)
+            self.hide_lock_points()
             return
         if val=='sweep':
+            self.hide_lock_points()
             self.set_button_green(self.button_sweep)
             return
         index = self.module.stage_names.index(val)
         self.set_button_green(self.sequence_widget.stage_widgets[index].button_goto)
+        self.show_lock(val)
 
     def set_button_green(self, button):
         """
@@ -1975,15 +1978,26 @@ class LockboxWidget(ModuleWidget):
 
     def show_lock(self, stage):
         """
-        The button of the stage widget becomes green, the expected signal graph of input show the lock point and slope
+        The button of the stage widget becomes green, the expected signal graph of input show the lock point and slope.
         """
-        if stage.widget is not None:
-            stage.widget.show_lock()
+        self.hide_lock_points()
+        if isinstance(stage, basestring):
+            stage = self.module.get_stage(stage)
+        if stage is not None:
+            if stage.widget is not None:
+                stage.widget.show_lock()
+            input_widget = self.module.get_input(stage.input).widget
+            if input_widget is not None:
+                input_widget.show_lock(stage.input, stage.variable_value)
+
+    def hide_lock_points(self):
+        """
+        make sure all input graphs are not displaying any setpoints and slopes
+        """
         for input_widget in self.all_sig_widget.inputs_widget.input_widgets:
             input_widget.hide_lock()
-        input_widget = self.module.get_input(stage.input).widget
-        if input_widget is not None:
-            input_widget.show_lock(stage.input, stage.variable_value)
+
+
 
    #def update_stage_names(self):
     #    """
