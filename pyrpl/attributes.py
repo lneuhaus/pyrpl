@@ -9,7 +9,7 @@ An attribute is a field that can be set or get by several means:
 Of course, the gui/parameter file/actual values have to stay "in sync" each time the attribute value is
 changed. The necessary mechanisms are happening behind the scene, and they are coded in this file.
 """
-
+from __future__ import division
 from .bijection import Bijection
 from .widgets.attribute_widgets import BoolAttributeWidget, FloatAttributeWidget, FilterAttributeWidget, \
                                             IntAttributeWidget, SelectAttributeWidget, StringAttributeWidget, \
@@ -20,6 +20,7 @@ import logging
 import sys
 import numpy as np
 import numbers
+
 
 
 logger = logging.getLogger(name=__name__)

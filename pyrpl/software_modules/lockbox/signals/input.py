@@ -34,9 +34,12 @@ class InputSignal(SoftwareModule):
         lockbox is the lockbox instance to which this input belongs.
         """
         self.lockbox = self.parent
-        self.model = self.parent.model
         self.parameters = dict()
         self.plot_range = np.linspace(-5, 5, 200)
+
+    @property
+    def model(self):
+        return self.parent.model
 
     def acquire(self):
         """

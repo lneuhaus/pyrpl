@@ -60,7 +60,6 @@ class SaveLabel(MyMenuLabel):
     def __init__(self, module_widget):
         super(SaveLabel, self).__init__(module_widget)
 
-
     def func(self, state):
         self.module.save_state(state)
 
@@ -74,6 +73,7 @@ class SaveLabel(MyMenuLabel):
     def new_state(self):
         state, accept = QtGui.QInputDialog.getText(self,
                                                    "Save %s state"%self.module.name, "Enter new state name:")
+        state = str(state)
         if accept:
             if state in self.module.states:
                 raise ValueError("State %s of module %s already exists!"%(state, self.module.name))
@@ -1413,7 +1413,7 @@ class MainOutputProperties(QtGui.QGroupBox):
         self.v1.addWidget(aws['dc_gain'])
         self.v2.addWidget(aws["output_channel"])
         self.v2.addWidget(aws["tf_type"])
-        aws['tf_curve'].hide()
+#        aws['tf_curve'].hide()
         self.setTitle('main attributes')
         for v in self.v1, self.v2:
             v.setSpacing(9)

@@ -88,8 +88,8 @@ class OutputSignal(Signal):
                       'extra_module',
                       'extra_module_state',
                       'unity_gain_desired',
-                      'tf_type',
-                      'tf_curve']
+                      'tf_type',]
+                      #'tf_curve']
     setup_attributes = gui_attributes
 
     widget_class = OutputSignalWidget
@@ -100,10 +100,10 @@ class OutputSignal(Signal):
     sweep_offset = FloatProperty()
     sweep_frequency = FrequencyProperty()
     sweep_waveform = SelectProperty(options=Asg1.waveforms)
-    dc_gain = FloatProperty() # gain for the conversion V-->model variable in *unit*
+    dc_gain = FloatProperty(min=-1e10, max=1e10) # gain for the conversion V-->model variable in *unit*
     output_channel = SelectProperty(options=['out1', 'out2']) # at some point, we should add pwms...
-    p = ProportionalGainProperty()
-    i = ProportionalGainProperty()
+    p = ProportionalGainProperty(min=-1e10, max=1e10)
+    i = ProportionalGainProperty(min=-1e10, max=1e10)
     analog_filter = ListFloatProperty()
     additional_filter = AdditionalFilterAttribute()
     extra_module = SelectProperty(['None', 'iir', 'pid', 'iq'])
@@ -111,7 +111,7 @@ class OutputSignal(Signal):
     tf_type = SelectProperty(["flat", "curve", "filter"])
     # tf_filter = CustomFilterRegister()
     unity_gain_desired = FloatProperty()
-    tf_curve = LongProperty()
+    # tf_curve = LongProperty()
 
     def init_module(self):
         self.display_name = "my_output"
@@ -207,3 +207,9 @@ class OutputSignal(Signal):
         Free up resources associated with the output
         """
         self.pyrpl.pids.free(self.pid)
+
+    def set_ival(self, val):
+        """
+        sets the integrator value to val (in V)
+        """
+        self.pid.ival = val

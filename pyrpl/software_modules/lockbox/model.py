@@ -78,12 +78,12 @@ class FabryPerot(Model):
     setup_attributes = gui_attributes
     wavelength = FloatProperty(max=10000,min=0)
     finesse = FloatProperty(max=1e7, min=0)
-    length = FloatProperty(max=10000, min=0)
+    length = FloatProperty(max=10e12, min=0)
     eta    = FloatProperty(min=0., max=1.)
     # approximate length (not taking into account small variations of the order of wavelength)
     variable = 'detuning'
 
-    input_cls = [FPReflection, FPTransmission, InputPdh]
+    input_cls = [FPTransmission, FPReflection, InputPdh]
 
     def lorentz(self, x):
         return 1.0 / (1.0 + x ** 2)

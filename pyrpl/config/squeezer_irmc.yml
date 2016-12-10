@@ -9,21 +9,20 @@ pyrpl: # General configuration of the software:
   # 'error' only shows errors
   modules: # SoftwareModules to load (in addition to IqManager, AsgManager, PidManager, ScopeManager)
     - NetworkAnalyzer
-    - SpectrumAnalyzer
     - Lockbox
   dock_positions: !!binary |
-    AAAA/wAAAAD9AAAAAQAAAAIAAAPDAAADifwBAAAAAfwAAAAAAAADwwAAAogA////+gAAAAcBAAAA
-    CPsAAAAMAHMAYwBvAHAAZQBzA/////8AAAANAAADSQAAAgr7AAAACABhAHMAZwBzAAAAAAD/////
-    AAAAFgD////7AAAABgBpAHEAcwAAAAAA/////wAAABYA////+wAAAAgAcABpAGQAcwAAAAAA////
-    /wAAABYA////+wAAAAgAaQBpAHIAcwAAAAAA/////wAAABYA////+wAAAAQAbgBhAAAAAAD/////
+    AAAA/wAAAAD9AAAAAQAAAAIAAAVbAAADRvwBAAAAAfwAAAAAAAAFWwAABVsA////+gAAAAcBAAAA
+    CPsAAAAMAHMAYwBvAHAAZQBzAQAAAAD/////AAADXwD////7AAAACABhAHMAZwBzAQAAAAD/////
+    AAACJQD////7AAAABgBpAHEAcwEAAAAA/////wAAAzcA////+wAAAAgAcABpAGQAcwEAAAAA////
+    /wAAAkMA////+wAAAAgAaQBpAHIAcwAAAAAA/////wAAABYA////+wAAAAQAbgBhAAAAAAD/////
     AAAAFgD////7AAAAIgBzAHAAZQBjAHQAcgB1AG0AXwBhAG4AYQBsAHkAegBlAHIAAAAAAP////8A
-    AAAWAP////sAAAAOAGwAbwBjAGsAYgBvAHgBAAAAAP////8AAAKIAP///wAAA8MAAAAAAAAABAAA
+    AAAAAAAAAPsAAAAOAGwAbwBjAGsAYgBvAHgBAAAAAP////8AAAVbAP///wAABVsAAAAAAAAABAAA
     AAQAAAAIAAAACPwAAAAA
   window_position:
-  - 319
-  - 22
-  - 963
-  - 946
+  - 163
+  - 54
+  - 1371
+  - 879
 redpitaya:
   hostname: 10.214.1.33
   password: root
@@ -40,42 +39,91 @@ spectrum_analyzers: !!omap
 lockboxs: !!omap
 - lockbox: !!omap
   - fabryperots: !!omap
-    - FabryPerot: !!omap []
+    - FabryPerot: !!omap [{wavelength: 1064.0}, {finesse: 5000.0}, {eta: 1.0}, {length: 100.0}]
   - reflections: !!omap
-    - reflection: !!omap []
+    - reflection: !!omap [{adc: adc2}]
   - transmissions: !!omap
     - transmission: !!omap []
   - pdhs: !!omap
-    - pdh: !!omap []
+    - pdh: !!omap [{mod_freq: 20000000.0}, {mod_amp: 1.0}, {mod_phase: 90.0}]
   - sequences: !!omap
-    - sequence: !!omap [{stages: !!omap [{stage1: !!omap [{duration: 0.0022}]}, {
-              stage2: !!omap [{duration: 0.0022}]}, {stage3: !!omap [{duration: 0.0022}]}]}]
+    - sequence: !!omap [{stages: !!omap [{drift: !!omap [{duration: 5.0}, {output_on: {
+                    piezo: [true, true, 1.0], fast_piezo: [false, false, 0]}}, {name: drift},
+                {variable_value: -0.8}, {input: reflection}]}, {even_closer: !!omap [
+                {variable_value: -0.7}, {output_on: {piezo: [true, false, 0], fast_piezo: [
+                      false, false, 0]}}, {duration: 0.3}, {name: even_closer}, {
+                  input: reflection}]}, {closer1: !!omap [{name: closer1}, {output_on: {
+                    piezo: [true, false, 0], fast_piezo: [false, false, 0]}}, {variable_value: -0.6},
+                {input: reflection}, {duration: 0.3}]}, {closer2: !!omap [{input: reflection},
+                {name: closer2}, {variable_value: -0.5}, {output_on: {piezo: [true,
+                      false, 0], fast_piezo: [false, false, 0]}}, {duration: 0.3}]},
+            {pdh: !!omap [{output_on: {piezo: [true, false, 0], fast_piezo: [true,
+                      false, 0]}}, {name: pdh}, {variable_value: -0.5}]}, {stage6: !!omap [
+                {variable_value: 0.0}, {output_on: {piezo: [true, false, 0], fast_piezo: [
+                      true, false, 0]}}]}]}]
   - interferometers: !!omap
     - interferometer: !!omap []
   - direct_inputs: !!omap
     - direct_input1: !!omap []
     - direct_input2: !!omap []
   - model_name: FabryPerot
+  - outputs: !!omap
+    - piezo: !!omap
+      - name: piezo
+      - output_channel: out2
+      - dc_gain: 10.0
+      - sweep_frequency: 10.0
+      - sweep_offset: 0.008
+      - sweep_amplitude: 0.4
+      - sweep_waveform: ramp
+      - p: 0.0
+      - i: 0.5
+      - is_sweepable: true
+    - fast_piezo: !!omap
+      - name: fast_piezo
+      - is_sweepable: true
+      - output_channel: out2
+      - dc_gain: 10.0
+      - sweep_amplitude: 0.0
+      - i: 100.0
+      - p: 100.0
+  - default_sweep_output: piezo
 hks: !!omap
 - hk: !!omap []
 amss: !!omap
 - ams: !!omap []
 scopes: !!omap
-- scope: !!omap []
+- scope: !!omap [{trigger_source: immediately}, {input2: dac2}, {duration: 8.589934592},
+    {trigger_delay: 4.294967296}, {input1: adc2}, {curve_name: ''}, {threshold_ch2: 0.0},
+    {average: true}, {threshold_ch1: 0.0}]
+- states: {sweep: {input2: dac2, input1: iq2, curve_name: '', threshold_ch2: 0.0,
+      trigger_delay: 0.020004864, average: true, threshold_ch1: 0.0, trigger_source: asg2,
+      duration: 0.134217728}, zoom: {input2: dac2, input1: adc1, curve_name: '', threshold_ch2: 0.0,
+      trigger_delay: 0.0, average: true, threshold_ch1: -0.4000244140625, trigger_source: ch1_negative_edge,
+      duration: 0.008388608}, rolling: {input2: dac2, input1: adc2, curve_name: '',
+      threshold_ch2: 0.0, trigger_delay: 4.294967296, average: true, threshold_ch1: 0.0,
+      trigger_source: immediately, duration: 8.589934592}}
 samplers: !!omap
 - sampler: !!omap []
 asgs: !!omap
 - asg1: !!omap []
-- asg2: !!omap []
+- asg2: !!omap [{waveform: ramp}, {frequency: 10.011717677116394}, {amplitude: 0.199951171875},
+    {offset: 0.0079345703125}, {output_direct: off}]
 pwms: !!omap
 - pwm1: !!omap []
 - pwm2: !!omap []
 pids: !!omap
-- pid1: !!omap []
-- pid2: !!omap []
-- pid3: !!omap []
-- pid4: !!omap []
+- pid1: !!omap [{ival: 0.0}]
+- pid2: !!omap [{ival: 0.0}]
+- pid3: !!omap [{ival: 0.0}]
+- pid4: !!omap [{ival: -1.0}, {setpoint: 0.1431884765625}, {p: 0.0}, {i: 0.0}, {input: adc1}]
 iirs: !!omap
 - iir: !!omap []
 iqs: !!omap
-- iq1: !!omap []
+- iq1: !!omap [{frequency: 19999999.98952262}, {amplitude: 0.09999847412109375}, {
+      phase: 0.0}, {quadrature_factor: 0.01171875}, {output_direct: off}, {acbandwidth: [
+        0]}, {bandwidth: [155424, 155424]}, {gain: 0.0}, {input: off}]
+- iq2: !!omap
+  - frequency: 19999999.98952262
+  - amplitude: 1.0
+  - phase: 90.0

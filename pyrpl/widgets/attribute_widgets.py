@@ -307,8 +307,8 @@ class MyDoubleSpinBox(MyNumberSpinBox):
 
     @property
     def val(self):
-        if self.line.text()!=("%."+str(self.decimals) + "f")%self._val:
-            return float(self.line.text())
+        if str(self.line.text())!=("%."+str(self.decimals) + "f")%self._val:
+            return float(str(self.line.text()))
         return self._val # the value needs to be known to a precision better than the display to avoid deadlocks
                          # in increments
 
@@ -340,7 +340,7 @@ class MyIntSpinBox(MyNumberSpinBox):
     @property
     def val(self):
         #if self.line.text()!=("%.i")%self._val:
-            return int(self.line.text())
+            return int(str(self.line.text()))
         #return self._val
 
     @val.setter
@@ -1096,7 +1096,10 @@ class SelectAttributeWidget(BaseAttributeWidget):
         self.defaults = new_options
         self.widget.clear()
         self.widget.addItems(new_options)
-        self.update()
+        try:
+            self.update()
+        except ValueError:
+            pass
         self.widget.blockSignals(False)
 
 
@@ -1135,7 +1138,7 @@ class MyListStageOutputAttributeWidget(QtGui.QWidget):
     def get_dict(self):
         dic = dict()
         for on, offset_enabled, offset in zip(self.output_on, self.offset_enabled, self.offset):
-            dic[on.text()] = (on.checkState()==2, offset_enabled.checkState()==2, offset.val)
+            dic[str(on.text())] = (on.checkState()==2, offset_enabled.checkState()==2, offset.val)
         return dic
 
     def add_line(self, name, val):

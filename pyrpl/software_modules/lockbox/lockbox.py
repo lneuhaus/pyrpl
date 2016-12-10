@@ -216,8 +216,6 @@ class Lockbox(SoftwareModule):
         """
         This function needs to be overwritten to retrieve the child module attributes as well
         """
-        # load normal attributes (model, default_sweep_output)
-        super(Lockbox, self).load_setup_attributes()
 
         # load outputs
         if self.c is not None:
@@ -235,6 +233,10 @@ class Lockbox(SoftwareModule):
             input._autosave_active = False
             input.load_setup_attributes()
             input._autosave_active = True
+
+        # load normal attributes (model, default_sweep_output)
+        super(Lockbox, self).load_setup_attributes()
+
 
         # load sequence
         self.sequence._autosave_active = False
