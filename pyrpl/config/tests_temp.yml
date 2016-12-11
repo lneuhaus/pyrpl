@@ -13,18 +13,18 @@ pyrpl: # General configuration of the software:
     - Lockbox
   dock_positions: !!binary |
     AAAA/wAAAAD9AAAAAQAAAAIAAATmAAADx/wBAAAAAvwAAAAAAAAE5gAABOYA/////AIAAAAC+wAA
-    AAwAcwBjAG8AcABlAHMDAAAAdAAAAZwAAANVAAACIPwAAAAVAAADxwAAAtcBAAAU+gAAAAECAAAA
-    A/sAAAAIAGEAcwBnAHMBAAAAAP////8AAAB6AP////sAAAAIAHAAaQBkAHMBAAAAAP////8AAAGu
-    AP////sAAAAOAGwAbwBjAGsAYgBvAHgBAAAAFQAAA8cAAALCAP////wAAATcAAADQwAAAAAA////
-    /AIAAAAD/AAAABUAAANhAAAAAAD////6AAAAAgIAAAAG+wAAAAQAbgBhAAAAAAD/////AAAAUAD/
-    ///7AAAAIgBzAHAAZQBjAHQAcgB1AG0AXwBhAG4AYQBsAHkAegBlAHIAAAAAAP////8AAABQAP//
-    //sAAAAiAHMAcABlAGMAdAByAHUAbQAgAGEAbgBhAGwAeQB6AGUAcgEAAAAA/////wAAAAAAAAAA
-    +wAAABQAQgBhAHMAZQBNAG8AZAB1AGwAZQEAAAAA/////wAAAAAAAAAA+wAAACAAbgBlAHQAdwBv
-    AHIAawBfAGEAbgBhAGwAeQB6AGUAcgEAAAAA/////wAAAAAAAAAA+wAAAAoAcwBjAG8AcABlAQAA
-    AAD/////AAAAAAAAAAD7AAAABgBpAHEAcwAAAAAVAAAC1wAAAFAA////+wAAAAgAaQBpAHIAcwAA
+    AAwAcwBjAG8AcABlAHMD///+6QAAAO4AAANVAAACIPwAAAAVAAADxwAAAtcBAAAU+gAAAAICAAAA
+    BPsAAAAGAGkAcQBzAQAAAAD/////AAABSgD////7AAAACABhAHMAZwBzAQAAAAD/////AAAAegD/
+    ///7AAAACABwAGkAZABzAQAAAAD/////AAABrgD////7AAAADgBsAG8AYwBrAGIAbwB4AQAAABUA
+    AAPHAAACwgD////8AAAE6gAAA0MAAAAAAP////wCAAAAAvwAAAAVAAADYQAAAAAA////+gAAAAIC
+    AAAABvsAAAAEAG4AYQAAAAAA/////wAAAFAA////+wAAACIAcwBwAGUAYwB0AHIAdQBtAF8AYQBu
+    AGEAbAB5AHoAZQByAAAAAAD/////AAAAUAD////7AAAAIgBzAHAAZQBjAHQAcgB1AG0AIABhAG4A
+    YQBsAHkAegBlAHIBAAAAAP////8AAAAAAAAAAPsAAAAUAEIAYQBzAGUATQBvAGQAdQBsAGUBAAAA
+    AP////8AAAAAAAAAAPsAAAAgAG4AZQB0AHcAbwByAGsAXwBhAG4AYQBsAHkAegBlAHIBAAAAAP//
+    //8AAAAAAAAAAPsAAAAKAHMAYwBvAHAAZQEAAAAA/////wAAAAAAAAAA+wAAAAgAaQBpAHIAcwAA
     AAAVAAADxwAAAFAA////AAAE5gAAAAAAAAAEAAAABAAAAAgAAAAI/AAAAAA=
   window_position:
-  - 657
+  - 649
   - 0
   - 1254
   - 1008
@@ -91,13 +91,16 @@ pids:
     p: 0.0
   pid4:
     ival: 0.0
-    p: 0.0
-    i: 0.0
+    p: 1.395751953125
+    i: 215.8886032723523
+    input: iq1
+    output_direct: out1
+    setpoint: 0.0028076171875
   pid3:
     ival: 0.0
   pid1:
     ival: 0.0
-    setpoint: 0.0001220703125
+    setpoint: 0.0
     p: 0.0
     input: asg1
     i: 10.000527898530768
@@ -185,7 +188,7 @@ lockboxs:
           extra_module_state: None
       slow_piezo: !!omap
       - name: slow_piezo
-      - dc_gain: 1.0
+      - dc_gain: 100.0
       - analog_filter:
         - 0.0
         - 0.0
@@ -194,10 +197,10 @@ lockboxs:
       - sweep_waveform: ramp
       - is_sweepable: true
       - p: 1.0
-      - i: 1.0
+      - i: 10000.0
       - unity_gain_desired: 0.0
     fabryperots: !!omap
-    - FabryPerot: !!omap [{eta: 1.0}, {length: 0.0}, {wavelength: 1030}, {finesse: 0.0}]
+    - FabryPerot: !!omap [{eta: 1.0}, {length: 0.0}, {wavelength: 1030.0}, {finesse: 0.0}]
     sequences: !!omap
     - sequence: !!omap [{stages: !!omap [{stage1: !!omap [{output_on: {slow_piezo: [
                       true, false, 0]}}, {name: stage1}, {duration: 10.17514314613342},

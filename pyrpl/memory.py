@@ -21,6 +21,7 @@ from collections import OrderedDict
 from shutil import copyfile
 import numpy as np
 import time
+from PyQt4 import QtCore
 
 import logging
 logger = logging.getLogger(name=__name__)
@@ -284,6 +285,8 @@ class MemoryTree(MemoryBranch):
     # never reload more frequently than every 2 s because this is the principal
     # cause of slowing down the code
     _reloaddeadtime = 2
+    _savedeadtime = 1 # never save more often than 1s
+    # as an indication, on my ssd, saving of a standard config file was timed at 30 ms, loading: 40 ms...
 
     def __init__(self, filename):
         if os.path.isfile(filename):
@@ -294,11 +297,18 @@ class MemoryTree(MemoryBranch):
             with open(self._filename, mode="w") as f:
                 pass
         self._load()
+        self._lastsave = time.time()
         # make a temporary file to ensure modification of config file is atomic (double-buffering like operation...)
         tmp_dir = os.path.join(os.path.dirname(self._filename), "tmp")
         if not os.path.isdir(tmp_dir):
             os.mkdir(tmp_dir)
         self._buffer_filename = os.path.join(tmp_dir, 'tmp.yml')
+        # create a timer to postpone to frequent savings
+        self._savetimer = QtCore.QTimer()
+        self._savetimer.setInterval(self._savedeadtime*1000)
+        self._savetimer.setSingleShot(True)
+        self._savetimer.timeout.connect(self._save)
+
         super(MemoryTree, self).__init__(self, "")
 
     def _load(self):
@@ -325,27 +335,32 @@ class MemoryTree(MemoryBranch):
 
     def _save(self):
         """ writes current tree structure and data to file """
-        if self._mtime != os.path.getmtime(self._filename):
-            logger.warning("Config file has recently been changed on your " +
-                           "harddisk. These changes might have been " +
-                           "overwritten now.")
-        logger.debug("Saving config file %s", self._filename)
-        copyfile(self._filename, self._filename+".bak")
-        try:
-            f = open(self._buffer_filename, mode='w')
-            save(self._data, stream=f)
-            f.flush()
-            os.fsync(f.fileno())
-            f.close()
-            # config file writing should be atomic! I am not 100% sure the following line guarantees atomicity on windows
-            # but it's already much better than lettin the yaml dumper save on the final config file
-            # see http://stackoverflow.com/questions/2333872/atomic-writing-to-file-with-python
-            # or https://bugs.python.org/issue8828
-            os.unlink(self._filename)
-            os.rename(self._buffer_filename, self._filename)
-        except:
-            copyfile(self._filename+".bak", self._filename)
-            logger.error("Error writing to file. Backup version was restored.")
-            raise
-        self._mtime = os.path.getmtime(self._filename)
+        if self._lastsave + self._savedeadtime < time.time():
+            self._lastsave = time.time()
+            if self._mtime != os.path.getmtime(self._filename):
+                logger.warning("Config file has recently been changed on your " +
+                               "harddisk. These changes might have been " +
+                               "overwritten now.")
+            logger.debug("Saving config file %s", self._filename)
+            copyfile(self._filename, self._filename+".bak")
+            try:
+                f = open(self._buffer_filename, mode='w')
+                save(self._data, stream=f)
+                f.flush()
+                os.fsync(f.fileno())
+                f.close()
+                # config file writing should be atomic! I am not 100% sure the following line guarantees atomicity on windows
+                # but it's already much better than letting the yaml dumper save on the final config file
+                # see http://stackoverflow.com/questions/2333872/atomic-writing-to-file-with-python
+                # or https://bugs.python.org/issue8828
+                os.unlink(self._filename)
+                os.rename(self._buffer_filename, self._filename)
+            except:
+                copyfile(self._filename+".bak", self._filename)
+                logger.error("Error writing to file. Backup version was restored.")
+                raise
+            self._mtime = os.path.getmtime(self._filename)
+        else: # make sure saving will eventually occur
+            if not self._savetimer.isActive():
+                self._savetimer.start()
 
