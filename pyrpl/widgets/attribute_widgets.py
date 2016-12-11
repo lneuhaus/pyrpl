@@ -32,7 +32,7 @@ class MyNumberSpinBox(QtGui.QWidget, object):
         timer_min_interval.
     """
     value_changed = QtCore.pyqtSignal()
-    timer_min_interval = 50 # don't go below 20 ms
+    timer_min_interval = 20 # don't go below 20 ms
     timer_initial_latency = 500 # 100 ms before starting to update continuously.
 
     def __init__(self, label, min=-1, max=1, increment=2.**(-13),
@@ -379,7 +379,7 @@ class BaseAttributeWidget(QtGui.QWidget):
         self.layout_v.addWidget(self.widget, 0) # stretch=0
         self.layout_v.addStretch(1)
         self.setLayout(self.layout_v)
-        self.update()
+        self.update_widget()
 
         #self.module_widget.register_layout.addLayout(self.layout_v)
         #self.value_changed.connect(self.emit_widget_value_changed)
@@ -414,7 +414,7 @@ class BaseAttributeWidget(QtGui.QWidget):
         """
 
         self.widget.blockSignals(True)
-        self.update()
+        self._update()
         self.widget.blockSignals(False)
 
     def set_widget(self):
@@ -424,7 +424,7 @@ class BaseAttributeWidget(QtGui.QWidget):
 
         self.widget = None
 
-    def update(self):
+    def _update(self):
         """
         To overwrite in base class.
         """
@@ -465,7 +465,7 @@ class StringAttributeWidget(BaseAttributeWidget):
         self.value_changed.emit()
 
 
-    def update(self):
+    def _update(self):
         """
         Updates the value displayed in the widget
         :return:
@@ -486,7 +486,7 @@ class NumberAttributeWidget(BaseAttributeWidget):
     def editing(self):
         return self.widget.line.hasFocus()
 
-    def update(self):
+    def _update(self):
         """
         Updates the value displayed in the widget
         :return:
@@ -856,7 +856,7 @@ class ListFloatAttributeWidget(BaseAttributeWidget):
         setattr(self.module, self.name, self.widget.get_list())
         self.value_changed.emit()
 
-    def update(self):
+    def _update(self):
         """
         Updates the value displayed in the widget
         :return:
@@ -1024,7 +1024,7 @@ class FilterAttributeWidget(BaseAttributeWidget):
         if self.acquisition_property:
             self.value_changed.emit()
 
-    def update(self):
+    def _update(self):
         """
         Sets the gui value from the current module value
 
@@ -1081,7 +1081,7 @@ class SelectAttributeWidget(BaseAttributeWidget):
         #if self.acquisition_property:
         self.value_changed.emit()
 
-    def update(self):
+    def _update(self):
         """
         Sets the gui value from the current module value
         """
@@ -1097,7 +1097,7 @@ class SelectAttributeWidget(BaseAttributeWidget):
         self.widget.clear()
         self.widget.addItems(new_options)
         try:
-            self.update()
+            self._update()
         except ValueError:
             pass
         self.widget.blockSignals(False)
@@ -1215,7 +1215,7 @@ class ListStageOutputAttributeWidget(BaseAttributeWidget):
         #if self.acquisition_property:
         self.value_changed.emit()
 
-    def update(self):
+    def _update(self):
         """
         Sets the gui value from the current module value
         """
@@ -1283,7 +1283,7 @@ class BoolAttributeWidget(BaseAttributeWidget):
             self.value_changed.emit()
 
 
-    def update(self):
+    def _update(self):
         """
         Sets the gui value from the current module value
 

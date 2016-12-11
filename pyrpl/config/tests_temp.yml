@@ -13,7 +13,7 @@ pyrpl: # General configuration of the software:
     - Lockbox
   dock_positions: !!binary |
     AAAA/wAAAAD9AAAAAQAAAAIAAATmAAADx/wBAAAAAvwAAAAAAAAE5gAABOYA/////AIAAAAC+wAA
-    AAwAcwBjAG8AcABlAHMCAAAAdAAAAZwAAANVAAACIPwAAAAVAAADxwAAAtcBAAAU+gAAAAICAAAA
+    AAwAcwBjAG8AcABlAHMDAAAAdAAAAZwAAANVAAACIPwAAAAVAAADxwAAAtcBAAAU+gAAAAECAAAA
     A/sAAAAIAGEAcwBnAHMBAAAAAP////8AAAB6AP////sAAAAIAHAAaQBkAHMBAAAAAP////8AAAGu
     AP////sAAAAOAGwAbwBjAGsAYgBvAHgBAAAAFQAAA8cAAALCAP////wAAATcAAADQwAAAAAA////
     /AIAAAAD/AAAABUAAANhAAAAAAD////6AAAAAgIAAAAG+wAAAAQAbgBhAAAAAAD/////AAAAUAD/
@@ -24,8 +24,8 @@ pyrpl: # General configuration of the software:
     AAD/////AAAAAAAAAAD7AAAABgBpAHEAcwAAAAAVAAAC1wAAAFAA////+wAAAAgAaQBpAHIAcwAA
     AAAVAAADxwAAAFAA////AAAE5gAAAAAAAAAEAAAABAAAAAgAAAAI/AAAAAA=
   window_position:
-  - 739
-  - 107
+  - 657
+  - 0
   - 1254
   - 1008
 redpitaya:
@@ -46,7 +46,7 @@ hks:
 amss:
   ams: {}
 scopes:
-  scope: {trigger_source: asg2, input1: pid4, trigger_delay: 0.0, duration: 0.000131072}
+  scope: {trigger_source: asg1, input1: pid1, trigger_delay: 0.0, duration: 0.134217728}
   states:
     sweep:
       average: true
@@ -63,7 +63,7 @@ samplers:
 asgs:
   asg2: {waveform: ramp, offset: 0.0, frequency: 1.0477378964424133, amplitude: 1.0,
     output_direct: off}
-  asg1: {}
+  asg1: {frequency: 100.000761449337}
   states: {uiui: {amplitude: 1.0, waveform: sin, trigger_source: immediately, output_direct: off,
       offset: 0.0, frequency: 0.0}}
 pwms:
@@ -88,6 +88,7 @@ iqs:
 pids:
   pid2:
     ival: 0.0
+    p: 0.0
   pid4:
     ival: 0.0
     p: 0.0
@@ -96,8 +97,11 @@ pids:
     ival: 0.0
   pid1:
     ival: 0.0
-    setpoint: 0.9998779296875
-    p: 0.8828125
+    setpoint: 0.0001220703125
+    p: 0.0
+    input: asg1
+    i: 10.000527898530768
+    d: 0.0
 iirs:
   iir:
     loops: 5
@@ -193,7 +197,7 @@ lockboxs:
       - i: 1.0
       - unity_gain_desired: 0.0
     fabryperots: !!omap
-    - FabryPerot: !!omap [{eta: 1.0}, {length: 0.0}, {wavelength: 1030.0}, {finesse: 0.0}]
+    - FabryPerot: !!omap [{eta: 1.0}, {length: 0.0}, {wavelength: 1030}, {finesse: 0.0}]
     sequences: !!omap
     - sequence: !!omap [{stages: !!omap [{stage1: !!omap [{output_on: {slow_piezo: [
                       true, false, 0]}}, {name: stage1}, {duration: 10.17514314613342},

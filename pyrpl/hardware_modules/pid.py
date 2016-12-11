@@ -21,16 +21,15 @@ class IValAttribute(FloatAttribute):
 class Pid(FilterModule):
     section_name = 'pid'
     widget_class = PidWidget
-    gui_attributes = ["input",
-                      "output_direct",
-                      "setpoint",
-                      "p",
-                      "i",
-                      "d",
-                      "ival",
-                      "inputfilter"]
+    setup_attributes = ["input",
+                        "output_direct",
+                        "setpoint",
+                        "p",
+                        "i",
+                        "d",
+                        "inputfilter"]
 
-    setup_attributes = gui_attributes
+    gui_attributes = setup_attributes + ["ival"]
 
     def _setup(self): # the function is here for its docstring to be used by the metaclass.
         """
