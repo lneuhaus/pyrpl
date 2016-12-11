@@ -4,7 +4,10 @@ from pyrpl.attributes import BoolProperty, FloatProperty, SelectProperty, FloatA
 from pyrpl.hardware_modules.asg import Asg1
 from pyrpl.widgets.module_widgets import OutputSignalWidget
 from pyrpl.hardware_modules.pid import delay_transfer_function, pid_transfer_function, filter_transfer_function
+from pyrpl.curvedb import CurveDB
+from scipy import interpolate
 
+import numpy as np
 
 class ProportionalGainProperty(FloatProperty):
     """
@@ -33,6 +36,9 @@ class IntegralGainProperty(FloatProperty):
 
 
 class PIcornerAttribute(FloatAttribute):
+    """
+    Not implemented yet
+    """
     def __set__(self, instance, value):
         pass
 
@@ -58,6 +64,43 @@ class DisplayNameProperty(StringProperty):
             obj.parent.rename_output(obj, val)
         else:
             super(DisplayNameProperty, self).set_value(obj, val)
+
+
+class AssistedDesignProperty(BoolProperty):
+    def set_value(self, obj, val):
+        super(AssistedDesignProperty, self).set_value(obj, val)
+        obj.assisted_gain_updated()
+        if obj.widget is not None:
+            obj.widget.set_assisted_design(obj.assisted_design)
+        return val
+
+
+class AnalogFilterProperty(ListFloatProperty):
+    def set_value(self, obj, val):
+        super(AnalogFilterProperty, self).set_value(obj, val)
+        obj.assisted_gain_updated()
+
+
+class UnityGainProperty(FrequencyProperty):
+    def set_value(self, obj, val):
+        super(UnityGainProperty, self).set_value(obj, val)
+        obj.assisted_gain_updated()
+
+
+class TfTypeProperty(SelectProperty):
+    def set_value(self, obj, val):
+        super(TfTypeProperty, self).set_value(obj, val)
+        if obj.widget is not None:
+            obj.widget.update_transfer_function()
+            obj.widget.change_analog_tf()
+
+
+class TfCurveProperty(LongProperty):
+    def set_value(self, obj, val):
+        super(TfCurveProperty, self).set_value(obj, val)
+        if obj.widget is not None:
+            obj.widget.update_transfer_function()
+            obj.widget.change_analog_tf()
 
 
 class OutputSignal(Signal):
@@ -94,15 +137,15 @@ class OutputSignal(Signal):
                       'analog_filter',
                       'extra_module',
                       'extra_module_state',
-                      'unity_gain_desired',
-                      'tf_type',]
+                      'unity_gain_desired']
                       #'tf_curve']
-    setup_attributes = gui_attributes
+    setup_attributes = gui_attributes + ['assisted_design', 'tf_curve', 'tf_type']
 
     widget_class = OutputSignalWidget
     name = DisplayNameProperty()
     # unit = SelectProperty(options=[]) # options are updated each time the lockbox model is changed.
     is_sweepable = BoolProperty()
+    assisted_design = AssistedDesignProperty()
     sweep_amplitude = FloatProperty()
     sweep_offset = FloatProperty()
     sweep_frequency = FrequencyProperty()
@@ -111,14 +154,14 @@ class OutputSignal(Signal):
     output_channel = SelectProperty(options=['out1', 'out2']) # at some point, we should add pwms...
     p = ProportionalGainProperty(min=-1e10, max=1e10)
     i = ProportionalGainProperty(min=-1e10, max=1e10)
-    analog_filter = ListFloatProperty()
+    analog_filter = AnalogFilterProperty()
     additional_filter = AdditionalFilterAttribute()
     extra_module = SelectProperty(['None', 'iir', 'pid', 'iq'])
     extra_module_state = SelectProperty(options=["None"])
-    tf_type = SelectProperty(["flat", "curve", "filter"])
+    tf_type = TfTypeProperty(["flat", "filter", "curve"])
     # tf_filter = CustomFilterRegister()
-    unity_gain_desired = FloatProperty()
-    # tf_curve = LongProperty()
+    unity_gain_desired = UnityGainProperty()
+    tf_curve = TfCurveProperty()
 
     def init_module(self):
         self.display_name = "my_output"
@@ -152,12 +195,40 @@ class OutputSignal(Signal):
         self.pid.p = self.p/(self.current_variable_slope*self.dc_gain)
         self.pid.i = self.i/(self.current_variable_slope*self.dc_gain)
 
+    def assisted_gain_updated(self):
+        if self.assisted_design:
+            filter = sorted(self.analog_filter)
+            if filter[0] < 0:
+                raise NotImplementedError("High pass filters are not handled currently in assisted design.")
+            if filter[2]!=0:
+                raise NotImplementedError("Only first order low-pass filter aer currently handled in assisted "
+                                          "design (derivators are currently disabled). Consider using iir module")
+            if filter[3]==0:
+                self.i = self.unity_gain_desired
+                self.p = 0
+            else:
+                self.i = self.unity_gain_desired
+                self.p = self.i/filter[3]
+
     def transfer_function(self, freqs):
         """
         Returns the design transfer function for the output
         """
+
+        analog_tf = np.ones(len(freqs), dtype=complex)
+        if self.tf_type=='filter':
+            analog_tf = filter_transfer_function(freqs, self.analog_filter)
+        if self.tf_type=='curve':
+            curve = CurveDB.get(self.tf_curve)
+            x = curve.data.index
+            y = curve.data.values
+            ampl = interpolate.interp1d(x, abs(y))(freqs)
+            phase = interpolate.interp1d(x, np.unwrap(np.angle(y)))(freqs)
+            analog_tf = ampl*np.exp(1j*phase)
+
         # 200 ns extra_delay + 3 cycles from pid._delay
-        return delay_transfer_function(freqs, self.pid._delay, 200e-9, self.pid._frequency_correction)*\
+        return analog_tf*\
+               delay_transfer_function(freqs, self.pid._delay, 200e-9, self.pid._frequency_correction)*\
                pid_transfer_function(freqs, self.p, self.i, self.pid._frequency_correction)*\
                filter_transfer_function(freqs, self.additional_filter, self.pid._frequency_correction)
 
@@ -178,6 +249,21 @@ class OutputSignal(Signal):
                              "set to 'unlock', 'sweep', or 'lock', not %s"%(self.name, val))
         self._mode = val
         return val
+
+    def tf_freqs(self):
+        """
+        Frequency values to plot the transfer function. Frequency (abcissa) of the tf_curve if tf_type=="curve",
+        else: logspace(0, 6, 2000)
+        """
+        if self.tf_type != 'curve': # req axis should be that of the curve
+            return np.logspace(0, 6, 2000)
+        else:
+            try:
+                c = CurveDB.get(self.tf_curve)
+            except:
+                return None
+            else:
+                return c.data.index
 
     def lock(self, input, variable_value):
         """

@@ -12,21 +12,21 @@ pyrpl: # General configuration of the software:
     - SpectrumAnalyzer
     - Lockbox
   dock_positions: !!binary |
-    AAAA/wAAAAD9AAAAAQAAAAIAAATmAAADx/wBAAAAAvwAAAAAAAAE5gAABOYA/////AIAAAAC+wAA
-    AAwAcwBjAG8AcABlAHMD///+pAAAAKMAAANVAAACIPwAAAAVAAADxwAAAtcBAAAU+gAAAAMCAAAA
-    BPsAAAAGAGkAcQBzAQAAAAD/////AAABSgD////7AAAACABhAHMAZwBzAQAAAAD/////AAAAegD/
-    ///7AAAACABwAGkAZABzAQAAAAD/////AAABrgD////7AAAADgBsAG8AYwBrAGIAbwB4AQAAABUA
-    AAPHAAACwgD////8AAAE6gAAA0MAAAAAAP////wCAAAAAvwAAAAVAAADYQAAAAAA////+gAAAAIC
-    AAAABvsAAAAEAG4AYQAAAAAA/////wAAAFAA////+wAAACIAcwBwAGUAYwB0AHIAdQBtAF8AYQBu
-    AGEAbAB5AHoAZQByAAAAAAD/////AAAAUAD////7AAAAIgBzAHAAZQBjAHQAcgB1AG0AIABhAG4A
-    YQBsAHkAegBlAHIBAAAAAP////8AAAAAAAAAAPsAAAAUAEIAYQBzAGUATQBvAGQAdQBsAGUBAAAA
-    AP////8AAAAAAAAAAPsAAAAgAG4AZQB0AHcAbwByAGsAXwBhAG4AYQBsAHkAegBlAHIBAAAAAP//
-    //8AAAAAAAAAAPsAAAAKAHMAYwBvAHAAZQEAAAAA/////wAAAAAAAAAA+wAAAAgAaQBpAHIAcwAA
-    AAAVAAADxwAAAFAA////AAAE5gAAAAAAAAAEAAAABAAAAAgAAAAI/AAAAAA=
+    AAAA/wAAAAD9AAAAAQAAAAIAAAT4AAADx/wBAAAAAvwAAAAAAAAE+AAABPgA////+gAAAAQCAAAA
+    BfsAAAAMAHMAYwBvAHAAZQBzAQAAAAD/////AAAAwQD////7AAAABgBpAHEAcwEAAAAA/////wAA
+    AUoA////+wAAAAgAYQBzAGcAcwEAAAAA/////wAAAHoA////+wAAAAgAcABpAGQAcwEAAAAA////
+    /wAAAa4A////+wAAAA4AbABvAGMAawBiAG8AeAEAAAAVAAADxwAAAsIA/////AAABOoAAANDAAAA
+    AAD////8AgAAAAL8AAAAFQAAA2EAAAAAAP////oAAAACAgAAAAb7AAAABABuAGEAAAAAAP////8A
+    AABQAP////sAAAAiAHMAcABlAGMAdAByAHUAbQBfAGEAbgBhAGwAeQB6AGUAcgAAAAAA/////wAA
+    AFAA////+wAAACIAcwBwAGUAYwB0AHIAdQBtACAAYQBuAGEAbAB5AHoAZQByAQAAAAD/////AAAA
+    AAAAAAD7AAAAFABCAGEAcwBlAE0AbwBkAHUAbABlAQAAAAD/////AAAAAAAAAAD7AAAAIABuAGUA
+    dAB3AG8AcgBrAF8AYQBuAGEAbAB5AHoAZQByAQAAAAD/////AAAAAAAAAAD7AAAACgBzAGMAbwBw
+    AGUBAAAAAP////8AAAAAAAAAAPsAAAAIAGkAaQByAHMAAAAAFQAAA8cAAABQAP///wAABPgAAAAA
+    AAAABAAAAAQAAAAIAAAACPwAAAAA
   window_position:
-  - 649
+  - -7
   - 0
-  - 1254
+  - 1272
   - 1008
 redpitaya:
   hostname: 10.214.1.28
@@ -91,14 +91,14 @@ pids:
     p: 0.0
   pid4:
     ival: 0.0
-    p: 0.9990234375
-    i: 99.90337457874553
-    input: iq1
+    p: 1.0
+    i: 0.0
+    input: asg2
     output_direct: out1
     setpoint: 0.0
     inputfilter:
-    - -9
-    - 0
+    - -37
+    - 19428
     - 0
     - 0
   pid3:
@@ -193,22 +193,27 @@ lockboxs:
           extra_module_state: None
       slow_piezo: !!omap
       - name: slow_piezo
-      - dc_gain: 100.0
+      - dc_gain: 421.4735386635911
       - analog_filter:
+        - 100.60089200627812
+        - 0.0
         - 0.0
         - 0.0
       - sweep_frequency: 100.0
       - sweep_amplitude: 1.0
       - sweep_waveform: ramp
       - is_sweepable: true
-      - p: 1.0
-      - i: 100.0
-      - unity_gain_desired: 0.0
+      - p: 206.44703625008887
+      - i: 24624.1533181672
+      - unity_gain_desired: 17110.916275896518
       - additional_filter:
-        - -9
+        - -37
+        - 19428
         - 0
         - 0
-        - 0
+      - tf_type: filter
+      - assisted_design: false
+      - tf_curve: 40
     fabryperots: !!omap
     - FabryPerot: !!omap [{eta: 1.0}, {length: 0.0}, {wavelength: 1030.0}, {finesse: 0.0}]
     sequences: !!omap

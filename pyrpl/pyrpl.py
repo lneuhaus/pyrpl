@@ -329,7 +329,10 @@ class Pyrpl(object):
         for cls, name in zip(module_classes, module_names):
             # ModuleClass = getattr(software_modules, module_name)
             module = cls(self, name)
-            module.load_setup_attributes() # attributes are loaded but the module is not "setup"
+            try:
+                module.load_setup_attributes() # attributes are loaded but the module is not "setup"
+            except BaseException as e:
+                self.logger.warning("problem loading attributes of module " + name + "\n" + str(e))
             """
             if module.name in self.c._keys():
                 kwds = self.c[module.name]

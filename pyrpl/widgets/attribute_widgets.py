@@ -506,6 +506,9 @@ class NumberAttributeWidget(BaseAttributeWidget):
     def set_per_second(self, val):
         self.widget.set_per_second(val)
 
+    def set_log_increment(self):
+        self.widget.set_log_increment()
+
 
 class IntAttributeWidget(NumberAttributeWidget):
     """

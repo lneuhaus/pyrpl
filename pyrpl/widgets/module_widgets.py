@@ -1400,10 +1400,117 @@ class SpecAnWidget(ModuleWidget):
         self.y_data = np.zeros(len(self.x_data))
         self.current_average = 0
 
+
+class AnalogTfDialog(QtGui.QDialog):
+    def __init__(self, parent):
+        super(AnalogTfDialog, self).__init__(parent)
+        self.parent = parent
+        self.module = self.parent.module
+        self.setWindowTitle("Analog transfer function for output %s" % self.module.name)
+        self.lay_v = QtGui.QVBoxLayout(self)
+        self.lay_h = QtGui.QHBoxLayout()
+        self.ok = QtGui.QPushButton('Ok')
+        self.lay_h.addWidget(self.ok)
+        self.ok.clicked.connect(self.validate)
+        self.cancel = QtGui.QPushButton('Cancel')
+        self.lay_h.addWidget(self.cancel)
+        self.group = QtGui.QButtonGroup()
+        self.flat = QtGui.QRadioButton("Flat response")
+        self.filter = QtGui.QRadioButton('Analog filter (in "assisted design section")')
+        self.curve = QtGui.QRadioButton("User defined curve")
+        self.group.addButton(self.flat)
+        self.group.addButton(self.filter)
+        self.group.addButton(self.curve)
+
+        self.lay_v.addWidget(self.flat)
+        self.lay_v.addWidget(self.filter)
+        self.lay_v.addWidget(self.curve)
+        self.label = QtGui.QLabel("Curve #")
+        self.line = QtGui.QLineEdit("coucou")
+
+        self.lay_line = QtGui.QHBoxLayout()
+        self.lay_v.addLayout(self.lay_line)
+        self.lay_v.addWidget(self.line)
+        self.lay_line.addStretch(1)
+        self.lay_line.addWidget(self.label)
+        self.lay_line.addWidget(self.line, stretch=10)
+        self.lay_v.addSpacing(20)
+        self.lay_v.addLayout(self.lay_h)
+        self.curve.toggled.connect(self.change_visibility)
+        {'flat':self.flat, 'filter':self.filter, 'curve':self.curve}[self.module.tf_type].setChecked(True)
+
+        self.line.setText(str(self.module.tf_curve))
+        self.line.textEdited.connect(lambda: self.line.setStyleSheet(""))
+        self.cancel.clicked.connect(self.reject)
+        self.curve_id = None
+        self.res = None
+
+
+    def change_visibility(self, checked):
+        print(checked)
+        for widget in self.label, self.line:
+            widget.setEnabled(checked)
+
+    def validate(self):
+        self.line.setStyleSheet('')
+        if self.flat.isChecked():
+            self.res = "flat"
+            self.accept()
+        if self.filter.isChecked():
+            self.res = 'filter'
+            self.accept()
+        if self.curve.isChecked():
+            try:
+                curve_id = int(str(self.line.text()))
+            except:
+                self.line.setStyleSheet('background-color:red;')
+            else:
+                self.res = 'curve'
+                self.curve_id = curve_id
+                self.accept()
+
+    def get_type_number(self):
+        accept = self.exec_()
+        return accept, self.res, self.curve_id
+
+
+class AnalogTfSpec(QtGui.QWidget):
+    """
+    A button + label that allows to display and change the transfer function specification
+    """
+    def __init__(self, parent):
+        super(AnalogTfSpec, self).__init__(parent)
+        self.parent = parent
+        self.module = self.parent.module
+        self.layout = QtGui.QVBoxLayout(self)
+        self.label = QtGui.QLabel("Analog t. f.")
+        self.layout.addWidget(self.label)
+        self.button = QtGui.QPushButton('Change...')
+        self.layout.addWidget(self.button)
+        self.button.clicked.connect(self.change)
+        self.dialog = AnalogTfDialog(self)
+        self.layout.setContentsMargins(0,0,0,0)
+        self.change_analog_tf()
+
+    def change(self, ev):
+        accept, typ, number = self.dialog.get_type_number()
+        if accept:
+            if typ=='curve':
+                self.module.tf_curve = number
+            self.module.tf_type = typ
+
+    def change_analog_tf(self):
+        txt = self.module.tf_type
+        if self.module.tf_type=='curve':
+            txt += ' #' + str(self.module.tf_curve)
+        self.button.setText(txt)
+
+
 class MainOutputProperties(QtGui.QGroupBox):
     def __init__(self, parent):
         super(MainOutputProperties, self).__init__(parent)
         self.parent = parent
+        self.module = self.parent.module
         aws = self.parent.attribute_widgets
         self.layout = QtGui.QHBoxLayout(self)
         self.v1 = QtGui.QVBoxLayout()
@@ -1412,12 +1519,20 @@ class MainOutputProperties(QtGui.QGroupBox):
         self.layout.addLayout(self.v2)
         self.v1.addWidget(aws["name"])
         self.v1.addWidget(aws['dc_gain'])
+        aws['dc_gain'].set_log_increment()
         self.v2.addWidget(aws["output_channel"])
-        self.v2.addWidget(aws["tf_type"])
+        # self.v2.addWidget(aws["tf_type"])
+        self.button_tf = AnalogTfSpec(self)
+        self.v2.addWidget(self.button_tf)
+
 #        aws['tf_curve'].hide()
         self.setTitle('main attributes')
         for v in self.v1, self.v2:
             v.setSpacing(9)
+
+    def change_analog_tf(self):
+        self.button_tf.change_analog_tf()
+
 
 class SweepOutputProperties(QtGui.QGroupBox):
     def __init__(self, parent):
@@ -1444,11 +1559,21 @@ class WidgetManual(QtGui.QWidget):
         self.layout = QtGui.QVBoxLayout(self)
         self.p = parent.parent.attribute_widgets["p"]
         self.i = parent.parent.attribute_widgets["i"]
+        self.p.label.setText('p [1] ')
+        self.i.label.setText('i [Hz]')
+        self.p.label.setFixedWidth(24)
+        self.i.label.setFixedWidth(24)
+        # self.p.adjustSize()
+        # self.i.adjustSize()
+
+        for prop in self.p, self.i:
+            prop.widget.set_log_increment()
+
         self.p.set_horizontal()
         self.i.set_horizontal()
         self.layout.addWidget(self.p)
         self.layout.addWidget(self.i)
-        self.i.label.setMinimumWidth(6)
+        # self.i.label.setMinimumWidth(6)
 
 class WidgetAssisted(QtGui.QWidget):
     def __init__(self, parent):
@@ -1460,6 +1585,7 @@ class WidgetAssisted(QtGui.QWidget):
         self.layout.addLayout(self.v1)
         self.layout.addLayout(self.v2)
         self.desired = parent.parent.attribute_widgets["unity_gain_desired"]
+        self.desired.set_log_increment()
         self.analog_filter = parent.parent.attribute_widgets["analog_filter"]
         #self.analog_filter.set_horizontal()
         # self.analog_filter.layout_v.setSpacing(0)
@@ -1472,6 +1598,7 @@ class PidProperties(QtGui.QGroupBox):
     def __init__(self, parent):
         super(PidProperties, self).__init__(parent)
         self.parent = parent
+        self.module = self.parent.module
         aws = self.parent.attribute_widgets
         self.layout = QtGui.QHBoxLayout(self)
         self.v1 = QtGui.QVBoxLayout()
@@ -1503,12 +1630,11 @@ class PidProperties(QtGui.QGroupBox):
             v.setSpacing(0)
             v.setContentsMargins(5, 1, 0, 0)
 
-
-    def toggle_mode(self):
+    def toggle_mode(self): # button clicked
         if self.manual.isChecked():
-            self.set_manual()
+            self.module.assisted_design = False
         else:
-            self.set_assisted()
+            self.module.assisted_design = True
 
     def set_assisted(self):
         self.manual_widget.setEnabled(False)
@@ -1535,7 +1661,8 @@ class PostFiltering(QtGui.QGroupBox):
         self.layout.setSpacing(12)
 
         self.setTitle("post filtering")
-#=============Lockbox widgets========================#
+
+
 class OutputSignalWidget(ModuleWidget):
     @property
     def name(self):
@@ -1544,6 +1671,19 @@ class OutputSignalWidget(ModuleWidget):
     @name.setter
     def name(self, value):
         return value # only way to modify widget name is to change output.display_name
+
+    def change_analog_tf(self):
+        self.main_props.change_analog_tf()
+
+    def set_assisted_design(self, val):
+        """
+        Disable the corresponding buttons in the pid property section.
+        """
+        self.pid_props.blockSignals(True)
+        self.pid_props.manual.setChecked(not val)
+        self.pid_props.assisted.setChecked(val)
+        self.pid_props.blockSignals(False)
+        {True:self.pid_props.set_assisted, False:self.pid_props.set_manual}[val]()
 
     def init_gui(self):
         self.main_layout = QtGui.QVBoxLayout()
@@ -1571,39 +1711,16 @@ class OutputSignalWidget(ModuleWidget):
         self.main_props = MainOutputProperties(self)
         self.col1.addWidget(self.main_props)
         self.col1.addStretch(5)
-        """
-        self.col1.addWidget(aws["name"])
-        self.col1.addWidget(aws["output_channel"])
-        # self.col1.addWidget(aws["unit"])
-        self.col1.addWidget(aws["dc_gain"])
-        self.col1.addWidget(aws["tf_type"])
-        self.col1.addWidget(aws["tf_curve"])
-        self.col1.addStretch(5)
-        """
 
         self.sweep_props = SweepOutputProperties(self)
         self.col2.addWidget(self.sweep_props)
         self.col2.addStretch(5)
-        """
-        self.col2.addWidget(aws["is_sweepable"])
-        self.col2.addWidget(aws["sweep_frequency"])
-        self.col2.addWidget(aws["sweep_amplitude"])
-        self.col2.addWidget(aws["sweep_offset"])
-        self.col2.addWidget(aws["sweep_waveform"])
-        self.col2.addStretch(5)
-        """
 
         self.pid_props = PidProperties(self)
+        self.set_assisted_design(self.module.assisted_design)
         self.col3.addWidget(self.pid_props)
 
         self.col3.addStretch(5)
-        """
-        self.col3.addWidget(aws["p"])
-        self.col3.addWidget(aws["i"])
-        # self.col3.addWidget(aws["tf_filter"])
-        self.col3.addWidget(aws["unity_gain_desired"])
-        self.col3.addStretch(5)
-        """
 
         self.post_props = PostFiltering(self)
         self.col4.addWidget(self.post_props)
@@ -1614,6 +1731,9 @@ class OutputSignalWidget(ModuleWidget):
         self.win_phase = pg.GraphicsWindow(title="Phase")
         self.plot_item = self.win.addPlot(title="Magnitude (dB)")
         self.plot_item_phase = self.win_phase.addPlot(title="Phase (deg)")
+        self.plot_item.showGrid(y=True, x=True, alpha=1.)
+        self.plot_item_phase.showGrid(y=True, x=True, alpha=1.)
+
         self.plot_item_phase.setXLink(self.plot_item)
 
         self.curve = self.plot_item.plot(pen='y')
@@ -1626,15 +1746,17 @@ class OutputSignalWidget(ModuleWidget):
 
         self.main_layout.addWidget(self.win)
         self.main_layout.addWidget(self.win_phase)
+        self.update_transfer_function()
 
     def update_transfer_function(self):
         """
         Updates the transfer function curve of the output.
         """
-        freqs = np.logspace(0,6, 2000)
+        freqs = self.module.tf_freqs()
         curve = self.module.transfer_function(freqs)
         self.curve.setData(freqs, abs(curve))
-        self.curve_phase.setData(freqs, np.angle(curve))
+        self.curve_phase.setData(freqs, 180./np.pi*np.angle(curve))
+
 
 class LockboxInputWidget(ModuleWidget):
     """
