@@ -69,15 +69,6 @@ class Lockbox(SoftwareModule):
         output.sweep()
         self.state = "sweep"
 
-#    def get_unique_output_id(self):
-#        """
-#        returns the smallest id that is unoccupied by an output
-#        """
-#        i = 1
-#        while i in [output.id for output in self.outputs]:
-#            i+=1
-#        return i
-
     @property
     def state(self):
         return self._state

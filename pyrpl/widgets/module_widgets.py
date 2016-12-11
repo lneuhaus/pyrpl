@@ -1619,8 +1619,22 @@ class OutputSignalWidget(ModuleWidget):
         self.curve = self.plot_item.plot(pen='y')
         self.curve_phase = self.plot_item_phase.plot(pen=None, symbol='o', symbolSize=1)
 
+        self.plot_item.setLogMode(x=True, y=True)
+        self.plot_item_phase.setLogMode(x=True, y=None)
+        self.curve.setLogMode(xMode=True, yMode=True)
+        self.curve_phase.setLogMode(xMode=True, yMode=None)
+
         self.main_layout.addWidget(self.win)
         self.main_layout.addWidget(self.win_phase)
+
+    def update_transfer_function(self):
+        """
+        Updates the transfer function curve of the output.
+        """
+        freqs = np.logspace(0,6, 2000)
+        curve = self.module.transfer_function(freqs)
+        self.curve.setData(freqs, abs(curve))
+        self.curve_phase.setData(freqs, np.angle(curve))
 
 class LockboxInputWidget(ModuleWidget):
     """

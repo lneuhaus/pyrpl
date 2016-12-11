@@ -3,6 +3,7 @@ from pyrpl.attributes import BoolProperty, FloatProperty, SelectProperty, FloatA
                              StringProperty, ListFloatProperty, FrequencyProperty
 from pyrpl.hardware_modules.asg import Asg1
 from pyrpl.widgets.module_widgets import OutputSignalWidget
+from pyrpl.hardware_modules.pid import delay_transfer_function, pid_transfer_function, filter_transfer_function
 
 
 class ProportionalGainProperty(FloatProperty):
@@ -14,6 +15,8 @@ class ProportionalGainProperty(FloatProperty):
         if instance.mode=='lock':
             instance.update_pid_gains(instance.current_input_lock,
                                       instance.current_variable_value)
+        if instance.widget is not None:
+            instance.widget.update_transfer_function()
 
 
 class IntegralGainProperty(FloatProperty):
@@ -25,6 +28,8 @@ class IntegralGainProperty(FloatProperty):
         if instance.mode=='lock':
             instance.update_pid_gains(instance.current_input_lock,
                                       instance.current_variable_value)
+        if instance.widget is not None:
+            instance.widget.update_transfer_function()
 
 
 class PIcornerAttribute(FloatAttribute):
@@ -43,6 +48,8 @@ class AdditionalFilterAttribute(FilterAttribute):
 
     def set_value(self, instance, value):
         instance.pid.inputfilter = value
+        if instance.widget is not None:
+            instance.widget.update_transfer_function()
 
 
 class DisplayNameProperty(StringProperty):
@@ -119,6 +126,7 @@ class OutputSignal(Signal):
         self._mode = "unlock"
         self.current_input_lock = None
         self.current_variable_value = 0
+        self.current_variable_slope = 0
         self.lockbox = self.parent
         self.name = 'output' # will be updated in add_output of parent module
 
@@ -134,10 +142,24 @@ class OutputSignal(Signal):
         """
         if isinstance(input, basestring):
             input = self.lockbox.get_input(input)
+
+        self.current_input_lock = input
+        self.current_variable_value = variable_value
+        self.current_variable_slope = input.expected_slope(variable_value)
+
         self.pid.setpoint = input.expected_signal(variable_value)
-        input_gain = input.expected_slope(variable_value)
-        self.pid.p = self.p/(input_gain*self.dc_gain)
-        self.pid.i = self.i/(input_gain*self.dc_gain)
+
+        self.pid.p = self.p/(self.current_variable_slope*self.dc_gain)
+        self.pid.i = self.i/(self.current_variable_slope*self.dc_gain)
+
+    def transfer_function(self, freqs):
+        """
+        Returns the design transfer function for the output
+        """
+        # 200 ns extra_delay + 3 cycles from pid._delay
+        return delay_transfer_function(freqs, self.pid._delay, 200e-9, self.pid._frequency_correction)*\
+               pid_transfer_function(freqs, self.p, self.i, self.pid._frequency_correction)*\
+               filter_transfer_function(freqs, self.additional_filter, self.pid._frequency_correction)
 
     @property
     def mode(self):
@@ -164,8 +186,6 @@ class OutputSignal(Signal):
         if isinstance(input, basestring):
             input = self.lockbox.get_input(input)
         self.mode = 'lock'
-        self.current_input_lock = input
-        self.current_variable_value = variable_value
         self.update_pid_gains(input, variable_value)
         self.pid.input = input.signal()
 

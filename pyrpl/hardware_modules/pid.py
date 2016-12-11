@@ -156,34 +156,10 @@ class Pid(FilterModule):
         tf: np.array(..., dtype=np.complex)
             The complex open loop transfer function of the module.
         """
-        module_delay = self._delay
-        frequencies = np.array(frequencies, dtype=np.complex)
-        # integrator with one cycle of extra delay
-        tf = self. i /( frequencies *1j) \
-             * np.exp(-1j * 8e-9 * self._frequency_correction *
-                      frequencies * 2 * np.pi)
-        # proportional (delay in self._delay included)
-        tf += self.p
-        # derivative action with one cycle of extra delay
-        # if self.d != 0:
-        #    tf += frequencies*1j/self.d \
-        #          * np.exp(-1j * 8e-9 * self._frequency_correction *
-        #                   frequencies * 2 * np.pi)
-        # input filter modelisation
-        for f in self.inputfilter:
-            if f == 0:
-                continue
-            elif f > 0:  # lowpass
-                tf /= (1.0 + 1j* frequencies / f)
-                module_delay += 2  # two cycles extra delay per lowpass
-            elif f < 0:  # highpass
-                tf /= (1.0 + 1j * f / frequencies)
-                # plus is correct here since f already has a minus sign
-                module_delay += 1  # one cycle extra delay per highpass
-        # add delay
-        delay = module_delay * 8e-9 / self._frequency_correction + extradelay
-        tf *= np.exp(-1j * delay * frequencies * 2 * np.pi)
-        return tf
+
+        return pid_transfer_function(frequencies, self.p, self.i, self.d, self._frequency_correction)*\
+               filter_transfer_function(frequencies, self.inputfilter, self._frequency_correction)*\
+               delay_transfer_function(frequencies, self._delay, extradelay, self._frequency_correction)
 
     normalization_on = BoolRegister(0x130, 0, doc="if True the PID is used "
                                                   "as a normalizer")
@@ -204,3 +180,61 @@ class Pid(FilterModule):
     normalization_inputoffset = FloatRegister(0x110, bits=(14 + _DSR),
                                               norm=2 ** (13 + _DSR),
                                               doc="normalization inputoffset [volts]")
+
+def delay_transfer_function(frequencies, module_delay_cycle, extradelay_s, frequency_correction):
+    """
+    Transfer function of the eventual extradelay of a pid module
+    """
+    delay = module_delay_cycle * 8e-9 / frequency_correction + extradelay_s
+    frequencies = np.array(frequencies, dtype=np.complex)
+    tf = np.ones(len(frequencies), dtype=np.complex)
+    tf *= np.exp(-1j * delay * frequencies * 2 * np.pi)
+    return tf
+
+
+def pid_transfer_function(frequencies, p, i, d, frequency_correction=1.):
+    """
+    returns the transfer function of a generic pid module
+    delay is the module delay as found in pid._delay, p, i and d are the proportional, integral, and differential gains
+    frequency_correction is the module frequency_corection as found in pid._frequency_corection
+    """
+
+    frequencies = np.array(frequencies, dtype=np.complex)
+    # integrator with one cycle of extra delay
+    tf = i / (frequencies * 1j) \
+        * np.exp(-1j * 8e-9 * frequency_correction *
+              frequencies * 2 * np.pi)
+    # proportional (delay in self._delay included)
+    tf += p
+    # derivative action with one cycle of extra delay
+    # if self.d != 0:
+    #    tf += frequencies*1j/self.d \
+    #          * np.exp(-1j * 8e-9 * self._frequency_correction *
+    #                   frequencies * 2 * np.pi)
+    # add delay
+    delay = 0 # module_delay * 8e-9 / self._frequency_correction
+    tf *= np.exp(-1j * delay * frequencies * 2 * np.pi)
+    return tf
+
+
+def filter_transfer_function(frequencies, filter_values, frequency_correction=1.):
+    """
+    Transfer function of the inputfilter part of a pid module
+    """
+    frequencies = np.array(frequencies, dtype=np.complex)
+    module_delay = 0
+    tf = np.ones(len(frequencies), dtype=complex)
+    # input filter modelisation
+    for f in filter_values:
+        if f == 0:
+            continue
+        elif f > 0:  # lowpass
+            tf /= (1.0 + 1j * frequencies / f)
+            module_delay += 2  # two cycles extra delay per lowpass
+        elif f < 0:  # highpass
+            tf /= (1.0 + 1j * f / frequencies)
+            # plus is correct here since f already has a minus sign
+            module_delay += 1  # one cycle extra delay per highpass
+    delay = module_delay * 8e-9 / frequency_correction
+    tf *= np.exp(-1j * delay * frequencies * 2 * np.pi)
+    return tf

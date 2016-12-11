@@ -1,6 +1,6 @@
 pyrpl: # General configuration of the software:
   name: test_refactor
-  gui: false # autostart gui
+  gui: true # autostart gui
   loglevel: info
   # level of logged information.
   # 'debug' outputs everything
@@ -13,7 +13,7 @@ pyrpl: # General configuration of the software:
     - Lockbox
   dock_positions: !!binary |
     AAAA/wAAAAD9AAAAAQAAAAIAAATmAAADx/wBAAAAAvwAAAAAAAAE5gAABOYA/////AIAAAAC+wAA
-    AAwAcwBjAG8AcABlAHMD///+6QAAAO4AAANVAAACIPwAAAAVAAADxwAAAtcBAAAU+gAAAAICAAAA
+    AAwAcwBjAG8AcABlAHMD///+pAAAAKMAAANVAAACIPwAAAAVAAADxwAAAtcBAAAU+gAAAAMCAAAA
     BPsAAAAGAGkAcQBzAQAAAAD/////AAABSgD////7AAAACABhAHMAZwBzAQAAAAD/////AAAAegD/
     ///7AAAACABwAGkAZABzAQAAAAD/////AAABrgD////7AAAADgBsAG8AYwBrAGIAbwB4AQAAABUA
     AAPHAAACwgD////8AAAE6gAAA0MAAAAAAP////wCAAAAAvwAAAAVAAADYQAAAAAA////+gAAAAIC
@@ -91,11 +91,16 @@ pids:
     p: 0.0
   pid4:
     ival: 0.0
-    p: 1.395751953125
-    i: 215.8886032723523
+    p: 0.9990234375
+    i: 99.90337457874553
     input: iq1
     output_direct: out1
-    setpoint: 0.0028076171875
+    setpoint: 0.0
+    inputfilter:
+    - -9
+    - 0
+    - 0
+    - 0
   pid3:
     ival: 0.0
   pid1:
@@ -197,8 +202,13 @@ lockboxs:
       - sweep_waveform: ramp
       - is_sweepable: true
       - p: 1.0
-      - i: 10000.0
+      - i: 100.0
       - unity_gain_desired: 0.0
+      - additional_filter:
+        - -9
+        - 0
+        - 0
+        - 0
     fabryperots: !!omap
     - FabryPerot: !!omap [{eta: 1.0}, {length: 0.0}, {wavelength: 1030.0}, {finesse: 0.0}]
     sequences: !!omap
