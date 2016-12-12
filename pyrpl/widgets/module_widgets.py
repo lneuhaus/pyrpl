@@ -181,17 +181,7 @@ class ScopeWidget(ModuleWidget):
     """
     Widget for scope
     """
-    """
-    register_names = ["input1",
-                      "input2",
-                      "duration",
-                      "average",
-                      "trigger_source",
-                      "trigger_delay",
-                      "threshold_ch1",
-                      "threshold_ch2",
-                      "curve_name"]
-    """
+
     def init_gui(self):
         """
         sets up all the gui for the scope.
@@ -253,6 +243,8 @@ class ScopeWidget(ModuleWidget):
         self.checkbox_untrigged.clicked.connect(self.rolling_mode_toggled)
         self.update_rolling_mode_visibility()
         self.attribute_widgets['duration'].value_changed.connect(self.update_rolling_mode_visibility)
+        self.set_running_state()
+        self.set_rolling_mode()
 
 
     def display_channel(self, ch):
@@ -341,7 +333,7 @@ class ScopeWidget(ModuleWidget):
 
     @property
     def state(self):
-        if self.button_continuous.text()=="Stop":
+        if self.module.running_continuous: #button_continuous.text()=="Stop":
             return "running"
         else:
             return "stopped"
@@ -355,7 +347,7 @@ class ScopeWidget(ModuleWidget):
         self.button_continuous.setText("Stop")
         self.button_single.setEnabled(False)
         self.module.setup()
-        if self.rolling_mode:
+        if self.module.rolling_mode:
             self.module._trigger_source = 'off'
             self.module._trigger_armed = True
         self.plot_item.enableAutoRange('xy', True)
@@ -371,6 +363,21 @@ class ScopeWidget(ModuleWidget):
         self.timer.stop()
         self.button_single.setEnabled(True)
 
+    def set_running_state(self):
+        """
+        Set running state (stop/run continuous) according to module's attribute "running_continuous"
+        """
+        if self.module.running_continuous:
+            self.run_continuous()
+        else:
+            self.stop()
+
+    def set_rolling_mode(self):
+        """
+        Set rolling mode or on off based on the module's attribute "rolling_mode"
+        """
+        self.rolling_mode = self.module.rolling_mode
+
     def run_continuous_clicked(self):
         """
         Toggles the button run_continuous to stop or vice versa and starts the acquisition timer
@@ -378,12 +385,12 @@ class ScopeWidget(ModuleWidget):
 
         if str(self.button_continuous.text()) \
                 == "Run continuous":
-            self.run_continuous()
+            self.module.running_continuous = True # run_continuous()
         else:
-            self.stop()
+            self.module.running_continuous = False
 
     def rolling_mode_toggled(self):
-        self.rolling_mode = self.rolling_mode
+        self.module.rolling_mode = self.rolling_mode
 
     @property
     def rolling_mode(self):

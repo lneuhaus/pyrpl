@@ -1,7 +1,7 @@
 from ..errors import NotReadyError, TimeoutError
 from ..attributes import FloatAttribute, SelectAttribute, BoolRegister, \
-    FloatRegister, SelectRegister, \
-                             StringProperty, IntRegister, LongRegister
+                         FloatRegister, SelectRegister, BoolProperty, \
+                         StringProperty, IntRegister, LongRegister
 from ..modules import HardwareModule
 from ..widgets.module_widgets import ScopeWidget
 
@@ -103,7 +103,8 @@ class TriggerSourceAttribute(SelectAttribute):
     def set_value(self, instance, value):
         # if isinstance(value, HardwareModule):
         #   value = value.name
-        instance._trigger_source = value
+        if not instance.rolling_mode: # don't change trigger source in rolling mode
+            instance._trigger_source = value
         if instance._trigger_source_memory != value:
             instance._trigger_source_memory = value
             # passing between immediately and other sources possibly requires trigger delay change
@@ -131,6 +132,24 @@ class DspInputAttributeScope(DspInputAttribute):
         return value
 
 
+class RunningContinuousProperty(BoolProperty):
+    """
+    Nothing to do unless widget exists
+    """
+    def update_gui(self, module):
+        super(RunningContinuousProperty, self).update_gui(module)
+        module.widget.set_running_state()
+
+
+class RollingModeProperty(BoolProperty):
+    """
+    Nothing to do unless widget exists
+    """
+    def update_gui(self, module):
+        super(RollingModeProperty, self).update_gui(module)
+        module.widget.set_rolling_mode()
+
+
 class Scope(HardwareModule):
     section_name = 'scope'
     addr_base = 0x40100000
@@ -143,7 +162,9 @@ class Scope(HardwareModule):
                       "trigger_delay",
                       "threshold_ch1",
                       "threshold_ch2",
-                      "curve_name"]
+                      "curve_name",
+                      "running_continuous",
+                      "rolling_mode"]
     setup_attributes = gui_attributes
     name = 'scope'
     data_length = data_length  # see definition and explanation above
@@ -190,6 +211,10 @@ class Scope(HardwareModule):
         self.setup()
 
     trigger_source = TriggerSourceAttribute(_trigger_sources.keys())
+
+    running_continuous = RunningContinuousProperty() # if the module has a widget, it is running continuously.
+    rolling_mode = RollingModeProperty() # if the module has a widget, it is in rolling mode.
+
 
     _trigger_debounce = IntRegister(0x90, doc="Trigger debounce time [cycles]")
 

@@ -78,6 +78,7 @@ class Lockbox(SoftwareModule):
         if not val in ['unlock', 'sweep'] + [stage.name for stage in self.sequence.stages]:
             raise ValueError("State should be either unlock, or a valid stage name")
         self._state = val
+        # To avoid explicit reference to gui here, one could consider using a DynamicSelectAttribute...
         if self.widget is not None:
             self.widget.set_state(val)
         return val
@@ -125,6 +126,9 @@ class Lockbox(SoftwareModule):
 
         self.__class__.default_sweep_output.change_options(self, [out.name for out in self.outputs])
         if self.widget is not None:
+            # Since adding/removing outputs corresponds to dynamic creation of Modules, our attribute's based way of
+            # hiding gui update is not effective. Since this is a highly exceptional situation, I don't find it too
+            # bad.
             self.widget.add_output(output)
         return output
 
@@ -136,10 +140,17 @@ class Lockbox(SoftwareModule):
             if output.name in self.c.outputs._keys():
                 self.c.outputs._pop(output.name)
         self.__class__.default_sweep_output.change_options([output.name for output in self.outputs])
+
         if self.widget is not None:
+            # Since adding/removing outputs corresponds to dynamic creation of Modules, our attribute's based way of
+            # hiding gui update is not effective. Since this is a highly exceptional situation, I don't find it too
+            # bad.
             self.widget.remove_output(output)
 
     def rename_output(self, output, new_name):
+        """
+        This changes the name of the output in many different places: lockbox attribute, config file, pid's owner
+        """
         if hasattr(self, output.name):
             delattr(self, output.name)
         setattr(self, new_name, output)
@@ -148,13 +159,12 @@ class Lockbox(SoftwareModule):
         output._name = new_name
         if output.pid is not None:
             output.pid.owner = new_name
-            if output.pid.widget is not None:
-                output.pid.widget.show_ownership()
         self.sequence.update_outputs()
         self.update_output_names()
 
     def update_output_names(self):
         if self.widget is not None:
+            # Could be done in BaseModule name property...
             self.widget.update_output_names()
         self.__class__.default_sweep_output.change_options(self, [out.name for out in self.outputs])
 
@@ -244,6 +254,9 @@ class Lockbox(SoftwareModule):
         self.inputs.append(input)
         setattr(self, input.name, input)
         if self.widget is not None:
+            # Since adding/removing inputs corresponds to dynamic creation of Modules, our attribute's based way of
+            # hiding gui update is not effective. Since this is a highly exceptional situation, I don't find it too
+            # bad.
             self.widget.add_input(input)
 
     def _setup(self):

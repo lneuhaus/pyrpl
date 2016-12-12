@@ -18,8 +18,9 @@ class ProportionalGainProperty(FloatProperty):
         if instance.mode=='lock':
             instance.update_pid_gains(instance.current_input_lock,
                                       instance.current_variable_value)
-        if instance.widget is not None:
-            instance.widget.update_transfer_function()
+    def update_gui(self, module):
+        super(ProportionalGainProperty, self).update_gui(module)
+        module.widget.update_transfer_function()
 
 
 class IntegralGainProperty(FloatProperty):
@@ -31,8 +32,10 @@ class IntegralGainProperty(FloatProperty):
         if instance.mode=='lock':
             instance.update_pid_gains(instance.current_input_lock,
                                       instance.current_variable_value)
-        if instance.widget is not None:
-            instance.widget.update_transfer_function()
+
+    def update_gui(self, module):
+        super(IntegralGainProperty, self).update_gui(module)
+        module.widget.update_transfer_function()
 
 
 class PIcornerAttribute(FloatAttribute):
@@ -54,8 +57,10 @@ class AdditionalFilterAttribute(FilterAttribute):
 
     def set_value(self, instance, value):
         instance.pid.inputfilter = value
-        if instance.widget is not None:
-            instance.widget.update_transfer_function()
+
+    def update_gui(self, module):
+        super(AdditionalFilterAttribute, self).update_gui(module)
+        module.widget.update_transfer_function()
 
 
 class DisplayNameProperty(StringProperty):
@@ -70,9 +75,11 @@ class AssistedDesignProperty(BoolProperty):
     def set_value(self, obj, val):
         super(AssistedDesignProperty, self).set_value(obj, val)
         obj.assisted_gain_updated()
-        if obj.widget is not None:
-            obj.widget.set_assisted_design(obj.assisted_design)
         return val
+
+    def update_gui(self, module):
+        super(AssistedDesignProperty, self).update_gui(module)
+        module.widget.set_assisted_design(module.assisted_design)
 
 
 class AnalogFilterProperty(ListFloatProperty):
@@ -90,17 +97,21 @@ class UnityGainProperty(FrequencyProperty):
 class TfTypeProperty(SelectProperty):
     def set_value(self, obj, val):
         super(TfTypeProperty, self).set_value(obj, val)
-        if obj.widget is not None:
-            obj.widget.update_transfer_function()
-            obj.widget.change_analog_tf()
+
+    def update_gui(self, module):
+        super(TfTypeProperty, self).update_gui(module)
+        module.widget.update_transfer_function()
+        module.widget.change_analog_tf()
 
 
 class TfCurveProperty(LongProperty):
     def set_value(self, obj, val):
         super(TfCurveProperty, self).set_value(obj, val)
-        if obj.widget is not None:
-            obj.widget.update_transfer_function()
-            obj.widget.change_analog_tf()
+
+    def update_gui(self, module):
+        super(TfCurveProperty, self).update_gui(module)
+        module.widget.update_transfer_function()
+        module.widget.change_analog_tf()
 
 
 class OutputSignal(Signal):

@@ -79,8 +79,7 @@ class BaseAttribute(object):
         Sets the value in the gui and config
         """
         if instance.widget is not None:  # update gui only if it exists
-            if self.name in instance.widget.attribute_widgets:
-                self.update_gui(instance)
+            self.update_gui(instance)
         if instance._autosave_active:  # (for instance, when module is slaved, don't save attributes)
             if self.name in instance.setup_attributes:
                     self.save_attribute(instance, value)
@@ -96,7 +95,8 @@ class BaseAttribute(object):
         """
         Updates the widget with the module's value.
         """
-        module.widget.attribute_widgets[self.name].update_widget()
+        if self.name in module.widget.attribute_widgets:
+            module.widget.attribute_widgets[self.name].update_widget()
 
     def save_attribute(self, module, value):
         """

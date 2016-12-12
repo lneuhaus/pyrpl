@@ -12,10 +12,10 @@ pyrpl: # General configuration of the software:
     - SpectrumAnalyzer
     - Lockbox
   dock_positions: !!binary |
-    AAAA/wAAAAD9AAAAAQAAAAIAAAT4AAADx/wBAAAAAvwAAAAAAAAE+AAABPgA////+gAAAAQCAAAA
+    AAAA/wAAAAD9AAAAAQAAAAIAAAT4AAAEP/wBAAAAAvwAAAAAAAAE+AAABPgA////+gAAAAACAAAA
     BfsAAAAMAHMAYwBvAHAAZQBzAQAAAAD/////AAAAwQD////7AAAABgBpAHEAcwEAAAAA/////wAA
-    AUoA////+wAAAAgAYQBzAGcAcwEAAAAA/////wAAAHoA////+wAAAAgAcABpAGQAcwEAAAAA////
-    /wAAAa4A////+wAAAA4AbABvAGMAawBiAG8AeAEAAAAVAAADxwAAAsIA/////AAABOoAAANDAAAA
+    AUoA////+wAAAAgAYQBzAGcAcwEAAAAA/////wAAAHoA////+wAAAAgAcABpAGQAcwMAAAKIAAAA
+    JwAABPgAAAQU+wAAAA4AbABvAGMAawBiAG8AeAEAAAAVAAADxwAAAsIA/////AAABOoAAANDAAAA
     AAD////8AgAAAAL8AAAAFQAAA2EAAAAAAP////oAAAACAgAAAAb7AAAABABuAGEAAAAAAP////8A
     AABQAP////sAAAAiAHMAcABlAGMAdAByAHUAbQBfAGEAbgBhAGwAeQB6AGUAcgAAAAAA/////wAA
     AFAA////+wAAACIAcwBwAGUAYwB0AHIAdQBtACAAYQBuAGEAbAB5AHoAZQByAQAAAAD/////AAAA
@@ -27,7 +27,7 @@ pyrpl: # General configuration of the software:
   - -7
   - 0
   - 1272
-  - 1008
+  - 1128
 redpitaya:
   hostname: 10.214.1.28
   password: root
@@ -46,18 +46,46 @@ hks:
 amss:
   ams: {}
 scopes:
-  scope: {trigger_source: asg1, input1: pid1, trigger_delay: 0.0, duration: 0.134217728}
+  scope: {trigger_source: asg2, input1: pid4, trigger_delay: 0.0, duration: 1.073741824,
+    running_continuous: true, curve_name: '', input2: adc2, threshold_ch1: 0.0, threshold_ch2: 0.0,
+    average: true, rolling_mode: true}
   states:
     sweep:
-      average: true
+      curve_name: ''
+      input2: adc2
+      input1: pid4
+      threshold_ch1: 0.0
       duration: 0.016777216
       trigger_source: asg2
+      running_continuous: false
+      threshold_ch2: 0.0
       trigger_delay: 0.0
+      average: true
+      rolling_mode: false
+    sweep_running:
+      curve_name: ''
+      input2: adc2
+      input1: pid4
+      threshold_ch1: 0.0
+      duration: 0.016777216
+      trigger_source: asg2
+      running_continuous: true
+      threshold_ch2: 0.0
+      trigger_delay: 0.0
+      average: true
+      rolling_mode: false
+    rolling:
+      rolling_mode: true
+      trigger_source: asg2
+      input1: pid4
+      average: true
       threshold_ch2: 0.0
       input2: adc2
+      trigger_delay: 0.0
+      duration: 1.073741824
+      running_continuous: true
       curve_name: ''
       threshold_ch1: 0.0
-      input1: pid4
 samplers:
   sampler: {}
 asgs:
@@ -97,8 +125,8 @@ pids:
     output_direct: out1
     setpoint: 0.0
     inputfilter:
-    - -37
-    - 19428
+    - 0
+    - 0
     - 0
     - 0
   pid3:
@@ -195,7 +223,7 @@ lockboxs:
       - name: slow_piezo
       - dc_gain: 421.4735386635911
       - analog_filter:
-        - 100.60089200627812
+        - 1831.1844489391813
         - 0.0
         - 0.0
         - 0.0
@@ -203,16 +231,16 @@ lockboxs:
       - sweep_amplitude: 1.0
       - sweep_waveform: ramp
       - is_sweepable: true
-      - p: 206.44703625008887
-      - i: 24624.1533181672
-      - unity_gain_desired: 17110.916275896518
+      - p: 20.804416063489814
+      - i: 38096.723164723044
+      - unity_gain_desired: 38096.723164723044
       - additional_filter:
-        - -37
-        - 19428
         - 0
         - 0
-      - tf_type: filter
-      - assisted_design: false
+        - 0
+        - 0
+      - tf_type: flat
+      - assisted_design: true
       - tf_curve: 40
     fabryperots: !!omap
     - FabryPerot: !!omap [{eta: 1.0}, {length: 0.0}, {wavelength: 1030.0}, {finesse: 0.0}]
@@ -221,3 +249,7 @@ lockboxs:
                       true, false, 0]}}, {name: stage1}, {duration: 10.17514314613342},
                 {variable_value: 0.3236037654876708}]}, {stage2: !!omap [{output_on: {
                     slow_piezo: [true, false, 0]}}, {name: stage2}]}]}]
+    auto_relock: false
+    interferometers: !!omap
+    - interferometer: !!omap []
+    model_name: interferometer

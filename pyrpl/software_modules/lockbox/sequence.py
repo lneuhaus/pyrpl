@@ -3,8 +3,8 @@ from pyrpl.attributes import SelectProperty, FloatProperty, BoolProperty, Dynami
 from pyrpl.modules import SoftwareModule
 from pyrpl.widgets.module_widgets import LockboxSequenceWidget, LockboxStageWidget
 
-
 from collections import OrderedDict
+
 
 class Sequence(SoftwareModule):
     widget_class = LockboxSequenceWidget
@@ -73,7 +73,6 @@ class Sequence(SoftwareModule):
         if state_section is None:
             state_section = self.c_states
         state_section[name] = OrderedDict()
-
         for stage in self.stages:
             stage.save_state(stage.name, getattr(state_section, name))
 
@@ -101,9 +100,6 @@ class StageNameProperty(StringProperty):
             obj.parent.rename_stage(obj, val)
         else:
             super(StageNameProperty, self).set_value(obj, val)
-
-
-
 
 
 class Stage(SoftwareModule):

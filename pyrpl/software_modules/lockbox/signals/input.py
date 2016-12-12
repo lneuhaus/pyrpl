@@ -59,15 +59,13 @@ class InputSignal(SoftwareModule):
         """
         curve = self.acquire()
         self.parameters = dict(mean=curve.mean(), rms=curve.std(), min=curve.min(), max=curve.max())
-
-
         if self.widget is not None:
             self.update_graph()
 
     def update_graph(self):
         if self.widget is not None:
-            y = self.expected_signal(self.plot_range )
-            self.widget.show_graph(self.plot_range , y)
+            y = self.expected_signal(self.plot_range)
+            self.widget.show_graph(self.plot_range, y)
 
 
     def expected_signal(self, variable):
