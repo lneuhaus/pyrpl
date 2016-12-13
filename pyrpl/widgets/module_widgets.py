@@ -344,8 +344,6 @@ class ScopeWidget(ModuleWidget):
         self.button_continuous.setText("Stop")
         self.button_single.setEnabled(False)
         self.module.setup()
-        if self.module.is_rolling_mode_active():
-            self.module.set_for_rolling_mode()
         self.plot_item.enableAutoRange('xy', True)
         self.first_shot_of_continuous = True
         self.timer.start()
@@ -372,6 +370,7 @@ class ScopeWidget(ModuleWidget):
         Set rolling mode on or off based on the module's attribute "rolling_mode"
         """
         self.rolling_mode = self.module.rolling_mode
+
 
     def run_continuous_clicked(self):
         """

@@ -154,6 +154,11 @@ class RollingModeProperty(BoolProperty):
     """
     Nothing to do unless widget exists
     """
+    def set_value(self, obj, val):
+        super(RollingModeProperty, self).set_value(obj, val)
+        if obj.running_continuous:
+            obj.setup()
+
     def update_gui(self, module):
         super(RollingModeProperty, self).update_gui(module)
         module.widget.set_rolling_mode()
@@ -214,10 +219,6 @@ class Scope(HardwareModule):
 
     _trigger_source = SelectRegister(0x4, doc="Trigger source",
                                      options=_trigger_sources)
-
-    def set_state(self, dic):
-        super(Scope, self).set_state(dic)
-        self.setup()
 
     trigger_source = TriggerSourceAttribute(_trigger_sources.keys())
 
@@ -403,6 +404,8 @@ class Scope(HardwareModule):
         if self.trigger_source == 'immediately':
             # self.wait_for_pretrig_ok()
             self.trigger_source = self.trigger_source
+        if self.is_rolling_mode_active():
+            self.set_for_rolling_mode()
 
     def rolling_mode_allowed(self):
         """

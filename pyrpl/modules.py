@@ -143,12 +143,20 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         old_callback_active = self._callback_active
         self._callback_active = False
         try:
-            for key, value in kwds.items():
-                if not key in self.setup_attributes:
-                    raise ValueError("Attribute %s of module %s doesn't exist."%(key, self.name))
-                setattr(self, key, value)
+            for key in self.setup_attributes:
+                if key in kwds:
+                    value = kwds.pop(key)
+                    setattr(self, key, value)
         finally:
             self._callback_active = old_callback_active
+        if len(kwds)>0:
+            raise ValueError("Attribute %s of module %s doesn't exist." % (kwds[0], self.name))
+        #    for key, value in kwds.items():
+        #        if not key in self.setup_attributes:
+        #            raise ValueError("Attribute %s of module %s doesn't exist."%(key, self.name))
+        #        setattr(self, key, value)
+        #finally:
+        #    self._callback_active = old_callback_active
 
     def load_setup_attributes(self):
         """
