@@ -12,10 +12,10 @@ pyrpl: # General configuration of the software:
     - SpectrumAnalyzer
     - Lockbox
   dock_positions: !!binary |
-    AAAA/wAAAAD9AAAAAQAAAAIAAAT4AAAEP/wBAAAAAvwAAAAAAAAE+AAABPgA////+gAAAAACAAAA
-    BfsAAAAMAHMAYwBvAHAAZQBzAQAAAAD/////AAAAwQD////7AAAABgBpAHEAcwEAAAAA/////wAA
-    AUoA////+wAAAAgAYQBzAGcAcwEAAAAA/////wAAAHoA////+wAAAAgAcABpAGQAcwMAAAKIAAAA
-    JwAABPgAAAQU+wAAAA4AbABvAGMAawBiAG8AeAEAAAAVAAADxwAAAsIA/////AAABOoAAANDAAAA
+    AAAA/wAAAAD9AAAAAQAAAAIAAAT4AAADTPwBAAAAAvwAAAAAAAAE+AAABPgA////+gAAAAACAAAA
+    BfsAAAAMAHMAYwBvAHAAZQBzAQAAAAD/////AAAAwQD////7AAAACABwAGkAZABzAQAAAAD/////
+    AAABrgD////7AAAABgBpAHEAcwEAAAAA/////wAAAUoA////+wAAAAgAYQBzAGcAcwEAAAAA////
+    /wAAAHoA////+wAAAA4AbABvAGMAawBiAG8AeAEAAAAVAAADxwAAAsIA/////AAABOoAAANDAAAA
     AAD////8AgAAAAL8AAAAFQAAA2EAAAAAAP////oAAAACAgAAAAb7AAAABABuAGEAAAAAAP////8A
     AABQAP////sAAAAiAHMAcABlAGMAdAByAHUAbQBfAGEAbgBhAGwAeQB6AGUAcgAAAAAA/////wAA
     AFAA////+wAAACIAcwBwAGUAYwB0AHIAdQBtACAAYQBuAGEAbAB5AHoAZQByAQAAAAD/////AAAA
@@ -24,10 +24,10 @@ pyrpl: # General configuration of the software:
     AGUBAAAAAP////8AAAAAAAAAAPsAAAAIAGkAaQByAHMAAAAAFQAAA8cAAABQAP///wAABPgAAAAA
     AAAABAAAAAQAAAAIAAAACPwAAAAA
   window_position:
-  - -7
-  - 0
+  - 387
+  - 3
   - 1272
-  - 1128
+  - 885
 redpitaya:
   hostname: 10.214.1.28
   password: root
@@ -91,7 +91,7 @@ samplers:
 asgs:
   asg2: {waveform: ramp, offset: 0.0, frequency: 1.0477378964424133, amplitude: 1.0,
     output_direct: off}
-  asg1: {frequency: 100.000761449337}
+  asg1: {frequency: 1.9790604710578918}
   states: {uiui: {amplitude: 1.0, waveform: sin, trigger_source: immediately, output_direct: off,
       offset: 0.0, frequency: 0.0}}
 pwms:

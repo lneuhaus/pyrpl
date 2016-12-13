@@ -186,7 +186,6 @@ class ScopeWidget(ModuleWidget):
         """
         sets up all the gui for the scope.
         """
-
         self.datas = [None, None]
         self.times = None
         self.ch_col = ('green', 'red')
@@ -204,7 +203,7 @@ class ScopeWidget(ModuleWidget):
         self.button_save = QtGui.QPushButton("Save curve")
         self.curves = [self.plot_item.plot(pen=color[0]) \
                        for color in self.ch_col]
-        self.main_layout.addWidget(self.win)
+        self.main_layout.addWidget(self.win, stretch=10)
         self.button_layout.addWidget(self.button_single)
         self.button_layout.addWidget(self.button_continuous)
         self.button_layout.addWidget(self.button_save)
@@ -213,7 +212,6 @@ class ScopeWidget(ModuleWidget):
         for i in (1, 2):
             self.cb_ch.append(QtGui.QCheckBox("Channel " + str(i)))
             self.button_layout.addWidget(self.cb_ch[-1])
-
         self.button_single.clicked.connect(self.run_single)
         self.button_continuous.clicked.connect(self.run_continuous_clicked)
         self.button_save.clicked.connect(self.save)
@@ -343,13 +341,11 @@ class ScopeWidget(ModuleWidget):
         Toggles the button run_continuous to stop and starts the acquisition timer.
         This function is part of the public interface.
         """
-
         self.button_continuous.setText("Stop")
         self.button_single.setEnabled(False)
         self.module.setup()
-        if self.module.rolling_mode:
-            self.module._trigger_source = 'off'
-            self.module._trigger_armed = True
+        if self.module.is_rolling_mode_active():
+            self.module.set_for_rolling_mode()
         self.plot_item.enableAutoRange('xy', True)
         self.first_shot_of_continuous = True
         self.timer.start()
@@ -358,7 +354,6 @@ class ScopeWidget(ModuleWidget):
         """
         Toggles the button stop to run_continuous to stop and stops the acquisition timer
         """
-
         self.button_continuous.setText("Run continuous")
         self.timer.stop()
         self.button_single.setEnabled(True)
@@ -374,7 +369,7 @@ class ScopeWidget(ModuleWidget):
 
     def set_rolling_mode(self):
         """
-        Set rolling mode or on off based on the module's attribute "rolling_mode"
+        Set rolling mode on or off based on the module's attribute "rolling_mode"
         """
         self.rolling_mode = self.module.rolling_mode
 
@@ -397,7 +392,6 @@ class ScopeWidget(ModuleWidget):
         # Note for future improvement: rolling mode should be a BoolAttribute of
         # Scope rather than a dirty attribute of ScopeWidget. Parameter saving would also require to use it
         # as a parameter of Scope.setup()
-
         return ((self.checkbox_untrigged.isChecked()) and \
                 self.rolling_group.isEnabled())
 
@@ -416,8 +410,7 @@ class ScopeWidget(ModuleWidget):
         """
         hide rolling mode checkbox for duration < 100 ms
         """
-
-        self.rolling_group.setEnabled(self.module.duration > 0.1)
+        self.rolling_group.setEnabled(self.module.rolling_mode_allowed())
         self.attribute_widgets['trigger_source'].widget.setEnabled(
             not self.rolling_mode)
         old = self.attribute_widgets['threshold_ch1'].widget.isEnabled()
@@ -426,8 +419,8 @@ class ScopeWidget(ModuleWidget):
         self.attribute_widgets['threshold_ch2'].widget.setEnabled(
             not self.rolling_mode)
         self.button_single.setEnabled(not self.rolling_mode)
-        if old==self.rolling_mode:
-            self.rolling_mode_toggled()
+        # if old==self.rolling_mode:
+        #    self.rolling_mode_toggled()
 
     def autoscale(self):
         """Autoscale pyqtgraph"""
@@ -1049,6 +1042,7 @@ class IirWidget(ModuleWidget):
 
 
 class ModuleManagerWidget(ModuleWidget):
+    add_stretch = True
 
     def create_title_bar(self):
         """
@@ -1067,7 +1061,8 @@ class ModuleManagerWidget(ModuleWidget):
             # module_widget.setStyleSheet("ModuleWidget{border: 1px dashed gray;color: black;}")
             self.module_widgets.append(module_widget)
             self.main_layout.addWidget(module_widget)
-        self.main_layout.addStretch(5) # streth space between Managers preferentially.
+        if self.add_stretch:
+            self.main_layout.addStretch(5) # streth space between Managers preferentially.
         self.main_layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self.main_layout)
 
@@ -1077,7 +1072,7 @@ class PidManagerWidget(ModuleManagerWidget):
 
 
 class ScopeManagerWidget(ModuleManagerWidget):
-    pass
+    add_stretch = False # Scope should expand maximally
 
 
 class IirManagerWidget(ModuleManagerWidget):

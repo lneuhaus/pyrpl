@@ -54,12 +54,22 @@ class DurationAttribute(SelectAttribute):
         the rounding makes sure that the actual value is longer or equal to the set value"""
         value = float(value) / instance.data_length
         tbase = 8e-9
+        decimation =  max(instance.decimations)
+        found = False
         for d in instance.decimations:
             if value <= tbase * float(d):
-                instance.decimation = d
-                return
-        instance.decimation = max(instance.decimations)
-        instance._logger.error("Desired duration too long to realize")
+                decimation = d
+                found = True
+                break
+        if not found:
+            instance._logger.error("Desired duration too long to realize")
+        instance.decimation = decimation
+
+    def update_gui(self, module):
+        if module.is_rolling_mode_active():  # changing duration might change rolling mode
+            module.widget.set_rolling_mode()
+        else:
+            module.trigger_source = module.trigger_source # otherwise, make sure trigger becomes effective again
 
 
 class DecimationRegister(SelectRegister):
@@ -103,8 +113,7 @@ class TriggerSourceAttribute(SelectAttribute):
     def set_value(self, instance, value):
         # if isinstance(value, HardwareModule):
         #   value = value.name
-        if not instance.rolling_mode: # don't change trigger source in rolling mode
-            instance._trigger_source = value
+        instance._trigger_source = value
         if instance._trigger_source_memory != value:
             instance._trigger_source_memory = value
             # passing between immediately and other sources possibly requires trigger delay change
@@ -394,6 +403,22 @@ class Scope(HardwareModule):
         if self.trigger_source == 'immediately':
             # self.wait_for_pretrig_ok()
             self.trigger_source = self.trigger_source
+
+    def rolling_mode_allowed(self):
+        """
+        Only if duration larger than 0.1 s
+        """
+        return self.duration>0.1
+
+    def is_rolling_mode_active(self):
+        """
+        Rolling_mode property evaluates to True and duration larger than 0.1 s
+        """
+        return self.rolling_mode and self.rolling_mode_allowed()
+
+    def set_for_rolling_mode(self):
+        self._trigger_source = 'off'
+        self._trigger_armed = True
 
     def setup_old(self,
               duration=None,
