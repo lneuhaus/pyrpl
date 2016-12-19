@@ -402,6 +402,7 @@ class ListStageOutputAttribute(BaseAttribute):
                 raise ValueError("value %s is not possible for output %s offset (stage %s)"%(start_offset, key, self.name))
         return value
 
+
 # docstring does not work yet, see:
 # http://stackoverflow.com/questions/37255109/python-docstring-for-descriptors
 # for now there is a workaround: call Module.help(register)

@@ -19,10 +19,15 @@ class InputSignal(SoftwareModule):
     """
     section_name = 'input'  # name of the input
     gui_attributes = ["adc"]
-    setup_attributes = gui_attributes
+    setup_attributes = gui_attributes + ["min", "max", "mean", "rms"]
     adc = SelectProperty(options=['adc1', 'adc2']) # adc
     model_cls = None # Model class to which this input belongs.
     widget_class = LockboxInputWidget
+    min = FloatProperty()
+    max = FloatProperty()
+    mean = FloatProperty()
+    rms = FloatProperty(min=0, max=2)
+
 
     """
     def __init__(self, model):
@@ -48,6 +53,8 @@ class InputSignal(SoftwareModule):
         """
         self.lockbox.sweep()
         scope = self.pyrpl.scopes.pop(self.name)
+        if not "sweep" in scope.states:
+            scope.save_state("sweep")
         scope.load_state("sweep")
         scope.setup(input1=self.signal(), input2=self.lockbox.asg)
         curve = scope.curve(ch=1)
@@ -59,7 +66,10 @@ class InputSignal(SoftwareModule):
         This function should be reimplemented to measure whatever property of the curve is needed by expected_signal
         """
         curve = self.acquire()
-        self.parameters = dict(mean=curve.mean(), rms=curve.std(), min=curve.min(), max=curve.max())
+        self.mean = curve.mean()
+        self.rms = curve.std()
+        self.min = curve.min()
+        self.max=curve.max()
         if self.widget is not None:
             self.update_graph()
 
@@ -151,6 +161,13 @@ class InputSignal(SoftwareModule):
                            self._variable)
             return None
 
+    def create_widget(self):
+        widget = super(InputSignal, self).create_widget()
+        try:
+            self.update_graph()
+        except:
+            pass
+        return widget
 
 class InputDirect(InputSignal):
     section_name = 'direct_input'
@@ -253,7 +270,7 @@ class InputPdh(InputSignal):
         return np.real(i_ref * np.exp(1j * phase)) / eta
 
     def expected_signal(self, variable):
-        return self.parameters['mean'] + (self.parameters['max'] - self.parameters['min'])*\
+        return self.mean + (self.max - self.min)*\
                                          self._pdh_normalized(variable,
                                                               self.mod_freq,
                                                               self.mod_phase,

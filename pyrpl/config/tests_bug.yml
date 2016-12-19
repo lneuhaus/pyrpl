@@ -1,0 +1,88 @@
+pyrpl: # General configuration of the software:
+  name: test_bugs
+  gui: true # autostart gui
+  loglevel: info
+  # level of logged information.
+  # 'debug' outputs everything
+  # 'infi' is default level
+  # 'warning' only shows warnings and errors
+  # 'error' only shows errors
+  modules: # SoftwareModules to load (in addition to IqManager, AsgManager, PidManager, ScopeManager)
+    - NetworkAnalyzer
+    - SpectrumAnalyzer
+    - Lockbox
+  dock_positions: !!binary |
+    AAAA/wAAAAD9AAAAAQAAAAIAAAT4AAADTPwBAAAAAvwAAAAAAAAE+AAABPgA////+gAAAAQCAAAA
+    BfsAAAAMAHMAYwBvAHAAZQBzAQAAAAD/////AAAAwQD////7AAAACABwAGkAZABzAQAAAAD/////
+    AAABrgD////7AAAABgBpAHEAcwEAAAAA/////wAAAUoA////+wAAAAgAYQBzAGcAcwEAAAAA////
+    /wAAAHoA////+wAAAA4AbABvAGMAawBiAG8AeAEAAAAVAAADxwAAAg4A/////AAABOoAAANDAAAA
+    AAD////8AgAAAAL8AAAAFQAAA2EAAAAAAP////oAAAACAgAAAAb7AAAABABuAGEAAAAAAP////8A
+    AABQAP////sAAAAiAHMAcABlAGMAdAByAHUAbQBfAGEAbgBhAGwAeQB6AGUAcgAAAAAA/////wAA
+    AFAA////+wAAACIAcwBwAGUAYwB0AHIAdQBtACAAYQBuAGEAbAB5AHoAZQByAQAAAAD/////AAAA
+    AAAAAAD7AAAAFABCAGEAcwBlAE0AbwBkAHUAbABlAQAAAAD/////AAAAAAAAAAD7AAAAIABuAGUA
+    dAB3AG8AcgBrAF8AYQBuAGEAbAB5AHoAZQByAQAAAAD/////AAAAAAAAAAD7AAAACgBzAGMAbwBw
+    AGUBAAAAAP////8AAAAAAAAAAPsAAAAIAGkAaQByAHMAAAAAFQAAA8cAAABQAP///wAABPgAAAAA
+    AAAABAAAAAQAAAAIAAAACPwAAAAA
+  window_position:
+  - 961
+  - 148
+  - 1272
+  - 885
+redpitaya:
+  hostname: 10.214.1.28
+  password: root
+  user: root
+  port: 2222
+  frequency_correction: 1.0
+  filename: fpga//red_pitaya.bin
+  reloadfpga: true
+  monitor_server_name: monitor_server
+nas: !!omap
+- na: !!omap []
+spectrum_analyzers: !!omap
+- spectrum_analyzer: !!omap []
+lockboxs: !!omap
+- lockbox: !!omap
+  - fabryperots: !!omap
+    - FabryPerot: !!omap [{length: 0.0}, {eta: 1.0}]
+  - transmissions: !!omap
+    - transmission: !!omap [{mean: -0.01944684237241745}, {rms: 0.0005343958661630615},
+        {min: -0.0216064453125}, {max: -0.01708984375}]
+  - reflections: !!omap
+    - reflection: !!omap [{mean: -0.019464224576950073}, {rms: 0.0005442603080148067},
+        {min: -0.021728515625}, {max: -0.01708984375}]
+  - pdhs: !!omap
+    - pdh: !!omap []
+  - sequences: !!omap
+    - sequence: !!omap []
+  - outputs: !!omap
+    - output1: !!omap
+      - name: output1
+      - is_sweepable: true
+hks: !!omap
+- hk: !!omap []
+amss: !!omap
+- ams: !!omap []
+scopes: !!omap
+- scope: !!omap [{trigger_source: immediately}]
+- states: {coucou: {trigger_source: immediately, input1: adc1, curve_name: '', input2: adc2,
+      running_continuous: false, threshold_ch2: 0.0, average: true, trigger_delay: 0.0,
+      duration: 0.000131072, rolling_mode: false, threshold_ch1: 0.0}, sweep: {threshold_ch1: 0.0,
+      rolling_mode: false, trigger_delay: 0.0, trigger_source: immediately, duration: 0.000131072,
+      input1: adc1, threshold_ch2: 0.0, running_continuous: false, average: true,
+      input2: adc2, curve_name: ''}}
+samplers: !!omap
+- sampler: !!omap []
+asgs: !!omap
+- asg1: !!omap []
+- asg2: !!omap []
+pwms: !!omap
+- pwm1: !!omap []
+- pwm2: !!omap []
+pids: !!omap
+- pid1: !!omap []
+- pid2: !!omap []
+- pid3: !!omap []
+- pid4: !!omap [{p: 1.0}, {i: 0.0}, {setpoint: 0.0}, {input: asg2}, {output_direct: out1}]
+iirs: !!omap
+- iir: !!omap []

@@ -20,14 +20,14 @@ class Model(SoftwareModule):
 class InterferometerPort1(InputDirect):
     name = 'port1'
     def expected_signal(self, phase):
-        return self.parameters['mean'] + .5*(self.parameters['max'] - self.parameters['min']) * \
+        return self.mean + .5*(self.max - self.min) * \
                                     np.sin(phase)
 
 
 class InterferometerPort2(InputDirect):
     name = 'port2'
     def expected_signal(self, phase):
-        return self.parameters['mean'] - .5*(self.parameters['max'] - self.parameters['min']) * \
+        return self.mean - .5*(self.max - self.min) * \
                                     np.sin(phase)
 
 
@@ -60,14 +60,14 @@ class Inteferometer(Model):
 class FPTransmission(InputDirect):
     section_name = 'transmission'
     def expected_signal(self, variable):
-        return self.parameters['min'] + (self.parameters['max'] - self.parameters['min'])*self.model.lorentz(variable)
+        return self.min + (self.max - self.min)*self.model.lorentz(variable)
 
 
 class FPReflection(InputDirect):
     section_name = 'reflection'
 
     def expected_signal(self, variable):
-        return self.parameters['max'] - (self.parameters['max'] - self.parameters['min'])*self.model.lorentz(variable)
+        return self.max - (self.max - self.min)*self.model.lorentz(variable)
 
 
 class FabryPerot(Model):
