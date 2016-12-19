@@ -1,3 +1,4 @@
+from __future__ import division
 from pyrpl.attributes import SelectProperty, FloatProperty, BoolProperty, DynamicSelectProperty, StringProperty, \
                             ListStageOuputProperty
 from pyrpl.modules import SoftwareModule
@@ -161,9 +162,9 @@ class Stage(SoftwareModule):
         """
         for output in self.lockbox.outputs:
             (on, offset_enable, offset) = self.output_on[output.name]
+            if offset_enable:
+                output.set_ival(offset)
             if on:
-                if offset_enable:
-                    output.set_ival(offset)
                 output.lock(self.input, self.variable_value)
             else:
                 output.unlock()

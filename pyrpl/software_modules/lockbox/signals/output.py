@@ -1,3 +1,4 @@
+from __future__ import division
 from . import Signal
 from pyrpl.attributes import BoolProperty, FloatProperty, SelectProperty, FloatAttribute, FilterAttribute, LongProperty,\
                              StringProperty, ListFloatProperty, FrequencyProperty
@@ -178,6 +179,7 @@ class OutputSignal(Signal):
         self.display_name = "my_output"
         self._pid = None
         self._mode = "unlock"
+        self.tf_type = 'flat'
         self.current_input_lock = None
         self.current_variable_value = 0
         self.current_variable_slope = 0
@@ -238,10 +240,11 @@ class OutputSignal(Signal):
             analog_tf = ampl*np.exp(1j*phase)
 
         # 200 ns extra_delay + 3 cycles from pid._delay
-        return analog_tf*\
+        result = analog_tf*\
                delay_transfer_function(freqs, self.pid._delay, 200e-9, self.pid._frequency_correction)*\
                pid_transfer_function(freqs, self.p, self.i, self.pid._frequency_correction)*\
                filter_transfer_function(freqs, self.additional_filter, self.pid._frequency_correction)
+        return result # np.ones(len(freqs))
 
     @property
     def mode(self):
@@ -285,6 +288,7 @@ class OutputSignal(Signal):
         self.mode = 'lock'
         self.update_pid_gains(input, variable_value)
         self.pid.input = input.signal()
+        self.pid.output_direct = self.output_channel
 
     @property
     def is_locked(self):
@@ -302,6 +306,9 @@ class OutputSignal(Signal):
     def unlock(self):
         self.mode = 'unlock'
         self.pid.p = self.pid.i = 0
+        
+    def reset_ival(self):
+        self.pid.ival = 0
 
     def sweep(self):
         self.mode = 'sweep'
@@ -312,6 +319,7 @@ class OutputSignal(Signal):
         self.pid.i = 0
         self.pid.ival = 0
         self.pid.p = 1.
+        self.pid.setpoint = 0.
         self.lockbox.asg.setup(amplitude=self.sweep_amplitude,
                                offset=self.sweep_offset,
                                frequency=self.sweep_frequency,

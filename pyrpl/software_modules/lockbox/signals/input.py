@@ -1,3 +1,4 @@
+from __future__ import division
 from pyrpl.modules import SoftwareModule
 from . import Signal
 from pyrpl.attributes import SelectAttribute, SelectProperty, FloatProperty, FrequencyProperty, PhaseProperty

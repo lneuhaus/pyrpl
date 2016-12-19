@@ -1,0 +1,121 @@
+pyrpl: # General configuration of the software:
+  name: test_refactor
+  gui: true # autostart gui
+  loglevel: info
+  # level of logged information.
+  # 'debug' outputs everything
+  # 'infi' is default level
+  # 'warning' only shows warnings and errors
+  # 'error' only shows errors
+  modules: # SoftwareModules to load (in addition to IqManager, AsgManager, PidManager, ScopeManager)
+    - NetworkAnalyzer
+    - SpectrumAnalyzer
+    - Lockbox
+  dock_positions: !!binary |
+    AAAA/wAAAAD9AAAAAQAAAAIAAAZMAAADHfwBAAAAAvwAAAAAAAAEBQAABAUA////+gAAAAABAAAA
+    B/sAAAAMAHMAYwBvAHAAZQBzAQAAAAD/////AAAEBQD////7AAAACABhAHMAZwBzAQAAAAD/////
+    AAACJQD////7AAAABgBpAHEAcwAAAAAA/////wAAABYA////+wAAAAgAaQBpAHIAcwAAAAAA////
+    /wAAABYA////+wAAAAQAbgBhAAAAAAD/////AAAAFgD////7AAAAIgBzAHAAZQBjAHQAcgB1AG0A
+    XwBhAG4AYQBsAHkAegBlAHIAAAAAAP////8AAAAWAP////sAAAAOAGwAbwBjAGsAYgBvAHgDAAAA
+    jQAAADEAAAU+AAAC8vsAAAAIAHAAaQBkAHMBAAAECQAAAkMAAAJDAP///wAABkwAAAAAAAAABAAA
+    AAQAAAAIAAAACPwAAAAA
+  window_position:
+  - -1054
+  - 59
+  - 1612
+  - 838
+redpitaya:
+  hostname: 10.214.1.32
+  password: root
+  user: root
+  port: 2222
+  frequency_correction: 1.0000620276708887
+  filename: fpga//red_pitaya.bin
+  reloadfpga: true
+  monitor_server_name: pyrpl
+nas: !!omap
+- na: !!omap []
+spectrum_analyzers: !!omap
+- spectrum_analyzer: !!omap []
+lockboxs: !!omap
+- lockbox: !!omap
+  - fabryperots: !!omap
+    - FabryPerot: !!omap [{wavelength: 1064.0}, {finesse: 10000.0}, {length: 180000.0},
+        {eta: 1.0}]
+  - transmissions: !!omap
+    - transmission: !!omap []
+  - reflections: !!omap
+    - reflection: !!omap []
+  - pdhs: !!omap
+    - pdh: !!omap []
+  - sequences: !!omap
+    - sequence: !!omap [{stages: !!omap [{stage1: !!omap [{input: reflection}, {variable_value: 1.0},
+                {duration: 5.0}, {output_on: {fine_piezo: [false, true, 0.004431152343750002],
+                    coarse_piezo: [false, true, -1.0]}}]}, {stage2: !!omap [{output_on: {
+                    fine_piezo: [true, true, -1.0], coarse_piezo: [false, false, 0]}},
+                {variable_value: 1.0}, {input: reflection}, {duration: 0.2}]}, {stage3: !!omap [
+                {variable_value: 0.8}, {input: reflection}, {output_on: {fine_piezo: [
+                      true, false, 0], coarse_piezo: [true, false, 0]}}, {duration: 0.2}]},
+            {stage4: !!omap [{duration: 0.0}, {input: reflection}, {variable_value: 0.6},
+                {output_on: {fine_piezo: [true, false, 0], coarse_piezo: [true, false,
+                      0]}}]}]}]
+  - outputs: !!omap
+    - fine_piezo: !!omap
+      - p: -0.0001
+      - i: -0.0001
+      - dc_gain: 0.05
+      - output_channel: out2
+      - assisted_design: false
+      - analog_filter:
+        - 10.0
+        - 0.0
+        - 0.0
+        - 0.0
+      - unity_gain_desired: 1000.0
+      - name: fine_piezo
+      - sweep_frequency: 30.0
+      - sweep_offset: 0.0
+      - sweep_amplitude: 1.0
+      - is_sweepable: true
+    - coarse_piezo: !!omap
+      - p: 1.0
+      - is_sweepable: true
+      - sweep_amplitude: 1.0
+      - sweep_frequency: 10.0
+      - sweep_offset: 0.0
+      - dc_gain: 50.0
+      - i: 2.0
+      - name: coarse_piezo
+  - default_sweep_output: fine_piezo
+hks: !!omap
+- hk: !!omap []
+amss: !!omap
+- ams: !!omap []
+scopes: !!omap
+- scope: !!omap [{trigger_source: asg2}, {running_continuous: true}, {duration: 0.033554432},
+    {trigger_delay: 0.0}, {input2: adc2}, {rolling_mode: false}, {input1: adc1}, {
+      average: true}, {threshold_ch1: 0.0}, {threshold_ch2: 0.0}, {curve_name: ''}]
+- states: {sweep: {input2: adc2, input1: adc1, rolling_mode: false, curve_name: '',
+      threshold_ch2: 0.0, trigger_delay: 0.0, average: true, threshold_ch1: 0.0, trigger_source: asg2,
+      running_continuous: true, duration: 0.134217728}, rolling: {input2: dac1, input1: adc1,
+      rolling_mode: true, curve_name: '', threshold_ch2: 0.0, trigger_delay: 0.0,
+      average: true, threshold_ch1: 0.0, trigger_source: asg2, running_continuous: true,
+      duration: 2.147483648}}
+samplers: !!omap
+- sampler: !!omap []
+asgs: !!omap
+- asg1: !!omap [{output_direct: off}, {frequency: 164.72768038511276}]
+- asg2: !!omap [{waveform: cos}, {amplitude: 1.0}, {offset: 0.0}, {frequency: 10.011717677116394},
+    {output_direct: off}]
+pwms: !!omap
+- pwm1: !!omap []
+- pwm2: !!omap []
+pids: !!omap
+- pid1: !!omap
+  - output_direct: off
+- pid2: !!omap []
+- pid3: !!omap [{p: 0.0}, {i: 0.0}, {input: asg2}, {output_direct: out1}, {setpoint: 0.0}]
+- pid4: !!omap [{p: -0.0576171875}, {i: -0.055584221761171476}, {setpoint: 0.3968505859375},
+    {input: adc1}, {output_direct: out2}]
+iirs: !!omap
+- iir: !!omap []

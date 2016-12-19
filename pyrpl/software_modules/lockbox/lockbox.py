@@ -1,3 +1,4 @@
+from __future__ import division
 from pyrpl.modules import SoftwareModule
 from pyrpl.attributes import SelectProperty, BoolProperty, DynamicSelectProperty
 from .model import Model
@@ -64,6 +65,9 @@ class Lockbox(SoftwareModule):
         """
         self.unlock()
         # if output is None:
+        for output in self.outputs:
+            output.reset_ival()
+        
         index = self.output_names.index(self.default_sweep_output)
         output = self.outputs[index]
         output.sweep()
