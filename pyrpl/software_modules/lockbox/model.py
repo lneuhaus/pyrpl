@@ -87,3 +87,18 @@ class FabryPerot(Model):
 
     def lorentz(self, x):
         return 1.0 / (1.0 + x ** 2)
+
+
+class HighFinesseReflection(FPReflection):
+    """
+    Reflection for a FabryPerot. The only difference with FPReflection is that 
+    acquire will be done in 2 steps (coarse, then fine)
+    """
+    
+    def acquire(self):
+        curve = super(HighFinesseFabryPerot, self).aquire()
+
+        
+class HighFinesseFabryPerot(FabryPerot):
+    input_cls = [HighFinesseReflection]
+    

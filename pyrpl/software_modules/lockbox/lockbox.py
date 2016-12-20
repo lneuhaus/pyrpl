@@ -10,8 +10,11 @@ from .sequence import Sequence
 from collections import OrderedDict
 from PyQt4 import QtCore
 
-
-all_models = OrderedDict([(model.name, model) for model in Model.__subclasses__()])
+def all_subclasses(cls):
+    return cls.__subclasses__() + [g for s in cls.__subclasses__()
+                                   for g in all_subclasses(s)]
+    
+all_models = OrderedDict([(model.name, model) for model in all_subclasses(Model)])
 
 
 class ModelProperty(SelectProperty):

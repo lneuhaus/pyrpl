@@ -12,17 +12,17 @@ pyrpl: # General configuration of the software:
     - SpectrumAnalyzer
     - Lockbox
   dock_positions: !!binary |
-    AAAA/wAAAAD9AAAAAQAAAAIAAAZMAAADHfwBAAAAAvwAAAAAAAAEBQAABAUA////+gAAAAABAAAA
+    AAAA/wAAAAD9AAAAAQAAAAIAAAcvAAADHfwBAAAAAvwAAAAAAAAE6AAABOgA////+gAAAAYBAAAA
     B/sAAAAMAHMAYwBvAHAAZQBzAQAAAAD/////AAAEBQD////7AAAACABhAHMAZwBzAQAAAAD/////
     AAACJQD////7AAAABgBpAHEAcwAAAAAA/////wAAABYA////+wAAAAgAaQBpAHIAcwAAAAAA////
     /wAAABYA////+wAAAAQAbgBhAAAAAAD/////AAAAFgD////7AAAAIgBzAHAAZQBjAHQAcgB1AG0A
-    XwBhAG4AYQBsAHkAegBlAHIAAAAAAP////8AAAAWAP////sAAAAOAGwAbwBjAGsAYgBvAHgDAAAA
-    jQAAADEAAAU+AAAC8vsAAAAIAHAAaQBkAHMBAAAECQAAAkMAAAJDAP///wAABkwAAAAAAAAABAAA
+    XwBhAG4AYQBsAHkAegBlAHIAAAAAAP////8AAAAWAP////sAAAAOAGwAbwBjAGsAYgBvAHgBAAAA
+    AP////8AAAToAP////sAAAAIAHAAaQBkAHMBAAAE7AAAAkMAAAJDAP///wAABy8AAAAAAAAABAAA
     AAQAAAAIAAAACPwAAAAA
   window_position:
-  - -1054
-  - 59
-  - 1612
+  - 107
+  - 0
+  - 1839
   - 838
 redpitaya:
   hostname: 10.214.1.32
@@ -43,9 +43,11 @@ lockboxs: !!omap
     - FabryPerot: !!omap [{wavelength: 1064.0}, {finesse: 10000.0}, {length: 180000.0},
         {eta: 1.0}]
   - transmissions: !!omap
-    - transmission: !!omap []
+    - transmission: !!omap [{mean: 0.4664570018649101}, {rms: 0.0024892727084975634},
+        {min: 0.4036865234375}, {max: 0.4737548828125}]
   - reflections: !!omap
-    - reflection: !!omap []
+    - reflection: !!omap [{mean: 0.46627388149499893}, {rms: 0.0025519074054665544},
+        {min: 0.3997802734375}, {max: 0.472900390625}]
   - pdhs: !!omap
     - pdh: !!omap []
   - sequences: !!omap
@@ -86,7 +88,13 @@ lockboxs: !!omap
       - dc_gain: 50.0
       - i: 2.0
       - name: coarse_piezo
-  - default_sweep_output: fine_piezo
+  - default_sweep_output: coarse_piezo
+  - interferometers: !!omap
+    - interferometer: !!omap []
+  - direct_inputs: !!omap
+    - direct_input1: !!omap []
+    - direct_input2: !!omap []
+  - model_name: FabryPerot
 hks: !!omap
 - hk: !!omap []
 amss: !!omap
@@ -114,8 +122,9 @@ pids: !!omap
 - pid1: !!omap
   - output_direct: off
 - pid2: !!omap []
-- pid3: !!omap [{p: 0.0}, {i: 0.0}, {input: asg2}, {output_direct: out1}, {setpoint: 0.0}]
-- pid4: !!omap [{p: -0.0576171875}, {i: -0.055584221761171476}, {setpoint: 0.3968505859375},
-    {input: adc1}, {output_direct: out2}]
+- pid3: !!omap [{p: 1.0}, {i: 0.0}, {input: asg2}, {output_direct: out1}, {setpoint: 0.0}]
+- pid4: !!omap [{p: 0.0}, {i: 0.0}, {setpoint: 0.0}, {input: asg2}, {output_direct: out2}]
 iirs: !!omap
 - iir: !!omap []
+iqs: !!omap
+- iq1: !!omap []
