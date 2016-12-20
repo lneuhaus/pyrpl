@@ -107,8 +107,11 @@ class HighFinesseInput(InputDirect):
                 scope.duration/=100
                 scope.trigger_source = "ch1_positive_edge"
                 scope.save_state("sweep_zoom")
+            else:
+                scope.load_state("sweep_zoom")
             threshold = self.get_threshold(curve)
             scope.setup(threshold_ch1=threshold, input1=self.signal())
+            print(threshold)
             curve = scope.curve()
             self.get_stats_from_curve(curve)
         finally:

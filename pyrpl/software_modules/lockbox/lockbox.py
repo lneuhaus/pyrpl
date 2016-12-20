@@ -118,6 +118,7 @@ class Lockbox(SoftwareModule):
         """
         Launches the full lock sequence, stage by stage until the end.
         """
+        self.unlock()
         self.goto_next()
 
     def add_output(self):
@@ -180,6 +181,7 @@ class Lockbox(SoftwareModule):
         Unlocks all outputs, without touching the integrator value.
         """
         self.state = 'unlock'
+        self.timer_lock.stop()
         for output in self.outputs:
             output.unlock()
 

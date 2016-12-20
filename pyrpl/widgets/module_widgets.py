@@ -489,7 +489,7 @@ class PidWidget(ModuleWidget):
             self.attribute_widgets[prop].widget.set_log_increment()
         # can't avoid timer to update ival
         self.timer_ival = QtCore.QTimer()
-        self.timer_ival.setInterval(100)
+        self.timer_ival.setInterval(1000)
         self.timer_ival.timeout.connect(self.update_ival)
         self.timer_ival.start()
 
@@ -1755,8 +1755,10 @@ class OutputSignalWidget(ModuleWidget):
         """
         freqs = self.module.tf_freqs()
         curve = self.module.transfer_function(freqs)
-        self.curve.setData(freqs, abs(curve))
-        self.curve_phase.setData(freqs, 180./np.pi*np.angle(curve))
+        abs_curve = abs(curve)
+        if(max(abs_curve)>0): # python 2 crashes when plotting zeros in log_mode
+            self.curve.setData(freqs, abs_curve)
+            self.curve_phase.setData(freqs, 180./np.pi*np.angle(curve))
 
 
 class LockboxInputWidget(ModuleWidget):
