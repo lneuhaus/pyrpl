@@ -89,16 +89,67 @@ class FabryPerot(Model):
         return 1.0 / (1.0 + x ** 2)
 
 
-class HighFinesseReflection(FPReflection):
+class HighFinesseInput(InputDirect):
+    """
+    Since the number of points in the scope is too small for high finesse cavities, the acquisition is performed in
+    2 steps:
+        1. Full scan with the actuator, full scope duration, trigged on asg
+        2. Full scan with the actuator, smaller scope duration, trigged on input (level defined by previous scan).
+    Scope states corresponding to 1 and 2 are "sweep" and "sweep_zoom"
+    """
+
+    def calibrate(self):
+        print("high-finesse calibrate")
+        curve = super(HighFinesseInput, self).acquire()
+        scope = self.pyrpl.scopes.pop(self.name)
+        try:
+            if not "sweep_zoom" in scope.states:
+                scope.duration/=100
+                scope.trigger_source = "ch1_positive_edge"
+                scope.save_state("sweep_zoom")
+            threshold = self.get_threshold(curve)
+            scope.setup(threshold_ch1=threshold, input1=self.signal())
+            curve = scope.curve()
+            self.get_stats_from_curve(curve)
+        finally:
+            self.pyrpl.scopes.free(scope)
+        if self.widget is not None:
+            self.update_graph()
+
+    def get_threshold(self, curve):
+        return (curve.min() + curve.mean())/2
+
+
+class HighFinesseReflection(HighFinesseInput, FPReflection):
     """
     Reflection for a FabryPerot. The only difference with FPReflection is that 
     acquire will be done in 2 steps (coarse, then fine)
     """
-    
-    def acquire(self):
-        curve = super(HighFinesseFabryPerot, self).aquire()
+    section_name = 'hf_reflection'
+    pass
+
+
+class HighFinesseTransmission(HighFinesseInput, FPTransmission):
+    """
+    Reflection for a FabryPerot. The only difference with FPReflection is that
+    acquire will be done in 2 steps (coarse, then fine)
+    """
+    section_name = 'hf_transmission'
+    pass
+
+
+class HighFinessePdh(HighFinesseInput, InputPdh):
+    """
+    Reflection for a FabryPerot. The only difference with FPReflection is that
+    acquire will be done in 2 steps (coarse, then fine)
+    """
+    section_name = 'hf_pdh'
+
+    signal = InputPdh.signal
 
         
 class HighFinesseFabryPerot(FabryPerot):
-    input_cls = [HighFinesseReflection]
+    name = "HighFinesseFP"
+    section_name = "high_finesse_fp"
+    input_cls = [HighFinesseReflection, HighFinesseTransmission, HighFinessePdh]
     

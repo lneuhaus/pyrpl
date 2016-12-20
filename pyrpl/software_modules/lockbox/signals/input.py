@@ -53,23 +53,31 @@ class InputSignal(SoftwareModule):
         """
         self.lockbox.sweep()
         scope = self.pyrpl.scopes.pop(self.name)
-        if not "sweep" in scope.states:
-            scope.save_state("sweep")
-        scope.load_state("sweep")
-        scope.setup(input1=self.signal(), input2=self.lockbox.asg)
-        curve = scope.curve(ch=1)
-        self.pyrpl.scopes.free(scope)
+        try:
+            if not "sweep" in scope.states:
+                scope.save_state("sweep")
+            scope.load_state("sweep")
+            scope.setup(input1=self.signal(), input2=self.lockbox.asg)
+            curve = scope.curve(ch=1)
+        finally:
+            self.pyrpl.scopes.free(scope)
         return curve
+
+    def get_stats_from_curve(self, curve):
+        """
+        gets the mean, min, max, rms value of curve (into the corresponding self's attributes)
+        """
+        self.mean = curve.mean()
+        self.rms = curve.std()
+        self.min = curve.min()
+        self.max = curve.max()
 
     def calibrate(self):
         """
         This function should be reimplemented to measure whatever property of the curve is needed by expected_signal
         """
         curve = self.acquire()
-        self.mean = curve.mean()
-        self.rms = curve.std()
-        self.min = curve.min()
-        self.max=curve.max()
+        self.get_stats_from_curve(curve)
         if self.widget is not None:
             self.update_graph()
 
