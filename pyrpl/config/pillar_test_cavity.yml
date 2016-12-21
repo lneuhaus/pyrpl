@@ -12,17 +12,17 @@ pyrpl: # General configuration of the software:
     - SpectrumAnalyzer
     - Lockbox
   dock_positions: !!binary |
-    AAAA/wAAAAD9AAAAAQAAAAIAAAWgAAADHfwBAAAAAfwAAAAAAAAFoAAABOgA////+gAAAAUBAAAA
+    AAAA/wAAAAD9AAAAAQAAAAIAAAXNAAADHfwBAAAAAfwAAAAAAAAFzQAABc0A////+gAAAAcBAAAA
     CPsAAAAMAHMAYwBvAHAAZQBzAQAAAAD/////AAAEBQD////7AAAACABwAGkAZABzAQAAAAD/////
-    AAACQwD////7AAAACABhAHMAZwBzAQAAAAD/////AAACJQD////7AAAABgBpAHEAcwAAAAAA////
-    /wAAABYA////+wAAAAgAaQBpAHIAcwAAAAAA/////wAAABYA////+wAAAAQAbgBhAQAAAAD/////
+    AAACQwD////7AAAACABhAHMAZwBzAQAAAAD/////AAACJQD////7AAAABgBpAHEAcwEAAAAA////
+    /wAAAzcA////+wAAAAgAaQBpAHIAcwAAAAAA/////wAAABYA////+wAAAAQAbgBhAQAAAAD/////
     AAAD1AD////7AAAAIgBzAHAAZQBjAHQAcgB1AG0AXwBhAG4AYQBsAHkAegBlAHIAAAAAAP////8A
-    AAAWAP////sAAAAOAGwAbwBjAGsAYgBvAHgBAAAAAP////8AAAToAP///wAABaAAAAAAAAAABAAA
+    AAAWAP////sAAAAOAGwAbwBjAGsAYgBvAHgBAAAAAP////8AAAXNAP///wAABc0AAAAAAAAABAAA
     AAQAAAAIAAAACPwAAAAA
   window_position:
   - -8
   - -8
-  - 1440
+  - 1485
   - 838
 redpitaya:
   hostname: 10.214.1.32
@@ -35,7 +35,7 @@ redpitaya:
   monitor_server_name: pyrpl
 nas: !!omap
 - na: !!omap [{output_direct: out2}, {input: pid4}, {infer_open_loop_tf: true}, {
-      amplitude: 0.05}, {logscale: true}, {avg: 8}, {rbw: [37]}]
+      amplitude: 0.001}, {logscale: true}, {avg: 8}, {rbw: [37]}]
 spectrum_analyzers: !!omap
 - spectrum_analyzer: !!omap []
 lockboxs: !!omap
@@ -53,20 +53,23 @@ lockboxs: !!omap
     - pdh: !!omap []
   - sequences: !!omap
     - sequence: !!omap [{stages: !!omap [{stage1: !!omap [{input: hf_reflection},
-                {variable_value: 1.4}, {duration: 6.0}, {output_on: {fine_piezo: [
+                {variable_value: -1.4}, {duration: 6.0}, {output_on: {fine_piezo: [
                       false, true, 0], coarse_piezo2: [false, true, 0], coarse_piezo: [
-                      true, true, -1.0]}}]}, {stage2: !!omap [{output_on: {fine_piezo: [
+                      true, true, 1.0]}}]}, {stage2: !!omap [{output_on: {fine_piezo: [
                       true, false, 0], coarse_piezo2: [true, false, 0], coarse_piezo: [
-                      false, false, 0]}}, {variable_value: 1.5}, {input: hf_reflection},
-                {duration: 0.2}]}, {stage3: !!omap [{variable_value: 1.2}, {input: hf_reflection},
+                      false, false, 0]}}, {variable_value: -1.2}, {input: hf_reflection},
+                {duration: 0.1}]}, {stage3: !!omap [{variable_value: -0.9}, {input: hf_reflection},
                 {output_on: {fine_piezo: [true, false, 0], coarse_piezo2: [true, false,
-                      0], coarse_piezo: [false, false, 0]}}, {duration: 0.2}]}, {
-              stage4: !!omap [{duration: 0.2}, {input: hf_reflection}, {variable_value: 1.0},
+                      0], coarse_piezo: [false, false, 0]}}, {duration: 0.1}]}, {
+              stage4: !!omap [{duration: 0.1}, {input: hf_reflection}, {variable_value: -0.5},
                 {output_on: {fine_piezo: [true, false, 0], coarse_piezo2: [true, false,
                       0], coarse_piezo: [false, false, 0]}}]}, {stage5: !!omap [{
                   input: hf_reflection}, {output_on: {fine_piezo: [true, false, 0],
                     coarse_piezo2: [true, false, 0], coarse_piezo: [false, false,
-                      0]}}, {variable_value: 0.9}, {duration: 0.2}]}]}]
+                      0]}}, {variable_value: -0.5}, {duration: 0.1}]}, {stage6: !!omap [
+                {duration: 0.0}, {variable_value: 0.0}, {output_on: {fine_piezo: [
+                      true, false, 0], coarse_piezo2: [true, false, 0], coarse_piezo: [
+                      false, false, 0]}}]}]}]
   - outputs: !!omap
     - fine_piezo: !!omap
       - p: -10.0
@@ -94,16 +97,21 @@ lockboxs: !!omap
       - dc_gain: 50.0
       - sweep_amplitude: 0.0
       - sweep_frequency: 0
-      - i: 0.05381481802091467
+      - i: 0.01
       - name: coarse_piezo2
-      - p: 0.0
+      - p: 0.01
+      - additional_filter:
+        - 2
+        - 0
+        - 0
+        - 0
     - coarse_piezo: !!omap
       - name: coarse_piezo
       - dc_gain: 50.0
-      - p: 1.0
+      - p: 0.5
       - i: 2.0
       - is_sweepable: true
-      - sweep_frequency: 10.0
+      - sweep_frequency: 5.0
       - sweep_amplitude: 1.0
   - default_sweep_output: coarse_piezo
   - interferometers: !!omap
@@ -116,21 +124,21 @@ lockboxs: !!omap
     - HighFinesseFP: !!omap [{wavelength: 1064.0}, {finesse: 10000.0}, {length: 0.00018},
         {eta: 1.0}]
   - hf_reflections: !!omap
-    - hf_reflection: !!omap [{mean: 0.4574224054813385}, {rms: 0.016759609293567346},
-        {min: 0.2523193359375}, {max: 0.4739990234375}]
+    - hf_reflection: !!omap [{mean: 0.44107990711927414}, {rms: 0.019210868959415338},
+        {min: 0.24755859375}, {max: 0.456787109375}]
   - hf_transmissions: !!omap
     - hf_transmission: !!omap []
   - hf_pdhs: !!omap
-    - hf_pdh: !!omap []
+    - hf_pdh: !!omap [{mod_amp: 0.01}, {mod_phase: 120.0}, {mod_freq: 50000000.0}]
 hks: !!omap
 - hk: !!omap []
 amss: !!omap
 - ams: !!omap []
 scopes: !!omap
-- scope: !!omap [{trigger_source: ch1_positive_edge}, {running_continuous: true},
-    {duration: 0.033554432}, {trigger_delay: 0.0}, {input2: adc2}, {rolling_mode: false},
-    {input1: adc1}, {average: true}, {threshold_ch1: 0.0}, {threshold_ch2: 0.0}, {
-      curve_name: ''}]
+- scope: !!omap [{trigger_source: ch1_positive_edge}, {running_continuous: false},
+    {duration: 0.000262144}, {trigger_delay: 0.0}, {input2: iq1}, {rolling_mode: false},
+    {input1: adc1}, {average: true}, {threshold_ch1: 0.3707275390625}, {threshold_ch2: 0.050048828125},
+    {curve_name: ''}]
 - states: {sweep: {input2: adc2, input1: adc1, rolling_mode: false, curve_name: '',
       threshold_ch2: 0.0, trigger_delay: 0.0, average: true, threshold_ch1: 0.0, trigger_source: asg2,
       running_continuous: true, duration: 0.134217728}, rolling: {input2: dac1, input1: adc1,
@@ -151,13 +159,14 @@ pwms: !!omap
 pids: !!omap
 - pid1: !!omap
   - output_direct: off
-- pid2: !!omap [{setpoint: 0.3990478515625}, {p: 0.0}, {i: 0.0}, {input: adc1}, {
+- pid2: !!omap [{setpoint: 0.3861083984375}, {p: 0.0}, {i: 0.0}, {input: adc1}, {
       output_direct: out1}]
-- pid3: !!omap [{p: 0.0}, {i: 0.009264036960195246}, {input: adc1}, {output_direct: out1},
-    {setpoint: 0.3515625}]
-- pid4: !!omap [{p: -1.64208984375}, {i: 0.0}, {setpoint: 0.3515625}, {input: adc1},
+- pid3: !!omap [{p: 0.00048828125}, {i: 0.0}, {input: iq1}, {output_direct: out1},
+    {setpoint: -0.0008544921875}, {inputfilter: [2, 0, 0, 0]}]
+- pid4: !!omap [{p: -0.388427734375}, {i: 0.0}, {setpoint: -0.0008544921875}, {input: iq1},
     {output_direct: out2}, {inputfilter: [1214, 0, 0, 0]}]
 iirs: !!omap
 - iir: !!omap []
 iqs: !!omap
-- iq1: !!omap []
+- iq1: !!omap [{frequency: 49999999.98835847}, {amplitude: 0.01000213623046875}, {
+      phase: 119.99999997206032}]
