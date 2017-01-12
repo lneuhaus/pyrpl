@@ -1,5 +1,7 @@
 redpitaya:
-  hostname: 10.214.1.9
+  #hostname: 10.214.1.9
+  hostname: 10.214.1.21
+  #hostname: unavailable
   password: root
   user: root
   port: 2222
