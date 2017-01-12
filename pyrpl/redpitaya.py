@@ -108,7 +108,7 @@ class RedPitaya(SSHshell):
         else:
             self.filename = filename
         if dirname is None:
-            self.dirname = os.path.abspath(os.path.dirname(rp.__file__)) #or inspect.getfile(_rp)
+            self.dirname = os.path.abspath(os.path.dirname(__file__)) #or inspect.getfile(_rp)
         else:
             self.dirname = dirname
         if not os.path.exists(self.dirname):
@@ -173,9 +173,9 @@ class RedPitaya(SSHshell):
         sleep(self.delay)
         self.ask('mkdir ' + self.serverdirname)
         sleep(self.delay)
-        source = os.path.join(self.dirname,filename)
+        source = os.path.join(self.dirname, filename)
         if not os.path.isfile(source):
-            source = os.path.join(self.dirname,'fpga', filename)
+            source = os.path.join(self.dirname, 'fpga', filename)
         if not os.path.isfile(source):
             raise IOError("Wrong filename",
               "The fpga bitfile was not found at the expected location. Try passing the arguments "
@@ -185,7 +185,7 @@ class RedPitaya(SSHshell):
               +" current filename: "+self.filename)
         try:
             self.scp.put(source,
-                         os.path.join(self.serverdirname,self._binfilename))
+                         os.path.join(self.serverdirname, self._binfilename))
         except (SCPException, SSHException):
             # try again before failing
             self.startscp()

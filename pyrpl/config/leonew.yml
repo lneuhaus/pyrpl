@@ -1,3 +1,22 @@
+pyrpl:
+  name: test_refactor
+  gui: true
+  loglevel: info
+  modules:
+  - NetworkAnalyzer
+  - SpectrumAnalyzer
+  dock_positions: !!binary |
+    AAAA/wAAAAD9AAAAAQAAAAIAAAVWAAACnfwBAAAAAfwAAAAAAAAFVgAAA/EA////+gAAAAMBAAAA
+    B/sAAAAIAGEAcwBnAHMAAAAAAP////8AAAAUAP////sAAAAGAGkAcQBzAAAAAAD/////AAAAFAD/
+    ///7AAAACABwAGkAZABzAAAAAAD/////AAAAFAD////7AAAADABzAGMAbwBwAGUAcwEAAAAA////
+    /wAAA/EA////+wAAAAgAaQBpAHIAcwAAAAAA/////wAAABQA////+wAAAAQAbgBhAAAAAAD/////
+    AAAAFAD////7AAAAIgBzAHAAZQBjAHQAcgB1AG0AXwBhAG4AYQBsAHkAegBlAHIAAAAAAP////8A
+    AAMKAP///wAABVYAAAAAAAAABAAAAAQAAAAIAAAACPwAAAAA
+  window_position:
+  - -4
+  - -4
+  - 1366
+  - 705
 redpitaya:
   hostname: 192.168.1.107
   user: root
@@ -6,45 +25,39 @@ redpitaya:
   frequency_correction: 1.0
   filename: fpga//red_pitaya.bin
   reloadfpga: true
-general:
-  loglevel: debug
-  name: default_cavity
-
-inputs:
-  reflection: adc1
-
-outputs:
-  slowpzt: out1
-  fastpzt: out2
-
-model:
-  type: fabry-perot
-  cavity:
-    length: 0.5
-    finesse: 5000
-    actuator:
-  modelconstants:
-    lock_upper_threshold: 0.9
-    lock_lower_threshold: 0.0
-    relative_reflection_off: 0.01
-
-stages:
-  UNLOCKEDSTAGE: 0
-  COARSEFINDSTAGE: 1
-  DRIFTSTAGE: 2
-  SOFSTAGE: 3
-  PDHSTAGE: 4
-asg1:
-  trigger_source: immediately
-  output_direct: off
-  offset: 0.0
-  waveform: sin
-  amplitude: 1.0
-  frequency: 0.0
-asg2:
-  trigger_source: immediately
-  output_direct: off
-  offset: 0.0
-  waveform: sin
-  amplitude: 1.0
-  frequency: 0.0
+  monitor_server_name: monitor_server
+nas:
+  na: {}
+spectrum_analyzers:
+  spectrum_analyzer:
+    input: adc2
+hks:
+  hk: {}
+amss:
+  ams: {}
+scopes:
+  scope:
+    trigger_source: immediately
+    input1: adc1
+    input2: adc2
+    running_continuous: false
+    duration: 4.294967296
+    rolling_mode: true
+    average: false
+samplers:
+  sampler: {}
+asgs:
+  asg1: {}
+  asg2: {}
+pwms:
+  pwm1: {}
+  pwm2: {}
+iqs:
+  iq1: {}
+pids:
+  pid1: {}
+  pid2: {}
+  pid3: {}
+  pid4: {}
+iirs:
+  iir: {}
