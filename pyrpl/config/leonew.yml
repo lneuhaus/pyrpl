@@ -41,7 +41,7 @@ scopes:
     input1: adc1
     input2: adc2
     running_continuous: false
-    duration: 4.294967296
+    duration: 8.589934592
     rolling_mode: true
     average: false
 samplers:
