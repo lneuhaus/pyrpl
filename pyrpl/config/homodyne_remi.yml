@@ -1,0 +1,102 @@
+redpitaya:
+  hostname: 10.214.1.32
+  password: root
+  user: root
+  port: 2222
+  frequency_correction: 1.0000620276708887
+  filename: fpga//red_pitaya.bin
+  reloadfpga: true
+  gui: true
+  monitor_server_name: pyrpl
+general:
+  name: homodyne
+  loglevel: warning
+  curvedb: pyinstruments
+model:
+  modeltype: interferometer
+  wavelength: 1.064e-06
+  lock:
+    error_threshold: 10.0
+    stages:
+      call_unlock: {}
+      start:
+        input: transmission
+        factor: 0.1
+        phase: 0
+        outputs:
+        - piezo
+        time: 0.1
+      finish:
+        input: transmission
+        factor: 1.0
+        phase: 0
+        outputs:
+        - piezo
+        setup_iir: true
+inputs:
+  transmission:
+    unit: V
+    redpitaya_input: adc1
+    offset: -0.0177127867937088
+    max: 0.4016239196062088
+    min: -0.3881710022687912
+    mean: -0.008641749620437622
+    rms: 0.2848283583143258
+    curve: 1227867
+outputs:
+  piezo:
+    redpitaya_output: out1
+    max_voltage: 1.0
+    min_voltage: -1.0
+    calibrationunits: m_per_V
+    m_per_V: 1.25e-06
+    analogfilter:
+      lowpass:
+      - 1000
+    lock:
+      unity_gain_frequency: 10000.0
+      inputfilter:
+      - 0
+      - 0
+      - 0
+      - 0
+    sweep:
+      waveform: sin
+      frequency: 10.0
+      amplitude: 1.0
+scope:
+  input1: adc1
+  input2: dac1
+  duration: 0.1
+  trigger_source: immediately
+  average: false
+scopegui:
+  coordinates:
+  - 0
+  - 9
+  - 1424
+  - 813
+  auto_run_continuous: true
+signal:
+  unit: V
+  V_per_V: 1.0
+  raw_per_V: 8192.0
+  duration: 0.1
+  average: false
+  autosave: false
+  points: 16384
+  trigger_source: immediately
+  trigger_delay: 0
+  acquire_timeout: 0.3
+  offset_subtraction: true
+  offset: 0
+  peak: 0
+  threshold: 0
+  hysteresis: 0.002
+dock_positions: !!binary |
+  AAAA/wAAAAD9AAAAAQAAAAIAAAWQAAADLfwBAAAAAfwAAAAAAAAFkAAAA3YA////+gAAAAABAAAA
+  BvsAAAAEAE4AYQEAAAAA/////wAAA3YA////+wAAAB4AUwBjAG8AcABlAC8AUwBwAGUAYwAuACAA
+  QQBuAC4BAAAAAP////8AAANzAP////sAAAAIAEEAcwBnAHMBAAAAAP////8AAAJFAP////sAAAAI
+  AFAAaQBkAHMBAAAAAP////8AAAJjAP////sAAAAEAEkAcQEAAAAA/////wAAA20A////+wAAABYA
+  UAB5AHIAcABsACAAbQBvAGQAZQBsAQAAAAD/////AAABpQD///8AAAWQAAAAAAAAAAQAAAAEAAAA
+  CAAAAAj8AAAAAA==

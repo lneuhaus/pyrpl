@@ -1,7 +1,7 @@
 from ..errors import NotReadyError, TimeoutError
 from ..attributes import FloatAttribute, SelectAttribute, BoolRegister, \
-    FloatRegister, SelectRegister, \
-                             StringProperty, IntRegister, LongRegister
+                         FloatRegister, SelectRegister, BoolProperty, \
+                         StringProperty, IntRegister, LongRegister
 from ..modules import HardwareModule
 from ..widgets.module_widgets import ScopeWidget
 
@@ -54,12 +54,22 @@ class DurationAttribute(SelectAttribute):
         the rounding makes sure that the actual value is longer or equal to the set value"""
         value = float(value) / instance.data_length
         tbase = 8e-9
+        decimation =  max(instance.decimations)
+        found = False
         for d in instance.decimations:
             if value <= tbase * float(d):
-                instance.decimation = d
-                return
-        instance.decimation = max(instance.decimations)
-        instance._logger.error("Desired duration too long to realize")
+                decimation = d
+                found = True
+                break
+        if not found:
+            instance._logger.error("Desired duration too long to realize")
+        instance.decimation = decimation
+
+    def update_gui(self, module):
+        if module.is_rolling_mode_active():  # changing duration might change rolling mode
+            module.widget.set_rolling_mode()
+        else:
+            module.trigger_source = module.trigger_source # otherwise, make sure trigger becomes effective again
 
 
 class DecimationRegister(SelectRegister):
@@ -131,8 +141,31 @@ class DspInputAttributeScope(DspInputAttribute):
         return value
 
 
+class RunningContinuousProperty(BoolProperty):
+    """
+    Nothing to do unless widget exists
+    """
+    def update_gui(self, module):
+        super(RunningContinuousProperty, self).update_gui(module)
+        module.widget.set_running_state()
+
+
+class RollingModeProperty(BoolProperty):
+    """
+    Nothing to do unless widget exists
+    """
+    def set_value(self, obj, val):
+        super(RollingModeProperty, self).set_value(obj, val)
+        if obj.running_continuous:
+            obj.setup()
+
+    def update_gui(self, module):
+        super(RollingModeProperty, self).update_gui(module)
+        module.widget.set_rolling_mode()
+
+
 class Scope(HardwareModule):
-    name = 'scope'
+    section_name = 'scope'
     addr_base = 0x40100000
     widget_class = ScopeWidget
     gui_attributes = ["input1",
@@ -143,7 +176,9 @@ class Scope(HardwareModule):
                       "trigger_delay",
                       "threshold_ch1",
                       "threshold_ch2",
-                      "curve_name"]
+                      "curve_name",
+                      "running_continuous",
+                      "rolling_mode"]
     setup_attributes = gui_attributes
     name = 'scope'
     data_length = data_length  # see definition and explanation above
@@ -185,11 +220,11 @@ class Scope(HardwareModule):
     _trigger_source = SelectRegister(0x4, doc="Trigger source",
                                      options=_trigger_sources)
 
-    def set_state(self, dic):
-        super(Scope, self).set_state(dic)
-        self.setup()
-
     trigger_source = TriggerSourceAttribute(_trigger_sources.keys())
+
+    running_continuous = RunningContinuousProperty() # if the module has a widget, it is running continuously.
+    rolling_mode = RollingModeProperty() # if the module has a widget, it is in rolling mode.
+
 
     _trigger_debounce = IntRegister(0x90, doc="Trigger debounce time [cycles]")
 
@@ -369,6 +404,24 @@ class Scope(HardwareModule):
         if self.trigger_source == 'immediately':
             # self.wait_for_pretrig_ok()
             self.trigger_source = self.trigger_source
+        if self.is_rolling_mode_active():
+            self.set_for_rolling_mode()
+
+    def rolling_mode_allowed(self):
+        """
+        Only if duration larger than 0.1 s
+        """
+        return self.duration>0.1
+
+    def is_rolling_mode_active(self):
+        """
+        Rolling_mode property evaluates to True and duration larger than 0.1 s
+        """
+        return self.rolling_mode and self.rolling_mode_allowed()
+
+    def set_for_rolling_mode(self):
+        self._trigger_source = 'off'
+        self._trigger_armed = True
 
     def setup_old(self,
               duration=None,

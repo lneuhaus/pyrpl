@@ -43,7 +43,7 @@ class IqAcbandwidth(FilterAttribute):
 
 
 class IQ(FilterModule):
-    name = 'iq'
+    section_name = 'iq'
     widget_class = IqWidget
     gui_attributes = ["input",
                       "acbandwidth",

@@ -4,7 +4,7 @@ from . import DSP_INPUTS
 
 
 class Sampler(HardwareModule):
-    name = 'sampler'
+    section_name = 'sampler'
     addr_base = 0x40300000
 
 for inp, num in DSP_INPUTS.items():

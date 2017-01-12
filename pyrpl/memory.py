@@ -21,6 +21,7 @@ from collections import OrderedDict
 from shutil import copyfile
 import numpy as np
 import time
+from PyQt4 import QtCore
 
 import logging
 logger = logging.getLogger(name=__name__)
@@ -42,6 +43,9 @@ try:
                 lambda dumper, data: dumper.represent_str(str(data)))
     ruamel.yaml.RoundTripDumper.add_representer(np.ndarray,
                 lambda dumper, data: dumper.represent_list(list(data)))
+
+    # see http://stackoverflow.com/questions/13518819/avoid-references-in-pyyaml
+    ruamel.yaml.RoundTripDumper.ignore_aliases = lambda *args: True
     def load(f):
         return ruamel.yaml.load(f, ruamel.yaml.RoundTripLoader)
     def save(data, stream=None):
@@ -51,6 +55,10 @@ try:
 except:
     logger.warning("ruamel.yaml could not be found. Using yaml instead. Comments in config files will be lost.")
     import yaml
+
+    # see http://stackoverflow.com/questions/13518819/avoid-references-in-pyyaml
+    yaml.RoundTripDumper.ignore_aliases = lambda *args: True # NEVER TESTED
+
     # ordered load and dump for yaml files. From
     # http://stackoverflow.com/questions/5121931/in-python-how-can-you-load-yaml-mappings-as-ordereddicts
     def load(stream, Loader=yaml.SafeLoader, object_pairs_hook=OrderedDict):
@@ -160,7 +168,7 @@ class MemoryBranch(object):
     @property
     def _dict(self):
         """ return a dict containing the memory branch data"""
-        d = {}
+        d = OrderedDict()
         for defaultdict in reversed(self._defaults):
             d.update(defaultdict._dict)
         d.update(self._data)
@@ -232,6 +240,14 @@ class MemoryBranch(object):
             self._data[item] = value
             self._save()
 
+    def _rename(self, name):
+        parent = self._parent
+        if self._branch in parent._keys():
+            branch = parent._pop(self._branch)
+        else:
+            branch = OrderedDict()
+        parent[name] = branch
+
     # remove an item from the config file
     def _pop(self, name):
         ro = isbranch(self._data[name]) and 'value' in self._data[name] and \
@@ -241,7 +257,8 @@ class MemoryBranch(object):
                 "Attribute %s is read-only and cannot be deleted", name)
             return None
         else:
-            self.__dict__.pop(name)
+            if name in self.__dict__.keys():
+                self.__dict__.pop(name)
             value = self._data.pop(name)
             self._save()
             return value
@@ -268,6 +285,8 @@ class MemoryTree(MemoryBranch):
     # never reload more frequently than every 2 s because this is the principal
     # cause of slowing down the code
     _reloaddeadtime = 2
+    _savedeadtime = 1 # never save more often than 1s
+    # as an indication, on my ssd, saving of a standard config file was timed at 30 ms, loading: 40 ms...
 
     def __init__(self, filename):
         if os.path.isfile(filename):
@@ -278,6 +297,18 @@ class MemoryTree(MemoryBranch):
             with open(self._filename, mode="w") as f:
                 pass
         self._load()
+        self._lastsave = time.time()
+        # make a temporary file to ensure modification of config file is atomic (double-buffering like operation...)
+        tmp_dir = os.path.join(os.path.dirname(self._filename), "tmp")
+        if not os.path.isdir(tmp_dir):
+            os.mkdir(tmp_dir)
+        self._buffer_filename = os.path.join(tmp_dir, 'tmp.yml')
+        # create a timer to postpone to frequent savings
+        self._savetimer = QtCore.QTimer()
+        self._savetimer.setInterval(self._savedeadtime*1000)
+        self._savetimer.setSingleShot(True)
+        self._savetimer.timeout.connect(self._save)
+
         super(MemoryTree, self).__init__(self, "")
 
     def _load(self):
@@ -304,18 +335,32 @@ class MemoryTree(MemoryBranch):
 
     def _save(self):
         """ writes current tree structure and data to file """
-        if self._mtime != os.path.getmtime(self._filename):
-            logger.warning("Config file has recently been changed on your " +
-                           "harddisk. These changes might have been " +
-                           "overwritten now.")
-        logger.debug("Saving config file %s", self._filename)
-        copyfile(self._filename, self._filename+".bak")
-        try:
-            with open(self._filename, mode='w') as f:
+        if self._lastsave + self._savedeadtime < time.time():
+            self._lastsave = time.time()
+            if self._mtime != os.path.getmtime(self._filename):
+                logger.warning("Config file has recently been changed on your " +
+                               "harddisk. These changes might have been " +
+                               "overwritten now.")
+            logger.debug("Saving config file %s", self._filename)
+            copyfile(self._filename, self._filename+".bak")
+            try:
+                f = open(self._buffer_filename, mode='w')
                 save(self._data, stream=f)
-        except:
-            copyfile(self._filename+".bak", self._filename)
-            logger.error("Error writing to file. Backup version was restored.")
-            raise
-        self._mtime = os.path.getmtime(self._filename)
+                f.flush()
+                os.fsync(f.fileno())
+                f.close()
+                # config file writing should be atomic! I am not 100% sure the following line guarantees atomicity on windows
+                # but it's already much better than letting the yaml dumper save on the final config file
+                # see http://stackoverflow.com/questions/2333872/atomic-writing-to-file-with-python
+                # or https://bugs.python.org/issue8828
+                os.unlink(self._filename)
+                os.rename(self._buffer_filename, self._filename)
+            except:
+                copyfile(self._filename+".bak", self._filename)
+                logger.error("Error writing to file. Backup version was restored.")
+                raise
+            self._mtime = os.path.getmtime(self._filename)
+        else: # make sure saving will eventually occur
+            if not self._savetimer.isActive():
+                self._savetimer.start()
 

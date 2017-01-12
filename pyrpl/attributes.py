@@ -9,16 +9,18 @@ An attribute is a field that can be set or get by several means:
 Of course, the gui/parameter file/actual values have to stay "in sync" each time the attribute value is
 changed. The necessary mechanisms are happening behind the scene, and they are coded in this file.
 """
-
+from __future__ import division
 from .bijection import Bijection
 from .widgets.attribute_widgets import BoolAttributeWidget, FloatAttributeWidget, FilterAttributeWidget, \
                                             IntAttributeWidget, SelectAttributeWidget, StringAttributeWidget, \
-                                            ListComplexAttributeWidget, FrequencyAttributeWidget
+                                            ListComplexAttributeWidget, FrequencyAttributeWidget, \
+                                            ListStageOutputAttributeWidget, ListFloatAttributeWidget
 
 import logging
 import sys
 import numpy as np
 import numbers
+
 
 
 logger = logging.getLogger(name=__name__)
@@ -39,6 +41,7 @@ class BaseAttribute(object):
       - a function get_value(instance, owner) that reads the value from wherever it is stored internally
     """
     widget_class = None
+    widget = None
 
     def __init__(self, default=None, doc=""):
         """
@@ -76,8 +79,7 @@ class BaseAttribute(object):
         Sets the value in the gui and config
         """
         if instance.widget is not None:  # update gui only if it exists
-            if self.name in instance.widget.attribute_widgets:
-                self.update_gui(instance)
+            self.update_gui(instance)
         if instance._autosave_active:  # (for instance, when module is slaved, don't save attributes)
             if self.name in instance.setup_attributes:
                     self.save_attribute(instance, value)
@@ -93,7 +95,8 @@ class BaseAttribute(object):
         """
         Updates the widget with the module's value.
         """
-        module.widget.attribute_widgets[self.name].update_widget()
+        if self.name in module.widget.attribute_widgets:
+            module.widget.attribute_widgets[self.name].update_widget()
 
     def save_attribute(self, module, value):
         """
@@ -107,8 +110,8 @@ class BaseAttribute(object):
         """
         if name is None:
             name = self.name # attributed by the metaclass of module
-        return self.widget_class(name, module)
-
+        widget = self.widget_class(name, module)
+        return widget
 
 class NumberAttribute(BaseAttribute):
     """
@@ -224,16 +227,14 @@ class SelectAttribute(BaseAttribute):
                 return self._options
         """
 
-
     def create_widget(self, module, name=None):
         """
         This function is reimplemented to pass the options to the widget.
         """
         if name is None:
             name = self.name
-        self.widget = SelectAttributeWidget(name, module, self.options)
-        return self.widget
-
+        widget = SelectAttributeWidget(name, module, self.options)
+        return widget
 
     def validate_and_normalize(self, value, module):
         """
@@ -253,6 +254,50 @@ class SelectAttribute(BaseAttribute):
         elif isinstance(options[0], numbers.Number):
             value = float(value)
             return min([opt for opt in options], key=lambda x: abs(x - value))
+
+
+class DynamicSelectAttribute(BaseAttribute):
+    """
+    An attribute for a multiple choice value.
+    The options are not stored in the descriptor, but in the instance of module itself (in __*name*_options).
+    In this way, options can be changed on a per-module basis at eun time, using change_options(instance, new_options)
+    """
+    widget_class = SelectAttributeWidget
+
+    def __init__(self, options=[], default=None, doc=""):
+        super(DynamicSelectAttribute, self).__init__(default=default, doc=doc)
+
+    def change_options(self, instance, new_options):
+        setattr(instance, '__' + self.name + '_' + 'options', new_options)
+        if instance.widget is not None:
+            if self.name in instance.widget.attribute_widgets:
+                instance.widget.attribute_widgets[self.name].change_options(new_options)
+
+    def options(self, instance):
+        """
+        options are evaluated at run time. To be reimplemented in base class.
+        """
+        return getattr(instance, '__' + self.name + '_' + 'options')
+
+    def validate_and_normalize(self, value, module):
+        """
+        value should evaluate to a string present in self.options(instance) at evaluation time.
+        """
+        value = str(value)
+        if not (value in self.options(module)):
+            raise ValueError("value %s is not an option for SelectAttribute %s of %s" % (value,
+                                                                                         self.name,
+                                                                                         module.name))
+        return value
+
+    def create_widget(self, module, name=None):
+        """
+        This function is reimplemented to pass the options to the widget.
+        """
+        if name is None:
+            name = self.name
+        widget = SelectAttributeWidget(name, module, self.options(module))
+        return widget
 
 
 class StringAttribute(BaseAttribute):
@@ -283,7 +328,7 @@ class PhaseAttribute(FloatAttribute):
         """
         Rejects anything that is not float, and takes modulo 360
         """
-        return super(PhaseAttribute, self).validate_and_normalize(value%360)
+        return super(PhaseAttribute, self).validate_and_normalize(value%360, module)
 
 
 class FilterAttribute(BaseAttribute):
@@ -305,18 +350,29 @@ class FilterAttribute(BaseAttribute):
         return [min([opt for opt in self.valid_frequencies(module)], key=lambda x: abs(x - val)) for val in value]
 
 
+class ListFloatAttribute(BaseAttribute):
+    """
+    An arbitrary length list of float numbers.
+    """
+    widget_class = ListFloatAttributeWidget
+
+    def validate_and_normalize(self, value, module):
+        """
+        Converts the value in a list of float numbers.
+        """
+        if not np.iterable(value):
+            value = [value]
+        return [float(val) for val in value]
+
+
+
+
 class ListComplexAttribute(BaseAttribute):
     """
     An arbitrary length list of complex numbers.
     """
 
     widget_class = ListComplexAttributeWidget
-
-    def set_value(self, instance, value):
-        """
-        Since yml complex lists are loaded as string lists, allow for a conversion step here.
-        """
-        return super(ListComplexAttribute, self).set_value(instance, value)
 
     def validate_and_normalize(self, value, module):
         """
@@ -325,6 +381,26 @@ class ListComplexAttribute(BaseAttribute):
         if not np.iterable(value):
             value = [value]
         return [complex(val) for val in value]
+
+
+class ListStageOutputAttribute(BaseAttribute):
+    """
+    A list of str->bool mappings (used to map outputs on/off for each stage of a lockbox). Assignation can also be
+    done via lnba['my_piezo'] = True
+    """
+    widget_class = ListStageOutputAttributeWidget
+
+    def validate_and_normalize(self, value, module):
+        if not isinstance(value, dict):
+            raise ValueError("value %s for attribute %s is not a valid dictionary"%(value, self.name))
+        for key, (is_on, is_start_offset, start_offset) in value.items():
+            if not isinstance(is_on, bool):
+                raise ValueError("Value %s is not possible for output %s on/off property (stage %s)"%(is_on, key, self.name))
+            if not isinstance(is_start_offset, bool):
+                raise ValueError("value %s is not possible for output %s offset_enable (stage %s)"%(is_start_offset, key, self.name))
+            if not isinstance(start_offset, numbers.Number):
+                raise ValueError("value %s is not possible for output %s offset (stage %s)"%(start_offset, key, self.name))
+        return value
 
 
 # docstring does not work yet, see:
@@ -829,6 +905,20 @@ class SelectProperty(SelectAttribute, BaseProperty):
         return getattr(obj, '_' + self.name)
 
 
+class DynamicSelectProperty(DynamicSelectAttribute, BaseProperty):
+    """
+    A property for multiple choice values, the options can be set dynamically at runtime
+    """
+    def get_value(self, obj, obj_type):
+        if obj is None:
+            return self
+        if not hasattr(obj, '_' + self.name):
+            # choose any value in the options as default.
+            default = sorted(self.options(obj))[0]
+            setattr(obj, '_' + self.name, default)
+        return getattr(obj, '_' + self.name)
+
+
 class StringProperty(StringAttribute, BaseProperty):
     """
     A property for a string value
@@ -890,8 +980,22 @@ class FilterProperty(FilterAttribute, BaseProperty):
         return super(FilterProperty, self).set_value(obj, value)
 
 
+class ListFloatProperty(ListFloatAttribute, BaseProperty):
+    """
+    A property for list of float values
+    """
+    default = [0,0,0,0]
+
+
 class ListComplexProperty(ListComplexAttribute, BaseProperty):
     """
     A property for a list of complex values
     """
     default = [0.]
+
+
+class ListStageOuputProperty(ListStageOutputAttribute, BaseProperty):
+    """
+    A property for a list named bool value (dict with str-bool mapping)
+    """
+    default = {}

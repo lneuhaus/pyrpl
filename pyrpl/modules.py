@@ -14,6 +14,7 @@ from .widgets.module_widgets import ModuleWidget
 import logging
 import numpy as np
 from six import with_metaclass
+from collections import OrderedDict
 
 
 
@@ -50,15 +51,11 @@ def new_func_setup():
             self._callback_active = True
     return setup
 
-
-class ModuleMetaClass(type):
+class NameAttributesMetaClass(type):
     '''
-    1. Magic to retrieve the name of the attributes in the attributes themselves.
+    Magic to retrieve the name of the attributes in the attributes themselves.
     see http://code.activestate.com/recipes/577426-auto-named-decriptors/
-
-    2. Builds the setup docstring by aggregating _setup's and setup_attributes's docstrings.
     '''
-
     def __new__(cls, classname, bases, classDict):
         """
         Iterate through the new class' __dict__ and update the .name of all recognised BaseAttribute.
@@ -70,6 +67,11 @@ class ModuleMetaClass(type):
                 attr.name = name
         return type.__new__(cls, classname, bases, classDict)
 
+
+class ModuleMetaClass(NameAttributesMetaClass):
+    '''
+    Builds the setup docstring by aggregating _setup's and setup_attributes's docstrings.
+    '''
     def __init__(self, classname, bases, classDict):
         """
         Takes care of creating the module's 'setup' function.
@@ -112,7 +114,8 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
     Finally, setup(**kwds) is created by ModuleMetaClass. it combines set_setup_attributes(**kwds) with _setup()
     """
     pyrpl_config = None
-    name = 'basemodule'
+    name = None # instance-level attribute
+    section_name = 'basemodule' # name that is going to be used for the section in the config file (class-level)
     widget_class = ModuleWidget  # Change this to provide a custom graphical class
     gui_attributes = []  # class inheriting from ModuleWidget can automatically generate gui from a list of attributes
     setup_attributes = []  # attributes listed here will be saved in the config file everytime they are updated.
@@ -140,12 +143,20 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         old_callback_active = self._callback_active
         self._callback_active = False
         try:
-            for key, value in kwds.items():
-                if not key in self.setup_attributes:
-                    raise ValueError("Attribute %s of module %s doesn't exist."%(key, self.name))
-                setattr(self, key, value)
+            for key in self.setup_attributes:
+                if key in kwds:
+                    value = kwds.pop(key)
+                    setattr(self, key, value)
         finally:
             self._callback_active = old_callback_active
+        if len(kwds)>0:
+            raise ValueError("Attribute %s of module %s doesn't exist." % (kwds[0], self.name))
+        #    for key, value in kwds.items():
+        #        if not key in self.setup_attributes:
+        #            raise ValueError("Attribute %s of module %s doesn't exist."%(key, self.name))
+        #        setattr(self, key, value)
+        #finally:
+        #    self._callback_active = old_callback_active
 
     def load_setup_attributes(self):
         """
@@ -161,23 +172,29 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
     @property
     def c_states(self):
         """
-        Returns the config file branch corresponding to the "states" section
+        Returns the config file branch corresponding to the "states" section.
         """
         if not "states" in self.c._parent._keys():
             self.c._parent["states"] = dict()
         return self.c._parent.states
 
-    def save_state(self, name):
-        """Saves the current state under the name "name" in the config file"""
-        self.c_states[name] = self.get_setup_attributes()
+    def save_state(self, name, state_section=None):
+        """Saves the current state under the name "name" in the config file. If state_section is left unchanged,
+        uses the normal class_section.states convention."""
+        if state_section is None:
+            state_section = self.c_states
+        state_section[name] = self.get_setup_attributes()
 
-    def load_state(self, name):
+    def load_state(self, name, state_section=None):
         """
-        Loads the state with name "name" from the config file.
+        Loads the state with name "name" from the config file. If state_section is left unchanged, uses the normal
+        class_section.states convention.
         """
-        if not name in self.c_states._keys():
+        if state_section is None:
+            state_section = self.c_states
+        if not name in state_section._keys():
             raise KeyError("State %s doesn't exist for modules %s"%(name, self.__class__.name))
-        self.setup(**self.c_states[name])
+        self.setup(**state_section[name])
 
     @property
     def states(self):
@@ -206,7 +223,7 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
 
     def create_widget(self):
         """
-        Creates the widget specified in widget_class. The attr
+        Creates the widget specified in widget_class.
         """
         self._callback_active = False # otherwise, saved values will be overwritten by default gui values
         self._autosave_active = False # otherwise, default gui values will be saved
@@ -223,12 +240,12 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         The config file instance. In practice, writing values in here will write the values in the corresponding
         section of the config file.
         """
-        manager_section = self.__class__.name + "s" # for instance, iqs
-        if not manager_section in self.pyrpl_config._keys():
-            self.pyrpl_config[manager_section] = dict()
-        manager_section = getattr(self.pyrpl_config, manager_section)
+        manager_section_name = self.section_name + "s" # for instance, iqs
+        if not manager_section_name in self.parent.c._keys():
+            self.parent.c[manager_section_name] = OrderedDict()
+        manager_section = getattr(self.parent.c, manager_section_name)
         if not self.name in manager_section._keys():
-            manager_section[self.name] = dict()
+            manager_section[self.name] = OrderedDict()
         return getattr(manager_section, self.name)
 
     def callback(self):
@@ -266,6 +283,8 @@ class HardwareModule(BaseModule):
     possess the following class attributes
       - addr_base: the base address of the module, such as 0x40300000
     """
+
+    parent = None # parent will be redpitaya instance
 
     def ownership_changed(self, old, new):
         """
@@ -311,6 +330,7 @@ class HardwareModule(BaseModule):
         self._addr_base = self.addr_base # why ?
         self.__doc__ = "Available registers: \r\n\r\n" + self.help()
         self._rp = redpitaya
+        self.parent = redpitaya
         self.pyrpl_config = redpitaya.c
         self.init_module()
         self._autosave_active = True
@@ -375,18 +395,32 @@ class SoftwareModule(BaseModule):
       ready for acquisition/output with the current setup_attributes' values.
     """
 
-    def __init__(self, pyrpl, name=None):
+    def __init__(self, parent, name=None):
         """
         Creates a module with given name. If name is None, uses cls.name.
+        parent is either a pyrpl instance, or another SoftwareModule.
+          - First case: config file entry is in self.__class__.name + 's'--> self.name
+          - Second case: config file entry is in parent_entry-->self.__class__.name + 's'-->self.name
         """
         self._autosave_active = False  # attribute values are not overwritten in the config file
         if name is not None:
             self.name = name
-        self.pyrpl = pyrpl
-        self._parent = pyrpl
-        self.pyrpl_config = pyrpl.c
+        self.parent = parent
+        #self._parent = pyrpl
+        #self.pyrpl_config = pyrpl.c
         self.init_module()
         self._autosave_active = True
+
+    @property
+    def pyrpl(self):
+        """
+        Recursively looks through patent modules untill pyrpl instance is reached.
+        """
+        from .pyrpl import Pyrpl
+        parent = self.parent
+        while(not isinstance(parent, Pyrpl)):
+            parent = parent.parent
+        return parent
 
     def init_module(self):
         """

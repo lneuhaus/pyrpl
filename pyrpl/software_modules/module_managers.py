@@ -19,7 +19,7 @@ class ModuleManager(SoftwareModule):
       back its gui if any).
     """
 
-    name = "some_modules"
+    section_name = "some_modules"
     widget_class = ModuleManagerWidget
 
     @property
@@ -60,16 +60,16 @@ class ModuleManager(SoftwareModule):
         return None
 
 class AsgManager(ModuleManager):
-    name = "asgs"
+    section_name = "asgs"
     # hardware_module_names = ["asg1", "asg2"]  # The same info would be duplicated from redpitaya.py
 
 class PidManager(ModuleManager):
-    name = "pids"
+    section_name = "pids"
     # hardware_module_names = ["pid1", "pid2", "pid3", "pid4"]  # The same info would be duplicated from redpitaya.py
 
 
 class IqManager(ModuleManager):
-    name = "iqs"
+    section_name = "iqs"
     widget_class = IqManagerWidget
     # hardware_module_names = ["iq1", "iq2", "iq3"]  # The same info would be duplicated from redpitaya.py
 
@@ -79,7 +79,7 @@ class ScopeManager(ModuleManager):
     Only one scope, but it should be protected by the slave/owner mechanism.
     """
 
-    name = "scopes"
+    section_name = "scopes"
     widget_class = ScopeManagerWidget
     # hardware_module_names = ["scope"]  # The same info would be duplicated from redpitaya.py
 
@@ -88,5 +88,5 @@ class IirManager(ModuleManager):
     Only one iir, but it should be protected by the slave/owner mechanism.
     """
 
-    name = "iirs"
+    section_name = "iirs"
     widget_class = IirManagerWidget

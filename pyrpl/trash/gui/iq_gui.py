@@ -342,4 +342,4 @@ class IqWidget(ModuleWidget):
                                                                       property_acbw.name)))
             property_acbw.widget.setCurrentIndex(index)
 
-        property_acbw.update = update
+        property_acbw._update = update
