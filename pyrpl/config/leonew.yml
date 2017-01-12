@@ -6,11 +6,11 @@ pyrpl:
   - NetworkAnalyzer
   - SpectrumAnalyzer
   dock_positions: !!binary |
-    AAAA/wAAAAD9AAAAAQAAAAIAAAVWAAACnfwBAAAAAfwAAAAAAAAFVgAAA/EA////+gAAAAMBAAAA
-    B/sAAAAIAGEAcwBnAHMAAAAAAP////8AAAAUAP////sAAAAGAGkAcQBzAAAAAAD/////AAAAFAD/
-    ///7AAAACABwAGkAZABzAAAAAAD/////AAAAFAD////7AAAADABzAGMAbwBwAGUAcwEAAAAA////
-    /wAAA/EA////+wAAAAgAaQBpAHIAcwAAAAAA/////wAAABQA////+wAAAAQAbgBhAAAAAAD/////
-    AAAAFAD////7AAAAIgBzAHAAZQBjAHQAcgB1AG0AXwBhAG4AYQBsAHkAegBlAHIAAAAAAP////8A
+    AAAA/wAAAAD9AAAAAQAAAAIAAAVWAAACnfwBAAAAAfwAAAAAAAAFVgAAA/EA////+gAAAAYBAAAA
+    B/sAAAAIAGEAcwBnAHMBAAAAAP////8AAAHoAP////sAAAAGAGkAcQBzAQAAAAD/////AAADCQD/
+    ///7AAAACABwAGkAZABzAQAAAAD/////AAAB0wD////7AAAADABzAGMAbwBwAGUAcwEAAAAA////
+    /wAAA/EA////+wAAAAgAaQBpAHIAcwEAAAAA/////wAAAToA////+wAAAAQAbgBhAQAAAAD/////
+    AAADbgD////7AAAAIgBzAHAAZQBjAHQAcgB1AG0AXwBhAG4AYQBsAHkAegBlAHIBAAAAAP////8A
     AAMKAP///wAABVYAAAAAAAAABAAAAAQAAAAIAAAACPwAAAAA
   window_position:
   - -4
@@ -30,7 +30,8 @@ nas:
   na: {}
 spectrum_analyzers:
   spectrum_analyzer:
-    input: adc2
+    input: adc1
+    baseband: true
 hks:
   hk: {}
 amss:
@@ -53,7 +54,25 @@ pwms:
   pwm1: {}
   pwm2: {}
 iqs:
-  iq1: {}
+  iq1:
+    input: adc1
+  iq3:
+    amplitude: 0.0
+    frequency: 200.001522898674
+  iq2:
+    acbandwidth:
+    - 0
+    bandwidth:
+    - 159154943
+    - 159154943
+    - 159154943
+    - 159154943
+    quadrature_factor: 0.0
+    output_signal: quadrature
+    gain: 0.0
+    amplitude: 0.0
+    phase: 0.0
+    output_direct: 'off'
 pids:
   pid1: {}
   pid2: {}

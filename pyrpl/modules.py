@@ -81,17 +81,16 @@ class ModuleMetaClass(NameAttributesMetaClass):
         """
         super(ModuleMetaClass, self).__init__(classname, bases, classDict)
         if hasattr(self, "setup_attributes"):
-            if not "setup" in self.__dict__:# function setup is inherited--> this is bad because we want a docstring
+            if not "setup" in self.__dict__:  # function setup is inherited--> this is bad because we want a docstring
                 # different for each subclass
                 setattr(self, "setup", new_func_setup())
                 overwrite_docstring = True
             else:
-                overwrite_docstring = (self.setup.__doc__=="") # keep the docstring if it was made manually
+                overwrite_docstring = (self.setup.__doc__ == "")  # keep the docstring if it was made manually
             if overwrite_docstring:
                 if hasattr(self.setup, "__func__"): # Should evaluate to True in Python 2
-                    self.setup.__func__.__doc__ = get_setup_docstring(self) # In a
-                # MetaClass, self is a class...
-                else: #in python 3, __doc__ is directly an attribute of the function
+                    self.setup.__func__.__doc__ = get_setup_docstring(self)  # In a MetaClass, self is a class...
+                else:  # in python 3, __doc__ is directly an attribute of the function
                     self.setup.__doc__ = get_setup_docstring(self)
 
 
@@ -107,7 +106,7 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
 
     BaseModules implements several functions itself:
       - create_widget: returns a widget according to widget_class
-      - get_setup_attributes(): returns a dictionnary with the current setup_attribute key value pairs
+      - get_setup_attributes(): returns a dictionary with the current setup_attribute key value pairs
       - load_setup_attributes(): loads setup_attributes from config file
       - set_setup_attributes(**kwds): sets the provided setup_attributes
 
