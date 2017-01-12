@@ -364,3 +364,17 @@ class MemoryTree(MemoryBranch):
             if not self._savetimer.isActive():
                 self._savetimer.start()
 
+class DummyMemoryTree(dict):
+    """
+    This class is there to emulate a MemoryTree, for users who would use RedPitaya object without Pyrpl object
+    """
+    @property
+    def _keys(self):
+        return self.keys
+
+    def __getattribute__(self, item):
+        try:
+            attr = super(DummyMemoryTree, self).__getattribute__(item)
+            return attr
+        except AttributeError:
+            return self[item]

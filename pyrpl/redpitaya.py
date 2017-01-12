@@ -20,6 +20,7 @@ from . import monitor_client
 from . import hardware_modules as rp
 from .sshshell import SSHshell
 from .pyrpl_utils import get_unique_name_list_from_class_list
+from .memory import DummyMemoryTree
 
 import logging
 import os
@@ -32,21 +33,6 @@ from paramiko import SSHException
 from scp import SCPClient, SCPException
 from collections import OrderedDict
 
-
-class DummyMemoryTree(dict):
-    """
-    This class is there to emulate a MemoryTree, for users who would use RedPitaya object without Pyrpl object
-    """
-    @property
-    def _keys(self):
-        return self.keys
-
-    def __getattribute__(self, item):
-        try:
-            attr = super(DummyMemoryTree, self).__getattribute__(item)
-            return attr
-        except AttributeError:
-            return self[item]
 
 class RedPitaya(SSHshell):
     _binfilename = 'fpga.bin'
