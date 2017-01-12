@@ -57,7 +57,7 @@ except:
     import yaml
 
     # see http://stackoverflow.com/questions/13518819/avoid-references-in-pyyaml
-    yaml.RoundTripDumper.ignore_aliases = lambda *args: True # NEVER TESTED
+    yaml.Dumper.ignore_aliases = lambda *args: True # NEVER TESTED
 
     # ordered load and dump for yaml files. From
     # http://stackoverflow.com/questions/5121931/in-python-how-can-you-load-yaml-mappings-as-ordereddicts
