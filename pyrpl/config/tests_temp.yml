@@ -75,17 +75,17 @@ scopes:
       average: true
       rolling_mode: false
     rolling:
-      rolling_mode: true
-      trigger_source: asg2
-      input1: pid4
-      average: true
-      threshold_ch2: 0.0
       input2: adc2
-      trigger_delay: 0.0
-      duration: 1.073741824
+      rolling_mode: true
       running_continuous: true
+      trigger_delay: 0.0
       curve_name: ''
       threshold_ch1: 0.0
+      input1: pid4
+      duration: 1.073741824
+      average: true
+      threshold_ch2: 0.0
+      trigger_source: asg2
 samplers:
   sampler: {}
 asgs:
