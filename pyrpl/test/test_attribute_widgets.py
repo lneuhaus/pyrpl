@@ -18,7 +18,7 @@ class TestClass(object):
 
     def test_module_attributes(self):
         class DummyModule(SoftwareModule):
-            name = "dummy_module"
+            section_name = "dummy_module"
             gui_attributes = ['true_or_false']
             true_or_false = BoolProperty()
 
@@ -27,9 +27,6 @@ class TestClass(object):
 
 
     def test_software_module_widget(self):
-        #if self.r is None:
-        #    return
-
         class DummyModule(SoftwareModule):
             gui_attributes = ['true_or_false']
             true_or_false = BoolProperty()

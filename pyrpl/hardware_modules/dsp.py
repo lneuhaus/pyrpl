@@ -18,7 +18,7 @@ DSP_INPUTS = dict(
         adc2=11,
         dac1=12,
         dac2=13,
-        iq2_2=14,
+        iq3_2=14,
         off=15)
 
 class DspInputAttribute(SelectAttribute):

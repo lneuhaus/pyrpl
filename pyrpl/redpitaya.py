@@ -344,52 +344,9 @@ class RedPitaya(SSHshell):
         """
         Automatically generates modules from the list RedPitaya.cls_modules
         """
-        """
-        for name, cls in self.module_dict.items():
-            if np.iterable(cls): # dict key is (cls, number of instances)
-                cls, num = cls
-                for index in range(num):
-                    self.makemodule(name + str(index + 1), cls) # module have 1-based indices
-            else:
-                self.makemodule(name, cls)
-        """
         names = get_unique_name_list_from_class_list(self.cls_modules)
         for cls, name in zip(self.cls_modules, names):
             self.makemodule(name, cls)
-
-        """
-        self.hk = _rp.HK(self.client, parent=self)
-        self.ams = _rp.AMS(self.client, parent=self)
-        self.scope = _rp.Scope(self.client, parent=self)
-        self.sampler = _rp.Sampler(self.client, parent=self)
-        self.asg1 = _rp.Asg1(self.client, parent=self)
-        self.asg2 = _rp.Asg2(self.client, parent=self)
-        self.pwm0 = _rp.AuxOutput(self.client, output='pwm0', parent=self)
-        self.pwm1 = _rp.AuxOutput(self.client, output='pwm1', parent=self)
-        for name, module, number in [("pid", _rp.Pid, 4),
-                                     ("iir", _rp.IIR, 1),
-                                     ("iq", _rp.IQ, 2)]:
-            # make a list for each kind of module
-            thislist = []
-            self.__setattr__(name+'s', thislist)
-            # fill it with the modules
-            for i in range(number):
-                if number > 1:
-                    thisname = name + str(i)
-                else:
-                    thisname = name
-                thismodule = module(self.client, module=thisname, parent=self)
-                thislist.append(thismodule)
-                # to be deprecated
-                self.__setattr__(thisname, thismodule)
-        # iq2 is special: two outputs for scope/specAn. This special treatment
-        # should soon be made more general. For thsi reason, we already
-        # exclude it from the iqs list, such that it cannot be popped away..
-        self.iq2 = _rp.IQ(self.client, module='iq2', parent=self)
-        # higher functionality modules
-        #self.na = NetworkAnalyzer(self)
-        #self.spec_an = SpectrumAnalyzer(self)
-        """
 
     def make_a_slave(self, port=None, monitor_server_name=None, gui=False):
         if port is None:

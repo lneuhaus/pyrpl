@@ -287,9 +287,9 @@ class MemoryTree(MemoryBranch):
 
     # never reload more frequently than every 2 s because this is the principal
     # cause of slowing down the code
-    _reloaddeadtime = 2
+    _reloaddeadtime = 20
     # never save more often than 1s
-    _savedeadtime = 1
+    _savedeadtime = 10
     # as an indication, on my ssd, saving of a standard config file was timed at 30 ms, loading: 40 ms...
 
     def __init__(self, filename=None):

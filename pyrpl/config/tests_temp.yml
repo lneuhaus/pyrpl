@@ -6,21 +6,21 @@ pyrpl:
   - NetworkAnalyzer
   - SpectrumAnalyzer
   dock_positions: !!binary |
-    AAAA/wAAAAD9AAAAAQAAAAIAAAd8AAAD3fwBAAAAAvwAAAAAAAADrAAAA40A/////AIAAAAD+wAA
-    AAwAcwBjAG8AcABlAHMBAAAAFQAAASQAAADXAP////sAAAAGAGkAcQBzAQAAAT0AAAHoAAABaAD/
-    ///7AAAACABhAHMAZwBzAQAAAykAAADJAAAAlAD////8AAADsAAAA8wAAAOmAP////wCAAAAAvwA
-    AAAVAAABugAAARMBAAAU+gAAAAACAAAAB/sAAAAEAG4AYQEAAAAA/////wAAAP4A////+wAAACIA
-    cwBwAGUAYwB0AHIAdQBtAF8AYQBuAGEAbAB5AHoAZQByAQAAAAD/////AAAAswD////7AAAAIgBz
+    AAAA/wAAAAD9AAAAAQAAAAIAAAcBAAAD4/wBAAAAAvwAAAAAAAAD8QAAA/EA/////AIAAAAD+wAA
+    AAwAcwBjAG8AcABlAHMBAAAAEgAAA+MAAAC5AP////sAAAAGAGkAcQBzAAAAAQwAAAGjAAAARgD/
+    ///7AAAACABhAHMAZwBzAAAAAioAAACFAAAARgD////8AAAD9wAAAwoAAAMKAP////wCAAAAAvwA
+    AAASAAAD4wAAAJYA////+gAAAAECAAAAB/sAAAAEAG4AYQAAAAAA/////wAAAEYA////+wAAACIA
+    cwBwAGUAYwB0AHIAdQBtAF8AYQBuAGEAbAB5AHoAZQByAQAAAAD/////AAAAlgD////7AAAAIgBz
     AHAAZQBjAHQAcgB1AG0AIABhAG4AYQBsAHkAegBlAHIBAAAAAP////8AAAAAAAAAAPsAAAAUAEIA
-    YQBzAGUATQBvAGQAdQBsAGUBAAAAAP////8AAAAAAAAAAPsAAAAIAGkAaQByAHMBAAAAAP////8A
-    AAB/AP////sAAAAgAG4AZQB0AHcAbwByAGsAXwBhAG4AYQBsAHkAegBlAHIBAAAAAP////8AAAAA
-    AAAAAPsAAAAKAHMAYwBvAHAAZQEAAAAA/////wAAAAAAAAAA+wAAAAgAcABpAGQAcwEAAAHTAAAC
-    HwAAAhgA////AAAHfAAAAAAAAAAEAAAABAAAAAgAAAAI/AAAAAA=
+    YQBzAGUATQBvAGQAdQBsAGUBAAAAAP////8AAAAAAAAAAPsAAAAIAGkAaQByAHMAAAAAAP////8A
+    AABGAP////sAAAAgAG4AZQB0AHcAbwByAGsAXwBhAG4AYQBsAHkAegBlAHIBAAAAAP////8AAAAA
+    AAAAAPsAAAAKAHMAYwBvAHAAZQEAAAAA/////wAAAAAAAAAA+wAAAAgAcABpAGQAcwAAAAASAAAD
+    4wAAAEYA////AAAHAQAAAAAAAAAEAAAABAAAAAgAAAAI/AAAAAA=
   window_position:
-  - -1928
-  - 117
-  - 1916
-  - 1030
+  - 1362
+  - -4
+  - 1793
+  - 1031
 redpitaya:
   password: root
   user: root
@@ -30,132 +30,53 @@ redpitaya:
   reloadfpga: true
   monitor_server_name: monitor_server
 nas:
-  na:
-    input: pid4
-    output_direct: 'off'
-    start: 1000.0
-    stop: 1000000.0
-    rbw:
-    - 75
-    points: 11
-    amplitude: 0.1
-    logscale: true
-    avg: 10
-    acbandwidth:
-    - 0
+  na: {}
 spectrum_analyzers:
-  spectrum_analyzer: {}
+  spectrum_analyzer:
+    input: adc1
+    baseband: true
+    span:
+    - 1908
+    avg: 10
 hks:
   hk: {}
 amss:
   ams: {}
 scopes:
   scope:
-    trigger_source: asg2
-    duration: 0.067108864
-    input1: asg2
-    input2: asg2
-    trigger_delay: 0.0
+    trigger_source: immediately
+    running_continuous: false
+    duration: 0.004194304
+    rolling_mode: false
 samplers:
   sampler: {}
 asgs:
-  asg1:
-    amplitude: 1.0
-    offset: 0.0
-    output_direct: 'off'
-    waveform: ramp
-    frequency: 14.901161193847656
-    trigger_source: immediately
-  asg2:
-    frequency: 14.901161193847656
-    amplitude: 1.0
-    offset: 0.0
-    output_direct: 'off'
-    waveform: ramp
-    trigger_source: immediately
+  asg1: {}
+  asg2: {}
 pwms:
   pwm1: {}
   pwm2: {}
 iqs:
-  iq1:
-    input: iq1
-    acbandwidth:
-    - 1214
-    frequency: 2999.9937396496534
-    bandwidth:
-    - 1214
-    output_signal: output_direct
-    gain: 0.0
-    phase: 0.0
-    output_direct: 'off'
-    amplitude: 0.0
+  iq1: {}
+  iq2: {}
   iq3:
-    bandwidth:
-    - 75
-    input: pid4
     acbandwidth:
     - 0
-    frequency: 125892.5476577133
-    output_signal: output_direct
-    gain: 0.0
-    amplitude: 0.09999847412109375
-    phase: 0.0
-    output_direct: 'off'
-  iq2:
-    input: iq2
-    acbandwidth:
-    - 1214
-    frequency: 2999.9937396496534
     bandwidth:
-    - 1214
-    output_signal: output_direct
+    - 159154943
+    - 159154943
+    - 159154943
+    - 159154943
+    quadrature_factor: 0.0
+    output_signal: quadrature
     gain: 0.0
-    phase: 0.0
-    output_direct: 'off'
     amplitude: 0.0
-pids:
-  pid1:
-    input: iq3
-    setpoint: 0.0
-    p: 0.0
-    i: 0.0
-    d: 0.0
-    inputfilter:
-    - 0
-  pid2:
-    input: iq3
-    setpoint: 0.0
-    p: 0.0
-    i: 0.0
-    d: 0.0
-    inputfilter:
-    - 0
-  pid3:
-    input: iq3
-    setpoint: 0.0
-    p: 0.0
-    i: 0.0
-    d: 0.0
-    inputfilter:
-    - 0
-  pid4:
-    input: iq3
-    setpoint: 0.0
-    p: 10.0
-    i: 0.0
-    d: 0.0
-    inputfilter:
-    - -4857
-    - -9714
-    - 155424
-    - 310849
-iirs:
-  iir:
-    input: iq3
-    loops: 35
-    zeros:
-    - (-3000+100000j)
-    poles:
-    - (-3000+50000j)
-    gain: 1.0
+    phase: 0.0
     output_direct: 'off'
+pids:
+  pid1: {}
+  pid2: {}
+  pid3: {}
+  pid4: {}
+iirs:
+  iir: {}

@@ -16,7 +16,7 @@ import time
 data_length = 2 ** 14
 
 
-class TriggerDelay(FloatAttribute):
+class TriggerDelayAttribute(FloatAttribute):
     # def __init__(self, attr_name, doc=""):
     #   super(TriggerDelay, self).__init__(attr_name, 0.001, doc=doc)
 
@@ -49,21 +49,15 @@ class DurationAttribute(SelectAttribute):
             return self
         return instance.sampling_time * float(instance.data_length)
 
+    def validate_and_normalize(self, value, module):
+        # gets next value, to be replaced with next-higher value
+        value = float(value)
+        return min([opt for opt in self.options], key=lambda x: abs(x - value))
+
     def set_value(self, instance, value):
         """sets returns the duration of a full scope sequence
         the rounding makes sure that the actual value is longer or equal to the set value"""
-        value = float(value) / instance.data_length
-        tbase = 8e-9
-        decimation =  max(instance.decimations)
-        found = False
-        for d in instance.decimations:
-            if value <= tbase * float(d):
-                decimation = d
-                found = True
-                break
-        if not found:
-            instance._logger.error("Desired duration too long to realize")
-        instance.decimation = decimation
+        instance.sampling_time = float(value) / instance.data_length
 
     def update_gui(self, module):
         if module.is_rolling_mode_active():  # changing duration might change rolling mode
@@ -88,16 +82,15 @@ class SamplingTimeAttribute(SelectAttribute):
             return self
         return 8e-9 * float(instance.decimation)
 
+    def validate_and_normalize(self, value, module):
+        # gets next value, to be replaced with next-lower value
+        value = float(value)
+        return min([opt for opt in self.options], key=lambda x: abs(x - value))
+
     def set_value(self, instance, value):
         """sets or returns the time separation between two subsequent points of a scope trace
         the rounding makes sure that the actual value is shorter or equal to the set value"""
-        tbase = 8e-9
-        for d in reversed(instance.decimations):
-            if value >= tbase * d:
-                instance.decimation = d
-                return
-        instance.decimation = min(instance.decimations)
-        self._logger.error("Desired sampling time impossible to realize")
+        instance.decimation = float(value) / 8e-9
 
 
 class TriggerSourceAttribute(SelectAttribute):
@@ -241,7 +234,7 @@ class Scope(HardwareModule):
                                  doc="number of decimated data after trigger "
                                      "written into memory [samples]")
 
-    trigger_delay = TriggerDelay("trigger_delay", min=-10, max=8e-9*2**30, doc="delay between trigger and acquisition start.\n"
+    trigger_delay = TriggerDelayAttribute("trigger_delay", min=-10, max=8e-9 * 2 ** 30, doc="delay between trigger and acquisition start.\n"
                                                       "negative values down to -duration are allowed for pretrigger")
 
     _trigger_delay_running = BoolRegister(0x0, 2,
