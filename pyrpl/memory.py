@@ -57,7 +57,7 @@ except:
     import yaml
 
     # see http://stackoverflow.com/questions/13518819/avoid-references-in-pyyaml
-    yaml.RoundTripDumper.ignore_aliases = lambda *args: True # NEVER TESTED
+    yaml.Dumper.ignore_aliases = lambda *args: True # NEVER TESTED
 
     # ordered load and dump for yaml files. From
     # http://stackoverflow.com/questions/5121931/in-python-how-can-you-load-yaml-mappings-as-ordereddicts
@@ -364,3 +364,17 @@ class MemoryTree(MemoryBranch):
             if not self._savetimer.isActive():
                 self._savetimer.start()
 
+class DummyMemoryTree(dict):
+    """
+    This class is there to emulate a MemoryTree, for users who would use RedPitaya object without Pyrpl object
+    """
+    @property
+    def _keys(self):
+        return self.keys
+
+    def __getattribute__(self, item):
+        try:
+            attr = super(DummyMemoryTree, self).__getattribute__(item)
+            return attr
+        except AttributeError:
+            return self[item]

@@ -247,6 +247,8 @@ class InputPdh(InputSignal):
                       phase=self.mod_phase,
                       input=self.adc,
                       gain=0,
+                      bandwidth=[1e6, 1e6],
+                      acbandwidth=1e6,
                       quadrature_factor=0.01,
                       output_signal='quadrature',
                       output_direct=self.mod_output)
@@ -281,5 +283,5 @@ class InputPdh(InputSignal):
         return self.mean + (self.max - self.min)*\
                                          self._pdh_normalized(variable,
                                                               self.mod_freq,
-                                                              self.mod_phase,
+                                                              0,
                                                               self.model.eta)
