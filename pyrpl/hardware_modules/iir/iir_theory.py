@@ -391,6 +391,7 @@ class IirFilter(object):
         z, p, k = self.rescaled_sys  # 'tf_continuous'
 
         # pre-account for frequency distortion of bilinear transformation
+        # - this step is obsolete in the current algorithm
         # if prewarp:
         #    z, p = prewarp(z, p, dt=loops * dt)
 

@@ -8,9 +8,10 @@ pyrpl: # General configuration of the software:
   # 'warning' only shows warnings and errors
   # 'error' only shows errors
   modules: # SoftwareModules to load (in addition to IqManager, AsgManager, PidManager, ScopeManager)
+  # the listed software modules will be loaded, i.e. they will block the necessary resources such as IQs, PIDs etc.
     - NetworkAnalyzer
     - SpectrumAnalyzer
-
+    - Lockbox
 redpitaya:
   hostname: 192.168.1.107
   user: root
