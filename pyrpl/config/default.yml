@@ -10,7 +10,7 @@ pyrpl: # General configuration of the software:
   modules: # SoftwareModules to load (in addition to IqManager, AsgManager, PidManager, ScopeManager)
     - NetworkAnalyzer
     - SpectrumAnalyzer
-
+    - Lockbox
 redpitaya:
   hostname: 192.168.1.107
   user: root
