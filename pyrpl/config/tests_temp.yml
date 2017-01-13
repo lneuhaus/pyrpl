@@ -1,10 +1,15 @@
-pyrpl:
+pyrpl: # General configuration of the software:
   name: test_refactor
-  gui: true
+  gui: true # autostart gui
   loglevel: info
-  modules:
-  - NetworkAnalyzer
-  - SpectrumAnalyzer
+  # level of logged information.
+  # 'debug' outputs everything
+  # 'infi' is default level
+  # 'warning' only shows warnings and errors
+  # 'error' only shows errors
+  modules: # SoftwareModules to load (in addition to IqManager, AsgManager, PidManager, ScopeManager)
+    - NetworkAnalyzer
+    - SpectrumAnalyzer
   dock_positions: !!binary |
     AAAA/wAAAAD9AAAAAQAAAAIAAAd8AAAD3fwBAAAAAvwAAAAAAAADrAAAA40A/////AIAAAAD+wAA
     AAwAcwBjAG8AcABlAHMBAAAAFQAAASQAAADXAP////sAAAAGAGkAcQBzAQAAAT0AAAHoAAABaAD/
@@ -30,49 +35,3 @@ redpitaya:
   filename: fpga//red_pitaya.bin
   reloadfpga: true
   monitor_server_name: monitor_server
-nas:
-  na:
-    output_direct: out1
-    input: adc1
-    start: 1000000.0
-    stop: 2000000.0
-    rbw:
-    - 77712
-spectrum_analyzers:
-  spectrum_analyzer:
-    input: asg1
-hks:
-  hk: {}
-amss:
-  ams: {}
-scopes:
-  scope: {}
-samplers:
-  sampler: {}
-asgs:
-  asg1: {}
-  asg2: {}
-pwms:
-  pwm1: {}
-  pwm2: {}
-iqs:
-  iq1: {}
-  iq3:
-    bandwidth:
-    - 77712
-    input: adc1
-    acbandwidth:
-    - 0
-    frequency: 1904000.0042878091
-    output_signal: output_direct
-    gain: 0.0
-    amplitude: 0.01000213623046875
-    phase: 0.0
-    output_direct: out1
-pids:
-  pid1: {}
-  pid2: {}
-  pid3: {}
-  pid4: {}
-iirs:
-  iir: {}

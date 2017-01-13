@@ -20,7 +20,7 @@ from . import monitor_client
 from . import hardware_modules as rp
 from .sshshell import SSHshell
 from .pyrpl_utils import get_unique_name_list_from_class_list
-from .memory import DummyMemoryTree
+from .memory import MemoryTree
 
 import logging
 import os
@@ -33,38 +33,28 @@ from paramiko import SSHException
 from scp import SCPClient, SCPException
 from collections import OrderedDict
 
-
 class RedPitaya(SSHshell):
     _binfilename = 'fpga.bin'
-    """
-    module_dict = OrderedDict([ ('hk', _rp.HK), # careful: the initialization OrderedDict(a=x, b=y) looses the order
-                                ('ams', _rp.AMS),
-                                ('scope', _rp.Scope),
-                                ('sampler', _rp.Sampler),
-                                ('asg1', _rp.Asg1),
-                                ('asg2', _rp.Asg2),
-                                ('pwm', (_rp.AuxOutput, 2)), # dict key is (cls, number of instances)
-                                ('iq', (_rp.IQ, 3)),
-                                ('pid', (_rp.Pid, 4)),
-                                ('iir', _rp.IIR)])# redpitaya modules are automatically generated from this dict
-    """
     cls_modules = [rp.HK, rp.AMS, rp.Scope, rp.Sampler, rp.Asg1, rp.Asg2] + \
                   [rp.AuxOutput]*2 + [rp.IQ]*3 + [rp.Pid]*4 + [rp.IIR]
 
-    def __init__(self, hostname='192.168.1.100', port=2222,
+    def __init__(self, configfile=None,  # configfile is needed to store parameters. None simulates one
+                 hostname='192.168.1.100', port=2222,
                  user='root', password='root',
                  delay=0.05, 
                  autostart=True, reloadfpga=True, reloadserver=False, 
                  filename=None, dirname=None,
                  leds_off=True, frequency_correction=1.0, timeout = 3,
                  monitor_server_name='monitor_server',
-                 silence_env = False, config=DummyMemoryTree() # In general, config is the parent's memoryTree
+                 silence_env = False,
                  ):
         """installs and starts the interface on the RedPitaya at hostname that allows remote control
 
         if you are experiencing problems, try to increase delay, or try logging.getLogger().setLevel(logging.DEBUG)"""
         self.logger = logging.getLogger(name=__name__)
         #self.license()
+        # make or retrieve the config file
+        self.c = MemoryTree(configfile)
         self._slaves = []
         self.serverdirname = "//opt//pyrpl//"
         self.serverrunning = False
@@ -80,7 +70,6 @@ class RedPitaya(SSHshell):
         self.leds_off = leds_off
         self.timeout = timeout
         self.monitor_server_name = monitor_server_name
-        self.c = config
         self.modules = OrderedDict()
 
         # get parameters from os.environment variables

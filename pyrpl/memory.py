@@ -282,37 +282,43 @@ class MemoryTree(MemoryBranch):
         The filename of the .yml file defining the MemoryTree structure.
     """
     _data = OrderedDict()
+
     # never reload more frequently than every 2 s because this is the principal
     # cause of slowing down the code
     _reloaddeadtime = 2
-    _savedeadtime = 1 # never save more often than 1s
+    # never save more often than 1s
+    _savedeadtime = 1
     # as an indication, on my ssd, saving of a standard config file was timed at 30 ms, loading: 40 ms...
 
-    def __init__(self, filename):
-        if os.path.isfile(filename):
+    def __init__(self, filename=None):
+        if filename is None: #  simulate a config file, only store data in memory
             self._filename = filename
-        else:
-            logger.warning("File "+filename+" not found. New file created. ")
-            self._filename = filename
-            with open(self._filename, mode="w") as f:
-                pass
-        self._load()
-        self._lastsave = time.time()
-        # make a temporary file to ensure modification of config file is atomic (double-buffering like operation...)
-        tmp_dir = os.path.join(os.path.dirname(self._filename), "tmp")
-        if not os.path.isdir(tmp_dir):
-            os.mkdir(tmp_dir)
-        self._buffer_filename = os.path.join(tmp_dir, 'tmp.yml')
-        # create a timer to postpone to frequent savings
-        self._savetimer = QtCore.QTimer()
-        self._savetimer.setInterval(self._savedeadtime*1000)
-        self._savetimer.setSingleShot(True)
-        self._savetimer.timeout.connect(self._save)
-
+        else:  # normal mode of operation with an actual configfile on the disc
+            if os.path.isfile(filename):
+                self._filename = filename
+            else:
+                logger.warning("File "+filename+" not found. New file created. ")
+                self._filename = filename
+                with open(self._filename, mode="w") as f:
+                    pass
+            self._load()
+            self._lastsave = time.time()
+            # make a temporary file to ensure modification of config file is atomic (double-buffering like operation...)
+            tmp_dir = os.path.join(os.path.dirname(self._filename), "tmp")
+            if not os.path.isdir(tmp_dir):
+                os.mkdir(tmp_dir)
+            self._buffer_filename = os.path.join(tmp_dir, 'tmp.yml')
+            # create a timer to postpone to frequent savings
+            self._savetimer = QtCore.QTimer()
+            self._savetimer.setInterval(self._savedeadtime*1000)
+            self._savetimer.setSingleShot(True)
+            self._savetimer.timeout.connect(self._save)
         super(MemoryTree, self).__init__(self, "")
 
     def _load(self):
         """ loads data from file """
+        if self._filename is None:
+            return
         logger.debug("Loading config file %s", self._filename)
         with open(self._filename) as f:
             self._data = load(f)
@@ -327,6 +333,8 @@ class MemoryTree(MemoryBranch):
     def _reload(self):
         """" reloads data from file if file has changed recently """
         # first check if a reload was not performed recently (speed up reasons)
+        if self._filename is None:
+            return
         if self._lastreload + self._reloaddeadtime < time.time():
             logger.debug("Checking change time of config file...")
             self._lastreload = time.time()
@@ -335,6 +343,8 @@ class MemoryTree(MemoryBranch):
 
     def _save(self):
         """ writes current tree structure and data to file """
+        if self._filename is None:
+            return
         if self._lastsave + self._savedeadtime < time.time():
             self._lastsave = time.time()
             if self._mtime != os.path.getmtime(self._filename):
@@ -364,17 +374,18 @@ class MemoryTree(MemoryBranch):
             if not self._savetimer.isActive():
                 self._savetimer.start()
 
-class DummyMemoryTree(dict):
-    """
-    This class is there to emulate a MemoryTree, for users who would use RedPitaya object without Pyrpl object
-    """
-    @property
-    def _keys(self):
-        return self.keys
+if False:
+    class DummyMemoryTree():  # obsolete now
+        """
+        This class is there to emulate a MemoryTree, for users who would use RedPitaya object without Pyrpl object
+        """
+        @property
+        def _keys(self):
+            return self.keys
 
-    def __getattribute__(self, item):
-        try:
-            attr = super(DummyMemoryTree, self).__getattribute__(item)
-            return attr
-        except AttributeError:
-            return self[item]
+        def __getattribute__(self, item):
+            try:
+                attr = super(DummyMemoryTree, self).__getattribute__(item)
+                return attr
+            except AttributeError:
+                return self[item]
