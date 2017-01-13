@@ -90,7 +90,9 @@ except:
         return yaml.dump(data, stream, OrderedDumper,
                          default_flow_style=default_flow_style, **kwds)
     def isbranch(obj):
-        return type(obj) == OrderedDict
+        return isinstance(obj,dict)
+        # return type(obj) == OrderedDict
+
     # usage example:
     # load(stream, yaml.SafeLoader)
     # save(data, stream=f, Dumper=yaml.SafeDumper)

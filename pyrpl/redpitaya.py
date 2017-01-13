@@ -38,7 +38,7 @@ class RedPitaya(SSHshell):
     cls_modules = [rp.HK, rp.AMS, rp.Scope, rp.Sampler, rp.Asg1, rp.Asg2] + \
                   [rp.AuxOutput]*2 + [rp.IQ]*3 + [rp.Pid]*4 + [rp.IIR]
 
-    def __init__(self, configfile=None,  # configfile is needed to store parameters. None simulates one
+    def __init__(self, config=None,  # configfile is needed to store parameters. None simulates one
                  hostname='192.168.1.100', port=2222,
                  user='root', password='root',
                  delay=0.05, 
@@ -54,7 +54,10 @@ class RedPitaya(SSHshell):
         self.logger = logging.getLogger(name=__name__)
         #self.license()
         # make or retrieve the config file
-        self.c = MemoryTree(configfile)
+        if isinstance(config, MemoryTree):
+            self.c = config
+        else:
+            self.c = MemoryTree(config)
         self._slaves = []
         self.serverdirname = "//opt//pyrpl//"
         self.serverrunning = False
@@ -299,16 +302,7 @@ class RedPitaya(SSHshell):
     def end(self):
         self.endserver()
         self.endclient()
-    """
-    def __del__(self):
-        self.end()
-        try:
-            self.ssh.close()
-        except socket.error:
-            self.logger.warning("__del__ tried to close a socket that "
-                                "already was closed. ")
-        super(RedPitaya, self).__del__()
-    """
+
 
     def restart(self):
         self.end()

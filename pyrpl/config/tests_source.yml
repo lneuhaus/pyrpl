@@ -27,7 +27,7 @@ pyrpl: # General configuration of the software:
   - 1916
   - 1030
 redpitaya:
-  hostname: 10.214.1.28
+  #hostname: 10.214.1.28 # comes from environment
   password: root
   user: root
   port: 2222

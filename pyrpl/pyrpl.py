@@ -274,7 +274,7 @@ class Pyrpl(object):
         else:
             logging.getLogger(name='pyrpl').setLevel(level)
 
-    def __init__(self, config="default", source=None):
+    def __init__(self, config="myconfigfile", source="default"):
         # logger initialisation
         self.logger = logging.getLogger(name=__name__)
         config = self._getpath(config)

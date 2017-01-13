@@ -177,23 +177,23 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
             self.c._parent["states"] = dict()
         return self.c._parent.states
 
-    def save_state(self, name, state_section=None):
+    def save_state(self, name, state_branch=None):
         """Saves the current state under the name "name" in the config file. If state_section is left unchanged,
         uses the normal class_section.states convention."""
-        if state_section is None:
-            state_section = self.c_states
-        state_section[name] = self.get_setup_attributes()
+        if state_branch is None:
+            state_branch = self.c_states
+        state_branch[name] = self.get_setup_attributes()
 
-    def load_state(self, name, state_section=None):
+    def load_state(self, name, state_branch=None):
         """
         Loads the state with name "name" from the config file. If state_section is left unchanged, uses the normal
         class_section.states convention.
         """
-        if state_section is None:
-            state_section = self.c_states
-        if not name in state_section._keys():
+        if state_branch is None:
+            state_branch = self.c_states
+        if not name in state_branch._keys():
             raise KeyError("State %s doesn't exist for modules %s"%(name, self.__class__.name))
-        self.setup(**state_section[name])
+        self.setup(**state_branch[name])
 
     @property
     def states(self):
