@@ -24,7 +24,8 @@ import os
 import logging
 
 class SSHshell(object):
-
+    """ This is a wrapper around paramiko.SSHClient and scp.SCPClient
+    I provides a ssh connection with the ability to transfer files over it"""
     def __init__(
             self,
             hostname='localhost',

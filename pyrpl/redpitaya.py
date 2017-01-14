@@ -33,7 +33,7 @@ from paramiko import SSHException
 from scp import SCPClient, SCPException
 from collections import OrderedDict
 
-class RedPitaya(SSHshell):
+class RedPitaya(object):
     _binfilename = 'fpga.bin'
     cls_modules = [rp.HK, rp.AMS, rp.Scope, rp.Sampler, rp.Asg1, rp.Asg2] + \
                   [rp.AuxOutput]*2 + [rp.IQ]*3 + [rp.Pid]*4 + [rp.IIR]
@@ -120,23 +120,23 @@ class RedPitaya(SSHshell):
             self.startdummyclient()
             return
         # start ssh connection
-        super(RedPitaya, self).__init__(hostname=self.hostname,
-                                        sshport=self.sshport,
-                                        user=self.user,
-                                        password=self.password, 
-                                        delay = self.delay, 
-                                        timeout = self.timeout)
+        self.ssh = SSHshell(hostname=self.hostname,
+                            sshport=self.sshport,
+                            user=self.user,
+                            password=self.password,
+                            delay = self.delay,
+                            timeout = self.timeout)
         # test ssh connection for exceptions
         try:
-            self.ask()
+            self.ssh.ask()
         except socket.error:
                 # try again before anything else
-                super(RedPitaya, self).__init__(hostname=self.hostname,
-                                                sshport=self.sshport,
-                                                user=self.user,
-                                                password=self.password,
-                                                delay=self.delay, 
-                                                timeout = self.timeout)
+                self.ssh = SSHshell(hostname=self.hostname,
+                                    sshport=self.sshport,
+                                    user=self.user,
+                                    password=self.password,
+                                    delay=self.delay,
+                                    timeout=self.timeout)
         # start other stuff
         if reloadfpga:
             self.update_fpga()
@@ -146,9 +146,9 @@ class RedPitaya(SSHshell):
             self.start()
 
     def switch_led(self, gpiopin=0, state=False):
-        self.ask("echo " + str(gpiopin) + " > /sys/class/gpio/export")
+        self.ssh.ask("echo " + str(gpiopin) + " > /sys/class/gpio/export")
         sleep(self.delay)
-        self.ask(
+        self.ssh.ask(
             "echo out > /sys/class/gpio/gpio" +
             str(gpiopin) +
             "/direction")
@@ -157,7 +157,7 @@ class RedPitaya(SSHshell):
             state = "1"
         else:
             state = "0"
-        self.ask( "echo " + state + " > /sys/class/gpio/gpio" +
+        self.ssh.ask( "echo " + state + " > /sys/class/gpio/gpio" +
             str(gpiopin) + "/value")
         sleep(self.delay)
 
@@ -166,9 +166,9 @@ class RedPitaya(SSHshell):
             filename = self.filename
         self.end()
         sleep(self.delay)
-        self.ask('rw')
+        self.ssh.ask('rw')
         sleep(self.delay)
-        self.ask('mkdir ' + self.serverdirname)
+        self.ssh.ask('mkdir ' + self.serverdirname)
         sleep(self.delay)
         source = os.path.join(self.dirname, filename)
         if not os.path.isfile(source):
@@ -181,31 +181,31 @@ class RedPitaya(SSHshell):
               +self.dirname
               +" current filename: "+self.filename)
         try:
-            self.scp.put(source,
+            self.ssh.scp.put(source,
                          os.path.join(self.serverdirname, self._binfilename))
         except (SCPException, SSHException):
             # try again before failing
             self.startscp()
             sleep(self.delay)
-            self.scp = SCPClient(self.ssh.get_transport())
+            self.ssh.scp = SCPClient(self.ssh.get_transport())
         sleep(self.delay)
         # kill all other servers to prevent reading while fpga is flashed
         self.end()
-        self.ask('killall nginx')
-        self.ask('systemctl stop redpitaya_nginx') # for 0.94 and higher
-        self.ask('cat ' 
+        self.ssh.ask('killall nginx')
+        self.ssh.ask('systemctl stop redpitaya_nginx') # for 0.94 and higher
+        self.ssh.ask('cat '
                  + os.path.join(self.serverdirname, self._binfilename)
                  + ' > //dev//xdevcfg')
         sleep(self.delay)
-        self.ask('rm -f '+ os.path.join(self.serverdirname, self._binfilename))
-        self.ask("nginx -p //opt//www//")
-        self.ask('systemctl start redpitaya_nginx') # for 0.94 and higher #needs test
+        self.ssh.ask('rm -f '+ os.path.join(self.serverdirname, self._binfilename))
+        self.ssh.ask("nginx -p //opt//www//")
+        self.ssh.ask('systemctl start redpitaya_nginx') # for 0.94 and higher #needs test
         sleep(self.delay)
-        self.ask('ro')
+        self.ssh.ask('ro')
 
     def fpgarecentlyflashed(self):
-        self.ask()
-        result =self.ask("echo $(($(date +%s) - $(date +%s -r \""
+        self.ssh.ask()
+        result =self.ssh.ask("echo $(($(date +%s) - $(date +%s -r \""
         + os.path.join(self.serverdirname, self._binfilename) +"\")))")
         age = None
         for line in result.split('\n'):
@@ -229,27 +229,27 @@ class RedPitaya(SSHshell):
     def installserver(self):
         self.endserver()
         sleep(self.delay)
-        self.ask('rw')
+        self.ssh.ask('rw')
         sleep(self.delay)
-        self.ask('mkdir ' + self.serverdirname)
+        self.ssh.ask('mkdir ' + self.serverdirname)
         sleep(self.delay)
-        self.ask("cd " + self.serverdirname)
+        self.ssh.ask("cd " + self.serverdirname)
         #try both versions
         for serverfile in ['monitor_server','monitor_server_0.95']:
             sleep(self.delay)
             try:
-                self.scp.put(
+                self.ssh.scp.put(
                     os.path.join(self.dirname, 'monitor_server', serverfile),
                     self.serverdirname+self.monitor_server_name)
             except (SCPException, SSHException):
                 self.logger.exception("Upload error. Try again after rebooting your RedPitaya..")
             sleep(self.delay)
-            self.ask('chmod 755 ./'+self.monitor_server_name)
+            self.ssh.ask('chmod 755 ./'+self.monitor_server_name)
             sleep(self.delay)
-            self.ask('ro')
-            result = self.ask("./"+self.monitor_server_name+" "+ str(self.port))
+            self.ssh.ask('ro')
+            result = self.ssh.ask("./"+self.monitor_server_name+" "+ str(self.port))
             sleep(self.delay)
-            result += self.ask()
+            result += self.ssh.ask()
             if not "sh" in result: 
                 self.logger.info("Server application started on port %d",self.port)
                 return self.port
@@ -271,7 +271,7 @@ class RedPitaya(SSHshell):
         if self.fpgarecentlyflashed():
             self.logger.info("FPGA is being flashed. Please wait for 2 seconds.")
             sleep(2.0)
-        result = self.ask(self.serverdirname+"/"+self.monitor_server_name
+        result = self.ssh.ask(self.serverdirname+"/"+self.monitor_server_name
                           +" "+ str(self.port))
         if not "sh" in result: # sh in result means we tried the wrong binary version
             self.logger.info("Server application started on port %d",self.port)
@@ -282,14 +282,14 @@ class RedPitaya(SSHshell):
     
     def endserver(self):
         try:
-            self.ask('\x03') #exit running server application
+            self.ssh.ask('\x03') #exit running server application
         except:
             self.logger.exception("Server not responding...")
-        if 'pitaya' in self.ask():
+        if 'pitaya' in self.ssh.ask():
             self.logger.info('>') # formerly 'console ready'
         sleep(self.delay)
         # make sure no other monitor_server blocks the port
-        self.ask('killall ' + self.monitor_server_name)
+        self.ssh.ask('killall ' + self.monitor_server_name)
         self.serverrunning = False
         
     def endclient(self):
