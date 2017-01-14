@@ -40,6 +40,7 @@ class RedPitaya(SSHshell):
 
     def __init__(self, config=None,  # configfile is needed to store parameters. None simulates one
                  hostname='192.168.1.100', port=2222,
+                 sshport=22,
                  user='root', password='root',
                  delay=0.05, 
                  autostart=True, reloadfpga=True, reloadserver=False, 
@@ -66,6 +67,7 @@ class RedPitaya(SSHshell):
         self.password = password
         self.delay = delay
         self.port = port
+        self.sshport = sshport
         self.defaultport = port # sometimes we randomly pick another port to bypass problems of the linux on redpitaya
         self.conn = None
         self.client = None
@@ -79,6 +81,7 @@ class RedPitaya(SSHshell):
         if not silence_env:
             for k in ["hostname",
                       "port",
+                      "sshport",
                       "user",
                       "password",
                       "delay",
@@ -117,7 +120,8 @@ class RedPitaya(SSHshell):
             self.startdummyclient()
             return
         # start ssh connection
-        super(RedPitaya, self).__init__(hostname=self.hostname, 
+        super(RedPitaya, self).__init__(hostname=self.hostname,
+                                        sshport=self.sshport,
                                         user=self.user,
                                         password=self.password, 
                                         delay = self.delay, 
@@ -127,7 +131,8 @@ class RedPitaya(SSHshell):
             self.ask()
         except socket.error:
                 # try again before anything else
-                super(RedPitaya, self).__init__(hostname=self.hostname, 
+                super(RedPitaya, self).__init__(hostname=self.hostname,
+                                                sshport=self.sshport,
                                                 user=self.user,
                                                 password=self.password,
                                                 delay=self.delay, 
