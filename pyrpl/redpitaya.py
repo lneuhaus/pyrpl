@@ -124,9 +124,12 @@ class RedPitaya(object):
         # optional: write configuration back to config file
         #self.c.redpitaya = self.parameters
 
+        # save default port definition for possible automatic port change
+        self.parameters['defaultport'] = self.parameters['port']
         # frequency_correction is accessed by child modules
         self.frequency_correction = self.parameters['frequency_correction']
-        self._serverrunning = False  # memorize whether server is running - nearly obsolete
+        # memorize whether server is running - nearly obsolete
+        self._serverrunning = False
         self.client = None  # client class
         self._slaves = []  # slave interfaces to same redpitaya
         self.modules = OrderedDict()  # all submodules

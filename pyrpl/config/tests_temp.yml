@@ -1,27 +1,33 @@
-pyrpl:
+pyrpl: # General configuration of the software:
   name: test_refactor
-  gui: true
+  gui: true # autostart gui
   loglevel: info
-  modules:
-  - NetworkAnalyzer
-  - SpectrumAnalyzer
+  # level of logged information.
+  # 'debug' outputs everything
+  # 'infi' is default level
+  # 'warning' only shows warnings and errors
+  # 'error' only shows errors
+  modules: # SoftwareModules to load (in addition to IqManager, AsgManager, PidManager, ScopeManager)
+    - NetworkAnalyzer
+    - SpectrumAnalyzer
   dock_positions: !!binary |
-    AAAA/wAAAAD9AAAAAQAAAAIAAAVMAAACk/wBAAAAAvwAAAAAAAAFTAAAA/EA/////AIAAAAD+wAA
-    AAwAcwBjAG8AcABlAHMBAAAAEgAAApMAAAC5AP////sAAAAGAGkAcQBzAAAAAQwAAAGjAAAARgD/
-    ///7AAAACABhAHMAZwBzAAAAAioAAACFAAAARgD////8AAAD9wAAAwoAAAAAAP////wCAAAAAvwA
-    AAASAAAD4wAAAAAA////+gAAAAICAAAAB/sAAAAEAG4AYQAAAAAA/////wAAAEYA////+wAAACIA
-    cwBwAGUAYwB0AHIAdQBtAF8AYQBuAGEAbAB5AHoAZQByAAAAAAD/////AAAARgD////7AAAAIgBz
+    AAAA/wAAAAD9AAAAAQAAAAIAAAd8AAAD3fwBAAAAAvwAAAAAAAADrAAAA40A/////AIAAAAD+wAA
+    AAwAcwBjAG8AcABlAHMBAAAAFQAAASQAAADXAP////sAAAAGAGkAcQBzAQAAAT0AAAHoAAABaAD/
+    ///7AAAACABhAHMAZwBzAQAAAykAAADJAAAAlAD////8AAADsAAAA8wAAAOmAP////wCAAAAAvwA
+    AAAVAAABugAAARMBAAAU+gAAAAACAAAAB/sAAAAEAG4AYQEAAAAA/////wAAAP4A////+wAAACIA
+    cwBwAGUAYwB0AHIAdQBtAF8AYQBuAGEAbAB5AHoAZQByAQAAAAD/////AAAAswD////7AAAAIgBz
     AHAAZQBjAHQAcgB1AG0AIABhAG4AYQBsAHkAegBlAHIBAAAAAP////8AAAAAAAAAAPsAAAAUAEIA
-    YQBzAGUATQBvAGQAdQBsAGUBAAAAAP////8AAAAAAAAAAPsAAAAIAGkAaQByAHMAAAAAAP////8A
-    AABGAP////sAAAAgAG4AZQB0AHcAbwByAGsAXwBhAG4AYQBsAHkAegBlAHIBAAAAAP////8AAAAA
-    AAAAAPsAAAAKAHMAYwBvAHAAZQEAAAAA/////wAAAAAAAAAA+wAAAAgAcABpAGQAcwAAAAASAAAD
-    4wAAAEYA////AAAFTAAAAAAAAAAEAAAABAAAAAgAAAAI/AAAAAA=
+    YQBzAGUATQBvAGQAdQBsAGUBAAAAAP////8AAAAAAAAAAPsAAAAIAGkAaQByAHMBAAAAAP////8A
+    AAB/AP////sAAAAgAG4AZQB0AHcAbwByAGsAXwBhAG4AYQBsAHkAegBlAHIBAAAAAP////8AAAAA
+    AAAAAPsAAAAKAHMAYwBvAHAAZQEAAAAA/////wAAAAAAAAAA+wAAAAgAcABpAGQAcwEAAAHTAAAC
+    HwAAAhgA////AAAHfAAAAAAAAAAEAAAABAAAAAgAAAAI/AAAAAA=
   window_position:
-  - 1
-  - 1
-  - 1356
-  - 695
+  - -1928
+  - 117
+  - 1916
+  - 1030
 redpitaya:
+  #hostname: 10.214.1.28 # comes from environment
   password: root
   user: root
   port: 2222
@@ -29,54 +35,3 @@ redpitaya:
   filename: fpga//red_pitaya.bin
   reloadfpga: true
   monitor_server_name: monitor_server
-nas:
-  na: {}
-spectrum_analyzers:
-  spectrum_analyzer:
-    input: adc1
-    baseband: true
-    span:
-    - 1908
-    avg: 10
-hks:
-  hk: {}
-amss:
-  ams: {}
-scopes:
-  scope:
-    trigger_source: immediately
-    running_continuous: true
-    duration: 0.002097152
-    rolling_mode: false
-samplers:
-  sampler: {}
-asgs:
-  asg1: {}
-  asg2: {}
-pwms:
-  pwm1: {}
-  pwm2: {}
-iqs:
-  iq1: {}
-  iq2: {}
-  iq3:
-    acbandwidth:
-    - 0
-    bandwidth:
-    - 159154943
-    - 159154943
-    - 159154943
-    - 159154943
-    quadrature_factor: 0.0
-    output_signal: quadrature
-    gain: 0.0
-    amplitude: 0.0
-    phase: 0.0
-    output_direct: 'off'
-pids:
-  pid1: {}
-  pid2: {}
-  pid3: {}
-  pid4: {}
-iirs:
-  iir: {}
