@@ -33,23 +33,64 @@ from paramiko import SSHException
 from scp import SCPClient, SCPException
 from collections import OrderedDict
 
+
+# default parameters for redpitaya object creation
+defaultparameters = dict(
+    hostname='192.168.1.100', # the ip or hostname of the board
+    port=2222,  # port for PyRPL datacommunication
+    sshport=22,  # port of ssh server - default 22
+    user='root',
+    password='root',
+    delay=0.05,  # delay between ssh commands - console is too slow otherwise
+    autostart=True,  # autostart the client?
+    reloadserver=False,  # reinstall the server at startup if not necessary?
+    reloadfpga=True,  # reload the fpga bitfile at startup?
+    filename='fpga//red_pitaya.bin',  # name of the bitfile for the fpga, None is default file
+    dirname=os.path.abspath(os.path.dirname(__file__)),  # directory of the bitfile for the fpga, None is default dir
+    serverbinfilename='fpga.bin',  # name of the binfile on the server
+    serverdirname = "//opt//pyrpl//",  # server directory for server app and bitfile
+    leds_off=True,  # turn off all GPIO lets at startup (improves analog performance)
+    frequency_correction=1.0,  # actual FPGA frequency is 125 MHz * frequency_correction
+    timeout=3,  # timeout in seconds for ssh communication
+    monitor_server_name='monitor_server',  # name of the server program on redpitaya
+    silence_env=False)  # suppress all environment variables that may override the configuration?
+
 class RedPitaya(object):
-    _binfilename = 'fpga.bin'
     cls_modules = [rp.HK, rp.AMS, rp.Scope, rp.Sampler, rp.Asg1, rp.Asg2] + \
                   [rp.AuxOutput]*2 + [rp.IQ]*3 + [rp.Pid]*4 + [rp.IIR]
 
     def __init__(self, config=None,  # configfile is needed to store parameters. None simulates one
-                 hostname='192.168.1.100', port=2222,
-                 sshport=22,
-                 user='root', password='root',
-                 delay=0.05, 
-                 autostart=True, reloadfpga=True, reloadserver=False, 
-                 filename=None, dirname=None,
-                 leds_off=True, frequency_correction=1.0, timeout = 3,
-                 monitor_server_name='monitor_server',
-                 silence_env = False,
-                 ):
-        """installs and starts the interface on the RedPitaya at hostname that allows remote control
+                 **kwargs):
+        """ this class provides the basic interface to the redpitaya board
+
+        The constructor installs and starts the communication interface on the RedPitaya
+        at 'hostname' that allows remote control and readout
+
+        'config' is the config file or MemoryTree of the config file. All keyword arguments
+        may be specified in the branch 'redpitaya' of this config file. Alternatively,
+        they can be overwritten by keyword arguments at the function call.
+
+        'config=None' specifies that no persistent config file is saved on the disc.
+
+        Possible keyword arguments and their defaults are:
+            hostname='192.168.1.100', # the ip or hostname of the board
+            port=2222,  # port for PyRPL datacommunication
+            sshport=22,  # port of ssh server - default 22
+            user='root',
+            password='root',
+            delay=0.05,  # delay between ssh commands - console is too slow otherwise
+            autostart=True,  # autostart the client?
+            reloadserver=False,  # reinstall the server at startup if not necessary?
+            reloadfpga=True,  # reload the fpga bitfile at startup?
+            filename='fpga//red_pitaya.bin',  # name of the bitfile for the fpga, None is default file
+            dirname=os.path.abspath(os.path.dirname(__file__)),  # directory of the bitfile for the fpga, None is default dir
+            serverbinfilename='fpga.bin',  # name of the binfile on the server
+            serverdirname = "//opt//pyrpl//",  # server directory for server app and bitfile
+            leds_off=True,  # turn off all GPIO lets at startup (improves analog performance)
+            frequency_correction=1.0,  # actual FPGA frequency is 125 MHz * frequency_correction
+            timeout=3,  # timeout in seconds for ssh communication
+            monitor_server_name='monitor_server',  # name of the server program on redpitaya
+            silence_env=False)  # suppress all environment variables that may override the configuration?
 
         if you are experiencing problems, try to increase delay, or try logging.getLogger().setLevel(logging.DEBUG)"""
         self.logger = logging.getLogger(name=__name__)
@@ -59,154 +100,141 @@ class RedPitaya(object):
             self.c = config
         else:
             self.c = MemoryTree(config)
-        self._slaves = []
-        self.serverdirname = "//opt//pyrpl//"
-        self.serverrunning = False
-        self.hostname = hostname
-        self.user = user
-        self.password = password
-        self.delay = delay
-        self.port = port
-        self.sshport = sshport
-        self.defaultport = port # sometimes we randomly pick another port to bypass problems of the linux on redpitaya
-        self.conn = None
-        self.client = None
-        self.frequency_correction = frequency_correction
-        self.leds_off = leds_off
-        self.timeout = timeout
-        self.monitor_server_name = monitor_server_name
-        self.modules = OrderedDict()
-
+        # get the parameters right (in order of increasing priority):
+        # first defaults, then environment variables, config file, and command line arguments
+        self.parameters = defaultparameters
         # get parameters from os.environment variables
-        if not silence_env:
-            for k in ["hostname",
-                      "port",
-                      "sshport",
-                      "user",
-                      "password",
-                      "delay",
-                      "timeout",
-                      "monitor_server_name"]:
+        if not self.parameters['silence_env']:
+            for k in self.parameters.keys():
                 if "REDPITAYA_"+k.upper() in os.environ:
                     newvalue = os.environ["REDPITAYA_"+k.upper()]
-                    oldvalue = self.__getattribute__(k)
-                    self.__setattr__(k, type(oldvalue)(newvalue))
+                    oldvalue = self.parameters[k]
+                    self.parameters[k] = type(oldvalue)(newvalue)
                     if k == "password": # do not show the password on the screen
                         newvalue = "********"
                     self.logger.warning("Variable %s with value %s overwritten by "
                                         +"environment variable REDPITAYA_%s with "
                                         +"value %s", k, oldvalue,
                                         k.upper(), newvalue)
-        # check filenames - should work without specifying them
-        if filename is None:
-            self.filename = 'fpga//red_pitaya.bin'
-        else:
-            self.filename = filename
-        if dirname is None:
-            self.dirname = os.path.abspath(os.path.dirname(__file__)) #or inspect.getfile(_rp)
-        else:
-            self.dirname = dirname
-        if not os.path.exists(self.dirname):
-            if os.path.exists(os.path.abspath(os.path.join(self.dirname,'prypl'))):
-                self.dirname = os.path.abspath(os.path.join(self.dirname,'prypl'))
+        try:
+            self.parameters.update(self.c.redpitaya._dict)  # from config file
+        except:
+            pass
+        self.parameters.update(kwargs)  # from class initialisation
+        # optional: write configuration back to config file
+        #self.c.redpitaya = self.parameters
+
+        # frequency_correction is accessed by child modules
+        self.frequency_correction = self.parameters['frequency_correction']
+        self._serverrunning = False  # memorize whether server is running - nearly obsolete
+        self.client = None  # client class
+        self._slaves = []  # slave interfaces to same redpitaya
+        self.modules = OrderedDict()  # all submodules
+
+        # auto-correct wrong paths if possible
+        if not os.path.exists(self.parameters['dirname']):
+            if os.path.exists(os.path.abspath(os.path.join(self.parameters['dirname'], 'prypl'))):
+                self.parameters['dirname'] = os.path.abspath(os.path.join(self.parameters['dirname'], 'prypl'))
             else:
                 raise IOError("Wrong dirname",
                           "The directory of the pyrl package could not be found. Please try again calling RedPitaya"
                           "with the additional argument dirname='c://github//pyrpl//pyrpl' adapted to your installation"
                           " directory of pyrpl! Current dirname: "
-                           +self.dirname)
-        if self.hostname == "unavailable": # simulation mode - start without connecting
+                           +self.parameters['dirname'])
+
+        # connect to the redpitaya board
+        if self.parameters['hostname'] == "unavailable":  # simulation mode - start without connecting
             self.logger.warning("Starting client in dummy mode...")
             self.startdummyclient()
-            return
-        # start ssh connection
-        self.ssh = SSHshell(hostname=self.hostname,
-                            sshport=self.sshport,
-                            user=self.user,
-                            password=self.password,
-                            delay = self.delay,
-                            timeout = self.timeout)
-        # test ssh connection for exceptions
-        try:
-            self.ssh.ask()
-        except socket.error:
-                # try again before anything else
-                self.ssh = SSHshell(hostname=self.hostname,
-                                    sshport=self.sshport,
-                                    user=self.user,
-                                    password=self.password,
-                                    delay=self.delay,
-                                    timeout=self.timeout)
-        # start other stuff
-        if reloadfpga:
-            self.update_fpga()
-        if reloadserver:
-            self.installserver()
-        if autostart:
-            self.start()
+        else:  # normal mode - establish ssh connection and
+            # start ssh connection
+            self.ssh = SSHshell(hostname=self.parameters['hostname'],
+                                sshport=self.parameters['sshport'],
+                                user=self.parameters['user'],
+                                password=self.parameters['password'],
+                                delay = self.parameters['delay'],
+                                timeout = self.parameters['timeout'])
+            try:  # test ssh connection for exceptions
+                self.ssh.ask()
+            except socket.error:
+                    # try again before anything else
+                    self.ssh = SSHshell(hostname=self.parameters['hostname'],
+                                        sshport=self.parameters['sshport'],
+                                        user=self.parameters['user'],
+                                        password=self.parameters['password'],
+                                        delay=self.parameters['delay'],
+                                        timeout=self.parameters['timeout'])
+            # start other stuff
+            if self.parameters['reloadfpga']:  # flash fpga
+                self.update_fpga()
+            if self.parameters['reloadserver']:  # reinstall server app
+                self.installserver()
+            if self.parameters['autostart']:  # start client
+                self.start()
 
     def switch_led(self, gpiopin=0, state=False):
         self.ssh.ask("echo " + str(gpiopin) + " > /sys/class/gpio/export")
-        sleep(self.delay)
+        sleep(self.parameters['delay'])
         self.ssh.ask(
             "echo out > /sys/class/gpio/gpio" +
             str(gpiopin) +
             "/direction")
-        sleep(self.delay)
+        sleep(self.parameters['delay'])
         if state:
             state = "1"
         else:
             state = "0"
         self.ssh.ask( "echo " + state + " > /sys/class/gpio/gpio" +
             str(gpiopin) + "/value")
-        sleep(self.delay)
+        sleep(self.parameters['delay'])
 
     def update_fpga(self, filename=None):
         if filename is None:
-            filename = self.filename
+            filename = self.parameters['filename']
         self.end()
-        sleep(self.delay)
+        sleep(self.parameters['delay'])
         self.ssh.ask('rw')
-        sleep(self.delay)
-        self.ssh.ask('mkdir ' + self.serverdirname)
-        sleep(self.delay)
-        source = os.path.join(self.dirname, filename)
+        sleep(self.parameters['delay'])
+        self.ssh.ask('mkdir ' + self.parameters['serverdirname'])
+        sleep(self.parameters['delay'])
+        source = os.path.join(self.parameters['dirname'], filename)
         if not os.path.isfile(source):
-            source = os.path.join(self.dirname, 'fpga', filename)
+            source = os.path.join(self.parameters['dirname'], 'fpga', filename)
         if not os.path.isfile(source):
             raise IOError("Wrong filename",
               "The fpga bitfile was not found at the expected location. Try passing the arguments "
               "dirname=\"c://github//pyrpl//pyrpl//\" adapted to your installation directory of pyrpl "
               "and filename=\"red_pitaya.bin\"! Current dirname: "
-              +self.dirname
-              +" current filename: "+self.filename)
+              +self.parameters['dirname']
+              +" current filename: "+self.parameters['filename'])
         try:
             self.ssh.scp.put(source,
-                         os.path.join(self.serverdirname, self._binfilename))
+                         os.path.join(self.parameters['serverdirname'],
+                                      self.parameters['serverbinfilename']))
         except (SCPException, SSHException):
             # try again before failing
             self.startscp()
-            sleep(self.delay)
+            sleep(self.parameters['delay'])
             self.ssh.scp = SCPClient(self.ssh.get_transport())
-        sleep(self.delay)
+        sleep(self.parameters['delay'])
         # kill all other servers to prevent reading while fpga is flashed
         self.end()
         self.ssh.ask('killall nginx')
         self.ssh.ask('systemctl stop redpitaya_nginx') # for 0.94 and higher
         self.ssh.ask('cat '
-                 + os.path.join(self.serverdirname, self._binfilename)
+                 + os.path.join(self.parameters['serverdirname'], self.parameters['serverbinfilename'])
                  + ' > //dev//xdevcfg')
-        sleep(self.delay)
-        self.ssh.ask('rm -f '+ os.path.join(self.serverdirname, self._binfilename))
+        sleep(self.parameters['delay'])
+        self.ssh.ask('rm -f '+ os.path.join(self.parameters['serverdirname'], self.parameters['serverbinfilename']))
         self.ssh.ask("nginx -p //opt//www//")
         self.ssh.ask('systemctl start redpitaya_nginx') # for 0.94 and higher #needs test
-        sleep(self.delay)
+        sleep(self.parameters['delay'])
         self.ssh.ask('ro')
 
     def fpgarecentlyflashed(self):
         self.ssh.ask()
         result =self.ssh.ask("echo $(($(date +%s) - $(date +%s -r \""
-        + os.path.join(self.serverdirname, self._binfilename) +"\")))")
+        + os.path.join(self.parameters['serverdirname'], self.parameters['serverbinfilename']) +"\")))")
         age = None
         for line in result.split('\n'):
             try:
@@ -228,38 +256,38 @@ class RedPitaya(object):
 
     def installserver(self):
         self.endserver()
-        sleep(self.delay)
+        sleep(self.parameters['delay'])
         self.ssh.ask('rw')
-        sleep(self.delay)
-        self.ssh.ask('mkdir ' + self.serverdirname)
-        sleep(self.delay)
-        self.ssh.ask("cd " + self.serverdirname)
+        sleep(self.parameters['delay'])
+        self.ssh.ask('mkdir ' + self.parameters['serverdirname'])
+        sleep(self.parameters['delay'])
+        self.ssh.ask("cd " + self.parameters['serverdirname'])
         #try both versions
         for serverfile in ['monitor_server','monitor_server_0.95']:
-            sleep(self.delay)
+            sleep(self.parameters['delay'])
             try:
                 self.ssh.scp.put(
-                    os.path.join(self.dirname, 'monitor_server', serverfile),
-                    self.serverdirname+self.monitor_server_name)
+                    os.path.join(self.parameters['dirname'], 'monitor_server', self.parameters['monitor_server_name']),
+                    self.parameters['serverdirname']+self.parameters['monitor_server_name'])
             except (SCPException, SSHException):
                 self.logger.exception("Upload error. Try again after rebooting your RedPitaya..")
-            sleep(self.delay)
-            self.ssh.ask('chmod 755 ./'+self.monitor_server_name)
-            sleep(self.delay)
+            sleep(self.parameters['delay'])
+            self.ssh.ask('chmod 755 ./'+self.parameters['monitor_server_name'])
+            sleep(self.parameters['delay'])
             self.ssh.ask('ro')
-            result = self.ssh.ask("./"+self.monitor_server_name+" "+ str(self.port))
-            sleep(self.delay)
+            result = self.ssh.ask("./"+self.parameters['monitor_server_name']+" "+ str(self.parameters['port']))
+            sleep(self.parameters['delay'])
             result += self.ssh.ask()
             if not "sh" in result: 
-                self.logger.info("Server application started on port %d",self.port)
-                return self.port
+                self.logger.info("Server application started on port %d",self.parameters['port'])
+                return self.parameters['port']
             else: # means we tried the wrong binary version. make sure server is not running and try again with next file
                 self.endserver()
         
         #try once more on a different port
-        if self.port == self.defaultport:
-            self.port = random.randint(self.defaultport,50000)
-            self.logger.warning("Problems to start the server application. Trying again with a different port number %d",self.port)
+        if self.parameters['port'] == self.parameters['defaultport']:
+            self.parameters['port'] = random.randint(self.parameters['defaultport'],50000)
+            self.logger.warning("Problems to start the server application. Trying again with a different port number %d",self.parameters['port'])
             return self.installserver()
         
         self.logger.error("Server application could not be started. Try to recompile monitor_server on your RedPitaya (see manual). ")
@@ -267,16 +295,16 @@ class RedPitaya(object):
     
     def startserver(self):
         self.endserver()
-        sleep(self.delay)
+        sleep(self.parameters['delay'])
         if self.fpgarecentlyflashed():
             self.logger.info("FPGA is being flashed. Please wait for 2 seconds.")
             sleep(2.0)
-        result = self.ssh.ask(self.serverdirname+"/"+self.monitor_server_name
-                          +" "+ str(self.port))
+        result = self.ssh.ask(self.parameters['serverdirname']+"/"+self.parameters['monitor_server_name']
+                          +" "+ str(self.parameters['port']))
         if not "sh" in result: # sh in result means we tried the wrong binary version
-            self.logger.info("Server application started on port %d",self.port)
-            self.serverrunning = True
-            return self.port
+            self.logger.info("Server application started on port %d",self.parameters['port'])
+            self._serverrunning = True
+            return self.parameters['port']
         #something went wrong
         return self.installserver()
     
@@ -287,21 +315,21 @@ class RedPitaya(object):
             self.logger.exception("Server not responding...")
         if 'pitaya' in self.ssh.ask():
             self.logger.info('>') # formerly 'console ready'
-        sleep(self.delay)
+        sleep(self.parameters['delay'])
         # make sure no other monitor_server blocks the port
-        self.ssh.ask('killall ' + self.monitor_server_name)
-        self.serverrunning = False
+        self.ssh.ask('killall ' + self.parameters['monitor_server_name'])
+        self._serverrunning = False
         
     def endclient(self):
         del self.client
         self.client = None
 
     def start(self):
-        if self.leds_off:
+        if self.parameters['leds_off']:
             self.switch_led(gpiopin=0, state=False)
             self.switch_led(gpiopin=7, state=False)
         self.startserver()
-        sleep(self.delay)
+        sleep(self.parameters['delay'])
         self.startclient()
 
     def end(self):
@@ -317,9 +345,9 @@ class RedPitaya(object):
         """restart the server. usually executed when client encounters an error"""
         if port is not None:
             if port < 0: #code to try a random port
-                self.port = random.randint(2223,50000)
+                self.parameters['port'] = random.randint(2223,50000)
             else:
-                self.port = port
+                self.parameters['port'] = port
         return self.startserver()
 
     def license(self):
@@ -331,7 +359,7 @@ class RedPitaya(object):
 
     def startclient(self):
         self.client = monitor_client.MonitorClient(
-            self.hostname, self.port, restartserver=self.restartserver)
+            self.parameters['hostname'], self.parameters['port'], restartserver=self.restartserver)
         self.makemodules()
         self.logger.info("Client started with success")
 
@@ -355,25 +383,18 @@ class RedPitaya(object):
 
     def make_a_slave(self, port=None, monitor_server_name=None, gui=False):
         if port is None:
-            port = self.port + len(self._slaves)*10 + 1
+            port = self.parameters['port'] + len(self._slaves)*10 + 1
         if monitor_server_name is None:
-            monitor_server_name = self.monitor_server_name + str(port)
-        r = RedPitaya(hostname=self.hostname,
+            monitor_server_name = self.parameters['monitor_server_name'] + str(port)
+        slaveparameters = dict(self.parameters)
+        slaveparameters.update(dict(
                          port=port,
-                         user=self.user,
-                         password=self.password,
-                         delay=self.delay,
                          autostart=True,
                          reloadfpga=False,
                          reloadserver=False,
-                         filename=self.filename,
-                         dirname=self.dirname,
-                         leds_off=self.leds_off,
-                         frequency_correction=self.frequency_correction,
-                         timeout=self.timeout,
                          monitor_server_name=monitor_server_name,
-                         silence_env=True,
-                         ) #gui=gui)
+                         silence_env=True))
+        r = RedPitaya(**slaveparameters) #gui=gui)
         r._master = self
         self._slaves.append(r)
         return r
