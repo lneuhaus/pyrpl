@@ -82,8 +82,7 @@ class SaveLabel(MyMenuLabel):
 
 class ModuleWidget(QtGui.QGroupBox):
     """
-    Base class for a module Widget. In general, this is one of the Tab in the
-    final RedPitayaGui object.
+    Base class for a module Widget. In general, this is one of the DockWidget of the Pyrpl MainWindow.
     """
     title_pos = (12, 0)
 
@@ -110,6 +109,13 @@ class ModuleWidget(QtGui.QGroupBox):
         # self.setStyleSheet("ModuleWidget{border:0;color: transparent;}") # frames and title hidden for software_modules
                                         # ModuleManagerWidget sets them visible for the HardwareModuleWidgets...
         self.show_ownership()
+        self.module.gui_updater.connect_widget(self)
+
+    def update_attribute_by_name(self, name):
+        """
+        Updates a specific attribute.
+        """
+        self.attribute_widgets[name].update_widget()
 
     def create_title_bar(self):
         self.title_label = QtGui.QLabel("yo", parent=self)
@@ -212,20 +218,21 @@ class ScopeWidget(ModuleWidget):
         for i in (1, 2):
             self.cb_ch.append(QtGui.QCheckBox("Channel " + str(i)))
             self.button_layout.addWidget(self.cb_ch[-1])
-        self.button_single.clicked.connect(self.run_single)
+        self.button_single.clicked.connect(self.module.run_single)
         self.button_continuous.clicked.connect(self.run_continuous_clicked)
         self.button_save.clicked.connect(self.save)
-        self.timer = QtCore.QTimer()
-        self.timer.setInterval(10)
-        self.timer.setSingleShot(True)
 
-        self.timer.timeout.connect(self.check_for_curves)
+        # self.timer = QtCore.QTimer()
+        # self.timer.setInterval(10)
+        # self.timer.setSingleShot(True)
 
-        for cb, col in zip(self.cb_ch, self.ch_col):
-            cb.setCheckState(2)
-            cb.setStyleSheet('color: ' + col)
-        for cb in self.cb_ch:
-            cb.stateChanged.connect(self.display_curves)
+        # self.timer.timeout.connect(self.check_for_curves)
+
+        # for cb, col in zip(self.cb_ch, self.ch_col):
+            # cb.setCheckState(2)
+            # cb.setStyleSheet('color: ' + col)
+        # for cb in self.cb_ch:
+            # cb.stateChanged.connect(self.display_curves)
 
         self.rolling_group = QtGui.QGroupBox("Trigger mode")
         self.checkbox_normal = QtGui.QRadioButton("Normal")
@@ -241,9 +248,27 @@ class ScopeWidget(ModuleWidget):
         self.checkbox_untrigged.clicked.connect(self.rolling_mode_toggled)
         self.update_rolling_mode_visibility()
         self.attribute_widgets['duration'].value_changed.connect(self.update_rolling_mode_visibility)
-        self.set_running_state()
-        self.set_rolling_mode()
+        #self.set_running_state()
+        #self.set_rolling_mode()
 
+    def update_attribute_by_name(self, name):
+        super(ScopeWidget, self).update_attribute_by_name(name)
+        if name in ['rolling_mode', 'duration']:
+            self.update_rolling_mode_visibility()
+        if name in ['running_continuous',]:
+            self.update_running_buttons()
+
+    def update_running_buttons(self):
+        """
+        Change text of Run continuous button and visibility of run single button
+        according to module.running_continuous
+        """
+        if self.module.running_continuous:
+            self.button_continuous.setText("Stop")
+            self.button_single.setEnabled(False)
+        else:
+            self.button_continuous.setText("Run continuous")
+            self.button_single.setEnabled(True)
 
     def display_channel(self, ch):
         """
@@ -258,9 +283,17 @@ class ScopeWidget(ModuleWidget):
         except NotReadyError:
             pass
 
-    def display_curves(self):
+    def display_curves(self, list_of_arrays):
         """
         Displays all active channels on the graph.
+        """
+        times, ch1, ch2 = list_of_arrays
+        for ch, data in enumerate([ch1, ch2]):
+            if data is not None:
+                self.curves[ch].setData(times, data)
+                self.curves[ch].setVisible(True)
+            else:
+                self.curves[ch].setVisible(False)
         """
         if not self.rolling_mode: # otherwise, evrything is handled in check_for_curves
             for i in (1, 2):
@@ -269,24 +302,22 @@ class ScopeWidget(ModuleWidget):
                     self.curves[i - 1].setVisible(True)
                 else:
                     self.curves[i - 1].setVisible(False)
-
+        """
+    """
     def run_single(self):
-        """
-        When run_single is pressed, launches a single acquisition.
-        """
+        #
+        #When run_single is pressed, launches a single acquisition.
+        #
 
-        self.module.setup()
-        self.plot_item.enableAutoRange('xy', True)
-        self.display_curves()
 
+    """
+
+    """
     def check_for_curves(self):
-        """
-        This function is called periodically by a timer when in run_continuous mode.
-        1/ Check if curves are ready.
-        2/ If so, plots them on the graph
-        3/ Restarts the timer.
-        """
-
+        #This function is called periodically by a timer when in run_continuous mode.
+        #1/ Check if curves are ready.
+        #2/ If so, plots them on the graph
+        #3/ Restarts the timer.
         if not self.rolling_mode:
             if self.module.curve_ready():
                 self.display_curves()
@@ -320,6 +351,7 @@ class ScopeWidget(ModuleWidget):
         except Exception as e:
             print(e)
         self.timer.start()
+    """
 
     def curve_display_done(self):
         """
@@ -336,39 +368,46 @@ class ScopeWidget(ModuleWidget):
         else:
             return "stopped"
 
+    """
     def run_continuous(self):
-        """
-        Toggles the button run_continuous to stop and starts the acquisition timer.
-        This function is part of the public interface.
-        """
+        #
+        #Toggles the button run_continuous to stop and starts the acquisition timer.
+        #This function is part of the public interface.
+        #
         self.button_continuous.setText("Stop")
         self.button_single.setEnabled(False)
         self.module.setup()
         self.plot_item.enableAutoRange('xy', True)
         self.first_shot_of_continuous = True
         self.timer.start()
+    """
 
+    """
     def stop(self):
-        """
-        Toggles the button stop to run_continuous to stop and stops the acquisition timer
-        """
+
+        #Toggles the button stop to run_continuous to stop and stops the acquisition timer
+
         self.button_continuous.setText("Run continuous")
         self.timer.stop()
         self.button_single.setEnabled(True)
+    """
 
+    """
     def set_running_state(self):
-        """
-        Set running state (stop/run continuous) according to module's attribute "running_continuous"
-        """
+
+        # Set running state (stop/run continuous) according to module's attribute "running_continuous"
+
         if self.module.running_continuous:
             self.run_continuous()
         else:
             self.stop()
+    """
+
 
     def set_rolling_mode(self):
-        """
-        Set rolling mode on or off based on the module's attribute "rolling_mode"
-        """
+
+        #Set rolling mode on or off based on the module's attribute "rolling_mode"
+
         self.rolling_mode = self.module.rolling_mode
 
 
@@ -409,6 +448,7 @@ class ScopeWidget(ModuleWidget):
         """
         hide rolling mode checkbox for duration < 100 ms
         """
+        print('updating visibility')
         self.rolling_group.setEnabled(self.module.rolling_mode_allowed())
         self.attribute_widgets['trigger_source'].widget.setEnabled(
             not self.rolling_mode)

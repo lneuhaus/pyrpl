@@ -86,7 +86,7 @@ pwms: !!omap
 - pwm1: !!omap []
 - pwm2: !!omap []
 pids: !!omap
-- pid1: !!omap []
+- pid1: !!omap [{setpoint: 0.0999755859375}]
 - pid2: !!omap []
 - pid3: !!omap []
 - pid4: !!omap []

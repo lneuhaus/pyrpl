@@ -6,9 +6,11 @@ from ..modules import HardwareModule
 from ..widgets.module_widgets import ScopeWidget
 
 from . import DSP_INPUTS, DspModule, DspInputAttribute
+from ..modules import GuiUpdater
 
 import numpy as np
 import time
+from PyQt4 import QtCore, QtGui
 
 # data_length must be defined outside of class body for python 3
 # compatibility since otherwise it is not available in the class level
@@ -59,12 +61,6 @@ class DurationAttribute(SelectAttribute):
         the rounding makes sure that the actual value is longer or equal to the set value"""
         instance.sampling_time = float(value) / instance.data_length
 
-    def update_gui(self, module):
-        if module.is_rolling_mode_active():  # changing duration might change rolling mode
-            module.widget.set_rolling_mode()
-        else:
-            module.trigger_source = module.trigger_source # otherwise, make sure trigger becomes effective again
-
 
 class DecimationRegister(SelectRegister):
     """
@@ -72,6 +68,7 @@ class DecimationRegister(SelectRegister):
     """
     def set_value(self, instance, value):
         super(DecimationRegister, self).set_value(instance, value)
+        print(instance.duration)
         instance.__class__.duration.set_value_gui_config(instance, instance.duration)
         instance.__class__.sampling_time.set_value_gui_config(instance, instance.sampling_time)
 
@@ -138,23 +135,112 @@ class RunningContinuousProperty(BoolProperty):
     """
     Nothing to do unless widget exists
     """
-    def update_gui(self, module):
-        super(RunningContinuousProperty, self).update_gui(module)
-        module.widget.set_running_state()
+    def set_value(self, module, val):
+        if module is None:
+            return self
+        super(RunningContinuousProperty, self).set_value(module, val)
+        if val:
+            module.gui_updater.run_continuous()
+        else:
+            module.gui_updater.stop()
+
+#    def update_gui(self, module):
+#        super(RunningContinuousProperty, self).update_gui(module)
+        #module.widget.set_running_state()
 
 
 class RollingModeProperty(BoolProperty):
     """
     Nothing to do unless widget exists
     """
-    def set_value(self, obj, val):
-        super(RollingModeProperty, self).set_value(obj, val)
-        if obj.running_continuous:
-            obj.setup()
+    def set_value(self, module, val):
+        super(RollingModeProperty, self).set_value(module, val)
+        if module.running_continuous:
+            module.setup()
+            if module.is_rolling_mode_active():
+                module.set_for_rolling_mode()
 
-    def update_gui(self, module):
-        super(RollingModeProperty, self).update_gui(module)
-        module.widget.set_rolling_mode()
+
+class GuiUpdaterScope(GuiUpdater):
+    display_curves = QtCore.pyqtSignal(list) # This signal is emitted when curves need to be displayed
+    # the argument is [array(times), array(curve1), array(curve2)] or [times, None, array(curve2)]
+    autoscale = QtCore.pyqtSignal()
+
+    def __init__(self, module):
+        super(GuiUpdaterScope, self).__init__(module)
+        self.first_shot_of_continuous = True
+        self.timer_continuous = QtCore.QTimer()
+        self.timer_continuous.setInterval(10)
+        self.timer_continuous.timeout.connect(self.check_for_curves)
+        self.timer_continuous.setSingleShot(True)
+
+    def run_continuous(self):
+        """
+        periodically checks for curve.
+        """
+        self.module.setup()
+        if self.module.is_rolling_mode_active():
+            self.module.set_for_rolling_mode()
+        self.first_shot_of_continuous = True
+        self.timer_continuous.start()
+
+    def stop(self):
+        self.timer_continuous.stop()
+
+    def run_single(self):
+        self.module.stop()
+        self.module.setup()
+        self.timer_continuous.start()
+
+
+    def check_for_curves(self):
+        """
+        This function is called periodically by a timer when in run_continuous mode.
+        1/ Check if curves are ready.
+        2/ If so, plots them on the graph
+        3/ Restarts the timer.
+        """
+        datas = [None, None, None]
+        # triggered mode in "single" acquisition, or when rolling mode is off, or when duration is
+        # too small
+        if self.module.is_rolling_mode_active() and self.module.running_continuous: ## Rolling mode
+            wp0 = self.module._write_pointer_current # write pointer before acquisition
+            times = self.module.times # times
+            times -= times[-1]
+            datas = [times, None, None]
+            for ch, active in ((1, self.module.ch1_active),  (2, self.module.ch2_active)):
+                if active:
+                    datas[ch] = self.module._get_ch_no_roll(ch)
+            wp1 = self.module._write_pointer_current # write pointer after acquisition
+            for index, data in ((1, datas[1]), (2, datas[2])):
+                if data is None:
+                    continue
+                to_discard = (wp1 - wp0) % self.module.data_length # remove data that have been affected during acq.
+                data = np.roll(data, self.module.data_length - wp0)[to_discard:]
+                data = np.concatenate([[np.nan] * to_discard, data])
+                datas[index] = data
+            self.display_curves.emit(datas)
+            # no setup in rolling mode
+        else: # triggered mode
+            if self.module.curve_ready(): # if curve not ready, wait for next timer iteration
+                for ch, active in ((1, self.module.ch1_active), (2, self.module.ch2_active)):
+                    if active:
+                        datas[ch] = self.module._get_ch(ch)
+                datas[0] = self.module.times
+                self.display_curves.emit(datas)
+                if self.first_shot_of_continuous:
+                    self.first_shot_of_continuous = False  # autoscale only upon first curve
+                    self.autoscale.emit()
+                self.module.setup()
+            else: # curve not ready, wait for next timer iteration
+                self.timer_continuous.start()
+        if self.module.running_continuous:
+            self.timer_continuous.start()
+
+    def connect_widget(self, widget):
+        super(GuiUpdaterScope, self).connect_widget(widget)
+        self.autoscale.connect(widget.autoscale)
+        self.display_curves.connect(widget.display_curves)
 
 
 class Scope(HardwareModule):
@@ -171,7 +257,9 @@ class Scope(HardwareModule):
                       "threshold_ch2",
                       "curve_name",
                       "running_continuous",
-                      "rolling_mode"]
+                      "rolling_mode",
+                      "ch1_active",
+                      "ch2_active"]
     setup_attributes = gui_attributes
     name = 'scope'
     data_length = data_length  # see definition and explanation above
@@ -179,6 +267,7 @@ class Scope(HardwareModule):
 
     def init_module(self):
         # dsp multiplexer channels for scope and asg are the same by default
+        self.gui_updater = GuiUpdaterScope(self)
         self._ch1 = DspModule(self._rp, name='asg1')
         self._ch2 = DspModule(self._rp, name='asg2')
         self.inputs = self._ch1.inputs
@@ -312,6 +401,10 @@ class Scope(HardwareModule):
 
     duration = DurationAttribute(durations)
 
+    ch1_active = BoolProperty(doc="should ch1 be displayed in the gui")
+
+    ch2_active = BoolProperty(doc="should ch2 be displayed in the gui")
+
     def ownership_changed(self, old, new):
         """
         If the scope was in continuous mode when slaved, it has to stop!!
@@ -397,8 +490,6 @@ class Scope(HardwareModule):
         if self.trigger_source == 'immediately':
             # self.wait_for_pretrig_ok()
             self.trigger_source = self.trigger_source
-        if self.is_rolling_mode_active():
-            self.set_for_rolling_mode()
 
     def rolling_mode_allowed(self):
         """
@@ -415,74 +506,6 @@ class Scope(HardwareModule):
     def set_for_rolling_mode(self):
         self._trigger_source = 'off'
         self._trigger_armed = True
-
-    def setup_old(self,
-              duration=None,
-              trigger_source=None,
-              average=None,
-              threshold_ch1=None, # for consistency between setup function and setup_attributes
-              threshold_ch2=None, # I don't use a single threshold
-              hysteresis=None,
-              trigger_delay=None,
-              input1=None,
-              input2=None):
-        """sets up the scope for a new trace acquisition including arming the trigger
-
-        duration: the minimum duration in seconds to be recorded
-        trigger_source: the trigger source. see the options for the parameter separately
-        average: use averaging or not when sampling is not performed at full rate.
-                 similar to high-resolution mode in commercial scopes
-        threshold: Trigger threshold in V
-        hysteresis: signal hysteresis needed to enable trigger in V.
-                    Should be larger than the rms-noise of the signal
-        trigger_delay: trigger_delay in s
-        input1/2: set the inputs of channel 1/2
-
-        if a parameter is None, the current attribute value is used
-
-        In case trigger_source is set to "immediately", trigger_delay is disregarded and
-        trace starts at t=0
-        """
-
-        self._setup_called = True
-        self._reset_writestate_machine = True
-        if average is not None:
-            self.average = average
-        if duration is not None:
-            self.duration = duration
-        if threshold_ch1 is not None:
-            self.threshold_ch1 = threshold_ch1
-        if threshold_ch2 is not None:
-            self.threshold_ch2 = threshold_ch2
-        if hysteresis is not None:
-            self.hysteresis_ch1 = hysteresis
-            self.hysteresis_ch2 = hysteresis
-        if input1 is not None:
-            self.input1 = input1
-        if input2 is not None:
-            self.input2 = input2
-        if trigger_delay is not None:
-            self.trigger_delay = trigger_delay
-
-        # trigger logic - set source
-        if trigger_source is None:
-            self.trigger_source = self.trigger_source
-        else:
-            self.trigger_source = trigger_source
-        # arm trigger
-        self._trigger_armed = True
-        # mode 'immediately' must receive software trigger after arming to
-        # start acquisition. The software trigger must occur after
-        # pretrig_ok, but we do not need to worry about this because it is
-        # taken care of in the trigger_source setter in this class (the
-        # trigger_delay section of it).
-        if self.trigger_source == 'immediately':
-            # self.wait_for_pretrig_ok()
-            self.trigger_source = self.trigger_source
-
-            # if self.trigger_source == 'immediately':
-            #    self.wait_for_pretrig_ok()
-            #    self.trigger_source = 'immediately'# write state machine
 
     def wait_for_pretrigger(self):
         """ sleeps until scope trigger is ready (buffer has enough new data) """
@@ -556,3 +579,20 @@ class Scope(HardwareModule):
         iq_module.quadrature_factor = 1.0
         self.input1 = iq
         return iq_module
+
+    def run_continuous(self):
+        """
+        Continuously feeds the gui with new curves from the scope.
+        """
+        self.running_continuous = True
+
+    def stop(self):
+        self.running_continuous = False
+
+    def run_single(self):
+        """
+        Feeds gui with one new curve from the scope.
+        """
+        self.stop()
+        self.setup()
+        self.gui_updater.run_single()
