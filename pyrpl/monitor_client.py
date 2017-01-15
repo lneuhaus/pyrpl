@@ -26,22 +26,31 @@ import logging
 
 class MonitorClient(object):
 
-    def __init__(self, address="192.168.1.0", port=2222, restartserver=None):
+    def __init__(self, hostname="192.168.1.0", port=2222, restartserver=None):
         """initiates a client connected to monitor_server
 
-        address: server address, e.g. "localhost" or "192.168.1.0"
+        hostname: server address, e.g. "localhost" or "192.168.1.0"
         port:    the port that the server is running on. 2222 by default
         restartserver: a function to call that restarts the server in case of problems
         """
         self.logger = logging.getLogger(name=__name__)
         self._restartserver = restartserver
-        self._address = address
+        self._hostname = hostname
         self._port = port
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         # try to connect at least 5 times
         for i in range(5):
+            if not self._port > 0:
+                if self._port is None: # likely means that _restartserver failed.
+                    raise ValueError("Connection to hostname %s failed. "
+                                     "Please check your connection parameters!"
+                                     %(self._hostname))
+                else:
+                    raise ValueError("Trying to open MonitorClient for hostname %s "
+                                 "on invalid port %s. Please check your connection "
+                                 "parameters!" % (self._hostname, self._port))
             try:
-                self.socket.connect((self._address, self._port))
+                self.socket.connect((self._hostname, self._port))
             except socket.error:  # mostly because port is still closed
                 self.logger.warning("Socket error during connection "
                                     "attempt %s.", i)
@@ -63,14 +72,14 @@ class MonitorClient(object):
     def __del__(self):
         self.close()
         
-    #the public methods to use which will recover from connection problems
+    # the public methods to use which will recover from connection problems
     def reads(self, addr, length):
         return self.try_n_times(self._reads, addr, length)
 
     def writes(self, addr, values):
         return self.try_n_times(self._writes, addr, values)
     
-    #the actual code
+    # the actual code
     def _reads(self, addr, length):
         if length > 65535:
             length = 65535
@@ -131,18 +140,17 @@ class MonitorClient(object):
         self.close()
         port = self._restartserver()
         self.__init__(
-            address=self._address,
+            hostname=self._hostname,
             port=port,
             restartserver=self._restartserver)
+
 
 class DummyClient(object):
     """Class for unitary tests without RedPitaya hardware available"""
     class fpgadict(dict):
         def __missing__(self,key):
             return 0
-    fpgamemory = fpgadict({
-                        str(0x40100014): 1,  # scope decimation initial value 
-                        })
+    fpgamemory = fpgadict({str(0x40100014): 1})  # scope decimation initial value
     
     def reads(self, addr, length):
         val = []

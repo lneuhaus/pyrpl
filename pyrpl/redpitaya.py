@@ -114,7 +114,8 @@ class RedPitaya(object):
                         newvalue = "********"
                     self.logger.warning("Variable %s with value %s overwritten by "
                                         +"environment variable REDPITAYA_%s with "
-                                        +"value %s", k, oldvalue,
+                                        +"value %s. Use argument 'silence_env=True' "
+                                        +"if this is not desired!", k, oldvalue,
                                         k.upper(), newvalue)
         try:
             self.parameters.update(self.c.redpitaya._dict)  # from config file
@@ -210,16 +211,17 @@ class RedPitaya(object):
               "and filename=\"red_pitaya.bin\"! Current dirname: "
               +self.parameters['dirname']
               +" current filename: "+self.parameters['filename'])
-        try:
-            self.ssh.scp.put(source,
-                         os.path.join(self.parameters['serverdirname'],
-                                      self.parameters['serverbinfilename']))
-        except (SCPException, SSHException):
-            # try again before failing
-            self.startscp()
-            sleep(self.parameters['delay'])
-            self.ssh.scp = SCPClient(self.ssh.get_transport())
-        sleep(self.parameters['delay'])
+        for i in range(2):
+            try:
+                self.ssh.scp.put(source,
+                             os.path.join(self.parameters['serverdirname'],
+                                          self.parameters['serverbinfilename']))
+            except (SCPException, SSHException):
+                # try again before failing
+                self.ssh.startscp()
+                sleep(self.parameters['delay'])
+            else:
+                break
         # kill all other servers to prevent reading while fpga is flashed
         self.end()
         self.ssh.ask('killall nginx')
@@ -270,7 +272,7 @@ class RedPitaya(object):
             sleep(self.parameters['delay'])
             try:
                 self.ssh.scp.put(
-                    os.path.join(self.parameters['dirname'], 'monitor_server', self.parameters['monitor_server_name']),
+                    os.path.join(self.parameters['dirname'], 'monitor_server', serverfile),
                     self.parameters['serverdirname']+self.parameters['monitor_server_name'])
             except (SCPException, SSHException):
                 self.logger.exception("Upload error. Try again after rebooting your RedPitaya..")
@@ -282,7 +284,7 @@ class RedPitaya(object):
             sleep(self.parameters['delay'])
             result += self.ssh.ask()
             if not "sh" in result: 
-                self.logger.info("Server application started on port %d",self.parameters['port'])
+                self.logger.info("Server application started on port %d", self.parameters['port'])
                 return self.parameters['port']
             else: # means we tried the wrong binary version. make sure server is not running and try again with next file
                 self.endserver()
