@@ -68,10 +68,16 @@ class DecimationRegister(SelectRegister):
     """
     def set_value(self, instance, value):
         super(DecimationRegister, self).set_value(instance, value)
-        print(instance.duration)
         instance.__class__.duration.set_value_gui_config(instance, instance.duration)
         instance.__class__.sampling_time.set_value_gui_config(instance, instance.sampling_time)
+        if instance.is_rolling_mode_active():
+            instance.set_for_rolling_mode()
+        else:
+            instance.setup()
 
+    def update_gui(self, module):
+        super(DecimationRegister, self).update_gui(module)
+        module.gui_updater.first_shot_of_continuous = True
 
 class SamplingTimeAttribute(SelectAttribute):
     def get_value(self, instance, owner):
@@ -220,6 +226,9 @@ class GuiUpdaterScope(GuiUpdater):
                 data = np.concatenate([[np.nan] * to_discard, data])
                 datas[index] = data
             self.display_curves.emit(datas)
+            if self.first_shot_of_continuous:
+                self.first_shot_of_continuous = False
+                self.autoscale.emit()
             # no setup in rolling mode
         else: # triggered mode
             if self.module.curve_ready(): # if curve not ready, wait for next timer iteration
@@ -409,10 +418,8 @@ class Scope(HardwareModule):
         """
         If the scope was in continuous mode when slaved, it has to stop!!
         """
-
         if new is not None:
-            if self.widget is not None:
-                self.widget.stop()
+            self.stop()
 
     @property
     def _rawdata_ch1(self):
@@ -552,7 +559,7 @@ class Scope(HardwareModule):
             return self._get_ch(ch)
 
     ### unfunctional so far
-    def spectrum(self,
+    def spectrum(self, # Obsolete ?
                  center,
                  span,
                  avg,
@@ -572,7 +579,7 @@ class Scope(HardwareModule):
         y = self.curve()
         return y
 
-    def configure_signal_chain(self, input, iq):
+    def configure_signal_chain(self, input, iq): # Obsolete ?
         iq_module = getattr(self._rp, iq)
         iq_module.input = input
         iq_module.output_signal = 'quadrature'
@@ -587,6 +594,9 @@ class Scope(HardwareModule):
         self.running_continuous = True
 
     def stop(self):
+        """
+        Stops the current acquisition.
+        """
         self.running_continuous = False
 
     def run_single(self):

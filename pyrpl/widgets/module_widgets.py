@@ -198,6 +198,53 @@ class ScopeWidget(ModuleWidget):
         self.module.__dict__['curve_name'] = 'scope'
         self.main_layout = QtGui.QVBoxLayout()
         self.init_attribute_layout()
+        aws = self.attribute_widgets
+        self.attribute_layout.removeWidget(aws['rolling_mode'])
+        aws['rolling_mode'].hide()
+        self.attribute_layout.removeWidget(aws['running_continuous'])
+        aws['running_continuous'].hide()
+
+        self.layout_channels = QtGui.QVBoxLayout()
+        self.layout_ch1 = QtGui.QHBoxLayout()
+        self.layout_ch2 = QtGui.QHBoxLayout()
+        self.layout_channels.addLayout(self.layout_ch1)
+        self.layout_channels.addLayout(self.layout_ch2)
+
+
+        self.attribute_layout.removeWidget(aws['ch1_active'])
+        self.attribute_layout.removeWidget(aws['input1'])
+        self.attribute_layout.removeWidget(aws['threshold_ch1'])
+
+        self.layout_ch1.addWidget(aws['ch1_active'])
+        self.layout_ch1.addWidget(aws['input1'])
+        self.layout_ch1.addWidget(aws['threshold_ch1'])
+
+        self.attribute_layout.removeWidget(aws['ch2_active'])
+        self.attribute_layout.removeWidget(aws['input2'])
+        self.attribute_layout.removeWidget(aws['threshold_ch2'])
+
+        self.layout_ch2.addWidget(aws['ch2_active'])
+        self.layout_ch2.addWidget(aws['input2'])
+        self.layout_ch2.addWidget(aws['threshold_ch2'])
+
+        self.attribute_layout.addLayout(self.layout_channels)
+
+        self.attribute_layout.removeWidget(aws['duration'])
+        self.attribute_layout.removeWidget(aws['trigger_delay'])
+        self.layout_duration = QtGui.QVBoxLayout()
+        self.layout_duration.addWidget(aws['duration'])
+        self.layout_duration.addWidget(aws['trigger_delay'])
+        self.attribute_layout.addLayout(self.layout_duration)
+
+        self.attribute_layout.removeWidget(aws['trigger_source'])
+        self.attribute_layout.removeWidget(aws['average'])
+        self.layout_misc = QtGui.QVBoxLayout()
+        self.layout_misc.addWidget(aws['trigger_source'])
+        self.layout_misc.addWidget(aws['average'])
+        self.attribute_layout.addLayout(self.layout_misc)
+
+        self.attribute_layout.removeWidget(aws['curve_name'])
+
         self.button_layout = QtGui.QHBoxLayout()
         self.setLayout(self.main_layout)
         self.setWindowTitle("Scope")
@@ -213,26 +260,18 @@ class ScopeWidget(ModuleWidget):
         self.button_layout.addWidget(self.button_single)
         self.button_layout.addWidget(self.button_continuous)
         self.button_layout.addWidget(self.button_save)
+        self.button_layout.addWidget(aws['curve_name'])
+        aws['curve_name'].setMaximumWidth(250)
         self.main_layout.addLayout(self.button_layout)
+        """
         self.cb_ch = []
         for i in (1, 2):
             self.cb_ch.append(QtGui.QCheckBox("Channel " + str(i)))
             self.button_layout.addWidget(self.cb_ch[-1])
+        """
         self.button_single.clicked.connect(self.module.run_single)
         self.button_continuous.clicked.connect(self.run_continuous_clicked)
         self.button_save.clicked.connect(self.save)
-
-        # self.timer = QtCore.QTimer()
-        # self.timer.setInterval(10)
-        # self.timer.setSingleShot(True)
-
-        # self.timer.timeout.connect(self.check_for_curves)
-
-        # for cb, col in zip(self.cb_ch, self.ch_col):
-            # cb.setCheckState(2)
-            # cb.setStyleSheet('color: ' + col)
-        # for cb in self.cb_ch:
-            # cb.stateChanged.connect(self.display_curves)
 
         self.rolling_group = QtGui.QGroupBox("Trigger mode")
         self.checkbox_normal = QtGui.QRadioButton("Normal")
@@ -248,13 +287,13 @@ class ScopeWidget(ModuleWidget):
         self.checkbox_untrigged.clicked.connect(self.rolling_mode_toggled)
         self.update_rolling_mode_visibility()
         self.attribute_widgets['duration'].value_changed.connect(self.update_rolling_mode_visibility)
-        #self.set_running_state()
-        #self.set_rolling_mode()
+        self.update_running_buttons()
+        self.update_rolling_mode_visibility()
 
     def update_attribute_by_name(self, name):
         super(ScopeWidget, self).update_attribute_by_name(name)
         if name in ['rolling_mode', 'duration']:
-            self.update_rolling_mode_visibility()
+            self.rolling_mode = self.module.rolling_mode
         if name in ['running_continuous',]:
             self.update_running_buttons()
 
@@ -294,64 +333,6 @@ class ScopeWidget(ModuleWidget):
                 self.curves[ch].setVisible(True)
             else:
                 self.curves[ch].setVisible(False)
-        """
-        if not self.rolling_mode: # otherwise, evrything is handled in check_for_curves
-            for i in (1, 2):
-                if self.cb_ch[i - 1].checkState() == 2:
-                    self.display_channel(i)
-                    self.curves[i - 1].setVisible(True)
-                else:
-                    self.curves[i - 1].setVisible(False)
-        """
-    """
-    def run_single(self):
-        #
-        #When run_single is pressed, launches a single acquisition.
-        #
-
-
-    """
-
-    """
-    def check_for_curves(self):
-        #This function is called periodically by a timer when in run_continuous mode.
-        #1/ Check if curves are ready.
-        #2/ If so, plots them on the graph
-        #3/ Restarts the timer.
-        if not self.rolling_mode:
-            if self.module.curve_ready():
-                self.display_curves()
-                if self.first_shot_of_continuous:
-                    self.first_shot_of_continuous = False  # autoscale only upon first curve
-                    self.plot_item.enableAutoRange('xy', False)
-                self.module.setup()
-        else:
-            wp0 = self.module._write_pointer_current
-            self.datas = [None, None]
-            for ch in (1, 2):
-                if self.cb_ch[ch - 1].checkState() == 2:
-                    self.datas[ch-1] = self.module._get_ch_no_roll(ch)
-            wp1 = self.module._write_pointer_current
-            for index, data in enumerate(self.datas):
-                if data is None:
-                    self.curves[index].setVisible(False)
-                    continue
-                to_discard = (wp1 - wp0) % self.module.data_length
-                data = np.roll(data, self.module.data_length - wp0)[
-                       to_discard:]
-                data = np.concatenate([[np.nan] * to_discard, data])
-                times = self.module.times
-                times -= times[-1]
-                self.datas[index] = data
-                self.times = times
-                self.curves[index].setData(times, data)
-                self.curves[index].setVisible(True)
-        try:
-            self.curve_display_done()
-        except Exception as e:
-            print(e)
-        self.timer.start()
-    """
 
     def curve_display_done(self):
         """
@@ -368,46 +349,10 @@ class ScopeWidget(ModuleWidget):
         else:
             return "stopped"
 
-    """
-    def run_continuous(self):
-        #
-        #Toggles the button run_continuous to stop and starts the acquisition timer.
-        #This function is part of the public interface.
-        #
-        self.button_continuous.setText("Stop")
-        self.button_single.setEnabled(False)
-        self.module.setup()
-        self.plot_item.enableAutoRange('xy', True)
-        self.first_shot_of_continuous = True
-        self.timer.start()
-    """
-
-    """
-    def stop(self):
-
-        #Toggles the button stop to run_continuous to stop and stops the acquisition timer
-
-        self.button_continuous.setText("Run continuous")
-        self.timer.stop()
-        self.button_single.setEnabled(True)
-    """
-
-    """
-    def set_running_state(self):
-
-        # Set running state (stop/run continuous) according to module's attribute "running_continuous"
-
-        if self.module.running_continuous:
-            self.run_continuous()
-        else:
-            self.stop()
-    """
-
-
     def set_rolling_mode(self):
-
-        #Set rolling mode on or off based on the module's attribute "rolling_mode"
-
+        """
+        Set rolling mode on or off based on the module's attribute "rolling_mode"
+        """
         self.rolling_mode = self.module.rolling_mode
 
 
@@ -439,27 +384,20 @@ class ScopeWidget(ModuleWidget):
             self.checkbox_untrigged.setChecked(True)
         else:
             self.checkbox_normal.setChecked(True)
-        if self.state=='running':
-            self.stop()
-            self.run_continuous()
         return val
 
     def update_rolling_mode_visibility(self):
         """
         hide rolling mode checkbox for duration < 100 ms
         """
-        print('updating visibility')
         self.rolling_group.setEnabled(self.module.rolling_mode_allowed())
         self.attribute_widgets['trigger_source'].widget.setEnabled(
             not self.rolling_mode)
-        old = self.attribute_widgets['threshold_ch1'].widget.isEnabled()
         self.attribute_widgets['threshold_ch1'].widget.setEnabled(
             not self.rolling_mode)
         self.attribute_widgets['threshold_ch2'].widget.setEnabled(
             not self.rolling_mode)
         self.button_single.setEnabled(not self.rolling_mode)
-        # if old==self.rolling_mode:
-        #    self.rolling_mode_toggled()
 
     def autoscale(self):
         """Autoscale pyqtgraph"""

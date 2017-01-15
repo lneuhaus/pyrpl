@@ -35,3 +35,49 @@ redpitaya:
   filename: fpga//red_pitaya.bin
   reloadfpga: true
   monitor_server_name: monitor_server
+nas: !!omap
+- na: !!omap
+  - output_direct: out1
+  - input: adc1
+  - start: 1000000.0
+  - stop: 2000000.0
+  - rbw:
+    - 77712
+spectrum_analyzers: !!omap
+- spectrum_analyzer: !!omap []
+hks: !!omap
+- hk: !!omap []
+amss: !!omap
+- ams: !!omap []
+scopes: !!omap
+- scope: !!omap []
+samplers: !!omap
+- sampler: !!omap []
+asgs: !!omap
+- asg1: !!omap []
+- asg2: !!omap []
+pwms: !!omap
+- pwm1: !!omap []
+- pwm2: !!omap []
+iqs: !!omap
+- iq1: !!omap []
+- iq2: !!omap []
+- iq3: !!omap
+  - bandwidth:
+    - 77712
+  - input: adc1
+  - acbandwidth:
+    - 0
+  - frequency: 1404999.9881535769
+  - output_signal: output_direct
+  - gain: 0.0
+  - amplitude: 0.01000213623046875
+  - phase: 0.0
+  - output_direct: out1
+pids: !!omap
+- pid1: !!omap []
+- pid2: !!omap []
+- pid3: !!omap []
+- pid4: !!omap []
+iirs: !!omap
+- iir: !!omap []
