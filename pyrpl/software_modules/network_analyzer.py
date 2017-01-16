@@ -95,6 +95,8 @@ class NetworkAnalyzer(SoftwareModule):
         self.infer_open_loop_tf = False
         self.curve_name = 'na_curve'
         self._is_setup = False
+        # possibly a bugfix:
+        self.time_per_point = max(1.0 / self.rbw * (self.avg + self.sleeptimes), 1e-3)
 
     input = SelectProperty(DspModule.inputs)
     output_direct = SelectProperty(DspModule.output_directs)

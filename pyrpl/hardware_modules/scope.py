@@ -277,8 +277,8 @@ class Scope(HardwareModule):
     def init_module(self):
         # dsp multiplexer channels for scope and asg are the same by default
         self.gui_updater = GuiUpdaterScope(self)
-        self._ch1 = DspModule(self._rp, name='in1')
-        self._ch2 = DspModule(self._rp, name='in2')
+        self._ch1 = DspModule(self._rp, name='asg1')  # the scope inputs and asg outputs have the same id
+        self._ch2 = DspModule(self._rp, name='asg2')  # check fpga code dsp_modules to understand
         self.inputs = self._ch1.inputs
         self._setup_called = False
         self._trigger_source_memory = "immediately"
