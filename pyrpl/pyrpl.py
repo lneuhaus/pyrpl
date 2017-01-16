@@ -262,6 +262,9 @@ class Pyrpl(object):
     if not os.path.exists(_user_config_dir):
         _user_config_dir = os.path.join(_default_config_dir,
                                         _user_config_dir)
+    if not os.path.exists(_user_config_dir):
+        os.mkdir(_user_config_dir)
+
     @classmethod
     def _getpath(self, filename='default'):
         # get extension right
