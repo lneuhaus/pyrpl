@@ -56,8 +56,8 @@ class TestClass(object):
             expect = np.linspace(-1.0, 3.0, asg.data_length, endpoint=False)
             expect[asg.data_length // 2:] = -1 * expect[:asg.data_length // 2]
             expect *= -1
-            self.r.scope.input1 = asg.name  # Bijection(self.r.scope._ch1._inputs).inverse[asg._dsp._number]
-            self.r.scope.input2 = self.r.scope.input1
+            self.r.scope.input1 = asg  # Bijection(self.r.scope._ch1._inputs).inverse[asg._dsp._number]
+            self.r.scope.input2 = asg.name
             # asg.trig()
             self.r.scope.setup(trigger_source=self.r.scope.input1)  # the asg trigger
             measured = self.r.scope.curve(ch=1, timeout=4)

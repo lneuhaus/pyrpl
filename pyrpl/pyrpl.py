@@ -253,15 +253,15 @@ class Pyrpl(object):
     # get global configuration memory tree
     _global_config = global_config
     _default_config_dir = default_config_dir
-    # auto-correct the user config dir
+
+    # auto-correct the user config dir so it points to the right place
     try:
-        configdir = _global_config.general.configdir
+        _user_config_dir = _global_config.general.configdir
     except KeyError:
-        _global_config.general.configdir = _default_config_dir
-    else:
-        if configdir.startswith('./'): # allow relative path w.r.t. default config dir
-            configdir = os.path.join(_default_config_dir,configdir)
-    _global_config.general.configdir = _default_config_dir
+        _user_config_dir = ""
+    if not os.path.exists(_user_config_dir):
+        _user_config_dir = os.path.join(_default_config_dir,
+                                        _user_config_dir)
 
     def _getpath(self, filename):
         # get extension right
@@ -271,11 +271,14 @@ class Pyrpl(object):
         p, f = os.path.split(filename)
         if not p:  # no path specified -> search in configdir
             try:
-                filename = os.path.join(self._global_config.general.configdir, f)
+                filename = os.path.join(self._user_config_dir, f)
             except:
                 filename = None
-            if not os.path.isfile(filename): # ... or defaultconfigdir
-                filename = os.path.join(self._default_config_dir, f)
+                # ... or defaultconfigdir
+                if (not os.path.isfile(filename)
+                    and os.path.isfile(
+                        os.path.join(self._default_config_dir, f))):
+                    filename = os.path.join(self._default_config_dir, f)
         return filename
 
     def _setloglevel(self):
@@ -291,7 +294,8 @@ class Pyrpl(object):
                 self.logger.warning("Config file already exists. Source file "
                                     + "specification is ignored")
             else:
-                copyfile(self._getpath(source), config)
+                copyfile(self._getpath(source),
+                         self._getpath(config))
         # configuration is retrieved from config file
         self.c = MemoryTree(config)
         # set global logging level if specified in config file
