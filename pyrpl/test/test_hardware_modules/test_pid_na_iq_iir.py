@@ -38,7 +38,7 @@ class TestClass(object):
         na = self.pyrpl.na
         for iq in [r.iq1, r.iq2, r.iq3]:
             na._iq = iq
-            na.setup(start=3000, stop=10e6, points=1001, rbw=1000, avg=1,
+            na.setup(start=3000, stop=10e6, points=101, rbw=1000, avg=1,
                      # I reduced from 1001 to 101, is it normal that
                      # it was taking ages ? -> no, should not take more than 1 second with rbw=1000
                      amplitude=0.1, input=na.iq, output_direct='off',
@@ -74,7 +74,7 @@ class TestClass(object):
         # shortcuts and na configuration
         na = self.pyrpl.na
         for pid in self.pyrpl.pids.all_modules:
-            na.setup(start=1000, stop=1000e3, points=101, rbw=100, avg=1,  # points 101->11, it was taking ages
+            na.setup(start=1000, stop=1000e3, points=11, rbw=100, avg=1,  # points 101->11, it was taking ages
                      amplitude=0.1, input=pid, output_direct='off',
                      acbandwidth=0, logscale=True)
 

@@ -1,26 +1,26 @@
 pyrpl:
   name: test_refactor
-  gui: false
+  gui: true
   loglevel: info
   modules:
   - NetworkAnalyzer
   - SpectrumAnalyzer
   dock_positions: !!binary |
-    AAAA/wAAAAD9AAAAAQAAAAIAAAaQAAAD4/wBAAAAAvwAAAAAAAADHAAAAwkA/////AIAAAAD+wAA
-    AAwAcwBjAG8AcABlAHMBAAAAEgAAAUAAAADWAP////sAAAAGAGkAcQBzAQAAAVgAAAHgAAABSgD/
-    ///7AAAACABhAHMAZwBzAQAAAz4AAAC3AAAAegD////8AAADIgAAA24AAANuAP////wCAAAAAvwA
-    AAASAAABuAAAAScBAAAU+gAAAAACAAAAB/sAAAAEAG4AYQEAAAAA/////wAAANUA////+wAAACIA
-    cwBwAGUAYwB0AHIAdQBtAF8AYQBuAGEAbAB5AHoAZQByAQAAAAD/////AAAAlgD////7AAAAIgBz
+    AAAA/wAAAAD9AAAAAQAAAAIAAAd8AAAD3fwBAAAAAvwAAAAAAAADrAAAA40A/////AIAAAAD+wAA
+    AAwAcwBjAG8AcABlAHMBAAAAFQAAASQAAADXAP////sAAAAGAGkAcQBzAQAAAT0AAAHoAAABaAD/
+    ///7AAAACABhAHMAZwBzAQAAAykAAADJAAAAlAD////8AAADsAAAA8wAAAOmAP////wCAAAAAvwA
+    AAAVAAABugAAARMBAAAU+gAAAAACAAAAB/sAAAAEAG4AYQEAAAAA/////wAAAP4A////+wAAACIA
+    cwBwAGUAYwB0AHIAdQBtAF8AYQBuAGEAbAB5AHoAZQByAQAAAAD/////AAAAswD////7AAAAIgBz
     AHAAZQBjAHQAcgB1AG0AIABhAG4AYQBsAHkAegBlAHIBAAAAAP////8AAAAAAAAAAPsAAAAUAEIA
     YQBzAGUATQBvAGQAdQBsAGUBAAAAAP////8AAAAAAAAAAPsAAAAIAGkAaQByAHMBAAAAAP////8A
-    AAESAP////sAAAAgAG4AZQB0AHcAbwByAGsAXwBhAG4AYQBsAHkAegBlAHIBAAAAAP////8AAAAA
-    AAAAAPsAAAAKAHMAYwBvAHAAZQEAAAAA/////wAAAAAAAAAA+wAAAAgAcABpAGQAcwEAAAHQAAAC
-    JQAAAa4A////AAAGkAAAAAAAAAAEAAAABAAAAAgAAAAI/AAAAAA=
+    AAB/AP////sAAAAgAG4AZQB0AHcAbwByAGsAXwBhAG4AYQBsAHkAegBlAHIBAAAAAP////8AAAAA
+    AAAAAPsAAAAKAHMAYwBvAHAAZQEAAAAA/////wAAAAAAAAAA+wAAAAgAcABpAGQAcwEAAAHTAAAC
+    HwAAAhgA////AAAHfAAAAAAAAAAEAAAABAAAAAgAAAAI/AAAAAA=
   window_position:
-  - 1362
-  - -4
-  - 1680
-  - 1031
+  - -1928
+  - 117
+  - 1916
+  - 1030
 redpitaya:
   password: root
   user: root
@@ -31,15 +31,17 @@ redpitaya:
   monitor_server_name: monitor_server
 nas:
   na:
-    output_direct: out1
-    input: in1
-    start: 1000.0
-    stop: 10000.0
+    input: iir
+    output_direct: 'off'
+    start: 3000.0
+    stop: 50000.0
     rbw:
     - 1214
-    points: 101
-    amplitude: 0.01
-    avg: 1
+    - 1214
+    points: 2501
+    amplitude: 0.02
+    logscale: true
+    avg: 5
 spectrum_analyzers:
   spectrum_analyzer: {}
 hks:
@@ -47,15 +49,7 @@ hks:
 amss:
   ams: {}
 scopes:
-  scope:
-    trigger_source: immediately
-    running_continuous: true
-    input1: in1
-    ch1_active: true
-    ch2_active: true
-    input2: in2
-    duration: 0.536870912
-    rolling_mode: true
+  scope: {}
 samplers:
   sampler: {}
 asgs:
@@ -70,19 +64,45 @@ iqs:
   iq3:
     bandwidth:
     - 1214
-    input: in1
+    input: iir
     acbandwidth:
     - 0
-    frequency: 999999.9892897904
+    frequency: 9038.281859830022
     output_signal: output_direct
     gain: 0.0
-    amplitude: 0.0
+    amplitude: 0.01999664306640625
     phase: 0.0
-    output_direct: out1
+    output_direct: 'off'
 pids:
   pid1: {}
   pid2: {}
   pid3: {}
   pid4: {}
 iirs:
-  iir: {}
+  iir:
+    input: iq3
+    loops: 80
+    zeros:
+    - (-151.0000001-10101.3614529j)
+    - (-151.0000001+10101.3614529j)
+    - (-210.0000001-21828.9081776j)
+    - (-210.0000001+21828.9081776j)
+    - (-100.0000001-30156.73583j)
+    - (-100.0000001+30156.73583j)
+    - (-100.0000001-32063.2533145j)
+    - (-100.0000001+32063.2533145j)
+    - (-610.0000001-44654.6352456j)
+    - (-610.0000001+44654.6352456j)
+    poles:
+    - (-151.0000001-16271.5168674j)
+    - (-151.0000001+16271.5168674j)
+    - (-51.0000001-22342.5432482j)
+    - (-51.0000001+22342.5432482j)
+    - (-50.0000001-30884.3040614j)
+    - (-50.0000001+30884.3040614j)
+    - (-41.0000001-32732.5244507j)
+    - (-41.0000001+32732.5244507j)
+    - (-51.0000001-46953.0049699j)
+    - (-51.0000001+46953.0049699j)
+    gain: 0.5
+    output_direct: 'off'
