@@ -355,7 +355,6 @@ class ScopeWidget(ModuleWidget):
         """
         self.rolling_mode = self.module.rolling_mode
 
-
     def run_continuous_clicked(self):
         """
         Toggles the button run_continuous to stop or vice versa and starts the acquisition timer
