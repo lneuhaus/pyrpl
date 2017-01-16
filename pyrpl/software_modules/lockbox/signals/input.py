@@ -18,9 +18,9 @@ class InputSignal(SoftwareModule):
       -
     """
     section_name = 'input'  # name of the input
-    gui_attributes = ["adc"]
+    gui_attributes = ["input_channel"]
     setup_attributes = gui_attributes + ["min", "max", "mean", "rms"]
-    adc = SelectProperty(options=['adc1', 'adc2']) # adc
+    input_channel = SelectProperty(options=['in1', 'in2']) # adc
     model_cls = None # Model class to which this input belongs.
     widget_class = LockboxInputWidget
     min = FloatProperty()
@@ -181,7 +181,7 @@ class InputDirect(InputSignal):
     section_name = 'direct_input'
 
     def signal(self):
-        return self.adc
+        return self.input_channel
 
 
 class PdhFrequencyProperty(FrequencyProperty):
@@ -245,7 +245,7 @@ class InputPdh(InputSignal):
         self.iq.setup(frequency=self.mod_freq,
                       amplitude=self.mod_amp,
                       phase=self.mod_phase,
-                      input=self.adc,
+                      input=self.input_channel,
                       gain=0,
                       bandwidth=[1e6, 1e6],
                       acbandwidth=1e6,
