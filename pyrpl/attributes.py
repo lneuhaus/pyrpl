@@ -849,7 +849,7 @@ class PWMRegister(FloatRegister, FloatAttribute):
         super(PWMRegister, self).__init__(address=address, bits=14, norm=1, **kwargs)
         self.min = 0   # voltage of pwm outputs ranges from 0 to 1.8 volts
         self.max = 1.8
-        self.increment = 0.001  # actual resolution is 14 bits (roughly 0.1 mV incr.)
+        self.increment = (self.max-self.min)/2**(self.bits-1)  # actual resolution is 14 bits (roughly 0.1 mV incr.)
         self.CFG_BITS = int(CFG_BITS)
         self.PWM_BITS = int(PWM_BITS)
 
