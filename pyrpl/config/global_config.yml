@@ -1,4 +1,4 @@
 general:
-  configdir: d:\mypyrplconfigfiles
+  configdir: C:\lneuhaus\github\pyrpl\pyrpl\config
   curvedb: pyinstruments
   loglevel: info

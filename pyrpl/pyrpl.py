@@ -253,6 +253,15 @@ class Pyrpl(object):
     # get global configuration memory tree
     _global_config = global_config
     _default_config_dir = default_config_dir
+    # auto-correct the user config dir
+    try:
+        configdir = _global_config.general.configdir
+    except KeyError:
+        _global_config.general.configdir = _default_config_dir
+    else:
+        if configdir.startswith('./'): # allow relative path w.r.t. default config dir
+            configdir = os.path.join(_default_config_dir,configdir)
+    _global_config.general.configdir = _default_config_dir
 
     def _getpath(self, filename):
         # get extension right
