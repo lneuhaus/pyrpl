@@ -1,4 +1,4 @@
 general:
-  # import CurveDB class from which module? if missing, it's pyrpl.curvedb
-  #curvedb: pyrpl
+  configdir: d:\mypyrplconfigfiles
   curvedb: pyinstruments
+  loglevel: info

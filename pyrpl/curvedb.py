@@ -38,11 +38,8 @@ import logging
 # optional override of CurveDB class with custom module, as defined in
 # ./pyrpl/config/global_config.yml
 try:
-    from .memory import MemoryTree
-    _configdir = os.path.join(os.path.dirname(__file__), "config")
-    mt = MemoryTree(os.path.join(_configdir, "global_config.yml"))
-    global CurveDB
-    CurveDB = __import__(mt.general.curvedb).CurveDB
+    from .global_config import global_config
+    CurveDB = __import__(global_config.general.curvedb).CurveDB
 except:
     class CurveDB(object):
         _dirname = os.path.join(os.path.dirname(__file__),"curves")

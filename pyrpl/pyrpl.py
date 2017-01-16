@@ -31,7 +31,8 @@ from .widgets.pyrpl_widget import PyrplWidget
 from . import software_modules
 from .memory import MemoryTree
 from .redpitaya import RedPitaya
-from .pyrpl_utils import get_unique_name_list_from_class_list
+from . import pyrpl_utils
+from .global_config import *
 
 ## Something has to be done with this docstring... I would like to wait for lockbox to be implemented before doing it...
 """
@@ -248,31 +249,29 @@ class Pyrpl(object):
         template config file and copied to 'config' if that file does
         not exist.
     """
-    _configdir = os.path.join(os.path.dirname(__file__), "config")
+
+    # get global configuration memory tree
+    _global_config = global_config
+    _default_config_dir = default_config_dir
 
     def _getpath(self, filename):
-        p, f = os.path.split(filename)
-        if not p:  # no path specified -> search in configdir
-            filename = os.path.join(self._configdir, filename)
+        # get extension right
         if not filename.endswith(".yml"):
             filename = filename + ".yml"
+        # get path right
+        p, f = os.path.split(filename)
+        if not p:  # no path specified -> search in configdir
+            try:
+                filename = os.path.join(self._global_config.general.configdir, f)
+            except:
+                filename = None
+            if not os.path.isfile(filename): # ... or defaultconfigdir
+                filename = os.path.join(self._default_config_dir, f)
         return filename
 
     def _setloglevel(self):
-        """ sets the log level to the one specified in config file"""
-        try:
-            level = self.c.pyrpl.loglevel
-            loglevels = {"notset": logging.NOTSET,
-                         "debug": logging.DEBUG,
-                         "info": logging.INFO,
-                         "warning": logging.WARNING,
-                         "error": logging.ERROR,
-                         "critical": logging.CRITICAL}
-            level = loglevels[level]
-        except:
-            pass
-        else:
-            logging.getLogger(name='pyrpl').setLevel(level)
+        pyrpl_utils.setloglevel(level=self.c.pyrpl.loglevel,
+                                loggername='pyrpl')  # __name__
 
     def __init__(self, config="myconfigfile", source="default"):
         # logger initialisation
@@ -325,7 +324,7 @@ class Pyrpl(object):
                           'ScopeManager',
                           'IirManager'] + soft_mod_names
         module_classes = [getattr(software_modules, cls_name) for cls_name in soft_mod_names]
-        module_names = get_unique_name_list_from_class_list(module_classes)
+        module_names = pyrpl_utils.get_unique_name_list_from_class_list(module_classes)
         for cls, name in zip(module_classes, module_names):
             # ModuleClass = getattr(software_modules, module_name)
             module = cls(self, name)
