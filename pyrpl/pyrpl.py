@@ -248,6 +248,10 @@ class Pyrpl(object):
         If None, it is ignored. Else, the file 'source' is taken as a
         template config file and copied to 'config' if that file does
         not exist.
+    **kwargs: dict
+        Additional arguments can be passed and will be written to the
+        redpitaya branch of the config file. See class definition of
+        RedPitaya for possible keywords.
     """
 
     # get global configuration memory tree
@@ -288,7 +292,7 @@ class Pyrpl(object):
         pyrpl_utils.setloglevel(level=self.c.pyrpl.loglevel,
                                 loggername=__name__)  # 'pyrpl')
 
-    def __init__(self, config="myconfigfile", source="default"):
+    def __init__(self, config="myconfigfile", source="default", **kwargs):
         # logger initialisation
         self.logger = logging.getLogger(name=__name__)
         config = self._getpath(config)
@@ -303,16 +307,14 @@ class Pyrpl(object):
         self.c = MemoryTree(config)
         # set global logging level if specified in config file
         self._setloglevel()
-        # configuration is retrieved from config file
-        self.c = MemoryTree(config)
-        # set global logging level if specified in config file
-        self._setloglevel()
 
-        # Eventually, could become optional...
+        if not 'redpitaya' in self.c._keys() and len(kwargs)>0:
+            self.c['redpitaya'] = dict()
+        self.c.redpitaya._update(kwargs)
         # initialize RedPitaya object with the configured parameters
         if 'redpitaya' in self.c._keys():
-            self.rp = RedPitaya(config=self.c, **self.c.redpitaya._dict)
-        else:
+            self.rp = RedPitaya(config=self.c)
+        else:  # not tested, probably not interesting
             self.rp = None
 
         self.software_modules = []
