@@ -140,7 +140,7 @@ class FloatAttribute(NumberAttribute):
     """
     widget_class = FloatAttributeWidget
 
-    def __init__(self, default=None, increment=0.001, min=-.1, max=1., doc=""):
+    def __init__(self, default=None, increment=0.001, min=-1., max=1., doc=""):
         super(FloatAttribute, self).__init__(default=default, doc=doc)
         self.increment = increment
         self.min = min
@@ -847,6 +847,9 @@ class PWMRegister(FloatRegister, FloatAttribute):
     # see FPGA code for more detailed description on how the PWM works
     def __init__(self, address, CFG_BITS=24, PWM_BITS=8, **kwargs):
         super(PWMRegister, self).__init__(address=address, bits=14, norm=1, **kwargs)
+        self.min = 0
+        self.max = 1.8
+        self.increment = 0.001
         self.CFG_BITS = int(CFG_BITS)
         self.PWM_BITS = int(PWM_BITS)
 

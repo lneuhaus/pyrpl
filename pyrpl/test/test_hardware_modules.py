@@ -116,7 +116,7 @@ class TestClass(object):
             assert abs(self.r.ams.dac1 - offset) > threshold, \
                 str(self.r.ams.dac1) + " vs " + str(offset)
         # test direct write access
-        for offset in np.linspace(0, 1.8):
+        for offset in np.linspace(0, 1.8, 50, endpoint=True):
             # self.r.ams.dac0 = offset
             # self.r.ams.dac1 = offset
             self.r.ams.dac2 = offset
