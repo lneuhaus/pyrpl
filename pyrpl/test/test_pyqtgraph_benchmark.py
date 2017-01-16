@@ -8,20 +8,26 @@ import logging
 from pyrpl import RedPitaya
 logger = logging.getLogger(name=__name__)
 
-APP = QtGui.QApplication.instance()
 
 class PyqtgraphTestCases(unittest.TestCase):
+    """ This test case creates a maximally simplistic scope gui
+    that continuously plots the data of both scope channels,
+    and checks the obtainable frame rate.
+    Frame rates down to 20 Hz are accepted """
+    APP = QtGui.QApplication.instance()
     N = 2 ** 14
-    cycles = 100
-    frequency = 10
+    cycles = 50  # cycles to average frame rate over
+    frequency = 10.0
     duration = 1.0
-    dt = 0.01
-    REDPITAYA = True
+    dt = 0.01  # maximum frame rate is 100 Hz
+    REDPITAYA = True  # REDPITAYA=False tests the speed of PyQtGraph alone
+    timeout = 10  # timeout if the gui never plots anything
 
     def setUp(self):
         self.t0 = np.linspace(0, self.duration, self.N)
         self.plotWidget = pg.plot(title="Realtime plotting benchmark")
         self.cycle = 0
+        self.starttime = time.time()  # not yet the actual starttime, but needed for timeout
 
         if self.REDPITAYA:
             self.r = RedPitaya()
@@ -61,14 +67,20 @@ class PyqtgraphTestCases(unittest.TestCase):
         self.timer.stop()
 
     def test_speed(self):
-        while self.cycle < self.cycles:
+        # wait for the gui to display all required curves
+        while self.cycle < self.cycles or (time.time() > self.timeout + self.starttime):
             time.sleep(0.001)
-            APP.processEvents()
+            # this is needed such that the test GUI actually plots something
+            self.APP.processEvents()
+
         if self.cycle < self.cycles:
             print("Must complete %d cycles before testing for speed!"%self.cycles)
             assert False
         else:
+            # time per frame
             dt = (self.endtime - self.starttime) / self.cycles
             print("Frame rate: %f Hz"%(1.0/dt))
+            dt *= 1e3
             print("Update period: %f ms" %(dt))
-            assert (dt < 1e-3)
+            # require at least 20 fps
+            assert (dt < 50.0), "Frame update time of %f ms too slow!"%dt
