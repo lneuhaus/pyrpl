@@ -99,6 +99,8 @@ doc/my_notebooks/
 
 #config backups
 pyrpl/config/*.bak
+#user config
+pyrpl/config/user_config/*
 
 #test files made by Xueshi
 test_import.py
