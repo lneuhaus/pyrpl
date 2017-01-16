@@ -8,13 +8,12 @@ __version__ = "0.9.0.0"
 import logging
 logger = logging.getLogger(name=__name__)
 logger.setLevel(logging.ERROR)  # only show errors until userdefine log level is set up
-from . import pyrpl_utils
 from .global_config import global_config
+from .pyrpl_utils import setloglevel
 try:
-    pyrpl_utils.setloglevel(global_config.general.loglevel, loggername=logger.name)
+    setloglevel(global_config.general.loglevel, loggername=logger.name)
 except:
     pass
-
 
 from .curvedb import CurveDB
 from .redpitaya import RedPitaya

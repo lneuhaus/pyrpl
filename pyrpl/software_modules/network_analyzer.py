@@ -88,7 +88,7 @@ class NetworkAnalyzer(SoftwareModule):
         self.rbw = 200
         self.avg = 1
         self.amplitude = 0.01
-        self.input = 'adc1'
+        self.input = 'in1'
         self.output_direct = 'off'
         self.acbandwidth = 0
         self.sleeptimes = 0.5

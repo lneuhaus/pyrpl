@@ -24,8 +24,8 @@ class AuxOutput(DspModule):
     section_name = "pwm" # duplicate name will be detected at instanciation
 
     def __init__(self, rp, name=None):
-        super(AuxOutput, self).__init__(rp, name=dict(pwm1='adc1', pwm2='adc2')[name]) # because pwm's input is using
-                                                                                       # adc's plug
+        super(AuxOutput, self).__init__(rp, name=dict(pwm1='in1', pwm2='in2')[name]) # because pwm's input is using
+                                                                                       # adc-input's plug
         self.name = name
     """
     def __init__(self, client, name, parent): # name is 'pwm0' or 'pwm1'

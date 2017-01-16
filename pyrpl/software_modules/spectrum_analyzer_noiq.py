@@ -86,7 +86,7 @@ class SpectrumAnalyzer(SoftwareModule):
         self.rp = self.pyrpl.rp
         self.center = 0
         self.avg = 10
-        self.input = 'adc1'
+        self.input = 'in1'
         self.acbandwidth = 0
         self.window = "flattop"
 

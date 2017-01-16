@@ -12,7 +12,7 @@ class Sampler(HardwareModule):
     section_name = 'sampler'
     addr_base = 0x40300000
 
-    def mean_stddev(self, signal="asg1", t = 1e-2):
+    def mean_stddev(self, signal="in1", t = 1e-2):
         """
         computes the mean and standard deviation of the chosen signal
 

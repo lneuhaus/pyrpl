@@ -30,143 +30,46 @@ redpitaya:
   reloadfpga: true
   monitor_server_name: monitor_server
 nas:
-  na: {}
+  na:
+    output_direct: out1
+    input: adc1
+    start: 1000000.0
+    stop: 2000000.0
+    rbw:
+    - 77712
 spectrum_analyzers:
   spectrum_analyzer: {}
 hks:
-  hk:
-    led: 12
-    expansion_P0: true
-    expansion_P1: true
-    expansion_P2: true
-    expansion_P3: true
-    expansion_P4: true
-    expansion_P5: true
-    expansion_P6: true
-    expansion_P7: true
-    expansion_N0: true
-    expansion_N1: true
-    expansion_N2: true
-    expansion_N3: true
-    expansion_N4: true
-    expansion_N5: true
-    expansion_N6: true
-    expansion_N7: true
-  states:
-    test_save:
-      expansion_N0: true
-      expansion_N1: true
-      expansion_N2: true
-      expansion_N3: true
-      expansion_N4: true
-      expansion_N5: true
-      expansion_N6: true
-      expansion_N7: true
-      expansion_P0: true
-      expansion_P1: true
-      expansion_P2: true
-      expansion_P3: true
-      expansion_P4: true
-      expansion_P5: true
-      expansion_P6: true
-      expansion_P7: true
-      led: 12
+  hk: {}
 amss:
   ams: {}
-  states:
-    test_save: {}
 scopes:
   scope:
-    duration: 8.589934592
-    trigger_source: asg1
-    input1: adc1
-    input2: adc1
-    trigger_delay: 8.589934592
-    average: true
-    threshold_ch1: 0.9998779296875
-    threshold_ch2: 0.9998779296875
-    curve_name: foo
-    running_continuous: false
-    rolling_mode: true
-    ch1_active: true
-    ch2_active: true
-  states:
-    test_save:
-      average: true
-      ch1_active: true
-      ch2_active: true
-      curve_name: foo
-      duration: 8.589934592
-      input1: adc1
-      input2: adc1
-      rolling_mode: true
-      running_continuous: true
-      threshold_ch1: 0.9998779296875
-      threshold_ch2: 0.9998779296875
-      trigger_delay: 8.589934592
-      trigger_source: asg1
+    trigger_source: immediately
+    running_continuous: true
 samplers:
   sampler: {}
-  states:
-    test_save: {}
 asgs:
-  asg1:
-    amplitude: 1.9998779296875
-    offset: 0.9998779296875
-    output_direct: both
-    waveform: cos
-    frequency: 26.891939342021942
-    trigger_source: ext_negative_edge
-  asg2:
-    frequency: 26.891939342021942
-    amplitude: 1.9998779296875
-    offset: 0.9998779296875
-    output_direct: both
-    waveform: cos
-    trigger_source: ext_negative_edge
-  states:
-    test_save:
-      amplitude: 1.9998779296875
-      frequency: 26.891939342021942
-      offset: 0.9998779296875
-      output_direct: both
-      trigger_source: ext_negative_edge
-      waveform: cos
+  asg1: {}
+  asg2: {}
 pwms:
   pwm1: {}
   pwm2: {}
-  states:
-    test_save: {}
 iqs:
-  iq1:
+  iq1: {}
+  iq2: {}
+  iq3:
+    bandwidth:
+    - 77712
     input: adc1
     acbandwidth:
-    - 9
-    frequency: 25.00019036233425
-    bandwidth:
     - 0
-    - 0
-    quadrature_factor: 25.0
+    frequency: 1988000.0036209822
     output_signal: output_direct
-    gain: 1.0
-    amplitude: 13.999992370605469
-    phase: 25.00000001862645
-    output_direct: 'off'
-  iq2: {}
-  states:
-    test_save:
-      acbandwidth: 9.486373847239932
-      amplitude: 0.9999923706054688
-      bandwidth:
-      - 0
-      - 0
-      frequency: 11.990778148174286
-      gain: 1.0
-      input: adc1
-      output_direct: both
-      output_signal: 'off'
-      phase: 12.000000039115548
-      quadrature_factor: 12.0
+    gain: 0.0
+    amplitude: 0.01000213623046875
+    phase: 0.0
+    output_direct: out1
 pids:
   pid1: {}
   pid2: {}

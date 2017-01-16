@@ -277,8 +277,8 @@ class Scope(HardwareModule):
     def init_module(self):
         # dsp multiplexer channels for scope and asg are the same by default
         self.gui_updater = GuiUpdaterScope(self)
-        self._ch1 = DspModule(self._rp, name='asg1')
-        self._ch2 = DspModule(self._rp, name='asg2')
+        self._ch1 = DspModule(self._rp, name='in1')
+        self._ch2 = DspModule(self._rp, name='in2')
         self.inputs = self._ch1.inputs
         self._setup_called = False
         self._trigger_source_memory = "immediately"
@@ -315,7 +315,6 @@ class Scope(HardwareModule):
 
     running_continuous = RunningContinuousProperty() # if the module has a widget, it is running continuously.
     rolling_mode = RollingModeProperty() # if the module has a widget, it is in rolling mode.
-
 
     _trigger_debounce = IntRegister(0x90, doc="Trigger debounce time [cycles]")
 
@@ -384,17 +383,17 @@ class Scope(HardwareModule):
 
     # equalization filter not implemented here
 
-    voltage1 = FloatRegister(0x154, bits=14, norm=2 ** 13,
-                             doc="ADC1 current value [volts]")
+    voltage_in1 = FloatRegister(0x154, bits=14, norm=2 ** 13,
+                                doc="in1 current value [volts]")
 
-    voltage2 = FloatRegister(0x158, bits=14, norm=2 ** 13,
-                             doc="ADC2 current value [volts]")
+    voltage_in2 = FloatRegister(0x158, bits=14, norm=2 ** 13,
+                                doc="in2 current value [volts]")
 
-    dac1 = FloatRegister(0x164, bits=14, norm=2 ** 13,
-                         doc="DAC1 current value [volts]")
+    voltage_out1 = FloatRegister(0x164, bits=14, norm=2 ** 13,
+                                 doc="out1 current value [volts]")
 
-    dac2 = FloatRegister(0x168, bits=14, norm=2 ** 13,
-                         doc="DAC2 current value [volts]")
+    voltage_out2 = FloatRegister(0x168, bits=14, norm=2 ** 13,
+                                 doc="out2 current value [volts]")
 
     ch1_firstpoint = FloatRegister(0x10000, bits=14, norm=2 ** 13,
                                    doc="1 sample of ch1 data [volts]")
@@ -537,17 +536,20 @@ class Scope(HardwareModule):
             raise ValueError("channel should be 1 or 2, got " + str(ch))
         return self._rawdata_ch1 * 1. / 2 ** 13 if ch == 1 else self._rawdata_ch2 * 1. / 2 ** 13
 
-    def curve(self, ch=1, timeout=1.):
+    def curve(self, ch=1, timeout=None):
         """
         Takes a curve from channel ch:
-            If timeout>0: runs until data is ready or timeout expires
+            If timeout>0:  runs until data is ready or timeout expires
             If timeout<=0: returns immediately the current buffer without
-            checking for trigger status.
+                           checking for trigger status.
+            If timeout is None: timeout is auto-set to twice scope.duration
         """
         if not self._setup_called:
             raise NotReadyError("setup has never been called")
         SLEEP_TIME = 0.001
         total_sleep = 0
+        if timeout is None:
+            timeout = self.duration * 2
         if timeout > 0:
             while (total_sleep < timeout):
                 if self.curve_ready():
@@ -557,27 +559,6 @@ class Scope(HardwareModule):
             raise TimeoutError("Scope wasn't trigged during timeout")
         else:
             return self._get_ch(ch)
-
-    ### unfunctional so far
-    def spectrum(self, # Obsolete ?
-                 center,
-                 span,
-                 avg,
-                 input="adc1",
-                 window="flattop",
-                 acbandwidth=50.0,
-                 iq='iq2'):
-        points_per_bw = 10
-        iq_module = self.configure_signal_chain(input, iq)
-        iq_module.frequency = center
-        bw = span * points_per_bw / self.data_length
-        self.duration = 1. / bw
-        self._rp.iq2.bandwidth = [span, span]
-        self.setup(trigger_source='immediately',
-                   average=False,
-                   trigger_delay=0)
-        y = self.curve()
-        return y
 
     def configure_signal_chain(self, input, iq): # Obsolete ?
         iq_module = getattr(self._rp, iq)

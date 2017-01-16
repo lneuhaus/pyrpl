@@ -232,7 +232,7 @@ class SpectrumAnalyzer(SoftwareModule):
         self.points = Scope.data_length
         """ # intializing stuffs while scope is not reserved modifies the parameters of the scope...
 
-        self.input = 'adc1'
+        self.input = 'in1'
         self.span = 1e5
         self.rbw_auto = True
         """
