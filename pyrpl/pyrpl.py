@@ -271,7 +271,7 @@ class Pyrpl(object):
 
     def _setloglevel(self):
         pyrpl_utils.setloglevel(level=self.c.pyrpl.loglevel,
-                                loggername='pyrpl')  # __name__
+                                loggername=__name__)  # 'pyrpl')
 
     def __init__(self, config="myconfigfile", source="default"):
         # logger initialisation
