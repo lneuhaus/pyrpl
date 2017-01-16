@@ -262,8 +262,8 @@ class Pyrpl(object):
     if not os.path.exists(_user_config_dir):
         _user_config_dir = os.path.join(_default_config_dir,
                                         _user_config_dir)
-
-    def _getpath(self, filename):
+    @classmethod
+    def _getpath(self, filename='default'):
         # get extension right
         if not filename.endswith(".yml"):
             filename = filename + ".yml"
@@ -275,10 +275,10 @@ class Pyrpl(object):
             except:
                 filename = None
                 # ... or defaultconfigdir
-                if (not os.path.isfile(filename)
-                    and os.path.isfile(
-                        os.path.join(self._default_config_dir, f))):
-                    filename = os.path.join(self._default_config_dir, f)
+            if (not os.path.isfile(filename)
+                and os.path.isfile(
+                    os.path.join(self._default_config_dir, f))):
+                filename = os.path.join(self._default_config_dir, f)
         return filename
 
     def _setloglevel(self):
