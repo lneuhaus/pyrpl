@@ -20,6 +20,7 @@ import logging
 import sys
 import numpy as np
 import numbers
+from PyQt4 import QtCore, QtGui
 
 
 
@@ -47,7 +48,6 @@ class BaseAttribute(object):
         """
         default: if provided, the value is initialized to it
         """
-
         if default is not None:
             self.value = default
         self.__doc__ = doc
@@ -95,8 +95,10 @@ class BaseAttribute(object):
         """
         Updates the widget with the module's value.
         """
-        if self.name in module.widget.attribute_widgets:
-            module.widget.attribute_widgets[self.name].update_widget()
+        # if self.name in module.widget.attribute_widgets:
+        #   module.widget.attribute_widgets[self.name].update_widget()
+        if self.name in module.gui_attributes:
+            module.gui_updater.attribute_changed.emit(self.name)
 
     def save_attribute(self, module, value):
         """

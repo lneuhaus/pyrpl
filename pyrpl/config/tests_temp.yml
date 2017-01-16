@@ -35,3 +35,4 @@ redpitaya:
   filename: fpga//red_pitaya.bin
   reloadfpga: true
   monitor_server_name: monitor_server
+

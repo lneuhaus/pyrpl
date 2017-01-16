@@ -15,6 +15,7 @@ import logging
 import numpy as np
 from six import with_metaclass
 from collections import OrderedDict
+from PyQt4 import QtCore, QtGui
 
 
 
@@ -94,6 +95,24 @@ class ModuleMetaClass(NameAttributesMetaClass):
                     self.setup.__doc__ = get_setup_docstring(self)
 
 
+class GuiUpdater(QtCore.QObject):
+    """
+    A QObject that is connected to the widgets to update their value when attributes change
+    """
+    attribute_changed = QtCore.pyqtSignal(str)
+    # The name of the property that has changed
+
+    def __init__(self, module):
+        super(GuiUpdater, self).__init__()
+        self.module = module
+
+    def connect_widget(self, widget):
+        """
+        Establishes all connections between the module and the widget.
+        """
+        self.attribute_changed.connect(widget.update_attribute_by_name)
+
+
 class BaseModule(with_metaclass(ModuleMetaClass, object)):
     # python 3-compatible way of using metaclass
     # attributes have automatically their internal name set properly upon module creation
@@ -112,6 +131,7 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
 
     Finally, setup(**kwds) is created by ModuleMetaClass. it combines set_setup_attributes(**kwds) with _setup()
     """
+    gui_updater = None # a QOBject used to communicate with the widget
     pyrpl_config = None
     name = None # instance-level attribute
     section_name = 'basemodule' # name that is going to be used for the section in the config file (class-level)
@@ -178,8 +198,10 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         return self.c._parent.states
 
     def save_state(self, name, state_branch=None):
-        """Saves the current state under the name "name" in the config file. If state_section is left unchanged,
-        uses the normal class_section.states convention."""
+        """
+        Saves the current state under the name "name" in the config file. If state_section is left unchanged,
+        uses the normal class_section.states convention.
+        """
         if state_branch is None:
             state_branch = self.c_states
         state_branch[name] = self.get_setup_attributes()
@@ -321,6 +343,7 @@ class HardwareModule(BaseModule):
 
         if no name provided, will use cls.name
         """
+        self.gui_updater = GuiUpdater(self)
         self._autosave_active = False
         if name is not None:
             self.name = name
@@ -401,6 +424,7 @@ class SoftwareModule(BaseModule):
           - First case: config file entry is in self.__class__.name + 's'--> self.name
           - Second case: config file entry is in parent_entry-->self.__class__.name + 's'-->self.name
         """
+        self.gui_updater = GuiUpdater(self)
         self._autosave_active = False  # attribute values are not overwritten in the config file
         if name is not None:
             self.name = name

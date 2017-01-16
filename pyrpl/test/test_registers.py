@@ -1,5 +1,7 @@
 import logging
 logger = logging.getLogger(name=__name__)
+from nose.tools import set_trace
+
 
 from pyrpl import RedPitaya
 from pyrpl.modules import BaseModule
