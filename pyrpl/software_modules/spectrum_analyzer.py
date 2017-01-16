@@ -377,11 +377,11 @@ class SpectrumAnalyzer(SoftwareModule):
         """
         :return: complex iq time trace
         """
-        timeout = self.scope.duration * 2 # leave some margin
-        res = np.asarray(self.scope.curve(1, timeout=timeout),
+        #timeout = self.scope.duration * 2 # leave some margin
+        res = np.asarray(self.scope.curve(1, timeout=None),
                          dtype=np.complex)
         if not self.baseband:
-            res += 1j*self.scope.curve(2, timeout=timeout)
+            res += 1j*self.scope.curve(2, timeout=None)
         return res[:self.data_length]
 
     def filtered_iq_data(self):
