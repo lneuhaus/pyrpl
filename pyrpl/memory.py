@@ -21,6 +21,7 @@ from collections import OrderedDict
 from shutil import copyfile
 import numpy as np
 import time
+from PyQt4 import QtCore
 
 import logging
 logger = logging.getLogger(name=__name__)
@@ -38,6 +39,13 @@ try:
                 lambda dumper, data: dumper.represent_float(float(data)))
     ruamel.yaml.RoundTripDumper.add_representer(complex,
                 lambda dumper, data: dumper.represent_str(str(data)))
+    ruamel.yaml.RoundTripDumper.add_representer(np.complex128,
+                lambda dumper, data: dumper.represent_str(str(data)))
+    ruamel.yaml.RoundTripDumper.add_representer(np.ndarray,
+                lambda dumper, data: dumper.represent_list(list(data)))
+
+    # see http://stackoverflow.com/questions/13518819/avoid-references-in-pyyaml
+    ruamel.yaml.RoundTripDumper.ignore_aliases = lambda *args: True
     def load(f):
         return ruamel.yaml.load(f, ruamel.yaml.RoundTripLoader)
     def save(data, stream=None):
@@ -47,6 +55,10 @@ try:
 except:
     logger.warning("ruamel.yaml could not be found. Using yaml instead. Comments in config files will be lost.")
     import yaml
+
+    # see http://stackoverflow.com/questions/13518819/avoid-references-in-pyyaml
+    yaml.Dumper.ignore_aliases = lambda *args: True # NEVER TESTED
+
     # ordered load and dump for yaml files. From
     # http://stackoverflow.com/questions/5121931/in-python-how-can-you-load-yaml-mappings-as-ordereddicts
     def load(stream, Loader=yaml.SafeLoader, object_pairs_hook=OrderedDict):
@@ -67,17 +79,20 @@ except:
                 yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
                 data.items())
         OrderedDumper.add_representer(OrderedDict, _dict_representer)
-
         OrderedDumper.add_representer(np.float64,
                     lambda dumper, data: dumper.represent_float(float(data)))
-
         OrderedDumper.add_representer(complex,
                     lambda dumper, data: dumper.represent_str(str(data)))
-
+        OrderedDumper.add_representer(np.complex128,
+                    lambda dumper, data: dumper.represent_str(str(data)))
+        OrderedDumper.add_representer(np.ndarray,
+                    lambda dumper, data: dumper.represent_list(list(data)))
         return yaml.dump(data, stream, OrderedDumper,
                          default_flow_style=default_flow_style, **kwds)
     def isbranch(obj):
-        return type(obj) == OrderedDict
+        return isinstance(obj,dict)
+        # return type(obj) == OrderedDict
+
     # usage example:
     # load(stream, yaml.SafeLoader)
     # save(data, stream=f, Dumper=yaml.SafeDumper)
@@ -108,7 +123,7 @@ class MemoryBranch(object):
     @property
     def _defaults(self):
         """ defaults allows to define a list of default branches to fall back
-        upon if the desired kay is not found in the current branch """
+        upon if the desired key is not found in the current branch """
         return self.__defaults
 
     @_defaults.setter
@@ -154,8 +169,8 @@ class MemoryBranch(object):
 
     @property
     def _dict(self):
-        " return a dict containing the memory branch data"
-        d = {}
+        """ return a dict containing the memory branch data"""
+        d = OrderedDict()
         for defaultdict in reversed(self._defaults):
             d.update(defaultdict._dict)
         d.update(self._data)
@@ -227,6 +242,14 @@ class MemoryBranch(object):
             self._data[item] = value
             self._save()
 
+    def _rename(self, name):
+        parent = self._parent
+        if self._branch in parent._keys():
+            branch = parent._pop(self._branch)
+        else:
+            branch = OrderedDict()
+        parent[name] = branch
+
     # remove an item from the config file
     def _pop(self, name):
         ro = isbranch(self._data[name]) and 'value' in self._data[name] and \
@@ -236,7 +259,8 @@ class MemoryBranch(object):
                 "Attribute %s is read-only and cannot be deleted", name)
             return None
         else:
-            self.__dict__.pop(name)
+            if name in self.__dict__.keys():
+                self.__dict__.pop(name)
             value = self._data.pop(name)
             self._save()
             return value
@@ -260,23 +284,43 @@ class MemoryTree(MemoryBranch):
         The filename of the .yml file defining the MemoryTree structure.
     """
     _data = OrderedDict()
+
     # never reload more frequently than every 2 s because this is the principal
     # cause of slowing down the code
-    _reloaddeadtime = 2
+    _reloaddeadtime = 20
+    # never save more often than 1s
+    _savedeadtime = 10
+    # as an indication, on my ssd, saving of a standard config file was timed at 30 ms, loading: 40 ms...
 
-    def __init__(self, filename):
-        if os.path.isfile(filename):
+    def __init__(self, filename=None):
+        if filename is None: #  simulate a config file, only store data in memory
             self._filename = filename
-        else:
-            logger.warning("File "+filename+" not found. New file created. ")
-            self._filename = filename
-            with open(self._filename, mode="w") as f:
-                pass
-        self._load()
+        else:  # normal mode of operation with an actual configfile on the disc
+            if os.path.isfile(filename):
+                self._filename = filename
+            else:
+                logger.warning("File "+filename+" not found. New file created. ")
+                self._filename = filename
+                with open(self._filename, mode="w") as f:
+                    pass
+            self._load()
+            self._lastsave = time.time()
+            # make a temporary file to ensure modification of config file is atomic (double-buffering like operation...)
+            tmp_dir = os.path.join(os.path.dirname(self._filename), "tmp")
+            if not os.path.isdir(tmp_dir):
+                os.mkdir(tmp_dir)
+            self._buffer_filename = os.path.join(tmp_dir, 'tmp.yml')
+            # create a timer to postpone to frequent savings
+            self._savetimer = QtCore.QTimer()
+            self._savetimer.setInterval(self._savedeadtime*1000)
+            self._savetimer.setSingleShot(True)
+            self._savetimer.timeout.connect(self._save)
         super(MemoryTree, self).__init__(self, "")
 
     def _load(self):
         """ loads data from file """
+        if self._filename is None:
+            return
         logger.debug("Loading config file %s", self._filename)
         with open(self._filename) as f:
             self._data = load(f)
@@ -291,6 +335,8 @@ class MemoryTree(MemoryBranch):
     def _reload(self):
         """" reloads data from file if file has changed recently """
         # first check if a reload was not performed recently (speed up reasons)
+        if self._filename is None:
+            return
         if self._lastreload + self._reloaddeadtime < time.time():
             logger.debug("Checking change time of config file...")
             self._lastreload = time.time()
@@ -299,19 +345,49 @@ class MemoryTree(MemoryBranch):
 
     def _save(self):
         """ writes current tree structure and data to file """
-        if self._mtime != os.path.getmtime(self._filename):
-            logger.warning("Config file has recently been changed on your " +
-                           "harddisk. These changes might have been " +
-                           "overwritten now.")
-        logger.debug("Saving config file %s", self._filename)
-        copyfile(self._filename, self._filename+".bak")
-        try:
-            f = open(self._filename, mode='w')
-            save(self._data, stream=f)
-            f.close()
-        except:
-            copyfile(self._filename+".bak", self._filename)
-            logger.error("Error writing to file. Backup version was restored.")
-            raise
-        self._mtime = os.path.getmtime(self._filename)
+        if self._filename is None:
+            return
+        if self._lastsave + self._savedeadtime < time.time():
+            self._lastsave = time.time()
+            if self._mtime != os.path.getmtime(self._filename):
+                logger.warning("Config file has recently been changed on your " +
+                               "harddisk. These changes might have been " +
+                               "overwritten now.")
+            logger.debug("Saving config file %s", self._filename)
+            copyfile(self._filename, self._filename+".bak")
+            try:
+                f = open(self._buffer_filename, mode='w')
+                save(self._data, stream=f)
+                f.flush()
+                os.fsync(f.fileno())
+                f.close()
+                # config file writing should be atomic! I am not 100% sure the following line guarantees atomicity on windows
+                # but it's already much better than letting the yaml dumper save on the final config file
+                # see http://stackoverflow.com/questions/2333872/atomic-writing-to-file-with-python
+                # or https://bugs.python.org/issue8828
+                os.unlink(self._filename)
+                os.rename(self._buffer_filename, self._filename)
+            except:
+                copyfile(self._filename+".bak", self._filename)
+                logger.error("Error writing to file. Backup version was restored.")
+                raise
+            self._mtime = os.path.getmtime(self._filename)
+        else: # make sure saving will eventually occur
+            if not self._savetimer.isActive():
+                self._savetimer.start()
 
+if False:
+    class DummyMemoryTree():  # obsolete now
+        """
+        This class is there to emulate a MemoryTree, for users who would use RedPitaya object without Pyrpl object
+        """
+        @property
+        def _keys(self):
+            return self.keys
+
+        def __getattribute__(self, item):
+            try:
+                attr = super(DummyMemoryTree, self).__getattribute__(item)
+                return attr
+            except AttributeError:
+                return self[item]

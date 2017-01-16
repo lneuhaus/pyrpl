@@ -1,0 +1,82 @@
+pyrpl:
+  name: test_refactor
+  gui: true
+  loglevel: info
+  modules:
+  - NetworkAnalyzer
+  - SpectrumAnalyzer
+  dock_positions: !!binary |
+    AAAA/wAAAAD9AAAAAQAAAAIAAAVWAAACnfwBAAAAAfwAAAAAAAAFVgAAA/EA////+gAAAAYBAAAA
+    B/sAAAAIAGEAcwBnAHMBAAAAAP////8AAAHoAP////sAAAAGAGkAcQBzAQAAAAD/////AAADCQD/
+    ///7AAAACABwAGkAZABzAQAAAAD/////AAAB0wD////7AAAADABzAGMAbwBwAGUAcwEAAAAA////
+    /wAAA/EA////+wAAAAgAaQBpAHIAcwEAAAAA/////wAAAToA////+wAAAAQAbgBhAQAAAAD/////
+    AAADbgD////7AAAAIgBzAHAAZQBjAHQAcgB1AG0AXwBhAG4AYQBsAHkAegBlAHIBAAAAAP////8A
+    AAMKAP///wAABVYAAAAAAAAABAAAAAQAAAAIAAAACPwAAAAA
+  window_position:
+  - -4
+  - -4
+  - 1366
+  - 705
+redpitaya:
+  hostname: 192.168.1.107
+  user: root
+  password: root
+  port: 2222
+  frequency_correction: 1.0
+  filename: fpga//red_pitaya.bin
+  reloadfpga: true
+  monitor_server_name: monitor_server
+nas:
+  na: {}
+spectrum_analyzers:
+  spectrum_analyzer:
+    input: adc1
+    baseband: true
+hks:
+  hk: {}
+amss:
+  ams: {}
+scopes:
+  scope:
+    trigger_source: immediately
+    input1: adc1
+    input2: adc2
+    running_continuous: false
+    duration: 8.589934592
+    rolling_mode: true
+    average: false
+samplers:
+  sampler: {}
+asgs:
+  asg1: {}
+  asg2: {}
+pwms:
+  pwm1: {}
+  pwm2: {}
+iqs:
+  iq1:
+    input: adc1
+  iq3:
+    amplitude: 0.0
+    frequency: 200.001522898674
+  iq2:
+    acbandwidth:
+    - 0
+    bandwidth:
+    - 159154943
+    - 159154943
+    - 159154943
+    - 159154943
+    quadrature_factor: 0.0
+    output_signal: quadrature
+    gain: 0.0
+    amplitude: 0.0
+    phase: 0.0
+    output_direct: 'off'
+pids:
+  pid1: {}
+  pid2: {}
+  pid3: {}
+  pid4: {}
+iirs:
+  iir: {}

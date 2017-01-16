@@ -46,6 +46,8 @@ try:
 except:
     class CurveDB(object):
         _dirname = os.path.join(os.path.dirname(__file__),"curves")
+        if not os.path.exists(_dirname): # if _dirname doesn't exist, some unexpected errors will occur.
+            os.mkdir(_dirname)
 
         def __init__(self, name="some_curve"):
             """
@@ -59,6 +61,15 @@ except:
             self.params = dict()
             self.data = pandas.Series()
             self.name = name
+
+        @property
+        def name(self):
+            return self.params["name"]
+
+        @name.setter
+        def name(self, val):
+            self.params["name"] = val
+            return val
 
         @classmethod
         def create(cls, *args, **kwds):
@@ -84,6 +95,8 @@ except:
 
             obj.params = kwds
             pk = obj.pk  # make a pk
+            if ("childs" not in obj.params):
+                obj.params["childs"] = None
             if ("autosave" not in kwds) or (kwds["autosave"]):
                 obj.save()
             return obj
@@ -99,15 +112,18 @@ except:
             elif isinstance(curve, list):
                 return [CurveDB.get(c) for c in curve]
             else:
-                with open(CurveDB._dirname + str(curve) + '.p', 'r') as f:
+                with open(os.path.join(CurveDB._dirname, str(curve) + '.p'), 'rb') as f:
+                    # rb is for compatibility with python 3
+                    # see http://stackoverflow.com/questions/5512811/builtins-typeerror-must-be-str-not-bytes
                     curve = CurveDB()
                     curve._pk, curve.data, curve.params = pickle.load(f)
                 return curve
 
         def save(self):
-            with open(os.path.join(self._dirname, str(self.pk) + '.p'), 'w') as f:
+            with open(os.path.join(self._dirname, str(self.pk) + '.p'), 'wb') as f:
+                # wb is for compatibility with python 3
+                # see http://stackoverflow.com/questions/5512811/builtins-typeerror-must-be-str-not-bytes
                 pickle.dump((self.pk, self.data, self.params), f)
-                f.close()
 
         def delete(self):
             # remove the file

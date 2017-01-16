@@ -214,7 +214,7 @@ class FPM_LMSD(FPM):
                        + ["lock_lmsd", "setup_lmsd", "setup_pll", "stop_pll"]
     #def setup(self):
     #    super(FPM_LMSD, self).setup()
-    #    self._parent.constants = self._parent.c.constants
+    #    self._rp.constants = self._rp.c.constants
 
     def setup_lmsd(self):
         self._disable_pdh()
@@ -522,7 +522,7 @@ class FPM_LMSD(FPM):
     def setup_pll(self, timeout=5.0, whileloop=False):
         self.pll_sound = False
         if not hasattr(self, 'rrp'):
-            #self._parent.rp.make_a_slave() # make a new interface to avoid conflicts
+            #self._rp._rp.make_a_slave() # make a new interface to avoid conflicts
             self.rrp = self._parent.rp
         self.phaselogger = SensingDevice(name='pll_phase',
                                          minval=-100000, maxval=100000)

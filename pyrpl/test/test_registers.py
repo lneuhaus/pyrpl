@@ -1,13 +1,11 @@
-from nose.tools import with_setup
-from unittest import TestCase
-import os
-import numpy as np
 import logging
 logger = logging.getLogger(name=__name__)
+from nose.tools import set_trace
+
 
 from pyrpl import RedPitaya
-from pyrpl.redpitaya_modules import *
-from pyrpl.registers import *
+from pyrpl.modules import BaseModule
+from pyrpl.attributes import *
 
 
 class TestClass(object):
@@ -22,14 +20,14 @@ class TestClass(object):
             if isinstance(module, BaseModule):
                 logger.info("Scanning module %s...", modulekey)
                 for regkey, regclass in type(module).__dict__.items():
-                    if isinstance(regclass, Register):
+                    if isinstance(regclass, BaseRegister):
                         logger.info("Scanning register %s...", regkey)
                         yield self.register_validation, module, modulekey, \
                             regclass, regkey
     
     def register_validation(self, module, modulekey, reg, regkey):
         logger.debug("%s %s", modulekey, regkey)
-        if type(reg) is Register:
+        if type(reg) is BaseRegister:
             # try to read
             value = module.__getattribute__(regkey)
             # make sure Register represents an int
@@ -139,7 +137,7 @@ class TestClass(object):
                 assert False
             # make sure any frequency has an error below 100 mHz!
             if regkey not in []:
-                for freq in [0, 1, 10, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8]:
+                for freq in [0, 1, 10, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 125e6/2]: # FrequencyRegisters are now limited.
                     module.__setattr__(regkey, freq)
                     diff = abs(module.__getattribute__(regkey)-freq)
                     if diff > 0.1:
@@ -153,13 +151,13 @@ class TestClass(object):
             # try to read
             value = module.__getattribute__(regkey)
             # make sure Register represents an int
-            if not isinstance((list(reg.options.keys())[0]), type(value)):
+            if not isinstance((sorted(reg.options)[0]), type(value)):
                 assert False
             # exclude read-only registers
             if regkey in ["id"]:
                 return
             # try all options and confirm change that they are saved
-            for option in reg.options.keys():
+            for option in sorted(reg.options):
                 module.__setattr__(regkey, option)
                 if option != module.__getattribute__(regkey):
                     assert False

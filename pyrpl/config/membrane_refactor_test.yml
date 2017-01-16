@@ -1,0 +1,174 @@
+pyrpl: # General configuration of the software:
+  name: test_refactor
+  gui: true # autostart gui
+  loglevel: info
+  # level of logged information.
+  # 'debug' outputs everything
+  # 'infi' is default level
+  # 'warning' only shows warnings and errors
+  # 'error' only shows errors
+  modules: # SoftwareModules to load (in addition to IqManager, AsgManager, PidManager, ScopeManager)
+    - NetworkAnalyzer
+    - SpectrumAnalyzer
+  dock_positions: !!binary |
+    AAAA/wAAAAD9AAAAAQAAAAIAAAd8AAAD3fwBAAAAAvwAAAAAAAADrAAAA40A/////AIAAAAD+wAA
+    AAwAcwBjAG8AcABlAHMBAAAAFQAAASQAAADXAP////sAAAAGAGkAcQBzAQAAAT0AAAHoAAABaAD/
+    ///7AAAACABhAHMAZwBzAQAAAykAAADJAAAAlAD////8AAADsAAAA8wAAAOmAP////wCAAAAAvwA
+    AAAVAAABugAAARMBAAAU+gAAAAACAAAAB/sAAAAEAG4AYQEAAAAA/////wAAAP4A////+wAAACIA
+    cwBwAGUAYwB0AHIAdQBtAF8AYQBuAGEAbAB5AHoAZQByAQAAAAD/////AAAAswD////7AAAAIgBz
+    AHAAZQBjAHQAcgB1AG0AIABhAG4AYQBsAHkAegBlAHIBAAAAAP////8AAAAAAAAAAPsAAAAUAEIA
+    YQBzAGUATQBvAGQAdQBsAGUBAAAAAP////8AAAAAAAAAAPsAAAAIAGkAaQByAHMBAAAAAP////8A
+    AAB/AP////sAAAAgAG4AZQB0AHcAbwByAGsAXwBhAG4AYQBsAHkAegBlAHIBAAAAAP////8AAAAA
+    AAAAAPsAAAAKAHMAYwBvAHAAZQEAAAAA/////wAAAAAAAAAA+wAAAAgAcABpAGQAcwEAAAHTAAAC
+    HwAAAhgA////AAAHfAAAAAAAAAAEAAAABAAAAAgAAAAI/AAAAAA=
+  window_position:
+  - -1928
+  - 117
+  - 1916
+  - 1030
+redpitaya:
+  hostname: 10.214.1.28
+  password: root
+  user: root
+  port: 2222
+  frequency_correction: 1.0
+  filename: fpga//red_pitaya.bin
+  reloadfpga: true
+  monitor_server_name: monitor_server
+
+
+network_analyzer:
+  stop: 10000.0
+  points: 1001
+  input: pid1
+  infer_open_loop_tf: false
+  rbw:
+  - 9.0
+  avg: 1
+  start: 100.0
+  output_direct: out1
+  amplitude: 0.01
+  logscale: true
+  curve_name: na_c
+asg1:
+  output_direct: off
+  waveform: sin
+  trigger_source: immediately
+  amplitude: 1.0
+  offset: 0.0
+  frequency: 0.0
+  on: true
+asg2:
+  offset: 0.0
+  output_direct: off
+  waveform: sin
+  trigger_source: immediately
+  frequency: 0.0
+  amplitude: 1.0
+  on: true
+scope:
+  input1: asg1
+  trigger_source: ch1_negative_edge
+  threshold_ch1: 0.0
+  trigger_delay: 0
+  input2: pid1
+  duration: '0.134217728'
+  average: true
+iq0:
+  frequency: 100003.70384659618
+  bandwidth:
+  - 18.0
+  - 18.0
+  amplitude: 0.0
+  quadrature_factor: 0.00390625
+  phase: 10.00000351946801
+  input: asg2
+pid1:
+  input: iq1
+  inputfilter:
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  output_direct: off
+  i: 0.004632018480097623
+  p: 0.0
+  ival: 0
+  setpoint: 0.0
+  d: 0.0
+iq1:
+  quadrature_factor: 0.01171875
+  frequency: 100010.30750572681
+  input: asg1
+  bandwidth:
+  - 75.0
+  - 75.0
+  gain: 0.0
+  output_signal: quadrature
+  output_direct: off
+  phase: 0.09999996051192284
+  on: true
+  amplitude: 0.0
+iq2:
+  input: adc1
+  bandwidth:
+  - 2486795.0
+  - 2486795.0
+  output_signal: quadrature
+  quadrature_factor: 0.001
+  output_direct: off
+  gain: 0
+  frequency: 9999.98883344233
+  phase: 0
+  amplitude: 0
+  on: true
+pid2:
+  inputfilter:
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  input: adc2
+  output_direct: off
+  i: 0.0
+  d: 0.0
+pid3:
+  inputfilter:
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  input: adc1
+  output_direct: off
+  i: 0.0
+pid4:
+  inputfilter:
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  input: adc2
+  output_direct: off
+spectrum_analyzer:
+  input: adc1
+  span: 31250000.0
+  rbw_auto: true
+  window: flattop
+  center: 9999.98883344233
+hk: {}
+ams: {}
+asgs: {}
+iqs: {}
+pids: {}
+scopes: {}
+iirs: {}
+sampler: {}
+adc1: {}
+adc2: {}
+iir: {}
+na:
+  rbw:
+  - 151.0
+  output_direct: off
+  curve_name: na_curve
+  input: adc1

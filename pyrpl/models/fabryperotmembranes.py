@@ -15,9 +15,9 @@ class FPMembranes(FabryPerot):
 
     def sweep_pzt_direct(self):
         rp = self._parent.rp
-        #old_val = rp.pid3.ival
+        #old_val = _rp.pid3.ival
 
-        #rp.pid3.ival = old_val
+        #_rp.pid3.ival = old_val
         rp.pid2.p = 1
         rp.pid2.input = 'asg1'
         rp.pid2.i = 0

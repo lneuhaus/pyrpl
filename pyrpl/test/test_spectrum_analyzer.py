@@ -1,34 +1,29 @@
-from nose.tools import with_setup
-from unittest import TestCase
-import os
-import numpy as np
 import logging
+import os
 
 logger = logging.getLogger(name=__name__)
 
-from pyrpl import RedPitaya
-from pyrpl.redpitaya_modules import *
-from pyrpl.registers import *
-from pyrpl.bijection import Bijection
+from pyrpl import RedPitaya, Pyrpl
 
-from pyrpl.spectrum_analyzer import SpectrumAnalyzer
+from pyrpl.software_modules.spectrum_analyzer import SpectrumAnalyzer
 
 class TestClass(object):
     @classmethod
     def setUpAll(self):
         # these tests wont succeed without the hardware
         if os.environ['REDPITAYA_HOSTNAME'] == 'unavailable':
-            self.r = None
+            self.pyrpl = None
         else:
-            self.r = RedPitaya()
+            self.pyrpl = Pyrpl(config="tests_temp", source="tests_source")
+
 
     def test_spec_an(self):
-        if self.r is None:
+        if self.pyrpl is None:
             return
-        sa = SpectrumAnalyzer(self.r)
+        sa = self.pyrpl.spectrum_analyzer
         sa.input = "asg1"
-        self.r.asg1.frequency = 1e6
-        self.r.asg1.trigger_source = 'immediately'
+        self.pyrpl.rp.asg1.frequency = 1e6
+        self.pyrpl.rp.asg1.trigger_source = 'immediately'
 
         sa.setup(center=1e6, span=1e5)
         curve = sa.curve()

@@ -1,0 +1,359 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Diagram>
+  <ID>Python</ID>
+  <OriginalElement>#C:/Users/Samuel/Documents/GitHub/pyrpl/pyrpl/attributes.py</OriginalElement>
+  <nodes>
+    <node x="3778.7172619047615" y="535.0">pyrpl.attributes.FilterAttribute</node>
+    <node x="1640.5175492610833" y="535.0">pyrpl.attributes.PhaseAttribute</node>
+    <node x="3741.0922619047615" y="682.0">pyrpl.attributes.FilterRegister</node>
+    <node x="2828.966954022989" y="682.0">pyrpl.attributes.LongProperty</node>
+    <node x="3131.966954022989" y="682.0">pyrpl.attributes.BoolProperty</node>
+    <node x="575.375" y="682.0">pyrpl.attributes.FrequencyRegister</node>
+    <node x="3722.2916666666665" y="194.0">pyrpl.attributes.BaseAttribute</node>
+    <node x="2155.5175492610833" y="438.0">pyrpl.attributes.NumberRegister</node>
+    <node x="2529.966954022989" y="682.0">pyrpl.attributes.LongRegister</node>
+    <node x="981.0175492610833" y="535.0">pyrpl.attributes.FloatRegister</node>
+    <node x="2242.5175492610833" y="535.0">pyrpl.attributes.IntRegister</node>
+    <node x="3423.5592159277494" y="535.0">pyrpl.attributes.IORegister</node>
+    <node x="10.5" y="438.0">pyrpl.attributes.PWMRegister</node>
+    <node x="231.75" y="682.0">pyrpl.attributes.SelectRegister</node>
+    <node x="1603.5502873563223" y="438.0">pyrpl.attributes.FloatAttribute</node>
+    <node x="2227.0502873563223" y="682.0">pyrpl.attributes.FloatProperty</node>
+    <node x="2905.966954022989" y="535.0">pyrpl.attributes.BaseProperty</node>
+    <node x="4348.0922619047615" y="682.0">pyrpl.attributes.ListComplexProperty</node>
+    <node x="4431.8422619047615" y="311.0">pyrpl.attributes.ListComplexAttribute</node>
+    <node x="3410.5592159277494" y="311.0">pyrpl.attributes.BoolAttribute</node>
+    <node x="1279.0175492610833" y="535.0">pyrpl.attributes.FrequencyAttribute</node>
+    <node x="1600.9672619047615" y="311.0">pyrpl.attributes.BaseRegister</node>
+    <node x="663.2675492610833" y="535.0">pyrpl.attributes.SelectAttribute</node>
+    <node x="940.8002873563223" y="682.0">pyrpl.attributes.SelectProperty</node>
+    <node x="1980.508928571428" y="311.0">pyrpl.attributes.NumberAttribute</node>
+    <node x="4038.0922619047615" y="682.0">pyrpl.attributes.StringProperty</node>
+    <node x="2541.6008825944164" y="438.0">pyrpl.attributes.IntAttribute</node>
+    <node x="2939.966954022989" y="0.0">_abcoll.Hashable</node>
+    <node x="3415.0592159277494" y="438.0">pyrpl.attributes.BoolRegister</node>
+    <node x="1918.0502873563223" y="682.0">pyrpl.attributes.PhaseProperty</node>
+    <node x="4109.5922619047615" y="311.0">pyrpl.attributes.StringAttribute</node>
+    <node x="1249.8002873563223" y="682.0">pyrpl.attributes.PhaseRegister</node>
+    <node x="2995.466954022989" y="97.0">object</node>
+    <node x="3430.966954022989" y="682.0">pyrpl.attributes.FilterProperty</node>
+    <node x="1574.0502873563223" y="682.0">pyrpl.attributes.FrequencyProperty</node>
+  </nodes>
+  <notes />
+  <edges>
+    <edge source="pyrpl.attributes.SelectRegister" target="pyrpl.attributes.BaseRegister">
+      <point x="-71.25" y="-23.5" />
+      <point x="303.0" y="408.0" />
+      <point x="1669.7172619047615" y="408.0" />
+      <point x="-68.75" y="23.5" />
+    </edge>
+    <edge source="pyrpl.attributes.SelectProperty" target="pyrpl.attributes.SelectAttribute">
+      <point x="-72.25" y="-23.5" />
+      <point x="1013.0502873563223" y="602.0" />
+      <point x="881.5175492610833" y="602.0" />
+      <point x="72.75" y="23.5" />
+    </edge>
+    <edge source="pyrpl.attributes.IntRegister" target="pyrpl.attributes.IntAttribute">
+      <point x="65.0" y="-23.5" />
+      <point x="2437.5175492610833" y="515.0" />
+      <point x="2585.93421592775" y="515.0" />
+      <point x="-88.66666666666652" y="23.5" />
+    </edge>
+    <edge source="pyrpl.attributes.LongProperty" target="pyrpl.attributes.IntAttribute">
+      <point x="-70.75" y="-23.5" />
+      <point x="2899.716954022989" y="622.0" />
+      <point x="2794.9342159277494" y="622.0" />
+      <point x="2794.9342159277494" y="515.0" />
+      <point x="2763.267549261083" y="515.0" />
+      <point x="88.66666666666652" y="23.5" />
+    </edge>
+    <edge source="pyrpl.attributes.PWMRegister" target="pyrpl.attributes.BaseAttribute">
+      <point x="-70.5" y="-23.5" />
+      <point x="81.0" y="271.0" />
+      <point x="3782.5059523809523" y="271.0" />
+      <point x="-80.28571428571422" y="23.5" />
+    </edge>
+    <edge source="pyrpl.attributes.BoolProperty" target="pyrpl.attributes.BoolAttribute">
+      <point x="69.75" y="-23.5" />
+      <point x="3341.216954022989" y="662.0" />
+      <point x="3390.2172619047615" y="662.0" />
+      <point x="3390.2172619047615" y="418.0" />
+      <point x="3480.8092159277494" y="418.0" />
+      <point x="-70.25" y="23.5" />
+    </edge>
+    <edge source="pyrpl.attributes.SelectProperty" target="pyrpl.attributes.BaseProperty">
+      <point x="72.25" y="-23.5" />
+      <point x="1157.5502873563223" y="632.0" />
+      <point x="2921.466954022989" y="632.0" />
+      <point x="-124.0" y="23.5" />
+    </edge>
+    <edge source="pyrpl.attributes.FilterRegister" target="pyrpl.attributes.BaseRegister">
+      <point x="-69.25" y="-23.5" />
+      <point x="3810.3422619047615" y="652.0" />
+      <point x="3768.2172619047615" y="652.0" />
+      <point x="3768.2172619047615" y="378.0" />
+      <point x="1853.050595238095" y="378.0" />
+      <point x="114.58333333333348" y="23.5" />
+    </edge>
+    <edge source="pyrpl.attributes.FloatAttribute" target="pyrpl.attributes.NumberAttribute">
+      <point x="0.0" y="-23.5" />
+      <point x="1745.5502873563223" y="418.0" />
+      <point x="2058.008928571428" y="418.0" />
+      <point x="-77.5" y="23.5" />
+    </edge>
+    <edge source="pyrpl.attributes.FloatProperty" target="pyrpl.attributes.BaseProperty">
+      <point x="70.5" y="-23.5" />
+      <point x="2438.5502873563223" y="662.0" />
+      <point x="3014.466954022989" y="662.0" />
+      <point x="-31.0" y="23.5" />
+    </edge>
+    <edge source="pyrpl.attributes.SelectAttribute" target="pyrpl.attributes.BaseAttribute">
+      <point x="0.0" y="-23.5" />
+      <point x="808.7675492610833" y="515.0" />
+      <point x="0.0" y="515.0" />
+      <point x="0.0" y="261.0" />
+      <point x="3742.363095238095" y="261.0" />
+      <point x="-120.42857142857156" y="23.5" />
+    </edge>
+    <edge source="pyrpl.attributes.FilterProperty" target="pyrpl.attributes.BaseProperty">
+      <point x="-70.25" y="-23.5" />
+      <point x="3501.216954022989" y="652.0" />
+      <point x="3107.466954022989" y="652.0" />
+      <point x="62.0" y="23.5" />
+    </edge>
+    <edge source="pyrpl.attributes.BaseRegister" target="object">
+      <point x="0.0" y="-23.5" />
+      <point x="1738.4672619047615" y="169.0" />
+      <point x="3012.1336206896553" y="169.0" />
+      <point x="-33.333333333333485" y="23.5" />
+    </edge>
+    <edge source="pyrpl.attributes.PhaseRegister" target="pyrpl.attributes.FloatRegister">
+      <point x="-71.25" y="-23.5" />
+      <point x="1321.0502873563223" y="612.0" />
+      <point x="1189.5175492610833" y="612.0" />
+      <point x="69.5" y="23.5" />
+    </edge>
+    <edge source="pyrpl.attributes.StringAttribute" target="pyrpl.attributes.BaseAttribute">
+      <point x="0.0" y="-23.5" />
+      <point x="4255.5922619047615" y="291.0" />
+      <point x="3943.0773809523807" y="291.0" />
+      <point x="80.28571428571422" y="23.5" />
+    </edge>
+    <edge source="pyrpl.attributes.BaseProperty" target="object">
+      <point x="0.0" y="-23.5" />
+      <point x="0.0" y="23.5" />
+    </edge>
+    <edge source="pyrpl.attributes.FloatRegister" target="pyrpl.attributes.BaseRegister">
+      <point x="-69.5" y="-23.5" />
+      <point x="1050.5175492610833" y="418.0" />
+      <point x="1715.5505952380947" y="418.0" />
+      <point x="-22.916666666666742" y="23.5" />
+    </edge>
+    <edge source="pyrpl.attributes.IntAttribute" target="pyrpl.attributes.NumberAttribute">
+      <point x="0.0" y="-23.5" />
+      <point x="2674.6008825944164" y="398.0" />
+      <point x="2213.008928571428" y="398.0" />
+      <point x="77.5" y="23.5" />
+    </edge>
+    <edge source="pyrpl.attributes.PWMRegister" target="pyrpl.attributes.BaseRegister">
+      <point x="70.5" y="-23.5" />
+      <point x="222.0" y="398.0" />
+      <point x="1623.8839285714282" y="398.0" />
+      <point x="-114.58333333333326" y="23.5" />
+    </edge>
+    <edge source="pyrpl.attributes.BoolProperty" target="pyrpl.attributes.BaseProperty">
+      <point x="-69.75" y="-23.5" />
+      <point x="3201.716954022989" y="662.0" />
+      <point x="3076.466954022989" y="662.0" />
+      <point x="31.0" y="23.5" />
+    </edge>
+    <edge source="pyrpl.attributes.FrequencyAttribute" target="pyrpl.attributes.FloatAttribute">
+      <point x="0.0" y="-23.5" />
+      <point x="1442.0175492610833" y="515.0" />
+      <point x="1710.0502873563223" y="515.0" />
+      <point x="-35.5" y="23.5" />
+    </edge>
+    <edge source="pyrpl.attributes.FilterRegister" target="pyrpl.attributes.FilterAttribute">
+      <point x="69.25" y="-23.5" />
+      <point x="3948.8422619047615" y="662.0" />
+      <point x="3990.9672619047615" y="662.0" />
+      <point x="70.75" y="23.5" />
+    </edge>
+    <edge source="pyrpl.attributes.BoolRegister" target="pyrpl.attributes.BaseRegister">
+      <point x="-68.75" y="-23.5" />
+      <point x="3483.8092159277494" y="388.0" />
+      <point x="1807.2172619047615" y="388.0" />
+      <point x="68.75" y="23.5" />
+    </edge>
+    <edge source="object" target="_abcoll.Hashable">
+      <point x="0.0" y="-23.5" />
+      <point x="0.0" y="23.5" />
+    </edge>
+    <edge source="pyrpl.attributes.LongRegister" target="pyrpl.attributes.IntRegister">
+      <point x="-69.75" y="-23.5" />
+      <point x="2599.716954022989" y="622.0" />
+      <point x="2372.5175492610833" y="622.0" />
+      <point x="0.0" y="23.5" />
+    </edge>
+    <edge source="pyrpl.attributes.BaseAttribute" target="object">
+      <point x="0.0" y="-23.5" />
+      <point x="3862.7916666666665" y="169.0" />
+      <point x="3078.8002873563223" y="169.0" />
+      <point x="33.333333333333485" y="23.5" />
+    </edge>
+    <edge source="pyrpl.attributes.LongRegister" target="pyrpl.attributes.IntAttribute">
+      <point x="69.75" y="-23.5" />
+      <point x="2739.216954022989" y="622.0" />
+      <point x="2638.6842159277494" y="622.0" />
+      <point x="2638.6842159277494" y="515.0" />
+      <point x="2674.6008825944164" y="515.0" />
+      <point x="0.0" y="23.5" />
+    </edge>
+    <edge source="pyrpl.attributes.ListComplexProperty" target="pyrpl.attributes.BaseProperty">
+      <point x="-84.75" y="-23.5" />
+      <point x="4432.8422619047615" y="632.0" />
+      <point x="3169.466954022989" y="632.0" />
+      <point x="124.0" y="23.5" />
+    </edge>
+    <edge source="pyrpl.attributes.PhaseProperty" target="pyrpl.attributes.PhaseAttribute">
+      <point x="-72.25" y="-23.5" />
+      <point x="1990.3002873563223" y="622.0" />
+      <point x="1858.7675492610833" y="622.0" />
+      <point x="72.75" y="23.5" />
+    </edge>
+    <edge source="pyrpl.attributes.FrequencyRegister" target="pyrpl.attributes.FrequencyAttribute">
+      <point x="80.0" y="-23.5" />
+      <point x="815.375" y="622.0" />
+      <point x="1360.5175492610833" y="622.0" />
+      <point x="-81.5" y="23.5" />
+    </edge>
+    <edge source="pyrpl.attributes.LongProperty" target="pyrpl.attributes.BaseProperty">
+      <point x="70.75" y="-23.5" />
+      <point x="3041.216954022989" y="662.0" />
+      <point x="3045.466954022989" y="662.0" />
+      <point x="0.0" y="23.5" />
+    </edge>
+    <edge source="pyrpl.attributes.PhaseProperty" target="pyrpl.attributes.BaseProperty">
+      <point x="72.25" y="-23.5" />
+      <point x="2134.8002873563223" y="652.0" />
+      <point x="2983.466954022989" y="652.0" />
+      <point x="-62.0" y="23.5" />
+    </edge>
+    <edge source="pyrpl.attributes.BoolRegister" target="pyrpl.attributes.BoolAttribute">
+      <point x="68.75" y="-23.5" />
+      <point x="70.25" y="23.5" />
+    </edge>
+    <edge source="pyrpl.attributes.StringProperty" target="pyrpl.attributes.StringAttribute">
+      <point x="72.5" y="-23.5" />
+      <point x="0.0" y="23.5" />
+    </edge>
+    <edge source="pyrpl.attributes.SelectRegister" target="pyrpl.attributes.SelectAttribute">
+      <point x="71.25" y="-23.5" />
+      <point x="445.5" y="602.0" />
+      <point x="736.0175492610833" y="602.0" />
+      <point x="-72.75" y="23.5" />
+    </edge>
+    <edge source="pyrpl.attributes.FloatRegister" target="pyrpl.attributes.FloatAttribute">
+      <point x="69.5" y="-23.5" />
+      <point x="1189.5175492610833" y="505.0" />
+      <point x="1639.0502873563223" y="505.0" />
+      <point x="-106.5" y="23.5" />
+    </edge>
+    <edge source="pyrpl.attributes.ListComplexProperty" target="pyrpl.attributes.ListComplexAttribute">
+      <point x="84.75" y="-23.5" />
+      <point x="0.0" y="23.5" />
+    </edge>
+    <edge source="pyrpl.attributes.BoolAttribute" target="pyrpl.attributes.BaseAttribute">
+      <point x="0.0" y="-23.5" />
+      <point x="3551.0592159277494" y="291.0" />
+      <point x="3862.7916666666665" y="291.0" />
+      <point x="0.0" y="23.5" />
+    </edge>
+    <edge source="pyrpl.attributes.StringProperty" target="pyrpl.attributes.BaseProperty">
+      <point x="-72.5" y="-23.5" />
+      <point x="4110.5922619047615" y="642.0" />
+      <point x="3138.466954022989" y="642.0" />
+      <point x="93.0" y="23.5" />
+    </edge>
+    <edge source="pyrpl.attributes.IORegister" target="pyrpl.attributes.BoolRegister">
+      <point x="0.0" y="-23.5" />
+      <point x="0.0" y="23.5" />
+    </edge>
+    <edge source="pyrpl.attributes.ListComplexAttribute" target="pyrpl.attributes.BaseAttribute">
+      <point x="0.0" y="-23.5" />
+      <point x="4602.3422619047615" y="281.0" />
+      <point x="3983.220238095238" y="281.0" />
+      <point x="120.42857142857156" y="23.5" />
+    </edge>
+    <edge source="pyrpl.attributes.PhaseAttribute" target="pyrpl.attributes.FloatAttribute">
+      <point x="0.0" y="-23.5" />
+      <point x="1786.0175492610833" y="515.0" />
+      <point x="1781.0502873563223" y="515.0" />
+      <point x="35.5" y="23.5" />
+    </edge>
+    <edge source="pyrpl.attributes.FloatProperty" target="pyrpl.attributes.FloatAttribute">
+      <point x="-70.5" y="-23.5" />
+      <point x="2297.5502873563223" y="622.0" />
+      <point x="2166.0175492610833" y="622.0" />
+      <point x="2166.0175492610833" y="515.0" />
+      <point x="1852.0502873563223" y="515.0" />
+      <point x="106.5" y="23.5" />
+    </edge>
+    <edge source="pyrpl.attributes.NumberRegister" target="pyrpl.attributes.BaseRegister">
+      <point x="0.0" y="-23.5" />
+      <point x="2307.5175492610833" y="408.0" />
+      <point x="1761.3839285714282" y="408.0" />
+      <point x="22.916666666666742" y="23.5" />
+    </edge>
+    <edge source="pyrpl.attributes.FilterProperty" target="pyrpl.attributes.FilterAttribute">
+      <point x="70.25" y="-23.5" />
+      <point x="3641.716954022989" y="662.0" />
+      <point x="3849.4672619047615" y="662.0" />
+      <point x="-70.75" y="23.5" />
+    </edge>
+    <edge source="pyrpl.attributes.IntRegister" target="pyrpl.attributes.NumberRegister">
+      <point x="-65.0" y="-23.5" />
+      <point x="0.0" y="23.5" />
+    </edge>
+    <edge source="pyrpl.attributes.FrequencyProperty" target="pyrpl.attributes.BaseProperty">
+      <point x="81.0" y="-23.5" />
+      <point x="1817.0502873563223" y="642.0" />
+      <point x="2952.466954022989" y="642.0" />
+      <point x="-93.0" y="23.5" />
+    </edge>
+    <edge source="pyrpl.attributes.NumberAttribute" target="pyrpl.attributes.BaseAttribute">
+      <point x="0.0" y="-23.5" />
+      <point x="2135.508928571428" y="281.0" />
+      <point x="3822.648809523809" y="281.0" />
+      <point x="-40.14285714285734" y="23.5" />
+    </edge>
+    <edge source="pyrpl.attributes.FrequencyProperty" target="pyrpl.attributes.FrequencyAttribute">
+      <point x="-81.0" y="-23.5" />
+      <point x="1655.0502873563223" y="612.0" />
+      <point x="1523.5175492610833" y="612.0" />
+      <point x="81.5" y="23.5" />
+    </edge>
+    <edge source="pyrpl.attributes.FilterAttribute" target="pyrpl.attributes.BaseAttribute">
+      <point x="0.0" y="-23.5" />
+      <point x="3920.2172619047615" y="291.0" />
+      <point x="3902.934523809524" y="291.0" />
+      <point x="40.14285714285734" y="23.5" />
+    </edge>
+    <edge source="pyrpl.attributes.FrequencyRegister" target="pyrpl.attributes.FloatRegister">
+      <point x="-80.0" y="-23.5" />
+      <point x="655.375" y="612.0" />
+      <point x="1050.5175492610833" y="612.0" />
+      <point x="-69.5" y="23.5" />
+    </edge>
+    <edge source="pyrpl.attributes.PhaseRegister" target="pyrpl.attributes.PhaseAttribute">
+      <point x="71.25" y="-23.5" />
+      <point x="1463.5502873563223" y="622.0" />
+      <point x="1713.2675492610833" y="622.0" />
+      <point x="-72.75" y="23.5" />
+    </edge>
+  </edges>
+  <settings layout="Hierarchic Group" zoom="0.4" x="1799.0" y="249.1588877387785" />
+  <SelectedNodes />
+  <Categories />
+</Diagram>
+

@@ -1,0 +1,2228 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>pyrpl package &mdash; pyrpl 0.9.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.9.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="pyrpl 0.9.1 documentation" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">pyrpl 0.9.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="pyrpl-package">
+<h1>pyrpl package<a class="headerlink" href="#pyrpl-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="pyrpl.hardware_modules.html">pyrpl.hardware_modules package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.hardware_modules.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.hardware_modules.html#module-pyrpl.hardware_modules.ams">pyrpl.hardware_modules.ams module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.hardware_modules.html#module-pyrpl.hardware_modules.asg">pyrpl.hardware_modules.asg module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.hardware_modules.html#module-pyrpl.hardware_modules.aux_output">pyrpl.hardware_modules.aux_output module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.hardware_modules.html#module-pyrpl.hardware_modules.dsp">pyrpl.hardware_modules.dsp module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.hardware_modules.html#module-pyrpl.hardware_modules.filter">pyrpl.hardware_modules.filter module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.hardware_modules.html#module-pyrpl.hardware_modules.hk">pyrpl.hardware_modules.hk module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.hardware_modules.html#module-pyrpl.hardware_modules.iir">pyrpl.hardware_modules.iir module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.hardware_modules.html#module-pyrpl.hardware_modules.iq">pyrpl.hardware_modules.iq module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.hardware_modules.html#module-pyrpl.hardware_modules.pid">pyrpl.hardware_modules.pid module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.hardware_modules.html#module-pyrpl.hardware_modules.sampler">pyrpl.hardware_modules.sampler module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.hardware_modules.html#module-pyrpl.hardware_modules.scope">pyrpl.hardware_modules.scope module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.hardware_modules.html#module-pyrpl.hardware_modules">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="pyrpl.models.html">pyrpl.models package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.models.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.models.html#pyrpl-models-fabryperot-module">pyrpl.models.fabryperot module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.models.html#pyrpl-models-fabryperotmembranes-module">pyrpl.models.fabryperotmembranes module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.models.html#pyrpl-models-filter-module">pyrpl.models.filter module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.models.html#pyrpl-models-fpm-module">pyrpl.models.fpm module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.models.html#pyrpl-models-interferometer-module">pyrpl.models.interferometer module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.models.html#pyrpl-models-interferometer-am-module">pyrpl.models.interferometer_am module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.models.html#pyrpl-models-lmsd-module">pyrpl.models.lmsd module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.models.html#pyrpl-models-tilt-module">pyrpl.models.tilt module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.models.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="pyrpl.software_modules.html">pyrpl.software_modules package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.software_modules.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="pyrpl.software_modules.lockbox.html">pyrpl.software_modules.lockbox package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="pyrpl.software_modules.lockbox.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyrpl.software_modules.lockbox.html#module-pyrpl.software_modules.lockbox.lockbox">pyrpl.software_modules.lockbox.lockbox module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyrpl.software_modules.lockbox.html#pyrpl-software-modules-lockbox-signal-module">pyrpl.software_modules.lockbox.signal module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyrpl.software_modules.lockbox.html#module-pyrpl.software_modules.lockbox">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.software_modules.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.software_modules.html#module-pyrpl.software_modules.module_managers">pyrpl.software_modules.module_managers module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.software_modules.html#module-pyrpl.software_modules.network_analyzer">pyrpl.software_modules.network_analyzer module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.software_modules.html#module-pyrpl.software_modules.spectrum_analyzer">pyrpl.software_modules.spectrum_analyzer module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.software_modules.html#pyrpl-software-modules-spectrum-analyzer-noiq-module">pyrpl.software_modules.spectrum_analyzer_noiq module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.software_modules.html#module-pyrpl.software_modules">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="pyrpl.test.html">pyrpl.test package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.test.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.test.html#module-pyrpl.test.test_attribute_widgets">pyrpl.test.test_attribute_widgets module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.test.html#module-pyrpl.test.test_example">pyrpl.test.test_example module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.test.html#module-pyrpl.test.test_hardware_modules">pyrpl.test.test_hardware_modules module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.test.html#module-pyrpl.test.test_load_save">pyrpl.test.test_load_save module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.test.html#module-pyrpl.test.test_module_widgets">pyrpl.test.test_module_widgets module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.test.html#module-pyrpl.test.test_network_analyzer">pyrpl.test.test_network_analyzer module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.test.html#module-pyrpl.test.test_pyrpl">pyrpl.test.test_pyrpl module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.test.html#module-pyrpl.test.test_redpitaya">pyrpl.test.test_redpitaya module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.test.html#module-pyrpl.test.test_registers">pyrpl.test.test_registers module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.test.html#module-pyrpl.test.test_spectrum_analyzer">pyrpl.test.test_spectrum_analyzer module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.test.html#module-pyrpl.test">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="pyrpl.trash.html">pyrpl.trash package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.trash.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="pyrpl.trash.gui.html">pyrpl.trash.gui package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="pyrpl.trash.gui.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyrpl.trash.gui.html#pyrpl-trash-gui-iq-gui-module">pyrpl.trash.gui.iq_gui module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyrpl.trash.gui.html#module-pyrpl.trash.gui.pyrpl_gui">pyrpl.trash.gui.pyrpl_gui module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyrpl.trash.gui.html#module-pyrpl.trash.gui.redpitaya_gui">pyrpl.trash.gui.redpitaya_gui module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyrpl.trash.gui.html#module-pyrpl.trash.gui.temp">pyrpl.trash.gui.temp module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyrpl.trash.gui.html#module-pyrpl.trash.gui">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.trash.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.trash.html#pyrpl-trash-pyrpl-old-module">pyrpl.trash.pyrpl_old module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.trash.html#module-pyrpl.trash">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="pyrpl.widgets.html">pyrpl.widgets package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.widgets.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.widgets.html#module-pyrpl.widgets.attribute_widgets">pyrpl.widgets.attribute_widgets module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.widgets.html#module-pyrpl.widgets.module_widgets">pyrpl.widgets.module_widgets module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.widgets.html#module-pyrpl.widgets.pyrpl_widget">pyrpl.widgets.pyrpl_widget module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.widgets.html#module-pyrpl.widgets.schematics">pyrpl.widgets.schematics module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.widgets.html#module-pyrpl.widgets">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-pyrpl.attributes">
+<span id="pyrpl-attributes-module"></span><h2>pyrpl.attributes module<a class="headerlink" href="#module-pyrpl.attributes" title="Permalink to this headline">¶</a></h2>
+<p>The parameters of the lockbox are controlled by descriptors deriving from BaseAttribute.</p>
+<dl class="docutils">
+<dt>An attribute is a field that can be set or get by several means:</dt>
+<dd><ul class="first last simple">
+<li>programmatically: module.attribute = value</li>
+<li>graphically: attribute.create_widget(module) returns a widget to manipulate the value</li>
+<li>via loading the value in a config file for permanent value preservation</li>
+</ul>
+</dd>
+</dl>
+<p>Of course, the gui/parameter file/actual values have to stay &#8220;in sync&#8221; each time the attribute value is
+changed. The necessary mechanisms are happening behind the scene, and they are coded in this file.</p>
+<dl class="class">
+<dt id="pyrpl.attributes.BaseAttribute">
+<em class="property">class </em><tt class="descclassname">pyrpl.attributes.</tt><tt class="descname">BaseAttribute</tt><big>(</big><em>default=None</em>, <em>doc=''</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.BaseAttribute" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<dl class="docutils">
+<dt>An attribute is a field that can be set or get by several means:</dt>
+<dd><ul class="first last simple">
+<li>programmatically: module.attribute = value</li>
+<li>graphically: attribute.create_widget(module) returns a widget to manipulate the value</li>
+<li>via loading the value in a config file for permanence</li>
+</ul>
+</dd>
+<dt>The concrete derived class need to have certain attributes properly defined:</dt>
+<dd><ul class="first last simple">
+<li>widget_class: the class of the widget to use for the gui (see attribute_widgets.py)</li>
+<li>a function set_value(instance, value) that effectively sets the value (on redpitaya or elsewhere)</li>
+<li>a function get_value(instance, owner) that reads the value from wherever it is stored internally</li>
+</ul>
+</dd>
+</dl>
+<dl class="method">
+<dt id="pyrpl.attributes.BaseAttribute.create_widget">
+<tt class="descname">create_widget</tt><big>(</big><em>module</em>, <em>name=None</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.BaseAttribute.create_widget" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a widget to graphically manipulate the attribute.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.attributes.BaseAttribute.save_attribute">
+<tt class="descname">save_attribute</tt><big>(</big><em>module</em>, <em>value</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.BaseAttribute.save_attribute" title="Permalink to this definition">¶</a></dt>
+<dd><p>Saves the module&#8217;s value in the config file.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.attributes.BaseAttribute.set_value_gui_config">
+<tt class="descname">set_value_gui_config</tt><big>(</big><em>instance</em>, <em>value</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.BaseAttribute.set_value_gui_config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the value in the gui and config</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.attributes.BaseAttribute.update_gui">
+<tt class="descname">update_gui</tt><big>(</big><em>module</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.BaseAttribute.update_gui" title="Permalink to this definition">¶</a></dt>
+<dd><p>Updates the widget with the module&#8217;s value.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.attributes.BaseAttribute.validate_and_normalize">
+<tt class="descname">validate_and_normalize</tt><big>(</big><em>value</em>, <em>module</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.BaseAttribute.validate_and_normalize" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function should raise an exception if the value is incorrect.
+Normalization can be:</p>
+<blockquote>
+<div><ul class="simple">
+<li>returning value.name if attribute &#8220;name&#8221; exists</li>
+<li>rounding to nearest multiple of step for float_registers</li>
+<li>rounding elements to nearest valid_frequencies for FilterAttributes</li>
+</ul>
+</div></blockquote>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pyrpl.attributes.BaseAttribute.widget_class">
+<tt class="descname">widget_class</tt><em class="property"> = None</em><a class="headerlink" href="#pyrpl.attributes.BaseAttribute.widget_class" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrpl.attributes.BaseProperty">
+<em class="property">class </em><tt class="descclassname">pyrpl.attributes.</tt><tt class="descname">BaseProperty</tt><a class="headerlink" href="#pyrpl.attributes.BaseProperty" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>A Property is a special type of attribute that is not mapping a fpga value, but rather an attribute _attr_name
+of the module. This is used mainly in SoftwareModules</p>
+<dl class="method">
+<dt id="pyrpl.attributes.BaseProperty.get_value">
+<tt class="descname">get_value</tt><big>(</big><em>obj</em>, <em>obj_type</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.BaseProperty.get_value" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.attributes.BaseProperty.set_value">
+<tt class="descname">set_value</tt><big>(</big><em>obj</em>, <em>val</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.BaseProperty.set_value" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrpl.attributes.BaseRegister">
+<em class="property">class </em><tt class="descclassname">pyrpl.attributes.</tt><tt class="descname">BaseRegister</tt><big>(</big><em>address</em>, <em>doc=''</em>, <em>bitmask=None</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.BaseRegister" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Registers implement the necessary read/write logic for storing an attribute on the redpitaya.
+Interface for basic register of type int. To convert the value between register format and python readable
+format, registers need to implement &#8220;from_python&#8221; and &#8220;to_python&#8221; functions</p>
+<dl class="method">
+<dt id="pyrpl.attributes.BaseRegister.get_value">
+<tt class="descname">get_value</tt><big>(</big><em>obj</em>, <em>objtype=None</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.BaseRegister.get_value" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves the value that is physically on the redpitaya device.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.attributes.BaseRegister.set_value">
+<tt class="descname">set_value</tt><big>(</big><em>obj</em>, <em>val</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.BaseRegister.set_value" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the value on the redpitaya device.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrpl.attributes.BoolAttribute">
+<em class="property">class </em><tt class="descclassname">pyrpl.attributes.</tt><tt class="descname">BoolAttribute</tt><big>(</big><em>default=None</em>, <em>doc=''</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.BoolAttribute" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyrpl.attributes.BaseAttribute" title="pyrpl.attributes.BaseAttribute"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.BaseAttribute</span></tt></a></p>
+<p>An attribute for booleans</p>
+<dl class="method">
+<dt id="pyrpl.attributes.BoolAttribute.validate_and_normalize">
+<tt class="descname">validate_and_normalize</tt><big>(</big><em>value</em>, <em>module</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.BoolAttribute.validate_and_normalize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts value to bool.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pyrpl.attributes.BoolAttribute.widget_class">
+<tt class="descname">widget_class</tt><a class="headerlink" href="#pyrpl.attributes.BoolAttribute.widget_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <tt class="xref py py-class docutils literal"><span class="pre">BoolAttributeWidget</span></tt></p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrpl.attributes.BoolProperty">
+<em class="property">class </em><tt class="descclassname">pyrpl.attributes.</tt><tt class="descname">BoolProperty</tt><big>(</big><em>default=None</em>, <em>doc=''</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.BoolProperty" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyrpl.attributes.BoolAttribute" title="pyrpl.attributes.BoolAttribute"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.BoolAttribute</span></tt></a>, <a class="reference internal" href="#pyrpl.attributes.BaseProperty" title="pyrpl.attributes.BaseProperty"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.BaseProperty</span></tt></a></p>
+<p>A property for a boolean value</p>
+<dl class="attribute">
+<dt id="pyrpl.attributes.BoolProperty.default">
+<tt class="descname">default</tt><em class="property"> = False</em><a class="headerlink" href="#pyrpl.attributes.BoolProperty.default" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrpl.attributes.BoolRegister">
+<em class="property">class </em><tt class="descclassname">pyrpl.attributes.</tt><tt class="descname">BoolRegister</tt><big>(</big><em>address</em>, <em>bit=0</em>, <em>invert=False</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.BoolRegister" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyrpl.attributes.BaseRegister" title="pyrpl.attributes.BaseRegister"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.BaseRegister</span></tt></a>, <a class="reference internal" href="#pyrpl.attributes.BoolAttribute" title="pyrpl.attributes.BoolAttribute"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.BoolAttribute</span></tt></a></p>
+<p>Inteface for boolean values, 1: True, 0: False.
+invert=True inverts the mapping</p>
+<dl class="method">
+<dt id="pyrpl.attributes.BoolRegister.set_value">
+<tt class="descname">set_value</tt><big>(</big><em>obj</em>, <em>val</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.BoolRegister.set_value" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.attributes.BoolRegister.to_python">
+<tt class="descname">to_python</tt><big>(</big><em>value</em>, <em>obj</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.BoolRegister.to_python" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrpl.attributes.FilterAttribute">
+<em class="property">class </em><tt class="descclassname">pyrpl.attributes.</tt><tt class="descname">FilterAttribute</tt><big>(</big><em>default=None</em>, <em>doc=''</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.FilterAttribute" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyrpl.attributes.BaseAttribute" title="pyrpl.attributes.BaseAttribute"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.BaseAttribute</span></tt></a></p>
+<p>An attribute for a list of bandwidth. Each bandwidth has to be chosen in a list given by
+self.valid_frequencies(module) (evaluated at runtime). If floats are provided, they are normalized to the
+nearest values in the list. Individual floats are also normalized to a singleton.
+The number of elements in the list are also defined at runtime.</p>
+<dl class="method">
+<dt id="pyrpl.attributes.FilterAttribute.validate_and_normalize">
+<tt class="descname">validate_and_normalize</tt><big>(</big><em>value</em>, <em>module</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.FilterAttribute.validate_and_normalize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a list with the closest elements in module.valid_frequencies</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pyrpl.attributes.FilterAttribute.widget_class">
+<tt class="descname">widget_class</tt><a class="headerlink" href="#pyrpl.attributes.FilterAttribute.widget_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <tt class="xref py py-class docutils literal"><span class="pre">FilterAttributeWidget</span></tt></p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrpl.attributes.FilterProperty">
+<em class="property">class </em><tt class="descclassname">pyrpl.attributes.</tt><tt class="descname">FilterProperty</tt><big>(</big><em>default=None</em>, <em>doc=''</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.FilterProperty" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyrpl.attributes.FilterAttribute" title="pyrpl.attributes.FilterAttribute"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.FilterAttribute</span></tt></a>, <a class="reference internal" href="#pyrpl.attributes.BaseProperty" title="pyrpl.attributes.BaseProperty"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.BaseProperty</span></tt></a></p>
+<p>A property for a list of float values to be chosen in valid_frequencies(module).</p>
+<dl class="method">
+<dt id="pyrpl.attributes.FilterProperty.get_value">
+<tt class="descname">get_value</tt><big>(</big><em>obj</em>, <em>obj_type</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.FilterProperty.get_value" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.attributes.FilterProperty.set_value">
+<tt class="descname">set_value</tt><big>(</big><em>obj</em>, <em>value</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.FilterProperty.set_value" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrpl.attributes.FilterRegister">
+<em class="property">class </em><tt class="descclassname">pyrpl.attributes.</tt><tt class="descname">FilterRegister</tt><big>(</big><em>address</em>, <em>filterstages</em>, <em>shiftbits</em>, <em>minbw</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.FilterRegister" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyrpl.attributes.BaseRegister" title="pyrpl.attributes.BaseRegister"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.BaseRegister</span></tt></a>, <a class="reference internal" href="#pyrpl.attributes.FilterAttribute" title="pyrpl.attributes.FilterAttribute"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.FilterAttribute</span></tt></a></p>
+<p>Interface for up to 4 low-/highpass filters in series (filter_block.v)</p>
+<dl class="method">
+<dt id="pyrpl.attributes.FilterRegister.from_python">
+<tt class="descname">from_python</tt><big>(</big><em>value</em>, <em>obj</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.FilterRegister.from_python" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.attributes.FilterRegister.to_python">
+<tt class="descname">to_python</tt><big>(</big><em>value</em>, <em>obj</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.FilterRegister.to_python" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns a list of bandwidths for the low-pass filter cascade before the module
+negative bandwidth stands for high-pass instead of lowpass, 0 bandwidth for bypassing the filter</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.attributes.FilterRegister.valid_frequencies">
+<tt class="descname">valid_frequencies</tt><big>(</big><em>obj</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.FilterRegister.valid_frequencies" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns a list of all valid filter cutoff frequencies</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pyrpl.attributes.FilterRegister.widget_class">
+<tt class="descname">widget_class</tt><a class="headerlink" href="#pyrpl.attributes.FilterRegister.widget_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <tt class="xref py py-class docutils literal"><span class="pre">FilterAttributeWidget</span></tt></p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrpl.attributes.FloatAttribute">
+<em class="property">class </em><tt class="descclassname">pyrpl.attributes.</tt><tt class="descname">FloatAttribute</tt><big>(</big><em>default=None</em>, <em>increment=0.001</em>, <em>min=-0.1</em>, <em>max=1.0</em>, <em>doc=''</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.FloatAttribute" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyrpl.attributes.NumberAttribute" title="pyrpl.attributes.NumberAttribute"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.NumberAttribute</span></tt></a></p>
+<p>An attribute for a float value.</p>
+<dl class="method">
+<dt id="pyrpl.attributes.FloatAttribute.validate_and_normalize">
+<tt class="descname">validate_and_normalize</tt><big>(</big><em>value</em>, <em>module</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.FloatAttribute.validate_and_normalize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Try to convert to float, then saturates with min and max</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pyrpl.attributes.FloatAttribute.widget_class">
+<tt class="descname">widget_class</tt><a class="headerlink" href="#pyrpl.attributes.FloatAttribute.widget_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <tt class="xref py py-class docutils literal"><span class="pre">FloatAttributeWidget</span></tt></p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrpl.attributes.FloatProperty">
+<em class="property">class </em><tt class="descclassname">pyrpl.attributes.</tt><tt class="descname">FloatProperty</tt><big>(</big><em>default=None</em>, <em>increment=0.001</em>, <em>min=-0.1</em>, <em>max=1.0</em>, <em>doc=''</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.FloatProperty" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyrpl.attributes.FloatAttribute" title="pyrpl.attributes.FloatAttribute"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.FloatAttribute</span></tt></a>, <a class="reference internal" href="#pyrpl.attributes.BaseProperty" title="pyrpl.attributes.BaseProperty"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.BaseProperty</span></tt></a></p>
+<p>A property for a float value</p>
+<dl class="attribute">
+<dt id="pyrpl.attributes.FloatProperty.default">
+<tt class="descname">default</tt><em class="property"> = 0.0</em><a class="headerlink" href="#pyrpl.attributes.FloatProperty.default" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrpl.attributes.FloatRegister">
+<em class="property">class </em><tt class="descclassname">pyrpl.attributes.</tt><tt class="descname">FloatRegister</tt><big>(</big><em>address</em>, <em>bits=14</em>, <em>norm=1</em>, <em>signed=True</em>, <em>invert=False</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.FloatRegister" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyrpl.attributes.BaseRegister" title="pyrpl.attributes.BaseRegister"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.BaseRegister</span></tt></a>, <a class="reference internal" href="#pyrpl.attributes.FloatAttribute" title="pyrpl.attributes.FloatAttribute"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.FloatAttribute</span></tt></a></p>
+<p>Implements a fixed point register, seen like a (signed) float from python</p>
+<dl class="method">
+<dt id="pyrpl.attributes.FloatRegister.from_python">
+<tt class="descname">from_python</tt><big>(</big><em>value</em>, <em>obj</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.FloatRegister.from_python" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.attributes.FloatRegister.to_python">
+<tt class="descname">to_python</tt><big>(</big><em>value</em>, <em>obj</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.FloatRegister.to_python" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.attributes.FloatRegister.validate_and_normalize">
+<tt class="descname">validate_and_normalize</tt><big>(</big><em>value</em>, <em>module</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.FloatRegister.validate_and_normalize" title="Permalink to this definition">¶</a></dt>
+<dd><p>saturates to min/max, and rounds to the nearest value authorized by the register.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrpl.attributes.FrequencyAttribute">
+<em class="property">class </em><tt class="descclassname">pyrpl.attributes.</tt><tt class="descname">FrequencyAttribute</tt><big>(</big><em>default=None</em>, <em>increment=0.1</em>, <em>min=0</em>, <em>max=62500000.0</em>, <em>doc=''</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.FrequencyAttribute" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyrpl.attributes.FloatAttribute" title="pyrpl.attributes.FloatAttribute"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.FloatAttribute</span></tt></a></p>
+<p>An attribute for frequency values</p>
+<dl class="method">
+<dt id="pyrpl.attributes.FrequencyAttribute.validate_and_normalize">
+<tt class="descname">validate_and_normalize</tt><big>(</big><em>value</em>, <em>module</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.FrequencyAttribute.validate_and_normalize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Same as FloatAttribute, except it saturates with 0.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pyrpl.attributes.FrequencyAttribute.widget_class">
+<tt class="descname">widget_class</tt><a class="headerlink" href="#pyrpl.attributes.FrequencyAttribute.widget_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <tt class="xref py py-class docutils literal"><span class="pre">FrequencyAttributeWidget</span></tt></p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrpl.attributes.FrequencyProperty">
+<em class="property">class </em><tt class="descclassname">pyrpl.attributes.</tt><tt class="descname">FrequencyProperty</tt><big>(</big><em>default=None</em>, <em>increment=0.1</em>, <em>min=0</em>, <em>max=62500000.0</em>, <em>doc=''</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.FrequencyProperty" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyrpl.attributes.FrequencyAttribute" title="pyrpl.attributes.FrequencyAttribute"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.FrequencyAttribute</span></tt></a>, <a class="reference internal" href="#pyrpl.attributes.BaseProperty" title="pyrpl.attributes.BaseProperty"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.BaseProperty</span></tt></a></p>
+<p>A property for a frequency value</p>
+<dl class="attribute">
+<dt id="pyrpl.attributes.FrequencyProperty.default">
+<tt class="descname">default</tt><em class="property"> = 0.0</em><a class="headerlink" href="#pyrpl.attributes.FrequencyProperty.default" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrpl.attributes.FrequencyRegister">
+<em class="property">class </em><tt class="descclassname">pyrpl.attributes.</tt><tt class="descname">FrequencyRegister</tt><big>(</big><em>address</em>, <em>bits=32</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.FrequencyRegister" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyrpl.attributes.FloatRegister" title="pyrpl.attributes.FloatRegister"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.FloatRegister</span></tt></a>, <a class="reference internal" href="#pyrpl.attributes.FrequencyAttribute" title="pyrpl.attributes.FrequencyAttribute"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.FrequencyAttribute</span></tt></a></p>
+<p>Registers that contain a frequency as a float in units of Hz</p>
+<dl class="attribute">
+<dt id="pyrpl.attributes.FrequencyRegister.CLOCK_FREQUENCY">
+<tt class="descname">CLOCK_FREQUENCY</tt><em class="property"> = 125000000.0</em><a class="headerlink" href="#pyrpl.attributes.FrequencyRegister.CLOCK_FREQUENCY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.attributes.FrequencyRegister.from_python">
+<tt class="descname">from_python</tt><big>(</big><em>value</em>, <em>obj</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.FrequencyRegister.from_python" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.attributes.FrequencyRegister.get_value">
+<tt class="descname">get_value</tt><big>(</big><em>obj</em>, <em>objtype=None</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.FrequencyRegister.get_value" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.attributes.FrequencyRegister.set_value">
+<tt class="descname">set_value</tt><big>(</big><em>obj</em>, <em>val</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.FrequencyRegister.set_value" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.attributes.FrequencyRegister.to_python">
+<tt class="descname">to_python</tt><big>(</big><em>value</em>, <em>obj</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.FrequencyRegister.to_python" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.attributes.FrequencyRegister.validate_and_normalize">
+<tt class="descname">validate_and_normalize</tt><big>(</big><em>value</em>, <em>module</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.FrequencyRegister.validate_and_normalize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Same as FloatRegister, except the value should be positive.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrpl.attributes.IORegister">
+<em class="property">class </em><tt class="descclassname">pyrpl.attributes.</tt><tt class="descname">IORegister</tt><big>(</big><em>read_address</em>, <em>write_address</em>, <em>direction_address</em>, <em>outputmode=True</em>, <em>bit=0</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.IORegister" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyrpl.attributes.BoolRegister" title="pyrpl.attributes.BoolRegister"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.BoolRegister</span></tt></a></p>
+<p>Interface for digital outputs
+if argument outputmode is True, output mode is set, else input mode</p>
+<dl class="method">
+<dt id="pyrpl.attributes.IORegister.direction">
+<tt class="descname">direction</tt><big>(</big><em>obj</em>, <em>v=None</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.IORegister.direction" title="Permalink to this definition">¶</a></dt>
+<dd><p>sets the direction (inputmode/outputmode) for the Register</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.attributes.IORegister.get_value">
+<tt class="descname">get_value</tt><big>(</big><em>obj</em>, <em>objtype=None</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.IORegister.get_value" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.attributes.IORegister.set_value">
+<tt class="descname">set_value</tt><big>(</big><em>obj</em>, <em>val</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.IORegister.set_value" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrpl.attributes.IntAttribute">
+<em class="property">class </em><tt class="descclassname">pyrpl.attributes.</tt><tt class="descname">IntAttribute</tt><big>(</big><em>default=None</em>, <em>min=0</em>, <em>max=16384</em>, <em>increment=1</em>, <em>doc=''</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.IntAttribute" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyrpl.attributes.NumberAttribute" title="pyrpl.attributes.NumberAttribute"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.NumberAttribute</span></tt></a></p>
+<p>An attribute for integer values</p>
+<dl class="method">
+<dt id="pyrpl.attributes.IntAttribute.validate_and_normalize">
+<tt class="descname">validate_and_normalize</tt><big>(</big><em>value</em>, <em>module</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.IntAttribute.validate_and_normalize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accepts float, but rounds to integer</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pyrpl.attributes.IntAttribute.widget_class">
+<tt class="descname">widget_class</tt><a class="headerlink" href="#pyrpl.attributes.IntAttribute.widget_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <tt class="xref py py-class docutils literal"><span class="pre">IntAttributeWidget</span></tt></p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrpl.attributes.IntRegister">
+<em class="property">class </em><tt class="descclassname">pyrpl.attributes.</tt><tt class="descname">IntRegister</tt><big>(</big><em>address</em>, <em>bits=32</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.IntRegister" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyrpl.attributes.NumberRegister" title="pyrpl.attributes.NumberRegister"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.NumberRegister</span></tt></a>, <a class="reference internal" href="#pyrpl.attributes.IntAttribute" title="pyrpl.attributes.IntAttribute"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.IntAttribute</span></tt></a></p>
+<p>Register for integer values encoded on less than 32 bits.</p>
+<dl class="method">
+<dt id="pyrpl.attributes.IntRegister.from_python">
+<tt class="descname">from_python</tt><big>(</big><em>value</em>, <em>obj</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.IntRegister.from_python" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.attributes.IntRegister.to_python">
+<tt class="descname">to_python</tt><big>(</big><em>value</em>, <em>obj</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.IntRegister.to_python" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrpl.attributes.ListComplexAttribute">
+<em class="property">class </em><tt class="descclassname">pyrpl.attributes.</tt><tt class="descname">ListComplexAttribute</tt><big>(</big><em>default=None</em>, <em>doc=''</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.ListComplexAttribute" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyrpl.attributes.BaseAttribute" title="pyrpl.attributes.BaseAttribute"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.BaseAttribute</span></tt></a></p>
+<p>An arbitrary length list of complex numbers.</p>
+<dl class="method">
+<dt id="pyrpl.attributes.ListComplexAttribute.set_value">
+<tt class="descname">set_value</tt><big>(</big><em>instance</em>, <em>value</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.ListComplexAttribute.set_value" title="Permalink to this definition">¶</a></dt>
+<dd><p>Since yml complex lists are loaded as string lists, allow for a conversion step here.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.attributes.ListComplexAttribute.validate_and_normalize">
+<tt class="descname">validate_and_normalize</tt><big>(</big><em>value</em>, <em>module</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.ListComplexAttribute.validate_and_normalize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts the value in a list of complex numbers.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pyrpl.attributes.ListComplexAttribute.widget_class">
+<tt class="descname">widget_class</tt><a class="headerlink" href="#pyrpl.attributes.ListComplexAttribute.widget_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <tt class="xref py py-class docutils literal"><span class="pre">ListComplexAttributeWidget</span></tt></p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrpl.attributes.ListComplexProperty">
+<em class="property">class </em><tt class="descclassname">pyrpl.attributes.</tt><tt class="descname">ListComplexProperty</tt><big>(</big><em>default=None</em>, <em>doc=''</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.ListComplexProperty" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyrpl.attributes.ListComplexAttribute" title="pyrpl.attributes.ListComplexAttribute"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.ListComplexAttribute</span></tt></a>, <a class="reference internal" href="#pyrpl.attributes.BaseProperty" title="pyrpl.attributes.BaseProperty"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.BaseProperty</span></tt></a></p>
+<p>A property for a list of complex values</p>
+<dl class="attribute">
+<dt id="pyrpl.attributes.ListComplexProperty.default">
+<tt class="descname">default</tt><em class="property"> = [0.0]</em><a class="headerlink" href="#pyrpl.attributes.ListComplexProperty.default" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrpl.attributes.LongProperty">
+<em class="property">class </em><tt class="descclassname">pyrpl.attributes.</tt><tt class="descname">LongProperty</tt><big>(</big><em>min=0</em>, <em>max=16384</em>, <em>increment=1</em>, <em>doc=''</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.LongProperty" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyrpl.attributes.IntAttribute" title="pyrpl.attributes.IntAttribute"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.IntAttribute</span></tt></a>, <a class="reference internal" href="#pyrpl.attributes.BaseProperty" title="pyrpl.attributes.BaseProperty"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.BaseProperty</span></tt></a></p>
+<p>A property for a long value</p>
+<dl class="attribute">
+<dt id="pyrpl.attributes.LongProperty.default">
+<tt class="descname">default</tt><em class="property"> = 0</em><a class="headerlink" href="#pyrpl.attributes.LongProperty.default" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrpl.attributes.LongRegister">
+<em class="property">class </em><tt class="descclassname">pyrpl.attributes.</tt><tt class="descname">LongRegister</tt><big>(</big><em>address</em>, <em>bits=64</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.LongRegister" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyrpl.attributes.IntRegister" title="pyrpl.attributes.IntRegister"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.IntRegister</span></tt></a>, <a class="reference internal" href="#pyrpl.attributes.IntAttribute" title="pyrpl.attributes.IntAttribute"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.IntAttribute</span></tt></a></p>
+<p>Interface for register of python type int/long with arbitrary length &#8216;bits&#8217; (effectively unsigned)</p>
+<dl class="method">
+<dt id="pyrpl.attributes.LongRegister.get_value">
+<tt class="descname">get_value</tt><big>(</big><em>obj</em>, <em>objtype=None</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.LongRegister.get_value" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.attributes.LongRegister.set_value">
+<tt class="descname">set_value</tt><big>(</big><em>obj</em>, <em>val</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.LongRegister.set_value" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrpl.attributes.NumberAttribute">
+<em class="property">class </em><tt class="descclassname">pyrpl.attributes.</tt><tt class="descname">NumberAttribute</tt><big>(</big><em>default=None</em>, <em>doc=''</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.NumberAttribute" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyrpl.attributes.BaseAttribute" title="pyrpl.attributes.BaseAttribute"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.BaseAttribute</span></tt></a></p>
+<p>Abstract class for ints and floats</p>
+<dl class="method">
+<dt id="pyrpl.attributes.NumberAttribute.create_widget">
+<tt class="descname">create_widget</tt><big>(</big><em>module</em>, <em>name=None</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.NumberAttribute.create_widget" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.attributes.NumberAttribute.validate_and_normalize">
+<tt class="descname">validate_and_normalize</tt><big>(</big><em>value</em>, <em>module</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.NumberAttribute.validate_and_normalize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Saturates value with min and max.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrpl.attributes.NumberRegister">
+<em class="property">class </em><tt class="descclassname">pyrpl.attributes.</tt><tt class="descname">NumberRegister</tt><big>(</big><em>address</em>, <em>bits=64</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.NumberRegister" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyrpl.attributes.BaseRegister" title="pyrpl.attributes.BaseRegister"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.BaseRegister</span></tt></a></p>
+<p>Base register for numbers.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrpl.attributes.PWMRegister">
+<em class="property">class </em><tt class="descclassname">pyrpl.attributes.</tt><tt class="descname">PWMRegister</tt><big>(</big><em>address</em>, <em>CFG_BITS=24</em>, <em>PWM_BITS=8</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.PWMRegister" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyrpl.attributes.BaseRegister" title="pyrpl.attributes.BaseRegister"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.BaseRegister</span></tt></a>, <a class="reference internal" href="#pyrpl.attributes.BaseAttribute" title="pyrpl.attributes.BaseAttribute"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.BaseAttribute</span></tt></a></p>
+<dl class="method">
+<dt id="pyrpl.attributes.PWMRegister.from_python">
+<tt class="descname">from_python</tt><big>(</big><em>value</em>, <em>obj</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.PWMRegister.from_python" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.attributes.PWMRegister.to_python">
+<tt class="descname">to_python</tt><big>(</big><em>value</em>, <em>obj</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.PWMRegister.to_python" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrpl.attributes.PhaseAttribute">
+<em class="property">class </em><tt class="descclassname">pyrpl.attributes.</tt><tt class="descname">PhaseAttribute</tt><big>(</big><em>increment=1.0</em>, <em>min=0.0</em>, <em>max=360.0</em>, <em>doc=''</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.PhaseAttribute" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyrpl.attributes.FloatAttribute" title="pyrpl.attributes.FloatAttribute"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.FloatAttribute</span></tt></a></p>
+<p>An attribute to represent a phase</p>
+<dl class="method">
+<dt id="pyrpl.attributes.PhaseAttribute.validate_and_normalize">
+<tt class="descname">validate_and_normalize</tt><big>(</big><em>value</em>, <em>module</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.PhaseAttribute.validate_and_normalize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rejects anything that is not float, and takes modulo 360</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrpl.attributes.PhaseProperty">
+<em class="property">class </em><tt class="descclassname">pyrpl.attributes.</tt><tt class="descname">PhaseProperty</tt><big>(</big><em>increment=1.0</em>, <em>min=0.0</em>, <em>max=360.0</em>, <em>doc=''</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.PhaseProperty" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyrpl.attributes.PhaseAttribute" title="pyrpl.attributes.PhaseAttribute"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.PhaseAttribute</span></tt></a>, <a class="reference internal" href="#pyrpl.attributes.BaseProperty" title="pyrpl.attributes.BaseProperty"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.BaseProperty</span></tt></a></p>
+<p>A property for a phase value</p>
+<dl class="attribute">
+<dt id="pyrpl.attributes.PhaseProperty.default">
+<tt class="descname">default</tt><em class="property"> = 0</em><a class="headerlink" href="#pyrpl.attributes.PhaseProperty.default" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrpl.attributes.PhaseRegister">
+<em class="property">class </em><tt class="descclassname">pyrpl.attributes.</tt><tt class="descname">PhaseRegister</tt><big>(</big><em>address</em>, <em>bits=32</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.PhaseRegister" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyrpl.attributes.FloatRegister" title="pyrpl.attributes.FloatRegister"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.FloatRegister</span></tt></a>, <a class="reference internal" href="#pyrpl.attributes.PhaseAttribute" title="pyrpl.attributes.PhaseAttribute"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.PhaseAttribute</span></tt></a></p>
+<p>Registers that contain a phase as a float in units of degrees.</p>
+<dl class="method">
+<dt id="pyrpl.attributes.PhaseRegister.from_python">
+<tt class="descname">from_python</tt><big>(</big><em>value</em>, <em>obj</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.PhaseRegister.from_python" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.attributes.PhaseRegister.to_python">
+<tt class="descname">to_python</tt><big>(</big><em>value</em>, <em>obj</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.PhaseRegister.to_python" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.attributes.PhaseRegister.validate_and_normalize">
+<tt class="descname">validate_and_normalize</tt><big>(</big><em>value</em>, <em>module</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.PhaseRegister.validate_and_normalize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rounds to nearest authorized register value and take modulo 360</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrpl.attributes.SelectAttribute">
+<em class="property">class </em><tt class="descclassname">pyrpl.attributes.</tt><tt class="descname">SelectAttribute</tt><big>(</big><em>options</em>, <em>default=None</em>, <em>doc=''</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.SelectAttribute" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyrpl.attributes.BaseAttribute" title="pyrpl.attributes.BaseAttribute"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.BaseAttribute</span></tt></a></p>
+<p>An attribute for a multiple choice value.
+The options have to be specified as a list at the time of attribute creation (Module declaration).
+If options are numbers (int or float), rounding to the closest value is performed during the validation
+If options are strings, validation is strict.</p>
+<dl class="method">
+<dt id="pyrpl.attributes.SelectAttribute.create_widget">
+<tt class="descname">create_widget</tt><big>(</big><em>module</em>, <em>name=None</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.SelectAttribute.create_widget" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function is reimplemented to pass the options to the widget.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.attributes.SelectAttribute.validate_and_normalize">
+<tt class="descname">validate_and_normalize</tt><big>(</big><em>value</em>, <em>module</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.SelectAttribute.validate_and_normalize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Looks for attribute name, otherwise, converts to string and rejects if not in self.options</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pyrpl.attributes.SelectAttribute.widget_class">
+<tt class="descname">widget_class</tt><a class="headerlink" href="#pyrpl.attributes.SelectAttribute.widget_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <tt class="xref py py-class docutils literal"><span class="pre">SelectAttributeWidget</span></tt></p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrpl.attributes.SelectProperty">
+<em class="property">class </em><tt class="descclassname">pyrpl.attributes.</tt><tt class="descname">SelectProperty</tt><big>(</big><em>options</em>, <em>default=None</em>, <em>doc=''</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.SelectProperty" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyrpl.attributes.SelectAttribute" title="pyrpl.attributes.SelectAttribute"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.SelectAttribute</span></tt></a>, <a class="reference internal" href="#pyrpl.attributes.BaseProperty" title="pyrpl.attributes.BaseProperty"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.BaseProperty</span></tt></a></p>
+<p>A property for multiple choice values, if options are numbers, rounding will be performed,
+otherwise validator is strict.</p>
+<dl class="method">
+<dt id="pyrpl.attributes.SelectProperty.get_value">
+<tt class="descname">get_value</tt><big>(</big><em>obj</em>, <em>obj_type</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.SelectProperty.get_value" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrpl.attributes.SelectRegister">
+<em class="property">class </em><tt class="descclassname">pyrpl.attributes.</tt><tt class="descname">SelectRegister</tt><big>(</big><em>address</em>, <em>options={}</em>, <em>doc=''</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.SelectRegister" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyrpl.attributes.BaseRegister" title="pyrpl.attributes.BaseRegister"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.BaseRegister</span></tt></a>, <a class="reference internal" href="#pyrpl.attributes.SelectAttribute" title="pyrpl.attributes.SelectAttribute"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.SelectAttribute</span></tt></a></p>
+<p>Implements a selection, such as for multiplexers</p>
+<dl class="method">
+<dt id="pyrpl.attributes.SelectRegister.from_python">
+<tt class="descname">from_python</tt><big>(</big><em>value</em>, <em>obj</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.SelectRegister.from_python" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.attributes.SelectRegister.to_python">
+<tt class="descname">to_python</tt><big>(</big><em>value</em>, <em>obj</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.SelectRegister.to_python" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrpl.attributes.StringAttribute">
+<em class="property">class </em><tt class="descclassname">pyrpl.attributes.</tt><tt class="descname">StringAttribute</tt><big>(</big><em>default=None</em>, <em>doc=''</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.StringAttribute" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyrpl.attributes.BaseAttribute" title="pyrpl.attributes.BaseAttribute"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.BaseAttribute</span></tt></a></p>
+<p>An attribute for string (in practice, there is no StringRegister at this stage).</p>
+<dl class="method">
+<dt id="pyrpl.attributes.StringAttribute.validate_and_normalize">
+<tt class="descname">validate_and_normalize</tt><big>(</big><em>value</em>, <em>module</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.StringAttribute.validate_and_normalize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reject anything that is not a basestring</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pyrpl.attributes.StringAttribute.widget_class">
+<tt class="descname">widget_class</tt><a class="headerlink" href="#pyrpl.attributes.StringAttribute.widget_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <tt class="xref py py-class docutils literal"><span class="pre">StringAttributeWidget</span></tt></p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrpl.attributes.StringProperty">
+<em class="property">class </em><tt class="descclassname">pyrpl.attributes.</tt><tt class="descname">StringProperty</tt><big>(</big><em>default=None</em>, <em>doc=''</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.StringProperty" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyrpl.attributes.StringAttribute" title="pyrpl.attributes.StringAttribute"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.StringAttribute</span></tt></a>, <a class="reference internal" href="#pyrpl.attributes.BaseProperty" title="pyrpl.attributes.BaseProperty"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.BaseProperty</span></tt></a></p>
+<p>A property for a string value</p>
+<dl class="attribute">
+<dt id="pyrpl.attributes.StringProperty.default">
+<tt class="descname">default</tt><em class="property"> = ''</em><a class="headerlink" href="#pyrpl.attributes.StringProperty.default" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-pyrpl.bijection">
+<span id="pyrpl-bijection-module"></span><h2>pyrpl.bijection module<a class="headerlink" href="#module-pyrpl.bijection" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pyrpl.bijection.Bijection">
+<em class="property">class </em><tt class="descclassname">pyrpl.bijection.</tt><tt class="descname">Bijection</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pyrpl.bijection.Bijection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">dict</span></tt></p>
+<p>This class defines a bijection object based on dict</p>
+<p>It can be used exactly like dict, but additionally has a property
+&#8216;inverse&#8217; which contains the inverted {value: key} dict.</p>
+<dl class="method">
+<dt id="pyrpl.bijection.Bijection.pop">
+<tt class="descname">pop</tt><big>(</big><em>key</em><big>)</big><a class="headerlink" href="#pyrpl.bijection.Bijection.pop" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.bijection.Bijection.update">
+<tt class="descname">update</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pyrpl.bijection.Bijection.update" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-pyrpl.bodefit">
+<span id="pyrpl-bodefit-module"></span><h2>pyrpl.bodefit module<a class="headerlink" href="#module-pyrpl.bodefit" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pyrpl.bodefit.BodeFit">
+<em class="property">class </em><tt class="descclassname">pyrpl.bodefit.</tt><tt class="descname">BodeFit</tt><big>(</big><em>id=None</em>, <em>xlog=True</em>, <em>invert=True</em>, <em>autogain=True</em>, <em>legend=True</em>, <em>showstability=False</em><big>)</big><a class="headerlink" href="#pyrpl.bodefit.BodeFit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyrpl.bodefit.BodePlot" title="pyrpl.bodefit.BodePlot"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.bodefit.BodePlot</span></tt></a></p>
+<dl class="method">
+<dt id="pyrpl.bodefit.BodeFit.default">
+<tt class="descname">default</tt><big>(</big><em>autogain=True</em><big>)</big><a class="headerlink" href="#pyrpl.bodefit.BodeFit.default" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyrpl.bodefit.BodeFit.extraparams">
+<tt class="descname">extraparams</tt><em class="property"> = ['loops', 'gain', 'invert', 'delta', 'actpole', 'actzero', 'inputfilter']</em><a class="headerlink" href="#pyrpl.bodefit.BodeFit.extraparams" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyrpl.bodefit.BodeFit.gain">
+<tt class="descname">gain</tt><a class="headerlink" href="#pyrpl.bodefit.BodeFit.gain" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.bodefit.BodeFit.getpz">
+<tt class="descname">getpz</tt><big>(</big><em>pointlist</em><big>)</big><a class="headerlink" href="#pyrpl.bodefit.BodeFit.getpz" title="Permalink to this definition">¶</a></dt>
+<dd><p>gets &#8216;data&#8217; of poles or zeros for plotting</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pyrpl.bodefit.BodeFit.inputfilter">
+<tt class="descname">inputfilter</tt><a class="headerlink" href="#pyrpl.bodefit.BodeFit.inputfilter" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.bodefit.BodeFit.loadfit">
+<tt class="descname">loadfit</tt><big>(</big><em>id=None</em><big>)</big><a class="headerlink" href="#pyrpl.bodefit.BodeFit.loadfit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyrpl.bodefit.BodeFit.params">
+<tt class="descname">params</tt><a class="headerlink" href="#pyrpl.bodefit.BodeFit.params" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyrpl.bodefit.BodeFit.poles">
+<tt class="descname">poles</tt><a class="headerlink" href="#pyrpl.bodefit.BodeFit.poles" title="Permalink to this definition">¶</a></dt>
+<dd><p>this list only contains single poles/zeros. Complex conjugates
+are automatically added</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.bodefit.BodeFit.refresh">
+<tt class="descname">refresh</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.bodefit.BodeFit.refresh" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.bodefit.BodeFit.savefig">
+<tt class="descname">savefig</tt><big>(</big><em>filename='bodeplot'</em>, <em>DPI=600</em>, <em>outdir=None</em><big>)</big><a class="headerlink" href="#pyrpl.bodefit.BodeFit.savefig" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.bodefit.BodeFit.savefit">
+<tt class="descname">savefit</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.bodefit.BodeFit.savefit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.bodefit.BodeFit.transfer_function">
+<tt class="descname">transfer_function</tt><big>(</big><em>frequencies=None</em><big>)</big><a class="headerlink" href="#pyrpl.bodefit.BodeFit.transfer_function" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.bodefit.BodeFit.update_data">
+<tt class="descname">update_data</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.bodefit.BodeFit.update_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.bodefit.BodeFit.update_info">
+<tt class="descname">update_info</tt><big>(</big><em>append=''</em><big>)</big><a class="headerlink" href="#pyrpl.bodefit.BodeFit.update_info" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyrpl.bodefit.BodeFit.zeros">
+<tt class="descname">zeros</tt><a class="headerlink" href="#pyrpl.bodefit.BodeFit.zeros" title="Permalink to this definition">¶</a></dt>
+<dd><p>this list only contains single poles/zeros. Complex conjugates
+are automatically added</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrpl.bodefit.BodeFitIIR">
+<em class="property">class </em><tt class="descclassname">pyrpl.bodefit.</tt><tt class="descname">BodeFitIIR</tt><big>(</big><em>id=None</em>, <em>xlog=True</em>, <em>invert=True</em>, <em>autogain=True</em>, <em>legend=True</em>, <em>showstability=False</em><big>)</big><a class="headerlink" href="#pyrpl.bodefit.BodeFitIIR" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyrpl.bodefit.BodeFit" title="pyrpl.bodefit.BodeFit"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.bodefit.BodeFit</span></tt></a></p>
+<dl class="method">
+<dt id="pyrpl.bodefit.BodeFitIIR.update_data">
+<tt class="descname">update_data</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.bodefit.BodeFitIIR.update_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.bodefit.BodeFitIIR.update_info">
+<tt class="descname">update_info</tt><big>(</big><em>append=''</em><big>)</big><a class="headerlink" href="#pyrpl.bodefit.BodeFitIIR.update_info" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrpl.bodefit.BodeFitIIRGui">
+<em class="property">class </em><tt class="descclassname">pyrpl.bodefit.</tt><tt class="descname">BodeFitIIRGui</tt><big>(</big><em>id=None</em>, <em>xlog=True</em>, <em>invert=True</em>, <em>autogain=True</em>, <em>legend=False</em>, <em>showstability=False</em><big>)</big><a class="headerlink" href="#pyrpl.bodefit.BodeFitIIRGui" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyrpl.bodefit.BodeFitIIR" title="pyrpl.bodefit.BodeFitIIR"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.bodefit.BodeFitIIR</span></tt></a></p>
+<dl class="method">
+<dt id="pyrpl.bodefit.BodeFitIIRGui.clickmode">
+<tt class="descname">clickmode</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.bodefit.BodeFitIIRGui.clickmode" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.bodefit.BodeFitIIRGui.onclick">
+<tt class="descname">onclick</tt><big>(</big><em>event</em><big>)</big><a class="headerlink" href="#pyrpl.bodefit.BodeFitIIRGui.onclick" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.bodefit.BodeFitIIRGui.onkeypress">
+<tt class="descname">onkeypress</tt><big>(</big><em>event</em><big>)</big><a class="headerlink" href="#pyrpl.bodefit.BodeFitIIRGui.onkeypress" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.bodefit.BodeFitIIRGui.otherkeyactions">
+<tt class="descname">otherkeyactions</tt><big>(</big><em>key</em><big>)</big><a class="headerlink" href="#pyrpl.bodefit.BodeFitIIRGui.otherkeyactions" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrpl.bodefit.BodeFitIIRGuiOptimisation">
+<em class="property">class </em><tt class="descclassname">pyrpl.bodefit.</tt><tt class="descname">BodeFitIIRGuiOptimisation</tt><big>(</big><em>id=None</em>, <em>xlog=True</em>, <em>invert=False</em>, <em>autogain=True</em>, <em>legend=True</em>, <em>showstability=False</em><big>)</big><a class="headerlink" href="#pyrpl.bodefit.BodeFitIIRGuiOptimisation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyrpl.bodefit.BodeFitIIRGui" title="pyrpl.bodefit.BodeFitIIRGui"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.bodefit.BodeFitIIRGui</span></tt></a></p>
+<p>Numerical p-norm calculation of filter coefficients</p>
+<dl class="attribute">
+<dt id="pyrpl.bodefit.BodeFitIIRGuiOptimisation.coefficients">
+<tt class="descname">coefficients</tt><a class="headerlink" href="#pyrpl.bodefit.BodeFitIIRGuiOptimisation.coefficients" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.bodefit.BodeFitIIRGuiOptimisation.error">
+<tt class="descname">error</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.bodefit.BodeFitIIRGuiOptimisation.error" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyrpl.bodefit.BodeFitIIRGuiOptimisation.loops">
+<tt class="descname">loops</tt><a class="headerlink" href="#pyrpl.bodefit.BodeFitIIRGuiOptimisation.loops" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.bodefit.BodeFitIIRGuiOptimisation.minimize">
+<tt class="descname">minimize</tt><big>(</big><em>coefficients=None</em>, <em>degree=None</em>, <em>initialize=False</em><big>)</big><a class="headerlink" href="#pyrpl.bodefit.BodeFitIIRGuiOptimisation.minimize" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.bodefit.BodeFitIIRGuiOptimisation.nosorandomcoefficients">
+<tt class="descname">nosorandomcoefficients</tt><big>(</big><em>degree=10</em>, <em>scale=4.0</em><big>)</big><a class="headerlink" href="#pyrpl.bodefit.BodeFitIIRGuiOptimisation.nosorandomcoefficients" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.bodefit.BodeFitIIRGuiOptimisation.otherkeyaction">
+<tt class="descname">otherkeyaction</tt><big>(</big><em>key</em><big>)</big><a class="headerlink" href="#pyrpl.bodefit.BodeFitIIRGuiOptimisation.otherkeyaction" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.bodefit.BodeFitIIRGuiOptimisation.otherkeyactions">
+<tt class="descname">otherkeyactions</tt><big>(</big><em>key</em><big>)</big><a class="headerlink" href="#pyrpl.bodefit.BodeFitIIRGuiOptimisation.otherkeyactions" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.bodefit.BodeFitIIRGuiOptimisation.randomcoefficients">
+<tt class="descname">randomcoefficients</tt><big>(</big><em>degree=10</em>, <em>scale=4.0</em><big>)</big><a class="headerlink" href="#pyrpl.bodefit.BodeFitIIRGuiOptimisation.randomcoefficients" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyrpl.bodefit.BodeFitIIRGuiOptimisation.redpitaya">
+<tt class="descname">redpitaya</tt><a class="headerlink" href="#pyrpl.bodefit.BodeFitIIRGuiOptimisation.redpitaya" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyrpl.bodefit.BodeFitIIRGuiOptimisation.sampling_time">
+<tt class="descname">sampling_time</tt><a class="headerlink" href="#pyrpl.bodefit.BodeFitIIRGuiOptimisation.sampling_time" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.bodefit.BodeFitIIRGuiOptimisation.setcoefficients">
+<tt class="descname">setcoefficients</tt><big>(</big><em>num0s</em>, <em>num1s</em>, <em>den0s</em>, <em>den1s</em><big>)</big><a class="headerlink" href="#pyrpl.bodefit.BodeFitIIRGuiOptimisation.setcoefficients" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.bodefit.BodeFitIIRGuiOptimisation.setdefaulttarget">
+<tt class="descname">setdefaulttarget</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.bodefit.BodeFitIIRGuiOptimisation.setdefaulttarget" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyrpl.bodefit.BodeFitIIRGuiOptimisation.target">
+<tt class="descname">target</tt><a class="headerlink" href="#pyrpl.bodefit.BodeFitIIRGuiOptimisation.target" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.bodefit.BodeFitIIRGuiOptimisation.unitycoefficients">
+<tt class="descname">unitycoefficients</tt><big>(</big><em>degree=1</em>, <em>k=1</em><big>)</big><a class="headerlink" href="#pyrpl.bodefit.BodeFitIIRGuiOptimisation.unitycoefficients" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrpl.bodefit.BodePlot">
+<em class="property">class </em><tt class="descclassname">pyrpl.bodefit.</tt><tt class="descname">BodePlot</tt><big>(</big><em>data</em>, <em>datastyle={'data': 'b-'}</em>, <em>autoplot=True</em>, <em>xlog=True</em>, <em>legend=True</em><big>)</big><a class="headerlink" href="#pyrpl.bodefit.BodePlot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Class that generates bodeplots from an OrderedDict of data +
+style specification</p>
+<dl class="docutils">
+<dt>Parameters</dt>
+<dd><dl class="first last docutils">
+<dt>data: collections.OrderedDict</dt>
+<dd>An ordered dict containing key-value pairs of datalabels and data.
+The data can be either pandas.Series objects or tuples of x and
+y arrays. y should be complex to benefit from the bodeplot
+functionality.</dd>
+<dt>datastyle: dict</dt>
+<dd>a dictionary whose keys are the same as in data, containing the
+plot style parameter for the trace</dd>
+<dt>autoplot: bool</dt>
+<dd>Plot automatically upon startup</dd>
+<dt>xlog: bool</dt>
+<dd>Makes x-axis logscaled.</dd>
+</dl>
+</dd>
+</dl>
+<dl class="method">
+<dt id="pyrpl.bodefit.BodePlot.plot">
+<tt class="descname">plot</tt><big>(</big><em>unwrap=False</em>, <em>newfigstyle='y-'</em>, <em>label=''</em><big>)</big><a class="headerlink" href="#pyrpl.bodefit.BodePlot.plot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyrpl.bodefit.BodePlot.x">
+<tt class="descname">x</tt><a class="headerlink" href="#pyrpl.bodefit.BodePlot.x" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="pyrpl.bodefit.iirparams_from_curve">
+<tt class="descclassname">pyrpl.bodefit.</tt><tt class="descname">iirparams_from_curve</tt><big>(</big><em>id</em><big>)</big><a class="headerlink" href="#pyrpl.bodefit.iirparams_from_curve" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="pyrpl.bodefit.iirparams_from_curveparams">
+<tt class="descclassname">pyrpl.bodefit.</tt><tt class="descname">iirparams_from_curveparams</tt><big>(</big><em>curveparams</em><big>)</big><a class="headerlink" href="#pyrpl.bodefit.iirparams_from_curveparams" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-pyrpl.curvedb">
+<span id="pyrpl-curvedb-module"></span><h2>pyrpl.curvedb module<a class="headerlink" href="#module-pyrpl.curvedb" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-pyrpl.errors">
+<span id="pyrpl-errors-module"></span><h2>pyrpl.errors module<a class="headerlink" href="#module-pyrpl.errors" title="Permalink to this headline">¶</a></h2>
+<dl class="exception">
+<dt id="pyrpl.errors.NotReadyError">
+<em class="property">exception </em><tt class="descclassname">pyrpl.errors.</tt><tt class="descname">NotReadyError</tt><a class="headerlink" href="#pyrpl.errors.NotReadyError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">exceptions.ValueError</span></tt></p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="pyrpl.errors.TimeoutError">
+<em class="property">exception </em><tt class="descclassname">pyrpl.errors.</tt><tt class="descname">TimeoutError</tt><a class="headerlink" href="#pyrpl.errors.TimeoutError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">exceptions.ValueError</span></tt></p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pyrpl.fitting">
+<span id="pyrpl-fitting-module"></span><h2>pyrpl.fitting module<a class="headerlink" href="#module-pyrpl.fitting" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pyrpl.fitting.Fit">
+<em class="property">class </em><tt class="descclassname">pyrpl.fitting.</tt><tt class="descname">Fit</tt><big>(</big><em>data</em>, <em>func</em>, <em>fixed_params={}</em>, <em>manualguess_params={}</em>, <em>maxiter=10000</em>, <em>errfn='error_vector'</em>, <em>autofit=True</em>, <em>graphicalfit=False</em><big>)</big><a class="headerlink" href="#pyrpl.fitting.Fit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<dl class="method">
+<dt id="pyrpl.fitting.Fit.error_vector">
+<tt class="descname">error_vector</tt><big>(</big><em>args</em><big>)</big><a class="headerlink" href="#pyrpl.fitting.Fit.error_vector" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns a vector containing the difference between fit and data - not the square of it!</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.fitting.Fit.fit">
+<tt class="descname">fit</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.fitting.Fit.fit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.fitting.Fit.getparams">
+<tt class="descname">getparams</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.fitting.Fit.getparams" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.fitting.Fit.getsqerror">
+<tt class="descname">getsqerror</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.fitting.Fit.getsqerror" title="Permalink to this definition">¶</a></dt>
+<dd><p>rms of fit residue</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.fitting.Fit.graphicalfit">
+<tt class="descname">graphicalfit</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.fitting.Fit.graphicalfit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.fitting.Fit.log_error_vector">
+<tt class="descname">log_error_vector</tt><big>(</big><em>args</em><big>)</big><a class="headerlink" href="#pyrpl.fitting.Fit.log_error_vector" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns a vector containing the difference between log(fit) and log(data) - not the square of it!</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.fitting.Fit.x">
+<tt class="descname">x</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.fitting.Fit.x" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.fitting.Fit.y">
+<tt class="descname">y</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.fitting.Fit.y" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-pyrpl.iir">
+<span id="pyrpl-iir-module"></span><h2>pyrpl.iir module<a class="headerlink" href="#module-pyrpl.iir" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pyrpl.iir.IirFilter">
+<em class="property">class </em><tt class="descclassname">pyrpl.iir.</tt><tt class="descname">IirFilter</tt><big>(</big><em>zeros</em>, <em>poles</em>, <em>gain</em>, <em>loops=None</em>, <em>dt=8e-09</em>, <em>minloops=4</em>, <em>maxloops=1023</em>, <em>iirstages=16</em>, <em>totalbits=32</em>, <em>shiftbits=29</em>, <em>tol=0.001</em>, <em>frequencies=None</em>, <em>inputfilter=0</em>, <em>moduledelay=5</em><big>)</big><a class="headerlink" href="#pyrpl.iir.IirFilter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<dl class="attribute">
+<dt id="pyrpl.iir.IirFilter.coefficients">
+<tt class="descname">coefficients</tt><a class="headerlink" href="#pyrpl.iir.IirFilter.coefficients" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the coefficients of the IIR filter</p>
+<dl class="docutils">
+<dt>sys: (zeros, poles, gain)</dt>
+<dd><p class="first">zeros: list of complex zeros
+poles: list of complex poles
+gain:  DC-gain</p>
+<p class="last">zeros/poles with nonzero imaginary part should come in complex
+conjugate pairs, otherwise the conjugate zero/pole will
+automatically be added. After this, the number of poles should
+exceed the number of zeros at least by one, otherwise a real pole
+near the nyquist frequency will automatically be added until there
+are more poles than zeros.</p>
+</dd>
+<dt>loops: int or None</dt>
+<dd>the number of FPGA cycles per filter sample. None tries to
+automatically find the value leading to the highest possible
+sampling frequency. If the numerical precision of the filter
+coefficients in the FPGA is the limiting, manually setting a higher
+value of loops may improve the filter performance.</dd>
+<dt>dt: float</dt>
+<dd>the FPGA clock frequency. Should be very close to 8e-9</dd>
+<dt>minoops: int</dt>
+<dd>minimum number of loops (constant of the FPGA design)</dd>
+<dt>maxloops: int</dt>
+<dd>maximum number of loops (constant of the FPGA design)</dd>
+<dt>tol: float</dt>
+<dd>tolerancee for matching conjugate pole/zero pairs. 1e-3 is okay.</dd>
+<dt>intermediatereturn: str or None</dt>
+<dd>if set to a valid option, the algorithm will stop at the specified
+step and return an intermediate result for debugging. Valid options are</dd>
+</dl>
+<p>coefficients, loops</p>
+<p>coefficients is an array of float arrays of length six, which hold the
+filter coefficients to be passed directly to the iir module</p>
+<p>loops is the number of loops for the implemented design.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pyrpl.iir.IirFilter.coefficients_rounded">
+<tt class="descname">coefficients_rounded</tt><a class="headerlink" href="#pyrpl.iir.IirFilter.coefficients_rounded" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyrpl.iir.IirFilter.designdata">
+<tt class="descname">designdata</tt><a class="headerlink" href="#pyrpl.iir.IirFilter.designdata" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.iir.IirFilter.finiteprecision">
+<tt class="descname">finiteprecision</tt><big>(</big><em>coeff=None</em>, <em>totalbits=None</em>, <em>shiftbits=None</em><big>)</big><a class="headerlink" href="#pyrpl.iir.IirFilter.finiteprecision" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyrpl.iir.IirFilter.frequencies">
+<tt class="descname">frequencies</tt><a class="headerlink" href="#pyrpl.iir.IirFilter.frequencies" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.iir.IirFilter.minimize_delay">
+<tt class="descname">minimize_delay</tt><big>(</big><em>coefficients=None</em><big>)</big><a class="headerlink" href="#pyrpl.iir.IirFilter.minimize_delay" title="Permalink to this definition">¶</a></dt>
+<dd><p>Minimizes the delay of coefficients by rearranging the biquads in an
+optimal way (highest frequency poles get minimum delay.</p>
+<p>coefficients</p>
+<p>new coefficients</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.iir.IirFilter.prewarp">
+<tt class="descname">prewarp</tt><big>(</big><em>z</em>, <em>p</em>, <em>dt=8e-09</em><big>)</big><a class="headerlink" href="#pyrpl.iir.IirFilter.prewarp" title="Permalink to this definition">¶</a></dt>
+<dd><p>prewarps frequencies in order to correct warping effect in discrete
+time conversion</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pyrpl.iir.IirFilter.proper_sys">
+<tt class="descname">proper_sys</tt><a class="headerlink" href="#pyrpl.iir.IirFilter.proper_sys" title="Permalink to this definition">¶</a></dt>
+<dd><p>Makes sure that a system is strictly proper and that all complex
+poles/zeros have conjugate parters.</p>
+<p>zeros: list of zeros
+poles: list of poles
+loops: number of loops to implement. Can be None for autodetection.
+minloops: minimum number of loops that is acceptable
+maxloops: minimum number of loops that is acceptable
+iirstages: number of biquads available for implementation
+tol: tolerance for matching complex conjugate partners</p>
+<p>(zeros, poles, minloops) - the corrected lists of poles/zeros and the
+number of loops that are minimally needed for implementation</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pyrpl.iir.IirFilter.rescaled_sys">
+<tt class="descname">rescaled_sys</tt><a class="headerlink" href="#pyrpl.iir.IirFilter.rescaled_sys" title="Permalink to this definition">¶</a></dt>
+<dd><p>rescales poles and zeros with 2pi and returns the prefactor
+corresponding to dc-gain gain</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.iir.IirFilter.rp2coefficients">
+<tt class="descname">rp2coefficients</tt><big>(</big><em>r</em>, <em>p</em>, <em>c</em>, <em>tol=0</em><big>)</big><a class="headerlink" href="#pyrpl.iir.IirFilter.rp2coefficients" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pairs residues and corresponding poles into second order sections.</p>
+<p>r: array with numerator coefficient
+p: array with poles
+tol: tolerance for combining complex conjugate pairs.</p>
+<p>coefficients: array((N, 6), dtype=np.float64) where N is number of biquads</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pyrpl.iir.IirFilter.sampling_rate">
+<tt class="descname">sampling_rate</tt><a class="headerlink" href="#pyrpl.iir.IirFilter.sampling_rate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyrpl.iir.IirFilter.sys">
+<tt class="descname">sys</tt><a class="headerlink" href="#pyrpl.iir.IirFilter.sys" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.iir.IirFilter.tf_coefficients">
+<tt class="descname">tf_coefficients</tt><big>(</big><em>frequencies=None</em>, <em>coefficients=None</em>, <em>delay=False</em><big>)</big><a class="headerlink" href="#pyrpl.iir.IirFilter.tf_coefficients" title="Permalink to this definition">¶</a></dt>
+<dd><p>computes implemented transfer function - assuming no delay and
+infinite precision (actually floating-point precision)
+Returns the discrete transfer function realized by coefficients at
+frequencies.</p>
+<dl class="docutils">
+<dt>coefficients: np.array</dt>
+<dd>coefficients as returned from iir module</dd>
+<dt>frequencies: np.array</dt>
+<dd>frequencies to compute the transfer function for</dd>
+<dt>dt: float</dt>
+<dd>discrete sampling time (seconds)</dd>
+<dt>zoh: bool</dt>
+<dd>If true, zero-order hold implementation is assumed. Otherwise,
+the delay is expected to depend on the index of biquad.</dd>
+</dl>
+<p>np.array(..., dtype=np.complex)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.iir.IirFilter.tf_continuous">
+<tt class="descname">tf_continuous</tt><big>(</big><em>frequencies=None</em><big>)</big><a class="headerlink" href="#pyrpl.iir.IirFilter.tf_continuous" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the continuous transfer function of sys at frequencies.</p>
+<dl class="docutils">
+<dt>sys: tuple</dt>
+<dd>(zeros, poles, gain)
+zeros: list of complex zeros
+poles: list of complex poles
+gain: float</dd>
+<dt>frequencies: np.array</dt>
+<dd>frequencies to compute the transfer function for</dd>
+</dl>
+<p>np.array(..., dtype=np.complex)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.iir.IirFilter.tf_discrete">
+<tt class="descname">tf_discrete</tt><big>(</big><em>rp_discrete=None</em>, <em>frequencies=None</em><big>)</big><a class="headerlink" href="#pyrpl.iir.IirFilter.tf_discrete" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the discrete transfer function realized by coefficients at
+frequencies.</p>
+<dl class="docutils">
+<dt>rpz: np.array</dt>
+<dd>coefficients as returned from iir module (array of biquad
+coefficients)</dd>
+<dt>frequencies: np.array</dt>
+<dd>frequencies to compute the transfer function for</dd>
+<dt>dt: float</dt>
+<dd>discrete sampling time (seconds)</dd>
+<dt>delay_per_cycle: float</dt>
+<dd>the biquad at coefficients[i] experiences an extra
+delay of i*delay_per_cycle</dd>
+<dt>zoh: bool</dt>
+<dd>If true, zero-order hold implementation is assumed. Otherwise,
+the delay is expected to depend on the index of biquad.</dd>
+</dl>
+<p>np.array(..., dtype=np.complex)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.iir.IirFilter.tf_final">
+<tt class="descname">tf_final</tt><big>(</big><em>frequencies=None</em><big>)</big><a class="headerlink" href="#pyrpl.iir.IirFilter.tf_final" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the discrete transfer function realized by coefficients at
+frequencies.</p>
+<dl class="docutils">
+<dt>coefficients: np.array</dt>
+<dd>coefficients as returned from iir module</dd>
+<dt>frequencies: np.array</dt>
+<dd>frequencies to compute the transfer function for</dd>
+<dt>dt: float</dt>
+<dd>discrete sampling time (seconds)</dd>
+<dt>zoh: bool</dt>
+<dd>If true, zero-order hold implementation is assumed. Otherwise,
+the delay is expected to depend on the index of biquad.</dd>
+</dl>
+<p>np.array(..., dtype=np.complex)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.iir.IirFilter.tf_inputfilter">
+<tt class="descname">tf_inputfilter</tt><big>(</big><em>inputfilter=None</em>, <em>frequencies=None</em><big>)</big><a class="headerlink" href="#pyrpl.iir.IirFilter.tf_inputfilter" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.iir.IirFilter.tf_partialfraction">
+<tt class="descname">tf_partialfraction</tt><big>(</big><em>frequencies=None</em><big>)</big><a class="headerlink" href="#pyrpl.iir.IirFilter.tf_partialfraction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the transfer function just before the partial fraction
+expansion for frequencies.</p>
+<p>sys: (poles, zeros, k)
+dt:  sampling time
+continuous: if True, returns the transfer function in continuous</p>
+<blockquote>
+<div>time domain, if False converts to discrete one</div></blockquote>
+<p>method: method for scipy.signal.cont2discrete
+alpha:  alpha for above method (see scipy documentation)</p>
+<p>np.array(..., dtype=np.complex)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.iir.IirFilter.tf_rounded">
+<tt class="descname">tf_rounded</tt><big>(</big><em>frequencies=None</em>, <em>delay=False</em><big>)</big><a class="headerlink" href="#pyrpl.iir.IirFilter.tf_rounded" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the discrete transfer function realized by coefficients at
+frequencies.</p>
+<dl class="docutils">
+<dt>coefficients: np.array</dt>
+<dd>coefficients as returned from iir module</dd>
+<dt>frequencies: np.array</dt>
+<dd>frequencies to compute the transfer function for</dd>
+<dt>dt: float</dt>
+<dd>discrete sampling time (seconds)</dd>
+<dt>zoh: bool</dt>
+<dd>If true, zero-order hold implementation is assumed. Otherwise,
+the delay is expected to depend on the index of biquad.</dd>
+</dl>
+<p>np.array(..., dtype=np.complex)</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="pyrpl.iir.bodeplot">
+<tt class="descclassname">pyrpl.iir.</tt><tt class="descname">bodeplot</tt><big>(</big><em>data</em>, <em>xlog=False</em><big>)</big><a class="headerlink" href="#pyrpl.iir.bodeplot" title="Permalink to this definition">¶</a></dt>
+<dd><p>plots a bode plot of the data x, y</p>
+<dl class="docutils">
+<dt>data:    a list of tuples (f, tf[, label]) where f are frequencies and tf</dt>
+<dd>complex transfer data, and label the label for data</dd>
+</dl>
+<p>xlog:    sets xaxis to logscale
+figure:</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyrpl.iir.cont2discrete">
+<tt class="descclassname">pyrpl.iir.</tt><tt class="descname">cont2discrete</tt><big>(</big><em>r</em>, <em>p</em>, <em>c</em>, <em>dt=8e-09</em><big>)</big><a class="headerlink" href="#pyrpl.iir.cont2discrete" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transforms residue and pole from continuous to discrete time</p>
+<p>r: residues
+p: poles
+dt: sampling time</p>
+<p>(r, p) with the transformation applied</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyrpl.iir.discrete2cont">
+<tt class="descclassname">pyrpl.iir.</tt><tt class="descname">discrete2cont</tt><big>(</big><em>r</em>, <em>p</em>, <em>c</em>, <em>dt=8e-09</em><big>)</big><a class="headerlink" href="#pyrpl.iir.discrete2cont" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transforms residues and poles from discrete time to continuous</p>
+<p>r: residues
+p: poles
+c: constant term to be carried along
+dt: sampling time (s)</p>
+<p>r, p with the transformation applied</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyrpl.iir.freqs">
+<tt class="descclassname">pyrpl.iir.</tt><tt class="descname">freqs</tt><big>(</big><em>sys</em>, <em>w</em><big>)</big><a class="headerlink" href="#pyrpl.iir.freqs" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function computes the frequency response of a zpk system at an
+array of frequencies.</p>
+<p>It loosely mimicks &#8216;scipy.signal.freqs&#8217;.</p>
+<dl class="docutils">
+<dt>system: (zeros, poles, k)</dt>
+<dd>zeros and poles both in rad/s, k is the actual coefficient, not DC gain</dd>
+<dt>w: np.array</dt>
+<dd>frequencies in rad/s</dd>
+</dl>
+<p>np.array(..., dtype=np.complex) with the response</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyrpl.iir.freqs_rp">
+<tt class="descclassname">pyrpl.iir.</tt><tt class="descname">freqs_rp</tt><big>(</big><em>r</em>, <em>p</em>, <em>c</em>, <em>w</em><big>)</big><a class="headerlink" href="#pyrpl.iir.freqs_rp" title="Permalink to this definition">¶</a></dt>
+<dd><p>same as freqs, but takes a list of residues and poles</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyrpl.iir.freqz_">
+<tt class="descclassname">pyrpl.iir.</tt><tt class="descname">freqz_</tt><big>(</big><em>sys</em>, <em>w</em>, <em>dt=8e-09</em><big>)</big><a class="headerlink" href="#pyrpl.iir.freqz_" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function computes the frequency response of a zpk system at an
+array of frequencies.</p>
+<p>It loosely mimicks &#8216;scipy.signal.frequresp&#8217;.</p>
+<dl class="docutils">
+<dt>system: (zeros, poles, k)</dt>
+<dd>zeros and poles both in rad/s, k is the actual coefficient, not DC gain</dd>
+<dt>w: np.array</dt>
+<dd>frequencies in rad/s</dd>
+</dl>
+<p>dt: sampling time</p>
+<p>np.array(..., dtype=np.complex) with the response</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyrpl.iir.residues">
+<tt class="descclassname">pyrpl.iir.</tt><tt class="descname">residues</tt><big>(</big><em>z</em>, <em>p</em>, <em>k</em><big>)</big><a class="headerlink" href="#pyrpl.iir.residues" title="Permalink to this definition">¶</a></dt>
+<dd><p>this function uses the residue method (Heaviside Cover-up method)
+to perform the partial fraction expansion of a rational function
+defined by zeros, poles and a prefactor k. No intermediate
+conversion into a polynome is performed, which makes this function
+less prone to finite precision issues. In the current version,
+no pole value may occur twice and the number of poles must be
+strictly greated than the number of zeros.</p>
+<p>np.array(dtype=np.complex128) containing the numerator array a of the
+expansion</p>
+<blockquote>
+<div>product_i( s - z[i] )               a[i]</div></blockquote>
+<dl class="docutils">
+<dt>k &#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;&#8212;- =  sum ( &#8212;&#8212;&#8212;- )</dt>
+<dd>product_j( s - p[j] )             s - p[j]</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyrpl.iir.sos2zpk">
+<tt class="descclassname">pyrpl.iir.</tt><tt class="descname">sos2zpk</tt><big>(</big><em>sos</em><big>)</big><a class="headerlink" href="#pyrpl.iir.sos2zpk" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return zeros, poles, and gain of a series of second-order sections</p>
+<dl class="docutils">
+<dt>sos <span class="classifier-delimiter">:</span> <span class="classifier">array_like</span></dt>
+<dd>Array of second-order filter coefficients, must have shape
+<tt class="docutils literal"><span class="pre">(n_sections,</span> <span class="pre">6)</span></tt>. See <cite>sosfilt</cite> for the SOS filter format
+specification.</dd>
+</dl>
+<dl class="docutils">
+<dt>z <span class="classifier-delimiter">:</span> <span class="classifier">ndarray</span></dt>
+<dd>Zeros of the transfer function.</dd>
+<dt>p <span class="classifier-delimiter">:</span> <span class="classifier">ndarray</span></dt>
+<dd>Poles of the transfer function.</dd>
+<dt>k <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd>System gain.</dd>
+</dl>
+<div class="versionadded">
+<p><span class="versionmodified">New in version 0.16.0.</span></p>
+</div>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pyrpl.memory">
+<span id="pyrpl-memory-module"></span><h2>pyrpl.memory module<a class="headerlink" href="#module-pyrpl.memory" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pyrpl.memory.MemoryBranch">
+<em class="property">class </em><tt class="descclassname">pyrpl.memory.</tt><tt class="descname">MemoryBranch</tt><big>(</big><em>parent</em>, <em>branch</em>, <em>defaults=</em><span class="optional">[</span><span class="optional">]</span><big>)</big><a class="headerlink" href="#pyrpl.memory.MemoryBranch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Represents a branch of a memoryTree</p>
+<p>All methods are preceded by an underscore to guarantee that tab expansion
+of a memory branch only displays the available subbranches or leaves.</p>
+<dl class="docutils">
+<dt>parent: MemoryBranch</dt>
+<dd>parent is the parent MemoryBranch</dd>
+<dt>branch: str</dt>
+<dd>branch is a string with the name of the branch to create</dd>
+<dt>defaults: list</dt>
+<dd>list of default branches that are used if requested data is not
+found in the current branch</dd>
+</dl>
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrpl.memory.MemoryTree">
+<em class="property">class </em><tt class="descclassname">pyrpl.memory.</tt><tt class="descname">MemoryTree</tt><big>(</big><em>filename</em><big>)</big><a class="headerlink" href="#pyrpl.memory.MemoryTree" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyrpl.memory.MemoryBranch" title="pyrpl.memory.MemoryBranch"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.memory.MemoryBranch</span></tt></a></p>
+<p>The highest level of a MemoryBranch construct. All attributes of this
+object that do not start with &#8216;_&#8217; are other MemoryBranch objects or
+Leaves, i.e. key - value pairs.</p>
+<dl class="docutils">
+<dt>filename: str</dt>
+<dd>The filename of the .yml file defining the MemoryTree structure.</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyrpl.memory.isbranch">
+<tt class="descclassname">pyrpl.memory.</tt><tt class="descname">isbranch</tt><big>(</big><em>obj</em><big>)</big><a class="headerlink" href="#pyrpl.memory.isbranch" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="pyrpl.memory.load">
+<tt class="descclassname">pyrpl.memory.</tt><tt class="descname">load</tt><big>(</big><em>stream</em>, <em>Loader=&lt;class 'yaml.loader.SafeLoader'&gt;</em>, <em>object_pairs_hook=&lt;class 'collections.OrderedDict'&gt;</em><big>)</big><a class="headerlink" href="#pyrpl.memory.load" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="pyrpl.memory.save">
+<tt class="descclassname">pyrpl.memory.</tt><tt class="descname">save</tt><big>(</big><em>data</em>, <em>stream=None</em>, <em>Dumper=&lt;class 'yaml.dumper.SafeDumper'&gt;</em>, <em>default_flow_style=False</em>, <em>**kwds</em><big>)</big><a class="headerlink" href="#pyrpl.memory.save" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="pyrpl-model-module">
+<h2>pyrpl.model module<a class="headerlink" href="#pyrpl-model-module" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-pyrpl.modules">
+<span id="pyrpl-modules-module"></span><h2>pyrpl.modules module<a class="headerlink" href="#module-pyrpl.modules" title="Permalink to this headline">¶</a></h2>
+<dl class="docutils">
+<dt>Modules are the basic building blocks of Pyrpl:</dt>
+<dd><ul class="first last simple">
+<li>The internal structure of the FPGA is made of individual modules performing a well defined task. Each of these
+FPGA modules are represented in python by a HardwareModule.</li>
+<li>Higher-level operations, for instance those that need a coordinated operation of several HardwareModules is
+performed by SoftwareModules.</li>
+</ul>
+</dd>
+</dl>
+<p>Both HardwareModules and SoftwareModules inherit BaseModule that give them basic capabilities such as displaying their
+attributes in the GUI having their state load and saved in the config file...</p>
+<dl class="class">
+<dt id="pyrpl.modules.BaseModule">
+<em class="property">class </em><tt class="descclassname">pyrpl.modules.</tt><tt class="descname">BaseModule</tt><a class="headerlink" href="#pyrpl.modules.BaseModule" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<dl class="docutils">
+<dt>Several fields have to be implemented in child class:</dt>
+<dd><ul class="first last simple">
+<li>setup_attributes: attributes that are touched by setup(<a href="#id1"><span class="problematic" id="id2">**</span></a>kwds)/saved/restored upon module creation</li>
+<li>gui_attributes: attributes to be displayed by the widget</li>
+<li>widget_class: class of the widget to use to represent the module in the gui (a child of ModuleWidget)</li>
+<li>_setup(): sets the module ready for acquisition/output with the current attribute&#8217;s values.</li>
+</ul>
+</dd>
+<dt>BaseModules implements several functions itself:</dt>
+<dd><ul class="first last simple">
+<li>create_widget: returns a widget according to widget_class</li>
+<li>get_setup_attributes(): returns a dictionnary with the current setup_attribute key value pairs</li>
+<li>load_setup_attributes(): loads setup_attributes from config file</li>
+<li>set_setup_attributes(<a href="#id3"><span class="problematic" id="id4">**</span></a>kwds): sets the provided setup_attributes</li>
+</ul>
+</dd>
+</dl>
+<p>Finally, setup(<a href="#id5"><span class="problematic" id="id6">**</span></a>kwds) is created by ModuleMetaClass. it combines set_setup_attributes(<a href="#id7"><span class="problematic" id="id8">**</span></a>kwds) with _setup()</p>
+<dl class="attribute">
+<dt id="pyrpl.modules.BaseModule.c">
+<tt class="descname">c</tt><a class="headerlink" href="#pyrpl.modules.BaseModule.c" title="Permalink to this definition">¶</a></dt>
+<dd><p>The config file instance. In practice, writing values in here will write the values in the corresponding
+section of the config file.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pyrpl.modules.BaseModule.c_states">
+<tt class="descname">c_states</tt><a class="headerlink" href="#pyrpl.modules.BaseModule.c_states" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the config file branch corresponding to the &#8220;states&#8221; section</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.modules.BaseModule.callback">
+<tt class="descname">callback</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.modules.BaseModule.callback" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function is called whenever an attribute listed in callback_attributes is changed outside setup()</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pyrpl.modules.BaseModule.callback_attributes">
+<tt class="descname">callback_attributes</tt><em class="property"> = []</em><a class="headerlink" href="#pyrpl.modules.BaseModule.callback_attributes" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.modules.BaseModule.create_widget">
+<tt class="descname">create_widget</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.modules.BaseModule.create_widget" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates the widget specified in widget_class. The attr</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.modules.BaseModule.get_setup_attributes">
+<tt class="descname">get_setup_attributes</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.modules.BaseModule.get_setup_attributes" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">a dict with the current values of the setup attributes</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pyrpl.modules.BaseModule.gui_attributes">
+<tt class="descname">gui_attributes</tt><em class="property"> = []</em><a class="headerlink" href="#pyrpl.modules.BaseModule.gui_attributes" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.modules.BaseModule.help">
+<tt class="descname">help</tt><big>(</big><em>register=''</em><big>)</big><a class="headerlink" href="#pyrpl.modules.BaseModule.help" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns the docstring of the specified register name
+if register is an empty string, all available docstrings are returned</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.modules.BaseModule.load_setup_attributes">
+<tt class="descname">load_setup_attributes</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.modules.BaseModule.load_setup_attributes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load and sets all setup attributes from config file</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.modules.BaseModule.load_state">
+<tt class="descname">load_state</tt><big>(</big><em>name</em><big>)</big><a class="headerlink" href="#pyrpl.modules.BaseModule.load_state" title="Permalink to this definition">¶</a></dt>
+<dd><p>Loads the state with name &#8220;name&#8221; from the config file.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pyrpl.modules.BaseModule.name">
+<tt class="descname">name</tt><em class="property"> = 'basemodule'</em><a class="headerlink" href="#pyrpl.modules.BaseModule.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyrpl.modules.BaseModule.owner">
+<tt class="descname">owner</tt><a class="headerlink" href="#pyrpl.modules.BaseModule.owner" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyrpl.modules.BaseModule.pyrpl_config">
+<tt class="descname">pyrpl_config</tt><em class="property"> = None</em><a class="headerlink" href="#pyrpl.modules.BaseModule.pyrpl_config" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.modules.BaseModule.save_state">
+<tt class="descname">save_state</tt><big>(</big><em>name</em><big>)</big><a class="headerlink" href="#pyrpl.modules.BaseModule.save_state" title="Permalink to this definition">¶</a></dt>
+<dd><p>Saves the current state under the name &#8220;name&#8221; in the config file</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.modules.BaseModule.set_setup_attributes">
+<tt class="descname">set_setup_attributes</tt><big>(</big><em>**kwds</em><big>)</big><a class="headerlink" href="#pyrpl.modules.BaseModule.set_setup_attributes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the values of the setup attributes. Without calling any callbacks</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.modules.BaseModule.setup">
+<tt class="descname">setup</tt><big>(</big><em>**kwds</em><big>)</big><a class="headerlink" href="#pyrpl.modules.BaseModule.setup" title="Permalink to this definition">¶</a></dt>
+<dd><blockquote>
+<div>Sets the module up for acquisition with the current setup attribute values.</div></blockquote>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pyrpl.modules.BaseModule.setup_attributes">
+<tt class="descname">setup_attributes</tt><em class="property"> = []</em><a class="headerlink" href="#pyrpl.modules.BaseModule.setup_attributes" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyrpl.modules.BaseModule.states">
+<tt class="descname">states</tt><a class="headerlink" href="#pyrpl.modules.BaseModule.states" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyrpl.modules.BaseModule.widget">
+<tt class="descname">widget</tt><em class="property"> = None</em><a class="headerlink" href="#pyrpl.modules.BaseModule.widget" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyrpl.modules.BaseModule.widget_class">
+<tt class="descname">widget_class</tt><a class="headerlink" href="#pyrpl.modules.BaseModule.widget_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <tt class="xref py py-class docutils literal"><span class="pre">ModuleWidget</span></tt></p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrpl.modules.HardwareModule">
+<em class="property">class </em><tt class="descclassname">pyrpl.modules.</tt><tt class="descname">HardwareModule</tt><big>(</big><em>redpitaya</em>, <em>name=None</em><big>)</big><a class="headerlink" href="#pyrpl.modules.HardwareModule" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyrpl.modules.BaseModule" title="pyrpl.modules.BaseModule"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.modules.BaseModule</span></tt></a></p>
+<p>Module that directly maps a FPGA module. In addition to BaseModule&#8217;s requirements, HardwareModule classes have to
+possess the following class attributes</p>
+<blockquote>
+<div><ul class="simple">
+<li>addr_base: the base address of the module, such as 0x40300000</li>
+</ul>
+</div></blockquote>
+<dl class="method">
+<dt id="pyrpl.modules.HardwareModule.get_state">
+<tt class="descname">get_state</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.modules.HardwareModule.get_state" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a dictionaty with all current values of the parameters
+listed in parameter_names</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.modules.HardwareModule.init_module">
+<tt class="descname">init_module</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.modules.HardwareModule.init_module" title="Permalink to this definition">¶</a></dt>
+<dd><p>To implement in child class if needed.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.modules.HardwareModule.ownership_changed">
+<tt class="descname">ownership_changed</tt><big>(</big><em>old</em>, <em>new</em><big>)</big><a class="headerlink" href="#pyrpl.modules.HardwareModule.ownership_changed" title="Permalink to this definition">¶</a></dt>
+<dd><p>This hook is there to make sure any ongoing measurement is stopped when the module get slaved
+old: name of old owner (eventually None)
+new: name of new owner (eventually None)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.modules.HardwareModule.set_state">
+<tt class="descname">set_state</tt><big>(</big><em>dic</em><big>)</big><a class="headerlink" href="#pyrpl.modules.HardwareModule.set_state" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets all parameters to the values in dic. When necessary,
+the function also calls setup()</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.modules.HardwareModule.setup">
+<tt class="descname">setup</tt><big>(</big><em>**kwds</em><big>)</big><a class="headerlink" href="#pyrpl.modules.HardwareModule.setup" title="Permalink to this definition">¶</a></dt>
+<dd><blockquote>
+<div>Sets the module up for acquisition with the current setup attribute values.</div></blockquote>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrpl.modules.ModuleMetaClass">
+<em class="property">class </em><tt class="descclassname">pyrpl.modules.</tt><tt class="descname">ModuleMetaClass</tt><big>(</big><em>classname</em>, <em>bases</em>, <em>classDict</em><big>)</big><a class="headerlink" href="#pyrpl.modules.ModuleMetaClass" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">type</span></tt></p>
+<p>1. Magic to retrieve the name of the attributes in the attributes themselves.
+see <a class="reference external" href="http://code.activestate.com/recipes/577426-auto-named-decriptors/">http://code.activestate.com/recipes/577426-auto-named-decriptors/</a></p>
+<ol class="arabic simple" start="2">
+<li>Builds the setup docstring by aggregating _setup&#8217;s and setup_attributes&#8217;s docstrings.</li>
+</ol>
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrpl.modules.SoftwareModule">
+<em class="property">class </em><tt class="descclassname">pyrpl.modules.</tt><tt class="descname">SoftwareModule</tt><big>(</big><em>pyrpl</em>, <em>name=None</em><big>)</big><a class="headerlink" href="#pyrpl.modules.SoftwareModule" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyrpl.modules.BaseModule" title="pyrpl.modules.BaseModule"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.modules.BaseModule</span></tt></a></p>
+<p>Module that doesn&#8217;t communicate with the Redpitaya directly.
+Child class needs to implement:</p>
+<blockquote>
+<div><ul class="simple">
+<li>init_module(pyrpl): initializes the module (attribute values aren&#8217;t saved during that stage)</li>
+<li>setup_attributes: see BaseModule</li>
+<li>gui_attributes: see BaseModule</li>
+<li>_setup(): see BaseModule, this function is called when the user calls setup(<a href="#id9"><span class="problematic" id="id10">**</span></a>kwds) and should set the module</li>
+</ul>
+<p>ready for acquisition/output with the current setup_attributes&#8217; values.</p>
+</div></blockquote>
+<dl class="method">
+<dt id="pyrpl.modules.SoftwareModule.init_module">
+<tt class="descname">init_module</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.modules.SoftwareModule.init_module" title="Permalink to this definition">¶</a></dt>
+<dd><p>To be reimplemented in child class.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.modules.SoftwareModule.setup">
+<tt class="descname">setup</tt><big>(</big><em>**kwds</em><big>)</big><a class="headerlink" href="#pyrpl.modules.SoftwareModule.setup" title="Permalink to this definition">¶</a></dt>
+<dd><blockquote>
+<div>Sets the module up for acquisition with the current setup attribute values.</div></blockquote>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="pyrpl.modules.get_setup_docstring">
+<tt class="descclassname">pyrpl.modules.</tt><tt class="descname">get_setup_docstring</tt><big>(</big><em>cls</em><big>)</big><a class="headerlink" href="#pyrpl.modules.get_setup_docstring" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>Returns a docstring for the function &#8216;setup&#8217; that is composed of:</dt>
+<dd><ul class="first last simple">
+<li>the &#8216;_setup&#8217; docstring</li>
+<li>the list of all setup_attributes docstrings</li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyrpl.modules.new_func_setup">
+<tt class="descclassname">pyrpl.modules.</tt><tt class="descname">new_func_setup</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.modules.new_func_setup" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-pyrpl.monitor_client">
+<span id="pyrpl-monitor-client-module"></span><h2>pyrpl.monitor_client module<a class="headerlink" href="#module-pyrpl.monitor_client" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pyrpl.monitor_client.DummyClient">
+<em class="property">class </em><tt class="descclassname">pyrpl.monitor_client.</tt><tt class="descname">DummyClient</tt><a class="headerlink" href="#pyrpl.monitor_client.DummyClient" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Class for unitary tests without RedPitaya hardware available</p>
+<dl class="method">
+<dt id="pyrpl.monitor_client.DummyClient.close">
+<tt class="descname">close</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.monitor_client.DummyClient.close" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="class">
+<dt id="pyrpl.monitor_client.DummyClient.fpgadict">
+<em class="property">class </em><tt class="descname">fpgadict</tt><a class="headerlink" href="#pyrpl.monitor_client.DummyClient.fpgadict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">dict</span></tt></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pyrpl.monitor_client.DummyClient.fpgamemory">
+<tt class="descclassname">DummyClient.</tt><tt class="descname">fpgamemory</tt><em class="property"> = {'1074790420': 1}</em><a class="headerlink" href="#pyrpl.monitor_client.DummyClient.fpgamemory" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.monitor_client.DummyClient.reads">
+<tt class="descclassname">DummyClient.</tt><tt class="descname">reads</tt><big>(</big><em>addr</em>, <em>length</em><big>)</big><a class="headerlink" href="#pyrpl.monitor_client.DummyClient.reads" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.monitor_client.DummyClient.restart">
+<tt class="descclassname">DummyClient.</tt><tt class="descname">restart</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.monitor_client.DummyClient.restart" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.monitor_client.DummyClient.writes">
+<tt class="descclassname">DummyClient.</tt><tt class="descname">writes</tt><big>(</big><em>addr</em>, <em>values</em><big>)</big><a class="headerlink" href="#pyrpl.monitor_client.DummyClient.writes" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrpl.monitor_client.MonitorClient">
+<em class="property">class </em><tt class="descclassname">pyrpl.monitor_client.</tt><tt class="descname">MonitorClient</tt><big>(</big><em>address='192.168.1.0'</em>, <em>port=2222</em>, <em>restartserver=None</em><big>)</big><a class="headerlink" href="#pyrpl.monitor_client.MonitorClient" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<dl class="method">
+<dt id="pyrpl.monitor_client.MonitorClient.close">
+<tt class="descname">close</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.monitor_client.MonitorClient.close" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.monitor_client.MonitorClient.emptybuffer">
+<tt class="descname">emptybuffer</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.monitor_client.MonitorClient.emptybuffer" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.monitor_client.MonitorClient.reads">
+<tt class="descname">reads</tt><big>(</big><em>addr</em>, <em>length</em><big>)</big><a class="headerlink" href="#pyrpl.monitor_client.MonitorClient.reads" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.monitor_client.MonitorClient.restart">
+<tt class="descname">restart</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.monitor_client.MonitorClient.restart" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.monitor_client.MonitorClient.try_n_times">
+<tt class="descname">try_n_times</tt><big>(</big><em>function</em>, <em>addr</em>, <em>value</em>, <em>n=5</em><big>)</big><a class="headerlink" href="#pyrpl.monitor_client.MonitorClient.try_n_times" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.monitor_client.MonitorClient.writes">
+<tt class="descname">writes</tt><big>(</big><em>addr</em>, <em>values</em><big>)</big><a class="headerlink" href="#pyrpl.monitor_client.MonitorClient.writes" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-pyrpl.pyrpl">
+<span id="pyrpl-pyrpl-module"></span><h2>pyrpl.pyrpl module<a class="headerlink" href="#module-pyrpl.pyrpl" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pyrpl.pyrpl.Pyrpl">
+<em class="property">class </em><tt class="descclassname">pyrpl.pyrpl.</tt><tt class="descname">Pyrpl</tt><big>(</big><em>config='default'</em>, <em>source=None</em><big>)</big><a class="headerlink" href="#pyrpl.pyrpl.Pyrpl" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Higher level object, in charge of loading the right hardware and software
+module, depending on the configuration described in a config file.</p>
+<dl class="docutils">
+<dt>config: str</dt>
+<dd>Name of the config file. No .yml extension is needed. The file
+should be located in the config directory.</dd>
+<dt>source: str</dt>
+<dd>If None, it is ignored. Else, the file &#8216;source&#8217; is taken as a
+template config file and copied to &#8216;config&#8217; if that file does
+not exist.</dd>
+</dl>
+<dl class="method">
+<dt id="pyrpl.pyrpl.Pyrpl.create_widget">
+<tt class="descname">create_widget</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.pyrpl.Pyrpl.create_widget" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates the top-level widget</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pyrpl.pyrpl.Pyrpl.hardware_modules">
+<tt class="descname">hardware_modules</tt><a class="headerlink" href="#pyrpl.pyrpl.Pyrpl.hardware_modules" title="Permalink to this definition">¶</a></dt>
+<dd><p>List of all hardware modules loaded in this configuration.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.pyrpl.Pyrpl.load_software_modules">
+<tt class="descname">load_software_modules</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.pyrpl.Pyrpl.load_software_modules" title="Permalink to this definition">¶</a></dt>
+<dd><p>load all software modules defined as root element of the config file.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pyrpl.pyrpl.Pyrpl.modules">
+<tt class="descname">modules</tt><a class="headerlink" href="#pyrpl.pyrpl.Pyrpl.modules" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-pyrpl.pyrpl_utils">
+<span id="pyrpl-pyrpl-utils-module"></span><h2>pyrpl.pyrpl_utils module<a class="headerlink" href="#module-pyrpl.pyrpl_utils" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="pyrpl.pyrpl_utils.get_unique_name_list_from_class_list">
+<tt class="descclassname">pyrpl.pyrpl_utils.</tt><tt class="descname">get_unique_name_list_from_class_list</tt><big>(</big><em>cls_list</em><big>)</big><a class="headerlink" href="#pyrpl.pyrpl_utils.get_unique_name_list_from_class_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns a list of names using cls.name if unique or cls.name1, cls.name2... otherwise.
+Order of the name list matches order of cls_list, such that iterating over zip(cls_list, name_list) is OK</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyrpl.pyrpl_utils.sleep">
+<tt class="descclassname">pyrpl.pyrpl_utils.</tt><tt class="descname">sleep</tt><big>(</big><em>time_s</em><big>)</big><a class="headerlink" href="#pyrpl.pyrpl_utils.sleep" title="Permalink to this definition">¶</a></dt>
+<dd><p>If PyQt4 is installed on the machine,
+calls processEvents regularly to make sure</p>
+<blockquote>
+<div><p>the GUI doesn&#8217;t freeze.</p>
+<p>This function should be used everywhere in the
+project in place of &#8220;time.sleep&#8221;</p>
+</div></blockquote>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pyrpl.redpitaya">
+<span id="pyrpl-redpitaya-module"></span><h2>pyrpl.redpitaya module<a class="headerlink" href="#module-pyrpl.redpitaya" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pyrpl.redpitaya.DummyMemoryTree">
+<em class="property">class </em><tt class="descclassname">pyrpl.redpitaya.</tt><tt class="descname">DummyMemoryTree</tt><a class="headerlink" href="#pyrpl.redpitaya.DummyMemoryTree" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">dict</span></tt></p>
+<p>This class is there to emulate a MemoryTree, for users who would use RedPitaya object without Pyrpl object</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrpl.redpitaya.RedPitaya">
+<em class="property">class </em><tt class="descclassname">pyrpl.redpitaya.</tt><tt class="descname">RedPitaya</tt><big>(</big><em>hostname='192.168.1.100'</em>, <em>port=2222</em>, <em>user='root'</em>, <em>password='root'</em>, <em>delay=0.05</em>, <em>autostart=True</em>, <em>reloadfpga=True</em>, <em>reloadserver=False</em>, <em>filename=None</em>, <em>dirname=None</em>, <em>leds_off=True</em>, <em>frequency_correction=1.0</em>, <em>timeout=3</em>, <em>monitor_server_name='monitor_server'</em>, <em>silence_env=False</em>, <em>config={}</em><big>)</big><a class="headerlink" href="#pyrpl.redpitaya.RedPitaya" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyrpl.sshshell.SSHshell" title="pyrpl.sshshell.SSHshell"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.sshshell.SSHshell</span></tt></a></p>
+<dl class="attribute">
+<dt id="pyrpl.redpitaya.RedPitaya.cls_modules">
+<tt class="descname">cls_modules</tt><em class="property"> = [&lt;class 'pyrpl.hardware_modules.hk.HK'&gt;, &lt;class 'pyrpl.hardware_modules.ams.AMS'&gt;, &lt;class 'pyrpl.hardware_modules.scope.Scope'&gt;, &lt;class 'pyrpl.hardware_modules.sampler.Sampler'&gt;, &lt;class 'pyrpl.hardware_modules.asg.Asg'&gt;, &lt;class 'pyrpl.hardware_modules.asg.Asg'&gt;, &lt;class 'pyrpl.hardware_modules.aux_output.AuxOutput'&gt;, &lt;class 'pyrpl.hardware_modules.aux_output.AuxOutput'&gt;, &lt;class 'pyrpl.hardware_modules.iq.IQ'&gt;, &lt;class 'pyrpl.hardware_modules.iq.IQ'&gt;, &lt;class 'pyrpl.hardware_modules.iq.IQ'&gt;, &lt;class 'pyrpl.hardware_modules.pid.Pid'&gt;, &lt;class 'pyrpl.hardware_modules.pid.Pid'&gt;, &lt;class 'pyrpl.hardware_modules.pid.Pid'&gt;, &lt;class 'pyrpl.hardware_modules.pid.Pid'&gt;, &lt;class 'pyrpl.hardware_modules.iir.IIR'&gt;]</em><a class="headerlink" href="#pyrpl.redpitaya.RedPitaya.cls_modules" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.redpitaya.RedPitaya.end">
+<tt class="descname">end</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.redpitaya.RedPitaya.end" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.redpitaya.RedPitaya.endclient">
+<tt class="descname">endclient</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.redpitaya.RedPitaya.endclient" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.redpitaya.RedPitaya.endserver">
+<tt class="descname">endserver</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.redpitaya.RedPitaya.endserver" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.redpitaya.RedPitaya.fpgarecentlyflashed">
+<tt class="descname">fpgarecentlyflashed</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.redpitaya.RedPitaya.fpgarecentlyflashed" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.redpitaya.RedPitaya.installserver">
+<tt class="descname">installserver</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.redpitaya.RedPitaya.installserver" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.redpitaya.RedPitaya.license">
+<tt class="descname">license</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.redpitaya.RedPitaya.license" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.redpitaya.RedPitaya.make_a_slave">
+<tt class="descname">make_a_slave</tt><big>(</big><em>port=None</em>, <em>monitor_server_name=None</em>, <em>gui=False</em><big>)</big><a class="headerlink" href="#pyrpl.redpitaya.RedPitaya.make_a_slave" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.redpitaya.RedPitaya.makemodule">
+<tt class="descname">makemodule</tt><big>(</big><em>name</em>, <em>cls</em><big>)</big><a class="headerlink" href="#pyrpl.redpitaya.RedPitaya.makemodule" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.redpitaya.RedPitaya.makemodules">
+<tt class="descname">makemodules</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.redpitaya.RedPitaya.makemodules" title="Permalink to this definition">¶</a></dt>
+<dd><p>Automatically generates modules from the list RedPitaya.cls_modules</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.redpitaya.RedPitaya.restart">
+<tt class="descname">restart</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.redpitaya.RedPitaya.restart" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.redpitaya.RedPitaya.restartserver">
+<tt class="descname">restartserver</tt><big>(</big><em>port=None</em><big>)</big><a class="headerlink" href="#pyrpl.redpitaya.RedPitaya.restartserver" title="Permalink to this definition">¶</a></dt>
+<dd><p>restart the server. usually executed when client encounters an error</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.redpitaya.RedPitaya.start">
+<tt class="descname">start</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.redpitaya.RedPitaya.start" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.redpitaya.RedPitaya.startclient">
+<tt class="descname">startclient</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.redpitaya.RedPitaya.startclient" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.redpitaya.RedPitaya.startdummyclient">
+<tt class="descname">startdummyclient</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.redpitaya.RedPitaya.startdummyclient" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.redpitaya.RedPitaya.startserver">
+<tt class="descname">startserver</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.redpitaya.RedPitaya.startserver" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.redpitaya.RedPitaya.switch_led">
+<tt class="descname">switch_led</tt><big>(</big><em>gpiopin=0</em>, <em>state=False</em><big>)</big><a class="headerlink" href="#pyrpl.redpitaya.RedPitaya.switch_led" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.redpitaya.RedPitaya.update_fpga">
+<tt class="descname">update_fpga</tt><big>(</big><em>filename=None</em><big>)</big><a class="headerlink" href="#pyrpl.redpitaya.RedPitaya.update_fpga" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-pyrpl.sound">
+<span id="pyrpl-sound-module"></span><h2>pyrpl.sound module<a class="headerlink" href="#module-pyrpl.sound" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="pyrpl.sound.sine">
+<tt class="descclassname">pyrpl.sound.</tt><tt class="descname">sine</tt><big>(</big><em>frequency=1000</em>, <em>duration=1</em><big>)</big><a class="headerlink" href="#pyrpl.sound.sine" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-pyrpl.sshshell">
+<span id="pyrpl-sshshell-module"></span><h2>pyrpl.sshshell module<a class="headerlink" href="#module-pyrpl.sshshell" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pyrpl.sshshell.SSHshell">
+<em class="property">class </em><tt class="descclassname">pyrpl.sshshell.</tt><tt class="descname">SSHshell</tt><big>(</big><em>hostname='localhost'</em>, <em>user='root'</em>, <em>password='root'</em>, <em>delay=0.05</em>, <em>timeout=3</em><big>)</big><a class="headerlink" href="#pyrpl.sshshell.SSHshell" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<dl class="method">
+<dt id="pyrpl.sshshell.SSHshell.ask">
+<tt class="descname">ask</tt><big>(</big><em>question=''</em><big>)</big><a class="headerlink" href="#pyrpl.sshshell.SSHshell.ask" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.sshshell.SSHshell.askraw">
+<tt class="descname">askraw</tt><big>(</big><em>question=''</em><big>)</big><a class="headerlink" href="#pyrpl.sshshell.SSHshell.askraw" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.sshshell.SSHshell.endapp">
+<tt class="descname">endapp</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.sshshell.SSHshell.endapp" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.sshshell.SSHshell.read">
+<tt class="descname">read</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.sshshell.SSHshell.read" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.sshshell.SSHshell.read_nbytes">
+<tt class="descname">read_nbytes</tt><big>(</big><em>nbytes</em><big>)</big><a class="headerlink" href="#pyrpl.sshshell.SSHshell.read_nbytes" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.sshshell.SSHshell.reboot">
+<tt class="descname">reboot</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.sshshell.SSHshell.reboot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.sshshell.SSHshell.shutdown">
+<tt class="descname">shutdown</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.sshshell.SSHshell.shutdown" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.sshshell.SSHshell.startscp">
+<tt class="descname">startscp</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.sshshell.SSHshell.startscp" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.sshshell.SSHshell.write">
+<tt class="descname">write</tt><big>(</big><em>text</em><big>)</big><a class="headerlink" href="#pyrpl.sshshell.SSHshell.write" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-pyrpl">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-pyrpl" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">pyrpl package</a><ul>
+<li><a class="reference internal" href="#subpackages">Subpackages</a></li>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-pyrpl.attributes">pyrpl.attributes module</a></li>
+<li><a class="reference internal" href="#module-pyrpl.bijection">pyrpl.bijection module</a></li>
+<li><a class="reference internal" href="#module-pyrpl.bodefit">pyrpl.bodefit module</a></li>
+<li><a class="reference internal" href="#module-pyrpl.curvedb">pyrpl.curvedb module</a></li>
+<li><a class="reference internal" href="#module-pyrpl.errors">pyrpl.errors module</a></li>
+<li><a class="reference internal" href="#module-pyrpl.fitting">pyrpl.fitting module</a></li>
+<li><a class="reference internal" href="#module-pyrpl.iir">pyrpl.iir module</a></li>
+<li><a class="reference internal" href="#module-pyrpl.memory">pyrpl.memory module</a></li>
+<li><a class="reference internal" href="#pyrpl-model-module">pyrpl.model module</a></li>
+<li><a class="reference internal" href="#module-pyrpl.modules">pyrpl.modules module</a></li>
+<li><a class="reference internal" href="#module-pyrpl.monitor_client">pyrpl.monitor_client module</a></li>
+<li><a class="reference internal" href="#module-pyrpl.pyrpl">pyrpl.pyrpl module</a></li>
+<li><a class="reference internal" href="#module-pyrpl.pyrpl_utils">pyrpl.pyrpl_utils module</a></li>
+<li><a class="reference internal" href="#module-pyrpl.redpitaya">pyrpl.redpitaya module</a></li>
+<li><a class="reference internal" href="#module-pyrpl.sound">pyrpl.sound module</a></li>
+<li><a class="reference internal" href="#module-pyrpl.sshshell">pyrpl.sshshell module</a></li>
+<li><a class="reference internal" href="#module-pyrpl">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/pyrpl.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">pyrpl 0.9.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2016, Leonhard Neuhaus.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>
