@@ -1,10 +1,12 @@
 import sys
 from time import sleep
-
+from collections import OrderedDict
 import numpy as np
-from pyrpl.attributes import BoolRegister, FloatRegister, SelectRegister, IntRegister, \
+
+from ..attributes import BoolRegister, FloatRegister, SelectRegister, IntRegister, \
                              PhaseRegister, FrequencyRegister, FloatAttribute, FilterAttribute, FilterRegister
-from pyrpl.widgets.module_widgets import IqWidget
+from ..widgets.module_widgets import IqWidget
+from ..pyrpl_utils import sorted_dict
 
 from . import FilterModule
 
@@ -59,7 +61,7 @@ class IQ(FilterModule):
 
     _delay = 5  # bare delay of IQ module with no filters set (cycles)
 
-    _output_signals = dict(
+    _output_signals = sorted_dict(
         quadrature=0,
         output_direct=1,
         pfd=2,

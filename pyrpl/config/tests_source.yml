@@ -10,24 +10,8 @@ pyrpl: # General configuration of the software:
   modules: # SoftwareModules to load (in addition to IqManager, AsgManager, PidManager, ScopeManager)
     - NetworkAnalyzer
     - SpectrumAnalyzer
-  dock_positions: !!binary |
-    AAAA/wAAAAD9AAAAAQAAAAIAAAd8AAAD3fwBAAAAAvwAAAAAAAADrAAAA40A/////AIAAAAD+wAA
-    AAwAcwBjAG8AcABlAHMBAAAAFQAAASQAAADXAP////sAAAAGAGkAcQBzAQAAAT0AAAHoAAABaAD/
-    ///7AAAACABhAHMAZwBzAQAAAykAAADJAAAAlAD////8AAADsAAAA8wAAAOmAP////wCAAAAAvwA
-    AAAVAAABugAAARMBAAAU+gAAAAACAAAAB/sAAAAEAG4AYQEAAAAA/////wAAAP4A////+wAAACIA
-    cwBwAGUAYwB0AHIAdQBtAF8AYQBuAGEAbAB5AHoAZQByAQAAAAD/////AAAAswD////7AAAAIgBz
-    AHAAZQBjAHQAcgB1AG0AIABhAG4AYQBsAHkAegBlAHIBAAAAAP////8AAAAAAAAAAPsAAAAUAEIA
-    YQBzAGUATQBvAGQAdQBsAGUBAAAAAP////8AAAAAAAAAAPsAAAAIAGkAaQByAHMBAAAAAP////8A
-    AAB/AP////sAAAAgAG4AZQB0AHcAbwByAGsAXwBhAG4AYQBsAHkAegBlAHIBAAAAAP////8AAAAA
-    AAAAAPsAAAAKAHMAYwBvAHAAZQEAAAAA/////wAAAAAAAAAA+wAAAAgAcABpAGQAcwEAAAHTAAAC
-    HwAAAhgA////AAAHfAAAAAAAAAAEAAAABAAAAAgAAAAI/AAAAAA=
-  window_position:
-  - -1928
-  - 117
-  - 1916
-  - 1030
+    - Lockbox
 redpitaya:
-  #hostname: 10.214.1.28 # comes from environment
   password: root
   user: root
   port: 2222

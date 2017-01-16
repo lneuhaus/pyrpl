@@ -184,6 +184,10 @@ class MemoryBranch(object):
         """ write data to file"""
         self._parent._save()
 
+    def _update(self, new_dict):
+        self._data.update(new_dict)
+        self._save()
+
     def __getattribute__(self, name):
         """ implements the dot notation.
         Example: self.subbranch.leaf returns the item 'leaf' of 'subbranch' """

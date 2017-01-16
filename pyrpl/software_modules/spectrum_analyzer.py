@@ -232,7 +232,7 @@ class SpectrumAnalyzer(SoftwareModule):
         self.points = Scope.data_length
         """ # intializing stuffs while scope is not reserved modifies the parameters of the scope...
 
-        self.input = 'adc1'
+        self.input = 'in1'
         self.span = 1e5
         self.rbw_auto = True
         """
@@ -377,11 +377,11 @@ class SpectrumAnalyzer(SoftwareModule):
         """
         :return: complex iq time trace
         """
-        timeout = self.scope.duration * 2 # leave some margin
-        res = np.asarray(self.scope.curve(1, timeout=timeout),
+        #timeout = self.scope.duration * 2 # leave some margin
+        res = np.asarray(self.scope.curve(1, timeout=None),
                          dtype=np.complex)
         if not self.baseband:
-            res += 1j*self.scope.curve(2, timeout=timeout)
+            res += 1j*self.scope.curve(2, timeout=None)
         return res[:self.data_length]
 
     def filtered_iq_data(self):

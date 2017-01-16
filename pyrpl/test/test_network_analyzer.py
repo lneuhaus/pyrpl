@@ -5,7 +5,7 @@ logger = logging.getLogger(name=__name__)
 
 from pyrpl import Pyrpl
 
-from pyrpl.software_modules.network_analyzer import NetworkAnalyzer
+from ..software_modules.network_analyzer import NetworkAnalyzer
 
 class TestClass(object):
     @classmethod
@@ -25,8 +25,8 @@ class TestClass(object):
             return
         na = self.pyrpl.na
         na.output_direct = "out1"
-        na.input = "adc1"
-        na.setup(start=1e6, stop=2e6, rbw=1e5)
+        na.input = "in1"
+        na.setup(start=1e6, stop=2e6, rbw=1e5, points=101)
         x, y, amp = na.curve()
         #Assumes out1 is connected with adc1...
         assert(max(abs(y) - 1)<0.2)

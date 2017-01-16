@@ -1,5 +1,6 @@
 import time
 import logging
+from collections import OrderedDict
 
 QT_EXIST = True
 try:
@@ -64,3 +65,11 @@ def setloglevel(level='info', loggername='pyrpl'):
     else:
         logging.getLogger(name=loggername).setLevel(level)
 
+
+def sorted_dict(dict_to_sort=None, sort_by_values=True, **kwargs):
+    if dict_to_sort is None:
+        dict_to_sort = kwargs
+    if not sort_by_values:
+        return OrderedDict(sorted(dict_to_sort.items()))
+    else:
+        return OrderedDict(sorted(dict_to_sort.items(), key=lambda x: x[1]))
