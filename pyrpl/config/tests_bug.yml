@@ -24,8 +24,8 @@ pyrpl: # General configuration of the software:
     //8AAAAAAAAAAPsAAAAKAHMAYwBvAHAAZQEAAAAA/////wAAAAAAAAAA+wAAAAgAaQBpAHIAcwAA
     AAAVAAADxwAAAFAA////AAADSAAAAAAAAAAEAAAABAAAAAgAAAAI/AAAAAA=
   window_position:
-  - 1027
-  - 0
+  - -893
+  - 125
   - 840
   - 1008
 redpitaya:

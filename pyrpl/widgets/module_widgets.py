@@ -388,7 +388,7 @@ class ScopeWidget(ModuleWidget):
 
     def update_rolling_mode_visibility(self):
         """
-        hide rolling mode checkbox for duration < 100 ms
+        Hide rolling mode checkbox for duration < 100 ms
         """
         self.rolling_group.setEnabled(self.module.rolling_mode_allowed())
         self.attribute_widgets['trigger_source'].widget.setEnabled(
@@ -401,7 +401,6 @@ class ScopeWidget(ModuleWidget):
 
     def autoscale(self):
         """Autoscale pyqtgraph"""
-
         self.plot_item.autoRange()
 
     def save(self):
