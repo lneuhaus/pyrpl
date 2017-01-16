@@ -10,7 +10,6 @@ logger = logging.getLogger(name=__name__)
 
 APP = QtGui.QApplication.instance()
 
-
 class PyqtgraphTestCases(unittest.TestCase):
     N = 2 ** 14
     cycles = 100

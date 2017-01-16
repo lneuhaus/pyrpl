@@ -168,6 +168,7 @@ class RollingModeProperty(BoolProperty):
 
 
 class GuiUpdaterScope(GuiUpdater):
+    """ class that takes care of emitting signals to update all possible scope displays """
     display_curves = QtCore.pyqtSignal(list) # This signal is emitted when curves need to be displayed
     # the argument is [array(times), array(curve1), array(curve2)] or [times, None, array(curve2)]
     autoscale = QtCore.pyqtSignal()
@@ -176,7 +177,7 @@ class GuiUpdaterScope(GuiUpdater):
         super(GuiUpdaterScope, self).__init__(module)
         self.first_shot_of_continuous = True
         self.timer_continuous = QtCore.QTimer()
-        self.timer_continuous.setInterval(10)
+        self.timer_continuous.setInterval(10)  # max. frame rate: 100 Hz
         self.timer_continuous.timeout.connect(self.check_for_curves)
         self.timer_continuous.setSingleShot(True)
 
@@ -197,7 +198,6 @@ class GuiUpdaterScope(GuiUpdater):
         self.module.stop()
         self.module.setup()
         self.timer_continuous.start()
-
 
     def check_for_curves(self):
         """
@@ -230,7 +230,7 @@ class GuiUpdaterScope(GuiUpdater):
                 self.first_shot_of_continuous = False
                 self.autoscale.emit()
             # no setup in rolling mode
-        else: # triggered mode
+        else:  # triggered mode
             if self.module.curve_ready(): # if curve not ready, wait for next timer iteration
                 for ch, active in ((1, self.module.ch1_active), (2, self.module.ch2_active)):
                     if active:

@@ -115,7 +115,7 @@ class ModuleWidget(QtGui.QGroupBox):
         """
         Updates a specific attribute.
         """
-        self.attribute_widgets[name].update_widget()
+        self.attribute_widgets[str(name)].update_widget()
 
     def create_title_bar(self):
         self.title_label = QtGui.QLabel("yo", parent=self)
