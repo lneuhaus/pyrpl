@@ -847,9 +847,9 @@ class PWMRegister(FloatRegister, FloatAttribute):
     # see FPGA code for more detailed description on how the PWM works
     def __init__(self, address, CFG_BITS=24, PWM_BITS=8, **kwargs):
         super(PWMRegister, self).__init__(address=address, bits=14, norm=1, **kwargs)
-        self.min = 0
+        self.min = 0   # voltage of pwm outputs ranges from 0 to 1.8 volts
         self.max = 1.8
-        self.increment = 0.001
+        self.increment = 0.001  # actual resolution is 14 bits (roughly 0.1 mV incr.)
         self.CFG_BITS = int(CFG_BITS)
         self.PWM_BITS = int(PWM_BITS)
 
