@@ -10,6 +10,7 @@ pyrpl: # General configuration of the software:
   modules: # SoftwareModules to load (in addition to IqManager, AsgManager, PidManager, ScopeManager)
     - NetworkAnalyzer
     - SpectrumAnalyzer
+    - Lockbox
 redpitaya:
   password: root
   user: root
