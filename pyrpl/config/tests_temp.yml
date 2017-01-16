@@ -31,17 +31,18 @@ redpitaya:
   monitor_server_name: monitor_server
 nas:
   na:
-    input: iir
+    input: iq2
     output_direct: 'off'
     start: 3000.0
-    stop: 50000.0
+    stop: 10000000.0
     rbw:
     - 1214
-    - 1214
-    points: 2501
-    amplitude: 0.02
+    points: 1001
+    amplitude: 0.1
     logscale: true
-    avg: 5
+    avg: 1
+    acbandwidth:
+    - 1214
 spectrum_analyzers:
   spectrum_analyzer: {}
 hks:
@@ -59,18 +60,40 @@ pwms:
   pwm1: {}
   pwm2: {}
 iqs:
-  iq1: {}
-  iq2: {}
+  iq1:
+    input: iq1
+    acbandwidth:
+    - 1214
+    frequency: 2999.9937396496534
+    bandwidth:
+    - 1214
+    output_signal: output_direct
+    gain: 0.0
+    phase: 0.0
+    output_direct: 'off'
+    amplitude: 0.0
+  iq2:
+    input: iq2
+    acbandwidth:
+    - 1214
+    frequency: 6196552.800247446
+    bandwidth:
+    - 1214
+    output_signal: output_direct
+    gain: 0.0
+    phase: 0.0
+    output_direct: 'off'
+    amplitude: 0.09999847412109375
   iq3:
     bandwidth:
     - 1214
-    input: iir
+    input: iq2
     acbandwidth:
     - 0
-    frequency: 9038.281859830022
+    frequency: 300000.0142492354
     output_signal: output_direct
     gain: 0.0
-    amplitude: 0.01999664306640625
+    amplitude: 0.0
     phase: 0.0
     output_direct: 'off'
 pids:
@@ -81,28 +104,10 @@ pids:
 iirs:
   iir:
     input: iq3
-    loops: 80
+    loops: 35
     zeros:
-    - (-151.0000001-10101.3614529j)
-    - (-151.0000001+10101.3614529j)
-    - (-210.0000001-21828.9081776j)
-    - (-210.0000001+21828.9081776j)
-    - (-100.0000001-30156.73583j)
-    - (-100.0000001+30156.73583j)
-    - (-100.0000001-32063.2533145j)
-    - (-100.0000001+32063.2533145j)
-    - (-610.0000001-44654.6352456j)
-    - (-610.0000001+44654.6352456j)
+    - (-3000+100000j)
     poles:
-    - (-151.0000001-16271.5168674j)
-    - (-151.0000001+16271.5168674j)
-    - (-51.0000001-22342.5432482j)
-    - (-51.0000001+22342.5432482j)
-    - (-50.0000001-30884.3040614j)
-    - (-50.0000001+30884.3040614j)
-    - (-41.0000001-32732.5244507j)
-    - (-41.0000001+32732.5244507j)
-    - (-51.0000001-46953.0049699j)
-    - (-51.0000001+46953.0049699j)
-    gain: 0.5
+    - (-3000+50000j)
+    gain: 1.0
     output_direct: 'off'
