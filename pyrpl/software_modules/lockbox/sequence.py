@@ -95,6 +95,7 @@ class Sequence(SoftwareModule):
         for stage in self.stages:
             stage.update_inputs()
 
+
 class StageNameProperty(StringProperty):
     def set_value(self, obj, val):
         if obj.parent is not None:

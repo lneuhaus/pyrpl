@@ -12,22 +12,22 @@ pyrpl: # General configuration of the software:
     - SpectrumAnalyzer
     - Lockbox
   dock_positions: !!binary |
-    AAAA/wAAAAD9AAAAAQAAAAIAAANIAAADx/wBAAAAAvwAAAAAAAADSAAAAkgA/////AIAAAAC+wAA
-    AAwAcwBjAG8AcABlAHMBAAAAFQAAA8cAAADiAP////wAAAEFAAAC1wAAAAAA////+v////8CAAAA
-    BPsAAAAIAHAAaQBkAHMAAAAAAP////8AAABQAP////sAAAAGAGkAcQBzAAAAAAD/////AAAAUAD/
-    ///7AAAACABhAHMAZwBzAAAAAAD/////AAAAUAD////7AAAADgBsAG8AYwBrAGIAbwB4AAAAABUA
-    AAPHAAAAUAD////8AAAE6gAAA0MAAAAAAP////wCAAAAAvwAAAAVAAADYQAAAAAA////+gAAAAIC
-    AAAABvsAAAAEAG4AYQAAAAAA/////wAAAFAA////+wAAACIAcwBwAGUAYwB0AHIAdQBtAF8AYQBu
-    AGEAbAB5AHoAZQByAAAAAAD/////AAAAUAD////7AAAAIgBzAHAAZQBjAHQAcgB1AG0AIABhAG4A
-    YQBsAHkAegBlAHIBAAAAAP////8AAAAAAAAAAPsAAAAUAEIAYQBzAGUATQBvAGQAdQBsAGUBAAAA
-    AP////8AAAAAAAAAAPsAAAAgAG4AZQB0AHcAbwByAGsAXwBhAG4AYQBsAHkAegBlAHIBAAAAAP//
-    //8AAAAAAAAAAPsAAAAKAHMAYwBvAHAAZQEAAAAA/////wAAAAAAAAAA+wAAAAgAaQBpAHIAcwAA
-    AAAVAAADxwAAAFAA////AAADSAAAAAAAAAAEAAAABAAAAAgAAAAI/AAAAAA=
+    AAAA/wAAAAD9AAAAAQAAAAIAAAd8AAAD0PwBAAAAAvwAAAAAAAAHfAAABPgA////+gAAAAACAAAA
+    BfsAAAAMAHMAYwBvAHAAZQBzAQAAAAD/////AAAA4gD////7AAAACABwAGkAZABzAAAAAAD/////
+    AAAAUAD////7AAAABgBpAHEAcwAAAAAA/////wAAAFAA////+wAAAAgAYQBzAGcAcwEAAAAA////
+    /wAAAHoA////+wAAAA4AbABvAGMAawBiAG8AeAEAAAAVAAADxwAAAsIA/////AAABOoAAANDAAAA
+    AAD////8AgAAAAL8AAAAFQAAA2EAAAAAAP////oAAAACAgAAAAb7AAAABABuAGEAAAAAAP////8A
+    AABQAP////sAAAAiAHMAcABlAGMAdAByAHUAbQBfAGEAbgBhAGwAeQB6AGUAcgAAAAAA/////wAA
+    AFAA////+wAAACIAcwBwAGUAYwB0AHIAdQBtACAAYQBuAGEAbAB5AHoAZQByAQAAAAD/////AAAA
+    AAAAAAD7AAAAFABCAGEAcwBlAE0AbwBkAHUAbABlAQAAAAD/////AAAAAAAAAAD7AAAAIABuAGUA
+    dAB3AG8AcgBrAF8AYQBuAGEAbAB5AHoAZQByAQAAAAD/////AAAAAAAAAAD7AAAACgBzAGMAbwBw
+    AGUBAAAAAP////8AAAAAAAAAAPsAAAAIAGkAaQByAHMAAAAAFQAAA8cAAABQAP///wAAB3wAAAAA
+    AAAABAAAAAQAAAAIAAAACPwAAAAA
   window_position:
-  - -893
-  - 125
-  - 840
-  - 1008
+  - 322
+  - 247
+  - 1916
+  - 1017
 redpitaya:
   hostname: 10.214.1.28
   password: root
@@ -54,7 +54,14 @@ lockboxs: !!omap
   - pdhs: !!omap
     - pdh: !!omap []
   - sequences: !!omap
-    - sequence: !!omap [{stages: !!omap [{stage1: !!omap [{duration: 0}]}]}]
+    - sequence: !!omap [{stages: !!omap [{stage1: !!omap [{name: stage1}, {input: hf_pdh},
+                {variable_value: 0.0}, {output_on: {output1: [true, false, 0]}}, {
+                  duration: 0.0}, {function_call: ''}]}, {states: {s2: {variable_value: 0.0,
+                  input: hf_pdh, function_call: '', duration: 0.0, output_on: {output1: [
+                      true, false, 0]}, name: stage2}, s1: {variable_value: 0.0, input: hf_pdh,
+                  function_call: '', duration: 0.0, output_on: {output1: [true, false,
+                      0]}, name: stage1}}}, {stage2: !!omap []}]}]
+    - states: {}
   - outputs: !!omap
     - output1: !!omap
       - name: output1
@@ -85,9 +92,9 @@ hks: !!omap
 amss: !!omap
 - ams: !!omap []
 scopes: !!omap
-- scope: !!omap [{trigger_source: asg1}, {trigger_delay: 0.0}, {input1: asg1}, {input2: asg2},
-    {duration: 0.536870912}, {average: true}, {threshold_ch1: 0.0}, {threshold_ch2: 0.0},
-    {curve_name: ''}, {running_continuous: false}, {rolling_mode: true}, {ch1_active: true},
+- scope: !!omap [{trigger_source: asg1}, {trigger_delay: 0.0}, {input1: adc1}, {input2: asg2},
+    {duration: 0.004194304}, {average: true}, {threshold_ch1: 0.0}, {threshold_ch2: 0.0},
+    {curve_name: ''}, {running_continuous: true}, {rolling_mode: true}, {ch1_active: true},
     {ch2_active: true}]
 - states: {coucou: {trigger_source: immediately, input1: adc1, curve_name: '', input2: adc2,
       running_continuous: false, threshold_ch2: 0.0, average: true, trigger_delay: 0.0,
@@ -100,7 +107,7 @@ scopes: !!omap
 samplers: !!omap
 - sampler: !!omap []
 asgs: !!omap
-- asg1: !!omap [{frequency: 1.9790604710578918}]
+- asg1: !!omap [{frequency: 99999.94654208422}]
 - asg2: !!omap []
 pwms: !!omap
 - pwm1: !!omap []

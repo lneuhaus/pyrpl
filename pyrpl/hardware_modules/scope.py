@@ -179,6 +179,7 @@ class GuiUpdaterScope(GuiUpdater):
         self.timer_continuous.setInterval(10)
         self.timer_continuous.timeout.connect(self.check_for_curves)
         self.timer_continuous.setSingleShot(True)
+        self.last_datas = [None, None, None]
 
     def run_continuous(self):
         """
@@ -226,6 +227,7 @@ class GuiUpdaterScope(GuiUpdater):
                 data = np.concatenate([[np.nan] * to_discard, data])
                 datas[index] = data
             self.display_curves.emit(datas)
+            self.last_datas = datas
             if self.first_shot_of_continuous:
                 self.first_shot_of_continuous = False
                 self.autoscale.emit()
@@ -237,6 +239,7 @@ class GuiUpdaterScope(GuiUpdater):
                         datas[ch] = self.module._get_ch(ch)
                 datas[0] = self.module.times
                 self.display_curves.emit(datas)
+                self.last_datas = datas
                 if self.first_shot_of_continuous:
                     self.first_shot_of_continuous = False  # autoscale only upon first curve
                     self.autoscale.emit()
