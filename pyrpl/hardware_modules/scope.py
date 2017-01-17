@@ -142,8 +142,6 @@ class RunningContinuousProperty(BoolProperty):
     Nothing to do unless widget exists
     """
     def set_value(self, module, val):
-        if module is None:
-            return self
         super(RunningContinuousProperty, self).set_value(module, val)
         if val:
             module.gui_updater.run_continuous()
@@ -590,3 +588,20 @@ class Scope(HardwareModule):
         self.stop()
         self.setup()
         self.gui_updater.run_single()
+
+    def save_curve(self):
+        """
+        Saves the curve(s) that is (are) currently displayed in the gui in the db_system. Also, returns the list
+        [curve_ch1, curve_ch2]...
+        """
+        datas = self.gui_updater.last_datas
+        d = self.get_setup_attributes()
+        curves = [None, None]
+        for ch, active in [(1, self.ch1_active), (2, self.ch2_active)]:
+                if active:
+                    d.update({'ch': ch,
+                              'name': self.curve_name + ' ch' + str(ch)})
+                    curves[ch-1] = self._save_curve(self.times,
+                                                    datas[ch - 1],
+                                                    **d)
+        return curves

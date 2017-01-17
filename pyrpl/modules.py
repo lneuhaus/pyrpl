@@ -10,6 +10,7 @@ attributes in the GUI having their state load and saved in the config file...
 
 from .attributes import BaseAttribute
 from .widgets.module_widgets import ModuleWidget
+from pyrpl import CurveDB
 
 import logging
 import numpy as np
@@ -131,6 +132,7 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
 
     Finally, setup(**kwds) is created by ModuleMetaClass. it combines set_setup_attributes(**kwds) with _setup()
     """
+    curve_class = CurveDB  # Change this to save the curve with a different system
     gui_updater = None # a QOBject used to communicate with the widget
     pyrpl_config = None
     name = None # instance-level attribute
@@ -216,6 +218,22 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         if not name in state_branch._keys():
             raise KeyError("State %s doesn't exist for modules %s"%(name, self.__class__.name))
         self.setup(**state_branch[name])
+
+    def _save_curve(self, x_values, y_values, **attributes):
+        """
+        Saves a curve in some database system.
+        To change the database system, overwrite this function
+        or patch Module.curvedb if the interface is identical.
+
+        :param  x_values: numpy array with x values
+        :param  y_values: numpy array with y values
+        :param  attributes: extra curve parameters (such as relevant module settings)
+        """
+
+        c = self.curve_class.create(x_values,
+                                    y_values,
+                                    **attributes)
+        return c
 
     @property
     def states(self):

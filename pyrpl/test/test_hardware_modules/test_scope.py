@@ -6,6 +6,11 @@ logger = logging.getLogger(name=__name__)
 from pyrpl import RedPitaya, Pyrpl
 from pyrpl.attributes import *
 
+import time
+from PyQt4 import QtCore, QtGui
+
+APP = QtGui.QApplication.instance()
+
 
 class TestClass(object):
     @classmethod
@@ -29,9 +34,7 @@ class TestClass(object):
             return
 
         def data_changing():
-            import time
             time.sleep(0.1)
-            APP = QtGui.QApplication.instance()
             APP.processEvents()
             data = self.r.scope.gui_updater.last_datas[1]
             time.sleep(.5)
@@ -72,3 +75,22 @@ class TestClass(object):
 
         self.r.scope.load_state("stop")
         assert not data_changing()
+
+    def test_save_curve(self):
+        if self.r is None:
+            return
+        self.r.scope.setup(duration=0.01, trigger_source='immediately',
+                           trigger_delay=0., rolling_mode=True, input1='in1', ch1_active=True)
+        self.r.scope.run_single()
+        time.sleep(0.1)
+        APP.processEvents()
+        curve1, curve2 = self.r.scope.save_curve()
+        attr = self.r.scope.get_setup_attributes()
+        for curve in (curve1, curve2):
+            intersect = set(curve.params.keys()) & set(attr)
+            assert len(intersect)>=5 # make sure some parameters are saved
+            p1 = dict((k, curve.params[k]) for k in intersect)
+            p2 = dict((k, attr[k]) for k in intersect)
+            assert p1==p2 # make sure those parameters are equal to the setup_attributes of the scope
+
+

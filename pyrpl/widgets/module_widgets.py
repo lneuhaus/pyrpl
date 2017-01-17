@@ -8,7 +8,6 @@ can be changed before calling create_widget()
 from .schematics import MyImage, MyFrame, MyLabel, MyFrameDrawing, Connection # useful stuffs for IqManagerWidget
 
 from PyQt4 import QtCore, QtGui
-from pyrpl import CurveDB
 from collections import OrderedDict
 import pyqtgraph as pg
 from pyrpl.errors import NotReadyError
@@ -88,7 +87,6 @@ class ModuleWidget(QtGui.QGroupBox):
 
     attribute_changed = QtCore.pyqtSignal()
     # register_names = [] # a list of all register name to expose in the gui
-    curve_class = CurveDB # Change this to save the curve with a different system
 
     def set_title(self, title):
         if hasattr(self, "title_label"): # ModuleManagerWidgets don't have a title_label
@@ -154,22 +152,6 @@ class ModuleWidget(QtGui.QGroupBox):
             self.attribute_widgets[attr_name] = widget
             self.attribute_layout.addWidget(widget)
             widget.value_changed.connect(self.attribute_changed)
-
-    def save_curve(self, x_values, y_values, **attributes):
-        """
-        Saves the curve in some database system.
-        To change the database system, overwrite this function
-        or patch Module.curvedb if the interface is identical.
-
-        :param  x_values: numpy array with x values
-        :param  y_values: numpy array with y values
-        :param  attributes: extra curve parameters (such as relevant module settings)
-        """
-
-        c = self.curve_class.create(x_values,
-                                    y_values,
-                                    **attributes)
-        return c
 
     def init_gui(self):
         """
@@ -263,15 +245,10 @@ class ScopeWidget(ModuleWidget):
         self.button_layout.addWidget(aws['curve_name'])
         aws['curve_name'].setMaximumWidth(250)
         self.main_layout.addLayout(self.button_layout)
-        """
-        self.cb_ch = []
-        for i in (1, 2):
-            self.cb_ch.append(QtGui.QCheckBox("Channel " + str(i)))
-            self.button_layout.addWidget(self.cb_ch[-1])
-        """
+
         self.button_single.clicked.connect(self.module.run_single)
         self.button_continuous.clicked.connect(self.run_continuous_clicked)
-        self.button_save.clicked.connect(self.save)
+        self.button_save.clicked.connect(self.save_clicked)
 
         self.rolling_group = QtGui.QGroupBox("Trigger mode")
         self.checkbox_normal = QtGui.QRadioButton("Normal")
@@ -342,12 +319,14 @@ class ScopeWidget(ModuleWidget):
         """
         pass
 
+    """
     @property
     def state(self):
         if self.module.running_continuous: #button_continuous.text()=="Stop":
             return "running"
         else:
             return "stopped"
+    """
 
     def set_rolling_mode(self):
         """
@@ -362,9 +341,9 @@ class ScopeWidget(ModuleWidget):
 
         if str(self.button_continuous.text()) \
                 == "Run continuous":
-            self.module.running_continuous = True # run_continuous()
+            self.module.run_continuous()
         else:
-            self.module.running_continuous = False
+            self.module.stop()
 
     def rolling_mode_toggled(self):
         self.module.rolling_mode = self.rolling_mode
@@ -402,19 +381,8 @@ class ScopeWidget(ModuleWidget):
         """Autoscale pyqtgraph"""
         self.plot_item.autoRange()
 
-    def save(self):
-        """
-        Save the active curve(s). If you would like to overwrite the save behavior, maybe you should
-        consider overwriting Module.save_curve or Module.curve_db rather than this function.
-        """
-
-        for ch in [1, 2]:
-            d = self.module.get_setup_attributes()
-            d.update({'ch': ch,
-                      'name': self.module.curve_name + ' ch' + str(ch)})
-            self.save_curve(self.times,
-                            self.datas[ch-1],
-                            **d)
+    def save_clicked(self):
+        self.module.save_curve()
 
 
 class AsgWidget(ModuleWidget):
@@ -519,29 +487,29 @@ class NaWidget(ModuleWidget):
         self.button_restart_averaging.clicked.connect(
             self.ask_restart_and_do_it)
         self.button_save.clicked.connect(self.save)
-        self.timer = QtCore.QTimer()  # timer for point acquisition
-        self.timer.setInterval(10)
-        self.timer.setSingleShot(True)
+        #self.timer = QtCore.QTimer()  # timer for point acquisition
+        #self.timer.setInterval(10)
+        #self.timer.setSingleShot(True)
 
-        self.update_timer = QtCore.QTimer()  # timer for plot update
-        self.update_timer.setInterval(50)  # 50 ms refreshrate max
-        self.update_timer.timeout.connect(self.update_plot)
-        self.update_timer.setSingleShot(True)
+        #self.update_timer = QtCore.QTimer()  # timer for plot update
+        #self.update_timer.setInterval(50)  # 50 ms refreshrate max
+        #self.update_timer.timeout.connect(self.update_plot)
+        #self.update_timer.setSingleShot(True)
 
-        self.continuous = True
-        self.paused = True
-        self.need_restart = True
+        #self.continuous = True
+        #self.paused = True
+        #self.need_restart = True
 
-        self.attribute_changed.connect(self.ask_restart)
+        #self.attribute_changed.connect(self.ask_restart)
 
-        self.timer.timeout.connect(self.add_one_point)
+        #self.timer.timeout.connect(self.add_one_point)
 
-        self.paused = True
+        #self.paused = True
         # self.restart_averaging() # why would you want to do that? Comment?
 
 
-        self.attribute_widgets["infer_open_loop_tf"].acquisition_property = False
-        self.attribute_widgets["curve_name"].acquisition_property = False
+        #self.attribute_widgets["infer_open_loop_tf"].acquisition_property = False
+        #self.attribute_widgets["curve_name"].acquisition_property = False
 
         self.arrow = pg.ArrowItem()
         self.arrow.setVisible(False)
@@ -549,6 +517,12 @@ class NaWidget(ModuleWidget):
         self.arrow_phase.setVisible(False)
         self.plot_item.addItem(self.arrow)
         self.plot_item_phase.addItem(self.arrow_phase)
+
+    def autoscale(self):
+        pass
+
+    def update_point(self, index):
+        pass
 
     def save_current_curve_attributes(self):
         """
