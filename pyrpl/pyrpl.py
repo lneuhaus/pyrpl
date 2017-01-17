@@ -33,6 +33,7 @@ from .memory import MemoryTree
 from .redpitaya import RedPitaya
 from . import pyrpl_utils
 from .global_config import *
+from .software_modules import get_software_module
 
 ## Something has to be done with this docstring... I would like to wait for lockbox to be implemented before doing it...
 """
@@ -341,7 +342,7 @@ class Pyrpl(object):
                           'PidManager',
                           'ScopeManager',
                           'IirManager'] + soft_mod_names
-        module_classes = [getattr(software_modules, cls_name) for cls_name in soft_mod_names]
+        module_classes = [get_software_module(cls_name) for cls_name in soft_mod_names]
         module_names = pyrpl_utils.get_unique_name_list_from_class_list(module_classes)
         for cls, name in zip(module_classes, module_names):
             # ModuleClass = getattr(software_modules, module_name)
