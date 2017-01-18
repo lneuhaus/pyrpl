@@ -59,10 +59,8 @@ class BaseAttribute(object):
         """
         value = self.validate_and_normalize(value, instance) # self.to_serializable(value)
         self.set_value(instance, value) # sets the value internally
-        self.set_value_gui_config(instance, value) # update value in gui and config
-        if self.name in instance.callback_attributes: # _setup should ne triggered...
-            if instance._callback_active: # un less a bunch of attributes are being changed together.
-                instance.callback()
+        self.value_updated(instance, value) # update value in gui and config
+
 
     def validate_and_normalize(self, value, module):
         """
@@ -74,15 +72,22 @@ class BaseAttribute(object):
         """
         return value # by default any value is valid
 
-    def set_value_gui_config(self, instance, value):
+    def value_updated(self, module, value):
         """
-        Sets the value in the gui and config
+        Once the value has been changed internally, this function is called to perform the following actions:
+         - launch the signal module.signal_launcher.attribute_changed (this is used in particular for gui update)
+         - saves the new value in the config file (if flag module._autosave_active is True).
+         - calls the callback function if the attribute is in module.callback
+         Note for developers:
+         we might consider moving the 2 last points in a connection behind the signal "attribute_changed".
         """
-        if instance.widget is not None:  # update gui only if it exists
-            self.update_gui(instance)
-        if instance._autosave_active:  # (for instance, when module is slaved, don't save attributes)
-            if self.name in instance.setup_attributes:
-                    self.save_attribute(instance, value)
+        self.launch_signal(module, value)
+        if module._autosave_active:  # (for module, when module is slaved, don't save attributes)
+            if self.name in module.setup_attributes:
+                    self.save_attribute(module, value)
+        if self.name in module.callback_attributes: # _setup should ne triggered...
+            if module._callback_active: # un less a bunch of attributes are being changed together.
+                module.callback()
         return value
 
     def __get__(self, instance, owner):
@@ -91,14 +96,14 @@ class BaseAttribute(object):
         val = self.get_value(instance, owner)
         return val
 
-    def update_gui(self, module):
+    def launch_signal(self, module, new_value):
         """
         Updates the widget with the module's value.
         """
         # if self.name in module.widget.attribute_widgets:
         #   module.widget.attribute_widgets[self.name].update_widget()
-        if self.name in module.gui_attributes:
-            module.gui_updater.attribute_changed.emit(self.name)
+        #if self.name in module.gui_attributes:
+        module.signal_launcher.attribute_changed.emit(self.name, [new_value])
 
     def save_attribute(self, module, value):
         """
@@ -425,7 +430,7 @@ class BaseRegister(object):
         if obj is None:
             return self  # allows to access the descriptor by calling class.Register
             # see http://nbviewer.jupyter.org/urls/gist.github.com/ChrisBeaumont/5758381/raw/descriptor_writeup.ipynb
-        self.parent = obj  # store obj in memory
+        # self.parent = obj  # store obj in memory
         if self.bitmask is None:
             return self.to_python(obj._read(self.address), obj)
         else:
@@ -438,7 +443,6 @@ class BaseRegister(object):
         # self.parent = obj  #store obj in memory<-- very bad practice: there is one Register for the class
         # and potentially many obj instances (think of having 2 redpitayas in the same python session), then
         # _read should use different clients depending on which obj is calling...)
-
         if self.bitmask is None:
             obj._write(self.address, self.from_python(val, obj))
         else:

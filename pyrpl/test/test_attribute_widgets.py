@@ -24,10 +24,10 @@ class DummyModule(SoftwareModule):
 class TestClass(object):
     @classmethod
     def setUpAll(self):
-        filename = os.path.join(os.path.split(os.path.dirname(__file__))[0], 'config', 'tests_temp.yml')
+        filename = os.path.join(os.path.split(os.path.dirname(__file__))[0], 'config', 'user_config', 'tests_temp.yml')
         if os.path.exists(filename):
             os.remove(filename)
-        self.pyrpl = Pyrpl(config="tests_temp", source="tests_source_dummy_module")
+        self.pyrpl = Pyrpl(config="tests_temp_dummy_module", source="tests_source_dummy_module")
         # This config file contains - DummyModule in the section "software_modules"
         self.r = self.pyrpl.rp
 

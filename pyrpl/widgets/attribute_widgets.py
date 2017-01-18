@@ -379,7 +379,7 @@ class BaseAttributeWidget(QtGui.QWidget):
         self.layout_v.addWidget(self.widget, 0) # stretch=0
         self.layout_v.addStretch(1)
         self.setLayout(self.layout_v)
-        self.update_widget()
+        self.update_widget(self.module_value())
 
         #self.module_widget.register_layout.addLayout(self.layout_v)
         #self.value_changed.connect(self.emit_widget_value_changed)
@@ -407,14 +407,14 @@ class BaseAttributeWidget(QtGui.QWidget):
     #    if self.acquisition_property:
     #        self.module_widget.property_changed.emit()
 
-    def update_widget(self):
+    def update_widget(self, new_value):
         """
         Block QtSignals upon update to avoid infinite recursion.
         :return:
         """
 
         self.widget.blockSignals(True)
-        self._update()
+        self._update(new_value)
         self.widget.blockSignals(False)
 
     def set_widget(self):
@@ -465,13 +465,13 @@ class StringAttributeWidget(BaseAttributeWidget):
         self.value_changed.emit()
 
 
-    def _update(self):
+    def _update(self, new_value):
         """
         Updates the value displayed in the widget
         :return:
         """
         if not self.widget.hasFocus():
-            self.widget.setText(self.module_value())
+            self.widget.setText(new_value)
 
 
 class NumberAttributeWidget(BaseAttributeWidget):
@@ -486,13 +486,13 @@ class NumberAttributeWidget(BaseAttributeWidget):
     def editing(self):
         return self.widget.line.hasFocus()
 
-    def _update(self):
+    def _update(self, new_value):
         """
         Updates the value displayed in the widget
         :return:
         """
         if not self.widget.hasFocus():
-            self.widget.setValue(self.module_value())
+            self.widget.setValue(new_value)
 
     def set_increment(self, val):
         self.widget.setSingleStep(val)
@@ -859,13 +859,13 @@ class ListFloatAttributeWidget(BaseAttributeWidget):
         setattr(self.module, self.name, self.widget.get_list())
         self.value_changed.emit()
 
-    def _update(self):
+    def _update(self, new_value):
         """
         Updates the value displayed in the widget
         :return:
         """
         if not self.widget.hasFocus():
-            self.widget.set_list(self.module_value())
+            self.widget.set_list(new_value)
 
     def set_max_cols(self, num):
         """
@@ -890,13 +890,13 @@ class ListComplexAttributeWidget(BaseAttributeWidget):
     def editing(self):
         return self.widget.editing()
 
-    def update(self):
+    def _update(self, new_value):
         """
         Updates the value displayed in the widget
         :return:
         """
         if not self.widget.hasFocus():
-            self.widget.set_list(self.module_value())
+            self.widget.set_list(new_value)
 
     def set_widget(self):
         """
@@ -1027,17 +1027,18 @@ class FilterAttributeWidget(BaseAttributeWidget):
         if self.acquisition_property:
             self.value_changed.emit()
 
-    def _update(self):
+    def _update(self, new_value):
         """
         Sets the gui value from the current module value
 
         :return:
         """
 
-        val = getattr(self.module, self.name)
-        if isinstance(val, basestring) or not np.iterable(val): # only 1 element in the FilterAttribute, make a list for consistency
-            val = [val]
-        self.widget.set_list(val)
+        #val = getattr(self.module, self.name)
+
+        if isinstance(new_value, basestring) or not np.iterable(new_value): # only 1 element in the FilterAttribute, make a list for consistency
+            val = [new_value]
+        self.widget.set_list(new_value)
 
     def set_max_cols(self, n_cols):
         self.widget.set_max_cols(n_cols)
@@ -1084,11 +1085,11 @@ class SelectAttributeWidget(BaseAttributeWidget):
         #if self.acquisition_property:
         self.value_changed.emit()
 
-    def _update(self):
+    def _update(self, new_value):
         """
         Sets the gui value from the current module value
         """
-        index = list(self.options).index(getattr(self.module, self.name))
+        index = list(self.options).index(new_value)
         self.widget.setCurrentIndex(index)
 
     def change_options(self, new_options):
@@ -1218,11 +1219,11 @@ class ListStageOutputAttributeWidget(BaseAttributeWidget):
         #if self.acquisition_property:
         self.value_changed.emit()
 
-    def _update(self):
+    def _update(self, new_value):
         """
         Sets the gui value from the current module value
         """
-        self.widget.set_dict(getattr(self.module, self.name))
+        self.widget.set_dict(new_value)
 
 #class DynamicSelectAttributeWidget(SelectAttributeWidget):
 #    """
@@ -1286,11 +1287,11 @@ class BoolAttributeWidget(BaseAttributeWidget):
             self.value_changed.emit()
 
 
-    def _update(self):
+    def _update(self, new_value):
         """
         Sets the gui value from the current module value
 
         :return:
         """
 
-        self.widget.setCheckState(getattr(self.module, self.name) * 2)
+        self.widget.setCheckState(new_value * 2)

@@ -38,7 +38,7 @@ class TestClass(object):
         na = self.pyrpl.na
         for iq in [r.iq1, r.iq2, r.iq3]:
             na._iq = iq
-            na.setup(start=3000, stop=10e6, points=101, rbw=1000, avg=1,
+            na.setup(start_freq=3000, stop_freq=10e6, points=101, rbw=1000, avg=1,
                      # I reduced from 1001 to 101, is it normal that
                      # it was taking ages ? -> no, should not take more than 1 second with rbw=1000
                      amplitude=0.1, input=na.iq, output_direct='off',
@@ -74,7 +74,7 @@ class TestClass(object):
         # shortcuts and na configuration
         na = self.pyrpl.na
         for pid in self.pyrpl.pids.all_modules:
-            na.setup(start=1000, stop=1000e3, points=11, rbw=100, avg=1,  # points 101->11, it was taking ages
+            na.setup(start_freq=1000, stop_freq=1000e3, points=11, rbw=100, avg=1,  # points 101->11, it was taking ages
                      amplitude=0.1, input=pid, output_direct='off',
                      acbandwidth=0, logscale=True)
 
@@ -121,7 +121,7 @@ class TestClass(object):
         # shortcuts and na configuration
         na = self.pyrpl.na
         for pid in self.pyrpl.pids.all_modules:
-            na.setup(start=1000, stop=1000e3, points=11, rbw=100,  # 101 points, 1 av->11 points, 7 av (taking ages)
+            na.setup(start_freq=1000, stop_freq=1000e3, points=11, rbw=100,  # 101 points, 1 av->11 points, 7 av (taking ages)
                      avg=7,
                      amplitude=0.1, input=pid, output_direct='off',
                      acbandwidth=0, logscale=True)
@@ -174,7 +174,7 @@ class TestClass(object):
         # shortcuts and na configuration
         na = self.pyrpl.na
         for pid in self.pyrpl.pids.all_modules:
-            na.setup(start=1000, stop=1000e3, points=11, rbw=100,
+            na.setup(start_freq=1000, stop_freq=1000e3, points=11, rbw=100,
                      avg=10,
                      amplitude=0.1, input=pid, output_direct='off',
                      acbandwidth=0, logscale=True)
@@ -234,7 +234,7 @@ class TestClass(object):
         for bpf in [r.iq1, r.iq2]:
             plotdata = []
             # setup na for measurement
-            na.setup(start=300e3, stop=700e3, points=51, rbw=1000, avg=3,
+            na.setup(start_freq=300e3, stop_freq=700e3, points=51, rbw=1000, avg=3,
                      acbandwidth=0, amplitude=0.2, input=bpf,
                      output_direct='off', logscale=False)
             # setup bandpass
@@ -287,8 +287,8 @@ class TestClass(object):
         # setup na
         na = self.pyrpl.na
         iir = self.pyrpl.rp.iir
-        self.pyrpl.na.setup(start=3e3,
-                            stop=1e6,
+        self.pyrpl.na.setup(start_freq=3e3,
+                            stop_freq=1e6,
                             points=301,
                             rbw=[500, 500],
                             avg=1,
@@ -362,8 +362,8 @@ class TestClass(object):
                                     -51.00000010 + 46953.00496993j]),
                           0.03,
                           400)
-        naset = dict(start=3e3,
-                     stop=50e3,
+        naset = dict(start_freq=3e3,
+                     stop_freq=50e3,
                      points=2001,
                      rbw=[500, 500],
                      avg=1,
@@ -380,8 +380,8 @@ class TestClass(object):
         p = [5e4j - 3e3]
         g = 0.5
         loops = None
-        naset = dict(start=3e3,
-                     stop=10e6,
+        naset = dict(start_freq=3e3,
+                     stop_freq=10e6,
                      points=1001,
                      rbw=[500, 500],
                      avg=1,
@@ -409,8 +409,8 @@ class TestClass(object):
                       -51.00000010 + 46953.00496993j]),
             0.5)
         loops = 80
-        naset = dict(start=3e3,
-                     stop=50e3,
+        naset = dict(start_freq=3e3,
+                     stop_freq=50e3,
                      points=2501,
                      rbw=[1000, 1000],
                      avg=5,
@@ -428,8 +428,8 @@ class TestClass(object):
              +1e6j - 30000, -5e5]
         g = 1.0
         loops = None
-        naset = dict(start=1e4,
-                     stop=500e3,
+        naset = dict(start_freq=1e4,
+                     stop_freq=500e3,
                      points=301,
                      rbw=1000,
                      avg=1,

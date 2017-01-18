@@ -19,8 +19,8 @@ class ProportionalGainProperty(FloatProperty):
         if instance.mode=='lock':
             instance.update_pid_gains(instance.current_input_lock,
                                       instance.current_variable_value)
-    def update_gui(self, module):
-        super(ProportionalGainProperty, self).update_gui(module)
+    def launch_signal(self, module):
+        super(ProportionalGainProperty, self).launch_signal(module)
         module.widget.update_transfer_function()
 
 
@@ -34,8 +34,8 @@ class IntegralGainProperty(FloatProperty):
             instance.update_pid_gains(instance.current_input_lock,
                                       instance.current_variable_value)
 
-    def update_gui(self, module):
-        super(IntegralGainProperty, self).update_gui(module)
+    def launch_signal(self, module):
+        super(IntegralGainProperty, self).launch_signal(module)
         module.widget.update_transfer_function()
 
 
@@ -59,8 +59,8 @@ class AdditionalFilterAttribute(FilterAttribute):
     def set_value(self, instance, value):
         instance.pid.inputfilter = value
 
-    def update_gui(self, module):
-        super(AdditionalFilterAttribute, self).update_gui(module)
+    def launch_signal(self, module):
+        super(AdditionalFilterAttribute, self).launch_signal(module)
         module.widget.update_transfer_function()
 
 
@@ -78,8 +78,8 @@ class AssistedDesignProperty(BoolProperty):
         obj.assisted_gain_updated()
         return val
 
-    def update_gui(self, module):
-        super(AssistedDesignProperty, self).update_gui(module)
+    def launch_signal(self, module):
+        super(AssistedDesignProperty, self).launch_signal(module)
         module.widget.set_assisted_design(module.assisted_design)
 
 
@@ -99,8 +99,8 @@ class TfTypeProperty(SelectProperty):
     def set_value(self, obj, val):
         super(TfTypeProperty, self).set_value(obj, val)
 
-    def update_gui(self, module):
-        super(TfTypeProperty, self).update_gui(module)
+    def launch_signal(self, module):
+        super(TfTypeProperty, self).launch_signal(module)
         module.widget.update_transfer_function()
         module.widget.change_analog_tf()
 
@@ -109,8 +109,8 @@ class TfCurveProperty(LongProperty):
     def set_value(self, obj, val):
         super(TfCurveProperty, self).set_value(obj, val)
 
-    def update_gui(self, module):
-        super(TfCurveProperty, self).update_gui(module)
+    def launch_signal(self, module):
+        super(TfCurveProperty, self).launch_signal(module)
         module.widget.update_transfer_function()
         module.widget.change_analog_tf()
 

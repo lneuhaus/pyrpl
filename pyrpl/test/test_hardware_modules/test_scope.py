@@ -36,10 +36,10 @@ class TestClass(object):
         def data_changing():
             time.sleep(0.1)
             APP.processEvents()
-            data = self.r.scope.gui_updater.last_datas[1]
+            data = self.r.scope.last_datas[1]
             time.sleep(.5)
             APP.processEvents()
-            return ((data != self.r.scope.gui_updater.last_datas[1])[~np.isnan(data)]).any()
+            return ((data != self.r.scope.last_datas[1])[~np.isnan(data)]).any()
 
         self.r.asg1.frequency = 0
         self.r.scope.setup(duration=0.5, trigger_source='asg1',
@@ -80,7 +80,7 @@ class TestClass(object):
         if self.r is None:
             return
         self.r.scope.setup(duration=0.01, trigger_source='immediately',
-                           trigger_delay=0., rolling_mode=True, input1='in1', ch1_active=True)
+                           trigger_delay=0., rolling_mode=True, input1='in1', ch1_active=True, ch2_active=True)
         self.r.scope.run_single()
         time.sleep(0.1)
         APP.processEvents()

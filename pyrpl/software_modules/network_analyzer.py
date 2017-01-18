@@ -1,6 +1,6 @@
 import logging
 import sys
-from time import sleep, time
+from time import sleep
 
 from ..attributes import FilterAttribute
 from ..attributes import FloatProperty, SelectProperty, FrequencyProperty, \
@@ -9,10 +9,14 @@ from ..hardware_modules import DspModule # just to get the
 from ..widgets.module_widgets import NaWidget
 
 from . import SoftwareModule
-from ..modules import GuiUpdater
+from ..modules import SignalLauncher
 
 from PyQt4 import QtCore, QtGui
 import numpy as np
+import timeit # timeit.default_timer() is THE precise timer to use (microsecond precise vs milliseconds for time.time())
+# see http://stackoverflow.com/questions/85451/python-time-clock-vs-time-time-accuracy
+
+APP = QtGui.QApplication.instance()
 
 
 class NaAcBandwidth(FilterAttribute):
@@ -53,30 +57,30 @@ class NaStateProperty(StringProperty):
         super(NaStateProperty, self).set_value(module, val)
         if val in ['running_continuous', 'running_single']:
             if old_val=="stopped":
-                module.gui_updater.run()
+                module.iq.output_direct = module.output_direct
+                module.signal_launcher.run()
             else:
-                module.gui_updater.resume()
+                module.iq.output_direct = module.output_direct
+                module.signal_launcher.resume()
         if val in ['paused_continuous', 'paused_single', "stopped"]:
-            module.gui_updater.pause()
+            module.signal_launcher.pause()
+            module.iq.output_direct = 'off'
 
-"""
-class RunningContinuousProperty(BoolProperty):
+class LogScaleProperty(BoolProperty):
     def set_value(self, module, val):
-        super(RunningContinuousProperty, self).set_value(module, val)
-        if val:
-            module.gui_updater.run()
-        else:
-            module.gui_updater.stop()
-"""
+        super(LogScaleProperty, self).set_value(module, val)
+        module.signal_launcher.x_log_toggled.emit()
 
-class GuiUpdaterNA(GuiUpdater):
+class SignalLauncherNA(SignalLauncher):
     point_updated = QtCore.pyqtSignal(int) # This signal is emitted when a point needs to be updated (added/changed)
     # The argument is the index of the point as found in module.y_averaged
     autoscale = QtCore.pyqtSignal()
     scan_finished = QtCore.pyqtSignal()
+    clear_curve = QtCore.pyqtSignal()
+    x_log_toggled = QtCore.pyqtSignal()
 
     def __init__(self, module):
-        super(GuiUpdaterNA, self).__init__(module)
+        super(SignalLauncherNA, self).__init__(module)
         self.datas = [None, None]
         self.timer_point = QtCore.QTimer()
         self.timer_point.setSingleShot(True)
@@ -84,30 +88,37 @@ class GuiUpdaterNA(GuiUpdater):
         self.timer_point.start()
 
     def next_point(self):
-        x, y, amp = self.module.get_current_point()
-        cur = self.module.current_point
-        self.module.y_current_scan[cur] = y
-        self.module.y_averaged[cur] = (self.module.y_averaged[cur] * self.module.current_averages + y) \
-                         / (self.module.current_averages + 1)
-        self.module.x[cur] = x
-        self.module.threshold_hook(y)
-        if(self.module.current_point+1<self.module.points): # next point is still in the scan range
-            self.module.prepare_for_next_point()
-            self.point_updated.emit(self.module.current_point)
-            self.timer_point.start()
-        else: # end of scan
-            self.module.current_averages += 1
-            if self.module.state=='running_continuous':
-                self.module.setup() # reset acquistion without resetting averaging
+        if self.module.state in ['running_continuous', 'running_single']:
+            x, y, amp = self.module.get_current_point()
+            cur = self.module.current_point
+            if cur>=0: # to let time for the transiant of the accumulator, the first point has a negative index
+                self.module.y_current_scan[cur] = y
+                self.module.y_averaged[cur] = (self.module.y_averaged[cur] * self.module.current_averages + y) \
+                                 / (self.module.current_averages + 1)
+                self.module.x[cur] = x
+                self.module.threshold_hook(y)
+                if(self.module.current_point+1<self.module.points): # next point is still in the scan range
+                    self.module.prepare_for_next_point()
+                    self.point_updated.emit(self.module.current_point)
+                    self.timer_point.start()
+                else: # end of scan
+                    self.module.current_averages += 1
+                    if self.module.state=='running_continuous':
+                        self.module.setup() # reset acquistion without resetting averaging
+                        self.timer_point.start()
+                    else:
+                        self.module.pause() # gives the opportunity to average other scans with this one by calling
+                        # run_continuous()
+                    self.scan_finished.emit()
+            else: # The point was a dummy point with index -1 at the beginning of the curve
+                self.module.prepare_for_next_point()
                 self.timer_point.start()
-            else:
-                self.module.pause()
-            self.scan_finished.emit()
 
     def run(self):
         self.module.setup()
         self.module.setup_averaging()
         self.module.prepare_for_next_point()
+        self.clear_curve.emit()
         self.timer_point.start()
 
     def resume(self):
@@ -117,10 +128,12 @@ class GuiUpdaterNA(GuiUpdater):
         self.timer_point.stop()
 
     def connect_widget(self, widget):
-        super(GuiUpdaterNA, self).connect_widget(widget)
+        super(SignalLauncherNA, self).connect_widget(widget)
         self.autoscale.connect(widget.autoscale)
         self.point_updated.connect(widget.update_point)
         self.scan_finished.connect(widget.scan_finished)
+        self.clear_curve.connect(widget.clear_curve)
+        self.x_log_toggled.connect(widget.x_log_toggled)
 
 
 class NetworkAnalyzer(SoftwareModule):
@@ -161,7 +174,7 @@ class NetworkAnalyzer(SoftwareModule):
     data = None
 
     def init_module(self):
-        self.gui_updater = GuiUpdaterNA(self)
+        self.signal_launcher = SignalLauncherNA(self)
         self._logger = logging.getLogger(__name__)
         self.start_freq = 200
         self.stop_freq = 50000
@@ -178,7 +191,7 @@ class NetworkAnalyzer(SoftwareModule):
         self.curve_name = 'na_curve'
         self._is_setup = False
         # possibly a bugfix:
-        self.time_per_point = max(1.0 / self.rbw * (self.avg + self.sleeptimes), 1e-3)
+        self.time_per_point = 1.0 / self.rbw * (self.avg + self.sleeptimes)
         self.current_averages = 0
         self.time_last_point = 0
         self.state = 'stopped'
@@ -190,7 +203,7 @@ class NetworkAnalyzer(SoftwareModule):
     rbw = RbwAttribute()
     amplitude = FloatProperty(min=0, max=1, increment=1. / 2 ** 14)
     points = LongProperty(min=1, max=1e8)
-    logscale = BoolProperty()
+    logscale = LogScaleProperty()
     infer_open_loop_tf = BoolProperty()
     avg = LongProperty(min=1)
     curve_name = StringProperty()
@@ -225,12 +238,14 @@ class NetworkAnalyzer(SoftwareModule):
 
         if self.logscale:
             self.x = np.logspace(
-                np.log10(self.start),
-                np.log10(self.stop),
+                np.log10(self.start_freq),
+                np.log10(self.stop_freq),
                 self.points,
                 endpoint=True)
         else:
             self.x = np.linspace(self.start_freq, self.stop_freq, self.points, endpoint=True)
+        for index, val in enumerate(self.x):
+            self.x[index] = self.iq.__class__.frequency.validate_and_normalize(val, self) # retrieve the real freqs...
         # preventive saturation
         amplitude = abs(self.amplitude)
         self.iq.setup(frequency=self.x[0],
@@ -243,23 +258,30 @@ class NetworkAnalyzer(SoftwareModule):
                       output_direct=self.output_direct,
                       output_signal='output_direct')
         # time_per_point is calculated at setup for speed reasons
-        self.time_per_point = max(1.0 / self.rbw * (self.avg + self.sleeptimes), 1e-3)
+        self.time_per_point = 1.0 / self.rbw * (self.avg + self.sleeptimes)
         # setup averaging
         self.iq._na_averages = np.int(np.round(125e6 / self.rbw * self.avg))
         self.iq._na_sleepcycles = np.int(np.round(125e6 / self.rbw * self.sleeptimes))
         # compute rescaling factor of raw data
         self._rescale = 2.0 ** (-self.iq._LPFBITS) * 4.0  # 4 is artefact of fpga code
-        self.current_point = -1
+        self.current_point = -2 # number of "dead_points" at the beginning of the scans.
+        self._cached_na_averages = self.iq._na_averages # to avoid reading it at every single point
         self.iq.frequency = self.x[0]  # this triggers the NA acquisition
-        self.time_last_point = time()
+        self.time_last_point = timeit.default_timer()
+        self._tf_values = self.transfer_function(self.x) # precalculate transfer_function values for speed
         self.values_generator = self.values()
+        # Warn the user if time_per_point is too small:
+        if self.time_per_point<0.001: # < 1 ms measurement time will make acquisition inefficient.
+            self._logger.info("Time between successive points is %.1f ms."
+                              " You should increase 'avg' to at least %i for efficient acquisition.",
+                              self.time_per_point * 1000, self.avg*0.1/self.time_per_point)
 
     def setup_averaging(self):
         self.current_averages = 0
         self.current_attributes = self.get_setup_attributes()
         self.y_current_scan = np.zeros(self.points, dtype=complex)
         self.y_averaged = np.zeros(self.points, dtype=complex)
-        self.gui_updater.timer_point.setInterval(self.time_per_point)
+        self.signal_launcher.timer_point.setInterval(self.time_per_point)
 
     @property
     def last_valid_point(self):
@@ -279,14 +301,22 @@ class NetworkAnalyzer(SoftwareModule):
         time_per_point
         """
         # get the actual point's (discretized) frequency
-        x = self.iq.frequency
-        tf = self.transfer_function(x)
-        # compute remaining time for acquisition
-        passed_duration = time() - self.time_last_point
-        remaining_duration = self.time_per_point - passed_duration
-        if remaining_duration >= 0:
-            sleep(remaining_duration)
-        y = self.iq._nadata
+        x = self.x[max(self.current_point, 0)] # negative index means "dead point" at start_freq at the beginning.
+        tf = self._tf_values[self.current_point]
+        ok = False
+        while not ok: # make sure enough time was left for data to accumulate in the iq register...
+            # compute remaining time for acquisition
+            passed_duration = timeit.default_timer() - self.time_last_point #DO NOT USE time.time()
+            # This gets updated only every 1 ms or so.
+            remaining_duration = self.time_per_point - passed_duration
+            if remaining_duration >= 0.002: #sleeping in the ms range becomes inaccurate, in this case, we will just
+                # continuously check if enough time has passed. For averaging times longer than 2 ms, a 1 ms error in
+                # the sleep time is only a 50 % error, but less CPU intensive.
+                # see http://stackoverflow.com/questions/1133857/how-accurate-is-pythons-time-sleep
+                sleep(remaining_duration)
+            if remaining_duration<=0: # exit the loop when enough time has passed.
+                ok = True
+        y = self.iq._nadata_total/self._cached_na_averages #only one read operation
         # get amplitude for normalization
         amp = self.amplitude
         # normalize immediately
@@ -305,11 +335,11 @@ class NetworkAnalyzer(SoftwareModule):
         self.current_point += 1
         if self.current_point < self.points:
             # writing to iq.frequency triggers the acquisition
-            self.iq.frequency = self.x[self.current_point]
+            self.iq.frequency = self.x[max(self.current_point, 0)] # <0 index means "dead point" with start_freq
         else:
             # turn off the modulation when done
             self.iq.amplitude = 0
-        self.time_last_point = time()  # check averaging time from now
+        self.time_last_point = timeit.default_timer() # check averaging time from now
 
     def values(self):
         """
@@ -328,15 +358,16 @@ class NetworkAnalyzer(SoftwareModule):
         """
 
         try:
-            #for point in xrange(self.points):
             while self.current_point < self.points:
-                #self.current_point = point
                 x, y, amp = self.get_current_point()
                 # replace frequency axis by time in zerospan mode:
-                if self.start == self.stop:
-                    x = time()
-                self.prepare_for_next_point(y)
-                yield (x, y, amp)
+                if self.start_freq == self.stop_freq:
+                    x = timeit.default_timer()
+                self.prepare_for_next_point()
+                if self.current_point - 1>=0: # negative index at the beginning of the scan are "dead points" for the
+                    # accumulator to stabilize.
+                    yield (x, y, amp)
+
         except Exception as e:
             self.iq._logger.info("NA output turned off due to an exception")
             raise e
@@ -347,15 +378,14 @@ class NetworkAnalyzer(SoftwareModule):
     def curve(self, **kwds):  # amplitude can be limited
         """
         High level function: this sets up the na and acquires a curve. See setup for the explanation of parameters.
+        Contrary to functions starting with 'run_', here, the acquisition is blocking.
 
         Returns
         -------
         (array of frequencies, array of complex ampl, array of amplitudes)
         """
 
-        self._setup(**kwds)
-        #if not self._setup:
-        #    raise NotReadyError("call setup() before first curve")
+        self.setup(**kwds)
         xs = np.zeros(self.points, dtype=float)
         ys = np.zeros(self.points, dtype=complex)
         amps = np.zeros(self.points, dtype=float)
@@ -366,13 +396,14 @@ class NetworkAnalyzer(SoftwareModule):
 
         # set pseudo-acquisition of first point to supress transient effects
         self.iq.amplitude = self.amplitude
-        self.iq.frequency = self.start
+        self.iq.frequency = self.start_freq
         sleep(self.time_per_point)
 
         for index, (x, y, amp) in enumerate(self.values_generator):
             xs[index] = x
             ys[index] = y
             amps[index] = amp
+        self.iq.output_direct = 'off'
         return xs, ys, amps
 
     # delay observed with measurements of the na transfer function

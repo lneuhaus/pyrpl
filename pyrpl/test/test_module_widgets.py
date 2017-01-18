@@ -57,8 +57,8 @@ class TestClass(object):
     def test_asg_gui(self):
         if self.pyrpl is None:
             return
-        for asg_widget in [mod.widget for mod in self.pyrpl.asgs.all_modules]:
-            self.try_gui_module(asg_widget)
+        for asg in [mod for mod in self.pyrpl.asgs.all_modules]:
+            self.try_gui_module(asg.create_widget())
 
     def try_gui_module(self, module_widget): # name should not start with test
         if not self.do_gui_tests:

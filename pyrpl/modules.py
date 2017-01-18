@@ -96,15 +96,15 @@ class ModuleMetaClass(NameAttributesMetaClass):
                     self.setup.__doc__ = get_setup_docstring(self)
 
 
-class GuiUpdater(QtCore.QObject):
+class SignalLauncher(QtCore.QObject):
     """
     A QObject that is connected to the widgets to update their value when attributes change
     """
-    attribute_changed = QtCore.pyqtSignal(str)
-    # The name of the property that has changed
+    attribute_changed = QtCore.pyqtSignal(str, list)
+    # The name of the property that has changed, the list is [new_value], the new_value of the attribute
 
     def __init__(self, module):
-        super(GuiUpdater, self).__init__()
+        super(SignalLauncher, self).__init__()
         self.module = module
 
     def connect_widget(self, widget):
@@ -133,7 +133,7 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
     Finally, setup(**kwds) is created by ModuleMetaClass. it combines set_setup_attributes(**kwds) with _setup()
     """
     curve_class = CurveDB  # Change this to save the curve with a different system
-    gui_updater = None # a QOBject used to communicate with the widget
+    signal_launcher = None # a QOBject used to communicate with the widget
     pyrpl_config = None
     name = None # instance-level attribute
     section_name = 'basemodule' # name that is going to be used for the section in the config file (class-level)
@@ -350,7 +350,9 @@ class HardwareModule(BaseModule):
     def __setattr__(self, name, value):
         # prevent the user from setting a nonexisting attribute (I am not sure anymore if it's not making everyone's
         # life harder...)
-        if hasattr(self, name) or name.startswith('_') or hasattr(type(self), name):
+        # if hasattr(self, name) or name.startswith('_') or hasattr(type(self), name):
+        if name.startswith("_") or (name in self.__dict__) or hasattr(self.__class__, name): # we don't want class.attr
+            # to be executed to save  one ssh communication time, this was the case with hasattr(self, name)
             super(BaseModule, self).__setattr__(name, value)
         else:
             raise ValueError("New module attributes may not be set at runtime. Attribute "
@@ -361,7 +363,7 @@ class HardwareModule(BaseModule):
 
         if no name provided, will use cls.name
         """
-        self.gui_updater = GuiUpdater(self)
+        self.signal_launcher = SignalLauncher(self)
         self._autosave_active = False
         if name is not None:
             self.name = name
@@ -442,7 +444,7 @@ class SoftwareModule(BaseModule):
           - First case: config file entry is in self.__class__.name + 's'--> self.name
           - Second case: config file entry is in parent_entry-->self.__class__.name + 's'-->self.name
         """
-        self.gui_updater = GuiUpdater(self)
+        self.signal_launcher = SignalLauncher(self)
         self._autosave_active = False  # attribute values are not overwritten in the config file
         if name is not None:
             self.name = name

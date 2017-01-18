@@ -15,6 +15,7 @@ from pyrpl.errors import NotReadyError
 from time import time
 import numpy as np
 import functools
+import timeit
 
 APP = QtGui.QApplication.instance()
 
@@ -107,13 +108,14 @@ class ModuleWidget(QtGui.QGroupBox):
         # self.setStyleSheet("ModuleWidget{border:0;color: transparent;}") # frames and title hidden for software_modules
                                         # ModuleManagerWidget sets them visible for the HardwareModuleWidgets...
         self.show_ownership()
-        self.module.gui_updater.connect_widget(self)
+        self.module.signal_launcher.connect_widget(self)
 
-    def update_attribute_by_name(self, name):
+    def update_attribute_by_name(self, name, new_value_list):
         """
-        Updates a specific attribute.
+        Updates a specific attribute. New value is passed as a 1-element list to avoid typing problems in signal-slot.
         """
-        self.attribute_widgets[str(name)].update_widget()
+        if name in self.module.gui_attributes:
+            self.attribute_widgets[str(name)].update_widget(new_value_list[0])
 
     def create_title_bar(self):
         self.title_label = QtGui.QLabel("yo", parent=self)
@@ -198,10 +200,6 @@ class ScopeWidget(ModuleWidget):
         self.main_layout = QtGui.QVBoxLayout()
         self.init_attribute_layout()
         aws = self.attribute_widgets
-        self.attribute_layout.removeWidget(aws['rolling_mode'])
-        aws['rolling_mode'].hide()
-        self.attribute_layout.removeWidget(aws['running_continuous'])
-        aws['running_continuous'].hide()
 
         self.layout_channels = QtGui.QVBoxLayout()
         self.layout_ch1 = QtGui.QHBoxLayout()
@@ -284,8 +282,8 @@ class ScopeWidget(ModuleWidget):
         self.update_running_buttons()
         self.update_rolling_mode_visibility()
 
-    def update_attribute_by_name(self, name):
-        super(ScopeWidget, self).update_attribute_by_name(name)
+    def update_attribute_by_name(self, name, new_value_list):
+        super(ScopeWidget, self).update_attribute_by_name(name, new_value_list)
         if name in ['rolling_mode', 'duration']:
             self.rolling_mode = self.module.rolling_mode
         if name in ['running_continuous',]:
@@ -458,19 +456,20 @@ class PidWidget(ModuleWidget):
         widget = self.attribute_widgets['ival']
         if self.isVisible(): # avoid unnecessary ssh traffic
             if not widget.editing():
-                widget.update_widget()
+                widget.update_widget(self.module.ival)
 
 
 class NaWidget(ModuleWidget):
     """
     Network Analyzer Tab.
     """
+    starting_update_rate = 0.2 # this would be a good idea to change this number dynamically when the curve becomes
+    # more and more expensive to display.
 
     def init_gui(self):
         """
         Sets up the gui
         """
-        #self.module.__dict__['curve_name'] = 'na trace'
         self.main_layout = QtGui.QVBoxLayout()
         self.init_attribute_layout()
         self.button_layout = QtGui.QHBoxLayout()
@@ -490,7 +489,7 @@ class NaWidget(ModuleWidget):
         self.button_save = QtGui.QPushButton("Save curve")
 
         self.chunks = [] #self.plot_item.plot(pen='y')
-        self.curve_phase = self.plot_item_phase.plot(pen=None, symbol='o')
+        self.chunks_phase = []
         self.main_layout.addWidget(self.win)
         self.main_layout.addWidget(self.win_phase)
         self.button_layout.addWidget(self.button_single)
@@ -503,29 +502,6 @@ class NaWidget(ModuleWidget):
         self.button_continuous.clicked.connect(self.run_continuous_clicked)
         self.button_stop.clicked.connect(self.button_stop_clicked)
         self.button_save.clicked.connect(self.save_clicked)
-        #self.timer = QtCore.QTimer()  # timer for point acquisition
-        #self.timer.setInterval(10)
-        #self.timer.setSingleShot(True)
-
-        #self.update_timer = QtCore.QTimer()  # timer for plot update
-        #self.update_timer.setInterval(50)  # 50 ms refreshrate max
-        #self.update_timer.timeout.connect(self.update_plot)
-        #self.update_timer.setSingleShot(True)
-
-        #self.continuous = True
-        #self.paused = True
-        #self.need_restart = True
-
-        #self.attribute_changed.connect(self.ask_restart)
-
-        #self.timer.timeout.connect(self.add_one_point)
-
-        #self.paused = True
-        # self.restart_averaging() # why would you want to do that? Comment?
-
-
-        #self.attribute_widgets["infer_open_loop_tf"].acquisition_property = False
-        #self.attribute_widgets["curve_name"].acquisition_property = False
 
         self.arrow = pg.ArrowItem()
         self.arrow.setVisible(False)
@@ -536,32 +512,77 @@ class NaWidget(ModuleWidget):
         self.last_updated_point = 0
         self.last_updated_time = 0
         self.display_state(self.module.state)
+        self.update_period = self.starting_update_rate # also modified in clear_curve.
 
     def autoscale(self):
-        pass
+        """
+        log_mode = self.module.logscale
+        self.plot_item.setLogMode(x=log_mod, y=None) # this seems also needed
+        self.plot_item_phase.setLogMode(x=log_mod, y=None)
+        """
+        self.plot_item.setRange(xRange=[self.module.start_freq, self.module.stop_freq])
+        self.plot_item_phase.setRange(xRange=[self.module.start_freq, self.module.stop_freq])
+
+    def clear_curve(self):
+        """
+        Clear all chunks
+        """
+        self.update_period = self.starting_update_rate  # let's assume update of curve takes 50 ms
+        while(True):
+            try:
+                chunk = self.chunks.pop()
+                chunk_phase = self.chunks_phase.pop()
+                chunk.clear()
+                chunk_phase.clear()
+            except IndexError:
+                break
+
+    def x_log_toggled(self):
+        """
+        change x_log of axis
+        """
+        log_mod = self.module.logscale
+        self.plot_item.setLogMode(x=log_mod, y=None) # this seems also needed
+        self.plot_item_phase.setLogMode(x=log_mod, y=None)
 
     def scan_finished(self):
         """
         if in run continuous, needs to redisplay the number of averages
         """
-        self.display_state(self.module.state)
+        self.display_state(self.module.state) # display correct average number
+        self.update_point(self.module.points-1, force=True) # make sure all points in the scan are updated
 
-    def update_point(self, index):
+    def update_point(self, index, force=False):
         """
         To speed things up, the curves are plotted by chunks of 50 points. All points between last_updated_point and
         index will be redrawn.
         """
+        APP.processEvents()  # Give hand back to the gui since timer intervals might be very short
         last_chunk_index = self.last_updated_point//50
         current_chunk_index = index//50
 
-        if  time() - self.last_updated_time>0.05: # last update time was a long time ago, update plot
+        if force or (time() - self.last_updated_time>self.update_period): # if last update time was a long time ago,
+            #  update plot, otherwise we would spend more time plotting things than acquiring data...
             for chunk_index in range(last_chunk_index, current_chunk_index+1):
                 self.update_chunk(chunk_index) # eventually several chunks to redraw
             self.last_updated_point = index
             self.last_updated_time = time()
 
-    def update_attribute_by_name(self, name):
-        super(NaWidget, self).update_attribute_by_name(name)
+
+            # draw arrow
+            cur = self.module.current_point - 1
+            visible = self.module.last_valid_point != cur + 1
+            logscale = self.module.logscale
+            freq = self.module.x[cur]
+            xpos = np.log10(freq) if logscale else freq
+            if cur > 0:
+                self.arrow.setPos(xpos, abs(self.module.y_averaged[cur]))
+                self.arrow.setVisible(visible)
+                self.arrow_phase.setPos(xpos, 180./np.pi*np.angle(self.module.y_averaged[cur]))
+                self.arrow_phase.setVisible(visible)
+
+    def update_attribute_by_name(self, name, new_value_list):
+        super(NaWidget, self).update_attribute_by_name(name, new_value_list)
         if name=="state":
             self.display_state(self.module.state)
 
@@ -572,9 +593,13 @@ class NaWidget(ModuleWidget):
         while len(self.chunks) <= chunk_index: # create as many chunks as needed to reach chunk_index (in principle only
             # one curve should be missing at most)
             self.chunks.append(self.plot_item.plot(pen='y'))
+            self.chunks_phase.append(self.plot_item_phase.plot(pen=None, symbol='o'))
 
         sl = slice(max(0, 50 * chunk_index - 1), min(50 * (chunk_index + 1), self.module.last_valid_point), 1) # make sure there is an overlap between slices
-        self.chunks[chunk_index].setData(self.module.x[sl], np.abs(self.module.y_averaged[sl]))
+        data = self.module.y_averaged[sl]
+        self.chunks[chunk_index].setData(self.module.x[sl], np.abs(data))
+        self.chunks_phase[chunk_index].setData(self.module.x[sl], 180./np.pi*np.angle(data))
+
 
     def run_continuous_clicked(self):
         """
@@ -598,7 +623,6 @@ class NaWidget(ModuleWidget):
         """
         Save the current curve.
         """
-
         self.module.save_curve()
 
     def display_state(self, state):
@@ -687,11 +711,6 @@ class NaWidget(ModuleWidget):
         # is only marginally slowing
         # down the measurement...
         self.update_timer.setInterval(self.last_valid_point / 100)
-
-
-
-
-
 
 
 class MyGraphicsWindow(pg.GraphicsWindow):

@@ -221,7 +221,6 @@ class Lockbox(SoftwareModule):
         ### update stages: keep outputs unchanged, when input doesn't exist anymore, change it.
         self.sequence.update_inputs()
 
-
     def load_setup_attributes(self):
         """
         This function needs to be overwritten to retrieve the child module attributes as well
