@@ -163,6 +163,7 @@ class ModuleWidget(QtGui.QGroupBox):
         c = self.curve_class.create(x_values,
                                     y_values,
                                     **attributes)
+        c.name = attributes["curve_name"]
         return c
 
     def init_gui(self):
