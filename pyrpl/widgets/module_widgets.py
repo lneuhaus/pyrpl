@@ -153,7 +153,6 @@ class ModuleWidget(QtGui.QGroupBox):
             self.attribute_layout.addWidget(widget)
             widget.value_changed.connect(self.attribute_changed)
 
-<<<<<<< HEAD
     def save_curve(self, x_values, y_values, **attributes):
         """
         Saves the curve in some database system.
@@ -171,8 +170,6 @@ class ModuleWidget(QtGui.QGroupBox):
         c.name = attributes["curve_name"]
         return c
 
-=======
->>>>>>> af20be3f0d79bb1b4373ab3ca40fdffad774a473
     def init_gui(self):
         """
         To be overwritten in derived class
