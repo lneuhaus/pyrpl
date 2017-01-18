@@ -20,6 +20,7 @@ import logging
 import sys
 import numpy as np
 import numbers
+from PyQt4 import QtCore, QtGui
 
 
 
@@ -47,7 +48,6 @@ class BaseAttribute(object):
         """
         default: if provided, the value is initialized to it
         """
-
         if default is not None:
             self.value = default
         self.__doc__ = doc
@@ -95,8 +95,10 @@ class BaseAttribute(object):
         """
         Updates the widget with the module's value.
         """
-        if self.name in module.widget.attribute_widgets:
-            module.widget.attribute_widgets[self.name].update_widget()
+        # if self.name in module.widget.attribute_widgets:
+        #   module.widget.attribute_widgets[self.name].update_widget()
+        if self.name in module.gui_attributes:
+            module.gui_updater.attribute_changed.emit(self.name)
 
     def save_attribute(self, module, value):
         """
@@ -138,7 +140,7 @@ class FloatAttribute(NumberAttribute):
     """
     widget_class = FloatAttributeWidget
 
-    def __init__(self, default=None, increment=0.001, min=-.1, max=1., doc=""):
+    def __init__(self, default=None, increment=0.001, min=-1., max=1., doc=""):
         super(FloatAttribute, self).__init__(default=default, doc=doc)
         self.increment = increment
         self.min = min
@@ -845,6 +847,9 @@ class PWMRegister(FloatRegister, FloatAttribute):
     # see FPGA code for more detailed description on how the PWM works
     def __init__(self, address, CFG_BITS=24, PWM_BITS=8, **kwargs):
         super(PWMRegister, self).__init__(address=address, bits=14, norm=1, **kwargs)
+        self.min = 0   # voltage of pwm outputs ranges from 0 to 1.8 volts
+        self.max = 1.8
+        self.increment = (self.max-self.min)/2**(self.bits-1)  # actual resolution is 14 bits (roughly 0.1 mV incr.)
         self.CFG_BITS = int(CFG_BITS)
         self.PWM_BITS = int(PWM_BITS)
 

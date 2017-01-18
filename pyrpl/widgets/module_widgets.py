@@ -8,7 +8,6 @@ can be changed before calling create_widget()
 from .schematics import MyImage, MyFrame, MyLabel, MyFrameDrawing, Connection # useful stuffs for IqManagerWidget
 
 from PyQt4 import QtCore, QtGui
-from pyrpl import CurveDB
 from collections import OrderedDict
 import pyqtgraph as pg
 from pyrpl.errors import NotReadyError
@@ -82,14 +81,12 @@ class SaveLabel(MyMenuLabel):
 
 class ModuleWidget(QtGui.QGroupBox):
     """
-    Base class for a module Widget. In general, this is one of the Tab in the
-    final RedPitayaGui object.
+    Base class for a module Widget. In general, this is one of the DockWidget of the Pyrpl MainWindow.
     """
     title_pos = (12, 0)
 
     attribute_changed = QtCore.pyqtSignal()
     # register_names = [] # a list of all register name to expose in the gui
-    curve_class = CurveDB # Change this to save the curve with a different system
 
     def set_title(self, title):
         if hasattr(self, "title_label"): # ModuleManagerWidgets don't have a title_label
@@ -110,6 +107,13 @@ class ModuleWidget(QtGui.QGroupBox):
         # self.setStyleSheet("ModuleWidget{border:0;color: transparent;}") # frames and title hidden for software_modules
                                         # ModuleManagerWidget sets them visible for the HardwareModuleWidgets...
         self.show_ownership()
+        self.module.gui_updater.connect_widget(self)
+
+    def update_attribute_by_name(self, name):
+        """
+        Updates a specific attribute.
+        """
+        self.attribute_widgets[str(name)].update_widget()
 
     def create_title_bar(self):
         self.title_label = QtGui.QLabel("yo", parent=self)
@@ -149,6 +153,7 @@ class ModuleWidget(QtGui.QGroupBox):
             self.attribute_layout.addWidget(widget)
             widget.value_changed.connect(self.attribute_changed)
 
+<<<<<<< HEAD
     def save_curve(self, x_values, y_values, **attributes):
         """
         Saves the curve in some database system.
@@ -166,6 +171,8 @@ class ModuleWidget(QtGui.QGroupBox):
         c.name = attributes["curve_name"]
         return c
 
+=======
+>>>>>>> af20be3f0d79bb1b4373ab3ca40fdffad774a473
     def init_gui(self):
         """
         To be overwritten in derived class
@@ -193,6 +200,53 @@ class ScopeWidget(ModuleWidget):
         self.module.__dict__['curve_name'] = 'scope'
         self.main_layout = QtGui.QVBoxLayout()
         self.init_attribute_layout()
+        aws = self.attribute_widgets
+        self.attribute_layout.removeWidget(aws['rolling_mode'])
+        aws['rolling_mode'].hide()
+        self.attribute_layout.removeWidget(aws['running_continuous'])
+        aws['running_continuous'].hide()
+
+        self.layout_channels = QtGui.QVBoxLayout()
+        self.layout_ch1 = QtGui.QHBoxLayout()
+        self.layout_ch2 = QtGui.QHBoxLayout()
+        self.layout_channels.addLayout(self.layout_ch1)
+        self.layout_channels.addLayout(self.layout_ch2)
+
+
+        self.attribute_layout.removeWidget(aws['ch1_active'])
+        self.attribute_layout.removeWidget(aws['input1'])
+        self.attribute_layout.removeWidget(aws['threshold_ch1'])
+
+        self.layout_ch1.addWidget(aws['ch1_active'])
+        self.layout_ch1.addWidget(aws['input1'])
+        self.layout_ch1.addWidget(aws['threshold_ch1'])
+
+        self.attribute_layout.removeWidget(aws['ch2_active'])
+        self.attribute_layout.removeWidget(aws['input2'])
+        self.attribute_layout.removeWidget(aws['threshold_ch2'])
+
+        self.layout_ch2.addWidget(aws['ch2_active'])
+        self.layout_ch2.addWidget(aws['input2'])
+        self.layout_ch2.addWidget(aws['threshold_ch2'])
+
+        self.attribute_layout.addLayout(self.layout_channels)
+
+        self.attribute_layout.removeWidget(aws['duration'])
+        self.attribute_layout.removeWidget(aws['trigger_delay'])
+        self.layout_duration = QtGui.QVBoxLayout()
+        self.layout_duration.addWidget(aws['duration'])
+        self.layout_duration.addWidget(aws['trigger_delay'])
+        self.attribute_layout.addLayout(self.layout_duration)
+
+        self.attribute_layout.removeWidget(aws['trigger_source'])
+        self.attribute_layout.removeWidget(aws['average'])
+        self.layout_misc = QtGui.QVBoxLayout()
+        self.layout_misc.addWidget(aws['trigger_source'])
+        self.layout_misc.addWidget(aws['average'])
+        self.attribute_layout.addLayout(self.layout_misc)
+
+        self.attribute_layout.removeWidget(aws['curve_name'])
+
         self.button_layout = QtGui.QHBoxLayout()
         self.setLayout(self.main_layout)
         self.setWindowTitle("Scope")
@@ -208,25 +262,13 @@ class ScopeWidget(ModuleWidget):
         self.button_layout.addWidget(self.button_single)
         self.button_layout.addWidget(self.button_continuous)
         self.button_layout.addWidget(self.button_save)
+        self.button_layout.addWidget(aws['curve_name'])
+        aws['curve_name'].setMaximumWidth(250)
         self.main_layout.addLayout(self.button_layout)
-        self.cb_ch = []
-        for i in (1, 2):
-            self.cb_ch.append(QtGui.QCheckBox("Channel " + str(i)))
-            self.button_layout.addWidget(self.cb_ch[-1])
-        self.button_single.clicked.connect(self.run_single)
+
+        self.button_single.clicked.connect(self.module.run_single)
         self.button_continuous.clicked.connect(self.run_continuous_clicked)
-        self.button_save.clicked.connect(self.save)
-        self.timer = QtCore.QTimer()
-        self.timer.setInterval(10)
-        self.timer.setSingleShot(True)
-
-        self.timer.timeout.connect(self.check_for_curves)
-
-        for cb, col in zip(self.cb_ch, self.ch_col):
-            cb.setCheckState(2)
-            cb.setStyleSheet('color: ' + col)
-        for cb in self.cb_ch:
-            cb.stateChanged.connect(self.display_curves)
+        self.button_save.clicked.connect(self.save_clicked)
 
         self.rolling_group = QtGui.QGroupBox("Trigger mode")
         self.checkbox_normal = QtGui.QRadioButton("Normal")
@@ -242,9 +284,27 @@ class ScopeWidget(ModuleWidget):
         self.checkbox_untrigged.clicked.connect(self.rolling_mode_toggled)
         self.update_rolling_mode_visibility()
         self.attribute_widgets['duration'].value_changed.connect(self.update_rolling_mode_visibility)
-        self.set_running_state()
-        self.set_rolling_mode()
+        self.update_running_buttons()
+        self.update_rolling_mode_visibility()
 
+    def update_attribute_by_name(self, name):
+        super(ScopeWidget, self).update_attribute_by_name(name)
+        if name in ['rolling_mode', 'duration']:
+            self.rolling_mode = self.module.rolling_mode
+        if name in ['running_continuous',]:
+            self.update_running_buttons()
+
+    def update_running_buttons(self):
+        """
+        Change text of Run continuous button and visibility of run single button
+        according to module.running_continuous
+        """
+        if self.module.running_continuous:
+            self.button_continuous.setText("Stop")
+            self.button_single.setEnabled(False)
+        else:
+            self.button_continuous.setText("Run continuous")
+            self.button_single.setEnabled(True)
 
     def display_channel(self, ch):
         """
@@ -259,68 +319,17 @@ class ScopeWidget(ModuleWidget):
         except NotReadyError:
             pass
 
-    def display_curves(self):
+    def display_curves(self, list_of_arrays):
         """
         Displays all active channels on the graph.
         """
-        if not self.rolling_mode: # otherwise, evrything is handled in check_for_curves
-            for i in (1, 2):
-                if self.cb_ch[i - 1].checkState() == 2:
-                    self.display_channel(i)
-                    self.curves[i - 1].setVisible(True)
-                else:
-                    self.curves[i - 1].setVisible(False)
-
-    def run_single(self):
-        """
-        When run_single is pressed, launches a single acquisition.
-        """
-
-        self.module.setup()
-        self.plot_item.enableAutoRange('xy', True)
-        self.display_curves()
-
-    def check_for_curves(self):
-        """
-        This function is called periodically by a timer when in run_continuous mode.
-        1/ Check if curves are ready.
-        2/ If so, plots them on the graph
-        3/ Restarts the timer.
-        """
-
-        if not self.rolling_mode:
-            if self.module.curve_ready():
-                self.display_curves()
-                if self.first_shot_of_continuous:
-                    self.first_shot_of_continuous = False  # autoscale only upon first curve
-                    self.plot_item.enableAutoRange('xy', False)
-                self.module.setup()
-        else:
-            wp0 = self.module._write_pointer_current
-            self.datas = [None, None]
-            for ch in (1, 2):
-                if self.cb_ch[ch - 1].checkState() == 2:
-                    self.datas[ch-1] = self.module._get_ch_no_roll(ch)
-            wp1 = self.module._write_pointer_current
-            for index, data in enumerate(self.datas):
-                if data is None:
-                    self.curves[index].setVisible(False)
-                    continue
-                to_discard = (wp1 - wp0) % self.module.data_length
-                data = np.roll(data, self.module.data_length - wp0)[
-                       to_discard:]
-                data = np.concatenate([[np.nan] * to_discard, data])
-                times = self.module.times
-                times -= times[-1]
-                self.datas[index] = data
-                self.times = times
-                self.curves[index].setData(times, data)
-                self.curves[index].setVisible(True)
-        try:
-            self.curve_display_done()
-        except Exception as e:
-            print(e)
-        self.timer.start()
+        times, ch1, ch2 = list_of_arrays
+        for ch, data in enumerate([ch1, ch2]):
+            if data is not None:
+                self.curves[ch].setData(times, data)
+                self.curves[ch].setVisible(True)
+            else:
+                self.curves[ch].setVisible(False)
 
     def curve_display_done(self):
         """
@@ -330,48 +339,20 @@ class ScopeWidget(ModuleWidget):
         """
         pass
 
+    """
     @property
     def state(self):
         if self.module.running_continuous: #button_continuous.text()=="Stop":
             return "running"
         else:
             return "stopped"
-
-    def run_continuous(self):
-        """
-        Toggles the button run_continuous to stop and starts the acquisition timer.
-        This function is part of the public interface.
-        """
-        self.button_continuous.setText("Stop")
-        self.button_single.setEnabled(False)
-        self.module.setup()
-        self.plot_item.enableAutoRange('xy', True)
-        self.first_shot_of_continuous = True
-        self.timer.start()
-
-    def stop(self):
-        """
-        Toggles the button stop to run_continuous to stop and stops the acquisition timer
-        """
-        self.button_continuous.setText("Run continuous")
-        self.timer.stop()
-        self.button_single.setEnabled(True)
-
-    def set_running_state(self):
-        """
-        Set running state (stop/run continuous) according to module's attribute "running_continuous"
-        """
-        if self.module.running_continuous:
-            self.run_continuous()
-        else:
-            self.stop()
+    """
 
     def set_rolling_mode(self):
         """
         Set rolling mode on or off based on the module's attribute "rolling_mode"
         """
         self.rolling_mode = self.module.rolling_mode
-
 
     def run_continuous_clicked(self):
         """
@@ -380,9 +361,9 @@ class ScopeWidget(ModuleWidget):
 
         if str(self.button_continuous.text()) \
                 == "Run continuous":
-            self.module.running_continuous = True # run_continuous()
+            self.module.run_continuous()
         else:
-            self.module.running_continuous = False
+            self.module.stop()
 
     def rolling_mode_toggled(self):
         self.module.rolling_mode = self.rolling_mode
@@ -401,45 +382,27 @@ class ScopeWidget(ModuleWidget):
             self.checkbox_untrigged.setChecked(True)
         else:
             self.checkbox_normal.setChecked(True)
-        if self.state=='running':
-            self.stop()
-            self.run_continuous()
         return val
 
     def update_rolling_mode_visibility(self):
         """
-        hide rolling mode checkbox for duration < 100 ms
+        Hide rolling mode checkbox for duration < 100 ms
         """
         self.rolling_group.setEnabled(self.module.rolling_mode_allowed())
         self.attribute_widgets['trigger_source'].widget.setEnabled(
             not self.rolling_mode)
-        old = self.attribute_widgets['threshold_ch1'].widget.isEnabled()
         self.attribute_widgets['threshold_ch1'].widget.setEnabled(
             not self.rolling_mode)
         self.attribute_widgets['threshold_ch2'].widget.setEnabled(
             not self.rolling_mode)
         self.button_single.setEnabled(not self.rolling_mode)
-        # if old==self.rolling_mode:
-        #    self.rolling_mode_toggled()
 
     def autoscale(self):
         """Autoscale pyqtgraph"""
-
         self.plot_item.autoRange()
 
-    def save(self):
-        """
-        Save the active curve(s). If you would like to overwrite the save behavior, maybe you should
-        consider overwriting Module.save_curve or Module.curve_db rather than this function.
-        """
-
-        for ch in [1, 2]:
-            d = self.module.get_setup_attributes()
-            d.update({'ch': ch,
-                      'name': self.module.curve_name + ' ch' + str(ch)})
-            self.save_curve(self.times,
-                            self.datas[ch-1],
-                            **d)
+    def save_clicked(self):
+        self.module.save_curve()
 
 
 class AsgWidget(ModuleWidget):
@@ -525,48 +488,47 @@ class NaWidget(ModuleWidget):
         self.button_single.my_label = "Single"
         self.button_continuous = QtGui.QPushButton("Run continuous")
         self.button_continuous.my_label = "Continuous"
-        self.button_restart_averaging = QtGui.QPushButton('Restart averaging')
+        self.button_stop = QtGui.QPushButton('Stop')
 
         self.button_save = QtGui.QPushButton("Save curve")
 
-        self.curve = self.plot_item.plot(pen='y')
+        self.chunks = [] #self.plot_item.plot(pen='y')
         self.curve_phase = self.plot_item_phase.plot(pen=None, symbol='o')
         self.main_layout.addWidget(self.win)
         self.main_layout.addWidget(self.win_phase)
         self.button_layout.addWidget(self.button_single)
         self.button_layout.addWidget(self.button_continuous)
-        self.button_layout.addWidget(self.button_restart_averaging)
+        self.button_layout.addWidget(self.button_stop)
         self.button_layout.addWidget(self.button_save)
         self.main_layout.addLayout(self.button_layout)
 
         self.button_single.clicked.connect(self.run_single_clicked)
         self.button_continuous.clicked.connect(self.run_continuous_clicked)
-        self.button_restart_averaging.clicked.connect(
-            self.ask_restart_and_do_it)
-        self.button_save.clicked.connect(self.save)
-        self.timer = QtCore.QTimer()  # timer for point acquisition
-        self.timer.setInterval(10)
-        self.timer.setSingleShot(True)
+        self.button_stop.clicked.connect(self.button_stop_clicked)
+        self.button_save.clicked.connect(self.save_clicked)
+        #self.timer = QtCore.QTimer()  # timer for point acquisition
+        #self.timer.setInterval(10)
+        #self.timer.setSingleShot(True)
 
-        self.update_timer = QtCore.QTimer()  # timer for plot update
-        self.update_timer.setInterval(50)  # 50 ms refreshrate max
-        self.update_timer.timeout.connect(self.update_plot)
-        self.update_timer.setSingleShot(True)
+        #self.update_timer = QtCore.QTimer()  # timer for plot update
+        #self.update_timer.setInterval(50)  # 50 ms refreshrate max
+        #self.update_timer.timeout.connect(self.update_plot)
+        #self.update_timer.setSingleShot(True)
 
-        self.continuous = True
-        self.paused = True
-        self.need_restart = True
+        #self.continuous = True
+        #self.paused = True
+        #self.need_restart = True
 
-        self.attribute_changed.connect(self.ask_restart)
+        #self.attribute_changed.connect(self.ask_restart)
 
-        self.timer.timeout.connect(self.add_one_point)
+        #self.timer.timeout.connect(self.add_one_point)
 
-        self.paused = True
+        #self.paused = True
         # self.restart_averaging() # why would you want to do that? Comment?
 
 
-        self.attribute_widgets["infer_open_loop_tf"].acquisition_property = False
-        self.attribute_widgets["curve_name"].acquisition_property = False
+        #self.attribute_widgets["infer_open_loop_tf"].acquisition_property = False
+        #self.attribute_widgets["curve_name"].acquisition_property = False
 
         self.arrow = pg.ArrowItem()
         self.arrow.setVisible(False)
@@ -574,173 +536,120 @@ class NaWidget(ModuleWidget):
         self.arrow_phase.setVisible(False)
         self.plot_item.addItem(self.arrow)
         self.plot_item_phase.addItem(self.arrow_phase)
+        self.last_updated_point = 0
+        self.last_updated_time = 0
+        self.display_state(self.module.state)
 
-    def save_current_curve_attributes(self):
-        """
-        Stores the attributes in a dictionary self.current_curve_attributes.
-        """
+    def autoscale(self):
+        pass
 
-        self.current_curve_attributes = self.module.get_setup_attributes()
-
-    def save(self):
+    def scan_finished(self):
         """
-        Save the current curve. If you would like to overwrite the save behavior, maybe you should
-        consider overwriting Module.save_curve or Module.curve_db rather than this function.
+        if in run continuous, needs to redisplay the number of averages
         """
+        self.display_state(self.module.state)
 
-        self.save_curve(self.x[:self.last_valid_point],
-                        self.data[:self.last_valid_point],
-                        **self.current_curve_attributes)
-
-    def init_data(self):
+    def update_point(self, index):
         """
-        Prepares empty arrays before starting the scan
+        To speed things up, the curves are plotted by chunks of 50 points. All points between last_updated_point and
+        index will be redrawn.
         """
+        last_chunk_index = self.last_updated_point//50
+        current_chunk_index = index//50
 
-        self.data = np.zeros(self.module.points, dtype=complex)
-        self.x = np.empty(self.module.points)
-        self.post_average = 0
+        if  time() - self.last_updated_time>0.05: # last update time was a long time ago, update plot
+            for chunk_index in range(last_chunk_index, current_chunk_index+1):
+                self.update_chunk(chunk_index) # eventually several chunks to redraw
+            self.last_updated_point = index
+            self.last_updated_time = time()
 
-    def ask_restart(self):
+    def update_attribute_by_name(self, name):
+        super(NaWidget, self).update_attribute_by_name(name)
+        if name=="state":
+            self.display_state(self.module.state)
+
+    def update_chunk(self, chunk_index):
         """
-        Called whenever a property is changed: the execution should stop and
-        when the user wants to acquire more, the acquisition should restart
-        from scratch. However, the current curve is not immediately erased in
-        case the user would like to save it.
+        updates curve # chunk_index with the data from the module
         """
+        while len(self.chunks) <= chunk_index: # create as many chunks as needed to reach chunk_index (in principle only
+            # one curve should be missing at most)
+            self.chunks.append(self.plot_item.plot(pen='y'))
 
-        self.set_state(continuous=self.continuous, paused=True,
-                       need_restart=True, n_av=0)
+        sl = slice(max(0, 50 * chunk_index - 1), min(50 * (chunk_index + 1), self.module.last_valid_point), 1) # make sure there is an overlap between slices
+        self.chunks[chunk_index].setData(self.module.x[sl], np.abs(self.module.y_averaged[sl]))
 
-    def ask_restart_and_do_it(self):
+    def run_continuous_clicked(self):
         """
-        Restart is actually done immediately (Called when the user clicks on restart averaging)
+        launches a continuous run
         """
-
-        if not self.paused:
-            self.timer.stop()
-            self.restart_averaging()
-            self.new_run()
-            self.timer.start()
-            self.set_state(continuous=self.continuous, paused=self.paused,
-                           need_restart=False, n_av=0)
+        if str(self.button_continuous.text()).startswith("Pause"):
+            self.module.pause()
         else:
-            self.set_state(continuous=self.continuous, paused=self.paused,
-                           need_restart=True, n_av=0)
-
-    def restart_averaging(self):
-        """
-        Initializes the data, sets the timer, launches the run.
-        """
-
-        self.init_data()
-        self.timer.setInterval(self.module.time_per_point * 1000)
-        self.update_timer.setInterval(10)
-        self.new_run()
-
-    def run_single(self):
-        """
-        Launches a single run (part of the public interface).
-        Restarts averaging from scratch.
-        """
-
-        self.restart_averaging()
-        self.new_run()
-        self.set_state(continuous=False, paused=False, need_restart=False)
-        self.timer.start()
+            self.module.run_continuous()
 
     def run_single_clicked(self):
         """
-        Toggles between pause and running.
+        launches a single acquisition
         """
-        if self.paused:
-            if self.continuous or self.need_restart:  # restart from scratch
-                self.run_single()
-            else:  # continue with the previously started scan
-                self.set_state(continuous=False, paused=False,
-                               need_restart=False)
-                self.timer.start()
-        else:  # If already running, then set to paused
-            self.set_state(continuous=False, paused=True, need_restart=False)
+        if str(self.button_single.text()).startswith("Pause"):
+            self.module.pause()
+        else:
+            self.module.run_single()
 
-    def stop(self):
+    def save_clicked(self):
         """
-        Stop the current execution (part of the public interface).
+        Save the current curve.
         """
 
-        self.set_state(continuous=self.continuous, paused=True,
-                       need_restart=self.need_restart)
-        self.module.iq.amplitude = 0
+        self.module.save_curve()
 
-    def new_run(self):
+    def display_state(self, state):
         """
-        Sets up the fpga modules for a new run and save the run parameters.
+        Displays one of the possible states
+        "running_continuous", "running_single", "paused_continuous", "paused_single", "stopped"
         """
-
-        self.module.setup()
-        self.values = self.module.values()
-        self.save_current_curve_attributes()
-
-    def set_state(self, continuous, paused, need_restart, n_av=0):
-        """
-        The current state is composed of 3 flags and a number. This function
-        updates the flags and reflects on the gui the required state.
-
-        :param continuous: True or False means continuous or single
-        :param paused: True or False Whether the acquisition is running or stopped
-        :param need_restart: True or False: whether the current data could be averaged with upcoming ones
-        :param n_av: current number of averages
-        :return:
-        """
-
-        self.continuous = continuous
-        self.paused = paused
-        self.need_restart = need_restart
-        active_button = self.button_continuous if continuous else self.button_single
-        inactive_button = self.button_single if continuous else self.button_continuous
-        self.button_restart_averaging.setEnabled(not need_restart)
-        active_button.setEnabled(True)
-        inactive_button.setEnabled(self.paused)
-        first_word = 'Run ' if need_restart else 'Continue '
-        if self.paused:
+        if not state in ["running_continuous", "running_single", "paused_continuous", "paused_single", "stopped"]:
+            raise ValueError("Na state should be either running_continuous, running_single, paused_continuous, "
+                             "paused_single.")
+        if state=="running_continuous":
+            self.button_single.setEnabled(False)
             self.button_single.setText("Run single")
-            self.button_continuous.setText(first_word + "(%i averages)" % n_av)
-            self.module.iq.amplitude = 0
-        else:
-            if active_button == self.button_single:
-                active_button.setText('Pause')
-            else:
-                active_button.setText('Pause (%i averages)' % n_av)
+            self.button_continuous.setEnabled(True)
+            self.button_continuous.setText("Pause (%i averages)"%self.module.current_averages)
+            return
+        if state=="running_single":
+            self.button_single.setEnabled(True)
+            self.button_single.setText("Pause")
+            self.button_continuous.setEnabled(False)
+            self.button_continuous.setText("Run continuous")
+            return
+        if state=="paused_single" or (state=="paused_continuous" and self.module.current_averages==0):
+            self.button_continuous.setText("Resume continuous")
+            self.button_single.setText("Resume single")
+            self.button_continuous.setEnabled(True)
+            self.button_single.setEnabled(True)
+            return
+        if state=="paused_continuous":
+            self.button_continuous.setText("Resume continuous (%i averages)"%self.module.current_averages)
+            self.button_single.setText("Run single")
+            self.button_continuous.setEnabled(True)
+            self.button_single.setEnabled(False)
+            return
+        if state=="stopped":
+            self.button_continuous.setText("Run continuous")
+            self.button_single.setText("Run single")
+            self.button_continuous.setEnabled(True)
+            self.button_single.setEnabled(True)
+            return
 
-    @property
-    def last_valid_point(self):
+    def button_stop_clicked(self):
         """
-        Index of the last point that contains more than 0 averages
+        Going to stop will impose a setup_average before next run.
         """
-        if self.post_average > 0:
-            max_point = self.module.points
-        else:
-            max_point = self.module.current_point
-        return max_point
+        self.module.stop()
 
-    def threshold_hook(self, current_val):
-        """
-        A convenience function to stop the run upon some condition
-        (such as reaching of a threshold. current_val is the complex amplitude
-        of the last data point).
-
-        To be overwritten in derived class...
-        Parameters
-        ----------
-        current_val
-
-        Returns
-        -------
-
-        """
-        pass
-
-    def update_plot(self):
+    def update_plot_obsolete(self):
         """
         Update plot only every 10 ms max...
 
@@ -782,85 +691,10 @@ class NaWidget(ModuleWidget):
         # down the measurement...
         self.update_timer.setInterval(self.last_valid_point / 100)
 
-    def add_one_point(self):
-        """
-        This function is called by a timer periodically to add new points in the buffer.
-        Plotting is actually done by another independent loop.
-        """
 
-        if self.paused:
-            return
-        cur = self.module.current_point
-        try:
-            x, y, amp = next(self.values)
-            self.threshold_hook(y)
-        except StopIteration:
-            self.post_average += 1
-            if self.continuous:
-                self.new_run()
-                self.set_state(continuous=True, paused=False,
-                               need_restart=False, n_av=self.post_average)
-                self.timer.start()
-            else:
-                self.set_state(continuous=True, paused=True,
-                               need_restart=False, n_av=self.post_average)  # 1
-                self.button_single.setText("Run single")
-            return
-        self.data[cur] = (self.data[cur] * self.post_average + y) \
-                         / (self.post_average + 1)
-        self.x[cur] = x
-        # fomerly, we had buffers for both phase and magnitude. This was faster
-        # but more messy. We could restore them once the display get
-        # exceedingly slow. In that case, they should be calculated right
-        # after acquisition, i.e. here.
 
-        if not self.update_timer.isActive():
-            self.update_timer.start()
 
-        self.timer.setInterval(self.module.time_per_point * 1000)
-        self.timer.start()
 
-    def run_continuous(self):
-        """
-        Launch a continuous acquisition (part of the public interface).
-        Averages from scratch
-        """
-
-        self.restart_averaging()
-        self.new_run()
-        self.set_state(continuous=True, paused=False, need_restart=False,
-                       n_av=self.post_average)
-        self.timer.start()
-
-    def resume_acquisition(self):
-        """
-        Resumes the current acquisition (continuous or single) if it was stopped.
-        An AveragingError is launched if the parameters have changed in the mean time.
-        """
-
-        if self.need_restart:
-            raise AveragingError("""parameters have changed in the mean time, cannot average
-                with previous data""")
-        else:
-            self.set_state(continuous=self.continuous,
-                           paused=False,
-                           need_restart=self.need_restart,
-                           n_av=self.post_average)
-
-    def run_continuous_clicked(self):
-        """
-        Toggles the run continuous button, and performs the required action.
-        """
-        if self.paused:
-            if self.need_restart:
-                self.run_continuous()
-            else:
-                self.set_state(continuous=True, paused=False,
-                               need_restart=False, n_av=self.post_average)
-                self.timer.start()
-        else:
-            self.set_state(continuous=True, paused=True, need_restart=False,
-                           n_av=self.post_average)
 
 
 class MyGraphicsWindow(pg.GraphicsWindow):

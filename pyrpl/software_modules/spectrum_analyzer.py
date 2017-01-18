@@ -232,7 +232,7 @@ class SpectrumAnalyzer(SoftwareModule):
         self.points = Scope.data_length
         """ # intializing stuffs while scope is not reserved modifies the parameters of the scope...
 
-        self.input = 'adc1'
+        self.input = 'in1'
         self.span = 1e5
         self.rbw_auto = True
         """
@@ -241,11 +241,11 @@ class SpectrumAnalyzer(SoftwareModule):
     @property
     def iq(self):
         if self._iq is None:
-            self._iq = self.pyrpl.rp.iq2# can't use the normal pop mechanism because we specifically want the customized iq2
+            self._iq = self.pyrpl.rp.iq3  # can't use the normal pop mechanism because we specifically want the customized iq2
             self._iq.owner = self.name
         return self._iq
 
-    iq_quadraturesignal = 'iq2_2'
+    iq_quadraturesignal = 'iq3_2'
 
     @property
     def data_length(self):
@@ -377,11 +377,11 @@ class SpectrumAnalyzer(SoftwareModule):
         """
         :return: complex iq time trace
         """
-        timeout = self.scope.duration * 2 # leave some margin
-        res = np.asarray(self.scope.curve(1, timeout=timeout),
+        #timeout = self.scope.duration * 2 # leave some margin
+        res = np.asarray(self.scope.curve(1, timeout=None),
                          dtype=np.complex)
         if not self.baseband:
-            res += 1j*self.scope.curve(2, timeout=timeout)
+            res += 1j*self.scope.curve(2, timeout=None)
         return res[:self.data_length]
 
     def filtered_iq_data(self):
@@ -409,7 +409,7 @@ class SpectrumAnalyzer(SoftwareModule):
         """
         if not self._is_setup:
             raise NotReadyError("Setup was never called")
-        res = scipy.fftpack.fftshift(np.abs(scipy.fftpack  .fft(self.filtered_iq_data())) ** 2)[self.useful_index()]
+        res = scipy.fftpack.fftshift(np.abs(scipy.fftpack.fft(self.filtered_iq_data())) ** 2)[self.useful_index()]
         self.pyrpl.scopes.free(self.scope)
         return res
 

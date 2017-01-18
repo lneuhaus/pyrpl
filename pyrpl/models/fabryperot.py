@@ -3,6 +3,8 @@ from pyrpl.software_modules.lockbox.signal import Signal
 from . import *
 from ..pyrpl_utils import sleep
 
+import logging
+
 logger = logging.getLogger(name=__name__)
 
 

@@ -31,7 +31,9 @@ from .widgets.pyrpl_widget import PyrplWidget
 from . import software_modules
 from .memory import MemoryTree
 from .redpitaya import RedPitaya
-from .pyrpl_utils import get_unique_name_list_from_class_list
+from . import pyrpl_utils
+from .global_config import *
+from .software_modules import get_software_module
 
 ## Something has to be done with this docstring... I would like to wait for lockbox to be implemented before doing it...
 """
@@ -247,34 +249,51 @@ class Pyrpl(object):
         If None, it is ignored. Else, the file 'source' is taken as a
         template config file and copied to 'config' if that file does
         not exist.
+    **kwargs: dict
+        Additional arguments can be passed and will be written to the
+        redpitaya branch of the config file. See class definition of
+        RedPitaya for possible keywords.
     """
-    _configdir = os.path.join(os.path.dirname(__file__), "config")
 
-    def _getpath(self, filename):
-        p, f = os.path.split(filename)
-        if not p:  # no path specified -> search in configdir
-            filename = os.path.join(self._configdir, filename)
+    # get global configuration memory tree
+    _global_config = global_config
+    _default_config_dir = default_config_dir
+
+    # auto-correct the user config dir so it points to the right place
+    try:
+        _user_config_dir = _global_config.general.configdir
+    except KeyError:
+        _user_config_dir = ""
+    if not os.path.exists(_user_config_dir):
+        _user_config_dir = os.path.join(_default_config_dir,
+                                        _user_config_dir)
+    if not os.path.exists(_user_config_dir):
+        os.mkdir(_user_config_dir)
+
+    @classmethod
+    def _getpath(self, filename='default'):
+        # get extension right
         if not filename.endswith(".yml"):
             filename = filename + ".yml"
+        # get path right
+        p, f = os.path.split(filename)
+        if not p:  # no path specified -> search in configdir
+            try:
+                filename = os.path.join(self._user_config_dir, f)
+            except:
+                filename = None
+                # ... or defaultconfigdir
+            if (not os.path.isfile(filename)
+                and os.path.isfile(
+                    os.path.join(self._default_config_dir, f))):
+                filename = os.path.join(self._default_config_dir, f)
         return filename
 
     def _setloglevel(self):
-        """ sets the log level to the one specified in config file"""
-        try:
-            level = self.c.pyrpl.loglevel
-            loglevels = {"notset": logging.NOTSET,
-                         "debug": logging.DEBUG,
-                         "info": logging.INFO,
-                         "warning": logging.WARNING,
-                         "error": logging.ERROR,
-                         "critical": logging.CRITICAL}
-            level = loglevels[level]
-        except:
-            pass
-        else:
-            logging.getLogger(name='pyrpl').setLevel(level)
+        pyrpl_utils.setloglevel(level=self.c.pyrpl.loglevel,
+                                loggername=__name__)  # 'pyrpl')
 
-    def __init__(self, config="default", source=None):
+    def __init__(self, config="myconfigfile", source="default", **kwargs):
         # logger initialisation
         self.logger = logging.getLogger(name=__name__)
         config = self._getpath(config)
@@ -283,21 +302,20 @@ class Pyrpl(object):
                 self.logger.warning("Config file already exists. Source file "
                                     + "specification is ignored")
             else:
-                copyfile(self._getpath(source), config)
-        # configuration is retrieved from config file
-        self.c = MemoryTree(config)
-        # set global logging level if specified in config file
-        self._setloglevel()
+                copyfile(self._getpath(source),
+                         self._getpath(config))
         # configuration is retrieved from config file
         self.c = MemoryTree(config)
         # set global logging level if specified in config file
         self._setloglevel()
 
-        # Eventually, could become optional...
+        if not 'redpitaya' in self.c._keys() and len(kwargs)>0:
+            self.c['redpitaya'] = dict()
+        self.c.redpitaya._update(kwargs)
         # initialize RedPitaya object with the configured parameters
         if 'redpitaya' in self.c._keys():
-            self.rp = RedPitaya(config=self.c, **self.c.redpitaya._dict)
-        else:
+            self.rp = RedPitaya(config=self.c)
+        else:  # not tested, probably not interesting
             self.rp = None
 
         self.software_modules = []
@@ -324,8 +342,8 @@ class Pyrpl(object):
                           'PidManager',
                           'ScopeManager',
                           'IirManager'] + soft_mod_names
-        module_classes = [getattr(software_modules, cls_name) for cls_name in soft_mod_names]
-        module_names = get_unique_name_list_from_class_list(module_classes)
+        module_classes = [get_software_module(cls_name) for cls_name in soft_mod_names]
+        module_names = pyrpl_utils.get_unique_name_list_from_class_list(module_classes)
         for cls, name in zip(module_classes, module_names):
             # ModuleClass = getattr(software_modules, module_name)
             module = cls(self, name)

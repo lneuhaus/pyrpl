@@ -11,6 +11,7 @@ pyrpl: # General configuration of the software:
     - NetworkAnalyzer
     - SpectrumAnalyzer
     - Lockbox
+    - DummyModule
 redpitaya:
   password: root
   user: root

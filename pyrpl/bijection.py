@@ -22,4 +22,3 @@ class Bijection(dict):
     def update(self,*args, **kwargs):
         super(Bijection,self).update(*args,**kwargs)
         self.inverse = {v: k for k, v in self.items()}
-        

@@ -1,5 +1,6 @@
 import time
-
+import logging
+from collections import OrderedDict
 
 QT_EXIST = True
 try:
@@ -49,4 +50,27 @@ def get_unique_name_list_from_class_list(cls_list):
     return names
 
 
+def setloglevel(level='info', loggername='pyrpl'):
+    """ sets the log level to the one specified in config file"""
+    try:
+        loglevels = {"notset": logging.NOTSET,
+                     "debug": logging.DEBUG,
+                     "info": logging.INFO,
+                     "warning": logging.WARNING,
+                     "error": logging.ERROR,
+                     "critical": logging.CRITICAL}
+        level = loglevels[level]
+    except:
+        pass
+    else:
+        logging.getLogger(name=loggername).setLevel(level)
+
+
+def sorted_dict(dict_to_sort=None, sort_by_values=True, **kwargs):
+    if dict_to_sort is None:
+        dict_to_sort = kwargs
+    if not sort_by_values:
+        return OrderedDict(sorted(dict_to_sort.items()))
+    else:
+        return OrderedDict(sorted(dict_to_sort.items(), key=lambda x: x[1]))
 

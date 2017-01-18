@@ -1,0 +1,94 @@
+pyrpl: # General configuration of the software:
+  name: test_refactor
+  gui: true # autostart gui
+  loglevel: info
+  # level of logged information.
+  # 'debug' outputs everything
+  # 'infi' is default level
+  # 'warning' only shows warnings and errors
+  # 'error' only shows errors
+  modules:
+  # the listed software modules will be loaded, i.e. they will block the necessary resources such as IQs, PIDs etc.
+           # SoftwareModules to load (in addition to IqManager, AsgManager, PidManager, ScopeManager)
+    - NetworkAnalyzer
+    - SpectrumAnalyzer
+    - Lockbox
+  dock_positions: !!binary |
+    AAAA/wAAAAD9AAAAAQAAAAIAAAeAAAAESPwBAAAAAfwAAAAAAAAHgAAABPgA////+gAAAAcBAAAA
+    CPsAAAAIAGEAcwBnAHMAAAAAAP////8AAAAWAP////sAAAAGAGkAcQBzAAAAAAD/////AAAAFgD/
+    ///7AAAACABwAGkAZABzAAAAAAD/////AAAAFgD////7AAAADABzAGMAbwBwAGUAcwEAAAAA////
+    /wAABBEA////+wAAAAgAaQBpAHIAcwAAAAAA/////wAAABYA////+wAAAAQAbgBhAAAAAAD/////
+    AAAAFgD////7AAAAIgBzAHAAZQBjAHQAcgB1AG0AXwBhAG4AYQBsAHkAegBlAHIAAAAAAP////8A
+    AAAWAP////sAAAAOAGwAbwBjAGsAYgBvAHgBAAAAAP////8AAAT4AP///wAAB4AAAAAAAAAABAAA
+    AAQAAAAIAAAACPwAAAAA
+  window_position:
+  - -8
+  - -8
+  - 1920
+  - 1137
+redpitaya:
+  hostname: 10.214.1.28
+  user: root
+  password: root
+  port: 2222
+  frequency_correction: 1.0
+  filename: fpga//red_pitaya.bin
+  reloadfpga: true
+  monitor_server_name: monitor_server
+nas: !!omap
+- na: !!omap []
+spectrum_analyzers: !!omap
+- spectrum_analyzer: !!omap []
+lockboxs: !!omap
+- lockbox: !!omap
+  - fabryperots: !!omap
+    - FabryPerot: !!omap []
+  - transmissions: !!omap
+    - transmission: !!omap []
+  - reflections: !!omap
+    - reflection: !!omap []
+  - pdhs: !!omap
+    - pdh: !!omap []
+  - sequences: !!omap
+    - sequence: !!omap []
+    - states: {}
+  - outputs: !!omap
+    - output2: !!omap
+      - name: output2
+- states: {}
+hks: !!omap
+- hk: !!omap []
+amss: !!omap
+- ams: !!omap []
+scopes: !!omap
+- scope: !!omap
+  - trigger_source: immediately
+  - running_continuous: true
+- states:
+    initial:
+      threshold_ch2: 0.0
+      threshold_ch1: 0.0
+      running_continuous: true
+      rolling_mode: false
+      input2: adc2
+      trigger_source: immediately
+      curve_name: ''
+      duration: 0.000131072
+      trigger_delay: 0.0
+      average: true
+      input1: adc1
+samplers: !!omap
+- sampler: !!omap []
+asgs: !!omap
+- asg1: !!omap []
+- asg2: !!omap []
+pwms: !!omap
+- pwm1: !!omap []
+- pwm2: !!omap []
+pids: !!omap
+- pid1: !!omap [{setpoint: 0.0999755859375}]
+- pid2: !!omap []
+- pid3: !!omap []
+- pid4: !!omap []
+iirs: !!omap
+- iir: !!omap []

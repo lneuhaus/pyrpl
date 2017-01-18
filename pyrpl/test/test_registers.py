@@ -1,5 +1,7 @@
 import logging
 logger = logging.getLogger(name=__name__)
+from nose.tools import set_trace
+
 
 from pyrpl import RedPitaya
 from pyrpl.modules import BaseModule
@@ -78,10 +80,10 @@ class TestClass(object):
             if regkey in ['pfd_integral',
                           'ch1_firstpoint',
                           'ch2_firstpoint',
-                          'dac1',
-                          'dac2',
-                          'voltage1',
-                          'voltage2',
+                          'voltage_out1',
+                          'voltage_out2',
+                          'voltage_in1',
+                          'voltage_in2',
                           'firstpoint',
                           'lastpoint'
                           ] or modulekey == 'sampler':

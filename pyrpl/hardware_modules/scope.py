@@ -6,9 +6,11 @@ from ..modules import HardwareModule
 from ..widgets.module_widgets import ScopeWidget
 
 from . import DSP_INPUTS, DspModule, DspInputAttribute
+from ..modules import GuiUpdater
 
 import numpy as np
 import time
+from PyQt4 import QtCore, QtGui
 
 # data_length must be defined outside of class body for python 3
 # compatibility since otherwise it is not available in the class level
@@ -16,7 +18,7 @@ import time
 data_length = 2 ** 14
 
 
-class TriggerDelay(FloatAttribute):
+class TriggerDelayAttribute(FloatAttribute):
     # def __init__(self, attr_name, doc=""):
     #   super(TriggerDelay, self).__init__(attr_name, 0.001, doc=doc)
 
@@ -49,27 +51,15 @@ class DurationAttribute(SelectAttribute):
             return self
         return instance.sampling_time * float(instance.data_length)
 
+    def validate_and_normalize(self, value, module):
+        # gets next value, to be replaced with next-higher value
+        value = float(value)
+        return min([opt for opt in self.options], key=lambda x: abs(x - value))
+
     def set_value(self, instance, value):
         """sets returns the duration of a full scope sequence
         the rounding makes sure that the actual value is longer or equal to the set value"""
-        value = float(value) / instance.data_length
-        tbase = 8e-9
-        decimation =  max(instance.decimations)
-        found = False
-        for d in instance.decimations:
-            if value <= tbase * float(d):
-                decimation = d
-                found = True
-                break
-        if not found:
-            instance._logger.error("Desired duration too long to realize")
-        instance.decimation = decimation
-
-    def update_gui(self, module):
-        if module.is_rolling_mode_active():  # changing duration might change rolling mode
-            module.widget.set_rolling_mode()
-        else:
-            module.trigger_source = module.trigger_source # otherwise, make sure trigger becomes effective again
+        instance.sampling_time = float(value) / instance.data_length
 
 
 class DecimationRegister(SelectRegister):
@@ -80,7 +70,14 @@ class DecimationRegister(SelectRegister):
         super(DecimationRegister, self).set_value(instance, value)
         instance.__class__.duration.set_value_gui_config(instance, instance.duration)
         instance.__class__.sampling_time.set_value_gui_config(instance, instance.sampling_time)
+        if instance.is_rolling_mode_active():
+            instance.set_for_rolling_mode()
+        else:
+            instance.setup()
 
+    def update_gui(self, module):
+        super(DecimationRegister, self).update_gui(module)
+        module.gui_updater.first_shot_of_continuous = True
 
 class SamplingTimeAttribute(SelectAttribute):
     def get_value(self, instance, owner):
@@ -88,16 +85,15 @@ class SamplingTimeAttribute(SelectAttribute):
             return self
         return 8e-9 * float(instance.decimation)
 
+    def validate_and_normalize(self, value, module):
+        # gets next value, to be replaced with next-lower value
+        value = float(value)
+        return min([opt for opt in self.options], key=lambda x: abs(x - value))
+
     def set_value(self, instance, value):
         """sets or returns the time separation between two subsequent points of a scope trace
         the rounding makes sure that the actual value is shorter or equal to the set value"""
-        tbase = 8e-9
-        for d in reversed(instance.decimations):
-            if value >= tbase * d:
-                instance.decimation = d
-                return
-        instance.decimation = min(instance.decimations)
-        self._logger.error("Desired sampling time impossible to realize")
+        instance.decimation = float(value) / 8e-9
 
 
 class TriggerSourceAttribute(SelectAttribute):
@@ -145,23 +141,116 @@ class RunningContinuousProperty(BoolProperty):
     """
     Nothing to do unless widget exists
     """
-    def update_gui(self, module):
-        super(RunningContinuousProperty, self).update_gui(module)
-        module.widget.set_running_state()
+    def set_value(self, module, val):
+        super(RunningContinuousProperty, self).set_value(module, val)
+        if val:
+            module.gui_updater.run_continuous()
+        else:
+            module.gui_updater.stop()
+
+#    def update_gui(self, module):
+#        super(RunningContinuousProperty, self).update_gui(module)
+        #module.widget.set_running_state()
 
 
 class RollingModeProperty(BoolProperty):
     """
     Nothing to do unless widget exists
     """
-    def set_value(self, obj, val):
-        super(RollingModeProperty, self).set_value(obj, val)
-        if obj.running_continuous:
-            obj.setup()
+    def set_value(self, module, val):
+        super(RollingModeProperty, self).set_value(module, val)
+        if module.running_continuous:
+            module.setup()
+            if module.is_rolling_mode_active():
+                module.set_for_rolling_mode()
 
-    def update_gui(self, module):
-        super(RollingModeProperty, self).update_gui(module)
-        module.widget.set_rolling_mode()
+
+class GuiUpdaterScope(GuiUpdater):
+    """ class that takes care of emitting signals to update all possible scope displays """
+    display_curves = QtCore.pyqtSignal(list) # This signal is emitted when curves need to be displayed
+    # the argument is [array(times), array(curve1), array(curve2)] or [times, None, array(curve2)]
+    autoscale = QtCore.pyqtSignal()
+
+    def __init__(self, module):
+        super(GuiUpdaterScope, self).__init__(module)
+        self.first_shot_of_continuous = True
+        self.timer_continuous = QtCore.QTimer()
+        self.timer_continuous.setInterval(10)  # max. frame rate: 100 Hz
+        self.timer_continuous.timeout.connect(self.check_for_curves)
+        self.timer_continuous.setSingleShot(True)
+        self.last_datas = [None, None, None]
+
+    def run_continuous(self):
+        """
+        periodically checks for curve.
+        """
+        self.module.setup()
+        if self.module.is_rolling_mode_active():
+            self.module.set_for_rolling_mode()
+        self.first_shot_of_continuous = True
+        self.timer_continuous.start()
+
+    def stop(self):
+        self.timer_continuous.stop()
+
+    def run_single(self):
+        self.module.stop()
+        self.module.setup()
+        self.timer_continuous.start()
+
+    def check_for_curves(self):
+        """
+        This function is called periodically by a timer when in run_continuous mode.
+        1/ Check if curves are ready.
+        2/ If so, plots them on the graph
+        3/ Restarts the timer.
+        """
+        datas = [None, None, None]
+        # triggered mode in "single" acquisition, or when rolling mode is off, or when duration is
+        # too small
+        if self.module.is_rolling_mode_active() and self.module.running_continuous: ## Rolling mode
+            wp0 = self.module._write_pointer_current # write pointer before acquisition
+            times = self.module.times # times
+            times -= times[-1]
+            datas = [times, None, None]
+            for ch, active in ((1, self.module.ch1_active),  (2, self.module.ch2_active)):
+                if active:
+                    datas[ch] = self.module._get_ch_no_roll(ch)
+            wp1 = self.module._write_pointer_current # write pointer after acquisition
+            for index, data in ((1, datas[1]), (2, datas[2])):
+                if data is None:
+                    continue
+                to_discard = (wp1 - wp0) % self.module.data_length # remove data that have been affected during acq.
+                data = np.roll(data, self.module.data_length - wp0)[to_discard:]
+                data = np.concatenate([[np.nan] * to_discard, data])
+                datas[index] = data
+            self.display_curves.emit(datas)
+            self.last_datas = datas
+            if self.first_shot_of_continuous:
+                self.first_shot_of_continuous = False
+                self.autoscale.emit()
+            # no setup in rolling mode
+        else:  # triggered mode
+            if self.module.curve_ready(): # if curve not ready, wait for next timer iteration
+                for ch, active in ((1, self.module.ch1_active), (2, self.module.ch2_active)):
+                    if active:
+                        datas[ch] = self.module._get_ch(ch)
+                datas[0] = self.module.times
+                self.display_curves.emit(datas)
+                self.last_datas = datas
+                if self.first_shot_of_continuous:
+                    self.first_shot_of_continuous = False  # autoscale only upon first curve
+                    self.autoscale.emit()
+                self.module.setup()
+            else: # curve not ready, wait for next timer iteration
+                self.timer_continuous.start()
+        if self.module.running_continuous:
+            self.timer_continuous.start()
+
+    def connect_widget(self, widget):
+        super(GuiUpdaterScope, self).connect_widget(widget)
+        self.autoscale.connect(widget.autoscale)
+        self.display_curves.connect(widget.display_curves)
 
 
 class Scope(HardwareModule):
@@ -178,7 +267,9 @@ class Scope(HardwareModule):
                       "threshold_ch2",
                       "curve_name",
                       "running_continuous",
-                      "rolling_mode"]
+                      "rolling_mode",
+                      "ch1_active",
+                      "ch2_active"]
     setup_attributes = gui_attributes
     name = 'scope'
     data_length = data_length  # see definition and explanation above
@@ -186,8 +277,9 @@ class Scope(HardwareModule):
 
     def init_module(self):
         # dsp multiplexer channels for scope and asg are the same by default
-        self._ch1 = DspModule(self._rp, name='asg1')
-        self._ch2 = DspModule(self._rp, name='asg2')
+        self.gui_updater = GuiUpdaterScope(self)
+        self._ch1 = DspModule(self._rp, name='asg1')  # the scope inputs and asg outputs have the same id
+        self._ch2 = DspModule(self._rp, name='asg2')  # check fpga code dsp_modules to understand
         self.inputs = self._ch1.inputs
         self._setup_called = False
         self._trigger_source_memory = "immediately"
@@ -225,7 +317,6 @@ class Scope(HardwareModule):
     running_continuous = RunningContinuousProperty() # if the module has a widget, it is running continuously.
     rolling_mode = RollingModeProperty() # if the module has a widget, it is in rolling mode.
 
-
     _trigger_debounce = IntRegister(0x90, doc="Trigger debounce time [cycles]")
 
     trigger_debounce = FloatRegister(0x90, bits=20, norm=125e6,
@@ -241,7 +332,7 @@ class Scope(HardwareModule):
                                  doc="number of decimated data after trigger "
                                      "written into memory [samples]")
 
-    trigger_delay = TriggerDelay("trigger_delay", min=-10, max=8e-9*2**30, doc="delay between trigger and acquisition start.\n"
+    trigger_delay = TriggerDelayAttribute("trigger_delay", min=-10, max=8e-9 * 2 ** 30, doc="delay between trigger and acquisition start.\n"
                                                       "negative values down to -duration are allowed for pretrigger")
 
     _trigger_delay_running = BoolRegister(0x0, 2,
@@ -293,17 +384,17 @@ class Scope(HardwareModule):
 
     # equalization filter not implemented here
 
-    voltage1 = FloatRegister(0x154, bits=14, norm=2 ** 13,
-                             doc="ADC1 current value [volts]")
+    voltage_in1 = FloatRegister(0x154, bits=14, norm=2 ** 13,
+                                doc="in1 current value [volts]")
 
-    voltage2 = FloatRegister(0x158, bits=14, norm=2 ** 13,
-                             doc="ADC2 current value [volts]")
+    voltage_in2 = FloatRegister(0x158, bits=14, norm=2 ** 13,
+                                doc="in2 current value [volts]")
 
-    dac1 = FloatRegister(0x164, bits=14, norm=2 ** 13,
-                         doc="DAC1 current value [volts]")
+    voltage_out1 = FloatRegister(0x164, bits=14, norm=2 ** 13,
+                                 doc="out1 current value [volts]")
 
-    dac2 = FloatRegister(0x168, bits=14, norm=2 ** 13,
-                         doc="DAC2 current value [volts]")
+    voltage_out2 = FloatRegister(0x168, bits=14, norm=2 ** 13,
+                                 doc="out2 current value [volts]")
 
     ch1_firstpoint = FloatRegister(0x10000, bits=14, norm=2 ** 13,
                                    doc="1 sample of ch1 data [volts]")
@@ -319,14 +410,16 @@ class Scope(HardwareModule):
 
     duration = DurationAttribute(durations)
 
+    ch1_active = BoolProperty(doc="should ch1 be displayed in the gui")
+
+    ch2_active = BoolProperty(doc="should ch2 be displayed in the gui")
+
     def ownership_changed(self, old, new):
         """
         If the scope was in continuous mode when slaved, it has to stop!!
         """
-
         if new is not None:
-            if self.widget is not None:
-                self.widget.stop()
+            self.stop()
 
     @property
     def _rawdata_ch1(self):
@@ -404,8 +497,6 @@ class Scope(HardwareModule):
         if self.trigger_source == 'immediately':
             # self.wait_for_pretrig_ok()
             self.trigger_source = self.trigger_source
-        if self.is_rolling_mode_active():
-            self.set_for_rolling_mode()
 
     def rolling_mode_allowed(self):
         """
@@ -422,74 +513,6 @@ class Scope(HardwareModule):
     def set_for_rolling_mode(self):
         self._trigger_source = 'off'
         self._trigger_armed = True
-
-    def setup_old(self,
-              duration=None,
-              trigger_source=None,
-              average=None,
-              threshold_ch1=None, # for consistency between setup function and setup_attributes
-              threshold_ch2=None, # I don't use a single threshold
-              hysteresis=None,
-              trigger_delay=None,
-              input1=None,
-              input2=None):
-        """sets up the scope for a new trace acquisition including arming the trigger
-
-        duration: the minimum duration in seconds to be recorded
-        trigger_source: the trigger source. see the options for the parameter separately
-        average: use averaging or not when sampling is not performed at full rate.
-                 similar to high-resolution mode in commercial scopes
-        threshold: Trigger threshold in V
-        hysteresis: signal hysteresis needed to enable trigger in V.
-                    Should be larger than the rms-noise of the signal
-        trigger_delay: trigger_delay in s
-        input1/2: set the inputs of channel 1/2
-
-        if a parameter is None, the current attribute value is used
-
-        In case trigger_source is set to "immediately", trigger_delay is disregarded and
-        trace starts at t=0
-        """
-
-        self._setup_called = True
-        self._reset_writestate_machine = True
-        if average is not None:
-            self.average = average
-        if duration is not None:
-            self.duration = duration
-        if threshold_ch1 is not None:
-            self.threshold_ch1 = threshold_ch1
-        if threshold_ch2 is not None:
-            self.threshold_ch2 = threshold_ch2
-        if hysteresis is not None:
-            self.hysteresis_ch1 = hysteresis
-            self.hysteresis_ch2 = hysteresis
-        if input1 is not None:
-            self.input1 = input1
-        if input2 is not None:
-            self.input2 = input2
-        if trigger_delay is not None:
-            self.trigger_delay = trigger_delay
-
-        # trigger logic - set source
-        if trigger_source is None:
-            self.trigger_source = self.trigger_source
-        else:
-            self.trigger_source = trigger_source
-        # arm trigger
-        self._trigger_armed = True
-        # mode 'immediately' must receive software trigger after arming to
-        # start acquisition. The software trigger must occur after
-        # pretrig_ok, but we do not need to worry about this because it is
-        # taken care of in the trigger_source setter in this class (the
-        # trigger_delay section of it).
-        if self.trigger_source == 'immediately':
-            # self.wait_for_pretrig_ok()
-            self.trigger_source = self.trigger_source
-
-            # if self.trigger_source == 'immediately':
-            #    self.wait_for_pretrig_ok()
-            #    self.trigger_source = 'immediately'# write state machine
 
     def wait_for_pretrigger(self):
         """ sleeps until scope trigger is ready (buffer has enough new data) """
@@ -514,17 +537,20 @@ class Scope(HardwareModule):
             raise ValueError("channel should be 1 or 2, got " + str(ch))
         return self._rawdata_ch1 * 1. / 2 ** 13 if ch == 1 else self._rawdata_ch2 * 1. / 2 ** 13
 
-    def curve(self, ch=1, timeout=1.):
+    def curve(self, ch=1, timeout=None):
         """
         Takes a curve from channel ch:
-            If timeout>0: runs until data is ready or timeout expires
+            If timeout>0:  runs until data is ready or timeout expires
             If timeout<=0: returns immediately the current buffer without
-            checking for trigger status.
+                           checking for trigger status.
+            If timeout is None: timeout is auto-set to twice scope.duration
         """
         if not self._setup_called:
             raise NotReadyError("setup has never been called")
         SLEEP_TIME = 0.001
         total_sleep = 0
+        if timeout is None:
+            timeout = self.duration * 2
         if timeout > 0:
             while (total_sleep < timeout):
                 if self.curve_ready():
@@ -535,31 +561,47 @@ class Scope(HardwareModule):
         else:
             return self._get_ch(ch)
 
-    ### unfunctional so far
-    def spectrum(self,
-                 center,
-                 span,
-                 avg,
-                 input="adc1",
-                 window="flattop",
-                 acbandwidth=50.0,
-                 iq='iq2'):
-        points_per_bw = 10
-        iq_module = self.configure_signal_chain(input, iq)
-        iq_module.frequency = center
-        bw = span * points_per_bw / self.data_length
-        self.duration = 1. / bw
-        self._rp.iq2.bandwidth = [span, span]
-        self.setup(trigger_source='immediately',
-                   average=False,
-                   trigger_delay=0)
-        y = self.curve()
-        return y
-
-    def configure_signal_chain(self, input, iq):
+    def configure_signal_chain(self, input, iq): # Obsolete ?
         iq_module = getattr(self._rp, iq)
         iq_module.input = input
         iq_module.output_signal = 'quadrature'
         iq_module.quadrature_factor = 1.0
         self.input1 = iq
         return iq_module
+
+    def run_continuous(self):
+        """
+        Continuously feeds the gui with new curves from the scope.
+        """
+        self.running_continuous = True
+
+    def stop(self):
+        """
+        Stops the current acquisition.
+        """
+        self.running_continuous = False
+
+    def run_single(self):
+        """
+        Feeds gui with one new curve from the scope.
+        """
+        self.stop()
+        self.setup()
+        self.gui_updater.run_single()
+
+    def save_curve(self):
+        """
+        Saves the curve(s) that is (are) currently displayed in the gui in the db_system. Also, returns the list
+        [curve_ch1, curve_ch2]...
+        """
+        datas = self.gui_updater.last_datas
+        d = self.get_setup_attributes()
+        curves = [None, None]
+        for ch, active in [(1, self.ch1_active), (2, self.ch2_active)]:
+                if active:
+                    d.update({'ch': ch,
+                              'name': self.curve_name + ' ch' + str(ch)})
+                    curves[ch-1] = self._save_curve(self.times,
+                                                    datas[ch - 1],
+                                                    **d)
+        return curves

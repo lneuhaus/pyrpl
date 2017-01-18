@@ -70,12 +70,12 @@ class Sequence(SoftwareModule):
                         stage.load_setup_attributes()
                         stage._autosave_active = True
 
-    def save_state(self, name, state_section=None):
-        if state_section is None:
-            state_section = self.c_states
-        state_section[name] = OrderedDict()
+    def save_state(self, name, state_branch=None):
+        if state_branch is None:
+            state_branch = self.c_states
+        state_branch[name] = OrderedDict()
         for stage in self.stages:
-            stage.save_state(stage.name, getattr(state_section, name))
+            stage.save_state(stage.name, getattr(state_branch, name))
 
     def load_state(self, name, state_section=None):
         if state_section is None:
@@ -94,6 +94,7 @@ class Sequence(SoftwareModule):
     def update_inputs(self):
         for stage in self.stages:
             stage.update_inputs()
+
 
 class StageNameProperty(StringProperty):
     def set_value(self, obj, val):

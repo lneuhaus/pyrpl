@@ -10,11 +10,13 @@ attributes in the GUI having their state load and saved in the config file...
 
 from .attributes import BaseAttribute
 from .widgets.module_widgets import ModuleWidget
+from pyrpl import CurveDB
 
 import logging
 import numpy as np
 from six import with_metaclass
 from collections import OrderedDict
+from PyQt4 import QtCore, QtGui
 
 
 
@@ -81,18 +83,35 @@ class ModuleMetaClass(NameAttributesMetaClass):
         """
         super(ModuleMetaClass, self).__init__(classname, bases, classDict)
         if hasattr(self, "setup_attributes"):
-            if not "setup" in self.__dict__:# function setup is inherited--> this is bad because we want a docstring
+            if not "setup" in self.__dict__:  # function setup is inherited--> this is bad because we want a docstring
                 # different for each subclass
                 setattr(self, "setup", new_func_setup())
                 overwrite_docstring = True
             else:
-                overwrite_docstring = (self.setup.__doc__=="") # keep the docstring if it was made manually
+                overwrite_docstring = (self.setup.__doc__ == "")  # keep the docstring if it was made manually
             if overwrite_docstring:
                 if hasattr(self.setup, "__func__"): # Should evaluate to True in Python 2
-                    self.setup.__func__.__doc__ = get_setup_docstring(self) # In a
-                # MetaClass, self is a class...
-                else: #in python 3, __doc__ is directly an attribute of the function
+                    self.setup.__func__.__doc__ = get_setup_docstring(self)  # In a MetaClass, self is a class...
+                else:  # in python 3, __doc__ is directly an attribute of the function
                     self.setup.__doc__ = get_setup_docstring(self)
+
+
+class GuiUpdater(QtCore.QObject):
+    """
+    A QObject that is connected to the widgets to update their value when attributes change
+    """
+    attribute_changed = QtCore.pyqtSignal(str)
+    # The name of the property that has changed
+
+    def __init__(self, module):
+        super(GuiUpdater, self).__init__()
+        self.module = module
+
+    def connect_widget(self, widget):
+        """
+        Establishes all connections between the module and the widget.
+        """
+        self.attribute_changed.connect(widget.update_attribute_by_name)
 
 
 class BaseModule(with_metaclass(ModuleMetaClass, object)):
@@ -107,12 +126,14 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
 
     BaseModules implements several functions itself:
       - create_widget: returns a widget according to widget_class
-      - get_setup_attributes(): returns a dictionnary with the current setup_attribute key value pairs
+      - get_setup_attributes(): returns a dictionary with the current setup_attribute key value pairs
       - load_setup_attributes(): loads setup_attributes from config file
       - set_setup_attributes(**kwds): sets the provided setup_attributes
 
     Finally, setup(**kwds) is created by ModuleMetaClass. it combines set_setup_attributes(**kwds) with _setup()
     """
+    curve_class = CurveDB  # Change this to save the curve with a different system
+    gui_updater = None # a QOBject used to communicate with the widget
     pyrpl_config = None
     name = None # instance-level attribute
     section_name = 'basemodule' # name that is going to be used for the section in the config file (class-level)
@@ -178,23 +199,41 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
             self.c._parent["states"] = dict()
         return self.c._parent.states
 
-    def save_state(self, name, state_section=None):
-        """Saves the current state under the name "name" in the config file. If state_section is left unchanged,
-        uses the normal class_section.states convention."""
-        if state_section is None:
-            state_section = self.c_states
-        state_section[name] = self.get_setup_attributes()
+    def save_state(self, name, state_branch=None):
+        """
+        Saves the current state under the name "name" in the config file. If state_section is left unchanged,
+        uses the normal class_section.states convention.
+        """
+        if state_branch is None:
+            state_branch = self.c_states
+        state_branch[name] = self.get_setup_attributes()
 
-    def load_state(self, name, state_section=None):
+    def load_state(self, name, state_branch=None):
         """
         Loads the state with name "name" from the config file. If state_section is left unchanged, uses the normal
         class_section.states convention.
         """
-        if state_section is None:
-            state_section = self.c_states
-        if not name in state_section._keys():
+        if state_branch is None:
+            state_branch = self.c_states
+        if not name in state_branch._keys():
             raise KeyError("State %s doesn't exist for modules %s"%(name, self.__class__.name))
-        self.setup(**state_section[name])
+        self.setup(**state_branch[name])
+
+    def _save_curve(self, x_values, y_values, **attributes):
+        """
+        Saves a curve in some database system.
+        To change the database system, overwrite this function
+        or patch Module.curvedb if the interface is identical.
+
+        :param  x_values: numpy array with x values
+        :param  y_values: numpy array with y values
+        :param  attributes: extra curve parameters (such as relevant module settings)
+        """
+
+        c = self.curve_class.create(x_values,
+                                    y_values,
+                                    **attributes)
+        return c
 
     @property
     def states(self):
@@ -322,6 +361,7 @@ class HardwareModule(BaseModule):
 
         if no name provided, will use cls.name
         """
+        self.gui_updater = GuiUpdater(self)
         self._autosave_active = False
         if name is not None:
             self.name = name
@@ -402,6 +442,7 @@ class SoftwareModule(BaseModule):
           - First case: config file entry is in self.__class__.name + 's'--> self.name
           - Second case: config file entry is in parent_entry-->self.__class__.name + 's'-->self.name
         """
+        self.gui_updater = GuiUpdater(self)
         self._autosave_active = False  # attribute values are not overwritten in the config file
         if name is not None:
             self.name = name

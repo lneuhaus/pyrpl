@@ -1,25 +1,28 @@
+from collections import OrderedDict
+
 from ..attributes import SelectAttribute, SelectRegister, BoolRegister
 from ..modules import HardwareModule
+from ..pyrpl_utils import sorted_dict
 
-DSP_INPUTS = dict(
-        pid1=0,
-        pid2=1,
-        pid3=2,
-        pid4=3,
-        iir=4,
-        iq1=5,
-        iq2=6,
-        iq3=7,
-        asg1=8,
-        asg2=9,
-        # scope1 = 8, #same as asg1 by design
-        # scope2 = 9, #same as asg2 by design
-        adc1=10, #same as asg
-        adc2=11,
-        dac1=12,
-        dac2=13,
-        iq2_2=14,
-        off=15)
+DSP_INPUTS = sorted_dict(
+    pid1=0,
+    pid2=1,
+    pid3=2,
+    pid4=3,
+    iir=4,
+    iq1=5,
+    iq2=6,
+    iq3=7,
+    asg1=8,
+    asg2=9,
+    # scope1 = 8, #same as asg1 by design
+    # scope2 = 9, #same as asg2 by design
+    in1=10, #same as asg
+    in2=11,
+    out1=12,
+    out2=13,
+    iq3_2=14,
+    off=15)
 
 class DspInputAttribute(SelectAttribute):
     "selects the input signal of the module"
@@ -30,24 +33,24 @@ class DspInputAttribute(SelectAttribute):
             return instance._input
 
     def set_value(self, instance, value):
-        # allow to directly pass another dspmodule as input
-        # if isinstance(value, HardwareModule) and hasattr(value, 'name'): # (asg is HardwareModule but not DspModule)
-        #    instance._input = value.name
-        #else:
-        instance._input = value
+        # allow to directly pass another module as input
+        if hasattr(value, 'name'):
+            instance._input = value.name
+        else:
+            instance._input = value
         return value
+
 
 class DspModule(HardwareModule):
     _delay = 0  # delay of the module from input to output_signal (in cycles)
 
-    _inputs = DSP_INPUTS
+    _inputs = sorted_dict(DSP_INPUTS, sort_by_values=True)
     inputs = _inputs.keys()
 
-    _output_directs = dict(
-        off=0,
-        out1=1,
-        out2=2,
-        both=3)
+    _output_directs = sorted_dict(off=0,
+                                  out1=1,
+                                  out2=2,
+                                  both=3)
     output_directs = _output_directs.keys()
 
     _input = SelectRegister(0x0, options=_inputs,
