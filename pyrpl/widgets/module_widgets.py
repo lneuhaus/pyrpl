@@ -334,15 +334,6 @@ class ScopeWidget(ModuleWidget):
         """
         pass
 
-    """
-    @property
-    def state(self):
-        if self.module.running_continuous: #button_continuous.text()=="Stop":
-            return "running"
-        else:
-            return "stopped"
-    """
-
     def set_rolling_mode(self):
         """
         Set rolling mode on or off based on the module's attribute "rolling_mode"
@@ -544,6 +535,9 @@ class NaWidget(ModuleWidget):
         log_mod = self.module.logscale
         self.plot_item.setLogMode(x=log_mod, y=None) # this seems also needed
         self.plot_item_phase.setLogMode(x=log_mod, y=None)
+        for chunk, chunk_phase in zip(self.chunks, self.chunks_phase):
+            chunk.setLogMode(xMode=log_mod, yMode=None)
+            chunk_phase.setLogMode(xMode=log_mod, yMode=None)
 
     def scan_finished(self):
         """
@@ -592,8 +586,13 @@ class NaWidget(ModuleWidget):
         """
         while len(self.chunks) <= chunk_index: # create as many chunks as needed to reach chunk_index (in principle only
             # one curve should be missing at most)
-            self.chunks.append(self.plot_item.plot(pen='y'))
-            self.chunks_phase.append(self.plot_item_phase.plot(pen=None, symbol='o'))
+            chunk = self.plot_item.plot(pen='y')
+            chunk_phase = self.plot_item_phase.plot(pen=None, symbol='o')
+            self.chunks.append(chunk)
+            self.chunks_phase.append(chunk_phase)
+            log_mod = self.module.logscale
+            chunk.setLogMode(xMode=log_mod, yMode=None)
+            chunk_phase.setLogMode(xMode=log_mod, yMode=None)
 
         sl = slice(max(0, 50 * chunk_index - 1), min(50 * (chunk_index + 1), self.module.last_valid_point), 1) # make sure there is an overlap between slices
         data = self.module.y_averaged[sl]
