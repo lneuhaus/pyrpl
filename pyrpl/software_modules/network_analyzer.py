@@ -47,6 +47,18 @@ class RbwAttribute(FilterAttribute):
         return module.iq.__class__.bandwidth.valid_frequencies(module.iq)
 
 
+class NaStateProperty(StringProperty):
+    def set_value(self, module, val):
+        old_val = module.state
+        super(NaStateProperty, self).set_value(module, val)
+        if val in ['running_continuous', 'running_single']:
+            if old_val=="stopped":
+                module.gui_updater.run()
+            else:
+                module.gui_updater.resume()
+        if val in ['paused_continuous', 'paused_single', "stopped"]:
+            module.gui_updater.pause()
+
 """
 class RunningContinuousProperty(BoolProperty):
     def set_value(self, module, val):
@@ -59,7 +71,7 @@ class RunningContinuousProperty(BoolProperty):
 
 class GuiUpdaterNA(GuiUpdater):
     point_updated = QtCore.pyqtSignal(int) # This signal is emitted when a point needs to be updated (added/changed)
-    # The argument is the index of the point as found in gui_updater.datas
+    # The argument is the index of the point as found in module.y_averaged
     autoscale = QtCore.pyqtSignal()
     scan_finished = QtCore.pyqtSignal()
 
@@ -75,39 +87,40 @@ class GuiUpdaterNA(GuiUpdater):
         x, y, amp = self.module.get_current_point()
         cur = self.module.current_point
         self.module.y_current_scan[cur] = y
-        self.module.y_averaged = (self.y_averaged[cur] * self.current_averages + y) \
-                         / (self.current_averages + 1)
+        self.module.y_averaged[cur] = (self.module.y_averaged[cur] * self.module.current_averages + y) \
+                         / (self.module.current_averages + 1)
         self.module.x[cur] = x
-        if(self.module.current_point<self.module.points): # next point is still in the scan range
+        self.module.threshold_hook(y)
+        if(self.module.current_point+1<self.module.points): # next point is still in the scan range
             self.module.prepare_for_next_point()
-            self.point_updated(self.module.current_point)
+            self.point_updated.emit(self.module.current_point)
             self.timer_point.start()
         else: # end of scan
             self.module.current_averages += 1
-            if self.module.running_continuous:
+            if self.module.state=='running_continuous':
                 self.module.setup() # reset acquistion without resetting averaging
                 self.timer_point.start()
             else:
-                self.scan_finished.emit()
-
-    def setup_averaging(self):
-        self.module.y_current_scan = np.zeros(self.module.points)
-        self.module.y_averaged = np.zeros(self.module.points)
-        self.timer_point.setInterval(self.module.time_per_point)
+                self.module.pause()
+            self.scan_finished.emit()
 
     def run(self):
         self.module.setup()
-        self.setup_averaging()
+        self.module.setup_averaging()
         self.module.prepare_for_next_point()
         self.timer_point.start()
 
-    def stop(self):
+    def resume(self):
+        self.timer_point.start()
+
+    def pause(self):
         self.timer_point.stop()
 
     def connect_widget(self, widget):
         super(GuiUpdaterNA, self).connect_widget(widget)
         self.autoscale.connect(widget.autoscale)
         self.point_updated.connect(widget.update_point)
+        self.scan_finished.connect(widget.scan_finished)
 
 
 class NetworkAnalyzer(SoftwareModule):
@@ -131,20 +144,20 @@ class NetworkAnalyzer(SoftwareModule):
     """
     section_name = 'na'
     widget_class = NaWidget
-    gui_attributes = ["input",
-                      "acbandwidth",
-                      "output_direct",
-                      "start_freq",
-                      "stop_freq",
-                      "rbw",
-                      "points",
-                      "amplitude",
-                      "logscale",
-                      "infer_open_loop_tf",
-                      "avg",
-                      "curve_name",
-                      "running_continuous"]
-    setup_attributes = gui_attributes
+    callback_attributes = ["input", # stops acquisition when one of these is changed
+                          "acbandwidth",
+                          "output_direct",
+                          "start_freq",
+                          "stop_freq",
+                          "rbw",
+                          "points",
+                          "amplitude",
+                          "logscale",
+                          "infer_open_loop_tf",
+                          "avg"]
+    gui_attributes = callback_attributes + ["curve_name",
+                                            "state"]
+    setup_attributes = [attr for attr in gui_attributes if attr!='state']
     data = None
 
     def init_module(self):
@@ -166,6 +179,9 @@ class NetworkAnalyzer(SoftwareModule):
         self._is_setup = False
         # possibly a bugfix:
         self.time_per_point = max(1.0 / self.rbw * (self.avg + self.sleeptimes), 1e-3)
+        self.current_averages = 0
+        self.time_last_point = 0
+        self.state = 'stopped'
 
     input = SelectProperty(DspModule.inputs)
     output_direct = SelectProperty(DspModule.output_directs)
@@ -173,13 +189,16 @@ class NetworkAnalyzer(SoftwareModule):
     stop_freq = FrequencyProperty()
     rbw = RbwAttribute()
     amplitude = FloatProperty(min=0, max=1, increment=1. / 2 ** 14)
-    points = LongProperty()
+    points = LongProperty(min=1, max=1e8)
     logscale = BoolProperty()
     infer_open_loop_tf = BoolProperty()
     avg = LongProperty(min=1)
     curve_name = StringProperty()
     acbandwidth = NaAcBandwidth(doc="Bandwidth of the input high-pass filter of the na.")
-    running_continuous = BoolProperty()
+    state = NaStateProperty()
+
+    def callback(self):
+        self.stop()
 
     @property
     def iq(self):
@@ -230,10 +249,21 @@ class NetworkAnalyzer(SoftwareModule):
         self.iq._na_sleepcycles = np.int(np.round(125e6 / self.rbw * self.sleeptimes))
         # compute rescaling factor of raw data
         self._rescale = 2.0 ** (-self.iq._LPFBITS) * 4.0  # 4 is artefact of fpga code
-        self.current_point = 0
+        self.current_point = -1
         self.iq.frequency = self.x[0]  # this triggers the NA acquisition
         self.time_last_point = time()
         self.values_generator = self.values()
+
+    def setup_averaging(self):
+        self.current_averages = 0
+        self.current_attributes = self.get_setup_attributes()
+        self.y_current_scan = np.zeros(self.points, dtype=complex)
+        self.y_averaged = np.zeros(self.points, dtype=complex)
+        self.gui_updater.timer_point.setInterval(self.time_per_point)
+
+    @property
+    def last_valid_point(self):
+        return self.points - 1 if self.current_averages>0 else self.current_point
 
     @property
     def current_freq(self):
@@ -268,7 +298,7 @@ class NetworkAnalyzer(SoftwareModule):
         y /= tf
         return x, y, amp
 
-    def prepare_for_next_point(self, last_normalized_val):
+    def prepare_for_next_point(self):
         """
         Sets everything for next point
         """
@@ -398,28 +428,51 @@ class NetworkAnalyzer(SoftwareModule):
         """
         Saves the curve that is currently displayed in the gui in the db_system. Also, returns the curve.
         """
-        datas = self.gui_updater.datas
-        return self._save_curve(x=datas[0],
-                                y=datas[1],
-                                **self.get_setup_attributes())
+        return self._save_curve(x_values=self.x,
+                                y_values=self.y_averaged,
+                                **self.current_attributes)
 
     def run_continuous(self):
         """
-        Launch a continuous acquisition where successive curves are averaged with each others. The result is averaged
+        Launch a continuous acquisition where successive chunks are averaged with each others. The result is averaged
         in self.y
         """
-        self.running_continuous = True
-        self.gui_updater.run()
-
-    def stop(self):
-        """
-        Stops the current acquistion.
-        """
-        self.gui_updater.stop()
+        self.state = "running_continuous"
 
     def run_single(self):
         """
         Acquires a single scan. The result, once available, will be in self.x, self.y
         """
-        self.running_continuous = False
-        self.gui_updater.run()
+        self.state = "running_single"
+
+    def pause(self):
+        """
+        Pauses the current acquistion. The acquisition can be resumed later
+        """
+        if self.state == "running_continuous":
+            self.state = "paused_continuous"
+        if self.state == "running_single":
+            self.state = "paused_single"
+
+    def stop(self):
+        """
+        Stops definitely the acquisition (next call to run_continuous will restart from 0)
+        """
+        self.state = 'stopped'
+
+    def threshold_hook(self, current_val):  # goes in the module...
+        """
+        A convenience function to stop the run upon some condition
+        (such as reaching of a threshold. current_val is the complex amplitude
+        of the last data point).
+
+        To be overwritten in derived class...
+        Parameters
+        ----------
+        current_val
+
+        Returns
+        -------
+
+        """
+        pass
