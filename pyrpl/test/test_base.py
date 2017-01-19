@@ -7,9 +7,9 @@ import logging
 from .. import Pyrpl, RedPitaya
 logger = logging.getLogger(name=__name__)
 
-class RedpitayaTestCase(unittest.TestCase):
+class TestRedpitaya(unittest.TestCase):
     @classmethod
-    def setUp(self):
+    def setUpAll(self):
         self.hostname = os.environ.get('REDPITAYA_HOSTNAME')
         self.password = os.environ.get('REDPITAYA_PASSWORD')
         # these tests wont succeed without the hardware
@@ -17,17 +17,18 @@ class RedpitayaTestCase(unittest.TestCase):
             self.r = None
         else:
             self.r = RedPitaya()
-        self.mysetup()
+        #self.mysetup()
 
     def mysetup(self):
         # derived class custom setup
         pass
 
-    def tearDown(self):
+    @classmethod
+    def tearDownAll(self):
         pass
 
 
-class MyRedPitayaTestCase(RedpitayaTestCase):
+class TestMyRedpitaya(TestRedpitaya):
     """ example for a derived test class"""
 
     def test_import(self):
@@ -43,8 +44,9 @@ class MyRedPitayaTestCase(RedpitayaTestCase):
         self.assertEqual(r.hk.led, 0)
 
 
-class PyrplTestCase(unittest.TestCase):
-    def setUp(self):
+class TestPyrpl(unittest.TestCase):
+    @classmethod
+    def setUpAll(self):
         # these tests wont succeed without the hardware
         if os.environ['REDPITAYA_HOSTNAME'] == 'unavailable':
             self.pyrpl = None
@@ -53,7 +55,8 @@ class PyrplTestCase(unittest.TestCase):
             self.pyrpl = Pyrpl(config="tests_temp", source="tests_source")
             self.r = self.pyrpl.rp
 
-    def tearDown(self):
+    @classmethod
+    def tearDownAll(self):
         # shut down the gui if applicable
         pass
         # properly close the connections
@@ -62,7 +65,7 @@ class PyrplTestCase(unittest.TestCase):
         os.remove(self.pyrpl.c._filename)
 
 
-class MyPyrplTestCase(PyrplTestCase):
+class TestMyPyrpl(TestPyrpl):
     """ example for a derived test class"""
     def test_import(self):
         assert (self.pyrpl is not None)
