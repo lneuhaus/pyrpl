@@ -5,7 +5,7 @@ from time import sleep
 from ..attributes import FilterAttribute
 from ..attributes import FloatProperty, SelectProperty, FrequencyProperty, \
                         LongProperty, BoolProperty, StringProperty
-from ..hardware_modules import DspModule # just to get the
+from ..hardware_modules import DspModule
 from ..widgets.module_widgets import NaWidget
 
 from . import SoftwareModule
@@ -13,15 +13,21 @@ from ..modules import SignalLauncher
 
 from PyQt4 import QtCore, QtGui
 import numpy as np
-import timeit # timeit.default_timer() is THE precise timer to use (microsecond precise vs milliseconds for time.time())
-# see http://stackoverflow.com/questions/85451/python-time-clock-vs-time-time-accuracy
+
+# timeit.default_timer() is THE precise timer to use (microsecond precise vs
+# milliseconds for time.time()).
+# see
+# http://stackoverflow.com/questions/85451/python-time-clock-vs-time-time-accuracy
+import timeit
 
 APP = QtGui.QApplication.instance()
 
 
 class NaAcBandwidth(FilterAttribute):
     def valid_frequencies(selfself, instance):
-        return [freq for freq in instance.iq._valid_inputfilter_frequencies(instance.iq) if freq>=0]
+        return [freq for freq
+                in instance.iq._valid_inputfilter_frequencies(instance.iq)
+                if freq >= 0]
 
     def get_value(self, instance, owner):
         if instance is None:
@@ -66,10 +72,12 @@ class NaStateProperty(StringProperty):
             module.signal_launcher.pause()
             module.iq.output_direct = 'off'
 
+
 class LogScaleProperty(BoolProperty):
     def set_value(self, module, val):
         super(LogScaleProperty, self).set_value(module, val)
         module.signal_launcher.x_log_toggled.emit()
+
 
 class SignalLauncherNA(SignalLauncher):
     point_updated = QtCore.pyqtSignal(int) # This signal is emitted when a point needs to be updated (added/changed)
@@ -101,7 +109,7 @@ class SignalLauncherNA(SignalLauncher):
                     self.module.prepare_for_next_point()
                     self.point_updated.emit(self.module.current_point)
                     self.timer_point.start()
-                else: # end of scan
+                else:  # end of scan
                     self.module.current_averages += 1
                     if self.module.running_state=='running_continuous':
                         self.module.setup() # reset acquistion without resetting averaging
@@ -110,7 +118,8 @@ class SignalLauncherNA(SignalLauncher):
                         self.module.pause() # gives the opportunity to average other scans with this one by calling
                         # run_continuous()
                     self.scan_finished.emit()
-            else: # The point was a dummy point with index -1 at the beginning of the curve
+            else:  # The point was a dummy point with index -1 at the
+                # beginning of the curve
                 self.module.prepare_for_next_point()
                 self.timer_point.start()
 
@@ -158,16 +167,16 @@ class NetworkAnalyzer(SoftwareModule):
     section_name = 'na'
     widget_class = NaWidget
     callback_attributes = ["input", # stops acquisition when one of these is changed
-                          "acbandwidth",
-                          "output_direct",
-                          "start_freq",
-                          "stop_freq",
-                          "rbw",
-                          "points",
-                          "amplitude",
-                          "logscale",
-                          "infer_open_loop_tf",
-                          "avg"]
+                           "acbandwidth",
+                           "output_direct",
+                           "start_freq",
+                           "stop_freq",
+                           "rbw",
+                           "points",
+                           "amplitude",
+                           "logscale",
+                           "infer_open_loop_tf",
+                           "avg"]
     gui_attributes = callback_attributes + ["curve_name",
                                             "running_state"]
     setup_attributes = [attr for attr in gui_attributes if attr!='running_state']

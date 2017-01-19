@@ -133,9 +133,9 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
     Finally, setup(**kwds) is created by ModuleMetaClass. it combines set_setup_attributes(**kwds) with _setup()
     """
     curve_class = CurveDB  # Change this to save the curve with a different system
-    signal_launcher = None # a QOBject used to communicate with the widget
+    signal_launcher = None  # a QOBject used to communicate with the widget
     pyrpl_config = None
-    name = None # instance-level attribute
+    name = None  # instance-level attribute
     section_name = 'basemodule' # name that is going to be used for the section in the config file (class-level)
     widget_class = ModuleWidget  # Change this to provide a custom graphical class
     gui_attributes = []  # class inheriting from ModuleWidget can automatically generate gui from a list of attributes
@@ -215,8 +215,9 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         """
         if state_branch is None:
             state_branch = self.c_states
-        if not name in state_branch._keys():
-            raise KeyError("State %s doesn't exist for modules %s"%(name, self.__class__.name))
+        if name not in state_branch._keys():
+            raise KeyError("State %s doesn't exist for modules %s"
+                           % (name, self.__class__.name))
         self.setup(**state_branch[name])
 
     def _save_curve(self, x_values, y_values, **attributes):
@@ -241,13 +242,15 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
 
     def _setup(self):
         """
-        Sets the module up for acquisition with the current setup attribute values.
+        Sets the module up for acquisition with the current setup attribute
+        values.
         """
         pass
 
     def help(self, register=''):
         """returns the docstring of the specified register name
-           if register is an empty string, all available docstrings are returned"""
+           if register is an empty string, all available docstrings are
+           returned"""
         if register:
             string = type(self).__dict__[register].__doc__
             return string
@@ -256,7 +259,8 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
             for key in type(self).__dict__.keys():
                 if isinstance(type(self).__dict__[key], BaseAttribute):
                     docstring = self.help(key)
-                    if not docstring.startswith('_'):  # mute internal registers
+                    # mute internal registers
+                    if not docstring.startswith('_'):
                         string += key + ": " + docstring + '\r\n\r\n'
             return string
 
@@ -276,8 +280,8 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
     @property
     def c(self):
         """
-        The config file instance. In practice, writing values in here will write the values in the corresponding
-        section of the config file.
+        The config file instance. In practice, writing values in here will
+        write the values in the corresponding section of the config file.
         """
         manager_section_name = self.section_name + "s" # for instance, iqs
         if not manager_section_name in self.parent.c._keys():
@@ -302,32 +306,38 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         """
         Changing module ownership automagically:
          - changes the visibility of the module_widget in the gui
-         - re-setups the module with the module attributes in the config-file if new ownership is None
+         - re-setups the module with the module attributes in the config-file
+           if new ownership is None
         """
         old = self.owner
         self._owner = val
-        if val==None:
+        if val is None:
             self._autosave_active = True
         else:
-            self._autosave_active = False # desactivate autosave for slave modules
+            # desactivate autosave for slave modules
+            self._autosave_active = False
         self.ownership_changed(old, val)
         if self.widget is not None:
             self.widget.show_ownership()
         if val is None:
             self.setup(**self.c._dict)
 
+
 class HardwareModule(BaseModule):
     """
-    Module that directly maps a FPGA module. In addition to BaseModule's requirements, HardwareModule classes have to
-    possess the following class attributes
+    Module that directly maps a FPGA module. In addition to BaseModule's r
+    equirements, HardwareModule classes have to possess the following class
+    attributes
       - addr_base: the base address of the module, such as 0x40300000
     """
 
-    parent = None # parent will be redpitaya instance
+    parent = None  # parent will be redpitaya instance
 
     def ownership_changed(self, old, new):
         """
-        This hook is there to make sure any ongoing measurement is stopped when the module get slaved
+        This hook is there to make sure any ongoing measurement is stopped when
+        the module gets slaved
+
         old: name of old owner (eventually None)
         new: name of new owner (eventually None)
         """
@@ -348,15 +358,21 @@ class HardwareModule(BaseModule):
 
 
     def __setattr__(self, name, value):
-        # prevent the user from setting a nonexisting attribute (I am not sure anymore if it's not making everyone's
-        # life harder...)
-        # if hasattr(self, name) or name.startswith('_') or hasattr(type(self), name):
-        if name.startswith("_") or (name in self.__dict__) or hasattr(self.__class__, name): # we don't want class.attr
-            # to be executed to save  one ssh communication time, this was the case with hasattr(self, name)
+        # prevent the user from setting a nonexisting attribute
+        # (I am not sure anymore if it's not making everyone's life harder...)
+        # if hasattr(self, name) or name.startswith('_') or
+        # hasattr(type(self), name):
+        if name.startswith("_") \
+                or (name in self.__dict__) \
+                or hasattr(self.__class__, name):
+            # we don't want class.attr
+            # to be executed to save one communication time,
+            # this was the case with hasattr(self, name)
             super(BaseModule, self).__setattr__(name, value)
         else:
-            raise ValueError("New module attributes may not be set at runtime. Attribute "
-                             + name + " is not defined in class " + self.__class__.__name__)
+            raise ValueError("New module attributes may not be set at runtime."
+                             " Attribute " + name + " is not defined in class "
+                             + self.__class__.__name__)
 
     def __init__(self, redpitaya, name=None):
         """ Creates the prototype of a RedPitaya Module interface
@@ -369,7 +385,7 @@ class HardwareModule(BaseModule):
             self.name = name
         self._logger = logging.getLogger(name=__name__)
         self._client = redpitaya.client
-        self._addr_base = self.addr_base # why ?
+        self._addr_base = self.addr_base  # why ?
         self.__doc__ = "Available registers: \r\n\r\n" + self.help()
         self._rp = redpitaya
         self.parent = redpitaya
@@ -430,10 +446,12 @@ class SoftwareModule(BaseModule):
     """
     Module that doesn't communicate with the Redpitaya directly.
     Child class needs to implement:
-      - init_module(pyrpl): initializes the module (attribute values aren't saved during that stage)
+      - init_module(pyrpl): initializes the module (attribute values aren't
+        saved during that stage)
       - setup_attributes: see BaseModule
       - gui_attributes: see BaseModule
-      - _setup(): see BaseModule, this function is called when the user calls setup(**kwds) and should set the module
+      - _setup(): see BaseModule, this function is called when the user calls
+        setup(**kwds) and should set the module
       ready for acquisition/output with the current setup_attributes' values.
     """
 
@@ -441,23 +459,27 @@ class SoftwareModule(BaseModule):
         """
         Creates a module with given name. If name is None, uses cls.name.
         parent is either a pyrpl instance, or another SoftwareModule.
-          - First case: config file entry is in self.__class__.name + 's'--> self.name
-          - Second case: config file entry is in parent_entry-->self.__class__.name + 's'-->self.name
+          - First case: config file entry is in
+            self.__class__.name + 's'--> self.name
+          - Second case: config file entry is in
+            parent_entry-->self.__class__.name + 's'-->self.name
         """
         self.signal_launcher = SignalLauncher(self)
-        self._autosave_active = False  # attribute values are not overwritten in the config file
+        # attribute values are not overwritten in the config file:
+        self._autosave_active = False
         if name is not None:
             self.name = name
         self.parent = parent
-        #self._parent = pyrpl
-        #self.pyrpl_config = pyrpl.c
+        # self._parent = pyrpl
+        # self.pyrpl_config = pyrpl.c
         self.init_module()
         self._autosave_active = True
 
     @property
     def pyrpl(self):
         """
-        Recursively looks through patent modules untill pyrpl instance is reached.
+        Recursively looks through patent modules untill pyrpl instance is
+        reached.
         """
         from .pyrpl import Pyrpl
         parent = self.parent

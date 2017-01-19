@@ -32,7 +32,7 @@ class SSHshell(object):
             user='root',
             password='root',
             delay=0.05, 
-            timeout = 3,
+            timeout=3,
             sshport=22):
         self.logger = logging.getLogger(name=__name__)
         self.delay = delay

@@ -341,7 +341,6 @@ class RedPitaya(object):
         self.endserver()
         self.endclient()
 
-
     def restart(self):
         self.end()
         self.start()
