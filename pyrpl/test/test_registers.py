@@ -1,11 +1,13 @@
 import logging
 logger = logging.getLogger(name=__name__)
+from nose.tools import with_setup
+from unittest import TestCase
 from .test_base import RedpitayaTestCase
 from ..modules import BaseModule
 from ..attributes import *
 from .. import RedPitaya
 
-class TestClass(RedpitayaTestCase):
+class TestClass(RedpitayaTestCase, TestCase):
     def setUp(self):
         self.r = RedPitaya()
 
