@@ -115,7 +115,7 @@ class MemoryBranch(object):
         list of default branches that are used if requested data is not
         found in the current branch
     """
-    def __init__(self, parent, branch, defaults=[]):
+    def __init__(self, parent, branch, defaults=list([])):
         self._branch = branch
         self._parent = parent
         self._defaults = defaults
@@ -152,7 +152,7 @@ class MemoryBranch(object):
             parent = parent._parent
         return branchname
 
-    def _getbranch(self, branchname, defaults=[]):
+    def _getbranch(self, branchname, defaults=list([])):
         """ returns a Memory branch from the same MemoryTree with
         branchname.
         Example: branchname = 'level1.level2.mybranch' """
@@ -310,10 +310,7 @@ class MemoryTree(MemoryBranch):
             self._load()
             self._lastsave = time.time()
             # make a temporary file to ensure modification of config file is atomic (double-buffering like operation...)
-            tmp_dir = os.path.join(os.path.dirname(self._filename), "tmp")
-            if not os.path.isdir(tmp_dir):
-                os.mkdir(tmp_dir)
-            self._buffer_filename = os.path.join(tmp_dir, 'tmp.yml')
+            self._buffer_filename = self._filename+'.tmp'
             # create a timer to postpone to frequent savings
             self._savetimer = QtCore.QTimer()
             self._savetimer.setInterval(self._savedeadtime*1000)
@@ -358,7 +355,7 @@ class MemoryTree(MemoryBranch):
                                "harddisk. These changes might have been " +
                                "overwritten now.")
             logger.debug("Saving config file %s", self._filename)
-            copyfile(self._filename, self._filename+".bak")
+            copyfile(self._filename, self._filename+".bak")  # maybe this line is obsolete (see below)
             try:
                 f = open(self._buffer_filename, mode='w')
                 save(self._data, stream=f)
@@ -381,7 +378,7 @@ class MemoryTree(MemoryBranch):
                 self._savetimer.start()
 
 if False:
-    class DummyMemoryTree():  # obsolete now
+    class DummyMemoryTree(object):  # obsolete now
         """
         This class is there to emulate a MemoryTree, for users who would use RedPitaya object without Pyrpl object
         """
@@ -395,3 +392,4 @@ if False:
                 return attr
             except AttributeError:
                 return self[item]
+            
