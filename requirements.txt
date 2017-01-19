@@ -8,7 +8,7 @@ nose
 pyyaml
 ruamel.yaml
 pyqtgraph
-PyQt4 # not fully mandatory, but to be honest the code hasn't been tested without it
+PyQt4
 
 ###### Requirements with Version Specifiers ######
 #   See https://www.python.org/dev/peps/pep-0440/#version-specifiers
