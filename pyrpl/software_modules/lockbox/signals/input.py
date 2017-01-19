@@ -211,14 +211,24 @@ class PdhModOutputProperty(SelectProperty):
         instance.iq.output_direct = value
         return value
 
+class PdhQuadratureFactorProperty(FloatProperty):
+    def set_value(self, instance, value):
+        super(PdhQuadratureFactorProperty, self).set_value(instance, value)
+        instance.iq.quadrature_factor = value
+        return value
 
 class InputPdh(InputSignal):
     section_name = 'pdh'
-    gui_attributes = InputSignal.gui_attributes + ['mod_freq', 'mod_amp', 'mod_phase', 'mod_output']
+    gui_attributes = InputSignal.gui_attributes + ['mod_freq',
+                                                   'mod_amp',
+                                                   'mod_phase',
+                                                   'quadrature_factor',
+                                                   'mod_output']
     setup_attributes = gui_attributes
     mod_freq   = PdhFrequencyProperty()
     mod_amp    = PdhAmplitudeProperty()
     mod_phase  = PdhPhaseProperty()
+    quadrature_factor = PdhQuadratureFactorProperty()
     mod_output = PdhModOutputProperty(['out1', 'out2'])
 
     def init_module(self):
@@ -249,7 +259,7 @@ class InputPdh(InputSignal):
                       gain=0,
                       bandwidth=[1e6, 1e6],
                       acbandwidth=1e6,
-                      quadrature_factor=0.01,
+                      quadrature_factor=self.quadrature_factor,
                       output_signal='quadrature',
                       output_direct=self.mod_output)
 
