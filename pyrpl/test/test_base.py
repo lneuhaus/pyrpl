@@ -49,15 +49,16 @@ class TestPyrpl(TestRedpitaya):
 
     @classmethod
     def tearDownAll(self):
+        # none of the below stuff works properly, all introduce more errors...
         # shut down the gui if applicable
         # -> this requires some other functions
         # at least stop all acquisitions
-        self.pyrpl.na.stop()
-        self.pyrpl.scope.stop()
+        #self.pyrpl.na.stop()
+        #self.pyrpl.scope.stop()
         # self.pyrpl.specan.stop()
         # for now a workaround: prevent reconnection after closing of
         # the connection
-        self.r.parameters['hostname'] = 'unavailable'
+        #self.r.parameters['hostname'] = 'unavailable'
         # also kill the ssh such that no more fpga flashing can occur
         # does not work now
         #del self.r.ssh
