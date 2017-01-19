@@ -8,6 +8,7 @@ from .. import Pyrpl, RedPitaya
 logger = logging.getLogger(name=__name__)
 
 class RedpitayaTestCase(unittest.TestCase):
+    @classmethod
     def setUp(self):
         self.hostname = os.environ.get('REDPITAYA_HOSTNAME')
         self.password = os.environ.get('REDPITAYA_PASSWORD')
