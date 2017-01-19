@@ -37,13 +37,16 @@ class TestClass(object):
             time.sleep(0.1)
             APP.processEvents()
             data = self.r.scope.last_datas[1]
-            time.sleep(.5)
+            time.sleep(0.75)
             APP.processEvents()
-            return ((data != self.r.scope.last_datas[1])[~np.isnan(data)]).any()
+            time.sleep(0.1)
+            return ((data !=
+                     self.r.scope.last_datas[1])[~np.isnan(data)]).any()
 
         self.r.asg1.frequency = 0
         self.r.scope.setup(duration=0.5, trigger_source='asg1',
-                           trigger_delay=0., rolling_mode=True, input1='in1', ch1_active=True)
+                           trigger_delay=0., rolling_mode=True, input1='in1',
+                           ch1_active=True, ch2_active=True)
         self.r.scope.run_continuous()
         assert data_changing()  # rolling mode should be active
         self.r.scope.save_state("running_roll")
@@ -51,6 +54,8 @@ class TestClass(object):
         self.r.scope.duration = 0.001
         assert not data_changing()  # rolling mode inactive for durations < 0.1 s
 
+        from time import sleep
+        sleep(0.1)
         self.r.scope.duration = 0.5
         assert data_changing()
 
@@ -80,7 +85,8 @@ class TestClass(object):
         if self.r is None:
             return
         self.r.scope.setup(duration=0.01, trigger_source='immediately',
-                           trigger_delay=0., rolling_mode=True, input1='in1', ch1_active=True, ch2_active=True)
+                           trigger_delay=0., rolling_mode=True, input1='in1',
+                           ch1_active=True, ch2_active=True)
         self.r.scope.run_single()
         time.sleep(0.1)
         APP.processEvents()
