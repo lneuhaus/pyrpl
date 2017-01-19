@@ -57,9 +57,10 @@ class BaseAttribute(object):
         This function is called for any BaseAttribute, such that all the gui updating, and saving to disk is done
         automagically. The real work is delegated to self.set_value.
         """
-        value = self.validate_and_normalize(value, instance) # self.to_serializable(value)
-        self.set_value(instance, value) # sets the value internally
-        self.value_updated(instance, value) # update value in gui and config
+        value = self.validate_and_normalize(value, instance)  # self.to_serializable(value)
+        self.set_value(instance, value)  # sets the value internally
+        self.value_updated(instance, value)  # lauch signal and update
+        # config, callback
 
 
     def validate_and_normalize(self, value, module):
@@ -70,7 +71,7 @@ class BaseAttribute(object):
            - rounding to nearest multiple of step for float_registers
            - rounding elements to nearest valid_frequencies for FilterAttributes
         """
-        return value # by default any value is valid
+        return value  # by default any value is valid
 
     def value_updated(self, module, value):
         """

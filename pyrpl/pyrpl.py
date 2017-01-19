@@ -358,7 +358,7 @@ class Pyrpl(object):
                     kwds = dict()
                 module.load_setup_attributes(**kwds) # first, setup software modules...
             """
-            setattr(self, module.name, module) # todo --> use self instead
+            setattr(self, module.name, module)  # todo --> use self instead
             self.software_modules.append(module)
 
     @property
