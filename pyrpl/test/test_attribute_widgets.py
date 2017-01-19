@@ -22,6 +22,8 @@ class DummyModule(SoftwareModule):
 
 
 class TestClass(TestPyrpl):
+    source_config_file = "tests_source_dummy_module"
+
     def test_module_attributes(self):
         assert(isinstance(self.pyrpl.dummy_module.true_or_false, bool))
         assert(isinstance(self.pyrpl.dummy_module.some_number, float))

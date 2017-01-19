@@ -32,6 +32,10 @@ class TestMyRedpitaya(TestRedpitaya):
 
 
 class TestPyrpl(TestRedpitaya):
+    """ base class for all pyrpl tests """
+    # name of the configfile to use
+    source_config_file = "tests_source"
+
     @classmethod
     def setUpAll(self):
         # these tests wont succeed without the hardware
@@ -39,7 +43,8 @@ class TestPyrpl(TestRedpitaya):
         #    self.pyrpl = None
         #    self.r = None
         #else:
-        self.pyrpl = Pyrpl(config="tests_temp", source="tests_source")
+        self.pyrpl = Pyrpl(config="tests_temp",
+                           source=self.source_config_file)
         self.r = self.pyrpl.rp
 
     @classmethod
