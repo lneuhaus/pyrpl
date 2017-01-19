@@ -1,15 +1,13 @@
+import logging
+logger = logging.getLogger(name=__name__)
 import pyqtgraph as pg
 import numpy as np
-import unittest
 import time
 from PyQt4 import QtCore
 from PyQt4 import QtGui
-import logging
-from pyrpl import RedPitaya
-logger = logging.getLogger(name=__name__)
+from .test_base import TestRedpitaya
 
-
-class PyqtgraphTestCases(unittest.TestCase):
+class TestPyqtgraph(TestRedpitaya):
     """ This test case creates a maximally simplistic scope gui
     that continuously plots the data of both scope channels,
     and checks the obtainable frame rate.
@@ -23,20 +21,22 @@ class PyqtgraphTestCases(unittest.TestCase):
     REDPITAYA = True  # REDPITAYA=False tests the speed of PyQtGraph alone
     timeout = 10  # timeout if the gui never plots anything
 
-    def mysetup(self):
+    def setup(self):
         self.t0 = np.linspace(0, self.duration, self.N)
         self.plotWidget = pg.plot(title="Realtime plotting benchmark")
         self.cycle = 0
         self.starttime = time.time()  # not yet the actual starttime, but needed for timeout
 
         if self.REDPITAYA:
-            self.r = RedPitaya()
             self.r.scope.setup(trigger_source='immediately', duration=self.duration)
 
         self.timer = QtCore.QTimer()
         self.timer.setInterval(1000*self.dt)
         self.timer.timeout.connect(self.update_plot)
         self.timer.start()
+
+    def teardown(self):
+        self.timer.stop()
 
     def update_plot(self):
         self.cycle += 1
@@ -62,9 +62,6 @@ class PyqtgraphTestCases(unittest.TestCase):
         else:
             self.c1.setData(t, y1)
             self.c2.setData(t, y2)
-
-    def tearDown(self):
-        self.timer.stop()
 
     def test_speed(self):
         # for now, this test is a cause of hangup

@@ -1,23 +1,10 @@
 import logging
-import os
-
 logger = logging.getLogger(name=__name__)
-
-from pyrpl import RedPitaya, Pyrpl
 from pyrpl.attributes import *
-from pyrpl.bijection import Bijection
 from pyrpl.software_modules.module_managers import ModuleManager
+from .test_base import TestPyrpl
 
-import time
-
-from pyrpl import CurveDB
-
-class TestClass(object):
-    @classmethod
-    def setUpAll(self):
-        self.pyrpl = Pyrpl(config="tests_temp", source="tests_source")
-        self.r = self.pyrpl.rp
-
+class TestClass(TestPyrpl):
     def scramble_values(self, mod, str_val='foo', num_val=12, bool_val=True, list_val=[19], option_index=0):
         attr_names =[]
         attr_vals = []

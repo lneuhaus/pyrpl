@@ -2,7 +2,6 @@ import logging
 logger = logging.getLogger(name=__name__)
 from .test_base import TestPyrpl
 
-
 class TestClass(TestPyrpl):
     def test_spec_an(self):
         # at this point this test is still highly dubious (nothing is tested
