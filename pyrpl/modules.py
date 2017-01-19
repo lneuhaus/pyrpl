@@ -10,7 +10,7 @@ attributes in the GUI having their state load and saved in the config file...
 
 from .attributes import BaseAttribute
 from .widgets.module_widgets import ModuleWidget
-from pyrpl import CurveDB
+from . import CurveDB
 
 import logging
 import numpy as np
