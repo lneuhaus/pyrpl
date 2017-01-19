@@ -1,22 +1,8 @@
 import logging
-import os
-
 logger = logging.getLogger(name=__name__)
+from .test_base import TestPyrpl
 
-from pyrpl import RedPitaya, Pyrpl
-
-from pyrpl.software_modules.spectrum_analyzer import SpectrumAnalyzer
-
-class TestClass(object):
-    @classmethod
-    def setUpAll(self):
-        # these tests wont succeed without the hardware
-        if os.environ['REDPITAYA_HOSTNAME'] == 'unavailable':
-            self.pyrpl = None
-        else:
-            self.pyrpl = Pyrpl(config="tests_temp", source="tests_source")
-
-
+class TestClass(TestPyrpl):
     def test_spec_an(self):
         # at this point this test is still highly dubious (nothing is tested
         #  for, really)
@@ -28,7 +14,7 @@ class TestClass(object):
         asg.amplitude = 0.1
         asg.waveform = 'cos'
         asg.trigger_source = 'immediately'
-        sa.setup(center=1e6, span=1e5, input=asg)
+        sa.setup(center=1e6, span=1e3, input=asg)
         curve = sa.curve()
         # Assumes out1 is connected with adc1...
         assert(curve.argmax() == len(curve)/2), curve.argmax()

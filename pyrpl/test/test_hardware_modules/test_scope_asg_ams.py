@@ -1,30 +1,13 @@
 import logging
-import os
-
 logger = logging.getLogger(name=__name__)
-
-from pyrpl import RedPitaya, Pyrpl
-from pyrpl.attributes import *
-from pyrpl.bijection import Bijection
-
 import time
+import numpy as np
+from ... import CurveDB
+from ..test_base import TestPyrpl
 
-from pyrpl import CurveDB
 
-
-class TestClass(object):
-    @classmethod
-    def setUpAll(self):
-        # these tests wont succeed without the hardware
-        if os.environ['REDPITAYA_HOSTNAME'] == 'unavailable':
-            self.r = None
-        else:
-            # Delete
-            filename = os.path.join(os.path.split(os.path.dirname(__file__))[0], 'config', 'tests_temp.yml')
-            if os.path.exists(filename):
-                os.remove(filename)
-            self.pyrpl = Pyrpl(config="tests_temp", source="tests_source")
-            self.r = self.pyrpl.rp
+class TestClass(TestPyrpl):
+    def setup(self):
         self.extradelay = 0.6 * 8e-9  # no idea where this comes from
 
     def test_asg(self):

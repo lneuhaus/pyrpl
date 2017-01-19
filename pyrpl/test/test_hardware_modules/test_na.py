@@ -1,32 +1,14 @@
 import logging
-import os
-
 logger = logging.getLogger(name=__name__)
-
-from pyrpl import RedPitaya, Pyrpl
-from pyrpl.attributes import *
-
 import time
 import copy
-from PyQt4 import QtCore, QtGui
-
+from PyQt4 import QtGui
+from ..test_base import TestPyrpl
 APP = QtGui.QApplication.instance()
 
-class TestClass(object):
-    @classmethod
-    def setUpAll(self):
-        # these tests wont succeed without the hardware
-        if os.environ['REDPITAYA_HOSTNAME'] == 'unavailable':
-            self.r = None
-        else:
-            # Delete
-            filename = os.path.join(os.path.split(os.path.dirname(__file__))[0], 'config', 'user_config',
-                                    'tests_temp.yml')
-            if os.path.exists(filename):
-                os.remove(filename)
-            self.pyrpl = Pyrpl(config="tests_temp", source="tests_source")
-            self.r = self.pyrpl.rp
-            self.na = self.pyrpl.na
+class TestClass(TestPyrpl):
+    def setup(self):
+        self.na = self.pyrpl.na
         self.extradelay = 0.6 * 8e-9  # no idea where this comes from
 
     def test_na_running_states(self):
