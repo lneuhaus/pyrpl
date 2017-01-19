@@ -42,10 +42,11 @@ class TestClass(TestPyrpl):
             self.scramble_values(mod, 'bar', 13, False, [15], 1)
             mod.load_state('test_save')
             for attr, attr_val in zip(mod.setup_attributes, attr_vals):
-                if attr == 'default_sweep_output':
+                if attr == 'default_sweep_output' or attr == 'baseband':
                     continue  # anyways, this will be redesigned soon with a proper link to the output...
                 if attr!='d': # derivators are deactivated
-                    assert getattr(mod, attr)==attr_val, (mod, attr, attr_val)
+                    assert getattr(mod, attr) == attr_val, (mod, attr,
+                                                            attr_val)
 
     def test_load_save(self):
         for mod in self.pyrpl.modules:
