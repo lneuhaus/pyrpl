@@ -47,7 +47,7 @@ class TestClass(object):
         assert data_changing()
 
         self.na.rbw=100 # change some setup_attribute
-        assert self.na.state=="stopped"
+        assert self.na.running_state=="stopped"
         assert not data_changing()
 
         self.na.run_continuous()
@@ -61,8 +61,8 @@ class TestClass(object):
         tic = time.time()
         self.na.run_single()
         APP.processEvents()
-        print(self.na.state)
-        while(self.na.state=='running_single'):
+        print(self.na.running_state)
+        while(self.na.running_state=='running_single'):
             APP.processEvents()
         duration = time.time() - tic
         assert duration<2 # 2 s for 200 points with gui display

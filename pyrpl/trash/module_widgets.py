@@ -577,7 +577,7 @@ class NaWidget(ModuleWidget):
 
     def update_attribute_by_name(self, name, new_value_list):
         super(NaWidget, self).update_attribute_by_name(name, new_value_list)
-        if name=="state":
+        if name=="running_state":
             self.display_state(self.module.state)
 
     def update_chunk(self, chunk_index):

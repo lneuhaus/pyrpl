@@ -64,7 +64,7 @@ class NaWidget(ModuleWidget):
         self.plot_item_phase.addItem(self.arrow_phase)
         self.last_updated_point = 0
         self.last_updated_time = 0
-        self.display_state(self.module.state)
+        self.display_state(self.module.running_state)
         self.update_period = self.starting_update_rate # also modified in clear_curve.
 
     def autoscale(self):
@@ -105,7 +105,7 @@ class NaWidget(ModuleWidget):
         """
         if in run continuous, needs to redisplay the number of averages
         """
-        self.display_state(self.module.state) # display correct average number
+        self.display_state(self.module.running_state) # display correct average number
         self.update_point(self.module.points-1, force=True) # make sure all points in the scan are updated
 
     def update_point(self, index, force=False):
@@ -139,8 +139,8 @@ class NaWidget(ModuleWidget):
 
     def update_attribute_by_name(self, name, new_value_list):
         super(NaWidget, self).update_attribute_by_name(name, new_value_list)
-        if name=="state":
-            self.display_state(self.module.state)
+        if name=="running_state":
+            self.display_state(self.module.running_state)
 
     def update_chunk(self, chunk_index):
         """
@@ -186,39 +186,39 @@ class NaWidget(ModuleWidget):
         """
         self.module.save_curve()
 
-    def display_state(self, state):
+    def display_state(self, running_state):
         """
         Displays one of the possible states
         "running_continuous", "running_single", "paused_continuous", "paused_single", "stopped"
         """
-        if not state in ["running_continuous", "running_single", "paused_continuous", "paused_single", "stopped"]:
-            raise ValueError("Na state should be either running_continuous, running_single, paused_continuous, "
+        if not running_state in ["running_continuous", "running_single", "paused_continuous", "paused_single", "stopped"]:
+            raise ValueError("Na running_state should be either running_continuous, running_single, paused_continuous, "
                              "paused_single.")
-        if state=="running_continuous":
+        if running_state== "running_continuous":
             self.button_single.setEnabled(False)
             self.button_single.setText("Run single")
             self.button_continuous.setEnabled(True)
             self.button_continuous.setText("Pause (%i averages)"%self.module.current_averages)
             return
-        if state=="running_single":
+        if running_state== "running_single":
             self.button_single.setEnabled(True)
             self.button_single.setText("Pause")
             self.button_continuous.setEnabled(False)
             self.button_continuous.setText("Run continuous")
             return
-        if state=="paused_single" or (state=="paused_continuous" and self.module.current_averages==0):
+        if running_state== "paused_single" or (running_state== "paused_continuous" and self.module.current_averages==0):
             self.button_continuous.setText("Resume continuous")
             self.button_single.setText("Resume single")
             self.button_continuous.setEnabled(True)
             self.button_single.setEnabled(True)
             return
-        if state=="paused_continuous":
+        if running_state== "paused_continuous":
             self.button_continuous.setText("Resume continuous (%i averages)"%self.module.current_averages)
             self.button_single.setText("Run single")
             self.button_continuous.setEnabled(True)
             self.button_single.setEnabled(False)
             return
-        if state=="stopped":
+        if running_state== "stopped":
             self.button_continuous.setText("Run continuous")
             self.button_single.setText("Run single")
             self.button_continuous.setEnabled(True)

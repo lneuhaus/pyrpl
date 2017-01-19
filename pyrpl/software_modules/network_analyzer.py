@@ -53,7 +53,7 @@ class RbwAttribute(FilterAttribute):
 
 class NaStateProperty(StringProperty):
     def set_value(self, module, val):
-        old_val = module.state
+        old_val = module.running_state
         super(NaStateProperty, self).set_value(module, val)
         if val in ['running_continuous', 'running_single']:
             if old_val=="stopped":
@@ -88,7 +88,7 @@ class SignalLauncherNA(SignalLauncher):
         self.timer_point.start()
 
     def next_point(self):
-        if self.module.state in ['running_continuous', 'running_single']:
+        if self.module.running_state in ['running_continuous', 'running_single']:
             x, y, amp = self.module.get_current_point()
             cur = self.module.current_point
             if cur>=0: # to let time for the transiant of the accumulator, the first point has a negative index
@@ -103,7 +103,7 @@ class SignalLauncherNA(SignalLauncher):
                     self.timer_point.start()
                 else: # end of scan
                     self.module.current_averages += 1
-                    if self.module.state=='running_continuous':
+                    if self.module.running_state=='running_continuous':
                         self.module.setup() # reset acquistion without resetting averaging
                         self.timer_point.start()
                     else:
@@ -169,8 +169,8 @@ class NetworkAnalyzer(SoftwareModule):
                           "infer_open_loop_tf",
                           "avg"]
     gui_attributes = callback_attributes + ["curve_name",
-                                            "state"]
-    setup_attributes = [attr for attr in gui_attributes if attr!='state']
+                                            "running_state"]
+    setup_attributes = [attr for attr in gui_attributes if attr!='running_state']
     data = None
 
     def init_module(self):
@@ -194,7 +194,7 @@ class NetworkAnalyzer(SoftwareModule):
         self.time_per_point = 1.0 / self.rbw * (self.avg + self.sleeptimes)
         self.current_averages = 0
         self.time_last_point = 0
-        self.state = 'stopped'
+        self.running_state = 'stopped'
 
     input = SelectProperty(DspModule.inputs)
     output_direct = SelectProperty(DspModule.output_directs)
@@ -208,7 +208,7 @@ class NetworkAnalyzer(SoftwareModule):
     avg = LongProperty(min=1)
     curve_name = StringProperty()
     acbandwidth = NaAcBandwidth(doc="Bandwidth of the input high-pass filter of the na.")
-    state = NaStateProperty()
+    running_state = NaStateProperty()
 
     def callback(self):
         self.stop()
@@ -468,28 +468,28 @@ class NetworkAnalyzer(SoftwareModule):
         Launch a continuous acquisition where successive chunks are averaged with each others. The result is averaged
         in self.y
         """
-        self.state = "running_continuous"
+        self.running_state = "running_continuous"
 
     def run_single(self):
         """
         Acquires a single scan. The result, once available, will be in self.x, self.y
         """
-        self.state = "running_single"
+        self.running_state = "running_single"
 
     def pause(self):
         """
         Pauses the current acquistion. The acquisition can be resumed later
         """
-        if self.state == "running_continuous":
-            self.state = "paused_continuous"
-        if self.state == "running_single":
-            self.state = "paused_single"
+        if self.running_state == "running_continuous":
+            self.running_state = "paused_continuous"
+        if self.running_state == "running_single":
+            self.running_state = "paused_single"
 
     def stop(self):
         """
         Stops definitely the acquisition (next call to run_continuous will restart from 0)
         """
-        self.state = 'stopped'
+        self.running_state = 'stopped'
 
     def threshold_hook(self, current_val):  # goes in the module...
         """
