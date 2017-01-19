@@ -1,18 +1,17 @@
 import logging
 logger = logging.getLogger(name=__name__)
-from nose.tools import set_trace
+from .test_base import RedpitayaTestCase
+from ..modules import BaseModule
+from ..attributes import *
+from .. import RedPitaya
 
-
-from pyrpl import RedPitaya
-from pyrpl.modules import BaseModule
-from pyrpl.attributes import *
-
-
-class TestClass(object):
-    @classmethod
-    def setUpAll(self):
+class TestClass(RedpitayaTestCase):
+    def setUp(self):
         self.r = RedPitaya()
-    
+
+    def test_connection(self):
+        assert self.r is not None
+
     def test_generator(self):
         if self.r is None:
             assert False

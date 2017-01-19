@@ -23,7 +23,7 @@ class PyqtgraphTestCases(unittest.TestCase):
     REDPITAYA = True  # REDPITAYA=False tests the speed of PyQtGraph alone
     timeout = 10  # timeout if the gui never plots anything
 
-    def setUp(self):
+    def mysetup(self):
         self.t0 = np.linspace(0, self.duration, self.N)
         self.plotWidget = pg.plot(title="Realtime plotting benchmark")
         self.cycle = 0
