@@ -392,4 +392,3 @@ if False:
                 return attr
             except AttributeError:
                 return self[item]
-            
