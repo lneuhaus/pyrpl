@@ -19,9 +19,9 @@ class ProportionalGainProperty(FloatProperty):
         if instance.mode=='lock':
             instance.update_pid_gains(instance.current_input_lock,
                                       instance.current_variable_value)
-    def launch_signal(self, module):
-        super(ProportionalGainProperty, self).launch_signal(module)
-        module.widget.update_transfer_function()
+    #def launch_signal(self, module, new_value_list):
+     #   super(ProportionalGainProperty, self).launch_signal(module, new_value_list)
+    #    module.widget.update_transfer_function()
 
 
 class IntegralGainProperty(FloatProperty):
@@ -34,9 +34,9 @@ class IntegralGainProperty(FloatProperty):
             instance.update_pid_gains(instance.current_input_lock,
                                       instance.current_variable_value)
 
-    def launch_signal(self, module):
-        super(IntegralGainProperty, self).launch_signal(module)
-        module.widget.update_transfer_function()
+    #def launch_signal(self, module, new_value_list):
+        #super(IntegralGainProperty, self).launch_signal(module, new_value_list)
+        #module.widget.update_transfer_function()
 
 
 class PIcornerAttribute(FloatAttribute):
@@ -59,9 +59,9 @@ class AdditionalFilterAttribute(FilterAttribute):
     def set_value(self, instance, value):
         instance.pid.inputfilter = value
 
-    def launch_signal(self, module):
-        super(AdditionalFilterAttribute, self).launch_signal(module)
-        module.widget.update_transfer_function()
+    #def launch_signal(self, module, new_value_list):
+    #    super(AdditionalFilterAttribute, self).launch_signal(module, new_value_list)
+    #    module.widget.update_transfer_function()
 
 
 class DisplayNameProperty(StringProperty):
@@ -78,9 +78,9 @@ class AssistedDesignProperty(BoolProperty):
         obj.assisted_gain_updated()
         return val
 
-    def launch_signal(self, module):
-        super(AssistedDesignProperty, self).launch_signal(module)
-        module.widget.set_assisted_design(module.assisted_design)
+    #def launch_signal(self, module, new_value_list):
+    #    super(AssistedDesignProperty, self).launch_signal(module, new_value_list)
+    #    module.widget.set_assisted_design(module.assisted_design)
 
 
 class AnalogFilterProperty(ListFloatProperty):
@@ -99,20 +99,20 @@ class TfTypeProperty(SelectProperty):
     def set_value(self, obj, val):
         super(TfTypeProperty, self).set_value(obj, val)
 
-    def launch_signal(self, module):
-        super(TfTypeProperty, self).launch_signal(module)
-        module.widget.update_transfer_function()
-        module.widget.change_analog_tf()
+    #def launch_signal(self, module, new_value_list):
+        #super(TfTypeProperty, self).launch_signal(module, new_value_list)
+        #module.widget.update_transfer_function()
+        #module.widget.change_analog_tf()
 
 
 class TfCurveProperty(LongProperty):
     def set_value(self, obj, val):
         super(TfCurveProperty, self).set_value(obj, val)
 
-    def launch_signal(self, module):
-        super(TfCurveProperty, self).launch_signal(module)
-        module.widget.update_transfer_function()
-        module.widget.change_analog_tf()
+    #def launch_signal(self, module, new_value_list):
+    #    super(TfCurveProperty, self).launch_signal(module, new_value_list)
+    #    module.widget.update_transfer_function()
+    #    module.widget.change_analog_tf()
 
 
 class OutputSignal(Signal):
