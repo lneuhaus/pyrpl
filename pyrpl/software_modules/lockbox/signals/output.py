@@ -190,7 +190,7 @@ class OutputSignal(Signal):
  #   def id(self): # it would be more convenient to compute name from output, but class attribute name can't be a
  #                 # property since it used to define the save section
  #       return int(self.name.strip('output'))
-    def update_pid_gains(self, input, variable_value):
+    def update_pid_gains(self, input, variable_value, factor=1.):
         """
         If current mode is "lock", updates the gains of the underlying pid module such that:
             - input.gain * pid.p * output.dc_gain = output.p
@@ -205,8 +205,8 @@ class OutputSignal(Signal):
 
         self.pid.setpoint = input.expected_signal(variable_value)
 
-        self.pid.p = self.p/(self.current_variable_slope*self.dc_gain)
-        self.pid.i = self.i/(self.current_variable_slope*self.dc_gain)
+        self.pid.p = self.p/(self.current_variable_slope*self.dc_gain)*factor
+        self.pid.i = self.i/(self.current_variable_slope*self.dc_gain)*factor
 
     def assisted_gain_updated(self):
         if self.assisted_design:
@@ -279,7 +279,7 @@ class OutputSignal(Signal):
             else:
                 return c.data.index
 
-    def lock(self, input, variable_value):
+    def lock(self, input, variable_value, factor=1.):
         """
         Closes the lock loop, using the required p and i parameters.
         """

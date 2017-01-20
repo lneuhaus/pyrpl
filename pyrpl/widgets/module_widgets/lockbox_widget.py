@@ -558,7 +558,10 @@ class LockboxStageWidget(ModuleWidget):
         self.lay_v2.addWidget(aws['variable_value'])
         self.main_layout.addWidget(aws['output_on'])
 
-        self.main_layout.addWidget(aws['function_call'])
+        self.lay_h2 = QtGui.QHBoxLayout()
+        self.main_layout.addLayout(self.lay_h2)
+        self.lay_h2.addWidget(aws['function_call'])
+        self.lay_h2.addWidget(aws['factor'])
 
         self.button_goto = QtGui.QPushButton('Goto stage')
         self.button_goto.clicked.connect(self.module.setup)
@@ -588,7 +591,7 @@ class LockboxSequenceWidget(ModuleWidget):
     """
     def init_gui(self):
         self.main_layout = QtGui.QHBoxLayout(self)
-        self.init_attribute_layout() # eventhough, I don't think there's any attribute
+        self.init_attribute_layout()  # eventhough, I don't think there's any attribute
         self.stage_widgets = []
         self.button_add = QtGui.QPushButton('+')
         self.button_add.setSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Expanding)
