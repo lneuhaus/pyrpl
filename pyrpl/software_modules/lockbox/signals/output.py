@@ -19,9 +19,9 @@ class ProportionalGainProperty(FloatProperty):
         if instance.mode=='lock':
             instance.update_pid_gains(instance.current_input_lock,
                                       instance.current_variable_value)
-    def launch_signal(self, module, new_value_list):
-        super(ProportionalGainProperty, self).launch_signal(module, new_value_list)
-        module.widget.update_transfer_function()
+    #def launch_signal(self, module, new_value_list):
+     #   super(ProportionalGainProperty, self).launch_signal(module, new_value_list)
+    #    module.widget.update_transfer_function()
 
 
 class IntegralGainProperty(FloatProperty):
@@ -34,9 +34,9 @@ class IntegralGainProperty(FloatProperty):
             instance.update_pid_gains(instance.current_input_lock,
                                       instance.current_variable_value)
 
-    def launch_signal(self, module, new_value_list):
-        super(IntegralGainProperty, self).launch_signal(module, new_value_list)
-        module.widget.update_transfer_function()
+    #def launch_signal(self, module, new_value_list):
+        #super(IntegralGainProperty, self).launch_signal(module, new_value_list)
+        #module.widget.update_transfer_function()
 
 
 class PIcornerAttribute(FloatAttribute):
