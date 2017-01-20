@@ -58,7 +58,7 @@ class InputSignal(SoftwareModule):
                 scope.save_state("sweep")
             scope.load_state("sweep")
             scope.setup(input1=self.signal(), input2=self.lockbox.asg)
-            curve = scope.curve(ch=1)
+            curve = scope.curve(ch=1, timeout=0.1+2./self.lockbox.asg.frequency)
         finally:
             self.pyrpl.scopes.free(scope)
         return curve
