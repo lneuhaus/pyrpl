@@ -1101,7 +1101,7 @@ class SelectAttributeWidget(BaseAttributeWidget):
         self.widget.clear()
         self.widget.addItems(new_options)
         try:
-            self._update()
+            self._update(new_value=self.module_value())
         except ValueError:
             pass
         self.widget.blockSignals(False)
