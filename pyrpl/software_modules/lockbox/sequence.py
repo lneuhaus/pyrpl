@@ -173,6 +173,9 @@ class Stage(SoftwareModule):
                 output.lock(self.input, self.variable_value, factor=self.factor)
             else:
                 output.unlock()
+        if self.function_call!="":
+            func = getattr(self.lockbox.model, self.function_call)
+            func(self.factor)
         self.lockbox.state = self.name
         #if self.lockbox.widget is not None:
         #    self.lockbox.widget.show_lock(self)

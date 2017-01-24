@@ -286,7 +286,7 @@ class OutputSignal(Signal):
         if isinstance(input, basestring):
             input = self.lockbox.get_input(input)
         self.mode = 'lock'
-        self.update_pid_gains(input, variable_value)
+        self.update_pid_gains(input, variable_value, factor=factor)
         self.pid.input = input.signal()
         self.pid.output_direct = self.output_channel
 

@@ -224,7 +224,7 @@ class InputPdh(InputSignal):
                                                    'mod_phase',
                                                    'quadrature_factor',
                                                    'mod_output']
-    setup_attributes = gui_attributes
+    setup_attributes = gui_attributes + ["min", "max", "mean", "rms"]
     mod_freq   = PdhFrequencyProperty()
     mod_amp    = PdhAmplitudeProperty()
     mod_phase  = PdhPhaseProperty()
