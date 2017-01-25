@@ -1,0 +1,18 @@
+pyrpl:
+  name: test_refactor
+  gui: true
+  loglevel: info
+  modules:
+  - NetworkAnalyzer
+  - SpectrumAnalyzer
+  - Lockbox
+redpitaya:
+  hostname: 10.214.1.41
+  user: root
+  password: root
+  port: 2222
+  frequency_correction: 1.0
+  filename: fpga//red_pitaya.bin
+  reloadfpga: true
+  monitor_server_name: monitor_server
+  silence_env: true

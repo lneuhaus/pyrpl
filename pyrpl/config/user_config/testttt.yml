@@ -1,0 +1,74 @@
+pyrpl:
+  name: test_refactor
+  gui: true
+  loglevel: info
+  modules:
+  - NetworkAnalyzer
+  - SpectrumAnalyzer
+  - Lockbox
+  dock_positions: !!binary |
+    AAAA/wAAAAD9AAAAAQAAAAIAAAO3AAACRfwBAAAAAfwAAAAAAAADtwAAA7cA////+gAAAAcBAAAA
+    CPsAAAAIAGEAcwBnAHMBAAAAAP////8AAAHoAP////sAAAAGAGkAcQBzAAAAAAD/////AAAAFAD/
+    ///7AAAACABwAGkAZABzAAAAAAD/////AAAAFAD////7AAAADABzAGMAbwBwAGUAcwAAAAAA////
+    /wAAABQA////+wAAAAgAaQBpAHIAcwAAAAAA/////wAAABQA////+wAAAAQAbgBhAQAAAAD/////
+    AAADtwD////7AAAAIgBzAHAAZQBjAHQAcgB1AG0AXwBhAG4AYQBsAHkAegBlAHIBAAAAAP////8A
+    AAMKAP////sAAAAOAGwAbwBjAGsAYgBvAHgBAAAAAP////8AAAKJAP///wAAA7cAAAAAAAAABAAA
+    AAQAAAAIAAAACPwAAAAA
+  window_position:
+  - 0
+  - 0
+  - 951
+  - 617
+redpitaya:
+  password: root
+  user: root
+  port: 2222
+  frequency_correction: 1.0
+  filename: fpga//red_pitaya.bin
+  reloadfpga: true
+  monitor_server_name: monitor_server
+nas:
+  na: {}
+spectrum_analyzers:
+  spectrum_analyzer: {}
+lockboxs:
+  lockbox:
+    fabryperots:
+      FabryPerot: {}
+    transmissions:
+      transmission: {}
+    reflections:
+      reflection: {}
+    pdhs:
+      pdh: {}
+    sequences:
+      sequence:
+        stages:
+          stage1:
+            factor: 0.0021000000000000003
+            variable_value: 0.0011
+            output_on: {}
+hks:
+  hk: {}
+amss:
+  ams: {}
+scopes:
+  scope:
+    trigger_source: immediately
+samplers:
+  sampler: {}
+asgs:
+  asg1: {}
+  asg2: {}
+pwms:
+  pwm1: {}
+  pwm2: {}
+iqs:
+  iq1: {}
+pids:
+  pid1: {}
+  pid2: {}
+  pid3: {}
+  pid4: {}
+iirs:
+  iir: {}
