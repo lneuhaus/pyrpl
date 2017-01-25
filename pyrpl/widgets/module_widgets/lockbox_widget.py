@@ -186,6 +186,7 @@ class WidgetManual(QtGui.QWidget):
         self.layout.addWidget(self.i)
         # self.i.label.setMinimumWidth(6)
 
+
 class WidgetAssisted(QtGui.QWidget):
     def __init__(self, parent):
         super(WidgetAssisted, self).__init__(parent)
@@ -204,6 +205,7 @@ class WidgetAssisted(QtGui.QWidget):
         self.analog_filter.set_max_cols(2)
         self.v1.addWidget(self.desired)
         self.v2.addWidget(self.analog_filter)
+
 
 class PidProperties(QtGui.QGroupBox):
     def __init__(self, parent):
@@ -254,6 +256,7 @@ class PidProperties(QtGui.QGroupBox):
     def set_manual(self):
         self.manual_widget.setEnabled(True)
         self.assisted_widget.setEnabled(False)
+
 
 class PostFiltering(QtGui.QGroupBox):
     def __init__(self, parent):
@@ -412,6 +415,7 @@ class LockboxInputWidget(ModuleWidget):
         """
         self.curve.setData(x, y)
 
+
 class InputsWidget(QtGui.QWidget):
     """
     A widget to represent all input signals on the same tab
@@ -454,6 +458,7 @@ class MyTabBar(QtGui.QTabBar):
         #    return QtCore.QSize(size.width() - 15, size.height())
         #else:
         return size
+
 
 class AllSignalsWidget(QtGui.QTabWidget):
     """
@@ -517,6 +522,7 @@ class AllSignalsWidget(QtGui.QTabWidget):
 
     def remove_input(self, input):
         self.inputs_widget.remove_input(input)
+
 
 class MyCloseButton(QtGui.QPushButton):
     def __init__(self, parent=None):
@@ -582,7 +588,6 @@ class LockboxStageWidget(ModuleWidget):
 
     def show_lock(self):
         self.parent().parent().set_button_green(self.button_goto)
-
 
 
 class LockboxSequenceWidget(ModuleWidget):
@@ -749,4 +754,3 @@ class LockboxWidget(ModuleWidget):
         """
         for input_widget in self.all_sig_widget.inputs_widget.input_widgets:
             input_widget.hide_lock()
-

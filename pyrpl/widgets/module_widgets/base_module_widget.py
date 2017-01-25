@@ -11,6 +11,7 @@ import functools
 
 APP = QtGui.QApplication.instance()
 
+
 class MyMenuLabel(QtGui.QLabel):
     """
     A label on top of the menu widget that is able to display save or load menu.
@@ -42,6 +43,7 @@ class LoadLabel(MyMenuLabel):
     text = "  .:Load:. "
     def func(self, state):
         self.module.load_state(state)
+
 
 class SaveLabel(MyMenuLabel):
     """

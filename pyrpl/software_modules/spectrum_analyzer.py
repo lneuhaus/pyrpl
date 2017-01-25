@@ -16,6 +16,8 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###############################################################################
 
+import logging
+logger = logging.getLogger(name=__name__)
 from pyrpl.attributes import BoolProperty, FloatProperty, FloatAttribute, SelectAttribute, BoolAttribute, \
                              FrequencyAttribute, LongProperty, SelectProperty, FilterProperty, StringProperty, \
                              FilterAttribute, SelectProperty
@@ -152,6 +154,7 @@ class SpanFilterProperty(FilterProperty):
 
 
 class SignalLauncherSpectrumAnalyzer(SignalLauncher):
+    _max_refresh_rate = 25
     """ class that takes care of emitting signals to update all possible specan displays """
     display_curves = QtCore.pyqtSignal(list) # This signal is emitted when curves need to be displayed
     # the argument is [array(frequencies), array(curve)]
@@ -159,9 +162,8 @@ class SignalLauncherSpectrumAnalyzer(SignalLauncher):
 
     def __init__(self, module):
         super(SignalLauncherSpectrumAnalyzer, self).__init__(module)
-        self.first_shot_of_continuous = True
         self.timer_continuous = QtCore.QTimer()
-        self.timer_continuous.setInterval(10)  # max. frame rate: 100 Hz
+        self.timer_continuous.setInterval(1000./self._max_refresh_rate)
         self.timer_continuous.timeout.connect(self.check_for_curves)
         self.timer_continuous.setSingleShot(True)
 
@@ -170,17 +172,10 @@ class SignalLauncherSpectrumAnalyzer(SignalLauncher):
         periodically checks for curve.
         """
         self.module.setup()
-        self.first_shot_of_continuous = True
         self.timer_continuous.start()
 
     def stop(self):
         self.timer_continuous.stop()
-
-    def resume(self):
-        self.timer_point.start()
-
-    def pause(self):
-        self.timer_point.stop()
 
     def run_single(self):
         self.module.stop()
@@ -194,45 +189,12 @@ class SignalLauncherSpectrumAnalyzer(SignalLauncher):
         2/ If so, plots them on the graph
         3/ Restarts the timer.
         """
-        datas = [None, None]
-        # triggered mode in "single" acquisition, or when rolling mode is off, or when duration is
-        # too small
-        if self.module.is_rolling_mode_active() and self.module.running_continuous: ## Rolling mode
-            wp0 = self.module._write_pointer_current # write pointer before acquisition
-            times = self.module.times # times
-            times -= times[-1]
-            datas = [times, None, None]
-            for ch, active in ((1, self.module.ch1_active),  (2, self.module.ch2_active)):
-                if active:
-                    datas[ch] = self.module._get_ch_no_roll(ch)
-            wp1 = self.module._write_pointer_current # write pointer after acquisition
-            for index, data in ((1, datas[1]), (2, datas[2])):
-                if data is None:
-                    continue
-                to_discard = (wp1 - wp0) % self.module.data_length # remove data that have been affected during acq.
-                data = np.roll(data, self.module.data_length - wp0)[to_discard:]
-                data = np.concatenate([[np.nan] * to_discard, data])
-                datas[index] = data
-            self.display_curves.emit(datas)
-            self.module.last_datas = datas
-            if self.first_shot_of_continuous:
-                self.first_shot_of_continuous = False
+        if self.module.running_continuous:
+            if self.module.acquire_one_curve():
+                self.display_curves.emit([self.module.frequencies, self.module.data])
                 self.autoscale.emit()
-            # no setup in rolling mode
-        else:  # triggered mode
-            if self.module.curve_ready(): # if curve not ready, wait for next timer iteration
-                for ch, active in ((1, self.module.ch1_active), (2, self.module.ch2_active)):
-                    if active:
-                        datas[ch] = self.module._get_ch(ch)
-                datas[0] = self.module.times
-                self.display_curves.emit(datas)
-                self.module.last_datas = datas
-                if self.first_shot_of_continuous:
-                    self.first_shot_of_continuous = False  # autoscale only upon first curve
-                    self.autoscale.emit()
-                self.module.setup()
-            else: # curve not ready, wait for next timer iteration
-                self.timer_continuous.start()
+            else:  # curve not ready, wait for next timer iteration
+                pass
         if self.module.running_continuous:
             self.timer_continuous.start()
 
@@ -240,6 +202,18 @@ class SignalLauncherSpectrumAnalyzer(SignalLauncher):
         super(SignalLauncherSpectrumAnalyzer, self).connect_widget(widget)
         self.autoscale.connect(widget.autoscale)
         self.display_curves.connect(widget.display_curves)
+
+
+class RunningContinuousProperty(BoolProperty):
+    """
+    Nothing to do unless widget exists
+    """
+    def set_value(self, module, val):
+        super(RunningContinuousProperty, self).set_value(module, val)
+        if val:
+            module.signal_launcher.run_continuous()
+        else:
+            module.signal_launcher.stop()
 
 
 class SpectrumAnalyzer(SoftwareModule):
@@ -303,6 +277,7 @@ class SpectrumAnalyzer(SoftwareModule):
         time is a valid scope sampling time.
         """)
     rbw_auto = RbwAutoAttribute()
+    running_continuous = RunningContinuousProperty()
     center = CenterAttribute()
     points = LongProperty()
     rbw = RbwAttribute()
@@ -326,6 +301,7 @@ class SpectrumAnalyzer(SoftwareModule):
         self.avg = 10
         self.window = "flattop"
         self.points = Scope.data_length
+        self.restart_averaging()
         """ # intializing stuff while scope is not reserved modifies the
         parameters of the scope...
 
@@ -334,6 +310,7 @@ class SpectrumAnalyzer(SoftwareModule):
         self.rbw_auto = True
         """
         self._is_setup = False
+        self.data = None
 
     @property
     def iq(self):
@@ -378,71 +355,6 @@ class SpectrumAnalyzer(SoftwareModule):
             self.scope.input1 = self.iq_quadraturesignal
         self.scope.setup(average=True,
                          trigger_source="immediately")
-
-    def setup_old(self,
-              span=None,
-              center=None,
-              points=None,
-              avg=None,
-              window=None,
-              acbandwidth=None,
-              input=None,
-              baseband=None,
-              curve_name=None,
-              rbw_auto=None):
-        """
-        :param span: span of the analysis
-        :param center: center frequency
-        :param data_length: number of points
-        :param avg: not in use now
-        :param window: "gauss" for now
-        :param acbandwidth: bandwidth of the input highpass filter
-        :param input: input channel
-        :return:
-        """
-        self._is_setup = True
-
-        if self.scope.owner != self.name:
-            self.pyrpl.scopes.pop(self.name)
-
-        if span is not None:
-            self.span = span
-        if center is not None:
-            self.center = center
-        if points is not None:
-            self.data_length = points
-        if avg is not None:
-            self.avg = avg
-        if window is not None:
-            self.window = window
-        if acbandwidth is not None:
-            self.acbandwidth = acbandwidth
-        if input is not None:
-            self.input = input
-        else:
-            self.input = self.input
-        if rbw_auto is not None:
-            self.rbw_auto = rbw_auto
-        if baseband is not None:
-            self.baseband = baseband
-        if curve_name is not None:
-            self.curve_name = curve_name
-
-        # setup iq module
-        if not self.baseband:
-            self.iq.setup(
-                bandwidth=[self.span*self.if_filter_bandwidth_per_span]*4,
-                gain=0,
-                phase=0,
-                acbandwidth=self.acbandwidth,
-                amplitude=0,
-                output_direct='off',
-                output_signal='quadrature',
-                quadrature_factor=self.quadrature_factor)
-
-        self.scope.trigger_source = "immediately"
-        self.scope.average = True
-        self.scope.setup()
 
     def curve_ready(self):
         return self.scope.curve_ready()
@@ -514,7 +426,7 @@ class SpectrumAnalyzer(SoftwareModule):
         self.pyrpl.scopes.free(self.scope)
         return res
 
-    def freqs(self):
+    def frequencies(self):
         """
         :return: frequency array
         """
@@ -526,3 +438,66 @@ class SpectrumAnalyzer(SoftwareModule):
         data[data <= 0] = 1e-100
         # conversion to dBm scale
         return 10.0 * np.log10(data) + 30.0
+
+    def save_curve(self):
+        """
+        Saves the curve(s) that is (are) currently displayed in the gui in the db_system. Also, returns the list
+        [curve_ch1, curve_ch2]...
+        """
+        params = self.get_setup_attributes()
+        for attr in ["current_average", "running_continuous"]:
+            params[attr] = self.__getattribute__(attr)
+        params.update()
+        curve = self._save_curve(self.frequencies(),
+                                 self.data,
+                                 **params)
+        return curve
+
+    def run_continuous(self):
+        """
+        Continuously feeds the gui with new curves from the scope. Once ready, datas are located in self.last_datas.
+        """
+        self.running_continuous = True
+
+    def stop(self):
+        """
+        Stops the current acquisition.
+        """
+        self.running_continuous = False
+
+    def restart_averaging(self):
+        """
+        Restarts the curve averaging.
+        """
+        self.data = np.zeros(len(self.frequencies()))
+        self.current_average = 0
+
+    def acquire_one_curve(self):
+        """
+        Acquires one curve and adds it to the average.
+        returns True if new data are available for plotting.
+        """
+        # several seconds... In the mean time, no other event can be
+        # treated. That's why the gui freezes...
+        if self.curve_ready():
+            self.data = (self.current_average * self.data \
+                     + self.module.curve()) / (self.current_average + 1)
+            self.current_average += 1
+            # let current_average be maximally equal to avg -> yields best real-time averaging mode
+            if self.current_average > self.avg:
+                self.current_average = self.avg
+            do_plot = True
+        else:
+            do_plot = False
+        if self.running_continuous and not self.scope._trigger_delay_running:
+            self.module.setup()
+        return do_plot
+
+    def run_single(self):
+        """
+        Feeds gui with one new curve from the scope. Once ready, datas are located in self.last_datas.
+        """
+        self.stop()
+        self.setup()
+        self.signal_launcher.run_single()
+
