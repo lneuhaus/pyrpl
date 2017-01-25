@@ -101,9 +101,9 @@ doc/my_notebooks/
 pyrpl/config/*.bak
 
 #user config
-pyrpl/config/user_config/*.yml
-pyrpl/config/user_config/*.bak
-pyrpl/config/user_config
+#pyrpl/config/user_config/*.yml
+#pyrpl/config/user_config/*.bak
+#pyrpl/config/user_config
 
 
 #test files made by Xueshi
