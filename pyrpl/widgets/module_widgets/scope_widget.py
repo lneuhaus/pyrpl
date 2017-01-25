@@ -89,7 +89,7 @@ class ScopeWidget(ModuleWidget):
         aws['curve_name'].setMaximumWidth(250)
         self.main_layout.addLayout(self.button_layout)
 
-        self.button_single.clicked.connect(self.module.run_single_clicked)
+        self.button_single.clicked.connect(self.module.run_single)
         self.button_continuous.clicked.connect(self.run_continuous_clicked)
         self.button_save.clicked.connect(self.save_clicked)
 

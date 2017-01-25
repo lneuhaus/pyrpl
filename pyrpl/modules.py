@@ -100,7 +100,7 @@ class SignalLauncher(QtCore.QObject):
     """
     A QObject that is connected to the widgets to update their value when attributes of a module change
     """
-    attribute_changed = QtCore.pyqtSignal(str, list)
+    update_attribute_by_name = QtCore.pyqtSignal(str, list)
     # The name of the property that has changed, the list is [new_value], the new_value of the attribute
 
     def __init__(self, module):
@@ -111,29 +111,11 @@ class SignalLauncher(QtCore.QObject):
         """
         Establishes all connections between the module and the widget.
         """
-        self.attribute_changed.connect(widget.update_attribute_by_name)
-
-
-class VoidSignalLauncher(SignalLauncher):
-    """
-    A SignalLauncher for a module that provides signals without arguments.
-
-    The names of the signals are passed as list to the class constructor.
-    The function connect_widghet will connect the signals to identically
-    named methods of the widget object.
-    """
-    def __init__(self, module, signals=list()):
-        super(VoidSignalLauncher, self).__init__(module=module)
-        self.signals = signals
-        for s in self.signals:
-            self.__setattr__(s, QtCore.pyqtSignal(str, list))
-
-    def connect_widget(self, widget):
-        """
-        Establishes all connections between the module and the widget.
-        """
-        for s in self.signals:
-            self.__getattribute__(s).connect("update_"+widget.__getattribute__(s))
+        #self.update_attribute_by_name.connect(widget.update_attribute_by_name)
+        for key in dir(self.__class__):
+            val = getattr(self, key)
+            if isinstance(val, QtCore.pyqtBoundSignal) and hasattr(widget, key):
+                val.connect(getattr(widget, key))
 
 
 class BaseModule(with_metaclass(ModuleMetaClass, object)):

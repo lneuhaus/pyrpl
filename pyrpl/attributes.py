@@ -104,7 +104,7 @@ class BaseAttribute(object):
         # if self.name in module.widget.attribute_widgets:
         #   module.widget.attribute_widgets[self.name].update_widget()
         #if self.name in module.gui_attributes:
-        module.signal_launcher.attribute_changed.emit(self.name, [new_value])
+        module.signal_launcher.update_attribute_by_name.emit(self.name, [new_value])
 
     def save_attribute(self, module, value):
         """

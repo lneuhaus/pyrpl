@@ -29,7 +29,7 @@ class SpecAnWidget(ModuleWidget):
         self.main_layout.addWidget(self.win)
 
         self.plot_item = self.win.addPlot(title="PSD")
-        self.curves = [self.plot_item.plot(pen='m')]
+        self.curve = self.plot_item.plot(pen='m')
 
         self.button_single = QtGui.QPushButton("Run single")
         self.button_single.clicked.connect(self.run_single_clicked)
@@ -41,7 +41,7 @@ class SpecAnWidget(ModuleWidget):
         self.button_restart_averaging.clicked.connect(self.module.restart_averaging)
 
         self.button_save = QtGui.QPushButton("Save curve")
-        self.button_save.clicked.connect(self.save)
+        self.button_save.clicked.connect(self.module.save_curve)
 
         self.button_layout.addWidget(self.button_single)
         self.button_layout.addWidget(self.button_continuous)
@@ -50,7 +50,7 @@ class SpecAnWidget(ModuleWidget):
         self.main_layout.addLayout(self.button_layout)
 
         self.running = False
-        self.attribute_changed.connect(self.restart_averaging)
+        self.attribute_changed.connect(self.module.restart_averaging)
 
         self.attribute_widgets["rbw_auto"].value_changed.connect(self.update_rbw_visibility)
         self.update_rbw_visibility()
@@ -82,12 +82,9 @@ class SpecAnWidget(ModuleWidget):
     def update_rbw_visibility(self):
         self.attribute_widgets["rbw"].widget.setEnabled(not self.module.rbw_auto)
 
-    def autoscale(self):
+    def autoscale_display(self):
         """Autoscale pyqtgraph"""
         self.plot_item.autoRange()
-
-    def save_clicked(self):
-        self.module.save_curve()
 
     def run_continuous_clicked(self):
         """
@@ -113,16 +110,13 @@ class SpecAnWidget(ModuleWidget):
         self.acquire_one_curve()
         self.button_continuous.setEnabled(True)
 
-    def display_curves(self, list_of_arrays):
+    def update_display(self):
         """
         Displays all active channels on the graph.
         """
-        frequencies = list_of_arrays[0]
-        datas = list_of_arrays[1:]
-        for ch, data in enumerate(datas):
-            if data is not None:
-                self.curves[ch].setData(frequencies, self.module.data_to_dBm(data))
-                self.curves[ch].setVisible(True)
-            else:
-                self.curves[ch].setVisible(False)
+        if self.module.data is not None:
+            self.curve.setData(self.module.frequencies, self.module.data_to_dBm(self.module.data))
+            self.curve.setVisible(True)
+        else:
+            self.curve.setVisible(False)
         self.update_running_buttons()

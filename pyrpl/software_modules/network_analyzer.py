@@ -138,11 +138,11 @@ class SignalLauncherNA(SignalLauncher):
 
     def connect_widget(self, widget):
         super(SignalLauncherNA, self).connect_widget(widget)
-        self.autoscale.connect(widget.autoscale)
+        #self.autoscale.connect(widget.autoscale)
         self.point_updated.connect(widget.update_point)
-        self.scan_finished.connect(widget.scan_finished)
-        self.clear_curve.connect(widget.clear_curve)
-        self.x_log_toggled.connect(widget.x_log_toggled)
+        #self.scan_finished.connect(widget.scan_finished)
+        #self.clear_curve.connect(widget.clear_curve)
+        #self.x_log_toggled.connect(widget.x_log_toggled)
 
 
 class NetworkAnalyzer(SoftwareModule):

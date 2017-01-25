@@ -154,11 +154,11 @@ class SpanFilterProperty(FilterProperty):
 
 
 class SignalLauncherSpectrumAnalyzer(SignalLauncher):
-    _max_refresh_rate = 25
     """ class that takes care of emitting signals to update all possible specan displays """
-    display_curves = QtCore.pyqtSignal(list) # This signal is emitted when curves need to be displayed
-    # the argument is [array(frequencies), array(curve)]
-    autoscale = QtCore.pyqtSignal()
+    _max_refresh_rate = 25
+
+    update_display = QtCore.pyqtSignal()
+    autoscale_display = QtCore.pyqtSignal()
 
     def __init__(self, module):
         super(SignalLauncherSpectrumAnalyzer, self).__init__(module)
@@ -173,6 +173,7 @@ class SignalLauncherSpectrumAnalyzer(SignalLauncher):
         """
         self.module.setup()
         self.timer_continuous.start()
+        self.autoscale_display.emit()
 
     def stop(self):
         self.timer_continuous.stop()
@@ -190,18 +191,12 @@ class SignalLauncherSpectrumAnalyzer(SignalLauncher):
         3/ Restarts the timer.
         """
         if self.module.running_continuous:
-            if self.module.acquire_one_curve():
-                self.display_curves.emit([self.module.frequencies, self.module.data])
-                self.autoscale.emit()
+            if self.module.acquire_one_curve():  # true if new data to plot are available
+                self.update_display.emit()
             else:  # curve not ready, wait for next timer iteration
                 pass
         if self.module.running_continuous:
             self.timer_continuous.start()
-
-    def connect_widget(self, widget):
-        super(SignalLauncherSpectrumAnalyzer, self).connect_widget(widget)
-        self.autoscale.connect(widget.autoscale)
-        self.display_curves.connect(widget.display_curves)
 
 
 class RunningContinuousProperty(BoolProperty):
@@ -302,6 +297,7 @@ class SpectrumAnalyzer(SoftwareModule):
         self.window = "flattop"
         self.points = Scope.data_length
         self.restart_averaging()
+        self.signal_launcher = SignalLauncherSpectrumAnalyzer(self)
         """ # intializing stuff while scope is not reserved modifies the
         parameters of the scope...
 
@@ -426,6 +422,7 @@ class SpectrumAnalyzer(SoftwareModule):
         self.pyrpl.scopes.free(self.scope)
         return res
 
+    @property
     def frequencies(self):
         """
         :return: frequency array
@@ -448,7 +445,7 @@ class SpectrumAnalyzer(SoftwareModule):
         for attr in ["current_average", "running_continuous"]:
             params[attr] = self.__getattribute__(attr)
         params.update()
-        curve = self._save_curve(self.frequencies(),
+        curve = self._save_curve(self.frequencies,
                                  self.data,
                                  **params)
         return curve
@@ -469,7 +466,7 @@ class SpectrumAnalyzer(SoftwareModule):
         """
         Restarts the curve averaging.
         """
-        self.data = np.zeros(len(self.frequencies()))
+        self.data = np.zeros(len(self.frequencies))
         self.current_average = 0
 
     def acquire_one_curve(self):
@@ -480,8 +477,12 @@ class SpectrumAnalyzer(SoftwareModule):
         # several seconds... In the mean time, no other event can be
         # treated. That's why the gui freezes...
         if self.curve_ready():
-            self.data = (self.current_average * self.data \
-                     + self.module.curve()) / (self.current_average + 1)
+            newdata = self.scope.curve()
+            if newdata is None:
+                self.data = newdata
+            else:
+                self.data = (self.current_average * self.data \
+                     + newdata) / (self.current_average + 1)
             self.current_average += 1
             # let current_average be maximally equal to avg -> yields best real-time averaging mode
             if self.current_average > self.avg:
@@ -490,7 +491,7 @@ class SpectrumAnalyzer(SoftwareModule):
         else:
             do_plot = False
         if self.running_continuous and not self.scope._trigger_delay_running:
-            self.module.setup()
+            self.setup()
         return do_plot
 
     def run_single(self):

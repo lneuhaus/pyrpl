@@ -248,10 +248,10 @@ class SignalLauncherScope(SignalLauncher):
         if self.module.running_continuous:
             self.timer_continuous.start()
 
-    def connect_widget(self, widget):
-        super(SignalLauncherScope, self).connect_widget(widget)
-        self.autoscale.connect(widget.autoscale)
-        self.display_curves.connect(widget.display_curves)
+    #def connect_widget(self, widget):
+    #    super(SignalLauncherScope, self).connect_widget(widget)
+        #self.autoscale.connect(widget.autoscale)
+        #self.display_curves.connect(widget.display_curves)
 
 
 class Scope(HardwareModule):
@@ -569,13 +569,13 @@ class Scope(HardwareModule):
         else:
             return self._get_ch(ch)
 
-    def configure_signal_chain(self, input, iq): # Obsolete ?
-        iq_module = getattr(self._rp, iq)
-        iq_module.input = input
-        iq_module.output_signal = 'quadrature'
-        iq_module.quadrature_factor = 1.0
-        self.input1 = iq
-        return iq_module
+    #def configure_signal_chain(self, input, iq): # Obsolete ?
+    #    iq_module = getattr(self._rp, iq)
+    #    iq_module.input = input
+    #    iq_module.output_signal = 'quadrature'
+    #    iq_module.quadrature_factor = 1.0
+    #    self.input1 = iq
+    #    return iq_module
 
     def run_continuous(self):
         """
