@@ -98,9 +98,9 @@ class ModuleMetaClass(NameAttributesMetaClass):
 
 class SignalLauncher(QtCore.QObject):
     """
-    A QObject that is connected to the widgets to update their value when attributes change
+    A QObject that is connected to the widgets to update their value when attributes of a module change
     """
-    attribute_changed = QtCore.pyqtSignal(str, list)
+    update_attribute_by_name = QtCore.pyqtSignal(str, list)
     # The name of the property that has changed, the list is [new_value], the new_value of the attribute
 
     def __init__(self, module):
@@ -111,7 +111,11 @@ class SignalLauncher(QtCore.QObject):
         """
         Establishes all connections between the module and the widget.
         """
-        self.attribute_changed.connect(widget.update_attribute_by_name)
+        #self.update_attribute_by_name.connect(widget.update_attribute_by_name)
+        for key in dir(self.__class__):
+            val = getattr(self, key)
+            if isinstance(val, QtCore.pyqtBoundSignal) and hasattr(widget, key):
+                val.connect(getattr(widget, key))
 
 
 class BaseModule(with_metaclass(ModuleMetaClass, object)):

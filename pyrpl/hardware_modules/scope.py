@@ -1,3 +1,5 @@
+import logging
+logger = logging.getLogger(name=__name__)
 from ..errors import NotReadyError, TimeoutError
 from ..attributes import FloatAttribute, SelectAttribute, BoolRegister, \
                          FloatRegister, SelectRegister, BoolProperty, \
@@ -246,10 +248,10 @@ class SignalLauncherScope(SignalLauncher):
         if self.module.running_continuous:
             self.timer_continuous.start()
 
-    def connect_widget(self, widget):
-        super(SignalLauncherScope, self).connect_widget(widget)
-        self.autoscale.connect(widget.autoscale)
-        self.display_curves.connect(widget.display_curves)
+    #def connect_widget(self, widget):
+    #    super(SignalLauncherScope, self).connect_widget(widget)
+        #self.autoscale.connect(widget.autoscale)
+        #self.display_curves.connect(widget.display_curves)
 
 
 class Scope(HardwareModule):
@@ -526,6 +528,13 @@ class Scope(HardwareModule):
                and (not self._trigger_delay_running) \
                and self._setup_called
 
+    def curve_acquiring(self):
+        """
+        Returns True if data is in the process of being acquired
+        """
+        return (self._trigger_armed or self._trigger_delay_running) \
+               and self._setup_called
+
     def _get_ch(self, ch):
         if not ch in [1, 2]:
             raise ValueError("channel should be 1 or 2, got " + str(ch))
@@ -560,13 +569,13 @@ class Scope(HardwareModule):
         else:
             return self._get_ch(ch)
 
-    def configure_signal_chain(self, input, iq): # Obsolete ?
-        iq_module = getattr(self._rp, iq)
-        iq_module.input = input
-        iq_module.output_signal = 'quadrature'
-        iq_module.quadrature_factor = 1.0
-        self.input1 = iq
-        return iq_module
+    #def configure_signal_chain(self, input, iq): # Obsolete ?
+    #    iq_module = getattr(self._rp, iq)
+    #    iq_module.input = input
+    #    iq_module.output_signal = 'quadrature'
+    #    iq_module.quadrature_factor = 1.0
+    #    self.input1 = iq
+    #    return iq_module
 
     def run_continuous(self):
         """
@@ -597,10 +606,10 @@ class Scope(HardwareModule):
         d = self.get_setup_attributes()
         curves = [None, None]
         for ch, active in [(1, self.ch1_active), (2, self.ch2_active)]:
-                if active:
-                    d.update({'ch': ch,
-                              'name': self.curve_name + ' ch' + str(ch)})
-                    curves[ch-1] = self._save_curve(self.times,
-                                                    datas[ch - 1],
-                                                    **d)
+            if active:
+                d.update({'ch': ch,
+                          'name': self.curve_name + ' ch' + str(ch)})
+                curves[ch - 1] = self._save_curve(self.times,
+                                                  datas[ch],
+                                                  **d)
         return curves

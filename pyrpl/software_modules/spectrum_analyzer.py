@@ -16,6 +16,8 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###############################################################################
 
+import logging
+logger = logging.getLogger(name=__name__)
 from pyrpl.attributes import BoolProperty, FloatProperty, FloatAttribute, SelectAttribute, BoolAttribute, \
                              FrequencyAttribute, LongProperty, SelectProperty, FilterProperty, StringProperty, \
                              FilterAttribute, SelectProperty
@@ -38,10 +40,11 @@ import json
 import matplotlib
 import matplotlib.pyplot as plt
 import logging
-from pyrpl.widgets.module_widgets import SpecAnWidget
+from ..widgets.module_widgets import SpecAnWidget
 
-from pyrpl.errors import NotReadyError
-from pyrpl.hardware_modules import Scope, DspModule
+from ..errors import NotReadyError
+from ..hardware_modules import Scope, DspModule
+from ..modules import SignalLauncher
 
 
 # Some initial remarks about spectrum estimation:
@@ -150,6 +153,64 @@ class SpanFilterProperty(FilterProperty):
             return val
 
 
+class SignalLauncherSpectrumAnalyzer(SignalLauncher):
+    """ class that takes care of emitting signals to update all possible specan displays """
+    _max_refresh_rate = 25
+
+    update_display = QtCore.pyqtSignal()
+    autoscale_display = QtCore.pyqtSignal()
+
+    def __init__(self, module):
+        super(SignalLauncherSpectrumAnalyzer, self).__init__(module)
+        self.timer_continuous = QtCore.QTimer()
+        self.timer_continuous.setInterval(1000./self._max_refresh_rate)
+        self.timer_continuous.timeout.connect(self.check_for_curves)
+        self.timer_continuous.setSingleShot(True)
+
+    def run_continuous(self):
+        """
+        periodically checks for curve.
+        """
+        self.module.setup()
+        self.timer_continuous.start()
+
+    def stop(self):
+        self.timer_continuous.stop()
+
+    def run_single(self):
+        self.module.stop()
+        self.module.setup()
+        self.timer_continuous.start()
+
+    def check_for_curves(self):
+        """
+        This function is called periodically by a timer when in run_continuous mode.
+        1/ Check if curves are ready.
+        2/ If so, plots them on the graph
+        3/ Restarts the timer.
+        """
+        if self.module.running_continuous:
+            if self.module.acquire_one_curve():  # true if new data to plot are available
+                self.update_display.emit()
+            else:  # curve not ready, wait for next timer iteration
+                pass
+            if self.module.current_average == 1:
+                self.autoscale_display.emit()
+            self.timer_continuous.start()
+
+
+class RunningContinuousProperty(BoolProperty):
+    """
+    Nothing to do unless widget exists
+    """
+    def set_value(self, module, val):
+        super(RunningContinuousProperty, self).set_value(module, val)
+        if val:
+            module.signal_launcher.run_continuous()
+        else:
+            module.signal_launcher.stop()
+
+
 class SpectrumAnalyzer(SoftwareModule):
     """
     A spectrum analyzer is composed of an IQ demodulator, followed by a scope.
@@ -198,6 +259,7 @@ class SpectrumAnalyzer(SoftwareModule):
         return [int(np.ceil(1. / nyquist_margin / s_time))
              for s_time in Scope.sampling_times]
     spans = spans(nyquist_margin)
+
     windows = ['blackman', 'flattop', 'boxcar', 'hamming']  # more can be
     # added here (see http://docs.scipy.org/doc/scipy/reference/generated
     # /scipy.signal.get_window.html#scipy.signal.get_window)
@@ -210,6 +272,7 @@ class SpectrumAnalyzer(SoftwareModule):
         time is a valid scope sampling time.
         """)
     rbw_auto = RbwAutoAttribute()
+    running_continuous = RunningContinuousProperty()
     center = CenterAttribute()
     points = LongProperty()
     rbw = RbwAttribute()
@@ -233,6 +296,8 @@ class SpectrumAnalyzer(SoftwareModule):
         self.avg = 10
         self.window = "flattop"
         self.points = Scope.data_length
+        self.restart_averaging()
+        self.signal_launcher = SignalLauncherSpectrumAnalyzer(self)
         """ # intializing stuff while scope is not reserved modifies the
         parameters of the scope...
 
@@ -241,6 +306,7 @@ class SpectrumAnalyzer(SoftwareModule):
         self.rbw_auto = True
         """
         self._is_setup = False
+        self.data = None
 
     @property
     def iq(self):
@@ -285,71 +351,6 @@ class SpectrumAnalyzer(SoftwareModule):
             self.scope.input1 = self.iq_quadraturesignal
         self.scope.setup(average=True,
                          trigger_source="immediately")
-
-    def setup_old(self,
-              span=None,
-              center=None,
-              points=None,
-              avg=None,
-              window=None,
-              acbandwidth=None,
-              input=None,
-              baseband=None,
-              curve_name=None,
-              rbw_auto=None):
-        """
-        :param span: span of the analysis
-        :param center: center frequency
-        :param data_length: number of points
-        :param avg: not in use now
-        :param window: "gauss" for now
-        :param acbandwidth: bandwidth of the input highpass filter
-        :param input: input channel
-        :return:
-        """
-        self._is_setup = True
-
-        if self.scope.owner != self.name:
-            self.pyrpl.scopes.pop(self.name)
-
-        if span is not None:
-            self.span = span
-        if center is not None:
-            self.center = center
-        if points is not None:
-            self.data_length = points
-        if avg is not None:
-            self.avg = avg
-        if window is not None:
-            self.window = window
-        if acbandwidth is not None:
-            self.acbandwidth = acbandwidth
-        if input is not None:
-            self.input = input
-        else:
-            self.input = self.input
-        if rbw_auto is not None:
-            self.rbw_auto = rbw_auto
-        if baseband is not None:
-            self.baseband = baseband
-        if curve_name is not None:
-            self.curve_name = curve_name
-
-        # setup iq module
-        if not self.baseband:
-            self.iq.setup(
-                bandwidth=[self.span*self.if_filter_bandwidth_per_span]*4,
-                gain=0,
-                phase=0,
-                acbandwidth=self.acbandwidth,
-                amplitude=0,
-                output_direct='off',
-                output_signal='quadrature',
-                quadrature_factor=self.quadrature_factor)
-
-        self.scope.trigger_source = "immediately"
-        self.scope.average = True
-        self.scope.setup()
 
     def curve_ready(self):
         return self.scope.curve_ready()
@@ -421,7 +422,8 @@ class SpectrumAnalyzer(SoftwareModule):
         self.pyrpl.scopes.free(self.scope)
         return res
 
-    def freqs(self):
+    @property
+    def frequencies(self):
         """
         :return: frequency array
         """
@@ -431,4 +433,72 @@ class SpectrumAnalyzer(SoftwareModule):
     def data_to_dBm(self, data):
         # replace values whose log doesnt exist
         data[data <= 0] = 1e-100
+        # conversion to dBm scale
         return 10.0 * np.log10(data) + 30.0
+
+    def save_curve(self):
+        """
+        Saves the curve(s) that is (are) currently displayed in the gui in the db_system. Also, returns the list
+        [curve_ch1, curve_ch2]...
+        """
+        params = self.get_setup_attributes()
+        for attr in ["current_average", "running_continuous"]:
+            params[attr] = self.__getattribute__(attr)
+        params.update()
+        curve = self._save_curve(self.frequencies,
+                                 self.data,
+                                 **params)
+        return curve
+
+    def run_continuous(self):
+        """
+        Continuously feeds the gui with new curves from the scope. Once ready, datas are located in self.last_datas.
+        """
+        self.running_continuous = True
+
+    def stop(self):
+        """
+        Stops the current acquisition.
+        """
+        self.running_continuous = False
+
+    def restart_averaging(self):
+        """
+        Restarts the curve averaging.
+        """
+        self.data = np.zeros(len(self.frequencies))
+        self.current_average = 0
+
+    def acquire_one_curve(self):
+        """
+        Acquires one curve and adds it to the average.
+        returns True if new data are available for plotting.
+        """
+        # several seconds... In the mean time, no other event can be
+        # treated. That's why the gui freezes...
+        if self.curve_ready():
+            newdata = self.curve()
+            if self.data is None:
+                self.data = newdata
+            else:
+                self.data = (self.current_average * self.data \
+                     + newdata) / (self.current_average + 1)
+            self.current_average += 1
+            # let current_average be maximally equal to avg -> yields best real-time averaging mode
+            if self.current_average > self.avg:
+                self.current_average = self.avg
+            do_plot = True
+        else:
+            do_plot = False
+        if self.running_continuous and not self.scope._trigger_delay_running:
+            self.setup()
+        return do_plot
+
+    def run_single(self):
+        """
+        Feeds gui with one new curve from the scope. Once ready, datas are located in self.last_datas.
+        """
+        self.stop()
+        self.setup()
+        self.signal_launcher.run_single()
+

@@ -111,6 +111,9 @@ class ScopeWidget(ModuleWidget):
         self.update_rolling_mode_visibility()
 
     def update_attribute_by_name(self, name, new_value_list):
+        """
+        Updates all attributes on the gui when their values have changed.
+        """
         super(ScopeWidget, self).update_attribute_by_name(name, new_value_list)
         if name in ['rolling_mode', 'duration']:
             self.rolling_mode = self.module.rolling_mode
@@ -154,13 +157,14 @@ class ScopeWidget(ModuleWidget):
             else:
                 self.curves[ch].setVisible(False)
 
-    def curve_display_done(self):
-        """
-        User may overwrite this function to implement custom functionality
-        at each graphical update.
-        :return:
-        """
-        pass
+    # currently not implemented?
+    #def curve_display_done(self):
+    #    """
+    #    User may overwrite this function to implement custom functionality
+    #    at each graphical update.
+    #    :return:
+    #    """
+    #    pass
 
     def set_rolling_mode(self):
         """

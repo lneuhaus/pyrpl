@@ -1,8 +1,7 @@
-import copy
-
-from pyrpl.widgets.module_widgets import ModuleManagerWidget, IqManagerWidget,\
+import logging
+logger = logging.getLogger(name=__name__)
+from ..widgets.module_widgets import ModuleManagerWidget, IqManagerWidget,\
                                  ScopeManagerWidget, IirManagerWidget
-
 from . import SoftwareModule
 
 
