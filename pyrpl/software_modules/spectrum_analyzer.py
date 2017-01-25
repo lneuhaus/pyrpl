@@ -173,7 +173,6 @@ class SignalLauncherSpectrumAnalyzer(SignalLauncher):
         """
         self.module.setup()
         self.timer_continuous.start()
-        self.autoscale_display.emit()
 
     def stop(self):
         self.timer_continuous.stop()
@@ -195,7 +194,8 @@ class SignalLauncherSpectrumAnalyzer(SignalLauncher):
                 self.update_display.emit()
             else:  # curve not ready, wait for next timer iteration
                 pass
-        if self.module.running_continuous:
+            if self.module.current_average == 1:
+                self.autoscale_display.emit()
             self.timer_continuous.start()
 
 
@@ -477,8 +477,8 @@ class SpectrumAnalyzer(SoftwareModule):
         # several seconds... In the mean time, no other event can be
         # treated. That's why the gui freezes...
         if self.curve_ready():
-            newdata = self.scope.curve()
-            if newdata is None:
+            newdata = self.curve()
+            if self.data is None:
                 self.data = newdata
             else:
                 self.data = (self.current_average * self.data \
