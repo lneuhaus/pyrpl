@@ -53,7 +53,7 @@ try:
     def isbranch(obj):
         return isinstance(obj, dict) #type is ruamel.yaml.comments.CommentedMap
 except:
-    logger.warning("ruamel.yaml could not be found. Using yaml instead. Comments in config files will be lost.")
+    logger.warning("ruamel.yaml could not be imported. Using yaml instead. Comments in config files will be lost.")
     import yaml
 
     # see http://stackoverflow.com/questions/13518819/avoid-references-in-pyyaml
@@ -307,7 +307,6 @@ class MemoryTree(MemoryBranch):
                 self._filename = filename
                 with open(self._filename, mode="w") as f:
                     pass
-            self._load()
             self._lastsave = time.time()
             # make a temporary file to ensure modification of config file is atomic (double-buffering like operation...)
             self._buffer_filename = self._filename+'.tmp'
@@ -316,6 +315,7 @@ class MemoryTree(MemoryBranch):
             self._savetimer.setInterval(self._savedeadtime*1000)
             self._savetimer.setSingleShot(True)
             self._savetimer.timeout.connect(self._save)
+        self._load()
         super(MemoryTree, self).__init__(self, "")
 
     def _load(self):

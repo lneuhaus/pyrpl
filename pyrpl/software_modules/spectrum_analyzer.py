@@ -38,10 +38,11 @@ import json
 import matplotlib
 import matplotlib.pyplot as plt
 import logging
-from pyrpl.widgets.module_widgets import SpecAnWidget
+from ..widgets.module_widgets import SpecAnWidget
 
-from pyrpl.errors import NotReadyError
-from pyrpl.hardware_modules import Scope, DspModule
+from ..errors import NotReadyError
+from ..hardware_modules import Scope, DspModule
+from ..modules import SignalLauncher
 
 
 # Some initial remarks about spectrum estimation:
@@ -150,6 +151,97 @@ class SpanFilterProperty(FilterProperty):
             return val
 
 
+class SignalLauncherSpectrumAnalyzer(SignalLauncher):
+    """ class that takes care of emitting signals to update all possible specan displays """
+    display_curves = QtCore.pyqtSignal(list) # This signal is emitted when curves need to be displayed
+    # the argument is [array(frequencies), array(curve)]
+    autoscale = QtCore.pyqtSignal()
+
+    def __init__(self, module):
+        super(SignalLauncherSpectrumAnalyzer, self).__init__(module)
+        self.first_shot_of_continuous = True
+        self.timer_continuous = QtCore.QTimer()
+        self.timer_continuous.setInterval(10)  # max. frame rate: 100 Hz
+        self.timer_continuous.timeout.connect(self.check_for_curves)
+        self.timer_continuous.setSingleShot(True)
+
+    def run_continuous(self):
+        """
+        periodically checks for curve.
+        """
+        self.module.setup()
+        self.first_shot_of_continuous = True
+        self.timer_continuous.start()
+
+    def stop(self):
+        self.timer_continuous.stop()
+
+    def resume(self):
+        self.timer_point.start()
+
+    def pause(self):
+        self.timer_point.stop()
+
+    def run_single(self):
+        self.module.stop()
+        self.module.setup()
+        self.timer_continuous.start()
+
+    def check_for_curves(self):
+        """
+        This function is called periodically by a timer when in run_continuous mode.
+        1/ Check if curves are ready.
+        2/ If so, plots them on the graph
+        3/ Restarts the timer.
+        """
+        datas = [None, None]
+        # triggered mode in "single" acquisition, or when rolling mode is off, or when duration is
+        # too small
+        if self.module.is_rolling_mode_active() and self.module.running_continuous: ## Rolling mode
+            wp0 = self.module._write_pointer_current # write pointer before acquisition
+            times = self.module.times # times
+            times -= times[-1]
+            datas = [times, None, None]
+            for ch, active in ((1, self.module.ch1_active),  (2, self.module.ch2_active)):
+                if active:
+                    datas[ch] = self.module._get_ch_no_roll(ch)
+            wp1 = self.module._write_pointer_current # write pointer after acquisition
+            for index, data in ((1, datas[1]), (2, datas[2])):
+                if data is None:
+                    continue
+                to_discard = (wp1 - wp0) % self.module.data_length # remove data that have been affected during acq.
+                data = np.roll(data, self.module.data_length - wp0)[to_discard:]
+                data = np.concatenate([[np.nan] * to_discard, data])
+                datas[index] = data
+            self.display_curves.emit(datas)
+            self.module.last_datas = datas
+            if self.first_shot_of_continuous:
+                self.first_shot_of_continuous = False
+                self.autoscale.emit()
+            # no setup in rolling mode
+        else:  # triggered mode
+            if self.module.curve_ready(): # if curve not ready, wait for next timer iteration
+                for ch, active in ((1, self.module.ch1_active), (2, self.module.ch2_active)):
+                    if active:
+                        datas[ch] = self.module._get_ch(ch)
+                datas[0] = self.module.times
+                self.display_curves.emit(datas)
+                self.module.last_datas = datas
+                if self.first_shot_of_continuous:
+                    self.first_shot_of_continuous = False  # autoscale only upon first curve
+                    self.autoscale.emit()
+                self.module.setup()
+            else: # curve not ready, wait for next timer iteration
+                self.timer_continuous.start()
+        if self.module.running_continuous:
+            self.timer_continuous.start()
+
+    def connect_widget(self, widget):
+        super(SignalLauncherSpectrumAnalyzer, self).connect_widget(widget)
+        self.autoscale.connect(widget.autoscale)
+        self.display_curves.connect(widget.display_curves)
+
+
 class SpectrumAnalyzer(SoftwareModule):
     """
     A spectrum analyzer is composed of an IQ demodulator, followed by a scope.
@@ -198,6 +290,7 @@ class SpectrumAnalyzer(SoftwareModule):
         return [int(np.ceil(1. / nyquist_margin / s_time))
              for s_time in Scope.sampling_times]
     spans = spans(nyquist_margin)
+
     windows = ['blackman', 'flattop', 'boxcar', 'hamming']  # more can be
     # added here (see http://docs.scipy.org/doc/scipy/reference/generated
     # /scipy.signal.get_window.html#scipy.signal.get_window)
@@ -431,4 +524,5 @@ class SpectrumAnalyzer(SoftwareModule):
     def data_to_dBm(self, data):
         # replace values whose log doesnt exist
         data[data <= 0] = 1e-100
+        # conversion to dBm scale
         return 10.0 * np.log10(data) + 30.0
