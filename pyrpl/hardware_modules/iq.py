@@ -214,19 +214,23 @@ class IQ(FilterModule):
                                   doc='number of cycles to wait before starting to average')
 
     @property
-    def _nadata(self):
+    def _nadata(self): # reading two registers necessary because _na_averages is not cached
+        return self._nadata_total / float(self._na_averages)
+
+    @property
+    def _nadata_total(self): #only one read operation--> twice faster than _nadata
         attempt = 0
         a, b, c, d = self._reads(0x140, 4)
         while not ((a >> 31 == 0) and (b >> 31 == 0)
                    and (c >> 31 == 0) and (d >> 31 == 0)):
             a, b, c, d = self._reads(0x140, 4)
+            print('too soon')
             attempt += 1
             if attempt > 10:
                 raise Exception("Trying to recover NA data while averaging is not finished. Some setting is wrong. ")
         sum = np.complex128(self._to_pyint(int(a) + (int(b) << 31), bitlength=62)) \
               + np.complex128(self._to_pyint(int(c) + (int(d) << 31), bitlength=62)) * 1j
-        return sum / float(self._na_averages)
-
+        return sum
     # the implementation of network_analyzer is not identical to na_trace
     # there are still many bugs in it, which is why we will keep this function
     # in the gui

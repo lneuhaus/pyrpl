@@ -112,7 +112,7 @@ class RbwAutoAttribute(BoolAttribute):
         return value
 
 
-class CenterAttrbute(FrequencyAttribute):
+class CenterAttribute(FrequencyAttribute):
     def get_value(self, instance, owner):
         if instance is None:
             return self
@@ -123,8 +123,11 @@ class CenterAttrbute(FrequencyAttribute):
 
     def set_value(self, instance, value):
         if instance.baseband and value != 0:
-            raise ValueError("Nonzero center frequency not allowed in "
-                             "baseband mode.")
+            # former solution:
+            # raise ValueError("Nonzero center frequency not allowed in "
+            #                 "baseband mode.")
+            # more automatic way:
+            instance.baseband = False
         if not instance.baseband:
             instance.iq.frequency = value
         return value
@@ -207,7 +210,7 @@ class SpectrumAnalyzer(SoftwareModule):
         time is a valid scope sampling time.
         """)
     rbw_auto = RbwAutoAttribute()
-    center = CenterAttrbute()
+    center = CenterAttribute()
     points = LongProperty()
     rbw = RbwAttribute()
     window = SelectProperty(options=windows)
@@ -230,7 +233,8 @@ class SpectrumAnalyzer(SoftwareModule):
         self.avg = 10
         self.window = "flattop"
         self.points = Scope.data_length
-        """ # intializing stuffs while scope is not reserved modifies the parameters of the scope...
+        """ # intializing stuff while scope is not reserved modifies the
+        parameters of the scope...
 
         self.input = 'in1'
         self.span = 1e5
@@ -260,6 +264,7 @@ class SpectrumAnalyzer(SoftwareModule):
         # setup iq module
         if not self.baseband:
             self.iq.setup(
+                input = self.input,
                 bandwidth=[self.span*self.if_filter_bandwidth_per_span]*4,
                 gain=0,
                 phase=0,
@@ -268,14 +273,17 @@ class SpectrumAnalyzer(SoftwareModule):
                 output_direct='off',
                 output_signal='quadrature',
                 quadrature_factor=self.quadrature_factor)
-        # change scope ownership in order not to mess up with the scope configuration
+        # change scope ownership in order not to mess up the scope configuration
         if self.scope.owner != self.name:
             self.pyrpl.scopes.pop(self.name)
         # setup scope
         self.scope.sampling_time = 1. / self.nyquist_margin / self.span # only duration can be used within setup
-        self.scope.setup(input1=self.iq,
-                         input2=self.iq_quadraturesignal,
-                         average=True,
+        if self.baseband:
+            self.scope.input1 = self.input
+        else:
+            self.scope.input1 = self.iq
+            self.scope.input1 = self.iq_quadraturesignal
+        self.scope.setup(average=True,
                          trigger_source="immediately")
 
     def setup_old(self,
@@ -377,11 +385,11 @@ class SpectrumAnalyzer(SoftwareModule):
         """
         :return: complex iq time trace
         """
-        timeout = self.scope.duration * 2 # leave some margin
-        res = np.asarray(self.scope.curve(1, timeout=timeout),
+        #timeout = self.scope.duration * 2 # leave some margin
+        res = np.asarray(self.scope.curve(1, timeout=None),
                          dtype=np.complex)
         if not self.baseband:
-            res += 1j*self.scope.curve(2, timeout=timeout)
+            res += 1j*self.scope.curve(2, timeout=None)
         return res[:self.data_length]
 
     def filtered_iq_data(self):

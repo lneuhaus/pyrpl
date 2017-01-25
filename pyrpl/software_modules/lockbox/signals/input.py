@@ -18,9 +18,9 @@ class InputSignal(SoftwareModule):
       -
     """
     section_name = 'input'  # name of the input
-    gui_attributes = ["adc"]
+    gui_attributes = ["input_channel"]
     setup_attributes = gui_attributes + ["min", "max", "mean", "rms"]
-    adc = SelectProperty(options=['adc1', 'adc2']) # adc
+    input_channel = SelectProperty(options=['in1', 'in2']) # adc
     model_cls = None # Model class to which this input belongs.
     widget_class = LockboxInputWidget
     min = FloatProperty()
@@ -58,7 +58,7 @@ class InputSignal(SoftwareModule):
                 scope.save_state("sweep")
             scope.load_state("sweep")
             scope.setup(input1=self.signal(), input2=self.lockbox.asg)
-            curve = scope.curve(ch=1)
+            curve = scope.curve(ch=1, timeout=0.1+2./self.lockbox.asg.frequency)
         finally:
             self.pyrpl.scopes.free(scope)
         return curve
@@ -181,7 +181,7 @@ class InputDirect(InputSignal):
     section_name = 'direct_input'
 
     def signal(self):
-        return self.adc
+        return self.input_channel
 
 
 class PdhFrequencyProperty(FrequencyProperty):
@@ -211,14 +211,24 @@ class PdhModOutputProperty(SelectProperty):
         instance.iq.output_direct = value
         return value
 
+class PdhQuadratureFactorProperty(FloatProperty):
+    def set_value(self, instance, value):
+        super(PdhQuadratureFactorProperty, self).set_value(instance, value)
+        instance.iq.quadrature_factor = value
+        return value
 
 class InputPdh(InputSignal):
     section_name = 'pdh'
-    gui_attributes = InputSignal.gui_attributes + ['mod_freq', 'mod_amp', 'mod_phase', 'mod_output']
-    setup_attributes = gui_attributes
+    gui_attributes = InputSignal.gui_attributes + ['mod_freq',
+                                                   'mod_amp',
+                                                   'mod_phase',
+                                                   'quadrature_factor',
+                                                   'mod_output']
+    setup_attributes = gui_attributes + ["min", "max", "mean", "rms"]
     mod_freq   = PdhFrequencyProperty()
     mod_amp    = PdhAmplitudeProperty()
     mod_phase  = PdhPhaseProperty()
+    quadrature_factor = PdhQuadratureFactorProperty()
     mod_output = PdhModOutputProperty(['out1', 'out2'])
 
     def init_module(self):
@@ -245,11 +255,11 @@ class InputPdh(InputSignal):
         self.iq.setup(frequency=self.mod_freq,
                       amplitude=self.mod_amp,
                       phase=self.mod_phase,
-                      input=self.adc,
+                      input=self.input_channel,
                       gain=0,
                       bandwidth=[1e6, 1e6],
                       acbandwidth=1e6,
-                      quadrature_factor=0.01,
+                      quadrature_factor=self.quadrature_factor,
                       output_signal='quadrature',
                       output_direct=self.mod_output)
 

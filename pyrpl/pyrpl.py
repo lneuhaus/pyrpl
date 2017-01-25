@@ -33,6 +33,7 @@ from .memory import MemoryTree
 from .redpitaya import RedPitaya
 from . import pyrpl_utils
 from .global_config import *
+from .software_modules import get_software_module
 
 ## Something has to be done with this docstring... I would like to wait for lockbox to be implemented before doing it...
 """
@@ -248,13 +249,29 @@ class Pyrpl(object):
         If None, it is ignored. Else, the file 'source' is taken as a
         template config file and copied to 'config' if that file does
         not exist.
+    **kwargs: dict
+        Additional arguments can be passed and will be written to the
+        redpitaya branch of the config file. See class definition of
+        RedPitaya for possible keywords.
     """
 
     # get global configuration memory tree
     _global_config = global_config
     _default_config_dir = default_config_dir
 
-    def _getpath(self, filename):
+    # auto-correct the user config dir so it points to the right place
+    try:
+        _user_config_dir = _global_config.general.configdir
+    except KeyError:
+        _user_config_dir = ""
+    if not os.path.exists(_user_config_dir):
+        _user_config_dir = os.path.join(_default_config_dir,
+                                        _user_config_dir)
+    if not os.path.exists(_user_config_dir):
+        os.mkdir(_user_config_dir)
+
+    @classmethod
+    def _getpath(self, filename='default'):
         # get extension right
         if not filename.endswith(".yml"):
             filename = filename + ".yml"
@@ -262,10 +279,13 @@ class Pyrpl(object):
         p, f = os.path.split(filename)
         if not p:  # no path specified -> search in configdir
             try:
-                filename = os.path.join(self._global_config.general.configdir, f)
+                filename = os.path.join(self._user_config_dir, f)
             except:
                 filename = None
-            if not os.path.isfile(filename): # ... or defaultconfigdir
+                # ... or defaultconfigdir
+            if (not os.path.isfile(filename)
+                and os.path.isfile(
+                    os.path.join(self._default_config_dir, f))):
                 filename = os.path.join(self._default_config_dir, f)
         return filename
 
@@ -273,7 +293,7 @@ class Pyrpl(object):
         pyrpl_utils.setloglevel(level=self.c.pyrpl.loglevel,
                                 loggername=__name__)  # 'pyrpl')
 
-    def __init__(self, config="myconfigfile", source="default"):
+    def __init__(self, config="myconfigfile", source="default", **kwargs):
         # logger initialisation
         self.logger = logging.getLogger(name=__name__)
         config = self._getpath(config)
@@ -282,21 +302,20 @@ class Pyrpl(object):
                 self.logger.warning("Config file already exists. Source file "
                                     + "specification is ignored")
             else:
-                copyfile(self._getpath(source), config)
-        # configuration is retrieved from config file
-        self.c = MemoryTree(config)
-        # set global logging level if specified in config file
-        self._setloglevel()
+                copyfile(self._getpath(source),
+                         self._getpath(config))
         # configuration is retrieved from config file
         self.c = MemoryTree(config)
         # set global logging level if specified in config file
         self._setloglevel()
 
-        # Eventually, could become optional...
+        if not 'redpitaya' in self.c._keys() and len(kwargs)>0:
+            self.c['redpitaya'] = dict()
+        self.c.redpitaya._update(kwargs)
         # initialize RedPitaya object with the configured parameters
         if 'redpitaya' in self.c._keys():
-            self.rp = RedPitaya(config=self.c, **self.c.redpitaya._dict)
-        else:
+            self.rp = RedPitaya(config=self.c)
+        else:  # not tested, probably not interesting
             self.rp = None
 
         self.software_modules = []
@@ -323,15 +342,16 @@ class Pyrpl(object):
                           'PidManager',
                           'ScopeManager',
                           'IirManager'] + soft_mod_names
-        module_classes = [getattr(software_modules, cls_name) for cls_name in soft_mod_names]
+        module_classes = [get_software_module(cls_name) for cls_name in soft_mod_names]
         module_names = pyrpl_utils.get_unique_name_list_from_class_list(module_classes)
         for cls, name in zip(module_classes, module_names):
             # ModuleClass = getattr(software_modules, module_name)
             module = cls(self, name)
-            try:
-                module.load_setup_attributes() # attributes are loaded but the module is not "setup"
-            except BaseException as e:
-                self.logger.warning("problem loading attributes of module " + name + "\n" + str(e))
+            #try: # This leads to bugs that are very cumbersome and difficult to track. For now, I prefer to have a blocking
+            # exception when loading is not working...
+            module.load_setup_attributes() # attributes are loaded but the module is not "setup"
+            #except BaseException as e:
+            #    self.logger.warning("problem loading attributes of module " + name + "\n" + str(e))
             """
             if module.name in self.c._keys():
                 kwds = self.c[module.name]
@@ -339,7 +359,7 @@ class Pyrpl(object):
                     kwds = dict()
                 module.load_setup_attributes(**kwds) # first, setup software modules...
             """
-            setattr(self, module.name, module) # todo --> use self instead
+            setattr(self, module.name, module)  # todo --> use self instead
             self.software_modules.append(module)
 
     @property

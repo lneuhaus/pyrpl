@@ -155,4 +155,48 @@ class HighFinesseFabryPerot(FabryPerot):
     name = "HighFinesseFP"
     section_name = "high_finesse_fp"
     input_cls = [HighFinesseReflection, HighFinesseTransmission, HighFinessePdh]
-    
+
+
+class PTempProperty(FloatProperty):
+    def set_value(self, module, val):
+        super(PTempProperty, self).set_value(module, val)
+        module.pid_temp.p = val
+
+
+class ITempProperty(FloatProperty):
+    def set_value(self, module, val):
+        super(ITempProperty, self).set_value(module, val)
+        module.pid_temp.i = val
+
+
+class FabryPerotTemperatureControl(Model):
+    name = "FabryPerotTemperatureControl"
+    section_name = "fabryperot"
+    units = ['m', 'MHz', 'nm']
+    gui_attributes = ["wavelength", "finesse", "length", 'eta', 'p_temp', 'i_temp']
+    setup_attributes = gui_attributes
+    wavelength = FloatProperty(max=10000,min=0)
+    finesse = FloatProperty(max=1e7, min=0)
+    length = FloatProperty(max=10e12, min=0)
+    eta    = FloatProperty(min=0., max=1.)
+    p_temp = PTempProperty(max=1e6, min=-1e6)
+    i_temp    = ITempProperty(max=1e6, min=-1e6)
+    # approximate length (not taking into account small variations of the order of wavelength)
+    variable = 'detuning'
+
+    input_cls = [FPTransmission, FPReflection, InputPdh]
+
+    def init_module(self):
+        self.pid_temp = self.pyrpl.pids.pop('temperature_control')
+        self.pwm_temp = self.pyrpl.rp.pwm1
+        self.pwm_temp.input = self.pid_temp
+        self.pid_temp.ival = 0
+
+    def lorentz(self, x):
+        return 1.0 / (1.0 + x ** 2)
+
+    def lock_temperature(self, factor):
+        self.pid_temp.output_direct = 'off'
+        self.pid_temp.input = "out1"
+        self.pid_temp.p = self.p_temp
+        self.pid_temp.i = self.i_temp

@@ -32,7 +32,7 @@ class SSHshell(object):
             user='root',
             password='root',
             delay=0.05, 
-            timeout = 3,
+            timeout=3,
             sshport=22):
         self.logger = logging.getLogger(name=__name__)
         self.delay = delay
@@ -49,7 +49,7 @@ class SSHshell(object):
             username=self.user,
             password=self.password,
             port=self.sshport,
-            timeout = timeout)
+            timeout=timeout)
         self.channel = self.ssh.invoke_shell()
         self.startscp()
         # self.sleep(0.1)
@@ -107,4 +107,3 @@ class SSHshell(object):
         self.endapp()
         self.ask("shutdown now")
         self.__del__()
-        

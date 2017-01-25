@@ -19,9 +19,9 @@ class ProportionalGainProperty(FloatProperty):
         if instance.mode=='lock':
             instance.update_pid_gains(instance.current_input_lock,
                                       instance.current_variable_value)
-    def update_gui(self, module):
-        super(ProportionalGainProperty, self).update_gui(module)
-        module.widget.update_transfer_function()
+    #def launch_signal(self, module, new_value_list):
+     #   super(ProportionalGainProperty, self).launch_signal(module, new_value_list)
+    #    module.widget.update_transfer_function()
 
 
 class IntegralGainProperty(FloatProperty):
@@ -34,9 +34,9 @@ class IntegralGainProperty(FloatProperty):
             instance.update_pid_gains(instance.current_input_lock,
                                       instance.current_variable_value)
 
-    def update_gui(self, module):
-        super(IntegralGainProperty, self).update_gui(module)
-        module.widget.update_transfer_function()
+    #def launch_signal(self, module, new_value_list):
+        #super(IntegralGainProperty, self).launch_signal(module, new_value_list)
+        #module.widget.update_transfer_function()
 
 
 class PIcornerAttribute(FloatAttribute):
@@ -59,9 +59,9 @@ class AdditionalFilterAttribute(FilterAttribute):
     def set_value(self, instance, value):
         instance.pid.inputfilter = value
 
-    def update_gui(self, module):
-        super(AdditionalFilterAttribute, self).update_gui(module)
-        module.widget.update_transfer_function()
+    #def launch_signal(self, module, new_value_list):
+    #    super(AdditionalFilterAttribute, self).launch_signal(module, new_value_list)
+    #    module.widget.update_transfer_function()
 
 
 class DisplayNameProperty(StringProperty):
@@ -78,9 +78,9 @@ class AssistedDesignProperty(BoolProperty):
         obj.assisted_gain_updated()
         return val
 
-    def update_gui(self, module):
-        super(AssistedDesignProperty, self).update_gui(module)
-        module.widget.set_assisted_design(module.assisted_design)
+    #def launch_signal(self, module, new_value_list):
+    #    super(AssistedDesignProperty, self).launch_signal(module, new_value_list)
+    #    module.widget.set_assisted_design(module.assisted_design)
 
 
 class AnalogFilterProperty(ListFloatProperty):
@@ -99,20 +99,20 @@ class TfTypeProperty(SelectProperty):
     def set_value(self, obj, val):
         super(TfTypeProperty, self).set_value(obj, val)
 
-    def update_gui(self, module):
-        super(TfTypeProperty, self).update_gui(module)
-        module.widget.update_transfer_function()
-        module.widget.change_analog_tf()
+    #def launch_signal(self, module, new_value_list):
+        #super(TfTypeProperty, self).launch_signal(module, new_value_list)
+        #module.widget.update_transfer_function()
+        #module.widget.change_analog_tf()
 
 
 class TfCurveProperty(LongProperty):
     def set_value(self, obj, val):
         super(TfCurveProperty, self).set_value(obj, val)
 
-    def update_gui(self, module):
-        super(TfCurveProperty, self).update_gui(module)
-        module.widget.update_transfer_function()
-        module.widget.change_analog_tf()
+    #def launch_signal(self, module, new_value_list):
+    #    super(TfCurveProperty, self).launch_signal(module, new_value_list)
+    #    module.widget.update_transfer_function()
+    #    module.widget.change_analog_tf()
 
 
 class OutputSignal(Signal):
@@ -190,7 +190,7 @@ class OutputSignal(Signal):
  #   def id(self): # it would be more convenient to compute name from output, but class attribute name can't be a
  #                 # property since it used to define the save section
  #       return int(self.name.strip('output'))
-    def update_pid_gains(self, input, variable_value):
+    def update_pid_gains(self, input, variable_value, factor=1.):
         """
         If current mode is "lock", updates the gains of the underlying pid module such that:
             - input.gain * pid.p * output.dc_gain = output.p
@@ -205,8 +205,8 @@ class OutputSignal(Signal):
 
         self.pid.setpoint = input.expected_signal(variable_value)
 
-        self.pid.p = self.p/(self.current_variable_slope*self.dc_gain)
-        self.pid.i = self.i/(self.current_variable_slope*self.dc_gain)
+        self.pid.p = self.p/(self.current_variable_slope*self.dc_gain)*factor
+        self.pid.i = self.i/(self.current_variable_slope*self.dc_gain)*factor
 
     def assisted_gain_updated(self):
         if self.assisted_design:
@@ -279,14 +279,14 @@ class OutputSignal(Signal):
             else:
                 return c.data.index
 
-    def lock(self, input, variable_value):
+    def lock(self, input, variable_value, factor=1.):
         """
         Closes the lock loop, using the required p and i parameters.
         """
         if isinstance(input, basestring):
             input = self.lockbox.get_input(input)
         self.mode = 'lock'
-        self.update_pid_gains(input, variable_value)
+        self.update_pid_gains(input, variable_value, factor=factor)
         self.pid.input = input.signal()
         self.pid.output_direct = self.output_channel
 

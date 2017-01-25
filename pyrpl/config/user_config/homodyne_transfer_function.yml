@@ -1,0 +1,164 @@
+pyrpl: # General configuration of the software:
+  name: test_refactor
+  gui: true # autostart gui
+  loglevel: info
+  # level of logged information.
+  # 'debug' outputs everything
+  # 'infi' is default level
+  # 'warning' only shows warnings and errors
+  # 'error' only shows errors
+  modules: # SoftwareModules to load (in addition to IqManager, AsgManager, PidManager, ScopeManager)
+    - NetworkAnalyzer
+    - SpectrumAnalyzer
+    - Lockbox
+  dock_positions: !!binary |
+    AAAA/wAAAAD9AAAAAQAAAAIAAAWgAAADHfwBAAAAAfwAAAAAAAAFoAAABOgA////+gAAAAcBAAAA
+    CPsAAAAMAHMAYwBvAHAAZQBzAQAAAAD/////AAAEBQD////7AAAACABwAGkAZABzAQAAAAD/////
+    AAACQwD////7AAAACABhAHMAZwBzAQAAAAD/////AAACJQD////7AAAABgBpAHEAcwEAAAAA////
+    /wAAAzcA////+wAAAAgAaQBpAHIAcwAAAAAA/////wAAABYA////+wAAAAQAbgBhAQAAAAD/////
+    AAAD1AD////7AAAAIgBzAHAAZQBjAHQAcgB1AG0AXwBhAG4AYQBsAHkAegBlAHIBAAAAAP////8A
+    AANUAP////sAAAAOAGwAbwBjAGsAYgBvAHgBAAAAAP////8AAAToAP///wAABaAAAAAAAAAABAAA
+    AAQAAAAIAAAACPwAAAAA
+  window_position:
+  - -8
+  - -8
+  - 1440
+  - 838
+redpitaya:
+  hostname: 10.214.1.32
+  password: root
+  user: root
+  port: 2222
+  frequency_correction: 1.0000620276708887
+  filename: fpga//red_pitaya.bin
+  reloadfpga: true
+  monitor_server_name: pyrpl
+nas: !!omap
+- na: !!omap [{output_direct: out1}, {input: adc1}, {infer_open_loop_tf: false}, {
+      amplitude: 0.5}, {logscale: true}, {avg: 1}, {rbw: [75]}, {start: 100000.0},
+    {stop: 1000000.0}, {points: 5001}, {curve_name: test}]
+spectrum_analyzers: !!omap
+- spectrum_analyzer: !!omap [{input: iq1}, {baseband: true}, {center: 0}, {rbw: 1.0}]
+lockboxs: !!omap
+- lockbox: !!omap
+  - fabryperots: !!omap
+    - FabryPerot: !!omap [{wavelength: 1064.0}, {finesse: 10000.0}, {length: 180000.0},
+        {eta: 1.0}]
+  - transmissions: !!omap
+    - transmission: !!omap [{mean: 0.18276581913232803}, {rms: 0.0005308628664487906},
+        {min: 0.1728515625}, {max: 0.1876220703125}]
+  - reflections: !!omap
+    - reflection: !!omap [{mean: 0.1823769435286522}, {rms: 0.00038389662406035016},
+        {min: 0.173095703125}, {max: 0.18701171875}]
+  - pdhs: !!omap
+    - pdh: !!omap []
+  - sequences: !!omap
+    - sequence: !!omap [{stages: !!omap [{states: {}}, {halfslope: !!omap [{output_on: {
+                    coarse_piezo2: [true, false, 0], coarse_piezo: [true, false, 0]}},
+                {name: halfslope}, {variable_value: 0.0}, {duration: 1.0}]}, {stage2: !!omap [
+                {output_on: {coarse_piezo2: [false, false, 0], coarse_piezo3: [true,
+                      false, 0]}}]}, {stage1: !!omap [{output_on: {coarse_piezo2: [
+                      true, false, 0], coarse_piezo3: [false, false, 0]}}, {duration: 1.0}]}]}]
+  - outputs: !!omap
+    - states: {}
+    - coarse_piezo2: !!omap
+      - name: coarse_piezo2
+      - is_sweepable: true
+      - dc_gain: 1.0
+      - i: 5.0
+      - p: 0.5
+      - assisted_design: true
+      - analog_filter:
+        - 10.0
+        - 0.0
+        - 0.0
+        - 0.0
+      - unity_gain_desired: 5.0
+      - additional_filter:
+        - 19428
+        - 19428
+        - 19428
+        - 19428
+      - sweep_frequency: 7.0
+      - sweep_amplitude: 1.0
+    - coarse_piezo3: !!omap
+      - name: coarse_piezo3
+      - dc_gain: 1.0
+      - i: 500.0
+      - p: 50.0
+      - assisted_design: true
+      - unity_gain_desired: 500.0
+      - additional_filter:
+        - 19428
+        - 19428
+        - 19428
+        - 19428
+      - sweep_frequency: 10.0
+      - sweep_amplitude: 1.0
+      - analog_filter:
+        - 10.0
+        - 0.0
+        - 0.0
+        - 0.0
+  - default_sweep_output: coarse_piezo
+  - interferometers: !!omap
+    - interferometer: !!omap [{wavelength: 1064.0}]
+  - direct_inputs: !!omap
+    - direct_input1: !!omap [{mean: 0.07757695019245148}, {rms: 0.07155705334127781},
+        {min: -0.0140380859375}, {max: 0.171630859375}, {adc: adc1}]
+    - direct_input2: !!omap [{mean: 0.07719730585813522}, {rms: 0.07185573302458365},
+        {min: -0.0140380859375}, {max: 0.171630859375}]
+  - model_name: interferometer
+  - high_finesse_fps: !!omap
+    - HighFinesseFP: !!omap [{wavelength: 1064.0}, {finesse: 10000.0}, {length: 0.00018},
+        {eta: 1.0}]
+  - hf_reflections: !!omap
+    - hf_reflection: !!omap [{mean: 0.945639930665493}, {rms: 0.09184102313009841},
+        {min: 0.72265625}, {max: 0.9998779296875}, {adc: adc1}]
+  - hf_transmissions: !!omap
+    - hf_transmission: !!omap [{mean: 0.13955172896385193}, {rms: 0.0015788949645888716},
+        {min: 0.1322021484375}, {max: 0.1427001953125}]
+  - hf_pdhs: !!omap
+    - hf_pdh: !!omap [{mod_amp: 0.01}, {mod_phase: 90.0}, {mod_freq: 50000000.0},
+        {mod_output: out1}, {adc: adc1}]
+  - auto_relock: false
+- states: {}
+hks: !!omap
+- hk: !!omap []
+amss: !!omap
+- ams: !!omap []
+scopes: !!omap
+- scope: !!omap [{trigger_source: immediately}, {running_continuous: true}, {duration: 0.536870912},
+    {trigger_delay: 0.0}, {input2: dac1}, {rolling_mode: false}, {input1: adc1}, {
+      average: false}, {threshold_ch1: 0.0999755859375}, {threshold_ch2: 0.0}, {curve_name: ''}]
+- states: {sweep: {input2: dac1, input1: adc1, rolling_mode: false, curve_name: '',
+      threshold_ch2: 0.0, trigger_delay: 0.268435456, average: false, threshold_ch1: 0.0999755859375,
+      trigger_source: immediately, running_continuous: true, duration: 0.536870912},
+    rolling: {input2: dac1, input1: adc1, rolling_mode: true, curve_name: '', threshold_ch2: 0.0,
+      trigger_delay: 0.0, average: true, threshold_ch1: 0.0, trigger_source: asg2,
+      running_continuous: true, duration: 2.147483648}, sweep_zoom: {input2: iq1,
+      input1: adc1, rolling_mode: false, curve_name: '', threshold_ch2: 0.0, trigger_delay: 0.0,
+      average: true, threshold_ch1: 0.0999755859375, trigger_source: ch1_negative_edge,
+      running_continuous: true, duration: 0.000262144}}
+samplers: !!omap
+- sampler: !!omap []
+asgs: !!omap
+- asg1: !!omap []
+- asg2: !!omap []
+pwms: !!omap
+- pwm1: !!omap []
+- pwm2: !!omap []
+pids: !!omap
+- pid1: !!omap []
+- pid2: !!omap []
+- pid3: !!omap []
+- pid4: !!omap [{p: 0.0}, {i: 0.0}, {setpoint: 0.07763671875}, {input: adc1}, {output_direct: out1},
+    {inputfilter: [19428, 19428, 19428, 19428]}]
+iirs: !!omap
+- iir: !!omap []
+iqs: !!omap
+- iq1: !!omap []
+- iq2: !!omap []
+- iq3: !!omap [{amplitude: 0.0}, {bandwidth: [75]}, {input: adc1}, {acbandwidth: [
+        0]}, {frequency: 100000.00474974513}, {output_signal: output_direct}, {gain: 0.0},
+    {phase: 0.0}, {output_direct: out1}]

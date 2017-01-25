@@ -1,18 +1,15 @@
 import logging
-
 logger = logging.getLogger(name=__name__)
-
-from pyrpl import Pyrpl
 from pyrpl.widgets.attribute_widgets import SelectAttributeWidget, BoolAttributeWidget, NumberAttributeWidget
 from pyrpl.attributes import BoolAttribute, NumberAttribute, SelectAttribute
-from pyrpl.redpitaya import RedPitaya
 from PyQt4.QtTest import QTest
 from PyQt4.QtCore import Qt
 import os
+from .test_base import TestPyrpl
 
-class TestClass(object):
+class TestClass(TestPyrpl):
     @classmethod
-    def setUpAll(self):
+    def setup(self):
         ## these tests currently do not run on travis.
         ## our workaround is this: detect from environment variable
         ## if tests are executed on travis and refuse the gui tests
@@ -23,13 +20,7 @@ class TestClass(object):
         else:
             self.do_gui_tests = False
 
-        if self.do_gui_tests:
-            filename = os.path.join(os.path.split(os.path.dirname(__file__))[0], 'config', 'tests_temp.yml')
-            if os.path.exists(filename):
-                os.remove(filename)
-            self.pyrpl = Pyrpl(config="tests_temp", source="tests_source")
-            self.r = self.pyrpl.rp
-        else:
+        if not self.do_gui_tests:
             self.pyrpl = None
 
     def test_scope_widget(self):
@@ -57,8 +48,8 @@ class TestClass(object):
     def test_asg_gui(self):
         if self.pyrpl is None:
             return
-        for asg_widget in [mod.widget for mod in self.pyrpl.asgs.all_modules]:
-            self.try_gui_module(asg_widget)
+        for asg in [mod for mod in self.pyrpl.asgs.all_modules]:
+            self.try_gui_module(asg.create_widget())
 
     def try_gui_module(self, module_widget): # name should not start with test
         if not self.do_gui_tests:

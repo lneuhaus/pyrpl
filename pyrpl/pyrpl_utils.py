@@ -73,3 +73,4 @@ def sorted_dict(dict_to_sort=None, sort_by_values=True, **kwargs):
         return OrderedDict(sorted(dict_to_sort.items()))
     else:
         return OrderedDict(sorted(dict_to_sort.items(), key=lambda x: x[1]))
+

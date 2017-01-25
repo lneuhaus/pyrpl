@@ -60,6 +60,8 @@ class Sequence(SoftwareModule):
             self.remove_stage(stage)
 
     def load_setup_attributes(self):
+        #import pdb
+        #pdb.set_trace()
         if self.c is not None:
             if 'stages' in self.c._dict.keys():
                 for name, stage in self.c.stages._dict.items():
@@ -95,6 +97,7 @@ class Sequence(SoftwareModule):
         for stage in self.stages:
             stage.update_inputs()
 
+
 class StageNameProperty(StringProperty):
     def set_value(self, obj, val):
         if obj.parent is not None:
@@ -112,7 +115,8 @@ class Stage(SoftwareModule):
                       'variable_value',
                       'output_on',
                       'duration',
-                      'function_call']
+                      'function_call',
+                      'factor']
     setup_attributes = gui_attributes
     section_name = 'stage'
     name = StageNameProperty(default='my_stage')
@@ -122,6 +126,7 @@ class Stage(SoftwareModule):
     variable_value = FloatProperty(min=-1e6, max=1e6)
     duration = FloatProperty(min=0, max=1e6)
     function_call = StringProperty()
+    factor = FloatProperty(default=1., min=-1e6, max=1e6)
 
     def init_module(self):
         self.lockbox = self.parent.parent
@@ -165,9 +170,12 @@ class Stage(SoftwareModule):
             if offset_enable:
                 output.set_ival(offset)
             if on:
-                output.lock(self.input, self.variable_value)
+                output.lock(self.input, self.variable_value, factor=self.factor)
             else:
                 output.unlock()
+        if self.function_call!="":
+            func = getattr(self.lockbox.model, self.function_call)
+            func(self.factor)
         self.lockbox.state = self.name
         #if self.lockbox.widget is not None:
         #    self.lockbox.widget.show_lock(self)

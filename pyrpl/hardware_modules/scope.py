@@ -6,7 +6,7 @@ from ..modules import HardwareModule
 from ..widgets.module_widgets import ScopeWidget
 
 from . import DSP_INPUTS, DspModule, DspInputAttribute
-from ..modules import GuiUpdater
+from ..modules import SignalLauncher
 
 import numpy as np
 import time
@@ -68,16 +68,16 @@ class DecimationRegister(SelectRegister):
     """
     def set_value(self, instance, value):
         super(DecimationRegister, self).set_value(instance, value)
-        instance.__class__.duration.set_value_gui_config(instance, instance.duration)
-        instance.__class__.sampling_time.set_value_gui_config(instance, instance.sampling_time)
+        instance.__class__.duration.value_updated(instance, instance.duration)
+        instance.__class__.sampling_time.value_updated(instance, instance.sampling_time)
         if instance.is_rolling_mode_active():
             instance.set_for_rolling_mode()
         else:
             instance.setup()
 
-    def update_gui(self, module):
-        super(DecimationRegister, self).update_gui(module)
-        module.gui_updater.first_shot_of_continuous = True
+    def value_updated(self, module, value):
+        super(DecimationRegister, self).value_updated(module, value)
+        module.signal_launcher.first_shot_of_continuous = True
 
 class SamplingTimeAttribute(SelectAttribute):
     def get_value(self, instance, owner):
@@ -142,13 +142,11 @@ class RunningContinuousProperty(BoolProperty):
     Nothing to do unless widget exists
     """
     def set_value(self, module, val):
-        if module is None:
-            return self
         super(RunningContinuousProperty, self).set_value(module, val)
         if val:
-            module.gui_updater.run_continuous()
+            module.signal_launcher.run_continuous()
         else:
-            module.gui_updater.stop()
+            module.signal_launcher.stop()
 
 #    def update_gui(self, module):
 #        super(RunningContinuousProperty, self).update_gui(module)
@@ -167,16 +165,17 @@ class RollingModeProperty(BoolProperty):
                 module.set_for_rolling_mode()
 
 
-class GuiUpdaterScope(GuiUpdater):
+class SignalLauncherScope(SignalLauncher):
+    """ class that takes care of emitting signals to update all possible scope displays """
     display_curves = QtCore.pyqtSignal(list) # This signal is emitted when curves need to be displayed
     # the argument is [array(times), array(curve1), array(curve2)] or [times, None, array(curve2)]
     autoscale = QtCore.pyqtSignal()
 
     def __init__(self, module):
-        super(GuiUpdaterScope, self).__init__(module)
+        super(SignalLauncherScope, self).__init__(module)
         self.first_shot_of_continuous = True
         self.timer_continuous = QtCore.QTimer()
-        self.timer_continuous.setInterval(10)
+        self.timer_continuous.setInterval(10)  # max. frame rate: 100 Hz
         self.timer_continuous.timeout.connect(self.check_for_curves)
         self.timer_continuous.setSingleShot(True)
 
@@ -197,7 +196,6 @@ class GuiUpdaterScope(GuiUpdater):
         self.module.stop()
         self.module.setup()
         self.timer_continuous.start()
-
 
     def check_for_curves(self):
         """
@@ -226,17 +224,19 @@ class GuiUpdaterScope(GuiUpdater):
                 data = np.concatenate([[np.nan] * to_discard, data])
                 datas[index] = data
             self.display_curves.emit(datas)
+            self.module.last_datas = datas
             if self.first_shot_of_continuous:
                 self.first_shot_of_continuous = False
                 self.autoscale.emit()
             # no setup in rolling mode
-        else: # triggered mode
+        else:  # triggered mode
             if self.module.curve_ready(): # if curve not ready, wait for next timer iteration
                 for ch, active in ((1, self.module.ch1_active), (2, self.module.ch2_active)):
                     if active:
                         datas[ch] = self.module._get_ch(ch)
                 datas[0] = self.module.times
                 self.display_curves.emit(datas)
+                self.module.last_datas = datas
                 if self.first_shot_of_continuous:
                     self.first_shot_of_continuous = False  # autoscale only upon first curve
                     self.autoscale.emit()
@@ -247,7 +247,7 @@ class GuiUpdaterScope(GuiUpdater):
             self.timer_continuous.start()
 
     def connect_widget(self, widget):
-        super(GuiUpdaterScope, self).connect_widget(widget)
+        super(SignalLauncherScope, self).connect_widget(widget)
         self.autoscale.connect(widget.autoscale)
         self.display_curves.connect(widget.display_curves)
 
@@ -265,20 +265,20 @@ class Scope(HardwareModule):
                       "threshold_ch1",
                       "threshold_ch2",
                       "curve_name",
-                      "running_continuous",
-                      "rolling_mode",
                       "ch1_active",
                       "ch2_active"]
-    setup_attributes = gui_attributes
+    setup_attributes = gui_attributes + ["running_continuous", "rolling_mode"]
     name = 'scope'
     data_length = data_length  # see definition and explanation above
     inputs = None
+    last_datas = None
 
     def init_module(self):
         # dsp multiplexer channels for scope and asg are the same by default
-        self.gui_updater = GuiUpdaterScope(self)
-        self._ch1 = DspModule(self._rp, name='in1')
-        self._ch2 = DspModule(self._rp, name='in2')
+        self.last_datas = [None, None, None] # last_datas that were sent for plotting (times, ch1, ch2)
+        self.signal_launcher = SignalLauncherScope(self)
+        self._ch1 = DspModule(self._rp, name='asg1')  # the scope inputs and asg outputs have the same id
+        self._ch2 = DspModule(self._rp, name='asg2')  # check fpga code dsp_modules to understand
         self.inputs = self._ch1.inputs
         self._setup_called = False
         self._trigger_source_memory = "immediately"
@@ -570,7 +570,7 @@ class Scope(HardwareModule):
 
     def run_continuous(self):
         """
-        Continuously feeds the gui with new curves from the scope.
+        Continuously feeds the gui with new curves from the scope. Once ready, datas are located in self.last_datas.
         """
         self.running_continuous = True
 
@@ -582,8 +582,25 @@ class Scope(HardwareModule):
 
     def run_single(self):
         """
-        Feeds gui with one new curve from the scope.
+        Feeds gui with one new curve from the scope. Once ready, datas are located in self.last_datas.
         """
         self.stop()
         self.setup()
-        self.gui_updater.run_single()
+        self.signal_launcher.run_single()
+
+    def save_curve(self):
+        """
+        Saves the curve(s) that is (are) currently displayed in the gui in the db_system. Also, returns the list
+        [curve_ch1, curve_ch2]...
+        """
+        datas = self.last_datas
+        d = self.get_setup_attributes()
+        curves = [None, None]
+        for ch, active in [(1, self.ch1_active), (2, self.ch2_active)]:
+                if active:
+                    d.update({'ch': ch,
+                              'name': self.curve_name + ' ch' + str(ch)})
+                    curves[ch-1] = self._save_curve(self.times,
+                                                    datas[ch - 1],
+                                                    **d)
+        return curves

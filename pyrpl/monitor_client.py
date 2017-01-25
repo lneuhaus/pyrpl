@@ -102,8 +102,12 @@ class MonitorClient(object):
         values = values[:65535 - 2]
         length = len(values)
         header = b'w' + bytes(bytearray([0,
-                                         length & 0xFF, (length >> 8) & 0xFF,
-                                         addr & 0xFF, (addr >> 8) & 0xFF, (addr >> 16) & 0xFF, (addr >> 24) & 0xFF]))
+                                         length & 0xFF,
+                                         (length >> 8) & 0xFF,
+                                         addr & 0xFF,
+                                         (addr >> 8) & 0xFF,
+                                         (addr >> 16) & 0xFF,
+                                         (addr >> 24) & 0xFF]))
         # send header+body
         self.socket.send(header +
                          np.array(values, dtype=np.uint32).tobytes())
@@ -148,7 +152,7 @@ class MonitorClient(object):
 class DummyClient(object):
     """Class for unitary tests without RedPitaya hardware available"""
     class fpgadict(dict):
-        def __missing__(self,key):
+        def __missing__(self, key):
             return 0
     fpgamemory = fpgadict({str(0x40100014): 1})  # scope decimation initial value
     

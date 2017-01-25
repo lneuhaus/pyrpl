@@ -10,7 +10,6 @@ if APP is None: # Otherwise, create it
 class ExceptionLauncher(QtCore.QObject):
     #Used to display exceptions in the status bar of PyrplWidgets
     _show_exception = QtCore.pyqtSignal() # use a signal to make sure no thread is messing up with gui
-
     def __init__(self):
         super(ExceptionLauncher, self).__init__()
         self._show_exception.connect(self.show_all)

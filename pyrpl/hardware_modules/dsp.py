@@ -33,12 +33,13 @@ class DspInputAttribute(SelectAttribute):
             return instance._input
 
     def set_value(self, instance, value):
-        # allow to directly pass another dspmodule as input
-        # if isinstance(value, HardwareModule) and hasattr(value, 'name'): # (asg is HardwareModule but not DspModule)
-        #    instance._input = value.name
-        #else:
-        instance._input = value
+        # allow to directly pass another module as input
+        if hasattr(value, 'name'):
+            instance._input = value.name
+        else:
+            instance._input = value
         return value
+
 
 class DspModule(HardwareModule):
     _delay = 0  # delay of the module from input to output_signal (in cycles)
