@@ -179,8 +179,10 @@ class FabryPerotTemperatureControl(Model):
     finesse = FloatProperty(max=1e7, min=0)
     length = FloatProperty(max=10e12, min=0)
     eta    = FloatProperty(min=0., max=1.)
-    p_temp = PTempProperty(max=1e6, min=-1e6)
-    i_temp    = ITempProperty(max=1e6, min=-1e6)
+    #p_temp = PTempProperty(max=1e6, min=-1e6)
+    #i_temp = ITempProperty(max=1e6, min=-1e6)
+    p_temp = FloatProperty(max=1e6, min=-1e6)
+    i_temp = FloatProperty(max=1e6, min=-1e6)
     # approximate length (not taking into account small variations of the order of wavelength)
     variable = 'detuning'
 
@@ -190,7 +192,7 @@ class FabryPerotTemperatureControl(Model):
         self.pid_temp = self.pyrpl.pids.pop('temperature_control')
         self.pwm_temp = self.pyrpl.rp.pwm1
         self.pwm_temp.input = self.pid_temp
-        self.pid_temp.ival = 0
+        self.unlock_temperature(1.)
 
     def lorentz(self, x):
         return 1.0 / (1.0 + x ** 2)
@@ -200,3 +202,10 @@ class FabryPerotTemperatureControl(Model):
         self.pid_temp.input = "out1"
         self.pid_temp.p = self.p_temp
         self.pid_temp.i = self.i_temp
+        self.pid_temp.inputfilter = [10, 100, 100, 100]
+
+    def unlock_temperature(self, factor):
+        self.pid_temp.output_direct = 'off'
+        self.pid_temp.ival = 0
+        self.pid_temp.p = 0
+        self.pid_temp.i = 0
