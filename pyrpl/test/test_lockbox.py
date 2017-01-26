@@ -119,3 +119,10 @@ class TestClass(TestPyrpl):
 
         self.lockbox.rename_stage(stage2, 'bar')
         assert (hasattr(self.lockbox.sequence, 'bar'))
+
+    def test_real_lock(self):
+        self.lockbox.remove_all_outputs()
+        self.lockbox.remove_all_stages()
+        stage = self.lockbox.add_stage()
+        out = self.lockbox.add_output()
+        

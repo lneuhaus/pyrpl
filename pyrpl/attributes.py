@@ -48,7 +48,7 @@ class BaseAttribute(object):
         default: if provided, the value is initialized to it
         """
         if default is not None:
-            self.value = default
+            self.default = default
         self.__doc__ = doc
 
     def __set__(self, instance, value):

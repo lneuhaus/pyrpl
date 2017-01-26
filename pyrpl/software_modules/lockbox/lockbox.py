@@ -262,6 +262,9 @@ class Lockbox(SoftwareModule):
         stage._name = new_name
         self.signal_launcher.stage_renamed.emit()
 
+    def remove_all_stages(self):
+        self.sequence.remove_all_stages()
+
     def unlock(self):
         """
         Unlocks all outputs, without touching the integrator value.
