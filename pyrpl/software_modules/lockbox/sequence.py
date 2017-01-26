@@ -14,7 +14,6 @@ class Sequence(SoftwareModule):
     def init_module(self):
         self.stages = []
         self.lockbox = self.parent
-        self.add_stage()
 
     def get_unique_stage_name(self):
         idx = len(self.stages) + 1
@@ -31,6 +30,14 @@ class Sequence(SoftwareModule):
     def add_stage(self):
         """
         Stages can be added at will.
+        """
+        stage = self._add_stage_no_save()
+        stage.name = stage.name  # triggers a save in the config file...
+        return stage
+
+    def _add_stage_no_save(self):
+        """
+        Adds a stage in the sequence without touching the config file
         """
         stage = Stage(self)
         stage._autosave_active = False
@@ -84,7 +91,7 @@ class Sequence(SoftwareModule):
             if 'stages' in self.c._dict.keys():
                 for name, stage in self.c.stages._dict.items():
                     if name!='states':
-                        stage = self.add_stage()
+                        stage = self._add_stage_no_save() # don't make a duplicate entry in the config file
                         stage._autosave_active = False
                         self.rename_stage(stage, name)
                         stage.load_setup_attributes()

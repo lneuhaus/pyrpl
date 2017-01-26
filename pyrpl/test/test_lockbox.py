@@ -91,7 +91,6 @@ class TestClass(TestPyrpl):
         assert len(set(names)) == len(names)  # Make sure unique names are created
         assert hasattr(self.lockbox.sequence, names[-1])
 
-
     def test_delete_stage(self):
         widget = self.lockbox.create_widget()
         self.lockbox.add_stage()
