@@ -2,9 +2,10 @@ from __future__ import division
 from pyrpl.modules import SoftwareModule, SignalLauncher
 from pyrpl.attributes import SelectProperty, BoolProperty, StringProperty
 from .model import Model
+from .models import *
 from .signals import OutputSignal, InputSignal
 from pyrpl.widgets.module_widgets import LockboxWidget
-from pyrpl.pyrpl_utils import  get_unique_name_list_from_class_list
+from pyrpl.pyrpl_utils import get_unique_name_list_from_class_list
 from .sequence import Sequence
 
 from collections import OrderedDict
