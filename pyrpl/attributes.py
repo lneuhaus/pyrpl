@@ -243,9 +243,16 @@ class SelectAttribute(BaseAttribute):
           - New validation takes effect immediately (otherwise a script involving 1. changing the options/2. selecting
           one of the new options could not be executed at once)
           - Update of the ComboxBox is performed behind a signal-slot mechanism to be thread-safe
+          - If the current value is not in the new_options, then value is changed to some available option
         """
         setattr(instance, '__' + self.name + '_' + 'options', new_options)
         instance.signal_launcher.change_options.emit(self.name, new_options)
+        if not getattr(instance, self.name) in new_options:
+            if len(new_options)>0:
+                setattr(instance, self.name, new_options[0])
+            else:
+                setattr(instance, self.name, None)
+
     """ # I keep the comment here for a few commits for safety
     def options(self, obj):
         if callable(self._options):
@@ -271,6 +278,8 @@ class SelectAttribute(BaseAttribute):
         Looks for attribute name, otherwise, converts to string and rejects if not in self.options
         """
         options = sorted(self.options(module)) # (module)
+        if len(options)==0 and value is None:
+            return None
         if isinstance(options[0], basestring):
             if hasattr(value, 'name'):
                 value = str(value.name)

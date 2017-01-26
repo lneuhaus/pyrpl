@@ -18,11 +18,10 @@ class Sequence(SoftwareModule):
 
     def get_unique_stage_name(self):
         idx = len(self.stages) + 1
-        'stage' + str(idx) in self.stage_names
         name = 'stage' + str(idx)
         while name in self.stage_names:
             idx+=1
-            name = 'stage' + str(idx) in self.stage_names
+            name = 'stage' + str(idx)
         return name
 
     @property
@@ -54,10 +53,14 @@ class Sequence(SoftwareModule):
         #    self.widget.update_stage_names()
 
     def remove_stage(self, stage, allow_last_stage=False):
+        if isinstance(stage, basestring):
+            stage = self.get_stage(stage)
         if not allow_last_stage:
             if len(self.stages)<=1:
                 raise ValueError("At least one stage should remain in the sequence")
         self.stages.remove(stage)
+        if hasattr(self, stage.name):
+            delattr(self, stage.name)
         if "stages" in self.c._keys():
             if stage.name in self.c.stages._keys():
                 self.c.stages._pop(stage.name)
@@ -113,6 +116,14 @@ class Sequence(SoftwareModule):
     def update_inputs(self):
         for stage in self.stages:
             stage.update_inputs()
+
+    def get_stage(self, name):
+        """
+        retieves a stage by name
+        """
+        if not name in self.stage_names:
+            raise ValueError(stage_name + " is not a valid stage name")
+        return self.stages[self.stage_names.index(name)]
 
 
 class StageNameProperty(StringProperty):

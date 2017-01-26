@@ -32,6 +32,8 @@ class TestClass(TestPyrpl):
 
     def test_delete_output(self):
         widget = self.lockbox.create_widget()
+        self.lockbox.remove_all_outputs()
+        self.lockbox.add_output()
         self.lockbox.add_output()
         old_name = self.lockbox.output_names[-1]
         assert(hasattr(self.lockbox, old_name))
@@ -41,12 +43,20 @@ class TestClass(TestPyrpl):
         assert not (hasattr(self.lockbox, old_name))
         APP.processEvents()
         assert len(widget.all_sig_widget.output_widgets)==old_len-1
+        self.lockbox.remove_all_outputs()
+        out1 = self.lockbox.add_output()
+        out = self.lockbox.add_output()
+        self.lockbox.default_sweep_output = out
+        self.lockbox.remove_output(out.name)
+        # APP.processEvents()
+        assert(self.lockbox.default_sweep_output==out1.name)
 
     def test_rename_output(self):
         """
         Check whether renaming an output updates everything properly
         """
         widget = self.lockbox.create_widget()
+        self.lockbox.remove_all_outputs()
         output1 = self.lockbox.add_output()
         output2 = self.lockbox.add_output()
         try:
@@ -64,7 +74,6 @@ class TestClass(TestPyrpl):
 
         assert(output2.pid.owner=='bar')
 
-
     def test_create_stage(self):
         old_len = len(self.lockbox.sequence.stages)
 
@@ -80,38 +89,34 @@ class TestClass(TestPyrpl):
 
         names = self.lockbox.stage_names  # [out.name for out in self.lockbox.outputs]
         assert len(set(names)) == len(names)  # Make sure unique names are created
-        assert hasattr(self.lockbox, names[-1])
+        assert hasattr(self.lockbox.sequence, names[-1])
 
-    """
-    def test_delete_output(self):
+
+    def test_delete_stage(self):
         widget = self.lockbox.create_widget()
-        self.lockbox.add_output()
-        old_name = self.lockbox.output_names[-1]
-        assert (hasattr(self.lockbox, old_name))
-        old_len = len(self.lockbox.outputs)
-        self.lockbox.remove_output(self.lockbox.outputs[-1])
-        assert (len(self.lockbox.outputs) == old_len - 1)
-        assert not (hasattr(self.lockbox, old_name))
+        self.lockbox.add_stage()
+        old_name = self.lockbox.stage_names[-1]
+        assert (hasattr(self.lockbox.sequence, old_name))
+        old_len = len(self.lockbox.sequence.stages)
+        self.lockbox.remove_stage(self.lockbox.sequence.stages[-1])
+        assert (len(self.lockbox.sequence.stages) == old_len - 1)
+        assert not (hasattr(self.lockbox.sequence, old_name))
         APP.processEvents()
-        assert len(widget.all_sig_widget.output_widgets) == old_len - 1
-    """
-    """
-    def test_rename_output(self):
+        assert len(widget.sequence_widget.stage_widgets) == old_len - 1
+
+    def test_rename_stage(self):
         widget = self.lockbox.create_widget()
-        output1 = self.lockbox.add_output()
-        output2 = self.lockbox.add_output()
+        stage1 = self.lockbox.add_stage()
+        stage2 = self.lockbox.add_stage()
         try:
-            self.lockbox.rename_output(output1, output2.name)
+            self.lockbox.rename_stage(stage1, stage2.name)
         except ValueError:
             pass
         else:
             assert (False)  # should be impossible to duplicate name of outputs
 
-        output2.name = "foo"
-        assert (hasattr(self.lockbox, 'foo'))
+        stage2.name = "foo"
+        assert (hasattr(self.lockbox.sequence, 'foo'))
 
-        self.lockbox.rename_output(output2, 'bar')
-        assert (hasattr(self.lockbox, 'bar'))
-
-        assert (output2.pid.owner == 'bar')
-    """
+        self.lockbox.rename_stage(stage2, 'bar')
+        assert (hasattr(self.lockbox.sequence, 'bar'))
