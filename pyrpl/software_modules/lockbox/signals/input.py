@@ -290,8 +290,10 @@ class InputPdh(InputSignal):
         return np.real(i_ref * np.exp(1j * phase)) / eta
 
     def expected_signal(self, variable):
-        return self.mean + (self.max - self.min)*\
-                                         self._pdh_normalized(variable,
-                                                              self.mod_freq,
-                                                              0,
-                                                              self.model.eta)
+        return 0.5 * (self.max - self.min) \
+               + 0.5 * (self.max - self.min)\
+                 * self._pdh_normalized(variable,
+                                        sbfreq=self.mod_freq,
+                                        phase=0,
+                                        eta=self.model.eta)
+    
