@@ -610,6 +610,6 @@ class Scope(HardwareModule):
                 d.update({'ch': ch,
                           'name': self.curve_name + ' ch' + str(ch)})
                 curves[ch - 1] = self._save_curve(self.times,
-                                                  datas[ch],
+                                                  datas[chgi],
                                                   **d)
         return curves
