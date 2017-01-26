@@ -19,7 +19,7 @@ class InterferometerPort2(InputDirect):
 
 
 class Inteferometer(Model):
-    name = "interferometer"
+    name = "Interferometer"
     section_name = "interferometer"
     units = ['m', 'deg', 'rad']
     wavelength = FloatProperty(max=10000, min=0)
