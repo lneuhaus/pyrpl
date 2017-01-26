@@ -23,7 +23,6 @@ import numbers
 from PyQt4 import QtCore, QtGui
 
 
-
 logger = logging.getLogger(name=__name__)
 
 #way to represent the smallest positive value
@@ -219,11 +218,34 @@ class SelectAttribute(BaseAttribute):
     """
     widget_class = SelectAttributeWidget
 
-    def __init__(self, options, default=None, doc=""):
+    def __init__(self, options=[], default=None, doc=""):
+        """
+        Options can be specified at attribute creation, but it can also be updated latter on a per-module basis using
+        change_options(new_options)
+        """
         super(SelectAttribute, self).__init__(default=default, doc=doc)
-        self.options = sorted(options) # usually, the user will pass a dictkeys object, which is not ordered and tricky
+        # self.options = sorted(options) # usually, the user will pass a dictkeys object, which is not ordered and tricky
                                        # to index
+        self._starting_options = options
 
+    def options(self, instance):
+        """
+        options are evaluated at run time.
+        """
+        if hasattr(instance, '__' + self.name + '_' + 'options'):
+            return getattr(instance, '__' + self.name + '_' + 'options')
+        else:
+            return self._starting_options
+
+    def change_options(self, instance, new_options):
+        """
+        Changes the possible options acceptable by the Attribute
+          - New validation takes effect immediately (otherwise a script involving 1. changing the options/2. selecting
+          one of the new options could not be executed at once)
+          - Update of the ComboxBox is performed behind a signal-slot mechanism to be thread-safe
+        """
+        setattr(instance, '__' + self.name + '_' + 'options', new_options)
+        instance.signal_launcher.change_options.emit(self.name, new_options)
     """ # I keep the comment here for a few commits for safety
     def options(self, obj):
         if callable(self._options):
@@ -241,14 +263,14 @@ class SelectAttribute(BaseAttribute):
         """
         if name is None:
             name = self.name
-        widget = SelectAttributeWidget(name, module, self.options)
+        widget = SelectAttributeWidget(name, module, self.options(module))
         return widget
 
     def validate_and_normalize(self, value, module):
         """
         Looks for attribute name, otherwise, converts to string and rejects if not in self.options
         """
-        options = sorted(self.options) # (module)
+        options = sorted(self.options(module)) # (module)
         if isinstance(options[0], basestring):
             if hasattr(value, 'name'):
                 value = str(value.name)
@@ -264,7 +286,7 @@ class SelectAttribute(BaseAttribute):
             return min([opt for opt in options], key=lambda x: abs(x - value))
 
 
-class DynamicSelectAttribute(BaseAttribute):
+class DynamicSelectAttributeObsolete(BaseAttribute): # all SelectedAttributes are now Dynamic
     """
     An attribute for a multiple choice value.
     The options are not stored in the descriptor, but in the instance of module itself (in __*name*_options).
@@ -276,10 +298,19 @@ class DynamicSelectAttribute(BaseAttribute):
         super(DynamicSelectAttribute, self).__init__(default=default, doc=doc)
 
     def change_options(self, instance, new_options):
+        """
+        Changes the possible options acceptable by the Attribute
+          - New validation takes effect immediately (otherwise a script involving 1. changing the options/2. selecting
+          one of the new options could not be executed at once)
+          - Update of the ComboxBox is performed behind a signal-slot mechanism to be thread-safe
+        """
         setattr(instance, '__' + self.name + '_' + 'options', new_options)
+        instance.signal_launcher.change_options.emit(self.name, new_options)
+        """
         if instance.widget is not None:
             if self.name in instance.widget.attribute_widgets:
                 instance.widget.attribute_widgets[self.name].change_options(new_options)
+        """
 
     def options(self, instance):
         """
@@ -910,23 +941,28 @@ class SelectProperty(SelectAttribute, BaseProperty):
             return self
         if not hasattr(obj, '_' + self.name):
             # choose any value in the options as default.
-            default = sorted(self.options)[0]
-            setattr(obj, '_' + self.name, default)
+            default = sorted(self.options(obj))
+            if len(default)>0:
+                val = default[0]
+                setattr(obj, '_' + self.name, val)
+                return val
+            else:
+                return None
         return getattr(obj, '_' + self.name)
 
 
-class DynamicSelectProperty(DynamicSelectAttribute, BaseProperty):
-    """
-    A property for multiple choice values, the options can be set dynamically at runtime
-    """
-    def get_value(self, obj, obj_type):
-        if obj is None:
-            return self
-        if not hasattr(obj, '_' + self.name):
-            # choose any value in the options as default.
-            default = sorted(self.options(obj))[0]
-            setattr(obj, '_' + self.name, default)
-        return getattr(obj, '_' + self.name)
+#class DynamicSelectProperty(DynamicSelectAttribute, BaseProperty):
+#    """
+#    A property for multiple choice values, the options can be set dynamically at runtime
+#    """
+#    def get_value(self, obj, obj_type):
+#        if obj is None:
+#            return self
+#        if not hasattr(obj, '_' + self.name):
+#            # choose any value in the options as default.
+#            default = sorted(self.options(obj))[0]
+#            setattr(obj, '_' + self.name, default)
+#        return getattr(obj, '_' + self.name)
 
 
 class StringProperty(StringAttribute, BaseProperty):

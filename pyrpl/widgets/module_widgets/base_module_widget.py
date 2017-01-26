@@ -79,7 +79,6 @@ class ModuleWidget(QtGui.QGroupBox):
     Base class for a module Widget. In general, this is one of the DockWidget of the Pyrpl MainWindow.
     """
     title_pos = (12, 0)
-
     attribute_changed = QtCore.pyqtSignal()
     # register_names = [] # a list of all register name to expose in the gui
 
@@ -101,15 +100,36 @@ class ModuleWidget(QtGui.QGroupBox):
         self.create_title_bar()
         # self.setStyleSheet("ModuleWidget{border:0;color: transparent;}") # frames and title hidden for software_modules
                                         # ModuleManagerWidget sets them visible for the HardwareModuleWidgets...
-        self.show_ownership()
+        self.change_ownership()
         self.module.signal_launcher.connect_widget(self)
+
+    def change_ownership(self):
+        """
+        SLOT: don't change name unless you know what you are doing
+        Display the new ownership
+        """
+        if self.module.owner is not None:
+            self.setEnabled(False)
+            self.set_title(self.module.name + ' (' + self.module.owner + ')')
+        else:
+            self.setEnabled(True)
+            self.set_title(self.module.name)
 
     def update_attribute_by_name(self, name, new_value_list):
         """
+        SLOT: don't change name unless you know what you are doing
         Updates a specific attribute. New value is passed as a 1-element list to avoid typing problems in signal-slot.
         """
         if name in self.module.gui_attributes:
             self.attribute_widgets[str(name)].update_widget(new_value_list[0])
+
+    def change_options(self, select_attribute_name, new_options):
+        """
+        SLOT: don't change name unless you know what you are doing
+        New options should be displayed for some SelectAttribute.
+        """
+        if select_attribute_name in self.module.gui_attributes:
+            self.attribute_widgets[str(select_attribute_name)].change_options(new_options)
 
     def create_title_bar(self):
         self.title_label = QtGui.QLabel("yo", parent=self)
@@ -125,14 +145,6 @@ class ModuleWidget(QtGui.QGroupBox):
         self.setStyleSheet("ModuleWidget{margin: 0.1em; margin-top:0.6em; border: 1 dotted gray;border-radius:5}")
         # margin-top large enough for border to be in the middle of title
         self.layout().setContentsMargins(0, 5, 0, 0)
-
-    def show_ownership(self):
-        if self.module.owner is not None:
-            self.setEnabled(False)
-            self.set_title(self.module.name + ' (' + self.module.owner + ')')
-        else:
-            self.setEnabled(True)
-            self.set_title(self.module.name)
 
     def init_attribute_layout(self):
         """

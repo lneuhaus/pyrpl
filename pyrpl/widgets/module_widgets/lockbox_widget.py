@@ -670,23 +670,23 @@ class LockboxWidget(ModuleWidget):
         self.all_sig_widget.remove_input(input)
 
     ## Output Management
-    def update_output_names(self):
+    def output_renamed(self):
         """
         Refresh all output name tabs in the widget
         """
         self.all_sig_widget.update_output_names()
 
-    def add_output(self, output):
+    def output_created(self, outputs):
         """
-        Adds an output to the widget
+        Adds an output to the widget,  outputs is a singleton [outpout]
         """
-        self.all_sig_widget.add_output(output)
+        self.all_sig_widget.add_output(outputs[0])
 
-    def remove_output(self, output):
+    def output_deleted(self, outputs):
         """
-        Removes an output to the widget
+        Removes an output to the widget, outputs is a singleton [outpout]
         """
-        self.all_sig_widget.remove_output(output)
+        self.all_sig_widget.remove_output(outputs[0])
 
     ## Model management
     def change_model(self, model):
@@ -701,17 +701,23 @@ class LockboxWidget(ModuleWidget):
         self.main_layout.insertWidget(1, widget)
 
     ## Sequence Management
-    def add_stage(self, stage):
+    def stage_created(self, stages):
         """
-        Adds a new stage to the widget
+        Adds a new stage to the widget (stages is a singleton [stage])
         """
-        self.sequence_widget.add_stage(stage)
+        self.sequence_widget.add_stage(stages[0])
 
-    def remove_stage(self, stage):
+    def stage_deleted(self, stages):
         """
-        Removes a stage to the model
+        Removes a stage to the model (stages is a singleton [stage])
         """
-        self.sequence_widget.remove_stage(stage)
+        self.sequence_widget.remove_stage(stages[0])
+
+    def stage_renamed(self):
+        """
+        Redisplay all names of stages
+        """
+        self.sequence_widget.update_stage_names()
 
     def set_state(self, val):
         if val=='unlock':

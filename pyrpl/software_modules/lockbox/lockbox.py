@@ -1,6 +1,6 @@
 from __future__ import division
-from pyrpl.modules import SoftwareModule
-from pyrpl.attributes import SelectProperty, BoolProperty, DynamicSelectProperty
+from pyrpl.modules import SoftwareModule, SignalLauncher
+from pyrpl.attributes import SelectProperty, BoolProperty, StringProperty
 from .model import Model
 from .signals import OutputSignal, InputSignal
 from pyrpl.widgets.module_widgets import LockboxWidget
@@ -27,6 +27,21 @@ class ModelProperty(SelectProperty):
         return val
 
 
+class SignalLauncherLockbox(SignalLauncher):
+    """
+    A SignalLauncher for the lockbox
+    """
+    output_created = QtCore.pyqtSignal(list)
+    output_deleted = QtCore.pyqtSignal(list)
+    output_renamed = QtCore.pyqtSignal()
+    stage_created = QtCore.pyqtSignal(list)
+    stage_deleted = QtCore.pyqtSignal(list)
+    stage_renamed = QtCore.pyqtSignal() # changes the
+
+    # state_changed = QtCore.pyqtSignal() # need to change the color of buttons in the widget
+    # state is now a standard Property, signals are caught by the update_attribute_by_name function of the widget.
+
+
 class Lockbox(SoftwareModule):
     """
     A Module that allows to perform feedback on systems that are well described by a physical model.
@@ -37,9 +52,11 @@ class Lockbox(SoftwareModule):
     setup_attributes = gui_attributes
     model_name = ModelProperty(options=all_models.keys())
     auto_relock = BoolProperty()
-    default_sweep_output = DynamicSelectProperty(options=[])
+    default_sweep_output = SelectProperty(options=[])
+    state = SelectProperty(options=[])
 
     def init_module(self):
+        self.signal_launcher = SignalLauncherLockbox(self)
         self.outputs = []
         self.__class__.default_sweep_output.change_options(self, ['dummy']) # dirty... something needs to be done with this attribute class
         self._asg = None
@@ -51,6 +68,9 @@ class Lockbox(SoftwareModule):
         self.timer_lock = QtCore.QTimer()
         self.timer_lock.timeout.connect(self.goto_next)
         self.timer_lock.setSingleShot(True)
+
+
+        self.add_output() # add at least one output
 
     @property
     def asg(self):
@@ -92,7 +112,7 @@ class Lockbox(SoftwareModule):
 
     @property
     def stage_names(self):
-        return [stage.name for stage in self.sequence.stages]
+        return self.sequence.stage_names
 
     def goto_next(self):
         """
@@ -121,44 +141,76 @@ class Lockbox(SoftwareModule):
         self.unlock()
         self.goto_next()
 
+    def get_unique_output_name(self):
+        idx = 1
+        name = 'output' + str(idx)
+        while (name in self.output_names):
+            idx += 1
+            name = 'output' + str(idx)
+        return name
+
     def add_output(self):
         """
         Outputs of the lockbox are added dynamically (for now, inputs are defined by the model).
         """
         output = OutputSignal(self)
-        # output.name = 'output' + str(self.get_unique_output_id())
+        output.name = self.get_unique_output_name()
         self.outputs.append(output)
         setattr(self, output.name, output)
         # self.__class__.default_sweep_output.change_options([output.name for output in self.outputs])
         self.sequence.update_outputs()
 
         self.__class__.default_sweep_output.change_options(self, [out.name for out in self.outputs])
+        """
         if self.widget is not None:
             # Since adding/removing outputs corresponds to dynamic creation of Modules, our attribute's based way of
             # hiding gui update is not effective. Since this is a highly exceptional situation, I don't find it too
             # bad.
             self.widget.add_output(output)
+        """
+        self.signal_launcher.output_created.emit([output])
         return output
 
-    def remove_output(self, output):
+    def remove_output(self, output, allow_remove_last=False):
+        """
+        Removes and clear output from the list of outputs. if allow_remove_last is left to False, an exception is raised
+        when trying to remove the last output.
+        """
+        if not allow_remove_last:
+            if len(self.outputs)<=1:
+                raise ValueError("There has to be at list one output.")
+        if hasattr(self, output.name):
+            delattr(self, output.name)
         output.clear()
         self.outputs.remove(output)
         self.sequence.update_outputs()
         if 'outputs' in self.c._keys():
             if output.name in self.c.outputs._keys():
                 self.c.outputs._pop(output.name)
-        self.__class__.default_sweep_output.change_options([output.name for output in self.outputs])
 
+        self.__class__.default_sweep_output.change_options(self, [output.name for output in self.outputs])
+        """
         if self.widget is not None:
             # Since adding/removing outputs corresponds to dynamic creation of Modules, our attribute's based way of
             # hiding gui update is not effective. Since this is a highly exceptional situation, I don't find it too
             # bad.
             self.widget.remove_output(output)
+        """
+        self.signal_launcher.output_deleted.emit([output])
+
+    def remove_all_outputs(self):
+        """
+        Removes all outputs, even the last one.
+        """
+        while(len(self.outputs)>0):
+            self.remove_output(self.outputs[-1], allow_remove_last=True)
 
     def rename_output(self, output, new_name):
         """
         This changes the name of the output in many different places: lockbox attribute, config file, pid's owner
         """
+        if new_name in self.output_names and self.get_output(new_name)!=output:
+            raise ValueError("Name %s already exists for an output"%new_name)
         if hasattr(self, output.name):
             delattr(self, output.name)
         setattr(self, new_name, output)
@@ -168,13 +220,40 @@ class Lockbox(SoftwareModule):
         if output.pid is not None:
             output.pid.owner = new_name
         self.sequence.update_outputs()
-        self.update_output_names()
-
-    def update_output_names(self):
-        if self.widget is not None:
-            # Could be done in BaseModule name property...
-            self.widget.update_output_names()
         self.__class__.default_sweep_output.change_options(self, [out.name for out in self.outputs])
+        self.signal_launcher.output_renamed.emit()
+        # --> This also launches the appropriate signal...
+        # self.update_output_names()
+
+    #def update_output_names(self):
+    #    """
+    #    if self.widget is not None:
+    #        # Could be done in BaseModule name property...
+    #        self.widget.update_output_names()
+    #    """
+    #    self.__class__.default_sweep_output.change_options(self, [out.name for out in self.outputs])
+    #    self.signal_launcher.output_renamed.emit()
+
+    def add_stage(self):
+        """
+        adds a stage to the lockbox sequence
+        """
+        self.sequence.add_stage()
+
+    def remove_stage(self, stage):
+        """
+        Removes stage from the lockbox seequence
+        """
+        self.sequence.remove_stage(stage)
+
+    def rename_stage(self, stage, new_name):
+        if hasattr(self.sequence, stage.name):
+            delattr(self.sequence, stage.name)
+        setattr(self.sequence, new_name, stage)
+        if stage._autosave_active:
+            stage.c._rename(new_name)
+        stage._name = new_name
+        self.signal_launcher.stage_renamed.emit()
 
     def unlock(self):
         """
@@ -225,6 +304,7 @@ class Lockbox(SoftwareModule):
         """
         This function needs to be overwritten to retrieve the child module attributes as well
         """
+        self.remove_all_outputs()
         # load outputs
         if self.c is not None:
             if 'outputs' in self.c._dict.keys():
@@ -235,6 +315,9 @@ class Lockbox(SoftwareModule):
                         self.rename_output(output, name)
                         output.load_setup_attributes()
                         output._autosave_active = True
+        if len(self.outputs)==0:
+            self.add_output()  # add at least one output
+
         # load inputs
         for input in self.inputs:
             input._autosave_active = False
