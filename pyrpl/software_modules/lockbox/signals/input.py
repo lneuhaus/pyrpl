@@ -10,6 +10,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class InputSignal(SoftwareModule):
     """
     An input signal allows to convert a measured voltage into the value of the model's physical variable in *unit*.
@@ -176,6 +177,7 @@ class InputSignal(SoftwareModule):
         except:
             pass
         return widget
+
 
 class InputDirect(InputSignal):
     section_name = 'direct_input'

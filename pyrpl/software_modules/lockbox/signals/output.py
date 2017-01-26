@@ -10,6 +10,7 @@ from scipy import interpolate
 
 import numpy as np
 
+
 class ProportionalGainProperty(FloatProperty):
     """
     Forwards the gain to the pid module when the lock is active. Otherwise, behaves as a property.
@@ -162,7 +163,8 @@ class OutputSignal(Signal):
     sweep_offset = FloatProperty()
     sweep_frequency = FrequencyProperty()
     sweep_waveform = SelectProperty(options=Asg1.waveforms)
-    dc_gain = FloatProperty(min=-1e10, max=1e10) # gain for the conversion V-->model variable in *unit*
+    # gain for the conversion V-->model variable in *unit*
+    dc_gain = FloatProperty(default=1.0, min=-1e10, max=1e10)
     output_channel = SelectProperty(options=['out1', 'out2']) # at some point, we should add pwms...
     p = ProportionalGainProperty(min=-1e10, max=1e10)
     i = ProportionalGainProperty(min=-1e10, max=1e10)

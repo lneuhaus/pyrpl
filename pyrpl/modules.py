@@ -102,6 +102,8 @@ class SignalLauncher(QtCore.QObject):
     """
     update_attribute_by_name = QtCore.pyqtSignal(str, list)
     # The name of the property that has changed, the list is [new_value], the new_value of the attribute
+    change_options = QtCore.pyqtSignal(str, list) # name of the SelectProperty, list of new options
+    change_ownership = QtCore.pyqtSignal() # The owner of the module has changed
 
     def __init__(self, module):
         super(SignalLauncher, self).__init__()
@@ -109,7 +111,7 @@ class SignalLauncher(QtCore.QObject):
 
     def connect_widget(self, widget):
         """
-        Establishes all connections between the module and the widget.
+        Establishes all connections between the module and the widget by name.
         """
         #self.update_attribute_by_name.connect(widget.update_attribute_by_name)
         for key in dir(self.__class__):
@@ -321,10 +323,12 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
             # desactivate autosave for slave modules
             self._autosave_active = False
         self.ownership_changed(old, val)
-        if self.widget is not None:
-            self.widget.show_ownership()
         if val is None:
             self.setup(**self.c._dict)
+        self.signal_launcher.change_ownership.emit()
+        #if self.widget is not None:
+        #    self.widget.show_ownership()
+
 
 
 class HardwareModule(BaseModule):

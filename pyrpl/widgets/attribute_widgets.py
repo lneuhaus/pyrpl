@@ -379,8 +379,8 @@ class BaseAttributeWidget(QtGui.QWidget):
         self.layout_v.addWidget(self.widget, 0) # stretch=0
         self.layout_v.addStretch(1)
         self.setLayout(self.layout_v)
-        self.update_widget(self.module_value())
-
+        if self.module_value() is not None: # SelectAttributes without options might have a None value
+            self.update_widget(self.module_value())
         #self.module_widget.register_layout.addLayout(self.layout_v)
         #self.value_changed.connect(self.emit_widget_value_changed)
         #self.module_widget.property_watch_timer.timeout. \

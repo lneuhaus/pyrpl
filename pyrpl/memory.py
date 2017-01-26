@@ -325,6 +325,8 @@ class MemoryTree(MemoryBranch):
         logger.debug("Loading config file %s", self._filename)
         with open(self._filename) as f:
             self._data = load(f)
+        if self._data is None:  # empty file gives None
+            self._data = OrderedDict()
         # update dict of the object
         for name in self.__dict__:
             if not name.startswith('_') and name not in self._data:

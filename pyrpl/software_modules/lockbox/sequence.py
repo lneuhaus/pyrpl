@@ -1,5 +1,5 @@
 from __future__ import division
-from pyrpl.attributes import SelectProperty, FloatProperty, BoolProperty, DynamicSelectProperty, StringProperty, \
+from pyrpl.attributes import SelectProperty, FloatProperty, BoolProperty, StringProperty, \
                             ListStageOuputProperty
 from pyrpl.modules import SoftwareModule
 from pyrpl.widgets.module_widgets import LockboxSequenceWidget, LockboxStageWidget
@@ -13,6 +13,21 @@ class Sequence(SoftwareModule):
 
     def init_module(self):
         self.stages = []
+        self.lockbox = self.parent
+        self.add_stage()
+
+    def get_unique_stage_name(self):
+        idx = len(self.stages) + 1
+        'stage' + str(idx) in self.stage_names
+        name = 'stage' + str(idx)
+        while name in self.stage_names:
+            idx+=1
+            name = 'stage' + str(idx) in self.stage_names
+        return name
+
+    @property
+    def stage_names(self):
+        return [stage.name for stage in self.stages]
 
     def add_stage(self):
         """
@@ -22,46 +37,46 @@ class Sequence(SoftwareModule):
         stage._autosave_active = False
         stage.update_inputs()
         stage.update_outputs()
-        stage.name = "stage" + str(len(self.stages) + 1)
+        stage._name = self.get_unique_stage_name()
         self.stages.append(stage)
         setattr(self, stage.name, stage)
         # self.__class__.default_sweep_output.change_options([output.name for output in self.outputs])
-        if self.widget is not None:
-            self.widget.add_stage(stage)
+        self.lockbox.signal_launcher.stage_created.emit([stage])
         stage._autosave_active = True
         return stage
 
     def rename_stage(self, stage, new_name):
-        if hasattr(self, stage.name):
-            delattr(self, stage.name)
-        setattr(self, new_name, stage)
-        if stage._autosave_active:
-            stage.c._rename(new_name)
-        stage._name = new_name
-        self.update_stage_names()
+        self.lockbox.rename_stage(stage, new_name)
 
     def update_stage_names(self):
-        if self.widget is not None:
-            self.widget.update_stage_names()
+        self.lockbox.signal_launcher.stage_renamed.emit()
+        #if self.widget is not None:
+        #    self.widget.update_stage_names()
 
-    def remove_stage(self, stage):
+    def remove_stage(self, stage, allow_last_stage=False):
+        if not allow_last_stage:
+            if len(self.stages)<=1:
+                raise ValueError("At least one stage should remain in the sequence")
         self.stages.remove(stage)
         if "stages" in self.c._keys():
             if stage.name in self.c.stages._keys():
                 self.c.stages._pop(stage.name)
-        if stage.widget is not None:
-            self.widget.remove_stage(stage)
+        self.lockbox.signal_launcher.stage_deleted.emit([stage])
+        #if stage.widget is not None:
+        #   self.widget.remove_stage(stage)
 
     def remove_all_stages(self):
+        print("removing all stages")
         to_remove = [] # never iterate on a list that s being deleted
         for stage in self.stages:
             to_remove.append(stage)
         for stage in to_remove:
-            self.remove_stage(stage)
+            self.remove_stage(stage, allow_last_stage=True)
 
     def load_setup_attributes(self):
         #import pdb
         #pdb.set_trace()
+        self.remove_all_stages()
         if self.c is not None:
             if 'stages' in self.c._dict.keys():
                 for name, stage in self.c.stages._dict.items():
@@ -71,6 +86,8 @@ class Sequence(SoftwareModule):
                         self.rename_stage(stage, name)
                         stage.load_setup_attributes()
                         stage._autosave_active = True
+        if len(self.stages)==0:
+            self.add_stage()
 
     def save_state(self, name, state_branch=None):
         if state_branch is None:
@@ -121,7 +138,7 @@ class Stage(SoftwareModule):
     section_name = 'stage'
     name = StageNameProperty(default='my_stage')
     widget_class = LockboxStageWidget
-    input = DynamicSelectProperty()
+    input = SelectProperty()
     output_on = ListStageOuputProperty()
     variable_value = FloatProperty(min=-1e6, max=1e6)
     duration = FloatProperty(min=0, max=1e6)
