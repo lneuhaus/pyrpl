@@ -1,43 +1,32 @@
 from __future__ import division
 from . import Signal
-from pyrpl.attributes import BoolProperty, FloatProperty, SelectProperty, FloatAttribute, FilterAttribute, LongProperty,\
-                             StringProperty, ListFloatProperty, FrequencyProperty
+from pyrpl.attributes import BoolProperty, FloatProperty, SelectProperty, \
+    FloatAttribute, FilterAttribute, LongProperty, StringProperty, \
+    ListFloatProperty, FrequencyProperty
 from pyrpl.hardware_modules.asg import Asg1
 from pyrpl.widgets.module_widgets import OutputSignalWidget
-from pyrpl.hardware_modules.pid import delay_transfer_function, pid_transfer_function, filter_transfer_function
+from pyrpl.hardware_modules.pid import delay_transfer_function,\
+    pid_transfer_function, filter_transfer_function
 from pyrpl.curvedb import CurveDB
 from scipy import interpolate
 
 import numpy as np
 
 
-class ProportionalGainProperty(FloatProperty):
+class GainProperty(FloatProperty):
     """
-    Forwards the gain to the pid module when the lock is active. Otherwise, behaves as a property.
-    """
-    def set_value(self, instance, value):
-        super(ProportionalGainProperty, self).set_value(instance, value)
-        if instance.mode=='lock':
-            instance.update_pid_gains(instance.current_input_lock,
-                                      instance.current_variable_value)
-    #def launch_signal(self, module, new_value_list):
-     #   super(ProportionalGainProperty, self).launch_signal(module, new_value_list)
-    #    module.widget.update_transfer_function()
-
-
-class IntegralGainProperty(FloatProperty):
-    """
-    Forwards the gain to the pid module when the lock is active. Otherwise, behaves as a property.
+    Forwards the gain to the pid module when the lock is active. Otherwise,
+    behaves as a property.
     """
     def set_value(self, instance, value):
-        super(IntegralGainProperty, self).set_value(instance, value)
-        if instance.mode=='lock':
+        super(GainProperty, self).set_value(instance, value)
+        if instance.mode == 'lock':
             instance.update_pid_gains(instance.current_input_lock,
                                       instance.current_variable_value)
-
-    #def launch_signal(self, module, new_value_list):
-        #super(IntegralGainProperty, self).launch_signal(module, new_value_list)
-        #module.widget.update_transfer_function()
+    # def launch_signal(self, module, new_value_list):
+    #     super(ProportionalGainProperty, self).launch_signal(module,
+    #         new_value_list)
+    #     module.widget.update_transfer_function()
 
 
 class PIcornerAttribute(FloatAttribute):
@@ -165,9 +154,10 @@ class OutputSignal(Signal):
     sweep_waveform = SelectProperty(options=Asg1.waveforms)
     # gain for the conversion V-->model variable in *unit*
     dc_gain = FloatProperty(default=1.0, min=-1e10, max=1e10)
-    output_channel = SelectProperty(options=['out1', 'out2']) # at some point, we should add pwms...
-    p = ProportionalGainProperty(min=-1e10, max=1e10)
-    i = ProportionalGainProperty(min=-1e10, max=1e10)
+    output_channel = SelectProperty(options=['out1', 'out2',
+                                             'pwm0', 'pwm1'])
+    p = GainProperty(min=-1e10, max=1e10)
+    i = GainProperty(min=-1e10, max=1e10)
     analog_filter = AnalogFilterProperty()
     additional_filter = AdditionalFilterAttribute()
     extra_module = SelectProperty(['None', 'iir', 'pid', 'iq'])
@@ -186,7 +176,7 @@ class OutputSignal(Signal):
         self.current_variable_value = 0
         self.current_variable_slope = 0
         self.lockbox = self.parent
-        self.name = 'output' # will be updated in add_output of parent module
+        self.name = 'output'  # will be updated in add_output of parent module
 
  #   @property
  #   def id(self): # it would be more convenient to compute name from output, but class attribute name can't be a
@@ -207,23 +197,23 @@ class OutputSignal(Signal):
 
         self.pid.setpoint = input.expected_signal(variable_value)
 
-        self.pid.p = self.p/(self.current_variable_slope*self.dc_gain)*factor
-        self.pid.i = self.i/(self.current_variable_slope*self.dc_gain)*factor
+        self.pid.p = self.p / (self.current_variable_slope*self.dc_gain)*factor
+        self.pid.i = self.i / (self.current_variable_slope*self.dc_gain)*factor
 
     def assisted_gain_updated(self):
         if self.assisted_design:
             filter = sorted(self.analog_filter)
             if filter[0] < 0:
                 raise NotImplementedError("High pass filters are not handled currently in assisted design.")
-            if filter[2]!=0:
+            if filter[2] != 0:
                 raise NotImplementedError("Only first order low-pass filter aer currently handled in assisted "
                                           "design (derivators are currently disabled). Consider using iir module")
-            if filter[3]==0:
+            if filter[3] == 0:
                 self.i = self.unity_gain_desired
                 self.p = 0
             else:
                 self.i = self.unity_gain_desired
-                self.p = self.i/filter[3]
+                self.p = self.i / filter[3]
 
     def transfer_function(self, freqs):
         """
@@ -231,9 +221,9 @@ class OutputSignal(Signal):
         """
 
         analog_tf = np.ones(len(freqs), dtype=complex)
-        if self.tf_type=='filter':
+        if self.tf_type == 'filter':
             analog_tf = filter_transfer_function(freqs, self.analog_filter)
-        if self.tf_type=='curve':
+        if self.tf_type == 'curve':
             curve = CurveDB.get(self.tf_curve)
             x = curve.data.index
             y = curve.data.values
@@ -242,11 +232,14 @@ class OutputSignal(Signal):
             analog_tf = ampl*np.exp(1j*phase)
 
         # 200 ns extra_delay + 3 cycles from pid._delay
-        result = analog_tf*\
-               delay_transfer_function(freqs, self.pid._delay, 200e-9, self.pid._frequency_correction)*\
-               pid_transfer_function(freqs, self.p, self.i, self.pid._frequency_correction)*\
-               filter_transfer_function(freqs, self.additional_filter, self.pid._frequency_correction)
-        return result # np.ones(len(freqs))
+        result = analog_tf * \
+            delay_transfer_function(freqs, self.pid._delay, 200e-9,
+                                    self.pid._frequency_correction) * \
+            pid_transfer_function(freqs, self.p, self.i,
+                                  self.pid._frequency_correction) * \
+            filter_transfer_function(freqs, self.additional_filter,
+                                     self.pid._frequency_correction)
+        return result  # np.ones(len(freqs))
 
     @property
     def mode(self):
@@ -264,7 +257,6 @@ class OutputSignal(Signal):
             raise ValueError("mode of output %s can only be "
                              "set to 'unlock', 'sweep', or 'lock', not %s"%(self.name, val))
         self._mode = val
-        return val
 
     def tf_freqs(self):
         """
@@ -327,7 +319,19 @@ class OutputSignal(Signal):
                                frequency=self.sweep_frequency,
                                waveform=self.sweep_waveform)
         self.pid.input = self.lockbox.asg
-        self.pid.output_direct = self.output_channel
+        self._set_output()
+
+    def _set_output(self):
+        if self.output_channel.startswith('out'):
+            self.pid.output_direct = self.output_channel
+        elif self.output_channel.startswith('pwm'):
+            self.pid.output_direct = 'off'
+            pwm = getattr(self.pyrpl.rp, self.output_channel)
+            pwm.input = self.pid
+        else:
+            raise NotImplementedError(
+                "Selected output_channel '%s' is not implemented"
+                % self.output_channel)
 
     def clear(self):
         """

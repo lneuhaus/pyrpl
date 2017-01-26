@@ -69,8 +69,6 @@ class Lockbox(SoftwareModule):
         self.timer_lock = QtCore.QTimer()
         self.timer_lock.timeout.connect(self.goto_next)
         self.timer_lock.setSingleShot(True)
-
-
         self.add_output() # add at least one output
 
     @property
@@ -360,7 +358,6 @@ class Lockbox(SoftwareModule):
         retrieves an input by name
         """
         return self.inputs[[input.name for input in self.inputs].index(name)]
-
 
     def get_output(self, name):
         """

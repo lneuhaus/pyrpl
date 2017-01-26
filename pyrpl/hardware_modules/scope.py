@@ -279,8 +279,10 @@ class Scope(HardwareModule):
         # dsp multiplexer channels for scope and asg are the same by default
         self.last_datas = [None, None, None] # last_datas that were sent for plotting (times, ch1, ch2)
         self.signal_launcher = SignalLauncherScope(self)
-        self._ch1 = DspModule(self._rp, name='asg1')  # the scope inputs and asg outputs have the same id
-        self._ch2 = DspModule(self._rp, name='asg2')  # check fpga code dsp_modules to understand
+        self._ch1 = DspModule(self._rp, name='asg0')  # the scope inputs and
+        #  asg outputs have the same id
+        self._ch2 = DspModule(self._rp, name='asg1')  # check fpga code
+        # dsp_modules to understand
         self.inputs = self._ch1.inputs
         self._setup_called = False
         self._trigger_source_memory = "immediately"

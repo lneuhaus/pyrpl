@@ -13,15 +13,16 @@ logger = logging.getLogger(__name__)
 
 class InputSignal(SoftwareModule):
     """
-    An input signal allows to convert a measured voltage into the value of the model's physical variable in *unit*.
-    The signal can be calibrated by taking a curve while scanning an output.
+    An input signal allows to convert a measured voltage into the value of the
+    model's physical variable in *unit*. The signal can be calibrated by
+    taking a curve while scanning an output.
       - calibrate()
       -
     """
     section_name = 'input'  # name of the input
     gui_attributes = ["input_channel"]
     setup_attributes = gui_attributes + ["min", "max", "mean", "rms"]
-    input_channel = SelectProperty(options=['in1', 'in2']) # adc
+    input_channel = SelectProperty(options=['in1', 'in2'])  # adc
     model_cls = None # Model class to which this input belongs.
     widget_class = LockboxInputWidget
     min = FloatProperty()
@@ -87,7 +88,6 @@ class InputSignal(SoftwareModule):
             y = self.expected_signal(self.plot_range)
             self.widget.show_graph(self.plot_range, y)
 
-
     def expected_signal(self, variable):
         """
         Returns the value of the expected signal in V, depending on the variable value "variable". The parameters in
@@ -103,7 +103,7 @@ class InputSignal(SoftwareModule):
         return scipy.misc.derivative(self.expected_signal,
                                      variable,
                                      dx=1e-9,
-                                     n=1, #first derivative
+                                     n=1,  # first derivative
                                      order=3)
 
     def inverse(self, func, y, x0, args=()):
@@ -181,7 +181,6 @@ class InputSignal(SoftwareModule):
 
 class InputDirect(InputSignal):
     section_name = 'direct_input'
-
     def signal(self):
         return self.input_channel
 
@@ -221,8 +220,8 @@ class PdhQuadratureFactorProperty(FloatProperty):
         return value
 
 
-class InputPdh(InputSignal):
-    section_name = 'pdh'
+class InputIQ(InputDirect):
+    section_name = 'iq'
     gui_attributes = InputSignal.gui_attributes + ['mod_freq',
                                                    'mod_amp',
                                                    'mod_phase',
@@ -236,7 +235,7 @@ class InputPdh(InputSignal):
     mod_output = PdhModOutputProperty(['out1', 'out2'])
 
     def init_module(self):
-        super(InputPdh, self).init_module()
+        super(InputIQ, self).init_module()
         self._iq = None
         self.setup()
 
@@ -266,37 +265,3 @@ class InputPdh(InputSignal):
                       quadrature_factor=self.quadrature_factor,
                       output_signal='quadrature',
                       output_direct=self.mod_output)
-
-    def _pdh_normalized(self, x, sbfreq=10.0, phase=0, eta=1):
-        # pdh only has appreciable slope for detunings between -0.5 and 0.5
-        # unless you are using it for very exotic purposes..
-        # incident beam: laser field
-        # a at x,
-        # 1j*a*rel at x+sbfreq
-        # 1j*a*rel at x-sbfreq
-        # in the end we will only consider cross-terms so the parameter rel will be normalized out
-        # all three fields incident on cavity
-        # eta is ratio between input mirror transmission and total loss (including this transmission),
-        # i.e. between 0 and 1. While there is a residual dependence on eta, it is very weak and
-        # can be neglected for all practical purposes.
-        # intracavity field a_cav, incident field a_in, reflected field a_ref    #
-        # a_cav(x) = a_in(x)*sqrt(eta)/(1+1j*x)
-        # a_ref(x) = -1 + eta/(1+1j*x)
-        def a_ref(x):
-            return 1 - eta / (1 + 1j * x)
-
-        # reflected intensity = abs(sum_of_reflected_fields)**2
-        # components oscillating at sbfreq: cross-terms of central lorentz with either sideband
-        i_ref = np.conjugate(a_ref(x)) * 1j * a_ref(x + sbfreq) \
-                + a_ref(x) * np.conjugate(1j * a_ref(x - sbfreq))
-        # we demodulate with phase phi, i.e. multiply i_ref by e**(1j*phase), and take the real part
-        # normalization constant is very close to 1/eta
-        return np.real(i_ref * np.exp(1j * phase)) / eta
-
-    def expected_signal(self, variable):
-        return 0.5 * (self.max - self.min) \
-               + 0.5 * (self.max - self.min)\
-                 * self._pdh_normalized(variable,
-                                        sbfreq=self.mod_freq,
-                                        phase=0,
-                                        eta=self.model.eta)

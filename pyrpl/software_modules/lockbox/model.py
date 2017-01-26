@@ -1,8 +1,4 @@
 from pyrpl.modules import SoftwareModule
-from .signals.input import InputDirect, InputPdh
-from pyrpl.attributes import FloatProperty
-
-import numpy as np
 
 
 class Model(SoftwareModule):
@@ -13,5 +9,6 @@ class Model(SoftwareModule):
     """
     section_name = 'model'
     parameter_name = ""
-    units = []  # possible units to describe the physical parameter to control e.g. ['m', 'MHz']
-    input_cls = [] # list of input signals that can be implemented
+    units = []  # possible units to describe the physical parameter to control
+    #  e.g. ['m', 'MHz']
+    input_cls = []  # list of input signals that can be implemented

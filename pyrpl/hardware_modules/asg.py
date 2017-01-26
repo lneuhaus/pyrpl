@@ -86,13 +86,13 @@ def make_asg(channel=1):
         set_VALUE_OFFSET = 0x00
         set_DATA_OFFSET = 0x10000
         set_default_output_direct = 'off'
-        set_name = 'asg1'
+        set_name = 'asg0'
     else:
         set_DATA_OFFSET = 0x20000
         set_VALUE_OFFSET = 0x20
         set_BIT_OFFSET = 16
         set_default_output_direct = 'off'
-        set_name = 'asg2'
+        set_name = 'asg1'
 
     class Asg(HardwareModule):
         widget_class = AsgWidget
@@ -117,9 +117,9 @@ def make_asg(channel=1):
             self._counter_wrap = 0x3FFFFFFF  # correct value unless you know better
             self._writtendata = np.zeros(self.data_length)
             if self._BIT_OFFSET == 0:
-                self._dsp = DspModule(self._rp, name='asg1')
+                self._dsp = DspModule(self._rp, name='asg0')
             else:
-                self._dsp = DspModule(self._rp, name='asg2')
+                self._dsp = DspModule(self._rp, name='asg1')
             self.output_directs = self._dsp.output_directs
             self.waveform = 'sin'
             self.trigger_source = 'immediately'
