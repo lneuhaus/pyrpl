@@ -231,7 +231,7 @@ class SelectAttribute(BaseAttribute):
         super(SelectAttribute, self).__init__(default=default, doc=doc)
         # self.options = sorted(options) # usually, the user will pass a dictkeys object, which is not ordered and tricky
                                        # to index
-        self._starting_options = options
+        self._starting_options = sorted(options)
 
     def options(self, instance):
         """
@@ -250,7 +250,7 @@ class SelectAttribute(BaseAttribute):
           - Update of the ComboxBox is performed behind a signal-slot mechanism to be thread-safe
           - If the current value is not in the new_options, then value is changed to some available option
         """
-        setattr(instance, '__' + self.name + '_' + 'options', new_options)
+        setattr(instance, '__' + self.name + '_' + 'options', sorted(new_options))
         instance.signal_launcher.change_options.emit(self.name, new_options)
         if not getattr(instance, self.name) in new_options:
             if len(new_options)>0:

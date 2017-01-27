@@ -414,9 +414,9 @@ class SpectrumAnalyzer(SoftwareModule):
         middle = int(self.data_length / 2)
         length = self.points  # self.data_length/self.nyquist_margin
         if self.baseband:
-            return slice(middle, middle + length / 2 + 1)
+            return slice(middle, int(middle + length / 2 + 1))
         else:
-            return slice(middle - length/2, middle + length/2 + 1)
+            return slice(int(middle - length/2), int(middle + length/2 + 1))
 
     def curve(self):
         """

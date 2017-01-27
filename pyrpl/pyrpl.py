@@ -396,5 +396,8 @@ class Pyrpl(object):
         kill all timers and closes the connection to the redpitaya
         """
         self.kill_timers()
+        if self.widget is not None:
+            self.widget.deleteLater()
         self.rp.end()
+        APP.processEvents() # do the job of actually destroying the widgets
 
