@@ -15,6 +15,12 @@ class FPReflection(InputDirect):
     def expected_signal(self, variable):
         return self.max - (self.max - self.min) * self.model.lorentz(variable)
 
+class InputFromOutput(InputDirect):
+    section_name = 'input_from_output'
+
+    def expected_signal(self, variable):
+        return variable
+
 
 class InputPdh(InputIQ):
     section_name = 'pdh'
@@ -157,11 +163,11 @@ class ITempProperty(FloatProperty):
         module.pid_temp.i = val
 
 
-class FabryPerotTemperatureControl(FabryPerot):
+class FabryPerotTemperatureControlOld(FabryPerot):
     # optional
     # input_cls = [HighFinesseReflection, HighFinesseTransmission,
     #             HighFinessePdh]
-    name = "FabryPerotTemperatureControl"
+    name = "FabryPerotTemperatureControlOld"
     gui_attributes = ["wavelength", "finesse", "length", 'eta']\
         + ['p_temp', 'i_temp']
     setup_attributes = gui_attributes
@@ -186,3 +192,12 @@ class FabryPerotTemperatureControl(FabryPerot):
         self.pid_temp.ival = 0
         self.pid_temp.p = 0
         self.pid_temp.i = 0
+
+class FabryPerotTemperatureControl(FabryPerot):
+    name = "FabryPerotTemperatureControl"
+    input_cls = FabryPerot.input_cls + [InputFromOutput]
+
+    def lock_temperature(self, factor):
+        self.pyrpl.lockbox.out_temp.lock(
+            input='input_from_output',
+            variable_value=0)
