@@ -282,7 +282,7 @@ class OutputSignal(Signal):
         self.mode = 'lock'
         self.update_pid_gains(input, variable_value, factor=factor)
         self.pid.input = input.signal()
-        self.pid.output_direct = self.output_channel
+        self._set_output()
 
     @property
     def is_locked(self):
