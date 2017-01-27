@@ -14,15 +14,13 @@ class Sequence(SoftwareModule):
     def init_module(self):
         self.stages = []
         self.lockbox = self.parent
-        self.add_stage()
 
     def get_unique_stage_name(self):
         idx = len(self.stages) + 1
-        'stage' + str(idx) in self.stage_names
         name = 'stage' + str(idx)
         while name in self.stage_names:
             idx+=1
-            name = 'stage' + str(idx) in self.stage_names
+            name = 'stage' + str(idx)
         return name
 
     @property
@@ -32,6 +30,14 @@ class Sequence(SoftwareModule):
     def add_stage(self):
         """
         Stages can be added at will.
+        """
+        stage = self._add_stage_no_save()
+        stage.name = stage.name  # triggers a save in the config file...
+        return stage
+
+    def _add_stage_no_save(self):
+        """
+        Adds a stage in the sequence without touching the config file
         """
         stage = Stage(self)
         stage._autosave_active = False
@@ -54,10 +60,14 @@ class Sequence(SoftwareModule):
         #    self.widget.update_stage_names()
 
     def remove_stage(self, stage, allow_last_stage=False):
+        if isinstance(stage, basestring):
+            stage = self.get_stage(stage)
         if not allow_last_stage:
             if len(self.stages)<=1:
                 raise ValueError("At least one stage should remain in the sequence")
         self.stages.remove(stage)
+        if hasattr(self, stage.name):
+            delattr(self, stage.name)
         if "stages" in self.c._keys():
             if stage.name in self.c.stages._keys():
                 self.c.stages._pop(stage.name)
@@ -81,7 +91,7 @@ class Sequence(SoftwareModule):
             if 'stages' in self.c._dict.keys():
                 for name, stage in self.c.stages._dict.items():
                     if name!='states':
-                        stage = self.add_stage()
+                        stage = self._add_stage_no_save() # don't make a duplicate entry in the config file
                         stage._autosave_active = False
                         self.rename_stage(stage, name)
                         stage.load_setup_attributes()
@@ -113,6 +123,14 @@ class Sequence(SoftwareModule):
     def update_inputs(self):
         for stage in self.stages:
             stage.update_inputs()
+
+    def get_stage(self, name):
+        """
+        retieves a stage by name
+        """
+        if not name in self.stage_names:
+            raise ValueError(stage_name + " is not a valid stage name")
+        return self.stages[self.stage_names.index(name)]
 
 
 class StageNameProperty(StringProperty):

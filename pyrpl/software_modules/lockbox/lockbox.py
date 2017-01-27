@@ -152,6 +152,8 @@ class Lockbox(SoftwareModule):
         """
         Outputs of the lockbox are added dynamically (for now, inputs are defined by the model).
         """
+        if self.pyrpl.pids.n_available()<1:
+            raise ValueError("All pids are currently in use. Cannot create any more outputs.")
         output = OutputSignal(self)
         output.name = self.get_unique_output_name()
         self.outputs.append(output)
@@ -175,9 +177,11 @@ class Lockbox(SoftwareModule):
         Removes and clear output from the list of outputs. if allow_remove_last is left to False, an exception is raised
         when trying to remove the last output.
         """
+        if isinstance(output, basestring):
+            output = self.get_output(output)
         if not allow_remove_last:
             if len(self.outputs)<=1:
-                raise ValueError("There has to be at list one output.")
+                raise ValueError("There has to be at least one output.")
         if hasattr(self, output.name):
             delattr(self, output.name)
         output.clear()
@@ -237,7 +241,7 @@ class Lockbox(SoftwareModule):
         """
         adds a stage to the lockbox sequence
         """
-        self.sequence.add_stage()
+        return self.sequence.add_stage()
 
     def remove_stage(self, stage):
         """
@@ -246,6 +250,8 @@ class Lockbox(SoftwareModule):
         self.sequence.remove_stage(stage)
 
     def rename_stage(self, stage, new_name):
+        if new_name in self.stage_names and self.get_stage(new_name)!=stage:
+            raise ValueError("Name %s already exists for a stage"%new_name)
         if hasattr(self.sequence, stage.name):
             delattr(self.sequence, stage.name)
         setattr(self.sequence, new_name, stage)
@@ -253,6 +259,9 @@ class Lockbox(SoftwareModule):
             stage.c._rename(new_name)
         stage._name = new_name
         self.signal_launcher.stage_renamed.emit()
+
+    def remove_all_stages(self):
+        self.sequence.remove_all_stages()
 
     def unlock(self):
         """
@@ -369,9 +378,7 @@ class Lockbox(SoftwareModule):
         """
         retieves a stage by name
         """
-        if not name in self.stage_names:
-            raise ValueError(stage_name + " is not a valid stage name")
-        return self.sequence.stages[self.stage_names.index(name)]
+        return self.sequence.get_stage(name)
 
     def calibrate_all(self):
         """

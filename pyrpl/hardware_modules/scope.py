@@ -56,7 +56,7 @@ class DurationAttribute(SelectAttribute):
     def validate_and_normalize(self, value, module):
         # gets next value, to be replaced with next-higher value
         value = float(value)
-        return min([opt for opt in self.options], key=lambda x: abs(x - value))
+        return min([opt for opt in self.options(module)], key=lambda x: abs(x - value))
 
     def set_value(self, instance, value):
         """sets returns the duration of a full scope sequence
@@ -90,7 +90,7 @@ class SamplingTimeAttribute(SelectAttribute):
     def validate_and_normalize(self, value, module):
         # gets next value, to be replaced with next-lower value
         value = float(value)
-        return min([opt for opt in self.options], key=lambda x: abs(x - value))
+        return min([opt for opt in self.options(module)], key=lambda x: abs(x - value))
 
     def set_value(self, instance, value):
         """sets or returns the time separation between two subsequent points of a scope trace

@@ -52,6 +52,22 @@ class ModuleManager(SoftwareModule):
         if module.owner is not None:
             module.owner = None
 
+    def n_modules(self):
+        """
+        returns the total number of modules
+        """
+        return len(self.all_modules)
+
+    def n_available(self):
+        """
+        returns the number of modules still available
+        """
+        total = 0
+        for module in self.all_modules:  # start with largest index module
+            if module.owner is None:
+                total += 1
+        return total
+
     @property
     def c(self):
         # no config file section for ModuleManagers

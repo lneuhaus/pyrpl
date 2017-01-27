@@ -1089,6 +1089,9 @@ class SelectAttributeWidget(BaseAttributeWidget):
         """
         Sets the gui value from the current module value
         """
+        if len(getattr(self.module.__class__, self.name).options(self.module))==0: # None is OK if no options are available
+            if new_value is None:
+                return
         index = list(self.options).index(new_value)
         self.widget.setCurrentIndex(index)
 

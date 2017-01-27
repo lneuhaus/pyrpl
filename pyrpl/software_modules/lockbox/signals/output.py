@@ -148,9 +148,9 @@ class OutputSignal(Signal):
     # unit = SelectProperty(options=[]) # options are updated each time the lockbox model is changed.
     is_sweepable = BoolProperty()
     assisted_design = AssistedDesignProperty()
-    sweep_amplitude = FloatProperty()
+    sweep_amplitude = FloatProperty(default=1.)
     sweep_offset = FloatProperty()
-    sweep_frequency = FrequencyProperty()
+    sweep_frequency = FrequencyProperty(default=50)
     sweep_waveform = SelectProperty(options=Asg1.waveforms)
     # gain for the conversion V-->model variable in *unit*
     dc_gain = FloatProperty(default=1.0, min=-1e10, max=1e10)
