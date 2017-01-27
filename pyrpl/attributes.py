@@ -29,6 +29,7 @@ logger = logging.getLogger(name=__name__)
 #needed to set floats to minimum count above zero
 epsilon = sys.float_info.epsilon
 
+
 class BaseAttribute(object):
     """An attribute is a field that can be set or get by several means:
       - programmatically: module.attribute = value
@@ -416,8 +417,6 @@ class ListFloatAttribute(BaseAttribute):
         if not np.iterable(value):
             value = [value]
         return [float(val) for val in value]
-
-
 
 
 class ListComplexAttribute(BaseAttribute):

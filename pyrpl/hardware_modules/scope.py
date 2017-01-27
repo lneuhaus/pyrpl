@@ -20,33 +20,6 @@ from PyQt4 import QtCore, QtGui
 data_length = 2 ** 14
 
 
-class TriggerDelayAttribute(FloatAttribute):
-    # def __init__(self, attr_name, doc=""):
-    #   super(TriggerDelay, self).__init__(attr_name, 0.001, doc=doc)
-
-    def get_value(self, obj, obj_type):
-        if obj is None:
-            return self
-        return (obj._trigger_delay - obj.data_length // 2) * obj.sampling_time
-
-    def set_value(self, obj, delay):
-        # memorize the setting
-        obj._trigger_delay_memory = delay
-        # convert float delay into counts
-        delay = int(np.round(delay / obj.sampling_time)) + obj.data_length // 2
-        # in mode "immediately", trace goes from 0 to duration,
-        # but trigger_delay_memory is not overwritten
-        if obj.trigger_source == 'immediately':
-            obj._trigger_delay = obj.data_length
-            return delay
-        if delay <= 0:
-            delay = 1  # bug in scope code: 0 does not work
-        elif delay > 2 ** 32 - 1:  # self.data_length-1:
-            delay = 2 ** 32 - 1  # self.data_length-1
-        obj._trigger_delay = delay
-        return delay
-
-
 class DurationAttribute(SelectAttribute):
     def get_value(self, instance, owner):
         if instance is None:
@@ -116,6 +89,33 @@ class TriggerSourceAttribute(SelectAttribute):
             instance._trigger_source_memory = value
             # passing between immediately and other sources possibly requires trigger delay change
             instance.trigger_delay = instance._trigger_delay_memory
+
+
+class TriggerDelayAttribute(FloatAttribute):
+    # def __init__(self, attr_name, doc=""):
+    #   super(TriggerDelay, self).__init__(attr_name, 0.001, doc=doc)
+
+    def get_value(self, obj, obj_type):
+        if obj is None:
+            return self
+        return (obj._trigger_delay - obj.data_length // 2) * obj.sampling_time
+
+    def set_value(self, obj, delay):
+        # memorize the setting
+        obj._trigger_delay_memory = delay
+        # convert float delay into counts
+        delay = int(np.round(delay / obj.sampling_time)) + obj.data_length // 2
+        # in mode "immediately", trace goes from 0 to duration,
+        # but trigger_delay_memory is not overwritten
+        if obj.trigger_source == 'immediately':
+            obj._trigger_delay = obj.data_length
+            return delay
+        if delay <= 0:
+            delay = 1  # bug in scope code: 0 does not work
+        elif delay > 2 ** 32 - 1:  # self.data_length-1:
+            delay = 2 ** 32 - 1  # self.data_length-1
+        obj._trigger_delay = delay
+        return delay
 
 
 class DspInputAttributeScope(DspInputAttribute):
@@ -285,7 +285,7 @@ class Scope(HardwareModule):
         # dsp_modules to understand
         self.inputs = self._ch1.inputs
         self._setup_called = False
-        self._trigger_source_memory = "immediately"
+        self._trigger_source_memory = 'off' # "immediately" #fixes bug with trigger_delay for 'immediate' at startup
         self._trigger_delay_memory = 0
 
     input1 = DspInputAttributeScope(1)
@@ -305,8 +305,8 @@ class Scope(HardwareModule):
                         "ch2_negative_edge": 5,
                         "ext_positive_edge": 6,  # DIO0_P pin
                         "ext_negative_edge": 7,  # DIO0_P pin
-                        "asg1": 8,
-                        "asg2": 9}
+                        "asg0": 8,
+                        "asg1": 9}
 
     curve_name = StringProperty('curve_name')
 
