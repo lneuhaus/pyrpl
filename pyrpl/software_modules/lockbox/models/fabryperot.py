@@ -22,14 +22,14 @@ class FabryPerot(Model):
     units = ['m', 'MHz', 'nm']
     gui_attributes = ["wavelength", "finesse", "length", 'eta']
     setup_attributes = gui_attributes
-    wavelength = FloatProperty(max=10000, min=0)
-    finesse = FloatProperty(max=1e7, min=0)
+    wavelength = FloatProperty(max=10000, min=0, default=1.064)
+    finesse = FloatProperty(max=1e7, min=0, default=10000)
     # approximate length (not taking into account small variations of the
     # order of the wavelength)
-    length = FloatProperty(max=10e12, min=0)
+    length = FloatProperty(max=10e12, min=0, default=10000)
     # eta is the ratio between input mirror transmission and the sum of
     # transmission and loss: T/(T+P)
-    eta = FloatProperty(min=0., max=1.)
+    eta = FloatProperty(min=0., max=1., default=1.)
     variable = 'detuning'
 
     input_cls = [FPTransmission, FPReflection, InputPdh]

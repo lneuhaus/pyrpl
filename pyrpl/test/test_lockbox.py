@@ -121,8 +121,30 @@ class TestClass(TestPyrpl):
         assert (hasattr(self.lockbox.sequence, 'bar'))
 
     def test_real_lock(self):
-        self.lockbox.remove_all_outputs()
+        pid = self.pyrpl.rp.pid1
+        pid.i = 0.1
+        pid.p = 0.1
         self.lockbox.remove_all_stages()
+        self.lockbox.remove_all_outputs()
+        self.lockbox.model_name = 'Linear'
         stage = self.lockbox.add_stage()
         out = self.lockbox.add_output()
-        
+        out.p = 0
+        out.i = -10.
+        stage.output_on = {"output1": (True, True, 1)}
+        self.lockbox.linear_input.input_channel = 'pid1'
+        out.output_channel = 'out1'
+        pid.input = 'out1'
+        stage.input = self.lockbox.linear_input
+        stage.variable_value = 0.1
+        self.lockbox.lock()
+        APP.processEvents()
+        mean, std = self.pyrpl.rp.sampler.mean_stddev('out1', 0.01)
+        assert(mean, std>0.9) # since out1 should start at 1 V
+        time.sleep(1.5)
+        mean, std = self.pyrpl.rp.sampler.mean_stddev('pid1', 0.01)
+        assert (abs(mean-0.1)<0.01)
+        assert (std<0.01)
+        mean, std = self.pyrpl.rp.sampler.mean_stddev('out1', 0.01)
+        assert (abs(mean) < 0.01)
+        assert (std<0.01)

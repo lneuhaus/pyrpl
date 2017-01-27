@@ -37,7 +37,9 @@ class SignalLauncherLockbox(SignalLauncher):
     output_renamed = QtCore.pyqtSignal()
     stage_created = QtCore.pyqtSignal(list)
     stage_deleted = QtCore.pyqtSignal(list)
-    stage_renamed = QtCore.pyqtSignal() # changes the
+    stage_renamed = QtCore.pyqtSignal()
+    model_changed = QtCore.pyqtSignal()
+    state_changed = QtCore.pyqtSignal()
 
     # state_changed = QtCore.pyqtSignal() # need to change the color of buttons in the widget
     # state is now a standard Property, signals are caught by the update_attribute_by_name function of the widget.
@@ -54,12 +56,11 @@ class Lockbox(SoftwareModule):
     model_name = ModelProperty(options=all_models.keys())
     auto_relock = BoolProperty()
     default_sweep_output = SelectProperty(options=[])
-    state = SelectProperty(options=[])
 
     def init_module(self):
         self.signal_launcher = SignalLauncherLockbox(self)
         self.outputs = []
-        self.__class__.default_sweep_output.change_options(self, ['dummy']) # dirty... something needs to be done with this attribute class
+        # self.__class__.default_sweep_output.change_options(self, ['dummy']) # dirty... something needs to be done with this attribute class
         self._asg = None
         self.inputs = []
         self.sequence = Sequence(self, 'sequence')
@@ -69,9 +70,6 @@ class Lockbox(SoftwareModule):
         self.timer_lock = QtCore.QTimer()
         self.timer_lock.timeout.connect(self.goto_next)
         self.timer_lock.setSingleShot(True)
-
-
-        self.add_output() # add at least one output
 
     @property
     def asg(self):
@@ -107,8 +105,7 @@ class Lockbox(SoftwareModule):
             raise ValueError("State should be either unlock, or a valid stage name")
         self._state = val
         # To avoid explicit reference to gui here, one could consider using a DynamicSelectAttribute...
-        if self.widget is not None:
-            self.widget.set_state(val)
+        self.signal_launcher.state_changed.emit()
         return val
 
     @property
@@ -154,10 +151,19 @@ class Lockbox(SoftwareModule):
         """
         Outputs of the lockbox are added dynamically (for now, inputs are defined by the model).
         """
+        output = self._add_output_no_save()
+        output.name = output.name # trigers the write in the config file
+        return output
+
+    def _add_output_no_save(self):
+        """
+        Adds and returns and output without touching the config file (useful when loading an output from the config
+        file)
+        """
         if self.pyrpl.pids.n_available()<1:
             raise ValueError("All pids are currently in use. Cannot create any more outputs.")
         output = OutputSignal(self)
-        output.name = self.get_unique_output_name()
+        output._name = self.get_unique_output_name() # doesn't trigger write in the config file
         self.outputs.append(output)
         setattr(self, output.name, output)
         # self.__class__.default_sweep_output.change_options([output.name for output in self.outputs])
@@ -278,8 +284,8 @@ class Lockbox(SoftwareModule):
         ### model should be redisplayed
         self.model = all_models[self.model_name](self)
         self.model.load_setup_attributes()
-        if self.widget is not None:
-            self.widget.change_model(self.model)
+        #if self.widget is not None:
+        #    self.widget.change_model(self.model)
 
         ### outputs are only slightly affected by a change of model: only the unit of their DC-gain might become
         ### obsolete, in which case, it needs to be changed to some value...
@@ -310,6 +316,8 @@ class Lockbox(SoftwareModule):
         ### update stages: keep outputs unchanged, when input doesn't exist anymore, change it.
         self.sequence.update_inputs()
 
+        self.signal_launcher.model_changed.emit()
+
     def load_setup_attributes(self):
         """
         This function needs to be overwritten to retrieve the child module attributes as well
@@ -320,7 +328,7 @@ class Lockbox(SoftwareModule):
             if 'outputs' in self.c._dict.keys():
                 for name, output in self.c.outputs._dict.items():
                     if name!='states':
-                        output = self.add_output()
+                        output = self._add_output_no_save()
                         output._autosave_active = False
                         self.rename_output(output, name)
                         output.load_setup_attributes()

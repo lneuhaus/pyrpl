@@ -22,7 +22,7 @@ class Inteferometer(Model):
     name = "Interferometer"
     section_name = "interferometer"
     units = ['m', 'deg', 'rad']
-    wavelength = FloatProperty(max=10000, min=0)
+    wavelength = FloatProperty(max=10000, min=0, default=1.064)
     gui_attributes = ['wavelength']
     setup_attributes = gui_attributes
     variable = 'phase'

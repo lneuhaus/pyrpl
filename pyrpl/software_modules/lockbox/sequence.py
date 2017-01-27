@@ -76,7 +76,6 @@ class Sequence(SoftwareModule):
         #   self.widget.remove_stage(stage)
 
     def remove_all_stages(self):
-        print("removing all stages")
         to_remove = [] # never iterate on a list that s being deleted
         for stage in self.stages:
             to_remove.append(stage)

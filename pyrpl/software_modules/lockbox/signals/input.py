@@ -3,6 +3,7 @@ from pyrpl.modules import SoftwareModule
 from . import Signal
 from pyrpl.attributes import SelectAttribute, SelectProperty, FloatProperty, FrequencyProperty, PhaseProperty
 from pyrpl.widgets.module_widgets import LockboxInputWidget
+from pyrpl.hardware_modules.dsp import DSP_INPUTS
 
 import scipy
 import numpy as np
@@ -21,7 +22,8 @@ class InputSignal(SoftwareModule):
     section_name = 'input'  # name of the input
     gui_attributes = ["input_channel"]
     setup_attributes = gui_attributes + ["min", "max", "mean", "rms"]
-    input_channel = SelectProperty(options=['in1', 'in2']) # adc
+    input_channel = SelectProperty(options=sorted(DSP_INPUTS.keys())) # ['in1', 'in2']) # adc
+    # Is it desirable to be allowed to select any internal signal?
     model_cls = None # Model class to which this input belongs.
     widget_class = LockboxInputWidget
     min = FloatProperty()
@@ -184,6 +186,14 @@ class InputDirect(InputSignal):
 
     def signal(self):
         return self.input_channel
+
+
+#class InputInternal(InputSignal): # Maybe the hierarchy should be the opposite...
+#    section_name = 'internal_signal'
+#    input_channel = SelectProperty(options=sorted(DSP_INPUTS.keys()))
+#
+#    def signal(self):
+#        return self.input_channel
 
 
 class PdhFrequencyProperty(FrequencyProperty):

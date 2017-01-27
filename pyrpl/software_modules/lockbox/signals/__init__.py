@@ -11,4 +11,4 @@ class Signal(SoftwareModule): # with_metaclass(NameAttributesMetaClass, object)
     pass
 
 from .output import OutputSignal
-from .input import InputSignal
+from .input import InputSignal, InputPdh

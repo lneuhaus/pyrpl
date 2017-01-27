@@ -672,27 +672,32 @@ class LockboxWidget(ModuleWidget):
     ## Output Management
     def output_renamed(self):
         """
+        SLOT: don't change name unless you know what you are doing
         Refresh all output name tabs in the widget
         """
         self.all_sig_widget.update_output_names()
 
     def output_created(self, outputs):
         """
+        SLOT: don't change name unless you know what you are doing
         Adds an output to the widget,  outputs is a singleton [outpout]
         """
         self.all_sig_widget.add_output(outputs[0])
 
     def output_deleted(self, outputs):
         """
+        SLOT: don't change name unless you know what you are doing
         Removes an output to the widget, outputs is a singleton [outpout]
         """
         self.all_sig_widget.remove_output(outputs[0])
 
     ## Model management
-    def change_model(self, model):
+    def model_changed(self):
         """
+        SLOT: don't change name unless you know what you are doing
         displays the new model
         """
+        model = self.module.model
         self.model_widget.hide()
         self.main_layout.removeWidget(self.model_widget)
         self.model_widget.deleteLater()
@@ -703,21 +708,31 @@ class LockboxWidget(ModuleWidget):
     ## Sequence Management
     def stage_created(self, stages):
         """
+        SLOT: don't change name unless you know what you are doing
         Adds a new stage to the widget (stages is a singleton [stage])
         """
         self.sequence_widget.add_stage(stages[0])
 
     def stage_deleted(self, stages):
         """
+        SLOT: don't change name unless you know what you are doing
         Removes a stage to the model (stages is a singleton [stage])
         """
         self.sequence_widget.remove_stage(stages[0])
 
     def stage_renamed(self):
         """
+        SLOT: don't change name unless you know what you are doing
         Redisplay all names of stages
         """
         self.sequence_widget.update_stage_names()
+
+    def state_changed(self):
+        """
+        SLOT: don't change name unless you know what you are doing
+        Basically painting some button in green is required
+        """
+        self.set_state(self.module.state)
 
     def set_state(self, val):
         if val=='unlock':

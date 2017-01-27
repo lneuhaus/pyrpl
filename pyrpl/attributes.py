@@ -93,7 +93,12 @@ class BaseAttribute(object):
     def __get__(self, instance, owner):
         if instance is None:
             return self
-        val = self.get_value(instance, owner)
+        try:
+            get_value = self.get_value
+        except AttributeError as e:
+            raise NotImplementedError("The attribute %s doesn't have a method get_value. Did you use an Attribute "
+                                      "instead of a Property?"%self.name)
+        val = get_value(instance, owner)
         return val
 
     def launch_signal(self, module, new_value):
