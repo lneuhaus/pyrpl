@@ -55,7 +55,12 @@ def sos2zpk(sos):
     p = np.empty(n_sections*2, np.complex128)
     k = 1.
     for section in range(n_sections):
-        zpk = sig.tf2zpk(sos[section, :3], sos[section, 3:])
+        b, a = sos[section, :3], sos[section, 3:]
+        # remove leading zeros from numerator to avoid badcoefficient warning in scipy.signal.normaize
+        while b[0] == 0:
+            b = b[1:]
+        # convert to transfer function
+        zpk = sig.tf2zpk(b, a)
         z[2*section:2*(section+1)] = zpk[0]
         p[2*section:2*(section+1)] = zpk[1]
         k *= zpk[2]
@@ -701,10 +706,10 @@ class IirFilter(object):
         if len(realp) % 2 != 0:
             realp.append(0)
             realr.append(0)
-        #realp = np.asarray(np.real(realp), dtype=np.float64)
-        #realr = np.asarray(np.real(realr), dtype=np.float64)
-        realp = np.asarray((realp), dtype=np.float64)
-        realr = np.asarray((realr), dtype=np.float64)
+        realp = np.asarray(np.real(realp), dtype=np.float64)
+        realr = np.asarray(np.real(realr), dtype=np.float64)
+        # realp = np.asarray((realp), dtype=np.float64)
+        # realr = np.asarray((realr), dtype=np.float64)
 
         # implement coefficients - order is the one from specification of poles
         # Some kind of sorting should be implemented but not clear which one.
@@ -744,6 +749,7 @@ class IirFilter(object):
             if (c[0:3] == 0).all():
                 ranks.append(0)
             else:
+
                 z, p, k = sos2zpk([c])
                 # compute something proportional to the frequency of the pole
                 ppp = [np.abs(np.log(pp)) for pp in p if pp != 0]
