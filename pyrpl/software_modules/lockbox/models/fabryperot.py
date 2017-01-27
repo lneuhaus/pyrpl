@@ -20,7 +20,7 @@ class InputPdh(InputIQ):
     section_name = 'pdh'
 
     def expected_signal(self, variable):
-        return 0.5 * (self.max - self.min) \
+        return 0.5 * (self.max + self.min) \
                + 0.5 * (self.max - self.min)\
                  * self._pdh_normalized(variable,
                                         sbfreq=self.mod_freq,
