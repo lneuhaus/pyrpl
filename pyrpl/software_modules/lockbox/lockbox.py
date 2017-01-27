@@ -40,6 +40,8 @@ class SignalLauncherLockbox(SignalLauncher):
     stage_renamed = QtCore.pyqtSignal()
     model_changed = QtCore.pyqtSignal()
     state_changed = QtCore.pyqtSignal()
+    add_input = QtCore.pyqtSignal(list)
+    remove_input = QtCore.pyqtSignal(list)
 
     # state_changed = QtCore.pyqtSignal() # need to change the color of buttons in the widget
     # state is now a standard Property, signals are caught by the update_attribute_by_name function of the widget.
@@ -356,18 +358,13 @@ class Lockbox(SoftwareModule):
 
     def _remove_input(self, input):
         input.clear()
-        if self.widget is not None:
-            self.widget.remove_input(input)
         self.inputs.remove(input)
+        self.signal_launcher.remove_input.emit([input])
 
     def _add_input(self, input):
         self.inputs.append(input)
         setattr(self, input.name, input)
-        if self.widget is not None:
-            # Since adding/removing inputs corresponds to dynamic creation of Modules, our attribute's based way of
-            # hiding gui update is not effective. Since this is a highly exceptional situation, I don't find it too
-            # bad.
-            self.widget.add_input(input)
+        self.signal_launcher.add_input.emit([input])
 
     def _setup(self):
         """

@@ -657,17 +657,19 @@ class LockboxWidget(ModuleWidget):
         self.setLayout(self.main_layout)
 
     ## Input Management
-    def add_input(self, input):
+    def add_input(self, inputs):
         """
+        SLOT: don't change name unless you know what you are doing
         Adds an input to the widget
         """
-        self.all_sig_widget.add_input(input)
+        self.all_sig_widget.add_input(inputs[0])
 
-    def remove_input(self, input):
+    def remove_input(self, inputs):
         """
+        SLOT: don't change name unless you know what you are doing
         Remove an input to the widget
         """
-        self.all_sig_widget.remove_input(input)
+        self.all_sig_widget.remove_input(inputs[0])
 
     ## Output Management
     def output_renamed(self):
@@ -695,7 +697,7 @@ class LockboxWidget(ModuleWidget):
     def model_changed(self):
         """
         SLOT: don't change name unless you know what you are doing
-        displays the new model
+        displays the new model (In particular, updates all inputs)
         """
         model = self.module.model
         self.model_widget.hide()
