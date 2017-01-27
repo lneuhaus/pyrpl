@@ -264,7 +264,6 @@ class InputIQ(InputDirect):
         """
         setup a PDH error signal using the attribute values
         """
-        print self.input_channel,"fffffffffffffffff"
         self.iq.setup(frequency=self.mod_freq,
                       amplitude=self.mod_amp,
                       phase=self.mod_phase,

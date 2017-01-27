@@ -20,9 +20,10 @@ class InputPdh(InputIQ):
     section_name = 'pdh'
 
     def expected_signal(self, variable):
-        return 0.5 * (self.max + self.min) \
-               + 0.5 * (self.max - self.min)\
-                 * self._pdh_normalized(variable,
+        offset = 0.5 * (self.max + self.min)
+        amplitude = 0.5 * (self.max - self.min)
+        # we neglect offset here because it should really be zero on resonance
+        return amplitude * self._pdh_normalized(variable,
                                         sbfreq=self.mod_freq,
                                         phase=0,
                                         eta=self.model.eta)
