@@ -95,6 +95,12 @@ class SignalLauncherNA(SignalLauncher):
         self.timer_point.timeout.connect(self.next_point)
         self.timer_point.start()
 
+    def kill_timers(self):
+        """
+        kill all timers
+        """
+        self.timer_point.stop()
+
     def next_point(self):
         if self.module.running_state in ['running_continuous', 'running_single']:
             x, y, amp = self.module.get_current_point()

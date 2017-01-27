@@ -13,7 +13,7 @@ class TestClass(TestPyrpl):
     def test_asg(self):
         if self.r is None:
             return
-        for asg in [self.r.asg1, self.r.asg2]:
+        for asg in [self.r.asg0, self.r.asg1]:
             asg.setup(frequency=12345.)
             expect = 1. / 8191 * np.round(8191. * np.sin(
                 np.linspace(
@@ -28,7 +28,7 @@ class TestClass(TestPyrpl):
     def test_asg_to_scope(self):
         if self.r is None:
             return
-        for asg in [self.r.asg1, self.r.asg2]:
+        for asg in [self.r.asg0, self.r.asg1]:
             self.r.scope.duration = 0.1
             asg.setup(waveform='ramp',
                       frequency=1. / self.r.scope.duration,

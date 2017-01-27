@@ -18,7 +18,7 @@ class TestClass(TestPyrpl):
         extradelay = self.extradelay
         # shortcuts and na configuration
         na = self.pyrpl.na
-        for iq in [r.iq1, r.iq2, r.iq3]:
+        for iq in [r.iq0, r.iq1, r.iq2]:
             na._iq = iq
             na.setup(start_freq=3000, stop_freq=10e6, points=101, rbw=1000, avg=1,
                      # I reduced from 1001 to 101, is it normal that
@@ -213,7 +213,7 @@ class TestClass(TestPyrpl):
         # shortcut for na and bpf (bandpass filter)
         na = self.pyrpl.na
 
-        for bpf in [r.iq1, r.iq2]:
+        for bpf in [r.iq0, r.iq1]:
             plotdata = []
             # setup na for measurement
             na.setup(start_freq=300e3, stop_freq=700e3, points=51, rbw=1000, avg=3,

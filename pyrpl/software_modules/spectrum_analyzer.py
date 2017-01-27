@@ -167,6 +167,12 @@ class SignalLauncherSpectrumAnalyzer(SignalLauncher):
         self.timer_continuous.timeout.connect(self.check_for_curves)
         self.timer_continuous.setSingleShot(True)
 
+    def kill_timers(self):
+        """
+        kill all timers
+        """
+        self.timer_continuous.stop()
+
     def run_continuous(self):
         """
         periodically checks for curve.

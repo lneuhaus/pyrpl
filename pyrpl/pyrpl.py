@@ -384,3 +384,10 @@ class Pyrpl(object):
         self.widget = PyrplWidget(self)
         return self.widget
 
+    def kill_timers(self):
+        """
+        kill all timers
+        """
+        for module in self.modules:
+            module.signal_launcher.kill_timers()
+

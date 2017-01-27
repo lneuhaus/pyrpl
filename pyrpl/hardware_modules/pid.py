@@ -32,6 +32,12 @@ class SignalLauncherPid(SignalLauncher):
         self.timer_ival.setSingleShot(False)
         self.timer_ival.start()
 
+    def kill_timers(self):
+        """
+        kill all timers
+        """
+        self.timer_ival.stop()
+
 
 class Pid(FilterModule):
     section_name = 'pid'
