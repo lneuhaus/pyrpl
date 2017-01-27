@@ -44,6 +44,7 @@ class SignalLauncherLockbox(SignalLauncher):
     state_changed = QtCore.pyqtSignal()
     add_input = QtCore.pyqtSignal(list)
     remove_input = QtCore.pyqtSignal(list)
+    update_transfer_function = QtCore.pyqtSignal(list)
 
     def __init__(self, module):
         super(SignalLauncherLockbox, self).__init__(module)

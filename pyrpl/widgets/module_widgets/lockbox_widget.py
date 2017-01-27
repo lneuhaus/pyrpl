@@ -523,6 +523,10 @@ class AllSignalsWidget(QtGui.QTabWidget):
     def remove_input(self, input):
         self.inputs_widget.remove_input(input)
 
+    def update_transfer_function(self, output):
+        if output.widget in self.output_widgets:
+            output.widget.update_transfer_function()
+
 
 class MyCloseButton(QtGui.QPushButton):
     def __init__(self, parent=None):
@@ -655,6 +659,13 @@ class LockboxWidget(ModuleWidget):
         self.main_layout.addWidget(self.sequence_widget)
         self.main_layout.addStretch(5)
         self.setLayout(self.main_layout)
+
+    def update_transfer_function(self, outputs):
+        """
+        SLOT: don't change name unless you know what you are doing
+        updates the plot of the transfer function for output outputs[0]
+        """
+        self.all_sig_widget.update_transfer_function(outputs[0])
 
     ## Input Management
     def add_input(self, inputs):

@@ -23,6 +23,7 @@ class GainProperty(FloatProperty):
         if instance.mode == 'lock':
             instance.update_pid_gains(instance.current_input_lock,
                                       instance.current_variable_value)
+        instance.lockbox.signal_launcher.update_transfer_function.emit([instance])
     # def launch_signal(self, module, new_value_list):
     #     super(ProportionalGainProperty, self).launch_signal(module,
     #         new_value_list)
@@ -48,6 +49,7 @@ class AdditionalFilterAttribute(FilterAttribute):
 
     def set_value(self, instance, value):
         instance.pid.inputfilter = value
+        instance.lockbox.signal_launcher.update_transfer_function.emit([instance])
 
     #def launch_signal(self, module, new_value_list):
     #    super(AdditionalFilterAttribute, self).launch_signal(module, new_value_list)
@@ -77,6 +79,7 @@ class AnalogFilterProperty(ListFloatProperty):
     def set_value(self, obj, val):
         super(AnalogFilterProperty, self).set_value(obj, val)
         obj.assisted_gain_updated()
+        obj.lockbox.signal_launcher.update_transfer_function.emit([obj])
 
 
 class UnityGainProperty(FrequencyProperty):
@@ -88,6 +91,7 @@ class UnityGainProperty(FrequencyProperty):
 class TfTypeProperty(SelectProperty):
     def set_value(self, obj, val):
         super(TfTypeProperty, self).set_value(obj, val)
+        obj.lockbox.signal_launcher.update_transfer_function.emit([obj])
 
     #def launch_signal(self, module, new_value_list):
         #super(TfTypeProperty, self).launch_signal(module, new_value_list)
@@ -168,6 +172,7 @@ class OutputSignal(Signal):
     tf_curve = TfCurveProperty()
 
     def init_module(self):
+        self.lockbox = self.parent
         self.display_name = "my_output"
         self._pid = None
         self._mode = "unlock"
@@ -175,7 +180,6 @@ class OutputSignal(Signal):
         self.current_input_lock = None
         self.current_variable_value = 0
         self.current_variable_slope = 0
-        self.lockbox = self.parent
         self.name = 'output'  # will be updated in add_output of parent module
 
  #   @property

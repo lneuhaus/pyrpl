@@ -71,7 +71,7 @@ class TestPyrpl(TestRedpitaya):
         # delete the configfile
         os.remove(self.pyrpl.c._filename)
         while os.path.exists(self.pyrpl.c._filename):
-            pass # make sure the file is really gone before proceeding further
+            pass  # make sure the file is really gone before proceeding further
 
 
 class TestMyPyrpl(TestPyrpl):
