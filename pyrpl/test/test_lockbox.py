@@ -76,7 +76,6 @@ class TestClass(TestPyrpl):
 
     def test_create_stage(self):
         old_len = len(self.lockbox.sequence.stages)
-
         widget = self.lockbox.create_widget()
         self.lockbox.add_stage()
         assert len(self.lockbox.sequence.stages) == old_len + 1

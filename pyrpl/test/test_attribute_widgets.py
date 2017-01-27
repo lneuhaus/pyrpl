@@ -24,9 +24,10 @@ class DummyModule(SoftwareModule):
 class TestClass(TestPyrpl):
     source_config_file = "tests_source_dummy_module"
 
-    def test_module_attributes(self):
+    def test_config_file(self):
         assert("DummyModule" in self.pyrpl.c.pyrpl.modules)
-        return
+
+    def test_dummy_module(self):
         assert(isinstance(self.pyrpl.dummy_module.true_or_false, bool))
         assert(isinstance(self.pyrpl.dummy_module.some_number, float))
         assert(isinstance(self.pyrpl.dummy_module.some_filter, numbers.Number)) #should this be a list ?

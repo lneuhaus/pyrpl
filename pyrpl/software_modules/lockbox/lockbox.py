@@ -280,6 +280,7 @@ class Lockbox(SoftwareModule):
             delattr(self.sequence, stage.name)
         setattr(self.sequence, new_name, stage)
         if stage._autosave_active:
+            stage.c # make sure stage config section is created ?
             stage.c._rename(new_name)
         stage._name = new_name
         self.signal_launcher.stage_renamed.emit()

@@ -5,6 +5,13 @@ __version__ = "0.9.0.0"
 
 
 # set up the logging level at the root module as configured in 'config/global_config.yml'
+import warnings
+import numpy as np
+from scipy.signal import BadCoefficients
+warnings.simplefilter("ignore", np.VisibleDeprecationWarning) # pyqtgraph is throwing a warning on ScatterPlotItem
+warnings.simplefilter("error", np.ComplexWarning) # pyqtgraph is throwing a warning on ScatterPlotItem
+warnings.simplefilter("error", BadCoefficients)
+
 import logging
 logger = logging.getLogger(name=__name__)
 logger.setLevel(logging.ERROR)  # only show errors until userdefine log level is set up

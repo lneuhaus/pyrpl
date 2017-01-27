@@ -45,7 +45,7 @@ class TestPyrpl(TestRedpitaya):
         #    self.r = None
         #else:
         self.pyrpl = Pyrpl(config="tests_temp",
-                               source=self.source_config_file)
+                           source=self.source_config_file)
         self.r = self.pyrpl.rp
 
     @classmethod
@@ -70,6 +70,8 @@ class TestPyrpl(TestRedpitaya):
         self.pyrpl.end() # rp.end()
         # delete the configfile
         os.remove(self.pyrpl.c._filename)
+        while os.path.exists(self.pyrpl.c._filename):
+            pass # make sure the file is really gone before proceeding further
 
 
 class TestMyPyrpl(TestPyrpl):
