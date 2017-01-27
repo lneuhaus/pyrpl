@@ -391,3 +391,10 @@ class Pyrpl(object):
         for module in self.modules:
             module.signal_launcher.kill_timers()
 
+    def end(self):
+        """
+        kill all timers and closes the connection to the redpitaya
+        """
+        self.kill_timers()
+        self.rp.end()
+
