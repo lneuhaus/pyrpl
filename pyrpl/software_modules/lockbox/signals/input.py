@@ -23,7 +23,7 @@ class InputSignal(SoftwareModule):
     section_name = 'input'  # name of the input
     gui_attributes = ["input_channel"]
     setup_attributes = gui_attributes + ["min", "max", "mean", "rms"]
-    input_channel = SelectProperty(options=sorted(DSP_INPUTS.keys())) # ['in1', 'in2']) # adc
+    input_channel = SelectProperty(options=sorted(DSP_INPUTS.keys()))  # ['in1', 'in2']) # adc
     # Is it desirable to be allowed to select any internal signal?
     model_cls = None # Model class to which this input belongs.
     widget_class = LockboxInputWidget
@@ -264,6 +264,7 @@ class InputIQ(InputDirect):
         """
         setup a PDH error signal using the attribute values
         """
+        print self.input_channel,"fffffffffffffffff"
         self.iq.setup(frequency=self.mod_freq,
                       amplitude=self.mod_amp,
                       phase=self.mod_phase,

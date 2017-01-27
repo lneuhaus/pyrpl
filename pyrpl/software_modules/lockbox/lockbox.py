@@ -87,7 +87,6 @@ class Lockbox(SoftwareModule):
         # self.add_output() # adding it now creates problem when loading an output named "output1". It is eventually
         # added inside (after) load_setup_attribute
 
-
     @property
     def asg(self):
         if self._asg==None:
@@ -329,6 +328,7 @@ class Lockbox(SoftwareModule):
                 input = cls(self, name)
                 self._add_input(input)
                 input.load_setup_attributes()
+                input.setup()
 
         ### update stages: keep outputs unchanged, when input doesn't exist anymore, change it.
         self.sequence.update_inputs()
