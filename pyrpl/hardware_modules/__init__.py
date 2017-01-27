@@ -24,7 +24,7 @@ from .dsp import DspModule, DSP_INPUTS, DspInputAttribute
 from .filter import FilterModule
 from .hk import HK
 from .scope import Scope
-from .asg import Asg1, Asg2
+from .asg import Asg0, Asg1
 from .pid import Pid
 from .sampler import Sampler
 from .aux_output import AuxOutput
