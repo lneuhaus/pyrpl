@@ -328,9 +328,12 @@ class MemoryTree(MemoryBranch):
         if self._data is None:  # empty file gives None
             self._data = OrderedDict()
         # update dict of the object
+        to_remove = []
         for name in self.__dict__:
             if not name.startswith('_') and name not in self._data:
-                self.__dict__.pop(name)
+                to_remove.append(name)
+        for name in to_remove:
+            self.__dict__.pop(name)
         self.__dict__.update(self._data)
         self._mtime = os.path.getmtime(self._filename)
         self._lastreload = time.time()

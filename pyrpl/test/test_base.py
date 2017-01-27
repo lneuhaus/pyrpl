@@ -38,6 +38,7 @@ class TestPyrpl(TestRedpitaya):
 
     @classmethod
     def setUpAll(self):
+        print("=======SETTING UP " + str(self.__class__) + " ===========")
         # these tests wont succeed without the hardware
         #if os.environ['REDPITAYA_HOSTNAME'] == 'unavailable':
         #    self.pyrpl = None
@@ -49,6 +50,7 @@ class TestPyrpl(TestRedpitaya):
 
     @classmethod
     def tearDownAll(self):
+        print("=======TEARING DOWN " + str(self.__class__) + " ===========")
         # none of the below stuff works properly, all introduce more errors...
         # shut down the gui if applicable
         # -> this requires some other functions

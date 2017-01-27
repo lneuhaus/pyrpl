@@ -35,6 +35,10 @@ from . import pyrpl_utils
 from .global_config import *
 from .software_modules import get_software_module
 
+from PyQt4 import QtCore, QtGui
+
+APP = QtGui.QApplication.instance()
+
 ## Something has to be done with this docstring... I would like to wait for lockbox to be implemented before doing it...
 """
 channels:
@@ -380,7 +384,6 @@ class Pyrpl(object):
         """
         Creates the top-level widget
         """
-
         self.widget = PyrplWidget(self)
         return self.widget
 

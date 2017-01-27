@@ -504,8 +504,8 @@ class AllSignalsWidget(QtGui.QTabWidget):
         self.insertTab(self.count() - 1, widget, widget.name)
 
     def remove_output(self, output):
-        tab_nr = self.output_widgets.index(output.widget) + 1  # count "inputs" tab
         if output.widget in self.output_widgets:
+            tab_nr = self.output_widgets.index(output.widget) + 1  # count "inputs" tab
             output.widget.hide()
             self.output_widgets.remove(output.widget)
             self.removeTab(tab_nr)
