@@ -123,7 +123,7 @@ class RedPitaya(object):
             pass
         self.parameters.update(kwargs)  # from class initialisation
         # optional: write configuration back to config file
-        self.c.redpitaya = self.parameters
+        self.c["redpitaya"]= self.parameters
 
         # save default port definition for possible automatic port change
         self.parameters['defaultport'] = self.parameters['port']

@@ -384,3 +384,20 @@ class Pyrpl(object):
         self.widget = PyrplWidget(self)
         return self.widget
 
+    def kill_timers(self):
+        """
+        kill all timers
+        """
+        for module in self.modules:
+            module.signal_launcher.kill_timers()
+
+    def end(self):
+        """
+        kill all timers and closes the connection to the redpitaya
+        """
+        self.kill_timers()
+        if self.widget is not None:
+            self.widget.deleteLater()
+        self.rp.end()
+        APP.processEvents() # do the job of actually destroying the widgets
+

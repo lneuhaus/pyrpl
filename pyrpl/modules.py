@@ -109,6 +109,12 @@ class SignalLauncher(QtCore.QObject):
         super(SignalLauncher, self).__init__()
         self.module = module
 
+    def kill_timers(self):
+        """
+        kill all timers
+        """
+        pass
+
     def connect_widget(self, widget):
         """
         Establishes all connections between the module and the widget by name.

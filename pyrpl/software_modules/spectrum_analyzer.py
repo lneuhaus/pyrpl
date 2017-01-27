@@ -167,6 +167,12 @@ class SignalLauncherSpectrumAnalyzer(SignalLauncher):
         self.timer_continuous.timeout.connect(self.check_for_curves)
         self.timer_continuous.setSingleShot(True)
 
+    def kill_timers(self):
+        """
+        kill all timers
+        """
+        self.timer_continuous.stop()
+
     def run_continuous(self):
         """
         periodically checks for curve.
@@ -408,9 +414,9 @@ class SpectrumAnalyzer(SoftwareModule):
         middle = int(self.data_length / 2)
         length = self.points  # self.data_length/self.nyquist_margin
         if self.baseband:
-            return slice(middle, middle + length / 2 + 1)
+            return slice(middle, int(middle + length / 2 + 1))
         else:
-            return slice(middle - length/2, middle + length/2 + 1)
+            return slice(int(middle - length/2), int(middle + length/2 + 1))
 
     def curve(self):
         """

@@ -15,7 +15,9 @@ def all_subclasses(cls):
     return cls.__subclasses__() + [g for s in cls.__subclasses__()
                                    for g in all_subclasses(s)]
     
-all_models = OrderedDict([(model.name, model) for model in all_subclasses(Model)])
+def all_models():
+    return OrderedDict([(model.name, model) for model in
+                                 all_subclasses(Model)])
 
 
 class ModelProperty(SelectProperty):
@@ -43,6 +45,18 @@ class SignalLauncherLockbox(SignalLauncher):
     add_input = QtCore.pyqtSignal(list)
     remove_input = QtCore.pyqtSignal(list)
 
+    def __init__(self, module):
+        super(SignalLauncherLockbox, self).__init__(module)
+        self.timer_lock = QtCore.QTimer()
+        self.timer_lock.timeout.connect(self.module.goto_next)
+        self.timer_lock.setSingleShot(True)
+
+    def kill_timers(self):
+        """
+        kill all timers
+        """
+        self.timer_lock.stop()
+
     # state_changed = QtCore.pyqtSignal() # need to change the color of buttons in the widget
     # state is now a standard Property, signals are caught by the update_attribute_by_name function of the widget.
 
@@ -55,7 +69,7 @@ class Lockbox(SoftwareModule):
     widget_class = LockboxWidget
     gui_attributes = ["model_name", "default_sweep_output", "auto_relock"]
     setup_attributes = gui_attributes
-    model_name = ModelProperty(options=all_models.keys())
+    model_name = ModelProperty(options=all_models().keys())
     auto_relock = BoolProperty()
     default_sweep_output = SelectProperty(options=[])
 
@@ -66,13 +80,10 @@ class Lockbox(SoftwareModule):
         self._asg = None
         self.inputs = []
         self.sequence = Sequence(self, 'sequence')
-        self.model_name = sorted(all_models.keys())[0]
+        self.__class__.model_name.change_options(self, sorted(all_models().keys()))
+        self.model_name = sorted(all_models().keys())[0]
         self.model_changed()
         self.state = "unlock"
-        self.timer_lock = QtCore.QTimer()
-        self.timer_lock.timeout.connect(self.goto_next)
-        self.timer_lock.setSingleShot(True)
-
         # self.add_output() # adding it now creates problem when loading an output named "output1". It is eventually
         # added inside (after) load_setup_attribute
 
@@ -128,9 +139,9 @@ class Lockbox(SoftwareModule):
             index = self.stage_names.index(self.state) + 1
         stage = self.stage_names[index]
         self.goto(stage)
-        self.timer_lock.setInterval(self.get_stage(stage).duration*1000)
+        self.signal_launcher.timer_lock.setInterval(self.get_stage(stage).duration*1000)
         if index + 1 < len(self.sequence.stages):
-            self.timer_lock.start()
+            self.signal_launcher.timer_lock.start()
 
     def goto(self, stage_name):
         """
@@ -282,13 +293,13 @@ class Lockbox(SoftwareModule):
         Unlocks all outputs, without touching the integrator value.
         """
         self.state = 'unlock'
-        self.timer_lock.stop()
+        self.signal_launcher.timer_lock.stop()
         for output in self.outputs:
             output.unlock()
 
     def model_changed(self):
         ### model should be redisplayed
-        self.model = all_models[self.model_name](self)
+        self.model = all_models()[self.model_name](self)
         self.model.load_setup_attributes()
         #if self.widget is not None:
         #    self.widget.change_model(self.model)

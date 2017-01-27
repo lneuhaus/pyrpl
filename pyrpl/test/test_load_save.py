@@ -15,7 +15,7 @@ class TestClass(TestPyrpl):
             if isinstance(val, basestring):
                 desc = getattr(mod.__class__, attr)
                 if isinstance(desc, SelectAttribute):
-                    val = desc.options[option_index]
+                    val = desc.options(mod)[option_index]
                 else:
                     val = str_val
             if isinstance(val, numbers.Number):

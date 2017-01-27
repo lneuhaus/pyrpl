@@ -63,7 +63,7 @@ class TestPyrpl(TestRedpitaya):
         # does not work now
         #del self.r.ssh
         # properly close the connections
-        self.pyrpl.rp.end()
+        self.pyrpl.end() # rp.end()
         # delete the configfile
         os.remove(self.pyrpl.c._filename)
 
