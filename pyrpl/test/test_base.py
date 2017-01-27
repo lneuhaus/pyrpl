@@ -45,7 +45,7 @@ class TestPyrpl(TestRedpitaya):
         #    self.r = None
         #else:
         self.pyrpl = Pyrpl(config="tests_temp",
-                           source=self.source_config_file)
+                               source=self.source_config_file)
         self.r = self.pyrpl.rp
 
     @classmethod
@@ -55,11 +55,11 @@ class TestPyrpl(TestRedpitaya):
         # shut down the gui if applicable
         # -> this requires some other functions
         # at least stop all acquisitions
-        self.pyrpl.na.stop()
-        self.pyrpl.scope.stop()
-        self.pyrpl.specan.stop()
-        for pid in self.pyrpl.pids.all_modules:
-            pid.widget.timer_ival.stop()
+        #self.pyrpl.na.stop()
+        #self.pyrpl.scope.stop()
+        #self.pyrpl.specan.stop()
+        #for pid in self.pyrpl.pids.all_modules:
+        #    pid.widget.timer_ival.stop() # Already done in self.pyrpl.end()
         # for now a workaround: prevent reconnection after closing of
         # the connection
         #self.r.parameters['hostname'] = 'unavailable'

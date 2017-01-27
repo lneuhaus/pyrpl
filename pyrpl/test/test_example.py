@@ -10,9 +10,9 @@ class TestClass(TestPyrpl):
             assert False
             
     def test_example2(self):
-        if self.r.asg1.frequency < 0:
+        if self.r.asg0.frequency < 0:
             assert False
     
     def test_example3(self):
-        if self.r.asg2.frequency < 0:
+        if self.r.asg1.frequency < 0:
             assert False

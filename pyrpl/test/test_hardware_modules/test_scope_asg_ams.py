@@ -86,7 +86,7 @@ class TestClass(TestPyrpl):
             return
         asg = self.r.asg1
         asg.setup(amplitude=0, offset=0)
-        for pwm in [self.r.pwm1, self.r.pwm2]:
+        for pwm in [self.r.pwm0, self.r.pwm1]:
             pwm.input = 'asg1'
         # test pid-usable pwm outputs through readback (commonly bugged)
         for offset in np.linspace(-1.5, 1.5, 20):
