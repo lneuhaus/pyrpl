@@ -16,10 +16,48 @@ class FPReflection(InputDirect):
         return self.max - (self.max - self.min) * self.model.lorentz(variable)
 
 
+class InputPdh(InputIQ):
+    section_name = 'pdh'
+
+    def expected_signal(self, variable):
+        return 0.5 * (self.max - self.min) \
+               + 0.5 * (self.max - self.min)\
+                 * self._pdh_normalized(variable,
+                                        sbfreq=self.mod_freq,
+                                        phase=0,
+                                        eta=self.model.eta)
+
+    def _pdh_normalized(self, x, sbfreq=10.0, phase=0, eta=1):
+        """  returns a pdh error signal at for a number of detunings x. """
+        # pdh only has appreciable slope for detunings between -0.5 and 0.5
+        # unless you are using it for very exotic purposes..
+        # incident beam: laser field
+        # a at x,
+        # 1j*a*rel at x+sbfreq
+        # 1j*a*rel at x-sbfreq
+        # in the end we will only consider cross-terms so the parameter rel will be normalized out
+        # all three fields incident on cavity
+        # eta is ratio between input mirror transmission and total loss (including this transmission),
+        # i.e. between 0 and 1. While there is a residual dependence on eta, it is very weak and
+        # can be neglected for all practical purposes.
+        # intracavity field a_cav, incident field a_in, reflected field a_ref    #
+        # a_cav(x) = a_in(x)*sqrt(eta)/(1+1j*x)
+        # a_ref(x) = -1 + eta/(1+1j*x)
+        def a_ref(x):
+            return 1 - eta / (1 + 1j * x)
+        # reflected intensity = abs(sum_of_reflected_fields)**2
+        # components oscillating at sbfreq: cross-terms of central lorentz with either sideband
+        i_ref = np.conjugate(a_ref(x)) * 1j * a_ref(x + sbfreq) \
+                + a_ref(x) * np.conjugate(1j * a_ref(x - sbfreq))
+        # we demodulate with phase phi, i.e. multiply i_ref by e**(1j*phase), and take the real part
+        # normalization constant is very close to 1/eta
+        return np.real(i_ref * np.exp(1j * phase)) / eta
+
+
 class FabryPerot(Model):
     name = "FabryPerot"
     section_name = "fabryperot"
-    units = ['m', 'MHz', 'nm']
+    units = ['m', 'Hz', 'nm', 'MHz']
     gui_attributes = ["wavelength", "finesse", "length", 'eta']
     setup_attributes = gui_attributes
     wavelength = FloatProperty(max=10000, min=0, default=1.064)
@@ -96,7 +134,6 @@ class HighFinessePdh(HighFinesseInput, InputPdh):
     acquire will be done in 2 steps (coarse, then fine)
     """
     section_name = 'hf_pdh'
-
     signal = InputPdh.signal
 
 
@@ -119,34 +156,22 @@ class ITempProperty(FloatProperty):
         module.pid_temp.i = val
 
 
-class FabryPerotTemperatureControl(Model):
+class FabryPerotTemperatureControl(FabryPerot):
+    # optional
+    # input_cls = [HighFinesseReflection, HighFinesseTransmission,
+    #             HighFinessePdh]
     name = "FabryPerotTemperatureControl"
-    section_name = "fabryperot"
-    units = ['m', 'MHz', 'nm']
-    gui_attributes = ["wavelength", "finesse", "length", 'eta', 'p_temp',
-                      'i_temp']
+    gui_attributes = ["wavelength", "finesse", "length", 'eta']\
+        + ['p_temp', 'i_temp']
     setup_attributes = gui_attributes
-    wavelength = FloatProperty(max=10000, min=0)
-    finesse = FloatProperty(max=1e7, min=0)
-    length = FloatProperty(max=10e12, min=0)
-    eta = FloatProperty(min=0., max=1.)
-    # p_temp = PTempProperty(max=1e6, min=-1e6)
-    # i_temp = ITempProperty(max=1e6, min=-1e6)
     p_temp = FloatProperty(max=1e6, min=-1e6)
     i_temp = FloatProperty(max=1e6, min=-1e6)
-    # approximate length (not taking into account small variations of the order of wavelength)
-    variable = 'detuning'
-
-    input_cls = [FPTransmission, FPReflection, InputPdh]
 
     def init_module(self):
         self.pid_temp = self.pyrpl.pids.pop('temperature_control')
         self.pwm_temp = self.pyrpl.rp.pwm1
         self.pwm_temp.input = self.pid_temp
         self.unlock_temperature(1.)
-
-    def lorentz(self, x):
-        return 1.0 / (1.0 + x ** 2)
 
     def lock_temperature(self, factor):
         self.pid_temp.output_direct = 'off'

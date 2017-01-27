@@ -5,23 +5,23 @@ from ..modules import HardwareModule
 from ..pyrpl_utils import sorted_dict
 
 DSP_INPUTS = sorted_dict(
-    pid1=0,
-    pid2=1,
-    pid3=2,
-    pid4=3,
+    pid0=0,
+    pid1=1,
+    pid2=2,
+    pid3=3,
     iir=4,
-    iq1=5,
-    iq2=6,
-    iq3=7,
-    asg1=8,
-    asg2=9,
-    # scope1 = 8, #same as asg1 by design
-    # scope2 = 9, #same as asg2 by design
+    iq0=5,
+    iq1=6,
+    iq2=7,
+    asg0=8,
+    asg1=9,
+    # scope0 = 8, #same as asg1 by design
+    # scope1 = 9, #same as asg2 by design
     in1=10, #same as asg
     in2=11,
     out1=12,
     out2=13,
-    iq3_2=14,
+    iq2_2=14,
     off=15)
 
 class DspInputAttribute(SelectAttribute):

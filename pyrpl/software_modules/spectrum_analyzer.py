@@ -311,11 +311,12 @@ class SpectrumAnalyzer(SoftwareModule):
     @property
     def iq(self):
         if self._iq is None:
-            self._iq = self.pyrpl.rp.iq3  # can't use the normal pop mechanism because we specifically want the customized iq2
+            self._iq = self.pyrpl.rp.iq2  # can't use the normal pop
+            # mechanism because we specifically want the customized iq2
             self._iq.owner = self.name
         return self._iq
 
-    iq_quadraturesignal = 'iq3_2'
+    iq_quadraturesignal = 'iq2_2'
 
     @property
     def data_length(self):

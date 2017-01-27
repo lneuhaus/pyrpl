@@ -71,6 +71,10 @@ class Lockbox(SoftwareModule):
         self.timer_lock.timeout.connect(self.goto_next)
         self.timer_lock.setSingleShot(True)
 
+        # self.add_output() # adding it now creates problem when loading an output named "output1". It is eventually
+        # added inside (after) load_setup_attribute
+
+
     @property
     def asg(self):
         if self._asg==None:
@@ -377,7 +381,6 @@ class Lockbox(SoftwareModule):
         retrieves an input by name
         """
         return self.inputs[[input.name for input in self.inputs].index(name)]
-
 
     def get_output(self, name):
         """
