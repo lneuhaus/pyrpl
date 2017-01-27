@@ -43,20 +43,19 @@ def get_unique_name_list_from_class_list(cls_list):
     # first, map from list of classes to a list of corresponding names
     # e.g. all_names = ['hk, ..., 'pwm', 'pwm', ...
     all_names = [cls.section_name for cls in cls_list]
-    # names_vs_occurence is a dict, e.g. {'hk': 1, 'pwm': 2}
-    names_vs_occurence = {name: all_names.count(name)-1 for name in all_names}
     final_names = []
     for name in all_names:
-        # count remaining occurences
-        occurences = names_vs_occurence[name]
-        names_vs_occurence[name] -= 1
-        # single modules have 0 more occurences and have not occured before
-        if occurences == 0 and not (name+'1' in final_names):
-            # single modules keep their name, e.g. 'hk'
+        # how many times does the name occur?
+        occurences = all_names.count(name)
+        if occurences == 1:
+            # for single names, leave as-is
             final_names.append(name)
         else:
-            # multiple modules are called 'pwm0', 'pwm1', ...
-            final_names.append(name+str(occurences))
+            # for multiple name, assign name+str(lowest_free_number)
+            for i in range(occurences):
+                if not name+str(i) in final_names:
+                    final_names.append(name+str(i))
+                    break
     return final_names
 
 

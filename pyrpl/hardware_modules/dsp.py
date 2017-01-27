@@ -24,6 +24,7 @@ DSP_INPUTS = sorted_dict(
     iq2_2=14,
     off=15)
 
+
 class DspInputAttribute(SelectAttribute):
     "selects the input signal of the module"
     def get_value(self, instance, owner):
