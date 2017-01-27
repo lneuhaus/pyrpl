@@ -168,7 +168,7 @@ class Lockbox(SoftwareModule):
         Outputs of the lockbox are added dynamically (for now, inputs are defined by the model).
         """
         output = self._add_output_no_save()
-        output.name = output.name # trigers the write in the config file
+        output.name = output.name  # trigers the write in the config file
         return output
 
     def _add_output_no_save(self):
@@ -182,9 +182,7 @@ class Lockbox(SoftwareModule):
         output._name = self.get_unique_output_name() # doesn't trigger write in the config file
         self.outputs.append(output)
         setattr(self, output.name, output)
-        # self.__class__.default_sweep_output.change_options([output.name for output in self.outputs])
         self.sequence.update_outputs()
-
         self.__class__.default_sweep_output.change_options(self, [out.name for out in self.outputs])
         """
         if self.widget is not None:
@@ -333,7 +331,6 @@ class Lockbox(SoftwareModule):
 
         ### update stages: keep outputs unchanged, when input doesn't exist anymore, change it.
         self.sequence.update_inputs()
-
         self.signal_launcher.model_changed.emit()
 
     def load_setup_attributes(self):
@@ -345,7 +342,7 @@ class Lockbox(SoftwareModule):
         if self.c is not None:
             if 'outputs' in self.c._dict.keys():
                 for name, output in self.c.outputs._dict.items():
-                    if name!='states':
+                    if name != 'states':
                         output = self._add_output_no_save()
                         output._autosave_active = False
                         self.rename_output(output, name)
