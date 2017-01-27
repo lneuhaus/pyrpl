@@ -56,7 +56,7 @@ defaultparameters = dict(
     silence_env=False)  # suppress all environment variables that may override the configuration?
 
 class RedPitaya(object):
-    cls_modules = [rp.HK, rp.AMS, rp.Scope, rp.Sampler, rp.Asg1, rp.Asg2] + \
+    cls_modules = [rp.HK, rp.AMS, rp.Scope, rp.Sampler, rp.Asg0, rp.Asg1] + \
                   [rp.AuxOutput]*2 + [rp.IQ]*3 + [rp.Pid]*4 + [rp.IIR]
 
     def __init__(self, config=None,  # configfile is needed to store parameters. None simulates one

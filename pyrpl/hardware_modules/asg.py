@@ -80,19 +80,17 @@ class AsgOffsetAttribute(FloatAttribute):
 
 
 # ugly workaround, but realized too late that descriptors have this limit
-def make_asg(channel=1):
-    if channel == 1:
+def make_asg(channel=0):
+    if channel == 0:
         set_BIT_OFFSET = 0
         set_VALUE_OFFSET = 0x00
         set_DATA_OFFSET = 0x10000
         set_default_output_direct = 'off'
-        set_name = 'asg0'
     else:
         set_DATA_OFFSET = 0x20000
         set_VALUE_OFFSET = 0x20
         set_BIT_OFFSET = 16
         set_default_output_direct = 'off'
-        set_name = 'asg1'
 
     class Asg(HardwareModule):
         widget_class = AsgWidget
@@ -110,7 +108,8 @@ def make_asg(channel=1):
         _BIT_OFFSET = set_BIT_OFFSET
         default_output_direct = set_default_output_direct
         output_directs = None
-        section_name = 'asg' # duplicate name will be detected automatically at instanciation...
+        section_name = 'asg'  # duplicate name will be detected
+        # automatically at instanciation...
         addr_base = 0x40200000
 
         def init_module(self):
@@ -419,5 +418,5 @@ def make_asg(channel=1):
     return Asg
 
 
+Asg0 = make_asg(channel=0)
 Asg1 = make_asg(channel=1)
-Asg2 = make_asg(channel=2)
