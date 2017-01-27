@@ -330,7 +330,6 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         #    self.widget.show_ownership()
 
 
-
 class HardwareModule(BaseModule):
     """
     Module that directly maps a FPGA module. In addition to BaseModule's r
