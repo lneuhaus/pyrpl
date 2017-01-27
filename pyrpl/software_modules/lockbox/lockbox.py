@@ -15,7 +15,9 @@ def all_subclasses(cls):
     return cls.__subclasses__() + [g for s in cls.__subclasses__()
                                    for g in all_subclasses(s)]
     
-all_models = OrderedDict([(model.name, model) for model in all_subclasses(Model)])
+def all_models():
+    return OrderedDict([(model.name, model) for model in
+                                 all_subclasses(Model)])
 
 
 class ModelProperty(SelectProperty):
@@ -55,7 +57,7 @@ class Lockbox(SoftwareModule):
     widget_class = LockboxWidget
     gui_attributes = ["model_name", "default_sweep_output", "auto_relock"]
     setup_attributes = gui_attributes
-    model_name = ModelProperty(options=all_models.keys())
+    model_name = ModelProperty(options=all_models().keys())
     auto_relock = BoolProperty()
     default_sweep_output = SelectProperty(options=[])
 
@@ -66,7 +68,8 @@ class Lockbox(SoftwareModule):
         self._asg = None
         self.inputs = []
         self.sequence = Sequence(self, 'sequence')
-        self.model_name = sorted(all_models.keys())[0]
+        self.__class__.model_name.change_options(self, all_models().keys())
+        self.model_name = sorted(all_models().keys())[0]
         self.model_changed()
         self.state = "unlock"
         self.timer_lock = QtCore.QTimer()
@@ -288,7 +291,7 @@ class Lockbox(SoftwareModule):
 
     def model_changed(self):
         ### model should be redisplayed
-        self.model = all_models[self.model_name](self)
+        self.model = all_models()[self.model_name](self)
         self.model.load_setup_attributes()
         #if self.widget is not None:
         #    self.widget.change_model(self.model)

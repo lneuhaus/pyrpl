@@ -32,7 +32,6 @@ class InputSignal(SoftwareModule):
     mean = FloatProperty()
     rms = FloatProperty(min=0, max=2)
 
-
     """
     def __init__(self, model):
         self.model = model
