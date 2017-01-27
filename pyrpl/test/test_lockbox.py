@@ -4,13 +4,13 @@ import time
 import numpy as np
 from PyQt4 import QtCore, QtGui
 from .test_base import TestPyrpl
+
 APP = QtGui.QApplication.instance()
 
 
 class TestClass(TestPyrpl):
     def setup(self):
         self.lockbox = self.pyrpl.lockbox
-        self.extradelay = 0.6 * 8e-9  # no idea where this comes from
 
     def test_create_output(self):
         old_len = len(self.lockbox.outputs)
@@ -27,7 +27,8 @@ class TestClass(TestPyrpl):
         self.lockbox.add_output()
 
         names = self.lockbox.output_names#[out.name for out in self.lockbox.outputs]
-        assert len(set(names))==len(names) # Make sure unique names are created
+        assert len(set(names)) == len(names) # Make sure unique names are
+        # created
         assert hasattr(self.lockbox, names[-1])
 
     def test_delete_output(self):
@@ -39,17 +40,17 @@ class TestClass(TestPyrpl):
         assert(hasattr(self.lockbox, old_name))
         old_len = len(self.lockbox.outputs)
         self.lockbox.remove_output(self.lockbox.outputs[-1])
-        assert(len(self.lockbox.outputs)==old_len-1)
+        assert(len(self.lockbox.outputs) == old_len-1)
         assert not (hasattr(self.lockbox, old_name))
         APP.processEvents()
-        assert len(widget.all_sig_widget.output_widgets)==old_len-1
+        assert len(widget.all_sig_widget.output_widgets) == old_len-1
         self.lockbox.remove_all_outputs()
         out1 = self.lockbox.add_output()
         out = self.lockbox.add_output()
         self.lockbox.default_sweep_output = out
         self.lockbox.remove_output(out.name)
         # APP.processEvents()
-        assert(self.lockbox.default_sweep_output==out1.name)
+        assert(self.lockbox.default_sweep_output == out1.name)
 
     def test_rename_output(self):
         """

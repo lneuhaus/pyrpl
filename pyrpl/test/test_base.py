@@ -10,10 +10,6 @@ class TestRedpitaya(object):
     def setUpAll(self):
         self.hostname = os.environ.get('REDPITAYA_HOSTNAME')
         self.password = os.environ.get('REDPITAYA_PASSWORD')
-        # these tests wont succeed without the hardware
-        #if os.environ['REDPITAYA_HOSTNAME'] == 'unavailable':
-        #    self.r = None
-        #else:
         self.r = RedPitaya()
 
     @classmethod
@@ -39,11 +35,6 @@ class TestPyrpl(TestRedpitaya):
     @classmethod
     def setUpAll(self):
         print("=======SETTING UP " + str(self.__class__) + " ===========")
-        # these tests wont succeed without the hardware
-        #if os.environ['REDPITAYA_HOSTNAME'] == 'unavailable':
-        #    self.pyrpl = None
-        #    self.r = None
-        #else:
         self.pyrpl = Pyrpl(config="tests_temp",
                            source=self.source_config_file)
         self.r = self.pyrpl.rp
@@ -67,7 +58,7 @@ class TestPyrpl(TestRedpitaya):
         # does not work now
         #del self.r.ssh
         # properly close the connections
-        self.pyrpl.end() # rp.end()
+        self.pyrpl.end()  # rp.end()
         # delete the configfile
         os.remove(self.pyrpl.c._filename)
         while os.path.exists(self.pyrpl.c._filename):

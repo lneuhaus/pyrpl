@@ -1,7 +1,7 @@
 import logging
 logger = logging.getLogger(name=__name__)
-from pyrpl.attributes import *
-from pyrpl.software_modules.module_managers import ModuleManager
+from ..attributes import *
+from ..software_modules.module_managers import ModuleManager
 from .test_base import TestPyrpl
 
 class TestClass(TestPyrpl):

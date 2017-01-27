@@ -402,5 +402,4 @@ class Pyrpl(object):
         if self.widget is not None:
             self.widget.deleteLater()
         self.rp.end()
-        APP.processEvents() # do the job of actually destroying the widgets
-
+        APP.processEvents()  # do the job of actually destroying the widgets

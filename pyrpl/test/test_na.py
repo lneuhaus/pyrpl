@@ -3,13 +3,13 @@ logger = logging.getLogger(name=__name__)
 import time
 import copy
 from PyQt4 import QtGui
-from ..test_base import TestPyrpl
+from .test_base import TestPyrpl
 APP = QtGui.QApplication.instance()
+
 
 class TestClass(TestPyrpl):
     def setup(self):
         self.na = self.pyrpl.na
-        self.extradelay = 0.6 * 8e-9  # no idea where this comes from
 
     def test_na_running_states(self):
         # make sure scope rolling_mode and running states are correctly setup when something is changed
@@ -35,7 +35,6 @@ class TestClass(TestPyrpl):
         self.na.run_continuous()
         assert data_changing()
 
-
     def test_benchmark(self):
         if self.r is None:
             return
@@ -47,7 +46,7 @@ class TestClass(TestPyrpl):
         while(self.na.running_state=='running_single'):
             APP.processEvents()
         duration = time.time() - tic
-        assert duration<2 # 2 s for 200 points with gui display
+        assert duration < 2 # 2 s for 200 points with gui display
         # This is much slower in nosetests than in real life (I get <3 s). Don't know why
 
         self.na.setup(start_freq=1000, stop_freq=1e4, rbw=1000000, points=1000, avg=1)
