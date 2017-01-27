@@ -1,9 +1,10 @@
 import numpy as np
 from pyrpl.attributes import FloatAttribute, BoolRegister, FloatRegister
 from pyrpl.widgets.module_widgets import PidWidget
-
 from . import FilterModule
+from pyrpl.modules import SignalLauncher
 
+from PyQt4 import QtCore, QtGui
 
 class IValAttribute(FloatAttribute):
     """
@@ -18,6 +19,20 @@ class IValAttribute(FloatAttribute):
         """set the value of the register holding the integrator's sum [volts]"""
         return instance._write(0x100, instance._from_pyint(int(round(value * 2 ** 13)), bitlength=16))
 
+
+class SignalLauncherPid(SignalLauncher):
+    update_ival = QtCore.pyqtSignal() # the widget decides at the other hand if it has to be done or not depending
+    # on the visibility
+
+    def __init__(self, module):
+        super(SignalLauncherPid, self).__init__(module)
+        self.timer_ival = QtCore.QTimer()
+        self.timer_ival.setInterval(1000)  # max. refresh rate: 1 Hz
+        self.timer_ival.timeout.connect(self.update_ival)
+        self.timer_ival.setSingleShot(False)
+        self.timer_ival.start()
+
+
 class Pid(FilterModule):
     section_name = 'pid'
     widget_class = PidWidget
@@ -31,30 +46,15 @@ class Pid(FilterModule):
 
     gui_attributes = setup_attributes + ["ival"]
 
+    def init_module(self):
+        super(Pid, self).init_module()
+        self.signal_launcher = SignalLauncherPid(self)
+
     def _setup(self): # the function is here for its docstring to be used by the metaclass.
         """
         sets up the pid (just setting the attributes is OK).
         """
         pass
-
-    def setup_old(self,
-              input=None,
-              output_direct=None,
-              setpoint=None,
-              p=None,
-              i=None,
-              d=None,
-              ival=None,
-              inputfilter=None):
-
-        if input is not None: self.input = input
-        if output_direct is not None: self.output_direct = output_direct
-        if setpoint is not None: self.setpoint = setpoint
-        if p is not None: self.p = p
-        if i is not None: self.i = i
-        if d is not None: self.d = d
-        if ival is not None: self.ival = ival
-        if inputfilter is not None: self.inputfilter = inputfilter
 
     _delay = 3  # min delay in cycles from input to output_signal of the module
     # with integrator and derivative gain, delay is rather 4 cycles

@@ -68,7 +68,7 @@ class Lockbox(SoftwareModule):
         self._asg = None
         self.inputs = []
         self.sequence = Sequence(self, 'sequence')
-        self.__class__.model_name.change_options(self, all_models().keys())
+        self.__class__.model_name.change_options(self, sorted(all_models().keys()))
         self.model_name = sorted(all_models().keys())[0]
         self.model_changed()
         self.state = "unlock"

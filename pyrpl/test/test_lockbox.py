@@ -140,7 +140,7 @@ class TestClass(TestPyrpl):
         self.lockbox.lock()
         APP.processEvents()
         mean, std = self.pyrpl.rp.sampler.mean_stddev('out1', 0.01)
-        assert(mean, std>0.9) # since out1 should start at 1 V
+        assert (mean>0.9) # since out1 should start at 1 V
         time.sleep(1.5)
         mean, std = self.pyrpl.rp.sampler.mean_stddev('pid1', 0.01)
         assert (abs(mean-0.1)<0.01)

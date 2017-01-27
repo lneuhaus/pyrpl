@@ -22,10 +22,11 @@ class PidWidget(ModuleWidget):
         for prop in 'p', 'i', 'd':
             self.attribute_widgets[prop].widget.set_log_increment()
         # can't avoid timer to update ival
-        self.timer_ival = QtCore.QTimer()
-        self.timer_ival.setInterval(1000)
-        self.timer_ival.timeout.connect(self.update_ival)
-        self.timer_ival.start()
+
+        # self.timer_ival = QtCore.QTimer()
+        # self.timer_ival.setInterval(1000)
+        # self.timer_ival.timeout.connect(self.update_ival)
+        # self.timer_ival.start()
 
     def update_ival(self):
         widget = self.attribute_widgets['ival']
