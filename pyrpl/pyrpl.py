@@ -395,6 +395,7 @@ class Pyrpl(object):
         """
         for module in self.modules:
             module.signal_launcher.kill_timers()
+        self.widget.kill_timers()
 
     def end(self):
         """

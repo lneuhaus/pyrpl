@@ -113,6 +113,10 @@ class PyrplWidget(QtGui.QMainWindow):
         EL.status_bars.append(self.status_bar)
         self.setWindowTitle(self.parent.c.pyrpl.name)
 
+    def kill_timers(self):
+        self.timer.stop()
+        self.timer_save_pos.stop()
+
     def add_dock_widget(self, create_widget, name):
         dock_widget = MyDockWidget(create_widget, name)
         self.dock_widgets[name] = dock_widget
