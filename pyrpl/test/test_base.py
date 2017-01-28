@@ -30,9 +30,9 @@ class TestMyRedpitaya(TestRedpitaya):
 class TestPyrpl(TestRedpitaya):
     """ base class for all pyrpl tests """
     # name of the configfile to use
-    source_config_file = "tests_source"
+    source_config_file = "nosetests_source.yml"
 
-    tmp_config_file = "tests_temp"
+    tmp_config_file = "nosetests_config.yml"
 
     @classmethod
     def erase_temp_file(self):
@@ -43,7 +43,6 @@ class TestPyrpl(TestRedpitaya):
         while os.path.exists(tmp_conf):
             pass  # make sure the file is really gone before proceeding further
 
-
     @classmethod
     def setUpAll(self):
         print("=======SETTING UP " + str(self.__class__) + " ===========")
@@ -52,7 +51,7 @@ class TestPyrpl(TestRedpitaya):
         #    self.pyrpl = None
         #    self.r = None
         #else:
-        self.erase_temp_file() # also before (for instance in case of Ctrl-C)
+        self.erase_temp_file()  # also before (for instance in case of Ctrl-C)
         self.pyrpl = Pyrpl(config=self.tmp_config_file,
                            source=self.source_config_file)
         self.r = self.pyrpl.rp
