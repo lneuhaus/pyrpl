@@ -1,13 +1,14 @@
-pyrpl: # General configuration of the software:
-  name: test_refactor
-  gui: true # autostart gui
+pyrpl:  # General configuration of the software:
+  name: nosetests_pyrpl
+  gui: true  # autostart gui
   loglevel: info
   # level of logged information.
   # 'debug' outputs everything
   # 'infi' is default level
   # 'warning' only shows warnings and errors
   # 'error' only shows errors
-  modules: # SoftwareModules to load (in addition to IqManager, AsgManager, PidManager, ScopeManager)
+  modules:  # SoftwareModules to load (in addition to IqManager, AsgManager,
+  # PidManager, ScopeManager)
     - NetworkAnalyzer
     - SpectrumAnalyzer
     - Lockbox
