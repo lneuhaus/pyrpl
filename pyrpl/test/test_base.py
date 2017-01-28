@@ -31,7 +31,6 @@ class TestPyrpl(TestRedpitaya):
     """ base class for all pyrpl tests """
     # name of the configfile to use
     source_config_file = "nosetests_source.yml"
-
     tmp_config_file = "nosetests_config.yml"
 
     @classmethod
@@ -39,7 +38,12 @@ class TestPyrpl(TestRedpitaya):
         tmp_conf = os.path.join(Pyrpl._user_config_dir,
                      self.tmp_config_file)
         if os.path.exists(tmp_conf):
-            os.remove(tmp_conf)
+            try:
+                os.remove(tmp_conf)
+            # sometimes, an earlier test delete file between exists and
+            # remove calls, this gives a WindowsError
+            except WindowsError:
+                pass
         while os.path.exists(tmp_conf):
             pass  # make sure the file is really gone before proceeding further
 

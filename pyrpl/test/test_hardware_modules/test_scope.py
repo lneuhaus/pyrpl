@@ -7,7 +7,7 @@ from ..test_base import TestPyrpl
 APP = QtGui.QApplication.instance()
 
 
-class TestClass(TestPyrpl):
+class TestScopeClass(TestPyrpl):
     # somehow the file seems to suffer from other nosetests, so pick an
     # individual name for this test:
     tmp_config_file = "nosetests_config_scope.yml"
@@ -79,5 +79,5 @@ class TestClass(TestPyrpl):
             assert len(intersect) >= 5  # make sure some parameters are saved
             p1 = dict((k, curve.params[k]) for k in intersect)
             p2 = dict((k, attr[k]) for k in intersect)
-            assert p1 == p2  # make sure those parameters are equal to the setup_attributes of the scope
-
+            assert p1 == p2   # make sure those parameters are equal to the
+            # setup_attributes of the scope
