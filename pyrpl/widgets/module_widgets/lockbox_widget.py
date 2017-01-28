@@ -503,18 +503,24 @@ class AllSignalsWidget(QtGui.QTabWidget):
         self.output_widgets.append(widget)
         self.insertTab(self.count() - 1, widget, widget.name)
 
+    def output_widget_names(self):
+        return [widget.name for widget in self.output_widgets]
+
     def remove_output(self, output):
-        if output.widget in self.output_widgets:
-            tab_nr = self.output_widgets.index(output.widget) + 1  # count "inputs" tab
-            output.widget.hide()
-            self.output_widgets.remove(output.widget)
-            self.removeTab(tab_nr)
-            output.widget.deleteLater()
+        for widget in self.output_widgets:
+            if widget.module == output:
+                self.output_widgets.remove(widget)
+                widget.deleteLater()
 
     def update_output_names(self):
         for index in range(self.count()):
             widget = self.widget(index)
-            self.setTabText(index, widget.name)
+            if hasattr(widget, "module"):
+                self.setTabText(index, widget.module.name)
+            #if widge
+            #if len(self.lb_widget.module.output_names)>=index:
+            #    self.setTabText(index, self.lb_widget.module.output_names[
+            #        index-1])
 
     ## Input Management
     def add_input(self, input):
@@ -524,8 +530,14 @@ class AllSignalsWidget(QtGui.QTabWidget):
         self.inputs_widget.remove_input(input)
 
     def update_transfer_function(self, output):
-        if output.widget in self.output_widgets:
-            output.widget.update_transfer_function()
+        if output.name in self.output_widget_names():
+            self.get_output_widget_by_name(
+                output.name).update_transfer_function()
+
+    def get_output_widget_by_name(self, name):
+        for widget in self.output_widgets:
+            if widget.module.name==name:
+                return widget
 
 
 class MyCloseButton(QtGui.QPushButton):

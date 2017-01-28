@@ -283,7 +283,9 @@ class Pyrpl(object):
         p, f = os.path.split(filename)
         if not p:  # no path specified -> search in configdir
             try:
-                filename = os.path.join(self._user_config_dir, f)
+                filename = os.path.join(self._user_config_dir, f) # Why is it
+                #  impossible to access config directories before having an
+                # instance of pyrpl ?
             except:
                 filename = None
                 # ... or defaultconfigdir
