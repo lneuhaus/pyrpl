@@ -8,14 +8,10 @@ APP = QtGui.QApplication.instance()
 
 
 class TestClass(TestPyrpl):
-    def setup(self):
-        self.extradelay = 0.6 * 8e-9  # no idea where this comes from
 
     def test_scope_rolling_mode_and_running_state_update(self):
-        # make sure scope rolling_mode and running states are correctly setup when something is changed
-        if self.r is None:
-            return
-
+        """ makes sure scope rolling_mode and running states are correctly
+        setup when something is changed """
         def data_changing():
             time.sleep(0.1)
             APP.processEvents()
@@ -38,7 +34,7 @@ class TestClass(TestPyrpl):
         assert not data_changing()  # rolling mode inactive for durations < 0.1 s
 
         from time import sleep
-        sleep(0.1)
+        sleep(0.5)
         self.r.scope.duration = 0.5
         assert data_changing()
 
@@ -77,9 +73,8 @@ class TestClass(TestPyrpl):
         attr = self.r.scope.get_setup_attributes()
         for curve in (curve1, curve2):
             intersect = set(curve.params.keys()) & set(attr)
-            assert len(intersect)>=5 # make sure some parameters are saved
+            assert len(intersect) >= 5  # make sure some parameters are saved
             p1 = dict((k, curve.params[k]) for k in intersect)
             p2 = dict((k, attr[k]) for k in intersect)
-            assert p1==p2 # make sure those parameters are equal to the setup_attributes of the scope
-
+            assert p1 == p2  # make sure those parameters are equal to the setup_attributes of the scope
 
