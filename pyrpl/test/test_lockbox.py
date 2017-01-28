@@ -121,6 +121,7 @@ class TestClass(TestPyrpl):
         assert (hasattr(self.lockbox.sequence, 'bar'))
 
     def test_real_lock(self):
+        delay = 0.01
         pid = self.pyrpl.rp.pid1
         pid.i = 0.1
         pid.p = 0.1
@@ -139,12 +140,12 @@ class TestClass(TestPyrpl):
         stage.variable_value = 0.1
         self.lockbox.lock()
         APP.processEvents()
-        mean, std = self.pyrpl.rp.sampler.mean_stddev('out1', 0.01)
-        assert (mean>0.5) # since out1 should start at 1 V
+        mean, std = self.pyrpl.rp.sampler.mean_stddev('out1', delay)
+        assert (mean > 0.5), mean  # since out1 should start at 1 V
         time.sleep(1.5)
-        mean, std = self.pyrpl.rp.sampler.mean_stddev('pid1', 0.01)
-        assert (abs(mean-0.1)<0.01)
-        assert (std<0.01)
-        mean, std = self.pyrpl.rp.sampler.mean_stddev('out1', 0.01)
-        assert (abs(mean) < 0.01)
-        assert (std<0.01)
+        mean, std = self.pyrpl.rp.sampler.mean_stddev('pid1', delay)
+        assert (abs(mean-0.1) < 0.01), mean
+        assert (std < 0.01)
+        mean, std = self.pyrpl.rp.sampler.mean_stddev('out1', delay)
+        assert (abs(mean) < 0.01), mean
+        assert (std < 0.01), std

@@ -44,12 +44,14 @@ try:
     ruamel.yaml.RoundTripDumper.add_representer(np.ndarray,
                 lambda dumper, data: dumper.represent_list(list(data)))
 
-    # see http://stackoverflow.com/questions/13518819/avoid-references-in-pyyaml
-    ruamel.yaml.RoundTripDumper.ignore_aliases = lambda *args: True
+    #http://stackoverflow.com/questions/13518819/avoid-references-in-pyyaml
+    #ruamel.yaml.RoundTripDumper.ignore_aliases = lambda *args: True
     def load(f):
         return ruamel.yaml.load(f, ruamel.yaml.RoundTripLoader)
     def save(data, stream=None):
-        return ruamel.yaml.dump(data, stream=stream, Dumper=ruamel.yaml.RoundTripDumper, default_flow_style = False)
+        return ruamel.yaml.dump(data, stream=stream,
+                                Dumper=ruamel.yaml.RoundTripDumper,
+                                default_flow_style=False)
     def isbranch(obj):
         return isinstance(obj, dict) #type is ruamel.yaml.comments.CommentedMap
 except:
@@ -57,7 +59,7 @@ except:
     import yaml
 
     # see http://stackoverflow.com/questions/13518819/avoid-references-in-pyyaml
-    yaml.Dumper.ignore_aliases = lambda *args: True # NEVER TESTED
+    #yaml.Dumper.ignore_aliases = lambda *args: True # NEVER TESTED
 
     # ordered load and dump for yaml files. From
     # http://stackoverflow.com/questions/5121931/in-python-how-can-you-load-yaml-mappings-as-ordereddicts
@@ -349,11 +351,13 @@ class MemoryTree(MemoryBranch):
             if self._mtime != os.path.getmtime(self._filename):
                 self._load()
 
-    def _save(self):
+    def _save(self, savedeadtime=None):
+        if savedeadtime is None:
+            savedeadtime = self._savedeadtime
         """ writes current tree structure and data to file """
         if self._filename is None:
             return
-        if self._lastsave + self._savedeadtime < time.time():
+        if self._lastsave + savedeadtime < time.time():
             self._lastsave = time.time()
             if self._mtime != os.path.getmtime(self._filename):
                 logger.warning("Config file has recently been changed on your " +
@@ -378,9 +382,20 @@ class MemoryTree(MemoryBranch):
                 logger.error("Error writing to file. Backup version was restored.")
                 raise
             self._mtime = os.path.getmtime(self._filename)
-        else: # make sure saving will eventually occur
+        else:  # make sure saving will eventually occur
             if not self._savetimer.isActive():
                 self._savetimer.start()
+
+    # forces to save the config file immediately and kills the save timer
+    def _save_now(self):
+        # stop save timer
+        if self._savetimer.isActive():
+            self._savetimer.stop()
+        # make sure save is done immediately by forcing negative deadtime
+        self._save(savedeadtime=-1)
+        # make sure no save timer was launched in the meantime
+        if self._savetimer.isActive():
+            self._savetimer.stop()
 
 if False:
     class DummyMemoryTree(object):  # obsolete now

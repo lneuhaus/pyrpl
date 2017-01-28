@@ -341,6 +341,13 @@ class RedPitaya(object):
         self.endserver()
         self.endclient()
 
+    def end_ssh(self):
+        self.ssh.channel.close()
+
+    def end_all(self):
+        self.end()
+        self.end_ssh()
+
     def restart(self):
         self.end()
         self.start()

@@ -403,5 +403,9 @@ class Pyrpl(object):
         self.kill_timers()
         if self.widget is not None:
             self.widget.deleteLater()
-        self.rp.end()
+        # make sure the save timer of the config file is not running and
+        # all data are written to the harddisk
+        self.c._save_now()
+        # end redpitatya communication
+        self.rp.end_all()
         APP.processEvents()  # do the job of actually destroying the widgets

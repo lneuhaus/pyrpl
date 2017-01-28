@@ -37,14 +37,19 @@ class Sampler(HardwareModule):
         nn = 0
         cum = 0
         cumsq = 0
-        #while time()-t0 < n*8e-9:
         while time() < t0 + t:
             nn += 1
             value = self.__getattribute__(signal)
             cum += value
-            cumsq += value ** 2
-        mean = float(cum) / nn
-        stddev = (float(cumsq) / nn - mean ** 2) ** 0.5
+            cumsq += (value ** 2.0)
+        nn = float(nn)
+        mean = cum / nn
+        variance = (cumsq / nn - mean**2.0)
+        # while mathematically nonsense, this can happen numerically
+        if variance < 0:
+            # this means the variance is tiny and can be assumed zero
+            variance = 0
+        stddev = variance ** 0.5
         return mean, stddev
 
 for inp, num in DSP_INPUTS.items():
