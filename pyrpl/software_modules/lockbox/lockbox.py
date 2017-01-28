@@ -44,6 +44,7 @@ class SignalLauncherLockbox(SignalLauncher):
     state_changed = QtCore.pyqtSignal()
     add_input = QtCore.pyqtSignal(list)
     remove_input = QtCore.pyqtSignal(list)
+    update_transfer_function = QtCore.pyqtSignal(list)
 
     def __init__(self, module):
         super(SignalLauncherLockbox, self).__init__(module)
@@ -213,7 +214,11 @@ class Lockbox(SoftwareModule):
             if output.name in self.c.outputs._keys():
                 self.c.outputs._pop(output.name)
 
-        self.__class__.default_sweep_output.change_options(self, [output.name for output in self.outputs])
+        self.__class__.default_sweep_output.change_options(self,
+                                                           [output_var.name for
+                                                            output_var in
+                                                            self.outputs])
+        # carreful, comprehension variable overwrite locals...
         """
         if self.widget is not None:
             # Since adding/removing outputs corresponds to dynamic creation of Modules, our attribute's based way of

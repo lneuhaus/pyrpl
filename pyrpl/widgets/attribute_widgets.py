@@ -75,6 +75,8 @@ class MyNumberSpinBox(QtGui.QWidget, object):
         self.lay.addWidget(self.down)
 
         self.line = QtGui.QLineEdit()
+        self.line.setStyleSheet("QLineEdit { qproperty-cursorPosition: 0; }") # align text on the left
+        # http://stackoverflow.com/questions/18662157/qt-qlineedit-widget-to-get-long-text-left-aligned
         self.lay.addWidget(self.line)
 
         self._button_up_down = False

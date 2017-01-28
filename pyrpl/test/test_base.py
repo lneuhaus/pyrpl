@@ -32,10 +32,28 @@ class TestPyrpl(TestRedpitaya):
     # name of the configfile to use
     source_config_file = "tests_source"
 
+    tmp_config_file = "tests_temp"
+
+    @classmethod
+    def erase_temp_file(self):
+        tmp_conf = os.path.join(Pyrpl._user_config_dir,
+                     self.tmp_config_file)
+        if os.path.exists(tmp_conf):
+            os.remove(tmp_conf)
+        while os.path.exists(tmp_conf):
+            pass  # make sure the file is really gone before proceeding further
+
+
     @classmethod
     def setUpAll(self):
         print("=======SETTING UP " + str(self.__class__) + " ===========")
-        self.pyrpl = Pyrpl(config="tests_temp",
+        # these tests wont succeed without the hardware
+        #if os.environ['REDPITAYA_HOSTNAME'] == 'unavailable':
+        #    self.pyrpl = None
+        #    self.r = None
+        #else:
+        self.erase_temp_file() # also before (for instance in case of Ctrl-C)
+        self.pyrpl = Pyrpl(config=self.tmp_config_file,
                            source=self.source_config_file)
         self.r = self.pyrpl.rp
 
@@ -60,9 +78,7 @@ class TestPyrpl(TestRedpitaya):
         # properly close the connections
         self.pyrpl.end()  # rp.end()
         # delete the configfile
-        os.remove(self.pyrpl.c._filename)
-        while os.path.exists(self.pyrpl.c._filename):
-            pass # make sure the file is really gone before proceeding further
+        self.erase_temp_file()
 
 
 class TestMyPyrpl(TestPyrpl):
