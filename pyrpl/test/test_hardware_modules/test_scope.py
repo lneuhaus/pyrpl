@@ -10,9 +10,7 @@ APP = QtGui.QApplication.instance()
 class TestScopeClass(TestPyrpl):
     # somehow the file seems to suffer from other nosetests, so pick an
     # individual name for this test:
-    tmp_config_file = "nosetests_config_scope.yml"
-    #def __init__(self):
-    #    self.tmp_config_file = "nosetests_config_scope.yml"
+    # tmp_config_file = "nosetests_config_scope.yml"
 
     def test_scope_rolling_mode_and_running_state_update(self):
         """ makes sure scope rolling_mode and running states are correctly
