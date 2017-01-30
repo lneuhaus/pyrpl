@@ -5,8 +5,7 @@ from pyrpl.attributes import BoolProperty, FloatProperty, SelectProperty, \
     ListFloatProperty, FrequencyProperty
 from pyrpl.hardware_modules.asg import Asg1
 from pyrpl.widgets.module_widgets import OutputSignalWidget
-from pyrpl.hardware_modules.pid import delay_transfer_function,\
-    pid_transfer_function, filter_transfer_function
+from pyrpl.hardware_modules.pid import Pid
 from pyrpl.curvedb import CurveDB
 from scipy import interpolate
 
@@ -226,7 +225,8 @@ class OutputSignal(Signal):
 
         analog_tf = np.ones(len(freqs), dtype=complex)
         if self.tf_type == 'filter':
-            analog_tf = filter_transfer_function(freqs, self.analog_filter)
+            analog_tf = Pid._filter_transfer_function(freqs,
+                                                      self.analog_filter)
         if self.tf_type == 'curve':
             curve = CurveDB.get(self.tf_curve)
             x = curve.data.index
@@ -236,14 +236,11 @@ class OutputSignal(Signal):
             analog_tf = ampl*np.exp(1j*phase)
 
         # 200 ns extra_delay + 3 cycles from pid._delay
-        result = analog_tf * \
-            delay_transfer_function(freqs, self.pid._delay, 200e-9,
-                                    self.pid._frequency_correction) * \
-            pid_transfer_function(freqs, self.p, self.i,
-                                  self.pid._frequency_correction) * \
-            filter_transfer_function(freqs, self.additional_filter,
-                                     self.pid._frequency_correction)
-        return result  # np.ones(len(freqs))
+        result = analog_tf * Pid._transfer_function(
+            freqs, p=self.p, i=self.i,
+            frequency_correction=self.pid._frequency_correction,
+            filter_values=self.additional_filter)
+        return result
 
     @property
     def mode(self):
@@ -310,9 +307,9 @@ class OutputSignal(Signal):
 
     def sweep(self):
         self.mode = 'sweep'
-        self.is_sweepable = True # ... not handled in the gui for now
+        self.is_sweepable = True  # ... not handled in the gui for now
         if not self.is_sweepable:
-            raise ValueError("output '%s' is not sweepable"%self.name)
+            raise ValueError("output '%s' is not sweepable" % self.name)
         self.unlock()
         self.pid.i = 0
         self.pid.ival = 0

@@ -12,17 +12,22 @@ class IValAttribute(FloatAttribute):
     """
 
     def get_value(self, instance, owner):
-        return float(instance._to_pyint(instance._read(0x100), bitlength=16)) / 2 ** 13
+        return float(instance._to_pyint(instance._read(0x100), bitlength=16))\
+               / 2 ** 13
         # bitlength used to be 32 until 16/7/2016
+        # still, FPGA has an asymmetric representation for reading and writing
+        # from/to this register
 
     def set_value(self, instance, value):
         """set the value of the register holding the integrator's sum [volts]"""
-        return instance._write(0x100, instance._from_pyint(int(round(value * 2 ** 13)), bitlength=16))
+        return instance._write(0x100, instance._from_pyint(
+            int(round(value * 2 ** 13)), bitlength=16))
 
 
 class SignalLauncherPid(SignalLauncher):
-    update_ival = QtCore.pyqtSignal() # the widget decides at the other hand if it has to be done or not depending
-    # on the visibility
+    update_ival = QtCore.pyqtSignal()
+    # the widget decides at the other hand if it has to be done or not
+    # depending on the visibility
 
     def __init__(self, module):
         super(SignalLauncherPid, self).__init__(module)
@@ -137,6 +142,27 @@ class Pid(FilterModule):
     def reg_integral(self, v):
         self.ival = v
 
+    normalization_on = BoolRegister(0x130, 0,
+                                    doc="if True the PID is used "
+                                        "as a normalizer")
+
+    # current normalization gain is p-register
+    normalization_i = FloatRegister(0x10C, bits=_GAINBITS,
+                                    norm=2 ** (_ISR) * 2.0 * np.pi *
+                                         8e-9 / 2 ** 13 / 1.5625,
+                                    # 1.5625 is empirical value,
+                                    # no time/idea to do the maths
+                                    doc="stablization crossover frequency [Hz]")
+
+    @property
+    def normalization_gain(self):
+        """ current gain in the normalization """
+        return self.p / 2.0
+
+    normalization_inputoffset = FloatRegister(0x110, bits=(14 + _DSR),
+                                              norm=2 ** (13 + _DSR),
+                                              doc="normalization inputoffset [volts]")
+
     def transfer_function(self, frequencies, extradelay=0):
         """
         Returns a complex np.array containing the transfer function of the
@@ -162,85 +188,103 @@ class Pid(FilterModule):
         tf: np.array(..., dtype=np.complex)
             The complex open loop transfer function of the module.
         """
+        return Pid._transfer_function(frequencies,
+                                      p=self.p,
+                                      i=self.i,
+                                      d=0,  # d is currently not available
+                                      filter_values=self.inputfilter,
+                                      extradelay_s=extradelay,
+                                      module_delay_cycle=self._delay,
+                                      frequency_correction=self._frequency_correction)
 
-        return pid_transfer_function(frequencies, self.p, self.i, self.d, self._frequency_correction)*\
-               filter_transfer_function(frequencies, self.inputfilter, self._frequency_correction)*\
-               delay_transfer_function(frequencies, self._delay, extradelay, self._frequency_correction)
+    @classmethod
+    def _transfer_function(cls,
+                           frequencies,
+                           p,
+                           i,
+                           filter_values=list(),
+                           d=0,
+                           module_delay_cycle=_delay,
+                           extradelay_s=0.0,
+                           frequency_correction=1.0):
+        return Pid._pid_transfer_function(frequencies,
+                                 p=p,
+                                 i=i,
+                                 d=d,
+                                 frequency_correction=frequency_correction)\
+            * Pid._filter_transfer_function(frequencies,
+                                 filter_values=filter_values,
+                                 frequency_correction=frequency_correction)\
+            * Pid._delay_transfer_function(frequencies,
+                                 module_delay_cycle=module_delay_cycle,
+                                 extradelay_s=extradelay_s,
+                                 frequency_correction=frequency_correction)
 
-    normalization_on = BoolRegister(0x130, 0, doc="if True the PID is used "
-                                                  "as a normalizer")
+    @classmethod
+    def _pid_transfer_function(cls,
+                               frequencies, p, i, d=0,
+                               frequency_correction=1.):
+        """
+        returns the transfer function of a generic pid module
+        delay is the module delay as found in pid._delay, p, i and d are the
+        proportional, integral, and differential gains
+        frequency_correction is the module frequency_corection as
+        found in pid._frequency_corection
+        """
 
-    # current normalization gain is p-register
-    normalization_i = FloatRegister(0x10C, bits=_GAINBITS,
-                                    norm=2 ** (_ISR) * 2.0 * np.pi *
-                                         8e-9 / 2 ** 13 / 1.5625,
-                                    # 1.5625 is empirical value,
-                                    # no time/idea to do the maths
-                                    doc="stablization crossover frequency [Hz]")
+        frequencies = np.array(frequencies, dtype=np.complex)
+        # integrator with one cycle of extra delay
+        tf = i / (frequencies * 1j) \
+            * np.exp(-1j * 8e-9 * frequency_correction *
+                  frequencies * 2 * np.pi)
+        # proportional (delay in self._delay included)
+        tf += p
+        # derivative action with one cycle of extra delay
+        # if self.d != 0:
+        #    tf += frequencies*1j/self.d \
+        #          * np.exp(-1j * 8e-9 * self._frequency_correction *
+        #                   frequencies * 2 * np.pi)
+        # add delay
+        delay = 0 # module_delay * 8e-9 / self._frequency_correction
+        tf *= np.exp(-1j * delay * frequencies * 2 * np.pi)
+        return tf
 
-    @property
-    def normalization_gain(self):
-        """ current gain in the normalization """
-        return self.p / 2.0
+    @classmethod
+    def _delay_transfer_function(cls,
+                                 frequencies,
+                                 module_delay_cycle=_delay,
+                                 extradelay_s=0,
+                                 frequency_correction=1.0):
+        """
+        Transfer function of the eventual extradelay of a pid module
+        """
+        delay = module_delay_cycle * 8e-9 / frequency_correction + extradelay_s
+        frequencies = np.array(frequencies, dtype=np.complex)
+        tf = np.ones(len(frequencies), dtype=np.complex)
+        tf *= np.exp(-1j * delay * frequencies * 2 * np.pi)
+        return tf
 
-    normalization_inputoffset = FloatRegister(0x110, bits=(14 + _DSR),
-                                              norm=2 ** (13 + _DSR),
-                                              doc="normalization inputoffset [volts]")
-
-def delay_transfer_function(frequencies, module_delay_cycle, extradelay_s, frequency_correction):
-    """
-    Transfer function of the eventual extradelay of a pid module
-    """
-    delay = module_delay_cycle * 8e-9 / frequency_correction + extradelay_s
-    frequencies = np.array(frequencies, dtype=np.complex)
-    tf = np.ones(len(frequencies), dtype=np.complex)
-    tf *= np.exp(-1j * delay * frequencies * 2 * np.pi)
-    return tf
-
-
-def pid_transfer_function(frequencies, p, i, d, frequency_correction=1.):
-    """
-    returns the transfer function of a generic pid module
-    delay is the module delay as found in pid._delay, p, i and d are the proportional, integral, and differential gains
-    frequency_correction is the module frequency_corection as found in pid._frequency_corection
-    """
-
-    frequencies = np.array(frequencies, dtype=np.complex)
-    # integrator with one cycle of extra delay
-    tf = i / (frequencies * 1j) \
-        * np.exp(-1j * 8e-9 * frequency_correction *
-              frequencies * 2 * np.pi)
-    # proportional (delay in self._delay included)
-    tf += p
-    # derivative action with one cycle of extra delay
-    # if self.d != 0:
-    #    tf += frequencies*1j/self.d \
-    #          * np.exp(-1j * 8e-9 * self._frequency_correction *
-    #                   frequencies * 2 * np.pi)
-    # add delay
-    delay = 0 # module_delay * 8e-9 / self._frequency_correction
-    tf *= np.exp(-1j * delay * frequencies * 2 * np.pi)
-    return tf
-
-
-def filter_transfer_function(frequencies, filter_values, frequency_correction=1.):
-    """
-    Transfer function of the inputfilter part of a pid module
-    """
-    frequencies = np.array(frequencies, dtype=np.complex)
-    module_delay = 0
-    tf = np.ones(len(frequencies), dtype=complex)
-    # input filter modelisation
-    for f in filter_values:
-        if f == 0:
-            continue
-        elif f > 0:  # lowpass
-            tf /= (1.0 + 1j * frequencies / f)
-            module_delay += 2  # two cycles extra delay per lowpass
-        elif f < 0:  # highpass
-            tf /= (1.0 + 1j * f / frequencies)
-            # plus is correct here since f already has a minus sign
-            module_delay += 1  # one cycle extra delay per highpass
-    delay = module_delay * 8e-9 / frequency_correction
-    tf *= np.exp(-1j * delay * frequencies * 2 * np.pi)
-    return tf
+    @classmethod
+    def _filter_transfer_function(cls,
+                                  frequencies, filter_values,
+                                  frequency_correction=1.):
+        """
+        Transfer function of the inputfilter part of a pid module
+        """
+        frequencies = np.array(frequencies, dtype=np.complex)
+        module_delay = 0
+        tf = np.ones(len(frequencies), dtype=complex)
+        # input filter modelisation
+        for f in filter_values:
+            if f == 0:
+                continue
+            elif f > 0:  # lowpass
+                tf /= (1.0 + 1j * frequencies / f)
+                module_delay += 2  # two cycles extra delay per lowpass
+            elif f < 0:  # highpass
+                tf /= (1.0 + 1j * f / frequencies)
+                # plus is correct here since f already has a minus sign
+                module_delay += 1  # one cycle extra delay per highpass
+        delay = module_delay * 8e-9 / frequency_correction
+        tf *= np.exp(-1j * delay * frequencies * 2 * np.pi)
+        return tf
