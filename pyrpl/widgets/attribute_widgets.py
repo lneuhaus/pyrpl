@@ -1075,7 +1075,7 @@ class SelectAttributeWidget(BaseAttributeWidget):
 
         :return:
         """
-        return self.defaults #getattr(self.module, self.defaults)
+        return self.defaults  # getattr(self.module, self.defaults)
 
     def write(self):
         """
@@ -1132,7 +1132,7 @@ class MyListStageOutputAttributeWidget(QtGui.QWidget):
         self.remove_lines()
         index = 0
         for key, val in dic.items():
-            if index<len(self.output_on):
+            if index < len(self.output_on):
                 self.set_line_name_value(index, key, val)
                 index += 1
             else:

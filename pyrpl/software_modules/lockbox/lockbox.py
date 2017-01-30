@@ -77,7 +77,8 @@ class Lockbox(SoftwareModule):
     def init_module(self):
         self.signal_launcher = SignalLauncherLockbox(self)
         self.outputs = []
-        # self.__class__.default_sweep_output.change_options(self, ['dummy']) # dirty... something needs to be done with this attribute class
+        # self.__class__.default_sweep_output.change_options(self, ['dummy'])
+        #  dirty... something needs to be done with this attribute class
         self._asg = None
         self.inputs = []
         self.sequence = Sequence(self, 'sequence')
@@ -85,12 +86,13 @@ class Lockbox(SoftwareModule):
         self.model_name = sorted(all_models().keys())[0]
         self.model_changed()
         self.state = "unlock"
-        # self.add_output() # adding it now creates problem when loading an output named "output1". It is eventually
+        # self.add_output() # adding it now creates problem when loading an
+        # output named "output1". It is eventually
         # added inside (after) load_setup_attribute
 
     @property
     def asg(self):
-        if self._asg==None:
+        if self._asg is None:
             self._asg = self.pyrpl.asgs.pop(self.name)
         return self._asg
 
@@ -100,7 +102,8 @@ class Lockbox(SoftwareModule):
 
     def sweep(self):
         """
-        Performs a sweep of one of the output. No output default kwds to avoid problems when use as a slot.
+        Performs a sweep of one of the output. No output default kwds to avoid
+        problems when use as a slot.
         """
         self.unlock()
         # if output is None:
@@ -174,22 +177,27 @@ class Lockbox(SoftwareModule):
 
     def _add_output_no_save(self):
         """
-        Adds and returns and output without touching the config file (useful when loading an output from the config
-        file)
+        Adds and returns and output without touching the config file (useful
+        when loading an output from the config file)
         """
-        if self.pyrpl.pids.n_available()<1:
-            raise ValueError("All pids are currently in use. Cannot create any more outputs.")
+        if self.pyrpl.pids.n_available() < 1:
+            raise ValueError(
+                "All pids are currently in use. Cannot create any more "
+                "outputs.")
         output = OutputSignal(self)
-        output._name = self.get_unique_output_name() # doesn't trigger write in the config file
+        # doesn't trigger write in the config file
+        output._name = self.get_unique_output_name()
         self.outputs.append(output)
         setattr(self, output.name, output)
         self.sequence.update_outputs()
-        self.__class__.default_sweep_output.change_options(self, [out.name for out in self.outputs])
+        self.__class__.default_sweep_output.\
+            change_options(self, [out.name for out in self.outputs])
         """
         if self.widget is not None:
-            # Since adding/removing outputs corresponds to dynamic creation of Modules, our attribute's based way of
-            # hiding gui update is not effective. Since this is a highly exceptional situation, I don't find it too
-            # bad.
+            # Since adding/removing outputs corresponds to dynamic creation of
+            # Modules, our attribute-based way of
+            # hiding gui update is not effective. Since this is a highly
+            # exceptional situation, I don't find it too bad.
             self.widget.add_output(output)
         """
         self.signal_launcher.output_created.emit([output])
@@ -218,7 +226,7 @@ class Lockbox(SoftwareModule):
                                                            [output_var.name for
                                                             output_var in
                                                             self.outputs])
-        # carreful, comprehension variable overwrite locals...
+        # careful, comprehension variable overwrite locals...
         """
         if self.widget is not None:
             # Since adding/removing outputs corresponds to dynamic creation of Modules, our attribute's based way of
@@ -340,10 +348,14 @@ class Lockbox(SoftwareModule):
 
     def load_setup_attributes(self):
         """
-        This function needs to be overwritten to retrieve the child module attributes as well
+        This function needs to be overwritten to retrieve the child module
+        attributes as well
         """
         self.remove_all_outputs()
         # load outputs
+
+        # prevent saving wrong default_sweep_output at startup
+        self._autosave_active = False
         if self.c is not None:
             if 'outputs' in self.c._dict.keys():
                 for name, output in self.c.outputs._dict.items():
@@ -355,6 +367,7 @@ class Lockbox(SoftwareModule):
                         output._autosave_active = True
         if len(self.outputs)==0:
             self.add_output()  # add at least one output
+        self._autosave_active = True # activate autosave
 
         # load inputs
         for input in self.inputs:

@@ -62,7 +62,6 @@ class BaseAttribute(object):
         self.value_updated(instance, value)  # lauch signal and update
         # config, callback
 
-
     def validate_and_normalize(self, value, module):
         """
         This function should raise an exception if the value is incorrect.
@@ -87,7 +86,7 @@ class BaseAttribute(object):
             if self.name in module.setup_attributes:
                     self.save_attribute(module, value)
         if self.name in module.callback_attributes: # _setup should ne triggered...
-            if module._callback_active: # un less a bunch of attributes are being changed together.
+            if module._callback_active: # unless a bunch of attributes are being changed together.
                 module.callback()
         return value
 
@@ -97,8 +96,9 @@ class BaseAttribute(object):
         try:
             get_value = self.get_value
         except AttributeError as e:
-            raise NotImplementedError("The attribute %s doesn't have a method get_value. Did you use an Attribute "
-                                      "instead of a Property?"%self.name)
+            raise NotImplementedError("The attribute %s doesn't have a method "
+                                      "get_value. Did you use an Attribute "
+                                      "instead of a Property?" % self.name)
         val = get_value(instance, owner)
         return val
 
@@ -109,7 +109,8 @@ class BaseAttribute(object):
         # if self.name in module.widget.attribute_widgets:
         #   module.widget.attribute_widgets[self.name].update_widget()
         #if self.name in module.gui_attributes:
-        module.signal_launcher.update_attribute_by_name.emit(self.name, [new_value])
+        module.signal_launcher.update_attribute_by_name.emit(self.name,
+                                                             [new_value])
 
     def save_attribute(self, module, value):
         """
@@ -161,8 +162,8 @@ class FloatAttribute(NumberAttribute):
         """
         Try to convert to float, then saturates with min and max
         """
-        return super(FloatAttribute, self).validate_and_normalize(float(value), module)
-
+        return super(FloatAttribute, self).validate_and_normalize(float(value),
+                                                                  module)
 
 class FrequencyAttribute(FloatAttribute):
     """
@@ -253,8 +254,13 @@ class SelectAttribute(BaseAttribute):
         """
         setattr(instance, '__' + self.name + '_' + 'options', sorted(new_options))
         instance.signal_launcher.change_options.emit(self.name, new_options)
+        # this is strange behaviour, an option should be actively selected..
         if not getattr(instance, self.name) in new_options:
-            if len(new_options)>0:
+            logger.debug("Option %s is not a valid choice for "
+                         "SelectAttribute %s. A random choice is being "
+                         "made which may lead to undesired behavior.."
+                         % (getattr(instance, self.name), self.name))
+            if len(new_options) > 0:
                 setattr(instance, self.name, new_options[0])
             else:
                 setattr(instance, self.name, None)
@@ -283,8 +289,8 @@ class SelectAttribute(BaseAttribute):
         """
         Looks for attribute name, otherwise, converts to string and rejects if not in self.options
         """
-        options = sorted(self.options(module)) # (module)
-        if len(options)==0 and value is None:
+        options = sorted(self.options(module))
+        if len(options) == 0 and value is None:
             return None
         if isinstance(options[0], basestring):
             if hasattr(value, 'name'):
@@ -292,9 +298,9 @@ class SelectAttribute(BaseAttribute):
             else:
                 value = str(value)
             if not (value in options):
-                raise ValueError("value %s is not an option for SelectAttribute %s of %s"%(value,
-                                                                                           self.name,
-                                                                                           module.name))
+                raise ValueError("value %s is not an option for "
+                                 "SelectAttribute %s of %s" %
+                                 (value, self.name, module.name))
             return value
         elif isinstance(options[0], numbers.Number):
             value = float(value)
@@ -927,10 +933,12 @@ class PWMRegister(FloatRegister, FloatAttribute):
 
     # validate_and_normalize from FloatRegister is fine
 
+
 class BaseProperty(object):
     """
-    A Property is a special type of attribute that is not mapping a fpga value, but rather an attribute _attr_name
-    of the module. This is used mainly in SoftwareModules
+    A Property is a special type of attribute that is not mapping a fpga value,
+    but rather an attribute _attr_name of the module. This is used mainly in
+    SoftwareModules
     """
     def get_value(self, obj, obj_type):
         if obj is None:
@@ -941,7 +949,7 @@ class BaseProperty(object):
 
     def set_value(self, obj, val):
         setattr(obj, '_' + self.name, val)
-        return val # maybe better with getattr... but more expensive
+        return val  # maybe better with getattr... but more expensive
 
 
 class SelectProperty(SelectAttribute, BaseProperty):
@@ -955,7 +963,7 @@ class SelectProperty(SelectAttribute, BaseProperty):
         if not hasattr(obj, '_' + self.name):
             # choose any value in the options as default.
             default = sorted(self.options(obj))
-            if len(default)>0:
+            if len(default) > 0:
                 val = default[0]
                 setattr(obj, '_' + self.name, val)
                 return val
@@ -1043,7 +1051,7 @@ class ListFloatProperty(ListFloatAttribute, BaseProperty):
     """
     A property for list of float values
     """
-    default = [0,0,0,0]
+    default = [0, 0, 0, 0]
 
 
 class ListComplexProperty(ListComplexAttribute, BaseProperty):
