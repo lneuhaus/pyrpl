@@ -56,6 +56,7 @@ def patch_excepthook():
 
 TIMER = QtCore.QTimer()
 TIMER.setSingleShot(True)
+TIMER.setInterval(1000)
 TIMER.timeout.connect(patch_excepthook)
 TIMER.start()
 
@@ -112,10 +113,12 @@ class PyrplWidget(QtGui.QMainWindow):
         self.status_bar = self.statusBar()
         EL.status_bars.append(self.status_bar)
         self.setWindowTitle(self.parent.c.pyrpl.name)
+        # UGLY WAY TO FIX ISSUES IN AN UGLY IMPLEMENTATION
+        self.timers = [self.timer_save_pos, EL.timer, TIMER]
 
     def kill_timers(self):
-        self.timer.stop()
-        self.timer_save_pos.stop()
+        for timer in self.timers:
+            timer.stop()
 
     def add_dock_widget(self, create_widget, name):
         dock_widget = MyDockWidget(create_widget, name)
