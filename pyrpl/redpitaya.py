@@ -51,7 +51,7 @@ defaultparameters = dict(
     serverdirname = "//opt//pyrpl//",  # server directory for server app and bitfile
     leds_off=True,  # turn off all GPIO lets at startup (improves analog performance)
     frequency_correction=1.0,  # actual FPGA frequency is 125 MHz * frequency_correction
-    timeout=3,  # timeout in seconds for ssh communication
+    timeout=1,  # timeout in seconds for ssh communication
     monitor_server_name='monitor_server',  # name of the server program on redpitaya
     silence_env=False)  # suppress all environment variables that may override the configuration?
 
@@ -147,34 +147,57 @@ class RedPitaya(object):
                            +self.parameters['dirname'])
 
         # connect to the redpitaya board
-        if self.parameters['hostname'] == "unavailable":  # simulation mode - start without connecting
+        self.start_ssh()
+        # start other stuff
+        if self.parameters['reloadfpga']:  # flash fpga
+            self.update_fpga()
+        if self.parameters['reloadserver']:  # reinstall server app
+            self.installserver()
+        if self.parameters['autostart']:  # start client
+            self.start()
+
+    def start_ssh(self, attempt=0):
+        """
+        Extablishes an ssh connection to the RedPitaya board
+
+        returns True if a successful connection has been established
+        """
+        try:
+            # close pre-existing connection if necessary
+            self.end_ssh()
+        except:
+            pass
+        if self.parameters['hostname'] == "unavailable":
+            # simulation mode - start without connecting
             self.logger.warning("Starting client in dummy mode...")
             self.startdummyclient()
+            return True
         else:  # normal mode - establish ssh connection and
             # start ssh connection
             self.ssh = SSHshell(hostname=self.parameters['hostname'],
                                 sshport=self.parameters['sshport'],
                                 user=self.parameters['user'],
                                 password=self.parameters['password'],
-                                delay = self.parameters['delay'],
-                                timeout = self.parameters['timeout'])
+                                delay=self.parameters['delay'],
+                                timeout=self.parameters['timeout'])
             try:  # test ssh connection for exceptions
                 self.ssh.ask()
-            except socket.error:
-                    # try again before anything else
-                    self.ssh = SSHshell(hostname=self.parameters['hostname'],
-                                        sshport=self.parameters['sshport'],
-                                        user=self.parameters['user'],
-                                        password=self.parameters['password'],
-                                        delay=self.parameters['delay'],
-                                        timeout=self.parameters['timeout'])
-            # start other stuff
-            if self.parameters['reloadfpga']:  # flash fpga
-                self.update_fpga()
-            if self.parameters['reloadserver']:  # reinstall server app
-                self.installserver()
-            if self.parameters['autostart']:  # start client
-                self.start()
+            except socket.error:  # connection problem
+                if attempt < 3:
+                    # try to connect up to 3 times
+                    return self.start_ssh(attempt=attempt+1)
+                else:  # even multiple attempts did not work
+                    raise SSHException("Could not establish an ssh "
+                                       "connection to hostname %s on port %s "
+                                       "with username % and passwort ****!"
+                                       "%s" % (self.parameters["hostname"],
+                                             self.parameters["sshport"],
+                                             self.parameters["user"]))
+                    return False
+            else:  # everything went well, connection is established
+                # also establish scp connection
+                self.ssh.startscp()
+                return True
 
     def switch_led(self, gpiopin=0, state=False):
         self.ssh.ask("echo " + str(gpiopin) + " > /sys/class/gpio/export")
@@ -188,7 +211,7 @@ class RedPitaya(object):
             state = "1"
         else:
             state = "0"
-        self.ssh.ask( "echo " + state + " > /sys/class/gpio/gpio" +
+        self.ssh.ask("echo " + state + " > /sys/class/gpio/gpio" +
             str(gpiopin) + "/value")
         sleep(self.parameters['delay'])
 
@@ -211,14 +234,14 @@ class RedPitaya(object):
               "and filename=\"red_pitaya.bin\"! Current dirname: "
               +self.parameters['dirname']
               +" current filename: "+self.parameters['filename'])
-        for i in range(2):
+        for i in range(3):
             try:
                 self.ssh.scp.put(source,
                              os.path.join(self.parameters['serverdirname'],
                                           self.parameters['serverbinfilename']))
             except (SCPException, SSHException):
                 # try again before failing
-                self.ssh.startscp()
+                self.start_ssh()
                 sleep(self.parameters['delay'])
             else:
                 break
