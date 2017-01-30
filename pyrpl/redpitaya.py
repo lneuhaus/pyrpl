@@ -55,6 +55,7 @@ defaultparameters = dict(
     monitor_server_name='monitor_server',  # name of the server program on redpitaya
     silence_env=False)  # suppress all environment variables that may override the configuration?
 
+
 class RedPitaya(object):
     cls_modules = [rp.HK, rp.AMS, rp.Scope, rp.Sampler, rp.Asg0, rp.Asg1] + \
                   [rp.AuxOutput]*2 + [rp.IQ]*3 + [rp.Pid]*4 + [rp.IIR]
