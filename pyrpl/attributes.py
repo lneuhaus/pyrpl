@@ -1,13 +1,16 @@
 """
-The parameters of the lockbox are controlled by descriptors deriving from BaseAttribute.
+The parameters of the lockbox are controlled by descriptors deriving from
+BaseAttribute.
 
 An attribute is a field that can be set or get by several means:
       - programmatically: module.attribute = value
-      - graphically: attribute.create_widget(module) returns a widget to manipulate the value
+      - graphically: attribute.create_widget(module) returns a widget to
+        manipulate the value
       - via loading the value in a config file for permanent value preservation
 
-Of course, the gui/parameter file/actual values have to stay "in sync" each time the attribute value is
-changed. The necessary mechanisms are happening behind the scene, and they are coded in this file.
+Of course, the gui/parameter file/actual values have to stay "in sync" each
+time the attribute value is changed. The necessary mechanisms are happening
+behind the scene, and they are coded in this file.
 """
 from __future__ import division
 from .bijection import Bijection
@@ -33,13 +36,18 @@ epsilon = sys.float_info.epsilon
 class BaseAttribute(object):
     """An attribute is a field that can be set or get by several means:
       - programmatically: module.attribute = value
-      - graphically: attribute.create_widget(module) returns a widget to manipulate the value
+      - graphically: attribute.create_widget(module) returns a widget to
+        manipulate the value
       - via loading the value in a config file for permanence
 
-    The concrete derived class need to have certain attributes properly defined:
-      - widget_class: the class of the widget to use for the gui (see attribute_widgets.py)
-      - a function set_value(instance, value) that effectively sets the value (on redpitaya or elsewhere)
-      - a function get_value(instance, owner) that reads the value from wherever it is stored internally
+    The concrete derived class need to have certain attributes properly
+    defined:
+      - widget_class: the class of the widget to use for the gui (see
+        attribute_widgets.py)
+      - a function set_value(instance, value) that effectively sets the value
+        (on redpitaya or elsewhere)
+      - a function get_value(instance, owner) that reads the value from
+        wherever it is stored internally
     """
     widget_class = None
     widget = None
