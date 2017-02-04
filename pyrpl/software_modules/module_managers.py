@@ -41,6 +41,11 @@ class ModuleManager(SoftwareModule):
         :param owner: (string): name of the module that is reserving the resource
         leave None if the gui shouldn't be disabled.
         If no available module left, returns None.
+
+        To make sure the module will be freed afterwards, use the context manager construct:
+        with pyrpl.mod_mag.pop('owner') as mod:
+            mod.do_something()
+        # module automatically freed at this point
         """
         for module in self.all_modules[-1::-1]: # start with largest index module
             if module.owner is None:

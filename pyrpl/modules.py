@@ -335,6 +335,24 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         #if self.widget is not None:
         #    self.widget.show_ownership()
 
+    def __enter__(self):
+        """
+        This function is executed in the context manager construct with ... as ... :
+        """
+        return self
+
+    def __exit__(self, type, val, traceback):
+        """
+        To make sure the module will be freed afterwards, use the context manager construct:
+        with pyrpl.mod_mag.pop('owner') as mod:
+            mod.do_something()
+        # module automatically freed at this point
+
+        The free operation is performed in this function
+        see http://stackoverflow.com/questions/1369526/what-is-the-python-keyword-with-used-for
+        """
+        self.owner = None
+
 
 class HardwareModule(BaseModule):
     """
