@@ -28,7 +28,7 @@ class NaWidget(ModuleWidget):
         self.button_layout = QtGui.QHBoxLayout()
         self.setLayout(self.main_layout)
         self.setWindowTitle("NA")
-        self.win = pg.GraphicsWindow(title="Amplitude")
+        self.win = pg.GraphicsWindow(title="Magnitude")
         self.win_phase = pg.GraphicsWindow(title="Phase")
         self.plot_item = self.win.addPlot(title="Magnitude (dB)")
         self.plot_item_phase = self.win_phase.addPlot(title="Phase (deg)")
@@ -132,10 +132,18 @@ class NaWidget(ModuleWidget):
             freq = self.module.x[cur]
             xpos = np.log10(freq) if logscale else freq
             if cur > 0:
-                self.arrow.setPos(xpos, abs(self.module.y_averaged[cur]))
+                self.arrow.setPos(xpos,
+                                  self._magnitude(self.module.y_averaged[cur]))
                 self.arrow.setVisible(visible)
-                self.arrow_phase.setPos(xpos, 180./np.pi*np.angle(self.module.y_averaged[cur]))
+                self.arrow_phase.setPos(xpos,
+                                        self._phase(self.module.y_averaged[cur]))
                 self.arrow_phase.setVisible(visible)
+
+    def _magnitude(self, data):
+        return 20. * np.log10(np.abs(data))
+
+    def _phase(self, data):
+        return np.angle(data, deg=True)
 
     def update_attribute_by_name(self, name, new_value_list):
         super(NaWidget, self).update_attribute_by_name(name, new_value_list)
@@ -158,8 +166,10 @@ class NaWidget(ModuleWidget):
 
         sl = slice(max(0, 50 * chunk_index - 1), min(50 * (chunk_index + 1), self.module.last_valid_point), 1) # make sure there is an overlap between slices
         data = self.module.y_averaged[sl]
-        self.chunks[chunk_index].setData(self.module.x[sl], np.abs(data))
-        self.chunks_phase[chunk_index].setData(self.module.x[sl], 180./np.pi*np.angle(data))
+        self.chunks[chunk_index].setData(self.module.x[sl],
+                                         self._magnitude(data))
+        self.chunks_phase[chunk_index].setData(self.module.x[sl],
+                                               self._phase(data))
 
 
     def run_continuous_clicked(self):
