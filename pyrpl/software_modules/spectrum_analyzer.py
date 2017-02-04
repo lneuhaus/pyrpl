@@ -195,13 +195,14 @@ class SignalLauncherSpectrumAnalyzer(SignalLauncher):
         2/ If so, plots them on the graph
         3/ Restarts the timer.
         """
-        if self.module.running_continuous:
-            if self.module.acquire_one_curve():  # true if new data to plot are available
-                self.update_display.emit()
-            else:  # curve not ready, wait for next timer iteration
-                pass
-            if self.module.current_average == 1:
-                self.autoscale_display.emit()
+        #if self.module.running_continuous:
+        if self.module.acquire_one_curve():  # true if new data to plot are available
+            self.update_display.emit()
+        else:  # curve not ready, wait for next timer iteration
+            self.timer_continuous.start()
+        if self.module.current_average == 1:
+            self.autoscale_display.emit()
+        if self.module.running_continuous and not self.timer_continuous.isActive():
             self.timer_continuous.start()
 
 
@@ -215,7 +216,7 @@ class RunningContinuousProperty(BoolProperty):
             module.signal_launcher.run_continuous()
         else:
             module.signal_launcher.stop()
-
+            module.scope.owner = None
 
 class SpectrumAnalyzer(SoftwareModule):
     """
@@ -328,6 +329,10 @@ class SpectrumAnalyzer(SoftwareModule):
     def data_length(self):
         return int(self.points)  # *self.nyquist_margin)
 
+    @property
+    def sampling_time(self):
+        return 1. / self.nyquist_margin / self.span
+
     def _setup(self):
         """
         Set things up for a spectrum acquisition. Between setup(**kwds) and curve(),
@@ -350,7 +355,7 @@ class SpectrumAnalyzer(SoftwareModule):
         if self.scope.owner != self.name:
             self.pyrpl.scopes.pop(self.name)
         # setup scope
-        self.scope.sampling_time = 1. / self.nyquist_margin / self.span # only duration can be used within setup
+        self.scope.sampling_time = self.sampling_time # only duration can be used within setup
         if self.baseband:
             self.scope.input1 = self.input
         else:
@@ -370,13 +375,6 @@ class SpectrumAnalyzer(SoftwareModule):
     def duration(self):
         return self.scope.duration
 
-    @property
-    def sampling_time(self):
-        """
-        :return: scope sampling time
-        """
-        return self.scope.sampling_time
-
     def filter_window(self):
         """
         :return: filter window
@@ -389,7 +387,7 @@ class SpectrumAnalyzer(SoftwareModule):
         normfactor = 1.0 / self.data_length / np.sqrt(50.0) * filterfactor
         return window * normfactor
 
-    def iq_data(self):
+    def iq_data(self, timeout):
         """
         :return: complex iq time trace
         """
@@ -400,11 +398,11 @@ class SpectrumAnalyzer(SoftwareModule):
             res += 1j*self.scope.curve(2, timeout=None)
         return res[:self.data_length]
 
-    def filtered_iq_data(self):
+    def filtered_iq_data(self, timeout):
         """
         :return: the product between the complex iq data and the filter_window
         """
-        return self.iq_data() * np.asarray(self.filter_window(),
+        return self.iq_data(timeout) * np.asarray(self.filter_window(),
                                            dtype=np.complex)
 
     def useful_index(self):
@@ -418,15 +416,22 @@ class SpectrumAnalyzer(SoftwareModule):
         else:
             return slice(int(middle - length/2), int(middle + length/2 + 1))
 
-    def curve(self):
+    def curve(self, timeout=None):
         """
         Get a spectrum from the device. It is mandatory to call setup() before curve()
-        :return:
+            If timeout>0:  runs until data is ready or timeout expires
+            If timeout is None: timeout is auto-set to twice scope.duration
+            If timeout is <0, throws ValueError
         """
+        if timeout is not None and timeout<0:
+            raise(ValueError('Timeout needs to be None or >0'))
         if not self._is_setup:
             raise NotReadyError("Setup was never called")
-        res = scipy.fftpack.fftshift(np.abs(scipy.fftpack.fft(self.filtered_iq_data())) ** 2)[self.useful_index()]
-        self.pyrpl.scopes.free(self.scope)
+        SLEEP_TIME = 0.001
+        total_sleep = 0
+        res = scipy.fftpack.fftshift(np.abs(scipy.fftpack.fft(self.filtered_iq_data(timeout))) ** 2)[self.useful_index()]
+        if not self.running_continuous:
+            self.pyrpl.scopes.free(self.scope)
         return res
 
     @property
@@ -494,16 +499,20 @@ class SpectrumAnalyzer(SoftwareModule):
             # let current_average be maximally equal to avg -> yields best real-time averaging mode
             if self.current_average > self.avg:
                 self.current_average = self.avg
-            do_plot = True
+            if self.running_continuous:
+                self.setup()
+            return True
         else:
-            do_plot = False
-        if self.running_continuous and not self.scope._trigger_delay_running:
-            self.setup()
-        return do_plot
+            return False
+
+        #if self.running_continuous and not self.scope._trigger_delay_running:
+        #    self.setup()
+        #    print(self.curve_ready())
+        #return do_plot
 
     def run_single(self):
         """
-        Feeds gui with one new curve from the scope. Once ready, datas are located in self.last_datas.
+        Feeds gui with one new curve from the scope. Once ready, data are located in self.last_datas.
         """
         self.stop()
         self.setup()

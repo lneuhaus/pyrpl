@@ -66,18 +66,17 @@ class SpecAnWidget(ModuleWidget):
         according to module.running_continuous
         """
         if self.module.running_continuous:
-            buttontext = 'Stop (%i' % self.module.current_average
-            if self.module.current_average >= self.module.avg:
-            # shows a plus sign when number of averages is available
-                buttontext += '+)'
-            else:
-                buttontext += ')'
-            self.button_continuous.setText(buttontext)
-            self.button_single.setEnabled(False)
+            buttontext = "Stop"
         else:
-
-            self.button_continuous.setText("Run continuous")
-            self.button_single.setEnabled(True)
+            buttontext = "Run continuous"
+        self.button_single.setEnabled(not self.module.running_continuous)
+        buttontext += ' (%i' % self.module.current_average
+        if self.module.current_average >= self.module.avg:
+        # shows a plus sign when number of averages is available
+            buttontext += '+)'
+        else:
+            buttontext += ')'
+        self.button_continuous.setText(buttontext)
 
     def update_rbw_visibility(self):
         self.attribute_widgets["rbw"].widget.setEnabled(not self.module.rbw_auto)
@@ -91,8 +90,7 @@ class SpecAnWidget(ModuleWidget):
         Toggles the button run_continuous to stop or vice versa and starts the acquisition timer
         """
 
-        if str(self.button_continuous.text()) \
-                == "Run continuous":
+        if str(self.button_continuous.text()).startswith("Run continuous"):
             self.module.run_continuous()
         else:
             self.module.stop()
