@@ -9,46 +9,22 @@ if APP is None: # Otherwise, create it
 
 class ExceptionLauncher(QtCore.QObject):
     #Used to display exceptions in the status bar of PyrplWidgets
-    _show_exception = QtCore.pyqtSignal() # use a signal to make sure no thread is messing up with gui
+    show_exception = QtCore.pyqtSignal(list) # use a signal to make sure no thread is messing up with gui
+
     def __init__(self):
         super(ExceptionLauncher, self).__init__()
-        self._show_exception.connect(self.show_all)
-        self.status_bars = []
-        self.timer = QtCore.QTimer()
-        self.timer.setInterval(1000)
-        self.timer.setSingleShot(False)
-        self.timer.timeout.connect(self.vanish_all)
 
     def display_exception(self, etype, evalue, tb):
-        self.etype = etype
-        self.evalue = evalue
-        self.tb = tb
-        self._show_exception.emit()
+        #self.etype = etype
+        #self.evalue = evalue
+        #self.tb = tb
+        self.show_exception.emit([etype, evalue, tb])
         self.old_except_hook(etype, evalue, tb)
-
-    def show_all(self):
-        self.timer.stop()
-        for bar in self.status_bars:
-            bar.showMessage(''.join(format_exception_only(self.etype, self.evalue)))
-            bar.setStyleSheet('color: white;background-color: red;')
-            bar.setToolTip(''.join(format_exception(self.etype, self.evalue, self.tb)))
-        self.timer.start()
-
-    def vanish_all(self):
-        for bar in self.status_bars:
-            bar.setStyleSheet('color: orange;')
-
 
 EL = ExceptionLauncher()
 # Exceptions raised by the event loop should be displayed in the MainWindow status_bar.
 # see http://stackoverflow.com/questions/40608610/exceptions-in-pyqt-event-loop-and-ipython
 # when running in ipython, we have to monkeypatch sys.excepthook in the qevent loop.
-"""
-def new_except_hook(etype, evalue, tb):
-    QtGui.QMessageBox.information(None,
-                                  str('error'),
-                                  ''.join(format_exception(etype, evalue, tb)))
-"""
 
 def patch_excepthook():
     EL.old_except_hook = sys.excepthook
@@ -56,7 +32,7 @@ def patch_excepthook():
 
 TIMER = QtCore.QTimer()
 TIMER.setSingleShot(True)
-TIMER.setInterval(1000)
+TIMER.setInterval(0)
 TIMER.timeout.connect(patch_excepthook)
 TIMER.start()
 
@@ -84,8 +60,6 @@ class MyDockWidget(QtGui.QDockWidget):
             self.widget = self.create_widget_func()
             self.setWidget(self.widget)
         super(MyDockWidget, self).showEvent(event)
-
-
         # self.setWidget(widget)
 
 
@@ -110,11 +84,33 @@ class PyrplWidget(QtGui.QMainWindow):
         self.timer_save_pos.timeout.connect(self._save_window_position)
         self.timer_save_pos.start()
 
+        self.timer_toolbar = QtCore.QTimer()
+        self.timer_toolbar.setInterval(1000)
+        self.timer_toolbar.setSingleShot(True)
+        self.timer_toolbar.timeout.connect(self.vanish_toolbar)
+
         self.status_bar = self.statusBar()
-        EL.status_bars.append(self.status_bar)
+        EL.show_exception.connect(self.show_exception)
         self.setWindowTitle(self.parent.c.pyrpl.name)
         # UGLY WAY TO FIX ISSUES IN AN UGLY IMPLEMENTATION
-        self.timers = [self.timer_save_pos, EL.timer, TIMER]
+        self.timers = [self.timer_save_pos, self.timer_toolbar]
+
+    def show_exception(self, typ_val_tb):
+        """
+        show exception in red in toolbar
+        """
+        typ, val, tb = typ_val_tb
+        self.timer_toolbar.stop()
+        self.status_bar.showMessage(''.join(format_exception_only(typ, val)))
+        self.status_bar.setStyleSheet('color: white;background-color: red;')
+        self.status_bar.setToolTip(''.join(format_exception(typ, val, tb)))
+        self.timer_toolbar.start()
+
+    def vanish_toolbar(self):
+        """
+        Toolbar becomes orange after (called 1s after exception occured)
+        """
+        self.status_bar.setStyleSheet('color: orange;')
 
     def kill_timers(self):
         for timer in self.timers:
