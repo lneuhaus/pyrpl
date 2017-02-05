@@ -248,6 +248,12 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
                                     **attributes)
         return c
 
+    def free(self):
+        """
+        Change ownership to None
+        """
+        self.owner = None
+
     @property
     def states(self):
         return list(self.c_states._keys())

@@ -33,6 +33,16 @@ class ModuleManagerWidget(ModuleWidget):
         self.main_layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self.main_layout)
 
+    def contextMenuEvent(self, event):
+        for widget in self.module_widgets:
+            if widget.geometry().contains(event.pos()):
+                if widget.module.owner is not None:
+                    act = QtGui.QAction('Free %s'%widget.module.name, self)
+                    act.triggered.connect(widget.module.free)
+                    menu = QtGui.QMenu()
+                    menu.addAction(act)
+                    menu.exec_(event.globalPos())
+
 
 class PidManagerWidget(ModuleManagerWidget):
     pass
