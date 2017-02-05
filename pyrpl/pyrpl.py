@@ -32,7 +32,6 @@ from . import software_modules
 from .memory import MemoryTree
 from .redpitaya import RedPitaya
 from . import pyrpl_utils
-from .global_config import *
 from .software_modules import get_software_module
 
 from PyQt4 import QtCore, QtGui
@@ -259,59 +258,15 @@ class Pyrpl(object):
         RedPitaya for possible keywords.
     """
 
-    # get global configuration memory tree
-    _global_config = global_config
-    _default_config_dir = default_config_dir
-
-    # auto-correct the user config dir so it points to the right place
-    try:
-        _user_config_dir = _global_config.general.configdir
-    except KeyError:
-        _user_config_dir = ""
-    if not os.path.exists(_user_config_dir):
-        _user_config_dir = os.path.join(_default_config_dir,
-                                        _user_config_dir)
-    if not os.path.exists(_user_config_dir):
-        os.mkdir(_user_config_dir)
-
-    @classmethod
-    def _getpath(self, filename='default'):
-        # get extension right
-        if not filename.endswith(".yml"):
-            filename = filename + ".yml"
-        # get path right
-        p, f = os.path.split(filename)
-        if not p:  # no path specified -> search in configdir
-            try:
-                filename = os.path.join(self._user_config_dir, f) # Why is it
-                #  impossible to access config directories before having an
-                # instance of pyrpl ?
-            except:
-                filename = None
-                # ... or defaultconfigdir
-            if (not os.path.isfile(filename)
-                and os.path.isfile(
-                    os.path.join(self._default_config_dir, f))):
-                filename = os.path.join(self._default_config_dir, f)
-        return filename
-
     def _setloglevel(self):
         pyrpl_utils.setloglevel(level=self.c.pyrpl.loglevel,
-                                loggername=__name__)  # 'pyrpl')
+                                loggername=__name__)
 
-    def __init__(self, config="myconfigfile", source="default", **kwargs):
+    def __init__(self, config="myconfigfile", source=None, **kwargs):
         # logger initialisation
         self.logger = logging.getLogger(name=__name__)
-        config = self._getpath(config)
-        if source is not None:
-            if os.path.isfile(config):
-                self.logger.warning("Config file already exists. Source file "
-                                    + "specification is ignored")
-            else:
-                copyfile(self._getpath(source),
-                         self._getpath(config))
         # configuration is retrieved from config file
-        self.c = MemoryTree(config)
+        self.c = MemoryTree(filename=config, source=source)
         # set global logging level if specified in config file
         self._setloglevel()
         self.widgets = [] # allow for multiple widgets

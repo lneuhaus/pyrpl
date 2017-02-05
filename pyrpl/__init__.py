@@ -15,8 +15,30 @@ warnings.simplefilter("error", BadCoefficients)
 import logging
 logger = logging.getLogger(name=__name__)
 logger.setLevel(logging.ERROR)  # only show errors until userdefine log level is set up
-from .global_config import global_config
+
+import os.path
+
+# get user directory
+try:  # first try from environment variable
+    user_dir = os.environ["PYRPL_USER_DIR"]
+except:  # otherwise, try ~/pyrpl_user_dir (where ~ is the user's home dir)
+    user_dir = os.path.expanduser('~/pyrpl_user_dir')
+
+# make variable directories
+user_config_dir = os.path.join(user_dir, 'config')
+user_curve_dir = os.path.join(user_dir, 'curves')
+user_model_dir = os.path.join(user_dir, 'models')
+default_config_dir = os.path.join(os.path.dirname(__file__), 'config')
+# create dirs if necessary
+for path in [user_dir, user_config_dir, user_curve_dir, user_model_dir]:
+    if not os.path.isdir(path):
+        os.mkdir(path)
+
 from .pyrpl_utils import setloglevel
+
+from .memory import MemoryTree
+
+global_config = MemoryTree('global_config')
 try:
     setloglevel(global_config.general.loglevel, loggername=logger.name)
 except:

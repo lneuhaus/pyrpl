@@ -1,4 +1,3 @@
 general:
-  configdir: user_config
   curvedb: pyinstruments
   loglevel: info
