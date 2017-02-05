@@ -1,13 +1,14 @@
 import time
 import logging
+logger = logging.getLogger(__file__)
 from collections import OrderedDict, Counter
 
+# global variable that tells whether QT is available - should be deprecated since we have a hard dependence on QT
 QT_EXIST = True
 try:
     from PyQt4 import QtCore, QtGui
 except ImportError:
     QT_EXIST = False
-
 if QT_EXIST:
     APP = QtGui.QApplication.instance()
 

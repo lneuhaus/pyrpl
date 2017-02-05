@@ -22,6 +22,7 @@ from shutil import copyfile
 import numpy as np
 import time
 from PyQt4 import QtCore
+from . import default_config_dir, user_config_dir
 
 import logging
 logger = logging.getLogger(name=__name__)
@@ -98,6 +99,57 @@ except:
     # usage example:
     # load(stream, yaml.SafeLoader)
     # save(data, stream=f, Dumper=yaml.SafeDumper)
+
+
+# two functions to locate config files
+def _get_filename(filename=None):
+    """ finds the correct path and name of a config file """
+    # accidentally, we may pass a MemoryTree object instead of file
+    if isinstance(filename, MemoryTree):
+        return filename._filename
+    # get extension right
+    if not filename.endswith(".yml"):
+        filename = filename + ".yml"
+    # see if filename is found with given path, or in user_config or in default_config
+    p, f = os.path.split(filename)
+    for path in [p, user_config_dir, default_config_dir]:
+        file = os.path.join(path, f)
+        if os.path.isfile(file):
+            return file
+    # file not existing, place it in user_config_dir
+    return os.path.join(user_config_dir, f)
+
+
+def get_config_file(filename=None, source=None):
+    """ returns the path to a valid, existing config file with possible source specification """
+    # if None is specified, that means we do not want a persistent config file
+    if filename is None:
+        return filename
+    # try to locate the file
+    filename = _get_filename(filename)
+    if os.path.isfile(filename):  # found a file
+        p, f = os.path.split(filename)
+        if p == default_config_dir:
+            # check whether path is default_config_dir and make a copy in
+            # user_config_dir in order to not alter original files
+            dest = os.path.join(user_config_dir, f)
+            copyfile(filename, dest)
+            return dest
+        else:
+            return filename
+    # file not existing, try to get it from source
+    if source is not None:
+        source = _get_filename(source)
+        if os.path.isfile(source):  # success - copy the source
+            logger.debug("File " + filename + " not found. New file created from source '%s'. "%source)
+            copyfile(source,filename)
+            return filename
+    # still not returned -> create empty file
+    with open(filename, mode="w"):
+        pass
+    logger.debug("File " + filename + " not found. New file created. ")
+    return filename
+
 
 
 class MemoryBranch(object):
@@ -298,17 +350,12 @@ class MemoryTree(MemoryBranch):
     _savedeadtime = 1
     # as an indication, on my ssd, saving of a standard config file was timed at 30 ms, loading: 40 ms...
 
-    def __init__(self, filename=None):
-        if filename is None: #  simulate a config file, only store data in memory
+    def __init__(self, filename=None, source=None):
+        # first, make sure filename exists
+        self._filename = get_config_file(filename, source)
+        if filename is None:  # simulate a config file, only store data in memory
             self._filename = filename
         else:  # normal mode of operation with an actual configfile on the disc
-            if os.path.isfile(filename):
-                self._filename = filename
-            else:
-                logger.warning("File "+filename+" not found. New file created. ")
-                self._filename = filename
-                with open(self._filename, mode="w") as f:
-                    pass
             self._lastsave = time.time()
             # make a temporary file to ensure modification of config file is atomic (double-buffering like operation...)
             self._buffer_filename = self._filename+'.tmp'
