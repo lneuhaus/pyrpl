@@ -314,6 +314,7 @@ class Pyrpl(object):
         self.c = MemoryTree(config)
         # set global logging level if specified in config file
         self._setloglevel()
+        self.widgets = [] # allow for multiple widgets
 
         if not 'redpitaya' in self.c._keys() and len(kwargs)>0:
             self.c['redpitaya'] = dict()
@@ -386,8 +387,9 @@ class Pyrpl(object):
         """
         Creates the top-level widget
         """
-        self.widget = PyrplWidget(self)
-        return self.widget
+        widget = PyrplWidget(self)
+        self.widgets.append(widget)
+        return widget
 
     def kill_timers(self):
         """
@@ -395,18 +397,21 @@ class Pyrpl(object):
         """
         for module in self.modules:
             module.signal_launcher.kill_timers()
-        self.widget.kill_timers()
+        for widget in self.widgets:
+            widget.kill_timers()
 
     def end(self):
         """
         kill all timers and closes the connection to the redpitaya
         """
         self.kill_timers()
-        if self.widget is not None:
-            self.widget.deleteLater()
+        for widget in self.widgets: # Close all widgets created
+            del widget # some bugs were probably caused by slots called afterwards (deleteLater --> del)
         # make sure the save timer of the config file is not running and
         # all data are written to the harddisk
         self.c._save_now()
         # end redpitatya communication
         self.rp.end_all()
-        APP.processEvents()  # do the job of actually destroying the widgets
+
+        #APP.processEvents()  # do the job of actually destroying the widgets
+        #APP.processEvents()

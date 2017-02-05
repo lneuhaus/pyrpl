@@ -295,10 +295,22 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         The config file instance. In practice, writing values in here will
         write the values in the corresponding section of the config file.
         """
+        entered = False
         manager_section_name = self.section_name + "s" # for instance, iqs
-        if not manager_section_name in self.parent.c._keys():
+        keys = sorted(self.parent.c._keys())
+        keys2 = sorted(self.parent.c._keys())
+        keys3 = sorted(self.parent.c._keys())
+
+        #if not manager_section_name in self.parent.c._keys():
+        #    self.parent.c[manager_section_name] = OrderedDict()
+        #    entered = True
+        try:
+            manager_section = getattr(self.parent.c, manager_section_name)
+        except KeyError:
+            entered = True
             self.parent.c[manager_section_name] = OrderedDict()
-        manager_section = getattr(self.parent.c, manager_section_name)
+            manager_section = getattr(self.parent.c, manager_section_name)
+
         if not self.name in manager_section._keys():
             manager_section[self.name] = OrderedDict()
         return getattr(manager_section, self.name)

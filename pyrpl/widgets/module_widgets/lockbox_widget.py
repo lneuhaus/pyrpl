@@ -640,7 +640,6 @@ class LockboxSequenceWidget(ModuleWidget):
                 self.main_layout.removeWidget(widget)
                 stage.widget.deleteLater()
 
-
     def update_stage_names(self):
         for widget in self.stage_widgets:
             widget.set_title(widget.name)

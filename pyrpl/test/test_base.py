@@ -58,6 +58,7 @@ class TestPyrpl(TestRedpitaya):
         self.erase_temp_file()  # also before (for instance in case of Ctrl-C)
         self.pyrpl = Pyrpl(config=self.tmp_config_file,
                            source=self.source_config_file)
+        # self.pyrpl.create_widget() # create a second widget to be sure
         self.r = self.pyrpl.rp
 
     @classmethod
