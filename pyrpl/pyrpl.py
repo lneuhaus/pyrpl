@@ -296,12 +296,14 @@ class Pyrpl(object):
         return filename
 
     def _setloglevel(self):
-        pyrpl_utils.setloglevel(level=self.c.pyrpl.loglevel,
-                                loggername=__name__)  # 'pyrpl')
+        if __name__ == '__main__':
+            pyrpl_utils.setloglevel(level=self.c.pyrpl.loglevel,
+                                    loggername='pyrpl') #__name__)  # 'pyrpl') if name is pyrpl.pyrpl, then pyrpl.submodule
+                                                                    # is not a sublogger of this one
 
     def __init__(self, config="myconfigfile", source="default", **kwargs):
         # logger initialisation
-        self.logger = logging.getLogger(name=__name__)
+        self.logger = logging.getLogger(name='pyrpl')#__name__)
         config = self._getpath(config)
         if source is not None:
             if os.path.isfile(config):
