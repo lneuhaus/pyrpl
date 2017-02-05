@@ -33,9 +33,6 @@ import pickle
 import os
 import logging
 
-from . import global_config
-
-#from . import fitting
 
 # optional override of CurveDB class with custom module, as defined in
 # ./pyrpl/config/global_config.yml
@@ -43,8 +40,10 @@ try:
     from . import global_config
     CurveDB = __import__(global_config.general.curvedb).CurveDB
 except:
+    from . import user_curve_dir
+
     class CurveDB(object):
-        _dirname = os.path.join(os.path.dirname(__file__),"curves")
+        _dirname = user_curve_dir
         if not os.path.exists(_dirname): # if _dirname doesn't exist, some unexpected errors will occur.
             os.mkdir(_dirname)
 
