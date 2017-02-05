@@ -10,6 +10,38 @@ import numpy as np
 
 APP = QtGui.QApplication.instance()
 
+
+class MyGraphicsWindow(pg.GraphicsWindow):
+    def __init__(self, title, parent_widget):
+        super(MyGraphicsWindow, self).__init__(title)
+        self.parent_widget = parent_widget
+        self.setToolTip("IIR transfer function: \n"
+                        "----------------------\n"
+                        "CTRL + Left click: add one more pole. \n"
+                        "SHIFT + Left click: add one more zero\n"
+                        "Left Click: select pole (other possibility: click on the '+j' labels below the graph)\n"
+                        "Left/Right arrows: change imaginary part (frequency) of the current pole or zero\n"
+                        "Up/Down arrows; change the real part (width) of the current pole or zero. \n"
+                        "Poles are represented by 'X', zeros by 'O'")
+
+    def mousePressEvent(self, *args, **kwds):
+        event = args[0]
+        modifier = int(event.modifiers())
+        it = self.getItem(0, 0)
+        pos = it.mapToScene(event.pos()) #  + it.vb.pos()
+        point = it.vb.mapSceneToView(pos)
+        x, y = point.x(), point.y()
+        x = 10 ** x
+        new_z = -100 - 1.j * x
+        if modifier==QtCore.Qt.CTRL:
+            self.parent_widget.module.poles += [new_z]
+            self.parent_widget.attribute_widgets['poles'].set_selected(-1)
+        if modifier == QtCore.Qt.SHIFT:
+            self.parent_widget.module.zeros += [new_z]
+            self.parent_widget.attribute_widgets['zeros'].set_selected(-1)
+        return super(MyGraphicsWindow, self).mousePressEvent(*args, **kwds)
+
+
 class IirWidget(ModuleWidget):
     def init_gui(self):
         self.main_layout = QtGui.QVBoxLayout()
