@@ -3,7 +3,7 @@
 import logging
 logger = logging.getLogger(name=__name__)
 import os
-from .. import Pyrpl, RedPitaya
+from .. import Pyrpl, RedPitaya, user_config_dir
 
 class TestRedpitaya(object):
     @classmethod
@@ -35,9 +35,9 @@ class TestPyrpl(TestRedpitaya):
 
     @classmethod
     def erase_temp_file(self):
-        tmp_conf = os.path.join(Pyrpl._user_config_dir,
+        tmp_conf = os.path.join(user_config_dir,
                      self.tmp_config_file)
-        if os.path.exists(tmp_conf):
+        if os.path.isfile(tmp_conf):
             try:
                 os.remove(tmp_conf)
             # sometimes, an earlier test delete file between exists and
