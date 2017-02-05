@@ -34,11 +34,10 @@ for path in [user_dir, user_config_dir, user_curve_dir, user_model_dir]:
     if not os.path.isdir(path):
         os.mkdir(path)
 
+# try to set log level (and automatically generate custom global_config file
 from .pyrpl_utils import setloglevel
-
 from .memory import MemoryTree
-
-global_config = MemoryTree('global_config')
+global_config = MemoryTree('global_config', source='global_config')
 try:
     setloglevel(global_config.general.loglevel, loggername=logger.name)
 except:

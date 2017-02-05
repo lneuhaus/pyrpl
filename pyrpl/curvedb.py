@@ -33,6 +33,8 @@ import pickle
 import os
 import logging
 
+from . import global_config
+
 #from . import fitting
 
 # optional override of CurveDB class with custom module, as defined in

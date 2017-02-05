@@ -127,8 +127,16 @@ def get_config_file(filename=None, source=None):
         return filename
     # try to locate the file
     filename = _get_filename(filename)
-    if os.path.isfile(filename):
-        return filename
+    if os.path.isfile(filename):  # found a file
+        p, f = os.path.split(filename)
+        if p == default_config_dir:
+            # check whether path is default_config_dir and make a copy in
+            # user_config_dir in order to not alter original files
+            dest = os.path.join(user_config_dir, f)
+            copyfile(filename, dest)
+            return dest
+        else:
+            return filename
     # file not existing, try to get it from source
     if source is not None:
         source = _get_filename(source)
