@@ -473,22 +473,22 @@ class HardwareModule(BaseModule):
         v = (v & (2 ** bitlength - 1))
         return np.uint32(v)
 
-    def get_state(self):
-        """Returns a dictionaty with all current values of the parameters
-        listed in parameter_names"""
+    #def get_state(self):
+    #    """Returns a dictionaty with all current values of the parameters
+    #    listed in parameter_names"""
+    #
+    #   res = dict()
+    #    for par in self.parameter_names:
+    #        res[par] = getattr(self, par)
+    #    return res
 
-        res = dict()
-        for par in self.parameter_names:
-            res[par] = getattr(self, par)
-        return res
-
-    def set_state(self, dic):
-        """Sets all parameters to the values in dic. When necessary,
-        the function also calls setup()"""
-
-        res = dict()
-        for key, value in dic.iteritems():
-            setattr(self, key, value)
+    #def set_state(self, dic):
+    #    """Sets all parameters to the values in dic. When necessary,
+    #    the function also calls setup()"""
+    #
+    #    res = dict()
+    #    for key, value in dic.iteritems():
+    #        setattr(self, key, value)
 
 
 class SoftwareModule(BaseModule):
