@@ -630,11 +630,16 @@ class LockboxSequenceWidget(ModuleWidget):
         return stage
 
     def remove_stage(self, stage):
-        if stage.widget in self.stage_widgets:
-            stage.widget.hide()
-            self.stage_widgets.remove(stage.widget)
-            self.main_layout.removeWidget(stage.widget)
-            stage.widget.deleteLater()
+        for widget in self.stage_widgets:
+            if widget.name==stage.name:
+                #if stage.widget in self.stage_widgets:
+                if self.parent().button_green==widget.button_goto:
+                    self.parent().button_green = None
+                widget.hide()
+                self.stage_widgets.remove(widget)
+                self.main_layout.removeWidget(widget)
+                stage.widget.deleteLater()
+
 
     def update_stage_names(self):
         for widget in self.stage_widgets:
@@ -743,6 +748,7 @@ class LockboxWidget(ModuleWidget):
         SLOT: don't change name unless you know what you are doing
         Removes a stage to the model (stages is a singleton [stage])
         """
+
         self.sequence_widget.remove_stage(stages[0])
 
     def stage_renamed(self):
@@ -776,7 +782,8 @@ class LockboxWidget(ModuleWidget):
         """
         Only one colored button can exist at a time
         """
-        self.button_green.setStyleSheet("")
+        if self.button_green is not None:
+            self.button_green.setStyleSheet("")
         button.setStyleSheet("background-color:green")
         self.button_green = button
 
