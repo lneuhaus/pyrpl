@@ -164,7 +164,7 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         """
         :return: a dict with the current values of the setup attributes
         """
-        kwds = dict()
+        kwds = OrderedDict()
         for attr in self.setup_attributes:
             kwds[attr] = getattr(self, attr)
         return kwds
@@ -195,7 +195,7 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         """
          Load and sets all setup attributes from config file
         """
-        dic = dict()
+        dic = OrderedDict()
         if self.c is not None:
             for key, value in self.c._dict.items():
                 if key in self.setup_attributes:
@@ -305,11 +305,10 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         try:
             manager_section = getattr(self.parent.c, manager_section_name)
         except KeyError:
-            self.parent.c[manager_section_name] = OrderedDict()
+            self.parent.c[manager_section_name] = dict()
             manager_section = getattr(self.parent.c, manager_section_name)
-
         if not self.name in manager_section._keys():
-            manager_section[self.name] = OrderedDict()
+            manager_section[self.name] = dict()
         return getattr(manager_section, self.name)
 
     def callback(self):
