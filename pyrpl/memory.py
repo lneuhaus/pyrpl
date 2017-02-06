@@ -297,7 +297,10 @@ class MemoryBranch(object):
         if item in self._data:
             self.__setattr__(item, value)
         else:
-            self._data[item] = value
+            if isbranch(value):
+                self._data[item] = dict(value)
+            else:
+                self._data[item] = value
             self._save()
 
     def _rename(self, name):
