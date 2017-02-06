@@ -93,7 +93,7 @@ except:
         return yaml.dump(data, stream, OrderedDumper,
                          default_flow_style=default_flow_style, **kwds)
     def isbranch(obj):
-        return isinstance(obj,dict)
+        return isinstance(obj, dict)
         # return type(obj) == OrderedDict
 
     # usage example:
