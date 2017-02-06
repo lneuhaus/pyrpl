@@ -259,12 +259,25 @@ class Pyrpl(object):
     """
 
     def _setloglevel(self):
+        # if __name__ == '__main__':
         pyrpl_utils.setloglevel(level=self.c.pyrpl.loglevel,
-                                loggername=__name__)
+                                    loggername='pyrpl') #__name__)  # 'pyrpl') if name is pyrpl.pyrpl, then
+                                                                    # pyrpl.submodule is not a sublogger of this one
 
     def __init__(self, config="myconfigfile", source=None, **kwargs):
         # logger initialisation
-        self.logger = logging.getLogger(name=__name__)
+        self.logger = logging.getLogger(name='pyrpl') #__name__)  # 'pyrpl') if name is pyrpl.pyrpl, then
+                                                                    # pyrpl.submodule is not a sublogger of this one
+
+        #config = self._getpath(config)
+        #if source is not None:
+        #    if os.path.isfile(config):
+        #        self.logger.warning("Config file already exists. Source file "
+        #                            + "specification is ignored")
+        #    else:
+        #        copyfile(self._getpath(source),
+        #                 self._getpath(config))
+
         # configuration is retrieved from config file
         self.c = MemoryTree(filename=config, source=source)
         # set global logging level if specified in config file

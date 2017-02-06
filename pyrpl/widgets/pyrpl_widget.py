@@ -2,6 +2,8 @@ from PyQt4 import QtCore, QtGui
 import sys
 from traceback import format_exception, format_exception_only
 
+import logging
+
 APP = QtGui.QApplication.instance() # try to retrieve the app (I think when Ipython is running, the app already exists)
 if APP is None: # Otherwise, create it
     APP = QtGui.QApplication(["pyrpl"])
@@ -10,6 +12,7 @@ if APP is None: # Otherwise, create it
 class ExceptionLauncher(QtCore.QObject):
     #Used to display exceptions in the status bar of PyrplWidgets
     show_exception = QtCore.pyqtSignal(list) # use a signal to make sure no thread is messing up with gui
+    show_log = QtCore.pyqtSignal(list)
 
     def __init__(self):
         super(ExceptionLauncher, self).__init__()
@@ -20,6 +23,10 @@ class ExceptionLauncher(QtCore.QObject):
         #self.tb = tb
         self.show_exception.emit([etype, evalue, tb])
         self.old_except_hook(etype, evalue, tb)
+
+    def display_log(self, record):
+        self.show_log.emit([record])
+
 
 EL = ExceptionLauncher()
 # Exceptions raised by the event loop should be displayed in the MainWindow status_bar.
@@ -35,6 +42,33 @@ TIMER.setSingleShot(True)
 TIMER.setInterval(0)
 TIMER.timeout.connect(patch_excepthook)
 TIMER.start()
+
+
+class LogHandler(QtCore.QObject, logging.Handler):
+    """
+    A handler class which sends log strings to a wx object
+    """
+    show_log = QtCore.pyqtSignal(list)
+
+    def __init__(self):
+        """
+        Initialize the handler
+        """
+        logging.Handler.__init__(self)
+        QtCore.QObject.__init__(self)
+
+    def emit(self, record):
+        """
+        Emit a record.
+        """
+        try:
+            msg = self.format(record)
+            self.show_log.emit([msg])
+            #EL.display_log(record)
+        except (KeyboardInterrupt, SystemExit):
+            raise
+        except:
+            self.handleError(record)
 
 
 class MyDockWidget(QtGui.QDockWidget):
@@ -67,6 +101,9 @@ class PyrplWidget(QtGui.QMainWindow):
     def __init__(self, pyrpl_instance):
         self.parent = pyrpl_instance
         self.logger = self.parent.logger
+        self.handler = LogHandler()
+        self.logger.addHandler(self.handler)
+
         super(PyrplWidget, self).__init__()
         self.setDockNestingEnabled(True)
         self.dock_widgets = {}
@@ -91,6 +128,7 @@ class PyrplWidget(QtGui.QMainWindow):
 
         self.status_bar = self.statusBar()
         EL.show_exception.connect(self.show_exception)
+        self.handler.show_log.connect(self.show_log)
         self.setWindowTitle(self.parent.c.pyrpl.name)
         # UGLY WAY TO FIX ISSUES IN AN UGLY IMPLEMENTATION
         self.timers = [self.timer_save_pos, self.timer_toolbar]
@@ -103,14 +141,23 @@ class PyrplWidget(QtGui.QMainWindow):
         self.timer_toolbar.stop()
         self.status_bar.showMessage(''.join(format_exception_only(typ, val)))
         self.status_bar.setStyleSheet('color: white;background-color: red;')
+        self._next_toolbar_style = 'color: orange;'
         self.status_bar.setToolTip(''.join(format_exception(typ, val, tb)))
+        self.timer_toolbar.start()
+
+    def show_log(self, records):
+        record = records[0]
+        self.timer_toolbar.stop()
+        self.status_bar.showMessage(record)
+        self.status_bar.setStyleSheet('color: white;background-color: green;')
+        self._next_toolbar_style = 'color: grey;'
         self.timer_toolbar.start()
 
     def vanish_toolbar(self):
         """
         Toolbar becomes orange after (called 1s after exception occured)
         """
-        self.status_bar.setStyleSheet('color: orange;')
+        self.status_bar.setStyleSheet(self._next_toolbar_style)
 
     def kill_timers(self):
         for timer in self.timers:
