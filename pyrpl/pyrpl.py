@@ -259,16 +259,17 @@ class Pyrpl(object):
     """
 
     def _setloglevel(self):
-        # if __name__ == '__main__':
-        pyrpl_utils.setloglevel(level=self.c.pyrpl.loglevel,
-                                    loggername='pyrpl') #__name__)  # 'pyrpl') if name is pyrpl.pyrpl, then
-                                                                    # pyrpl.submodule is not a sublogger of this one
+        try:
+            level = self.c.pyrpl.loglevel
+        except KeyError:
+            pass
+        else:
+            pyrpl_utils.setloglevel(level=level,
+                                loggername='pyrpl') #__name__)
 
     def __init__(self, config="myconfigfile", source=None, **kwargs):
         # logger initialisation
-        self.logger = logging.getLogger(name='pyrpl') #__name__)  # 'pyrpl') if name is pyrpl.pyrpl, then
-                                                                    # pyrpl.submodule is not a sublogger of this one
-
+        self.logger = logging.getLogger(name='pyrpl')
         #config = self._getpath(config)
         #if source is not None:
         #    if os.path.isfile(config):
