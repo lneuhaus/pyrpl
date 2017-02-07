@@ -12,7 +12,7 @@ try:
     from pyrpl import user_model_dir
     import sys, os
     sys.path.append(user_model_dir)
-    module=None
+    module = None
     for module in os.listdir(user_model_dir):
         if module == '__init__.py' or module[-3:] != '.py':
             continue
@@ -21,3 +21,4 @@ try:
     del module
 except:
     logger.warning("An error occured during the import of user model files!")
+    raise

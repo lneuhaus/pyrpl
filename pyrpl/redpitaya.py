@@ -156,6 +156,8 @@ class RedPitaya(object):
             self.installserver()
         if self.parameters['autostart']:  # start client
             self.start()
+        self.logger.info('Successfully connected to Redpitaya with hostname '
+                         '%s.'%self.ssh.hostname)
 
     def start_ssh(self, attempt=0):
         """

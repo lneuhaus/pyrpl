@@ -225,7 +225,8 @@ class PidProperties(QtGui.QGroupBox):
         self.radio_group.addButton(self.manual)
         self.radio_group.addButton(self.assisted)
         self.assisted.toggled.connect(self.toggle_mode)
-        self.manual.toggled.connect(self.toggle_mode)
+        # only one button of the group must be connected
+        # self.manual.toggled.connect(self.toggle_mode)
 
         self.manual_widget = WidgetManual(self)
         self.v1.addWidget(self.manual)
@@ -249,19 +250,20 @@ class PidProperties(QtGui.QGroupBox):
         else:
             self.module.assisted_design = True
         self.update_assisted_design()
-        print "TEST"
 
     def update_assisted_design(self):
         """
         Does what must be done when manual/assisted design radio button was clicked
         """
         assisted_on = self.module.assisted_design
-        self.pid_props.blockSignals(True)
-        self.pid_props.manual.setChecked(not assisted_on)
-        self.pid_props.assisted.setChecked(assisted_on)
-        self.manual_widget.setEnabled(not assisted_on)
-        self.assisted_widget.setEnabled(assisted_on)
-        self.pid_props.blockSignals(False)
+        self.blockSignals(True)
+        try:
+            self.manual.setChecked(not assisted_on)
+            self.assisted.setChecked(assisted_on)
+            self.manual_widget.setEnabled(not assisted_on)
+            self.assisted_widget.setEnabled(assisted_on)
+        finally:
+            self.blockSignals(False)
 
 
 class PostFiltering(QtGui.QGroupBox):

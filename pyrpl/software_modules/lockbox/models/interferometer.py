@@ -18,7 +18,7 @@ class InterferometerPort2(InputDirect):
                            np.sin(phase)
 
 
-class Inteferometer(Model):
+class Interferometer(Model):
     name = "Interferometer"
     section_name = "interferometer"
     units = ['m', 'deg', 'rad']

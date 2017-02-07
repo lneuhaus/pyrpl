@@ -25,7 +25,7 @@ class InputSignal(SoftwareModule):
     setup_attributes = gui_attributes + ["min", "max", "mean", "rms"]
     input_channel = SelectProperty(options=sorted(DSP_INPUTS.keys()))  # ['in1', 'in2']) # adc
     # Is it desirable to be allowed to select any internal signal?
-    model_cls = None # Model class to which this input belongs.
+    model_cls = None  # Model class to which this input belongs.
     widget_class = LockboxInputWidget
     min = FloatProperty()
     max = FloatProperty()
@@ -55,15 +55,23 @@ class InputSignal(SoftwareModule):
         returns an experimental curve in V obtained from a sweep of the lockbox.
         """
         self.lockbox.sweep()
-        scope = self.pyrpl.scopes.pop(self.name)
-        try:
-            if not "sweep" in scope.states:
-                scope.save_state("sweep")
-            scope.load_state("sweep")
-            scope.setup(input1=self.signal(), input2=self.lockbox.asg)
-            curve = scope.curve(ch=1, timeout=0.1+2./self.lockbox.asg.frequency)
-        finally:
-            self.pyrpl.scopes.free(scope)
+        with self.pyrpl.scopes.pop(self.name) as scope:
+            if "sweep" in scope.states:
+                scope.load_state("sweep")
+            else:
+                scope.setup(input1=self.signal(),
+                            input2=self.lockbox.get_output(
+                                self.lockbox.default_sweep_output).pid.output_direct,
+                            trigger_source=self.lockbox.asg.name,
+                            duration=2./self.lockbox.asg.frequency,
+                            ch1_active=True,
+                            ch2_active=False,
+                            average=True,
+                            running_continuous=False,
+                            rolling_mode=False)
+                scope.save_state("autosweep")
+            curve = scope.curve(ch=1,
+                                timeout=2./self.lockbox.asg.frequency+0.1)
         return curve
 
     def get_stats_from_curve(self, curve):
