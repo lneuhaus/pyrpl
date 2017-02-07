@@ -209,7 +209,7 @@ class OutputSignal(Signal):
             if filter[0] < 0:
                 raise NotImplementedError("High pass filters are not handled currently in assisted design.")
             if filter[2] != 0:
-                raise NotImplementedError("Only first order low-pass filter aer currently handled in assisted "
+                raise NotImplementedError("Only first order low-pass filter are currently handled in assisted "
                                           "design (derivators are currently disabled). Consider using iir module")
             if filter[3] == 0:
                 self.i = self.unity_gain_desired
