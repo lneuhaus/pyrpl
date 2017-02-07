@@ -8,7 +8,7 @@ can be changed before calling create_widget()
 from PyQt4 import QtCore, QtGui
 from collections import OrderedDict
 import functools
-
+import logging
 APP = QtGui.QApplication.instance()
 
 
@@ -92,6 +92,7 @@ class ModuleWidget(QtGui.QGroupBox):
 
     def __init__(self, name, module, parent=None):
         super(ModuleWidget, self).__init__(parent)
+        self._logger = logging.getLogger(__name__)
         self.module = module
         self.name = name
         self.attribute_widgets = OrderedDict()

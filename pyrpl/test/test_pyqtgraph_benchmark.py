@@ -5,7 +5,8 @@ import numpy as np
 import time
 from PyQt4 import QtCore
 from PyQt4 import QtGui
-from .test_base import TestRedpitaya
+from .test_redpitaya import TestRedpitaya
+
 
 class TestPyqtgraph(TestRedpitaya):
     """ This test case creates a maximally simplistic scope gui

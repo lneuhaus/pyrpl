@@ -191,17 +191,14 @@ class NetworkAnalyzer(SoftwareModule):
                          "logscale",
                          "infer_open_loop_tf",
                          "avg",
-                         "curve_name"
-                         ]
-    _gui_attributes = _setup_attributes + \
-                       ["running_state"]
+                         "curve_name"]
+    _gui_attributes = _setup_attributes + ["running_state"]
     _callback_attributes = [a for a in _gui_attributes
                             if a not in ['running_state', 'curve_name']]
     data = None
     _signal_launcher = SignalLauncherNA
 
     def _init_module(self):
-        self._logger = logging.getLogger(__name__)
         self.start_freq = 200
         self.stop_freq = 50000
         self.points = 1001
@@ -216,8 +213,7 @@ class NetworkAnalyzer(SoftwareModule):
         self.infer_open_loop_tf = False
         self.curve_name = 'na_curve'
         self._is_setup = False
-        # possibly a bugfix:
-        self.time_per_point = 1.0 / self.rbw * (self.avg + self.sleeptimes)
+        self.time_per_point = self._time_per_point()
         self.current_averages = 0
         self.time_last_point = 0
         self.running_state = 'stopped'
@@ -288,23 +284,23 @@ class NetworkAnalyzer(SoftwareModule):
                       input=self.input,
                       output_direct=self.output_direct,
                       output_signal='output_direct')
-        # time_per_point is calculated at setup for speed reasons
-        self.time_per_point = 1.0 / self.rbw * (self.avg + self.sleeptimes)
         # setup averaging
         self.iq._na_averages = np.int(np.round(125e6 / self.rbw * self.avg))
+        self._cached_na_averages = self.iq._na_averages
         self.iq._na_sleepcycles = np.int(
             np.round(125e6 / self.rbw * self.sleeptimes))
+        # time_per_point is calculated at setup for speed reasons
+        self.time_per_point = self._time_per_point()
         # compute rescaling factor of raw data
-        self._rescale = 2.0 ** (-self.iq._LPFBITS) * 4.0
         # 4 is artefact of fpga code
-        self.current_point = -2
+        self._rescale = 2.0 ** (-self.iq._LPFBITS) * 4.0
         # number of "dead_points" at the beginning of the scans.
-        self._cached_na_averages = self.iq._na_averages
+        self.current_point = -2
         # to avoid reading it at every single point
         self.iq.frequency = self.x[0]  # this triggers the NA acquisition
         self.time_last_point = timeit.default_timer()
         self._tf_values = self.transfer_function(self.x)
-        # precalculate transfer_function values for speed
+        # pre-calculate transfer_function values for speed
         self.values_generator = self.values()
         # Warn the user if time_per_point is too small:
         # < 1 ms measurement time will make acquisition inefficient.
@@ -312,8 +308,12 @@ class NetworkAnalyzer(SoftwareModule):
             self._logger.info("Time between successive points is %.1f ms."
                               " You should increase 'avg' to at least %i for "
                               "efficient acquisition.",
-                              self.time_per_point * 1000,
+                              self.time_per_point * 1000.,
                               self.avg*0.1/self.time_per_point)
+
+    def _time_per_point(self):
+        return float(self.iq._na_sleepcycles + self.iq._na_averages) \
+               / (125e6 * self.iq._frequency_correction)
 
     def setup_averaging(self):
         self.current_averages = 0
@@ -340,26 +340,33 @@ class NetworkAnalyzer(SoftwareModule):
         time_per_point
         """
         # get the actual point's (discretized) frequency
-        x = self.x[max(self.current_point, 0)] # negative index means "dead point" at start_freq at the beginning.
+        x = self.x[max(self.current_point, 0)]
+        # negative index means "dead point" at start_freq at the beginning.
         tf = self._tf_values[self.current_point]
-        ok = False
-        while not ok: # make sure enough time was left for data to accumulate in the iq register...
+        while True:
+            # make sure enough time was left for data to accumulate in
+            # the iq register...
             # compute remaining time for acquisition
-            passed_duration = timeit.default_timer() - self.time_last_point #DO NOT USE time.time()
-            # This gets updated only every 1 ms or so.
+            passed_duration = timeit.default_timer() - self.time_last_point
+            #DO NOT USE time.time(). This gets updated only every 1 ms or so.
             remaining_duration = self.time_per_point - passed_duration
-            if remaining_duration >= 0.002: #sleeping in the ms range becomes inaccurate, in this case, we will just
-                # continuously check if enough time has passed. For averaging times longer than 2 ms, a 1 ms error in
-                # the sleep time is only a 50 % error, but less CPU intensive.
+            if remaining_duration >= 0.002:
+                # sleeping in the ms range becomes inaccurate, in this case, we
+                # will just continuously check if enough time has passed. For
+                # averaging times longer than 2 ms, a 1 ms error in the sleep
+                # time is only a 50 % error, but less CPU intensive.
                 # see http://stackoverflow.com/questions/1133857/how-accurate-is-pythons-time-sleep
                 sleep(remaining_duration)
-            if remaining_duration<=0: # exit the loop when enough time has passed.
-                ok = True
-        y = self.iq._nadata_total/self._cached_na_averages #only one read operation
-        # get amplitude for normalization
-        amp = self.amplitude
-        # normalize immediately
-        if amp == 0:
+            # exit the loop when enough time has passed.
+            if remaining_duration < 0:
+                break
+        if self.current_point < 5:
+            self._logger.debug("NA is currently reading point %s",
+                                 self.current_point)
+        # only one read operation per point is this one
+        y = self.iq._nadata_total/self._cached_na_averages
+        amp = self.amplitude  # get amplitude for normalization
+        if amp == 0:  # normalize immediately
             y *= self._rescale  # avoid division by zero
         else:
             y *= self._rescale / amp
@@ -374,11 +381,13 @@ class NetworkAnalyzer(SoftwareModule):
         self.current_point += 1
         if self.current_point < self.points:
             # writing to iq.frequency triggers the acquisition
-            self.iq.frequency = self.x[max(self.current_point, 0)] # <0 index means "dead point" with start_freq
+            # negative index means "dead point" with start_freq
+            self.iq.frequency = self.x[max(self.current_point, 0)]
         else:
             # turn off the modulation when done
             self.iq.amplitude = 0
-        self.time_last_point = timeit.default_timer() # check averaging time from now
+        # check averaging time from now
+        self.time_last_point = timeit.default_timer()
 
     def values(self):
         """
@@ -395,7 +404,6 @@ class NetworkAnalyzer(SoftwareModule):
 
         values are made of a triplet (freq, complex_response, amplitude)
         """
-
         try:
             while self.current_point < self.points:
                 x, y, amp = self.get_current_point()
@@ -403,10 +411,11 @@ class NetworkAnalyzer(SoftwareModule):
                 if self.start_freq == self.stop_freq:
                     x = timeit.default_timer()
                 self.prepare_for_next_point()
-                if self.current_point - 1>=0: # negative index at the beginning of the scan are "dead points" for the
+                if self.current_point > 0:
+                    # negative index at the
+                    # beginning of the scan are "dead points" for the
                     # accumulator to stabilize.
                     yield (x, y, amp)
-
         except Exception as e:
             self.iq._logger.info("NA output turned off due to an exception")
             raise e
@@ -416,14 +425,14 @@ class NetworkAnalyzer(SoftwareModule):
 
     def curve(self, **kwds):  # amplitude can be limited
         """
-        High level function: this sets up the na and acquires a curve. See setup for the explanation of parameters.
-        Contrary to functions starting with 'run_', here, the acquisition is blocking.
+        High level function: this sets up the na and acquires a curve. See
+        setup for the explanation of parameters. Contrary to functions
+        starting with 'run_', here, the acquisition is blocking.
 
         Returns
         -------
         (array of frequencies, array of complex ampl, array of amplitudes)
         """
-
         self.setup(**kwds)
         xs = np.zeros(self.points, dtype=float)
         ys = np.zeros(self.points, dtype=complex)
@@ -437,7 +446,6 @@ class NetworkAnalyzer(SoftwareModule):
         self.iq.amplitude = self.amplitude
         self.iq.frequency = self.start_freq
         sleep(self.time_per_point)
-
         for index, (x, y, amp) in enumerate(self.values_generator):
             xs[index] = x
             ys[index] = y

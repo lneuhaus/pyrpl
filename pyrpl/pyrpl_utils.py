@@ -21,8 +21,8 @@ def sleep(time_s):
      This function should be used everywhere in the
      project in place of "time.sleep"
     """
-
-    if QT_EXIST:
+    # QTimer-based sleep operation is not to be used for now
+    if False: #QT_EXIST and APP is not None:
         timer = QtCore.QTimer()
         timer.setSingleShot(True)
         timer.setInterval(1000*time_s)
@@ -31,6 +31,7 @@ def sleep(time_s):
             APP.processEvents()
     else:
         time.sleep(time_s)
+
 
 def get_unique_name_list_from_class_list(cls_list):
     """

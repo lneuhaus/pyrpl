@@ -266,7 +266,10 @@ class Pyrpl(object):
         RedPitaya for possible keywords.
     """
 
-    def __init__(self, config="myconfigfile", source=None, **kwargs):
+    def __init__(self,
+                 config="myconfigfile",
+                 source=None,
+                 **kwargs):
         # logger initialisation
         self.logger = logging.getLogger(name='pyrpl') #__name__)  # 'pyrpl') if name is pyrpl.pyrpl, then
                                                                     # pyrpl.submodule is not a sublogger of this one
@@ -359,11 +362,14 @@ class Pyrpl(object):
         kill all timers and closes the connection to the redpitaya
         """
         self.kill_timers()
-        for widget in self.widgets:  # Close all widgets
-            del widget
+        while len(self.widgets)>0:  # Close all widgets
+            w = self.widgets.pop()
+            del w
+        # do the job of actually destroying the widgets
+        APP.processEvents()
         # make sure the save timer of the config file is not running and
         # all data are written to the harddisk
         self.c._save_now()
         # end redpitatya communication
         self.rp.end_all()
-        APP.processEvents()  # do the job of actually destroying the widgets
+        APP.processEvents()

@@ -18,14 +18,16 @@
 
 
 import numpy as np
-import time
-from time import sleep
+from .pyrpl_utils import sleep
 import socket
-from collections import defaultdict
 import logging
 
-class MonitorClient(object):
+# global conter to assign a number to each client
+# only used for debugging purposes
+CLIENT_NUMBER = 0
 
+
+class MonitorClient(object):
     def __init__(self, hostname="192.168.1.0", port=2222, restartserver=None):
         """initiates a client connected to monitor_server
 
@@ -34,6 +36,12 @@ class MonitorClient(object):
         restartserver: a function to call that restarts the server in case of problems
         """
         self.logger = logging.getLogger(name=__name__)
+        # update global client counter and assign a number to this client
+        global CLIENT_NUMBER
+        CLIENT_NUMBER += 1
+        self.client_number = CLIENT_NUMBER
+        self.logger.debug("Client number %s started", self.client_number)
+        # start setting up client
         self._restartserver = restartserver
         self._hostname = hostname
         self._port = port
@@ -41,22 +49,23 @@ class MonitorClient(object):
         # try to connect at least 5 times
         for i in range(5):
             if not self._port > 0:
-                if self._port is None: # likely means that _restartserver failed.
+                if self._port is None:
+                    # likely means that _restartserver failed.
                     raise ValueError("Connection to hostname %s failed. "
                                      "Please check your connection parameters!"
-                                     %(self._hostname))
+                                     % (self._hostname))
                 else:
-                    raise ValueError("Trying to open MonitorClient for hostname %s "
-                                 "on invalid port %s. Please check your connection "
-                                 "parameters!" % (self._hostname, self._port))
+                    raise ValueError("Trying to open MonitorClient for "
+                                     "hostname %s on invalid port %s. Please "
+                                     "check your connection parameters!"
+                                     % (self._hostname, self._port))
             try:
                 self.socket.connect((self._hostname, self._port))
             except socket.error:  # mostly because port is still closed
                 self.logger.warning("Socket error during connection "
                                     "attempt %s.", i)
-                sleep(0.5)
-                self._port = self._restartserver()  # try a different port
-                                                    # here by putting port=-1
+                # could try a different port here by putting port=-1
+                self._port = self._restartserver()
             else:
                 break
         self.socket.settimeout(1.0)  # 1 second timeout for socket operations
@@ -130,10 +139,14 @@ class MonitorClient(object):
             try:
                 value = function(addr, value)
             except (socket.timeout, socket.error):
-                self.logger.error("Timeout or socket error.")
-                self.logger.error(
-                "Error occured in reading attempt %s. Trying another time to "
-                "read from redpitaya. ", i)
+                self.logger.error("Error occured in reading attempt %s. "
+                                  "Reconnecting at addr %s to %s value %s by "
+                                  "client %s"
+                                  % (i,
+                                     hex(addr),
+                                     function.__name__,
+                                     value,
+                                     self.client_number))
                 if self._restartserver is not None:
                     self.restart()
             else:

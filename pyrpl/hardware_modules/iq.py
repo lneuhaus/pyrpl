@@ -224,7 +224,8 @@ class IQ(FilterModule):
         while not ((a >> 31 == 0) and (b >> 31 == 0)
                    and (c >> 31 == 0) and (d >> 31 == 0)):
             a, b, c, d = self._reads(0x140, 4)
-            print('too soon')
+
+            self._logger.warning('NA data not ready yet. Try again!')
             attempt += 1
             if attempt > 10:
                 raise Exception("Trying to recover NA data while averaging is not finished. Some setting is wrong. ")
