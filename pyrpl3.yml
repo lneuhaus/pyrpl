@@ -72,7 +72,6 @@ dependencies:
   - jupyter-console==5.0.0
   - jupyter-core==4.2.1
   - prompt-toolkit==1.0.9
-  - pyrpl==0.9.0.0
   - ruamel.yaml==0.13.13
   - scp==0.10.2
   - win-unicode-console==0.5
