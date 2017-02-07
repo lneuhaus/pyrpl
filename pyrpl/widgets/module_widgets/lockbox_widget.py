@@ -224,8 +224,8 @@ class PidProperties(QtGui.QGroupBox):
         self.assisted = QtGui.QRadioButton('assisted design')
         self.radio_group.addButton(self.manual)
         self.radio_group.addButton(self.assisted)
-        self.assisted.clicked.connect(self.toggle_mode)
-        self.manual.clicked.connect(self.toggle_mode)
+        self.assisted.toggled.connect(self.toggle_mode)
+        self.manual.toggled.connect(self.toggle_mode)
 
         self.manual_widget = WidgetManual(self)
         self.v1.addWidget(self.manual)
@@ -249,6 +249,7 @@ class PidProperties(QtGui.QGroupBox):
         else:
             self.module.assisted_design = True
         self.update_assisted_design()
+        print "TEST"
 
     def update_assisted_design(self):
         """
