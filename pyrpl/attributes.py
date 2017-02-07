@@ -13,7 +13,7 @@ time the attribute value is changed. The necessary mechanisms are happening
 behind the scene, and they are coded in this file.
 """
 from __future__ import division
-from .bijection import Bijection
+from .pyrpl_utils import Bijection
 from .widgets.attribute_widgets import BoolAttributeWidget, FloatAttributeWidget, FilterAttributeWidget, \
                                             IntAttributeWidget, SelectAttributeWidget, StringAttributeWidget, \
                                             ListComplexAttributeWidget, FrequencyAttributeWidget, \

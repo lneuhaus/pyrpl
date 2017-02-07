@@ -19,83 +19,6 @@ from collections import OrderedDict
 from PyQt4 import QtCore, QtGui
 
 
-
-def get_setup_docstring(cls):
-    """
-    Returns a docstring for the function 'setup' that is composed of:
-      - the '_setup' docstring
-      - the list of all setup_attributes docstrings
-    """
-    if not hasattr(cls, "_setup"):
-        raise NotImplementedError("class '" + cls.__name__ + "' needs to implement a method '_setup'")
-    doc = cls._setup.__doc__ + '\n'
-    doc += "attributes\n=========="
-    for attr_name in cls.setup_attributes:
-        attr = getattr(cls, attr_name)
-        doc += "\n  " + attr_name + ": " + attr.__doc__
-    return doc
-
-def new_func_setup():
-    def setup(self, **kwds):
-        """
-        First: sets the attributes specified in kwds with set_setup_attributes(**kwds).
-        Second: setup the module with the current attributes (using _setup())
-
-        Many instances of this function will be created by the module's metaclass
-        (one per subclass having a setup_attributes field) and each of these functions will have the present docstring
-        overwritten by a more descriptive one based on _setup.__doc__ and module attributes docstrings.
-        """
-        self._callback_active = False
-        try:
-            self.set_setup_attributes(**kwds)
-            self._setup()
-        finally:
-            self._callback_active = True
-    return setup
-
-class NameAttributesMetaClass(type):
-    '''
-    Magic to retrieve the name of the attributes in the attributes themselves.
-    see http://code.activestate.com/recipes/577426-auto-named-decriptors/
-    '''
-    def __new__(cls, classname, bases, classDict):
-        """
-        Iterate through the new class' __dict__ and update the .name of all recognised BaseAttribute.
-        Otherwise, we would have to declare every attribute with the following unpleasantly redundant code:
-        foo = SomeAttribute(bits=14, min=0, max=1, name='foo')
-        """
-        for name, attr in classDict.items():
-            if isinstance(attr, BaseAttribute):
-                attr.name = name
-        return type.__new__(cls, classname, bases, classDict)
-
-
-class ModuleMetaClass(NameAttributesMetaClass):
-    '''
-    Builds the setup docstring by aggregating _setup's and setup_attributes's docstrings.
-    '''
-    def __init__(self, classname, bases, classDict):
-        """
-        Takes care of creating the module's 'setup' function.
-        The setup function combines set_attributes(**kwds) with _setup().
-        We cannot use normal inheritance because we want a customized docstring for each module.
-        The docstring is created here by combining the module's _setup docstring and individual attributes' docstring.
-        """
-        super(ModuleMetaClass, self).__init__(classname, bases, classDict)
-        if hasattr(self, "setup_attributes"):
-            if not "setup" in self.__dict__:  # function setup is inherited--> this is bad because we want a docstring
-                # different for each subclass
-                setattr(self, "setup", new_func_setup())
-                overwrite_docstring = True
-            else:
-                overwrite_docstring = (self.setup.__doc__ == "")  # keep the docstring if it was made manually
-            if overwrite_docstring:
-                if hasattr(self.setup, "__func__"): # Should evaluate to True in Python 2
-                    self.setup.__func__.__doc__ = get_setup_docstring(self)  # In a MetaClass, self is a class...
-                else:  # in python 3, __doc__ is directly an attribute of the function
-                    self.setup.__doc__ = get_setup_docstring(self)
-
-
 class SignalLauncher(QtCore.QObject):
     """
     A QObject that is connected to the widgets to update their value when attributes of a module change
@@ -126,9 +49,84 @@ class SignalLauncher(QtCore.QObject):
                 val.connect(getattr(widget, key))
 
 
+class ModuleMetaClass(type):
+    """ Generate Module classes with two features:
+    - __new__ lets attributes know what name they are referred two in the
+    class that contains them
+    - __init__ auto-generates the function setup() and its docstring """
+    def __new__(cls, classname, bases, classDict):
+        """
+        Magic to retrieve the name of the attributes in the attributes themselves.
+        see http://code.activestate.com/recipes/577426-auto-named-decriptors/
+        Iterate through the new class' __dict__ and update the .name of all recognised BaseAttribute.
+        Otherwise, we would have to declare every attribute with the following unpleasantly redundant code:
+        foo = SomeAttribute(bits=14, min=0, max=1, name='foo')
+        """
+        for name, attr in classDict.items():
+            if isinstance(attr, BaseAttribute):
+                attr.name = name
+        return type.__new__(cls, classname, bases, classDict)
+
+    def __init__(self, classname, bases, classDict):
+        """
+        Builds the setup docstring by aggregating _setup's and setup_attributes's docstrings.
+        Takes care of creating the module's 'setup' function.
+        The setup function combines set_attributes(**kwds) with _setup().
+        We cannot use normal inheritance because we want a customized docstring for each module.
+        The docstring is created here by combining the module's _setup docstring and individual attributes' docstring.
+        """
+        super(ModuleMetaClass, self).__init__(classname, bases, classDict)
+        #if hasattr(self, "setup_attributes"):
+        if "setup" not in self.__dict__:
+            # 1. generate a setup function
+            def setup(self, **kwds):
+                self._callback_active = False
+                try:
+                    # user can redefine any setup_attribute through kwds
+                    self.set_setup_attributes(**kwds)
+                    # derived class
+                    if hasattr(self, '_setup'):
+                        self._setup()
+                finally:
+                    self._callback_active = True
+            # 2. place the new setup function in the module class
+            setattr(self, "setup", setup)
+
+        #if setup has no docstring, then make one
+        # docstring syntax differs between python versions. Python 3:
+        if hasattr(self.setup, "__func__"):
+            if (self.setup.__func__.__doc__ is None or
+                        self.setup.__func__.__doc__ == ""):
+                self.setup.__func__.__doc__ = self.make_setup_docstring()
+        # ... python 2
+        elif (self.setup.__doc__ is None or
+                      self.setup.__doc__ == ""):
+            setup.__doc__ += self.make_setup_docstring()
+
+    def make_setup_docstring(self):
+        """
+        Returns a docstring for the function 'setup' that is composed of:
+          - the '_setup' docstring
+          - the list of all setup_attributes docstrings
+        """
+        doc = ""
+        if hasattr(self, "_setup"):
+            doc += self._setup.__doc__ + '\n'
+        doc += "attributes\n=========="
+        for attr_name in self.setup_attributes:
+            attr = getattr(self, attr_name)
+            doc += "\n  " + attr_name + ": " + attr.__doc__
+        return doc
+
+
 class BaseModule(with_metaclass(ModuleMetaClass, object)):
-    # python 3-compatible way of using metaclass
-    # attributes have automatically their internal name set properly upon module creation
+    # The Syntax for defining a metaclass changed from Python 2 to 3.
+    # with_metaclass is compatible with both versions and roughly does this:
+    # def with_metaclass(meta, *bases):
+    #     """Create a base class with a metaclass."""
+    #     return meta("NewBase", bases, {})
+    # Specifically, ModuleMetaClass ensures that attributes have automatically
+    # their internal name set properly upon module creation.
     """
     Several fields have to be implemented in child class:
       - setup_attributes: attributes that are touched by setup(**kwds)/saved/restored upon module creation
@@ -159,6 +157,23 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
     _callback_active = True # This flag is used to desactivate callback during setup
     _autosave_active = True # This flag is used to desactivate saving into file during init
     _owner = None
+
+    def __init__(self, parent, name=None):
+        """
+        Creates a module with given name. If name is None, uses cls.name.
+        parent is either a pyrpl instance, or another SoftwareModule.
+          - First case: config file entry is in
+            self.__class__.name + 's'--> self.name
+          - Second case: config file entry is in
+            parent_entry-->self.__class__.name + 's'-->self.name
+        """
+        if name is not None:
+            self.name = name
+        self.signal_launcher = SignalLauncher(self)
+        self.parent = parent
+        self._autosave_active = False
+        self.init_module()
+        self._autosave_active = True
 
     def get_setup_attributes(self):
         """
@@ -340,8 +355,6 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         if val is None:
             self.setup(**self.c._dict)
         self.signal_launcher.change_ownership.emit()
-        #if self.widget is not None:
-        #    self.widget.show_ownership()
 
     def __enter__(self):
         """
@@ -371,6 +384,31 @@ class HardwareModule(BaseModule):
     """
 
     parent = None  # parent will be redpitaya instance
+
+    def __init__(self, redpitaya, name=None):
+        """ Creates the prototype of a RedPitaya Module interface
+
+        if no name provided, will use cls.name
+        """
+        if name is not None:
+            self.name = name
+        self._logger = logging.getLogger(name=__name__)
+        self._client = redpitaya.client
+        self._addr_base = self.addr_base  # why ?
+        self.__doc__ = "Available registers: \r\n\r\n" + self.help()
+        self._rp = redpitaya
+        self.parent = redpitaya
+        self.pyrpl_config = redpitaya.c
+        self.signal_launcher = SignalLauncher(self)
+        self._autosave_active = False
+        self.init_module()
+        self._autosave_active = True
+
+    def init_module(self):
+        """
+        To implement in child class if needed.
+        """
+        pass
 
     def ownership_changed(self, old, new):
         """
@@ -412,31 +450,6 @@ class HardwareModule(BaseModule):
             raise ValueError("New module attributes may not be set at runtime."
                              " Attribute " + name + " is not defined in class "
                              + self.__class__.__name__)
-
-    def __init__(self, redpitaya, name=None):
-        """ Creates the prototype of a RedPitaya Module interface
-
-        if no name provided, will use cls.name
-        """
-        self.signal_launcher = SignalLauncher(self)
-        self._autosave_active = False
-        if name is not None:
-            self.name = name
-        self._logger = logging.getLogger(name=__name__)
-        self._client = redpitaya.client
-        self._addr_base = self.addr_base  # why ?
-        self.__doc__ = "Available registers: \r\n\r\n" + self.help()
-        self._rp = redpitaya
-        self.parent = redpitaya
-        self.pyrpl_config = redpitaya.c
-        self.init_module()
-        self._autosave_active = True
-
-    def init_module(self):
-        """
-        To implement in child class if needed.
-        """
-        pass
 
     def _reads(self, addr, length):
         return self._client.reads(self._addr_base + addr, length)
@@ -494,7 +507,14 @@ class SoftwareModule(BaseModule):
       ready for acquisition/output with the current setup_attributes' values.
     """
 
-    def __init__(self, parent, name=None):
+
+    def init_module(self):
+        """
+        To be reimplemented in child class.
+        """
+        pass
+
+    def obsolete__init__(self, parent, name=None):
         """
         Creates a module with given name. If name is None, uses cls.name.
         parent is either a pyrpl instance, or another SoftwareModule.
@@ -525,9 +545,3 @@ class SoftwareModule(BaseModule):
         while(not isinstance(parent, Pyrpl)):
             parent = parent.parent
         return parent
-
-    def init_module(self):
-        """
-        To be reimplemented in child class.
-        """
-        pass

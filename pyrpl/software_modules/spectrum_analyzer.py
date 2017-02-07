@@ -293,7 +293,6 @@ class SpectrumAnalyzer(SoftwareModule):
     def init_module(self):
         self._iq = None
         self.rp = self.pyrpl.rp
-        self._parent = self.rp # very weird, now the correct way would be to use the ModuleManagers...
 
         self._rbw = 0
         self._rbw_auto = False
@@ -369,7 +368,7 @@ class SpectrumAnalyzer(SoftwareModule):
 
     @property
     def scope(self):
-        return self.rp.scope
+        return self.prrpl.rp.scope
 
     @property
     def duration(self):
