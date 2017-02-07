@@ -38,12 +38,12 @@ class InputPdh(InputIQ):
         """  returns a pdh error signal at for a number of detunings x. """
         # pdh only has appreciable slope for detunings between -0.5 and 0.5
         # unless you are using it for very exotic purposes..
-        # incident beam: laser field
+        # The incident beam is composed of three laser fields:
         # a at x,
         # 1j*a*rel at x+sbfreq
         # 1j*a*rel at x-sbfreq
-        # in the end we will only consider cross-terms so the parameter rel will be normalized out
-        # all three fields incident on cavity
+        # In the end we will only consider cross-terms so the parameter rel will be normalized out.
+        # All three fields are incident on the cavity:
         # eta is ratio between input mirror transmission and total loss (including this transmission),
         # i.e. between 0 and 1. While there is a residual dependence on eta, it is very weak and
         # can be neglected for all practical purposes.
@@ -51,6 +51,7 @@ class InputPdh(InputIQ):
         # a_cav(x) = a_in(x)*sqrt(eta)/(1+1j*x)
         # a_ref(x) = -1 + eta/(1+1j*x)
         def a_ref(x):
+            """complex lorentzian reflection"""
             return 1 - eta / (1 + 1j * x)
         # reflected intensity = abs(sum_of_reflected_fields)**2
         # components oscillating at sbfreq: cross-terms of central lorentz with either sideband

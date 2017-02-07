@@ -224,8 +224,8 @@ class PidProperties(QtGui.QGroupBox):
         self.assisted = QtGui.QRadioButton('assisted design')
         self.radio_group.addButton(self.manual)
         self.radio_group.addButton(self.assisted)
-        self.assisted.clicked.connect(self.toggle_mode)
-        self.manual.clicked.connect(self.toggle_mode)
+        self.assisted.toggled.connect(self.toggle_mode)
+        self.manual.toggled.connect(self.toggle_mode)
 
         self.manual_widget = WidgetManual(self)
         self.v1.addWidget(self.manual)
@@ -243,19 +243,25 @@ class PidProperties(QtGui.QGroupBox):
             v.setSpacing(0)
             v.setContentsMargins(5, 1, 0, 0)
 
-    def toggle_mode(self): # button clicked
+    def toggle_mode(self): # manual vs assisted design button clicked
         if self.manual.isChecked():
             self.module.assisted_design = False
         else:
             self.module.assisted_design = True
+        self.update_assisted_design()
+        print "TEST"
 
-    def set_assisted(self):
-        self.manual_widget.setEnabled(False)
-        self.assisted_widget.setEnabled(True)
-
-    def set_manual(self):
-        self.manual_widget.setEnabled(True)
-        self.assisted_widget.setEnabled(False)
+    def update_assisted_design(self):
+        """
+        Does what must be done when manual/assisted design radio button was clicked
+        """
+        assisted_on = self.module.assisted_design
+        self.pid_props.blockSignals(True)
+        self.pid_props.manual.setChecked(not assisted_on)
+        self.pid_props.assisted.setChecked(assisted_on)
+        self.manual_widget.setEnabled(not assisted_on)
+        self.assisted_widget.setEnabled(assisted_on)
+        self.pid_props.blockSignals(False)
 
 
 class PostFiltering(QtGui.QGroupBox):
@@ -289,16 +295,6 @@ class OutputSignalWidget(ModuleWidget):
     def change_analog_tf(self):
         self.main_props.change_analog_tf()
 
-    def set_assisted_design(self, val):
-        """
-        Disable the corresponding buttons in the pid property section.
-        """
-        self.pid_props.blockSignals(True)
-        self.pid_props.manual.setChecked(not val)
-        self.pid_props.assisted.setChecked(val)
-        self.pid_props.blockSignals(False)
-        {True:self.pid_props.set_assisted, False:self.pid_props.set_manual}[val]()
-
     def init_gui(self):
         self.main_layout = QtGui.QVBoxLayout()
         self.setLayout(self.main_layout)
@@ -331,7 +327,7 @@ class OutputSignalWidget(ModuleWidget):
         self.col2.addStretch(5)
 
         self.pid_props = PidProperties(self)
-        self.set_assisted_design(self.module.assisted_design)
+        self.pid_props.update_assisted_design()
         self.col3.addWidget(self.pid_props)
 
         self.col3.addStretch(5)
