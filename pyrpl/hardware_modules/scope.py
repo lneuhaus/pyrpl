@@ -614,12 +614,14 @@ class Scope(HardwareModule):
         self.setup()
         self._signal_launcher.run_single()
 
-    def save_curve(self):
+    def save_curve(self, ch=None):
         """
         Saves the curve(s) that is (are) currently displayed in the gui in the db_system. Also, returns the list
         [curve_ch1, curve_ch2]...
         """
-        datas = self.last_datas
+        datas = [self.times,
+                 self.curve(ch=1, timeout=-1),
+                 self.curve(ch=2, timeout=-1)]
         d = self.get_setup_attributes()
         curves = [None, None]
         for ch, active in [(1, self.ch1_active), (2, self.ch2_active)]:
