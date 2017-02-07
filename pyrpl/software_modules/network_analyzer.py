@@ -299,8 +299,8 @@ class NetworkAnalyzer(SoftwareModule):
         # to avoid reading it at every single point
         self.iq.frequency = self.x[0]  # this triggers the NA acquisition
         self.time_last_point = timeit.default_timer()
-        self._tf_values = self.transfer_function(self.x)
         # pre-calculate transfer_function values for speed
+        self._tf_values = self.transfer_function(self.x)
         self.values_generator = self.values()
         # Warn the user if time_per_point is too small:
         # < 1 ms measurement time will make acquisition inefficient.
