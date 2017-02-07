@@ -237,6 +237,14 @@ meters is implemented there. Another very often used model type is
 
 """
 
+default_pyrpl_config = {'name': 'default_pyrpl_instance',
+                        'gui': True,
+                        'loglevel': 'info',
+                        'modules': ['NetworkAnalyzer',
+                                    'SpectrumAnalyzer',
+                                    'Lockbox']
+                        }
+
 
 class Pyrpl(object):
     """
@@ -258,42 +266,26 @@ class Pyrpl(object):
         RedPitaya for possible keywords.
     """
 
-    def _setloglevel(self):
-        try:
-            level = self.c.pyrpl.loglevel
-        except KeyError:
-            pass
-        else:
-            pyrpl_utils.setloglevel(level=level,
-                                loggername='pyrpl') #__name__)
-
     def __init__(self, config="myconfigfile", source=None, **kwargs):
         # logger initialisation
-        self.logger = logging.getLogger(name='pyrpl')
-        #config = self._getpath(config)
-        #if source is not None:
-        #    if os.path.isfile(config):
-        #        self.logger.warning("Config file already exists. Source file "
-        #                            + "specification is ignored")
-        #    else:
-        #        copyfile(self._getpath(source),
-        #                 self._getpath(config))
-
+        self.logger = logging.getLogger(name='pyrpl') #__name__)  # 'pyrpl') if name is pyrpl.pyrpl, then
+                                                                    # pyrpl.submodule is not a sublogger of this one
         # configuration is retrieved from config file
         self.c = MemoryTree(filename=config, source=source)
+        # make sure config file has the required sections
+        if not 'pyrpl' in self.c._keys():
+            self.c['pyrpl'] = default_pyrpl_config
         # set global logging level if specified in config file
-        self._setloglevel()
-        self.widgets = [] # allow for multiple widgets
-
-        if not 'redpitaya' in self.c._keys() and len(kwargs)>0:
+        if 'loglevel' in self.c.pyrpl._keys():
+            pyrpl_utils.setloglevel(level=self.c.pyrpl.loglevel,
+                                loggername='pyrpl')
+        # initialize RedPitaya object with the configured or default parameters
+        if not 'redpitaya' in self.c._keys():
             self.c['redpitaya'] = dict()
         self.c.redpitaya._update(kwargs)
-        # initialize RedPitaya object with the configured parameters
-        if 'redpitaya' in self.c._keys():
-            self.rp = RedPitaya(config=self.c)
-        else:  # not tested, probably not interesting
-            self.rp = None
-
+        self.rp = RedPitaya(config=self.c)
+        # allow for multiple widgets
+        self.widgets = []
         self.software_modules = []
         self.load_software_modules()
 
