@@ -67,7 +67,7 @@ class DspModule(HardwareModule):
 
     out2_saturated = BoolRegister(0x8, 1, doc="True if out2 is saturated")
 
-    section_name = "dspmodule"
+    _section_name = "dspmodule"
 
     addr_base = None
 
@@ -76,7 +76,7 @@ class DspModule(HardwareModule):
         self.addr_base = 0x40300000 + self._number * 0x10000
         super(DspModule, self).__init__(rp, name)
 
-    def init_module(self):
+    def _init_module(self):
         pass
     """
     def __init__(self, client, name, parent): # for consistency, all HardwareModule creators have the same signature

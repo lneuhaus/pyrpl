@@ -7,7 +7,7 @@ class Model(SoftwareModule):
     available to describe the model parameter (e.g. 'm', 'MHz' for detuning).
     inputs is a list of signal.Input objects (or derived classes such as signal.PDH)
     """
-    section_name = 'model'
+    _section_name = 'model'
     parameter_name = ""
     units = []  # possible units to describe the physical parameter to control
     #  e.g. ['m', 'MHz']

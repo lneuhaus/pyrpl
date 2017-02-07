@@ -108,7 +108,7 @@ class ModuleWidget(QtGui.QGroupBox):
         # self.setStyleSheet("ModuleWidget{border:0;color: transparent;}") # frames and title hidden for software_modules
                                         # ModuleManagerWidget sets them visible for the HardwareModuleWidgets...
         self.show_ownership()
-        self.module.signal_launcher.connect_widget(self)
+        self.module._signal_launcher.connect_widget(self)
 
     def update_attribute_by_name(self, name, new_value_list):
         """

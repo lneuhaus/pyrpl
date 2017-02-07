@@ -66,16 +66,15 @@ class Lockbox(SoftwareModule):
     """
     A Module that allows to perform feedback on systems that are well described by a physical model.
     """
-    section_name = 'lockbox'
-    widget_class = LockboxWidget
-    gui_attributes = ["model_name", "default_sweep_output", "auto_relock"]
-    setup_attributes = gui_attributes
+    _section_name = 'lockbox'
+    _widget_class = LockboxWidget
+    _setup_attributes = ["model_name", "default_sweep_output", "auto_relock"]
+    _gui_attributes = _setup_attributes
     model_name = ModelProperty(options=all_models().keys())
     auto_relock = BoolProperty()
     default_sweep_output = SelectProperty(options=[])
-
-    def init_module(self):
-        self.signal_launcher = SignalLauncherLockbox(self)
+    _signal_launcher = SignalLauncherLockbox
+    def _init_module(self):
         self.outputs = []
         # self.__class__.default_sweep_output.change_options(self, ['dummy'])
         #  dirty... something needs to be done with this attribute class
@@ -125,7 +124,7 @@ class Lockbox(SoftwareModule):
             raise ValueError("State should be either unlock, or a valid stage name")
         self._state = val
         # To avoid explicit reference to gui here, one could consider using a DynamicSelectAttribute...
-        self.signal_launcher.state_changed.emit()
+        self._signal_launcher.state_changed.emit()
         return val
 
     @property
@@ -142,9 +141,9 @@ class Lockbox(SoftwareModule):
             index = self.stage_names.index(self.state) + 1
         stage = self.stage_names[index]
         self.goto(stage)
-        self.signal_launcher.timer_lock.setInterval(self.get_stage(stage).duration*1000)
+        self._signal_launcher.timer_lock.setInterval(self.get_stage(stage).duration * 1000)
         if index + 1 < len(self.sequence.stages):
-            self.signal_launcher.timer_lock.start()
+            self._signal_launcher.timer_lock.start()
 
     def goto(self, stage_name):
         """
@@ -200,7 +199,7 @@ class Lockbox(SoftwareModule):
             # exceptional situation, I don't find it too bad.
             self.widget.add_output(output)
         """
-        self.signal_launcher.output_created.emit([output])
+        self._signal_launcher.output_created.emit([output])
         return output
 
     def remove_output(self, output, allow_remove_last=False):
@@ -234,7 +233,7 @@ class Lockbox(SoftwareModule):
             # bad.
             self.widget.remove_output(output)
         """
-        self.signal_launcher.output_deleted.emit([output])
+        self._signal_launcher.output_deleted.emit([output])
 
     def remove_all_outputs(self):
         """
@@ -259,7 +258,7 @@ class Lockbox(SoftwareModule):
             output.pid.owner = new_name
         self.sequence.update_outputs()
         self.__class__.default_sweep_output.change_options(self, [out.name for out in self.outputs])
-        self.signal_launcher.output_renamed.emit()
+        self._signal_launcher.output_renamed.emit()
         # --> This also launches the appropriate signal...
         # self.update_output_names()
 
@@ -270,7 +269,7 @@ class Lockbox(SoftwareModule):
     #        self.widget.update_output_names()
     #    """
     #    self.__class__.default_sweep_output.change_options(self, [out.name for out in self.outputs])
-    #    self.signal_launcher.output_renamed.emit()
+    #    self._signal_launcher.output_renamed.emit()
 
     def add_stage(self):
         """
@@ -294,7 +293,7 @@ class Lockbox(SoftwareModule):
             stage.c # make sure stage config section is created ?
             stage.c._rename(new_name)
         stage._name = new_name
-        self.signal_launcher.stage_renamed.emit()
+        self._signal_launcher.stage_renamed.emit()
 
     def remove_all_stages(self):
         self.sequence.remove_all_stages()
@@ -304,7 +303,7 @@ class Lockbox(SoftwareModule):
         Unlocks all outputs, without touching the integrator value.
         """
         self.state = 'unlock'
-        self.signal_launcher.timer_lock.stop()
+        self._signal_launcher.timer_lock.stop()
         for output in self.outputs:
             output.unlock()
 
@@ -344,7 +343,7 @@ class Lockbox(SoftwareModule):
 
         ### update stages: keep outputs unchanged, when input doesn't exist anymore, change it.
         self.sequence.update_inputs()
-        self.signal_launcher.model_changed.emit()
+        self._signal_launcher.model_changed.emit()
 
     def load_setup_attributes(self):
         """
@@ -386,12 +385,12 @@ class Lockbox(SoftwareModule):
     def _remove_input(self, input):
         input.clear()
         self.inputs.remove(input)
-        self.signal_launcher.remove_input.emit([input])
+        self._signal_launcher.remove_input.emit([input])
 
     def _add_input(self, input):
         self.inputs.append(input)
         setattr(self, input.name, input)
-        self.signal_launcher.add_input.emit([input])
+        self._signal_launcher.add_input.emit([input])
 
     def _setup(self):
         """

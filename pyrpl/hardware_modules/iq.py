@@ -45,19 +45,19 @@ class IqAcbandwidth(FilterAttribute):
 
 
 class IQ(FilterModule):
-    section_name = 'iq'
-    widget_class = IqWidget
-    gui_attributes = ["input",
-                      "acbandwidth",
-                      "frequency",
-                      "bandwidth",
-                      "quadrature_factor",
-                      "output_signal",
-                      "gain",
-                      "amplitude",
-                      "phase",
-                      "output_direct"] # "on"
-    setup_attributes = gui_attributes
+    _section_name = 'iq'
+    _widget_class = IqWidget
+    _setup_attributes = ["input",
+                         "acbandwidth",
+                         "frequency",
+                         "bandwidth",
+                         "quadrature_factor",
+                         "output_signal",
+                         "gain",
+                         "amplitude",
+                         "phase",
+                         "output_direct"]
+    _gui_attributes = _setup_attributes
 
     _delay = 5  # bare delay of IQ module with no filters set (cycles)
 

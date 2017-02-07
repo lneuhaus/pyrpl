@@ -3,27 +3,27 @@ from ..model import *
 
 
 class FPTransmission(InputDirect):
-    section_name = 'transmission'
+    _section_name = 'transmission'
 
     def expected_signal(self, variable):
         return self.min + (self.max - self.min) * self.model.lorentz(variable)
 
 
 class FPReflection(InputDirect):
-    section_name = 'reflection'
+    _section_name = 'reflection'
 
     def expected_signal(self, variable):
         return self.max - (self.max - self.min) * self.model.lorentz(variable)
 
 class InputFromOutput(InputDirect):
-    section_name = 'input_from_output'
+    _section_name = 'input_from_output'
 
     def expected_signal(self, variable):
         return variable
 
 
 class InputPdh(InputIQ):
-    section_name = 'pdh'
+    _section_name = 'pdh'
 
     def expected_signal(self, variable):
         offset = 0.5 * (self.max + self.min)
@@ -64,10 +64,10 @@ class InputPdh(InputIQ):
 
 class FabryPerot(Model):
     name = "FabryPerot"
-    section_name = "fabryperot"
+    _section_name = "fabryperot"
     units = ['m', 'Hz', 'nm', 'MHz']
-    gui_attributes = ["wavelength", "finesse", "length", 'eta']
-    setup_attributes = gui_attributes
+    _setup_attributes = ["wavelength", "finesse", "length", 'eta']
+    _gui_attributes = _setup_attributes
     wavelength = FloatProperty(max=10000, min=0, default=1.064)
     finesse = FloatProperty(max=1e7, min=0, default=10000)
     # approximate length (not taking into account small variations of the
@@ -111,7 +111,7 @@ class HighFinesseInput(InputDirect):
             self.get_stats_from_curve(curve)
         finally:
             self.pyrpl.scopes.free(scope)
-        if self.widget is not None:
+        if self._widget is not None:
             self.update_graph()
 
     def get_threshold(self, curve):
@@ -123,7 +123,7 @@ class HighFinesseReflection(HighFinesseInput, FPReflection):
     Reflection for a FabryPerot. The only difference with FPReflection is that
     acquire will be done in 2 steps (coarse, then fine)
     """
-    section_name = 'hf_reflection'
+    _section_name = 'hf_reflection'
     pass
 
 
@@ -132,7 +132,7 @@ class HighFinesseTransmission(HighFinesseInput, FPTransmission):
     Reflection for a FabryPerot. The only difference with FPReflection is that
     acquire will be done in 2 steps (coarse, then fine)
     """
-    section_name = 'hf_transmission'
+    _section_name = 'hf_transmission'
     pass
 
 
@@ -141,13 +141,13 @@ class HighFinessePdh(HighFinesseInput, InputPdh):
     Reflection for a FabryPerot. The only difference with FPReflection is that
     acquire will be done in 2 steps (coarse, then fine)
     """
-    section_name = 'hf_pdh'
+    _section_name = 'hf_pdh'
     signal = InputPdh.signal
 
 
 class HighFinesseFabryPerot(FabryPerot):
     name = "HighFinesseFP"
-    section_name = "high_finesse_fp"
+    _section_name = "high_finesse_fp"
     input_cls = [HighFinesseReflection, HighFinesseTransmission,
                  HighFinessePdh]
 
@@ -169,13 +169,13 @@ class FabryPerotTemperatureControlOld(FabryPerot):
     # input_cls = [HighFinesseReflection, HighFinesseTransmission,
     #             HighFinessePdh]
     name = "FabryPerotTemperatureControlOld"
-    gui_attributes = ["wavelength", "finesse", "length", 'eta']\
-        + ['p_temp', 'i_temp']
-    setup_attributes = gui_attributes
+    _gui_attributes = ["wavelength", "finesse", "length", 'eta'] \
+                      + ['p_temp', 'i_temp']
+    _setup_attributes = _gui_attributes
     p_temp = FloatProperty(max=1e6, min=-1e6)
     i_temp = FloatProperty(max=1e6, min=-1e6)
 
-    def init_module(self):
+    def _init_module(self):
         self.pid_temp = self.pyrpl.pids.pop('temperature_control')
         self.pwm_temp = self.pyrpl.rp.pwm1
         self.pwm_temp.input = self.pid_temp

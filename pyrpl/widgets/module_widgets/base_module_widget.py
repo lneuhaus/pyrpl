@@ -101,7 +101,7 @@ class ModuleWidget(QtGui.QGroupBox):
         # self.setStyleSheet("ModuleWidget{border:0;color: transparent;}") # frames and title hidden for software_modules
                                         # ModuleManagerWidget sets them visible for the HardwareModuleWidgets...
         self.change_ownership()
-        self.module.signal_launcher.connect_widget(self)
+        self.module._signal_launcher.connect_widget(self)
 
     def change_ownership(self):
         """
@@ -120,7 +120,7 @@ class ModuleWidget(QtGui.QGroupBox):
         SLOT: don't change name unless you know what you are doing
         Updates a specific attribute. New value is passed as a 1-element list to avoid typing problems in signal-slot.
         """
-        if name in self.module.gui_attributes:
+        if name in self.module._gui_attributes:
             self.attribute_widgets[str(name)].update_widget(new_value_list[0])
 
     def change_options(self, select_attribute_name, new_options):
@@ -128,7 +128,7 @@ class ModuleWidget(QtGui.QGroupBox):
         SLOT: don't change name unless you know what you are doing
         New options should be displayed for some SelectAttribute.
         """
-        if select_attribute_name in self.module.gui_attributes:
+        if select_attribute_name in self.module._gui_attributes:
             self.attribute_widgets[str(select_attribute_name)].change_options(new_options)
 
     def create_title_bar(self):
@@ -155,7 +155,7 @@ class ModuleWidget(QtGui.QGroupBox):
         self.attribute_layout = QtGui.QHBoxLayout()
         self.main_layout.addLayout(self.attribute_layout)
 
-        for attr_name in self.module.gui_attributes:
+        for attr_name in self.module._gui_attributes:
             widget = getattr(self.module.__class__, attr_name).create_widget(self.module)
             self.attribute_widgets[attr_name] = widget
             self.attribute_layout.addWidget(widget)

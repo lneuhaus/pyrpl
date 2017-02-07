@@ -18,8 +18,8 @@ class ModuleManager(SoftwareModule):
       back its gui if any).
     """
 
-    section_name = "some_modules"
-    widget_class = ModuleManagerWidget
+    _section_name = "some_modules"
+    _widget_class = ModuleManagerWidget
 
     @property
     def hardware_module_names(self):
@@ -32,7 +32,7 @@ class ModuleManager(SoftwareModule):
 
         return [key for key in self.pyrpl.rp.modules.keys() if key[:-1]==self.name[:-1] or key==self.name[:-1]]
 
-    def init_module(self):
+    def _init_module(self):
         self.all_modules = [getattr(self.pyrpl.rp, name) for name in self.hardware_module_names]
 
     def pop(self, owner=None):
@@ -80,17 +80,17 @@ class ModuleManager(SoftwareModule):
         return None
 
 class AsgManager(ModuleManager):
-    section_name = "asgs"
+    _section_name = "asgs"
     # hardware_module_names = ["asg1", "asg2"]  # The same info would be duplicated from redpitaya.py
 
 class PidManager(ModuleManager):
-    section_name = "pids"
+    _section_name = "pids"
     # hardware_module_names = ["pid1", "pid2", "pid3", "pid4"]  # The same info would be duplicated from redpitaya.py
 
 
 class IqManager(ModuleManager):
-    section_name = "iqs"
-    widget_class = IqManagerWidget
+    _section_name = "iqs"
+    _widget_class = IqManagerWidget
     # hardware_module_names = ["iq1", "iq2", "iq3"]  # The same info would be duplicated from redpitaya.py
 
 
@@ -99,8 +99,8 @@ class ScopeManager(ModuleManager):
     Only one scope, but it should be protected by the slave/owner mechanism.
     """
 
-    section_name = "scopes"
-    widget_class = ScopeManagerWidget
+    _section_name = "scopes"
+    _widget_class = ScopeManagerWidget
     # hardware_module_names = ["scope"]  # The same info would be duplicated from redpitaya.py
 
 class IirManager(ModuleManager):
@@ -108,5 +108,5 @@ class IirManager(ModuleManager):
     Only one iir, but it should be protected by the slave/owner mechanism.
     """
 
-    section_name = "iirs"
-    widget_class = IirManagerWidget
+    _section_name = "iirs"
+    _widget_class = IirManagerWidget

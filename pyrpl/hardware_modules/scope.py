@@ -52,7 +52,7 @@ class DecimationRegister(SelectRegister):
 
     def value_updated(self, module, value):
         super(DecimationRegister, self).value_updated(module, value)
-        module.signal_launcher.first_shot_of_continuous = True
+        module._signal_launcher.first_shot_of_continuous = True
 
 class SamplingTimeAttribute(SelectAttribute):
     def get_value(self, instance, owner):
@@ -146,9 +146,9 @@ class RunningContinuousProperty(BoolProperty):
     def set_value(self, module, val):
         super(RunningContinuousProperty, self).set_value(module, val)
         if val:
-            module.signal_launcher.run_continuous()
+            module._signal_launcher.run_continuous()
         else:
-            module.signal_launcher.stop()
+            module._signal_launcher.stop()
 
 #    def update_gui(self, module):
 #        super(RunningContinuousProperty, self).update_gui(module)
@@ -261,10 +261,11 @@ class SignalLauncherScope(SignalLauncher):
 
 
 class Scope(HardwareModule):
-    section_name = 'scope'
+    _section_name = 'scope'
     addr_base = 0x40100000
-    widget_class = ScopeWidget
-    gui_attributes = ["input1",
+    _widget_class = ScopeWidget
+
+    _gui_attributes = ["input1",
                       "input2",
                       "duration",
                       "average",
@@ -275,16 +276,17 @@ class Scope(HardwareModule):
                       "curve_name",
                       "ch1_active",
                       "ch2_active"]
-    setup_attributes = gui_attributes + ["running_continuous", "rolling_mode"]
+    _setup_attributes = _gui_attributes + ["running_continuous",
+                                           "rolling_mode"]
+    _signal_launcher = SignalLauncherScope
     name = 'scope'
     data_length = data_length  # see definition and explanation above
     inputs = None
     last_datas = None
 
-    def init_module(self):
+    def _init_module(self):
         # dsp multiplexer channels for scope and asg are the same by default
         self.last_datas = [None, None, None] # last_datas that were sent for plotting (times, ch1, ch2)
-        self.signal_launcher = SignalLauncherScope(self)
         self._ch1 = DspModule(self._rp, name='asg0')  # the scope inputs and
         #  asg outputs have the same id
         self._ch2 = DspModule(self._rp, name='asg1')  # check fpga code
@@ -293,6 +295,11 @@ class Scope(HardwareModule):
         self._setup_called = False
         self._trigger_source_memory = 'off' # "immediately" #fixes bug with trigger_delay for 'immediate' at startup
         self._trigger_delay_memory = 0
+        self.setup(trigger_source='immediately',
+                   duration=1,
+                   running_continuous=True,
+                   rolling_mode=True,
+                   average=False)
 
     input1 = DspInputAttributeScope(1)
     input2 = DspInputAttributeScope(2)
@@ -419,9 +426,11 @@ class Scope(HardwareModule):
 
     duration = DurationAttribute(durations)
 
-    ch1_active = BoolProperty(doc="should ch1 be displayed in the gui")
+    ch1_active = BoolProperty(default=True,
+                              doc="should ch1 be displayed in the gui?")
 
-    ch2_active = BoolProperty(doc="should ch2 be displayed in the gui")
+    ch2_active = BoolProperty(default=True,
+                              doc="should ch2 be displayed in the gui?")
 
     def ownership_changed(self, old, new):
         """
@@ -603,7 +612,7 @@ class Scope(HardwareModule):
         """
         self.stop()
         self.setup()
-        self.signal_launcher.run_single()
+        self._signal_launcher.run_single()
 
     def save_curve(self):
         """

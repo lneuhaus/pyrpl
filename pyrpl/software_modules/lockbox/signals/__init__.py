@@ -6,7 +6,7 @@ class Signal(SoftwareModule): # with_metaclass(NameAttributesMetaClass, object)
     """
     An input or output signal.
     """
-    widget = None
+    _widget = None
     pass
 
 from .output import *

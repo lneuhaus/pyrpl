@@ -74,7 +74,7 @@ class SpectrumAnalyzer(SoftwareModule):
     inputs = DspModule.inputs
 
     #_setup = False
-    def init_module(self):
+    def _init_module(self):
     
         #it looks like bandwidth of filters are then perfect
         self.nyquist_margin = 1.0 #2*pi - we will take care of the rbw

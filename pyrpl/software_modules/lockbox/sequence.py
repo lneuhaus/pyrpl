@@ -8,10 +8,10 @@ from collections import OrderedDict
 
 
 class Sequence(SoftwareModule):
-    widget_class = LockboxSequenceWidget
-    section_name = 'sequence'
+    _widget_class = LockboxSequenceWidget
+    _section_name = 'sequence'
 
-    def init_module(self):
+    def _init_module(self):
         self.stages = []
         self.lockbox = self.parent
 
@@ -47,7 +47,7 @@ class Sequence(SoftwareModule):
         self.stages.append(stage)
         setattr(self, stage.name, stage)
         # self.__class__.default_sweep_output.change_options([output.name for output in self.outputs])
-        self.lockbox.signal_launcher.stage_created.emit([stage])
+        self.lockbox._signal_launcher.stage_created.emit([stage])
         stage._autosave_active = True
         return stage
 
@@ -55,7 +55,7 @@ class Sequence(SoftwareModule):
         self.lockbox.rename_stage(stage, new_name)
 
     def update_stage_names(self):
-        self.lockbox.signal_launcher.stage_renamed.emit()
+        self.lockbox._signal_launcher.stage_renamed.emit()
         #if self.widget is not None:
         #    self.widget.update_stage_names()
 
@@ -71,7 +71,7 @@ class Sequence(SoftwareModule):
         if "stages" in self.c._keys():
             if stage.name in self.c.stages._keys():
                 self.c.stages._pop(stage.name)
-        self.lockbox.signal_launcher.stage_deleted.emit([stage])
+        self.lockbox._signal_launcher.stage_deleted.emit([stage])
         #if stage.widget is not None:
         #   self.widget.remove_stage(stage)
 
@@ -144,17 +144,17 @@ class Stage(SoftwareModule):
     """
     A stage is a single step in the lock acquisition process
     """
-    gui_attributes = ['name',
+    _setup_attributes = ['name',
                       'input',
                       'variable_value',
                       'output_on',
                       'duration',
                       'function_call',
                       'factor']
-    setup_attributes = gui_attributes
-    section_name = 'stage'
+    _gui_attributes = _setup_attributes
+    _section_name = 'stage'
     name = StageNameProperty(default='my_stage')
-    widget_class = LockboxStageWidget
+    _widget_class = LockboxStageWidget
     input = SelectProperty()
     output_on = ListStageOuputProperty()
     variable_value = FloatProperty(min=-1e6, max=1e6)
@@ -162,7 +162,7 @@ class Stage(SoftwareModule):
     function_call = StringProperty()
     factor = FloatProperty(default=1., min=-1e6, max=1e6)
 
-    def init_module(self):
+    def _init_module(self):
         self.lockbox = self.parent.parent
         self.update_inputs()
         self.update_outputs()

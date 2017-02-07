@@ -7,7 +7,7 @@ import numpy as np
 
 
 class IIR(FilterModule):
-    section_name = 'iir'
+    _section_name = 'iir'
     iirfilter = None  # will be set by setup()
     _minloops = 5  # minimum number of loops for correct behaviour
     _maxloops = 1023
@@ -30,17 +30,17 @@ class IIR(FilterModule):
 
     _IIRSTAGES = IntRegister(0x208)
 
-    widget_class = IirWidget
+    _widget_class = IirWidget
 
-    gui_attributes = [ "input",
+    _setup_attributes = ["input",
                        "loops",
                        "zeros",
                        "poles",
                        "gain",
                        "output_direct",
                        "inputfilter"]
-    setup_attributes = gui_attributes
-    callback_attributes = gui_attributes
+    _gui_attributes = _setup_attributes
+    _callback_attributes = _gui_attributes
     """
     parameter_names = ["loops",
                        "on",
@@ -266,8 +266,8 @@ class IIR(FilterModule):
         else:
             self._logger.info("IIR Overflow pattern: %s", bin(self.overflow))
 
-        if self.widget is not None:
-            self.widget.update_plot()
+        if self._widget is not None:
+            self._widget.update_plot()
         """ # obviously have to do something with that...
         if designdata or plot:
             maxf = 125e6 / self.loops

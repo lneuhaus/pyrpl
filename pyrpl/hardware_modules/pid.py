@@ -45,23 +45,20 @@ class SignalLauncherPid(SignalLauncher):
 
 
 class Pid(FilterModule):
-    section_name = 'pid'
-    widget_class = PidWidget
-    setup_attributes = ["input",
-                        "output_direct",
-                        "setpoint",
-                        "p",
-                        "i",
-                        "d",
-                        "inputfilter"]
+    _section_name = 'pid'
+    _widget_class = PidWidget
+    _signal_launcher = SignalLauncherPid
+    _setup_attributes = ["input",
+                         "output_direct",
+                         "setpoint",
+                         "p",
+                         "i",
+                         "d",
+                         "inputfilter"]
+    _gui_attributes = _setup_attributes + ["ival"]
 
-    gui_attributes = setup_attributes + ["ival"]
-
-    def init_module(self):
-        super(Pid, self).init_module()
-        self.signal_launcher = SignalLauncherPid(self)
-
-    def _setup(self): # the function is here for its docstring to be used by the metaclass.
+    # the function is here so the metaclass generates a setup(**kwds) function
+    def _setup(self):
         """
         sets up the pid (just setting the attributes is OK).
         """

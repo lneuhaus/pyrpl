@@ -21,7 +21,7 @@ class AuxOutput(DspModule):
 
     Currently, only pwm1 and pwm2 are available.
     """
-    section_name = "pwm"  # duplicate name will be detected at instantiation
+    _section_name = "pwm"  # duplicate name will be detected at instantiation
 
     def __init__(self, rp, name=None):
         super(AuxOutput, self).__init__(rp, name=dict(pwm0='in1',

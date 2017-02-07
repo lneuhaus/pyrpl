@@ -83,7 +83,7 @@ class BaseAttribute(object):
     def value_updated(self, module, value):
         """
         Once the value has been changed internally, this function is called to perform the following actions:
-         - launch the signal module.signal_launcher.attribute_changed (this is used in particular for gui update)
+         - launch the signal module._signal_launcher.attribute_changed (this is used in particular for gui update)
          - saves the new value in the config file (if flag module._autosave_active is True).
          - calls the callback function if the attribute is in module.callback
          Note for developers:
@@ -91,11 +91,12 @@ class BaseAttribute(object):
         """
         self.launch_signal(module, value)
         if module._autosave_active:  # (for module, when module is slaved, don't save attributes)
-            if self.name in module.setup_attributes:
+            if self.name in module._setup_attributes:
                     self.save_attribute(module, value)
-        if self.name in module.callback_attributes: # _setup should ne triggered...
+        if self.name in module._callback_attributes: # _setup should ne
+            # triggered...
             if module._callback_active: # unless a bunch of attributes are being changed together.
-                module.callback()
+                module._callback()
         return value
 
     def __get__(self, instance, owner):
@@ -117,7 +118,7 @@ class BaseAttribute(object):
         # if self.name in module.widget.attribute_widgets:
         #   module.widget.attribute_widgets[self.name].update_widget()
         #if self.name in module.gui_attributes:
-        module.signal_launcher.update_attribute_by_name.emit(self.name,
+        module._signal_launcher.update_attribute_by_name.emit(self.name,
                                                              [new_value])
 
     def save_attribute(self, module, value):
@@ -261,7 +262,7 @@ class SelectAttribute(BaseAttribute):
           - If the current value is not in the new_options, then value is changed to some available option
         """
         setattr(instance, '__' + self.name + '_' + 'options', sorted(new_options))
-        instance.signal_launcher.change_options.emit(self.name, new_options)
+        instance._signal_launcher.change_options.emit(self.name, new_options)
         # this is strange behaviour, an option should be actively selected..
         if not getattr(instance, self.name) in new_options:
             logger.debug("Option %s is not a valid choice for "
@@ -334,7 +335,7 @@ class DynamicSelectAttributeObsolete(BaseAttribute): # all SelectedAttributes ar
           - Update of the ComboxBox is performed behind a signal-slot mechanism to be thread-safe
         """
         setattr(instance, '__' + self.name + '_' + 'options', new_options)
-        instance.signal_launcher.change_options.emit(self.name, new_options)
+        instance._signal_launcher.change_options.emit(self.name, new_options)
         """
         if instance.widget is not None:
             if self.name in instance.widget.attribute_widgets:

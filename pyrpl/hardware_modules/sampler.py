@@ -9,7 +9,7 @@ class Sampler(HardwareModule):
 
     This is a momentary workaround, will be improved later on with an upgraded FPGA version """
 
-    section_name = 'sampler'
+    _section_name = 'sampler'
     addr_base = 0x40300000
 
     def mean_stddev(self, signal="in1", t = 1e-2):

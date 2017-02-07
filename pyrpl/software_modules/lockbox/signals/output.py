@@ -22,7 +22,8 @@ class GainProperty(FloatProperty):
         if instance.mode == 'lock':
             instance.update_pid_gains(instance.current_input_lock,
                                       instance.current_variable_value)
-        instance.lockbox.signal_launcher.update_transfer_function.emit([instance])
+        instance.lockbox._signal_launcher.update_transfer_function.emit(
+            [instance])
     # def launch_signal(self, module, new_value_list):
     #     super(ProportionalGainProperty, self).launch_signal(module,
     #         new_value_list)
@@ -48,7 +49,8 @@ class AdditionalFilterAttribute(FilterAttribute):
 
     def set_value(self, instance, value):
         instance.pid.inputfilter = value
-        instance.lockbox.signal_launcher.update_transfer_function.emit([instance])
+        instance.lockbox._signal_launcher.update_transfer_function.emit([
+            instance])
 
     #def launch_signal(self, module, new_value_list):
     #    super(AdditionalFilterAttribute, self).launch_signal(module, new_value_list)
@@ -78,7 +80,7 @@ class AnalogFilterProperty(ListFloatProperty):
     def set_value(self, obj, val):
         super(AnalogFilterProperty, self).set_value(obj, val)
         obj.assisted_gain_updated()
-        obj.lockbox.signal_launcher.update_transfer_function.emit([obj])
+        obj.lockbox._signal_launcher.update_transfer_function.emit([obj])
 
 
 class UnityGainProperty(FrequencyProperty):
@@ -90,7 +92,7 @@ class UnityGainProperty(FrequencyProperty):
 class TfTypeProperty(SelectProperty):
     def set_value(self, obj, val):
         super(TfTypeProperty, self).set_value(obj, val)
-        obj.lockbox.signal_launcher.update_transfer_function.emit([obj])
+        obj.lockbox._signal_launcher.update_transfer_function.emit([obj])
 
     #def launch_signal(self, module, new_value_list):
         #super(TfTypeProperty, self).launch_signal(module, new_value_list)
@@ -126,8 +128,8 @@ class OutputSignal(Signal):
       - unity_gain_desired: desired value for unity gain frequency.
       - tf_type: ["flat", "curve", "filter"], how is the analog transfer function specified.
     """
-    section_name = 'output'
-    gui_attributes = [# 'unit',
+    _section_name = 'output'
+    _gui_attributes = [# 'unit',
                       'name',
                       'is_sweepable',
                       'sweep_amplitude',
@@ -144,9 +146,10 @@ class OutputSignal(Signal):
                       'extra_module_state',
                       'unity_gain_desired']
                       #'tf_curve']
-    setup_attributes = gui_attributes + ['assisted_design', 'tf_curve', 'tf_type']
+    _setup_attributes = _gui_attributes + ['assisted_design', 'tf_curve',
+                                           'tf_type']
 
-    widget_class = OutputSignalWidget
+    _widget_class = OutputSignalWidget
     name = DisplayNameProperty()
     # unit = SelectProperty(options=[]) # options are updated each time the lockbox model is changed.
     is_sweepable = BoolProperty()
@@ -170,7 +173,7 @@ class OutputSignal(Signal):
     unity_gain_desired = UnityGainProperty()
     tf_curve = TfCurveProperty()
 
-    def init_module(self):
+    def _init_module(self):
         self.lockbox = self.parent
         self.display_name = "my_output"
         self._pid = None

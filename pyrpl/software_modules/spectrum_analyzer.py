@@ -213,9 +213,9 @@ class RunningContinuousProperty(BoolProperty):
     def set_value(self, module, val):
         super(RunningContinuousProperty, self).set_value(module, val)
         if val:
-            module.signal_launcher.run_continuous()
+            module._signal_launcher.run_continuous()
         else:
-            module.signal_launcher.stop()
+            module._signal_launcher.stop()
             module.scope.owner = None
 
 class SpectrumAnalyzer(SoftwareModule):
@@ -239,21 +239,21 @@ class SpectrumAnalyzer(SoftwareModule):
       curve = sa.curve()
       freqs = sa.freqs()
     """
-    section_name = 'spectrum_analyzer'
-    widget_class = SpecAnWidget
+    _section_name = 'spectrum_analyzer'
+    _widget_class = SpecAnWidget
 
-    gui_attributes = ["input",
-                      "baseband",
-                      "center",
-                      "span",
-                      "points",
-                      "rbw_auto",
-                      "rbw",
-                      "window",
-                      "avg",
-                      "acbandwidth",
-                      "curve_name"]
-    setup_attributes = gui_attributes
+    _setup_attributes = ["input",
+                         "baseband",
+                         "center",
+                         "span",
+                         "points",
+                         "rbw_auto",
+                         "rbw",
+                         "window",
+                         "avg",
+                         "acbandwidth",
+                         "curve_name"]
+    _gui_attributes = _setup_attributes
 
     # numerical values
     nyquist_margin = 1.0
@@ -289,8 +289,10 @@ class SpectrumAnalyzer(SoftwareModule):
     acbandwidth = SpecAnAcBandwidth()
     curve_name = StringProperty()
 
+    _signal_launcher = SignalLauncherSpectrumAnalyzer
+
     # functions
-    def init_module(self):
+    def _init_module(self):
         self._iq = None
         self.rp = self.pyrpl.rp
 
@@ -303,7 +305,6 @@ class SpectrumAnalyzer(SoftwareModule):
         self.window = "flattop"
         self.points = Scope.data_length
         self.restart_averaging()
-        self.signal_launcher = SignalLauncherSpectrumAnalyzer(self)
         """ # intializing stuff while scope is not reserved modifies the
         parameters of the scope...
 
@@ -515,5 +516,5 @@ class SpectrumAnalyzer(SoftwareModule):
         """
         self.stop()
         self.setup()
-        self.signal_launcher.run_single()
+        self._signal_launcher.run_single()
 

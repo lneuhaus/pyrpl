@@ -5,10 +5,10 @@ from pyrpl.attributes import PWMRegister
 class AMS(HardwareModule):
     """mostly deprecated module (redpitaya has removed adc support).
     only here for dac2 and dac3"""
-    section_name = 'ams'
+    _section_name = 'ams'
     addr_base = 0x40400000
 
-    def init_module(self):
+    def _init_module(self):
         pass
     # attention: writing to dac0 and dac1 has no effect
     # only write to dac2 and 3 to set output voltages

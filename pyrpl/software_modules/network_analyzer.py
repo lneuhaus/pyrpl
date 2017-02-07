@@ -64,19 +64,19 @@ class NaStateProperty(StringProperty):
         if val in ['running_continuous', 'running_single']:
             if old_val=="stopped":
                 module.iq.output_direct = module.output_direct
-                module.signal_launcher.run()
+                module._signal_launcher.run()
             else:
                 module.iq.output_direct = module.output_direct
-                module.signal_launcher.resume()
+                module._signal_launcher.resume()
         if val in ['paused_continuous', 'paused_single', "stopped"]:
-            module.signal_launcher.pause()
+            module._signal_launcher.pause()
             module.iq.output_direct = 'off'
 
 
 class LogScaleProperty(BoolProperty):
     def set_value(self, module, val):
         super(LogScaleProperty, self).set_value(module, val)
-        module.signal_launcher.x_log_toggled.emit()
+        module._signal_launcher.x_log_toggled.emit()
 
 
 class SignalLauncherNA(SignalLauncher):
@@ -170,26 +170,29 @@ class NetworkAnalyzer(SoftwareModule):
             for freq, response, amplitude in na.values():
                 print response
     """
-    section_name = 'na'
-    widget_class = NaWidget
-    callback_attributes = ["input", # stops acquisition when one of these is changed
-                           "acbandwidth",
-                           "output_direct",
-                           "start_freq",
-                           "stop_freq",
-                           "rbw",
-                           "points",
-                           "amplitude",
-                           "logscale",
-                           "infer_open_loop_tf",
-                           "avg"]
-    gui_attributes = callback_attributes + ["curve_name",
-                                            "running_state"]
-    setup_attributes = [attr for attr in gui_attributes if attr!='running_state']
+    _section_name = 'na'
+    _widget_class = NaWidget
+    _setup_attributes = ["input",
+                         "acbandwidth",
+                         "output_direct",
+                         "start_freq",
+                         "stop_freq",
+                         "rbw",
+                         "points",
+                         "amplitude",
+                         "logscale",
+                         "infer_open_loop_tf",
+                         "avg",
+                         "curve_name"
+                         ]
+    _gui_attributes = _setup_attributes + \
+                       ["running_state"]
+    _callback_attributes = [a for a in _gui_attributes
+                            if a not in ['running_state', 'curve_name']]
     data = None
+    _signal_launcher = SignalLauncherNA
 
-    def init_module(self):
-        self.signal_launcher = SignalLauncherNA(self)
+    def _init_module(self):
         self._logger = logging.getLogger(__name__)
         self.start_freq = 200
         self.stop_freq = 50000
@@ -225,7 +228,7 @@ class NetworkAnalyzer(SoftwareModule):
     acbandwidth = NaAcBandwidth(doc="Bandwidth of the input high-pass filter of the na.")
     running_state = NaStateProperty()
 
-    def callback(self):
+    def _callback(self):
         self.stop()
 
     @property
@@ -296,7 +299,7 @@ class NetworkAnalyzer(SoftwareModule):
         self.current_attributes = self.get_setup_attributes()
         self.y_current_scan = np.zeros(self.points, dtype=complex)
         self.y_averaged = np.zeros(self.points, dtype=complex)
-        self.signal_launcher.timer_point.setInterval(self.time_per_point)
+        self._signal_launcher.timer_point.setInterval(self.time_per_point)
 
     @property
     def last_valid_point(self):

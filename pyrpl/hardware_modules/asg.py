@@ -93,26 +93,26 @@ def make_asg(channel=0):
         set_default_output_direct = 'off'
 
     class Asg(HardwareModule):
-        widget_class = AsgWidget
-        gui_attributes = ["waveform",
-                          "amplitude",
-                          "offset",
-                          "frequency",
-                          "trigger_source",
-                          "output_direct"]
-        setup_attributes = gui_attributes
-        callback_attributes = ["trigger_source"]
+        _widget_class = AsgWidget
+        _setup_attributes = ["waveform",
+                             "amplitude",
+                             "offset",
+                             "frequency",
+                             "trigger_source",
+                             "output_direct"]
+        _gui_attributes = _setup_attributes
+        _callback_attributes = ["trigger_source"]
 
         _DATA_OFFSET = set_DATA_OFFSET
         _VALUE_OFFSET = set_VALUE_OFFSET
         _BIT_OFFSET = set_BIT_OFFSET
         default_output_direct = set_default_output_direct
         output_directs = None
-        section_name = 'asg'  # duplicate name will be detected
+        _section_name = 'asg'  # duplicate name will be detected
         # automatically at instanciation...
         addr_base = 0x40200000
 
-        def init_module(self):
+        def _init_module(self):
             self._counter_wrap = 0x3FFFFFFF  # correct value unless you know better
             self._writtendata = np.zeros(self.data_length)
             if self._BIT_OFFSET == 0:

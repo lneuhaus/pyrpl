@@ -20,13 +20,13 @@ class InputSignal(SoftwareModule):
       - calibrate()
       -
     """
-    section_name = 'input'  # name of the input
-    gui_attributes = ["input_channel"]
-    setup_attributes = gui_attributes + ["min", "max", "mean", "rms"]
+    _section_name = 'input'  # name of the input
+    _setup_attributes = ["input_channel", "min", "max", "mean", "rms"]
+    _gui_attributes = ["input_channel"]
     input_channel = SelectProperty(options=sorted(DSP_INPUTS.keys()))  # ['in1', 'in2']) # adc
     # Is it desirable to be allowed to select any internal signal?
     model_cls = None  # Model class to which this input belongs.
-    widget_class = LockboxInputWidget
+    _widget_class = LockboxInputWidget
     min = FloatProperty()
     max = FloatProperty()
     mean = FloatProperty()
@@ -38,7 +38,7 @@ class InputSignal(SoftwareModule):
         super(InputSignal, self).__init__(model)
     """
 
-    def init_module(self):
+    def _init_module(self):
         """
         lockbox is the lockbox instance to which this input belongs.
         """
@@ -89,13 +89,13 @@ class InputSignal(SoftwareModule):
         """
         curve = self.acquire()
         self.get_stats_from_curve(curve)
-        if self.widget is not None:
+        if self._widget is not None:
             self.update_graph()
 
     def update_graph(self):
-        if self.widget is not None:
+        if self._widget is not None:
             y = self.expected_signal(self.plot_range)
-            self.widget.show_graph(self.plot_range, y)
+            self._widget.show_graph(self.plot_range, y)
 
     def expected_signal(self, variable):
         """
@@ -189,7 +189,7 @@ class InputSignal(SoftwareModule):
 
 
 class InputDirect(InputSignal):
-    section_name = 'direct_input'
+    _section_name = 'direct_input'
     def signal(self):
         return self.input_channel
 
@@ -238,21 +238,21 @@ class PdhQuadratureFactorProperty(FloatProperty):
 
 
 class InputIQ(InputDirect):
-    section_name = 'iq'
-    gui_attributes = InputSignal.gui_attributes + ['mod_freq',
+    _section_name = 'iq'
+    _gui_attributes = InputSignal._gui_attributes + ['mod_freq',
                                                    'mod_amp',
                                                    'mod_phase',
                                                    'quadrature_factor',
                                                    'mod_output']
-    setup_attributes = gui_attributes + ["min", "max", "mean", "rms"]
+    _setup_attributes = _gui_attributes + ["min", "max", "mean", "rms"]
     mod_freq = PdhFrequencyProperty()
     mod_amp = PdhAmplitudeProperty()
     mod_phase = PdhPhaseProperty()
     quadrature_factor = PdhQuadratureFactorProperty()
     mod_output = PdhModOutputProperty(['out1', 'out2'])
 
-    def init_module(self):
-        super(InputIQ, self).init_module()
+    def _init_module(self):
+        super(InputIQ, self)._init_module()
         self._iq = None
         self.setup()
 

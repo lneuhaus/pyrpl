@@ -5,11 +5,11 @@ import numpy as np
 
 
 class HK(HardwareModule):
-    section_name = 'hk'
-    gui_attributes = ["id", "led"]
-    setup_attributes = ["led"] + \
-                       ['expansion_P' + str(i) for i in range(8)] + \
-                       ['expansion_N' + str(i) for i in range(8)]
+    _section_name = 'hk'
+    _setup_attributes = ["led"] + \
+                        ['expansion_P' + str(i) for i in range(8)] + \
+                        ['expansion_N' + str(i) for i in range(8)]
+    _gui_attributes = ["id", "led"]
     addr_base = 0x40000000
     # We need all attributes to be there when the interpreter is done reading the class (for metaclass to workout)
     # see http://stackoverflow.com/questions/2265402/adding-class-attributes-using-a-for-loop-in-python
@@ -28,7 +28,7 @@ class HK(HardwareModule):
     # another option: access led as array of bools
     # led = [BoolRegister(0x30,bit=i,doc="LED "+str(i)) for i in range(8)]
 
-    def init_module(self):
+    def _init_module(self):
         pass
 
     def _setup(self): # the function is here for its docstring to be used by the metaclass.
