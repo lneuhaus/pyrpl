@@ -36,12 +36,12 @@ class TestClass(TestPyrpl):
         self.na.run_continuous()
         assert data_changing()
 
-    # maximum allowed duration to acquire one point
-    duration_per_point = 30e-3
+    # maximum allowed duration to acquire one point without gui
+    duration_per_point = 5e-3
     def test_benchmark(self):
         if self.r is None:
             return
-        # test na speed with gui
+        # test na speed with gui. Allow twice as long
         self.na.setup(start_freq=1e3,
                       stop_freq=1e4,
                       rbw=1e6,
@@ -54,7 +54,7 @@ class TestClass(TestPyrpl):
         while(self.na.running_state == 'running_single'):
             APP.processEvents()
         duration = (time.time() - tic)/200.0
-        assert duration < self.duration_per_point, duration
+        assert duration < 2.*self.duration_per_point, duration
         # 2 s for 200 points with gui display
         # This is much slower in nosetests than in real life (I get <3 s).
         # Don't know why.

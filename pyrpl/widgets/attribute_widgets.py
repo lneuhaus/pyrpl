@@ -414,7 +414,6 @@ class BaseAttributeWidget(QtGui.QWidget):
         Block QtSignals upon update to avoid infinite recursion.
         :return:
         """
-
         self.widget.blockSignals(True)
         self._update(new_value)
         self.widget.blockSignals(False)
@@ -465,7 +464,6 @@ class StringAttributeWidget(BaseAttributeWidget):
     def write(self):
         setattr(self.module, self.name, str(self.widget.text()))
         self.value_changed.emit()
-
 
     def _update(self, new_value):
         """
