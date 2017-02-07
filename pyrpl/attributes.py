@@ -115,9 +115,9 @@ class BaseAttribute(object):
         """
         Updates the widget with the module's value.
         """
-        # if self.name in module.widget.attribute_widgets:
-        #   module.widget.attribute_widgets[self.name].update_widget()
-        #if self.name in module.gui_attributes:
+        # if self.name in module._widget.attribute_widgets:
+        #   module._widget.attribute_widgets[self.name].update_widget()
+        #if self.name in module._gui_attributes:
         module._signal_launcher.update_attribute_by_name.emit(self.name,
                                                              [new_value])
 

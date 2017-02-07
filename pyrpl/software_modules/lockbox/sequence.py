@@ -72,8 +72,8 @@ class Sequence(SoftwareModule):
             if stage.name in self.c.stages._keys():
                 self.c.stages._pop(stage.name)
         self.lockbox._signal_launcher.stage_deleted.emit([stage])
-        #if stage.widget is not None:
-        #   self.widget.remove_stage(stage)
+        #if stage._widget is not None:
+        #   self._widget.remove_stage(stage)
 
     def remove_all_stages(self):
         to_remove = [] # never iterate on a list that s being deleted
@@ -211,5 +211,5 @@ class Stage(SoftwareModule):
             func = getattr(self.lockbox.model, self.function_call)
             func(self.factor)
         self.lockbox.state = self.name
-        #if self.lockbox.widget is not None:
-        #    self.lockbox.widget.show_lock(self)
+        #if self.lockbox._widget is not None:
+        #    self.lockbox._widget.show_lock(self)

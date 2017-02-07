@@ -8,7 +8,7 @@ class TestClass(TestPyrpl):
     def scramble_values(self, mod, str_val='foo', num_val=12, bool_val=True, list_val=[19], option_index=0):
         attr_names =[]
         attr_vals = []
-        for attr in mod.setup_attributes:
+        for attr in mod._setup_attributes:
             if attr=='default_sweep_output':
                 continue # anyways, this will be redesigned soon with a proper link to the output...
             val = getattr(mod, attr)
@@ -41,7 +41,7 @@ class TestClass(TestPyrpl):
             mod.save_state('test_save')
             self.scramble_values(mod, 'bar', 13, False, [15], 1)
             mod.load_state('test_save')
-            for attr, attr_val in zip(mod.setup_attributes, attr_vals):
+            for attr, attr_val in zip(mod._setup_attributes, attr_vals):
                 if attr == 'default_sweep_output' or attr == 'baseband':
                     continue  # anyways, this will be redesigned soon with a proper link to the output...
                 if attr!='d': # derivators are deactivated

@@ -114,7 +114,7 @@ class ModuleWidget(QtGui.QGroupBox):
         """
         Updates a specific attribute. New value is passed as a 1-element list to avoid typing problems in signal-slot.
         """
-        if name in self.module.gui_attributes:
+        if name in self.module._gui_attributes:
             self.attribute_widgets[str(name)].update_widget(new_value_list[0])
 
     def create_title_bar(self):
@@ -149,7 +149,7 @@ class ModuleWidget(QtGui.QGroupBox):
         self.attribute_layout = QtGui.QHBoxLayout()
         self.main_layout.addLayout(self.attribute_layout)
 
-        for attr_name in self.module.gui_attributes:
+        for attr_name in self.module._gui_attributes:
             widget = getattr(self.module.__class__, attr_name).create_widget(self.module)
             self.attribute_widgets[attr_name] = widget
             self.attribute_layout.addWidget(widget)
@@ -374,7 +374,7 @@ class ScopeWidget(ModuleWidget):
         """
         Hide rolling mode checkbox for duration < 100 ms
         """
-        self.rolling_group.setEnabled(self.module.rolling_mode_allowed())
+        self.rolling_group.setEnabled(self.module._rolling_mode_allowed())
         self.attribute_widgets['trigger_source'].widget.setEnabled(
             not self.rolling_mode)
         self.attribute_widgets['threshold_ch1'].widget.setEnabled(
@@ -1846,11 +1846,11 @@ class LockboxSequenceWidget(ModuleWidget):
         return stage
 
     def remove_stage(self, stage):
-        if stage.widget in self.stage_widgets:
-            stage.widget.hide()
-            self.stage_widgets.remove(stage.widget)
-            self.main_layout.removeWidget(stage.widget)
-            stage.widget.deleteLater()
+        if stage._widget in self.stage_widgets:
+            stage._widget.hide()
+            self.stage_widgets.remove(stage._widget)
+            self.main_layout.removeWidget(stage._widget)
+            stage._widget.deleteLater()
 
     def update_stage_names(self):
         for widget in self.stage_widgets:
@@ -1974,9 +1974,9 @@ class LockboxWidget(ModuleWidget):
         if isinstance(stage, basestring):
             stage = self.module.get_stage(stage)
         if stage is not None:
-            if stage.widget is not None:
-                stage.widget.show_lock()
-            input_widget = self.module.get_input(stage.input).widget
+            if stage._widget is not None:
+                stage._widget.show_lock()
+            input_widget = self.module.get_input(stage.input)._widget
             if input_widget is not None:
                 input_widget.show_lock(stage.input, stage.variable_value)
 

@@ -369,7 +369,7 @@ class SpectrumAnalyzer(SoftwareModule):
 
     @property
     def scope(self):
-        return self.prrpl.rp.scope
+        return self.pyrpl.rp.scope
 
     @property
     def duration(self):

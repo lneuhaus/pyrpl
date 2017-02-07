@@ -55,7 +55,7 @@ class TestClass(TestPyrpl):
         if not self.do_gui_tests:
             return
         module = module_widget.module
-        for attr in module.gui_attributes:
+        for attr in module._gui_attributes:
             if isinstance(attr, SelectAttribute):
                 for option in attr.options:
                     to_set = attr.widget.findText(str(option))

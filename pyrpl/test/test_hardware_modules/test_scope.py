@@ -34,7 +34,8 @@ class TestScopeClass(TestPyrpl):
         self.r.scope.save_state("running_roll")
 
         self.r.scope.duration = 0.001
-        assert not data_changing()  # rolling mode inactive for durations < 0.1 s
+        # rolling mode inactive for durations < 0.1 s
+        assert not data_changing()
 
         from time import sleep
         sleep(0.5)

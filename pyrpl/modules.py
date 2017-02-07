@@ -172,9 +172,7 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
     _widget = None
     # internal memory for owner of the module (to avoid conflicts)
     _owner = None
-    # pyrpl_config file???
-    pyrpl_config = None
-    # name of the module, automaticcally assigned one per instance
+    # name of the module, automatically assigned one per instance
     name = None
     # the class for the SignalLauncher to be used
     _signal_launcher = SignalLauncher
@@ -231,7 +229,7 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         if len(kwds) > 0:
             raise ValueError("Attribute %s of module %s doesn't exist." % (kwds[0], self.name))
         #    for key, value in kwds.items():
-        #        if not key in self.setup_attributes:
+        #        if not key in self._setup_attributes:
         #            raise ValueError("Attribute %s of module %s doesn't exist."%(key, self.name))
         #        setattr(self, key, value)
         #finally:
@@ -437,7 +435,6 @@ class HardwareModule(BaseModule):
         self._client = parent.client
         self._addr_base = self.addr_base
         self._rp = parent
-        self.pyrpl_config = parent.c
         super(HardwareModule, self).__init__(parent, name=name)
         self.__doc__ = "Available registers: \r\n\r\n" + self.help()
 

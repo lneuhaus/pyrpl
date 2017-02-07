@@ -45,8 +45,8 @@ class DecimationRegister(SelectRegister):
         super(DecimationRegister, self).set_value(instance, value)
         instance.__class__.duration.value_updated(instance, instance.duration)
         instance.__class__.sampling_time.value_updated(instance, instance.sampling_time)
-        if instance.is_rolling_mode_active():
-            instance.set_for_rolling_mode()
+        if instance._is_rolling_mode_active():
+            instance._setup_rolling_mode()
         else:
             instance.setup()
 
@@ -150,21 +150,14 @@ class RunningContinuousProperty(BoolProperty):
         else:
             module._signal_launcher.stop()
 
-#    def update_gui(self, module):
-#        super(RunningContinuousProperty, self).update_gui(module)
-        #module.widget.set_running_state()
-
 
 class RollingModeProperty(BoolProperty):
-    """
-    Nothing to do unless widget exists
-    """
     def set_value(self, module, val):
         super(RollingModeProperty, self).set_value(module, val)
         if module.running_continuous:
             module.setup()
-            if module.is_rolling_mode_active():
-                module.set_for_rolling_mode()
+            if module._is_rolling_mode_active():
+                module._setup_rolling_mode()
 
 
 class SignalLauncherScope(SignalLauncher):
@@ -192,8 +185,8 @@ class SignalLauncherScope(SignalLauncher):
         periodically checks for curve.
         """
         self.module.setup()
-        if self.module.is_rolling_mode_active():
-            self.module.set_for_rolling_mode()
+        if self.module._is_rolling_mode_active():
+            self.module._setup_rolling_mode()
         self.first_shot_of_continuous = True
         self.timer_continuous.start()
 
@@ -215,7 +208,7 @@ class SignalLauncherScope(SignalLauncher):
         datas = [None, None, None]
         # triggered mode in "single" acquisition, or when rolling mode is off, or when duration is
         # too small
-        if self.module.is_rolling_mode_active() and self.module.running_continuous: ## Rolling mode
+        if self.module._is_rolling_mode_active() and self.module.running_continuous: ## Rolling mode
             wp0 = self.module._write_pointer_current # write pointer before acquisition
             times = self.module.times # times
             times -= times[-1]
@@ -516,19 +509,19 @@ class Scope(HardwareModule):
             # self.wait_for_pretrig_ok()
             self.trigger_source = self.trigger_source
 
-    def rolling_mode_allowed(self):
+    def _rolling_mode_allowed(self):
         """
         Only if duration larger than 0.1 s
         """
         return self.duration>0.1
 
-    def is_rolling_mode_active(self):
+    def _is_rolling_mode_active(self):
         """
         Rolling_mode property evaluates to True and duration larger than 0.1 s
         """
-        return self.rolling_mode and self.rolling_mode_allowed()
+        return self.rolling_mode and self._rolling_mode_allowed()
 
-    def set_for_rolling_mode(self):
+    def _setup_rolling_mode(self):
         self._trigger_source = 'off'
         self._trigger_armed = True
 
@@ -545,7 +538,7 @@ class Scope(HardwareModule):
                and (not self._trigger_delay_running) \
                and self._setup_called
 
-    def curve_acquiring(self):
+    def _curve_acquiring(self):
         """
         Returns True if data is in the process of being acquired
         """
@@ -614,7 +607,7 @@ class Scope(HardwareModule):
         self.setup()
         self._signal_launcher.run_single()
 
-    def save_curve(self, ch=None):
+    def save_curve(self):
         """
         Saves the curve(s) that is (are) currently displayed in the gui in the db_system. Also, returns the list
         [curve_ch1, curve_ch2]...

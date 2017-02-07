@@ -304,30 +304,23 @@ class Pyrpl(object):
         """
         load all software modules defined as root element of the config file.
         """
-        soft_mod_names = self.c.pyrpl.modules#[mod for mod in self.c._keys() if not mod in ("pyrpl", "redpitaya")]
         soft_mod_names = ['AsgManager',
                           'IqManager',
                           'PidManager',
                           'ScopeManager',
-                          'IirManager'] + soft_mod_names
-        module_classes = [get_software_module(cls_name) for cls_name in soft_mod_names]
-        module_names = pyrpl_utils.get_unique_name_list_from_class_list(module_classes)
+                          'IirManager'] + self.c.pyrpl.modules
+        #soft_mod_names = [mod for mod in self.c._keys()
+        #                  if not mod in ("pyrpl", "redpitaya")]
+        module_classes = [get_software_module(cls_name)
+                          for cls_name in soft_mod_names]
+        module_names = pyrpl_utils.\
+            get_unique_name_list_from_class_list(module_classes)
         for cls, name in zip(module_classes, module_names):
             # ModuleClass = getattr(software_modules, module_name)
             module = cls(self, name)
-            #try: # This leads to bugs that are very cumbersome and difficult to track. For now, I prefer to have a blocking
-            # exception when loading is not working...
-            module.load_setup_attributes() # attributes are loaded but the module is not "setup"
-            #except BaseException as e:
-            #    self.logger.warning("problem loading attributes of module " + name + "\n" + str(e))
-            """
-            if module.name in self.c._keys():
-                kwds = self.c[module.name]
-                if kwds is None:
-                    kwds = dict()
-                module.load_setup_attributes(**kwds) # first, setup software modules...
-            """
-            setattr(self, module.name, module)  # todo --> use self instead
+            # attributes are loaded but the module is not "setup"
+            module.load_setup_attributes()
+            setattr(self, module.name, module)
             self.software_modules.append(module)
 
     @property
@@ -366,13 +359,11 @@ class Pyrpl(object):
         kill all timers and closes the connection to the redpitaya
         """
         self.kill_timers()
-        for widget in self.widgets: # Close all widgets created
-            del widget # some bugs were probably caused by slots called afterwards (deleteLater --> del)
+        for widget in self.widgets:  # Close all widgets
+            del widget
         # make sure the save timer of the config file is not running and
         # all data are written to the harddisk
         self.c._save_now()
         # end redpitatya communication
         self.rp.end_all()
-
-        #APP.processEvents()  # do the job of actually destroying the widgets
-        #APP.processEvents()
+        APP.processEvents()  # do the job of actually destroying the widgets

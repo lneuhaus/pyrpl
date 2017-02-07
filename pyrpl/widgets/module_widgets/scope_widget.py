@@ -206,7 +206,7 @@ class ScopeWidget(ModuleWidget):
         """
         Hide rolling mode checkbox for duration < 100 ms
         """
-        self.rolling_group.setEnabled(self.module.rolling_mode_allowed())
+        self.rolling_group.setEnabled(self.module._rolling_mode_allowed())
         self.attribute_widgets['trigger_source'].widget.setEnabled(
             not self.rolling_mode)
         self.attribute_widgets['threshold_ch1'].widget.setEnabled(

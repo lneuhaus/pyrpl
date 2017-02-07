@@ -80,7 +80,8 @@ class LogScaleProperty(BoolProperty):
 
 
 class SignalLauncherNA(SignalLauncher):
-    point_updated = QtCore.pyqtSignal(int) # This signal is emitted when a point needs to be updated (added/changed)
+    point_updated = QtCore.pyqtSignal(int)
+    # This signal is emitted when a point needs to be updated (added/changed)
     # The argument is the index of the point as found in module.y_averaged
     autoscale = QtCore.pyqtSignal()
     scan_finished = QtCore.pyqtSignal()
@@ -102,27 +103,34 @@ class SignalLauncherNA(SignalLauncher):
         self.timer_point.stop()
 
     def next_point(self):
-        if self.module.running_state in ['running_continuous', 'running_single']:
+        if self.module.running_state in ['running_continuous',
+                                         'running_single']:
             x, y, amp = self.module.get_current_point()
             cur = self.module.current_point
-            if cur>=0: # to let time for the transiant of the accumulator, the first point has a negative index
+            if cur >= 0:
+                # to let time for the transient of the accumulator, the first
+                # point has a negative index
                 self.module.y_current_scan[cur] = y
-                self.module.y_averaged[cur] = (self.module.y_averaged[cur] * self.module.current_averages + y) \
-                                 / (self.module.current_averages + 1)
+                self.module.y_averaged[cur] = (self.module.y_averaged[cur]
+                    * self.module.current_averages + y) \
+                    / (self.module.current_averages + 1)
                 self.module.x[cur] = x
                 self.module.threshold_hook(y)
-                if(self.module.current_point+1<self.module.points): # next point is still in the scan range
+                if(self.module.current_point+1 < self.module.points):
+                    # next point is still in the scan range
                     self.module.prepare_for_next_point()
                     self.point_updated.emit(self.module.current_point)
                     self.timer_point.start()
                 else:  # end of scan
                     self.module.current_averages += 1
-                    if self.module.running_state=='running_continuous':
-                        self.module.setup() # reset acquistion without resetting averaging
+                    if self.module.running_state == 'running_continuous':
+                        # reset acquistion without resetting averaging
+                        self.module.setup()
                         self.timer_point.start()
                     else:
-                        self.module.pause() # gives the opportunity to average other scans with this one by calling
-                        # run_continuous()
+                        self.module.pause()
+                        # gives the opportunity to average other scans with
+                        # this one by calling run_continuous()
                     self.scan_finished.emit()
             else:  # The point was a dummy point with index -1 at the
                 # beginning of the curve
@@ -225,7 +233,8 @@ class NetworkAnalyzer(SoftwareModule):
     infer_open_loop_tf = BoolProperty()
     avg = LongProperty(min=1)
     curve_name = StringProperty()
-    acbandwidth = NaAcBandwidth(doc="Bandwidth of the input high-pass filter of the na.")
+    acbandwidth = NaAcBandwidth(
+        doc="Bandwidth of the input high-pass filter of the na.")
     running_state = NaStateProperty()
 
     def _callback(self):
@@ -261,9 +270,13 @@ class NetworkAnalyzer(SoftwareModule):
                 self.points,
                 endpoint=True)
         else:
-            self.x = np.linspace(self.start_freq, self.stop_freq, self.points, endpoint=True)
+            self.x = np.linspace(self.start_freq,
+                                 self.stop_freq,
+                                 self.points,
+                                 endpoint=True)
         for index, val in enumerate(self.x):
-            self.x[index] = self.iq.__class__.frequency.validate_and_normalize(val, self) # retrieve the real freqs...
+            self.x[index] = self.iq.__class__.frequency.\
+                validate_and_normalize(val, self) # retrieve the real freqs...
         # preventive saturation
         amplitude = abs(self.amplitude)
         self.iq.setup(frequency=self.x[0],
@@ -279,20 +292,28 @@ class NetworkAnalyzer(SoftwareModule):
         self.time_per_point = 1.0 / self.rbw * (self.avg + self.sleeptimes)
         # setup averaging
         self.iq._na_averages = np.int(np.round(125e6 / self.rbw * self.avg))
-        self.iq._na_sleepcycles = np.int(np.round(125e6 / self.rbw * self.sleeptimes))
+        self.iq._na_sleepcycles = np.int(
+            np.round(125e6 / self.rbw * self.sleeptimes))
         # compute rescaling factor of raw data
-        self._rescale = 2.0 ** (-self.iq._LPFBITS) * 4.0  # 4 is artefact of fpga code
-        self.current_point = -2 # number of "dead_points" at the beginning of the scans.
-        self._cached_na_averages = self.iq._na_averages # to avoid reading it at every single point
+        self._rescale = 2.0 ** (-self.iq._LPFBITS) * 4.0
+        # 4 is artefact of fpga code
+        self.current_point = -2
+        # number of "dead_points" at the beginning of the scans.
+        self._cached_na_averages = self.iq._na_averages
+        # to avoid reading it at every single point
         self.iq.frequency = self.x[0]  # this triggers the NA acquisition
         self.time_last_point = timeit.default_timer()
-        self._tf_values = self.transfer_function(self.x) # precalculate transfer_function values for speed
+        self._tf_values = self.transfer_function(self.x)
+        # precalculate transfer_function values for speed
         self.values_generator = self.values()
         # Warn the user if time_per_point is too small:
-        if self.time_per_point<0.001: # < 1 ms measurement time will make acquisition inefficient.
+        # < 1 ms measurement time will make acquisition inefficient.
+        if self.time_per_point < 0.001:
             self._logger.info("Time between successive points is %.1f ms."
-                              " You should increase 'avg' to at least %i for efficient acquisition.",
-                              self.time_per_point * 1000, self.avg*0.1/self.time_per_point)
+                              " You should increase 'avg' to at least %i for "
+                              "efficient acquisition.",
+                              self.time_per_point * 1000,
+                              self.avg*0.1/self.time_per_point)
 
     def setup_averaging(self):
         self.current_averages = 0

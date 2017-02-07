@@ -12,7 +12,8 @@ class TestClass(TestPyrpl):
         self.na = self.pyrpl.na
 
     def test_na_running_states(self):
-        # make sure scope rolling_mode and running states are correctly setup when something is changed
+        # make sure scope rolling_mode and running states are correctly setup
+        # when something is changed
         if self.r is None:
             return
 
@@ -28,32 +29,47 @@ class TestClass(TestPyrpl):
         self.na.run_single()
         assert data_changing()
 
-        self.na.rbw=100 # change some setup_attribute
-        assert self.na.running_state=="stopped"
+        self.na.rbw = 100  # change some setup_attribute
+        assert self.na.running_state == "stopped"
         assert not data_changing()
 
         self.na.run_continuous()
         assert data_changing()
 
+    # maximum allowed duration to acquire one point
+    duration_per_point = 30e-3
     def test_benchmark(self):
         if self.r is None:
             return
-        self.na.setup(start_freq=1000, stop_freq=1e4, rbw=1000000, points=200, avg=1)
+        # test na speed with gui
+        self.na.setup(start_freq=1e3,
+                      stop_freq=1e4,
+                      rbw=1e6,
+                      points=200,
+                      avg=1)
         tic = time.time()
         self.na.run_single()
         APP.processEvents()
         print(self.na.running_state)
-        while(self.na.running_state=='running_single'):
+        while(self.na.running_state == 'running_single'):
             APP.processEvents()
-        duration = time.time() - tic
-        assert duration < 2 # 2 s for 200 points with gui display
-        # This is much slower in nosetests than in real life (I get <3 s). Don't know why
+        duration = (time.time() - tic)/200.0
+        assert duration < self.duration_per_point, duration
+        # 2 s for 200 points with gui display
+        # This is much slower in nosetests than in real life (I get <3 s).
+        # Don't know why.
 
-        self.na.setup(start_freq=1000, stop_freq=1e4, rbw=1000000, points=1000, avg=1)
+        # test na speed without gui
+        self.na.setup(start_freq=1e3,
+                      stop_freq=1e4,
+                      rbw=1e6,
+                      points=1000,
+                      avg=1)
         tic = time.time()
         self.na.curve()
-        duration = time.time() - tic
-        assert duration < 2 # that's as good as we can do right now (1 read + 1 write per point)
+        duration = (time.time() - tic)/1000.0
+        assert duration < self.duration_per_point, duration
+        # that's as good as we can do right now (1 read + 1 write per point)
 
     def test_get_curve(self):
         if self.r is None:

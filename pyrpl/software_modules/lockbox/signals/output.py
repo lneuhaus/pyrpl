@@ -27,7 +27,7 @@ class GainProperty(FloatProperty):
     # def launch_signal(self, module, new_value_list):
     #     super(ProportionalGainProperty, self).launch_signal(module,
     #         new_value_list)
-    #     module.widget.update_transfer_function()
+    #     module._widget.update_transfer_function()
 
 
 class PIcornerAttribute(FloatAttribute):
@@ -40,7 +40,8 @@ class PIcornerAttribute(FloatAttribute):
 
 class AdditionalFilterAttribute(FilterAttribute):
     def valid_frequencies(self, instance):
-        return instance.pid.__class__.inputfilter.valid_frequencies(instance.pid)
+        return instance.pid.__class__.inputfilter.valid_frequencies(
+            instance.pid)
 
     def get_value(self, instance, owner):
         if instance is None:
@@ -54,7 +55,7 @@ class AdditionalFilterAttribute(FilterAttribute):
 
     #def launch_signal(self, module, new_value_list):
     #    super(AdditionalFilterAttribute, self).launch_signal(module, new_value_list)
-    #    module.widget.update_transfer_function()
+    #    module._widget.update_transfer_function()
 
 
 class DisplayNameProperty(StringProperty):
@@ -73,7 +74,7 @@ class AssistedDesignProperty(BoolProperty):
 
     #def launch_signal(self, module, new_value_list):
     #    super(AssistedDesignProperty, self).launch_signal(module, new_value_list)
-    #    module.widget.set_assisted_design(module.assisted_design)
+    #    module._widget.set_assisted_design(module.assisted_design)
 
 
 class AnalogFilterProperty(ListFloatProperty):
@@ -96,37 +97,45 @@ class TfTypeProperty(SelectProperty):
 
     #def launch_signal(self, module, new_value_list):
         #super(TfTypeProperty, self).launch_signal(module, new_value_list)
-        #module.widget.update_transfer_function()
-        #module.widget.change_analog_tf()
+        #module._widget.update_transfer_function()
+        #module._widget.change_analog_tf()
 
 
 class TfCurveProperty(LongProperty):
     def set_value(self, obj, val):
         super(TfCurveProperty, self).set_value(obj, val)
-
     #def launch_signal(self, module, new_value_list):
     #    super(TfCurveProperty, self).launch_signal(module, new_value_list)
-    #    module.widget.update_transfer_function()
-    #    module.widget.change_analog_tf()
+    #    module._widget.update_transfer_function()
+    #    module._widget.change_analog_tf()
 
 
 class OutputSignal(Signal):
     """
-    As many output signal as desired can be added to the lockbox. Each output defines:
+    As many output signals as desired can be added to the lockbox. Each
+    output defines:
       - name: the name of the output.
-      - dc_gain: how much the model's variable is expected to change for 1 V on the output (in *unit*)
+      - dc_gain: how much the model's variable is expected to change for 1 V
+        on the output (in *unit*)
       - unit: see above, should be one of the units available in the model.
-      - is_sweepable: boolean to decide whether using this output in a sweep is an option.
-      - sweep_amplitude/offset/frequency/waveform: what properties to use when sweeping the output
+      - is_sweepable: boolean to decide whether using this output in a sweep is
+        an option.
+      - sweep_amplitude/offset/frequency/waveform: what properties to use when
+        sweeping the output
       - output_channel: what physical output is used.
-      - p/i: the gains to use in a loop: those values are to be understood as full loop gains (p in [1], i in [Hz])
-      - additional_filter: a filter (4 cut-off frequencies) to add to the loop (in sweep and lock mode)
+      - p/i: the gains to use in a loop: those values are to be understood as
+        full loop gains (p in [1], i in [Hz])
+      - additional_filter: a filter (4 cut-off frequencies) to add to the loop
+        (in sweep and lock mode)
       - extra_module: extra module to add just before the output (usually iir).
       - extra_module_state: name of the state to use for the extra_module.
-      - tf_curve: the index of the curve describing the analog transfer function behind the output.
-      - tf_filter: alternatively, the analog transfer function can be specified by a filter (4 cut-off frequencies).
+      - tf_curve: the index of the curve describing the analog transfer
+        function behind the output.
+      - tf_filter: alternatively, the analog transfer function can be specified
+        by a filter (4 cut-off frequencies).
       - unity_gain_desired: desired value for unity gain frequency.
-      - tf_type: ["flat", "curve", "filter"], how is the analog transfer function specified.
+      - tf_type: ["flat", "curve", "filter"], how is the analog transfer
+        function specified.
     """
     _section_name = 'output'
     _gui_attributes = [# 'unit',
@@ -151,7 +160,8 @@ class OutputSignal(Signal):
 
     _widget_class = OutputSignalWidget
     name = DisplayNameProperty()
-    # unit = SelectProperty(options=[]) # options are updated each time the lockbox model is changed.
+    # unit = SelectProperty(options=[])
+    # options are updated each time the lockbox model is changed.
     is_sweepable = BoolProperty()
     assisted_design = AssistedDesignProperty()
     sweep_amplitude = FloatProperty(default=1.)
@@ -210,10 +220,14 @@ class OutputSignal(Signal):
         if self.assisted_design:
             filter = sorted(self.analog_filter)
             if filter[0] < 0:
-                raise NotImplementedError("High pass filters are not handled currently in assisted design.")
+                raise NotImplementedError("High pass filters are not handled "
+                                          "currently in assisted design.")
             if filter[2] != 0:
-                raise NotImplementedError("Only first order low-pass filter are currently handled in assisted "
-                                          "design (derivators are currently disabled). Consider using iir module")
+                raise NotImplementedError("Only first order low-pass filter "
+                                          "are currently handled in assisted "
+                                          "design (derivators are currently "
+                                          "disabled). Consider using iir "
+                                          "module")
             if filter[3] == 0:
                 self.i = self.unity_gain_desired
                 self.p = 0
@@ -257,17 +271,17 @@ class OutputSignal(Signal):
         """
         val should be in ["unlock", "sweep", "lock" ]
         """
-        if not val in ["unlock", "sweep", "lock" ]:
-            raise ValueError("mode of output %s can only be "
-                             "set to 'unlock', 'sweep', or 'lock', not %s"%(self.name, val))
+        if val not in ["unlock", "sweep", "lock"]:
+            raise ValueError("mode of output %s can only be set to 'unlock', "
+                             "'sweep', or 'lock', not %s"%(self.name, val))
         self._mode = val
 
     def tf_freqs(self):
         """
-        Frequency values to plot the transfer function. Frequency (abcissa) of the tf_curve if tf_type=="curve",
-        else: logspace(0, 6, 2000)
+        Frequency values to plot the transfer function. Frequency (abcissa) of
+        the tf_curve if tf_type=="curve", else: logspace(0, 6, 20000)
         """
-        if self.tf_type != 'curve': # req axis should be that of the curve
+        if self.tf_type != 'curve':  # req axis should be that of the curve
             return np.logspace(0, 6, 2000)
         else:
             try:
@@ -293,7 +307,8 @@ class OutputSignal(Signal):
         return True
 
     def update_for_model(self):
-        pass#self.__class__.unit.change_options(self.lockbox.get_model().units)
+        pass
+        #self.__class__.unit.change_options(self.lockbox.get_model( # ).units)
 
     @property
     def pid(self):
