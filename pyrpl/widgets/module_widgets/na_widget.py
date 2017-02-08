@@ -8,6 +8,7 @@ from PyQt4 import QtCore, QtGui
 import pyqtgraph as pg
 from time import time
 import numpy as np
+import sys
 
 APP = QtGui.QApplication.instance()
 
@@ -117,13 +118,13 @@ class NaWidget(ModuleWidget):
         last_chunk_index = self.last_updated_point//50
         current_chunk_index = index//50
 
-        if force or (time() - self.last_updated_time>self.update_period): # if last update time was a long time ago,
+        if force or (time() - self.last_updated_time > self.update_period):
+            #  if last update time was a long time ago,
             #  update plot, otherwise we would spend more time plotting things than acquiring data...
             for chunk_index in range(last_chunk_index, current_chunk_index+1):
                 self.update_chunk(chunk_index) # eventually several chunks to redraw
             self.last_updated_point = index
             self.last_updated_time = time()
-
 
             # draw arrow
             cur = self.module.current_point - 1
@@ -140,14 +141,14 @@ class NaWidget(ModuleWidget):
                 self.arrow_phase.setVisible(visible)
 
     def _magnitude(self, data):
-        return 20. * np.log10(np.abs(data))
+        return 20. * np.log10(np.abs(data)+sys.float_info.epsilon)
 
     def _phase(self, data):
         return np.angle(data, deg=True)
 
     def update_attribute_by_name(self, name, new_value_list):
         super(NaWidget, self).update_attribute_by_name(name, new_value_list)
-        if name=="running_state":
+        if name == "running_state":
             self.display_state(self.module.running_state)
 
     def update_chunk(self, chunk_index):
@@ -166,11 +167,12 @@ class NaWidget(ModuleWidget):
 
         sl = slice(max(0, 50 * chunk_index - 1), min(50 * (chunk_index + 1), self.module.last_valid_point), 1) # make sure there is an overlap between slices
         data = self.module.y_averaged[sl]
+        print("Calling update_point of NA gui after %.1f ms.",
+              (time() - self.last_updated_time) * 1000.0)
         self.chunks[chunk_index].setData(self.module.x[sl],
                                          self._magnitude(data))
         self.chunks_phase[chunk_index].setData(self.module.x[sl],
                                                self._phase(data))
-
 
     def run_continuous_clicked(self):
         """

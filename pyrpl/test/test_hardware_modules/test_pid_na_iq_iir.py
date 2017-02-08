@@ -20,9 +20,14 @@ class TestClass(TestPyrpl):
         na = self.pyrpl.na
         for iq in [r.iq0, r.iq1, r.iq2]:
             na._iq = iq
-            na.setup(start_freq=3000, stop_freq=10e6, points=101, rbw=1000, avg=1,
-                     # I reduced from 1001 to 101, is it normal that
-                     # it was taking ages ? -> no, should not take more than 1 second with rbw=1000
+            na.setup(start_freq=3000,
+                     stop_freq=10e6,
+                     points=101,
+                     # I reduced points from 1001 to 101, is it normal that
+                     # it was taking ages ? -> no, should not take more than 1
+                     # second with rbw=1000
+                     rbw=1000,
+                     avg=1,
                      amplitude=0.1, input=na.iq, output_direct='off',
                      acbandwidth=1000, logscale=True)
             f, data, a = na.curve()
@@ -46,7 +51,8 @@ class TestClass(TestPyrpl):
         # its transfer function, and compare it to the model.
 
         error_threshold = 0.03  # (relative error)
-        # Let's check the transfer function of the pid module with the integrated NA
+        # Let's check the transfer function of the pid module with the
+        # integrated NA
         if self.r is None:
             return
         else:
@@ -56,9 +62,17 @@ class TestClass(TestPyrpl):
         # shortcuts and na configuration
         na = self.pyrpl.na
         for pid in self.pyrpl.pids.all_modules:
-            na.setup(start_freq=1000, stop_freq=1000e3, points=11, rbw=100, avg=1,  # points 101->11, it was taking ages
-                     amplitude=0.1, input=pid, output_direct='off',
-                     acbandwidth=0, logscale=True)
+            na.setup(start_freq=1000,
+                     stop_freq=1000e3,
+                     # points 101->11, it was taking ages
+                     points=11,
+                     rbw=100,
+                     avg=1,
+                     amplitude=0.1,
+                     input=pid,
+                     output_direct='off',
+                     acbandwidth=0,
+                     logscale=True)
 
             # setup pid: input is the network analyzer output.
             pid.input = na.iq
@@ -103,7 +117,11 @@ class TestClass(TestPyrpl):
         # shortcuts and na configuration
         na = self.pyrpl.na
         for pid in self.pyrpl.pids.all_modules:
-            na.setup(start_freq=1000, stop_freq=1000e3, points=11, rbw=100,  # 101 points, 1 av->11 points, 7 av (taking ages)
+            na.setup(start_freq=1000,
+                     stop_freq=1000e3,
+                     # 101 points, 1 av->11 points, 7 av (taking ages)
+                     points=11,
+                     rbw=100,
                      avg=7,
                      amplitude=0.1, input=pid, output_direct='off',
                      acbandwidth=0, logscale=True)
@@ -113,7 +131,8 @@ class TestClass(TestPyrpl):
             pid.setpoint = 0
 
             # specify extradelay for theory. 3.6 cycles is empirical, but not
-            # far from what expects for NA delay (2 cycles for output, 2 for input)
+            # far from what one expects for NA delay (2 cycles for output,
+            # 2 for input)
             extradelay = self.extradelay
 
             # proportional gain of 0.01, integral = 1 kHz
@@ -146,7 +165,8 @@ class TestClass(TestPyrpl):
         # its transfer function, and compare it to the model.
 
         error_threshold = 0.1  # (relative error)
-        # Let's check the transfer function of the pid module with the integrated NA
+        # Let's check the transfer function of the pid module with the
+        # integrated NA
         if self.r is None:
             return
         else:
@@ -156,7 +176,10 @@ class TestClass(TestPyrpl):
         # shortcuts and na configuration
         na = self.pyrpl.na
         for pid in self.pyrpl.pids.all_modules:
-            na.setup(start_freq=1000, stop_freq=1000e3, points=11, rbw=100,
+            na.setup(start_freq=1000,
+                     stop_freq=1000e3,
+                     points=11,
+                     rbw=100,
                      avg=10,
                      amplitude=0.1, input=pid, output_direct='off',
                      acbandwidth=0, logscale=True)
@@ -166,7 +189,8 @@ class TestClass(TestPyrpl):
             pid.setpoint = 0
 
             # specify extradelay for theory. 3.6 cycles is empirical, but not
-            # far from what expects for NA delay (2 cycles for output, 2 for input)
+            # far from what one expects for NA delay (2 cycles for output,
+            # 2 for input)
             extradelay = self.extradelay
 
             # proportional gain of 10, inputfilter: 2kHz high-pass, 10 kHz
@@ -203,7 +227,8 @@ class TestClass(TestPyrpl):
         # function w.r.t. to the predicted one
         extradelay = 0
         error_threshold = 0.07
-        # Let's check the transfer function of the pid module with the integrated NA
+        # Let's check the transfer function of the pid module with the
+        # integrated NA
         if self.r is None:
             return
         else:
@@ -216,9 +241,16 @@ class TestClass(TestPyrpl):
         for bpf in [r.iq0, r.iq1]:
             plotdata = []
             # setup na for measurement
-            na.setup(start_freq=300e3, stop_freq=700e3, points=51, rbw=1000, avg=3,
-                     acbandwidth=0, amplitude=0.2, input=bpf,
-                     output_direct='off', logscale=False)
+            na.setup(start_freq=300e3,
+                     stop_freq=700e3,
+                     points=51,
+                     rbw=1000,
+                     avg=3,
+                     acbandwidth=0,
+                     amplitude=0.2,
+                     input=bpf,
+                     output_direct='off',
+                     logscale=False)
             # setup bandpass
             bpf.setup(frequency=500e3,  # center frequency
                       bandwidth=5000,  # Q=100.0,  # the filter quality factor # sorry, I am dropping this...
@@ -464,7 +496,8 @@ class TestClass(TestPyrpl):
                 maxerror = np.max(error)
             if maxerror > eth:
                 c = CurveDB.create(f, data, name='test_' + module.name
-                                                 + '_' + extrastring + '_na-failed-data')
+                                                 + '_' + extrastring
+                                                 + '_na-failed-data')
                 c.params["unittest_relative"] = relative
                 c.params["unittest_maxerror"] = maxerror
                 c.params["unittest_error_threshold"] = eth

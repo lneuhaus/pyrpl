@@ -30,20 +30,20 @@ class TestClass(TestPyrpl):
         for attr in widget.attribute_widgets:
             if isinstance(attr, SelectAttributeWidget):
                 for option in attr.options:
-                    to_set = attr.widget.findText(str(option)) # it would be a pain in the ** to
-                                                               #  select an element with a QTest
+                    to_set = attr.widget.findText(str(option))
+                    # it would be a pain to select an element with a QTest
                     attr.widget.setCurrentIndex(to_set)
-                    assert (getattr(self.pyrpl.rp.scope, attr.name)==option)
+                    assert (getattr(self.pyrpl.rp.scope, attr.name) == option)
             elif isinstance(attr, BoolAttributeWidget):
                 for i in range(2):
                     QTest.mouseClick(attr.widget, Qt.LeftButton)
-                    assert (getattr(self.pyrpl.rp.scope, attr.name)\
-                            ==(attr.widget.checkState()==2))
+                    assert (getattr(self.pyrpl.rp.scope, attr.name)
+                        == (attr.widget.checkState() == 2))
             elif isinstance(attr, NumberAttributeWidget):
                 for i in range(3):
                     attr.widget.stepUp()
                     assert(abs(getattr(self.pyrpl.rp.scope, attr.name) - \
-                               attr.widget.value())<0.0001)
+                               attr.widget.value()) < 0.0001)
 
     def test_asg_gui(self):
         if self.pyrpl is None:

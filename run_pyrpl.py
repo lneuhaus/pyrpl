@@ -9,7 +9,7 @@ from pyrpl import Pyrpl
 
 import sys
 
-if __name__=='__main__':
+if __name__ == '__main__':
     if len(sys.argv) > 2:
         print("usage: python run_pyrpl.py [config_file_name]")
     if len(sys.argv) == 1:

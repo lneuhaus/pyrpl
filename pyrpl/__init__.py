@@ -13,6 +13,7 @@ warnings.simplefilter("error", np.ComplexWarning) # pyqtgraph is throwing a warn
 warnings.simplefilter("error", BadCoefficients)
 
 import logging
+logging.basicConfig()
 logger = logging.getLogger(name=__name__)
 logger.setLevel(logging.ERROR)  # only show errors until userdefine log level is set up
 

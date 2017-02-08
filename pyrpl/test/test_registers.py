@@ -2,7 +2,7 @@ import logging
 logger = logging.getLogger(name=__name__)
 from pyrpl.modules import BaseModule
 from pyrpl.attributes import *
-from pyrpl.test.test_base import TestRedpitaya
+from pyrpl.test.test_redpitaya import TestRedpitaya
 
 
 class TestClass(TestRedpitaya):

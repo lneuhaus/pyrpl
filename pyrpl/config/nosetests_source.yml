@@ -1,7 +1,7 @@
 pyrpl:  # General configuration of the software:
   name: nosetests_pyrpl
   gui: true  # autostart gui
-  loglevel: info
+  loglevel: warning #debug
   # level of logged information.
   # 'debug' outputs everything
   # 'infi' is default level
