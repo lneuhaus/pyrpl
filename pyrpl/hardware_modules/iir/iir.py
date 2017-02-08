@@ -2,8 +2,14 @@ from . import iir_theory #, bodefit
 from .. import FilterModule
 from pyrpl.attributes import IntRegister, BoolRegister, ListComplexProperty, FloatProperty
 from pyrpl.widgets.module_widgets import IirWidget
+from pyrpl.modules import SignalLauncher
 
 import numpy as np
+from PyQt4 import QtCore, QtGui
+
+
+class SignalLauncherIir(SignalLauncher):
+    update_plot = QtCore.pyqtSignal()
 
 
 class IIR(FilterModule):
@@ -67,6 +73,9 @@ class IIR(FilterModule):
 
     overflow = IntRegister(0x108,
                            doc="Bitmask for various overflow conditions")
+
+    def _init_module(self):
+        self._signal_launcher = SignalLauncherIir(self)
 
     @property
     def output_saturation(self):
@@ -266,8 +275,7 @@ class IIR(FilterModule):
         else:
             self._logger.info("IIR Overflow pattern: %s", bin(self.overflow))
 
-        if self._widget is not None:
-            self._widget.update_plot()
+        self._signal_launcher.update_plot.emit()
         """ # obviously have to do something with that...
         if designdata or plot:
             maxf = 125e6 / self.loops

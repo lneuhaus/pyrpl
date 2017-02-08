@@ -89,13 +89,12 @@ class InputSignal(SoftwareModule):
         """
         curve = self.acquire()
         self.get_stats_from_curve(curve)
-        if self._widget is not None:
-            self.update_graph()
+        self.lockbox._signal_launcher.input_calibrated.emit([self])
 
-    def update_graph(self):
-        if self._widget is not None:
-            y = self.expected_signal(self.plot_range)
-            self._widget.show_graph(self.plot_range, y)
+#    def update_graph(self):
+#        if self._widget is not None:
+#            y = self.expected_signal(self.plot_range)
+#            self._widget.show_graph(self.plot_range, y)
 
     def expected_signal(self, variable):
         """

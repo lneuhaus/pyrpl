@@ -104,7 +104,7 @@ class ModuleMetaClass(type):
         # ... python 2
         elif (self.setup.__doc__ is None or
                       self.setup.__doc__ == ""):
-            setup.__doc__ += self.make_setup_docstring()
+            setup.__doc__ = self.make_setup_docstring()
 
     def make_setup_docstring(self):
         """
@@ -169,7 +169,7 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
     # This flag is used to desactivate saving into file during init
     _autosave_active = True
     # placeholder for widget
-    _widget = None
+    #_widget = None
     # internal memory for owner of the module (to avoid conflicts)
     _owner = None
     # name of the module, automatically assigned one per instance
@@ -333,11 +333,12 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         self._callback_active = False # otherwise, saved values will be overwritten by default gui values
         self._autosave_active = False # otherwise, default gui values will be saved
         try:
-            self._widget = self._widget_class(self.name, self)
+            widget = self._widget_class(self.name, self)
+            #self._widget = self._widget_class(self.name, self)
         finally:
             self._callback_active = True
             self._autosave_active = True
-        return self._widget
+        return widget # self._widget
 
     @property
     def c(self):

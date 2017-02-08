@@ -43,6 +43,7 @@ class SignalLauncherLockbox(SignalLauncher):
     model_changed = QtCore.pyqtSignal()
     state_changed = QtCore.pyqtSignal()
     add_input = QtCore.pyqtSignal(list)
+    input_calibrated = QtCore.pyqtSignal(list)
     remove_input = QtCore.pyqtSignal(list)
     update_transfer_function = QtCore.pyqtSignal(list)
 

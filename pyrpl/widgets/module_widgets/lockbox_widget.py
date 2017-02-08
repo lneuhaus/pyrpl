@@ -413,6 +413,9 @@ class LockboxInputWidget(ModuleWidget):
         """
         self.curve.setData(x, y)
 
+    def update_expected_signal(self, input):
+        y = input.expected_signal(input.plot_range)
+        self.show_graph(input.plot_range, y)
 
 class InputsWidget(QtGui.QWidget):
     """
@@ -440,6 +443,11 @@ class InputsWidget(QtGui.QWidget):
         widget = input.create_widget()
         self.input_widgets.append(widget)
         self.layout.addWidget(widget, stretch=3)
+
+    def update_expected_input_signal(self, input):
+        for widget in self.input_widgets:
+            if widget.name==input.name:
+                widget.update_expected_signal(input)
 
 
 class PlusTab(QtGui.QWidget):
@@ -531,6 +539,9 @@ class AllSignalsWidget(QtGui.QTabWidget):
         if output.name in self.output_widget_names():
             self.get_output_widget_by_name(
                 output.name).update_transfer_function()
+
+    def update_expected_input_signal(self, input):
+        self.inputs_widget.update_expected_input_signal(input)
 
     def get_output_widget_by_name(self, name):
         for widget in self.output_widgets:
@@ -673,6 +684,13 @@ class LockboxWidget(ModuleWidget):
         self.main_layout.addWidget(self.sequence_widget)
         self.main_layout.addStretch(5)
         self.setLayout(self.main_layout)
+
+    def input_calibrated(self, inputs):
+        """
+        SLOT: don't change name unless you know what you are doing
+        updates the plot of the input expected signal for input inputs[0]
+        """
+        self.all_sig_widget.update_expected_input_signal(inputs[0])
 
     def update_transfer_function(self, outputs):
         """

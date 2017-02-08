@@ -306,15 +306,10 @@ class NetworkAnalyzer(SoftwareModule):
         # < 1 ms measurement time will make acquisition inefficient.
         if self.time_per_point < 0.001:
             self._logger.info("Time between successive points is %.1f ms."
-<<<<<<< Updated upstream
-                              " You should increase 'avg' to at least %i for "
-                              "efficient acquisition.",
-                              self.time_per_point * 1000.,
-                              self.avg*0.1/self.time_per_point)
-=======
-                              " You should increase 'avg' to at least %i for efficient acquisition.",
+                              " You should increase 'avg' to at least %i "
+                              "for efficient acquisition.",
                               self.time_per_point * 1000, self.avg*0.001/self.time_per_point)
->>>>>>> Stashed changes
+
 
     def _time_per_point(self):
         return float(self.iq._na_sleepcycles + self.iq._na_averages) \
