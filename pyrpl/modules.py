@@ -158,11 +158,11 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
     _setup_attributes = []
     # class inheriting from ModuleWidget can
     # automatically generate gui from a list of attributes
-    _gui_attributes = [] #_setup_attributes
+    _gui_attributes = []
     # Changing these attributes outside setup(
     # **kwds) will trigger self.callback()
     # standard callback defined in BaseModule is to call setup()
-    _callback_attributes = [] #_gui_attributes
+    _callback_attributes = []
     # instance-level attribute created in create_widget
     # This flag is used to desactivate callback during setup
     _callback_active = True
