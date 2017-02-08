@@ -3,6 +3,13 @@ logger = logging.getLogger(name=__name__)
 from .test_base import TestPyrpl
 
 class TestClass(TestPyrpl):
+
+    def test_specan_stopped_at_startup(self):
+        """
+        This was so hard to detect, I am making a unit test
+        """
+        assert(self.pyrpl.spectrum_analyzer.running_continuous==False)
+
     def test_spec_an(self):
         # at this point this test is still highly dubious (nothing is tested
         #  for, really)

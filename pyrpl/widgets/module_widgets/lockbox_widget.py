@@ -434,10 +434,11 @@ class InputsWidget(QtGui.QWidget):
         #self.layout.addStretch(1)
 
     def remove_input(self, input):
-        if input._widget in self.input_widgets:
-            input._widget.hide()
-            self.input_widgets.remove(input._widget)
-            input._widget.deleteLater()
+        for widget in self.input_widgets:
+            if widget.name == input.name:
+                widget.hide()
+                self.input_widgets.remove(widget)
+                widget.deleteLater()
 
     def add_input(self, input):
         widget = input.create_widget()
@@ -448,6 +449,11 @@ class InputsWidget(QtGui.QWidget):
         for widget in self.input_widgets:
             if widget.name==input.name:
                 widget.update_expected_signal(input)
+
+    def show_lock(self, stage):
+        for widget in self.input_widgets:
+            if widget.name==stage.input:
+                widget.show_lock(stage.input, stage.variable_value)
 
 
 class PlusTab(QtGui.QWidget):
@@ -527,6 +533,9 @@ class AllSignalsWidget(QtGui.QTabWidget):
             #if len(self.lb_widget.module.output_names)>=index:
             #    self.setTabText(index, self.lb_widget.module.output_names[
             #        index-1])
+
+    def show_lock(self, stage):
+        self.inputs_widget.show_lock(stage)
 
     ## Input Management
     def add_input(self, input):
@@ -641,13 +650,12 @@ class LockboxSequenceWidget(ModuleWidget):
     def remove_stage(self, stage):
         for widget in self.stage_widgets:
             if widget.name == stage.name:
-                #if stage._widget in self.stage_widgets:
                 if self.parent().button_green == widget.button_goto:
                     self.parent().button_green = None
                 widget.hide()
                 self.stage_widgets.remove(widget)
                 self.main_layout.removeWidget(widget)
-                stage._widget.deleteLater()
+                widget.deleteLater()
 
     def update_stage_names(self):
         for widget in self.stage_widgets:
@@ -810,11 +818,7 @@ class LockboxWidget(ModuleWidget):
         if isinstance(stage, basestring):
             stage = self.module.get_stage(stage)
         if stage is not None:
-            if stage._widget is not None:
-                stage._widget.show_lock()
-            input_widget = self.module.get_input(stage.input)._widget
-            if input_widget is not None:
-                input_widget.show_lock(stage.input, stage.variable_value)
+            self.all_sig_widget.show_lock(stage)
 
     def hide_lock_points(self):
         """

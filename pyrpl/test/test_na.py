@@ -2,7 +2,7 @@ import logging
 logger = logging.getLogger(name=__name__)
 import time
 import copy
-from PyQt4 import QtGui
+from PyQt4 import QtGui, QtCore
 from .test_base import TestPyrpl
 APP = QtGui.QApplication.instance()
 
@@ -10,6 +10,12 @@ APP = QtGui.QApplication.instance()
 class TestClass(TestPyrpl):
     def setup(self):
         self.na = self.pyrpl.na
+
+    def test_na_stopped_at_startup(self):
+        """
+        This was so hard to detect, I am making a unit test
+        """
+        assert(self.na.running_state=='stopped')
 
     def test_na_running_states(self):
         # make sure scope rolling_mode and running states are correctly setup
@@ -35,41 +41,73 @@ class TestClass(TestPyrpl):
 
         self.na.run_continuous()
         assert data_changing()
+        self.na.stop() # do not let the na running or other tests might be screwed-up !!!
 
     # maximum allowed duration to acquire one point without gui
-    duration_per_point = 5e-3
+    duration_per_point = 1.7e-3 # previously 5e-3
     def test_benchmark(self):
+        """
         if self.r is None:
             return
         # test na speed without gui
         self.na.setup(start_freq=1e3,
                       stop_freq=1e4,
                       rbw=1e6,
-                      points=1000,
+                      points=10000,
                       avg=1)
         tic = time.time()
         self.na.curve()
-        duration = (time.time() - tic)/1000.0
+        duration = (time.time() - tic)/self.na.points
         assert duration < self.duration_per_point, duration
         # that's as good as we can do right now (1 read + 1 write per point)
 
+        """
         # test na speed with gui. Allow twice as long
         self.na.setup(start_freq=1e3,
                       stop_freq=1e4,
                       rbw=1e6,
-                      points=200,
+                      points=1000,
                       avg=1)
+
+        from time import sleep
+        #for i in range(1000): # we should maybe put that in teardown(), setup(), or even pyrpl.__init__()
+        #    APP.processEvents() # make sure no old events are going to screw up the timing test
+
         tic = time.time()
         self.na.run_single()
         APP.processEvents()
         print(self.na.running_state)
         while(self.na.running_state == 'running_single'):
             APP.processEvents()
-        duration = (time.time() - tic)/200.0
-        assert duration < 5.*self.duration_per_point, duration
+        duration = (time.time() - tic)/self.na.points
+
+        assert duration < 1.*self.duration_per_point, duration
         # 2 s for 200 points with gui display
         # This is much slower in nosetests than in real life (I get <3 s).
         # Don't know why.
+
+    def coucou(self):
+        self.count += 1
+        if self.count < self.total:
+            self.timer.start()
+
+    def test_stupid_timer(self):
+        self.timer = QtCore.QTimer()
+        self.timer.setInterval(2) # 1 ms
+        self.timer.setSingleShot(True)
+        self.count = 0
+        self.timer.timeout.connect(self.coucou)
+
+        for i in range(1000):
+            APP.processEvents()
+
+        tic = time.time()
+        self.total = 1000
+        self.timer.start()
+        while self.count<self.total:
+            APP.processEvents()
+        duration = time.time() - tic
+        assert(duration<2.5), duration
 
     def test_get_curve(self):
         if self.r is None:
@@ -83,7 +121,13 @@ class TestClass(TestPyrpl):
     def test_iq_stopped_when_paused(self):
         if self.r is None:
             return
-        self.na.setup(start_freq=1e5, stop_freq=2e5, rbw=100000, points=100, output_direct="out1", input="out1", amplitude=0.01)
+        self.na.setup(start_freq=1e5,
+                      stop_freq=2e5,
+                      rbw=100000,
+                      points=100,
+                      output_direct="out1",
+                      input="out1",
+                      amplitude=0.01)
         self.na.run_continuous()
         APP.processEvents()
         self.na.pause()

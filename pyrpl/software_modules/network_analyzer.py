@@ -310,7 +310,6 @@ class NetworkAnalyzer(SoftwareModule):
                               "for efficient acquisition.",
                               self.time_per_point * 1000, self.avg*0.001/self.time_per_point)
 
-
     def _time_per_point(self):
         return float(self.iq._na_sleepcycles + self.iq._na_averages) \
                / (125e6 * self.iq._frequency_correction)

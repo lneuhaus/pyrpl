@@ -290,7 +290,8 @@ class Scope(HardwareModule):
         self._trigger_delay_memory = 0
         self.setup(trigger_source='immediately',
                    duration=1,
-                   running_continuous=True,
+                   running_continuous=False, ### Otherwise it has to be switched off explicitly
+                                             ### before any benchmarking unittest!!!
                    rolling_mode=True,
                    average=False)
 

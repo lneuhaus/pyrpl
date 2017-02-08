@@ -12,6 +12,12 @@ class TestScopeClass(TestPyrpl):
     # individual name for this test:
     # tmp_config_file = "nosetests_config_scope.yml"
 
+    def test_scope_stopped_at_startup(self):
+        """
+        This was so hard to detect, I am making a unit test
+        """
+        assert(self.r.scope.running_continuous==False)
+
     def test_scope_rolling_mode_and_running_state_update(self):
         """ makes sure scope rolling_mode and running states are correctly
         setup when something is changed """

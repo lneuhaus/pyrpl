@@ -17,7 +17,8 @@ class NaWidget(ModuleWidget):
     """
     Network Analyzer Tab.
     """
-    starting_update_rate = 0.2 # this would be a good idea to change this number dynamically when the curve becomes
+    starting_update_rate =  0.2 # this would be a good idea to change this number dynamically when the curve becomes
+    CHUNK_SIZE = 500
     # more and more expensive to display.
 
     def init_gui(self):
@@ -111,12 +112,12 @@ class NaWidget(ModuleWidget):
 
     def update_point(self, index, force=False):
         """
-        To speed things up, the curves are plotted by chunks of 50 points. All points between last_updated_point and
+        To speed things up, the curves are plotted by chunks of self.CHUNK_SIZE points. All points between last_updated_point and
         index will be redrawn.
         """
-        APP.processEvents()  # Give hand back to the gui since timer intervals might be very short
-        last_chunk_index = self.last_updated_point//50
-        current_chunk_index = index//50
+        # APP.processEvents()  # Give hand back to the gui since timer intervals might be very short
+        last_chunk_index = self.last_updated_point//self.CHUNK_SIZE
+        current_chunk_index = index//self.CHUNK_SIZE
 
         if force or (time() - self.last_updated_time > self.update_period):
             #  if last update time was a long time ago,
@@ -165,7 +166,7 @@ class NaWidget(ModuleWidget):
             chunk.setLogMode(xMode=log_mod, yMode=None)
             chunk_phase.setLogMode(xMode=log_mod, yMode=None)
 
-        sl = slice(max(0, 50 * chunk_index - 1), min(50 * (chunk_index + 1), self.module.last_valid_point), 1) # make sure there is an overlap between slices
+        sl = slice(max(0, self.CHUNK_SIZE * chunk_index - 1), min(self.CHUNK_SIZE * (chunk_index + 1), self.module.last_valid_point), 1) # make sure there is an overlap between slices
         data = self.module.y_averaged[sl]
         print("Calling update_point of NA gui after %.1f ms.",
               (time() - self.last_updated_time) * 1000.0)
