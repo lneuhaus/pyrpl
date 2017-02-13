@@ -4,6 +4,8 @@ import time
 import copy
 from PyQt4 import QtGui, QtCore
 from .test_base import TestPyrpl
+import unittest
+
 APP = QtGui.QApplication.instance()
 
 
@@ -41,10 +43,13 @@ class TestClass(TestPyrpl):
 
         self.na.run_continuous()
         assert data_changing()
-        self.na.stop() # do not let the na running or other tests might be screwed-up !!!
+        self.na.stop()  # do not let the na running or other tests might be
+        # screwed-up !!!
 
     # maximum allowed duration to acquire one point without gui
     duration_per_point = 1.7e-3 # previously 5e-3
+    # duration_per_point = 5e-3
+    #@unittest.skip("testing skipping")
     def test_benchmark(self):
         """
         if self.r is None:
@@ -93,7 +98,7 @@ class TestClass(TestPyrpl):
 
     def test_stupid_timer(self):
         self.timer = QtCore.QTimer()
-        self.timer.setInterval(2) # 1 ms
+        self.timer.setInterval(2)  # formerly 1 ms
         self.timer.setSingleShot(True)
         self.count = 0
         self.timer.timeout.connect(self.coucou)
@@ -104,18 +109,19 @@ class TestClass(TestPyrpl):
         tic = time.time()
         self.total = 1000
         self.timer.start()
-        while self.count<self.total:
+        while self.count < self.total:
             APP.processEvents()
         duration = time.time() - tic
-        assert(duration<2.5), duration
+        assert(duration < 2.5), duration
 
     def test_get_curve(self):
         if self.r is None:
             return
         self.na.iq.output_signal = 'quadrature'
-        x, y, amp = self.na.curve(start_freq=1e5, stop_freq=2e5, rbw=10000, points=100,
-                                  input=self.na.iq, acbandwidth=0)
-        assert(all(abs(y-1)<0.1)) # If transfer function is taken into account, that should be much closer to 1...
+        x, y, amp = self.na.curve(start_freq=1e5, stop_freq=2e5, rbw=10000,
+                                  points=100, input=self.na.iq, acbandwidth=0)
+        assert(all(abs(y-1)<0.1))  # If transfer function is taken into
+        # account, that should be much closer to 1...
         # Also, there is this magic value of 0.988 instead of 1 ??!!!
 
     def test_iq_stopped_when_paused(self):
