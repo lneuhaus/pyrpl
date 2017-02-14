@@ -31,7 +31,11 @@ class TestClass(TestPyrpl):
             APP.processEvents()
             return (data != self.na.y_averaged).any()
 
+
+
         self.na.setup(start_freq=1000, stop_freq=1e4, rbw=1000, points=10000)
+        for i in range(100):
+            APP.processEvents()
         self.na.run_single()
         assert data_changing()
 
@@ -40,6 +44,11 @@ class TestClass(TestPyrpl):
         assert not data_changing()
 
         self.na.run_continuous()
+        time.sleep(0.1)
+        for i in range(100):
+            APP.processEvents()
+
+
         assert data_changing()
         self.na.stop() # do not let the na running or other tests might be screwed-up !!!
 
