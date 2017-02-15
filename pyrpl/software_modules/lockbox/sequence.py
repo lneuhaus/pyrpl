@@ -8,6 +8,7 @@ from collections import OrderedDict
 
 
 class Sequence(SoftwareModule):
+    """ A sequence is a list of Stages """
     _widget_class = LockboxSequenceWidget
     _section_name = 'sequence'
 
@@ -31,11 +32,11 @@ class Sequence(SoftwareModule):
         """
         Stages can be added at will.
         """
-        stage = self._add_stage_no_save()
+        stage = self.add_stage_no_save()
         stage.name = stage.name  # triggers a save in the config file...
         return stage
 
-    def _add_stage_no_save(self):
+    def add_stage_no_save(self):
         """
         Adds a stage in the sequence without touching the config file
         """
@@ -52,12 +53,19 @@ class Sequence(SoftwareModule):
         return stage
 
     def rename_stage(self, stage, new_name):
-        self.lockbox.rename_stage(stage, new_name)
+        if new_name in self.stage_names and self.get_stage(new_name)!=stage:
+            raise ValueError("Name %s already exists for a stage"%new_name)
+        if hasattr(self, stage.name):
+            delattr(self, stage.name)
+        setattr(self, new_name, stage)
+        if stage._autosave_active:
+            stage.c # make sure stage config section is created ?
+            stage.c._rename(new_name)
+        stage._name = new_name
+        self.update_stage_names()
 
     def update_stage_names(self):
         self.lockbox._signal_launcher.stage_renamed.emit()
-        #if self.widget is not None:
-        #    self.widget.update_stage_names()
 
     def remove_stage(self, stage, allow_last_stage=False):
         if isinstance(stage, basestring):
@@ -90,7 +98,7 @@ class Sequence(SoftwareModule):
             if 'stages' in self.c._dict.keys():
                 for name, stage in self.c.stages._dict.items():
                     if name!='states':
-                        stage = self._add_stage_no_save() # don't make a duplicate entry in the config file
+                        stage = self.add_stage_no_save() # don't make a duplicate entry in the config file
                         stage._autosave_active = False
                         self.rename_stage(stage, name)
                         stage.load_setup_attributes()
@@ -178,7 +186,6 @@ class Stage(SoftwareModule):
         """
         Updates the list of outputs to be in sync with the existing outputs in the lockbox
         """
-
         output_names = [output.name for output in self.lockbox.outputs]
         new_output_on = dict()
         for name in output_names:

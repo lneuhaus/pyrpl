@@ -1,7 +1,8 @@
 from __future__ import division
 from pyrpl.modules import SoftwareModule
 from . import Signal
-from pyrpl.attributes import SelectAttribute, SelectProperty, FloatProperty, FrequencyProperty, PhaseProperty
+from pyrpl.attributes import SelectAttribute, SelectProperty, FloatProperty, FrequencyProperty, PhaseProperty, \
+    FilterProperty
 from pyrpl.widgets.module_widgets import LockboxInputWidget
 from pyrpl.hardware_modules.dsp import DSP_INPUTS
 
@@ -46,6 +47,14 @@ class InputSignal(SoftwareModule):
         self.parameters = dict()
         self.plot_range = np.linspace(-5, 5, 200)
 
+    def unsetup(self):
+        """
+        Function that frees all resources occupied by this signal, as a preparation for its destruction.
+        To be implemented in child classes
+        -------
+        """
+        pass
+
     @property
     def model(self):
         return self.parent.model
@@ -60,7 +69,7 @@ class InputSignal(SoftwareModule):
                 scope.load_state("sweep")
             else:
                 scope.setup(input1=self.signal(),
-                            input2=self.lockbox.get_output(
+                            input2=self.lockbox._get_output(
                                 self.lockbox.default_sweep_output).pid.output_direct,
                             trigger_source=self.lockbox.asg.name,
                             duration=2./self.lockbox.asg.frequency,
@@ -201,57 +210,72 @@ class InputDirect(InputSignal):
 #        return self.input_channel
 
 
-class PdhFrequencyProperty(FrequencyProperty):
+class IqFrequencyProperty(FrequencyProperty):
     def set_value(self, instance, value):
-        super(PdhFrequencyProperty, self).set_value(instance, value)
+        super(IqFrequencyProperty, self).set_value(instance, value)
         instance.iq.frequency = value
         return value
 
 
-class PdhAmplitudeProperty(FloatProperty):
+class IqAmplitudeProperty(FloatProperty):
     def set_value(self, instance, value):
-        super(PdhAmplitudeProperty, self).set_value(instance, value)
+        super(IqAmplitudeProperty, self).set_value(instance, value)
         instance.iq.amplitude = value
         return value
 
 
-class PdhPhaseProperty(PhaseProperty):
+class IqPhaseProperty(PhaseProperty):
     def set_value(self, instance, value):
-        super(PdhPhaseProperty, self).set_value(instance, value)
+        super(IqPhaseProperty, self).set_value(instance, value)
         instance.iq.phase = value
         return value
 
 
-class PdhModOutputProperty(SelectProperty):
+class IqModOutputProperty(SelectProperty):
     def set_value(self, instance, value):
-        super(PdhModOutputProperty, self).set_value(instance, value)
+        super(IqModOutputProperty, self).set_value(instance, value)
         instance.iq.output_direct = value
         return value
 
-
-class PdhQuadratureFactorProperty(FloatProperty):
+class IqQuadratureFactorProperty(FloatProperty):
     def set_value(self, instance, value):
-        super(PdhQuadratureFactorProperty, self).set_value(instance, value)
+        super(IqQuadratureFactorProperty, self).set_value(instance, value)
         instance.iq.quadrature_factor = value
         return value
 
+class IqFilterProperty(FilterProperty):
+    def set_value(self, instance, val):
+        try:
+            val = list(val)
+        except:
+            val = [val, val]  # preferentially choose second order filter
+        instance.iq.bandwidth = val
+        super(IqFilterProperty, self).set_value(instance, val)
+        return val
 
-class InputIQ(InputDirect):
+    def valid_frequencies(self, module):
+        # only allow the low-pass filter options (exclude negative high-pass options)
+        return [v for v in module.iq.__class__.bandwidth.valid_frequencies(module.iq) if v >= 0]
+
+
+class InputIq(InputDirect):
     _section_name = 'iq'
     _gui_attributes = InputSignal._gui_attributes + ['mod_freq',
                                                    'mod_amp',
                                                    'mod_phase',
                                                    'quadrature_factor',
-                                                   'mod_output']
+                                                   'mod_output',
+                                                   'bandwidth']
     _setup_attributes = _gui_attributes + ["min", "max", "mean", "rms"]
-    mod_freq = PdhFrequencyProperty()
-    mod_amp = PdhAmplitudeProperty()
-    mod_phase = PdhPhaseProperty()
-    quadrature_factor = PdhQuadratureFactorProperty()
-    mod_output = PdhModOutputProperty(['out1', 'out2'])
+    mod_freq = IqFrequencyProperty()
+    mod_amp = IqAmplitudeProperty()
+    mod_phase = IqPhaseProperty()
+    quadrature_factor = IqQuadratureFactorProperty()
+    mod_output = IqModOutputProperty(['out1', 'out2'])
+    bandwidth = IqFilterProperty()
 
     def _init_module(self):
-        super(InputIQ, self)._init_module()
+        super(InputIq, self)._init_module()
         self._iq = None
         self.setup()
 
@@ -276,8 +300,19 @@ class InputIQ(InputDirect):
                       phase=self.mod_phase,
                       input=self.input_channel,
                       gain=0,
-                      bandwidth=[1e6, 1e6],
-                      acbandwidth=1e6,
+                      bandwidth=self.bandwidth,
+                      acbandwidth=self.mod_freq/100.0,
                       quadrature_factor=self.quadrature_factor,
                       output_signal='quadrature',
                       output_direct=self.mod_output)
+
+    def unsetup(self):
+        super(InputIq, self).unsetup()
+        self.iq.free()
+
+class InputFromOutput(InputDirect):
+    _section_name = 'input_from_output'
+
+    def expected_signal(self, variable):
+        return variable
+

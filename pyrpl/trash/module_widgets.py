@@ -1722,12 +1722,12 @@ class AllSignalsWidget(QtGui.QTabWidget):
 
     def tab_changed(self, index):
         if index==self.count()-1: # tab "+" clicked
-            self.lb_widget.module.add_output()
+            self.lb_widget.module._add_output()
             self.setCurrentIndex(self.count()-2) # bring created output tab on top
 
     def close_tab(self, index):
         lockbox = self.lb_widget.module
-        lockbox.remove_output(lockbox.outputs[index - 1])
+        lockbox._remove_output(lockbox.outputs[index - 1])
 
     ## Output Management
     def add_output(self, signal):
@@ -1815,7 +1815,7 @@ class LockboxStageWidget(ModuleWidget):
         self.close_button.move(evt.size().width() - self.close_button.width(), self.title_pos[1])
 
     def close(self):
-        self.module.parent.remove_stage(self.module)
+        self.module.parent._remove_stage(self.module)
 
     def show_lock(self):
         self.parent().parent().set_button_green(self.button_goto)
@@ -1943,7 +1943,7 @@ class LockboxWidget(ModuleWidget):
         """
         Removes a stage to the model
         """
-        self.sequence_widget.remove_stage(stage)
+        self.sequence_widget._remove_stage(stage)
 
     def set_state(self, val):
         if val=='unlock':
@@ -1954,7 +1954,7 @@ class LockboxWidget(ModuleWidget):
             self.hide_lock_points()
             self.set_button_green(self.button_sweep)
             return
-        index = self.module.stage_names.index(val)
+        index = self.module._stage_names.index(val)
         self.set_button_green(self.sequence_widget.stage_widgets[index].button_goto)
         self.show_lock(val)
 
@@ -1972,11 +1972,11 @@ class LockboxWidget(ModuleWidget):
         """
         self.hide_lock_points()
         if isinstance(stage, basestring):
-            stage = self.module.get_stage(stage)
+            stage = self.module._get_stage(stage)
         if stage is not None:
             if stage._widget is not None:
                 stage._widget.show_lock()
-            input_widget = self.module.get_input(stage.input)._widget
+            input_widget = self.module._get_input(stage.input)._widget
             if input_widget is not None:
                 input_widget.show_lock(stage.input, stage.variable_value)
 

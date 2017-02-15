@@ -61,7 +61,7 @@ class AdditionalFilterAttribute(FilterAttribute):
 class DisplayNameProperty(StringProperty):
     def set_value(self, obj, val):
         if obj.parent is not None:
-            obj.parent.rename_output(obj, val)
+            obj.parent._rename_output(obj, val)
         else:
             super(DisplayNameProperty, self).set_value(obj, val)
 
@@ -205,7 +205,7 @@ class OutputSignal(Signal):
             - input.gain * pid.i * output.dc_gain = output.i
         """
         if isinstance(input, basestring):
-            input = self.lockbox.get_input(input)
+            input = self.lockbox._get_input(input)
 
         self.current_input_lock = input
         self.current_variable_value = variable_value
@@ -296,7 +296,7 @@ class OutputSignal(Signal):
         Closes the lock loop, using the required p and i parameters.
         """
         if isinstance(input, basestring):
-            input = self.lockbox.get_input(input)
+            input = self.lockbox._get_input(input)
         self.mode = 'lock'
         self.update_pid_gains(input, variable_value, factor=factor)
         self.pid.input = input.signal()
@@ -363,3 +363,7 @@ class OutputSignal(Signal):
         sets the integrator value to val (in V)
         """
         self.pid.ival = val
+
+    def unsetup(self):
+        self.pid.free()
+

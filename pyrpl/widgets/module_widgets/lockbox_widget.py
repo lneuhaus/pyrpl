@@ -499,12 +499,12 @@ class AllSignalsWidget(QtGui.QTabWidget):
 
     def tab_changed(self, index):
         if index==self.count()-1: # tab "+" clicked
-            self.lb_widget.module.add_output()
+            self.lb_widget.module._add_output()
             self.setCurrentIndex(self.count()-2) # bring created output tab on top
 
     def close_tab(self, index):
         lockbox = self.lb_widget.module
-        lockbox.remove_output(lockbox.outputs[index - 1])
+        lockbox._remove_output(lockbox.outputs[index - 1])
 
     ## Output Management
     def add_output(self, signal):
@@ -684,11 +684,11 @@ class LockboxWidget(ModuleWidget):
         self.attribute_layout.addWidget(self.button_calibrate_all)
         self.button_calibrate_all.clicked.connect(self.module.calibrate_all)
 
-        self.model_widget = self.module.model.create_widget()
-        self.main_layout.addWidget(self.model_widget)
+        #self.model_widget = self.module.model.create_widget()
+        #self.main_layout.addWidget(self.model_widget)
         self.all_sig_widget = AllSignalsWidget(self)
         self.main_layout.addWidget(self.all_sig_widget)
-        self.sequence_widget = self.module.sequence.create_widget()
+        self.sequence_widget = self.module._sequence.create_widget()
         self.main_layout.addWidget(self.sequence_widget)
         self.main_layout.addStretch(5)
         self.setLayout(self.main_layout)
@@ -745,16 +745,16 @@ class LockboxWidget(ModuleWidget):
         self.all_sig_widget.remove_output(outputs[0])
 
     ## Model management
-    def model_changed(self):
+    def _classname_changed(self):
         """
         SLOT: don't change name unless you know what you are doing
         displays the new model (In particular, updates all inputs)
         """
-        model = self.module.model
+        lockbox = self.module.lockbox
         self.model_widget.hide()
         self.main_layout.removeWidget(self.model_widget)
         self.model_widget.deleteLater()
-        widget = model.create_widget()
+        widget = lockbox.create_widget()
         self.model_widget = widget
         self.main_layout.insertWidget(1, widget)
 
@@ -797,7 +797,7 @@ class LockboxWidget(ModuleWidget):
             self.hide_lock_points()
             self.set_button_green(self.button_sweep)
             return
-        index = self.module.stage_names.index(val)
+        index = self.module._stage_names.index(val)
         self.set_button_green(self.sequence_widget.stage_widgets[index].button_goto)
         self.show_lock(val)
 
@@ -816,7 +816,7 @@ class LockboxWidget(ModuleWidget):
         """
         self.hide_lock_points()
         if isinstance(stage, basestring):
-            stage = self.module.get_stage(stage)
+            stage = self.module._get_stage(stage)
         if stage is not None:
             self.all_sig_widget.show_lock(stage)
 

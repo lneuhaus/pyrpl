@@ -398,7 +398,7 @@ class RedPitaya(object):
         self.client = monitor_client.MonitorClient(
             self.parameters['hostname'], self.parameters['port'], restartserver=self.restartserver)
         self.makemodules()
-        self.logger.info("Client started with success")
+        self.logger.info("Client started successfully. ")
 
     def startdummyclient(self):
         self.client = monitor_client.DummyClient()

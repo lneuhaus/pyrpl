@@ -80,7 +80,6 @@ class ModuleMetaClass(type):
         setup_attribute docstrings.
         """
         super(ModuleMetaClass, self).__init__(classname, bases, classDict)
-        #if hasattr(self, "setup_attributes"):
         if "setup" not in self.__dict__:
             # 1. generate a setup function
             def setup(self, **kwds):
@@ -96,12 +95,12 @@ class ModuleMetaClass(type):
             # 2. place the new setup function in the module class
             setattr(self, "setup", setup)
         # 3. if setup has no docstring, then make one
-        # docstring syntax differs between python versions. Python 3:
+        # docstring syntax differs between python versions. Python 2:
         if hasattr(self.setup, "__func__"):
             if (self.setup.__func__.__doc__ is None or
                         self.setup.__func__.__doc__ == ""):
                 self.setup.__func__.__doc__ = self.make_setup_docstring()
-        # ... python 2
+        # ... python 3
         elif (self.setup.__doc__ is None or
                       self.setup.__doc__ == ""):
             setup.__doc__ = self.make_setup_docstring()
@@ -197,6 +196,9 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         self._autosave_active = False
         self._init_module()
         self._autosave_active = True
+        # load settings from config file
+        # attributes are loaded but the module is not "setup"
+        self.load_setup_attributes()
 
     def _init_module(self):
         """
@@ -245,6 +247,22 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
                 if key in self._setup_attributes:
                     dic[key] = value
             self.set_setup_attributes(**dic)
+
+    @property
+    def c(self):
+        """
+        The config file instance. In practice, writing values in here will
+        write the values in the corresponding section of the config file.
+        """
+        manager_section_name = self._section_name + "s" # for instance, iqs
+        try:
+            manager_section = getattr(self.parent.c, manager_section_name)
+        except KeyError:
+            self.parent.c[manager_section_name] = dict()
+            manager_section = getattr(self.parent.c, manager_section_name)
+        if not self.name in manager_section._keys():
+            manager_section[self.name] = dict()
+        return getattr(manager_section, self.name)
 
     @property
     def c_states(self):
@@ -339,22 +357,6 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
             self._callback_active = True
             self._autosave_active = True
         return widget # self._widget
-
-    @property
-    def c(self):
-        """
-        The config file instance. In practice, writing values in here will
-        write the values in the corresponding section of the config file.
-        """
-        manager_section_name = self._section_name + "s" # for instance, iqs
-        try:
-            manager_section = getattr(self.parent.c, manager_section_name)
-        except KeyError:
-            self.parent.c[manager_section_name] = dict()
-            manager_section = getattr(self.parent.c, manager_section_name)
-        if not self.name in manager_section._keys():
-            manager_section[self.name] = dict()
-        return getattr(manager_section, self.name)
 
     def _callback(self):
         """

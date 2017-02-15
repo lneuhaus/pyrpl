@@ -1,5 +1,5 @@
 from ..signals import *
-from ..model import *
+from ..lockbox import Lockbox
 
 
 class FPTransmission(InputDirect):
@@ -15,14 +15,7 @@ class FPReflection(InputDirect):
     def expected_signal(self, variable):
         return self.max - (self.max - self.min) * self.model.lorentz(variable)
 
-class InputFromOutput(InputDirect):
-    _section_name = 'input_from_output'
-
-    def expected_signal(self, variable):
-        return variable
-
-
-class InputPdh(InputIQ):
+class InputPdh(InputIq):
     _section_name = 'pdh'
 
     def expected_signal(self, variable):
@@ -62,7 +55,7 @@ class InputPdh(InputIQ):
         return np.real(i_ref * np.exp(1j * phase)) / eta
 
 
-class FabryPerot(Model):
+class FabryPerot(Lockbox):
     name = "FabryPerot"
     _section_name = "fabryperot"
     units = ['m', 'Hz', 'nm', 'MHz']
@@ -115,6 +108,7 @@ class HighFinesseInput(InputDirect):
             self.update_graph()
 
     def get_threshold(self, curve):
+        """ returns a reasonable scope threshold for the interesting part of this curve """
         return (curve.min() + curve.mean()) / 2
 
 
@@ -151,48 +145,6 @@ class HighFinesseFabryPerot(FabryPerot):
     input_cls = [HighFinesseReflection, HighFinesseTransmission,
                  HighFinessePdh]
 
-
-class PTempProperty(FloatProperty):
-    def set_value(self, module, val):
-        super(PTempProperty, self).set_value(module, val)
-        module.pid_temp.p = val
-
-
-class ITempProperty(FloatProperty):
-    def set_value(self, module, val):
-        super(ITempProperty, self).set_value(module, val)
-        module.pid_temp.i = val
-
-
-class FabryPerotTemperatureControlOld(FabryPerot):
-    # optional
-    # input_cls = [HighFinesseReflection, HighFinesseTransmission,
-    #             HighFinessePdh]
-    name = "FabryPerotTemperatureControlOld"
-    _gui_attributes = ["wavelength", "finesse", "length", 'eta'] \
-                      + ['p_temp', 'i_temp']
-    _setup_attributes = _gui_attributes
-    p_temp = FloatProperty(max=1e6, min=-1e6)
-    i_temp = FloatProperty(max=1e6, min=-1e6)
-
-    def _init_module(self):
-        self.pid_temp = self.pyrpl.pids.pop('temperature_control')
-        self.pwm_temp = self.pyrpl.rp.pwm1
-        self.pwm_temp.input = self.pid_temp
-        self.unlock_temperature(1.)
-
-    def lock_temperature(self, factor):
-        self.pid_temp.output_direct = 'off'
-        self.pid_temp.input = "out1"
-        self.pid_temp.p = self.p_temp
-        self.pid_temp.i = self.i_temp
-        self.pid_temp.inputfilter = [10, 100, 100, 100]
-
-    def unlock_temperature(self, factor):
-        self.pid_temp.output_direct = 'off'
-        self.pid_temp.ival = 0
-        self.pid_temp.p = 0
-        self.pid_temp.i = 0
 
 class FabryPerotTemperatureControl(FabryPerot):
     name = "FabryPerotTemperatureControl"

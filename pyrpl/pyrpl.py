@@ -33,6 +33,7 @@ from .memory import MemoryTree
 from .redpitaya import RedPitaya
 from . import pyrpl_utils
 from .software_modules import get_software_module
+from .software_modules.lockbox import Lockbox
 
 from PyQt4 import QtCore, QtGui
 
@@ -287,18 +288,17 @@ class Pyrpl(object):
             self.c['redpitaya'] = dict()
         self.c.redpitaya._update(kwargs)
         self.rp = RedPitaya(config=self.c)
-        # allow for multiple widgets
-        self.widgets = []
-        self.software_modules = []
+        self.widgets = [] # placeholder for widgets
+        # create software modules before...
         self.load_software_modules()
-
+        # ...initializing remaining hardware modules
         for module in self.hardware_modules:  # setup hardware modules with config file keys
             if module.owner is None: # (only modules that are not slaved by software modules)
-                # if module.name in self.c._keys():
-                    try:
-                        module.load_setup_attributes() # **self.c[module.name])
-                    except BaseException as e:
-                        self.logger.warning('Something went wrong when loading attributes of module "%s"'%module.name)
+                try:
+                    module.load_setup_attributes() # **self.c[module.name])
+                except BaseException as e:
+                    self.logger.warning('Something went wrong when loading attributes of module "%s"'%module.name)
+        # make the gui if applicable
         if self.c.pyrpl.gui:
             widget = self.create_widget()
             widget.show()
@@ -307,22 +307,24 @@ class Pyrpl(object):
         """
         load all software modules defined as root element of the config file.
         """
+        self.software_modules = []
         soft_mod_names = ['AsgManager',
                           'IqManager',
                           'PidManager',
                           'ScopeManager',
                           'IirManager'] + self.c.pyrpl.modules
-        #soft_mod_names = [mod for mod in self.c._keys()
-        #                  if not mod in ("pyrpl", "redpitaya")]
         module_classes = [get_software_module(cls_name)
                           for cls_name in soft_mod_names]
         module_names = pyrpl_utils.\
             get_unique_name_list_from_class_list(module_classes)
         for cls, name in zip(module_classes, module_names):
-            # ModuleClass = getattr(software_modules, module_name)
-            module = cls(self, name)
-            # attributes are loaded but the module is not "setup"
-            module.load_setup_attributes()
+            # some modules have generator function, e.g. Lockbox
+            # @classmethod
+            # def make_Lockbox(cls, parent, name): ...
+            if hasattr(cls, "_make_"+cls.__name__):
+                module = getattr(cls, "_make_"+cls.__name__)(self, name)
+            else:
+                module = cls(self, name)
             setattr(self, module.name, module)
             self.software_modules.append(module)
 
