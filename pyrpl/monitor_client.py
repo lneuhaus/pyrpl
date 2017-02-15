@@ -175,7 +175,14 @@ class DummyClient(object):
         offset = addr - 0x40100000
         # scope curve buffer
         if offset >= 0x10000 and offset < 0x30000:
-            return np.random.randint(2 ** 14 - 1)
+            v = int(np.random.normal(scale=2**13 - 1))//4
+            if v > 2**13-1:
+                v = 2*13-1
+            elif v < -(2**13-1):
+                v = -(2**13-1)
+            if v < 0:
+                v += 2**14
+            return v
         # scope control register - trigger armed, trigger source etc.
         if offset == 0:
             return 0
