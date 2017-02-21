@@ -258,8 +258,8 @@ class Lockbox(SoftwareModule):
         # supposed to be locked at this value
         variable_setpoint = self.get_stage(self.state).variable_value
         # current values
-        actmean, actstd = self.pyrpl.rp.sampler.mean_stddev(
-            input.input_channel)
+        #actmean, actrms = self.pyrpl.rp.sampler.mean_stddev(input.input_channel)
+        actmean, actrms = input.mean_rms()
         # setpoints
         setmean = input.expected_signal(variable_setpoint)
         setslope = input.expected_slope(variable_setpoint)
@@ -287,13 +287,13 @@ class Lockbox(SoftwareModule):
                              "Cavity is not locked: %s value "
                              "%.2f +- %.2f not in [%.2f, %.2f] "
                              "(setpoint %.2f).",
-                             input.name, actmean, actstd, min, max, variable_setpoint)
+                             input.name, actmean, actrms, min, max, variable_setpoint)
             return False
         # lock seems ok
         self._logger.log(loglevel,
                          "Cavity is locked: %s value "
                          "%.2f +- %.2f (setpoint %.2f).",
-                         input.name, actmean, actstd, variable_setpoint)
+                         input.name, actmean, actrms, variable_setpoint)
         return True
 
     def get_unique_output_name(self):

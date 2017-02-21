@@ -5,7 +5,7 @@ from pyrpl.attributes import SelectAttribute, SelectProperty, FloatProperty,\
     FrequencyProperty, PhaseProperty, FrequencyRegister
 from pyrpl.widgets.module_widgets import LockboxInputWidget
 from pyrpl.hardware_modules.dsp import DSP_INPUTS
-
+from ....pyrpl_utils import time
 import scipy
 import numpy as np
 import logging
@@ -22,8 +22,7 @@ class InputSignal(SoftwareModule):
       -
     """
     _section_name = 'input'  # name of the input
-    _setup_attributes = ["input_channel", "min", "max", "mean", "rms",
-                         "expected_amplitude"]
+    _setup_attributes = ["input_channel", "min", "max", "mean", "rms"]
     _gui_attributes = ["input_channel"]
     input_channel = SelectProperty(options=sorted(DSP_INPUTS.keys()))  # ['in1', 'in2']) # adc
     # Is it desirable to be allowed to select any internal signal?
@@ -47,6 +46,7 @@ class InputSignal(SoftwareModule):
         self.lockbox = self.parent
         self.parameters = dict()
         self.plot_range = np.linspace(-5, 5, 200)
+        self._lasttime = -1e10
 
     @property
     def model(self):
@@ -84,15 +84,36 @@ class InputSignal(SoftwareModule):
         self.rms = curve.std()
         self.min = curve.min()
         self.max = curve.max()
-        self.expected_amplitude = (self.max-self.min)/2
+
+    @property
+    def expected_amplitude(self):
+        return (self.max-self.min)/2.0
+
+    @property
+    def _sampler_time(self):
+        try:
+            return self.model._sampler_time
+        except:
+            return 0.01
+
+    def mean_rms(self):
+        if time() - self._lasttime >= self._sampler_time:
+            self._lastmean, self._lastrms = self.pyrpl.rp.sampler.mean_stddev(self.signal(),
+                                                                              t=self._sampler_time)
+            self._lasttime = time()
+        return self._lastmean, self._lastrms
 
     def relative_mean(self):
-        mean, std = self.pyrpl.rp.sampler.mean_stddev(self.signal())
+        # get fresh data
+        mean, rms = self.mean_rms()
+        # compute relative quantity
         return mean/self.expected_amplitude
 
     def relative_rms(self):
-        mean, std = self.pyrpl.rp.sampler.mean_stddev(self.signal())
-        return std/self.expected_amplitude
+        # get fresh data
+        mean, rms = self.mean_rms()
+        # compute relative quantity
+        return rms/self.expected_amplitude
 
     def calibrate(self):
         """
