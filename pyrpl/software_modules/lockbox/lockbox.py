@@ -69,12 +69,14 @@ class Lockbox(SoftwareModule):
     """
     _section_name = 'lockbox'
     _widget_class = LockboxWidget
-    _setup_attributes = ["model_name", "default_sweep_output", "auto_relock"]
+    _setup_attributes = ["model_name", "default_sweep_output",
+                         "auto_relock", "error_threshold"]
     _gui_attributes = _setup_attributes
     model_name = ModelProperty(options=all_models().keys())
     auto_relock = BoolProperty()
     default_sweep_output = SelectProperty(options=[])
     _signal_launcher = SignalLauncherLockbox
+    error_threshold = FloatProperty(default=1.0, min=-1e10,max=1e10)
     def _init_module(self):
         self.outputs = []
         # self.__class__.default_sweep_output.change_options(self, ['dummy'])
@@ -158,6 +160,66 @@ class Lockbox(SoftwareModule):
         """
         self.unlock()
         self.goto_next()
+
+
+    def is_locked(self, input=None):
+        """ returns True if locked, else False """
+        if self.state not in self.stage_names:
+            # not locked to any defined sequene state
+            self._logger.info("Cavity is not locked: lockbox state is %s.",
+                              self.state)
+            return False
+        # test for output saturation
+        for o in self.outputs:
+            if o.is_saturated:
+                self._logger.info("Cavity is not locked: output %s is "
+                                  "saturated.", o.name)
+                return False
+        # input locked to
+        if input is None:
+            input = self.get_input(self.get_stage(self.state).input)
+        try:
+            # use input-specific is_locked if it exists
+            return input.is_locked()
+        except:
+            pass
+        # supposed to be locked at this value
+        variable_setpoint = self.get_stage(self.state).variable_value
+        # current values
+        actmean, actstd = self.pyrpl.rp.sampler.mean_stddev(
+            input.input_channel)
+        # setpoints
+        setmean = input.expected_signal(variable_setpoint)
+        setslope = input.expected_slope(variable_setpoint)
+
+        # two different methods to compute to account for zero crossing
+        # method 1: get interval from linearized error signal
+        error_threshold = self.error_threshold
+        max1 = setmean + np.abs(setslope * error_threshold)
+        min1 = setmean - np.abs(setslope * error_threshold)
+        # method 2: get interval from nonlinear error signal
+        max2 = input.expected_signal(variable_setpoint+error_threshold)
+        min2 = input.expected_signal(variable_setpoint-error_threshold)
+        # no guarantee that min2<max2
+        if max2<min2:
+            # swap them in this case
+            max2, min2 = min2, max2
+        # require that both method1 and method2 indicate unlocked
+        if (actmean > max1 or actmean < min1):
+            if (actmean > max2 or actmean < min2):
+                self._logger.info("Cavity is not locked: error signal value "
+                                  "%.2f +- %.2f too far away from expectation "
+                                  "from setpoint %.2f on error signal %s.",
+                                  actmean, actstd, setmean, input.name)
+                return False
+
+        # lock seems ok
+        self._logger.debug("Cavity is locked: error signal value "
+                          "%.2f +- %.2f too far away from expectation "
+                          "from setpoint %.2f on error signal %s.",
+                          actmean, actstd, setmean, input.name)
+        return True
+
 
     def get_unique_output_name(self):
         idx = 1

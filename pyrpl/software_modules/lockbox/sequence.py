@@ -145,12 +145,12 @@ class Stage(SoftwareModule):
     A stage is a single step in the lock acquisition process
     """
     _setup_attributes = ['name',
-                      'input',
-                      'variable_value',
-                      'output_on',
-                      'duration',
-                      'function_call',
-                      'factor']
+                         'input',
+                         'variable_value',
+                         'output_on',
+                         'duration',
+                         'function_call',
+                         'factor']
     _gui_attributes = _setup_attributes
     _section_name = 'stage'
     name = StageNameProperty(default='my_stage')

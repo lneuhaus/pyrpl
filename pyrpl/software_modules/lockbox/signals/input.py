@@ -1,7 +1,8 @@
 from __future__ import division
 from pyrpl.modules import SoftwareModule
 from . import Signal
-from pyrpl.attributes import SelectAttribute, SelectProperty, FloatProperty, FrequencyProperty, PhaseProperty
+from pyrpl.attributes import SelectAttribute, SelectProperty, FloatProperty,\
+    FrequencyProperty, PhaseProperty, FrequencyRegister
 from pyrpl.widgets.module_widgets import LockboxInputWidget
 from pyrpl.hardware_modules.dsp import DSP_INPUTS
 
@@ -201,11 +202,34 @@ class InputDirect(InputSignal):
 #        return self.input_channel
 
 
-class PdhFrequencyProperty(FrequencyProperty):
-    def set_value(self, instance, value):
-        super(PdhFrequencyProperty, self).set_value(instance, value)
-        instance.iq.frequency = value
-        return value
+class PdhFrequencyProperty(FrequencyRegister):
+    #def set_value(self, instance, value):
+    #    super(PdhFrequencyProperty, self).set_value(instance, value)
+    #    instance.iq.frequency = value
+    #    return value
+    #def __init__(self, *args, **kwargs):
+    #    super(PdhFrequencyProperty, self).__init__(*args, **kwargs)
+    #    self.max = FrequencyRegister.CLOCK_FREQUENCY/2
+    def __init__(self):
+        super(PdhFrequencyProperty, self).__init__(address=0) # fill dummy
+        # value for address which is never used since get/set are
+        # overwritten here
+
+    #def validate_and_normalize(self, value, module):
+    #    if value is not None:
+    #        return super(PdhFrequencyProperty, self).validate_and_normalize(
+    #            value, module)
+    #    else:
+    #        return 0
+
+    def get_value(self, obj, objtype=None):
+        if obj is None:
+            return self
+        obj.iq.frequency
+
+    def set_value(self, obj, val):
+        if val is not None:
+            obj.iq.frequency = val
 
 
 class PdhAmplitudeProperty(FloatProperty):
@@ -239,10 +263,10 @@ class PdhQuadratureFactorProperty(FloatProperty):
 class InputIQ(InputDirect):
     _section_name = 'iq'
     _gui_attributes = InputSignal._gui_attributes + ['mod_freq',
-                                                   'mod_amp',
-                                                   'mod_phase',
-                                                   'quadrature_factor',
-                                                   'mod_output']
+                                                     'mod_amp',
+                                                     'mod_phase',
+                                                     'quadrature_factor',
+                                                     'mod_output']
     _setup_attributes = _gui_attributes + ["min", "max", "mean", "rms"]
     mod_freq = PdhFrequencyProperty()
     mod_amp = PdhAmplitudeProperty()
@@ -271,6 +295,7 @@ class InputIQ(InputDirect):
         """
         setup a PDH error signal using the attribute values
         """
+        self.mod_freq = self.mod_freq
         self.iq.setup(frequency=self.mod_freq,
                       amplitude=self.mod_amp,
                       phase=self.mod_phase,
