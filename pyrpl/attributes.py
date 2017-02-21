@@ -1022,6 +1022,7 @@ class FrequencyProperty(FrequencyAttribute, BaseProperty):
     A property for a frequency value
     """
     default = 0.
+    min = 0.
 
 
 class LongProperty(IntAttribute, BaseProperty):

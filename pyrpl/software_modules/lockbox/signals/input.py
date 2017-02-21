@@ -194,73 +194,55 @@ class InputDirect(InputSignal):
         return self.input_channel
 
 
-#class InputInternal(InputSignal): # Maybe the hierarchy should be the opposite...
-#    section_name = 'internal_signal'
-#    input_channel = SelectProperty(options=sorted(DSP_INPUTS.keys()))
-#
-#    def signal(self):
-#        return self.input_channel
+class InputFromOutput(InputDirect):
+    _section_name = 'input_from_output'
+
+    def expected_signal(self, x):
+        return x
 
 
-class PdhFrequencyProperty(FrequencyRegister):
-    #def set_value(self, instance, value):
-    #    super(PdhFrequencyProperty, self).set_value(instance, value)
-    #    instance.iq.frequency = value
-    #    return value
-    #def __init__(self, *args, **kwargs):
-    #    super(PdhFrequencyProperty, self).__init__(*args, **kwargs)
-    #    self.max = FrequencyRegister.CLOCK_FREQUENCY/2
-    def __init__(self):
-        super(PdhFrequencyProperty, self).__init__(address=0) # fill dummy
-        # value for address which is never used since get/set are
-        # overwritten here
+class IqFrequencyProperty(FrequencyProperty):
+    def __init__(self, **kwargs):
+        super(IqFrequencyProperty, self).__init__(**kwargs)
+        self.max = FrequencyRegister.CLOCK_FREQUENCY / 2.0
 
-    #def validate_and_normalize(self, value, module):
-    #    if value is not None:
-    #        return super(PdhFrequencyProperty, self).validate_and_normalize(
-    #            value, module)
-    #    else:
-    #        return 0
-
-    def get_value(self, obj, objtype=None):
-        if obj is None:
-            return self
-        obj.iq.frequency
-
-    def set_value(self, obj, val):
-        if val is not None:
-            obj.iq.frequency = val
-
-
-class PdhAmplitudeProperty(FloatProperty):
     def set_value(self, instance, value):
-        super(PdhAmplitudeProperty, self).set_value(instance, value)
+        super(IqFrequencyProperty, self).set_value(instance, value)
+        instance.iq.frequency = value
+        return value
+
+
+class IqAmplitudeProperty(FloatProperty):
+    def set_value(self, instance, value):
+        super(IqAmplitudeProperty, self).set_value(instance, value)
         instance.iq.amplitude = value
         return value
 
 
-class PdhPhaseProperty(PhaseProperty):
+class IqPhaseProperty(PhaseProperty):
     def set_value(self, instance, value):
-        super(PdhPhaseProperty, self).set_value(instance, value)
+        super(IqPhaseProperty, self).set_value(instance, value)
         instance.iq.phase = value
         return value
 
 
-class PdhModOutputProperty(SelectProperty):
+class IqModOutputProperty(SelectProperty):
     def set_value(self, instance, value):
-        super(PdhModOutputProperty, self).set_value(instance, value)
+        super(IqModOutputProperty, self).set_value(instance, value)
         instance.iq.output_direct = value
         return value
 
 
-class PdhQuadratureFactorProperty(FloatProperty):
+class IqQuadratureFactorProperty(FloatProperty):
     def set_value(self, instance, value):
-        super(PdhQuadratureFactorProperty, self).set_value(instance, value)
+        super(IqQuadratureFactorProperty, self).set_value(instance, value)
         instance.iq.quadrature_factor = value
         return value
 
 
-class InputIQ(InputDirect):
+class InputIq(InputDirect):
+    """ Base class for demodulated signals. A derived class must implement
+    the method expected_signal (see InputPdh in fabryperot.py for example)"""
     _section_name = 'iq'
     _gui_attributes = InputSignal._gui_attributes + ['mod_freq',
                                                      'mod_amp',
@@ -268,14 +250,14 @@ class InputIQ(InputDirect):
                                                      'quadrature_factor',
                                                      'mod_output']
     _setup_attributes = _gui_attributes + ["min", "max", "mean", "rms"]
-    mod_freq = PdhFrequencyProperty()
-    mod_amp = PdhAmplitudeProperty()
-    mod_phase = PdhPhaseProperty()
-    quadrature_factor = PdhQuadratureFactorProperty()
-    mod_output = PdhModOutputProperty(['out1', 'out2'])
+    mod_freq = IqFrequencyProperty()
+    mod_amp = IqAmplitudeProperty()
+    mod_phase = IqPhaseProperty()
+    quadrature_factor = IqQuadratureFactorProperty()
+    mod_output = IqModOutputProperty(['out1', 'out2'])
 
     def _init_module(self):
-        super(InputIQ, self)._init_module()
+        super(InputIq, self)._init_module()
         self._iq = None
         self.setup()
 
@@ -295,7 +277,6 @@ class InputIQ(InputDirect):
         """
         setup a PDH error signal using the attribute values
         """
-        self.mod_freq = self.mod_freq
         self.iq.setup(frequency=self.mod_freq,
                       amplitude=self.mod_amp,
                       phase=self.mod_phase,

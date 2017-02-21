@@ -15,12 +15,6 @@ class FPReflection(InputDirect):
     def expected_signal(self, variable):
         return self.max - (self.max - self.min) * self.model.lorentz(variable)
 
-class InputFromOutput(InputDirect):
-    _section_name = 'input_from_output'
-
-    def expected_signal(self, variable):
-        return variable
-
 class InputAnalogPdh(InputDirect):
     _section_name = 'analog_pdh'
     mod_freq = FrequencyProperty()
@@ -64,19 +58,8 @@ class InputAnalogPdh(InputDirect):
         return np.real(i_ref * np.exp(1j * phase)) / eta
 
 
-class InputPdh(InputIQ, InputAnalogPdh):
+class InputPdh(InputIq, InputAnalogPdh):
     _section_name = 'pdh'
-
-    def expected_signal(self, variable):
-        offset = 0.5 * (self.max + self.min)
-        amplitude = 0.5 * (self.max - self.min)
-        # we neglect offset here because it should really be zero on resonance
-
-        # inherit from parent
-        #return amplitude * self._pdh_normalized(variable,
-        #                                sbfreq=self.mod_freq,
-        #                                phase=0,
-        #                                eta=self.model.eta)
 
     def is_locked(self, loglevel=logging.INFO):
         # simply perform the is_locked with the reflection error signal
