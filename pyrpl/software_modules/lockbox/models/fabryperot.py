@@ -78,9 +78,10 @@ class InputPdh(InputIQ, InputAnalogPdh):
         #                                phase=0,
         #                                eta=self.model.eta)
 
-    def is_locked(self):
+    def is_locked(self, loglevel=logging.INFO):
         # simply perform the is_locked with the reflection error signal
-        return self.lockbox.is_locked(self.lockbox.reflection)
+        return self.lockbox.is_locked(self.lockbox.reflection,
+                                      loglevel=loglevel)
 
 
 class FabryPerot(Model):

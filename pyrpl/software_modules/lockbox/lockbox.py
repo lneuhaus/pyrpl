@@ -5,7 +5,7 @@ from .model import Model
 from .models import *
 from .signals import OutputSignal, InputSignal
 from pyrpl.widgets.module_widgets import LockboxWidget
-from pyrpl.pyrpl_utils import get_unique_name_list_from_class_list
+from pyrpl.pyrpl_utils import get_unique_name_list_from_class_list, sleep
 from .sequence import Sequence
 
 from collections import OrderedDict
@@ -46,6 +46,7 @@ class SignalLauncherLockbox(SignalLauncher):
     input_calibrated = QtCore.pyqtSignal(list)
     remove_input = QtCore.pyqtSignal(list)
     update_transfer_function = QtCore.pyqtSignal(list)
+    update_lockstatus = QtCore.pyqtSignal(list)
 
     def __init__(self, module):
         super(SignalLauncherLockbox, self).__init__(module)
@@ -53,14 +54,54 @@ class SignalLauncherLockbox(SignalLauncher):
         self.timer_lock.timeout.connect(self.module.goto_next)
         self.timer_lock.setSingleShot(True)
 
+        self.timer_autolock = QtCore.QTimer()
+        # autolock works by periodiccally calling relock
+        self.timer_autolock.timeout.connect(self.call_relock)
+        self.timer_autolock.setSingleShot(True)
+        self.timer_autolock.setInterval(1000.0)
+
+        self.timer_lockstatus = QtCore.QTimer()
+        self.timer_lockstatus.timeout.connect(self.call_lockstatus)
+        self.timer_lockstatus.setSingleShot(True)
+        self.timer_lockstatus.setInterval(500.0)
+
+        # start timer that checks lock status
+        self.timer_lockstatus.start()
+
+    def call_relock(self):
+        self.module.relock()
+        self.timer_autolock.start()
+
+    def call_lockstatus(self):
+        self.module._lockstatus()
+        self.timer_lockstatus.start()
+
     def kill_timers(self):
         """
         kill all timers
         """
         self.timer_lock.stop()
-
+        self.timer_autolock.stop()
+        self.timer_lockstatus.stop()
     # state_changed = QtCore.pyqtSignal() # need to change the color of buttons in the widget
     # state is now a standard Property, signals are caught by the update_attribute_by_name function of the widget.
+
+
+class AutoLockProperty(BoolProperty):
+    """ true if autolock is enabled"""
+    def set_value(self, obj, val):
+        super(AutoLockProperty, self).set_value(obj=obj, val=val)
+        if val:
+            obj._signal_launcher.timer_autolock.start()
+        else:
+            obj._signal_launcher.timer_autolock.stop()
+
+
+class AutoLockIntervalProperty(FloatProperty):
+    """ timeout for autolock timer """
+    def set_value(self, obj, val):
+        super(AutoLockIntervalProperty, self).set_value(obj=obj, val=val)
+        obj._signal_launcher.timer_autolock.setInterval(val*1000.0)
 
 
 class Lockbox(SoftwareModule):
@@ -70,13 +111,16 @@ class Lockbox(SoftwareModule):
     _section_name = 'lockbox'
     _widget_class = LockboxWidget
     _setup_attributes = ["model_name", "default_sweep_output",
-                         "auto_relock", "error_threshold"]
+                         "auto_lock", "error_threshold", "auto_lock_interval"]
     _gui_attributes = _setup_attributes
     model_name = ModelProperty(options=all_models().keys())
-    auto_relock = BoolProperty()
+    auto_lock = AutoLockProperty()
+    auto_lock_interval = AutoLockIntervalProperty(default=1.0, min=1e-3,
+                                                  max=1e10)
     default_sweep_output = SelectProperty(options=[])
     _signal_launcher = SignalLauncherLockbox
     error_threshold = FloatProperty(default=1.0, min=-1e10,max=1e10)
+
     def _init_module(self):
         self.outputs = []
         # self.__class__.default_sweep_output.change_options(self, ['dummy'])
@@ -88,6 +132,7 @@ class Lockbox(SoftwareModule):
         self.model_name = sorted(all_models().keys())[0]
         self.model_changed()
         self.state = "unlock"
+        # refresh input signals display
         # self.add_output() # adding it now creates problem when loading an
         # output named "output1". It is eventually
         # added inside (after) load_setup_attribute
@@ -154,6 +199,13 @@ class Lockbox(SoftwareModule):
         """
         self.get_stage(stage_name).setup()
 
+    def lock_blocking(self):
+        """ prototype for the blocking lock function """
+        self.lock()
+        while not self.state == self.stage_names[-1]:
+            sleep(1)
+        return is_locked()
+
     def lock(self):
         """
         Launches the full lock sequence, stage by stage until the end.
@@ -161,26 +213,47 @@ class Lockbox(SoftwareModule):
         self.unlock()
         self.goto_next()
 
+    def is_locking_sequence_active(self):
+        if self.state in self.stage_names and self.stage_names.index(
+                self.state) < len(self.stage_names)-1:
+            return True
 
-    def is_locked(self, input=None):
-        """ returns True if locked, else False """
+    def relock(self):
+        """ locks the cavity if it is_locked is false. Returns the value of
+        is_locked """
+        is_locked = self.is_locked(loglevel=logging.DEBUG)
+        if not is_locked:
+            # make sure not to launch another sequence during a locking attempt
+            if not self.is_locking_sequence_active():
+                self.lock()
+        return is_locked
+
+    def is_locked(self, input=None, loglevel=logging.INFO):
+        """ returns True if locked, else False. Also updates an internal
+        dict that contains information about the current error signals. The
+        state of lock is logged at loglevel """
+        self._locked_state = dict()
         if self.state not in self.stage_names:
             # not locked to any defined sequene state
-            self._logger.info("Cavity is not locked: lockbox state is %s.",
-                              self.state)
+            self._logger.log(loglevel, "Cavity is not locked: lockbox state "
+                                       "is %s.", self.state)
             return False
         # test for output saturation
         for o in self.outputs:
             if o.is_saturated:
-                self._logger.info("Cavity is not locked: output %s is "
-                                  "saturated.", o.name)
+                self._logger.log(loglevel, "Cavity is not locked: output %s "
+                                           "is saturated.", o.name)
                 return False
         # input locked to
         if input is None:
             input = self.get_input(self.get_stage(self.state).input)
         try:
             # use input-specific is_locked if it exists
-            return input.is_locked()
+            try:
+                islocked = input.is_locked(loglevel=loglevel)
+            except:
+                islocked = input.is_locked()
+            return islocked
         except:
             pass
         # supposed to be locked at this value
@@ -207,19 +280,19 @@ class Lockbox(SoftwareModule):
         # require that both method1 and method2 indicate unlocked
         if (actmean > max1 or actmean < min1):
             if (actmean > max2 or actmean < min2):
-                self._logger.info("Cavity is not locked: error signal value "
-                                  "%.2f +- %.2f too far away from expectation "
-                                  "from setpoint %.2f on error signal %s.",
-                                  actmean, actstd, setmean, input.name)
+                self._logger.log(loglevel,
+                                 "Cavity is not locked: error signal value "
+                                 "%.2f +- %.2f too far away from expectation "
+                                 "from setpoint %.2f on error signal %s.",
+                                 actmean, actstd, setmean, input.name)
+                self._locked_state['locked'] = False
                 return False
-
         # lock seems ok
-        self._logger.debug("Cavity is locked: error signal value "
-                          "%.2f +- %.2f too far away from expectation "
-                          "from setpoint %.2f on error signal %s.",
-                          actmean, actstd, setmean, input.name)
+        self._logger.log(loglevel,
+                         "Cavity is locked at error signal value "
+                         "%.2f +- %.2f (setpoint %.2f on error signal %s).",
+                         actmean, actstd, setmean, input.name)
         return True
-
 
     def get_unique_output_name(self):
         idx = 1
@@ -486,3 +559,38 @@ class Lockbox(SoftwareModule):
         """
         for input in self.inputs:
             input.calibrate()
+
+    def _lockstatus(self):
+        """ this function is a placeholder for periodic lockstatus
+        diagnostics, such as calls to is_locked, logging means and rms
+        values and plotting measured setpoints etc."""
+        # call islocked here for later use
+        islocked = self.is_locked(loglevel=logging.DEBUG)
+        islocked_color = self._is_locked_display_color(islocked=islocked)
+        # ask widget to update the lockstatus display
+        self._signal_launcher.update_lockstatus.emit([islocked_color])
+
+    def _is_locked_display_color(self, islocked=None):
+        """ function that returns the color of the LED indicating
+        lockstatus. If is_locked is called in update_lockstatus above,
+        it should not be called a second time here
+        """
+        if self.state == 'sweep':
+            return 'blue'
+        elif self.state == 'unlock':
+            return 'darkRed'
+        else:
+            # should be locked
+            if islocked is None:
+               islocked = self.is_locked(loglevel=logging.DEBUG)
+            if islocked:
+                if self.state == self.stage_names[-1]:
+                    # locked and in last stage
+                    return 'green'
+                else:
+                    # locked but acquiring
+                    return 'yellow'
+            else:
+                # unlocked but not supposed to
+                return 'red'
+
