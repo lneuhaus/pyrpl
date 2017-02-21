@@ -266,9 +266,9 @@ class Lockbox(SoftwareModule):
 
         # get max, min of acceptable error signals
         error_threshold = self.error_threshold
-        max = input.expected_signal(variable_setpoint+error_threshold)
         min = input.expected_signal(variable_setpoint-error_threshold)
-        startslope = input.expected_slope(variable_setpoint + error_threshold)
+        max = input.expected_signal(variable_setpoint+error_threshold)
+        startslope = input.expected_slope(variable_setpoint - error_threshold)
         stopslope = input.expected_slope(variable_setpoint + error_threshold)
         # no guarantee that min<max
         if max<min:
@@ -278,22 +278,22 @@ class Lockbox(SoftwareModule):
         # if slopes have unequal signs, the signal has a max/min in the
         # interval
         if startslope*stopslope <= 0:
-            if startslope > stopslope: # maximum in between, ignore upper limit
+            if startslope > stopslope:  # maximum in between, ignore upper limit
                 max = 1e100
-            elif startslope < stopslope: # minimum, ignore lower limit
+            elif startslope < stopslope:  # minimum, ignore lower limit
                 min = -1e100
-        if (actmean > max or actmean < min):
+        if actmean > max or actmean < min:
             self._logger.log(loglevel,
-                             "Cavity is not locked: error signal value "
-                             "%.2f +- %.2f too far away from expectation "
-                             "from setpoint %.2f on error signal %s.",
-                             actmean, actstd, setmean, input.name)
+                             "Cavity is not locked: %s value "
+                             "%.2f +- %.2f not in [%.2f, %.2f] "
+                             "(setpoint %.2f).",
+                             input.name, actmean, actstd, min, max, variable_setpoint)
             return False
         # lock seems ok
         self._logger.log(loglevel,
-                         "Cavity is locked at error signal value "
-                         "%.2f +- %.2f (setpoint %.2f on error signal %s).",
-                         actmean, actstd, setmean, input.name)
+                         "Cavity is locked: %s value "
+                         "%.2f +- %.2f (setpoint %.2f).",
+                         input.name, actmean, actstd, variable_setpoint)
         return True
 
     def get_unique_output_name(self):
