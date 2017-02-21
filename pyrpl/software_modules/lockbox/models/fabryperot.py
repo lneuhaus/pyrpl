@@ -119,7 +119,7 @@ class HighFinesseInput(InputDirect):
             if not "sweep_zoom" in scope.states:
                 scope.duration /= 100
                 scope.trigger_source = "ch1_positive_edge"
-                scope.save_state("sweep_zoom")
+                scope.save_state("autosweep_zoom")
             else:
                 scope.load_state("sweep_zoom")
             threshold = self.get_threshold(curve)
@@ -129,8 +129,8 @@ class HighFinesseInput(InputDirect):
             self.get_stats_from_curve(curve)
         finally:
             self.pyrpl.scopes.free(scope)
-        if self._widget is not None:
-            self.update_graph()
+        # update graph in lockbox
+        self.lockbox._signal_launcher.input_calibrated.emit([self])
 
     def get_threshold(self, curve):
         return (curve.min() + curve.mean()) / 2
