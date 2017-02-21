@@ -232,7 +232,6 @@ class Lockbox(SoftwareModule):
         """ returns True if locked, else False. Also updates an internal
         dict that contains information about the current error signals. The
         state of lock is logged at loglevel """
-        self._locked_state = dict()
         if self.state not in self.stage_names:
             # not locked to any defined sequene state
             self._logger.log(loglevel, "Cavity is not locked: lockbox state "
@@ -251,7 +250,7 @@ class Lockbox(SoftwareModule):
             # use input-specific is_locked if it exists
             try:
                 islocked = input.is_locked(loglevel=loglevel)
-            except:
+            except TypeError: # occurs if is_locked takes no argument loglevel
                 islocked = input.is_locked()
             return islocked
         except:
@@ -265,28 +264,31 @@ class Lockbox(SoftwareModule):
         setmean = input.expected_signal(variable_setpoint)
         setslope = input.expected_slope(variable_setpoint)
 
-        # two different methods to compute to account for zero crossing
-        # method 1: get interval from linearized error signal
+        # get max, min of acceptable error signals
         error_threshold = self.error_threshold
-        max1 = setmean + np.abs(setslope * error_threshold)
-        min1 = setmean - np.abs(setslope * error_threshold)
-        # method 2: get interval from nonlinear error signal
-        max2 = input.expected_signal(variable_setpoint+error_threshold)
-        min2 = input.expected_signal(variable_setpoint-error_threshold)
-        # no guarantee that min2<max2
-        if max2<min2:
+        max = input.expected_signal(variable_setpoint+error_threshold)
+        min = input.expected_signal(variable_setpoint-error_threshold)
+        startslope = input.expected_slope(variable_setpoint + error_threshold)
+        stopslope = input.expected_slope(variable_setpoint + error_threshold)
+        # no guarantee that min<max
+        if max<min:
             # swap them in this case
-            max2, min2 = min2, max2
-        # require that both method1 and method2 indicate unlocked
-        if (actmean > max1 or actmean < min1):
-            if (actmean > max2 or actmean < min2):
-                self._logger.log(loglevel,
-                                 "Cavity is not locked: error signal value "
-                                 "%.2f +- %.2f too far away from expectation "
-                                 "from setpoint %.2f on error signal %s.",
-                                 actmean, actstd, setmean, input.name)
-                self._locked_state['locked'] = False
-                return False
+            max, min = min, max
+        # now min < max
+        # if slopes have unequal signs, the signal has a max/min in the
+        # interval
+        if startslope*stopslope <= 0:
+            if startslope > stopslope: # maximum in between, ignore upper limit
+                max = 1e100
+            elif startslope < stopslope: # minimum, ignore lower limit
+                min = -1e100
+        if (actmean > max or actmean < min):
+            self._logger.log(loglevel,
+                             "Cavity is not locked: error signal value "
+                             "%.2f +- %.2f too far away from expectation "
+                             "from setpoint %.2f on error signal %s.",
+                             actmean, actstd, setmean, input.name)
+            return False
         # lock seems ok
         self._logger.log(loglevel,
                          "Cavity is locked at error signal value "
