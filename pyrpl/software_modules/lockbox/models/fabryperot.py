@@ -83,7 +83,7 @@ class FabryPerot(Model):
     eta = FloatProperty(min=0., max=1., default=1.)
     variable = 'detuning'
 
-    input_cls = [FPTransmission, FPReflection]#, InputPdh]
+    input_cls = [FPTransmission, FPReflection, InputPdh]
 
     def lorentz(self, x):
         return 1.0 / (1.0 + x ** 2)
@@ -168,55 +168,3 @@ class HighFinesseFabryPerot(FabryPerot):
     _section_name = "high_finesse_fp"
     input_cls = [HighFinesseReflection, HighFinesseTransmission,
                  HighFinessePdh]
-
-
-class PTempProperty(FloatProperty):
-    def set_value(self, module, val):
-        super(PTempProperty, self).set_value(module, val)
-        module.pid_temp.p = val
-
-
-class ITempProperty(FloatProperty):
-    def set_value(self, module, val):
-        super(ITempProperty, self).set_value(module, val)
-        module.pid_temp.i = val
-
-
-class FabryPerotTemperatureControlOld(FabryPerot):
-    # optional
-    # input_cls = [HighFinesseReflection, HighFinesseTransmission,
-    #             HighFinessePdh]
-    name = "FabryPerotTemperatureControlOld"
-    _gui_attributes = ["wavelength", "finesse", "length", 'eta'] \
-                      + ['p_temp', 'i_temp']
-    _setup_attributes = _gui_attributes
-    p_temp = FloatProperty(max=1e6, min=-1e6)
-    i_temp = FloatProperty(max=1e6, min=-1e6)
-
-    def _init_module(self):
-        self.pid_temp = self.pyrpl.pids.pop('temperature_control')
-        self.pwm_temp = self.pyrpl.rp.pwm1
-        self.pwm_temp.input = self.pid_temp
-        self.unlock_temperature(1.)
-
-    def lock_temperature(self, factor):
-        self.pid_temp.output_direct = 'off'
-        self.pid_temp.input = "out1"
-        self.pid_temp.p = self.p_temp
-        self.pid_temp.i = self.i_temp
-        self.pid_temp.inputfilter = [10, 100, 100, 100]
-
-    def unlock_temperature(self, factor):
-        self.pid_temp.output_direct = 'off'
-        self.pid_temp.ival = 0
-        self.pid_temp.p = 0
-        self.pid_temp.i = 0
-
-class FabryPerotTemperatureControl(FabryPerot):
-    name = "FabryPerotTemperatureControl"
-    input_cls = FabryPerot.input_cls + [InputFromOutput]
-
-    def lock_temperature(self, factor):
-        self.pyrpl.lockbox.out_temp.lock(
-            input='input_from_output',
-            variable_value=0)
