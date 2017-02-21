@@ -114,12 +114,12 @@ class Lockbox(SoftwareModule):
                          "auto_lock", "error_threshold", "auto_lock_interval"]
     _gui_attributes = _setup_attributes
     model_name = ModelProperty(options=all_models().keys())
-    auto_lock = AutoLockProperty()
     auto_lock_interval = AutoLockIntervalProperty(default=1.0, min=1e-3,
                                                   max=1e10)
     default_sweep_output = SelectProperty(options=[])
     _signal_launcher = SignalLauncherLockbox
     error_threshold = FloatProperty(default=1.0, min=-1e10,max=1e10)
+    auto_lock = AutoLockProperty()
 
     def _init_module(self):
         self.outputs = []
