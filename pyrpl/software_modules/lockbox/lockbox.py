@@ -571,6 +571,11 @@ class Lockbox(SoftwareModule):
         islocked_color = self._is_locked_display_color(islocked=islocked)
         # ask widget to update the lockstatus display
         self._signal_launcher.update_lockstatus.emit([islocked_color])
+        # optionally, call log function of the model
+        try:
+            self.model.log_lockstatus()
+        except:
+            pass
 
     def _is_locked_display_color(self, islocked=None):
         """ function that returns the color of the LED indicating

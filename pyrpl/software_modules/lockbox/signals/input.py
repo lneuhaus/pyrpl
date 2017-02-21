@@ -22,7 +22,8 @@ class InputSignal(SoftwareModule):
       -
     """
     _section_name = 'input'  # name of the input
-    _setup_attributes = ["input_channel", "min", "max", "mean", "rms"]
+    _setup_attributes = ["input_channel", "min", "max", "mean", "rms",
+                         "expected_amplitude"]
     _gui_attributes = ["input_channel"]
     input_channel = SelectProperty(options=sorted(DSP_INPUTS.keys()))  # ['in1', 'in2']) # adc
     # Is it desirable to be allowed to select any internal signal?
@@ -83,6 +84,15 @@ class InputSignal(SoftwareModule):
         self.rms = curve.std()
         self.min = curve.min()
         self.max = curve.max()
+        self.expected_amplitude = (self.max-self.min)/2
+
+    def relative_mean(self):
+        mean, std = self.pyrpl.rp.sampler.mean_stddev(self.signal())
+        return mean/self.expected_amplitude
+
+    def relative_rms(self):
+        mean, std = self.pyrpl.rp.sampler.mean_stddev(self.signal())
+        return std/self.expected_amplitude
 
     def calibrate(self):
         """
