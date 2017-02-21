@@ -90,6 +90,11 @@ class InputSignal(SoftwareModule):
         """
         curve = self.acquire()
         self.get_stats_from_curve(curve)
+        # log calibration values
+        self._logger.info("%s calibration successful - Min: %.3f  Max: %.3f  Mean: %.3f  Rms: %.3f",
+                          self.name,
+                          self.min, self.max, self.mean, self.rms)
+        # update graph in lockbox
         self.lockbox._signal_launcher.input_calibrated.emit([self])
 
 #    def update_graph(self):
@@ -200,6 +205,8 @@ class InputFromOutput(InputDirect):
     def expected_signal(self, x):
         return x
 
+    def calibrate(self):
+        pass
 
 class IqFrequencyProperty(FrequencyProperty):
     def __init__(self, **kwargs):
