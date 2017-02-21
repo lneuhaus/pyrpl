@@ -21,18 +21,20 @@ class InputFromOutput(InputDirect):
     def expected_signal(self, variable):
         return variable
 
-
-class InputPdh(InputIQ):
-    _section_name = 'pdh'
+class InputAnalogPdh(InputDirect):
+    _section_name = 'analog_pdh'
+    mod_freq = FrequencyProperty()
+    _setup_attributes = InputDirect._setup_attributes + ['mod_freq']
+    _gui_attributes = InputDirect._gui_attributes + ['mod_freq']
 
     def expected_signal(self, variable):
         offset = 0.5 * (self.max + self.min)
         amplitude = 0.5 * (self.max - self.min)
         # we neglect offset here because it should really be zero on resonance
         return amplitude * self._pdh_normalized(variable,
-                                        sbfreq=self.mod_freq,
-                                        phase=0,
-                                        eta=self.model.eta)
+                                    sbfreq=self.mod_freq/self.model.bandwidth,
+                                    phase=0,
+                                    eta=self.model.eta)
 
     def _pdh_normalized(self, x, sbfreq=10.0, phase=0, eta=1):
         """  returns a pdh error signal at for a number of detunings x. """
@@ -62,26 +64,58 @@ class InputPdh(InputIQ):
         return np.real(i_ref * np.exp(1j * phase)) / eta
 
 
+class InputPdh(InputIQ, InputAnalogPdh):
+    _section_name = 'pdh'
+
+    def expected_signal(self, variable):
+        offset = 0.5 * (self.max + self.min)
+        amplitude = 0.5 * (self.max - self.min)
+        # we neglect offset here because it should really be zero on resonance
+
+        # inherit from parent
+        #return amplitude * self._pdh_normalized(variable,
+        #                                sbfreq=self.mod_freq,
+        #                                phase=0,
+        #                                eta=self.model.eta)
+
+    def is_locked(self):
+        # simply perform the is_locked with the reflection error signal
+        return self.lockbox.is_locked(self.lockbox.reflection)
+
+
 class FabryPerot(Model):
     name = "FabryPerot"
     _section_name = "fabryperot"
     units = ['m', 'Hz', 'nm', 'MHz']
     _setup_attributes = ["wavelength", "finesse", "length", 'eta']
     _gui_attributes = _setup_attributes
-    wavelength = FloatProperty(max=10000, min=0, default=1.064)
+    wavelength = FloatProperty(max=10000, min=0, default=1.064e-6)
     finesse = FloatProperty(max=1e7, min=0, default=10000)
     # approximate length (not taking into account small variations of the
     # order of the wavelength)
-    length = FloatProperty(max=10e12, min=0, default=10000)
+    length = FloatProperty(max=10e12, min=0, default=1.0)
     # eta is the ratio between input mirror transmission and the sum of
     # transmission and loss: T/(T+P)
     eta = FloatProperty(min=0., max=1., default=1.)
     variable = 'detuning'
 
-    input_cls = [FPTransmission, FPReflection, InputPdh]
+    input_cls = [FPTransmission, FPReflection]#, InputPdh]
 
     def lorentz(self, x):
         return 1.0 / (1.0 + x ** 2)
+
+    @property
+    def free_spectral_range(self):
+        return 2.998e8/(2.*self.length)
+
+    @property
+    def linewidth(self):
+        return self.free_spectral_range / self.finesse
+
+    @property
+    def bandwidth(self):
+        return self.linewidth/2.0
+
 
 
 class HighFinesseInput(InputDirect):
