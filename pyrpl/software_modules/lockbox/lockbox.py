@@ -228,7 +228,7 @@ class Lockbox(SoftwareModule):
                 self.lock()
         return is_locked
 
-    def is_locked(self, input=None, loglevel=logging.INFO):
+    def is_locked(self, input=False, loglevel=logging.INFO):
         """ returns True if locked, else False. Also updates an internal
         dict that contains information about the current error signals. The
         state of lock is logged at loglevel """
@@ -244,7 +244,7 @@ class Lockbox(SoftwareModule):
                                            "is saturated.", o.name)
                 return False
         # input locked to
-        if input is None:
+        if not input: #input is None
             input = self.get_input(self.get_stage(self.state).input)
         try:
             # use input-specific is_locked if it exists
