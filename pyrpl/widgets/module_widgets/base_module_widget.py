@@ -4,7 +4,6 @@ Each Module instance can have a widget created by calling create_widget.
 To use a different class of Widget than the preset (for instance subclass it), the attribute ModuleClass.WidgetClass
 can be changed before calling create_widget()
 """
-
 from PyQt4 import QtCore, QtGui
 from collections import OrderedDict
 import functools
@@ -157,10 +156,17 @@ class ModuleWidget(QtGui.QGroupBox):
         self.main_layout.addLayout(self.attribute_layout)
 
         for attr_name in self.module._gui_attributes:
-            widget = getattr(self.module.__class__, attr_name).create_widget(self.module)
-            self.attribute_widgets[attr_name] = widget
+            attribute = getattr(self.module.__class__, attr_name)
+            if callable(attribute):
+                # assume that attribute is a function
+                widget = QtGui.QPushButton(attr_name)
+                widget.clicked.connect(getattr(self.module, attr_name))
+            else:
+                # standard case: make attribute widget
+                widget = attribute.create_widget(self.module)
+                self.attribute_widgets[attr_name] = widget
+                widget.value_changed.connect(self.attribute_changed)
             self.attribute_layout.addWidget(widget)
-            widget.value_changed.connect(self.attribute_changed)
 
     def save_curve(self, x_values, y_values, **attributes):
         """
