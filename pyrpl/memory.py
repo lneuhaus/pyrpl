@@ -154,52 +154,54 @@ def get_config_file(filename=None, source=None):
 
 
 class MemoryBranch(object):
+    """Represents a branch of a memoryTree
+
+    All methods are preceded by an underscore to guarantee that tab
+    expansion of a memory branch only displays the available subbranches or
+    leaves. A memory tree is a hierarchical structure. Nested dicts are
+    interpreted as subbranches.
+
+    Parameters
+    ----------
+    parent: MemoryBranch
+        parent is the parent MemoryBranch
+    branch: str
+        branch is a string with the name of the branch to create
+    defaults: list
+        list of default branches that are used if requested data is not
+        found in the current branch
+
+    Class members
+    -----------
+    all properties without preceeding underscore are config file entries
+
+    _data:      the raw data underlying the branch. Type depends on the
+                loader and can be dict, OrderedDict or CommentedMap
+    _dict:      similar to _data, but the dict contains all default
+                branches
+    _defaults:  list of MemoryBranch objects in order of decreasing
+                priority that are used as defaults for the Branch.
+                Changing the default values from the software will replace
+                the default values in the current MemoryBranch but not
+                alter the underlying default branch. Changing the
+                default branch when it is not overridden by the current
+                MemoryBranch results in an effective change in the branch.
+    _keys:      same as _dict._keys()
+    _update:    updates the branch with another dict
+    _pop:       removes a value/subbranch from the branch
+    _root:      the MemoryTree object (root) of the tree
+    _parent:    the parent of the branch
+    _branch:    the name of the branch
+    _new_branch: creates new branch. Same as self
+    _fullbranchname: returns the full path from root to the branch
+    _getbranch: returns a branch by specifying its path, e.g. 'b1.c2.d3'
+    _rename:    renames the branch
+    _reload:    attempts to reload the data from disc
+    _save:      attempts to save the data to disc
+
+    """
+
     def __init__(self, parent, branch, defaults=list([])):
-        """Represents a branch of a memoryTree
-
-        All methods are preceded by an underscore to guarantee that tab
-        expansion of a memory branch only displays the available subbranches or
-        leaves. A memory tree is a hierarchical structure. Nested dicts are
-        interpreted as subbranches.
-
-        Parameters
-        ----------
-        parent: MemoryBranch
-            parent is the parent MemoryBranch
-        branch: str
-            branch is a string with the name of the branch to create
-        defaults: list
-            list of default branches that are used if requested data is not
-            found in the current branch
-
-        Class members
-        -----------
-        all properties without preceeding underscore are config file entries
-
-        _data:      the raw data underlying the branch. Type depends on the
-                    loader and can be dict, OrderedDict or CommentedMap
-        _dict:      similar to _data, but the dict contains all default
-                    branches
-        _defaults:  list of MemoryBranch objects in order of decreasing
-                    priority that are used as defaults for the Branch.
-                    Changing the default values from the software will replace
-                    the default values in the current MemoryBranch but not
-                    alter the underlying default branch. Changing the
-                    default branch when it is not overridden by the current
-                    MemoryBranch results in an effective change in the branch.
-        _keys:      same as _dict._keys()
-        _update:    updates the branch with another dict
-        _pop:       removes a value/subbranch from the branch
-        _root:      the MemoryTree object (root) of the tree
-        _parent:    the parent of the branch
-        _branch:    the name of the branch
-        _fullbranchname: returns the full path from root to the branch
-        _getbranch: returns a branch by specifying its path, e.g. 'b1.c2.d3'
-        _rename:    renames the branch
-        _reload:    attempts to reload the data from disc
-        _save:      attempts to save the data to disc
-
-        """
         self._branch = branch
         self._parent = parent
         self._defaults = defaults  # this call also updates __dict__
