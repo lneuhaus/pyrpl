@@ -21,6 +21,8 @@ import numpy as np
 from .pyrpl_utils import sleep
 import socket
 import logging
+from .hardware_modules.dsp import DSP_INPUTS
+
 
 # global conter to assign a number to each client
 # only used for debugging purposes
@@ -186,6 +188,14 @@ class DummyClient(object):
         # scope control register - trigger armed, trigger source etc.
         if offset == 0:
             return 0
+        #DSP modules
+        for module in DSP_INPUTS:
+            offset = addr - 0x40300000 - 0x10000*DSP_INPUTS[module]
+            if module.startswith('pid'):
+                if offset == 0x220: # FILTERSTAGES
+                    return 4
+                elif offset == 0x228:  # MINBW
+                    return 1
         # everything else is restored from the dict
         return self.fpgamemory[str(addr)]
 
