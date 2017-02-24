@@ -65,18 +65,26 @@ class SpecAnWidget(ModuleWidget):
         Change text of Run continuous button and visibility of run single button
         according to module.running_continuous
         """
+        if self.module.current_average>0:
+            number_str = ' (' + str(self.module.current_average) + ")"
+        else:
+            number_str = ""
         if self.module.running_continuous:
-            buttontext = "Stop"
+            if self.module.current_average >= self.module.avg:
+                # shows a plus sign when number of averages is available
+                number_str = number_str[:-1] + '+)'
+            self.button_continuous.setText("Stop" + number_str)
+            self.button_single.setText("Run single")
+            self.button_single.setEnabled(False)
         else:
-            buttontext = "Run continuous"
-        self.button_single.setEnabled(not self.module.running_continuous)
-        buttontext += ' (%i' % self.module.current_average
-        if self.module.current_average >= self.module.avg:
-        # shows a plus sign when number of averages is available
-            buttontext += '+)'
-        else:
-            buttontext += ')'
-        self.button_continuous.setText(buttontext)
+            if self.module.running_single:
+                self.button_continuous.setText("Run continuous")
+                self.button_single.setText("Stop" + number_str)
+                self.button_single.setEnabled(True)
+            else:
+                self.button_continuous.setText("Run continuous" + number_str)
+                self.button_single.setText("Run single")
+                self.button_single.setEnabled(True)
 
     def update_rbw_visibility(self):
         self.attribute_widgets["rbw"].widget.setEnabled(not self.module.rbw_auto)
@@ -96,7 +104,10 @@ class SpecAnWidget(ModuleWidget):
             self.module.stop()
 
     def run_single_clicked(self):
-        self.module.run_single()
+        if str(self.button_single.text()).startswith('Stop'):
+            self.module.stop()
+        else:
+            self.module.run_single()
 
     def run_single_clicked_old(self):
         """

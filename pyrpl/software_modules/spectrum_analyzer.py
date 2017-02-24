@@ -186,7 +186,6 @@ class SignalLauncherSpectrumAnalyzer(SignalLauncher):
         self.timer_continuous.stop()
 
     def run_single(self):
-        self.module.stop()
         self.module.setup()
         self.first_display = True
         self.timer_continuous.start()
@@ -204,8 +203,9 @@ class SignalLauncherSpectrumAnalyzer(SignalLauncher):
             self.update_display.emit()
         else:  # curve not ready, wait for next timer iteration
             self.timer_continuous.start()
-        if (self.module.running_continuous or \
-           self.module.current_average<self.module.avg) and \
+        if self.module.current_average>=self.module.avg:
+            self.module.running_single = False
+        if self.module.is_running() and \
                 (not self.timer_continuous.isActive()):
             self.timer_continuous.start()
         if self.first_display:
@@ -296,6 +296,7 @@ class SpectrumAnalyzer(SoftwareModule):
         self.avg = 10
         self.window = "flattop"
         self.points = Scope.data_length
+        self.running_single = False
         self.restart_averaging()
         """ # intializing stuff while scope is not reserved modifies the
         parameters of the scope...
@@ -453,9 +454,10 @@ class SpectrumAnalyzer(SoftwareModule):
         [curve_ch1, curve_ch2]...
         """
         params = self.get_setup_attributes()
-        for attr in ["current_average", "running_continuous"]:
+        for attr in ["current_average", "running_continuous",
+                     "running_single"]:
             params[attr] = self.__getattribute__(attr)
-        params.update()
+        params.update(name=params['curve_name'])
         curve = self._save_curve(self.frequencies,
                                  self.data,
                                  **params)
@@ -471,7 +473,9 @@ class SpectrumAnalyzer(SoftwareModule):
         """
         Stops the current acquisition.
         """
+        self.running_single = False
         self.running_continuous = False
+
 
     def restart_averaging(self):
         """
@@ -479,6 +483,12 @@ class SpectrumAnalyzer(SoftwareModule):
         """
         self.data = np.zeros(len(self.frequencies))
         self.current_average = 0
+
+    def is_running(self):
+        """
+        :return:  True if running_continuous or running_single
+        """
+        return self.running_continuous or self.running_single
 
     def acquire_one_curve(self):
         """
@@ -498,7 +508,7 @@ class SpectrumAnalyzer(SoftwareModule):
             # let current_average be maximally equal to avg -> yields best real-time averaging mode
             if self.current_average > self.avg:
                 self.current_average = self.avg
-            if self.running_continuous:
+            if self.is_running():
                 self.setup()
             return True
         else:
@@ -514,6 +524,8 @@ class SpectrumAnalyzer(SoftwareModule):
         Feeds gui with one new curve from the scope. Once ready, data are located in self.last_datas.
         """
         self.stop()
+        self.restart_averaging()
+        self.running_single = True
         self.setup()
         self._signal_launcher.run_single()
 
