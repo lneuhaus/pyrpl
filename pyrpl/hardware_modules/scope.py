@@ -525,7 +525,6 @@ class Scope(HardwareModule):
         return self.rolling_mode and self._rolling_mode_allowed()
 
     def _setup_rolling_mode(self):
-        print("setting up rolling mode")
         self._trigger_source = 'off'
         self._trigger_armed = True
 

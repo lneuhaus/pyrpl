@@ -1,13 +1,12 @@
 """
 A widget for the scope module
 """
-
 from pyrpl.errors import NotReadyError
 from .base_module_widget import ModuleWidget
 
 import pyqtgraph as pg
 from PyQt4 import QtCore, QtGui
-
+import numpy as np
 
 APP = QtGui.QApplication.instance()
 
@@ -220,8 +219,19 @@ class ScopeWidget(ModuleWidget):
         self.button_single.setEnabled(not self.rolling_mode)
 
     def autoscale(self):
-        """Autoscale pyqtgraph"""
-        self.plot_item.autoRange()
+        """Autoscale pyqtgraph. The current behavior is to autoscale x axis
+        and set y axis to  [-1, +1]"""
+        mini = np.nan
+        maxi = np.nan
+        for curve in self.curves:
+            if curve.isVisible():
+                mini = np.nanmin([curve.xData.min(), mini])
+                maxi = np.nanmax([curve.xData.max(), maxi])
+        if not np.isnan(mini):
+            self.plot_item.setRange(xRange=[mini,
+                                            maxi])
+        self.plot_item.setRange(yRange=[-1,1])
+        # self.plot_item.autoRange()
 
     def save_clicked(self):
         self.module.save_curve()
