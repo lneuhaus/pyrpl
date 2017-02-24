@@ -199,11 +199,14 @@ class SignalLauncherSpectrumAnalyzer(SignalLauncher):
         3/ Restarts the timer.
         """
         #if self.module.running_continuous:
-        if self.module.acquire_one_curve():  # true if new data to plot are available
+        if self.module.acquire_one_curve():  # true if new data to plot
+                                             # are available
             self.update_display.emit()
         else:  # curve not ready, wait for next timer iteration
             self.timer_continuous.start()
-        if self.module.running_continuous and not self.timer_continuous.isActive():
+        if (self.module.running_continuous or \
+           self.module.current_average<self.module.avg) and \
+                (not self.timer_continuous.isActive()):
             self.timer_continuous.start()
         if self.first_display:
             self.first_display = False
@@ -227,21 +230,6 @@ class SpectrumAnalyzer(SoftwareModule):
     A spectrum analyzer is composed of an IQ demodulator, followed by a scope.
     The spectrum analyzer connections are made upon calling the function setup.
 
-    Example 1:
-      r = RedPitayaGui("1.1.1.1")
-      sa = SpectrumAnalyzer(r)
-      sa.setup(span=1000, center=100000)
-      curve = sa.curve()
-      freqs = sa.freqs()
-
-    Example 2:
-      r = RedPitayaGui("1.1.1.1")
-      sa = SpectrumAnalyzer(r)
-      sa.span = 1000
-      sa.center = 100000
-      sa.setup()
-      curve = sa.curve()
-      freqs = sa.freqs()
     """
     _section_name = 'spectrum_analyzer'
     _widget_class = SpecAnWidget
@@ -339,8 +327,8 @@ class SpectrumAnalyzer(SoftwareModule):
 
     def _setup(self):
         """
-        Set things up for a spectrum acquisition. Between setup(**kwds) and curve(),
-        the spectrum analyzer takes ownership over the scope.
+        Set things up for a spectrum acquisition. Between setup(**kwds) and
+        curve(), the spectrum analyzer takes ownership over the scope.
         """
         self._is_setup = True
         # setup iq module
@@ -355,11 +343,13 @@ class SpectrumAnalyzer(SoftwareModule):
                 output_direct='off',
                 output_signal='quadrature',
                 quadrature_factor=self.quadrature_factor)
-        # change scope ownership in order not to mess up the scope configuration
+        # change scope ownership in order not to mess up the scope
+        # configuration
         if self.scope.owner != self.name:
             self.pyrpl.scopes.pop(self.name)
         # setup scope
-        self.scope.sampling_time = self.sampling_time # only duration can be used within setup
+        self.scope.sampling_time = self.sampling_time # only duration can be
+        #  used within setup
         if self.baseband:
             self.scope.input1 = self.input
         else:
@@ -412,7 +402,8 @@ class SpectrumAnalyzer(SoftwareModule):
 
     def useful_index(self):
         """
-        :return: a slice containing the portion of the spectrum between start and stop
+        :return: a slice containing the portion of the spectrum between start
+        and stop
         """
         middle = int(self.data_length / 2)
         length = self.points  # self.data_length/self.nyquist_margin
@@ -423,10 +414,13 @@ class SpectrumAnalyzer(SoftwareModule):
 
     def curve(self, timeout=None):
         """
-        Get a spectrum from the device. It is mandatory to call setup() before curve()
+        Get a spectrum from the device. It is mandatory to call setup() before
+        curve()
             If timeout>0:  runs until data is ready or timeout expires
             If timeout is None: timeout is auto-set to twice scope.duration
             If timeout is <0, throws ValueError
+        No averaging is done at this stage (averaging only occurs within the
+        asynchronous mode of operation run_...)
         """
         if timeout is not None and timeout<0:
             raise(ValueError('Timeout needs to be None or >0'))
