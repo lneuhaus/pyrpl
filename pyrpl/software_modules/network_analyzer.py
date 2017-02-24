@@ -548,6 +548,7 @@ class NetworkAnalyzer(SoftwareModule):
         """
         Saves the curve that is currently displayed in the gui in the db_system. Also, returns the curve.
         """
+        self.current_attributes['name'] = self.current_attributes['curve_name']
         return self._save_curve(x_values=self.x,
                                 y_values=self.y_averaged,
                                 **self.current_attributes)
