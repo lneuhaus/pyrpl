@@ -105,10 +105,14 @@ class ScopeWidget(ModuleWidget):
             list(self.attribute_widgets.keys()).index("trigger_source"), self.rolling_group)
         self.checkbox_normal.clicked.connect(self.rolling_mode_toggled)
         self.checkbox_untrigged.clicked.connect(self.rolling_mode_toggled)
-        self.update_rolling_mode_visibility()
+        #self.update_rolling_mode_visibility()
         self.attribute_widgets['duration'].value_changed.connect(self.update_rolling_mode_visibility)
+
+        # since trigger_mode radiobuttons is not a regular attribute_widget,
+        # it is not synced with the module at creation time.
         self.update_running_buttons()
         self.update_rolling_mode_visibility()
+        self.rolling_mode = self.module.rolling_mode
 
     def update_attribute_by_name(self, name, new_value_list):
         """

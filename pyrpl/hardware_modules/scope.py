@@ -509,6 +509,8 @@ class Scope(HardwareModule):
         if self.trigger_source == 'immediately':
             # self.wait_for_pretrig_ok()
             self.trigger_source = self.trigger_source
+        if self._is_rolling_mode_active():
+            self._setup_rolling_mode()
 
     def _rolling_mode_allowed(self):
         """
@@ -523,6 +525,7 @@ class Scope(HardwareModule):
         return self.rolling_mode and self._rolling_mode_allowed()
 
     def _setup_rolling_mode(self):
+        print("setting up rolling mode")
         self._trigger_source = 'off'
         self._trigger_armed = True
 

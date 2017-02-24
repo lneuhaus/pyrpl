@@ -448,7 +448,7 @@ class Lockbox(SoftwareModule):
     def model_changed(self):
         ### model should be redisplayed
         self.model = all_models()[self.model_name](self)
-        self.model.load_setup_attributes()
+        self.model._load_setup_attributes()
         #if self.widget is not None:
         #    self.widget.change_model(self.model)
 
@@ -476,14 +476,14 @@ class Lockbox(SoftwareModule):
             if not name in intersect_names:
                 input = cls(self, name)
                 self._add_input(input)
-                input.load_setup_attributes()
+                input._load_setup_attributes()
                 input.setup()
 
         ### update stages: keep outputs unchanged, when input doesn't exist anymore, change it.
         self.sequence.update_inputs()
         self._signal_launcher.model_changed.emit()
 
-    def load_setup_attributes(self):
+    def _load_setup_attributes(self):
         """
         This function needs to be overwritten to retrieve the child module
         attributes as well
@@ -500,7 +500,7 @@ class Lockbox(SoftwareModule):
                         output = self._add_output_no_save()
                         output._autosave_active = False
                         self.rename_output(output, name)
-                        output.load_setup_attributes()
+                        output._load_setup_attributes()
                         output._autosave_active = True
         if len(self.outputs)==0:
             self.add_output()  # add at least one output
@@ -509,15 +509,15 @@ class Lockbox(SoftwareModule):
         # load inputs
         for input in self.inputs:
             input._autosave_active = False
-            input.load_setup_attributes()
+            input._load_setup_attributes()
             input._autosave_active = True
 
         # load normal attributes (model, default_sweep_output)
-        super(Lockbox, self).load_setup_attributes()
+        super(Lockbox, self)._load_setup_attributes()
 
         # load sequence
         self.sequence._autosave_active = False
-        self.sequence.load_setup_attributes()
+        self.sequence._load_setup_attributes()
         self.sequence._autosave_active = True
 
     def _remove_input(self, input):

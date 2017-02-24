@@ -362,7 +362,8 @@ class SpectrumAnalyzer(SoftwareModule):
             self.scope.input1 = self.iq
             self.scope.input1 = self.iq_quadraturesignal
         self.scope.setup(average=True,
-                         trigger_source="immediately")
+                         trigger_source="immediately",
+                         rolling_mode=False)
 
     def curve_ready(self):
         return self.scope.curve_ready()

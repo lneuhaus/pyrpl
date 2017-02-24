@@ -131,19 +131,52 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
     # Specifically, ModuleMetaClass ensures that attributes have automatically
     # their internal name set properly upon module creation.
     """
-    Several fields have to be implemented in child class:
-      - setup_attributes: attributes that are touched by setup(**kwds)/saved/restored upon module creation
-      - gui_attributes: attributes to be displayed by the widget
-      - widget_class: class of the widget to use to represent the module in the gui (a child of ModuleWidget)
-      - _setup(): sets the module ready for acquisition/output with the current attribute's values.
+    A module is a component of pyrpl doing a specific task, such as e.g. Scope/Lockbox/NetworkAnalyzer.
+    The module can have a widget to interact with it graphically.
+    It is composed of attributes (see attributes.py) whose values represent the current state of the
+    module (more precisely, the state is defined by the value of all attributes in _setup_attributes)
 
-    BaseModules implements several functions itself:
-      - create_widget: returns a widget according to widget_class
-      - get_setup_attributes(): returns a dictionary with the current setup_attribute key value pairs
-      - load_setup_attributes(): loads setup_attributes from config file
-      - set_setup_attributes(**kwds): sets the provided setup_attributes
+    The module can be slaved or freed by a user or another module. When the module is freed, it goes back
+    to the state immediately before being slaved. To make sure the module is freed, use the syntax:
 
-    Finally, setup(**kwds) is created by ModuleMetaClass. it combines set_setup_attributes(**kwds) with _setup()
+    with pyrpl.mod_mag.pop('owner') as mod:
+            mod.do_something()
+
+    public methods
+    --------------
+     - get_setup_attributes(): returns a dict with the current values of the setup attributes
+     - set_setup_attributes(**kwds): sets the provided setup_attributes (setup is not called)
+     - save_state(name): saves the current "state" (using get_setup_attribute) into the config file
+     - load_state(name): loads the state 'name' from the config file (setup is not called by default)
+     - create_widget(): returns a widget according to widget_class
+     - setup(**kwds): first, performs set_setup_attributes(**kwds), then calls _setup() to
+     set the module ready for acquisition. This method is automatically created by ModuleMetaClass
+     and it combines the docstring of individual setup_attributes with the docstring of _setup()
+
+     Public attributes:
+     ------------------
+     - name: attributed based on _section_name at instance creation
+     (also used as a section key in the config file)
+     - states: the list of states available in the config file
+     - owner: (string) a module can be owned (reserved) by a user or another module.
+     the module is free if and only if owner is None
+     - free: sets the owner to None, and brings the module back the state before it was slaved
+     (equivalent to module.owner = None)
+     - pyrpl: recursively looks through parent modules until it reaches the pyrpl instance
+
+    class attributes to be implemented in derived class:
+    ----------------------------------------------------
+     - individual attributes (instances of BaseAttribute)
+     - _setup_attributes: attribute names that are touched by setup(**kwds)/saved/restored upon module creation
+     - _gui_attributes: attribute names to be displayed by the widget
+     - _callback_attributes: attribute_names that triggers a callback when their value is changed
+     in the base class, _callback just calls setup()
+     - _widget_class: class of the widget to use to represent the module in the gui (a child of ModuleWidget)
+     - _section_name: the name under which all instances of the class should be stored in the config file
+
+    methods to implement in derived class:
+    --------------------------------------
+     - _setup(): sets the module ready for acquisition/output with the current attribute's values.
     """
 
     # Change this to save the curve with a different system
@@ -235,7 +268,7 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         #finally:
         #    self._callback_active = old_callback_active
 
-    def load_setup_attributes(self):
+    def _load_setup_attributes(self):
         """
          Load and sets all setup attributes from config file
         """
@@ -274,7 +307,7 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         if name not in state_branch._keys():
             raise KeyError("State %s doesn't exist for modules %s"
                            % (name, self.__class__.name))
-        self.setup(**state_branch[name])
+        self.set_setup_attributes(**state_branch[name])
 
     def _save_curve(self, x_values, y_values, **attributes):
         """
@@ -396,7 +429,7 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
     def __exit__(self, type, val, traceback):
         """
         To make sure the module will be freed afterwards, use the context manager construct:
-        with pyrpl.mod_mag.pop('owner') as mod:
+        with pyrpl.module_manager.pop('owner') as mod:
             mod.do_something()
         # module automatically freed at this point
 

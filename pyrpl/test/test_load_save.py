@@ -10,6 +10,8 @@ class TestClass(TestPyrpl):
         attr_vals = []
         for attr in mod._setup_attributes:
             if attr=='default_sweep_output':
+                attr_names.append(attr)
+                attr_vals.append(None)
                 continue # anyways, this will be redesigned soon with a proper link to the output...
             val = getattr(mod, attr)
             if isinstance(val, basestring):
@@ -18,10 +20,10 @@ class TestClass(TestPyrpl):
                     val = desc.options(mod)[option_index]
                 else:
                     val = str_val
-            if isinstance(val, numbers.Number):
-                val += num_val
             if isinstance(val, bool):
                 val = bool_val
+            if isinstance(val, numbers.Number):
+                val += num_val
             if isinstance(mod, list):
                 val = list_val
             try:
@@ -45,7 +47,7 @@ class TestClass(TestPyrpl):
                 if attr == 'default_sweep_output' or attr == 'baseband':
                     continue  # anyways, this will be redesigned soon with a proper link to the output...
                 if attr!='d': # derivators are deactivated
-                    assert getattr(mod, attr) == attr_val, (mod, attr,
+                    assert getattr(mod, attr)==attr_val, (mod, attr,
                                                             attr_val)
 
     def test_load_save(self):

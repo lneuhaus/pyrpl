@@ -296,7 +296,7 @@ class Pyrpl(object):
             if module.owner is None: # (only modules that are not slaved by software modules)
                 # if module.name in self.c._keys():
                     try:
-                        module.load_setup_attributes() # **self.c[module.name])
+                        module._load_setup_attributes() # **self.c[module.name])
                     except BaseException as e:
                         self.logger.warning('Something went wrong when loading attributes of module "%s"'%module.name)
         if self.c.pyrpl.gui:
@@ -322,7 +322,7 @@ class Pyrpl(object):
             # ModuleClass = getattr(software_modules, module_name)
             module = cls(self, name)
             # attributes are loaded but the module is not "setup"
-            module.load_setup_attributes()
+            module._load_setup_attributes()
             setattr(self, module.name, module)
             self.software_modules.append(module)
 

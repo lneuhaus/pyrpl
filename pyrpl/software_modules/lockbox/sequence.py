@@ -82,7 +82,7 @@ class Sequence(SoftwareModule):
         for stage in to_remove:
             self.remove_stage(stage, allow_last_stage=True)
 
-    def load_setup_attributes(self):
+    def _load_setup_attributes(self):
         #import pdb
         #pdb.set_trace()
         self.remove_all_stages()
@@ -93,7 +93,7 @@ class Sequence(SoftwareModule):
                         stage = self._add_stage_no_save() # don't make a duplicate entry in the config file
                         stage._autosave_active = False
                         self.rename_stage(stage, name)
-                        stage.load_setup_attributes()
+                        stage._load_setup_attributes()
                         stage._autosave_active = True
         if len(self.stages)==0:
             self.add_stage()
