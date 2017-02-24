@@ -166,6 +166,7 @@ class SignalLauncherSpectrumAnalyzer(SignalLauncher):
         self.timer_continuous.setInterval(1000./self._max_refresh_rate)
         self.timer_continuous.timeout.connect(self.check_for_curves)
         self.timer_continuous.setSingleShot(True)
+        self.first_display = True
 
     def kill_timers(self):
         """
@@ -177,6 +178,7 @@ class SignalLauncherSpectrumAnalyzer(SignalLauncher):
         """
         periodically checks for curve.
         """
+        self.first_display = True
         self.module.setup()
         self.timer_continuous.start()
 
@@ -186,6 +188,7 @@ class SignalLauncherSpectrumAnalyzer(SignalLauncher):
     def run_single(self):
         self.module.stop()
         self.module.setup()
+        self.first_display = True
         self.timer_continuous.start()
 
     def check_for_curves(self):
@@ -200,10 +203,11 @@ class SignalLauncherSpectrumAnalyzer(SignalLauncher):
             self.update_display.emit()
         else:  # curve not ready, wait for next timer iteration
             self.timer_continuous.start()
-        if self.module.current_average == 1:
-            self.autoscale_display.emit()
         if self.module.running_continuous and not self.timer_continuous.isActive():
             self.timer_continuous.start()
+        if self.first_display:
+            self.first_display = False
+            self.autoscale_display.emit()
 
 
 class RunningContinuousProperty(BoolProperty):
