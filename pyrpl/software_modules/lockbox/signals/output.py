@@ -159,7 +159,7 @@ class OutputSignal(Signal):
                                            'tf_type']
 
     _widget_class = OutputSignalWidget
-    name = DisplayNameProperty()
+    name = DisplayNameProperty(default='output')
     # unit = SelectProperty(options=[])
     # options are updated each time the lockbox model is changed.
     is_sweepable = BoolProperty()
@@ -182,6 +182,7 @@ class OutputSignal(Signal):
     # tf_filter = CustomFilterRegister()
     unity_gain_desired = UnityGainProperty()
     tf_curve = TfCurveProperty()
+    mode = SelectProperty(options=["unlock", "sweep", "lock"])
 
     def _init_module(self):
         self.lockbox = self.parent
@@ -192,7 +193,6 @@ class OutputSignal(Signal):
         self.current_input_lock = None
         self.current_variable_value = 0
         self.current_variable_slope = 0
-        self.name = 'output'  # will be updated in add_output of parent module
 
  #   @property
  #   def id(self): # it would be more convenient to compute name from output, but class attribute name can't be a
@@ -239,42 +239,26 @@ class OutputSignal(Signal):
         """
         Returns the design transfer function for the output
         """
-
         analog_tf = np.ones(len(freqs), dtype=complex)
         if self.tf_type == 'filter':
+            # use logic implemented in PID to simulate analog filters
             analog_tf = Pid._filter_transfer_function(freqs,
                                                       self.analog_filter)
         if self.tf_type == 'curve':
             curve = CurveDB.get(self.tf_curve)
             x = curve.data.index
             y = curve.data.values
+            # sample the curve transfer function at the requested frequencies
             ampl = interpolate.interp1d(x, abs(y))(freqs)
             phase = interpolate.interp1d(x, np.unwrap(np.angle(y)))(freqs)
             analog_tf = ampl*np.exp(1j*phase)
-
-        # 200 ns extra_delay + 3 cycles from pid._delay
+        # multiply by PID transfer function to get the loop transfer function
+        # same as Pid.transfer_function(freqs) but avoids reading registers form FPGA
         result = analog_tf * Pid._transfer_function(
             freqs, p=self.p, i=self.i,
             frequency_correction=self.pid._frequency_correction,
             filter_values=self.additional_filter)
         return result
-
-    @property
-    def mode(self):
-        """
-        returns "unlock", "sweep", or "lock"
-        """
-        return self._mode
-
-    @mode.setter
-    def mode(self, val):
-        """
-        val should be in ["unlock", "sweep", "lock" ]
-        """
-        if val not in ["unlock", "sweep", "lock"]:
-            raise ValueError("mode of output %s can only be set to 'unlock', "
-                             "'sweep', or 'lock', not %s"%(self.name, val))
-        self._mode = val
 
     def tf_freqs(self):
         """
@@ -373,12 +357,12 @@ class OutputSignal(Signal):
         """
         self.pyrpl.pids.free(self.pid)
 
+    def unsetup(self):
+        self.pid.free()
+
     def set_ival(self, val):
         """
         sets the integrator value to val (in V)
         """
         self.pid.ival = val
-
-    def unsetup(self):
-        self.pid.free()
 

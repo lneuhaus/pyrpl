@@ -12,7 +12,6 @@ from PyQt4 import QtCore
 
 
 def all_classnames():
-    from .models import *
     return OrderedDict([(subclass.__name__, subclass) for subclass in
                                  [Lockbox] + all_subclasses(Lockbox)])
 
@@ -158,7 +157,7 @@ class Lockbox(SoftwareModule):
 
     @property
     def asg(self):
-        if not hasattr('_asg') or self._asg is None:
+        if not hasattr(self, '_asg') or self._asg is None:
             self._asg = self.pyrpl.asgs.pop(self.name)
         return self._asg
 
@@ -198,8 +197,8 @@ class Lockbox(SoftwareModule):
     def lock_blocking(self):
         """ prototype for the blocking lock function """
         self.lock()
-        while not self.state == self.stage_names[-1]:
-            sleep(1)
+        while not self.state == self._stage_names[-1]:
+            sleep(0.01)
         return is_locked()
 
     def lock(self):
@@ -254,8 +253,8 @@ class Lockbox(SoftwareModule):
         return [output.name for output in self.outputs]
 
     def is_locking_sequence_active(self):
-        if self.state in self.stage_names and self.stage_names.index(
-                self.state) < len(self.stage_names)-1:
+        if self.state in self._stage_names and self._stage_names.index(
+                self.state) < len(self._stage_names)-1:
             return True
 
     def relock(self):
@@ -272,7 +271,7 @@ class Lockbox(SoftwareModule):
         """ returns True if locked, else False. Also updates an internal
         dict that contains information about the current error signals. The
         state of lock is logged at loglevel """
-        if self.state not in self.stage_names:
+        if self.state not in self._stage_names:
             # not locked to any defined sequene state
             self._logger.log(loglevel, "Cavity is not locked: lockbox state "
                                        "is %s.", self.state)
@@ -285,7 +284,7 @@ class Lockbox(SoftwareModule):
                 return False
         # input locked to
         if not input: #input=None (default) or input=False (call by gui)
-            input = self.get_input(self.get_stage(self.state).input)
+            input = self._get_input(self._get_stage(self.state).input)
         try:
             # use input-specific is_locked if it exists
             try:
@@ -296,7 +295,7 @@ class Lockbox(SoftwareModule):
         except:
             pass
         # supposed to be locked at this value
-        variable_setpoint = self.get_stage(self.state).variable_value
+        variable_setpoint = self._get_stage(self.state).variable_value
         # current values
         #actmean, actrms = self.pyrpl.rp.sampler.mean_stddev(input.input_channel)
         actmean, actrms = input.mean_rms()
@@ -336,7 +335,7 @@ class Lockbox(SoftwareModule):
                          input.name, actmean, actrms, variable_setpoint)
         return True
 
-    def get_unique_output_name(self):
+    def _get_unique_output_name(self):
         idx = 1
         name = 'output' + str(idx)
         while (name in self._output_names):
@@ -354,7 +353,7 @@ class Lockbox(SoftwareModule):
 
     def _add_output_no_save(self):
         """
-        Adds and returns and output without touching the config file (useful
+        Adds and returns an output without touching the config file (useful
         when loading an output from the config file)
         """
         if self.pyrpl.pids.n_available() < 1:
@@ -521,8 +520,48 @@ class Lockbox(SoftwareModule):
         # update references
         self.parent.lockbox = new_lockbox
         self.parent.software_modules[self.parent.software_modules.index(self)] = new_lockbox
+
         # launch signal
         new_lockbox._signal_launcher.model_changed.emit()
+
+    def _lockstatus(self):
+        """ this function is a placeholder for periodic lockstatus
+        diagnostics, such as calls to is_locked, logging means and rms
+        values and plotting measured setpoints etc."""
+        # call islocked here for later use
+        islocked = self.is_locked(loglevel=logging.DEBUG)
+        islocked_color = self._is_locked_display_color(islocked=islocked)
+        # ask widget to update the lockstatus display
+        self._signal_launcher.update_lockstatus.emit([islocked_color])
+        # optionally, call log function of the model
+        try:
+            self.log_lockstatus()
+        except:
+            pass
+
+    def _is_locked_display_color(self, islocked=None):
+        """ function that returns the color of the LED indicating
+        lockstatus. If is_locked is called in update_lockstatus above,
+        it should not be called a second time here
+        """
+        if self.state == 'sweep':
+            return 'blue'
+        elif self.state == 'unlock':
+            return 'darkRed'
+        else:
+            # should be locked
+            if islocked is None:
+               islocked = self.is_locked(loglevel=logging.DEBUG)
+            if islocked:
+                if self.state == self._stage_names[-1]:
+                    # locked and in last stage
+                    return 'green'
+                else:
+                    # locked but acquiring
+                    return 'yellow'
+            else:
+                # unlocked but not supposed to
+                return 'red'
 
     def _delete_Lockbox(self):
         self._signal_launcher.kill_timers()
@@ -541,41 +580,7 @@ class Lockbox(SoftwareModule):
         # return instance of the class
         return all_classnames()[classname](parent, name)
 
-    def _lockstatus(self):
-        """ this function is a placeholder for periodic lockstatus
-        diagnostics, such as calls to is_locked, logging means and rms
-        values and plotting measured setpoints etc."""
-        # call islocked here for later use
-        islocked = self.is_locked(loglevel=logging.DEBUG)
-        islocked_color = self._is_locked_display_color(islocked=islocked)
-        # ask widget to update the lockstatus display
-        self._signal_launcher.update_lockstatus.emit([islocked_color])
-        # optionally, call log function of the model
-        try:
-            self.model.log_lockstatus()
-        except:
-            pass
-
-    def _is_locked_display_color(self, islocked=None):
-        """ function that returns the color of the LED indicating
-        lockstatus. If is_locked is called in update_lockstatus above,
-        it should not be called a second time here
-        """
-        if self.state == 'sweep':
-            return 'blue'
-        elif self.state == 'unlock':
-            return 'darkRed'
-        else:
-            # should be locked
-            if islocked is None:
-               islocked = self.is_locked(loglevel=logging.DEBUG)
-            if islocked:
-                if self.state == self.stage_names[-1]:
-                    # locked and in last stage
-                    return 'green'
-                else:
-                    # locked but acquiring
-                    return 'yellow'
-            else:
-                # unlocked but not supposed to
-                return 'red'
+    @property
+    def model(self):
+        self._logger.warning("Using the model property of Lockbox will soon be deprecated. Please use lockbox instead! ")
+        return self

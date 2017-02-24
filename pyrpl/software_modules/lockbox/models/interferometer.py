@@ -1,5 +1,5 @@
 from ..signals import *
-from ..model import *
+from ..lockbox import Lockbox
 
 
 class InterferometerPort1(InputDirect):
@@ -18,12 +18,12 @@ class InterferometerPort2(InputDirect):
                            np.sin(phase)
 
 
-class Interferometer(Model):
+class Interferometer(Lockbox):
     name = "Interferometer"
     _section_name = "interferometer"
     units = ['m', 'deg', 'rad']
     wavelength = FloatProperty(max=10000, min=0, default=1.064)
-    _setup_attributes = ['wavelength']
+    _setup_attributes = Lockbox._setup_attributes + ['wavelength']
     _gui_attributes = _setup_attributes
     variable = 'phase'
 

@@ -67,12 +67,13 @@ class InputPdh(InputIq, InputAnalogPdh):
                                       loglevel=loglevel)
 
 
-class FabryPerot(Model):
+class FabryPerot(Lockbox):
     name = "FabryPerot"
     _section_name = "fabryperot"
     units = ['m', 'Hz', 'nm', 'MHz']
-    _setup_attributes = ["wavelength", "finesse", "length", 'eta']
-    _gui_attributes = _setup_attributes
+    _model_attributes = ["wavelength", "finesse", "length", 'eta']
+    _setup_attributes = Lockbox._setup_attributes + _model_attributes
+    _gui_attributes = Lockbox._setup_attributes + _model_attributes
     wavelength = FloatProperty(max=10000, min=0, default=1.064e-6)
     finesse = FloatProperty(max=1e7, min=0, default=10000)
     # approximate length (not taking into account small variations of the
