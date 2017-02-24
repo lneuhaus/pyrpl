@@ -176,9 +176,9 @@ class Stage(SoftwareModule):
 
     def update_outputs(self):
         """
-        Updates the list of outputs to be in sync with the existing outputs in the lockbox
+        Updates the list of outputs to be in sync with the existing outputs in
+        the lockbox
         """
-
         output_names = [output.name for output in self.lockbox.outputs]
         new_output_on = dict()
         for name in output_names:
@@ -209,7 +209,10 @@ class Stage(SoftwareModule):
                 output.unlock()
         if self.function_call!="":
             func = getattr(self.lockbox.model, self.function_call)
-            func(self.factor)
+            try:
+                func(**self.get_setup_attributes())
+            except TypeError:
+                func()
         self.lockbox.state = self.name
         #if self.lockbox._widget is not None:
         #    self.lockbox._widget.show_lock(self)

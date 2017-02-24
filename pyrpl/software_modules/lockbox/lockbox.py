@@ -244,7 +244,7 @@ class Lockbox(SoftwareModule):
                                            "is saturated.", o.name)
                 return False
         # input locked to
-        if input is None:
+        if not input: #input=None (default) or input=False (call by gui)
             input = self.get_input(self.get_stage(self.state).input)
         try:
             # use input-specific is_locked if it exists
