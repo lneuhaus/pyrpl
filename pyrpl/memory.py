@@ -192,7 +192,7 @@ class MemoryBranch(object):
     _root:      the MemoryTree object (root) of the tree
     _parent:    the parent of the branch
     _branch:    the name of the branch
-    _new_branch: creates new branch. Same as self
+    _new_branch: creates new branch. Same as br
     _fullbranchname: returns the full path from root to the branch
     _getbranch: returns a branch by specifying its path, e.g. 'b1.c2.d3'
     _rename:    renames the branch
