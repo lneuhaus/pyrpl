@@ -15,17 +15,20 @@ class FPReflection(InputDirect):
     def expected_signal(self, variable):
         return self.max - (self.max - self.min) * self.model.lorentz(variable)
 
-class InputPdh(InputIq):
-    _section_name = 'pdh'
+class InputAnalogPdh(InputDirect):
+    _section_name = 'analog_pdh'
+    mod_freq = FrequencyProperty()
+    _setup_attributes = InputDirect._setup_attributes + ['mod_freq']
+    _gui_attributes = InputDirect._gui_attributes + ['mod_freq']
 
     def expected_signal(self, variable):
         offset = 0.5 * (self.max + self.min)
         amplitude = 0.5 * (self.max - self.min)
         # we neglect offset here because it should really be zero on resonance
         return amplitude * self._pdh_normalized(variable,
-                                        sbfreq=self.mod_freq,
-                                        phase=0,
-                                        eta=self.model.eta)
+                                    sbfreq=self.mod_freq/self.model.bandwidth,
+                                    phase=0,
+                                    eta=self.model.eta)
 
     def _pdh_normalized(self, x, sbfreq=10.0, phase=0, eta=1):
         """  returns a pdh error signal at for a number of detunings x. """
@@ -55,17 +58,26 @@ class InputPdh(InputIq):
         return np.real(i_ref * np.exp(1j * phase)) / eta
 
 
-class FabryPerot(Lockbox):
+class InputPdh(InputIq, InputAnalogPdh):
+    _section_name = 'pdh'
+
+    def is_locked(self, loglevel=logging.INFO):
+        # simply perform the is_locked with the reflection error signal
+        return self.lockbox.is_locked(self.lockbox.reflection,
+                                      loglevel=loglevel)
+
+
+class FabryPerot(Model):
     name = "FabryPerot"
     _section_name = "fabryperot"
     units = ['m', 'Hz', 'nm', 'MHz']
     _setup_attributes = ["wavelength", "finesse", "length", 'eta']
     _gui_attributes = _setup_attributes
-    wavelength = FloatProperty(max=10000, min=0, default=1.064)
+    wavelength = FloatProperty(max=10000, min=0, default=1.064e-6)
     finesse = FloatProperty(max=1e7, min=0, default=10000)
     # approximate length (not taking into account small variations of the
     # order of the wavelength)
-    length = FloatProperty(max=10e12, min=0, default=10000)
+    length = FloatProperty(max=10e12, min=0, default=1.0)
     # eta is the ratio between input mirror transmission and the sum of
     # transmission and loss: T/(T+P)
     eta = FloatProperty(min=0., max=1., default=1.)
@@ -75,6 +87,19 @@ class FabryPerot(Lockbox):
 
     def lorentz(self, x):
         return 1.0 / (1.0 + x ** 2)
+
+    @property
+    def free_spectral_range(self):
+        return 2.998e8/(2.*self.length)
+
+    @property
+    def linewidth(self):
+        return self.free_spectral_range / self.finesse
+
+    @property
+    def bandwidth(self):
+        return self.linewidth/2.0
+
 
 
 class HighFinesseInput(InputDirect):
@@ -89,23 +114,25 @@ class HighFinesseInput(InputDirect):
     def calibrate(self):
         print("high-finesse calibrate")
         curve = super(HighFinesseInput, self).acquire()
-        scope = self.pyrpl.scopes.pop(self.name)
-        try:
-            if not "sweep_zoom" in scope.states:
+        with self.pyrpl.scopes.pop(self.name) as scope:
+            if "sweep_zoom" in scope.states:
+                scope.load_state("sweep_zoom")
+            else:
                 scope.duration /= 100
                 scope.trigger_source = "ch1_positive_edge"
-                scope.save_state("sweep_zoom")
-            else:
-                scope.load_state("sweep_zoom")
             threshold = self.get_threshold(curve)
             scope.setup(threshold_ch1=threshold, input1=self.signal())
-            print(threshold)
-            curve = scope.curve()
+            self._logger.debug("calibration threshold: %f", threshold)
+            scope.save_state("autosweep_zoom") # save state for debugging or modification
+            curve = scope.curve(ch=1,
+                                timeout=5./self.lockbox.asg.frequency)  # give some time if trigger is missed
             self.get_stats_from_curve(curve)
-        finally:
-            self.pyrpl.scopes.free(scope)
-        if self._widget is not None:
-            self.update_graph()
+        # log calibration values
+        self._logger.info("%s calibration successful - Min: %.3f  Max: %.3f  Mean: %.3f  Rms: %.3f",
+                          self.name,
+                          self.min, self.max, self.mean, self.rms)
+        # update graph in lockbox
+        self.lockbox._signal_launcher.input_calibrated.emit([self])
 
     def get_threshold(self, curve):
         """ returns a reasonable scope threshold for the interesting part of this curve """
@@ -117,7 +144,8 @@ class HighFinesseReflection(HighFinesseInput, FPReflection):
     Reflection for a FabryPerot. The only difference with FPReflection is that
     acquire will be done in 2 steps (coarse, then fine)
     """
-    _section_name = 'hf_reflection'
+    # changing names when going to hf-mode only causes problems
+    #_section_name = 'hf_reflection'
     pass
 
 
@@ -126,7 +154,7 @@ class HighFinesseTransmission(HighFinesseInput, FPTransmission):
     Reflection for a FabryPerot. The only difference with FPReflection is that
     acquire will be done in 2 steps (coarse, then fine)
     """
-    _section_name = 'hf_transmission'
+    #_section_name = 'hf_transmission'
     pass
 
 
@@ -135,7 +163,7 @@ class HighFinessePdh(HighFinesseInput, InputPdh):
     Reflection for a FabryPerot. The only difference with FPReflection is that
     acquire will be done in 2 steps (coarse, then fine)
     """
-    _section_name = 'hf_pdh'
+    #_section_name = 'hf_pdh'
     signal = InputPdh.signal
 
 
@@ -144,13 +172,3 @@ class HighFinesseFabryPerot(FabryPerot):
     _section_name = "high_finesse_fp"
     input_cls = [HighFinesseReflection, HighFinesseTransmission,
                  HighFinessePdh]
-
-
-class FabryPerotTemperatureControl(FabryPerot):
-    name = "FabryPerotTemperatureControl"
-    input_cls = FabryPerot.input_cls + [InputFromOutput]
-
-    def lock_temperature(self, factor):
-        self.pyrpl.lockbox.out_temp.lock(
-            input='input_from_output',
-            variable_value=0)

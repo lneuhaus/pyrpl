@@ -146,7 +146,13 @@ class RedPitaya(object):
                           "with the additional argument dirname='c://github//pyrpl//pyrpl' adapted to your installation"
                           " directory of pyrpl! Current dirname: "
                            +self.parameters['dirname'])
-
+        # provide option to simulate a RedPitaya
+        if self.parameters['hostname'] == '_DUMMY_':
+            self.startdummyclient()
+            self.logger.warning("Simulating RedPitaya because (hostname=="
+                                +self.parameters["hostname"]+"). Incomplete "
+                                "functionality possible. ")
+            return
         # connect to the redpitaya board
         self.start_ssh()
         # start other stuff
@@ -388,7 +394,7 @@ class RedPitaya(object):
         return self.startserver()
 
     def license(self):
-        self.logger.info("""\r\n    pyrpl  Copyright (C) 2014-2016  Leonhard Neuhaus
+        self.logger.info("""\r\n    pyrpl  Copyright (C) 2014-2017 Leonhard Neuhaus
     This program comes with ABSOLUTELY NO WARRANTY; for details read the file
     "LICENSE" in the source directory. This is free software, and you are
     welcome to redistribute it under certain conditions; read the file

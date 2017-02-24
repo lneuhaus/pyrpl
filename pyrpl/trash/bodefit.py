@@ -573,7 +573,7 @@ class BodeFitIIRGuiOptimisation(BodeFitIIRGui):
 
     def error(self):
         f = self.target.index.values
-        err = np.abs(np.log(self.target.values-self.iirfilter.tf_filtered(f)))**self.p
+        err = np.abs(np.log(self.target.values - self.iirfilter.tf_filtered(f))) ** self.p
         return err
 
     def otherkeyaction(self, key):

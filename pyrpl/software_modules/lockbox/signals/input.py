@@ -2,10 +2,10 @@ from __future__ import division
 from pyrpl.modules import SoftwareModule
 from . import Signal
 from pyrpl.attributes import SelectAttribute, SelectProperty, FloatProperty, FrequencyProperty, PhaseProperty, \
-    FilterProperty
+    FilterProperty, FrequencyRegister
 from pyrpl.widgets.module_widgets import LockboxInputWidget
 from pyrpl.hardware_modules.dsp import DSP_INPUTS
-
+from ....pyrpl_utils import time
 import scipy
 import numpy as np
 import logging
@@ -46,6 +46,7 @@ class InputSignal(SoftwareModule):
         self.lockbox = self.parent
         self.parameters = dict()
         self.plot_range = np.linspace(-5, 5, 200)
+        self._lasttime = -1e10
 
     def unsetup(self):
         """
@@ -92,12 +93,47 @@ class InputSignal(SoftwareModule):
         self.min = curve.min()
         self.max = curve.max()
 
+    @property
+    def expected_amplitude(self):
+        return (self.max-self.min)/2.0
+
+    @property
+    def _sampler_time(self):
+        try:
+            return self.model._sampler_time
+        except:
+            return 0.01
+
+    def mean_rms(self):
+        if time() - self._lasttime >= self._sampler_time:
+            self._lastmean, self._lastrms = self.pyrpl.rp.sampler.mean_stddev(self.signal(),
+                                                                              t=self._sampler_time)
+            self._lasttime = time()
+        return self._lastmean, self._lastrms
+
+    def relative_mean(self):
+        # get fresh data
+        mean, rms = self.mean_rms()
+        # compute relative quantity
+        return mean/self.expected_amplitude
+
+    def relative_rms(self):
+        # get fresh data
+        mean, rms = self.mean_rms()
+        # compute relative quantity
+        return rms/self.expected_amplitude
+
     def calibrate(self):
         """
         This function should be reimplemented to measure whatever property of the curve is needed by expected_signal
         """
         curve = self.acquire()
         self.get_stats_from_curve(curve)
+        # log calibration values
+        self._logger.info("%s calibration successful - Min: %.3f  Max: %.3f  Mean: %.3f  Rms: %.3f",
+                          self.name,
+                          self.min, self.max, self.mean, self.rms)
+        # update graph in lockbox
         self.lockbox._signal_launcher.input_calibrated.emit([self])
 
 #    def update_graph(self):
@@ -202,15 +238,20 @@ class InputDirect(InputSignal):
         return self.input_channel
 
 
-#class InputInternal(InputSignal): # Maybe the hierarchy should be the opposite...
-#    section_name = 'internal_signal'
-#    input_channel = SelectProperty(options=sorted(DSP_INPUTS.keys()))
-#
-#    def signal(self):
-#        return self.input_channel
+class InputFromOutput(InputDirect):
+    _section_name = 'input_from_output'
 
+    def expected_signal(self, x):
+        return x
+
+    def calibrate(self):
+        pass
 
 class IqFrequencyProperty(FrequencyProperty):
+    def __init__(self, **kwargs):
+        super(IqFrequencyProperty, self).__init__(**kwargs)
+        self.max = FrequencyRegister.CLOCK_FREQUENCY / 2.0
+
     def set_value(self, instance, value):
         super(IqFrequencyProperty, self).set_value(instance, value)
         instance.iq.frequency = value
@@ -236,6 +277,7 @@ class IqModOutputProperty(SelectProperty):
         super(IqModOutputProperty, self).set_value(instance, value)
         instance.iq.output_direct = value
         return value
+
 
 class IqQuadratureFactorProperty(FloatProperty):
     def set_value(self, instance, value):
@@ -266,6 +308,18 @@ class InputIq(InputDirect):
                                                    'quadrature_factor',
                                                    'mod_output',
                                                    'bandwidth']
+
+class InputIq(InputDirect):
+    """ Base class for demodulated signals. A derived class must implement
+    the method expected_signal (see InputPdh in fabryperot.py for example)"""
+    _section_name = 'iq'
+    _gui_attributes = InputSignal._gui_attributes + ['mod_freq',
+                                                     'mod_amp',
+                                                     'mod_phase',
+                                                     'quadrature_factor',
+                                                     'mod_output',
+                                                     'bandwidth']
+
     _setup_attributes = _gui_attributes + ["min", "max", "mean", "rms"]
     mod_freq = IqFrequencyProperty()
     mod_amp = IqAmplitudeProperty()

@@ -186,7 +186,7 @@ except:
 
         def sort(self):
             """numerically sorts the data series so that indexing can be used"""
-            X, Y = self.data.inde.values, self.data.values
+            X, Y = self.data.index.values, self.data.values
             xs = np.array([x for (x, y) in sorted(zip(X, Y))], dtype=np.float64)
             ys = np.array([y for (x, y) in sorted(zip(X, Y))], dtype=np.float64)
             self.data = pandas.Series(ys, index=xs)

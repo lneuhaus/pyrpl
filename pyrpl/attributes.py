@@ -180,7 +180,7 @@ class FrequencyAttribute(FloatAttribute):
     """
     widget_class = FrequencyAttributeWidget
 
-    def __init__(self, default=None, increment=0.1, min=0, max=125e6/2, doc=""):
+    def __init__(self, default=None, increment=0.1, min=0, max=1e100, doc=""):
         super(FloatAttribute, self).__init__(default=default, doc=doc)
         self.increment = increment
         self.min = min
@@ -777,6 +777,7 @@ class FrequencyRegister(FloatRegister, FrequencyAttribute):
                  bits=32,  # total number of bits to represent on fpga
                  **kwargs):
         super(FrequencyRegister, self).__init__(address=address, bits=bits, **kwargs)
+        self.max = self.CLOCK_FREQUENCY/2
         if self.invert:
             raise NotImplementedError("Increment not implemented for inverted registers")
         increment = self.CLOCK_FREQUENCY / 2 ** self.bits  # *obj._frequency_correction
@@ -1021,6 +1022,7 @@ class FrequencyProperty(FrequencyAttribute, BaseProperty):
     A property for a frequency value
     """
     default = 0.
+    min = 0.
 
 
 class LongProperty(IntAttribute, BaseProperty):

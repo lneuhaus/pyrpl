@@ -19,7 +19,7 @@ class Fit(object):
         self.autofit = autofit
         self.autofitgraphical = graphicalfit
         self.data = pandas.Series(np.array(data.values, dtype=np.double),
-                    index = np.array(data.index.values, dtype=np.double))
+                                  index = np.array(data.index.values, dtype=np.double))
         self.sqerror = float('nan')
         self.stepcount = 0
         self.maxiter = maxiter
@@ -108,9 +108,9 @@ class Fit(object):
     def y(self):
         if self._y_npy is None:
             if self.data.values.dtype == complex:
-                self._y_npy = numpy.array(self.data.values,dtype=complex)
+                self._y_npy = numpy.array(self.data.values, dtype=complex)
             else:
-                self._y_npy = numpy.array(self.data.values,dtype=np.double)
+                self._y_npy = numpy.array(self.data.values, dtype=np.double)
         return self._y_npy
 
     def getsqerror(self):
@@ -127,7 +127,7 @@ class Fit(object):
                                      maxfev=self.maxiter,
                                      diag=self.diag,
                                      full_output=True,
-                                     epsfcn=0.0 
+                                     epsfcn=0.0
                                      )
         self.sqerror = self.getsqerror()
         self.logger.debug("Fit completed with sqerror = " + str(self.sqerror))

@@ -166,13 +166,33 @@ class DummyClient(object):
     """Class for unitary tests without RedPitaya hardware available"""
     class fpgadict(dict):
         def __missing__(self, key):
-            return 0
+            return 1 # 0 (1 is needed to avoid division_by_zero errors for some registers)
     fpgamemory = fpgadict({str(0x40100014): 1})  # scope decimation initial value
-    
+
+    def read_fpgamemory(self, addr):
+        # here we implement a fraction of the memory map to simulate the actual redpitaya
+        # scope
+        offset = addr - 0x40100000
+        # scope curve buffer
+        if offset >= 0x10000 and offset < 0x30000:
+            v = int(np.random.normal(scale=2**13 - 1))//4
+            if v > 2**13-1:
+                v = 2*13-1
+            elif v < -(2**13-1):
+                v = -(2**13-1)
+            if v < 0:
+                v += 2**14
+            return v
+        # scope control register - trigger armed, trigger source etc.
+        if offset == 0:
+            return 0
+        # everything else is restored from the dict
+        return self.fpgamemory[str(addr)]
+
     def reads(self, addr, length):
         val = []
         for i in range(length):
-            val.append(self.fpgamemory[str(addr+0x4*i)])
+            val.append(self.read_fpgamemory(addr+0x4*i))
         return np.array(val,dtype=np.uint32)
     
     def writes(self, addr, values):

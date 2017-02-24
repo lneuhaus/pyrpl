@@ -1,4 +1,5 @@
 import time
+from timeit import default_timer
 import logging
 logger = logging.getLogger(__file__)
 from collections import OrderedDict, Counter
@@ -32,6 +33,9 @@ def sleep(time_s):
     else:
         time.sleep(time_s)
 
+def time():
+    """ returns the time. used instead of time.time for rapid portability"""
+    return default_timer()
 
 def get_unique_name_list_from_class_list(cls_list):
     """

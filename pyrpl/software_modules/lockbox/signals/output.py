@@ -306,6 +306,21 @@ class OutputSignal(Signal):
     def is_locked(self):
         return True
 
+    @property
+    def is_saturated(self):
+        """
+        Returns
+        -------
+        True: if the output has saturated
+        False: otherwise
+        """
+        ival, max, min = self.pid.ival, self.pid.max_voltage, \
+                         self.pid.min_voltage
+        if ival > max or ival < min:
+            return True
+        else:
+            return False
+
     def update_for_model(self):
         pass
         #self.__class__.unit.change_options(self.lockbox.get_model( # ).units)

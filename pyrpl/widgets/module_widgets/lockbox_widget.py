@@ -387,11 +387,10 @@ class LockboxInputWidget(ModuleWidget):
         self.curve_slope = self.plot_item.plot(pen=pg.mkPen('b', width=5))
         self.symbol = self.plot_item.plot(pen='b', symbol='o')
         self.main_layout.addWidget(self.win)
-
         self.button_calibrate = QtGui.QPushButton('Calibrate')
-
         self.main_layout.addWidget(self.button_calibrate)
         self.button_calibrate.clicked.connect(self.module.calibrate)
+        self.update_expected_signal()
 
     def hide_lock(self):
         self.curve_slope.setData([], [])
@@ -413,7 +412,10 @@ class LockboxInputWidget(ModuleWidget):
         """
         self.curve.setData(x, y)
 
-    def update_expected_signal(self, input):
+    def update_expected_signal(self, input=None):
+        # if input is None, input associated with this widget is used
+        if input is None:
+            input = self.module
         y = input.expected_signal(input.plot_range)
         self.show_graph(input.plot_range, y)
 
@@ -669,19 +671,22 @@ class LockboxWidget(ModuleWidget):
     def init_gui(self):
         self.main_layout = QtGui.QVBoxLayout()
         self.init_attribute_layout()
+        self.button_is_locked = QtGui.QPushButton("is_locked?")
         self.button_lock = QtGui.QPushButton("Lock")
         self.button_unlock = QtGui.QPushButton("Unlock")
+        self.button_sweep = QtGui.QPushButton("Sweep")
+        self.button_calibrate_all = QtGui.QPushButton("Calibrate all inputs")
         self.button_green = self.button_unlock
         self.set_button_green(self.button_green)
-        self.button_lock.clicked.connect(self.module.lock)
+        self.attribute_layout.addWidget(self.button_is_locked)
         self.attribute_layout.addWidget(self.button_lock)
         self.attribute_layout.addWidget(self.button_unlock)
-        self.button_unlock.clicked.connect(self.module.unlock)
-        self.button_sweep = QtGui.QPushButton("Sweep")
-        self.button_sweep.clicked.connect(self.module.sweep)
         self.attribute_layout.addWidget(self.button_sweep)
-        self.button_calibrate_all = QtGui.QPushButton("Calibrate all inputs")
         self.attribute_layout.addWidget(self.button_calibrate_all)
+        self.button_is_locked.clicked.connect(self.module.is_locked)
+        self.button_lock.clicked.connect(self.module.lock)
+        self.button_unlock.clicked.connect(self.module.unlock)
+        self.button_sweep.clicked.connect(self.module.sweep)
         self.button_calibrate_all.clicked.connect(self.module.calibrate_all)
 
         #self.model_widget = self.module.model.create_widget()
@@ -698,7 +703,8 @@ class LockboxWidget(ModuleWidget):
         SLOT: don't change name unless you know what you are doing
         updates the plot of the input expected signal for input inputs[0]
         """
-        self.all_sig_widget.update_expected_input_signal(inputs[0])
+        for input in inputs:
+            self.all_sig_widget.update_expected_input_signal(input)
 
     def update_transfer_function(self, outputs):
         """
@@ -801,6 +807,11 @@ class LockboxWidget(ModuleWidget):
         self.set_button_green(self.sequence_widget.stage_widgets[index].button_goto)
         self.show_lock(val)
 
+    def set_button_color(self, button, color):
+        """
+        Only one colored button can exist at a time
+        """
+
     def set_button_green(self, button):
         """
         Only one colored button can exist at a time
@@ -826,3 +837,10 @@ class LockboxWidget(ModuleWidget):
         """
         for input_widget in self.all_sig_widget.inputs_widget.input_widgets:
             input_widget.hide_lock()
+
+    def update_lockstatus(self, lockstatus):
+        # color = self.module._is_locked_display_color
+        color, = lockstatus
+        self.button_is_locked.setStyleSheet("background-color: %s; "
+                                            "color:white"%color)
+
