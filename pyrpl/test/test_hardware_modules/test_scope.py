@@ -103,9 +103,33 @@ class TestScopeClass(TestPyrpl):
         """calling setup with rolling mode should work"""
         self.r.scope.setup(duration=0.5,
                            trigger_delay=0., rolling_mode=True, input1='in1',
-                           ch1_active=True, ch2_active=True, running_continuous=True)
+                           ch1_active=True, ch2_active=True,
+                           running_continuous=True)
         assert self.data_changing()
         sleep(1)
-        assert self.data_changing()  # Make sure scope is not blocked after one buffer loop
+        assert self.data_changing()  # Make sure scope is not blocked
+                                     # after one buffer loop
 
         self.r.scope.stop()
+
+    def test_scope_slave_free(self):
+        """
+        Make sure the scope returns to rolling mode after being freed
+        :return:
+        """
+        self.pyrpl.rp.scope.setup(duration=0.5,
+                  trigger_delay=0., rolling_mode=True, input1='in1',
+                  ch1_active=True, ch2_active=True,
+                  running_continuous=True)
+        with self.pyrpl.scopes.pop("myapplication") as sco:
+            sco.setup(duration=0.5,
+                      trigger_delay=0., rolling_mode=False, input1='in1',
+                      ch1_active=True, ch2_active=True,
+                      running_continuous=False)
+            assert not self.data_changing()
+            curve = sco.curve()
+        assert self.data_changing()
+        sleep(1)
+        assert self.data_changing()  # Make sure scope is not blocked
+            # after one buffer loop
+        self.pyrpl.rp.scope.stop()
