@@ -521,7 +521,8 @@ class SpectrumAnalyzer(SoftwareModule):
 
     def run_single(self):
         """
-        Feeds gui with one new curve from the scope. Once ready, data are located in self.last_datas.
+        Feeds gui with one new curve from the scope. Once ready, data are
+        located in self.last_datas.
         """
         self.stop()
         self.restart_averaging()

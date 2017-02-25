@@ -77,8 +77,9 @@ class NaStateProperty(StringProperty):
                 module._signal_launcher.run()
             else:
                 module.iq.output_direct = module.output_direct
+                module.iq.frequency = module.iq.frequency # reset na
+                # accumulator
                 module._signal_launcher.resume()
-            print(module.output_direct)
         if val in ['paused_continuous', 'paused_single']:
             module._signal_launcher.pause()
             module.iq.output_direct = 'off'
@@ -228,7 +229,8 @@ class NetworkAnalyzer(SoftwareModule):
         """
         Whenever a setup_attribute is touched, stop the acquisition immediately.
         """
-        if self.running_state in ['running_single', 'running_continuous']:
+        if self.running_state in ['running_single', 'running_continuous',
+                                  'paused_single', 'paused_continuous']:
             print("stopping because callback")
             self.stop()
 
@@ -350,7 +352,7 @@ class NetworkAnalyzer(SoftwareModule):
         self.current_attributes = self.get_setup_attributes()
         self.y_current_scan = np.zeros(self.points, dtype=complex)
         self.y_averaged = np.zeros(self.points, dtype=complex)
-        self._signal_launcher.timer_point.setInterval(self.time_per_point)
+        self._signal_launcher.timer_point.setInterval(self.time_per_point*1000)
 
     @property
     def last_valid_point(self):
@@ -577,7 +579,8 @@ class NetworkAnalyzer(SoftwareModule):
 
     def stop(self):
         """
-        Stops definitely the acquisition (next call to run_continuous will restart from 0)
+        Stops definitively the acquisition (next call to run_continuous will
+        restart from 0)
         """
         self.running_state = 'stopped'
 

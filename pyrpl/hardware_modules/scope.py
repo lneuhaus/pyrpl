@@ -426,7 +426,7 @@ class Scope(HardwareModule):
     ch2_active = BoolProperty(default=True,
                               doc="should ch2 be displayed in the gui?")
 
-    def ownership_changed(self, old, new):
+    def _ownership_changed(self, old, new):
         """
         If the scope was in continuous mode when slaved, it has to stop!!
         """
