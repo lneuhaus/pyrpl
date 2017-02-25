@@ -289,8 +289,6 @@ class Pyrpl(object):
         self.rp = RedPitaya(config=self.c)
         # allow for multiple widgets
         self.widgets = []
-        self.software_modules = []
-        self.load_software_modules()
 
         for module in self.hardware_modules:  # setup hardware modules with config file keys
             if module.owner is None: # (only modules that are not slaved by software modules)
@@ -299,6 +297,10 @@ class Pyrpl(object):
                         module._load_setup_attributes() # **self.c[module.name])
                     except BaseException as e:
                         self.logger.warning('Something went wrong when loading attributes of module "%s"'%module.name)
+
+        self.software_modules = []
+        self.load_software_modules()
+
         if self.c.pyrpl.gui:
             widget = self.create_widget()
             widget.show()

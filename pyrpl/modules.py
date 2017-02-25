@@ -398,16 +398,18 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         """
         Creates the widget specified in widget_class.
         """
+        callback_bkp = self._callback_active
         self._callback_active = False # otherwise, saved values will be
         # overwritten by default gui values
+        autosave_bkp = self._autosave_active
         self._autosave_active = False # otherwise, default gui values will be
         # saved
         try:
             widget = self._widget_class(self.name, self)
             #self._widget = self._widget_class(self.name, self)
         finally:
-            self._callback_active = True
-            self._autosave_active = True
+            self._callback_active = callback_bkp
+            self._autosave_active = autosave_bkp
         return widget # self._widget
 
     @property
@@ -454,7 +456,7 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
             self._autosave_active = False
         self._ownership_changed(old, val)
         if val is None:
-            self.setup(**self.c._dict)
+            self.set_setup_attributes(**self.c._dict)
         self._signal_launcher.change_ownership.emit()
 
     def __enter__(self):

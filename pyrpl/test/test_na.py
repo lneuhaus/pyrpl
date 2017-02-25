@@ -155,3 +155,9 @@ class TestClass(TestPyrpl):
         APP.processEvents()
         assert self.na.iq.output_direct=='off'
 
+    def test_iq_autosave_active(self):
+        """
+        At some point, iq._autosave_active was reinitialized by iq
+        create_widget...
+        """
+        assert(self.na.iq._autosave_active==False)
