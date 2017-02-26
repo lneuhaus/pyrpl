@@ -615,9 +615,9 @@ class Scope(HardwareModule):
         Saves the curve(s) that is (are) currently displayed in the gui in the db_system. Also, returns the list
         [curve_ch1, curve_ch2]...
         """
-        datas = [self.times,
-                 self.curve(ch=1, timeout=-1),
-                 self.curve(ch=2, timeout=-1)]
+        #datas = [self.times,
+        #         self.curve(ch=1, timeout=-1),
+        #         self.curve(ch=2, timeout=-1)]
         d = self.get_setup_attributes()
         curves = [None, None]
         for ch, active in [(1, self.ch1_active), (2, self.ch2_active)]:
@@ -625,6 +625,7 @@ class Scope(HardwareModule):
                 d.update({'ch': ch,
                           'name': self.curve_name + ' ch' + str(ch)})
                 curves[ch - 1] = self._save_curve(self.times,
-                                                  datas[ch],
+                                                  self.last_datas[ch],
+                                                  #datas[ch],
                                                   **d)
         return curves
