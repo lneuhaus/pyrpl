@@ -110,8 +110,11 @@ class Lockbox(SoftwareModule):
     """
     _section_name = 'lockbox'
     _widget_class = LockboxWidget
-    _setup_attributes = ["model_name", "default_sweep_output",
-                         "auto_lock", "error_threshold", "auto_lock_interval"]
+    _setup_attributes = ["model_name",
+                         "default_sweep_output",
+                         "auto_lock",
+                         "error_threshold",
+                         "auto_lock_interval"]
     _gui_attributes = _setup_attributes
     model_name = ModelProperty(options=all_models().keys())
     auto_lock_interval = AutoLockIntervalProperty(default=1.0, min=1e-3,
