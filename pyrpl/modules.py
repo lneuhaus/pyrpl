@@ -20,7 +20,6 @@ from six import with_metaclass
 from collections import OrderedDict
 from PyQt4 import QtCore
 
-
 class SignalLauncher(QtCore.QObject):
     """
     A QObject that is connected to the widgets to update their value when
@@ -162,13 +161,19 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
      get_setup_attribute) into the config file
      - load_state(name): loads the state 'name' from the config file (setup
      is not called by default)
+     - erase_state(name): erases state "name" from config file
      - create_widget(): returns a widget according to widget_class
      - setup(**kwds): first, performs set_setup_attributes(**kwds),
      then calls _setup() to set the module ready for acquisition. This
      method is automatically created by ModuleMetaClass and it combines the
      docstring of individual setup_attributes with the docstring of _setup()
-     - free: sets the module owner to None, and brings the module back the
+     - free(): sets the module owner to None, and brings the module back the
      state before it was slaved equivalent to module.owner = None)
+     - get_yml(state=None): get the yml code representing the state "state'
+     or the current state if state is None
+     - set_yml(yml_content, state=None): sets the state "state" with the
+     content of yml_content. If state is None, the state is directly loaded
+     into the module.
 
 
      Public attributes:
@@ -312,13 +317,26 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
             self.set_setup_attributes(**dic)
 
     @property
-    def c_states(self):
+    def _c_states(self):
         """
         Returns the config file branch corresponding to the "states" section.
         """
         if not "states" in self.c._parent._keys():
             self.c._parent["states"] = dict()
         return self.c._parent.states
+
+    def _c_state(self, state_name, state_branch=None):
+        """
+        :param state_name: Name of the state to explore.
+        :param state_branch: If not None, look inside the provided branch.
+        :return: The memory branch of the requested state.
+        """
+        if state_branch is None: # look in the normal c_states
+            state_branch = self._c_states
+        if state_name not in state_branch._keys():
+            raise KeyError("State %s doesn't exist for modules %s"
+                           % (state_name, self.__class__.name))
+        return getattr(state_branch, state_name) #[state_name]
 
     def save_state(self, name, state_branch=None):
         """
@@ -327,21 +345,26 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         class_section.states convention.
         """
         if state_branch is None:
-            state_branch = self.c_states
+            state_branch = self._c_states
         state_branch[name] = self.get_setup_attributes()
 
     def load_state(self, name, state_branch=None):
         """
         Loads the state with name "name" from the config file. If
-        state_section is left unchanged, uses the normal
+        state_branch is left unchanged, uses the normal
         class_section.states convention.
         """
-        if state_branch is None:
-            state_branch = self.c_states
-        if name not in state_branch._keys():
-            raise KeyError("State %s doesn't exist for modules %s"
-                           % (name, self.__class__.name))
-        self.set_setup_attributes(**state_branch[name])
+        branch = self._c_state(name, state_branch=None)
+        self.set_setup_attributes(**branch._data) # ugly... MemoryTree needs to
+                                               # implement the API of a dict...
+
+    def erase_state(self, name):
+        """
+        Removes the state "name' from the config file
+        :param name: name of the state to erase
+        :return: None
+        """
+        self._c_state(name)._erase()
 
     def _save_curve(self, x_values, y_values, **attributes):
         """
@@ -368,7 +391,7 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
 
     @property
     def states(self):
-        return list(self.c_states._keys())
+        return list(self._c_states._keys())
 
     def _setup(self):
         """
@@ -490,6 +513,30 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         while (not isinstance(parent, Pyrpl)):
             parent = parent.parent
         return parent
+
+    def get_yml(self, state=None):
+        """
+        :param state: The name of the state to inspect. If state is None-->
+        then, use the current instrument state.
+        :return: a string containing the yml code
+        """
+        if state is None:
+            return self.c._get_yml()
+        else:
+            return self._c_state(state)._get_yml()
+
+    def set_yml(self, yml_content, state=None):
+        """
+        :param yml_content: some yml code to encode the module content.
+        :param state: The name of the state to set. If state is None-->
+        then, use the current instrument state and reloads it immediately
+        :return: None
+        """
+        if state is None:
+            self.c._set_yml(yml_content)
+            self._load_setup_attributes()
+        else:
+            self._c_state(state)._set_yml(yml_content)
 
 
 class HardwareModule(BaseModule):

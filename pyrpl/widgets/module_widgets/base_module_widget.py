@@ -8,6 +8,9 @@ from PyQt4 import QtCore, QtGui
 from collections import OrderedDict
 import functools
 import logging
+
+from pyrpl.widgets.yml_editor import YmlEditor
+
 APP = QtGui.QApplication.instance()
 
 
@@ -64,13 +67,47 @@ class SaveLabel(MyMenuLabel):
         return menu
 
     def new_state(self):
-        state, accept = QtGui.QInputDialog.getText(self,
-                                                   "Save %s state"%self.module.name, "Enter new state name:")
+        state, accept = QtGui.QInputDialog.getText(self, "Save %s "
+                            "state"%self.module.name, "Enter new state name:")
         state = str(state)
         if accept:
             if state in self.module.states:
-                raise ValueError("State %s of module %s already exists!"%(state, self.module.name))
+                raise ValueError( "State %s of module %s already exists!"%(
+                    state, self.module.name))
             self.module.save_state(state)
+
+class EraseLabel(MyMenuLabel):
+    """
+    "Erase" label
+    """
+    text = ".:erase:."
+
+    def func(self, state):
+        self.module.erase_state(state)
+
+
+class EditLabel(MyMenuLabel):
+    """
+    "Edit" label
+    """
+    text = ".:edit:."
+
+    def func(self, state):
+        editor = YmlEditor(self.module, state)
+        self.module_widget.yml_editors[str(self.module.name) + '__' + str(
+            state)] = editor
+        editor.show()
+
+    def get_menu(self):
+        menu = super(EditLabel, self).get_menu()
+        action_current = QtGui.QAction('<Current>', self)
+        action_current.triggered.connect(functools.partial(self.func, None))
+        others = menu.actions()
+        if len(others)>0:
+            menu.insertAction(action_current, others[0])
+        else:
+            menu.addAction(action_current)
+        return menu
 
 
 class ModuleWidget(QtGui.QGroupBox):
@@ -86,11 +123,20 @@ class ModuleWidget(QtGui.QGroupBox):
             self.title_label.setText(title)
             self.title_label.adjustSize()
             self.title_label.move(*self.title_pos)
-            self.load_label.move(self.title_label.width() + self.title_pos[0], self.title_pos[1])
-            self.save_label.move(self.load_label.width() + self.load_label.pos().x(), self.title_pos[1])
+            self.load_label.move(self.title_label.width() + self.title_pos[0],
+                                 self.title_pos[1])
+            self.save_label.move(self.load_label.width() +
+                                 self.load_label.pos().x(), self.title_pos[1])
+            self.erase_label.move(self.save_label.width() +
+                                 self.save_label.pos().x(), self.title_pos[1])
+            self.edit_label.move(self.erase_label.width() +
+                                 self.erase_label.pos().x(), self.title_pos[1])
+
 
     def __init__(self, name, module, parent=None):
         super(ModuleWidget, self).__init__(parent)
+        self.yml_editors = dict() # Widgets to edit the yml code of module
+                                  # on a per-state basis
         self._logger = logging.getLogger(__name__)
         self.module = module
         self.name = name
@@ -138,8 +184,14 @@ class ModuleWidget(QtGui.QGroupBox):
         self.load_label.adjustSize()
 
         self.save_label = SaveLabel(self)
-
         self.save_label.adjustSize()
+
+        self.erase_label = EraseLabel(self)
+        self.erase_label.adjustSize()
+
+        self.edit_label = EditLabel(self)
+        self.edit_label.adjustSize()
+
 
         # self.setStyleSheet("ModuleWidget{border: 1px dashed gray;color: black;}")
         self.setStyleSheet("ModuleWidget{margin: 0.1em; margin-top:0.6em; border: 1 dotted gray;border-radius:5}")

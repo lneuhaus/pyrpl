@@ -100,14 +100,14 @@ class Sequence(SoftwareModule):
 
     def save_state(self, name, state_branch=None):
         if state_branch is None:
-            state_branch = self.c_states
+            state_branch = self._c_states
         state_branch[name] = OrderedDict()
         for stage in self.stages:
             stage.save_state(stage.name, getattr(state_branch, name))
 
     def load_state(self, name, state_section=None):
         if state_section is None:
-            state_section = self.c_states
+            state_section = self._c_states
         self.remove_all_stages()
         for stage_section in state_section[name].values():
             stage = self.add_stage()

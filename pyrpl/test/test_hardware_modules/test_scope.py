@@ -133,3 +133,22 @@ class TestScopeClass(TestPyrpl):
         assert self.data_changing()  # Make sure scope is not blocked
             # after one buffer loop
         self.pyrpl.rp.scope.stop()
+
+    def test_no_write_in_config(self):
+        """
+        Make sure the scope isn't continuously writing to config file,
+        even in running mode.
+        :return:
+        """
+
+        self.pyrpl.rp.scope.setup(duration=0.005,
+                  trigger_delay=0., rolling_mode=False, input1='in1',
+                  ch1_active=True, ch2_active=True,
+                  running_continuous=True)
+        old = self.pyrpl.c._save_counter
+        for i in range(10):
+            sleep(0.01)
+            APP.processEvents()
+        new = self.pyrpl.c._save_counter
+        self.pyrpl.rp.scope.stop()
+        assert(old==new)

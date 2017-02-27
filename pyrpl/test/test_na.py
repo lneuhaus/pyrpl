@@ -4,7 +4,8 @@ import time
 import copy
 from PyQt4 import QtGui, QtCore
 from .test_base import TestPyrpl
-import unittest
+
+from time import sleep
 
 APP = QtGui.QApplication.instance()
 
@@ -161,3 +162,27 @@ class TestClass(TestPyrpl):
         create_widget...
         """
         assert(self.na.iq._autosave_active==False)
+
+
+    def test_no_write_in_config(self):
+        """
+        Make sure the na isn't continuously writing to config file,
+        even in running mode.
+        :return:
+        """
+
+        self.na.setup(start_freq=1e5,
+                      stop_freq=2e5,
+                      rbw=100000,
+                      points=100,
+                      output_direct="out1",
+                      input="out1",
+                      amplitude=0.01,
+                      running_continuous=True)
+        old = self.pyrpl.c._save_counter
+        for i in range(10):
+            sleep(0.01)
+            APP.processEvents()
+        new = self.pyrpl.c._save_counter
+        self.na.stop()
+        assert (old == new)

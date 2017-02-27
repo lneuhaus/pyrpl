@@ -358,9 +358,16 @@ class Lockbox(SoftwareModule):
         output.clear()
         self.outputs.remove(output)
         self.sequence.update_outputs()
-        if 'outputs' in self.c._keys():
-            if output.name in self.c.outputs._keys():
-                self.c.outputs._pop(output.name)
+
+        if self._autosave_active:
+            to_remove = []
+            if 'outputs' in self.c._keys():
+                for key in self.c.outputs._keys():
+                    outp = self.c.outputs[key]
+                    if outp["name"] == output.name: # in
+                        to_remove.append(key)
+                for key in to_remove:
+                    self.c.outputs._pop(key)
 
         self.__class__.default_sweep_output.change_options(self,
                                                            [output_var.name for
@@ -385,7 +392,8 @@ class Lockbox(SoftwareModule):
 
     def rename_output(self, output, new_name):
         """
-        This changes the name of the output in many different places: lockbox attribute, config file, pid's owner
+        This changes the name of the output in many different places: lockbox
+        attribute, config file, pid's owner
         """
         if new_name in self.output_names and self.get_output(new_name)!=output:
             raise ValueError("Name %s already exists for an output"%new_name)
@@ -491,11 +499,12 @@ class Lockbox(SoftwareModule):
         This function needs to be overwritten to retrieve the child module
         attributes as well
         """
-        self.remove_all_outputs()
-        # load outputs
 
         # prevent saving wrong default_sweep_output at startup
         self._autosave_active = False
+
+        # load outputs
+        self.remove_all_outputs()
         if self.c is not None:
             if 'outputs' in self.c._dict.keys():
                 for name, output in self.c.outputs._dict.items():
