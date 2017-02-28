@@ -273,7 +273,7 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         self._autosave_active = True
         # load settings from config file
         # attributes are loaded but the module is not "setup"
-        self.load_setup_attributes()
+        self._load_setup_attributes()
 
     def _init_module(self):
         """
@@ -319,7 +319,7 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
             self.set_setup_attributes(**dic)
 
     @property
-<<<<<<< HEAD
+
     def c(self):
         """
         The config file instance. In practice, writing values in here will
