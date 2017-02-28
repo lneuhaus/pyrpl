@@ -174,15 +174,18 @@ class TestClass(TestPyrpl):
         self.na.setup(start_freq=1e5,
                       stop_freq=2e5,
                       rbw=100000,
-                      points=100,
+                      points=10,
                       output_direct="out1",
                       input="out1",
                       amplitude=0.01,
-                      running_continuous=True)
+                      running_state="running_continuous")
+        for i in range(10):
+            sleep(0.01)
+            APP.processEvents()
         old = self.pyrpl.c._save_counter
         for i in range(10):
             sleep(0.01)
             APP.processEvents()
         new = self.pyrpl.c._save_counter
         self.na.stop()
-        assert (old == new)
+        assert (old == new), (old, new)

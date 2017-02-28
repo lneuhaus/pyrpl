@@ -182,7 +182,8 @@ class NetworkAnalyzer(SoftwareModule):
                          "logscale",
                          "infer_open_loop_tf",
                          "avg",
-                         "curve_name"]
+                         "curve_name",
+                         "running_state"]
     _gui_attributes = _setup_attributes + ["running_state"]
     _callback_attributes = [a for a in _gui_attributes
                             if a not in ['running_state', 'curve_name']]

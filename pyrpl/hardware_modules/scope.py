@@ -495,6 +495,10 @@ class Scope(HardwareModule):
         In case trigger_source is set to "immediately", trigger_delay is disregarded and
         trace starts at t=0
         """
+        autosave_backup = self._autosave_active
+        self._autosave_active = False # Don't save anything in config file
+                                      # during setup!! # maybe even better in
+                                      # BaseModule ??
         self._setup_called = True
         self._reset_writestate_machine = True
         # trigger logic - set source
@@ -511,6 +515,7 @@ class Scope(HardwareModule):
             self.trigger_source = self.trigger_source
         if self._is_rolling_mode_active():
             self._setup_rolling_mode()
+        self._autosave_active = autosave_backup
 
     def _rolling_mode_allowed(self):
         """
