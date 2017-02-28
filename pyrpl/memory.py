@@ -23,6 +23,7 @@ import numpy as np
 import time
 from PyQt4 import QtCore
 from . import default_config_dir, user_config_dir
+from io import StringIO
 
 import logging
 logger = logging.getLogger(name=__name__)
@@ -332,6 +333,31 @@ class MemoryBranch(object):
     def _keys(self):
         return self._data.keys()
 
+    def _erase(self):
+        """
+        Erases the current brabnch
+        :return:
+        """
+        self._parent._pop(self._branch)
+        self._save()
+
+    def _get_yml(self):
+        """
+        :return: returns the yml code for this branch
+        """
+        data = StringIO()
+        save(self._data, data)
+        return data.getvalue()
+
+    def _set_yml(self, yml_content):
+        """
+        :param yml_content: sets the branch to yml_content
+        :return: None
+        """
+        branch = load(yml_content)
+        self._parent._data[self._branch] = branch
+        self._save()
+
 
 class MemoryTree(MemoryBranch):
     """
@@ -368,6 +394,7 @@ class MemoryTree(MemoryBranch):
             self._savetimer.setSingleShot(True)
             self._savetimer.timeout.connect(self._save)
         self._load()
+        self._save_counter = 0 # cntr for unittest and debug purposes
         super(MemoryTree, self).__init__(self, "")
 
     def _load(self):
@@ -402,6 +429,7 @@ class MemoryTree(MemoryBranch):
                 self._load()
 
     def _save(self, savedeadtime=None):
+        self._save_counter+=1 # for unittest and debug purposes
         if savedeadtime is None:
             savedeadtime = self._savedeadtime
         """ writes current tree structure and data to file """

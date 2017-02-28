@@ -1,11 +1,13 @@
 """
 Modules are the basic building blocks of Pyrpl:
-  - The internal structure of the FPGA is made of individual modules performing a well defined task. Each of these
-    FPGA modules are represented in python by a HardwareModule.
-  - Higher-level operations, for instance those that need a coordinated operation of several HardwareModules is
-    performed by SoftwareModules.
-Both HardwareModules and SoftwareModules inherit BaseModule that give them basic capabilities such as displaying their
-attributes in the GUI having their state load and saved in the config file...
+  - The internal structure of the FPGA is made of individual modules
+  performing a well defined task. Each of these FPGA modules are represented
+  in python by a HardwareModule.
+  - Higher-level operations, for instance those that need a coordinated
+  operation of several HardwareModules is performed by SoftwareModules.
+Both HardwareModules and SoftwareModules inherit BaseModule that give them
+basic capabilities such as displaying their attributes in the GUI having
+their state load and saved in the config file...
 """
 
 from .attributes import BaseAttribute
@@ -18,7 +20,6 @@ from six import with_metaclass
 from collections import OrderedDict
 from PyQt4 import QtCore
 
-
 class SignalLauncher(QtCore.QObject):
     """
     A QObject that is connected to the widgets to update their value when
@@ -26,9 +27,12 @@ class SignalLauncher(QtCore.QObject):
     functionality shoud be implemented here as well
     """
     update_attribute_by_name = QtCore.pyqtSignal(str, list)
-    # The name of the property that has changed, the list is [new_value], the new_value of the attribute
-    change_options = QtCore.pyqtSignal(str, list) # name of the SelectProperty, list of new options
-    change_ownership = QtCore.pyqtSignal() # The owner of the module has changed
+    # The name of the property that has changed, the list is [new_value],
+    # the new_value of the attribute
+    change_options = QtCore.pyqtSignal(str, list) # name of the
+    # SelectProperty,  list of new options
+    change_ownership = QtCore.pyqtSignal() # The owner of the module  has
+    # changed
 
     def __init__(self, module):
         super(SignalLauncher, self).__init__()
@@ -47,7 +51,8 @@ class SignalLauncher(QtCore.QObject):
         #self.update_attribute_by_name.connect(widget.update_attribute_by_name)
         for key in dir(self.__class__):
             val = getattr(self, key)
-            if isinstance(val, QtCore.pyqtBoundSignal) and hasattr(widget, key):
+            if isinstance(val, QtCore.pyqtBoundSignal) and hasattr(widget,
+                                                                   key):
                 val.connect(getattr(widget, key))
 
 
@@ -130,30 +135,100 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
     # Specifically, ModuleMetaClass ensures that attributes have automatically
     # their internal name set properly upon module creation.
     """
-    Several fields have to be implemented in child class:
-      - setup_attributes: attributes that are touched by setup(**kwds)/saved/restored upon module creation
-      - gui_attributes: attributes to be displayed by the widget
-      - widget_class: class of the widget to use to represent the module in the gui (a child of ModuleWidget)
-      - _setup(): sets the module ready for acquisition/output with the current attribute's values.
+    A module is a component of pyrpl doing a specific task, such as e.g.
+    Scope/Lockbox/NetworkAnalyzer. The module can have a widget to interact
+    with it graphically.
 
-    BaseModules implements several functions itself:
-      - create_widget: returns a widget according to widget_class
-      - get_setup_attributes(): returns a dictionary with the current setup_attribute key value pairs
-      - load_setup_attributes(): loads setup_attributes from config file
-      - set_setup_attributes(**kwds): sets the provided setup_attributes
+    It is composed of attributes (see attributes.py) whose values represent
+    the current state of the module (more precisely, the state is defined
+    by the value of all attributes in _setup_attributes)
 
-    Finally, setup(**kwds) is created by ModuleMetaClass. it combines set_setup_attributes(**kwds) with _setup()
+    The module can be slaved or freed by a user or another module. When the
+    module is freed, it goes back to the state immediately before being
+    slaved. To make sure the module is freed, use the syntax:
+
+    with pyrpl.mod_mag.pop('owner') as mod:
+            mod.do_something()
+
+    public methods
+    --------------
+     - get_setup_attributes(): returns a dict with the current values of
+     the setup attributes
+     - set_setup_attributes(**kwds): sets the provided setup_attributes
+     (setup is not called)
+     - save_state(name): saves the current "state" (using
+     get_setup_attribute) into the config file
+     - load_state(name): loads the state 'name' from the config file (setup
+     is not called by default)
+     - erase_state(name): erases state "name" from config file
+     - create_widget(): returns a widget according to widget_class
+     - setup(**kwds): first, performs set_setup_attributes(**kwds),
+     then calls _setup() to set the module ready for acquisition. This
+     method is automatically created by ModuleMetaClass and it combines the
+     docstring of individual setup_attributes with the docstring of _setup()
+     - free(): sets the module owner to None, and brings the module back the
+     state before it was slaved equivalent to module.owner = None)
+     - get_yml(state=None): get the yml code representing the state "state'
+     or the current state if state is None
+     - set_yml(yml_content, state=None): sets the state "state" with the
+     content of yml_content. If state is None, the state is directly loaded
+     into the module.
+
+
+     Public attributes:
+     ------------------
+     - name: attributed based on _section_name at instance creation
+     (also used as a section key in the config file)
+     - states: the list of states available in the config file
+     - owner: (string) a module can be owned (reserved) by a user or another
+     module. The module is free if and only if owner is None
+     - pyrpl: recursively looks through parent modules until it reaches the
+     pyrpl instance
+
+    class attributes to be implemented in derived class:
+    ----------------------------------------------------
+     - individual attributes (instances of BaseAttribute)
+     - _setup_attributes: attribute names that are touched by setup(**kwds)/
+     saved/restored upon module creation
+     - _gui_attributes: attribute names to be displayed by the widget
+     - _callback_attributes: attribute_names that triggers a callback when
+     their value is changed in the base class, _callback just calls setup()
+     - _widget_class: class of the widget to use to represent the module in
+     the gui(a child of ModuleWidget)
+     - _section_name: the name under which all instances of the class should
+     be stored in the config file
+
+    methods to implement in derived class:
+    --------------------------------------
+     - _init_module(): initializes the module at startup. During this
+     initialization, attributes can be initialized without overwriting config
+     file values. Practical to use instead of __init__ to avoid calling
+     super().__init__()
+     - _setup(): sets the module ready for acquisition/output with the
+     current attribute's values. The metaclass of the module autogenerates a
+     function like this:
+        def setup(self, **kwds):
+            *** docstring of function _setup ***
+            *** for attribute in self.setup_attributes:
+            print-attribute-docstring-here ****
+
+            self.set_setup_attributes(kwds)
+            return self._setup()
+     - _ownership_changed(old, new): this function is called when the module
+     owner changes it can be used to stop the acquisition for instance.
     """
 
     # Change this to save the curve with a different system
     _curve_class = CurveDB
     # a QOBject used to communicate with the widget
     _signal_launcher = None
-    # name that is going to be used for the section in the config file (class-level)
+    # name that is going to be used for the section in the config file
+    # (class-level)
     _section_name = 'basemodule'
     # Change this to provide a custom graphical class
     _widget_class = ModuleWidget
-    # attributes listed here will be saved in the config file everytime they are updated.
+    # attributes listed here will be saved in the config file everytime they
+    # are updated.
     _setup_attributes = []
     # class inheriting from ModuleWidget can
     # automatically generate gui from a list of attributes
@@ -229,15 +304,10 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         finally:
             self._callback_active = old_callback_active
         if len(kwds) > 0:
-            raise ValueError("Attribute %s of module %s doesn't exist." % (kwds[0], self.name))
-        #    for key, value in kwds.items():
-        #        if not key in self._setup_attributes:
-        #            raise ValueError("Attribute %s of module %s doesn't exist."%(key, self.name))
-        #        setattr(self, key, value)
-        #finally:
-        #    self._callback_active = old_callback_active
+            raise ValueError("Attribute %s of module %s doesn't exist." %  (
+                kwds[0], self.name))
 
-    def load_setup_attributes(self):
+    def _load_setup_attributes(self):
         """
          Load and sets all setup attributes from config file
         """
@@ -249,6 +319,7 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
             self.set_setup_attributes(**dic)
 
     @property
+<<<<<<< HEAD
     def c(self):
         """
         The config file instance. In practice, writing values in here will
@@ -264,8 +335,7 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
             manager_section[self.name] = dict()
         return getattr(manager_section, self.name)
 
-    @property
-    def c_states(self):
+    def _c_states(self):
         """
         Returns the config file branch corresponding to the "states" section.
         """
@@ -273,26 +343,46 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
             self.c._parent["states"] = dict()
         return self.c._parent.states
 
+    def _c_state(self, state_name, state_branch=None):
+        """
+        :param state_name: Name of the state to explore.
+        :param state_branch: If not None, look inside the provided branch.
+        :return: The memory branch of the requested state.
+        """
+        if state_branch is None: # look in the normal c_states
+            state_branch = self._c_states
+        if state_name not in state_branch._keys():
+            raise KeyError("State %s doesn't exist for modules %s"
+                           % (state_name, self.__class__.name))
+        return getattr(state_branch, state_name) #[state_name]
+
     def save_state(self, name, state_branch=None):
         """
-        Saves the current state under the name "name" in the config file. If state_section is left unchanged,
-        uses the normal class_section.states convention.
+        Saves the current state under the name "name" in the config file. If
+        state_section is left unchanged, uses the normal
+        class_section.states convention.
         """
         if state_branch is None:
-            state_branch = self.c_states
+            state_branch = self._c_states
         state_branch[name] = self.get_setup_attributes()
 
     def load_state(self, name, state_branch=None):
         """
-        Loads the state with name "name" from the config file. If state_section is left unchanged, uses the normal
+        Loads the state with name "name" from the config file. If
+        state_branch is left unchanged, uses the normal
         class_section.states convention.
         """
-        if state_branch is None:
-            state_branch = self.c_states
-        if name not in state_branch._keys():
-            raise KeyError("State %s doesn't exist for modules %s"
-                           % (name, self.__class__.name))
-        self.setup(**state_branch[name])
+        branch = self._c_state(name, state_branch=None)
+        self.set_setup_attributes(**branch._data) # ugly... MemoryTree needs to
+                                               # implement the API of a dict...
+
+    def erase_state(self, name):
+        """
+        Removes the state "name' from the config file
+        :param name: name of the state to erase
+        :return: None
+        """
+        self._c_state(name)._erase()
 
     def _save_curve(self, x_values, y_values, **attributes):
         """
@@ -302,7 +392,8 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
 
         :param  x_values: numpy array with x values
         :param  y_values: numpy array with y values
-        :param  attributes: extra curve parameters (such as relevant module settings)
+        :param  attributes: extra curve parameters (such as relevant module
+        settings)
         """
 
         c = self._curve_class.create(x_values,
@@ -318,7 +409,7 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
 
     @property
     def states(self):
-        return list(self.c_states._keys())
+        return list(self._c_states._keys())
 
     def _setup(self):
         """
@@ -348,14 +439,18 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         """
         Creates the widget specified in widget_class.
         """
-        self._callback_active = False # otherwise, saved values will be overwritten by default gui values
-        self._autosave_active = False # otherwise, default gui values will be saved
+        callback_bkp = self._callback_active
+        self._callback_active = False # otherwise, saved values will be
+        # overwritten by default gui values
+        autosave_bkp = self._autosave_active
+        self._autosave_active = False # otherwise, default gui values will be
+        # saved
         try:
             widget = self._widget_class(self.name, self)
             #self._widget = self._widget_class(self.name, self)
         finally:
-            self._callback_active = True
-            self._autosave_active = True
+            self._callback_active = callback_bkp
+            self._autosave_active = autosave_bkp
         return widget # self._widget
 
     def _callback(self):
@@ -384,21 +479,23 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         else:
             # desactivate autosave for slave modules
             self._autosave_active = False
-        self.ownership_changed(old, val)
+        self._ownership_changed(old, val)
         if val is None:
-            self.setup(**self.c._dict)
+            self.set_setup_attributes(**self.c._dict)
         self._signal_launcher.change_ownership.emit()
 
     def __enter__(self):
         """
-        This function is executed in the context manager construct with ... as ... :
+        This function is executed in the context manager construct with
+        ... as ... :
         """
         return self
 
     def __exit__(self, type, val, traceback):
         """
-        To make sure the module will be freed afterwards, use the context manager construct:
-        with pyrpl.mod_mag.pop('owner') as mod:
+        To make sure the module will be freed afterwards, use the context
+         manager construct:
+        with pyrpl.module_manager.pop('owner') as mod:
             mod.do_something()
         # module automatically freed at this point
 
@@ -418,6 +515,30 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         while (not isinstance(parent, Pyrpl)):
             parent = parent.parent
         return parent
+
+    def get_yml(self, state=None):
+        """
+        :param state: The name of the state to inspect. If state is None-->
+        then, use the current instrument state.
+        :return: a string containing the yml code
+        """
+        if state is None:
+            return self.c._get_yml()
+        else:
+            return self._c_state(state)._get_yml()
+
+    def set_yml(self, yml_content, state=None):
+        """
+        :param yml_content: some yml code to encode the module content.
+        :param state: The name of the state to set. If state is None-->
+        then, use the current instrument state and reloads it immediately
+        :return: None
+        """
+        if state is None:
+            self.c._set_yml(yml_content)
+            self._load_setup_attributes()
+        else:
+            self._c_state(state)._set_yml(yml_content)
 
 
 class HardwareModule(BaseModule):
@@ -441,7 +562,7 @@ class HardwareModule(BaseModule):
         super(HardwareModule, self).__init__(parent, name=name)
         self.__doc__ = "Available registers: \r\n\r\n" + self.help()
 
-    def ownership_changed(self, old, new):
+    def _ownership_changed(self, old, new):
         """
         This hook is there to make sure any ongoing measurement is stopped when
         the module gets slaved
@@ -506,23 +627,6 @@ class HardwareModule(BaseModule):
             v = v + 2 ** bitlength
         v = (v & (2 ** bitlength - 1))
         return np.uint32(v)
-
-    #def get_state(self):
-    #    """Returns a dictionaty with all current values of the parameters
-    #    listed in parameter_names"""
-    #
-    #   res = dict()
-    #    for par in self.parameter_names:
-    #        res[par] = getattr(self, par)
-    #    return res
-
-    #def set_state(self, dic):
-    #    """Sets all parameters to the values in dic. When necessary,
-    #    the function also calls setup()"""
-    #
-    #    res = dict()
-    #    for key, value in dic.iteritems():
-    #        setattr(self, key, value)
 
 
 class SoftwareModule(BaseModule):

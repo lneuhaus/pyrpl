@@ -426,7 +426,7 @@ class Scope(HardwareModule):
     ch2_active = BoolProperty(default=True,
                               doc="should ch2 be displayed in the gui?")
 
-    def ownership_changed(self, old, new):
+    def _ownership_changed(self, old, new):
         """
         If the scope was in continuous mode when slaved, it has to stop!!
         """
@@ -509,6 +509,8 @@ class Scope(HardwareModule):
         if self.trigger_source == 'immediately':
             # self.wait_for_pretrig_ok()
             self.trigger_source = self.trigger_source
+        if self._is_rolling_mode_active():
+            self._setup_rolling_mode()
 
     def _rolling_mode_allowed(self):
         """
@@ -613,9 +615,9 @@ class Scope(HardwareModule):
         Saves the curve(s) that is (are) currently displayed in the gui in the db_system. Also, returns the list
         [curve_ch1, curve_ch2]...
         """
-        datas = [self.times,
-                 self.curve(ch=1, timeout=-1),
-                 self.curve(ch=2, timeout=-1)]
+        #datas = [self.times,
+        #         self.curve(ch=1, timeout=-1),
+        #         self.curve(ch=2, timeout=-1)]
         d = self.get_setup_attributes()
         curves = [None, None]
         for ch, active in [(1, self.ch1_active), (2, self.ch2_active)]:
@@ -623,6 +625,7 @@ class Scope(HardwareModule):
                 d.update({'ch': ch,
                           'name': self.curve_name + ' ch' + str(ch)})
                 curves[ch - 1] = self._save_curve(self.times,
-                                                  datas[ch],
+                                                  self.last_datas[ch],
+                                                  #datas[ch],
                                                   **d)
         return curves

@@ -64,7 +64,6 @@ class Pyrpl(object):
         redpitaya branch of the config file. See class definition of
         RedPitaya for possible keywords.
     """
-
     def __init__(self,
                  config="myconfigfile",
                  source=None,
@@ -87,8 +86,6 @@ class Pyrpl(object):
         self.c.redpitaya._update(kwargs)
         self.rp = RedPitaya(config=self.c)
         self.widgets = [] # placeholder for widgets
-        # create software modules before...
-        self.load_software_modules()
         # ...initializing remaining hardware modules
         for module in self.hardware_modules:  # setup hardware modules with config file keys
             if module.owner is None: # (only modules that are not slaved by software modules)
@@ -96,6 +93,8 @@ class Pyrpl(object):
                     module.load_setup_attributes() # **self.c[module.name])
                 except BaseException as e:
                     self.logger.warning('Something went wrong when loading attributes of module "%s"'%module.name)
+        # create software modules...
+        self.load_software_modules()
         # make the gui if applicable
         if self.c.pyrpl.gui:
             widget = self.create_widget()

@@ -1,13 +1,12 @@
 """
 A widget for the scope module
 """
-
 from pyrpl.errors import NotReadyError
 from .base_module_widget import ModuleWidget
 
 import pyqtgraph as pg
 from PyQt4 import QtCore, QtGui
-
+import numpy as np
 
 APP = QtGui.QApplication.instance()
 
@@ -105,10 +104,14 @@ class ScopeWidget(ModuleWidget):
             list(self.attribute_widgets.keys()).index("trigger_source"), self.rolling_group)
         self.checkbox_normal.clicked.connect(self.rolling_mode_toggled)
         self.checkbox_untrigged.clicked.connect(self.rolling_mode_toggled)
-        self.update_rolling_mode_visibility()
+        #self.update_rolling_mode_visibility()
         self.attribute_widgets['duration'].value_changed.connect(self.update_rolling_mode_visibility)
+
+        # since trigger_mode radiobuttons is not a regular attribute_widget,
+        # it is not synced with the module at creation time.
         self.update_running_buttons()
         self.update_rolling_mode_visibility()
+        self.rolling_mode = self.module.rolling_mode
 
     def update_attribute_by_name(self, name, new_value_list):
         """
@@ -216,8 +219,19 @@ class ScopeWidget(ModuleWidget):
         self.button_single.setEnabled(not self.rolling_mode)
 
     def autoscale(self):
-        """Autoscale pyqtgraph"""
-        self.plot_item.autoRange()
+        """Autoscale pyqtgraph. The current behavior is to autoscale x axis
+        and set y axis to  [-1, +1]"""
+        mini = np.nan
+        maxi = np.nan
+        for curve in self.curves:
+            if curve.isVisible():
+                mini = np.nanmin([curve.xData.min(), mini])
+                maxi = np.nanmax([curve.xData.max(), maxi])
+        if not np.isnan(mini):
+            self.plot_item.setRange(xRange=[mini,
+                                            maxi])
+        self.plot_item.setRange(yRange=[-1,1])
+        # self.plot_item.autoRange()
 
     def save_clicked(self):
         self.module.save_curve()

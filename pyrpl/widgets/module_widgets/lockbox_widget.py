@@ -694,9 +694,29 @@ class LockboxWidget(ModuleWidget):
         self.all_sig_widget = AllSignalsWidget(self)
         self.main_layout.addWidget(self.all_sig_widget)
         self.sequence_widget = self.module._sequence.create_widget()
+
+        self.button_hide = QtGui.QPushButton("^")
+        self.button_hide_clicked()
+        self.button_hide.setMaximumHeight(15)
+        #self.button_hide.setMaximumWidth(150)
+        self.button_hide.clicked.connect(self.button_hide_clicked)
+        self.main_layout.addWidget(self.button_hide)
+
         self.main_layout.addWidget(self.sequence_widget)
         self.main_layout.addStretch(5)
         self.setLayout(self.main_layout)
+
+    def button_hide_clicked(self):
+        """
+        Hide/show the signal part of the widget
+        :return:
+        """
+        if str(self.button_hide.text())=='v':
+            self.button_hide.setText('^')
+            self.all_sig_widget.show()
+        else:
+            self.button_hide.setText('v')
+            self.all_sig_widget.hide()
 
     def input_calibrated(self, inputs):
         """

@@ -2,6 +2,11 @@ import logging
 logger = logging.getLogger(name=__name__)
 from .test_base import TestPyrpl
 
+from time import sleep
+from PyQt4 import QtCore, QtGui
+
+APP = QtGui.QApplication.instance()
+
 class TestClass(TestPyrpl):
 
     def test_specan_stopped_at_startup(self):
@@ -25,3 +30,23 @@ class TestClass(TestPyrpl):
         curve = sa.curve()
         # Assumes out1 is connected with adc1...
         assert(curve.argmax() == len(curve)/2), curve.argmax()
+
+    def test_no_write_in_config(self):
+        """
+        Make sure the spec an isn't continuously writing to config file,
+        even in running mode.
+        :return:
+        """
+
+        self.pyrpl.spectrum_analyzer.setup(start_freq=1e5,
+                      stop_freq=2e5,
+                      rbw=100000,
+                      input="out1",
+                      running_continuous=True)
+        old = self.pyrpl.c._save_counter
+        for i in range(10):
+            sleep(0.01)
+            APP.processEvents()
+        new = self.pyrpl.c._save_counter
+        self.spectrum_analyzer.stop()
+        assert (old == new)

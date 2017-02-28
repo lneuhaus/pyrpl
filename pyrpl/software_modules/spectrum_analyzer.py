@@ -166,6 +166,7 @@ class SignalLauncherSpectrumAnalyzer(SignalLauncher):
         self.timer_continuous.setInterval(1000./self._max_refresh_rate)
         self.timer_continuous.timeout.connect(self.check_for_curves)
         self.timer_continuous.setSingleShot(True)
+        self.first_display = True
 
     def kill_timers(self):
         """
@@ -177,6 +178,7 @@ class SignalLauncherSpectrumAnalyzer(SignalLauncher):
         """
         periodically checks for curve.
         """
+        self.first_display = True
         self.module.setup()
         self.timer_continuous.start()
 
@@ -184,8 +186,8 @@ class SignalLauncherSpectrumAnalyzer(SignalLauncher):
         self.timer_continuous.stop()
 
     def run_single(self):
-        self.module.stop()
         self.module.setup()
+        self.first_display = True
         self.timer_continuous.start()
 
     def check_for_curves(self):
@@ -196,14 +198,19 @@ class SignalLauncherSpectrumAnalyzer(SignalLauncher):
         3/ Restarts the timer.
         """
         #if self.module.running_continuous:
-        if self.module.acquire_one_curve():  # true if new data to plot are available
+        if self.module.acquire_one_curve():  # true if new data to plot
+                                             # are available
             self.update_display.emit()
         else:  # curve not ready, wait for next timer iteration
             self.timer_continuous.start()
-        if self.module.current_average == 1:
-            self.autoscale_display.emit()
-        if self.module.running_continuous and not self.timer_continuous.isActive():
+        if self.module.current_average>=self.module.avg:
+            self.module.running_single = False
+        if self.module.is_running() and \
+                (not self.timer_continuous.isActive()):
             self.timer_continuous.start()
+        if self.first_display:
+            self.first_display = False
+            self.autoscale_display.emit()
 
 
 class RunningContinuousProperty(BoolProperty):
@@ -223,21 +230,6 @@ class SpectrumAnalyzer(SoftwareModule):
     A spectrum analyzer is composed of an IQ demodulator, followed by a scope.
     The spectrum analyzer connections are made upon calling the function setup.
 
-    Example 1:
-      r = RedPitayaGui("1.1.1.1")
-      sa = SpectrumAnalyzer(r)
-      sa.setup(span=1000, center=100000)
-      curve = sa.curve()
-      freqs = sa.freqs()
-
-    Example 2:
-      r = RedPitayaGui("1.1.1.1")
-      sa = SpectrumAnalyzer(r)
-      sa.span = 1000
-      sa.center = 100000
-      sa.setup()
-      curve = sa.curve()
-      freqs = sa.freqs()
     """
     _section_name = 'spectrum_analyzer'
     _widget_class = SpecAnWidget
@@ -304,6 +296,7 @@ class SpectrumAnalyzer(SoftwareModule):
         self.avg = 10
         self.window = "flattop"
         self.points = Scope.data_length
+        self.running_single = False
         self.restart_averaging()
         """ # intializing stuff while scope is not reserved modifies the
         parameters of the scope...
@@ -335,8 +328,8 @@ class SpectrumAnalyzer(SoftwareModule):
 
     def _setup(self):
         """
-        Set things up for a spectrum acquisition. Between setup(**kwds) and curve(),
-        the spectrum analyzer takes ownership over the scope.
+        Set things up for a spectrum acquisition. Between setup(**kwds) and
+        curve(), the spectrum analyzer takes ownership over the scope.
         """
         self._is_setup = True
         # setup iq module
@@ -351,18 +344,21 @@ class SpectrumAnalyzer(SoftwareModule):
                 output_direct='off',
                 output_signal='quadrature',
                 quadrature_factor=self.quadrature_factor)
-        # change scope ownership in order not to mess up the scope configuration
+        # change scope ownership in order not to mess up the scope
+        # configuration
         if self.scope.owner != self.name:
             self.pyrpl.scopes.pop(self.name)
         # setup scope
-        self.scope.sampling_time = self.sampling_time # only duration can be used within setup
+        self.scope.sampling_time = self.sampling_time # only duration can be
+        #  used within setup
         if self.baseband:
             self.scope.input1 = self.input
         else:
             self.scope.input1 = self.iq
             self.scope.input1 = self.iq_quadraturesignal
         self.scope.setup(average=True,
-                         trigger_source="immediately")
+                         trigger_source="immediately",
+                         rolling_mode=False)
 
     def curve_ready(self):
         return self.scope.curve_ready()
@@ -407,7 +403,8 @@ class SpectrumAnalyzer(SoftwareModule):
 
     def useful_index(self):
         """
-        :return: a slice containing the portion of the spectrum between start and stop
+        :return: a slice containing the portion of the spectrum between start
+        and stop
         """
         middle = int(self.data_length / 2)
         length = self.points  # self.data_length/self.nyquist_margin
@@ -418,10 +415,13 @@ class SpectrumAnalyzer(SoftwareModule):
 
     def curve(self, timeout=None):
         """
-        Get a spectrum from the device. It is mandatory to call setup() before curve()
+        Get a spectrum from the device. It is mandatory to call setup() before
+        curve()
             If timeout>0:  runs until data is ready or timeout expires
             If timeout is None: timeout is auto-set to twice scope.duration
             If timeout is <0, throws ValueError
+        No averaging is done at this stage (averaging only occurs within the
+        asynchronous mode of operation run_...)
         """
         if timeout is not None and timeout<0:
             raise(ValueError('Timeout needs to be None or >0'))
@@ -454,9 +454,10 @@ class SpectrumAnalyzer(SoftwareModule):
         [curve_ch1, curve_ch2]...
         """
         params = self.get_setup_attributes()
-        for attr in ["current_average", "running_continuous"]:
+        for attr in ["current_average", "running_continuous",
+                     "running_single"]:
             params[attr] = self.__getattribute__(attr)
-        params.update()
+        params.update(name=params['curve_name'])
         curve = self._save_curve(self.frequencies,
                                  self.data,
                                  **params)
@@ -472,7 +473,9 @@ class SpectrumAnalyzer(SoftwareModule):
         """
         Stops the current acquisition.
         """
+        self.running_single = False
         self.running_continuous = False
+
 
     def restart_averaging(self):
         """
@@ -480,6 +483,12 @@ class SpectrumAnalyzer(SoftwareModule):
         """
         self.data = np.zeros(len(self.frequencies))
         self.current_average = 0
+
+    def is_running(self):
+        """
+        :return:  True if running_continuous or running_single
+        """
+        return self.running_continuous or self.running_single
 
     def acquire_one_curve(self):
         """
@@ -499,7 +508,7 @@ class SpectrumAnalyzer(SoftwareModule):
             # let current_average be maximally equal to avg -> yields best real-time averaging mode
             if self.current_average > self.avg:
                 self.current_average = self.avg
-            if self.running_continuous:
+            if self.is_running():
                 self.setup()
             return True
         else:
@@ -512,9 +521,12 @@ class SpectrumAnalyzer(SoftwareModule):
 
     def run_single(self):
         """
-        Feeds gui with one new curve from the scope. Once ready, data are located in self.last_datas.
+        Feeds gui with one new curve from the scope. Once ready, data are
+        located in self.last_datas.
         """
         self.stop()
+        self.restart_averaging()
+        self.running_single = True
         self.setup()
         self._signal_launcher.run_single()
 

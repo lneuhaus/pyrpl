@@ -15,23 +15,53 @@ logger = logging.getLogger(__name__)
 
 class InputSignal(SoftwareModule):
     """
-    An input signal allows to convert a measured voltage into the value of the
-    model's physical variable in *unit*. The signal can be calibrated by
-    taking a curve while scanning an output.
-      - calibrate()
-      -
+    A Signal that corresponds to an inputsignal of the DSPModule inside the
+    RedPitaya. Moreover, the signal should provide a function to convert the
+    measured voltage into the value of the model's physical variable in
+    *unit*. The signal can be calibrated by taking a curve while scanning
+    an output.
+
+    module attributes (see BaseModule):
+    -----------------------------------
+    - input_channel: the redpitaya dsp input representing the signal
+    - min: min of the signal in V over a lockbox sweep
+    - max: max of the signal in V over a lockbox sweep
+    - mean: mean of the signal in V over a lockbox sweep
+    - rms: rms of the signal in V over a lockbox sweep
+
+    public methods:
+    ---------------
+    - acquire(): returns an experimental curve in V obtained from a sweep of
+    the lockbox.
+    - calibrate(): acquires a curve and determines all constants needed by
+    expected_signal
+    - expected_signal(variable): to be reimplemented in concrete derived class:
+    Returns the value of the expected signal in V, depending on the variable
+    value.
+    - expected_slope: returns the slope of the expected signal wrt variable at
+    a given value of the variable.
+    - relative_mean(self): returns the ratio between the measured mean value
+    and the expected one.
+    - relative_rms(self): returns the ratio between the measured rms value and
+    the expected mean.
+    - variable(): Estimates the model variable from the current value of
+    the input.
     """
     _section_name = 'input'  # name of the input
     _setup_attributes = ["input_channel", "min", "max", "mean", "rms"]
     _gui_attributes = ["input_channel"]
-    input_channel = SelectProperty(options=sorted(DSP_INPUTS.keys()))  # ['in1', 'in2']) # adc
+    input_channel = SelectProperty(options=sorted(DSP_INPUTS.keys()),
+                                   doc="the redpitaya dsp input representing "
+                                       "the signal"
+                                   )  # ['in1', 'in2']) # adc
     # Is it desirable to be allowed to select any internal signal?
     model_cls = None  # Model class to which this input belongs.
     _widget_class = LockboxInputWidget
-    min = FloatProperty()
-    max = FloatProperty()
-    mean = FloatProperty()
-    rms = FloatProperty(min=0, max=2)
+    min = FloatProperty(doc="min of the signal in V over a lockbox sweep")
+    max = FloatProperty(doc="max of the signal in V over a lockbox sweep")
+    mean = FloatProperty(doc="mean of the signal in V over a lockbox sweep")
+    rms = FloatProperty(min=0, max=2, doc="rms of the signal in V over a "
+                                          "lockbox sweep")
 
     """
     def __init__(self, model):
@@ -62,7 +92,8 @@ class InputSignal(SoftwareModule):
 
     def acquire(self):
         """
-        returns an experimental curve in V obtained from a sweep of the lockbox.
+        returns an experimental curve in V obtained from a sweep of the
+        lockbox.
         """
         self.lockbox.sweep()
         with self.pyrpl.scopes.pop(self.name) as scope:
@@ -86,7 +117,8 @@ class InputSignal(SoftwareModule):
 
     def get_stats_from_curve(self, curve):
         """
-        gets the mean, min, max, rms value of curve (into the corresponding self's attributes)
+        gets the mean, min, max, rms value of curve (into the corresponding
+        self's attributes).
         """
         self.mean = curve.mean()
         self.rms = curve.std()
@@ -105,6 +137,10 @@ class InputSignal(SoftwareModule):
             return 0.01
 
     def mean_rms(self):
+        """
+        returns a tuple containing the mean and rms value of the measured
+        signal in volts.
+        """
         if time() - self._lasttime >= self._sampler_time:
             self._lastmean, self._lastrms = self.pyrpl.rp.sampler.mean_stddev(self.signal(),
                                                                               t=self._sampler_time)
@@ -112,12 +148,18 @@ class InputSignal(SoftwareModule):
         return self._lastmean, self._lastrms
 
     def relative_mean(self):
+        """
+        returns the ratio between the measured mean value and the expected one.
+        """
         # get fresh data
         mean, rms = self.mean_rms()
         # compute relative quantity
         return mean/self.expected_amplitude
 
     def relative_rms(self):
+        """
+        returns the ratio between the measured rms value and the expected mean.
+        """
         # get fresh data
         mean, rms = self.mean_rms()
         # compute relative quantity
@@ -125,7 +167,8 @@ class InputSignal(SoftwareModule):
 
     def calibrate(self):
         """
-        This function should be reimplemented to measure whatever property of the curve is needed by expected_signal
+        This function should be reimplemented to measure whatever property of
+        the curve is needed by expected_signal.
         """
         curve = self.acquire()
         self.get_stats_from_curve(curve)
@@ -143,15 +186,16 @@ class InputSignal(SoftwareModule):
 
     def expected_signal(self, variable):
         """
-        Returns the value of the expected signal in V, depending on the variable value "variable". The parameters in
-        self.parameters should have been calibrated beforehand.
+        Returns the value of the expected signal in V, depending on the
+        variable value "variable".
         """
         raise NotImplementedError("Formula relating variable and parameters to output should be implemented in derived "
                                   "class")
 
     def expected_slope(self, variable):
         """
-        Returns the slope of the expected signal wrt variable at a given value of the variable.
+        Returns the slope of the expected signal wrt variable at a given value
+        of the variable.
         """
         return scipy.misc.derivative(self.expected_signal,
                                      variable,
@@ -161,8 +205,7 @@ class InputSignal(SoftwareModule):
 
     def inverse(self, func, y, x0, args=()):
         """
-        Finds a solution x to the equation y = func(x) in the
-        vicinity of x0.
+        Finds a solution x to the equation y = func(x) in the vicinity of x0.
 
         Parameters
         ----------

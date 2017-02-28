@@ -7,7 +7,6 @@ Subpackages
 .. toctree::
 
     pyrpl.hardware_modules
-    pyrpl.models
     pyrpl.software_modules
     pyrpl.test
     pyrpl.trash
@@ -20,22 +19,6 @@ pyrpl.attributes module
 -----------------------
 
 .. automodule:: pyrpl.attributes
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-pyrpl.bijection module
-----------------------
-
-.. automodule:: pyrpl.bijection
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-pyrpl.bodefit module
---------------------
-
-.. automodule:: pyrpl.bodefit
     :members:
     :undoc-members:
     :show-inheritance:
@@ -64,26 +47,10 @@ pyrpl.fitting module
     :undoc-members:
     :show-inheritance:
 
-pyrpl.iir module
-----------------
-
-.. automodule:: pyrpl.iir
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 pyrpl.memory module
 -------------------
 
 .. automodule:: pyrpl.memory
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-pyrpl.model module
-------------------
-
-.. automodule:: pyrpl.model
     :members:
     :undoc-members:
     :show-inheritance:

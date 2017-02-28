@@ -90,7 +90,7 @@ class Sequence(SoftwareModule):
         for stage in to_remove:
             self.remove_stage(stage, allow_last_stage=True)
 
-    def load_setup_attributes(self):
+    def _load_setup_attributes(self):
         #import pdb
         #pdb.set_trace()
         self.remove_all_stages()
@@ -101,21 +101,21 @@ class Sequence(SoftwareModule):
                         stage = self.add_stage_no_save() # don't make a duplicate entry in the config file
                         stage._autosave_active = False
                         self.rename_stage(stage, name)
-                        stage.load_setup_attributes()
+                        stage._load_setup_attributes()
                         stage._autosave_active = True
         if len(self.stages)==0:
             self.add_stage()
 
     def save_state(self, name, state_branch=None):
         if state_branch is None:
-            state_branch = self.c_states
+            state_branch = self._c_states
         state_branch[name] = OrderedDict()
         for stage in self.stages:
             stage.save_state(stage.name, getattr(state_branch, name))
 
     def load_state(self, name, state_section=None):
         if state_section is None:
-            state_section = self.c_states
+            state_section = self._c_states
         self.remove_all_stages()
         for stage_section in state_section[name].values():
             stage = self.add_stage()

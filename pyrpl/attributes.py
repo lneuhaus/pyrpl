@@ -14,10 +14,16 @@ behind the scene, and they are coded in this file.
 """
 from __future__ import division
 from .pyrpl_utils import Bijection
-from .widgets.attribute_widgets import BoolAttributeWidget, FloatAttributeWidget, FilterAttributeWidget, \
-                                            IntAttributeWidget, SelectAttributeWidget, StringAttributeWidget, \
-                                            ListComplexAttributeWidget, FrequencyAttributeWidget, \
-                                            ListStageOutputAttributeWidget, ListFloatAttributeWidget
+from .widgets.attribute_widgets import BoolAttributeWidget, \
+                                       FloatAttributeWidget, \
+                                       FilterAttributeWidget, \
+                                       IntAttributeWidget, \
+                                       SelectAttributeWidget, \
+                                       StringAttributeWidget, \
+                                       ListComplexAttributeWidget, \
+                                       FrequencyAttributeWidget, \
+                                       ListStageOutputAttributeWidget, \
+                                       ListFloatAttributeWidget
 
 import logging
 import sys
@@ -1077,3 +1083,4 @@ class ListStageOuputProperty(ListStageOutputAttribute, BaseProperty):
     A property for a list named bool value (dict with str-bool mapping)
     """
     default = {}
+

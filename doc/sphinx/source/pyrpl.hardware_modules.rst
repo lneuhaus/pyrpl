@@ -1,6 +1,13 @@
 pyrpl.hardware_modules package
 ==============================
 
+Subpackages
+-----------
+
+.. toctree::
+
+    pyrpl.hardware_modules.iir
+
 Submodules
 ----------
 
@@ -48,14 +55,6 @@ pyrpl.hardware_modules.hk module
 --------------------------------
 
 .. automodule:: pyrpl.hardware_modules.hk
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-pyrpl.hardware_modules.iir module
----------------------------------
-
-.. automodule:: pyrpl.hardware_modules.iir
     :members:
     :undoc-members:
     :show-inheritance:

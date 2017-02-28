@@ -107,8 +107,11 @@ class Lockbox(SoftwareModule):
     _section_name = 'lockbox'
     _widget_class = LockboxWidget
     _signal_launcher = SignalLauncherLockbox
-    _setup_attributes = ["classname", "default_sweep_output",
-                         "auto_lock", "error_threshold", "auto_lock_interval"]
+    _setup_attributes = ["classname",
+                         "default_sweep_output",
+                         "auto_lock",
+                         "auto_lock_interval",
+                         "error_threshold"]
     _gui_attributes = _setup_attributes
 
     classname = ClassnameProperty(options=[]) #all_models().keys())
@@ -393,10 +396,25 @@ class Lockbox(SoftwareModule):
             delattr(self, output.name)
         output.clear()
         self.outputs.remove(output)
+<<<<<<< HEAD
         self._sequence.update_outputs()
         if 'outputs' in self.c._keys():
             if output.name in self.c.outputs._keys():
                 self.c.outputs._pop(output.name)
+=======
+        self.sequence.update_outputs()
+
+        if self._autosave_active:
+            to_remove = []
+            if 'outputs' in self.c._keys():
+                for key in self.c.outputs._keys():
+                    outp = self.c.outputs[key]
+                    if outp["name"] == output.name: # in
+                        to_remove.append(key)
+                for key in to_remove:
+                    self.c.outputs._pop(key)
+
+>>>>>>> 8c484e805e7cf858e3b6b8f6a2f5b50e3c976a78
         self.__class__.default_sweep_output.change_options(self,
                                                            [output_var.name for
                                                             output_var in
@@ -412,7 +430,8 @@ class Lockbox(SoftwareModule):
 
     def _rename_output(self, output, new_name):
         """
-        This changes the name of the output in many different places: lockbox attribute, config file, pid's owner
+        This changes the name of the output in many different places: lockbox
+        attribute, config file, pid's owner
         """
         if new_name in self._output_names and self._get_output(new_name)!=output:
             raise ValueError("Name %s already exists for an output"%new_name)
@@ -446,14 +465,56 @@ class Lockbox(SoftwareModule):
     def _remove_all_stages(self):
         self._sequence.remove_all_stages()
 
-    def load_setup_attributes(self):
+    def _obsolete_model_changed(self):
+        ### model should be redisplayed
+        self.model = all_models()[self.model_name](self)
+        self.model._load_setup_attributes()
+        #if self.widget is not None:
+        #    self.widget.change_model(self.model)
+
+        ### outputs are only slightly affected by a change of model: only the unit of their DC-gain might become
+        ### obsolete, in which case, it needs to be changed to some value...
+        for output in self.outputs:
+            output.update_for_model()
+
+        ### inputs are intimately linked to the model used. When the model is changed, the policy is:
+        ###  - keep inputs that have a name compatible with the new model.
+        ###  - remove inputs that have a name unexpected in the new model
+        ###  - add inputs from the new model that have a name not present in the old model
+        names = get_unique_name_list_from_class_list(self.model.input_cls)
+        intersect_names = []
+
+        to_remove = [] # never iterate on a list that is being deleted
+        for input in self.inputs:
+            if not input.name in names:
+                to_remove.append(input)
+            else:
+                intersect_names.append(input.name)
+        for input in to_remove:
+            self._remove_input(input)
+        for name, cls in zip(names, self.model.input_cls):
+            if not name in intersect_names:
+                input = cls(self, name)
+                self._add_input(input)
+                input._load_setup_attributes()
+                input.setup()
+
+        ### update stages: keep outputs unchanged, when input doesn't exist anymore, change it.
+        self.sequence.update_inputs()
+        self._signal_launcher.model_changed.emit()
+
+    def _load_setup_attributes(self):
         """
         This function needs to be overwritten to retrieve the child module
         attributes as well
         """
+
+        # prevent saving wrong default_sweep_output at startup
+        self._autosave_active = False
+
+        # clean up outputs
         self._remove_all_outputs()
         # load outputs, prevent saving wrong default_sweep_output at startup
-        self._autosave_active = False
         if self.c is not None:
             if 'outputs' in self.c._dict.keys():
                 for name, output in self.c.outputs._dict.items():
@@ -461,7 +522,7 @@ class Lockbox(SoftwareModule):
                         output = self._add_output_no_save()
                         output._autosave_active = False
                         self._rename_output(output, name)
-                        output.load_setup_attributes()
+                        output._load_setup_attributes()
                         output._autosave_active = True
         if len(self.outputs)==0:
             self._add_output()  # add at least one output
@@ -470,16 +531,16 @@ class Lockbox(SoftwareModule):
         # load inputs
         for input in self.inputs:
             input._autosave_active = False
-            input.load_setup_attributes()
+            input._load_setup_attributes()
             input._autosave_active = True
 
         # load normal attributes (model, default_sweep_output)
-        super(Lockbox, self).load_setup_attributes()
+        super(Lockbox, self)._load_setup_attributes()
 
         # load sequence
-        self._sequence._autosave_active = False
-        self._sequence.load_setup_attributes()
-        self._sequence._autosave_active = True
+        self.sequence._autosave_active = False
+        self.sequence._load_setup_attributes()
+        self.sequence._autosave_active = True
 
     def _remove_input(self, input):
         input.clear()

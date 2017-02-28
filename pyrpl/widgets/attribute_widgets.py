@@ -425,7 +425,7 @@ class BaseAttributeWidget(QtGui.QWidget):
 
         self.widget = None
 
-    def _update(self):
+    def _update(self, new_value):
         """
         To overwrite in base class.
         """
@@ -730,7 +730,6 @@ class ListFloatSpinBox(QtGui.QWidget):
                 self.lay.addLayout(current_layout)
 
 
-
 class ListComplexSpinBox(QtGui.QFrame):
     value_changed = QtCore.pyqtSignal()
 
@@ -928,6 +927,7 @@ class ListComplexAttributeWidget(BaseAttributeWidget):
     @property
     def number(self):
         return len(self.widget.spins)
+
 
 class ListComboBox(QtGui.QWidget):
     value_changed = QtCore.pyqtSignal()
