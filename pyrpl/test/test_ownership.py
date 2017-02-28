@@ -10,9 +10,11 @@ APP = QtGui.QApplication.instance()
 
 class TestClass(TestPyrpl):
     def test_ownership_restored(self):
-        # make sure scope rolling_mode and running states are correctly setup when something is changed
+        # make sure scope rolling_mode and running states are correctly setup
+        # when something is changed
         if self.r is None:
             return
+        self.pyrpl.na.iq.free() # otherwise not a single iq is left for test
 
         for module in self.pyrpl.modules:
             if isinstance(module, ModuleManager):
