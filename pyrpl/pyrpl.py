@@ -65,7 +65,7 @@ class Pyrpl(object):
         RedPitaya for possible keywords.
     """
     def __init__(self,
-                 config="myconfigfile",
+                 config=None,
                  source=None,
                  **kwargs):
         # logger initialisation
@@ -90,7 +90,7 @@ class Pyrpl(object):
         for module in self.hardware_modules:  # setup hardware modules with config file keys
             if module.owner is None: # (only modules that are not slaved by software modules)
                 try:
-                    module.load_setup_attributes() # **self.c[module.name])
+                    module._load_setup_attributes() # **self.c[module.name])
                 except BaseException as e:
                     self.logger.warning('Something went wrong when loading attributes of module "%s"'%module.name)
         # create software modules...

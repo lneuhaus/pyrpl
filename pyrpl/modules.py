@@ -319,7 +319,6 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
             self.set_setup_attributes(**dic)
 
     @property
-
     def c(self):
         """
         The config file instance. In practice, writing values in here will
