@@ -558,21 +558,6 @@ class Lockbox(SoftwareModule):
         """
         return self._sequence.get_stage(name)
 
-    def _classname_changed(self):
-        # check whether a new object must be instantiated and return if not
-        if self.classname == self.__class__.__name__:
-            return
-        # delete former lockbox (free its resources)
-        self._delete_Lockbox()
-        # make a new object
-        new_lockbox = self._make_Lockbox(self.parent, self.name)
-        # update references
-        self.parent.lockbox = new_lockbox
-        self.parent.software_modules[self.parent.software_modules.index(self)] = new_lockbox
-
-        # launch signal
-        new_lockbox._signal_launcher.model_changed.emit()
-
     def _lockstatus(self):
         """ this function is a placeholder for periodic lockstatus
         diagnostics, such as calls to is_locked, logging means and rms
@@ -633,3 +618,24 @@ class Lockbox(SoftwareModule):
     def model(self):
         self._logger.warning("Using the model property of Lockbox will soon be deprecated. Please use lockbox instead! ")
         return self
+
+    def _classname_changed(self):
+        # check whether a new object must be instantiated and return if not
+        if self.classname == type(self).__name__:
+            self._logger.info("Classname not changed: - formerly: %s, now: %s.",
+                              type(self).__name__,
+                              self.classname)
+            return
+        self._logger.info("Lockbox classname changed - formerly: %s, now: %s.",
+                          type(self).__name__,
+                          self.classname)
+        # delete former lockbox (free its resources)
+        self._delete_Lockbox()
+        # make a new object
+        new_lockbox = self._make_Lockbox(self.parent, self.name)
+        # update references
+        self.parent.lockbox = new_lockbox
+        self.parent.software_modules[self.parent.software_modules.index(self)] = new_lockbox
+
+        # launch signal
+        new_lockbox._signal_launcher.model_changed.emit()

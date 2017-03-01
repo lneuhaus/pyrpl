@@ -334,6 +334,7 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
             manager_section[self.name] = dict()
         return getattr(manager_section, self.name)
 
+    @property
     def _c_states(self):
         """
         Returns the config file branch corresponding to the "states" section.

@@ -132,7 +132,7 @@ class InputSignal(SoftwareModule):
     @property
     def _sampler_time(self):
         try:
-            return self.model._sampler_time
+            return self.lockbox._sampler_time
         except:
             return 0.01
 
