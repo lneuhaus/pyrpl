@@ -770,28 +770,6 @@ class LockboxWidget(ModuleWidget):
         """
         self.all_sig_widget.remove_output(outputs[0])
 
-    def classname_changed(self):
-        """
-        This function destroys the old lockbox widget and loads a new one
-        """
-        # get the new lockbox object (should be created before signal is emitted
-        lockbox = self.module.parent.lockbox
-
-        self.module = lockbox
-
-        #for w in self.module.parent.widgets:
-        #    self.deleteLater()
-        #    w.add_dock_widget(lockbox.create_widget, lockbox.name)
-
-        #self.lockbox.hide()
-        #self.main_layout.removeWidget(self.model_widget)
-        #self.deleteLater()
-        #widget = lockbox.create_widget()
-        #self.model_widget = widget
-        #self.main_layout.insertWidget(1, widget)
-
-
-
     ## Sequence Management
     def stage_created(self, stages):
         """
@@ -872,3 +850,23 @@ class LockboxWidget(ModuleWidget):
         self.button_is_locked.setStyleSheet("background-color: %s; "
                                             "color:white"%color)
 
+    def classname_changed(self):
+        """
+        This function destroys the old lockbox widget and loads a new one
+        """
+        pyrpl = self.module.parent
+        self.module = None  # allow module to be deleted
+        for w in pyrpl.widgets:
+            # save window position
+            w.timer_save_pos.stop()
+            w.save_window_position()
+            # replace dock widget
+            wasvisible=w.remove_dock_widget(pyrpl.lockbox.name)
+            w.add_dock_widget(pyrpl.lockbox.create_widget, pyrpl.lockbox.name)# , visible=wasvisible)
+            # restore window position and widget visibility
+            w.set_window_position()  # reset the same window position as before
+            w.timer_save_pos.start()
+        self.delete_widget()
+
+    def delete_widget(self):
+        self.deleteLater()

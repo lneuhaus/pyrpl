@@ -176,13 +176,34 @@ class PyrplWidget(QtGui.QMainWindow):
 
         action = QtGui.QAction(name, self.menu_modules)
         action.setCheckable(True)
+        self.module_actions.append(action)
+        self.menu_modules.addAction(action)
 
         # make sure menu and widget are in sync
         action.changed.connect(lambda: dock_widget.setVisible(action.isChecked()))
         dock_widget.visibilityChanged.connect(lambda:action.setChecked(dock_widget.isVisible()))
 
-        self.module_actions.append(action)
-        self.menu_modules.addAction(action)
+    def remove_dock_widget(self, name):
+        dock_widget = self.dock_widgets.pop(name)
+        # return later whether the widget was visible
+        wasvisible = dock_widget.isVisible()
+        # disconnect signals from widget
+        dock_widget.blockSignals(True)  # avoid further signals
+        # remove action button from context menu
+        for action in self.module_actions:
+            buttontext = action.text()
+            if buttontext == name:
+                action.blockSignals(True)  # avoid further signals
+                self.module_actions.remove(action)
+                self.menu_modules.removeAction(action)
+                action.deleteLater()
+        # remove dock widget
+        if self.last_docked == dock_widget:
+            self.last_docked = self.dock_widgets.values()[-1]
+        self.removeDockWidget(dock_widget)
+        dock_widget.deleteLater()
+        # return whether the widget was visible
+        return wasvisible
 
     def save_window_position(self):
         if self.isVisible(): # Don't try to save position if window is closed (otherwise, random position is saved)

@@ -30,8 +30,8 @@ class ClassnameProperty(SelectProperty):
         else:
             obj._logger.debug("Autosave of classname attribute of Lockbox is inactive. This may have severe impact "
                               "on proper functionality.")
-        # this results in replacing the lockbox object by a new one
-        obj._logger.warning("Classname changed to %s", val)
+        obj._logger.debug("Lockbox classname changed to %s", val)
+        # this call results in replacing the lockbox object by a new one
         obj._classname_changed()
         return val
 
@@ -69,7 +69,7 @@ class SignalLauncherLockbox(SignalLauncher):
         self.timer_lockstatus = QtCore.QTimer()
         self.timer_lockstatus.timeout.connect(self.call_lockstatus)
         self.timer_lockstatus.setSingleShot(True)
-        self.timer_lockstatus.setInterval(500.0)
+        self.timer_lockstatus.setInterval(5000.0)
 
         # start timer that checks lock status
         self.timer_lockstatus.start()
@@ -614,8 +614,6 @@ class Lockbox(SoftwareModule):
             o.clear()
         for i in self.inputs:
             i.clear()
-        self._logger.warning("Before deleting old lockbox: Existing software modules: "
-                             "\n%s", str(self.parent.software_modules))
         try:
             self.parent.software_modules.remove(self)
         except ValueError:
@@ -656,18 +654,7 @@ class Lockbox(SoftwareModule):
         new_lockbox = self._make_Lockbox(self.parent, self.name)
         # update references
         self.parent.lockbox = new_lockbox
-
         self.parent.software_modules.append(new_lockbox)
-        # launch signal for widget creation
-        new_lockbox._signal_launcher.classname_changed.emit()
-        #del self
-
-        # test that new lockbox is in software modules
-        if new_lockbox not in self.parent.software_modules:
-            self._logger.warning("Could not find new Lockbox %s in the list of software modules. Duplicate lockbox "
-                                 "objects may coexist. It is recommended to restart PyRPL. Existing software modules: "
-                                 "\n%s", self.name, str(self.parent.software_modules))
-
-
-    def create_widget(self):
-        return super(Lockbox, self).create_widget()
+        # launch signal for widget recreation
+        self._signal_launcher.classname_changed.emit()
+        del self
