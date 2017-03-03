@@ -68,8 +68,7 @@ class InputPdh(InputIq, InputAnalogPdh):
 
 
 class FabryPerot(Lockbox):
-    name = "FabryPerot"
-    _section_name = "fabryperot"
+    #name = "FabryPerot"
     units = ['m', 'Hz', 'nm', 'MHz']
     _model_attributes = ["wavelength", "finesse", "length", 'eta']
     _setup_attributes = Lockbox._setup_attributes + _model_attributes
@@ -155,7 +154,7 @@ class HighFinesseTransmission(HighFinesseInput, FPTransmission):
     Reflection for a FabryPerot. The only difference with FPReflection is that
     acquire will be done in 2 steps (coarse, then fine)
     """
-    #_section_name = 'hf_transmission'
+    _section_name = 'hf_transmission'
     pass
 
 
@@ -164,12 +163,10 @@ class HighFinessePdh(HighFinesseInput, InputPdh):
     Reflection for a FabryPerot. The only difference with FPReflection is that
     acquire will be done in 2 steps (coarse, then fine)
     """
-    #_section_name = 'hf_pdh'
     signal = InputPdh.signal
 
 
 class HighFinesseFabryPerot(FabryPerot):
-    name = "HighFinesseFP"
-    _section_name = "high_finesse_fp"
+    #name = "HighFinesseFP"
     input_cls = [HighFinesseReflection, HighFinesseTransmission,
                  HighFinessePdh]

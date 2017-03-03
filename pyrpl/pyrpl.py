@@ -124,6 +124,7 @@ class Pyrpl(object):
                 module = cls(self, name)
             setattr(self, module.name, module)
             self.software_modules.append(module)
+            self.logger.debug("Created software module %s", name)
 
     @property
     def hardware_modules(self):

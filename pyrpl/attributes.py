@@ -73,8 +73,7 @@ class BaseAttribute(object):
         """
         value = self.validate_and_normalize(value, instance)  # self.to_serializable(value)
         self.set_value(instance, value)  # sets the value internally
-        self.value_updated(instance, value)  # lauch signal and update
-        # config, callback
+        self.value_updated(instance, value)  # lauch signal and update config and callback
 
     def validate_and_normalize(self, value, module):
         """

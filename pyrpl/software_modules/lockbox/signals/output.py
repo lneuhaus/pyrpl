@@ -357,9 +357,6 @@ class OutputSignal(Signal):
         """
         self.pyrpl.pids.free(self.pid)
 
-    def unsetup(self):
-        self.pid.free()
-
     def set_ival(self, val):
         """
         sets the integrator value to val (in V)

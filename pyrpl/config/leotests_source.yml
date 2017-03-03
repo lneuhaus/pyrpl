@@ -1,0 +1,18 @@
+pyrpl:  # General configuration of the software:
+  name: nosetests_pyrpl
+  gui: true  # autostart gui
+  loglevel: warning # debug
+  # level of logged information.
+  # 'debug' outputs everything
+  # 'infi' is default level
+  # 'warning' only shows warnings and errors
+  # 'error' only shows errors
+  modules:  # SoftwareModules to load (in addition to IqManager, AsgManager,
+  # PidManager, ScopeManager)
+    - NetworkAnalyzer
+    - SpectrumAnalyzer
+    - Lockbox
+redpitaya:
+  silence_env: true
+  hostname: _DUMMY_
+  

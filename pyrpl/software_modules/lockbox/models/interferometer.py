@@ -19,8 +19,7 @@ class InterferometerPort2(InputDirect):
 
 
 class Interferometer(Lockbox):
-    name = "Interferometer"
-    _section_name = "interferometer"
+    #name = "Interferometer"
     units = ['m', 'deg', 'rad']
     wavelength = FloatProperty(max=10000, min=0, default=1.064)
     _setup_attributes = Lockbox._setup_attributes + ['wavelength']

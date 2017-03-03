@@ -10,6 +10,8 @@ from .sequence import Sequence
 from collections import OrderedDict
 from PyQt4 import QtCore
 
+#import logging
+#logger = logging.getLogger(__name__)
 
 def all_classnames():
     return OrderedDict([(subclass.__name__, subclass) for subclass in
@@ -22,6 +24,14 @@ class ClassnameProperty(SelectProperty):
     """
     def set_value(self, obj, val):
         super(ClassnameProperty, self).set_value(obj, val)
+        # we must save the attribute immediately here in order to guarantee that make_Lockbox works
+        if obj._autosave_active:
+            self.save_attribute(obj, val)
+        else:
+            obj._logger.debug("Autosave of classname attribute of Lockbox is inactive. This may have severe impact "
+                              "on proper functionality.")
+        # this results in replacing the lockbox object by a new one
+        obj._logger.warning("Classname changed to %s", val)
         obj._classname_changed()
         return val
 
@@ -36,7 +46,7 @@ class SignalLauncherLockbox(SignalLauncher):
     stage_created = QtCore.pyqtSignal(list)
     stage_deleted = QtCore.pyqtSignal(list)
     stage_renamed = QtCore.pyqtSignal()
-    model_changed = QtCore.pyqtSignal()
+    classname_changed = QtCore.pyqtSignal()
     state_changed = QtCore.pyqtSignal()
     add_input = QtCore.pyqtSignal(list)
     input_calibrated = QtCore.pyqtSignal(list)
@@ -114,7 +124,7 @@ class Lockbox(SoftwareModule):
                          "error_threshold"]
     _gui_attributes = _setup_attributes
 
-    classname = ClassnameProperty(options=[]) #all_models().keys())
+    classname = ClassnameProperty(options=['Lockbox']) #all_models().keys())
     parameter_name = "parameter"
     # possible units to describe the physical parameter to control e.g. ['m', 'MHz']
     units = ['V']
@@ -139,11 +149,10 @@ class Lockbox(SoftwareModule):
         self.outputs = []
         # show all available models and set current one
         self.__class__.classname.change_options(self, sorted(all_classnames().keys()))
-        self.classname = self.__class__.__name__
+        self.classname = type(self).__name__
         # load availbale sequences
         self._sequence = Sequence(self, 'sequence')
         # initial state is unlocked
-        self.state = "unlock"
 
         #<<<<<<< HEAD
         # parameters are updated and outputs are loaded by load_setup_attributes (called at the end of __init__)
@@ -236,6 +245,8 @@ class Lockbox(SoftwareModule):
 
     @property
     def state(self):
+        if not hasattr(self, "_state"):
+            self._state = "unlock"
         return self._state
 
     @state.setter
@@ -600,17 +611,27 @@ class Lockbox(SoftwareModule):
     def _delete_Lockbox(self):
         self._signal_launcher.kill_timers()
         for o in self.outputs:
-            o.unsetup()
+            o.clear()
         for i in self.inputs:
-            i.unsetup()
+            i.clear()
+        self._logger.warning("Before deleting old lockbox: Existing software modules: "
+                             "\n%s", str(self.parent.software_modules))
+        try:
+            self.parent.software_modules.remove(self)
+        except ValueError:
+            self._logger.warning("Could not find old Lockbox %s in the list of software modules. Duplicate lockbox "
+                                 "objects may coexist. It is recommended to restart PyRPL. Existing software modules: "
+                                 "\n%s", self.name, str(self.parent.software_modules))
 
     @classmethod
     def _make_Lockbox(cls, parent, name):
         # identify class name
         try:
-            classname = parent.c.lockboxs.lockbox.classname
-        except:
+            classname = parent.c.lockboxs[name]['classname']
+        except KeyError:
             classname = cls.__name__
+            parent.logger.warning("No config file entry for classname found. Using class '%s'.", classname)
+        parent.logger.info("Making new Lockbox with class %s. ", classname)
         # return instance of the class
         return all_classnames()[classname](parent, name)
 
@@ -622,11 +643,11 @@ class Lockbox(SoftwareModule):
     def _classname_changed(self):
         # check whether a new object must be instantiated and return if not
         if self.classname == type(self).__name__:
-            self._logger.info("Classname not changed: - formerly: %s, now: %s.",
+            self._logger.debug("Lockbox classname not changed: - formerly: %s, now: %s.",
                               type(self).__name__,
                               self.classname)
             return
-        self._logger.info("Lockbox classname changed - formerly: %s, now: %s.",
+        self._logger.debug("Lockbox classname changed - formerly: %s, now: %s.",
                           type(self).__name__,
                           self.classname)
         # delete former lockbox (free its resources)
@@ -635,7 +656,18 @@ class Lockbox(SoftwareModule):
         new_lockbox = self._make_Lockbox(self.parent, self.name)
         # update references
         self.parent.lockbox = new_lockbox
-        self.parent.software_modules[self.parent.software_modules.index(self)] = new_lockbox
 
-        # launch signal
-        new_lockbox._signal_launcher.model_changed.emit()
+        self.parent.software_modules.append(new_lockbox)
+        # launch signal for widget creation
+        new_lockbox._signal_launcher.classname_changed.emit()
+        #del self
+
+        # test that new lockbox is in software modules
+        if new_lockbox not in self.parent.software_modules:
+            self._logger.warning("Could not find new Lockbox %s in the list of software modules. Duplicate lockbox "
+                                 "objects may coexist. It is recommended to restart PyRPL. Existing software modules: "
+                                 "\n%s", self.name, str(self.parent.software_modules))
+
+
+    def create_widget(self):
+        return super(Lockbox, self).create_widget()

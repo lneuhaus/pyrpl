@@ -16,8 +16,7 @@ class Linear(Lockbox):
     """
     A simple linear dependance of variable vs input
     """
-    name = "Linear"
-    _section_name = "linear"
+    #name = "Linear"
     units = ['m', 'deg', 'rad']
     variable = 'x'
     input_cls = [LinearInputDirect]

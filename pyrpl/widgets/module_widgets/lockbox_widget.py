@@ -770,19 +770,27 @@ class LockboxWidget(ModuleWidget):
         """
         self.all_sig_widget.remove_output(outputs[0])
 
-    ## Model management
-    def _classname_changed(self):
+    def classname_changed(self):
         """
-        SLOT: don't change name unless you know what you are doing
-        displays the new model (In particular, updates all inputs)
+        This function destroys the old lockbox widget and loads a new one
         """
-        lockbox = self.module.lockbox
-        self.model_widget.hide()
-        self.main_layout.removeWidget(self.model_widget)
-        self.model_widget.deleteLater()
-        widget = lockbox.create_widget()
-        self.model_widget = widget
-        self.main_layout.insertWidget(1, widget)
+        # get the new lockbox object (should be created before signal is emitted
+        lockbox = self.module.parent.lockbox
+
+        self.module = lockbox
+
+        #for w in self.module.parent.widgets:
+        #    self.deleteLater()
+        #    w.add_dock_widget(lockbox.create_widget, lockbox.name)
+
+        #self.lockbox.hide()
+        #self.main_layout.removeWidget(self.model_widget)
+        #self.deleteLater()
+        #widget = lockbox.create_widget()
+        #self.model_widget = widget
+        #self.main_layout.insertWidget(1, widget)
+
+
 
     ## Sequence Management
     def stage_created(self, stages):

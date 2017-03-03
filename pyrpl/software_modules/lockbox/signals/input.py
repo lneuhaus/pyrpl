@@ -274,6 +274,9 @@ class InputSignal(SoftwareModule):
             pass
         return widget
 
+    def clear(self):
+        """ implements the freeing of all resources in child classes"""
+        pass
 
 class InputDirect(InputSignal):
     _section_name = 'direct_input'
@@ -377,6 +380,7 @@ class InputIq(InputDirect):
         self.setup()
 
     def clear(self):
+        super(InputIq, self).clear()
         self.pyrpl.iqs.free(self.iq)
 
     def signal(self):
@@ -402,10 +406,6 @@ class InputIq(InputDirect):
                       quadrature_factor=self.quadrature_factor,
                       output_signal='quadrature',
                       output_direct=self.mod_output)
-
-    def unsetup(self):
-        super(InputIq, self).unsetup()
-        self.iq.free()
 
 class InputFromOutput(InputDirect):
     _section_name = 'input_from_output'
