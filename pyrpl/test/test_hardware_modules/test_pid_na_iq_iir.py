@@ -238,7 +238,7 @@ class TestClass(TestPyrpl):
         # shortcut for na and bpf (bandpass filter)
         na = self.pyrpl.na
 
-        for bpf in [r.iq0, r.iq1]:
+        for bpf in [r.iq0, r.iq2]:
             plotdata = []
             # setup na for measurement
             na.setup(start_freq=300e3,

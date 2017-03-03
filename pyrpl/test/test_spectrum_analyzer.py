@@ -38,15 +38,18 @@ class TestClass(TestPyrpl):
         :return:
         """
 
-        self.pyrpl.spectrum_analyzer.setup(start_freq=1e5,
-                      stop_freq=2e5,
+        self.pyrpl.spectrum_analyzer.setup(center=2e5,
+                      span=1e5,
                       rbw=100000,
                       input="out1",
                       running_continuous=True)
+        for i in range(15):
+            sleep(0.01)
+            APP.processEvents()
         old = self.pyrpl.c._save_counter
         for i in range(10):
             sleep(0.01)
             APP.processEvents()
         new = self.pyrpl.c._save_counter
-        self.spectrum_analyzer.stop()
-        assert (old == new)
+        self.pyrpl.spectrum_analyzer.stop()
+        assert (old == new), (old, new)

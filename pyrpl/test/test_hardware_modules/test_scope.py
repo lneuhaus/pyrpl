@@ -141,14 +141,18 @@ class TestScopeClass(TestPyrpl):
         :return:
         """
 
-        self.pyrpl.rp.scope.setup(duration=0.005,
-                  trigger_delay=0., rolling_mode=False, input1='in1',
+        for rolling_mode in (True, False):
+            self.pyrpl.rp.scope.setup(duration=0.005,
+                  trigger_delay=0., rolling_mode=rolling_mode, input1='in1',
                   ch1_active=True, ch2_active=True,
                   running_continuous=True)
-        old = self.pyrpl.c._save_counter
-        for i in range(10):
-            sleep(0.01)
-            APP.processEvents()
-        new = self.pyrpl.c._save_counter
-        self.pyrpl.rp.scope.stop()
-        assert(old==new)
+            for i in range(10):
+                sleep(0.01)
+                APP.processEvents()
+            old = self.pyrpl.c._save_counter
+            for i in range(10):
+                sleep(0.01)
+                APP.processEvents()
+            new = self.pyrpl.c._save_counter
+            self.pyrpl.rp.scope.stop()
+            assert(old==new), (old, new)

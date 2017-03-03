@@ -305,7 +305,7 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
             self._callback_active = old_callback_active
         if len(kwds) > 0:
             raise ValueError("Attribute %s of module %s doesn't exist." %  (
-                kwds[0], self.name))
+                sorted(kwds.keys())[0], self.name))
 
     def _load_setup_attributes(self):
         """

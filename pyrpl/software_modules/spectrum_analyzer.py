@@ -244,7 +244,8 @@ class SpectrumAnalyzer(SoftwareModule):
                          "window",
                          "avg",
                          "acbandwidth",
-                         "curve_name"]
+                         "curve_name",
+                         "running_continuous"]
     _gui_attributes = _setup_attributes
 
     # numerical values

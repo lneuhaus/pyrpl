@@ -104,9 +104,10 @@ class EditLabel(MyMenuLabel):
         action_current.triggered.connect(functools.partial(self.func, None))
         others = menu.actions()
         if len(others)>0:
-            menu.insertAction(action_current, others[0])
+            other = others[0]
+            menu.insertAction(other, action_current)
         else:
-            menu.addAction(action_current)
+            menu.addAction(action_current) # will append the action at the end
         return menu
 
 
