@@ -27,11 +27,11 @@ except:  # otherwise, try ~/pyrpl_user_dir (where ~ is the user's home dir)
 
 # make variable directories
 user_config_dir = os.path.join(user_dir, 'config')
-user_curve_dir = os.path.join(user_dir, 'curves')
-user_model_dir = os.path.join(user_dir, 'models')
+user_curve_dir = os.path.join(user_dir, 'curve')
+user_lockbox_dir = os.path.join(user_dir, 'lockbox')
 default_config_dir = os.path.join(os.path.dirname(__file__), 'config')
 # create dirs if necessary
-for path in [user_dir, user_config_dir, user_curve_dir, user_model_dir]:
+for path in [user_dir, user_config_dir, user_curve_dir, user_lockbox_dir]:
     if not os.path.isdir(path):
         os.mkdir(path)
 

@@ -9,11 +9,11 @@ from .linear import *
 # try to import user models if applicable
 try:
     usermodels = []
-    from pyrpl import user_model_dir
+    from pyrpl import user_lockbox_dir
     import sys, os
-    sys.path.append(user_model_dir)
+    sys.path.append(user_lockbox_dir)
     module = None
-    for module in os.listdir(user_model_dir):
+    for module in os.listdir(user_lockbox_dir):
         if module == '__init__.py' or module[-3:] != '.py':
             continue
         usermodels.append(__import__(module[:-3], locals(), globals(), [], -1))
