@@ -92,6 +92,5 @@ setup(name='pyrpl',
       # extras_require={'testing': ['pytest']},
 	  test_suite='nose.collector',
       # install options
-      cmdclass={'test': PyTest, 'fpga': compile_fpga,
-                'server': compile_server},
+      cmdclass={'test': PyTest, 'fpga': compile_fpga, 'server': compile_server}
       )
