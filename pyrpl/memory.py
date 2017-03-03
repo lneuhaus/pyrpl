@@ -248,10 +248,10 @@ class MemoryBranch(object):
 
     def _update(self, new_dict):
         self._data.update(new_dict)
-        self._save()
         # keep auto_completion up to date
         for k in new_dict:
             self.__dict__[k] = None
+        self._save()
 
     def __getattribute__(self, name):
         """ implements the dot notation.
@@ -286,7 +286,6 @@ class MemoryBranch(object):
             raise
 
     def __setattr__(self, name, value):
-        #logger.debug("SETATTR %s %s",  name, value)
         if name.startswith('_'):
             super(MemoryBranch, self).__setattr__(name, value)
         else:
@@ -304,18 +303,30 @@ class MemoryBranch(object):
                 self._data[item] = dict(value)
             else:
                 self._data[item] = value
-            logger.debug("SETITEM %s %s", item, value)
+            #logger.debug("SETITEM %s %s", item, value)
             self._save()
             # update the __dict__ for autocompletion
             self.__dict__[item] = None
 
     def _pop(self, name):
         """remove an item from the branch"""
+        value = self._data.pop(name)
         if name in self.__dict__.keys():
             self.__dict__.pop(name)
-        value = self._data.pop(name)
         self._save()
         return value
+
+    def _rename(self, name):
+        self._parent[name] = self._parent._pop(self._branch)
+        self._save()
+
+    def _erase(self):
+        """
+        Erases the current branch
+        :return:
+        """
+        self._parent._pop(self._branch)
+        self._save()
 
     @property
     def _root(self):
@@ -344,16 +355,6 @@ class MemoryBranch(object):
         branch._defaults = defaults
         return branch
 
-    def _rename(self, name):
-        try:
-            branch = self._parent._pop(self._branch)
-        except KeyError:
-            branch = OrderedDict()
-        parent[name] = branch._data
-
-    def __repr__(self):
-        return "MemoryBranch("+str(self._dict.keys())+")"
-
     def _reload(self):
         """ reload data from file"""
         self._parent._reload()
@@ -361,14 +362,6 @@ class MemoryBranch(object):
     def _save(self):
         """ write data to file"""
         self._parent._save()
-
-    def _erase(self):
-        """
-        Erases the current brabnch
-        :return:
-        """
-        self._parent._pop(self._branch)
-        self._save()
 
     def _get_yml(self):
         """
@@ -386,6 +379,9 @@ class MemoryBranch(object):
         branch = load(yml_content)
         self._parent._data[self._branch] = branch
         self._save()
+
+    def __repr__(self):
+        return "MemoryBranch(" + str(self._dict.keys()) + ")"
 
 
 class MemoryTree(MemoryBranch):
@@ -418,7 +414,7 @@ class MemoryTree(MemoryBranch):
     # never reload or save more frequently than _loadsavedeadtime because
     # this is the principal cause of slowing down the code (typ. 30-200 ms)
     # for immediate saving, call _save_now, for immediate loading _load_now
-    _loadsavedeadtime = 2
+    _loadsavedeadtime = 3
 
     # the dict containing the entire tree data (nested dict)
     _data = OrderedDict()
