@@ -2,18 +2,21 @@ from ..signals import *
 from ..lockbox import Lockbox
 
 
-class FPTransmission(InputDirect):
-    _section_name = 'transmission'
-
-    def expected_signal(self, variable):
-        return self.min + (self.max - self.min) * self.model.lorentz(variable)
-
-
 class FPReflection(InputDirect):
     _section_name = 'reflection'
 
     def expected_signal(self, variable):
-        return self.max - (self.max - self.min) * self.model.lorentz(variable)
+        return self.max - (self.max - self.min) * self._lorentz(variable)
+
+    def _lorentz(self, x):
+        return 1.0 / (1.0 + x ** 2)
+
+class FPTransmission(FPReflection):
+    _section_name = 'transmission'
+
+    def expected_signal(self, variable):
+        return self.min + (self.max - self.min) * self._lorentz(variable)
+
 
 class InputAnalogPdh(InputDirect):
     _section_name = 'analog_pdh'
@@ -26,9 +29,9 @@ class InputAnalogPdh(InputDirect):
         amplitude = 0.5 * (self.max - self.min)
         # we neglect offset here because it should really be zero on resonance
         return amplitude * self._pdh_normalized(variable,
-                                    sbfreq=self.mod_freq/self.model.bandwidth,
+                                    sbfreq=self.mod_freq/self.lockbox.bandwidth,
                                     phase=0,
-                                    eta=self.model.eta)
+                                    eta=self.lockbox.eta)
 
     def _pdh_normalized(self, x, sbfreq=10.0, phase=0, eta=1):
         """  returns a pdh error signal at for a number of detunings x. """
@@ -84,9 +87,6 @@ class FabryPerot(Lockbox):
     variable = 'detuning'
 
     input_cls = [FPTransmission, FPReflection, InputPdh]
-
-    def lorentz(self, x):
-        return 1.0 / (1.0 + x ** 2)
 
     @property
     def free_spectral_range(self):
