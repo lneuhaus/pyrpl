@@ -114,3 +114,10 @@ class Bijection(dict):
     def update(self, *args, **kwargs):
         super(Bijection, self).update(*args, **kwargs)
         self.inverse = {v: k for k, v in self.items()}
+
+
+def all_subclasses(cls):
+    """ returns a list of all subclasses of cls """
+    return cls.__subclasses__() + [g for s in cls.__subclasses__()
+                                   for g in all_subclasses(s)]
+

@@ -16,7 +16,7 @@ class TestClass(TestPyrpl):
         old_len = len(self.lockbox.outputs)
 
         widget = self.lockbox.create_widget()
-        self.lockbox.add_output()
+        self.lockbox._add_output()
 
         assert len(self.lockbox.outputs)==old_len + 1
 
@@ -24,31 +24,31 @@ class TestClass(TestPyrpl):
 
         assert len(widget.all_sig_widget.output_widgets) == old_len + 1
 
-        self.lockbox.add_output()
+        self.lockbox._add_output()
 
-        names = self.lockbox.output_names#[out.name for out in self.lockbox.outputs]
+        names = self.lockbox._output_names#[out.name for out in self.lockbox.outputs]
         assert len(set(names)) == len(names) # Make sure unique names are
         # created
         assert hasattr(self.lockbox, names[-1])
 
     def test_delete_output(self):
         widget = self.lockbox.create_widget()
-        self.lockbox.remove_all_outputs()
-        self.lockbox.add_output()
-        self.lockbox.add_output()
-        old_name = self.lockbox.output_names[-1]
+        self.lockbox._remove_all_outputs()
+        self.lockbox._add_output()
+        self.lockbox._add_output()
+        old_name = self.lockbox._output_names[-1]
         assert(hasattr(self.lockbox, old_name))
         old_len = len(self.lockbox.outputs)
-        self.lockbox.remove_output(self.lockbox.outputs[-1])
+        self.lockbox._remove_output(self.lockbox.outputs[-1])
         assert(len(self.lockbox.outputs) == old_len-1)
         assert not (hasattr(self.lockbox, old_name))
         APP.processEvents()
         assert len(widget.all_sig_widget.output_widgets) == old_len-1
-        self.lockbox.remove_all_outputs()
-        out1 = self.lockbox.add_output()
-        out = self.lockbox.add_output()
+        self.lockbox._remove_all_outputs()
+        out1 = self.lockbox._add_output()
+        out = self.lockbox._add_output()
         self.lockbox.default_sweep_output = out
-        self.lockbox.remove_output(out.name)
+        self.lockbox._remove_output(out.name)
         # APP.processEvents()
         assert(self.lockbox.default_sweep_output == out1.name)
 
@@ -57,11 +57,11 @@ class TestClass(TestPyrpl):
         Check whether renaming an output updates everything properly
         """
         widget = self.lockbox.create_widget()
-        self.lockbox.remove_all_outputs()
-        output1 = self.lockbox.add_output()
-        output2 = self.lockbox.add_output()
+        self.lockbox._remove_all_outputs()
+        output1 = self.lockbox._add_output()
+        output2 = self.lockbox._add_output()
         try:
-            self.lockbox.rename_output(output1, output2.name)
+            self.lockbox._rename_output(output1, output2.name)
         except ValueError:
             pass
         else:
@@ -70,7 +70,7 @@ class TestClass(TestPyrpl):
         output2.name = "foo"
         assert(hasattr(self.lockbox, 'foo'))
 
-        self.lockbox.rename_output(output2, 'bar')
+        self.lockbox._rename_output(output2, 'bar')
         assert (hasattr(self.lockbox, 'bar'))
 
         assert(output2.pid.owner=='bar')
@@ -87,17 +87,17 @@ class TestClass(TestPyrpl):
 
         self.lockbox.add_stage()
 
-        names = self.lockbox.stage_names  # [out.name for out in self.lockbox.outputs]
+        names = self.lockbox._stage_names  # [out.name for out in self.lockbox.outputs]
         assert len(set(names)) == len(names)  # Make sure unique names are created
         assert hasattr(self.lockbox.sequence, names[-1])
 
     def test_delete_stage(self):
         widget = self.lockbox.create_widget()
         self.lockbox.add_stage()
-        old_name = self.lockbox.stage_names[-1]
+        old_name = self.lockbox._stage_names[-1]
         assert (hasattr(self.lockbox.sequence, old_name))
         old_len = len(self.lockbox.sequence.stages)
-        self.lockbox.remove_stage(self.lockbox.sequence.stages[-1])
+        self.lockbox._remove_stage(self.lockbox.sequence.stages[-1])
         assert (len(self.lockbox.sequence.stages) == old_len - 1)
         assert not (hasattr(self.lockbox.sequence, old_name))
         APP.processEvents()
@@ -125,11 +125,11 @@ class TestClass(TestPyrpl):
         pid = self.pyrpl.rp.pid1
         pid.i = 0.1
         pid.p = 0.1
-        self.lockbox.remove_all_stages()
-        self.lockbox.remove_all_outputs()
+        self.lockbox._remove_all_stages()
+        self.lockbox._remove_all_outputs()
         self.lockbox.model_name = 'Linear'
         stage = self.lockbox.add_stage()
-        out = self.lockbox.add_output()
+        out = self.lockbox._add_output()
         out.p = 0
         out.i = -10.
         stage.output_on = {"output1": (True, True, 1)}

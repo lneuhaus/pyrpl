@@ -24,6 +24,7 @@ import time
 from PyQt4 import QtCore
 from . import default_config_dir, user_config_dir
 from io import StringIO
+from .pyrpl_utils import time
 
 import logging
 logger = logging.getLogger(name=__name__)
@@ -156,9 +157,10 @@ def get_config_file(filename=None, source=None):
 class MemoryBranch(object):
     """Represents a branch of a memoryTree
 
-    All methods are preceded by an underscore to guarantee that tab expansion
-    of a memory branch only displays the available subbranches or leaves.
-
+    All methods are preceded by an underscore to guarantee that tab
+    expansion of a memory branch only displays the available subbranches or
+    leaves. A memory tree is a hierarchical structure. Nested dicts are
+    interpreted as subbranches.
 
     Parameters
     ----------
@@ -169,11 +171,41 @@ class MemoryBranch(object):
     defaults: list
         list of default branches that are used if requested data is not
         found in the current branch
+
+    Class members
+    -----------
+    all properties without preceeding underscore are config file entries
+
+    _data:      the raw data underlying the branch. Type depends on the
+                loader and can be dict, OrderedDict or CommentedMap
+    _dict:      similar to _data, but the dict contains all default
+                branches
+    _defaults:  list of MemoryBranch objects in order of decreasing
+                priority that are used as defaults for the Branch.
+                Changing the default values from the software will replace
+                the default values in the current MemoryBranch but not
+                alter the underlying default branch. Changing the
+                default branch when it is not overridden by the current
+                MemoryBranch results in an effective change in the branch.
+    _keys:      same as _dict._keys()
+    _update:    updates the branch with another dict
+    _pop:       removes a value/subbranch from the branch
+    _root:      the MemoryTree object (root) of the tree
+    _parent:    the parent of the branch
+    _branch:    the name of the branch
+    _new_branch: creates new branch. Same as br
+    _fullbranchname: returns the full path from root to the branch
+    _getbranch: returns a branch by specifying its path, e.g. 'b1.c2.d3'
+    _rename:    renames the branch
+    _reload:    attempts to reload the data from disc
+    _save:      attempts to save the data to disc
+
     """
+
     def __init__(self, parent, branch, defaults=list([])):
         self._branch = branch
         self._parent = parent
-        self._defaults = defaults
+        self._defaults = defaults  # this call also updates __dict__
 
     @property
     def _defaults(self):
@@ -188,7 +220,102 @@ class MemoryBranch(object):
         else:
             self.__defaults = [value]
         # update __dict__ with inherited values from new defaults
-        self.__dict__.update(self._dict)
+        dict = self._dict
+        for k in self.__dict__.keys():
+            if k not in dict and not k.startswith('_'):
+                self.__dict__.pop(k)
+        for k in dict.keys():
+            # write None since this is only a
+            # placeholder (__getattribute__ is overwritten below)
+            self.__dict__[k] = None
+
+    @property
+    def _data(self):
+        """ The raw data (OrderedDict) or Mapping of the branch """
+        return self._parent._data[self._branch]
+
+    @property
+    def _dict(self):
+        """ return a dict containing the memory branch data"""
+        d = OrderedDict()
+        for defaultdict in reversed(self._defaults):
+            d.update(defaultdict._dict)
+        d.update(self._data)
+        return d
+
+    def _keys(self):
+        return self._dict.keys()
+
+    def _update(self, new_dict):
+        self._data.update(new_dict)
+        self._save()
+        # keep auto_completion up to date
+        for k in new_dict:
+            self.__dict__[k] = None
+
+    def __getattribute__(self, name):
+        """ implements the dot notation.
+        Example: self.subbranch.leaf returns the item 'leaf' of 'subbranch' """
+        if name.startswith('_'):
+            return super(MemoryBranch, self).__getattribute__(name)
+        else:
+            # convert dot notation into dict notation
+            attribute = self[name]
+            # if subbranch, return MemoryBranch object
+            if isbranch(attribute):
+                return MemoryBranch(self, name)
+            # otherwise return whatever we find in the data dict
+            else:
+                return attribute
+
+    # getitem bypasses the higher-level __getattribute__ function and provides
+    # direct low-level access to the underlying dictionary.
+    # This is much faster, as long as no changes have been made to the config
+    # file.
+    def __getitem__(self, item):
+        self._reload()
+        try:
+            return self._data[item]
+        except KeyError:
+            # if not in data, iterate over default branches
+            for defaultbranch in self._defaults:
+                try:
+                    return defaultbranch._data[item]
+                except KeyError:
+                    pass
+            raise
+
+    def __setattr__(self, name, value):
+        #logger.debug("SETATTR %s %s",  name, value)
+        if name.startswith('_'):
+            super(MemoryBranch, self).__setattr__(name, value)
+        else:
+            self._data[name] = value
+            self._save()
+
+    # creates a new entry, overriding the protection provided by dot notation
+    # if the value of this entry is of type dict, it becomes a MemoryBranch
+    # new values can be added to the branch in the same manner
+    def __setitem__(self, item, value):
+        if item in self._data:
+            self.__setattr__(item, value)
+        else:
+            if isbranch(value):
+                self._data[item] = dict(value)
+            else:
+                self._data[item] = value
+            logger.debug("SETITEM %s %s", item, value)
+            self._save()
+            # update the __dict__ for autocompletion
+            self.__dict__[item] = None
+
+    def _pop(self, name):
+        """remove an item from the branch"""
+        if name in self.__dict__.keys():
+            self.__dict__.pop(name)
+        value = self._data.pop(name)
+        self._save()
+        return value
 
     @property
     def _root(self):
@@ -217,19 +344,15 @@ class MemoryBranch(object):
         branch._defaults = defaults
         return branch
 
-    @property
-    def _data(self):
-        """ The raw data (OrderedDict) or Mapping of the branch """
-        return self._parent._data[self._branch]
+    def _rename(self, name):
+        try:
+            branch = self._parent._pop(self._branch)
+        except KeyError:
+            branch = OrderedDict()
+        parent[name] = branch._data
 
-    @property
-    def _dict(self):
-        """ return a dict containing the memory branch data"""
-        d = OrderedDict()
-        for defaultdict in reversed(self._defaults):
-            d.update(defaultdict._dict)
-        d.update(self._data)
-        return d
+    def __repr__(self):
+        return "MemoryBranch("+str(self._dict.keys())+")"
 
     def _reload(self):
         """ reload data from file"""
@@ -238,100 +361,6 @@ class MemoryBranch(object):
     def _save(self):
         """ write data to file"""
         self._parent._save()
-
-    def _update(self, new_dict):
-        self._data.update(new_dict)
-        self._save()
-
-    def __getattribute__(self, name):
-        """ implements the dot notation.
-        Example: self.subbranch.leaf returns the item 'leaf' of 'subbranch' """
-        if name.startswith('_'):
-            return super(MemoryBranch, self).__getattribute__(name)
-        else:
-            # if subbranch, return MemoryBranch object
-            if isbranch(self[name]):
-                # test if we have a LemoryLeaf
-                if 'value' in self[name]:
-                    return self[name]['value']
-                    # return MemoryLeaf(self, name) # maybe for the future
-                # otherwise create a MemoryBranch object
-                else:
-                    return MemoryBranch(self, name)
-            # otherwise return whatever we find in the data dict
-            else:
-                return self[name]
-
-    # getitem bypasses the higher-level __getattribute__ function and provides
-    # direct low-level access to the underlying dictionary.
-    # This is much faster, as long as no changes have been made to the config
-    # file.
-    def __getitem__(self, item):
-        self._reload()
-        try:
-            return self._data[item]
-        except KeyError:
-            for defaultbranch in self._defaults:
-                if item in defaultbranch._data:
-                    return defaultbranch._data[item]
-            raise
-
-    def __setattr__(self, name, value):
-        if name.startswith('_'):
-            super(MemoryBranch, self).__setattr__(name, value)
-        else:
-            if isbranch(self._data[name]) and 'value' in self._data[name]:
-                ro = self._data[name]["ro"] or False
-                if ro:
-                    logger.info("Attribute %s is read-only. New value %s cannot be written to config file",
-                                name, value)
-                else:
-                    self._data[name]['value'] = value
-            else:
-                self._data[name] = value
-            self._save()
-
-    # creates a new entry, overriding the protection provided by dot notation
-    # if the value of this entry is of type dict, it becomes a MemoryBranch
-    # new values can be added to the branch in the same manner
-    def __setitem__(self, item, value):
-        if item in self._data:
-            self.__setattr__(item, value)
-        else:
-            if isbranch(value):
-                self._data[item] = dict(value)
-            else:
-                self._data[item] = value
-            self._save()
-
-    def _rename(self, name):
-        parent = self._parent
-        if self._branch in parent._keys():
-            branch = parent._pop(self._branch)
-        else:
-            branch = OrderedDict()
-        parent[name] = branch
-
-    # remove an item from the config file
-    def _pop(self, name):
-        ro = isbranch(self._data[name]) and 'value' in self._data[name] and \
-             (self._data[name]["ro"] or False)
-        if ro:
-            logger.info(
-                "Attribute %s is read-only and cannot be deleted", name)
-            return None
-        else:
-            if name in self.__dict__.keys():
-                self.__dict__.pop(name)
-            value = self._data.pop(name)
-            self._save()
-            return value
-
-    def __repr__(self):
-        return "MemoryBranch("+str(self._dict.keys())+")"
-
-    def _keys(self):
-        return self._data.keys()
 
     def _erase(self):
         """
@@ -370,14 +399,29 @@ class MemoryTree(MemoryBranch):
     filename: str
         The filename of the .yml file defining the MemoryTree structure.
     """
-    _data = OrderedDict()
+    ##### internal load logic:
+    # 1. initially, call _load() to get the data from the file
+    # 2. upon each inquiry of the config data, _reload() is called to
+    # ensure data integrity
+    # 3. _reload assumes a delay of _loadsavedeadtime between changing the
+    # config file and Pyrpl requesting the new data. That means, _reload
+    # will not attempt to touch the config file more often than every
+    # _loadsavedeadtime. The last interaction time with the file system is
+    # saved in the variable _lastreload. If this time is far enough in the
+    # past, the modification time of the config file is compared to _mtime,
+    # the internal memory of the last modifiation time by pyrpl. If the two
+    # don't match, the file was altered outside the scope of pyrpl and _load
+    # is called to reload it.
 
-    # never reload more frequently than every 2 s because this is the principal
-    # cause of slowing down the code
-    _reloaddeadtime = 2
-    # never save more often than 1s
-    _savedeadtime = 1
-    # as an indication, on my ssd, saving of a standard config file was timed at 30 ms, loading: 40 ms...
+    ##### internal save logic:
+
+    # never reload or save more frequently than _loadsavedeadtime because
+    # this is the principal cause of slowing down the code (typ. 30-200 ms)
+    # for immediate saving, call _save_now, for immediate loading _load_now
+    _loadsavedeadtime = 2
+
+    # the dict containing the entire tree data (nested dict)
+    _data = OrderedDict()
 
     def __init__(self, filename=None, source=None):
         # first, make sure filename exists
@@ -385,58 +429,77 @@ class MemoryTree(MemoryBranch):
         if filename is None:  # simulate a config file, only store data in memory
             self._filename = filename
         else:  # normal mode of operation with an actual configfile on the disc
-            self._lastsave = time.time()
+            self._lastsave = time()
             # make a temporary file to ensure modification of config file is atomic (double-buffering like operation...)
             self._buffer_filename = self._filename+'.tmp'
             # create a timer to postpone to frequent savings
             self._savetimer = QtCore.QTimer()
-            self._savetimer.setInterval(self._savedeadtime*1000)
+            self._savetimer.setInterval(self._loadsavedeadtime*1000)
             self._savetimer.setSingleShot(True)
             self._savetimer.timeout.connect(self._save)
         self._load()
         self._save_counter = 0 # cntr for unittest and debug purposes
+        # root of the tree is also a MemoryBranch with parent self and
+        # branch name ""
         super(MemoryTree, self).__init__(self, "")
 
     def _load(self):
         """ loads data from file """
         if self._filename is None:
+            # if no file is used, just ignore this call
             return
         logger.debug("Loading config file %s", self._filename)
+        # read file from disc
         with open(self._filename) as f:
             self._data = load(f)
-        if self._data is None:  # empty file gives None
+        # store the modification time of this file version
+        self._mtime = os.path.getmtime(self._filename)
+        # make sure that reload timeout starts from this moment
+        self._lastreload = time()
+        # empty file gives _data=None
+        if self._data is None:
             self._data = OrderedDict()
-        # update dict of the object
+        # update dict of the MemoryTree object
         to_remove = []
+        # remove all obsolete entries
         for name in self.__dict__:
             if not name.startswith('_') and name not in self._data:
                 to_remove.append(name)
         for name in to_remove:
             self.__dict__.pop(name)
+        # insert the branches into the object __dict__ for auto-completion
         self.__dict__.update(self._data)
-        self._mtime = os.path.getmtime(self._filename)
-        self._lastreload = time.time()
 
     def _reload(self):
         """" reloads data from file if file has changed recently """
         # first check if a reload was not performed recently (speed up reasons)
         if self._filename is None:
             return
-        if self._lastreload + self._reloaddeadtime < time.time():
+        # check whether reload timeout has expired
+        if time() > self._lastreload + self._loadsavedeadtime:
+            # prepare next timeout
+            self._lastreload = time()
             logger.debug("Checking change time of config file...")
-            self._lastreload = time.time()
             if self._mtime != os.path.getmtime(self._filename):
+                logger.debug("Loading because mtime %s != filetime %s",
+                             self._mtime)
                 self._load()
+            else:
+                logger.debug("... no reloading required")
 
-    def _save(self, savedeadtime=None):
-        self._save_counter+=1 # for unittest and debug purposes
-        if savedeadtime is None:
-            savedeadtime = self._savedeadtime
+    def _save(self, deadtime=None):
+        logger.debug("SAVE")
+        return
+
+    def _save(self, deadtime=None):
+        self._save_counter+=1  # for unittest and debug purposes
+        if deadtime is None:
+            deadtime = self._loadsavedeadtime
         """ writes current tree structure and data to file """
         if self._filename is None:
             return
-        if self._lastsave + savedeadtime < time.time():
-            self._lastsave = time.time()
+        if self._lastsave + deadtime < time():
+            self._lastsave = time()
             if self._mtime != os.path.getmtime(self._filename):
                 logger.warning("Config file has recently been changed on your " +
                                "harddisk. These changes might have been " +
@@ -470,7 +533,7 @@ class MemoryTree(MemoryBranch):
         if self._savetimer.isActive():
             self._savetimer.stop()
         # make sure save is done immediately by forcing negative deadtime
-        self._save(savedeadtime=-1)
+        self._save(deadtime=-1)
         # make sure no save timer was launched in the meantime
         if self._savetimer.isActive():
             self._savetimer.stop()
@@ -478,7 +541,8 @@ class MemoryTree(MemoryBranch):
 if False:
     class DummyMemoryTree(object):  # obsolete now
         """
-        This class is there to emulate a MemoryTree, for users who would use RedPitaya object without Pyrpl object
+        This class is there to emulate a MemoryTree, for users who would use RedPitaya object without Pyrpl object. The
+        class is essentially deprecated by now.
         """
         @property
         def _keys(self):

@@ -16,103 +16,166 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###############################################################################
 
-# buglist: in lock_opt, it is inconvenient to always specify sof and pdh. unlocks when only pdh is changed
-# unspecified parameters should rather be left unchanged instead of being
-# set to 0 or 1
-
 from __future__ import print_function
 
 import logging
 import os
 from shutil import copyfile
+from PyQt4 import QtCore, QtGui
 
 from .widgets.pyrpl_widget import PyrplWidget
-
 from . import software_modules
 from .memory import MemoryTree
 from .redpitaya import RedPitaya
 from . import pyrpl_utils
 from .software_modules import get_software_module
 
-from PyQt4 import QtCore, QtGui
+# it is important that Lcokbox is loaded before the models
+from .software_modules.lockbox import Lockbox
+from .software_modules.lockbox.models import *  # make sure all models are loaded when we get started
+
 
 APP = QtGui.QApplication.instance()
 
-## Something has to be done with this docstring... I would like to wait for lockbox to be implemented before doing it...
-"""
-channels:
-Any input or output channel can be set to 0. This disables the channel and
-    the affected features will obviously not work.
-input channels: 1 (input 1), 2 (input 2), 3 (result of demodulation of either input)
-output channels: 1 (output 1), 2 (output 2), 3 (DAC0 PWM, not implemented yet)
-units:
-all frequencies in Hz
-all voltages in V
-'relative_'-prefix means values are between 0 and 1
-no unit means direct sampling value, usually between -8192 and 8191 (14bits), can be float if averaging is used
-'name' in the following refers to the name you give to the lockbox you are configuring
-for example: name = 'filter_cavity_2'
-Tuning instructions:
-You need one dictionary named CONSTANTS_name containing all parameters in this file.
-The setup procedure will consist in filling it with the right parameters.
-Some parameters will be stored automatically in the registry under
-HKEY_CURRENT_USER\Software\rplockbox\constants\'lockbox_name'.
-You start off by copying the example CONSTANTS_FPF2 and changing FPF2 to your cavity name.
-1) add the new dictionary to the dictionary of lockboxes below: CONSTANTS = dict(FPF2=CONSTANTS_FPF2, name=CONSTANTS_name)
-2) Go through your new dictionary paragraph by paragraph. Once you think you have the right parameters in the
-    first paragraph, load this code in an ipython console with the command:
-        from rplockbox_fpf2 import RPLockbox
-        r = RPLockbox(cavity = 'name')
-    If the first paragraph is set up correctly, your code should be loaded without error message.
-3) The second paragraph deals with the inputs and outputs. You shoud at least connect the reflection photodiode to
-    input 1 or 2 and the piezo amplifier input to output 1 or 2. In the dictionary, put the corresponding channel
-    number behind reflection_input and coarse_output. Set the limit output voltages of the red pitaya to
-    coarse_min_V and coarse_max_V. To continue, your cavity needs to be aligned and the RedPitaya
-    connected to all signals. You should make a quick check that everything is properly connected:
-    Execute r.get_mean("reflection_Volt"). The function should return the mean voltage at the reflection input.
-    Execute r.coarse = 0. The coarse output should go to its minimum value.
-    Execute r.coarse = 1. The coarse output should go to its maximum value.
-    Now its time to calibrate the offsets of the RedPitaya. Turn off or block the laser and type
-        r.darknoise()
-    Then turn on the laser and type
-        r.offresonant()
-    It is good practice to execute r.darknoise() before each measurement run to account for possible drifts of the
-    analog electronics of the RedPitaya. Since the RedPitaya does not know when you block the laser, you have to
-    implement an automatization of this yourself.
-    The option "find_coarse_redefine_means"=True executes r.offresonant() before each coarse resonance search
-    to account for possible laser power drifts. It is assumed that the laser is on when you search for a resonance.
-    You should now attempt a coarse search. Try
-        r.find_coarse()
-    If it returns immediately that the resonance was found at a round value near 0, you probably forgot to close
-    the web application in your browser with the RedPitaya (find_coarse() uses the scope trigger, and if the
-    web application uses it as well, this prevents our code from working properly).
-    Once a find_coarse() procedure works, you should spend a few minutes to make it as fast as possible.
-    To do so, simply change "coarse_searchtime" by factors of 2 while monitoring the find_coarse time.
-    You should quickly find an optimum. You can also perform this search with r.optimize_find_coarse(),
-    but you have to manually enter the found value into your constants dictionary.
-    When this is done, we can try a first side-of-fringe lock. Set 'pdh_input' = 0 for now, reload the program
-    and type
-        r.lock()
-    The code will first call find_coarse() and you should see the familiar output when a resonance is found. Then
-    the code sets coarse to a slightly higher value than at the resonance, defines a pid setpoint which corresponds to
-    the offresonant power constants["times find_coarse_threshold"], and turns on an integrator with a very low value.
-    If you have a scope monitor of the lock output, you should see this value slowly drifting downwards until it
-    encounters the side of a resonance and stays there. You now have to optimize the drift gain.
-    Try r.lock(drifti = xx) with different values for xx. If the drift goes upwards, reverse the sign of drifti.
-    If it drifts too slow, increase the value. If it passes over the resonance, decrease the value. The optimum
-    value should be written to lock_driftgain in the constants dictionary so you can just call r.lock().
-    Once the drift works fine, you can optimize the gain when the lock is in place. Call
-        r.lock(setpoint = 0.5, locki = xx)
-    and try different values. The code will drift into a resonance,
-    then progressively change the setpoint to obtain the desired relative reflection. As it does so, it
-    linearly ramps up lockgain to the desired value. If this ramping takes too long, shorten the value of
-    lock_ramptime.
-    If everything goes well, you now have a working side of fringe lock. If this is enough, skip the next section
-    dealing with PDH detection.
-    In case you really want to set up a PDH detection, continue here. Otherwise go to the last paragraph.
-"""
+default_pyrpl_config = {'name': 'default_pyrpl_instance',
+                        'gui': True,
+                        'loglevel': 'info',
+                        'modules': ['NetworkAnalyzer',
+                                    'SpectrumAnalyzer',
+                                    'Lockbox']
+                        }
 
-"""
+class Pyrpl(object):
+    """
+    Higher level object, in charge of loading the right hardware and software
+    module, depending on the configuration described in a config file.
+
+    Parameters
+    ----------
+    config: str
+        Name of the config file. No .yml extension is needed. The file
+        should be located in the config directory.
+    source: str
+        If None, it is ignored. Else, the file 'source' is taken as a
+        template config file and copied to 'config' if that file does
+        not exist.
+    **kwargs: dict
+        Additional arguments can be passed and will be written to the
+        redpitaya branch of the config file. See class definition of
+        RedPitaya for possible keywords.
+    """
+    def __init__(self,
+                 config=None,
+                 source=None,
+                 **kwargs):
+        # logger initialisation
+        self.logger = logging.getLogger(name='pyrpl') #__name__)  # 'pyrpl') if name is pyrpl.pyrpl, then
+                                                                    # pyrpl.submodule is not a sublogger of this one
+        # configuration is retrieved from config file
+        self.c = MemoryTree(filename=config, source=source)
+        # make sure config file has the required sections
+        if not 'pyrpl' in self.c._keys():
+            self.c['pyrpl'] = default_pyrpl_config
+        # set global logging level if specified in config file
+        if 'loglevel' in self.c.pyrpl._keys():
+            pyrpl_utils.setloglevel(level=self.c.pyrpl.loglevel,
+                                loggername='pyrpl')
+        # initialize RedPitaya object with the configured or default parameters
+        if not 'redpitaya' in self.c._keys():
+            self.c['redpitaya'] = dict()
+        self.c.redpitaya._update(kwargs)
+        self.rp = RedPitaya(config=self.c)
+        self.widgets = [] # placeholder for widgets
+        # ...initializing remaining hardware modules
+        for module in self.hardware_modules:  # setup hardware modules with config file keys
+            if module.owner is None: # (only modules that are not slaved by software modules)
+                try:
+                    module._load_setup_attributes() # **self.c[module.name])
+                except BaseException as e:
+                    self.logger.warning('Something went wrong when loading attributes of module "%s"'%module.name)
+        # create software modules...
+        self.load_software_modules()
+        # make the gui if applicable
+        if self.c.pyrpl.gui:
+            widget = self.create_widget()
+            widget.show()
+
+    def load_software_modules(self):
+        """
+        load all software modules defined as root element of the config file.
+        """
+        self.software_modules = []
+        soft_mod_names = ['AsgManager',
+                          'IqManager',
+                          'PidManager',
+                          'ScopeManager',
+                          'IirManager'] + self.c.pyrpl.modules
+        module_classes = [get_software_module(cls_name)
+                          for cls_name in soft_mod_names]
+        module_names = pyrpl_utils.\
+            get_unique_name_list_from_class_list(module_classes)
+        for cls, name in zip(module_classes, module_names):
+            # some modules have generator function, e.g. Lockbox
+            # @classmethod
+            # def make_Lockbox(cls, parent, name): ...
+            if hasattr(cls, "_make_"+cls.__name__):
+                module = getattr(cls, "_make_"+cls.__name__)(self, name)
+            else:
+                module = cls(self, name)
+            setattr(self, module.name, module)
+            self.software_modules.append(module)
+            self.logger.debug("Created software module %s", name)
+
+    @property
+    def hardware_modules(self):
+        """
+        List of all hardware modules loaded in this configuration.
+        """
+        if self.rp is not None:
+            return list(self.rp.modules.values())
+        else:
+            return []
+
+    @property
+    def modules(self):
+        return self.hardware_modules + self.software_modules
+
+    def create_widget(self):
+        """
+        Creates the top-level widget
+        """
+        widget = PyrplWidget(self)
+        self.widgets.append(widget)
+        return widget
+
+    def kill_timers(self):
+        """
+        kill all timers
+        """
+        for module in self.modules:
+            module._signal_launcher.kill_timers()
+        for widget in self.widgets:
+            widget.kill_timers()
+
+    def end(self):
+        """
+        kill all timers and closes the connection to the redpitaya
+        """
+        self.kill_timers()
+        while len(self.widgets)>0:  # Close all widgets
+            w = self.widgets.pop()
+            del w
+        # do the job of actually destroying the widgets
+        APP.processEvents()
+        # make sure the save timer of the config file is not running and
+        # all data are written to the harddisk
+        self.c._save_now()
+        # end redpitatya communication
+        self.rp.end_all()
+        APP.processEvents()
+
+
+""" # DEPRECATED DOCSTRING - KEEP UNTIL DOCUMENTATION IS READY
 pyrpl.py - high-level lockbox functionality
 
 A lockbox is a device that converts a number of input signals into a number of
@@ -236,142 +299,3 @@ meters is implemented there. Another very often used model type is
 "interferometer". The only difference is here that
 
 """
-
-default_pyrpl_config = {'name': 'default_pyrpl_instance',
-                        'gui': True,
-                        'loglevel': 'info',
-                        'modules': ['NetworkAnalyzer',
-                                    'SpectrumAnalyzer',
-                                    'Lockbox']
-                        }
-
-
-class Pyrpl(object):
-    """
-    Higher level object, in charge of loading the right hardware and software
-    module, depending on the configuration described in a config file.
-
-    Parameters
-    ----------
-    config: str
-        Name of the config file. No .yml extension is needed. The file
-        should be located in the config directory.
-    source: str
-        If None, it is ignored. Else, the file 'source' is taken as a
-        template config file and copied to 'config' if that file does
-        not exist.
-    **kwargs: dict
-        Additional arguments can be passed and will be written to the
-        redpitaya branch of the config file. See class definition of
-        RedPitaya for possible keywords.
-    """
-
-    def __init__(self,
-                 config="myconfigfile",
-                 source=None,
-                 **kwargs):
-        # logger initialisation
-        self.logger = logging.getLogger(name='pyrpl') #__name__)  # 'pyrpl') if name is pyrpl.pyrpl, then
-                                                                    # pyrpl.submodule is not a sublogger of this one
-        # configuration is retrieved from config file
-        self.c = MemoryTree(filename=config, source=source)
-        # make sure config file has the required sections
-        if not 'pyrpl' in self.c._keys():
-            self.c['pyrpl'] = default_pyrpl_config
-        # set global logging level if specified in config file
-        if 'loglevel' in self.c.pyrpl._keys():
-            pyrpl_utils.setloglevel(level=self.c.pyrpl.loglevel,
-                                loggername='pyrpl')
-        # initialize RedPitaya object with the configured or default parameters
-        if not 'redpitaya' in self.c._keys():
-            self.c['redpitaya'] = dict()
-        self.c.redpitaya._update(kwargs)
-        self.rp = RedPitaya(config=self.c)
-        # allow for multiple widgets
-        self.widgets = []
-
-        for module in self.hardware_modules:  # setup hardware modules with config file keys
-            if module.owner is None: # (only modules that are not slaved by software modules)
-                # if module.name in self.c._keys():
-                    try:
-                        module._load_setup_attributes() # **self.c[module.name])
-                    except BaseException as e:
-                        self.logger.warning('Something went wrong when loading attributes of module "%s"'%module.name)
-
-        self.software_modules = []
-        self.load_software_modules()
-
-        if self.c.pyrpl.gui:
-            widget = self.create_widget()
-            widget.show()
-
-    def load_software_modules(self):
-        """
-        load all software modules defined as root element of the config file.
-        """
-        soft_mod_names = ['AsgManager',
-                          'IqManager',
-                          'PidManager',
-                          'ScopeManager',
-                          'IirManager'] + self.c.pyrpl.modules
-        #soft_mod_names = [mod for mod in self.c._keys()
-        #                  if not mod in ("pyrpl", "redpitaya")]
-        module_classes = [get_software_module(cls_name)
-                          for cls_name in soft_mod_names]
-        module_names = pyrpl_utils.\
-            get_unique_name_list_from_class_list(module_classes)
-        for cls, name in zip(module_classes, module_names):
-            # ModuleClass = getattr(software_modules, module_name)
-            module = cls(self, name)
-            # attributes are loaded but the module is not "setup"
-            module._load_setup_attributes()
-            setattr(self, module.name, module)
-            self.software_modules.append(module)
-
-    @property
-    def hardware_modules(self):
-        """
-        List of all hardware modules loaded in this configuration.
-        """
-        if self.rp is not None:
-            return list(self.rp.modules.values())
-        else:
-            return []
-
-    @property
-    def modules(self):
-        return self.hardware_modules + self.software_modules
-
-    def create_widget(self):
-        """
-        Creates the top-level widget
-        """
-        widget = PyrplWidget(self)
-        self.widgets.append(widget)
-        return widget
-
-    def kill_timers(self):
-        """
-        kill all timers
-        """
-        for module in self.modules:
-            module._signal_launcher.kill_timers()
-        for widget in self.widgets:
-            widget.kill_timers()
-
-    def end(self):
-        """
-        kill all timers and closes the connection to the redpitaya
-        """
-        self.kill_timers()
-        while len(self.widgets)>0:  # Close all widgets
-            w = self.widgets.pop()
-            del w
-        # do the job of actually destroying the widgets
-        APP.processEvents()
-        # make sure the save timer of the config file is not running and
-        # all data are written to the harddisk
-        self.c._save_now()
-        # end redpitatya communication
-        self.rp.end_all()
-        APP.processEvents()

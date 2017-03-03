@@ -1,5 +1,5 @@
 from ..signals import *
-from ..model import *
+from ..lockbox import Lockbox
 
 
 class FPTransmission(InputDirect):
@@ -67,12 +67,12 @@ class InputPdh(InputIq, InputAnalogPdh):
                                       loglevel=loglevel)
 
 
-class FabryPerot(Model):
-    name = "FabryPerot"
-    _section_name = "fabryperot"
+class FabryPerot(Lockbox):
+    #name = "FabryPerot"
     units = ['m', 'Hz', 'nm', 'MHz']
-    _setup_attributes = ["wavelength", "finesse", "length", 'eta']
-    _gui_attributes = _setup_attributes
+    _model_attributes = ["wavelength", "finesse", "length", 'eta']
+    _setup_attributes = Lockbox._setup_attributes + _model_attributes
+    _gui_attributes = Lockbox._setup_attributes + _model_attributes
     wavelength = FloatProperty(max=10000, min=0, default=1.064e-6)
     finesse = FloatProperty(max=1e7, min=0, default=10000)
     # approximate length (not taking into account small variations of the
@@ -135,6 +135,7 @@ class HighFinesseInput(InputDirect):
         self.lockbox._signal_launcher.input_calibrated.emit([self])
 
     def get_threshold(self, curve):
+        """ returns a reasonable scope threshold for the interesting part of this curve """
         return (curve.min() + curve.mean()) / 2
 
 
@@ -153,7 +154,7 @@ class HighFinesseTransmission(HighFinesseInput, FPTransmission):
     Reflection for a FabryPerot. The only difference with FPReflection is that
     acquire will be done in 2 steps (coarse, then fine)
     """
-    #_section_name = 'hf_transmission'
+    _section_name = 'hf_transmission'
     pass
 
 
@@ -162,12 +163,10 @@ class HighFinessePdh(HighFinesseInput, InputPdh):
     Reflection for a FabryPerot. The only difference with FPReflection is that
     acquire will be done in 2 steps (coarse, then fine)
     """
-    #_section_name = 'hf_pdh'
     signal = InputPdh.signal
 
 
 class HighFinesseFabryPerot(FabryPerot):
-    name = "HighFinesseFP"
-    _section_name = "high_finesse_fp"
+    #name = "HighFinesseFP"
     input_cls = [HighFinesseReflection, HighFinesseTransmission,
                  HighFinessePdh]

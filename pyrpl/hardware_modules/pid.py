@@ -10,7 +10,6 @@ class IValAttribute(FloatAttribute):
     """
     Attribute for integrator value
     """
-
     def get_value(self, instance, owner):
         return float(instance._to_pyint(instance._read(0x100), bitlength=16))\
                / 2 ** 13
@@ -28,7 +27,6 @@ class SignalLauncherPid(SignalLauncher):
     update_ival = QtCore.pyqtSignal()
     # the widget decides at the other hand if it has to be done or not
     # depending on the visibility
-
     def __init__(self, module):
         super(SignalLauncherPid, self).__init__(module)
         self.timer_ival = QtCore.QTimer()

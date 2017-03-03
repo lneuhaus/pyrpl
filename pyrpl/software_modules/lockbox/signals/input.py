@@ -1,8 +1,8 @@
 from __future__ import division
 from pyrpl.modules import SoftwareModule
 from . import Signal
-from pyrpl.attributes import SelectAttribute, SelectProperty, FloatProperty,\
-    FrequencyProperty, PhaseProperty, FrequencyRegister
+from pyrpl.attributes import SelectAttribute, SelectProperty, FloatProperty, FrequencyProperty, PhaseProperty, \
+    FilterProperty, FrequencyRegister
 from pyrpl.widgets.module_widgets import LockboxInputWidget
 from pyrpl.hardware_modules.dsp import DSP_INPUTS
 from ....pyrpl_utils import time
@@ -78,6 +78,14 @@ class InputSignal(SoftwareModule):
         self.plot_range = np.linspace(-5, 5, 200)
         self._lasttime = -1e10
 
+    def unsetup(self):
+        """
+        Function that frees all resources occupied by this signal, as a preparation for its destruction.
+        To be implemented in child classes
+        -------
+        """
+        pass
+
     @property
     def model(self):
         return self.parent.model
@@ -93,7 +101,7 @@ class InputSignal(SoftwareModule):
                 scope.load_state("sweep")
             else:
                 scope.setup(input1=self.signal(),
-                            input2=self.lockbox.get_output(
+                            input2=self.lockbox._get_output(
                                 self.lockbox.default_sweep_output).pid.output_direct,
                             trigger_source=self.lockbox.asg.name,
                             duration=2./self.lockbox.asg.frequency,
@@ -124,7 +132,7 @@ class InputSignal(SoftwareModule):
     @property
     def _sampler_time(self):
         try:
-            return self.model._sampler_time
+            return self.lockbox._sampler_time
         except:
             return 0.01
 
@@ -266,6 +274,9 @@ class InputSignal(SoftwareModule):
             pass
         return widget
 
+    def clear(self):
+        """ implements the freeing of all resources in child classes"""
+        pass
 
 class InputDirect(InputSignal):
     _section_name = 'direct_input'
@@ -320,6 +331,29 @@ class IqQuadratureFactorProperty(FloatProperty):
         instance.iq.quadrature_factor = value
         return value
 
+class IqFilterProperty(FilterProperty):
+    def set_value(self, instance, val):
+        try:
+            val = list(val)
+        except:
+            val = [val, val]  # preferentially choose second order filter
+        instance.iq.bandwidth = val
+        super(IqFilterProperty, self).set_value(instance, val)
+        return val
+
+    def valid_frequencies(self, module):
+        # only allow the low-pass filter options (exclude negative high-pass options)
+        return [v for v in module.iq.__class__.bandwidth.valid_frequencies(module.iq) if v >= 0]
+
+
+class InputIq(InputDirect):
+    _section_name = 'iq'
+    _gui_attributes = InputSignal._gui_attributes + ['mod_freq',
+                                                   'mod_amp',
+                                                   'mod_phase',
+                                                   'quadrature_factor',
+                                                   'mod_output',
+                                                   'bandwidth']
 
 class InputIq(InputDirect):
     """ Base class for demodulated signals. A derived class must implement
@@ -329,13 +363,16 @@ class InputIq(InputDirect):
                                                      'mod_amp',
                                                      'mod_phase',
                                                      'quadrature_factor',
-                                                     'mod_output']
+                                                     'mod_output',
+                                                     'bandwidth']
+
     _setup_attributes = _gui_attributes + ["min", "max", "mean", "rms"]
     mod_freq = IqFrequencyProperty()
     mod_amp = IqAmplitudeProperty()
     mod_phase = IqPhaseProperty()
     quadrature_factor = IqQuadratureFactorProperty()
     mod_output = IqModOutputProperty(['out1', 'out2'])
+    bandwidth = IqFilterProperty()
 
     def _init_module(self):
         super(InputIq, self)._init_module()
@@ -343,6 +380,7 @@ class InputIq(InputDirect):
         self.setup()
 
     def clear(self):
+        super(InputIq, self).clear()
         self.pyrpl.iqs.free(self.iq)
 
     def signal(self):
@@ -363,8 +401,15 @@ class InputIq(InputDirect):
                       phase=self.mod_phase,
                       input=self.input_channel,
                       gain=0,
-                      bandwidth=[1e6, 1e6],
-                      acbandwidth=1e6,
+                      bandwidth=self.bandwidth,
+                      acbandwidth=self.mod_freq/100.0,
                       quadrature_factor=self.quadrature_factor,
                       output_signal='quadrature',
                       output_direct=self.mod_output)
+
+class InputFromOutput(InputDirect):
+    _section_name = 'input_from_output'
+
+    def expected_signal(self, variable):
+        return variable
+
