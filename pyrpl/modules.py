@@ -55,6 +55,12 @@ class SignalLauncher(QtCore.QObject):
                                                                    key):
                 val.connect(getattr(widget, key))
 
+    def clear(self):
+        for key in dir(self.__class__):
+            val = getattr(self, key)
+            if isinstance(val, QtCore.pyqtBoundSignal):
+                val.disconnect()
+        self.kill_timers()
 
 class ModuleMetaClass(type):
     """ Generate Module classes with two features:

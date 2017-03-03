@@ -46,7 +46,7 @@ class SignalLauncherLockbox(SignalLauncher):
     stage_created = QtCore.pyqtSignal(list)
     stage_deleted = QtCore.pyqtSignal(list)
     stage_renamed = QtCore.pyqtSignal()
-    classname_changed = QtCore.pyqtSignal()
+    delete_widget = QtCore.pyqtSignal()
     state_changed = QtCore.pyqtSignal()
     add_input = QtCore.pyqtSignal(list)
     input_calibrated = QtCore.pyqtSignal(list)
@@ -464,44 +464,6 @@ class Lockbox(SoftwareModule):
     def _remove_all_stages(self):
         self._sequence.remove_all_stages()
 
-    def _obsolete_model_changed(self):
-        ### model should be redisplayed
-        self.model = all_models()[self.model_name](self)
-        self.model._load_setup_attributes()
-        #if self.widget is not None:
-        #    self.widget.change_model(self.model)
-
-        ### outputs are only slightly affected by a change of model: only the unit of their DC-gain might become
-        ### obsolete, in which case, it needs to be changed to some value...
-        for output in self.outputs:
-            output.update_for_model()
-
-        ### inputs are intimately linked to the model used. When the model is changed, the policy is:
-        ###  - keep inputs that have a name compatible with the new model.
-        ###  - remove inputs that have a name unexpected in the new model
-        ###  - add inputs from the new model that have a name not present in the old model
-        names = get_unique_name_list_from_class_list(self.model.input_cls)
-        intersect_names = []
-
-        to_remove = [] # never iterate on a list that is being deleted
-        for input in self.inputs:
-            if not input.name in names:
-                to_remove.append(input)
-            else:
-                intersect_names.append(input.name)
-        for input in to_remove:
-            self._remove_input(input)
-        for name, cls in zip(names, self.model.input_cls):
-            if not name in intersect_names:
-                input = cls(self, name)
-                self._add_input(input)
-                input._load_setup_attributes()
-                input.setup()
-
-        ### update stages: keep outputs unchanged, when input doesn't exist anymore, change it.
-        self._sequence.update_inputs()
-        self._signal_launcher.model_changed.emit()
-
     def _load_setup_attributes(self):
         """
         This function needs to be overwritten to retrieve the child module
@@ -609,20 +571,24 @@ class Lockbox(SoftwareModule):
                 return 'red'
 
     def _delete_Lockbox(self):
-        self._signal_launcher.kill_timers()
+        """ returns a new Lockbox object of the type defined by the classname variable in the config file"""
+        self._signal_launcher.clear()
         for o in self.outputs:
             o.clear()
         for i in self.inputs:
             i.clear()
+        setattr(self.parent, self.name, None)  # pyrpl.lockbox = None
         try:
             self.parent.software_modules.remove(self)
         except ValueError:
             self._logger.warning("Could not find old Lockbox %s in the list of software modules. Duplicate lockbox "
                                  "objects may coexist. It is recommended to restart PyRPL. Existing software modules: "
                                  "\n%s", self.name, str(self.parent.software_modules))
+        del self
 
     @classmethod
     def _make_Lockbox(cls, parent, name):
+        """ returns a new Lockbox object of the type defined by the classname variable in the config file"""
         # identify class name
         try:
             classname = parent.c.lockboxs[name]['classname']
@@ -632,11 +598,6 @@ class Lockbox(SoftwareModule):
         parent.logger.info("Making new Lockbox with class %s. ", classname)
         # return instance of the class
         return all_classnames()[classname](parent, name)
-
-    @property
-    def model(self):
-        self._logger.warning("Using the model property of Lockbox will soon be deprecated. Please use lockbox instead! ")
-        return self
 
     def _classname_changed(self):
         # check whether a new object must be instantiated and return if not
@@ -648,13 +609,22 @@ class Lockbox(SoftwareModule):
         self._logger.debug("Lockbox classname changed - formerly: %s, now: %s.",
                           type(self).__name__,
                           self.classname)
+        # save names such that lockbox object can be deleted
+        pyrpl, name = self.pyrpl, self.name
+        # launch signal for widget deletion
+        self._signal_launcher.delete_widget.emit()
         # delete former lockbox (free its resources)
         self._delete_Lockbox()
         # make a new object
-        new_lockbox = self._make_Lockbox(self.parent, self.name)
+        new_lockbox = Lockbox._make_Lockbox(pyrpl, name)
         # update references
-        self.parent.lockbox = new_lockbox
-        self.parent.software_modules.append(new_lockbox)
-        # launch signal for widget recreation
-        self._signal_launcher.classname_changed.emit()
-        del self
+        setattr(pyrpl, name, new_lockbox)  # pyrpl.lockbox = new_lockbox
+        pyrpl.software_modules.append(new_lockbox)
+        # create new dock widget
+        for w in pyrpl.widgets:
+            w.reload_dock_widget(name)
+
+    @property
+    def model(self):
+        self._logger.warning("Using the model property of Lockbox will soon be deprecated. Please use lockbox instead! ")
+        return self  # lockbox.model is replaced by lockbox itself

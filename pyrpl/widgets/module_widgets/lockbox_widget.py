@@ -850,23 +850,6 @@ class LockboxWidget(ModuleWidget):
         self.button_is_locked.setStyleSheet("background-color: %s; "
                                             "color:white"%color)
 
-    def classname_changed(self):
-        """
-        This function destroys the old lockbox widget and loads a new one
-        """
-        pyrpl = self.module.parent
-        self.module = None  # allow module to be deleted
-        for w in pyrpl.widgets:
-            # save window position
-            w.timer_save_pos.stop()
-            w.save_window_position()
-            # replace dock widget
-            wasvisible=w.remove_dock_widget(pyrpl.lockbox.name)
-            w.add_dock_widget(pyrpl.lockbox.create_widget, pyrpl.lockbox.name)# , visible=wasvisible)
-            # restore window position and widget visibility
-            w.set_window_position()  # reset the same window position as before
-            w.timer_save_pos.start()
-        self.delete_widget()
-
     def delete_widget(self):
+        self.module = None  # allow module to be deleted
         self.deleteLater()

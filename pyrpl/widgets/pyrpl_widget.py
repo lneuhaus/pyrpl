@@ -205,6 +205,22 @@ class PyrplWidget(QtGui.QMainWindow):
         # return whether the widget was visible
         return wasvisible
 
+    def reload_dock_widget(self, name):
+        """
+        This function destroys the old lockbox widget and loads a new one
+        """
+        pyrpl = self.parent
+        module = getattr(pyrpl, name)
+        # save window position
+        self.timer_save_pos.stop()
+        self.save_window_position()
+        # replace dock widget
+        self.remove_dock_widget(name)
+        self.add_dock_widget(module.create_widget, name)
+        # restore window position and widget visibility
+        self.set_window_position()  # reset the same window position as before
+        self.timer_save_pos.start()
+
     def save_window_position(self):
         if self.isVisible(): # Don't try to save position if window is closed (otherwise, random position is saved)
             if (not "dock_positions" in self.parent.c.pyrpl._keys()) or \
