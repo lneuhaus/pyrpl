@@ -28,7 +28,7 @@ class TestPyrpl(object):
 
     @classmethod
     def setUpAll(cls):
-        print("=======SETTING UP TestPyrpl===========")
+        print("=======SETTING UP %s===========" % cls.__name__)
         # these tests will not succeed without the hardware
         cls.erase_temp_file()  # also before (for instance in case of Ctrl-C)
         cls.pyrpl = Pyrpl(config=cls.tmp_config_file,
@@ -38,7 +38,7 @@ class TestPyrpl(object):
 
     @classmethod
     def tearDownAll(cls):
-        print("=======TEARING DOWN TestPyrpl===========")
+        print("=======TEARING DOWN %s===========" % cls.__name__)
         # shut down Pyrpl
         cls.pyrpl.end()
         # delete the configfile

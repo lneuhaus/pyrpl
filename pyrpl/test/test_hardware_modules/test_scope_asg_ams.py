@@ -6,7 +6,7 @@ from ... import CurveDB
 from ..test_base import TestPyrpl
 
 
-class TestClass(TestPyrpl):
+class TestScopeAsgAms(TestPyrpl):
     def setup(self):
         self.extradelay = 0.6 * 8e-9  # no idea where this comes from
 

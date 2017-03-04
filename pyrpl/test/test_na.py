@@ -10,7 +10,7 @@ from time import sleep
 APP = QtGui.QApplication.instance()
 
 
-class TestClass(TestPyrpl):
+class TestNA(TestPyrpl):
     def setup(self):
         self.na = self.pyrpl.na
 

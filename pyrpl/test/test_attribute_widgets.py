@@ -21,7 +21,7 @@ class DummyModule(SoftwareModule):
     some_options = SelectProperty(options=["foo", "bar"])
 
 
-class TestClass(TestPyrpl):
+class TestAttributeWidgets(TestPyrpl):
     source_config_file = "tests_source_dummy_module"
 
     def test_config_file(self):

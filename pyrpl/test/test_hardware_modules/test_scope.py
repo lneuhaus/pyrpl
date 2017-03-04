@@ -8,7 +8,7 @@ from ..test_base import TestPyrpl
 APP = QtGui.QApplication.instance()
 
 
-class TestScopeClass(TestPyrpl):
+class TestScope(TestPyrpl):
     """
     Be carreful to stop the scope at the end of each test!!!
     """

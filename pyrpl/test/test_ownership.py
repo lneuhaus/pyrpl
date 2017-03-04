@@ -8,7 +8,7 @@ from pyrpl.software_modules.module_managers import ModuleManager
 APP = QtGui.QApplication.instance()
 
 
-class TestClass(TestPyrpl):
+class TestOwnership(TestPyrpl):
     def test_ownership_restored(self):
         # make sure scope rolling_mode and running states are correctly setup
         # when something is changed

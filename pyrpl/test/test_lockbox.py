@@ -8,7 +8,7 @@ from .test_base import TestPyrpl
 APP = QtGui.QApplication.instance()
 
 
-class TestClass(TestPyrpl):
+class TestLockbox(TestPyrpl):
     def setup(self):
         self.lockbox = self.pyrpl.lockbox
 
