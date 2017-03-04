@@ -76,59 +76,60 @@ class TestLockbox(TestPyrpl):
         assert(output2.pid.owner=='bar')
 
     def test_create_stage(self):
-        old_len = len(self.lockbox.sequence.stages)
+        old_len = len(self.lockbox._sequence.stages)
         widget = self.lockbox.create_widget()
-        self.lockbox.add_stage()
-        assert len(self.lockbox.sequence.stages) == old_len + 1
+        self.lockbox._add_stage()
+        assert len(self.lockbox._sequence.stages) == old_len + 1
 
         APP.processEvents()
 
         assert len(widget.sequence_widget.stage_widgets) == old_len + 1
 
-        self.lockbox.add_stage()
+        self.lockbox._add_stage()
 
         names = self.lockbox._stage_names  # [out.name for out in self.lockbox.outputs]
         assert len(set(names)) == len(names)  # Make sure unique names are created
-        assert hasattr(self.lockbox.sequence, names[-1])
+        assert hasattr(self.lockbox._sequence, names[-1])
 
     def test_delete_stage(self):
         widget = self.lockbox.create_widget()
-        self.lockbox.add_stage()
+        self.lockbox._add_stage()
         old_name = self.lockbox._stage_names[-1]
-        assert (hasattr(self.lockbox.sequence, old_name))
-        old_len = len(self.lockbox.sequence.stages)
-        self.lockbox._remove_stage(self.lockbox.sequence.stages[-1])
-        assert (len(self.lockbox.sequence.stages) == old_len - 1)
-        assert not (hasattr(self.lockbox.sequence, old_name))
+        assert (hasattr(self.lockbox._sequence, old_name))
+        old_len = len(self.lockbox._sequence.stages)
+        self.lockbox._remove_stage(self.lockbox._sequence.stages[-1])
+        assert (len(self.lockbox._sequence.stages) == old_len - 1)
+        assert not (hasattr(self.lockbox._sequence, old_name))
         APP.processEvents()
         assert len(widget.sequence_widget.stage_widgets) == old_len - 1
 
     def test_rename_stage(self):
         widget = self.lockbox.create_widget()
-        stage1 = self.lockbox.add_stage()
-        stage2 = self.lockbox.add_stage()
+        stage1 = self.lockbox._add_stage()
+        stage2 = self.lockbox._add_stage()
         try:
-            self.lockbox.rename_stage(stage1, stage2.name)
+            self.lockbox._rename_stage(stage1, stage2.name)
         except ValueError:
             pass
         else:
             assert (False)  # should be impossible to duplicate name of outputs
 
         stage2.name = "foo"
-        assert (hasattr(self.lockbox.sequence, 'foo'))
+        assert (hasattr(self.lockbox._sequence, 'foo'))
 
-        self.lockbox.rename_stage(stage2, 'bar')
-        assert (hasattr(self.lockbox.sequence, 'bar'))
+        self.lockbox._rename_stage(stage2, 'bar')
+        assert (hasattr(self.lockbox._sequence, 'bar'))
 
     def test_real_lock(self):
         delay = 0.01
         pid = self.pyrpl.rp.pid1
         pid.i = 0.1
         pid.p = 0.1
+        self.lockbox.classname = 'Linear'
+        self.lockbox = self.pyrpl.lockbox  # not so beautiful but necessary because lockbox object was replaced
         self.lockbox._remove_all_stages()
         self.lockbox._remove_all_outputs()
-        self.lockbox.model_name = 'Linear'
-        stage = self.lockbox.add_stage()
+        stage = self.lockbox._add_stage()
         out = self.lockbox._add_output()
         out.p = 0
         out.i = -10.

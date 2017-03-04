@@ -23,7 +23,8 @@ import numpy as np
 import time
 from PyQt4 import QtCore
 from . import default_config_dir, user_config_dir
-from io import StringIO
+#from io import StringIO
+from io import BytesIO as StringIO  # avoids unicode/str error in python 2.7
 from .pyrpl_utils import time
 
 import logging
@@ -192,13 +193,15 @@ class MemoryBranch(object):
     _root:      the MemoryTree object (root) of the tree
     _parent:    the parent of the branch
     _branch:    the name of the branch
-    _new_branch: creates new branch. Same as br
+    _get_or_create: creates a new branch and returns it. Same as branch[newname]=dict(), but also supports nesting,
+                e.g. newname="lev1.lev2.level3"
     _fullbranchname: returns the full path from root to the branch
     _getbranch: returns a branch by specifying its path, e.g. 'b1.c2.d3'
     _rename:    renames the branch
     _reload:    attempts to reload the data from disc
     _save:      attempts to save the data to disc
 
+    If a subbranch or a value is requested but does not exist in the current MemoryTree, a KeyError is raised.
     """
 
     def __init__(self, parent, branch, defaults=list([])):
@@ -262,13 +265,7 @@ class MemoryBranch(object):
             return super(MemoryBranch, self).__getattribute__(name)
         else:
             # convert dot notation into dict notation
-            attribute = self[name]
-            # if subbranch, return MemoryBranch object
-            if isbranch(attribute):
-                return MemoryBranch(self, name)
-            # otherwise return whatever we find in the data dict
-            else:
-                return attribute
+            return self[name]
 
     # getitem bypasses the higher-level __getattribute__ function and provides
     # direct low-level access to the underlying dictionary.
@@ -276,40 +273,59 @@ class MemoryBranch(object):
     # file.
     def __getitem__(self, item):
         self._reload()
-        try:
-            return self._data[item]
-        except KeyError:
-            # if not in data, iterate over default branches
-            for defaultbranch in self._defaults:
-                try:
-                    return defaultbranch._data[item]
-                except KeyError:
-                    pass
-            raise
+        # if a subbranch is requested, iterate through the hierarchy
+        if '.' in item:
+            item, subitem = item.split('.', 1)
+            return self[item][subitem]
+        # otherwise just return what we can find
+        else:
+            try:
+                # read from the data dict
+                attribute = self._data[item]
+            except KeyError:
+                # if not in data, iterate over default branches
+                for defaultbranch in self._defaults:
+                    try:
+                        return defaultbranch[item]
+                    except KeyError:
+                        pass
+                raise
+            else:
+                # if the object can be expressed as a branch, do so
+                if isbranch(attribute):
+                    return MemoryBranch(self, item)
+                # otherwise return whatever we found in the data dict
+                else:
+                    return attribute
 
     def __setattr__(self, name, value):
         #logger.debug("SETATTR %s %s",  name, value)
         if name.startswith('_'):
             super(MemoryBranch, self).__setattr__(name, value)
         else:
-            self._data[name] = value
-            self._save()
+            # implemment dot notation
+            self[name] = value
 
     # creates a new entry, overriding the protection provided by dot notation
     # if the value of this entry is of type dict, it becomes a MemoryBranch
     # new values can be added to the branch in the same manner
     def __setitem__(self, item, value):
-        if item in self._data:
-            self.__setattr__(item, value)
+        # if the subbranch is set or replaced, to this in a specific way
+        if isbranch(value):
+            # naive way: self._data[item] = dict(value)
+            # rather: replace values in their natural order (e.g. if value is OrderedDict)
+            # make an empty subbranch
+            self._data[item] = dict()
+            subbranch = self[item]
+            # use standard setter to set the values in Order and possibly as subbranch objects
+            for k, v in value.items():
+                subbranch[k] = v
+        #otherwise just write to the data dictionary
         else:
-            if isbranch(value):
-                self._data[item] = dict(value)
-            else:
-                self._data[item] = value
-            #logger.debug("SETITEM %s %s", item, value)
-            self._save()
-            # update the __dict__ for autocompletion
-            self.__dict__[item] = None
+            self._data[item] = value
+        self._save()
+        # update the __dict__ for autocompletion
+        self.__dict__[item] = None
 
     def _pop(self, name):
         """remove an item from the branch"""
@@ -322,6 +338,19 @@ class MemoryBranch(object):
     def _rename(self, name):
         self._parent[name] = self._parent._pop(self._branch)
         self._save()
+
+    def _get_or_create(self, name):
+        """ creates a new subbranch with name=name it it does not exist already and returns it. If name is a branch
+        hierarchy such as "subbranch1.subbranch2.subbranch3", all three subbranch levels are created """
+        # chop name into parts and iterate through them
+        currentdata = self._data
+        for subbranchname in name.split("."):
+            # make new branch if applicable
+            if subbranchname not in currentdata:
+                currentdata[subbranchname] = dict()
+            # move into new branch in case another subbranch will be created
+            currentdata = currentdata[subbranchname]
+        return self[name]
 
     def _erase(self):
         """
@@ -485,10 +514,6 @@ class MemoryTree(MemoryBranch):
                 self._load()
             else:
                 logger.debug("... no reloading required")
-
-    def _save(self, deadtime=None):
-        logger.debug("SAVE")
-        return
 
     def _save(self, deadtime=None):
         self._save_counter+=1  # for unittest and debug purposes

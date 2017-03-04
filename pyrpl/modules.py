@@ -59,7 +59,10 @@ class SignalLauncher(QtCore.QObject):
         for key in dir(self.__class__):
             val = getattr(self, key)
             if isinstance(val, QtCore.pyqtBoundSignal):
-                val.disconnect()
+                try:
+                    val.disconnect()
+                except TypeError:  # occurs if signal is not connected to anything
+                    pass
         self.kill_timers()
 
 class ModuleMetaClass(type):
@@ -330,15 +333,8 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         The config file instance. In practice, writing values in here will
         write the values in the corresponding section of the config file.
         """
-        manager_section_name = self._section_name + "s" # for instance, iqs
-        try:
-            manager_section = getattr(self.parent.c, manager_section_name)
-        except KeyError:
-            self.parent.c[manager_section_name] = dict()
-            manager_section = getattr(self.parent.c, manager_section_name)
-        if not self.name in manager_section._keys():
-            manager_section[self.name] = dict()
-        return getattr(manager_section, self.name)
+        # make new or retrieve existing branch with name such as 'iqs.iq0' or 'pids.pid3' (last part is module.name)
+        return self.parent.c._get_or_create(self._section_name + "s." + self.name)
 
     @property
     def _c_states(self):
@@ -347,7 +343,7 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         """
         if not "states" in self.c._parent._keys():
             self.c._parent["states"] = dict()
-        return self.c._parent.states
+        return self.c._parent._get_or_create("states")
 
     def _c_state(self, state_name, state_branch=None):
         """
@@ -590,7 +586,6 @@ class HardwareModule(BaseModule):
             self._logger.warning("Warning: Parent of %s has no attribute "
                                  "'frequency_correction'. ", self.name)
             return 1.0
-
 
     def __setattr__(self, name, value):
         # prevent the user from setting a nonexisting attribute

@@ -141,6 +141,7 @@ class BaseAttribute(object):
         widget = self.widget_class(name, module)
         return widget
 
+
 class NumberAttribute(BaseAttribute):
     """
     Abstract class for ints and floats
