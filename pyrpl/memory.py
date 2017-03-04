@@ -458,8 +458,6 @@ class MemoryTree(MemoryBranch):
             self._filename = filename
         else:  # normal mode of operation with an actual configfile on the disc
             self._lastsave = time()
-            # make a temporary file to ensure modification of config file is atomic (double-buffering like operation...)
-            self._buffer_filename = self._filename+'.tmp'
             # create a timer to postpone to frequent savings
             self._savetimer = QtCore.QTimer()
             self._savetimer.setInterval(self._loadsavedeadtime*1000)
@@ -470,6 +468,11 @@ class MemoryTree(MemoryBranch):
         # root of the tree is also a MemoryBranch with parent self and
         # branch name ""
         super(MemoryTree, self).__init__(self, "")
+
+    @property
+    def _buffer_filename(self):
+        """ makes a temporary file to ensure modification of config file is atomic (double-buffering like operation...)"""
+        return self._filename + '.tmp'
 
     def _load(self):
         """ loads data from file """
@@ -529,25 +532,27 @@ class MemoryTree(MemoryBranch):
                                "harddisk. These changes might have been " +
                                "overwritten now.")
             logger.debug("Saving config file %s", self._filename)
+            # we must be sure that overwriting config file never destroys existing data.
+            # security 1: backup with copyfile above
             copyfile(self._filename, self._filename+".bak")  # maybe this line is obsolete (see below)
+            # security 2: atomic writing such as shown in
+            # http://stackoverflow.com/questions/2333872/atomic-writing-to-file-with-python:
             try:
                 f = open(self._buffer_filename, mode='w')
                 save(self._data, stream=f)
                 f.flush()
                 os.fsync(f.fileno())
                 f.close()
-                # config file writing should be atomic! I am not 100% sure the following line guarantees atomicity on windows
-                # but it's already much better than letting the yaml dumper save on the final config file
-                # see http://stackoverflow.com/questions/2333872/atomic-writing-to-file-with-python
-                # or https://bugs.python.org/issue8828
                 os.unlink(self._filename)
                 os.rename(self._buffer_filename, self._filename)
             except:
                 copyfile(self._filename+".bak", self._filename)
                 logger.error("Error writing to file. Backup version was restored.")
                 raise
+            # save last modification time of the file
             self._mtime = os.path.getmtime(self._filename)
-        else:  # make sure saving will eventually occur
+        else:
+            # make sure saving will eventually occur by launching a timer
             if not self._savetimer.isActive():
                 self._savetimer.start()
 
