@@ -10,11 +10,12 @@ basic capabilities such as displaying their attributes in the GUI having
 their state load and saved in the config file...
 """
 
-from .attributes import BaseAttribute
+from .attributes import BaseAttribute, SubModuleAttribute
 from .widgets.module_widgets import ModuleWidget
 from . import CurveDB
 
 import logging
+from copy import copy
 import numpy as np
 from six import with_metaclass
 from collections import OrderedDict
@@ -37,6 +38,11 @@ class SignalLauncher(QtCore.QObject):
     def __init__(self, module):
         super(SignalLauncher, self).__init__()
         self.module = module
+
+    def emit_signal_by_name(self, name, *args, **kwds):
+        """Emits signal "name" with the specfified args and kwds."""
+        signal = getattr(self, name)
+        signal.emit(*args, **kwds)
 
     def kill_timers(self):
         """
@@ -64,8 +70,10 @@ class SignalLauncher(QtCore.QObject):
 
 class ModuleMetaClass(type):
     """ Generate Module classes with two features:
-    - __new__ lets attributes know what name they are referred two in the
-    class that contains them
+    - __new__ lets attributes know what name they are referred to in the
+    class that contains them.
+    - __new__ also lists all the submodules. This info will be used when
+    instantiating submodules at module instanciation time.
     - __init__ auto-generates the function setup() and its docstring """
     def __new__(cls, classname, bases, classDict):
         """
@@ -74,6 +82,8 @@ class ModuleMetaClass(type):
         see http://code.activestate.com/recipes/577426-auto-named-decriptors/
         Iterate through the new class' __dict__ and update the .name of all
         recognised BaseAttribute.
+
+        + list all submodules attributes
         """
         for name, attr in classDict.items():
             if isinstance(attr, BaseAttribute):
@@ -82,7 +92,10 @@ class ModuleMetaClass(type):
 
     def __init__(self, classname, bases, classDict):
         """
-        Takes care of creating 'setup(**kwds)' function of the module.
+        1. Takes care of adding all submodules attributes to the list
+        self._submodules
+
+        2. Takes care of creating 'setup(**kwds)' function of the module.
         The setup function executes set_attributes(**kwds) and then _setup().
 
         We cannot use normal inheritance because we want a customized
@@ -90,7 +103,20 @@ class ModuleMetaClass(type):
         concatenating the module's _setup docstring and individual
         setup_attribute docstrings.
         """
+        # 0. Normal class initialization
         super(ModuleMetaClass, self).__init__(classname, bases, classDict)
+
+        # 1. adding all submodules attributes to the dict self._submodules
+        for name, attr in classDict.items():
+            if isinstance(attr, SubModuleAttribute):
+                if '_submodules' in self.__dict__:
+                    self.__dict__['_submodules'][name] = attr
+                else:
+                    _parent_submodules       = copy(self._submodules)
+                    _parent_submodules[name] = attr
+                    setattr(self, '_submodules', _parent_submodules)
+
+        # 2. create setup(**kwds)
         if "setup" not in self.__dict__:
             # 1. generate a setup function
             def setup(self, **kwds):
@@ -226,34 +252,47 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
 
     # Change this to save the curve with a different system
     _curve_class = CurveDB
+
     # a QOBject used to communicate with the widget
-    _signal_launcher = None
+    _signal_launcher = None # should be _signal_launcher_cls and
+    # _signal_launcher
+
     # name that is going to be used for the section in the config file
     # (class-level)
     _section_name = 'basemodule'
+
+    # dict of submodules to instantiate at "instanciation-time".
+    # This dict will be automatically filled by the metaclass
+    _submodules = dict()
+
     # Change this to provide a custom graphical class
     _widget_class = ModuleWidget
+
     # attributes listed here will be saved in the config file everytime they
     # are updated.
     _setup_attributes = []
+
     # class inheriting from ModuleWidget can
     # automatically generate gui from a list of attributes
     _gui_attributes = []
+
     # Changing these attributes outside setup(
     # **kwds) will trigger self.callback()
     # standard callback defined in BaseModule is to call setup()
     _callback_attributes = []
-    # instance-level attribute created in create_widget
+
     # This flag is used to desactivate callback during setup
     _callback_active = True
+
     # This flag is used to desactivate saving into file during init
     _autosave_active = True
-    # placeholder for widget
-    #_widget = None
+
     # internal memory for owner of the module (to avoid conflicts)
     _owner = None
-    # name of the module, automatically assigned one per instance
+
+    # name of the module, metaclass automatically assigns one per instance
     name = None
+
     # the class for the SignalLauncher to be used
     _signal_launcher = SignalLauncher
 
@@ -275,6 +314,7 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         self._signal_launcher = self._signal_launcher(self)
         self.parent = parent
         self._autosave_active = False
+        self._create_submodules()
         self._init_module()
         self._autosave_active = True
         # load settings from config file
@@ -287,13 +327,29 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         """
         pass
 
+    def _create_submodules(self):
+        """
+        Instantiate one submodule per SubModuleAttribute
+        """
+        for key, sub in self._submodules.items():
+            setattr(self, '_' + key, sub.submodule_cls(self,
+                                                       name=key))
+
+    @property
+    def _submodule_names(self):
+        return [mod.name for mod in self._submodules]
+
     def get_setup_attributes(self):
         """
-        :return: a dict with the current values of the setup attributes
+        :return: a dict with the current values of the setup attributes.
+        Recursively calls get_setup_attributes for sub_modules.
         """
         kwds = OrderedDict()
         for attr in self._setup_attributes:
-            kwds[attr] = getattr(self, attr)
+            val = getattr(self, attr)
+            if attr in self._submodule_names:
+                val = val.get_setup_attributes()
+            kwds[attr] = val
         return kwds
 
     def set_setup_attributes(self, **kwds):
@@ -329,22 +385,38 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         """
         The config file instance. In practice, writing values in here will
         write the values in the corresponding section of the config file.
+
+        2 cases are possible:
+          1. If self._section_name is None, then the config file section is:
+                - parent_section: # e.g. scope
+                  - name          # e.g. run      <-------------
+          2.  Otherwise:
+                - parent_section: # e.g. root of the file
+                  - section_name: # e.g. scopes
+                   - name: # e.g. scope or iq2    <-------------
+                   - states: # states only allowed in case 2.
         """
-        manager_section_name = self._section_name + "s" # for instance, iqs
-        try:
-            manager_section = getattr(self.parent.c, manager_section_name)
-        except KeyError:
-            self.parent.c[manager_section_name] = dict()
-            manager_section = getattr(self.parent.c, manager_section_name)
-        if not self.name in manager_section._keys():
-            manager_section[self.name] = dict()
-        return getattr(manager_section, self.name)
+        if self._section_name is None: # case 1.
+            direct_parent = self.parent.c
+        else: # case 2.
+            manager_section_name = self._section_name + "s" # for instance, iqs
+            try:
+                direct_parent = getattr(self.parent.c, manager_section_name)
+            except KeyError:
+                self.parent.c[manager_section_name] = dict()
+                direct_parent = getattr(self.parent.c, manager_section_name)
+        if not self.name in direct_parent._keys():
+            direct_parent[self.name] = dict()
+        return getattr(direct_parent, self.name)
 
     @property
     def _c_states(self):
         """
         Returns the config file branch corresponding to the "states" section.
         """
+        if self._section_name is None:
+            raise NotImplementedError("States are not implemented for "
+                                      "module %s"%self.name)
         if not "states" in self.c._parent._keys():
             self.c._parent["states"] = dict()
         return self.c._parent.states
@@ -357,6 +429,10 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         """
         if state_branch is None: # look in the normal c_states
             state_branch = self._c_states
+        else:
+            if self._section_name is None:
+                raise NotImplementedError("States are not implemented for "
+                                          "module %s" % self.name)
         if state_name not in state_branch._keys():
             raise KeyError("State %s doesn't exist for modules %s"
                            % (state_name, self.__class__.name))
@@ -368,6 +444,9 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         state_section is left unchanged, uses the normal
         class_section.states convention.
         """
+        if self._section_name is None:
+            raise NotImplementedError("States are not implemented for "
+                                      "module %s" % self.name)
         if state_branch is None:
             state_branch = self._c_states
         state_branch[name] = self.get_setup_attributes()
@@ -378,6 +457,9 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         state_branch is left unchanged, uses the normal
         class_section.states convention.
         """
+        if self._section_name is None:
+            raise NotImplementedError("States are not implemented for "
+                                      "module %s" % self.name)
         branch = self._c_state(name, state_branch=None)
         self.set_setup_attributes(**branch._data) # ugly... MemoryTree needs to
                                                # implement the API of a dict...
@@ -388,6 +470,9 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         :param name: name of the state to erase
         :return: None
         """
+        if self._section_name is None:
+            raise NotImplementedError("States are not implemented for "
+                                      "module %s" % self.name)
         self._c_state(name)._erase()
 
     def _save_curve(self, x_values, y_values, **attributes):
@@ -401,7 +486,6 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         :param  attributes: extra curve parameters (such as relevant module
         settings)
         """
-
         c = self._curve_class.create(x_values,
                                      y_values,
                                      **attributes)
@@ -415,6 +499,9 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
 
     @property
     def states(self):
+        if self._section_name is None:
+            raise NotImplementedError("States are not implemented for "
+                                      "module %s" % self.name)
         return list(self._c_states._keys())
 
     def _setup(self):
@@ -546,6 +633,13 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         else:
             self._c_state(state)._set_yml(yml_content)
 
+    def _kill_timers(self):
+        """
+        Kill timers recursively in all submodules.
+        """
+        self._signal_launcher.kill_timers()
+        for sub in self._submodules.values():
+            sub._clear()
 
 class HardwareModule(BaseModule):
     """

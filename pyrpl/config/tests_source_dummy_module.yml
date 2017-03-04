@@ -20,3 +20,8 @@ redpitaya:
   filename: fpga//red_pitaya.bin
   reloadfpga: true
   monitor_server_name: monitor_server
+dummy_modules:
+  dummy_module:
+    sub1:
+       b1: true
+       b2: false

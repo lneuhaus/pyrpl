@@ -84,7 +84,6 @@ class TestClass(TestPyrpl):
                       points=1000,
                       avg=1)
 
-        from time import sleep
         #for i in range(1000): # we should maybe put that in teardown(), setup(), or even pyrpl.__init__()
         #    APP.processEvents() # make sure no old events are going to screw up the timing test
 

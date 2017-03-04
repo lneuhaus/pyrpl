@@ -23,7 +23,7 @@ class ScopeWidget(ModuleWidget):
         self.datas = [None, None]
         self.times = None
         self.ch_col = ('green', 'red')
-        self.module.__dict__['curve_name'] = 'scope'
+        #self.module.__dict__['curve_name'] = 'scope'
         self.main_layout = QtGui.QVBoxLayout()
         self.init_attribute_layout()
         aws = self.attribute_widgets
@@ -67,7 +67,7 @@ class ScopeWidget(ModuleWidget):
         self.layout_misc.addWidget(aws['average'])
         self.attribute_layout.addLayout(self.layout_misc)
 
-        self.attribute_layout.removeWidget(aws['curve_name'])
+        #self.attribute_layout.removeWidget(aws['curve_name'])
 
         self.button_layout = QtGui.QHBoxLayout()
         self.setLayout(self.main_layout)
@@ -84,11 +84,11 @@ class ScopeWidget(ModuleWidget):
         self.button_layout.addWidget(self.button_single)
         self.button_layout.addWidget(self.button_continuous)
         self.button_layout.addWidget(self.button_save)
-        self.button_layout.addWidget(aws['curve_name'])
-        aws['curve_name'].setMaximumWidth(250)
+        #self.button_layout.addWidget(aws['curve_name'])
+        #aws['curve_name'].setMaximumWidth(250)
         self.main_layout.addLayout(self.button_layout)
 
-        self.button_single.clicked.connect(self.module.run_single)
+        self.button_single.clicked.connect(self.module.run.single)
         self.button_continuous.clicked.connect(self.run_continuous_clicked)
         self.button_save.clicked.connect(self.save_clicked)
 
@@ -111,7 +111,7 @@ class ScopeWidget(ModuleWidget):
         # it is not synced with the module at creation time.
         self.update_running_buttons()
         self.update_rolling_mode_visibility()
-        self.rolling_mode = self.module.rolling_mode
+        self.rolling_mode = self.module.run.rolling_mode
 
     def update_attribute_by_name(self, name, new_value_list):
         """
@@ -119,21 +119,31 @@ class ScopeWidget(ModuleWidget):
         """
         super(ScopeWidget, self).update_attribute_by_name(name, new_value_list)
         if name in ['rolling_mode', 'duration']:
-            self.rolling_mode = self.module.rolling_mode
-        if name in ['running_continuous',]:
+            self.rolling_mode = self.module.run.rolling_mode
+        if name in ['running_state',]:
             self.update_running_buttons()
 
     def update_running_buttons(self):
         """
-        Change text of Run continuous button and visibility of run single button
-        according to module.running_continuous
+        Change text of Run continuous button and visibility of run single
+        button according to module.running_continuous
         """
-        if self.module.running_continuous:
+        if self.module.run.running_state=="running_continuous":
             self.button_continuous.setText("Stop")
             self.button_single.setEnabled(False)
-        else:
+            self.button_single.setText("Run single")
+        if self.module.run.running_state=="running_single":
             self.button_continuous.setText("Run continuous")
             self.button_single.setEnabled(True)
+            self.button_single.setText("Stop")
+        if self.module.run.running_state=="paused":
+            self.button_continuous.setText("Run continuous")
+            self.button_single.setEnabled(True)
+            self.button_single.setText("Run single")
+        if self.module.run.running_state=="stopped":
+            self.button_continuous.setText("Run continuous")
+            self.button_single.setEnabled(True)
+            self.button_single.setText("Run single")
 
     def display_channel(self, ch):
         """
@@ -173,7 +183,7 @@ class ScopeWidget(ModuleWidget):
         """
         Set rolling mode on or off based on the module's attribute "rolling_mode"
         """
-        self.rolling_mode = self.module.rolling_mode
+        self.rolling_mode = self.module.run.rolling_mode
 
     def run_continuous_clicked(self):
         """
@@ -182,12 +192,12 @@ class ScopeWidget(ModuleWidget):
 
         if str(self.button_continuous.text()) \
                 == "Run continuous":
-            self.module.run_continuous()
+            self.module.run.continuous()
         else:
-            self.module.stop()
+            self.module.run.stop()
 
     def rolling_mode_toggled(self):
-        self.module.rolling_mode = self.rolling_mode
+        self.module.run.rolling_mode = self.rolling_mode
 
     @property
     def rolling_mode(self):
@@ -209,7 +219,7 @@ class ScopeWidget(ModuleWidget):
         """
         Hide rolling mode checkbox for duration < 100 ms
         """
-        self.rolling_group.setEnabled(self.module._rolling_mode_allowed())
+        self.rolling_group.setEnabled(self.module.run._rolling_mode_allowed())
         self.attribute_widgets['trigger_source'].widget.setEnabled(
             not self.rolling_mode)
         self.attribute_widgets['threshold_ch1'].widget.setEnabled(
@@ -221,17 +231,24 @@ class ScopeWidget(ModuleWidget):
     def autoscale(self):
         """Autoscale pyqtgraph. The current behavior is to autoscale x axis
         and set y axis to  [-1, +1]"""
-        mini = np.nan
-        maxi = np.nan
-        for curve in self.curves:
-            if curve.isVisible():
-                mini = np.nanmin([curve.xData.min(), mini])
-                maxi = np.nanmax([curve.xData.max(), maxi])
-        if not np.isnan(mini):
-            self.plot_item.setRange(xRange=[mini,
-                                            maxi])
+        #mini = np.nan
+        #maxi = np.nan
+        #for curve in self.curves:
+        #    if curve.isVisible():
+        #        mini = np.nanmin([self., mini])
+        #        maxi = np.nanmax([curve.xData.max(), maxi])
+        #if not np.isnan(mini):
+
+        if self.module.run._is_rolling_mode_active():
+            mini = -self.module.duration
+            maxi = 0
+        else:
+            mini = min(self.module.times)
+            maxi = max(self.module.times)
+        self.plot_item.setRange(xRange=[mini,
+                                        maxi])
         self.plot_item.setRange(yRange=[-1,1])
         # self.plot_item.autoRange()
 
     def save_clicked(self):
-        self.module.save_curve()
+        self.module.run.save_curve()

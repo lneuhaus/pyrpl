@@ -469,10 +469,48 @@ class ListStageOutputAttribute(BaseAttribute):
             if not isinstance(is_on, bool):
                 raise ValueError("Value %s is not possible for output %s on/off property (stage %s)"%(is_on, key, self.name))
             if not isinstance(is_start_offset, bool):
-                raise ValueError("value %s is not possible for output %s offset_enable (stage %s)"%(is_start_offset, key, self.name))
+                raise ValueError("value %s is not possible for output %s "
+                                 "offset_enable (stage %s)"%(is_start_offset, key, self.name))
             if not isinstance(start_offset, numbers.Number):
                 raise ValueError("value %s is not possible for output %s offset (stage %s)"%(start_offset, key, self.name))
         return value
+
+
+class SubModuleAttribute(BaseAttribute):
+    """
+    This class is used to handle submodules of a module.
+    The SubmoduleAttribute is declared with:
+    SubModuleAttribute(submodule_cls, default, doc)
+
+    The submodule_cls is instantiated in the __init__ of the parent module
+
+    For the moment, the following actions are supported:
+       - module.sub = dict(...) : module.sub.set_setup_attributes(dict(...))
+       - module.sub: returns the submodule.
+    """
+    def __init__(self, submodule_cls, default=None, doc=""):
+        self.submodule_cls = submodule_cls
+        super(SubModuleAttribute, self).__init__(default=default, doc=doc)
+
+    def validate_and_normalize(self, value, module):
+        """
+        Make sure value is a dictionary with keys inside
+        submodule._setup_attributes
+        :param value:
+        :param module:
+        :return:
+        """
+        if not isinstance(value, dict):
+            raise ValueError(
+            "value %s for attribute %s is not a valid dictionary" % (
+            value, self.name))
+        sub = getattr(module, self.name)
+        for key in value.keys():
+            if not key in sub._setup_attributes:
+                raise ValueError("Submodule %s doesn't have %s as "
+                                     "setup_attribute"% (sub.name, key))
+        return value
+
 
 
 # docstring does not work yet, see:
@@ -1083,3 +1121,19 @@ class ListStageOuputProperty(ListStageOutputAttribute, BaseProperty):
     """
     default = {}
 
+
+class SubModuleProperty(SubModuleAttribute, BaseProperty):
+    """
+    A property for a submodule.
+    """
+    default = {}
+
+    def set_value(self, obj, val):
+        """
+        Use the dictionnary val to set_setup_attributes
+        :param obj:
+        :param val:
+        :return:
+        """
+        getattr(obj, self.name).set_setup_attributes(**val)
+        return val
