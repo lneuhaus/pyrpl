@@ -153,7 +153,8 @@ class IqManagerWidget(ModuleManagerWidget):
         self.graphic_items = []
         self.input = MyLabel("input", row_center, "input", parent=self)
 
-        self.high_pass = MyImage('acbandwidth', row_center, "high_pass.bmp", parent=self)
+        self.high_pass = MyImage('acbandwidth', row_center,
+                                 "high_pass.bmp", parent=self)
         self.low_pass1 = MyImage('bandwidth', row_up, "low_pass.bmp", parent=self, x_offset=-40)
         self.low_pass2 = MyImage('bandwidth', row_down, "low_pass.bmp", parent=self, x_offset=-40)
 

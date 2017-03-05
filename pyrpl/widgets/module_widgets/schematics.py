@@ -1,11 +1,12 @@
 """
-This file defines some primitives to draw a circuit schematic on Widgets. For now it is only used in IqManagerWidget.
+This file defines some primitives to draw a circuit schematic on Widgets.
+For now it is only used in IqManagerWidget.
 """
 
 import os.path as osp
 from PyQt4 import QtCore, QtGui
 
-IMAGE_PATH = osp.join(osp.dirname(__file__), "images")
+IMAGE_PATH = osp.join(osp.split(osp.dirname(__file__))[0], "images")
 
 
 class MyLabelSignal(QtGui.QLabel):
@@ -21,13 +22,16 @@ class MyItem(QtGui.QLabel):
         self.parent = parent
         parent.graphic_items.append(self)
         self.setStyleSheet(
-            "QLabel{border: 1px solid black; border-radius: 5px; font-size: 15px; background-color:white}")
+            "QLabel{border: 1px solid black; border-radius: 5px; "
+            "font-size: 15px; background-color:white}")
         self.proxy = parent.scene.addWidget(self)
         self.proxy.setZValue(2)
 
     def move_to_right_position(self):
-        widget = self.parent.module_widgets[0].attribute_widgets[self.widget_name]
-        x = widget.pos().x() + widget.width()/2 + self.x_offset - self.width()/2
+        widget = self.parent.module_widgets[0].attribute_widgets[
+            self.widget_name]
+        x = widget.pos().x() + widget.width()/2 + self.x_offset - \
+            self.width()/2
         y = self.y*self.parent.view.height() - self.height()/2
         self.move(x, y)
 
