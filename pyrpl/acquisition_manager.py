@@ -1,6 +1,6 @@
-from pyrpl.attributes import StringProperty, LongProperty,\
+from .attributes import StringProperty, LongProperty,\
      BoolProperty, ModuleProperty
-from pyrpl.modules import BaseModule, SignalLauncher
+from .modules import BaseModule, SignalLauncher
 
 from PyQt4 import QtCore, QtGui
 

@@ -411,11 +411,10 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         """
          Load and sets all setup attributes from config file
         """
-        dic = OrderedDict()
-        if self.c is not None:
-            for key, value in self.c._dict.items():
-                if key in self._setup_attributes:
-                    dic[key] = value
+        if self.c is not None:  # self.c = None switches off loading states (e.g. for ModuleManagers)
+            # pick those elements of the config state that are setup_attributes
+            dic = {k: v for k, v in self.c._dict.items() if k in self._setup_attributes}
+            # set those elements
             self.set_setup_attributes(**dic)
 
     @property

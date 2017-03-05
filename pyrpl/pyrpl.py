@@ -125,9 +125,9 @@ class Pyrpl(object):
                 else:
                     module = cls(self, name)
             except:
-                self.logger.error('Something went wrong when loading software module "%s"',
-                                  module.name)
-                #raise
+                self.logger.error('Something went wrong when loading the software module "%s"',
+                                  name)
+                raise
             else:
                 setattr(self, module.name, module)
                 self.software_modules.append(module)

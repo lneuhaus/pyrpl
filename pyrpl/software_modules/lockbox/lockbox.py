@@ -602,10 +602,10 @@ class Lockbox(SoftwareModule):
         """ returns a new Lockbox object of the type defined by the classname variable in the config file"""
         # identify class name
         try:
-            classname = parent.c.lockboxs[name]['classname']
+            classname = parent.c[name]['classname']
         except KeyError:
             classname = cls.__name__
-            parent.logger.warning("No config file entry for classname found. Using class '%s'.", classname)
+            parent.logger.debug("No config file entry for classname found. Using class '%s'.", classname)
         parent.logger.info("Making new Lockbox with class %s. ", classname)
         # return instance of the class
         return all_classnames()[classname](parent, name)
