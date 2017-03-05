@@ -4,7 +4,7 @@ from ..attributes import *
 from ..software_modules.module_managers import ModuleManager
 from .test_base import TestPyrpl
 
-class TestClass(TestPyrpl):
+class TestLoadSave(TestPyrpl):
     def scramble_values(self, mod, str_val='foo', num_val=12, bool_val=True, list_val=[19], option_index=0):
         attr_names =[]
         attr_vals = []

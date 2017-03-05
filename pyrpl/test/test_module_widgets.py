@@ -7,7 +7,7 @@ from PyQt4.QtCore import Qt
 import os
 from .test_base import TestPyrpl
 
-class TestClass(TestPyrpl):
+class TestModuleWidgets(TestPyrpl):
     @classmethod
     def setup(self):
         ## these tests currently do not run on travis.

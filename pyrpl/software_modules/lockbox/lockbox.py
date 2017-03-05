@@ -152,7 +152,6 @@ class Lockbox(SoftwareModule):
         self.classname = type(self).__name__
         # load availbale sequences
         self._sequence = Sequence(self, 'sequence')
-        # initial state is unlocked
 
         #<<<<<<< HEAD
         # parameters are updated and outputs are loaded by load_setup_attributes (called at the end of __init__)
@@ -572,19 +571,31 @@ class Lockbox(SoftwareModule):
 
     def _delete_Lockbox(self):
         """ returns a new Lockbox object of the type defined by the classname variable in the config file"""
+        pyrpl, name = self.pyrpl, self.name
         self._signal_launcher.clear()
         for o in self.outputs:
             o.clear()
         for i in self.inputs:
             i.clear()
-        setattr(self.parent, self.name, None)  # pyrpl.lockbox = None
+        setattr(pyrpl, name, None)  # pyrpl.lockbox = None
         try:
             self.parent.software_modules.remove(self)
         except ValueError:
             self._logger.warning("Could not find old Lockbox %s in the list of software modules. Duplicate lockbox "
                                  "objects may coexist. It is recommended to restart PyRPL. Existing software modules: "
                                  "\n%s", self.name, str(self.parent.software_modules))
-        del self
+        # redirect all attributes of the old lockbox to the new/future lockbox object
+        def getattribute_forwarder(obj, attribute):
+            lockbox = getattr(pyrpl, name)
+            return getattr(lockbox, attribute)
+        self.__getattribute__ = getattribute_forwarder
+        def setattribute_forwarder(obj, attribute, value):
+            lockbox = getattr(pyrpl, name)
+            return setattr(lockbox, attribute, value)
+        self.__setattr__ = setattribute_forwarder
+        # delete all references to properties in the class dict
+        #for k in self.__dict__.keys():
+        #    self.__dict__.pop(k)
 
     @classmethod
     def _make_Lockbox(cls, parent, name):

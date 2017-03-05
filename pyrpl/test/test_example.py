@@ -3,7 +3,7 @@ logger = logging.getLogger(name=__name__)
 from .test_base import TestPyrpl
 
 
-class TestClass(TestPyrpl):
+class TestExample(TestPyrpl):
     def setup(self):
         self.asg = self.pyrpl.rp.asg1
 

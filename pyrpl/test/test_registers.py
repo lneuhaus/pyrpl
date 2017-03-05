@@ -5,7 +5,7 @@ from pyrpl.attributes import *
 from pyrpl.test.test_redpitaya import TestRedpitaya
 
 
-class TestClass(TestRedpitaya):
+class TestRegisters(TestRedpitaya):
     def test_generator(self):
         if self.r is None:
             assert False

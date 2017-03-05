@@ -92,7 +92,8 @@ class Pyrpl(object):
                 try:
                     module._load_setup_attributes() # **self.c[module.name])
                 except BaseException as e:
-                    self.logger.warning('Something went wrong when loading attributes of module "%s"'%module.name)
+                    self.logger.error('Something went wrong when loading attributes of hardware module "%s"',
+                                      module.name)
         # create software modules...
         self.load_software_modules()
         # make the gui if applicable
@@ -118,13 +119,19 @@ class Pyrpl(object):
             # some modules have generator function, e.g. Lockbox
             # @classmethod
             # def make_Lockbox(cls, parent, name): ...
-            if hasattr(cls, "_make_"+cls.__name__):
-                module = getattr(cls, "_make_"+cls.__name__)(self, name)
+            try:
+                if hasattr(cls, "_make_"+cls.__name__):
+                    module = getattr(cls, "_make_"+cls.__name__)(self, name)
+                else:
+                    module = cls(self, name)
+            except:
+                self.logger.error('Something went wrong when loading software module "%s"',
+                                  module.name)
+                #raise
             else:
-                module = cls(self, name)
-            setattr(self, module.name, module)
-            self.software_modules.append(module)
-            self.logger.debug("Created software module %s", name)
+                setattr(self, module.name, module)
+                self.software_modules.append(module)
+                self.logger.debug("Created software module %s", name)
 
     @property
     def hardware_modules(self):

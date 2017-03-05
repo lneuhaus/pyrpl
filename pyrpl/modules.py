@@ -65,7 +65,10 @@ class SignalLauncher(QtCore.QObject):
         for key in dir(self.__class__):
             val = getattr(self, key)
             if isinstance(val, QtCore.pyqtBoundSignal):
-                val.disconnect()
+                try:
+                    val.disconnect()
+                except TypeError:  # occurs if signal is not connected to anything
+                    pass
         self.kill_timers()
 
 class ModuleMetaClass(type):
@@ -334,10 +337,21 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         for key, sub in self._submodules.items():
             setattr(self, '_' + key, sub.submodule_cls(self,
                                                        name=key))
-
     @property
     def _submodule_names(self):
         return [mod.name for mod in self._submodules]
+
+    @property
+    def pyrpl(self):
+        """
+        Recursively looks through patent modules untill pyrpl instance is
+        reached.
+        """
+        from .pyrpl import Pyrpl
+        parent = self.parent
+        while (not isinstance(parent, Pyrpl)):
+            parent = parent.parent
+        return parent
 
     def get_setup_attributes(self):
         """
@@ -383,86 +397,41 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
     @property
     def c(self):
         """
-        The config file instance. In practice, writing values in here will
-        write the values in the corresponding section of the config file.
+        Returns a MemoryBranch object used for storing data in the configuration file.
 
-        2 cases are possible:
-          1. If self._section_name is None, then the config file section is:
-                - parent_section: # e.g. scope
-                  - name          # e.g. run      <-------------
-          2.  Otherwise:
-                - parent_section: # e.g. root of the file
-                  - section_name: # e.g. scopes
-                   - name: # e.g. scope or iq2    <-------------
-                   - states: # states only allowed in case 2.
+        The branch corresponding to the module is a subbranch of the parent module's branch with the name of the module.
         """
-        if self._section_name is None: # case 1.
-            direct_parent = self.parent.c
-        else: # case 2.
-            manager_section_name = self._section_name + "s" # for instance, iqs
-            try:
-                direct_parent = getattr(self.parent.c, manager_section_name)
-            except KeyError:
-                self.parent.c[manager_section_name] = dict()
-                direct_parent = getattr(self.parent.c, manager_section_name)
-        if not self.name in direct_parent._keys():
-            direct_parent[self.name] = dict()
-        return getattr(direct_parent, self.name)
+        return self.parent.c._get_or_create(self.name)
 
     @property
-    def _c_states(self):
+    def _states(self):
         """
-        Returns the config file branch corresponding to the "states" section.
+        Returns the config file branch corresponding to the saved states of the module.
         """
-        if self._section_name is None:
-            raise NotImplementedError("States are not implemented for "
-                                      "module %s"%self.name)
-        if not "states" in self.c._parent._keys():
-            self.c._parent["states"] = dict()
-        return self.c._parent.states
+        return self.c._root._get_or_create(self.name + "_states")
 
-    def _c_state(self, state_name, state_branch=None):
+    @property
+    def states(self):
         """
-        :param state_name: Name of the state to explore.
-        :param state_branch: If not None, look inside the provided branch.
-        :return: The memory branch of the requested state.
+        Returns the names of all saved states of the module.
         """
-        if state_branch is None: # look in the normal c_states
-            state_branch = self._c_states
-        else:
-            if self._section_name is None:
-                raise NotImplementedError("States are not implemented for "
-                                          "module %s" % self.name)
-        if state_name not in state_branch._keys():
-            raise KeyError("State %s doesn't exist for modules %s"
-                           % (state_name, self.__class__.name))
-        return getattr(state_branch, state_name) #[state_name]
+        return list(self._states._keys())
 
-    def save_state(self, name, state_branch=None):
+    def save_state(self, name):
         """
         Saves the current state under the name "name" in the config file. If
         state_section is left unchanged, uses the normal
         class_section.states convention.
         """
-        if self._section_name is None:
-            raise NotImplementedError("States are not implemented for "
-                                      "module %s" % self.name)
-        if state_branch is None:
-            state_branch = self._c_states
-        state_branch[name] = self.get_setup_attributes()
+        self._states[name] = self.get_setup_attributes()
 
-    def load_state(self, name, state_branch=None):
+    def load_state(self, name):
         """
         Loads the state with name "name" from the config file. If
         state_branch is left unchanged, uses the normal
         class_section.states convention.
         """
-        if self._section_name is None:
-            raise NotImplementedError("States are not implemented for "
-                                      "module %s" % self.name)
-        branch = self._c_state(name, state_branch=None)
-        self.set_setup_attributes(**branch._data) # ugly... MemoryTree needs to
-                                               # implement the API of a dict...
+        self.set_setup_attributes(**self._states[name]._dict)
 
     def erase_state(self, name):
         """
@@ -470,10 +439,31 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         :param name: name of the state to erase
         :return: None
         """
-        if self._section_name is None:
-            raise NotImplementedError("States are not implemented for "
-                                      "module %s" % self.name)
-        self._c_state(name)._erase()
+        self._states[name]._erase()
+
+    def get_yml(self, state=None):
+        """
+        :param state: The name of the state to inspect. If state is None-->
+        then, use the current instrument state.
+        :return: a string containing the yml code
+        """
+        if state is None:
+            return self.c._get_yml()
+        else:
+            return self._states[state]._get_yml()
+
+    def set_yml(self, yml_content, state=None):
+        """
+        :param yml_content: some yml code to encode the module content.
+        :param state: The name of the state to set. If state is None-->
+        then, use the current instrument state and reloads it immediately
+        :return: None
+        """
+        if state is None:
+            self.c._set_yml(yml_content)
+            self._load_setup_attributes()
+        else:
+            self._states._get_or_create(state)._set_yml(yml_content)
 
     def _save_curve(self, x_values, y_values, **attributes):
         """
@@ -496,13 +486,6 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         Change ownership to None
         """
         self.owner = None
-
-    @property
-    def states(self):
-        if self._section_name is None:
-            raise NotImplementedError("States are not implemented for "
-                                      "module %s" % self.name)
-        return list(self._c_states._keys())
 
     def _setup(self):
         """
@@ -597,49 +580,14 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         """
         self.owner = None
 
-    @property
-    def pyrpl(self):
+    def _clear(self):
         """
-        Recursively looks through patent modules untill pyrpl instance is
-        reached.
-        """
-        from .pyrpl import Pyrpl
-        parent = self.parent
-        while (not isinstance(parent, Pyrpl)):
-            parent = parent.parent
-        return parent
-
-    def get_yml(self, state=None):
-        """
-        :param state: The name of the state to inspect. If state is None-->
-        then, use the current instrument state.
-        :return: a string containing the yml code
-        """
-        if state is None:
-            return self.c._get_yml()
-        else:
-            return self._c_state(state)._get_yml()
-
-    def set_yml(self, yml_content, state=None):
-        """
-        :param yml_content: some yml code to encode the module content.
-        :param state: The name of the state to set. If state is None-->
-        then, use the current instrument state and reloads it immediately
-        :return: None
-        """
-        if state is None:
-            self.c._set_yml(yml_content)
-            self._load_setup_attributes()
-        else:
-            self._c_state(state)._set_yml(yml_content)
-
-    def _kill_timers(self):
-        """
-        Kill timers recursively in all submodules.
+        Kill timers and free resources for this module and all submodules.
         """
         self._signal_launcher.kill_timers()
         for sub in self._submodules.values():
             sub._clear()
+
 
 class HardwareModule(BaseModule):
     """
@@ -685,23 +633,23 @@ class HardwareModule(BaseModule):
                                  "'frequency_correction'. ", self.name)
             return 1.0
 
-
-    def __setattr__(self, name, value):
-        # prevent the user from setting a nonexisting attribute
-        # (I am not sure anymore if it's not making everyone's life harder...)
-        # if hasattr(self, name) or name.startswith('_') or
-        # hasattr(type(self), name):
-        if name.startswith("_") \
-                or (name in self.__dict__) \
-                or hasattr(self.__class__, name):
-            # we don't want class.attr
-            # to be executed to save one communication time,
-            # this was the case with hasattr(self, name)
-            super(BaseModule, self).__setattr__(name, value)
-        else:
-            raise ValueError("New module attributes may not be set at runtime."
-                             " Attribute " + name + " is not defined in class "
-                             + self.__class__.__name__)
+        # Let's try to deprecate this
+        # def __setattr__(self, name, value):
+        # # prevent the user from setting a nonexisting attribute
+        # # (I am not sure anymore if it's not making everyone's life harder...)
+        # # if hasattr(self, name) or name.startswith('_') or
+        # # hasattr(type(self), name):
+        # if name.startswith("_") \
+        #         or (name in self.__dict__) \
+        #         or hasattr(self.__class__, name):
+        #     # we don't want class.attr
+        #     # to be executed to save one communication time,
+        #     # this was the case with hasattr(self, name)
+        #     super(BaseModule, self).__setattr__(name, value)
+        # else:
+        #     raise ValueError("New module attributes may not be set at runtime."
+        #                      " Attribute " + name + " is not defined in class "
+        #                      + self.__class__.__name__)
 
     def _reads(self, addr, length):
         return self._client.reads(self._addr_base + addr, length)
