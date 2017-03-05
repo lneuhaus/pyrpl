@@ -493,24 +493,26 @@ class ModuleAttribute(BaseAttribute):
         self.module_cls = module_cls
         super(ModuleAttribute, self).__init__(default=default, doc=doc)
 
-    def validate_and_normalize(self, value, module):
-        """
-        Make sure value is a dictionary with keys inside
-        submodule._setup_attributes
-        :param value:
-        :param module:
-        :return:
-        """
-        if not isinstance(value, dict):
-            raise ValueError(
-            "value %s for attribute %s is not a valid dictionary" % (
-            value, self.name))
-        sub = getattr(module, self.name)
-        for key in value.keys():
-            if not key in sub._setup_attributes:
-                raise ValueError("Submodule %s doesn't have %s as "
-                                     "setup_attribute"% (sub.name, key))
-        return value
+    # the normalization is already taken care of in the module.setup_attributes function
+    # -> no need for this
+    # def validate_and_normalize(self, value, module):
+    #     """
+    #     Make sure value is a dictionary with keys inside
+    #     submodule._setup_attributes
+    #     :param value:
+    #     :param module:
+    #     :return:
+    #     """
+    #     if not isinstance(value, dict):
+    #         raise ValueError(
+    #         "value %s for attribute %s is not a valid dictionary" % (
+    #         value, self.name))
+    #     sub = getattr(module, self.name)
+    #     for key in value.keys():
+    #         if not key in sub._setup_attributes:
+    #             raise ValueError("Submodule %s doesn't have %s as "
+    #                                  "setup_attribute"% (sub.name, key))
+    #     return value
 
 
 
@@ -1136,5 +1138,5 @@ class ModuleProperty(ModuleAttribute, BaseProperty):
         :param val:
         :return:
         """
-        getattr(obj, self.name).set_setup_attributes(**val)
+        getattr(obj, self.name).setup_attributes = val
         return val

@@ -126,7 +126,7 @@ class ModuleMetaClass(type):
                 self._callback_active = False
                 try:
                     # user can redefine any setup_attribute through kwds
-                    self.set_setup_attributes(**kwds)
+                    self.setup_attributes = kwds
                     # derived class
                     if hasattr(self, '_setup'):
                         self._setup()
@@ -317,13 +317,16 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         # create the signal launcher object from its class
         self._signal_launcher = self._signal_launcher(self)
         self.parent = parent
+        # disable autosave during initialization
         self._autosave_active = False
-        self._create_modules()
+        # instantiate submodule
+        for key, sub in self._module_attributes.items():
+            setattr(self, '_' + key, sub.module_cls(self, name=key))
+        # custom module initialization hook
         self._init_module()
+        # enable autosave and load last state from config file
         self._autosave_active = True
-        # load settings from config file
-        # attributes are loaded but the module is not "setup"
-        self._load_setup_attributes()
+        self._load_setup_attributes() # attributes are loaded but _setup() is not called
 
     def _init_module(self):
         """
@@ -337,11 +340,11 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         :return: If an ancestor of the current module is NOT autosaving, then
          the current module is not saving either.
         """
-        if hasattr(self, 'parent') and hasattr(self.parent,
-                                                  '_autosave_active'):
-            return self._flag_autosave_active and self.parent._autosave_active
-        else:
-            return self._flag_autosave_active
+        try:
+            parent_autosave_active = self.parent._autosave_active
+        except AttributeError:  # some parents do not implement the autosave flag
+            parent_autosave_active = True
+        return self._flag_autosave_active and parent_autosave_active
 
     @_autosave_active.setter
     def _autosave_active(self, val):
@@ -351,15 +354,7 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         :return:
         """
         self._flag_autosave_active = val
-        return val
 
-    def _create_modules(self):
-        """
-        Instantiate one submodule per SubModuleAttribute
-        """
-        for key, sub in self._module_attributes.items():
-            setattr(self, '_' + key, sub.module_cls(self,
-                                                       name=key))
     @property
     def _modules(self):
         return dict([(key, getattr(self, key)) for key in
@@ -382,7 +377,16 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         :return: a dict with the current values of the setup attributes.
         Recursively calls get_setup_attributes for sub_modules.
         """
-        kwds = OrderedDict()
+        self._logger.warning("get_setup_attributes is deprecated. Use property setup_attributes instead. ")
+        return self.setup_attributes
+
+    @property
+    def setup_attributes(self):
+        """
+        :return: a dict with the current values of the setup attributes.
+        Recursively calls get_setup_attributes for sub_modules.
+        """
+        kwds = dict()
         for attr in self._setup_attributes:
             val = getattr(self, attr)
             if attr in self._modules:
@@ -394,6 +398,15 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         """
         Sets the values of the setup attributes. Without calling any callbacks
         """
+        self._logger.warning("set_setup_attributes is deprecated. Use property setup_attributes instead. ")
+        self.setup_attributes = kwds
+
+    @setup_attributes.setter
+    def setup_attributes(self, kwds):
+        """
+        Sets the values of the setup attributes. Without calling any callbacks
+        """
+        kwds = dict(kwds)  # makes a copy of the kwds dict
         old_callback_active = self._callback_active
         self._callback_active = False
         try:
@@ -404,7 +417,7 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         finally:
             self._callback_active = old_callback_active
         if len(kwds) > 0:
-            raise ValueError("Attribute %s of module %s doesn't exist." %  (
+            raise ValueError("Attribute %s of module %s doesn't exist." % (
                 sorted(kwds.keys())[0], self.name))
 
     def _load_setup_attributes(self):
@@ -415,7 +428,7 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
             # pick those elements of the config state that are setup_attributes
             dic = {k: v for k, v in self.c._dict.items() if k in self._setup_attributes}
             # set those elements
-            self.set_setup_attributes(**dic)
+            self.setup_attributes = dic
 
     @property
     def c(self):
@@ -446,7 +459,7 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         state_section is left unchanged, uses the normal
         class_section.states convention.
         """
-        self._states[name] = self.get_setup_attributes()
+        self._states[name] = self.setup_attributes
 
     def load_state(self, name):
         """
@@ -454,7 +467,7 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         state_branch is left unchanged, uses the normal
         class_section.states convention.
         """
-        self.set_setup_attributes(**self._states[name]._dict)
+        self.setup_attributes = self._states[name]._dict
 
     def erase_state(self, name):
         """
