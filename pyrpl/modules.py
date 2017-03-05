@@ -10,7 +10,7 @@ basic capabilities such as displaying their attributes in the GUI having
 their state load and saved in the config file...
 """
 
-from .attributes import BaseAttribute, SubModuleAttribute
+from .attributes import BaseAttribute, ModuleAttribute
 from .widgets.module_widgets import ModuleWidget
 from . import CurveDB
 
@@ -93,7 +93,7 @@ class ModuleMetaClass(type):
     def __init__(self, classname, bases, classDict):
         """
         1. Takes care of adding all submodules attributes to the list
-        self._submodules
+        self._module_attributes
 
         2. Takes care of creating 'setup(**kwds)' function of the module.
         The setup function executes set_attributes(**kwds) and then _setup().
@@ -106,15 +106,15 @@ class ModuleMetaClass(type):
         # 0. Normal class initialization
         super(ModuleMetaClass, self).__init__(classname, bases, classDict)
 
-        # 1. adding all submodules attributes to the dict self._submodules
+        # 1. adding all submodules attributes to the dict self._module_attributes
         for name, attr in classDict.items():
-            if isinstance(attr, SubModuleAttribute):
-                if '_submodules' in self.__dict__:
-                    self.__dict__['_submodules'][name] = attr
+            if isinstance(attr, ModuleAttribute):
+                if '_module_attributes' in self.__dict__:
+                    self.__dict__['_module_attributes'][name] = attr
                 else:
-                    _parent_submodules       = copy(self._submodules)
-                    _parent_submodules[name] = attr
-                    setattr(self, '_submodules', _parent_submodules)
+                    _parent_module_attr = copy(self._module_attributes)
+                    _parent_module_attr[name] = attr
+                    setattr(self, '_module_attributes', _parent_module_attr)
 
         # 2. create setup(**kwds)
         if "setup" not in self.__dict__:
@@ -263,7 +263,7 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
 
     # dict of submodules to instantiate at "instanciation-time".
     # This dict will be automatically filled by the metaclass
-    _submodules = dict()
+    _module_attributes = dict()
 
     # Change this to provide a custom graphical class
     _widget_class = ModuleWidget
@@ -283,9 +283,6 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
 
     # This flag is used to desactivate callback during setup
     _callback_active = True
-
-    # This flag is used to desactivate saving into file during init
-    _autosave_active = True
 
     # internal memory for owner of the module (to avoid conflicts)
     _owner = None
@@ -307,14 +304,18 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
           - or another SoftwareModule: config file entry is in
             (parent_entry).(self.__class__.name + 's').(self.name)
         """
+
         if name is not None:
             self.name = name
+        self._flag_autosave_active = True # I would have prefered to use
+        # __autosave_active, but this gets automatically name mangled:
+        # see http://stackoverflow.com/questions/1301346/what-is-the-meaning-of-a-single-and-a-double-underscore-before-an-object-name
         self._logger = logging.getLogger(name=__name__)
         # create the signal launcher object from its class
         self._signal_launcher = self._signal_launcher(self)
         self.parent = parent
         self._autosave_active = False
-        self._create_submodules()
+        self._create_modules()
         self._init_module()
         self._autosave_active = True
         # load settings from config file
@@ -327,17 +328,40 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         """
         pass
 
-    def _create_submodules(self):
+    @property
+    def _autosave_active(self):
+        """
+        :return: If an ancestor of the current module is NOT autosaving, then
+         the current module is not saving either.
+        """
+        if hasattr(self, 'parent') and hasattr(self.parent,
+                                                  '_autosave_active'):
+            return self._flag_autosave_active and self.parent._autosave_active
+        else:
+            return self._flag_autosave_active
+
+    @_autosave_active.setter
+    def _autosave_active(self, val):
+        """
+        Only takes effect when all ancestor are autosaving
+        :param val:
+        :return:
+        """
+        self._flag_autosave_active = val
+        return val
+
+    def _create_modules(self):
         """
         Instantiate one submodule per SubModuleAttribute
         """
-        for key, sub in self._submodules.items():
-            setattr(self, '_' + key, sub.submodule_cls(self,
+        for key, sub in self._module_attributes.items():
+            setattr(self, '_' + key, sub.module_cls(self,
                                                        name=key))
 
     @property
-    def _submodule_names(self):
-        return [mod.name for mod in self._submodules]
+    def _modules(self):
+        return dict([(key, getattr(self, key)) for key in
+                     self._module_attributes])
 
     def get_setup_attributes(self):
         """
@@ -347,7 +371,7 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         kwds = OrderedDict()
         for attr in self._setup_attributes:
             val = getattr(self, attr)
-            if attr in self._submodule_names:
+            if attr in self._modules:
                 val = val.get_setup_attributes()
             kwds[attr] = val
         return kwds
@@ -570,11 +594,17 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         if val is None:
             self._autosave_active = True
         else:
-            # desactivate autosave for slave modules
+            # deactivate autosave for slave modules
             self._autosave_active = False
         self._ownership_changed(old, val)
         if val is None:
-            self.set_setup_attributes(**self.c._dict)
+            self._load_setup_attributes()
+            # self.set_setup_attributes(**self.c._dict)
+            # using the same dict will create a referennce (&id) in the
+            # config file for submodules --> That is probably a bug that
+            # could be solved by making a copy of the dict somewhere in
+            # memory.py, but on the other hand we are not supposed to use
+            # anything but the public API of memory.py
         self._signal_launcher.change_ownership.emit()
 
     def __enter__(self):
@@ -638,8 +668,9 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         Kill timers recursively in all submodules.
         """
         self._signal_launcher.kill_timers()
-        for sub in self._submodules.values():
-            sub._clear()
+        for sub in self._modules.values():
+            sub._kill_timers()
+
 
 class HardwareModule(BaseModule):
     """

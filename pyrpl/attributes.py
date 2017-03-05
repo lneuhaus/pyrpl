@@ -476,21 +476,21 @@ class ListStageOutputAttribute(BaseAttribute):
         return value
 
 
-class SubModuleAttribute(BaseAttribute):
+class ModuleAttribute(BaseAttribute):
     """
     This class is used to handle submodules of a module.
-    The SubmoduleAttribute is declared with:
-    SubModuleAttribute(submodule_cls, default, doc)
+    The ModuleAttribute is declared with:
+    ModuleAttribute(module_cls, default, doc)
 
-    The submodule_cls is instantiated in the __init__ of the parent module
+    The module_cls is instantiated in the __init__ of the parent module
 
     For the moment, the following actions are supported:
        - module.sub = dict(...) : module.sub.set_setup_attributes(dict(...))
        - module.sub: returns the submodule.
     """
-    def __init__(self, submodule_cls, default=None, doc=""):
-        self.submodule_cls = submodule_cls
-        super(SubModuleAttribute, self).__init__(default=default, doc=doc)
+    def __init__(self, module_cls, default=None, doc=""):
+        self.module_cls = module_cls
+        super(ModuleAttribute, self).__init__(default=default, doc=doc)
 
     def validate_and_normalize(self, value, module):
         """
@@ -1122,7 +1122,7 @@ class ListStageOuputProperty(ListStageOutputAttribute, BaseProperty):
     default = {}
 
 
-class SubModuleProperty(SubModuleAttribute, BaseProperty):
+class ModuleProperty(ModuleAttribute, BaseProperty):
     """
     A property for a submodule.
     """

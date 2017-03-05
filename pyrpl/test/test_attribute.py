@@ -3,7 +3,7 @@ logger = logging.getLogger(name=__name__)
 import numbers
 from ..modules import SoftwareModule
 from ..attributes import BoolProperty, FilterProperty, SelectProperty, \
-    FloatProperty, SubModuleProperty
+    FloatProperty, ModuleProperty
 from .test_base import TestPyrpl
 
 
@@ -34,8 +34,8 @@ class DummyModule(SoftwareModule):
     some_number = FloatProperty(min=-10, max=10)
     some_filter = MyFilterProperty()
     some_options = SelectProperty(options=["foo", "bar"])
-    sub1 = SubModuleProperty(FirstSubModule)
-    sub2 = SubModuleProperty(SecondSubModule)
+    sub1 = ModuleProperty(FirstSubModule)
+    sub2 = ModuleProperty(SecondSubModule)
 
 
 class TestClass(TestPyrpl):

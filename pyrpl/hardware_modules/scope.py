@@ -3,7 +3,7 @@ logger = logging.getLogger(name=__name__)
 from ..errors import NotReadyError, TimeoutError
 from ..attributes import FloatAttribute, SelectAttribute, BoolRegister, \
                          FloatRegister, SelectRegister, BoolProperty, \
-                         SubModuleProperty, IntRegister, LongRegister
+                         ModuleProperty, IntRegister, LongRegister
 from ..modules import HardwareModule
 from ..widgets.module_widgets import ScopeWidget
 from ..acquisition_manager import AcquisitionManager, AcquisitionModule
@@ -167,6 +167,7 @@ class RollingModeProperty(BoolProperty):
 
 
 class ScopeAcquisitionManager(AcquisitionManager):
+    _setup_attributes = AcquisitionManager._setup_attributes + ["rolling_mode"]
     rolling_mode = RollingModeProperty(doc="In rolling mode, the curve is "
                                            "continuously acquired and "
                                            "translated from the right to the "
@@ -215,7 +216,7 @@ class ScopeAcquisitionManager(AcquisitionManager):
         # triggered mode in "single" acquisition, or when rolling mode is off,
         # or when duration is too small
         if self._is_rolling_mode_active() and \
-                self.running_state in ["running_continuous", "running_single"]:
+                self.running_state in ["running_continuous"]:
             ##
             # Rolling mode
             wp0 = self._module._write_pointer_current  # write pointer
@@ -243,6 +244,7 @@ class ScopeAcquisitionManager(AcquisitionManager):
             self._emit_signal_by_name('display_curves', list(datas))
             self.data_current = datas
             # no setup in rolling mode
+            self._timer.start()  # restart timer in rolling_mode
         else:  # triggered mode
             if self._module.curve_ready():  # if curve not ready, wait for
                 # next timer iteration
@@ -256,15 +258,19 @@ class ScopeAcquisitionManager(AcquisitionManager):
                 self._do_average()
                 self._emit_signal_by_name("display_curves",
                                           list(self.data_avg))
-                self._module.setup()
+
                 if self.running_state == "running_single":
                     if self.current_avg < self.avg:
-                        self._timer.start()
-                    return
+                        self._module.setup()
+                        print("restarting")
+                        self._timer.start() # more averaging needed in single
+                    else:
+                        self.running_state = 'stopped' # single run over
+                if self.running_state == "running_continuous":
+                    self._module.setup()
+                    self._timer.start()
             else:  # curve not ready, wait for next timer iteration
                 self._timer.start()
-        if self.running_state == "running_continuous":
-            self._timer.start() # restart timer if run_continuous
 
     def _start_acquisition(self):
         """
@@ -295,7 +301,7 @@ class Scope(HardwareModule, AcquisitionModule):
     _section_name = 'scope'
     addr_base = 0x40100000
     _widget_class = ScopeWidget
-    run = SubModuleProperty(ScopeAcquisitionManager)
+    run = ModuleProperty(ScopeAcquisitionManager)
     _gui_attributes = ["input1",
                       "input2",
                       "duration",
@@ -311,7 +317,7 @@ class Scope(HardwareModule, AcquisitionModule):
     name = 'scope'
     data_length = data_length  # see definition and explanation above
     inputs = None
-    last_datas = None
+    # last_datas = None
 
     input1 = DspInputAttributeScope(1)
     input2 = DspInputAttributeScope(2)
@@ -468,7 +474,7 @@ class Scope(HardwareModule, AcquisitionModule):
         If the scope was in continuous mode when slaved, it has to stop!!
         """
         if new is not None:
-            self.stop()
+            self.run.stop()
 
     @property
     def _rawdata_ch1(self):
