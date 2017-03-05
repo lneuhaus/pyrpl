@@ -820,7 +820,7 @@ class FrequencyRegister(FloatRegister, FrequencyAttribute):
                  bits=32,  # total number of bits to represent on fpga
                  **kwargs):
         super(FrequencyRegister, self).__init__(address=address, bits=bits, **kwargs)
-        self.max = self.CLOCK_FREQUENCY/2
+        self.max = self.CLOCK_FREQUENCY / 2
         if self.invert:
             raise NotImplementedError("Increment not implemented for inverted registers")
         increment = self.CLOCK_FREQUENCY / 2 ** self.bits  # *obj._frequency_correction
