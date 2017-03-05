@@ -70,6 +70,17 @@ class ScopeWidget(ModuleWidget):
         #self.attribute_layout.removeWidget(aws['curve_name'])
 
         self.button_layout = QtGui.QHBoxLayout()
+
+        self.run_avg_widget = self.module.run.__class__.avg.create_widget(
+            self.module.run)
+        self.button_layout.addWidget(self.run_avg_widget)
+
+        self.curve_name_widget = \
+            self.module.run.__class__.curve_name.create_widget(
+            self.module.run)
+        self.button_layout.addWidget(self.curve_name_widget)
+
+
         self.setLayout(self.main_layout)
         self.setWindowTitle("Scope")
         self.win = pg.GraphicsWindow(title="Scope")
@@ -88,7 +99,7 @@ class ScopeWidget(ModuleWidget):
         #aws['curve_name'].setMaximumWidth(250)
         self.main_layout.addLayout(self.button_layout)
 
-        self.button_single.clicked.connect(self.module.run.single)
+        self.button_single.clicked.connect(self.run_single_clicked)
         self.button_continuous.clicked.connect(self.run_continuous_clicked)
         self.button_save.clicked.connect(self.save_clicked)
 
@@ -113,6 +124,14 @@ class ScopeWidget(ModuleWidget):
         self.update_rolling_mode_visibility()
         self.rolling_mode = self.module.run.rolling_mode
 
+        # Not sure why the stretch factors in button_layout are not good by
+        # default...
+        self.button_layout.setStretchFactor(self.button_single, 1)
+        self.button_layout.setStretchFactor(self.button_continuous, 1)
+        self.button_layout.setStretchFactor(self.button_save, 1)
+        self.button_layout.setStretchFactor(self.run_avg_widget, 1)
+        self.button_layout.setStretchFactor(self.curve_name_widget, 1)
+
     def update_attribute_by_name(self, name, new_value_list):
         """
         Updates all attributes on the gui when their values have changed.
@@ -128,20 +147,25 @@ class ScopeWidget(ModuleWidget):
         Change text of Run continuous button and visibility of run single
         button according to module.running_continuous
         """
+
         if self.module.run.running_state=="running_continuous":
-            self.button_continuous.setText("Stop")
+            self.button_continuous.setText("Stop (%i "
+                                           "avg)"%self.module.run.current_avg)
             self.button_single.setEnabled(False)
             self.button_single.setText("Run single")
         if self.module.run.running_state=="running_single":
             self.button_continuous.setText("Run continuous")
             self.button_single.setEnabled(True)
-            self.button_single.setText("Stop")
+            self.button_single.setText("Stop (%i "
+                                       "avg)"%self.module.run.current_avg)
         if self.module.run.running_state=="paused":
-            self.button_continuous.setText("Run continuous")
+            self.button_continuous.setText("Run continuous (%i "
+                                           "avg)"%self.module.run.current_avg)
             self.button_single.setEnabled(True)
             self.button_single.setText("Run single")
         if self.module.run.running_state=="stopped":
-            self.button_continuous.setText("Run continuous")
+            self.button_continuous.setText("Run continuous (%i "
+                                           "avg)"%self.module.run.current_avg)
             self.button_single.setEnabled(True)
             self.button_single.setText("Run single")
 
@@ -163,12 +187,14 @@ class ScopeWidget(ModuleWidget):
         Displays all active channels on the graph.
         """
         times, ch1, ch2 = list_of_arrays
-        for ch, data in enumerate([ch1, ch2]):
-            if data is not None:
+        for ch, (data, active) in enumerate([(ch1, self.module.ch1_active),
+                                             (ch2, self.module.ch2_active)]):
+            if active:
                 self.curves[ch].setData(times, data)
                 self.curves[ch].setVisible(True)
             else:
                 self.curves[ch].setVisible(False)
+        self.update_running_buttons() # to update the number of averages
 
     # currently not implemented?
     #def curve_display_done(self):
@@ -187,12 +213,18 @@ class ScopeWidget(ModuleWidget):
 
     def run_continuous_clicked(self):
         """
-        Toggles the button run_continuous to stop or vice versa and starts the acquisition timer
+        Toggles the button run_continuous to stop or vice versa and starts
+        he acquisition timer
         """
 
-        if str(self.button_continuous.text()) \
-                == "Run continuous":
+        if str(self.button_continuous.text()).startswith("Run continuous"):
             self.module.run.continuous()
+        else:
+            self.module.run.stop()
+
+    def run_single_clicked(self):
+        if str(self.button_single.text()).startswith("Run single"):
+            self.module.run.single()
         else:
             self.module.run.stop()
 

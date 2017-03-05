@@ -1,6 +1,6 @@
-from .attributes import StringProperty, LongProperty,\
-     BoolProperty, SubModuleProperty
-from .modules import BaseModule, SignalLauncher
+from pyrpl.attributes import StringProperty, LongProperty,\
+     BoolProperty, ModuleProperty
+from pyrpl.modules import BaseModule, SignalLauncher
 
 from PyQt4 import QtCore, QtGui
 
@@ -97,7 +97,7 @@ class AcquisitionManager(BaseModule):
     """
 
     _signal_launcher = SignalLauncherAM
-    _setup_attributes = ['running_state']
+    _setup_attributes = ['running_state', 'avg', 'curve_name']
     _callback_attributes = []
     _section_name = None # don't make a section, don't make states
 
@@ -118,6 +118,7 @@ class AcquisitionManager(BaseModule):
                            "continuous mode, a moving window average is "
                            "performed.",)
                        #default=1)
+    curve_name = StringProperty(doc="name of the curve to save.")
 
 
     def _init_module(self):
@@ -129,6 +130,7 @@ class AcquisitionManager(BaseModule):
         self.current_avg = 0
         self.avg = 1 # general remark: should be possible to specify that
                      # LongProperty.__init__
+        self.curve_name = self.name + " curve"
         self.data_current = None
         self.data_avg = None
 
@@ -159,18 +161,6 @@ class AcquisitionManager(BaseModule):
         """Let's the module's signal_launcher emit signal name"""
         self._signal_launcher.emit_signal_by_name(signal_name, *args, **kwds)
 
-    @property
-    def curve_name(self):
-        """
-        name of the curve to create upon saving
-        """
-        return self._module.run_curve_name
-
-    @curve_name.setter
-    def curve_name(self, val):
-        self._module.run_curve_name = val
-        return val
-
     def single(self):
         """
         Performs an asynchronous acquisition of avg curves.
@@ -178,9 +168,7 @@ class AcquisitionManager(BaseModule):
         an object with a get() function that blocks until
         data is ready.
         """
-        self.stop()
-        self._module.setup()
-        self._timer.start()
+        self.running_state = 'running_single'
 
     def continuous(self):
         """
@@ -214,7 +202,7 @@ class AcquisitionManager(BaseModule):
             if active:
                 d.update({'ch': ch,
                           'name': self.curve_name + ' ch' + str(ch)})
-                curves[ch - 1] = self._save_curve(self.times,
+                curves[ch - 1] = self._save_curve(self.data_avg[0],
                                                   self.data_avg[ch],
                                                   **d)
         return curves
@@ -226,5 +214,5 @@ class AcquisitionManager(BaseModule):
 
 class AcquisitionModule(BaseModule):
     _acquisition_manager_class = AcquisitionManager
-    run = SubModuleProperty(_acquisition_manager_class)
+    run = ModuleProperty(_acquisition_manager_class)
     # to overwrite with appropriate Manager in derived class

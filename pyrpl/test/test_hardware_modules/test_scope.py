@@ -25,12 +25,12 @@ class TestScope(TestPyrpl):
     def data_changing(self):
         time.sleep(0.1)
         APP.processEvents()
-        data = self.r.scope.last_datas[1]
+        data = self.r.scope.run.data_current[1]
         time.sleep(0.75)
         APP.processEvents()
         time.sleep(0.1)
         return ((data !=
-                 self.r.scope.last_datas[1])[~np.isnan(data)]).any()
+                 self.r.scope.run.data_current[1])[~np.isnan(data)]).any()
 
 
     def test_scope_rolling_mode_and_running_state_update(self):
@@ -117,22 +117,31 @@ class TestScope(TestPyrpl):
         Make sure the scope returns to rolling mode after being freed
         :return:
         """
+
         self.pyrpl.rp.scope.setup(duration=0.5,
-                  trigger_delay=0., rolling_mode=True, input1='in1',
-                  ch1_active=True, ch2_active=True,
-                  running_continuous=True)
+                            trigger_delay=0.,
+                            trigger_source='immediately',
+                            input1='in1',
+                            ch1_active=True,
+                            ch2_active=True,
+                            run=dict(rolling_mode=True,
+                                     running_state="running_continuous"))
         with self.pyrpl.scopes.pop("myapplication") as sco:
             sco.setup(duration=0.5,
-                      trigger_delay=0., rolling_mode=False, input1='in1',
-                      ch1_active=True, ch2_active=True,
-                      running_continuous=False)
+                      trigger_delay=0.,
+                      trigger_source='immediately',
+                      input1='in1',
+                      ch1_active=True,
+                      ch2_active=True,
+                      run=dict(rolling_mode=False,
+                               running_state="stopped"))
             assert not self.data_changing()
             curve = sco.curve()
         assert self.data_changing()
         sleep(1)
         assert self.data_changing()  # Make sure scope is not blocked
             # after one buffer loop
-        self.pyrpl.rp.scope.stop()
+        self.pyrpl.rp.scope.run.stop()
 
     def test_no_write_in_config(self):
         """
@@ -143,9 +152,13 @@ class TestScope(TestPyrpl):
 
         for rolling_mode in (True, False):
             self.pyrpl.rp.scope.setup(duration=0.005,
-                  trigger_delay=0., rolling_mode=rolling_mode, input1='in1',
-                  ch1_active=True, ch2_active=True,
-                  running_continuous=True)
+                                      trigger_delay=0.,
+                                      input1='in1',
+                                      ch1_active=True,
+                                      ch2_active=True,
+                                      run=
+                                    dict(rolling_mode=True,
+                                         running_state="running_continuous"))
             for i in range(10):
                 sleep(0.01)
                 APP.processEvents()
@@ -154,5 +167,5 @@ class TestScope(TestPyrpl):
                 sleep(0.01)
                 APP.processEvents()
             new = self.pyrpl.c._save_counter
-            self.pyrpl.rp.scope.stop()
+            self.pyrpl.rp.scope.run.stop()
             assert(old==new), (old, new)
