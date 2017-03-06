@@ -249,18 +249,22 @@ class SelectAttribute(BaseAttribute):
         change_options(new_options)
         """
         super(SelectAttribute, self).__init__(default=default, doc=doc)
-        # self.options = sorted(options) # usually, the user will pass a dictkeys object, which is not ordered and tricky
-                                       # to index
-        self._starting_options = sorted(options)
+        self._starting_options = options
 
     def options(self, instance):
         """
-        options are evaluated at run time.
+        options are evaluated at run time. options may be callable with instance as optional argument.
         """
         if hasattr(instance, '__' + self.name + '_' + 'options'):
-            return getattr(instance, '__' + self.name + '_' + 'options')
+            options = getattr(instance, '__' + self.name + '_' + 'options')
         else:
-            return self._starting_options
+            options = self._starting_options
+        if callable(options):
+            try:
+                options = options(instance)
+            except TypeError:
+                options = options()
+        return sorted(options)
 
     def change_options(self, instance, new_options):
         """
@@ -270,29 +274,19 @@ class SelectAttribute(BaseAttribute):
           - Update of the ComboxBox is performed behind a signal-slot mechanism to be thread-safe
           - If the current value is not in the new_options, then value is changed to some available option
         """
-        setattr(instance, '__' + self.name + '_' + 'options', sorted(new_options))
-        instance._signal_launcher.change_options.emit(self.name, new_options)
+        setattr(instance, '__' + self.name + '_' + 'options', new_options)
+        options = self.options(instance)
+        instance._signal_launcher.change_options.emit(self.name, options)
         # this is strange behaviour, an option should be actively selected..
-        if not getattr(instance, self.name) in new_options:
+        if not getattr(instance, self.name) in options:
             logger.debug("Option %s is not a valid choice for "
                          "SelectAttribute %s. A random choice is being "
                          "made which may lead to undesired behavior.."
                          % (getattr(instance, self.name), self.name))
-            if len(new_options) > 0:
-                setattr(instance, self.name, new_options[0])
+            if len(options) > 0:
+                setattr(instance, self.name, options[0])
             else:
                 setattr(instance, self.name, None)
-
-    """ # I keep the comment here for a few commits for safety
-    def options(self, obj):
-        if callable(self._options):
-            return self._options(obj)
-        else:
-            if hasattr(self._options, 'keys'):
-                return self._options.keys()
-            else:
-                return self._options
-        """
 
     def create_widget(self, module, name=None):
         """

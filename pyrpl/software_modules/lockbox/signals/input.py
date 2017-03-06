@@ -273,10 +273,22 @@ class InputSignal(Signal):
         """ implements the freeing of all resources in child classes"""
         pass
 
+
+
 class InputDirect(InputSignal):
     _section_name = 'direct_input'
+
     def signal(self):
-        return self.input_channel
+        try:
+            signal = self.lockbox.signals[self.input_channel].signal()
+        except:  # do not insist on this to work. if it fails, just return the direct value of input_channel
+            pass
+        return signal
+
+    input_channel = SelectProperty(options=(lambda instance: DSP_INPUTS.keys()+instance.lockbox.signals.keys()),
+                                   doc="the redpitaya dsp input representing "
+                                       "the signal"
+                                   )  # ['in1', 'in2']) # adc
 
 
 class InputFromOutput(InputDirect):

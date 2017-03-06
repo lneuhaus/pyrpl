@@ -126,36 +126,63 @@ class Lockbox(LockboxModule):
     # possible units to describe the physical parameter to control e.g. ['m', 'MHz']
     units = ['V']
 
-    #logical inputs and outputs of the lockbox
-    inputs = ModuleContainerProperty(LockboxModule,
-                                     input_from_output=InputFromOutput)
-
-    outputs = ModuleContainerProperty(LockboxModule,
-                                      output1=OutputSignal,
-                                      output2=OutputSignal)
-
     auto_lock_interval = AutoLockIntervalProperty(default=1.0, min=1e-3,
                                                   max=1e10)
     default_sweep_output = SelectProperty(options=[])
     error_threshold = FloatProperty(default=1.0, min=-1e10,max=1e10)
     auto_lock = AutoLockProperty()
 
-    # sequence submodule
+    # logical inputs and outputs of the lockbox are accessible as lockbox.outputs.output1
+    inputs = ModuleContainerProperty(LockboxModule,
+                                     input_from_output=InputFromOutput)
+    outputs = ModuleContainerProperty(LockboxModule,
+                                      output1=OutputSignal,
+                                      output2=OutputSignal)
+    # sequence attribute used to store the locking sequence
     sequence = ModuleProperty(Sequence)
 
     def _init_module(self):
         # update options of classname attribute with available lockbox types and update the value
         self.__class__.classname.change_options(self, sorted(all_classnames().keys()))
         self.classname = type(self).__name__
-        # make input/output lists
-        #self.inputs = [v for v in self.__dict__.values() if isinstance(v, InputSignal)]
-        #self.outputs = [v for v in self.__dict__.values() if isinstance(v, OutputSignal)]
+
+    @property
+    def signals(self):
+        """ a dict of all logical signals of the lockbox """
+        return OrderedDict(self.inputs.items() + self.outputs.items())
 
     @property
     def asg(self):
+        """ the asg being used for sweeps """
         if not hasattr(self, '_asg') or self._asg is None:
             self._asg = self.pyrpl.asgs.pop(self.name)
         return self._asg
+
+    def _setup(self):
+        """
+        Sets up the lockbox
+        """
+        for input in self.inputs:
+            input.setup()
+        for output in self.outputs:
+            output._setup()
+
+    def calibrate_all(self):
+        """
+        Calibrates successively all inputs
+        """
+        for input in self.inputs:
+            input.calibrate()
+
+    def unlock(self):
+        """
+        Disables autolock and unlocks all outputs, without touching the integrator value.
+        """
+        self.auto_lock = False
+        self._signal_launcher.timer_lock.stop()
+        for output in self.outputs:
+            output.unlock()
+        self.state = 'unlock'
 
     def sweep(self):
         """
@@ -165,9 +192,7 @@ class Lockbox(LockboxModule):
         self.unlock()
         for output in self.outputs:
             output.reset_ival()
-        index = self._output_names.index(self.default_sweep_output)
-        output = self.outputs[index]
-        output.sweep()
+        self.outputs[self.default_sweep_output].sweep()
         self.state = "sweep"
 
     def goto_next(self):
@@ -190,13 +215,6 @@ class Lockbox(LockboxModule):
         """
         self._get_stage(stage_name).setup()
 
-    def lock_blocking(self):
-        """ prototype for the blocking lock function """
-        self.lock()
-        while not self.state == self._stage_names[-1]:
-            sleep(0.01)
-        return self.is_locked()
-
     def lock(self):
         """
         Launches the full lock sequence, stage by stage until the end.
@@ -204,28 +222,13 @@ class Lockbox(LockboxModule):
         self.unlock()
         self.goto_next()
 
-    def unlock(self):
-        """
-        Unlocks all outputs, without touching the integrator value.
-        """
-        self.state = 'unlock'
-        self._signal_launcher.timer_lock.stop()
-        for output in self.outputs:
-            output.unlock()
-
-    def calibrate_all(self):
-        """
-        Calibrates successively all inputs
-        """
-        for input in self.inputs:
-            input.calibrate()
-
-    def _setup(self):
-        """
-        Sets up the lockbox
-        """
-        for output in self.outputs:
-            output._setup()
+    def lock_blocking(self):
+        """ prototype for the blocking lock function """
+        self._logger.warning("Function lock_blocking is currently not implemented correctly. ")
+        self.lock()
+        while not self.state == self._stage_names[-1]:
+            sleep(0.01)
+        return self.is_locked()
 
     @property
     def state(self):
@@ -364,34 +367,6 @@ class Lockbox(LockboxModule):
                 # unlocked but not supposed to
                 return 'red'
 
-    def _delete_Lockbox(self):
-        """ returns a new Lockbox object of the type defined by the classname variable in the config file"""
-        pyrpl, name = self.pyrpl, self.name
-        self._signal_launcher.clear()
-        for o in self.outputs:
-            o.clear()
-        for i in self.inputs:
-            i.clear()
-        setattr(pyrpl, name, None)  # pyrpl.lockbox = None
-        try:
-            self.parent.software_modules.remove(self)
-        except ValueError:
-            self._logger.warning("Could not find old Lockbox %s in the list of software modules. Duplicate lockbox "
-                                 "objects may coexist. It is recommended to restart PyRPL. Existing software modules: "
-                                 "\n%s", self.name, str(self.parent.software_modules))
-        # redirect all attributes of the old lockbox to the new/future lockbox object
-        def getattribute_forwarder(obj, attribute):
-            lockbox = getattr(pyrpl, name)
-            return getattr(lockbox, attribute)
-        self.__getattribute__ = getattribute_forwarder
-        def setattribute_forwarder(obj, attribute, value):
-            lockbox = getattr(pyrpl, name)
-            return setattr(lockbox, attribute, value)
-        self.__setattr__ = setattribute_forwarder
-        # delete all references to properties in the class dict
-        #for k in self.__dict__.keys():
-        #    self.__dict__.pop(k)
-
     @classmethod
     def _make_Lockbox(cls, parent, name):
         """ returns a new Lockbox object of the type defined by the classname variable in the config file"""
@@ -430,37 +405,30 @@ class Lockbox(LockboxModule):
         for w in pyrpl.widgets:
             w.reload_dock_widget(name)
 
-    @property
-    def model(self):
-        self._logger.warning("Using the model property of Lockbox will soon be deprecated. Please use lockbox instead! ")
-        return self  # lockbox.model is replaced by lockbox itself
-
-
-    def _remove_input(self, input):
-        input.clear()
-        self.inputs.remove(input)
-        self._signal_launcher.remove_input.emit([input])
-
-
-    def _add_input(self, input):
-        self.inputs.append(input)
-        setattr(self, input.name, input)
-        self._signal_launcher.add_input.emit([input])
-
-
-    def _get_input(self, name):
-        """
-        retrieves an input by name
-        """
-        return self.inputs[[input.name for input in self.inputs].index(name)]
-
-
-    def _get_output(self, name):
-        """
-        retrieves an output by name
-        """
-        return self.outputs[[output.name for output in self.outputs].index(name)]
-
+    def _delete_Lockbox(self):
+        """ returns a new Lockbox object of the type defined by the classname variable in the config file"""
+        pyrpl, name = self.pyrpl, self.name
+        self._signal_launcher.clear()
+        for o in self.outputs:
+            o.clear()
+        for i in self.inputs:
+            i.clear()
+        setattr(pyrpl, name, None)  # pyrpl.lockbox = None
+        try:
+            self.parent.software_modules.remove(self)
+        except ValueError:
+            self._logger.warning("Could not find old Lockbox %s in the list of software modules. Duplicate lockbox "
+                                 "objects may coexist. It is recommended to restart PyRPL. Existing software modules: "
+                                 "\n%s", self.name, str(self.parent.software_modules))
+        # redirect all attributes of the old lockbox to the new/future lockbox object
+        def getattribute_forwarder(obj, attribute):
+            lockbox = getattr(pyrpl, name)
+            return getattr(lockbox, attribute)
+        self.__getattribute__ = getattribute_forwarder
+        def setattribute_forwarder(obj, attribute, value):
+            lockbox = getattr(pyrpl, name)
+            return setattr(lockbox, attribute, value)
+        self.__setattr__ = setattribute_forwarder
 
     def _get_stage(self, name):
         """
@@ -468,116 +436,11 @@ class Lockbox(LockboxModule):
         """
         return self.sequence.get_stage(name)
 
-
-    def _get_unique_output_name(self):
-        idx = 1
-        name = 'output' + str(idx)
-        while (name in self._output_names):
-            idx += 1
-            name = 'output' + str(idx)
-        return name
-
-
-    def _add_output(self):
-        """
-        Outputs of the lockbox are added dynamically (for now, inputs are defined by the model).
-        """
-        output = self._add_output_no_save()
-        output.name = output.name  # trigers the write in the config file
-        return output
-
-
-    def _add_output_no_save(self):
-        """
-        Adds and returns an output without touching the config file (useful
-        when loading an output from the config file)
-        """
-        if self.pyrpl.pids.n_available() < 1:
-            raise ValueError(
-                "All pids are currently in use. Cannot create any more "
-                "outputs.")
-        output = OutputSignal(self)
-        # doesn't trigger write in the config file
-        output._name = self._get_unique_output_name()
-        self.outputs.append(output)
-        setattr(self, output.name, output)
-        # self.sequence.update_outputs()
-        self.__class__.default_sweep_output. \
-            change_options(self, [out.name for out in self.outputs])
-        """
-        if self.widget is not None:
-            # Since adding/removing outputs corresponds to dynamic creation of
-            # Modules, our attribute-based way of
-            # hiding gui update is not effective. Since this is a highly
-            # exceptional situation, I don't find it too bad.
-            self.widget.add_output(output)
-        """
-        self._signal_launcher.output_created.emit([output])
-        return output
-
-
-    def _remove_output(self, output, allow_remove_last=False):
-        """
-        Removes and clear output from the list of outputs. if allow_remove_last is left to False, an exception is raised
-        when trying to remove the last output.
-        """
-        if isinstance(output, basestring):
-            output = self._get_output(output)
-        if not allow_remove_last:
-            if len(self.outputs) <= 1:
-                raise ValueError("There has to be at least one output.")
-        if hasattr(self, output.name):
-            delattr(self, output.name)
-        output.clear()
-        self.outputs.remove(output)
-
-        self.sequence.update_outputs()
-
-        if 'outputs' in self.c._keys():
-            if output.name in self.c.outputs._keys():
-                self.c.outputs._pop(output.name)
-
-        self.__class__.default_sweep_output.change_options(self,
-                                                           [output_var.name for
-                                                            output_var in
-                                                            self.outputs])
-        self._signal_launcher.output_deleted.emit([output])
-
-
-    def _remove_all_outputs(self):
-        """
-        Removes all outputs, even the last one.
-        """
-        while (len(self.outputs) > 0):
-            self._remove_output(self.outputs[-1], allow_remove_last=True)
-
-
-    def _rename_output(self, output, new_name):
-        """
-        This changes the name of the output in many different places: lockbox
-        attribute, config file, pid's owner
-        """
-        if new_name in self._output_names and self._get_output(new_name) != output:
-            raise ValueError("Name %s already exists for an output" % new_name)
-        if hasattr(self, output.name):
-            delattr(self, output.name)
-        setattr(self, new_name, output)
-        if output._autosave_active:
-            output.c._rename(new_name)
-        output._name = new_name
-        if output.pid is not None:
-            output.pid.owner = new_name
-        self.sequence.update_outputs()
-        self.__class__.default_sweep_output.change_options(self, [out.name for out in self.outputs])
-        self._signal_launcher.output_renamed.emit()
-
-
     def _add_stage(self):
         """
         adds a stage to the lockbox sequence
         """
         return self.sequence.add_stage()
-
 
     def _remove_stage(self, stage):
         """
@@ -585,61 +448,12 @@ class Lockbox(LockboxModule):
         """
         self.sequence.remove_stage(stage)
 
-
     def _rename_stage(self, stage, new_name):
         self.sequence.rename_stage(stage, new_name)
-
 
     def _remove_all_stages(self):
         self.sequence.remove_all_stages()
 
-    # def _load_setup_attributes(self):
-    #         """
-    #         This function needs to be overwritten to retrieve the child module
-    #         attributes as well
-    #         """
-    #         super(Lockbox, self)._load_setup_attributes()
-    #         return
-    #         # prevent saving wrong default_sweep_output at startup
-    #         self._autosave_active = False
-    #
-    #         # clean up outputs
-    #         self._remove_all_outputs()
-    #         # load outputs, prevent saving wrong default_sweep_output at startup
-    #         if self.c is not None:
-    #             if 'outputs' in self.c._dict.keys():
-    #                 for name, output in self.c.outputs._dict.items():
-    #                     if name != 'states':
-    #                         output = self._add_output_no_save()
-    #                         output._autosave_active = False
-    #                         self._rename_output(output, name)
-    #                         output._load_setup_attributes()
-    #                         output._autosave_active = True
-    #         if len(self.outputs)==0:
-    #             self._add_output()  # add at least one output
-    #         self._autosave_active = True # activate autosave
-    #
-    #         # load inputs
-    #         for input in self.inputs:
-    #             input._autosave_active = False
-    #             input._load_setup_attributes()
-    #             input._autosave_active = True
-    #
-    #         # load normal attributes (model, default_sweep_output)
-    #         super(Lockbox, self)._load_setup_attributes()
-    #
-    #         # load sequence
-    #         #self.sequence._autosave_active = False
-    #         #self.sequence._load_setup_attributes()
-    #         #self.sequence._autosave_active = True
-
-
     @property
     def _stage_names(self):
         return self.sequence.stage_names
-
-
-    @property
-    def _output_names(self):
-        return [output.name for output in self.outputs]
-
