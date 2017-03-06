@@ -1,17 +1,13 @@
 from __future__ import division
-from pyrpl.modules import SoftwareModule, SignalLauncher
-from pyrpl.attributes import SelectProperty, BoolProperty, StringProperty
-from .model import Model
+from ...modules import SoftwareModule, SignalLauncher
+from ...attributes import SelectProperty, BoolProperty, StringProperty, ModuleProperty
 from .signals import *
-from pyrpl.widgets.module_widgets import LockboxWidget
-from pyrpl.pyrpl_utils import get_unique_name_list_from_class_list, all_subclasses, sleep
+from ...widgets.module_widgets import LockboxWidget
+from ...pyrpl_utils import get_unique_name_list_from_class_list, all_subclasses, sleep
 from .sequence import Sequence
-
 from collections import OrderedDict
 from PyQt4 import QtCore
 
-#import logging
-#logger = logging.getLogger(__name__)
 
 def all_classnames():
     return OrderedDict([(subclass.__name__, subclass) for subclass in
@@ -136,6 +132,9 @@ class Lockbox(SoftwareModule):
     error_threshold = FloatProperty(default=1.0, min=-1e10,max=1e10)
     auto_lock = AutoLockProperty()
 
+    # sequence submodule
+    sequence = ModuleProperty(Sequence)
+
     def _init_module(self):
         # make inputs
         inputnames = get_unique_name_list_from_class_list(self.input_cls)
@@ -150,8 +149,6 @@ class Lockbox(SoftwareModule):
         # show all available models and set current one
         self.__class__.classname.change_options(self, sorted(all_classnames().keys()))
         self.classname = type(self).__name__
-        # load availbale sequences
-        self._sequence = Sequence(self, 'sequence')
 
         #<<<<<<< HEAD
         # parameters are updated and outputs are loaded by load_setup_attributes (called at the end of __init__)
@@ -196,7 +193,7 @@ class Lockbox(SoftwareModule):
         stage = self._stage_names[index]
         self.goto(stage)
         self._signal_launcher.timer_lock.setInterval(self._get_stage(stage).duration * 1000)
-        if index + 1 < len(self._sequence.stages):
+        if index + 1 < len(self.sequence.stages):
             self._signal_launcher.timer_lock.start()
 
     def goto(self, stage_name):
@@ -250,7 +247,7 @@ class Lockbox(SoftwareModule):
 
     @state.setter
     def state(self, val):
-        if not val in ['unlock', 'sweep'] + [stage.name for stage in self._sequence.stages]:
+        if not val in ['unlock', 'sweep'] + [stage.name for stage in self.sequence.stages]:
             raise ValueError("State should be either unlock, or a valid stage name")
         self._state = val
         # To avoid explicit reference to gui here, one could consider using a DynamicSelectAttribute...
@@ -259,7 +256,7 @@ class Lockbox(SoftwareModule):
 
     @property
     def _stage_names(self):
-        return self._sequence.stage_names
+        return self.sequence.stage_names
 
     @property
     def _output_names(self):
@@ -378,7 +375,7 @@ class Lockbox(SoftwareModule):
         output._name = self._get_unique_output_name()
         self.outputs.append(output)
         setattr(self, output.name, output)
-        self._sequence.update_outputs()
+        #self.sequence.update_outputs()
         self.__class__.default_sweep_output.\
             change_options(self, [out.name for out in self.outputs])
         """
@@ -407,7 +404,7 @@ class Lockbox(SoftwareModule):
         output.clear()
         self.outputs.remove(output)
 
-        self._sequence.update_outputs()
+        self.sequence.update_outputs()
 
         if 'outputs' in self.c._keys():
             if output.name in self.c.outputs._keys():
@@ -441,7 +438,7 @@ class Lockbox(SoftwareModule):
         output._name = new_name
         if output.pid is not None:
             output.pid.owner = new_name
-        self._sequence.update_outputs()
+        self.sequence.update_outputs()
         self.__class__.default_sweep_output.change_options(self, [out.name for out in self.outputs])
         self._signal_launcher.output_renamed.emit()
 
@@ -449,19 +446,19 @@ class Lockbox(SoftwareModule):
         """
         adds a stage to the lockbox sequence
         """
-        return self._sequence.add_stage()
+        return self.sequence.add_stage()
 
     def _remove_stage(self, stage):
         """
         Removes stage from the lockbox seequence
         """
-        self._sequence.remove_stage(stage)
+        self.sequence.remove_stage(stage)
 
     def _rename_stage(self, stage, new_name):
-        self._sequence.rename_stage(stage, new_name)
+        self.sequence.rename_stage(stage, new_name)
 
     def _remove_all_stages(self):
-        self._sequence.remove_all_stages()
+        self.sequence.remove_all_stages()
 
     def _load_setup_attributes(self):
         """
@@ -498,9 +495,9 @@ class Lockbox(SoftwareModule):
         super(Lockbox, self)._load_setup_attributes()
 
         # load sequence
-        self._sequence._autosave_active = False
-        self._sequence._load_setup_attributes()
-        self._sequence._autosave_active = True
+        #self.sequence._autosave_active = False
+        #self.sequence._load_setup_attributes()
+        #self.sequence._autosave_active = True
 
     def _remove_input(self, input):
         input.clear()
@@ -528,7 +525,7 @@ class Lockbox(SoftwareModule):
         """
         retieves a stage by name
         """
-        return self._sequence.get_stage(name)
+        return self.sequence.get_stage(name)
 
     def _lockstatus(self):
         """ this function is a placeholder for periodic lockstatus

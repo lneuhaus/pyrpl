@@ -81,7 +81,7 @@ class ModuleMetaClass(type):
     - __new__ also lists all the submodules. This info will be used when
     instantiating submodules at module instanciation time.
     - __init__ auto-generates the function setup() and its docstring """
-    def __new__(cls, classname, bases, classDict):
+    def __init__(self, classname, bases, classDict):
         """
         Magic to retrieve the name of the attributes in the attributes
         themselves.
@@ -104,11 +104,11 @@ class ModuleMetaClass(type):
         setup_attribute docstrings.
         """
         # 0. make all attributes aware of their name in the class containing them
-        for name, attr in classDict.items():
+        for name, attr in self.__dict__.items():
             if isinstance(attr, BaseAttribute):
                 attr.name = name
         # 1a. prepare _setup_attributes etc.
-        _setup_attributes, _gui_attributes, _callback_attributes = [], [], []
+        _setup_attributes, _gui_attributes, _callback_attributes, _module_attributes = [], [], [], []
         for base in reversed(bases):  # append all base class _setup_attributes
             try: _setup_attributes += base._setup_attributes
             except AttributeError: pass
@@ -116,24 +116,25 @@ class ModuleMetaClass(type):
             except AttributeError: pass
             try: _callback_attributes += base._callback_attributes
             except AttributeError: pass
-        try: _setup_attributes += classDict['_setup_attributes']
-        except KeyError: pass
-        try: _gui_attributes += classDict['_gui_attributes']
-        except KeyError: pass
-        try: _callback_attributes += classDict['_callback_attributes']
-        except KeyError: pass
+            try: _module_attributes += base._module_attributes
+            except AttributeError: pass
+        _setup_attributes += self._setup_attributes
+        _gui_attributes += self._gui_attributes
+        _callback_attributes += self._callback_attributes
         # 1b. make a list of _module_attributes and add _module_attributes to _setup_attributes
-        classDict['_module_attributes'] = []
-        for name, attr in classDict.items():
+        for name, attr in self.__dict__.items():
             if isinstance(attr, ModuleAttribute):
-                classDict['_module_attributes'].append(name)
-                # 1c. add _module_attributes to _setup_attributes if the submodule has _setup_attributes
-                if len(attr.module_cls._setup_attributes)>0:
-                    _setup_attributes.append(name)
+                _module_attributes.append(name)
+        self._module_attributes = unique_list(_module_attributes)
+        # 1c. add _module_attributes to _setup_attributes if the submodule has _setup_attributes
+        for name in self._module_attributes:
+            attr = getattr(self, name)
+            if len(attr.module_cls._setup_attributes) > 0:
+                _setup_attributes.append(name)
         #1d. Set the unique list of _setup_attributes
-        classDict['_setup_attributes'] = unique_list(_setup_attributes)
-        classDict['_gui_attributes'] = unique_list(_gui_attributes)
-        classDict['_callback_attributes'] = unique_list(_callback_attributes)
+        self._setup_attributes = unique_list(_setup_attributes)
+        self._gui_attributes = unique_list(_gui_attributes)
+        self._callback_attributes = unique_list(_callback_attributes)
         # 2. create setup(**kwds)
         if "setup" not in classDict:
             # a. generate a setup function
@@ -148,33 +149,29 @@ class ModuleMetaClass(type):
                 finally:
                     self._callback_active = True
             # b. place the new setup function in the module class
-            classDict["setup"] = setup
+            self.setup = setup
         # 3. if setup has no docstring, then make one
-        cls.make_setup_docstring(classDict)
+        self.make_setup_docstring(classDict)
         # 4. make the new class
-        return super(ModuleMetaClass, cls).__new__(cls, classname, bases, classDict)
+        #return super(ModuleMetaClass, cls).__new__(cls, classname, bases, classDict)
 
-    @classmethod
-    def make_setup_docstring(cls, classDict):
+    #@classmethod
+    def make_setup_docstring(self, classDict):
         """
         Returns a docstring for the function 'setup' that is composed of:
           - the '_setup' docstring
           - the list of all setup_attributes docstrings
         """
         # get initial docstring (python 2 and python 3 syntax)
-        try: doc = classDict["_setup"].__doc__ + '\n'
+        try: doc = self._setup.__doc__ + '\n'
         except:
-            try: doc = classDict["_setup"].__func__.__doc__ + '\n'
+            try: doc = self._setup.__func__.__doc__ + '\n'
             except: doc = ""
         doc += "attributes\n=========="
-        for attr_name in classDict['_setup_attributes']:
-            if attr_name == 'running_state':
-                pass
-            try:
-                attr = classDict[attr_name]
-                doc += "\n  " + attr_name + ": " + attr.__doc__
-            except KeyError: pass
-        setup = classDict["setup"]
+        for attr_name in self._setup_attributes:
+            attr = getattr(self, attr_name)
+            doc += "\n  " + attr_name + ": " + attr.__doc__
+        setup = self.setup
         # docstring syntax differs between python versions. Python 2:
         if hasattr(setup, "__func__"):
             if (setup.__func__.__doc__ is None or setup.__func__.__doc__ == ""):
@@ -649,7 +646,7 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         """
         Kill timers and free resources for this module and all submodules.
         """
-        self._signal_launcher.kill_timers()
+        self._signal_launcher.clear()
         for sub in self._modules:
             getattr(self, sub)._clear()
 

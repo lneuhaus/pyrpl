@@ -78,13 +78,10 @@ class InputSignal(SoftwareModule):
         self.plot_range = np.linspace(-5, 5, 200)
         self._lasttime = -1e10
 
-    def unsetup(self):
-        """
-        Function that frees all resources occupied by this signal, as a preparation for its destruction.
-        To be implemented in child classes
-        -------
-        """
-        pass
+    @property
+    def c(self):
+        # inputs are in extra section 'inputs' for better visibility
+        return super(InputSignal, self).c._get_or_create('inputs.'+self.name)
 
     @property
     def model(self):
