@@ -262,7 +262,6 @@ class ScopeAcquisitionManager(AcquisitionManager):
                 if self.running_state == "running_single":
                     if self.current_avg < self.avg:
                         self._module.setup()
-                        print("restarting")
                         self._timer.start() # more averaging needed in single
                     else:
                         self.running_state = 'stopped' # single run over
@@ -559,6 +558,14 @@ class Scope(HardwareModule, AcquisitionModule):
             # self.wait_for_pretrig_ok()
             self.trigger_source = self.trigger_source
         self._autosave_active = autosave_backup
+        # I make the choice not to call self.run._setup_rolling_mode here
+        # disadvantage: calling scope.setup(run=dict(rolling_mode)) fails
+        # advantage: 1. people wont setup an acquisition in rolling_mode
+        # without noticing
+        # 2. Referencing self.run at an early stage of module creation can
+        # cause a problem because run is being loaded before it is even
+        # attached to scope (run._module exists but scope.run is about
+        # to be created).
 
     def wait_for_pretrigger(self):
         """ sleeps until scope trigger is ready (buffer has enough new data)"""
