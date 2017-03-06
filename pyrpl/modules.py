@@ -407,13 +407,13 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
     def setup_attributes(self):
         """
         :return: a dict with the current values of the setup attributes.
-        Recursively calls get_setup_attributes for sub_modules.
+        Recursively collects setup_attributes for sub_modules.
         """
-        kwds = dict()
+        kwds = OrderedDict()
         for attr in self._setup_attributes:
             val = getattr(self, attr)
             if attr in self._modules:
-                val = val.get_setup_attributes()
+                val = val.setup_attributes
             kwds[attr] = val
         return kwds
 

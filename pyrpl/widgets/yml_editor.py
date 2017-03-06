@@ -13,13 +13,10 @@ class YmlEditor(QtGui.QWidget):
 
         self.editor = QtGui.QTextEdit()
         self.button_refresh = QtGui.QPushButton("Refresh")
-        if self.state is None:
-            save_txt = "Save + set!!!"
-        else:
-            save_txt = "Save"
-        self.button_save = QtGui.QPushButton(save_txt)
-
         self.button_refresh.clicked.connect(self.refresh)
+        self.button_load_all = QtGui.QPushButton("Load current attributes")
+        self.button_load_all.clicked.connect(self.load_all)
+        self.button_save = QtGui.QPushButton("Save + set!!!" if self.state is None else "Save")
         self.button_save.clicked.connect(self.save)
 
         self.lay = QtGui.QVBoxLayout()
@@ -29,6 +26,7 @@ class YmlEditor(QtGui.QWidget):
         self.lay_h = QtGui.QHBoxLayout()
         self.lay.addLayout(self.lay_h)
         self.lay_h.addWidget(self.button_refresh)
+        self.lay_h.addWidget(self.button_load_all)
         self.lay_h.addWidget(self.button_save)
 
         self.refresh()
@@ -39,5 +37,9 @@ class YmlEditor(QtGui.QWidget):
     def refresh(self):
         self.editor.setText(self.module.get_yml(self.state))
 
+    def load_all(self):
+        self.editor.setText(self.module.c._get_yml(data=self.module.setup_attributes))
+
     def save(self):
         self.module.set_yml(str(self.editor.toPlainText()), state=self.state)
+

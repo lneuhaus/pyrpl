@@ -131,7 +131,9 @@ class MainOutputProperties(QtGui.QGroupBox):
         self.v2 = QtGui.QHBoxLayout()
         self.layout.addLayout(self.v2)
         self.layout.addLayout(self.v1)
-        self.v1.addWidget(aws['dc_gain'])
+        self.dcgain = aws['dc_gain']
+        self.v1.addWidget(self.dcgain)
+        self.dcgain.label.setText('analog DC-gain')
         self.v1.addWidget(aws["unit"])
         aws['dc_gain'].set_log_increment()
         self.v2.addWidget(aws["output_channel"])

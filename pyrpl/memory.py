@@ -395,13 +395,13 @@ class MemoryBranch(object):
         """ write data to file"""
         self._parent._save()
 
-    def _get_yml(self):
+    def _get_yml(self, data=None):
         """
         :return: returns the yml code for this branch
         """
-        data = StringIO()
-        save(self._data, data)
-        return data.getvalue()
+        text = StringIO()
+        save(self._data if data is None else data, text)
+        return text.getvalue()
 
     def _set_yml(self, yml_content):
         """

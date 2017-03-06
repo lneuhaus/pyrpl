@@ -166,7 +166,7 @@ class OutputSignal(Signal):
     dc_gain = FloatProperty(default=1.0, min=-1e10, max=1e10)
     output_channel = SelectProperty(options=['out1', 'out2',
                                              'pwm0', 'pwm1'])
-    unit = SelectProperty(default='V', options=lambda inst: inst.lockbox._units)
+    unit = SelectProperty(default='V/V', options=lambda inst: [u+"/V" for u in inst.lockbox._units])
 
     is_sweepable = BoolProperty(default=True)
     assisted_design = AssistedDesignProperty(default=True)
