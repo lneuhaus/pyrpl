@@ -112,11 +112,13 @@ class ScopeWidget(ModuleWidget):
         self.lay_radio.addWidget(self.checkbox_untrigged)
         self.rolling_group.setLayout(self.lay_radio)
         self.attribute_layout.insertWidget(
-            list(self.attribute_widgets.keys()).index("trigger_source"), self.rolling_group)
+            list(self.attribute_widgets.keys()).index("trigger_source"),
+            self.rolling_group)
         self.checkbox_normal.clicked.connect(self.rolling_mode_toggled)
         self.checkbox_untrigged.clicked.connect(self.rolling_mode_toggled)
         #self.update_rolling_mode_visibility()
-        self.attribute_widgets['duration'].value_changed.connect(self.update_rolling_mode_visibility)
+        self.attribute_widgets['duration'].value_changed.connect(
+            self.update_rolling_mode_visibility)
 
         # since trigger_mode radiobuttons is not a regular attribute_widget,
         # it is not synced with the module at creation time.
@@ -147,7 +149,6 @@ class ScopeWidget(ModuleWidget):
         Change text of Run continuous button and visibility of run single
         button according to module.running_continuous
         """
-
         if self.module.run.running_state=="running_continuous":
             self.button_continuous.setText("Stop (%i "
                                            "avg)"%self.module.run.current_avg)
@@ -182,7 +183,7 @@ class ScopeWidget(ModuleWidget):
         except NotReadyError:
             pass
 
-    def display_curves(self, list_of_arrays):
+    def display_curve(self, list_of_arrays):
         """
         Displays all active channels on the graph.
         """
@@ -207,7 +208,8 @@ class ScopeWidget(ModuleWidget):
 
     def set_rolling_mode(self):
         """
-        Set rolling mode on or off based on the module's attribute "rolling_mode"
+        Set rolling mode on or off based on the module's attribute
+        "rolling_mode"
         """
         self.rolling_mode = self.module.run.rolling_mode
 
@@ -233,8 +235,9 @@ class ScopeWidget(ModuleWidget):
 
     @property
     def rolling_mode(self):
-        # Note for future improvement: rolling mode should be a BoolAttribute of
-        # Scope rather than a dirty attribute of ScopeWidget. Parameter saving would also require to use it
+        # Note for future improvement: rolling mode should be a
+        # BoolAttribute  of Scope rather than a dirty attribute of
+        # ScopeWidget. Parameter saving would also require to use it
         # as a parameter of Scope.setup()
         return ((self.checkbox_untrigged.isChecked()) and \
                 self.rolling_group.isEnabled())

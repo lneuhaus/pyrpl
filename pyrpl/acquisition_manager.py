@@ -43,7 +43,6 @@ class RunningStateProperty(StringProperty):
             obj._start_acquisition()
         if val in ["paused", "stopped"]:
             obj._stop_acquisition()
-
         if val in ["running_single", "running_continuous"]:
             obj._emit_signal_by_name('autoscale')
         return val
@@ -52,10 +51,12 @@ class SignalLauncherAM(SignalLauncher):
     """
     A signal launcher for the AcquisitionManager
     """
-    display_curves = QtCore.pyqtSignal(list) # This signal is emitted when
+    display_curve = QtCore.pyqtSignal(list) # This signal is emitted when
     # curves need to be displayed the argument is [array(times),
     # array(curve1), array(curve2)] or [times, None, array(curve2)]
     autoscale = QtCore.pyqtSignal()
+
+
 
 
 class AcquisitionManager(BaseModule):
@@ -101,8 +102,12 @@ class AcquisitionManager(BaseModule):
     _callback_attributes = []
     _section_name = None # don't make a section, don't make states
 
+
+    #The format for curves are:
+    #   scope: np.array(times, ch1, ch2)
+    #   specan or na: np.array(frequencies, data)
     data_current = None # placeholder for current curve
-    data_avg = None # placeholder fo raveraged curve
+    data_avg = None # placeholder for averaged curve
 
     running_state = RunningStateProperty(doc="""
     The state can be either:
@@ -116,23 +121,23 @@ class AcquisitionManager(BaseModule):
     """)
     avg = LongProperty(doc="number of curves to average in single mode. In "
                            "continuous mode, a moving window average is "
-                           "performed.",)
-                       #default=1)
+                           "performed.",
+                       default=1)
     curve_name = StringProperty(doc="name of the curve to save.")
 
 
     def _init_module(self):
+        super(AcquisitionManager, self)._init_module()
         self._module = self.parent
         self._timer = QtCore.QTimer()
         self._timer.setInterval(10)  # max. frame rate: 100 Hz
         self._timer.setSingleShot(True)
         self._running_state = "stopped"
         self.current_avg = 0
-        self.avg = 1 # general remark: should be possible to specify that
-                     # LongProperty.__init__
         self.curve_name = self.name + " curve"
         self.data_current = None
         self.data_avg = None
+        self._restart_averaging()
 
     def _restart_averaging(self):
         """
@@ -195,17 +200,12 @@ class AcquisitionManager(BaseModule):
         Saves the curve(s) that is (are) currently displayed in the gui in
         the db_system. Also, returns the list [curve_ch1, curve_ch2]...
         """
-        d = self._module.get_setup_attributes()
-        curves = [None, None]
-        for ch, active in [(1, self._module.ch1_active),
-                           (2, self._module.ch2_active)]:
-            if active:
-                d.update({'ch': ch,
-                          'name': self.curve_name + ' ch' + str(ch)})
-                curves[ch - 1] = self._save_curve(self.data_avg[0],
-                                                  self.data_avg[ch],
-                                                  **d)
-        return curves
+        params = self._module.setup_attributes
+        params.update(name=self.curve_name)
+        curve = self._save_curve(self.data_avg[0],
+                                 self.data_avg[1],
+                                 **params)
+        return curve
 
     def _kill_timers(self):
         super(AcquisitionManager, self)._kill_timers()

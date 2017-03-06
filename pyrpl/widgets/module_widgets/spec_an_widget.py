@@ -31,6 +31,12 @@ class SpecAnWidget(ModuleWidget):
         self.plot_item = self.win.addPlot(title="PSD")
         self.curve = self.plot_item.plot(pen='m')
 
+        self.run_avg_widget = self.module.run.__class__.avg.create_widget(
+            self.module.run)
+        self.curve_name_widget = \
+            self.module.run.__class__.curve_name.create_widget(
+            self.module.run)
+
         self.button_single = QtGui.QPushButton("Run single")
         self.button_single.clicked.connect(self.run_single_clicked)
 
@@ -38,26 +44,38 @@ class SpecAnWidget(ModuleWidget):
         self.button_continuous.clicked.connect(self.run_continuous_clicked)
 
         self.button_restart_averaging = QtGui.QPushButton('Restart averaging')
-        self.button_restart_averaging.clicked.connect(self.module.restart_averaging)
+        self.button_restart_averaging.clicked.connect(self.module.run.stop)
 
         self.button_save = QtGui.QPushButton("Save curve")
-        self.button_save.clicked.connect(self.module.save_curve)
+        self.button_save.clicked.connect(self.module.run.save_curve)
 
+        self.button_layout.addWidget(self.run_avg_widget)
+        self.button_layout.addWidget(self.curve_name_widget)
         self.button_layout.addWidget(self.button_single)
         self.button_layout.addWidget(self.button_continuous)
         self.button_layout.addWidget(self.button_restart_averaging)
         self.button_layout.addWidget(self.button_save)
         self.main_layout.addLayout(self.button_layout)
 
-        self.running = False
-        self.attribute_changed.connect(self.module.restart_averaging)
+        # Not sure why the stretch factors in button_layout are not good by
+        # default...
+        self.button_layout.setStretchFactor(self.button_single, 1)
+        self.button_layout.setStretchFactor(self.button_continuous, 1)
+        self.button_layout.setStretchFactor(self.button_restart_averaging, 1)
+        self.button_layout.setStretchFactor(self.button_save, 1)
+        self.button_layout.setStretchFactor(self.run_avg_widget, 1)
+        self.button_layout.setStretchFactor(self.curve_name_widget, 1)
 
-        self.attribute_widgets["rbw_auto"].value_changed.connect(self.update_rbw_visibility)
-        self.update_rbw_visibility()
+        # self.running = False
+        # self.attribute_changed.connect(self.module.restart_averaging)
+
+        ##### self.attribute_widgets["rbw_auto"].value_changed.connect(
+        #####     self.update_rbw_visibility)
+        ##### self.update_rbw_visibility()
 
     def update_attribute_by_name(self, name, new_value_list):
         super(SpecAnWidget, self).update_attribute_by_name(name, new_value_list)
-        if name in ['running_continuous',]:
+        if name in ['running_state',]:
             self.update_running_buttons()
 
     def update_running_buttons(self):
@@ -65,19 +83,19 @@ class SpecAnWidget(ModuleWidget):
         Change text of Run continuous button and visibility of run single button
         according to module.running_continuous
         """
-        if self.module.current_average>0:
-            number_str = ' (' + str(self.module.current_average) + ")"
+        if self.module.run.current_avg>0:
+            number_str = ' (' + str(self.module.run.current_avg) + ")"
         else:
             number_str = ""
-        if self.module.running_continuous:
-            if self.module.current_average >= self.module.avg:
+        if self.module.run.running_state == 'running_continuous':
+            if self.module.run.current_avg >= self.module.run.avg:
                 # shows a plus sign when number of averages is available
                 number_str = number_str[:-1] + '+)'
-            self.button_continuous.setText("Stop" + number_str)
+            self.button_continuous.setText("Pause" + number_str)
             self.button_single.setText("Run single")
             self.button_single.setEnabled(False)
         else:
-            if self.module.running_single:
+            if self.module.run.running_state == "running_single":
                 self.button_continuous.setText("Run continuous")
                 self.button_single.setText("Stop" + number_str)
                 self.button_single.setEnabled(True)
@@ -86,8 +104,9 @@ class SpecAnWidget(ModuleWidget):
                 self.button_single.setText("Run single")
                 self.button_single.setEnabled(True)
 
-    def update_rbw_visibility(self):
-        self.attribute_widgets["rbw"].widget.setEnabled(not self.module.rbw_auto)
+    #### def update_rbw_visibility(self):
+    ####     self.attribute_widgets["rbw"].widget.setEnabled(not
+    #### self.module.rbw_auto)
 
     def autoscale_display(self):
         """Autoscale pyqtgraph"""
@@ -99,33 +118,24 @@ class SpecAnWidget(ModuleWidget):
         """
 
         if str(self.button_continuous.text()).startswith("Run continuous"):
-            self.module.run_continuous()
+            self.module.run.continuous()
         else:
-            self.module.stop()
+            self.module.run.pause()
 
     def run_single_clicked(self):
         if str(self.button_single.text()).startswith('Stop'):
-            self.module.stop()
+            self.module.run.stop()
         else:
-            self.module.run_single()
+            self.module.run.single()
 
-    def run_single_clicked_old(self):
-        """
-        Runs a single acquisition.
-        """
-        self.button_continuous.setEnabled(False)
-        self.restart_averaging()
-        self.module.setup()
-        self.acquire_one_curve()
-        self.button_continuous.setEnabled(True)
-
-    def update_display(self):
+    def display_curve(self, datas):
         """
         Displays all active channels on the graph.
         """
-        if self.module.data is not None:
-            self.curve.setData(self.module.frequencies, self.module.data_to_dBm(self.module.data))
-            self.curve.setVisible(True)
-        else:
-            self.curve.setVisible(False)
+        #if self.module.run.data_avg is not None:
+        self.curve.setData(datas[0],
+                           self.module.data_to_dBm(datas[1]))
+        self.curve.setVisible(True)
+        #else:
+        #    self.curve.setVisible(False)
         self.update_running_buttons()

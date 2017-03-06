@@ -241,7 +241,7 @@ class ScopeAcquisitionManager(AcquisitionManager):
                            to_discard:]
                     data = np.concatenate([[np.nan] * to_discard, data])
                     datas[index] = data
-            self._emit_signal_by_name('display_curves', list(datas))
+            self._emit_signal_by_name('display_curve', list(datas))
             self.data_current = datas
             # no setup in rolling mode
             self._timer.start()  # restart timer in rolling_mode
@@ -256,7 +256,7 @@ class ScopeAcquisitionManager(AcquisitionManager):
                 datas[0] = self._module.times
                 self.data_current = np.array(datas)
                 self._do_average()
-                self._emit_signal_by_name("display_curves",
+                self._emit_signal_by_name("display_curve",
                                           list(self.data_avg))
 
                 if self.running_state == "running_single":
@@ -269,7 +269,9 @@ class ScopeAcquisitionManager(AcquisitionManager):
                     self._module.setup()
                     self._timer.start()
             else:  # curve not ready, wait for next timer iteration
-                self._timer.start()
+                if self.running_state in ['running_continuous',
+                                          'running_single']:
+                    self._timer.start()
 
     def _start_acquisition(self):
         """
@@ -288,12 +290,28 @@ class ScopeAcquisitionManager(AcquisitionManager):
     def _do_average(self):
         self.data_avg[0] = self.data_current[0]
         self.current_avg += 1
-        if self.running_state in ['running_single', 'running_continuous']:
-            self.current_avg = min(self.current_avg, self.avg)
+        self.current_avg = min(self.current_avg, self.avg)
         self.data_avg[[1,2], :] = (self.data_avg[[1,2],
                                     :]*(self.current_avg-1)
                                 + \
                                 self.data_current[[1,2], :])/self.current_avg
+
+    def save_curve(self):
+        """
+        Saves the curve(s) that is (are) currently displayed in the gui in
+        the db_system. Also, returns the list [curve_ch1, curve_ch2]...
+        """
+        d = self._module.setup_attributes
+        curves = [None, None]
+        for ch, active in [(1, self._module.ch1_active),
+                           (2, self._module.ch2_active)]:
+            if active:
+                d.update({'ch': ch,
+                          'name': self.curve_name + ' ch' + str(ch)})
+                curves[ch - 1] = self._save_curve(self.data_avg[0],
+                                                  self.data_avg[ch],
+                                                  **d)
+        return curves
 
 
 class Scope(HardwareModule, AcquisitionModule):
