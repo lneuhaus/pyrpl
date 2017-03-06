@@ -32,6 +32,8 @@ class ClassnameProperty(SelectProperty):
         obj._classname_changed()
         return val
 
+    def options(self, instance):
+        return all_classnames().keys()
 
 class SignalLauncherLockbox(SignalLauncher):
     """
@@ -121,10 +123,13 @@ class Lockbox(LockboxModule):
                          "error_threshold"]
     _gui_attributes = _setup_attributes
 
-    classname = ClassnameProperty(options=['Lockbox']) #all_models().keys())
+    classname = ClassnameProperty()
     parameter_name = "parameter"
     # possible units to describe the physical parameter to control e.g. ['m', 'MHz']
-    units = ['V']
+    # units that are allowed for this lockbox (must provide methods with name "_unit_to_V" for all units)
+    _units = ['V']
+    def _V_per_V(self):
+        return 1.0
 
     auto_lock_interval = AutoLockIntervalProperty(default=1.0, min=1e-3,
                                                   max=1e10)
@@ -142,9 +147,10 @@ class Lockbox(LockboxModule):
     sequence = ModuleProperty(Sequence)
 
     def _init_module(self):
+        pass
         # update options of classname attribute with available lockbox types and update the value
-        self.__class__.classname.change_options(self, sorted(all_classnames().keys()))
-        self.classname = type(self).__name__
+        #self.__class__.classname.change_options(self, lambda: all_classnames().keys())
+        #self.classname = type(self).__name__
 
     @property
     def signals(self):

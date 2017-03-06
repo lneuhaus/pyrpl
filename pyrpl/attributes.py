@@ -245,7 +245,7 @@ class SelectAttribute(BaseAttribute):
 
     def __init__(self, options=[], default=None, doc=""):
         """
-        Options can be specified at attribute creation, but it can also be updated latter on a per-module basis using
+        Options can be specified at attribute creation, but it can also be updated later on a per-module basis using
         change_options(new_options)
         """
         super(SelectAttribute, self).__init__(default=default, doc=doc)
