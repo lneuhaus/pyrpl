@@ -1,8 +1,7 @@
-from pyrpl.modules import SoftwareModule
-from six import with_metaclass
+from .. import LockboxModule
 
 
-class Signal(SoftwareModule):  # with_metaclass(NameAttributesMetaClass, object)
+class Signal(LockboxModule):  # with_metaclass(NameAttributesMetaClass, object)
     """
     represention of a physial signal. Can be either an imput or output signal.
     """

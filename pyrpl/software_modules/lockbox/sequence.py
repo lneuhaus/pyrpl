@@ -1,20 +1,110 @@
 from __future__ import division
-from pyrpl.attributes import SelectProperty, FloatProperty, BoolProperty, StringProperty, \
-                            ListStageOuputProperty
-from pyrpl.modules import SoftwareModule
-from pyrpl.widgets.module_widgets import LockboxSequenceWidget, LockboxStageWidget
+from . import LockboxModule
+from ...attributes import SelectProperty, FloatProperty, BoolProperty, StringProperty, \
+                            ListStageOuputProperty, ModuleListProperty
+from ...widgets.module_widgets import LockboxSequenceWidget, LockboxStageWidget
 
 from collections import OrderedDict
 
 
-class Sequence(SoftwareModule):
+class StageNameProperty(StringProperty):
+    pass
+    #def set_value(self, obj, val):
+    #    if obj.parent is not None:
+    #        obj.parent.rename_stage(obj, val)
+    #    else:
+    #        super(StageNameProperty, self).set_value(obj, val)
+
+
+class Stage(LockboxModule):
+    """
+    A stage is a single step in the lock acquisition process
+    """
+    _setup_attributes = [#'name',
+                         'input',
+                         'variable_value',
+                         'output_on',
+                         'duration',
+                         'function_call',
+                         'factor']
+    _gui_attributes = _setup_attributes
+    #name = StageNameProperty(default='my_stage')
+    _widget_class = LockboxStageWidget
+    input = SelectProperty()
+    output_on = ListStageOuputProperty()
+    variable_value = FloatProperty(min=-1e6, max=1e6)
+    duration = FloatProperty(min=0, max=1e6)
+    function_call = StringProperty()
+    factor = FloatProperty(default=1., min=-1e6, max=1e6)
+
+    #def _init_module(self):
+    #    self.update_inputs()
+    #    self.update_outputs()
+
+    def _load_setup_attributes(self):
+        pass
+
+    def update_inputs(self):
+        """
+        Updates the list of possible inputs to be in sync with the existing inputs in the model
+        """
+        input_names = [input.name for input in self.lockbox.inputs]
+        self.__class__.input.change_options(self, input_names)
+
+    def update_outputs(self):
+        """
+        Updates the list of outputs to be in sync with the existing outputs in
+        the lockbox
+        """
+        output_names = [output.name for output in self.lockbox.outputs]
+        new_output_on = dict()
+        for name in output_names:
+            if not name in self.output_on:
+                new_output_on[name] = (True, False, 0)
+            else:
+                new_output_on[name] = self.output_on[name]
+        self.output_on = new_output_on
+
+    def set_setup_attributes(self, **kwds):
+        try:
+            super(Stage, self).set_setup_attributes(**kwds)
+        finally:
+            self.update_outputs()
+            self.update_inputs()
+
+    def _setup(self):
+        """
+        Setup the lockbox parameters according to this stage
+        """
+        for output in self.lockbox.outputs:
+            (on, offset_enable, offset) = self.output_on[output.name]
+            if offset_enable:
+                output.set_ival(offset)
+            if on:
+                output.lock(self.input, self.variable_value, factor=self.factor)
+            else:
+                output.unlock()
+        if self.function_call!="":
+            func = getattr(self.lockbox.model, self.function_call)
+            try:
+                func(**self.get_setup_attributes())
+            except TypeError:
+                func()
+        self.lockbox.state = self.name
+        #if self.lockbox._widget is not None:
+        #    self.lockbox._widget.show_lock(self)
+
+
+class Sequence(LockboxModule):
     """ A sequence is a list of Stages """
     _widget_class = LockboxSequenceWidget
     _section_name = 'sequence'
 
-    def _init_module(self):
-        self.stages = []
-        self.lockbox = self.parent
+    stages = ModuleListProperty(Stage)
+
+    @property
+    def lockbox(self):
+        return self.parent
 
     def get_unique_stage_name(self):
         idx = len(self.stages) + 1
@@ -90,22 +180,22 @@ class Sequence(SoftwareModule):
         for stage in to_remove:
             self.remove_stage(stage, allow_last_stage=True)
 
-    def _load_setup_attributes(self):
-        #import pdb
-        #pdb.set_trace()
-        self.remove_all_stages()
-        if self.c is not None:
-            if 'stages' in self.c._dict.keys():
-                for name, stage in self.c.stages._dict.items():
-                    if name!='states':
-                        stage = self.add_stage_no_save() # don't make a duplicate entry in the config file
-                        stage._autosave_active = False
-                        self.rename_stage(stage, name)
-                        stage._load_setup_attributes()
-                        stage._autosave_active = True
-        if len(self.stages)==0:
-            self.add_stage()
-
+    # def _load_setup_attributes(self):
+    #     #import pdb
+    #     #pdb.set_trace()
+    #     self.remove_all_stages()
+    #     if self.c is not None:
+    #         if 'stages' in self.c._dict.keys():
+    #             for name, stage in self.c.stages._dict.items():
+    #                 if name!='states':
+    #                     stage = self.add_stage_no_save() # don't make a duplicate entry in the config file
+    #                     stage._autosave_active = False
+    #                     self.rename_stage(stage, name)
+    #                     stage._load_setup_attributes()
+    #                     stage._autosave_active = True
+    #     if len(self.stages)==0:
+    #         self.add_stage()
+    #
     def save_state(self, name, state_branch=None):
         if state_branch is None:
             state_branch = self._c_states
@@ -138,89 +228,3 @@ class Sequence(SoftwareModule):
         if not name in self.stage_names:
             raise ValueError(stage_name + " is not a valid stage name")
         return self.stages[self.stage_names.index(name)]
-
-
-class StageNameProperty(StringProperty):
-    def set_value(self, obj, val):
-        if obj.parent is not None:
-            obj.parent.rename_stage(obj, val)
-        else:
-            super(StageNameProperty, self).set_value(obj, val)
-
-
-class Stage(SoftwareModule):
-    """
-    A stage is a single step in the lock acquisition process
-    """
-    _setup_attributes = ['name',
-                         'input',
-                         'variable_value',
-                         'output_on',
-                         'duration',
-                         'function_call',
-                         'factor']
-    _gui_attributes = _setup_attributes
-    _section_name = 'stage'
-    name = StageNameProperty(default='my_stage')
-    _widget_class = LockboxStageWidget
-    input = SelectProperty()
-    output_on = ListStageOuputProperty()
-    variable_value = FloatProperty(min=-1e6, max=1e6)
-    duration = FloatProperty(min=0, max=1e6)
-    function_call = StringProperty()
-    factor = FloatProperty(default=1., min=-1e6, max=1e6)
-
-    def _init_module(self):
-        self.lockbox = self.parent.parent
-        self.update_inputs()
-        self.update_outputs()
-
-    def update_inputs(self):
-        """
-        Updates the list of possible inputs to be in sync with the existing inputs in the model
-        """
-        input_names = [input.name for input in self.lockbox.inputs]
-        self.__class__.input.change_options(self, input_names)
-
-    def update_outputs(self):
-        """
-        Updates the list of outputs to be in sync with the existing outputs in
-        the lockbox
-        """
-        output_names = [output.name for output in self.lockbox.outputs]
-        new_output_on = dict()
-        for name in output_names:
-            if not name in self.output_on:
-                new_output_on[name] = (True, False, 0)
-            else:
-                new_output_on[name] = self.output_on[name]
-        self.output_on = new_output_on
-
-    def set_setup_attributes(self, **kwds):
-        try:
-            super(Stage, self).set_setup_attributes(**kwds)
-        finally:
-            self.update_outputs()
-            self.update_inputs()
-
-    def _setup(self):
-        """
-        Setup the lockbox parameters according to this stage
-        """
-        for output in self.lockbox.outputs:
-            (on, offset_enable, offset) = self.output_on[output.name]
-            if offset_enable:
-                output.set_ival(offset)
-            if on:
-                output.lock(self.input, self.variable_value, factor=self.factor)
-            else:
-                output.unlock()
-        if self.function_call!="":
-            func = getattr(self.lockbox.model, self.function_call)
-            try:
-                func(**self.get_setup_attributes())
-            except TypeError:
-                func()
-        self.lockbox.state = self.name
-        #if self.lockbox._widget is not None:
-        #    self.lockbox._widget.show_lock(self)

@@ -649,15 +649,15 @@ class LockboxSequenceWidget(ModuleWidget):
         self.main_layout.insertWidget(self.main_layout.indexOf(self.button_add), widget)
         return stage
 
-    def remove_stage(self, stage):
-        for widget in self.stage_widgets:
-            if widget.name == stage.name:
-                if self.parent().button_green == widget.button_goto:
-                    self.parent().button_green = None
-                widget.hide()
-                self.stage_widgets.remove(widget)
-                self.main_layout.removeWidget(widget)
-                widget.deleteLater()
+    def remove_stage(self, stagenumber=-1):
+        """ removes the widget with """
+        widget = self.stage_widgets.pop(stagenumber)
+        if widget.name == stage.name:
+            if self.parent().button_green == widget.button_goto:
+                self.parent().button_green = None
+            widget.hide()
+            self.main_layout.removeWidget(widget)
+            widget.deleteLater()
 
     def update_stage_names(self):
         for widget in self.stage_widgets:

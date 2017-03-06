@@ -123,8 +123,11 @@ class BaseAttribute(object):
         # if self.name in module._widget.attribute_widgets:
         #   module._widget.attribute_widgets[self.name].update_widget()
         #if self.name in module._gui_attributes:
-        module._signal_launcher.update_attribute_by_name.emit(self.name,
+        try:
+            module._signal_launcher.update_attribute_by_name.emit(self.name,
                                                              [new_value])
+        except AttributeError:  # occurs if nothing is connected (TODO: remove this)
+            pass
 
     def save_attribute(self, module, value):
         """
@@ -392,6 +395,7 @@ class StringAttribute(BaseAttribute):
         else:
             return value
 
+
 class PhaseAttribute(FloatAttribute):
     """
     An attribute to represent a phase
@@ -492,28 +496,6 @@ class ModuleAttribute(BaseAttribute):
     def __init__(self, module_cls, default=None, doc=""):
         self.module_cls = module_cls
         super(ModuleAttribute, self).__init__(default=default, doc=doc)
-
-    # the normalization is already taken care of in the module.setup_attributes function
-    # -> no need for this
-    # def validate_and_normalize(self, value, module):
-    #     """
-    #     Make sure value is a dictionary with keys inside
-    #     submodule._setup_attributes
-    #     :param value:
-    #     :param module:
-    #     :return:
-    #     """
-    #     if not isinstance(value, dict):
-    #         raise ValueError(
-    #         "value %s for attribute %s is not a valid dictionary" % (
-    #         value, self.name))
-    #     sub = getattr(module, self.name)
-    #     for key in value.keys():
-    #         if not key in sub._setup_attributes:
-    #             raise ValueError("Submodule %s doesn't have %s as "
-    #                                  "setup_attribute"% (sub.name, key))
-    #     return value
-
 
 
 # docstring does not work yet, see:
@@ -1140,3 +1122,108 @@ class ModuleProperty(ModuleAttribute, BaseProperty):
         """
         getattr(obj, self.name).setup_attributes = val
         return val
+
+
+class ModuleList(list):
+    """ a list of modules"""
+    def __init__(self, parent, element_cls, initlist=[]):
+        self.parent = parent
+        self.element_cls = element_cls
+        super(ModuleList, self).__init__([])
+        self.extend(initlist)
+
+    # all read-only methods from the base class 'list' work perfectly well for us, i.e.
+    # __getitem__, count(), index(), reverse()
+
+    def __setitem__(self, index, value):
+        # setting a list element sets up the corresponding module
+        self[index].setup_attributes = value
+
+    def insert(self, index, new):
+        # make new module
+        to_add = self.element_cls(self.parent)
+        # initialize setup_attributes
+        to_add.setup_attributes = new
+        # insert into list
+        super(ModuleList, self).insert(index, to_add)
+
+    def append(self, new):
+        self.insert(-1, new)
+
+    def extend(self, iterable):
+        for i in iterable:
+            self.append(i)
+
+    def __delitem__(self, index):
+        # setting a list element sets up the corresponding module
+        to_delete = super(ModuleList, self).pop(index)
+        # call destructor
+        to_delete._clear()
+
+    def pop(self, index=-1):
+        # get attributes
+        setup_attributes = self[index].setup_attributes
+        self.__delitem__(index)
+        return setup_attributes
+
+    def remove(self, value):
+        self.__delitem__(self.index(value))
+
+
+class ModuleListProperty(BaseAttribute):
+    """
+    A property for a list of submodules.
+    """
+    default = [{}]
+    module_cls = ModuleList
+
+    def __init__(self, element_cls, default=None, doc=""):
+        self.element_cls = element_cls
+        super(ModuleListProperty, self).__init__(default=default, doc=doc)
+
+    def get_value(self, obj, obj_type):
+        if not hasattr(obj, '_' + self.name):
+            setattr(obj, '_' + self.name, self.module_cls(obj, self.element_cls, self.default))
+        return getattr(obj, '_' + self.name)
+
+    def set_value(self, obj, val):
+        modulelist = getattr(obj, self.name)
+        for i, v in enumerate(val):
+            try:
+                modulelist[i] = v
+            except IndexError:
+                modulelist.append(v)
+        while len(modulelist) > len(val):
+            modulelist.remove(-1)
+
+    def validate_and_normalize(self, value, obj):
+        if not isinstance(value, list):
+            try:
+                value = value.values()
+            except AttributeError:
+                raise ValueError("ModuleProperty must be assigned a list. You have wrongly assigned an object of type "
+                                 "%s. ", type(value))
+        return value
+
+
+class ModuleContainerProperty(ModuleProperty):
+    def __init__(self, module_cls, default=None, doc="", **kwargs):
+        """ returns a descriptor for a module container, i.e. a class that contains submodules whose name and class are
+        specified in kwargs. module_cls is the base class for the module container (typically SoftwareModule)"""
+        # we simply create a container class that loosely resembles a dictionary which contains the given submodules
+        class ModuleContainer(module_cls):
+            def __getitem__(self, key):
+                return getattr(self, key)
+            def keys(self):
+                return self._module_attributes
+            def values(self):
+                return [self[k] for k in self.keys()]
+            def items(self):
+                return [(k, self[k]) for k in self.keys()]
+            def __iter__(self):
+                # this method allows to write code like this: 'for submodule in modulecontainer: submodule.do_sth()'
+                return iter(self.values())
+            # add the submodule entries here such that the metaclass of module_cls can do its job
+            for k, v in kwargs.items():
+                locals()[k] = ModuleProperty(v)
+        super(ModuleContainerProperty, self).__init__(ModuleContainer, default=default, doc=doc)

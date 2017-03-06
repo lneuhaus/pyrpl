@@ -103,6 +103,9 @@ class ModuleMetaClass(type):
         concatenating the module's _setup docstring and individual
         setup_attribute docstrings.
         """
+        if classname == 'ModuleContainer':
+            pass
+
         # 0. make all attributes aware of their name in the class containing them
         for name, attr in self.__dict__.items():
             if isinstance(attr, BaseAttribute):
@@ -323,7 +326,6 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
           - or another SoftwareModule: config file entry is in
             (parent_entry).(self.__class__.name + 's').(self.name)
         """
-
         if name is not None:
             self.name = name
         self._flag_autosave_active = True # I would have prefered to use
@@ -337,6 +339,7 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         self._autosave_active = False
         # instantiate submodules (submodule has preceeding underscore, SubmoduleProperty does not)
         for submodule in self._module_attributes:
+            submodule_cls = getattr(self.__class__, submodule)
             setattr(self, '_' + submodule, getattr(self.__class__, submodule).module_cls(self, name=submodule))
         # custom module initialization hook
         self._init_module()
@@ -346,7 +349,7 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         # Loading the module directly after its creation can be problematic:
         # For instance, a submodule will try to load itself even before it is
         # attached to its parent...
-        self._load_setup_attributes() # attributes are loaded but _setup() is not called
+        self._load_setup_attributes()  # attributes are loaded but _setup() is not called
 
     def _init_module(self):
         """

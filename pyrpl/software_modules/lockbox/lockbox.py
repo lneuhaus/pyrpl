@@ -1,10 +1,11 @@
 from __future__ import division
 from ...modules import SoftwareModule, SignalLauncher
-from ...attributes import SelectProperty, BoolProperty, StringProperty, ModuleProperty
+from ...attributes import SelectProperty, BoolProperty, StringProperty, ModuleProperty, ModuleContainerProperty
 from .signals import *
 from ...widgets.module_widgets import LockboxWidget
 from ...pyrpl_utils import get_unique_name_list_from_class_list, all_subclasses, sleep
 from .sequence import Sequence
+from . import LockboxModule
 from collections import OrderedDict
 from PyQt4 import QtCore
 
@@ -106,7 +107,7 @@ class AutoLockIntervalProperty(FloatProperty):
         obj._signal_launcher.timer_autolock.setInterval(val*1000.0)
 
 
-class Lockbox(SoftwareModule):
+class Lockbox(LockboxModule):
     """
     A Module that allows to perform feedback on systems that are well described by a physical model.
     """
@@ -124,8 +125,15 @@ class Lockbox(SoftwareModule):
     parameter_name = "parameter"
     # possible units to describe the physical parameter to control e.g. ['m', 'MHz']
     units = ['V']
-    # list of input signals that can be implemented
-    input_cls = [InputFromOutput]
+
+    #logical inputs and outputs of the lockbox
+    inputs = ModuleContainerProperty(LockboxModule,
+                                     input_from_output=InputFromOutput)
+
+    outputs = ModuleContainerProperty(LockboxModule,
+                                      output1=OutputSignal,
+                                      output2=OutputSignal)
+
     auto_lock_interval = AutoLockIntervalProperty(default=1.0, min=1e-3,
                                                   max=1e10)
     default_sweep_output = SelectProperty(options=[])
@@ -136,32 +144,12 @@ class Lockbox(SoftwareModule):
     sequence = ModuleProperty(Sequence)
 
     def _init_module(self):
-        # make inputs
-        inputnames = get_unique_name_list_from_class_list(self.input_cls)
-        self.inputs = []
-        for name, cls in zip(inputnames, self.input_cls):
-            input = cls(self, name)
-            self._add_input(input)
-            input._load_setup_attributes()
-            input.setup()
-        # outputs will be updated later
-        self.outputs = []
-        # show all available models and set current one
+        # update options of classname attribute with available lockbox types and update the value
         self.__class__.classname.change_options(self, sorted(all_classnames().keys()))
         self.classname = type(self).__name__
-
-        #<<<<<<< HEAD
-        # parameters are updated and outputs are loaded by load_setup_attributes (called at the end of __init__)
-        #### outputs are only slightly affected by a change of model: only the unit of their DC-gain might become
-        #### obsolete, in which case, it needs to be changed to some value...
-        #for output in self.outputs:
-        #    output.update_for_model()
-        #=======
-        # refresh input signals display
-        # self.add_output() # adding it now creates problem when loading an
-        # output named "output1". It is eventually
-        # added inside (after) load_setup_attribute
-        #>>>>>>> refactor_registers
+        # make input/output lists
+        #self.inputs = [v for v in self.__dict__.values() if isinstance(v, InputSignal)]
+        #self.outputs = [v for v in self.__dict__.values() if isinstance(v, OutputSignal)]
 
     @property
     def asg(self):
@@ -207,7 +195,7 @@ class Lockbox(SoftwareModule):
         self.lock()
         while not self.state == self._stage_names[-1]:
             sleep(0.01)
-        return is_locked()
+        return self.is_locked()
 
     def lock(self):
         """
@@ -253,14 +241,6 @@ class Lockbox(SoftwareModule):
         # To avoid explicit reference to gui here, one could consider using a DynamicSelectAttribute...
         self._signal_launcher.state_changed.emit()
         return val
-
-    @property
-    def _stage_names(self):
-        return self.sequence.stage_names
-
-    @property
-    def _output_names(self):
-        return [output.name for output in self.outputs]
 
     def is_locking_sequence_active(self):
         if self.state in self._stage_names and self._stage_names.index(
@@ -344,188 +324,6 @@ class Lockbox(SoftwareModule):
                          "%.2f +- %.2f (setpoint %.2f).",
                          input.name, actmean, actrms, variable_setpoint)
         return True
-
-    def _get_unique_output_name(self):
-        idx = 1
-        name = 'output' + str(idx)
-        while (name in self._output_names):
-            idx += 1
-            name = 'output' + str(idx)
-        return name
-
-    def _add_output(self):
-        """
-        Outputs of the lockbox are added dynamically (for now, inputs are defined by the model).
-        """
-        output = self._add_output_no_save()
-        output.name = output.name  # trigers the write in the config file
-        return output
-
-    def _add_output_no_save(self):
-        """
-        Adds and returns an output without touching the config file (useful
-        when loading an output from the config file)
-        """
-        if self.pyrpl.pids.n_available() < 1:
-            raise ValueError(
-                "All pids are currently in use. Cannot create any more "
-                "outputs.")
-        output = OutputSignal(self)
-        # doesn't trigger write in the config file
-        output._name = self._get_unique_output_name()
-        self.outputs.append(output)
-        setattr(self, output.name, output)
-        #self.sequence.update_outputs()
-        self.__class__.default_sweep_output.\
-            change_options(self, [out.name for out in self.outputs])
-        """
-        if self.widget is not None:
-            # Since adding/removing outputs corresponds to dynamic creation of
-            # Modules, our attribute-based way of
-            # hiding gui update is not effective. Since this is a highly
-            # exceptional situation, I don't find it too bad.
-            self.widget.add_output(output)
-        """
-        self._signal_launcher.output_created.emit([output])
-        return output
-
-    def _remove_output(self, output, allow_remove_last=False):
-        """
-        Removes and clear output from the list of outputs. if allow_remove_last is left to False, an exception is raised
-        when trying to remove the last output.
-        """
-        if isinstance(output, basestring):
-            output = self._get_output(output)
-        if not allow_remove_last:
-            if len(self.outputs)<=1:
-                raise ValueError("There has to be at least one output.")
-        if hasattr(self, output.name):
-            delattr(self, output.name)
-        output.clear()
-        self.outputs.remove(output)
-
-        self.sequence.update_outputs()
-
-        if 'outputs' in self.c._keys():
-            if output.name in self.c.outputs._keys():
-                self.c.outputs._pop(output.name)
-
-        self.__class__.default_sweep_output.change_options(self,
-                                                           [output_var.name for
-                                                            output_var in
-                                                            self.outputs])
-        self._signal_launcher.output_deleted.emit([output])
-
-    def _remove_all_outputs(self):
-        """
-        Removes all outputs, even the last one.
-        """
-        while(len(self.outputs)>0):
-            self._remove_output(self.outputs[-1], allow_remove_last=True)
-
-    def _rename_output(self, output, new_name):
-        """
-        This changes the name of the output in many different places: lockbox
-        attribute, config file, pid's owner
-        """
-        if new_name in self._output_names and self._get_output(new_name)!=output:
-            raise ValueError("Name %s already exists for an output"%new_name)
-        if hasattr(self, output.name):
-            delattr(self, output.name)
-        setattr(self, new_name, output)
-        if output._autosave_active:
-            output.c._rename(new_name)
-        output._name = new_name
-        if output.pid is not None:
-            output.pid.owner = new_name
-        self.sequence.update_outputs()
-        self.__class__.default_sweep_output.change_options(self, [out.name for out in self.outputs])
-        self._signal_launcher.output_renamed.emit()
-
-    def _add_stage(self):
-        """
-        adds a stage to the lockbox sequence
-        """
-        return self.sequence.add_stage()
-
-    def _remove_stage(self, stage):
-        """
-        Removes stage from the lockbox seequence
-        """
-        self.sequence.remove_stage(stage)
-
-    def _rename_stage(self, stage, new_name):
-        self.sequence.rename_stage(stage, new_name)
-
-    def _remove_all_stages(self):
-        self.sequence.remove_all_stages()
-
-    def _load_setup_attributes(self):
-        """
-        This function needs to be overwritten to retrieve the child module
-        attributes as well
-        """
-
-        # prevent saving wrong default_sweep_output at startup
-        self._autosave_active = False
-
-        # clean up outputs
-        self._remove_all_outputs()
-        # load outputs, prevent saving wrong default_sweep_output at startup
-        if self.c is not None:
-            if 'outputs' in self.c._dict.keys():
-                for name, output in self.c.outputs._dict.items():
-                    if name != 'states':
-                        output = self._add_output_no_save()
-                        output._autosave_active = False
-                        self._rename_output(output, name)
-                        output._load_setup_attributes()
-                        output._autosave_active = True
-        if len(self.outputs)==0:
-            self._add_output()  # add at least one output
-        self._autosave_active = True # activate autosave
-
-        # load inputs
-        for input in self.inputs:
-            input._autosave_active = False
-            input._load_setup_attributes()
-            input._autosave_active = True
-
-        # load normal attributes (model, default_sweep_output)
-        super(Lockbox, self)._load_setup_attributes()
-
-        # load sequence
-        #self.sequence._autosave_active = False
-        #self.sequence._load_setup_attributes()
-        #self.sequence._autosave_active = True
-
-    def _remove_input(self, input):
-        input.clear()
-        self.inputs.remove(input)
-        self._signal_launcher.remove_input.emit([input])
-
-    def _add_input(self, input):
-        self.inputs.append(input)
-        setattr(self, input.name, input)
-        self._signal_launcher.add_input.emit([input])
-
-    def _get_input(self, name):
-        """
-        retrieves an input by name
-        """
-        return self.inputs[[input.name for input in self.inputs].index(name)]
-
-    def _get_output(self, name):
-        """
-        retrieves an output by name
-        """
-        return self.outputs[[output.name for output in self.outputs].index(name)]
-
-    def _get_stage(self, name):
-        """
-        retieves a stage by name
-        """
-        return self.sequence.get_stage(name)
 
     def _lockstatus(self):
         """ this function is a placeholder for periodic lockstatus
@@ -636,3 +434,212 @@ class Lockbox(SoftwareModule):
     def model(self):
         self._logger.warning("Using the model property of Lockbox will soon be deprecated. Please use lockbox instead! ")
         return self  # lockbox.model is replaced by lockbox itself
+
+
+    def _remove_input(self, input):
+        input.clear()
+        self.inputs.remove(input)
+        self._signal_launcher.remove_input.emit([input])
+
+
+    def _add_input(self, input):
+        self.inputs.append(input)
+        setattr(self, input.name, input)
+        self._signal_launcher.add_input.emit([input])
+
+
+    def _get_input(self, name):
+        """
+        retrieves an input by name
+        """
+        return self.inputs[[input.name for input in self.inputs].index(name)]
+
+
+    def _get_output(self, name):
+        """
+        retrieves an output by name
+        """
+        return self.outputs[[output.name for output in self.outputs].index(name)]
+
+
+    def _get_stage(self, name):
+        """
+        retieves a stage by name
+        """
+        return self.sequence.get_stage(name)
+
+
+    def _get_unique_output_name(self):
+        idx = 1
+        name = 'output' + str(idx)
+        while (name in self._output_names):
+            idx += 1
+            name = 'output' + str(idx)
+        return name
+
+
+    def _add_output(self):
+        """
+        Outputs of the lockbox are added dynamically (for now, inputs are defined by the model).
+        """
+        output = self._add_output_no_save()
+        output.name = output.name  # trigers the write in the config file
+        return output
+
+
+    def _add_output_no_save(self):
+        """
+        Adds and returns an output without touching the config file (useful
+        when loading an output from the config file)
+        """
+        if self.pyrpl.pids.n_available() < 1:
+            raise ValueError(
+                "All pids are currently in use. Cannot create any more "
+                "outputs.")
+        output = OutputSignal(self)
+        # doesn't trigger write in the config file
+        output._name = self._get_unique_output_name()
+        self.outputs.append(output)
+        setattr(self, output.name, output)
+        # self.sequence.update_outputs()
+        self.__class__.default_sweep_output. \
+            change_options(self, [out.name for out in self.outputs])
+        """
+        if self.widget is not None:
+            # Since adding/removing outputs corresponds to dynamic creation of
+            # Modules, our attribute-based way of
+            # hiding gui update is not effective. Since this is a highly
+            # exceptional situation, I don't find it too bad.
+            self.widget.add_output(output)
+        """
+        self._signal_launcher.output_created.emit([output])
+        return output
+
+
+    def _remove_output(self, output, allow_remove_last=False):
+        """
+        Removes and clear output from the list of outputs. if allow_remove_last is left to False, an exception is raised
+        when trying to remove the last output.
+        """
+        if isinstance(output, basestring):
+            output = self._get_output(output)
+        if not allow_remove_last:
+            if len(self.outputs) <= 1:
+                raise ValueError("There has to be at least one output.")
+        if hasattr(self, output.name):
+            delattr(self, output.name)
+        output.clear()
+        self.outputs.remove(output)
+
+        self.sequence.update_outputs()
+
+        if 'outputs' in self.c._keys():
+            if output.name in self.c.outputs._keys():
+                self.c.outputs._pop(output.name)
+
+        self.__class__.default_sweep_output.change_options(self,
+                                                           [output_var.name for
+                                                            output_var in
+                                                            self.outputs])
+        self._signal_launcher.output_deleted.emit([output])
+
+
+    def _remove_all_outputs(self):
+        """
+        Removes all outputs, even the last one.
+        """
+        while (len(self.outputs) > 0):
+            self._remove_output(self.outputs[-1], allow_remove_last=True)
+
+
+    def _rename_output(self, output, new_name):
+        """
+        This changes the name of the output in many different places: lockbox
+        attribute, config file, pid's owner
+        """
+        if new_name in self._output_names and self._get_output(new_name) != output:
+            raise ValueError("Name %s already exists for an output" % new_name)
+        if hasattr(self, output.name):
+            delattr(self, output.name)
+        setattr(self, new_name, output)
+        if output._autosave_active:
+            output.c._rename(new_name)
+        output._name = new_name
+        if output.pid is not None:
+            output.pid.owner = new_name
+        self.sequence.update_outputs()
+        self.__class__.default_sweep_output.change_options(self, [out.name for out in self.outputs])
+        self._signal_launcher.output_renamed.emit()
+
+
+    def _add_stage(self):
+        """
+        adds a stage to the lockbox sequence
+        """
+        return self.sequence.add_stage()
+
+
+    def _remove_stage(self, stage):
+        """
+        Removes stage from the lockbox seequence
+        """
+        self.sequence.remove_stage(stage)
+
+
+    def _rename_stage(self, stage, new_name):
+        self.sequence.rename_stage(stage, new_name)
+
+
+    def _remove_all_stages(self):
+        self.sequence.remove_all_stages()
+
+    # def _load_setup_attributes(self):
+    #         """
+    #         This function needs to be overwritten to retrieve the child module
+    #         attributes as well
+    #         """
+    #         super(Lockbox, self)._load_setup_attributes()
+    #         return
+    #         # prevent saving wrong default_sweep_output at startup
+    #         self._autosave_active = False
+    #
+    #         # clean up outputs
+    #         self._remove_all_outputs()
+    #         # load outputs, prevent saving wrong default_sweep_output at startup
+    #         if self.c is not None:
+    #             if 'outputs' in self.c._dict.keys():
+    #                 for name, output in self.c.outputs._dict.items():
+    #                     if name != 'states':
+    #                         output = self._add_output_no_save()
+    #                         output._autosave_active = False
+    #                         self._rename_output(output, name)
+    #                         output._load_setup_attributes()
+    #                         output._autosave_active = True
+    #         if len(self.outputs)==0:
+    #             self._add_output()  # add at least one output
+    #         self._autosave_active = True # activate autosave
+    #
+    #         # load inputs
+    #         for input in self.inputs:
+    #             input._autosave_active = False
+    #             input._load_setup_attributes()
+    #             input._autosave_active = True
+    #
+    #         # load normal attributes (model, default_sweep_output)
+    #         super(Lockbox, self)._load_setup_attributes()
+    #
+    #         # load sequence
+    #         #self.sequence._autosave_active = False
+    #         #self.sequence._load_setup_attributes()
+    #         #self.sequence._autosave_active = True
+
+
+    @property
+    def _stage_names(self):
+        return self.sequence.stage_names
+
+
+    @property
+    def _output_names(self):
+        return [output.name for output in self.outputs]
+

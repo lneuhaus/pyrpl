@@ -1,10 +1,9 @@
 from __future__ import division
-from pyrpl.modules import SoftwareModule
 from . import Signal
-from pyrpl.attributes import SelectAttribute, SelectProperty, FloatProperty, FrequencyProperty, PhaseProperty, \
+from ....attributes import SelectAttribute, SelectProperty, FloatProperty, FrequencyProperty, PhaseProperty, \
     FilterProperty, FrequencyRegister
-from pyrpl.widgets.module_widgets import LockboxInputWidget
-from pyrpl.hardware_modules.dsp import DSP_INPUTS
+from ....widgets.module_widgets import LockboxInputWidget
+from ....hardware_modules.dsp import DSP_INPUTS
 from ....pyrpl_utils import time
 import scipy
 import numpy as np
@@ -13,7 +12,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class InputSignal(SoftwareModule):
+class InputSignal(Signal):
     """
     A Signal that corresponds to an inputsignal of the DSPModule inside the
     RedPitaya. Moreover, the signal should provide a function to convert the
@@ -73,15 +72,14 @@ class InputSignal(SoftwareModule):
         """
         lockbox is the lockbox instance to which this input belongs.
         """
-        self.lockbox = self.parent
         self.parameters = dict()
         self.plot_range = np.linspace(-5, 5, 200)
         self._lasttime = -1e10
 
-    @property
-    def c(self):
-        # inputs are in extra section 'inputs' for better visibility
-        return super(InputSignal, self).c._get_or_create('inputs.'+self.name)
+#    @property
+#    def c(self):
+#        # inputs are in extra section 'inputs' for better visibility
+#        return super(InputSignal, self).c._get_or_create('inputs.'+self.name)
 
     @property
     def model(self):

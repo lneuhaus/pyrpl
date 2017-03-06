@@ -1,12 +1,12 @@
 from __future__ import division
 from . import Signal
-from pyrpl.attributes import BoolProperty, FloatProperty, SelectProperty, \
+from ....attributes import BoolProperty, FloatProperty, SelectProperty, \
     FloatAttribute, FilterAttribute, LongProperty, StringProperty, \
     ListFloatProperty, FrequencyProperty
-from pyrpl.hardware_modules.asg import Asg1
-from pyrpl.widgets.module_widgets import OutputSignalWidget
-from pyrpl.hardware_modules.pid import Pid
-from pyrpl.curvedb import CurveDB
+from ....hardware_modules.asg import Asg1
+from ....widgets.module_widgets import OutputSignalWidget
+from ....hardware_modules.pid import Pid
+from ....curvedb import CurveDB
 from scipy import interpolate
 
 import numpy as np
@@ -59,11 +59,12 @@ class AdditionalFilterAttribute(FilterAttribute):
 
 
 class DisplayNameProperty(StringProperty):
-    def set_value(self, obj, val):
-        if obj.parent is not None:
-            obj.parent._rename_output(obj, val)
-        else:
-            super(DisplayNameProperty, self).set_value(obj, val)
+    pass
+    # def set_value(self, obj, val):
+    #     if obj.parent is not None:
+    #         obj.parent._rename_output(obj, val)
+    #     else:
+    #         super(DisplayNameProperty, self).set_value(obj, val)
 
 
 class AssistedDesignProperty(BoolProperty):
@@ -139,7 +140,7 @@ class OutputSignal(Signal):
     """
     _section_name = 'output'
     _gui_attributes = [# 'unit',
-                      'name',
+    #                  'name',
                       'is_sweepable',
                       'sweep_amplitude',
                       'sweep_offset',
@@ -159,7 +160,7 @@ class OutputSignal(Signal):
                                            'tf_type']
 
     _widget_class = OutputSignalWidget
-    name = DisplayNameProperty(default='output')
+    #name = DisplayNameProperty(default='output')
     # unit = SelectProperty(options=[])
     # options are updated each time the lockbox model is changed.
     is_sweepable = BoolProperty()
@@ -185,7 +186,6 @@ class OutputSignal(Signal):
     mode = SelectProperty(options=["unlock", "sweep", "lock"])
 
     def _init_module(self):
-        self.lockbox = self.parent
         self.display_name = "my_output"
         self._pid = None
         self._mode = "unlock"
@@ -194,7 +194,12 @@ class OutputSignal(Signal):
         self.current_variable_value = 0
         self.current_variable_slope = 0
 
- #   @property
+    #@property
+    #def c(self):
+    #    # outputs are in extra section 'outputs' for better visibility
+    #    return super(OutputSignal, self).c._get_or_create('outputs.' + self.name)
+
+            #   @property
  #   def id(self): # it would be more convenient to compute name from output, but class attribute name can't be a
  #                 # property since it used to define the save section
  #       return int(self.name.strip('output'))
