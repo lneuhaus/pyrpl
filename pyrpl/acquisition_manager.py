@@ -100,7 +100,7 @@ class AcquisitionManager(BaseModule):
     _signal_launcher = SignalLauncherAM
     _setup_attributes = ['running_state', 'avg', 'curve_name']
     _callback_attributes = []
-    _section_name = None # don't make a section, don't make states
+    #_section_name = None # don't make a section, don't make states
 
 
     #The format for curves are:

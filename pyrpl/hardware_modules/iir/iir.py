@@ -13,7 +13,6 @@ class SignalLauncherIir(SignalLauncher):
 
 
 class IIR(FilterModule):
-    _section_name = 'iir'
     iirfilter = None  # will be set by setup()
     _minloops = 5  # minimum number of loops for correct behaviour
     _maxloops = 1023

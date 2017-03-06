@@ -58,7 +58,7 @@ defaultparameters = dict(
 
 class RedPitaya(object):
     cls_modules = [rp.HK, rp.AMS, rp.Scope, rp.Sampler, rp.Asg0, rp.Asg1] + \
-                  [rp.AuxOutput]*2 + [rp.IQ]*3 + [rp.Pid]*4 + [rp.IIR]
+                  [rp.Pwm]*2 + [rp.Iq] * 3 + [rp.Pid] * 4 + [rp.IIR]
 
     def __init__(self, config=None,  # configfile is needed to store parameters. None simulates one
                  **kwargs):

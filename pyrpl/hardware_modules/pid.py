@@ -43,7 +43,6 @@ class SignalLauncherPid(SignalLauncher):
 
 
 class Pid(FilterModule):
-    _section_name = 'pid'
     _widget_class = PidWidget
     _signal_launcher = SignalLauncherPid
     _setup_attributes = ["input",

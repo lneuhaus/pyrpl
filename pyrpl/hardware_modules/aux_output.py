@@ -1,6 +1,6 @@
 from . import DspModule
 
-class AuxOutput(DspModule):
+class Pwm(DspModule):
     """Auxiliary outputs. PWM0-3 correspond to pins 17-20 on E2 connector.
 
     See  http://wiki.redpitaya.com/index.php?title=Extension_connectors
@@ -21,10 +21,8 @@ class AuxOutput(DspModule):
 
     Currently, only pwm1 and pwm2 are available.
     """
-    _section_name = "pwm"  # duplicate name will be detected at instantiation
-
     def __init__(self, rp, name=None):
-        super(AuxOutput, self).__init__(rp, name=dict(pwm0='in1',
+        super(Pwm, self).__init__(rp, name=dict(pwm0='in1',
                                                       pwm1='in2')[name])
         # because pwm's input is using adc-input's plug
         self.name = name

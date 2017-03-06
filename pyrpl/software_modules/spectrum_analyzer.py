@@ -183,7 +183,6 @@ class SpectrumAnalyzer(AcquisitionModule, SoftwareModule):
     A spectrum analyzer is composed of an IQ demodulator, followed by a scope.
     The spectrum analyzer connections are made upon calling the function setup.
     """
-    _section_name = 'spectrum_analyzer'
     _widget_class = SpecAnWidget
 
     run = ModuleProperty(SAAcquisitionManager)

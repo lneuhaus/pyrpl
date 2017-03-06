@@ -235,7 +235,7 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
 
      Public attributes:
      ------------------
-     - name: attributed based on _section_name at instance creation
+     - name: attributed based on name at instance creation
      (also used as a section key in the config file)
      - states: the list of states available in the config file
      - owner: (string) a module can be owned (reserved) by a user or another
@@ -253,8 +253,6 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
      their value is changed in the base class, _callback just calls setup()
      - _widget_class: class of the widget to use to represent the module in
      the gui(a child of ModuleWidget)
-     - _section_name: the name under which all instances of the class should
-     be stored in the config file
 
     methods to implement in derived class:
     --------------------------------------
@@ -282,10 +280,6 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
     # a QOBject used to communicate with the widget
     _signal_launcher = None # should be _signal_launcher_cls and
     # _signal_launcher
-
-    # name that is going to be used for the section in the config file
-    # (class-level)
-    _section_name = 'basemodule'
 
     # Change this to provide a custom graphical class
     _widget_class = ModuleWidget
@@ -440,8 +434,10 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         finally:
             self._callback_active = old_callback_active
         if len(kwds) > 0:
-            raise ValueError("Attribute %s of module %s doesn't exist." % (
-                sorted(kwds.keys())[0], self.name))
+            self._logger.warning("Trying to load attribute %s of module %s that are invalid setup_attributes.",
+                                 sorted(kwds.keys())[0], self.name)
+            #raise ValueError("Attribute %s of module %s doesn't exist." % (
+            #    sorted(kwds.keys())[0], self.name))
 
     def _load_setup_attributes(self):
         """

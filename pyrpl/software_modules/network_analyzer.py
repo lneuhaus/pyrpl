@@ -169,7 +169,6 @@ class NetworkAnalyzer(SoftwareModule):
             for freq, response, amplitude in na.values():
                 print response
     """
-    _section_name = 'na'
     _widget_class = NaWidget
     _setup_attributes = ["input",
                          "acbandwidth",

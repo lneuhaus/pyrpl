@@ -315,7 +315,6 @@ class ScopeAcquisitionManager(AcquisitionManager):
 
 
 class Scope(HardwareModule, AcquisitionModule):
-    _section_name = 'scope'
     addr_base = 0x40100000
     _widget_class = ScopeWidget
     run = ModuleProperty(ScopeAcquisitionManager)

@@ -113,7 +113,6 @@ class Lockbox(LockboxModule):
     """
     A Module that allows to perform feedback on systems that are well described by a physical model.
     """
-    _section_name = 'lockbox'
     _widget_class = LockboxWidget
     _signal_launcher = SignalLauncherLockbox
     _setup_attributes = ["classname",

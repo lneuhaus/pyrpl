@@ -67,8 +67,6 @@ class DspModule(HardwareModule):
 
     out2_saturated = BoolRegister(0x8, 1, doc="True if out2 is saturated")
 
-    _section_name = "dspmodule"
-
     addr_base = None
 
     def __init__(self, rp, name):

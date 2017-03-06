@@ -42,7 +42,7 @@ class LoadLabel(MyMenuLabel):
     """
     "Load" label
     """
-    text = "  .:Load:. "
+    text = " .:Load:. "
     def func(self, state):
         self.module.load_state(state)
 
@@ -51,7 +51,7 @@ class SaveLabel(MyMenuLabel):
     """
     "Save" label
     """
-    text = " .:Save:."
+    text = " .:Save:. "
 
     def __init__(self, module_widget):
         super(SaveLabel, self).__init__(module_widget)
@@ -80,7 +80,7 @@ class EraseLabel(MyMenuLabel):
     """
     "Erase" label
     """
-    text = ".:erase:."
+    text = " .:Erase:. "
 
     def func(self, state):
         self.module.erase_state(state)
@@ -90,7 +90,7 @@ class EditLabel(MyMenuLabel):
     """
     "Edit" label
     """
-    text = ".:edit:."
+    text = " .:Edit:. "
 
     def func(self, state):
         editor = YmlEditor(self.module, state)

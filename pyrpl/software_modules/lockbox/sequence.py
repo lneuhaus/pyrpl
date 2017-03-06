@@ -98,8 +98,6 @@ class Stage(LockboxModule):
 class Sequence(LockboxModule):
     """ A sequence is a list of Stages """
     _widget_class = LockboxSequenceWidget
-    _section_name = 'sequence'
-
     stages = ModuleListProperty(Stage)
 
     @property

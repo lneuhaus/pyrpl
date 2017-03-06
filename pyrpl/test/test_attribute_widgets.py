@@ -15,7 +15,6 @@ class MyFilterProperty(FilterProperty):
 
 
 class DummyModule(SoftwareModule):
-    _section_name = "dummy_module"
     _gui_attributes = ['true_or_false']
     true_or_false = BoolProperty()
     some_number = FloatProperty(min=-10, max=10)

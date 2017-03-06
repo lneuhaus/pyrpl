@@ -4,7 +4,6 @@ from pyrpl.software_modules.lockbox import Lockbox
 class CustomInput(InputDirect):
     """ A custom input signal for our customized lockbox. Please refer to the documentation on the default API of
     InputSignals"""
-    _section_name = 'CustomInput'
     def expected_signal(self, variable):
         # for example, assume that our analog signal is proportional to the square of the variable
         return self.min + self.lockbox.custom_attribute * variable**2

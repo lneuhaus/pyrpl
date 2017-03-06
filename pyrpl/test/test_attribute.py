@@ -13,21 +13,18 @@ class MyFilterProperty(FilterProperty):
 
 
 class FirstSubModule(SoftwareModule):
-    _section_name = None
     _setup_attributes = ['b1', 'b2']
     b1 = BoolProperty()
     b2 = BoolProperty()
 
 
 class SecondSubModule(SoftwareModule):
-    _section_name = 'sub2'
     _setup_attributes = ['b1', 'b2']
     b1 = BoolProperty()
     b2 = BoolProperty()
 
 
 class DummyModule(SoftwareModule):
-    _section_name = "dummy_module"
     _gui_attributes = ['true_or_false']
     _setup_attributes = ['sub1', 'sub2']
     true_or_false = BoolProperty()

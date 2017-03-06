@@ -1,8 +1,9 @@
 import logging
 logger = logging.getLogger(name=__name__)
-from ..widgets.module_widgets import ModuleManagerWidget, IqManagerWidget,\
-                                 ScopeManagerWidget, IirManagerWidget
+from ..widgets.module_widgets import ModuleManagerWidget, AsgManagerWidget, PidManagerWidget, IqManagerWidget, \
+    ScopeManagerWidget, IirManagerWidget
 from . import SoftwareModule
+
 
 class InsufficientResourceError(ValueError):
     """
@@ -24,10 +25,9 @@ class ModuleManager(SoftwareModule):
       - free(module): frees the module by reseting its user to None.
       (and enabling back its gui if any).
     """
-
-    _section_name = "some_modules"
     _widget_class = ModuleManagerWidget
-    _reserved_modules = [] # list-of_int with instrument index that should
+    _reserved_modules = [] # list-of
+    # _int with instrument index that should
     # NOT be available via pop()
 
     @property
@@ -97,31 +97,29 @@ class ModuleManager(SoftwareModule):
         # otherwise, empty sections such as iqss->iqs would be created
         return None
 
-class AsgManager(ModuleManager):
-    _section_name = "asgs"
 
-class PidManager(ModuleManager):
-    _section_name = "pids"
+class Asgs(ModuleManager):
+    _widget_class = AsgManagerWidget
 
 
-class IqManager(ModuleManager):
-    _section_name = "iqs"
+class Pids(ModuleManager):
+    _widget_class = PidManagerWidget
+
+
+class Iqs(ModuleManager):
     _widget_class = IqManagerWidget
     _reserved_modules = [2] # iq2 is reserved for spectrum_analyzer
 
 
-class ScopeManager(ModuleManager):
+class Scopes(ModuleManager):
     """
     Only one scope, but it should be protected by the slave/owner mechanism.
     """
-
-    _section_name = "scopes"
     _widget_class = ScopeManagerWidget
 
-class IirManager(ModuleManager):
+
+class Iirs(ModuleManager):
     """
     Only one iir, but it should be protected by the slave/owner mechanism.
     """
-
-    _section_name = "iirs"
     _widget_class = IirManagerWidget

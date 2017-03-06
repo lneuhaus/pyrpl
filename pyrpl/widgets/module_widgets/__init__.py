@@ -9,7 +9,7 @@ from .iq_widget import IqWidget
 from .lockbox_widget import LockboxWidget, OutputSignalWidget, InputsWidget, \
                             LockboxInputWidget, LockboxSequenceWidget, LockboxStageWidget
 from .module_manager_widget import ModuleManagerWidget, IqManagerWidget, PidManagerWidget, ScopeManagerWidget, \
-                                    IirManagerWidget
+                                    IirManagerWidget, AsgManagerWidget
 from .na_widget import NaWidget
 from .pid_widget import PidWidget
 from .scope_widget import ScopeWidget
