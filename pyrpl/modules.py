@@ -13,6 +13,7 @@ their state load and saved in the config file...
 from .attributes import BaseAttribute, ModuleAttribute
 from .widgets.module_widgets import ModuleWidget
 from . import CurveDB
+from .pyrpl_utils import unique_list
 
 import logging
 from copy import copy
@@ -62,6 +63,7 @@ class SignalLauncher(QtCore.QObject):
                 val.connect(getattr(widget, key))
 
     def clear(self):
+        """ Destroys the object by disconnecting all signals and by killing all timers"""
         for key in dir(self.__class__):
             val = getattr(self, key)
             if isinstance(val, QtCore.pyqtBoundSignal):
@@ -70,6 +72,7 @@ class SignalLauncher(QtCore.QObject):
                 except TypeError:  # occurs if signal is not connected to anything
                     pass
         self.kill_timers()
+
 
 class ModuleMetaClass(type):
     """ Generate Module classes with two features:
@@ -87,14 +90,8 @@ class ModuleMetaClass(type):
         recognised BaseAttribute.
 
         + list all submodules attributes
-        """
-        for name, attr in classDict.items():
-            if isinstance(attr, BaseAttribute):
-                attr.name = name
-        return type.__new__(cls, classname, bases, classDict)
 
-    def __init__(self, classname, bases, classDict):
-        """
+        formerly __init__
         1. Takes care of adding all submodules attributes to the list
         self._module_attributes
 
@@ -106,22 +103,40 @@ class ModuleMetaClass(type):
         concatenating the module's _setup docstring and individual
         setup_attribute docstrings.
         """
-        # 0. Normal class initialization
-        super(ModuleMetaClass, self).__init__(classname, bases, classDict)
-
-        # 1. adding all submodules attributes to the dict self._module_attributes
+        # 0. make all attributes aware of their name in the class containing them
+        for name, attr in classDict.items():
+            if isinstance(attr, BaseAttribute):
+                attr.name = name
+        # 1a. prepare _setup_attributes etc.
+        _setup_attributes, _gui_attributes, _callback_attributes = [], [], []
+        for base in reversed(bases):  # append all base class _setup_attributes
+            try: _setup_attributes += base._setup_attributes
+            except AttributeError: pass
+            try: _gui_attributes += base._gui_attributes
+            except AttributeError: pass
+            try: _callback_attributes += base._callback_attributes
+            except AttributeError: pass
+        try: _setup_attributes += classDict['_setup_attributes']
+        except KeyError: pass
+        try: _gui_attributes += classDict['_gui_attributes']
+        except KeyError: pass
+        try: _callback_attributes += classDict['_callback_attributes']
+        except KeyError: pass
+        # 1b. make a list of _module_attributes and add _module_attributes to _setup_attributes
+        classDict['_module_attributes'] = []
         for name, attr in classDict.items():
             if isinstance(attr, ModuleAttribute):
-                if '_module_attributes' in self.__dict__:
-                    self.__dict__['_module_attributes'][name] = attr
-                else:
-                    _parent_module_attr = copy(self._module_attributes)
-                    _parent_module_attr[name] = attr
-                    setattr(self, '_module_attributes', _parent_module_attr)
-
+                classDict['_module_attributes'].append(name)
+                # 1c. add _module_attributes to _setup_attributes if the submodule has _setup_attributes
+                if len(attr.module_cls._setup_attributes)>0:
+                    _setup_attributes.append(name)
+        #1d. Set the unique list of _setup_attributes
+        classDict['_setup_attributes'] = unique_list(_setup_attributes)
+        classDict['_gui_attributes'] = unique_list(_gui_attributes)
+        classDict['_callback_attributes'] = unique_list(_callback_attributes)
         # 2. create setup(**kwds)
-        if "setup" not in self.__dict__:
-            # 1. generate a setup function
+        if "setup" not in classDict:
+            # a. generate a setup function
             def setup(self, **kwds):
                 self._callback_active = False
                 try:
@@ -132,33 +147,41 @@ class ModuleMetaClass(type):
                         self._setup()
                 finally:
                     self._callback_active = True
-            # 2. place the new setup function in the module class
-            setattr(self, "setup", setup)
+            # b. place the new setup function in the module class
+            classDict["setup"] = setup
         # 3. if setup has no docstring, then make one
-        # docstring syntax differs between python versions. Python 2:
-        if hasattr(self.setup, "__func__"):
-            if (self.setup.__func__.__doc__ is None or
-                        self.setup.__func__.__doc__ == ""):
-                self.setup.__func__.__doc__ = self.make_setup_docstring()
-        # ... python 3
-        elif (self.setup.__doc__ is None or
-                      self.setup.__doc__ == ""):
-            setup.__doc__ = self.make_setup_docstring()
+        cls.make_setup_docstring(classDict)
+        # 4. make the new class
+        return super(ModuleMetaClass, cls).__new__(cls, classname, bases, classDict)
 
-    def make_setup_docstring(self):
+    @classmethod
+    def make_setup_docstring(cls, classDict):
         """
         Returns a docstring for the function 'setup' that is composed of:
           - the '_setup' docstring
           - the list of all setup_attributes docstrings
         """
-        doc = ""
-        if hasattr(self, "_setup"):
-            doc += self._setup.__doc__ + '\n'
+        # get initial docstring (python 2 and python 3 syntax)
+        try: doc = classDict["_setup"].__doc__ + '\n'
+        except:
+            try: doc = classDict["_setup"].__func__.__doc__ + '\n'
+            except: doc = ""
         doc += "attributes\n=========="
-        for attr_name in self._setup_attributes:
-            attr = getattr(self, attr_name)
-            doc += "\n  " + attr_name + ": " + attr.__doc__
-        return doc
+        for attr_name in classDict['_setup_attributes']:
+            if attr_name == 'running_state':
+                pass
+            try:
+                attr = classDict[attr_name]
+                doc += "\n  " + attr_name + ": " + attr.__doc__
+            except KeyError: pass
+        setup = classDict["setup"]
+        # docstring syntax differs between python versions. Python 2:
+        if hasattr(setup, "__func__"):
+            if (setup.__func__.__doc__ is None or setup.__func__.__doc__ == ""):
+                setup.__func__.__doc__ = doc
+        # ... python 3
+        elif (setup.__doc__ is None or setup.__doc__ == ""):
+            setup.__doc__ = doc
 
 
 class BaseModule(with_metaclass(ModuleMetaClass, object)):
@@ -264,10 +287,6 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
     # (class-level)
     _section_name = 'basemodule'
 
-    # dict of submodules to instantiate at "instanciation-time".
-    # This dict will be automatically filled by the metaclass
-    _module_attributes = dict()
-
     # Change this to provide a custom graphical class
     _widget_class = ModuleWidget
 
@@ -319,9 +338,9 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         self.parent = parent
         # disable autosave during initialization
         self._autosave_active = False
-        # instantiate submodule
-        for key, sub in self._module_attributes.items():
-            setattr(self, '_' + key, sub.module_cls(self, name=key))
+        # instantiate submodules (submodule has preceeding underscore, SubmoduleProperty does not)
+        for submodule in self._module_attributes:
+            setattr(self, '_' + submodule, getattr(self.__class__, submodule).module_cls(self, name=submodule))
         # custom module initialization hook
         self._init_module()
         # enable autosave and load last state from config file
@@ -627,9 +646,8 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         Kill timers and free resources for this module and all submodules.
         """
         self._signal_launcher.kill_timers()
-        for sub in self._modules.values():
-            sub._kill_timers()
-
+        for sub in self._modules:
+            getattr(self, sub)._clear()
 
 
 class HardwareModule(BaseModule):

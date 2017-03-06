@@ -80,6 +80,7 @@ def setloglevel(level='info', loggername='pyrpl'):
     else:
         logging.getLogger(name=loggername).setLevel(level)
 
+
 def sorted_dict(dict_to_sort=None, sort_by_values=True, **kwargs):
     if dict_to_sort is None:
         dict_to_sort = kwargs
@@ -87,6 +88,14 @@ def sorted_dict(dict_to_sort=None, sort_by_values=True, **kwargs):
         return OrderedDict(sorted(dict_to_sort.items()))
     else:
         return OrderedDict(sorted(dict_to_sort.items(), key=lambda x: x[1]))
+
+
+def unique_list(nonunique_list):
+    unique_list = []
+    for attr in nonunique_list:
+        if attr not in unique_list:
+            unique_list.append(attr)
+    return unique_list
 
 
 class Bijection(dict):
