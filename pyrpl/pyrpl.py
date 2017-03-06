@@ -160,7 +160,7 @@ class Pyrpl(object):
         kill all timers
         """
         for module in self.modules:
-            module._kill_timers()
+            module._clear()
         for widget in self.widgets:
             widget.kill_timers()
 

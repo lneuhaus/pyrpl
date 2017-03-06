@@ -645,7 +645,7 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         """
         self.owner = None
 
-    def _kill_timers(self):
+    def _clear(self):
         """
         Kill timers and free resources for this module and all submodules.
         """
