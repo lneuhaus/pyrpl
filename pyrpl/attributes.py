@@ -1057,8 +1057,12 @@ class LongProperty(IntAttribute, BaseProperty):
     """
     A property for a long value
     """
-    def __init__(self, min=0, max=2**14, increment=1, doc=""):
-        super(LongProperty, self).__init__(min=min, max=max, increment=increment, doc=doc)
+    def __init__(self, min=0, max=2**14, increment=1, default=0, doc=""):
+        super(LongProperty, self).__init__(min=min,
+                                           max=max,
+                                           increment=increment,
+                                           default=default,
+                                           doc=doc)
     default = 0
 
 

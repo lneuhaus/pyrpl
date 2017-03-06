@@ -13,7 +13,7 @@ class TestClass(TestPyrpl):
         """
         This was so hard to detect, I am making a unit test
         """
-        assert(self.pyrpl.spectrum_analyzer.running_continuous==False)
+        assert(self.pyrpl.spectrum_analyzer.run.running_state=='stopped')
 
     def test_spec_an(self):
         # at this point this test is still highly dubious (nothing is tested
@@ -26,7 +26,9 @@ class TestClass(TestPyrpl):
         asg.amplitude = 0.1
         asg.waveform = 'cos'
         asg.trigger_source = 'immediately'
-        sa.setup(center=1e6, span=1e3, input=asg)
+        sa.setup(center=1e6,
+                 span=1e3,
+                 input=asg)
         curve = sa.curve()
         # Assumes out1 is connected with adc1...
         assert(curve.argmax() == len(curve)/2), curve.argmax()
@@ -38,12 +40,12 @@ class TestClass(TestPyrpl):
         :return:
         """
 
-        self.pyrpl.spectrum_analyzer.setup(center=2e5,
-                      span=1e5,
-                      rbw=100000,
-                      input="out1",
-                      running_continuous=True)
-        for i in range(15):
+        self.pyrpl.spectrum_analyzer.setup_attributes = dict(center=2e5,
+                                           span=1e5,
+                                           input="out1",
+                                           run=dict(running_state=
+                                                    'running_continuous'))
+        for i in range(25):
             sleep(0.01)
             APP.processEvents()
         old = self.pyrpl.c._save_counter
@@ -51,5 +53,5 @@ class TestClass(TestPyrpl):
             sleep(0.01)
             APP.processEvents()
         new = self.pyrpl.c._save_counter
-        self.pyrpl.spectrum_analyzer.stop()
+        self.pyrpl.spectrum_analyzer.run.stop()
         assert (old == new), (old, new)
