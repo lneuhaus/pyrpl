@@ -133,7 +133,7 @@ class Lockbox(LockboxModule):
 
     auto_lock_interval = AutoLockIntervalProperty(default=1.0, min=1e-3,
                                                   max=1e10)
-    default_sweep_output = SelectProperty(options=[])
+    default_sweep_output = SelectProperty(options=lambda lb: lb.outputs.keys())
     error_threshold = FloatProperty(default=1.0, min=-1e10,max=1e10)
     auto_lock = AutoLockProperty()
 
@@ -416,9 +416,9 @@ class Lockbox(LockboxModule):
         pyrpl, name = self.pyrpl, self.name
         self._signal_launcher.clear()
         for o in self.outputs:
-            o.clear()
+            o._clear()
         for i in self.inputs:
-            i.clear()
+            i._clear()
         setattr(pyrpl, name, None)  # pyrpl.lockbox = None
         try:
             self.parent.software_modules.remove(self)

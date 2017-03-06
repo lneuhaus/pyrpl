@@ -339,11 +339,12 @@ class OutputSignal(Signal):
                 "Selected output_channel '%s' is not implemented"
                 % self.output_channel)
 
-    def clear(self):
+    def _clear(self):
         """
         Free up resources associated with the output
         """
         self.pyrpl.pids.free(self.pid)
+        super(OutputSignal, self)._clear()
 
     def set_ival(self, val):
         """

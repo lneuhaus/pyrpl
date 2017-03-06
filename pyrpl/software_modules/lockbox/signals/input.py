@@ -46,27 +46,33 @@ class InputSignal(Signal):
     - variable(): Estimates the model variable from the current value of
     the input.
     """
-    _section_name = 'input'  # name of the input
-    _setup_attributes = ["input_channel", "min", "max", "mean", "rms"]
-    _gui_attributes = ["input_channel"]
-    input_channel = SelectProperty(options=sorted(DSP_INPUTS.keys()),
-                                   doc="the redpitaya dsp input representing "
-                                       "the signal"
-                                   )  # ['in1', 'in2']) # adc
-    # Is it desirable to be allowed to select any internal signal?
-    model_cls = None  # Model class to which this input belongs.
+    _setup_attributes = ["min", "max", "mean", "rms", "input_signal"]
+    _gui_attributes = ["input_signal"]
     _widget_class = LockboxInputWidget
+
     min = FloatProperty(doc="min of the signal in V over a lockbox sweep")
     max = FloatProperty(doc="max of the signal in V over a lockbox sweep")
     mean = FloatProperty(doc="mean of the signal in V over a lockbox sweep")
     rms = FloatProperty(min=0, max=2, doc="rms of the signal in V over a "
                                           "lockbox sweep")
 
-    """
-    def __init__(self, model):
-        self.model = model
-        super(InputSignal, self).__init__(model)
-    """
+    # input_signal selects the input signal of the module from DSP modules and logical signals of the lockbox
+    input_signal = SelectProperty(options=(lambda instance: DSP_INPUTS.keys() + instance.lockbox.signals.keys()),
+                                  doc="the dsp module or lockbox signal used as input signal")
+
+    def _input_signal_dsp_module(self):
+        """ returns the dsp signal corresponding to input_signal"""
+        signal = self.input_signal
+        try:
+            signal = self.lockbox.signals[self.input_signal].signal()
+        except:  # do not insist on this to work. if it fails, just return the direct value of input_channel
+            pass
+        return signal
+
+    def signal(self):
+        """ returns the signal corresponding to this module that can be used to connect the signal to other modules.
+        By default, this is the direct input signal. """
+        return self._input_signal_dsp_module()
 
     def _init_module(self):
         """
@@ -75,15 +81,6 @@ class InputSignal(Signal):
         self.parameters = dict()
         self.plot_range = np.linspace(-5, 5, 200)
         self._lasttime = -1e10
-
-#    @property
-#    def c(self):
-#        # inputs are in extra section 'inputs' for better visibility
-#        return super(InputSignal, self).c._get_or_create('inputs.'+self.name)
-
-    @property
-    def model(self):
-        return self.parent.model
 
     def acquire(self):
         """
@@ -240,12 +237,6 @@ class InputSignal(Signal):
             else:
                 return None
 
-    def clear(self):
-        """
-        Free all resources owned by this input
-        """
-        pass
-
     def variable(self):
         """
         Estimates the model variable from the current value of the input.
@@ -269,36 +260,16 @@ class InputSignal(Signal):
             pass
         return widget
 
-    def clear(self):
-        """ implements the freeing of all resources in child classes"""
-        pass
-
-
 
 class InputDirect(InputSignal):
-    _section_name = 'direct_input'
-
-    def signal(self):
-        try:
-            signal = self.lockbox.signals[self.input_channel].signal()
-        except:  # do not insist on this to work. if it fails, just return the direct value of input_channel
-            pass
-        return signal
-
-    input_channel = SelectProperty(options=(lambda instance: DSP_INPUTS.keys()+instance.lockbox.signals.keys()),
-                                   doc="the redpitaya dsp input representing "
-                                       "the signal"
-                                   )  # ['in1', 'in2']) # adc
-
-
-class InputFromOutput(InputDirect):
-    _section_name = 'input_from_output'
-
     def expected_signal(self, x):
         return x
 
+
+class InputFromOutput(InputDirect):
     def calibrate(self):
         pass
+
 
 class IqFrequencyProperty(FrequencyProperty):
     def __init__(self, **kwargs):
@@ -352,20 +323,9 @@ class IqFilterProperty(FilterProperty):
         # only allow the low-pass filter options (exclude negative high-pass options)
         return [v for v in module.iq.__class__.bandwidth.valid_frequencies(module.iq) if v >= 0]
 
-
-class InputIq(InputDirect):
-    _section_name = 'iq'
-    _gui_attributes = InputSignal._gui_attributes + ['mod_freq',
-                                                   'mod_amp',
-                                                   'mod_phase',
-                                                   'quadrature_factor',
-                                                   'mod_output',
-                                                   'bandwidth']
-
 class InputIq(InputDirect):
     """ Base class for demodulated signals. A derived class must implement
     the method expected_signal (see InputPdh in fabryperot.py for example)"""
-    _section_name = 'iq'
     _gui_attributes = InputSignal._gui_attributes + ['mod_freq',
                                                      'mod_amp',
                                                      'mod_phase',
@@ -386,9 +346,9 @@ class InputIq(InputDirect):
         self._iq = None
         self.setup()
 
-    def clear(self):
-        super(InputIq, self).clear()
+    def _clear(self):
         self.pyrpl.iqs.free(self.iq)
+        super(InputIq, self)._clear()
 
     def signal(self):
         return self.iq
@@ -406,17 +366,11 @@ class InputIq(InputDirect):
         self.iq.setup(frequency=self.mod_freq,
                       amplitude=self.mod_amp,
                       phase=self.mod_phase,
-                      input=self.input_channel,
+                      input=self._input_signal_dsp_module(),
                       gain=0,
                       bandwidth=self.bandwidth,
                       acbandwidth=self.mod_freq/100.0,
                       quadrature_factor=self.quadrature_factor,
                       output_signal='quadrature',
                       output_direct=self.mod_output)
-
-class InputFromOutput(InputDirect):
-    _section_name = 'input_from_output'
-
-    def expected_signal(self, variable):
-        return variable
 

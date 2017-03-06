@@ -1,25 +1,19 @@
-from ..signals import *
 from ..lockbox import Lockbox
+from ..signals import *
+from ....attributes import ModuleContainerProperty
 
 
 class FPReflection(InputDirect):
-    _section_name = 'reflection'
-
     def expected_signal(self, variable):
         return self.max - (self.max - self.min) * self._lorentz(variable)
-
     def _lorentz(self, x):
         return 1.0 / (1.0 + x ** 2)
 
 class FPTransmission(FPReflection):
-    _section_name = 'transmission'
-
     def expected_signal(self, variable):
         return self.min + (self.max - self.min) * self._lorentz(variable)
 
-
 class InputAnalogPdh(InputDirect):
-    _section_name = 'analog_pdh'
     mod_freq = FrequencyProperty()
     _setup_attributes = InputDirect._setup_attributes + ['mod_freq']
     _gui_attributes = InputDirect._gui_attributes + ['mod_freq']
@@ -62,8 +56,6 @@ class InputAnalogPdh(InputDirect):
 
 
 class InputPdh(InputIq, InputAnalogPdh):
-    _section_name = 'pdh'
-
     def is_locked(self, loglevel=logging.INFO):
         # simply perform the is_locked with the reflection error signal
         return self.lockbox.is_locked(self.lockbox.reflection,
@@ -86,7 +78,10 @@ class FabryPerot(Lockbox):
     eta = FloatProperty(min=0., max=1., default=1.)
     variable = 'detuning'
 
-    input_cls = [FPTransmission, FPReflection, InputPdh]
+    inputs = ModuleContainerProperty(LockboxModule,
+                                     transmission = FPTransmission,
+                                     reflection = FPReflection,
+                                     pdh = InputPdh)
 
     @property
     def free_spectral_range(self):
@@ -144,8 +139,6 @@ class HighFinesseReflection(HighFinesseInput, FPReflection):
     Reflection for a FabryPerot. The only difference with FPReflection is that
     acquire will be done in 2 steps (coarse, then fine)
     """
-    # changing names when going to hf-mode only causes problems
-    #_section_name = 'hf_reflection'
     pass
 
 
@@ -154,7 +147,6 @@ class HighFinesseTransmission(HighFinesseInput, FPTransmission):
     Reflection for a FabryPerot. The only difference with FPReflection is that
     acquire will be done in 2 steps (coarse, then fine)
     """
-    _section_name = 'hf_transmission'
     pass
 
 
@@ -163,10 +155,12 @@ class HighFinessePdh(HighFinesseInput, InputPdh):
     Reflection for a FabryPerot. The only difference with FPReflection is that
     acquire will be done in 2 steps (coarse, then fine)
     """
-    signal = InputPdh.signal
+    # the signal is the one from pdh (otherwise maybe overwritten by the one from HighFinesseInput)
+    #signal = InputPdh.signal
 
 
 class HighFinesseFabryPerot(FabryPerot):
-    #name = "HighFinesseFP"
-    input_cls = [HighFinesseReflection, HighFinesseTransmission,
-                 HighFinessePdh]
+    inputs = ModuleContainerProperty(LockboxModule,
+                                     transmission=HighFinesseTransmission,
+                                     reflection=HighFinesseReflection,
+                                     pdh=HighFinessePdh)
