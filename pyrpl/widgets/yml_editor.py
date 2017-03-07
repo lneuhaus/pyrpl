@@ -9,7 +9,7 @@ class YmlEditor(QtGui.QWidget):
         if state is None:
             state = "current"
         self.setWindowTitle(".:Yml editor:. " + "Module: '" + \
-                    str(self.module.name) +  "' State: '" + str(state) + "'")
+                    str(self.module.name) + "' State: '" + str(state) + "'")
 
         self.editor = QtGui.QTextEdit()
         self.button_cancel = QtGui.QPushButton("Cancel without saving")
