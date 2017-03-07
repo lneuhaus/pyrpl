@@ -22,7 +22,7 @@ from ..attributes import BoolProperty, FloatProperty, FloatAttribute,  \
     SelectAttribute, BoolAttribute, FrequencyAttribute, LongProperty, \
     SelectProperty, FilterProperty, StringProperty, FilterAttribute, \
     SelectProperty
-from ..modules import SoftwareModule
+from ..modules import Module
 from ..module_attributes import *
 from pyrpl.acquisition_manager import AcquisitionManager, AcquisitionModule
 
@@ -179,7 +179,7 @@ class SAAcquisitionManager(AcquisitionManager):
         self.current_avg = 0
 
 
-class SpectrumAnalyzer(AcquisitionModule, SoftwareModule):
+class SpectrumAnalyzer(AcquisitionModule, Module):
     """
     A spectrum analyzer is composed of an IQ demodulator, followed by a scope.
     The spectrum analyzer connections are made upon calling the function setup.

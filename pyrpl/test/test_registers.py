@@ -1,6 +1,6 @@
 import logging
 logger = logging.getLogger(name=__name__)
-from pyrpl.modules import BaseModule
+from pyrpl.modules import Module
 from pyrpl.attributes import *
 from pyrpl.test.test_redpitaya import TestRedpitaya
 
@@ -10,7 +10,7 @@ class TestRegisters(TestRedpitaya):
         if self.r is None:
             assert False
         for modulekey, module in self.r.__dict__.items():
-            if isinstance(module, BaseModule):
+            if isinstance(module, Module):
                 logger.info("Scanning module %s...", modulekey)
                 for regkey, regclass in type(module).__dict__.items():
                     if isinstance(regclass, BaseRegister):

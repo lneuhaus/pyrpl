@@ -2,7 +2,7 @@ import logging
 logger = logging.getLogger(name=__name__)
 from ..widgets.module_widgets import ModuleManagerWidget, AsgManagerWidget, PidManagerWidget, IqManagerWidget, \
     ScopeManagerWidget, IirManagerWidget
-from . import SoftwareModule
+from . import Module
 
 
 class InsufficientResourceError(ValueError):
@@ -12,7 +12,7 @@ class InsufficientResourceError(ValueError):
     """
     pass
 
-class ModuleManager(SoftwareModule):
+class ModuleManager(Module):
     """
     Manages access to hardware modules. It is created from a list of
     hardware_modules to manage. For HardwareModules, ti is the manager module

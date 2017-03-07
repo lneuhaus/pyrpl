@@ -1,8 +1,8 @@
-from ...modules import SoftwareModule
+from ...modules import Module
 from ...module_attributes import ModuleContainerProperty
 
 
-class LockboxModule(SoftwareModule):
+class LockboxModule(Module):
     @property
     def lockbox(self):
         parent = self

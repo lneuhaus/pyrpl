@@ -184,7 +184,7 @@ class ModuleMetaClass(type):
             setup.__doc__ = doc
 
 
-class BaseModule(with_metaclass(ModuleMetaClass, object)):
+class Module(with_metaclass(ModuleMetaClass, object)):
     # The Syntax for defining a metaclass changed from Python 2 to 3.
     # with_metaclass is compatible with both versions and roughly does this:
     # def with_metaclass(meta, *bases):
@@ -654,7 +654,7 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
             getattr(self, sub)._clear()
 
 
-class HardwareModule(BaseModule):
+class HardwareModule(Module):
     """
     Module that directly maps a FPGA module. In addition to BaseModule's r
     equirements, HardwareModule classes have to possess the following class
@@ -741,17 +741,17 @@ class HardwareModule(BaseModule):
         v = (v & (2 ** bitlength - 1))
         return np.uint32(v)
 
-
-class SoftwareModule(BaseModule):
-    """
-    Module that doesn't communicate with the Redpitaya directly.
-    Child class needs to implement:
-      - init_module(pyrpl): initializes the module (attribute values aren't
-        saved during that stage)
-      - setup_attributes: see BaseModule
-      - gui_attributes: see BaseModule
-      - _setup(): see BaseModule, this function is called when the user calls
-        setup(**kwds) and should set the module
-        ready for acquisition/output with the current setup_attributes' values.
-    """
-    pass
+#
+# class SoftwareModule(Module):
+#     """
+#     Module that doesn't communicate with the Redpitaya directly.
+#     Child class needs to implement:
+#       - init_module(pyrpl): initializes the module (attribute values aren't
+#         saved during that stage)
+#       - setup_attributes: see BaseModule
+#       - gui_attributes: see BaseModule
+#       - _setup(): see BaseModule, this function is called when the user calls
+#         setup(**kwds) and should set the module
+#         ready for acquisition/output with the current setup_attributes' values.
+#     """
+#     pass

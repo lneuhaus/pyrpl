@@ -8,7 +8,7 @@ from ..attributes import FloatProperty, SelectProperty, FrequencyProperty, \
 from ..hardware_modules import DspModule
 from ..widgets.module_widgets import NaWidget
 
-from . import SoftwareModule
+from . import Module
 from ..modules import SignalLauncher
 
 from PyQt4 import QtCore, QtGui
@@ -150,7 +150,7 @@ class SignalLauncherNA(SignalLauncher):
         #self.x_log_toggled.connect(widget.x_log_toggled)
 
 
-class NetworkAnalyzer(SoftwareModule):
+class NetworkAnalyzer(Module):
     """
     Using an IQ module, the network analyzer can measure the complex coherent
     response between an output and any signal in the redpitaya.

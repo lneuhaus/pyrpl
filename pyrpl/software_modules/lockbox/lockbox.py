@@ -1,5 +1,5 @@
 from __future__ import division
-from ...modules import SoftwareModule, SignalLauncher
+from ...modules import Module, SignalLauncher
 from ...attributes import SelectProperty, BoolProperty, StringProperty
 from ...module_attributes import ModuleProperty, ModuleListProperty, ModuleContainerProperty
 from .signals import *

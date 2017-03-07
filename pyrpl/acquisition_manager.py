@@ -1,6 +1,6 @@
 from .attributes import StringProperty, LongProperty,\
      BoolProperty
-from .modules import BaseModule, SignalLauncher
+from .modules import Module, SignalLauncher
 from .module_attributes import *
 
 from PyQt4 import QtCore, QtGui
@@ -60,7 +60,7 @@ class SignalLauncherAM(SignalLauncher):
 
 
 
-class AcquisitionManager(BaseModule):
+class AcquisitionManager(Module):
     """
     The asynchronous mode is supported by a sub-object "run"
     of the module. When an asynchronous acquisition is running
@@ -213,7 +213,7 @@ class AcquisitionManager(BaseModule):
         self._timer.stop()
 
 
-class AcquisitionModule(BaseModule):
+class AcquisitionModule(Module):
     _acquisition_manager_class = AcquisitionManager
     run = ModuleProperty(_acquisition_manager_class)
     # to overwrite with appropriate Manager in derived class

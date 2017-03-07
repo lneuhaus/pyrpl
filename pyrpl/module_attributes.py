@@ -26,7 +26,7 @@ class ModuleProperty(ModuleAttribute, BaseProperty):
         return val
 
 
-class ModuleList(list, SoftwareModule):
+class ModuleList(list, Module):
     """ a list of modules"""
     def __init__(self, parent, element_cls, initlist=[]):
         self.parent = parent
@@ -114,7 +114,7 @@ class ModuleListProperty(BaseAttribute):
 
 
 class ModuleContainerProperty(ModuleProperty):
-    default_module_cls = SoftwareModule
+    default_module_cls = Module
     def __init__(self, module_cls=None, default=None, doc="",
                  ignore_errors=False, **kwargs):
         """ returns a descriptor for a module container, i.e. a class that contains submodules whose name and class are

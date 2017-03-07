@@ -16,7 +16,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###############################################################################
 
-from . import SoftwareModule
+from . import Module
 from pyrpl.sshshell import SSHshell
 from time import sleep
 from matplotlib import pyplot
@@ -42,7 +42,7 @@ from pyrpl.hardware_modules import NotReadyError, Scope, DspModule
 
 
 
-class SpectrumAnalyzer(SoftwareModule):
+class SpectrumAnalyzer(Module):
     """
     A spectrum analyzer is composed of an IQ demodulator, followed by a scope.
     The spectrum analyzer connections are made upon calling the function setup.

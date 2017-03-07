@@ -1,7 +1,7 @@
 import logging
 logger = logging.getLogger(name=__name__)
 import numbers
-from ..modules import SoftwareModule
+from ..modules import Module
 from ..attributes import BoolProperty, FilterProperty, SelectProperty, \
     FloatProperty
 from .test_base import TestPyrpl
@@ -14,7 +14,7 @@ class MyFilterProperty(FilterProperty):
         return [2**n for n in range(14)]
 
 
-class DummyModule(SoftwareModule):
+class DummyModule(Module):
     _gui_attributes = ['true_or_false']
     true_or_false = BoolProperty()
     some_number = FloatProperty(min=-10, max=10)
