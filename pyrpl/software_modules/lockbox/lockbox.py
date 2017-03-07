@@ -147,12 +147,6 @@ class Lockbox(LockboxModule):
     stages = ModuleListProperty(Stage)
     #stages._widget_class = LockboxSequenceWidget
 
-    def _init_module(self):
-        pass
-        # update options of classname attribute with available lockbox types and update the value
-        #self.__class__.classname.change_options(self, lambda: all_classnames().keys())
-        #self.classname = type(self).__name__
-
     @property
     def signals(self):
         """ a dict of all logical signals of the lockbox """
