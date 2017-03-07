@@ -135,12 +135,16 @@ class BaseAttribute(object):
         """
         module.c[self.name] = value
 
-    def create_widget(self, module, name=None):
+    def _create_widget(self, module, name=None):
         """
         Creates a widget to graphically manipulate the attribute.
         """
+        if self.widget_class is None:
+            logger.warning("Module %s of type %s is trying to create a widget for %s, but no widget_class is defined!",
+                           str(module), type(module), name)
+            return None
         if name is None:
-            name = self.name # attributed by the metaclass of module
+            name = self.name  # attributed by the metaclass of module
         widget = self.widget_class(name, module)
         return widget
 
@@ -150,8 +154,8 @@ class NumberAttribute(BaseAttribute):
     Abstract class for ints and floats
     """
 
-    def create_widget(self, module, name=None):
-        widget = super(NumberAttribute, self).create_widget(module, name=name)
+    def _create_widget(self, module, name=None):
+        widget = super(NumberAttribute, self)._create_widget(module, name=name)
         widget.set_increment(self.increment)
         widget.set_maximum(self.max)
         widget.set_minimum(self.min)
@@ -288,7 +292,7 @@ class SelectAttribute(BaseAttribute):
             else:
                 setattr(instance, self.name, None)
 
-    def create_widget(self, module, name=None):
+    def _create_widget(self, module, name=None):
         """
         This function is reimplemented to pass the options to the widget.
         """
@@ -317,59 +321,6 @@ class SelectAttribute(BaseAttribute):
         elif isinstance(options[0], numbers.Number):
             value = float(value)
             return min([opt for opt in options], key=lambda x: abs(x - value))
-
-
-class DynamicSelectAttributeObsolete(BaseAttribute): # all SelectedAttributes are now Dynamic
-    """
-    An attribute for a multiple choice value.
-    The options are not stored in the descriptor, but in the instance of module itself (in __*name*_options).
-    In this way, options can be changed on a per-module basis at eun time, using change_options(instance, new_options)
-    """
-    widget_class = SelectAttributeWidget
-
-    def __init__(self, options=[], default=None, doc=""):
-        super(DynamicSelectAttribute, self).__init__(default=default, doc=doc)
-
-    def change_options(self, instance, new_options):
-        """
-        Changes the possible options acceptable by the Attribute
-          - New validation takes effect immediately (otherwise a script involving 1. changing the options/2. selecting
-          one of the new options could not be executed at once)
-          - Update of the ComboxBox is performed behind a signal-slot mechanism to be thread-safe
-        """
-        setattr(instance, '__' + self.name + '_' + 'options', new_options)
-        instance._signal_launcher.change_options.emit(self.name, new_options)
-        """
-        if instance.widget is not None:
-            if self.name in instance.widget.attribute_widgets:
-                instance.widget.attribute_widgets[self.name].change_options(new_options)
-        """
-
-    def options(self, instance):
-        """
-        options are evaluated at run time. To be reimplemented in base class.
-        """
-        return getattr(instance, '__' + self.name + '_' + 'options')
-
-    def validate_and_normalize(self, value, module):
-        """
-        value should evaluate to a string present in self.options(instance) at evaluation time.
-        """
-        value = str(value)
-        if not (value in self.options(module)):
-            raise ValueError("value %s is not an option for SelectAttribute %s of %s" % (value,
-                                                                                         self.name,
-                                                                                         module.name))
-        return value
-
-    def create_widget(self, module, name=None):
-        """
-        This function is reimplemented to pass the options to the widget.
-        """
-        if name is None:
-            name = self.name
-        widget = SelectAttributeWidget(name, module, self.options(module))
-        return widget
 
 
 class StringAttribute(BaseAttribute):
@@ -1166,6 +1117,10 @@ class ModuleList(list):
 
     def remove(self, value):
         self.__delitem__(self.index(value))
+
+    @property
+    def setup_attributes(self):
+        return [item.setup_attributes for item in self]
 
 
 class ModuleListProperty(BaseAttribute):

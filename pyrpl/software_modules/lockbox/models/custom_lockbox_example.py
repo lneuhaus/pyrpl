@@ -43,7 +43,7 @@ class CustomLockbox(Lockbox):
     variable = 'displacement'
 
     # attributes are defined by descriptors
-    custom_attribute = FloatAttribute(default=1.0, increment=0.01, min=1e-5, max=1e5)
+    custom_attribute = FloatProperty(default=1.0, increment=0.01, min=1e-5, max=1e5)
 
     # list of attributes that are mandatory to define lockbox state. setup_attributes of all base classes and of all
     # submodules are automatically added to the list by the metaclass of Module

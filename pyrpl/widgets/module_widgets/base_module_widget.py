@@ -216,7 +216,7 @@ class ModuleWidget(QtGui.QGroupBox):
                 widget.clicked.connect(getattr(self.module, attr_name))
             else:
                 # standard case: make attribute widget
-                widget = attribute.create_widget(self.module)
+                widget = attribute._create_widget(self.module)
                 self.attribute_widgets[attr_name] = widget
                 widget.value_changed.connect(self.attribute_changed)
             self.attribute_layout.addWidget(widget)

@@ -93,8 +93,7 @@ class InputSignal(Signal):
                 scope.load_state("sweep")
             else:
                 scope.setup(input1=self.signal(),
-                            input2=self.lockbox._get_output(
-                                self.lockbox.default_sweep_output).pid.output_direct,
+                            input2=self.lockbox.outputs[self.lockbox.default_sweep_output].pid.output_direct,
                             trigger_source=self.lockbox.asg.name,
                             duration=2./self.lockbox.asg.frequency,
                             ch1_active=True,
@@ -252,8 +251,8 @@ class InputSignal(Signal):
                            self._variable)
             return None
 
-    def create_widget(self):
-        widget = super(InputSignal, self).create_widget()
+    def _create_widget(self):
+        widget = super(InputSignal, self)._create_widget()
         try:
             self.update_graph()
         except:

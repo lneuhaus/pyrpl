@@ -71,12 +71,12 @@ class ScopeWidget(ModuleWidget):
 
         self.button_layout = QtGui.QHBoxLayout()
 
-        self.run_avg_widget = self.module.run.__class__.avg.create_widget(
+        self.run_avg_widget = self.module.run.__class__.avg._create_widget(
             self.module.run)
         self.button_layout.addWidget(self.run_avg_widget)
 
         self.curve_name_widget = \
-            self.module.run.__class__.curve_name.create_widget(
+            self.module.run.__class__.curve_name._create_widget(
             self.module.run)
         self.button_layout.addWidget(self.curve_name_widget)
 

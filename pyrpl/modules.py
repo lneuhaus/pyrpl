@@ -566,10 +566,14 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
                         string += key + ": " + docstring + '\r\n\r\n'
             return string
 
-    def create_widget(self):
+    def _create_widget(self):
         """
         Creates the widget specified in widget_class.
         """
+        if self._widget_class is None:
+            self._logger.warning("Module %s of type %s is trying to create a widget, but no widget_class is defined!",
+                                 self.name, type(self), )
+            return None
         callback_bkp = self._callback_active
         self._callback_active = False # otherwise, saved values will be
         # overwritten by default gui values

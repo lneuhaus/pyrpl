@@ -1,10 +1,11 @@
 from __future__ import division
 from ...modules import SoftwareModule, SignalLauncher
-from ...attributes import SelectProperty, BoolProperty, StringProperty, ModuleProperty, ModuleContainerProperty
+from ...attributes import SelectProperty, BoolProperty, StringProperty, ModuleProperty, \
+    ModuleListProperty, ModuleContainerProperty
 from .signals import *
 from ...widgets.module_widgets import LockboxWidget
 from ...pyrpl_utils import get_unique_name_list_from_class_list, all_subclasses, sleep
-from .sequence import Sequence
+from .sequence import Sequence, Stage
 from . import LockboxModule
 from collections import OrderedDict
 from PyQt4 import QtCore
@@ -143,7 +144,10 @@ class Lockbox(LockboxModule):
                                       output1=OutputSignal,
                                       output2=OutputSignal)
     # sequence attribute used to store the locking sequence
-    sequence = ModuleProperty(Sequence)
+    #sequence = ModuleProperty(Sequence)
+
+    stages = ModuleListProperty(Stage)
+    #stages._widget_class = LockboxSequenceWidget
 
     def _init_module(self):
         pass
@@ -243,7 +247,7 @@ class Lockbox(LockboxModule):
 
     @state.setter
     def state(self, val):
-        if not val in ['unlock', 'sweep'] + [stage.name for stage in self.sequence.stages]:
+        if not val in ['unlock', 'sweep'] + [stage.name for stage in self.stages]:
             raise ValueError("State should be either unlock, or a valid stage name")
         self._state = val
         # To avoid explicit reference to gui here, one could consider using a DynamicSelectAttribute...
@@ -269,7 +273,7 @@ class Lockbox(LockboxModule):
         """ returns True if locked, else False. Also updates an internal
         dict that contains information about the current error signals. The
         state of lock is logged at loglevel """
-        if self.state not in self._stage_names:
+        if self.stage not in self.stages:
             # not locked to any defined sequene state
             self._logger.log(loglevel, "Cavity is not locked: lockbox state "
                                        "is %s.", self.state)
@@ -334,6 +338,7 @@ class Lockbox(LockboxModule):
         return True
 
     def _lockstatus(self):
+        return
         """ this function is a placeholder for periodic lockstatus
         diagnostics, such as calls to is_locked, logging means and rms
         values and plotting measured setpoints etc."""

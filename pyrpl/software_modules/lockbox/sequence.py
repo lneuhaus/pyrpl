@@ -7,28 +7,17 @@ from ...widgets.module_widgets import LockboxSequenceWidget, LockboxStageWidget
 from collections import OrderedDict
 
 
-class StageNameProperty(StringProperty):
-    pass
-    #def set_value(self, obj, val):
-    #    if obj.parent is not None:
-    #        obj.parent.rename_stage(obj, val)
-    #    else:
-    #        super(StageNameProperty, self).set_value(obj, val)
-
-
 class Stage(LockboxModule):
     """
     A stage is a single step in the lock acquisition process
     """
-    _setup_attributes = [#'name',
-                         'input',
+    _setup_attributes = ['input',
                          'variable_value',
                          'output_on',
                          'duration',
                          'function_call',
                          'factor']
     _gui_attributes = _setup_attributes
-    #name = StageNameProperty(default='my_stage')
     _widget_class = LockboxStageWidget
     input = SelectProperty()
     output_on = ListStageOuputProperty()
@@ -37,40 +26,8 @@ class Stage(LockboxModule):
     function_call = StringProperty()
     factor = FloatProperty(default=1., min=-1e6, max=1e6)
 
-    #def _init_module(self):
-    #    self.update_inputs()
-    #    self.update_outputs()
-
     def _load_setup_attributes(self):
         pass
-
-    def update_inputs(self):
-        """
-        Updates the list of possible inputs to be in sync with the existing inputs in the model
-        """
-        input_names = [input.name for input in self.lockbox.inputs]
-        self.__class__.input.change_options(self, input_names)
-
-    def update_outputs(self):
-        """
-        Updates the list of outputs to be in sync with the existing outputs in
-        the lockbox
-        """
-        output_names = [output.name for output in self.lockbox.outputs]
-        new_output_on = dict()
-        for name in output_names:
-            if not name in self.output_on:
-                new_output_on[name] = (True, False, 0)
-            else:
-                new_output_on[name] = self.output_on[name]
-        self.output_on = new_output_on
-
-    def set_setup_attributes(self, **kwds):
-        try:
-            super(Stage, self).set_setup_attributes(**kwds)
-        finally:
-            self.update_outputs()
-            self.update_inputs()
 
     def _setup(self):
         """
@@ -99,22 +56,7 @@ class Sequence(LockboxModule):
     """ A sequence is a list of Stages """
     _widget_class = LockboxSequenceWidget
     stages = ModuleListProperty(Stage)
-
-    @property
-    def lockbox(self):
-        return self.parent
-
-    def get_unique_stage_name(self):
-        idx = len(self.stages) + 1
-        name = 'stage' + str(idx)
-        while name in self.stage_names:
-            idx+=1
-            name = 'stage' + str(idx)
-        return name
-
-    @property
-    def stage_names(self):
-        return [stage.name for stage in self.stages]
+    stages._widget_class = LockboxSequenceWidget
 
     def add_stage(self):
         """
@@ -194,35 +136,3 @@ class Sequence(LockboxModule):
     #     if len(self.stages)==0:
     #         self.add_stage()
     #
-    def save_state(self, name, state_branch=None):
-        if state_branch is None:
-            state_branch = self._c_states
-        state_branch[name] = OrderedDict()
-        for stage in self.stages:
-            stage.save_state(stage.name, getattr(state_branch, name))
-
-    def load_state(self, name, state_section=None):
-        if state_section is None:
-            state_section = self._c_states
-        self.remove_all_stages()
-        for stage_section in state_section[name].values():
-            stage = self.add_stage()
-            stage._autosave_active = False
-            stage.set_setup_attributes(**stage_section)
-            stage._autosave_active = True
-
-    def update_outputs(self):
-        for stage in self.stages:
-            stage.update_outputs()
-
-    def update_inputs(self):
-        for stage in self.stages:
-            stage.update_inputs()
-
-    def get_stage(self, name):
-        """
-        retieves a stage by name
-        """
-        if not name in self.stage_names:
-            raise ValueError(stage_name + " is not a valid stage name")
-        return self.stages[self.stage_names.index(name)]

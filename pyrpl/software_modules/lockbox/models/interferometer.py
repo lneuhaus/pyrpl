@@ -16,10 +16,10 @@ class InterferometerPort2(InputDirect):
 
 
 class Interferometer(Lockbox):
-    units = ['m', 'deg', 'rad']
+    _units = ['m', 'deg', 'rad']
     wavelength = FloatProperty(max=10000, min=0, default=1.064)
-    _setup_attributes = Lockbox._setup_attributes + ['wavelength']
-    _gui_attributes = _setup_attributes
+    _setup_attributes = ['wavelength']
+    _gui_attributes = ['wavelength']
     variable = 'phase'
 
     inputs = ModuleContainerProperty(LockboxModule,

@@ -15,7 +15,7 @@ class TestLockbox(TestPyrpl):
     def test_create_output(self):
         old_len = len(self.lockbox.outputs)
 
-        widget = self.lockbox.create_widget()
+        widget = self.lockbox._create_widget()
         self.lockbox._add_output()
 
         assert len(self.lockbox.outputs)==old_len + 1
@@ -32,7 +32,7 @@ class TestLockbox(TestPyrpl):
         assert hasattr(self.lockbox, names[-1])
 
     def test_delete_output(self):
-        widget = self.lockbox.create_widget()
+        widget = self.lockbox._create_widget()
         self.lockbox._remove_all_outputs()
         self.lockbox._add_output()
         self.lockbox._add_output()
@@ -56,7 +56,7 @@ class TestLockbox(TestPyrpl):
         """
         Check whether renaming an output updates everything properly
         """
-        widget = self.lockbox.create_widget()
+        widget = self.lockbox._create_widget()
         self.lockbox._remove_all_outputs()
         output1 = self.lockbox._add_output()
         output2 = self.lockbox._add_output()
@@ -77,7 +77,7 @@ class TestLockbox(TestPyrpl):
 
     def test_create_stage(self):
         old_len = len(self.lockbox._sequence.stages)
-        widget = self.lockbox.create_widget()
+        widget = self.lockbox._create_widget()
         self.lockbox._add_stage()
         assert len(self.lockbox._sequence.stages) == old_len + 1
 
@@ -92,7 +92,7 @@ class TestLockbox(TestPyrpl):
         assert hasattr(self.lockbox._sequence, names[-1])
 
     def test_delete_stage(self):
-        widget = self.lockbox.create_widget()
+        widget = self.lockbox._create_widget()
         self.lockbox._add_stage()
         old_name = self.lockbox._stage_names[-1]
         assert (hasattr(self.lockbox._sequence, old_name))
@@ -104,7 +104,7 @@ class TestLockbox(TestPyrpl):
         assert len(widget.sequence_widget.stage_widgets) == old_len - 1
 
     def test_rename_stage(self):
-        widget = self.lockbox.create_widget()
+        widget = self.lockbox._create_widget()
         stage1 = self.lockbox._add_stage()
         stage2 = self.lockbox._add_stage()
         try:

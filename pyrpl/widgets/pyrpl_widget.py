@@ -115,7 +115,7 @@ class PyrplWidget(QtGui.QMainWindow):
         self.module_actions = []
 
         for module in self.parent.software_modules:
-            self.add_dock_widget(module.create_widget, module.name)
+            self.add_dock_widget(module._create_widget, module.name)
 
         self.set_window_position()
         self.timer_save_pos = QtCore.QTimer()
@@ -216,7 +216,7 @@ class PyrplWidget(QtGui.QMainWindow):
         self.save_window_position()
         # replace dock widget
         self.remove_dock_widget(name)
-        self.add_dock_widget(module.create_widget, name)
+        self.add_dock_widget(module._create_widget, name)
         # restore window position and widget visibility
         self.set_window_position()  # reset the same window position as before
         self.timer_save_pos.start()

@@ -98,7 +98,7 @@ class Pyrpl(object):
         self.load_software_modules()
         # make the gui if applicable
         if self.c.pyrpl.gui:
-            widget = self.create_widget()
+            widget = self._create_widget()
             widget.show()
 
     def load_software_modules(self):
@@ -144,7 +144,7 @@ class Pyrpl(object):
     def modules(self):
         return self.hardware_modules + self.software_modules
 
-    def create_widget(self):
+    def _create_widget(self):
         """
         Creates the top-level widget
         """

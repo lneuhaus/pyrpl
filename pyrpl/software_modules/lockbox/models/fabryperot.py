@@ -63,14 +63,12 @@ class InputPdh(InputIq, InputAnalogPdh):
 
 
 class FabryPerot(Lockbox):
-    #name = "FabryPerot"
     units = ['m', 'Hz', 'nm', 'MHz']
-    _model_attributes = ["wavelength", "finesse", "length", 'eta']
-    _setup_attributes = Lockbox._setup_attributes + _model_attributes
-    _gui_attributes = Lockbox._setup_attributes + _model_attributes
+    _setup_attributes = ["wavelength", "finesse", "length", 'eta']
+    _gui_attributes = _setup_attributes
     wavelength = FloatProperty(max=10000, min=0, default=1.064e-6)
     finesse = FloatProperty(max=1e7, min=0, default=10000)
-    # approximate length (not taking into account small variations of the
+    # approximate length in m (not taking into account small variations of the
     # order of the wavelength)
     length = FloatProperty(max=10e12, min=0, default=1.0)
     # eta is the ratio between input mirror transmission and the sum of

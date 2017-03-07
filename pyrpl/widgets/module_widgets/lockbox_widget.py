@@ -450,7 +450,7 @@ class InputsWidget(QtGui.QWidget):
                 widget.deleteLater()
 
     def add_input(self, input):
-        widget = input.create_widget()
+        widget = input._create_widget()
         self.input_widgets.append(widget)
         self.layout.addWidget(widget, stretch=3)
 
@@ -520,7 +520,7 @@ class AllSignalsWidget(QtGui.QTabWidget):
         """
         signal is an instance of OutputSignal
         """
-        widget = signal.create_widget()
+        widget = signal._create_widget()
         self.output_widgets.append(widget)
         self.insertTab(self.count() - 1, widget, widget.name)
 
@@ -651,7 +651,7 @@ class LockboxSequenceWidget(ModuleWidget):
         self.main_layout.addStretch(2)
 
     def add_stage(self, stage):
-        widget = stage.create_widget()
+        widget = stage._create_widget()
         self.stage_widgets.append(widget)
         self.main_layout.insertWidget(self.main_layout.indexOf(self.button_add), widget)
         return stage
