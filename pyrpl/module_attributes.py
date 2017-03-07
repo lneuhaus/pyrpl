@@ -2,13 +2,19 @@ from .attributes import *
 from .modules import *
 
 
+# # basic ModuleAttribute object is imported from attributes
+# class ModuleAttribute(BaseAttribute):
+#     def __init__(self, module_cls, default=None, doc="", ignore_errors=False):
+#         self.module_cls = module_cls
+#         super(ModuleAttribute, self).__init__(default=default, doc=doc,
+#                                               ignore_errors=ignore_errors)
+
 
 class ModuleProperty(ModuleAttribute, BaseProperty):
     """
     A property for a submodule.
     """
     default = {}
-
     def set_value(self, obj, val):
         """
         Use the dictionnary val to set_setup_attributes

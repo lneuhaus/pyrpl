@@ -8,7 +8,6 @@ from ....widgets.module_widgets import OutputSignalWidget
 from ....hardware_modules.pid import Pid
 from ....curvedb import CurveDB
 from scipy import interpolate
-
 import numpy as np
 
 
