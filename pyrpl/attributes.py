@@ -444,7 +444,6 @@ class ModuleAttribute(BaseAttribute):
        - module.sub = dict(...) : module.sub.set_setup_attributes(dict(...))
        - module.sub: returns the submodule.
     """
-
     def __init__(self, module_cls, default=None, doc="", ignore_errors=False):
         self.module_cls = module_cls
         super(ModuleAttribute, self).__init__(default=default, doc=doc,

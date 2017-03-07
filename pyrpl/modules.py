@@ -334,7 +334,9 @@ class Module(with_metaclass(ModuleMetaClass, object)):
         # instantiate submodules (submodule has preceeding underscore, SubmoduleProperty does not)
         for submodule in self._module_attributes:
             submodule_cls = getattr(self.__class__, submodule)
-            setattr(self, '_' + submodule, getattr(self.__class__, submodule).module_cls(self, name=submodule))
+            setattr(self,
+                    '_' + submodule,
+                    getattr(self.__class__, submodule).module_cls(self, name=submodule))
         # custom module initialization hook
         self._init_module()
         # enable autosave and load last state from config file
@@ -741,7 +743,7 @@ class HardwareModule(Module):
         v = (v & (2 ** bitlength - 1))
         return np.uint32(v)
 
-#
+# SoftwareModule is obsolete, since it is/was identical with BaseModule=Module
 # class SoftwareModule(Module):
 #     """
 #     Module that doesn't communicate with the Redpitaya directly.

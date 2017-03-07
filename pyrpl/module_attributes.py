@@ -26,13 +26,18 @@ class ModuleProperty(ModuleAttribute, BaseProperty):
         return val
 
 
-class ModuleList(list, Module):
+class ModuleList(Module, list):
     """ a list of modules"""
-    def __init__(self, parent, element_cls, initlist=[]):
-        self.parent = parent
+    def __init__(self, parent, name=None, element_cls=Module, default=[]):
+        super(ModuleList, self).__init__(parent, name=name)
+        # initialize config file dictionary with a list
+        #if len(self.c.) == 0:
+        self.parent.c[self.name] = default
         self.element_cls = element_cls
-        super(ModuleList, self).__init__([])
-        self.extend(initlist)
+        # element_cls must be slightly modified for proper saving
+        #ikm self.element_cls.c = property(fget = (lambda sel: sel.parent.c[sel.parent.index(sel)]))
+        #fset = (lambda self, v: self.parent.c[self.parent.index(self)] = v))
+        self.extend(default)
 
     # all read-only methods from the base class 'list' work perfectly well for us, i.e.
     # __getitem__, count(), index(), reverse()
@@ -43,7 +48,7 @@ class ModuleList(list, Module):
 
     def insert(self, index, new):
         # make new module
-        to_add = self.element_cls(self.parent)
+        to_add = self.element_cls(self, name=self.name + "_element")
         # initialize setup_attributes
         to_add.setup_attributes = new
         # insert into list
@@ -71,12 +76,25 @@ class ModuleList(list, Module):
     def remove(self, value):
         self.__delitem__(self.index(value))
 
+    def __repr__(self):
+        return str(ModuleList.__name__)+"("+list.__repr__(self)+")"
+
     @property
     def setup_attributes(self):
         return [item.setup_attributes for item in self]
 
+    @setup_attributes.setter
+    def setup_attributes(self, val):
+        for i, v in enumerate(val):
+            try:
+                self[i] = v
+            except IndexError:
+                self.append(v)
+        while len(self) > len(val):
+            self.remove(-1)
 
-class ModuleListProperty(BaseAttribute):
+
+class ModuleListProperty(ModuleProperty):
     """
     A property for a list of submodules.
     """
@@ -84,26 +102,24 @@ class ModuleListProperty(BaseAttribute):
     module_cls = ModuleList
 
     def __init__(self, element_cls, default=None, doc="", ignore_errors=False):
+        # only difference to base class: need to assign element_cls (i.e. class of element modules)
         self.element_cls = element_cls
-        super(ModuleListProperty, self).__init__(default=default, doc=doc,
+        super(ModuleListProperty, self).__init__(self.module_cls,
+                                                 default=default,
+                                                 doc=doc,
                                                  ignore_errors=ignore_errors)
 
+    # getter must manage the instantiation of default value
     def get_value(self, obj, obj_type):
         if not hasattr(obj, '_' + self.name):
-            setattr(obj, '_' + self.name, self.module_cls(obj, self.element_cls, self.default))
+            setattr(obj, '_' + self.name,
+                    self.module_cls(obj,
+                                    element_cls=self.element_cls,
+                                    default=self.default))
         return getattr(obj, '_' + self.name)
 
-    def set_value(self, obj, val):
-        modulelist = getattr(obj, self.name)
-        for i, v in enumerate(val):
-            try:
-                modulelist[i] = v
-            except IndexError:
-                modulelist.append(v)
-        while len(modulelist) > len(val):
-            modulelist.remove(-1)
-
     def validate_and_normalize(self, value, obj):
+        """ ensures that only list-like values are passed to the ModuleProperty """
         if not isinstance(value, list):
             try:
                 value = value.values()
@@ -146,6 +162,5 @@ class ModuleContainerProperty(ModuleProperty):
             def setup_attributes(self, kwds):
                 module_cls.setup_attributes = \
                     {k:v for k, v in kwds.items() if k in self._setup_attributes}
-
         super(ModuleContainerProperty, self).__init__(ModuleContainer, default=default,
                                                       doc=doc, ignore_errors=ignore_errors)
