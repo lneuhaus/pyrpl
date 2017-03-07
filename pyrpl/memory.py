@@ -56,8 +56,6 @@ try:
         return ruamel.yaml.dump(data, stream=stream,
                                 Dumper=ruamel.yaml.RoundTripDumper,
                                 default_flow_style=False)
-    def isbranch(obj):
-        return isinstance(obj, dict) #type is ruamel.yaml.comments.CommentedMap
 except:
     logger.warning("ruamel.yaml could not be imported. Using yaml instead. Comments in config files will be lost.")
     import yaml
@@ -95,13 +93,14 @@ except:
                     lambda dumper, data: dumper.represent_list(list(data)))
         return yaml.dump(data, stream, OrderedDumper,
                          default_flow_style=default_flow_style, **kwds)
-    def isbranch(obj):
-        return isinstance(obj, dict)
-        # return type(obj) == OrderedDict
 
     # usage example:
     # load(stream, yaml.SafeLoader)
     # save(data, stream=f, Dumper=yaml.SafeDumper)
+
+
+def isbranch(obj):
+    return isinstance(obj, dict) or isinstance(obj, list)
 
 
 # two functions to locate config files
@@ -204,9 +203,9 @@ class MemoryBranch(object):
     If a subbranch or a value is requested but does not exist in the current MemoryTree, a KeyError is raised.
     """
 
-    def __init__(self, parent, branch, defaults=list([])):
-        self._branch = branch
+    def __init__(self, parent, branch, defaults=[]):
         self._parent = parent
+        self._branch = branch
         self._defaults = defaults  # this call also updates __dict__
 
     @property
@@ -217,10 +216,14 @@ class MemoryBranch(object):
 
     @_defaults.setter
     def _defaults(self, value):
-        if isinstance(value, list):
-            self.__defaults = list(value)
+        if isinstance(self._data, list):
+            # if _data is list, defaults does not work and is therefore omitted
+            self.__defaults = []
         else:
-            self.__defaults = [value]
+            if not isinstance(value, list):
+                self.__defaults = [value]
+            else:
+                self.__defaults = list(value)
         # update __dict__ with inherited values from new defaults
         dict = self._dict
         for k in self.__dict__.keys():
@@ -242,11 +245,17 @@ class MemoryBranch(object):
         d = OrderedDict()
         for defaultdict in reversed(self._defaults):
             d.update(defaultdict._dict)
-        d.update(self._data)
+        try:
+            d.update(self._data)
+        except TypeError:  # happens when _data is a list
+            pass
         return d
 
     def _keys(self):
-        return self._dict.keys()
+        if isinstance(self._data, list):
+            return range(self.__len__())
+        else:
+            return self._dict.keys()
 
     def _update(self, new_dict):
         self._data.update(new_dict)
@@ -274,7 +283,7 @@ class MemoryBranch(object):
     def __getitem__(self, item):
         self._reload()
         # if a subbranch is requested, iterate through the hierarchy
-        if '.' in item:
+        if isinstance(item, str) and '.' in item:
             item, subitem = item.split('.', 1)
             return self[item][subitem]
         # otherwise just return what we can find
@@ -282,14 +291,14 @@ class MemoryBranch(object):
             try:
                 # read from the data dict
                 attribute = self._data[item]
-            except KeyError:
+            except (KeyError, IndexError) as e:
                 # if not in data, iterate over default branches
                 for defaultbranch in self._defaults:
                     try:
                         return defaultbranch[item]
-                    except KeyError:
+                    except (KeyError, IndexError):
                         pass
-                raise
+                raise e
             else:
                 # if the object can be expressed as a branch, do so
                 if isbranch(attribute):
@@ -315,17 +324,34 @@ class MemoryBranch(object):
             # naive way: self._data[item] = dict(value)
             # rather: replace values in their natural order (e.g. if value is OrderedDict)
             # make an empty subbranch
-            self._data[item] = dict()
-            subbranch = self[item]
-            # use standard setter to set the values in Order and possibly as subbranch objects
-            for k, v in value.items():
-                subbranch[k] = v
+            if isinstance(value, list):
+                self._set_data(item, [])
+                subbranch = self[item]
+                # use standard setter to set the values 1 by 1 and possibly as subbranch objects
+                for k, v in enumerate(value):
+                    subbranch[k] = v
+            else:  # dict-like
+                # makes an empty subbranch
+                self._set_data(item, dict())
+                subbranch = self[item]
+                # use standard setter to set the values 1 by 1 and possibly as subbranch objects
+                for k, v in value.items():
+                    subbranch[k] = v
         #otherwise just write to the data dictionary
         else:
-            self._data[item] = value
+            self._set_data(item, value)
         self._save()
         # update the __dict__ for autocompletion
         self.__dict__[item] = None
+
+    def _set_data(self, item, value):
+        """ helper function to manage setting list entries that do not exist"""
+        if isinstance(self._data, list) and item == len(self._data):
+            self._data.append(value)
+        else:
+            # trivial case: _data is dict or item within list length
+            # and we can simply set the entry
+            self._data[item] = value
 
     def _pop(self, name):
         """remove an item from the branch"""
@@ -338,6 +364,19 @@ class MemoryBranch(object):
     def _rename(self, name):
         self._parent[name] = self._parent._pop(self._branch)
         self._save()
+
+    # will be deprecated soon (never been used)
+    def _getbranch(self, branchname, defaults=list([])):
+        """ returns a Memory branch from the same MemoryTree with
+        branchname.
+        Example: branchname = 'level1.level2.mybranch' """
+        logger.warning("MemoryBranch._getbranch() will be deprecated soon. "
+                       "Please use _get_or_create() instead. ")
+        branch = self._root
+        for subbranch in branchname.split('.'):
+            branch = branch[subbranch]
+        branch._defaults = defaults
+        return branch
 
     def _get_or_create(self, name):
         """ creates a new subbranch with name=name it it does not exist already and returns it. If name is a branch
@@ -377,16 +416,6 @@ class MemoryBranch(object):
             parent = parent._parent
         return branchname
 
-    def _getbranch(self, branchname, defaults=list([])):
-        """ returns a Memory branch from the same MemoryTree with
-        branchname.
-        Example: branchname = 'level1.level2.mybranch' """
-        branch = self._root
-        for subbranch in branchname.split('.'):
-            branch = branch.__getattribute__(subbranch)
-        branch._defaults = defaults
-        return branch
-
     def _reload(self):
         """ reload data from file"""
         self._parent._reload()
@@ -412,8 +441,14 @@ class MemoryBranch(object):
         self._parent._data[self._branch] = branch
         self._save()
 
+    def __len__(self):
+        return len(self._data)
+
+    def __contains__(self, item):
+        return item in self._data
+
     def __repr__(self):
-        return "MemoryBranch(" + str(self._dict.keys()) + ")"
+        return "MemoryBranch(" + str(self._keys()) + ")"
 
 
 class MemoryTree(MemoryBranch):

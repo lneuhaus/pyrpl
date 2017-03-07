@@ -33,7 +33,11 @@ class ModuleList(Module, list):
         # initialize config file dictionary with a list
         #if len(self.c.) == 0:
         self.parent.c[self.name] = default
-        self.element_cls = element_cls
+
+        self.element_cls = type(element_cls.__name__ + "ListElement",
+                                [element_cls],
+                                {'c': property(fget=lambda self: None)})
+
         # element_cls must be slightly modified for proper saving
         #ikm self.element_cls.c = property(fget = (lambda sel: sel.parent.c[sel.parent.index(sel)]))
         #fset = (lambda self, v: self.parent.c[self.parent.index(self)] = v))

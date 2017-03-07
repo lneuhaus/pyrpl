@@ -1,6 +1,7 @@
 import logging
 logger = logging.getLogger(name=__name__)
 import os
+from ..memory import MemoryTree, MemoryBranch
 from .. import *
 
 class TestMemory(object):
@@ -21,3 +22,32 @@ class TestMemory(object):
         mt = MemoryTree('test')
         assert len(mt._keys()) == 0
         os.remove(mt._filename)
+
+    def test_usage(self):
+        m = MemoryTree(filename='test')
+        m.a = 1
+        assert not isinstance(m.a, MemoryBranch)
+        m.b = {}
+        assert isinstance(m.b, MemoryBranch)
+        m.b = 'fdf'
+        assert not isinstance(m.b, MemoryBranch)
+        m.c = []
+        assert isinstance(m.c, MemoryBranch)
+        m.c[0] = 0
+        m.c[1] = 2
+        assert m.c._pop(-1) == 2
+        assert len(m.c) == 1
+        m.c[1] = 11
+        m.c[2] = 22
+        m.c[3] = 33
+        assert len(m.c) == 4
+        assert m.c._pop(2) == 22
+        assert m.c[2] == 33
+        # do something tricky
+        m.d = dict(e=1,
+                   f=dict(g=[0, dict(h=[0,99,98]),{}]))
+        assert m.d.f.g[1].h[2]==98
+        assert isinstance(m.d.f.g[1].h, MemoryBranch)
+        # save and delete file
+        m._save_now()
+        os.remove(m._filename)
