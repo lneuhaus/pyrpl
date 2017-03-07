@@ -343,14 +343,14 @@ class MemoryBranch(object):
         """ creates a new subbranch with name=name it it does not exist already and returns it. If name is a branch
         hierarchy such as "subbranch1.subbranch2.subbranch3", all three subbranch levels are created """
         # chop name into parts and iterate through them
-        currentdata = self._data
+        currentbranch = self
         for subbranchname in name.split("."):
             # make new branch if applicable
-            if subbranchname not in currentdata:
-                currentdata[subbranchname] = dict()
+            if subbranchname not in currentbranch._data.keys():
+                currentbranch[subbranchname] = dict()
             # move into new branch in case another subbranch will be created
-            currentdata = currentdata[subbranchname]
-        return self[name]
+            currentbranch = currentbranch[subbranchname]
+        return currentbranch
 
     def _erase(self):
         """
@@ -448,14 +448,16 @@ class MemoryTree(MemoryBranch):
     # for immediate saving, call _save_now, for immediate loading _load_now
     _loadsavedeadtime = 3
 
-    # the dict containing the entire tree data (nested dict)
-    _data = OrderedDict()
+    # this structure will hold the data. Must define it here as immutable
+    # to overwrite the property _data of MemoryBranch
+    _data = None
 
     def __init__(self, filename=None, source=None):
         # first, make sure filename exists
         self._filename = get_config_file(filename, source)
         if filename is None:  # simulate a config file, only store data in memory
             self._filename = filename
+            self._data = OrderedDict()
         else:  # normal mode of operation with an actual configfile on the disc
             self._lastsave = time()
             # create a timer to postpone to frequent savings

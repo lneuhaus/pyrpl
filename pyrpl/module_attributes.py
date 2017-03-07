@@ -48,7 +48,7 @@ class ModuleList(Module, list):
 
     def insert(self, index, new):
         # make new module
-        to_add = self.element_cls(self, name=self.name + "_element")
+        to_add = self.element_cls(self, name=self.element_cls.__name__.lower())
         # initialize setup_attributes
         to_add.setup_attributes = new
         # insert into list
