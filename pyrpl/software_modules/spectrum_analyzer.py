@@ -18,11 +18,12 @@
 
 import logging
 logger = logging.getLogger(name=__name__)
-from pyrpl.attributes import BoolProperty, FloatProperty, FloatAttribute,  \
+from ..attributes import BoolProperty, FloatProperty, FloatAttribute,  \
     SelectAttribute, BoolAttribute, FrequencyAttribute, LongProperty, \
     SelectProperty, FilterProperty, StringProperty, FilterAttribute, \
-    SelectProperty, ModuleProperty
-from . import SoftwareModule
+    SelectProperty
+from ..modules import SoftwareModule
+from ..module_attributes import *
 from pyrpl.acquisition_manager import AcquisitionManager, AcquisitionModule
 
 import scipy.signal as sig

@@ -1,7 +1,8 @@
 from __future__ import division
 from . import LockboxModule
 from ...attributes import SelectProperty, FloatProperty, BoolProperty, StringProperty, \
-                            ListStageOuputProperty, ModuleListProperty
+                            ListStageOuputProperty
+from ...module_attributes import *
 from ...widgets.module_widgets import LockboxSequenceWidget, LockboxStageWidget
 
 from collections import OrderedDict

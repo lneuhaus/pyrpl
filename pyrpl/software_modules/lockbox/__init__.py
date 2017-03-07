@@ -1,5 +1,5 @@
 from ...modules import SoftwareModule
-from ...attributes import ModuleContainerProperty
+from ...module_attributes import ModuleContainerProperty
 
 
 class LockboxModule(SoftwareModule):

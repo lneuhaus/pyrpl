@@ -1,7 +1,7 @@
 from __future__ import division
 from ...modules import SoftwareModule, SignalLauncher
-from ...attributes import SelectProperty, BoolProperty, StringProperty, ModuleProperty, \
-    ModuleListProperty, ModuleContainerProperty
+from ...attributes import SelectProperty, BoolProperty, StringProperty
+from ...module_attributes import ModuleProperty, ModuleListProperty, ModuleContainerProperty
 from .signals import *
 from ...widgets.module_widgets import LockboxWidget
 from ...pyrpl_utils import get_unique_name_list_from_class_list, all_subclasses, sleep

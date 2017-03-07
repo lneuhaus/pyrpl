@@ -1,6 +1,7 @@
 from .attributes import StringProperty, LongProperty,\
-     BoolProperty, ModuleProperty
+     BoolProperty
 from .modules import BaseModule, SignalLauncher
+from .module_attributes import *
 
 from PyQt4 import QtCore, QtGui
 

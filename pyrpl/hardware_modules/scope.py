@@ -3,7 +3,8 @@ logger = logging.getLogger(name=__name__)
 from ..errors import NotReadyError, TimeoutError
 from ..attributes import FloatAttribute, SelectAttribute, BoolRegister, \
                          FloatRegister, SelectRegister, BoolProperty, \
-                         ModuleProperty, IntRegister, LongRegister
+                         ModuleAttribute, IntRegister, LongRegister
+from ..module_attributes import *
 from ..modules import HardwareModule
 from ..widgets.module_widgets import ScopeWidget
 from ..acquisition_manager import AcquisitionManager, AcquisitionModule
