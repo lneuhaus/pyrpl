@@ -1196,5 +1196,15 @@ class ModuleContainerProperty(ModuleProperty):
             # add the submodule entries here such that the metaclass of module_cls can do its job
             for k, v in kwargs.items():
                 locals()[k] = ModuleProperty(v)
+            # this re-definition essentially silences the warning issued
+            # when nonexisting submodules are present in the config file
+            @property
+            def setup_attributes(self):
+                return module_cls.setup_attributes
+            @setup_attributes.setter
+            def setup_attributes(self, kwds):
+                module_cls.setup_attributes = \
+                    {k:v for k, v in kwds.items() if k in self._setup_attributes}
+
         super(ModuleContainerProperty, self).__init__(ModuleContainer, default=default,
                                                       doc=doc, ignore_errors=ignore_errors)
