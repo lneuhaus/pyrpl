@@ -57,12 +57,13 @@ class BaseAttribute(object):
     widget_class = None
     widget = None
 
-    def __init__(self, default=None, doc=""):
+    def __init__(self, default=None, doc="", ignore_errors=False):
         """
         default: if provided, the value is initialized to it
         """
         if default is not None:
             self.default = default
+        self.ignore_errors = ignore_errors
         self.__doc__ = doc
 
     def __set__(self, instance, value):
@@ -173,8 +174,8 @@ class FloatAttribute(NumberAttribute):
     """
     widget_class = FloatAttributeWidget
 
-    def __init__(self, default=None, increment=0.001, min=-1., max=1., doc=""):
-        super(FloatAttribute, self).__init__(default=default, doc=doc)
+    def __init__(self, default=None, increment=0.001, min=-1., max=1., doc="", ignore_errors=False):
+        super(FloatAttribute, self).__init__(default=default, doc=doc, ignore_errors=ignore_errors)
         self.increment = increment
         self.min = min
         self.max = max
@@ -192,8 +193,8 @@ class FrequencyAttribute(FloatAttribute):
     """
     widget_class = FrequencyAttributeWidget
 
-    def __init__(self, default=None, increment=0.1, min=0, max=1e100, doc=""):
-        super(FloatAttribute, self).__init__(default=default, doc=doc)
+    def __init__(self, default=None, increment=0.1, min=0, max=1e100, doc="", ignore_errors=False):
+        super(FloatAttribute, self).__init__(default=default, doc=doc, ignore_errors=ignore_errors)
         self.increment = increment
         self.min = min
         self.max = max
@@ -211,8 +212,8 @@ class IntAttribute(NumberAttribute):
     """
     widget_class = IntAttributeWidget
 
-    def __init__(self, default=None, min=0, max=2**14, increment=1, doc=""):
-        super(IntAttribute, self).__init__(default=default, doc=doc)
+    def __init__(self, default=None, min=0, max=2**14, increment=1, doc="", ignore_errors=False):
+        super(IntAttribute, self).__init__(default=default, doc=doc, ignore_errors=ignore_errors)
         self.min = min
         self.max = max
         self.increment = increment
@@ -246,12 +247,12 @@ class SelectAttribute(BaseAttribute):
     """
     widget_class = SelectAttributeWidget
 
-    def __init__(self, options=[], default=None, doc=""):
+    def __init__(self, options=[], default=None, doc="", ignore_errors=False):
         """
         Options can be specified at attribute creation, but it can also be updated later on a per-module basis using
         change_options(new_options)
         """
-        super(SelectAttribute, self).__init__(default=default, doc=doc)
+        super(SelectAttribute, self).__init__(default=default, doc=doc, ignore_errors=ignore_errors)
         self._starting_options = options
 
     def options(self, instance):
@@ -313,9 +314,14 @@ class SelectAttribute(BaseAttribute):
             else:
                 value = str(value)
             if not (value in options):
-                raise ValueError("value %s is not an option for "
-                                 "SelectAttribute %s of %s" %
-                                 (value, self.name, module.name))
+                msg = "Value %s is not an option for SelectAttribute {%s} of %s"\
+                      % (value, self.name, module.name)
+                if self.ignore_errors:
+                    value = options[0]
+                    logger.warning(msg+". Picking an arbitrary value %s instead."
+                                   % str(value))
+                else:
+                    raise ValueError(msg)
             return value
         elif isinstance(options[0], numbers.Number):
             value = float(value)
@@ -344,8 +350,9 @@ class PhaseAttribute(FloatAttribute):
     """
     An attribute to represent a phase
     """
-    def __init__(self, increment=1., min=0., max=360., doc=""):
-        super(PhaseAttribute, self).__init__(increment=increment, min=min, max=max, doc=doc)
+    def __init__(self, increment=1., min=0., max=360., doc="", ignore_errors=False):
+        super(PhaseAttribute, self).__init__(increment=increment, min=min, max=max,
+                                             doc=doc, ignore_errors=ignore_errors)
 
     def validate_and_normalize(self, value, module):
         """
@@ -437,9 +444,10 @@ class ModuleAttribute(BaseAttribute):
        - module.sub = dict(...) : module.sub.set_setup_attributes(dict(...))
        - module.sub: returns the submodule.
     """
-    def __init__(self, module_cls, default=None, doc=""):
+    def __init__(self, module_cls, default=None, doc="", ignore_errors=False):
         self.module_cls = module_cls
-        super(ModuleAttribute, self).__init__(default=default, doc=doc)
+        super(ModuleAttribute, self).__init__(default=default, doc=doc,
+                                              ignore_errors=ignore_errors)
 
 
 # docstring does not work yet, see:
@@ -1001,12 +1009,13 @@ class LongProperty(IntAttribute, BaseProperty):
     """
     A property for a long value
     """
-    def __init__(self, min=0, max=2**14, increment=1, default=0, doc=""):
+    def __init__(self, min=0, max=2**14, increment=1, default=0, doc="", ignore_errors=False):
         super(LongProperty, self).__init__(min=min,
                                            max=max,
                                            increment=increment,
                                            default=default,
-                                           doc=doc)
+                                           doc=doc,
+                                           ignore_errors=ignore_errors)
     default = 0
 
 
@@ -1129,9 +1138,10 @@ class ModuleListProperty(BaseAttribute):
     default = [{}]
     module_cls = ModuleList
 
-    def __init__(self, element_cls, default=None, doc=""):
+    def __init__(self, element_cls, default=None, doc="", ignore_errors=False):
         self.element_cls = element_cls
-        super(ModuleListProperty, self).__init__(default=default, doc=doc)
+        super(ModuleListProperty, self).__init__(default=default, doc=doc,
+                                                 ignore_errors=ignore_errors)
 
     def get_value(self, obj, obj_type):
         if not hasattr(obj, '_' + self.name):
@@ -1164,7 +1174,8 @@ from .modules import SoftwareModule
 
 class ModuleContainerProperty(ModuleProperty):
     default_module_cls = SoftwareModule
-    def __init__(self, module_cls=None, default=None, doc="", **kwargs):
+    def __init__(self, module_cls=None, default=None, doc="",
+                 ignore_errors=False, **kwargs):
         """ returns a descriptor for a module container, i.e. a class that contains submodules whose name and class are
         specified in kwargs. module_cls is the base class for the module container (typically SoftwareModule)"""
         # we simply create a container class that loosely resembles a dictionary which contains the given submodules
@@ -1185,4 +1196,5 @@ class ModuleContainerProperty(ModuleProperty):
             # add the submodule entries here such that the metaclass of module_cls can do its job
             for k, v in kwargs.items():
                 locals()[k] = ModuleProperty(v)
-        super(ModuleContainerProperty, self).__init__(ModuleContainer, default=default, doc=doc)
+        super(ModuleContainerProperty, self).__init__(ModuleContainer, default=default,
+                                                      doc=doc, ignore_errors=ignore_errors)

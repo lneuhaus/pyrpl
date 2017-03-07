@@ -133,7 +133,8 @@ class Lockbox(LockboxModule):
 
     auto_lock_interval = AutoLockIntervalProperty(default=1.0, min=1e-3,
                                                   max=1e10)
-    default_sweep_output = SelectProperty(options=lambda lb: lb.outputs.keys())
+    # default_sweep_output would throw an error if the saved state corresponds to a nonexisting output
+    default_sweep_output = SelectProperty(options=lambda lb: lb.outputs.keys(), ignore_errors=True)
     error_threshold = FloatProperty(default=1.0, min=-1e10,max=1e10)
     auto_lock = AutoLockProperty()
 
