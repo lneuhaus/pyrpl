@@ -1,7 +1,6 @@
 # these imports are the standard imports for required for derived lockboxes
-from pyrpl.software_modules.lockbox.signals import *
 from pyrpl.software_modules.lockbox import *
-from pyrpl.attributes import *
+from pyrpl.software_modules.lockbox.signals import *
 
 
 # Any InputSignal must define a class that contains the function "expected_signal(variable)" that returns the expected
@@ -35,8 +34,12 @@ class CustomLockbox(Lockbox):
     """ A custom lockbox class that can be used to implement customized feedback controllers"""
 
     # this syntax for the definition of inputs and outputs allows to conveniently access inputs in the API
-    inputs = ModuleContainerProperty(LockboxModule,
-                                     custom_input_name=CustomInputClass)
+    inputs = LockboxModuleContainerProperty(custom_input_name1=CustomInputClass,
+                                            custom_input_name2=CustomInputClass)
+
+    outputs = LockboxModuleContainerProperty(slow_output=OutputSignal,
+                                             fast_output=OutputSignal,
+                                             pwm_output=OutputSignal)
 
     # the name of the variable to be stabilized to a setpoint. inputs.expected_signal(variable) returns the expected
     # signal as a function of this variable

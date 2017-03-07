@@ -24,7 +24,6 @@ from .widgets.attribute_widgets import BoolAttributeWidget, \
                                        FrequencyAttributeWidget, \
                                        ListStageOutputAttributeWidget, \
                                        ListFloatAttributeWidget
-
 import logging
 import sys
 import numpy as np
@@ -1159,11 +1158,18 @@ class ModuleListProperty(BaseAttribute):
         return value
 
 
+#import from modules may only happen here, after all attributes are defined
+from .modules import SoftwareModule
+
+
 class ModuleContainerProperty(ModuleProperty):
-    def __init__(self, module_cls, default=None, doc="", **kwargs):
+    default_module_cls = SoftwareModule
+    def __init__(self, module_cls=None, default=None, doc="", **kwargs):
         """ returns a descriptor for a module container, i.e. a class that contains submodules whose name and class are
         specified in kwargs. module_cls is the base class for the module container (typically SoftwareModule)"""
         # we simply create a container class that loosely resembles a dictionary which contains the given submodules
+        if module_cls is None:
+            module_cls = self.default_module_cls
         class ModuleContainer(module_cls):
             def __getitem__(self, key):
                 return getattr(self, key)

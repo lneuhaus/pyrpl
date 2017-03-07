@@ -30,8 +30,8 @@ from .redpitaya import RedPitaya
 from . import pyrpl_utils
 from .software_modules import get_software_module
 
-# it is important that Lcokbox is loaded before the models
-from .software_modules.lockbox import Lockbox
+# it is important that Lockbox is loaded before the models
+from .software_modules.lockbox import *
 from .software_modules.lockbox.models import *  # make sure all models are loaded when we get started
 
 

@@ -6,7 +6,7 @@ from .signals import *
 from ...widgets.module_widgets import LockboxWidget
 from ...pyrpl_utils import get_unique_name_list_from_class_list, all_subclasses, sleep
 from .sequence import Sequence, Stage
-from . import LockboxModule
+from . import LockboxModule, LockboxModuleContainerProperty
 from collections import OrderedDict
 from PyQt4 import QtCore
 
@@ -138,11 +138,9 @@ class Lockbox(LockboxModule):
     auto_lock = AutoLockProperty()
 
     # logical inputs and outputs of the lockbox are accessible as lockbox.outputs.output1
-    inputs = ModuleContainerProperty(LockboxModule,
-                                     input_from_output=InputFromOutput)
-    outputs = ModuleContainerProperty(LockboxModule,
-                                      output1=OutputSignal,
-                                      output2=OutputSignal)
+    inputs = LockboxModuleContainerProperty(input_from_output=InputFromOutput)
+    outputs = LockboxModuleContainerProperty(output1=OutputSignal,
+                                             output2=OutputSignal)
     # sequence attribute used to store the locking sequence
     #sequence = ModuleProperty(Sequence)
 

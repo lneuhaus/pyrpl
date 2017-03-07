@@ -1,4 +1,5 @@
 from ...modules import SoftwareModule
+from ...attributes import ModuleContainerProperty
 
 
 class LockboxModule(SoftwareModule):
@@ -8,5 +9,9 @@ class LockboxModule(SoftwareModule):
         while not isinstance(parent, Lockbox):
             parent = parent.parent
         return parent
+
+class LockboxModuleContainerProperty(ModuleContainerProperty):
+    default_module_cls = LockboxModule
+
 
 from .lockbox import Lockbox

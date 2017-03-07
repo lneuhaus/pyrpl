@@ -1,6 +1,5 @@
+from ..lockbox import *
 from ..signals import *
-from ..lockbox import Lockbox
-from ....attributes import ModuleContainerProperty
 
 
 class InterferometerPort1(InputDirect):
@@ -22,9 +21,8 @@ class Interferometer(Lockbox):
     _gui_attributes = ['wavelength']
     variable = 'phase'
 
-    inputs = ModuleContainerProperty(LockboxModule,
-                                     port1=InterferometerPort1,
-                                     port2=InterferometerPort2)
+    inputs = LockboxModuleContainerProperty(port1=InterferometerPort1,
+                                            port2=InterferometerPort2)
 
     # pdh = InputPdh
     #    port1 = InterferometerPort1 # any attribute of type InputSignal will be instantiated in the model

@@ -2,7 +2,7 @@ from ..modules import SoftwareModule
 from .module_managers import Asgs, Iqs, Pids, Scopes, Iirs
 from .network_analyzer import NetworkAnalyzer
 from .spectrum_analyzer import SpectrumAnalyzer
-from .lockbox import Lockbox
+from .lockbox import *
 
 
 def all_subclasses(cls):

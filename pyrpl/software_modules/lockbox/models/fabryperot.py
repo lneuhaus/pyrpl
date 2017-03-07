@@ -1,6 +1,5 @@
-from ..lockbox import Lockbox
+from ..lockbox import *
 from ..signals import *
-from ....attributes import ModuleContainerProperty
 
 
 class FPReflection(InputDirect):
@@ -76,10 +75,9 @@ class FabryPerot(Lockbox):
     eta = FloatProperty(min=0., max=1., default=1.)
     variable = 'detuning'
 
-    inputs = ModuleContainerProperty(LockboxModule,
-                                     transmission = FPTransmission,
-                                     reflection = FPReflection,
-                                     pdh = InputPdh)
+    inputs = LockboxModuleContainerProperty(transmission = FPTransmission,
+                                            reflection = FPReflection,
+                                            pdh = InputPdh)
 
     @property
     def free_spectral_range(self):
