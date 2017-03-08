@@ -343,10 +343,11 @@ class Module(with_metaclass(ModuleMetaClass, object)):
         # enable autosave and load last state from config file
         self._autosave_active = True
 
-        # Loading the module directly after its creation can be problematic:
-        # For instance, a submodule will try to load itself even before it is
-        # attached to its parent...
-        # self._load_setup_attributes()  # attributes are loaded but _setup() is not called
+        # Only top level modules should call _load_setup_attributes() since this call propagates
+        # through all child modules
+        if not isinstance(self.parent, Module):
+            # attributes are loaded but _setup() is not called
+            self._load_setup_attributes()
 
 
     def _init_module(self):
