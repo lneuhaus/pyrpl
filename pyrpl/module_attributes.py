@@ -25,16 +25,17 @@ class ModuleProperty(ModuleAttribute, BaseProperty):
         getattr(obj, self.name).setup_attributes = val
         return val
 
+    def get_value(self, obj, obj_type):
+        if not hasattr(obj, '_' + self.name):
+            # getter must manage the instantiation of default value
+            setattr(obj, '_' + self.name, self.module_cls(obj, name=self.name))
+        return getattr(obj, '_' + self.name)
+
 
 class ModuleList(Module, list):
     """ a list of modules"""
     def __init__(self, parent, name=None, element_cls=Module, default=[]):
         super(ModuleList, self).__init__(parent, name=name)
-        # initialize config file dictionary with a list
-        try:
-            self.parent.c[self.name]
-        except KeyError:
-            self.parent.c[self.name] = default
         def number(element_self):
             """ function that is used to dynamically assign each
             ModuleListElement's name to the index in the list.
@@ -136,10 +137,6 @@ class ModuleListProperty(ModuleProperty):
                                     element_cls=self.element_cls,
                                     default=self.default))
         return getattr(obj, '_' + self.name)
-
-    @property
-    def _setup_attributes(self):
-        return range()
 
     def validate_and_normalize(self, value, obj):
         """ ensures that only list-like values are passed to the ModuleProperty """

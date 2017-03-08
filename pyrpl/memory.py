@@ -356,16 +356,16 @@ class MemoryBranch(object):
     def _get_or_create(self, name):
         """ creates a new subbranch with name=name if it does not exist already and returns it. If name is a branch
         hierarchy such as "subbranch1.subbranch2.subbranch3", all three subbranch levels are created """
-        # chop name into parts and iterate through them
-        if name == 0 and len(self) == 0:
-            # instantiate a new list - odd way because we must
-            self._parent._data[self._branch] = []
-            return self
-        elif isinstance(name, int):
+        if isinstance(name, int):
+            if name == 0 and len(self) == 0:
+                # instantiate a new list - odd way because we must
+                self._parent._data[self._branch] = []
             # if index <= len, creation is done automatically if needed
             # otherwise an error is raised
+            self[name] = dict()
             return self[name]
         else:  # dict-like subbranch, support several sublevels separated by '.'
+            # chop name into parts and iterate through them
             currentbranch = self
             for subbranchname in name.split("."):
                 # make new branch if applicable

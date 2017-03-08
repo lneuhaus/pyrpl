@@ -706,8 +706,8 @@ class LockboxWidget(ModuleWidget):
         #self.button_hide.setMaximumWidth(150)
         self.button_hide.clicked.connect(self.button_hide_clicked)
         self.main_layout.addWidget(self.button_hide)
-        self.sequence_widget = self.module.sequence._create_widget()
-        self.main_layout.addWidget(self.sequence_widget)
+        #self.sequence_widget = self.module.sequence._create_widget()
+        #self.main_layout.addWidget(self.sequence_widget)
         self.main_layout.addStretch(5)
         self.setLayout(self.main_layout)
 
