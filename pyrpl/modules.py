@@ -474,14 +474,14 @@ class Module(with_metaclass(ModuleMetaClass, object)):
         """
         return list(self._states._keys())
 
-    def save_state(self, name = None):
+    def save_state(self, name=None):
         """
         Saves the current state under the name "name" in the config file. If
         state_section is left unchanged, uses the normal
         class_section.states convention.
         """
         if name is None:
-            self.c = self.setup_attributes
+            self.setup_attributes = self.setup_attributes
         else:
             self._states[name] = self.setup_attributes
 

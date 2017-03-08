@@ -52,6 +52,7 @@ class ModuleList(Module, list):
                                 {'name': property(fget=number),
                                  'number': property(fget=number)
                                 })
+        # imitate element widget class (arbitrary convention)
         self._widget_class = self.element_cls._widget_class
         # set to default setting
         self.extend(default)
@@ -69,8 +70,8 @@ class ModuleList(Module, list):
         to_add.setup_attributes = new
         # insert into list
         super(ModuleList, self).insert(index, to_add)
-        # make sure config file is up to date
-        self.setup_attributes = self.setup_attributes
+        # save state
+        self.save_state()
 
     def append(self, new):
         self.insert(-1, new)
@@ -84,8 +85,7 @@ class ModuleList(Module, list):
         to_delete = super(ModuleList, self).pop(index)
         # call destructor
         to_delete._clear()
-        # make sure config file is up to date
-        self.setup_attributes = self.setup_attributes
+        self.save_state()
 
     def pop(self, index=-1):
         # get attributes
@@ -111,7 +111,7 @@ class ModuleList(Module, list):
             except IndexError:
                 self.append(v)
         while len(self) > len(val):
-            self.remove(-1)
+            self.__delitem__(-1)
 
 
 class ModuleListProperty(ModuleProperty):
@@ -134,6 +134,7 @@ class ModuleListProperty(ModuleProperty):
         if not hasattr(obj, '_' + self.name):
             setattr(obj, '_' + self.name,
                     self.module_cls(obj,
+                                    name=self.name,
                                     element_cls=self.element_cls,
                                     default=self.default))
         return getattr(obj, '_' + self.name)
