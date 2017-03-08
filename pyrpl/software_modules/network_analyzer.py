@@ -2,14 +2,17 @@ import logging
 import sys
 from time import sleep
 
-from ..attributes import FilterAttribute
+from ..module_attributes import ModuleProperty
 from ..attributes import FloatProperty, SelectProperty, FrequencyProperty, \
-                        LongProperty, BoolProperty, StringProperty
+                         LongProperty, BoolProperty, StringProperty, \
+                         FilterAttribute, ModuleAttribute
 from ..hardware_modules import DspModule
 from ..widgets.module_widgets import NaWidget
 
 from . import Module
 from ..modules import SignalLauncher
+from ..acquisition_manager import SignalLauncherAcquisitionModule, \
+    AcquisitionModule, AcquisitionManager
 
 from PyQt4 import QtCore, QtGui
 import numpy as np
@@ -24,7 +27,7 @@ APP = QtGui.QApplication.instance()
 
 
 class NaAcBandwidth(FilterAttribute):
-    def valid_frequencies(selfself, instance):
+    def valid_frequencies(self, instance):
         return [freq for freq
                 in instance.iq._valid_inputfilter_frequencies(instance.iq)
                 if freq >= 0]
@@ -57,100 +60,94 @@ class RbwAttribute(FilterAttribute):
         return module.iq.__class__.bandwidth.valid_frequencies(module.iq)
 
 
-class NaStateProperty(StringProperty):
-    """
-    This property is the "master" attribute controlling asynchronous
-    data_acquisition of the na.
-    Changing its value to one of the following will autoomatically launch the
-    corresponding acquisition;
-      - 'running_continuous': infinite frequency scans averaged together
-      - 'running_single': single frequency scan (goes to paused_single when done)
-      - 'paused_single'
-      - 'paused_continuous'
-      - 'stopped': no way to resume on the same averages when stopped
-    """
-    def set_value(self, module, val):
-        old_val = module.running_state
-        if val in ['running_continuous', 'running_single']:
-            if old_val=="stopped":
-                module.iq.output_direct = module.output_direct
-                module._signal_launcher.run()
-            else:
-                module.iq.output_direct = module.output_direct
-                module.iq.frequency = module.iq.frequency # reset na
-                # accumulator
-                module._signal_launcher.resume()
-        if val in ['paused_continuous', 'paused_single']:
-            module._signal_launcher.pause()
-            module.iq.output_direct = 'off'
-        if val in ["stopped"]:
-            if hasattr(module, 'value_generator'):
-                module.values_generator.close() # closing the generator triggers the
-                                                # finally block
-                # Otherwise, the "finally" block is executed when the generator gets
-                # deleted (__del__): in practice, this happens at the next call of
-                # setup() ---> Very naughty situation...
-            module.iq.output_direct = 'off' # Not sure why this is needed in addition
-                                            # to close
-        super(NaStateProperty, self).set_value(module, val)
-
-
 class LogScaleProperty(BoolProperty):
     def set_value(self, module, val):
         super(LogScaleProperty, self).set_value(module, val)
         module._signal_launcher.x_log_toggled.emit()
 
 
-class SignalLauncherNA(SignalLauncher):
+class SignalLauncherNA(SignalLauncherAcquisitionModule):
     """
     The timers for asynchronous data acquisition are controlled
     inside this class
     """
-    point_updated = QtCore.pyqtSignal(int)
+
     # This signal is emitted when a point needs to be updated (added/changed)
     # The argument is the index of the point as found in module.y_averaged
-    autoscale = QtCore.pyqtSignal()
-    scan_finished = QtCore.pyqtSignal()
-    clear_curve = QtCore.pyqtSignal()
     x_log_toggled = QtCore.pyqtSignal()
 
-    def __init__(self, module):
-        super(SignalLauncherNA, self).__init__(module)
-        self.datas = [None, None]
-        self.timer_point = QtCore.QTimer()
-        self.timer_point.setSingleShot(True)
-        self.timer_point.timeout.connect(self.module._run_next_point)
-        self.timer_point.start()
 
-    def kill_timers(self):
+class NAAcquisitionManager(AcquisitionManager):
+    def _init_module(self):
+        super(NAAcquisitionManager, self)._init_module()
+        self._timer.timeout.connect(self._run_next_point)
+
+    def _start_acquisition(self):
         """
-        kill all timers
+        For the NA, resuming (from pause to start for instance... should
+        not setup the instrument again, otherwise, this would restart at
+        the beginning of the curve)
+        :return:
         """
-        self.timer_point.stop()
+        self._timer.setInterval(
+            self._module._time_per_point() * 1000)
+        self._timer.start() # No setup needed !!!
 
-    def run(self):
-        self.module.setup()
-        self.module._setup_averaging()
-        self.module._prepare_for_next_point()
-        self.clear_curve.emit()
-        self.timer_point.start()
+    @property
+    def current_point(self):
+        return self._module.current_point
 
-    def resume(self):
-        self.timer_point.start()
+    def _run_next_point(self):
+        if self.running_state in ['running_continuous',
+                                  'running_single']:
+            cur = self.current_point
+            try:
+                result = next(self._module.values_generator)
+            except StopIteration: # end of scan
+                self.current_avg = min(self.current_avg + 1, self.avg)
+                if self.running_state == 'running_continuous':
+                    # reset acquistion without resetting averaging
+                    self._module.setup()
+                    self._timer.start()
+                else:
+                    self.pause()
+                    # gives the opportunity to average other scans with
+                    # this one by calling run_continuous()
+                self._emit_signal_by_name('scan_finished')
+            else: # Scan not ended
+                if result is None: # PRETRACE_POINT, disregard and just
+                                   # relaunch timer for next point
+                    self._timer.start()
+                else: # standard point in the middle of the scan
+                      # fill in self.data_avg, self.data_current, self.x
+                      # launch signal to display point, and restart timer
+                    x, y, amp = result
+                    self.data_current[cur] = y
+                    self.data_avg[cur] = (self.data_avg[cur]
+                        * self.current_avg + y) \
+                        / (self.current_avg + 1)
 
-    def pause(self):
-        self.timer_point.stop()
+                    self.data_x[cur] = x
 
-    def connect_widget(self, widget):
-        super(SignalLauncherNA, self).connect_widget(widget)
-        #self.autoscale.connect(widget.autoscale)
-        self.point_updated.connect(widget.update_point)
-        #self.scan_finished.connect(widget.scan_finished)
-        #self.clear_curve.connect(widget.clear_curve)
-        #self.x_log_toggled.connect(widget.x_log_toggled)
+                    self._emit_signal_by_name('update_point',
+                                              self.current_point)
+                    self._timer.start()
+
+    def _restart_averaging(self):
+        self._module.setup()
+        points = self._module.points
+        self.data_x = np.zeros(points)
+        self.data_current = np.zeros(points, dtype=np.complex)
+        self.data_avg = np.zeros(points, dtype=np.complex)
+        self.current_avg = 0
+
+    @property
+    def last_valid_point(self):
+        return self._module.points - 1 if self.current_avg>0 else \
+            self.current_point
 
 
-class NetworkAnalyzer(Module):
+class NetworkAnalyzer(AcquisitionModule):
     """
     Using an IQ module, the network analyzer can measure the complex coherent
     response between an output and any signal in the redpitaya.
@@ -170,32 +167,32 @@ class NetworkAnalyzer(Module):
                 print response
     """
     _widget_class = NaWidget
-    _setup_attributes = ["input",
-                         "acbandwidth",
-                         "output_direct",
-                         "start_freq",
-                         "stop_freq",
-                         "rbw",
-                         "points",
-                         "amplitude",
-                         "logscale",
-                         "infer_open_loop_tf",
-                         "avg",
-                         "curve_name",
-                         "running_state"]
-    _gui_attributes = _setup_attributes + ["running_state"]
-    _callback_attributes = [a for a in _gui_attributes
-                            if a not in ['running_state', 'curve_name']]
-    data = None
+    _gui_attributes = ["input",
+                       "acbandwidth",
+                       "output_direct",
+                       "start_freq",
+                       "stop_freq",
+                       "rbw",
+                       "avg_per_point",
+                       "points",
+                       "amplitude",
+                       "logscale",
+                       "infer_open_loop_tf"]
+    _setup_attributes = _gui_attributes + ['run']
+    _callback_attributes = _gui_attributes
     _signal_launcher = SignalLauncherNA
+    run = ModuleProperty(NAAcquisitionManager)
+
     PRETRACE_POINTS = 2
 
     def _init_module(self):
+        self.current_point = 0
+
         self.start_freq = 200
         self.stop_freq = 50000
         self.points = 1001
         self.rbw = 200
-        self.avg = 1
+        self.avg_per_point = 1
         self.amplitude = 0.01
         self.input = 'in1'
         self.output_direct = 'off'
@@ -206,7 +203,7 @@ class NetworkAnalyzer(Module):
         self.curve_name = 'na_curve'
         self._is_setup = False
         self.time_per_point = self._time_per_point()
-        self.current_averages = 0
+        #self.current_averages = 0
         self.time_last_point = 0
         self.running_state = 'stopped'
 
@@ -214,25 +211,14 @@ class NetworkAnalyzer(Module):
     output_direct = SelectProperty(DspModule.output_directs)
     start_freq = FrequencyProperty()
     stop_freq = FrequencyProperty()
-    rbw = RbwAttribute()
+    rbw = RbwAttribute(default=1000)
+    avg_per_point = LongProperty(min=1, default=1)
     amplitude = FloatProperty(min=0, max=1, increment=1. / 2 ** 14)
-    points = LongProperty(min=1, max=1e8)
+    points = LongProperty(min=1, max=1e8, default=1001)
     logscale = LogScaleProperty()
     infer_open_loop_tf = BoolProperty()
-    avg = LongProperty(min=1)
-    curve_name = StringProperty()
     acbandwidth = NaAcBandwidth(
         doc="Bandwidth of the input high-pass filter of the na.")
-    running_state = NaStateProperty()
-
-    def _callback(self):
-        """
-        Whenever a setup_attribute is touched, stop the acquisition immediately.
-        """
-        if self.running_state in ['running_single', 'running_continuous',
-                                  'paused_single', 'paused_continuous']:
-            print("stopping because callback")
-            self.stop()
 
     @property
     def iq(self):
@@ -283,7 +269,8 @@ class NetworkAnalyzer(Module):
                       output_direct=self.output_direct,
                       output_signal='output_direct')
         # setup averaging
-        self.iq._na_averages = np.int(np.round(125e6 / self.rbw * self.avg))
+        self.iq._na_averages = np.int(np.round(125e6 / self.rbw *
+                                               self.avg_per_point))
         self._cached_na_averages = self.iq._na_averages
         self.iq._na_sleepcycles = np.int(
             np.round(125e6 / self.rbw * self.sleeptimes))
@@ -305,58 +292,15 @@ class NetworkAnalyzer(Module):
         # < 1 ms measurement time will make acquisition inefficient.
         if self.time_per_point < 0.001:
             self._logger.info("Time between successive points is %.1f ms."
-                              " You should increase 'avg' to at least %i "
+                              " You should increase 'avg_per_point' to at "
+                              "least %i "
                               "for efficient acquisition.",
-                              self.time_per_point * 1000, self.avg*0.001/self.time_per_point)
-
-    def _run_next_point(self):
-        if self.running_state in ['running_continuous',
-                                  'running_single']:
-            cur = self.current_point
-            try:
-                result = next(self.values_generator)
-            except StopIteration: # end of scan
-                self.current_averages += 1
-                if self.running_state == 'running_continuous':
-                    # reset acquistion without resetting averaging
-                    self.setup()
-                    self._signal_launcher.timer_point.start()
-                else:
-                    self.pause()
-                    # gives the opportunity to average other scans with
-                    # this one by calling run_continuous()
-                self._signal_launcher.scan_finished.emit()
-            else: # Scan not ended
-                if result is None: # PRETRACE_POINT, disregard and just
-                                   # relaunch timer for next point
-                    self._signal_launcher.timer_point.start()
-                else: # standard point in the middle of the scan
-                      # fill in self.y_current_scan, self.current_averages, self.x
-                      # launch signal to display point, and restart timer
-                    x, y, amp = result
-                    self.y_current_scan[cur] = y
-                    self.y_averaged[cur] = (self.y_averaged[cur]
-                        * self.current_averages + y) \
-                        / (self.current_averages + 1)
-                    self.x[cur] = x
-
-                    self._signal_launcher.point_updated.emit(self.current_point)
-                    self._signal_launcher.timer_point.start()
+                              self.time_per_point * 1000,
+                              self.avg_per_point*0.001/self.time_per_point)
 
     def _time_per_point(self):
         return float(self.iq._na_sleepcycles + self.iq._na_averages) \
                / (125e6 * self.iq._frequency_correction)
-
-    def _setup_averaging(self):
-        self.current_averages = 0
-        self.current_attributes = self.get_setup_attributes()
-        self.y_current_scan = np.zeros(self.points, dtype=complex)
-        self.y_averaged = np.zeros(self.points, dtype=complex)
-        self._signal_launcher.timer_point.setInterval(self.time_per_point*1000)
-
-    @property
-    def last_valid_point(self):
-        return self.points - 1 if self.current_averages>0 else self.current_point
 
     @property
     def current_freq(self):
@@ -546,43 +490,6 @@ class NetworkAnalyzer(Module):
         # add delay from phase (incorrect formula or missing effect...)
         return tf
 
-    def save_curve(self):
-        """
-        Saves the curve that is currently displayed in the gui in the db_system. Also, returns the curve.
-        """
-        self.current_attributes['name'] = self.current_attributes['curve_name']
-        return self._save_curve(x_values=self.x,
-                                y_values=self.y_averaged,
-                                **self.current_attributes)
-
-    def run_continuous(self):
-        """
-        Launch a continuous acquisition where successive chunks are averaged with each others. The result is averaged
-        in self.y
-        """
-        self.running_state = "running_continuous"
-
-    def run_single(self):
-        """
-        Acquires a single scan. The result, once available, will be in self.x, self.y
-        """
-        self.running_state = "running_single"
-
-    def pause(self):
-        """
-        Pauses the current acquistion. The acquisition can be resumed later
-        """
-        if self.running_state == "running_continuous":
-            self.running_state = "paused_continuous"
-        if self.running_state == "running_single":
-            self.running_state = "paused_single"
-
-    def stop(self):
-        """
-        Stops definitively the acquisition (next call to run_continuous will
-        restart from 0)
-        """
-        self.running_state = 'stopped'
 
     def threshold_hook(self, current_val):  # goes in the module...
         """

@@ -36,11 +36,14 @@ class RunningStateProperty(StringProperty):
         if val == "running_single":
             # restart averaging and launch avg acquisitions
             obj._restart_averaging()
+            obj._restart_averaging_called = True
             obj._start_acquisition()
         if val == "running_continuous":  # start acquisition. restart
             # averaging only if previous state was 'stop'
-            if previous_state == 'stopped':
+            if previous_state == 'stopped' or not \
+                    obj._restart_averaging_called:
                 obj._restart_averaging()
+                obj._restart_averaging_called = True
             obj._start_acquisition()
         if val in ["paused", "stopped"]:
             obj._stop_acquisition()
@@ -48,7 +51,8 @@ class RunningStateProperty(StringProperty):
             obj._emit_signal_by_name('autoscale')
         return val
 
-class SignalLauncherAM(SignalLauncher):
+
+class SignalLauncherAcquisitionManager(SignalLauncher):
     """
     A signal launcher for the AcquisitionManager
     """
@@ -57,7 +61,24 @@ class SignalLauncherAM(SignalLauncher):
     # array(curve1), array(curve2)] or [times, None, array(curve2)]
     autoscale = QtCore.pyqtSignal()
 
+    # For now, the following signals are only implemented with NA.
+    update_point = QtCore.pyqtSignal(int) # used in NA only
+    scan_finished = QtCore.pyqtSignal() # used in NA only
+    clear_curve = QtCore.pyqtSignal()   # NA only
 
+
+class SignalLauncherAcquisitionModule(SignalLauncher):
+    """ class that takes care of emitting signals to update all possible
+    displays """
+
+    def connect_widget(self, widget):
+        """
+        In addition to connecting the module to the widget, also connect the
+        acquisition manager. (At some point, we should make a separation
+        between module widget and acquisition manager widget).
+        """
+        super(SignalLauncherAcquisitionModule, self).connect_widget(widget)
+        self.module.run._signal_launcher.connect_widget(widget)
 
 
 class AcquisitionManager(Module):
@@ -98,15 +119,15 @@ class AcquisitionManager(Module):
      - current_average: current number of averages
     """
 
-    _signal_launcher = SignalLauncherAM
+    _signal_launcher = SignalLauncherAcquisitionManager
     _setup_attributes = ['running_state', 'avg', 'curve_name']
     _callback_attributes = []
     #_section_name = None # don't make a section, don't make states
 
-
     #The format for curves are:
     #   scope: np.array(times, ch1, ch2)
     #   specan or na: np.array(frequencies, data)
+    data_x = None # placeholder for current x-data
     data_current = None # placeholder for current curve
     data_avg = None # placeholder for averaged curve
 
@@ -126,7 +147,6 @@ class AcquisitionManager(Module):
                        default=1)
     curve_name = StringProperty(doc="name of the curve to save.")
 
-
     def _init_module(self):
         super(AcquisitionManager, self)._init_module()
         self._module = self.parent
@@ -136,9 +156,12 @@ class AcquisitionManager(Module):
         self._running_state = "stopped"
         self.current_avg = 0
         self.curve_name = self.name + " curve"
+        self.data_x = None
         self.data_current = None
         self.data_avg = None
-        self._restart_averaging()
+        self._restart_averaging_called = False # _restart_averaging needs to
+        # be called at least once (even if module is loaded in paused for
+        # instance).
 
     def _restart_averaging(self):
         """
@@ -203,8 +226,8 @@ class AcquisitionManager(Module):
         """
         params = self._module.setup_attributes
         params.update(name=self.curve_name)
-        curve = self._save_curve(self.data_avg[0],
-                                 self.data_avg[1],
+        curve = self._save_curve(self.data_x,
+                                 self.data_avg,
                                  **params)
         return curve
 
@@ -214,6 +237,18 @@ class AcquisitionManager(Module):
 
 
 class AcquisitionModule(Module):
-    _acquisition_manager_class = AcquisitionManager
-    run = ModuleProperty(_acquisition_manager_class)
+    run = ModuleProperty(AcquisitionManager)
     # to overwrite with appropriate Manager in derived class
+    _signal_launcher = SignalLauncherAcquisitionModule
+
+    def _callback(self):
+        """
+        Whenever a setup_attribute is touched, stop the acquisition
+        immediately (this behavior is not visible in scope because nothing
+        is listed in _callback_attributes).
+        """
+        if self.run.running_state in ['running_single', 'running_continuous',
+                                      'paused']:
+            print("stopping because callback")
+            self.run.stop()
+

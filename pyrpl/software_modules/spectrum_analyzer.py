@@ -111,25 +111,6 @@ class SpanFilterProperty(FilterProperty):
             return val
 
 
-class SignalLauncherSpectrumAnalyzer(SignalLauncher):
-    """ class that takes care of emitting signals to update all possible
-    specan displays """
-    #_max_refresh_rate = 25
-
-    #update_display = QtCore.pyqtSignal()
-    #autoscale_display = QtCore.pyqtSignal()
-
-
-    def connect_widget(self, widget):
-        """
-        In addition to connecting the module to the widget, also connect the
-        acquisition manager. (At some point, we should make a separation
-        between module widget and acquisition manager widget).
-        """
-        super(SignalLauncherSpectrumAnalyzer, self).connect_widget(widget)
-        self.module.run._signal_launcher.connect_widget(widget)
-
-
 class SAAcquisitionManager(AcquisitionManager):
     def _init_module(self):
         super(SAAcquisitionManager, self)._init_module()
@@ -143,14 +124,15 @@ class SAAcquisitionManager(AcquisitionManager):
         # several seconds... In the mean time, no other event can be
         # treated. That's why the gui freezes...
         if self._module.curve_ready():
-            if len(self.data_avg[1]) != self._module._real_points:
+            if len(self.data_avg) != self._module._real_points:
                 # for instance, if running_state pause was reloaded...
                 print("restarting ",  self._module._real_points)
                 self._restart_averaging()
-            self.data_current[0] = self._module.frequencies
-            self.data_current[1] = self._module.curve()
+            self.data_x = self._module.frequencies
+            self.data_current = self._module.curve()
             self._do_average()
-            self._emit_signal_by_name('display_curve', list(self.data_avg))
+            self._emit_signal_by_name('display_curve',
+                                      [self.data_x, self.data_avg])
             if self.running_state in  ['running_continuous',
                                        'running_single']:
                 self._module.setup()
@@ -165,17 +147,16 @@ class SAAcquisitionManager(AcquisitionManager):
                 self._timer.start()
 
     def _do_average(self):
-        self.data_avg[0] = self.data_current[0]
-        self.data_avg[1] = (self.current_avg * self.data_avg[1] \
-                         +  self.data_current[1]) / (self.current_avg + 1)
+        self.data_avg = (self.current_avg * self.data_avg \
+                         +  self.data_current) / (self.current_avg + 1)
         self.current_avg += 1
         if self.current_avg > self.avg:
             self.current_avg = self.avg
 
     def _restart_averaging(self):
         points = self._module._real_points
-        self.data_current = np.zeros((2, points))
-        self.data_avg = np.zeros((2, points))
+        self.data_current = np.zeros(points)
+        self.data_avg = np.zeros(points)
         self.current_avg = 0
 
 
@@ -227,7 +208,7 @@ class SpectrumAnalyzer(AcquisitionModule, Module):
     input = SelectProperty(options=inputs)
     acbandwidth = SpecAnAcBandwidth()
 
-    _signal_launcher = SignalLauncherSpectrumAnalyzer
+    # _signal_launcher = SignalLauncherSpectrumAnalyzer
 
     # functions
     def _init_module(self):
@@ -250,13 +231,6 @@ class SpectrumAnalyzer(AcquisitionModule, Module):
         return self._iq
 
     iq_quadraturesignal = 'iq2_2'
-
-    def _callback(self):
-        """
-        When a setup_attribute is touched, stop acquisition
-        :return:
-        """
-        self.run.stop()
 
     @property
     def data_length(self):

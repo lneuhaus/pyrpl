@@ -143,20 +143,6 @@ class DspInputAttributeScope(DspInputAttribute):
         return value
 
 
-class SignalLauncherScope(SignalLauncher):
-    """ class that takes care of emitting signals to update all possible
-    scope displays """
-
-    def connect_widget(self, widget):
-        """
-        In addition to connecting the module to the widget, also connect the
-        acquisition manager. (At some point, we should make a separation
-        between module widget and acquisition manager widget).
-        """
-        super(SignalLauncherScope, self).connect_widget(widget)
-        self.module.run._signal_launcher.connect_widget(widget)
-
-
 class RollingModeProperty(BoolProperty):
     def set_value(self, module, val):
         super(RollingModeProperty, self).set_value(module, val)
@@ -330,7 +316,6 @@ class Scope(HardwareModule, AcquisitionModule):
                       "ch1_active",
                       "ch2_active"]
     _setup_attributes = _gui_attributes + ["run"]
-    _signal_launcher = SignalLauncherScope
     name = 'scope'
     data_length = data_length  # see definition and explanation above
     inputs = None

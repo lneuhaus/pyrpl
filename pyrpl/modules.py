@@ -338,12 +338,11 @@ class Module(with_metaclass(ModuleMetaClass, object)):
         self._init_module()
         # enable autosave and load last state from config file
         self._autosave_active = True
-        # Only top level modules should call _load_setup_attributes() since this call propagates
-        # through all child modules
+        # Only top level modules should call _load_setup_attributes() since
+        # this call propagates through all child modules
         if not isinstance(self.parent, Module):
             # attributes are loaded but _setup() is not called
             self._load_setup_attributes()
-
 
     def _init_module(self):
         """
@@ -622,7 +621,7 @@ class Module(with_metaclass(ModuleMetaClass, object)):
         if val is None:
             self._load_setup_attributes()
             # self.set_setup_attributes(**self.c._dict)
-            # using the same dict will create a referennce (&id) in the
+            # using the same dict will create a reference (&id) in the
             # config file for submodules --> That is probably a bug that
             # could be solved by making a copy of the dict somewhere in
             # memory.py, but on the other hand we are not supposed to use
@@ -702,24 +701,6 @@ class HardwareModule(Module):
                                  "'frequency_correction'. ", self.name)
             return 1.0
 
-        # Let's try to deprecate this
-        # def __setattr__(self, name, value):
-        # # prevent the user from setting a nonexisting attribute
-        # # (I am not sure anymore if it's not making everyone's life harder...)
-        # # if hasattr(self, name) or name.startswith('_') or
-        # # hasattr(type(self), name):
-        # if name.startswith("_") \
-        #         or (name in self.__dict__) \
-        #         or hasattr(self.__class__, name):
-        #     # we don't want class.attr
-        #     # to be executed to save one communication time,
-        #     # this was the case with hasattr(self, name)
-        #     super(BaseModule, self).__setattr__(name, value)
-        # else:
-        #     raise ValueError("New module attributes may not be set at runtime."
-        #                      " Attribute " + name + " is not defined in class "
-        #                      + self.__class__.__name__)
-
     def _reads(self, addr, length):
         return self._client.reads(self._addr_base + addr, length)
 
@@ -744,18 +725,3 @@ class HardwareModule(Module):
             v = v + 2 ** bitlength
         v = (v & (2 ** bitlength - 1))
         return np.uint32(v)
-
-# SoftwareModule is obsolete, since it is/was identical with BaseModule=Module
-# class SoftwareModule(Module):
-#     """
-#     Module that doesn't communicate with the Redpitaya directly.
-#     Child class needs to implement:
-#       - init_module(pyrpl): initializes the module (attribute values aren't
-#         saved during that stage)
-#       - setup_attributes: see BaseModule
-#       - gui_attributes: see BaseModule
-#       - _setup(): see BaseModule, this function is called when the user calls
-#         setup(**kwds) and should set the module
-#         ready for acquisition/output with the current setup_attributes' values.
-#     """
-#     pass
