@@ -1,6 +1,7 @@
 from .attributes import StringProperty, LongProperty,\
-     BoolProperty, ModuleProperty
-from .modules import BaseModule, SignalLauncher
+     BoolProperty
+from .modules import Module, SignalLauncher
+from .module_attributes import *
 
 from PyQt4 import QtCore, QtGui
 
@@ -35,11 +36,14 @@ class RunningStateProperty(StringProperty):
         if val == "running_single":
             # restart averaging and launch avg acquisitions
             obj._restart_averaging()
+            obj._restart_averaging_called = True
             obj._start_acquisition()
         if val == "running_continuous":  # start acquisition. restart
             # averaging only if previous state was 'stop'
-            if previous_state == 'stopped':
+            if previous_state == 'stopped' or not \
+                    obj._restart_averaging_called:
                 obj._restart_averaging()
+                obj._restart_averaging_called = True
             obj._start_acquisition()
         if val in ["paused", "stopped"]:
             obj._stop_acquisition()
@@ -77,7 +81,7 @@ class SignalLauncherAcquisitionModule(SignalLauncher):
         self.module.run._signal_launcher.connect_widget(widget)
 
 
-class AcquisitionManager(BaseModule):
+class AcquisitionManager(Module):
     """
     The asynchronous mode is supported by a sub-object "run"
     of the module. When an asynchronous acquisition is running
@@ -118,7 +122,7 @@ class AcquisitionManager(BaseModule):
     _signal_launcher = SignalLauncherAcquisitionManager
     _setup_attributes = ['running_state', 'avg', 'curve_name']
     _callback_attributes = []
-    _section_name = None # don't make a section, don't make states
+    #_section_name = None # don't make a section, don't make states
 
     #The format for curves are:
     #   scope: np.array(times, ch1, ch2)
@@ -152,10 +156,11 @@ class AcquisitionManager(BaseModule):
         self._running_state = "stopped"
         self.current_avg = 0
         self.curve_name = self.name + " curve"
+        self.data_x = None
         self.data_current = None
         self.data_avg = None
         self._restart_averaging_called = False # _restart_averaging needs to
-        #  be called at least once (even if module is loaded in paused foro
+        # be called at least once (even if module is loaded in paused for
         # instance).
 
     def _restart_averaging(self):
@@ -171,9 +176,6 @@ class AcquisitionManager(BaseModule):
         Start an asynchronous acquisition without taking care of averaging
         :return:
         """
-        if not self._restart_averaging_called:
-            self._restart_averaging()
-            self._restart_averaging_called = True
         self._module.setup()
         self._timer.start()
 
@@ -224,8 +226,8 @@ class AcquisitionManager(BaseModule):
         """
         params = self._module.setup_attributes
         params.update(name=self.curve_name)
-        curve = self._save_curve(self.data_avg[0],
-                                 self.data_avg[1],
+        curve = self._save_curve(self.data_x,
+                                 self.data_avg,
                                  **params)
         return curve
 
@@ -234,7 +236,7 @@ class AcquisitionManager(BaseModule):
         self._timer.stop()
 
 
-class AcquisitionModule(BaseModule):
+class AcquisitionModule(Module):
     run = ModuleProperty(AcquisitionManager)
     # to overwrite with appropriate Manager in derived class
     _signal_launcher = SignalLauncherAcquisitionModule
@@ -249,3 +251,4 @@ class AcquisitionModule(BaseModule):
                                       'paused']:
             print("stopping because callback")
             self.run.stop()
+

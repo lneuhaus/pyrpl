@@ -20,7 +20,7 @@
 # unspecified parameters should rather be left unchanged instead of being
 # set to 0 or 1
 
-from pyrpl.software_modules import SoftwareModule
+from pyrpl.software_modules import Module
 import logging
 from .signal import logger
 import os
@@ -41,7 +41,7 @@ def getmodel(modeltype):
     logger.error("Model %s not found in model definition file %s",
                  modeltype, __file__)
 
-class Lockbox(SoftwareModule):
+class Lockbox(Module):
     """generic lockbox object, no implementation-dependent details here
 
     A lockbox defines one model of the physical system that is controlled."""

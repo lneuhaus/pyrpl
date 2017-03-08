@@ -48,12 +48,12 @@ class NaWidget(ModuleWidget):
         self.main_layout.addWidget(self.win)
         self.main_layout.addWidget(self.win_phase)
 
-        self.run_avg_widget = self.module.run.__class__.avg.create_widget(
+        self.run_avg_widget = self.module.run.__class__.avg._create_widget(
             self.module.run)
         self.button_layout.addWidget(self.run_avg_widget)
 
         self.curve_name_widget = \
-            self.module.run.__class__.curve_name.create_widget(
+            self.module.run.__class__.curve_name._create_widget(
             self.module.run)
         self.button_layout.addWidget(self.curve_name_widget)
 
@@ -155,12 +155,12 @@ class NaWidget(ModuleWidget):
             xpos = np.log10(freq) if logscale else freq
             if cur > 0:
                 self.arrow.setPos(xpos,
-                                  self._magnitude(self.module.run.data_avg[1][
-                                      cur]))
+                                  self._magnitude(self.module.run.data_avg[
+                                                      cur]))
                 self.arrow.setVisible(visible)
                 self.arrow_phase.setPos(xpos,
                                         self._phase(
-                                            self.module.run.data_avg[1][cur]))
+                                            self.module.run.data_avg[cur]))
                 self.arrow_phase.setVisible(visible)
 
     def _magnitude(self, data):
@@ -192,8 +192,8 @@ class NaWidget(ModuleWidget):
                    min(self.CHUNK_SIZE * (chunk_index + 1),
                        self.module.run.last_valid_point),
                    1) # make sure there is an overlap between slices
-        data = self.module.run.data_avg[1][sl]
-        x = np.real(self.module.run.data_avg[0][sl])
+        data = self.module.run.data_avg[sl]
+        x = np.real(self.module.run.data_x[sl])
         self.chunks[chunk_index].setData(x,
                                          self._magnitude(data))
         self.chunks_phase[chunk_index].setData(x,

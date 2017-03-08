@@ -26,7 +26,7 @@ class TestModuleWidgets(TestPyrpl):
     def test_scope_widget(self):
         if self.pyrpl is None:
             return
-        widget = self.pyrpl.rp.scope.create_widget()
+        widget = self.pyrpl.rp.scope._create_widget()
         for attr in widget.attribute_widgets:
             if isinstance(attr, SelectAttributeWidget):
                 for option in attr.options:
@@ -49,7 +49,7 @@ class TestModuleWidgets(TestPyrpl):
         if self.pyrpl is None:
             return
         for asg in [mod for mod in self.pyrpl.asgs.all_modules]:
-            self.try_gui_module(asg.create_widget())
+            self.try_gui_module(asg._create_widget())
 
     def try_gui_module(self, module_widget): # name should not start with test
         if not self.do_gui_tests:

@@ -30,8 +30,8 @@ from .redpitaya import RedPitaya
 from . import pyrpl_utils
 from .software_modules import get_software_module
 
-# it is important that Lcokbox is loaded before the models
-from .software_modules.lockbox import Lockbox
+# it is important that Lockbox is loaded before the models
+from .software_modules.lockbox import *
 from .software_modules.lockbox.models import *  # make sure all models are loaded when we get started
 
 
@@ -96,9 +96,12 @@ class Pyrpl(object):
                                       module.name)
         # create software modules...
         self.load_software_modules()
-        # make the gui if applicable
+        # # load setup attributes
+        # for m in self.modules:
+        #     m._load_setup_attributes()
+        # # make the gui if applicable
         if self.c.pyrpl.gui:
-            widget = self.create_widget()
+            widget = self._create_widget()
             widget.show()
 
     def load_software_modules(self):
@@ -106,11 +109,8 @@ class Pyrpl(object):
         load all software modules defined as root element of the config file.
         """
         self.software_modules = []
-        soft_mod_names = ['AsgManager',
-                          'IqManager',
-                          'PidManager',
-                          'ScopeManager',
-                          'IirManager'] + self.c.pyrpl.modules
+        # software modules are Managers for various modules plus those defined in the config file
+        soft_mod_names = ['Asgs', 'Iqs', 'Pids', 'Scopes', 'Iirs'] + self.c.pyrpl.modules
         module_classes = [get_software_module(cls_name)
                           for cls_name in soft_mod_names]
         module_names = pyrpl_utils.\
@@ -147,7 +147,7 @@ class Pyrpl(object):
     def modules(self):
         return self.hardware_modules + self.software_modules
 
-    def create_widget(self):
+    def _create_widget(self):
         """
         Creates the top-level widget
         """

@@ -150,7 +150,7 @@ class ModuleWidget(QtGui.QGroupBox):
         self.main_layout.addLayout(self.attribute_layout)
 
         for attr_name in self.module._gui_attributes:
-            widget = getattr(self.module.__class__, attr_name).create_widget(self.module)
+            widget = getattr(self.module.__class__, attr_name)._create_widget(self.module)
             self.attribute_widgets[attr_name] = widget
             self.attribute_layout.addWidget(widget)
             widget.value_changed.connect(self.attribute_changed)
@@ -867,7 +867,7 @@ class ModuleManagerWidget(ModuleWidget):
         self.module_widgets = []
 
         for index, mod in enumerate(self.module.all_modules):
-            module_widget = mod.create_widget()
+            module_widget = mod._create_widget()
             # frames and titles visible only for sub-modules of Managers
             # module_widget.setStyleSheet("ModuleWidget{border: 1px dashed gray;color: black;}")
             self.module_widgets.append(module_widget)
@@ -1637,7 +1637,7 @@ class InputsWidget(QtGui.QWidget):
             input.widget.deleteLater()
 
     def add_input(self, input):
-        widget = input.create_widget()
+        widget = input._create_widget()
         self.input_widgets.append(widget)
         self.layout.addWidget(widget, stretch=3)
 
@@ -1696,7 +1696,7 @@ class AllSignalsWidget(QtGui.QTabWidget):
         """
         signal is an instance of OutputSignal
         """
-        widget = signal.create_widget()
+        widget = signal._create_widget()
         self.output_widgets.append(widget)
         self.insertTab(self.count() - 1, widget, widget.name)
 
@@ -1802,7 +1802,7 @@ class LockboxSequenceWidget(ModuleWidget):
         self.main_layout.addStretch(2)
 
     def add_stage(self, stage):
-        widget = stage.create_widget()
+        widget = stage._create_widget()
         self.stage_widgets.append(widget)
         self.main_layout.insertWidget(self.main_layout.indexOf(self.button_add), widget)
         return stage
@@ -1841,11 +1841,11 @@ class LockboxWidget(ModuleWidget):
         self.attribute_layout.addWidget(self.button_calibrate_all)
         self.button_calibrate_all.clicked.connect(self.module.calibrate_all)
 
-        self.model_widget = self.module.model.create_widget()
+        self.model_widget = self.module.model._create_widget()
         self.main_layout.addWidget(self.model_widget)
         self.all_sig_widget = AllSignalsWidget(self)
         self.main_layout.addWidget(self.all_sig_widget)
-        self.sequence_widget = self.module.sequence.create_widget()
+        self.sequence_widget = self.module.sequence._create_widget()
         self.main_layout.addWidget(self.sequence_widget)
         self.main_layout.addStretch(5)
         self.setLayout(self.main_layout)
@@ -1890,7 +1890,7 @@ class LockboxWidget(ModuleWidget):
         self.model_widget.hide()
         self.main_layout.removeWidget(self.model_widget)
         self.model_widget.deleteLater()
-        widget = model.create_widget()
+        widget = model._create_widget()
         self.model_widget = widget
         self.main_layout.insertWidget(1, widget)
 

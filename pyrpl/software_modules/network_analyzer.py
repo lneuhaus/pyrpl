@@ -2,13 +2,14 @@ import logging
 import sys
 from time import sleep
 
+from ..module_attributes import ModuleProperty
 from ..attributes import FloatProperty, SelectProperty, FrequencyProperty, \
                          LongProperty, BoolProperty, StringProperty, \
-                         FilterAttribute, ModuleProperty
+                         FilterAttribute, ModuleAttribute
 from ..hardware_modules import DspModule
 from ..widgets.module_widgets import NaWidget
 
-from . import SoftwareModule
+from . import Module
 from ..modules import SignalLauncher
 from ..acquisition_manager import SignalLauncherAcquisitionModule, \
     AcquisitionModule, AcquisitionManager
@@ -57,44 +58,6 @@ class RbwAttribute(FilterAttribute):
 
     def valid_frequencies(self, module):
         return module.iq.__class__.bandwidth.valid_frequencies(module.iq)
-
-
-class NaStateProperty(StringProperty):
-    """
-    This property is the "master" attribute controlling asynchronous
-    data_acquisition of the na.
-    Changing its value to one of the following will autoomatically launch the
-    corresponding acquisition;
-      - 'running_continuous': infinite frequency scans averaged together
-      - 'running_single': single frequency scan (goes to paused_single when done)
-      - 'paused_single'
-      - 'paused_continuous'
-      - 'stopped': no way to resume on the same averages when stopped
-    """
-    def set_value(self, module, val):
-        old_val = module.running_state
-        if val in ['running_continuous', 'running_single']:
-            if old_val=="stopped":
-                module.iq.output_direct = module.output_direct
-                module._signal_launcher.run()
-            else:
-                module.iq.output_direct = module.output_direct
-                module.iq.frequency = module.iq.frequency # reset na
-                # accumulator
-                module._signal_launcher.resume()
-        if val in ['paused_continuous', 'paused_single']:
-            module._signal_launcher.pause()
-            module.iq.output_direct = 'off'
-        if val in ["stopped"]:
-            if hasattr(module, 'value_generator'):
-                module.values_generator.close() # closing the generator triggers the
-                                                # finally block
-                # Otherwise, the "finally" block is executed when the generator gets
-                # deleted (__del__): in practice, this happens at the next call of
-                # setup() ---> Very naughty situation...
-            module.iq.output_direct = 'off' # Not sure why this is needed in addition
-                                            # to close
-        super(NaStateProperty, self).set_value(module, val)
 
 
 class LogScaleProperty(BoolProperty):
@@ -159,13 +122,12 @@ class NAAcquisitionManager(AcquisitionManager):
                       # fill in self.data_avg, self.data_current, self.x
                       # launch signal to display point, and restart timer
                     x, y, amp = result
-                    self.data_current[1][cur] = y
-                    self.data_avg[1][cur] = (self.data_avg[1][cur]
+                    self.data_current[cur] = y
+                    self.data_avg[cur] = (self.data_avg[cur]
                         * self.current_avg + y) \
                         / (self.current_avg + 1)
 
-                    self.data_current[0][cur] = x
-                    self.data_avg[0][cur] = x
+                    self.data_x[cur] = x
 
                     self._emit_signal_by_name('update_point',
                                               self.current_point)
@@ -174,8 +136,9 @@ class NAAcquisitionManager(AcquisitionManager):
     def _restart_averaging(self):
         self._module.setup()
         points = self._module.points
-        self.data_current = np.zeros((2, points), dtype=np.complex)
-        self.data_avg = np.zeros((2, points), dtype=np.complex)
+        self.data_x = np.zeros(points)
+        self.data_current = np.zeros(points, dtype=np.complex)
+        self.data_avg = np.zeros(points, dtype=np.complex)
         self.current_avg = 0
 
     @property
@@ -184,8 +147,7 @@ class NAAcquisitionManager(AcquisitionManager):
             self.current_point
 
 
-
-class NetworkAnalyzer(AcquisitionModule, SoftwareModule):
+class NetworkAnalyzer(AcquisitionModule):
     """
     Using an IQ module, the network analyzer can measure the complex coherent
     response between an output and any signal in the redpitaya.
@@ -204,7 +166,6 @@ class NetworkAnalyzer(AcquisitionModule, SoftwareModule):
             for freq, response, amplitude in na.values():
                 print response
     """
-    _section_name = 'na'
     _widget_class = NaWidget
     _gui_attributes = ["input",
                        "acbandwidth",

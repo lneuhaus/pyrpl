@@ -43,7 +43,6 @@ class SignalLauncherPid(SignalLauncher):
 
 
 class Pid(FilterModule):
-    _section_name = 'pid'
     _widget_class = PidWidget
     _signal_launcher = SignalLauncherPid
     _setup_attributes = ["input",
@@ -270,6 +269,8 @@ class Pid(FilterModule):
         module_delay = 0
         tf = np.ones(len(frequencies), dtype=complex)
         # input filter modelisation
+        if not isinstance(filter_values, list):
+            filter_values = list([filter_values])
         for f in filter_values:
             if f == 0:
                 continue

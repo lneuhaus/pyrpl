@@ -23,7 +23,7 @@ class ModuleManagerWidget(ModuleWidget):
         self.module_widgets = []
 
         for index, mod in enumerate(self.module.all_modules):
-            module_widget = mod.create_widget()
+            module_widget = mod._create_widget()
             # frames and titles visible only for sub-modules of Managers
             # module_widget.setStyleSheet("ModuleWidget{border: 1px dashed gray;color: black;}")
             self.module_widgets.append(module_widget)
@@ -45,6 +45,10 @@ class ModuleManagerWidget(ModuleWidget):
 
 
 class PidManagerWidget(ModuleManagerWidget):
+    pass
+
+
+class AsgManagerWidget(ModuleManagerWidget):
     pass
 
 

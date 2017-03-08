@@ -27,8 +27,8 @@ class AnalogTfDialog(QtGui.QDialog):
         self.lay_h.addWidget(self.cancel)
         self.group = QtGui.QButtonGroup()
         self.flat = QtGui.QRadioButton("Flat response")
-        self.filter = QtGui.QRadioButton('Analog filter (in "assisted design section")')
-        self.curve = QtGui.QRadioButton("User defined curve")
+        self.filter = QtGui.QRadioButton('Analog low-pass filter (as in "Pid control/assisted design/analog filter cut-off")')
+        self.curve = QtGui.QRadioButton("User-defined curve")
         self.group.addButton(self.flat)
         self.group.addButton(self.filter)
         self.group.addButton(self.curve)
@@ -56,9 +56,7 @@ class AnalogTfDialog(QtGui.QDialog):
         self.curve_id = None
         self.res = None
 
-
     def change_visibility(self, checked):
-        print(checked)
         for widget in self.label, self.line:
             widget.setEnabled(checked)
 
@@ -94,7 +92,7 @@ class AnalogTfSpec(QtGui.QWidget):
         self.parent = parent
         self.module = self.parent.module
         self.layout = QtGui.QVBoxLayout(self)
-        self.label = QtGui.QLabel("Analog t. f.")
+        self.label = QtGui.QLabel("Analog transfer function")
         self.layout.addWidget(self.label)
         self.button = QtGui.QPushButton('Change...')
         self.layout.addWidget(self.button)
@@ -109,10 +107,15 @@ class AnalogTfSpec(QtGui.QWidget):
             if typ=='curve':
                 self.module.tf_curve = number
             self.module.tf_type = typ
+            self.change_analog_tf()
 
     def change_analog_tf(self):
-        txt = self.module.tf_type
-        if self.module.tf_type=='curve':
+        typ = self.module.tf_type
+        try:
+            txt = {'flat': 'flat', 'filter': 'low-pass', 'curve': 'user curve'}[typ]
+        except KeyError:
+            txt = typ
+        if typ=='curve':
             txt += ' #' + str(self.module.tf_curve)
         self.button.setText(txt)
 
@@ -123,21 +126,22 @@ class MainOutputProperties(QtGui.QGroupBox):
         self.parent = parent
         self.module = self.parent.module
         aws = self.parent.attribute_widgets
-        self.layout = QtGui.QHBoxLayout(self)
-        self.v1 = QtGui.QVBoxLayout()
-        self.layout.addLayout(self.v1)
-        self.v2 = QtGui.QVBoxLayout()
+        self.layout = QtGui.QVBoxLayout(self)
+        self.v1 = QtGui.QHBoxLayout()
+        self.v2 = QtGui.QHBoxLayout()
         self.layout.addLayout(self.v2)
-        self.v1.addWidget(aws["name"])
-        self.v1.addWidget(aws['dc_gain'])
+        self.layout.addLayout(self.v1)
+        self.dcgain = aws['dc_gain']
+        self.v1.addWidget(self.dcgain)
+        self.dcgain.label.setText('analog DC-gain')
+        self.v1.addWidget(aws["unit"])
         aws['dc_gain'].set_log_increment()
         self.v2.addWidget(aws["output_channel"])
         # self.v2.addWidget(aws["tf_type"])
         self.button_tf = AnalogTfSpec(self)
         self.v2.addWidget(self.button_tf)
-
-#        aws['tf_curve'].hide()
-        self.setTitle('main attributes')
+        # aws['tf_curve'].hide()
+        self.setTitle('Main settings')
         for v in self.v1, self.v2:
             v.setSpacing(9)
 
@@ -160,49 +164,50 @@ class SweepOutputProperties(QtGui.QGroupBox):
         self.v2.addWidget(aws["sweep_offset"])
         self.v2.addWidget(aws["sweep_waveform"])
         aws['is_sweepable'].hide()
-        self.setTitle("sweep attributes")
-
+        self.setTitle("Sweep parameters")
 
 class WidgetManual(QtGui.QWidget):
     def __init__(self, parent):
         super(WidgetManual, self).__init__(parent)
         self.parent = parent
         self.layout = QtGui.QVBoxLayout(self)
+        self.pv1 = QtGui.QVBoxLayout()
+        self.pv2 = QtGui.QVBoxLayout()
+        self.layout.addLayout(self.pv1)
+        self.layout.addLayout(self.pv2)
         self.p = parent.parent.attribute_widgets["p"]
         self.i = parent.parent.attribute_widgets["i"]
-        self.p.label.setText('p [1] ')
-        self.i.label.setText('i [Hz]')
-        self.p.label.setFixedWidth(24)
-        self.i.label.setFixedWidth(24)
+
+        self.p.label.setText('proportional gain (1)')
+        self.i.label.setText('integral unity-gain (Hz)')
+        #self.p.label.setFixedWidth(24)
+        #self.i.label.setFixedWidth(24)
         # self.p.adjustSize()
         # self.i.adjustSize()
-
         for prop in self.p, self.i:
             prop.widget.set_log_increment()
-
-        self.p.set_horizontal()
-        self.i.set_horizontal()
-        self.layout.addWidget(self.p)
-        self.layout.addWidget(self.i)
+        self.pv1.addWidget(self.p)
+        self.pv2.addWidget(self.i)
         # self.i.label.setMinimumWidth(6)
-
 
 class WidgetAssisted(QtGui.QWidget):
     def __init__(self, parent):
         super(WidgetAssisted, self).__init__(parent)
         self.parent = parent
-        self.layout = QtGui.QHBoxLayout(self)
+        self.layout = QtGui.QVBoxLayout(self)
         self.v1 = QtGui.QVBoxLayout()
         self.v2 = QtGui.QVBoxLayout()
         self.layout.addLayout(self.v1)
         self.layout.addLayout(self.v2)
-        self.desired = parent.parent.attribute_widgets["unity_gain_desired"]
+        self.desired = parent.parent.attribute_widgets["desired_unity_gain_frequency"]
+        self.desired.label.setText('desired unity-gain-frequency (Hz) ')
         self.desired.set_log_increment()
-        self.analog_filter = parent.parent.attribute_widgets["analog_filter"]
+        self.analog_filter = parent.parent.attribute_widgets["analog_filter_cutoff"]
+        self.analog_filter.label.setText('analog filter cut-off frequency (Hz)')
         #self.analog_filter.set_horizontal()
         # self.analog_filter.layout_v.setSpacing(0)
         # self.analog_filter.layout_v.setContentsMargins(0, 0, 0, 0)
-        self.analog_filter.set_max_cols(2)
+        #self.analog_filter.set_max_cols(2)
         self.v1.addWidget(self.desired)
         self.v2.addWidget(self.analog_filter)
 
@@ -214,10 +219,10 @@ class PidProperties(QtGui.QGroupBox):
         self.module = self.parent.module
         aws = self.parent.attribute_widgets
         self.layout = QtGui.QHBoxLayout(self)
-        self.v1 = QtGui.QVBoxLayout()
-        self.layout.addLayout(self.v1)
         self.v2 = QtGui.QVBoxLayout()
         self.layout.addLayout(self.v2)
+        self.v1 = QtGui.QVBoxLayout()
+        self.layout.addLayout(self.v1)
 
         self.radio_group = QtGui.QButtonGroup()
         self.manual = QtGui.QRadioButton('manual design')
@@ -282,7 +287,7 @@ class PostFiltering(QtGui.QGroupBox):
         self.layout.addLayout(self.mod_layout)
         self.layout.setSpacing(12)
 
-        self.setTitle("post filtering")
+        self.setTitle("Pre-filtering before PID")
 
 
 class OutputSignalWidget(ModuleWidget):
@@ -292,7 +297,8 @@ class OutputSignalWidget(ModuleWidget):
 
     @name.setter
     def name(self, value):
-        return value # only way to modify widget name is to change output.display_name
+        # name is read-only
+        pass
 
     def change_analog_tf(self):
         self.main_props.change_analog_tf()
@@ -356,8 +362,12 @@ class OutputSignalWidget(ModuleWidget):
         self.curve.setLogMode(xMode=True, yMode=True)
         self.curve_phase.setLogMode(xMode=True, yMode=None)
 
-        self.main_layout.addWidget(self.win)
-        self.main_layout.addWidget(self.win_phase)
+        self.plotbox = QtGui.QGroupBox(self)
+        self.plotbox.layout = QtGui.QVBoxLayout(self.plotbox)
+        self.plotbox.setTitle("Complete open-loop transfer function (V/V)")
+        self.plotbox.layout.addWidget(self.win)
+        self.plotbox.layout.addWidget(self.win_phase)
+        self.main_layout.addWidget(self.plotbox)
         self.update_transfer_function()
 
     def update_transfer_function(self):
@@ -443,7 +453,7 @@ class InputsWidget(QtGui.QWidget):
                 widget.deleteLater()
 
     def add_input(self, input):
-        widget = input.create_widget()
+        widget = input._create_widget()
         self.input_widgets.append(widget)
         self.layout.addWidget(widget, stretch=3)
 
@@ -513,7 +523,7 @@ class AllSignalsWidget(QtGui.QTabWidget):
         """
         signal is an instance of OutputSignal
         """
-        widget = signal.create_widget()
+        widget = signal._create_widget()
         self.output_widgets.append(widget)
         self.insertTab(self.count() - 1, widget, widget.name)
 
@@ -594,7 +604,7 @@ class LockboxStageWidget(ModuleWidget):
         self.lay_v2 = QtGui.QVBoxLayout()
         self.lay_h1.addLayout(self.lay_v2)
         aws = self.attribute_widgets
-        self.lay_v1.addWidget(aws['name'])
+        #self.lay_v1.addWidget(aws['name'])
         self.lay_v1.addWidget(aws['input'])
         self.lay_v2.addWidget(aws['duration'])
         self.lay_v2.addWidget(aws['variable_value'])
@@ -644,7 +654,7 @@ class LockboxSequenceWidget(ModuleWidget):
         self.main_layout.addStretch(2)
 
     def add_stage(self, stage):
-        widget = stage.create_widget()
+        widget = stage._create_widget()
         self.stage_widgets.append(widget)
         self.main_layout.insertWidget(self.main_layout.indexOf(self.button_add), widget)
         return stage
@@ -652,12 +662,11 @@ class LockboxSequenceWidget(ModuleWidget):
     def remove_stage(self, stagenumber=-1):
         """ removes the widget with """
         widget = self.stage_widgets.pop(stagenumber)
-        if widget.name == stage.name:
-            if self.parent().button_green == widget.button_goto:
-                self.parent().button_green = None
-            widget.hide()
-            self.main_layout.removeWidget(widget)
-            widget.deleteLater()
+        if self.parent().button_green == widget.button_goto:
+            self.parent().button_green = None
+        widget.hide()
+        self.main_layout.removeWidget(widget)
+        widget.deleteLater()
 
     def update_stage_names(self):
         for widget in self.stage_widgets:
@@ -688,21 +697,16 @@ class LockboxWidget(ModuleWidget):
         self.button_unlock.clicked.connect(self.module.unlock)
         self.button_sweep.clicked.connect(self.module.sweep)
         self.button_calibrate_all.clicked.connect(self.module.calibrate_all)
-
-        #self.model_widget = self.module.model.create_widget()
-        #self.main_layout.addWidget(self.model_widget)
         self.all_sig_widget = AllSignalsWidget(self)
         self.main_layout.addWidget(self.all_sig_widget)
-        self.sequence_widget = self.module._sequence.create_widget()
-
         self.button_hide = QtGui.QPushButton("^")
-        self.button_hide_clicked()
+        #self.button_hide_clicked() # open by default
         self.button_hide.setMaximumHeight(15)
         #self.button_hide.setMaximumWidth(150)
         self.button_hide.clicked.connect(self.button_hide_clicked)
         self.main_layout.addWidget(self.button_hide)
-
-        self.main_layout.addWidget(self.sequence_widget)
+        #self.sequence_widget = self.module._sequence.create_widget()
+        #self.main_layout.addWidget(self.sequence_widget)
         self.main_layout.addStretch(5)
         self.setLayout(self.main_layout)
 

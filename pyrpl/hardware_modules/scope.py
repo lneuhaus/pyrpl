@@ -3,7 +3,8 @@ logger = logging.getLogger(name=__name__)
 from ..errors import NotReadyError, TimeoutError
 from ..attributes import FloatAttribute, SelectAttribute, BoolRegister, \
                          FloatRegister, SelectRegister, BoolProperty, \
-                         ModuleProperty, IntRegister, LongRegister
+                         ModuleAttribute, IntRegister, LongRegister
+from ..module_attributes import *
 from ..modules import HardwareModule
 from ..widgets.module_widgets import ScopeWidget
 from ..acquisition_manager import AcquisitionManager, AcquisitionModule
@@ -301,7 +302,6 @@ class ScopeAcquisitionManager(AcquisitionManager):
 
 
 class Scope(HardwareModule, AcquisitionModule):
-    _section_name = 'scope'
     addr_base = 0x40100000
     _widget_class = ScopeWidget
     run = ModuleProperty(ScopeAcquisitionManager)

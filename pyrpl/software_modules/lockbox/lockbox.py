@@ -1,11 +1,12 @@
 from __future__ import division
-from ...modules import SoftwareModule, SignalLauncher
-from ...attributes import SelectProperty, BoolProperty, StringProperty, ModuleProperty, ModuleContainerProperty
+from ...modules import Module, SignalLauncher
+from ...attributes import SelectProperty, BoolProperty, StringProperty
+from ...module_attributes import ModuleProperty, ModuleListProperty, ModuleContainerProperty
 from .signals import *
 from ...widgets.module_widgets import LockboxWidget
 from ...pyrpl_utils import get_unique_name_list_from_class_list, all_subclasses, sleep
-from .sequence import Sequence
-from . import LockboxModule
+from .sequence import Sequence, Stage
+from . import LockboxModule, LockboxModuleContainerProperty
 from collections import OrderedDict
 from PyQt4 import QtCore
 
@@ -32,6 +33,8 @@ class ClassnameProperty(SelectProperty):
         obj._classname_changed()
         return val
 
+    def options(self, instance):
+        return all_classnames().keys()
 
 class SignalLauncherLockbox(SignalLauncher):
     """
@@ -111,40 +114,39 @@ class Lockbox(LockboxModule):
     """
     A Module that allows to perform feedback on systems that are well described by a physical model.
     """
-    _section_name = 'lockbox'
     _widget_class = LockboxWidget
     _signal_launcher = SignalLauncherLockbox
-    _setup_attributes = ["classname",
+    _gui_attributes = ["classname",
                          "default_sweep_output",
                          "auto_lock",
                          "auto_lock_interval",
                          "error_threshold"]
-    _gui_attributes = _setup_attributes
+    _setup_attributes = _gui_attributes + ["inputs", "outputs", "stages"]
 
-    classname = ClassnameProperty(options=['Lockbox']) #all_models().keys())
+    classname = ClassnameProperty()
     parameter_name = "parameter"
     # possible units to describe the physical parameter to control e.g. ['m', 'MHz']
-    units = ['V']
+    # units that are allowed for this lockbox (must provide methods with name "_unit_to_V" for all units)
+    _units = ['V']
+    def _V_per_V(self):
+        return 1.0
 
     auto_lock_interval = AutoLockIntervalProperty(default=1.0, min=1e-3,
                                                   max=1e10)
-    default_sweep_output = SelectProperty(options=[])
+    # default_sweep_output would throw an error if the saved state corresponds to a nonexisting output
+    default_sweep_output = SelectProperty(options=lambda lb: lb.outputs.keys(), ignore_errors=True)
     error_threshold = FloatProperty(default=1.0, min=-1e10,max=1e10)
     auto_lock = AutoLockProperty()
 
     # logical inputs and outputs of the lockbox are accessible as lockbox.outputs.output1
-    inputs = ModuleContainerProperty(LockboxModule,
-                                     input_from_output=InputFromOutput)
-    outputs = ModuleContainerProperty(LockboxModule,
-                                      output1=OutputSignal,
-                                      output2=OutputSignal)
+    inputs = LockboxModuleContainerProperty(input_from_output=InputFromOutput)
+    outputs = LockboxModuleContainerProperty(output1=OutputSignal,
+                                             output2=OutputSignal)
     # sequence attribute used to store the locking sequence
-    sequence = ModuleProperty(Sequence)
+    #sequence = ModuleProperty(Sequence)
 
-    def _init_module(self):
-        # update options of classname attribute with available lockbox types and update the value
-        self.__class__.classname.change_options(self, sorted(all_classnames().keys()))
-        self.classname = type(self).__name__
+    stages = ModuleListProperty(Stage)
+    #stages._widget_class = LockboxSequenceWidget
 
     @property
     def signals(self):
@@ -238,7 +240,7 @@ class Lockbox(LockboxModule):
 
     @state.setter
     def state(self, val):
-        if not val in ['unlock', 'sweep'] + [stage.name for stage in self.sequence.stages]:
+        if not val in ['unlock', 'sweep'] + [stage.name for stage in self.stages]:
             raise ValueError("State should be either unlock, or a valid stage name")
         self._state = val
         # To avoid explicit reference to gui here, one could consider using a DynamicSelectAttribute...
@@ -264,7 +266,7 @@ class Lockbox(LockboxModule):
         """ returns True if locked, else False. Also updates an internal
         dict that contains information about the current error signals. The
         state of lock is logged at loglevel """
-        if self.state not in self._stage_names:
+        if self.stage not in self.stages:
             # not locked to any defined sequene state
             self._logger.log(loglevel, "Cavity is not locked: lockbox state "
                                        "is %s.", self.state)
@@ -329,6 +331,7 @@ class Lockbox(LockboxModule):
         return True
 
     def _lockstatus(self):
+        return
         """ this function is a placeholder for periodic lockstatus
         diagnostics, such as calls to is_locked, logging means and rms
         values and plotting measured setpoints etc."""
@@ -410,9 +413,9 @@ class Lockbox(LockboxModule):
         pyrpl, name = self.pyrpl, self.name
         self._signal_launcher.clear()
         for o in self.outputs:
-            o.clear()
+            o._clear()
         for i in self.inputs:
-            i.clear()
+            i._clear()
         setattr(pyrpl, name, None)  # pyrpl.lockbox = None
         try:
             self.parent.software_modules.remove(self)

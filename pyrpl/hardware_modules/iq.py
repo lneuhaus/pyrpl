@@ -44,8 +44,7 @@ class IqAcbandwidth(FilterAttribute):
         return val
 
 
-class IQ(FilterModule):
-    _section_name = 'iq'
+class Iq(FilterModule):
     _widget_class = IqWidget
     _setup_attributes = ["input",
                          "acbandwidth",

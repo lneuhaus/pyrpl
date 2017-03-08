@@ -18,11 +18,12 @@
 
 import logging
 logger = logging.getLogger(name=__name__)
-from pyrpl.attributes import BoolProperty, FloatProperty, FloatAttribute,  \
+from ..attributes import BoolProperty, FloatProperty, FloatAttribute,  \
     SelectAttribute, BoolAttribute, FrequencyAttribute, LongProperty, \
     SelectProperty, FilterProperty, StringProperty, FilterAttribute, \
-    SelectProperty, ModuleProperty
-from . import SoftwareModule
+    SelectProperty
+from ..modules import Module
+from ..module_attributes import *
 from pyrpl.acquisition_manager import AcquisitionManager, AcquisitionModule
 
 import scipy.signal as sig
@@ -123,14 +124,15 @@ class SAAcquisitionManager(AcquisitionManager):
         # several seconds... In the mean time, no other event can be
         # treated. That's why the gui freezes...
         if self._module.curve_ready():
-            if len(self.data_avg[1]) != self._module._real_points:
+            if len(self.data_avg) != self._module._real_points:
                 # for instance, if running_state pause was reloaded...
                 print("restarting ",  self._module._real_points)
                 self._restart_averaging()
-            self.data_current[0] = self._module.frequencies
-            self.data_current[1] = self._module.curve()
+            self.data_x = self._module.frequencies
+            self.data_current = self._module.curve()
             self._do_average()
-            self._emit_signal_by_name('display_curve', list(self.data_avg))
+            self._emit_signal_by_name('display_curve',
+                                      [self.data_x, self.data_avg])
             if self.running_state in  ['running_continuous',
                                        'running_single']:
                 self._module.setup()
@@ -145,26 +147,24 @@ class SAAcquisitionManager(AcquisitionManager):
                 self._timer.start()
 
     def _do_average(self):
-        self.data_avg[0] = self.data_current[0]
-        self.data_avg[1] = (self.current_avg * self.data_avg[1] \
-                         +  self.data_current[1]) / (self.current_avg + 1)
+        self.data_avg = (self.current_avg * self.data_avg \
+                         +  self.data_current) / (self.current_avg + 1)
         self.current_avg += 1
         if self.current_avg > self.avg:
             self.current_avg = self.avg
 
     def _restart_averaging(self):
         points = self._module._real_points
-        self.data_current = np.zeros((2, points))
-        self.data_avg = np.zeros((2, points))
+        self.data_current = np.zeros(points)
+        self.data_avg = np.zeros(points)
         self.current_avg = 0
 
 
-class SpectrumAnalyzer(AcquisitionModule, SoftwareModule):
+class SpectrumAnalyzer(AcquisitionModule, Module):
     """
     A spectrum analyzer is composed of an IQ demodulator, followed by a scope.
     The spectrum analyzer connections are made upon calling the function setup.
     """
-    _section_name = 'spectrum_analyzer'
     _widget_class = SpecAnWidget
 
     run = ModuleProperty(SAAcquisitionManager)

@@ -31,10 +31,10 @@ class SpecAnWidget(ModuleWidget):
         self.plot_item = self.win.addPlot(title="PSD")
         self.curve = self.plot_item.plot(pen='m')
 
-        self.run_avg_widget = self.module.run.__class__.avg.create_widget(
+        self.run_avg_widget = self.module.run.__class__.avg._create_widget(
             self.module.run)
         self.curve_name_widget = \
-            self.module.run.__class__.curve_name.create_widget(
+            self.module.run.__class__.curve_name._create_widget(
             self.module.run)
 
         self.button_single = QtGui.QPushButton("Run single")

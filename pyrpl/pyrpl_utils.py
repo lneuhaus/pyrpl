@@ -48,7 +48,7 @@ def get_unique_name_list_from_class_list(cls_list):
 
     # first, map from list of classes to a list of corresponding names
     # e.g. all_names = ['hk, ..., 'pwm', 'pwm', ...
-    all_names = [cls._section_name for cls in cls_list]
+    all_names = [cls.__name__.lower() for cls in cls_list]
     final_names = []
     for name in all_names:
         # how many times does the name occur?

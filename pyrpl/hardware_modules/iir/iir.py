@@ -13,7 +13,6 @@ class SignalLauncherIir(SignalLauncher):
 
 
 class IIR(FilterModule):
-    _section_name = 'iir'
     iirfilter = None  # will be set by setup()
     _minloops = 5  # minimum number of loops for correct behaviour
     _maxloops = 1023
@@ -260,8 +259,7 @@ class IIR(FilterModule):
         dev = (np.abs((self.coefficients[0:len(self.iirfilter.coefficients)] -
                        self.iirfilter.coefficients).flatten()))
         maxdev = max(dev)
-        reldev = maxdev / \
-                 abs(self.iirfilter.coefficients.flatten()[np.argmax(dev)])
+        reldev = maxdev / abs(self.iirfilter.coefficients.flatten()[np.argmax(dev)])
         if reldev > 0.05:
             self._logger.warning(
                 "Maximum deviation from design coefficients: %.4g "

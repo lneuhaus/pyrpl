@@ -4,7 +4,7 @@ pyrpl:  # General configuration of the software:
   loglevel: warning # debug
   # level of logged information.
   # 'debug' outputs everything
-  # 'infi' is default level
+  # 'info' is default level
   # 'warning' only shows warnings and errors
   # 'error' only shows errors
   modules:  # SoftwareModules to load (in addition to IqManager, AsgManager,
@@ -14,5 +14,5 @@ pyrpl:  # General configuration of the software:
     - Lockbox
 redpitaya:
   silence_env: true
-  hostname: _DUMMY_
+  hostname: _FAKE_REDPITAYA_
   

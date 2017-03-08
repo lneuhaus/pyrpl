@@ -184,7 +184,7 @@ class ModuleMetaClass(type):
             setup.__doc__ = doc
 
 
-class BaseModule(with_metaclass(ModuleMetaClass, object)):
+class Module(with_metaclass(ModuleMetaClass, object)):
     # The Syntax for defining a metaclass changed from Python 2 to 3.
     # with_metaclass is compatible with both versions and roughly does this:
     # def with_metaclass(meta, *bases):
@@ -235,7 +235,7 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
 
      Public attributes:
      ------------------
-     - name: attributed based on _section_name at instance creation
+     - name: attributed based on name at instance creation
      (also used as a section key in the config file)
      - states: the list of states available in the config file
      - owner: (string) a module can be owned (reserved) by a user or another
@@ -253,8 +253,6 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
      their value is changed in the base class, _callback just calls setup()
      - _widget_class: class of the widget to use to represent the module in
      the gui(a child of ModuleWidget)
-     - _section_name: the name under which all instances of the class should
-     be stored in the config file
 
     methods to implement in derived class:
     --------------------------------------
@@ -282,10 +280,6 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
     # a QOBject used to communicate with the widget
     _signal_launcher = None # should be _signal_launcher_cls and
     # _signal_launcher
-
-    # name that is going to be used for the section in the config file
-    # (class-level)
-    _section_name = 'basemodule'
 
     # Change this to provide a custom graphical class
     _widget_class = ModuleWidget
@@ -340,17 +334,19 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         # instantiate submodules (submodule has preceeding underscore, SubmoduleProperty does not)
         for submodule in self._module_attributes:
             submodule_cls = getattr(self.__class__, submodule)
-            setattr(self, '_' + submodule, getattr(self.__class__, submodule).module_cls(self, name=submodule))
+            setattr(self,
+                    '_' + submodule,
+                    getattr(self.__class__, submodule).module_cls(self, name=submodule))
         # custom module initialization hook
         self._init_module()
+
         # enable autosave and load last state from config file
         self._autosave_active = True
-
-        # Loading the module directly after its creation can be problematic:
-        # For instance, a submodule will try to load itself even before it is
-        # attached to its parent...
-        #elf._load_setup_attributes()  # attributes are loaded but _setup()
-        # is not called
+        # Only top level modules should call _load_setup_attributes() since
+        # this call propagates through all child modules
+        if not isinstance(self.parent, Module):
+            # attributes are loaded but _setup() is not called
+            self._load_setup_attributes()
 
     def _init_module(self):
         """
@@ -408,13 +404,13 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
     def setup_attributes(self):
         """
         :return: a dict with the current values of the setup attributes.
-        Recursively calls get_setup_attributes for sub_modules.
+        Recursively collects setup_attributes for sub_modules.
         """
-        kwds = dict()
+        kwds = OrderedDict()
         for attr in self._setup_attributes:
             val = getattr(self, attr)
             if attr in self._modules:
-                val = val.get_setup_attributes()
+                val = val.setup_attributes
             kwds[attr] = val
         return kwds
 
@@ -441,8 +437,10 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
         finally:
             self._callback_active = old_callback_active
         if len(kwds) > 0:
-            raise ValueError("Attribute %s of module %s doesn't exist." % (
-                sorted(kwds.keys())[0], self.name))
+            self._logger.warning("Trying to load attribute %s of module %s that are invalid setup_attributes.",
+                                 sorted(kwds.keys())[0], self.name)
+            #raise ValueError("Attribute %s of module %s doesn't exist." % (
+            #    sorted(kwds.keys())[0], self.name))
 
     def _load_setup_attributes(self):
         """
@@ -571,10 +569,14 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
                         string += key + ": " + docstring + '\r\n\r\n'
             return string
 
-    def create_widget(self):
+    def _create_widget(self):
         """
         Creates the widget specified in widget_class.
         """
+        if self._widget_class is None:
+            self._logger.warning("Module %s of type %s is trying to create a widget, but no widget_class is defined!",
+                                 self.name, type(self), )
+            return None
         callback_bkp = self._callback_active
         self._callback_active = False # otherwise, saved values will be
         # overwritten by default gui values
@@ -655,7 +657,7 @@ class BaseModule(with_metaclass(ModuleMetaClass, object)):
             getattr(self, sub)._clear()
 
 
-class HardwareModule(BaseModule):
+class HardwareModule(Module):
     """
     Module that directly maps a FPGA module. In addition to BaseModule's r
     equirements, HardwareModule classes have to possess the following class
@@ -742,17 +744,17 @@ class HardwareModule(BaseModule):
         v = (v & (2 ** bitlength - 1))
         return np.uint32(v)
 
-
-class SoftwareModule(BaseModule):
-    """
-    Module that doesn't communicate with the Redpitaya directly.
-    Child class needs to implement:
-      - init_module(pyrpl): initializes the module (attribute values aren't
-        saved during that stage)
-      - setup_attributes: see BaseModule
-      - gui_attributes: see BaseModule
-      - _setup(): see BaseModule, this function is called when the user calls
-        setup(**kwds) and should set the module
-        ready for acquisition/output with the current setup_attributes' values.
-    """
-    pass
+# SoftwareModule is obsolete, since it is/was identical with BaseModule=Module
+# class SoftwareModule(Module):
+#     """
+#     Module that doesn't communicate with the Redpitaya directly.
+#     Child class needs to implement:
+#       - init_module(pyrpl): initializes the module (attribute values aren't
+#         saved during that stage)
+#       - setup_attributes: see BaseModule
+#       - gui_attributes: see BaseModule
+#       - _setup(): see BaseModule, this function is called when the user calls
+#         setup(**kwds) and should set the module
+#         ready for acquisition/output with the current setup_attributes' values.
+#     """
+#     pass

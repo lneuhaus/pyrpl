@@ -27,7 +27,7 @@ from .scope import Scope
 from .asg import Asg0, Asg1
 from .pid import Pid
 from .sampler import Sampler
-from .aux_output import AuxOutput
-from .iq import IQ
+from .aux_output import Pwm
+from .iq import Iq
 from .iir import IIR
 from .ams import AMS

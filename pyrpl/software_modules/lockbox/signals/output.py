@@ -8,7 +8,6 @@ from ....widgets.module_widgets import OutputSignalWidget
 from ....hardware_modules.pid import Pid
 from ....curvedb import CurveDB
 from scipy import interpolate
-
 import numpy as np
 
 
@@ -59,8 +58,9 @@ class AdditionalFilterAttribute(FilterAttribute):
 
 
 class DisplayNameProperty(StringProperty):
-    pass
-    # def set_value(self, obj, val):
+    def set_value(self, obj, val):
+        # name property is read-only
+        return
     #     if obj.parent is not None:
     #         obj.parent._rename_output(obj, val)
     #     else:
@@ -78,7 +78,7 @@ class AssistedDesignProperty(BoolProperty):
     #    module._widget.set_assisted_design(module.assisted_design)
 
 
-class AnalogFilterProperty(ListFloatProperty):
+class AnalogFilterProperty(FloatProperty): #ListFloatProperty):
     def set_value(self, obj, val):
         super(AnalogFilterProperty, self).set_value(obj, val)
         obj.assisted_gain_updated()
@@ -134,13 +134,11 @@ class OutputSignal(Signal):
         function behind the output.
       - tf_filter: alternatively, the analog transfer function can be specified
         by a filter (4 cut-off frequencies).
-      - unity_gain_desired: desired value for unity gain frequency.
+      - desired_unity_gain_frequency: desired value for unity gain frequency.
       - tf_type: ["flat", "curve", "filter"], how is the analog transfer
         function specified.
     """
-    _section_name = 'output'
-    _gui_attributes = [# 'unit',
-    #                  'name',
+    _gui_attributes = ['unit',
                       'is_sweepable',
                       'sweep_amplitude',
                       'sweep_offset',
@@ -151,37 +149,40 @@ class OutputSignal(Signal):
                       'p',
                       'i',
                       'additional_filter',
-                      'analog_filter',
+                      'analog_filter_cutoff',
                       'extra_module',
                       'extra_module_state',
-                      'unity_gain_desired']
-                      #'tf_curve']
+                      'desired_unity_gain_frequency']
+
     _setup_attributes = _gui_attributes + ['assisted_design', 'tf_curve',
                                            'tf_type']
 
     _widget_class = OutputSignalWidget
-    #name = DisplayNameProperty(default='output')
-    # unit = SelectProperty(options=[])
+
     # options are updated each time the lockbox model is changed.
-    is_sweepable = BoolProperty()
-    assisted_design = AssistedDesignProperty()
+
+    # main attributes
+    dc_gain = FloatProperty(default=1.0, min=-1e10, max=1e10)
+    output_channel = SelectProperty(options=['out1', 'out2',
+                                             'pwm0', 'pwm1'])
+    unit = SelectProperty(default='V/V', options=lambda inst: [u+"/V" for u in inst.lockbox._units])
+
+    is_sweepable = BoolProperty(default=True)
+    assisted_design = AssistedDesignProperty(default=True)
     sweep_amplitude = FloatProperty(default=1.)
     sweep_offset = FloatProperty()
     sweep_frequency = FrequencyProperty(default=50)
     sweep_waveform = SelectProperty(options=Asg1.waveforms)
     # gain for the conversion V-->model variable in *unit*
-    dc_gain = FloatProperty(default=1.0, min=-1e10, max=1e10)
-    output_channel = SelectProperty(options=['out1', 'out2',
-                                             'pwm0', 'pwm1'])
     p = GainProperty(min=-1e10, max=1e10)
     i = GainProperty(min=-1e10, max=1e10)
-    analog_filter = AnalogFilterProperty()
+    analog_filter_cutoff = AnalogFilterProperty(default=0)
     additional_filter = AdditionalFilterAttribute()
     extra_module = SelectProperty(['None', 'iir', 'pid', 'iq'])
     extra_module_state = SelectProperty(options=["None"])
-    tf_type = TfTypeProperty(["flat", "filter", "curve"])
+    tf_type = TfTypeProperty(["flat", "filter", "curve"], default="filter")
     # tf_filter = CustomFilterRegister()
-    unity_gain_desired = UnityGainProperty()
+    desired_unity_gain_frequency = UnityGainProperty(default=100.0)
     tf_curve = TfCurveProperty()
     mode = SelectProperty(options=["unlock", "sweep", "lock"])
 
@@ -194,15 +195,6 @@ class OutputSignal(Signal):
         self.current_variable_value = 0
         self.current_variable_slope = 0
 
-    #@property
-    #def c(self):
-    #    # outputs are in extra section 'outputs' for better visibility
-    #    return super(OutputSignal, self).c._get_or_create('outputs.' + self.name)
-
-            #   @property
- #   def id(self): # it would be more convenient to compute name from output, but class attribute name can't be a
- #                 # property since it used to define the save section
- #       return int(self.name.strip('output'))
     def update_pid_gains(self, input, variable_value, factor=1.):
         """
         If current mode is "lock", updates the gains of the underlying pid module such that:
@@ -223,22 +215,13 @@ class OutputSignal(Signal):
 
     def assisted_gain_updated(self):
         if self.assisted_design:
-            filter = sorted(self.analog_filter)
-            if filter[0] < 0:
-                raise NotImplementedError("High pass filters are not handled "
-                                          "currently in assisted design.")
-            if filter[2] != 0:
-                raise NotImplementedError("Only first order low-pass filter "
-                                          "are currently handled in assisted "
-                                          "design (derivators are currently "
-                                          "disabled). Consider using iir "
-                                          "module")
-            if filter[3] == 0:
-                self.i = self.unity_gain_desired
+            filter = self.analog_filter_cutoff
+            if filter == 0:
+                self.i = self.desired_unity_gain_frequency
                 self.p = 0
             else:
-                self.i = self.unity_gain_desired
-                self.p = self.i / filter[3]
+                self.i = self.desired_unity_gain_frequency
+                self.p = self.i / filter
 
     def transfer_function(self, freqs):
         """
@@ -247,8 +230,7 @@ class OutputSignal(Signal):
         analog_tf = np.ones(len(freqs), dtype=complex)
         if self.tf_type == 'filter':
             # use logic implemented in PID to simulate analog filters
-            analog_tf = Pid._filter_transfer_function(freqs,
-                                                      self.analog_filter)
+            analog_tf = Pid._filter_transfer_function(freqs, self.analog_filter_cutoff)
         if self.tf_type == 'curve':
             curve = CurveDB.get(self.tf_curve)
             x = curve.data.index
@@ -356,11 +338,12 @@ class OutputSignal(Signal):
                 "Selected output_channel '%s' is not implemented"
                 % self.output_channel)
 
-    def clear(self):
+    def _clear(self):
         """
         Free up resources associated with the output
         """
         self.pyrpl.pids.free(self.pid)
+        super(OutputSignal, self)._clear()
 
     def set_ival(self, val):
         """

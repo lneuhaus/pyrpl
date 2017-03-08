@@ -58,7 +58,7 @@ defaultparameters = dict(
 
 class RedPitaya(object):
     cls_modules = [rp.HK, rp.AMS, rp.Scope, rp.Sampler, rp.Asg0, rp.Asg1] + \
-                  [rp.AuxOutput]*2 + [rp.IQ]*3 + [rp.Pid]*4 + [rp.IIR]
+                  [rp.Pwm]*2 + [rp.Iq] * 3 + [rp.Pid] * 4 + [rp.IIR]
 
     def __init__(self, config=None,  # configfile is needed to store parameters. None simulates one
                  **kwargs):
@@ -147,7 +147,7 @@ class RedPitaya(object):
                           " directory of pyrpl! Current dirname: "
                            +self.parameters['dirname'])
         # provide option to simulate a RedPitaya
-        if self.parameters['hostname'] == '_DUMMY_':
+        if self.parameters['hostname'] == '_FAKE_REDPITAYA_':
             self.startdummyclient()
             self.logger.warning("Simulating RedPitaya because (hostname=="
                                 +self.parameters["hostname"]+"). Incomplete "
@@ -176,9 +176,9 @@ class RedPitaya(object):
             self.end_ssh()
         except:
             pass
-        if self.parameters['hostname'] == "unavailable":
+        if self.parameters['hostname'] == "_FAKE_REDPITAYA_":
             # simulation mode - start without connecting
-            self.logger.warning("Starting client in dummy mode...")
+            self.logger.warning("(Re-)starting client in dummy mode...")
             self.startdummyclient()
             return True
         else:  # normal mode - establish ssh connection and
@@ -409,7 +409,6 @@ class RedPitaya(object):
     def startdummyclient(self):
         self.client = monitor_client.DummyClient()
         self.makemodules()
-        self.logger.warning("Dummy mode started...")
 
     def makemodule(self, name, cls):
         module = cls(self, name)

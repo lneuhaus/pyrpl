@@ -1,8 +1,8 @@
-from ..modules import SoftwareModule
-from .module_managers import AsgManager, IqManager, PidManager, ScopeManager, IirManager
+from ..modules import Module
+from .module_managers import Asgs, Iqs, Pids, Scopes, Iirs
 from .network_analyzer import NetworkAnalyzer
 from .spectrum_analyzer import SpectrumAnalyzer
-from .lockbox import Lockbox
+from .lockbox import *
 
 
 def all_subclasses(cls):
@@ -18,7 +18,7 @@ def get_software_module(name):
     """
     Returns the subclass of SoftwareModule named name (if exists, otherwise None)
     """
-    subclasses = all_subclasses(SoftwareModule)
+    subclasses = all_subclasses(Module)
     for cls in subclasses:
         if cls.__name__ == name:
             return cls
