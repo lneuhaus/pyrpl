@@ -429,6 +429,7 @@ class LockboxInputWidget(ModuleWidget):
         y = input.expected_signal(input.plot_range)
         self.show_graph(input.plot_range, y)
 
+
 class InputsWidget(QtGui.QWidget):
     """
     A widget to represent all input signals on the same tab
@@ -647,7 +648,7 @@ class LockboxSequenceWidget(ModuleWidget):
         self.button_add = QtGui.QPushButton('+')
         self.button_add.setSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Expanding)
         self.button_add.setMinimumHeight(60)
-        for stage in self.module.stages:
+        for stage in self.module:
             self.add_stage(stage)
         self.button_add.clicked.connect(self.module.add_stage)
         self.main_layout.addWidget(self.button_add)
@@ -705,7 +706,7 @@ class LockboxWidget(ModuleWidget):
         #self.button_hide.setMaximumWidth(150)
         self.button_hide.clicked.connect(self.button_hide_clicked)
         self.main_layout.addWidget(self.button_hide)
-        #self.sequence_widget = self.module._sequence.create_widget()
+        #self.sequence_widget = self.module.sequence._create_widget()
         #self.main_layout.addWidget(self.sequence_widget)
         self.main_layout.addStretch(5)
         self.setLayout(self.main_layout)

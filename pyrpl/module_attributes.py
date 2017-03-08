@@ -25,16 +25,17 @@ class ModuleProperty(ModuleAttribute, BaseProperty):
         getattr(obj, self.name).setup_attributes = val
         return val
 
+    def get_value(self, obj, obj_type):
+        if not hasattr(obj, '_' + self.name):
+            # getter must manage the instantiation of default value
+            setattr(obj, '_' + self.name, self.module_cls(obj, name=self.name))
+        return getattr(obj, '_' + self.name)
+
 
 class ModuleList(Module, list):
     """ a list of modules"""
     def __init__(self, parent, name=None, element_cls=Module, default=[]):
         super(ModuleList, self).__init__(parent, name=name)
-        # initialize config file dictionary with a list
-        try:
-            self.parent.c[self.name]
-        except KeyError:
-            self.parent.c[self.name] = default
         def number(element_self):
             """ function that is used to dynamically assign each
             ModuleListElement's name to the index in the list.
@@ -49,7 +50,9 @@ class ModuleList(Module, list):
         self.element_cls = type(element_cls.__name__ + "ListElement",
                                 (element_cls, ),
                                 {'name': property(fget=number),
-                                 'number': property(fget=number)})
+                                 'number': property(fget=number)
+                                })
+        self._widget_class = self.element_cls._widget_class
         # set to default setting
         self.extend(default)
 
@@ -66,6 +69,8 @@ class ModuleList(Module, list):
         to_add.setup_attributes = new
         # insert into list
         super(ModuleList, self).insert(index, to_add)
+        # make sure config file is up to date
+        self.setup_attributes = self.setup_attributes
 
     def append(self, new):
         self.insert(-1, new)
@@ -79,6 +84,8 @@ class ModuleList(Module, list):
         to_delete = super(ModuleList, self).pop(index)
         # call destructor
         to_delete._clear()
+        # make sure config file is up to date
+        self.setup_attributes = self.setup_attributes
 
     def pop(self, index=-1):
         # get attributes
@@ -111,7 +118,7 @@ class ModuleListProperty(ModuleProperty):
     """
     A property for a list of submodules.
     """
-    default = [{}]
+    default = []
     module_cls = ModuleList
 
     def __init__(self, element_cls, default=None, doc="", ignore_errors=False):

@@ -98,8 +98,7 @@ class BaseAttribute(object):
         if module._autosave_active:  # (for module, when module is slaved, don't save attributes)
             if self.name in module._setup_attributes:
                     self.save_attribute(module, value)
-        if self.name in module._callback_attributes: # _setup should ne
-            # triggered...
+        if self.name in module._callback_attributes: # _setup should be triggered...
             if module._callback_active: # unless a bunch of attributes are being changed together.
                 module._callback()
         return value

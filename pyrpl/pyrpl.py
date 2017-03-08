@@ -88,9 +88,9 @@ class Pyrpl(object):
         self.widgets = [] # placeholder for widgets
         # ...initializing remaining hardware modules
         for module in self.hardware_modules:  # setup hardware modules with config file keys
-            if module.owner is None: # (only modules that are not slaved by software modules)
+            if module.owner is None:  # (only modules that are not slaved by software modules)
                 try:
-                    module._load_setup_attributes() # **self.c[module.name])
+                    module._load_setup_attributes()  # **self.c[module.name])
                 except BaseException as e:
                     self.logger.error('Something went wrong when loading attributes of hardware module "%s"',
                                       module.name)

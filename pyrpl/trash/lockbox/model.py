@@ -54,7 +54,7 @@ class Model(object):
         """ sets up all signals """
         for signal in self.signals.values():
             try:
-                params = signal._config.setup._dict
+                params = signal._config.setup._data
             except KeyError:
                 params = dict()
             try:

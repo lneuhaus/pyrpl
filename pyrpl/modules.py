@@ -331,12 +331,9 @@ class Module(with_metaclass(ModuleMetaClass, object)):
         self.parent = parent
         # disable autosave during initialization
         self._autosave_active = False
-        # instantiate submodules (submodule has preceeding underscore, SubmoduleProperty does not)
+        # instantiate modules associated with _module_attribute by calling their getter
         for submodule in self._module_attributes:
-            submodule_cls = getattr(self.__class__, submodule)
-            setattr(self,
-                    '_' + submodule,
-                    getattr(self.__class__, submodule).module_cls(self, name=submodule))
+            getattr(self, submodule)
         # custom module initialization hook
         self._init_module()
 
@@ -448,7 +445,7 @@ class Module(with_metaclass(ModuleMetaClass, object)):
         """
         if self.c is not None:  # self.c = None switches off loading states (e.g. for ModuleManagers)
             # pick those elements of the config state that are setup_attributes
-            dic = {k: v for k, v in self.c._dict.items() if k in self._setup_attributes}
+            dic = {k: v for k, v in self.c._data.items() if k in self._setup_attributes}
             # set those elements
             self.setup_attributes = dic
 
@@ -475,21 +472,27 @@ class Module(with_metaclass(ModuleMetaClass, object)):
         """
         return list(self._states._keys())
 
-    def save_state(self, name):
+    def save_state(self, name = None):
         """
         Saves the current state under the name "name" in the config file. If
         state_section is left unchanged, uses the normal
         class_section.states convention.
         """
-        self._states[name] = self.setup_attributes
+        if name is None:
+            self.c = self.setup_attributes
+        else:
+            self._states[name] = self.setup_attributes
 
-    def load_state(self, name):
+    def load_state(self, name = None):
         """
         Loads the state with name "name" from the config file. If
         state_branch is left unchanged, uses the normal
         class_section.states convention.
         """
-        self.setup_attributes = self._states[name]._dict
+        if name is None:
+            self.setup_attributes = self.c._data
+        else:
+            self.setup_attributes = self._states[name]._data
 
     def erase_state(self, name):
         """
@@ -534,10 +537,10 @@ class Module(with_metaclass(ModuleMetaClass, object)):
         :param  attributes: extra curve parameters (such as relevant module
         settings)
         """
-        c = self._curve_class.create(x_values,
+        curve = self._curve_class.create(x_values,
                                      y_values,
                                      **attributes)
-        return c
+        return curve
 
     def free(self):
         """

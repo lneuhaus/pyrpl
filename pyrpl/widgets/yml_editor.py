@@ -14,7 +14,7 @@ class YmlEditor(QtGui.QWidget):
         self.editor = QtGui.QTextEdit()
         self.button_cancel = QtGui.QPushButton("Cancel without saving")
         self.button_cancel.clicked.connect(self.cancel)
-        self.button_refresh = QtGui.QPushButton("Load from file (refresh)")
+        self.button_refresh = QtGui.QPushButton("Load data from config file")
         self.button_refresh.clicked.connect(self.refresh)
         self.button_load_all = QtGui.QPushButton("Load all current attributes from memory")
         self.button_load_all.clicked.connect(self.load_all)
