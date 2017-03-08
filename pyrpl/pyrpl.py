@@ -96,6 +96,9 @@ class Pyrpl(object):
                                       module.name)
         # create software modules...
         self.load_software_modules()
+        # load setup attributes
+        for m in self.modules:
+            m._load_setup_attributes()
         # make the gui if applicable
         if self.c.pyrpl.gui:
             widget = self._create_widget()

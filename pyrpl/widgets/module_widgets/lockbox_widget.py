@@ -364,7 +364,7 @@ class OutputSignalWidget(ModuleWidget):
 
         self.plotbox = QtGui.QGroupBox(self)
         self.plotbox.layout = QtGui.QVBoxLayout(self.plotbox)
-        self.plotbox.setTitle("Complete open-loop transfer function")
+        self.plotbox.setTitle("Complete open-loop transfer function (V/V)")
         self.plotbox.layout.addWidget(self.win)
         self.plotbox.layout.addWidget(self.win_phase)
         self.main_layout.addWidget(self.plotbox)

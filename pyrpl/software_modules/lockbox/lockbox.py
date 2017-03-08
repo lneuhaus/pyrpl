@@ -116,12 +116,12 @@ class Lockbox(LockboxModule):
     """
     _widget_class = LockboxWidget
     _signal_launcher = SignalLauncherLockbox
-    _setup_attributes = ["classname",
+    _gui_attributes = ["classname",
                          "default_sweep_output",
                          "auto_lock",
                          "auto_lock_interval",
                          "error_threshold"]
-    _gui_attributes = _setup_attributes
+    _setup_attributes = _gui_attributes + ["inputs", "outputs", "stages"]
 
     classname = ClassnameProperty()
     parameter_name = "parameter"

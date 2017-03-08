@@ -391,6 +391,10 @@ class MemoryBranch(object):
             # instantiate a new list - odd way because we must
             self._parent._data[self._branch] = []
             return self
+        elif isinstance(name, int):
+            # if index <= len, creation is done automatically if needed
+            # otherwise an error is raised
+            return self[name]
         else:
             currentbranch = self
             for subbranchname in name.split("."):

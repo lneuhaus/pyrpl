@@ -35,12 +35,7 @@ class ModuleList(Module, list):
             self.parent.c[self.name]
         except KeyError:
             self.parent.c[self.name] = default
-        #self.element_cls = element_cls
-
-        #name = property(fget=(lambda sel: sel.parent.index(sel))))
-        # name = self.element_cls.__name__.lower())
-
-        def name_from_number(element_self):
+        def number(element_self):
             """ function that is used to dynamically assign each
             ModuleListElement's name to the index in the list.
             This is needed for proper storage in the config file"""
@@ -48,14 +43,18 @@ class ModuleList(Module, list):
                 return element_self.parent.index(element_self)
             except ValueError:
                 return len(element_self.parent)
+        # element.number will return the index of the element in the list
+        # element.name equals element.number in order to get the right config
+        # file section
         self.element_cls = type(element_cls.__name__ + "ListElement",
                                 (element_cls, ),
-                                {'name': property(fget=name_from_number)})
+                                {'name': property(fget=number),
+                                 'number': property(fget=number)})
+        # set to default setting
         self.extend(default)
 
     # all read-only methods from the base class 'list' work perfectly well for us, i.e.
     # __getitem__, count(), index(), reverse()
-
     def __setitem__(self, index, value):
         # setting a list element sets up the corresponding module
         self[index].setup_attributes = value
