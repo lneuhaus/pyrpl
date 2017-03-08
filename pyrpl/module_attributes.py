@@ -66,7 +66,7 @@ class ModuleList(Module, list):
         self[index].setup_attributes = value
 
     def insert(self, index, new):
-        # make new module
+        # make new module (name has been by property in element_cls)
         to_add = self.element_cls(self)
         # initialize setup_attributes
         to_add.setup_attributes = new

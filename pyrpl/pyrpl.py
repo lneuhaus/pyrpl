@@ -81,8 +81,7 @@ class Pyrpl(object):
             pyrpl_utils.setloglevel(level=self.c.pyrpl.loglevel,
                                 loggername='pyrpl')
         # initialize RedPitaya object with the configured or default parameters
-        if not 'redpitaya' in self.c._keys():
-            self.c['redpitaya'] = dict()
+        self.c._get_or_create('redpitaya')
         self.c.redpitaya._update(kwargs)
         self.rp = RedPitaya(config=self.c)
         self.widgets = [] # placeholder for widgets
