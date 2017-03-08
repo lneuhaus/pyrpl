@@ -110,25 +110,6 @@ class SpanFilterProperty(FilterProperty):
             return val
 
 
-class SignalLauncherSpectrumAnalyzer(SignalLauncher):
-    """ class that takes care of emitting signals to update all possible
-    specan displays """
-    #_max_refresh_rate = 25
-
-    #update_display = QtCore.pyqtSignal()
-    #autoscale_display = QtCore.pyqtSignal()
-
-
-    def connect_widget(self, widget):
-        """
-        In addition to connecting the module to the widget, also connect the
-        acquisition manager. (At some point, we should make a separation
-        between module widget and acquisition manager widget).
-        """
-        super(SignalLauncherSpectrumAnalyzer, self).connect_widget(widget)
-        self.module.run._signal_launcher.connect_widget(widget)
-
-
 class SAAcquisitionManager(AcquisitionManager):
     def _init_module(self):
         super(SAAcquisitionManager, self)._init_module()
@@ -227,7 +208,7 @@ class SpectrumAnalyzer(AcquisitionModule, SoftwareModule):
     input = SelectProperty(options=inputs)
     acbandwidth = SpecAnAcBandwidth()
 
-    _signal_launcher = SignalLauncherSpectrumAnalyzer
+    # _signal_launcher = SignalLauncherSpectrumAnalyzer
 
     # functions
     def _init_module(self):
@@ -250,13 +231,6 @@ class SpectrumAnalyzer(AcquisitionModule, SoftwareModule):
         return self._iq
 
     iq_quadraturesignal = 'iq2_2'
-
-    def _callback(self):
-        """
-        When a setup_attribute is touched, stop acquisition
-        :return:
-        """
-        self.run.stop()
 
     @property
     def data_length(self):

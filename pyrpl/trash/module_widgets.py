@@ -565,7 +565,7 @@ class NaWidget(ModuleWidget):
 
             # draw arrow
             cur = self.module.current_point - 1
-            visible = self.module.last_valid_point != cur + 1
+            visible = self.module.run.last_valid_point != cur + 1
             logscale = self.module.logscale
             freq = self.module.x[cur]
             xpos = np.log10(freq) if logscale else freq
@@ -594,10 +594,14 @@ class NaWidget(ModuleWidget):
             chunk.setLogMode(xMode=log_mod, yMode=None)
             chunk_phase.setLogMode(xMode=log_mod, yMode=None)
 
-        sl = slice(max(0, 50 * chunk_index - 1), min(50 * (chunk_index + 1), self.module.last_valid_point), 1) # make sure there is an overlap between slices
+        sl = slice(max(0, 50 * chunk_index - 1),
+                   min(50 * (chunk_index + 1),
+                   self.module.run.last_valid_point),
+                   1) # make sure there is an overlap between slices
         data = self.module.y_averaged[sl]
         self.chunks[chunk_index].setData(self.module.x[sl], np.abs(data))
-        self.chunks_phase[chunk_index].setData(self.module.x[sl], 180./np.pi*np.angle(data))
+        self.chunks_phase[chunk_index].setData(self.module.x[sl],
+                                               180./np.pi*np.angle(data))
 
 
     def run_continuous_clicked(self):
@@ -668,48 +672,6 @@ class NaWidget(ModuleWidget):
         Going to stop will impose a setup_average before next run.
         """
         self.module.stop()
-
-    def update_plot_obsolete(self):
-        """
-        Update plot only every 10 ms max...
-
-        Returns
-        -------
-        """
-        # plot_time_start = time()
-        x = self.x[:self.last_valid_point]
-        y = self.data[:self.last_valid_point]
-
-        # check if we shall display open loop tf
-        if self.module.infer_open_loop_tf:
-            y = y / (1.0 + y)
-        mag = 20 * np.log10(np.abs(y))
-        phase = np.angle(y, deg=True)
-        log_mod = self.module.logscale
-        self.curve.setLogMode(xMode=log_mod, yMode=None)
-        self.curve_phase.setLogMode(xMode=log_mod, yMode=None)
-
-        self.plot_item.setLogMode(x=log_mod, y=None) # this seems also needed
-        self.plot_item_phase.setLogMode(x=log_mod, y=None)
-
-        self.curve.setData(x, mag)
-        self.curve_phase.setData(x, phase)
-
-        cur = self.module.current_point - 1
-        visible = self.last_valid_point!=cur + 1
-        logscale = self.module.logscale
-        freq = x[cur]
-        xpos = np.log10(freq) if logscale else freq
-        if cur>0:
-            self.arrow.setPos(xpos, mag[cur])
-            self.arrow.setVisible(visible)
-            self.arrow_phase.setPos(xpos, phase[cur])
-            self.arrow_phase.setVisible(visible)
-        # plot_time = time() - plot_time_start # actually not working, because done later
-        # self.update_timer.setInterval(plot_time*10*1000) # make sure plotting
-        # is only marginally slowing
-        # down the measurement...
-        self.update_timer.setInterval(self.last_valid_point / 100)
 
 
 class MyGraphicsWindow(pg.GraphicsWindow):
