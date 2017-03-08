@@ -31,16 +31,26 @@ class ModuleList(Module, list):
     def __init__(self, parent, name=None, element_cls=Module, default=[]):
         super(ModuleList, self).__init__(parent, name=name)
         # initialize config file dictionary with a list
-        #if len(self.c.) == 0:
-        self.parent.c[self.name] = default
+        try:
+            self.parent.c[self.name]
+        except KeyError:
+            self.parent.c[self.name] = default
+        #self.element_cls = element_cls
 
+        #name = property(fget=(lambda sel: sel.parent.index(sel))))
+        # name = self.element_cls.__name__.lower())
+
+        def name_from_number(element_self):
+            """ function that is used to dynamically assign each
+            ModuleListElement's name to the index in the list.
+            This is needed for proper storage in the config file"""
+            try:
+                return element_self.parent.index(element_self)
+            except ValueError:
+                return len(element_self.parent)
         self.element_cls = type(element_cls.__name__ + "ListElement",
-                                [element_cls],
-                                {'c': property(fget=lambda self: None)})
-
-        # element_cls must be slightly modified for proper saving
-        #ikm self.element_cls.c = property(fget = (lambda sel: sel.parent.c[sel.parent.index(sel)]))
-        #fset = (lambda self, v: self.parent.c[self.parent.index(self)] = v))
+                                (element_cls, ),
+                                {'name': property(fget=name_from_number)})
         self.extend(default)
 
     # all read-only methods from the base class 'list' work perfectly well for us, i.e.
@@ -52,7 +62,7 @@ class ModuleList(Module, list):
 
     def insert(self, index, new):
         # make new module
-        to_add = self.element_cls(self, name=self.element_cls.__name__.lower())
+        to_add = self.element_cls(self)
         # initialize setup_attributes
         to_add.setup_attributes = new
         # insert into list

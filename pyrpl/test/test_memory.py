@@ -24,7 +24,8 @@ class TestMemory(object):
         os.remove(mt._filename)
 
     def test_usage(self):
-        m = MemoryTree(filename='test')
+        filename = 'test2'
+        m = MemoryTree(filename)
         m.a = 1
         assert not isinstance(m.a, MemoryBranch)
         m.b = {}
@@ -47,6 +48,19 @@ class TestMemory(object):
         m.d = dict(e=1,
                    f=dict(g=[0, dict(h=[0,99,98]),{}]))
         assert m.d.f.g[1].h[2]==98
+        assert isinstance(m.d.f.g[1].h, MemoryBranch)
+        # list addition
+        m.x = [1.2]
+        assert (m.x+[2.1]) == [1.2, 2.1]
+        assert ([3.2]+m.x) == [3.2, 1.2]
+        # list addition with strings - used to be a source of bugs
+        m.l = ['memory']
+        assert (m.l+['list']) == ["memory", "list"]
+        assert (['list']+m.l) == ["list", "memory"]
+        # read from saved file
+        m._save_now()
+        m2 = MemoryTree(m._filename)
+        assert m.d.f.g[1].h[2] == 98
         assert isinstance(m.d.f.g[1].h, MemoryBranch)
         # save and delete file
         m._save_now()

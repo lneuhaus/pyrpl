@@ -239,17 +239,22 @@ class MemoryBranch(object):
         """ The raw data (OrderedDict) or Mapping of the branch """
         return self._parent._data[self._branch]
 
+    # # in comments to avoid accidental abuse
+    # @_data.setter
+    # def _data(self, value):
+    #     return self._parent._data[self._branch] = value
+
     @property
     def _dict(self):
         """ return a dict containing the memory branch data"""
-        d = OrderedDict()
-        for defaultdict in reversed(self._defaults):
-            d.update(defaultdict._dict)
-        try:
+        if isinstance(self._data, list):
+            return OrderedDict([(i, v) for i, v in enumerate(self._data)])
+        else:
+            d = OrderedDict()
+            for defaultdict in reversed(self._defaults):
+                d.update(defaultdict._dict)
             d.update(self._data)
-        except TypeError:  # happens when _data is a list
-            pass
-        return d
+            return d
 
     def _keys(self):
         if isinstance(self._data, list):
@@ -379,17 +384,22 @@ class MemoryBranch(object):
         return branch
 
     def _get_or_create(self, name):
-        """ creates a new subbranch with name=name it it does not exist already and returns it. If name is a branch
+        """ creates a new subbranch with name=name if it does not exist already and returns it. If name is a branch
         hierarchy such as "subbranch1.subbranch2.subbranch3", all three subbranch levels are created """
         # chop name into parts and iterate through them
-        currentbranch = self
-        for subbranchname in name.split("."):
-            # make new branch if applicable
-            if subbranchname not in currentbranch._data.keys():
-                currentbranch[subbranchname] = dict()
-            # move into new branch in case another subbranch will be created
-            currentbranch = currentbranch[subbranchname]
-        return currentbranch
+        if name == 0 and len(self) == 0:
+            # instantiate a new list - odd way because we must
+            self._parent._data[self._branch] = []
+            return self
+        else:
+            currentbranch = self
+            for subbranchname in name.split("."):
+                # make new branch if applicable
+                if subbranchname not in currentbranch._data.keys():
+                    currentbranch[subbranchname] = dict()
+                # move into new branch in case another subbranch will be created
+                currentbranch = currentbranch[subbranchname]
+            return currentbranch
 
     def _erase(self):
         """
@@ -449,6 +459,17 @@ class MemoryBranch(object):
 
     def __repr__(self):
         return "MemoryBranch(" + str(self._keys()) + ")"
+
+    # make it possible to add list-like memory tree to a list
+    def __add__(self, other):
+        if not isinstance(self._data, list):
+            raise NotImplementedError
+        return self._data + other
+
+    def __radd__(self, other):
+        if not isinstance(self._data, list):
+            raise NotImplementedError
+        return other + self._data
 
 
 class MemoryTree(MemoryBranch):

@@ -140,8 +140,7 @@ class MainOutputProperties(QtGui.QGroupBox):
         # self.v2.addWidget(aws["tf_type"])
         self.button_tf = AnalogTfSpec(self)
         self.v2.addWidget(self.button_tf)
-
-#        aws['tf_curve'].hide()
+        # aws['tf_curve'].hide()
         self.setTitle('Main settings')
         for v in self.v1, self.v2:
             v.setSpacing(9)
@@ -363,8 +362,12 @@ class OutputSignalWidget(ModuleWidget):
         self.curve.setLogMode(xMode=True, yMode=True)
         self.curve_phase.setLogMode(xMode=True, yMode=None)
 
-        self.main_layout.addWidget(self.win)
-        self.main_layout.addWidget(self.win_phase)
+        self.plotbox = QtGui.QGroupBox(self)
+        self.plotbox.layout = QtGui.QVBoxLayout(self.plotbox)
+        self.plotbox.setTitle("Complete open-loop transfer function")
+        self.plotbox.layout.addWidget(self.win)
+        self.plotbox.layout.addWidget(self.win_phase)
+        self.main_layout.addWidget(self.plotbox)
         self.update_transfer_function()
 
     def update_transfer_function(self):
