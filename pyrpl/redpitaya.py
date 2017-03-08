@@ -119,7 +119,7 @@ class RedPitaya(object):
                                         +"if this is not desired!", k, oldvalue,
                                         k.upper(), newvalue)
         try:
-            self.parameters.update(self.c.redpitaya._dict)  # from config file
+            self.parameters.update(self.c.redpitaya._data)  # from config file
         except:
             pass
         self.parameters.update(kwargs)  # from class initialisation

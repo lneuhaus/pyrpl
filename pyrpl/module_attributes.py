@@ -49,7 +49,9 @@ class ModuleList(Module, list):
         self.element_cls = type(element_cls.__name__ + "ListElement",
                                 (element_cls, ),
                                 {'name': property(fget=number),
-                                 'number': property(fget=number)})
+                                 'number': property(fget=number)
+                                })
+        self._widget_class = self.element_cls._widget_class
         # set to default setting
         self.extend(default)
 
@@ -66,6 +68,8 @@ class ModuleList(Module, list):
         to_add.setup_attributes = new
         # insert into list
         super(ModuleList, self).insert(index, to_add)
+        # make sure config file is up to date
+        self.setup_attributes = self.setup_attributes
 
     def append(self, new):
         self.insert(-1, new)
@@ -79,6 +83,8 @@ class ModuleList(Module, list):
         to_delete = super(ModuleList, self).pop(index)
         # call destructor
         to_delete._clear()
+        # make sure config file is up to date
+        self.setup_attributes = self.setup_attributes
 
     def pop(self, index=-1):
         # get attributes
@@ -111,7 +117,7 @@ class ModuleListProperty(ModuleProperty):
     """
     A property for a list of submodules.
     """
-    default = [{}]
+    default = []
     module_cls = ModuleList
 
     def __init__(self, element_cls, default=None, doc="", ignore_errors=False):
@@ -130,6 +136,10 @@ class ModuleListProperty(ModuleProperty):
                                     element_cls=self.element_cls,
                                     default=self.default))
         return getattr(obj, '_' + self.name)
+
+    @property
+    def _setup_attributes(self):
+        return range()
 
     def validate_and_normalize(self, value, obj):
         """ ensures that only list-like values are passed to the ModuleProperty """

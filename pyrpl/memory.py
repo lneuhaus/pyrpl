@@ -203,36 +203,21 @@ class MemoryBranch(object):
     If a subbranch or a value is requested but does not exist in the current MemoryTree, a KeyError is raised.
     """
 
-    def __init__(self, parent, branch, defaults=[]):
+    def __init__(self, parent, branch):
         self._parent = parent
         self._branch = branch
-        self._defaults = defaults  # this call also updates __dict__
+        self._update_instance_dict()
 
-    @property
-    def _defaults(self):
-        """ defaults allows to define a list of default branches to fall back
-        upon if the desired key is not found in the current branch """
-        return self.__defaults
-
-    @_defaults.setter
-    def _defaults(self, value):
-        if isinstance(self._data, list):
-            # if _data is list, defaults does not work and is therefore omitted
-            self.__defaults = []
-        else:
-            if not isinstance(value, list):
-                self.__defaults = [value]
-            else:
-                self.__defaults = list(value)
-        # update __dict__ with inherited values from new defaults
-        dict = self._dict
-        for k in self.__dict__.keys():
-            if k not in dict and not k.startswith('_'):
-                self.__dict__.pop(k)
-        for k in dict.keys():
-            # write None since this is only a
-            # placeholder (__getattribute__ is overwritten below)
-            self.__dict__[k] = None
+    def _update_instance_dict(self):
+        data = self._data
+        if isinstance(data, dict):
+            for k in self.__dict__.keys():
+                if k not in data and not k.startswith('_'):
+                    self.__dict__.pop(k)
+            for k in data.keys():
+                # write None since this is only a
+                # placeholder (__getattribute__ is overwritten below)
+                self.__dict__[k] = None
 
     @property
     def _data(self):
@@ -247,8 +232,10 @@ class MemoryBranch(object):
     @property
     def _dict(self):
         """ return a dict containing the memory branch data"""
+        logger.warning("Method _dict is obsolete!!!")
+        return self._data
         if isinstance(self._data, list):
-            return OrderedDict([(i, v) for i, v in enumerate(self._data)])
+            return self._data
         else:
             d = OrderedDict()
             for defaultdict in reversed(self._defaults):
@@ -260,13 +247,12 @@ class MemoryBranch(object):
         if isinstance(self._data, list):
             return range(self.__len__())
         else:
-            return self._dict.keys()
+            return self._data.keys()
 
     def _update(self, new_dict):
+        if isinstance(self._data, list):
+            raise NotImplementedError
         self._data.update(new_dict)
-        # keep auto_completion up to date
-        for k in new_dict:
-            self.__dict__[k] = None
         self._save()
         # keep auto_completion up to date
         for k in new_dict:
@@ -291,33 +277,17 @@ class MemoryBranch(object):
         if isinstance(item, str) and '.' in item:
             item, subitem = item.split('.', 1)
             return self[item][subitem]
-        # otherwise just return what we can find
-        else:
-            try:
-                # read from the data dict
-                attribute = self._data[item]
-            except (KeyError, IndexError) as e:
-                # if not in data, iterate over default branches
-                for defaultbranch in self._defaults:
-                    try:
-                        return defaultbranch[item]
-                    except (KeyError, IndexError):
-                        pass
-                raise e
-            else:
-                # if the object can be expressed as a branch, do so
-                if isbranch(attribute):
-                    return MemoryBranch(self, item)
-                # otherwise return whatever we found in the data dict
-                else:
-                    return attribute
+        else:  # otherwise just return what we can find
+            attribute = self._data[item]  # read from the data dict
+            if isbranch(attribute):  # if the object can be expressed as a branch, do so
+                return MemoryBranch(self, item)
+            else:  # otherwise return whatever we found in the data dict
+                return attribute
 
     def __setattr__(self, name, value):
-        #logger.debug("SETATTR %s %s",  name, value)
         if name.startswith('_'):
             super(MemoryBranch, self).__setattr__(name, value)
-        else:
-            # implemment dot notation
+        else:  # implemment dot notation
             self[name] = value
 
     # creates a new entry, overriding the protection provided by dot notation
@@ -395,7 +365,7 @@ class MemoryBranch(object):
             # if index <= len, creation is done automatically if needed
             # otherwise an error is raised
             return self[name]
-        else:
+        else:  # dict-like subbranch, support several sublevels separated by '.'
             currentbranch = self
             for subbranchname in name.split("."):
                 # make new branch if applicable

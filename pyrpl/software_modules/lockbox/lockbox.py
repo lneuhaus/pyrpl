@@ -9,6 +9,7 @@ from .sequence import Sequence, Stage
 from . import LockboxModule, LockboxModuleContainerProperty
 from collections import OrderedDict
 from PyQt4 import QtCore
+from ...widgets.module_widgets.lockbox_widget import LockboxSequenceWidget, LockboxStageWidget
 
 
 def all_classnames():
@@ -117,11 +118,11 @@ class Lockbox(LockboxModule):
     _widget_class = LockboxWidget
     _signal_launcher = SignalLauncherLockbox
     _gui_attributes = ["classname",
-                         "default_sweep_output",
-                         "auto_lock",
-                         "auto_lock_interval",
-                         "error_threshold"]
-    _setup_attributes = _gui_attributes + ["inputs", "outputs", "stages"]
+                       "default_sweep_output",
+                       "auto_lock",
+                       "auto_lock_interval",
+                       "error_threshold"]
+    _setup_attributes = _gui_attributes + ["inputs", "outputs", "sequence"]
 
     classname = ClassnameProperty()
     parameter_name = "parameter"
@@ -145,7 +146,8 @@ class Lockbox(LockboxModule):
     # sequence attribute used to store the locking sequence
     #sequence = ModuleProperty(Sequence)
 
-    stages = ModuleListProperty(Stage)
+    # Sequence is a list of stage modules. By default the first stage is created
+    sequence = ModuleListProperty(Stage, default=[{}])
     #stages._widget_class = LockboxSequenceWidget
 
     @property

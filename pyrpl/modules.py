@@ -450,7 +450,7 @@ class Module(with_metaclass(ModuleMetaClass, object)):
         """
         if self.c is not None:  # self.c = None switches off loading states (e.g. for ModuleManagers)
             # pick those elements of the config state that are setup_attributes
-            dic = {k: v for k, v in self.c._dict.items() if k in self._setup_attributes}
+            dic = {k: v for k, v in self.c._data.items() if k in self._setup_attributes}
             # set those elements
             self.setup_attributes = dic
 
@@ -491,7 +491,7 @@ class Module(with_metaclass(ModuleMetaClass, object)):
         state_branch is left unchanged, uses the normal
         class_section.states convention.
         """
-        self.setup_attributes = self._states[name]._dict
+        self.setup_attributes = self._states[name]._data
 
     def erase_state(self, name):
         """
