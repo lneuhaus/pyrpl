@@ -28,8 +28,12 @@ class ModuleProperty(ModuleAttribute, BaseProperty):
     def get_value(self, obj, obj_type):
         if not hasattr(obj, '_' + self.name):
             # getter must manage the instantiation of default value
-            setattr(obj, '_' + self.name, self.module_cls(obj, name=self.name))
+            setattr(obj, '_' + self.name,
+                    self._create_module(obj, obj_type))
         return getattr(obj, '_' + self.name)
+
+    def _create_module(self, obj, obj_type):
+        return self.module_cls(obj, name=self.name)
 
 
 class ModuleList(Module, list):
@@ -52,8 +56,6 @@ class ModuleList(Module, list):
                                 {'name': property(fget=number),
                                  'number': property(fget=number)
                                 })
-        # imitate element widget class (arbitrary convention)
-        self._widget_class = self.element_cls._widget_class
         # set to default setting
         self.extend(default)
 
@@ -129,15 +131,16 @@ class ModuleListProperty(ModuleProperty):
                                                  doc=doc,
                                                  ignore_errors=ignore_errors)
 
-    # getter must manage the instantiation of default value
-    def get_value(self, obj, obj_type):
-        if not hasattr(obj, '_' + self.name):
-            setattr(obj, '_' + self.name,
-                    self.module_cls(obj,
+    def _create_module(self, obj, obj_type):
+        newmodule = self.module_cls(obj,
                                     name=self.name,
                                     element_cls=self.element_cls,
-                                    default=self.default))
-        return getattr(obj, '_' + self.name)
+                                    default=self.default)
+        try:
+            newmodule._widget_class = self._widget_class
+        except AttributeError:
+            pass
+        return newmodule
 
     def validate_and_normalize(self, value, obj):
         """ ensures that only list-like values are passed to the ModuleProperty """

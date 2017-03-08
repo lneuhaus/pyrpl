@@ -336,10 +336,8 @@ class Module(with_metaclass(ModuleMetaClass, object)):
             getattr(self, submodule)
         # custom module initialization hook
         self._init_module()
-
         # enable autosave and load last state from config file
         self._autosave_active = True
-
         # Only top level modules should call _load_setup_attributes() since this call propagates
         # through all child modules
         if not isinstance(self.parent, Module):
@@ -580,21 +578,19 @@ class Module(with_metaclass(ModuleMetaClass, object)):
         """
         if self._widget_class is None:
             self._logger.warning("Module %s of type %s is trying to create a widget, but no widget_class is defined!",
-                                 self.name, type(self), )
+                                 self.name, type(self))
             return None
         callback_bkp = self._callback_active
         self._callback_active = False # otherwise, saved values will be
         # overwritten by default gui values
         autosave_bkp = self._autosave_active
-        self._autosave_active = False # otherwise, default gui values will be
-        # saved
+        self._autosave_active = False  # otherwise, default gui values will be saved
         try:
             widget = self._widget_class(self.name, self)
-            #self._widget = self._widget_class(self.name, self)
         finally:
             self._callback_active = callback_bkp
             self._autosave_active = autosave_bkp
-        return widget # self._widget
+        return widget
 
     def _callback(self):
         """

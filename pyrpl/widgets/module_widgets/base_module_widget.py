@@ -120,6 +120,7 @@ class ModuleWidget(QtGui.QGroupBox):
     # register_names = [] # a list of all register name to expose in the gui
 
     def set_title(self, title):
+        title = str(title)
         if hasattr(self, "title_label"): # ModuleManagerWidgets don't have a title_label
             self.title_label.setText(title)
             self.title_label.adjustSize()

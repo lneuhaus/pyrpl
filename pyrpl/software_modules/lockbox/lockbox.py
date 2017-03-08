@@ -143,12 +143,10 @@ class Lockbox(LockboxModule):
     inputs = LockboxModuleContainerProperty(input_from_output=InputFromOutput)
     outputs = LockboxModuleContainerProperty(output1=OutputSignal,
                                              output2=OutputSignal)
-    # sequence attribute used to store the locking sequence
-    #sequence = ModuleProperty(Sequence)
 
     # Sequence is a list of stage modules. By default the first stage is created
     sequence = ModuleListProperty(Stage, default=[{}])
-    #stages._widget_class = LockboxSequenceWidget
+    sequence._widget_class = LockboxSequenceWidget
 
     @property
     def signals(self):
