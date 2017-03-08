@@ -57,8 +57,11 @@ class InputSignal(Signal):
                                           "lockbox sweep")
 
     # input_signal selects the input signal of the module from DSP modules and logical signals of the lockbox
-    input_signal = SelectProperty(options=(lambda instance: DSP_INPUTS.keys() + instance.lockbox.signals.keys()),
-                                  doc="the dsp module or lockbox signal used as input signal")
+    input_signal = SelectProperty(options=(lambda instance:
+                                           list(DSP_INPUTS.keys()) +
+                                           list(
+                                           instance.lockbox.signals.keys())),
+                 doc="the dsp module or lockbox signal used as input signal")
 
     def _input_signal_dsp_module(self):
         """ returns the dsp signal corresponding to input_signal"""
