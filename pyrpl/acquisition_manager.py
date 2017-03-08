@@ -237,7 +237,7 @@ class AcquisitionManager(Module):
 
 
 class AcquisitionModule(Module):
-    run = ModuleProperty(AcquisitionManager)
+    # run = ModuleProperty(AcquisitionManager)
     # to overwrite with appropriate Manager in derived class
     _signal_launcher = SignalLauncherAcquisitionModule
 
@@ -247,8 +247,7 @@ class AcquisitionModule(Module):
         immediately (this behavior is not visible in scope because nothing
         is listed in _callback_attributes).
         """
-        if self.run.running_state in ['running_single', 'running_continuous',
+        if self.run.running_state in ['running_single',
+                                      'running_continuous',
                                       'paused']:
-            print("stopping because callback")
             self.run.stop()
-

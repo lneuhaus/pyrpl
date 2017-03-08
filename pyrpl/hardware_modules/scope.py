@@ -199,7 +199,7 @@ class ScopeAcquisitionManager(AcquisitionManager):
         2/ If so, plots them on the graph
         3/ Restarts the timer.
         """
-        datas = np.zeros((3, len(self._module.times)))
+        datas = np.zeros((2, len(self._module.times)))
         # triggered mode in "single" acquisition, or when rolling mode is off,
         # or when duration is too small
         if self._is_rolling_mode_active() and \
@@ -210,15 +210,15 @@ class ScopeAcquisitionManager(AcquisitionManager):
             # before acquisition
             times = self._module.times  # times
             times -= times[-1]
-            datas[0] = times
+
             for ch, active in (
-            (1, self._module.ch1_active), (2, self._module.ch2_active)):
+            (0, self._module.ch1_active), (1, self._module.ch2_active)):
                 if active:
-                    datas[ch] = self._module._get_ch_no_roll(ch)
+                    datas[ch] = self._module._get_ch_no_roll(ch+1)
             wp1 = self._module._write_pointer_current  # write pointer after
             #  acquisition
-            for index, active in [(1, self._module.ch1_active),
-                                  (2, self._module.ch2_active)]:
+            for index, active in [(0, self._module.ch1_active),
+                                  (1, self._module.ch2_active)]:
                 if active:
                     data = datas[index]
                     to_discard = (
@@ -228,23 +228,25 @@ class ScopeAcquisitionManager(AcquisitionManager):
                            to_discard:]
                     data = np.concatenate([[np.nan] * to_discard, data])
                     datas[index] = data
-            self._emit_signal_by_name('display_curve', list(datas))
+            self.data_x = times
             self.data_current = datas
             # no setup in rolling mode
+            self._emit_signal_by_name('display_curve', [self.data_x,
+                                                        datas])
             self._timer.start()  # restart timer in rolling_mode
         else:  # triggered mode
             if self._module.curve_ready():  # if curve not ready, wait for
                 # next timer iteration
                 datas[0] = self._module.times
                 for ch, active in (
-                (1, self._module.ch1_active), (2, self._module.ch2_active)):
+                (0, self._module.ch1_active), (1, self._module.ch2_active)):
                     if active:
-                        datas[ch] = self._module._get_ch(ch)
-                datas[0] = self._module.times
+                        datas[ch] = self._module._get_ch(ch+1)
+                self.data_x = self._module.times
                 self.data_current = np.array(datas)
                 self._do_average()
                 self._emit_signal_by_name("display_curve",
-                                          list(self.data_avg))
+                                          [self.data_x, self.data_avg])
 
                 if self.running_state == "running_single":
                     if self.current_avg < self.avg:
@@ -270,18 +272,17 @@ class ScopeAcquisitionManager(AcquisitionManager):
             self._setup_rolling_mode()
 
     def _restart_averaging(self):
-        self.data_current = np.zeros((3, len(self._module.times)))
-        self.data_avg = np.zeros((3, len(self._module.times)))
+        self.data_current = np.zeros((2, len(self._module.times)))
+        self.data_avg = np.zeros((2, len(self._module.times)))
         self.current_avg = 0
 
     def _do_average(self):
-        self.data_avg[0] = self.data_current[0]
         self.current_avg += 1
         self.current_avg = min(self.current_avg, self.avg)
-        self.data_avg[[1,2], :] = (self.data_avg[[1,2],
+        self.data_avg[[0, 1], :] = (self.data_avg[[0,1],
                                     :]*(self.current_avg-1)
                                 + \
-                                self.data_current[[1,2], :])/self.current_avg
+                                self.data_current[[0,1], :])/self.current_avg
 
     def save_curve(self):
         """
@@ -290,14 +291,14 @@ class ScopeAcquisitionManager(AcquisitionManager):
         """
         d = self._module.setup_attributes
         curves = [None, None]
-        for ch, active in [(1, self._module.ch1_active),
-                           (2, self._module.ch2_active)]:
+        for ch, active in [(0, self._module.ch1_active),
+                           (1, self._module.ch2_active)]:
             if active:
                 d.update({'ch': ch,
-                          'name': self.curve_name + ' ch' + str(ch)})
-                curves[ch - 1] = self._save_curve(self.data_avg[0],
-                                                  self.data_avg[ch],
-                                                  **d)
+                          'name': self.curve_name + ' ch' + str(ch+1)})
+                curves[ch] = self._save_curve(self.data_x,
+                                              self.data_avg[ch],
+                                              **d)
         return curves
 
 
@@ -306,16 +307,16 @@ class Scope(HardwareModule, AcquisitionModule):
     _widget_class = ScopeWidget
     run = ModuleProperty(ScopeAcquisitionManager)
     _gui_attributes = ["input1",
-                      "input2",
-                      "duration",
-                      "average",
-                      "trigger_source",
-                      "trigger_delay",
-                      "threshold_ch1",
-                      "threshold_ch2",
-                      "ch1_active",
-                      "ch2_active"]
-    _setup_attributes = _gui_attributes + ["run"]
+                       "input2",
+                       "duration",
+                       "average",
+                       "trigger_source",
+                       "trigger_delay",
+                       "threshold_ch1",
+                       "threshold_ch2",
+                       "ch1_active",
+                       "ch2_active"]
+    _setup_attributes = _gui_attributes
     name = 'scope'
     data_length = data_length  # see definition and explanation above
     inputs = None

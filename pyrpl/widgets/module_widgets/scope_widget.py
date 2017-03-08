@@ -187,7 +187,7 @@ class ScopeWidget(ModuleWidget):
         """
         Displays all active channels on the graph.
         """
-        times, ch1, ch2 = list_of_arrays
+        times, (ch1, ch2) = list_of_arrays
         for ch, (data, active) in enumerate([(ch1, self.module.ch1_active),
                                              (ch2, self.module.ch2_active)]):
             if active:

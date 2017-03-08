@@ -12,13 +12,13 @@ APP = QtGui.QApplication.instance()
 
 class TestNA(TestPyrpl):
     def setup(self):
-        self.na = self.pyrpl.na
+        self.na = self.pyrpl.networkanalyzer
 
     def test_na_stopped_at_startup(self):
         """
         This was so hard to detect, I am making a unit test
         """
-        assert(self.na.running_state=='stopped')
+        assert(self.na.run.running_state=='stopped')
 
     def test_na_running_states(self):
         # make sure scope rolling_mode and running states are correctly setup
@@ -29,31 +29,33 @@ class TestNA(TestPyrpl):
         def data_changing():
             time.sleep(0.1)
             APP.processEvents()
-            data = copy.deepcopy(self.na.y_averaged)
+            data = copy.deepcopy(self.na.run.data_avg)
             time.sleep(.3)
-            APP.processEvents()
-            return (data != self.na.y_averaged).any()
 
+            for i in range(1000):
+                APP.processEvents()
 
+            return (data != self.na.run.data_avg).any()
 
         self.na.setup(start_freq=1000, stop_freq=1e4, rbw=1000, points=10000)
         for i in range(100):
             APP.processEvents()
-        self.na.run_single()
+
+        self.na.run.single()
         assert data_changing()
 
         self.na.rbw = 100  # change some setup_attribute
-        assert self.na.running_state == "stopped"
+        assert self.na.run.running_state == "stopped"
         assert not data_changing()
 
-        self.na.run_continuous()
+        self.na.run.continuous()
         time.sleep(0.1)
         for i in range(100):
             APP.processEvents()
 
 
         assert data_changing()
-        self.na.stop()  # do not let the na running or other tests might be
+        self.na.run.stop()  # do not let the na running or other tests might be
         # screwed-up !!!
 
     # maximum allowed duration to acquire one point without gui
@@ -88,10 +90,10 @@ class TestNA(TestPyrpl):
         #    APP.processEvents() # make sure no old events are going to screw up the timing test
 
         tic = time.time()
-        self.na.run_single()
+        self.na.run.single()
         APP.processEvents()
-        print(self.na.running_state)
-        while(self.na.running_state == 'running_single'):
+        print(self.na.run.running_state)
+        while(self.na.run.running_state == 'running_single'):
             APP.processEvents()
         duration = (time.time() - tic)/self.na.points
 
@@ -143,15 +145,15 @@ class TestNA(TestPyrpl):
                       output_direct="out1",
                       input="out1",
                       amplitude=0.01)
-        self.na.run_continuous()
+        self.na.run.continuous()
         APP.processEvents()
-        self.na.pause()
+        self.na.run.pause()
         APP.processEvents()
         assert self.na.iq.output_direct=='off'
-        self.na.run_continuous()
+        self.na.run.continuous()
         APP.processEvents()
         assert self.na.iq.output_direct=='out1'
-        self.na.stop()
+        self.na.run.stop()
         APP.processEvents()
         assert self.na.iq.output_direct=='off'
 
@@ -178,7 +180,7 @@ class TestNA(TestPyrpl):
                       input="out1",
                       amplitude=0.01,
                       running_state="running_continuous")
-        for i in range(10):
+        for i in range(20):
             sleep(0.01)
             APP.processEvents()
         old = self.pyrpl.c._save_counter
@@ -186,5 +188,5 @@ class TestNA(TestPyrpl):
             sleep(0.01)
             APP.processEvents()
         new = self.pyrpl.c._save_counter
-        self.na.stop()
+        self.na.run.stop()
         assert (old == new), (old, new)

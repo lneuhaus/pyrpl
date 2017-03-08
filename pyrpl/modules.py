@@ -112,6 +112,7 @@ class ModuleMetaClass(type):
                 attr.name = name
         # 1a. prepare _setup_attributes etc.
         _setup_attributes, _gui_attributes, _callback_attributes, _module_attributes = [], [], [], []
+
         for base in reversed(bases):  # append all base class _setup_attributes
             try: _setup_attributes += base._setup_attributes
             except AttributeError: pass

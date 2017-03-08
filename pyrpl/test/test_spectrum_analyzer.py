@@ -13,14 +13,14 @@ class TestClass(TestPyrpl):
         """
         This was so hard to detect, I am making a unit test
         """
-        assert(self.pyrpl.spectrum_analyzer.run.running_state=='stopped')
+        assert(self.pyrpl.spectrumanalyzer.run.running_state=='stopped')
 
     def test_spec_an(self):
         # at this point this test is still highly dubious (nothing is tested
         #  for, really)
         if self.pyrpl is None:
             return
-        sa = self.pyrpl.spectrum_analyzer
+        sa = self.pyrpl.spectrumanalyzer
         asg = self.pyrpl.rp.asg1
         asg.frequency = 1e6
         asg.amplitude = 0.1
@@ -40,7 +40,7 @@ class TestClass(TestPyrpl):
         :return:
         """
 
-        self.pyrpl.spectrum_analyzer.setup_attributes = dict(center=2e5,
+        self.pyrpl.spectrumanalyzer.setup_attributes = dict(center=2e5,
                                            span=1e5,
                                            input="out1",
                                            run=dict(running_state=
@@ -53,5 +53,5 @@ class TestClass(TestPyrpl):
             sleep(0.01)
             APP.processEvents()
         new = self.pyrpl.c._save_counter
-        self.pyrpl.spectrum_analyzer.run.stop()
+        self.pyrpl.spectrumanalyzer.run.stop()
         assert (old == new), (old, new)

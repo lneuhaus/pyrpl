@@ -1,16 +1,12 @@
-import logging
 import sys
 from time import sleep
 
 from ..module_attributes import ModuleProperty
 from ..attributes import FloatProperty, SelectProperty, FrequencyProperty, \
-                         LongProperty, BoolProperty, StringProperty, \
-                         FilterAttribute, ModuleAttribute
+                         LongProperty, BoolProperty, FilterAttribute
 from ..hardware_modules import DspModule
 from ..widgets.module_widgets import NaWidget
 
-from . import Module
-from ..modules import SignalLauncher
 from ..acquisition_manager import SignalLauncherAcquisitionModule, \
     AcquisitionModule, AcquisitionManager
 
@@ -87,11 +83,21 @@ class NAAcquisitionManager(AcquisitionManager):
         For the NA, resuming (from pause to start for instance... should
         not setup the instrument again, otherwise, this would restart at
         the beginning of the curve)
+        Moreover, iq is disabled even when na is just paused.
         :return:
         """
         self._timer.setInterval(
             self._module._time_per_point() * 1000)
         self._timer.start() # No setup needed !!!
+        self._module.iq.output_direct = self._module.output_direct
+
+    def _stop_acquisition(self):
+        """
+        Also stop the iq.
+        :return:
+        """
+        super(NAAcquisitionManager, self)._stop_acquisition()
+        self._module.iq.output_direct = 'off'
 
     @property
     def current_point(self):
@@ -318,8 +324,9 @@ class NetworkAnalyzer(AcquisitionModule):
                  - A triplet containing (x, y , amp) otherwise
         """
         if self.current_point < 0:
-            # if this is a PRETRACE_POINT at the beginning of the trace, disregard the value
-            # get the actual point's (discretized) frequency
+            # if this is a PRETRACE_POINT at the beginning of the trace,
+            #  disregard the value get the actual point's (discretized)
+            # frequency
             return None
         else:
             x = self.x[self.current_point]
@@ -329,13 +336,15 @@ class NetworkAnalyzer(AcquisitionModule):
                 # the iq register...
                 # compute remaining time for acquisition
                 passed_duration = timeit.default_timer() - self.time_last_point
-                #DO NOT USE time.time(). This gets updated only every 1 ms or so.
+                # DO NOT USE time.time().
+                # This gets updated only every 1 ms or so.
                 remaining_duration = self.time_per_point - passed_duration
                 if remaining_duration >= 0.002:
-                    # sleeping in the ms range becomes inaccurate, in this case, we
-                    # will just continuously check if enough time has passed. For
-                    # averaging times longer than 2 ms, a 1 ms error in the sleep
-                    # time is only a 50 % error, but less CPU intensive.
+                    # sleeping in the ms range becomes inaccurate, in this
+                    # case, we will just continuously check if enough time has
+                    #  passed. For averaging times longer than 2 ms, a 1 ms
+                    # error in the sleep time is only a 50 % error, but less
+                    #  CPU intensive.
                     # see http://stackoverflow.com/questions/1133857/how-accurate-is-pythons-time-sleep
                     sleep(remaining_duration)
                 # exit the loop when enough time has passed.
@@ -345,7 +354,8 @@ class NetworkAnalyzer(AcquisitionModule):
             # to remove once we are convinced it's clean...
             if self.current_point < 5:
                 if self.current_point<0:
-                    raise ValueError('current point is: ' + str(self.current_point))
+                    raise ValueError('current point is: ' + str(
+                        self.current_point))
                 self._logger.debug("NA is currently reading point %s",
                                      self.current_point)
             ###################################################
@@ -356,7 +366,8 @@ class NetworkAnalyzer(AcquisitionModule):
                 y *= self._rescale  # avoid division by zero
             else:
                 y *= self._rescale / amp
-            # correct for network analyzer transfer function (AC-filter and delay)
+            # correct for network analyzer transfer function (AC-filter and
+            # delay)
             y /= tf
             return x, y, amp
 
@@ -385,7 +396,7 @@ class NetworkAnalyzer(AcquisitionModule):
             print val
         or individual values can be fetched successively by calling
         values = na.values()
-        val1 = next(values) # avoid values.next() as it doesn't work with python 3
+        val1 = next(values) # avoid values.next() as it doesn't work with py 3
         val2 = next(values)
 
         values are made of a triplet (freq, complex_response, amplitude)
@@ -396,7 +407,9 @@ class NetworkAnalyzer(AcquisitionModule):
                     self._prepare_for_next_point()
                     if result is not None:
                         x, y, amp = result
-                        self.threshold_hook(y)  # call a hook function for the user
+                        self.threshold_hook(y) # call a hook function for
+                        # the user
+
                         # replace frequency axis by time in zerospan mode:
                         if self.start_freq == self.stop_freq:
                             x = timeit.default_timer()

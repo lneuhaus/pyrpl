@@ -27,11 +27,11 @@ class TestScope(TestPyrpl):
         APP.processEvents()
         data = self.r.scope.run.data_current[1]
         time.sleep(0.75)
-        APP.processEvents()
+        for i in range(1000):
+            APP.processEvents()
         time.sleep(0.1)
         return ((data !=
                  self.r.scope.run.data_current[1])[~np.isnan(data)]).any()
-
 
     def test_scope_rolling_mode_and_running_state_update(self):
         """ makes sure scope rolling_mode and running states are correctly
@@ -39,10 +39,11 @@ class TestScope(TestPyrpl):
 
 
         self.r.asg1.frequency = 0
-        self.r.scope.setup(duration=0.5,
+        self.r.scope.setup_attributes = dict(duration=0.5,
                            trigger_source='asg1',
                            trigger_delay=0.,
-                           run=dict(rolling_mode=True),
+                           run=dict(rolling_mode=True,
+                                    running_state="running_continuous"),
                            input1='in1',
                            ch1_active=True,
                            ch2_active=True)
@@ -73,7 +74,8 @@ class TestScope(TestPyrpl):
         self.r.scope.load_state("running_roll")
         assert self.data_changing()
         sleep(1)
-        assert self.data_changing() # Make sure scope is not blocked after one buffer loop
+        assert self.data_changing() # Make sure scope is not blocked after one
+        #  buffer loop
 
         self.r.scope.run.stop()
         self.r.scope.load_state("running_triggered")
