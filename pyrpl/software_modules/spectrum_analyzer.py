@@ -146,6 +146,7 @@ class SAAcquisitionManager(AcquisitionManager):
                                       'running_single']:
                 self._timer.start()
 
+
     def _do_average(self):
         self.data_avg = (self.current_avg * self.data_avg \
                          +  self.data_current) / (self.current_avg + 1)
@@ -272,7 +273,10 @@ class SpectrumAnalyzer(AcquisitionModule, Module):
             self.scope.input1 = self.iq_quadraturesignal
         self.scope.setup(average=True,
                          trigger_source="immediately",
-                         run=dict(rolling_mode=False))
+                         ch1_active=True,
+                         ch2_active=True,
+                         run=dict(rolling_mode=False,
+                                  running_state='stopped'))
 
     def curve_ready(self):
         return self.scope.curve_ready()
