@@ -253,6 +253,7 @@ class ScopeAcquisitionManager(AcquisitionManager):
                         self._module.setup()
                         self._timer.start() # more averaging needed in single
                     else:
+                        self._set_result_in_future()
                         self.running_state = 'stopped' # single run over
                 if self.running_state == "running_continuous":
                     self._module.setup()
