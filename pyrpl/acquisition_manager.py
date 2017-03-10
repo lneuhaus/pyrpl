@@ -1,10 +1,10 @@
-from .attributes import StringProperty, LongProperty,\
-     BoolProperty
-from .modules import Module, SignalLauncher
 from .module_attributes import *
 
 from PyQt4 import QtCore, QtGui
+from .async_utils import PyrplFuture
 
+
+class AcquisitionError(ValueError): pass
 
 class RunningStateProperty(StringProperty):
     """
@@ -23,6 +23,9 @@ class RunningStateProperty(StringProperty):
         This is the master property: changing this value triggers all the logic
         to change the acquisition mode
         """
+        # touching the running_state cancels the pending future object
+        obj._future.cancel()
+
         allowed = ["running_single",
                    "running_continuous",
                    "paused",
@@ -160,6 +163,7 @@ class AcquisitionManager(Module):
         self.data_current = None
         self.data_avg = None
         self._restart_averaging_called = False # _restart_averaging needs to
+        self._future = PyrplFuture()
         # be called at least once (even if module is loaded in paused for
         # instance).
 
@@ -194,10 +198,21 @@ class AcquisitionManager(Module):
         """
         Performs an asynchronous acquisition of avg curves.
         The function returns a promise of the result:
-        an object with a get() function that blocks until
+        an object with a result() function that blocks until
         data is ready.
+
+        If the instrument is already in state 'run_single', then, raises
+        AcquisitionError.
+
+        If the running_state of the instrument is modified before the end
+        of the scan, the future object will be cancelled.
         """
+        if self.running_state == 'running_single':
+            raise AcquisitionError("Instrument %s is already in mode "
+                                   "'run_single'"%self._module.name)
         self.running_state = 'running_single'
+        self._future = PyrplFuture()
+        return self._future
 
     def continuous(self):
         """
@@ -234,6 +249,13 @@ class AcquisitionManager(Module):
     def _kill_timers(self):
         super(AcquisitionManager, self)._kill_timers()
         self._timer.stop()
+
+    def _set_result_in_future(self):
+        """
+        Updates the value of self._future with the tuple: (data_x, data_avg).
+        In practice, this function is called at the end of a single scan.
+        """
+        self._future.set_result((self.data_x, self.data_avg))
 
 
 class AcquisitionModule(Module):

@@ -116,6 +116,7 @@ class NAAcquisitionManager(AcquisitionManager):
                     self._module.setup()
                     self._timer.start()
                 else:
+                    self._set_result_in_future()
                     self.pause()
                     # gives the opportunity to average other scans with
                     # this one by calling run_continuous()
@@ -211,7 +212,6 @@ class NetworkAnalyzer(AcquisitionModule):
         self.time_per_point = self._time_per_point()
         #self.current_averages = 0
         self.time_last_point = 0
-        self.running_state = 'stopped'
 
     input = SelectProperty(DspModule.inputs)
     output_direct = SelectProperty(DspModule.output_directs)
