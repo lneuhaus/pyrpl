@@ -13,25 +13,26 @@ except ImportError:
 if QT_EXIST:
     APP = QtGui.QApplication.instance()
 
-def sleep(time_s):
-    """
-    If PyQt4 is installed on the machine,
-    calls processEvents regularly to make sure
-     the GUI doesn't freeze.
 
-     This function should be used everywhere in the
-     project in place of "time.sleep"
-    """
-    # QTimer-based sleep operation is not to be used for now
-    if False: #QT_EXIST and APP is not None:
-        timer = QtCore.QTimer()
-        timer.setSingleShot(True)
-        timer.setInterval(1000*time_s)
-        timer.start()
-        while(timer.isActive()):
-            APP.processEvents()
-    else:
-        time.sleep(time_s)
+#def sleep(time_s):
+#    """
+#    If PyQt4 is installed on the machine,
+#    calls processEvents regularly to make sure
+#     the GUI doesn't freeze.
+
+#     This function should be used everywhere in the
+#     project in place of "time.sleep"
+#    """
+#    # QTimer-based sleep operation is not to be used for now
+#    if False: #QT_EXIST and APP is not None:
+#        timer = QtCore.QTimer()
+#        timer.setSingleShot(True)
+#        timer.setInterval(1000*time_s)
+#        timer.start()
+#        while(timer.isActive()):
+#            APP.processEvents()
+#    else:
+#        time.sleep(time_s)
 
 def time():
     """ returns the time. used instead of time.time for rapid portability"""

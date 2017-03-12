@@ -38,7 +38,7 @@ class TestNA(TestPyrpl):
             return (data != self.na.run.data_avg).any()
 
         self.na.setup(start_freq=1000, stop_freq=1e4, rbw=1000, points=10000)
-        for i in range(100):
+        for i in range(1000):
             APP.processEvents()
 
         self.na.run.single()

@@ -123,29 +123,26 @@ class SAAcquisitionManager(AcquisitionManager):
         """
         # several seconds... In the mean time, no other event can be
         # treated. That's why the gui freezes...
-        if self._module.curve_ready():
-            if len(self.data_avg) != self._module._real_points:
-                # for instance, if running_state pause was reloaded...
-                print("restarting ",  self._module._real_points)
-                self._restart_averaging()
-            self.data_x = self._module.frequencies
-            self.data_current = self._module.curve()
-            self._do_average()
-            self._emit_signal_by_name('display_curve',
-                                      [self.data_x, self.data_avg])
-            if self.running_state in  ['running_continuous',
-                                       'running_single']:
-                self._module.setup()
-            if self.running_state == 'running_continuous':
+        print('checking')
+        while not self._module.curve_ready():
+            async_utils.sleep(self._module._remaining_duration())
+        if len(self.data_avg) != self._module._real_points:
+            # for instance, if running_state pause was reloaded...
+            print("restarting ",  self._module._real_points)
+            self._restart_averaging()
+        self.data_x = self._module.frequencies
+        self.data_current = self._module.curve()
+        self._do_average()
+        self._emit_signal_by_name('display_curve',
+                                  [self.data_x, self.data_avg])
+        if self.running_state in  ['running_continuous',
+                                   'running_single']:
+            self._module.setup()
+        if self.running_state == 'running_continuous':
+            self._timer.start()
+        if self.running_state == 'running_single':
+            if self.current_avg<self.avg:
                 self._timer.start()
-            if self.running_state == 'running_single':
-                if self.current_avg<self.avg:
-                    self._timer.start()
-        else:
-            if self.running_state in ['running_continuous',
-                                      'running_single']:
-                self._timer.start()
-
 
     def _do_average(self):
         self.data_avg = (self.current_avg * self.data_avg \
@@ -233,6 +230,12 @@ class SpectrumAnalyzer(AcquisitionModule, Module):
 
     iq_quadraturesignal = 'iq2_2'
 
+    def _remaining_duration(self):
+        """
+        Duration before next scope curve will be ready.
+        """
+        return self.scope._remaining_duration()
+
     @property
     def data_length(self):
         return int(self.points)  # *self.nyquist_margin)
@@ -249,7 +252,7 @@ class SpectrumAnalyzer(AcquisitionModule, Module):
         self._is_setup = True
         # setup iq module
         if not self.baseband:
-            self.iq.setup(
+            self.iq.setup( # for som reason, this takes 300 ms to do
                 input = self.input,
                 bandwidth=[self.span*self.if_filter_bandwidth_per_span]*4,
                 gain=0,
@@ -277,6 +280,9 @@ class SpectrumAnalyzer(AcquisitionModule, Module):
                          ch2_active=True,
                          run=dict(rolling_mode=False,
                                   running_state='stopped'))
+
+    def _remaining_duration(self):
+        return self.scope._remaining_duration()
 
     def curve_ready(self):
         return self.scope.curve_ready()

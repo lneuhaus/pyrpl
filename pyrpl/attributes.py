@@ -821,6 +821,7 @@ class FilterRegister(BaseRegister, FilterAttribute):
         return int(np.ceil(np.log2(125000000 / self._MINBW(obj))))
 
     def valid_frequencies(self, obj):
+        # this function NEEDS TO BE OPTIMIZED: TAKES 50 ms !!!!
         """ returns a list of all valid filter cutoff frequencies"""
         valid_bits = range(0, 2 ** self._SHIFTBITS(obj))
         pos = list([self.to_python(b | 0x1 << 7, obj) for b in valid_bits])

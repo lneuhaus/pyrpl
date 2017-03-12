@@ -226,7 +226,7 @@ class ScopeWidget(ModuleWidget):
 
     def run_single_clicked(self):
         if str(self.button_single.text()).startswith("Run single"):
-            self.module.run.single()
+            self.module.run.single_async()
         else:
             self.module.run.stop()
 

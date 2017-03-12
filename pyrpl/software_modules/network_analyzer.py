@@ -1,3 +1,5 @@
+from .. import async_utils
+
 import sys
 from time import sleep
 
@@ -74,6 +76,10 @@ class SignalLauncherNA(SignalLauncherAcquisitionModule):
 
 
 class NAAcquisitionManager(AcquisitionManager):
+    MIN_INTERVAL_RUNNING_SINGLE = 0
+    MIN_INTERVAL_RUNNING_CONTINUOUS = 0
+    # na should be as fast as possible
+
     def _init_module(self):
         super(NAAcquisitionManager, self)._init_module()
         self._timer.timeout.connect(self._run_next_point)
@@ -86,9 +92,7 @@ class NAAcquisitionManager(AcquisitionManager):
         Moreover, iq is disabled even when na is just paused.
         :return:
         """
-        self._timer.setInterval(
-            self._module._time_per_point() * 1000)
-        self._timer.start() # No setup needed !!!
+        super(NAAcquisitionManager, self)._start_acquisition()
         self._module.iq.output_direct = self._module.output_direct
 
     def _stop_acquisition(self):
@@ -103,7 +107,7 @@ class NAAcquisitionManager(AcquisitionManager):
     def current_point(self):
         return self._module.current_point
 
-    def _run_next_point(self):
+    def _run_next_point_old(self):
         if self.running_state in ['running_continuous',
                                   'running_single']:
             cur = self.current_point
@@ -308,6 +312,11 @@ class NetworkAnalyzer(AcquisitionModule):
         return float(self.iq._na_sleepcycles + self.iq._na_averages) \
                / (125e6 * self.iq._frequency_correction)
 
+    def _remaining_duration(self):
+        """Remaining time in seconds until current point is ready"""
+        return self.time_per_point - (timeit.default_timer() -
+                                      self.time_last_point)
+
     @property
     def current_freq(self):
         """
@@ -331,27 +340,9 @@ class NetworkAnalyzer(AcquisitionModule):
         else:
             x = self.x[self.current_point]
             tf = self._tf_values[self.current_point]
-            while True:
-                # make sure enough time was left for data to accumulate in
-                # the iq register...
-                # compute remaining time for acquisition
-                passed_duration = timeit.default_timer() - self.time_last_point
-                # DO NOT USE time.time().
-                # This gets updated only every 1 ms or so.
-                remaining_duration = self.time_per_point - passed_duration
-                if remaining_duration >= 0.002:
-                    # sleeping in the ms range becomes inaccurate, in this
-                    # case, we will just continuously check if enough time has
-                    #  passed. For averaging times longer than 2 ms, a 1 ms
-                    # error in the sleep time is only a 50 % error, but less
-                    #  CPU intensive.
-                    # see http://stackoverflow.com/questions/1133857/how-accurate-is-pythons-time-sleep
-                    sleep(remaining_duration)
-                # exit the loop when enough time has passed.
-                if remaining_duration < 0:
-                    break
-            ##################################################
-            # to remove once we are convinced it's clean...
+
+            async_utils.sleep(self._remaining_duration())
+
             if self.current_point < 5:
                 if self.current_point<0:
                     raise ValueError('current point is: ' + str(
