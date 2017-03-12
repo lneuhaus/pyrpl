@@ -10,7 +10,7 @@ class Sampler(HardwareModule):
     This is a momentary workaround, will be improved later on with an upgraded FPGA version """
     addr_base = 0x40300000
 
-    def mean_stddev(self, signal="in1", t = 1e-2):
+    def mean_stddev(self, signal="in1", t=1e-2):
         """
         computes the mean and standard deviation of the chosen signal
 
@@ -31,10 +31,10 @@ class Sampler(HardwareModule):
             signal = signal.name
         except AttributeError:
             pass
-        t0 = time()  # get start time
         nn = 0
         cum = 0
         cumsq = 0
+        t0 = time()  # get start time
         while time() < t0 + t:
             nn += 1
             value = self.__getattribute__(signal)

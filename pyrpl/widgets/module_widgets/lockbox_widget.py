@@ -580,6 +580,15 @@ class MyCloseButton(QtGui.QPushButton):
         self.setFixedHeight(16)
         self.setFixedWidth(16)
 
+class MyAddButton(QtGui.QPushButton):
+    def __init__(self, parent=None):
+        super(MyAddButton, self).__init__(parent)
+        style = APP.style()
+        close_icon = style.standardIcon(QtGui.QStyle.SP_TitleBarNormalButton)
+        self.setIcon(close_icon)
+        self.setFixedHeight(16)
+        self.setFixedWidth(16)
+
 
 class LockboxStageWidget(ModuleWidget):
     """
@@ -587,11 +596,11 @@ class LockboxStageWidget(ModuleWidget):
     """
     @property
     def name(self):
-        return self.module.name
+        return '    stage '+str(self.module.name)
 
     @name.setter
     def name(self, value):
-        return value  # only way to modify widget name is to change output.display_name
+        pass
 
     def init_gui(self):
         self.main_layout = QtGui.QVBoxLayout(self)
@@ -607,14 +616,13 @@ class LockboxStageWidget(ModuleWidget):
         aws = self.attribute_widgets
         #self.lay_v1.addWidget(aws['name'])
         self.lay_v1.addWidget(aws['input'])
-        self.lay_v2.addWidget(aws['duration'])
-        self.lay_v2.addWidget(aws['variable_value'])
+        self.lay_v2.addWidget(aws['setpoint'])
+        self.lay_v1.addWidget(aws['duration'])
+        self.lay_v2.addWidget(aws['gain_factor'])
         self.main_layout.addWidget(aws['output_on'])
-
         self.lay_h2 = QtGui.QHBoxLayout()
         self.main_layout.addLayout(self.lay_h2)
         self.lay_h2.addWidget(aws['function_call'])
-        self.lay_h2.addWidget(aws['factor'])
 
         self.button_goto = QtGui.QPushButton('Goto stage')
         self.button_goto.clicked.connect(self.module.setup)
@@ -625,13 +633,21 @@ class LockboxStageWidget(ModuleWidget):
         self.close_button = MyCloseButton(self)
         self.close_button.clicked.connect(self.close)
         self.close_button.move(self.width() - self.close_button.width(), self.title_pos[1] + 8)
+        self.add_button = MyAddButton(self)
+        self.add_button.clicked.connect(lambda: self.module.parent.insert(self.module.name,
+                                                                          self.module.setup_attributes))
+        self.add_button.move(0, self.title_pos[1] + 8)
 
     def resizeEvent(self, evt):
         super(LockboxStageWidget, self).resizeEvent(evt)
         self.close_button.move(evt.size().width() - self.close_button.width(), self.title_pos[1])
+        self.add_button.move(0, self.title_pos[1])
 
     def close(self):
-        self.module.parent.remove_stage(self.module)
+        if len(self.module.parent) == 1:
+            self.module._logger.info("You cannot delete the last stage!")
+        else:
+            self.module.parent.remove(self.module)
 
     def show_lock(self):
         self.parent().parent().set_button_green(self.button_goto)
@@ -649,25 +665,34 @@ class LockboxSequenceWidget(ModuleWidget):
         self.button_add.setSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Expanding)
         self.button_add.setMinimumHeight(60)
         for stage in self.module:
-            self.add_stage(stage)
-        self.button_add.clicked.connect(lambda: self.module.append(self.module.sequence[-1].setup_attributes))
+            self.stage_created([stage])
+        self.button_add.clicked.connect(lambda: self.module.append(self.module[-1].setup_attributes))
         self.main_layout.addWidget(self.button_add)
         self.main_layout.addStretch(2)
 
-    def add_stage(self, stage):
+    def stage_created(self, stage):
+        stage = stage[0] # values are passed as list of length 1
         widget = stage._create_widget()
+        stage._widget = widget
         self.stage_widgets.append(widget)
-        self.main_layout.insertWidget(self.main_layout.indexOf(self.button_add), widget)
-        return stage
+        if stage.name >= len(self.module)-1:
+            index = self.main_layout.indexOf(self.button_add)
+        else:
+            index = self.main_layout.indexOf(self.module.index(stage.name)._widget)
+        self.main_layout.insertWidget(index, widget)
+        self.update_stage_names()
 
-    def remove_stage(self, stagenumber=-1):
-        """ removes the widget with """
-        widget = self.stage_widgets.pop(stagenumber)
+    def stage_deleted(self, stage):
+        """ removes the widget corresponding to stage"""
+        stage = stage[0] # values are passes as list of length 1
+        widget = stage._widget
+        self.stage_widgets.remove(widget)
         if self.parent().button_green == widget.button_goto:
             self.parent().button_green = None
         widget.hide()
         self.main_layout.removeWidget(widget)
         widget.deleteLater()
+        self.update_stage_names()
 
     def update_stage_names(self):
         for widget in self.stage_widgets:
@@ -706,8 +731,8 @@ class LockboxWidget(ModuleWidget):
         #self.button_hide.setMaximumWidth(150)
         self.button_hide.clicked.connect(self.button_hide_clicked)
         self.main_layout.addWidget(self.button_hide)
-        #self.sequence_widget = self.module.sequence._create_widget()
-        #self.main_layout.addWidget(self.sequence_widget)
+        self.sequence_widget = self.module.sequence._create_widget()
+        self.main_layout.addWidget(self.sequence_widget)
         self.main_layout.addStretch(5)
         self.setLayout(self.main_layout)
 
@@ -775,53 +800,23 @@ class LockboxWidget(ModuleWidget):
         """
         self.all_sig_widget.remove_output(outputs[0])
 
-    ## Sequence Management
-    def stage_created(self, stages):
-        """
-        SLOT: don't change name unless you know what you are doing
-        Adds a new stage to the widget (stages is a singleton [stage])
-        """
-        self.sequence_widget.add_stage(stages[0])
-
-    def stage_deleted(self, stages):
-        """
-        SLOT: don't change name unless you know what you are doing
-        Removes a stage to the model (stages is a singleton [stage])
-        """
-
-        self.sequence_widget.remove_stage(stages[0])
-
-    def stage_renamed(self):
-        """
-        SLOT: don't change name unless you know what you are doing
-        Redisplay all names of stages
-        """
-        self.sequence_widget.update_stage_names()
-
     def state_changed(self):
         """
         SLOT: don't change name unless you know what you are doing
         Basically painting some button in green is required
         """
-        self.set_state(self.module.state)
-
-    def set_state(self, val):
-        if val=='unlock':
+        state = self.module.state
+        if state=='unlock':
             self.set_button_green(self.button_unlock)
             self.hide_lock_points()
             return
-        if val=='sweep':
+        elif state=='sweep':
             self.hide_lock_points()
             self.set_button_green(self.button_sweep)
             return
-        index = self.module._stage_names.index(val)
-        self.set_button_green(self.sequence_widget.stage_widgets[index].button_goto)
-        self.show_lock(val)
-
-    def set_button_color(self, button, color):
-        """
-        Only one colored button can exist at a time
-        """
+        else:  # val is index of a lock stage
+            self.set_button_green(state._widget.button_goto)
+            self.show_lock(state)
 
     def set_button_green(self, button):
         """

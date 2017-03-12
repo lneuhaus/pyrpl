@@ -277,12 +277,12 @@ class Module(with_metaclass(ModuleMetaClass, object)):
     # Change this to save the curve with a different system
     _curve_class = CurveDB
 
-    # a QOBject used to communicate with the widget
-    _signal_launcher = None # should be _signal_launcher_cls and
-    # _signal_launcher
-
     # Change this to provide a custom graphical class
     _widget_class = ModuleWidget
+
+    # the class for the SignalLauncher to be used
+    # a QOBject used to communicate with the widget
+    _signal_launcher = SignalLauncher
 
     # attributes listed here will be saved in the config file everytime they
     # are updated.
@@ -305,9 +305,6 @@ class Module(with_metaclass(ModuleMetaClass, object)):
 
     # name of the module, metaclass automatically assigns one per instance
     name = None
-
-    # the class for the SignalLauncher to be used
-    _signal_launcher = SignalLauncher
 
     def __init__(self, parent, name=None):
         """

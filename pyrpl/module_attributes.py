@@ -29,7 +29,7 @@ class ModuleProperty(ModuleAttribute, BaseProperty):
         if not hasattr(obj, '_' + self.name):
             # getter must manage the instantiation of default value
             setattr(obj, '_' + self.name,
-                    self._create_module(obj, obj_type))
+                self._create_module(obj, obj_type))
         return getattr(obj, '_' + self.name)
 
     def _create_module(self, obj, obj_type):
@@ -39,7 +39,6 @@ class ModuleProperty(ModuleAttribute, BaseProperty):
 class ModuleList(Module, list):
     """ a list of modules"""
     def __init__(self, parent, name=None, element_cls=Module, default=[]):
-        super(ModuleList, self).__init__(parent, name=name)
         def number(element_self):
             """ function that is used to dynamically assign each
             ModuleListElement's name to the index in the list.
@@ -48,14 +47,17 @@ class ModuleList(Module, list):
                 return element_self.parent.index(element_self)
             except ValueError:
                 return len(element_self.parent)
-        # element.number will return the index of the element in the list
+        def next(element_self):
+            return element_self.parent[element_self.parent.index(element_self)]
         # element.name equals element.number in order to get the right config
         # file section
         self.element_cls = type(element_cls.__name__ + "ListElement",
                                 (element_cls, ),
                                 {'name': property(fget=number),
-                                 'number': property(fget=number)
+                                 'next': property(fget=next)
                                 })
+        self._signal_launcher = self.element_cls._signal_launcher
+        super(ModuleList, self).__init__(parent, name=name)
         # set to default setting
         self.extend(default)
 
@@ -66,7 +68,8 @@ class ModuleList(Module, list):
         self[index].setup_attributes = value
 
     def insert(self, index, new):
-        # make new module (name has been by property in element_cls)
+        # make new module (name has already been defined
+        # by the corresponding property in element_cls)
         to_add = self.element_cls(self)
         # initialize setup_attributes
         to_add.setup_attributes = new

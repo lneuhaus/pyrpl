@@ -1197,6 +1197,7 @@ class MyListStageOutputAttributeWidget(QtGui.QWidget):
             except IndexError:
                 break
 
+
 class ListStageOutputAttributeWidget(BaseAttributeWidget):
     def set_widget(self):
         """
@@ -1227,30 +1228,6 @@ class ListStageOutputAttributeWidget(BaseAttributeWidget):
         Sets the gui value from the current module value
         """
         self.widget.set_dict(new_value)
-
-#class DynamicSelectAttributeWidget(SelectAttributeWidget):
-#    """
-#    Multiple choice property, with optiosn evaluated at run-time:
-#    the options in the combobox have to be filled upon click.
-#    """
-#    def __init__(self, name, module):
-#        BaseAttributeWidget.__init__(self, name, module) # don' t do the SelectAttributeWidget initialization.
-#
-#    def set_widget(self):
-#        """
-#        Sets up the widget (here a QComboBox).
-#        """
-#        self.widget = QtGui.QComboBox()
-#        self.widget.currentIndexChanged.connect(self.write)
-#
-#    @property
-#    def options(self):
-#        """
-#        All possible options.
-#        """
-#        return getattr(self.module.__class__, self.name).options(self.module)
-#
-#    def
 
 
 class PhaseAttributeWidget(FloatAttributeWidget):
