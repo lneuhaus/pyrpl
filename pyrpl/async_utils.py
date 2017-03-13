@@ -2,8 +2,11 @@
 This file contains a number of methods for asynchronous operations.
 """
 import logging
+from PyQt4 import QtCore, QtGui
+from timeit import default_timer
 
 _LOGGER = logging.getLogger(name=__name__)
+
 try:
     from asyncio import Future, ensure_future, CancelledError, set_event_loop
 except ImportError:
@@ -12,12 +15,11 @@ except ImportError:
     from concurrent.futures import Future, CancelledError
 else:
     import quamash
-    loop = quamash.QEventLoop()
-    set_event_loop(loop)
-from PyQt4 import QtCore, QtGui
-from timeit import default_timer
+    set_event_loop(quamash.QEventLoop())
+
 APP = QtGui.QApplication.instance()
 MAIN_THREAD = APP.thread()
+
 
 class MainThreadTimer(QtCore.QTimer):
     """
@@ -127,8 +129,8 @@ class PyrplFuture(Future):
 
     def __init__(self):
         super(PyrplFuture, self).__init__()
-        self._timer_timeout = None # timer that will be instantiated if
-                                   # result(timeout) is called with a >0 value
+        self._timer_timeout = None  # timer that will be instantiated if
+        #  result(timeout) is called with a >0 value
 
     def _exit_loop(self, x=None):
         """
@@ -185,15 +187,15 @@ class PyrplFuture(Future):
 
         Raises:
             CancelledError: If the future was cancelled.
-            TimeoutError: If the future didn't finish executing before the given
-                timeout.
+            TimeoutError: If the future didn't finish executing before the
+                          given timeout.
             Exception: If the call raised then that exception will be raised.
         """
 
         self._wait_for_done(timeout)
         return super(PyrplFuture, self).result()
 
-    def exception(self, timeout=None):
+    def await_exception(self, timeout=None):
         """
         Return the exception raised by the call that the future represents.
 
@@ -208,10 +210,11 @@ class PyrplFuture(Future):
 
         Raises:
             CancelledError: If the future was cancelled.
-            TimeoutError: If the future didn't finish executing before the given
+            TimeoutError: If the future didn't finish executing before the
+            given  timeout.
         """
         self._wait_for_done(timeout)
-        return super(PyrplFuture, self).exception()
+        return self.exception()
 
     def cancel(self):
         if self._timer_timeout is not None:
@@ -249,5 +252,5 @@ def sleep(delay):
         timer.start()
         loop.exec_()
     # 2. For high-precision, manually process events 1-by-1 during the last ms
-    while (default_timer() < end_time):
+    while default_timer() < end_time:
         APP.processEvents()

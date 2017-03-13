@@ -24,13 +24,14 @@ from ..attributes import BoolProperty, FloatProperty, FloatAttribute,  \
     SelectProperty
 from ..modules import Module
 from ..module_attributes import *
-from pyrpl.acquisition_manager import AcquisitionManager, AcquisitionModule
+from pyrpl.acquisition_manager import AcquisitionModule
 
 import scipy.signal as sig
 import scipy.fftpack
 import numpy as np
 import os
 from pylab import *
+from ..modules import Module
 import pandas
 from PyQt4 import QtCore, QtGui
 
@@ -111,7 +112,7 @@ class SpanFilterProperty(FilterProperty):
             return val
 
 
-class SAAcquisitionManager(AcquisitionManager):
+class SAAcquisitionManager(Module):
     def _init_module(self):
         super(SAAcquisitionManager, self)._init_module()
         self._timer.timeout.connect(self._check_for_curves)

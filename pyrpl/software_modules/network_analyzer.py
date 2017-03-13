@@ -8,10 +8,10 @@ from ..attributes import FloatProperty, SelectProperty, FrequencyProperty, \
                          LongProperty, BoolProperty, FilterAttribute
 from ..hardware_modules import DspModule
 from ..widgets.module_widgets import NaWidget
+from ..modules import Module
 
 from ..acquisition_manager import SignalLauncherAcquisitionModule, \
-    AcquisitionModule, AcquisitionManager
-
+    AcquisitionModule
 from PyQt4 import QtCore, QtGui
 import numpy as np
 
@@ -75,7 +75,7 @@ class SignalLauncherNA(SignalLauncherAcquisitionModule):
     x_log_toggled = QtCore.pyqtSignal()
 
 
-class NAAcquisitionManager(AcquisitionManager):
+class NAAcquisitionManager(Module):
     MIN_INTERVAL_RUNNING_SINGLE = 0
     MIN_INTERVAL_RUNNING_CONTINUOUS = 0
     # na should be as fast as possible
