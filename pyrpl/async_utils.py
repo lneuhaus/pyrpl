@@ -125,8 +125,8 @@ class PyrplFuture(Future):
     - _set_data_as_result(): set
     """
 
-    def __init__(self, loop=None):
-        super(PyrplFuture, self).__init__(loop=loop)
+    def __init__(self):
+        super(PyrplFuture, self).__init__()
         self._timer_timeout = None # timer that will be instantiated if
                                    # result(timeout) is called with a >0 value
 
@@ -247,7 +247,7 @@ def sleep(delay):
         timer = MainThreadTimer(new_delay * 1000)
         timer.timeout.connect(loop.quit)
         timer.start()
-        loop.exec()
+        loop.exec_()
     # 2. For high-precision, manually process events 1-by-1 during the last ms
     while (default_timer() < end_time):
         APP.processEvents()
