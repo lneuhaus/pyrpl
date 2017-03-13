@@ -1,5 +1,5 @@
 from ...modules import Module
-from ...module_attributes import ModuleContainerProperty
+from ...module_attributes import ModuleDictProperty
 
 
 class LockboxModule(Module):
@@ -10,7 +10,7 @@ class LockboxModule(Module):
             parent = parent.parent
         return parent
 
-class LockboxModuleContainerProperty(ModuleContainerProperty):
+class LockboxModuleDictProperty(ModuleDictProperty):
     default_module_cls = LockboxModule
 
 

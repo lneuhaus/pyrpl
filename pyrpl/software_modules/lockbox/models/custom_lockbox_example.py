@@ -44,10 +44,10 @@ class CustomLockbox(Lockbox):
     """ A custom lockbox class that can be used to implement customized feedback controllers"""
 
     # this syntax for the definition of inputs and outputs allows to conveniently access inputs in the API
-    inputs = LockboxModuleContainerProperty(custom_input_name1=CustomInputClass,
+    inputs = LockboxModuleDictProperty(custom_input_name1=CustomInputClass,
                                             custom_input_name2=CustomInputClass)
 
-    outputs = LockboxModuleContainerProperty(slow_output=OutputSignal,
+    outputs = LockboxModuleDictProperty(slow_output=OutputSignal,
                                              fast_output=OutputSignal,
                                              pwm_output=OutputSignal)
 

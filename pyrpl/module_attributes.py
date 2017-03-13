@@ -254,13 +254,15 @@ class ModuleDictProperty(ModuleProperty):
                  ignore_errors=False, **kwargs):
         """ returns a descriptor for a module container, i.e. a class that contains submodules whose name and class are
         specified in kwargs. module_cls is the base class for the module container (typically SoftwareModule)"""
-        # make a copy of ModuleDict class that can be modified without modifying all ModuleDict class instances
-        # inherit from module_cls
+        # get default base class to inherit from
         if module_cls is None:
             module_cls = self.default_module_cls
-        class ModuleDictClassInstance(ModuleDict, module_cls):
-            pass
-        # init this attribute
+        # make a copy of ModuleDict class that can be modified without modifying all ModuleDict class instances
+        # inherit from module_cls
+        ModuleDictClassInstance = type(module_cls.__name__+"DictPropertyInstance",
+                                       (ModuleDict, module_cls),
+                                       {key: ModuleProperty(value) for key, value in kwargs.items()})
+        # init this attribute with the contained module
         super(ModuleDictProperty, self).__init__(ModuleDictClassInstance,
                                                  default=default,
                                                  doc=doc,

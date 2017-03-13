@@ -21,7 +21,7 @@ class Interferometer(Lockbox):
     _gui_attributes = ['wavelength']
     variable = 'phase'
 
-    inputs = LockboxModuleContainerProperty(port1=InterferometerPort1,
+    inputs = LockboxModuleDictProperty(port1=InterferometerPort1,
                                             port2=InterferometerPort2)
 
     # pdh = InputPdh

@@ -6,7 +6,7 @@ from .signals import *
 from ...widgets.module_widgets import LockboxWidget
 from ...pyrpl_utils import get_unique_name_list_from_class_list, all_subclasses, sleep
 from .stage import Stage
-from . import LockboxModule, LockboxModuleContainerProperty
+from . import LockboxModule, LockboxModuleDictProperty
 from collections import OrderedDict
 from PyQt4 import QtCore
 from ...widgets.module_widgets.lockbox_widget import LockboxSequenceWidget, LockboxStageWidget
@@ -146,8 +146,8 @@ class Lockbox(LockboxModule):
     auto_lock = AutoLockProperty()
 
     # logical inputs and outputs of the lockbox are accessible as lockbox.outputs.output1
-    inputs = LockboxModuleContainerProperty(input_from_output=InputFromOutput)
-    outputs = LockboxModuleContainerProperty(output1=OutputSignal,
+    inputs = LockboxModuleDictProperty(input_from_output=InputFromOutput)
+    outputs = LockboxModuleDictProperty(output1=OutputSignal,
                                              output2=OutputSignal)
 
     # Sequence is a list of stage modules. By default the first stage is created

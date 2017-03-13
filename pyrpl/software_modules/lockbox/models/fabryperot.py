@@ -75,7 +75,7 @@ class FabryPerot(Lockbox):
     eta = FloatProperty(min=0., max=1., default=1.)
     variable = 'detuning'
 
-    inputs = LockboxModuleContainerProperty(transmission = FPTransmission,
+    inputs = LockboxModuleDictProperty(transmission = FPTransmission,
                                             reflection = FPReflection,
                                             pdh = InputPdh)
 
