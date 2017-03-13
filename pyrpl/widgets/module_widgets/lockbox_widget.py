@@ -619,7 +619,7 @@ class LockboxStageWidget(ModuleWidget):
         self.lay_v2.addWidget(aws['setpoint'])
         self.lay_v1.addWidget(aws['duration'])
         self.lay_v2.addWidget(aws['gain_factor'])
-        self.main_layout.addWidget(aws['output_on'])
+        #self.main_layout.addWidget(aws['outputs'])
         self.lay_h2 = QtGui.QHBoxLayout()
         self.main_layout.addLayout(self.lay_h2)
         self.lay_h2.addWidget(aws['function_call'])

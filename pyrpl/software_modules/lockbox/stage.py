@@ -15,8 +15,14 @@ class StageSignalLauncher(SignalLauncher):
     #stage_renamed = QtCore.pyqtSignal()
 
 class StageOutput(LockboxModule):
-    lock_on = SelectProperty(default=False, options=['true', 'false', 'ignore'])
-    reset_offset = SelectProperty(default=False, options=['true', 'false', 'ignore'])
+    _setup_attributes = ['lock_on',
+                         'reset_offset',
+                         'offset']
+    _gui_attributes = _setup_attributes
+    lock_on = SelectProperty(default='false', options=['true', 'false', 'ignore'])
+    reset_offset = SelectProperty(default=False, options=[True, False])
+    offset = FloatProperty(default=0, min=-1., max=1.)
+
 
 
 class Stage(LockboxModule):
@@ -25,10 +31,10 @@ class Stage(LockboxModule):
     """
     _setup_attributes = ['input',
                          'setpoint',
-                         'output_on',
                          'duration',
                          'function_call',
-                         'gain_factor']
+                         'gain_factor'] #,
+                         #'outputs']
     _gui_attributes = _setup_attributes
     _widget_class = LockboxStageWidget
     _signal_launcher = StageSignalLauncher
@@ -37,13 +43,18 @@ class Stage(LockboxModule):
     setpoint = FloatProperty(default=0, min=-1e6, max=1e6)
 
     duration = FloatProperty(default=0, min=0, max=1e6)
-    outputs = ModuleContainerProperty(StageOutput)
     function_call = StringProperty()
 
     gain_factor = FloatProperty(default=1., min=-1e6, max=1e6)
 
+    # outputs is a dict, containing an entry of StageOutput per Lockbox output
+    # (initialized in _init_module)
+    outputs = ModuleDictProperty(module_cls=LockboxModule)
+
     def _init_module(self):
         super(Stage, self)._init_module()
+        for output in self.lockbox.outputs:
+            self.outputs[output.name] = StageOutput
         self._signal_launcher.stage_created.emit([self])
         self.parent._signal_launcher.stage_created.emit([self])
 

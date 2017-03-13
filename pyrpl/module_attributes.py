@@ -191,3 +191,77 @@ class ModuleContainerProperty(ModuleProperty):
                     {k:v for k, v in kwds.items() if k in self._setup_attributes}
         super(ModuleContainerProperty, self).__init__(ModuleContainer, default=default,
                                                       doc=doc, ignore_errors=ignore_errors)
+
+
+class ModuleDict(Module):
+    """
+    container class that loosely resembles a dictionary which contains submodules
+    """
+    def __getitem__(self, key):
+        return getattr(self, key)
+
+    def keys(self):
+        return self._module_attributes
+
+    def values(self):
+        return [self[k] for k in self.keys()]
+
+    def items(self):
+        return [(k, self[k]) for k in self.keys()]
+
+    def __iter__(self):
+        # this method allows to write code like this: 'for submodule in modulecontainer: submodule.do_sth()'
+        return iter(self.values())
+
+    @property
+    def setup_attributes(self):
+        return super(ModuleDict, self).setup_attributes
+
+    @setup_attributes.setter
+    def setup_attributes(self, kwds):
+        Module.setup_attributes.fset(self,
+            {k: v for k, v in kwds.items() if k in self._setup_attributes})
+
+    def __setitem__(self, key, value):
+        # make the new ModuleProperty of module type "value" in the class
+        mp = ModuleProperty(value)
+        mp.name = key  # assign module name
+        setattr(self.__class__, key, mp)
+        # do what the constructor would do: append to setup_attributes...
+        self._module_attributes.append(key)
+        self._setup_attributes.append(key)
+        # ... attribute the name
+        self[key].name = key
+        # initialize with saved values if available
+        self[key]._load_setup_attributes()
+
+    def __delitem__(self, key):
+        self._module_attributes.pop(key)
+        self._setup_attributes.pop(key)
+        getattr(self, key)._clear()
+        delattr(self, key)
+
+    def pop(self, key):
+        """ same as __delattr__ (does not return a value) """
+        module = self._setup_attributes.pop(key)
+        delattr(self, key)
+        return module
+
+
+class ModuleDictProperty(ModuleProperty):
+    default_module_cls = Module
+    def __init__(self, module_cls=None, default=None, doc="",
+                 ignore_errors=False, **kwargs):
+        """ returns a descriptor for a module container, i.e. a class that contains submodules whose name and class are
+        specified in kwargs. module_cls is the base class for the module container (typically SoftwareModule)"""
+        # make a copy of ModuleDict class that can be modified without modifying all ModuleDict class instances
+        # inherit from module_cls
+        if module_cls is None:
+            module_cls = self.default_module_cls
+        class ModuleDictClassInstance(ModuleDict, module_cls):
+            pass
+        # init this attribute
+        super(ModuleDictProperty, self).__init__(ModuleDictClassInstance,
+                                                 default=default,
+                                                 doc=doc,
+                                                 ignore_errors=ignore_errors)
