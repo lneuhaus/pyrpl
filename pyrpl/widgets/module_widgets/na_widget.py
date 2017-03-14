@@ -31,9 +31,15 @@ class NaWidget(ModuleWidget):
         self.setLayout(self.main_layout)
         self.setWindowTitle("NA")
         self.win = pg.GraphicsWindow(title="Magnitude")
+
+        self.label_benchmark = pg.LabelItem(justify='right')
+        self.win.addItem(self.label_benchmark, row=1,col=0)
+        self._last_benchmark_value = np.nan
+
         self.win_phase = pg.GraphicsWindow(title="Phase")
-        self.plot_item = self.win.addPlot(title="Magnitude (dB)")
-        self.plot_item_phase = self.win_phase.addPlot(title="Phase (deg)")
+        self.plot_item = self.win.addPlot(row=1, col=0, title="Magnitude (dB)")
+        self.plot_item_phase = self.win_phase.addPlot(row=1, col=0,
+                                                      title="Phase (deg)")
         self.plot_item_phase.setXLink(self.plot_item)
         self.button_single = QtGui.QPushButton("Run single")
         self.button_single.my_label = "Single"
@@ -48,13 +54,13 @@ class NaWidget(ModuleWidget):
         self.main_layout.addWidget(self.win)
         self.main_layout.addWidget(self.win_phase)
 
-        self.run_avg_widget = self.module.run.__class__.avg._create_widget(
-            self.module.run)
+        self.run_avg_widget = self.module.__class__.avg._create_widget(
+            self.module)
         self.button_layout.addWidget(self.run_avg_widget)
 
         self.curve_name_widget = \
-            self.module.run.__class__.curve_name._create_widget(
-            self.module.run)
+            self.module.__class__.curve_name._create_widget(
+            self.module)
         self.button_layout.addWidget(self.curve_name_widget)
 
         self.button_layout.addWidget(self.button_single)
@@ -76,7 +82,7 @@ class NaWidget(ModuleWidget):
         self.plot_item_phase.addItem(self.arrow_phase)
         self.last_updated_point = 0
         self.last_updated_time = 0
-        self.display_state(self.module.run.running_state)
+        self.display_state(self.module.running_state)
         self.update_period = self.starting_update_rate # also modified in clear_curve.
 
         # Not sure why the stretch factors in button_layout are not good by
@@ -110,6 +116,7 @@ class NaWidget(ModuleWidget):
                 chunk_phase.clear()
             except IndexError:
                 break
+        self.label_benchmark.setText("")
 
     def x_log_toggled(self):
         """
@@ -126,9 +133,12 @@ class NaWidget(ModuleWidget):
         """
         if in run continuous, needs to redisplay the number of averages
         """
-        self.display_state(self.module.run.running_state) # display correct
+        self.display_state(self.module.running_state) # display correct
         # average number
         self.update_point(self.module.points-1, force=True) # make sure all points in the scan are updated
+
+    def set_benchmark_text(self, text):
+        self.label_benchmark.setText(text)
 
     def update_point(self, index, force=False):
         """
@@ -138,6 +148,13 @@ class NaWidget(ModuleWidget):
         # APP.processEvents()  # Give hand back to the gui since timer intervals might be very short
         last_chunk_index = self.last_updated_point//self.CHUNK_SIZE
         current_chunk_index = index//self.CHUNK_SIZE
+
+        rate = self.module.measured_time_per_point
+        if not np.isnan(rate) and self._last_benchmark_value != rate:
+            theory = self.module.time_per_point
+            self.set_benchmark_text("ms/pt: %.1f (theory: %.1f)"%(
+                                                             rate*1000,
+                                                             theory*1000))
 
         if force or (time() - self.last_updated_time > self.update_period):
             #  if last update time was a long time ago,
@@ -149,18 +166,18 @@ class NaWidget(ModuleWidget):
 
             # draw arrow
             cur = self.module.current_point - 1
-            visible = self.module.run.last_valid_point != cur + 1
+            visible = self.module.last_valid_point != cur + 1
             logscale = self.module.logscale
-            freq = self.module.x[cur]
+            freq = self.module.data_x[cur]
             xpos = np.log10(freq) if logscale else freq
             if cur > 0:
                 self.arrow.setPos(xpos,
-                                  self._magnitude(self.module.run.data_avg[
+                                  self._magnitude(self.module.data_avg[
                                                       cur]))
                 self.arrow.setVisible(visible)
                 self.arrow_phase.setPos(xpos,
                                         self._phase(
-                                            self.module.run.data_avg[cur]))
+                                            self.module.data_avg[cur]))
                 self.arrow_phase.setVisible(visible)
 
     def _magnitude(self, data):
@@ -172,7 +189,7 @@ class NaWidget(ModuleWidget):
     def update_attribute_by_name(self, name, new_value_list):
         super(NaWidget, self).update_attribute_by_name(name, new_value_list)
         if name == "running_state":
-            self.display_state(self.module.run.running_state)
+            self.display_state(self.module.running_state)
 
     def update_chunk(self, chunk_index):
         """
@@ -190,38 +207,36 @@ class NaWidget(ModuleWidget):
 
         sl = slice(max(0, self.CHUNK_SIZE * chunk_index - 1),
                    min(self.CHUNK_SIZE * (chunk_index + 1),
-                       self.module.run.last_valid_point),
-                   1) # make sure there is an overlap between slices
-        data = self.module.run.data_avg[sl]
-        x = np.real(self.module.run.data_x[sl])
-        self.chunks[chunk_index].setData(x,
-                                         self._magnitude(data))
-        self.chunks_phase[chunk_index].setData(x,
-                                               self._phase(data))
+                       self.module.last_valid_point),
+                       1) # make sure there is an overlap between slices
+        data = self.module.data_avg[sl]
+        x = np.real(self.module.data_x[sl])
+        self.chunks[chunk_index].setData(x, self._magnitude(data))
+        self.chunks_phase[chunk_index].setData(x, self._phase(data))
 
     def run_continuous_clicked(self):
         """
         launches a continuous run
         """
         if str(self.button_continuous.text()).startswith("Pause"):
-            self.module.run.pause()
+            self.module.pause()
         else:
-            self.module.run.continuous()
+            self.module.continuous()
 
     def run_single_clicked(self):
         """
         launches a single acquisition
         """
         if str(self.button_single.text()).startswith("Pause"):
-            self.module.run.pause()
+            self.module.pause()
         else:
-            self.module.run.single()
+            self.module.single_async()
 
     def save_clicked(self):
         """
         Save the current curve.
         """
-        self.module.run.save_curve()
+        self.module.save_curve()
 
     def display_state(self, running_state):
         """
@@ -242,7 +257,7 @@ class NaWidget(ModuleWidget):
             self.button_single.setText("Run single")
             self.button_continuous.setEnabled(True)
             self.button_continuous.setText("Pause (%i "
-                                            "averages)"%self.module.run.current_avg)
+                                            "averages)"%self.module.current_avg)
             return
         if running_state== "running_single":
             self.button_single.setEnabled(True)
@@ -252,7 +267,7 @@ class NaWidget(ModuleWidget):
             return
         if running_state == "paused":
             self.button_continuous.setText("Resume continuous (%i "
-                                            "averages)"%self.module.run.current_avg)
+                                            "averages)"%self.module.current_avg)
             self.button_single.setText("Run single")
             self.button_continuous.setEnabled(True)
             self.button_single.setEnabled(False)
@@ -268,7 +283,7 @@ class NaWidget(ModuleWidget):
         """
         Going to stop will impose a setup_average before next run.
         """
-        self.module.run.stop()
+        self.module.stop()
 
 
 class MyGraphicsWindow(pg.GraphicsWindow):

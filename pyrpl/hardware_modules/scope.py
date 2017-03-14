@@ -1,7 +1,7 @@
 from ..module_attributes import *
 from ..modules import HardwareModule
 from ..widgets.module_widgets import ScopeWidget
-from ..acquisition_manager import AcquisitionModule
+from ..acquisition_module import AcquisitionModule
 from ..async_utils import MainThreadTimer, PyrplFuture
 
 from . import DSP_INPUTS, DspModule, DspInputAttribute
@@ -170,6 +170,12 @@ class ContinuousRollingFuture(PyrplFuture):
     def pause(self):
         self._timer.stop()
 
+    def _set_run_continuous(self):
+        """
+        Dummy function: ContinuousRollingFuture instance is always
+        "_run_continuous"
+        """
+        pass
 
 class Scope(HardwareModule, AcquisitionModule):
     addr_base = 0x40100000
@@ -344,6 +350,7 @@ class Scope(HardwareModule, AcquisitionModule):
     def _init_module(self):
         self._setup_attributes.remove("running_state")
         self._setup_attributes.append("running_state")
+
         # dsp multiplexer channels for scope and asg are the same by default
         self._ch1 = DspModule(self._rp, name='asg0')  # the scope inputs and
         #  asg outputs have the same id
@@ -355,7 +362,9 @@ class Scope(HardwareModule, AcquisitionModule):
         # trigger_delay for 'immediate' at startup
         self._trigger_delay_memory = 0
 
-        super(Scope, self)._init_module()  # _init_module of AcqisitionModule
+        super(Scope, self)._init_module()  # _init_module of AcquisitionModule
+
+
 
     def _ownership_changed(self, old, new):
         """
@@ -449,7 +458,8 @@ class Scope(HardwareModule, AcquisitionModule):
     # Concrete implementation of AcquisitionModule methods
     # ----------------------------------------------------
 
-    def _data_x(self):
+    @property
+    def data_x(self):
         return self.times
 
     def _get_curve(self):
@@ -566,20 +576,27 @@ class Scope(HardwareModule, AcquisitionModule):
                                               **d)
         return curves
 
-    def _setup(self):
-        # the _run_future is renewed to match the requested type of run (
-        # rolling_mode or triggered)
-        # This is how we make sure changing duration or rolling_mode won't
-        # freeze the acquisition.
-        self._run_future.cancel()
-        self._run_future = self._get_new_continuous_future()
-        self._run_future.start()
-        self._emit_signal_by_name("autoscale")
-
-    def _get_new_continuous_future(self):
+    def _new_run_future(self):
         # acquisition is done by a custom Future in rolling_mode to avoid
         # averaging
-        if self._is_rolling_mode_active():
-            return ContinuousRollingFuture(self)
+        if self._is_rolling_mode_active() and self.running_state == \
+                "running_continuous":
+            self._run_future.cancel()
+            self._run_future = ContinuousRollingFuture(self)
         else:
-            return super(Scope, self)._get_new_continuous_future()
+            super(Scope, self)._new_run_future()
+
+    # Shortcut to the RunFuture data (for plotting):
+    # ----------------------------------------------
+
+    @property
+    def data_x(self):
+        return self.times
+
+    @property
+    def data_avg(self):
+        return self._run_future.data_avg
+
+    @property
+    def current_avg(self):
+        return self._run_future.current_avg

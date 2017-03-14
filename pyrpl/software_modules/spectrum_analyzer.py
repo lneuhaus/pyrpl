@@ -24,7 +24,7 @@ from ..attributes import BoolProperty, FloatProperty, FloatAttribute,  \
     SelectProperty
 from ..modules import Module
 from ..module_attributes import *
-from pyrpl.acquisition_manager import AcquisitionModule
+from pyrpl.acquisition_module import AcquisitionModule
 
 import scipy.signal as sig
 import scipy.fftpack

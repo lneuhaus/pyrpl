@@ -79,7 +79,8 @@ class CurveFuture(PyrplFuture):
             delay = max(self.min_delay_ms,
                         self._module._remaining_time() * 1000)
 
-        self._timer = MainThreadTimer(delay)
+        self._timer = MainThreadTimer(max(0, delay)) #  avoid negative times
+        # delays
         self._timer.timeout.connect(self._set_data_as_result)
         self._timer.start()
 
@@ -128,23 +129,25 @@ class RunFuture(PyrplFuture):
          data_avg: np.array(y_complex)
     """
 
-    _launch_at_startup = True
-
-    def __init__(self, module, continuous_run):
-        self._continuous_run = continuous_run
+    def __init__(self, module, min_delay_ms):
+        self._run_continuous = False
         self._module = module
+        self._min_delay_ms = min_delay_ms
         super(RunFuture, self).__init__()
-        self.current_avg = 0
-        self.data_x = self._module._data_x()
         self.data_avg = None
         self._fut = None
+        self.current_avg = 0
+        self._paused = True
 
     def _new_curve_arrived(self, curve):
         try:
             result = curve.result()
         except (AcquisitionError, CancelledError):
-            self.cancel()
-            return
+            if self._module.running_state in ["running_continuous",
+                                              "running_single"]:
+                return
+            else:
+                self.cancel()
         if self._module.running_state in ["running_continuous",
                                           "running_single"]:
             self.current_avg = min(self.current_avg + 1, self._module.avg)
@@ -156,40 +159,48 @@ class RunFuture(PyrplFuture):
                                  result) / self.current_avg
 
             self._module._emit_signal_by_name('display_curve',
-                                              [self.data_x,
+                                              [self._module.data_x,
                                                self.data_avg])
 
             if self._is_run_over():
-                self.set_result(self.data_avg)
-                self._module.running_state = "stopped"
+                if not self.done():
+                    self.set_result(self.data_avg)
+                    self._module.running_state = "stopped" # should be 'paused'
+                    # if we want to average over the single run, but for
+                    # scope and specan, it is more convenient to restart
+                    # averaging (basically saves the button stop in the GUI)
             else:
-                self._fut = self._module._curve_async(self._get_delay())
-                self._fut.add_done_callback(self._new_curve_arrived)
-
-    def _get_delay(self):
-        if self._continuous_run:
-            return self._module.MIN_DELAY_CONTINUOUS_MS
-        else:
-            return self._module.MIN_DELAY_SINGLE_MS
+                if not self._paused:
+                    self.start()
 
     def _is_run_over(self):
-        if self._continuous_run:
+        if self._run_continuous:
             return False
         else:
             return self.current_avg >= self._module.avg
 
     def cancel(self):
-        if self._fut is not None:
-            self._fut.cancel()
+        self.pause()
         super(RunFuture, self).cancel()
 
     def pause(self):
+        self._paused = True
         if self._fut is not None:
             self._fut.cancel()
 
     def start(self):
-        self._fut = self._module._curve_async(self._get_delay())
+        self._paused = False
+        if self._fut is not None:
+            self._fut.cancel()
+        self._fut = self._module._curve_async(self._min_delay_ms)
         self._fut.add_done_callback(self._new_curve_arrived)
+
+    def _set_run_continuous(self):
+        """
+        Makes the RunFuture continuous (used when setting "running_continuous")
+        """
+        self._run_continuous = True
+        self._min_delay_ms = self._module.MIN_DELAY_CONTINUOUS_MS
 
 
 class RunningStateProperty(StringProperty):
@@ -225,18 +236,21 @@ class RunningStateProperty(StringProperty):
 
         if val == "running_single":
             # acquire as fast as possible avg curves
-            obj._run_future = obj._get_new_single_future()
-            obj._run_future.start()
+            # obj._new_run_future()
+            # obj._run_future.start()
+            obj.setup()
         if val == "running_continuous":
-            obj._start_acquisition()
-            if previous_state == 'stopped':  # restart averaging...
-                obj._run_future.cancel()
-                obj._run_future = obj._get_new_continuous_future()
-            obj._run_future.start()
+            # obj._start_acquisition()
+            if previous_state == 'stopped':  #  restart averaging...
+                # obj._new_run_future()
+                obj.setup()
+            else:
+                obj._run_future._set_run_continuous() # if previous run was
+                # "running_single" keep averaging in the same run, simply make
+                # it continuous
+                obj._run_future.start()
         if val in ["paused", "stopped"]:
             obj._run_future.pause()
-        if val in ["running_single", "running_continuous"]:
-            obj.setup()
 
 
 class SignalLauncherAcquisitionModule(SignalLauncher):
@@ -249,9 +263,10 @@ class SignalLauncherAcquisitionModule(SignalLauncher):
     autoscale = QtCore.pyqtSignal()
 
     # For now, the following signals are only implemented with NA.
-    update_point = QtCore.pyqtSignal(int)  # used in NA only
-    scan_finished = QtCore.pyqtSignal()  # used in NA only
-    clear_curve = QtCore.pyqtSignal()  # NA only
+    update_point = QtCore.pyqtSignal(int)  #  used in NA only
+    scan_finished = QtCore.pyqtSignal()  #  used in NA only
+    clear_curve = QtCore.pyqtSignal()  #  NA only
+    x_log_toggled = QtCore.pyqtSignal() #  logscale changed
 
 
 class AcquisitionModule(Module):
@@ -292,9 +307,33 @@ class AcquisitionModule(Module):
      - current_avg: current number of averages
     """
 
+    # The averaged data are stored in a RunFuture object _run_future
+    #
+    # _setup() recreates from scratch _run_future by calling _new_run_future()
+    #
+    # It is necessary to setup the AcquisitionModule on startup to start
+    # with clean arrays
+    #
+    # Changing any attribute in callback_attribute (mostly every
+    # setup_attribute except running_state) will force a restart of the
+    # averaging by calling setup
+    #
+    # On the other hand, "running_state" has a customized behavior: it will
+    # only call setup() when needed and perform customized actions otherwise:
+    #  - paused/stopped -> running_single: start acquisition on new future
+    #  - paused -> running_continuous: start acquisition on same future + set
+    #  future to run_continuous (irreversible)
+    #  - stopped -> running_continuous: start acquisition on new future +
+    # set future to run_continuous (irreversible) == call setup()
+    #  - running_single/running_continuous -> pause/stop: pause acquisition
+
+    _setup_on_load = True #  acquisition_modules need to be setup() once
+    # they are loaded
     _signal_launcher = SignalLauncherAcquisitionModule
     _setup_attributes = ['running_state', 'avg', 'curve_name']
     _callback_attributes = []
+    _run_future_cls = RunFuture
+
     MIN_DELAY_SINGLE_MS = 0  # async acquisition should be as fast as
     # possible
     MIN_DELAY_CONTINUOUS_MS = 40  # leave time for the event loop in
@@ -309,7 +348,7 @@ class AcquisitionModule(Module):
       at next call of running_continous
       - stopped: acquisition interrupted, averaging will restart at next
       call of running_continuous.
-    """)
+    """, default='stopped')
     avg = LongProperty(doc="number of curves to average in single mode. In "
                            "continuous mode, a moving window average is "
                            "performed.",
@@ -324,16 +363,27 @@ class AcquisitionModule(Module):
         self._curve_future = Future()
         # On the other hand, RunFuture has a start method and is not started
         # at instanciation.
-        self._run_future = RunFuture(self, continuous_run=True)
+        self._run_future = self._run_future_cls(self,
+                                   min_delay_ms=self.MIN_DELAY_SINGLE_MS)
 
-    def _get_new_curve_future(self, min_delay_ms):
-        return CurveFuture(self, min_delay_ms=min_delay_ms)
+    def _new_curve_future(self, min_delay_ms):
+        self._curve_future.cancel()
+        self._curve_future = CurveFuture(self, min_delay_ms=min_delay_ms)
 
-    def _get_new_single_future(self):
-        return RunFuture(self, continuous_run=False)
-
-    def _get_new_continuous_future(self):
-        return RunFuture(self, continuous_run=True)
+    def _new_run_future(self):
+        #assert self.running_state in ["running_single",
+        #                              "running_continuous"], \
+        #                             "Run future cannot be created in " \
+        #                             "state %s"%self.running_state
+        if hasattr(self, "_run_future"): #  for _init_module
+            self._run_future.cancel()
+        if self.running_state == "running_continuous":
+            self._run_future = self._run_future_cls(self,
+                                    min_delay_ms=self.MIN_DELAY_CONTINUOUS_MS)
+            self._run_future._set_run_continuous()
+        else:
+            self._run_future = self._run_future_cls(self,
+                                    min_delay_ms=self.MIN_DELAY_SINGLE_MS)
 
     def _emit_signal_by_name(self, signal_name, *args, **kwds):
         """Let's the module's signal_launcher emit signal name"""
@@ -344,10 +394,8 @@ class AcquisitionModule(Module):
         Same as curve_async except this function can be used in any
         running_state.
         """
-        self._curve_future.cancel()
         self._start_acquisition()
-        self._curve_future = self._get_new_curve_future(
-            min_delay_ms=min_delay_ms)
+        self._new_curve_future(min_delay_ms=min_delay_ms)
         return self._curve_future
 
     def curve_async(self):
@@ -437,9 +485,15 @@ class AcquisitionModule(Module):
         self._curve_future.cancel()
         self._run_future.cancel()
 
-    @property
-    def current_avg(self):
-        return self._run_future.current_avg
+    def _setup(self):
+        # the _run_future is renewed to match the requested type of run (
+        # rolling_mode or triggered)
+        # This is how we make sure changing duration or rolling_mode won't
+        # freeze the acquisition.
+        self._new_run_future()
+        if self.running_state in ["running_single", "running_continuous"]:
+            self._run_future.start()
+            self._emit_signal_by_name("autoscale")
 
     # Methods to implement in derived class:
     # --------------------------------------
@@ -467,7 +521,8 @@ class AcquisitionModule(Module):
         """
         raise NotImplementedError
 
-    def _data_x(self):
+    @property
+    def data_x(self):
         """
         x-axis of the curves to plot.
         :return:
@@ -483,3 +538,14 @@ class AcquisitionModule(Module):
         Only non-blocking operations are allowed.
         """
         pass
+
+    # Shortcut to the RunFuture data (for plotting):
+    # ----------------------------------------------
+
+    @property
+    def data_avg(self):
+        return self._run_future.data_avg
+
+    @property
+    def current_avg(self):
+        return self._run_future.current_avg

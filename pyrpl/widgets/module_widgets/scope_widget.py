@@ -156,13 +156,15 @@ class ScopeWidget(ModuleWidget):
             self.button_single.setText("Run single")
         if self.module.running_state=="running_single":
             self.button_continuous.setText("Run continuous")
-            self.button_single.setEnabled(True)
+            self.button_single.setEnabled(
+                                    not self.module._is_rolling_mode_active())
             self.button_single.setText("Stop (%i "
                                        "avg)"%self.module.current_avg)
         if self.module.running_state=="paused":
             self.button_continuous.setText("Run continuous (%i "
                                            "avg)"%self.module.current_avg)
-            self.button_single.setEnabled(True)
+            self.button_single.setEnabled(
+                                    not self.module._is_rolling_mode_active())
             self.button_single.setText("Run single")
         if self.module.running_state=="stopped":
             self.button_continuous.setText("Run continuous (%i "
@@ -197,15 +199,6 @@ class ScopeWidget(ModuleWidget):
                 self.curves[ch].setVisible(False)
         self.update_running_buttons() # to update the number of averages
 
-    # currently not implemented?
-    #def curve_display_done(self):
-    #    """
-    #    User may overwrite this function to implement custom functionality
-    #    at each graphical update.
-    #    :return:
-    #    """
-    #    pass
-
     def set_rolling_mode(self):
         """
         Set rolling mode on or off based on the module's attribute
@@ -235,10 +228,6 @@ class ScopeWidget(ModuleWidget):
 
     @property
     def rolling_mode(self):
-        # Note for future improvement: rolling mode should be a
-        # BoolAttribute  of Scope rather than a dirty attribute of
-        # ScopeWidget. Parameter saving would also require to use it
-        # as a parameter of Scope.setup()
         return ((self.checkbox_untrigged.isChecked()) and \
                 self.rolling_group.isEnabled())
 
@@ -266,14 +255,6 @@ class ScopeWidget(ModuleWidget):
     def autoscale(self):
         """Autoscale pyqtgraph. The current behavior is to autoscale x axis
         and set y axis to  [-1, +1]"""
-        #mini = np.nan
-        #maxi = np.nan
-        #for curve in self.curves:
-        #    if curve.isVisible():
-        #        mini = np.nanmin([self., mini])
-        #        maxi = np.nanmax([curve.xData.max(), maxi])
-        #if not np.isnan(mini):
-
         if self.module._is_rolling_mode_active():
             mini = -self.module.duration
             maxi = 0
