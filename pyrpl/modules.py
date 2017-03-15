@@ -143,15 +143,25 @@ class ModuleMetaClass(type):
         if "setup" not in classDict:
             # a. generate a setup function
             def setup(self, **kwds):
-                self._callback_active = False
+                self._setup_ongoing = True
                 try:
                     # user can redefine any setup_attribute through kwds
-                    self.setup_attributes = kwds
-                    # derived class
-                    if hasattr(self, '_setup'):
-                        self._setup()
+                    kwds = dict(kwds)  # makes a copy of the kwds dict
+                    try:
+                        for key in self._setup_attributes:
+                            if key in kwds:
+                                value = kwds.pop(key)
+                                setattr(self, key, value)
+                    finally:
+                        if hasattr(self, '_setup'):
+                            self._setup()
+                    if len(kwds) > 0:
+                        self._logger.warning(
+                            "Trying to load attribute %s of module %s that "
+                            "are invalid setup_attributes.",
+                            sorted(kwds.keys())[0], self.name)
                 finally:
-                    self._callback_active = True
+                    self._setup_ongoing = False
             # b. place the new setup function in the module class
             self.setup = setup
         # 3. if setup has no docstring, then make one
@@ -299,7 +309,7 @@ class Module(with_metaclass(ModuleMetaClass, object)):
     _callback_attributes = []
 
     # This flag is used to desactivate callback during setup
-    _callback_active = True
+    _setup_ongoing = False
 
     # internal memory for owner of the module (to avoid conflicts)
     _owner = None
@@ -423,19 +433,7 @@ class Module(with_metaclass(ModuleMetaClass, object)):
         """
         Sets the values of the setup attributes. Without calling any callbacks
         """
-        kwds = dict(kwds)  # makes a copy of the kwds dict
-        old_callback_active = self._callback_active
-        self._callback_active = False
-        try:
-            for key in self._setup_attributes:
-                if key in kwds:
-                    value = kwds.pop(key)
-                    setattr(self, key, value)
-        finally:
-            self._callback_active = old_callback_active
-        if len(kwds) > 0:
-            self._logger.warning("Trying to load attribute %s of module %s that are invalid setup_attributes.",
-                                 sorted(kwds.keys())[0], self.name)
+        self.setup(**kwds)
             #raise ValueError("Attribute %s of module %s doesn't exist." % (
             #    sorted(kwds.keys())[0], self.name))
 
@@ -580,19 +578,19 @@ class Module(with_metaclass(ModuleMetaClass, object)):
             self._logger.warning("Module %s of type %s is trying to create a widget, but no widget_class is defined!",
                                  self.name, type(self))
             return None
-        callback_bkp = self._callback_active
-        self._callback_active = False # otherwise, saved values will be
+        _setup_ongoing_bkp = self._setup_ongoing
+        self._setup_ongoing = True # otherwise, saved values will be
         # overwritten by default gui values
         autosave_bkp = self._autosave_active
         self._autosave_active = False  # otherwise, default gui values will be saved
         try:
             widget = self._widget_class(self.name, self)
         finally:
-            self._callback_active = callback_bkp
+            self._setup_ongoing = _setup_ongoing_bkp
             self._autosave_active = autosave_bkp
         return widget
 
-    def _callback(self):
+    def _callback_obsolete(self):
         """
         This function is called whenever an attribute listed in
         callback_attributes is changed outside setup()

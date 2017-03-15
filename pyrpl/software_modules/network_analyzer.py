@@ -108,7 +108,7 @@ class NaPointFuture(PyrplFuture):
 
 class NaCurveFuture(PyrplFuture):
     N_POINT_BENCHMARK = 100 #  update measured_time_per_point every 100 points
-    def __init__(self, module, min_delay_ms):
+    def __init__(self, module, min_delay_ms, autostart=True):
         self._module = module
         self._min_delay_ms = min_delay_ms
         self.current_point = 0
@@ -118,12 +118,15 @@ class NaCurveFuture(PyrplFuture):
                                  dtype=np.complex)
         self.data_amp = np.zeros(self.n_points)
         self._paused = True
+        self._fut = None
         self.never_started = True
         super(NaCurveFuture, self).__init__()
         self._module._start_acquisition()
         # self.start()
         self._reset_benchmark()
         self.measured_time_per_point = np.nan  #  measured over last scan
+        if autostart:
+            self.start()
 
     def start(self):
         if self.never_started:
@@ -198,7 +201,9 @@ class NaCurveFuture(PyrplFuture):
 
 class NaRunFuture(NaCurveFuture):
     def __init__(self, module, min_delay_ms):
-        super(NaRunFuture, self).__init__(module, min_delay_ms)
+        super(NaRunFuture, self).__init__(module,
+                                          min_delay_ms,
+                                          autostart=False)
         self._run_continuous = False
 
     def pause(self):
@@ -269,19 +274,23 @@ class NetworkAnalyzer(AcquisitionModule):
                        "logscale",
                        "infer_open_loop_tf"]
     _setup_attributes = _gui_attributes + ['running_state']
-    _callback_attributes = _gui_attributes
-    input = SelectProperty(DspModule.inputs)
-    output_direct = SelectProperty(DspModule.output_directs)
-    start_freq = FrequencyProperty()
-    stop_freq = FrequencyProperty()
-    rbw = RbwAttribute(default=1000)
-    avg_per_point = LongProperty(min=1, default=1)
-    amplitude = FloatProperty(min=0, max=1, increment=1. / 2 ** 14)
-    points = LongProperty(min=1, max=1e8, default=1001)
-    logscale = LogScaleProperty()
+    # _callback_attributes = _gui_attributes
+    input = SelectProperty(DspModule.inputs, callback=True)
+    output_direct = SelectProperty(DspModule.output_directs, callback=True)
+    start_freq = FrequencyProperty(callback=True)
+    stop_freq = FrequencyProperty(callback=True)
+    rbw = RbwAttribute(default=1000, callback=True)
+    avg_per_point = LongProperty(min=1, default=1, callback=True)
+    amplitude = FloatProperty(min=0,
+                              max=1,
+                              increment=1. / 2 ** 14,
+                              callback=True)
+    points = LongProperty(min=1, max=1e8, default=1001, callback=True)
+    logscale = LogScaleProperty(callback=True)
     infer_open_loop_tf = BoolProperty()
     acbandwidth = NaAcBandwidth(
-        doc="Bandwidth of the input high-pass filter of the na.")
+        doc="Bandwidth of the input high-pass filter of the na.",
+        callback=True)
 
     def _init_module(self):
         # to remove once order is fixed
@@ -410,6 +419,8 @@ class NetworkAnalyzer(AcquisitionModule):
     MIN_DELAY_SINGLE_MS = 0
     MIN_DELAY_CONTINUOUS_MS = 0
     # na should be as fast as possible
+
+    _curve_future_cls = NaCurveFuture
     _run_future_cls = NaRunFuture
 
     def _new_run_future_obsolete(self):

@@ -335,6 +335,7 @@ class AcquisitionModule(Module):
     _setup_attributes = ['running_state', 'avg', 'curve_name']
     _callback_attributes = []
     _run_future_cls = RunFuture
+    _curve_future_cls = CurveFuture
 
     MIN_DELAY_SINGLE_MS = 0  # async acquisition should be as fast as
     # possible
@@ -371,7 +372,8 @@ class AcquisitionModule(Module):
 
     def _new_curve_future(self, min_delay_ms):
         self._curve_future.cancel()
-        self._curve_future = CurveFuture(self, min_delay_ms=min_delay_ms)
+        self._curve_future = self._curve_future_cls(self,
+                                                    min_delay_ms=min_delay_ms)
 
     def _new_run_future(self):
         #assert self.running_state in ["running_single",
