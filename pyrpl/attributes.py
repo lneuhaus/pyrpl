@@ -54,7 +54,7 @@ class BaseAttribute(object):
       - a function get_value(instance, owner) that reads the value from
         wherever it is stored internally
     """
-    widget_class = None
+    _widget_class = None
     widget = None
 
     def __init__(self, default=None, doc="", ignore_errors=False):
@@ -138,13 +138,13 @@ class BaseAttribute(object):
         """
         Creates a widget to graphically manipulate the attribute.
         """
-        if self.widget_class is None:
-            logger.warning("Module %s of type %s is trying to create a widget for %s, but no widget_class is defined!",
+        if self._widget_class is None:
+            logger.warning("Module %s of type %s is trying to create a widget for %s, but no _widget_class is defined!",
                            str(module), type(module), name)
             return None
         if name is None:
             name = self.name  # attributed by the metaclass of module
-        widget = self.widget_class(name, module)
+        widget = self._widget_class(name, module)
         return widget
 
 
@@ -171,7 +171,7 @@ class FloatAttribute(NumberAttribute):
     """
     An attribute for a float value.
     """
-    widget_class = FloatAttributeWidget
+    _widget_class = FloatAttributeWidget
 
     def __init__(self, default=None, increment=0.001, min=-1., max=1., doc="", ignore_errors=False):
         super(FloatAttribute, self).__init__(default=default, doc=doc, ignore_errors=ignore_errors)
@@ -190,7 +190,7 @@ class FrequencyAttribute(FloatAttribute):
     """
     An attribute for frequency values
     """
-    widget_class = FrequencyAttributeWidget
+    _widget_class = FrequencyAttributeWidget
 
     def __init__(self, default=None, increment=0.1, min=0, max=1e100, doc="", ignore_errors=False):
         super(FloatAttribute, self).__init__(default=default, doc=doc, ignore_errors=ignore_errors)
@@ -209,7 +209,7 @@ class IntAttribute(NumberAttribute):
     """
     An attribute for integer values
     """
-    widget_class = IntAttributeWidget
+    _widget_class = IntAttributeWidget
 
     def __init__(self, default=None, min=0, max=2**14, increment=1, doc="", ignore_errors=False):
         super(IntAttribute, self).__init__(default=default, doc=doc, ignore_errors=ignore_errors)
@@ -228,7 +228,7 @@ class BoolAttribute(BaseAttribute):
     """
     An attribute for booleans
     """
-    widget_class = BoolAttributeWidget
+    _widget_class = BoolAttributeWidget
 
     def validate_and_normalize(self, value, module):
         """
@@ -244,7 +244,7 @@ class SelectAttribute(BaseAttribute):
     If options are numbers (int or float), rounding to the closest value is performed during the validation
     If options are strings, validation is strict.
     """
-    widget_class = SelectAttributeWidget
+    _widget_class = SelectAttributeWidget
 
     def __init__(self, options=[], default=None, doc="", ignore_errors=False):
         """
@@ -331,7 +331,7 @@ class StringAttribute(BaseAttribute):
     """
     An attribute for string (in practice, there is no StringRegister at this stage).
     """
-    widget_class = StringAttributeWidget
+    _widget_class = StringAttributeWidget
 
     def validate_and_normalize(self, value, module):
         """
@@ -368,7 +368,7 @@ class FilterAttribute(BaseAttribute):
     The number of elements in the list are also defined at runtime.
     """
 
-    widget_class = FilterAttributeWidget
+    _widget_class = FilterAttributeWidget
 
     def validate_and_normalize(self, value, module):
         """
@@ -383,7 +383,7 @@ class ListFloatAttribute(BaseAttribute):
     """
     An arbitrary length list of float numbers.
     """
-    widget_class = ListFloatAttributeWidget
+    _widget_class = ListFloatAttributeWidget
 
     def validate_and_normalize(self, value, module):
         """
@@ -399,7 +399,7 @@ class ListComplexAttribute(BaseAttribute):
     An arbitrary length list of complex numbers.
     """
 
-    widget_class = ListComplexAttributeWidget
+    _widget_class = ListComplexAttributeWidget
 
     def validate_and_normalize(self, value, module):
         """
@@ -415,7 +415,7 @@ class ListStageOutputAttribute(BaseAttribute):
     A list of str->bool mappings (used to map outputs on/off for each stage of a lockbox). Assignation can also be
     done via lnba['my_piezo'] = True
     """
-    widget_class = ListStageOutputAttributeWidget
+    _widget_class = ListStageOutputAttributeWidget
 
     def validate_and_normalize(self, value, module):
         if not isinstance(value, dict):
@@ -800,7 +800,7 @@ class FilterRegister(BaseRegister, FilterAttribute):
     """
     Interface for up to 4 low-/highpass filters in series (filter_block.v)
     """
-    widget_class = FilterAttributeWidget
+    _widget_class = FilterAttributeWidget
 
     def __init__(self, address, filterstages, shiftbits, minbw, **kwargs):
         super(FilterRegister, self).__init__(address=address, **kwargs)
@@ -808,14 +808,21 @@ class FilterRegister(BaseRegister, FilterAttribute):
         self.shiftbits = shiftbits
         self.minbw = minbw
 
+    def read_and_save(self, obj, attr_name):
+        # save the value upon first execution in order to only read this once
+        var_name = self.name + "_" + attr_name
+        if not hasattr(obj, var_name):
+            setattr(obj, var_name, obj._read(getattr(self, attr_name)))
+        return getattr(obj, var_name)
+
     def _FILTERSTAGES(self, obj):
-        return obj._read(self.filterstages)
+        return self.read_and_save(obj, "filtersatages")
 
     def _SHIFTBITS(self, obj):
-        return obj._read(self.shiftbits)
+        return self.read_and_save(obj, "shiftbits")
 
     def _MINBW(self, obj):
-        return obj._read(self.minbw)
+        return self.read_and_save(obj, "minbw")
 
     def _ALPHABITS(self, obj):
         return int(np.ceil(np.log2(125000000 / self._MINBW(obj))))
