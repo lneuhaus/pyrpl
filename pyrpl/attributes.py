@@ -575,9 +575,10 @@ class IntRegister(NumberRegister, IntAttribute):
     """
     Register for integer values encoded on less than 32 bits.
     """
-    def __init__(self, address, bits=32, **kwargs):
+    def __init__(self, address, bits=32, callback=False, **kwargs):
         super(IntRegister, self).__init__(address=address, **kwargs)
-        IntAttribute.__init__(self, min=0, max=2 ** bits, increment=1)
+        IntAttribute.__init__(self, min=0, max=2 ** bits, increment=1,
+                              callback=callback)
         self.bits = bits
         self.size = int(np.ceil(float(self.bits) / 32))
 
@@ -628,9 +629,9 @@ class BoolRegister(BaseRegister, BoolAttribute):
     """Inteface for boolean values, 1: True, 0: False.
     invert=True inverts the mapping"""
 
-    def __init__(self, address, bit=0, invert=False, **kwargs):
+    def __init__(self, address, bit=0, invert=False, callback=False, **kwargs):
         super(BoolRegister, self).__init__(address=address, **kwargs)
-        BoolAttribute.__init__(self)
+        BoolAttribute.__init__(self, callback=callback)
         self.bit = bit
         assert type(invert) == bool
         self.invert = invert
@@ -696,12 +697,13 @@ class SelectRegister(BaseRegister, SelectAttribute):
     def __init__(self, address,
                  options={},
                  doc="",
+                 callback=False,
                  **kwargs):
         super(SelectRegister, self).__init__(
             address=address,
             doc=doc + "\r\nOptions:\r\n" + str(options),
             **kwargs)
-        SelectAttribute.__init__(self, options)
+        SelectAttribute.__init__(self, options, callback=callback)
         self._options = Bijection(options)
 
     def to_python(self, value, obj):

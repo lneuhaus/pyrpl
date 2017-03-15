@@ -578,16 +578,18 @@ class Module(with_metaclass(ModuleMetaClass, object)):
             self._logger.warning("Module %s of type %s is trying to create a widget, but no widget_class is defined!",
                                  self.name, type(self))
             return None
-        _setup_ongoing_bkp = self._setup_ongoing
-        self._setup_ongoing = True # otherwise, saved values will be
+        #_setup_ongoing_bkp = self._setup_ongoing
+        #self._setup_ongoing = True # otherwise, saved values will be
         # overwritten by default gui values
-        autosave_bkp = self._autosave_active
-        self._autosave_active = False  # otherwise, default gui values will be saved
+        #autosave_bkp = self._autosave_active
+        #self._autosave_active = False  # otherwise, default gui values will
+        #  be saved
         try:
             widget = self._widget_class(self.name, self)
         finally:
-            self._setup_ongoing = _setup_ongoing_bkp
-            self._autosave_active = autosave_bkp
+            pass
+         #   self._setup_ongoing = _setup_ongoing_bkp
+         #   self._autosave_active = autosave_bkp
         return widget
 
     def _callback_obsolete(self):

@@ -113,7 +113,7 @@ class SpectrumAnalyzer(AcquisitionModule):
                        "window",
                        "acbandwidth"]
     _setup_attributes = _gui_attributes
-    _callback_attributes = _gui_attributes
+    #_callback_attributes = _gui_attributes
 
     # numerical values
     nyquist_margin = 1.0
@@ -134,16 +134,17 @@ class SpectrumAnalyzer(AcquisitionModule):
     inputs = DspModule.inputs
 
     # attributes
-    baseband = BoolProperty()
+    baseband = BoolProperty(callback=True)
     span = SpanFilterProperty(doc="""
         Span can only be given by 1./sampling_time where sampling
         time is a valid scope sampling time.
-        """)
-    center = CenterAttribute()
-    points = LongProperty()
-    window = SelectProperty(options=windows)
-    input = SelectProperty(options=inputs)
-    acbandwidth = SpecAnAcBandwidth()
+        """,
+        callback=True)
+    center = CenterAttribute(callback=True)
+    points = LongProperty(callback=True)
+    window = SelectProperty(options=windows, callback=True)
+    input = SelectProperty(options=inputs, callback=True)
+    acbandwidth = SpecAnAcBandwidth(callback=True)
 
     # _signal_launcher = SignalLauncherSpectrumAnalyzer
 

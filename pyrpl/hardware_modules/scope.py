@@ -195,7 +195,7 @@ class Scope(HardwareModule, AcquisitionModule):
     # acquisition setup
     _setup_attributes = _gui_attributes + ["rolling_mode", "running_state"]
     # changing these resets the acquisition and autoscale (calls setup())
-    _callback_attributes = ["rolling_mode", "decimation", "trigger_delay"]
+    # _callback_attributes = ["rolling_mode", "decimation", "trigger_delay"]
 
     data_length = data_length  # to use it in a list comprehension
 
@@ -203,7 +203,8 @@ class Scope(HardwareModule, AcquisitionModule):
                                     "continuously acquired and "
                                     "translated from the right to the "
                                     "left of the screen while new "
-                                    "data arrive.")
+                                    "data arrive.",
+                                callback=True)
 
     inputs = None
     input1 = DspInputAttributeScope(1)
@@ -257,7 +258,8 @@ class Scope(HardwareModule, AcquisitionModule):
                                               "acquisition start.\n"
                                               "negative values down to "
                                               "-duration are allowed for "
-                                              "pretrigger")
+                                              "pretrigger",
+                                          callback=True)
 
     _trigger_delay_running = BoolRegister(0x0, 2,
                                           doc="trigger delay running ("
@@ -293,7 +295,8 @@ class Scope(HardwareModule, AcquisitionModule):
     decimation = DecimationRegister(0x14, doc="decimation factor",
                                     # customized to update duration and
                                     # sampling_time
-                                    options=_decimations)
+                                    options=_decimations,
+                                    callback=True)
 
     _write_pointer_current = IntRegister(0x18,
                                          doc="current write pointer "

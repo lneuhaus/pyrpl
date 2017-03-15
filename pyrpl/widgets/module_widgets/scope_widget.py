@@ -181,6 +181,14 @@ class ScopeWidget(ModuleWidget):
         except NotReadyError:
             pass
 
+    def change_ownership(self):
+        """
+        For some reason the visibility of the rolling mode panel is not updated
+        when the scope becomes free again unless we ask for it explicitly...
+        """
+        super(ScopeWidget, self).change_ownership()
+        self.update_rolling_mode_visibility()
+
     def display_curve(self, list_of_arrays):
         """
         Displays all active channels on the graph.

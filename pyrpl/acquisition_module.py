@@ -333,7 +333,6 @@ class AcquisitionModule(Module):
     # they are loaded
     _signal_launcher = SignalLauncherAcquisitionModule
     _setup_attributes = ['running_state', 'avg', 'curve_name']
-    _callback_attributes = []
     _run_future_cls = RunFuture
     _curve_future_cls = CurveFuture
 
