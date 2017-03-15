@@ -362,7 +362,8 @@ class MemoryBranch(object):
                 self._parent._data[self._branch] = []
             # if index <= len, creation is done automatically if needed
             # otherwise an error is raised
-            self[name] = dict()
+            if name >= len(self):
+                self[name] = dict()
             return self[name]
         else:  # dict-like subbranch, support several sublevels separated by '.'
             # chop name into parts and iterate through them
