@@ -816,7 +816,7 @@ class FilterRegister(BaseRegister, FilterAttribute):
         return getattr(obj, var_name)
 
     def _FILTERSTAGES(self, obj):
-        return self.read_and_save(obj, "filtersatages")
+        return self.read_and_save(obj, "filterstages")
 
     def _SHIFTBITS(self, obj):
         return self.read_and_save(obj, "shiftbits")
