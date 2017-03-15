@@ -4,14 +4,13 @@ from ..signals import *
 
 class InterferometerPort1(InputDirect):
     def expected_signal(self, phase):
-        return self.mean + .5 * (self.max - self.min) * \
-                           np.sin(phase)
+        return 0.5 * (self.min + self.max) +\
+               0.5 * (self.max - self.min) * np.sin(phase)
 
 
-class InterferometerPort2(InputDirect):
+class InterferometerPort2(InterferometerPort1):
     def expected_signal(self, phase):
-        return self.mean - .5 * (self.max - self.min) * \
-                           np.sin(phase)
+        return super(InterferometerPort2, self).expected_amplitude(-phase)
 
 
 class Interferometer(Lockbox):
