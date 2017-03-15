@@ -33,13 +33,13 @@ class Stage(LockboxModule):
                          'setpoint',
                          'duration',
                          'function_call',
-                         'gain_factor'] #,
-                         #'outputs']
+                         'gain_factor',
+                         'outputs']
     _gui_attributes = _setup_attributes
     _widget_class = LockboxStageWidget
     _signal_launcher = StageSignalLauncher
 
-    input = SelectProperty(options=lambda stage: stage.lockbox.inputs.keys())
+    input = SelectProperty(options=lambda stage: stage.lockbox.inputs.module_attributes())
     setpoint = FloatProperty(default=0, min=-1e6, max=1e6)
 
     duration = FloatProperty(default=0, min=0, max=1e6)

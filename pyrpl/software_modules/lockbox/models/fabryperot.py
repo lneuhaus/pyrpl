@@ -57,13 +57,13 @@ class InputAnalogPdh(InputDirect):
 class InputPdh(InputIq, InputAnalogPdh):
     def is_locked(self, loglevel=logging.INFO):
         # simply perform the is_locked with the reflection error signal
-        return self.lockbox.is_locked(self.lockbox.reflection,
+        return self.lockbox.is_locked(self.lockbox.inputs.reflection,
                                       loglevel=loglevel)
 
 
 class FabryPerot(Lockbox):
     units = ['m', 'Hz', 'nm', 'MHz']
-    _setup_attributes = ["wavelength", "finesse", "length", 'eta']
+    _setup_attributes = ["wavelength", "finesse", "length", "eta", "inputs", "sequence"]
     _gui_attributes = _setup_attributes
     wavelength = FloatProperty(max=10000, min=0, default=1.064e-6)
     finesse = FloatProperty(max=1e7, min=0, default=10000)
@@ -76,8 +76,8 @@ class FabryPerot(Lockbox):
     variable = 'detuning'
 
     inputs = LockboxModuleDictProperty(transmission = FPTransmission,
-                                            reflection = FPReflection,
-                                            pdh = InputPdh)
+                                       reflection = FPReflection,
+                                       pdh = InputPdh)
 
     @property
     def free_spectral_range(self):

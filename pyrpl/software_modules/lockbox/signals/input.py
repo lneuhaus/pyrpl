@@ -325,14 +325,14 @@ class IqFilterProperty(FilterProperty):
 class InputIq(InputDirect):
     """ Base class for demodulated signals. A derived class must implement
     the method expected_signal (see InputPdh in fabryperot.py for example)"""
-    _gui_attributes = InputSignal._gui_attributes + ['mod_freq',
-                                                     'mod_amp',
-                                                     'mod_phase',
-                                                     'quadrature_factor',
-                                                     'mod_output',
-                                                     'bandwidth']
+    _gui_attributes = ['mod_freq',
+                       'mod_amp',
+                       'mod_phase',
+                       'quadrature_factor',
+                       'mod_output',
+                       'bandwidth']
+    _setup_attributes = _gui_attributes
 
-    _setup_attributes = _gui_attributes + ["min", "max", "mean", "rms"]
     mod_freq = IqFrequencyProperty()
     mod_amp = IqAmplitudeProperty()
     mod_phase = IqPhaseProperty()

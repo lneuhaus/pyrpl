@@ -261,7 +261,11 @@ class ModuleDictProperty(ModuleProperty):
         # inherit from module_cls
         ModuleDictClassInstance = type(module_cls.__name__+"DictPropertyInstance",
                                        (ModuleDict, module_cls),
-                                       {key: ModuleProperty(value) for key, value in kwargs.items()})
+                    {key: ModuleProperty(value) for key, value in kwargs.items()})
+        # metaclass of Module takes care of _x_attributes and names of submodules:
+        # ModuleDictClassInstance._setup_attributes = kwargs.keys()
+        # ModuleDictClassInstance._module_attributes = kwargs.keys()
+
         # init this attribute with the contained module
         super(ModuleDictProperty, self).__init__(ModuleDictClassInstance,
                                                  default=default,
