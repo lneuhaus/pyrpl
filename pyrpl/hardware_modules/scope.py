@@ -585,18 +585,3 @@ class Scope(HardwareModule, AcquisitionModule):
             self._run_future = ContinuousRollingFuture(self)
         else:
             super(Scope, self)._new_run_future()
-
-    # Shortcut to the RunFuture data (for plotting):
-    # ----------------------------------------------
-
-    @property
-    def data_x(self):
-        return self.times
-
-    @property
-    def data_avg(self):
-        return self._run_future.data_avg
-
-    @property
-    def current_avg(self):
-        return self._run_future.current_avg

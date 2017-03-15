@@ -54,14 +54,12 @@ class NaWidget(ModuleWidget):
         self.main_layout.addWidget(self.win)
         self.main_layout.addWidget(self.win_phase)
 
-        self.run_avg_widget = self.module.__class__.avg._create_widget(
-            self.module)
-        self.button_layout.addWidget(self.run_avg_widget)
+        aws = self.attribute_widgets
+        self.attribute_layout.removeWidget(aws["avg"])
+        self.attribute_layout.removeWidget(aws["curve_name"])
 
-        self.curve_name_widget = \
-            self.module.__class__.curve_name._create_widget(
-            self.module)
-        self.button_layout.addWidget(self.curve_name_widget)
+        self.button_layout.addWidget(aws["avg"])
+        self.button_layout.addWidget(aws["curve_name"])
 
         self.button_layout.addWidget(self.button_single)
         self.button_layout.addWidget(self.button_continuous)
@@ -91,8 +89,8 @@ class NaWidget(ModuleWidget):
         self.button_layout.setStretchFactor(self.button_continuous, 1)
         self.button_layout.setStretchFactor(self.button_stop, 1)
         self.button_layout.setStretchFactor(self.button_save, 1)
-        self.button_layout.setStretchFactor(self.run_avg_widget, 1)
-        self.button_layout.setStretchFactor(self.curve_name_widget, 1)
+        #self.button_layout.setStretchFactor(self.run_avg_widget, 1)
+        #self.button_layout.setStretchFactor(self.curve_name_widget, 1)
 
     def autoscale(self):
         """

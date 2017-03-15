@@ -71,15 +71,11 @@ class ScopeWidget(ModuleWidget):
 
         self.button_layout = QtGui.QHBoxLayout()
 
-        self.run_avg_widget = self.module.__class__.avg._create_widget(
-            self.module)
-        self.button_layout.addWidget(self.run_avg_widget)
-
-        self.curve_name_widget = \
-            self.module.__class__.curve_name._create_widget(
-            self.module)
-        self.button_layout.addWidget(self.curve_name_widget)
-
+        aws = self.attribute_widgets
+        self.attribute_layout.removeWidget(aws["avg"])
+        self.attribute_layout.removeWidget(aws["curve_name"])
+        self.button_layout.addWidget(aws["avg"])
+        self.button_layout.addWidget(aws["curve_name"])
 
         self.setLayout(self.main_layout)
         self.setWindowTitle("Scope")
@@ -131,8 +127,8 @@ class ScopeWidget(ModuleWidget):
         self.button_layout.setStretchFactor(self.button_single, 1)
         self.button_layout.setStretchFactor(self.button_continuous, 1)
         self.button_layout.setStretchFactor(self.button_save, 1)
-        self.button_layout.setStretchFactor(self.run_avg_widget, 1)
-        self.button_layout.setStretchFactor(self.curve_name_widget, 1)
+        #self.button_layout.setStretchFactor(self.run_avg_widget, 1)
+        #self.button_layout.setStretchFactor(self.curve_name_widget, 1)
 
     def update_attribute_by_name(self, name, new_value_list):
         """

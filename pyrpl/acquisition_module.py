@@ -327,6 +327,8 @@ class AcquisitionModule(Module):
     # set future to run_continuous (irreversible) == call setup()
     #  - running_single/running_continuous -> pause/stop: pause acquisition
 
+    _gui_attributes = ['avg', 'curve_name']
+
     _setup_on_load = True #  acquisition_modules need to be setup() once
     # they are loaded
     _signal_launcher = SignalLauncherAcquisitionModule
@@ -352,7 +354,8 @@ class AcquisitionModule(Module):
     avg = LongProperty(doc="number of curves to average in single mode. In "
                            "continuous mode, a moving window average is "
                            "performed.",
-                       default=1)
+                       default=1,
+                       min=1)
     curve_name = StringProperty(doc="name of the curve to save.")
 
     def _init_module(self):
