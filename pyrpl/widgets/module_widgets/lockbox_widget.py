@@ -685,8 +685,9 @@ class LockboxSequenceWidget(ModuleWidget):
         for stage in self.module:
             self.stage_created([stage])
         self.main_layout.addStretch(2)
-        #self.scroll_layout = QtGui.QScrollArea(self)
+        self.scroll_layout = QtGui.QScrollArea(self)
         #self.scroll_layout.setWidget(self)
+        #self.scroll_layout.setLayout(self)
 
     def stage_created(self, stage):
         stage = stage[0] # values are passed as list of length 1
