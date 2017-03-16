@@ -134,17 +134,17 @@ class SpectrumAnalyzer(AcquisitionModule):
     inputs = DspModule.inputs
 
     # attributes
-    baseband = BoolProperty(callback=True)
+    baseband = BoolProperty(call_setup=True)
     span = SpanFilterProperty(doc="""
         Span can only be given by 1./sampling_time where sampling
         time is a valid scope sampling time.
         """,
-        callback=True)
-    center = CenterAttribute(callback=True)
-    points = LongProperty(default=16384, callback=True)
-    window = SelectProperty(options=windows, callback=True)
-    input = SelectProperty(options=inputs, callback=True)
-    acbandwidth = SpecAnAcBandwidth(callback=True)
+        call_setup=True)
+    center = CenterAttribute(call_setup=True)
+    points = LongProperty(default=16384, call_setup=True)
+    window = SelectProperty(options=windows, call_setup=True)
+    input = SelectProperty(options=inputs, call_setup=True)
+    acbandwidth = SpecAnAcBandwidth(call_setup=True)
 
     # _signal_launcher = SignalLauncherSpectrumAnalyzer
 

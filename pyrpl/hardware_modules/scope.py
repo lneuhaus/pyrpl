@@ -204,7 +204,7 @@ class Scope(HardwareModule, AcquisitionModule):
                                     "translated from the right to the "
                                     "left of the screen while new "
                                     "data arrive.",
-                                callback=True)
+                                call_setup=True)
 
     inputs = None
     input1 = DspInputAttributeScope(1)
@@ -259,7 +259,7 @@ class Scope(HardwareModule, AcquisitionModule):
                                               "negative values down to "
                                               "-duration are allowed for "
                                               "pretrigger",
-                                          callback=True)
+                                          call_setup=True)
 
     _trigger_delay_running = BoolRegister(0x0, 2,
                                           doc="trigger delay running ("
@@ -296,7 +296,7 @@ class Scope(HardwareModule, AcquisitionModule):
                                     # customized to update duration and
                                     # sampling_time
                                     options=_decimations,
-                                    callback=True)
+                                    call_setup=True)
 
     _write_pointer_current = IntRegister(0x18,
                                          doc="current write pointer "
