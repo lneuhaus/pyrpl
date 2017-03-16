@@ -351,9 +351,6 @@ class Scope(HardwareModule, AcquisitionModule):
                               doc="should ch2 be displayed in the gui?")
 
     def _init_module(self):
-        self._setup_attributes.remove("running_state")
-        self._setup_attributes.append("running_state")
-
         # dsp multiplexer channels for scope and asg are the same by default
         self._ch1 = DspModule(self._rp, name='asg0')  # the scope inputs and
         #  asg outputs have the same id
