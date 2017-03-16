@@ -180,43 +180,6 @@ class ModuleListProperty(ModuleProperty):
         return value
 
 
-# class ModuleContainerProperty(ModuleProperty):
-#     default_module_cls = Module
-#     def __init__(self, module_cls=None, default=None, doc="",
-#                  ignore_errors=False, **kwargs):
-#         """ returns a descriptor for a module container, i.e. a class that contains submodules whose name and class are
-#         specified in kwargs. module_cls is the base class for the module container (typically SoftwareModule)"""
-#         # we simply create a container class that loosely resembles a dictionary which contains the given submodules
-#         if module_cls is None:
-#             module_cls = self.default_module_cls
-#         class ModuleContainer(module_cls):
-#             def __getitem__(self, key):
-#                 return getattr(self, key)
-#             def keys(self):
-#                 return self._module_attributes
-#             def values(self):
-#                 return [self[k] for k in self.keys()]
-#             def items(self):
-#                 return [(k, self[k]) for k in self.keys()]
-#             def __iter__(self):
-#                 # this method allows to write code like this: 'for submodule in modulecontainer: submodule.do_sth()'
-#                 return iter(self.values())
-#             # add the submodule entries here such that the metaclass of module_cls can do its job
-#             for k, v in kwargs.items():
-#                 locals()[k] = ModuleProperty(v)
-#             # this re-definition essentially silences the warning issued
-#             # when nonexisting submodules are present in the config file
-#             @property
-#             def setup_attributes(self):
-#                 return module_cls.setup_attributes
-#             @setup_attributes.setter
-#             def setup_attributes(self, kwds):
-#                 module_cls.setup_attributes = \
-#                     {k:v for k, v in kwds.items() if k in self._setup_attributes}
-#         super(ModuleContainerProperty, self).__init__(ModuleContainer, default=default,
-#                                                       doc=doc, ignore_errors=ignore_errors)
-#
-
 class ModuleDict(Module):
     """
     container class that loosely resembles a dictionary which contains submodules
