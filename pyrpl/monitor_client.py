@@ -195,6 +195,14 @@ class DummyClient(object):
                     return 4
                 elif offset == 0x228:  # MINBW
                     return 1
+            elif module.startswith('iir'):
+                if offset == 0x200:  # IIRBITS
+                    return 64
+                elif offset == 0x204:  # IIRSHIFT
+                    return 32
+                elif offset == 0x208:  # IIRSTAGES
+                    return 16
+
         # everything else is restored from the dict
         return self.fpgamemory[str(addr)]
 
