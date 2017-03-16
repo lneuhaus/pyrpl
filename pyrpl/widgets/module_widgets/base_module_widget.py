@@ -111,57 +111,55 @@ class EditLabel(MyMenuLabel):
         return menu
 
 
-class ModuleWidget(QtGui.QGroupBox):
+class ReducedModuleWidget(QtGui.QGroupBox):
     """
     Base class for a module Widget. In general, this is one of the DockWidget of the Pyrpl MainWindow.
     """
-    title_pos = (12, 0)
     attribute_changed = QtCore.pyqtSignal()
-    # register_names = [] # a list of all register name to expose in the gui
-
-    def set_title(self, title):
-        title = str(title)
-        if hasattr(self, "title_label"): # ModuleManagerWidgets don't have a title_label
-            self.title_label.setText(title)
-            self.title_label.adjustSize()
-            self.title_label.move(*self.title_pos)
-            self.load_label.move(self.title_label.width() + self.title_pos[0],
-                                 self.title_pos[1])
-            self.save_label.move(self.load_label.width() +
-                                 self.load_label.pos().x(), self.title_pos[1])
-            self.erase_label.move(self.save_label.width() +
-                                 self.save_label.pos().x(), self.title_pos[1])
-            self.edit_label.move(self.erase_label.width() +
-                                 self.erase_label.pos().x(), self.title_pos[1])
-
+    title_pos = (12, 0)
 
     def __init__(self, name, module, parent=None):
-        super(ModuleWidget, self).__init__(parent)
-        self.yml_editors = dict() # Widgets to edit the yml code of module
-                                  # on a per-state basis
+        super(ReducedModuleWidget, self).__init__(parent)
         self._logger = logging.getLogger(__name__)
         self.module = module
         self.name = name
         self.attribute_widgets = OrderedDict()
-
+        self.yml_editors = dict()  # optional widgets to edit the yml code of module on a per-state basis
         self.init_gui() # performs the automatic gui creation based on register_names
-        self.create_title_bar()
         # self.setStyleSheet("ModuleWidget{border:0;color: transparent;}") # frames and title hidden for software_modules
                                         # ModuleManagerWidget sets them visible for the HardwareModuleWidgets...
-        self.change_ownership()
+        self.create_title_bar()
+        self.change_ownership() # also sets the title
         self.module._signal_launcher.connect_widget(self)
 
-    def change_ownership(self):
+    def init_gui(self):
         """
-        SLOT: don't change name unless you know what you are doing
-        Display the new ownership
+        To be overwritten in derived class
+        :return:
         """
-        if self.module.owner is not None:
-            self.setEnabled(False)
-            self.set_title(self.module.name + ' (' + self.module.owner + ')')
-        else:
-            self.setEnabled(True)
-            self.set_title(self.module.name)
+        self.main_layout = QtGui.QHBoxLayout()
+        self.setLayout(self.main_layout)
+        self.init_attribute_layout()
+
+    def init_attribute_layout(self):
+        """
+        Automatically creates the gui properties for the register_widgets in register_names.
+        :return:
+        """
+        self.attribute_layout = QtGui.QHBoxLayout()
+        self.main_layout.addLayout(self.attribute_layout)
+        for attr_name in self.module._gui_attributes:
+            attribute = getattr(self.module.__class__, attr_name)
+            if callable(attribute):
+                # assume that attribute is a function
+                widget = QtGui.QPushButton(attr_name)
+                widget.clicked.connect(getattr(self.module, attr_name))
+            else:
+                # standard case: make attribute widget
+                widget = attribute._create_widget(self.module)
+                self.attribute_widgets[attr_name] = widget
+                widget.value_changed.connect(self.attribute_changed)
+            self.attribute_layout.addWidget(widget)
 
     def update_attribute_by_name(self, name, new_value_list):
         """
@@ -179,6 +177,63 @@ class ModuleWidget(QtGui.QGroupBox):
         if select_attribute_name in self.module._gui_attributes:
             self.attribute_widgets[str(select_attribute_name)].change_options(new_options)
 
+    def change_ownership(self):
+        """
+        SLOT: don't change name unless you know what you are doing
+        Display the new ownership
+        """
+        if self.module.owner is not None:
+            self.setEnabled(False)
+            self.set_title(self.module.name + ' (' + self.module.owner + ')')
+        else:
+            self.setEnabled(True)
+            self.set_title(self.module.name)
+
+    def set_title(self, title):
+        return self.setTitle(str(title))
+
+    def create_title_bar(self):
+        # manage spacings of title bar / box around module
+        for v in [self.main_layout]:
+            v.setSpacing(0)
+            v.setContentsMargins(5, 1, 0, 0)
+
+    def save_curve(self, x_values, y_values, **attributes):
+        """
+        Saves the curve in some database system.
+        To change the database system, overwrite this function
+        or patch Module.curvedb if the interface is identical.
+
+        :param  x_values: numpy array with x values
+        :param  y_values: numpy array with y values
+        :param  attributes: extra curve parameters (such as relevant module settings)
+        """
+        c = self.curve_class.create(x_values,
+                                    y_values,
+                                    **attributes)
+        c.name = attributes["curve_name"]
+        return c
+
+
+class ModuleWidget(ReducedModuleWidget):
+    """
+    Base class for a module Widget. In general, this is one of the DockWidget of the Pyrpl MainWindow.
+    """
+    def set_title(self, title):
+        title = str(title)
+        if hasattr(self, "title_label"): # ModuleManagerWidgets don't have a title_label
+            self.title_label.setText(title)
+            self.title_label.adjustSize()
+            self.title_label.move(*self.title_pos)
+            self.load_label.move(self.title_label.width() + self.title_pos[0],
+                                 self.title_pos[1])
+            self.save_label.move(self.load_label.width() +
+                                 self.load_label.pos().x(), self.title_pos[1])
+            self.erase_label.move(self.save_label.width() +
+                                 self.save_label.pos().x(), self.title_pos[1])
+            self.edit_label.move(self.erase_label.width() +
+                                 self.erase_label.pos().x(), self.title_pos[1])
+
     def create_title_bar(self):
         self.title_label = QtGui.QLabel("yo", parent=self)
          # title should be at the top-left corner of the widget
@@ -194,58 +249,7 @@ class ModuleWidget(QtGui.QGroupBox):
         self.edit_label = EditLabel(self)
         self.edit_label.adjustSize()
 
-
         # self.setStyleSheet("ModuleWidget{border: 1px dashed gray;color: black;}")
         self.setStyleSheet("ModuleWidget{margin: 0.1em; margin-top:0.6em; border: 1 dotted gray;border-radius:5}")
         # margin-top large enough for border to be in the middle of title
         self.layout().setContentsMargins(0, 5, 0, 0)
-
-    def init_attribute_layout(self):
-        """
-        Automatically creates the gui properties for the register_widgets in register_names.
-        :return:
-        """
-
-        self.attribute_layout = QtGui.QHBoxLayout()
-        self.main_layout.addLayout(self.attribute_layout)
-
-        for attr_name in self.module._gui_attributes:
-            attribute = getattr(self.module.__class__, attr_name)
-            if callable(attribute):
-                # assume that attribute is a function
-                widget = QtGui.QPushButton(attr_name)
-                widget.clicked.connect(getattr(self.module, attr_name))
-            else:
-                # standard case: make attribute widget
-                widget = attribute._create_widget(self.module)
-                self.attribute_widgets[attr_name] = widget
-                widget.value_changed.connect(self.attribute_changed)
-            self.attribute_layout.addWidget(widget)
-
-    def save_curve(self, x_values, y_values, **attributes):
-        """
-        Saves the curve in some database system.
-        To change the database system, overwrite this function
-        or patch Module.curvedb if the interface is identical.
-
-        :param  x_values: numpy array with x values
-        :param  y_values: numpy array with y values
-        :param  attributes: extra curve parameters (such as relevant module settings)
-        """
-
-        c = self.curve_class.create(x_values,
-                                    y_values,
-                                    **attributes)
-        c.name = attributes["curve_name"]
-        return c
-
-    def init_gui(self):
-        """
-        To be overwritten in derived class
-
-        :return:
-        """
-
-        self.main_layout = QtGui.QHBoxLayout()
-        self.setLayout(self.main_layout)
-        self.init_attribute_layout()

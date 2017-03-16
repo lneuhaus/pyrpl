@@ -224,24 +224,12 @@ class MemoryBranch(object):
         """ The raw data (OrderedDict) or Mapping of the branch """
         return self._parent._data[self._branch]
 
-    # # in comments to avoid accidental abuse
-    # @_data.setter
-    # def _data(self, value):
-    #     return self._parent._data[self._branch] = value
+    @_data.setter
+    def _data(self, value):
+        logger.warning("You are directly modifying the data of MemoryBranch"
+                       " %s to %s.", self._fullbranchname, str(value))
+        self._parent._data[self._branch] = value
 
-    @property
-    def _dict(self):
-        """ return a dict containing the memory branch data"""
-        logger.warning("Method _dict is obsolete!!!")
-        return self._data
-        if isinstance(self._data, list):
-            return self._data
-        else:
-            d = OrderedDict()
-            for defaultdict in reversed(self._defaults):
-                d.update(defaultdict._dict)
-            d.update(self._data)
-            return d
 
     def _keys(self):
         if isinstance(self._data, list):

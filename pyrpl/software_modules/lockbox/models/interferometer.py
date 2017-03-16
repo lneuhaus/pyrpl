@@ -16,7 +16,7 @@ class InterferometerPort2(InterferometerPort1):
 class Interferometer(Lockbox):
     _units = ['m', 'deg', 'rad']
     wavelength = FloatProperty(max=10000, min=0, default=1.064e-6)
-    _setup_attributes = ['wavelength']
+    _setup_attributes = ['wavelength', "inputs", "sequence"]  # this ensures that sequence is loaded at the very end
     _gui_attributes = ['wavelength']
     variable = 'phase'
 

@@ -1,8 +1,8 @@
 """
 The lockbox widget is composed of all the submodules widgets
 """
-
-from .base_module_widget import ModuleWidget
+from ..attribute_widgets import BaseAttributeWidget
+from .base_module_widget import ReducedModuleWidget, ModuleWidget
 
 from PyQt4 import QtCore, QtGui
 import pyqtgraph as pg
@@ -466,7 +466,7 @@ class InputsWidget(QtGui.QWidget):
     def show_lock(self, stage):
         for widget in self.input_widgets:
             if widget.name==stage.input:
-                widget.show_lock(stage.input, stage.variable_value)
+                widget.show_lock(stage.input, stage.setpoint)
 
 
 class PlusTab(QtGui.QWidget):
@@ -579,6 +579,8 @@ class MyCloseButton(QtGui.QPushButton):
         self.setIcon(close_icon)
         self.setFixedHeight(16)
         self.setFixedWidth(16)
+        self.setToolTip("Delete this stage...")
+
 
 class MyAddButton(QtGui.QPushButton):
     def __init__(self, parent=None):
@@ -588,9 +590,19 @@ class MyAddButton(QtGui.QPushButton):
         self.setIcon(close_icon)
         self.setFixedHeight(16)
         self.setFixedWidth(16)
+        self.setToolTip("Add a new stage before this one...")
 
 
-class LockboxStageWidget(ModuleWidget):
+class StageOutputWidget(ReducedModuleWidget):
+    def init_attribute_layout(self):
+        super(StageOutputWidget, self).init_attribute_layout()
+        # constrain the size of the offset
+        self.attribute_widgets["offset"].resize(1, self.attribute_widgets["offset"].height())
+        self.attribute_widgets["offset"].setFixedWidth(100)
+        self.attribute_widgets["reset_offset"].setToolTip("Reset output offset value at the beginning of this stage?")
+
+
+class LockboxStageWidget(ReducedModuleWidget):
     """
     A widget representing a single lockbox stage
     """
@@ -619,10 +631,13 @@ class LockboxStageWidget(ModuleWidget):
         self.lay_v2.addWidget(aws['setpoint'])
         self.lay_v1.addWidget(aws['duration'])
         self.lay_v2.addWidget(aws['gain_factor'])
-        #self.main_layout.addWidget(aws['outputs'])
-        self.lay_h2 = QtGui.QHBoxLayout()
+        self.lay_h2 = QtGui.QVBoxLayout()
         self.main_layout.addLayout(self.lay_h2)
-        self.lay_h2.addWidget(aws['function_call'])
+        for output in self.module.lockbox.outputs:
+            self.lay_h2.addWidget(self.module.outputs[output.name]._create_widget())
+        self.lay_h3 = QtGui.QHBoxLayout()
+        self.main_layout.addLayout(self.lay_h3)
+        self.lay_h3.addWidget(aws['function_call'])
 
         self.button_goto = QtGui.QPushButton('Goto stage')
         self.button_goto.clicked.connect(self.module.setup)
@@ -644,8 +659,9 @@ class LockboxStageWidget(ModuleWidget):
         self.add_button.move(0, self.title_pos[1])
 
     def close(self):
+        self.module._logger.debug("Closing stage %s", self.module.name)
         if len(self.module.parent) == 1:
-            self.module._logger.info("You cannot delete the last stage!")
+            self.module._logger.warning("You are not allowed to delete the last stage!")
         else:
             self.module.parent.remove(self.module)
 
@@ -674,12 +690,14 @@ class LockboxSequenceWidget(ModuleWidget):
         stage = stage[0] # values are passed as list of length 1
         widget = stage._create_widget()
         stage._widget = widget
-        self.stage_widgets.append(widget)
-        if stage.name >= len(self.module)-1:
-            index = self.main_layout.indexOf(self.button_add)
+        self.stage_widgets.insert(stage.name, widget)
+        if stage.name >= len(self.stage_widgets)-1:
+            # stage must be inserted at the end
+            insert_before = self.button_add
         else:
-            index = self.main_layout.indexOf(self.module.index(stage.name)._widget)
-        self.main_layout.insertWidget(index, widget)
+            # stage was inserted before another one
+            insert_before = self.stage_widgets[self.stage_widgets.index(widget)+1]
+        self.main_layout.insertWidget(self.main_layout.indexOf(insert_before), widget)
         self.update_stage_names()
 
     def stage_deleted(self, stage):
@@ -805,18 +823,18 @@ class LockboxWidget(ModuleWidget):
         SLOT: don't change name unless you know what you are doing
         Basically painting some button in green is required
         """
-        state = self.module.state
-        if state=='unlock':
+        stage = self.module.stage
+        if stage=='unlock':
             self.set_button_green(self.button_unlock)
             self.hide_lock_points()
             return
-        elif state=='sweep':
+        elif stage=='sweep':
             self.hide_lock_points()
             self.set_button_green(self.button_sweep)
             return
-        else:  # val is index of a lock stage
-            self.set_button_green(state._widget.button_goto)
-            self.show_lock(state)
+        elif stage in self.module.sequence:  # val is index of a lock stage
+            self.set_button_green(stage._widget.button_goto)
+            self.show_lock(stage)
 
     def set_button_green(self, button):
         """
@@ -832,9 +850,9 @@ class LockboxWidget(ModuleWidget):
         The button of the stage widget becomes green, the expected signal graph of input show the lock point and slope.
         """
         self.hide_lock_points()
-        if isinstance(stage, basestring):
-            stage = self.module._get_stage(stage)
-        if stage is not None:
+        if isinstance(stage, int):
+            stage = self.module.sequence[stage]
+        if stage is not None and not isinstance(stage, basestring):
             self.all_sig_widget.show_lock(stage)
 
     def hide_lock_points(self):

@@ -60,7 +60,7 @@ class CustomLockbox(Lockbox):
 
     # list of attributes that are mandatory to define lockbox state. setup_attributes of all base classes and of all
     # submodules are automatically added to the list by the metaclass of Module
-    _setup_attributes = ["custom_attribute"]
+    _setup_attributes = ["custom_attribute", "sequence"]  # sequence has to be at the very end
     # attributes that are displayed in the gui. _gui_attributes from base classes are also added.
     _gui_attributes = ["custom_attribute"]
 

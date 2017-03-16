@@ -156,7 +156,9 @@ class HighFinessePdh(HighFinesseInput, InputPdh):
 
 
 class HighFinesseFabryPerot(FabryPerot):
-    inputs = ModuleContainerProperty(LockboxModule,
+    _setup_attributes = ["inputs", "sequence"]  # this ensures that sequence is loaded at the very end (i.e. after inputs)
+
+    inputs = LockboxModuleDictProperty(LockboxModule,
                                      transmission=HighFinesseTransmission,
                                      reflection=HighFinesseReflection,
                                      pdh=HighFinessePdh)

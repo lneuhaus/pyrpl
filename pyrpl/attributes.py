@@ -22,8 +22,8 @@ from .widgets.attribute_widgets import BoolAttributeWidget, \
                                        StringAttributeWidget, \
                                        ListComplexAttributeWidget, \
                                        FrequencyAttributeWidget, \
-                                       ListStageOutputAttributeWidget, \
-                                       ListFloatAttributeWidget
+                                       ListFloatAttributeWidget, \
+                                       BoolIgnoreAttributeWidget
 import logging
 import sys
 import numpy as np
@@ -237,6 +237,27 @@ class BoolAttribute(BaseAttribute):
         return bool(value)
 
 
+class BoolIgnoreAttribute(BaseAttribute):
+    """
+    An attribute for booleans
+    """
+    _widget_class = BoolIgnoreAttributeWidget
+
+    def validate_and_normalize(self, value, module):
+        """
+        Converts value to bool.
+        """
+        if isinstance(value, basestring):
+            if value.lower() == 'true':
+                return True
+            elif value.lower() == 'false':
+                return False
+            else:
+                return 'ignore'
+        else:
+            return bool(value)
+
+
 class SelectAttribute(BaseAttribute):
     """
     An attribute for a multiple choice value.
@@ -307,7 +328,7 @@ class SelectAttribute(BaseAttribute):
         options = sorted(self.options(module))
         if len(options) == 0 and value is None:
             return None
-        if isinstance(options[0], basestring):
+        if isinstance(options[0], basestring) and isinstance(options[-1], basestring):
             if hasattr(value, 'name'):
                 value = str(value.name)
             else:
@@ -322,9 +343,11 @@ class SelectAttribute(BaseAttribute):
                 else:
                     raise ValueError(msg)
             return value
-        elif isinstance(options[0], numbers.Number):
+        elif isinstance(options[0], numbers.Number) and isinstance(options[-1], numbers.Number):
             value = float(value)
             return min([opt for opt in options], key=lambda x: abs(x - value))
+        else:
+            return super(SelectAttribute, self).validate_and_normalize(value, module)
 
 
 class StringAttribute(BaseAttribute):
@@ -408,27 +431,6 @@ class ListComplexAttribute(BaseAttribute):
         if not np.iterable(value):
             value = [value]
         return [complex(val) for val in value]
-
-
-class ListStageOutputAttribute(BaseAttribute):
-    """
-    A list of str->bool mappings (used to map outputs on/off for each stage of a lockbox). Assignation can also be
-    done via lnba['my_piezo'] = True
-    """
-    _widget_class = ListStageOutputAttributeWidget
-
-    def validate_and_normalize(self, value, module):
-        if not isinstance(value, dict):
-            raise ValueError("value %s for attribute %s is not a valid dictionary"%(value, self.name))
-        for key, (is_on, is_start_offset, start_offset) in value.items():
-            if not isinstance(is_on, bool):
-                raise ValueError("Value %s is not possible for output %s on/off property (stage %s)"%(is_on, key, self.name))
-            if not isinstance(is_start_offset, bool):
-                raise ValueError("value %s is not possible for output %s "
-                                 "offset_enable (stage %s)"%(is_start_offset, key, self.name))
-            if not isinstance(start_offset, numbers.Number):
-                raise ValueError("value %s is not possible for output %s offset (stage %s)"%(start_offset, key, self.name))
-        return value
 
 
 class ModuleAttribute(BaseAttribute):
@@ -1031,6 +1033,12 @@ class BoolProperty(BoolAttribute, BaseProperty):
     """
     default = False
 
+class BoolIgnoreProperty(BoolIgnoreAttribute, BaseProperty):
+    """
+    A property for a boolean value
+    """
+    default = False
+
 
 class FilterProperty(FilterAttribute, BaseProperty):
     """
@@ -1061,11 +1069,4 @@ class ListComplexProperty(ListComplexAttribute, BaseProperty):
     A property for a list of complex values
     """
     default = [0.]
-
-
-class ListStageOuputProperty(ListStageOutputAttribute, BaseProperty):
-    """
-    A property for a list named bool value (dict with str-bool mapping)
-    """
-    default = {}
 

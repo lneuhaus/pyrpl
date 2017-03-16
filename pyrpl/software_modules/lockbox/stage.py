@@ -1,9 +1,10 @@
 from __future__ import division
 from . import LockboxModule
-from ...attributes import SelectProperty, FloatProperty, BoolProperty, StringProperty, \
-                            ListStageOuputProperty
+from ...attributes import SelectProperty, FloatProperty, BoolProperty, \
+    StringProperty
 from ...module_attributes import *
-from ...widgets.module_widgets import LockboxSequenceWidget, LockboxStageWidget
+from ...widgets.module_widgets import ReducedModuleWidget, \
+    LockboxSequenceWidget, LockboxStageWidget, StageOutputWidget
 
 from PyQt4 import QtCore
 
@@ -15,31 +16,30 @@ class StageSignalLauncher(SignalLauncher):
     #stage_renamed = QtCore.pyqtSignal()
 
 class StageOutput(LockboxModule):
-    _setup_attributes = ['lock_on',
+    _setup_attributes = ['lock',
                          'reset_offset',
                          'offset']
     _gui_attributes = _setup_attributes
-    lock_on = SelectProperty(default='false', options=['true', 'false', 'ignore'])
-    reset_offset = SelectProperty(default=False, options=[True, False])
+    _widget_class = StageOutputWidget
+    lock = BoolIgnoreProperty(default=False)
+    reset_offset = BoolProperty(default=False)
     offset = FloatProperty(default=0, min=-1., max=1.)
-
 
 
 class Stage(LockboxModule):
     """
     A stage is a single step in the lock acquisition process
     """
-    _setup_attributes = ['input',
-                         'setpoint',
-                         'duration',
-                         'function_call',
-                         'gain_factor',
-                         'outputs']
-    _gui_attributes = _setup_attributes
+    _gui_attributes = ['input',
+                       'setpoint',
+                       'duration',
+                       'function_call',
+                       'gain_factor']
+    _setup_attributes = _gui_attributes + ['outputs']
     _widget_class = LockboxStageWidget
     _signal_launcher = StageSignalLauncher
 
-    input = SelectProperty(options=lambda stage: stage.lockbox.inputs.module_attributes())
+    input = SelectProperty(options=lambda stage: stage.lockbox.inputs.keys())
     setpoint = FloatProperty(default=0, min=-1e6, max=1e6)
 
     duration = FloatProperty(default=0, min=0, max=1e6)
@@ -57,28 +57,39 @@ class Stage(LockboxModule):
             self.outputs[output.name] = StageOutput
         self._signal_launcher.stage_created.emit([self])
         self.parent._signal_launcher.stage_created.emit([self])
+        self.lockbox._logger.debug("Stage %s initialized"%self.name)
 
     def _clear(self):
+        self.lockbox._logger.debug("Deleting stage %s"%self.name)
         self._signal_launcher.stage_deleted.emit([self])
         self.parent._signal_launcher.stage_deleted.emit([self])
         super(Stage, self)._clear()
+
+    @property
+    def _states(self):
+        """
+        Returns the config file branch corresponding to the saved states of the module.
+        """
+        return self.c._root._get_or_create("stage_" + str(self.name) + "_states")
 
     def _setup(self):
         """
         Setup the lockbox parameters according to this stage
         """
         for output in self.lockbox.outputs:
-            (on, offset_enable, offset) = self.output_on[output.name]
-            if offset_enable:
-                output.set_ival(offset)
-            if on:
-                output.lock(self.input, self.variable_value, factor=self.factor)
-            else:
+            setting = self.outputs[output.name]
+            if setting.reset_offset:
+                output.set_ival(setting.offset)
+            if setting.lock_on == 'true':
+                output.lock(self.input, self.setpoint, factor=self.factor)
+            elif setting.lock_on == 'false':
                 output.unlock()
+            #elif setting.lock_on == 'ignore':
+            #    pass
         if self.function_call!="":
             func = getattr(self.lockbox.model, self.function_call)
             try:
-                func(**self.get_setup_attributes())
+                func(self)
             except TypeError:
                 func()
-        self.lockbox.state = self
+        self.lockbox.state = self.name

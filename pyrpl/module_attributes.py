@@ -39,22 +39,31 @@ class ModuleProperty(ModuleAttribute, BaseProperty):
 class ModuleList(Module, list):
     """ a list of modules"""
     def __init__(self, parent, name=None, element_cls=Module, default=[]):
-        def number(element_self):
+        def element_name(element_self):
             """ function that is used to dynamically assign each
             ModuleListElement's name to the index in the list.
             This is needed for proper storage in the config file"""
             try:
                 return element_self.parent.index(element_self)
             except ValueError:
-                return len(element_self.parent)
-        def next(element_self):
-            return element_self.parent[element_self.parent.index(element_self)]
+                return element_self._initial_name #'not in list' #return len(element_self.parent)
+        def element_next(element_self):
+            try:
+                return element_self.parent[element_self.parent.index(element_self)+1]
+            except:
+                return None
+        def element_init(element_self, parent, initial_name=None, *args, **kwargs):
+            # creates a wrapper around the init function to pass the initial element
+            # number in the list at object creation
+            element_self._initial_name = initial_name
+            return element_cls.__init__(element_self, parent, *args, **kwargs)
         # element.name equals element.number in order to get the right config
         # file section
         self.element_cls = type(element_cls.__name__ + "ListElement",
                                 (element_cls, ),
-                                {'name': property(fget=number),
-                                 'next': property(fget=next)
+                                {'name': property(fget=element_name),
+                                 'next': property(fget=element_next),
+                                 '__init__': element_init
                                 })
         self._signal_launcher = self.element_cls._signal_launcher
         super(ModuleList, self).__init__(parent, name=name)
@@ -68,29 +77,36 @@ class ModuleList(Module, list):
         self[index].setup_attributes = value
 
     def insert(self, index, new):
-        # make new module (name has already been defined
-        # by the corresponding property in element_cls)
-        to_add = self.element_cls(self)
+        # insert None as a placeholder at the right place in the list
+        # in order to assign right indices to surrounding elements
+        super(ModuleList, self).insert(index, None)
+        # make new module (initial_name must be given).
+        super(ModuleList, self).__setitem__(index,
+                            self.element_cls(self, initial_name=index))
+        # set initial name to none, since name is now inferred from index in the list
+        self[index]._initial_name=None
         # initialize setup_attributes
-        to_add.setup_attributes = new
-        # insert into list
-        super(ModuleList, self).insert(index, to_add)
+        self[index].setup_attributes = new
         # save state
         self.save_state()
 
     def append(self, new):
-        self.insert(-1, new)
+        self.insert(self.__len__(), new)
 
     def extend(self, iterable):
         for i in iterable:
             self.append(i)
 
-    def __delitem__(self, index):
+    def __delitem__(self, index=-1):
+        # make sure at object destruction that the name variable corresponds to former name
+        self[index]._initial_name = index
         # setting a list element sets up the corresponding module
         to_delete = super(ModuleList, self).pop(index)
         # call destructor
         to_delete._clear()
-        self.save_state()
+        # remove saved state from config file
+        self.c._pop(index)
+        #self.save_state()
 
     def pop(self, index=-1):
         # get attributes
@@ -117,6 +133,14 @@ class ModuleList(Module, list):
                 self.append(v)
         while len(self) > len(val):
             self.__delitem__(-1)
+
+    def _load_setup_attributes(self):
+        """
+         Load and sets all setup attributes from config file
+        """
+        if self.c is not None:
+            # self.c._data is a list that can be passed to setup_attributes
+            self.setup_attributes = self.c._data
 
 
 class ModuleListProperty(ModuleProperty):
@@ -156,42 +180,42 @@ class ModuleListProperty(ModuleProperty):
         return value
 
 
-class ModuleContainerProperty(ModuleProperty):
-    default_module_cls = Module
-    def __init__(self, module_cls=None, default=None, doc="",
-                 ignore_errors=False, **kwargs):
-        """ returns a descriptor for a module container, i.e. a class that contains submodules whose name and class are
-        specified in kwargs. module_cls is the base class for the module container (typically SoftwareModule)"""
-        # we simply create a container class that loosely resembles a dictionary which contains the given submodules
-        if module_cls is None:
-            module_cls = self.default_module_cls
-        class ModuleContainer(module_cls):
-            def __getitem__(self, key):
-                return getattr(self, key)
-            def keys(self):
-                return self._module_attributes
-            def values(self):
-                return [self[k] for k in self.keys()]
-            def items(self):
-                return [(k, self[k]) for k in self.keys()]
-            def __iter__(self):
-                # this method allows to write code like this: 'for submodule in modulecontainer: submodule.do_sth()'
-                return iter(self.values())
-            # add the submodule entries here such that the metaclass of module_cls can do its job
-            for k, v in kwargs.items():
-                locals()[k] = ModuleProperty(v)
-            # this re-definition essentially silences the warning issued
-            # when nonexisting submodules are present in the config file
-            @property
-            def setup_attributes(self):
-                return module_cls.setup_attributes
-            @setup_attributes.setter
-            def setup_attributes(self, kwds):
-                module_cls.setup_attributes = \
-                    {k:v for k, v in kwds.items() if k in self._setup_attributes}
-        super(ModuleContainerProperty, self).__init__(ModuleContainer, default=default,
-                                                      doc=doc, ignore_errors=ignore_errors)
-
+# class ModuleContainerProperty(ModuleProperty):
+#     default_module_cls = Module
+#     def __init__(self, module_cls=None, default=None, doc="",
+#                  ignore_errors=False, **kwargs):
+#         """ returns a descriptor for a module container, i.e. a class that contains submodules whose name and class are
+#         specified in kwargs. module_cls is the base class for the module container (typically SoftwareModule)"""
+#         # we simply create a container class that loosely resembles a dictionary which contains the given submodules
+#         if module_cls is None:
+#             module_cls = self.default_module_cls
+#         class ModuleContainer(module_cls):
+#             def __getitem__(self, key):
+#                 return getattr(self, key)
+#             def keys(self):
+#                 return self._module_attributes
+#             def values(self):
+#                 return [self[k] for k in self.keys()]
+#             def items(self):
+#                 return [(k, self[k]) for k in self.keys()]
+#             def __iter__(self):
+#                 # this method allows to write code like this: 'for submodule in modulecontainer: submodule.do_sth()'
+#                 return iter(self.values())
+#             # add the submodule entries here such that the metaclass of module_cls can do its job
+#             for k, v in kwargs.items():
+#                 locals()[k] = ModuleProperty(v)
+#             # this re-definition essentially silences the warning issued
+#             # when nonexisting submodules are present in the config file
+#             @property
+#             def setup_attributes(self):
+#                 return module_cls.setup_attributes
+#             @setup_attributes.setter
+#             def setup_attributes(self, kwds):
+#                 module_cls.setup_attributes = \
+#                     {k:v for k, v in kwds.items() if k in self._setup_attributes}
+#         super(ModuleContainerProperty, self).__init__(ModuleContainer, default=default,
+#                                                       doc=doc, ignore_errors=ignore_errors)
+#
 
 class ModuleDict(Module):
     """
