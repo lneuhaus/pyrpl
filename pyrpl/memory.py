@@ -37,6 +37,8 @@ logger = logging.getLogger(name=__name__)
 # issue a warning and use pyyaml (=yaml= instead). Comments are lost in this
 #  case.
 try:
+    raise  # disables ruamel support
+
     import ruamel.yaml
     #ruamel.yaml.add_implicit_resolver()
     ruamel.yaml.RoundTripDumper.add_representer(np.float64,
