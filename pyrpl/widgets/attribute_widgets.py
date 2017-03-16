@@ -308,6 +308,8 @@ class MyDoubleSpinBox(MyNumberSpinBox):
                  log_increment=False, halflife_seconds=2.0, decimals=4):
         self.decimals = decimals
         super(MyDoubleSpinBox, self).__init__(label, min, max, increment, log_increment, halflife_seconds)
+        width_in_characters = 6 + self.decimals
+        self.setFixedWidth(width_in_characters*10)
 
     @property
     def val(self):
@@ -319,7 +321,10 @@ class MyDoubleSpinBox(MyNumberSpinBox):
     @val.setter
     def val(self, new_val):
         self._val = new_val # in case the line is not updated immediately
-        self.line.setText(("%."+str(self.decimals) + "f")%new_val)
+        # former non-scientific notation
+        #self.line.setText(("%."+str(self.decimals) + "f")%new_val)
+        # currently: scientific notation
+        self.line.setText( ('{:.'+str(self.decimals)+'e}').format(new_val) )
         self.value_changed.emit()
         return new_val
 

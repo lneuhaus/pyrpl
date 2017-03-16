@@ -337,9 +337,11 @@ class SelectAttribute(BaseAttribute):
                 msg = "Value %s is not an option for SelectAttribute {%s} of %s"\
                       % (value, self.name, module.name)
                 if self.ignore_errors:
-                    value = options[0]
-                    logger.warning(msg+". Picking an arbitrary value %s instead."
-                                   % str(value))
+                    logger.warning(msg + ". Selecting value 'None' instead.")
+                    value = None
+                    #logger.warning(msg + ". Picking an arbitrary value %s instead."
+                    #               % str(value))
+                    #value = options[0]
                 else:
                     raise ValueError(msg)
             return value

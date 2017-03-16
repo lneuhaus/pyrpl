@@ -65,7 +65,7 @@ class FabryPerot(Lockbox):
     units = ['m', 'Hz', 'nm', 'MHz']
     _setup_attributes = ["wavelength", "finesse", "length", "eta", "inputs", "sequence"]
     _gui_attributes = _setup_attributes
-    wavelength = FloatProperty(max=10000, min=0, default=1.064e-6)
+    wavelength = FloatProperty(max=1., min=0., default=1.064e-6, increment=1e-9)
     finesse = FloatProperty(max=1e7, min=0, default=10000)
     # approximate length in m (not taking into account small variations of the
     # order of the wavelength)
