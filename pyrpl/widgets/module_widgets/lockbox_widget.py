@@ -675,16 +675,18 @@ class LockboxSequenceWidget(ModuleWidget):
     """
     def init_gui(self):
         self.main_layout = QtGui.QHBoxLayout(self)
-        self.init_attribute_layout()  # eventhough, I don't think there's any attribute
+        self.init_attribute_layout()
         self.stage_widgets = []
         self.button_add = QtGui.QPushButton('+')
         self.button_add.setSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Expanding)
-        self.button_add.setMinimumHeight(60)
-        for stage in self.module:
-            self.stage_created([stage])
+        #self.button_add.setMinimumHeight(60)
         self.button_add.clicked.connect(lambda: self.module.append(self.module[-1].setup_attributes))
         self.main_layout.addWidget(self.button_add)
+        for stage in self.module:
+            self.stage_created([stage])
         self.main_layout.addStretch(2)
+        #self.scroll_layout = QtGui.QScrollArea(self)
+        #self.scroll_layout.setWidget(self)
 
     def stage_created(self, stage):
         stage = stage[0] # values are passed as list of length 1
@@ -741,29 +743,52 @@ class LockboxWidget(ModuleWidget):
         self.button_unlock.clicked.connect(self.module.unlock)
         self.button_sweep.clicked.connect(self.module.sweep)
         self.button_calibrate_all.clicked.connect(self.module.calibrate_all)
-        self.all_sig_widget = AllSignalsWidget(self)
-        self.main_layout.addWidget(self.all_sig_widget)
-        self.button_hide = QtGui.QPushButton("^")
-        #self.button_hide_clicked() # open by default
-        self.button_hide.setMaximumHeight(15)
-        #self.button_hide.setMaximumWidth(150)
-        self.button_hide.clicked.connect(self.button_hide_clicked)
-        self.main_layout.addWidget(self.button_hide)
+
+        # Locking sequence widget
         self.sequence_widget = self.module.sequence._create_widget()
         self.main_layout.addWidget(self.sequence_widget)
+        self.button_hide1 = QtGui.QPushButton("^ Lock sequence ^")
+        self.button_hide1.setMaximumHeight(15)
+        self.button_hide1.clicked.connect(self.button_hide1_clicked)
+        self.main_layout.addWidget(self.button_hide1)
+
+        # inputs/ outputs widget
+        self.all_sig_widget = AllSignalsWidget(self)
+        self.main_layout.addWidget(self.all_sig_widget)
+        self.button_hide2 = QtGui.QPushButton("^ Inputs / Outputs ^")
+        #self.button_hide_clicked() # open by default
+        self.button_hide2.setMaximumHeight(15)
+        #self.button_hide2.setMaximumWidth(150)
+        self.button_hide2.clicked.connect(self.button_hide2_clicked)
+        self.main_layout.addWidget(self.button_hide2)
+
         self.main_layout.addStretch(5)
         self.setLayout(self.main_layout)
 
-    def button_hide_clicked(self):
+    def button_hide1_clicked(self):
         """
         Hide/show the signal part of the widget
         :return:
         """
-        if str(self.button_hide.text())=='v':
-            self.button_hide.setText('^')
+        current = str(self.button_hide1.text())
+        if current.endswith('v'):
+            self.button_hide1.setText('^' + current[1:-1] + '^')
+            self.sequence_widget.show()
+        else:
+            self.button_hide1.setText('v' + current[1:-1] + 'v')
+            self.sequence_widget.hide()
+
+    def button_hide2_clicked(self):
+        """
+        Hide/show the signal part of the widget
+        :return:
+        """
+        current = str(self.button_hide2.text())
+        if current.endswith('v'):
+            self.button_hide2.setText('^' + current[1:-1] + '^')
             self.all_sig_widget.show()
         else:
-            self.button_hide.setText('v')
+            self.button_hide2.setText('v' + current[1:-1] + 'v')
             self.all_sig_widget.hide()
 
     def input_calibrated(self, inputs):
