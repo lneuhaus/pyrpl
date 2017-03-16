@@ -95,7 +95,7 @@ class SignalLauncherLockbox(SignalLauncher):
         self.timer_lockstatus = QtCore.QTimer()
         self.timer_lockstatus.timeout.connect(self.call_lockstatus)
         self.timer_lockstatus.setSingleShot(True)
-        self.timer_lockstatus.setInterval(5000.0)
+        self.timer_lockstatus.setInterval(1000.0)
 
         # start timer that checks lock status
         self.timer_lockstatus.start()
@@ -278,7 +278,7 @@ class Lockbox(LockboxModule):
         """ returns True if locked, else False. Also updates an internal
         dict that contains information about the current error signals. The
         state of lock is logged at loglevel """
-        if not isinstance(self.stage, int):
+        if not self.stage in self.sequence:
             # not locked to any defined sequence state
             self._logger.log(loglevel, "Cavity is not locked: lockbox state "
                                        "is %s.", self.stage)
