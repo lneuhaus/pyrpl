@@ -232,7 +232,7 @@ class Lockbox(LockboxModule):
         """
         Sets up the lockbox to the stage named stage_name
         """
-        stage._setup_renamed()
+        stage.enable()
 
     def lock(self):
         """

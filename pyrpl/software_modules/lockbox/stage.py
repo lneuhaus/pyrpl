@@ -73,7 +73,7 @@ class Stage(LockboxModule):
         """
         return self.c._root._get_or_create("stage_" + str(self.name) + "_states")
 
-    def _setup_renamed(self):
+    def enable(self):
         """
         Setup the lockbox parameters according to this stage
         """
