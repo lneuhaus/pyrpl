@@ -46,6 +46,9 @@ class WaveformAttribute(SelectAttribute):
             elif waveform == 'halframp':
                 y = np.linspace(-1.0, 1.0, instance.data_length,
                                 endpoint=False)
+            elif waveform == 'square':
+                y = np.ones(instance.data_length)
+                y[len(y)//2:] = -1.0
             elif waveform == 'dc':
                 y = np.zeros(instance.data_length)
             elif waveform == 'noise':
@@ -210,7 +213,8 @@ def make_asg(channel=0):
                                         'white noise. If false, asg behaves '
                                         'normally. ')
 
-        waveforms = ['sin', 'cos', 'ramp', 'halframp', 'dc', 'noise']
+        waveforms = ['sin', 'cos', 'ramp', 'halframp', 'square', 'dc',
+                     'noise']
 
         waveform = WaveformAttribute(waveforms)
 
