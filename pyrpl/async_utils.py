@@ -133,6 +133,12 @@ class PyrplFuture(Future):
         self._timer_timeout = None  # timer that will be instantiated if
         #  result(timeout) is called with a >0 value
 
+    def result(self):
+        try: #  concurrent.futures.Future (python 2)
+            return super(PyrplFuture, self).result(timeout=0)
+        except TypeError: #  asyncio.Future (python 3)
+            return super(PyrplFuture, self).result()
+
     def _exit_loop(self, x=None):
         """
         Parameter x=None is there such that the function can be set as
@@ -194,7 +200,7 @@ class PyrplFuture(Future):
         """
 
         self._wait_for_done(timeout)
-        return super(PyrplFuture, self).result()
+        return super(PyrplFuture, self).result(timeout=0)
 
     def await_exception(self, timeout=None):
         """
