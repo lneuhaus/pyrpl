@@ -4,7 +4,8 @@ from ...attributes import SelectProperty, BoolProperty, StringProperty
 from ...module_attributes import ModuleProperty, ModuleListProperty, ModuleDictProperty
 from .signals import *
 from ...widgets.module_widgets import LockboxWidget
-from ...pyrpl_utils import get_unique_name_list_from_class_list, all_subclasses, sleep
+from ...pyrpl_utils import get_unique_name_list_from_class_list, all_subclasses
+from ...async_utils import sleep
 from .stage import Stage
 from . import LockboxModule, LockboxModuleDictProperty
 from collections import OrderedDict

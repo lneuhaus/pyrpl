@@ -12,7 +12,7 @@ APP = QtGui.QApplication.instance()
 
 class TestNA(TestPyrpl):
     def setup(self):
-        self.na = self.pyrpl.na
+        self.na = self.pyrpl.networkanalyzer
 
     def test_na_stopped_at_startup(self):
         """
@@ -29,24 +29,27 @@ class TestNA(TestPyrpl):
         def data_changing():
             time.sleep(0.1)
             APP.processEvents()
-            data = copy.deepcopy(self.na.y_averaged)
+            data = copy.deepcopy(self.na.data_avg)
             time.sleep(.3)
-            APP.processEvents()
-            return (data != self.na.y_averaged).any()
 
+            for i in range(1000):
+                APP.processEvents()
 
+            return (data != self.na.data_avg).any()
 
         self.na.setup(start_freq=1000, stop_freq=1e4, rbw=1000, points=10000)
-        for i in range(100):
+        for i in range(1000):
             APP.processEvents()
-        self.na.run_single()
+
+        self.na.single_async()
         assert data_changing()
 
+        current_point = self.na.current_point
         self.na.rbw = 100  # change some setup_attribute
-        assert self.na.running_state == "stopped"
-        assert not data_changing()
+        assert self.na.current_point < current_point # make sure the run was
+        #  restarted
 
-        self.na.run_continuous()
+        self.na.continuous()
         time.sleep(0.1)
         for i in range(100):
             APP.processEvents()
@@ -57,7 +60,7 @@ class TestNA(TestPyrpl):
         # screwed-up !!!
 
     # maximum allowed duration to acquire one point without gui
-    duration_per_point = 1.7e-3 # previously 5e-3
+    duration_per_point =   1.7e-3# 2.3e-3 ## previously 5e-3
     # duration_per_point = 5e-3
     #@unittest.skip("testing skipping")
     def test_benchmark(self):
@@ -88,7 +91,7 @@ class TestNA(TestPyrpl):
         #    APP.processEvents() # make sure no old events are going to screw up the timing test
 
         tic = time.time()
-        self.na.run_single()
+        self.na.single()
         APP.processEvents()
         print(self.na.running_state)
         while(self.na.running_state == 'running_single'):
@@ -127,8 +130,9 @@ class TestNA(TestPyrpl):
         if self.r is None:
             return
         self.na.iq.output_signal = 'quadrature'
-        x, y, amp = self.na.curve(start_freq=1e5, stop_freq=2e5, rbw=10000,
-                                  points=100, input=self.na.iq, acbandwidth=0)
+        self.na.setup(start_freq=1e5, stop_freq=2e5, rbw=10000,
+                      points=100, input=self.na.iq, acbandwidth=0)
+        y = self.na.curve()
         assert(all(abs(y-1)<0.1))  # If transfer function is taken into
         # account, that should be much closer to 1...
         # Also, there is this magic value of 0.988 instead of 1 ??!!!
@@ -143,12 +147,12 @@ class TestNA(TestPyrpl):
                       output_direct="out1",
                       input="out1",
                       amplitude=0.01)
-        self.na.run_continuous()
+        self.na.continuous()
         APP.processEvents()
         self.na.pause()
         APP.processEvents()
         assert self.na.iq.output_direct=='off'
-        self.na.run_continuous()
+        self.na.continuous()
         APP.processEvents()
         assert self.na.iq.output_direct=='out1'
         self.na.stop()
@@ -178,7 +182,7 @@ class TestNA(TestPyrpl):
                       input="out1",
                       amplitude=0.01,
                       running_state="running_continuous")
-        for i in range(10):
+        for i in range(20):
             sleep(0.01)
             APP.processEvents()
         old = self.pyrpl.c._save_counter

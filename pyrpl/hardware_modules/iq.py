@@ -66,21 +66,7 @@ class Iq(FilterModule):
         pfd=2,
         off=3,
         quadrature_hf=4)
-    """
-    parameter_names = ["output_signal",
-                       "bandwidth",
-                       "on",
-                       "pfd_on",
-                       "pfd_integral",
-                       "phase",
-                       "frequency",
-                       "amplitude",
-                       "quadrature_factor",
-                       "gain",
-                       "acbandwidth",
-                       "output_direct",
-                       "input"]
-    """
+
 
     output_signals = _output_signals.keys()
     output_signal = SelectRegister(0x10C, options=_output_signals,
@@ -165,47 +151,7 @@ class Iq(FilterModule):
         Sets up an iq demodulator, refer to the drawing in the GUI for an explanation of the IQ layout.
         (just setting the attributes is OK).
         """
-
         pass
-
-    def setup_old(
-            self,
-            frequency=None,
-            bandwidth=None,
-            gain=None,
-            phase=None,
-            Q=None,
-            acbandwidth=None,
-            amplitude=None,
-            input=None,
-            output_direct=None,
-            output_signal=None,
-            quadrature_factor=1.0):
-        self.on = False
-        if frequency is not None:
-            self.frequency = frequency
-        if Q is None:
-            if bandwidth:
-                self.bandwidth = bandwidth
-        else:
-            self.bandwidth = self.frequency / Q / 2
-        if input is not None:
-            self.input = input
-        if gain is not None:
-            self.gain = gain
-        if phase is not None:
-            self.phase = phase
-        if acbandwidth is not None:
-            self.inputfilter = -acbandwidth
-        if amplitude is not None:
-            self.amplitude = amplitude
-        if output_direct is not None:
-            self.output_direct = output_direct
-        if output_signal is not None:
-            self.output_signal = output_signal
-        if quadrature_factor is not None:
-            self.quadrature_factor = quadrature_factor
-        self.on = True
 
     _na_averages = IntRegister(0x130,
                                doc='number of cycles to perform na-averaging over')

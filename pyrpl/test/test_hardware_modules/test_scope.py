@@ -20,18 +20,27 @@ class TestScope(TestPyrpl):
         """
         This was so hard to detect, I am making a unit test
         """
-        assert(self.r.scope.run.running_state=='stopped')
+        assert(self.r.scope.running_state=='stopped')
 
     def data_changing(self):
         time.sleep(0.1)
         APP.processEvents()
-        data = self.r.scope.run.data_current[1]
+        if self.r.scope.data_avg is not None:
+            data = self.r.scope.data_avg[0]
+        else:
+            data = None
         time.sleep(0.75)
-        APP.processEvents()
+        for i in range(1000):
+            APP.processEvents()
         time.sleep(0.1)
+        if self.r.scope.data_avg is not None:
+            res = self.r.scope.data_avg[0]
+        else:
+            res = None
+        if data is None:
+            return res is not None
         return ((data !=
-                 self.r.scope.run.data_current[1])[~np.isnan(data)]).any()
-
+                 res)[~np.isnan(data)]).any()
 
     def test_scope_rolling_mode_and_running_state_update(self):
         """ makes sure scope rolling_mode and running states are correctly
@@ -39,14 +48,15 @@ class TestScope(TestPyrpl):
 
 
         self.r.asg1.frequency = 0
-        self.r.scope.setup(duration=0.5,
+        self.r.scope.setup_attributes = dict(duration=0.5,
                            trigger_source='asg1',
                            trigger_delay=0.,
-                           run=dict(rolling_mode=True),
+                           rolling_mode=True,
+                           running_state="running_continuous",
                            input1='in1',
                            ch1_active=True,
                            ch2_active=True)
-        self.r.scope.run.continuous()
+        self.r.scope.continuous()
         assert self.data_changing()  # rolling mode should be active
         self.r.scope.save_state("running_roll")
 
@@ -58,31 +68,33 @@ class TestScope(TestPyrpl):
         self.r.scope.duration = 0.5
         assert self.data_changing()
 
-        self.r.scope.run.rolling_mode = False
+        self.r.scope.rolling_mode = False
         self.r.scope.duration = 0.2
+
         self.r.scope.save_state("running_triggered")
         assert not self.data_changing()
 
         self.r.asg1.frequency = 1e5
         assert self.data_changing()
 
-        self.r.scope.run.stop()
+        self.r.scope.stop()
         self.r.scope.save_state("stop")
         assert not self.data_changing()
 
         self.r.scope.load_state("running_roll")
         assert self.data_changing()
         sleep(1)
-        assert self.data_changing() # Make sure scope is not blocked after one buffer loop
+        assert self.data_changing() # Make sure scope is not blocked after one
+        #  buffer loop
 
-        self.r.scope.run.stop()
+        self.r.scope.stop()
         self.r.scope.load_state("running_triggered")
         assert self.data_changing()
 
         self.r.scope.load_state("stop")
         assert not self.data_changing()
 
-        self.r.scope.run.stop()
+        self.r.scope.stop()
 
     def test_save_curve(self):
         if self.r is None:
@@ -90,14 +102,14 @@ class TestScope(TestPyrpl):
         self.r.scope.setup(duration=0.01,
                            trigger_source='immediately',
                            trigger_delay=0.,
-                           run=dict(rolling_mode=True),
+                           rolling_mode=True,
                            input1='in1',
                            ch1_active=True,
                            ch2_active=True)
-        self.r.scope.run.single()
+        self.r.scope.single()
         time.sleep(0.1)
         APP.processEvents()
-        curve1, curve2 = self.r.scope.run.save_curve()
+        curve1, curve2 = self.r.scope.save_curve()
         attr = self.r.scope.setup_attributes
         for curve in (curve1, curve2):
             intersect = set(curve.params.keys()) & set(attr)
@@ -115,14 +127,14 @@ class TestScope(TestPyrpl):
                                              input1='in1',
                                              ch1_active=True,
                                              ch2_active=True,
-                                             run=dict(rolling_mode=True,
-                                    running_state='running_continuous'))
+                                             rolling_mode=True,
+                                             running_state='running_continuous')
         assert self.data_changing()
         sleep(1)
         assert self.data_changing()  # Make sure scope is not blocked
                                      # after one buffer loop
 
-        self.r.scope.run.stop()
+        self.r.scope.stop()
 
     def test_scope_slave_free(self):
         """
@@ -136,8 +148,8 @@ class TestScope(TestPyrpl):
                             input1='in1',
                             ch1_active=True,
                             ch2_active=True,
-                            run=dict(rolling_mode=True,
-                                     running_state="running_continuous"))
+                            rolling_mode=True,
+                            running_state="running_continuous")
         with self.pyrpl.scopes.pop("myapplication") as sco:
             sco.setup(duration=0.5,
                       trigger_delay=0.,
@@ -145,15 +157,15 @@ class TestScope(TestPyrpl):
                       input1='in1',
                       ch1_active=True,
                       ch2_active=True,
-                      run=dict(rolling_mode=False,
-                               running_state="stopped"))
+                      rolling_mode=False,
+                      running_state="stopped")
             assert not self.data_changing()
             curve = sco.curve()
         assert self.data_changing()
         sleep(1)
         assert self.data_changing()  # Make sure scope is not blocked
             # after one buffer loop
-        self.pyrpl.rp.scope.run.stop()
+        self.pyrpl.rp.scope.stop()
 
     def test_no_write_in_config(self):
         """
@@ -168,9 +180,8 @@ class TestScope(TestPyrpl):
                                       input1='in1',
                                       ch1_active=True,
                                       ch2_active=True,
-                                      run=
-                                    dict(rolling_mode=True,
-                                         running_state="running_continuous"))
+                                      rolling_mode=True,
+                                      running_state="running_continuous")
             for i in range(10):
                 sleep(0.01)
                 APP.processEvents()
@@ -179,5 +190,5 @@ class TestScope(TestPyrpl):
                 sleep(0.01)
                 APP.processEvents()
             new = self.pyrpl.c._save_counter
-            self.pyrpl.rp.scope.run.stop()
+            self.pyrpl.rp.scope.stop()
             assert(old==new), (old, new)

@@ -71,15 +71,11 @@ class ScopeWidget(ModuleWidget):
 
         self.button_layout = QtGui.QHBoxLayout()
 
-        self.run_avg_widget = self.module.run.__class__.avg._create_widget(
-            self.module.run)
-        self.button_layout.addWidget(self.run_avg_widget)
-
-        self.curve_name_widget = \
-            self.module.run.__class__.curve_name._create_widget(
-            self.module.run)
-        self.button_layout.addWidget(self.curve_name_widget)
-
+        aws = self.attribute_widgets
+        self.attribute_layout.removeWidget(aws["avg"])
+        self.attribute_layout.removeWidget(aws["curve_name"])
+        self.button_layout.addWidget(aws["avg"])
+        self.button_layout.addWidget(aws["curve_name"])
 
         self.setLayout(self.main_layout)
         self.setWindowTitle("Scope")
@@ -124,15 +120,15 @@ class ScopeWidget(ModuleWidget):
         # it is not synced with the module at creation time.
         self.update_running_buttons()
         self.update_rolling_mode_visibility()
-        self.rolling_mode = self.module.run.rolling_mode
+        self.rolling_mode = self.module.rolling_mode
 
         # Not sure why the stretch factors in button_layout are not good by
         # default...
         self.button_layout.setStretchFactor(self.button_single, 1)
         self.button_layout.setStretchFactor(self.button_continuous, 1)
         self.button_layout.setStretchFactor(self.button_save, 1)
-        self.button_layout.setStretchFactor(self.run_avg_widget, 1)
-        self.button_layout.setStretchFactor(self.curve_name_widget, 1)
+        #self.button_layout.setStretchFactor(self.run_avg_widget, 1)
+        #self.button_layout.setStretchFactor(self.curve_name_widget, 1)
 
     def update_attribute_by_name(self, name, new_value_list):
         """
@@ -140,7 +136,7 @@ class ScopeWidget(ModuleWidget):
         """
         super(ScopeWidget, self).update_attribute_by_name(name, new_value_list)
         if name in ['rolling_mode', 'duration']:
-            self.rolling_mode = self.module.run.rolling_mode
+            self.rolling_mode = self.module.rolling_mode
         if name in ['running_state',]:
             self.update_running_buttons()
 
@@ -149,24 +145,26 @@ class ScopeWidget(ModuleWidget):
         Change text of Run continuous button and visibility of run single
         button according to module.running_continuous
         """
-        if self.module.run.running_state=="running_continuous":
+        if self.module.running_state=="running_continuous":
             self.button_continuous.setText("Stop (%i "
-                                           "avg)"%self.module.run.current_avg)
+                                           "avg)"%self.module.current_avg)
             self.button_single.setEnabled(False)
             self.button_single.setText("Run single")
-        if self.module.run.running_state=="running_single":
+        if self.module.running_state=="running_single":
             self.button_continuous.setText("Run continuous")
-            self.button_single.setEnabled(True)
+            self.button_single.setEnabled(
+                                    not self.module._is_rolling_mode_active())
             self.button_single.setText("Stop (%i "
-                                       "avg)"%self.module.run.current_avg)
-        if self.module.run.running_state=="paused":
+                                       "avg)"%self.module.current_avg)
+        if self.module.running_state=="paused":
             self.button_continuous.setText("Run continuous (%i "
-                                           "avg)"%self.module.run.current_avg)
-            self.button_single.setEnabled(True)
+                                           "avg)"%self.module.current_avg)
+            self.button_single.setEnabled(
+                                    not self.module._is_rolling_mode_active())
             self.button_single.setText("Run single")
-        if self.module.run.running_state=="stopped":
+        if self.module.running_state=="stopped":
             self.button_continuous.setText("Run continuous (%i "
-                                           "avg)"%self.module.run.current_avg)
+                                           "avg)"%self.module.current_avg)
             self.button_single.setEnabled(True)
             self.button_single.setText("Run single")
 
@@ -183,11 +181,19 @@ class ScopeWidget(ModuleWidget):
         except NotReadyError:
             pass
 
+    def change_ownership(self):
+        """
+        For some reason the visibility of the rolling mode panel is not updated
+        when the scope becomes free again unless we ask for it explicitly...
+        """
+        super(ScopeWidget, self).change_ownership()
+        self.update_rolling_mode_visibility()
+
     def display_curve(self, list_of_arrays):
         """
         Displays all active channels on the graph.
         """
-        times, ch1, ch2 = list_of_arrays
+        times, (ch1, ch2) = list_of_arrays
         for ch, (data, active) in enumerate([(ch1, self.module.ch1_active),
                                              (ch2, self.module.ch2_active)]):
             if active:
@@ -197,21 +203,12 @@ class ScopeWidget(ModuleWidget):
                 self.curves[ch].setVisible(False)
         self.update_running_buttons() # to update the number of averages
 
-    # currently not implemented?
-    #def curve_display_done(self):
-    #    """
-    #    User may overwrite this function to implement custom functionality
-    #    at each graphical update.
-    #    :return:
-    #    """
-    #    pass
-
     def set_rolling_mode(self):
         """
         Set rolling mode on or off based on the module's attribute
         "rolling_mode"
         """
-        self.rolling_mode = self.module.run.rolling_mode
+        self.rolling_mode = self.module.rolling_mode
 
     def run_continuous_clicked(self):
         """
@@ -220,25 +217,21 @@ class ScopeWidget(ModuleWidget):
         """
 
         if str(self.button_continuous.text()).startswith("Run continuous"):
-            self.module.run.continuous()
+            self.module.continuous()
         else:
-            self.module.run.stop()
+            self.module.stop()
 
     def run_single_clicked(self):
         if str(self.button_single.text()).startswith("Run single"):
-            self.module.run.single()
+            self.module.single_async()
         else:
-            self.module.run.stop()
+            self.module.stop()
 
     def rolling_mode_toggled(self):
-        self.module.run.rolling_mode = self.rolling_mode
+        self.module.rolling_mode = self.rolling_mode
 
     @property
     def rolling_mode(self):
-        # Note for future improvement: rolling mode should be a
-        # BoolAttribute  of Scope rather than a dirty attribute of
-        # ScopeWidget. Parameter saving would also require to use it
-        # as a parameter of Scope.setup()
         return ((self.checkbox_untrigged.isChecked()) and \
                 self.rolling_group.isEnabled())
 
@@ -254,7 +247,7 @@ class ScopeWidget(ModuleWidget):
         """
         Hide rolling mode checkbox for duration < 100 ms
         """
-        self.rolling_group.setEnabled(self.module.run._rolling_mode_allowed())
+        self.rolling_group.setEnabled(self.module._rolling_mode_allowed())
         self.attribute_widgets['trigger_source'].widget.setEnabled(
             not self.rolling_mode)
         self.attribute_widgets['threshold_ch1'].widget.setEnabled(
@@ -266,15 +259,7 @@ class ScopeWidget(ModuleWidget):
     def autoscale(self):
         """Autoscale pyqtgraph. The current behavior is to autoscale x axis
         and set y axis to  [-1, +1]"""
-        #mini = np.nan
-        #maxi = np.nan
-        #for curve in self.curves:
-        #    if curve.isVisible():
-        #        mini = np.nanmin([self., mini])
-        #        maxi = np.nanmax([curve.xData.max(), maxi])
-        #if not np.isnan(mini):
-
-        if self.module.run._is_rolling_mode_active():
+        if self.module._is_rolling_mode_active():
             mini = -self.module.duration
             maxi = 0
         else:
@@ -286,4 +271,4 @@ class ScopeWidget(ModuleWidget):
         # self.plot_item.autoRange()
 
     def save_clicked(self):
-        self.module.run.save_curve()
+        self.module.save_curve()

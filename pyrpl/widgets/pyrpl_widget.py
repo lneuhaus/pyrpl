@@ -1,6 +1,7 @@
 from PyQt4 import QtCore, QtGui
 import sys
 from traceback import format_exception, format_exception_only
+# from collections import OrderedDict
 
 import logging
 
@@ -199,7 +200,9 @@ class PyrplWidget(QtGui.QMainWindow):
                 action.deleteLater()
         # remove dock widget
         if self.last_docked == dock_widget:
-            self.last_docked = self.dock_widgets.values()[-1]
+            self.last_docked = sorted(self.dock_widgets.values())[-1]
+            # not sure what this is supposed to mean, but dict keys/values
+            # are not indexable in python 3. Please, convert to list before!
         self.removeDockWidget(dock_widget)
         dock_widget.deleteLater()
         # return whether the widget was visible

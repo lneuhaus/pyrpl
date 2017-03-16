@@ -18,28 +18,15 @@
 
 import logging
 logger = logging.getLogger(name=__name__)
-from ..attributes import BoolProperty, FloatProperty, FloatAttribute,  \
-    SelectAttribute, BoolAttribute, FrequencyAttribute, LongProperty, \
-    SelectProperty, FilterProperty, StringProperty, FilterAttribute, \
-    SelectProperty
-from ..modules import Module
+
 from ..module_attributes import *
-from pyrpl.acquisition_manager import AcquisitionManager, AcquisitionModule
+from pyrpl.acquisition_module import AcquisitionModule
+from ..widgets.module_widgets import SpecAnWidget
+from ..hardware_modules import Scope, DspModule
 
 import scipy.signal as sig
 import scipy.fftpack
-import numpy as np
-import os
 from pylab import *
-import pandas
-from PyQt4 import QtCore, QtGui
-
-from ..widgets.module_widgets import SpecAnWidget
-
-from ..errors import NotReadyError
-from ..hardware_modules import Scope, DspModule
-from ..modules import SignalLauncher
-
 
 # Some initial remarks about spectrum estimation:
 # Main source: Oppenheim + Schaefer, Digital Signal Processing, 1975
@@ -69,6 +56,7 @@ from ..modules import SignalLauncher
 #        if value:
 #            instance.span = instance.span
 #        return value
+
 
 class CenterAttribute(FrequencyAttribute):
     def get_value(self, instance, owner):
@@ -111,82 +99,31 @@ class SpanFilterProperty(FilterProperty):
             return val
 
 
-class SAAcquisitionManager(AcquisitionManager):
-    def _init_module(self):
-        super(SAAcquisitionManager, self)._init_module()
-        self._timer.timeout.connect(self._check_for_curves)
-
-    def _check_for_curves(self):
-        """
-        Acquires one curve and adds it to the average.
-        returns True if new data are available for plotting.
-        """
-        # several seconds... In the mean time, no other event can be
-        # treated. That's why the gui freezes...
-        if self._module.curve_ready():
-            if len(self.data_avg) != self._module._real_points:
-                # for instance, if running_state pause was reloaded...
-                print("restarting ",  self._module._real_points)
-                self._restart_averaging()
-            self.data_x = self._module.frequencies
-            self.data_current = self._module.curve()
-            self._do_average()
-            self._emit_signal_by_name('display_curve',
-                                      [self.data_x, self.data_avg])
-            if self.running_state in  ['running_continuous',
-                                       'running_single']:
-                self._module.setup()
-            if self.running_state == 'running_continuous':
-                self._timer.start()
-            if self.running_state == 'running_single':
-                if self.current_avg<self.avg:
-                    self._timer.start()
-        else:
-            if self.running_state in ['running_continuous',
-                                      'running_single']:
-                self._timer.start()
-
-    def _do_average(self):
-        self.data_avg = (self.current_avg * self.data_avg \
-                         +  self.data_current) / (self.current_avg + 1)
-        self.current_avg += 1
-        if self.current_avg > self.avg:
-            self.current_avg = self.avg
-
-    def _restart_averaging(self):
-        points = self._module._real_points
-        self.data_current = np.zeros(points)
-        self.data_avg = np.zeros(points)
-        self.current_avg = 0
-
-
-class SpectrumAnalyzer(AcquisitionModule, Module):
+class SpectrumAnalyzer(AcquisitionModule):
     """
     A spectrum analyzer is composed of an IQ demodulator, followed by a scope.
     The spectrum analyzer connections are made upon calling the function setup.
     """
     _widget_class = SpecAnWidget
-
-    run = ModuleProperty(SAAcquisitionManager)
-
     _gui_attributes = ["input",
-                         "baseband",
-                         "center",
-                         "span",
-                         "points",
-                         "window",
-                         "acbandwidth"]
-    _setup_attributes = _gui_attributes + ["run"]
-    _callback_attributes = _gui_attributes
+                       "baseband",
+                       "center",
+                       "span",
+                       "points",
+                       "window",
+                       "acbandwidth"]
+    _setup_attributes = _gui_attributes
+    #_callback_attributes = _gui_attributes
 
     # numerical values
     nyquist_margin = 1.0
     if_filter_bandwidth_per_span = 1.0
-    quadrature_factor = 0.001
+    quadrature_factor = 0.1# 0.001 #  it looks like 0.001 is now rounded to
+    # 0...
 
     # select_attributes list of options
     def spans(nyquist_margin):
-        # see http://stackoverflow.com/questions/13905741/accessing-class-variables-from-a-list-comprehension-in-the-class-definition
+        # see http://stackoverflow.com/questions/13905741/
         return [int(np.ceil(1. / nyquist_margin / s_time))
              for s_time in Scope.sampling_times]
     spans = spans(nyquist_margin)
@@ -197,30 +134,31 @@ class SpectrumAnalyzer(AcquisitionModule, Module):
     inputs = DspModule.inputs
 
     # attributes
-    baseband = BoolProperty()
+    baseband = BoolProperty(callback=True)
     span = SpanFilterProperty(doc="""
         Span can only be given by 1./sampling_time where sampling
         time is a valid scope sampling time.
-        """)
-    center = CenterAttribute()
-    points = LongProperty()
-    window = SelectProperty(options=windows)
-    input = SelectProperty(options=inputs)
-    acbandwidth = SpecAnAcBandwidth()
+        """,
+        callback=True)
+    center = CenterAttribute(callback=True)
+    points = LongProperty(default=16384, callback=True)
+    window = SelectProperty(options=windows, callback=True)
+    input = SelectProperty(options=inputs, callback=True)
+    acbandwidth = SpecAnAcBandwidth(callback=True)
 
     # _signal_launcher = SignalLauncherSpectrumAnalyzer
 
     # functions
     def _init_module(self):
-        super(SpectrumAnalyzer, self)._init_module()
-        self.rp = self.pyrpl.rp
         self.acbandwidth = 0
         self.baseband = False
         self.center = 0
         self.window = "flattop"
         self.points = Scope.data_length
         self._is_setup = False
-        self.run._restart_averaging()
+        super(SpectrumAnalyzer, self)._init_module()
+        self.rp = self.pyrpl.rp
+
 
     @property
     def iq(self):
@@ -232,6 +170,12 @@ class SpectrumAnalyzer(AcquisitionModule, Module):
 
     iq_quadraturesignal = 'iq2_2'
 
+    def _remaining_duration(self):
+        """
+        Duration before next scope curve will be ready.
+        """
+        return self.scope._remaining_duration()
+
     @property
     def data_length(self):
         return int(self.points)  # *self.nyquist_margin)
@@ -240,39 +184,8 @@ class SpectrumAnalyzer(AcquisitionModule, Module):
     def sampling_time(self):
         return 1. / self.nyquist_margin / self.span
 
-    def _setup(self):
-        """
-        Set things up for a spectrum acquisition. Between setup(**kwds) and
-        curve(), the spectrum analyzer takes ownership over the scope.
-        """
-        self._is_setup = True
-        # setup iq module
-        if not self.baseband:
-            self.iq.setup(
-                input = self.input,
-                bandwidth=[self.span*self.if_filter_bandwidth_per_span]*4,
-                gain=0,
-                phase=0,
-                acbandwidth=self.acbandwidth,
-                amplitude=0,
-                output_direct='off',
-                output_signal='quadrature',
-                quadrature_factor=self.quadrature_factor)
-        # change scope ownership in order not to mess up the scope
-        # configuration
-        if self.scope.owner != self.name:
-            self.pyrpl.scopes.pop(self.name)
-        # setup scope
-        self.scope.sampling_time = self.sampling_time # only duration can be
-        #  used within setup
-        if self.baseband:
-            self.scope.input1 = self.input
-        else:
-            self.scope.input1 = self.iq
-            self.scope.input1 = self.iq_quadraturesignal
-        self.scope.setup(average=True,
-                         trigger_source="immediately",
-                         run=dict(rolling_mode=False))
+    def _remaining_duration(self):
+        return self.scope._remaining_duration()
 
     def curve_ready(self):
         return self.scope.curve_ready()
@@ -297,23 +210,24 @@ class SpectrumAnalyzer(AcquisitionModule, Module):
         normfactor = 1.0 / self.data_length / np.sqrt(50.0) * filterfactor
         return window * normfactor
 
-    def iq_data(self, timeout):
+    def _get_iq_data(self):
         """
         :return: complex iq time trace
         """
-        #timeout = self.scope.duration * 2 # leave some margin
-        res = np.asarray(self.scope.curve(1, timeout=None),
-                         dtype=np.complex)
-        if not self.baseband:
-            res += 1j*self.scope.curve(2, timeout=None)
-        return res[:self.data_length]
+        res = self.scope._get_curve()
+        if self.baseband:
+            return res[0][:self.data_length]
+        else:
+            return (res[0] + 1j*res[1])[:self.data_length]
+#            res += 1j*self.scope.curve(2, timeout=None)
+#        return res[:self.data_length]
 
-    def filtered_iq_data(self, timeout):
+    def _get_filtered_iq_data(self):
         """
         :return: the product between the complex iq data and the filter_window
         """
-        return self.iq_data(timeout) * np.asarray(self.filter_window(),
-                                           dtype=np.complex)
+        return self._get_iq_data() * np.asarray(self.filter_window(),
+                                            dtype=np.complex)
 
     def useful_index(self):
         """
@@ -335,28 +249,6 @@ class SpectrumAnalyzer(AcquisitionModule, Module):
         """
         return self.points/2 if self.baseband else self.points
 
-    def curve(self, timeout=None):
-        """
-        Get a spectrum from the device. It is mandatory to call setup() before
-        curve()
-            If timeout>0:  runs until data is ready or timeout expires
-            If timeout is None: timeout is auto-set to twice scope.duration
-            If timeout is <0, throws ValueError
-        No averaging is done at this stage (averaging only occurs within the
-        asynchronous mode of operation run_...)
-        """
-        if timeout is not None and timeout<0:
-            raise(ValueError('Timeout needs to be None or >0'))
-        if not self._is_setup:
-            raise NotReadyError("Setup was never called")
-        SLEEP_TIME = 0.001
-        total_sleep = 0
-        res = scipy.fftpack.fftshift(np.abs(scipy.fftpack.fft(
-            self.filtered_iq_data(timeout))) ** 2)[self.useful_index()]
-        if not self.run.continuous:
-            self.pyrpl.scopes.free(self.scope)
-        return res
-
     @property
     def frequencies(self):
         """
@@ -371,3 +263,68 @@ class SpectrumAnalyzer(AcquisitionModule, Module):
         data[data <= 0] = 1e-100
         # conversion to dBm scale
         return 10.0 * np.log10(data) + 30.0
+
+    # Concrete implementation of AcquisitionModule methods
+    # ----------------------------------------------------
+
+    @property
+    def data_x(self):
+        return self.frequencies
+
+    def _get_curve(self):
+        """
+        Simply pack together channel 1 and channel 2 curves in a numpy array
+        """
+        res = scipy.fftpack.fftshift(np.abs(scipy.fftpack.fft(
+            self._get_filtered_iq_data())) ** 2)[self.useful_index()]
+        if not self.running_state in ["running_single", "running_continuous"]:
+            self.pyrpl.scopes.free(self.scope)
+        return res
+
+    def _remaining_time(self):
+        """
+        :returns curve duration - ellapsed duration since last setup() call.
+        """
+        return self.scope._remaining_time()
+
+    def _data_ready(self):
+        """
+        :return: True if curve is ready in the hardware, False otherwise.
+        """
+        return self.scope._data_ready()
+
+    def _start_acquisition(self):
+        autosave_backup = self._autosave_active
+        # setup iq module
+        if not self.baseband:
+            self.iq.setup( # for som reason, this takes 300 ms to do
+                input = self.input,
+                bandwidth=[self.span*self.if_filter_bandwidth_per_span]*4,
+                gain=0,
+                phase=0,
+                acbandwidth=self.acbandwidth,
+                amplitude=0,
+                output_direct='off',
+                output_signal='quadrature',
+                quadrature_factor=self.quadrature_factor)
+        # change scope ownership in order not to mess up the scope
+        # configuration
+        if self.scope.owner != self.name:
+            self.pyrpl.scopes.pop(self.name)
+        # setup scope
+        if self.baseband:
+            input1 = self.input
+            input2 = self.input
+        else:
+            input1 = self.iq
+            input2 = self.iq_quadraturesignal
+        self.scope.setup(input1=input1,
+                         input2=input2,
+                         average=True,
+                         duration=self.scope.data_length*self.sampling_time,
+                         trigger_source="immediately",
+                         ch1_active=True,
+                         ch2_active=True,
+                         rolling_mode=False,
+                         running_state='stopped')
+        return self.scope._start_acquisition()

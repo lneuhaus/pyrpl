@@ -1,26 +1,20 @@
-import logging
-logger = logging.getLogger(name=__name__)
-from ..errors import NotReadyError, TimeoutError
-from ..attributes import FloatAttribute, SelectAttribute, BoolRegister, \
-                         FloatRegister, SelectRegister, BoolProperty, \
-                         ModuleAttribute, IntRegister, LongRegister
 from ..module_attributes import *
 from ..modules import HardwareModule
 from ..widgets.module_widgets import ScopeWidget
-from ..acquisition_manager import AcquisitionManager, AcquisitionModule
+from ..acquisition_module import AcquisitionModule
+from ..async_utils import MainThreadTimer, PyrplFuture
 
 from . import DSP_INPUTS, DspModule, DspInputAttribute
-from ..modules import SignalLauncher
 
 import numpy as np
 import time
-from PyQt4 import QtCore
+from timeit import default_timer
+import logging
 
-# data_length must be defined outside of class body for python 3
-# compatibility since otherwise it is not available in the class level
-# namespace
-data_length = 2 ** 14
+logger = logging.getLogger(name=__name__)
 
+
+data_length = 2**14
 
 class DurationAttribute(SelectAttribute):
     def get_value(self, instance, owner):
@@ -44,13 +38,14 @@ class DecimationRegister(SelectRegister):
     """
     Carreful: changing decimation changes duration and sampling_time as well
     """
+
     def set_value(self, instance, value):
         super(DecimationRegister, self).set_value(instance, value)
         instance.__class__.duration.value_updated(instance, instance.duration)
         instance.__class__.sampling_time.value_updated(instance,
                                                        instance.sampling_time)
-        instance.setup()
-        instance.run._decimation_changed() # acquisition_manager needs to be
+        # instance.setup()
+        # instance._decimation_changed() # acquisition_manager needs to be
         # warned because that could have changed _is_rolling_mode_active()
 
 
@@ -126,6 +121,7 @@ class DspInputAttributeScope(DspInputAttribute):
     Same as DspInput, except that it sets the value to instance._ch[
     index].input instead of instance.input
     """
+
     def __init__(self, ch=1, doc=""):
         options = DSP_INPUTS.keys()
         super(DspInputAttributeScope, self).__init__(options=options, doc=doc)
@@ -143,190 +139,82 @@ class DspInputAttributeScope(DspInputAttribute):
         return value
 
 
-class RollingModeProperty(BoolProperty):
-    def set_value(self, module, val):
-        super(RollingModeProperty, self).set_value(module, val)
-        if module.running_state=="running_continuous":
-            module._module.setup()
-            if module._is_rolling_mode_active():
-                module._setup_rolling_mode()
-            module._emit_signal_by_name('autoscale')
+class ContinuousRollingFuture(PyrplFuture):
+    DELAY_ROLLING_MODE_MS = 20
+    current_avg = 1  # no averaging in rolling mode
 
+    def __init__(self, module):
+        super(ContinuousRollingFuture, self).__init__()
+        self._module = module
+        self._timer = MainThreadTimer(self.DELAY_ROLLING_MODE_MS)
+        self._timer.timeout.connect(self._get_rolling_curve)
 
-class ScopeAcquisitionManager(AcquisitionManager):
-    _setup_attributes = AcquisitionManager._setup_attributes + ["rolling_mode"]
-    rolling_mode = RollingModeProperty(doc="In rolling mode, the curve is "
-                                           "continuously acquired and "
-                                           "translated from the right to the "
-                                           "left of the screen while new "
-                                           "data arrive.")
-    def _init_module(self):
-        super(ScopeAcquisitionManager, self)._init_module()
-        self._timer.timeout.connect(self._check_for_curves)
-        # self._rolling_mode = False
+    def _get_rolling_curve(self):
+        if not self._module._is_rolling_mode_active():
+            return
+        if not self._module.running_state == "running_continuous":
+            return
+        data_x, datas = self._module._get_rolling_curve()
+        # no setup in rolling mode
+        self._module._emit_signal_by_name('display_curve', [data_x,
+                                                            datas])
+        self.data_avg = datas
+        self.data_x = data_x
+        self._timer.start()  # restart timer in rolling_mode
 
-    def _decimation_changed(self):
+    def start(self):
+        self._module._start_acquisition_rolling_mode()
+        # rolling_mode requires to disable the trigger
+        self._timer.start()
+
+    def pause(self):
+        self._timer.stop()
+
+    def _set_run_continuous(self):
         """
-        This function is called by the setter of
-        DecimationRegister because changing decimation might change the
-        outcome of _is_rolling_mode_active().
+        Dummy function: ContinuousRollingFuture instance is always
+        "_run_continuous"
         """
-        if self._is_rolling_mode_active():
-            self._setup_rolling_mode()
-        self._emit_signal_by_name('autoscale')
-
-    def _setup_rolling_mode(self):
-        self._module._trigger_source = 'off'
-        self._module._trigger_armed = True
-
-    def _rolling_mode_allowed(self):
-        """
-        Only if duration larger than 0.1 s
-        """
-        return self._module.duration > 0.1
-
-    def _is_rolling_mode_active(self):
-        """
-        Rolling_mode property evaluates to True and duration larger than 0.1 s
-        """
-        return self.rolling_mode and self._rolling_mode_allowed()
-
-    def _check_for_curves(self):
-        """
-        This function is called periodically by a timer when in run_continuous
-        mode.
-        1/ Check if curves are ready.
-        2/ If so, plots them on the graph
-        3/ Restarts the timer.
-        """
-        datas = np.zeros((3, len(self._module.times)))
-        # triggered mode in "single" acquisition, or when rolling mode is off,
-        # or when duration is too small
-        if self._is_rolling_mode_active() and \
-                self.running_state in ["running_continuous"]:
-            ##
-            # Rolling mode
-            wp0 = self._module._write_pointer_current  # write pointer
-            # before acquisition
-            times = self._module.times  # times
-            times -= times[-1]
-            datas[0] = times
-            for ch, active in (
-            (1, self._module.ch1_active), (2, self._module.ch2_active)):
-                if active:
-                    datas[ch] = self._module._get_ch_no_roll(ch)
-            wp1 = self._module._write_pointer_current  # write pointer after
-            #  acquisition
-            for index, active in [(1, self._module.ch1_active),
-                                  (2, self._module.ch2_active)]:
-                if active:
-                    data = datas[index]
-                    to_discard = (
-                                 wp1 - wp0) % self._module.data_length # remove
-                    #  data that have been affected during acq.
-                    data = np.roll(data, self._module.data_length - wp0)[
-                           to_discard:]
-                    data = np.concatenate([[np.nan] * to_discard, data])
-                    datas[index] = data
-            self._emit_signal_by_name('display_curve', list(datas))
-            self.data_current = datas
-            # no setup in rolling mode
-            self._timer.start()  # restart timer in rolling_mode
-        else:  # triggered mode
-            if self._module.curve_ready():  # if curve not ready, wait for
-                # next timer iteration
-                datas[0] = self._module.times
-                for ch, active in (
-                (1, self._module.ch1_active), (2, self._module.ch2_active)):
-                    if active:
-                        datas[ch] = self._module._get_ch(ch)
-                datas[0] = self._module.times
-                self.data_current = np.array(datas)
-                self._do_average()
-                self._emit_signal_by_name("display_curve",
-                                          list(self.data_avg))
-
-                if self.running_state == "running_single":
-                    if self.current_avg < self.avg:
-                        self._module.setup()
-                        self._timer.start() # more averaging needed in single
-                    else:
-                        self.running_state = 'stopped' # single run over
-                if self.running_state == "running_continuous":
-                    self._module.setup()
-                    self._timer.start()
-            else:  # curve not ready, wait for next timer iteration
-                if self.running_state in ['running_continuous',
-                                          'running_single']:
-                    self._timer.start()
-
-    def _start_acquisition(self):
-        """
-        Start acquisition has to be customized to change the trigger
-        settings when in rolling mode.
-        """
-        super(ScopeAcquisitionManager, self)._start_acquisition()
-        if self._is_rolling_mode_active():
-            self._setup_rolling_mode()
-
-    def _restart_averaging(self):
-        self.data_current = np.zeros((3, len(self._module.times)))
-        self.data_avg = np.zeros((3, len(self._module.times)))
-        self.current_avg = 0
-
-    def _do_average(self):
-        self.data_avg[0] = self.data_current[0]
-        self.current_avg += 1
-        self.current_avg = min(self.current_avg, self.avg)
-        self.data_avg[[1,2], :] = (self.data_avg[[1,2],
-                                    :]*(self.current_avg-1)
-                                + \
-                                self.data_current[[1,2], :])/self.current_avg
-
-    def save_curve(self):
-        """
-        Saves the curve(s) that is (are) currently displayed in the gui in
-        the db_system. Also, returns the list [curve_ch1, curve_ch2]...
-        """
-        d = self._module.setup_attributes
-        curves = [None, None]
-        for ch, active in [(1, self._module.ch1_active),
-                           (2, self._module.ch2_active)]:
-            if active:
-                d.update({'ch': ch,
-                          'name': self.curve_name + ' ch' + str(ch)})
-                curves[ch - 1] = self._save_curve(self.data_avg[0],
-                                                  self.data_avg[ch],
-                                                  **d)
-        return curves
-
+        pass
 
 class Scope(HardwareModule, AcquisitionModule):
     addr_base = 0x40100000
-    _widget_class = ScopeWidget
-    run = ModuleProperty(ScopeAcquisitionManager)
-    _gui_attributes = ["input1",
-                      "input2",
-                      "duration",
-                      "average",
-                      "trigger_source",
-                      "trigger_delay",
-                      "threshold_ch1",
-                      "threshold_ch2",
-                      "ch1_active",
-                      "ch2_active"]
-    _setup_attributes = _gui_attributes + ["run"]
     name = 'scope'
-    data_length = data_length  # see definition and explanation above
-    inputs = None
-    # last_datas = None
+    _widget_class = ScopeWidget
+    # run = ModuleProperty(ScopeAcquisitionManager)
+    _gui_attributes = ["input1",
+                       "input2",
+                       "duration",
+                       "average",
+                       "trigger_source",
+                       "trigger_delay",
+                       "threshold_ch1",
+                       "threshold_ch2",
+                       "ch1_active",
+                       "ch2_active"]  # running_state last for proper
+    # acquisition setup
+    _setup_attributes = _gui_attributes + ["rolling_mode", "running_state"]
+    # changing these resets the acquisition and autoscale (calls setup())
+    # _callback_attributes = ["rolling_mode", "decimation", "trigger_delay"]
 
+    data_length = data_length  # to use it in a list comprehension
+
+    rolling_mode = BoolProperty(doc="In rolling mode, the curve is "
+                                    "continuously acquired and "
+                                    "translated from the right to the "
+                                    "left of the screen while new "
+                                    "data arrive.",
+                                callback=True)
+
+    inputs = None
     input1 = DspInputAttributeScope(1)
     input2 = DspInputAttributeScope(2)
 
     _reset_writestate_machine = BoolRegister(0x0, 1,
-                            doc="Set to True to reset writestate machine. \
-                            Automatically goes back to false. ")
+                                             doc="Set to True to reset "
+                                                 "writestate machine. "
+                                                 "Automatically goes back "
+                                                 "to false.")
 
     _trigger_armed = BoolRegister(0x0, 0, doc="Set to True to arm trigger")
 
@@ -366,26 +254,32 @@ class Scope(HardwareModule, AcquisitionModule):
     trigger_delay = TriggerDelayAttribute("trigger_delay",
                                           min=-10,
                                           max=8e-9 * 2 ** 30,
-                        doc="delay between trigger and acquisition start.\n"
-                "negative values down to -duration are allowed for pretrigger")
+                                          doc="delay between trigger and "
+                                              "acquisition start.\n"
+                                              "negative values down to "
+                                              "-duration are allowed for "
+                                              "pretrigger",
+                                          callback=True)
 
     _trigger_delay_running = BoolRegister(0x0, 2,
-                            doc="trigger delay running (register adc_dly_do)")
+                                          doc="trigger delay running ("
+                                              "register adc_dly_do)")
 
     _adc_we_keep = BoolRegister(0x0, 3,
-                        doc="Scope resets trigger automatically (adc_we_keep)")
+                                doc="Scope resets trigger automatically ("
+                                    "adc_we_keep)")
 
     _adc_we_cnt = IntRegister(0x2C, doc="Number of samles that have passed "
                                         "since trigger was armed (adc_we_cnt)")
 
     current_timestamp = LongRegister(0x15C,
                                      bits=64,
-                                     doc="An absolute counter " \
+                                     doc="An absolute counter "
                                          + "for the time [cycles]")
 
     trigger_timestamp = LongRegister(0x164,
                                      bits=64,
-                                     doc="An absolute counter " \
+                                     doc="An absolute counter "
                                          + "for the trigger time [cycles]")
 
     _decimations = {2 ** n: 2 ** n for n in range(0, 17)}
@@ -395,18 +289,22 @@ class Scope(HardwareModule, AcquisitionModule):
     sampling_times = [8e-9 * dec for dec in decimations]
 
     # price to pay for Python 3 compatibility: list comprehension workaround
-    # cf. http://stackoverflow.com/questions/13905741/accessing-class-variables-from-a-list-comprehension-in-the-class-definition
+    # cf. http://stackoverflow.com/questions/13905741
     durations = [st * data_length for st in sampling_times]
 
     decimation = DecimationRegister(0x14, doc="decimation factor",
-                            # customized to update duration and sampling_time
-                                options=_decimations)
+                                    # customized to update duration and
+                                    # sampling_time
+                                    options=_decimations,
+                                    callback=True)
 
     _write_pointer_current = IntRegister(0x18,
-                            doc="current write pointer position [samples]")
+                                         doc="current write pointer "
+                                             "position [samples]")
 
     _write_pointer_trigger = IntRegister(0x1C,
-                        doc="write pointer when trigger arrived [samples]")
+                                         doc="write pointer when trigger "
+                                             "arrived [samples]")
 
     hysteresis_ch1 = FloatRegister(0x20, bits=14, norm=2 ** 13,
                                    doc="hysteresis for ch1 trigger [volts]")
@@ -415,7 +313,8 @@ class Scope(HardwareModule, AcquisitionModule):
                                    doc="hysteresis for ch2 trigger [volts]")
 
     average = BoolRegister(0x28, 0,
-                    doc="Enables averaging during decimation if set to True")
+                           doc="Enables averaging during decimation if set "
+                               "to True")
 
     # equalization filter not implemented here
 
@@ -452,6 +351,9 @@ class Scope(HardwareModule, AcquisitionModule):
                               doc="should ch2 be displayed in the gui?")
 
     def _init_module(self):
+        self._setup_attributes.remove("running_state")
+        self._setup_attributes.append("running_state")
+
         # dsp multiplexer channels for scope and asg are the same by default
         self._ch1 = DspModule(self._rp, name='asg0')  # the scope inputs and
         #  asg outputs have the same id
@@ -459,24 +361,20 @@ class Scope(HardwareModule, AcquisitionModule):
         # dsp_modules to understand
         self.inputs = self._ch1.inputs
         self._setup_called = False
-        self._trigger_source_memory = 'off' # "immediately" #fixes bug with
+        self._trigger_source_memory = 'off'  # "immediately" #fixes bug with
         # trigger_delay for 'immediate' at startup
         self._trigger_delay_memory = 0
-        self.setup(trigger_source='immediately',
-                   duration=1,
-                   #run_continuous=False, ### Otherwise it has to be
-                   #                          ### switched off explicitly
-                   #                          ### before any benchmarking
-                   #                          ### unittest!!!
-                   #run_rolling_mode=True,
-                   average=False)
+
+        super(Scope, self)._init_module()  # _init_module of AcquisitionModule
+
+
 
     def _ownership_changed(self, old, new):
         """
         If the scope was in continuous mode when slaved, it has to stop!!
         """
         if new is not None:
-            self.run.stop()
+            self.stop()
 
     @property
     def _rawdata_ch1(self):
@@ -536,16 +434,60 @@ class Scope(HardwareModule, AcquisitionModule):
                            trigger_delay + duration / 2.,
                            self.data_length, endpoint=False)
 
-    def _setup(self):
+    def wait_for_pretrigger(self):
+        """ sleeps until scope trigger is ready (buffer has enough new data)"""
+        while not self.pretrig_ok:
+            time.sleep(0.001)
+
+    def curve_ready(self):
         """
-        sets up the scope for a new trace acquisition including arming the
-        trigger. In case trigger_source is set to "immediately",
-        trigger_delay is disregarded and trace starts at t=0
+        Returns True if new data is ready for transfer
         """
+        return (not self._trigger_armed) and \
+               (not self._trigger_delay_running) and self._setup_called
+
+    def _curve_acquiring(self):
+        """
+        Returns True if data is in the process of being acquired
+        """
+        return (self._trigger_armed or self._trigger_delay_running) \
+            and self._setup_called
+
+    def _get_ch(self, ch):
+        if ch not in [1, 2]:
+            raise ValueError("channel should be 1 or 2, got " + str(ch))
+        return self._data_ch1 if ch == 1 else self._data_ch2
+
+    # Concrete implementation of AcquisitionModule methods
+    # ----------------------------------------------------
+
+    @property
+    def data_x(self):
+        return self.times
+
+    def _get_curve(self):
+        """
+        Simply pack together channel 1 and channel 2 curves in a numpy array
+        """
+        return np.array((self._get_ch(1), self._get_ch(2)))
+
+    def _remaining_time(self):
+        """
+        :returns curve duration - ellapsed duration since last setup() call.
+        """
+        return self.duration - (default_timer() - self._last_time_setup)
+
+    def _data_ready(self):
+        """
+        :return: True if curve is ready in the hardware, False otherwise.
+        """
+        return self.curve_ready()
+
+    def _start_acquisition(self):
         autosave_backup = self._autosave_active
-        self._autosave_active = False # Don't save anything in config file
-                                      # during setup!! # maybe even better in
-                                      # BaseModule ??
+        self._autosave_active = False  # Don't save anything in config file
+        # during setup!! # maybe even better in
+        # BaseModule ??
         self._setup_called = True
         self._reset_writestate_machine = True
         # trigger logic - set source
@@ -561,66 +503,88 @@ class Scope(HardwareModule, AcquisitionModule):
             # self.wait_for_pretrig_ok()
             self.trigger_source = self.trigger_source
         self._autosave_active = autosave_backup
-        # I make the choice not to call self.run._setup_rolling_mode here
-        # disadvantage: calling scope.setup(run=dict(rolling_mode)) fails
-        # advantage: 1. people wont setup an acquisition in rolling_mode
-        # without noticing
-        # 2. Referencing self.run at an early stage of module creation can
-        # cause a problem because run is being loaded before it is even
-        # attached to scope (run._module exists but scope.run is about
-        # to be created).
+        self._last_time_setup = default_timer()
 
-    def wait_for_pretrigger(self):
-        """ sleeps until scope trigger is ready (buffer has enough new data)"""
-        while not self.pretrig_ok:
-            time.sleep(0.001)
+    # Rolling_mode related methods:
+    # -----------------------------
 
-    def curve_ready(self):
+    def _rolling_mode_allowed(self):
         """
-        Returns True if new data is ready for transfer
+        Only if duration larger than 0.1 s
         """
-        return (not self._trigger_armed) \
-               and (not self._trigger_delay_running) \
-               and self._setup_called
+        return self.duration > 0.1
 
-    def _curve_acquiring(self):
+    def _is_rolling_mode_active(self):
         """
-        Returns True if data is in the process of being acquired
+        Rolling_mode property evaluates to True and duration larger than 0.1 s
         """
-        return (self._trigger_armed or self._trigger_delay_running) \
-               and self._setup_called
-
-    def _get_ch(self, ch):
-        if not ch in [1, 2]:
-            raise ValueError("channel should be 1 or 2, got " + str(ch))
-        return self._data_ch1 if ch == 1 else self._data_ch2
+        return self.rolling_mode and self._rolling_mode_allowed()
 
     def _get_ch_no_roll(self, ch):
-        if not ch in [1, 2]:
+        if ch not in [1, 2]:
             raise ValueError("channel should be 1 or 2, got " + str(ch))
         return self._rawdata_ch1 * 1. / 2 ** 13 if ch == 1 else \
             self._rawdata_ch2 * 1. / 2 ** 13
 
-    def curve(self, ch=1, timeout=None):
+    def _get_rolling_curve(self):
+        datas = np.zeros((2, len(self.times)))
+        # Rolling mode
+        wp0 = self._write_pointer_current  # write pointer
+        # before acquisition
+        times = self.times
+        times -= times[-1]
+
+        for ch, active in (
+                (0, self.ch1_active),
+                (1, self.ch2_active)):
+            if active:
+                datas[ch] = self._get_ch_no_roll(ch + 1)
+        wp1 = self._write_pointer_current  # write pointer after
+        #  acquisition
+        for index, active in [(0, self.ch1_active),
+                              (1, self.ch2_active)]:
+            if active:
+                data = datas[index]
+                to_discard = (
+                                 wp1 - wp0) % self.data_length  # remove
+                #  data that have been affected during acq.
+                data = np.roll(data, self.data_length - wp0)[
+                       to_discard:]
+                data = np.concatenate([[np.nan] * to_discard, data])
+                datas[index] = data
+        return times, datas
+
+    def _start_acquisition_rolling_mode(self):
+        self._start_acquisition()
+        self._trigger_source = 'off'
+        self._trigger_armed = True
+
+    # Custom behavior of AcquisitionModule methods for scope:
+    # -------------------------------------------------------
+
+    def save_curve(self):
         """
-        Takes a curve from channel ch:
-            If timeout>0:  runs until data is ready or timeout expires
-            If timeout<=0: returns immediately the current buffer without
-                           checking for trigger status.
-            If timeout is None: timeout is auto-set to twice scope.duration
+        Saves the curve(s) that is (are) currently displayed in the gui in
+        the db_system. Also, returns the list [curve_ch1, curve_ch2]...
         """
-        if not self._setup_called:
-            raise NotReadyError("setup has never been called")
-        SLEEP_TIME = 0.001
-        total_sleep = 0
-        if timeout is None:
-            timeout = self.duration * 2
-        if timeout > 0:
-            while (total_sleep < timeout):
-                if self.curve_ready():
-                    return self._get_ch(ch)
-                total_sleep += SLEEP_TIME
-                time.sleep(SLEEP_TIME)
-            raise TimeoutError("Scope wasn't trigged during timeout")
+        d = self.setup_attributes
+        curves = [None, None]
+        for ch, active in [(0, self.ch1_active),
+                           (1, self.ch2_active)]:
+            if active:
+                d.update({'ch': ch,
+                          'name': self.curve_name + ' ch' + str(ch + 1)})
+                curves[ch] = self._save_curve(self._run_future.data_x,
+                                              self._run_future.data_avg[ch],
+                                              **d)
+        return curves
+
+    def _new_run_future(self):
+        # acquisition is done by a custom Future in rolling_mode to avoid
+        # averaging
+        if self._is_rolling_mode_active() and self.running_state == \
+                "running_continuous":
+            self._run_future.cancel()
+            self._run_future = ContinuousRollingFuture(self)
         else:
-            return self._get_ch(ch)
+            super(Scope, self)._new_run_future()

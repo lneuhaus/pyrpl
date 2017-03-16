@@ -73,7 +73,6 @@ class AsgOffsetAttribute(FloatAttribute):
 
     def set_value(self, instance, val):
         instance._offset_masked = val
-        return val
 
     def get_value(self, instance, owner):
         return instance._offset_masked
@@ -101,7 +100,7 @@ def make_asg(channel=0):
                              "trigger_source",
                              "output_direct"]
         _gui_attributes = _setup_attributes
-        _callback_attributes = ["trigger_source"]
+        # _callback_attributes = ["trigger_source"]
 
         _DATA_OFFSET = set_DATA_OFFSET
         _VALUE_OFFSET = set_VALUE_OFFSET
@@ -155,9 +154,12 @@ def make_asg(channel=0):
 
         trigger_sources = _trigger_sources.keys()
 
-        trigger_source = SelectRegister(0x0, bitmask=0x0007 << _BIT_OFFSET, # changing trigger source requires a new _setup()
+        trigger_source = SelectRegister(0x0, bitmask=0x0007 << _BIT_OFFSET,
                                         options=_trigger_sources,
-                                        doc="trigger source for triggered output")
+                                        doc="trigger source for triggered "
+                                            "output")
+                                        # callback=True) for some reason,
+        # this doesn't seem to be needed anymore...
 
         # offset is stored in bits 31:16 of the register.
         # This adaptation to FloatRegister is a little subtle but should work nonetheless
@@ -205,7 +207,8 @@ def make_asg(channel=0):
                                     doc='If True, the phase of the asg will be '
                                         'pseudo-random with a period of 2**31-1 '
                                         'cycles. This is used for the generation of '
-                                        'white noise. If false, asg behaves normally. ')
+                                        'white noise. If false, asg behaves '
+                                        'normally. ')
 
         waveforms = ['sin', 'cos', 'ramp', 'halframp', 'dc', 'noise']
 

@@ -18,7 +18,6 @@
 
 
 import numpy as np
-from .pyrpl_utils import sleep
 import socket
 import logging
 from .hardware_modules.dsp import DSP_INPUTS

@@ -1,26 +1,23 @@
-import logging
-import sys
-from time import sleep
-
+from .. import async_utils
+from ..async_utils import PyrplFuture, MainThreadTimer, CancelledError, sleep
 from ..module_attributes import ModuleProperty
 from ..attributes import FloatProperty, SelectProperty, FrequencyProperty, \
-                         LongProperty, BoolProperty, StringProperty, \
-                         FilterAttribute, ModuleAttribute
+                         LongProperty, BoolProperty, FilterAttribute
 from ..hardware_modules import DspModule
 from ..widgets.module_widgets import NaWidget
+from ..modules import Module
+from ..acquisition_module import SignalLauncherAcquisitionModule, \
+    AcquisitionModule
 
-from . import Module
-from ..modules import SignalLauncher
-from ..acquisition_manager import SignalLauncherAcquisitionModule, \
-    AcquisitionModule, AcquisitionManager
-
+import sys
+from copy import copy
 from PyQt4 import QtCore, QtGui
 import numpy as np
-
 # timeit.default_timer() is THE precise timer to use (microsecond precise vs
 # milliseconds for time.time()).
 # see
-# http://stackoverflow.com/questions/85451/python-time-clock-vs-time-time-accuracy
+# http://stackoverflow.com/questions/85451
+# /python-time-clock-vs-time-time-accuracy
 import timeit
 
 APP = QtGui.QApplication.instance()
@@ -66,85 +63,186 @@ class LogScaleProperty(BoolProperty):
         module._signal_launcher.x_log_toggled.emit()
 
 
-class SignalLauncherNA(SignalLauncherAcquisitionModule):
+class NaPointFuture(PyrplFuture):
     """
-    The timers for asynchronous data acquisition are controlled
-    inside this class
+    Future object for a NetworkAnalyzer point.
     """
 
-    # This signal is emitted when a point needs to be updated (added/changed)
-    # The argument is the index of the point as found in module.y_averaged
-    x_log_toggled = QtCore.pyqtSignal()
+    def __init__(self, module, point_index, min_delay_ms=0):
+        self._module = module
+        self.point_index = point_index
+        self._min_delay_ms = min_delay_ms
+        super(NaPointFuture, self).__init__()
+        self._init_timer()
+
+    def _init_timer(self):
+        self._module._start_point_acquisition(self.point_index)
+        if self._min_delay_ms == 0:
+            # make sure 1st instrument interrogation occurs before time
+            delay = self._module._remaining_time() * 1000 - 1
+        else:
+            # 1 ms loss due to timer inaccuracy is acceptable
+            delay = max(self._min_delay_ms,
+                        self._module._remaining_time() * 1000)
+
+        self._timer = MainThreadTimer(max(0, delay))
+        self._timer.timeout.connect(self._set_data_as_result)
+        self._timer.start()
+
+    def _set_data_as_result(self):
+        if not self.done(): # if point was cancelled, leave the loop.
+            point = self._module._get_point(self.point_index)
+            if point is not None:
+                self.set_result(point)
+            else:
+                self._timer.setInterval(self._min_delay_ms)
+                self._timer.start()
+
+    def set_exception(self, exception):
+        self._timer.stop()
+        super(NaPointFuture, self).set_exception(exception)
+
+    def cancel(self):
+        self._timer.stop()
+        super(NaPointFuture, self).cancel()
 
 
-class NAAcquisitionManager(AcquisitionManager):
-    def _init_module(self):
-        super(NAAcquisitionManager, self)._init_module()
-        self._timer.timeout.connect(self._run_next_point)
+class NaCurveFuture(PyrplFuture):
+    N_POINT_BENCHMARK = 100 #  update measured_time_per_point every 100 points
+    def __init__(self, module, min_delay_ms, autostart=True):
+        self._module = module
+        self._min_delay_ms = min_delay_ms
+        self.current_point = 0
+        self.current_avg  = 1
+        self.n_points = self._module.points
+        self._paused = True
+        self._fut = None
+        self.never_started = True
+        super(NaCurveFuture, self).__init__()
+        self._module._start_acquisition()
+        self.data_x = copy(self._module.data_x)  # In case of saving latter.
+        self.data_avg = np.zeros(self.n_points,
+                                 dtype=np.complex)
+        self.data_amp = np.zeros(self.n_points)
+        # self.start()
+        self._reset_benchmark()
+        self.measured_time_per_point = np.nan  #  measured over last scan
+        if autostart:
+            self.start()
 
-    def _start_acquisition(self):
-        """
-        For the NA, resuming (from pause to start for instance... should
-        not setup the instrument again, otherwise, this would restart at
-        the beginning of the curve)
-        :return:
-        """
-        self._timer.setInterval(
-            self._module._time_per_point() * 1000)
-        self._timer.start() # No setup needed !!!
+    def start(self):
+        self._module.iq.output_direct = self._module.output_direct
+        if self.never_started:
+            self._module._emit_signal_by_name("clear_curve")
+            self.never_started = False
+        self._paused = False
+        self._setup_next_point()
 
-    @property
-    def current_point(self):
-        return self._module.current_point
+    def _setup_next_point(self):
+        self._fut = self._module._new_point_future(self.current_point,
+                                                   self._min_delay_ms)
+        self._fut.add_done_callback(self._new_point_arrived)
 
-    def _run_next_point(self):
-        if self.running_state in ['running_continuous',
-                                  'running_single']:
-            cur = self.current_point
-            try:
-                result = next(self._module.values_generator)
-            except StopIteration: # end of scan
-                self.current_avg = min(self.current_avg + 1, self.avg)
-                if self.running_state == 'running_continuous':
-                    # reset acquistion without resetting averaging
-                    self._module.setup()
-                    self._timer.start()
-                else:
-                    self.pause()
-                    # gives the opportunity to average other scans with
-                    # this one by calling run_continuous()
-                self._emit_signal_by_name('scan_finished')
-            else: # Scan not ended
-                if result is None: # PRETRACE_POINT, disregard and just
-                                   # relaunch timer for next point
-                    self._timer.start()
-                else: # standard point in the middle of the scan
-                      # fill in self.data_avg, self.data_current, self.x
-                      # launch signal to display point, and restart timer
-                    x, y, amp = result
-                    self.data_current[cur] = y
-                    self.data_avg[cur] = (self.data_avg[cur]
-                        * self.current_avg + y) \
-                        / (self.current_avg + 1)
+    def pause(self):
+        self._module.iq.output_direct = 'off'  #  switch off iq when paused
+        self._paused = True
+        if self._fut is not None:
+            self._fut.cancel()
 
-                    self.data_x[cur] = x
+    def _reset_benchmark(self):
+        self._last_time_benchmark = timeit.default_timer()
+        self._current_points_benchmark = 0
 
-                    self._emit_signal_by_name('update_point',
-                                              self.current_point)
-                    self._timer.start()
+    def _update_benchmark(self):
+        self._current_points_benchmark += 1
+        if self._current_points_benchmark >= self.N_POINT_BENCHMARK:
+            current_time = timeit.default_timer()
+            self.measured_time_per_point = \
+    (current_time - self._last_time_benchmark)/self._current_points_benchmark
+            self._reset_benchmark()
 
-    def _restart_averaging(self):
-        self._module.setup()
-        points = self._module.points
-        self.data_x = np.zeros(points)
-        self.data_current = np.zeros(points, dtype=np.complex)
-        self.data_avg = np.zeros(points, dtype=np.complex)
-        self.current_avg = 0
+    def _new_point_arrived(self, point):
+        if self._paused:
+            return
+        self._update_benchmark()
+        try:
+            point = point.result()
+        except CancelledError:
+            self._point_cancelled()
+            return #  exit the loop (could be restarted latter for RunFuture)
+        self._add_point(point)
+        self.current_point+=1
+        if self.current_point==self.n_points:
+            self._scan_finished()
+        else:
+            self._setup_next_point()
 
-    @property
-    def last_valid_point(self):
-        return self._module.points - 1 if self.current_avg>0 else \
-            self.current_point
+    def cancel(self):
+        self.pause()
+        super(NaCurveFuture, self).cancel()
+
+    # These methods behave differently in the derived class RunFuture:
+    # ----------------------------------------------------------------
+    #  1. points are averaged and not overwritten.
+    #  2. Each point sends an update signal to the gui.
+    #  3. A point cancelled doesn't mean the Future is cancelled (can be
+    # restarted if the state is paused.)
+    #  4. When the scan is finished, start a new scan over.
+
+    def _add_point(self, point):
+        y, amp = point
+        self.data_avg[self.current_point] = y
+        self.data_amp[self.current_point] = amp
+
+    def _point_cancelled(self):
+        self.cancel() #  if a point is cancelled during a curve, cancel the
+        # curve
+
+    def _scan_finished(self):
+        self.set_result(self.data_avg)
+
+
+class NaRunFuture(NaCurveFuture):
+    def __init__(self, module, min_delay_ms):
+        super(NaRunFuture, self).__init__(module,
+                                          min_delay_ms,
+                                          autostart=False)
+        self._run_continuous = False
+
+    def pause(self):
+        self._paused = True
+
+    def _add_point(self, point):
+        y, amp = point
+        index = self.current_point
+        self.data_avg[index] = (self.data_avg[index]*(self.current_avg - 1) + \
+                               y)/self.current_avg
+        self.data_amp[index] = amp
+        self._module._emit_signal_by_name("update_point", index)
+
+    def _point_cancelled(self):
+        # If a point is cancelled during the run, for instance the user
+        # pressed pause, the acquisition can be restarted latter.
+        pass
+
+    def _scan_finished(self):
+        # launch this signal before current_point goes back to 0...
+        self._module._emit_signal_by_name("scan_finished")
+        if self._run_continuous or self.current_avg<self._module.avg:
+            self._module._start_acquisition()
+            # restart scan from the beginning.
+            self.current_point = 0
+            self.start()
+        if not self._run_continuous and self.current_avg == self._module.avg:
+            self.set_result(self.data_avg)
+            #  in case the user wants to move on with running_continuous mode
+            self.current_point = 0
+            self._module.running_state = "paused"
+        self.current_avg = min(self.current_avg + 1, self._module.avg)
+
+    def _set_run_continuous(self):
+        self._run_continuous = True
+        self._min_delay_ms = self._module.MIN_DELAY_CONTINUOUS_MS
 
 
 class NetworkAnalyzer(AcquisitionModule):
@@ -178,47 +276,51 @@ class NetworkAnalyzer(AcquisitionModule):
                        "amplitude",
                        "logscale",
                        "infer_open_loop_tf"]
-    _setup_attributes = _gui_attributes + ['run']
-    _callback_attributes = _gui_attributes
-    _signal_launcher = SignalLauncherNA
-    run = ModuleProperty(NAAcquisitionManager)
-
-    PRETRACE_POINTS = 2
+    _setup_attributes = _gui_attributes + ['running_state']
+    # _callback_attributes = _gui_attributes
+    input = SelectProperty(DspModule.inputs, callback=True)
+    output_direct = SelectProperty(DspModule.output_directs, callback=True)
+    start_freq = FrequencyProperty(callback=True)
+    stop_freq = FrequencyProperty(callback=True)
+    rbw = RbwAttribute(default=1000, callback=True)
+    avg_per_point = LongProperty(min=1, default=1, callback=True)
+    amplitude = FloatProperty(min=0,
+                              max=1,
+                              increment=1. / 2 ** 14,
+                              callback=True)
+    points = LongProperty(min=1, max=1e8, default=1001, callback=True)
+    logscale = LogScaleProperty(callback=True)
+    infer_open_loop_tf = BoolProperty()
+    acbandwidth = NaAcBandwidth(
+        doc="Bandwidth of the input high-pass filter of the na.",
+        callback=True)
 
     def _init_module(self):
-        self.current_point = 0
+        # to remove once order is fixed
+        self._setup_attributes.remove('running_state')
+        self._setup_attributes.append('running_state')
 
+        self.sleeptimes = 0.5
+        self.rbw = 200
         self.start_freq = 200
         self.stop_freq = 50000
         self.points = 1001
-        self.rbw = 200
+
         self.avg_per_point = 1
         self.amplitude = 0.01
         self.input = 'in1'
         self.output_direct = 'off'
         self.acbandwidth = 0
-        self.sleeptimes = 0.5
         self.logscale = False
         self.infer_open_loop_tf = False
         self.curve_name = 'na_curve'
         self._is_setup = False
         self.time_per_point = self._time_per_point()
         #self.current_averages = 0
-        self.time_last_point = 0
-        self.running_state = 'stopped'
+        self._time_last_point = 0
+        self._update_data_x()
+        super(NetworkAnalyzer, self)._init_module()
 
-    input = SelectProperty(DspModule.inputs)
-    output_direct = SelectProperty(DspModule.output_directs)
-    start_freq = FrequencyProperty()
-    stop_freq = FrequencyProperty()
-    rbw = RbwAttribute(default=1000)
-    avg_per_point = LongProperty(min=1, default=1)
-    amplitude = FloatProperty(min=0, max=1, increment=1. / 2 ** 14)
-    points = LongProperty(min=1, max=1e8, default=1001)
-    logscale = LogScaleProperty()
-    infer_open_loop_tf = BoolProperty()
-    acbandwidth = NaAcBandwidth(
-        doc="Bandwidth of the input high-pass filter of the na.")
 
     @property
     def iq(self):
@@ -237,67 +339,6 @@ class NetworkAnalyzer(AcquisitionModule):
     def inputs(self):
         return self.iq.inputs
 
-    def _setup(self):
-        """
-        Sets up the network analyzer for a run.
-        """
-        self._is_setup = True
-
-        if self.logscale:
-            self.x = np.logspace(
-                np.log10(self.start_freq),
-                np.log10(self.stop_freq),
-                self.points,
-                endpoint=True)
-        else:
-            self.x = np.linspace(self.start_freq,
-                                 self.stop_freq,
-                                 self.points,
-                                 endpoint=True)
-        for index, val in enumerate(self.x):
-            self.x[index] = self.iq.__class__.frequency.\
-                validate_and_normalize(val, self) # retrieve the real freqs...
-        # preventive saturation
-        amplitude = abs(self.amplitude)
-        self.iq.setup(frequency=self.x[0],
-                      bandwidth=self.rbw,
-                      gain=0,
-                      phase=0,
-                      acbandwidth=self.acbandwidth,
-                      amplitude=amplitude,
-                      input=self.input,
-                      output_direct=self.output_direct,
-                      output_signal='output_direct')
-        # setup averaging
-        self.iq._na_averages = np.int(np.round(125e6 / self.rbw *
-                                               self.avg_per_point))
-        self._cached_na_averages = self.iq._na_averages
-        self.iq._na_sleepcycles = np.int(
-            np.round(125e6 / self.rbw * self.sleeptimes))
-        # time_per_point is calculated at setup for speed reasons
-        self.time_per_point = self._time_per_point()
-        # compute rescaling factor of raw data
-        # 4 is artefact of fpga code
-        self._rescale = 2.0 ** (-self.iq._LPFBITS) * 4.0
-        # number of "dead_points" at the beginning of the scans.
-        self.current_point = - self.PRETRACE_POINTS
-        # to avoid reading it at every single point
-        self.iq.frequency = self.x[0]  # this triggers the NA acquisition
-        self.time_last_point = timeit.default_timer()
-        # pre-calculate transfer_function values for speed
-        self._tf_values = self.transfer_function(self.x)
-        self.values_generator = self._values()
-        self.iq.on = True
-        # Warn the user if time_per_point is too small:
-        # < 1 ms measurement time will make acquisition inefficient.
-        if self.time_per_point < 0.001:
-            self._logger.info("Time between successive points is %.1f ms."
-                              " You should increase 'avg_per_point' to at "
-                              "least %i "
-                              "for efficient acquisition.",
-                              self.time_per_point * 1000,
-                              self.avg_per_point*0.001/self.time_per_point)
-
     def _time_per_point(self):
         return float(self.iq._na_sleepcycles + self.iq._na_averages) \
                / (125e6 * self.iq._frequency_correction)
@@ -308,138 +349,6 @@ class NetworkAnalyzer(AcquisitionModule):
         current frequency during the scan
         """
         return self.iq.frequency
-
-    def _get_current_point(self):
-        """
-        This function fetches the current point on the redpitaya.
-        The function blocks until the time since the last point has reached
-        time_per_point.
-        Returns: - None if the point is a PRETRACE_POINT to be discarded
-                 - A triplet containing (x, y , amp) otherwise
-        """
-        if self.current_point < 0:
-            # if this is a PRETRACE_POINT at the beginning of the trace, disregard the value
-            # get the actual point's (discretized) frequency
-            return None
-        else:
-            x = self.x[self.current_point]
-            tf = self._tf_values[self.current_point]
-            while True:
-                # make sure enough time was left for data to accumulate in
-                # the iq register...
-                # compute remaining time for acquisition
-                passed_duration = timeit.default_timer() - self.time_last_point
-                #DO NOT USE time.time(). This gets updated only every 1 ms or so.
-                remaining_duration = self.time_per_point - passed_duration
-                if remaining_duration >= 0.002:
-                    # sleeping in the ms range becomes inaccurate, in this case, we
-                    # will just continuously check if enough time has passed. For
-                    # averaging times longer than 2 ms, a 1 ms error in the sleep
-                    # time is only a 50 % error, but less CPU intensive.
-                    # see http://stackoverflow.com/questions/1133857/how-accurate-is-pythons-time-sleep
-                    sleep(remaining_duration)
-                # exit the loop when enough time has passed.
-                if remaining_duration < 0:
-                    break
-            ##################################################
-            # to remove once we are convinced it's clean...
-            if self.current_point < 5:
-                if self.current_point<0:
-                    raise ValueError('current point is: ' + str(self.current_point))
-                self._logger.debug("NA is currently reading point %s",
-                                     self.current_point)
-            ###################################################
-            # only one read operation per point is this one
-            y = self.iq._nadata_total/self._cached_na_averages
-            amp = self.amplitude  # get amplitude for normalization
-            if amp == 0:  # normalize immediately
-                y *= self._rescale  # avoid division by zero
-            else:
-                y *= self._rescale / amp
-            # correct for network analyzer transfer function (AC-filter and delay)
-            y /= tf
-            return x, y, amp
-
-    def _prepare_for_next_point(self):
-        """
-        Sets everything for next point
-        """
-        self.current_point += 1
-        if self.current_point < self.points:
-            # writing to iq.frequency triggers the acquisition
-            # negative index means "PRETRACE_POINT"--> acquire with start_freq
-            self.iq.frequency = self.x[max(self.current_point, 0)]
-        #else:
-        #    # turn off the modulation when done
-        #    self.iq.amplitude = 0
-        # check averaging time from now
-        self.time_last_point = timeit.default_timer()
-
-    def _values(self):
-        """
-        Returns
-        -------
-        A generator of successive values for the na curve.
-        The generator can be used in a for loop:
-        for val in na.values():
-            print val
-        or individual values can be fetched successively by calling
-        values = na.values()
-        val1 = next(values) # avoid values.next() as it doesn't work with python 3
-        val2 = next(values)
-
-        values are made of a triplet (freq, complex_response, amplitude)
-        """
-        try:
-            while self.current_point < self.points:
-                    result = self._get_current_point()
-                    self._prepare_for_next_point()
-                    if result is not None:
-                        x, y, amp = result
-                        self.threshold_hook(y)  # call a hook function for the user
-                        # replace frequency axis by time in zerospan mode:
-                        if self.start_freq == self.stop_freq:
-                            x = timeit.default_timer()
-                        yield (x, y, amp)
-                    else:
-                        yield None
-        except Exception as e:
-            self.iq._logger.info("NA output turned off due to an exception")
-            raise e
-        finally:
-            self.iq.on = False
-
-    def curve(self, **kwds):  # amplitude can be limited
-        """
-        High level function: this sets up the na and acquires a curve. See
-        setup for the explanation of parameters. Contrary to functions
-        starting with 'run_', here, the acquisition is blocking.
-
-        Returns
-        -------
-        (array of frequencies, array of complex ampl, array of amplitudes)
-        """
-        self.setup(**kwds)
-        xs = np.zeros(self.points, dtype=float)
-        ys = np.zeros(self.points, dtype=complex)
-        amps = np.zeros(self.points, dtype=float)
-
-        self._logger.info("Estimated acquisition time: %.1f s",
-                          self.time_per_point * (self.points+1))
-        sys.stdout.flush()  # make sure the time is shown immediately
-
-        # set pseudo-acquisition of first point to supress transient effects
-        self.iq.amplitude = self.amplitude
-        self.iq.frequency = self.start_freq
-        # sleep(self.time_per_point)
-        for index in range(self.PRETRACE_POINTS):
-            # "burn" the first PRETRACE_POINTS
-            assert(next(self.values_generator) is None)
-        for index, (x, y, amp) in enumerate(self.values_generator):
-            xs[index] = x
-            ys[index] = y
-            amps[index] = amp
-        return xs, ys, amps
 
     # delay observed with measurements of the na transfer function
     # expected is something between 3 and 4, so it is okay
@@ -490,7 +399,6 @@ class NetworkAnalyzer(AcquisitionModule):
         # add delay from phase (incorrect formula or missing effect...)
         return tf
 
-
     def threshold_hook(self, current_val):  # goes in the module...
         """
         A convenience function to stop the run upon some condition
@@ -507,3 +415,170 @@ class NetworkAnalyzer(AcquisitionModule):
 
         """
         pass
+
+    # Concrete implementation of AcquisitionModule methods and attributes:
+    # --------------------------------------------------------------------
+
+    MIN_DELAY_SINGLE_MS = 0
+    MIN_DELAY_CONTINUOUS_MS = 0
+    # na should be as fast as possible
+
+    _curve_future_cls = NaCurveFuture
+    _run_future_cls = NaRunFuture
+
+    def _new_run_future_obsolete(self):
+        assert self.running_state in ["running_single",
+                                      "running_continuous"], \
+                                     "Run future cannot be created in " \
+                                     "state %s"%self.running_state
+
+        self._run_future.cancel()
+        if self.running_state == "running_continuous":
+            self._run_future = NaRunFuture(self,
+                                min_delay_ms=self.MIN_DELAY_CONTINUOUS_MS)
+            self._run_future._set_run_continuous()
+        if self.running_state == "running_single":
+            self._run_future = NaRunFuture(self,
+                                    min_delay_ms=self.MIN_DELAY_SINGLE_MS)
+
+    def _get_new_curve_future(self, min_delay_ms):
+        return NaCurveFuture(self, min_delay_ms)
+
+    def _new_point_future(self, index, min_delay_ms):
+        if hasattr(self, "_point_future"): #  for _init_module
+            self._point_future.cancel()
+        self._point_future = NaPointFuture(self, index, min_delay_ms)
+        return self._point_future
+
+    def _start_point_acquisition(self, index):
+        #if self.current_point < self.points:
+            # writing to iq.frequency triggers the acquisition
+            # negative index means "PRETRACE_POINT"--> acquire with start_freq
+        self.iq.frequency = self.data_x[index]
+        self._time_last_point = timeit.default_timer()
+
+    def _get_point(self, index):
+        # get the actual point's (discretized)
+        # frequency
+        if self._remaining_time()>0:
+            return None
+        # only one read operation per point
+        y = self.iq._nadata_total / self._cached_na_averages
+
+        x = self.data_x[index]
+        tf = self._tf_values[index]
+
+        amp = self.amplitude  # get amplitude for normalization
+        if amp == 0:  # normalize immediately
+            y *= self._rescale  # avoid division by zero
+        else:
+            y *= self._rescale / amp
+        # correct for network analyzer transfer function (AC-filter and
+        # delay)
+        y /= tf
+        return y, amp
+
+    def _start_acquisition(self):
+        """
+        For the NA, resuming (from pause to start for instance... should
+        not setup the instrument again, otherwise, this would restart at
+        the beginning of the curve)
+        Moreover, iq is disabled even when na is just paused.
+        :return:
+        """
+        # super(NAAcquisitionManager, self)._start_acquisition()
+        self._update_data_x()
+        x = self.data_x
+        # preventive saturation
+        amplitude = abs(self.amplitude)
+        self.iq.setup(frequency=x[0],
+                      bandwidth=self.rbw,
+                      gain=0,
+                      phase=0,
+                      acbandwidth=self.acbandwidth,
+                      amplitude=amplitude,
+                      input=self.input,
+                      output_direct=self.output_direct,
+                      output_signal='output_direct')
+        # setup averaging
+        self.iq._na_averages = np.int(np.round(125e6 / self.rbw *
+                                               self.avg_per_point))
+        self._cached_na_averages = self.iq._na_averages
+        self.iq._na_sleepcycles = np.int(
+            np.round(125e6 / self.rbw * self.sleeptimes))
+        # time_per_point is calculated at setup for speed reasons
+        self.time_per_point = self._time_per_point()
+        # compute rescaling factor of raw data
+        # 4 is artefact of fpga code
+        self._rescale = 2.0 ** (-self.iq._LPFBITS) * 4.0
+        # to avoid reading it at every single point
+        self.iq.frequency = x[0]  # this triggers the NA acquisition
+        self._time_last_point = timeit.default_timer()
+        # pre-calculate transfer_function values for speed
+        self._tf_values = self.transfer_function(x)
+        self.iq.on = True
+        # Warn the user if time_per_point is too small:
+        # < 1 ms measurement time will make acquisition inefficient.
+        if self.time_per_point < 0.001:
+            self._logger.info("Time between successive points is %.1f ms."
+                              " You should increase 'avg_per_point' to at "
+                              "least %i "
+                              "for efficient acquisition.",
+                              self.time_per_point * 1000,
+                              self.avg_per_point * 0.001 / self.time_per_point)
+
+    def _stop_acquisition(self):
+        """
+        Stop the iq.
+        """
+        self.iq.output_direct = 'off'
+
+    @property
+    def data_x(self):
+        return self._data_x
+
+    def _update_data_x(self):
+        if self.logscale:
+            raw_values = np.logspace(
+                np.log10(self.start_freq),
+                np.log10(self.stop_freq),
+                         self.points,
+                         endpoint=True)
+        else:
+            raw_values = np.linspace(self.start_freq,
+                               self.stop_freq,
+                               self.points,
+                               endpoint=True)
+        values = np.zeros(len(raw_values))
+        for index, val in enumerate(raw_values):
+            values[index] = self.iq.__class__.frequency. \
+                validate_and_normalize(val, self)  # retrieve the real freqs...
+        self._data_x = values
+
+    def _remaining_time(self):
+        """Remaining time in seconds until current point is ready"""
+        # implement here the extra waiting at the beginning
+        if self.current_point==0:
+            time_per_point = 3*self.time_per_point
+        else:
+            time_per_point = self.time_per_point
+        return time_per_point - (timeit.default_timer() -
+                                      self._time_last_point)
+
+    # Shortcut to the RunFuture data (for plotting):
+    # ----------------------------------------------
+
+    @property
+    def last_valid_point(self):
+        if self.current_avg>1:
+            return self.points - 1
+        else:
+            return self.current_point
+
+    @property
+    def current_point(self):
+        return self._run_future.current_point
+
+    @property
+    def measured_time_per_point(self):
+        return self._run_future.measured_time_per_point
