@@ -133,7 +133,7 @@ class ModuleMetaClass(type):
         # 1c. add _module_attributes to _setup_attributes if the submodule has _setup_attributes
         for name in self._module_attributes:
             attr = getattr(self, name)
-            if len(attr.module_cls._setup_attributes) > 0:
+            if True:  #len(attr.module_cls._setup_attributes) > 0:
                 _setup_attributes.append(name)
         #1d. Set the unique list of _setup_attributes
         self._setup_attributes = unique_list(_setup_attributes)

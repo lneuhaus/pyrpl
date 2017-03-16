@@ -130,7 +130,7 @@ class Lockbox(LockboxModule):
                        "auto_lock",
                        "auto_lock_interval",
                        "error_threshold"]
-    _setup_attributes = _gui_attributes + ["inputs", "outputs", "sequence"]
+    _setup_attributes = _gui_attributes
 
     classname = ClassnameProperty()
     parameter_name = "parameter"
@@ -150,7 +150,7 @@ class Lockbox(LockboxModule):
     # logical inputs and outputs of the lockbox are accessible as lockbox.outputs.output1
     inputs = LockboxModuleDictProperty(input_from_output=InputFromOutput)
     outputs = LockboxModuleDictProperty(output1=OutputSignal,
-                                             output2=OutputSignal)
+                                        output2=OutputSignal)
 
     # Sequence is a list of stage modules. By default the first stage is created
     sequence = ModuleListProperty(Stage, default=[{}])
@@ -170,7 +170,15 @@ class Lockbox(LockboxModule):
     @property
     def signals(self):
         """ a dict of all logical signals of the lockbox """
-        return OrderedDict(self.inputs.items() + self.outputs.items())
+        # only return those signals that are already initialized to avoid recursive loops
+        # at startup
+        signallist = []
+        if hasattr(self, "_inputs"):
+            signallist += self.inputs.items()
+        if hasattr(self, "_outputs"):
+            signallist += self.outputs.items()
+        return OrderedDict(signallist)
+        #return OrderedDict(self.inputs.items()+self.outputs.items())
 
     @property
     def asg(self):

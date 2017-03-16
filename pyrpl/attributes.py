@@ -146,7 +146,7 @@ class BaseAttribute(object):
         """
         if self._widget_class is None:
             logger.warning("Module %s of type %s is trying to create a widget for %s, but no _widget_class is defined!",
-                           str(module), type(module), name)
+                           str(module), type(module), self.name)
             return None
         if name is None:
             name = self.name  # attributed by the metaclass of module
@@ -381,11 +381,11 @@ class SelectAttribute(BaseAttribute):
                 msg = "Value %s is not an option for SelectAttribute {%s} of %s"\
                       % (value, self.name, module.name)
                 if self.ignore_errors:
-                    logger.warning(msg + ". Selecting value 'None' instead.")
-                    value = None
-                    #logger.warning(msg + ". Picking an arbitrary value %s instead."
-                    #               % str(value))
-                    #value = options[0]
+                    # value = None
+                    # logger.warning(msg + ". Selecting value 'None' instead.")
+                    value = options[0]
+                    logger.warning(msg + ". Picking an arbitrary value %s instead."
+                                   % str(value))
                 else:
                     raise ValueError(msg)
             return value

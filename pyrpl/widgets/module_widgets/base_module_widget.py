@@ -157,8 +157,10 @@ class ReducedModuleWidget(QtGui.QGroupBox):
             else:
                 # standard case: make attribute widget
                 widget = attribute._create_widget(self.module)
-                self.attribute_widgets[attr_name] = widget
+                if widget is None:
+                    continue
                 widget.value_changed.connect(self.attribute_changed)
+            self.attribute_widgets[attr_name] = widget
             self.attribute_layout.addWidget(widget)
 
     def update_attribute_by_name(self, name, new_value_list):
