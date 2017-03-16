@@ -16,12 +16,12 @@ class StageSignalLauncher(SignalLauncher):
     #stage_renamed = QtCore.pyqtSignal()
 
 class StageOutput(LockboxModule):
-    _setup_attributes = ['lock',
+    _setup_attributes = ['lock_on',
                          'reset_offset',
                          'offset']
     _gui_attributes = _setup_attributes
     _widget_class = StageOutputWidget
-    lock = BoolIgnoreProperty(default=False)
+    lock_on = BoolIgnoreProperty(default=False)
     reset_offset = BoolProperty(default=False)
     offset = FloatProperty(default=0, min=-1., max=1.)
 
