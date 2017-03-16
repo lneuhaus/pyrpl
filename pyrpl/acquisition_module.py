@@ -251,7 +251,10 @@ class RunningStateProperty(StringProperty):
                 # it continuous
                 obj._run_future.start()
         if val in ["paused", "stopped"]:
-            obj._run_future.pause()
+            obj._run_future.cancel() #  single cannot be resumed
+            #  on the other hand, continuous can still be started again
+            #  eventhough it is cancelled. Basically, the result will never
+            #  be set, but hte acquisition can still be going on indefinitely.
 
 
 class SignalLauncherAcquisitionModule(SignalLauncher):

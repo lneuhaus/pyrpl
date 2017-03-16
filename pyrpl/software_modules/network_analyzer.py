@@ -10,6 +10,7 @@ from ..acquisition_module import SignalLauncherAcquisitionModule, \
     AcquisitionModule
 
 import sys
+from copy import copy
 from PyQt4 import QtCore, QtGui
 import numpy as np
 # timeit.default_timer() is THE precise timer to use (microsecond precise vs
@@ -114,14 +115,15 @@ class NaCurveFuture(PyrplFuture):
         self.current_point = 0
         self.current_avg  = 1
         self.n_points = self._module.points
-        self.data_avg = np.zeros(self.n_points,
-                                 dtype=np.complex)
-        self.data_amp = np.zeros(self.n_points)
         self._paused = True
         self._fut = None
         self.never_started = True
         super(NaCurveFuture, self).__init__()
         self._module._start_acquisition()
+        self.data_x = copy(self._module.data_x)  # In case of saving latter.
+        self.data_avg = np.zeros(self.n_points,
+                                 dtype=np.complex)
+        self.data_amp = np.zeros(self.n_points)
         # self.start()
         self._reset_benchmark()
         self.measured_time_per_point = np.nan  #  measured over last scan
