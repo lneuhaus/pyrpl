@@ -157,7 +157,7 @@ class Lockbox(LockboxModule):
     sequence._widget_class = LockboxSequenceWidget
 
     # current state of the lockbox
-    state = StateSelectProperty(options=(lambda inst: ['unlock', 'sweep'] + range(len(inst.sequence))),
+    state = StateSelectProperty(options=(lambda inst: ['unlock', 'sweep'] + list(range(len(inst.sequence)))),
                                 default='unlock')
 
     @property
