@@ -200,7 +200,7 @@ class PyrplFuture(Future):
         """
 
         self._wait_for_done(timeout)
-        return super(PyrplFuture, self).result(timeout=0)
+        return super(PyrplFuture, self).result()
 
     def await_exception(self, timeout=None):
         """
