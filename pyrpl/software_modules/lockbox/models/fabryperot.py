@@ -12,7 +12,7 @@ class FPTransmission(FPReflection):
     def expected_signal(self, variable):
         return self.min + (self.max - self.min) * self._lorentz(variable)
 
-class InputAnalogPdh(InputDirect):
+class FPAnalogPdh(InputDirect):
     mod_freq = FrequencyProperty()
     _setup_attributes = InputDirect._setup_attributes + ['mod_freq']
     _gui_attributes = InputDirect._gui_attributes + ['mod_freq']
@@ -54,7 +54,7 @@ class InputAnalogPdh(InputDirect):
         return np.real(i_ref * np.exp(1j * phase)) / eta
 
 
-class InputPdh(InputIq, InputAnalogPdh):
+class FPPdh(InputIq, FPAnalogPdh):
     def is_locked(self, loglevel=logging.INFO):
         # simply perform the is_locked with the reflection error signal
         return self.lockbox.is_locked(self.lockbox.inputs.reflection,
@@ -75,9 +75,9 @@ class FabryPerot(Lockbox):
     eta = FloatProperty(min=0., max=1., default=1.)
     variable = 'detuning'
 
-    inputs = LockboxModuleDictProperty(transmission = FPTransmission,
-                                       reflection = FPReflection,
-                                       pdh = InputPdh)
+    inputs = LockboxModuleDictProperty(transmission=FPTransmission,
+                                       reflection=FPReflection,
+                                       pdh=FPPdh)
 
     @property
     def free_spectral_range(self):
@@ -103,7 +103,6 @@ class HighFinesseInput(InputDirect):
     """
 
     def calibrate(self):
-        print("high-finesse calibrate")
         curve = super(HighFinesseInput, self).acquire()
         with self.pyrpl.scopes.pop(self.name) as scope:
             if "sweep_zoom" in scope.states:
@@ -115,11 +114,11 @@ class HighFinesseInput(InputDirect):
             scope.setup(threshold_ch1=threshold, input1=self.signal())
             self._logger.debug("calibration threshold: %f", threshold)
             scope.save_state("autosweep_zoom") # save state for debugging or modification
-            curve = scope.curve(ch=1,
-                                timeout=5./self.lockbox.asg.frequency)  # give some time if trigger is missed
-            self.get_stats_from_curve(curve)
+            curve1, curve2 = scope.curve(timeout=5./self.lockbox.asg.frequency)  # give some time if trigger is missed
+            self.get_stats_from_curve(curve1)
         # log calibration values
-        self._logger.info("%s calibration successful - Min: %.3f  Max: %.3f  Mean: %.3f  Rms: %.3f",
+        self._logger.info("%s high-finesse calibration successful - "
+                          "Min: %.3f  Max: %.3f  Mean: %.3f  Rms: %.3f",
                           self.name,
                           self.min, self.max, self.mean, self.rms)
         # update graph in lockbox
@@ -146,7 +145,7 @@ class HighFinesseTransmission(HighFinesseInput, FPTransmission):
     pass
 
 
-class HighFinessePdh(HighFinesseInput, InputPdh):
+class HighFinessePdh(HighFinesseInput, FPPdh):
     """
     Reflection for a FabryPerot. The only difference with FPReflection is that
     acquire will be done in 2 steps (coarse, then fine)

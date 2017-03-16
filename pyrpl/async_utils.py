@@ -4,6 +4,7 @@ This file contains a number of methods for asynchronous operations.
 import logging
 from PyQt4 import QtCore, QtGui
 from timeit import default_timer
+from .errors import TimeoutError, NotReadyError
 
 _LOGGER = logging.getLogger(name=__name__)
 
