@@ -426,7 +426,7 @@ class AcquisitionModule(Module):
         2. the function directly returns an array with the curve instead of
         a future object
         """
-        return self.curve_async().result(timeout)
+        return self.curve_async().await_result(timeout)
 
     def single_async(self):
         """
