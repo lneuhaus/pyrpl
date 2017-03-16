@@ -1,5 +1,5 @@
 from .. import async_utils
-from ..async_utils import PyrplFuture, MainThreadTimer, CancelledError
+from ..async_utils import PyrplFuture, MainThreadTimer, CancelledError, sleep
 from ..module_attributes import ModuleProperty
 from ..attributes import FloatProperty, SelectProperty, FrequencyProperty, \
                          LongProperty, BoolProperty, FilterAttribute
@@ -75,6 +75,7 @@ class NaPointFuture(PyrplFuture):
         self._init_timer()
 
     def _init_timer(self):
+        self._module._start_point_acquisition(self.point_index)
         if self._min_delay_ms == 0:
             # make sure 1st instrument interrogation occurs before time
             delay = self._module._remaining_time() * 1000 - 1
@@ -84,7 +85,6 @@ class NaPointFuture(PyrplFuture):
                         self._module._remaining_time() * 1000)
 
         self._timer = MainThreadTimer(max(0, delay))
-        self._module._start_point_acquisition(self.point_index)
         self._timer.timeout.connect(self._set_data_as_result)
         self._timer.start()
 
@@ -129,15 +129,20 @@ class NaCurveFuture(PyrplFuture):
             self.start()
 
     def start(self):
+        self._module.iq.output_direct = self._module.output_direct
         if self.never_started:
             self._module._emit_signal_by_name("clear_curve")
             self.never_started = False
         self._paused = False
-        self._fut = self._module._get_new_point_future(self.current_point,
-                                                       self._min_delay_ms)
+        self._setup_next_point()
+
+    def _setup_next_point(self):
+        self._fut = self._module._new_point_future(self.current_point,
+                                                   self._min_delay_ms)
         self._fut.add_done_callback(self._new_point_arrived)
 
     def pause(self):
+        self._module.iq.output_direct = 'off'  #  switch off iq when paused
         self._paused = True
         if self._fut is not None:
             self._fut.cancel()
@@ -162,17 +167,13 @@ class NaCurveFuture(PyrplFuture):
             point = point.result()
         except CancelledError:
             self._point_cancelled()
-            return # exit the loop (could be restarted latter for RunFuture)
+            return #  exit the loop (could be restarted latter for RunFuture)
         self._add_point(point)
         self.current_point+=1
         if self.current_point==self.n_points:
             self._scan_finished()
-            self._stop_scan_time = timeit.default_timer()
-            self.measured_time_per_point = (self._stop_scan_time - \
-                                        self._start_scan_time)/self.n_points
         else:
-            self._start_scan_time = timeit.default_timer()
-            self.start()
+            self._setup_next_point()
 
     def cancel(self):
         self.pause()
@@ -441,8 +442,11 @@ class NetworkAnalyzer(AcquisitionModule):
     def _get_new_curve_future(self, min_delay_ms):
         return NaCurveFuture(self, min_delay_ms)
 
-    def _get_new_point_future(self, index, min_delay_ms):
-        return NaPointFuture(self, index, min_delay_ms)
+    def _new_point_future(self, index, min_delay_ms):
+        if hasattr(self, "_point_future"): #  for _init_module
+            self._point_future.cancel()
+        self._point_future = NaPointFuture(self, index, min_delay_ms)
+        return self._point_future
 
     def _start_point_acquisition(self, index):
         #if self.current_point < self.points:
@@ -454,13 +458,14 @@ class NetworkAnalyzer(AcquisitionModule):
     def _get_point(self, index):
         # get the actual point's (discretized)
         # frequency
-        x = self.data_x[index]
-        tf = self._tf_values[index]
-
         if self._remaining_time()>0:
             return None
         # only one read operation per point
         y = self.iq._nadata_total / self._cached_na_averages
+
+        x = self.data_x[index]
+        tf = self._tf_values[index]
+
         amp = self.amplitude  # get amplitude for normalization
         if amp == 0:  # normalize immediately
             y *= self._rescale  # avoid division by zero

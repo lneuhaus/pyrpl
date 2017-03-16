@@ -18,7 +18,7 @@ class TestNA(TestPyrpl):
         """
         This was so hard to detect, I am making a unit test
         """
-        assert(self.na.run.running_state=='stopped')
+        assert(self.na.running_state=='stopped')
 
     def test_na_running_states(self):
         # make sure scope rolling_mode and running states are correctly setup
@@ -29,37 +29,38 @@ class TestNA(TestPyrpl):
         def data_changing():
             time.sleep(0.1)
             APP.processEvents()
-            data = copy.deepcopy(self.na.run.data_avg)
+            data = copy.deepcopy(self.na.data_avg)
             time.sleep(.3)
 
             for i in range(1000):
                 APP.processEvents()
 
-            return (data != self.na.run.data_avg).any()
+            return (data != self.na.data_avg).any()
 
         self.na.setup(start_freq=1000, stop_freq=1e4, rbw=1000, points=10000)
         for i in range(1000):
             APP.processEvents()
 
-        self.na.run.single()
+        self.na.single_async()
         assert data_changing()
 
+        current_point = self.na.current_point
         self.na.rbw = 100  # change some setup_attribute
-        assert self.na.run.running_state == "stopped"
-        assert not data_changing()
+        assert self.na.current_point < current_point # make sure the run was
+        #  restarted
 
-        self.na.run.continuous()
+        self.na.continuous()
         time.sleep(0.1)
         for i in range(100):
             APP.processEvents()
 
 
         assert data_changing()
-        self.na.run.stop()  # do not let the na running or other tests might be
+        self.na.stop()  # do not let the na running or other tests might be
         # screwed-up !!!
 
     # maximum allowed duration to acquire one point without gui
-    duration_per_point = 1.7e-3 # previously 5e-3
+    duration_per_point =   1.7e-3# 2.3e-3 ## previously 5e-3
     # duration_per_point = 5e-3
     #@unittest.skip("testing skipping")
     def test_benchmark(self):
@@ -90,10 +91,10 @@ class TestNA(TestPyrpl):
         #    APP.processEvents() # make sure no old events are going to screw up the timing test
 
         tic = time.time()
-        self.na.run.single()
+        self.na.single()
         APP.processEvents()
-        print(self.na.run.running_state)
-        while(self.na.run.running_state == 'running_single'):
+        print(self.na.running_state)
+        while(self.na.running_state == 'running_single'):
             APP.processEvents()
         duration = (time.time() - tic)/self.na.points
 
@@ -129,8 +130,9 @@ class TestNA(TestPyrpl):
         if self.r is None:
             return
         self.na.iq.output_signal = 'quadrature'
-        x, y, amp = self.na.curve(start_freq=1e5, stop_freq=2e5, rbw=10000,
-                                  points=100, input=self.na.iq, acbandwidth=0)
+        self.na.setup(start_freq=1e5, stop_freq=2e5, rbw=10000,
+                      points=100, input=self.na.iq, acbandwidth=0)
+        y = self.na.curve()
         assert(all(abs(y-1)<0.1))  # If transfer function is taken into
         # account, that should be much closer to 1...
         # Also, there is this magic value of 0.988 instead of 1 ??!!!
@@ -145,15 +147,15 @@ class TestNA(TestPyrpl):
                       output_direct="out1",
                       input="out1",
                       amplitude=0.01)
-        self.na.run.continuous()
+        self.na.continuous()
         APP.processEvents()
-        self.na.run.pause()
+        self.na.pause()
         APP.processEvents()
         assert self.na.iq.output_direct=='off'
-        self.na.run.continuous()
+        self.na.continuous()
         APP.processEvents()
         assert self.na.iq.output_direct=='out1'
-        self.na.run.stop()
+        self.na.stop()
         APP.processEvents()
         assert self.na.iq.output_direct=='off'
 
@@ -188,5 +190,5 @@ class TestNA(TestPyrpl):
             sleep(0.01)
             APP.processEvents()
         new = self.pyrpl.c._save_counter
-        self.na.run.stop()
+        self.na.stop()
         assert (old == new), (old, new)
