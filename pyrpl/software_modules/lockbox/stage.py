@@ -88,9 +88,16 @@ class Stage(LockboxModule):
             #elif setting.lock_on == 'ignore':
             #    pass
         if self.function_call!="":
-            func = getattr(self.lockbox.model, self.function_call)
             try:
-                func(self)
-            except TypeError:
-                func()
+                func = getattr(self.lockbox, self.function_call)
+            except AttributeError:
+                self._logger.warning("Could not find the function '%s'  called "
+                                     "in stage %s in the Lockbox class. "
+                                     "Please specify a valid function name "
+                                     "to call!", self.function_call, self.name)
+            else:
+                try:
+                    func(self)
+                except TypeError:
+                    func()
         self.lockbox.state = self.name
