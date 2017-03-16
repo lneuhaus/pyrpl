@@ -80,7 +80,7 @@ except:
                 if isinstance(args[0], pandas.Series):
                     ser = args[0]
                 else:
-                    y = nu.array(args[0])
+                    y = np.array(args[0])
                     ser = pandas.Series(y)
             elif len(args) == 2:
                 x = np.array(args[0])

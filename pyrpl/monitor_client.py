@@ -195,6 +195,34 @@ class DummyClient(object):
                     return 4
                 elif offset == 0x228:  # MINBW
                     return 1
+            elif module.startswith('iir'):
+                if offset == 0x200:  # IIRBITS
+                    return 64
+                elif offset == 0x204:  # IIRSHIFT
+                    return 32
+                elif offset == 0x208:  # IIRSTAGES
+                    return 16
+                elif offset == 0x220:  # filterstages
+                    return 1
+            elif module.startswith('iq'):
+                if offset == 0x220:  # filterstages
+                    return 1
+                # rbw filter register
+                elif offset == 0x230:  # filterstages = 0x230
+                    return 2
+                elif offset == 0x234:  # shiftbits = 0x234
+                    return 2
+                elif offset == 0x238:  # minbw = 0x238
+                    return 1
+            for filter_module in ['iq', 'pid', 'iir']:
+                if module.startswith(filter_module):
+                    if offset == 0x220:  # filterstages
+                        return 1
+                    elif offset == 0x224:  # shiftbits
+                        return 2
+                    elif offset == 0x228:  # minbw
+                        return 1
+
         # everything else is restored from the dict
         return self.fpgamemory[str(addr)]
 

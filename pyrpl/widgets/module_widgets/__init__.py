@@ -2,12 +2,12 @@
 This package defines all the widgets to control the different modules of pyrpl.
 """
 
-from .base_module_widget import ModuleWidget
+from .base_module_widget import ReducedModuleWidget, ModuleWidget
 from .asg_widget import AsgWidget
 from .iir_widget import IirWidget
 from .iq_widget import IqWidget
 from .lockbox_widget import LockboxWidget, OutputSignalWidget, InputsWidget, \
-                            LockboxInputWidget, LockboxSequenceWidget, LockboxStageWidget
+                            LockboxInputWidget, LockboxSequenceWidget, LockboxStageWidget, StageOutputWidget
 from .module_manager_widget import ModuleManagerWidget, IqManagerWidget, PidManagerWidget, ScopeManagerWidget, \
                                     IirManagerWidget, AsgManagerWidget
 from .na_widget import NaWidget

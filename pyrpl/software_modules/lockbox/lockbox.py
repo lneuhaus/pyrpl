@@ -1,13 +1,13 @@
 from __future__ import division
 from ...modules import Module, SignalLauncher
 from ...attributes import SelectProperty, BoolProperty, StringProperty
-from ...module_attributes import ModuleProperty, ModuleListProperty, ModuleContainerProperty
+from ...module_attributes import ModuleProperty, ModuleListProperty, ModuleDictProperty
 from .signals import *
 from ...widgets.module_widgets import LockboxWidget
 from ...pyrpl_utils import get_unique_name_list_from_class_list, all_subclasses
 from ...async_utils import sleep
-from .sequence import Sequence, Stage
-from . import LockboxModule, LockboxModuleContainerProperty
+from .stage import Stage
+from . import LockboxModule, LockboxModuleDictProperty
 from collections import OrderedDict
 from PyQt4 import QtCore
 from ...widgets.module_widgets.lockbox_widget import LockboxSequenceWidget, LockboxStageWidget
@@ -37,6 +37,30 @@ class ClassnameProperty(SelectProperty):
 
     def options(self, instance):
         return all_classnames().keys()
+
+
+class AutoLockProperty(BoolProperty):
+    """ true if autolock is enabled"""
+    def set_value(self, obj, val):
+        super(AutoLockProperty, self).set_value(obj=obj, val=val)
+        if val:
+            obj._signal_launcher.timer_autolock.start()
+        else:
+            obj._signal_launcher.timer_autolock.stop()
+
+
+class AutoLockIntervalProperty(FloatProperty):
+    """ timeout for autolock timer """
+    def set_value(self, obj, val):
+        super(AutoLockIntervalProperty, self).set_value(obj=obj, val=val)
+        obj._signal_launcher.timer_autolock.setInterval(val*1000.0)
+
+
+class StateSelectProperty(SelectProperty):
+    def set_value(self, obj, val):
+        super(StateSelectProperty, self).set_value(obj, val)
+        obj._signal_launcher.state_changed.emit()
+
 
 class SignalLauncherLockbox(SignalLauncher):
     """
@@ -95,23 +119,6 @@ class SignalLauncherLockbox(SignalLauncher):
     # state is now a standard Property, signals are caught by the update_attribute_by_name function of the widget.
 
 
-class AutoLockProperty(BoolProperty):
-    """ true if autolock is enabled"""
-    def set_value(self, obj, val):
-        super(AutoLockProperty, self).set_value(obj=obj, val=val)
-        if val:
-            obj._signal_launcher.timer_autolock.start()
-        else:
-            obj._signal_launcher.timer_autolock.stop()
-
-
-class AutoLockIntervalProperty(FloatProperty):
-    """ timeout for autolock timer """
-    def set_value(self, obj, val):
-        super(AutoLockIntervalProperty, self).set_value(obj=obj, val=val)
-        obj._signal_launcher.timer_autolock.setInterval(val*1000.0)
-
-
 class Lockbox(LockboxModule):
     """
     A Module that allows to perform feedback on systems that are well described by a physical model.
@@ -141,13 +148,24 @@ class Lockbox(LockboxModule):
     auto_lock = AutoLockProperty()
 
     # logical inputs and outputs of the lockbox are accessible as lockbox.outputs.output1
-    inputs = LockboxModuleContainerProperty(input_from_output=InputFromOutput)
-    outputs = LockboxModuleContainerProperty(output1=OutputSignal,
+    inputs = LockboxModuleDictProperty(input_from_output=InputFromOutput)
+    outputs = LockboxModuleDictProperty(output1=OutputSignal,
                                              output2=OutputSignal)
 
     # Sequence is a list of stage modules. By default the first stage is created
     sequence = ModuleListProperty(Stage, default=[{}])
     sequence._widget_class = LockboxSequenceWidget
+
+    # current state of the lockbox
+    state = StateSelectProperty(options=(lambda inst: ['unlock', 'sweep'] + range(len(inst.sequence))),
+                                default='unlock')
+
+    @property
+    def stage(self):
+        if isinstance(self.state, int):
+            return self.sequence[self.state]
+        else:
+            return self.state
 
     @property
     def signals(self):
@@ -202,21 +220,19 @@ class Lockbox(LockboxModule):
         """
         Goes to the stage immediately after the current one
         """
-        if self.state=='sweep' or self.state=='unlock':
-            index = 0
-        else:
-            index = self._stage_names.index(self.state) + 1
-        stage = self._stage_names[index]
-        self.goto(stage)
-        self._signal_launcher.timer_lock.setInterval(self._get_stage(stage).duration * 1000)
-        if index + 1 < len(self.sequence.stages):
+        if isinstance(self.stage, self.sequence.element_cls):
+            self.goto(self.stage.next)
+        else: #  self.state=='sweep' or self.state=='unlock':
+            self.goto(self.sequence[0])
+        if self.stage != self.sequence[-1]:
+            self._signal_launcher.timer_lock.setInterval((self.stage).duration * 1000)
             self._signal_launcher.timer_lock.start()
 
-    def goto(self, stage_name):
+    def goto(self, stage):
         """
         Sets up the lockbox to the stage named stage_name
         """
-        self._get_stage(stage_name).setup()
+        stage.enable()
 
     def lock(self):
         """
@@ -229,29 +245,16 @@ class Lockbox(LockboxModule):
         """ prototype for the blocking lock function """
         self._logger.warning("Function lock_blocking is currently not implemented correctly. ")
         self.lock()
-        while not self.state == self._stage_names[-1]:
+        while not self.stage == self.sequence[-1]:
             sleep(0.01)
         return self.is_locked()
 
-    @property
-    def state(self):
-        if not hasattr(self, "_state"):
-            self._state = "unlock"
-        return self._state
-
-    @state.setter
-    def state(self, val):
-        if not val in ['unlock', 'sweep'] + [stage.name for stage in self.stages]:
-            raise ValueError("State should be either unlock, or a valid stage name")
-        self._state = val
-        # To avoid explicit reference to gui here, one could consider using a DynamicSelectAttribute...
-        self._signal_launcher.state_changed.emit()
-        return val
-
     def is_locking_sequence_active(self):
-        if self.state in self._stage_names and self._stage_names.index(
-                self.state) < len(self._stage_names)-1:
+        state = self.stage
+        if isinstance(state, int) and state < len(self.sequence)-1:
             return True
+        else:
+            return False
 
     def relock(self):
         """ locks the cavity if it is_locked is false. Returns the value of
@@ -267,10 +270,10 @@ class Lockbox(LockboxModule):
         """ returns True if locked, else False. Also updates an internal
         dict that contains information about the current error signals. The
         state of lock is logged at loglevel """
-        if self.stage not in self.stages:
-            # not locked to any defined sequene state
+        if not isinstance(self.stage, int):
+            # not locked to any defined sequence state
             self._logger.log(loglevel, "Cavity is not locked: lockbox state "
-                                       "is %s.", self.state)
+                                       "is %s.", self.stage)
             return False
         # test for output saturation
         for o in self.outputs:
@@ -280,7 +283,7 @@ class Lockbox(LockboxModule):
                 return False
         # input locked to
         if not input: #input=None (default) or input=False (call by gui)
-            input = self._get_input(self._get_stage(self.state).input)
+            input = self.inputs[self.sequence[self.stage].input]
         try:
             # use input-specific is_locked if it exists
             try:
@@ -291,7 +294,7 @@ class Lockbox(LockboxModule):
         except:
             pass
         # supposed to be locked at this value
-        variable_setpoint = self._get_stage(self.state).variable_value
+        variable_setpoint = self.sequence[self.stage].setpoint
         # current values
         #actmean, actrms = self.pyrpl.rp.sampler.mean_stddev(input.input_channel)
         actmean, actrms = input.mean_rms()
@@ -352,16 +355,16 @@ class Lockbox(LockboxModule):
         lockstatus. If is_locked is called in update_lockstatus above,
         it should not be called a second time here
         """
-        if self.state == 'sweep':
+        if self.stage == 'sweep':
             return 'blue'
-        elif self.state == 'unlock':
+        elif self.stage == 'unlock':
             return 'darkRed'
         else:
             # should be locked
             if islocked is None:
                islocked = self.is_locked(loglevel=logging.DEBUG)
             if islocked:
-                if self.state == self._stage_names[-1]:
+                if self.stage == self._stage_names[-1]:
                     # locked and in last stage
                     return 'green'
                 else:
@@ -433,31 +436,3 @@ class Lockbox(LockboxModule):
             lockbox = getattr(pyrpl, name)
             return setattr(lockbox, attribute, value)
         self.__setattr__ = setattribute_forwarder
-
-    def _get_stage(self, name):
-        """
-        retieves a stage by name
-        """
-        return self.sequence.get_stage(name)
-
-    def _add_stage(self):
-        """
-        adds a stage to the lockbox sequence
-        """
-        return self.sequence.add_stage()
-
-    def _remove_stage(self, stage):
-        """
-        Removes stage from the lockbox seequence
-        """
-        self.sequence.remove_stage(stage)
-
-    def _rename_stage(self, stage, new_name):
-        self.sequence.rename_stage(stage, new_name)
-
-    def _remove_all_stages(self):
-        self.sequence.remove_all_stages()
-
-    @property
-    def _stage_names(self):
-        return self.sequence.stage_names

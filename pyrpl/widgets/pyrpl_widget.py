@@ -225,21 +225,18 @@ class PyrplWidget(QtGui.QMainWindow):
         self.timer_save_pos.start()
 
     def save_window_position(self):
-        if self.isVisible(): # Don't try to save position if window is closed (otherwise, random position is saved)
+        # Don't try to save position if window is closed (otherwise, random position is saved)
+        if self.isVisible():
+            act_state = bytes(self.saveState())
             if (not "dock_positions" in self.parent.c.pyrpl._keys()) or \
-               (self.parent.c.pyrpl["dock_positions"]!=bytes(
-                    self.saveState())):
-                self.parent.c.pyrpl["dock_positions"] = bytes(self.saveState())
-            try:
-                _ = self.parent.c.pyrpl.window_position
-            except KeyError:
-                self.parent.c.pyrpl["window_position"] = dict()
-            try:
-                if self.parent.c.pyrpl["window_position"]!=self.window_position:
-                    self.parent.c.pyrpl["window_position"] = self.window_position
-            except Exception as e:
-                self.logger.warning("Gui is not started. Cannot save position.\n"\
-                                    + str(e))
+               (self.parent.c.pyrpl["dock_positions"]!=act_state):
+                self.parent.c.pyrpl["dock_positions"] = act_state
+            act_window_pos = self.window_position
+            saved_window_pos = self.parent.c.pyrpl._get_or_create("window_position")._data
+            if saved_window_pos != act_window_pos:
+                self.parent.c.pyrpl.window_position = self.window_position
+        #else:
+        #    self.logger.debug("Gui is not started. Cannot save position.\n")
 
     def set_window_position(self):
         if "dock_positions" in self.parent.c.pyrpl._keys():
@@ -247,14 +244,13 @@ class PyrplWidget(QtGui.QMainWindow):
                 self.logger.warning("Sorry, " + \
                     "there was a problem with the restoration of Dock positions")
         try:
-            coords = self.parent.c.pyrpl["window_position"]
+            coords = self.parent.c.pyrpl["window_position"]._data
         except KeyError:
             coords = [0, 0, 800, 600]
         try:
             self.window_position = coords
-        #self._lock_window_position()
         except Exception as e:
-            self.logger.warning("Gui is not started. Cannot save position.\n"\
+            self.logger.warning("Gui is not started. Cannot set window position.\n"\
                                 + str(e))
 
     @property

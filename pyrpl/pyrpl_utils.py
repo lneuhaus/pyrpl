@@ -92,10 +92,14 @@ def sorted_dict(dict_to_sort=None, sort_by_values=True, **kwargs):
 
 
 def unique_list(nonunique_list):
+    """ Returns a list where each element of nonunique_list occurs exactly once.
+    The last occurence of an element defines its position in the returned list.
+    """
     unique_list = []
-    for attr in nonunique_list:
+    for attr in reversed(nonunique_list):
+        # remove all previous occurences
         if attr not in unique_list:
-            unique_list.append(attr)
+            unique_list.insert(0, attr)
     return unique_list
 
 

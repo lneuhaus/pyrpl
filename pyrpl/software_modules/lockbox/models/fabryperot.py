@@ -57,15 +57,15 @@ class InputAnalogPdh(InputDirect):
 class InputPdh(InputIq, InputAnalogPdh):
     def is_locked(self, loglevel=logging.INFO):
         # simply perform the is_locked with the reflection error signal
-        return self.lockbox.is_locked(self.lockbox.reflection,
+        return self.lockbox.is_locked(self.lockbox.inputs.reflection,
                                       loglevel=loglevel)
 
 
 class FabryPerot(Lockbox):
     units = ['m', 'Hz', 'nm', 'MHz']
-    _setup_attributes = ["wavelength", "finesse", "length", 'eta']
+    _setup_attributes = ["wavelength", "finesse", "length", "eta", "inputs", "sequence"]
     _gui_attributes = _setup_attributes
-    wavelength = FloatProperty(max=10000, min=0, default=1.064e-6)
+    wavelength = FloatProperty(max=1., min=0., default=1.064e-6, increment=1e-9)
     finesse = FloatProperty(max=1e7, min=0, default=10000)
     # approximate length in m (not taking into account small variations of the
     # order of the wavelength)
@@ -75,9 +75,9 @@ class FabryPerot(Lockbox):
     eta = FloatProperty(min=0., max=1., default=1.)
     variable = 'detuning'
 
-    inputs = LockboxModuleContainerProperty(transmission = FPTransmission,
-                                            reflection = FPReflection,
-                                            pdh = InputPdh)
+    inputs = LockboxModuleDictProperty(transmission = FPTransmission,
+                                       reflection = FPReflection,
+                                       pdh = InputPdh)
 
     @property
     def free_spectral_range(self):
@@ -156,7 +156,9 @@ class HighFinessePdh(HighFinesseInput, InputPdh):
 
 
 class HighFinesseFabryPerot(FabryPerot):
-    inputs = ModuleContainerProperty(LockboxModule,
+    _setup_attributes = ["inputs", "sequence"]  # this ensures that sequence is loaded at the very end (i.e. after inputs)
+
+    inputs = LockboxModuleDictProperty(LockboxModule,
                                      transmission=HighFinesseTransmission,
                                      reflection=HighFinesseReflection,
                                      pdh=HighFinessePdh)

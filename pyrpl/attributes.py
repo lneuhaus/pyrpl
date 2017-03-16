@@ -22,8 +22,8 @@ from .widgets.attribute_widgets import BoolAttributeWidget, \
                                        StringAttributeWidget, \
                                        ListComplexAttributeWidget, \
                                        FrequencyAttributeWidget, \
-                                       ListStageOutputAttributeWidget, \
-                                       ListFloatAttributeWidget
+                                       ListFloatAttributeWidget, \
+                                       BoolIgnoreAttributeWidget
 import logging
 import sys
 import numpy as np
@@ -54,7 +54,7 @@ class BaseAttribute(object):
       - a function get_value(instance, owner) that reads the value from
         wherever it is stored internally
     """
-    widget_class = None
+    _widget_class = None
     widget = None
 
     def __init__(self,
@@ -144,13 +144,13 @@ class BaseAttribute(object):
         """
         Creates a widget to graphically manipulate the attribute.
         """
-        if self.widget_class is None:
-            logger.warning("Module %s of type %s is trying to create a widget for %s, but no widget_class is defined!",
+        if self._widget_class is None:
+            logger.warning("Module %s of type %s is trying to create a widget for %s, but no _widget_class is defined!",
                            str(module), type(module), name)
             return None
         if name is None:
             name = self.name  # attributed by the metaclass of module
-        widget = self.widget_class(name, module)
+        widget = self._widget_class(name, module)
         return widget
 
 
@@ -177,7 +177,7 @@ class FloatAttribute(NumberAttribute):
     """
     An attribute for a float value.
     """
-    widget_class = FloatAttributeWidget
+    _widget_class = FloatAttributeWidget
 
     def __init__(self,
                  default=None,
@@ -206,7 +206,7 @@ class FrequencyAttribute(FloatAttribute):
     """
     An attribute for frequency values
     """
-    widget_class = FrequencyAttributeWidget
+    _widget_class = FrequencyAttributeWidget
 
     def __init__(self,
                  default=None,
@@ -235,7 +235,7 @@ class IntAttribute(NumberAttribute):
     """
     An attribute for integer values
     """
-    widget_class = IntAttributeWidget
+    _widget_class = IntAttributeWidget
 
     def __init__(self,
                  default=None,
@@ -264,13 +264,34 @@ class BoolAttribute(BaseAttribute):
     """
     An attribute for booleans
     """
-    widget_class = BoolAttributeWidget
+    _widget_class = BoolAttributeWidget
 
     def validate_and_normalize(self, value, module):
         """
         Converts value to bool.
         """
         return bool(value)
+
+
+class BoolIgnoreAttribute(BaseAttribute):
+    """
+    An attribute for booleans
+    """
+    _widget_class = BoolIgnoreAttributeWidget
+
+    def validate_and_normalize(self, value, module):
+        """
+        Converts value to bool.
+        """
+        if isinstance(value, basestring):
+            if value.lower() == 'true':
+                return True
+            elif value.lower() == 'false':
+                return False
+            else:
+                return 'ignore'
+        else:
+            return bool(value)
 
 
 class SelectAttribute(BaseAttribute):
@@ -280,7 +301,7 @@ class SelectAttribute(BaseAttribute):
     If options are numbers (int or float), rounding to the closest value is performed during the validation
     If options are strings, validation is strict.
     """
-    widget_class = SelectAttributeWidget
+    _widget_class = SelectAttributeWidget
 
     def __init__(self,
                  options=[],
@@ -351,7 +372,7 @@ class SelectAttribute(BaseAttribute):
         options = sorted(self.options(module))
         if len(options) == 0 and value is None:
             return None
-        if isinstance(options[0], basestring):
+        if isinstance(options[0], basestring) and isinstance(options[-1], basestring):
             if hasattr(value, 'name'):
                 value = str(value.name)
             else:
@@ -360,22 +381,26 @@ class SelectAttribute(BaseAttribute):
                 msg = "Value %s is not an option for SelectAttribute {%s} of %s"\
                       % (value, self.name, module.name)
                 if self.ignore_errors:
-                    value = options[0]
-                    logger.warning(msg+". Picking an arbitrary value %s instead."
-                                   % str(value))
+                    logger.warning(msg + ". Selecting value 'None' instead.")
+                    value = None
+                    #logger.warning(msg + ". Picking an arbitrary value %s instead."
+                    #               % str(value))
+                    #value = options[0]
                 else:
                     raise ValueError(msg)
             return value
-        elif isinstance(options[0], numbers.Number):
+        elif isinstance(options[0], numbers.Number) and isinstance(options[-1], numbers.Number):
             value = float(value)
             return min([opt for opt in options], key=lambda x: abs(x - value))
+        else:
+            return super(SelectAttribute, self).validate_and_normalize(value, module)
 
 
 class StringAttribute(BaseAttribute):
     """
     An attribute for string (in practice, there is no StringRegister at this stage).
     """
-    widget_class = StringAttributeWidget
+    _widget_class = StringAttributeWidget
 
     def validate_and_normalize(self, value, module):
         """
@@ -422,7 +447,7 @@ class FilterAttribute(BaseAttribute):
     The number of elements in the list are also defined at runtime.
     """
 
-    widget_class = FilterAttributeWidget
+    _widget_class = FilterAttributeWidget
 
     def validate_and_normalize(self, value, module):
         """
@@ -437,7 +462,7 @@ class ListFloatAttribute(BaseAttribute):
     """
     An arbitrary length list of float numbers.
     """
-    widget_class = ListFloatAttributeWidget
+    _widget_class = ListFloatAttributeWidget
 
     def validate_and_normalize(self, value, module):
         """
@@ -453,7 +478,7 @@ class ListComplexAttribute(BaseAttribute):
     An arbitrary length list of complex numbers.
     """
 
-    widget_class = ListComplexAttributeWidget
+    _widget_class = ListComplexAttributeWidget
 
     def validate_and_normalize(self, value, module):
         """
@@ -462,27 +487,6 @@ class ListComplexAttribute(BaseAttribute):
         if not np.iterable(value):
             value = [value]
         return [complex(val) for val in value]
-
-
-class ListStageOutputAttribute(BaseAttribute):
-    """
-    A list of str->bool mappings (used to map outputs on/off for each stage of a lockbox). Assignation can also be
-    done via lnba['my_piezo'] = True
-    """
-    widget_class = ListStageOutputAttributeWidget
-
-    def validate_and_normalize(self, value, module):
-        if not isinstance(value, dict):
-            raise ValueError("value %s for attribute %s is not a valid dictionary"%(value, self.name))
-        for key, (is_on, is_start_offset, start_offset) in value.items():
-            if not isinstance(is_on, bool):
-                raise ValueError("Value %s is not possible for output %s on/off property (stage %s)"%(is_on, key, self.name))
-            if not isinstance(is_start_offset, bool):
-                raise ValueError("value %s is not possible for output %s "
-                                 "offset_enable (stage %s)"%(is_start_offset, key, self.name))
-            if not isinstance(start_offset, numbers.Number):
-                raise ValueError("value %s is not possible for output %s offset (stage %s)"%(start_offset, key, self.name))
-        return value
 
 
 class ModuleAttribute(BaseAttribute):
@@ -863,7 +867,7 @@ class FilterRegister(BaseRegister, FilterAttribute):
     """
     Interface for up to 4 low-/highpass filters in series (filter_block.v)
     """
-    widget_class = FilterAttributeWidget
+    _widget_class = FilterAttributeWidget
 
     def __init__(self, address, filterstages, shiftbits, minbw, **kwargs):
         super(FilterRegister, self).__init__(address=address, **kwargs)
@@ -872,14 +876,21 @@ class FilterRegister(BaseRegister, FilterAttribute):
         self.shiftbits = shiftbits
         self.minbw = minbw
 
+    def read_and_save(self, obj, attr_name):
+        # save the value upon first execution in order to only read this once
+        var_name = self.name + "_" + attr_name
+        if not hasattr(obj, var_name):
+            setattr(obj, var_name, obj._read(getattr(self, attr_name)))
+        return getattr(obj, var_name)
+
     def _FILTERSTAGES(self, obj):
-        return obj._read(self.filterstages)
+        return self.read_and_save(obj, "filterstages")
 
     def _SHIFTBITS(self, obj):
-        return obj._read(self.shiftbits)
+        return self.read_and_save(obj, "shiftbits")
 
     def _MINBW(self, obj):
-        return obj._read(self.minbw)
+        return self.read_and_save(obj, "minbw")
 
     def _ALPHABITS(self, obj):
         return int(np.ceil(np.log2(125000000 / self._MINBW(obj))))
@@ -1097,6 +1108,12 @@ class BoolProperty(BoolAttribute, BaseProperty):
     """
     default = False
 
+class BoolIgnoreProperty(BoolIgnoreAttribute, BaseProperty):
+    """
+    A property for a boolean value
+    """
+    default = False
+
 
 class FilterProperty(FilterAttribute, BaseProperty):
     """
@@ -1127,11 +1144,4 @@ class ListComplexProperty(ListComplexAttribute, BaseProperty):
     A property for a list of complex values
     """
     default = [0.]
-
-
-class ListStageOuputProperty(ListStageOutputAttribute, BaseProperty):
-    """
-    A property for a list named bool value (dict with str-bool mapping)
-    """
-    default = {}
 

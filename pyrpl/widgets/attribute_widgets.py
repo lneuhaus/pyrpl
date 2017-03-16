@@ -7,6 +7,8 @@ from pyqtgraph.Qt import QtGui, QtCore
 import numpy as np
 import time
 import functools
+from ..pyrpl_utils import Bijection
+
 
 import sys
 if sys.version_info < (3,):
@@ -306,6 +308,8 @@ class MyDoubleSpinBox(MyNumberSpinBox):
                  log_increment=False, halflife_seconds=2.0, decimals=4):
         self.decimals = decimals
         super(MyDoubleSpinBox, self).__init__(label, min, max, increment, log_increment, halflife_seconds)
+        width_in_characters = 6 + self.decimals
+        self.setFixedWidth(width_in_characters*10)
 
     @property
     def val(self):
@@ -317,7 +321,10 @@ class MyDoubleSpinBox(MyNumberSpinBox):
     @val.setter
     def val(self, new_val):
         self._val = new_val # in case the line is not updated immediately
-        self.line.setText(("%."+str(self.decimals) + "f")%new_val)
+        # former non-scientific notation
+        #self.line.setText(("%."+str(self.decimals) + "f")%new_val)
+        # currently: scientific notation
+        self.line.setText( ('{:.'+str(self.decimals)+'e}').format(new_val) )
         self.value_changed.emit()
         return new_val
 
@@ -394,7 +401,6 @@ class BaseAttributeWidget(QtGui.QWidget):
         self.layout_h = QtGui.QHBoxLayout()
         self.layout_h.addWidget(self.label)
         self.layout_h.addWidget(self.widget)
-
         self.layout_v.addLayout(self.layout_h)
 
     def editing(self):
@@ -402,7 +408,6 @@ class BaseAttributeWidget(QtGui.QWidget):
         User is editing the property graphically don't mess up with him
         :return:
         """
-
         return False
 
     #def emit_widget_value_changed(self):
@@ -442,7 +447,6 @@ class StringAttributeWidget(BaseAttributeWidget):
     """
     Property for string values.
     """
-
     def set_widget(self):
         """
         Sets up the widget (here a QSpinBox)
@@ -478,7 +482,6 @@ class NumberAttributeWidget(BaseAttributeWidget):
     """
     Base property for float and int.
     """
-
     def write(self):
         setattr(self.module, self.name, self.widget.value())
         self.value_changed.emit()
@@ -514,13 +517,11 @@ class IntAttributeWidget(NumberAttributeWidget):
     """
     Property for integer values.
     """
-
     def set_widget(self):
         """
         Sets up the widget (here a QSpinBox)
         :return:
         """
-
         self.widget = MyIntSpinBox(None)#QtGui.QSpinBox()
         # self.widget.setMaximumWidth(200)
         self.widget.value_changed.connect(self.write)
@@ -531,7 +532,6 @@ class IntAttributeWidget(NumberAttributeWidget):
 
         :return: int
         """
-
         return int(getattr(self.module, self.name))
 
 
@@ -539,13 +539,11 @@ class FloatAttributeWidget(NumberAttributeWidget):
     """
     Property for float values
     """
-
     def set_widget(self):
         """
         Sets up the widget (here a QDoubleSpinBox)
         :return:
         """
-
         self.widget = MyDoubleSpinBox(None)#QtGui.QDoubleSpinBox()
         self.widget.value_changed.connect(self.write)
 
@@ -555,8 +553,8 @@ class FloatAttributeWidget(NumberAttributeWidget):
 
         :return: float
         """
-
         return float(getattr(self.module, self.name))
+
 
 class MyComplexSpinBox(QtGui.QFrame):
     """
@@ -1110,149 +1108,6 @@ class SelectAttributeWidget(BaseAttributeWidget):
         self.widget.blockSignals(False)
 
 
-class MyListStageOutputAttributeWidget(QtGui.QWidget):
-    value_changed = QtCore.pyqtSignal()
-    def __init__(self, parent=None):
-        super(MyListStageOutputAttributeWidget, self).__init__(parent)
-        self.layout = QtGui.QHBoxLayout(self)
-        self.layout1 = QtGui.QVBoxLayout()
-        self.layout2 = QtGui.QVBoxLayout()
-        self.layout3 = QtGui.QVBoxLayout()
-        self.layout.addLayout(self.layout1)
-        self.layout.addLayout(self.layout2)
-        self.layout.addLayout(self.layout3)
-
-        self.output_on = []
-        self.offset_enabled = []
-        self.offset = []
-
-    def set_dict(self, dic):
-        self.remove_lines()
-        index = 0
-        for key, val in dic.items():
-            if index < len(self.output_on):
-                self.set_line_name_value(index, key, val)
-                index += 1
-            else:
-                self.add_line(key, val)
-                index +=1
-        while(True):
-            try:
-                self.remove_line(index)
-            except IndexError:
-                break
-
-    def get_dict(self):
-        dic = dict()
-        for on, offset_enabled, offset in zip(self.output_on, self.offset_enabled, self.offset):
-            dic[str(on.text())] = (on.checkState()==2, offset_enabled.checkState()==2, offset.val)
-        return dic
-
-    def add_line(self, name, val):
-        (is_on, offset_enabled, offset) = val
-
-        on = QtGui.QCheckBox(name, self)
-        self.output_on.append(on)
-        on.setChecked(is_on)
-        on.stateChanged.connect(self.value_changed)
-        self.layout1.addWidget(on)
-
-        oe = QtGui.QCheckBox(self)
-        oe.setChecked(offset_enabled)
-        oe.stateChanged.connect(self.value_changed)
-        self.layout2.addWidget(oe)
-        self.offset_enabled.append(oe)
-
-        offs = MyDoubleSpinBox("")
-        offs.val = offset
-        offs.value_changed.connect(self.value_changed)
-        self.layout3.addWidget(offs)
-        self.offset.append(offs)
-
-    def set_line_name_value(self, index, name, val):
-        (is_on, offset_enabled, offset) = val
-        self.output_on[index].setText(name)
-        self.output_on[index].setChecked(is_on)
-        self.offset_enabled_on[index].setChecked(offset_enabled)
-        self.offset[index].val = offset
-
-    def get_line_value(self, index):
-        on = self.output_on[index].chekState()==2
-        offset_enabled = self.offset_enabled[index].checkState()==2
-        offset = self.offset[index].val
-        return (on, offset_enabled, offset)
-
-    def remove_line(self, index):
-        output_on = self.output_on.pop(index)
-        offset_on = self.offset_enabled.pop(index)
-        offset = self.offset.pop(index)
-        output_on.deleteLater()
-        offset_on.deleteLater()
-        offset.deleteLater()
-
-    def remove_lines(self):
-        while True:
-            try:
-                self.remove_line(0)
-            except IndexError:
-                break
-
-class ListStageOutputAttributeWidget(BaseAttributeWidget):
-    def set_widget(self):
-        """
-        Sets up the widget (here a MyListStageOutputAttributeWidget)
-        """
-        self.layout_v.setSpacing(0)
-        self.widget = MyListStageOutputAttributeWidget()
-        self.widget.value_changed.connect(self.write)
-        self.layout_col_names = QtGui.QHBoxLayout()
-        self.layout_v.insertLayout(0, self.layout_col_names)
-        self.layout_v.removeWidget(self.label)
-        self.label.deleteLater()
-        self.label_on = QtGui.QLabel("output_on")
-        self.layout_col_names.addWidget(self.label_on)
-        self.label_offset = QtGui.QLabel("start_offset")
-        self.layout_col_names.addWidget(self.label_offset)
-
-    def write(self):
-        """
-        Sets the module property value from the current gui value
-        """
-        setattr(self.module, self.name, self.widget.get_dict())
-        #if self.acquisition_property:
-        self.value_changed.emit()
-
-    def _update(self, new_value):
-        """
-        Sets the gui value from the current module value
-        """
-        self.widget.set_dict(new_value)
-
-#class DynamicSelectAttributeWidget(SelectAttributeWidget):
-#    """
-#    Multiple choice property, with optiosn evaluated at run-time:
-#    the options in the combobox have to be filled upon click.
-#    """
-#    def __init__(self, name, module):
-#        BaseAttributeWidget.__init__(self, name, module) # don' t do the SelectAttributeWidget initialization.
-#
-#    def set_widget(self):
-#        """
-#        Sets up the widget (here a QComboBox).
-#        """
-#        self.widget = QtGui.QComboBox()
-#        self.widget.currentIndexChanged.connect(self.write)
-#
-#    @property
-#    def options(self):
-#        """
-#        All possible options.
-#        """
-#        return getattr(self.module.__class__, self.name).options(self.module)
-#
-#    def
-
-
 class PhaseAttributeWidget(FloatAttributeWidget):
     pass
 
@@ -1298,3 +1153,39 @@ class BoolAttributeWidget(BaseAttributeWidget):
         """
 
         self.widget.setCheckState(new_value * 2)
+
+
+class BoolIgnoreAttributeWidget(BoolAttributeWidget):
+    """
+    Boolean property with additional option 'ignore' that is shown
+    as a grey check in GUI
+    """
+    _gui_to_attribute_mapping = Bijection({0: False,
+                                           1: 'ignore',
+                                           2: True})
+
+    def set_widget(self):
+        """
+        Sets the widget (here a QCheckbox)
+        :return:
+        """
+        self.widget = QtGui.QCheckBox()
+        self.widget.setTristate(True)
+        self.widget.stateChanged.connect(self.write)
+        self.setToolTip("Checked:\t    on\nUnchecked: off\nGrey:\t    ignore")
+
+    def write(self):
+        """
+        Sets the module value from the current gui value
+        :return:
+        """
+        setattr(self.module, self.name, self._gui_to_attribute_mapping[self.widget.checkState()])
+        if self.acquisition_property:
+            self.value_changed.emit()
+
+    def _update(self, new_value):
+        """
+        Sets the gui value from the current module value
+        :return:
+        """
+        self.widget.setCheckState(self._gui_to_attribute_mapping.inverse[new_value])
