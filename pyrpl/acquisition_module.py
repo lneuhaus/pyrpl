@@ -135,6 +135,7 @@ class RunFuture(PyrplFuture):
         self._min_delay_ms = min_delay_ms
         super(RunFuture, self).__init__()
         self.data_avg = None
+        self.data_x = copy(self._module.data_x) #  in case it is saved latter
         self._fut = None
         self.current_avg = 0
         self._paused = True

@@ -141,7 +141,7 @@ class SpectrumAnalyzer(AcquisitionModule):
         """,
         callback=True)
     center = CenterAttribute(callback=True)
-    points = LongProperty(callback=True)
+    points = LongProperty(default=16384, callback=True)
     window = SelectProperty(options=windows, callback=True)
     input = SelectProperty(options=inputs, callback=True)
     acbandwidth = SpecAnAcBandwidth(callback=True)
@@ -150,14 +150,15 @@ class SpectrumAnalyzer(AcquisitionModule):
 
     # functions
     def _init_module(self):
-        super(SpectrumAnalyzer, self)._init_module()
-        self.rp = self.pyrpl.rp
         self.acbandwidth = 0
         self.baseband = False
         self.center = 0
         self.window = "flattop"
         self.points = Scope.data_length
         self._is_setup = False
+        super(SpectrumAnalyzer, self)._init_module()
+        self.rp = self.pyrpl.rp
+
 
     @property
     def iq(self):

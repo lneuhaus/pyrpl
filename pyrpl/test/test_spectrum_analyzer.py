@@ -13,7 +13,7 @@ class TestClass(TestPyrpl):
         """
         This was so hard to detect, I am making a unit test
         """
-        assert(self.pyrpl.spectrumanalyzer.run.running_state=='stopped')
+        assert(self.pyrpl.spectrumanalyzer.running_state=='stopped')
 
     def test_spec_an(self):
         # at this point this test is still highly dubious (nothing is tested
@@ -43,8 +43,8 @@ class TestClass(TestPyrpl):
         self.pyrpl.spectrumanalyzer.setup_attributes = dict(center=2e5,
                                            span=1e5,
                                            input="out1",
-                                           run=dict(running_state=
-                                                    'running_continuous'))
+                                           unning_state=
+                                                    'running_continuous')
         for i in range(25):
             sleep(0.01)
             APP.processEvents()
@@ -53,5 +53,5 @@ class TestClass(TestPyrpl):
             sleep(0.01)
             APP.processEvents()
         new = self.pyrpl.c._save_counter
-        self.pyrpl.spectrumanalyzer.run.stop()
+        self.pyrpl.spectrumanalyzer.stop()
         assert (old == new), (old, new)
