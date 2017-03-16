@@ -61,13 +61,13 @@ class BaseAttribute(object):
                  default=None,
                  doc="",
                  ignore_errors=False,
-                 callback=False):
+                 call_setup=False):
         """
         default: if provided, the value is initialized to it
         """
         if default is not None:
             self.default = default
-        self.callback = callback
+        self.call_setup = call_setup
         self.ignore_errors = ignore_errors
         self.__doc__ = doc
 
@@ -103,7 +103,7 @@ class BaseAttribute(object):
         if module._autosave_active:  # (for module, when module is slaved, don't save attributes)
             if self.name in module._setup_attributes:
                     self.save_attribute(module, value)
-        if self.callback: # _setup should be triggered...
+        if self.call_setup: # _setup should be triggered...
             if not module._setup_ongoing: # unless a bunch of attributes are
                 # being changed together.
                 module.setup()
@@ -186,11 +186,11 @@ class FloatAttribute(NumberAttribute):
                  max=1.,
                  doc="",
                  ignore_errors=False,
-                 callback=False):
+                 call_setup=False):
         super(FloatAttribute, self).__init__(default=default,
                                              doc=doc,
                                              ignore_errors=ignore_errors,
-                                             callback=callback)
+                                             call_setup=call_setup)
         self.increment = increment
         self.min = min
         self.max = max
@@ -215,11 +215,11 @@ class FrequencyAttribute(FloatAttribute):
                  max=1e100,
                  doc="",
                  ignore_errors=False,
-                 callback=False):
+                 call_setup=False):
         super(FloatAttribute, self).__init__(default=default,
                                              doc=doc,
                                              ignore_errors=ignore_errors,
-                                             callback=callback)
+                                             call_setup=call_setup)
         self.increment = increment
         self.min = min
         self.max = max
@@ -244,11 +244,11 @@ class IntAttribute(NumberAttribute):
                  increment=1,
                  doc="",
                  ignore_errors=False,
-                 callback=False):
+                 call_setup=False):
         super(IntAttribute, self).__init__(default=default,
                                            doc=doc,
                                            ignore_errors=ignore_errors,
-                                           callback=callback)
+                                           call_setup=call_setup)
         self.min = min
         self.max = max
         self.increment = increment
@@ -308,7 +308,7 @@ class SelectAttribute(BaseAttribute):
                  default=None,
                  doc="",
                  ignore_errors=False,
-                 callback=False):
+                 call_setup=False):
         """
         Options can be specified at attribute creation, but it can also be updated later on a per-module basis using
         change_options(new_options)
@@ -316,7 +316,7 @@ class SelectAttribute(BaseAttribute):
         super(SelectAttribute, self).__init__(default=default,
                                               doc=doc,
                                               ignore_errors=ignore_errors,
-                                              callback=callback)
+                                              call_setup=call_setup)
         self._starting_options = options
 
     def options(self, instance):
@@ -424,13 +424,13 @@ class PhaseAttribute(FloatAttribute):
                  max=360.,
                  doc="",
                  ignore_errors=False,
-                 callback=False):
+                 call_setup=False):
         super(PhaseAttribute, self).__init__(increment=increment,
                                              min=min,
                                              max=max,
                                              doc=doc,
                                              ignore_errors=ignore_errors,
-                                             callback=callback)
+                                             call_setup=call_setup)
 
     def validate_and_normalize(self, value, module):
         """
@@ -506,12 +506,12 @@ class ModuleAttribute(BaseAttribute):
                  default=None,
                  doc="",
                  ignore_errors=False,
-                 callback=False):
+                 call_setup=False):
         self.module_cls = module_cls
         super(ModuleAttribute, self).__init__(default=default,
                                               doc=doc,
                                               ignore_errors=ignore_errors,
-                                              callback=callback)
+                                              call_setup=call_setup)
 
 
 # docstring does not work yet, see:
@@ -579,10 +579,10 @@ class IntRegister(NumberRegister, IntAttribute):
     """
     Register for integer values encoded on less than 32 bits.
     """
-    def __init__(self, address, bits=32, callback=False, **kwargs):
+    def __init__(self, address, bits=32, call_setup=False, **kwargs):
         super(IntRegister, self).__init__(address=address, **kwargs)
         IntAttribute.__init__(self, min=0, max=2 ** bits, increment=1,
-                              callback=callback)
+                              call_setup=call_setup)
         self.bits = bits
         self.size = int(np.ceil(float(self.bits) / 32))
 
@@ -633,9 +633,9 @@ class BoolRegister(BaseRegister, BoolAttribute):
     """Inteface for boolean values, 1: True, 0: False.
     invert=True inverts the mapping"""
 
-    def __init__(self, address, bit=0, invert=False, callback=False, **kwargs):
+    def __init__(self, address, bit=0, invert=False, call_setup=False, **kwargs):
         super(BoolRegister, self).__init__(address=address, **kwargs)
-        BoolAttribute.__init__(self, callback=callback)
+        BoolAttribute.__init__(self, call_setup=call_setup)
         self.bit = bit
         assert type(invert) == bool
         self.invert = invert
@@ -701,13 +701,13 @@ class SelectRegister(BaseRegister, SelectAttribute):
     def __init__(self, address,
                  options={},
                  doc="",
-                 callback=False,
+                 call_setup=False,
                  **kwargs):
         super(SelectRegister, self).__init__(
             address=address,
             doc=doc + "\r\nOptions:\r\n" + str(options),
             **kwargs)
-        SelectAttribute.__init__(self, options, callback=callback)
+        SelectAttribute.__init__(self, options, call_setup=call_setup)
         self._options = Bijection(options)
 
     def to_python(self, value, obj):
@@ -1091,14 +1091,14 @@ class LongProperty(IntAttribute, BaseProperty):
                  default=0,
                  doc="",
                  ignore_errors=False,
-                 callback=False):
+                 call_setup=False):
         super(LongProperty, self).__init__(min=min,
                                            max=max,
                                            increment=increment,
                                            default=default,
                                            doc=doc,
                                            ignore_errors=ignore_errors,
-                                           callback=callback)
+                                           call_setup=call_setup)
     default = 0
 
 

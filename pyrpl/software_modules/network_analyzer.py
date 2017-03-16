@@ -278,22 +278,22 @@ class NetworkAnalyzer(AcquisitionModule):
                        "infer_open_loop_tf"]
     _setup_attributes = _gui_attributes + ['running_state']
     # _callback_attributes = _gui_attributes
-    input = SelectProperty(DspModule.inputs, callback=True)
-    output_direct = SelectProperty(DspModule.output_directs, callback=True)
-    start_freq = FrequencyProperty(callback=True)
-    stop_freq = FrequencyProperty(callback=True)
-    rbw = RbwAttribute(default=1000, callback=True)
-    avg_per_point = LongProperty(min=1, default=1, callback=True)
+    input = SelectProperty(DspModule.inputs, call_setup=True)
+    output_direct = SelectProperty(DspModule.output_directs, call_setup=True)
+    start_freq = FrequencyProperty(call_setup=True)
+    stop_freq = FrequencyProperty(call_setup=True)
+    rbw = RbwAttribute(default=1000, call_setup=True)
+    avg_per_point = LongProperty(min=1, default=1, call_setup=True)
     amplitude = FloatProperty(min=0,
                               max=1,
                               increment=1. / 2 ** 14,
-                              callback=True)
-    points = LongProperty(min=1, max=1e8, default=1001, callback=True)
-    logscale = LogScaleProperty(callback=True)
+                              call_setup=True)
+    points = LongProperty(min=1, max=1e8, default=1001, call_setup=True)
+    logscale = LogScaleProperty(call_setup=True)
     infer_open_loop_tf = BoolProperty()
     acbandwidth = NaAcBandwidth(
         doc="Bandwidth of the input high-pass filter of the na.",
-        callback=True)
+        call_setup=True)
 
     def _init_module(self):
         # to remove once order is fixed
