@@ -212,10 +212,14 @@ class Lockbox(LockboxModule):
                                         ['unlock', 'sweep'] + list(range(len(inst.sequence)))),
                                         default='unlock')
 
+    final_stage = None
+
     @property
     def current_stage(self):
         if isinstance(self.current_state, int):
             return self.sequence[self.current_state]
+        elif self.current_state == 'final_lock_stage':
+            return self.final_stage
         else:
             return self.current_state
 
@@ -340,7 +344,7 @@ class Lockbox(LockboxModule):
         """ returns True if locked, else False. Also updates an internal
         dict that contains information about the current error signals. The
         state of lock is logged at loglevel """
-        if not self.current_stage in self.sequence:
+        if not self.current_stage in (self.sequence+[self.final_stage]):
             # not locked to any defined sequence state
             self._logger.log(loglevel, "Cavity is not locked: lockbox state "
                                        "is %s.", self.current_stage)
@@ -353,7 +357,7 @@ class Lockbox(LockboxModule):
                 return False
         # input locked to
         if input is None: #input=None (default) or input=False (call by gui)
-            input = self.inputs[self.sequence[self.current_stage].input]
+            input = self.inputs[self.current_stage.input]
         try:
             # use input-specific is_locked if it exists
             try:
@@ -364,20 +368,16 @@ class Lockbox(LockboxModule):
         except:
             pass
         # supposed to be locked at this value
-        variable_setpoint = self.sequence[self.current_stage].setpoint
+        setpoint = self.current_stage.setpoint
         # current values
         #actmean, actrms = self.pyrpl.rp.sampler.mean_stddev(input.input_channel)
-        actmean, actrms = input.mean_rms()
-        # setpoints
-        setmean = input.expected_signal(variable_setpoint)
-        setslope = input.expected_slope(variable_setpoint)
-
+        actmean, actrms = input.mean, input.rms
         # get max, min of acceptable error signals
         error_threshold = self.error_threshold
-        min = input.expected_signal(variable_setpoint-error_threshold)
-        max = input.expected_signal(variable_setpoint+error_threshold)
-        startslope = input.expected_slope(variable_setpoint - error_threshold)
-        stopslope = input.expected_slope(variable_setpoint + error_threshold)
+        min = input.expected_signal(setpoint-error_threshold)
+        max = input.expected_signal(setpoint+error_threshold)
+        startslope = input.expected_slope(setpoint - error_threshold)
+        stopslope = input.expected_slope(setpoint + error_threshold)
         # no guarantee that min<max
         if max<min:
             # swap them in this case
@@ -392,20 +392,29 @@ class Lockbox(LockboxModule):
                 min = -1e100
         if actmean > max or actmean < min:
             self._logger.log(loglevel,
-                             "Cavity is not locked: %s value "
-                             "%.2f +- %.2f not in [%.2f, %.2f] "
-                             "(setpoint %.2f).",
-                             input.name, actmean, actrms, min, max, variable_setpoint)
+                             "Cavity is not locked at stage %s: "
+                             "input %s value of %.2f +- %.2f (setpoint %.2f)"
+                             "is not in error interval [%.2f, %.2f].",
+                             self.current_stage.name,
+                             input.name,
+                             actmean,
+                             actrms,
+                             input.expected_signal(setpoint),
+                             min,
+                             max)
             return False
         # lock seems ok
         self._logger.log(loglevel,
-                         "Cavity is locked: %s value "
-                         "%.2f +- %.2f (setpoint %.2f).",
-                         input.name, actmean, actrms, variable_setpoint)
+                         "Cavity is locked at stage %s: "
+                         "input %s value is %.2f +- %.2f (setpoint %.2f).",
+                         self.current_stage.name,
+                         input.name,
+                         actmean,
+                         actrms,
+                         input.expected_signal(setpoint))
         return True
 
     def _lockstatus(self):
-        return
         """ this function is a placeholder for periodic lockstatus
         diagnostics, such as calls to is_locked, logging means and rms
         values and plotting measured setpoints etc."""
@@ -425,16 +434,16 @@ class Lockbox(LockboxModule):
         lockstatus. If is_locked is called in update_lockstatus above,
         it should not be called a second time here
         """
-        if self.current_stage == 'sweep':
+        if self.current_state == 'sweep':
             return 'blue'
-        elif self.current_stage == 'unlock':
+        elif self.current_state == 'unlock':
             return 'darkRed'
         else:
             # should be locked
             if islocked is None:
                islocked = self.is_locked(loglevel=logging.DEBUG)
             if islocked:
-                if self.current_stage == self._stage_names[-1]:
+                if self.current_state == 'final_lock_stage':
                     # locked and in last stage
                     return 'green'
                 else:
