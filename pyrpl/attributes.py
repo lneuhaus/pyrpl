@@ -320,9 +320,19 @@ class SelectAttribute(BaseAttribute):
         self._starting_options = options
         if not hasattr(self, 'default'):
             try:
-                self.default = self._starting_options[0]
+                if callable(options):
+                    try:
+                        self.default = options(None)[0]
+                    except:
+                        self.default = options()[0]
+                else:
+                    self.default = self._starting_options[0]
             except:
-                self.default = None
+                #self.default = None
+                logger.warning("Default of SelectAttribute with docstring %s "
+                               "has been set to None due to lack of other "
+                               "options. ",
+                               self.__doc__)
 
 
     def options(self, instance):
@@ -698,28 +708,6 @@ class IORegister(BoolRegister):
         return super(IORegister, self).set_value(obj, val)
 
 
-class SelectRegister(BaseRegister, SelectAttribute):
-    """Implements a selection, such as for multiplexers"""
-
-    def __init__(self, address,
-                 options={},
-                 doc="",
-                 call_setup=False,
-                 **kwargs):
-        super(SelectRegister, self).__init__(
-            address=address,
-            doc=doc + "\r\nOptions:\r\n" + str(options),
-            **kwargs)
-        SelectAttribute.__init__(self, options, call_setup=call_setup)
-        self._options = Bijection(options)
-
-    def to_python(self, value, obj):
-        return self._options.inverse[value]
-
-    def from_python(self, value, obj):
-        return self._options[value]
-
-
 class FloatRegister(BaseRegister, FloatAttribute):
     """Implements a fixed point register, seen like a (signed) float from python"""
 
@@ -864,6 +852,28 @@ class FrequencyRegister(FloatRegister, FrequencyAttribute):
         return FrequencyAttribute.validate_and_normalize(self,
                                                          FloatRegister.validate_and_normalize(self, value, module),
                                                          module)
+
+
+class SelectRegister(BaseRegister, SelectAttribute):
+    """Implements a selection, such as for multiplexers"""
+
+    def __init__(self, address,
+                 options={},
+                 doc="",
+                 call_setup=False,
+                 **kwargs):
+        super(SelectRegister, self).__init__(
+            address=address,
+            doc=doc + "\r\nOptions:\r\n" + str(options),
+            **kwargs)
+        SelectAttribute.__init__(self, options, call_setup=call_setup)
+        self._options = Bijection(options)
+
+    def to_python(self, value, obj):
+        return self._options.inverse[value]
+
+    def from_python(self, value, obj):
+        return self._options[value]
 
 
 class FilterRegister(BaseRegister, FilterAttribute):
@@ -1025,21 +1035,18 @@ class SelectProperty(SelectAttribute, BaseProperty):
     A property for multiple choice values, if options are numbers, rounding will be performed,
     otherwise validator is strict.
     """
-    pass
-    # this leads to bugs, since it wrongly suggests that default setting
-    # of SelectProperties has an effect.
-    #
-    # def get_value(self, obj, obj_type):
-    #     if not hasattr(obj, '_' + self.name):
-    #         # choose any value in the options as default.
-    #         default = sorted(self.options(obj))
-    #         if len(default) > 0:
-    #             val = default[0]
-    #             setattr(obj, '_' + self.name, val)
-    #             return val
-    #         else:
-    #             return None
-    #     return getattr(obj, '_' + self.name)
+    def get_value(self, obj, obj_type):
+        if not hasattr(obj, '_' + self.name):
+            # choose any value in the options as default.
+            if hasattr(self, 'default'):
+                default = self.default
+            else:
+                try:
+                    default = sorted(self.options(obj))[0]
+                except IndexError:
+                    default = None
+            setattr(obj, '_' + self.name, default)
+        return getattr(obj, '_' + self.name)
 
 
 class StringProperty(StringAttribute, BaseProperty):
