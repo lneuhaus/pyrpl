@@ -144,18 +144,15 @@ class Lockbox(LockboxModule):
     _output_units = ['V', 'mV']
     # each _output_unit must come with a function that allows conversion from
     # output_unit to setpoint_unit
-    _V_per_V = 1.0
-    #_mV_per_V = 1e-3 (handled by prefix management of _unit1_per_unit2)
-
-    def _unit1_per_unit2(self, unit1, unit2, try_prefix=True):
+    def _unit1_in_unit2(self, unit1, unit2, try_prefix=True):
         """ helper function to convert unit2 to unit 1"""
         if unit1 == unit2:
             return 1.0
         try:
-            return getattr(self, '_'+unit1+'_per_'+unit2)
+            return getattr(self, '_'+unit1+'_in_'+unit2)
         except AttributeError:
             try:
-                return 1.0 / getattr(self, '_' + unit2 + '_per_' + unit1)
+                return 1.0 / getattr(self, '_' + unit2 + '_in_' + unit1)
             except AttributeError:
                 if not try_prefix:
                     raise
@@ -174,19 +171,23 @@ class Lockbox(LockboxModule):
                 for prefix1 in _unit_prefixes:
                     if unit1.startswith(prefix1) and len(unit1)>len(prefix1):
                         try:
-                            return self._unit1_per_unit2(unit1[len(prefix1):],
+                            return self._unit1_in_unit2(unit1[len(prefix1):],
                                                          unit2[len(prefix2):],
                                                          try_prefix=False)\
                                    * _unit_prefixes[prefix1]/_unit_prefixes[prefix2]
                         except AttributeError:
                             pass
-        raise AttributeError("Could not find attribute %s in Lockbox class. ",
-                             unit1+'_per_'+unit2)
+        raise AttributeError("Could not find attribute %s in Lockbox class. "
+                             %(unit1+'_per_'+unit2))
 
 
-    def _unit_per_setpoint_unit(self, unit):
+    def _unit_in_setpoint_unit(self, unit):
         # helper function to convert setpoint_unit into unit
-        return self._unit1_per_unit2(unit, self.setpoint_unit)
+        return self._unit1_in_unit2(unit, self.setpoint_unit)
+
+    def _setpoint_unit_in_unit(self, unit):
+        # helper function to convert setpoint_unit into unit
+        return self._unit1_in_unit2(self.setpoint_unit, unit)
 
     auto_lock_interval = AutoLockIntervalProperty(default=1.0, min=1e-3,
                                                   max=1e10)
@@ -256,9 +257,10 @@ class Lockbox(LockboxModule):
 
     def unlock(self, reset_offset=True):
         """
-        Disables autolock and unlocks all outputs.
+        Unlocks all outputs.
         """
-        self.auto_lock = False
+        # self.auto_lock = False  # in conflict with calls of unlock
+        # by sweep() and lock()
         self._signal_launcher.timer_lock.stop()
         for output in self.outputs:
             output.unlock(reset_offset=reset_offset)
@@ -350,7 +352,7 @@ class Lockbox(LockboxModule):
                                            "is saturated.", o.name)
                 return False
         # input locked to
-        if not input: #input=None (default) or input=False (call by gui)
+        if input is None: #input=None (default) or input=False (call by gui)
             input = self.inputs[self.sequence[self.current_stage].input]
         try:
             # use input-specific is_locked if it exists

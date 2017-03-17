@@ -17,12 +17,12 @@ logging.basicConfig()
 logger = logging.getLogger(name=__name__)
 logger.setLevel(logging.ERROR)  # only show errors until userdefine log level is set up
 
-import os.path
+import os
 
 # get user directory
 try:  # first try from environment variable
     user_dir = os.environ["PYRPL_USER_DIR"]
-except:  # otherwise, try ~/pyrpl_user_dir (where ~ is the user's home dir)
+except KeyError:  # otherwise, try ~/pyrpl_user_dir (where ~ is the user's home dir)
     user_dir = os.path.expanduser('~/pyrpl_user_dir')
 
 # make variable directories

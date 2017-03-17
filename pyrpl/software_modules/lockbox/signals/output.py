@@ -12,18 +12,6 @@ from ....curvedb import CurveDB
 from .. import LockboxModule, LockboxModuleDictProperty
 
 
-class GainProperty(FloatProperty):
-    """
-    Forwards the gain to the pid module when the lock is active. Otherwise,
-    behaves as a property.
-    """
-    def set_value(self, obj, value):
-        super(GainProperty, self).set_value(obj, value)
-        if obj.current_state == 'lock':
-            obj._setup_pid_lock(obj.current_input_lock,
-                                obj.current_variable_value)
-        obj.lockbox._signal_launcher.update_transfer_function.emit([obj])
-
 
 class AdditionalFilterAttribute(FilterAttribute):
     # proxy to the pid inputfilter attribute that emits a signal when changed
@@ -36,50 +24,6 @@ class AdditionalFilterAttribute(FilterAttribute):
     def set_value(self, obj, value):
         obj.pid.inputfilter = value
         obj.lockbox._signal_launcher.update_transfer_function.emit([obj])
-
-
-class AssistedDesignProperty(BoolProperty):
-    def set_value(self, obj, val):
-        super(AssistedDesignProperty, self).set_value(obj, val)
-        obj.assisted_gain_updated()
-        return val
-
-    #def launch_signal(self, module, new_value_list):
-    #    super(AssistedDesignProperty, self).launch_signal(module, new_value_list)
-    #    module._widget.set_assisted_design(module.assisted_design)
-
-
-class AnalogFilterProperty(FloatProperty): #ListFloatProperty):
-    def set_value(self, obj, val):
-        super(AnalogFilterProperty, self).set_value(obj, val)
-        obj.assisted_gain_updated()
-        obj.lockbox._signal_launcher.update_transfer_function.emit([obj])
-
-
-class UnityGainProperty(FrequencyProperty):
-    def set_value(self, obj, val):
-        super(UnityGainProperty, self).set_value(obj, val)
-        obj.assisted_gain_updated()
-
-
-class TfTypeProperty(SelectProperty):
-    def set_value(self, obj, val):
-        super(TfTypeProperty, self).set_value(obj, val)
-        obj.lockbox._signal_launcher.update_transfer_function.emit([obj])
-
-    #def launch_signal(self, module, new_value_list):
-        #super(TfTypeProperty, self).launch_signal(module, new_value_list)
-        #module._widget.update_transfer_function()
-        #module._widget.change_analog_tf()
-
-
-class TfCurveProperty(LongProperty):
-    def set_value(self, obj, val):
-        super(TfCurveProperty, self).set_value(obj, val)
-    #def launch_signal(self, module, new_value_list):
-    #    super(TfCurveProperty, self).launch_signal(module, new_value_list)
-    #    module._widget.update_transfer_function()
-    #    module._widget.change_analog_tf()
 
 
 class OutputSignal(Signal):
@@ -132,35 +76,30 @@ class OutputSignal(Signal):
                           options=lambda inst:
                           [u+"/V" for u in inst.lockbox._output_units],
                           call_setup=True)
-    tf_type = TfTypeProperty(["flat", "filter", "curve"], default="filter")
-    tf_curve = TfCurveProperty()
+    tf_type = SelectProperty(["flat", "filter", "curve"],
+                             default="filter",
+                             call_setup=True)
+    tf_curve = LongProperty(call_setup=True)
     # sweep properties
     sweep_amplitude = FloatProperty(default=1., min=-1, max=1, call_setup=True)
     sweep_offset = FloatProperty(default=0.0, min=-1, max=1, call_setup=True)
     sweep_frequency = FrequencyProperty(default=50.0, call_setup=True)
     sweep_waveform = SelectProperty(options=Asg1.waveforms, default='ramp', call_setup=True)
     # gain properties
-    assisted_design = AssistedDesignProperty(default=True, call_setup=True)
-    desired_unity_gain_frequency = UnityGainProperty(default=100.0, min=0, max=1e10, call_setup=True)
-    analog_filter_cutoff = AnalogFilterProperty(default=0, min=0, max=1e10, increment=0.1, call_setup=True)
-    p = GainProperty(min=-1e10, max=1e10, call_setup=True)
-    i = GainProperty(min=-1e10, max=1e10, call_setup=True)
+    assisted_design = BoolProperty(default=True, call_setup=True)
+    desired_unity_gain_frequency = FrequencyProperty(default=100.0, min=0, max=1e10, call_setup=True)
+    analog_filter_cutoff = FrequencyProperty(default=0, min=0, max=1e10, increment=0.1, call_setup=True)
+    p = FloatProperty(min=-1e10, max=1e10, call_setup=True)
+    i = FloatProperty(min=-1e10, max=1e10, call_setup=True)
     # additional filter properties
-    additional_filter = AdditionalFilterAttribute(call_setup=True)
+    additional_filter = AdditionalFilterAttribute() #call_setup=True)
     extra_module = SelectProperty(['None', 'iir', 'pid', 'iq'], call_setup=True)
     extra_module_state = SelectProperty(options=['None'], call_setup=True)
     # internal state of the output
     current_state = SelectProperty(options=['lock', 'unlock', 'sweep'], default='unlock')
 
-    def assisted_gain_updated(self):
-        if self.assisted_design:
-            filter = self.analog_filter_cutoff
-            if filter == 0:
-                self.i = self.desired_unity_gain_frequency
-                self.p = 0
-            else:
-                self.i = self.desired_unity_gain_frequency
-                self.p = self.i / filter
+    def signal(self):
+        return self.pid.name
 
     @property
     def pid(self):
@@ -222,24 +161,24 @@ class OutputSignal(Signal):
         self.pid.p = 1.
         self.current_state = 'sweep'
 
-    def lock(self, input=None, setpoint=None, offset=None, factor=None):
+    def lock(self, input=None, setpoint=None, offset=None, gain_factor=None):
         """
         Closes the lock loop, using the required p and i parameters.
         """
         # store lock parameters in case an update is requested
-        self._lock_input = input or self._lock_input
-        self._lock_setpoint = setpoint or self._lock_setpoint
-        self._lock_factor = factor or self._lock_factor
+        self._lock_input = self._lock_input if input is None else input
+        self._lock_setpoint = self._lock_setpoint if setpoint is None else setpoint
+        self._lock_gain_factor = self._lock_gain_factor if gain_factor is None else gain_factor
         # Parameter 'offset' is not internally stored because another call to 'lock()'
         # shouldnt reset the offset by default as this would un-lock an existing lock
         self._setup_pid_output()  # optional to ensure that pid output is properly set
         self._setup_pid_lock(input=self._lock_input,
                              setpoint=self._lock_setpoint,
                              offset=offset,
-                             factor=self._lock_factor)
+                             gain_factor=self._lock_gain_factor)
         self.current_state = 'lock'
 
-    def _setup_pid_lock(self, input, setpoint, offset=None, factor=1.0):
+    def _setup_pid_lock(self, input, setpoint, offset=None, gain_factor=1.0):
         """
         If current mode is "lock", updates the gains of the underlying pid module such that:
             - input.gain * pid.p * output.dc_gain = output.p
@@ -247,31 +186,60 @@ class OutputSignal(Signal):
         """
         if isinstance(input, basestring):
             input = self.lockbox.inputs[input]
-        # The total loop gain is composed of gains of pid and external components.
-        # The external loop is composed of input slope (in units V_per_setpoint_unit, e. g. V/degree)
-        # and output gain (in units 'self.unit', e.g. m/V). We need it in units of V/V.
+
+        # The total loop is composed of the pid and external components.
+        # The external parts are 1) the output with the predefined gain and 2)
+        # the input (error signal) with a setpoint-dependent slope.
+        # 1) model the output: dc_gain converted into units of setpoint_unit_per_V
         output_unit = self.unit.split('/')[0]
-        setpoint_unit_per_output_unit = getattr(self.lockbox,
-                                                "variable_per_"+output_unit)
-        external_loop_gain = input.expected_slope(setpoint)\
-                             * self.dc_gain \
-                             * setpoint_unit_per_output_unit
-        # write values to pid module
-        self.pid.setpoint = input.expected_signal(setpoint)
-        self.pid.p = self.p / external_loop_gain * factor
-        self.pid.i = self.i / external_loop_gain * factor
-        self.pid.input = input.signal()
+        external_loop_gain = self.dc_gain\
+                             * self.lockbox._unit_in_setpoint_unit(output_unit)
+        # 2) model the input: slope comes in units of V_per_setpoint_unit,
+        # which cancels previous unit and we end up with a dimensionless ext. gain.
+        external_loop_gain *= input.expected_slope(setpoint)
+
+        # we should avoid setting gains to infinity
+        if external_loop_gain == 0:
+            self._logger.warning("External loop gain for output %s is zero. "
+                                 "Skipping pid lock for this step. ",
+                                 self.name)
+        else:
+            # write values to pid module
+            self.pid.setpoint = input.expected_signal(setpoint)
+            self.pid.p = self.p / external_loop_gain * gain_factor
+            self.pid.i = self.i / external_loop_gain * gain_factor
+            self.pid.input = input.signal()
         # offset is the last thing that is modified to guarantee the offset setting with the gains
         if offset is not None:
             self.pid.ival = offset
 
+    def _setup_offset(self, offset):
+        self.pid.ival = offset
+
     def _setup(self):
+        # synchronize assisted_design parameters with p/i setting
+        if self.assisted_design:
+            self.i = self.desired_unity_gain_frequency
+            if self.analog_filter_cutoff == 0:
+                self.p = 0
+            else:
+                self.p = self.i / self.analog_filter_cutoff
+        else:
+            self.desired_unity_gain_frequency = self.i
+            if self.p == 0:
+                self.analog_filter_cutoff = 0
+            else:
+                self.analog_filter_cutoff = self.i / self.p
+        # re-enable lock/sweep/unlock with new parameters
         if self.current_state == 'sweep':
             self.sweep()
         elif self.current_state == 'unlock':
             self.unlock()
         elif self.current_state == 'lock':
             self.lock()
+        # plot current transfer function
+        self.lockbox._signal_launcher.update_transfer_function.emit([self])
+
 
     ##############################
     # transfer function plotting #
@@ -315,4 +283,3 @@ class OutputSignal(Signal):
             frequency_correction=self.pid._frequency_correction,
             filter_values=self.additional_filter)
         return result
-

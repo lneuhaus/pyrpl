@@ -638,8 +638,8 @@ class LockboxStageWidget(ReducedModuleWidget):
         self.main_layout.addLayout(self.lay_h3)
         self.lay_h3.addWidget(aws['function_call'])
 
-        self.button_goto = QtGui.QPushButton('Goto stage')
-        self.button_goto.clicked.connect(self.module.setup)
+        self.button_goto = QtGui.QPushButton('Go to this stage')
+        self.button_goto.clicked.connect(self.module.enable)
         self.main_layout.addWidget(self.button_goto)
 
     def create_title_bar(self):
@@ -738,11 +738,11 @@ class LockboxWidget(ModuleWidget):
         self.attribute_layout.addWidget(self.button_unlock)
         self.attribute_layout.addWidget(self.button_sweep)
         self.attribute_layout.addWidget(self.button_calibrate_all)
-        self.button_is_locked.clicked.connect(self.module.is_locked)
-        self.button_lock.clicked.connect(self.module.lock)
-        self.button_unlock.clicked.connect(self.module.unlock)
-        self.button_sweep.clicked.connect(self.module.sweep)
-        self.button_calibrate_all.clicked.connect(self.module.calibrate_all)
+        self.button_is_locked.clicked.connect(lambda: self.module.is_locked())
+        self.button_lock.clicked.connect(lambda: self.module.lock())
+        self.button_unlock.clicked.connect(lambda: self.module.unlock())
+        self.button_sweep.clicked.connect(lambda: self.module.sweep())
+        self.button_calibrate_all.clicked.connect(lambda: self.module.calibrate_all())
 
         # Locking sequence widget
         self.sequence_widget = self.module.sequence._create_widget()

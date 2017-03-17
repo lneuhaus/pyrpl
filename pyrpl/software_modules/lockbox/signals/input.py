@@ -218,7 +218,6 @@ class InputSignal(Signal):
     _gui_attributes = ["input_signal"]
     _widget_class = LockboxInputWidget
 
-
     # input_signal selects the input signal of the module from DSP modules and logical signals of the lockbox
     input_signal = SelectProperty(options=(lambda instance:
                                         list(DSP_INPUTS.keys()) +

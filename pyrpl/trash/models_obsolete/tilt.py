@@ -76,7 +76,7 @@ class TEM02FabryPerot(FabryPerot):
                    setpoint=self.transmission(detuning),
                    input=input._config.redpitaya_input,
                    offset=None,
-                   factor=factor)
+                   gain_factor=factor)
         return self.islocked()
 
     def lock_tilt(self, detuning=1, factor=1.0):
@@ -104,7 +104,7 @@ class TEM02FabryPerot(FabryPerot):
                    setpoint=self.tilt(detuning),
                    input=input._config.redpitaya_input,
                    offset=None,
-                   factor=factor)
+                   gain_factor=factor)
 
     def lock(self, detuning=0, factor=1.0, stop=False):
         while not self.islocked():

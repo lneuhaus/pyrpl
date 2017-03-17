@@ -21,9 +21,13 @@ class StageOutput(LockboxModule):
                          'offset']
     _gui_attributes = _setup_attributes
     _widget_class = StageOutputWidget
-    lock_on = BoolIgnoreProperty(default=False)
-    reset_offset = BoolProperty(default=False)
-    offset = FloatProperty(default=0, min=-1., max=1.)
+    lock_on = BoolIgnoreProperty(default=False, call_setup=True)
+    reset_offset = BoolProperty(default=False, call_setup=True)
+    offset = FloatProperty(default=0, min=-1., max=1., call_setup=True)
+
+    def _setup(self):
+        # forward changes to parent module
+        self.parent._setup()
 
 
 class Stage(LockboxModule):
@@ -33,23 +37,38 @@ class Stage(LockboxModule):
     _gui_attributes = ['input',
                        'setpoint',
                        'duration',
-                       'function_call',
-                       'gain_factor']
+                       'gain_factor',
+                       'function_call']
     _setup_attributes = _gui_attributes + ['outputs']
     _widget_class = LockboxStageWidget
     _signal_launcher = StageSignalLauncher
 
     input = SelectProperty(ignore_errors=True,
-                           options=lambda stage: stage.lockbox.inputs.keys())
-    setpoint = FloatProperty(default=0, min=-1e6, max=1e6)
+                           options=lambda stage: stage.lockbox.inputs.keys(),
+                           call_setup=True)
 
-    duration = FloatProperty(default=0, min=0, max=1e6)
-    function_call = StringProperty()
+    setpoint = FloatProperty(default=0,
+                             min=-1e6,
+                             max=1e6,
+                             increment=0.1,
+                             call_setup=True)
 
-    gain_factor = FloatProperty(default=1., min=-1e6, max=1e6)
+    gain_factor = FloatProperty(default=1.,
+                                min=-1e6,
+                                max=1e6,
+                                increment=0.1,
+                                call_setup=True)
 
-    # outputs is a dict, containing an entry of StageOutput per Lockbox output
-    # (initialized in _init_module)
+    function_call = StringProperty(default="",
+                                   call_setup=True)
+
+    duration = FloatProperty(default=0,
+                             min=0,
+                             max=1e6,
+                             increment=0.1)
+
+    # outputs is a dict of submodules, containing an entry of
+    # StageOutput per Lockbox output (initialized in _init_module)
     outputs = ModuleDictProperty(module_cls=LockboxModule)
 
     def _init_module(self):
@@ -71,7 +90,8 @@ class Stage(LockboxModule):
         """
         Returns the config file branch corresponding to the saved states of the module.
         """
-        return self.c._root._get_or_create("stage_" + str(self.name) + "_states")
+        return None  # saving individual stage states is not allowed
+        #return self.c._root._get_or_create("stage_" + str(self.name) + "_states")
 
     def enable(self):
         """
@@ -79,17 +99,26 @@ class Stage(LockboxModule):
         """
         for output in self.lockbox.outputs:
             setting = self.outputs[output.name]
-            if setting.lock_on == 'true':
+            if setting.lock_on == 'ignore':
+                # this part is here to remind you that BoolIgnoreProperties
+                # should not be typecasted into bools, i.e. do not write
+                # if setting.lock_on: do_sth() because 'ignore' will bug
+                pass
+            if setting.lock_on == False:
+                output.unlock()
+            if setting.reset_offset:
+                output._setup_offset(setting.offset)
+        # make a new iteration for enabling lock, in order
+        # to be sure that all offsets are reset before starting lock
+        for output in self.lockbox.outputs:
+            setting = self.outputs[output.name]
+            if setting.lock_on == True:
                 output.lock(input=self.input,
                             setpoint=self.setpoint,
-                            offset=setting.offset
-                                if setting.reset_offset else None,
-                            factor=self.factor)
-            elif setting.lock_on == 'false':
-                output.unlock()
-            #elif setting.lock_on == 'ignore':
-            #    pass
-        if self.function_call!="":
+                            offset=setting.offset if setting.reset_offset else None,
+                            gain_factor=self.gain_factor)
+        # optionally call a user function at the end of the stage
+        if self.function_call != "":
             try:
                 func = getattr(self.lockbox, self.function_call)
             except AttributeError:
@@ -102,4 +131,9 @@ class Stage(LockboxModule):
                     func(self)
                 except TypeError:
                     func()
+        # set lockbox state to stage name
         self.lockbox.current_state = self.name
+
+    def _setup(self):
+        if self.name == self.lockbox.current_state:
+            self.enable()

@@ -196,7 +196,7 @@ class FPM(FabryPerot):
                       setpoint=setpoint,
                       input=None,  # no signal has been configured so we set
                                    # input manually
-                      factor=factor,
+                      gain_factor=factor,
                       offset=offset,
                       second_integrator=0,
                       setup_iir=False,

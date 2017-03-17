@@ -278,7 +278,7 @@ class Model(object):
                        setpoint=setpoint,
                        input=input,
                        offset=offset,
-                       factor=factor,
+                       gain_factor=factor,
                        **kwargs)
             else:  # special option: instead of locking, write the gain
                 o.save_current_gain(slope=slope*variable_per_unit)

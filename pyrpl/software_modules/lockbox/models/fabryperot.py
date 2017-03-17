@@ -107,18 +107,18 @@ class FabryPerot(Interferometer):
         return self.linewidth/2.0
 
     # management of intput/output units
-    setpoint_variable = 'detuning'
+    # setpoint_variable = 'detuning'
     setpoint_unit = 'bandwidth'
     _output_units = ['V', 'm', 'Hz', 'nm', 'MHz']
 
+    # must provide conversion from setpoint_unit into all other basic units
     @property
-    def _Hz_per_bandwidth(self):
-        return 1.0 / self.bandwidth
+    def _bandwidth_in_Hz(self):
+        return self.bandwidth
 
     @property
-    def _m_per_bandwidth(self):
+    def _bandwidth_in_m(self):
         # linewidth (in m) = lambda/(2*finesse)
-        # factor 2 comes from double-phaseshift upon reflection off the mirror
         # bandwidth = linewidth/2
         return self.wavelength / self.finesse / 4.0
 
@@ -152,12 +152,15 @@ class HighFinesseInput(InputDirect):
             self._logger.debug("calibration threshold: %f", threshold)
             scope.save_state("autosweep_zoom") # save state for debugging or modification
             curve1, curve2 = scope.curve(timeout=5./self.lockbox.asg.frequency)  # give some time if trigger is missed
-            self.get_stats_from_curve(curve1)
+            self.calibration_data.get_stats_from_curve(curve1)
         # log calibration values
         self._logger.info("%s high-finesse calibration successful - "
                           "Min: %.3f  Max: %.3f  Mean: %.3f  Rms: %.3f",
                           self.name,
-                          self.min, self.max, self.mean, self.rms)
+                          self.calibration_data.min,
+                          self.calibration_data.max,
+                          self.calibration_data.mean,
+                          self.calibration_data.rms)
         # update graph in lockbox
         self.lockbox._signal_launcher.input_calibrated.emit([self])
 
