@@ -109,6 +109,7 @@ class NaPointFuture(PyrplFuture):
 
 class NaCurveFuture(PyrplFuture):
     N_POINT_BENCHMARK = 100 #  update measured_time_per_point every 100 points
+
     def __init__(self, module, min_delay_ms, autostart=True):
         self._module = module
         self._min_delay_ms = min_delay_ms

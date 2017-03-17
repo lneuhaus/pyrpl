@@ -1,12 +1,33 @@
 from ..lockbox import *
 from ..signals import *
+from .interferometer import Interferometer
 
 
 class FPReflection(InputDirect):
+
     def expected_signal(self, variable):
         return self.calibration_data.max - (self.calibration_data.max - self.calibration_data.min) * self._lorentz(variable)
+
     def _lorentz(self, x):
         return 1.0 / (1.0 + x ** 2)
+
+    # 'relative' scale of 100% is given by offresonant reflection, 0% by dark reflection (=0)
+    @property
+    def relative_mean(self):
+        """
+        returns the ratio between the measured mean value and the expected one.
+        """
+        # compute relative quantity
+        return self.mean / self.calibration_data.max
+
+    @property
+    def relative_rms(self):
+        """
+        returns the ratio between the measured rms value and the expected mean.
+        """
+        # compute relative quantity
+        return self.rms / self.calibration_data.max
+
 
 class FPTransmission(FPReflection):
     def expected_signal(self, variable):
@@ -59,35 +80,52 @@ class FPPdh(InputIq, FPAnalogPdh):
                                       loglevel=loglevel)
 
 
-class FabryPerot(Lockbox):
-    units = ['m', 'Hz', 'nm', 'MHz']
-    _gui_attributes = ["wavelength", "finesse", "length", "eta"]
+class FabryPerot(Interferometer):
+    _gui_attributes = ["finesse", "round_trip_length", "eta"]
     _setup_attributes = _gui_attributes
-    wavelength = FloatProperty(max=1., min=0., default=1.064e-6, increment=1e-9)
     finesse = FloatProperty(max=1e7, min=0, default=10000)
     # approximate length in m (not taking into account small variations of the
     # order of the wavelength)
-    length = FloatProperty(max=10e12, min=0, default=1.0)
+    round_trip_length = FloatProperty(max=10e12, min=0, default=1.0)
     # eta is the ratio between input mirror transmission and the sum of
     # transmission and loss: T/(T+P)
     eta = FloatProperty(min=0., max=1., default=1.)
-    variable = 'detuning'
+
+    @property
+    def free_spectral_range(self):
+        """ returns the cavity free spectral range in Hz """
+        return 2.998e8 / self.round_trip_length
+
+    @property
+    def linewidth(self):
+        """ returns the cavity linewidth in Hz """
+        return self.free_spectral_range / self.finesse
+
+    @property
+    def bandwidth(self):
+        """ returns the cavity bandwidth in Hz """
+        return self.linewidth/2.0
+
+    # management of intput/output units
+    setpoint_variable = 'detuning'
+    setpoint_unit = 'bandwidth'
+    _output_units = ['V', 'm', 'Hz', 'nm', 'MHz']
+
+    @property
+    def _Hz_per_bandwidth(self):
+        return 1.0 / self.bandwidth
+
+    @property
+    def _m_per_bandwidth(self):
+        # linewidth (in m) = lambda/(2*finesse)
+        # factor 2 comes from double-phaseshift upon reflection off the mirror
+        # bandwidth = linewidth/2
+        return self.wavelength / self.finesse / 4.0
 
     inputs = LockboxModuleDictProperty(transmission=FPTransmission,
                                        reflection=FPReflection,
                                        pdh=FPPdh)
 
-    @property
-    def free_spectral_range(self):
-        return 2.998e8/(2.*self.length)
-
-    @property
-    def linewidth(self):
-        return self.free_spectral_range / self.finesse
-
-    @property
-    def bandwidth(self):
-        return self.linewidth/2.0
 
 
 
@@ -125,7 +163,7 @@ class HighFinesseInput(InputDirect):
 
     def get_threshold(self, curve):
         """ returns a reasonable scope threshold for the interesting part of this curve """
-        return (curve.min() + curve.mean()) / 2
+        return (curve.min() + curve.mean()) / 2.0 + self.calibration_data._analog_offset
 
 
 class HighFinesseReflection(HighFinesseInput, FPReflection):

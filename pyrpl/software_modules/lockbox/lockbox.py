@@ -134,16 +134,65 @@ class Lockbox(LockboxModule):
 
     classname = ClassnameProperty()
     parameter_name = "parameter"
-    # possible units to describe the physical parameter to control e.g. ['m', 'MHz']
-    # units that are allowed for this lockbox (must provide methods with name "_unit_to_V" for all units)
-    _units = ['V']
-    def _V_per_V(self):
-        return 1.0
+
+    ###################
+    # unit management #
+    ###################
+    # setpoint_unit is mandatory to specify in which unit the setpoint is given
+    setpoint_unit = 'V'
+    # output gain comes in units of '_output_unit'/V of analog redpitaya output
+    _output_units = ['V', 'mV']
+    # each _output_unit must come with a function that allows conversion from
+    # output_unit to setpoint_unit
+    _V_per_V = 1.0
+    #_mV_per_V = 1e-3 (handled by prefix management of _unit1_per_unit2)
+
+    def _unit1_per_unit2(self, unit1, unit2, try_prefix=True):
+        """ helper function to convert unit2 to unit 1"""
+        if unit1 == unit2:
+            return 1.0
+        try:
+            return getattr(self, '_'+unit1+'_per_'+unit2)
+        except AttributeError:
+            try:
+                return 1.0 / getattr(self, '_' + unit2 + '_per_' + unit1)
+            except AttributeError:
+                if not try_prefix:
+                    raise
+        # did not find the unit. Try scaling of unit1
+        _unit_prefixes = OrderedDict([('', 1.0,),
+                                      ('m', 1e-3),
+                                      ('u', 1e-6),
+                                      ('n', 1e-9),
+                                      ('p', 1e-12),
+                                      ('k', 1e3),
+                                      ('M', 1e6),
+                                      ('G', 1e9),
+                                      ('T', 1e12)])
+        for prefix2 in _unit_prefixes:
+            if unit2.startswith(prefix2) and len(unit2)>len(prefix2):
+                for prefix1 in _unit_prefixes:
+                    if unit1.startswith(prefix1) and len(unit1)>len(prefix1):
+                        try:
+                            return self._unit1_per_unit2(unit1[len(prefix1):],
+                                                         unit2[len(prefix2):],
+                                                         try_prefix=False)\
+                                   * _unit_prefixes[prefix1]/_unit_prefixes[prefix2]
+                        except AttributeError:
+                            pass
+        raise AttributeError("Could not find attribute %s in Lockbox class. ",
+                             unit1+'_per_'+unit2)
+
+
+    def _unit_per_setpoint_unit(self, unit):
+        # helper function to convert setpoint_unit into unit
+        return self._unit1_per_unit2(unit, self.setpoint_unit)
 
     auto_lock_interval = AutoLockIntervalProperty(default=1.0, min=1e-3,
                                                   max=1e10)
     # default_sweep_output would throw an error if the saved state corresponds to a nonexisting output
-    default_sweep_output = SelectProperty(options=lambda lb: lb.outputs.keys(), ignore_errors=True)
+    default_sweep_output = SelectProperty(options=lambda lb: lb.outputs.keys(),
+                                          ignore_errors=True)
     error_threshold = FloatProperty(default=1.0, min=-1e10,max=1e10)
     auto_lock = AutoLockProperty()
 
@@ -157,15 +206,17 @@ class Lockbox(LockboxModule):
     sequence._widget_class = LockboxSequenceWidget
 
     # current state of the lockbox
-    state = StateSelectProperty(options=(lambda inst: ['unlock', 'sweep'] + list(range(len(inst.sequence)))),
-                                default='unlock')
+    current_state = StateSelectProperty(options=
+                                        (lambda inst:
+                                        ['unlock', 'sweep'] + list(range(len(inst.sequence)))),
+                                        default='unlock')
 
     @property
-    def stage(self):
-        if isinstance(self.state, int):
-            return self.sequence[self.state]
+    def current_stage(self):
+        if isinstance(self.current_state, int):
+            return self.sequence[self.current_state]
         else:
-            return self.state
+            return self.current_state
 
     @property
     def signals(self):
@@ -187,14 +238,14 @@ class Lockbox(LockboxModule):
             self._asg = self.pyrpl.asgs.pop(self.name)
         return self._asg
 
-    def _setup(self):
-        """
-        Sets up the lockbox
-        """
-        for input in self.inputs:
-            input.setup()
-        for output in self.outputs:
-            output._setup()
+    # def _setup(self):
+    #     """
+    #     Sets up the lockbox
+    #     """
+    #     for input in self.inputs:
+    #         input.setup()
+    #     for output in self.outputs:
+    #         output._setup()
 
     def calibrate_all(self):
         """
@@ -203,15 +254,15 @@ class Lockbox(LockboxModule):
         for input in self.inputs:
             input.calibrate()
 
-    def unlock(self):
+    def unlock(self, reset_offset=True):
         """
-        Disables autolock and unlocks all outputs, without touching the integrator value.
+        Disables autolock and unlocks all outputs.
         """
         self.auto_lock = False
         self._signal_launcher.timer_lock.stop()
         for output in self.outputs:
-            output.unlock()
-        self.state = 'unlock'
+            output.unlock(reset_offset=reset_offset)
+        self.current_state = 'unlock'
 
     def sweep(self):
         """
@@ -219,21 +270,19 @@ class Lockbox(LockboxModule):
         problems when use as a slot.
         """
         self.unlock()
-        for output in self.outputs:
-            output.reset_ival()
         self.outputs[self.default_sweep_output].sweep()
-        self.state = "sweep"
+        self.current_state = "sweep"
 
     def goto_next(self):
         """
         Goes to the stage immediately after the current one
         """
-        if isinstance(self.stage, self.sequence.element_cls):
-            self.goto(self.stage.next)
-        else: #  self.state=='sweep' or self.state=='unlock':
+        if isinstance(self.current_stage, self.sequence.element_cls):
+            self.goto(self.current_stage.next)
+        else:  # self.state=='sweep' or self.state=='unlock':
             self.goto(self.sequence[0])
-        if self.stage != self.sequence[-1]:
-            self._signal_launcher.timer_lock.setInterval((self.stage).duration * 1000)
+        if self.current_stage != self.sequence[-1]:
+            self._signal_launcher.timer_lock.setInterval((self.current_stage).duration * 1000)
             self._signal_launcher.timer_lock.start()
 
     def goto(self, stage):
@@ -242,23 +291,34 @@ class Lockbox(LockboxModule):
         """
         stage.enable()
 
-    def lock(self):
+    def lock(self, **kwds):
         """
         Launches the full lock sequence, stage by stage until the end.
+        optional kwds are stage attributes that are set after iteration through the sequence,
+        e.g. a modified setpoint.
         """
+        # prepare final stage as a modified copy of the last stage
+        self.final_stage = Stage(self, name='final_lock_stage')
+        self.final_stage.setup(**self.sequence[-1].setup_attributes)
+        self.final_stage.setup(**kwds)
+        self.final_stage.duration = 0
+        # iterate through locking sequence:
+        # unlock -> sequence -> final_stage
         self.unlock()
-        self.goto_next()
+        for stage in self.sequence + [self.final_stage]:
+            stage.enable()
+            sleep(stage.duration)
 
     def lock_blocking(self):
         """ prototype for the blocking lock function """
         self._logger.warning("Function lock_blocking is currently not implemented correctly. ")
         self.lock()
-        while not self.stage == self.sequence[-1]:
+        while not self.current_stage == self.sequence[-1]:
             sleep(0.01)
         return self.is_locked()
 
     def is_locking_sequence_active(self):
-        state = self.stage
+        state = self.current_stage
         if isinstance(state, int) and state < len(self.sequence)-1:
             return True
         else:
@@ -278,10 +338,10 @@ class Lockbox(LockboxModule):
         """ returns True if locked, else False. Also updates an internal
         dict that contains information about the current error signals. The
         state of lock is logged at loglevel """
-        if not self.stage in self.sequence:
+        if not self.current_stage in self.sequence:
             # not locked to any defined sequence state
             self._logger.log(loglevel, "Cavity is not locked: lockbox state "
-                                       "is %s.", self.stage)
+                                       "is %s.", self.current_stage)
             return False
         # test for output saturation
         for o in self.outputs:
@@ -291,7 +351,7 @@ class Lockbox(LockboxModule):
                 return False
         # input locked to
         if not input: #input=None (default) or input=False (call by gui)
-            input = self.inputs[self.sequence[self.stage].input]
+            input = self.inputs[self.sequence[self.current_stage].input]
         try:
             # use input-specific is_locked if it exists
             try:
@@ -302,7 +362,7 @@ class Lockbox(LockboxModule):
         except:
             pass
         # supposed to be locked at this value
-        variable_setpoint = self.sequence[self.stage].setpoint
+        variable_setpoint = self.sequence[self.current_stage].setpoint
         # current values
         #actmean, actrms = self.pyrpl.rp.sampler.mean_stddev(input.input_channel)
         actmean, actrms = input.mean_rms()
@@ -363,16 +423,16 @@ class Lockbox(LockboxModule):
         lockstatus. If is_locked is called in update_lockstatus above,
         it should not be called a second time here
         """
-        if self.stage == 'sweep':
+        if self.current_stage == 'sweep':
             return 'blue'
-        elif self.stage == 'unlock':
+        elif self.current_stage == 'unlock':
             return 'darkRed'
         else:
             # should be locked
             if islocked is None:
                islocked = self.is_locked(loglevel=logging.DEBUG)
             if islocked:
-                if self.stage == self._stage_names[-1]:
+                if self.current_stage == self._stage_names[-1]:
                     # locked and in last stage
                     return 'green'
                 else:

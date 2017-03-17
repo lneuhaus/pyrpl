@@ -55,13 +55,14 @@ class DspModule(HardwareModule):
     output_directs = _output_directs.keys()
 
     _input = SelectRegister(0x0, options=_inputs,
-                           doc="selects the input signal of the module")
+                            doc="selects the input signal of the module")
 
     input = DspInputAttribute(_inputs)
 
-    output_direct = SelectRegister(0x4, options=_output_directs,
-                            doc="selects to which analog output the module \
-                            signal is sent directly")
+    output_direct = SelectRegister(0x4,
+                                   options=_output_directs,
+                                   doc="selects to which analog output the "
+                                       "module signal is sent directly")
 
     out1_saturated = BoolRegister(0x8, 0, doc="True if out1 is saturated")
 
@@ -73,13 +74,3 @@ class DspModule(HardwareModule):
         self._number = self._inputs[name]  # find address from name
         self.addr_base = 0x40300000 + self._number * 0x10000
         super(DspModule, self).__init__(rp, name)
-
-    def _init_module(self):
-        pass
-    """
-    def __init__(self, client, name, parent): # for consistency, all HardwareModule creators have the same signature
-        self._number = self._inputs[name]
-        super(DspModule, self).__init__(client,
-            addr_base=0x40300000+self._number*0x10000,
-            parent=parent, name=name)
-    """

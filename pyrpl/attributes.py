@@ -318,6 +318,12 @@ class SelectAttribute(BaseAttribute):
                                               ignore_errors=ignore_errors,
                                               call_setup=call_setup)
         self._starting_options = options
+        if not hasattr(self, 'default'):
+            try:
+                self.default = self._starting_options[0]
+            except:
+                self.default = None
+
 
     def options(self, instance):
         """
@@ -531,9 +537,6 @@ class BaseRegister(object):
         """
         Retrieves the value that is physically on the redpitaya device.
         """
-        if obj is None:
-            return self  # allows to access the descriptor by calling class.Register
-            # see http://nbviewer.jupyter.org/urls/gist.github.com/ChrisBeaumont/5758381/raw/descriptor_writeup.ipynb
         # self.parent = obj  # store obj in memory
         if self.bitmask is None:
             return self.to_python(obj._read(self.address), obj)
@@ -1022,33 +1025,21 @@ class SelectProperty(SelectAttribute, BaseProperty):
     A property for multiple choice values, if options are numbers, rounding will be performed,
     otherwise validator is strict.
     """
-    def get_value(self, obj, obj_type):
-        if obj is None:
-            return self
-        if not hasattr(obj, '_' + self.name):
-            # choose any value in the options as default.
-            default = sorted(self.options(obj))
-            if len(default) > 0:
-                val = default[0]
-                setattr(obj, '_' + self.name, val)
-                return val
-            else:
-                return None
-        return getattr(obj, '_' + self.name)
-
-
-#class DynamicSelectProperty(DynamicSelectAttribute, BaseProperty):
-#    """
-#    A property for multiple choice values, the options can be set dynamically at runtime
-#    """
-#    def get_value(self, obj, obj_type):
-#        if obj is None:
-#            return self
-#        if not hasattr(obj, '_' + self.name):
-#            # choose any value in the options as default.
-#            default = sorted(self.options(obj))[0]
-#            setattr(obj, '_' + self.name, default)
-#        return getattr(obj, '_' + self.name)
+    pass
+    # this leads to bugs, since it wrongly suggests that default setting
+    # of SelectProperties has an effect.
+    #
+    # def get_value(self, obj, obj_type):
+    #     if not hasattr(obj, '_' + self.name):
+    #         # choose any value in the options as default.
+    #         default = sorted(self.options(obj))
+    #         if len(default) > 0:
+    #             val = default[0]
+    #             setattr(obj, '_' + self.name, val)
+    #             return val
+    #         else:
+    #             return None
+    #     return getattr(obj, '_' + self.name)
 
 
 class StringProperty(StringAttribute, BaseProperty):

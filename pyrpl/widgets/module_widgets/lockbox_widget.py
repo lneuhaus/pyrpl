@@ -163,7 +163,6 @@ class SweepOutputProperties(QtGui.QGroupBox):
         self.v1.addWidget(aws['sweep_amplitude'])
         self.v2.addWidget(aws["sweep_offset"])
         self.v2.addWidget(aws["sweep_waveform"])
-        aws['is_sweepable'].hide()
         self.setTitle("Sweep parameters")
 
 class WidgetManual(QtGui.QWidget):
@@ -849,7 +848,7 @@ class LockboxWidget(ModuleWidget):
         SLOT: don't change name unless you know what you are doing
         Basically painting some button in green is required
         """
-        stage = self.module.stage
+        stage = self.module.current_stage
         if stage=='unlock':
             self.set_button_green(self.button_unlock)
             self.hide_lock_points()

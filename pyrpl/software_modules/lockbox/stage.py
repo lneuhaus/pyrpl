@@ -79,10 +79,12 @@ class Stage(LockboxModule):
         """
         for output in self.lockbox.outputs:
             setting = self.outputs[output.name]
-            if setting.reset_offset:
-                output.set_ival(setting.offset)
             if setting.lock_on == 'true':
-                output.lock(self.input, self.setpoint, factor=self.factor)
+                output.lock(input=self.input,
+                            setpoint=self.setpoint,
+                            offset=setting.offset
+                                if setting.reset_offset else None,
+                            factor=self.factor)
             elif setting.lock_on == 'false':
                 output.unlock()
             #elif setting.lock_on == 'ignore':
@@ -100,4 +102,4 @@ class Stage(LockboxModule):
                     func(self)
                 except TypeError:
                     func()
-        self.lockbox.state = self.name
+        self.lockbox.current_state = self.name

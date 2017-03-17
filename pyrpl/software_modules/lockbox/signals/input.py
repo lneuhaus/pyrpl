@@ -15,13 +15,14 @@ logger = logging.getLogger(__name__)
 
 class CalibrationData(LockboxModule):
     """ class to hold the calibration data of an input signal """
-    _setup_attributes = ["min", "max", "mean", "rms"]
+    _setup_attributes = ["min", "max", "mean", "rms", "_analog_offset"]
     _gui_attributes = []
     min = FloatProperty(doc="min of the signal in V over a lockbox sweep")
     max = FloatProperty(doc="max of the signal in V over a lockbox sweep")
     mean = FloatProperty(doc="mean of the signal in V over a lockbox sweep")
     rms = FloatProperty(min=0, max=2, doc="rms of the signal in V over a "
                                           "lockbox sweep")
+    _analog_offset = FloatProperty(default=0.0, doc="analog offset of the signal")
 
     @property
     def amplitude(self):
@@ -60,6 +61,23 @@ class Signal(LockboxModule):
                          self.name)
         return 'off'
 
+    def get_analog_offset(self, duration=1.0):
+        """ function to acquire the analog offset of the signal (with nothing connected).
+         This offset is subtracted from all raw signals"""
+        # make sure the lockbox is unlocked, just in case
+        self.lockbox.unlock()
+        # sample the input with a rather long duration to get a good average
+        self.stats(t=duration)
+        current_residual_offset = self.mean
+        last_offset = self.calibration_data._analog_offset
+        # current_residual_offset = current_offset - last_offset
+        current_offset = last_offset + current_residual_offset
+        self.calibration_data._analog_offset = current_offset
+        self._logger.info("Calibrated analog offset of signal %s. "
+                          "Old value: %s, new value: %s, difference: %s.",
+                          last_offset,
+                          self.calibration_data._analog_offset,
+                          current_residual_offset)
 
     ##################################################
     # Sampler routines for diagnostics of the signal #
@@ -92,6 +110,10 @@ class Signal(LockboxModule):
             # get fresh data
             self._lastmean, self._lastrms, self._lastmax, self._lastmin\
                 = self.pyrpl.rp.sampler.stats(self.signal(), t=t)
+            # subtract analog offset from all non-relative values
+            self._lastmean -= self.calibration_data._analog_offset
+            self._lastmax -= self.calibration_data._analog_offset
+            self._lastmin -= self.calibration_data._analog_offset
             # save a timestamp and the employed sampler time
             self._lasttime = time()
             self._lastt = t
@@ -131,7 +153,7 @@ class Signal(LockboxModule):
         returns the ratio between the measured mean value and the expected one.
         """
         # compute relative quantity
-        return self.mean / self.expected_amplitude
+        return self.mean / self.calibration_data.amplitude
 
     @property
     def relative_rms(self):
@@ -139,7 +161,23 @@ class Signal(LockboxModule):
         returns the ratio between the measured rms value and the expected mean.
         """
         # compute relative quantity
-        return self.rms / self.expected_amplitude
+        return self.rms / self.calibration_data.amplitude
+
+    def diagnostics(self, duration = 1.0):
+        """
+        example code for lock diagnostics:
+
+        Parameters
+        ----------
+        duration: duration over which to average
+
+        Returns
+        -------
+        relative rms of the signal, normalized by
+        """
+        # samples the input over duration
+        self.stats(t=duration)
+        return self.relative_rms
 
 
 class InputSignal(Signal):
@@ -222,6 +260,7 @@ class InputSignal(Signal):
                             rolling_mode=False)
                 scope.save_state("autosweep")
             curve1, curve2 = scope.curve(timeout=1. / self.lockbox.asg.frequency + scope.duration)
+        curve1 -= self.calibration_data._analog_offset
         return curve1
 
     def calibrate(self):
@@ -252,7 +291,8 @@ class InputSignal(Signal):
     def expected_slope(self, variable):
         """
         Returns the slope of the expected signal wrt variable at a given value
-        of the variable.
+        of the variable. May be overwritten by a more efficient (analytical) method
+        in a derived class.
         """
         return scipy.misc.derivative(self.expected_signal,
                                      variable,
