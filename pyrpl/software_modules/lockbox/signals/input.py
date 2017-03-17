@@ -104,7 +104,7 @@ class InputSignal(Signal):
                             running_state='running_continuous',
                             rolling_mode=False)
                 scope.save_state("autosweep")
-            curve1, curve2 = scope.curve(timeout=2./self.lockbox.asg.frequency+0.1)
+            curve1, curve2 = scope.curve(timeout=1./self.lockbox.asg.frequency+scope.duration)
         return curve1
 
     def get_stats_from_curve(self, curve):

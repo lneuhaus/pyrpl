@@ -105,6 +105,7 @@ class HighFinesseInput(InputDirect):
     def calibrate(self):
         curve = super(HighFinesseInput, self).acquire()
         with self.pyrpl.scopes.pop(self.name) as scope:
+            scope.load_state("autosweep")
             if "sweep_zoom" in scope.states:
                 scope.load_state("sweep_zoom")
             else:

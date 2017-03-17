@@ -176,13 +176,13 @@ class OutputSignal(Signal):
     # gain for the conversion V-->model variable in *unit*
     p = GainProperty(min=-1e10, max=1e10)
     i = GainProperty(min=-1e10, max=1e10)
-    analog_filter_cutoff = AnalogFilterProperty(default=0)
+    analog_filter_cutoff = AnalogFilterProperty(default=0, min=0, max=1e10, increment=0.1)
     additional_filter = AdditionalFilterAttribute()
     extra_module = SelectProperty(['None', 'iir', 'pid', 'iq'])
     extra_module_state = SelectProperty(options=["None"])
     tf_type = TfTypeProperty(["flat", "filter", "curve"], default="filter")
     # tf_filter = CustomFilterRegister()
-    desired_unity_gain_frequency = UnityGainProperty(default=100.0)
+    desired_unity_gain_frequency = UnityGainProperty(default=100.0, min=0, max=1e10)
     tf_curve = TfCurveProperty()
     mode = SelectProperty(options=["unlock", "sweep", "lock"])
 
@@ -195,23 +195,21 @@ class OutputSignal(Signal):
         self.current_variable_value = 0
         self.current_variable_slope = 0
 
-    def update_pid_gains(self, input, variable_value, factor=1.):
+    def update_pid_gains(self, input, setpoint, factor=1.):
         """
         If current mode is "lock", updates the gains of the underlying pid module such that:
             - input.gain * pid.p * output.dc_gain = output.p
             - input.gain * pid.i * output.dc_gain = output.i
         """
         if isinstance(input, basestring):
-            input = self.lockbox._get_input(input)
+            input = self.lockbox.inputs[input]
 
-        self.current_input_lock = input
-        self.current_variable_value = variable_value
-        self.current_variable_slope = input.expected_slope(variable_value)
+        expected_slope = input.expected_slope(setpoint)
 
-        self.pid.setpoint = input.expected_signal(variable_value)
+        self.pid.setpoint = input.expected_signal(setpoint)
 
-        self.pid.p = self.p / (self.current_variable_slope*self.dc_gain)*factor
-        self.pid.i = self.i / (self.current_variable_slope*self.dc_gain)*factor
+        self.pid.p = self.p / (self.current_variable_slope * self.dc_gain) * factor
+        self.pid.i = self.i / (self.current_variable_slope * self.dc_gain) * factor
 
     def assisted_gain_updated(self):
         if self.assisted_design:
@@ -262,14 +260,14 @@ class OutputSignal(Signal):
             else:
                 return c.data.index
 
-    def lock(self, input, variable_value, factor=1.):
+    def lock(self, input, setpoint, factor=1.):
         """
         Closes the lock loop, using the required p and i parameters.
         """
         if isinstance(input, basestring):
-            input = self.lockbox._get_input(input)
+            input = self.lockbox.inputs[input]
         self.mode = 'lock'
-        self.update_pid_gains(input, variable_value, factor=factor)
+        self.update_pid_gains(input, setpoint, factor=factor)
         self.pid.input = input.signal()
         self._set_output()
 
@@ -291,10 +289,6 @@ class OutputSignal(Signal):
             return True
         else:
             return False
-
-    def update_for_model(self):
-        pass
-        #self.__class__.unit.change_options(self.lockbox.get_model( # ).units)
 
     @property
     def pid(self):
@@ -350,4 +344,3 @@ class OutputSignal(Signal):
         sets the integrator value to val (in V)
         """
         self.pid.ival = val
-
