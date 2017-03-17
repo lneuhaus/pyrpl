@@ -1,15 +1,145 @@
 from __future__ import division
-from . import Signal
+import scipy
+import numpy as np
+import logging
 from ....attributes import SelectAttribute, SelectProperty, FloatProperty, FrequencyProperty, PhaseProperty, \
     FilterProperty, FrequencyRegister
 from ....widgets.module_widgets import LockboxInputWidget
 from ....hardware_modules.dsp import DSP_INPUTS
 from ....pyrpl_utils import time
-import scipy
-import numpy as np
-import logging
+from ....module_attributes import ModuleProperty
+from .. import LockboxModule, LockboxModuleDictProperty
 
 logger = logging.getLogger(__name__)
+
+
+class CalibrationData(LockboxModule):
+    """ class to hold the calibration data of an input signal """
+    _setup_attributes = ["min", "max", "mean", "rms"]
+    _gui_attributes = []
+    min = FloatProperty(doc="min of the signal in V over a lockbox sweep")
+    max = FloatProperty(doc="max of the signal in V over a lockbox sweep")
+    mean = FloatProperty(doc="mean of the signal in V over a lockbox sweep")
+    rms = FloatProperty(min=0, max=2, doc="rms of the signal in V over a "
+                                          "lockbox sweep")
+
+    @property
+    def amplitude(self):
+        """ small helper function for expected signal """
+        return 0.5 * (self.max - self.min)
+
+
+    @property
+    def offset(self):
+        """ small helper function for expected signal """
+        return 0.5 * (self.max + self.min)
+
+    def get_stats_from_curve(self, curve):
+        """
+        gets the mean, min, max, rms value of curve (into the corresponding
+        self's attributes).
+        """
+        self.mean = curve.mean()
+        self.rms = curve.std()
+        self.min = curve.min()
+        self.max = curve.max()
+
+
+class Signal(LockboxModule):
+    """
+    represention of a physial signal. Can be either an imput or output signal.
+    """
+    _widget = None
+    calibration_data = ModuleProperty(CalibrationData)
+
+    def signal(self):
+        """ derived class should define this method which yields the scope-
+        compatible signal that can be used to monitor this signal"""
+        raise ValueError("Please define the method 'signal()' if the Signal "
+                         "%s to return a valid scope-compatible input.",
+                         self.name)
+        return 'off'
+
+
+    ##################################################
+    # Sampler routines for diagnostics of the signal #
+    ##################################################
+    @property
+    def sampler_time(self):
+        """ specifies the duration over which to sample a signal """
+        if hasattr(self, '_sampler_time') and self._sampler_time is not None:
+            return self._sampler_time
+        elif hasattr(self.lockbox, '_sampler_time') and self.lockbox._sampler_time is not None:
+            return self.lockbox._sampler_time
+        else:
+            return 0.01
+
+    def stats(self, t=None):
+        """
+        returns a tuple containing the mean, rms, max, and min of the signal.
+        """
+        # generate new samples for mean, rms, max, min if
+        # a) executed for the first time,
+        # b) nonstandard sampler time
+        # c) last sample older than sampler time
+        # Point c) ensures that we can call stats several times in
+        # immediate succession, e.g. to get mean and rms
+        if not hasattr(self, '_lasttime') or t is not None or \
+                time() - self._lasttime >= self.sampler_time:
+            # choose sampler time
+            if t is None:
+                t = self.sampler_time
+            # get fresh data
+            self._lastmean, self._lastrms, self._lastmax, self._lastmin\
+                = self.pyrpl.rp.sampler.stats(self.signal(), t=t)
+            # save a timestamp and the employed sampler time
+            self._lasttime = time()
+            self._lastt = t
+        return self._lastmean, self._lastrms, self._lastmax, self._lastmin
+
+    @property
+    def mean(self):
+        # get fresh data
+        mean, rms, max, min= self.stats()
+        # compute relative quantity
+        return mean
+
+    @property
+    def rms(self):
+        # get fresh data
+        mean, rms, max, min= self.stats()
+        # compute relative quantity
+        return rms
+
+    @property
+    def max(self):
+        # get fresh data
+        mean, rms, max, min= self.stats()
+        # compute relative quantity
+        return max
+
+    @property
+    def min(self):
+        # get fresh data
+        mean, rms, max, min= self.stats()
+        # compute relative quantity
+        return min
+
+    @property
+    def relative_mean(self):
+        """
+        returns the ratio between the measured mean value and the expected one.
+        """
+        # compute relative quantity
+        return self.mean / self.expected_amplitude
+
+    @property
+    def relative_rms(self):
+        """
+        returns the ratio between the measured rms value and the expected mean.
+        """
+        # compute relative quantity
+        return self.rms / self.expected_amplitude
 
 
 class InputSignal(Signal):
@@ -46,15 +176,10 @@ class InputSignal(Signal):
     - variable(): Estimates the model variable from the current value of
     the input.
     """
-    _setup_attributes = ["min", "max", "mean", "rms", "input_signal"]
+    _setup_attributes = ["input_signal"]
     _gui_attributes = ["input_signal"]
     _widget_class = LockboxInputWidget
 
-    min = FloatProperty(doc="min of the signal in V over a lockbox sweep")
-    max = FloatProperty(doc="max of the signal in V over a lockbox sweep")
-    mean = FloatProperty(doc="mean of the signal in V over a lockbox sweep")
-    rms = FloatProperty(min=0, max=2, doc="rms of the signal in V over a "
-                                          "lockbox sweep")
 
     # input_signal selects the input signal of the module from DSP modules and logical signals of the lockbox
     input_signal = SelectProperty(options=(lambda instance:
@@ -76,15 +201,7 @@ class InputSignal(Signal):
         By default, this is the direct input signal. """
         return self._input_signal_dsp_module()
 
-    def _init_module(self):
-        """
-        lockbox is the lockbox instance to which this input belongs.
-        """
-        self.parameters = dict()
-        self.plot_range = np.linspace(-5, 5, 200)
-        self._lasttime = -1e10
-
-    def acquire(self):
+    def sweep_acquire(self):
         """
         returns an experimental curve in V obtained from a sweep of the
         lockbox.
@@ -97,89 +214,37 @@ class InputSignal(Signal):
                 scope.setup(input1=self.signal(),
                             input2=self.lockbox.outputs[self.lockbox.default_sweep_output].pid.output_direct,
                             trigger_source=self.lockbox.asg.name,
-                            duration=2./self.lockbox.asg.frequency,
+                            duration=2. / self.lockbox.asg.frequency,
                             ch1_active=True,
                             ch2_active=False,
                             average=True,
                             running_state='running_continuous',
                             rolling_mode=False)
                 scope.save_state("autosweep")
-            curve1, curve2 = scope.curve(timeout=1./self.lockbox.asg.frequency+scope.duration)
+            curve1, curve2 = scope.curve(timeout=1. / self.lockbox.asg.frequency + scope.duration)
         return curve1
-
-    def get_stats_from_curve(self, curve):
-        """
-        gets the mean, min, max, rms value of curve (into the corresponding
-        self's attributes).
-        """
-        self.mean = curve.mean()
-        self.rms = curve.std()
-        self.min = curve.min()
-        self.max = curve.max()
-
-    @property
-    def expected_amplitude(self):
-        return (self.max-self.min)/2.0
-
-    @property
-    def _sampler_time(self):
-        try:
-            return self.lockbox._sampler_time
-        except:
-            return 0.01
-
-    def mean_rms(self):
-        """
-        returns a tuple containing the mean and rms value of the measured
-        signal in volts.
-        """
-        if time() - self._lasttime >= self._sampler_time:
-            self._lastmean, self._lastrms = self.pyrpl.rp.sampler.mean_stddev(self.signal(),
-                                                                              t=self._sampler_time)
-            self._lasttime = time()
-        return self._lastmean, self._lastrms
-
-    def relative_mean(self):
-        """
-        returns the ratio between the measured mean value and the expected one.
-        """
-        # get fresh data
-        mean, rms = self.mean_rms()
-        # compute relative quantity
-        return mean/self.expected_amplitude
-
-    def relative_rms(self):
-        """
-        returns the ratio between the measured rms value and the expected mean.
-        """
-        # get fresh data
-        mean, rms = self.mean_rms()
-        # compute relative quantity
-        return rms/self.expected_amplitude
 
     def calibrate(self):
         """
         This function should be reimplemented to measure whatever property of
         the curve is needed by expected_signal.
         """
-        curve = self.acquire()
-        self.get_stats_from_curve(curve)
+        curve = self.sweep_acquire()
+        self.calibration_data.get_stats_from_curve(curve)
         # log calibration values
         self._logger.info("%s calibration successful - Min: %.3f  Max: %.3f  Mean: %.3f  Rms: %.3f",
                           self.name,
-                          self.min, self.max, self.mean, self.rms)
+                          self.calibration_data.min,
+                          self.calibration_data.max,
+                          self.calibration_data.mean,
+                          self.calibration_data.rms)
         # update graph in lockbox
         self.lockbox._signal_launcher.input_calibrated.emit([self])
-
-#    def update_graph(self):
-#        if self._widget is not None:
-#            y = self.expected_signal(self.plot_range)
-#            self._widget.show_graph(self.plot_range, y)
 
     def expected_signal(self, variable):
         """
         Returns the value of the expected signal in V, depending on the
-        variable value "variable".
+        setpoint value "variable".
         """
         raise NotImplementedError("Formula relating variable and parameters to output should be implemented in derived "
                                   "class")
@@ -195,62 +260,72 @@ class InputSignal(Signal):
                                      n=1,  # first derivative
                                      order=3)
 
-    def inverse(self, func, y, x0, args=()):
-        """
-        Finds a solution x to the equation y = func(x) in the vicinity of x0.
+    # temporarily broken
+    #
+    # def inverse(self, func, y, x0, args=()):
+    #     """
+    #     Finds a solution x to the equation y = func(x) in the vicinity of x0.
+    #
+    #     Parameters
+    #     ----------
+    #     func: function
+    #         the function
+    #     y: float or np.array(,dtype=float)
+    #         the desired value of the function
+    #     x0: float
+    #         the starting point for the search
+    #     args: tuple
+    #         optional arguments to pass to func
+    #
+    #     Returns
+    #     -------
+    #     x: float
+    #         the solution. None if no inverse could be found.
+    #     """
+    #     try:
+    #         inverse = [self._inverse(self.expected_signal, yy, x0, args=args) for yy in y]
+    #         if len(inverse) == 1:
+    #             return inverse[0]
+    #         else:
+    #             return inverse
+    #     except TypeError:
+    #         def myfunc(x, *args):
+    #             return func(x, *args) - y
+    #         solution, infodict, ier, mesg = scipy.optimize.fsolve(
+    #                      myfunc,
+    #                      x0,
+    #                      args=args,
+    #                      xtol=1e-6,
+    #                      epsfcn=1e-8,
+    #                      fprime=self.__getattribute__(func.__name__+'_slope'),
+    #                      full_output=True)
+    #         if ier == 1:  # means solution was found
+    #             return solution[0]
+    #         else:
+    #             return None
+    #
+    # def variable(self):
+    #     """
+    #     Estimates the model variable from the current value of the input.
+    #     """
+    #     curve = self.sweep_acquire()
+    #     act = curve.mean()
+    #     set = self.lockbox.setpoint
+    #     variable = self.inverse(act, set)
+    #     if variable is not None:
+    #         return variable
+    #     else:
+    #         logger.warning("%s could not be estimated. Run a calibration!",
+    #                        self._variable)
+    #         return None
 
-        Parameters
-        ----------
-        func: function
-            the function
-        y: float or np.array(,dtype=float)
-            the desired value of the function
-        x0: float
-            the starting point for the search
-        args: tuple
-            optional arguments to pass to func
-
-        Returns
-        -------
-        x: float
-            the solution. None if no inverse could be found.
+    def _init_module(self):
         """
-        try:
-            inverse = [self._inverse(self.expected_signal, yy, x0, args=args) for yy in y]
-            if len(inverse) == 1:
-                return inverse[0]
-            else:
-                return inverse
-        except TypeError:
-            def myfunc(x, *args):
-                return func(x, *args) - y
-            solution, infodict, ier, mesg = scipy.optimize.fsolve(
-                         myfunc,
-                         x0,
-                         args=args,
-                         xtol=1e-6,
-                         epsfcn=1e-8,
-                         fprime=self.__getattribute__(func.__name__+'_slope'),
-                         full_output=True)
-            if ier == 1:  # means solution was found
-                return solution[0]
-            else:
-                return None
-
-    def variable(self):
+        lockbox is the lockbox instance to which this input belongs.
         """
-        Estimates the model variable from the current value of the input.
-        """
-        curve = self.acquire()
-        act = curve.mean()
-        set = self.lockbox.setpoint
-        variable = self.inverse(act, set)
-        if variable is not None:
-            return variable
-        else:
-            logger.warning("%s could not be estimated. Run a calibration!",
-                           self._variable)
-            return None
+        self.parameters = dict()
+        self.plot_range = np.linspace(-5, 5, 200)
+        self._lasttime = -1e10
 
     def _create_widget(self):
         widget = super(InputSignal, self)._create_widget()

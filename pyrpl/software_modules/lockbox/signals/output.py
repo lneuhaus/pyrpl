@@ -1,5 +1,5 @@
 from __future__ import division
-from . import Signal
+from .input import Signal
 from ....attributes import BoolProperty, FloatProperty, SelectProperty, \
     FloatAttribute, FilterAttribute, LongProperty, StringProperty, \
     ListFloatProperty, FrequencyProperty
@@ -43,8 +43,6 @@ class AdditionalFilterAttribute(FilterAttribute):
             instance.pid)
 
     def get_value(self, instance, owner):
-        if instance is None:
-            return self
         return instance.pid.inputfilter
 
     def set_value(self, instance, value):
@@ -55,16 +53,6 @@ class AdditionalFilterAttribute(FilterAttribute):
     #def launch_signal(self, module, new_value_list):
     #    super(AdditionalFilterAttribute, self).launch_signal(module, new_value_list)
     #    module._widget.update_transfer_function()
-
-
-class DisplayNameProperty(StringProperty):
-    def set_value(self, obj, val):
-        # name property is read-only
-        return
-    #     if obj.parent is not None:
-    #         obj.parent._rename_output(obj, val)
-    #     else:
-    #         super(DisplayNameProperty, self).set_value(obj, val)
 
 
 class AssistedDesignProperty(BoolProperty):

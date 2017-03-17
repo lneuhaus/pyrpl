@@ -4,13 +4,13 @@ from ..signals import *
 
 class FPReflection(InputDirect):
     def expected_signal(self, variable):
-        return self.max - (self.max - self.min) * self._lorentz(variable)
+        return self.calibration_data.max - (self.calibration_data.max - self.calibration_data.min) * self._lorentz(variable)
     def _lorentz(self, x):
         return 1.0 / (1.0 + x ** 2)
 
 class FPTransmission(FPReflection):
     def expected_signal(self, variable):
-        return self.min + (self.max - self.min) * self._lorentz(variable)
+        return self.calibration_data.min + (self.calibration_data.max - self.calibration_data.min) * self._lorentz(variable)
 
 class FPAnalogPdh(InputDirect):
     mod_freq = FrequencyProperty()
@@ -18,10 +18,8 @@ class FPAnalogPdh(InputDirect):
     _gui_attributes = InputDirect._gui_attributes + ['mod_freq']
 
     def expected_signal(self, variable):
-        offset = 0.5 * (self.max + self.min)
-        amplitude = 0.5 * (self.max - self.min)
         # we neglect offset here because it should really be zero on resonance
-        return amplitude * self._pdh_normalized(variable,
+        return self.calibration_data.amplitude * self._pdh_normalized(variable,
                                     sbfreq=self.mod_freq/self.lockbox.bandwidth,
                                     phase=0,
                                     eta=self.lockbox.eta)
@@ -103,7 +101,7 @@ class HighFinesseInput(InputDirect):
     """
 
     def calibrate(self):
-        curve = super(HighFinesseInput, self).acquire()
+        curve = super(HighFinesseInput, self).sweep_acquire()
         with self.pyrpl.scopes.pop(self.name) as scope:
             scope.load_state("autosweep")
             if "sweep_zoom" in scope.states:

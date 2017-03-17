@@ -11,7 +11,7 @@ class CustomInputClass(InputSignal):
     InputSignals"""
     def expected_signal(self, variable):
         # For example, assume that our analog signal is proportional to the square of the variable
-        return self.min + self.custom_gain_attribute * self.lockbox.custom_attribute * variable**2
+        return self.calibration_data.min + self.custom_gain_attribute * self.lockbox.custom_attribute * variable**2
 
     # If possible, you should explicitely define the derivative of expected_signal(variable). Otherwise, the derivative
     # is estimated numerically which might lead to inaccuracies and excess delay.
@@ -35,7 +35,7 @@ class CustomInputClass(InputSignal):
         """ This is a simplified calibration method. InputSignal.calibrate works better than this in most cases. """
         self.lockbox.sweep()
         # get a curve of the signal during the sweep
-        curve = self.acquire()
+        curve = self.sweep_acquire()
         # fill self.mean, min, max, rms with values from acquired curve.
         self.get_stats_from_curve(curve=curve)
 

@@ -146,7 +146,6 @@ class ModuleMetaClass(type):
                 self._setup_ongoing = True
                 try:
                     # user can redefine any setup_attribute through kwds
-                    kwds = dict(kwds)  # makes a copy of the kwds dict
                     try:
                         for key in self._setup_attributes:
                             if key in kwds:
@@ -430,9 +429,8 @@ class Module(with_metaclass(ModuleMetaClass, object)):
         """
         Sets the values of the setup attributes. Without calling any callbacks
         """
+        # see 'ModuleMetaClass' above for the definition of self.setup()
         self.setup(**kwds)
-            #raise ValueError("Attribute %s of module %s doesn't exist." % (
-            #    sorted(kwds.keys())[0], self.name))
 
     def _load_setup_attributes(self):
         """
