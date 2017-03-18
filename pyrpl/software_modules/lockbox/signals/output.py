@@ -140,6 +140,7 @@ class OutputSignal(Signal):
         Free up resources associated with the output
         """
         self.pyrpl.pids.free(self.pid)
+        self._pid = None
         super(OutputSignal, self)._clear()
 
     def unlock(self, reset_offset=False):

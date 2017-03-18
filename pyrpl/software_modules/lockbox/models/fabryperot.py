@@ -3,10 +3,13 @@ from ..signals import *
 from .interferometer import Interferometer
 
 
-class FPReflection(InputDirect):
+class FPReflection(InputSignal):
 
-    def expected_signal(self, variable):
-        return self.calibration_data.max - (self.calibration_data.max - self.calibration_data.min) * self._lorentz(variable)
+    def expected_signal(self, setpoint):
+        detuning = setpoint * self.lockbox._setpoint_unit_in_unit('bandwidth')
+        return self.calibration_data.max - (self.calibration_data.max -
+                                            self.calibration_data.min) * \
+                                           self._lorentz(detuning)
 
     def _lorentz(self, x):
         return 1.0 / (1.0 + x ** 2)
@@ -30,18 +33,29 @@ class FPReflection(InputDirect):
 
 
 class FPTransmission(FPReflection):
-    def expected_signal(self, variable):
-        return self.calibration_data.min + (self.calibration_data.max - self.calibration_data.min) * self._lorentz(variable)
+    def expected_signal(self, setpoint):
+        detuning = setpoint * self.lockbox._setpoint_unit_in_unit('bandwidth')
+        return self.calibration_data.min + (self.calibration_data.max -
+                                            self.calibration_data.min) * \
+                                            self._lorentz(detuning)
 
-class FPAnalogPdh(InputDirect):
+
+class FPAnalogPdh(InputSignal):
     mod_freq = FrequencyProperty()
     _setup_attributes = InputDirect._setup_attributes + ['mod_freq']
     _gui_attributes = InputDirect._gui_attributes + ['mod_freq']
 
-    def expected_signal(self, variable):
+    def is_locked(self, loglevel=logging.INFO):
+        # simply perform the is_locked with the reflection error signal
+        return self.lockbox.is_locked(self.lockbox.inputs.reflection,
+                                      loglevel=loglevel)
+
+    def expected_signal(self, setpoint):
         # we neglect offset here because it should really be zero on resonance
-        return self.calibration_data.amplitude * self._pdh_normalized(variable,
-                                    sbfreq=self.mod_freq/self.lockbox.bandwidth,
+        detuning = setpoint * self.lockbox._setpoint_unit_in_unit('bandwidth')
+        return self.calibration_data.amplitude * self._pdh_normalized(detuning,
+                                    sbfreq=self.mod_freq
+                                           / self.lockbox._bandwidth_in_Hz,
                                     phase=0,
                                     eta=self.lockbox.eta)
 
@@ -74,15 +88,17 @@ class FPAnalogPdh(InputDirect):
 
 
 class FPPdh(InputIq, FPAnalogPdh):
-    def is_locked(self, loglevel=logging.INFO):
-        # simply perform the is_locked with the reflection error signal
-        return self.lockbox.is_locked(self.lockbox.inputs.reflection,
-                                      loglevel=loglevel)
+    pass
 
 
 class FabryPerot(Interferometer):
     _gui_attributes = ["finesse", "round_trip_length", "eta"]
     _setup_attributes = _gui_attributes
+
+    inputs = LockboxModuleDictProperty(transmission=FPTransmission,
+                                       reflection=FPReflection,
+                                       pdh=FPPdh)
+
     finesse = FloatProperty(max=1e7, min=0, default=10000)
     # approximate length in m (not taking into account small variations of the
     # order of the wavelength)
@@ -96,16 +112,6 @@ class FabryPerot(Interferometer):
         """ returns the cavity free spectral range in Hz """
         return 2.998e8 / self.round_trip_length
 
-    @property
-    def linewidth(self):
-        """ returns the cavity linewidth in Hz """
-        return self.free_spectral_range / self.finesse
-
-    @property
-    def bandwidth(self):
-        """ returns the cavity bandwidth in Hz """
-        return self.linewidth/2.0
-
     # management of intput/output units
     # setpoint_variable = 'detuning'
     setpoint_unit = SelectProperty(options=['bandwidth',
@@ -115,23 +121,25 @@ class FabryPerot(Interferometer):
 
     # must provide conversion from setpoint_unit into all other basic units
     @property
+    def _linewidth_in_m(self):
+        return self.wavelength / self.finesse / 2.0
+
+    @property
+    def _linewidth_in_Hz(self):
+        return self.free_spectral_range / self.finesse
+
+    @property
     def _bandwidth_in_Hz(self):
-        return self.bandwidth
+        return self.linewidth_in_Hz / 2.0
 
     @property
     def _bandwidth_in_m(self):
         # linewidth (in m) = lambda/(2*finesse)
         # bandwidth = linewidth/2
-        return self.wavelength / self.finesse / 4.0
-
-    inputs = LockboxModuleDictProperty(transmission=FPTransmission,
-                                       reflection=FPReflection,
-                                       pdh=FPPdh)
+        return self.linewidth_in_m / 2.0
 
 
-
-
-class HighFinesseInput(InputDirect):
+class HighFinesseInput(InputSignal):
     """
     Since the number of points in the scope is too small for high finesse cavities, the acquisition is performed in
     2 steps:
@@ -168,7 +176,8 @@ class HighFinesseInput(InputDirect):
 
     def get_threshold(self, curve):
         """ returns a reasonable scope threshold for the interesting part of this curve """
-        return (curve.min() + curve.mean()) / 2.0 + self.calibration_data._analog_offset
+        return (curve.min() + curve.mean()) / 2.0 \
+               + self.calibration_data._analog_offset
 
 
 class HighFinesseReflection(HighFinesseInput, FPReflection):
@@ -180,26 +189,18 @@ class HighFinesseReflection(HighFinesseInput, FPReflection):
 
 
 class HighFinesseTransmission(HighFinesseInput, FPTransmission):
-    """
-    Reflection for a FabryPerot. The only difference with FPReflection is that
-    acquire will be done in 2 steps (coarse, then fine)
-    """
     pass
 
+class HighFinesseAnalogPdh(HighFinesseInput, FPAnalogPdh):
+    pass
 
 class HighFinessePdh(HighFinesseInput, FPPdh):
-    """
-    Reflection for a FabryPerot. The only difference with FPReflection is that
-    acquire will be done in 2 steps (coarse, then fine)
-    """
-    # the signal is the one from pdh (otherwise maybe overwritten by the one from HighFinesseInput)
-    #signal = InputPdh.signal
+    pass
 
 
 class HighFinesseFabryPerot(FabryPerot):
     _setup_attributes = ["inputs", "sequence"]  # this ensures that sequence is loaded at the very end (i.e. after inputs)
 
-    inputs = LockboxModuleDictProperty(LockboxModule,
-                                     transmission=HighFinesseTransmission,
-                                     reflection=HighFinesseReflection,
-                                     pdh=HighFinessePdh)
+    inputs = LockboxModuleDictProperty(transmission=HighFinesseTransmission,
+                                       reflection=HighFinesseReflection,
+                                       pdh=HighFinessePdh)

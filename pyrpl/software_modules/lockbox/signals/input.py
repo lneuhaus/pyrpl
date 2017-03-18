@@ -471,7 +471,7 @@ class IqFilterProperty(FilterProperty):
         # only allow the low-pass filter options (exclude negative high-pass options)
         return [v for v in module.iq.__class__.bandwidth.valid_frequencies(module.iq) if v >= 0]
 
-class InputIq(InputDirect):
+class InputIq(InputSignal):
     """ Base class for demodulated signals. A derived class must implement
     the method expected_signal (see InputPdh in fabryperot.py for example)"""
     _gui_attributes = ['mod_freq',
@@ -491,21 +491,21 @@ class InputIq(InputDirect):
 
     def _init_module(self):
         super(InputIq, self)._init_module()
-        self._iq = None
         self.setup()
 
-    def _clear(self):
-        self.pyrpl.iqs.free(self.iq)
-        super(InputIq, self)._clear()
+    @property
+    def iq(self):
+        if not hasattr(self, '_iq') or self._iq is None:
+            self._iq = self.pyrpl.iqs.pop(self.name)
+        return self._iq
 
     def signal(self):
         return self.iq
 
-    @property
-    def iq(self):
-        if self._iq is None:
-            self._iq = self.pyrpl.iqs.pop(self.name)
-        return self._iq
+    def _clear(self):
+        self.pyrpl.iqs.free(self.iq)
+        self._iq = None
+        super(InputIq, self)._clear()
 
     def _setup(self):
         """
