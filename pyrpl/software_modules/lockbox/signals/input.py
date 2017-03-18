@@ -389,6 +389,17 @@ class InputFromOutput(InputDirect):
                                         list(instance.lockbox.outputs.keys())),
                                   doc="lockbox signal used as input")
 
+    def is_locked(self):
+        """ this is mainly used for coarse locking where significant
+        effective deviations from the setpoint (in units of setpoint_variable)
+        may occur. We therefore issue a warning and return True if is_locked is
+        based on this output. """
+        self._logger.warning("is_locked() for InputFromOutput '%s' is not "
+                             "implemented. Please use a derived class with "
+                             "custom method or test lock on another input.",
+                             self.name)
+        return True
+
     def expected_signal(self, setpoint):
         """ it is assumed that the output has the linear relationship between
         setpoint change in output_unit per volt from the redpitaya, which
