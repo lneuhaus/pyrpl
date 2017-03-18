@@ -122,7 +122,7 @@ class Stage(LockboxModule):
             try:
                 func = getattr(self.lockbox, self.function_call)
             except AttributeError:
-                self._logger.warning("Could not find the function '%s'  called "
+                self._logger.warning("Could not find the function '%s' called "
                                      "in stage %s in the Lockbox class. "
                                      "Please specify a valid function name "
                                      "to call!", self.function_call, self.name)
