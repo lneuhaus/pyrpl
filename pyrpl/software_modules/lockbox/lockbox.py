@@ -24,11 +24,13 @@ class ClassnameProperty(SelectProperty):
     """
     def set_value(self, obj, val):
         super(ClassnameProperty, self).set_value(obj, val)
-        # we must save the attribute immediately here in order to guarantee that make_Lockbox works
+        # we must save the attribute immediately here in order to guarantee
+        # that make_Lockbox works
         if obj._autosave_active:
             self.save_attribute(obj, val)
         else:
-            obj._logger.debug("Autosave of classname attribute of Lockbox is inactive. This may have severe impact "
+            obj._logger.debug("Autosave of classname attribute of Lockbox is "
+                              "inactive. This may have severe impact "
                               "on proper functionality.")
         obj._logger.debug("Lockbox classname changed to %s", val)
         # this call results in replacing the lockbox object by a new one
@@ -115,13 +117,16 @@ class SignalLauncherLockbox(SignalLauncher):
         self.timer_lock.stop()
         self.timer_autolock.stop()
         self.timer_lockstatus.stop()
-    # state_changed = QtCore.pyqtSignal() # need to change the color of buttons in the widget
-    # state is now a standard Property, signals are caught by the update_attribute_by_name function of the widget.
+    # state_changed = QtCore.pyqtSignal() # need to change the color of buttons
+        # in the widget
+    # state is now a standard Property, signals are caught by the
+        # update_attribute_by_name function of the widget.
 
 
 class Lockbox(LockboxModule):
     """
-    A Module that allows to perform feedback on systems that are well described by a physical model.
+    A Module that allows to perform feedback on systems that are well described
+    by a physical model.
     """
     _widget_class = LockboxWidget
     _signal_launcher = SignalLauncherLockbox
@@ -174,7 +179,8 @@ class Lockbox(LockboxModule):
                             return self._unit1_in_unit2(unit1[len(prefix1):],
                                                          unit2[len(prefix2):],
                                                          try_prefix=False)\
-                                   * _unit_prefixes[prefix1]/_unit_prefixes[prefix2]
+                                   * _unit_prefixes[prefix1]\
+                                   / _unit_prefixes[prefix2]
                         except AttributeError:
                             pass
         raise AttributeError("Could not find attribute %s in Lockbox class. "
@@ -191,13 +197,15 @@ class Lockbox(LockboxModule):
 
     auto_lock_interval = AutoLockIntervalProperty(default=1.0, min=1e-3,
                                                   max=1e10)
-    # default_sweep_output would throw an error if the saved state corresponds to a nonexisting output
+    # default_sweep_output would throw an error if the saved state corresponds
+    # to a nonexisting output
     default_sweep_output = SelectProperty(options=lambda lb: lb.outputs.keys(),
                                           ignore_errors=True)
     error_threshold = FloatProperty(default=1.0, min=-1e10,max=1e10)
     auto_lock = AutoLockProperty()
 
-    # logical inputs and outputs of the lockbox are accessible as lockbox.outputs.output1
+    # logical inputs and outputs of the lockbox are accessible as
+    # lockbox.outputs.output1
     inputs = LockboxModuleDictProperty(input_from_output=InputFromOutput)
     outputs = LockboxModuleDictProperty(output1=OutputSignal,
                                         output2=OutputSignal)
@@ -208,8 +216,9 @@ class Lockbox(LockboxModule):
 
     # current state of the lockbox
     current_state = StateSelectProperty(options=
-                                        (lambda inst:
-                                        ['unlock', 'sweep'] + list(range(len(inst.sequence)))),
+                                          (lambda inst:
+                                            ['unlock', 'sweep']
+                                            + list(range(len(inst.sequence)))),
                                         default='unlock')
 
     final_stage = None
@@ -226,8 +235,8 @@ class Lockbox(LockboxModule):
     @property
     def signals(self):
         """ a dict of all logical signals of the lockbox """
-        # only return those signals that are already initialized to avoid recursive loops
-        # at startup
+        # only return those signals that are already initialized to avoid
+        # recursive loops at startup
         signallist = []
         if hasattr(self, "_inputs"):
             signallist += self.inputs.items()
@@ -288,7 +297,8 @@ class Lockbox(LockboxModule):
         else:  # self.state=='sweep' or self.state=='unlock':
             self.goto(self.sequence[0])
         if self.current_stage != self.sequence[-1]:
-            self._signal_launcher.timer_lock.setInterval((self.current_stage).duration * 1000)
+            self._signal_launcher.timer_lock.setInterval(
+                (self.current_stage).duration * 1000)
             self._signal_launcher.timer_lock.start()
 
     def goto(self, stage):
@@ -300,8 +310,8 @@ class Lockbox(LockboxModule):
     def lock(self, **kwds):
         """
         Launches the full lock sequence, stage by stage until the end.
-        optional kwds are stage attributes that are set after iteration through the sequence,
-        e.g. a modified setpoint.
+        optional kwds are stage attributes that are set after iteration through
+        the sequence, e.g. a modified setpoint.
         """
         # prepare final stage as a modified copy of the last stage
         self.final_stage = Stage(self, name='final_lock_stage')
@@ -317,7 +327,8 @@ class Lockbox(LockboxModule):
 
     def lock_blocking(self):
         """ prototype for the blocking lock function """
-        self._logger.warning("Function lock_blocking is currently not implemented correctly. ")
+        self._logger.warning("Function lock_blocking is currently not "
+                             "implemented correctly. ")
         self.lock()
         while not self.current_stage == self.sequence[-1]:
             sleep(0.01)
@@ -455,21 +466,24 @@ class Lockbox(LockboxModule):
 
     @classmethod
     def _make_Lockbox(cls, parent, name):
-        """ returns a new Lockbox object of the type defined by the classname variable in the config file"""
+        """ returns a new Lockbox object of the type defined by the classname
+        variable in the config file"""
         # identify class name
         try:
             classname = parent.c[name]['classname']
         except KeyError:
             classname = cls.__name__
-            parent.logger.debug("No config file entry for classname found. Using class '%s'.", classname)
-        parent.logger.info("Making new Lockbox with class %s. ", classname)
+            parent.logger.debug("No config file entry for classname found. "
+                                "Using class '%s'.", classname)
+        parent.logger.debug("Making new Lockbox with class %s. ", classname)
         # return instance of the class
         return all_classnames()[classname](parent, name)
 
     def _classname_changed(self):
         # check whether a new object must be instantiated and return if not
         if self.classname == type(self).__name__:
-            self._logger.debug("Lockbox classname not changed: - formerly: %s, now: %s.",
+            self._logger.debug("Lockbox classname not changed: - formerly: %s, "
+                               "now: %s.",
                               type(self).__name__,
                               self.classname)
             return
@@ -492,7 +506,8 @@ class Lockbox(LockboxModule):
             w.reload_dock_widget(name)
 
     def _delete_Lockbox(self):
-        """ returns a new Lockbox object of the type defined by the classname variable in the config file"""
+        """ returns a new Lockbox object of the type defined by the classname
+        variable in the config file"""
         pyrpl, name = self.pyrpl, self.name
         self._signal_launcher.clear()
         for o in self.outputs:
@@ -503,10 +518,13 @@ class Lockbox(LockboxModule):
         try:
             self.parent.software_modules.remove(self)
         except ValueError:
-            self._logger.warning("Could not find old Lockbox %s in the list of software modules. Duplicate lockbox "
-                                 "objects may coexist. It is recommended to restart PyRPL. Existing software modules: "
-                                 "\n%s", self.name, str(self.parent.software_modules))
-        # redirect all attributes of the old lockbox to the new/future lockbox object
+            self._logger.warning("Could not find old Lockbox %s in the list of "
+                                 "software modules. Duplicate lockbox objects "
+                                 "may coexist. It is recommended to restart "
+                                 "PyRPL. Existing software modules: \n%s",
+                                 self.name, str(self.parent.software_modules))
+        # redirect all attributes of the old lockbox to the new/future lockbox
+        # object
         def getattribute_forwarder(obj, attribute):
             lockbox = getattr(pyrpl, name)
             return getattr(lockbox, attribute)

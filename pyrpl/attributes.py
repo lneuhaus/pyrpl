@@ -145,7 +145,8 @@ class BaseAttribute(object):
         Creates a widget to graphically manipulate the attribute.
         """
         if self._widget_class is None:
-            logger.warning("Module %s of type %s is trying to create a widget for %s, but no _widget_class is defined!",
+            logger.warning("Module %s of type %s is trying to create a widget "
+                           "for %s, but no _widget_class is defined!",
                            str(module), type(module), self.name)
             return None
         if name is None:
@@ -228,7 +229,9 @@ class FrequencyAttribute(FloatAttribute):
         """
         Same as FloatAttribute, except it saturates with 0.
         """
-        return max(0, super(FrequencyAttribute, self).validate_and_normalize(value, module))
+        return max(0,
+                   super(FrequencyAttribute,
+                         self).validate_and_normalize(value, module))
 
 
 class IntAttribute(NumberAttribute):
@@ -328,11 +331,9 @@ class SelectAttribute(BaseAttribute):
                 else:
                     self.default = self._starting_options[0]
             except:
-                #self.default = None
-                logger.warning("Default of SelectAttribute with docstring %s "
-                               "has been set to None due to lack of other "
-                               "options. ",
-                               self.__doc__)
+                logger.debug("Default of SelectAttribute with docstring %s "
+                             "has no options. ",
+                             self.__doc__)
 
 
     def options(self, instance):

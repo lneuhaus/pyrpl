@@ -93,7 +93,8 @@ class RedPitaya(object):
             monitor_server_name='monitor_server',  # name of the server program on redpitaya
             silence_env=False)  # suppress all environment variables that may override the configuration?
 
-        if you are experiencing problems, try to increase delay, or try logging.getLogger().setLevel(logging.DEBUG)"""
+        if you are experiencing problems, try to increase delay, or try
+        logging.getLogger().setLevel(logging.DEBUG)"""
         self.logger = logging.getLogger(name=__name__)
         #self.license()
         # make or retrieve the config file
@@ -102,7 +103,8 @@ class RedPitaya(object):
         else:
             self.c = MemoryTree(config)
         # get the parameters right (in order of increasing priority):
-        # first defaults, then environment variables, config file, and command line arguments
+        # first defaults, then environment variables, config file, and command
+        # line arguments
         self.parameters = defaultparameters
         # get parameters from os.environment variables
         if not self.parameters['silence_env']:
@@ -113,11 +115,12 @@ class RedPitaya(object):
                     self.parameters[k] = type(oldvalue)(newvalue)
                     if k == "password": # do not show the password on the screen
                         newvalue = "********"
-                    self.logger.warning("Variable %s with value %s overwritten by "
-                                        +"environment variable REDPITAYA_%s with "
-                                        +"value %s. Use argument 'silence_env=True' "
-                                        +"if this is not desired!", k, oldvalue,
-                                        k.upper(), newvalue)
+                    self.logger.debug("Variable %s with value %s overwritten "
+                                      "by environment variable REDPITAYA_%s "
+                                      "with value %s. Use argument "
+                                      "'silence_env=True' if this is not "
+                                      "desired!",
+                                      k, oldvalue, k.upper(), newvalue)
         try:
             self.parameters.update(self.c.redpitaya._data)  # from config file
         except:
@@ -316,7 +319,8 @@ class RedPitaya(object):
             sleep(self.parameters['delay'])
             result += self.ssh.ask()
             if not "sh" in result: 
-                self.logger.info("Server application started on port %d", self.parameters['port'])
+                self.logger.debug("Server application started on port %d",
+                              self.parameters['port'])
                 return self.parameters['port']
             else: # means we tried the wrong binary version. make sure server is not running and try again with next file
                 self.endserver()
@@ -334,12 +338,14 @@ class RedPitaya(object):
         self.endserver()
         sleep(self.parameters['delay'])
         if self.fpgarecentlyflashed():
-            self.logger.info("FPGA is being flashed. Please wait for 2 seconds.")
+            self.logger.info("FPGA is being flashed. Please wait for 2 "
+                            "seconds.")
             sleep(2.0)
         result = self.ssh.ask(self.parameters['serverdirname']+"/"+self.parameters['monitor_server_name']
                           +" "+ str(self.parameters['port']))
         if not "sh" in result: # sh in result means we tried the wrong binary version
-            self.logger.info("Server application started on port %d",self.parameters['port'])
+            self.logger.debug("Server application started on port %d",
+                              self.parameters['port'])
             self._serverrunning = True
             return self.parameters['port']
         #something went wrong
@@ -351,7 +357,7 @@ class RedPitaya(object):
         except:
             self.logger.exception("Server not responding...")
         if 'pitaya' in self.ssh.ask():
-            self.logger.info('>') # formerly 'console ready'
+            self.logger.debug('>') # formerly 'console ready'
         sleep(self.parameters['delay'])
         # make sure no other monitor_server blocks the port
         self.ssh.ask('killall ' + self.parameters['monitor_server_name'])
@@ -404,7 +410,7 @@ class RedPitaya(object):
         self.client = monitor_client.MonitorClient(
             self.parameters['hostname'], self.parameters['port'], restartserver=self.restartserver)
         self.makemodules()
-        self.logger.info("Client started successfully. ")
+        self.logger.debug("Client started successfully. ")
 
     def startdummyclient(self):
         self.client = monitor_client.DummyClient()
