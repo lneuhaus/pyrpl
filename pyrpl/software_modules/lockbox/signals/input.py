@@ -379,11 +379,34 @@ class InputDirect(InputSignal):
     def expected_signal(self, x):
         return x
 
-
 class InputFromOutput(InputDirect):
+
     def calibrate(self):
+        """ no need to calibrate this """
         pass
 
+    input_signal = SelectProperty(options=(lambda instance:
+                                        list(instance.lockbox.outputs.keys())),
+                                  doc="lockbox signal used as input")
+
+    def expected_signal(self, setpoint):
+        """ it is assumed that the output has the linear relationship between
+        setpoint change in output_unit per volt from the redpitaya, which
+        is configured in the output parameter 'dc_gain'. We only need to
+        convert units to get the output voltage bringing about a given
+        setpoint difference. """
+        # An example:
+        # The configured output gain is 'output.dc_gain' nm/V.
+        # setpoint_unit is cavity 'linewidth', the latter given by
+        # 'lockbox._setpopint_unit_in_unit('nm')' (in nm).
+        # Therefore, the output voltage corresponding to a change of
+        # one linewidth is given (in V) by:
+        # lockbox._setpopint_unit_in_unit('nm')/output.dc_gain
+        output = self.lockbox.signals[self.input_signal]
+        output_unit = output.unit.split('/')[0]
+        setpoint_in_output_unit = \
+            setpoint * self.lockbox._setpoint_unit_in_unit(output_unit)
+        return setpoint_in_output_unit / output.dc_gain
 
 class IqFrequencyProperty(FrequencyProperty):
     def __init__(self, **kwargs):

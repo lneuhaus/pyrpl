@@ -108,7 +108,9 @@ class FabryPerot(Interferometer):
 
     # management of intput/output units
     # setpoint_variable = 'detuning'
-    setpoint_unit = 'bandwidth'
+    setpoint_unit = SelectProperty(options=['bandwidth',
+                                            'linewidth'],
+                                   default='bandwidth')
     _output_units = ['V', 'm', 'Hz', 'nm', 'MHz']
 
     # must provide conversion from setpoint_unit into all other basic units

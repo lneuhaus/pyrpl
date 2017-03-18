@@ -126,6 +126,7 @@ class Lockbox(LockboxModule):
     _widget_class = LockboxWidget
     _signal_launcher = SignalLauncherLockbox
     _gui_attributes = ["classname",
+                       "setpoint_unit",
                        "default_sweep_output",
                        "auto_lock",
                        "auto_lock_interval",
@@ -133,13 +134,12 @@ class Lockbox(LockboxModule):
     _setup_attributes = _gui_attributes
 
     classname = ClassnameProperty()
-    parameter_name = "parameter"
 
     ###################
     # unit management #
     ###################
     # setpoint_unit is mandatory to specify in which unit the setpoint is given
-    setpoint_unit = 'V'
+    setpoint_unit = SelectProperty(options=['V'], default='V')
     # output gain comes in units of '_output_unit'/V of analog redpitaya output
     _output_units = ['V', 'mV']
     # each _output_unit must come with a function that allows conversion from
