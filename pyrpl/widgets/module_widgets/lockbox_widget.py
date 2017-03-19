@@ -8,6 +8,7 @@ import numpy as np
 from ..attribute_widgets import BaseAttributeWidget
 from .base_module_widget import ReducedModuleWidget, ModuleWidget
 
+
 APP = QtGui.QApplication.instance()
 
 
@@ -463,8 +464,11 @@ class InputsWidget(QtGui.QWidget):
 
     def show_lock(self, stage):
         for widget in self.input_widgets:
-            if widget.name==stage.input:
-                widget.show_lock(stage.input, stage.setpoint)
+            try:
+                if widget.name==stage.input:
+                    widget.show_lock(stage.input, stage.setpoint)
+            except AttributeError:  # when stage is not a Stage object
+                pass
 
 
 class PlusTab(QtGui.QWidget):
@@ -877,7 +881,7 @@ class LockboxWidget(ModuleWidget):
             try:
                 self.set_button_green(stage._widget.button_goto)
             except AttributeError:  # if stage has not widget (final_stage)
-                pass
+                self.set_button_green(None)
             self.show_lock(stage)
         self.update_lockstatus()
 
@@ -898,8 +902,9 @@ class LockboxWidget(ModuleWidget):
         self.hide_lock_points()
         if isinstance(stage, int):
             stage = self.module.sequence[stage]
-        if stage is not None and not isinstance(stage, basestring):
-            self.all_sig_widget.show_lock(stage)
+        elif stage == "final_stage":
+            stage = self.module.final_stage
+        self.all_sig_widget.show_lock(stage)
 
     def hide_lock_points(self):
         """
