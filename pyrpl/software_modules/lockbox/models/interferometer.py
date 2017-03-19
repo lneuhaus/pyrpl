@@ -27,17 +27,19 @@ class Interferometer(Lockbox):
     _output_units = ['V', 'm', 'nm']
     # must provide conversion from setpoint_unit into all other basic units
     # management of intput/output units
+    _rad_in_deg = 180.0  / np.pi  # only internally needed
+
     @property
     def _deg_in_m(self):
         # factor 2 comes from assumption that beam is reflected off a mirror,
         # i. e. beam gets twice the phaseshift from the displacement
-        return 2.0 * 360.0 / self.wavelength
+        return self.wavelength / 360.0 / 2.0
 
     @property
     def _rad_in_m(self):
         # factor 2 comes from assumption that beam is reflected off a mirror,
         # i. e. beam gets twice the phaseshift from the displacement
-        return 2.0 * 2.0 * np.pi / self.wavelength
+        return self._rad_in_deg * self._deg_in_m
 
     inputs = LockboxModuleDictProperty(port1=InterferometerPort1,
                                        port2=InterferometerPort2)
