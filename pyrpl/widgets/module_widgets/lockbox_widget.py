@@ -684,9 +684,6 @@ class LockboxSequenceWidget(ModuleWidget):
         for stage in self.module:
             self.stage_created([stage])
         self.main_layout.addStretch(2)
-        self.scroll_layout = QtGui.QScrollArea(self)
-        #self.scroll_layout.setWidget(self)
-        #self.scroll_layout.setLayout(self)
 
     def stage_created(self, stage):
         stage = stage[0] # values are passed as list of length 1
@@ -707,8 +704,8 @@ class LockboxSequenceWidget(ModuleWidget):
         stage = stage[0] # values are passes as list of length 1
         widget = stage._widget
         self.stage_widgets.remove(widget)
-        if self.parent().button_green == widget.button_goto:
-            self.parent().button_green = None
+        if self.parent().parent().parent().button_green == widget.button_goto:
+            self.parent().parent().parent().button_green = None
         widget.hide()
         self.main_layout.removeWidget(widget)
         widget.deleteLater()
@@ -744,23 +741,34 @@ class LockboxWidget(ModuleWidget):
         self.button_sweep.clicked.connect(lambda: self.module.sweep())
         self.button_calibrate_all.clicked.connect(lambda: self.module.calibrate_all())
 
-        # Locking sequence widget
+        # Locking sequence widget + hide button
         self.sequence_widget = self.module.sequence._create_widget()
-        self.main_layout.addWidget(self.sequence_widget)
-        self.button_hide1 = QtGui.QPushButton("^ Lock sequence ^")
-        self.button_hide1.setMaximumHeight(15)
-        self.button_hide1.clicked.connect(self.button_hide1_clicked)
-        self.main_layout.addWidget(self.button_hide1)
+        self.scrollarea = QtGui.QScrollArea()
+        self.scrollarea.setWidget(self.sequence_widget)
+        minimumsizehint = self.sequence_widget.minimumSizeHint().height() \
+                         + self.scrollarea.horizontalScrollBar().height()
+        self.scrollarea.setMinimumHeight(minimumsizehint)
+        #self.scrollarea.setVerticalScrollBarPolicy(
+        #    QtCore.Qt.ScrollBarAlwaysOff)
+        #self.sequence_widget.setSizePolicy(QtGui.QSizePolicy.Preferred,
+        #                                   QtGui.QSizePolicy.Preferred)
+        self.scrollarea.setWidgetResizable(True)
+        self.main_layout.addWidget(self.scrollarea)
+        # hide button for sequence
+        # self.button_hide1 = QtGui.QPushButton("^ Lock sequence ^")
+        # self.button_hide1.setMaximumHeight(15)
+        # self.button_hide1.clicked.connect(self.button_hide1_clicked)
+        # self.main_layout.addWidget(self.button_hide1)
 
         # inputs/ outputs widget
         self.all_sig_widget = AllSignalsWidget(self)
-        self.main_layout.addWidget(self.all_sig_widget)
-        self.button_hide2 = QtGui.QPushButton("^ Inputs / Outputs ^")
+        self.button_hide2 = QtGui.QPushButton("hide inputs / outputs")
         #self.button_hide_clicked() # open by default
         self.button_hide2.setMaximumHeight(15)
         #self.button_hide2.setMaximumWidth(150)
         self.button_hide2.clicked.connect(self.button_hide2_clicked)
         self.main_layout.addWidget(self.button_hide2)
+        self.main_layout.addWidget(self.all_sig_widget)
 
         self.main_layout.addStretch(5)
         self.setLayout(self.main_layout)
@@ -783,12 +791,19 @@ class LockboxWidget(ModuleWidget):
         Hide/show the signal part of the widget
         :return:
         """
+        # current = str(self.button_hide2.text())
+        # if current.endswith('v'):
+        #     self.button_hide2.setText('^' + current[1:-1] + '^')
+        #     self.all_sig_widget.show()
+        # else:
+        #     self.button_hide2.setText('v' + current[1:-1] + 'v')
+        #     self.all_sig_widget.hide()
         current = str(self.button_hide2.text())
-        if current.endswith('v'):
-            self.button_hide2.setText('^' + current[1:-1] + '^')
+        if current.startswith('show'):
+            self.button_hide2.setText('hide' + current[4:])
             self.all_sig_widget.show()
         else:
-            self.button_hide2.setText('v' + current[1:-1] + 'v')
+            self.button_hide2.setText('show' + current[4:])
             self.all_sig_widget.hide()
 
     def input_calibrated(self, inputs):

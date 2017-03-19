@@ -130,13 +130,13 @@ class FabryPerot(Interferometer):
 
     @property
     def _bandwidth_in_Hz(self):
-        return self.linewidth_in_Hz / 2.0
+        return self._linewidth_in_Hz / 2.0
 
     @property
     def _bandwidth_in_m(self):
         # linewidth (in m) = lambda/(2*finesse)
         # bandwidth = linewidth/2
-        return self.linewidth_in_m / 2.0
+        return self._linewidth_in_m / 2.0
 
 
 class HighFinesseInput(InputSignal):

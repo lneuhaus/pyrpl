@@ -78,6 +78,8 @@ class MyDockWidget(QtGui.QDockWidget):
     """
     A DockWidget where the inner widget is only created when needed (To reduce load times).
     """
+    scrollable = True  # use scroll bars?
+
     def __init__(self, create_widget_func, name):
         """
         create_widget_func is a function to create the widget.
@@ -95,10 +97,36 @@ class MyDockWidget(QtGui.QDockWidget):
     def showEvent(self, event):
         if self.widget is None:
             self.widget = self.create_widget_func()
-            self.setWidget(self.widget)
+            if self.scrollable:
+                self.scrollarea = QtGui.QScrollArea()
+                self.scrollarea.setWidget(self.widget)
+                self.scrollarea.setWidgetResizable(True)
+                self.setWidget(self.scrollarea)
+            else:
+                self.setWidget(self.widget)
         super(MyDockWidget, self).showEvent(event)
-        # self.setWidget(widget)
 
+    def event(self, event):
+        event_type = event.type()
+        if event.type() == 176:  # QEvent::NonClientAreaMouseButtonDblClick
+            if self.isFloating():
+                if self.isMaximized():
+                    fn = lambda: self.showNormal()
+                else:
+                    fn = lambda: self.showMaximized()
+                # strange bug: always goes back to normal
+                # self.showMaximized()
+                # dirty workaround: make a timer
+                self.timer = QtCore.QTimer()
+                self.timer.timeout.connect(fn)
+                self.timer.setSingleShot(True)
+                self.timer.setInterval(1.0)
+                self.timer.start()
+            event.accept()
+            return True
+        else:
+            #return super(MyDockWidget, self).event(event)
+            return QtGui.QDockWidget.event(self, event)
 
 class PyrplWidget(QtGui.QMainWindow):
     def __init__(self, pyrpl_instance):
@@ -108,7 +136,11 @@ class PyrplWidget(QtGui.QMainWindow):
         self.logger.addHandler(self.handler)
 
         super(PyrplWidget, self).__init__()
-        self.setDockNestingEnabled(True)
+        self.setDockNestingEnabled(True)  # allow dockwidget nesting
+        self.setAnimated(True)  # animate docking of dock widgets
+        self.showMaximized()  # maximized by default
+        #self.showFullScreen()
+
         self.dock_widgets = {}
         self.last_docked = None
 
@@ -117,7 +149,6 @@ class PyrplWidget(QtGui.QMainWindow):
 
         for module in self.parent.software_modules:
             self.add_dock_widget(module._create_widget, module.name)
-
         self.set_window_position()
         self.timer_save_pos = QtCore.QTimer()
         self.timer_save_pos.setInterval(1000)
@@ -169,9 +200,12 @@ class PyrplWidget(QtGui.QMainWindow):
         dock_widget = MyDockWidget(create_widget, name)
         self.dock_widgets[name] = dock_widget
         self.addDockWidget(QtCore.Qt.TopDockWidgetArea,
-                                           dock_widget)
+                           dock_widget)
         if self.last_docked is not None:
             self.tabifyDockWidget(self.last_docked, dock_widget)
+        # put tabs on top
+        self.setTabPosition(dock_widget.allowedAreas(),
+                            QtGui.QTabWidget.North)
         self.last_docked = dock_widget
         self.last_docked.hide()  # by default no widget is created...
 
