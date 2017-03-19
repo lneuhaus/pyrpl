@@ -863,7 +863,7 @@ class LockboxWidget(ModuleWidget):
         SLOT: don't change name unless you know what you are doing
         Basically painting some button in green is required
         """
-        stage = self.module.current_stage
+        stage = self.module.current_state
         if stage=='unlock':
             self.set_button_green(self.button_unlock)
             self.hide_lock_points()
@@ -872,8 +872,11 @@ class LockboxWidget(ModuleWidget):
             self.hide_lock_points()
             self.set_button_green(self.button_sweep)
             return
-        elif stage in self.module.sequence:  # val is index of a lock stage
-            self.set_button_green(stage._widget.button_goto)
+        else:
+            if stage == self.module.final_stage:
+                self.set_button_green(self.module.sequence[-1]._widget.button_goto)
+            else:
+                self.set_button_green(stage._widget.button_goto)
             self.show_lock(stage)
 
     def set_button_green(self, button):
@@ -902,9 +905,9 @@ class LockboxWidget(ModuleWidget):
         for input_widget in self.all_sig_widget.inputs_widget.input_widgets:
             input_widget.hide_lock()
 
-    def update_lockstatus(self, lockstatus):
+    def update_lockstatus(self):
         # color = self.module._is_locked_display_color
-        color, = lockstatus
+        color = self.module._is_locked_display_color()
         self.button_is_locked.setStyleSheet("background-color: %s; "
                                             "color:white"%color)
 

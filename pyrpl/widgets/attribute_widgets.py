@@ -324,7 +324,8 @@ class MyDoubleSpinBox(MyNumberSpinBox):
         # former non-scientific notation
         #self.line.setText(("%."+str(self.decimals) + "f")%new_val)
         # currently: scientific notation
-        self.line.setText( ('{:.'+str(self.decimals)+'e}').format(new_val) )
+        self.line.setText(('{:.'+str(self.decimals)+'e}').format(
+            float(new_val)))
         self.value_changed.emit()
         return new_val
 

@@ -96,7 +96,8 @@ class OutputSignal(Signal):
     extra_module = SelectProperty(['None', 'iir', 'pid', 'iq'], call_setup=True)
     extra_module_state = SelectProperty(options=['None'], call_setup=True)
     # internal state of the output
-    current_state = SelectProperty(options=['lock', 'unlock', 'sweep'], default='unlock')
+    current_state = SelectProperty(options=['lock', 'unlock', 'sweep'],
+                                   default='unlock')
 
     def signal(self):
         return self.pid.name

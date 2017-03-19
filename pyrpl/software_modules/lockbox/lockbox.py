@@ -80,7 +80,7 @@ class SignalLauncherLockbox(SignalLauncher):
     input_calibrated = QtCore.pyqtSignal(list)
     remove_input = QtCore.pyqtSignal(list)
     update_transfer_function = QtCore.pyqtSignal(list)
-    update_lockstatus = QtCore.pyqtSignal(list)
+    update_lockstatus = QtCore.pyqtSignal()
 
     def __init__(self, module):
         super(SignalLauncherLockbox, self).__init__(module)
@@ -217,17 +217,30 @@ class Lockbox(LockboxModule):
     # current state of the lockbox
     current_state = StateSelectProperty(options=
                                           (lambda inst:
-                                            ['unlock', 'sweep']
+                                            ['unlock', 'sweep', 'lock']
                                             + list(range(len(inst.sequence)))),
                                         default='unlock')
 
-    final_stage = None
+    @property
+    def final_stage(self):
+        """ temporary storage of the final lock stage"""
+        if not hasattr(self, _final_stage):
+            self._final_stage = Stage(self, name='final_stage')
+            self.final_stage = {}
+        return self._final_stage
+
+    @final_stage.setter
+    def final_stage(self, kwargs):
+        setup_attributes = self.sequence[-1].setup_attributes
+        setup_attributes.update(kwargs)
+        setup_attributes['duration'] = 0
+        self._final_stage.setup(**setup_attributes)
 
     @property
     def current_stage(self):
         if isinstance(self.current_state, int):
             return self.sequence[self.current_state]
-        elif self.current_state == 'final_lock_stage':
+        elif self.current_state == 'lock':
             return self.final_stage
         else:
             return self.current_state
@@ -313,43 +326,27 @@ class Lockbox(LockboxModule):
         optional kwds are stage attributes that are set after iteration through
         the sequence, e.g. a modified setpoint.
         """
-        # prepare final stage as a modified copy of the last stage
-        self.final_stage = Stage(self, name='final_lock_stage')
-        self.final_stage.setup(**self.sequence[-1].setup_attributes)
-        self.final_stage.setup(**kwds)
-        self.final_stage.duration = 0
+        # prepare final stage property as a modified copy of the last stage
+        self.final_stage = kwds
         # iterate through locking sequence:
         # unlock -> sequence -> final_stage
         self.unlock()
         for stage in self.sequence + [self.final_stage]:
             stage.enable()
             sleep(stage.duration)
-
-    def lock_blocking(self):
-        """ prototype for the blocking lock function """
-        self._logger.warning("Function lock_blocking is currently not "
-                             "implemented correctly. ")
-        self.lock()
-        while not self.current_stage == self.sequence[-1]:
-            sleep(0.01)
-        return self.is_locked()
-
-    def is_locking_sequence_active(self):
-        state = self.current_stage
-        if isinstance(state, int) and state < len(self.sequence)-1:
-            return True
-        else:
-            return False
+        return self.is_locked(loglevel=logging.DEBUG)
 
     def relock(self):
         """ locks the cavity if it is_locked is false. Returns the value of
         is_locked """
-        is_locked = self.is_locked(loglevel=logging.DEBUG)
-        if not is_locked:
-            # make sure not to launch another sequence during a locking attempt
-            if not self.is_locking_sequence_active():
-                self.lock()
-        return is_locked
+        if self.current_stage in self.sequence:
+            # lock acquisition in progress, dont interrupt
+            return False
+        # either in final stage or in an unlocked state
+        elif self.is_locked(loglevel=logging.DEBUG):
+            return True
+        else:
+            return self.lock(**self.final_stage._setup_attributes)
 
     def is_locked(self, input=None, loglevel=logging.INFO):
         """ returns True if locked, else False. Also updates an internal
@@ -428,12 +425,9 @@ class Lockbox(LockboxModule):
     def _lockstatus(self):
         """ this function is a placeholder for periodic lockstatus
         diagnostics, such as calls to is_locked, logging means and rms
-        values and plotting measured setpoints etc."""
-        # call islocked here for later use
-        islocked = self.is_locked(loglevel=logging.DEBUG)
-        islocked_color = self._is_locked_display_color(islocked=islocked)
-        # ask widget to update the lockstatus display
-        self._signal_launcher.update_lockstatus.emit([islocked_color])
+        values, and plotting measured setpoints etc."""
+        # ask GUI to update the lockstatus display
+        self._signal_launcher.update_lockstatus.emit()
         # optionally, call log function of the model
         try:
             self.log_lockstatus()
@@ -454,7 +448,7 @@ class Lockbox(LockboxModule):
             if islocked is None:
                islocked = self.is_locked(loglevel=logging.DEBUG)
             if islocked:
-                if self.current_state == 'final_lock_stage':
+                if self.current_state == 'lock':
                     # locked and in last stage
                     return 'green'
                 else:
