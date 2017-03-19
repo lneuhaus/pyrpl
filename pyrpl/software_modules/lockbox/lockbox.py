@@ -5,7 +5,7 @@ from ...module_attributes import ModuleProperty, ModuleListProperty, ModuleDictP
 from .signals import *
 from ...widgets.module_widgets import LockboxWidget
 from ...pyrpl_utils import get_unique_name_list_from_class_list, all_subclasses
-from ...async_utils import sleep
+from ...async_utils import sleep, PyrplFuture, MainThreadTimer
 from .stage import Stage
 from . import LockboxModule, LockboxModuleDictProperty
 from collections import OrderedDict
@@ -120,6 +120,48 @@ class SignalLauncherLockbox(SignalLauncher):
         #self.timer_lock.stop()
         self.timer_autolock.stop()
         self.timer_lockstatus.stop()
+
+class LockFuture(PyrplFuture):
+    """
+    A Future that will only be fulfilled (with True or False) when the whole
+    lock sequence is over.
+    """
+    def __init__(self, lockbox, **kwds):
+        """
+        The kwds are the options for the "final stage" (a modified copy of
+        the last stage that is enabled once the sequence is over)
+        """
+        self.lockbox = lockbox
+        super(LockFuture, self).__init__()
+        # prepare final stage property as a modified copy of the last stage
+        self.lockbox.final_stage = kwds
+        # iterate through locking sequence:
+        # unlock -> sequence -> final_stage
+        self.lockbox.unlock()
+
+        first_stage = self.lockbox.sequence[0]
+        first_stage.enable()
+
+        self._timer = MainThreadTimer(first_stage.duration*1000)
+        self._timer.timeout.connect(self.goto_next_stage)
+        self._timer.start()
+
+    def goto_next_stage(self):
+        """
+        Goes to the stage immediately after the current one.
+        """
+        next_stage = self.lockbox.current_stage.next
+        if next_stage is None: #  sequence over, set result
+            self.set_result(self.lockbox.is_locked()) #  Ideally,
+            # this should be asynchronous as well...
+        else:
+            self._timer.setInterval(next_stage.duration * 1000)
+            next_stage.enable()
+            self._timer.start()
+
+    def cancel(self):
+        self._timer.stop()
+        super(LockFuture, self).cancel()
 
 
 class Lockbox(LockboxModule):
@@ -329,8 +371,45 @@ class Lockbox(LockboxModule):
             sleep(stage.duration)
             if self._state_change_time != state_change_time:
                 # lockbox state was changed during sleep -> Abort lock
+                # Remark:
+                # In the async logic, self._lock_future.cancel() should be
+                # called whenever a stage.enable() is called (use an
+                # unprotected function stage._enable for the lock sequence
+                # itself)
                 return False
         return self.is_locked(loglevel=logging.DEBUG)
+
+    def lock_new(self, **kwds):
+        """
+        Same as lock_async, except the function will block until the lock
+        sequence is over.
+        :param **kwds: The parameters to use for the final stage
+        :returns the result (True or False) of the lock sequence.
+        """
+        is_locked = self.lock_async(**kwds)
+        return is_locked.await_result() #  no timeout since duration is
+        # deterministic
+
+    def lock_async(self, **kwds):
+        """
+        Launches the full lock sequence, stage by stage until the end.
+        optional kwds are stage attributes that are set after iteration through
+        the sequence, e.g. a modified setpoint. Returns immediately a
+        LockFuture object that will represent the result of the lock sequence
+        (True or False) once arrived at the end of the sequence.
+        """
+        self._new_lock_future(**kwds)
+        return self._new_lock_future()
+
+    def _new_lock_future(self, **kwds):
+        """
+        Cancels the current self._lock_future, creates and returns a new one
+        with the specified kwds.
+        """
+        if hasattr(self, '_lock_future'):
+            self._lock_future.cancel()
+        self._lock_future = LockFuture(self, **kwds)
+        return self._lock_future
 
     def relock(self):
         """ locks the cavity if it is_locked is false. Returns the value of

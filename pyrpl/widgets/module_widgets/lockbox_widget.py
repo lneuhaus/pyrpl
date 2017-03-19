@@ -930,7 +930,7 @@ class LockboxWidget(ModuleWidget):
             if islocked is None:
                 islocked = module.is_locked(loglevel=logging.DEBUG)
             if islocked:
-                if self.current_state == 'lock':
+                if module.current_state == 'lock':
                     # locked and in last stage
                     return 'green'
                 else:
