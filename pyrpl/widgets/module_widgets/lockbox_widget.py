@@ -1,13 +1,12 @@
 """
 The lockbox widget is composed of all the submodules widgets
 """
-from ..attribute_widgets import BaseAttributeWidget
-from .base_module_widget import ReducedModuleWidget, ModuleWidget
-
 from PyQt4 import QtCore, QtGui
 import pyqtgraph as pg
-
+import logging
 import numpy as np
+from ..attribute_widgets import BaseAttributeWidget
+from .base_module_widget import ReducedModuleWidget, ModuleWidget
 
 APP = QtGui.QApplication.instance()
 
@@ -773,6 +772,10 @@ class LockboxWidget(ModuleWidget):
         self.main_layout.addStretch(5)
         self.setLayout(self.main_layout)
 
+    def delete_widget(self):
+        self.module = None  # allow module to be deleted
+        self.deleteLater()
+
     def button_hide1_clicked(self):
         """
         Hide/show the signal part of the widget
@@ -863,21 +866,20 @@ class LockboxWidget(ModuleWidget):
         SLOT: don't change name unless you know what you are doing
         Basically painting some button in green is required
         """
-        stage = self.module.current_state
+        stage = self.module.current_stage
         if stage=='unlock':
             self.set_button_green(self.button_unlock)
             self.hide_lock_points()
-            return
         elif stage=='sweep':
             self.hide_lock_points()
             self.set_button_green(self.button_sweep)
-            return
         else:
-            if stage == self.module.final_stage:
-                self.set_button_green(self.module.sequence[-1]._widget.button_goto)
-            else:
+            try:
                 self.set_button_green(stage._widget.button_goto)
+            except AttributeError:  # if stage has not widget (final_stage)
+                pass
             self.show_lock(stage)
+        self.update_lockstatus()
 
     def set_button_green(self, button):
         """
@@ -885,7 +887,8 @@ class LockboxWidget(ModuleWidget):
         """
         if self.button_green is not None:
             self.button_green.setStyleSheet("")
-        button.setStyleSheet("background-color:green")
+        if button is not None:
+            button.setStyleSheet("background-color:green")
         self.button_green = button
 
     def show_lock(self, stage):
@@ -905,12 +908,34 @@ class LockboxWidget(ModuleWidget):
         for input_widget in self.all_sig_widget.inputs_widget.input_widgets:
             input_widget.hide_lock()
 
-    def update_lockstatus(self):
+    def update_lockstatus(self, islockedlist=[None]):
+        islocked = islockedlist[0]
         # color = self.module._is_locked_display_color
-        color = self.module._is_locked_display_color()
+        color = self._is_locked_display_color(islocked=islocked)
         self.button_is_locked.setStyleSheet("background-color: %s; "
                                             "color:white"%color)
 
-    def delete_widget(self):
-        self.module = None  # allow module to be deleted
-        self.deleteLater()
+    def _is_locked_display_color(self, islocked=None):
+        """ function that returns the color of the LED indicating
+        lockstatus. If is_locked is called in update_lockstatus above,
+        it should not be called a second time here
+        """
+        module = self.module
+        if module.current_state == 'sweep':
+            return 'blue'
+        elif module.current_state == 'unlock':
+            return 'darkRed'
+        else:
+            # should be locked
+            if islocked is None:
+                islocked = module.is_locked(loglevel=logging.DEBUG)
+            if islocked:
+                if self.current_state == 'lock':
+                    # locked and in last stage
+                    return 'green'
+                else:
+                    # locked but acquiring
+                    return 'yellow'
+            else:
+                # unlocked but not supposed to
+                return 'red'

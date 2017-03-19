@@ -61,6 +61,8 @@ class AutoLockIntervalProperty(FloatProperty):
 class StateSelectProperty(SelectProperty):
     def set_value(self, obj, val):
         super(StateSelectProperty, self).set_value(obj, val)
+        # save the last time of change of state
+        obj._state_change_time = time()
         obj._signal_launcher.state_changed.emit()
 
 
@@ -80,13 +82,14 @@ class SignalLauncherLockbox(SignalLauncher):
     input_calibrated = QtCore.pyqtSignal(list)
     remove_input = QtCore.pyqtSignal(list)
     update_transfer_function = QtCore.pyqtSignal(list)
-    update_lockstatus = QtCore.pyqtSignal()
+    update_lockstatus = QtCore.pyqtSignal(list)
 
     def __init__(self, module):
         super(SignalLauncherLockbox, self).__init__(module)
-        self.timer_lock = QtCore.QTimer()
-        self.timer_lock.timeout.connect(self.module.goto_next)
-        self.timer_lock.setSingleShot(True)
+        # obsolete
+        # self.timer_lock = QtCore.QTimer()
+        # self.timer_lock.timeout.connect(self.module.goto_next)
+        # self.timer_lock.setSingleShot(True)
 
         self.timer_autolock = QtCore.QTimer()
         # autolock works by periodiccally calling relock
@@ -114,13 +117,9 @@ class SignalLauncherLockbox(SignalLauncher):
         """
         kill all timers
         """
-        self.timer_lock.stop()
+        #self.timer_lock.stop()
         self.timer_autolock.stop()
         self.timer_lockstatus.stop()
-    # state_changed = QtCore.pyqtSignal() # need to change the color of buttons
-        # in the widget
-    # state is now a standard Property, signals are caught by the
-        # update_attribute_by_name function of the widget.
 
 
 class Lockbox(LockboxModule):
@@ -134,9 +133,8 @@ class Lockbox(LockboxModule):
                        "setpoint_unit",
                        "default_sweep_output",
                        "auto_lock",
-                       "auto_lock_interval",
                        "error_threshold"]
-    _setup_attributes = _gui_attributes
+    _setup_attributes = _gui_attributes + ["auto_lock_interval"]
 
     classname = ClassnameProperty()
 
@@ -186,7 +184,6 @@ class Lockbox(LockboxModule):
         raise AttributeError("Could not find attribute %s in Lockbox class. "
                              %(unit1+'_per_'+unit2))
 
-
     def _unit_in_setpoint_unit(self, unit):
         # helper function to convert setpoint_unit into unit
         return self._unit1_in_unit2(unit, self.setpoint_unit)
@@ -195,14 +192,18 @@ class Lockbox(LockboxModule):
         # helper function to convert setpoint_unit into unit
         return self._unit1_in_unit2(self.setpoint_unit, unit)
 
-    auto_lock_interval = AutoLockIntervalProperty(default=1.0, min=1e-3,
-                                                  max=1e10)
     # default_sweep_output would throw an error if the saved state corresponds
     # to a nonexisting output
     default_sweep_output = SelectProperty(options=lambda lb: lb.outputs.keys(),
                                           ignore_errors=True)
+
+    # consider cavity locked ifin units of setpoint_unit
     error_threshold = FloatProperty(default=1.0, min=-1e10,max=1e10)
+
     auto_lock = AutoLockProperty()
+    # try to relock every auto_lock_interval (s) is autolock is on
+    auto_lock_interval = AutoLockIntervalProperty(default=1.0, min=1e-3,
+                                                  max=1e10)
 
     # logical inputs and outputs of the lockbox are accessible as
     # lockbox.outputs.output1
@@ -224,7 +225,7 @@ class Lockbox(LockboxModule):
     @property
     def final_stage(self):
         """ temporary storage of the final lock stage"""
-        if not hasattr(self, _final_stage):
+        if not hasattr(self, '_final_stage'):
             self._final_stage = Stage(self, name='final_stage')
             self.final_stage = {}
         return self._final_stage
@@ -234,7 +235,7 @@ class Lockbox(LockboxModule):
         setup_attributes = self.sequence[-1].setup_attributes
         setup_attributes.update(kwargs)
         setup_attributes['duration'] = 0
-        self._final_stage.setup(**setup_attributes)
+        self.final_stage.setup(**setup_attributes)
 
     @property
     def current_stage(self):
@@ -265,15 +266,6 @@ class Lockbox(LockboxModule):
             self._asg = self.pyrpl.asgs.pop(self.name)
         return self._asg
 
-    # def _setup(self):
-    #     """
-    #     Sets up the lockbox
-    #     """
-    #     for input in self.inputs:
-    #         input.setup()
-    #     for output in self.outputs:
-    #         output._setup()
-
     def calibrate_all(self):
         """
         Calibrates successively all inputs
@@ -285,9 +277,6 @@ class Lockbox(LockboxModule):
         """
         Unlocks all outputs.
         """
-        # self.auto_lock = False  # in conflict with calls of unlock
-        # by sweep() and lock()
-        self._signal_launcher.timer_lock.stop()
         for output in self.outputs:
             output.unlock(reset_offset=reset_offset)
         self.current_state = 'unlock'
@@ -301,24 +290,25 @@ class Lockbox(LockboxModule):
         self.outputs[self.default_sweep_output].sweep()
         self.current_state = "sweep"
 
-    def goto_next(self):
-        """
-        Goes to the stage immediately after the current one
-        """
-        if isinstance(self.current_stage, self.sequence.element_cls):
-            self.goto(self.current_stage.next)
-        else:  # self.state=='sweep' or self.state=='unlock':
-            self.goto(self.sequence[0])
-        if self.current_stage != self.sequence[-1]:
-            self._signal_launcher.timer_lock.setInterval(
-                (self.current_stage).duration * 1000)
-            self._signal_launcher.timer_lock.start()
-
-    def goto(self, stage):
-        """
-        Sets up the lockbox to the stage named stage_name
-        """
-        stage.enable()
+    # obsolete
+    # def goto_next(self):
+    #     """
+    #     Goes to the stage immediately after the current one
+    #     """
+    #     if isinstance(self.current_stage, self.sequence.element_cls):
+    #         self.goto(self.current_stage.next)
+    #     else:  # self.state=='sweep' or self.state=='unlock':
+    #         self.goto(self.sequence[0])
+    #     if self.current_stage != self.sequence[-1]:
+    #         self._signal_launcher.timer_lock.setInterval(
+    #             (self.current_stage).duration * 1000)
+    #         self._signal_launcher.timer_lock.start()
+    #
+    # def goto(self, stage):
+    #     """
+    #     Sets up the lockbox to the stage named stage_name
+    #     """
+    #     stage.enable()
 
     def lock(self, **kwds):
         """
@@ -333,7 +323,13 @@ class Lockbox(LockboxModule):
         self.unlock()
         for stage in self.sequence + [self.final_stage]:
             stage.enable()
+            state_change_time = self._state_change_time
+            # asynchronous sleep, allows other things
+            # to happend in the meantime
             sleep(stage.duration)
+            if self._state_change_time != state_change_time:
+                # lockbox state was changed during sleep -> Abort lock
+                return False
         return self.is_locked(loglevel=logging.DEBUG)
 
     def relock(self):
@@ -347,6 +343,15 @@ class Lockbox(LockboxModule):
             return True
         else:
             return self.lock(**self.final_stage._setup_attributes)
+
+    # def _setup(self):
+    #     """
+    #     Sets up the lockbox
+    #     """
+    #     for input in self.inputs:
+    #         input.setup()
+    #     for output in self.outputs:
+    #         output._setup()
 
     def is_locked(self, input=None, loglevel=logging.INFO):
         """ returns True if locked, else False. Also updates an internal
@@ -426,37 +431,10 @@ class Lockbox(LockboxModule):
         """ this function is a placeholder for periodic lockstatus
         diagnostics, such as calls to is_locked, logging means and rms
         values, and plotting measured setpoints etc."""
-        # ask GUI to update the lockstatus display
-        self._signal_launcher.update_lockstatus.emit()
-        # optionally, call log function of the model
-        try:
-            self.log_lockstatus()
-        except:
-            pass
-
-    def _is_locked_display_color(self, islocked=None):
-        """ function that returns the color of the LED indicating
-        lockstatus. If is_locked is called in update_lockstatus above,
-        it should not be called a second time here
-        """
-        if self.current_state == 'sweep':
-            return 'blue'
-        elif self.current_state == 'unlock':
-            return 'darkRed'
-        else:
-            # should be locked
-            if islocked is None:
-               islocked = self.is_locked(loglevel=logging.DEBUG)
-            if islocked:
-                if self.current_state == 'lock':
-                    # locked and in last stage
-                    return 'green'
-                else:
-                    # locked but acquiring
-                    return 'yellow'
-            else:
-                # unlocked but not supposed to
-                return 'red'
+        # ask GUI to update the lockstatus display (pass value of
+        # self.is_locked() instead of None if already available)
+        self._signal_launcher.update_lockstatus.emit([None])
+        # optionally, insert logging functionality in derived classes here...
 
     @classmethod
     def _make_Lockbox(cls, parent, name):
