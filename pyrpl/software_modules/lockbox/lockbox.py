@@ -182,7 +182,7 @@ class Lockbox(LockboxModule):
                         except AttributeError:
                             pass
         raise AttributeError("Could not find attribute %s in Lockbox class. "
-                             %(unit1+'_per_'+unit2))
+                             %(unit1+'_in_'+unit2))
 
     def _unit_in_setpoint_unit(self, unit):
         # helper function to convert setpoint_unit into unit
