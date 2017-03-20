@@ -7,6 +7,7 @@ import logging
 import numpy as np
 from ..attribute_widgets import BaseAttributeWidget
 from .base_module_widget import ReducedModuleWidget, ModuleWidget
+from ...pyrpl_utils import get_base_module_class
 
 
 APP = QtGui.QApplication.instance()
@@ -724,8 +725,20 @@ class LockboxWidget(ModuleWidget):
     The LockboxWidget combines the lockbox submodules widget: model, inputs, outputs, lockbox_control
     """
     def init_gui(self):
+        # make standard layout
         self.main_layout = QtGui.QVBoxLayout()
+        self.setLayout(self.main_layout)  # wasnt here before
         self.init_attribute_layout()
+        # move all custom attributes to the second GUI line (spares place)
+        self.custom_attribute_layout = QtGui.QHBoxLayout()
+        self.main_layout.addLayout(self.custom_attribute_layout)
+        lockbox_base_class = get_base_module_class(self.module)
+        for attr_name in self.module._gui_attributes:
+            if attr_name not in lockbox_base_class._gui_attributes:
+                widget = self.attribute_widgets[attr_name]
+                self.attribute_layout.removeWidget(widget)
+                self.custom_attribute_layout.addWidget(widget)
+        # add buttons to standard attribute layout
         self.button_is_locked = QtGui.QPushButton("is_locked?")
         self.button_lock = QtGui.QPushButton("Lock")
         self.button_unlock = QtGui.QPushButton("Unlock")

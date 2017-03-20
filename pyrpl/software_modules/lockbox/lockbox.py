@@ -138,10 +138,10 @@ class Lockbox(LockboxModule):
     _widget_class = LockboxWidget
     _signal_launcher = SignalLauncherLockbox
     _gui_attributes = ["classname",
-                       "setpoint_unit",
                        "default_sweep_output",
                        "auto_lock",
-                       "error_threshold"]
+                       "error_threshold",
+                       "setpoint_unit"]
     _setup_attributes = _gui_attributes + ["auto_lock_interval",
                                            "lockstatus_interval"]
 
