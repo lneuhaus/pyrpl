@@ -9,8 +9,8 @@ print os.environ["PYRPL_USER_DIR"]
 print default_config_dir
 print user_config_dir
 
-#p = Pyrpl('fpm')
-p = Pyrpl('ttttt', hostname='_FAKE_REDPITAYA_')
+p = Pyrpl('fpm')
+#p = Pyrpl('ttttt', hostname='_FAKE_REDPITAYA_')
 print p.c._filename
 
 while True:

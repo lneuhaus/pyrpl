@@ -153,7 +153,7 @@ class ReducedModuleWidget(QtGui.QGroupBox):
             if callable(attribute):
                 # assume that attribute is a function
                 widget = QtGui.QPushButton(attr_name)
-                widget.clicked.connect(lambda: getattr(self.module, attr_name)())
+                widget.clicked.connect(getattr(self.module, attr_name))
             else:
                 # standard case: make attribute widget
                 widget = attribute._create_widget(self.module)
