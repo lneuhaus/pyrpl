@@ -835,6 +835,7 @@ class ListComplexSpinBox(QtGui.QFrame):
             if spin.hasFocus():
                 return index
 
+
 class ListFloatAttributeWidget(BaseAttributeWidget):
     """
     The number of values is fixed (to 4 for now)
