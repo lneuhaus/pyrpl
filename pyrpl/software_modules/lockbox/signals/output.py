@@ -119,7 +119,10 @@ class OutputSignal(Signal):
         """
         ival, max, min = self.pid.ival, self.pid.max_voltage, \
                          self.pid.min_voltage
-        if ival > max or ival < min:
+        sample = getattr(self.pyrpl.rp.sampler, self.pid.name)
+        # criterion for saturation: integrator value saturated
+        # and current value (including pid) as well
+        if (ival > max or ival < min) and (sample > max or sample < min):
             return True
         else:
             return False

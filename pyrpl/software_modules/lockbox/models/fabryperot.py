@@ -47,8 +47,7 @@ class FPAnalogPdh(InputSignal):
 
     def is_locked(self, loglevel=logging.INFO):
         # simply perform the is_locked with the reflection error signal
-        return self.lockbox.is_locked(self.lockbox.inputs.reflection,
-                                      loglevel=loglevel)
+        return self.lockbox.inputs.reflection.is_locked(loglevel=loglevel)
 
     def expected_signal(self, setpoint):
         # we neglect offset here because it should really be zero on resonance

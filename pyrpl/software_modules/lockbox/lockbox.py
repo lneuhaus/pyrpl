@@ -58,6 +58,13 @@ class AutoLockIntervalProperty(FloatProperty):
         obj._signal_launcher.timer_autolock.setInterval(val*1000.0)
 
 
+class LockstatusIntervalProperty(FloatProperty):
+    """ timeout for autolock timer """
+    def set_value(self, obj, val):
+        super(LockstatusIntervalProperty, self).set_value(obj=obj, val=val)
+        obj._signal_launcher.timer_lockstatus.setInterval(val*1000.0)
+
+
 class StateSelectProperty(SelectProperty):
     def set_value(self, obj, val):
         super(StateSelectProperty, self).set_value(obj, val)
@@ -95,19 +102,20 @@ class SignalLauncherLockbox(SignalLauncher):
         # autolock works by periodiccally calling relock
         self.timer_autolock.timeout.connect(self.call_relock)
         self.timer_autolock.setSingleShot(True)
-        self.timer_autolock.setInterval(1000.0)
+        #self.timer_autolock.setInterval(1000.0)  # set by property
 
         self.timer_lockstatus = QtCore.QTimer()
         self.timer_lockstatus.timeout.connect(self.call_lockstatus)
         self.timer_lockstatus.setSingleShot(True)
-        self.timer_lockstatus.setInterval(1000.0)
+        #self.timer_lockstatus.setInterval(1000.0)  # set by property
 
         # start timer that checks lock status
         self.timer_lockstatus.start()
 
     def call_relock(self):
         self.module.relock()
-        self.timer_autolock.start()
+        if self.module.auto_lock:
+            self.timer_autolock.start()
 
     def call_lockstatus(self):
         self.module._lockstatus()
@@ -134,7 +142,8 @@ class Lockbox(LockboxModule):
                        "default_sweep_output",
                        "auto_lock",
                        "error_threshold"]
-    _setup_attributes = _gui_attributes + ["auto_lock_interval"]
+    _setup_attributes = _gui_attributes + ["auto_lock_interval",
+                                           "lockstatus_interval"]
 
     classname = ClassnameProperty()
 
@@ -203,7 +212,9 @@ class Lockbox(LockboxModule):
     auto_lock = AutoLockProperty()
     # try to relock every auto_lock_interval (s) is autolock is on
     auto_lock_interval = AutoLockIntervalProperty(default=1.0, min=1e-3,
-                                                  max=1e10)
+                                                   max=1e10)
+    lockstatus_interval = LockstatusIntervalProperty(default=1.0, min=1e-3,
+                                                      max=1e10)
 
     # logical inputs and outputs of the lockbox are accessible as
     # lockbox.outputs.output1
@@ -218,7 +229,7 @@ class Lockbox(LockboxModule):
     # current state of the lockbox
     current_state = StateSelectProperty(options=
                                           (lambda inst:
-                                            ['unlock', 'sweep', 'lock']
+                                            ['unlock', 'sweep', 'final_stage']
                                             + list(range(len(inst.sequence)))),
                                         default='unlock')
 
@@ -241,7 +252,7 @@ class Lockbox(LockboxModule):
     def current_stage(self):
         if isinstance(self.current_state, int):
             return self.sequence[self.current_state]
-        elif self.current_state == 'lock':
+        elif self.current_state == 'final_stage':
             return self.final_stage
         else:
             return self.current_state
@@ -316,11 +327,12 @@ class Lockbox(LockboxModule):
         optional kwds are stage attributes that are set after iteration through
         the sequence, e.g. a modified setpoint.
         """
-        # prepare final stage property as a modified copy of the last stage
-        self.final_stage = kwds
         # iterate through locking sequence:
         # unlock -> sequence -> final_stage
         self.unlock()
+        # prepare final stage property as a modified copy of the last stage
+        self.final_stage = kwds
+        # actual sequence
         for stage in self.sequence + [self.final_stage]:
             stage.enable()
             state_change_time = self._state_change_time
@@ -335,14 +347,17 @@ class Lockbox(LockboxModule):
     def relock(self):
         """ locks the cavity if it is_locked is false. Returns the value of
         is_locked """
-        if self.current_stage in self.sequence:
-            # lock acquisition in progress, dont interrupt
-            return False
-        # either in final stage or in an unlocked state
-        elif self.is_locked(loglevel=logging.DEBUG):
+        if self.current_stage == self.final_stage and self.is_locked(loglevel=logging.DEBUG):
+            # locked and in final stage, nothing to do
             return True
+        elif self.current_stage in self.sequence \
+                and self._state_change_time + self.current_stage.duration + 1.0 < time():
+            # lock acquisition in progress and not taking too long
+            # (with 0.1 s margin), do not interrupt
+            return False
         else:
-            return self.lock(**self.final_stage._setup_attributes)
+            # either unlocked in final stage or in an unlocked state: call lock()
+            return self.lock(**self.final_stage.setup_attributes)
 
     # def _setup(self):
     #     """
@@ -359,73 +374,30 @@ class Lockbox(LockboxModule):
         state of lock is logged at loglevel """
         if not self.current_stage in (self.sequence+[self.final_stage]):
             # not locked to any defined sequence state
-            self._logger.log(loglevel, "Cavity is not locked: lockbox state "
-                                       "is %s.", self.current_stage)
+            self._logger.log(loglevel,
+                             "Not locked: lockbox state '%s' does not "
+                             "correspond to a lock stage.",
+                             self.current_state)
             return False
         # test for output saturation
         for o in self.outputs:
             if o.is_saturated:
-                self._logger.log(loglevel, "Cavity is not locked: output %s "
+                self._logger.log(loglevel, "Not locked: output %s "
                                            "is saturated.", o.name)
                 return False
         # input locked to
-        if input is None: #input=None (default) or input=False (call by gui)
-            input = self.inputs[self.current_stage.input]
+        if input is None:
+            if hasattr(self, '_default_is_locked_input') and self._default_is_locked_input is not None:
+                input = self._default_is_locked_input
+            else:
+                input = self.current_stage.input
+        if not isinstance(input, InputSignal):
+            input = self.inputs[input]
+        # call is_locked of the input
         try:
-            # use input-specific is_locked if it exists
-            try:
-                islocked = input.is_locked(loglevel=loglevel)
-            except TypeError: # occurs if is_locked takes no argument loglevel
-                islocked = input.is_locked()
-            return islocked
-        except:
-            pass
-        # supposed to be locked at this value
-        setpoint = self.current_stage.setpoint
-        # current values
-        #actmean, actrms = self.pyrpl.rp.sampler.mean_stddev(input.input_channel)
-        actmean, actrms = input.mean, input.rms
-        # get max, min of acceptable error signals
-        error_threshold = self.error_threshold
-        min = input.expected_signal(setpoint-error_threshold)
-        max = input.expected_signal(setpoint+error_threshold)
-        startslope = input.expected_slope(setpoint - error_threshold)
-        stopslope = input.expected_slope(setpoint + error_threshold)
-        # no guarantee that min<max
-        if max<min:
-            # swap them in this case
-            max, min = min, max
-        # now min < max
-        # if slopes have unequal signs, the signal has a max/min in the
-        # interval
-        if startslope*stopslope <= 0:
-            if startslope > stopslope:  # maximum in between, ignore upper limit
-                max = 1e100
-            elif startslope < stopslope:  # minimum, ignore lower limit
-                min = -1e100
-        if actmean > max or actmean < min:
-            self._logger.log(loglevel,
-                             "Cavity is not locked at stage %s: "
-                             "input %s value of %.2f +- %.2f (setpoint %.2f)"
-                             "is not in error interval [%.2f, %.2f].",
-                             self.current_stage.name,
-                             input.name,
-                             actmean,
-                             actrms,
-                             input.expected_signal(setpoint),
-                             min,
-                             max)
-            return False
-        # lock seems ok
-        self._logger.log(loglevel,
-                         "Cavity is locked at stage %s: "
-                         "input %s value is %.2f +- %.2f (setpoint %.2f).",
-                         self.current_stage.name,
-                         input.name,
-                         actmean,
-                         actrms,
-                         input.expected_signal(setpoint))
-        return True
+            return input.is_locked(loglevel=loglevel)
+        except TypeError: # occurs if is_locked takes no argument loglevel
+            return input.is_locked()
 
     def _lockstatus(self):
         """ this function is a placeholder for periodic lockstatus

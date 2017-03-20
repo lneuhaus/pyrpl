@@ -138,8 +138,6 @@ class PyrplWidget(QtGui.QMainWindow):
         super(PyrplWidget, self).__init__()
         self.setDockNestingEnabled(True)  # allow dockwidget nesting
         self.setAnimated(True)  # animate docking of dock widgets
-        self.showMaximized()  # maximized by default
-        #self.showFullScreen()
 
         self.dock_widgets = {}
         self.last_docked = None
@@ -149,6 +147,7 @@ class PyrplWidget(QtGui.QMainWindow):
 
         for module in self.parent.software_modules:
             self.add_dock_widget(module._create_widget, module.name)
+        # self.showMaximized()  # maximized by default
         self.set_window_position()
         self.timer_save_pos = QtCore.QTimer()
         self.timer_save_pos.setInterval(1000)

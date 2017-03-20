@@ -738,7 +738,8 @@ class LockboxWidget(ModuleWidget):
         self.attribute_layout.addWidget(self.button_unlock)
         self.attribute_layout.addWidget(self.button_sweep)
         self.attribute_layout.addWidget(self.button_calibrate_all)
-        self.button_is_locked.clicked.connect(lambda: self.module.is_locked())
+        self.button_is_locked.clicked.connect(lambda: self.module.is_locked(
+            loglevel=self.module._logger.getEffectiveLevel()))
         self.button_lock.clicked.connect(lambda: self.module.lock())
         self.button_unlock.clicked.connect(lambda: self.module.unlock())
         self.button_sweep.clicked.connect(lambda: self.module.sweep())
@@ -935,7 +936,7 @@ class LockboxWidget(ModuleWidget):
             if islocked is None:
                 islocked = module.is_locked(loglevel=logging.DEBUG)
             if islocked:
-                if self.current_state == 'lock':
+                if module.current_stage == module.final_stage:
                     # locked and in last stage
                     return 'green'
                 else:
