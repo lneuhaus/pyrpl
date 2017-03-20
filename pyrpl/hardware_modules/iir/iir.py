@@ -13,6 +13,7 @@ class SignalLauncherIir(SignalLauncher):
 
 
 class IIR(FilterModule):
+    _signal_launcher = SignalLauncherIir
     iirfilter = None  # will be set by setup()
     _minloops = 5  # minimum number of loops for correct behaviour
     _maxloops = 1023
@@ -74,7 +75,8 @@ class IIR(FilterModule):
                            doc="Bitmask for various overflow conditions")
 
     def _init_module(self):
-        self._signal_launcher = SignalLauncherIir(self)
+        #self._signal_launcher = SignalLauncherIir(self)
+        self._logger.setLevel(30)
 
     @property
     def output_saturation(self):

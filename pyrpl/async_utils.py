@@ -6,13 +6,13 @@ from PyQt4 import QtCore, QtGui
 from timeit import default_timer
 from .errors import TimeoutError, NotReadyError
 
-_LOGGER = logging.getLogger(name=__name__)
+logger = logging.getLogger(name=__name__)
 
 try:
     from asyncio import Future, ensure_future, CancelledError, set_event_loop
 except ImportError:
-    _LOGGER.warning("asyncio not found, we will use concurrent.futures "
-                    "instead of python 3.5 Futures.")
+    logger.debug("asyncio not found, we will use concurrent.futures "
+                  "instead of python 3.5 Futures.")
     from concurrent.futures import Future, CancelledError
 else:
     import quamash

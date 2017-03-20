@@ -96,7 +96,8 @@ class OutputSignal(Signal):
     extra_module = SelectProperty(['None', 'iir', 'pid', 'iq'], call_setup=True)
     extra_module_state = SelectProperty(options=['None'], call_setup=True)
     # internal state of the output
-    current_state = SelectProperty(options=['lock', 'unlock', 'sweep'], default='unlock')
+    current_state = SelectProperty(options=['lock', 'unlock', 'sweep'],
+                                   default='unlock')
 
     def signal(self):
         return self.pid.name
@@ -118,7 +119,10 @@ class OutputSignal(Signal):
         """
         ival, max, min = self.pid.ival, self.pid.max_voltage, \
                          self.pid.min_voltage
-        if ival > max or ival < min:
+        sample = getattr(self.pyrpl.rp.sampler, self.pid.name)
+        # criterion for saturation: integrator value saturated
+        # and current value (including pid) as well
+        if (ival > max or ival < min) and (sample > max or sample < min):
             return True
         else:
             return False
@@ -140,6 +144,7 @@ class OutputSignal(Signal):
         Free up resources associated with the output
         """
         self.pyrpl.pids.free(self.pid)
+        self._pid = None
         super(OutputSignal, self)._clear()
 
     def unlock(self, reset_offset=False):

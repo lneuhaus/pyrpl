@@ -66,6 +66,17 @@ def get_unique_name_list_from_class_list(cls_list):
     return final_names
 
 
+def get_class_name_from_module_name(module_name):
+    """ returns the class name corresponding to a module_name """
+    return module_name[0].upper() + (module_name[1:]).rstrip('1234567890')
+
+def get_base_module_class(module):
+    """ returns the base class of module that has the same name as module """
+    base_module_class_name = get_class_name_from_module_name(module.name)
+    for base_module_class in type(module).__mro__:
+        if base_module_class.__name__ == base_module_class_name:
+            return base_module_class
+
 def setloglevel(level='info', loggername='pyrpl'):
     """ sets the log level to the one specified in config file"""
     try:

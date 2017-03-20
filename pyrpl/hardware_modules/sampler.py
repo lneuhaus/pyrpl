@@ -38,7 +38,7 @@ class Sampler(HardwareModule):
         max = -np.inf
         min = np.inf
         t0 = time()  # get start time
-        while time() < t0 + t:
+        while nn == 0 or time() < t0 + t:  # do at least one sample
             nn += 1
             value = self.__getattribute__(signal)
             cum += value
@@ -74,6 +74,8 @@ class Sampler(HardwareModule):
         mean, stddev: mean and standard deviation of all samples
 
         """
+        self._logger.warning("Sampler.mean_stddev() is obsolete. Please use "
+                             "Sampler.stats() instead!")
         mean, stddev, max, min = self.stats(signal=signal, t=t)
         return mean, stddev
 
@@ -85,4 +87,4 @@ for inp, num in DSP_INPUTS.items():
                 0x10 + num * 0x10000,
                 bits=14,
                 norm=2 ** 13 - 1,
-                doc="output signal " + inp))
+                doc="current value of " + inp))

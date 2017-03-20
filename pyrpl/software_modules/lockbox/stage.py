@@ -135,5 +135,9 @@ class Stage(LockboxModule):
         self.lockbox.current_state = self.name
 
     def _setup(self):
-        if self.name == self.lockbox.current_state:
+        if self.lockbox.current_state == self.name:
             self.enable()
+        # synchronize (active) final_stage with the last stage of sequence
+        # -> disable because too confusing for the user?
+        elif self.lockbox.current_state == 'lock' and self == self.parent[-1]:
+            self.lockbox.final_stage = {}

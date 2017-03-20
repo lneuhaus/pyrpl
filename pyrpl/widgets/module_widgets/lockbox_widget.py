@@ -1,13 +1,14 @@
 """
 The lockbox widget is composed of all the submodules widgets
 """
-from ..attribute_widgets import BaseAttributeWidget
-from .base_module_widget import ReducedModuleWidget, ModuleWidget
-
 from PyQt4 import QtCore, QtGui
 import pyqtgraph as pg
-
+import logging
 import numpy as np
+from ..attribute_widgets import BaseAttributeWidget
+from .base_module_widget import ReducedModuleWidget, ModuleWidget
+from ...pyrpl_utils import get_base_module_class
+
 
 APP = QtGui.QApplication.instance()
 
@@ -464,8 +465,11 @@ class InputsWidget(QtGui.QWidget):
 
     def show_lock(self, stage):
         for widget in self.input_widgets:
-            if widget.name==stage.input:
-                widget.show_lock(stage.input, stage.setpoint)
+            try:
+                if widget.name==stage.input:
+                    widget.show_lock(stage.input, stage.setpoint)
+            except AttributeError:  # when stage is not a Stage object
+                pass
 
 
 class PlusTab(QtGui.QWidget):
@@ -684,9 +688,6 @@ class LockboxSequenceWidget(ModuleWidget):
         for stage in self.module:
             self.stage_created([stage])
         self.main_layout.addStretch(2)
-        self.scroll_layout = QtGui.QScrollArea(self)
-        #self.scroll_layout.setWidget(self)
-        #self.scroll_layout.setLayout(self)
 
     def stage_created(self, stage):
         stage = stage[0] # values are passed as list of length 1
@@ -707,8 +708,8 @@ class LockboxSequenceWidget(ModuleWidget):
         stage = stage[0] # values are passes as list of length 1
         widget = stage._widget
         self.stage_widgets.remove(widget)
-        if self.parent().button_green == widget.button_goto:
-            self.parent().button_green = None
+        if self.parent().parent().parent().button_green == widget.button_goto:
+            self.parent().parent().parent().button_green = None
         widget.hide()
         self.main_layout.removeWidget(widget)
         widget.deleteLater()
@@ -724,8 +725,20 @@ class LockboxWidget(ModuleWidget):
     The LockboxWidget combines the lockbox submodules widget: model, inputs, outputs, lockbox_control
     """
     def init_gui(self):
+        # make standard layout
         self.main_layout = QtGui.QVBoxLayout()
+        self.setLayout(self.main_layout)  # wasnt here before
         self.init_attribute_layout()
+        # move all custom attributes to the second GUI line (spares place)
+        self.custom_attribute_layout = QtGui.QHBoxLayout()
+        self.main_layout.addLayout(self.custom_attribute_layout)
+        lockbox_base_class = get_base_module_class(self.module)
+        for attr_name in self.module._gui_attributes:
+            if attr_name not in lockbox_base_class._gui_attributes:
+                widget = self.attribute_widgets[attr_name]
+                self.attribute_layout.removeWidget(widget)
+                self.custom_attribute_layout.addWidget(widget)
+        # add buttons to standard attribute layout
         self.button_is_locked = QtGui.QPushButton("is_locked?")
         self.button_lock = QtGui.QPushButton("Lock")
         self.button_unlock = QtGui.QPushButton("Unlock")
@@ -738,32 +751,48 @@ class LockboxWidget(ModuleWidget):
         self.attribute_layout.addWidget(self.button_unlock)
         self.attribute_layout.addWidget(self.button_sweep)
         self.attribute_layout.addWidget(self.button_calibrate_all)
-        self.button_is_locked.clicked.connect(lambda: self.module.is_locked())
+        self.button_is_locked.clicked.connect(lambda: self.module.is_locked(
+            loglevel=self.module._logger.getEffectiveLevel()))
         self.button_lock.clicked.connect(lambda: self.module.lock())
         self.button_unlock.clicked.connect(lambda: self.module.unlock())
         self.button_sweep.clicked.connect(lambda: self.module.sweep())
         self.button_calibrate_all.clicked.connect(lambda: self.module.calibrate_all())
 
-        # Locking sequence widget
+        # Locking sequence widget + hide button
         self.sequence_widget = self.module.sequence._create_widget()
-        self.main_layout.addWidget(self.sequence_widget)
-        self.button_hide1 = QtGui.QPushButton("^ Lock sequence ^")
-        self.button_hide1.setMaximumHeight(15)
-        self.button_hide1.clicked.connect(self.button_hide1_clicked)
-        self.main_layout.addWidget(self.button_hide1)
+        self.scrollarea = QtGui.QScrollArea()
+        self.scrollarea.setWidget(self.sequence_widget)
+        minimumsizehint = self.sequence_widget.minimumSizeHint().height() \
+                         + self.scrollarea.horizontalScrollBar().height()
+        self.scrollarea.setMinimumHeight(minimumsizehint)
+        #self.scrollarea.setVerticalScrollBarPolicy(
+        #    QtCore.Qt.ScrollBarAlwaysOff)
+        #self.sequence_widget.setSizePolicy(QtGui.QSizePolicy.Preferred,
+        #                                   QtGui.QSizePolicy.Preferred)
+        self.scrollarea.setWidgetResizable(True)
+        self.main_layout.addWidget(self.scrollarea)
+        # hide button for sequence
+        # self.button_hide1 = QtGui.QPushButton("^ Lock sequence ^")
+        # self.button_hide1.setMaximumHeight(15)
+        # self.button_hide1.clicked.connect(self.button_hide1_clicked)
+        # self.main_layout.addWidget(self.button_hide1)
 
         # inputs/ outputs widget
         self.all_sig_widget = AllSignalsWidget(self)
-        self.main_layout.addWidget(self.all_sig_widget)
-        self.button_hide2 = QtGui.QPushButton("^ Inputs / Outputs ^")
+        self.button_hide2 = QtGui.QPushButton("hide inputs / outputs")
         #self.button_hide_clicked() # open by default
         self.button_hide2.setMaximumHeight(15)
         #self.button_hide2.setMaximumWidth(150)
         self.button_hide2.clicked.connect(self.button_hide2_clicked)
         self.main_layout.addWidget(self.button_hide2)
+        self.main_layout.addWidget(self.all_sig_widget)
 
         self.main_layout.addStretch(5)
         self.setLayout(self.main_layout)
+
+    def delete_widget(self):
+        self.module = None  # allow module to be deleted
+        self.deleteLater()
 
     def button_hide1_clicked(self):
         """
@@ -783,12 +812,19 @@ class LockboxWidget(ModuleWidget):
         Hide/show the signal part of the widget
         :return:
         """
+        # current = str(self.button_hide2.text())
+        # if current.endswith('v'):
+        #     self.button_hide2.setText('^' + current[1:-1] + '^')
+        #     self.all_sig_widget.show()
+        # else:
+        #     self.button_hide2.setText('v' + current[1:-1] + 'v')
+        #     self.all_sig_widget.hide()
         current = str(self.button_hide2.text())
-        if current.endswith('v'):
-            self.button_hide2.setText('^' + current[1:-1] + '^')
+        if current.startswith('show'):
+            self.button_hide2.setText('hide' + current[4:])
             self.all_sig_widget.show()
         else:
-            self.button_hide2.setText('v' + current[1:-1] + 'v')
+            self.button_hide2.setText('show' + current[4:])
             self.all_sig_widget.hide()
 
     def input_calibrated(self, inputs):
@@ -852,14 +888,16 @@ class LockboxWidget(ModuleWidget):
         if stage=='unlock':
             self.set_button_green(self.button_unlock)
             self.hide_lock_points()
-            return
         elif stage=='sweep':
             self.hide_lock_points()
             self.set_button_green(self.button_sweep)
-            return
-        elif stage in self.module.sequence:  # val is index of a lock stage
-            self.set_button_green(stage._widget.button_goto)
+        else:
+            try:
+                self.set_button_green(stage._widget.button_goto)
+            except AttributeError:  # if stage has not widget (final_stage)
+                self.set_button_green(None)
             self.show_lock(stage)
+        self.update_lockstatus()
 
     def set_button_green(self, button):
         """
@@ -867,7 +905,8 @@ class LockboxWidget(ModuleWidget):
         """
         if self.button_green is not None:
             self.button_green.setStyleSheet("")
-        button.setStyleSheet("background-color:green")
+        if button is not None:
+            button.setStyleSheet("background-color:green")
         self.button_green = button
 
     def show_lock(self, stage):
@@ -877,8 +916,9 @@ class LockboxWidget(ModuleWidget):
         self.hide_lock_points()
         if isinstance(stage, int):
             stage = self.module.sequence[stage]
-        if stage is not None and not isinstance(stage, basestring):
-            self.all_sig_widget.show_lock(stage)
+        elif stage == "final_stage":
+            stage = self.module.final_stage
+        self.all_sig_widget.show_lock(stage)
 
     def hide_lock_points(self):
         """
@@ -887,12 +927,34 @@ class LockboxWidget(ModuleWidget):
         for input_widget in self.all_sig_widget.inputs_widget.input_widgets:
             input_widget.hide_lock()
 
-    def update_lockstatus(self, lockstatus):
+    def update_lockstatus(self, islockedlist=[None]):
+        islocked = islockedlist[0]
         # color = self.module._is_locked_display_color
-        color, = lockstatus
+        color = self._is_locked_display_color(islocked=islocked)
         self.button_is_locked.setStyleSheet("background-color: %s; "
                                             "color:white"%color)
 
-    def delete_widget(self):
-        self.module = None  # allow module to be deleted
-        self.deleteLater()
+    def _is_locked_display_color(self, islocked=None):
+        """ function that returns the color of the LED indicating
+        lockstatus. If is_locked is called in update_lockstatus above,
+        it should not be called a second time here
+        """
+        module = self.module
+        if module.current_state == 'sweep':
+            return 'blue'
+        elif module.current_state == 'unlock':
+            return 'darkRed'
+        else:
+            # should be locked
+            if islocked is None:
+                islocked = module.is_locked(loglevel=logging.DEBUG)
+            if islocked:
+                if module.current_stage == module.final_stage:
+                    # locked and in last stage
+                    return 'green'
+                else:
+                    # locked but acquiring
+                    return 'yellow'
+            else:
+                # unlocked but not supposed to
+                return 'red'

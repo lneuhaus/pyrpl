@@ -111,20 +111,17 @@ class ModuleMetaClass(type):
             if isinstance(attr, BaseAttribute):
                 attr.name = name
         # 1a. prepare _setup_attributes etc.
-        _setup_attributes, _gui_attributes, _callback_attributes, _module_attributes = [], [], [], []
+        _setup_attributes, _gui_attributes, _module_attributes = [], [], []
 
         for base in reversed(bases):  # append all base class _setup_attributes
             try: _setup_attributes += base._setup_attributes
             except AttributeError: pass
             try: _gui_attributes += base._gui_attributes
             except AttributeError: pass
-            try: _callback_attributes += base._callback_attributes
-            except AttributeError: pass
             try: _module_attributes += base._module_attributes
             except AttributeError: pass
         _setup_attributes += self._setup_attributes
         _gui_attributes += self._gui_attributes
-        _callback_attributes += self._callback_attributes
         # 1b. make a list of _module_attributes and add _module_attributes to _setup_attributes
         for name, attr in self.__dict__.items():
             if isinstance(attr, ModuleAttribute):
@@ -138,7 +135,6 @@ class ModuleMetaClass(type):
         #1d. Set the unique list of _setup_attributes
         self._setup_attributes = unique_list(_setup_attributes)
         self._gui_attributes = unique_list(_gui_attributes)
-        self._callback_attributes = unique_list(_callback_attributes)
         # 2. create setup(**kwds)
         if "setup" not in classDict:
             # a. generate a setup function
@@ -301,11 +297,6 @@ class Module(with_metaclass(ModuleMetaClass, object)):
     # class inheriting from ModuleWidget can
     # automatically generate gui from a list of attributes
     _gui_attributes = []
-
-    # Changing these attributes outside setup(
-    # **kwds) will trigger self.callback()
-    # standard callback defined in BaseModule is to call setup()
-    _callback_attributes = []
 
     # This flag is used to desactivate callback during setup
     _setup_ongoing = False
@@ -586,13 +577,6 @@ class Module(with_metaclass(ModuleMetaClass, object)):
          #   self._setup_ongoing = _setup_ongoing_bkp
          #   self._autosave_active = autosave_bkp
         return widget
-
-    def _callback_obsolete(self):
-        """
-        This function is called whenever an attribute listed in
-        callback_attributes is changed outside setup()
-        """
-        self.setup()
 
     @property
     def owner(self):

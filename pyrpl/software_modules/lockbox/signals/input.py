@@ -299,6 +299,55 @@ class InputSignal(Signal):
                                      n=1,  # first derivative
                                      order=3)
 
+    def is_locked(self, loglevel=logging.INFO):
+        """ returns whether the input is locked at the current stage """
+        # supposed to be locked at this value
+        setpoint = self.lockbox.current_stage.setpoint
+        # current values
+        actmean, actrms = self.mean, self.rms
+        # get max, min of acceptable error signals
+        error_threshold = self.lockbox.error_threshold
+        min = self.expected_signal(setpoint-error_threshold)
+        max = self.expected_signal(setpoint+error_threshold)
+        startslope = self.expected_slope(setpoint - error_threshold)
+        stopslope = self.expected_slope(setpoint + error_threshold)
+        # no guarantee that min<max
+        if max < min:
+            # swap them in this case
+            max, min = min, max
+        # now min < max
+        # if slopes have unequal signs, the signal has a max/min in the
+        # interval
+        if startslope*stopslope <= 0:
+            if startslope > stopslope:  # maximum in between, ignore upper limit
+                max = np.inf
+            elif startslope < stopslope:  # minimum, ignore lower limit
+                min = -np.inf
+        if actmean > max or actmean < min:
+            self._logger.log(loglevel,
+                             "Not locked at stage %s: "
+                             "input %s value of %.2f +- %.2f (setpoint %.2f)"
+                             "is not in error interval [%.2f, %.2f].",
+                             self.lockbox.current_stage.name,
+                             self.name,
+                             actmean,
+                             actrms,
+                             self.expected_signal(setpoint),
+                             min,
+                             max)
+            return False
+        # lock seems ok
+        self._logger.log(loglevel,
+                         "Locked at stage %s: "
+                         "input %s value is %.2f +- %.2f (setpoint %.2f).",
+                         self.lockbox.current_stage.name,
+                         self.name,
+                         actmean,
+                         actrms,
+                         self.expected_signal(setpoint))
+        return True
+
+
     # temporarily broken
     #
     # def inverse(self, func, y, x0, args=()):
@@ -379,11 +428,58 @@ class InputDirect(InputSignal):
     def expected_signal(self, x):
         return x
 
-
 class InputFromOutput(InputDirect):
+
     def calibrate(self):
+        """ no need to calibrate this """
         pass
 
+    input_signal = SelectProperty(options=(lambda instance:
+                                        list(instance.lockbox.outputs.keys())),
+                                  doc="lockbox signal used as input")
+
+    def is_locked(self, loglevel=logging.INFO):
+        """ this is mainly used for coarse locking where significant
+        effective deviations from the setpoint (in units of setpoint_variable)
+        may occur. We therefore issue a warning and return True if is_locked is
+        based on this output. """
+        inputdsp = self.lockbox.outputs[self.input_signal].pid.input
+        forwarded_input = None
+        for inp in self.lockbox.inputs:
+            inpsignal = inp.signal()
+            if inp.signal() == inputdsp:
+                forwarded_input = inp
+                break
+        if forwarded_input is not None:
+            self._logger.debug("is_locked() for InputFromOutput '%s' is not "
+                               "implemented. Forwarding is_locked() to the "
+                               "input signal '%s'.",
+                               self.name, forwarded_input.name)
+            return forwarded_input.is_locked(loglevel=loglevel)
+        else:
+            self._logger.warning("is_locked() for InputFromOutput '%s' is not "
+                               "implemented. No input for forwarding found.",
+                               self.name)
+            return True
+
+    def expected_signal(self, setpoint):
+        """ it is assumed that the output has the linear relationship between
+        setpoint change in output_unit per volt from the redpitaya, which
+        is configured in the output parameter 'dc_gain'. We only need to
+        convert units to get the output voltage bringing about a given
+        setpoint difference. """
+        # An example:
+        # The configured output gain is 'output.dc_gain' nm/V.
+        # setpoint_unit is cavity 'linewidth', the latter given by
+        # 'lockbox._setpopint_unit_in_unit('nm')' (in nm).
+        # Therefore, the output voltage corresponding to a change of
+        # one linewidth is given (in V) by:
+        # lockbox._setpopint_unit_in_unit('nm')/output.dc_gain
+        output = self.lockbox.signals[self.input_signal]
+        output_unit = output.unit.split('/')[0]
+        setpoint_in_output_unit = \
+            setpoint * self.lockbox._setpoint_unit_in_unit(output_unit)
+        return setpoint_in_output_unit / output.dc_gain
 
 class IqFrequencyProperty(FrequencyProperty):
     def __init__(self, **kwargs):
@@ -437,7 +533,7 @@ class IqFilterProperty(FilterProperty):
         # only allow the low-pass filter options (exclude negative high-pass options)
         return [v for v in module.iq.__class__.bandwidth.valid_frequencies(module.iq) if v >= 0]
 
-class InputIq(InputDirect):
+class InputIq(InputSignal):
     """ Base class for demodulated signals. A derived class must implement
     the method expected_signal (see InputPdh in fabryperot.py for example)"""
     _gui_attributes = ['mod_freq',
@@ -457,21 +553,21 @@ class InputIq(InputDirect):
 
     def _init_module(self):
         super(InputIq, self)._init_module()
-        self._iq = None
         self.setup()
-
-    def _clear(self):
-        self.pyrpl.iqs.free(self.iq)
-        super(InputIq, self)._clear()
-
-    def signal(self):
-        return self.iq
 
     @property
     def iq(self):
-        if self._iq is None:
+        if not hasattr(self, '_iq') or self._iq is None:
             self._iq = self.pyrpl.iqs.pop(self.name)
         return self._iq
+
+    def signal(self):
+        return self.iq.name
+
+    def _clear(self):
+        self.pyrpl.iqs.free(self.iq)
+        self._iq = None
+        super(InputIq, self)._clear()
 
     def _setup(self):
         """
@@ -487,4 +583,3 @@ class InputIq(InputDirect):
                       quadrature_factor=self.quadrature_factor,
                       output_signal='quadrature',
                       output_direct=self.mod_output)
-

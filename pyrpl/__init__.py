@@ -48,5 +48,6 @@ from .curvedb import CurveDB
 from .redpitaya import RedPitaya
 from .hardware_modules import *
 from .attributes import *
+from .modules import *
 from .curvedb import *
 from .pyrpl import *
