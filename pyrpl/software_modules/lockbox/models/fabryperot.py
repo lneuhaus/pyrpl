@@ -4,7 +4,6 @@ from .interferometer import Interferometer
 
 
 class FPReflection(InputSignal):
-
     def expected_signal(self, setpoint):
         detuning = setpoint * self.lockbox._setpoint_unit_in_unit('bandwidth')
         return self.calibration_data.max - (self.calibration_data.max -

@@ -1,7 +1,7 @@
 # these imports are the standard imports for required for derived lockboxes
 from pyrpl.software_modules.lockbox import *
 from pyrpl.software_modules.lockbox.signals import *
-
+from pyrpl.software_modules.lockbox.loop import *
 
 # Any InputSignal must define a class that contains the function "expected_signal(variable)" that returns the expected
 # signal value as a function of the variable value. This function ensures that the correct setpoint and a reasonable
@@ -74,3 +74,42 @@ class CustomLockbox(Lockbox):
         self.calibrate_all()
         self.unlock()
         self.lock()
+
+# in loop.py:
+#class ExampleLoop(LockboxPlotLoop):
+#    def loop(self):
+#        self.plot.append(green=np.sin(time()), red=np.cos(time()))
+
+class ExampleLoop(LockboxPlotLoop):
+    def _init_module(self):
+        self.n = 0
+        self.last_texcess = 0
+
+    def loop(self):
+        # attention: self.time() is FPGA time, time() is plot-relevant time
+        self.n += 1
+        tact = time() - self.plot.plot_start_time
+        tmin = self.interval * self.n
+        texcess = tact - tmin
+        dt = texcess - self.last_texcess
+        self.last_texcess = texcess
+        self.plot.append(green=np.sin(2.0*np.pi*tact/self.lockbox.interval),
+                         red=dt)
+
+
+class ExampleLoopLockbox(Lockbox):
+    loop = None
+    _gui_attributes = ["start", "stop", "interval"]
+
+    interval = FloatProperty(default=0.01, min=0)
+
+    def start(self):
+        self.stop()
+        self.loop = ExampleLoop(parent=self,
+                                name="example_loop",
+                                interval=self.interval)
+
+    def stop(self):
+        if self.loop is not None:
+            self.loop._clear()
+            self.loop = None
