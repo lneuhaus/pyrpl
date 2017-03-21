@@ -120,10 +120,31 @@ class ExampleLoopLockbox(Lockbox):
             self.loop = None
 
 
-class LockboxGalvanicIsolation(LockboxLoop):
-    def _init_module(self):
-        from pyrpl import Pyrpl
-        self.pyrpl2 = Pyrpl("second_redpitaya")
+class GalvanicIsolationLoopLockbox(Lockbox):
+    """ an example for a loop fully described in the lockbox class definition"""
+    _gui_attributes = ["start_gi", "stop_gi", "gi_interval"]
+    gi_interval = FloatProperty(default=0.05, min=0, max=1e10,
+                                doc="Minimum interval at which the loop updates the second redpitaya output")
 
-    def loop(self):
-        self.pyrpl2.rp.pid0.ival = self.pyrpl.rp.sampler.pid1 # send pid of IP output to second redpitaya
+    def start_gi(self):
+        self.stop_gi()
+        if not hasattr(self, 'second_pyrpl') or self.second_pyrpl is None:
+            from pyrpl import Pyrpl
+            # start second redpitaya
+            self.second_pyrpl = Pyrpl("second_redpitaya", hostname="_FAKE_REDPITAYA_")
+        self.galvanic_isolation_loop = LockboxLoop(parent=self,
+            name="galvanic_isolation_loop",
+            interval=self.gi_interval,
+            loop_function=self.galvanic_isolation_loop_function)
+
+    def galvanic_isolation_loop_function(self):
+        """ the loop function to be started"""
+        # read an output value from this lockbox and set it as the output of the second redpitaya
+        self.second_pyrpl.rp.asg0.offset = self.pyrpl.rp.sampler.pid0
+        # only for debugging:
+        # self.second_pyrpl.rp.asg0.offset = np.sin(2 * np.pi * time() - self.galvanic_isolation_loop.loop_start_time)
+
+    def stop_gi(self):
+        if hasattr(self, 'galvanic_isolation_loop') and self.galvanic_isolation_loop is not None:
+            self.galvanic_isolation_loop._clear()
+        self.galvanic_isolation_loop = None

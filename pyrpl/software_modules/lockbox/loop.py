@@ -25,6 +25,7 @@ class Loop(Module):
         self.interval = interval
         self.timer.timeout.connect(self.main_loop)
         self.timer.start()
+        self.loop_start_time = time()
 
     @property
     def interval(self):
