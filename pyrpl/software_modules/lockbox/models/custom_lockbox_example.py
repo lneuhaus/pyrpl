@@ -80,21 +80,26 @@ class CustomLockbox(Lockbox):
 #    def loop(self):
 #        self.plot.append(green=np.sin(time()), red=np.cos(time()))
 
-class ExampleLoop(LockboxPlotLoop):
+class ExampleLoop(LockboxPlotLoop): # or inherit from
     def _init_module(self):
-        self.n = 0
+        self.c.n = 0
         self.last_texcess = 0
+        self.result_ready = "not ready"
 
     def loop(self):
         # attention: self.time() is FPGA time, time() is plot-relevant time
-        self.n += 1
+        self.c.n += 1
         tact = time() - self.plot.plot_start_time
-        tmin = self.interval * self.n
+        tmin = self.interval * self.c.n
         texcess = tact - tmin
         dt = texcess - self.last_texcess
         self.last_texcess = texcess
-        self.plot.append(green=np.sin(2.0*np.pi*tact/self.lockbox.interval),
+        self.plot.append(green=np.sin(2.0*np.pi*tact*3), #/self.lockbox.interval),
                          red=dt)
+        if self.c.n == 100:
+            self.result = 42
+            self.result_ready = True
+            self._clear()
 
 
 class ExampleLoopLockbox(Lockbox):
@@ -113,3 +118,12 @@ class ExampleLoopLockbox(Lockbox):
         if self.loop is not None:
             self.loop._clear()
             self.loop = None
+
+
+class LockboxGalvanicIsolation(LockboxLoop):
+    def _init_module(self):
+        from pyrpl import Pyrpl
+        self.pyrpl2 = Pyrpl("second_redpitaya")
+
+    def loop(self):
+        self.pyrpl2.rp.pid0.ival = self.pyrpl.rp.sampler.pid1 # send pid of IP output to second redpitaya

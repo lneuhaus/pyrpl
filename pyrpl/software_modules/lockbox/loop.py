@@ -63,7 +63,7 @@ class Loop(Module):
 class LockboxLoop(Loop, LockboxModule):
     # inheriting from LockboxModule essentially creates a lockbox property
     # that refers to the lockbox
-    def time(self):
+    def fpga_time(self):
         """ current FPGA time in s """
         return float(self.pyrpl.rp.scope.current_timestamp) * 8e-9 / self.pyrpl.rp.frequency_correction
 
@@ -109,7 +109,9 @@ class LockboxPlotLoop(LockboxLoop):
         self.plot = PlotWindow()
         super(LockboxPlotLoop, self).__init__(*args, **kwargs)
 
+    def append(self, red=None, green=None):
+        self.plot.append(red=red, green=green)
+
     def _clear(self):
         self.plot.close()
         super(LockboxPlotLoop, self)._clear()
-
