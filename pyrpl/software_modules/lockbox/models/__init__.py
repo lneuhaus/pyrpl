@@ -2,6 +2,8 @@ from .interferometer import *
 from .fabryperot import *
 from .linear import *
 from .custom_lockbox_example import *
+from .coarse_lockbox import *
+
 #from .fabryperotmembranes import *
 #from .interferometer_am import *
 #from .lmsd import *
