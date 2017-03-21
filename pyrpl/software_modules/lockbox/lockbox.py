@@ -439,7 +439,7 @@ class Lockbox(LockboxModule):
         # launch signal for widget deletion
         self._signal_launcher.delete_widget.emit()
         # delete former lockbox (free its resources)
-        self._delete_Lockbox()
+        self._clear()
         # make a new object
         new_lockbox = Lockbox._make_Lockbox(pyrpl, name)
         # update references
@@ -449,15 +449,11 @@ class Lockbox(LockboxModule):
         for w in pyrpl.widgets:
             w.reload_dock_widget(name)
 
-    def _delete_Lockbox(self):
+    def _clear(self):
         """ returns a new Lockbox object of the type defined by the classname
         variable in the config file"""
         pyrpl, name = self.pyrpl, self.name
-        self._signal_launcher.clear()
-        for o in self.outputs:
-            o._clear()
-        for i in self.inputs:
-            i._clear()
+        super(Lockbox, self)._clear()
         setattr(pyrpl, name, None)  # pyrpl.lockbox = None
         try:
             self.parent.software_modules.remove(self)

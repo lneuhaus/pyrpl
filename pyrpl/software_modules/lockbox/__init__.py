@@ -1,5 +1,5 @@
 from ...modules import Module
-from ...module_attributes import ModuleDictProperty
+from ...module_attributes import ModuleProperty, ModuleDictProperty
 
 
 class LockboxModule(Module):

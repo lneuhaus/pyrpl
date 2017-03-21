@@ -21,7 +21,7 @@ import numpy as np
 import socket
 import logging
 from .hardware_modules.dsp import DSP_INPUTS
-
+from .pyrpl_utils import time
 
 # global conter to assign a number to each client
 # only used for debugging purposes
@@ -187,6 +187,17 @@ class DummyClient(object):
         # scope control register - trigger armed, trigger source etc.
         if offset == 0:
             return 0
+        if offset == 0x15C:  # current_timestamp lv part
+            t = int(time()*125e6)
+            return t % (2**32)
+        if offset == 0x160:  # current_timestamp mv part
+            return 0
+            t = int(time()*125e6)
+            return t - (t % (2**32))
+        if offset == 0x164:  # trigger_timestamp lv part
+            return 0
+        if offset == 0x168:  # trigger_timestamp mv part
+            return 0
         #DSP modules
         for module in DSP_INPUTS:
             offset = addr - 0x40300000 - 0x10000*DSP_INPUTS[module]
@@ -230,7 +241,7 @@ class DummyClient(object):
         val = []
         for i in range(length):
             val.append(self.read_fpgamemory(addr+0x4*i))
-        return np.array(val,dtype=np.uint32)
+        return np.array(val, dtype=np.uint32)
     
     def writes(self, addr, values):
         for i, v in enumerate(values):

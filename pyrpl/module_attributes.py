@@ -1,7 +1,6 @@
 from .attributes import *
 from .modules import *
 
-
 # # basic ModuleAttribute object is imported from attributes
 # class ModuleAttribute(BaseAttribute):
 #     def __init__(self, module_cls, default=None, doc="", ignore_errors=False):
@@ -33,7 +32,7 @@ class ModuleProperty(ModuleAttribute, BaseProperty):
         return getattr(obj, '_' + self.name)
 
     def _create_module(self, obj, obj_type):
-        return self.module_cls(obj, name=self.name)
+        return self.module_cls(obj, name=self.name, **self.kwargs)
 
 
 class ModuleList(Module, list):

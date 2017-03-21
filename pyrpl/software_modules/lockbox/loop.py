@@ -6,26 +6,43 @@ from ...async_utils import sleep, PyrplFuture, MainThreadTimer
 from ...pyrpl_utils import time
 
 class Loop(Module):
-    def __init__(self, parent, name='loop', interval=0.01,
-                 loop_function=None, init_function=None, clear_function=None):
+    def __init__(self, parent, name='loop', interval=0.01, autostart=True,
+                 loop_function=None, setup_function=None, teardown_function=None):
         # parent is parent pyrpl module
         # name is important for the right config file section name
         # optionally, init_function, loop_function, and clear_function can be passed
         # as arguments
-        if init_function is not None:
-            self._init_module = init_function
+        super(Loop, self).__init__(parent, name=name)
+        if setup_function is not None:
+            self.setup_loop = setup_function
         if loop_function is not None:
             self.loop = loop_function
-        if clear_function is not None:
-            self._clear_module = clear_function
-        super(Loop, self).__init__(parent, name=name)
+        if teardown_function is not None:
+            self.teardown_loop = teardown_function
         self._ended = False  # becomes True when loop is ended
         self.timer = MainThreadTimer(interval=0)
         # interval in seconds
         self.interval = interval
         self.timer.timeout.connect(self.main_loop)
-        self.timer.start()
-        self.loop_start_time = time()
+        self.n = 0  # counter for the number of loops
+        self.time  # initialize start time in internal time format
+        # call custom initialization (excluded above)
+        try:
+            self.setup_loop()
+        except TypeError:
+            # allows to pass instance functions of the parent module as arguments as well
+            self.setup_loop(self.parent, self)
+        if autostart:
+            self.main_loop()
+
+    @property
+    def time(self):
+        """ time since start of the loop """
+        try:
+            return time() - self.loop_start_time
+        except AttributeError:
+            self.loop_start_time = time()
+            return 0
 
     @property
     def interval(self):
@@ -35,42 +52,62 @@ class Loop(Module):
     def interval(self, val):
         self.timer.setInterval(val*1000.0)
 
-    def _clear(self):
-        self._signal_launcher.clear()
+    def stop(self):
         self._ended = True
         self.timer.stop()
-        self._clear_module()
+
+    def _clear(self):
+        self._signal_launcher.clear()
+        self.stop()
+        try:
+            self.teardown_loop()
+        except TypeError:
+            # allows to pass instance functions of the parent module as arguments as well
+            self.teardown_loop(self.parent, self)
         super(Loop, self)._clear()
 
     def main_loop(self):
-        # this function is called by
-        self.loop()
+        self.n += 1
+        try:
+            self.loop()
+        except TypeError:
+            # allows to pass instance functions of the parent module as arguments as well
+            self.loop(self.parent, self)
         if not self._ended:
             self.timer.start()
 
-    def _init_module(self):
+    def setup_loop(self):
         """ put your initialization routine here"""
-        pass
-
-    def _clear_module(self):
-        """ put your destruction routine here"""
         pass
 
     def loop(self):
         # insert your loop function here
         pass
 
+    def teardown_loop(self):
+        """ put your destruction routine here"""
+        pass
+
 
 class LockboxLoop(Loop, LockboxModule):
     # inheriting from LockboxModule essentially creates a lockbox property
     # that refers to the lockbox
-    def fpga_time(self):
-        """ current FPGA time in s """
-        return float(self.pyrpl.rp.scope.current_timestamp) * 8e-9 / self.pyrpl.rp.frequency_correction
+    @property
+    def time(self):
+        """ current FPGA time in s since startup """
+        try:
+            return float(self.pyrpl.rp.scope.current_timestamp) * 8e-9 / self.pyrpl.rp.frequency_correction \
+                   - self.loop_start_time
+        except AttributeError:
+            self.loop_start_time = float(self.pyrpl.rp.scope.current_timestamp) * 8e-9 / self.pyrpl.rp.frequency_correction
+            return 0
 
+
+    @property
     def trigger_time(self):
-        """ FPGA time in s when trigger even occured """
-        return 8e-9 * float(self.pyrpl.rp.scope.trigger_timestamp) * 8e-9 / self.pyrpl.rp.frequency_correction
+        """ FPGA time in s when trigger even occured (same frame of reference as self.time())"""
+        return 8e-9 * float(self.pyrpl.rp.scope.trigger_timestamp) * 8e-9 / self.pyrpl.rp.frequency_correction \
+               - self.loop_start_time
 
 
 class PlotWindow(object):
@@ -82,7 +119,6 @@ class PlotWindow(object):
     close() closes the plot"""
     def __init__(self, title="plotwindow"):
         self.win = pg.GraphicsWindow(title=title)
-        #self.win.setWindowTitle(title)
         self.pw = self.win.addPlot()
         self.curve_green = self.pw.plot(pen="g")
         self.curve_red = self.pw.plot(pen="r")
@@ -105,14 +141,20 @@ class PlotWindow(object):
         self.win.close()
 
 
-class LockboxPlotLoop(LockboxLoop):
+class PlotLoop(LockboxLoop):
     def __init__(self, *args, **kwargs):
         self.plot = PlotWindow()
-        super(LockboxPlotLoop, self).__init__(*args, **kwargs)
+        super(PlotLoop, self).__init__(*args, **kwargs)
+        #self.win.setWindowTitle(self.name)
 
-    def append(self, red=None, green=None):
+
+    def plotappend(self, red=None, green=None):
         self.plot.append(red=red, green=green)
 
     def _clear(self):
         self.plot.close()
-        super(LockboxPlotLoop, self)._clear()
+        super(PlotLoop, self)._clear()
+
+
+class LockboxPlotLoop(PlotLoop, LockboxLoop):
+    pass
