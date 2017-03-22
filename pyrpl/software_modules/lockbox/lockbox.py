@@ -140,7 +140,7 @@ class Lockbox(LockboxModule):
     _gui_attributes = ["classname",
                        "default_sweep_output",
                        "auto_lock",
-                       "error_threshold",
+                       "is_locked_threshold",
                        "setpoint_unit"]
     _setup_attributes = _gui_attributes + ["auto_lock_interval",
                                            "lockstatus_interval"]
@@ -207,7 +207,9 @@ class Lockbox(LockboxModule):
                                           ignore_errors=True)
 
     # consider cavity locked ifin units of setpoint_unit
-    error_threshold = FloatProperty(default=1.0, min=-1e10,max=1e10)
+    is_locked_threshold = FloatProperty(default=1.0, min=-1e10, max=1e10,
+                                        doc="Setpoint interval size to consider "
+                                            "system in locked state")
 
     auto_lock = AutoLockProperty()
     # try to relock every auto_lock_interval (s) is autolock is on

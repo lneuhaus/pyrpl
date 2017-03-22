@@ -314,7 +314,7 @@ class InputSignal(Signal):
         # current values
         actmean, actrms = self.mean, self.rms
         # get max, min of acceptable error signals
-        error_threshold = self.lockbox.error_threshold
+        error_threshold = self.lockbox.is_locked_threshold
         min = self.expected_signal(setpoint-error_threshold)
         max = self.expected_signal(setpoint+error_threshold)
         startslope = self.expected_slope(setpoint - error_threshold)
