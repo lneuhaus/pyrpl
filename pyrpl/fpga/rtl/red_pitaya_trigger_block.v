@@ -98,6 +98,8 @@ reg  [ 14-1: 0] set_a_thresh  ;
 reg  [ 14-1: 0] set_a_hyst   ;
 reg rearm;
 reg auto_rearm;
+reg  [ 14-1: 0] phase_offset;
+reg phase_abs;
 
 
 //  System bus connection
@@ -110,6 +112,8 @@ always @(posedge clk_i) begin
       set_a_hyst <= 14'd20; // 2.5 mV by default
       rearm <= 1'b0;
       auto_rearm <= 1'b0;
+      phase_offset <= 14'd0;
+      phase_abs <= 1'b0;
    end
    else begin
       if (addr==16'h100 && wen)
@@ -117,9 +121,10 @@ always @(posedge clk_i) begin
       else
          rearm <= 1'b0;
       if (wen) begin
-         if (addr==16'h104)   auto_rearm <= wdata[1:0];
+         if (addr==16'h104)   {phase_abs, auto_rearm} <= wdata[2:0];
          if (addr==16'h108)   trigger_source <= wdata[2:0];
          if (addr==16'h10C)   output_select <= wdata[4:0];
+         if (addr==16'h110)   phase_offset <= wdata[14:0];
          if (addr==16'h118)   set_a_thresh <= wdata[14-1:0];
          if (addr==16'h11C)   set_a_hyst <= wdata[14-1:0];
          if (addr==16'h120)   set_filter  <= wdata;
@@ -128,9 +133,10 @@ always @(posedge clk_i) begin
 
 	  casez (addr)
 	     16'h100 : begin ack <= wen|ren; rdata <= {{32-1{1'b0}},armed}; end
-	     16'h104 : begin ack <= wen|ren; rdata <= {{32-1{1'b0}},auto_rearm}; end
+	     16'h104 : begin ack <= wen|ren; rdata <= {{32-1{2'b0}},phase_abs,auto_rearm}; end
 	     16'h108 : begin ack <= wen|ren; rdata <= {{32-2{1'b0}},trigger_source}; end
 	     16'h10C : begin ack <= wen|ren; rdata <= {{32-4{1'b0}},output_select}; end
+	     16'h110 : begin ack <= wen|ren; rdata <= {{32-14{1'b0}},phase_offset}; end
 
 	     16'h118 : begin ack <= wen|ren; rdata <= set_a_thresh; end
 	     16'h11C : begin ack <= wen|ren; rdata <= set_a_hyst; end
@@ -208,8 +214,12 @@ reg trigger_signal;
 reg armed;
 reg   [ 64 - 1:0] ctr_value        ;
 reg   [ 64 - 1:0] timestamp_trigger;
+reg   [ 14 - 1:0] phase_processed;
 reg   [ 14 - 1:0] phase;
 reg   [ 14 - 1:0] output_data;
+wire  [ 14 - 1:0] phase_sum;
+
+assign phase_sum = phase_i + phase_offset;
 
 always @(posedge adc_clk_i)
 if (adc_rstn_i == 1'b0) begin
@@ -219,15 +229,20 @@ if (adc_rstn_i == 1'b0) begin
    timestamp_trigger <= 64'h0;
    phase <= 14'd0;
    output_data <= 14'd0;
+   phase_processed <= 14'd0;
 end else begin
    // bit 0 of trigger_source defines positive slope trigger, bit 1 negative_slope trigger
    trigger_signal <= ((adc_trig_ap && trigger_source[0]) || (adc_trig_an && trigger_source[1])) && armed;
    // disarm after trigger event, rearm when requested or explicitely or by auto_rearm;
    armed <= (armed && (!trigger_signal)) || rearm || auto_rearm;
    ctr_value <= ctr_value + 1'b1;
+   if ((phase_abs == 1'b1) && (phase_sum[14-1] == 1'b1))
+       phase_processed <= (~phase_sum)+14'd1);
+   else
+       phase_processed <= phase_sum;
    if (trigger_signal==1'b1) begin
        timestamp_trigger <= ctr_value;  # take a timestamp
-       phase <= phase_i;
+       phase <= phase_processed;
    end
    // output_signal multiplexer
    if (output_select==TTL):
