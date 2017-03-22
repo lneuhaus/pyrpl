@@ -194,11 +194,8 @@ class HighFinesseInput(InputSignal):
 
     def get_threshold(self, curve):
         """ returns a reasonable scope threshold for the interesting part of this curve """
-        #setup_attributes = self.calibration_data.setup_attributes
         self.calibration_data.get_stats_from_curve(curve)
         threshold = self.expected_signal(1.0*self.lockbox._unit_in_setpoint_unit('bandwidth'))
-        print threshold
-        #self.calibration_data.setup_attributes = setup_attributes  # restore setting from before
         return threshold
 
 
@@ -214,7 +211,7 @@ class HighFinesseTransmission(HighFinesseInput, FPTransmission):
     pass
 
 class HighFinesseAnalogPdh(HighFinesseInput, FPAnalogPdh):
-    def calibrate(self, trigger_signal="reflection", autosave=False):
+    def calibrate(self, trigger_signal="reflection", autosave=True):
         trigger_signal = self.lockbox.inputs[trigger_signal]
         # take a first coarse calibration for trigger threshold estimation
         curve0, _ = trigger_signal.sweep_acquire()
