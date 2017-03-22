@@ -44,7 +44,8 @@ class CoarseSearchStep(LockboxPlotLoop): # or inherit from
         self.tneg = []
         self.lockbox.unlock()
         self.scope_setup()
-        self.switch_coarse()
+        # switch coarse
+        self.digital_coarse = not self.digital_coarse
 
     def scope_setup(self):
         self.scope.setup(duration=5e-4,
@@ -55,6 +56,7 @@ class CoarseSearchStep(LockboxPlotLoop): # or inherit from
                          threshold_ch1=self.threshold,
                          rolling_mode=False,
                          running_state="running_single")
+        #self.scope.curve_async()
 
     @property
     def threshold(self):
@@ -64,7 +66,7 @@ class CoarseSearchStep(LockboxPlotLoop): # or inherit from
                          input1=self.lockbox.inputs.reflection.signal())
             data, _ = s.curve()
             s.free()
-        self.lockbox.inputs.reflection.mean
+
         val = data.mean()*0.5
         return val
 
@@ -78,6 +80,19 @@ class CoarseSearchStep(LockboxPlotLoop): # or inherit from
 
     def switch_coarse(self):
         if self.coarse_close_to_min:
+            self.lockbox.coarse = self.coarsemax
+        else:
+            self.lockbox.coarse = self.coarsemin
+
+    @property
+    def digital_coarse(self):
+        """" true if coarse closer to its maximum than to its minimum """
+        val = self.lockbox.coarse
+        return self.coarsemax - val < val - self.coarsemin
+
+    @digital_coarse.setter
+    def digital_coarse(self, value):
+        if value:
             self.lockbox.coarse = self.coarsemax
         else:
             self.lockbox.coarse = self.coarsemin
@@ -123,7 +138,7 @@ class CoarseSearchStep(LockboxPlotLoop): # or inherit from
                 #Continue search with decreased amplitude
                 self.coarsemin = val - amplitude
                 self.coarsemax = val + amplitude
-                self.switch_coarse()
+                self.digital_coarse = not self.digital_coarse
             else:
                 #Stop search and go to more realistic value of coarse
                 self._init_module()
@@ -143,7 +158,7 @@ class CoarseSearchStep(LockboxPlotLoop): # or inherit from
                          green=self.trigger_time)
 
 
-class CoarseSearchStepLockbox(FabryPerot):
+class GCoarseSearchStepLockbox( FabryPerot):
     coarse = CoarseProperty(default=0,
                             # max voltage at piezo: 100 V
                             # max voltage before divider:

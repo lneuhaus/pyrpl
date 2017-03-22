@@ -7,12 +7,14 @@ from ...pyrpl_utils import time
 
 class Loop(Module):
     def __init__(self, parent, name='loop', interval=0.01, autostart=True,
-                 loop_function=None, setup_function=None, teardown_function=None):
+                 loop_function=None, setup_function=None,
+                 teardown_function=None, **kwargs):
         # parent is parent pyrpl module
         # name is important for the right config file section name
         # optionally, init_function, loop_function, and clear_function can be passed
         # as arguments
         super(Loop, self).__init__(parent, name=name)
+        self.kwargs = kwargs  # allows using kwargs in setup_loop
         if setup_function is not None:
             self.setup_loop = setup_function
         if loop_function is not None:
@@ -52,13 +54,9 @@ class Loop(Module):
     def interval(self, val):
         self.timer.setInterval(val*1000.0)
 
-    def stop(self):
+    def _clear(self):
         self._ended = True
         self.timer.stop()
-
-    def _clear(self):
-        self._signal_launcher.clear()
-        self.stop()
         try:
             self.teardown_loop()
         except TypeError:
