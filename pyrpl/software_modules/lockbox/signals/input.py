@@ -250,14 +250,14 @@ class InputSignal(Signal):
                 scope.setup(input1=self.signal(),
                             input2=self.lockbox.outputs[self.lockbox.default_sweep_output].pid.output_direct,
                             trigger_source=self.lockbox.asg.name,
-                            duration=2. / self.lockbox.asg.frequency,
+                            duration=1./self.lockbox.asg.frequency,
                             ch1_active=True,
                             ch2_active=False,
                             average=True,
                             running_state='running_continuous',
                             rolling_mode=False)
                 scope.save_state("autosweep")
-            curve1, curve2 = scope.curve(timeout=1. / self.lockbox.asg.frequency + scope.duration)
+            curve1, curve2 = scope.curve(timeout=1./self.lockbox.asg.frequency+scope.duration)
             times = scope.times
         curve1 -= self.calibration_data._analog_offset
         return curve1, times
@@ -280,7 +280,7 @@ class InputSignal(Signal):
         self.lockbox._signal_launcher.input_calibrated.emit([self])
         # save data if desired
         if autosave:
-            params = self.setup_attributes
+            params = self.calibration_data.setup_attributes
             params['name'] = self.name+"_calibration"
             newcurve = self._save_curve(times, curve, **params)
             return newcurve
@@ -356,7 +356,7 @@ class InputSignal(Signal):
         return True
 
 
-    # temporarily broken
+    # inverse is temporarily broken
     #
     # def inverse(self, func, y, x0, args=()):
     #     """
@@ -437,7 +437,6 @@ class InputDirect(InputSignal):
         return x
 
 class InputFromOutput(InputDirect):
-
     def calibrate(self):
         """ no need to calibrate this """
         pass

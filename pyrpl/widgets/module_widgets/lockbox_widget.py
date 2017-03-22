@@ -399,7 +399,7 @@ class LockboxInputWidget(ModuleWidget):
         self.main_layout.addWidget(self.win)
         self.button_calibrate = QtGui.QPushButton('Calibrate')
         self.main_layout.addWidget(self.button_calibrate)
-        self.button_calibrate.clicked.connect(self.module.calibrate)
+        self.button_calibrate.clicked.connect(lambda: self.module.calibrate())
         self.update_expected_signal()
 
     def hide_lock(self):

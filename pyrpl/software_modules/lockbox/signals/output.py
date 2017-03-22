@@ -12,7 +12,6 @@ from ....curvedb import CurveDB
 from .. import LockboxModule, LockboxModuleDictProperty
 
 
-
 class AdditionalFilterAttribute(FilterAttribute):
     # proxy to the pid inputfilter attribute that emits a signal when changed
     def valid_frequencies(self, obj):

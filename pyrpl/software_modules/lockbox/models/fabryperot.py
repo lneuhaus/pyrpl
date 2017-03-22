@@ -151,21 +151,28 @@ class HighFinesseInput(InputSignal):
             if "sweep_zoom" in scope.states:
                 scope.load_state("sweep_zoom")
             else:
-                scope.duration /= 100
-                scope.trigger_source = "ch1_positive_edge"
-            scope.setup(threshold_ch1=threshold, input1=self.signal())
-            self._logger.debug("calibration threshold: %f", threshold)
+                # zoom by finesse/10
+                scope.duration = scope.duration / (self.lockbox.finesse/10.0)
+                scope.trigger_source = "ch1_negative_edge"
+                scope.hysteresis_ch1 = 0.002
+                scope.trigger_delay = 0.0
+            scope.setup(threshold_ch1=threshold,
+                        input1=self.signal())
             if input2 is not None:
                 scope.input2 = input2
             scope.save_state("autosweep_zoom")  # save state for debugging or modification
-            curve1, curve2 = scope.curve(timeout=5. / self.lockbox.asg.frequency)  # give some time if trigger is missed
+            self._logger.debug("calibration threshold: %f", threshold)
+            # give some extra (10x) timeout time in case the trigger is missed
+            curve1, curve2 = scope.curve(
+                timeout=10./self.lockbox.asg.frequency+scope.duration)
             times = scope.times
             return curve1, curve2, times
 
     def calibrate(self, autosave=False):
         # take a first coarse calibration for trigger threshold estimation
         curve0, _ = super(HighFinesseInput, self).sweep_acquire()
-        curve1, _, times = self.sweep_acquire_zoom(self.get_threshold(curve0))
+        curve1, _, times = self.sweep_acquire_zoom(
+            threshold=self.get_threshold(curve0))
         self.calibration_data.get_stats_from_curve(curve1)
         # log calibration values
         self._logger.info("%s high-finesse calibration successful - "
@@ -178,7 +185,7 @@ class HighFinesseInput(InputSignal):
         # update graph in lockbox
         self.lockbox._signal_launcher.input_calibrated.emit([self])
         if autosave:
-            params = self.setup_attributes
+            params = self.calibration_data.setup_attributes
             params['name'] = self.name + "_calibration"
             newcurve = self._save_curve(times, curve1, **params)
             return newcurve
@@ -187,8 +194,12 @@ class HighFinesseInput(InputSignal):
 
     def get_threshold(self, curve):
         """ returns a reasonable scope threshold for the interesting part of this curve """
-        return (curve.min() + curve.max()) / 2.0 \
-               + self.calibration_data._analog_offset
+        #setup_attributes = self.calibration_data.setup_attributes
+        self.calibration_data.get_stats_from_curve(curve)
+        threshold = self.expected_signal(1.0*self.lockbox._unit_in_setpoint_unit('bandwidth'))
+        print threshold
+        #self.calibration_data.setup_attributes = setup_attributes  # restore setting from before
+        return threshold
 
 
 class HighFinesseReflection(HighFinesseInput, FPReflection):
@@ -208,8 +219,9 @@ class HighFinesseAnalogPdh(HighFinesseInput, FPAnalogPdh):
         # take a first coarse calibration for trigger threshold estimation
         curve0, _ = trigger_signal.sweep_acquire()
         # take the zoomed trace by triggering on the trigger_signal
-        _, curve2, times = trigger_signal.sweep_acquire_zoom(trigger_signal.get_threshold(curve0),
-                                                      input2=self.signal())
+        curve1, curve2, times = trigger_signal.sweep_acquire_zoom(
+            threshold=trigger_signal.get_threshold(curve0),
+            input2=self.signal())
         self.calibration_data.get_stats_from_curve(curve2)
         # log calibration values
         self._logger.info("%s high-finesse calibration successful - "
@@ -222,9 +234,15 @@ class HighFinesseAnalogPdh(HighFinesseInput, FPAnalogPdh):
         # update graph in lockbox
         self.lockbox._signal_launcher.input_calibrated.emit([self])
         if autosave:
-            params = self.setup_attributes
+            # pdh curve
+            params = self.calibration_data.setup_attributes
             params['name'] = self.name + "_calibration"
             newcurve = self._save_curve(times, curve2, **params)
+            # trigger signal curve
+            params = trigger_signal.calibration_data.setup_attributes
+            params['name'] = trigger_signal.name + "_calibration"
+            trigcurve = self._save_curve(times, curve1, **params)
+            newcurve.add_child(trigcurve)
             return newcurve
         else:
             return None
