@@ -1,4 +1,3 @@
-import numpy as np
 from ..attributes import BoolRegister, FloatRegister, SelectRegister, PhaseRegister, LongRegister
 from . import FilterModule
 from ..pyrpl_utils import sorted_dict
