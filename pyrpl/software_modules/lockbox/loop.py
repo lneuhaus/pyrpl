@@ -96,17 +96,18 @@ class LockboxLoop(Loop, LockboxModule):
     def time(self):
         """ current FPGA time in s since startup """
         try:
-            return float(self.pyrpl.rp.scope.current_timestamp) * 8e-9 / self.pyrpl.rp.frequency_correction \
+            return 8e-9 * self.pyrpl.rp.scope.current_timestamp / \
+                           self.pyrpl.rp.frequency_correction \
                    - self.loop_start_time
         except AttributeError:
-            self.loop_start_time = float(self.pyrpl.rp.scope.current_timestamp) * 8e-9 / self.pyrpl.rp.frequency_correction
+            self.loop_start_time =  8e-9 * self.pyrpl.rp.scope.current_timestamp\
+                                     / self.pyrpl.rp.frequency_correction
             return 0
-
 
     @property
     def trigger_time(self):
         """ FPGA time in s when trigger even occured (same frame of reference as self.time())"""
-        return 8e-9 * float(self.pyrpl.rp.scope.trigger_timestamp) * 8e-9 / self.pyrpl.rp.frequency_correction \
+        return 8e-9 * self.pyrpl.rp.scope.trigger_timestamp / self.pyrpl.rp.frequency_correction \
                - self.loop_start_time
 
 
