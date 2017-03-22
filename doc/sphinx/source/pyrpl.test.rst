@@ -19,6 +19,14 @@ pyrpl.test.debug_timer module
     :undoc-members:
     :show-inheritance:
 
+pyrpl.test.test_attribute module
+--------------------------------
+
+.. automodule:: pyrpl.test.test_attribute
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 pyrpl.test.test_attribute_widgets module
 ----------------------------------------
 
