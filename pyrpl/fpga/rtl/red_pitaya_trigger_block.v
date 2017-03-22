@@ -61,28 +61,20 @@
  * 
  */
 
-module red_pitaya_pid_block #(
-   //parameters for gain control (binary points and total bitwidth)
-   parameter     PSR = 12         ,
-   parameter     ISR = 32         ,//official redpitaya: 18
-   parameter     DSR = 10         ,
-   parameter     GAINBITS = 24    ,
-   parameter     DERIVATIVE = 0   , //disables differential gain if 0
-   
+module red_pitaya_trigger_block #(
    //parameters for input pre-filter
-   parameter     FILTERSTAGES = 4 ,
+   parameter     FILTERSTAGES = 1,
    parameter     FILTERSHIFTBITS = 5,
-   parameter     FILTERMINBW = 20,
-   
-   //enable arbitrary output saturation or not
-   parameter     ARBITRARY_SATURATION = 1
+   parameter     FILTERMINBW = 1,
 )
 (
    // data
    input                 clk_i           ,  // clock
    input                 rstn_i          ,  // reset - active low
    input      [ 14-1: 0] dat_i           ,  // input data
+   input      [ 14-1: 0] phase_i         ,  // input phase to feed through
    output     [ 14-1: 0] dat_o           ,  // output data
+   output     [ 14-1: 0] signal_o        ,  // output data
 
    // communication with PS
    input      [ 16-1: 0] addr,
@@ -93,71 +85,67 @@ module red_pitaya_pid_block #(
    input      [ 32-1: 0] wdata
 );
 
-reg [ 14-1: 0] set_sp;   // set point
-reg [ 16-1: 0] set_ival;   // integral value to set
-reg            ival_write;
-reg [ GAINBITS-1: 0] set_kp;   // Kp
-reg [ GAINBITS-1: 0] set_ki;   // Ki
-reg [ GAINBITS-1: 0] set_kd;   // Kd
+
+//output states
+localparam TTL = 4'd0;
+localparam PHASE = 4'd1;
+
+//settings
 reg [ 32-1: 0] set_filter;   // filter setting
-// limits if arbitrary saturation is enabled
-reg signed [ 14-1:0] out_max;
-reg signed [ 14-1:0] out_min;
-reg normalization_on;
+reg  [  2-1: 0] trigger_source   ;
+reg  [  4-1: 0] output_select;
+reg  [ 14-1: 0] set_a_thresh  ;
+reg  [ 14-1: 0] set_a_hyst   ;
+reg rearm;
+reg auto_rearm;
+
 
 //  System bus connection
 always @(posedge clk_i) begin
    if (rstn_i == 1'b0) begin
-      set_sp <= 14'd0;
-      set_ival <= 14'd0;
-      set_kp <= {GAINBITS{1'b0}};
-      set_ki <= {GAINBITS{1'b0}};
-      set_kd <= {GAINBITS{1'b0}};
       set_filter <= 32'd0;
-      ival_write <= 1'b0;
-      out_min <= {1'b1,{14-1{1'b0}}};
-      out_max <= {1'b0,{14-1{1'b1}}};
-      normalization_on <= 1'b0;
+      trigger_source <= 2'b00;
+      output_select <= 4'b0000;
+      set_a_thresh <= 14'd0;
+      set_a_hyst <= 14'd20; // 2.5 mV by default
+      rearm <= 1'b0;
+      auto_rearm <= 1'b0;
    end
    else begin
-      if (normalization_on == 1'b1)
-         set_kp  <= norm_integral;
-      if (wen) begin
-         if (addr==16'h100)   set_ival <= wdata[16-1:0];
-         if (addr==16'h104)   set_sp  <= wdata[14-1:0];
-         if ((addr==16'h108) && (normalization_on == 1'b0)) set_kp <= wdata[GAINBITS-1:0];
-         if (addr==16'h10C)   set_ki  <= wdata[GAINBITS-1:0];
-         if (addr==16'h110)   set_kd  <= wdata[GAINBITS-1:0];
-         if (addr==16'h120)   set_filter  <= wdata;
-         if (addr==16'h124)   out_min  <= wdata;
-         if (addr==16'h128)   out_max  <= wdata;
-         if (addr==16'h130)   normalization_on  <= wdata[0];
-      end
       if (addr==16'h100 && wen)
-         ival_write <= 1'b1;
+         rearm <= 1'b1;
       else
-         ival_write <= 1'b0;
+         rearm <= 1'b0;
+      if (wen) begin
+         if (addr==16'h104)   auto_rearm <= wdata[1:0];
+         if (addr==16'h108)   trigger_source <= wdata[2:0];
+         if (addr==16'h10C)   output_select <= wdata[4:0];
+         if (addr==16'h118)   set_a_thresh <= wdata[14-1:0];
+         if (addr==16'h11C)   set_a_hyst <= wdata[14-1:0];
+         if (addr==16'h120)   set_filter  <= wdata;
+
+      end
 
 	  casez (addr)
-	     16'h100 : begin ack <= wen|ren; rdata <= int_shr; end
-	     16'h104 : begin ack <= wen|ren; rdata <= {{32-14{1'b0}},set_sp}; end
-	     16'h108 : begin ack <= wen|ren; rdata <= {{32-GAINBITS{1'b0}},set_kp}; end
-	     16'h10C : begin ack <= wen|ren; rdata <= {{32-GAINBITS{1'b0}},set_ki}; end
-	     16'h110 : begin ack <= wen|ren; rdata <= {{32-GAINBITS{1'b0}},set_kd}; end
-	     16'h120 : begin ack <= wen|ren; rdata <= set_filter; end
-	     16'h124 : begin ack <= wen|ren; rdata <= {{32-14{1'b0}},out_min}; end
-	     16'h128 : begin ack <= wen|ren; rdata <= {{32-14{1'b0}},out_max}; end
-	     16'h130 : begin ack <= wen|ren; rdata <= {{32-31{1'b0}},normalization_on}; end
+	     16'h100 : begin ack <= wen|ren; rdata <= {{32-1{1'b0}},armed}; end
+	     16'h104 : begin ack <= wen|ren; rdata <= {{32-1{1'b0}},auto_rearm}; end
+	     16'h108 : begin ack <= wen|ren; rdata <= {{32-2{1'b0}},trigger_source}; end
+	     16'h10C : begin ack <= wen|ren; rdata <= {{32-4{1'b0}},output_select}; end
 
-	     16'h200 : begin ack <= wen|ren; rdata <= PSR; end
-	     16'h204 : begin ack <= wen|ren; rdata <= ISR; end
-	     16'h208 : begin ack <= wen|ren; rdata <= DSR; end
-	     16'h20C : begin ack <= wen|ren; rdata <= GAINBITS; end
+	     16'h118 : begin ack <= wen|ren; rdata <= set_a_thresh; end
+	     16'h11C : begin ack <= wen|ren; rdata <= set_a_hyst; end
+	     16'h120 : begin ack <= wen|ren; rdata <= set_filter; end
+
+	     16'h15C : begin ack <= wen|ren; rdata <= ctr_value[32-1:0]; end
+	     16'h160 : begin ack <= wen|ren; rdata <= ctr_value[64-1:32]; end
+	     16'h164 : begin ack <= wen|ren; rdata <= timestamp_trigger[32-1:0]; end
+	     16'h168 : begin ack <= wen|ren; rdata <= timestamp_trigger[64-1:32]; end
+
 	     16'h220 : begin ack <= wen|ren; rdata <= FILTERSTAGES; end
 	     16'h224 : begin ack <= wen|ren; rdata <= FILTERSHIFTBITS; end
 	     16'h228 : begin ack <= wen|ren; rdata <= FILTERMINBW; end
-	     
-	     default: begin ack <= wen|ren;  rdata <=  32'h0; end 
+
+	     default: begin ack <= wen|ren;  rdata <=  32'h0; end
 	  endcase	     
    end
 end
@@ -171,7 +159,7 @@ red_pitaya_filter_block #(
      .SIGNALBITS(14),
      .MINBW(FILTERMINBW)
   )
-  pidfilter
+  triggerfilter
   (
   .clk_i(clk_i),
   .rstn_i(rstn_i),
@@ -180,163 +168,75 @@ red_pitaya_filter_block #(
   .dat_o(dat_i_filtered)
   );
 
+
+
 //---------------------------------------------------------------------------------
-//  Set point error calculation - 1 cycle delay
+//  Trigger created from input signal - nearly identical with scope
+reg  [  2-1: 0] adc_scht_ap  ;
+reg  [  2-1: 0] adc_scht_an  ;
+reg  [ 14-1: 0] set_a_treshp ;
+reg  [ 14-1: 0] set_a_treshm ;
+reg adc_trig_ap;
+reg adc_trig_an;
 
-reg  [ 16-1: 0] error        ;
+always @(posedge adc_clk_i)
+if (adc_rstn_i == 1'b0) begin
+   adc_scht_ap  <=  2'h0 ;
+   adc_scht_an  <=  2'h0 ;
+   adc_trig_ap  <=  1'b0 ;
+   adc_trig_an  <=  1'b0 ;
+end else begin
+   set_a_treshp <= set_a_tresh + set_a_hyst ; // calculate positive
+   set_a_treshm <= set_a_tresh - set_a_hyst ; // and negative treshold
 
-always @(posedge clk_i) begin
-   if (rstn_i == 1'b0) begin
-      error <= 16'h0 ;
+   if (adc_dv) begin
+           if ($signed(dat_i_filtered) >= $signed(set_a_tresh ))      adc_scht_ap[0] <= 1'b1 ;  // treshold reached
+      else if ($signed(dat_i_filtered) <  $signed(set_a_treshm))      adc_scht_ap[0] <= 1'b0 ;  // wait until it goes under hysteresis
+           if ($signed(dat_i_filtered) <= $signed(set_a_tresh ))      adc_scht_an[0] <= 1'b1 ;  // treshold reached
+      else if ($signed(dat_i_filtered) >  $signed(set_a_treshp))      adc_scht_an[0] <= 1'b0 ;  // wait until it goes over hysteresis
    end
-   else begin
-      //error <= $signed(set_sp) - $signed(dat_i) ;
-      error <= normalization_on ? ($signed({set_sp, 1'b0}) - $signed(normalized_product)) : ($signed(dat_i_filtered) - $signed(set_sp)) ;
-   end
+
+   adc_scht_ap[1] <= adc_scht_ap[0] ;
+   adc_scht_an[1] <= adc_scht_an[0] ;
+
+   adc_trig_ap <= adc_scht_ap[0] && !adc_scht_ap[1] ; // make 1 cyc pulse
+   adc_trig_an <= adc_scht_an[0] && !adc_scht_an[1] ;
 end
 
+// trigger logic
+reg trigger_signal;
+reg armed;
+reg   [ 64 - 1:0] ctr_value        ;
+reg   [ 64 - 1:0] timestamp_trigger;
+reg   [ 14 - 1:0] phase;
+reg   [ 14 - 1:0] output_data;
 
-//---------------------------------------------------------------------------------
-//  Proportional part - 1 cycle delay
-
-reg   [15+GAINBITS-PSR-1: 0] kp_reg        ;
-wire  [15+GAINBITS-1: 0] kp_mult       ;
-
-always @(posedge clk_i) begin
-   if (rstn_i == 1'b0) begin
-      kp_reg  <= {15+GAINBITS-PSR{1'b0}};
+always @(posedge adc_clk_i)
+if (adc_rstn_i == 1'b0) begin
+   trigger_signal <= 1'b0;
+   armed <= 1'b0;
+   ctr_value <= 64'h0;
+   timestamp_trigger <= 64'h0;
+   phase <= 14'd0;
+   output_data <= 14'd0;
+end else begin
+   // bit 0 of trigger_source defines positive slope trigger, bit 1 negative_slope trigger
+   trigger_signal <= ((adc_trig_ap && trigger_source[0]) || (adc_trig_an && trigger_source[1])) && armed;
+   // disarm after trigger event, rearm when requested or explicitely or by auto_rearm;
+   armed <= (armed && (!trigger_signal)) || rearm || auto_rearm;
+   ctr_value <= ctr_value + 1'b1;
+   if (trigger_signal==1'b1) begin
+       timestamp_trigger <= ctr_value;  # take a timestamp
+       phase <= phase_i;
    end
-   else begin
-      kp_reg <= kp_mult[15+GAINBITS-1:PSR] ;
-   end
+   // output_signal multiplexer
+   if (output_select==TTL):
+       output_data <= {0'b0,{13{trigger_signal}}};
+   else if (output=select==PHASE):
+       output_data <= phase;
 end
 
-assign kp_mult = normalization_on ? ($signed(dat_i_offset) * $signed(set_kp)) : ($signed(error) * $signed(set_kp));
-
-reg signed [14-1:0] dat_i_offset;
-reg signed [15-1:0] normalized_product;
-always @(posedge clk_i) begin
-    dat_i_offset <= $signed(dat_i) - $signed(set_kd[DSR+14-1:DSR]);
-    if ({(|kp_reg[15+GAINBITS-PSR-1:15]),kp_reg[15-1]} == 2'b01)
-        normalized_product <= {1'b0, {15-1{1'b1}}};
-    else if ({(|kp_reg[15+GAINBITS-PSR-1:15]),kp_reg[15-1]} == 2'b11)
-        normalized_product <= {{15-1{1'b0}},1'b1};
-    else
-        normalized_product <= kp_reg;
-end
-
-//---------------------------------------------------------------------------------
-// Integrator - 2 cycles delay (but treat similar to proportional since it
-// will become negligible at high frequencies where delay is important)
-
-localparam IBW = ISR+16; //integrator bit-width. Over-represent the integral sum to record longterm drifts (overrepresented by 2 bits)
-reg   [16+GAINBITS-1: 0] ki_mult ;
-wire  [IBW  : 0] int_sum       ;
-reg   [IBW-1: 0] int_reg       ;
-wire  [IBW-ISR-1: 0] int_shr   ;
-
-always @(posedge clk_i) begin
-   if (rstn_i == 1'b0) begin
-      ki_mult  <= {15+GAINBITS{1'b0}};
-      int_reg  <= {IBW{1'b0}};
-   end
-   else begin
-      ki_mult <= $signed(error) * $signed(set_ki) ;
-      if (ival_write)
-         int_reg <= { {IBW-16-ISR{set_ival[16-1]}},set_ival[16-1:0],{ISR{1'b0}}};
-      else if ((normalization_on==1'b1) && ({(|int_sum[IBW:ISR-PSR+GAINBITS]),int_sum[ISR-PSR+GAINBITS-1]} == 2'b01))
-       // positive saturation with normalization on
-         int_reg <= {{IBW-1-ISR+PSR-GAINBITS+1{1'b0}},{ISR-PSR+GAINBITS-1{1'b1}}};
-      else if ((normalization_on==1'b0) && (int_sum[IBW+1-1:IBW+1-2] == 2'b01)) //normal positive saturation
-         int_reg <= {1'b0,{IBW-1{1'b1}}};
-      else if ((normalization_on==1'b1) && ({(|int_sum[IBW:ISR-PSR+GAINBITS]),int_sum[ISR-PSR+GAINBITS-1]} == 2'b11)) // number is negative
-         int_reg <= {{IBW-1-ISR+PSR-1{1'b0}},{ISR-PSR+1{1'b1}}};
-         //int_reg <= {{GAINBITS-1{1'b0}}, 1'b1, {IBW-GAINBITS-1{1'b0}}};
-      else if ((normalization_on==1'b0) && (int_sum[IBW+1-1:IBW+1-2] == 2'b10)) //normal negative saturation
-         int_reg <= {1'b1,{IBW-1{1'b0}}};
-      else
-         int_reg <= int_sum[IBW-1:0]; // use sum as it is
-   end
-end
-
-assign int_sum = $signed(ki_mult) + $signed(int_reg) ;
-assign int_shr = $signed(int_reg[IBW-1:ISR]) ;
-
-wire  [GAINBITS-1: 0] norm_integral;
-assign norm_integral = $signed(int_reg[IBW-1:ISR-PSR]);
-
-//---------------------------------------------------------------------------------
-//  Derivative - 2 cycles delay (but treat as 1 cycle because its not
-//  functional at the moment
-
-wire  [    39-1: 0] kd_mult       ;
-reg   [39-DSR-1: 0] kd_reg        ; 
-reg   [39-DSR-1: 0] kd_reg_r      ;
-reg   [39-DSR  : 0] kd_reg_s      ;
-
-generate 
-	if (DERIVATIVE == 1) begin
-		wire  [15+GAINBITS-1: 0] kd_mult;
-		reg   [15+GAINBITS-DSR-1: 0] kd_reg;
-		reg   [15+GAINBITS-DSR-1: 0] kd_reg_r;
-		reg   [15+GAINBITS-DSR  : 0] kd_reg_s;
-		always @(posedge clk_i) begin
-		   if (rstn_i == 1'b0) begin
-		      kd_reg   <= {15+GAINBITS-DSR{1'b0}};
-		      kd_reg_r <= {15+GAINBITS-DSR{1'b0}};
-		      kd_reg_s <= {15+GAINBITS-DSR+1{1'b0}};
-		   end
-		   else begin
-		      kd_reg   <= kd_mult[15+GAINBITS-1:DSR] ;
-		      kd_reg_r <= kd_reg;
-		      kd_reg_s <= $signed(kd_reg) - $signed(kd_reg_r); //this is the end result
-		   end
-		end
-		assign kd_mult = $signed(error) * $signed(set_kd) ;
-	end
-	else begin
-		wire [15+GAINBITS-DSR:0] kd_reg_s;
-		assign kd_reg_s = {15+GAINBITS-DSR+1{1'b0}};
-	end
-endgenerate 
-
-//---------------------------------------------------------------------------------
-//  Sum together - saturate output - 1 cycle delay
-
-localparam MAXBW = 17; //maximum possible bitwidth for pid_sum
-wire        [   MAXBW-1: 0] pid_sum;
-reg signed  [   14-1: 0] pid_out;
-
-		always @(posedge clk_i) begin
-		   if (rstn_i == 1'b0) begin
-		      pid_out    <= 14'b0;
-		   end
-		   else begin
-		      if ({pid_sum[MAXBW-1],|pid_sum[MAXBW-2:13]} == 2'b01) //positive overflow
-		         pid_out <= 14'h1FFF;
-		      else if ({pid_sum[MAXBW-1],&pid_sum[MAXBW-2:13]} == 2'b10) //negative overflow
-		         pid_out <= 14'h2000;
-		      else
-		         pid_out <= pid_sum[14-1:0];
-		   end
-		end
-assign pid_sum = (normalization_on) ? ($signed(error)): ($signed(kp_reg) + $signed(int_shr) + $signed(kd_reg_s));
-
-generate 
-	if (ARBITRARY_SATURATION == 0)
-		assign dat_o = pid_out;
-	else begin
-		reg signed [ 14-1:0] out_buffer;
-		always @(posedge clk_i) begin
-			if (pid_out >= out_max)
-				out_buffer <= out_max;
-			else if (pid_out <= out_min)
-				out_buffer <= out_min;
-			else
-				out_buffer <= pid_out;
-		end
-		assign dat_o = out_buffer; 
-	end
-endgenerate
+assign dat_o = output_data;
+assign signal_o = output_data;
 
 endmodule

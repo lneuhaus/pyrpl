@@ -467,6 +467,7 @@ red_pitaya_scope i_scope (
 
 //---------------------------------------------------------------------------------
 //  DAC arbitrary signal generator
+wire    [14-1: 0] asg1phase_o;
 
 red_pitaya_asg i_asg (
    // DAC
@@ -478,6 +479,7 @@ red_pitaya_asg i_asg (
   .trig_b_i        (  exp_p_in[0]                ),
   .trig_out_o      (  trig_asg_out               ),
   .trig_scope_i    (  trig_scope_out             ),
+  .asg1phase       (  asg1phase_o                ),
   
   // System bus
   .sys_addr        (  sys_addr                   ),  // address
@@ -506,7 +508,8 @@ red_pitaya_dsp i_dsp (
   .asg2_i          (  asg_b                  ),
   .scope1_o        (  to_scope_a             ),
   .scope2_o        (  to_scope_b             ),
-	
+  .asg1phase_i     (  asg1phase_o            ),
+
   .pwm0            (  pwm_signals[0]         ),
   .pwm1            (  pwm_signals[1]         ),
   .pwm2            (  pwm_signals[2]         ),
