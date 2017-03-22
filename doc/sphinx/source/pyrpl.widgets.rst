@@ -27,6 +27,14 @@ pyrpl.widgets.pyrpl_widget module
     :undoc-members:
     :show-inheritance:
 
+pyrpl.widgets.yml_editor module
+-------------------------------
+
+.. automodule:: pyrpl.widgets.yml_editor
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 
 Module contents
 ---------------

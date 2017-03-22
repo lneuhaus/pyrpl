@@ -523,8 +523,10 @@ class ModuleAttribute(BaseAttribute):
                  default=None,
                  doc="",
                  ignore_errors=False,
-                 call_setup=False):
+                 call_setup=False,
+                 **kwargs):
         self.module_cls = module_cls
+        self.kwargs = kwargs
         super(ModuleAttribute, self).__init__(default=default,
                                               doc=doc,
                                               ignore_errors=ignore_errors,

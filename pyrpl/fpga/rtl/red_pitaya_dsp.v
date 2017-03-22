@@ -67,7 +67,8 @@ module red_pitaya_dsp #(
    output     [ 14-1: 0] scope2_o,
    input      [ 14-1: 0] asg1_i,
    input      [ 14-1: 0] asg2_i,
-   
+   input      [ 14-1: 0] asg1phase,
+
    // pwm outputs
    output     [ 14-1: 0] pwm0,
    output     [ 14-1: 0] pwm1,
@@ -95,6 +96,7 @@ localparam PID0  = 'd0; //formerly PID11
 localparam PID1  = 'd1; //formerly PID12: input2->output1
 localparam PID2  = 'd2; //formerly PID21: input1->output2
 localparam PID3  = 'd3; //formerly PID22
+localparam TRIG  = 'd3; //formerly PID3
 localparam IIR   = 'd4; //IIR filter to connect in series to PID module
 localparam IQ0   = 'd5; //for PDH signal generation
 localparam IQ1   = 'd6; //for NA functionality
@@ -235,13 +237,13 @@ always @(posedge clk_i) begin
       input_select [PID0] <= ADC1;
       output_select[PID0] <= OFF;
       
-      input_select [PID1] <= ADC2;
+      input_select [PID1] <= ADC1;
       output_select[PID1] <= OFF;
 
       input_select [PID2] <= ADC1;
       output_select[PID2] <= OFF;
 
-      input_select [PID3] <= ADC2;
+      input_select [PID3] <= ADC1;
       output_select[PID3] <= OFF;
 
       input_select [IIR] <= ADC1;
@@ -296,7 +298,7 @@ end
  *********************************************/
 
 //PID
-generate for (j = 0; j < 4; j = j+1) begin
+generate for (j = 0; j < 3; j = j+1) begin
    red_pitaya_pid_block i_pid (
      // data
      .clk_i        (  clk_i          ),  // clock
@@ -316,6 +318,27 @@ generate for (j = 0; j < 4; j = j+1) begin
 end
 endgenerate
 
+//TRIG
+generate for (j = 3; j < 4; j = j+1) begin
+   red_pitaya_trigger_block i_trigger (
+     // data
+     .clk_i        (  clk_i          ),  // clock
+     .rstn_i       (  rstn_i         ),  // reset - active low
+     .dat_i        (  input_signal [j] ),  // input data
+     .dat_o        (  output_direct[j]),  // output data
+     .signal_o     (  output_signal[j]),  // output signal
+     .phase1_i      (  asg1phase ),  // phase input
+
+	 //communincation with PS
+	 .addr ( sys_addr[16-1:0] ),
+	 .wen  ( sys_wen & (sys_addr[20-1:16]==j) ),
+	 .ren  ( sys_ren & (sys_addr[20-1:16]==j) ),
+	 .ack  ( module_ack[j] ),
+	 .rdata (module_rdata[j]),
+     .wdata (sys_wdata)
+   );
+end
+endgenerate
 
 //IIR module 
 generate for (j = 4; j < 5; j = j+1) begin

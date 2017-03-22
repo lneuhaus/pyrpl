@@ -128,17 +128,18 @@ class GalvanicIsolationLoopLockbox(Lockbox):
 
     def start_gi(self):
         self.stop_gi()
+        # start second redpitaya
         if not hasattr(self, 'second_pyrpl') or self.second_pyrpl is None:
             from pyrpl import Pyrpl
-            # start second redpitaya
             self.second_pyrpl = Pyrpl("second_redpitaya", hostname="_FAKE_REDPITAYA_")
+        # start loop
         self.galvanic_isolation_loop = LockboxLoop(parent=self,
             name="galvanic_isolation_loop",
             interval=self.gi_interval,
             loop_function=self.galvanic_isolation_loop_function)
 
     def galvanic_isolation_loop_function(self):
-        """ the loop function to be started"""
+        """ the loop function to be executed"""
         # read an output value from this lockbox and set it as the output of the second redpitaya
         self.second_pyrpl.rp.asg0.offset = self.pyrpl.rp.sampler.pid0
         # only for debugging:
@@ -148,3 +149,20 @@ class GalvanicIsolationLoopLockbox(Lockbox):
         if hasattr(self, 'galvanic_isolation_loop') and self.galvanic_isolation_loop is not None:
             self.galvanic_isolation_loop._clear()
         self.galvanic_isolation_loop = None
+
+
+class ShortLoopLockbox(Lockbox):
+    """ an example for very short loop description"""
+
+    def plot_sin_and_in1(lockbox_self, loop_self):
+        """ if you pass an instance_method of the lockbox, it should take two arguments:
+        the instance of the lockbox (self) and the instance of the loop"""
+        loop_self.plot.append(green=np.sin(2*np.pi*loop_self.time),
+                              red=lockbox_self.pyrpl.rp.sampler.in1)
+        if loop_self.n > 100:  # auto-stop after 1000 cycles
+            loop_self._clear()
+
+    loop = ModuleProperty(LockboxPlotLoop,
+                          interval=0.05,
+                          autostart=True,
+                          loop_function=plot_sin_and_in1)

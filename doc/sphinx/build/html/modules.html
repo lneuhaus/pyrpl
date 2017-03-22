@@ -6,9 +6,9 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pyrpl &#8212; pyrpl 0.9.1 documentation</title>
+    <title>pyrpl &mdash; pyrpl 0.9.1 documentation</title>
     
-    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     
     <script type="text/javascript">
@@ -17,18 +17,16 @@
         VERSION:     '0.9.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
+        HAS_SOURCE:  true
       };
     </script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" /> 
+    <link rel="top" title="pyrpl 0.9.1 documentation" href="index.html" /> 
   </head>
-  <body role="document">
-    <div class="related" role="navigation" aria-label="related navigation">
+  <body>
+    <div class="related">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -37,14 +35,14 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pyrpl 0.9.1 documentation</a> &#187;</li> 
+        <li><a href="index.html">pyrpl 0.9.1 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
-          <div class="body" role="main">
+          <div class="body">
             
   <div class="section" id="pyrpl">
 <h1>pyrpl<a class="headerlink" href="#pyrpl" title="Permalink to this headline">¶</a></h1>
@@ -65,6 +63,7 @@
 <li class="toctree-l4"><a class="reference internal" href="pyrpl.hardware_modules.html#module-pyrpl.hardware_modules.pid">pyrpl.hardware_modules.pid module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="pyrpl.hardware_modules.html#module-pyrpl.hardware_modules.sampler">pyrpl.hardware_modules.sampler module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="pyrpl.hardware_modules.html#module-pyrpl.hardware_modules.scope">pyrpl.hardware_modules.scope module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyrpl.hardware_modules.html#module-pyrpl.hardware_modules.trig">pyrpl.hardware_modules.trig module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="pyrpl.hardware_modules.html#module-pyrpl.hardware_modules">Module contents</a></li>
 </ul>
 </li>
@@ -82,6 +81,7 @@
 <li class="toctree-l4"><a class="reference internal" href="pyrpl.test.html#subpackages">Subpackages</a></li>
 <li class="toctree-l4"><a class="reference internal" href="pyrpl.test.html#submodules">Submodules</a></li>
 <li class="toctree-l4"><a class="reference internal" href="pyrpl.test.html#pyrpl-test-debug-timer-module">pyrpl.test.debug_timer module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyrpl.test.html#pyrpl-test-test-attribute-module">pyrpl.test.test_attribute module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="pyrpl.test.html#module-pyrpl.test.test_attribute_widgets">pyrpl.test.test_attribute_widgets module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="pyrpl.test.html#module-pyrpl.test.test_base">pyrpl.test.test_base module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="pyrpl.test.html#module-pyrpl.test.test_example">pyrpl.test.test_example module</a></li>
@@ -112,23 +112,27 @@
 <li class="toctree-l4"><a class="reference internal" href="pyrpl.widgets.html#submodules">Submodules</a></li>
 <li class="toctree-l4"><a class="reference internal" href="pyrpl.widgets.html#module-pyrpl.widgets.attribute_widgets">pyrpl.widgets.attribute_widgets module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="pyrpl.widgets.html#module-pyrpl.widgets.pyrpl_widget">pyrpl.widgets.pyrpl_widget module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyrpl.widgets.html#module-pyrpl.widgets.yml_editor">pyrpl.widgets.yml_editor module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="pyrpl.widgets.html#module-pyrpl.widgets">Module contents</a></li>
 </ul>
 </li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="pyrpl.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.html#module-pyrpl.acquisition_module">pyrpl.acquisition_module module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.html#module-pyrpl.async_utils">pyrpl.async_utils module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="pyrpl.html#module-pyrpl.attributes">pyrpl.attributes module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="pyrpl.html#module-pyrpl.curvedb">pyrpl.curvedb module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="pyrpl.html#module-pyrpl.errors">pyrpl.errors module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="pyrpl.html#pyrpl-fitting-module">pyrpl.fitting module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.html#module-pyrpl.fitting">pyrpl.fitting module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="pyrpl.html#module-pyrpl.memory">pyrpl.memory module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.html#module-pyrpl.module_attributes">pyrpl.module_attributes module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="pyrpl.html#module-pyrpl.modules">pyrpl.modules module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="pyrpl.html#module-pyrpl.monitor_client">pyrpl.monitor_client module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="pyrpl.html#module-pyrpl.pyrpl">pyrpl.pyrpl module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="pyrpl.html#module-pyrpl.pyrpl_utils">pyrpl.pyrpl_utils module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="pyrpl.html#module-pyrpl.redpitaya">pyrpl.redpitaya module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="pyrpl.html#pyrpl-sound-module">pyrpl.sound module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.html#module-pyrpl.sound">pyrpl.sound module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="pyrpl.html#module-pyrpl.sshshell">pyrpl.sshshell module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="pyrpl.html#module-pyrpl">Module contents</a></li>
 </ul>
@@ -141,30 +145,31 @@
           </div>
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+      <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper">
-  <div role="note" aria-label="source link">
-    <h3>This Page</h3>
-    <ul class="this-page-menu">
-      <li><a href="_sources/modules.rst.txt"
-            rel="nofollow">Show Source</a></li>
-    </ul>
-   </div>
-<div id="searchbox" style="display: none" role="search">
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/modules.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
     </div>
-    <div class="related" role="navigation" aria-label="related navigation">
+    <div class="related">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -173,12 +178,12 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pyrpl 0.9.1 documentation</a> &#187;</li> 
+        <li><a href="index.html">pyrpl 0.9.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
-    <div class="footer" role="contentinfo">
-        &#169; Copyright 2016, Leonhard Neuhaus.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.1.
+    <div class="footer">
+        &copy; Copyright 2016, Leonhard Neuhaus.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
     </div>
   </body>
 </html>

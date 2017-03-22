@@ -15,6 +15,22 @@ Subpackages
 Submodules
 ----------
 
+pyrpl.acquisition_module module
+-------------------------------
+
+.. automodule:: pyrpl.acquisition_module
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pyrpl.async_utils module
+------------------------
+
+.. automodule:: pyrpl.async_utils
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 pyrpl.attributes module
 -----------------------
 
@@ -51,6 +67,14 @@ pyrpl.memory module
 -------------------
 
 .. automodule:: pyrpl.memory
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pyrpl.module_attributes module
+------------------------------
+
+.. automodule:: pyrpl.module_attributes
     :members:
     :undoc-members:
     :show-inheritance:

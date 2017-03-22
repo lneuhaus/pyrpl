@@ -4,6 +4,14 @@ pyrpl.software_modules.lockbox.models package
 Submodules
 ----------
 
+pyrpl.software_modules.lockbox.models.custom_lockbox_example module
+-------------------------------------------------------------------
+
+.. automodule:: pyrpl.software_modules.lockbox.models.custom_lockbox_example
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 pyrpl.software_modules.lockbox.models.fabryperot module
 -------------------------------------------------------
 

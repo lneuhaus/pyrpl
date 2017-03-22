@@ -23,7 +23,6 @@ class CalibrationData(LockboxModule):
     rms = FloatProperty(min=0, max=2, doc="rms of the signal in V over a "
                                           "lockbox sweep")
     _analog_offset = FloatProperty(default=0.0, doc="analog offset of the signal")
-
     @property
     def amplitude(self):
         """ small helper function for expected signal """
@@ -259,15 +258,16 @@ class InputSignal(Signal):
                             rolling_mode=False)
                 scope.save_state("autosweep")
             curve1, curve2 = scope.curve(timeout=1. / self.lockbox.asg.frequency + scope.duration)
+            times = scope.times
         curve1 -= self.calibration_data._analog_offset
-        return curve1
+        return curve1, times
 
-    def calibrate(self):
+    def calibrate(self, autosave=False):
         """
         This function should be reimplemented to measure whatever property of
         the curve is needed by expected_signal.
         """
-        curve = self.sweep_acquire()
+        curve, times = self.sweep_acquire()
         self.calibration_data.get_stats_from_curve(curve)
         # log calibration values
         self._logger.info("%s calibration successful - Min: %.3f  Max: %.3f  Mean: %.3f  Rms: %.3f",
@@ -278,6 +278,14 @@ class InputSignal(Signal):
                           self.calibration_data.rms)
         # update graph in lockbox
         self.lockbox._signal_launcher.input_calibrated.emit([self])
+        # save data if desired
+        if autosave:
+            params = self.setup_attributes
+            params['name'] = self.name+"_calibration"
+            newcurve = self._save_curve(times, curve, **params)
+            return newcurve
+        else:
+            return None
 
     def expected_signal(self, variable):
         """
@@ -306,7 +314,7 @@ class InputSignal(Signal):
         # current values
         actmean, actrms = self.mean, self.rms
         # get max, min of acceptable error signals
-        error_threshold = self.lockbox.error_threshold
+        error_threshold = self.lockbox.is_locked_threshold
         min = self.expected_signal(setpoint-error_threshold)
         max = self.expected_signal(setpoint+error_threshold)
         startslope = self.expected_slope(setpoint - error_threshold)

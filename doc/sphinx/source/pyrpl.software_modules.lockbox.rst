@@ -20,18 +20,18 @@ pyrpl.software_modules.lockbox.lockbox module
     :undoc-members:
     :show-inheritance:
 
-pyrpl.software_modules.lockbox.model module
--------------------------------------------
+pyrpl.software_modules.lockbox.loop module
+------------------------------------------
 
-.. automodule:: pyrpl.software_modules.lockbox.model
+.. automodule:: pyrpl.software_modules.lockbox.loop
     :members:
     :undoc-members:
     :show-inheritance:
 
-pyrpl.software_modules.lockbox.sequence module
-----------------------------------------------
+pyrpl.software_modules.lockbox.stage module
+-------------------------------------------
 
-.. automodule:: pyrpl.software_modules.lockbox.sequence
+.. automodule:: pyrpl.software_modules.lockbox.stage
     :members:
     :undoc-members:
     :show-inheritance:

@@ -91,6 +91,14 @@ pyrpl.hardware_modules.scope module
     :undoc-members:
     :show-inheritance:
 
+pyrpl.hardware_modules.trig module
+----------------------------------
+
+.. automodule:: pyrpl.hardware_modules.trig
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 
 Module contents
 ---------------

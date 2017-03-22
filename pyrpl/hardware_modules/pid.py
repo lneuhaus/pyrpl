@@ -72,20 +72,6 @@ class Pid(FilterModule):
 
     _GAINBITS = 24  # Register(0x20C)
 
-    """
-    parameter_names = ["p",
-                       "i",
-                       "d",
-                       "setpoint",
-                       "min_voltage",
-                       "max_voltage",
-                       "normalization_on",
-                       "normalization_i",
-                       "output_direct",
-                       "input",
-                       "ival"]
-    """
-
     ival = IValAttribute(min=-4, max=4, increment= 8. / 2**16)
 
     setpoint = FloatRegister(0x104, bits=14, norm= 2 **13,

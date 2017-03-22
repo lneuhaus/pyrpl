@@ -78,7 +78,9 @@ module red_pitaya_asg (
   output     [  2-1: 0] trig_out_o,  // notification trigger
  
   input                 trig_scope_i    ,  // trigger from the scope
-  
+
+  output     [ 14-1: 0] asg1phase_o;
+
   // System bus
   input      [ 32-1: 0] sys_addr  ,  // bus address
   input      [ 32-1: 0] sys_wdata ,  // bus write data
@@ -419,5 +421,8 @@ end
 //assign xn_wire = a * xn + b;
 assign rand_pnt = xn[31-1:31-RSZ];
 //rand_pnt will carry values between 0 and 2**(RSZ)-2
+
+// forward the current phase of asg1;
+assign asg1phase_o = buf_a_rpnt;
 
 endmodule
