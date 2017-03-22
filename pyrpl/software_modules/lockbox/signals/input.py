@@ -488,43 +488,16 @@ class InputFromOutput(InputDirect):
             setpoint * self.lockbox._setpoint_unit_in_unit(output_unit)
         return setpoint_in_output_unit / output.dc_gain
 
-class IqFrequencyProperty(FrequencyProperty):
-    def __init__(self, **kwargs):
-        super(IqFrequencyProperty, self).__init__(**kwargs)
-        self.max = FrequencyRegister.CLOCK_FREQUENCY / 2.0
-
-    def set_value(self, instance, value):
-        super(IqFrequencyProperty, self).set_value(instance, value)
-        instance.iq.frequency = value
-        return value
-
-
-class IqAmplitudeProperty(FloatProperty):
-    def set_value(self, instance, value):
-        super(IqAmplitudeProperty, self).set_value(instance, value)
-        instance.iq.amplitude = value
-        return value
-
-
-class IqPhaseProperty(PhaseProperty):
-    def set_value(self, instance, value):
-        super(IqPhaseProperty, self).set_value(instance, value)
-        instance.iq.phase = value
-        return value
-
-
-class IqModOutputProperty(SelectProperty):
-    def set_value(self, instance, value):
-        super(IqModOutputProperty, self).set_value(instance, value)
-        instance.iq.output_direct = value
-        return value
-
 
 class IqQuadratureFactorProperty(FloatProperty):
     def set_value(self, instance, value):
-        super(IqQuadratureFactorProperty, self).set_value(instance, value)
+        # super(IqQuadratureFactorProperty, self).set_value(instance, value)
         instance.iq.quadrature_factor = value
         return value
+
+    def get_value(self, instance, value):
+        return instance.iq.quadrature_factor
+
 
 class IqFilterProperty(FilterProperty):
     def set_value(self, instance, val):
@@ -540,27 +513,27 @@ class IqFilterProperty(FilterProperty):
         # only allow the low-pass filter options (exclude negative high-pass options)
         return [v for v in module.iq.__class__.bandwidth.valid_frequencies(module.iq) if v >= 0]
 
+
 class InputIq(InputSignal):
     """ Base class for demodulated signals. A derived class must implement
     the method expected_signal (see InputPdh in fabryperot.py for example)"""
     _gui_attributes = ['mod_freq',
                        'mod_amp',
                        'mod_phase',
-                       'quadrature_factor',
                        'mod_output',
-                       'bandwidth']
+                       'bandwidth',
+                       'quadrature_factor']
     _setup_attributes = _gui_attributes
 
-    mod_freq = IqFrequencyProperty()
-    mod_amp = IqAmplitudeProperty()
-    mod_phase = IqPhaseProperty()
-    quadrature_factor = IqQuadratureFactorProperty()
-    mod_output = IqModOutputProperty(['out1', 'out2'])
-    bandwidth = IqFilterProperty()
-
-    def _init_module(self):
-        super(InputIq, self)._init_module()
-        self.setup()
+    mod_freq = FrequencyProperty(min=0.0,
+                                 max=FrequencyRegister.CLOCK_FREQUENCY / 2.0,
+                                 default=0.0,
+                                 call_setup=True)
+    mod_amp = FloatProperty(min=-1, max=1, default=0.0, call_setup=True)
+    mod_phase = PhaseProperty(call_setup=True)
+    mod_output = SelectProperty(['out1', 'out2'], call_setup=True)
+    quadrature_factor = IqQuadratureFactorProperty(call_setup=True)
+    bandwidth = IqFilterProperty(call_setup=True)
 
     @property
     def iq(self):
