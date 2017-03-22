@@ -145,9 +145,7 @@ class HighFinesseInput(InputSignal):
         2. Full scan with the actuator, smaller scope duration, trigged on input (level defined by previous scan).
     Scope states corresponding to 1 and 2 are "sweep" and "sweep_zoom"
     """
-
-    def calibrate(self):
-        curve = super(HighFinesseInput, self).sweep_acquire()
+    def sweep_acquire_zoom(self, threshold, input2=None):
         with self.pyrpl.scopes.pop(self.name) as scope:
             scope.load_state("autosweep")
             if "sweep_zoom" in scope.states:
@@ -155,12 +153,20 @@ class HighFinesseInput(InputSignal):
             else:
                 scope.duration /= 100
                 scope.trigger_source = "ch1_positive_edge"
-            threshold = self.get_threshold(curve)
             scope.setup(threshold_ch1=threshold, input1=self.signal())
             self._logger.debug("calibration threshold: %f", threshold)
-            scope.save_state("autosweep_zoom") # save state for debugging or modification
-            curve1, curve2 = scope.curve(timeout=5./self.lockbox.asg.frequency)  # give some time if trigger is missed
-            self.calibration_data.get_stats_from_curve(curve1)
+            if input2 is not None:
+                scope.input2 = input2
+            scope.save_state("autosweep_zoom")  # save state for debugging or modification
+            curve1, curve2 = scope.curve(timeout=5. / self.lockbox.asg.frequency)  # give some time if trigger is missed
+            times = scope.times
+            return curve1, curve2, times
+
+    def calibrate(self, autosave=False):
+        # take a first coarse calibration for trigger threshold estimation
+        curve0, _ = super(HighFinesseInput, self).sweep_acquire()
+        curve1, _, times = self.sweep_acquire_zoom(self.get_threshold(curve0))
+        self.calibration_data.get_stats_from_curve(curve1)
         # log calibration values
         self._logger.info("%s high-finesse calibration successful - "
                           "Min: %.3f  Max: %.3f  Mean: %.3f  Rms: %.3f",
@@ -171,10 +177,17 @@ class HighFinesseInput(InputSignal):
                           self.calibration_data.rms)
         # update graph in lockbox
         self.lockbox._signal_launcher.input_calibrated.emit([self])
+        if autosave:
+            params = self.setup_attributes
+            params['name'] = self.name + "_calibration"
+            newcurve = self._save_curve(times, curve1, **params)
+            return newcurve
+        else:
+            return None
 
     def get_threshold(self, curve):
         """ returns a reasonable scope threshold for the interesting part of this curve """
-        return (curve.min() + curve.mean()) / 2.0 \
+        return (curve.min() + curve.max()) / 2.0 \
                + self.calibration_data._analog_offset
 
 
@@ -190,9 +203,33 @@ class HighFinesseTransmission(HighFinesseInput, FPTransmission):
     pass
 
 class HighFinesseAnalogPdh(HighFinesseInput, FPAnalogPdh):
-    pass
+    def calibrate(self, trigger_signal="reflection", autosave=False):
+        trigger_signal = self.lockbox.inputs[trigger_signal]
+        # take a first coarse calibration for trigger threshold estimation
+        curve0, _ = trigger_signal.sweep_acquire()
+        # take the zoomed trace by triggering on the trigger_signal
+        _, curve2, times = trigger_signal.sweep_acquire_zoom(trigger_signal.get_threshold(curve0),
+                                                      input2=self.signal())
+        self.calibration_data.get_stats_from_curve(curve2)
+        # log calibration values
+        self._logger.info("%s high-finesse calibration successful - "
+                          "Min: %.3f  Max: %.3f  Mean: %.3f  Rms: %.3f",
+                          self.name,
+                          self.calibration_data.min,
+                          self.calibration_data.max,
+                          self.calibration_data.mean,
+                          self.calibration_data.rms)
+        # update graph in lockbox
+        self.lockbox._signal_launcher.input_calibrated.emit([self])
+        if autosave:
+            params = self.setup_attributes
+            params['name'] = self.name + "_calibration"
+            newcurve = self._save_curve(times, curve2, **params)
+            return newcurve
+        else:
+            return None
 
-class HighFinessePdh(HighFinesseInput, FPPdh):
+class HighFinessePdh(InputIq, HighFinesseAnalogPdh):
     pass
 
 
