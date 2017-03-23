@@ -1,10 +1,8 @@
 from pyhardware import instrument
-
 from pyrpl.software_modules.lockbox import *
 from pyrpl.software_modules.lockbox.signals import *
 from pyrpl.software_modules.lockbox.loop import *
 from pyrpl.software_modules.lockbox.models.fabryperot import *
-
 
 
 class CoarseProperty(FloatAttribute):
@@ -174,3 +172,4 @@ class CoarseSearchStepLockbox(FabryPerot):
         if self.loop is not None:
             self.loop._clear()
             self.loop = None
+

@@ -13,7 +13,7 @@ time the attribute value is changed. The necessary mechanisms are happening
 behind the scene, and they are coded in this file.
 """
 from __future__ import division
-from .pyrpl_utils import Bijection
+from .pyrpl_utils import Bijection, recursive_getattribute, recursive_setattr
 from .widgets.attribute_widgets import BoolAttributeWidget, \
                                        FloatAttributeWidget, \
                                        FilterAttributeWidget, \
@@ -1146,3 +1146,34 @@ class ListComplexProperty(ListComplexAttribute, BaseProperty):
     """
     default = [0.]
 
+
+
+class AttributeProperty(BaseProperty):
+    """ forwards everything that is possible to instance.path_to_target"""
+    def __init__(self,
+                 path_to_target):
+        self.path_to_target
+
+    def __get__(self, instance, owner):
+        if instance is None:
+            return self
+        self.instance = instance
+        return recursive_getattribute(instance, self.path_to_target)
+
+    def __set__(self, instance, value):
+        self.instance = instance
+        recursive_setattr(instance, self.path_to_target, value)
+
+    def __getattribute__(self, item):
+        exclude = ["path_to_target", "instance"]
+        if item in exclude:
+            return super(AttributeProperty, self).__getattribute__(self, item)
+        else:
+            return recursive_getattribute(self, self.path_to_target+'.'+item)
+
+    def __setattr__(self, item, value):
+        exclude = ["path_to_target", "instance"]
+        if item in exclude:
+            super(AttributeProperty, self).__setattr__(self, item, value)
+        else:
+            recursive_setattr(self, self.path_to_target+'.'+item, value)
