@@ -453,7 +453,7 @@ class PhaseAttribute(FloatAttribute):
         """
         Rejects anything that is not float, and takes modulo 360
         """
-        return super(PhaseAttribute, self).validate_and_normalize(value%360, module)
+        return super(PhaseAttribute, self).validate_and_normalize(value % 360., module)
 
 
 class FilterAttribute(BaseAttribute):

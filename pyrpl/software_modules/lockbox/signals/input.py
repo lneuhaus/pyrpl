@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 class CalibrationData(LockboxModule):
     """ class to hold the calibration data of an input signal """
-    _setup_attributes = ["min", "max", "mean", "rms", "_analog_offset"]
+    _setup_attributes = ["min", "max", "mean", "rms", "_analog_offset", "_asg_phase"]
     _gui_attributes = []
     min = FloatProperty(doc="min of the signal in V over a lockbox sweep")
     max = FloatProperty(doc="max of the signal in V over a lockbox sweep")
@@ -23,6 +23,9 @@ class CalibrationData(LockboxModule):
     rms = FloatProperty(min=0, max=2, doc="rms of the signal in V over a "
                                           "lockbox sweep")
     _analog_offset = FloatProperty(default=0.0, doc="analog offset of the signal")
+    _asg_phase = PhaseProperty(doc="Phase of the asg when error signal is centered "
+                                   "in calibration. Not used by all signals. ")
+
     @property
     def amplitude(self):
         """ small helper function for expected signal """
@@ -216,6 +219,7 @@ class InputSignal(Signal):
     _setup_attributes = ["input_signal"]
     _gui_attributes = ["input_signal"]
     _widget_class = LockboxInputWidget
+    plot_range = np.linspace(-5, 5, 200)  # range of setpoint values over which to plot signal
 
     # input_signal selects the input signal of the module from DSP modules and logical signals of the lockbox
     input_signal = SelectProperty(options=(lambda instance:
@@ -254,7 +258,8 @@ class InputSignal(Signal):
                             ch1_active=True,
                             ch2_active=False,
                             average=True,
-                            running_state='running_continuous',
+                            avg=1,  # trace_average
+                            running_state='stopped',
                             rolling_mode=False)
                 scope.save_state("autosweep")
             curve1, curve2 = scope.curve(timeout=1./self.lockbox.asg.frequency+scope.duration)
@@ -283,6 +288,7 @@ class InputSignal(Signal):
             params = self.calibration_data.setup_attributes
             params['name'] = self.name+"_calibration"
             newcurve = self._save_curve(times, curve, **params)
+            self.calibration_data.curve = newcurve
             return newcurve
         else:
             return None
@@ -420,7 +426,6 @@ class InputSignal(Signal):
         lockbox is the lockbox instance to which this input belongs.
         """
         self.parameters = dict()
-        self.plot_range = np.linspace(-5, 5, 200)
         self._lasttime = -1e10
 
     def _create_widget(self):

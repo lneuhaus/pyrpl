@@ -146,13 +146,14 @@ class HighFinesseInput(InputSignal):
     Scope states corresponding to 1 and 2 are "sweep" and "sweep_zoom"
     """
     def sweep_acquire_zoom(self, threshold, input2=None):
+        self.lockbox.unlock()  # turn off sweep
         with self.pyrpl.scopes.pop(self.name) as scope:
             scope.load_state("autosweep")
             if "sweep_zoom" in scope.states:
                 scope.load_state("sweep_zoom")
             else:
-                # zoom by finesse/10
-                scope.duration = scope.duration / (self.lockbox.finesse/10.0)
+                # zoom by finesse/20
+                scope.duration /= (self.lockbox.finesse/20.0)
                 scope.trigger_source = "ch1_negative_edge"
                 scope.hysteresis_ch1 = 0.002
                 scope.trigger_delay = 0.0
@@ -162,10 +163,12 @@ class HighFinesseInput(InputSignal):
                 scope.input2 = input2
             scope.save_state("autosweep_zoom")  # save state for debugging or modification
             self._logger.debug("calibration threshold: %f", threshold)
+            curves = scope.curve_async()
+            self.lockbox.sweep()  # start sweep only after arming the scope
             # give some extra (10x) timeout time in case the trigger is missed
-            curve1, curve2 = scope.curve(
-                timeout=10./self.lockbox.asg.frequency+scope.duration)
+            curve1, curve2 = curves.await_result(timeout=10./self.lockbox.asg.frequency+scope.duration)
             times = scope.times
+            self.calibration_data._asg_phase = self.lockbox.asg.scopetriggerphase
             return curve1, curve2, times
 
     def calibrate(self, autosave=False):
@@ -173,6 +176,7 @@ class HighFinesseInput(InputSignal):
         curve0, _ = super(HighFinesseInput, self).sweep_acquire()
         curve1, _, times = self.sweep_acquire_zoom(
             threshold=self.get_threshold(curve0))
+        curve1 -= self.calibration_data._analog_offset
         self.calibration_data.get_stats_from_curve(curve1)
         # log calibration values
         self._logger.info("%s high-finesse calibration successful - "
@@ -188,6 +192,7 @@ class HighFinesseInput(InputSignal):
             params = self.calibration_data.setup_attributes
             params['name'] = self.name + "_calibration"
             newcurve = self._save_curve(times, curve1, **params)
+            self.calibration_data.curve = newcurve
             return newcurve
         else:
             return None
@@ -219,7 +224,10 @@ class HighFinesseAnalogPdh(HighFinesseInput, FPAnalogPdh):
         curve1, curve2, times = trigger_signal.sweep_acquire_zoom(
             threshold=trigger_signal.get_threshold(curve0),
             input2=self.signal())
+        curve1 -= trigger_signal.calibration_data._analog_offset
+        curve2 -= self.calibration_data._analog_offset
         self.calibration_data.get_stats_from_curve(curve2)
+        self.calibration_data._asg_phase = trigger_signal.calibration_data._asg_phase
         # log calibration values
         self._logger.info("%s high-finesse calibration successful - "
                           "Min: %.3f  Max: %.3f  Mean: %.3f  Rms: %.3f",
@@ -240,6 +248,7 @@ class HighFinesseAnalogPdh(HighFinesseInput, FPAnalogPdh):
             params['name'] = trigger_signal.name + "_calibration"
             trigcurve = self._save_curve(times, curve1, **params)
             newcurve.add_child(trigcurve)
+            self.calibration_data.curve = newcurve
             return newcurve
         else:
             return None
