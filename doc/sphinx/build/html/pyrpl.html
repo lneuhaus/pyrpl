@@ -6,15 +6,15 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pyrpl package &mdash; pyrpl 0.9.1 documentation</title>
+    <title>pyrpl package &mdash; pyrpl 0.9.3 documentation</title>
     
-    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.9.1',
+        VERSION:     '0.9.3',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="pyrpl 0.9.1 documentation" href="index.html" /> 
+    <link rel="top" title="pyrpl 0.9.3 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">pyrpl 0.9.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">pyrpl 0.9.3 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -817,6 +817,13 @@ manipulate the value</li>
 <p>Of course, the gui/parameter file/actual values have to stay &#8220;in sync&#8221; each
 time the attribute value is changed. The necessary mechanisms are happening
 behind the scene, and they are coded in this file.</p>
+<dl class="class">
+<dt id="pyrpl.attributes.AttributeProperty">
+<em class="property">class </em><tt class="descclassname">pyrpl.attributes.</tt><tt class="descname">AttributeProperty</tt><big>(</big><em>path_to_target</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.AttributeProperty" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyrpl.attributes.BaseProperty" title="pyrpl.attributes.BaseProperty"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.BaseProperty</span></tt></a></p>
+<p>forwards everything that is possible to instance.path_to_target</p>
+</dd></dl>
+
 <dl class="class">
 <dt id="pyrpl.attributes.BaseAttribute">
 <em class="property">class </em><tt class="descclassname">pyrpl.attributes.</tt><tt class="descname">BaseAttribute</tt><big>(</big><em>default=None</em>, <em>doc=''</em>, <em>ignore_errors=False</em>, <em>call_setup=False</em><big>)</big><a class="headerlink" href="#pyrpl.attributes.BaseAttribute" title="Permalink to this definition">¶</a></dt>
@@ -2348,6 +2355,18 @@ Order of the name list matches order of cls_list, such that iterating over zip(c
 </dd></dl>
 
 <dl class="function">
+<dt id="pyrpl.pyrpl_utils.recursive_getattribute">
+<tt class="descclassname">pyrpl.pyrpl_utils.</tt><tt class="descname">recursive_getattribute</tt><big>(</big><em>root</em>, <em>path</em><big>)</big><a class="headerlink" href="#pyrpl.pyrpl_utils.recursive_getattribute" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns root.path (i.e. root.attr1.attr2)</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyrpl.pyrpl_utils.recursive_setattr">
+<tt class="descclassname">pyrpl.pyrpl_utils.</tt><tt class="descname">recursive_setattr</tt><big>(</big><em>root</em>, <em>path</em>, <em>value</em><big>)</big><a class="headerlink" href="#pyrpl.pyrpl_utils.recursive_setattr" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns root.path = value (i.e. root.attr1.attr2 = value)</p>
+</dd></dl>
+
+<dl class="function">
 <dt id="pyrpl.pyrpl_utils.setloglevel">
 <tt class="descclassname">pyrpl.pyrpl_utils.</tt><tt class="descname">setloglevel</tt><big>(</big><em>level='info'</em>, <em>loggername='pyrpl'</em><big>)</big><a class="headerlink" href="#pyrpl.pyrpl_utils.setloglevel" title="Permalink to this definition">¶</a></dt>
 <dd><p>sets the log level to the one specified in config file</p>
@@ -2565,6 +2584,9 @@ I provides a ssh connection with the ability to transfer files over it</p>
       </div>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="index.html">
+              <img class="logo" src="_static/logo.png" alt="Logo"/>
+            </a></p>
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">pyrpl package</a><ul>
@@ -2621,11 +2643,11 @@ I provides a ssh connection with the ability to transfer files over it</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">pyrpl 0.9.1 documentation</a> &raquo;</li> 
+        <li><a href="index.html">pyrpl 0.9.3 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
-        &copy; Copyright 2016, Leonhard Neuhaus.
+        &copy; Copyright 2017, Leonhard Neuhaus.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
     </div>
   </body>

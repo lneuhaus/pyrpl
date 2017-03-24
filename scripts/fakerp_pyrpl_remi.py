@@ -5,7 +5,7 @@ APP = QtGui.QApplication.instance()
 
 #p = Pyrpl(hostname="_FAKE_REDPITAYA_")
 #p = Pyrpl(config="leotests_source", hostname="_FAKE_REDPITAYA_")
-p = Pyrpl(config="ltests_source", hostname="_FAKE_REDPITAYA_")
+p = Pyrpl(config="remitests_source", hostname="_FAKE_REDPITAYA_")
 
 while True:
     APP.processEvents()

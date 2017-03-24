@@ -1,8 +1,14 @@
+import numpy as np
 from ..lockbox import *
 from ..signals import *
 
 
 class InterferometerPort1(InputDirect):
+    @property
+    def plot_range(self):
+        maxval = np.pi*self.lockbox._unit_in_setpoint_unit('rad')
+        return np.linspace(-maxval, maxval, 200)
+
     def expected_signal(self, phase):
         phase *= self.lockbox._setpoint_unit_in_unit('rad')
         return self.calibration_data.offset + self.calibration_data.amplitude * np.sin(phase)
@@ -24,10 +30,10 @@ class Interferometer(Lockbox):
                                             'rad'],
                                    default='deg')
 
-    _output_units = ['V', 'm', 'nm']
+    _output_units = ['m', 'nm']
     # must provide conversion from setpoint_unit into all other basic units
     # management of intput/output units
-    _rad_in_deg = 180.0  / np.pi  # only internally needed
+    _rad_in_deg = 180.0 / np.pi  # only internally needed
 
     @property
     def _deg_in_m(self):
