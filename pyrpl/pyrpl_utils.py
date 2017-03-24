@@ -146,3 +146,17 @@ def all_subclasses(cls):
     return cls.__subclasses__() + [g for s in cls.__subclasses__()
                                    for g in all_subclasses(s)]
 
+def recursive_getattribute(root, path):
+    """ returns root.path (i.e. root.attr1.attr2) """
+    attribute = root
+    for name in path.split('.'):
+        attribute = getattr(attribute, name)
+    return attribute
+
+def recursive_setattr(root, path, value):
+    """ returns root.path = value (i.e. root.attr1.attr2 = value) """
+    attribute = root
+    names = path.split('.')
+    for name in names[:-1]:
+        attribute = getattr(attribute, name)
+    setattr(attribute, names[-1], value)

@@ -1,36 +1,7 @@
-from pyhardware import instrument
-
 from pyrpl.software_modules.lockbox import *
 from pyrpl.software_modules.lockbox.signals import *
 from pyrpl.software_modules.lockbox.loop import *
 from pyrpl.software_modules.lockbox.models.fabryperot import *
-
-
-
-class CoarseProperty(FloatAttribute):
-    def __init__(self, **kwds):
-        self._initialized = False
-        super(CoarseProperty, self).__init__(**kwds)
-
-    def get_value(self, obj, obj_type):
-        if obj is None:
-            return self
-        return obj.fgen.offset
-
-    def set_value(self, obj, val):
-        if val > self.max:
-            obj._logger.warning("Coarse cannot go above max. value of %s!",
-                                self.max)
-        if val < self.min:
-            obj._logger.warning("Coarse cannot go above min. value of %s!",
-                                self.min)
-        if obj.fgen.waveform != "DC":
-            obj.fgen.waveform = "DC"
-        if self._initialized:
-            obj.fgen.offset = val
-        else:
-            obj.fgen.set = val
-            self._initialized = True
 
 
 class CoarseSearchStep(LockboxPlotLoop): # or inherit from
@@ -159,20 +130,10 @@ class CoarseSearchStep(LockboxPlotLoop): # or inherit from
 
 
 class GCoarseSearchStepLockbox( FabryPerot):
-    coarse = CoarseProperty(default=0,
-                            # max voltage at piezo: 100 V
-                            # max voltage before divider:
-                            # 100V / (120 kOhm / 200 kOhm)
-                            # max voltage at tegam input:
-                            # 100V / (120 kOhm / 200 kOhm) / 50.0
-                            max=100.0 / (120e3 / 200e3) / 50.0,
-                            min=-0.0 / (120e3 / 200e3) / 50.0,
-                            # max=120.0/(120e3/200e3)/50.0,
-                            # min=-20.0 / (120e3 / 200e3) / 50.0,
-                            increment=0.001)
-
-    def _init_module(self):
-        self.fgen = instrument('FgenCoarse')
+    coarse = FloatProperty(default=0,
+                           max=100.0 / (120e3 / 200e3) / 50.0,
+                           min=-0.0 / (120e3 / 200e3) / 50.0,
+                           increment=0.001)
 
     loop = None
     _gui_attributes = ["start", "stop", "interval", "coarse"]
