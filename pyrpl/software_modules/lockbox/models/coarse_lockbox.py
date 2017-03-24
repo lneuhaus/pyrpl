@@ -166,8 +166,8 @@ class CoarseSearchStep(LockboxPlotLoop): # or inherit from
     def threshold(self):
         with self.scopes.pop('test') as s:
             s.setup(duration=5e-4,
-                         trigger_source="immediately",
-                         input1=self.lockbox.inputs.reflection.signal())
+                    trigger_source="immediately",
+                    input1=self.lockbox.inputs.reflection.signal())
             data, _ = s.curve()
             s.free()
         self.lockbox.inputs.reflection.mean
@@ -286,3 +286,46 @@ class CoarseSearchStepLockbox(FPM_analog_PDH):
         if self.loop is not None:
             self.loop._clear()
             self.loop = None
+
+class CoarseSearchStepLockboxGI(CoarseSearchStepLockbox):
+    _gui_attributes = ["gi_fps", "gi_rate"]
+
+    gi_fps = FloatProperty(min=-1e10, max=1e10, default=0)
+    gi_rate= FloatProperty(min=0, max=1e10, default=100.0)
+
+    def gi_init(self, loop_self):
+        from ....redpitaya import RedPitaya
+        self.rp2 = RedPitaya(hostname='10.214.1.21')
+        self.rp2.asg0.on = False
+        self.rp2.pid0.input='asg0'
+        self.rp2.pid0.p= 0
+        self.rp2.pid0.i = 0
+        self.rp2.pid0.output_direct = 'out1'
+        loop_self.last_time = 0.0
+
+        self.pid = self.pyrpl.pids.pop("gilbtest")
+        self.pid.output_direct="off"
+        self.pid.p=0
+        self.pid.i=0
+        #self.pyrpl.na.input = self.pid
+        #self.pyrpl.na.output_direct='out1'
+
+    def gi_copydata(self, loop_self):
+        v = self.pyrpl.rp.sampler.out2
+        #self.rp2.pid0.ival = v
+        self.pid.ival = v
+
+        if loop_self.n % 1000 == 0:
+            time = float(loop_self.time)
+            #print time
+            self.gi_fps = 1000.0/(time - loop_self.last_time)
+            loop_self.last_time = time
+            loop_self.interval = 1.0 / self.gi_rate
+
+    gi_loop = ModuleProperty(LockboxLoop,
+                          interval=0.01,
+                          autostart=True,
+                          loop_function=gi_copydata,
+                          setup_function=gi_init
+                          )
+

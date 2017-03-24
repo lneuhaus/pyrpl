@@ -11,7 +11,8 @@ class Trig(FilterModule):
                          "hysteresis",
                          "phase_offset",
                          "auto_rearm",
-                         "phase_abs"]
+                         "phase_abs",
+                         "trigger_armed"]
     _gui_attributes = _setup_attributes
 
     trigger_armed = BoolRegister(0x100, 0, doc="Set to True to arm trigger")
@@ -53,7 +54,5 @@ class Trig(FilterModule):
                                          + "for the trigger time [cycles]")
 
     def _setup(self):
-        """
-        sets up the module (just setting the attributes is OK).
-        """
+        """ sets up the module (just setting the attributes is OK). """
         self.trigger_armed = True
