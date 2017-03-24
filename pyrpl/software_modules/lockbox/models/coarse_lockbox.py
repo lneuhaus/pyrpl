@@ -54,6 +54,8 @@ class CoarseSearchStep(LockboxPlotLoop): # or inherit from
                          trigger_delay=0,
                          threshold_ch1=self.threshold,
                          rolling_mode=False,
+                         average=False,
+                         avg=1,
                          running_state="running_single")
 
     @property

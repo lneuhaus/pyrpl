@@ -54,7 +54,8 @@ class TestRegisters(TestRedpitaya):
             if regkey in ['_reset_writestate_machine',
                           '_trigger_armed',
                           '_trigger_delay_running',
-                          'pretrig_ok']:
+                          'pretrig_ok',
+                          'trigger_armed']:
                 return
             # write opposite value and confirm it has changed
             module.__setattr__(regkey, not value)
@@ -116,7 +117,9 @@ class TestRegisters(TestRedpitaya):
                 for phase in np.linspace(-1234, 5678, 90):
                     module.__setattr__(regkey, phase)
                     diff = abs(module.__getattribute__(regkey) - (phase % 360))
-                    if diff > 1e-6:
+                    bits = getattr(module.__class__, regkey).bits
+                    thr = 360.0/2**bits/2  # factor 2 because rounding is used
+                    if diff > thr: 
                         assert False, \
                             "at phase " + str(phase) + ": diff = " + str(diff)
             # set back original value
