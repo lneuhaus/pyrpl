@@ -6,6 +6,12 @@ from pyrpl.test.test_redpitaya import TestRedpitaya
 
 
 class TestRegisters(TestRedpitaya):
+    """ This test verifies that all registers behave as expected.
+
+    The test is not only useful to test the python interface,
+    but also checks that the fpga is not behaving stragely,
+    i.e. loosing data or writing the wrong data. Thus, it is the
+    principal test to execute on new fpga designs. """
     def test_generator(self):
         if self.r is None:
             assert False
@@ -119,7 +125,7 @@ class TestRegisters(TestRedpitaya):
                     diff = abs(module.__getattribute__(regkey) - (phase % 360))
                     bits = getattr(module.__class__, regkey).bits
                     thr = 360.0/2**bits/2  # factor 2 because rounding is used
-                    if diff > thr: 
+                    if diff > thr:
                         assert False, \
                             "at phase " + str(phase) + ": diff = " + str(diff)
             # set back original value
