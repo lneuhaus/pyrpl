@@ -8,6 +8,9 @@ from ..test_base import TestPyrpl
 class TestPidNaIqIir(TestPyrpl):
     def setup(self):
         self.extradelay = 0.6 * 8e-9  # no idea where this comes from
+        # shortcut
+        self.pyrpl.na = self.pyrpl.networkanalyzer
+        self.na = self.pyrpl.networkanalyzer
 
     def test_na(self):
         error_threshold = 0.03  # (relative error, dominated by phase error)
@@ -30,7 +33,8 @@ class TestPidNaIqIir(TestPyrpl):
                      avg=1,
                      amplitude=0.1, input=na.iq, output_direct='off',
                      acbandwidth=1000, logscale=True)
-            f, data, a = na.curve()
+            data= na.curve()
+            f = na.data_x
             theory = np.array(f * 0 + 1.0,
                               dtype=np.complex)
             # obsolete since na data now comes autocorrected:
@@ -88,7 +92,8 @@ class TestPidNaIqIir(TestPyrpl):
             pid.d = 0
             pid.ival = 0
             pid.inputfilter = 0
-            f, data, amplitudes = na.curve()
+            data= na.curve()
+            f = na.data_x
             plotdata.append((f, data, 'p=1'))
             theory = pid.transfer_function(f, extradelay=extradelay)
             relerror = np.abs((data - theory) / theory)
@@ -141,7 +146,8 @@ class TestPidNaIqIir(TestPyrpl):
             pid.d = 0
             pid.ival = 0
             pid.inputfilter = 0
-            f, data, amplitudes = na.curve()
+            data= na.curve()
+            f = na.data_x
             plotdata.append((f, data, 'p=1e-1, i=1e3'))
             theory = pid.transfer_function(f, extradelay=extradelay)
             relerror = np.abs((data - theory) / theory)
@@ -201,7 +207,8 @@ class TestPidNaIqIir(TestPyrpl):
             pid.ival = 0
             pid.inputfilter = [-5e3, -10e3, 150e3, 300e3]
             print("Actual inputfilter after rounding: ", pid.inputfilter)
-            f, data, amplitudes = na.curve()
+            data= na.curve()
+            f = na.data_x
             plotdata.append((f, data, 'p=10 + filter'))
             theory = pid.transfer_function(f, extradelay=extradelay)
             relerror = np.abs((data - theory) / theory)
@@ -236,7 +243,7 @@ class TestPidNaIqIir(TestPyrpl):
         plotdata = []
 
         # shortcut for na and bpf (bandpass filter)
-        na = self.pyrpl.na
+        na = self.pyrpl.networkanalyzer
 
         for bpf in [r.iq0, r.iq2]:
             plotdata = []
@@ -265,7 +272,8 @@ class TestPidNaIqIir(TestPyrpl):
             for phase in [-45, 0, 45, 90]:
                 bpf.phase = phase
                 # take transfer function
-                f, data, ampl = na.curve()
+                data = na.curve()
+                f = na.data_x
                 theory = bpf.transfer_function(f, extradelay=extradelay)
                 abserror = np.abs(data - theory)
                 maxerror = np.max(abserror)
@@ -299,17 +307,17 @@ class TestPidNaIqIir(TestPyrpl):
         else:
             r = self.r
         # setup na
-        na = self.pyrpl.na
+        na = self.pyrpl.networkanalyzer
         iir = self.pyrpl.rp.iir
-        self.pyrpl.na.setup(start_freq=3e3,
-                            stop_freq=1e6,
-                            points=301,
-                            rbw=[500, 500],
-                            avg=1,
-                            amplitude=0.005,
-                            input=iir,
-                            output_direct='off',
-                            logscale=True)
+        na.setup(start_freq=3e3,
+                 stop_freq=1e6,
+                 points=301,
+                 rbw=[500, 500],
+                 avg=1,
+                 amplitude=0.005,
+                 input=iir,
+                 output_direct='off',
+                 logscale=True)
 
         # setup a simple iir transfer function
         zeros = [1e5j - 3e3]
@@ -357,7 +365,8 @@ class TestPidNaIqIir(TestPyrpl):
         else:
             pyrpl = self.pyrpl
         # setup na
-        na = pyrpl.na
+        na = self.pyrpl.networkanalyzer
+        self.pyrpl.na = na
         iir = pyrpl.rp.iir
 
         params = []
@@ -432,7 +441,7 @@ class TestPidNaIqIir(TestPyrpl):
                      input=iir,
                      output_direct='off',
                      logscale=True)
-        error_threshold = 0.025
+        error_threshold = 0.03
         params.append((z, p, g, loops, naset, "loops=80", error_threshold,
                        ['final', 'continuous']))
 
@@ -469,8 +478,11 @@ class TestPidNaIqIir(TestPyrpl):
                      extradelay=0, relative=False, mean=False, kinds=None):
         """ helper function: tests if module.transfer_function is within
         error_threshold of the measured transfer function of the module"""
-        self.pyrpl.na.input = module
-        f, data, ampl = self.pyrpl.na.curve()
+        na = self.pyrpl.na
+        na.input = module
+        data = na.curve()
+        f = na.data_x
+
         extrastring = str(setting)
         if not kinds:
             kinds = [None]

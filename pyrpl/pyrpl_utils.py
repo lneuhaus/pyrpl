@@ -70,12 +70,38 @@ def get_class_name_from_module_name(module_name):
     """ returns the class name corresponding to a module_name """
     return module_name[0].upper() + (module_name[1:]).rstrip('1234567890')
 
+
 def get_base_module_class(module):
     """ returns the base class of module that has the same name as module """
     base_module_class_name = get_class_name_from_module_name(module.name)
     for base_module_class in type(module).__mro__:
         if base_module_class.__name__ == base_module_class_name:
             return base_module_class
+
+
+# see http://stackoverflow.com/questions/3862310/how-can-i-find-all-subclasses-of-a-class-given-its-name
+def all_subclasses(cls):
+    """ returns a list of all subclasses of cls """
+    return cls.__subclasses__() + [g for s in cls.__subclasses__()
+                                   for g in all_subclasses(s)]
+
+
+def recursive_getattribute(root, path):
+    """ returns root.path (i.e. root.attr1.attr2) """
+    attribute = root
+    for name in path.split('.'):
+        attribute = getattr(attribute, name)
+    return attribute
+
+
+def recursive_setattr(root, path, value):
+    """ returns root.path = value (i.e. root.attr1.attr2 = value) """
+    attribute = root
+    names = path.split('.')
+    for name in names[:-1]:
+        attribute = getattr(attribute, name)
+    setattr(attribute, names[-1], value)
+
 
 def setloglevel(level='info', loggername='pyrpl'):
     """ sets the log level to the one specified in config file"""
@@ -139,24 +165,3 @@ class Bijection(dict):
     def update(self, *args, **kwargs):
         super(Bijection, self).update(*args, **kwargs)
         self.inverse = {v: k for k, v in self.items()}
-
-
-def all_subclasses(cls):
-    """ returns a list of all subclasses of cls """
-    return cls.__subclasses__() + [g for s in cls.__subclasses__()
-                                   for g in all_subclasses(s)]
-
-def recursive_getattribute(root, path):
-    """ returns root.path (i.e. root.attr1.attr2) """
-    attribute = root
-    for name in path.split('.'):
-        attribute = getattr(attribute, name)
-    return attribute
-
-def recursive_setattr(root, path, value):
-    """ returns root.path = value (i.e. root.attr1.attr2 = value) """
-    attribute = root
-    names = path.split('.')
-    for name in names[:-1]:
-        attribute = getattr(attribute, name)
-    setattr(attribute, names[-1], value)

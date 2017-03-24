@@ -28,7 +28,7 @@ from . import software_modules
 from .memory import MemoryTree
 from .redpitaya import RedPitaya
 from . import pyrpl_utils
-from .software_modules import get_software_module
+from .software_modules import get_module
 
 # it is important that Lockbox is loaded before the models
 from .software_modules.lockbox import *
@@ -110,7 +110,7 @@ class Pyrpl(object):
         self.software_modules = []
         # software modules are Managers for various modules plus those defined in the config file
         soft_mod_names = ['Asgs', 'Iqs', 'Pids', 'Scopes', 'Iirs'] + self.c.pyrpl.modules
-        module_classes = [get_software_module(cls_name)
+        module_classes = [get_module(cls_name)
                           for cls_name in soft_mod_names]
         module_names = pyrpl_utils.\
             get_unique_name_list_from_class_list(module_classes)

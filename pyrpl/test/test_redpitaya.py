@@ -19,13 +19,8 @@ class TestRedpitaya(object):
         print("=======TEARING DOWN TestRedpitaya===========")
         cls.r.end_all()
 
-# only one test class per file is allowed due to conflicts
-#
-#class TestMyRedpitaya(TestRedpitaya):
-#    """ example for a derived test class"""
-#
-#    def test_redpitaya(self):
-#        assert (self.r is not None)
-#
-#    def test_connect(self):
-#        assert self.r.hk.led == 0
+    def test_redpitaya(self):
+        assert (self.r is not None)
+
+    def test_connect(self):
+        assert self.r.hk.led == 0
