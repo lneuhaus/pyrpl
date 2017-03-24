@@ -56,7 +56,8 @@ copyright = u'2017, Leonhard Neuhaus'
 # built documents.
 #
 # The short X.Y version.
-version = '0.9.3'
+from pyrpl import __version__
+version = __version__
 # The full version, including alpha/beta/rc tags.
 release = version
 
@@ -103,8 +104,8 @@ pygments_style = 'sphinx'
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-#html_theme = 'default'
-html_theme = 'nature'
+#html_theme = 'default' # 'nature'
+html_theme = 'nature' # haiku
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -123,7 +124,8 @@ html_theme = 'nature'
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-#html_logo = None
+html_logo = '.\\..\\..\\..\\logo.png'
+full_logo = True
 
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
@@ -208,7 +210,7 @@ latex_documents = [
 
 # The name of an image file (relative to this directory) to place at the top of
 # the title page.
-#latex_logo = None
+latex_logo = html_logo
 
 # For "manual" documents, if this is true, then toplevel headings are parts,
 # not chapters.
