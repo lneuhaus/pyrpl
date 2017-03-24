@@ -1,7 +1,5 @@
 import logging
 logger = logging.getLogger(name=__name__)
-import time
-import copy
 from PyQt4 import QtGui
 from .test_base import TestPyrpl
 from pyrpl.software_modules.module_managers import ModuleManager
@@ -14,7 +12,8 @@ class TestOwnership(TestPyrpl):
         # when something is changed
         if self.r is None:
             return
-        self.pyrpl.na.iq.free() # otherwise not a single iq is left for test
+        self.pyrpl.networkanalyzer.iq.free()
+        # otherwise not a single iq is left for test
 
         for module in self.pyrpl.modules:
             if isinstance(module, ModuleManager):

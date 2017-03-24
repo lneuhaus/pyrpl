@@ -1,6 +1,8 @@
 from PyQt4 import QtCore, QtGui
 import time
 
+""" what is this file for? delete it? """
+
 APP = QtGui.QApplication.instance()
 if APP is None:
 	APP = QtGui.QApplication(['DEBUG_TIMER'])
@@ -32,6 +34,7 @@ class ToPasteInNotebook(object):
         while self.count<1000:
             APP.processEvents()
         duration = time.time() - tic
-        assert(duration<1), duration
+        assert(duration<1), duration  # should this not be >1 ???
+
 t = ToPasteInNotebook()
 t.test_stupid_timer()

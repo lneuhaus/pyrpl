@@ -43,7 +43,7 @@ class TestScopeAsgAms(TestPyrpl):
             self.r.scope.input2 = asg.name
             # asg.trig()
             self.r.scope.setup(trigger_source=self.r.scope.input1)  # the asg trigger
-            measured = self.r.scope.curve(ch=1, timeout=4)
+            measured, _ = self.r.scope.curve(timeout=4)
             diff = np.max(np.abs(measured - expect))
             if diff > 0.001:
                 c = CurveDB.create(expect, measured,

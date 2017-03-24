@@ -3,7 +3,8 @@ logger = logging.getLogger(name=__name__)
 import numbers
 from ..modules import Module
 from ..attributes import BoolProperty, FilterProperty, SelectProperty, \
-    FloatProperty, ModuleProperty
+    FloatProperty
+from ..module_attributes import  ModuleProperty
 from .test_base import TestPyrpl
 
 
@@ -36,20 +37,20 @@ class DummyModule(Module):
 
 
 class TestClass(TestPyrpl):
-    source_config_file = "tests_source_dummy_module"
+    source_config_file = "nosetests_source_dummy_module"
 
     def setup(self):
-        self.sub1 = self.pyrpl.dummy_module.sub1
-        self.sub2 = self.pyrpl.dummy_module.sub2
+        self.sub1 = self.pyrpl.dummymodule.sub1
+        self.sub2 = self.pyrpl.dummymodule.sub2
 
     def test_config_file(self):
         assert("DummyModule" in self.pyrpl.c.pyrpl.modules)
 
     def test_dummy_module(self):
-        assert(isinstance(self.pyrpl.dummy_module.true_or_false, bool))
-        assert(isinstance(self.pyrpl.dummy_module.some_number, float))
-        assert(isinstance(self.pyrpl.dummy_module.some_filter, numbers.Number)) #should this be a list ?
-        assert(isinstance(self.pyrpl.dummy_module.some_options, basestring))
+        assert(isinstance(self.pyrpl.dummymodule.true_or_false, bool))
+        assert(isinstance(self.pyrpl.dummymodule.some_number, float))
+        assert(isinstance(self.pyrpl.dummymodule.some_filter, numbers.Number)) #should this be a list ?
+        assert(isinstance(self.pyrpl.dummymodule.some_options, basestring))
 
     def test_submodule(self):
         assert(self.sub1.b1==True) # values defined in config file
@@ -60,7 +61,7 @@ class TestClass(TestPyrpl):
         assert(self.sub2.b1==True)
         assert(self.sub2.b2==False)
 
-        self.pyrpl.dummy_module.save_state("true_false_true_false")
+        self.pyrpl.dummymodule.save_state("true_false_true_false")
 
         self.sub1.b1 = False
         self.sub1.b2 = True
@@ -72,7 +73,7 @@ class TestClass(TestPyrpl):
         assert(self.sub2.b1==False)
         assert(self.sub2.b2==True)
 
-        self.pyrpl.dummy_module.load_state("true_false_true_false")
+        self.pyrpl.dummymodule.load_state("true_false_true_false")
         assert(self.sub1.b1==True)
         assert(self.sub1.b2==False)
         assert(self.sub2.b1==True)

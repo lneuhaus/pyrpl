@@ -204,7 +204,7 @@ class RunFuture(PyrplFuture):
         self._min_delay_ms = self._module.MIN_DELAY_CONTINUOUS_MS
 
 
-class RunningStateProperty(StringProperty):
+class RunningStateProperty(SelectProperty):
     """
     The state can be either:
       - running_single: taking a single acquisition (avg averages).
@@ -225,6 +225,8 @@ class RunningStateProperty(StringProperty):
         # (no effect if future is already done)
         obj._curve_future.cancel()
 
+        # this test is obsolete. it has been replaced by using a
+        # SelectAttribute instead of StringAttribute
         allowed = ["running_single",
                    "running_continuous",
                    "paused",
@@ -345,7 +347,13 @@ class AcquisitionModule(Module):
     MIN_DELAY_CONTINUOUS_MS = 40  # leave time for the event loop in
     # continuous
 
-    running_state = RunningStateProperty(doc="""
+    running_state = RunningStateProperty(
+        default = 'stopped',
+        options=["running_single",
+                 "running_continuous",
+                 "paused",
+                 "stopped"],
+        doc="""
     The state can be either:
       - running_single: taking a single acquisition (avg averages).
       averaging is automatically restarted.
@@ -354,7 +362,7 @@ class AcquisitionModule(Module):
       at next call of running_continous
       - stopped: acquisition interrupted, averaging will restart at next
       call of running_continuous.
-    """, default='stopped')
+    """)
     avg = LongProperty(doc="number of curves to average in single mode. In "
                            "continuous mode, a moving window average is "
                            "performed.",
