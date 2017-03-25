@@ -41,7 +41,6 @@ try:
     CurveDB = __import__(global_config.general.curvedb).CurveDB
 except:
     from . import user_curve_dir
-
     class CurveDB(object):
         _dirname = user_curve_dir
         if not os.path.exists(_dirname): # if _dirname doesn't exist, some unexpected errors will occur.

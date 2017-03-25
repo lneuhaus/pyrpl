@@ -287,3 +287,56 @@ class OutputSignal(Signal):
             frequency_correction=self.pid._frequency_correction,
             filter_values=self.additional_filter)
         return result
+
+
+    # TODO: re-implement this function for if an iir filter is set
+    # def setup_iir(self, **kwargs):
+    #     """
+    #     Inserts an iir filter before the output pid. For correct routing,
+    #     the pid input must be set correctly, as the iir filter will reuse
+    #     the pid input setting as its own input and send its output through
+    #     the pid.
+    #
+    #     Parameters
+    #     ----------
+    #     kwargs: dict
+    #         Any kwargs that are accepted by IIR.setup(). By default,
+    #         the output's iir section in the config file is used for these
+    #         parameters.
+    #
+    #     Returns
+    #     -------
+    #     None
+    #     """
+    #     # load data from config file
+    #     try:
+    #         iirconfig = self._config.iir._dict
+    #     except KeyError:
+    #         logger.debug("No iir filter was defined for output %s. ",
+    #                      self._name)
+    #         return
+    #     else:
+    #         logger.debug("Setting up IIR filter for output %s. ", self._name)
+    #     # overwrite defaults with kwargs
+    #     iirconfig.update(kwargs)
+    #     if 'curve' in iirconfig:
+    #         iirconfig.update(bodefit.iirparams_from_curve(
+    #             id=iirconfig.pop('curve')))
+    #     else:
+    #         # workaround for complex numbers from yaml
+    #         iirconfig["zeros"] = [complex(n) for n in iirconfig.pop("zeros")]
+    #         iirconfig["poles"] = [complex(n) for n in iirconfig.pop("poles")]
+    #     # get module
+    #     if not hasattr(self, "iir"):
+    #         self.iir = self._rp.iirs.pop()
+    #         logger.debug("IIR filter retrieved for output %s. ", self._name)
+    #     # output_direct off, since iir goes through pid
+    #     iirconfig["output_direct"] = "off"
+    #     # input setting -> copy the pid input if it is not erroneously on iir
+    #     pidinput = self.pid.input
+    #     if pidinput != 'iir':
+    #         iirconfig["input"] = pidinput
+    #     # setup
+    #     self.iir.setup(**iirconfig)
+    #     # route iir output through pid
+    #     self.pid.input = self.iir.name

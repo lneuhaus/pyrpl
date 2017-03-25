@@ -3,15 +3,35 @@ from ..signals import *
 from .interferometer import Interferometer
 
 
-class FPReflection(InputSignal):
+class Lorentz(object):
+    """ base class for Lorentzian-like signals"""
+    def _lorentz(self, x):
+        """ lorentzian function """
+        return 1.0 / (1.0 + x ** 2)
+
+    def _lorentz_complex(self, x):
+        """ complex-valued lorentzian function """
+        return 1.0 / (1.0 + 1.0j * x)
+
+    def _lorentz_slope(self, x):
+        """ derivative of _lorentz"""
+        return -2.0 * x * self._lorentz(x) ** 2
+
+    def _lorentz_slope_normalized(self, x):
+        """ derivative of _lorentz with maximum of 1.0 """
+        return self._lorentz_slope(x) / np.abs(self._lorentz_slope(1.0 / np.sqrt(3)))
+
+    def _lorentz_slope_slope(self, x):
+        """ second derivative of _lorentz """
+        return (-2.0 + 6.0 * x ** 2) * self._lorentz(x) ** 3
+
+
+class FPReflection(InputSignal, Lorentz):
     def expected_signal(self, setpoint):
         detuning = setpoint * self.lockbox._setpoint_unit_in_unit('bandwidth')
         return self.calibration_data.max - (self.calibration_data.max -
                                             self.calibration_data.min) * \
                                            self._lorentz(detuning)
-
-    def _lorentz(self, x):
-        return 1.0 / (1.0 + x ** 2)
 
     # 'relative' scale of 100% is given by offresonant reflection, 0% by dark reflection (=0)
     @property
@@ -39,7 +59,7 @@ class FPTransmission(FPReflection):
                                             self._lorentz(detuning)
 
 
-class FPAnalogPdh(InputSignal):
+class FPAnalogPdh(InputSignal, Lorentz):
     mod_freq = FrequencyProperty()
     _setup_attributes = InputDirect._setup_attributes + ['mod_freq']
     _gui_attributes = InputDirect._gui_attributes + ['mod_freq']
@@ -75,7 +95,7 @@ class FPAnalogPdh(InputSignal):
         # a_ref(x) = -1 + eta/(1+1j*x)
         def a_ref(x):
             """complex lorentzian reflection"""
-            return 1 - eta / (1 + 1j * x)
+            return 1.0 - eta * self._lorentz_complex(x)
         # reflected intensity = abs(sum_of_reflected_fields)**2
         # components oscillating at sbfreq: cross-terms of central lorentz with either sideband
         i_ref = np.conjugate(a_ref(x)) * 1j * a_ref(x + sbfreq) \
@@ -86,7 +106,27 @@ class FPAnalogPdh(InputSignal):
 
 
 class FPPdh(InputIq, FPAnalogPdh):
+    """ Same as analog pdh signal, but generated from IQ module """
     pass
+
+
+class FPTilt(InputSignal, Lorentz):
+    """ Error signal for tilt-locking schemes, e.g.
+    https://arxiv.org/pdf/1410.8773.pdf """
+    def _tilt_normalized(self, detuning):
+        """ do the math and you'll see that the tilt error signal is simply
+        the derivative of the cavity lorentzian"""
+        return self._lorentz_slope_normalized(detuning)
+
+    def expected_signal(self, setpoint):
+        """ expected error signal is centered around zero on purpose"""
+        detuning = setpoint * self.lockbox._setpoint_unit_in_unit('bandwidth')
+        return self.calibration_data.amplitude * self._tilt_normalized(detuning)
+
+    def is_locked(self, loglevel=logging.INFO):
+        # simply perform the is_locked with the reflection error signal since
+        # error signal is zero on resonance
+        return self.lockbox.inputs.reflection.is_locked(loglevel=loglevel)
 
 
 class FabryPerot(Interferometer):
