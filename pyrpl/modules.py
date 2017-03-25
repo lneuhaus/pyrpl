@@ -183,10 +183,9 @@ class ModuleMetaClass(type):
         setup = self.setup
         # docstring syntax differs between python versions. Python 2:
         if hasattr(setup, "__func__"):
-            if (setup.__func__.__doc__ is None or setup.__func__.__doc__ == ""):
-                setup.__func__.__doc__ = doc
+            setup.__func__.__doc__ = doc
         # ... python 3
-        elif (setup.__doc__ is None or setup.__doc__ == ""):
+        elif hasattr(setup, '__doc__'):
             setup.__doc__ = doc
 
 

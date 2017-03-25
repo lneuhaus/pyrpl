@@ -91,16 +91,11 @@ class LockboxLoop(Loop, LockboxModule):
     # inheriting from LockboxModule essentially creates a lockbox property
     # that refers to the lockbox
     @property
-    def time(self):
+    def fpga_time(self):
         """ current FPGA time in s since startup """
-        try:
-            return 8e-9 * self.pyrpl.rp.scope.current_timestamp / \
-                           self.pyrpl.rp.frequency_correction \
-                   - self.loop_start_time
-        except AttributeError:
-            self.loop_start_time =  8e-9 * self.pyrpl.rp.scope.current_timestamp\
-                                     / self.pyrpl.rp.frequency_correction
-            return 0
+        return 8e-9 * self.pyrpl.rp.scope.current_timestamp / \
+                       self.pyrpl.rp.frequency_correction \
+                       - self.loop_start_time
 
     @property
     def trigger_time(self):
