@@ -61,7 +61,7 @@ class TestRegisters(TestRedpitaya):
                           '_trigger_armed',
                           '_trigger_delay_running',
                           'pretrig_ok',
-                          'trigger_armed']:
+                          'armed']:
                 return
             # write opposite value and confirm it has changed
             module.__setattr__(regkey, not value)

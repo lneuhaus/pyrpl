@@ -125,8 +125,8 @@ class SpectrumAnalyzer(AcquisitionModule):
     # correct voltage amplitude of a coherent signal (linear scale)
     # more units can be added as needed, but need to guarantee that conversion
     # is done as well (see implementation in lockbox for example)
-    unit = SelectAttribute(default="Vpk",
-                           options=["Vpk"])
+    unit = SelectProperty(default="Vpk",
+                          options=["Vpk"])
 
     # select_attributes list of options
     def spans(nyquist_margin):
