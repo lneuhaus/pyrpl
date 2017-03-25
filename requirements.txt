@@ -3,16 +3,17 @@
 scp
 matplotlib
 scipy
-pandas
 nose
 pyyaml
 #ruamel.yaml # requirement disabled
 pyqtgraph
+
 # cannot install pyQt4 with pip:
 # http://stackoverflow.com/questions/4628519/is-it-possible-to-require-pyqt-from-setuptools-setup-py
 # PyQt4
 
 ###### Requirements with Version Specifiers ######
 #   See https://www.python.org/dev/peps/pep-0440/#version-specifiers
+
 numpy (>=1.9)
 paramiko (>=2.0)
