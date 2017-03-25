@@ -1,7 +1,6 @@
 if False:  # deactivated. this file will be deleted once fully migrated
     from __future__ import print_function #see http://python-future.org/compatible_idioms.html
     import collections
-    from scipy.optimize import leastsq
     import json
     import time
     import matplotlib.pyplot as plt
@@ -10,9 +9,10 @@ if False:  # deactivated. this file will be deleted once fully migrated
     import os
     import logging
     import pandas
-    from pyrpl.trash import CurveDB
-    from pyrpl.trash import iir
-    from .sound import sine
+    from scipy.optimize import leastsq
+    from ...curvedb  import CurveDB
+    from .iir_theory import IirFilter
+    from ...sound import sine
 
 
     def iirparams_from_curve(id):
@@ -291,7 +291,7 @@ if False:  # deactivated. this file will be deleted once fully migrated
         def transfer_function(self, frequencies=None):
             if frequencies is None:
                 frequencies = self.x
-            self.iirfilter = iir.IirFilter(self.zeros,
+            self.iirfilter = IirFilter(self.zeros,
                                            self.poles,
                                            self.gain,
                                            loops=self.loops,

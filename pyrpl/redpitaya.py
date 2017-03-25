@@ -16,7 +16,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###############################################################################
 
-from . import monitor_client
+from . import redpitaya_client
 from . import hardware_modules as rp
 from .sshshell import SSHshell
 from .pyrpl_utils import get_unique_name_list_from_class_list
@@ -407,13 +407,13 @@ class RedPitaya(object):
     "LICENSE" in the source directory for details.\r\n""")
 
     def startclient(self):
-        self.client = monitor_client.MonitorClient(
+        self.client = redpitaya_client.MonitorClient(
             self.parameters['hostname'], self.parameters['port'], restartserver=self.restartserver)
         self.makemodules()
         self.logger.debug("Client started successfully. ")
 
     def startdummyclient(self):
-        self.client = monitor_client.DummyClient()
+        self.client = redpitaya_client.DummyClient()
         self.makemodules()
 
     def makemodule(self, name, cls):

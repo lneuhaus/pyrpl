@@ -19,9 +19,9 @@
 
 import paramiko
 from time import sleep
-from scp import SCPClient, SCPException
-import os
+from scp import SCPClient
 import logging
+
 
 class SSHshell(object):
     """ This is a wrapper around paramiko.SSHClient and scp.SCPClient

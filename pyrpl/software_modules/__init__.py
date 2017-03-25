@@ -3,6 +3,8 @@ from .module_managers import Asgs, Iqs, Pids, Scopes, Iirs
 from .network_analyzer import NetworkAnalyzer
 from .spectrum_analyzer import SpectrumAnalyzer
 from .lockbox import *
+from .loop import *
+
 from ..pyrpl_utils import all_subclasses
 
 

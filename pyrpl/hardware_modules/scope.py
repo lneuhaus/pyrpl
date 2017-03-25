@@ -1,15 +1,15 @@
+import logging
+import time
+from timeit import default_timer
+
+import numpy as np
+
+from pyrpl.software_modules.acquisition_module import AcquisitionModule
+from . import DSP_INPUTS, DspModule, DspInputAttribute
+from ..async_utils import MainThreadTimer, PyrplFuture
 from ..module_attributes import *
 from ..modules import HardwareModule
 from ..widgets.module_widgets import ScopeWidget
-from ..acquisition_module import AcquisitionModule
-from ..async_utils import MainThreadTimer, PyrplFuture
-
-from . import DSP_INPUTS, DspModule, DspInputAttribute
-
-import numpy as np
-import time
-from timeit import default_timer
-import logging
 
 logger = logging.getLogger(name=__name__)
 

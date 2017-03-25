@@ -1,18 +1,15 @@
-from .. import async_utils
-from ..async_utils import PyrplFuture, MainThreadTimer, CancelledError, sleep
-from ..module_attributes import ModuleProperty
+from copy import copy
+
+import numpy as np
+from PyQt4 import QtGui
+
+from pyrpl.software_modules.acquisition_module import AcquisitionModule
+from ..async_utils import PyrplFuture, MainThreadTimer, CancelledError
 from ..attributes import FloatProperty, SelectProperty, FrequencyProperty, \
                          LongProperty, BoolProperty, FilterAttribute
 from ..hardware_modules import DspModule
 from ..widgets.module_widgets import NaWidget
-from ..modules import Module
-from ..acquisition_module import SignalLauncherAcquisitionModule, \
-    AcquisitionModule
 
-import sys
-from copy import copy
-from PyQt4 import QtCore, QtGui
-import numpy as np
 # timeit.default_timer() is THE precise timer to use (microsecond precise vs
 # milliseconds for time.time()).
 # see

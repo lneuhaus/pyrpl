@@ -20,7 +20,7 @@ import logging
 logger = logging.getLogger(name=__name__)
 
 from ..module_attributes import *
-from pyrpl.acquisition_module import AcquisitionModule
+from pyrpl.software_modules.acquisition_module import AcquisitionModule
 from ..widgets.module_widgets import SpecAnWidget
 from ..hardware_modules import Scope, DspModule
 

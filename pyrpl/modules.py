@@ -279,9 +279,6 @@ class Module(with_metaclass(ModuleMetaClass, object)):
      owner changes it can be used to stop the acquisition for instance.
     """
 
-    # Change this to save the curve with a different system
-    _curve_class = CurveDB
-
     # Change this to provide a custom graphical class
     _widget_class = ModuleWidget
 
@@ -520,7 +517,7 @@ class Module(with_metaclass(ModuleMetaClass, object)):
         :param  attributes: extra curve parameters (such as relevant module
         settings)
         """
-        curve = self._curve_class.create(x_values,
+        curve = CurveDB.create(x_values,
                                      y_values,
                                      **attributes)
         return curve
