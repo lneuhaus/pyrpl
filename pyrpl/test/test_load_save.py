@@ -39,7 +39,8 @@ class TestLoadSave(TestPyrpl):
             if isinstance(val, basestring):
                 desc = getattr(mod.__class__, attr)
                 if isinstance(desc, SelectAttribute):
-                    val = desc.options(mod)[option_index]
+                    val = desc.options(mod)\
+                            [option_index % len(desc.options(mod))]
                 else:
                     val = str_val
             if isinstance(val, bool):
@@ -57,12 +58,6 @@ class TestLoadSave(TestPyrpl):
             attr_names.append(attr)
             attr_vals.append(val)
         return attr_names, attr_vals
-
-    str_val = 'foo',
-    num_val = 12,
-    bool_val = True,
-    list_val = [1912],
-    option_index = 0,
 
     def assert_load_save_module(self, mod):
         if not isinstance(mod, ModuleManager):

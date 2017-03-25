@@ -16,6 +16,14 @@ class TestScope(TestPyrpl):
     # individual name for this test:
     # tmp_config_file = "nosetests_config_scope.yml"
 
+    def teardown(self):
+        """ delete the curves fabricated in this test"""
+        for todelete in ["curve1", "curve2"]:
+            if hasattr(self, "todelete"):
+                c = getattr(self, todelete)
+                if c is not None:
+                    c.delete()
+
     def test_scope_stopped_at_startup(self):
         """
         This was so hard to detect, I am making a unit test
@@ -110,6 +118,7 @@ class TestScope(TestPyrpl):
         time.sleep(0.1)
         APP.processEvents()
         curve1, curve2 = self.r.scope.save_curve()
+        self.curve1, self.curve2 = curve1, curve2 # for later deletion
         attr = self.r.scope.setup_attributes
         for curve in (curve1, curve2):
             intersect = set(curve.params.keys()) & set(attr)
