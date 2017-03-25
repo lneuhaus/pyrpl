@@ -13,6 +13,7 @@ class TestClass(TestPyrpl):
         """
         This was so hard to detect, I am making a unit test
         """
+        # this test is not efficient as nothing guarantees that it will be the first test that is executed
         assert(self.pyrpl.spectrumanalyzer.running_state=='stopped')
 
     def test_spec_an(self):
@@ -29,14 +30,18 @@ class TestClass(TestPyrpl):
                   trigger_source = 'immediately')
         sa.setup(center=f0,
                  span=1e3,
+                 unit="Vpk",
                  input=asg)
         curve = sa.curve()
         freqs = sa.frequencies
-        fmax = freqs[curve.argmax()]
+        peak = curve.argmax()
+        fmax = freqs[peak]
         diff = np.abs(fmax-f0)
         threshold = float(sa.span)/sa.points
         assert (diff < threshold), (fmax, f0, diff, threshold)
         # TODO: add quantitative test of peak level
+        peakv = curve[peak]
+        #assert abs(peak-asg.amplitude)<asg.amplitude/100.0, (peak, asg.amplitude)
 
     def test_no_write_in_config(self):
         """

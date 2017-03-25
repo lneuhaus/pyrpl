@@ -15,7 +15,15 @@ import codecs
 import os
 import sys
 
+
 here = os.path.abspath(os.path.dirname(__file__))
+
+# Version info -- read without importing
+_locals = {}
+with open('pyrpl/_version.py') as fp:
+    exec(fp.read(), None, _locals)
+version = _locals['__version__']
+
 
 # read requirements
 # from http://stackoverflow.com/questions/14399534/how-can-i-reference-requirements-txt-for-the-install-requires-kwarg-in-setuptool
@@ -61,7 +69,7 @@ def compile_server(): #gcc crosscompiler must be installed for this to work
         os.chdir(cwd)
 
 setup(name='pyrpl',
-      version='0.9.0.0',
+      version=version,
       description='DSP servo controller for quantum optics with the RedPitaya',
       long_description=read('README.md'),
       author='Leonhard Neuhaus',
