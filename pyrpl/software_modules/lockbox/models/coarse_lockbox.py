@@ -1,10 +1,7 @@
 from pyhardware import instrument
-
 from pyrpl.attributes import *
-from pyrpl.software_modules.lockbox import *
-from pyrpl.software_modules.lockbox.signals import *
-from pyrpl.software_modules.lockbox.loop import *
 from pyrpl.software_modules.lockbox.models.fabryperot import *
+from pyrpl.software_modules.loop import *
 
 class PdhEnabledProperty(BoolAttribute):
     """ a gui button to enable PDH """

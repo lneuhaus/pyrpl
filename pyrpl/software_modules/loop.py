@@ -1,9 +1,14 @@
+"""
+Defines a number of Loop modules to be used to perform periodically a task
+"""
+
 import numpy as np
 import pyqtgraph as pg
-from ...modules import Module
-from . import LockboxModule
-from ...async_utils import sleep, PyrplFuture, MainThreadTimer
-from ...pyrpl_utils import time
+from ..modules import Module
+from .lockbox import LockboxModule
+from ..async_utils import sleep, PyrplFuture, MainThreadTimer
+from ..pyrpl_utils import time
+
 
 class Loop(Module):
     def __init__(self, parent, name='loop', interval=0.01, autostart=True,
@@ -137,9 +142,14 @@ class PlotWindow(object):
 
 class PlotLoop(LockboxLoop):
     def __init__(self, *args, **kwargs):
-        self.plot = PlotWindow()
+        try:
+            plot = kwargs.pop("plot")
+        except KeyError:
+            plot = True
+        if plot:
+            self.plot = PlotWindow()
+            #self.win.setWindowTitle(self.name)
         super(PlotLoop, self).__init__(*args, **kwargs)
-        #self.win.setWindowTitle(self.name)
 
 
     def plotappend(self, red=None, green=None):

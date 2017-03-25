@@ -1,5 +1,4 @@
-from ..lockbox import *
-from ..signals import *
+from .. import *
 
 
 class LinearInputDirect(InputDirect):

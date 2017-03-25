@@ -4,11 +4,6 @@ from .linear import *
 from .custom_lockbox_example import *
 from .coarse_lockbox import *
 
-#from .fabryperotmembranes import *
-#from .interferometer_am import *
-#from .lmsd import *
-#from .tilt import *
-
 # try to import user models if applicable
 from pyrpl import user_lockbox_dir
 import sys, os

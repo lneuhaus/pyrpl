@@ -2,13 +2,13 @@ from __future__ import division
 import scipy
 import numpy as np
 import logging
-from ....attributes import SelectAttribute, SelectProperty, FloatProperty, FrequencyProperty, PhaseProperty, \
+from pyrpl.attributes import SelectAttribute, SelectProperty, FloatProperty, FrequencyProperty, PhaseProperty, \
     FilterProperty, FrequencyRegister
-from ....widgets.module_widgets import LockboxInputWidget
-from ....hardware_modules.dsp import DSP_INPUTS
-from ....pyrpl_utils import time
-from ....module_attributes import ModuleProperty
-from .. import LockboxModule, LockboxModuleDictProperty
+from pyrpl.widgets.module_widgets import LockboxInputWidget
+from pyrpl.hardware_modules.dsp import DSP_INPUTS
+from pyrpl.pyrpl_utils import time
+from pyrpl.module_attributes import ModuleProperty
+from pyrpl.software_modules.lockbox import LockboxModule, LockboxModuleDictProperty
 
 logger = logging.getLogger(__name__)
 

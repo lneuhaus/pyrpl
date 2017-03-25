@@ -1,15 +1,15 @@
 from __future__ import division
-from scipy import interpolate
+
 import numpy as np
-from .input import Signal
-from ....attributes import BoolProperty, FloatProperty, SelectProperty, \
-    FloatAttribute, FilterAttribute, LongProperty, StringProperty, \
-    ListFloatProperty, FrequencyProperty
-from ....hardware_modules.asg import Asg1
-from ....widgets.module_widgets import OutputSignalWidget
-from ....hardware_modules.pid import Pid
-from ....curvedb import CurveDB
-from .. import LockboxModule, LockboxModuleDictProperty
+from scipy import interpolate
+
+from pyrpl.software_modules.lockbox.input import Signal
+from pyrpl.attributes import BoolProperty, FloatProperty, SelectProperty, \
+    FilterAttribute, LongProperty, FrequencyProperty
+from pyrpl.curvedb import CurveDB
+from pyrpl.hardware_modules.asg import Asg1
+from pyrpl.hardware_modules.pid import Pid
+from pyrpl.widgets.module_widgets import OutputSignalWidget
 
 
 class AdditionalFilterAttribute(FilterAttribute):

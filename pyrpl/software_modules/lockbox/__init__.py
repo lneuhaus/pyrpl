@@ -13,5 +13,6 @@ class LockboxModule(Module):
 class LockboxModuleDictProperty(ModuleDictProperty):
     default_module_cls = LockboxModule
 
-
+from .input import *
+from .output import *
 from .lockbox import Lockbox

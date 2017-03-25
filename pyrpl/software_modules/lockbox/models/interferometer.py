@@ -1,6 +1,4 @@
-import numpy as np
-from ..lockbox import *
-from ..signals import *
+from .. import *
 
 
 class InterferometerPort1(InputDirect):

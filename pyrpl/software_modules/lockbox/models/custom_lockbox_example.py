@@ -1,7 +1,6 @@
 # these imports are the standard imports for required for derived lockboxes
 from pyrpl.software_modules.lockbox import *
-from pyrpl.software_modules.lockbox.signals import *
-from pyrpl.software_modules.lockbox.loop import *
+from pyrpl.software_modules.loop import *
 
 # Any InputSignal must define a class that contains the function "expected_signal(variable)" that returns the expected
 # signal value as a function of the variable value. This function ensures that the correct setpoint and a reasonable
