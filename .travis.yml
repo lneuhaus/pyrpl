@@ -5,9 +5,11 @@ env:
 language: python
 python:
   - "2.7"
-  - "3.3"
-  - "3.4"
   - "3.5"
+  - "3.6"
+# maybe we can add this later:
+#  - "3.3"
+#  - "3.4"
 
 # lots of stuff here comes from https://gist.github.com/dan-blanchard/7045057
   
