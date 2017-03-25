@@ -3,6 +3,10 @@ __version__ = "0.9.0.0"
 #__all__ = ["registers", "curvedb", "redpitaya", "hardware_modules", "iir",
 #           "memory", "pyrpl", "signal", "model"]
 
+from ._version import __version_info__, __version__
+
+__author__ = "Leonhard Neuhaus <neuhaus@lkb.upmc.fr>"
+__license__ = "GNU General Public License 3 (GPLv3)"
 
 # set up the logging level at the root module as configured in 'config/global_config.yml'
 import warnings
