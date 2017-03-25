@@ -74,7 +74,10 @@ module red_pitaya_dsp #(
    output     [ 14-1: 0] pwm1,
    output     [ 14-1: 0] pwm2,
    output     [ 14-1: 0] pwm3,
-   
+
+   // trigger outputs for the scope
+   output                trig_output, // from trigger dsp module
+
    // system bus
    input      [ 32-1: 0] sys_addr        ,  //!< bus address
    input      [ 32-1: 0] sys_wdata       ,  //!< bus write data
@@ -327,7 +330,8 @@ generate for (j = 3; j < 4; j = j+1) begin
      .dat_i        (  input_signal [j] ),  // input data
      .dat_o        (  output_direct[j]),  // output data
      .signal_o     (  output_signal[j]),  // output signal
-     .phase1_i      (  asg1phase ),  // phase input
+     .phase1_i     (  asg1phase ),  // phase input
+     .trig_o       (  trig_signal ),
 
 	 //communincation with PS
 	 .addr ( sys_addr[16-1:0] ),

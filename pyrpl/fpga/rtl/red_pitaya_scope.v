@@ -78,7 +78,7 @@ module red_pitaya_scope #(
    // trigger sources
    input                 trig_ext_i      ,  // external trigger
    input      [  2-1: 0] trig_asg_i      ,  // ASG trigger
-   
+   input                 trig_dsp_i      ,  // DSP module trigger
    output                trig_scope_o    ,  // copy of scope trigger
 
    // AXI0 master
@@ -632,6 +632,7 @@ end else begin
        4'd7 : adc_trig <= ext_trig_n    ; // external - falling edge
        4'd8 : adc_trig <= asg_trig_p    ; // ASG - rising edge
        4'd9 : adc_trig <= asg_trig_n    ; // ASG - falling edge
+       4'd10: adc_trig <= dsp_trig_i    ; // dsp trigger input
     default : adc_trig <= 1'b0          ;
    endcase
 end

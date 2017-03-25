@@ -227,7 +227,8 @@ class Scope(HardwareModule, AcquisitionModule):
                         "ext_positive_edge": 6,  # DIO0_P pin
                         "ext_negative_edge": 7,  # DIO0_P pin
                         "asg0": 8,
-                        "asg1": 9}
+                        "asg1": 9,
+                        "dsp": 10} #dsp trig module trigger
 
     trigger_sources = sorted(_trigger_sources.keys())  # help for the user
 

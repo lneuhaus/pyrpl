@@ -75,6 +75,7 @@ module red_pitaya_trigger_block #(
    input      [ 14-1: 0] phase_i         ,  // input phase to feed through
    output     [ 14-1: 0] dat_o           ,  // output data
    output     [ 14-1: 0] signal_o        ,  // output data
+   output                trig_o          ,  // trigger signal
 
    // communication with PS
    input      [ 16-1: 0] addr,
@@ -253,5 +254,6 @@ end
 
 assign dat_o = output_data;
 assign signal_o = output_data;
+assign trig_o = trigger_signal;
 
 endmodule

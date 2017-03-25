@@ -428,6 +428,8 @@ wire    [  2-1:0] trig_asg_out;
 wire trig_scope_out;
 wire    [14-1: 0] to_scope_a;
 wire    [14-1: 0] to_scope_b;
+wire dsp_trigger;
+
 
 red_pitaya_scope i_scope (
   // ADC
@@ -437,7 +439,7 @@ red_pitaya_scope i_scope (
   .adc_rstn_i      (  adc_rstn                   ),  // reset - active low
   .trig_ext_i      (  exp_p_in[0]                ),  // external trigger
   .trig_asg_i      (  trig_asg_out               ),  // ASG trigger
-
+  .trig_dsp_i      (  dsp_trigger                ),
   .trig_scope_o    (  trig_scope_out             ),  // scope trigger to feed other instruments
 
 
@@ -514,7 +516,9 @@ red_pitaya_dsp i_dsp (
   .pwm1            (  pwm_signals[1]         ),
   .pwm2            (  pwm_signals[2]         ),
   .pwm3            (  pwm_signals[3]         ),
-  
+
+  .trig_o          (  dsp_trigger            ),
+
   // System bus
   .sys_addr        (  sys_addr                   ),  // address
   .sys_wdata       (  sys_wdata                  ),  // write data
