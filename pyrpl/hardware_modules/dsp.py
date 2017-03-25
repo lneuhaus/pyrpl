@@ -28,10 +28,7 @@ DSP_INPUTS = sorted_dict(
 class DspInputAttribute(SelectAttribute):
     "selects the input signal of the module"
     def get_value(self, instance, owner):
-        if instance is None:
-            return self
-        else:
-            return instance._input
+        return instance._input
 
     def set_value(self, instance, value):
         # allow to directly pass another module as input
@@ -45,14 +42,22 @@ class DspInputAttribute(SelectAttribute):
 class DspModule(HardwareModule):
     _delay = 0  # delay of the module from input to output_signal (in cycles)
 
-    _inputs = sorted_dict(DSP_INPUTS, sort_by_values=True)
-    inputs = _inputs.keys()
-
     _output_directs = sorted_dict(off=0,
                                   out1=1,
                                   out2=2,
                                   both=3)
     output_directs = _output_directs.keys()
+
+    _inputs = sorted_dict(DSP_INPUTS, sort_by_values=True)
+    inputs = _inputs.keys()
+
+    def _logical_inputs(self):
+        if self is None:
+            signals = []
+        else:
+            signals = self.pyrpl.lockbox.signals
+        return self._inputs + signals
+        #pass #for
 
     _input = SelectRegister(0x0, options=_inputs,
                             doc="selects the input signal of the module")

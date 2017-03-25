@@ -5,8 +5,8 @@ from .custom_lockbox_example import *
 from .coarse_lockbox import *
 
 # try to import user models if applicable
-from pyrpl import user_lockbox_dir
 import sys, os
+from .... import user_lockbox_dir
 sys.path.append(user_lockbox_dir)
 
 usermodels = []

@@ -1,5 +1,5 @@
 from .dsp import DspModule
-from pyrpl.attributes import FilterRegister
+from ..attributes import FilterRegister
 
 
 class FilterModule(DspModule):

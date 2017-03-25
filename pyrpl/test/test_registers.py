@@ -1,8 +1,8 @@
 import logging
 logger = logging.getLogger(name=__name__)
-from pyrpl.modules import Module
-from pyrpl.attributes import *
-from pyrpl.test.test_redpitaya import TestRedpitaya
+from ..modules import Module
+from ..attributes import *
+from ..test.test_redpitaya import TestRedpitaya
 
 
 class TestRegisters(TestRedpitaya):

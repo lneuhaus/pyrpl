@@ -1,12 +1,12 @@
 """
 A widget for the scope module
 """
-from pyrpl.errors import NotReadyError
-from .base_module_widget import ModuleWidget
-
 import pyqtgraph as pg
 from PyQt4 import QtCore, QtGui
 import numpy as np
+from ...errors import NotReadyError
+from .base_module_widget import ModuleWidget
+
 
 APP = QtGui.QApplication.instance()
 

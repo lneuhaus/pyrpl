@@ -1,9 +1,9 @@
 import numpy as np
-from pyrpl.attributes import FloatRegister
-from pyrpl.modules import HardwareModule
+from ..pyrpl_utils import time
+from ..attributes import FloatRegister
+from ..modules import HardwareModule
 from . import DSP_INPUTS
 
-from time import time
 
 class Sampler(HardwareModule):
     """ this module provides a sample of each signal.

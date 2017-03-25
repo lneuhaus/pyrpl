@@ -12,11 +12,10 @@ their state load and saved in the config file...
 
 from .attributes import BaseAttribute, ModuleAttribute
 from .widgets.module_widgets import ModuleWidget
-from . import CurveDB
+from .curvedb import CurveDB
 from .pyrpl_utils import unique_list
 
 import logging
-from copy import copy
 import numpy as np
 from six import with_metaclass
 from collections import OrderedDict

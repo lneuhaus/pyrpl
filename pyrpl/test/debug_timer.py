@@ -7,7 +7,7 @@ APP = QtGui.QApplication.instance()
 if APP is None:
 	APP = QtGui.QApplication(['DEBUG_TIMER'])
 
-from pyrpl import Pyrpl
+from .. import Pyrpl
 
 
 pyrpl = Pyrpl(config="nosetests_source.yml",

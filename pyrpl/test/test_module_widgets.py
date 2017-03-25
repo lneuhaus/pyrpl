@@ -1,11 +1,12 @@
 import logging
 logger = logging.getLogger(name=__name__)
-from pyrpl.widgets.attribute_widgets import SelectAttributeWidget, BoolAttributeWidget, NumberAttributeWidget
-from pyrpl.attributes import BoolAttribute, NumberAttribute, SelectAttribute
 from PyQt4.QtTest import QTest
 from PyQt4.QtCore import Qt
 import os
+from ..widgets.attribute_widgets import SelectAttributeWidget, BoolAttributeWidget, NumberAttributeWidget
+from ..attributes import BoolAttribute, NumberAttribute, SelectAttribute
 from .test_base import TestPyrpl
+
 
 class TestModuleWidgets(TestPyrpl):
     @classmethod

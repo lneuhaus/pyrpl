@@ -1,10 +1,10 @@
 import numpy as np
-from pyrpl.attributes import FloatAttribute, BoolRegister, FloatRegister
-from pyrpl.widgets.module_widgets import PidWidget
+from PyQt4 import QtCore
+from ..attributes import FloatAttribute, BoolRegister, FloatRegister
+from ..modules import SignalLauncher
 from . import FilterModule
-from pyrpl.modules import SignalLauncher
+from ..widgets.module_widgets import PidWidget
 
-from PyQt4 import QtCore, QtGui
 
 class IValAttribute(FloatAttribute):
     """

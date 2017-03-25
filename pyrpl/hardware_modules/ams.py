@@ -1,5 +1,5 @@
-from pyrpl.modules import HardwareModule
-from pyrpl.attributes import PWMRegister
+from ..modules import HardwareModule
+from ..attributes import PWMRegister
 
 
 class AMS(HardwareModule):

@@ -1,8 +1,8 @@
 from . import iir_theory #, bodefit
 from .. import FilterModule
-from pyrpl.attributes import IntRegister, BoolRegister, ListComplexProperty, FloatProperty
-from pyrpl.widgets.module_widgets import IirWidget
-from pyrpl.modules import SignalLauncher
+from ...attributes import IntRegister, BoolRegister, ListComplexProperty, FloatProperty
+from ...widgets.module_widgets import IirWidget
+from ...modules import SignalLauncher
 
 import numpy as np
 from PyQt4 import QtCore, QtGui

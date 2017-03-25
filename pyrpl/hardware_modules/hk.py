@@ -1,5 +1,5 @@
-from pyrpl.attributes import IntRegister, SelectRegister, IORegister
-from pyrpl.modules import HardwareModule
+from ..attributes import IntRegister, SelectRegister, IORegister
+from ..modules import HardwareModule
 
 import numpy as np
 

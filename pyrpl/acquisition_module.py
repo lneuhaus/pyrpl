@@ -36,9 +36,9 @@ async def my_acquisition_routine(n):
 ensure_future(my_acquisition_coroutine(10))
 eventloop.run_until_complete()
 """
-
-from pyrpl.module_attributes import *
-from pyrpl.async_utils import PyrplFuture, Future, MainThreadTimer, CancelledError
+from copy import copy
+from .module_attributes import *
+from .async_utils import PyrplFuture, Future, MainThreadTimer, CancelledError
 
 
 class AcquisitionError(ValueError):
@@ -135,7 +135,7 @@ class RunFuture(PyrplFuture):
         self._min_delay_ms = min_delay_ms
         super(RunFuture, self).__init__()
         self.data_avg = None
-        self.data_x = copy(self._module.data_x) #  in case it is saved latter
+        self.data_x = copy(self._module.data_x) #  in case it is saved later
         self._fut = None
         self.current_avg = 0
         self._paused = True

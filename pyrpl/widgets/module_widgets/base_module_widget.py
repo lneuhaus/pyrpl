@@ -8,8 +8,7 @@ from PyQt4 import QtCore, QtGui
 from collections import OrderedDict
 import functools
 import logging
-
-from pyrpl.widgets.yml_editor import YmlEditor
+from ...widgets.yml_editor import YmlEditor
 
 APP = QtGui.QApplication.instance()
 

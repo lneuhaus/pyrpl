@@ -20,9 +20,9 @@ import logging
 logger = logging.getLogger(name=__name__)
 
 from ..module_attributes import *
-from pyrpl.software_modules.acquisition_module import AcquisitionModule
-from ..widgets.module_widgets import SpecAnWidget
 from ..hardware_modules import Scope, DspModule
+from ..acquisition_module import AcquisitionModule
+from ..widgets.module_widgets import SpecAnWidget
 
 import scipy.signal as sig
 import scipy.fftpack

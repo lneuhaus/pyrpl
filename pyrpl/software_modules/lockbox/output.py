@@ -3,13 +3,13 @@ from __future__ import division
 import numpy as np
 from scipy import interpolate
 
-from pyrpl.software_modules.lockbox.input import Signal
-from pyrpl.attributes import BoolProperty, FloatProperty, SelectProperty, \
+from ...software_modules.lockbox.input import Signal
+from ...attributes import BoolProperty, FloatProperty, SelectProperty, \
     FilterAttribute, LongProperty, FrequencyProperty
-from pyrpl.curvedb import CurveDB
-from pyrpl.hardware_modules.asg import Asg1
-from pyrpl.hardware_modules.pid import Pid
-from pyrpl.widgets.module_widgets import OutputSignalWidget
+from ...curvedb import CurveDB
+from ...hardware_modules.asg import Asg0, Asg1
+from ...hardware_modules.pid import Pid
+from ...widgets.module_widgets import OutputSignalWidget
 
 
 class AdditionalFilterAttribute(FilterAttribute):

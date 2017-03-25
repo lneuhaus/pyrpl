@@ -1,14 +1,11 @@
-import logging
 import time
-from timeit import default_timer
 
-import numpy as np
-
-from pyrpl.software_modules.acquisition_module import AcquisitionModule
 from . import DSP_INPUTS, DspModule, DspInputAttribute
 from ..async_utils import MainThreadTimer, PyrplFuture
 from ..module_attributes import *
 from ..modules import HardwareModule
+from ..pyrpl_utils import time
+from ..acquisition_module import AcquisitionModule
 from ..widgets.module_widgets import ScopeWidget
 
 logger = logging.getLogger(name=__name__)
@@ -473,7 +470,7 @@ class Scope(HardwareModule, AcquisitionModule):
         """
         :returns curve duration - ellapsed duration since last setup() call.
         """
-        return self.duration - (default_timer() - self._last_time_setup)
+        return self.duration - (time() - self._last_time_setup)
 
     def _data_ready(self):
         """
@@ -501,7 +498,7 @@ class Scope(HardwareModule, AcquisitionModule):
             # self.wait_for_pretrig_ok()
             self.trigger_source = self.trigger_source
         self._autosave_active = autosave_backup
-        self._last_time_setup = default_timer()
+        self._last_time_setup = timer()
 
     # Rolling_mode related methods:
     # -----------------------------

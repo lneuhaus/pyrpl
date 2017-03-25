@@ -2,7 +2,7 @@ import logging
 logger = logging.getLogger(name=__name__)
 from PyQt4 import QtGui
 from .test_base import TestPyrpl
-from pyrpl.software_modules.module_managers import ModuleManager
+from ..software_modules.module_managers import ModuleManager
 APP = QtGui.QApplication.instance()
 
 
