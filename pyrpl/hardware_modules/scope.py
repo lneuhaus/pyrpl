@@ -486,7 +486,7 @@ class Scope(HardwareModule, AcquisitionModule):
             # self.wait_for_pretrig_ok()
             self.trigger_source = self.trigger_source
         self._autosave_active = autosave_backup
-        self._last_time_setup = timer()
+        self._last_time_setup = time()
 
     # Rolling_mode related methods:
     # -----------------------------
