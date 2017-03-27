@@ -85,6 +85,7 @@ class Pyrpl(object):
         self.c._get_or_create('redpitaya')
         self.c.redpitaya._update(kwargs)
         self.rp = RedPitaya(config=self.c)
+        self.rp.parent=self
         self.widgets = [] # placeholder for widgets
         # ...initializing remaining hardware modules
         for module in self.hardware_modules:  # setup hardware modules with config file keys

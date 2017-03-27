@@ -1,7 +1,7 @@
 from collections import OrderedDict
-from ..attributes import SelectAttribute, SelectRegister, BoolRegister
-from ..modules import HardwareModule
-from ..pyrpl_utils import sorted_dict
+from ..attributes import SelectAttribute, SelectRegister, BoolRegister, SelectProperty
+from ..modules import HardwareModule, SignalModule
+from ..pyrpl_utils import sorted_dict, recursive_getattribute, recursive_setattr
 
 
 DSP_INPUTS = sorted_dict(
@@ -25,21 +25,62 @@ DSP_INPUTS = sorted_dict(
     off=15)
 
 
-class DspInputAttribute(SelectAttribute):
+class DspInputAttribute(SelectProperty):
     "selects the input signal of the module"
-    def get_value(self, instance, owner):
-        return instance._input
+    def __init__(self,
+                 default=None,
+                 doc="",
+                 ignore_errors=False,
+                 call_setup=False):
+        super(SelectProperty, self).__init__(default=default,
+                                             doc=doc,
+                                             ignore_errors=ignore_errors,
+                                             call_setup=call_setup)
+        if not hasattr(self, 'default'):
+           self.default = self.options(None).keys()[0]
+
+    register = '_input'
+
+    def options(self, instance):
+        """ collects all available logical inputs, composed of all
+        dsp inputs and all submodule inputs, such as lockbox signals etc."""
+        # options is a mapping from option names to the setting of _input
+        if instance is None:
+            signals = sorted_dict({k: k for k in DSP_INPUTS.keys()})
+        else:
+            signals = sorted_dict({k: k for k in instance._inputs.keys()})
+            if instance is not None:
+                for module in instance.pyrpl.software_modules:
+                    try:
+                        module_signals = module.signals
+                    except AttributeError:
+                        pass
+                    else:
+                        for key, value in module_signals.items():
+                            signals[module.name + '.' + key] = value.signal()
+        return signals
 
     def set_value(self, instance, value):
-        # allow to directly pass another module as input
-        if hasattr(value, 'name'):
-            instance._input = value.name
+        try:
+            value = value.signal()
+        except AttributeError:
+            pass
+        super(DspInputAttribute, self).set_value(instance, value)
+        recursive_setattr(instance,
+                          self.register,
+                          self.options(instance)[value])
+
+    def get_value(self, instance, owner):
+        value = super(DspInputAttribute, self).get_value(instance, owner)
+        # make sure the setting corresponds to the register setting
+        current = recursive_getattribute(instance, self.register)
+        if current == self.options(instance)[value]:
+            return value
         else:
-            instance._input = value
-        return value
+            return current
 
 
-class DspModule(HardwareModule):
+class DspModule(HardwareModule, SignalModule):
     _delay = 0  # delay of the module from input to output_signal (in cycles)
 
     _output_directs = sorted_dict(off=0,
@@ -49,27 +90,13 @@ class DspModule(HardwareModule):
     output_directs = _output_directs.keys()
 
     _inputs = sorted_dict(DSP_INPUTS, sort_by_values=True)
-    inputs = _inputs.keys()
-
-    def _logical_inputs(self):
-        """ collects all available logical inputs, composed of all
-        dsp inputs and all submodule inputs, such as lockbox signals etc."""
-        signals = sorted_dict(DSP_INPUTS, sort_by_values=True)
-        if self is not None:
-            for module in self.pyrpl.software_modules:
-                try:
-                    module_signals = module.signals
-                except AttributeError:
-                    pass
-                else:
-                    for key, value in module_signals.items():
-                        signals[module.name+key] = value
-        return signals
-
     _input = SelectRegister(0x0, options=_inputs,
                             doc="selects the input signal of the module")
 
     input = DspInputAttribute(_inputs)
+
+    inputs = _inputs.keys()
+
 
     output_direct = SelectRegister(0x4,
                                    options=_output_directs,

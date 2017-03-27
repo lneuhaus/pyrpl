@@ -1,7 +1,7 @@
 import numpy as np
 from ..attributes import SelectAttribute, BoolRegister, FloatRegister, SelectRegister, \
                              IntRegister, LongRegister, PhaseRegister, FrequencyRegister, FloatAttribute
-from ..modules import HardwareModule
+from ..modules import HardwareModule, SignalModule
 from ..widgets.module_widgets import AsgWidget
 
 from . import DspModule
@@ -94,7 +94,7 @@ def make_asg(channel=0):
         set_BIT_OFFSET = 16
         set_default_output_direct = 'off'
 
-    class Asg(HardwareModule):
+    class Asg(HardwareModule, SignalModule):
         _widget_class = AsgWidget
         _setup_attributes = ["waveform",
                              "amplitude",

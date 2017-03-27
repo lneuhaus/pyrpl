@@ -700,3 +700,9 @@ class HardwareModule(Module):
             v = v + 2 ** bitlength
         v = (v & (2 ** bitlength - 1))
         return np.uint32(v)
+
+
+class SignalModule(Module):
+    """ any module that can be passed as an input to another module"""
+    def signal(self):
+        return self.name

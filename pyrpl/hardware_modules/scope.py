@@ -1,11 +1,11 @@
 import time
 
+from pyrpl.acquisition_module import AcquisitionModule
 from . import DSP_INPUTS, DspModule, DspInputAttribute
 from ..async_utils import MainThreadTimer, PyrplFuture
 from ..module_attributes import *
 from ..modules import HardwareModule
 from ..pyrpl_utils import time
-from ..acquisition_module import AcquisitionModule
 from ..widgets.module_widgets import ScopeWidget
 
 logger = logging.getLogger(name=__name__)
@@ -119,21 +119,9 @@ class DspInputAttributeScope(DspInputAttribute):
     index].input instead of instance.input
     """
 
-    def __init__(self, ch=1, doc=""):
-        options = DSP_INPUTS.keys()
-        super(DspInputAttributeScope, self).__init__(options=options, doc=doc)
-        self.ch = ch
-
-    def get_value(self, instance, owner):
-        if instance is None:
-            return self
-        ch = getattr(instance, '_ch' + str(self.ch))
-        return ch.input
-
-    def set_value(self, instance, value):
-        ch = getattr(instance, '_ch' + str(self.ch))
-        setattr(ch, 'input', value)
-        return value
+    def __init__(self, ch=1, **kwds):
+        super(DspInputAttributeScope, self).__init__(**kwds)
+        self.register = '_ch%d.input'
 
 
 class ContinuousRollingFuture(PyrplFuture):

@@ -167,6 +167,7 @@ class RedPitaya(object):
             self.start()
         self.logger.info('Successfully connected to Redpitaya with hostname '
                          '%s.'%self.ssh.hostname)
+        self.parent = self
 
     def start_ssh(self, attempt=0):
         """
