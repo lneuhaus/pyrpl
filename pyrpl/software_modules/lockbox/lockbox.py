@@ -152,7 +152,7 @@ class Lockbox(LockboxModule):
     # unit management #
     ###################
     # setpoint_unit is mandatory to specify in which unit the setpoint is given
-    setpoint_unit = SelectProperty(options=['V'], default='V')
+    setpoint_unit = SelectProperty(options=['V'], default='V', ignore_errors=True)
     # output gain comes in units of '_output_unit'/V of analog redpitaya output
     _output_units = ['V', 'mV']
     # each _output_unit must come with a function that allows conversion from

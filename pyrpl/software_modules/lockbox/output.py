@@ -74,7 +74,8 @@ class OutputSignal(Signal):
     unit = SelectProperty(default='V/V',
                           options=lambda inst:
                           [u+"/V" for u in inst.lockbox._output_units],
-                          call_setup=True)
+                          call_setup=True,
+                          ignore_errors=True)
     tf_type = SelectProperty(["flat", "filter", "curve"],
                              default="filter",
                              call_setup=True)

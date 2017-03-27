@@ -23,7 +23,8 @@ from .widgets.attribute_widgets import BoolAttributeWidget, \
                                        ListComplexAttributeWidget, \
                                        FrequencyAttributeWidget, \
                                        ListFloatAttributeWidget, \
-                                       BoolIgnoreAttributeWidget
+                                       BoolIgnoreAttributeWidget, \
+                                       TextAttributeWidget
 import logging
 import sys
 import numpy as np
@@ -398,8 +399,6 @@ class SelectAttribute(BaseAttribute):
                 msg = "Value %s is not an option for SelectAttribute {%s} of %s"\
                       % (value, self.name, module.name)
                 if self.ignore_errors:
-                    # value = None
-                    # logger.warning(msg + ". Selecting value 'None' instead.")
                     value = options[0]
                     logger.warning(msg + ". Picking an arbitrary value %s instead."
                                    % str(value))
@@ -1057,6 +1056,13 @@ class StringProperty(StringAttribute, BaseProperty):
     A property for a string value
     """
     default = ""
+
+
+class TextProperty(StringProperty):
+    """
+    A property for longer text
+    """
+    _widget_class = TextAttributeWidget
 
 
 class PhaseProperty(PhaseAttribute, BaseProperty):

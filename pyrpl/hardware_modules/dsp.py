@@ -1,8 +1,8 @@
 from collections import OrderedDict
-
 from ..attributes import SelectAttribute, SelectRegister, BoolRegister
 from ..modules import HardwareModule
 from ..pyrpl_utils import sorted_dict
+
 
 DSP_INPUTS = sorted_dict(
     pid0=0,
@@ -52,12 +52,19 @@ class DspModule(HardwareModule):
     inputs = _inputs.keys()
 
     def _logical_inputs(self):
-        if self is None:
-            signals = []
-        else:
-            signals = self.pyrpl.lockbox.signals
-        return self._inputs + signals
-        #pass #for
+        """ collects all available logical inputs, composed of all
+        dsp inputs and all submodule inputs, such as lockbox signals etc."""
+        signals = sorted_dict(DSP_INPUTS, sort_by_values=True)
+        if self is not None:
+            for module in self.pyrpl.software_modules:
+                try:
+                    module_signals = module.signals
+                except AttributeError:
+                    pass
+                else:
+                    for key, value in module_signals.items():
+                        signals[module.name+key] = value
+        return signals
 
     _input = SelectRegister(0x0, options=_inputs,
                             doc="selects the input signal of the module")

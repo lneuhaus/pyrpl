@@ -42,7 +42,8 @@ default_pyrpl_config = {'name': 'default_pyrpl_instance',
                         'loglevel': 'info',
                         'modules': ['NetworkAnalyzer',
                                     'SpectrumAnalyzer',
-                                    'Lockbox']
+                                    'Lockbox',
+                                    'PyrplConfig']
                         }
 
 class Pyrpl(object):

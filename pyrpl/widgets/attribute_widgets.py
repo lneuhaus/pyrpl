@@ -479,6 +479,24 @@ class StringAttributeWidget(BaseAttributeWidget):
             self.widget.setText(new_value)
 
 
+
+class TextAttributeWidget(StringAttributeWidget):
+    """
+    Property for multiline string values.
+    """
+    def set_widget(self):
+        """
+        Sets up the widget (here a QSpinBox)
+        :return:
+        """
+        self.widget = QtGui.QTextEdit()
+        self.widget.textChanged.connect(self.write)
+
+    def write(self):
+        setattr(self.module, self.name, str(self.widget.toPlainText()))
+        self.value_changed.emit()
+
+
 class NumberAttributeWidget(BaseAttributeWidget):
     """
     Base property for float and int.
