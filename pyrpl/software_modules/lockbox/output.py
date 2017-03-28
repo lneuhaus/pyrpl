@@ -340,3 +340,8 @@ class OutputSignal(Signal):
     #     self.iir.setup(**iirconfig)
     #     # route iir output through pid
     #     self.pid.input = self.iir.name
+class PiezoOutput(OutputSignal):
+    unit = SelectProperty(default='m/V',
+                          options=lambda inst:
+                          [u + "/V" for u in inst.lockbox._output_units],
+                          call_setup=True)

@@ -49,6 +49,10 @@ class Interferometer(Lockbox):
                                        port2=InterferometerPort2)
 
 
+    outputs = LockboxModuleDictProperty(piezo=PiezoOutput)
+                                        #piezo2=PiezoOutput)
+
+
 class PdhInterferometerPort1(InputIq, InterferometerPort1):
     def expected_signal(self, phase):
         # proportional to the derivative of the signal

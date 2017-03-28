@@ -3,7 +3,7 @@ from copy import copy
 import numpy as np
 from PyQt4 import QtGui
 
-from pyrpl.software_modules.acquisition_module import AcquisitionModule
+from ..acquisition_module import AcquisitionModule
 from ..async_utils import PyrplFuture, MainThreadTimer, CancelledError
 from ..attributes import FloatProperty, SelectProperty, FrequencyProperty, \
                          LongProperty, BoolProperty, FilterAttribute

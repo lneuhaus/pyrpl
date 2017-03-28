@@ -1,10 +1,7 @@
-import logging
 import time
 from timeit import default_timer
 
-import numpy as np
-
-from pyrpl.software_modules.acquisition_module import AcquisitionModule
+from ..acquisition_module import AcquisitionModule
 from . import DSP_INPUTS, DspModule, DspInputAttribute
 from ..async_utils import MainThreadTimer, PyrplFuture
 from ..module_attributes import *

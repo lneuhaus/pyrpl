@@ -37,8 +37,8 @@ ensure_future(my_acquisition_coroutine(10))
 eventloop.run_until_complete()
 """
 
-from pyrpl.module_attributes import *
-from pyrpl.async_utils import PyrplFuture, Future, MainThreadTimer, CancelledError
+from .module_attributes import *
+from .async_utils import PyrplFuture, Future, MainThreadTimer, CancelledError
 
 
 class AcquisitionError(ValueError):
