@@ -167,7 +167,7 @@ except:
         def all(cls):
             pks = [int(f.split('.p')[0])
                    for f in os.listdir(cls._dirname) if f.endswith('.p')]
-            return pks
+            return sorted(pks, reverse=True)
 
         @property
         def pk(self):

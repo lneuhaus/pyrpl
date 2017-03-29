@@ -33,7 +33,6 @@ class ScopeWidget(ModuleWidget):
         self.layout_channels.addLayout(self.layout_ch1)
         self.layout_channels.addLayout(self.layout_ch2)
 
-
         self.attribute_layout.removeWidget(aws['ch1_active'])
         self.attribute_layout.removeWidget(aws['input1'])
         self.attribute_layout.removeWidget(aws['threshold_ch1'])

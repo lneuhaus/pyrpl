@@ -7,8 +7,9 @@ from pyqtgraph.Qt import QtGui, QtCore
 import numpy as np
 import time
 import functools
+import pyqtgraph as pg
 from ..pyrpl_utils import Bijection, recursive_setattr, recursive_getattr
-
+from ..curvedb import CurveDB
 
 import sys
 if sys.version_info < (3,):
@@ -1222,3 +1223,43 @@ class BoolIgnoreAttributeWidget(BoolAttributeWidget):
         :return:
         """
         self.widget.setCheckState(self._gui_to_attribute_mapping.inverse[new_value])
+
+
+class CurveAttributeWidget(BaseAttributeWidget):
+    """
+    Base property for float and int.
+    """
+    def set_widget(self):
+        """
+        Sets the widget (here a QCheckbox)
+        :return:
+        """
+        self.widget = pg.GraphicsWindow(title="Curve")
+        self.plot_item = self.widget.addPlot(title="Curve")
+        self.plot_item.showGrid(y=True, alpha=1.)
+        self.curve = self.plot_item.plot(pen='r')
+        #self.setToolTip("Checked:\t    on\nUnchecked: off\nGrey:\t    ignore")
+
+    def write(self):
+        # nothing to write from a curve
+        pass
+        #setattr(self.module, self.name, self.widget.value())
+        #self.value_changed.emit()
+
+    def _update(self, new_value):
+        """
+        Updates the value displayed in the widget
+        :return:
+        """
+        if new_value is None:
+            return
+        try:
+            data = getattr(self.module, '_' + self.name + '_object').data
+        except:
+            pass
+        else:
+            x = data.index.values
+            y = np.abs(data.values)
+            if np.iscomplex(y[0]):
+                y = np.abs(y)
+            self.curve.setData(x, y)

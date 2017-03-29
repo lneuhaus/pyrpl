@@ -25,7 +25,9 @@ from .widgets.attribute_widgets import BoolAttributeWidget, \
                                        FrequencyAttributeWidget, \
                                        ListFloatAttributeWidget, \
                                        BoolIgnoreAttributeWidget, \
-                                       TextAttributeWidget
+                                       TextAttributeWidget, \
+                                       CurveAttributeWidget
+from .curvedb import CurveDB
 from collections import OrderedDict
 import logging
 import sys
@@ -1021,3 +1023,26 @@ class ModuleAttribute(BaseAttribute):
     The actual implementation is found in module_attributes.ModuleProperty.
     This object is only used inside the Module class
     """
+
+
+class CurveProperty(BaseProperty):
+    """ property for a curve_id whose widget plots the corresponding curve """
+    _widget_class = CurveAttributeWidget
+
+    def validate_and_normalize(self, obj, value):
+        try:
+            value = int(value)
+        except:
+            pass
+        if value in CurveDB.all():
+            return value
+        else:
+            return None
+
+    def set_value(self, obj, val):
+        BaseProperty.set_value(self, obj, val)
+        if val is None:
+            curve = None
+        else:
+            curve = CurveDB.get(val)
+        setattr(obj, '_' + self.name + '_object', curve)
