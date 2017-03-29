@@ -632,7 +632,7 @@ end else begin
        4'd7 : adc_trig <= ext_trig_n    ; // external - falling edge
        4'd8 : adc_trig <= asg_trig_p    ; // ASG - rising edge
        4'd9 : adc_trig <= asg_trig_n    ; // ASG - falling edge
-       4'd10: adc_trig <= dsp_trig_i    ; // dsp trigger input
+       4'd10: adc_trig <= trig_dsp_i    ; // dsp trigger input
     default : adc_trig <= 1'b0          ;
    endcase
 end

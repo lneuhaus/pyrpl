@@ -79,7 +79,7 @@ module red_pitaya_asg (
  
   input                 trig_scope_i    ,  // trigger from the scope
 
-  output     [ 14-1: 0] asg1phase_o;
+  output     [ 14-1: 0] asg1phase_o,
 
   // System bus
   input      [ 32-1: 0] sys_addr  ,  // bus address

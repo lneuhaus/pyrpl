@@ -65,14 +65,14 @@ module red_pitaya_trigger_block #(
    //parameters for input pre-filter
    parameter     FILTERSTAGES = 1,
    parameter     FILTERSHIFTBITS = 5,
-   parameter     FILTERMINBW = 1,
+   parameter     FILTERMINBW = 1
 )
 (
    // data
    input                 clk_i           ,  // clock
    input                 rstn_i          ,  // reset - active low
    input      [ 14-1: 0] dat_i           ,  // input data
-   input      [ 14-1: 0] phase_i         ,  // input phase to feed through
+   input      [ 14-1: 0] phase1_i         ,  // input phase to feed through
    output     [ 14-1: 0] dat_o           ,  // output data
    output     [ 14-1: 0] signal_o        ,  // output data
    output                trig_o          ,  // trigger signal
@@ -181,33 +181,31 @@ red_pitaya_filter_block #(
 //  Trigger created from input signal - nearly identical with scope
 reg  [  2-1: 0] adc_scht_ap  ;
 reg  [  2-1: 0] adc_scht_an  ;
-reg  [ 14-1: 0] set_a_treshp ;
-reg  [ 14-1: 0] set_a_treshm ;
+reg  [ 14-1: 0] set_a_threshp ;
+reg  [ 14-1: 0] set_a_threshm ;
 reg adc_trig_ap;
 reg adc_trig_an;
 
-always @(posedge adc_clk_i)
-if (adc_rstn_i == 1'b0) begin
-   adc_scht_ap  <=  2'h0 ;
-   adc_scht_an  <=  2'h0 ;
-   adc_trig_ap  <=  1'b0 ;
-   adc_trig_an  <=  1'b0 ;
-end else begin
-   set_a_treshp <= set_a_tresh + set_a_hyst ; // calculate positive
-   set_a_treshm <= set_a_tresh - set_a_hyst ; // and negative treshold
+always @(posedge clk_i) begin
+   set_a_threshp <= set_a_thresh + set_a_hyst ; // calculate positive
+   set_a_threshm <= set_a_thresh - set_a_hyst ; // and negative threshold
+   if (rstn_i == 1'b0) begin
+      adc_scht_ap  <=  2'h0 ;
+      adc_scht_an  <=  2'h0 ;
+      adc_trig_ap  <=  1'b0 ;
+      adc_trig_an  <=  1'b0 ;
+   end else begin
+      if ($signed(dat_i_filtered) >= $signed(set_a_thresh ))      adc_scht_ap[0] <= 1'b1 ;  // threshold reached
+      else if ($signed(dat_i_filtered) <  $signed(set_a_threshm)) adc_scht_ap[0] <= 1'b0 ;  // wait until it goes under hysteresis
+      if ($signed(dat_i_filtered) <= $signed(set_a_thresh ))      adc_scht_an[0] <= 1'b1 ;  // threshold reached
+      else if ($signed(dat_i_filtered) >  $signed(set_a_threshp)) adc_scht_an[0] <= 1'b0 ;  // wait until it goes over hysteresis
 
-   if (adc_dv) begin
-           if ($signed(dat_i_filtered) >= $signed(set_a_tresh ))      adc_scht_ap[0] <= 1'b1 ;  // treshold reached
-      else if ($signed(dat_i_filtered) <  $signed(set_a_treshm))      adc_scht_ap[0] <= 1'b0 ;  // wait until it goes under hysteresis
-           if ($signed(dat_i_filtered) <= $signed(set_a_tresh ))      adc_scht_an[0] <= 1'b1 ;  // treshold reached
-      else if ($signed(dat_i_filtered) >  $signed(set_a_treshp))      adc_scht_an[0] <= 1'b0 ;  // wait until it goes over hysteresis
+      adc_scht_ap[1] <= adc_scht_ap[0] ;
+      adc_scht_an[1] <= adc_scht_an[0] ;
+
+      adc_trig_ap <= adc_scht_ap[0] && !adc_scht_ap[1] ; // make 1 cyc pulse
+      adc_trig_an <= adc_scht_an[0] && !adc_scht_an[1] ;
    end
-
-   adc_scht_ap[1] <= adc_scht_ap[0] ;
-   adc_scht_an[1] <= adc_scht_an[0] ;
-
-   adc_trig_ap <= adc_scht_ap[0] && !adc_scht_ap[1] ; // make 1 cyc pulse
-   adc_trig_an <= adc_scht_an[0] && !adc_scht_an[1] ;
 end
 
 // trigger logic
@@ -218,12 +216,16 @@ reg   [ 64 - 1:0] timestamp_trigger;
 reg   [ 14 - 1:0] phase_processed;
 reg   [ 14 - 1:0] phase;
 reg   [ 14 - 1:0] output_data;
+wire  [ 14 - 1:0] phase_i;
 wire  [ 14 - 1:0] phase_sum;
 
+//multiplexer for input phase (still TODO)
+assign phase_i = phase1_i;
+//account for offset
 assign phase_sum = phase_i + phase_offset;
 
-always @(posedge adc_clk_i)
-if (adc_rstn_i == 1'b0) begin
+always @(posedge clk_i)
+if (rstn_i == 1'b0) begin
    trigger_signal <= 1'b0;
    armed <= 1'b0;
    ctr_value <= 64'h0;
@@ -238,17 +240,17 @@ end else begin
    armed <= (armed && (!trigger_signal)) || rearm || auto_rearm;
    ctr_value <= ctr_value + 1'b1;
    if ((phase_abs == 1'b1) && (phase_sum[14-1] == 1'b1))
-       phase_processed <= (~phase_sum)+14'd1);
+       phase_processed <= (~phase_sum)+14'd1;
    else
        phase_processed <= phase_sum;
    if (trigger_signal==1'b1) begin
-       timestamp_trigger <= ctr_value;  # take a timestamp
+       timestamp_trigger <= ctr_value;  // take a timestamp
        phase <= phase_processed;
    end
    // output_signal multiplexer
-   if (output_select==TTL):
-       output_data <= {0'b0,{13{trigger_signal}}};
-   else if (output=select==PHASE):
+   if (output_select==TTL)
+       output_data <= {1'b0,{13{trigger_signal}}};
+   else if (output_select==PHASE)
        output_data <= phase;
 end
 
