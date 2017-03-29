@@ -1026,23 +1026,24 @@ class ModuleAttribute(BaseAttribute):
 
 
 class CurveProperty(BaseProperty):
-    """ property for a curve_id whose widget plots the corresponding curve """
+    """ property for a curve whose widget plots the corresponding curve.
+     The property can be set by either passing a CurveDB object, or a  curve id"""
     _widget_class = CurveAttributeWidget
 
     def validate_and_normalize(self, obj, value):
-        try:
-            value = int(value)
-        except:
-            pass
-        if value in CurveDB.all():
-            return value
-        else:
-            return None
+        # returns none or a valid curve corresponding to the given curve or id
+        if not isinstance(value, CurveDB):
+            try:
+                value = int(value)
+                value = CurveDB.get(value)
+            except:
+                value = None
+        return value
 
     def set_value(self, obj, val):
-        BaseProperty.set_value(self, obj, val)
         if val is None:
-            curve = None
+            pk = None
         else:
-            curve = CurveDB.get(val)
-        setattr(obj, '_' + self.name + '_object', curve)
+            pk = val.pk
+        BaseProperty.set_value(self, obj, pk)
+        setattr(obj, '_' + self.name + '_object', val)
