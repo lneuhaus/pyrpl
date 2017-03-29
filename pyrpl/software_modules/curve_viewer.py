@@ -14,7 +14,7 @@ def all_curves(instance):
 class CurveViewer(Module):
     _widget_class = CurveViewerWidget
     """ This Module allows to quickly browse through curves that were taken with pyrpl"""
-    _gui_attributes = ["pk", "curve", "params"]
+    _gui_attributes = ["pk", "curve", "params", "save_params"]
 
     pk = SelectProperty(options=all_curves,
                         doc="the pk of the currently viewed curve",
@@ -25,5 +25,16 @@ class CurveViewer(Module):
     params = TextProperty()
 
     def _setup(self):
+        self.m = MemoryTree()
         self.curve = self.pk
-        self.params = str(self._curve_object.params)
+        if self._curve_object is None:
+            self.params = ""
+        else:
+            self.params = self.m._get_yml(self._curve_object.params)
+
+    def save_params(self):
+        self.m = MemoryTree()
+        self.m._set_yml(self.params)
+        if self._curve_object is not None:
+            self._curve_object.params = self.self.m._data
+            self._curve_object.save()

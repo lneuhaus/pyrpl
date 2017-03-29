@@ -19,7 +19,7 @@
 from . import redpitaya_client
 from . import hardware_modules as rp
 from .sshshell import SSHshell
-from .pyrpl_utils import get_unique_name_list_from_class_list
+from .pyrpl_utils import get_unique_name_list_from_class_list, update_with_typeconversion
 from .memory import MemoryTree
 
 import logging
@@ -121,11 +121,14 @@ class RedPitaya(object):
                                       "'silence_env=True' if this is not "
                                       "desired!",
                                       k, oldvalue, k.upper(), newvalue)
+        # settings from config file
         try:
-            self.parameters.update(self.c.redpitaya._data)  # from config file
+            update_with_typeconversion(self.parameters, self.c.redpitaya._data)
         except:
             pass
-        self.parameters.update(kwargs)  # from class initialisation
+        # settings from class initialisation
+        update_with_typeconversion(self.parameters, kwargs)
+
         # optional: write configuration back to config file
         self.c["redpitaya"]= self.parameters
 

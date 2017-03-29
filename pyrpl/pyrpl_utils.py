@@ -128,6 +128,15 @@ def sorted_dict(dict_to_sort=None, sort_by_values=True, **kwargs):
         return OrderedDict(sorted(dict_to_sort.items(), key=lambda x: x[1]))
 
 
+def update_with_typeconversion(dictionary, update):
+    for k, v in update.items():
+        if k in dictionary:
+            # perform type conversion if appropriate
+            v = type(dictionary[k])(v)
+        dictionary[k] = v
+    return dictionary
+
+
 def unique_list(nonunique_list):
     """ Returns a list where each element of nonunique_list occurs exactly once.
     The last occurence of an element defines its position in the returned list.
