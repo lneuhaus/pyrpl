@@ -146,11 +146,11 @@ def make_asg(channel=0):
             ("ext_negative_edge", 3 << _BIT_OFFSET),  # DIO0_P pin
             ("ext_raw", 4 << _BIT_OFFSET),  # 4- raw DIO0_P pin
             ("high", 5 << _BIT_OFFSET)  # 5 - constant high
-             ])
+            ])
         trigger_sources = _trigger_sources.keys()
 
         trigger_source = SelectRegister(0x0, bitmask=0x0007 << _BIT_OFFSET,
-                                        default='off',
+                                        default='immediately',
                                         options=_trigger_sources,
                                         doc="trigger source for triggered "
                                             "output")

@@ -40,14 +40,15 @@ class Trig(FilterModule):
 
     threshold = FloatRegister(0x118, bits=14, norm=2 ** 13,
                               doc="trigger threshold [volts]")
-    hysteresis = FloatRegister(0x11C, bits=14, norm=2 ** 13,
-                              doc="hysteresis for ch1 trigger [volts]")
 
+    hysteresis = FloatRegister(0x11C, bits=14, norm=2 ** 13,
+                               doc="hysteresis for ch1 trigger [volts]")
 
     current_timestamp = LongRegister(0x15C,
                                      bits=64,
                                      doc="An absolute counter "
                                          + "for the time [cycles]")
+
     trigger_timestamp = LongRegister(0x164,
                                      bits=64,
                                      doc="An absolute counter "

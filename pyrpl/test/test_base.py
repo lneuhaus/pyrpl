@@ -44,10 +44,7 @@ class TestPyrpl(object):
         # delete the configfile
         cls.erase_temp_file()
 
+    def test_pyrpl(self):
+        assert (self.pyrpl is not None)
 
 # only one test class per file is allowed due to conflicts
-#
-#class TestMyPyrpl(TestPyrpl):
-#    """ example for a derived test class"""
-#    def test_pyrpl(self):
-#        assert (self.pyrpl is not None)

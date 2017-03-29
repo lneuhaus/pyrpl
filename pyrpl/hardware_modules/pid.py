@@ -17,9 +17,9 @@ class IValAttribute(FloatProperty):
         # still, FPGA has an asymmetric representation for reading and writing
         # from/to this register
 
-    def set_value(self, instance, value):
+    def set_value(self, obj, value):
         """set the value of the register holding the integrator's sum [volts]"""
-        return instance._write(0x100, instance._from_pyint(
+        return obj._write(0x100, obj._from_pyint(
             int(round(value * 2 ** 13)), bitlength=16))
 
 

@@ -183,7 +183,6 @@ class BaseRegister(BaseProperty):
     Interface for basic register of type int. To convert the value between register format and python readable
     format, registers need to implement "from_python" and "to_python" functions"""
     default = None
-
     def __init__(self, address, bitmask=None, **kwargs):
         self.address = address
         self.bitmask = bitmask
@@ -257,10 +256,10 @@ class BoolRegister(BaseRegister, BoolProperty):
         if self.invert:
             val = not val
         if val:
-            v = obj._read(self.address) | (1 << self.bit)
+            towrite = obj._read(self.address) | (1 << self.bit)
         else:
-            v = obj._read(self.address) & (~(1 << self.bit))
-        return val
+            towrite = obj._read(self.address) & (~(1 << self.bit))
+        return towrite
 
 
 class BoolIgnoreProperty(BoolProperty):
@@ -424,16 +423,21 @@ class FloatRegister(IntRegister, FloatProperty):
     def __init__(self, address,
                  bits=14,  # total number of bits to represent on fpga
                  bitmask=None,
-                 norm=1,  # fpga value corresponding to 1 in python
+                 norm=1.0,  # fpga value corresponding to 1 in python
                  signed=True,  # otherwise unsigned
                  invert=False,  # if False: FPGA=norm*python, if True: FPGA=norm/python
                  **kwargs):
-        increment =  1./norm
-        self.norm = float(norm)
+        IntRegister.__init__(self, address=address, bits=bits, bitmask=bitmask)
         self.invert = invert
         self.signed = signed
-        IntRegister.__init__(self, address=address, bits=bits, bitmask=bitmask)
-        FloatProperty.__init__(self, increment=increment, min=-norm, max=norm, **kwargs)
+        self.norm = float(norm)
+        increment = 1.0/self.norm
+        max = float(2 ** (self.bits - int(self.signed)) - 1) / self.norm
+        if self.signed:
+            min = - float(2 ** (self.bits - int(self.signed))) / self.norm
+        else:
+            min = 0
+        FloatProperty.__init__(self, increment=increment, min=min, max=max, **kwargs)
 
     def to_python(self, obj, value):
         # 2's complement
@@ -481,11 +485,15 @@ class FloatRegister(IntRegister, FloatProperty):
 
     def validate_and_normalize(self, obj, value):
         """
-        saturates to min/max, and rounds to the nearest value authorized by the register.
+        For unsigned registers, takes the absolute value of the given value.
+        Rounds to the nearest value authorized by the register granularity,
+        then does the same as FloatProperty (==NumberProperty).
         """
-        return IntRegister.validate_and_normalize(self,
-                                                  obj,
-                                                  int(round(value/self.increment))*self.increment)
+        if not self.signed:
+            value = abs(value)
+        return FloatProperty.validate_and_normalize(self,
+                                                    obj,
+                                                    round(value/self.increment)*self.increment)
 
 
 class FrequencyProperty(FloatProperty):
