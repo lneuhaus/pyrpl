@@ -29,7 +29,7 @@ def all_inputs_keys(instance):
     """ collects all available logical inputs, composed of all
     dsp inputs and all submodule inputs, such as lockbox signals etc."""
     # options is a mapping from option names to the setting of _input
-    signals = DSP_INPUTS.keys()
+    signals = list(DSP_INPUTS.keys())
     if instance is not None:
         try:
             pyrpl = instance.pyrpl

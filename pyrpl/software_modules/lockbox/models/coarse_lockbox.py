@@ -1,4 +1,4 @@
-from pyhardware import instrument
+# from pyhardware import instrument
 from pyrpl.attributes import *
 from pyrpl.software_modules.lockbox.models.fabryperot import *
 from pyrpl.software_modules.loop import *

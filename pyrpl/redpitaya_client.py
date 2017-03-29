@@ -201,10 +201,7 @@ class DummyClient(object):
         #DSP modules
         all = DSP_INPUTS
         for module in DSP_INPUTS:
-            try:
-                offset = addr - dsp_addr_base(module)
-            except TypeError:
-                print offset
+            offset = addr - dsp_addr_base(module)
             if module.startswith('pid'):
                 if offset == 0x220: # FILTERSTAGES
                     return 4
