@@ -181,7 +181,7 @@ genvar j;
 
 //select inputs
 generate for (j = 0; j < MODULES+EXTRAMODULES; j = j+1)
-   assign input_signal[j] = output_signal[input_select[j]];
+   assign input_signal[j] = (input_select[j]==NONE) ? 14'b0 : output_signal[input_select[j]];
 endgenerate
 
 //sum together the direct outputs
