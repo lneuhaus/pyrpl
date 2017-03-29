@@ -102,8 +102,19 @@ class Pyrpl(object):
         #     m._load_setup_attributes()
         # # make the gui if applicable
         if self.c.pyrpl.gui:
+            self.show_gui()
+
+    def show_gui(self):
+        if len(self.widgets) == 0:
             widget = self._create_widget()
             widget.show()
+        else:
+            for w in self.widgets:
+                w.show()
+
+    def hide_gui(self):
+        for w in self.widgets:
+            w.hide()
 
     def load_software_modules(self):
         """
