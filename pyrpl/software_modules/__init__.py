@@ -3,6 +3,7 @@ from .module_managers import Asgs, Iqs, Pids, Scopes, Iirs
 from .network_analyzer import NetworkAnalyzer
 from .spectrum_analyzer import SpectrumAnalyzer
 from .pyrpl_config import PyrplConfig
+from .curve_viewer import CurveViewer
 from .lockbox import *
 from .loop import *
 

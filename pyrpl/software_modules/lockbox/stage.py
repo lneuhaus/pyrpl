@@ -3,6 +3,7 @@ from . import LockboxModule
 from ...attributes import SelectProperty, FloatProperty, BoolProperty, \
     StringProperty
 from ...module_attributes import *
+from ...hardware_modules import InputSelectProperty
 from ...widgets.module_widgets import ReducedModuleWidget, \
     LockboxSequenceWidget, LockboxStageWidget, StageOutputWidget
 
@@ -43,7 +44,7 @@ class Stage(LockboxModule):
     _widget_class = LockboxStageWidget
     _signal_launcher = StageSignalLauncher
 
-    input = SelectProperty(ignore_errors=True,
+    input = InputSelectProperty(ignore_errors=True,
                            options=lambda stage: stage.lockbox.inputs.keys(),
                            call_setup=True)
 
@@ -138,8 +139,8 @@ class Stage(LockboxModule):
         # the first test is needed to avoid startup problems
         if hasattr(self.lockbox, '_sequence'):
             if self.lockbox.current_state == self.name:
+                # enable a stage if its parameters have changed
                 self.enable()
             # synchronize (active) final_stage with the last stage of sequence
-            # -> disable because too confusing for the user?
             elif self.lockbox.current_state == 'lock' and self == self.parent[-1]:
                 self.lockbox.final_stage = self.setup_attributes

@@ -163,13 +163,18 @@ except:
             self.params["childs"] = list(childs+[child.pk])
             self.save()
 
+        @classmethod
+        def all(cls):
+            pks = [int(f.split('.p')[0])
+                   for f in os.listdir(cls._dirname) if f.endswith('.p')]
+            return pks
+
         @property
         def pk(self):
             if hasattr(self, "_pk"):
                 return self._pk
             else:
-                pks = [int(f.split('.p')[0]) or -1
-                       for f in os.listdir(self._dirname) if f.endswith('.p')]
+                pks = self.all()
                 if len(pks) == 0:
                     self._pk = 1
                 else:

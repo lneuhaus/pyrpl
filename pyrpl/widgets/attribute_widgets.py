@@ -1099,7 +1099,18 @@ class SelectAttributeWidget(BaseAttributeWidget):
 
         :return:
         """
-        setattr(self.module, self.name, str(self.widget.currentText()))
+        try:
+            setattr(self.module, self.name, str(self.widget.currentText()))
+        except ValueError as e1:
+            # typically string - int - conversion related
+            options = getattr(self.module.__class__, self.name).options(self.module).keys()
+            try:
+                index = [str(k) for k in options].index(str(self.widget.currentText()))
+            except ValueError as e2:
+                raise e1
+            else:
+                setattr(self.module, self.name, options[index])
+
         self.value_changed.emit()
 
     def _update(self, new_value):

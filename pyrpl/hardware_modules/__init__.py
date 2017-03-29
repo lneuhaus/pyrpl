@@ -20,7 +20,8 @@
 there for more information. """
 
 
-from .dsp import DspModule, DSP_INPUTS, all_inputs, all_output_directs, dsp_addr_base
+from .dsp import DspModule, DSP_INPUTS, all_inputs, all_output_directs, \
+    dsp_addr_base, InputSelectProperty, InputSelectRegister
 from .filter import FilterModule
 from .hk import HK
 from .scope import Scope

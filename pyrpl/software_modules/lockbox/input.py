@@ -5,7 +5,7 @@ import logging
 from ...attributes import SelectProperty, FloatProperty, FrequencyProperty, PhaseProperty, \
     FilterProperty, FrequencyRegister
 from ...widgets.module_widgets import LockboxInputWidget
-from ...hardware_modules.dsp import all_inputs
+from ...hardware_modules.dsp import DSP_INPUTS, InputSelectProperty
 from ...pyrpl_utils import time
 from ...module_attributes import ModuleProperty
 from ...software_modules.lockbox import LockboxModule, LockboxModuleDictProperty
@@ -221,22 +221,25 @@ class InputSignal(Signal):
     _widget_class = LockboxInputWidget
     plot_range = np.linspace(-5, 5, 200)  # range of setpoint values over which to plot signal
 
-    # input_signal selects the input signal of the module from DSP modules and logical signals of the lockbox
-    #input_signal = SelectProperty(options=(lambda instance:
-    #                                    list(DSP_INPUTS.keys()) +
-    #                                    list(instance.lockbox.signals.keys())),
-    #             doc="the dsp module or lockbox signal used as input signal")
-    input_signal = SelectProperty(options=all_inputs,
-                                  doc="the dsp module or lockbox signal used as input signal")
+    input_signal = InputSelectProperty(doc="the dsp module or lockbox signal used as input signal")
 
     def _input_signal_dsp_module(self):
         """ returns the dsp signal corresponding to input_signal"""
         signal = self.input_signal
-        try:
-            signal = self.lockbox.signals[self.input_signal].signal()
-        except:  # do not insist on this to work. if it fails, just return the direct value of input_channel
-            pass
-        return signal
+        for i in range(5):  # try at most 5 hierarchy levels
+            try:
+                signal = self.lockbox.signals[self.input_signal].signal()
+            except:  # do not insist on this to work. if it fails, just return the direct value of input_channel
+                pass
+            if signal in DSP_INPUTS:
+                break
+        if signal not in DSP_INPUTS:
+            self._logger.warning("Input signal of input %s cannot be traced "
+                                 "to a valid dsp input. Input considered "
+                                 "'off'.", self.name)
+            return 'off'
+        else:
+            return signal
 
     def signal(self):
         """ returns the signal corresponding to this module that can be used to connect the signal to other modules.
@@ -449,9 +452,9 @@ class InputFromOutput(InputDirect):
         """ no need to calibrate this """
         pass
 
-    input_signal = SelectProperty(options=(lambda instance:
-                                        list(instance.lockbox.outputs.keys())),
-                                  doc="lockbox signal used as input")
+    input_signal = InputSelectProperty(options=(lambda instance:
+                                      list(instance.lockbox.outputs.keys())),
+                                      doc="lockbox signal used as input")
 
     def is_locked(self, loglevel=logging.INFO):
         """ this is mainly used for coarse locking where significant

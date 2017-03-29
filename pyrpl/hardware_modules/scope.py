@@ -1,6 +1,5 @@
 import time
-from ..module_attributes import InputSelectRegister
-from .dsp import all_inputs, dsp_addr_base
+from .dsp import all_inputs, dsp_addr_base, InputSelectRegister
 from ..acquisition_module import AcquisitionModule
 from ..async_utils import MainThreadTimer, PyrplFuture
 from ..pyrpl_utils import sorted_dict
@@ -38,7 +37,7 @@ class DurationProperty(SelectProperty):
         value = float(value)
         options = self.options(obj).keys()
         try:
-            return min([opt for opt in options if opt > value],
+            return min([opt for opt in options if opt >= value],
                    key=lambda x: abs(x - value))
         except ValueError:
             obj._logger.info("Selected duration is longer than "
@@ -62,7 +61,7 @@ class SamplingTimeProperty(SelectProperty):
         value = float(value)
         options = self.options(obj).keys()
         try:
-            return min([opt for opt in options if opt < value],
+            return min([opt for opt in options if opt <= value],
                    key=lambda x: abs(x - value))
         except ValueError:
             obj._logger.info("Selected sampling time is shorter than "

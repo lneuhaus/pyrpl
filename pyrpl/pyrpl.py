@@ -43,8 +43,8 @@ default_pyrpl_config = {'name': 'default_pyrpl_instance',
                         'modules': ['NetworkAnalyzer',
                                     'SpectrumAnalyzer',
                                     'Lockbox',
-                                    'PyrplConfig']
-                        }
+                                    'CurveViewer',
+                                    'PyrplConfig']}
 
 class Pyrpl(object):
     """

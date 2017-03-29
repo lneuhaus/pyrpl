@@ -278,27 +278,3 @@ class ModuleDictProperty(ModuleProperty):
                                                  doc=doc,
                                                  ignore_errors=ignore_errors)
 
-
-class InputSelectProperty(SelectProperty):
-    """ a select register that stores logical signals if possible,
-    otherwise the underlying dsp signals"""
-    def validate_and_normalize(self, obj, value):
-        if isinstance(value, SignalModule):
-            # construct the path from the pyrpl module
-            module = value
-            name = module.name
-            while module != module.pyrpl:
-                module = module.parent
-                name = module.name + '.' + name
-            # take this path as the input signal key if allowed
-            if name in self.options(obj):
-                value = name
-            # otherwise take the corresponding dsp signal
-            else:
-                value = value.signal()
-        return super(InputSelectProperty, self).validate_and_normalize(obj, value)
-
-
-class InputSelectRegister(InputSelectProperty, SelectRegister):
-    pass
-

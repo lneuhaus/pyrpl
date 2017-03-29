@@ -1,6 +1,5 @@
 from collections import OrderedDict
 from ..attributes import BoolRegister, SelectProperty, SelectProperty, SelectRegister
-from ..module_attributes import InputSelectRegister
 from ..modules import HardwareModule, SignalModule
 from ..pyrpl_utils import sorted_dict, recursive_getattr, recursive_setattr
 
@@ -26,12 +25,11 @@ DSP_INPUTS = OrderedDict([
     # ('scope1', 9), #same as asg1 by design
     ('off', 15)])
 
-
-def all_inputs(instance):
+def all_inputs_keys(instance):
     """ collects all available logical inputs, composed of all
     dsp inputs and all submodule inputs, such as lockbox signals etc."""
     # options is a mapping from option names to the setting of _input
-    signals = OrderedDict(DSP_INPUTS)
+    signals = DSP_INPUTS.keys()
     if instance is not None:
         try:
             pyrpl = instance.pyrpl
@@ -44,15 +42,63 @@ def all_inputs(instance):
                 except AttributeError:
                     pass
                 else:
-                    for key, value in module_signals.items():
-                        signals[module.name + '.' + key] = value.signal()
-    for signal in signals:
-        while signals[signal] in signals:  # signal points to another key
-            if signals[signal] == signal:  # a) signal points to its own key
-                signals[signal] = 'off'
-            else:  # b) signal points to the key of another signal
-                signals[signal] = signals[signals[signal]]  # resolve the pointer
+                    for name, signal in module_signals.items():
+                        signals.append(signal.name)
+                        signal = signal.parent
+                        while signal != pyrpl:
+                            signals[-1] = signal.name + '.' + signals[-1]
+                            signal = signal.parent
     return signals
+
+
+def all_inputs(instance):
+    """ collects all available logical inputs, composed of all
+    dsp inputs and all submodule inputs, such as lockbox signals etc."""
+    # options is a mapping from option names to the setting of _input
+    signals = OrderedDict()
+    for k in all_inputs_keys(instance):
+        if k in DSP_INPUTS:
+            signals[k] = DSP_INPUTS[k]
+        elif instance is not None:
+            try:
+                signals[k] = recursive_getattr(instance.pyrpl, k+'.signal')()
+            except AttributeError:
+                pass
+    #for signal in signals:
+    #    while signals[signal] in signals:  # signal points to another key
+    #        if signals[signal] == signal:  # a) signal points to its own key
+    #            signals[signal] = 'off'
+    #        else:  # b) signal points to the key of another signal
+    #            signals[signal] = signals[signals[signal]]  # resolve the pointer
+    return signals
+
+
+class InputSelectProperty(SelectProperty):
+    """ a select register that stores logical signals if possible,
+    otherwise the underlying dsp signals"""
+    def __init__(self, options=all_inputs_keys, **kwargs):
+        SelectProperty.__init__(self, options=options, **kwargs)
+
+    def validate_and_normalize(self, obj, value):
+        if isinstance(value, SignalModule):
+            # construct the path from the pyrpl module
+            module = value
+            name = module.name
+            while module != module.pyrpl:
+                module = module.parent
+                name = module.name + '.' + name
+            # take this path as the input signal key if allowed
+            if name in self.options(obj):
+                value = name
+            # otherwise take the corresponding dsp signal
+            else:
+                value = value.signal()
+        return super(InputSelectProperty, self).validate_and_normalize(obj, value)
+
+
+class InputSelectRegister(InputSelectProperty, SelectRegister):
+    def __init__(self, address, options=all_inputs, **kwargs):
+        SelectRegister.__init__(self, address, options=options, **kwargs)
 
 
 def all_output_directs(instance):

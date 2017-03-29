@@ -21,7 +21,7 @@ logger = logging.getLogger(name=__name__)
 
 from ..module_attributes import *
 from ..hardware_modules import Scope
-from ..hardware_modules.dsp import all_inputs
+from ..hardware_modules.dsp import all_inputs, InputSelectProperty
 from ..acquisition_module import AcquisitionModule
 from ..widgets.module_widgets import SpecAnWidget
 

@@ -14,3 +14,5 @@ from .na_widget import NaWidget
 from .pid_widget import PidWidget
 from .scope_widget import ScopeWidget
 from .spec_an_widget import SpecAnWidget
+from .pyrpl_config_widget import PyrplConfigWidget
+from .curve_viewer_widget import CurveViewerWidget

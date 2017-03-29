@@ -7,8 +7,7 @@ from ..async_utils import PyrplFuture, MainThreadTimer, CancelledError
 from ..attributes import FloatProperty, SelectProperty, FrequencyProperty, \
                          IntProperty, BoolProperty, FilterProperty, SelectProperty, \
                          ProxyProperty
-from ..module_attributes import InputSelectProperty
-from ..hardware_modules import all_inputs, all_output_directs
+from ..hardware_modules import all_inputs, all_output_directs, InputSelectProperty
 from ..acquisition_module import AcquisitionModule
 from ..widgets.module_widgets import NaWidget
 
@@ -278,7 +277,7 @@ class NetworkAnalyzer(AcquisitionModule):
                        "infer_open_loop_tf"]
     _setup_attributes = _gui_attributes + ['running_state']
     # _callback_attributes = _gui_attributes
-    input = InputSelectProperty(all_inputs, call_setup=True)
+    input = InputSelectProperty(call_setup=True)
     #input = ProxyProperty('iq.input')
     output_direct = SelectProperty(all_output_directs, call_setup=True)
     start_freq = FrequencyProperty(call_setup=True)

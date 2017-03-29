@@ -2,9 +2,9 @@ from PyQt4 import QtCore, QtGui
 from .base_module_widget import ReducedModuleWidget
 
 
-class PyrplConfigWidget(ReducedModuleWidget):
+class CurveViewerWidget(ReducedModuleWidget):
     def init_attribute_layout(self):
-        super(PyrplConfigWidget, self).init_attribute_layout()
+        super(CurveViewerWidget, self).init_attribute_layout()
         textwidget = self.attribute_widgets["params"]
         self.main_layout.removeWidget(textwidget)
         self.textbox = QtGui.QHBoxLayout()
