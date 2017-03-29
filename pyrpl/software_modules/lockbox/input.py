@@ -2,10 +2,10 @@ from __future__ import division
 import scipy
 import numpy as np
 import logging
-from ...attributes import SelectAttribute, SelectProperty, FloatProperty, FrequencyProperty, PhaseProperty, \
+from ...attributes import SelectProperty, FloatProperty, FrequencyProperty, PhaseProperty, \
     FilterProperty, FrequencyRegister
 from ...widgets.module_widgets import LockboxInputWidget
-from ...hardware_modules.dsp import DSP_INPUTS
+from ...hardware_modules.dsp import all_inputs
 from ...pyrpl_utils import time
 from ...module_attributes import ModuleProperty
 from ...software_modules.lockbox import LockboxModule, LockboxModuleDictProperty
@@ -222,10 +222,12 @@ class InputSignal(Signal):
     plot_range = np.linspace(-5, 5, 200)  # range of setpoint values over which to plot signal
 
     # input_signal selects the input signal of the module from DSP modules and logical signals of the lockbox
-    input_signal = SelectProperty(options=(lambda instance:
-                                        list(DSP_INPUTS.keys()) +
-                                        list(instance.lockbox.signals.keys())),
-                 doc="the dsp module or lockbox signal used as input signal")
+    #input_signal = SelectProperty(options=(lambda instance:
+    #                                    list(DSP_INPUTS.keys()) +
+    #                                    list(instance.lockbox.signals.keys())),
+    #             doc="the dsp module or lockbox signal used as input signal")
+    input_signal = SelectProperty(options=all_inputs,
+                                  doc="the dsp module or lockbox signal used as input signal")
 
     def _input_signal_dsp_module(self):
         """ returns the dsp signal corresponding to input_signal"""
@@ -441,6 +443,7 @@ class InputDirect(InputSignal):
     def expected_signal(self, x):
         return x
 
+
 class InputFromOutput(InputDirect):
     def calibrate(self):
         """ no need to calibrate this """
@@ -500,8 +503,8 @@ class IqQuadratureFactorProperty(FloatProperty):
         instance.iq.quadrature_factor = value
         return value
 
-    def get_value(self, instance, value):
-        return instance.iq.quadrature_factor
+    def get_value(self, obj):
+        return obj.iq.quadrature_factor
 
 
 class IqFilterProperty(FilterProperty):

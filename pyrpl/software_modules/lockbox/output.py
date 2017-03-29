@@ -5,19 +5,19 @@ from scipy import interpolate
 
 from ...software_modules.lockbox.input import Signal
 from ...attributes import BoolProperty, FloatProperty, SelectProperty, \
-    FilterAttribute, LongProperty, FrequencyProperty
+    FilterProperty, FrequencyProperty, IntProperty
 from ...curvedb import CurveDB
 from ...hardware_modules.asg import Asg0, Asg1
 from ...hardware_modules.pid import Pid
 from ...widgets.module_widgets import OutputSignalWidget
 
 
-class AdditionalFilterAttribute(FilterAttribute):
+class AdditionalFilterAttribute(FilterProperty):
     # proxy to the pid inputfilter attribute that emits a signal when changed
     def valid_frequencies(self, obj):
         return obj.pid.__class__.inputfilter.valid_frequencies(obj.pid)
 
-    def get_value(self, obj, owner):
+    def get_value(self, obj):
         return obj.pid.inputfilter
 
     def set_value(self, obj, value):
@@ -79,7 +79,7 @@ class OutputSignal(Signal):
     tf_type = SelectProperty(["flat", "filter", "curve"],
                              default="filter",
                              call_setup=True)
-    tf_curve = LongProperty(call_setup=True)
+    tf_curve = IntProperty(call_setup=True)
     # sweep properties
     sweep_amplitude = FloatProperty(default=1., min=-1, max=1, call_setup=True)
     sweep_offset = FloatProperty(default=0.0, min=-1, max=1, call_setup=True)
@@ -223,6 +223,7 @@ class OutputSignal(Signal):
 
     def _setup(self):
         # synchronize assisted_design parameters with p/i setting
+        self._setup_ongoing = True
         if self.assisted_design:
             self.i = self.desired_unity_gain_frequency
             if self.analog_filter_cutoff == 0:
@@ -235,6 +236,7 @@ class OutputSignal(Signal):
                 self.analog_filter_cutoff = 0
             else:
                 self.analog_filter_cutoff = self.i / self.p
+        self._setup_ongoing = False
         # re-enable lock/sweep/unlock with new parameters
         if self.current_state == 'sweep':
             self.sweep()

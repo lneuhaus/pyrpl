@@ -4,19 +4,17 @@ from collections import OrderedDict
 import numpy as np
 
 from ..attributes import BoolRegister, FloatRegister, SelectRegister, IntRegister, \
-                             PhaseRegister, FrequencyRegister, FloatAttribute, FilterAttribute, FilterRegister
+                             PhaseRegister, FrequencyRegister, FloatProperty, FilterRegister, FilterProperty
 from ..widgets.module_widgets import IqWidget
 from ..pyrpl_utils import sorted_dict
 
 from . import FilterModule
 
 
-class IqGain(FloatAttribute):
+class IqGain(FloatProperty):
     """descriptor for the gain of the Iq module"""
 
-    def get_value(self, obj, objtype=None):
-        if obj is None:
-            return self
+    def get_value(self, obj):
         return obj._g1 / 2 ** 3
 
     def set_value(self, obj, val):
@@ -25,16 +23,16 @@ class IqGain(FloatAttribute):
         return val
 
 
-class IqAcbandwidth(FilterAttribute):
+class IqAcbandwidth(FilterProperty):
     """descriptor for the acbandwidth of the Iq module"""
 
     def valid_frequencies(self, module):
         return [freq for freq in module.__class__.inputfilter.valid_frequencies(module) if freq >= 0]
 
-    def get_value(self, instance, owner):
-        if instance is None:
+    def get_value(self, obj):
+        if obj is None:
             return self
-        return - instance.inputfilter
+        return - obj.inputfilter
 
     def set_value(self, instance, val):
         if np.iterable(val):
@@ -142,7 +140,7 @@ class Iq(FilterModule):
     # return self._valid_inputfilter_frequencies()
     # acbandwidths = FilterModule.inputfilter.valid_frequencies()
 
-    gain = IqGain(_g1, doc="gain of the iq module (see drawing)")
+    gain = IqGain(doc="gain of the iq module (see drawing)")
 
     acbandwidth = IqAcbandwidth(doc="positive corner frequency of input high pass filter")
 

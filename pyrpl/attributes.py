@@ -12,8 +12,9 @@ Of course, the gui/parameter file/actual values have to stay "in sync" each
 time the attribute value is changed. The necessary mechanisms are happening
 behind the scene, and they are coded in this file.
 """
+
 from __future__ import division
-from .pyrpl_utils import Bijection, recursive_getattribute, recursive_setattr
+from .pyrpl_utils import recursive_getattr, recursive_setattr
 from .widgets.attribute_widgets import BoolAttributeWidget, \
                                        FloatAttributeWidget, \
                                        FilterAttributeWidget, \
@@ -25,6 +26,7 @@ from .widgets.attribute_widgets import BoolAttributeWidget, \
                                        ListFloatAttributeWidget, \
                                        BoolIgnoreAttributeWidget, \
                                        TextAttributeWidget
+from collections import OrderedDict
 import logging
 import sys
 import numpy as np
@@ -52,11 +54,12 @@ class BaseAttribute(object):
         attribute_widgets.py)
       - a function set_value(instance, value) that effectively sets the value
         (on redpitaya or elsewhere)
-      - a function get_value(instance, owner) that reads the value from
+      - a function get_value(instance) that reads the value from
         wherever it is stored internally
     """
     _widget_class = None
     widget = None
+    default = None
 
     def __init__(self,
                  default=None,
@@ -72,16 +75,16 @@ class BaseAttribute(object):
         self.ignore_errors = ignore_errors
         self.__doc__ = doc
 
-    def __set__(self, instance, value):
+    def __set__(self, obj, value):
         """
         This function is called for any BaseAttribute, such that all the gui updating, and saving to disk is done
-        automagically. The real work is delegated to self.set_value.
+        automatically. The real work is delegated to self.set_value.
         """
-        value = self.validate_and_normalize(value, instance)  # self.to_serializable(value)
-        self.set_value(instance, value)  # sets the value internally
-        self.value_updated(instance, value)  # lauch signal and update config and callback
+        value = self.validate_and_normalize(obj, value)  # self.to_serializable(value)
+        self.set_value(obj, value)  # sets the value internally
+        self.value_updated(obj, value)  # lauch signal and update config and callback
 
-    def validate_and_normalize(self, value, module):
+    def validate_and_normalize(self, obj, value):
         """
         This function should raise an exception if the value is incorrect.
         Normalization can be:
@@ -103,24 +106,26 @@ class BaseAttribute(object):
         self.launch_signal(module, value)
         if module._autosave_active:  # (for module, when module is slaved, don't save attributes)
             if self.name in module._setup_attributes:
-                    self.save_attribute(module, value)
-        if self.call_setup: # _setup should be triggered...
-            if not module._setup_ongoing: # unless a bunch of attributes are
-                # being changed together.
-                module.setup()
+                self.save_attribute(module, value)
+        if self.call_setup and not module._setup_ongoing:
+            # call setup unless a bunch of attributes are being changed together.
+            module.setup()
         return value
 
     def __get__(self, instance, owner):
+        # self.parent = instance
+        #store instance in memory <-- very bad practice: there is one Register for the class
+        # and potentially many obj instances (think of having 2 redpitayas in the same python session), then
+        # _read should use different clients depending on which obj is calling...)
         if instance is None:
             return self
-        try:
-            get_value = self.get_value
-        except AttributeError as e:
-            raise NotImplementedError("The attribute %s doesn't have a method "
-                                      "get_value. Did you use an Attribute "
-                                      "instead of a Property?" % self.name)
-        val = get_value(instance, owner)
-        return val
+        return self.get_value(instance)
+        # try:
+        #     return self.get_value(instance)
+        # except AttributeError:
+        #     raise NotImplementedError("The attribute %s doesn't have a method "
+        #                               "get_value. Did you use an Attribute "
+        #                               "instead of a Property?" % self.name)
 
     def launch_signal(self, module, new_value):
         """
@@ -151,139 +156,119 @@ class BaseAttribute(object):
                            str(module), type(module), self.name)
             return None
         if name is None:
-            name = self.name  # attributed by the metaclass of module
+            name = self.name
         widget = self._widget_class(name, module)
         return widget
 
 
-class NumberAttribute(BaseAttribute):
+class BaseProperty(BaseAttribute):
     """
-    Abstract class for ints and floats
+    A Property is a special type of attribute that is not mapping a fpga value,
+    but rather an attribute _name of the module. This is used mainly in
+    SoftwareModules
     """
+    def get_value(self, obj):
+        if not hasattr(obj, '_' + self.name):
+            setattr(obj, '_' + self.name, self.default)
+        return getattr(obj, '_' + self.name)
 
-    def _create_widget(self, module, name=None):
-        widget = super(NumberAttribute, self)._create_widget(module, name=name)
-        widget.set_increment(self.increment)
-        widget.set_maximum(self.max)
-        widget.set_minimum(self.min)
-        return widget
+    def set_value(self, obj, val):
+        setattr(obj, '_' + self.name, val)
 
-    def validate_and_normalize(self, value, module):
+
+class BaseRegister(BaseProperty):
+    """Registers implement the necessary read/write logic for storing an attribute on the redpitaya.
+    Interface for basic register of type int. To convert the value between register format and python readable
+    format, registers need to implement "from_python" and "to_python" functions"""
+    default = None
+
+    def __init__(self, address, bitmask=None, **kwargs):
+        self.address = address
+        self.bitmask = bitmask
+        BaseProperty.__init__(self, **kwargs)
+
+    def _writes(self, obj, addr, v):
+        return obj._writes(addr, v)
+
+    def _reads(self, obj, addr, l):
+        return obj._reads(addr, l)
+
+    def _write(self, obj, addr, v):
+        return obj._write(addr, v)
+
+    def _read(self, obj, addr):
+        return obj._read(addr)
+
+    def get_value(self, obj):
         """
-        Saturates value with min and max.
+        Retrieves the value that is physically on the redpitaya device.
         """
-        return max(min(value, self.max), self.min)
+        # self.parent = obj  # store obj in memory
+        if self.bitmask is None:
+            return self.to_python(obj, obj._read(self.address))
+        else:
+            return self.to_python(obj, obj._read(self.address) & self.bitmask)
 
-
-class FloatAttribute(NumberAttribute):
-    """
-    An attribute for a float value.
-    """
-    _widget_class = FloatAttributeWidget
-
-    def __init__(self,
-                 default=None,
-                 increment=0.001,
-                 min=-1.,
-                 max=1.,
-                 doc="",
-                 ignore_errors=False,
-                 call_setup=False):
-        super(FloatAttribute, self).__init__(default=default,
-                                             doc=doc,
-                                             ignore_errors=ignore_errors,
-                                             call_setup=call_setup)
-        self.increment = increment
-        self.min = min
-        self.max = max
-
-    def validate_and_normalize(self, value, module):
+    def set_value(self, obj, val):
         """
-        Try to convert to float, then saturates with min and max
+        Sets the value on the redpitaya device.
         """
-        return super(FloatAttribute, self).validate_and_normalize(float(value),
-                                                                  module)
+        if self.bitmask is None:
+            obj._write(self.address, self.from_python(obj, val))
+        else:
+            act = obj._read(self.address)
+            new = act & (~self.bitmask) | (int(self.from_python(obj, val)) & self.bitmask)
+            obj._write(self.address, new)
 
-class FrequencyAttribute(FloatAttribute):
+
+class BoolProperty(BaseProperty):
     """
-    An attribute for frequency values
-    """
-    _widget_class = FrequencyAttributeWidget
-
-    def __init__(self,
-                 default=None,
-                 increment=0.1,
-                 min=0,
-                 max=1e100,
-                 doc="",
-                 ignore_errors=False,
-                 call_setup=False):
-        super(FloatAttribute, self).__init__(default=default,
-                                             doc=doc,
-                                             ignore_errors=ignore_errors,
-                                             call_setup=call_setup)
-        self.increment = increment
-        self.min = min
-        self.max = max
-
-    def validate_and_normalize(self, value, module):
-        """
-        Same as FloatAttribute, except it saturates with 0.
-        """
-        return max(0,
-                   super(FrequencyAttribute,
-                         self).validate_and_normalize(value, module))
-
-
-class IntAttribute(NumberAttribute):
-    """
-    An attribute for integer values
-    """
-    _widget_class = IntAttributeWidget
-
-    def __init__(self,
-                 default=None,
-                 min=0,
-                 max=2**14,
-                 increment=1,
-                 doc="",
-                 ignore_errors=False,
-                 call_setup=False):
-        super(IntAttribute, self).__init__(default=default,
-                                           doc=doc,
-                                           ignore_errors=ignore_errors,
-                                           call_setup=call_setup)
-        self.min = min
-        self.max = max
-        self.increment = increment
-
-    def validate_and_normalize(self, value, module):
-        """
-        Accepts float, but rounds to integer
-        """
-        return super(IntAttribute, self).validate_and_normalize(int(round(value)), module)
-
-
-class BoolAttribute(BaseAttribute):
-    """
-    An attribute for booleans
+    A property for a boolean value
     """
     _widget_class = BoolAttributeWidget
+    default = False
 
-    def validate_and_normalize(self, value, module):
+    def validate_and_normalize(self, obj, value):
         """
         Converts value to bool.
         """
         return bool(value)
 
 
-class BoolIgnoreAttribute(BaseAttribute):
+class BoolRegister(BaseRegister, BoolProperty):
+    """Inteface for boolean values, 1: True, 0: False.
+    invert=True inverts the mapping"""
+    def __init__(self, address, bit=0, bitmask=None, invert=False, **kwargs):
+        self.bit = bit
+        assert type(invert) == bool
+        self.invert = invert
+        BaseRegister.__init__(self, address=address, bitmask=bitmask)
+        BoolProperty.__init__(self, **kwargs)
+
+    def to_python(self, obj, value):
+        value = bool((value >> self.bit) & 1)
+        if self.invert:
+            value = not value
+        return value
+
+    def from_python(self, obj, val):
+        if self.invert:
+            val = not val
+        if val:
+            v = obj._read(self.address) | (1 << self.bit)
+        else:
+            v = obj._read(self.address) & (~(1 << self.bit))
+        return val
+
+
+class BoolIgnoreProperty(BoolProperty):
     """
     An attribute for booleans
     """
     _widget_class = BoolIgnoreAttributeWidget
+    default = False
 
-    def validate_and_normalize(self, value, module):
+    def validate_and_normalize(self, obj, value):
         """
         Converts value to bool.
         """
@@ -298,339 +283,111 @@ class BoolIgnoreAttribute(BaseAttribute):
             return bool(value)
 
 
-class SelectAttribute(BaseAttribute):
-    """
-    An attribute for a multiple choice value.
-    The options have to be specified as a list at the time of attribute creation (Module declaration).
-    If options are numbers (int or float), rounding to the closest value is performed during the validation
-    If options are strings, validation is strict.
-    """
-    _widget_class = SelectAttributeWidget
-
-    def __init__(self,
-                 options=[],
-                 default=None,
-                 doc="",
-                 ignore_errors=False,
-                 call_setup=False):
-        """
-        Options can be specified at attribute creation, but it can also be updated later on a per-module basis using
-        change_options(new_options)
-        """
-        super(SelectAttribute, self).__init__(default=default,
-                                              doc=doc,
-                                              ignore_errors=ignore_errors,
-                                              call_setup=call_setup)
-        self._starting_options = options
-        if not hasattr(self, 'default'):
-            try:
-                if callable(options):
-                    try:
-                        self.default = options(None)[0]
-                    except:
-                        self.default = options()[0]
-                else:
-                    self.default = self._starting_options[0]
-            except:
-                logger.debug("Default of SelectAttribute with docstring %s "
-                             "has no options. ",
-                             self.__doc__)
-
-
-    def options(self, instance):
-        """
-        options are evaluated at run time. options may be callable with instance as optional argument.
-        """
-        if hasattr(instance, '__' + self.name + '_' + 'options'):
-            options = getattr(instance, '__' + self.name + '_' + 'options')
+class IORegister(BoolRegister):
+    """Interface for digital outputs
+    if argument outputmode is True, output mode is set, else input mode"""
+    def __init__(self, read_address, write_address, direction_address,
+                 outputmode=True, **kwargs):
+        if outputmode:
+            address = write_address
         else:
-            options = self._starting_options
-        if callable(options):
-            try:
-                options = options(instance)
-            except TypeError:
-                options = options()
-        return sorted(options)
+            address = read_address
+        self.direction_address = direction_address
+        # self.direction = BoolRegister(direction_address,bit=bit, **kwargs)
+        self.outputmode = outputmode  # set output direction
+        BoolRegister.__init__(self, address=address, **kwargs)
 
-    def change_options(self, instance, new_options):
-        """
-        Changes the possible options acceptable by the Attribute
-          - New validation takes effect immediately (otherwise a script involving 1. changing the options/2. selecting
-          one of the new options could not be executed at once)
-          - Update of the ComboxBox is performed behind a signal-slot mechanism to be thread-safe
-          - If the current value is not in the new_options, then value is changed to some available option
-        """
-        setattr(instance, '__' + self.name + '_' + 'options', new_options)
-        options = self.options(instance)
-        instance._signal_launcher.change_options.emit(self.name, options)
-        # this is strange behaviour, an option should be actively selected..
-        if not getattr(instance, self.name) in options:
-            logger.debug("Option %s is not a valid choice for "
-                         "SelectAttribute %s. A random choice is being "
-                         "made which may lead to undesired behavior.."
-                         % (getattr(instance, self.name), self.name))
-            if len(options) > 0:
-                setattr(instance, self.name, options[0])
-            else:
-                setattr(instance, self.name, None)
-
-    def _create_widget(self, module, name=None):
-        """
-        This function is reimplemented to pass the options to the widget.
-        """
-        if name is None:
-            name = self.name
-        widget = SelectAttributeWidget(name, module, self.options(module))
-        return widget
-
-    def validate_and_normalize(self, value, module):
-        """
-        Looks for attribute name, otherwise, converts to string and rejects if not in self.options
-        """
-        options = sorted(self.options(module))
-        if len(options) == 0 and value is None:
-            return None
-        if isinstance(options[0], basestring) and isinstance(options[-1], basestring):
-            if hasattr(value, 'name'):
-                value = str(value.name)
-            else:
-                value = str(value)
-            if not (value in options):
-                msg = "Value %s is not an option for SelectAttribute {%s} of %s"\
-                      % (value, self.name, module.name)
-                if self.ignore_errors:
-                    value = options[0]
-                    logger.warning(msg + ". Picking an arbitrary value %s instead."
-                                   % str(value))
-                else:
-                    raise ValueError(msg)
-            return value
-        elif isinstance(options[0], numbers.Number) and isinstance(options[-1], numbers.Number):
-            value = float(value)
-            return min([opt for opt in options], key=lambda x: abs(x - value))
+    def direction(self, obj, v=None):
+        """ sets the direction (inputmode/outputmode) for the Register """
+        if v is None:
+            v = self.outputmode
+        if v:
+            v = obj._read(self.address) | (1 << self.bit)
         else:
-            return super(SelectAttribute, self).validate_and_normalize(value, module)
+            v = obj._read(self.direction_address) & (~(1 << self.bit))
+        obj._write(self.direction_address, v)
 
-
-class StringAttribute(BaseAttribute):
-    """
-    An attribute for string (in practice, there is no StringRegister at this stage).
-    """
-    _widget_class = StringAttributeWidget
-
-    def validate_and_normalize(self, value, module):
-        """
-        Reject anything that is not a basestring
-        """
-        if not isinstance(value, basestring):
-            raise ValueError("value %s cannot be used for StringAttribute %s of module %s"%(str(value),
-                                                                                            self.name,
-                                                                                            module.name))
-        else:
-            return value
-
-
-class PhaseAttribute(FloatAttribute):
-    """
-    An attribute to represent a phase
-    """
-    def __init__(self,
-                 increment=1.,
-                 min=0.,
-                 max=360.,
-                 doc="",
-                 ignore_errors=False,
-                 call_setup=False):
-        super(PhaseAttribute, self).__init__(increment=increment,
-                                             min=min,
-                                             max=max,
-                                             doc=doc,
-                                             ignore_errors=ignore_errors,
-                                             call_setup=call_setup)
-
-    def validate_and_normalize(self, value, module):
-        """
-        Rejects anything that is not float, and takes modulo 360
-        """
-        return super(PhaseAttribute, self).validate_and_normalize(value % 360., module)
-
-
-class FilterAttribute(BaseAttribute):
-    """
-    An attribute for a list of bandwidth. Each bandwidth has to be chosen in a list given by
-    self.valid_frequencies(module) (evaluated at runtime). If floats are provided, they are normalized to the
-    nearest values in the list. Individual floats are also normalized to a singleton.
-    The number of elements in the list are also defined at runtime.
-    """
-
-    _widget_class = FilterAttributeWidget
-
-    def validate_and_normalize(self, value, module):
-        """
-        Returns a list with the closest elements in module.valid_frequencies
-        """
-        if not np.iterable(value):
-            value = [value]
-        return [min([opt for opt in self.valid_frequencies(module)], key=lambda x: abs(x - val)) for val in value]
-
-
-class ListFloatAttribute(BaseAttribute):
-    """
-    An arbitrary length list of float numbers.
-    """
-    _widget_class = ListFloatAttributeWidget
-
-    def validate_and_normalize(self, value, module):
-        """
-        Converts the value in a list of float numbers.
-        """
-        if not np.iterable(value):
-            value = [value]
-        return [float(val) for val in value]
-
-
-class ListComplexAttribute(BaseAttribute):
-    """
-    An arbitrary length list of complex numbers.
-    """
-
-    _widget_class = ListComplexAttributeWidget
-
-    def validate_and_normalize(self, value, module):
-        """
-        Converts the value in a list of complex numbers.
-        """
-        if not np.iterable(value):
-            value = [value]
-        return [complex(val) for val in value]
-
-
-class ModuleAttribute(BaseAttribute):
-    """
-    This class is used to handle submodules of a module.
-    The ModuleAttribute is declared with:
-    ModuleAttribute(module_cls, default, doc)
-
-    The module_cls is instantiated in the __init__ of the parent module
-
-    For the moment, the following actions are supported:
-       - module.sub = dict(...) : module.sub.set_setup_attributes(dict(...))
-       - module.sub: returns the submodule.
-    """
-    def __init__(self,
-                 module_cls,
-                 default=None,
-                 doc="",
-                 ignore_errors=False,
-                 call_setup=False,
-                 **kwargs):
-        self.module_cls = module_cls
-        self.kwargs = kwargs
-        super(ModuleAttribute, self).__init__(default=default,
-                                              doc=doc,
-                                              ignore_errors=ignore_errors,
-                                              call_setup=call_setup)
-
-
-# docstring does not work yet, see:
-# http://stackoverflow.com/questions/37255109/python-docstring-for-descriptors
-# for now there is a workaround: call Module.help(register)
-class BaseRegister(object):
-    """Registers implement the necessary read/write logic for storing an attribute on the redpitaya.
-    Interface for basic register of type int. To convert the value between register format and python readable
-    format, registers need to implement "from_python" and "to_python" functions"""
-
-    def __init__(self, address, doc="", bitmask=None):
-        self.address = address
-        self.__doc__ = doc
-        self.bitmask = bitmask
-
-    def get_value(self, obj, objtype=None):
-        """
-        Retrieves the value that is physically on the redpitaya device.
-        """
-        # self.parent = obj  # store obj in memory
-        if self.bitmask is None:
-            return self.to_python(obj._read(self.address), obj)
-        else:
-            return self.to_python(obj._read(self.address) & self.bitmask, obj)
+    def get_value(self, obj):
+        self.direction(obj)
+        return BoolRegister.get_value(self, obj)
 
     def set_value(self, obj, val):
-        """
-        Sets the value on the redpitaya device.
-        """
-        # self.parent = obj  #store obj in memory<-- very bad practice: there is one Register for the class
-        # and potentially many obj instances (think of having 2 redpitayas in the same python session), then
-        # _read should use different clients depending on which obj is calling...)
-        if self.bitmask is None:
-            obj._write(self.address, self.from_python(val, obj))
-        else:
-            act = obj._read(self.address)
-            new = act & (~self.bitmask) | (int(self.from_python(val, obj)) & self.bitmask)
-            obj._write(self.address, new)
-
-    def _writes(self, obj, addr, v):
-        return obj._writes(addr, v)
-
-    def _reads(self, obj, addr, l):
-        return obj._reads(addr, l)
-
-    def _write(self, obj, addr, v):
-        return obj._write(addr, v)
-
-    def _read(self, obj, addr):
-        return obj._read(addr)
+        self.direction(obj)
+        return BoolRegister.set_value(self, obj, val)
 
 
-class NumberRegister(BaseRegister):
+class NumberProperty(BaseProperty):
     """
-    Base register for numbers.
+    Abstract class for ints and floats
     """
-    def __init__(self, address, bits=64, **kwargs):
-        super(NumberRegister, self).__init__(address=address, **kwargs)
+    _widget_class = IntAttributeWidget
+    default = 0
+
+    def __init__(self,
+                 min=0,
+                 max=2**14,
+                 increment=1,
+                 **kwargs):
+        self.min = min
+        self.max = max
+        self.increment = increment
+        BaseProperty.__init__(self, **kwargs)
+
+    def _create_widget(self, module, name=None):
+        widget = BaseProperty._create_widget(self, module, name=name)
+        widget.set_increment(self.increment)
+        widget.set_maximum(self.max)
+        widget.set_minimum(self.min)
+        return widget
+
+    def validate_and_normalize(self, obj, value):
+        """
+        Saturates value with min and max.
+        """
+        return max(min(value, self.max), self.min)
 
 
-class IntRegister(NumberRegister, IntAttribute):
+class IntProperty(NumberProperty):
+    def validate_and_normalize(self, obj, value):
+        """
+        Accepts float, but rounds to integer
+        """
+        return NumberProperty.validate_and_normalize(self,
+                                                     obj,
+                                                     int(round(value)))
+
+
+class IntRegister(BaseRegister, IntProperty):
     """
     Register for integer values encoded on less than 32 bits.
     """
-    def __init__(self, address, bits=32, call_setup=False, **kwargs):
-        super(IntRegister, self).__init__(address=address, **kwargs)
-        IntAttribute.__init__(self, min=0, max=2 ** bits, increment=1,
-                              call_setup=call_setup)
+    def __init__(self, address, bits=32, bitmask=None, **kwargs):
         self.bits = bits
         self.size = int(np.ceil(float(self.bits) / 32))
+        BaseRegister.__init__(self, address=address, bitmask=bitmask)
+        IntProperty.__init__(self, **kwargs)
 
-    def to_python(self, value, obj):
+    def to_python(self, obj, value):
         return int(value)
 
-    def from_python(self, value, obj):
+    def from_python(self, obj, value):
         return int(value)
 
 
-class LongRegister(IntRegister, IntAttribute):
+class LongRegister(IntRegister):
     """Interface for register of python type int/long with arbitrary length 'bits' (effectively unsigned)"""
-
-    def __init__(self, address, bits=64, **kwargs):
-        super(LongRegister, self).__init__(address=address, **kwargs)
-        IntAttribute.__init__(self, min=0, max=2 ** bits, increment=1)
-        self.bits = bits
-        self.size = int(np.ceil(float(self.bits) / 32))
-
-    def get_value(self, obj, objtype=None):
-        if obj is None:
-            return self
+    def get_value(self, obj):
         values = obj._reads(self.address, self.size)
         value = int(0)
         for i in range(self.size):
             value += int(values[i]) << (32 * i)
         if self.bitmask is None:
-            return self.to_python(value, obj)
+            return self.to_python(obj, value)
         else:
-            return (self.to_python(value, obj) & self.bitmask)
+            return (self.to_python(obj, value) & self.bitmask)
 
     def set_value(self, obj, val):
-        val = self.from_python(val, obj)
+        val = self.from_python(obj, val)
         values = np.zeros(self.size, dtype=np.uint32)
         if self.bitmask is None:
             for i in range(self.size):
@@ -644,93 +401,39 @@ class LongRegister(IntRegister, IntAttribute):
         obj._writes(self.address, values)
 
 
-class BoolRegister(BaseRegister, BoolAttribute):
-    """Inteface for boolean values, 1: True, 0: False.
-    invert=True inverts the mapping"""
+class FloatProperty(NumberProperty):
+    """
+    An attribute for a float value.
+    """
+    _widget_class = FloatAttributeWidget
+    default = 0.0
 
-    def __init__(self, address, bit=0, invert=False, call_setup=False, **kwargs):
-        super(BoolRegister, self).__init__(address=address, **kwargs)
-        BoolAttribute.__init__(self, call_setup=call_setup)
-        self.bit = bit
-        assert type(invert) == bool
-        self.invert = invert
-
-    def to_python(self, value, obj):
-        value = bool((value >> self.bit) & 1)
-        if self.invert:
-            value = not value
-        return value
-
-    def set_value(self, obj, val):
-        if self.invert:
-            val = not val
-        if val:
-            v = obj._read(self.address) | (1 << self.bit)
-        else:
-            v = obj._read(self.address) & (~(1 << self.bit))
-        obj._write(self.address, v)
-        return val
+    def validate_and_normalize(self, obj, value):
+        """
+        Try to convert to float, then saturates with min and max
+        """
+        return NumberProperty.validate_and_normalize(self,
+                                                     obj,
+                                                     float(value))
 
 
-class IORegister(BoolRegister):
-    """Interface for digital outputs
-    if argument outputmode is True, output mode is set, else input mode"""
-
-    def __init__(self, read_address, write_address, direction_address,
-                 outputmode=True, bit=0, **kwargs):
-        if outputmode:
-            address = write_address
-        else:
-            address = read_address
-        super(IORegister, self).__init__(address=address, bit=bit, **kwargs)
-        self.direction_address = direction_address
-        # self.direction = BoolRegister(direction_address,bit=bit, **kwargs)
-        self.outputmode = outputmode  # set output direction
-
-    def direction(self, obj, v=None):
-        """ sets the direction (inputmode/outputmode) for the Register """
-        if v is None:
-            v = self.outputmode
-        if v:
-            v = obj._read(self.address) | (1 << self.bit)
-        else:
-            v = obj._read(self.direction_address) & (~(1 << self.bit))
-        obj._write(self.direction_address, v)
-
-    def get_value(self, obj, objtype=None):
-        if obj is None:
-            return self
-        # self.parent = obj  # store obj in memory <--- BAD, WHAT IF SEVERAL MODULES SHARE THE SAME REGISTER ?
-        self.direction(obj)
-        return super(IORegister, self).get_value(obj, objtype)
-
-    def set_value(self, obj, val):
-        # self.parent = obj  # store obj in memory
-        self.direction(obj)
-        return super(IORegister, self).set_value(obj, val)
-
-
-class FloatRegister(BaseRegister, FloatAttribute):
+class FloatRegister(IntRegister, FloatProperty):
     """Implements a fixed point register, seen like a (signed) float from python"""
-
     def __init__(self, address,
                  bits=14,  # total number of bits to represent on fpga
+                 bitmask=None,
                  norm=1,  # fpga value corresponding to 1 in python
                  signed=True,  # otherwise unsigned
                  invert=False,  # if False: FPGA=norm*python, if True: FPGA=norm/python
                  **kwargs):
-        super(FloatRegister, self).__init__(address=address, **kwargs)
-        # if invert:
-        #    raise NotImplementedError("increment not implemented for inverted registers")#return self.norm/2**self.bits
-        # else:
         increment =  1./norm
-        FloatAttribute.__init__(self, increment=increment, min=-norm, max=norm)
-        self.bits = bits
         self.norm = float(norm)
         self.invert = invert
         self.signed = signed
+        IntRegister.__init__(self, address=address, bits=bits, bitmask=bitmask)
+        FloatProperty.__init__(self, increment=increment, min=-norm, max=norm, **kwargs)
 
-    def to_python(self, value, obj):
+    def to_python(self, obj, value):
         # 2's complement
         if self.signed:
             if value >= 2 ** (self.bits - 1):
@@ -744,7 +447,7 @@ class FloatRegister(BaseRegister, FloatAttribute):
         else:
             return float(value) / self.norm
 
-    def from_python(self, value, obj):
+    def from_python(self, obj, value):
         # round and normalize
         if self.invert:
             if value == 0:
@@ -774,63 +477,42 @@ class FloatRegister(BaseRegister, FloatAttribute):
                 v = 2 ** self.bits - 1
         return v
 
-    def validate_and_normalize(self, value, module):
+    def validate_and_normalize(self, obj, value):
         """
         saturates to min/max, and rounds to the nearest value authorized by the register.
         """
-        return super(FloatRegister, self).validate_and_normalize(int(round(value/self.increment))*self.increment, module)
+        return IntRegister.validate_and_normalize(self,
+                                                  obj,
+                                                  int(round(value/self.increment))*self.increment)
 
 
-class PhaseRegister(FloatRegister, PhaseAttribute):
-    """Registers that contain a phase as a float in units of degrees."""
+class FrequencyProperty(FloatProperty):
+    """
+    An attribute for frequency values
+    """
+    _widget_class = FrequencyAttributeWidget
 
-    def __init__(self, address, bits=32, **kwargs):
-        super(PhaseRegister, self).__init__(address=address, bits=bits, **kwargs)
-        PhaseAttribute.__init__(self, increment=360. / 2 ** bits)
-
-    def from_python(self, value, obj):
-        # make sure small float values are not rounded to zero
-        if self.invert:
-            value = float(value) * (-1)
-        return int(round((float(value) % 360) / 360 * 2 ** self.bits) % 2 ** self.bits)
-
-    def to_python(self, value, obj):
-        phase = float(value) / 2 ** self.bits * 360
-        if self.invert:
-            phase *= -1
-        return phase % 360.0
-
-    def validate_and_normalize(self, value, module):
+    def validate_and_normalize(self, obj, value):
         """
-        Rounds to nearest authorized register value and take modulo 360
+        Same as FloatAttribute, except it cannot become negative.
         """
-        value = (int(round((float(value) % 360) / 360 * 2 ** self.bits)) / 2 ** self.bits)*360.
-        return value
+        return max(0, FloatProperty.validate_and_normalize(self,
+                                                           obj,
+                                                           value))
 
-class FrequencyRegister(FloatRegister, FrequencyAttribute):
+
+class FrequencyRegister(FloatRegister, FrequencyProperty):
     """Registers that contain a frequency as a float in units of Hz"""
     # attention: no bitmask can be defined for frequencyregisters
     CLOCK_FREQUENCY = 125e6
 
-    def __init__(self, address,
-                 bits=32,  # total number of bits to represent on fpga
-                 **kwargs):
-        super(FrequencyRegister, self).__init__(address=address, bits=bits, **kwargs)
-        self.max = self.CLOCK_FREQUENCY / 2
-        if self.invert:
-            raise NotImplementedError("Increment not implemented for inverted registers")
-        increment = self.CLOCK_FREQUENCY / 2 ** self.bits  # *obj._frequency_correction
-        FloatAttribute.__init__(self, increment=increment, min=0, max=self.CLOCK_FREQUENCY * 0.5)
+    def __init__(self, address, **kwargs):
+        FloatRegister.__init__(self, address, **kwargs)
+        self.min = 0
+        self.max = self.CLOCK_FREQUENCY / 2.0
+        self.increment = self.CLOCK_FREQUENCY / 2 ** self.bits
 
-    def get_value(self, obj, objtype=None):
-        if obj is None:
-            return self
-        return self.to_python(obj._read(self.address), obj)
-
-    def set_value(self, obj, val):
-        obj._write(self.address, self.from_python(val, obj))
-
-    def from_python(self, value, obj):
+    def from_python(self, obj, value):
         # make sure small float values are not rounded to zero
         value = abs(float(value) / obj._frequency_correction)
         if (value == epsilon):
@@ -842,54 +524,101 @@ class FrequencyRegister(FloatRegister, FrequencyAttribute):
             # out of reach because 2**bits is out of reach
         return value
 
-    def to_python(self, value, obj):
+    def to_python(self, obj, value):
         return 125e6 / 2 ** self.bits * float(
-            value) * obj._frequency_correction  # Seems correct (should not be 2**bits -1): 125 MHz
-        # out of reach because 2**bits is out of reach
+            value) * obj._frequency_correction
 
-    def validate_and_normalize(self, value, module):
+    def validate_and_normalize(self, obj, value):
         """
         Same as FloatRegister, except the value should be positive.
         """
-        return FrequencyAttribute.validate_and_normalize(self,
-                                                         FloatRegister.validate_and_normalize(self, value, module),
-                                                         module)
+        return FrequencyProperty.validate_and_normalize(self, obj,
+                        FloatRegister.validate_and_normalize(self, obj, value))
 
 
-class SelectRegister(BaseRegister, SelectAttribute):
-    """Implements a selection, such as for multiplexers"""
-
-    def __init__(self, address,
-                 options={},
-                 doc="",
-                 call_setup=False,
-                 **kwargs):
-        super(SelectRegister, self).__init__(
-            address=address,
-            doc=doc + "\r\nOptions:\r\n" + str(options),
-            **kwargs)
-        SelectAttribute.__init__(self, options, call_setup=call_setup)
-        self._options = Bijection(options)
-
-    def to_python(self, value, obj):
-        return self._options.inverse[value]
-
-    def from_python(self, value, obj):
-        return self._options[value]
+class PhaseProperty(FloatProperty):
+    """
+    An attribute to represent a phase
+    """
+    def validate_and_normalize(self, obj, value):
+        """
+        Rejects anything that is not float, and takes modulo 360
+        """
+        return FloatProperty.validate_and_normalize(self,
+                                                    obj,
+                                                    value % 360.)
 
 
-class FilterRegister(BaseRegister, FilterAttribute):
+class PhaseRegister(FloatRegister, PhaseProperty):
+    """Registers that contain a phase as a float in units of degrees."""
+    def __init__(self, address, bits=32, bitmask=None, **kwargs):
+        FloatRegister.__init__(self, address=address, bits=bits, bitmask=bitmask, **kwargs)
+        PhaseProperty.__init__(self, increment=360. / 2 ** bits)
+
+    def from_python(self, obj, value):
+        if self.invert:
+            value = float(value) * (-1)
+        return int(round(float(value) / 360 * 2 ** self.bits) % 2 ** self.bits)
+
+    def to_python(self, obj, value):
+        phase = float(value) / 2 ** self.bits * 360
+        if self.invert:
+            phase *= -1
+        return phase % 360.0
+
+    def validate_and_normalize(self, obj, value):
+        """
+        Rounds to nearest authorized register value and take modulo 360
+        """
+        return ((int(round(float(value) / 360 * 2 ** self.bits)) / 2 ** self.bits) * 360.) % 360.0
+
+
+class FilterProperty(BaseProperty):
+    """
+    An attribute for a list of bandwidth. Each bandwidth has to be chosen in a list given by
+    self.valid_frequencies(module) (evaluated at runtime). If floats are provided, they are normalized to the
+    nearest values in the list. Individual floats are also normalized to a singleton.
+    The number of elements in the list are also defined at runtime.
+    A property for a list of float values to be chosen in valid_frequencies(module).
+    """
+    _widget_class = FilterAttributeWidget
+
+    def validate_and_normalize(self, obj, value):
+        """
+        Returns a list with the closest elements in module.valid_frequencies
+        """
+        if not np.iterable(value):
+            value = [value]
+        return [min([opt for opt in self.valid_frequencies(obj)],
+                    key=lambda x: abs(x - val)) for val in value]
+
+    def get_value(self, obj):
+        if not hasattr(obj, '_' + self.name):
+            # choose any value in the options as default.
+            default = self.valid_frequencies(obj)[0]
+            setattr(obj, '_' + self.name, default)
+        return getattr(obj, '_' + self.name)
+
+    def set_value(self, obj, value):
+        return BaseProperty.set_value(self, obj, value)
+
+    def valid_frequencies(self, module):
+        raise NotImplementedError("this is a baseclass, your derived class "
+                                  "must implement the following function")
+
+
+class FilterRegister(BaseRegister, FilterProperty):
     """
     Interface for up to 4 low-/highpass filters in series (filter_block.v)
     """
     _widget_class = FilterAttributeWidget
 
     def __init__(self, address, filterstages, shiftbits, minbw, **kwargs):
-        super(FilterRegister, self).__init__(address=address, **kwargs)
-        FilterAttribute.__init__(self, **kwargs)
         self.filterstages = filterstages
         self.shiftbits = shiftbits
         self.minbw = minbw
+        BaseRegister.__init__(self, address=address)
+        FilterProperty.__init__(self, **kwargs)
 
     def read_and_save(self, obj, attr_name):
         # save the value upon first execution in order to only read this once
@@ -914,17 +643,17 @@ class FilterRegister(BaseRegister, FilterAttribute):
         # this function NEEDS TO BE OPTIMIZED: TAKES 50 ms !!!!
         """ returns a list of all valid filter cutoff frequencies"""
         valid_bits = range(0, 2 ** self._SHIFTBITS(obj))
-        pos = list([self.to_python(b | 0x1 << 7, obj) for b in valid_bits])
+        pos = list([self.to_python(obj, b | 0x1 << 7)
+                    for b in valid_bits])
         pos = [int(val) if not np.iterable(val) else int(val[0]) for val in pos]
         neg = [-val for val in reversed(pos)]
         return neg + [0] + pos
 
-    def to_python(self, value, obj):
+    def to_python(self, obj, value):
         """
         returns a list of bandwidths for the low-pass filter cascade before the module
         negative bandwidth stands for high-pass instead of lowpass, 0 bandwidth for bypassing the filter
         """
-
         filter_shifts = value
         shiftbits = self._SHIFTBITS(obj)
         alphabits = self._ALPHABITS(obj)
@@ -947,7 +676,7 @@ class FilterRegister(BaseRegister, FilterAttribute):
         else:
             return bandwidths
 
-    def from_python(self, value, obj):
+    def from_python(self, obj, value):
         filterstages = self._FILTERSTAGES(obj)
         try:
             v = list(value)[:filterstages]
@@ -977,18 +706,51 @@ class FilterRegister(BaseRegister, FilterAttribute):
         return filter_shifts
 
 
-class PWMRegister(FloatRegister, FloatAttribute):
+### not rigorously checked
+class ListFloatProperty(BaseProperty):
+    """
+    An arbitrary length list of float numbers.
+    """
+    default = [0, 0, 0, 0]
+    _widget_class = ListFloatAttributeWidget
+
+    def validate_and_normalize(self, obj, value):
+        """
+        Converts the value in a list of float numbers.
+        """
+        if not np.iterable(value):
+            value = [value]
+        return [float(val) for val in value]
+
+
+class ListComplexProperty(BaseProperty):
+    """
+    An arbitrary length list of complex numbers.
+    """
+    _widget_class = ListComplexAttributeWidget
+    default = [0.]
+
+    def validate_and_normalize(self, obj, value):
+        """
+        Converts the value in a list of complex numbers.
+        """
+        if not np.iterable(value):
+            value = [value]
+        return [complex(val) for val in value]
+
+
+class PWMRegister(FloatRegister):
     # FloatRegister that defines the PWM voltage similar to setting a float
     # see FPGA code for more detailed description on how the PWM works
     def __init__(self, address, CFG_BITS=24, PWM_BITS=8, **kwargs):
-        super(PWMRegister, self).__init__(address=address, bits=14, norm=1, **kwargs)
+        self.CFG_BITS = int(CFG_BITS)
+        self.PWM_BITS = int(PWM_BITS)
+        FloatRegister.__init__(self, address=address, bits=14, norm=1, **kwargs)
         self.min = 0   # voltage of pwm outputs ranges from 0 to 1.8 volts
         self.max = 1.8
         self.increment = (self.max-self.min)/2**(self.bits-1)  # actual resolution is 14 bits (roughly 0.1 mV incr.)
-        self.CFG_BITS = int(CFG_BITS)
-        self.PWM_BITS = int(PWM_BITS)
 
-    def to_python(self, value, obj):
+    def to_python(self, obj, value):
         value = int(value)
         pwm = float(value >> (self.CFG_BITS - self.PWM_BITS) & (2 ** self.PWM_BITS - 1))
         mod = value & (2 ** (self.CFG_BITS - self.PWM_BITS) - 1)
@@ -999,7 +761,7 @@ class PWMRegister(FloatRegister, FloatAttribute):
                          value, voltage)
         return voltage
 
-    def from_python(self, value, obj):
+    def from_python(self, obj, value):
         # here we don't bother to minimize the PWM noise
         # room for improvement is in the low -> towrite conversion
         value = 0 if (value < 0) else float(value) / 1.8 * (2 ** self.PWM_BITS)
@@ -1011,51 +773,23 @@ class PWMRegister(FloatRegister, FloatAttribute):
         towrite += ((1 << low) - 1) & ((1 << self.CFG_BITS) - 1)
         return towrite
 
-    # validate_and_normalize from FloatRegister is fine
 
-
-class BaseProperty(object):
+class StringProperty(BaseProperty):
     """
-    A Property is a special type of attribute that is not mapping a fpga value,
-    but rather an attribute _attr_name of the module. This is used mainly in
-    SoftwareModules
+    An attribute for string (in practice, there is no StringRegister at this stage).
     """
-    def get_value(self, obj, obj_type):
-        if obj is None:
-            return self
-        if not hasattr(obj, '_' + self.name):
-            setattr(obj, '_' + self.name, self.default)
-        return getattr(obj, '_' + self.name)
-
-    def set_value(self, obj, val):
-        setattr(obj, '_' + self.name, val)
-        return val  # maybe better with getattr... but more expensive
-
-
-class SelectProperty(SelectAttribute, BaseProperty):
-    """
-    A property for multiple choice values, if options are numbers, rounding will be performed,
-    otherwise validator is strict.
-    """
-    def get_value(self, obj, obj_type):
-        if not hasattr(obj, '_' + self.name):
-            # choose any value in the options as default.
-            if hasattr(self, 'default'):
-                default = self.default
-            else:
-                try:
-                    default = sorted(self.options(obj))[0]
-                except IndexError:
-                    default = None
-            setattr(obj, '_' + self.name, default)
-        return getattr(obj, '_' + self.name)
-
-
-class StringProperty(StringAttribute, BaseProperty):
-    """
-    A property for a string value
-    """
+    _widget_class = StringAttributeWidget
     default = ""
+
+    def validate_and_normalize(self, obj, value):
+        """
+        Reject anything that is not a basestring
+        """
+        if not isinstance(value, basestring):
+            raise ValueError("value %s cannot be used for StringAttribute %s of module %s"
+                             %(str(value), self.name, obj.name))
+        else:
+            return value
 
 
 class TextProperty(StringProperty):
@@ -1065,121 +799,225 @@ class TextProperty(StringProperty):
     _widget_class = TextAttributeWidget
 
 
-class PhaseProperty(PhaseAttribute, BaseProperty):
+class SelectProperty(BaseProperty):
     """
-    A property for a phase value
+    An attribute for a multiple choice value.
+    The options have to be specified as a list at the time of attribute creation (Module declaration).
+    If options are numbers (int or float), rounding to the closest value is performed during the validation
+    If options are strings, validation is strict.
     """
-    default = 0
+    _widget_class = SelectAttributeWidget
+    default = None
 
-
-class FloatProperty(FloatAttribute, BaseProperty):
-    """
-    A property for a float value
-    """
-    default = 0.
-
-
-class FrequencyProperty(FrequencyAttribute, BaseProperty):
-    """
-    A property for a frequency value
-    """
-    default = 0.
-    min = 0.
-
-
-class LongProperty(IntAttribute, BaseProperty):
-    """
-    A property for a long value
-    """
     def __init__(self,
-                 min=0,
-                 max=2**14,
-                 increment=1,
-                 default=0,
-                 doc="",
-                 ignore_errors=False,
-                 call_setup=False):
-        super(LongProperty, self).__init__(min=min,
-                                           max=max,
-                                           increment=increment,
-                                           default=default,
-                                           doc=doc,
-                                           ignore_errors=ignore_errors,
-                                           call_setup=call_setup)
-    default = 0
+                 options=[],
+                 **kwargs):
+        """
+        Options can be specified at attribute creation, but it can also be updated later on a per-module basis using
+        change_options(new_options)
+        """
+        self.default_options = options
+        BaseProperty.__init__(self, **kwargs)
 
+    @property
+    def __doc__(self):
+        # Append available options to docstring
+        return self.doc + "\r\nOptions:\r\n" + str(self.options(None).keys())
 
-class BoolProperty(BoolAttribute, BaseProperty):
-    """
-    A property for a boolean value
-    """
-    default = False
+    @__doc__.setter
+    def __doc__(self, value):
+        self.doc = value
 
-class BoolIgnoreProperty(BoolIgnoreAttribute, BaseProperty):
-    """
-    A property for a boolean value
-    """
-    default = False
+    def get_default(self, instance):
+        """ returns the default value. default is pre-defined value
+        if that is not a valid option. Otherwise the first valid option
+        is taken, and if that is not possible (no options), None is taken. """
+        default = self.default  # internal default
+        # at startup, we cannot access the instance, so we must continue without it
+        if instance is not None:
+            # make sure default is stored in the instance, such that it can be easily modified
+            if not hasattr(instance, '_' + self.name + '_' + 'default'):
+                setattr(instance, '_' + self.name + '_' + 'default', default)
+            default = getattr(instance, '_' + self.name + '_' + 'default')
+        # make sure default is a valid option
+        options = self.options(instance)
+        if not default in options:
+            # if not valid, default default is the first options
+            default = options.keys()[0]
+        # if no options are availbale, fall back to None
+        if default is None:
+            logger.warning("Default of SelectProperty %s "
+                           "is None. ", self.name)
+        return default
 
+    def options(self, instance):
+        """
+        options are evaluated at run time. options may be callable with instance as optional argument.
+        """
+        options = self.default_options
+        # at startup, we cannot access the instance, so we must continue without it
+        if instance is not None:
+            # make sure default is stored in the instance, such that it can be easily modified
+            if not hasattr(instance, '_' + self.name + '_' + 'options'):
+                setattr(instance, '_' + self.name + '_' + 'options', options)
+            options = getattr(instance, '_' + self.name + '_' + 'options')
+        if callable(options):
+            try:
+                options = options(instance)
+            except (TypeError, AttributeError):
+                try:
+                    options = options()
+                except (TypeError, AttributeError):
+                    options = OrderedDict()
+        if isinstance(options, list):
+            options = OrderedDict([(v, v) for v in options])
+        if len(options) == 0:
+            logger.debug("SelectProperty %s of module %s has no options!", self.name, instance)
+            options = {None: None}
+        # check whether options have changed w.r.t. last time and emit a signal in that case
+        if instance is not None:
+            try:
+                lastoptions = getattr(instance, '_' + self.name + '_lastoptions')
+            except AttributeError:
+                lastoptions = None
+            if options != lastoptions:
+                setattr(instance, '_' + self.name + '_lastoptions', options)
+                instance._signal_launcher.change_options.emit(self.name, options.keys())
+        # return the actual options
+        return options
 
-class FilterProperty(FilterAttribute, BaseProperty):
-    """
-    A property for a list of float values to be chosen in valid_frequencies(module).
-    """
-    def get_value(self, obj, obj_type):
-        if obj is None:
-            return self
+    def change_options(self, instance, new_options):
+        """
+        Changes the possible options acceptable by the Attribute
+          - New validation takes effect immediately (otherwise a script involving 1. changing the options/2. selecting
+          one of the new options could not be executed at once)
+          - Update of the ComboxBox is performed behind a signal-slot mechanism to be thread-safe
+          - If the current value is not in the new_options, then value is changed to some available option
+        """
+        setattr(instance, '_' + self.name + '_' + 'options', new_options)
+        self.options(instance)
+
+    def validate_and_normalize(self, obj, value):
+        options = self.options(obj)
+        if not (value in options):
+            msg = "Value %s is not an option for SelectAttribute %s of module %s with options %s"\
+                  % (value, self.name, obj.name, options)
+            if self.ignore_errors:
+                value = self.get_default(obj)
+                logger.warning(msg + ". Picking an arbitrary value %s instead."
+                               % str(value))
+            else:
+                raise ValueError(msg)
+        return value
+
+    def get_value(self, obj):
         if not hasattr(obj, '_' + self.name):
-            # choose any value in the options as default.
-            default = self.valid_frequencies(obj)[0]
-            setattr(obj, '_' + self.name, default)
-        return getattr(obj, '_' + self.name)
+            setattr(obj, '_' + self.name, self.get_default(obj))
+        value = getattr(obj, '_' + self.name)
+        # make sure the value is a valid option
+        value = self.validate_and_normalize(obj, value)
+        return value
 
     def set_value(self, obj, value):
-        return super(FilterProperty, self).set_value(obj, value)
+        BaseProperty.set_value(self, obj, value)
 
 
-class ListFloatProperty(ListFloatAttribute, BaseProperty):
-    """
-    A property for list of float values
-    """
-    default = [0, 0, 0, 0]
+class SelectRegister(BaseRegister, SelectProperty):
+    """Implements a selection, such as for multiplexers"""
+    def __init__(self, address,
+                 bitmask=None,
+                 options={},
+                 **kwargs):
+        BaseRegister.__init__(self, address=address, bitmask=bitmask)
+        SelectProperty.__init__(self, options=options, **kwargs)
+
+    def get_default(self, obj):
+        default = SelectProperty.get_default(self, obj)
+        if default is None and obj is not None:
+            # retrieve default value from FPGA if nothing more reasonable is available
+            value = BaseRegister.get_value(self, obj)
+            for k, v in self.options(obj).items():
+                if v == value:
+                    default = k
+                    break
+        return default
+
+    def get_value(self, obj):
+        value = SelectProperty.get_value(self, obj)
+        # make sure the register value corresponds to the selected option
+        expected_value = self.options(obj)[value]
+        raw_value = BaseRegister.get_value(self, obj)
+        if raw_value != expected_value:
+            obj._logger.warning("Register %s of module %s has value %s, "
+                                "which does not correspond to selected "
+                                "option %s. Setting to '%s'. ",
+                                self.name, obj.name,
+                                raw_value, expected_value, value)
+            BaseRegister.set_value(self, obj, expected_value)
+        return value
+
+    def set_value(self, obj, value):
+        SelectProperty.set_value(self, obj, value)
+        BaseRegister.set_value(self, obj, self.options(obj)[value])
+
+    def to_python(self, obj, value):
+        return int(value)
+
+    def from_python(self, obj, value):
+        return int(value)
 
 
-class ListComplexProperty(ListComplexAttribute, BaseProperty):
-    """
-    A property for a list of complex values
-    """
-    default = [0.]
-
-
-
-class AttributeProperty(BaseProperty):
+class ProxyProperty(BaseProperty):
     """ forwards everything that is possible to instance.path_to_target"""
     def __init__(self,
                  path_to_target):
-        self.path_to_target
+        self.path_to_target = path_to_target
+        lastpart = path_to_target.split('.')[-1]
+        self.path_to_target_descriptor = path_to_target[:-len(lastpart)] \
+                                         + '__class__.' \
+                                         + lastpart
 
     def __get__(self, instance, owner):
         if instance is None:
             return self
-        self.instance = instance
-        return recursive_getattribute(instance, self.path_to_target)
+        self.instance = instance  # dangerous, but works because we
+        # only call __getattribute__ immediately after __set__ or __get__
+        return recursive_getattr(instance, self.path_to_target)
 
-    def __set__(self, instance, value):
-        self.instance = instance
-        recursive_setattr(instance, self.path_to_target, value)
+    def __set__(self, obj, value):
+        self.instance = obj
+        recursive_setattr(obj, self.path_to_target, value)
 
     def __getattribute__(self, item):
-        exclude = ["path_to_target", "instance"]
-        if item in exclude:
-            return super(AttributeProperty, self).__getattribute__(self, item)
-        else:
-            return recursive_getattribute(self, self.path_to_target+'.'+item)
+        try:
+            return BaseProperty.__getattribute__(self, item)
+        except AttributeError:
+            return recursive_getattr(self.instance, self.path_to_target_descriptor + '.' + item)
 
-    def __setattr__(self, item, value):
-        exclude = ["path_to_target", "instance"]
-        if item in exclude:
-            super(AttributeProperty, self).__setattr__(self, item, value)
-        else:
-            recursive_setattr(self, self.path_to_target+'.'+item, value)
+    #def __setattr__(self, item, value):
+    #    try:
+    #        super(AttributeProperty, self).__setattr__(item, value)
+    #    except AttributeError:  # this is probably silly
+    #        recursive_setattr(self.instance, self.path_to_target_descriptor + '.' + item, value)
+
+    # def __getattribute__(self, item):
+    #     exclude = ["path_to_target", "instance"]
+    #     if item in exclude or not hasattr(self, 'instance'):
+    #         return super(AttributeProperty, self).__getattribute__(item)
+    #     else:
+    #         return recursive_getattr(self.instance, self.path_to_target + '.' + item)
+    #
+    # def __setattr__(self, item, value):
+    #     exclude = ["path_to_target", "instance"]
+    #     if item in exclude or not hasattr(self, 'instance'):
+    #         super(AttributeProperty, self).__setattr__(item, value)
+    #     else:
+    #         recursive_setattr(self.instance, self.path_to_target+'.'+item, value)
+
+
+class ModuleAttribute(BaseAttribute):
+    """
+    This is the base class for handling submodules of a module.
+    The actual implementation is found in module_attributes.ModuleProperty.
+    This object is only used inside the Module class
+    """

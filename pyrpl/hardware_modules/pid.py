@@ -1,17 +1,17 @@
 import numpy as np
 from PyQt4 import QtCore
-from ..attributes import FloatAttribute, BoolRegister, FloatRegister
+from ..attributes import FloatProperty, BoolRegister, FloatRegister
 from ..modules import SignalLauncher
 from . import FilterModule
 from ..widgets.module_widgets import PidWidget
 
 
-class IValAttribute(FloatAttribute):
+class IValAttribute(FloatProperty):
     """
     Attribute for integrator value
     """
-    def get_value(self, instance, owner):
-        return float(instance._to_pyint(instance._read(0x100), bitlength=16))\
+    def get_value(self, obj):
+        return float(obj._to_pyint(obj._read(0x100), bitlength=16))\
                / 2 ** 13
         # bitlength used to be 32 until 16/7/2016
         # still, FPGA has an asymmetric representation for reading and writing

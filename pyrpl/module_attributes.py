@@ -1,19 +1,37 @@
 from .attributes import *
 from .modules import *
 
-# # basic ModuleAttribute object is imported from attributes
-# class ModuleAttribute(BaseAttribute):
-#     def __init__(self, module_cls, default=None, doc="", ignore_errors=False):
-#         self.module_cls = module_cls
-#         super(ModuleAttribute, self).__init__(default=default, doc=doc,
-#                                               ignore_errors=ignore_errors)
-
 
 class ModuleProperty(ModuleAttribute, BaseProperty):
     """
     A property for a submodule.
+
+    The ModuleAttribute is declared with:
+    ModuleAttribute(module_cls, default, doc)
+
+    The module_cls is instantiated in the __init__ of the parent module
+
+    For the moment, the following actions are supported:
+       - module.sub = dict(...) : module.sub.set_setup_attributes(dict(...))
+       - module.sub: returns the submodule.
     """
     default = {}
+
+    def __init__(self,
+                 module_cls,
+                 default=None,
+                 doc="",
+                 ignore_errors=False,
+                 call_setup=False,
+                 **kwargs):
+        self.module_cls = module_cls
+        self.kwargs = kwargs
+        BaseAttribute.__init__(self,
+                               default=default,
+                               doc=doc,
+                               ignore_errors=ignore_errors,
+                               call_setup=call_setup)
+
     def set_value(self, obj, val):
         """
         Use the dictionnary val to set_setup_attributes
@@ -24,14 +42,14 @@ class ModuleProperty(ModuleAttribute, BaseProperty):
         getattr(obj, self.name).setup_attributes = val
         return val
 
-    def get_value(self, obj, obj_type):
+    def get_value(self, obj):
         if not hasattr(obj, '_' + self.name):
             # getter must manage the instantiation of default value
             setattr(obj, '_' + self.name,
-                self._create_module(obj, obj_type))
+                self._create_module(obj))
         return getattr(obj, '_' + self.name)
 
-    def _create_module(self, obj, obj_type):
+    def _create_module(self, obj):
         return self.module_cls(obj, name=self.name, **self.kwargs)
 
 
@@ -152,12 +170,13 @@ class ModuleListProperty(ModuleProperty):
     def __init__(self, element_cls, default=None, doc="", ignore_errors=False):
         # only difference to base class: need to assign element_cls (i.e. class of element modules)
         self.element_cls = element_cls
-        super(ModuleListProperty, self).__init__(self.module_cls,
-                                                 default=default,
-                                                 doc=doc,
-                                                 ignore_errors=ignore_errors)
+        ModuleProperty.__init__(self,
+                                self.module_cls,
+                                default=default,
+                                doc=doc,
+                                ignore_errors=ignore_errors)
 
-    def _create_module(self, obj, obj_type):
+    def _create_module(self, obj):
         newmodule = self.module_cls(obj,
                                     name=self.name,
                                     element_cls=self.element_cls,
@@ -168,13 +187,14 @@ class ModuleListProperty(ModuleProperty):
             pass
         return newmodule
 
-    def validate_and_normalize(self, value, obj):
+    def validate_and_normalize(self, obj, value):
         """ ensures that only list-like values are passed to the ModuleProperty """
         if not isinstance(value, list):
             try:
                 value = value.values()
             except AttributeError:
-                raise ValueError("ModuleProperty must be assigned a list. You have wrongly assigned an object of type "
+                raise ValueError("ModuleProperty must be assigned a list. "
+                                 "You have wrongly assigned an object of type "
                                  "%s. ", type(value))
         return value
 
@@ -257,3 +277,28 @@ class ModuleDictProperty(ModuleProperty):
                                                  default=default,
                                                  doc=doc,
                                                  ignore_errors=ignore_errors)
+
+
+class InputSelectProperty(SelectProperty):
+    """ a select register that stores logical signals if possible,
+    otherwise the underlying dsp signals"""
+    def validate_and_normalize(self, obj, value):
+        if isinstance(value, SignalModule):
+            # construct the path from the pyrpl module
+            module = value
+            name = module.name
+            while module != module.pyrpl:
+                module = module.parent
+                name = module.name + '.' + name
+            # take this path as the input signal key if allowed
+            if name in self.options(obj):
+                value = name
+            # otherwise take the corresponding dsp signal
+            else:
+                value = value.signal()
+        return super(InputSelectProperty, self).validate_and_normalize(obj, value)
+
+
+class InputSelectRegister(InputSelectProperty, SelectRegister):
+    pass
+

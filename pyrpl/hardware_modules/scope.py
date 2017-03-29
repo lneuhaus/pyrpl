@@ -1,62 +1,75 @@
 import time
-
-from pyrpl.acquisition_module import AcquisitionModule
-from . import DSP_INPUTS, DspModule, DspInputAttribute
+from ..module_attributes import InputSelectRegister
+from .dsp import all_inputs, dsp_addr_base
+from ..acquisition_module import AcquisitionModule
 from ..async_utils import MainThreadTimer, PyrplFuture
-from ..module_attributes import *
+from ..pyrpl_utils import sorted_dict
+from ..attributes import *
 from ..modules import HardwareModule
 from ..pyrpl_utils import time
 from ..widgets.module_widgets import ScopeWidget
 
 logger = logging.getLogger(name=__name__)
 
-
 data_length = 2**14
-
-class DurationAttribute(SelectAttribute):
-    def get_value(self, instance, owner):
-        if instance is None:
-            return self
-        return instance.sampling_time * float(instance.data_length)
-
-    def validate_and_normalize(self, value, module):
-        # gets next value, to be replaced with next-higher value
-        value = float(value)
-        return min([opt for opt in self.options(module)],
-                   key=lambda x: abs(x - value))
-
-    def set_value(self, instance, value):
-        """sets returns the duration of a full scope sequence the rounding
-        makes sure that the actual value is longer or equal to the set value"""
-        instance.sampling_time = float(value) / instance.data_length
 
 
 class DecimationRegister(SelectRegister):
     """
-    Carreful: changing decimation changes duration and sampling_time as well
+    Careful: changing decimation changes duration and sampling_time as well
     """
-
-    def set_value(self, instance, value):
-        super(DecimationRegister, self).set_value(instance, value)
-        instance.__class__.duration.value_updated(instance, instance.duration)
-        instance.__class__.sampling_time.value_updated(instance,
-                                                       instance.sampling_time)
+    def set_value(self, obj, value):
+        SelectRegister.set_value(self, obj, value)
+        obj.__class__.duration.value_updated(obj, obj.duration)
+        obj.__class__.sampling_time.value_updated(obj, obj.sampling_time)
         # instance.setup()
         # instance._decimation_changed() # acquisition_manager needs to be
         # warned because that could have changed _is_rolling_mode_active()
 
 
-class SamplingTimeAttribute(SelectAttribute):
-    def get_value(self, instance, owner):
-        if instance is None:
-            return self
-        return 8e-9 * float(instance.decimation)
+class DurationProperty(SelectProperty):
+    def get_value(self, obj):
+        return obj.sampling_time * float(obj.data_length)
 
-    def validate_and_normalize(self, value, module):
+    def validate_and_normalize(self, obj, value):
+        # gets next-higher value
+        value = float(value)
+
+        value = float(value)
+        options = self.options(obj).keys()
+        try:
+            return min([opt for opt in options if opt > value],
+                   key=lambda x: abs(x - value))
+        except ValueError:
+            obj._logger.info("Selected duration is longer than "
+                             "physically possible with the employed hardware. "
+                             "Picking longest-possible value %s. ",
+                             max(options))
+            return max(options)
+
+    def set_value(self, obj, value):
+        """sets returns the duration of a full scope sequence the rounding
+        makes sure that the actual value is longer or equal to the set value"""
+        obj.sampling_time = float(value) / obj.data_length
+
+
+class SamplingTimeProperty(SelectProperty):
+    def get_value(self, obj):
+        return 8e-9 * float(obj.decimation)
+
+    def validate_and_normalize(self, obj, value):
         # gets next value, to be replaced with next-lower value
         value = float(value)
-        return min([opt for opt in self.options(module)],
+        options = self.options(obj).keys()
+        try:
+            return min([opt for opt in options if opt < value],
                    key=lambda x: abs(x - value))
+        except ValueError:
+            obj._logger.info("Selected sampling time is shorter than "
+                             "physically possible with the employed hardware. "
+                             "Picking shortest-possible value %s. ",
+                             min(options))
+            return min(options)
 
     def set_value(self, instance, value):
         """sets or returns the time separation between two subsequent
@@ -65,15 +78,15 @@ class SamplingTimeAttribute(SelectAttribute):
         instance.decimation = float(value) / 8e-9
 
 
-class TriggerSourceAttribute(SelectAttribute):
-    def get_value(self, instance, owner):
-        if instance is None:
+class TriggerSourceAttribute(SelectProperty):
+    def get_value(self, obj):
+        if obj is None:
             return self
-        if hasattr(instance, "_trigger_source_memory"):
-            return instance._trigger_source_memory
+        if hasattr(obj, "_trigger_source_memory"):
+            return obj._trigger_source_memory
         else:
-            instance._trigger_source_memory = instance._trigger_source
-            return instance._trigger_source_memory
+            obj._trigger_source_memory = obj._trigger_source
+            return obj._trigger_source_memory
 
     def set_value(self, instance, value):
         # if isinstance(value, HardwareModule):
@@ -86,11 +99,8 @@ class TriggerSourceAttribute(SelectAttribute):
             instance.trigger_delay = instance._trigger_delay_memory
 
 
-class TriggerDelayAttribute(FloatAttribute):
-    # def __init__(self, attr_name, doc=""):
-    #   super(TriggerDelay, self).__init__(attr_name, 0.001, doc=doc)
-
-    def get_value(self, obj, obj_type):
+class TriggerDelayAttribute(FloatProperty):
+    def get_value(self, obj):
         if obj is None:
             return self
         return (obj._trigger_delay - obj.data_length // 2) * obj.sampling_time
@@ -111,17 +121,6 @@ class TriggerDelayAttribute(FloatAttribute):
             delay = 2 ** 32 - 1  # self.data_length-1
         obj._trigger_delay = delay
         return delay
-
-
-class DspInputAttributeScope(DspInputAttribute):
-    """
-    Same as DspInput, except that it sets the value to instance._ch[
-    index].input instead of instance.input
-    """
-
-    def __init__(self, ch=1, **kwds):
-        super(DspInputAttributeScope, self).__init__(**kwds)
-        self.register = '_ch%d.input'
 
 
 class ContinuousRollingFuture(PyrplFuture):
@@ -176,11 +175,10 @@ class Scope(HardwareModule, AcquisitionModule):
                        "threshold_ch1",
                        "threshold_ch2",
                        "ch1_active",
-                       "ch2_active"]  # running_state last for proper
-    # acquisition setup
+                       "ch2_active"]
+    # running_state last for proper acquisition setup
     _setup_attributes = _gui_attributes + ["rolling_mode", "running_state"]
     # changing these resets the acquisition and autoscale (calls setup())
-    # _callback_attributes = ["rolling_mode", "decimation", "trigger_delay"]
 
     data_length = data_length  # to use it in a list comprehension
 
@@ -191,9 +189,18 @@ class Scope(HardwareModule, AcquisitionModule):
                                     "data arrive.",
                                 call_setup=True)
 
-    inputs = None
-    input1 = DspInputAttributeScope(1)
-    input2 = DspInputAttributeScope(2)
+    @property
+    def inputs(self):
+        return all_inputs(self).keys()
+
+    # the scope inputs and asg outputs have the same dsp id
+    input1 = InputSelectRegister(- addr_base + dsp_addr_base('asg0') + 0x0,
+                                 options=all_inputs,
+                                 doc="selects the input signal of the module")
+
+    input2 = InputSelectRegister(- addr_base + dsp_addr_base('asg1') + 0x0,
+                                 options=all_inputs,
+                                 doc="selects the input signal of the module")
 
     _reset_writestate_machine = BoolRegister(0x0, 1,
                                              doc="Set to True to reset "
@@ -203,19 +210,20 @@ class Scope(HardwareModule, AcquisitionModule):
 
     _trigger_armed = BoolRegister(0x0, 0, doc="Set to True to arm trigger")
 
-    _trigger_sources = {"off": 0,
-                        "immediately": 1,
-                        "ch1_positive_edge": 2,
-                        "ch1_negative_edge": 3,
-                        "ch2_positive_edge": 4,
-                        "ch2_negative_edge": 5,
-                        "ext_positive_edge": 6,  # DIO0_P pin
-                        "ext_negative_edge": 7,  # DIO0_P pin
-                        "asg0": 8,
-                        "asg1": 9,
-                        "dsp": 10} #dsp trig module trigger
+    _trigger_sources = sorted_dict({"off": 0,
+                                    "immediately": 1,
+                                    "ch1_positive_edge": 2,
+                                    "ch1_negative_edge": 3,
+                                    "ch2_positive_edge": 4,
+                                    "ch2_negative_edge": 5,
+                                    "ext_positive_edge": 6,  # DIO0_P pin
+                                    "ext_negative_edge": 7,  # DIO0_P pin
+                                    "asg0": 8,
+                                    "asg1": 9,
+                                    "dsp": 10}, #dsp trig module trigger
+                                    sort_by_values=True)
 
-    trigger_sources = sorted(_trigger_sources.keys())  # help for the user
+    trigger_sources = _trigger_sources.keys()  # help for the user
 
     _trigger_source = SelectRegister(0x4, doc="Trigger source",
                                      options=_trigger_sources)
@@ -237,8 +245,7 @@ class Scope(HardwareModule, AcquisitionModule):
                                  doc="number of decimated data after trigger "
                                      "written into memory [samples]")
 
-    trigger_delay = TriggerDelayAttribute("trigger_delay",
-                                          min=-10,
+    trigger_delay = TriggerDelayAttribute(min=-10,
                                           max=8e-9 * 2 ** 30,
                                           doc="delay between trigger and "
                                               "acquisition start.\n"
@@ -268,21 +275,27 @@ class Scope(HardwareModule, AcquisitionModule):
                                      doc="An absolute counter "
                                          + "for the trigger time [cycles]")
 
-    _decimations = {2 ** n: 2 ** n for n in range(0, 17)}
+    _decimations = sorted_dict({2 ** n: 2 ** n for n in range(0, 17)},
+                               sort_by_values=True)
 
-    decimations = sorted(_decimations.keys())  # help for the user
+    decimations = _decimations.keys()  # help for the user
 
-    sampling_times = [8e-9 * dec for dec in decimations]
-
-    # price to pay for Python 3 compatibility: list comprehension workaround
-    # cf. http://stackoverflow.com/questions/13905741
-    durations = [st * data_length for st in sampling_times]
-
+    # decimation is the basic register, sampling_time and duration are slaves of it
     decimation = DecimationRegister(0x14, doc="decimation factor",
                                     # customized to update duration and
                                     # sampling_time
                                     options=_decimations,
                                     call_setup=True)
+
+    sampling_times = [8e-9 * dec for dec in decimations]
+
+    sampling_time = SamplingTimeProperty(options=sampling_times)
+
+    # list comprehension workaround for python 3 compatibility
+    # cf. http://stackoverflow.com/questions/13905741
+    durations = [st * data_length for st in sampling_times]
+
+    duration = DurationProperty(options=durations)
 
     _write_pointer_current = IntRegister(0x18,
                                          doc="current write pointer "
@@ -326,10 +339,6 @@ class Scope(HardwareModule, AcquisitionModule):
                               doc="True if enough data have been acquired "
                                   "to fill the pretrig buffer")
 
-    sampling_time = SamplingTimeAttribute(options=sampling_times)
-
-    duration = DurationAttribute(durations)
-
     ch1_active = BoolProperty(default=True,
                               doc="should ch1 be displayed in the gui?")
 
@@ -337,19 +346,10 @@ class Scope(HardwareModule, AcquisitionModule):
                               doc="should ch2 be displayed in the gui?")
 
     def _init_module(self):
-        # dsp multiplexer channels for scope and asg are the same by default
-        self._ch1 = DspModule(self._rp, name='asg0')  # the scope inputs and
-        #  asg outputs have the same id
-        self._ch2 = DspModule(self._rp, name='asg1')  # check fpga code
-        # dsp_modules to understand
-        self.inputs = self._ch1.inputs
-        self._setup_called = False
         self._trigger_source_memory = 'off'  # "immediately" #fixes bug with
         # trigger_delay for 'immediate' at startup
         self._trigger_delay_memory = 0
-
         super(Scope, self)._init_module()  # _init_module of AcquisitionModule
-
 
 
     def _ownership_changed(self, old, new):

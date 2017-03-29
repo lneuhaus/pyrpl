@@ -5,8 +5,10 @@ from PyQt4 import QtGui
 
 from ..async_utils import PyrplFuture, MainThreadTimer, CancelledError
 from ..attributes import FloatProperty, SelectProperty, FrequencyProperty, \
-                         LongProperty, BoolProperty, FilterAttribute
-from ..hardware_modules import DspModule
+                         IntProperty, BoolProperty, FilterProperty, SelectProperty, \
+                         ProxyProperty
+from ..module_attributes import InputSelectProperty
+from ..hardware_modules import all_inputs, all_output_directs
 from ..acquisition_module import AcquisitionModule
 from ..widgets.module_widgets import NaWidget
 
@@ -20,13 +22,13 @@ import timeit
 APP = QtGui.QApplication.instance()
 
 
-class NaAcBandwidth(FilterAttribute):
+class NaAcBandwidth(FilterProperty):
     def valid_frequencies(self, instance):
         return [freq for freq
                 in instance.iq._valid_inputfilter_frequencies(instance.iq)
                 if freq >= 0]
 
-    def get_value(self, instance, owner):
+    def get_value(self, instance):
         if instance is None:
             return self
         return -instance.iq.inputfilter
@@ -36,8 +38,8 @@ class NaAcBandwidth(FilterAttribute):
         return value
 
 
-class RbwAttribute(FilterAttribute):
-    def get_value(self, instance, owner):
+class RbwAttribute(FilterProperty):
+    def get_value(self, instance):
         if instance is None:
             return self
         return instance.iq.bandwidth[0]
@@ -276,17 +278,18 @@ class NetworkAnalyzer(AcquisitionModule):
                        "infer_open_loop_tf"]
     _setup_attributes = _gui_attributes + ['running_state']
     # _callback_attributes = _gui_attributes
-    input = SelectProperty(DspModule.inputs, call_setup=True)
-    output_direct = SelectProperty(DspModule.output_directs, call_setup=True)
+    input = InputSelectProperty(all_inputs, call_setup=True)
+    #input = ProxyProperty('iq.input')
+    output_direct = SelectProperty(all_output_directs, call_setup=True)
     start_freq = FrequencyProperty(call_setup=True)
     stop_freq = FrequencyProperty(call_setup=True)
     rbw = RbwAttribute(default=1000, call_setup=True)
-    avg_per_point = LongProperty(min=1, default=1, call_setup=True)
+    avg_per_point = IntProperty(min=1, default=1, call_setup=True)
     amplitude = FloatProperty(min=0,
                               max=1,
                               increment=1. / 2 ** 14,
                               call_setup=True)
-    points = LongProperty(min=1, max=1e8, default=1001, call_setup=True)
+    points = IntProperty(min=1, max=1e8, default=1001, call_setup=True)
     logscale = LogScaleProperty(call_setup=True)
     infer_open_loop_tf = BoolProperty()
     acbandwidth = NaAcBandwidth(
@@ -318,7 +321,6 @@ class NetworkAnalyzer(AcquisitionModule):
         self._time_last_point = 0
         self._update_data_x()
         super(NetworkAnalyzer, self)._init_module()
-
 
     @property
     def iq(self):
@@ -550,7 +552,7 @@ class NetworkAnalyzer(AcquisitionModule):
         values = np.zeros(len(raw_values))
         for index, val in enumerate(raw_values):
             values[index] = self.iq.__class__.frequency. \
-                validate_and_normalize(val, self)  # retrieve the real freqs...
+                validate_and_normalize(self, val)  # retrieve the real freqs...
         self._data_x = values
 
     def _remaining_time(self):

@@ -38,9 +38,6 @@ class ClassnameProperty(SelectProperty):
         obj._classname_changed()
         return val
 
-    def options(self, instance):
-        return all_classnames().keys()
-
 
 class AutoLockProperty(BoolProperty):
     """ true if autolock is enabled"""
@@ -146,7 +143,7 @@ class Lockbox(LockboxModule):
     _setup_attributes = _gui_attributes + ["auto_lock_interval",
                                            "lockstatus_interval"]
 
-    classname = ClassnameProperty()
+    classname = ClassnameProperty(options=lambda: all_classnames().keys())
 
     ###################
     # unit management #

@@ -1,27 +1,16 @@
 import numpy as np
-from ..attributes import SelectAttribute, BoolRegister, FloatRegister, SelectRegister, \
-                             IntRegister, LongRegister, PhaseRegister, FrequencyRegister, FloatAttribute
+from collections import OrderedDict
+from ..attributes import BoolRegister, FloatRegister, SelectRegister, SelectProperty, \
+                             IntRegister, LongRegister, PhaseRegister, FrequencyRegister, FloatProperty
 from ..modules import HardwareModule, SignalModule
 from ..widgets.module_widgets import AsgWidget
-
-from . import DspModule
-
-
-class OutputDirectAttribute(SelectAttribute):
-    def get_value(self, instance, owner):
-        if instance is None:
-            return self
-        else:
-            return instance._dsp.output_direct
-
-    def set_value(self, instance, val):
-        instance._dsp.output_direct = val
-        return val
+from . import all_output_directs, dsp_addr_base
 
 
-class WaveformAttribute(SelectAttribute):
-    def get_value(self, instance, owner):
-        return instance._waveform
+class WaveformAttribute(SelectProperty):
+    default = 'sin'
+    #def get_value(self, instance):
+    #    return instance._waveform
 
     def set_value(self, instance, waveform):
         waveform = waveform.lower()
@@ -66,7 +55,7 @@ class WaveformAttribute(SelectAttribute):
         return waveform
 
 
-class AsgOffsetAttribute(FloatAttribute):
+class AsgOffsetAttribute(FloatProperty):
     def __init__(self):
         super(AsgOffsetAttribute, self).__init__(default=0,
                                                  increment=1./2**13,
@@ -77,8 +66,8 @@ class AsgOffsetAttribute(FloatAttribute):
     def set_value(self, instance, val):
         instance._offset_masked = val
 
-    def get_value(self, instance, owner):
-        return instance._offset_masked
+    def get_value(self, obj):
+        return obj._offset_masked
 
 
 # ugly workaround, but realized too late that descriptors have this limit
@@ -115,16 +104,18 @@ def make_asg(channel=0):
         def _init_module(self):
             self._counter_wrap = 0x3FFFFFFF  # correct value unless you know better
             self._writtendata = np.zeros(self.data_length)
-            if self._BIT_OFFSET == 0:
-                self._dsp = DspModule(self._rp, name='asg0')
-            else:
-                self._dsp = DspModule(self._rp, name='asg1')
-            self.output_directs = self._dsp.output_directs
             self.waveform = 'sin'
             self.trigger_source = 'immediately'
             self.output_direct = self.default_output_direct
 
-        output_direct = OutputDirectAttribute(DspModule._output_directs)
+        @property
+        def output_directs(self):
+            return all_output_directs(self).keys()
+
+        output_direct = SelectRegister(
+            - addr_base + dsp_addr_base('asg0' if _BIT_OFFSET == 0 else 'asg1') + 0x4,
+                    options=all_output_directs,
+                    doc="selects the direct output of the module")
 
         data_length = 2 ** 14
 
@@ -148,16 +139,18 @@ def make_asg(channel=0):
                                     doc="Raw phase value where counter wraps around. To be set to 2**16*(2**14-1) = 0x3FFFFFFF in virtually all cases. ")
 
         # register trig_a/b_src
-        _trigger_sources = {"off": 0 << _BIT_OFFSET,
-                            "immediately": 1 << _BIT_OFFSET,
-                            "ext_positive_edge": 2 << _BIT_OFFSET,  # DIO0_P pin
-                            "ext_negative_edge": 3 << _BIT_OFFSET,  # DIO0_P pin
-                            "ext_raw": 4 << _BIT_OFFSET,  # 4- raw DIO0_P pin
-                            "high": 5 << _BIT_OFFSET}  # 5 - constant high
-
+        _trigger_sources = OrderedDict([
+            ("off", 0 << _BIT_OFFSET),
+            ("immediately", 1 << _BIT_OFFSET),
+            ("ext_positive_edge", 2 << _BIT_OFFSET),  # DIO0_P pin
+            ("ext_negative_edge", 3 << _BIT_OFFSET),  # DIO0_P pin
+            ("ext_raw", 4 << _BIT_OFFSET),  # 4- raw DIO0_P pin
+            ("high", 5 << _BIT_OFFSET)  # 5 - constant high
+             ])
         trigger_sources = _trigger_sources.keys()
 
         trigger_source = SelectRegister(0x0, bitmask=0x0007 << _BIT_OFFSET,
+                                        default='off',
                                         options=_trigger_sources,
                                         doc="trigger source for triggered "
                                             "output")

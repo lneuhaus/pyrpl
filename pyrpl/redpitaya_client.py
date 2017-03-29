@@ -20,7 +20,7 @@
 import numpy as np
 import socket
 import logging
-from .hardware_modules.dsp import DSP_INPUTS
+from .hardware_modules.dsp import dsp_addr_base, DSP_INPUTS
 from .pyrpl_utils import time
 
 # global conter to assign a number to each client
@@ -199,8 +199,12 @@ class DummyClient(object):
         if offset == 0x168:  # trigger_timestamp mv part
             return 0
         #DSP modules
+        all = DSP_INPUTS
         for module in DSP_INPUTS:
-            offset = addr - 0x40300000 - 0x10000*DSP_INPUTS[module]
+            try:
+                offset = addr - dsp_addr_base(module)
+            except TypeError:
+                print offset
             if module.startswith('pid'):
                 if offset == 0x220: # FILTERSTAGES
                     return 4

@@ -20,7 +20,8 @@ import logging
 logger = logging.getLogger(name=__name__)
 
 from ..module_attributes import *
-from ..hardware_modules import Scope, DspModule
+from ..hardware_modules import Scope
+from ..hardware_modules.dsp import all_inputs
 from ..acquisition_module import AcquisitionModule
 from ..widgets.module_widgets import SpecAnWidget
 
@@ -32,7 +33,7 @@ from pylab import *
 # Main source: Oppenheim + Schaefer, Digital Signal Processing, 1975
 
 #class RbwAttribute(FloatAttribute):
-#    def get_value(self, instance, owner):
+#    def get_value(self, instance):
 #        if instance is None:
 #            return self
 #        if instance.rbw_auto:
@@ -46,7 +47,7 @@ from pylab import *
 
 
 #class RbwAutoAttribute(BoolAttribute):
-#    def get_value(self, instance, owner):
+#    def get_value(self, instance):
 #        if instance is None:
 #            return self
 #        return instance._rbw_auto
@@ -58,8 +59,8 @@ from pylab import *
 #        return value
 
 
-class CenterAttribute(FrequencyAttribute):
-    def get_value(self, instance, owner):
+class CenterAttribute(FrequencyProperty):
+    def get_value(self, instance):
         if instance is None:
             return self
         if instance.baseband:
@@ -90,8 +91,8 @@ class SpanFilterProperty(FilterProperty):
     def valid_frequencies(self, instance):
         return instance.spans
 
-    def get_value(self, instance, owner):
-        val = super(SpanFilterProperty, self).get_value(instance, owner)
+    def get_value(self, obj):
+        val = super(SpanFilterProperty, self).get_value(obj)
         if np.iterable(val):
             return val[0] # maybe this should be the default behavior for
             # FilterAttributes... or make another Attribute type
@@ -139,7 +140,9 @@ class SpectrumAnalyzer(AcquisitionModule):
     windows = ['blackman', 'flattop', 'boxcar', 'hamming']  # more can be
     # added here (see http://docs.scipy.org/doc/scipy/reference/generated
     # /scipy.signal.get_window.html#scipy.signal.get_window)
-    inputs = DspModule.inputs
+    @property
+    def inputs(self):
+        return all_inputs(self).keys()
 
     # attributes
     baseband = BoolProperty(call_setup=True)
@@ -149,9 +152,9 @@ class SpectrumAnalyzer(AcquisitionModule):
         """,
         call_setup=True)
     center = CenterAttribute(call_setup=True)
-    points = LongProperty(default=16384, call_setup=True)
+    points = IntProperty(default=16384, call_setup=True)
     window = SelectProperty(options=windows, call_setup=True)
-    input = SelectProperty(options=inputs, call_setup=True)
+    input = InputSelectProperty(options=all_inputs, call_setup=True)
     acbandwidth = SpecAnAcBandwidth(call_setup=True)
 
     # _signal_launcher = SignalLauncherSpectrumAnalyzer

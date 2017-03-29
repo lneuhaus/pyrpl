@@ -86,7 +86,7 @@ def all_subclasses(cls):
                                    for g in all_subclasses(s)]
 
 
-def recursive_getattribute(root, path):
+def recursive_getattr(root, path):
     """ returns root.path (i.e. root.attr1.attr2) """
     attribute = root
     for name in path.split('.'):

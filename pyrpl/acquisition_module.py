@@ -363,7 +363,7 @@ class AcquisitionModule(Module):
       - stopped: acquisition interrupted, averaging will restart at next
       call of running_continuous.
     """)
-    avg = LongProperty(doc="number of curves to average in single mode. In "
+    avg = IntProperty(doc="number of curves to average in single mode. In "
                            "continuous mode, a moving window average is "
                            "performed.",
                        default=1,

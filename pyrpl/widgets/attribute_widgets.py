@@ -7,7 +7,7 @@ from pyqtgraph.Qt import QtGui, QtCore
 import numpy as np
 import time
 import functools
-from ..pyrpl_utils import Bijection
+from ..pyrpl_utils import Bijection, recursive_setattr, recursive_getattr
 
 
 import sys
@@ -1061,17 +1061,13 @@ class FilterAttributeWidget(BaseAttributeWidget):
     def set_max_cols(self, n_cols):
         self.widget.set_max_cols(n_cols)
 
+
 class SelectAttributeWidget(BaseAttributeWidget):
     """
     Multiple choice property.
     """
-
-    def __init__(self, name, module, defaults=None):
-        if defaults is not None:
-            self.defaults = defaults
-        else:
-            self.defaults = name + 's'
-        super(SelectAttributeWidget, self).__init__(name, module)
+    def __init__(self, name, module, options=[], **kwargs):
+        return super(SelectAttributeWidget, self).__init__(name, module, **kwargs)
 
     def set_widget(self):
         """
@@ -1079,9 +1075,8 @@ class SelectAttributeWidget(BaseAttributeWidget):
 
         :return:
         """
-
         self.widget = QtGui.QComboBox()
-        self.widget.addItems(list(map(str, self.options)))
+        self.widget.addItems(self.options)
         self.widget.currentIndexChanged.connect(self.write)
 
     @property
@@ -1091,7 +1086,12 @@ class SelectAttributeWidget(BaseAttributeWidget):
 
         :return:
         """
-        return self.defaults  # getattr(self.module, self.defaults)
+        # return self.defaults  # getattr(self.module, self.defaults)
+        opt = recursive_getattr(self.module, '__class__.' + self.name + '.options')(self.module)
+        opt = [str(v) for v in opt]
+        if len(opt) == 0:
+            opt = [""]
+        return opt
 
     def write(self):
         """
@@ -1100,25 +1100,27 @@ class SelectAttributeWidget(BaseAttributeWidget):
         :return:
         """
         setattr(self.module, self.name, str(self.widget.currentText()))
-        #if self.acquisition_property:
         self.value_changed.emit()
 
     def _update(self, new_value):
         """
         Sets the gui value from the current module value
         """
-        if len(getattr(self.module.__class__, self.name).options(self.module))==0: # None is OK if no options are available
-            if new_value is None:
-                return
-        index = list(self.options).index(new_value)
+        try:
+            index = self.options.index(str(new_value))
+        except IndexError:
+            self.module._logger.warning("SelectWidget %s could not find current value %s "
+                                        "in the options %s",
+                                        self.name, self.new_value, self.options)
+            index = 0
         self.widget.setCurrentIndex(index)
 
     def change_options(self, new_options):
         """
-        The options of the combobox can be cahnged dynamically. new_options is a list of strings.
+        The options of the combobox can be changed dynamically. new_options is a list of strings.
         """
         self.widget.blockSignals(True)
-        self.defaults = new_options
+        #self.defaults = new_options
         self.widget.clear()
         self.widget.addItems(new_options)
         try:

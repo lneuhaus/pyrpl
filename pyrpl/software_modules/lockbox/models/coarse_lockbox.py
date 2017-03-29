@@ -3,9 +3,10 @@ from pyrpl.attributes import *
 from pyrpl.software_modules.lockbox.models.fabryperot import *
 from pyrpl.software_modules.loop import *
 
-class PdhEnabledProperty(BoolAttribute):
+
+class PdhEnabledProperty(BoolProperty):
     """ a gui button to enable PDH """
-    def get_value(self, obj, obj_type):
+    def get_value(self, obj):
         if obj is None:
             return self
         obj._generator.channel_idx = 1
@@ -108,12 +109,12 @@ class FPM_analog_PDH(FabryPerot):
             self._generator.amplitude = c.amplitude_for_finesse
             self._generator.output_enabled = True
 
-class CoarseProperty(FloatAttribute):
+class CoarseProperty(FloatProperty):
     def __init__(self, **kwds):
         self._initialized = False
         super(CoarseProperty, self).__init__(**kwds)
 
-    def get_value(self, obj, obj_type):
+    def get_value(self, obj):
         if obj is None:
             return self
         return obj.fgen.offset

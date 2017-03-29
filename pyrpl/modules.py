@@ -141,14 +141,10 @@ class ModuleMetaClass(type):
                 self._setup_ongoing = True
                 try:
                     # user can redefine any setup_attribute through kwds
-                    try:
-                        for key in self._setup_attributes:
-                            if key in kwds:
-                                value = kwds.pop(key)
-                                setattr(self, key, value)
-                    finally:
-                        if hasattr(self, '_setup'):
-                            self._setup()
+                    for key in self._setup_attributes:
+                        if key in kwds:
+                            value = kwds.pop(key)
+                            setattr(self, key, value)
                     if len(kwds) > 0:
                         self._logger.warning(
                             "Trying to load attribute %s of module %s that "
@@ -156,6 +152,8 @@ class ModuleMetaClass(type):
                             sorted(kwds.keys())[0], self.name)
                 finally:
                     self._setup_ongoing = False
+                if hasattr(self, '_setup'):
+                    self._setup()
             # b. place the new setup function in the module class
             self.setup = setup
         # 3. if setup has no docstring, then make one
@@ -413,9 +411,8 @@ class Module(with_metaclass(ModuleMetaClass, object)):
     @setup_attributes.setter
     def setup_attributes(self, kwds):
         """
-        Sets the values of the setup attributes. Without calling any callbacks
+        Sets the values of the setup attributes.
         """
-        # see 'ModuleMetaClass' above for the definition of self.setup()
         self.setup(**kwds)
 
     def _load_setup_attributes(self):

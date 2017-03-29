@@ -15,7 +15,6 @@ class ScopeWidget(ModuleWidget):
     """
     Widget for scope
     """
-
     def init_gui(self):
         """
         sets up all the gui for the scope.
