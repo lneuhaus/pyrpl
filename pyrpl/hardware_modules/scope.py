@@ -79,8 +79,6 @@ class SamplingTimeProperty(SelectProperty):
 
 class TriggerSourceAttribute(SelectProperty):
     def get_value(self, obj):
-        if obj is None:
-            return self
         if hasattr(obj, "_trigger_source_memory"):
             return obj._trigger_source_memory
         else:
@@ -88,8 +86,6 @@ class TriggerSourceAttribute(SelectProperty):
             return obj._trigger_source_memory
 
     def set_value(self, instance, value):
-        # if isinstance(value, HardwareModule):
-        #   value = value.name
         instance._trigger_source = value
         if instance._trigger_source_memory != value:
             instance._trigger_source_memory = value
@@ -100,8 +96,6 @@ class TriggerSourceAttribute(SelectProperty):
 
 class TriggerDelayAttribute(FloatProperty):
     def get_value(self, obj):
-        if obj is None:
-            return self
         return (obj._trigger_delay - obj.data_length // 2) * obj.sampling_time
 
     def set_value(self, obj, delay):
@@ -190,15 +184,17 @@ class Scope(HardwareModule, AcquisitionModule):
 
     @property
     def inputs(self):
-        return all_inputs(self).keys()
+        return list(all_inputs(self).keys())
 
     # the scope inputs and asg outputs have the same dsp id
     input1 = InputSelectRegister(- addr_base + dsp_addr_base('asg0') + 0x0,
                                  options=all_inputs,
+                                 default='in1',
                                  doc="selects the input signal of the module")
 
     input2 = InputSelectRegister(- addr_base + dsp_addr_base('asg1') + 0x0,
                                  options=all_inputs,
+                                 default='in2',
                                  doc="selects the input signal of the module")
 
     _reset_writestate_machine = BoolRegister(0x0, 1,
@@ -224,10 +220,10 @@ class Scope(HardwareModule, AcquisitionModule):
 
     trigger_sources = _trigger_sources.keys()  # help for the user
 
-    _trigger_source = SelectRegister(0x4, doc="Trigger source",
-                                     options=_trigger_sources)
+    _trigger_source_register = SelectRegister(0x4, doc="Trigger source",
+                                              options=_trigger_sources)
 
-    trigger_source = TriggerSourceAttribute(_trigger_sources.keys())
+    trigger_source = TriggerSourceAttribute(options = _trigger_sources.keys())
 
     _trigger_debounce = IntRegister(0x90, doc="Trigger debounce time [cycles]")
 
@@ -538,7 +534,7 @@ class Scope(HardwareModule, AcquisitionModule):
 
     def _start_acquisition_rolling_mode(self):
         self._start_acquisition()
-        self._trigger_source = 'off'
+        self._trigger_source_register = 'off'
         self._trigger_armed = True
 
     # Custom behavior of AcquisitionModule methods for scope:

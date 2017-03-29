@@ -36,13 +36,11 @@ class TestLoadSave(TestPyrpl):
                 val = [{}] * list_length
             else:
                 val = getattr(mod, attr)
-            if isinstance(val, basestring):
-                desc = getattr(mod.__class__, attr)
-                if isinstance(desc, SelectAttribute):
-                    val = desc.options(mod)\
-                            [option_index % len(desc.options(mod))]
-                else:
-                    val = str_val
+            desc = getattr(mod.__class__, attr)
+            if isinstance(desc, SelectProperty):
+                val = list(desc.options(mod).keys())[option_index % len(desc.options(mod))]
+            elif isinstance(val, basestring):
+                val = str_val
             if isinstance(val, bool):
                 val = bool_val
             if isinstance(val, numbers.Number):

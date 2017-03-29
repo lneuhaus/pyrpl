@@ -81,12 +81,13 @@ class InputSelectProperty(SelectProperty):
 
     def validate_and_normalize(self, obj, value):
         if isinstance(value, SignalModule):
-            # construct the path from the pyrpl module
-            module = value
-            name = module.name
-            while module != module.pyrpl:
-                module = module.parent
+            # try to construct the path from the pyrpl module
+            pyrpl, rp = value.pyrpl, value.pyrpl.rp
+            name = value.name
+            module = value.parent
+            while (module != pyrpl) and (module != rp):
                 name = module.name + '.' + name
+                module = module.parent
             # take this path as the input signal key if allowed
             if name in self.options(obj):
                 value = name

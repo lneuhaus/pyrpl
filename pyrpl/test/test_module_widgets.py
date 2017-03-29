@@ -4,7 +4,7 @@ from PyQt4.QtTest import QTest
 from PyQt4.QtCore import Qt
 import os
 from ..widgets.attribute_widgets import SelectAttributeWidget, BoolAttributeWidget, NumberAttributeWidget
-from ..attributes import BoolAttribute, NumberAttribute, SelectAttribute
+from ..attributes import BoolProperty, NumberProperty, SelectProperty
 from .test_base import TestPyrpl
 
 
@@ -57,17 +57,17 @@ class TestModuleWidgets(TestPyrpl):
             return
         module = module_widget.module
         for attr in module._gui_attributes:
-            if isinstance(attr, SelectAttribute):
+            if isinstance(attr, SelectProperty):
                 for option in attr.options:
                     to_set = attr.widget.findText(str(option))
                     attr.widget.setCurrentIndex(to_set)
                     assert (getattr(module, attr.name) == option)
-            elif isinstance(attr, BoolAttribute):
+            elif isinstance(attr, BoolProperty):
                 for i in range(2):
                     QTest.mouseClick(attr.widget, Qt.LeftButton)
                     assert (getattr(module, attr.name) \
                             == (attr.widget.checkState() == 2))
-            elif isinstance(attr, NumberAttribute):
+            elif isinstance(attr, NumberProperty):
                 for i in range(3):
                     attr.widget.stepUp()
                     val = getattr(module, attr.name)
