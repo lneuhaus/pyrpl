@@ -64,12 +64,14 @@ def all_inputs(instance):
                 signals[k] = recursive_getattr(instance.pyrpl, k+'.signal')()
             except AttributeError:
                 pass
-    #for signal in signals:
-    #    while signals[signal] in signals:  # signal points to another key
-    #        if signals[signal] == signal:  # a) signal points to its own key
-    #            signals[signal] = 'off'
-    #        else:  # b) signal points to the key of another signal
-    #            signals[signal] = signals[signals[signal]]  # resolve the pointer
+    for i in range(4):  # avoid closed loops by maximum depth of iteration
+        for signal in signals:
+            if signals[signal] not in signals:
+                pass
+            elif signals[signal] == signal:  # points to its own key
+                signals[signal] = 'off'
+            else:  # signal points to the key of another signal
+                signals[signal] = signals[signals[signal]]  # resolve pointer
     return signals
 
 
