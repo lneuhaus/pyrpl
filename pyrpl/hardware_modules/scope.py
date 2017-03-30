@@ -82,11 +82,11 @@ class TriggerSourceAttribute(SelectProperty):
         if hasattr(obj, "_trigger_source_memory"):
             return obj._trigger_source_memory
         else:
-            obj._trigger_source_memory = obj._trigger_source
+            obj._trigger_source_memory = obj._trigger_source_register
             return obj._trigger_source_memory
 
     def set_value(self, instance, value):
-        instance._trigger_source = value
+        instance._trigger_source_register = value
         if instance._trigger_source_memory != value:
             instance._trigger_source_memory = value
             # passing between immediately and other sources possibly

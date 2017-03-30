@@ -853,7 +853,7 @@ class SelectProperty(BaseProperty):
         options = self.options(instance)
         if not default in options:
             # if not valid, default default is the first options
-            default = options.keys()[0]
+            default = list(options)[0]
         # if no options are availbale, fall back to None
         if default is None:
             logger.warning("Default of SelectProperty %s "
@@ -892,7 +892,7 @@ class SelectProperty(BaseProperty):
                 lastoptions = None
             if options != lastoptions:
                 setattr(instance, '_' + self.name + '_lastoptions', options)
-                instance._signal_launcher.change_options.emit(self.name, options.keys())
+                instance._signal_launcher.change_options.emit(self.name, list(options))
         # return the actual options
         return options
 

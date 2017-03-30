@@ -67,7 +67,7 @@ module red_pitaya_dsp #(
    output     [ 14-1: 0] scope2_o,
    input      [ 14-1: 0] asg1_i,
    input      [ 14-1: 0] asg2_i,
-   input      [ 14-1: 0] asg1phase,
+   input      [ 14-1: 0] asg1phase_i,
 
    // pwm outputs
    output     [ 14-1: 0] pwm0,
@@ -76,7 +76,7 @@ module red_pitaya_dsp #(
    output     [ 14-1: 0] pwm3,
 
    // trigger outputs for the scope
-   output                trig_output, // from trigger dsp module
+   output                trig_o,   // output from trigger dsp module
 
    // system bus
    input      [ 32-1: 0] sys_addr        ,  //!< bus address
@@ -181,7 +181,7 @@ genvar j;
 
 //select inputs
 generate for (j = 0; j < MODULES+EXTRAMODULES; j = j+1)
-   assign input_signal[j] = output_signal[input_select[j]];
+   assign input_signal[j] = (input_select[j]==NONE) ? 14'b0 : output_signal[input_select[j]];
 endgenerate
 
 //sum together the direct outputs
@@ -321,6 +321,7 @@ generate for (j = 0; j < 3; j = j+1) begin
 end
 endgenerate
 
+wire trig_signal;
 //TRIG
 generate for (j = 3; j < 4; j = j+1) begin
    red_pitaya_trigger_block i_trigger (
@@ -330,7 +331,7 @@ generate for (j = 3; j < 4; j = j+1) begin
      .dat_i        (  input_signal [j] ),  // input data
      .dat_o        (  output_direct[j]),  // output data
      .signal_o     (  output_signal[j]),  // output signal
-     .phase1_i     (  asg1phase ),  // phase input
+     .phase1_i     (  asg1phase_i ),  // phase input
      .trig_o       (  trig_signal ),
 
 	 //communincation with PS
@@ -343,6 +344,7 @@ generate for (j = 3; j < 4; j = j+1) begin
    );
 end
 endgenerate
+assign trig_o = trig_signal;
 
 //IIR module 
 generate for (j = 4; j < 5; j = j+1) begin
