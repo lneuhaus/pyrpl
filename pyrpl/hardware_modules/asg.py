@@ -105,8 +105,8 @@ def make_asg(channel=0):
             self._counter_wrap = 0x3FFFFFFF  # correct value unless you know better
             self._writtendata = np.zeros(self.data_length)
             self.waveform = 'sin'
-            self.trigger_source = 'immediately'
             self.output_direct = self.default_output_direct
+            self.trigger_source = 'immediately'
 
         @property
         def output_directs(self):
@@ -150,7 +150,7 @@ def make_asg(channel=0):
         trigger_sources = _trigger_sources.keys()
 
         trigger_source = SelectRegister(0x0, bitmask=0x0007 << _BIT_OFFSET,
-                                        default='immediately',
+                                        default='off',
                                         options=_trigger_sources,
                                         doc="trigger source for triggered "
                                             "output")

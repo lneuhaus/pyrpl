@@ -2,7 +2,7 @@ import logging
 logger = logging.getLogger(name=__name__)
 import time
 import numpy as np
-from time import sleep
+from ...async_utils import sleep
 from PyQt4 import QtCore, QtGui
 from ..test_base import TestPyrpl
 APP = QtGui.QApplication.instance()
@@ -31,13 +31,13 @@ class TestScope(TestPyrpl):
         assert(self.r.scope.running_state=='stopped')
 
     def data_changing(self):
-        time.sleep(0.1)
+        sleep(0.1)
         APP.processEvents()
         if self.r.scope.data_avg is not None:
             data = self.r.scope.data_avg[0]
         else:
             data = None
-        time.sleep(0.75)
+        sleep(0.75)
         for i in range(1000):
             APP.processEvents()
         time.sleep(0.1)
@@ -47,8 +47,7 @@ class TestScope(TestPyrpl):
             res = None
         if data is None:
             return res is not None
-        return ((data !=
-                 res)[~np.isnan(data)]).any()
+        return ((data != res)[~np.isnan(data)]).any()
 
     def test_scope_rolling_mode_and_running_state_update(self):
         """ makes sure scope rolling_mode and running states are correctly
@@ -81,7 +80,6 @@ class TestScope(TestPyrpl):
         assert not self.data_changing()
 
         self.r.asg1.frequency = 1e5
-        self.r.asg1.setup()  # asg.setup() must be called to start the trigger emission
         assert self.data_changing()
 
         self.r.scope.stop()
@@ -91,8 +89,8 @@ class TestScope(TestPyrpl):
         self.r.scope.load_state("running_roll")
         assert self.data_changing()
         sleep(1)
-        assert self.data_changing() # Make sure scope is not blocked after one
-        #  buffer loop
+        # Make sure scope is not blocked after one buffer loop
+        assert self.data_changing()
 
         self.r.scope.stop()
         self.r.scope.load_state("running_triggered")

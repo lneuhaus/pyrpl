@@ -215,7 +215,6 @@ class RunningStateProperty(SelectProperty):
       - stopped: acquisition interrupted, averaging will restart at next
       call of running_continuous.
     """
-
     def set_value(self, obj, val):
         """
         This is the master property: changing this value triggers all the logic
@@ -224,25 +223,14 @@ class RunningStateProperty(SelectProperty):
         # touching the running_state cancels the pending curve_future object
         # (no effect if future is already done)
         obj._curve_future.cancel()
-
-        # this test is obsolete. it has been replaced by using a
-        # SelectAttribute instead of StringAttribute
-        allowed = ["running_single",
-                   "running_continuous",
-                   "paused",
-                   "stopped"]
-        if val not in allowed:
-            raise ValueError("Allowed states are : " + ', '.join(allowed))
         previous_state = obj.running_state
-
-        super(RunningStateProperty, self).set_value(obj, val)
-
+        SelectProperty.set_value(self, obj, val)
         if val == "running_single":
             # acquire as fast as possible avg curves
             # obj._new_run_future()
             # obj._run_future.start()
             obj.setup()
-        if val == "running_continuous":
+        elif val == "running_continuous":
             # obj._start_acquisition()
             if previous_state == 'stopped':  #  restart averaging...
                 # obj._new_run_future()
@@ -252,11 +240,11 @@ class RunningStateProperty(SelectProperty):
                 # "running_single" keep averaging in the same run, simply make
                 # it continuous
                 obj._run_future.start()
-        if val in ["paused", "stopped"]:
+        elif val in ["paused", "stopped"]:
             obj._run_future.cancel() #  single cannot be resumed
             #  on the other hand, continuous can still be started again
             #  eventhough it is cancelled. Basically, the result will never
-            #  be set, but hte acquisition can still be going on indefinitely.
+            #  be set, but the acquisition can still be going on indefinitely.
 
 
 class SignalLauncherAcquisitionModule(SignalLauncher):
@@ -348,7 +336,7 @@ class AcquisitionModule(Module):
     # continuous
 
     running_state = RunningStateProperty(
-        default = 'stopped',
+        default='stopped',
         options=["running_single",
                  "running_continuous",
                  "paused",
@@ -363,6 +351,7 @@ class AcquisitionModule(Module):
       - stopped: acquisition interrupted, averaging will restart at next
       call of running_continuous.
     """)
+
     avg = IntProperty(doc="number of curves to average in single mode. In "
                            "continuous mode, a moving window average is "
                            "performed.",
@@ -496,8 +485,8 @@ class AcquisitionModule(Module):
                                  **params)
         return curve
 
-    def _kill_timers(self):
-        super(AcquisitionModule, self)._kill_timers()
+    def _clear(self):
+        super(AcquisitionModule, self)._clear()
         self._curve_future.cancel()
         self._run_future.cancel()
 

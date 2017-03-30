@@ -884,14 +884,18 @@ class SelectProperty(BaseProperty):
         if len(options) == 0:
             logger.debug("SelectProperty %s of module %s has no options!", self.name, instance)
             options = {None: None}
-        # check whether options have changed w.r.t. last time and emit a signal in that case
+        # check whether options keys have changed w.r.t. last time and emit a signal in that
+        # case. Also create a list of valid options in the parent module called
+        # self.name+'_options'.
         if instance is not None:
             try:
-                lastoptions = getattr(instance, '_' + self.name + '_lastoptions')
+                lastoptions = getattr(instance, '_' + self.name + '_options')
             except AttributeError:
                 lastoptions = None
             if options != lastoptions:
-                setattr(instance, '_' + self.name + '_lastoptions', options)
+                setattr(instance, '_' + self.name + '_options', options)
+                # save the keys for the user convenience
+                setattr(instance, self.name + '_options', options.keys())
                 instance._signal_launcher.change_options.emit(self.name, list(options))
         # return the actual options
         return options
@@ -906,6 +910,7 @@ class SelectProperty(BaseProperty):
         """
         setattr(instance, '_' + self.name + '_' + 'options', new_options)
         # refresh default options in case options(None) is called (no instance in argument)
+        # this also triggers the signal emission in the method options()
         self.default_options = self.options(instance)
 
     def validate_and_normalize(self, obj, value):

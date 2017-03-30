@@ -1,7 +1,7 @@
 import time
 from .dsp import all_inputs, dsp_addr_base, InputSelectRegister
 from ..acquisition_module import AcquisitionModule
-from ..async_utils import MainThreadTimer, PyrplFuture
+from ..async_utils import MainThreadTimer, PyrplFuture, sleep
 from ..pyrpl_utils import sorted_dict
 from ..attributes import *
 from ..modules import HardwareModule
@@ -32,8 +32,6 @@ class DurationProperty(SelectProperty):
 
     def validate_and_normalize(self, obj, value):
         # gets next-higher value
-        value = float(value)
-
         value = float(value)
         options = self.options(obj).keys()
         try:
@@ -153,6 +151,7 @@ class ContinuousRollingFuture(PyrplFuture):
         "_run_continuous"
         """
         pass
+
 
 class Scope(HardwareModule, AcquisitionModule):
     addr_base = 0x40100000
@@ -346,7 +345,6 @@ class Scope(HardwareModule, AcquisitionModule):
         self._trigger_delay_memory = 0
         super(Scope, self)._init_module()  # _init_module of AcquisitionModule
 
-
     def _ownership_changed(self, old, new):
         """
         If the scope was in continuous mode when slaved, it has to stop!!
@@ -415,7 +413,7 @@ class Scope(HardwareModule, AcquisitionModule):
     def wait_for_pretrigger(self):
         """ sleeps until scope trigger is ready (buffer has enough new data)"""
         while not self.pretrig_ok:
-            time.sleep(0.001)
+            sleep(0.001)
 
     def curve_ready(self):
         """
@@ -426,7 +424,9 @@ class Scope(HardwareModule, AcquisitionModule):
 
     def _curve_acquiring(self):
         """
-        Returns True if data is in the process of being acquired
+        Returns True if data is in the process of being acquired, i.e.
+        waiting for trigger event or for acquisition of data after
+        trigger event.
         """
         return (self._trigger_armed or self._trigger_delay_running) \
             and self._setup_called
@@ -523,8 +523,7 @@ class Scope(HardwareModule, AcquisitionModule):
                               (1, self.ch2_active)]:
             if active:
                 data = datas[index]
-                to_discard = (
-                                 wp1 - wp0) % self.data_length  # remove
+                to_discard = (wp1 - wp0) % self.data_length  # remove
                 #  data that have been affected during acq.
                 data = np.roll(data, self.data_length - wp0)[
                        to_discard:]
