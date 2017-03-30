@@ -81,6 +81,7 @@ class TestScope(TestPyrpl):
         assert not self.data_changing()
 
         self.r.asg1.frequency = 1e5
+        self.r.asg1.setup()  # asg.setup() must be called to start the trigger emission
         assert self.data_changing()
 
         self.r.scope.stop()
