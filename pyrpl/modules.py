@@ -419,7 +419,10 @@ class Module(with_metaclass(ModuleMetaClass, object)):
         """
          Load and sets all setup attributes from config file
         """
-        if self.c is not None:  # self.c = None switches off loading states (e.g. for ModuleManagers)
+        # self.c = None switches off loading states (e.g. for ModuleManagers).
+        # First part of the if avoids creating an empty branch in the
+        # config file at the call of this function at startup.
+        if (self.name in self.parent.c) and (self.c is not None):
             # pick those elements of the config state that are setup_attributes
             dic = {k: v for k, v in self.c._data.items() if k in self._setup_attributes}
             # set those elements
@@ -446,7 +449,11 @@ class Module(with_metaclass(ModuleMetaClass, object)):
         """
         Returns the names of all saved states of the module.
         """
-        return list(self._states._keys())
+        # the if avoids creating an empty states section for all modules
+        if (self.name + "_states") in self.parent.c._root._data:
+            return list(self._states._keys())
+        else:
+            return []
 
     def save_state(self, name=None):
         """

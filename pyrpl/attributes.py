@@ -860,7 +860,7 @@ class SelectProperty(BaseProperty):
                            "is None. ", self.name)
         return default
 
-    def options(self, instance):
+    def options(self, instance=None):
         """
         options are evaluated at run time. options may be callable with instance as optional argument.
         """
@@ -905,7 +905,8 @@ class SelectProperty(BaseProperty):
           - If the current value is not in the new_options, then value is changed to some available option
         """
         setattr(instance, '_' + self.name + '_' + 'options', new_options)
-        self.options(instance)
+        # refresh default options in case options(None) is called (no instance in argument)
+        self.default_options = self.options(instance)
 
     def validate_and_normalize(self, obj, value):
         options = self.options(obj)
@@ -983,8 +984,9 @@ class ProxyProperty(BaseProperty):
                  path_to_target):
         self.path_to_target = path_to_target
         lastpart = path_to_target.split('.')[-1]
-        self.path_to_target_descriptor = path_to_target[:-len(lastpart)] \
-                                         + '__class__.' \
+        self.path_to_target_module = path_to_target[:-(len(lastpart)+1)] #+1 for the dot
+        self.path_to_target_descriptor = self.path_to_target_module \
+                                         + '.__class__.' \
                                          + lastpart
 
     def __get__(self, instance, owner):
@@ -1004,7 +1006,31 @@ class ProxyProperty(BaseProperty):
         except AttributeError:
             return recursive_getattr(self.instance, self.path_to_target_descriptor + '.' + item)
 
-    #def __setattr__(self, item, value):
+    # special functions for SelectProperties, which transform the argument 'obj' from the hosting module
+    # to the target module to avoid redundant saving of options
+    def options(self, obj):
+        if obj is None:
+            obj = self.instance
+        module = recursive_getattr(obj, self.path_to_target_module)
+        return recursive_getattr(obj, self.path_to_target_descriptor + '.options')(module)
+
+    def change_options(self, obj, new_options):
+        if obj is None:
+            obj = self.instance
+        module = recursive_getattr(obj, self.path_to_target_module)
+        return recursive_getattr(obj, self.path_to_target_descriptor + '.change_options')(module, new_options)
+
+    def __repr__(self):
+        try:
+            targetdescr = " (target: " \
+                + recursive_getattr(self.instance,
+                                    self.path_to_target_descriptor).__repr__() \
+                + ")"
+        except:
+            targetdescr = ""
+        return super(ProxyProperty, self).__repr__() + targetdescr
+
+            #def __setattr__(self, item, value):
     #    try:
     #        super(AttributeProperty, self).__setattr__(item, value)
     #    except AttributeError:  # this is probably silly
