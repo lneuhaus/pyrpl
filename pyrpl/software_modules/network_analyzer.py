@@ -115,7 +115,7 @@ class NaCurveFuture(PyrplFuture):
         self.current_avg  = 1
         self.n_points = self._module.points
         self._paused = True
-        self._fut = None
+        self._fut = None # placeholder for next point future
         self.never_started = True
         super(NaCurveFuture, self).__init__()
         self._module._start_acquisition()
@@ -130,7 +130,8 @@ class NaCurveFuture(PyrplFuture):
             self.start()
 
     def start(self):
-        self._module.iq.output_direct = self._module.output_direct
+        # self._module.iq.output_direct = self._module.output_direct
+        self._module.iq.amplitude = self._module.amplitude
         if self.never_started:
             self._module._emit_signal_by_name("clear_curve")
             self.never_started = False
@@ -143,7 +144,8 @@ class NaCurveFuture(PyrplFuture):
         self._fut.add_done_callback(self._new_point_arrived)
 
     def pause(self):
-        self._module.iq.output_direct = 'off'  #  switch off iq when paused
+        #self._module.iq.output_direct = 'off'  #  switch off iq when paused
+        self._module.iq.amplitude = 0
         self._paused = True
         if self._fut is not None:
             self._fut.cancel()
@@ -208,8 +210,8 @@ class NaRunFuture(NaCurveFuture):
                                           autostart=False)
         self._run_continuous = False
 
-    def pause(self):
-        self._paused = True
+    #def pause(self):
+    #    self._paused = True
 
     def _add_point(self, point):
         y, amp = point

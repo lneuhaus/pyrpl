@@ -30,30 +30,30 @@ class TestNA(TestPyrpl):
             time.sleep(0.1)
             APP.processEvents()
             data = copy.deepcopy(self.na.data_avg)
-            time.sleep(.3)
+            time.sleep(.001)
 
             for i in range(1000):
+                time.sleep(.001)
                 APP.processEvents()
 
             return (data != self.na.data_avg).any()
 
         self.na.setup(start_freq=1000, stop_freq=1e4, rbw=1000, points=10000)
-        for i in range(1000):
+        for i in range(10000):
             APP.processEvents()
 
         self.na.single_async()
         assert data_changing()
 
         current_point = self.na.current_point
-        self.na.rbw = 100  # change some setup_attribute
+        self.na.rbw = 10000  # change some setup_attribute
         assert self.na.current_point < current_point # make sure the run was
         #  restarted
 
         self.na.continuous()
         time.sleep(0.1)
-        for i in range(100):
+        for i in range(1000):
             APP.processEvents()
-
 
         assert data_changing()
         self.na.stop()  # do not let the na running or other tests might be
@@ -151,13 +151,13 @@ class TestNA(TestPyrpl):
         APP.processEvents()
         self.na.pause()
         APP.processEvents()
-        assert self.na.iq.output_direct=='off'
+        assert self.na.iq.amplitude==0
         self.na.continuous()
         APP.processEvents()
-        assert self.na.iq.output_direct=='out1'
+        assert self.na.iq.amplitude!=0
         self.na.stop()
         APP.processEvents()
-        assert self.na.iq.output_direct=='off'
+        assert self.na.iq.amplitude==0
 
     def test_iq_autosave_active(self):
         """
