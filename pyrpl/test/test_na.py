@@ -173,7 +173,6 @@ class TestNA(TestPyrpl):
         even in running mode.
         :return:
         """
-
         self.na.setup(start_freq=1e5,
                       stop_freq=2e5,
                       rbw=100000,
