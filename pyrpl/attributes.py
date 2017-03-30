@@ -989,6 +989,9 @@ class ProxyProperty(BaseProperty):
                                          + '.__class__.' \
                                          + lastpart
 
+    def connect_signals(self, instance):
+        pass
+
     def __get__(self, instance, owner):
         if instance is None:
             return self
@@ -1029,26 +1032,6 @@ class ProxyProperty(BaseProperty):
         except:
             targetdescr = ""
         return super(ProxyProperty, self).__repr__() + targetdescr
-
-            #def __setattr__(self, item, value):
-    #    try:
-    #        super(AttributeProperty, self).__setattr__(item, value)
-    #    except AttributeError:  # this is probably silly
-    #        recursive_setattr(self.instance, self.path_to_target_descriptor + '.' + item, value)
-
-    # def __getattribute__(self, item):
-    #     exclude = ["path_to_target", "instance"]
-    #     if item in exclude or not hasattr(self, 'instance'):
-    #         return super(AttributeProperty, self).__getattribute__(item)
-    #     else:
-    #         return recursive_getattr(self.instance, self.path_to_target + '.' + item)
-    #
-    # def __setattr__(self, item, value):
-    #     exclude = ["path_to_target", "instance"]
-    #     if item in exclude or not hasattr(self, 'instance'):
-    #         super(AttributeProperty, self).__setattr__(item, value)
-    #     else:
-    #         recursive_setattr(self.instance, self.path_to_target+'.'+item, value)
 
 
 class ModuleAttribute(BaseAttribute):
