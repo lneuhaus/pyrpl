@@ -91,21 +91,20 @@ class Loop(Module):
         """ put your destruction routine here"""
         pass
 
-
-class LockboxLoop(Loop, LockboxModule):
-    # inheriting from LockboxModule essentially creates a lockbox property
-    # that refers to the lockbox
+    # useful helpers for precise timing, e.g. of the trigger module
     @property
     def fpga_time(self):
         """ current FPGA time in s since startup """
-        return 8e-9 * self.pyrpl.rp.scope.current_timestamp / \
-                       self.pyrpl.rp.frequency_correction \
-                       - self.loop_start_time
+        return 8e-9 * self.pyrpl.rp.trig.current_timestamp / \
+               self.pyrpl.rp.frequency_correction \
+               - self.loop_start_time
 
     @property
     def trigger_time(self):
-        """ FPGA time in s when trigger even occured (same frame of reference as self.time())"""
-        return 8e-9 * self.pyrpl.rp.scope.trigger_timestamp / self.pyrpl.rp.frequency_correction \
+        """ FPGA time in s when trigger even occured (same frame of reference
+        as self.time())"""
+        return 8e-9 * self.pyrpl.rp.trig.trigger_timestamp / \
+               self.pyrpl.rp.frequency_correction \
                - self.loop_start_time
 
 
@@ -140,7 +139,7 @@ class PlotWindow(object):
         self.win.close()
 
 
-class PlotLoop(LockboxLoop):
+class PlotLoop(Loop):
     def __init__(self, *args, **kwargs):
         try:
             plot = kwargs.pop("plot")
@@ -158,7 +157,3 @@ class PlotLoop(LockboxLoop):
     def _clear(self):
         self.plot.close()
         super(PlotLoop, self)._clear()
-
-
-class LockboxPlotLoop(PlotLoop, LockboxLoop):
-    pass

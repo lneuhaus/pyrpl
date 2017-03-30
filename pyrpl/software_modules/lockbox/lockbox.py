@@ -1,17 +1,17 @@
 from __future__ import division
-from ...modules import Module, SignalLauncher
-from ...attributes import SelectProperty, BoolProperty, StringProperty
-from ...module_attributes import ModuleProperty, ModuleListProperty, ModuleDictProperty
+from collections import OrderedDict
+from PyQt4 import QtCore
+from ...modules import SignalLauncher
+from ...module_attributes import ModuleListProperty
 from .input import *
 from .output import *
 from ...widgets.module_widgets import LockboxWidget
-from ...pyrpl_utils import get_unique_name_list_from_class_list, all_subclasses
+from ...pyrpl_utils import all_subclasses
 from ...async_utils import sleep
 from .stage import Stage
 from . import LockboxModule, LockboxModuleDictProperty
-from collections import OrderedDict
-from PyQt4 import QtCore
-from ...widgets.module_widgets.lockbox_widget import LockboxSequenceWidget, LockboxStageWidget
+from . import LockboxLoop, LockboxPlotLoop
+from ...widgets.module_widgets.lockbox_widget import LockboxSequenceWidget
 
 
 def all_classnames():
