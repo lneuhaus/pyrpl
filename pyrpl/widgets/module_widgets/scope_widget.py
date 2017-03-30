@@ -40,10 +40,12 @@ class ScopeWidget(ModuleWidget):
         self.layout_ch1.addWidget(aws['ch1_active'])
         self.layout_ch1.addWidget(aws['input1'])
         self.layout_ch1.addWidget(aws['threshold_ch1'])
+        aws['ch1_active'].setStyleSheet("color: %s"%self.ch_col[0])
 
         self.attribute_layout.removeWidget(aws['ch2_active'])
         self.attribute_layout.removeWidget(aws['input2'])
         self.attribute_layout.removeWidget(aws['threshold_ch2'])
+        aws['ch2_active'].setStyleSheet("color: %s"%self.ch_col[1])
 
         self.layout_ch2.addWidget(aws['ch2_active'])
         self.layout_ch2.addWidget(aws['input2'])

@@ -86,10 +86,6 @@ class TestNA(TestPyrpl):
                       rbw=1e6,
                       points=1000,
                       avg=1)
-
-        #for i in range(1000): # we should maybe put that in teardown(), setup(), or even pyrpl.__init__()
-        #    APP.processEvents() # make sure no old events are going to screw up the timing test
-
         tic = time.time()
         self.na.single()
         APP.processEvents()
@@ -98,7 +94,11 @@ class TestNA(TestPyrpl):
             APP.processEvents()
         duration = (time.time() - tic)/self.na.points
 
-        assert duration < 1.*self.duration_per_point, duration
+        assert duration < 1.*self.duration_per_point, \
+            "Na should take at most %.1f ms per point, but actually needs " \
+            "%.1f ms. This won't compromise functionality but it is " \
+            "recommended that establish a more direct ethernet connection" \
+            "to you Red Pitaya module" % (self.duration_per_point*1000.0, duration*1000.0)
         # 2 s for 200 points with gui display
         # This is much slower in nosetests than in real life (I get <3 s).
         # Don't know why.

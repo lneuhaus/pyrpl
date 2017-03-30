@@ -53,8 +53,6 @@ class TestScope(TestPyrpl):
     def test_scope_rolling_mode_and_running_state_update(self):
         """ makes sure scope rolling_mode and running states are correctly
         setup when something is changed """
-
-
         self.r.asg1.frequency = 0
         self.r.scope.setup_attributes = dict(duration=0.5,
                            trigger_source='asg1',
@@ -150,7 +148,6 @@ class TestScope(TestPyrpl):
         Make sure the scope returns to rolling mode after being freed
         :return:
         """
-
         self.pyrpl.rp.scope.setup(duration=0.5,
                             trigger_delay=0.,
                             trigger_source='immediately',
@@ -182,7 +179,6 @@ class TestScope(TestPyrpl):
         even in running mode.
         :return:
         """
-
         for rolling_mode in (True, False):
             self.pyrpl.rp.scope.setup(duration=0.005,
                                       trigger_delay=0.,
