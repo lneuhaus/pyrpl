@@ -28,6 +28,14 @@ pyrpl.test.test_hardware_modules.test_scope_asg_ams module
     :undoc-members:
     :show-inheritance:
 
+pyrpl.test.test_hardware_modules.test_trig module
+-------------------------------------------------
+
+.. automodule:: pyrpl.test.test_hardware_modules.test_trig
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 
 Module contents
 ---------------

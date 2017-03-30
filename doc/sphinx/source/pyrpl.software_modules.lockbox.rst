@@ -7,10 +7,17 @@ Subpackages
 .. toctree::
 
     pyrpl.software_modules.lockbox.models
-    pyrpl.software_modules.lockbox.signals
 
 Submodules
 ----------
+
+pyrpl.software_modules.lockbox.input module
+-------------------------------------------
+
+.. automodule:: pyrpl.software_modules.lockbox.input
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
 pyrpl.software_modules.lockbox.lockbox module
 ---------------------------------------------
@@ -20,10 +27,10 @@ pyrpl.software_modules.lockbox.lockbox module
     :undoc-members:
     :show-inheritance:
 
-pyrpl.software_modules.lockbox.loop module
-------------------------------------------
+pyrpl.software_modules.lockbox.output module
+--------------------------------------------
 
-.. automodule:: pyrpl.software_modules.lockbox.loop
+.. automodule:: pyrpl.software_modules.lockbox.output
     :members:
     :undoc-members:
     :show-inheritance:

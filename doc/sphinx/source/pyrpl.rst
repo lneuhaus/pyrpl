@@ -9,7 +9,6 @@ Subpackages
     pyrpl.hardware_modules
     pyrpl.software_modules
     pyrpl.test
-    pyrpl.trash
     pyrpl.widgets
 
 Submodules
@@ -55,14 +54,6 @@ pyrpl.errors module
     :undoc-members:
     :show-inheritance:
 
-pyrpl.fitting module
---------------------
-
-.. automodule:: pyrpl.fitting
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 pyrpl.memory module
 -------------------
 
@@ -87,14 +78,6 @@ pyrpl.modules module
     :undoc-members:
     :show-inheritance:
 
-pyrpl.monitor_client module
----------------------------
-
-.. automodule:: pyrpl.monitor_client
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 pyrpl.pyrpl module
 ------------------
 
@@ -115,6 +98,14 @@ pyrpl.redpitaya module
 ----------------------
 
 .. automodule:: pyrpl.redpitaya
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pyrpl.redpitaya_client module
+-----------------------------
+
+.. automodule:: pyrpl.redpitaya_client
     :members:
     :undoc-members:
     :show-inheritance:

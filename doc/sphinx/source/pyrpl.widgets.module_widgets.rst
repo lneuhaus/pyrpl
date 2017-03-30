@@ -20,6 +20,14 @@ pyrpl.widgets.module_widgets.base_module_widget module
     :undoc-members:
     :show-inheritance:
 
+pyrpl.widgets.module_widgets.curve_viewer_widget module
+-------------------------------------------------------
+
+.. automodule:: pyrpl.widgets.module_widgets.curve_viewer_widget
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 pyrpl.widgets.module_widgets.iir_widget module
 ----------------------------------------------
 
@@ -64,6 +72,14 @@ pyrpl.widgets.module_widgets.pid_widget module
 ----------------------------------------------
 
 .. automodule:: pyrpl.widgets.module_widgets.pid_widget
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pyrpl.widgets.module_widgets.pyrpl_config_widget module
+-------------------------------------------------------
+
+.. automodule:: pyrpl.widgets.module_widgets.pyrpl_config_widget
     :members:
     :undoc-members:
     :show-inheritance:

@@ -99,6 +99,14 @@ pyrpl.test.test_ownership module
     :undoc-members:
     :show-inheritance:
 
+pyrpl.test.test_proxyproperty module
+------------------------------------
+
+.. automodule:: pyrpl.test.test_proxyproperty
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 pyrpl.test.test_pyqtgraph_benchmark module
 ------------------------------------------
 

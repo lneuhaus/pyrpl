@@ -79,12 +79,14 @@ class BaseAttribute(object):
 
     def __set__(self, obj, value):
         """
-        This function is called for any BaseAttribute, such that all the gui updating, and saving to disk is done
-        automatically. The real work is delegated to self.set_value.
+        This function is called for any BaseAttribute, such that all the gui
+        updating, and saving to disk is done automatically. The real work is
+        delegated to self.set_value.
         """
-        value = self.validate_and_normalize(obj, value)  # self.to_serializable(value)
-        self.set_value(obj, value)  # sets the value internally
-        self.value_updated(obj, value)  # lauch signal and update config and callback
+        value = self.validate_and_normalize(obj, value)
+        self.set_value(obj, value)
+        # save new value in config, lauch signal and possibly call setup()
+        self.value_updated(obj, value)
 
     def validate_and_normalize(self, obj, value):
         """

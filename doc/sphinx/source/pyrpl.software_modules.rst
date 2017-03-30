@@ -11,6 +11,22 @@ Subpackages
 Submodules
 ----------
 
+pyrpl.software_modules.curve_viewer module
+------------------------------------------
+
+.. automodule:: pyrpl.software_modules.curve_viewer
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pyrpl.software_modules.loop module
+----------------------------------
+
+.. automodule:: pyrpl.software_modules.loop
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 pyrpl.software_modules.module_managers module
 ---------------------------------------------
 
@@ -27,18 +43,18 @@ pyrpl.software_modules.network_analyzer module
     :undoc-members:
     :show-inheritance:
 
-pyrpl.software_modules.spectrum_analyzer module
------------------------------------------------
+pyrpl.software_modules.pyrpl_config module
+------------------------------------------
 
-.. automodule:: pyrpl.software_modules.spectrum_analyzer
+.. automodule:: pyrpl.software_modules.pyrpl_config
     :members:
     :undoc-members:
     :show-inheritance:
 
-pyrpl.software_modules.spectrum_analyzer_noiq module
-----------------------------------------------------
+pyrpl.software_modules.spectrum_analyzer module
+-----------------------------------------------
 
-.. automodule:: pyrpl.software_modules.spectrum_analyzer_noiq
+.. automodule:: pyrpl.software_modules.spectrum_analyzer
     :members:
     :undoc-members:
     :show-inheritance:

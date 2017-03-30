@@ -153,7 +153,7 @@ class RedPitaya(object):
                           " directory of pyrpl! Current dirname: "
                            +self.parameters['dirname'])
         # provide option to simulate a RedPitaya
-        if self.parameters['hostname'] == '_FAKE_REDPITAYA_':
+        if self.parameters['hostname'] in ['_FAKE_REDPITAYA_', '_FAKE_']:
             self.startdummyclient()
             self.logger.warning("Simulating RedPitaya because (hostname=="
                                 +self.parameters["hostname"]+"). Incomplete "
@@ -205,15 +205,14 @@ class RedPitaya(object):
                 else:  # even multiple attempts did not work
                     raise SSHException("Could not establish an ssh "
                                        "connection to hostname %s on port %s "
-                                       "with username % and passwort ****!"
-                                       "%s" % (self.parameters["hostname"],
-                                             self.parameters["sshport"],
-                                             self.parameters["user"]))
-                    return False
-            else:  # everything went well, connection is established
-                # also establish scp connection
-                self.ssh.startscp()
-                return True
+                                       "with username %s and passwort ****!"
+                                       % (self.parameters["hostname"],
+                                          self.parameters["sshport"],
+                                          self.parameters["user"]))
+            # everything went well, connection is established
+            # also establish scp connection
+            self.ssh.startscp()
+            return True
 
     def switch_led(self, gpiopin=0, state=False):
         self.ssh.ask("echo " + str(gpiopin) + " > /sys/class/gpio/export")

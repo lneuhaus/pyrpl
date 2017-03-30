@@ -1111,7 +1111,6 @@ class SelectAttributeWidget(BaseAttributeWidget):
                 raise e1
             else:
                 setattr(self.module, self.name, options[index])
-
         self.value_changed.emit()
 
     def _update(self, new_value):
