@@ -219,7 +219,7 @@ class RunningStateProperty(SelectProperty):
     # (with a call_setup=True option) because the precise actions to be
     # taken depend on the previous state of running_state. Such a behavior
     # would not be straightforward to implement in _setup()
-    
+
     def set_value(self, obj, val):
         """
         This is the master property: changing this value triggers all the logic
@@ -297,8 +297,7 @@ class AcquisitionModule(Module):
      - curve_name: name of the curve to create upon saving
      - avg: number of averages in single (not to confuse with averaging per
      point)
-     - data_last: array containing the last curve acquired
-     - data_averaged: array containing the current averaged curve
+     - data_avg: array containing the current averaged curve
      - current_avg: current number of averages
     """
 

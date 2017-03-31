@@ -57,7 +57,10 @@ from pylab import *
 #        if value:
 #            instance.span = instance.span
 #        return value
-
+class DisplayUnitProperty(SelectProperty):
+    def set_value(self, obj, value):
+        super(DisplayUnitProperty, self).set_value(obj, value)
+        obj._emit_signal_by_name('autoscale')
 
 class CenterAttribute(FrequencyProperty):
     def get_value(self, instance):
@@ -113,7 +116,7 @@ class SpectrumAnalyzer(AcquisitionModule):
                        "points",
                        "window",
                        "acbandwidth",
-                       "unit"]
+                       "display_unit"]
     _setup_attributes = _gui_attributes
 
     # numerical values
@@ -126,8 +129,16 @@ class SpectrumAnalyzer(AcquisitionModule):
     # correct voltage amplitude of a coherent signal (linear scale)
     # more units can be added as needed, but need to guarantee that conversion
     # is done as well (see implementation in lockbox for example)
-    unit = SelectProperty(default="Vpk",
-                          options=["Vpk"],
+    display_unit = DisplayUnitProperty(default="Vpk^2",
+                          options=["Vpk^2",
+                                   "dB(Vpk^2)",
+                                   "Vpk",
+                                   "Vrms^2",
+                                   "dB(Vrms^2)",
+                                   "Vrms",
+                                   "Vrms^2/Hz",
+                                   "dB(Vrms^2/Hz)",
+                                   "Vrms/sqrt(Hz)"],
                           ignore_errors=True)
 
     # select_attributes list of options
@@ -170,6 +181,10 @@ class SpectrumAnalyzer(AcquisitionModule):
         super(SpectrumAnalyzer, self)._init_module()
         self.rp = self.pyrpl.rp
 
+    @property
+    def rbw(self):
+        # There is probably some multiples of pi missing...
+        return 1./self.duration
 
     @property
     def iq(self):
@@ -275,6 +290,33 @@ class SpectrumAnalyzer(AcquisitionModule):
         # conversion to dBm scale
         return 10.0 * np.log10(data) + 30.0
 
+    def data_to_display_unit(self, data, rbw):
+        """
+        Converts the array 'data', assumed to be in 'Vpk^2', into display
+        units.
+        Since some units require a rbw for the conversion, it is an explicit
+        argument of the function.
+        """
+        if self.display_unit=='Vpk^2':
+            return data
+        if self.display_unit == 'dB(Vpk^2)':
+            return 10 * log10(data)
+        if self.display_unit=='Vpk':
+            return sqrt(data)
+
+        if self.display_unit=='Vrms^2':
+            return data/2
+        if self.display_unit=='dB(Vrms^2)':
+            return 10*log10(data/2)
+        if self.display_unit == 'Vrms':
+            return sqrt(data) / sqrt(2)
+
+        if self.display_unit=='Vrms^2/Hz':
+            return data /2 / rbw
+        if self.display_unit=='dB(Vrms^2/Hz)':
+            return 10 * log10(data / 2 / rbw)
+        if self.display_unit == 'Vrms/sqrt(Hz)':
+            return sqrt(data)/sqrt(2)/rbw
     # Concrete implementation of AcquisitionModule methods
     # ----------------------------------------------------
 
@@ -282,12 +324,18 @@ class SpectrumAnalyzer(AcquisitionModule):
     def data_x(self):
         return self.frequencies
 
+    def _new_run_future(self):
+        # Redefined because a SpecAnRun needs to know its rbw
+        super(SpectrumAnalyzer, self)._new_run_future()
+        self._run_future.rbw = self.rbw
+        return
+
     def _get_curve(self):
         """
         Simply pack together channel 1 and channel 2 curves in a numpy array
         """
         res = scipy.fftpack.fftshift(np.abs(scipy.fftpack.fft(
-            self._get_filtered_iq_data())) ** 2)[self.useful_index()]
+            self._get_filtered_iq_data()))**2)[self.useful_index()]
         if not self.running_state in ["running_single", "running_continuous"]:
             self.pyrpl.scopes.free(self.scope)
         return res
