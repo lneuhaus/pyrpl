@@ -215,6 +215,11 @@ class RunningStateProperty(SelectProperty):
       - stopped: acquisition interrupted, averaging will restart at next
       call of running_continuous.
     """
+    #  Changing running_state is handled here instead of inside _setup()
+    # (with a call_setup=True option) because the precise actions to be
+    # taken depend on the previous state of running_state. Such a behavior
+    # would not be straightforward to implement in _setup()
+    
     def set_value(self, obj, val):
         """
         This is the master property: changing this value triggers all the logic
