@@ -79,7 +79,7 @@ class TestNA(TestPyrpl):
             "recommended that establish a more direct ethernet connection" \
             "to you Red Pitaya module" % (maxduration*1000.0, duration*1000.0)
 
-        # test na speed with gui. Allow twice as long
+        # test na speed with gui.
         self.na.setup(start_freq=1e3,
                       stop_freq=1e4,
                       rbw=1e6,
@@ -92,9 +92,8 @@ class TestNA(TestPyrpl):
         while(self.na.running_state == 'running_single'):
             APP.processEvents()
         duration = (time.time() - tic)/self.na.points
-
+        #Allow twice as long with gui
         maxduration *= 2
-
         assert duration < maxduration, \
             "Na gui should take at most %.1f ms per point, but actually " \
             "needs %.1f ms. This won't compromise functionality but it is " \

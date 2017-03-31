@@ -50,9 +50,13 @@ class TestPyrpl(object):
     def test_read_write_time(self):
         maxtime = 3e-3 # maximum time per read/write in seconds
         assert self.read_time < maxtime, \
-            "read operation is very slow: %e s" % self.read_time
+            "read operation is very slow: %e s. It is highly recommended " \
+            "that you improve the network connection to your Red Pitaya " \
+            "device. " % self.read_time
         assert self.write_time < maxtime, \
-            "write operation is very slow: %e s" % self.write_time
+            "write operation is very slow: %e s. It is highly recommended " \
+            "that you improve the network connection to your Red Pitaya " \
+            "device. " % self.write_time
 
     @classmethod
     def tearDownAll(cls):
