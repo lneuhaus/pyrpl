@@ -1,5 +1,4 @@
-
-class UnecpectedPyrplError(Exception):
+class UnexpectedPyrplError(Exception):
     """Raise when an unexpected error occurs that should be reported"""
     # color codes
     STARTC = "\x1b[35m"  # purple
@@ -14,7 +13,20 @@ class UnecpectedPyrplError(Exception):
         help us improve the documentation. Thanks! """ + ENDC
     def __init__(self, message="", *args):
         self.message = message + self.pyrpl_error_message
-        super(UnecpectedPyrplError, self).__init__(self.message, *args)
+        super(UnexpectedPyrplError, self).__init__(self.message, *args)
+
+
+class ExpectedPyrplError(Exception):
+    """Raise when an unexpected error occurs that should be reported"""
+    # color codes
+    STARTC = "\x1b[35m"  # purple
+    ENDC = "\x1b[0m"  # normal
+    pyrpl_error_message = STARTC + """\n\n
+        An expected error occured in PyRPL. Please follow the instructions
+        in this error message and retry! """ + ENDC
+    def __init__(self, message="", *args):
+        self.message = message + self.pyrpl_error_message
+        super(ExpectedPyrplError, self).__init__(self.message, *args)
 
 
 class TimeoutError(ValueError):

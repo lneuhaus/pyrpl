@@ -3,8 +3,10 @@
 import logging
 logger = logging.getLogger(name=__name__)
 import os
-from .. import Pyrpl, user_config_dir
+from .. import Pyrpl, user_config_dir, global_config
 from ..pyrpl_utils import time
+from ..errors import UnexpectedPyrplError, ExpectedPyrplError
+
 
 class TestPyrpl(object):
     """ base class for all pyrpl tests """
@@ -48,15 +50,22 @@ class TestPyrpl(object):
         cls.communication_time = (cls.read_time + cls.write_time)/2.0
 
     def test_read_write_time(self):
-        maxtime = 3e-3 # maximum time per read/write in seconds
+        # maximum time per read/write in seconds
+        try:
+            maxtime = global_config.test.max_communication_time
+        except:
+            raise ExpectedPyrplError("Error with global config file. "
+                                       "Please delete the file %s and retry!"
+                                       % os.path.join(user_config_dir,
+                                                      'global_config.yml'))
         assert self.read_time < maxtime, \
-            "read operation is very slow: %e s. It is highly recommended " \
-            "that you improve the network connection to your Red Pitaya " \
-            "device. " % self.read_time
+            "Read operation is very slow: %e s (expected < %e s). It is " \
+            "highly recommended that you improve the network connection to " \
+            "your Red Pitaya device. " % (self.read_time, maxtime)
         assert self.write_time < maxtime, \
-            "write operation is very slow: %e s. It is highly recommended " \
-            "that you improve the network connection to your Red Pitaya " \
-            "device. " % self.write_time
+            "Write operation is very slow: %e s (expected < %e s). It is " \
+            "highly recommended that you improve the network connection to " \
+            "your Red Pitaya device. " % (self.read_time, maxtime)
 
     @classmethod
     def tearDownAll(cls):

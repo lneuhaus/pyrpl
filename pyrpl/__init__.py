@@ -27,7 +27,7 @@ import os
 try:  # first try from environment variable
     user_dir = os.environ["PYRPL_USER_DIR"]
 except KeyError:  # otherwise, try ~/pyrpl_user_dir (where ~ is the user's home dir)
-    user_dir = os.path.expanduser('~/pyrpl_user_dir')
+    user_dir = os.path.join(os.path.expanduser('~'), 'pyrpl_user_dir')
 
 # make variable directories
 user_config_dir = os.path.join(user_dir, 'config')
