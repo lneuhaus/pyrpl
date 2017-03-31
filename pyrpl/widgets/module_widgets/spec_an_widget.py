@@ -139,7 +139,8 @@ class SpecAnWidget(ModuleWidget):
         Displays all active channels on the graph.
         """
         self.curve.setData(datas[0],
-                           self.module.data_to_dBm(datas[1]))
+                           self.module.data_to_display_unit(datas[1],
+                                                self.module._run_future.rbw))
         self.curve.setVisible(True)
         #else:
         #    self.curve.setVisible(False)
