@@ -2,11 +2,11 @@
 The Iir widget allows to dynamically select zeros and poles of the iir filter
 """
 from .base_module_widget import ModuleWidget
-
+from collections import OrderedDict
 from PyQt4 import QtCore, QtGui
 import pyqtgraph as pg
 import numpy as np
-
+import sys
 
 APP = QtGui.QApplication.instance()
 
@@ -54,94 +54,69 @@ class IirGraphWidget(QtGui.QGroupBox):
         self.win_phase = MyGraphicsWindow(title="Phase", parent_widget=self)
         # self.proxy = pg.SignalProxy(self.win.scene().sigMouseClicked,
         # rateLimit=60, slot=self.mouse_clicked)
-        self.plot_item = self.win.addPlot(title="Magnitude (dB)")
-        self.plot_item_phase = self.win_phase.addPlot(title="Phase (deg)")
-        self.plot_item_phase.setXLink(self.plot_item)
+        self.mag = self.win.addPlot(title="Magnitude (dB)")
+        self.phase = self.win_phase.addPlot(title="Phase (deg)")
+        self.phase.setXLink(self.mag)
         # self.proxy_phase = pg.SignalProxy(self.win_phase.scene().sigMouseClicked,
         # rateLimit=60, slot=self.mouse_clicked)
 
-        self.curve = self.plot_item.plot(pen='y')
-        self.curve_phase = self.plot_item_phase.plot(pen=None, symbol='o',
-                                                     symbolSize=1)
+        # we will plot the following curves:
+        # poles, zeros -> large dots and crosses
+        # design (designed filter) - yellow line
+        # measured filter with na - orange dots <-
+        # data (measruement data) - green line
+        # data x design (or data/design) - red line
+        self.xlog = True
+        self.plots = OrderedDict()
+        # make lines
+        for name, style in [('data', dict(pen='g')),
+                            ('filter_design', dict(pen='y')),
+                            ('data_x_design', dict(pen='r'))]:
+            self.plots[name] = self.mag.plot(**style)
+            self.plots[name + "_phase"] = self.phase.plot(**style)
+            self.plots[name].setLogMode(xMode=self.xlog, yMode=None)
+            self.plots[name + '_phase'].setLogMode(xMode=self.xlog, yMode=None)
 
-        self.points_poles = pg.ScatterPlotItem(size=20,
-                                               symbol='x',
-                                               pen=pg.mkPen(None),
-                                               brush=pg.mkBrush(255, 0, 255, 120))
-        self.plot_item.addItem(self.points_poles)
-        self.points_poles_phase = pg.ScatterPlotItem(size=20,
-                                                     pen=pg.mkPen(None),
-                                                     symbol='x',
-                                                     brush=pg.mkBrush(255, 0, 255,
-                                                                      120))
-        self.plot_item_phase.addItem(self.points_poles_phase)
-
-        self.points_zeros = pg.ScatterPlotItem(size=20,
-                                               symbol='o',
-                                               pen=pg.mkPen(None),
-                                               brush=pg.mkBrush(255, 0, 255, 120))
-        self.plot_item.addItem(self.points_zeros)
-        self.points_zeros_phase = pg.ScatterPlotItem(size=20,
-                                                     pen=pg.mkPen(None),
-                                                     symbol='o',
-                                                     brush=pg.mkBrush(255, 0, 255,
-                                                                      120))
-        self.plot_item_phase.addItem(self.points_zeros_phase)
+        for name, style in [('filter_measurement', dict(symbol='o',
+                                                 size=10,
+                                                 pen='b')),
+                            ('zeros', dict(pen=pg.mkPen(None),
+                                           symbol='o',
+                                           size=20,
+                                           brush=pg.mkBrush(255, 0, 255, 120))),
+                            ('poles', dict(size=20,
+                                           symbol='x',
+                                           pen=pg.mkPen(None),
+                                           brush=pg.mkBrush(255, 0, 255,
+                                                            120))),
+                            # ('actpole', dict(size=30,
+                            #                symbol='x',
+                            #                pen='r',
+                            #                brush=pg.mkBrush(255, 0, 255,
+                            #                                 120))),
+                            # ('actzero', dict(size=30,
+                            #                symbol='o',
+                            #                pen='r',
+                            #                brush=pg.mkBrush(255, 0, 255,
+                            #                                 120)))
+                            ]:
+                item = pg.ScatterPlotItem(**style)
+                self.mag.addItem(item)
+                self.plots[name] = item
+                item = pg.ScatterPlotItem(**style)
+                self.phase.addItem(item)
+                self.plots[name+'_phase'] = item
+        # also set logscale for the xaxis
+        # make scatter plots
+        self.mag.setLogMode(x=self.xlog, y=None)
+        self.phase.setLogMode(x=self.xlog, y=None)
         self.layout.addWidget(self.win)
         self.layout.addWidget(self.win_phase)
-
-        # actual plotting parameters
-        self.frequencies = np.logspace(1, np.log10(5e6), 2000)
-        self.xlog = True
-        self.curve.setLogMode(xMode=self.xlog, yMode=None)
-        self.curve_phase.setLogMode(xMode=self.xlog, yMode=None)
-        self.plot_item.setLogMode(x=self.xlog, y=None)
-        self.plot_item_phase.setLogMode(x=self.xlog, y=None)
-        # update the plot
-        #self.update_plot()
         # connect signals
-        self.points_poles.sigClicked.connect(self.parent.select_pole)
-        self.points_poles_phase.sigClicked.connect(self.parent.select_pole)
-        self.points_zeros.sigClicked.connect(self.parent.select_zero)
-        self.points_zeros_phase.sigClicked.connect(self.parent.select_zero)
-
-    def update_plot(self):
-        aws = self.parent.attribute_widgets
-        tf = self.module.transfer_function(self.frequencies)
-        self.curve.setData(self.frequencies, abs(tf))
-        self.curve_phase.setData(self.frequencies, 180. * np.angle(tf) / np.pi)
-        freq_poles = abs(np.imag(self.module.poles))
-        tf_poles = self.module.transfer_function(
-            freq_poles)  # why is frequency the imaginary part? is it
-        # related to Laplace transform?
-        freq_zeros = abs(np.imag(self.module.zeros))
-        tf_zeros = self.module.transfer_function(freq_zeros)
-        selected_pole = aws["poles"].get_selected()
-        brush_poles = [{True: pg.mkBrush(color='r'), False: pg.mkBrush(color='b')}
-                       [num==selected_pole] for num in range(aws["poles"].number)]
-        self.points_poles_phase.setPoints(
-            [{'pos': (freq, phase), 'data': index, 'brush': brush} for
-             (index, (freq, phase, brush)) in \
-             enumerate(zip(np.log10(freq_poles), 180. / np.pi * np.angle(tf_poles),
-                           brush_poles))])
-        self.points_poles.setPoints(
-            [{'pos': (freq, mag), 'data': index, 'brush': brush} for
-             (index, (freq, mag, brush)) in \
-             enumerate(zip(np.log10(freq_poles), abs(tf_poles), brush_poles))])
-
-        selected_zero = aws["zeros"].get_selected()
-        brush_zeros = [{True: pg.mkBrush(color='r'), False: pg.mkBrush(color='b')}[
-                           num == selected_zero] \
-                       for num in range(aws['zeros'].number)]
-        self.points_zeros_phase.setPoints(
-            [{'pos': (freq, phase), 'data': index, 'brush': brush} for
-             (index, (freq, phase, brush)) in \
-             enumerate(zip(np.log10(freq_zeros), 180. / np.pi * np.angle(tf_zeros),
-                           brush_zeros))])
-        self.points_zeros.setPoints(
-            [{'pos': (freq, mag), 'data': index, 'brush': brush} for
-             (index, (freq, mag, brush)) in \
-             enumerate(zip(np.log10(freq_zeros), abs(tf_zeros), brush_zeros))])
+        self.plots['poles'].sigClicked.connect(self.parent.select_pole)
+        self.plots['poles_phase'].sigClicked.connect(self.parent.select_pole)
+        self.plots['zeros'].sigClicked.connect(self.parent.select_zero)
+        self.plots['zeros_phase'].sigClicked.connect(self.parent.select_zero)
 
 
 class IirButtonWidget(QtGui.QGroupBox):
@@ -185,19 +160,6 @@ class IirBottomWidget(QtGui.QGroupBox):
             self.layout.addWidget(widget)
 
 
-""" # obviously have to do something with that...
-if designdata or plot:
-    maxf = 125e6 / self.loops
-    fs = np.linspace(maxf / 1000, maxf, 2001, endpoint=True)
-    designdata = self.iirfilter.designdata
-    if plot:
-        iir.bodeplot(designdata, xlog=True)
-    return designdata
-else:
-    return None
-"""
-
-
 class IirWidget(ModuleWidget):
     def init_gui(self):
         self.main_layout = QtGui.QVBoxLayout()
@@ -224,6 +186,8 @@ class IirWidget(ModuleWidget):
         self.bottom_widget = IirBottomWidget(self)
         self.main_layout.addWidget(self.bottom_widget)
 
+        self.update_plot()
+
         # setup filter in its present state
         self.module.setup()
 
@@ -234,4 +198,75 @@ class IirWidget(ModuleWidget):
     def select_zero(self, plot_item, spots):
         index = spots[0].data()
         self.attribute_widgets['zeros'].set_selected(index)
+
+    @property
+    def frequencies(self):
+        try:
+            return self.module._data_curve_object.data.index.values
+        except AttributeError:
+            # in case data_curve is None (no curve selected)
+            return np.logspace(1, np.log10(5e6), 2000)
+
+    def _magnitude(self, data):
+        return 20. * np.log10(np.abs(np.asarray(data, dtype=np.complex))
+                              + sys.float_info.epsilon)
+
+    def _phase(self, data):
+        return np.angle(data, deg=True)
+
+    def update_plot(self):
+        # first, we compile the line plot data, then we iterate over them and
+        # plot them. we then plot the scatter plots in the same manner
+        tfargs = {}  # args to the call of iir.transfer_function
+        frequencies = self.frequencies
+        plot = OrderedDict()
+        try:
+            plot['data'] = self.module._data_curve_object.data.values
+        except AttributeError:
+            plot['data'] = []
+        plot['filter_design'] = self.module.transfer_function(frequencies,
+                                                              **tfargs)
+        try:
+            plot['data_x_design'] = plot['data'] / plot['filter_design']
+        except ValueError:
+            try:
+                plot['data_x_design'] = 1.0 / plot['filter_design']
+            except:
+                plot['data_x_design'] = []
+        for k, v in plot.items():
+            self.graph_widget.plots[k].setData(frequencies[:len(v)],
+                                               self._magnitude(v))
+            self.graph_widget.plots[k+'_phase'].setData(frequencies[:len(v)],
+                                                    self._phase(v))
+
+        freq_poles = abs(np.imag(self.module.poles))
+        tf_poles = self.module.transfer_function(
+            freq_poles)
+        freq_zeros = abs(np.imag(self.module.zeros))
+        tf_zeros = self.module.transfer_function(freq_zeros)
+
+        aws = self.attribute_widgets
+        for end in ['poles', 'zeros']:
+            mag, phase = [], []
+            for start in ["complex", "real"]:
+                key = start+'_'+end
+                freq = abs(np.imag(getattr(self.module, key)))
+                tf = self.module.transfer_function(freq, **tfargs)
+                selected = aws[key].get_selected()
+                brush = [pg.mkBrush(color='r')
+                         if (num == selected)
+                         else pg.mkBrush(color='b')
+                         for num in range(aws[key].number)]
+                mag += [{'pos': (freq, value), 'data': index, 'brush': brush}
+                 for (index, (freq, value, brush))
+                 in enumerate(zip(list(np.log10(freq)),
+                                  list(self._magnitude(tf)),
+                                  brush))]
+                phase += [{'pos': (freq, value), 'data': index, 'brush': brush}
+                 for (index, (freq, value, brush))
+                 in enumerate(zip(list(np.log10(freq)),
+                                  list(self._phase(tf)),
+                                  brush))]
+            self.graph_widget.plots[end].setPoints(mag)
+            self.graph_widget.plots[end+'_phase'].setPoints(phase)
 

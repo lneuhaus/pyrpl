@@ -2,7 +2,6 @@ from PyQt4 import QtCore, QtGui
 from .base_module_widget import ReducedModuleWidget
 
 
-
 class CurveViewerWidget(ReducedModuleWidget):
     def init_attribute_layout(self):
         super(CurveViewerWidget, self).init_attribute_layout()

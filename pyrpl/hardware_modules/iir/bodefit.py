@@ -9,7 +9,6 @@ if False:  # deactivated. this file will be deleted once fully migrated
     import os
     import logging
     import pandas
-    from scipy.optimize import leastsq
     from ...curvedb  import CurveDB
     from .iir_theory import IirFilter
     from ...sound import sine

@@ -1,7 +1,7 @@
 from . import iir_theory #, bodefit
 from .. import FilterModule
 from ...attributes import IntRegister, BoolRegister, ListComplexProperty, \
-    FloatProperty, StringProperty, ListFloatProperty
+    FloatProperty, StringProperty, ListFloatProperty, CurveSelectProperty
 from ...widgets.module_widgets import IirWidget
 from ...modules import SignalLauncher
 
@@ -51,9 +51,9 @@ class IirListProperty(ListComplexProperty):
                 complex.append(v)
         # avoid calling setup twice
         obj._setup_ongoing = True
-        setattr(obj, 'real_' + self.name, real)
-        obj._setup_ongoing = False
         setattr(obj, 'complex_' + self.name, real)
+        obj._setup_ongoing = False
+        setattr(obj, 'real_' + self.name, real)
 
 
 class IIR(FilterModule):
@@ -103,6 +103,7 @@ class IIR(FilterModule):
                        "on",
                        "bypass",
                        "overflow",
+                       "data_curve",
                        # for debugging
                        "_setup_unity",
                        "_setup_zero"]
@@ -140,7 +141,13 @@ class IIR(FilterModule):
     overflow_bitfield = IntRegister(0x108,
                                     doc="Bitmask for various overflow conditions")
 
-    overflow = OverflowProperty()
+    overflow = OverflowProperty(doc="a string indicating the overflow status "
+                                    "of the iir module")
+
+    data_curve = CurveSelectProperty(doc="NA curve id to use as a basis for "
+                                         "the graphical filter design",
+                                     call_setup=True,
+                                     default=-1)
 
     def _init_module(self):
         #self._logger.setLevel(30)

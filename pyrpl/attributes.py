@@ -1121,11 +1121,9 @@ class ModuleAttribute(BaseProperty):
     This object is only used inside the Module class
     """
 
-
-class CurveProperty(BaseProperty):
-    """ property for a curve whose widget plots the corresponding curve.
-     The property can be set by either passing a CurveDB object, or a  curve id"""
-    _widget_class = CurveAttributeWidget
+class CurveSelectProperty(SelectProperty):
+    def options(self, instance):
+        return OrderedDict([(k, k) for k in ([-1] + CurveDB.all())])
 
     def validate_and_normalize(self, obj, value):
         # returns none or a valid curve corresponding to the given curve or id
@@ -1139,8 +1137,14 @@ class CurveProperty(BaseProperty):
 
     def set_value(self, obj, val):
         if val is None:
-            pk = None
+            pk = -1
         else:
             pk = val.pk
-        BaseProperty.set_value(self, obj, pk)
+        SelectProperty.set_value(self, obj, pk)
         setattr(obj, '_' + self.name + '_object', val)
+
+
+class CurveProperty(CurveSelectProperty):
+    """ property for a curve whose widget plots the corresponding curve.
+     The property can be set by either passing a CurveDB object, or a  curve id"""
+    _widget_class = CurveAttributeWidget
