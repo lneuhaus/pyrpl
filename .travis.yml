@@ -38,6 +38,8 @@ before_install:
   - sudo ln -s /run/shm /dev/shm
   # starts gui support
   - sh -e /etc/init.d/xvfb start
+  # this pip update will hopefully solve issues in python 2.7
+  - sudo pip install --upgrade pip
 
 #before_install:
 # - sudo apt-get update
