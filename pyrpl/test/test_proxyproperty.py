@@ -1,9 +1,10 @@
 import logging
 logger = logging.getLogger(name=__name__)
-from .test_base import TestPyrpl
 from ..modules import Module
 from ..attributes import FloatProperty, SelectProperty, ProxyProperty
 from ..module_attributes import *
+from ..memory import MemoryTree
+from ..async_utils import sleep
 
 
 class MySubModule(Module):
@@ -18,10 +19,25 @@ class MyModule(Module):
     myfloat = FloatProperty(min=-1e10, max=1e10, default=12.3)
 
 
-class TestProxyProperty(TestPyrpl):
+class SignalReceiver(object):
+    """
+    slots for signals to ensure that signals are properly emitted
+    """
+    def update_attribute_by_name(self, name, value):
+        self.arrived_signal = (name, value)
+
+    def change_options(self, name, options):
+        self.arrived_signal = (name, options)
+
+    def change_ownership(self):
+        self.arrived_signal = True
+
+
+class TestProxyProperty(object):
     def test_proxy(self):
+        self.pyrpl = None
         self.parent = self.pyrpl
-        self.c = self.pyrpl.c
+        self.c = MemoryTree()
         m = MyModule(parent=self, name='m')
 
         # float proxy
@@ -45,10 +61,10 @@ class TestProxyProperty(TestPyrpl):
         m.moduleproperty.myselect = 3
         assert m.myselectproxy == 3
         assert m.moduleproperty.myselect == 3
+
         # options
         defaultoptions = [1,2,3,'a','b','c']
         newoptions = [5, 6, 7]
-
         # argument None:
         # select property
         options = m.moduleproperty.__class__.myselect.options(None).keys()
@@ -66,7 +82,6 @@ class TestProxyProperty(TestPyrpl):
 
         # change of options assuming that proxy is a SelectProperty of target module
         m.__class__.myselectproxy.change_options(m, newoptions)
-
         # argument None:
         # select property
         options = m.moduleproperty.__class__.myselect.options(None).keys()
@@ -87,3 +102,36 @@ class TestProxyProperty(TestPyrpl):
         # instead, we have however a nice representation string
         repr = m.__class__.myselectproxy.__repr__()
         assert "SelectProperty" in repr, repr
+
+        # connect slots to signals of this module
+        s = SignalReceiver()
+        m._signal_launcher.connect_widget(s)
+
+        # setup and perform some action
+        s.arrived_signal = False
+        m.myselectproxy = 7
+        # see whether signal arrives
+        for i in range(100):
+            sleep(0.01)
+            if s.arrived_signal:
+                break
+        else:
+            assert False, "Timeout: proxy signals are not properly connected"
+        assert s.arrived_signal == ("myselectproxy", [7]), s.arrived_signal
+
+        assert m.myselectproxy_options == newoptions
+
+        # setup and perform some action
+        s.arrived_signal = False
+        m.__class__.myselectproxy.change_options(m, ['foo', 'par'])
+        # see whether signal arrives
+        for i in range(100):
+            sleep(0.01)
+            if s.arrived_signal:
+                break
+        else:
+            assert False, "Timeout: proxy signals are not properly connected"
+        assert s.arrived_signal == ("myselectproxy", ['foo', 'par']), \
+            s.arrived_signal
+
+        assert m.myselectproxy_options == ['foo', 'par']

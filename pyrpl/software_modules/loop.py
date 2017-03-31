@@ -5,8 +5,7 @@ Defines a number of Loop modules to be used to perform periodically a task
 import numpy as np
 import pyqtgraph as pg
 from ..modules import Module
-from .lockbox import LockboxModule
-from ..async_utils import sleep, PyrplFuture, MainThreadTimer
+from ..async_utils import MainThreadTimer
 from ..pyrpl_utils import time
 
 

@@ -898,7 +898,8 @@ class SelectProperty(BaseProperty):
                 setattr(instance, '_' + self.name + '_options', options)
                 # save the keys for the user convenience
                 setattr(instance, self.name + '_options', options.keys())
-                instance._signal_launcher.change_options.emit(self.name, list(options))
+                instance._signal_launcher.change_options.emit(self.name,
+                                                              list(options))
         # return the actual options
         return options
 
@@ -991,38 +992,42 @@ class ProxyProperty(BaseProperty):
                  path_to_target):
         self.path_to_target = path_to_target
         lastpart = path_to_target.split('.')[-1]
+        self.target_attribute = lastpart
         self.path_to_target_module = path_to_target[:-(len(lastpart)+1)] #+1 for the dot
         self.path_to_target_descriptor = self.path_to_target_module \
                                          + '.__class__.' \
                                          + lastpart
 
-    def connect_signals(self, instance):
-        pass
-
     def __get__(self, instance, owner):
         if instance is None:
             return self
+        self.connect_signals(instance)
         self.instance = instance  # dangerous, but works because we
         # only call __getattribute__ immediately after __set__ or __get__
         return recursive_getattr(instance, self.path_to_target)
 
     def __set__(self, obj, value):
         self.instance = obj
+        self.connect_signals(obj)
         recursive_setattr(obj, self.path_to_target, value)
 
     def __getattribute__(self, item):
         try:
             return BaseProperty.__getattribute__(self, item)
         except AttributeError:
-            return recursive_getattr(self.instance, self.path_to_target_descriptor + '.' + item)
+            return recursive_getattr(self.instance,
+                                     self.path_to_target_descriptor + '.' + item)
 
-    # special functions for SelectProperties, which transform the argument 'obj' from the hosting module
-    # to the target module to avoid redundant saving of options
+    # special functions for SelectProperties, which transform the argument
+    # 'obj' from the hosting module to the target module to avoid redundant
+    # saving of options
     def options(self, obj):
         if obj is None:
             obj = self.instance
         module = recursive_getattr(obj, self.path_to_target_module)
-        return recursive_getattr(obj, self.path_to_target_descriptor + '.options')(module)
+        options = recursive_getattr(obj, self.path_to_target_descriptor +
+                           '.options')(module)
+        return options
 
     def change_options(self, obj, new_options):
         if obj is None:
@@ -1039,6 +1044,36 @@ class ProxyProperty(BaseProperty):
         except:
             targetdescr = ""
         return super(ProxyProperty, self).__repr__() + targetdescr
+
+    def connect_signals(self, instance):
+        """ function that takes care of forwarding signals from target to
+        signal_launcher of proxy module """
+        if hasattr(instance, '_' + self.name + '_connected'):
+            return  # skip if connection has already been set up
+        else:
+            module = recursive_getattr(instance, self.path_to_target_module)
+
+            def forward_update_attribute_by_name(name, value):
+                """ forward the signal, but change attribute name """
+                if name == self.target_attribute:
+                    instance._signal_launcher.update_attribute_by_name.emit(
+                        self.name, value)
+            module._signal_launcher.update_attribute_by_name.connect(
+                forward_update_attribute_by_name)
+
+            def forward_change_options(name, new_options):
+                """ forward the signal, but change attribute name """
+                if name == self.target_attribute:
+                    # update local list of options
+                    setattr(instance, self.name + '_options', new_options)
+                    # forward the signal
+                    instance._signal_launcher.change_options.emit(
+                        self.name, new_options)
+            module._signal_launcher.change_options.connect(
+                forward_change_options)
+
+            # remember that we are now connected
+            setattr(instance, '_' + self.name + '_connected', True)
 
 
 class ModuleAttribute(BaseAttribute):
