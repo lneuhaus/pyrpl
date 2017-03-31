@@ -544,7 +544,7 @@ class IIR(FilterModule):
         # take average delay to be half the loops since this is the
         # expectation value for the delay (plus internal propagation delay)
         # module_delay = self._delay + self.loops / 2.0
-        tf = self.iirfilter.__getattribute__('tf_' + kind)(frequencies)
+        tf = getattr(self.iirfilter, 'tf_' + kind)(frequencies)
         # for f in [self.inputfilter]:  # only one filter at the moment
         #    if f == 0:
         #        continue
@@ -559,20 +559,3 @@ class IIR(FilterModule):
         # delay = module_delay * 8e-9 / self._frequency_correction + extradelay
         # tf *= np.exp(-1j*delay*frequencies*2*np.pi)
         return tf
-
-    bf = None
-
-    # def bodefit(self, id):
-    #    """ launches the gui to fit a transfer function and allows to use
-    #    the fit transfer function as IIR filter loop shape
-
-    #   Parameters
-    #    ----------
-    #    id: int
-    #      id of the curve containing the transfer function to work on
-    #    """
-    #    self.bf = bodefit.BodeFitIIRGuiOptimisation(id)
-    #    self.bf.lockbox = self._rp
-    #    self.bf.iir = self
-    #    return self.bf
-

@@ -23,8 +23,8 @@ import numpy as np
 import logging
 logger = logging.getLogger(name=__name__)
 
-# this one is a copy-paste from scipy 18 for being compatible with lower
-# versions of scipy
+# this one is essentially a copy-paste from scipy 18 for being compatible with
+# lower versions of scipy
 def sos2zpk(sos):
     """
     Return zeros, poles, and gain of a series of second-order sections
@@ -142,20 +142,20 @@ def residues(z, p, k):
         conversion into a polynome is performed, which makes this function
         less prone to finite precision issues. In the current version,
         no pole value may occur twice and the number of poles must be
-        strictly greated than the number of zeros.
+        strictly greater than the number of zeros.
 
         Returns
         -------
         np.array(dtype=np.complex128) containing the numerator array a of the
         expansion
 
-            product_i( s - z[i] )               a[i]
-        k ------------------------- =  sum ( ---------- )
-            product_j( s - p[j] )             s - p[j]
+            product_i( s - z[i] )                 a[j]
+        k ------------------------- =  sum_j ( ---------- )
+            product_j( s - p[j] )               s - p[j]
     """
     # first we should ensure that there are no double poles
     if len(np.unique(p)) < len(p):
-        raise ValueError("Residues received a list of poles where some "
+        raise ValueError("residues() received a list of poles where some "
                          "values appear twice. This cannot be implemented "
                          "at the time being.")
     # next we split off a constant term if applicable
@@ -164,7 +164,7 @@ def residues(z, p, k):
     elif len(p) == len(z):  # proper
         c = k
     else:
-        raise ValueError("Desired transfer is not proper! ")
+        raise ValueError("Specified transfer function is not proper! ")
     # so the initial polynom H becomes
     # H = N/Q = k*Q/Q + P/Q, where degree(P) < degree(Q)
     # to find P from N, we have
@@ -172,7 +172,7 @@ def residues(z, p, k):
     # P = N - k*Q
     # the kQ part will be zero at all pole locations, thus can be dropped here
     # without problems
-
+    #
     # actually doing the math (or checking wikipedia) reveals a simple formula
     # for a[i] that is implemented here:
     # https://en.wikipedia.org/wiki/Partial_fraction_decomposition#Residue_method
