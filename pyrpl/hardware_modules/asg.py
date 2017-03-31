@@ -153,8 +153,8 @@ def make_asg(channel=0):
                                         default='off',
                                         options=_trigger_sources,
                                         doc="trigger source for triggered "
-                                            "output")
-                                        # callback=True) for some reason,
+                                            "output",
+                                        call_setup=True) #  for some reason,
         # this doesn't seem to be needed anymore...
 
         # offset is stored in bits 31:16 of the register.

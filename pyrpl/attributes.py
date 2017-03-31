@@ -832,7 +832,7 @@ class SelectProperty(BaseProperty):
     @property
     def __doc__(self):
         # Append available options to docstring
-        return self.doc + "\r\nOptions:\r\n" + str(self.options(None).keys())
+        return self.doc + "\r\nOptions:\r\n" + str(list(self.options(None)))
 
     @__doc__.setter
     def __doc__(self, value):
@@ -879,7 +879,7 @@ class SelectProperty(BaseProperty):
                     options = options()
                 except (TypeError, AttributeError):
                     options = OrderedDict()
-        if isinstance(options, list):
+        if not hasattr(options, "keys"):
             options = OrderedDict([(v, v) for v in options])
         if len(options) == 0:
             logger.debug("SelectProperty %s of module %s has no options!", self.name, instance)
@@ -895,7 +895,7 @@ class SelectProperty(BaseProperty):
             if options != lastoptions:
                 setattr(instance, '_' + self.name + '_options', options)
                 # save the keys for the user convenience
-                setattr(instance, self.name + '_options', options.keys())
+                setattr(instance, self.name + '_options', list(options.keys()))
                 instance._signal_launcher.change_options.emit(self.name, list(options))
         # return the actual options
         return options
