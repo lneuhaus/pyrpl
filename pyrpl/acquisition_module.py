@@ -532,7 +532,7 @@ class AcquisitionModule(Module):
         x-axis of the curves to plot.
         :return:
         """
-        raise NotImplementedError("To implemnet in derived class")
+        raise NotImplementedError("To implement in derived class")
 
     def _start_acquisition(self):
         """
