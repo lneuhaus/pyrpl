@@ -69,7 +69,7 @@ install:
     fi
   # fixes dependency conflict issue in python 3.6:
   - if [[ "$TRAVIS_PYTHON_VERSION" != "3.6" ]]; then
-      conda install -c conda-forge pyqtgraph=0.10.0
+      conda install --yes -c conda-forge pyqtgraph=0.10.0;
     fi
   - python setup.py install
 
