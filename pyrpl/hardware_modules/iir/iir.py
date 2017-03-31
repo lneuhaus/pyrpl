@@ -116,13 +116,11 @@ class IIR(FilterModule):
 
     on = BoolRegister(0x104, 0,
                       doc="IIR is on",
-                      default=False,
-                      call_setup=True)
+                      default=False)
 
     bypass = BoolRegister(0x104, 1,
                           doc="IIR is bypassed",
-                          default=False,
-                          call_setup=True)
+                          default=False)
 
 
     complex_zeros = ListComplexProperty(default=[], call_setup=True)
@@ -284,69 +282,75 @@ class IIR(FilterModule):
         coefficients   data to be passed to iir.bodeplot to plot the
                        realized transfer function
         """
-        if self._IIRSTAGES == 0:
-            raise Exception("Error: This FPGA bitfile does not support IIR "
-                            "filters! Please use an IIR version!")
-        self.on = False
-        self.bypass = False
-        # design the filter
-        self.iirfilter = iir_theory.IirFilter(zeros=self.zeros,
-                                              poles=self.poles,
-                                              gain=self.gain,
-                                              loops=self.loops,
-                                              dt=8e-9 * self._frequency_correction,
-                                              minloops=self._minloops,
-                                              maxloops=self._maxloops,
-                                              iirstages=self._IIRSTAGES,
-                                              totalbits=self._IIRBITS,
-                                              shiftbits=self._IIRSHIFT,
-                                              inputfilter=0,
-                                              moduledelay=self._delay)
-        # set loops in fpga
-        self.loops = self.iirfilter.loops
-        # write to the coefficients register
-        self.coefficients = self.iirfilter.coefficients
-        self._logger.info("Filter sampling frequency is %.3s MHz",
-                          1e-6 / self.sampling_time)
-        # low-pass filter the input signal with a first order filter with
-        # cutoff near the sampling rate - decreases aliasing and achieves
-        # higher internal data precision (3 extra bits) through averaging
+        try:
+            # block recursive calls to _setup
+            self._setup_ongoing = True
 
-        #if inputfilter is None:
-        #    self.inputfilter = 125e6 * self._frequency_correction / self.loops
-        #else:
-        #    self.inputfilter = inputfilter
-        self.iirfilter.inputfilter = self.inputfilter  # update model
-        self._logger.info("IIR anti-aliasing input filter set to: %s MHz",
-                          self.iirfilter.inputfilter * 1e-6)
-        # connect the module
-        #if input is not None:
-        #    self.input = input
-        #if output_direct is not None:
-        #    self.output_direct = output_direct
-        # switch it on only once everything is set up
-        self.on = True ### wsa turnon before...
-        self._logger.info("IIR filter ready")
-        # compute design error
-        dev = (np.abs((self.coefficients[0:len(self.iirfilter.coefficients)] -
-                       self.iirfilter.coefficients).flatten()))
-        maxdev = max(dev)
-        reldev = maxdev / abs(self.iirfilter.coefficients.flatten()[np.argmax(dev)])
-        if reldev > 0.05:
-            self._logger.warning(
-                "Maximum deviation from design coefficients: %.4g "
-                "(relative: %.4g)", maxdev, reldev)
-        else:
-            self._logger.info("Maximum deviation from design coefficients: "
-                              "%.4g (relative: %.4g)", maxdev, reldev)
-        if bool(self.overflow_bitfield):
-            self._logger.warning("IIR Overflow detected. Pattern: %s",
-                                 bin(self.overflow_bitfield))
-        else:
-            self._logger.info("IIR Overflow pattern: %s",
-                              bin(self.overflow_bitfield))
+            if self._IIRSTAGES == 0:
+                raise Exception("Error: This FPGA bitfile does not support IIR "
+                                "filters! Please use an IIR version!")
+            self.on = False
+            self.bypass = False
+            # design the filter
+            self.iirfilter = iir_theory.IirFilter(zeros=self.zeros,
+                                                  poles=self.poles,
+                                                  gain=self.gain,
+                                                  loops=self.loops,
+                                                  dt=8e-9 * self._frequency_correction,
+                                                  minloops=self._minloops,
+                                                  maxloops=self._maxloops,
+                                                  iirstages=self._IIRSTAGES,
+                                                  totalbits=self._IIRBITS,
+                                                  shiftbits=self._IIRSHIFT,
+                                                  inputfilter=0,
+                                                  moduledelay=self._delay)
+            # set loops in fpga
+            self.loops = self.iirfilter.loops
+            # write to the coefficients register
+            self.coefficients = self.iirfilter.coefficients
+            self._logger.info("Filter sampling frequency is %.3s MHz",
+                              1e-6 / self.sampling_time)
+            # low-pass filter the input signal with a first order filter with
+            # cutoff near the sampling rate - decreases aliasing and achieves
+            # higher internal data precision (3 extra bits) through averaging
 
-        self._signal_launcher.update_plot.emit()
+            #if inputfilter is None:
+            #    self.inputfilter = 125e6 * self._frequency_correction / self.loops
+            #else:
+            #    self.inputfilter = inputfilter
+            self.iirfilter.inputfilter = self.inputfilter  # update model
+            self._logger.info("IIR anti-aliasing input filter set to: %s MHz",
+                              self.iirfilter.inputfilter * 1e-6)
+            # connect the module
+            #if input is not None:
+            #    self.input = input
+            #if output_direct is not None:
+            #    self.output_direct = output_direct
+            # switch it on only once everything is set up
+            self.on = True ### wsa turnon before...
+            self._logger.info("IIR filter ready")
+            # compute design error
+            dev = (np.abs((self.coefficients[0:len(self.iirfilter.coefficients)] -
+                           self.iirfilter.coefficients).flatten()))
+            maxdev = max(dev)
+            reldev = maxdev / abs(self.iirfilter.coefficients.flatten()[np.argmax(dev)])
+            if reldev > 0.05:
+                self._logger.warning(
+                    "Maximum deviation from design coefficients: %.4g "
+                    "(relative: %.4g)", maxdev, reldev)
+            else:
+                self._logger.info("Maximum deviation from design coefficients: "
+                                  "%.4g (relative: %.4g)", maxdev, reldev)
+            if bool(self.overflow_bitfield):
+                self._logger.warning("IIR Overflow detected. Pattern: %s",
+                                     bin(self.overflow_bitfield))
+            else:
+                self._logger.info("IIR Overflow pattern: %s",
+                                  bin(self.overflow_bitfield))
+            self._signal_launcher.update_plot.emit()
+        finally:
+            self._setup_ongoing = False
+
 
     def setup_old(
             self,
