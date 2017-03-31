@@ -638,8 +638,9 @@ class FilterRegister(BaseRegister, FilterProperty):
         FilterProperty.__init__(self, **kwargs)
 
     def read_and_save(self, obj, attr_name):
-        # save the value upon first execution in order to only read this once
-        var_name = self.name + "_" + attr_name
+        # save the value of constants saved in the fpga upon first execution
+        # in order to only read the corresponding register once
+        var_name = "_" + self.name + "_" + attr_name
         if not hasattr(obj, var_name):
             setattr(obj, var_name, obj._read(getattr(self, attr_name)))
         return getattr(obj, var_name)
@@ -654,14 +655,13 @@ class FilterRegister(BaseRegister, FilterProperty):
         return self.read_and_save(obj, "minbw")
 
     def _ALPHABITS(self, obj):
-        return int(np.ceil(np.log2(125000000 / self._MINBW(obj))))
+        return int(np.ceil(np.log2(125000000.0 / self._MINBW(obj))))
 
     def valid_frequencies(self, obj):
         # this function NEEDS TO BE OPTIMIZED: TAKES 50 ms !!!!
         """ returns a list of all valid filter cutoff frequencies"""
         valid_bits = range(0, 2 ** self._SHIFTBITS(obj))
-        pos = list([self.to_python(obj, b | 0x1 << 7)
-                    for b in valid_bits])
+        pos = list([self.to_python(obj, b | 0x1 << 7) for b in valid_bits])
         pos = [int(val) if not np.iterable(val) else int(val[0]) for val in pos]
         neg = [-val for val in reversed(pos)]
         return neg + [0] + pos
@@ -672,17 +672,15 @@ class FilterRegister(BaseRegister, FilterProperty):
         negative bandwidth stands for high-pass instead of lowpass, 0 bandwidth for bypassing the filter
         """
         filter_shifts = value
-        shiftbits = self._SHIFTBITS(obj)
-        alphabits = self._ALPHABITS(obj)
         bandwidths = []
         for i in range(self._FILTERSTAGES(obj)):
             v = (filter_shifts >> (i * 8)) & 0xFF
-            shift = v & (2 ** shiftbits - 1)
+            shift = v & (2 ** self._SHIFTBITS(obj) - 1)
             filter_on = ((v >> 7) == 0x1)
             highpass = (((v >> 6) & 0x1) == 0x1)
             if filter_on:
                 bandwidth = float(2 ** shift) / \
-                            (2 ** alphabits) * 125e6 / 2 / np.pi
+                            (2 ** self._ALPHABITS(obj)) * 125e6 / 2 / np.pi
                 if highpass:
                     bandwidth *= -1.0
             else:
@@ -694,15 +692,12 @@ class FilterRegister(BaseRegister, FilterProperty):
             return bandwidths
 
     def from_python(self, obj, value):
-        filterstages = self._FILTERSTAGES(obj)
         try:
-            v = list(value)[:filterstages]
+            v = list(value)[:self._FILTERSTAGES(obj)]
         except TypeError:
-            v = list([value])[:filterstages]
+            v = list([value])[:self._FILTERSTAGES(obj)]
         filter_shifts = 0
-        shiftbits = self._SHIFTBITS(obj)
-        alphabits = self._ALPHABITS(obj)
-        for i in range(filterstages):
+        for i in range(self._FILTERSTAGES(obj)):
             if len(v) <= i:
                 bandwidth = 0
             else:
@@ -710,20 +705,19 @@ class FilterRegister(BaseRegister, FilterProperty):
             if bandwidth == 0:
                 continue
             else:
-                shift = int(np.round(np.log2(np.abs(bandwidth) * \
-                                             (2 ** alphabits) * 2 * np.pi / 125e6)))
+                shift = int(np.round(
+                    np.log2(np.abs(bandwidth)*(2**self._ALPHABITS(obj))*2*np.pi/125e6)))
                 if shift < 0:
                     shift = 0
-                elif shift > (2 ** shiftbits - 1):
-                    shift = (2 ** shiftbits - 1)
-                shift += 2 ** 7  # turn this filter stage on
+                elif shift > (2**self._SHIFTBITS(obj) - 1):
+                    shift = (2**self._SHIFTBITS(obj) - 1)
+                shift += 2**7  # turn this filter stage on
                 if bandwidth < 0:
-                    shift += 2 ** 6  # turn this filter into a highpass
-                filter_shifts += (shift) * 2 ** (8 * i)
+                    shift += 2**6  # turn this filter into a highpass
+                filter_shifts += shift * 2**(8*i)
         return filter_shifts
 
 
-### not rigorously checked
 class ListFloatProperty(BaseProperty):
     """
     An arbitrary length list of float numbers.
@@ -757,8 +751,10 @@ class ListComplexProperty(BaseProperty):
 
 
 class PWMRegister(FloatRegister):
-    # FloatRegister that defines the PWM voltage similar to setting a float
-    # see FPGA code for more detailed description on how the PWM works
+    """
+    FloatRegister that defines the PWM voltage similar to setting a float.
+    """
+    # See FPGA code for a more detailed description on how the PWM works
     def __init__(self, address, CFG_BITS=24, PWM_BITS=8, **kwargs):
         self.CFG_BITS = int(CFG_BITS)
         self.PWM_BITS = int(PWM_BITS)
@@ -793,7 +789,7 @@ class PWMRegister(FloatRegister):
 
 class StringProperty(BaseProperty):
     """
-    An attribute for string (in practice, there is no StringRegister at this stage).
+    An attribute for string (there is no corresponding StringRegister).
     """
     _widget_class = StringAttributeWidget
     default = ""
@@ -811,7 +807,7 @@ class StringProperty(BaseProperty):
 
 class TextProperty(StringProperty):
     """
-    A property for longer text
+    Same as StringProperty, but the gui displays it as multi-line text.
     """
     _widget_class = TextAttributeWidget
 
@@ -819,9 +815,13 @@ class TextProperty(StringProperty):
 class SelectProperty(BaseProperty):
     """
     An attribute for a multiple choice value.
-    The options have to be specified as a list at the time of attribute creation (Module declaration).
-    If options are numbers (int or float), rounding to the closest value is performed during the validation
-    If options are strings, validation is strict.
+
+    The options can be specified at the object creation as a list or an
+    (ordered) dict, or as a callable with one argument (which is None or the
+    module that contains this attribute, depending on when the call is made).
+    Options can be specified at attribute creation, but it can also be updated
+    later on a per-module basis using change_options(new_options). If
+    options are callable, they are evaluated every time they are needed.
     """
     _widget_class = SelectAttributeWidget
     default = None
@@ -829,10 +829,6 @@ class SelectProperty(BaseProperty):
     def __init__(self,
                  options=[],
                  **kwargs):
-        """
-        Options can be specified at attribute creation, but it can also be updated later on a per-module basis using
-        change_options(new_options)
-        """
         self.default_options = options
         BaseProperty.__init__(self, **kwargs)
 
@@ -947,7 +943,14 @@ class SelectProperty(BaseProperty):
 
 
 class SelectRegister(BaseRegister, SelectProperty):
-    """Implements a selection, such as for multiplexers"""
+    """
+    Implements a selection register, such as for multiplexers.
+
+    The options must be a dict, where the keys indicate the available
+    options and the values indicate the corresponding fpga register values.
+    If different keys point to the same register value, the keys are
+    nevertheless distinguished (allows implementing aliases that may vary
+    over time if options is a callable object). """
     def __init__(self, address,
                  bitmask=None,
                  options={},
@@ -992,7 +995,12 @@ class SelectRegister(BaseRegister, SelectProperty):
 
 
 class ProxyProperty(BaseAttribute):
-    """ forwards everything that is possible to instance.path_to_target"""
+    """
+    An attribute that is a proxy to another attribute.
+
+    This attribute essentially behaves like the one that is reached by
+    instance.path_to_target, always staying in synch.
+    """
     def __init__(self,
                  path_to_target,
                  call_setup=False):
@@ -1052,7 +1060,7 @@ class ProxyProperty(BaseAttribute):
             obj = self.instance
         module = recursive_getattr(obj, self.path_to_target_module)
         options = recursive_getattr(obj, self.path_to_target_descriptor +
-                           '.options')(module)
+                                    '.options')(module)
         return options
 
     def change_options(self, obj, new_options):
@@ -1064,9 +1072,9 @@ class ProxyProperty(BaseAttribute):
     def __repr__(self):
         try:
             targetdescr = " (target: " \
-                + recursive_getattr(self.instance,
-                                    self.path_to_target_descriptor).__repr__() \
-                + ")"
+                          + recursive_getattr(self.instance,
+                                              self.path_to_target_descriptor).__repr__() \
+                          + ")"
         except:
             targetdescr = ""
         return super(ProxyProperty, self).__repr__() + targetdescr
@@ -1117,13 +1125,21 @@ class ProxyProperty(BaseAttribute):
 class ModuleAttribute(BaseProperty):
     """
     This is the base class for handling submodules of a module.
+
     The actual implementation is found in module_attributes.ModuleProperty.
     This object is only used inside the Module class
     """
 
 class CurveSelectProperty(SelectProperty):
+    """
+    An attribute to select a curve from all available ones.
+
+    The curve object is loaded to instance._name_object, where 'name' stands
+    for the name of this attribute. The property can be set by either passing
+    a CurveDB object, or a curve id.
+    """
     def options(self, instance):
-        return OrderedDict([(k, k) for k in ([-1] + CurveDB.all())])
+        return OrderedDict([(k, k) for k in (CurveDB.all()) + [-1]])
 
     def validate_and_normalize(self, obj, value):
         # returns none or a valid curve corresponding to the given curve or id
@@ -1146,5 +1162,8 @@ class CurveSelectProperty(SelectProperty):
 
 class CurveProperty(CurveSelectProperty):
     """ property for a curve whose widget plots the corresponding curve.
-     The property can be set by either passing a CurveDB object, or a  curve id"""
+
+    Unfortunately, the widget does not allow to select the curve,
+    i.e. selection must be implemented with another CurveSelectProperty.
+    """
     _widget_class = CurveAttributeWidget

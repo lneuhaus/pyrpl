@@ -1,5 +1,5 @@
 env:
-- AUTOCORRETPEP8=0 REDPITAYA_SKIPGUITEST=1 DISPLAY=:99.0
+- AUTOCORRETPEP8=0 DISPLAY=:99.0
 # REDPITAYA variables are defined in travis account (encrypted)
 
 language: python
@@ -37,7 +37,10 @@ before_install:
   - sudo rm -rf /dev/shm
   - sudo ln -s /run/shm /dev/shm
   # starts gui support
+  # see https://docs.travis-ci.com/user/gui-and-headless-browsers/
   - sh -e /etc/init.d/xvfb start
+  # give it some time to start
+  - sleep 3
   # this pip update will hopefully solve issues in python 2.7
   - sudo pip install --upgrade pip
 

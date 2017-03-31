@@ -7,6 +7,7 @@ nose
 pyyaml
 #ruamel.yaml # requirement disabled
 pyqtgraph
+quamash  # in principle, this is not needed in python 2.7
 
 # cannot install pyQt4 with pip:
 # http://stackoverflow.com/questions/4628519/is-it-possible-to-require-pyqt-from-setuptools-setup-py
@@ -14,5 +15,5 @@ pyqtgraph
 
 ###### Requirements with Version Specifiers ######
 #   See https://www.python.org/dev/peps/pep-0440/#version-specifiers
-numpy (>=1.9)
-paramiko (>=2.0)
+numpy >=1.9  # on my computer, this works without problems without (...)
+paramiko >=2.0  # formerly paramiko (>=2.0)
