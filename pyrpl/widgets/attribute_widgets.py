@@ -754,7 +754,8 @@ class ListFloatSpinBox(QtGui.QWidget):
 class ListComplexSpinBox(QtGui.QFrame):
     value_changed = QtCore.pyqtSignal()
 
-    def __init__(self, label, min=-65e6, max=65e6, increment=1., log_increment=True, halflife_seconds=1.):
+    def __init__(self, label, min=-65e6, max=65e6, increment=1.,
+                 log_increment=True, halflife_seconds=1.):
         super(ListComplexSpinBox, self).__init__()
         self.label = label
         self.min = min
@@ -927,8 +928,8 @@ class ListComplexAttributeWidget(BaseAttributeWidget):
         """
 
         self.widget = ListComplexSpinBox(label=None,
-                                         min=-65e6,
-                                         max=65e6,
+                                         min=-125e6,
+                                         max=125e6,
                                          log_increment=True,
                                          halflife_seconds=1.)
         #self.widget.setDecimals(4)

@@ -39,33 +39,28 @@ class IIR(FilterModule):
     _widget_class = IirWidget
 
     _setup_attributes = ["input",
-                       "loops",
-                       "zeros",
-                       "poles",
-                       "gain",
-                       "output_direct",
-                       "inputfilter"]
-    _gui_attributes = _setup_attributes
-    _callback_attributes = _gui_attributes
-    """
-    parameter_names = ["loops",
-                       "on",
-                       "shortcut",
-                       "coefficients",
-                       "input",
-                       "output_direct"]
-    """
+                         "loops",
+                         "zeros",
+                         "poles",
+                         "output_direct",
+                         "inputfilter",
+                         "gain",
+                         "on",
+                         "shortcut"]
+    _gui_attributes = _setup_attributes + ['overflow']
 
     loops = IntRegister(0x100, doc="Decimation factor of IIR w.r.t. 125 MHz. " \
-                                   + "Must be at least 3. ")
+                                   + "Must be at least 3-5. ",
+                        default=_minloops,
+                        min=_minloops, max=_maxloops)
 
-    on = BoolRegister(0x104, 0, doc="IIR is on")
+    on = BoolRegister(0x104, 0, doc="IIR is on", default=False)
 
     zeros = ListComplexProperty()
     poles = ListComplexProperty()
-    gain =  FloatProperty()
+    gain = FloatProperty(min=-1e20, max=1e20, default=1.0)
 
-    shortcut = BoolRegister(0x104, 1, doc="IIR is bypassed")
+    shortcut = BoolRegister(0x104, 1, default=False, doc="IIR is bypassed")
 
     # obsolete
     # copydata = BoolRegister(0x104, 2,
