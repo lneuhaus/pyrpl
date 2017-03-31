@@ -14,15 +14,19 @@ class SignalLauncherIir(SignalLauncher):
 
 
 class OverflowProperty(StringProperty):
-    # this is a preliminary version
     def get_value(self, obj):
         value = obj.overflow_bitfield
         if value == 0:
-            return 'no overflow'
-        elif (value & (1<<6)):
-            return 'sum overflow'
+            text = 'no overflow'
+        if bool(value & 0b1111111):
+            text = "sum and internal saturation"
+        elif bool(value & 0b1000000):
+            text = 'sum saturation'
+        elif bool(value & 0b0111111):
+            text = 'internal saturation'
         else:
-            return 'internal overflow'
+            text = 'unknown overflow'
+        return text
 
     def validate_and_normalize(self, obj, value):
         # this is a read-only property, but it has to be read to reset it
@@ -31,6 +35,25 @@ class OverflowProperty(StringProperty):
     def set_value(self, obj, value):
         # this is a read-only property, but it has to be read to reset it
         self.launch_signal(obj, value)
+
+
+class IirListProperty(ListComplexProperty):
+    def get_value(self, obj):
+        return list(getattr(obj, 'complex_'+self.name) +
+                    getattr(obj, 'real_'+self.name))
+
+    def set_value(self, obj, value):
+        real, complex = [], []
+        for v in value:
+            if np.imag(v)==0:
+                real.append(v)
+            else:
+                complex.append(v)
+        # avoid calling setup twice
+        obj._setup_ongoing = True
+        setattr(obj, 'real_' + self.name, real)
+        obj._setup_ongoing = False
+        setattr(obj, 'complex_' + self.name, real)
 
 
 class IIR(FilterModule):
@@ -68,20 +91,49 @@ class IIR(FilterModule):
                          "gain",
                          "on",
                          "bypass"]
-    _gui_attributes = _setup_attributes + ['overflow']
+    _gui_attributes = ["input",
+                       "loops",
+                       "complex_zeros",
+                       "complex_poles",
+                       "real_zeros",
+                       "real_poles",
+                       "output_direct",
+                       "inputfilter",
+                       "gain",
+                       "on",
+                       "bypass",
+                       "overflow",
+                       # for debugging
+                       "_setup_unity",
+                       "_setup_zero"]
 
     loops = IntRegister(0x100, doc="Decimation factor of IIR w.r.t. 125 MHz. " \
                                    + "Must be at least 3-5. ",
                         default=_minloops,
-                        min=_minloops, max=_maxloops)
+                        min=_minloops,
+                        max=_maxloops,
+                        call_setup=True)
 
-    on = BoolRegister(0x104, 0, doc="IIR is on", default=False)
-    bypass = BoolRegister(0x104, 1, doc="IIR is bypassed")
+    on = BoolRegister(0x104, 0,
+                      doc="IIR is on",
+                      default=False,
+                      call_setup=True)
 
-    zeros = ListComplexProperty()
-    poles = ListComplexProperty()
+    bypass = BoolRegister(0x104, 1,
+                          doc="IIR is bypassed",
+                          default=False,
+                          call_setup=True)
 
-    gain = FloatProperty(min=-1e20, max=1e20, default=1.0)
+
+    complex_zeros = ListComplexProperty(default=[], call_setup=True)
+    complex_poles = ListComplexProperty(default=[], call_setup=True)
+    real_zeros = ListComplexProperty(default=[], call_setup=True)
+    real_poles = ListComplexProperty(default=[], call_setup=True)
+
+    zeros = IirListProperty()
+    poles = IirListProperty()
+
+    gain = FloatProperty(min=-1e20, max=1e20, default=1.0, call_setup=True)
 
     # obsolete
     # copydata = BoolRegister(0x104, 2,
@@ -93,8 +145,8 @@ class IIR(FilterModule):
     overflow = OverflowProperty()
 
     def _init_module(self):
-        #self._signal_launcher = SignalLauncherIir(self)
-        self._logger.setLevel(30)
+        #self._logger.setLevel(30)
+        pass
 
     @property
     def output_saturation(self):
@@ -291,20 +343,11 @@ class IIR(FilterModule):
             self._logger.warning("IIR Overflow detected. Pattern: %s",
                                  bin(self.overflow_bitfield))
         else:
-            self._logger.info("IIR Overflow pattern: %s", bin(self.overflow_bitfield))
+            self._logger.info("IIR Overflow pattern: %s",
+                              bin(self.overflow_bitfield))
 
         self._signal_launcher.update_plot.emit()
-        """ # obviously have to do something with that...
-        if designdata or plot:
-            maxf = 125e6 / self.loops
-            fs = np.linspace(maxf / 1000, maxf, 2001, endpoint=True)
-            designdata = self.iirfilter.designdata
-            if plot:
-                iir.bodeplot(designdata, xlog=True)
-            return designdata
-        else:
-            return None
-        """
+
     def setup_old(
             self,
             zeros,
@@ -521,11 +564,4 @@ class IIR(FilterModule):
     #    self.bf.lockbox = self._rp
     #    self.bf.iir = self
     #    return self.bf
-
-
-class IIR_Gui(IIR):
-    real_zeros = ListFloatProperty()
-    real_poles = ListFloatProperty()
-    complex_zeros = ListComplexProperty()
-    complex_poles = ListComplexProperty()
 

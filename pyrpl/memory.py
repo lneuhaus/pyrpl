@@ -232,7 +232,6 @@ class MemoryBranch(object):
                        " %s to %s.", self._fullbranchname, str(value))
         self._parent._data[self._branch] = value
 
-
     def _keys(self):
         if isinstance(self._data, list):
             return range(self.__len__())

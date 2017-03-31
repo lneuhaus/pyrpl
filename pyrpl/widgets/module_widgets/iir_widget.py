@@ -98,7 +98,7 @@ class IirGraphWidget(QtGui.QGroupBox):
         self.plot_item.setLogMode(x=self.xlog, y=None)
         self.plot_item_phase.setLogMode(x=self.xlog, y=None)
         # update the plot
-        self.update_plot()
+        #self.update_plot()
         # connect signals
         self.points_poles.sigClicked.connect(self.parent.select_pole)
         self.points_poles_phase.sigClicked.connect(self.parent.select_pole)
@@ -167,7 +167,7 @@ class IirButtonWidget(QtGui.QGroupBox):
 
 
 class IirBottomWidget(QtGui.QGroupBox):
-    BUTTONWIDTH = 150
+    BUTTONWIDTH = 300
 
     def __init__(self, parent):
         # widget for poles and zeros
@@ -178,10 +178,24 @@ class IirBottomWidget(QtGui.QGroupBox):
         self.layout = QtGui.QHBoxLayout(self)
         #self.setLayout(self.layout)  # wasnt here before
         aws = self.parent.attribute_widgets
-        for attr in ['poles', 'zeros']:
+        for attr in ['complex_poles', 'complex_zeros',
+                     'real_poles', 'real_zeros']:
             widget = aws[attr]
             widget.setFixedWidth(self.BUTTONWIDTH)
             self.layout.addWidget(widget)
+
+
+""" # obviously have to do something with that...
+if designdata or plot:
+    maxf = 125e6 / self.loops
+    fs = np.linspace(maxf / 1000, maxf, 2001, endpoint=True)
+    designdata = self.iirfilter.designdata
+    if plot:
+        iir.bodeplot(designdata, xlog=True)
+    return designdata
+else:
+    return None
+"""
 
 
 class IirWidget(ModuleWidget):

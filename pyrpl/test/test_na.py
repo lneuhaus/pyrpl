@@ -124,7 +124,7 @@ class TestNA(TestPyrpl):
         while self.count < self.total:
             APP.processEvents()
         duration = time.time() - tic
-        assert(duration < 2.5), duration
+        assert(duration < 3.0), duration
 
     def test_get_curve(self):
         if self.r is None:
