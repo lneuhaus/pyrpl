@@ -42,30 +42,45 @@ class MyGraphicsWindow(pg.GraphicsWindow):
         return super(MyGraphicsWindow, self).mousePressEvent(*args, **kwds)
 
 
-class IirWidget(ModuleWidget):
-    def init_gui(self):
-        self.main_layout = QtGui.QVBoxLayout()
-        self.setLayout(self.main_layout)
+class IirGraphWidget(QtGui.QGroupBox):
+    def __init__(self, parent):
+        # graph
+        super(IirGraphWidget, self).__init__(parent)
+        self.parent = parent
+        self.module = self.parent.module
+
+        self.layout = QtGui.QVBoxLayout(self)
+        #self.v1 = QtGui.QHBoxLayout()
+        #self.v2 = QtGui.QHBoxLayout()
+        #self.layout.addLayout(self.v2)
+        #self.layout.addLayout(self.v1)
+
+        #self.setLayout(self.layout)  # wasnt here before
+
         self.win = MyGraphicsWindow(title="Amplitude", parent_widget=self)
         self.win_phase = MyGraphicsWindow(title="Phase", parent_widget=self)
-        # self.proxy = pg.SignalProxy(self.win.scene().sigMouseClicked, rateLimit=60, slot=self.mouse_clicked)
+        # self.proxy = pg.SignalProxy(self.win.scene().sigMouseClicked,
+        # rateLimit=60, slot=self.mouse_clicked)
         self.plot_item = self.win.addPlot(title="Magnitude (dB)")
         self.plot_item_phase = self.win_phase.addPlot(title="Phase (deg)")
         self.plot_item_phase.setXLink(self.plot_item)
-        # self.proxy_phase = pg.SignalProxy(self.win_phase.scene().sigMouseClicked, rateLimit=60, slot=self.mouse_clicked)
+        # self.proxy_phase = pg.SignalProxy(self.win_phase.scene().sigMouseClicked,
+        # rateLimit=60, slot=self.mouse_clicked)
 
         self.curve = self.plot_item.plot(pen='y')
-        self.curve_phase = self.plot_item_phase.plot(pen=None, symbol='o', symbolSize=1)
+        self.curve_phase = self.plot_item_phase.plot(pen=None, symbol='o',
+                                                     symbolSize=1)
 
         self.points_poles = pg.ScatterPlotItem(size=20,
                                                symbol='x',
                                                pen=pg.mkPen(None),
                                                brush=pg.mkBrush(255, 0, 255, 120))
         self.plot_item.addItem(self.points_poles)
-        self.points_poles_phase =  pg.ScatterPlotItem(size=20,
-                                                      pen=pg.mkPen(None),
-                                                      symbol='x',
-                                                      brush=pg.mkBrush(255, 0, 255, 120))
+        self.points_poles_phase = pg.ScatterPlotItem(size=20,
+                                                     pen=pg.mkPen(None),
+                                                     symbol='x',
+                                                     brush=pg.mkBrush(255, 0, 255,
+                                                                      120))
         self.plot_item_phase.addItem(self.points_poles_phase)
 
         self.points_zeros = pg.ScatterPlotItem(size=20,
@@ -76,50 +91,106 @@ class IirWidget(ModuleWidget):
         self.points_zeros_phase = pg.ScatterPlotItem(size=20,
                                                      pen=pg.mkPen(None),
                                                      symbol='o',
-                                                     brush=pg.mkBrush(255, 0, 255, 120))
+                                                     brush=pg.mkBrush(255, 0, 255,
+                                                                      120))
         self.plot_item_phase.addItem(self.points_zeros_phase)
+        self.layout.addWidget(self.win)
+        self.layout.addWidget(self.win_phase)
 
-        self.main_layout.addWidget(self.win)
-        self.main_layout.addWidget(self.win_phase)
+
+class IirButtonWidget(QtGui.QGroupBox):
+    BUTTONWIDTH = 100
+
+    def __init__(self, parent):
+        # buttons and standard attributes
+        super(IirButtonWidget, self).__init__(parent)
+        self.parent = parent
+        self.module = self.parent.module
+        self.layout = QtGui.QVBoxLayout(self)
+        #self.setLayout(self.layout)  # wasnt here before
+        aws = self.parent.attribute_widgets
+
+        for attr in ['input', 'inputfilter', 'output_direct', 'loops',
+                     'gain', 'on', 'bypass', 'overflow']:
+            widget = aws[attr]
+            widget.setFixedWidth(self.BUTTONWIDTH)
+            self.layout.addWidget(widget)
+
+        self.setFixedWidth(self.BUTTONWIDTH+50)
+
+
+class IirBottomWidget(QtGui.QGroupBox):
+    def __init__(self, parent):
+        # buttons
+        super(IirButtonWidget, self).__init__(parent)
+        self.parent = parent
+        self.module = self.parent.module
+        self.layout = QtGui.QVBoxLayout(self)
+        #self.setLayout(self.layout)  # wasnt here before
+        aws = self.parent.attribute_widgets
+
+
+
+class IirWidget(ModuleWidget):
+    def init_gui(self):
+        self.main_layout = QtGui.QVBoxLayout()
+        self.setLayout(self.main_layout)
+
+        # add all attribute widgets and remove them right away
         self.init_attribute_layout()
-        self.second_attribute_layout = QtGui.QVBoxLayout()
-        self.attribute_layout.addLayout(self.second_attribute_layout)
-        self.third_attribute_layout = QtGui.QVBoxLayout()
-        self.attribute_layout.addLayout(self.third_attribute_layout)
-        index = 0
-        for key, widget in self.attribute_widgets.items():
-            index+=1
-            if index>3:
-                layout = self.third_attribute_layout
-            else:
-                layout = self.second_attribute_layout
-            if key!='poles' and key!='zeros':
-                self.attribute_layout.removeWidget(widget)
-                layout.addWidget(widget, stretch=0)
+        for widget in self.attribute_widgets.values():
+            self.main_layout.removeWidget(widget)
 
-        self.second_attribute_layout.addStretch(1)
-        self.third_attribute_layout.addStretch(1)
-        for attribute_widget in self.attribute_widgets.values():
-            self.main_layout.setStretchFactor(attribute_widget, 0)
+        # divide into top and bottom layout
+        self.top_layout = QtGui.QHBoxLayout()
+        self.main_layout.addLayout(self.top_layout)
 
-        self.frequencies = np.logspace(1, np.log10(5e6), 2000)
+        # add graph widget
+        self.graph_widget = IirGraphWidget(self)
+        self.top_layout.addWidget(self.graph_widget)
 
+        # buttons to the right of graph
+        self.button_widget = IirButtonWidget(self)
+        self.top_layout.addWidget(self.button_widget)
 
-        self.xlog = True
-        self.curve.setLogMode(xMode=self.xlog, yMode=None)
-        self.curve_phase.setLogMode(xMode=self.xlog, yMode=None)
-
-        self.plot_item.setLogMode(x=self.xlog, y=None) # this seems also needed
-        self.plot_item_phase.setLogMode(x=self.xlog, y=None)
-
-        self.module.setup()
-        self.update_plot()
-
-        self.points_poles.sigClicked.connect(self.select_pole)
-        self.points_poles_phase.sigClicked.connect(self.select_pole)
-
-        self.points_zeros.sigClicked.connect(self.select_zero)
-        self.points_zeros_phase.sigClicked.connect(self.select_zero)
+        # self.second_attribute_layout = QtGui.QVBoxLayout()
+        # self.attribute_layout.addLayout(self.second_attribute_layout)
+        # self.third_attribute_layout = QtGui.QVBoxLayout()
+        # self.attribute_layout.addLayout(self.third_attribute_layout)
+        # index = 0
+        # for key, widget in self.attribute_widgets.items():
+        #     index+=1
+        #     if index>3:
+        #         layout = self.third_attribute_layout
+        #     else:
+        #         layout = self.second_attribute_layout
+        #     if key!='poles' and key!='zeros':
+        #         self.attribute_layout.removeWidget(widget)
+        #         layout.addWidget(widget, stretch=0)
+        #
+        # self.second_attribute_layout.addStretch(1)
+        # self.third_attribute_layout.addStretch(1)
+        # for attribute_widget in self.attribute_widgets.values():
+        #     self.main_layout.setStretchFactor(attribute_widget, 0)
+        #
+        # self.frequencies = np.logspace(1, np.log10(5e6), 2000)
+        #
+        #
+        # self.xlog = True
+        # self.curve.setLogMode(xMode=self.xlog, yMode=None)
+        # self.curve_phase.setLogMode(xMode=self.xlog, yMode=None)
+        #
+        # self.plot_item.setLogMode(x=self.xlog, y=None) # this seems also needed
+        # self.plot_item_phase.setLogMode(x=self.xlog, y=None)
+        #
+        # self.module.setup()
+        # self.update_plot()
+        #
+        # self.points_poles.sigClicked.connect(self.select_pole)
+        # self.points_poles_phase.sigClicked.connect(self.select_pole)
+        #
+        # self.points_zeros.sigClicked.connect(self.select_zero)
+        # self.points_zeros_phase.sigClicked.connect(self.select_zero)
 
     def select_pole(self, plot_item, spots):
         index = spots[0].data()

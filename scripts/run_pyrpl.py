@@ -18,10 +18,13 @@ if __name__ == '__main__':
         print (i, arg)
         if i == 0: # run_pyrpl.py
             continue
-        k, v = arg.split('=', 1)
+        try:
+            k, v = arg.split('=', 1)
+        except ValueError:
+            k, v = arg, ""
         if v == "":
             if i == 1:
-                kwargs["config"]= k
+                kwargs["config"] = k
         else:
             kwargs[k] = v
     print("Calling Pyrpl(**%s)"%str(kwargs))

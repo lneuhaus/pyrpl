@@ -46,7 +46,7 @@ class IIR(FilterModule):
                          "inputfilter",
                          "gain",
                          "on",
-                         "shortcut"]
+                         "bypass"]
     _gui_attributes = _setup_attributes + ['overflow']
 
     loops = IntRegister(0x100, doc="Decimation factor of IIR w.r.t. 125 MHz. " \
@@ -60,7 +60,7 @@ class IIR(FilterModule):
     poles = ListComplexProperty()
     gain = FloatProperty(min=-1e20, max=1e20, default=1.0)
 
-    shortcut = BoolRegister(0x104, 1, doc="IIR is bypassed")
+    bypass = BoolRegister(0x104, 1, doc="IIR is bypassed")
 
     # obsolete
     # copydata = BoolRegister(0x104, 2,
@@ -213,7 +213,7 @@ class IIR(FilterModule):
             raise Exception("Error: This FPGA bitfile does not support IIR "
                             "filters! Please use an IIR version!")
         self.on = False
-        self.shortcut = False
+        self.bypass = False
         # design the filter
         self.iirfilter = iir_theory.IirFilter(zeros=self.zeros,
                                               poles=self.poles,
@@ -333,7 +333,7 @@ class IIR(FilterModule):
             raise Exception("Error: This FPGA bitfile does not support IIR "
                             "filters! Please use an IIR version!")
         self.on = False
-        self.shortcut = False
+        self.bypass = False
         # design the filter
         self.iirfilter = iir_theory.IirFilter(zeros=zeros,
                                               poles=poles,
@@ -409,9 +409,9 @@ class IIR(FilterModule):
         Returns a complex np.array containing the transfer function of the
         current IIR module setting for the given frequency array. The
         best-possible estimation of delays is automatically performed for
-        all kinds of transfer function. The setting of 'shortcut' is ignored
+        all kinds of transfer function. The setting of 'bypass' is ignored
         for this computation, i.e. the theoretical and measured transfer
-        functions can only agree if shortcut is False.
+        functions can only agree if bypass is False.
 
         Parameters
         ----------
