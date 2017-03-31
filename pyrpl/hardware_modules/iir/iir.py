@@ -60,7 +60,7 @@ class IIR(FilterModule):
     poles = ListComplexProperty()
     gain = FloatProperty(min=-1e20, max=1e20, default=1.0)
 
-    shortcut = BoolRegister(0x104, 1, default=False, doc="IIR is bypassed")
+    shortcut = BoolRegister(0x104, 1, doc="IIR is bypassed")
 
     # obsolete
     # copydata = BoolRegister(0x104, 2,
