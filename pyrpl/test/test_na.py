@@ -63,8 +63,8 @@ class TestNA(TestPyrpl):
     def test_benchmark(self):
         # test na speed without gui -
         # that's as good as we can do right now (1 read + 1 write per point
-        # + 0.5 error margin)
-        maxduration = self.communication_time * 2.5
+        # + 0.9 error margin)
+        maxduration = self.communication_time * 2.9
         self.na.setup(start_freq=1e3,
                       stop_freq=1e4,
                       rbw=1e6,
