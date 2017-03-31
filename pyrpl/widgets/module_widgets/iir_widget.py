@@ -45,18 +45,11 @@ class MyGraphicsWindow(pg.GraphicsWindow):
 class IirGraphWidget(QtGui.QGroupBox):
     def __init__(self, parent):
         # graph
+        self.name = "Transfer functions"
         super(IirGraphWidget, self).__init__(parent)
         self.parent = parent
         self.module = self.parent.module
-
         self.layout = QtGui.QVBoxLayout(self)
-        #self.v1 = QtGui.QHBoxLayout()
-        #self.v2 = QtGui.QHBoxLayout()
-        #self.layout.addLayout(self.v2)
-        #self.layout.addLayout(self.v1)
-
-        #self.setLayout(self.layout)  # wasnt here before
-
         self.win = MyGraphicsWindow(title="Amplitude", parent_widget=self)
         self.win_phase = MyGraphicsWindow(title="Phase", parent_widget=self)
         # self.proxy = pg.SignalProxy(self.win.scene().sigMouseClicked,
@@ -97,12 +90,66 @@ class IirGraphWidget(QtGui.QGroupBox):
         self.layout.addWidget(self.win)
         self.layout.addWidget(self.win_phase)
 
+        # actual plotting parameters
+        self.frequencies = np.logspace(1, np.log10(5e6), 2000)
+        self.xlog = True
+        self.curve.setLogMode(xMode=self.xlog, yMode=None)
+        self.curve_phase.setLogMode(xMode=self.xlog, yMode=None)
+        self.plot_item.setLogMode(x=self.xlog, y=None)
+        self.plot_item_phase.setLogMode(x=self.xlog, y=None)
+        # update the plot
+        self.update_plot()
+        # connect signals
+        self.points_poles.sigClicked.connect(self.parent.select_pole)
+        self.points_poles_phase.sigClicked.connect(self.parent.select_pole)
+        self.points_zeros.sigClicked.connect(self.parent.select_zero)
+        self.points_zeros_phase.sigClicked.connect(self.parent.select_zero)
+
+    def update_plot(self):
+        aws = self.parent.attribute_widgets
+        tf = self.module.transfer_function(self.frequencies)
+        self.curve.setData(self.frequencies, abs(tf))
+        self.curve_phase.setData(self.frequencies, 180. * np.angle(tf) / np.pi)
+        freq_poles = abs(np.imag(self.module.poles))
+        tf_poles = self.module.transfer_function(
+            freq_poles)  # why is frequency the imaginary part? is it
+        # related to Laplace transform?
+        freq_zeros = abs(np.imag(self.module.zeros))
+        tf_zeros = self.module.transfer_function(freq_zeros)
+        selected_pole = aws["poles"].get_selected()
+        brush_poles = [{True: pg.mkBrush(color='r'), False: pg.mkBrush(color='b')}
+                       [num==selected_pole] for num in range(aws["poles"].number)]
+        self.points_poles_phase.setPoints(
+            [{'pos': (freq, phase), 'data': index, 'brush': brush} for
+             (index, (freq, phase, brush)) in \
+             enumerate(zip(np.log10(freq_poles), 180. / np.pi * np.angle(tf_poles),
+                           brush_poles))])
+        self.points_poles.setPoints(
+            [{'pos': (freq, mag), 'data': index, 'brush': brush} for
+             (index, (freq, mag, brush)) in \
+             enumerate(zip(np.log10(freq_poles), abs(tf_poles), brush_poles))])
+
+        selected_zero = aws["zeros"].get_selected()
+        brush_zeros = [{True: pg.mkBrush(color='r'), False: pg.mkBrush(color='b')}[
+                           num == selected_zero] \
+                       for num in range(aws['zeros'].number)]
+        self.points_zeros_phase.setPoints(
+            [{'pos': (freq, phase), 'data': index, 'brush': brush} for
+             (index, (freq, phase, brush)) in \
+             enumerate(zip(np.log10(freq_zeros), 180. / np.pi * np.angle(tf_zeros),
+                           brush_zeros))])
+        self.points_zeros.setPoints(
+            [{'pos': (freq, mag), 'data': index, 'brush': brush} for
+             (index, (freq, mag, brush)) in \
+             enumerate(zip(np.log10(freq_zeros), abs(tf_zeros), brush_zeros))])
+
 
 class IirButtonWidget(QtGui.QGroupBox):
     BUTTONWIDTH = 100
 
     def __init__(self, parent):
         # buttons and standard attributes
+        self.name = "General settings"
         super(IirButtonWidget, self).__init__(parent)
         self.parent = parent
         self.module = self.parent.module
@@ -120,15 +167,21 @@ class IirButtonWidget(QtGui.QGroupBox):
 
 
 class IirBottomWidget(QtGui.QGroupBox):
+    BUTTONWIDTH = 150
+
     def __init__(self, parent):
-        # buttons
-        super(IirButtonWidget, self).__init__(parent)
+        # widget for poles and zeros
+        self.name = "Filter poles and zeros"
+        super(IirBottomWidget, self).__init__(parent)
         self.parent = parent
         self.module = self.parent.module
-        self.layout = QtGui.QVBoxLayout(self)
+        self.layout = QtGui.QHBoxLayout(self)
         #self.setLayout(self.layout)  # wasnt here before
         aws = self.parent.attribute_widgets
-
+        for attr in ['poles', 'zeros']:
+            widget = aws[attr]
+            widget.setFixedWidth(self.BUTTONWIDTH)
+            self.layout.addWidget(widget)
 
 
 class IirWidget(ModuleWidget):
@@ -153,44 +206,12 @@ class IirWidget(ModuleWidget):
         self.button_widget = IirButtonWidget(self)
         self.top_layout.addWidget(self.button_widget)
 
-        # self.second_attribute_layout = QtGui.QVBoxLayout()
-        # self.attribute_layout.addLayout(self.second_attribute_layout)
-        # self.third_attribute_layout = QtGui.QVBoxLayout()
-        # self.attribute_layout.addLayout(self.third_attribute_layout)
-        # index = 0
-        # for key, widget in self.attribute_widgets.items():
-        #     index+=1
-        #     if index>3:
-        #         layout = self.third_attribute_layout
-        #     else:
-        #         layout = self.second_attribute_layout
-        #     if key!='poles' and key!='zeros':
-        #         self.attribute_layout.removeWidget(widget)
-        #         layout.addWidget(widget, stretch=0)
-        #
-        # self.second_attribute_layout.addStretch(1)
-        # self.third_attribute_layout.addStretch(1)
-        # for attribute_widget in self.attribute_widgets.values():
-        #     self.main_layout.setStretchFactor(attribute_widget, 0)
-        #
-        # self.frequencies = np.logspace(1, np.log10(5e6), 2000)
-        #
-        #
-        # self.xlog = True
-        # self.curve.setLogMode(xMode=self.xlog, yMode=None)
-        # self.curve_phase.setLogMode(xMode=self.xlog, yMode=None)
-        #
-        # self.plot_item.setLogMode(x=self.xlog, y=None) # this seems also needed
-        # self.plot_item_phase.setLogMode(x=self.xlog, y=None)
-        #
-        # self.module.setup()
-        # self.update_plot()
-        #
-        # self.points_poles.sigClicked.connect(self.select_pole)
-        # self.points_poles_phase.sigClicked.connect(self.select_pole)
-        #
-        # self.points_zeros.sigClicked.connect(self.select_zero)
-        # self.points_zeros_phase.sigClicked.connect(self.select_zero)
+        # poles and zeros at the bottom of the graph
+        self.bottom_widget = IirBottomWidget(self)
+        self.main_layout.addWidget(self.bottom_widget)
+
+        # setup filter in its present state
+        self.module.setup()
 
     def select_pole(self, plot_item, spots):
         index = spots[0].data()
@@ -200,28 +221,3 @@ class IirWidget(ModuleWidget):
         index = spots[0].data()
         self.attribute_widgets['zeros'].set_selected(index)
 
-    def update_plot(self):
-        tf = self.module.transfer_function(self.frequencies)
-        self.curve.setData(self.frequencies, abs(tf))
-        self.curve_phase.setData(self.frequencies, 180.*np.angle(tf)/np.pi)
-        freq_poles = abs(np.imag(self.module.poles))
-        tf_poles = self.module.transfer_function(freq_poles)  # why is frequency the imaginary part? is it
-        # related to Laplace transform?
-        freq_zeros = abs(np.imag(self.module.zeros))
-        tf_zeros = self.module.transfer_function(freq_zeros)
-        selected_pole = self.attribute_widgets["poles"].get_selected()
-        brush_poles = [{True: pg.mkBrush(color='r'), False: pg.mkBrush(color='b')}[num==selected_pole] \
-                                    for num in range(self.attribute_widgets["poles"].number)]
-        self.points_poles_phase.setPoints([{'pos': (freq, phase), 'data': index, 'brush': brush} for (index, (freq, phase, brush)) in \
-                                     enumerate(zip(np.log10(freq_poles), 180./np.pi*np.angle(tf_poles), brush_poles))])
-        self.points_poles.setPoints([{'pos': (freq, mag), 'data': index, 'brush': brush} for (index, (freq, mag, brush)) in \
-                                                            enumerate(zip(np.log10(freq_poles), abs(tf_poles), brush_poles))])
-
-        selected_zero = self.attribute_widgets["zeros"].get_selected()
-        brush_zeros = [{True: pg.mkBrush(color='r'), False: pg.mkBrush(color='b')}[num==selected_zero] \
-                                    for num in range(self.attribute_widgets["zeros"].number)]
-        self.points_zeros_phase.setPoints(
-            [{'pos': (freq, phase), 'data': index, 'brush': brush} for (index, (freq, phase, brush)) in \
-             enumerate(zip(np.log10(freq_zeros), 180. / np.pi * np.angle(tf_zeros), brush_zeros))])
-        self.points_zeros.setPoints([{'pos': (freq, mag), 'data': index, 'brush': brush} for (index, (freq, mag, brush)) in \
-                                     enumerate(zip(np.log10(freq_zeros), abs(tf_zeros), brush_zeros))])

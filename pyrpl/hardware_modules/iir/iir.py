@@ -1,6 +1,7 @@
 from . import iir_theory #, bodefit
 from .. import FilterModule
-from ...attributes import IntRegister, BoolRegister, ListComplexProperty, FloatProperty
+from ...attributes import IntRegister, BoolRegister, ListComplexProperty, \
+    FloatProperty, StringProperty, ListFloatProperty
 from ...widgets.module_widgets import IirWidget
 from ...modules import SignalLauncher
 
@@ -10,6 +11,26 @@ from PyQt4 import QtCore, QtGui
 
 class SignalLauncherIir(SignalLauncher):
     update_plot = QtCore.pyqtSignal()
+
+
+class OverflowProperty(StringProperty):
+    # this is a preliminary version
+    def get_value(self, obj):
+        value = obj.overflow_bitfield
+        if value == 0:
+            return 'no overflow'
+        elif (value & (1<<6)):
+            return 'sum overflow'
+        else:
+            return 'internal overflow'
+
+    def validate_and_normalize(self, obj, value):
+        # this is a read-only property, but it has to be read to reset it
+        return self.get_value(obj)
+
+    def set_value(self, obj, value):
+        # this is a read-only property, but it has to be read to reset it
+        self.launch_signal(obj, value)
 
 
 class IIR(FilterModule):
@@ -55,19 +76,21 @@ class IIR(FilterModule):
                         min=_minloops, max=_maxloops)
 
     on = BoolRegister(0x104, 0, doc="IIR is on", default=False)
+    bypass = BoolRegister(0x104, 1, doc="IIR is bypassed")
 
     zeros = ListComplexProperty()
     poles = ListComplexProperty()
-    gain = FloatProperty(min=-1e20, max=1e20, default=1.0)
 
-    bypass = BoolRegister(0x104, 1, doc="IIR is bypassed")
+    gain = FloatProperty(min=-1e20, max=1e20, default=1.0)
 
     # obsolete
     # copydata = BoolRegister(0x104, 2,
     #            doc="If True: coefficients are being copied from memory")
 
-    overflow = IntRegister(0x108,
-                           doc="Bitmask for various overflow conditions")
+    overflow_bitfield = IntRegister(0x108,
+                                    doc="Bitmask for various overflow conditions")
+
+    overflow = OverflowProperty()
 
     def _init_module(self):
         #self._signal_launcher = SignalLauncherIir(self)
@@ -77,16 +100,16 @@ class IIR(FilterModule):
     def output_saturation(self):
         """ returns True if the output of the IIR filter has saturated since
         the last reset """
-        return bool(self.overflow & 1 << 6)
+        return bool(self.overflow_bitfield & 1 << 6)
 
     @property
     def internal_overflow(self):
         """ returns True if the IIR filter has experienced an internal
         overflow (leading to saturation) since the last reset"""
-        overflow = bool(self.overflow & 0b111111)
+        overflow = bool(self.overflow_bitfield & 0b111111)
         if overflow:
             self._logger.info("Internal overflow has occured. Bit pattern "
-                              "%s", bin(self.overflow))
+                              "%s", bin(self.overflow_bitfield))
         return overflow
 
     def _from_double(self, v, bitlength=64, shift=0):
@@ -264,11 +287,11 @@ class IIR(FilterModule):
         else:
             self._logger.info("Maximum deviation from design coefficients: "
                               "%.4g (relative: %.4g)", maxdev, reldev)
-        if bool(self.overflow):
+        if bool(self.overflow_bitfield):
             self._logger.warning("IIR Overflow detected. Pattern: %s",
-                                 bin(self.overflow))
+                                 bin(self.overflow_bitfield))
         else:
-            self._logger.info("IIR Overflow pattern: %s", bin(self.overflow))
+            self._logger.info("IIR Overflow pattern: %s", bin(self.overflow_bitfield))
 
         self._signal_launcher.update_plot.emit()
         """ # obviously have to do something with that...
@@ -384,11 +407,11 @@ class IIR(FilterModule):
         else:
             self._logger.info("Maximum deviation from design coefficients: "
                               "%.4g (relative: %.4g)", maxdev, reldev)
-        if bool(self.overflow):
+        if bool(self.overflow_bitfield):
             self._logger.warning("IIR Overflow detected. Pattern: %s",
-                                 bin(self.overflow))
+                                 bin(self.overflow_bitfield))
         else:
-            self._logger.info("IIR Overflow pattern: %s", bin(self.overflow))
+            self._logger.info("IIR Overflow pattern: %s", bin(self.overflow_bitfield))
         if designdata or plot:
             maxf = 125e6 / self.loops
             fs = np.linspace(maxf / 1000, maxf, 2001, endpoint=True)
@@ -498,3 +521,11 @@ class IIR(FilterModule):
     #    self.bf.lockbox = self._rp
     #    self.bf.iir = self
     #    return self.bf
+
+
+class IIR_Gui(IIR):
+    real_zeros = ListFloatProperty()
+    real_poles = ListFloatProperty()
+    complex_zeros = ListComplexProperty()
+    complex_poles = ListComplexProperty()
+

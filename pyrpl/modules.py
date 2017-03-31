@@ -538,22 +538,25 @@ class Module(with_metaclass(ModuleMetaClass, object)):
         """
         pass
 
+    # def help(self, register=''):
+    #     """returns the docstring of the specified register name
+    #        if register is an empty string, all available docstrings are
+    #        returned"""
+    #     if register:
+    #         string = type(self).__dict__[register].__doc__
+    #         return string
+    #     else:
+    #         string = ""
+    #         for key in type(self).__dict__.keys():
+    #             if isinstance(type(self).__dict__[key], BaseAttribute):
+    #                 docstring = self.help(key)
+    #                 # mute internal registers
+    #                 if not docstring.startswith('_'):
+    #                     string += key + ": " + docstring + '\r\n\r\n'
+    #         return string
     def help(self, register=''):
-        """returns the docstring of the specified register name
-           if register is an empty string, all available docstrings are
-           returned"""
-        if register:
-            string = type(self).__dict__[register].__doc__
-            return string
-        else:
-            string = ""
-            for key in type(self).__dict__.keys():
-                if isinstance(type(self).__dict__[key], BaseAttribute):
-                    docstring = self.help(key)
-                    # mute internal registers
-                    if not docstring.startswith('_'):
-                        string += key + ": " + docstring + '\r\n\r\n'
-            return string
+        return "Please refer to the docstring of the function setup() or " \
+               "to the manual for further help! "
 
     def _create_widget(self):
         """

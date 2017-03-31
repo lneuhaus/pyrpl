@@ -1005,6 +1005,16 @@ class ProxyProperty(BaseAttribute):
                                          + lastpart
         self.call_setup = call_setup
 
+    def _target_to_proxy(self, obj, target):
+        """ override this function to implement conversion between target
+        and proxy"""
+        return target
+
+    def _proxy_to_target(self, obj, proxy):
+        """ override this function to implement conversion between target
+        and proxy"""
+        return proxy
+
     def __get__(self, instance, owner):
         if instance is None:
             return self
@@ -1012,12 +1022,16 @@ class ProxyProperty(BaseAttribute):
         # dangerous, but works because we only call __getattribute__
         # immediately after __set__ or __get__
         self.connect_signals(instance)
-        return recursive_getattr(instance, self.path_to_target)
+        return self._target_to_proxy(instance,
+                                     recursive_getattr(instance,
+                                                       self.path_to_target))
 
     def __set__(self, obj, value):
         self.instance = obj
         self.connect_signals(obj)
-        recursive_setattr(obj, self.path_to_target, value)
+        recursive_setattr(obj,
+                          self.path_to_target,
+                          self._proxy_to_target(obj, value))
 
     def __getattribute__(self, item):
         try:
