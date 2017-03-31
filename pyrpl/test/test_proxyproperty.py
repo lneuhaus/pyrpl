@@ -14,10 +14,12 @@ class MySubModule(Module):
 
 class MyModule(Module):
     moduleproperty = ModuleProperty(MySubModule)
-    myfloatproxy = ProxyProperty("moduleproperty.myfloat")
+    myfloatproxy = ProxyProperty("moduleproperty.myfloat", call_setup=True)
     myselectproxy = ProxyProperty("moduleproperty.myselect")
     myfloat = FloatProperty(min=-1e10, max=1e10, default=12.3)
 
+    def _setup(self):
+        self.setup_called = True
 
 class SignalReceiver(object):
     """
@@ -40,6 +42,8 @@ class TestProxyProperty(object):
         self.c = MemoryTree()
         m = MyModule(parent=self, name='m')
 
+        assert m.__class__.myselectproxy.name == 'myselectproxy'
+
         # float proxy
         assert m.myfloat == 12.3
         assert m.myfloat == m.myfloatproxy
@@ -51,6 +55,16 @@ class TestProxyProperty(object):
         # setting the underlying attribute affects the proxy
         m.moduleproperty.myfloat = 4.0
         assert m.myfloatproxy == 4.0
+
+        m.setup_called = False
+        assert not m.setup_called
+        m.moduleproperty.myfloat = 2.0
+        assert m.setup_called
+
+        m.setup_called = False
+        assert not m.setup_called
+        m.myfloatproxy = 3.0
+        assert m.setup_called
 
         # select proxy
         assert m.myselectproxy == 'a'

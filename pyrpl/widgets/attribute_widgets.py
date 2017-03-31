@@ -375,14 +375,18 @@ class BaseAttributeWidget(QtGui.QWidget):
     """
     value_changed = QtCore.pyqtSignal()
 
-    def __init__(self, name, module):
+    def __init__(self, name, module, widget_name=None):
         super(BaseAttributeWidget, self).__init__()
         self.setToolTip(getattr(module.__class__, name).__doc__)
         self.module = module
         self.name = name
+        if widget_name is None:
+            self.widget_name = self.name
+        else:
+            self.widget_name = widget_name
         self.acquisition_property = True  # property affects signal acquisition
         self.layout_v = QtGui.QVBoxLayout()
-        self.label = QtGui.QLabel(name)
+        self.label = QtGui.QLabel(self.widget_name)
         self.layout_v.addWidget(self.label, 0) # stretch=0
         self.layout_v.setContentsMargins(0, 0, 0, 0)
         #self.module = self.module_widget.module
@@ -429,7 +433,6 @@ class BaseAttributeWidget(QtGui.QWidget):
         """
         To overwrite in base class.
         """
-
         self.widget = None
 
     def _update(self, new_value):
@@ -896,10 +899,11 @@ class ListComplexAttributeWidget(BaseAttributeWidget):
     """
     Attribute for arbitrary number of complex. New values can be added/removed with buttons
     """
-    def __init__(self, name, module):
+    def __init__(self, name, module, widget_name=None):
         val = getattr(module, name)
         #self.defaults = name + 's'
-        super(ListComplexAttributeWidget, self).__init__(name, module)
+        super(ListComplexAttributeWidget, self).__init__(name, module,
+                                                         widget_name=widget_name)
 
     def write(self):
         setattr(self.module, self.name, self.widget.get_list())
@@ -1014,7 +1018,7 @@ class FilterAttributeWidget(BaseAttributeWidget):
     The attribute descriptor needs to expose a function valid_frequencies(module)
     """
 
-    def __init__(self, name, module):
+    def __init__(self, name, module, widget_name=None):
         val = getattr(module, name)
         if np.iterable(val):
             self.number = len(val)
@@ -1022,7 +1026,8 @@ class FilterAttributeWidget(BaseAttributeWidget):
             self.number = 1
         #self.defaults = name + 's'
         self.options = getattr(module.__class__, name).valid_frequencies(module)
-        super(FilterAttributeWidget, self).__init__(name, module)
+        super(FilterAttributeWidget, self).__init__(name, module,
+                                                    widget_name=widget_name)
 
     def set_widget(self):
         """
@@ -1067,8 +1072,10 @@ class SelectAttributeWidget(BaseAttributeWidget):
     """
     Multiple choice property.
     """
-    def __init__(self, name, module, options=[], **kwargs):
-        return super(SelectAttributeWidget, self).__init__(name, module, **kwargs)
+    def __init__(self, name, module, widget_name=None, **kwargs):
+        return super(SelectAttributeWidget, self).__init__(name, module,
+                                                           widget_name=widget_name,
+                                                           **kwargs)
 
     def set_widget(self):
         """
@@ -1146,8 +1153,9 @@ class PhaseAttributeWidget(FloatAttributeWidget):
 
 
 class FrequencyAttributeWidget(FloatAttributeWidget):
-    def __init__(self, name, module):
-        super(FrequencyAttributeWidget, self).__init__(name, module)
+    def __init__(self, name, module, widget_name=None):
+        super(FrequencyAttributeWidget, self).__init__(name, module,
+                                                       widget_name=widget_name)
         self.set_per_second(10)
 
 
@@ -1155,7 +1163,6 @@ class BoolAttributeWidget(BaseAttributeWidget):
     """
     Boolean property
     """
-
     def set_widget(self):
         """
         Sets the widget (here a QCheckbox)
@@ -1172,7 +1179,6 @@ class BoolAttributeWidget(BaseAttributeWidget):
 
         :return:
         """
-
         setattr(self.module, self.name, self.widget.checkState() == 2)
         if self.acquisition_property:
             self.value_changed.emit()

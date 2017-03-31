@@ -2,7 +2,7 @@ from .attributes import *
 from .modules import *
 
 
-class ModuleProperty(ModuleAttribute, BaseProperty):
+class ModuleProperty(ModuleAttribute):
     """
     A property for a submodule.
 
@@ -26,7 +26,7 @@ class ModuleProperty(ModuleAttribute, BaseProperty):
                  **kwargs):
         self.module_cls = module_cls
         self.kwargs = kwargs
-        BaseAttribute.__init__(self,
+        ModuleAttribute.__init__(self,
                                default=default,
                                doc=doc,
                                ignore_errors=ignore_errors,

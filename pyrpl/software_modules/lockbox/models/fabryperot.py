@@ -292,12 +292,13 @@ class HighFinesseAnalogPdh(HighFinesseInput, FPAnalogPdh):
         else:
             return None
 
-class HighFinessePdh(InputIq, HighFinesseAnalogPdh):
+class HighFinessePdh(HighFinesseAnalogPdh, FPPdh):
     pass
 
 
 class HighFinesseFabryPerot(FabryPerot):
-    _setup_attributes = ["inputs", "sequence"]  # this ensures that sequence is loaded at the very end (i.e. after inputs)
+    _setup_attributes = ["inputs", "sequence"]
+    # this ensures that sequence is loaded at the very end (i.e. after inputs)
 
     inputs = LockboxModuleDictProperty(transmission=HighFinesseTransmission,
                                        reflection=HighFinesseReflection,

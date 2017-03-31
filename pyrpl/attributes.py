@@ -14,6 +14,7 @@ behind the scene, and they are coded in this file.
 """
 
 from __future__ import division
+from functools import partial
 from .pyrpl_utils import recursive_getattr, recursive_setattr
 from .widgets.attribute_widgets import BoolAttributeWidget, \
                                        FloatAttributeWidget, \
@@ -44,7 +45,15 @@ epsilon = sys.float_info.epsilon
 
 
 class BaseAttribute(object):
-    """An attribute is a field that can be set or get by several means:
+    """base class for attribute - only used as a placeholder"""
+
+class BaseProperty(BaseAttribute):
+    """
+    A Property is a special type of attribute that is not mapping a fpga value,
+    but rather an attribute _name of the module. This is used mainly in
+    SoftwareModules
+
+    An attribute is a field that can be set or get by several means:
       - programmatically: module.attribute = value
       - graphically: attribute.create_widget(module) returns a widget to
         manipulate the value
@@ -150,7 +159,7 @@ class BaseAttribute(object):
         """
         module.c[self.name] = value
 
-    def _create_widget(self, module, name=None):
+    def _create_widget(self, module, widget_name=None):
         """
         Creates a widget to graphically manipulate the attribute.
         """
@@ -159,18 +168,9 @@ class BaseAttribute(object):
                            "for %s, but no _widget_class is defined!",
                            str(module), type(module), self.name)
             return None
-        if name is None:
-            name = self.name
-        widget = self._widget_class(name, module)
+        widget = self._widget_class(self.name, module, widget_name=widget_name)
         return widget
 
-
-class BaseProperty(BaseAttribute):
-    """
-    A Property is a special type of attribute that is not mapping a fpga value,
-    but rather an attribute _name of the module. This is used mainly in
-    SoftwareModules
-    """
     def get_value(self, obj):
         if not hasattr(obj, '_' + self.name):
             setattr(obj, '_' + self.name, self.default)
@@ -336,8 +336,9 @@ class NumberProperty(BaseProperty):
         self.increment = increment
         BaseProperty.__init__(self, **kwargs)
 
-    def _create_widget(self, module, name=None):
-        widget = BaseProperty._create_widget(self, module, name=name)
+    def _create_widget(self, module, widget_name=None):
+        widget = BaseProperty._create_widget(self, module,
+                                             widget_name=widget_name)
         widget.set_increment(self.increment)
         widget.set_maximum(self.max)
         widget.set_minimum(self.min)
@@ -986,10 +987,11 @@ class SelectRegister(BaseRegister, SelectProperty):
         return int(value)
 
 
-class ProxyProperty(BaseProperty):
+class ProxyProperty(BaseAttribute):
     """ forwards everything that is possible to instance.path_to_target"""
     def __init__(self,
-                 path_to_target):
+                 path_to_target,
+                 call_setup=False):
         self.path_to_target = path_to_target
         lastpart = path_to_target.split('.')[-1]
         self.target_attribute = lastpart
@@ -997,13 +999,15 @@ class ProxyProperty(BaseProperty):
         self.path_to_target_descriptor = self.path_to_target_module \
                                          + '.__class__.' \
                                          + lastpart
+        self.call_setup = call_setup
 
     def __get__(self, instance, owner):
         if instance is None:
             return self
+        self.instance = instance
+        # dangerous, but works because we only call __getattribute__
+        # immediately after __set__ or __get__
         self.connect_signals(instance)
-        self.instance = instance  # dangerous, but works because we
-        # only call __getattribute__ immediately after __set__ or __get__
         return recursive_getattr(instance, self.path_to_target)
 
     def __set__(self, obj, value):
@@ -1015,8 +1019,12 @@ class ProxyProperty(BaseProperty):
         try:
             return BaseProperty.__getattribute__(self, item)
         except AttributeError:
-            return recursive_getattr(self.instance,
+            attr = recursive_getattr(self.instance,
                                      self.path_to_target_descriptor + '.' + item)
+            #if callable(attr):
+            #    return partial(attr, self.instance)
+            #else:
+            return attr
 
     # special functions for SelectProperties, which transform the argument
     # 'obj' from the hosting module to the target module to avoid redundant
@@ -1058,6 +1066,8 @@ class ProxyProperty(BaseProperty):
                 if name == self.target_attribute:
                     instance._signal_launcher.update_attribute_by_name.emit(
                         self.name, value)
+                if self.call_setup:
+                    instance.setup()
             module._signal_launcher.update_attribute_by_name.connect(
                 forward_update_attribute_by_name)
 
@@ -1075,8 +1085,18 @@ class ProxyProperty(BaseProperty):
             # remember that we are now connected
             setattr(instance, '_' + self.name + '_connected', True)
 
+    def _create_widget(self, module, widget_name=None, **kwargs):
+        target_module = recursive_getattr(module, self.path_to_target_module)
+        if widget_name is None:
+            widget_name = self.name
+        return recursive_getattr(module,
+                                 self.path_to_target_descriptor +
+                                 '._create_widget')(target_module,
+                                                    widget_name=widget_name,
+                                                    **kwargs)
 
-class ModuleAttribute(BaseAttribute):
+
+class ModuleAttribute(BaseProperty):
     """
     This is the base class for handling submodules of a module.
     The actual implementation is found in module_attributes.ModuleProperty.

@@ -49,14 +49,15 @@ class Interferometer(Lockbox):
                                        port2=InterferometerPort2)
 
 
-class PdhInterferometerPort1(InputIq, InterferometerPort1):
+class PdhInterferometerPort1(InterferometerPort1, InputIq):
     def expected_signal(self, phase):
         # proportional to the derivative of the signal
         # i.e. sin(phase)+const. -> cos(phase)
         phase *= self.lockbox._setpoint_unit_in_unit('rad')
         return self.calibration_data.amplitude * np.cos(phase)
 
-class PdhInterferometerPort2(InputIq, InterferometerPort2):
+
+class PdhInterferometerPort2(InterferometerPort2, InputIq):
     def expected_signal(self, phase):
         # proportional to the derivative of the signal
         # i.e. sin(phase) -> cos(phase) = sin(phase+pi/2)

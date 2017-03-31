@@ -2,11 +2,11 @@ from __future__ import division
 import scipy
 import numpy as np
 import logging
-from ...attributes import SelectProperty, FloatProperty, FrequencyProperty, PhaseProperty, \
-    FilterProperty, FrequencyRegister
+from ...attributes import SelectProperty, FloatProperty, FrequencyProperty, \
+    PhaseProperty, FilterProperty, FrequencyRegister, ProxyProperty
 from ...widgets.module_widgets import LockboxInputWidget
 from ...hardware_modules.dsp import DSP_INPUTS, InputSelectProperty
-from ...pyrpl_utils import time
+from ...pyrpl_utils import time, recursive_getattr
 from ...module_attributes import ModuleProperty
 from ...software_modules.lockbox import LockboxModule, LockboxModuleDictProperty
 
@@ -221,25 +221,28 @@ class InputSignal(Signal):
     _widget_class = LockboxInputWidget
     plot_range = np.linspace(-5, 5, 200)  # range of setpoint values over which to plot signal
 
-    input_signal = InputSelectProperty(doc="the dsp module or lockbox signal used as input signal")
+    input_signal = InputSelectProperty(call_setup=True,
+                                       doc="the dsp module or lockbox "
+                                            "signal used as input signal")
 
     def _input_signal_dsp_module(self):
         """ returns the dsp signal corresponding to input_signal"""
         signal = self.input_signal
+        # problem arises if there is a long loop of logical signals -> iterate
         for i in range(5):  # try at most 5 hierarchy levels
             try:
-                signal = self.lockbox.signals[self.input_signal].signal()
-            except:  # do not insist on this to work. if it fails, just return the direct value of input_channel
+                signal = recursive_getattr(self.pyrpl, signal).signal()
+            except:  # do not insist on this to work as signal may be a str
                 pass
             if signal in DSP_INPUTS:
-                break
-        if signal not in DSP_INPUTS:
-            self._logger.warning("Input signal of input %s cannot be traced "
-                                 "to a valid dsp input. Input considered "
-                                 "'off'.", self.name)
-            return 'off'
-        else:
-            return signal
+                return signal
+        # no break ever occured
+        self._logger.warning("Input signal of input %s cannot be traced "
+                             "to a valid dsp input (it yields %s). Input "
+                             "will be turned 'off'.",
+                             self.name, signal)
+        return 'off'
+
 
     def signal(self):
         """ returns the signal corresponding to this module that can be used to connect the signal to other modules.
@@ -500,31 +503,6 @@ class InputFromOutput(InputDirect):
         return setpoint_in_output_unit / output.dc_gain
 
 
-class IqQuadratureFactorProperty(FloatProperty):
-    def set_value(self, instance, value):
-        # super(IqQuadratureFactorProperty, self).set_value(instance, value)
-        instance.iq.quadrature_factor = value
-        return value
-
-    def get_value(self, obj):
-        return obj.iq.quadrature_factor
-
-
-class IqFilterProperty(FilterProperty):
-    def set_value(self, instance, val):
-        try:
-            val = list(val)
-        except:
-            val = [val, val]  # preferentially choose second order filter
-        instance.iq.bandwidth = val
-        super(IqFilterProperty, self).set_value(instance, val)
-        return val
-
-    def valid_frequencies(self, module):
-        # only allow the low-pass filter options (exclude negative high-pass options)
-        return [v for v in module.iq.__class__.bandwidth.valid_frequencies(module.iq) if v >= 0]
-
-
 class InputIq(InputSignal):
     """ Base class for demodulated signals. A derived class must implement
     the method expected_signal (see InputPdh in fabryperot.py for example)"""
@@ -536,15 +514,12 @@ class InputIq(InputSignal):
                        'quadrature_factor']
     _setup_attributes = _gui_attributes
 
-    mod_freq = FrequencyProperty(min=0.0,
-                                 max=FrequencyRegister.CLOCK_FREQUENCY / 2.0,
-                                 default=0.0,
-                                 call_setup=True)
-    mod_amp = FloatProperty(min=-1, max=1, default=0.0, call_setup=True)
-    mod_phase = PhaseProperty(call_setup=True)
-    mod_output = SelectProperty(['out1', 'out2'], call_setup=True)
-    quadrature_factor = IqQuadratureFactorProperty(call_setup=True)
-    bandwidth = IqFilterProperty(call_setup=True)
+    mod_freq = ProxyProperty("iq.frequency")
+    mod_amp = ProxyProperty("iq.amplitude")
+    mod_phase = ProxyProperty("iq.phase")
+    mod_output = ProxyProperty("iq.output_direct")
+    quadrature_factor = ProxyProperty("iq.quadrature_factor")
+    bandwidth = ProxyProperty("iq.bandwidth")
 
     @property
     def iq(self):
@@ -564,13 +539,13 @@ class InputIq(InputSignal):
         """
         setup a PDH error signal using the attribute values
         """
-        self.iq.setup(frequency=self.mod_freq,
-                      amplitude=self.mod_amp,
-                      phase=self.mod_phase,
+        self.iq.setup(#frequency=self.mod_freq,
+                      #amplitude=self.mod_amp,
+                      #phase=self.mod_phase,
                       input=self._input_signal_dsp_module(),
                       gain=0,
-                      bandwidth=self.bandwidth,
+                      #bandwidth=self.bandwidth,
                       acbandwidth=self.mod_freq/100.0,
-                      quadrature_factor=self.quadrature_factor,
-                      output_signal='quadrature',
-                      output_direct=self.mod_output)
+                      #quadrature_factor=self.quadrature_factor,
+                      output_signal='quadrature') #,
+                      #output_direct=self.mod_output)
