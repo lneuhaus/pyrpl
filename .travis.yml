@@ -64,6 +64,10 @@ install:
   - if [[ "$TRAVIS_PYTHON_VERSION" != "3.5" ]] && [[ "$TRAVIS_PYTHON_VERSION" != "3.4" ]]; then
       conda install --yes -c dan_blanchard python-coveralls nose-cov; 
     fi
+  # fixes dependency conflict issue in python 3.6:
+  - if [[ "$TRAVIS_PYTHON_VERSION" != "3.6" ]]; then
+      conda install -c conda-forge pyqtgraph=0.10.0
+    fi
   - python setup.py install
 
 #before_script: ./autocorrectpep8_script.sh
