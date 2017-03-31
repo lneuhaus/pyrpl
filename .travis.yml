@@ -42,7 +42,7 @@ before_install:
   # give it some time to start
   - sleep 3
   # this pip update will hopefully solve issues in python 2.7
-  - sudo pip install --upgrade pip
+  - sudo easy_install pip==9.0.1
 
 #before_install:
 # - sudo apt-get update
