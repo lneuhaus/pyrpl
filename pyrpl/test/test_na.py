@@ -59,15 +59,12 @@ class TestNA(TestPyrpl):
         self.na.stop()  # do not let the na running or other tests might be
         # screwed-up !!!
 
-    # maximum allowed duration to acquire one point without gui
-    duration_per_point =   1.7e-3# 2.3e-3 ## previously 5e-3
-    # duration_per_point = 5e-3
     #@unittest.skip("testing skipping")
     def test_benchmark(self):
-        """
-        if self.r is None:
-            return
-        # test na speed without gui
+        # test na speed without gui -
+        # that's as good as we can do right now (1 read + 1 write per point
+        # + 0.5 error margin)
+        maxduration = self.communication_time * 2.5
         self.na.setup(start_freq=1e3,
                       stop_freq=1e4,
                       rbw=1e6,
@@ -76,10 +73,12 @@ class TestNA(TestPyrpl):
         tic = time.time()
         self.na.curve()
         duration = (time.time() - tic)/self.na.points
-        assert duration < self.duration_per_point, duration
-        # that's as good as we can do right now (1 read + 1 write per point)
+        assert duration < maxduration, \
+            "Na w/o gui should take at most %.1f ms per point, but actually " \
+            "needs %.1f ms. This won't compromise functionality but it is " \
+            "recommended that establish a more direct ethernet connection" \
+            "to you Red Pitaya module" % (maxduration*1000.0, duration*1000.0)
 
-        """
         # test na speed with gui. Allow twice as long
         self.na.setup(start_freq=1e3,
                       stop_freq=1e4,
@@ -94,11 +93,13 @@ class TestNA(TestPyrpl):
             APP.processEvents()
         duration = (time.time() - tic)/self.na.points
 
-        assert duration < 1.*self.duration_per_point, \
-            "Na should take at most %.1f ms per point, but actually needs " \
-            "%.1f ms. This won't compromise functionality but it is " \
+        maxduration *= 2
+
+        assert duration < maxduration, \
+            "Na gui should take at most %.1f ms per point, but actually " \
+            "needs %.1f ms. This won't compromise functionality but it is " \
             "recommended that establish a more direct ethernet connection" \
-            "to you Red Pitaya module" % (self.duration_per_point*1000.0, duration*1000.0)
+            "to you Red Pitaya module" % (maxduration*1000.0, duration*1000.0)
         # 2 s for 200 points with gui display
         # This is much slower in nosetests than in real life (I get <3 s).
         # Don't know why.
