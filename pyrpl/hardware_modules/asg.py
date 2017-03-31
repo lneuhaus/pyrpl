@@ -136,6 +136,7 @@ def make_asg(channel=0):
 
         # register set_a_rgate
         _counter_wrap = IntRegister(0x8 + _VALUE_OFFSET,
+                                    bits=32,
                                     doc="Raw phase value where counter wraps around. To be set to 2**16*(2**14-1) = 0x3FFFFFFF in virtually all cases. ")
 
         # register trig_a/b_src

@@ -327,8 +327,8 @@ class NumberProperty(BaseProperty):
     default = 0
 
     def __init__(self,
-                 min=0,
-                 max=2**14,
+                 min=-np.inf,
+                 max=np.inf,
                  increment=1,
                  **kwargs):
         self.min = min
