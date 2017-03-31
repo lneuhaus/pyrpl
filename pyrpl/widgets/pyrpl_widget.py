@@ -233,7 +233,7 @@ class PyrplWidget(QtGui.QMainWindow):
                 action.deleteLater()
         # remove dock widget
         if self.last_docked == dock_widget:
-            self.last_docked = sorted(self.dock_widgets.values())[-1]
+            self.last_docked = list(self.dock_widgets.values())[-1]
             # not sure what this is supposed to mean, but dict keys/values
             # are not indexable in python 3. Please, convert to list before!
         self.removeDockWidget(dock_widget)

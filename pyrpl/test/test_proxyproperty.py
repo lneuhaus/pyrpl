@@ -81,34 +81,34 @@ class TestProxyProperty(object):
         newoptions = [5, 6, 7]
         # argument None:
         # select property
-        options = m.moduleproperty.__class__.myselect.options(None).keys()
+        options = list(m.moduleproperty.__class__.myselect.options(None).keys())
         assert options == defaultoptions, options
         # proxy
-        options = m.__class__.myselectproxy.options(None).keys()
+        options = list(m.__class__.myselectproxy.options(None).keys())
         assert options == defaultoptions, options
         # argument instance
         # select property
-        options = m.moduleproperty.__class__.myselect.options(m.moduleproperty).keys()
+        options = list(m.moduleproperty.__class__.myselect.options(m.moduleproperty).keys())
         assert options == defaultoptions, options
         # proxy
-        options = m.__class__.myselectproxy.options(m).keys()
+        options = list(m.__class__.myselectproxy.options(m).keys())
         assert options == defaultoptions, options
 
         # change of options assuming that proxy is a SelectProperty of target module
         m.__class__.myselectproxy.change_options(m, newoptions)
         # argument None:
         # select property
-        options = m.moduleproperty.__class__.myselect.options(None).keys()
+        options = list(m.moduleproperty.__class__.myselect.options(None).keys())
         assert options == newoptions, options
         # proxy
-        options = m.__class__.myselectproxy.options(None).keys()
+        options = list(m.__class__.myselectproxy.options(None).keys())
         assert options == newoptions, options
         # argument instance
         # select property
-        options = m.moduleproperty.__class__.myselect.options(m.moduleproperty).keys()
+        options = list(m.moduleproperty.__class__.myselect.options(m.moduleproperty).keys())
         assert options == newoptions, options
         # proxy
-        options = m.__class__.myselectproxy.options(m).keys()
+        options = list(m.__class__.myselectproxy.options(m).keys())
         assert options == newoptions, options
 
         # unfortunately, we do not know how to make this work:

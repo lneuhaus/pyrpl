@@ -160,7 +160,7 @@ class TestScopeAsgAms(TestPyrpl):
         self.r.scope.trigger_source = "immediately"
         self.r.scope.duration = 0.001
         self.r.scope.trigger_delay = 0.01
-        assert (self.r.scope.times[0] == 0)
+        assert (self.r.scope.times[0] == 0), self.r.scope.times[0]
 
         self.r.scope.trigger_source = "asg1"
         self.r.scope.duration = 0.001
