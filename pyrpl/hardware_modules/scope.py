@@ -389,9 +389,15 @@ class Scope(HardwareModule, AcquisitionModule):
         # endtime = duration*
         duration = self.duration
         trigger_delay = self.trigger_delay
-        return np.linspace(trigger_delay - duration / 2.,
-                           trigger_delay + duration / 2.,
-                           self.data_length, endpoint=False)
+        if self.trigger_source!='immediately':
+            return np.linspace(trigger_delay - duration / 2.,
+                               trigger_delay + duration / 2.,
+                               self.data_length, endpoint=False)
+        else:
+            return np.linspace(0,
+                               duration,
+                               self.data_length, endpoint=False)
+
 
     def wait_for_pretrigger(self):
         """ sleeps until scope trigger is ready (buffer has enough new data)"""
