@@ -143,7 +143,7 @@ class Lockbox(LockboxModule):
     _setup_attributes = _gui_attributes + ["auto_lock_interval",
                                            "lockstatus_interval"]
 
-    classname = ClassnameProperty(options=lambda: all_classnames().keys())
+    classname = ClassnameProperty(options=lambda: list(all_classnames().keys()))
 
     ###################
     # unit management #
