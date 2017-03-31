@@ -369,7 +369,10 @@ class IntRegister(BaseRegister, IntProperty):
         self.bits = bits
         self.size = int(np.ceil(float(self.bits) / 32))
         BaseRegister.__init__(self, address=address, bitmask=bitmask)
-        IntProperty.__init__(self, **kwargs)
+        if not 'min' in kwargs: kwargs['min'] = 0
+        if not 'max' in kwargs: kwargs['max'] = 2**self.bits-1
+        IntProperty.__init__(self,
+                             **kwargs)
 
     def to_python(self, obj, value):
         return int(value)
@@ -434,13 +437,16 @@ class FloatRegister(IntRegister, FloatProperty):
         self.invert = invert
         self.signed = signed
         self.norm = float(norm)
-        increment = 1.0/self.norm
-        max = float(2 ** (self.bits - int(self.signed)) - 1) / self.norm
-        if self.signed:
-            min = - float(2 ** (self.bits - int(self.signed))) / self.norm
-        else:
-            min = 0
-        FloatProperty.__init__(self, increment=increment, min=min, max=max, **kwargs)
+        if 'increment' not in kwargs:
+            kwargs['increment'] = 1.0/self.norm
+        if 'max' not in kwargs:
+            kwargs['max'] = (float(2 ** (self.bits - int(self.signed)) - 1) / self.norm)
+        if 'min' not in kwargs:
+            if self.signed:
+                kwargs['min'] = - float(2 ** (self.bits - int(self.signed))) / self.norm
+            else:
+                kwargs['min'] = 0
+        FloatProperty.__init__(self, **kwargs)
 
     def to_python(self, obj, value):
         # 2's complement
@@ -494,24 +500,21 @@ class FloatRegister(IntRegister, FloatProperty):
         """
         if not self.signed:
             value = abs(value)
-        return FloatProperty.validate_and_normalize(self,
-                                                    obj,
-                                                    round(value/self.increment)*self.increment)
+        return FloatProperty.validate_and_normalize(self, obj,
+                                round(value/self.increment)*self.increment)
 
 
 class FrequencyProperty(FloatProperty):
     """
     An attribute for frequency values
+    Same as FloatAttribute, except it cannot become negative.
     """
     _widget_class = FrequencyAttributeWidget
 
-    def validate_and_normalize(self, obj, value):
-        """
-        Same as FloatAttribute, except it cannot become negative.
-        """
-        return max(0, FloatProperty.validate_and_normalize(self,
-                                                           obj,
-                                                           value))
+    def __init__(self, **kwargs):
+        if 'min' not in kwargs:
+            kwargs['min'] = 0
+        FloatProperty.__init__(self, **kwargs)
 
 
 class FrequencyRegister(FloatRegister, FrequencyProperty):
@@ -564,9 +567,10 @@ class PhaseProperty(FloatProperty):
 
 class PhaseRegister(FloatRegister, PhaseProperty):
     """Registers that contain a phase as a float in units of degrees."""
-    def __init__(self, address, bits=32, bitmask=None, **kwargs):
-        FloatRegister.__init__(self, address=address, bits=bits, bitmask=bitmask, **kwargs)
-        PhaseProperty.__init__(self, increment=360. / 2 ** bits)
+    def __init__(self, address, bits=32, bitmask=None, invert=False, **kwargs):
+        FloatRegister.__init__(self, address=address, bits=bits,
+                               bitmask=bitmask, invert=invert)
+        PhaseProperty.__init__(self, increment=360. / 2 ** bits, **kwargs)
 
     def from_python(self, obj, value):
         if self.invert:
