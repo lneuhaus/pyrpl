@@ -227,13 +227,9 @@ class RunningStateProperty(SelectProperty):
         SelectProperty.set_value(self, obj, val)
         if val == "running_single":
             # acquire as fast as possible avg curves
-            # obj._new_run_future()
-            # obj._run_future.start()
             obj.setup()
         elif val == "running_continuous":
-            # obj._start_acquisition()
             if previous_state == 'stopped':  #  restart averaging...
-                # obj._new_run_future()
                 obj.setup()
             else:
                 obj._run_future._set_run_continuous() # if previous run was
@@ -532,7 +528,7 @@ class AcquisitionModule(Module):
         x-axis of the curves to plot.
         :return:
         """
-        raise NotImplementedError("To implemnet in derived class")
+        raise NotImplementedError("To implement in derived class")
 
     def _start_acquisition(self):
         """

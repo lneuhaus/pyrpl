@@ -13,6 +13,14 @@ logger = logging.getLogger(name=__name__)
 data_length = 2**14
 
 
+# ==========================================
+# The following properties are all linked:
+#  - decimation
+#  - duration
+#  - sampling_time
+# decimation is the "master": changing it updates
+# the 2 others.
+# ==========================================
 class DecimationRegister(SelectRegister):
     """
     Careful: changing decimation changes duration and sampling_time as well
@@ -55,7 +63,7 @@ class SamplingTimeProperty(SelectProperty):
         return 8e-9 * float(obj.decimation)
 
     def validate_and_normalize(self, obj, value):
-        # gets next value, to be replaced with next-lower value
+        # gets next-lower value
         value = float(value)
         options = self.options(obj).keys()
         try:
@@ -75,47 +83,14 @@ class SamplingTimeProperty(SelectProperty):
         instance.decimation = float(value) / 8e-9
 
 
-class TriggerSourceAttribute(SelectProperty):
-    def get_value(self, obj):
-        if hasattr(obj, "_trigger_source_memory"):
-            return obj._trigger_source_memory
-        else:
-            obj._trigger_source_memory = obj._trigger_source_register
-            return obj._trigger_source_memory
-
-    def set_value(self, instance, value):
-        instance._trigger_source_register = value
-        if instance._trigger_source_memory != value:
-            instance._trigger_source_memory = value
-            # passing between immediately and other sources possibly
-            # requires trigger delay change
-            instance.trigger_delay = instance._trigger_delay_memory
-
-
-class TriggerDelayAttribute(FloatProperty):
-    def get_value(self, obj):
-        return (obj._trigger_delay - obj.data_length // 2) * obj.sampling_time
-
-    def set_value(self, obj, delay):
-        # memorize the setting
-        obj._trigger_delay_memory = delay
-        # convert float delay into counts
-        delay = int(np.round(delay / obj.sampling_time)) + obj.data_length // 2
-        # in mode "immediately", trace goes from 0 to duration,
-        # but trigger_delay_memory is not overwritten
-        if obj.trigger_source == 'immediately':
-            obj._trigger_delay = obj.data_length
-            return delay
-        if delay <= 0:
-            delay = 1  # bug in scope code: 0 does not work
-        elif delay > 2 ** 32 - 1:  # self.data_length-1:
-            delay = 2 ** 32 - 1  # self.data_length-1
-        obj._trigger_delay = delay
-        return delay
-
-
 class ContinuousRollingFuture(PyrplFuture):
-    DELAY_ROLLING_MODE_MS = 20
+    """
+    This Future object is the one controlling the acquisition in
+    rolling_mode. It will never be fullfilled (done), since rolling_mode
+    is always continuous, but the timer/slot mechanism to control the
+    rolling_mode acquisition is encapsulated in this object.
+    """
+    DELAY_ROLLING_MODE_MS = 20 #  update the display every 20 ms
     current_avg = 1  # no averaging in rolling mode
 
     def __init__(self, module):
@@ -222,7 +197,13 @@ class Scope(HardwareModule, AcquisitionModule):
     _trigger_source_register = SelectRegister(0x4, doc="Trigger source",
                                               options=_trigger_sources)
 
-    trigger_source = TriggerSourceAttribute(options = _trigger_sources.keys())
+    trigger_source = SelectProperty(options=_trigger_sources.keys(),
+                                    doc="Trigger source for the scope. Use "
+                                        "'immediately' if no "
+                                        "synchronisation is required. "
+                                        "Trigger_source will be ignored in "
+                                        "rolling_mode.",
+                                    call_setup=True)
 
     _trigger_debounce = IntRegister(0x90, doc="Trigger debounce time [cycles]")
 
@@ -235,18 +216,20 @@ class Scope(HardwareModule, AcquisitionModule):
     threshold_ch2 = FloatRegister(0xC, bits=14, norm=2 ** 13,
                                   doc="ch1 trigger threshold [volts]")
 
-    _trigger_delay = IntRegister(0x10,
+    _trigger_delay_register = IntRegister(0x10,
                                  doc="number of decimated data after trigger "
                                      "written into memory [samples]")
 
-    trigger_delay = TriggerDelayAttribute(min=-10,
-                                          max=8e-9 * 2 ** 30,
-                                          doc="delay between trigger and "
-                                              "acquisition start.\n"
-                                              "negative values down to "
-                                              "-duration are allowed for "
-                                              "pretrigger",
-                                          call_setup=True)
+    trigger_delay = FloatProperty(min=-10, # TriggerDelayAttribute
+                                  max=8e-9 * 2 ** 30,
+                                  doc="delay between trigger and "
+                                      "acquisition start.\n"
+                                      "negative values down to "
+                                      "-duration are allowed for "
+                                      "pretrigger. "
+                                      "In trigger_source='immediately', "
+                                      "trigger_delay is ignored.",
+                                  call_setup=True)
 
     _trigger_delay_running = BoolRegister(0x0, 2,
                                           doc="trigger delay running ("
@@ -340,9 +323,9 @@ class Scope(HardwareModule, AcquisitionModule):
                               doc="should ch2 be displayed in the gui?")
 
     def _init_module(self):
-        self._trigger_source_memory = 'off'  # "immediately" #fixes bug with
+        # self._trigger_source_memory = 'off'  # "immediately" #fixes bug with
         # trigger_delay for 'immediate' at startup
-        self._trigger_delay_memory = 0
+        # self._trigger_delay_memory = 0
         super(Scope, self)._init_module()  # _init_module of AcquisitionModule
 
     def _ownership_changed(self, old, new):
@@ -375,7 +358,7 @@ class Scope(HardwareModule, AcquisitionModule):
         """ acquired (normalized) data from ch1"""
         return np.array(
             np.roll(self._rawdata_ch1, - (self._write_pointer_trigger +
-                                          self._trigger_delay + 1)),
+                                          self._trigger_delay_register + 1)),
             dtype=np.float) / 2 ** 13
 
     @property
@@ -383,7 +366,7 @@ class Scope(HardwareModule, AcquisitionModule):
         """ acquired (normalized) data from ch2"""
         return np.array(
             np.roll(self._rawdata_ch2, - (self._write_pointer_trigger +
-                                          self._trigger_delay + 1)),
+                                          self._trigger_delay_register + 1)),
             dtype=np.float) / 2 ** 13
 
     @property
@@ -462,29 +445,51 @@ class Scope(HardwareModule, AcquisitionModule):
         return self.curve_ready()
 
     def _start_acquisition(self):
+        """
+        Start acquisition of a curve in rolling_mode=False
+        """
         autosave_backup = self._autosave_active
         self._autosave_active = False  # Don't save anything in config file
         # during setup!! # maybe even better in
         # BaseModule ??
         self._setup_called = True
+
+        # 0. reset state machine
         self._reset_writestate_machine = True
-        # trigger logic - set source
-        self.trigger_source = self.trigger_source
-        # arm trigger
-        self._trigger_armed = True
-        # mode 'immediately' must receive software trigger after arming to
-        # start acquisition. The software trigger must occur after
-        # pretrig_ok, but we do not need to worry about this because it is
-        # taken care of in the trigger_source setter in this class (the
-        # trigger_delay section of it).
+
+        # set the trigger delay:
+        # 1. in mode "immediately", trace goes from 0 to duration,
         if self.trigger_source == 'immediately':
-            # self.wait_for_pretrig_ok()
-            self.trigger_source = self.trigger_source
+            self._trigger_delay_register = self.data_length
+        else: #  2. triggering on real signal
+            #  a. convert float delay into counts
+            delay = int(np.round(self.trigger_delay / self.sampling_time)) + \
+                    self.data_length // 2
+            #  b. Do the proper roundings of the trigger delay
+            if delay <= 0:
+                delay = 1  # bug in scope code: 0 does not work
+            elif delay > 2 ** 32 - 1:
+                delay = 2 ** 32 - 1
+            # c. set the trigger_delay in the right fpga register
+            self._trigger_delay_register = delay
+
+        # 4. Arm the trigger: curve acquisition will only start passed this
+        self._trigger_armed = True
+        # 5. In case immediately, setting again _trigger_source_register
+        # will cause a "software_trigger"
+        self._trigger_source_register = self.trigger_source
+
         self._autosave_active = autosave_backup
         self._last_time_setup = time()
 
     # Rolling_mode related methods:
     # -----------------------------
+
+    def _start_acquisition_rolling_mode(self):
+        self._start_acquisition()
+        self._trigger_source_register = 'off'
+        self._trigger_armed = True
+
 
     def _rolling_mode_allowed(self):
         """
@@ -530,11 +535,6 @@ class Scope(HardwareModule, AcquisitionModule):
                 data = np.concatenate([[np.nan] * to_discard, data])
                 datas[index] = data
         return times, datas
-
-    def _start_acquisition_rolling_mode(self):
-        self._start_acquisition()
-        self._trigger_source_register = 'off'
-        self._trigger_armed = True
 
     # Custom behavior of AcquisitionModule methods for scope:
     # -------------------------------------------------------
