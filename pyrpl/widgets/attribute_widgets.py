@@ -1061,7 +1061,9 @@ class FilterAttributeWidget(BaseAttributeWidget):
 
         #val = getattr(self.module, self.name)
 
-        if isinstance(new_value, basestring) or not np.iterable(new_value): # only 1 element in the FilterAttribute, make a list for consistency
+        if isinstance(new_value, str) or not np.iterable(new_value): # only 1
+            # element in the FilterAttribute, make a list for consistency,
+            # used to be basestring
             val = [new_value]
         self.widget.set_list(new_value)
 

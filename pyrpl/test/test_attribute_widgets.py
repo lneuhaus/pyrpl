@@ -33,7 +33,7 @@ class TestAttributeWidgets(TestPyrpl):
         assert(isinstance(self.pyrpl.dummymodule.true_or_false, bool))
         assert(isinstance(self.pyrpl.dummymodule.some_number, float))
         assert(isinstance(self.pyrpl.dummymodule.some_filter, numbers.Number)) #should this be a list ?
-        assert(isinstance(self.pyrpl.dummymodule.some_options, basestring))
+        assert(isinstance(self.pyrpl.dummymodule.some_options, str))  # used to be basestring
         # tried to add this, but the second assertion just doesnt seem to work
         assert (self.pyrpl.c.dummymodule.some_number == 3.123), \
                        self.pyrpl.c.dummymodule.some_number

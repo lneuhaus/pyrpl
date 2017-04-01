@@ -275,7 +275,7 @@ class BoolIgnoreProperty(BoolProperty):
         """
         Converts value to bool.
         """
-        if isinstance(value, basestring):
+        if isinstance(value, str):  # used to be basestring
             if value.lower() == 'true':
                 return True
             elif value.lower() == 'false':
@@ -796,9 +796,9 @@ class StringProperty(BaseProperty):
 
     def validate_and_normalize(self, obj, value):
         """
-        Reject anything that is not a basestring
+        Reject anything that is not a string
         """
-        if not isinstance(value, basestring):
+        if not isinstance(value, str):  # used to be basestring
             raise ValueError("value %s cannot be used for StringAttribute %s of module %s"
                              %(str(value), self.name, obj.name))
         else:

@@ -189,7 +189,7 @@ class OutputSignal(Signal):
             - input.gain * pid.p * output.dc_gain = output.p
             - input.gain * pid.i * output.dc_gain = output.i
         """
-        if isinstance(input, basestring):
+        if isinstance(input, str):  # used to be basestring
             input = self.lockbox.inputs[input]
 
         # The total loop is composed of the pid and external components.

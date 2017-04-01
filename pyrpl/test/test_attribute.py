@@ -50,7 +50,7 @@ class TestClass(TestPyrpl):
         assert(isinstance(self.pyrpl.dummymodule.true_or_false, bool))
         assert(isinstance(self.pyrpl.dummymodule.some_number, float))
         assert(isinstance(self.pyrpl.dummymodule.some_filter, numbers.Number)) #should this be a list ?
-        assert(isinstance(self.pyrpl.dummymodule.some_options, basestring))
+        assert(isinstance(self.pyrpl.dummymodule.some_options, str))  # used to be basestring
 
     def test_submodule(self):
         assert(self.sub1.b1==True) # values defined in config file
