@@ -1,3 +1,6 @@
+# must go into travis setup and insert ip address and other data of the
+redpitaya device, and disable concurrent builds to avoid conflicts between
+tests of different python versions
 env:
 - AUTOCORRETPEP8=0 DISPLAY=:99.0
 # REDPITAYA variables are defined in travis account (encrypted)

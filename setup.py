@@ -41,7 +41,7 @@ requirements = ['scp',
                 'pyqtgraph',
                 'numpy>=1.9',
                 'paramiko>=2.0',
-                #'ruamel.yaml' # requirement disabled
+                #'ruamel.yaml' # temporarily disabled
                 'nose>=1.0']
 if sys.version_info >= (3,0):#  stuff not needed in python <= 2.7',
     requirements += ['quamash']
@@ -107,9 +107,11 @@ setup(name='pyrpl',
                               'monitor_server/monitor_server',
                               'monitor_server/monitor_server_0.95']},
 
+      # install_requires is for setuptools
       install_requires=requirements,
-      setup_requires=requirements,
-      requires=requirements,  # needed on my local machine...
+      #setup_requires=requirements,
+      # requires is for distutils
+      #requires=requirements,
 
       # stuff for unitary test with pytest
       tests_require=['nose>=1.0'],
