@@ -58,6 +58,7 @@ install:
   - sudo easy_install pip==9.0.1
   - source activate test-environment
   - pip install scp
+  - conda install --yes pyqt=4
   # there are some bugs in the installation of these packages in higher python versions
   - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
       conda install --yes -c dan_blanchard python-coveralls nose-cov;

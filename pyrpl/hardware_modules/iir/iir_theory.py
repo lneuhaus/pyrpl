@@ -18,10 +18,17 @@
 
 
 import scipy.signal as sig
-import matplotlib.pyplot as plt
 import numpy as np
 import logging
+from ...errors import ExpectedPyrplError
+
 logger = logging.getLogger(name=__name__)
+
+# this is not strictly needed
+try:
+    import matplotlib.pyplot as plt
+except:
+    pass
 
 # this one is essentially a copy-paste from scipy 18 for being compatible with
 # lower versions of scipy
@@ -245,7 +252,12 @@ def bodeplot(data, xlog=False):
     xlog:    sets xaxis to logscale
     figure:
     """
-    ax1 = plt.subplot(211)
+    try:
+        ax1 = plt.subplot(211)
+    except:
+        raise ExpectedPyrplError("No installation of matplotlib found. "
+                                 "Please install matplotlib in order to use "
+                                 "this feature.")
     if len(data[0]) == 3:  # unpack the labels from data
         newdata = []
         labels = []
