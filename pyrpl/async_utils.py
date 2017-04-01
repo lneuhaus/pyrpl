@@ -10,7 +10,7 @@ logger = logging.getLogger(name=__name__)
 
 try:
     from asyncio import Future, ensure_future, CancelledError, set_event_loop
-except ImportError:
+except ImportError:  # this occurs in python 2.7
     logger.debug("asyncio not found, we will use concurrent.futures "
                   "instead of python 3.5 Futures.")
     from concurrent.futures import Future, CancelledError

@@ -38,6 +38,7 @@ requirements = ['scp',
                 #'matplotlib', # optional requirementm, not needed for core
                 'scipy',
                 'pyyaml',
+                'pandas',
                 'pyqtgraph',
                 'numpy>=1.9',
                 'paramiko>=2.0',
@@ -45,6 +46,8 @@ requirements = ['scp',
                 'nose>=1.0']
 if sys.version_info >= (3,0):#  stuff not needed in python <= 2.7',
     requirements += ['quamash']
+else:  # python 2.7
+    requirements += ['futures']
 
 # cannot install pyQt4 with pip:
 # http://stackoverflow.com/questions/4628519/is-it-possible-to-require-pyqt-from-setuptools-setup-py

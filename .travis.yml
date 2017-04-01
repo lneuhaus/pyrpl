@@ -53,20 +53,20 @@ before_install:
 # - sudo pip install autopep8
 
 install:
-  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION numpy scipy paramiko matplotlib pandas nose pip
   # this pip update will hopefully solve issues in python 2.7
   - sudo easy_install pip==9.0.1
+  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION numpy scipy paramiko pandas nose pip
   - source activate test-environment
   - pip install scp
   - conda install --yes pyqt=4
+  - conda install --yes -c conda-forge pyqtgraph=0.10.0
   # there are some bugs in the installation of these packages in higher python versions
   - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
       conda install --yes -c dan_blanchard python-coveralls nose-cov;
     fi
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "3.5" ]]; then
+  - if [[ "$TRAVIS_PYTHON_VERSION" != "2.7" ]]; then
       pip install quamash;
     fi
-  - conda install --yes -c conda-forge pyqtgraph=0.10.0
   - python setup.py install
   # overwrite default global config file with a custom one for travis (allows slower communication time)
   - mkdir $HOME/pyrpl_user_dir
