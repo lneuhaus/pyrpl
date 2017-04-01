@@ -42,7 +42,6 @@ before_install:
   # give it some time to start
   - sleep 3
   # this pip update will hopefully solve issues in python 2.7
-  - sudo easy_install pip==9.0.1
 
 #before_install:
 # - sudo apt-get update
@@ -54,18 +53,19 @@ before_install:
 ##- apt-get install libblas-dev liblapack-dev libatlas-base-dev gfortran
 
 install:
+  - sudo easy_install pip==9.0.1
   - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION numpy scipy paramiko matplotlib pandas nose pip
   - source activate test-environment
   - if [[ "$TRAVIS_PYTHON_VERSION" != "3.3" ]]; then
-      conda install -c ufechner pyqtgraph;
+      conda install --yes -c ufechner pyqtgraph;
     fi
   - pip install scp
   # there are some bugs in the installation of these packages in higher python versions
   - if [[ "$TRAVIS_PYTHON_VERSION" != "3.5" ]] && [[ "$TRAVIS_PYTHON_VERSION" != "3.4" ]]; then
       conda install --yes -c dan_blanchard python-coveralls nose-cov;
     fi
-  - if [[ "$TRAVIS_PYTHON_VERSION" != "3.5" ]]; then
-      pip install quamash
+  - if [[ "$TRAVIS_PYTHON_VERSION" == "3.5" ]]; then
+      pip install quamash;
     fi
   # fixes dependency conflict issue in python 3.6:
   - if [[ "$TRAVIS_PYTHON_VERSION" != "3.6" ]]; then
