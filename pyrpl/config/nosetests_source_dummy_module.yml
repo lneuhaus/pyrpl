@@ -12,14 +12,6 @@ pyrpl: # General configuration of the software:
     - SpectrumAnalyzer
     - Lockbox
     - DummyModule
-redpitaya:
-  password: root
-  user: root
-  port: 2222
-  frequency_correction: 1.0
-  filename: fpga//red_pitaya.bin
-  reloadfpga: true
-  monitor_server_name: monitor_server
 dummymodule:
   sub1:
     b1: true

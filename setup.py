@@ -16,7 +16,6 @@ import os
 import sys
 
 
-here = os.path.abspath(os.path.dirname(__file__))
 
 # Version info -- read without importing
 _locals = {}
@@ -25,15 +24,32 @@ with open('pyrpl/_version.py') as fp:
 version = _locals['__version__']
 
 
-# read requirements
-# from http://stackoverflow.com/questions/14399534/how-can-i-reference-requirements-txt-for-the-install-requires-kwarg-in-setuptool
-requirements = []
-with open(os.path.join(here, 'requirements.txt')) as f:
-    lines = f.readlines()
-    for line in lines:
-        line = line.strip()
-        if '#' not in line and line:
-            requirements.append(line.strip())
+# # read requirements
+# # from http://stackoverflow.com/questions/14399534/how-can-i-reference-requirements-txt-for-the-install-requires-kwarg-in-setuptool
+# requirements = []
+# here = os.path.abspath(os.path.dirname(__file__))
+# with open(os.path.join(here, 'requirements.txt')) as f:
+#     lines = f.readlines()
+#     for line in lines:
+#         line = line.strip()
+#         if '#' not in line and line:
+#             requirements.append(line.strip())
+requirements = ['scp',
+                'matplotlib',
+                'scipy',
+                'pyyaml',
+                'pyqtgraph',
+                'numpy(>=1.9)',
+                'paramiko(>=2.0)',
+                #'ruamel.yaml' # requirement disabled
+                'nose(>=1.0)']
+if sys.version_info >= (3,0):
+    requirements.append('quamash')#  ; not in python_version > 2.7',
+
+# cannot install pyQt4 with pip:
+# http://stackoverflow.com/questions/4628519/is-it-possible-to-require-pyqt-from-setuptools-setup-py
+# PyQt4
+
 
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read() 
@@ -74,7 +90,7 @@ setup(name='pyrpl',
       long_description=read('README.md'),
       author='Leonhard Neuhaus',
       author_email='neuhaus@spectro.jussieu.fr',
-      url='https://www.github.com/lneuhaus/pyrplockbox/',
+      url='https://www.github.com/lneuhaus/pyrpl/',
       license='GPLv3',
       classifiers=['Programming Language :: Python :: 2.7',
                    'Natural Language :: English',
@@ -83,10 +99,10 @@ setup(name='pyrpl',
                    'Topic :: Scientific/Engineering :: Human Machine Interfaces',
                    'Topic :: Scientific/Engineering :: Physics',
                    'Programming Language :: C'],
-      keywords='RedPitaya DSP FPGA IIR PDH synchronous detection filter PID control lockbox servo feedback lock quantum optics',
+      keywords='RedPitaya DSP FPGA IIR PDH synchronous detection filter PID '
+               'control lockbox servo feedback lock quantum optics',
       platforms='any',
       packages=['pyrpl'],
-      # package_dir={'pyrpl': ''},
       package_data={'pyrpl': ['fpga/red_pitaya.bin',
                               'monitor_server/monitor_server',
                               'monitor_server/monitor_server_0.95']},
@@ -100,5 +116,7 @@ setup(name='pyrpl',
       # extras_require={'testing': ['pytest']},
 	  test_suite='nose.collector',
       # install options
-      cmdclass={'test': PyTest, 'fpga': compile_fpga, 'server': compile_server}
+      cmdclass={'test': PyTest,
+                'fpga': compile_fpga,
+                'server': compile_server}
       )
