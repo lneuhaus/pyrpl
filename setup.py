@@ -107,10 +107,9 @@ setup(name='pyrpl',
                               'monitor_server/monitor_server',
                               'monitor_server/monitor_server_0.95']},
 
-      # install_requires is for setuptools
       install_requires=requirements,
+      # what were the others for? dont remember..
       #setup_requires=requirements,
-      # requires is for distutils
       #requires=requirements,
 
       # stuff for unitary test with pytest
