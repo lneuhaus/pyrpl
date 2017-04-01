@@ -27,7 +27,7 @@ from ..widgets.module_widgets import SpecAnWidget
 
 import scipy.signal as sig
 import scipy.fftpack
-from pylab import *
+#from pylab import *  # causes problem in travis
 
 # Some initial remarks about spectrum estimation:
 # Main source: Oppenheim + Schaefer, Digital Signal Processing, 1975
