@@ -9,11 +9,11 @@ language: python
 python:
   - "2.7"
   - "3.5"
-# 3.3 and 3.4 should work, 3.6 has an installation conflict at the moment:
-# skipping these because tests already take > 1h
-#  - "3.3"
-#  - "3.4"
-#  - "3.6"
+# nosetests is only executed for 2.7 and 3.5, but we still test the
+# installation for other python versions
+  - "3.3"
+  - "3.4"
+  - "3.6"
 
 # lots of stuff here comes from https://gist.github.com/dan-blanchard/7045057
   
@@ -76,8 +76,9 @@ install:
 
 # Run test
 script:
-  #see: https://github.com/rtfd/readthedocs.org/issues/1951
-  - nosetests --with-coverage --cover-package=pyrpl --logging-level=DEBUG
+  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]] || [[ "$TRAVIS_PYTHON_VERSION" == "3.5" ]]; then
+      nosetests;
+    fi
 
 # Calculate coverage
 after_success:
