@@ -30,7 +30,7 @@ class TestPyrpl(object):
 
     @classmethod
     def setUpAll(cls):
-        print("=======SETTING UP %s===========" % cls.__name__)
+        print("=======SETTING UP %s=============" % cls.__name__)
         # these tests will not succeed without the hardware
         cls.erase_temp_file()  # also before (for instance in case of Ctrl-C)
         cls.pyrpl = Pyrpl(config=cls.tmp_config_file,
@@ -48,7 +48,7 @@ class TestPyrpl(object):
             cls.r.hk.led = 0
         cls.write_time = (time()-t0)/float(N)
         cls.communication_time = (cls.read_time + cls.write_time)/2.0
-        print("Estimated time per read/write operation: %.1f / %.1f ms" %
+        print("Estimated time per read / write operation: %.1f ms / %.1f ms" %
               (cls.read_time*1000.0, cls.write_time*1000.0))
 
     def test_read_write_time(self):
