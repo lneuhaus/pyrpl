@@ -23,8 +23,8 @@ import numpy as np
 import time
 from PyQt4 import QtCore
 from . import default_config_dir, user_config_dir
-#from io import StringIO
-from io import BytesIO as StringIO  # avoids unicode/str error in python 2.7
+from io import StringIO
+#from io import BytesIO as StringIO  # avoids unicode/str error in python 2.7
 from .pyrpl_utils import time
 
 import logging
