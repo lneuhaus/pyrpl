@@ -114,6 +114,7 @@ class RedPitaya(object):
                     oldvalue = self.parameters[k]
                     self.parameters[k] = type(oldvalue)(newvalue)
                     if k == "password": # do not show the password on the screen
+                        oldvalue = "********"
                         newvalue = "********"
                     self.logger.debug("Variable %s with value %s overwritten "
                                       "by environment variable REDPITAYA_%s "
