@@ -50,8 +50,10 @@ class TestScope(TestPyrpl):
         return ((data != res)[~np.isnan(data)]).any()
 
     def test_scope_rolling_mode_and_running_state_update(self):
-        """ makes sure scope rolling_mode and running states are correctly
-        setup when something is changed """
+        """
+        makes sure scope rolling_mode and running states are correctly
+        setup when something is changed
+        """
         self.r.asg1.frequency = 0
         self.r.scope.setup_attributes = dict(duration=0.5,
                            trigger_source='asg1',
@@ -126,8 +128,10 @@ class TestScope(TestPyrpl):
             # setup_attributes of the scope
 
     def test_setup_rolling_mode(self):
-        """recalling a state with rolling mode should work."""
-        ### Carreful, setup(...) wont (see comment at the end of scop._setup)
+        """
+        recalling a state with rolling mode should work.
+        """
+        ### Careful, setup(...) wont (see comment at the end of scop._setup)
         self.r.scope.setup_attributes = dict(duration=0.5,
                                              trigger_delay=0.,
                                              input1='in1',
@@ -145,7 +149,6 @@ class TestScope(TestPyrpl):
     def test_scope_slave_free(self):
         """
         Make sure the scope returns to rolling mode after being freed
-        :return:
         """
         self.pyrpl.rp.scope.setup(duration=0.5,
                             trigger_delay=0.,
@@ -176,7 +179,6 @@ class TestScope(TestPyrpl):
         """
         Make sure the scope isn't continuously writing to config file,
         even in running mode.
-        :return:
         """
         for rolling_mode in (True, False):
             self.pyrpl.rp.scope.setup(duration=0.005,

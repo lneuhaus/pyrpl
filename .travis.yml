@@ -9,9 +9,10 @@ language: python
 python:
   - "2.7"
   - "3.5"
-  - "3.4"
-# maybe we can add this later:
+# 3.3 and 3.4 should work, 3.6 has an installation conflict at the moment:
+# skipping these because tests already take > 1h
 #  - "3.3"
+#  - "3.4"
 #  - "3.6"
 
 # lots of stuff here comes from https://gist.github.com/dan-blanchard/7045057
@@ -67,11 +68,9 @@ install:
   - if [[ "$TRAVIS_PYTHON_VERSION" != "2.7" ]]; then
       pip install quamash;
     fi
-  - python setup.py install
   # overwrite default global config file with a custom one for travis (allows slower communication time)
-  - mkdir $HOME/pyrpl_user_dir
   - \cp ./travis_global_config.yml ./pyrpl/config/global_config.yml
-  - \cp ./travis_global_config.yml $HOME/pyrpl_user_dir/global_config.yml
+  - python setup.py install
 
 #before_script: ./autocorrectpep8_script.sh
 

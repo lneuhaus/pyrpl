@@ -125,26 +125,25 @@ class TestScopeAsgAms(TestPyrpl):
     def test_scope_trigger_delay(self):
         """
         Make sure taking a curve in immediately is instantaneous
-        :return:
         """
         if self.r is None:
             return
         asg = self.r.asg1
         asg.setup(amplitude=0, offset=0)
-
+        max_read_time = self.read_time*self.r.scope.data_length*1.5
         self.r.scope.trigger_source = "immediately"
         self.r.scope.duration = 0.001
-        self.r.scope.trigger_delay = 1.
+        self.r.scope.trigger_delay = 2 * max_read_time
         tic = time.time()
         self.r.scope.setup()
         self.r.scope.curve()
-        assert (time.time() - tic < 0.1)
+        read_time = time.time() - tic
+        assert (read_time < max_read_time), (read_time, max_read_time)
 
     def test_scope_trigger_delay_not_forgotten(self):
         """
         Makes sure switching from some trigger_source to immediately and back
         doesn't forget the trigger_delay
-        :return:
         """
         if self.r is None:
             return

@@ -70,16 +70,17 @@ class Pyrpl(object):
                  source=None,
                  **kwargs):
         # logger initialisation
-        self.logger = logging.getLogger(name='pyrpl') #__name__)  # 'pyrpl') if name is pyrpl.pyrpl, then
-                                                                    # pyrpl.submodule is not a sublogger of this one
+        self.logger = logging.getLogger(name='pyrpl') # default: __name__
         # configuration is retrieved from config file
         self.c = MemoryTree(filename=config, source=source)
-        # make sure config file has the required sections
-        if not 'pyrpl' in self.c._keys():
-            self.c['pyrpl'] = default_pyrpl_config
+        # make sure config file has the required sections and complete with
+        # missing entries from default
+        pyrplbranch = self.c._get_or_create('pyrpl')
+        for k in default_pyrpl_config:
+            if k not in pyrplbranch._keys():
+                pyrplbranch[k] = default_pyrpl_config[k]
         # set global logging level if specified in config file
-        if 'loglevel' in self.c.pyrpl._keys():
-            pyrpl_utils.setloglevel(level=self.c.pyrpl.loglevel,
+        pyrpl_utils.setloglevel(level=self.c.pyrpl.loglevel,
                                 loggername='pyrpl')
         # initialize RedPitaya object with the configured or default parameters
         self.c._get_or_create('redpitaya')

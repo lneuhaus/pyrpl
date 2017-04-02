@@ -108,8 +108,9 @@ class IIR(FilterModule):
                        "_setup_unity",
                        "_setup_zero"]
 
-    loops = IntRegister(0x100, doc="Decimation factor of IIR w.r.t. 125 MHz. " \
-                                   + "Must be at least 3-5. ",
+    loops = IntRegister(0x100,
+                        doc="Decimation factor of IIR w.r.t. 125 MHz. Must be "
+                            "at least 3-5. ",
                         default=_minloops,
                         min=_minloops,
                         max=_maxloops,
@@ -121,8 +122,7 @@ class IIR(FilterModule):
 
     bypass = BoolRegister(0x104, 1,
                           doc="IIR is bypassed",
-                          default=False)
-
+                          default=False)  # fpga register name: shortcut
 
     complex_zeros = ListComplexProperty(default=[], call_setup=True)
     complex_poles = ListComplexProperty(default=[], call_setup=True)
@@ -297,7 +297,8 @@ class IIR(FilterModule):
                 raise Exception("Error: This FPGA bitfile does not support IIR "
                                 "filters! Please use an IIR version!")
             self.on = False
-            self.bypass = False
+            # don't mess with bypass parameter
+            #self.bypass = False
             # design the filter
             self.iirfilter = iir_theory.IirFilter(zeros=self.zeros,
                                                   poles=self.poles,

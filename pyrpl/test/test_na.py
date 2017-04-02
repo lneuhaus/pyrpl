@@ -50,7 +50,8 @@ class TestNA(TestPyrpl):
         # test na speed without gui -
         # that's as good as we can do right now (1 read + 1 write per point
         # + 0.9 error margin)
-        maxduration = self.communication_time * 2.9
+        maxduration = self.communication_time * 3.5
+        # maxduration factor used to be 2.9, but travis needs more time
         points = int(round(10.0 / maxduration))
         self.na.setup(start_freq=1e3,
                       stop_freq=1e4,

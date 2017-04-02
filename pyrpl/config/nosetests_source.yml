@@ -4,16 +4,17 @@ pyrpl:  # General configuration of the software:
 
   gui: true  # autostart gui
 
-  loglevel: warning # debug
+  loglevel: debug # debug
   # level of logged information.
   # 'debug' outputs everything
-  # 'infi' is default level
+  # 'info' is default level
   # 'warning' only shows warnings and errors
   # 'error' only shows errors
 
-  modules:
+  # this section is commented out to test with the default configuration
+  # modules:
   # SoftwareModules to load (in addition to all hardware modules -
   # IqManager, AsgManager, PidManager, ScopeManager)
-    - NetworkAnalyzer
-    - SpectrumAnalyzer
-    - Lockbox
+  #  - NetworkAnalyzer
+  #  - SpectrumAnalyzer
+  #  - Lockbox
