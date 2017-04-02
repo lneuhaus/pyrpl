@@ -5,6 +5,7 @@ import copy
 from PyQt4 import QtGui, QtCore
 from .test_base import TestPyrpl
 import numpy as np
+from .. import global_config
 from ..async_utils import sleep
 
 APP = QtGui.QApplication.instance()
@@ -50,7 +51,14 @@ class TestNA(TestPyrpl):
         # test na speed without gui -
         # that's as good as we can do right now (1 read + 1 write per point
         # + 0.9 error margin)
-        maxduration = self.communication_time * 3.5
+        try:
+            reads_per_na_cycle = global_config.test.reads_per_na_cycle
+        except:
+            reads_per_na_cycle = 2.9
+            logger.info("Could not find global config file entry "
+                        "'test.reads_per_na_cycle. Assuming default value "
+                        "%.1f.", reads_per_na_cycle)
+        maxduration = self.communication_time * reads_per_na_cycle
         # maxduration factor used to be 2.9, but travis needs more time
         points = int(round(10.0 / maxduration))
         self.na.setup(start_freq=1e3,
