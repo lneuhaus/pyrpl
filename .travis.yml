@@ -14,8 +14,8 @@ language: python
 python:
   - "3.5"
   - "2.7"
-  - "3.3"  # not working because of asyncio import
   - "3.4"
+  - "3.3"
 #  - "3.6" # still not working
 
 notifications:
