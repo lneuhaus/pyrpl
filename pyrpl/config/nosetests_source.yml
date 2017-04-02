@@ -4,7 +4,7 @@ pyrpl:  # General configuration of the software:
 
   gui: true  # autostart gui
 
-  loglevel: debug # debug
+  loglevel: info # debug
   # level of logged information.
   # 'debug' outputs everything
   # 'info' is default level
