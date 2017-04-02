@@ -76,7 +76,7 @@ except:
         OrderedLoader.add_constructor(
             yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
             construct_mapping)
-        return yaml.load(stream, OrderedLoader)
+        return yaml.safe_load(stream, OrderedLoader)
     def save(data, stream=None, Dumper=yaml.SafeDumper, default_flow_style=False, **kwds):
         class OrderedDumper(Dumper):
             pass
@@ -93,8 +93,13 @@ except:
                     lambda dumper, data: dumper.represent_str(str(data)))
         OrderedDumper.add_representer(np.ndarray,
                     lambda dumper, data: dumper.represent_list(list(data)))
-        return yaml.dump(data, stream, OrderedDumper,
-                         default_flow_style=default_flow_style, **kwds)
+        return yaml.safe_dump(data,
+                              stream,
+                              OrderedDumper,
+                              default_flow_style=default_flow_style,
+                              encoding='utf-8',
+                              allow_unicode = True,
+                              **kwds)
 
     # usage example:
     # load(stream, yaml.SafeLoader)

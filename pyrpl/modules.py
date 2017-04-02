@@ -466,7 +466,7 @@ class Module(with_metaclass(ModuleMetaClass, object)):
         else:
             self._states[name] = self.setup_attributes
 
-    def load_state(self, name = None):
+    def load_state(self, name=None):
         """
         Loads the state with name "name" from the config file. If
         state_branch is left unchanged, uses the normal

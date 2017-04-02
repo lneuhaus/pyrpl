@@ -260,7 +260,8 @@ class PyrplWidget(QtGui.QMainWindow):
     def save_window_position(self):
         # Don't try to save position if window is closed (otherwise, random position is saved)
         if self.isVisible():
-            act_state = bytes(self.saveState())
+            #  pre-serialize binary data as "latin1" string
+            act_state = (bytes(self.saveState())).decode("latin1")
             if (not "dock_positions" in self.parent.c.pyrpl._keys()) or \
                (self.parent.c.pyrpl["dock_positions"]!=act_state):
                 self.parent.c.pyrpl["dock_positions"] = act_state
@@ -273,7 +274,7 @@ class PyrplWidget(QtGui.QMainWindow):
 
     def set_window_position(self):
         if "dock_positions" in self.parent.c.pyrpl._keys():
-            if not self.restoreState(self.parent.c.pyrpl.dock_positions):
+            if not self.restoreState(self.parent.c.pyrpl.dock_positions.encode("latin1")):
                 self.logger.warning("Sorry, " + \
                     "there was a problem with the restoration of Dock positions")
         try:

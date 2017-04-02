@@ -9,6 +9,8 @@ APP = QtGui.QApplication.instance()
 
 
 class TestLockbox(TestPyrpl):
+    source_config_file = "nosetests_source_lockbox.yml"
+
     def setup(self):
         self.lockbox = self.pyrpl.lockbox
 
@@ -41,3 +43,11 @@ class TestLockbox(TestPyrpl):
         self.lockbox.sequence.append({})
         self.lockbox.outputs.output1.p = 0
         self.lockbox.outputs.output1.i = -10.
+
+    def test_lock(self):
+        print self.lockbox.states
+        # make a config file for a lock including iir that locks onto itself
+        # then load another state and lock a pid with existing integrator
+        # test lock with islocked, test autorelock, test unit issues,
+        # test change of lockbox with incompatible settings, test saving of
+        # relevant lock parameters.
