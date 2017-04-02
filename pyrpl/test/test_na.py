@@ -65,10 +65,11 @@ class TestNA(TestPyrpl):
         # that's as good as we can do right now (1 read + 1 write per point
         # + 0.9 error margin)
         maxduration = self.communication_time * 2.9
+        points = int(np.round(10.0 / maxduration))
         self.na.setup(start_freq=1e3,
                       stop_freq=1e4,
                       rbw=1e6,
-                      points=10000,
+                      points=points,
                       avg=1)
         tic = time.time()
         self.na.curve()
@@ -83,7 +84,7 @@ class TestNA(TestPyrpl):
         self.na.setup(start_freq=1e3,
                       stop_freq=1e4,
                       rbw=1e6,
-                      points=1000,
+                      points=points//2,
                       avg=1)
         tic = time.time()
         self.na.single()

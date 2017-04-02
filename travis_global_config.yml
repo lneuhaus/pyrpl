@@ -5,4 +5,5 @@ general:
   loglevel: debug
 test:
   # maximum reasonable time for a read/write operation
-  max_communication_time: 30.0e-3
+  # time is definitely above 60 ms for travis and arroseur.ddns.net
+  max_communication_time: 100.0e-3

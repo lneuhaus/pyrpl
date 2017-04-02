@@ -16,7 +16,7 @@ class TestMemory(object):
         assert mt is not None
         assert mt._filename is None
         mt = MemoryTree('test')
-        assert mt.redpitaya._data is not None
+        assert mt.pyrpl._data is not None
         mt = MemoryTree('test')
         os.remove(mt._filename)
         mt = MemoryTree('test')
