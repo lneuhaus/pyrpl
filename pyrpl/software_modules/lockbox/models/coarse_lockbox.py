@@ -261,12 +261,13 @@ class CoarseSearchStepLockbox(FPM_analog_PDH):
                                      increment=1e-3)
 
     loop = None
-    _gui_attributes = ["start", "stop", "interval", "coarse", "end_search_threshold"]
+    _gui_attributes = ["start", "stop", "interval", "coarse",
+                       "end_search_threshold", "coarse_sweep"]
 
     interval = FloatProperty(default=0.01, min=0)
 
     inputs = LockboxModuleDictProperty(reflection=FPReflection,
-                                       pdh=FPPdh,
+                                       #pdh=FPPdh,
                                        analog_pdh=FPAnalogPdhFPM)
 
     def _init_module(self):
@@ -285,6 +286,14 @@ class CoarseSearchStepLockbox(FPM_analog_PDH):
             self.loop._clear()
             self.loop = None
 
+    def coarse_sweep(self):
+        self.fgen.waveform = "SINusoid"
+        self.fgen.amplitude = (self.lockbox.__class__.coarse.max-
+                               self.lockbox.__class__.coarse.min)/2.
+        self.fgen.offset = (self.lockbox.__class__.coarse.max+
+                            self.lockbox.__class__.coarse.min)/2.
+        self.fgen.frequency = 1.
+
 class CoarseSearchStepLockboxGI(CoarseSearchStepLockbox):
     _gui_attributes = ["gi_fps", "gi_rate"]
 
@@ -293,7 +302,7 @@ class CoarseSearchStepLockboxGI(CoarseSearchStepLockbox):
 
     def gi_init(self, loop_self):
         from ....redpitaya import RedPitaya
-        self.rp2 = RedPitaya(hostname='10.214.1.21')
+        self.rp2 = RedPitaya(hostname='10.214.1.41', silence_env=True)
         self.rp2.asg0.on = False
         self.rp2.pid0.input='asg0'
         self.rp2.pid0.p= 0
@@ -310,9 +319,8 @@ class CoarseSearchStepLockboxGI(CoarseSearchStepLockbox):
 
     def gi_copydata(self, loop_self):
         v = self.pyrpl.rp.sampler.out2
-        #self.rp2.pid0.ival = v
-        self.pid.ival = v
-
+        self.rp2.pid0.ival = v
+        #self.pid.ival = v
         if loop_self.n % 1000 == 0:
             time = float(loop_self.time)
             #print time
