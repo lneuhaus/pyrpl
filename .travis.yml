@@ -1,22 +1,24 @@
-# must go into travis setup and insert ip address and other data of the
-# redpitaya device, and disable concurrent builds to avoid conflicts between
-# tests of different python versions
+# for setup: must go into travis setup and insert ip address and other data of
+# the redpitaya device, and disable concurrent builds to avoid conflicts
+# between tests of different python versions
+
+# lots of stuff here comes from https://gist.github.com/dan-blanchard/7045057
+  
 env:
 - AUTOCORRETPEP8=0 DISPLAY=:99.0
 # REDPITAYA variables are defined in travis account (encrypted)
 
 language: python
+# nosetests is only executed for 2.7 and 3.5, but we still test the
+# installation for other python versions
+
 python:
   - "2.7"
   - "3.5"
-# nosetests is only executed for 2.7 and 3.5, but we still test the
-# installation for other python versions
   - "3.3"
   - "3.4"
   - "3.6"
 
-# lots of stuff here comes from https://gist.github.com/dan-blanchard/7045057
-  
 notifications:
   email: false
 
