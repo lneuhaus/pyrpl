@@ -455,9 +455,10 @@ class InputFromOutput(InputDirect):
         """ no need to calibrate this """
         pass
 
-    input_signal = InputSelectProperty(options=(lambda instance:
-                                      list(instance.lockbox.outputs.keys())),
-                                      doc="lockbox signal used as input")
+    input_signal = InputSelectProperty(
+        options=(lambda instance:
+            ['lockbox.outputs.'+k for k in instance.lockbox.outputs.keys()]),
+        doc="lockbox signal used as input")
 
     def is_locked(self, loglevel=logging.INFO):
         """ this is mainly used for coarse locking where significant
