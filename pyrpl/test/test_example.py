@@ -5,9 +5,9 @@ from .test_base import TestPyrpl
 
 class TestExample(TestPyrpl):
     def setup(self):
-        self.asg = self.pyrpl.rp.asg1
+        self.asg = self.pyrpl.rp.asg0
 
-    #you are invited to change the following silly tests to something useful
+    #you are welcome to change the following silly tests to something useful
     def test_example(self):
         if 1 > 2:
             assert False

@@ -70,6 +70,7 @@ install:
   - python setup.py install
   # overwrite default global config file with a custom one for travis (allows slower communication time)
   - mkdir $HOME/pyrpl_user_dir
+  - \cp ./travis_global_config.yml ./pyrpl/config/global_config.yml
   - \cp ./travis_global_config.yml $HOME/pyrpl_user_dir/global_config.yml
 
 #before_script: ./autocorrectpep8_script.sh
