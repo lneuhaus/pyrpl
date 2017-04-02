@@ -12,8 +12,8 @@ language: python
 # nosetests is only executed for 2.7 and 3.5, but we still test the
 # installation for other python versions
 python:
-  - "2.7"
   - "3.5"
+  - "2.7"
   - "3.3"
   - "3.4"
 #  - "3.6" # still not working
