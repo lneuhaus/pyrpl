@@ -3,7 +3,7 @@
 # between tests of different python versions
 
 # lots of stuff here comes from https://gist.github.com/dan-blanchard/7045057
-  
+
 env:
 - AUTOCORRETPEP8=0 DISPLAY=:99.0
 # REDPITAYA variables are defined in travis account (encrypted)
@@ -11,7 +11,6 @@ env:
 language: python
 # nosetests is only executed for 2.7 and 3.5, but we still test the
 # installation for other python versions
-
 python:
   - "2.7"
   - "3.5"
@@ -24,8 +23,7 @@ notifications:
 
 before_install:
   - sudo apt-get update
-  # We do this conditionally because it saves us some downloading if the
-  # version is the same.
+  # We do this conditionally because it saves us some downloading if the version is the same.
   - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
       wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
     else
@@ -39,42 +37,30 @@ before_install:
   - conda update -q conda
   # Useful for debugging any issues with conda
   - conda info -a
-  # The next couple lines fix a crash with multiprocessing on Travis and are not specific to using Miniconda
+  # The next lines fix a crash with multiprocessing on Travis and are not specific to using Miniconda
   - sudo rm -rf /dev/shm
   - sudo ln -s /run/shm /dev/shm
-  # starts gui support
-  # see https://docs.travis-ci.com/user/gui-and-headless-browsers/
+  # starts gui support, see https://docs.travis-ci.com/user/gui-and-headless-browsers/
   - sh -e /etc/init.d/xvfb start
   # give it some time to start
   - sleep 3
 
-#before_install:
-# - sudo apt-get update
-# - sudo apt-get -y install python-pip
-# - sudo pip install --upgrade pip
-# - sudo pip install pep8
-# - sudo pip install autopep8
-
 install:
   # this pip update will hopefully solve issues in python 2.7
-  - sudo easy_install pip==9.0.1
-  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION numpy scipy paramiko pandas nose pip
+  # - sudo easy_install pip==9.0.1
+  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION
+  # numpy scipy paramiko pandas nose pip
   - source activate test-environment
-  - pip install scp
+  # - pip install scp
   - conda install --yes pyqt=4
-  - conda install --yes -c conda-forge pyqtgraph=0.10.0
+  # - conda install --yes -c conda-forge pyqtgraph=0.10.0
   # there are some bugs in the installation of these packages in higher python versions
   - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
       conda install --yes -c dan_blanchard python-coveralls nose-cov;
     fi
-  - if [[ "$TRAVIS_PYTHON_VERSION" != "2.7" ]]; then
-      pip install quamash;
-    fi
   # overwrite default global config file with a custom one for travis (allows slower communication time)
   - \cp ./travis_global_config.yml ./pyrpl/config/global_config.yml
   - python setup.py install
-
-#before_script: ./autocorrectpep8_script.sh
 
 # Run test
 script:
