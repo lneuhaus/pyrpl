@@ -4,8 +4,8 @@ import time
 import copy
 from PyQt4 import QtGui, QtCore
 from .test_base import TestPyrpl
-
-from time import sleep
+import numpy as np
+from ..async_utils import sleep
 
 APP = QtGui.QApplication.instance()
 
@@ -23,26 +23,15 @@ class TestNA(TestPyrpl):
     def test_na_running_states(self):
         # make sure scope rolling_mode and running states are correctly setup
         # when something is changed
-        if self.r is None:
-            return
-
         def data_changing():
-            time.sleep(0.1)
-            APP.processEvents()
             data = copy.deepcopy(self.na.data_avg)
-            time.sleep(.001)
-
-            for i in range(1000):
-                time.sleep(.001)
-                APP.processEvents()
-
+            sleep(self.communication_time * 5.0)
             return (data != self.na.data_avg).any()
 
         self.na.setup(start_freq=1000, stop_freq=1e4, rbw=1000, points=10000)
-        for i in range(10000):
-            APP.processEvents()
-
+        sleep(2.0*self.communication_time)
         self.na.single_async()
+        sleep(self.communication_time * 5.0)
         assert data_changing()
 
         current_point = self.na.current_point
@@ -51,10 +40,7 @@ class TestNA(TestPyrpl):
         #  restarted
 
         self.na.continuous()
-        time.sleep(0.1)
-        for i in range(1000):
-            APP.processEvents()
-
+        sleep(self.communication_time * 5.0)
         assert data_changing()
         self.na.stop()  # do not let the na running or other tests might be
         # screwed-up !!!
@@ -65,7 +51,7 @@ class TestNA(TestPyrpl):
         # that's as good as we can do right now (1 read + 1 write per point
         # + 0.9 error margin)
         maxduration = self.communication_time * 2.9
-        points = int(np.round(10.0 / maxduration))
+        points = int(round(10.0 / maxduration))
         self.na.setup(start_freq=1e3,
                       stop_freq=1e4,
                       rbw=1e6,
