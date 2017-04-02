@@ -11,7 +11,7 @@ class TestExample(TestPyrpl):
     def test_example(self):
         if 1 > 2:
             assert False
-            
+
     def test_example2(self):
         if self.asg.frequency < 0:
             assert False

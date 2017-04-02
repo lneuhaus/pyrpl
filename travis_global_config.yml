@@ -6,4 +6,4 @@ general:
 test:
   # maximum reasonable time for a read/write operation
   # time is about 105 ms for travis and arroseur.ddns.net
-  max_communication_time: 10.0
+  max_communication_time: 0.5
