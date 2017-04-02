@@ -111,7 +111,7 @@ class TestPidNaIqIir(TestPyrpl):
         # setup a pid module with a bunch of different settings and measure
         # its transfer function, and compare it to the model.
 
-        error_threshold = 0.003  # (relative error)
+        error_threshold = 0.03  # (relative error)
         # Let's check the transfer function of the pid module with the integrated NA
         plotdata = []
 
@@ -144,7 +144,7 @@ class TestPidNaIqIir(TestPyrpl):
             pid.inputfilter = 0
             data = na.curve()
             f = na.data_x
-            plotdata.append((f, data, ('p=%.1e'%pid.p)+(' i=.1e'%pid.i)))
+            plotdata.append((f, data, 'p=%.1e, i=%.1e' % (pid.p, pid.i)))
             theory = pid.transfer_function(f, extradelay=extradelay)
             relerror = np.abs((data - theory) / theory)
             maxerror = np.max(relerror)
