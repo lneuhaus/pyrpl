@@ -230,10 +230,11 @@ class SpectrumAnalyzer(AcquisitionModule):
         """
         window = sig.get_window(self.window, self.data_length, fftbins=False)
         # empirical value for scaling flattop to sqrt(W)/V
-        filterfactor = np.sqrt(50)
+        filterfactor = 1/10. #np.sqrt(50)
         # norm by datalength, by sqrt(50 Ohm), and something related to
         # filter
-        normfactor = 1.0 / self.data_length / np.sqrt(50.0) * filterfactor
+        # normfactor = 1.0 / self.data_length / np.sqrt(50.0) * filterfactor
+        normfactor = 1.0 / self.data_length / filterfactor
         return window * normfactor
 
     def _get_iq_data(self):
@@ -241,6 +242,7 @@ class SpectrumAnalyzer(AcquisitionModule):
         :return: complex iq time trace
         """
         res = self.scope._get_curve()
+
         if self.baseband:
             return res[0][:self.data_length]
         else:
@@ -300,23 +302,23 @@ class SpectrumAnalyzer(AcquisitionModule):
         if self.display_unit=='Vpk^2':
             return data
         if self.display_unit == 'dB(Vpk^2)':
-            return 10 * log10(data)
+            return 10 * np.log10(data)
         if self.display_unit=='Vpk':
-            return sqrt(data)
+            return np.sqrt(data)
 
         if self.display_unit=='Vrms^2':
             return data/2
         if self.display_unit=='dB(Vrms^2)':
-            return 10*log10(data/2)
+            return 10*np.log10(data/2)
         if self.display_unit == 'Vrms':
-            return sqrt(data) / sqrt(2)
+            return np.sqrt(data) / sqrt(2)
 
         if self.display_unit=='Vrms^2/Hz':
             return data /2 / rbw
         if self.display_unit=='dB(Vrms^2/Hz)':
-            return 10 * log10(data / 2 / rbw)
+            return 10 * np.log10(data / 2 / rbw)
         if self.display_unit == 'Vrms/sqrt(Hz)':
-            return sqrt(data)/sqrt(2)/rbw
+            return np.sqrt(data)/ np.sqrt(2)/rbw
     # Concrete implementation of AcquisitionModule methods
     # ----------------------------------------------------
 
