@@ -24,7 +24,6 @@ import time
 from PyQt4 import QtCore
 from . import default_config_dir, user_config_dir
 from io import StringIO
-#from io import BytesIO as StringIO  # avoids unicode/str error in python 2.7
 from .pyrpl_utils import time
 
 import logging
@@ -76,7 +75,7 @@ except:
         OrderedLoader.add_constructor(
             yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
             construct_mapping)
-        return yaml.safe_load(stream, OrderedLoader)
+        return yaml.load(stream, OrderedLoader)
     def save(data, stream=None, Dumper=yaml.SafeDumper, default_flow_style=False, **kwds):
         class OrderedDumper(Dumper):
             pass
@@ -93,13 +92,13 @@ except:
                     lambda dumper, data: dumper.represent_str(str(data)))
         OrderedDumper.add_representer(np.ndarray,
                     lambda dumper, data: dumper.represent_list(list(data)))
-        return yaml.safe_dump(data,
-                              stream,
-                              OrderedDumper,
-                              default_flow_style=default_flow_style,
-                              encoding='utf-8',
-                              allow_unicode = True,
-                              **kwds)
+        return yaml.dump(data,
+                         stream,
+                         OrderedDumper,
+                         default_flow_style=default_flow_style,
+                         encoding='utf-8',
+                         allow_unicode = True,
+                         **kwds)
 
     # usage example:
     # load(stream, yaml.SafeLoader)
