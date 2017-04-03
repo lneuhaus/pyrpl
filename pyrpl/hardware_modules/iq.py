@@ -97,7 +97,7 @@ class Iq(FilterModule):
     _GAINBITS = 18  # Register(0x20C)
     _SIGNALBITS = 14  # Register(0x210)
     _LPFBITS = 24  # Register(0x214)
-    _SHIFTBITS = 8  # Register(0x218)
+    _SHIFTBITS = 6  # Register(0x218)
 
     pfd_integral = FloatRegister(0x150, bits=_SIGNALBITS, norm=_SIGNALBITS,
                                  doc="value of the pfd integral [volts]")
@@ -122,7 +122,14 @@ class Iq(FilterModule):
                         doc="gain3 of iq module [volts]")
     quadrature_factor = FloatRegister(0x118,
                                       bits=_GAINBITS,
-                                      norm=2 ** _SHIFTBITS,
+                                      norm=1.0,
+                                      default=1.0,
+                                      #2 ** _SHIFTBITS,
+                                      #  quadrature_factor of 1 corresponds
+                                      # to lowest-possible gain,
+                                      # where iq_signal is simply the input
+                                      # tiemes a 1-V sine (possibly low-pass
+                                      # filtered)
                                       doc="amplification factor of demodulated signal [a.u.]")
 
     _g4 = FloatRegister(0x11C, bits=_GAINBITS, norm=2 ** _SHIFTBITS,
