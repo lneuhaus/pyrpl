@@ -412,14 +412,14 @@ class MemoryBranch(object):
         """
         text = BytesIO()
         save(self._data if data is None else data, text)
-        return text.getvalue().encode()
+        return text.getvalue().decode()
 
     def _set_yml(self, yml_content):
         """
         :param yml_content: sets the branch to yml_content
         :return: None
         """
-        branch = load(yml_content.decode())
+        branch = load(yml_content.encode())
         self._parent._data[self._branch] = branch
         self._save()
 

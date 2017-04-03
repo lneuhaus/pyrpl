@@ -30,14 +30,14 @@ class DummyModule(Module):
     # it is not necessary to mention the modules here
     #_setup_attributes = ['sub1', 'sub2']
     true_or_false = BoolProperty()
-    some_number = FloatProperty(min=-10, max=10)
+    some_number = FloatProperty(min=-10, max=10, default=1.414)
     some_filter = MyFilterProperty()
     some_options = SelectProperty(options=["foo", "bar"])
     sub1 = ModuleProperty(FirstSubModule)
     sub2 = ModuleProperty(SecondSubModule)
 
 
-class TestClass(TestPyrpl):
+class TestAttributeClass(TestPyrpl):
     source_config_file = "nosetests_source_dummy_module"
 
     def test_config_file(self):
@@ -48,6 +48,12 @@ class TestClass(TestPyrpl):
         assert(isinstance(self.pyrpl.dummymodule.some_number, float))
         assert(isinstance(self.pyrpl.dummymodule.some_filter, numbers.Number)) #should this be a list ?
         assert(isinstance(self.pyrpl.dummymodule.some_options, str))  # used to be basestring
+        # confirm config file content
+        assert (self.pyrpl.c.dummymodule.some_number == 3.123), \
+            self.pyrpl.c.dummymodule.some_number
+        # confirm that loading was done properly (instead of the above default)
+        assert (self.pyrpl.c.dummymodule.some_number == 3.123), \
+            self.pyrpl.c.dummymodule.some_number
 
     def test_submodule(self):
         self.sub1 = self.pyrpl.dummymodule.sub1

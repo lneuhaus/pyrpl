@@ -6,8 +6,6 @@ from ..attributes import BoolProperty, FilterProperty, SelectProperty, \
     FloatProperty
 from .test_base import TestPyrpl
 
-# This file was deteted. Is this supposed to be so?
-
 
 class MyFilterProperty(FilterProperty):
     def valid_frequencies(self, module):
