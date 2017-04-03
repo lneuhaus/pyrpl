@@ -1,18 +1,1 @@
-# please do not do any crazy stuff here, i.e. only put packages or comments
-###### Requirements without Version Specifiers ######
-scp
-matplotlib
-scipy
-pandas
-nose
-pyyaml
-ruamel.yaml
-pyqtgraph
-
-###### Requirements with Version Specifiers ######
-#   See https://www.python.org/dev/peps/pep-0440/#version-specifiers
-numpy
-paramiko
-# bugs appear if requirements are defined with version numbers
-#numpy>=1.9
-#paramiko>=2.0
+.

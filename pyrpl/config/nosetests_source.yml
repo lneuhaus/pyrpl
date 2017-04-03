@@ -1,0 +1,20 @@
+pyrpl:  # General configuration of the software:
+
+  name: nosetests_pyrpl
+
+  gui: true  # autostart gui
+
+  loglevel: info # debug
+  # level of logged information.
+  # 'debug' outputs everything
+  # 'info' is default level
+  # 'warning' only shows warnings and errors
+  # 'error' only shows errors
+
+  # this section is commented out to test with the default configuration
+  # modules:
+  # SoftwareModules to load (in addition to all hardware modules -
+  # IqManager, AsgManager, PidManager, ScopeManager)
+  #  - NetworkAnalyzer
+  #  - SpectrumAnalyzer
+  #  - Lockbox

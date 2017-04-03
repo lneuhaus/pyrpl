@@ -56,9 +56,9 @@ module red_pitaya_asg_ch #(
    output reg [RSZ-1: 0] buf_rpnt_o      ,  //!< buffer current read pointer
 
    // configuration
-   input     [RSZ+15: 0] set_size_i      ,  //!< set table data size
-   input     [RSZ+15: 0] set_step_i      ,  //!< set pointer step
-   input     [RSZ+15: 0] set_ofs_i       ,  //!< set reset offset
+   input     [RSZ+16-1: 0] set_size_i      ,  //!< set table data size
+   input     [RSZ+16-1: 0] set_step_i      ,  //!< set pointer step
+   input     [RSZ+16-1: 0] set_ofs_i       ,  //!< set reset offset
    input                 set_rst_i       ,  //!< set FSM to reset
    input                 set_once_i      ,  //!< set only once  -- not used
    input                 set_wrap_i      ,  //!< set wrap enable
@@ -84,10 +84,10 @@ reg   [  14-1: 0] dac_buf [0:(1<<RSZ)-1] ;
 reg   [  14-1: 0] dac_rd    ;
 reg   [  14-1: 0] dac_rdat  ;
 reg   [ RSZ-1: 0] dac_rp    ;
-reg   [RSZ+15: 0] dac_pnt   ; // read pointer
-reg   [RSZ+15: 0] dac_pntp  ; // previour read pointer
-wire  [RSZ+16: 0] dac_npnt  ; // next read pointer
-wire  [RSZ+16: 0] dac_npnt_sub ;
+reg   [RSZ+16-1: 0] dac_pnt   ; // read pointer
+reg   [RSZ+16-1: 0] dac_pntp  ; // previous read pointer
+wire  [RSZ+17-1: 0] dac_npnt  ; // next read pointer
+wire  [RSZ+17-1: 0] dac_npnt_sub ;
 wire              dac_npnt_sub_neg;
 
 reg   [  28-1: 0] dac_mult  ;
@@ -96,7 +96,7 @@ reg   [  15-1: 0] dac_sum   ;
 // read
 always @(posedge dac_clk_i)
 begin
-   buf_rpnt_o <= dac_pnt[RSZ+15:16];
+   buf_rpnt_o <= dac_pnt[16+RSZ-1:16];
    dac_rp     <= (rand_on_i == 1'b1) ? rand_pnt_i : dac_pnt[RSZ+15:16];
    dac_rd     <= dac_buf[dac_rp] ;
    dac_rdat   <= dac_rd ;  // improve timing
@@ -220,7 +220,7 @@ end else begin
       dac_pnt <= set_ofs_i;
    else if (dac_do) begin
       if (~dac_npnt_sub_neg)  dac_pnt <= set_wrap_i ? dac_npnt_sub : set_ofs_i; // wrap or go to start
-      else                    dac_pnt <= dac_npnt[RSZ+15:0]; // normal increase
+      else                    dac_pnt <= dac_npnt[RSZ+16-1:0]; // normal increase
    end
 end
 

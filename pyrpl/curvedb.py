@@ -33,19 +33,18 @@ import pickle
 import os
 import logging
 
-#from . import fitting
 
 # optional override of CurveDB class with custom module, as defined in
 # ./pyrpl/config/global_config.yml
 try:
-    from .memory import MemoryTree
-    _configdir = os.path.join(os.path.dirname(__file__), "config")
-    mt = MemoryTree(os.path.join(_configdir, "global_config.yml"))
-    global CurveDB
-    CurveDB = __import__(mt.general.curvedb).CurveDB
+    from . import global_config
+    CurveDB = __import__(global_config.general.curvedb).CurveDB
 except:
+    from . import user_curve_dir
     class CurveDB(object):
-        _dirname = os.path.join(os.path.dirname(__file__),"curves")
+        _dirname = user_curve_dir
+        if not os.path.exists(_dirname): # if _dirname doesn't exist, some unexpected errors will occur.
+            os.mkdir(_dirname)
 
         def __init__(self, name="some_curve"):
             """
@@ -60,6 +59,15 @@ except:
             self.data = pandas.Series()
             self.name = name
 
+        @property
+        def name(self):
+            return self.params["name"]
+
+        @name.setter
+        def name(self, val):
+            self.params["name"] = val
+            return val
+
         @classmethod
         def create(cls, *args, **kwds):
             """
@@ -71,7 +79,7 @@ except:
                 if isinstance(args[0], pandas.Series):
                     ser = args[0]
                 else:
-                    y = nu.array(args[0])
+                    y = np.array(args[0])
                     ser = pandas.Series(y)
             elif len(args) == 2:
                 x = np.array(args[0])
@@ -84,6 +92,8 @@ except:
 
             obj.params = kwds
             pk = obj.pk  # make a pk
+            if ("childs" not in obj.params):
+                obj.params["childs"] = None
             if ("autosave" not in kwds) or (kwds["autosave"]):
                 obj.save()
             return obj
@@ -99,19 +109,27 @@ except:
             elif isinstance(curve, list):
                 return [CurveDB.get(c) for c in curve]
             else:
-                with open(CurveDB._dirname + str(curve) + '.p', 'r') as f:
+                with open(os.path.join(CurveDB._dirname, str(curve) + '.p'), 'rb') as f:
+                    # rb is for compatibility with python 3
+                    # see http://stackoverflow.com/questions/5512811/builtins-typeerror-must-be-str-not-bytes
                     curve = CurveDB()
                     curve._pk, curve.data, curve.params = pickle.load(f)
                 return curve
 
         def save(self):
-            with open(os.path.join(self._dirname, str(self.pk) + '.p'), 'w') as f:
+            with open(os.path.join(self._dirname, str(self.pk) + '.p'), 'wb') as f:
+                # wb is for compatibility with python 3
+                # see http://stackoverflow.com/questions/5512811/builtins-typeerror-must-be-str-not-bytes
                 pickle.dump((self.pk, self.data, self.params), f)
-                f.close()
 
         def delete(self):
             # remove the file
-            os.remove(self._dirname + str(self.pk) + '.p')
+            try:
+                filename = os.path.join(self._dirname, str(self.pk) + '.p')
+                os.remove(filename)
+            except OSError:
+                self.logger.warning("Could not find remove the file %s. ",
+                                    filename)
             # remove dependencies.. do this at last so the curve is deleted if an
             # error occurs (i know..). The alternative would be to iterate over all
             # curves to find dependencies which could be slow without database.
@@ -150,13 +168,18 @@ except:
             self.params["childs"] = list(childs+[child.pk])
             self.save()
 
+        @classmethod
+        def all(cls):
+            pks = [int(f.split('.p')[0])
+                   for f in os.listdir(cls._dirname) if f.endswith('.p')]
+            return sorted(pks, reverse=True)
+
         @property
         def pk(self):
             if hasattr(self, "_pk"):
                 return self._pk
             else:
-                pks = [int(f.split('.p')[0]) or -1
-                       for f in os.listdir(self._dirname) if f.endswith('.p')]
+                pks = self.all()
                 if len(pks) == 0:
                     self._pk = 1
                 else:
@@ -172,7 +195,7 @@ except:
 
         def sort(self):
             """numerically sorts the data series so that indexing can be used"""
-            X, Y = self.data.inde.values, self.data.values
+            X, Y = self.data.index.values, self.data.values
             xs = np.array([x for (x, y) in sorted(zip(X, Y))], dtype=np.float64)
             ys = np.array([y for (x, y) in sorted(zip(X, Y))], dtype=np.float64)
             self.data = pandas.Series(ys, index=xs)

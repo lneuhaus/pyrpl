@@ -1,18 +1,13 @@
-import math
-import pyaudio
+import numpy as np
+from pyaudio import PyAudio
+# sudo apt-get install python-pyaudio
+
+BITRATE = 16000  # number of frames per second/frameset.
 
 
 def sine(frequency=1000, duration=1):
-    # sudo apt-get install python-pyaudio
-    PyAudio = pyaudio.PyAudio
-
-    # See http://en.wikipedia.org/wiki/Bit_rate#Audio
-    BITRATE = 16000  # number of frames per second/frameset.
-
-    # See http://www.phy.mtu.edu/~suits/notefreqs.html
-    FREQUENCY = frequency  # Hz, waves per second, 261.63=C4-note.
-    LENGTH = duration  # seconds to play sound
-
+    """ plays a sine tone for duration on the PC speaker """
+    frequency, duration = float(frequency), float(duration)
     NUMBEROFFRAMES = int(BITRATE * LENGTH)
     RESTFRAMES = NUMBEROFFRAMES % BITRATE
     WAVEDATA = ''

@@ -1,35 +1,32 @@
-from nose.tools import with_setup
-from unittest import TestCase
-import os
-import numpy as np
 import logging
 logger = logging.getLogger(name=__name__)
+from ..modules import Module
+from ..attributes import *
+from ..test.test_redpitaya import TestRedpitaya
 
-from pyrpl import RedPitaya
-from pyrpl.redpitaya_modules import *
-from pyrpl.registers import *
 
+class TestRegisters(TestRedpitaya):
+    """ This test verifies that all registers behave as expected.
 
-class TestClass(object):
-    @classmethod
-    def setUpAll(self):
-        self.r = RedPitaya()
-    
+    The test is not only useful to test the python interface,
+    but also checks that the fpga is not behaving stragely,
+    i.e. loosing data or writing the wrong data. Thus, it is the
+    principal test to execute on new fpga designs. """
     def test_generator(self):
         if self.r is None:
             assert False
         for modulekey, module in self.r.__dict__.items():
-            if isinstance(module, BaseModule):
+            if isinstance(module, Module):
                 logger.info("Scanning module %s...", modulekey)
                 for regkey, regclass in type(module).__dict__.items():
-                    if isinstance(regclass, Register):
+                    if isinstance(regclass, BaseRegister):
                         logger.info("Scanning register %s...", regkey)
                         yield self.register_validation, module, modulekey, \
-                            regclass, regkey
-    
+                              regclass, regkey
+
     def register_validation(self, module, modulekey, reg, regkey):
         logger.debug("%s %s", modulekey, regkey)
-        if type(reg) is Register:
+        if type(reg) is BaseRegister:
             # try to read
             value = module.__getattribute__(regkey)
             # make sure Register represents an int
@@ -39,7 +36,8 @@ class TestClass(object):
             module.__setattr__(regkey, value)
             newvalue = module.__getattribute__(regkey)
             assert value == newvalue, \
-                "Mismatch: value=" + str(value) + " new value = " + str(newvalue)
+                "Mismatch: value=" + str(value) + " new value = " + str(
+                    newvalue)
         if type(reg) is LongRegister:
             # try to read
             value = module.__getattribute__(regkey)
@@ -47,7 +45,7 @@ class TestClass(object):
             if not isinstance(value, int) and not isinstance(value, long):
                 assert False, 'wrong type: int/long != %s' % str(type(value))
             # write back to it to test setter
-            module.__setattr__(regkey,value)
+            module.__setattr__(regkey, value)
             newvalue = module.__getattribute__(regkey)
             if regkey not in ["current_timestamp"]:
                 assert value == newvalue, "Mismatch: value=" + str(value) \
@@ -62,7 +60,8 @@ class TestClass(object):
             if regkey in ['_reset_writestate_machine',
                           '_trigger_armed',
                           '_trigger_delay_running',
-                          'pretrig_ok']:
+                          'pretrig_ok',
+                          'armed']:
                 return
             # write opposite value and confirm it has changed
             module.__setattr__(regkey, not value)
@@ -82,10 +81,10 @@ class TestClass(object):
             if regkey in ['pfd_integral',
                           'ch1_firstpoint',
                           'ch2_firstpoint',
-                          'dac1',
-                          'dac2',
-                          'voltage1',
-                          'voltage2',
+                          'voltage_out1',
+                          'voltage_out2',
+                          'voltage_in1',
+                          'voltage_in2',
                           'firstpoint',
                           'lastpoint'
                           ] or modulekey == 'sampler':
@@ -123,10 +122,12 @@ class TestClass(object):
             if regkey not in ['scopetriggerphase']:
                 for phase in np.linspace(-1234, 5678, 90):
                     module.__setattr__(regkey, phase)
-                    diff = abs(module.__getattribute__(regkey)-(phase % 360))
-                    if diff > 1e-6:
+                    diff = abs(module.__getattribute__(regkey) - (phase % 360))
+                    bits = getattr(module.__class__, regkey).bits
+                    thr = 360.0/2**bits/2  # factor 2 because rounding is used
+                    if diff > thr:
                         assert False, \
-                            "at phase "+str(phase)+": diff = "+str(diff)
+                            "at phase " + str(phase) + ": diff = " + str(diff)
             # set back original value
             module.__setattr__(regkey, value)
             if value != module.__getattribute__(regkey):
@@ -139,12 +140,13 @@ class TestClass(object):
                 assert False
             # make sure any frequency has an error below 100 mHz!
             if regkey not in []:
-                for freq in [0, 1, 10, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8]:
+                for freq in [0, 1, 10, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7,
+                             125e6 / 2]:  # FrequencyRegisters are now limited.
                     module.__setattr__(regkey, freq)
-                    diff = abs(module.__getattribute__(regkey)-freq)
+                    diff = abs(module.__getattribute__(regkey) - freq)
                     if diff > 0.1:
                         assert False, \
-                            "at freq "+str(freq)+": diff = "+str(diff)
+                            "at freq " + str(freq) + ": diff = " + str(diff)
             # set back original value
             module.__setattr__(regkey, value)
             if value != module.__getattribute__(regkey):
@@ -153,13 +155,13 @@ class TestClass(object):
             # try to read
             value = module.__getattribute__(regkey)
             # make sure Register represents an int
-            if not isinstance((list(reg.options.keys())[0]), type(value)):
+            if not isinstance((sorted(reg.options(module))[0]), type(value)):
                 assert False
             # exclude read-only registers
             if regkey in ["id"]:
                 return
             # try all options and confirm change that they are saved
-            for option in reg.options.keys():
+            for option in sorted(reg.options(module)):
                 module.__setattr__(regkey, option)
                 if option != module.__getattribute__(regkey):
                     assert False

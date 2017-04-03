@@ -19,23 +19,26 @@
 
 import paramiko
 from time import sleep
-from scp import SCPClient, SCPException
-import os
+from scp import SCPClient
 import logging
 
-class SSHshell(object):
 
+class SSHshell(object):
+    """ This is a wrapper around paramiko.SSHClient and scp.SCPClient
+    I provides a ssh connection with the ability to transfer files over it"""
     def __init__(
             self,
             hostname='localhost',
             user='root',
             password='root',
             delay=0.05, 
-            timeout = 3):
+            timeout=3,
+            sshport=22):
         self.logger = logging.getLogger(name=__name__)
         self.delay = delay
         self.apprunning = False
         self.hostname = hostname
+        self.sshport=sshport
         self.user = user
         self.password = password
         self.timeout= timeout
@@ -45,7 +48,7 @@ class SSHshell(object):
             hostname,
             username=self.user,
             password=self.password,
-            port=22,
+            port=self.sshport,
             timeout=timeout)
         self.channel = self.ssh.invoke_shell()
         self.startscp()
@@ -53,8 +56,7 @@ class SSHshell(object):
    
     def startscp(self):
         self.scp = SCPClient(self.ssh.get_transport())
-        
-    
+
     def write(self, text):
         if self.channel.send_ready() and not text == "":
             return self.channel.send(text)
