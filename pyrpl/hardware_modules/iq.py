@@ -97,7 +97,7 @@ class Iq(FilterModule):
     _GAINBITS = 18  # Register(0x20C)
     _SIGNALBITS = 14  # Register(0x210)
     _LPFBITS = 24  # Register(0x214)
-    _SHIFTBITS = 6  # Register(0x218)
+    _SHIFTBITS = 8  # Register(0x218)
 
     pfd_integral = FloatRegister(0x150, bits=_SIGNALBITS, norm=_SIGNALBITS,
                                  doc="value of the pfd integral [volts]")
