@@ -409,8 +409,12 @@ class MemoryBranch(object):
         """
         :return: returns the yml code for this branch
         """
-        return save(self._data if data is None else data)
-
+        text = save(self._data if data is None else data)
+        try:
+            return text.decode()
+        except:
+            logger.warning("save() returned no decodable text!")
+            return text
 
     def _set_yml(self, yml_content):
         """
