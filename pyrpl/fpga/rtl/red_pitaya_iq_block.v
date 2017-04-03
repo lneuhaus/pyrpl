@@ -45,7 +45,7 @@ module red_pitaya_iq_block #(
       parameter SIGNALBITS = 14, //input signal bitwidth
 	  parameter LPFBITS    = 24, //internal bitwidths of low-pass filtered quadratures
       parameter GAINBITS  = 18 , //gain bitwidth
-   	  parameter SHIFTBITS  = 8 , //binary point of gains
+   	  parameter SHIFTBITS  = 6 , //binary point of gains
 
 	  //quadrature low-pass parameter
 	  parameter QUADRATUREFILTERSTAGES = 2,
