@@ -796,13 +796,9 @@ class StringProperty(BaseProperty):
 
     def validate_and_normalize(self, obj, value):
         """
-        Reject anything that is not a string
+        Convert argument to string
         """
-        if not isinstance(value, str):  # used to be basestring
-            raise ValueError("value %s cannot be used for StringAttribute %s of module %s"
-                             %(str(value), self.name, obj.name))
-        else:
-            return value
+        return str(value)
 
 
 class TextProperty(StringProperty):
