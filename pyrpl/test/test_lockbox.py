@@ -45,7 +45,7 @@ class TestLockbox(TestPyrpl):
         self.lockbox.outputs.output1.i = -10.
 
     def test_lock(self):
-        print self.lockbox.states
+        pass
         # make a config file for a lock including iir that locks onto itself
         # then load another state and lock a pid with existing integrator
         # test lock with islocked, test autorelock, test unit issues,
