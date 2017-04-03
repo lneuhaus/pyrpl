@@ -5,7 +5,7 @@ import logging
 from ...attributes import SelectProperty, FloatProperty, FrequencyProperty, \
     PhaseProperty, FilterProperty, FrequencyRegister, ProxyProperty
 from ...widgets.module_widgets import LockboxInputWidget
-from ...hardware_modules.dsp import DSP_INPUTS, InputSelectProperty
+from ...hardware_modules.dsp import DSP_INPUTS, InputSelectProperty, all_inputs
 from ...pyrpl_utils import time, recursive_getattr
 from ...module_attributes import ModuleProperty
 from ...software_modules.lockbox import LockboxModule, LockboxModuleDictProperty
@@ -465,17 +465,15 @@ class InputFromOutput(InputDirect):
         effective deviations from the setpoint (in units of setpoint_variable)
         may occur. We therefore issue a warning and return True if is_locked is
         based on this output. """
-        inputdsp = self.lockbox.outputs[self.input_signal].pid.input
+        inputdsp = self.lockbox.signals[self.input_signal.split('.')[-1]].pid.input
         forwarded_input = None
         for inp in self.lockbox.inputs:
-            inpsignal = inp.signal()
             if inp.signal() == inputdsp:
                 forwarded_input = inp
                 break
         if forwarded_input is not None:
-            self._logger.debug("is_locked() for InputFromOutput '%s' is not "
-                               "implemented. Forwarding is_locked() to the "
-                               "input signal '%s'.",
+            self._logger.debug("is_locked() for InputFromOutput '%s' is "
+                               "forwarded to is_locked() of input signal '%s'.",
                                self.name, forwarded_input.name)
             return forwarded_input.is_locked(loglevel=loglevel)
         else:
@@ -497,7 +495,7 @@ class InputFromOutput(InputDirect):
         # Therefore, the output voltage corresponding to a change of
         # one linewidth is given (in V) by:
         # lockbox._setpopint_unit_in_unit('nm')/output.dc_gain
-        output = self.lockbox.signals[self.input_signal]
+        output = self.lockbox.signals[self.input_signal.split('.')[-1]]
         output_unit = output.unit.split('/')[0]
         setpoint_in_output_unit = \
             setpoint * self.lockbox._setpoint_unit_in_unit(output_unit)
