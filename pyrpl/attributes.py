@@ -654,13 +654,15 @@ class FilterRegister(BaseRegister, FilterProperty):
     def _MINBW(self, obj):
         return self.read_and_save(obj, "minbw")
 
+    def _MAXSHIFT(self, obj):
+        return int(np.ceil(np.log2(np.floor(125000000.0/float(self._MINBW(obj))))))
+
     def _ALPHABITS(self, obj):
         return int(np.ceil(np.log2(125000000.0 / self._MINBW(obj))))
 
     def valid_frequencies(self, obj):
-        # this function NEEDS TO BE OPTIMIZED: TAKES 50 ms !!!!
         """ returns a list of all valid filter cutoff frequencies"""
-        valid_bits = range(0, 2 ** self._SHIFTBITS(obj))
+        valid_bits = range(0, self._MAXSHIFT(obj))
         pos = list([self.to_python(obj, b | 0x1 << 7) for b in valid_bits])
         pos = [int(val) if not np.iterable(val) else int(val[0]) for val in pos]
         neg = [-val for val in reversed(pos)]
