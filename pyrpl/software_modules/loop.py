@@ -69,12 +69,13 @@ class Loop(Module):
         super(Loop, self)._clear()
 
     def main_loop(self):
-        self.n += 1
         try:
             self.loop()
         except TypeError:
             # allows to pass instance functions of the parent module as arguments as well
             self.loop(self.parent, self)
+        # increment counter
+        self.n += 1
         if not self._ended:
             self.timer.start()
 

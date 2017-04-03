@@ -2,7 +2,6 @@ from .interferometer import *
 from .fabryperot import *
 from .linear import *
 from .custom_lockbox_example import *
-from .coarse_lockbox import *
 
 # try to import user models if applicable
 import sys, os

@@ -78,7 +78,6 @@ except:
     def save(data, stream=None, Dumper=yaml.SafeDumper,
              default_flow_style=False,
              encoding='utf-8',
-             allow_unicode=True,
              **kwds):
         class OrderedDumper(Dumper):
             pass
@@ -100,7 +99,6 @@ except:
                          Dumper=OrderedDumper,
                          default_flow_style=default_flow_style,
                          encoding=encoding,
-                         allow_unicode=allow_unicode,
                          **kwds)
 
     # usage example:
@@ -409,8 +407,7 @@ class MemoryBranch(object):
         """
         :return: returns the yml code for this branch
         """
-        return save(self._data if data is None else data)
-
+        return str(save(self._data if data is None else data))
 
     def _set_yml(self, yml_content):
         """

@@ -66,9 +66,9 @@ script:
       nosetests;
     fi
 
-# Calculate coverage
-after_success:
-  - coveralls --config_file .coveragerc
+# Calculate coverage - not working at the moment
+# after_success:
+#  - coveralls --config_file .coveragerc
 
 # upload autodoc to github pages
 # deploy:
