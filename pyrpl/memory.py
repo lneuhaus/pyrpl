@@ -23,7 +23,7 @@ import numpy as np
 import time
 from PyQt4 import QtCore
 from . import default_config_dir, user_config_dir
-from io import StringIO
+from io import BytesIO
 from .pyrpl_utils import time
 
 import logging
@@ -76,7 +76,11 @@ except:
             yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
             construct_mapping)
         return yaml.load(stream, OrderedLoader)
-    def save(data, stream=None, Dumper=yaml.SafeDumper, default_flow_style=False, **kwds):
+    def save(data, stream=None, Dumper=yaml.SafeDumper,
+             default_flow_style=False,
+             encoding='utf-8',
+             allow_unicode=True,
+             **kwds):
         class OrderedDumper(Dumper):
             pass
         def _dict_representer(dumper, data):
@@ -96,8 +100,8 @@ except:
                          stream,
                          OrderedDumper,
                          default_flow_style=default_flow_style,
-                         encoding='utf-8',
-                         allow_unicode = True,
+                         encoding=encoding,
+                         allow_unicode=allow_unicode,
                          **kwds)
 
     # usage example:
@@ -406,16 +410,16 @@ class MemoryBranch(object):
         """
         :return: returns the yml code for this branch
         """
-        text = StringIO()
+        text = BytesIO()
         save(self._data if data is None else data, text)
-        return text.getvalue()
+        return text.getvalue().encode()
 
     def _set_yml(self, yml_content):
         """
         :param yml_content: sets the branch to yml_content
         :return: None
         """
-        branch = load(yml_content)
+        branch = load(yml_content.decode())
         self._parent._data[self._branch] = branch
         self._save()
 
