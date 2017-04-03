@@ -72,7 +72,7 @@ module red_pitaya_pid_block #(
    //parameters for input pre-filter
    parameter     FILTERSTAGES = 4 ,
    parameter     FILTERSHIFTBITS = 5,
-   parameter     FILTERMINBW = 20,
+   parameter     FILTERMINBW = 5,
    
    //enable arbitrary output saturation or not
    parameter     ARBITRARY_SATURATION = 1
