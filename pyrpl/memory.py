@@ -23,7 +23,6 @@ import numpy as np
 import time
 from PyQt4 import QtCore
 from . import default_config_dir, user_config_dir
-from io import BytesIO
 from .pyrpl_utils import time
 
 import logging
@@ -97,8 +96,8 @@ except:
         OrderedDumper.add_representer(np.ndarray,
                     lambda dumper, data: dumper.represent_list(list(data)))
         return yaml.dump(data,
-                         stream,
-                         OrderedDumper,
+                         stream=stream,
+                         Dumper=OrderedDumper,
                          default_flow_style=default_flow_style,
                          encoding=encoding,
                          allow_unicode=allow_unicode,
@@ -410,16 +409,15 @@ class MemoryBranch(object):
         """
         :return: returns the yml code for this branch
         """
-        text = BytesIO()
-        save(self._data if data is None else data, text)
-        return text.getvalue().decode()
+        return save(self._data if data is None else data)
+
 
     def _set_yml(self, yml_content):
         """
         :param yml_content: sets the branch to yml_content
         :return: None
         """
-        branch = load(yml_content.encode())
+        branch = load(yml_content)
         self._parent._data[self._branch] = branch
         self._save()
 
