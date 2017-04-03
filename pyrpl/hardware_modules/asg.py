@@ -169,7 +169,11 @@ def make_asg(channel=0):
 
         # formerly scale
         amplitude = FloatRegister(0x4 + _VALUE_OFFSET, bits=14, bitmask=0x3FFF,
-                                  norm=2.**13, signed=False, max=1.0,
+                                  norm=2.**13, signed=False,
+                                  max=1.0,  # Internal fpga max is 2.0 V
+                                  # i.e. it is possible to define waveforms
+                                  # with smaller values and then boost them,
+                                  #  but there is no real interest to do so.
                                   doc="amplitude of output waveform [volts]")
         """FloatRegister(0x4 + _VALUE_OFFSET, bits=14, bitmask=0x3FFF,
                                   norm=2 ** 13, signed=False,
