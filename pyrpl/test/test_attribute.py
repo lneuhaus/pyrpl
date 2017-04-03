@@ -27,7 +27,8 @@ class SecondSubModule(Module):
 
 class DummyModule(Module):
     _gui_attributes = ['true_or_false']
-    _setup_attributes = ['sub1', 'sub2']
+    # it is not necessary to mention the modules here
+    #_setup_attributes = ['sub1', 'sub2']
     true_or_false = BoolProperty()
     some_number = FloatProperty(min=-10, max=10)
     some_filter = MyFilterProperty()
@@ -39,10 +40,6 @@ class DummyModule(Module):
 class TestClass(TestPyrpl):
     source_config_file = "nosetests_source_dummy_module"
 
-    def setup(self):
-        self.sub1 = self.pyrpl.dummymodule.sub1
-        self.sub2 = self.pyrpl.dummymodule.sub2
-
     def test_config_file(self):
         assert("DummyModule" in self.pyrpl.c.pyrpl.modules)
 
@@ -53,6 +50,8 @@ class TestClass(TestPyrpl):
         assert(isinstance(self.pyrpl.dummymodule.some_options, str))  # used to be basestring
 
     def test_submodule(self):
+        self.sub1 = self.pyrpl.dummymodule.sub1
+        self.sub2 = self.pyrpl.dummymodule.sub2
         assert(self.sub1.b1==True) # values defined in config file
         assert(self.sub1.b2==False)
 

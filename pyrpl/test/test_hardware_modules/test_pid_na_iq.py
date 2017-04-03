@@ -111,7 +111,7 @@ class TestPidNaIqIir(TestPyrpl):
         # setup a pid module with a bunch of different settings and measure
         # its transfer function, and compare it to the model.
 
-        error_threshold = 0.03  # (relative error)
+        error_threshold = 0.04  # (relative error)
         # Let's check the transfer function of the pid module with the integrated NA
         plotdata = []
 

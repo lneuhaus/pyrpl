@@ -124,7 +124,12 @@ except:
 
         def delete(self):
             # remove the file
-            os.remove(self._dirname + str(self.pk) + '.p')
+            try:
+                filename = os.path.join(self._dirname, str(self.pk) + '.p')
+                os.remove(filename)
+            except OSError:
+                self.logger.warning("Could not find remove the file %s. ",
+                                    filename)
             # remove dependencies.. do this at last so the curve is deleted if an
             # error occurs (i know..). The alternative would be to iterate over all
             # curves to find dependencies which could be slow without database.

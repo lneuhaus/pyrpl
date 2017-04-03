@@ -44,7 +44,7 @@ requirements = ['scp',
                 'paramiko>=2.0',
                 #'ruamel.yaml' # temporarily disabled
                 'nose>=1.0']
-if sys.version_info >= (3,0):#  stuff not needed in python <= 2.7',
+if sys.version_info >= (3,4):  # python version dependencies
     requirements += ['quamash']
 else:  # python 2.7
     requirements += ['futures']

@@ -19,7 +19,7 @@ class TestScope(TestPyrpl):
     def teardown(self):
         """ delete the curves fabricated in this test"""
         for todelete in ["curve1", "curve2"]:
-            if hasattr(self, "todelete"):
+            if hasattr(self, todelete):
                 c = getattr(self, todelete)
                 if c is not None:
                     c.delete()

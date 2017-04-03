@@ -11,7 +11,6 @@ class PyrplConfig(Module):
     """ This Module allow the Gui to configure the global settins, such as redpitaya and pyrpl """
     _gui_attributes = ["configfile", "module", "refresh", "save", "text"]
 
-
     configfile = StringProperty()
     def _init_module(self):
         self.configfile = self.pyrpl.c._filename or ""
