@@ -120,7 +120,7 @@ wire signed [OUTBITS-1:0] q2_product;
 red_pitaya_product_sat  #(
 	.BITS_IN1(INBITS),
 	.BITS_IN2(GAINBITS),
-	.SHIFT(SHIFTBITS),
+	.SHIFT(SHIFTBITS+2),
 	.BITS_OUT(OUTBITS))
 i0_product_and_sat (
   .factor1_i(signal1_i),
@@ -128,11 +128,11 @@ i0_product_and_sat (
   .product_o(q1_product),
   .overflow ()
 );
-// output second quatrature to scope etc.
+// output second quadrature to scope etc.
 red_pitaya_product_sat  #(
 	.BITS_IN1(INBITS),
 	.BITS_IN2(GAINBITS),
-	.SHIFT(SHIFTBITS),
+	.SHIFT(SHIFTBITS+2),
 	.BITS_OUT(OUTBITS))
 q0_product_and_sat (
   .factor1_i(signal2_i),

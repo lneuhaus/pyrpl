@@ -86,7 +86,7 @@ class Pid(FilterModule):
                       doc="pid proportional gain [1]")
     i = FloatRegister(0x10C, bits=_GAINBITS, norm= 2 **_ISR * 2.0 * np.pi * 8e-9,
                       doc="pid integral unity-gain frequency [Hz]")
-    d = FloatRegister(0x110, bits=_GAINBITS, norm= 2 ** _DSR /( 2.0 *np. pi *8e-9),
+    d = FloatRegister(0x110, bits=_GAINBITS, norm= 2 ** _DSR /( 2.0 *np. pi * 8e-9),
                       invert=True,
                       doc="pid derivative unity-gain frequency [Hz]. Off when 0.")
 
@@ -122,26 +122,27 @@ class Pid(FilterModule):
     def reg_integral(self, v):
         self.ival = v
 
-    normalization_on = BoolRegister(0x130, 0,
-                                    doc="if True the PID is used "
-                                        "as a normalizer")
-
-    # current normalization gain is p-register
-    normalization_i = FloatRegister(0x10C, bits=_GAINBITS,
-                                    norm=2 ** (_ISR) * 2.0 * np.pi *
-                                         8e-9 / 2 ** 13 / 1.5625,
-                                    # 1.5625 is empirical value,
-                                    # no time/idea to do the maths
-                                    doc="stablization crossover frequency [Hz]")
-
-    @property
-    def normalization_gain(self):
-        """ current gain in the normalization """
-        return self.p / 2.0
-
-    normalization_inputoffset = FloatRegister(0x110, bits=(14 + _DSR),
-                                              norm=2 ** (13 + _DSR),
-                                              doc="normalization inputoffset [volts]")
+    # deactivated for performance reasons
+    # normalization_on = BoolRegister(0x130, 0,
+    #                                 doc="if True the PID is used "
+    #                                     "as a normalizer")
+    #
+    # # current normalization gain is p-register
+    # normalization_i = FloatRegister(0x10C, bits=_GAINBITS,
+    #                                 norm=2 ** (_ISR) * 2.0 * np.pi *
+    #                                      8e-9 / 2 ** 13 / 1.5625,
+    #                                 # 1.5625 is empirical value,
+    #                                 # no time/idea to do the maths
+    #                                 doc="stablization crossover frequency [Hz]")
+    #
+    # @property
+    # def normalization_gain(self):
+    #     """ current gain in the normalization """
+    #     return self.p / 2.0
+    #
+    # normalization_inputoffset = FloatRegister(0x110, bits=(14 + _DSR),
+    #                                           norm=2 ** (13 + _DSR),
+    #                                           doc="normalization inputoffset [volts]")
 
     def transfer_function(self, frequencies, extradelay=0):
         """

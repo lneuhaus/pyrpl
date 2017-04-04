@@ -184,7 +184,7 @@ always @(posedge clk_i) begin
       error <= 15'h0 ;
    end
    else begin
-      error <= $signed(set_sp) - $signed(dat_i) ;
+      error <= $signed(dat_i_filtered) - $signed(set_sp) ;
    end
 end
 
