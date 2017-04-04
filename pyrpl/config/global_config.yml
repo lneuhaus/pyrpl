@@ -1,4 +1,8 @@
 general:
-  # import CurveDB class from which module? if missing, it's pyrpl.curvedb
-  #curvedb: pyrpl
-  curvedb: pyinstruments
+  # interface module for saving curves (default is pyrpl)
+  curvedb: pyrpl
+  # level of logging output (can be one in [debug, info, warning, error])
+  loglevel: info
+test:
+  # maximum reasonable time for a read/write operation
+  max_communication_time: 0.003

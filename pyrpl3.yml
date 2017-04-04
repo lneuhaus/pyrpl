@@ -1,0 +1,79 @@
+name: pyrpl3
+channels:
+- anaconda-fusion
+- defaults
+dependencies:
+- cffi=1.9.1=py35_0
+- colorama=0.3.7=py35_0
+- cryptography=1.7.1=py35_0
+- cycler=0.10.0=py35_0
+- decorator=4.0.11=py35_0
+- entrypoints=0.2.2=py35_0
+- icu=57.1=vc14_0
+- idna=2.2=py35_0
+- ipykernel=4.5.2=py35_0
+- ipython=5.1.0=py35_0
+- ipython_genutils=0.1.0=py35_0
+- ipywidgets=5.2.2=py35_1
+- jinja2=2.9.4=py35_0
+- jpeg=8d=vc14_2
+- jsonschema=2.5.1=py35_0
+- jupyter=1.0.0=py35_3
+- jupyter_client=4.4.0=py35_0
+- jupyter_console=5.0.0=py35_0
+- jupyter_core=4.2.1=py35_0
+- libpng=1.6.27=vc14_0
+- libtiff=4.0.6=vc14_2
+- markupsafe=0.23=py35_2
+- matplotlib=1.5.1=np111py35_0
+- mistune=0.7.3=py35_0
+- mkl=2017.0.1=0
+- nbconvert=4.2.0=py35_0
+- nbformat=4.2.0=py35_0
+- nose=1.3.7=py35_1
+- notebook=4.3.1=py35_1
+- numpy=1.11.3=py35_0
+- openssl=1.0.2k=vc14_0
+- pandas=0.19.2=np111py35_1
+- paramiko=2.0.2=py35_0
+- path.py=10.0=py35_0
+- pickleshare=0.7.4=py35_0
+- pip=9.0.1=py35_1
+- prompt_toolkit=1.0.9=py35_0
+- pyasn1=0.1.9=py35_0
+- pycparser=2.17=py35_0
+- pygments=2.1.3=py35_0
+- pyparsing=2.1.4=py35_0
+- pyqt=4.11.4=py35_7
+- pyqtgraph=0.9.10=py35_1
+- python=3.5.2=0
+- python-dateutil=2.6.0=py35_0
+- pytz=2016.10=py35_0
+- pyzmq=16.0.2=py35_0
+- qt=4.8.7=vc14_9
+- qtconsole=4.2.1=py35_0
+- scipy=0.18.1=np111py35_1
+- setuptools=27.2.0=py35_1
+- simplegeneric=0.8.1=py35_1
+- sip=4.18=py35_0
+- six=1.10.0=py35_0
+- tk=8.5.18=vc14_0
+- tornado=4.4.2=py35_0
+- traitlets=4.3.1=py35_0
+- vs2015_runtime=14.0.25123=0
+- wcwidth=0.1.7=py35_0
+- wheel=0.29.0=py35_0
+- widgetsnbextension=1.2.6=py35_0
+- win_unicode_console=0.5=py35_0
+- zlib=1.2.8=vc14_3
+- pip:
+  - ipython-genutils==0.1.0
+  - jupyter-client==4.4.0
+  - jupyter-console==5.0.0
+  - jupyter-core==4.2.1
+  - prompt-toolkit==1.0.9
+  - ruamel.yaml==0.13.13
+  - scp==0.10.2
+  - win-unicode-console==0.5
+prefix: C:\ProgramData\Anaconda3\envs\pyrpl3
+

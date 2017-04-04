@@ -1,34 +1,26 @@
-# unitary test for the pyrpl module
-
-import unittest
-import os
+# unitary test for the RedPitaya and Pyrpl modules and baseclass for all other
+# tests
 import logging
 logger = logging.getLogger(name=__name__)
-
-from pyrpl import RedPitaya
-
-
-class RedPitayaTestCases(unittest.TestCase):
-
-    def setUp(self):
-        self.hostname = os.environ.get('REDPITAYA_HOSTNAME')
-        self.password = os.environ.get('REDPITAYA_PASSWORD')
-
-    def tearDown(self):
-        pass
-
-    def test_hostname(self):
-        self.assertIsNotNone(
-            self.hostname,
-            msg="Set REDPITAYA_HOSTNAME=unavailable or the ip of your board to proceed!")
+import os
+from .. import Pyrpl, RedPitaya, user_config_dir
 
 
-    # This test is not strictly required as the password may be unchanged 'root'
-    #def test_password(self):
-    #    self.assertIsNotNone(
-    #        self.password,
-    #        msg="Set REDPITAYA_PASSWORD=<your redpitaya password> to proceed!")
-        
+class TestRedpitaya(object):
+    @classmethod
+    def setUpAll(cls):
+        print("=======SETTING UP TestRedpitaya===========")
+        cls.hostname = os.environ.get('REDPITAYA_HOSTNAME')
+        cls.password = os.environ.get('REDPITAYA_PASSWORD')
+        cls.r = RedPitaya()
+
+    @classmethod
+    def tearDownAll(cls):
+        print("=======TEARING DOWN TestRedpitaya===========")
+        cls.r.end_all()
+
+    def test_redpitaya(self):
+        assert (self.r is not None)
+
     def test_connect(self):
-        r = RedPitaya(hostname=self.hostname)
-        self.assertEqual(r.hk.led, 0)
+        assert self.r.hk.led == 0

@@ -70,6 +70,7 @@ nosetests.xml
 coverage.xml
 *,cover
 .hypothesis/
+xunit.xml
 
 # Translations
 *.mo
@@ -79,7 +80,7 @@ coverage.xml
 *.log
 
 # Sphinx documentation
-docs/_build/
+!doc/sphinx/build/html
 
 # PyBuilder
 target/
@@ -89,7 +90,7 @@ target/
 
 
 #notebooks
-docs/my_notebooks/
+doc/my_notebooks/
 
 *.pydevproject
 *.project
@@ -100,8 +101,14 @@ docs/my_notebooks/
 #config backups
 pyrpl/config/*.bak
 
+#user config
+pyrpl/config/user_config/*.yml
+pyrpl/config/user_config/*.bak
+pyrpl/config/user_config
+
+
 #test files made by Xueshi
 test_import.py
-run.py
+run.py 
 rpiq_gui.py
 rpiq.ui

@@ -1,36 +1,65 @@
-from nose.tools import with_setup
-from unittest import TestCase
-import os
-import numpy as np
 import logging
-
 logger = logging.getLogger(name=__name__)
+import numpy as np
+from time import sleep
+from PyQt4 import QtCore, QtGui
+from .test_base import TestPyrpl
 
-from pyrpl import RedPitaya
-from pyrpl.redpitaya_modules import *
-from pyrpl.registers import *
-from pyrpl.bijection import Bijection
+APP = QtGui.QApplication.instance()
 
-from pyrpl.spectrum_analyzer import SpectrumAnalyzer
+class TestClass(TestPyrpl):
 
-class TestClass(object):
-    @classmethod
-    def setUpAll(self):
-        # these tests wont succeed without the hardware
-        if os.environ['REDPITAYA_HOSTNAME'] == 'unavailable':
-            self.r = None
-        else:
-            self.r = RedPitaya()
+    def test_specan_stopped_at_startup(self):
+        """
+        This was so hard to detect, I am making a unit test
+        """
+        # this test is not efficient as nothing guarantees that it will be the first test that is executed
+        assert(self.pyrpl.spectrumanalyzer.running_state=='stopped')
 
     def test_spec_an(self):
-        if self.r is None:
+        # at this point this test is still highly dubious (nothing is tested
+        #  for, really)
+        f0 = 1.1e6
+        if self.pyrpl is None:
             return
-        sa = SpectrumAnalyzer(self.r)
-        sa.input = "asg1"
-        self.r.asg1.frequency = 1e6
-        self.r.asg1.trigger_source = 'immediately'
-
-        sa.setup(center=1e6, span=1e5)
+        sa = self.pyrpl.spectrumanalyzer
+        asg = self.pyrpl.rp.asg1
+        asg.setup(frequency = f0,
+                  amplitude = 0.1,
+                  waveform = 'cos',
+                  trigger_source = 'immediately')
+        sa.setup(center=f0,
+                 span=1e3,
+                 unit="Vpk",
+                 input=asg)
         curve = sa.curve()
-        #Assumes out1 is connected with adc1...
-        assert(curve.argmax()==len(curve)/2), curve.argmax()
+        freqs = sa.frequencies
+        peak = curve.argmax()
+        fmax = freqs[peak]
+        diff = np.abs(fmax-f0)
+        threshold = float(sa.span)/sa.points
+        assert (diff < threshold), (fmax, f0, diff, threshold)
+        # TODO: add quantitative test of peak level
+        peakv = curve[peak]
+        #assert abs(peak-asg.amplitude)<asg.amplitude/100.0, (peak, asg.amplitude)
+
+    def test_no_write_in_config(self):
+        """
+        Make sure the spec an isn't continuously writing to config file,
+        even in running mode.
+        :return:
+        """
+        self.pyrpl.spectrumanalyzer.setup_attributes = dict(center=2e5,
+                                           span=1e5,
+                                           input="out1",
+                                           running_state='running_continuous')
+        for i in range(25):
+            sleep(0.01)
+            APP.processEvents()
+        old = self.pyrpl.c._save_counter
+        for i in range(10):
+            sleep(0.01)
+            APP.processEvents()
+        new = self.pyrpl.c._save_counter
+        self.pyrpl.spectrumanalyzer.stop()
+        assert (old == new), (old, new)

@@ -1,0 +1,20 @@
+pyrpl: # General configuration of the software:
+  name: test_refactor
+  gui: true # autostart gui
+  loglevel: info
+  # level of logged information.
+  # 'debug' outputs everything
+  # 'infi' is default level
+  # 'warning' only shows warnings and errors
+  # 'error' only shows errors
+  modules: # SoftwareModules to load (in addition to IqManager, AsgManager, PidManager, ScopeManager)
+    - NetworkAnalyzer
+    - SpectrumAnalyzer
+    - Lockbox
+    - DummyModule
+dummymodule:
+  sub1:
+    b1: true
+    b2: false
+  true_or_false: false
+  some_number: 3.123

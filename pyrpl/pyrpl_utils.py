@@ -1,168 +1,176 @@
 import time
+from timeit import default_timer
+import logging
+logger = logging.getLogger(__file__)
+from collections import OrderedDict, Counter
 
-
+# global variable that tells whether QT is available - should be deprecated since we have a hard dependence on QT
 QT_EXIST = True
 try:
     from PyQt4 import QtCore, QtGui
 except ImportError:
     QT_EXIST = False
-
 if QT_EXIST:
     APP = QtGui.QApplication.instance()
 
-def sleep(time_s):
-    """
-    If PyQt4 is installed on the machine,
-    calls processEvents regularly to make sure
-     the GUI doesn't freeze.
 
-     This function should be used everywhere in the
-     project in place of "time.sleep"
-    """
+#def sleep(time_s):
+#    """
+#    If PyQt4 is installed on the machine,
+#    calls processEvents regularly to make sure
+#     the GUI doesn't freeze.
 
-    if QT_EXIST:
-        timer = QtCore.QTimer()
-        timer.setSingleShot(True)
-        timer.setInterval(1000*time_s)
-        timer.start()
-        while(timer.isActive()):
-            APP.processEvents()
+#     This function should be used everywhere in the
+#     project in place of "time.sleep"
+#    """
+#    # QTimer-based sleep operation is not to be used for now
+#    if False: #QT_EXIST and APP is not None:
+#        timer = QtCore.QTimer()
+#        timer.setSingleShot(True)
+#        timer.setInterval(1000*time_s)
+#        timer.start()
+#        while(timer.isActive()):
+#            APP.processEvents()
+#    else:
+#        time.sleep(time_s)
+
+def time():
+    """ returns the time. used instead of time.time for rapid portability"""
+    return default_timer()
+
+def get_unique_name_list_from_class_list(cls_list):
+    """
+    returns a list of names using cls.name if unique or cls.name1, cls.name2... otherwise.
+    Order of the name list matches order of cls_list, such that iterating over zip(cls_list, name_list) is OK
+    """
+    # cls_list is typically
+    # cls_modules = [rp.HK, rp.AMS, rp.Scope, rp.Sampler, rp.Asg1, rp.Asg2] + \
+    #              [rp.AuxOutput] * 2 + [rp.IQ] * 3 + [rp.Pid] * 4 + [rp.IIR]
+
+    # first, map from list of classes to a list of corresponding names
+    # e.g. all_names = ['hk, ..., 'pwm', 'pwm', ...
+    all_names = [cls.__name__.lower() for cls in cls_list]
+    final_names = []
+    for name in all_names:
+        # how many times does the name occur?
+        occurences = all_names.count(name)
+        if occurences == 1:
+            # for single names, leave as-is
+            final_names.append(name)
+        else:
+            # for multiple name, assign name+str(lowest_free_number)
+            for i in range(occurences):
+                if not name+str(i) in final_names:
+                    final_names.append(name+str(i))
+                    break
+    return final_names
+
+
+def get_class_name_from_module_name(module_name):
+    """ returns the class name corresponding to a module_name """
+    return module_name[0].upper() + (module_name[1:]).rstrip('1234567890')
+
+
+def get_base_module_class(module):
+    """ returns the base class of module that has the same name as module """
+    base_module_class_name = get_class_name_from_module_name(module.name)
+    for base_module_class in type(module).__mro__:
+        if base_module_class.__name__ == base_module_class_name:
+            return base_module_class
+
+
+# see http://stackoverflow.com/questions/3862310/how-can-i-find-all-subclasses-of-a-class-given-its-name
+def all_subclasses(cls):
+    """ returns a list of all subclasses of cls """
+    return cls.__subclasses__() + [g for s in cls.__subclasses__()
+                                   for g in all_subclasses(s)]
+
+
+def recursive_getattr(root, path):
+    """ returns root.path (i.e. root.attr1.attr2) """
+    attribute = root
+    for name in path.split('.'):
+        attribute = getattr(attribute, name)
+    return attribute
+
+
+def recursive_setattr(root, path, value):
+    """ returns root.path = value (i.e. root.attr1.attr2 = value) """
+    attribute = root
+    names = path.split('.')
+    for name in names[:-1]:
+        attribute = getattr(attribute, name)
+    setattr(attribute, names[-1], value)
+
+
+def setloglevel(level='info', loggername='pyrpl'):
+    """ sets the log level to the one specified in config file"""
+    try:
+        loglevels = {"notset": logging.NOTSET,
+                     "debug": logging.DEBUG,
+                     "info": logging.INFO,
+                     "warning": logging.WARNING,
+                     "error": logging.ERROR,
+                     "critical": logging.CRITICAL}
+        level = loglevels[level]
+    except:
+        pass
     else:
-        time.sleep(time_s)
-
-class MyDoubleSpinBox(QtGui.QWidget):
-    value_changed = QtCore.pyqtSignal()
-
-    def __init__(self, label, min=-1, max=1, step=2.**(-13),
-                 log_increment=False, log_step=1.01):
-        super(MyDoubleSpinBox, self).__init__()
-
-        self.min = min
-        self.max = max
-        self._val = 0
-        self.log_step=log_step
-        self.log_increment = False
-
-        self.lay = QtGui.QHBoxLayout()
-        self.lay.setContentsMargins(0,0,0,0)
-        self.lay.setSpacing(0)
-        self.setLayout(self.lay)
-
-        if label is not None:
-            self.label = QtGui.QLabel(label)
-            self.lay.addWidget(self.label)
-        self.step = step
-        self.decimals = 4
+        logging.getLogger(name=loggername).setLevel(level)
 
 
-        if self.log_increment:
-            self.up = QtGui.QPushButton('*')
-            self.down = QtGui.QPushButton('/')
-        else:
-            self.up = QtGui.QPushButton('+')
-            self.down = QtGui.QPushButton('-')
-        self.lay.addWidget(self.down)
-
-        self.line = QtGui.QLineEdit()
-        self.lay.addWidget(self.line)
+def sorted_dict(dict_to_sort=None, sort_by_values=True, **kwargs):
+    if dict_to_sort is None:
+        dict_to_sort = kwargs
+    if not sort_by_values:
+        return OrderedDict(sorted(dict_to_sort.items()))
+    else:
+        return OrderedDict(sorted(dict_to_sort.items(), key=lambda x: x[1]))
 
 
-        self.lay.addWidget(self.up)
-        self.timer_arrow = QtCore.QTimer()
-        self.timer_arrow.setInterval(5)
-        self.timer_arrow.timeout.connect(self.make_step)
-
-        self.up.pressed.connect(self.timer_arrow.start)
-        self.down.pressed.connect(self.timer_arrow.start)
-
-        self.up.setMaximumWidth(15)
-        self.down.setMaximumWidth(15)
-
-        self.up.released.connect(self.timer_arrow.stop)
-        self.down.released.connect(self.timer_arrow.stop)
-
-        self.line.editingFinished.connect(self.validate)
-        self.val = 0
-
-        self.setMaximumWidth(200)
-        self.setMaximumHeight(20)
+def update_with_typeconversion(dictionary, update):
+    for k, v in update.items():
+        if k in dictionary:
+            # perform type conversion if appropriate
+            v = type(dictionary[k])(v)
+        dictionary[k] = v
+    return dictionary
 
 
-    def set_log_increment(self):
-        self.up.setText("*")
-        self.down.setText("/")
-        self.log_increment = True
-
-    def sizeHint(self): #doesn t do anything, probably need to change sizePolicy
-        return QtCore.QSize(200, 20)
-
-    def setMaximum(self, val):
-        self.max = val
-
-    def setMinimum(self, val):
-        self.min = val
-
-    def setSingleStep(self, val):
-        self.step = val
-
-    def setValue(self, val):
-        self.val = val
-
-    def setDecimals(self, val):
-        self.decimals = val
-
-    def value(self):
-        return self.val
-
-    @property
-    def val(self):
-        if self.line.text()!=("%."+str(self.decimals) + "f")%self._val:
-            return float(self.line.text())
-        return self._val
-
-    @val.setter
-    def val(self, new_val):
-        self._val = new_val
-        self.line.setText(("%."+str(self.decimals) + "f")%new_val)
-        return new_val
-
-    def step_up(self, factor=1):
-        if self.log_increment:
-            self.val *= self.log_step**factor
-        else:
-            self.val += self.step*factor
-
-    def step_down(self, factor=1):
-        if self.log_increment:
-            self.val /= (self.log_step)**factor
-        else:
-            self.val -= self.step*factor
-
-    def make_step(self):
-        if self.up.isDown():
-            self.step_up()
-        if self.down.isDown():
-            self.step_down()
-        self.validate()
-
-    def keyPressEvent(self, event):
-        if event.key()==QtCore.Qt.Key_Up:
-            self.step_up(factor=5) ## To have roughly the same speed as with
-            # mouse
-        if event.key() == QtCore.Qt.Key_Down:
-            self.step_down(factor=5)  ## To have roughly the same speed as with
-            # mouse
-        self.validate()
-
-    def validate(self):
-        if self.val>self.max:
-            self.val = self.max
-        if self.val<self.min:
-            self.val = self.min
-        self.value_changed.emit()
+def unique_list(nonunique_list):
+    """ Returns a list where each element of nonunique_list occurs exactly once.
+    The last occurence of an element defines its position in the returned list.
+    """
+    unique_list = []
+    for attr in reversed(nonunique_list):
+        # remove all previous occurences
+        if attr not in unique_list:
+            unique_list.insert(0, attr)
+    return unique_list
 
 
+class Bijection(dict):
+    """ This class defines a bijection object based on dict
 
+    It can be used exactly like dict, but additionally has a property
+    'inverse' which contains the inverted {value: key} dict. """
 
+    def __init__(self, *args, **kwargs):
+        super(Bijection, self).__init__(*args, **kwargs)
+        self.inverse = {v: k for k, v in self.items()}
 
+    def __setitem__(self, key, value):
+        super(Bijection, self).__setitem__(key, value)
+        self.inverse[value] = key
 
+    def __delitem__(self, key):
+        self.inverse.__delitem__(self.__getitem__(key))
+        super(Bijection, self).__delitem__(key)
+
+    def pop(self, key):
+        self.inverse.pop(self.__getitem__(key))
+        super(Bijection, self).pop(key)
+
+    def update(self, *args, **kwargs):
+        super(Bijection, self).update(*args, **kwargs)
+        self.inverse = {v: k for k, v in self.items()}

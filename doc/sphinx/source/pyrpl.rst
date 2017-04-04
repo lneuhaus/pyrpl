@@ -6,127 +6,120 @@ Subpackages
 
 .. toctree::
 
-    pyrpl.gui
-    pyrpl.models
+    pyrpl.hardware_modules
+    pyrpl.software_modules
     pyrpl.test
+    pyrpl.widgets
 
 Submodules
 ----------
 
-pyrpl.bijection module
-----------------------
+pyrpl\.acquisition\_module module
+---------------------------------
 
-.. automodule:: pyrpl.bijection
+.. automodule:: pyrpl.acquisition_module
     :members:
     :undoc-members:
     :show-inheritance:
 
-pyrpl.curvedb module
---------------------
+pyrpl\.async\_utils module
+--------------------------
+
+.. automodule:: pyrpl.async_utils
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pyrpl\.attributes module
+------------------------
+
+.. automodule:: pyrpl.attributes
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pyrpl\.curvedb module
+---------------------
 
 .. automodule:: pyrpl.curvedb
     :members:
     :undoc-members:
     :show-inheritance:
 
-pyrpl.iir module
-----------------
+pyrpl\.errors module
+--------------------
 
-.. automodule:: pyrpl.iir
+.. automodule:: pyrpl.errors
     :members:
     :undoc-members:
     :show-inheritance:
 
-pyrpl.memory module
--------------------
+pyrpl\.memory module
+--------------------
 
 .. automodule:: pyrpl.memory
     :members:
     :undoc-members:
     :show-inheritance:
 
-pyrpl.model module
-------------------
+pyrpl\.module\_attributes module
+--------------------------------
 
-.. automodule:: pyrpl.model
+.. automodule:: pyrpl.module_attributes
     :members:
     :undoc-members:
     :show-inheritance:
 
-pyrpl.monitor_client module
----------------------------
+pyrpl\.modules module
+---------------------
 
-.. automodule:: pyrpl.monitor_client
+.. automodule:: pyrpl.modules
     :members:
     :undoc-members:
     :show-inheritance:
 
-pyrpl.network_analyzer module
------------------------------
-
-.. automodule:: pyrpl.network_analyzer
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-pyrpl.pyrpl module
-------------------
+pyrpl\.pyrpl module
+-------------------
 
 .. automodule:: pyrpl.pyrpl
     :members:
     :undoc-members:
     :show-inheritance:
 
-pyrpl.pyrpl_utils module
-------------------------
+pyrpl\.pyrpl\_utils module
+--------------------------
 
 .. automodule:: pyrpl.pyrpl_utils
     :members:
     :undoc-members:
     :show-inheritance:
 
-pyrpl.redpitaya module
-----------------------
+pyrpl\.redpitaya module
+-----------------------
 
 .. automodule:: pyrpl.redpitaya
     :members:
     :undoc-members:
     :show-inheritance:
 
-pyrpl.redpitaya_modules module
-------------------------------
+pyrpl\.redpitaya\_client module
+-------------------------------
 
-.. automodule:: pyrpl.redpitaya_modules
+.. automodule:: pyrpl.redpitaya_client
     :members:
     :undoc-members:
     :show-inheritance:
 
-pyrpl.registers module
-----------------------
-
-.. automodule:: pyrpl.registers
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-pyrpl.signal module
+pyrpl\.sound module
 -------------------
 
-.. automodule:: pyrpl.signal
+.. automodule:: pyrpl.sound
     :members:
     :undoc-members:
     :show-inheritance:
 
-pyrpl.spectrum_analyzer module
-------------------------------
-
-.. automodule:: pyrpl.spectrum_analyzer
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-pyrpl.sshshell module
----------------------
+pyrpl\.sshshell module
+----------------------
 
 .. automodule:: pyrpl.sshshell
     :members:
