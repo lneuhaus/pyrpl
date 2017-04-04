@@ -13,15 +13,100 @@ from ...errors import NotReadyError
 APP = QtGui.QApplication.instance()
 
 
+class BasebandAttributesWidget(QtGui.QWidget):
+    def __init__(self, specan_widget):
+        super(BasebandAttributesWidget, self).__init__()
+        self.h_layout = QtGui.QHBoxLayout()
+        self.setLayout(self.h_layout)
+        aws = specan_widget.attribute_widgets
+
+        self.v_layout1 = QtGui.QVBoxLayout()
+        self.h_layout.addLayout(self.v_layout1)
+        for name in ["display_input1_baseband", "display_input2_baseband"]:
+            widget = aws[name]
+            specan_widget.attribute_layout.removeWidget(widget)
+            self.v_layout1.addWidget(widget)
+
+        self.v_layout2 = QtGui.QVBoxLayout()
+        self.h_layout.addLayout(self.v_layout2)
+        for name in ["input1_baseband", "input2_baseband"]:
+            widget = aws[name]
+            specan_widget.attribute_layout.removeWidget(widget)
+            self.v_layout2.addWidget(widget)
+
+        self.v_layout3 = QtGui.QVBoxLayout()
+        self.h_layout.addLayout(self.v_layout3)
+        for name in ["display_cross_amplitude", "display_cross_phase"]:
+            widget = aws[name]
+            specan_widget.attribute_layout.removeWidget(widget)
+            self.v_layout3.addWidget(widget)
+
+
+class IqModeAttributesWidget(QtGui.QWidget):
+    def __init__(self, specan_widget):
+        super(IqModeAttributesWidget, self).__init__()
+        self.h_layout = QtGui.QHBoxLayout()
+        self.setLayout(self.h_layout)
+        aws = specan_widget.attribute_widgets
+
+        self.v_layout1 = QtGui.QVBoxLayout()
+        self.h_layout.addLayout(self.v_layout1)
+        for name in ["center", "input"]:
+            widget = aws[name]
+            specan_widget.attribute_layout.removeWidget(widget)
+            self.v_layout1.addWidget(widget)
+
+
+class OtherAttributesWidget(QtGui.QWidget):
+    def __init__(self, specan_widget):
+        super(OtherAttributesWidget, self).__init__()
+        self.h_layout = QtGui.QHBoxLayout()
+        self.setLayout(self.h_layout)
+        aws = specan_widget.attribute_widgets
+
+        self.v_layout1 = QtGui.QVBoxLayout()
+        self.h_layout.addLayout(self.v_layout1)
+        for name in ["baseband", "acbandwidth"]:
+            widget = aws[name]
+            specan_widget.attribute_layout.removeWidget(widget)
+            self.v_layout1.addWidget(widget)
+
+        self.v_layout2 = QtGui.QVBoxLayout()
+        self.h_layout.addLayout(self.v_layout2)
+        for name in ["span", "window"]:
+            widget = aws[name]
+            specan_widget.attribute_layout.removeWidget(widget)
+            self.v_layout2.addWidget(widget)
+
+        self.v_layout3 = QtGui.QVBoxLayout()
+        self.h_layout.addLayout(self.v_layout3)
+        for name in ["rbw", "display_unit"]:
+            widget = aws[name]
+            specan_widget.attribute_layout.removeWidget(widget)
+            self.v_layout3.addWidget(widget)
+
 class SpecAnWidget(ModuleWidget):
     _display_max_frequency = 25  # max 25 Hz framerate
     def init_gui(self):
         """
         Sets up the gui.
         """
+        self.last_data = None
         self.main_layout = QtGui.QVBoxLayout()
         self.module.__dict__['curve_name'] = 'pyrpl spectrum'
         self.init_attribute_layout()
+
+        self.other_widget = OtherAttributesWidget(self)
+        self.attribute_layout.addWidget(self.other_widget)
+
+        self.iqmode_widget = IqModeAttributesWidget(self)
+        self.attribute_layout.addWidget(self.iqmode_widget)
+
+        self.baseband_widget = BasebandAttributesWidget(self)
+        self.attribute_layout.addWidget(self.baseband_widget)
+
+
+
         self.button_layout = QtGui.QHBoxLayout()
         self.setLayout(self.main_layout)
         # self.setWindowTitle("Spec. An.")
@@ -31,13 +116,9 @@ class SpecAnWidget(ModuleWidget):
         self.plot_item = self.win.addPlot(title="PSD")
         self.curve = self.plot_item.plot(pen='m')
 
-        #self.run_avg_widget = self.module.__class__.avg._create_widget(
-        #    self.module)
-        #self.curve_name_widget = \
-        #    self.module.__class__.curve_name._create_widget(
-        #    self.module)
-
-
+        self.curve2 = self.plot_item.plot(pen='b') # input2 spectrum in
+        # baseband
+        self.curve_cross = self.plot_item.plot(pen='g') # curve for
 
         self.button_single = QtGui.QPushButton("Run single")
         self.button_single.clicked.connect(self.run_single_clicked)
@@ -69,6 +150,7 @@ class SpecAnWidget(ModuleWidget):
         self.button_layout.setStretchFactor(self.button_continuous, 1)
         self.button_layout.setStretchFactor(self.button_restart_averaging, 1)
         self.button_layout.setStretchFactor(self.button_save, 1)
+        self.update_baseband_visibility()
         # self.button_layout.setStretchFactor(self.run_avg_widget, 1)
         # self.button_layout.setStretchFactor(self.curve_name_widget, 1)
 
@@ -81,8 +163,14 @@ class SpecAnWidget(ModuleWidget):
 
     def update_attribute_by_name(self, name, new_value_list):
         super(SpecAnWidget, self).update_attribute_by_name(name, new_value_list)
-        if name in ['running_state',]:
+        if name in ['running_state']:
             self.update_running_buttons()
+        if name in ['baseband']:
+            self.update_baseband_visibility()
+
+    def update_baseband_visibility(self):
+        self.baseband_widget.setEnabled(self.module.baseband)
+        self.iqmode_widget.setEnabled(not self.module.baseband)
 
     def update_running_buttons(self):
         """
@@ -114,8 +202,16 @@ class SpecAnWidget(ModuleWidget):
     ####     self.attribute_widgets["rbw"].widget.setEnabled(not
     #### self.module.rbw_auto)
 
-    def autoscale_display(self):
+    def autoscale_x(self):
         """Autoscale pyqtgraph"""
+        mini = self.module.frequencies[0]
+        maxi = self.module.frequencies[-1]
+        self.plot_item.setRange(xRange=[mini,
+                                        maxi])
+        # self.plot_item.autoRange()
+
+    def unit_changed(self):
+        self.display_curve(self.last_data)
         self.plot_item.autoRange()
 
     def run_continuous_clicked(self):
@@ -138,10 +234,27 @@ class SpecAnWidget(ModuleWidget):
         """
         Displays all active channels on the graph.
         """
-        self.curve.setData(datas[0],
-                           self.module.data_to_display_unit(datas[1],
-                                                self.module._run_future.rbw))
-        self.curve.setVisible(True)
-        #else:
-        #    self.curve.setVisible(False)
+        self.last_data = datas
+        freqs = datas[0]
+        to_units = lambda x:self.module.data_to_display_unit(x,
+                                                  self.module._run_future.rbw)
+        if not self.module.baseband: # baseband mode, only 1 curve to display
+            self.curve.setData(freqs, to_units(datas[1]))
+            self.curve.setVisible(True)
+            self.curve2.setVisible(False)
+            self.curve_cross.setVisible(False)
+        else: # baseband mode: data is (spec1, spec2, real(cross), imag(cross))
+            spec1, spec2, cross_r, cross_i = datas[1]
+            self.curve.setData(freqs, to_units(spec1))
+            self.curve.setVisible(self.module.display_input1_baseband)
+
+            self.curve2.setData(freqs, to_units(spec2))
+            self.curve2.setVisible(self.module.display_input2_baseband)
+
+            cross = cross_r + 1j*cross_i
+            cross_mod = abs(cross)
+            self.curve_cross.setData(freqs, to_units(cross_mod))
+            self.curve_cross.setVisible(self.module.display_cross_amplitude)
+
+            # phase still needs to be implemented
         self.update_running_buttons()

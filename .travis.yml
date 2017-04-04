@@ -51,9 +51,10 @@ install:
   - source activate test-environment
   # python 2.7 doesnt come with coveralls, but we dont want to put it into the
   # requirements in setup.py
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
-      conda install --yes -c dan_blanchard python-coveralls nose-cov;
-    fi
+  - conda install --yes -c dan_blanchard python-coveralls nose-cov
+  # - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
+  #     conda install --yes -c dan_blanchard python-coveralls nose-cov;
+  #   fi
   # alternative location:
   # conda install --yes -c conda-forge coveralls;
   # overwrite default global config file with a custom one for travis (allows slower communication time)

@@ -27,40 +27,14 @@ from ..widgets.module_widgets import SpecAnWidget
 
 import scipy.signal as sig
 import scipy.fftpack
-#from pylab import *  # causes problem in travis
 
 # Some initial remarks about spectrum estimation:
 # Main source: Oppenheim + Schaefer, Digital Signal Processing, 1975
 
-#class RbwAttribute(FloatAttribute):
-#    def get_value(self, instance):
-#        if instance is None:
-#            return self
-#        if instance.rbw_auto:
-#            instance._rbw = instance.span / instance.points
-#        return instance._rbw
-#
-#    def set_value(self, instance, val):
-#        if not instance.rbw_auto:
-#            instance._rbw = val
-#        return val
-
-
-#class RbwAutoAttribute(BoolAttribute):
-#    def get_value(self, instance):
-#        if instance is None:
-#            return self
-#        return instance._rbw_auto
-
-#    def set_value(self, instance, value):
-#        instance._rbw_auto = value
-#        if value:
-#            instance.span = instance.span
-#        return value
 class DisplayUnitProperty(SelectProperty):
     def set_value(self, obj, value):
         super(DisplayUnitProperty, self).set_value(obj, value)
-        obj._emit_signal_by_name('autoscale')
+        obj._emit_signal_by_name('unit_changed')
 
 class CenterAttribute(FrequencyProperty):
     def get_value(self, instance):
@@ -90,6 +64,24 @@ class SpecAnAcBandwidth(FilterProperty):
                 if freq >= 0]
 
 
+class RbwProperty(ProxyProperty):
+    def _target_to_proxy(self, obj, target):
+        try:
+            target = target[0]
+        except TypeError:
+            pass
+        return int(round(target / obj.data_length))
+
+    def _proxy_to_target(self, obj, proxy):
+        return int(proxy * obj.data_length)
+
+    def valid_frequencies(self, instance):
+        vf = recursive_getattr(instance,
+                          self.path_to_target_descriptor).valid_frequencies(
+            recursive_getattr(instance, self.path_to_target_module))
+        return [self._target_to_proxy(instance, v) for v in vf]
+
+
 class SpanFilterProperty(FilterProperty):
     def valid_frequencies(self, instance):
         return instance.spans
@@ -113,18 +105,37 @@ class SpectrumAnalyzer(AcquisitionModule):
                        "baseband",
                        "center",
                        "span",
-                       "points",
+                       "rbw",
+                       #"points",
                        "window",
                        "acbandwidth",
-                       "display_unit"]
-    _setup_attributes = _gui_attributes
-
+                       "display_unit",
+                       "display_input1_baseband",
+                       "display_input2_baseband",
+                       "input1_baseband",
+                       "input2_baseband",
+                       "display_cross_amplitude",
+                       "display_cross_phase"]
+    _setup_attributes =["input",
+                       "baseband",
+                       "center",
+                       "span",
+                       #"rbw",
+                       #"points",
+                       "window",
+                       "acbandwidth",
+                       "display_unit",
+                       "display_input1_baseband",
+                       "display_input2_baseband",
+                       "input1_baseband",
+                       "input2_baseband",
+                       "display_cross_amplitude",
+                       "display_cross_phase"]
     # numerical values
     nyquist_margin = 1.0
     if_filter_bandwidth_per_span = 1.0
-    quadrature_factor = 0.1*1024# 0.001 #  it looks like 0.001 is now
-    # rounded to
-    # 0...
+
+    quadrature_factor = 1.# 0.1*1024
 
     # unit Vpk is such that the level of a peak in the spectrum indicates the
     # correct voltage amplitude of a coherent signal (linear scale)
@@ -164,15 +175,47 @@ class SpectrumAnalyzer(AcquisitionModule):
         """,
         call_setup=True)
     center = CenterAttribute(call_setup=True)
-    points = IntProperty(default=16384, call_setup=True)
+    # points = IntProperty(default=16384, call_setup=True)
     window = SelectProperty(options=windows, call_setup=True)
     input = InputSelectProperty(options=all_inputs, call_setup=True)
+    input1_baseband = InputSelectProperty(options=all_inputs, call_setup=True,
+                                          doc="input1 for baseband mode")
+    input2_baseband = InputSelectProperty(options=all_inputs, call_setup=True,
+                                          doc="input2 for baseband mode")
+    display_input1_baseband = BoolProperty(doc="should input1 spectrum be "
+                                               "displayed in "
+                                               "baseband-mode?")
+    display_input2_baseband = BoolProperty(doc="should input2 spectrum be "
+                                               "displayed in "
+                                               "baseband-mode?")
+    display_cross_amplitude = BoolProperty(doc="should cross-spectrum "
+                                               "amplitude"
+                                              " be displayed in "
+                                              "baseband-mode?")
+    display_cross_phase = BoolProperty(doc="should cross-spectrum amplitude"
+                                              " be displayed in "
+                                              "baseband-mode?")
+    rbw = RbwProperty("span")
+                      #doc="Rbw of the measurement (changing this setting "
+                      #    "will also affect the span)",
+                      #call_setup=False)
+
     acbandwidth = SpecAnAcBandwidth(call_setup=True)
 
     # _signal_launcher = SignalLauncherSpectrumAnalyzer
 
+    """
+    def _setup(self):
+        super(SpectrumAnalyzer, self)._setup()
+        if self._last_touched == 'span':
+            self.rbw = self.span/self.data_length
+        else:
+            self.span = self.rbw*self.data_length
+    """
+
     # functions
     def _init_module(self):
+        self._last_touched = 'span'
         self.acbandwidth = 0
         self.baseband = False
         self.center = 0
@@ -181,11 +224,6 @@ class SpectrumAnalyzer(AcquisitionModule):
         self._is_setup = False
         super(SpectrumAnalyzer, self)._init_module()
         self.rp = self.pyrpl.rp
-
-    @property
-    def rbw(self):
-        # There is probably some multiples of pi missing...
-        return 1./self.duration
 
     @property
     def iq(self):
@@ -205,7 +243,8 @@ class SpectrumAnalyzer(AcquisitionModule):
 
     @property
     def data_length(self):
-        return int(self.points)  # *self.nyquist_margin)
+        return self.scope.data_length
+        #return int(self.points)  # *self.nyquist_margin)
 
     @property
     def sampling_time(self):
@@ -231,10 +270,11 @@ class SpectrumAnalyzer(AcquisitionModule):
         """
         window = sig.get_window(self.window, self.data_length, fftbins=False)
         # empirical value for scaling flattop to sqrt(W)/V
-        filterfactor = np.sqrt(50)
+        filterfactor = 1/10. #np.sqrt(50)
         # norm by datalength, by sqrt(50 Ohm), and something related to
         # filter
-        normfactor = 1.0 / self.data_length / np.sqrt(50.0) * filterfactor
+        # normfactor = 1.0 / self.data_length / np.sqrt(50.0) * filterfactor
+        normfactor = 1.0 / self.data_length / filterfactor
         return window * normfactor
 
     def _get_iq_data(self):
@@ -242,8 +282,9 @@ class SpectrumAnalyzer(AcquisitionModule):
         :return: complex iq time trace
         """
         res = self.scope._get_curve()
+
         if self.baseband:
-            return res[0][:self.data_length]
+            return res[0][:self.data_length] + 1j*res[1][:self.data_length]
         else:
             return (res[0] + 1j*res[1])[:self.data_length]
 #            res += 1j*self.scope.curve(2, timeout=None)
@@ -256,7 +297,7 @@ class SpectrumAnalyzer(AcquisitionModule):
         return self._get_iq_data() * np.asarray(self.filter_window(),
                                             dtype=np.complex)
 
-    def useful_index(self):
+    def useful_index_obsolete(self):
         """
         :return: a slice containing the portion of the spectrum between start
         and stop
@@ -264,7 +305,10 @@ class SpectrumAnalyzer(AcquisitionModule):
         middle = int(self.data_length / 2)
         length = self.points  # self.data_length/self.nyquist_margin
         if self.baseband:
-            return slice(middle, int(middle + length / 2 + 1))
+            return slice(middle-1, middle + length/2 + 1)#slice(middle,
+            # int(middle + length /
+            #  2 +
+            #  1))
         else:
             return slice(int(middle - length/2), int(middle + length/2 + 1))
 
@@ -281,11 +325,14 @@ class SpectrumAnalyzer(AcquisitionModule):
         """
         :return: frequency array
         """
-        return self.center + scipy.fftpack.fftshift( scipy.fftpack.fftfreq(
+        if self.baseband:
+            return np.fft.rfftfreq(self.data_length, self.sampling_time)
+        else:
+            return self.center + scipy.fftpack.fftshift( scipy.fftpack.fftfreq(
                                   self.data_length,
-                                  self.sampling_time))[self.useful_index()]
+                                  self.sampling_time)) #[self.useful_index()]
 
-    def data_to_dBm(self, data):
+    def data_to_dBm(self, data): # will become obsolete
         # replace values whose log doesnt exist
         data[data <= 0] = 1e-100
         # conversion to dBm scale
@@ -301,23 +348,23 @@ class SpectrumAnalyzer(AcquisitionModule):
         if self.display_unit=='Vpk^2':
             return data
         if self.display_unit == 'dB(Vpk^2)':
-            return 10 * log10(data)
+            return 10 * np.log10(data)
         if self.display_unit=='Vpk':
-            return sqrt(data)
+            return np.sqrt(data)
 
         if self.display_unit=='Vrms^2':
             return data/2
         if self.display_unit=='dB(Vrms^2)':
-            return 10*log10(data/2)
+            return 10*np.log10(data/2)
         if self.display_unit == 'Vrms':
-            return sqrt(data) / sqrt(2)
+            return np.sqrt(data) / np.sqrt(2)
 
         if self.display_unit=='Vrms^2/Hz':
             return data /2 / rbw
         if self.display_unit=='dB(Vrms^2/Hz)':
-            return 10 * log10(data / 2 / rbw)
+            return 10 * np.log10(data / 2 / rbw)
         if self.display_unit == 'Vrms/sqrt(Hz)':
-            return sqrt(data)/sqrt(2)/rbw
+            return np.sqrt(data)/ np.sqrt(2)/rbw
     # Concrete implementation of AcquisitionModule methods
     # ----------------------------------------------------
 
@@ -332,14 +379,39 @@ class SpectrumAnalyzer(AcquisitionModule):
         return
 
     def _get_curve(self):
-        """
-        Simply pack together channel 1 and channel 2 curves in a numpy array
-        """
-        res = scipy.fftpack.fftshift(np.abs(scipy.fftpack.fft(
-            self._get_filtered_iq_data()))**2)[self.useful_index()]
+        iq_data = self._get_filtered_iq_data() # get iq data (from scope)
         if not self.running_state in ["running_single", "running_continuous"]:
-            self.pyrpl.scopes.free(self.scope)
-        return res
+            self.pyrpl.scopes.free(self.scope) # free scope if not continuous
+        if self.baseband:
+            # In baseband, where the 2 real inputs are stored in the real and
+            # imaginary part of iq_data, we need to make 2 different FFTs. Of
+            # course, we could do it naively by calling twice fft, however,
+            # this is not optimal:
+            # x = rand(10000)
+            # y = rand(10000)
+            # %timeit fftpack.fft(x)    # --> 74.3 us (143 us with numpy)
+            # %timeit fftpack.fft(x + 1j*y) # --> 163 us (182 us with numpy)
+            # A convenient option described in Oppenheim/Schafer  p.
+            # 333-334 consists in taking the right combinations of
+            # negative/positive/real/imaginary part of the complex fft,
+            # however, an optimized function for real FFT is already provided:
+            # %timeit fftpack.rfft(x)       # --> 63 us (72.7 us with numpy)
+            # --> In fact, we will use numpy.rfft insead of
+            # scipy.fftpack.rfft because the output
+            # format is directly a complex array, and thus, easier to handle.
+            fft1 = np.fft.fftpack.rfft(np.real(iq_data))
+            fft2 = np.fft.fftpack.rfft(np.imag(iq_data))
+            cross_spectrum = np.conjugate(fft1)*fft2
+
+            res = np.array([abs(fft1)**2,
+                            abs(fft2)**2,
+                            np.real(cross_spectrum),
+                            np.imag(cross_spectrum)])
+            return res#scipy.fftpack.fftshift(res)
+        else:
+            # Realize the complex fft of iq data
+            res = scipy.fftpack.fftshift(scipy.fftpack.fft(iq_data))
+            return np.abs(res)**2 # [self.useful_index()]
 
     def _remaining_time(self):
         """
@@ -357,7 +429,7 @@ class SpectrumAnalyzer(AcquisitionModule):
         autosave_backup = self._autosave_active
         # setup iq module
         if not self.baseband:
-            self.iq.setup( # for som reason, this takes 300 ms to do
+            self.iq.setup(
                 input = self.input,
                 bandwidth=[self.span*self.if_filter_bandwidth_per_span]*4,
                 gain=0,
@@ -373,8 +445,8 @@ class SpectrumAnalyzer(AcquisitionModule):
             self.pyrpl.scopes.pop(self.name)
         # setup scope
         if self.baseband:
-            input1 = self.input
-            input2 = self.input
+            input1 = self.input1_baseband
+            input2 = self.input2_baseband
         else:
             input1 = self.iq
             input2 = self.iq_quadraturesignal

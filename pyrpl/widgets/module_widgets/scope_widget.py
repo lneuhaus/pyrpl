@@ -256,7 +256,7 @@ class ScopeWidget(ModuleWidget):
             not self.rolling_mode)
         self.button_single.setEnabled(not self.rolling_mode)
 
-    def autoscale(self):
+    def autoscale_x(self):
         """Autoscale pyqtgraph. The current behavior is to autoscale x axis
         and set y axis to  [-1, +1]"""
         if self.module._is_rolling_mode_active():
