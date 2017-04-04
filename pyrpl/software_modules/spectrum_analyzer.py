@@ -122,7 +122,8 @@ class SpectrumAnalyzer(AcquisitionModule):
     # numerical values
     nyquist_margin = 1.0
     if_filter_bandwidth_per_span = 1.0
-    quadrature_factor = 0.1# 0.001 #  it looks like 0.001 is now rounded to
+    quadrature_factor = 0.1*1024# 0.001 #  it looks like 0.001 is now
+    # rounded to
     # 0...
 
     # unit Vpk is such that the level of a peak in the spectrum indicates the
