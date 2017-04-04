@@ -1009,7 +1009,7 @@ class ProxyProperty(BaseProperty):
         self.path_to_target_descriptor = self.path_to_target_module \
                                          + '.__class__.' \
                                          + lastpart
-        BaseAttribute.__init__(self, **kwargs)
+        BaseProperty.__init__(self, **kwargs)
 
     def _target_to_proxy(self, obj, target):
         """ override this function to implement conversion between target
