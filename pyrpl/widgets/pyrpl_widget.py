@@ -274,9 +274,12 @@ class PyrplWidget(QtGui.QMainWindow):
 
     def set_window_position(self):
         if "dock_positions" in self.parent.c.pyrpl._keys():
-            if not self.restoreState(self.parent.c.pyrpl.dock_positions.encode("latin1")):
-                self.logger.warning("Sorry, " + \
-                    "there was a problem with the restoration of Dock positions")
+            try:
+                self.restoreState(
+                    self.parent.c.pyrpl.dock_positions.encode("latin1"))
+            except:
+                self.logger.warning("Sorry, there was a problem with the "
+                                    "restoration of Dock positions. ")
         try:
             coords = self.parent.c.pyrpl["window_position"]._data
         except KeyError:
