@@ -72,7 +72,7 @@ module red_pitaya_pid_block #(
    //parameters for input pre-filter
    parameter     FILTERSTAGES = 4 ,
    parameter     FILTERSHIFTBITS = 5,
-   parameter     FILTERMINBW = 10,
+   parameter     FILTERMINBW = 5,
    
    //enable arbitrary output saturation or not
    parameter     ARBITRARY_SATURATION = 1
@@ -103,6 +103,7 @@ reg [ 32-1: 0] set_filter;   // filter setting
 // limits if arbitrary saturation is enabled
 reg signed [ 14-1:0] out_max;
 reg signed [ 14-1:0] out_min;
+reg normalization_on;
 
 //  System bus connection
 always @(posedge clk_i) begin
@@ -116,17 +117,21 @@ always @(posedge clk_i) begin
       ival_write <= 1'b0;
       out_min <= {1'b1,{14-1{1'b0}}};
       out_max <= {1'b0,{14-1{1'b1}}};
+      normalization_on <= 1'b0;
    end
    else begin
+      if (normalization_on == 1'b1)
+         set_kp  <= norm_integral;
       if (wen) begin
          if (addr==16'h100)   set_ival <= wdata[16-1:0];
          if (addr==16'h104)   set_sp  <= wdata[14-1:0];
-         if (addr==16'h108)   set_kp  <= wdata[GAINBITS-1:0];
+         if ((addr==16'h108) && (normalization_on == 1'b0)) set_kp <= wdata[GAINBITS-1:0];
          if (addr==16'h10C)   set_ki  <= wdata[GAINBITS-1:0];
          if (addr==16'h110)   set_kd  <= wdata[GAINBITS-1:0];
          if (addr==16'h120)   set_filter  <= wdata;
          if (addr==16'h124)   out_min  <= wdata;
          if (addr==16'h128)   out_max  <= wdata;
+         if (addr==16'h130)   normalization_on  <= wdata[0];
       end
       if (addr==16'h100 && wen)
          ival_write <= 1'b1;
@@ -142,6 +147,7 @@ always @(posedge clk_i) begin
 	     16'h120 : begin ack <= wen|ren; rdata <= set_filter; end
 	     16'h124 : begin ack <= wen|ren; rdata <= {{32-14{1'b0}},out_min}; end
 	     16'h128 : begin ack <= wen|ren; rdata <= {{32-14{1'b0}},out_max}; end
+	     16'h130 : begin ack <= wen|ren; rdata <= {{32-31{1'b0}},normalization_on}; end
 
 	     16'h200 : begin ack <= wen|ren; rdata <= PSR; end
 	     16'h204 : begin ack <= wen|ren; rdata <= ISR; end
@@ -177,14 +183,15 @@ red_pitaya_filter_block #(
 //---------------------------------------------------------------------------------
 //  Set point error calculation - 1 cycle delay
 
-reg  [ 15-1: 0] error        ;
+reg  [ 16-1: 0] error        ;
 
 always @(posedge clk_i) begin
    if (rstn_i == 1'b0) begin
-      error <= 15'h0 ;
+      error <= 16'h0 ;
    end
    else begin
-      error <= $signed(dat_i_filtered) - $signed(set_sp) ;
+      //error <= $signed(set_sp) - $signed(dat_i) ;
+      error <= normalization_on ? ($signed({set_sp, 1'b0}) - $signed(normalized_product)) : ($signed(dat_i_filtered) - $signed(set_sp)) ;
    end
 end
 
@@ -204,15 +211,24 @@ always @(posedge clk_i) begin
    end
 end
 
-assign kp_mult = $signed(error) * $signed(set_kp);
+assign kp_mult = normalization_on ? ($signed(dat_i_offset) * $signed(set_kp)) : ($signed(error) * $signed(set_kp));
+
+reg signed [14-1:0] dat_i_offset;
+reg signed [15-1:0] normalized_product;
+always @(posedge clk_i) begin
+    dat_i_offset <= $signed(dat_i) - $signed(set_kd[DSR+14-1:DSR]);
+    if ({(|kp_reg[15+GAINBITS-PSR-1:15]),kp_reg[15-1]} == 2'b01)
+        normalized_product <= {1'b0, {15-1{1'b1}}};
+    else if ({(|kp_reg[15+GAINBITS-PSR-1:15]),kp_reg[15-1]} == 2'b11)
+        normalized_product <= {{15-1{1'b0}},1'b1};
+    else
+        normalized_product <= kp_reg;
+end
 
 //---------------------------------------------------------------------------------
 // Integrator - 2 cycles delay (but treat similar to proportional since it
 // will become negligible at high frequencies where delay is important)
 
-//formerly
-//-localparam IBW = 64; //integrator bit-width. Over-represent the integral sum to record longterm drifts
-//-reg   [15+GAINBITS-1: 0] ki_mult  ;
 localparam IBW = ISR+16; //integrator bit-width. Over-represent the integral sum to record longterm drifts (overrepresented by 2 bits)
 reg   [16+GAINBITS-1: 0] ki_mult ;
 wire  [IBW  : 0] int_sum       ;
@@ -228,9 +244,15 @@ always @(posedge clk_i) begin
       ki_mult <= $signed(error) * $signed(set_ki) ;
       if (ival_write)
          int_reg <= { {IBW-16-ISR{set_ival[16-1]}},set_ival[16-1:0],{ISR{1'b0}}};
-      else if (int_sum[IBW+1-1:IBW+1-2] == 2'b01) //normal positive saturation
+      else if ((normalization_on==1'b1) && ({(|int_sum[IBW:ISR-PSR+GAINBITS]),int_sum[ISR-PSR+GAINBITS-1]} == 2'b01))
+       // positive saturation with normalization on
+         int_reg <= {{IBW-1-ISR+PSR-GAINBITS+1{1'b0}},{ISR-PSR+GAINBITS-1{1'b1}}};
+      else if ((normalization_on==1'b0) && (int_sum[IBW+1-1:IBW+1-2] == 2'b01)) //normal positive saturation
          int_reg <= {1'b0,{IBW-1{1'b1}}};
-      else if (int_sum[IBW+1-1:IBW+1-2] == 2'b10) // negative saturation
+      else if ((normalization_on==1'b1) && ({(|int_sum[IBW:ISR-PSR+GAINBITS]),int_sum[ISR-PSR+GAINBITS-1]} == 2'b11)) // number is negative
+         int_reg <= {{IBW-1-ISR+PSR-1{1'b0}},{ISR-PSR+1{1'b1}}};
+         //int_reg <= {{GAINBITS-1{1'b0}}, 1'b1, {IBW-GAINBITS-1{1'b0}}};
+      else if ((normalization_on==1'b0) && (int_sum[IBW+1-1:IBW+1-2] == 2'b10)) //normal negative saturation
          int_reg <= {1'b1,{IBW-1{1'b0}}};
       else
          int_reg <= int_sum[IBW-1:0]; // use sum as it is
@@ -239,6 +261,9 @@ end
 
 assign int_sum = $signed(ki_mult) + $signed(int_reg) ;
 assign int_shr = $signed(int_reg[IBW-1:ISR]) ;
+
+wire  [GAINBITS-1: 0] norm_integral;
+assign norm_integral = $signed(int_reg[IBW-1:ISR-PSR]);
 
 //---------------------------------------------------------------------------------
 //  Derivative - 2 cycles delay (but treat as 1 cycle because its not
@@ -295,7 +320,7 @@ reg signed  [   14-1: 0] pid_out;
 		         pid_out <= pid_sum[14-1:0];
 		   end
 		end
-assign pid_sum = $signed(kp_reg) + $signed(int_shr) + $signed(kd_reg_s);
+assign pid_sum = (normalization_on) ? ($signed(error)): ($signed(kp_reg) + $signed(int_shr) + $signed(kd_reg_s));
 
 generate 
 	if (ARBITRARY_SATURATION == 0)

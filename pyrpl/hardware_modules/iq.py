@@ -122,7 +122,14 @@ class Iq(FilterModule):
                         doc="gain3 of iq module [volts]")
     quadrature_factor = FloatRegister(0x118,
                                       bits=_GAINBITS,
-                                      norm=2 ** _SHIFTBITS,
+                                      norm=1.0,
+                                      default=1.0,
+                                      #2 ** _SHIFTBITS,
+                                      #  quadrature_factor of 1 corresponds
+                                      # to lowest-possible gain,
+                                      # where iq_signal is simply the input
+                                      # tiemes a 1-V sine (possibly low-pass
+                                      # filtered)
                                       doc="amplification factor of demodulated signal [a.u.]")
 
     _g4 = FloatRegister(0x11C, bits=_GAINBITS, norm=2 ** _SHIFTBITS,

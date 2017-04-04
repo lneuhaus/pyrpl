@@ -89,7 +89,7 @@ module red_pitaya_lpf_block
    (x <= 2**32) ? 32 : \
    -1
    
-localparam MAXSHIFT = `CLOG2(125000000/MINBW);
+localparam MAXSHIFT = `CLOG2(125000000/MINBW);  // gives an effective limit of 10 MHz (divided by 4 pi)
 
 reg  signed [SIGNALBITS+MAXSHIFT-1:0]    y;
 reg  signed [SIGNALBITS+MAXSHIFT-1:0]    delta;   //we need this cumbersome imperfect implementation with a delta buffer to introduce some delay so the code works at 125 MHZ
@@ -98,7 +98,7 @@ wire signed [SIGNALBITS-1:0]  y_out;
 wire filter_off;
 
 assign y_out = y[MAXSHIFT+SIGNALBITS-1:MAXSHIFT];
-assign shifted_delta = delta<<shift;
+assign shifted_delta = delta<<((shift<MAXSHIFT) ? shift : MAXSHIFT);
 
 always @(posedge clk_i) begin
     if (rstn_i == 1'b0) begin
