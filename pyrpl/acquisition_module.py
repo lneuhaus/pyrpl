@@ -255,7 +255,7 @@ class SignalLauncherAcquisitionModule(SignalLauncher):
     display_curve = QtCore.pyqtSignal(list)  # This signal is emitted when
     # curves need to be displayed the argument is [array(times),
     # array(curve1), array(curve2)] or [times, None, array(curve2)]
-    autoscale = QtCore.pyqtSignal()
+    autoscale_x = QtCore.pyqtSignal()
 
     # For now, the following signals are only implemented with NA.
     update_point = QtCore.pyqtSignal(int)  #  used in NA only
@@ -263,6 +263,8 @@ class SignalLauncherAcquisitionModule(SignalLauncher):
     clear_curve = QtCore.pyqtSignal()  #  NA only
     x_log_toggled = QtCore.pyqtSignal() #  logscale changed
 
+    # Following signal only implemented in spec an
+    unit_changed = QtCore.pyqtSignal()
 
 class AcquisitionModule(Module):
     """
@@ -498,7 +500,7 @@ class AcquisitionModule(Module):
         self._new_run_future()
         if self.running_state in ["running_single", "running_continuous"]:
             self._run_future.start()
-            self._emit_signal_by_name("autoscale")
+            self._emit_signal_by_name("autoscale_x")
 
     # Methods to implement in derived class:
     # --------------------------------------

@@ -90,7 +90,8 @@ def recursive_getattr(root, path):
     """ returns root.path (i.e. root.attr1.attr2) """
     attribute = root
     for name in path.split('.'):
-        attribute = getattr(attribute, name)
+        if name != "":
+            attribute = getattr(attribute, name)
     return attribute
 
 

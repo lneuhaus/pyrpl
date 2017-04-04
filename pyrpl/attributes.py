@@ -989,7 +989,7 @@ class SelectRegister(BaseRegister, SelectProperty):
         return int(value)
 
 
-class ProxyProperty(BaseAttribute):
+class ProxyProperty(BaseProperty):
     """
     An attribute that is a proxy to another attribute.
 
@@ -998,7 +998,7 @@ class ProxyProperty(BaseAttribute):
     """
     def __init__(self,
                  path_to_target,
-                 call_setup=False):
+                 **kwargs):
         self.path_to_target = path_to_target
         lastpart = path_to_target.split('.')[-1]
         self.target_attribute = lastpart
@@ -1006,7 +1006,7 @@ class ProxyProperty(BaseAttribute):
         self.path_to_target_descriptor = self.path_to_target_module \
                                          + '.__class__.' \
                                          + lastpart
-        self.call_setup = call_setup
+        BaseAttribute.__init__(self, **kwargs)
 
     def _target_to_proxy(self, obj, target):
         """ override this function to implement conversion between target
@@ -1056,7 +1056,8 @@ class ProxyProperty(BaseAttribute):
         module = recursive_getattr(obj, self.path_to_target_module)
         options = recursive_getattr(obj, self.path_to_target_descriptor +
                                     '.options')(module)
-        return options
+        return OrderedDict([(self._target_to_proxy(obj, k), v)
+                            for k, v in options.items()])
 
     def change_options(self, obj, new_options):
         if obj is None:
@@ -1086,7 +1087,8 @@ class ProxyProperty(BaseAttribute):
                 """ forward the signal, but change attribute name """
                 if name == self.target_attribute:
                     instance._signal_launcher.update_attribute_by_name.emit(
-                        self.name, value)
+                        self.name, [self._target_to_proxy(instance,
+                                                          value[0])])
                 if self.call_setup:
                     instance.setup()
             module._signal_launcher.update_attribute_by_name.connect(
@@ -1110,12 +1112,19 @@ class ProxyProperty(BaseAttribute):
         target_module = recursive_getattr(module, self.path_to_target_module)
         if widget_name is None:
             widget_name = self.name
+        #return recursive_getattr(module,
+        #                         self.path_to_target_descriptor +
+        #                         '._create_widget')(target_module,
+        #                                            widget_name=widget_name,
+        #                                            **kwargs)
+        self._widget_class = recursive_getattr(module,
+                                 self.path_to_target_descriptor +
+                                 '._widget_class')
         return recursive_getattr(module,
                                  self.path_to_target_descriptor +
-                                 '._create_widget')(target_module,
-                                                    widget_name=widget_name,
+                                 '.__class__._create_widget')(self, module,
+                                                    #widget_name=widget_name,
                                                     **kwargs)
-
 
 class ModuleAttribute(BaseProperty):
     """
