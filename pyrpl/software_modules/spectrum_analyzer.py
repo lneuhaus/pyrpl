@@ -131,6 +131,7 @@ class SpectrumAnalyzer(AcquisitionModule):
                        "input2_baseband",
                        "display_cross_amplitude",
                        "display_cross_phase"]
+    PADDING_FACTOR = 16
     # numerical values
     nyquist_margin = 1.0
     if_filter_bandwidth_per_span = 1.0
@@ -270,12 +271,8 @@ class SpectrumAnalyzer(AcquisitionModule):
         """
         window = sig.get_window(self.window, self.data_length, fftbins=False)
         # empirical value for scaling flattop to sqrt(W)/V
-        filterfactor = 1/10. #np.sqrt(50)
-        # norm by datalength, by sqrt(50 Ohm), and something related to
-        # filter
-        # normfactor = 1.0 / self.data_length / np.sqrt(50.0) * filterfactor
-        normfactor = 1.0 / self.data_length / filterfactor
-        return window * normfactor
+        window/=(np.sum(window)/2)
+        return window
 
     def _get_iq_data(self):
         """
@@ -326,10 +323,11 @@ class SpectrumAnalyzer(AcquisitionModule):
         :return: frequency array
         """
         if self.baseband:
-            return np.fft.rfftfreq(self.data_length, self.sampling_time)
+            return np.fft.rfftfreq(self.data_length*self.PADDING_FACTOR,
+                                   self.sampling_time)
         else:
             return self.center + scipy.fftpack.fftshift( scipy.fftpack.fftfreq(
-                                  self.data_length,
+                                  self.data_length*self.PADDING_FACTOR,
                                   self.sampling_time)) #[self.useful_index()]
 
     def data_to_dBm(self, data): # will become obsolete
@@ -365,6 +363,37 @@ class SpectrumAnalyzer(AcquisitionModule):
             return 10 * np.log10(data / 2 / rbw)
         if self.display_unit == 'Vrms/sqrt(Hz)':
             return np.sqrt(data)/ np.sqrt(2)/rbw
+
+
+    def transfer_function(self, frequencies):
+        """
+        Transfer function from the generation of quadratures to their
+        sampling, including scope decimation. At the moment, delays are not
+        taken into account.
+        """
+        # baseband not implemented yet....
+        frequencies = np.array(frequencies)
+        tf = np.ones(len(frequencies), dtype=complex)
+
+        for f in self.iq.bandwidth:
+            if f == 0:
+                continue
+            elif f > 0:  # lowpass
+                tf *= 1.0 / (
+                1.0 + 1j * (frequencies - self.iq.frequency) / f)
+                # quadrature_delay += 2
+            elif f < 0:  # highpass
+                tf *= 1.0 / (
+                1.0 + 1j * f / (frequencies - self.iq.frequency))
+                # quadrature_delay += 1  # one cycle extra delay per highpass
+
+        # scope decimation transfer function
+        freqs = frequencies / 125e6
+        tf *= 1. / self.scope.decimation * (
+        1 -  np.exp(-1j * self.scope.decimation * freqs)) / (
+              1 -  np.exp(-1j * freqs))
+        return tf
+
     # Concrete implementation of AcquisitionModule methods
     # ----------------------------------------------------
 
@@ -399,19 +428,26 @@ class SpectrumAnalyzer(AcquisitionModule):
             # --> In fact, we will use numpy.rfft insead of
             # scipy.fftpack.rfft because the output
             # format is directly a complex array, and thus, easier to handle.
-            fft1 = np.fft.fftpack.rfft(np.real(iq_data))
-            fft2 = np.fft.fftpack.rfft(np.imag(iq_data))
+            fft1 = np.fft.fftpack.rfft(np.real(iq_data),
+                                       self.data_length*self.PADDING_FACTOR)
+            fft2 = np.fft.fftpack.rfft(np.imag(iq_data),
+                                       self.data_length*self.PADDING_FACTOR)
             cross_spectrum = np.conjugate(fft1)*fft2
 
             res = np.array([abs(fft1)**2,
                             abs(fft2)**2,
                             np.real(cross_spectrum),
                             np.imag(cross_spectrum)])
-            return res#scipy.fftpack.fftshift(res)
+            # at some point, we need to cache the tf for performance
+            return res/abs(self.transfer_function(self.frequencies))**2
         else:
             # Realize the complex fft of iq data
-            res = scipy.fftpack.fftshift(scipy.fftpack.fft(iq_data))
-            return np.abs(res)**2 # [self.useful_index()]
+            res = scipy.fftpack.fftshift(scipy.fftpack.fft(iq_data,
+                                        self.data_length*self.PADDING_FACTOR))
+            # at some point we need to cache the tf for performance
+            return np.abs(res)**2/abs(self.transfer_function(
+                self.frequencies))**2
+            # [self.useful_index()]
 
     def _remaining_time(self):
         """

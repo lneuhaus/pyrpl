@@ -521,8 +521,8 @@ class Module(with_metaclass(ModuleMetaClass, object)):
         settings)
         """
         curve = CurveDB.create(x_values,
-                                     y_values,
-                                     **attributes)
+                               y_values,
+                               **attributes)
         return curve
 
     def free(self):

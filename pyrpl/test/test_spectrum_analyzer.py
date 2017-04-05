@@ -63,3 +63,21 @@ class TestClass(TestPyrpl):
         new = self.pyrpl.c._save_counter
         self.pyrpl.spectrumanalyzer.stop()
         assert (old == new), (old, new)
+
+    def test_flatness(self):
+        self.pyrpl.spectrumanalyzer.setup(baseband=False,
+                                          center=2e5,
+                                          span=2e6,
+                                          input="asg0",
+                                          running_state='stopped')
+        asg = self.pyrpl.rp.asg0
+        asg.setup(frequency=1e-5,
+                  amplitude=1,
+                  trigger_source='immediately',
+                  offset=0,
+                  waveform='sin')
+        freqs = np.linspace(1e5, 1e6)
+        for freq in freqs:
+            asg.frequency = freq
+            curve = self.pyrpl.spectrumanalyzer.curve()
+            assert abs(max(curve) - 1) < 0.01, max(curve)
