@@ -890,11 +890,11 @@ class SelectProperty(BaseProperty):
         # self.name+'_options'.
         if instance is not None:
             try:
-                lastoptions = getattr(instance, '_' + self.name + '_options')
+                lastoptions = getattr(instance, '_' + self.name + '_lastoptions')
             except AttributeError:
                 lastoptions = None
             if options != lastoptions:
-                setattr(instance, '_' + self.name + '_options', options)
+                setattr(instance, '_' + self.name + '_lastoptions', options)
                 # save the keys for the user convenience
                 setattr(instance, self.name + '_options', list(options.keys()))
                 instance._signal_launcher.change_options.emit(self.name,
