@@ -1,7 +1,8 @@
-# pyrpl
-[logo]: https://github.com/lneuhaus/pyrpl/blob/master/logo.png "Logo Pyrpl"
+# <img src="https://github.com/lneuhaus/pyrpl/blob/master/logo.png" width="250" alt="PyRPL">
+![travis status](https://travis-ci.com/lneuhaus/pyrpl.svg?token=Au8JgYk93p9iq2p6bSTp&branch=master "Travis status")
 
-PyRPL (Python RedPitaya Lockbox) turns your RedPitaya into a powerful DSP device, especially suitable as a digital lockbox and measurement device in quantum optics experiments. 
+PyRPL (Python RedPitaya Lockbox) turns your RedPitaya into a powerful DSP device, especially suitable as a digital lockbox and measurement device in quantum optics experiments.
+
 
 ## Installation
 Make sure you have an installation of Python (2 or 3), preferrably Anaconda.
