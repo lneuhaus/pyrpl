@@ -221,19 +221,19 @@ class RedPitaya(object):
     def update_fpga(self, filename=None):
         if filename is None:
             try:
-                filename = self.parameters['filename']
+                source = self.parameters['filename']
             except KeyError:
-                filename = None
+                source = None
         self.end()
         sleep(self.parameters['delay'])
         self.ssh.ask('rw')
         sleep(self.parameters['delay'])
         self.ssh.ask('mkdir ' + self.parameters['serverdirname'])
         sleep(self.parameters['delay'])
-        source = filename
-        if not os.path.isfile(source):
-            self.logger.warning("Desired bitfile %s does not exist. Using default file.",
-                                source)
+        if source is None or not os.path.isfile(source):
+            if source is not None:
+                self.logger.warning('Desired bitfile "%s" does not exist. Using default file.',
+                                    source)
             source = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'fpga', 'red_pitaya.bin')
         if not os.path.isfile(source):
             raise IOError("Wrong filename",
