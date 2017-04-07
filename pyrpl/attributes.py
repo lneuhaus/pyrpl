@@ -27,7 +27,8 @@ from .widgets.attribute_widgets import BoolAttributeWidget, \
                                        ListFloatAttributeWidget, \
                                        BoolIgnoreAttributeWidget, \
                                        TextAttributeWidget, \
-                                       CurveAttributeWidget
+                                       CurveAttributeWidget, \
+                                       CurveSelectAttributeWidget
 from .curvedb import CurveDB
 from collections import OrderedDict
 import logging
@@ -1165,6 +1166,11 @@ class CurveSelectProperty(SelectProperty):
             pk = val.pk
         SelectProperty.set_value(self, obj, pk)
         setattr(obj, '_' + self.name + '_object', val)
+
+
+class CurveSelectListProperty(CurveSelectProperty):
+    """ sanme as above, but widget is a list to select from """
+    _widget_class = CurveSelectAttributeWidget
 
 
 class CurveProperty(CurveSelectProperty):
