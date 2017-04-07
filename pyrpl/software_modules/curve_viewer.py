@@ -7,7 +7,7 @@ from ..widgets.module_widgets.curve_viewer_widget import CurveViewerWidget
 from ..curvedb import CurveDB
 
 
-def all_curves(instance):
+def all_curves(instance=None):
     return CurveDB.all()
 
 
