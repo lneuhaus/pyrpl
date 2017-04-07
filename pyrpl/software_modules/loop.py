@@ -10,7 +10,8 @@ from ..pyrpl_utils import time
 
 
 class Loop(Module):
-    def __init__(self, parent, name='loop', interval=0.01, autostart=True,
+    def __init__(self, parent, name='loop', interval=1.0,
+                 autostart=True,
                  loop_function=None, setup_function=None,
                  teardown_function=None, **kwargs):
         # parent is parent pyrpl module
@@ -73,7 +74,10 @@ class Loop(Module):
             self.loop()
         except TypeError:
             # allows to pass instance functions of the parent module as arguments as well
-            self.loop(self.parent, self)
+            try:
+                self.loop(self.parent, self)
+            except TypeError:
+                self.loop(self.parent)
         # increment counter
         self.n += 1
         if not self._ended:
