@@ -64,20 +64,43 @@ class TestClass(TestPyrpl):
         self.pyrpl.spectrumanalyzer.stop()
         assert (old == new), (old, new)
 
-    def test_flatness(self):
-        self.pyrpl.spectrumanalyzer.setup(baseband=False,
-                                          center=2e5,
+    def test_flatness_baseband(self):
+        self.pyrpl.spectrumanalyzer.setup(baseband=True,
+                                          center=0,
                                           span=2e6,
-                                          input="asg0",
+                                          input1_baseband="asg0",
                                           running_state='stopped')
         asg = self.pyrpl.rp.asg0
-        asg.setup(frequency=1e-5,
+        asg.setup(frequency=1e5,
                   amplitude=1,
                   trigger_source='immediately',
                   offset=0,
                   waveform='sin')
-        freqs = np.linspace(1e5, 1e6)
+        freqs = np.linspace(1e5, 9e5)
+        points = []
+        for freq in freqs:
+            asg.frequency = freq
+            curve = self.pyrpl.spectrumanalyzer.curve()[0]
+            points.append(max(curve))
+            assert abs(max(curve) - 1) < 0.01, max(curve)
+
+    def test_flatness_iqmode(self):
+        self.pyrpl.spectrumanalyzer.setup(baseband=False,
+                                          center=1e5,
+                                          span=2e6,
+                                          input="asg0",
+                                          running_state='stopped')
+        asg = self.pyrpl.rp.asg0
+        asg.setup(frequency=1e5,
+                  amplitude=1,
+                  trigger_source='immediately',
+                  offset=0,
+                  waveform='sin')
+        freqs = np.linspace(1e5, 9e5)
+        points = []
         for freq in freqs:
             asg.frequency = freq
             curve = self.pyrpl.spectrumanalyzer.curve()
+            points.append(max(curve))
             assert abs(max(curve) - 1) < 0.01, max(curve)
+

@@ -102,8 +102,8 @@ class SpectrumAnalyzer(AcquisitionModule):
     """
     _widget_class = SpecAnWidget
     _gui_attributes = ["input",
-                       "baseband",
                        "center",
+                       "baseband",
                        "span",
                        "rbw",
                        #"points",
@@ -117,8 +117,11 @@ class SpectrumAnalyzer(AcquisitionModule):
                        "display_cross_amplitude",
                        "display_cross_phase"]
     _setup_attributes =["input",
-                       "baseband",
                        "center",
+                       "baseband",
+                        # better to set baseband after center,
+                        # otherwise, asking for baseband explicitly would be
+                        # overwritten by non-zero center
                        "span",
                        #"rbw",
                        #"points",
@@ -216,6 +219,7 @@ class SpectrumAnalyzer(AcquisitionModule):
 
     # functions
     def _init_module(self):
+        self._transfer_function_square_cached = None
         self._last_touched = 'span'
         self.acbandwidth = 0
         self.baseband = False
@@ -369,29 +373,37 @@ class SpectrumAnalyzer(AcquisitionModule):
         """
         Transfer function from the generation of quadratures to their
         sampling, including scope decimation. At the moment, delays are not
-        taken into account.
+        taken into account (and the phase response is not guaranteed to be
+        exact.
+        Also, this function relies on the scope settings at the time it is
+        called. Make sure the scope is ready for acquistion before calling
+        it, or used the cached value of the transfer function
         """
         # baseband not implemented yet....
         frequencies = np.array(frequencies)
         tf = np.ones(len(frequencies), dtype=complex)
 
-        for f in self.iq.bandwidth:
-            if f == 0:
-                continue
-            elif f > 0:  # lowpass
-                tf *= 1.0 / (
-                1.0 + 1j * (frequencies - self.iq.frequency) / f)
-                # quadrature_delay += 2
-            elif f < 0:  # highpass
-                tf *= 1.0 / (
-                1.0 + 1j * f / (frequencies - self.iq.frequency))
-                # quadrature_delay += 1  # one cycle extra delay per highpass
+        if not self.baseband:
+            for f in self.iq.bandwidth:
+                if f == 0:
+                    continue
+                elif f > 0:  # lowpass
+                    tf *= 1.0 / (
+                    1.0 + 1j * (frequencies - self.iq.frequency) / f)
+                    # quadrature_delay += 2
+                elif f < 0:  # highpass
+                    tf *= 1.0 / (
+                    1.0 + 1j * f / (frequencies - self.iq.frequency))
+                    # quadrature_delay += 1  # one cycle extra delay per highpass
 
         # scope decimation transfer function
-        freqs = frequencies / 125e6
-        tf *= 1. / self.scope.decimation * (
-        1 -  np.exp(-1j * self.scope.decimation * freqs)) / (
-              1 -  np.exp(-1j * freqs))
+        #freqs = frequencies / (4*125e6)
+        #tf *= (1. / self.scope.decimation * (
+        #      1 -  np.exp(-1j * 2 * np.pi * self.scope.decimation * freqs))
+        #            #  / (
+        #      1 -  np.exp(-1j * 2 * np.pi * freqs)))
+        norm_freq = self.scope.decimation*frequencies/125e6
+        tf*=np.sinc(norm_freq)
         return tf
 
     # Concrete implementation of AcquisitionModule methods
@@ -439,14 +451,15 @@ class SpectrumAnalyzer(AcquisitionModule):
                             np.real(cross_spectrum),
                             np.imag(cross_spectrum)])
             # at some point, we need to cache the tf for performance
-            return res/abs(self.transfer_function(self.frequencies))**2
+            return res / self._transfer_function_square_cached
         else:
             # Realize the complex fft of iq data
             res = scipy.fftpack.fftshift(scipy.fftpack.fft(iq_data,
                                         self.data_length*self.PADDING_FACTOR))
             # at some point we need to cache the tf for performance
-            return np.abs(res)**2/abs(self.transfer_function(
-                self.frequencies))**2
+            return np.abs(res)**2 / self._transfer_function_square_cached
+            #/ abs(self.transfer_function(
+                #self.frequencies))**2
             # [self.useful_index()]
 
     def _remaining_time(self):
@@ -495,4 +508,6 @@ class SpectrumAnalyzer(AcquisitionModule):
                          ch2_active=True,
                          rolling_mode=False,
                          running_state='stopped')
+        self._transfer_function_square_cached = abs(self.transfer_function(
+            self.frequencies))**2
         return self.scope._start_acquisition()
