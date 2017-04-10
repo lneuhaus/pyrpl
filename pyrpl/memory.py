@@ -584,12 +584,12 @@ class MemoryTree(MemoryBranch):
     # forces to save the config file immediately and kills the save timer
     def _save_now(self):
         # stop save timer
-        if self._savetimer.isActive():
+        if hasattr(self, '_savetimer') and self._savetimer.isActive():
             self._savetimer.stop()
         # make sure save is done immediately by forcing negative deadtime
         self._save(deadtime=-1)
         # make sure no save timer was launched in the meantime
-        if self._savetimer.isActive():
+        if hasattr(self, '_savetimer') and self._savetimer.isActive():
             self._savetimer.stop()
 
 if False:

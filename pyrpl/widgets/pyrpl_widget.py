@@ -192,7 +192,7 @@ class PyrplWidget(QtGui.QMainWindow):
         """
         self.status_bar.setStyleSheet(self._next_toolbar_style)
 
-    def kill_timers(self):
+    def _clear(self):
         for timer in self.timers:
             timer.stop()
 
@@ -253,6 +253,7 @@ class PyrplWidget(QtGui.QMainWindow):
         # save window position
         self.timer_save_pos.stop()
         self.save_window_position()
+        pyrpl.c._save_now()  # make sure positions are written
         # replace dock widget
         self.remove_dock_widget(name)
         self.add_dock_widget(module._create_widget, name)
@@ -314,6 +315,8 @@ class PyrplWidget(QtGui.QMainWindow):
         except KeyError:
             return
         else:
+            if color.strip() == "":
+                return
             try:  # hex values must receive a preceeding hashtag
                 int(color, 16)
             except ValueError:

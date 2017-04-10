@@ -44,12 +44,6 @@ class SignalLauncher(QtCore.QObject):
         signal = getattr(self, name)
         signal.emit(*args, **kwds)
 
-    def kill_timers(self):
-        """
-        kill all timers
-        """
-        pass
-
     def connect_widget(self, widget):
         """
         Establishes all connections between the module and the widget by name.
@@ -61,7 +55,7 @@ class SignalLauncher(QtCore.QObject):
                                                                    key):
                 val.connect(getattr(widget, key))
 
-    def clear(self):
+    def _clear(self):
         """ Destroys the object by disconnecting all signals and by killing all timers"""
         for key in dir(self.__class__):
             val = getattr(self, key)
@@ -70,7 +64,6 @@ class SignalLauncher(QtCore.QObject):
                     val.disconnect()
                 except TypeError:  # occurs if signal is not connected to anything
                     pass
-        self.kill_timers()
 
 
 class ModuleMetaClass(type):
@@ -634,7 +627,7 @@ class Module(with_metaclass(ModuleMetaClass, object)):
         """
         Kill timers and free resources for this module and all submodules.
         """
-        self._signal_launcher.clear()
+        self._signal_launcher._clear()
         for sub in self._modules:
             getattr(self, sub)._clear()
 

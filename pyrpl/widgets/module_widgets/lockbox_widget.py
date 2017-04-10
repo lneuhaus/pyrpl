@@ -128,8 +128,8 @@ class MainOutputProperties(QtGui.QGroupBox):
         self.module = self.parent.module
         aws = self.parent.attribute_widgets
         self.layout = QtGui.QHBoxLayout(self)
-        self.leftlayout = QtGui.QVBoxLayout(self)
-        self.rightlayout = QtGui.QVBoxLayout(self)
+        self.leftlayout = QtGui.QVBoxLayout()
+        self.rightlayout = QtGui.QVBoxLayout()
         self.layout.addLayout(self.leftlayout)
         self.layout.addLayout(self.rightlayout)
         self.v1 = QtGui.QHBoxLayout()

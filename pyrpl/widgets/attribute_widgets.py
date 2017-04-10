@@ -1142,7 +1142,7 @@ class SelectAttributeWidget(BaseAttributeWidget):
         """
         self.widget.blockSignals(True)
         #self.defaults = new_options
-        self.widget.clear()
+        self.widget._clear()
         self.widget.addItems(new_options)
         try:
             self._update(new_value=self.module_value())

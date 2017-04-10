@@ -47,9 +47,10 @@ default_pyrpl_config = {'name': 'default_pyrpl_instance',
                         # 'CCEECC', # greenish
                         'modules': ['NetworkAnalyzer',
                                     'SpectrumAnalyzer',
-                                    'Lockbox',
                                     'CurveViewer',
-                                    'PyrplConfig']}
+                                    'PyrplConfig',
+                                    'Lockbox'
+                                    ]}
 
 class Pyrpl(object):
     """
@@ -174,20 +175,14 @@ class Pyrpl(object):
         self.widgets.append(widget)
         return widget
 
-    def kill_timers(self):
+    def _clear(self):
         """
-        kill all timers
+        kill all timers and closes the connection to the redpitaya
         """
         for module in self.modules:
             module._clear()
         for widget in self.widgets:
-            widget.kill_timers()
-
-    def end(self):
-        """
-        kill all timers and closes the connection to the redpitaya
-        """
-        self.kill_timers()
+            widget._clear()
         while len(self.widgets)>0:  # Close all widgets
             w = self.widgets.pop()
             del w

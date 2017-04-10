@@ -73,7 +73,7 @@ class TestPyrpl(object):
     def tearDownAll(cls):
         print("=======TEARING DOWN %s===========" % cls.__name__)
         # shut down Pyrpl
-        cls.pyrpl.end()
+        cls.pyrpl._clear()
         # delete the configfile
         cls.erase_temp_file()
 
