@@ -49,7 +49,7 @@ install:
   # we get issues with building numpy etc if we do not include those in the next line
   - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION numpy scipy paramiko pandas nose pip pyqt=4
   - source activate test-environment
-  - if [[ "$TRAVIS_PYTHON_VERSION" != "3.3" ]]; then  # some conflict in py3.3
+  - if [[ "$TRAVIS_PYTHON_VERSION" != "3.3" ]]; then
       conda install --yes -c conda-forge coveralls;
     fi
   # overwrite default global config file with a custom one for travis (allows slower communication time)
