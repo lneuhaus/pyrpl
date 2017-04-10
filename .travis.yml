@@ -49,13 +49,9 @@ install:
   # we get issues with building numpy etc if we do not include those in the next line
   - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION numpy scipy paramiko pandas nose pip pyqt=4
   - source activate test-environment
-  # python 2.7 doesnt come with coveralls, but we dont want to put it into the
-  # requirements in setup.py
-  #- if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
-  #    conda install --yes -c dan_blanchard python-coveralls nose-cov;
-  #  fi
-  # alternative location:
-  - conda install --yes -c conda-forge coveralls
+  - if [[ "$TRAVIS_PYTHON_VERSION" != "3.3" ]]; then  # some conflict in py3.3
+      conda install --yes -c conda-forge coveralls;
+    fi
   # overwrite default global config file with a custom one for travis (allows slower communication time)
   - \cp ./travis_global_config.yml ./pyrpl/config/global_config.yml
   - python setup.py install
@@ -67,8 +63,8 @@ script:
     fi
 
 # Calculate coverage - not working at the moment
-after_success:
- - coveralls --config_file .coveragerc
+# after_success:
+#  - coveralls --config_file .coveragerc
 
 # upload autodoc to github pages
 # deploy:
