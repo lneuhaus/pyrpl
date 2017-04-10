@@ -1114,6 +1114,7 @@ class ProxyProperty(BaseProperty):
 
     def _create_widget(self, module, widget_name=None, **kwargs):
         target_module = recursive_getattr(module, self.path_to_target_module)
+        target_descriptor = recursive_getattr(module, self.path_to_target_descriptor)
         if widget_name is None:
             widget_name = self.name
         #return recursive_getattr(module,
@@ -1124,11 +1125,19 @@ class ProxyProperty(BaseProperty):
         self._widget_class = recursive_getattr(module,
                                  self.path_to_target_descriptor +
                                  '._widget_class')
-        return recursive_getattr(module,
+        try:  # try to make a widget for proxy
+            return recursive_getattr(module,
                                  self.path_to_target_descriptor +
                                  '.__class__._create_widget')(self, module,
                                                     #widget_name=widget_name,
                                                     **kwargs)
+        except:  # make a renamed widget for target
+            return recursive_getattr(module,
+                                     self.path_to_target_descriptor +
+                                     '.__class__._create_widget')(target_descriptor, target_module,
+                                                                  widget_name=widget_name,
+                                                                  **kwargs)
+
 
 class ModuleAttribute(BaseProperty):
     """

@@ -164,11 +164,13 @@ class Scope(HardwareModule, AcquisitionModule):
     input1 = InputSelectRegister(- addr_base + dsp_addr_base('asg0') + 0x0,
                                  options=all_inputs,
                                  default='in1',
+                                 ignore_errors=True,
                                  doc="selects the input signal of the module")
 
     input2 = InputSelectRegister(- addr_base + dsp_addr_base('asg1') + 0x0,
                                  options=all_inputs,
                                  default='in2',
+                                 ignore_errors=True,
                                  doc="selects the input signal of the module")
 
     _reset_writestate_machine = BoolRegister(0x0, 1,
