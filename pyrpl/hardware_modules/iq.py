@@ -3,8 +3,9 @@ from time import sleep
 from collections import OrderedDict
 import numpy as np
 
-from ..attributes import BoolRegister, FloatRegister, SelectRegister, IntRegister, \
-                             PhaseRegister, FrequencyRegister, FloatProperty, FilterRegister, FilterProperty
+from ..attributes import BoolRegister, FloatRegister, SelectRegister, \
+    IntRegister, PhaseRegister, FrequencyRegister, FloatProperty, \
+    FilterRegister, FilterProperty, GainRegister
 from ..widgets.module_widgets import IqWidget
 from ..pyrpl_utils import sorted_dict
 
@@ -110,17 +111,17 @@ class Iq(FilterModule):
     frequency = FrequencyRegister(0x108, bits=_PHASEBITS,
                                   doc="frequency of iq demodulation [Hz]")
 
-    _g1 = FloatRegister(0x110, bits=_GAINBITS, norm=2 ** _SHIFTBITS,
+    _g1 = GainRegister(0x110, bits=_GAINBITS, norm=2 ** _SHIFTBITS,
                         doc="gain1 of iq module [volts]")
 
-    _g2 = FloatRegister(0x114, bits=_GAINBITS, norm=2 ** _SHIFTBITS,
+    _g2 = GainRegister(0x114, bits=_GAINBITS, norm=2 ** _SHIFTBITS,
                         doc="gain2 of iq module [volts]")
-    amplitude = FloatRegister(0x114, bits=_GAINBITS, norm=2 ** (_GAINBITS - 1),
+    amplitude = GainRegister(0x114, bits=_GAINBITS, norm=2 ** (_GAINBITS - 1),
                               doc="amplitude of coherent modulation [volts]")
 
-    _g3 = FloatRegister(0x118, bits=_GAINBITS, norm=2 ** _SHIFTBITS,
+    _g3 = GainRegister(0x118, bits=_GAINBITS, norm=2 ** _SHIFTBITS,
                         doc="gain3 of iq module [volts]")
-    quadrature_factor = FloatRegister(0x118,
+    quadrature_factor = GainRegister(0x118,
                                       bits=_GAINBITS,
                                       norm=1.0,
                                       default=1.0,
@@ -132,7 +133,7 @@ class Iq(FilterModule):
                                       # filtered)
                                       doc="amplification factor of demodulated signal [a.u.]")
 
-    _g4 = FloatRegister(0x11C, bits=_GAINBITS, norm=2 ** _SHIFTBITS,
+    _g4 = GainRegister(0x11C, bits=_GAINBITS, norm=2 ** _SHIFTBITS,
                         doc="gain4 of iq module [volts]")
 
 

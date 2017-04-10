@@ -1,7 +1,8 @@
 from . import iir_theory #, bodefit
 from .. import FilterModule
 from ...attributes import IntRegister, BoolRegister, ListComplexProperty, \
-    FloatProperty, StringProperty, ListFloatProperty, CurveSelectProperty
+    FloatProperty, StringProperty, ListFloatProperty, CurveSelectProperty, \
+    GainRegister
 from ...widgets.module_widgets import IirWidget
 from ...modules import SignalLauncher
 
