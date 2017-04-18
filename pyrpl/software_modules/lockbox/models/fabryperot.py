@@ -255,7 +255,7 @@ class HighFinesseTransmission(HighFinesseInput, FPTransmission):
     pass
 
 class HighFinesseAnalogPdh(HighFinesseInput, FPAnalogPdh):
-    def calibrate(self, trigger_signal="reflection", autosave=True):
+    def calibrate(self, trigger_signal="reflection", autosave=False):
         trigger_signal = self.lockbox.inputs[trigger_signal]
         # take a first coarse calibration for trigger threshold estimation
         curve0, _ = trigger_signal.sweep_acquire()
