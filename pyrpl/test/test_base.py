@@ -67,7 +67,7 @@ class TestPyrpl(object):
         assert self.write_time < maxtime, \
             "Write operation is very slow: %e s (expected < %e s). It is " \
             "highly recommended that you improve the network connection to " \
-            "your Red Pitaya device. " % (self.read_time, maxtime)
+            "your Red Pitaya device. " % (self.write_time, maxtime)
 
     @classmethod
     def tearDownAll(cls):
