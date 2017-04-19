@@ -513,7 +513,8 @@ class GainRegister(FloatRegister):
     def validate_and_normalize(self, obj, value):
         rounded_value = FloatRegister.validate_and_normalize(self, obj, value)
         if rounded_value == 0 and value != 0:  # value was rounded off to zero
-            rounded_value = np.abs(self.increment)*np.sign(value)
+            rounded_value = FloatRegister.validate_and_normalize(
+                self, obj, np.abs(self.increment)*np.sign(value))
             obj._logger.warning("Avoided rounding value %.1e of the "
                                 "gain register %s to zero. Setting it to %.1e "
                                 "instead. ", value, self.name, rounded_value)
