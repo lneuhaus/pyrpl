@@ -683,6 +683,8 @@ class FilterRegister(BaseRegister, FilterProperty):
             if filter_on:
                 bandwidth = float(2 ** shift) / \
                             (2 ** self._ALPHABITS(obj)) * 125e6 / 2 / np.pi
+                # warping
+                # bandwidth /= np.tan(bandwidth/2/125e6)/(bandwidth/2.0/125e6)
                 if highpass:
                     bandwidth *= -1.0
             else:
@@ -707,6 +709,8 @@ class FilterRegister(BaseRegister, FilterProperty):
             if bandwidth == 0:
                 continue
             else:
+                # warping
+                # bandwidth *= np.abs(np.tan(bandwidth/2/125e6)/( bandwidth/2.0/125e6))
                 shift = int(np.round(
                     np.log2(np.abs(bandwidth)*(2**self._ALPHABITS(obj))*2*np.pi/125e6)))
                 if shift < 0:

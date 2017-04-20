@@ -538,6 +538,15 @@ class NetworkAnalyzer(AcquisitionModule):
     def data_x(self):
         return self._data_x
 
+    @property
+    def frequencies(self):
+        """
+        alias for data_x
+
+        :return: frequency array
+        """
+        return self.data_x
+
     def _update_data_x(self):
         if self.logscale:
             raw_values = np.logspace(
