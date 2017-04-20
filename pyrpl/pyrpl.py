@@ -40,11 +40,17 @@ APP = QtGui.QApplication.instance()
 default_pyrpl_config = {'name': 'default_pyrpl_instance',
                         'gui': True,
                         'loglevel': 'info',
+                        'background_color': '',
+                        # reasonable options:
+                        # 'CCCCEE',  # blueish
+                        # 'EECCCC', # reddish
+                        # 'CCEECC', # greenish
                         'modules': ['NetworkAnalyzer',
                                     'SpectrumAnalyzer',
-                                    'Lockbox',
                                     'CurveViewer',
-                                    'PyrplConfig']}
+                                    'PyrplConfig',
+                                    'Lockbox'
+                                    ]}
 
 class Pyrpl(object):
     """
@@ -85,6 +91,7 @@ class Pyrpl(object):
         # initialize RedPitaya object with the configured or default parameters
         self.c._get_or_create('redpitaya')
         self.c.redpitaya._update(kwargs)
+        self.name = pyrplbranch.name
         self.rp = RedPitaya(config=self.c)
         self.rp.parent=self
         self.widgets = [] # placeholder for widgets
@@ -168,20 +175,14 @@ class Pyrpl(object):
         self.widgets.append(widget)
         return widget
 
-    def kill_timers(self):
+    def _clear(self):
         """
-        kill all timers
+        kill all timers and closes the connection to the redpitaya
         """
         for module in self.modules:
             module._clear()
         for widget in self.widgets:
-            widget.kill_timers()
-
-    def end(self):
-        """
-        kill all timers and closes the connection to the redpitaya
-        """
-        self.kill_timers()
+            widget._clear()
         while len(self.widgets)>0:  # Close all widgets
             w = self.widgets.pop()
             del w

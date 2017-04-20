@@ -329,19 +329,20 @@ class IirFilter(object):
         # it is easiest to just create a new object when the specification
         # has changed
         z, p, g = v
-        self = IirFilter(z, p, g,
-                         loops=self.loops,
-                         dt=self.dt,
-                         minloops=self.minloops,
-                         maxloops=self.maxloops,
-                         iirstages=self.iirstages,
-                         totalbits=self.totalbits,
-                         shiftbits=self.shiftbits,
-                         tol=self.tol,
-                         frequencies=self.frequencies,
-                         inputfilter=self.inputfilter,
-                         moduledelay=self.moduledelay)
-
+        self.__init__(z, p, g,
+                      loops=self.loops,
+                      dt=self.dt,
+                      minloops=self.minloops,
+                      maxloops=self.maxloops,
+                      iirstages=self.iirstages,
+                      totalbits=self.totalbits,
+                      shiftbits=self.shiftbits,
+                      tol=self.tol,
+                      frequencies=self.frequencies,
+                      inputfilter=self.inputfilter,
+                      moduledelay=self.moduledelay)
+        logger.warning("Setter of sys will soone be deprecated. Create a new "
+                       "instance of 'IirFilter' instead! ")
 
     @property
     def coefficients(self):

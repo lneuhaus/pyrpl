@@ -1,7 +1,8 @@
 from . import iir_theory #, bodefit
 from .. import FilterModule
 from ...attributes import IntRegister, BoolRegister, ListComplexProperty, \
-    FloatProperty, StringProperty, ListFloatProperty, CurveSelectProperty
+    FloatProperty, StringProperty, ListFloatProperty, CurveSelectProperty, \
+    GainRegister
 from ...widgets.module_widgets import IirWidget
 from ...modules import SignalLauncher
 
@@ -545,7 +546,11 @@ class IIR(FilterModule):
         # take average delay to be half the loops since this is the
         # expectation value for the delay (plus internal propagation delay)
         # module_delay = self._delay + self.loops / 2.0
-        tf = getattr(self.iirfilter, 'tf_' + kind)(frequencies)
+        try:
+            tf = getattr(self.iirfilter, 'tf_' + kind)(frequencies)
+        except AttributeError:
+            # happens when no iir filter is created
+            tf = frequencies*0+1e-12
         # for f in [self.inputfilter]:  # only one filter at the moment
         #    if f == 0:
         #        continue

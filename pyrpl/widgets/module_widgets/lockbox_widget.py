@@ -127,11 +127,15 @@ class MainOutputProperties(QtGui.QGroupBox):
         self.parent = parent
         self.module = self.parent.module
         aws = self.parent.attribute_widgets
-        self.layout = QtGui.QVBoxLayout(self)
+        self.layout = QtGui.QHBoxLayout(self)
+        self.leftlayout = QtGui.QVBoxLayout()
+        self.rightlayout = QtGui.QVBoxLayout()
+        self.layout.addLayout(self.leftlayout)
+        self.layout.addLayout(self.rightlayout)
         self.v1 = QtGui.QHBoxLayout()
         self.v2 = QtGui.QHBoxLayout()
-        self.layout.addLayout(self.v2)
-        self.layout.addLayout(self.v1)
+        self.leftlayout.addLayout(self.v2)
+        self.leftlayout.addLayout(self.v1)
         self.dcgain = aws['dc_gain']
         self.v1.addWidget(self.dcgain)
         self.dcgain.label.setText('analog DC-gain')
@@ -145,6 +149,8 @@ class MainOutputProperties(QtGui.QGroupBox):
         self.setTitle('Main settings')
         for v in self.v1, self.v2:
             v.setSpacing(9)
+        self.rightlayout.addWidget(aws["max_voltage"])
+        self.rightlayout.addWidget(aws["min_voltage"])
 
     def change_analog_tf(self):
         self.button_tf.change_analog_tf()

@@ -185,12 +185,14 @@ class ReducedModuleWidget(QtGui.QGroupBox):
         SLOT: don't change name unless you know what you are doing
         Display the new ownership
         """
+        #name = self.module.pyrpl.name + " - " + self.module.name
+        name = self.module.name
         if self.module.owner is not None:
             self.setEnabled(False)
-            self.set_title(self.module.name + ' (' + self.module.owner + ')')
+            self.set_title(name + ' (' + self.module.owner + ')')
         else:
             self.setEnabled(True)
-            self.set_title(self.module.name)
+            self.set_title(name)
 
     def set_title(self, title):
         return self.setTitle(str(title))

@@ -505,6 +505,27 @@ class FloatRegister(IntRegister, FloatProperty):
                                 round(value/self.increment)*self.increment)
 
 
+class GainRegister(FloatRegister):
+    """
+    A register used mainly for gains, that replaces round-off to zero by
+    round-off to the lowest-possible value.
+    """
+    def validate_and_normalize(self, obj, value):
+        rounded_value = FloatRegister.validate_and_normalize(self, obj, value)
+        if rounded_value == 0 and value != 0:  # value was rounded off to zero
+            rounded_value = FloatRegister.validate_and_normalize(
+                self, obj, np.abs(self.increment)*np.sign(value))
+            obj._logger.warning("Avoided rounding value %.1e of the "
+                                "gain register %s to zero. Setting it to %.1e "
+                                "instead. ", value, self.name, rounded_value)
+        if value > self.max or value < self.min:
+            obj._logger.warning("Requested gain for %s.%s is outside the "
+                                "bounds allowed by the hardware. Desired "
+                                "gain of %.1e is capped to %.1e. ",
+                                obj.name, self.name, value, rounded_value)
+        return rounded_value
+
+
 class FrequencyProperty(FloatProperty):
     """
     An attribute for frequency values

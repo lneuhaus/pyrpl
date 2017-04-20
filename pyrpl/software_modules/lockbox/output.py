@@ -64,7 +64,9 @@ class OutputSignal(Signal):
                       'analog_filter_cutoff',
                       'extra_module',
                       'extra_module_state',
-                      'desired_unity_gain_frequency']
+                      'desired_unity_gain_frequency',
+                      'max_voltage',
+                      'min_voltage']
     _setup_attributes = _gui_attributes + ['assisted_design', 'tf_curve',
                                            'tf_type']
     # main attributes
@@ -98,6 +100,13 @@ class OutputSignal(Signal):
     # internal state of the output
     current_state = SelectProperty(options=['lock', 'unlock', 'sweep'],
                                    default='unlock')
+    max_voltage = FloatProperty(default=1.0, min=-1.0, max=1.0,
+                                call_setup=True,
+                                doc="positive saturation voltage")
+    min_voltage = FloatProperty(default=-1.0,
+                                min=-1.0, max=1.0,
+                                call_setup=True,
+                                doc="negative saturation voltage")
 
     def signal(self):
         return self.pid.name
@@ -117,8 +126,8 @@ class OutputSignal(Signal):
         True: if the output has saturated
         False: otherwise
         """
-        ival, max, min = self.pid.ival, self.pid.max_voltage, \
-                         self.pid.min_voltage
+        ival, max, min = self.pid.ival, self.max_voltage, \
+                         self.min_voltage
         sample = getattr(self.pyrpl.rp.sampler, self.pid.name)
         # criterion for saturation: integrator value saturated
         # and current value (including pid) as well
@@ -128,6 +137,8 @@ class OutputSignal(Signal):
             return False
 
     def _setup_pid_output(self):
+        self.pid.max_voltage = self.max_voltage
+        self.pid.min_voltage = self.min_voltage
         if self.output_channel.startswith('out'):
             self.pid.output_direct = self.output_channel
         elif self.output_channel.startswith('pwm'):
@@ -176,7 +187,7 @@ class OutputSignal(Signal):
         self._lock_gain_factor = self._lock_gain_factor if gain_factor is None else gain_factor
         # Parameter 'offset' is not internally stored because another call to 'lock()'
         # shouldnt reset the offset by default as this would un-lock an existing lock
-        self._setup_pid_output()  # optional to ensure that pid output is properly set
+        #self._setup_pid_output()  # optional to ensure that pid output is properly set
         self._setup_pid_lock(input=self._lock_input,
                              setpoint=self._lock_setpoint,
                              offset=offset,
