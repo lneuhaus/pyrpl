@@ -518,6 +518,11 @@ class GainRegister(FloatRegister):
             obj._logger.warning("Avoided rounding value %.1e of the "
                                 "gain register %s to zero. Setting it to %.1e "
                                 "instead. ", value, self.name, rounded_value)
+        if value > self.max or value < self.min:
+            obj._logger.warning("Requested gain for %s.%s is outside the "
+                                "bounds allowed by the hardware. Desired "
+                                "gain of %.1e is capped to %.1e. ",
+                                obj.name, self.name, value, rounded_value)
         return rounded_value
 
 

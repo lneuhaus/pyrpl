@@ -110,8 +110,8 @@ class NaWidget(ModuleWidget):
             try:
                 chunk = self.chunks.pop()
                 chunk_phase = self.chunks_phase.pop()
-                chunk._clear()
-                chunk_phase._clear()
+                chunk.clear()
+                chunk_phase.clear()
             except IndexError:
                 break
         self.label_benchmark.setText("")

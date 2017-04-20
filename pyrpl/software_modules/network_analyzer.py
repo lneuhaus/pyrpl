@@ -8,6 +8,7 @@ from ..attributes import FloatProperty, SelectProperty, FrequencyProperty, \
                          IntProperty, BoolProperty, FilterProperty, SelectProperty, \
                          ProxyProperty
 from ..hardware_modules import all_inputs, all_output_directs, InputSelectProperty
+from ..modules import SignalModule
 from ..acquisition_module import AcquisitionModule
 from ..widgets.module_widgets import NaWidget
 
@@ -246,7 +247,7 @@ class NaRunFuture(NaCurveFuture):
         self._min_delay_ms = self._module.MIN_DELAY_CONTINUOUS_MS
 
 
-class NetworkAnalyzer(AcquisitionModule):
+class NetworkAnalyzer(AcquisitionModule, SignalModule):
     """
     Using an IQ module, the network analyzer can measure the complex coherent
     response between an output and any signal in the redpitaya.
@@ -343,6 +344,9 @@ class NetworkAnalyzer(AcquisitionModule):
     def _time_per_point(self):
         return float(self.iq._na_sleepcycles + self.iq._na_averages) \
                / (125e6 * self.iq._frequency_correction)
+
+    def signal(self):
+        return self.iq.signal()
 
     @property
     def current_freq(self):
