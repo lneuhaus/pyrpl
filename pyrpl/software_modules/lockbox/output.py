@@ -138,7 +138,7 @@ class OutputSignal(Signal):
 
     def _setup_pid_output(self):
         self.pid.max_voltage = self.max_voltage
-        self.pid.max_voltage = self.min_voltage
+        self.pid.min_voltage = self.min_voltage
         if self.output_channel.startswith('out'):
             self.pid.output_direct = self.output_channel
         elif self.output_channel.startswith('pwm'):

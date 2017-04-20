@@ -52,7 +52,9 @@ class Pid(FilterModule):
                          "p",
                          "i",
                          "d",
-                         "inputfilter"]
+                         "inputfilter",
+                         "max_voltage",
+                         "min_voltage"]
     _gui_attributes = _setup_attributes + ["ival"]
 
     # the function is here so the metaclass generates a setup(**kwds) function
