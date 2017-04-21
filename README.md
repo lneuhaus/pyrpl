@@ -15,7 +15,7 @@ python setup.py develop
 ```
 
 ## Quick start
-First, hook up your Red Pitaya / STEMlab to a LAN accessible from your computer (follow the instructions for this on redpitya.com and make sure you can access your Red Pitaya in your web browser by typing its ip-address / hostname into the address bar).
+First, hook up your Red Pitaya / STEMlab to a LAN accessible from your computer (follow the instructions for this on redpitya.com and make sure you can access your Red Pitaya with a web browser by typing its ip-address /  hostname into the address bar).
 In an IPython console or JuPyter notebook, type
 ```
 from pyrpl import Pyrpl

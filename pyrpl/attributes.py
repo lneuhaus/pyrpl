@@ -677,14 +677,24 @@ class FilterRegister(BaseRegister, FilterProperty):
         return self.read_and_save(obj, "minbw")
 
     def _MAXSHIFT(self, obj):
-        return int(np.ceil(np.log2(np.floor(125000000.0/float(self._MINBW(obj))))))
+        def clog2(x):
+            """ mirrors the function clog2 in verilog code """
+            if x < 2:
+                return 1
+            elif x > 2**32:
+                return -1
+            elif x > 2**31:
+                return 32
+            else:
+                return int(np.floor(np.log2(float(x))))+1
+        return clog2(125000000.0/float(self._MINBW(obj)))
 
-    def _ALPHABITS(self, obj):
-        return int(np.ceil(np.log2(125000000.0 / self._MINBW(obj))))
+    #def _ALPHABITS(self, obj):
+    #    return int(np.ceil(np.log2(125000000.0 / self._MINBW(obj))))
 
     def valid_frequencies(self, obj):
         """ returns a list of all valid filter cutoff frequencies"""
-        valid_bits = range(0, self._MAXSHIFT(obj))
+        valid_bits = range(0, self._MAXSHIFT(obj)-1)
         pos = list([self.to_python(obj, b | 0x1 << 7) for b in valid_bits])
         pos = [int(val) if not np.iterable(val) else int(val[0]) for val in pos]
         neg = [-val for val in reversed(pos)]
@@ -703,8 +713,13 @@ class FilterRegister(BaseRegister, FilterProperty):
             filter_on = ((v >> 7) == 0x1)
             highpass = (((v >> 6) & 0x1) == 0x1)
             if filter_on:
-                bandwidth = float(2 ** shift) / \
-                            (2 ** self._ALPHABITS(obj)) * 125e6 / 2 / np.pi
+                # difference equation is
+                # y[n] = (1-alpha)*y[n-1] + alpha*x[n]
+                alpha = float(2 ** shift) / (2 ** self._MAXSHIFT(obj))
+                # old formula
+                #bandwidth = alpha * 125e6 / 2 / np.pi
+                # new, more correct formula (from Oppenheim-Schafer p. 70)
+                bandwidth = -np.log(1.0-alpha)/2.0/np.pi*125e6
                 if highpass:
                     bandwidth *= -1.0
             else:
@@ -729,8 +744,11 @@ class FilterRegister(BaseRegister, FilterProperty):
             if bandwidth == 0:
                 continue
             else:
-                shift = int(np.round(
-                    np.log2(np.abs(bandwidth)*(2**self._ALPHABITS(obj))*2*np.pi/125e6)))
+                # old formula
+                #alpha = np.abs(bandwidth)*2*np.pi/125e6
+                # new formula
+                alpha = 1.0 - np.exp(-np.abs(bandwidth)*2.0*np.pi/125e6)
+                shift = int(np.round(np.log2(alpha*(2**self._MAXSHIFT(obj)))))
                 if shift < 0:
                     shift = 0
                 elif shift > (2**self._SHIFTBITS(obj) - 1):
