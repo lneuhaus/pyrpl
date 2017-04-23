@@ -1212,8 +1212,14 @@ class CurveSelectProperty(SelectProperty):
     for the name of this attribute. The property can be set by either passing
     a CurveDB object, or a curve id.
     """
-    def options(self, instance):
-        return OrderedDict([(k, k) for k in (CurveDB.all()) + [-1]])
+
+    def __init__(self,
+                 **kwargs):
+        SelectProperty.__init__(self, options=self._default_options, **kwargs)
+
+    def _default_options(self):
+        return CurveDB.all() + [-1]
+        #return OrderedDict([(k, k) for k in (CurveDB.all()) + [-1]])
 
     def validate_and_normalize(self, obj, value):
         # returns none or a valid curve corresponding to the given curve or id
@@ -1235,7 +1241,7 @@ class CurveSelectProperty(SelectProperty):
 
 
 class CurveSelectListProperty(CurveSelectProperty):
-    """ sanme as above, but widget is a list to select from """
+    """ same as above, but widget is a list to select from """
     _widget_class = CurveSelectAttributeWidget
 
 

@@ -1130,20 +1130,25 @@ class SelectAttributeWidget(BaseAttributeWidget):
         try:
             index = self.options.index(str(new_value))
         except IndexError:
-            self.module._logger.warning("SelectWidget %s could not find current value %s "
-                                        "in the options %s",
-                                        self.name, self.new_value, self.options)
+            self.module._logger.warning("SelectWidget %s could not find current "
+                                        "value %s in the options %s",
+                                        self.name,
+                                        self.new_value,
+                                        self.options)
             index = 0
         self.widget.setCurrentIndex(index)
 
     def change_options(self, new_options):
         """
-        The options of the combobox can be changed dynamically. new_options is a list of strings.
+        The options of the combobox can be changed dynamically. new_options is
+        a list of strings.
         """
         self.widget.blockSignals(True)
         #self.defaults = new_options
-        self.widget._clear()
-        self.widget.addItems(new_options)
+        self.widget.clear()
+        #self.widget.addItems(new_options)
+        # do not trust the new options, rather call options again
+        self.widget.addItems(self.options)
         try:
             self._update(new_value=self.module_value())
         except ValueError:
@@ -1172,7 +1177,6 @@ class BoolAttributeWidget(BaseAttributeWidget):
 
         :return:
         """
-
         self.widget = QtGui.QCheckBox()
         self.widget.stateChanged.connect(self.write)
 
@@ -1313,8 +1317,12 @@ class CurveSelectAttributeWidget(SelectAttributeWidget):
         Sets the module property value from the current gui value
         :return:
         """
-        setattr(self.module, self.name, int(self.widget.currentItem().text()))
-        self.value_changed.emit()
+        try:
+            setattr(self.module, self.name, int(self.widget.currentItem().text()))
+        except:
+            pass
+        else:
+            self.value_changed.emit()
 
     def _update(self, new_value):
         """

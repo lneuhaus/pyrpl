@@ -91,8 +91,10 @@ except:
             obj.data = ser
 
             obj.params = kwds
+            if not 'name' in obj.params:
+                obj.params['name'] = 'new_curve'
             pk = obj.pk  # make a pk
-            if ("childs" not in obj.params):
+            if "childs" not in obj.params:
                 obj.params["childs"] = None
             if ("autosave" not in kwds) or (kwds["autosave"]):
                 obj.save()
@@ -157,7 +159,7 @@ except:
             try:
                 return CurveDB.get(self.params["parent"])
             except KeyError:
-                self.logger.info("No parent found.")
+                self.logger.debug("No parent found.")
                 return None
 
         def add_child(self, child_curve):

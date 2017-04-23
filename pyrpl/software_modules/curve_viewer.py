@@ -20,7 +20,8 @@ class CurveViewer(Module):
     This Module allows to browse through curves that were taken with pyrpl
     """
     _widget_class = CurveViewerWidget
-    _gui_attributes = ["curve_name", "pk", "curve", "params", "save_params"]
+    _gui_attributes = ["curve_name", "pk", "curve", "params", "save_params",
+                       "delete_curve"]
     pk = CurveSelectListProperty(doc="the pk of the currently viewed curve",
                                  call_setup=True)
     curve = CurveProperty(default=None)
@@ -44,3 +45,11 @@ class CurveViewer(Module):
         if self._curve_object is not None:
             self._curve_object.params = self.self.m._data
             self._curve_object.save()
+
+    def delete_curve(self):
+        if self._curve_object is not None:
+            self._logger.info("Curve with id %s will be deleted!",
+                              self._curve_object.pk)
+            self._curve_object.delete()
+        self.__class__.pk.options(self)
+        #self.pk = -1
