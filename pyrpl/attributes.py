@@ -700,6 +700,18 @@ class FilterRegister(BaseRegister, FilterProperty):
         neg = [-val for val in reversed(pos)]
         return neg + [0] + pos
 
+    # empirical correction factors for the cutoff frequencies in order to be
+    # able to accurately model implemented bandwidth with an analog
+    # butterworth filter. Works well up to 5 MHz. See unittest test_inputfilter
+    correction_factors = {0.25: 1.65,
+                           0.125: 1.17,
+                           0.0625: 1.08,
+                           0.03125: 1.04,
+                           0.015625: 1.02,
+                           0.0078125: 1.01,
+                           0.001953125: 1.0,
+                           0.00390625: 1.0}
+
     def to_python(self, obj, value):
         """
         returns a list of bandwidths for the low-pass filter cascade before the module
@@ -720,6 +732,9 @@ class FilterRegister(BaseRegister, FilterProperty):
                 #bandwidth = alpha * 125e6 / 2 / np.pi
                 # new, more correct formula (from Oppenheim-Schafer p. 70)
                 bandwidth = -np.log(1.0-alpha)/2.0/np.pi*125e6
+                # here comes a nasty bugfix to make it work (see issue 242)
+                if alpha in self.correction_factors:
+                    bandwidth *= self.correction_factors[alpha]
                 if highpass:
                     bandwidth *= -1.0
             else:
@@ -748,6 +763,9 @@ class FilterRegister(BaseRegister, FilterProperty):
                 #alpha = np.abs(bandwidth)*2*np.pi/125e6
                 # new formula
                 alpha = 1.0 - np.exp(-np.abs(bandwidth)*2.0*np.pi/125e6)
+                if alpha in self.correction_factors:
+                    bandwidth /= self.correction_factors[alpha]
+                    alpha = 1.0 - np.exp(-np.abs(bandwidth)*2.0*np.pi/125e6)
                 shift = int(np.round(np.log2(alpha*(2**self._MAXSHIFT(obj)))))
                 if shift < 0:
                     shift = 0

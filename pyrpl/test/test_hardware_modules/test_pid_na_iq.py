@@ -50,6 +50,63 @@ class TestPidNaIq(TestPyrpl):
                                            name='test_na-failed-relerror'))
                 assert False, maxerror
 
+    def test_inputfilter(self):
+        """
+        tests whether the modeled transfer function of pid module with
+        any possible inputfilter (firstorder) corresponds to measured tf
+        """
+        error_threshold = 0.03
+        # testing one pid is enough
+        pid = self.p.rp.pid0
+        na = self.p.network_analyzer
+        na.setup(start_freq=10e3,
+                 stop_freq=20e6,
+                 # points 101->11, it was taking ages
+                 points=11,
+                 rbw=100,
+                 avg=1,
+                 amplitude=0.1,
+                 input=pid,
+                 output_direct='off',
+                 acbandwidth=0,
+                 logscale=True)
+
+        # setup pid: input is the network analyzer output.
+        pid.input = na.iq
+        pid.setpoint = 0
+
+        # specify extradelay for theory. 3.6 cycles is empirical, but not
+        # far from what expects for NA delay (2 cycles for output,
+        # 2 for input)
+        extradelay = self.extradelay
+
+        # proportional gain of 1, no inputfilter
+        pid.p = 1.0
+        pid.i = 0
+        pid.d = 0
+        pid.ival = 0
+
+        pid.inputfilter  # make sure this has been accessed before next step
+        inputfilters = pid._inputfilter_options
+        for bw in inputfilters:
+            pid.inputfilter = [bw]
+            data = na.curve()
+            f = na.data_x
+            theory = pid.transfer_function(f, extradelay=extradelay)
+            relerror = np.abs((data - theory) / theory)
+            maxerror = np.max(relerror)
+            if maxerror > error_threshold:
+                print(maxerror)
+                c = CurveDB.create(f, data, name='test_inputfilter-failed-data')
+                c.params["bandwidth"] = pid.inputfilter[0]
+                c.save()
+                c.add_child(CurveDB.create(f, theory,
+                                           name='test_inputfilter-failed-theory'))
+                c.add_child(CurveDB.create(f, relerror,
+                                           name='test_inputfilter-failed-relerror'))
+                assert False, (maxerror, bw)
+
+
     def test_pid_na1(self):
         # setup a pid module with a bunch of different settings and measure
         # its transfer function, and compare it to the model.
