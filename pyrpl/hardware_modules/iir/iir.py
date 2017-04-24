@@ -290,6 +290,9 @@ class IIR(FilterModule):
         coefficients   data to be passed to iir.bodeplot to plot the
                        realized transfer function
         """
+        self._signal_launcher.update_plot.emit()
+        return
+
         try:
             # block recursive calls to _setup
             self._setup_ongoing = True

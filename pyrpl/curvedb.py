@@ -126,6 +126,8 @@ except:
 
         def delete(self):
             # remove the file
+            delpk = self.pk
+            parent = self.parent
             try:
                 filename = os.path.join(self._dirname, str(self.pk) + '.p')
                 os.remove(filename)
@@ -138,10 +140,9 @@ except:
             # Heavy users should really use pyinstruments.
             self.logger.warning("Make sure curve %s was not parent of another " +
                                 "curve.")
-            parent = self.parent
             if parent:
                 parentchilds = parent.childs
-                parentchilds.remove(self.pk)
+                parentchilds.remove(delpk)
                 parent.childs = parentchilds
                 parent.save()
 
@@ -157,10 +158,12 @@ except:
         @property
         def parent(self):
             try:
-                return CurveDB.get(self.params["parent"])
+                parentid = self.params["parent"]
             except KeyError:
                 self.logger.debug("No parent found.")
                 return None
+            else:
+                return CurveDB.get(parentid)
 
         def add_child(self, child_curve):
             child = CurveDB.get(child_curve)

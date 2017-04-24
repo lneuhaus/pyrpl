@@ -50,6 +50,10 @@ class CurveViewer(Module):
         if self._curve_object is not None:
             self._logger.info("Curve with id %s will be deleted!",
                               self._curve_object.pk)
+            del_pk = self._curve_object.pk
             self._curve_object.delete()
-        self.__class__.pk.options(self)
-        #self.pk = -1
+            new_options = self.__class__.pk.options(self)
+            if len(new_options) > 0:
+                new_option = list(new_options.keys())[0]
+            if new_option != del_pk:
+                self.pk = new_option
