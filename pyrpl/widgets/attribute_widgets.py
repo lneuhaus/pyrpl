@@ -1129,10 +1129,10 @@ class SelectAttributeWidget(BaseAttributeWidget):
         """
         try:
             index = self.options.index(str(new_value))
-        except IndexError:
+        except (IndexError, ValueError):
             self.module._logger.warning("SelectWidget %s could not find current value %s "
                                         "in the options %s",
-                                        self.name, self.new_value, self.options)
+                                        self.name, new_value, self.options)
             index = 0
         self.widget.setCurrentIndex(index)
 

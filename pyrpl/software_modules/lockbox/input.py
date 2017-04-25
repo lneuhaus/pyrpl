@@ -9,6 +9,7 @@ from ...hardware_modules.dsp import DSP_INPUTS, InputSelectProperty, all_inputs
 from ...pyrpl_utils import time, recursive_getattr
 from ...module_attributes import ModuleProperty
 from ...software_modules.lockbox import LockboxModule, LockboxModuleDictProperty
+from ...modules import SignalModule
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +32,10 @@ class CalibrationData(LockboxModule):
         """ small helper function for expected signal """
         return 0.5 * (self.max - self.min)
 
+    @property
+    def peak_to_peak(self):
+        """ small helper function for expected signal """
+        return self.max - self.min
 
     @property
     def offset(self):
@@ -48,7 +53,7 @@ class CalibrationData(LockboxModule):
         self.max = curve.max()
 
 
-class Signal(LockboxModule):
+class Signal(LockboxModule, SignalModule):
     """
     represention of a physial signal. Can be either an imput or output signal.
     """
@@ -77,6 +82,7 @@ class Signal(LockboxModule):
         self.calibration_data._analog_offset = current_offset
         self._logger.info("Calibrated analog offset of signal %s. "
                           "Old value: %s, new value: %s, difference: %s.",
+                          self.name,
                           last_offset,
                           self.calibration_data._analog_offset,
                           current_residual_offset)
@@ -540,6 +546,10 @@ class InputIq(InputSignal):
                        'quadrature_factor']
     _setup_attributes = _gui_attributes
 
+    @property
+    def acbandwidth(self):
+        return self.mod_freq / 100.0
+
     # mod_freq = ProxyProperty("iq.frequency")
     # mod_amp = ProxyProperty("iq.amplitude")
     # mod_phase = ProxyProperty("iq.phase")
@@ -556,7 +566,6 @@ class InputIq(InputSignal):
     mod_output = SelectProperty(['out1', 'out2'], call_setup=True)
     quadrature_factor = IqQuadratureFactorProperty(call_setup=True)
     bandwidth = IqFilterProperty(call_setup=True)
-
 
     @property
     def iq(self):
@@ -582,7 +591,7 @@ class InputIq(InputSignal):
                       input=self._input_signal_dsp_module(),
                       gain=0,
                       bandwidth=self.bandwidth,
-                      acbandwidth=self.mod_freq/100.0,
+                      acbandwidth=self.acbandwidth,
                       quadrature_factor=self.quadrature_factor,
                       output_signal='quadrature',
                       output_direct=self.mod_output)

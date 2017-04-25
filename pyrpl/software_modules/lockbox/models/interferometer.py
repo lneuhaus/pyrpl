@@ -11,6 +11,16 @@ class InterferometerPort1(InputDirect):
         phase *= self.lockbox._setpoint_unit_in_unit('rad')
         return self.calibration_data.offset + self.calibration_data.amplitude * np.sin(phase)
 
+    def expected_setpoint(self, transmission):
+        sinvalue = (transmission - self.calibration_data.offset) / self.calibration_data.amplitude
+        if sinvalue > 1.0:
+            sinvalue = 1.0
+        elif sinvalue < -1.0:
+            sinvalue = -1.0
+        phase = np.arcsin(sinvalue)
+        phase /= self.lockbox._setpoint_unit_in_unit('rad')
+        return phase
+
 
 class InterferometerPort2(InterferometerPort1):
     def expected_signal(self, phase):
