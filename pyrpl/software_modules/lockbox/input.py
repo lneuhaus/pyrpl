@@ -273,6 +273,7 @@ class InputSignal(Signal):
                     scope.setup(input1=self.signal(),
                                 input2=self.lockbox.outputs[self.lockbox.default_sweep_output].pid.output_direct,
                                 trigger_source=self.lockbox.asg.name,
+                                trigger_delay=0,
                                 duration=1./self.lockbox.asg.frequency,
                                 ch1_active=True,
                                 ch2_active=False,
