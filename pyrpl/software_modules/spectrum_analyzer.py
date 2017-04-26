@@ -168,7 +168,7 @@ class SpectrumAnalyzer(AcquisitionModule):
         return all_inputs(self).keys()
 
     # attributes
-    baseband = BoolProperty(call_setup=True)
+    baseband = BoolProperty(default=True, call_setup=True)
     span = SpanFilterProperty(doc="""
         Span can only be given by 1./sampling_time where sampling
         time is a valid scope sampling time.
