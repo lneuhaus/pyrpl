@@ -457,7 +457,7 @@ class InputDirect(InputSignal):
 
 
 class InputFromOutput(InputDirect):
-    def calibrate(self):
+    def calibrate(self, autosave=False):
         """ no need to calibrate this """
         pass
 
