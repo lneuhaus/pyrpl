@@ -368,6 +368,34 @@ class SpectrumAnalyzer(AcquisitionModule):
         if self.display_unit == 'Vrms/sqrt(Hz)':
             return np.sqrt(data)/ np.sqrt(2)/rbw
 
+    def transfer_function_iq(self, frequencies):
+        # transfer function calculations
+        tf_iq = np.ones(len(frequencies), dtype=complex)
+        # iq transfer_function
+        if not self.baseband:
+            displaced_freqs = frequencies - self.center
+            for f in self._iq_bandwidth():
+                if f == 0:
+                    continue
+                elif f > 0:  # lowpass
+                    tf_iq *= 1.0 / (
+                        1.0 + 1j * displaced_freqs / f)
+                    # quadrature_delay += 2
+                elif f < 0:  # highpass
+                    tf_iq *= 1.0 / (
+                        1.0 + 1j * f / displaced_freqs)
+                    # quadrature_delay += 1  # one cycle extra delay per
+                    # highpass
+        return tf_iq
+
+    def transfer_function_scope(self, frequencies):
+        # scope transfer function
+        if not self.baseband:
+            displaced_freqs = frequencies - self.center
+        else:
+            displaced_freqs = frequencies
+        norm_freq = self._scope_decimation()*displaced_freqs/125e6
+        return np.sinc(norm_freq)
 
     def transfer_function(self, frequencies):
         """
@@ -375,36 +403,10 @@ class SpectrumAnalyzer(AcquisitionModule):
         sampling, including scope decimation. At the moment, delays are not
         taken into account (and the phase response is not guaranteed to be
         exact.
-        Also, this function relies on the scope settings at the time it is
-        called. Make sure the scope is ready for acquistion before calling
-        it, or used the cached value of the transfer function
         """
-        # baseband not implemented yet....
-        frequencies = np.array(frequencies)
-        tf = np.ones(len(frequencies), dtype=complex)
+        return self.transfer_function_iq(frequencies) * \
+               self.transfer_function_scope(frequencies)
 
-        if not self.baseband:
-            for f in self.iq.bandwidth:
-                if f == 0:
-                    continue
-                elif f > 0:  # lowpass
-                    tf *= 1.0 / (
-                    1.0 + 1j * (frequencies - self.iq.frequency) / f)
-                    # quadrature_delay += 2
-                elif f < 0:  # highpass
-                    tf *= 1.0 / (
-                    1.0 + 1j * f / (frequencies - self.iq.frequency))
-                    # quadrature_delay += 1  # one cycle extra delay per highpass
-
-        # scope decimation transfer function
-        #freqs = frequencies / (4*125e6)
-        #tf *= (1. / self.scope.decimation * (
-        #      1 -  np.exp(-1j * 2 * np.pi * self.scope.decimation * freqs))
-        #            #  / (
-        #      1 -  np.exp(-1j * 2 * np.pi * freqs)))
-        norm_freq = self.scope.decimation*frequencies/125e6
-        tf*=np.sinc(norm_freq)
-        return tf
 
     # Concrete implementation of AcquisitionModule methods
     # ----------------------------------------------------
@@ -420,6 +422,10 @@ class SpectrumAnalyzer(AcquisitionModule):
         return
 
     def _get_curve(self):
+        """
+        No transfer_function correction
+        :return:
+        """
         iq_data = self._get_filtered_iq_data() # get iq data (from scope)
         if not self.running_state in ["running_single", "running_continuous"]:
             self.pyrpl.scopes.free(self.scope) # free scope if not continuous
@@ -451,13 +457,16 @@ class SpectrumAnalyzer(AcquisitionModule):
                             np.real(cross_spectrum),
                             np.imag(cross_spectrum)])
             # at some point, we need to cache the tf for performance
-            return res / self._transfer_function_square_cached
+            self._last_curve_raw = res # for debugging purpose
+            return res/abs(self.transfer_function(self.frequencies))**2
         else:
             # Realize the complex fft of iq data
             res = scipy.fftpack.fftshift(scipy.fftpack.fft(iq_data,
                                         self.data_length*self.PADDING_FACTOR))
             # at some point we need to cache the tf for performance
-            return np.abs(res)**2 / self._transfer_function_square_cached
+            self._last_curve_raw = np.abs(res)**2 # for debugging purpose
+            return self._last_curve_raw/abs(self.transfer_function(
+                self.frequencies))**2
             #/ abs(self.transfer_function(
                 #self.frequencies))**2
             # [self.useful_index()]
@@ -474,13 +483,23 @@ class SpectrumAnalyzer(AcquisitionModule):
         """
         return self.scope._data_ready()
 
+    def _iq_bandwidth(self):
+        return self.iq.__class__.bandwidth.validate_and_normalize(
+            self.iq,
+            [self.span*self.if_filter_bandwidth_per_span]*4)
+
+    def _scope_decimation(self):
+        return self.scope.__class__.decimation.validate_and_normalize(
+                    self.scope,
+                    round(self.sampling_time/8e-9))
+
     def _start_acquisition(self):
         autosave_backup = self._autosave_active
         # setup iq module
         if not self.baseband:
             self.iq.setup(
                 input = self.input,
-                bandwidth=[self.span*self.if_filter_bandwidth_per_span]*4,
+                bandwidth=self._iq_bandwidth(),
                 gain=0,
                 phase=0,
                 acbandwidth=self.acbandwidth,
@@ -502,12 +521,11 @@ class SpectrumAnalyzer(AcquisitionModule):
         self.scope.setup(input1=input1,
                          input2=input2,
                          average=True,
-                         duration=self.scope.data_length*self.sampling_time,
+                         duration=self.scope.data_length*self._scope_decimation()*8e-9,
                          trigger_source="immediately",
                          ch1_active=True,
                          ch2_active=True,
                          rolling_mode=False,
                          running_state='stopped')
-        self._transfer_function_square_cached = abs(self.transfer_function(
-            self.frequencies))**2
+
         return self.scope._start_acquisition()

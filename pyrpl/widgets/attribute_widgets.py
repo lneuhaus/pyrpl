@@ -294,11 +294,12 @@ class MyNumberSpinBox(QtGui.QWidget, object):
         return super(MyNumberSpinBox, self).keyReleaseEvent(event)
 
     def validate(self):
-        if self.val>self.max:
-            self.val = self.max
-        if self.val<self.min:
-            self.val = self.min
-        self.value_changed.emit()
+        if self.line.isModified(): # otherwise don't trigger anything
+            if self.val>self.max:
+                self.val = self.max
+            if self.val<self.min:
+                self.val = self.min
+            self.value_changed.emit()
 
     def set_per_second(self, val):
         self.per_second = val
