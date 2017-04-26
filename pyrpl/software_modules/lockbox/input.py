@@ -10,6 +10,7 @@ from ...pyrpl_utils import time, recursive_getattr
 from ...module_attributes import ModuleProperty
 from ...software_modules.lockbox import LockboxModule, LockboxModuleDictProperty
 from ...modules import SignalModule
+from ...software_modules.module_managers import InsufficientResourceError
 
 logger = logging.getLogger(__name__)
 
@@ -47,10 +48,13 @@ class CalibrationData(LockboxModule):
         gets the mean, min, max, rms value of curve (into the corresponding
         self's attributes).
         """
-        self.mean = curve.mean()
-        self.rms = curve.std()
-        self.min = curve.min()
-        self.max = curve.max()
+        if curve is None:
+            self.logger.warning("Curve object for calibration is None. No calibration will be performed.")
+        else:
+            self.mean = curve.mean()
+            self.rms = curve.std()
+            self.min = curve.min()
+            self.max = curve.max()
 
 
 class Signal(LockboxModule, SignalModule):
@@ -260,26 +264,31 @@ class InputSignal(Signal):
         returns an experimental curve in V obtained from a sweep of the
         lockbox.
         """
-        self.lockbox.sweep()
-        with self.pyrpl.scopes.pop(self.name) as scope:
-            if "sweep" in scope.states:
-                scope.load_state("sweep")
-            else:
-                scope.setup(input1=self.signal(),
-                            input2=self.lockbox.outputs[self.lockbox.default_sweep_output].pid.output_direct,
-                            trigger_source=self.lockbox.asg.name,
-                            duration=1./self.lockbox.asg.frequency,
-                            ch1_active=True,
-                            ch2_active=False,
-                            average=True,
-                            avg=1,  # trace_average
-                            running_state='stopped',
-                            rolling_mode=False)
-                scope.save_state("autosweep")
-            curve1, curve2 = scope.curve(timeout=1./self.lockbox.asg.frequency+scope.duration)
-            times = scope.times
-        curve1 -= self.calibration_data._analog_offset
-        return curve1, times
+        try:
+            with self.pyrpl.scopes.pop(self.name) as scope:
+                self.lockbox.sweep()
+                if "sweep" in scope.states:
+                    scope.load_state("sweep")
+                else:
+                    scope.setup(input1=self.signal(),
+                                input2=self.lockbox.outputs[self.lockbox.default_sweep_output].pid.output_direct,
+                                trigger_source=self.lockbox.asg.name,
+                                duration=1./self.lockbox.asg.frequency,
+                                ch1_active=True,
+                                ch2_active=False,
+                                average=True,
+                                avg=1,  # trace_average
+                                running_state='stopped',
+                                rolling_mode=False)
+                    scope.save_state("autosweep")
+                curve1, curve2 = scope.curve(timeout=1./self.lockbox.asg.frequency+scope.duration)
+                times = scope.times
+                curve1 -= self.calibration_data._analog_offset
+                return curve1, times
+        except InsufficientResourceError:
+            # scope is blocked
+            self._logger.warning("No free scopes left for sweep_acquire. ")
+            return None, None
 
     def calibrate(self, autosave=False):
         """
@@ -287,6 +296,9 @@ class InputSignal(Signal):
         the curve is needed by expected_signal.
         """
         curve, times = self.sweep_acquire()
+        if curve is None:
+            self._logger.warning('Aborting calibration because no scope is available...')
+            return None
         self.calibration_data.get_stats_from_curve(curve)
         # log calibration values
         self._logger.info("%s calibration successful - Min: %.3f  Max: %.3f  Mean: %.3f  Rms: %.3f",

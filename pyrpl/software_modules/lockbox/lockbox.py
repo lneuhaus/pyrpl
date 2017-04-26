@@ -303,7 +303,7 @@ class Lockbox(LockboxModule):
     def relock(self, test_auto_lock=False, **kwargs):
         """ locks the cavity if it is_locked is false. Returns the value of
         is_locked """
-        if test_auto_lock and not self.auto_lock:
+        if test_auto_lock and (not self.auto_lock or self._setup_ongoing):
             # skip if autolock is off and call from autolock_timer
             return
         elif self.is_locking():
