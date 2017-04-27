@@ -529,3 +529,38 @@ class SpectrumAnalyzer(AcquisitionModule):
                          running_state='stopped')
 
         return self.scope._start_acquisition()
+
+    def _setup(self):
+        super(SpectrumAnalyzer, self)._setup()
+
+    def save_curve(self):
+        """
+        Saves the curve(s) that is (are) currently displayed in the gui in
+        the db_system. Also, returns the list [curve_ch1, curve_ch2]...
+        """
+        """
+        Saves the curve(s) that is (are) currently displayed in the gui in
+        the db_system. Also, returns the list [curve_ch1, curve_ch2]...
+        """
+        if not self.baseband:
+            return super(SpectrumAnalyzer, self)._save_curve()
+        else:
+            d = self.setup_attributes
+            curves = [None, None]
+            sp1, sp2, cross_real, cross_imag = self.data_avg
+            for ch, active in [(0, self.display_input1_baseband),
+                               (1, self.display_input2_baseband)]:
+                if active:
+                    d.update({'ch': ch,
+                              'name': self.curve_name + ' ch' + str(ch + 1)})
+                    curves[ch] = self._save_curve(self._run_future.data_x,
+                                                  self._run_future.data_avg[ch],
+                                                  **d)
+            if self.display_cross_amplitude:
+                d.update({'ch': 'cross',
+                          'name': self.curve_name + ' cross'})
+                curves.append(self._save_curve(self._run_future.data_x,
+                                              self._run_future.data_avg[2] +
+                                               1j*self._run_future.data_avg[3],
+                                              **d))
+            return curves
