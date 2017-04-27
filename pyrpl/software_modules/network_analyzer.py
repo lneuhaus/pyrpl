@@ -201,6 +201,7 @@ class NaCurveFuture(PyrplFuture):
 
     def _scan_finished(self):
         self.set_result(self.data_avg)
+        self.pause()
 
 
 class NaRunFuture(NaCurveFuture):
