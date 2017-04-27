@@ -530,9 +530,6 @@ class SpectrumAnalyzer(AcquisitionModule):
 
         return self.scope._start_acquisition()
 
-    def _setup(self):
-        super(SpectrumAnalyzer, self)._setup()
-
     def save_curve(self):
         """
         Saves the curve(s) that is (are) currently displayed in the gui in

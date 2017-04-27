@@ -118,7 +118,7 @@ class NaCurveFuture(PyrplFuture):
         self._fut = None # placeholder for next point future
         self.never_started = True
         super(NaCurveFuture, self).__init__()
-        self._module._start_acquisition()
+
         self.data_x = copy(self._module.data_x)  # In case of saving latter.
         self.data_avg = np.zeros(self.n_points,
                                  dtype=np.complex)
@@ -131,6 +131,7 @@ class NaCurveFuture(PyrplFuture):
 
     def start(self):
         # self._module.iq.output_direct = self._module.output_direct
+        self._module._start_acquisition()
         self._module.iq.amplitude = self._module.amplitude
         if self.never_started:
             self._module._emit_signal_by_name("clear_curve")
@@ -322,6 +323,7 @@ class NetworkAnalyzer(AcquisitionModule):
         #self.current_averages = 0
         self._time_last_point = 0
         self._update_data_x()
+
         super(NetworkAnalyzer, self)._init_module()
 
     @property
@@ -489,7 +491,6 @@ class NetworkAnalyzer(AcquisitionModule):
         :return:
         """
         # super(NAAcquisitionManager, self)._start_acquisition()
-        self._update_data_x()
         x = self.data_x
         # preventive saturation
         amplitude = abs(self.amplitude)
@@ -593,3 +594,7 @@ class NetworkAnalyzer(AcquisitionModule):
     @property
     def measured_time_per_point(self):
         return self._run_future.measured_time_per_point
+
+    def _setup(self):
+        self._update_data_x()  # precalculate frequency values
+        super(NetworkAnalyzer, self)._setup()
