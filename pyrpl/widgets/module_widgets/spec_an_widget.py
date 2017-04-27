@@ -91,6 +91,7 @@ class SpecAnWidget(ModuleWidget):
         """
         Sets up the gui.
         """
+        self.ch_col = ('magenta', 'blue', 'green')
         self.last_data = None
         self.main_layout = QtGui.QVBoxLayout()
         self.module.__dict__['curve_name'] = 'pyrpl spectrum'
@@ -114,11 +115,12 @@ class SpecAnWidget(ModuleWidget):
         self.main_layout.addWidget(self.win)
 
         self.plot_item = self.win.addPlot(title="PSD")
-        self.curve = self.plot_item.plot(pen='m')
+        self.curve = self.plot_item.plot(pen=self.ch_col[0][0])
 
-        self.curve2 = self.plot_item.plot(pen='b') # input2 spectrum in
+        self.curve2 = self.plot_item.plot(pen=self.ch_col[1][0]) # input2
+        # spectrum in
         # baseband
-        self.curve_cross = self.plot_item.plot(pen='g') # curve for
+        self.curve_cross = self.plot_item.plot(pen=self.ch_col[2][0]) # curve for
 
         self.button_single = QtGui.QPushButton("Run single")
         self.button_single.clicked.connect(self.run_single_clicked)
@@ -144,6 +146,13 @@ class SpecAnWidget(ModuleWidget):
         self.button_layout.addWidget(self.button_save)
         self.main_layout.addLayout(self.button_layout)
 
+
+        aws['display_input1_baseband'].setStyleSheet("color: %s" %
+                                                   self.ch_col[0])
+        aws['display_input2_baseband'].setStyleSheet("color: %s" %
+                                                   self.ch_col[1])
+        aws['display_cross_amplitude'].setStyleSheet("color: %s" %
+                                                   self.ch_col[2])
         # Not sure why the stretch factors in button_layout are not good by
         # default...
         self.button_layout.setStretchFactor(self.button_single, 1)
