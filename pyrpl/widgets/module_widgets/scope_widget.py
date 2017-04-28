@@ -85,7 +85,7 @@ class ScopeWidget(ModuleWidget):
         self.button_single = QtGui.QPushButton("Run single")
         self.button_continuous = QtGui.QPushButton("Run continuous")
         self.button_save = QtGui.QPushButton("Save curve")
-        self.curves = [self.plot_item.plot(pen=color[0]) \
+        self.curves = [self.plot_item.plot(pen=color[0], alpha=0.5) \
                        for color in self.ch_col]
         self.main_layout.addWidget(self.win, stretch=10)
         self.button_layout.addWidget(self.button_single)

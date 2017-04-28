@@ -66,7 +66,7 @@ class IirGraphWidget(QtGui.QGroupBox):
         # measured filter with na - orange dots <-
         # data (measruement data) - green line
         # data x design (or data/design) - red line
-        self.xlog = True
+        self.xlog = False #True
         self.plots = OrderedDict()
         # make lines
         for name, style in [('data', dict(pen='g')),
@@ -202,10 +202,14 @@ class IirWidget(ModuleWidget):
     @property
     def frequencies(self):
         try:
-            return self.module._data_curve_object.data.index.values
+            f = self.module._data_curve_object.data.index.values
         except AttributeError:
             # in case data_curve is None (no curve selected)
             return np.logspace(1, np.log10(5e6), 2000)
+        else:
+            # avoid zero frequency (log plot)
+            f[f<=0] = sys.float_info.epsilon
+            return f
 
     def _magnitude(self, data):
         return 20. * np.log10(np.abs(np.asarray(data, dtype=np.complex))
@@ -220,31 +224,37 @@ class IirWidget(ModuleWidget):
         tfargs = {}  # args to the call of iir.transfer_function
         frequencies = self.frequencies
         plot = OrderedDict()
+        # plot underlying curve data
         try:
             plot['data'] = self.module._data_curve_object.data.values
         except AttributeError:
             plot['data'] = []
-        plot['filter_design'] = self.module.transfer_function(frequencies,
-                                                              **tfargs)
-        try:
-            plot['data_x_design'] = plot['data'] / plot['filter_design']
-        except ValueError:
+        if False:
+            # plot designed filter
+            plot['filter_design'] = self.module.transfer_function(frequencies,
+                                                                  **tfargs)
+            # plot product
             try:
-                plot['data_x_design'] = 1.0 / plot['filter_design']
-            except:
-                plot['data_x_design'] = []
+                plot['data_x_design'] = plot['data'] / plot['filter_design']
+            except ValueError:
+                try:
+                    plot['data_x_design'] = 1.0 / plot['filter_design']
+                except:
+                    plot['data_x_design'] = []
+            # plot everything (all lines) up to here
         for k, v in plot.items():
             self.graph_widget.plots[k].setData(frequencies[:len(v)],
                                                self._magnitude(v))
             self.graph_widget.plots[k+'_phase'].setData(frequencies[:len(v)],
                                                     self._phase(v))
+        return
 
+        # plot poles and zeros
         freq_poles = abs(np.imag(self.module.poles))
         tf_poles = self.module.transfer_function(
             freq_poles)
         freq_zeros = abs(np.imag(self.module.zeros))
         tf_zeros = self.module.transfer_function(freq_zeros)
-
         aws = self.attribute_widgets
         for end in ['poles', 'zeros']:
             mag, phase = [], []

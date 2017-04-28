@@ -502,6 +502,33 @@ class InputFromOutput(InputDirect):
         return setpoint_in_output_unit / output.dc_gain
 
 
+
+
+class IqQuadratureFactorProperty(FloatProperty):
+    def set_value(self, instance, value):
+        # super(IqQuadratureFactorProperty, self).set_value(instance, value)
+        instance.iq.quadrature_factor = value
+        return value
+
+    def get_value(self, obj):
+        return obj.iq.quadrature_factor
+
+
+class IqFilterProperty(FilterProperty):
+    def set_value(self, instance, val):
+        try:
+            val = list(val)
+        except:
+            val = [val, val]  # preferentially choose second order filter
+        instance.iq.bandwidth = val
+        super(IqFilterProperty, self).set_value(instance, val)
+        return val
+
+    def valid_frequencies(self, module):
+        # only allow the low-pass filter options (exclude negative high-pass options)
+        return [v for v in module.iq.__class__.bandwidth.valid_frequencies(module.iq) if v >= 0]
+
+
 class InputIq(InputSignal):
     """ Base class for demodulated signals. A derived class must implement
     the method expected_signal (see InputPdh in fabryperot.py for example)"""
@@ -513,12 +540,23 @@ class InputIq(InputSignal):
                        'quadrature_factor']
     _setup_attributes = _gui_attributes
 
-    mod_freq = ProxyProperty("iq.frequency")
-    mod_amp = ProxyProperty("iq.amplitude")
-    mod_phase = ProxyProperty("iq.phase")
-    mod_output = ProxyProperty("iq.output_direct")
-    quadrature_factor = ProxyProperty("iq.quadrature_factor")
-    bandwidth = ProxyProperty("iq.bandwidth")
+    # mod_freq = ProxyProperty("iq.frequency")
+    # mod_amp = ProxyProperty("iq.amplitude")
+    # mod_phase = ProxyProperty("iq.phase")
+    # mod_output = ProxyProperty("iq.output_direct")
+    # quadrature_factor = ProxyProperty("iq.quadrature_factor")
+    # bandwidth = ProxyProperty("iq.bandwidth")
+
+    mod_freq = FrequencyProperty(min=0.0,
+                                 max = FrequencyRegister.CLOCK_FREQUENCY / 2.0,
+                                 default = 0.0,
+                                 call_setup = True)
+    mod_amp = FloatProperty(min=-1, max=1, default=0.0, call_setup=True)
+    mod_phase = PhaseProperty(call_setup=True)
+    mod_output = SelectProperty(['out1', 'out2'], call_setup=True)
+    quadrature_factor = IqQuadratureFactorProperty(call_setup=True)
+    bandwidth = IqFilterProperty(call_setup=True)
+
 
     @property
     def iq(self):
@@ -538,13 +576,13 @@ class InputIq(InputSignal):
         """
         setup a PDH error signal using the attribute values
         """
-        self.iq.setup(#frequency=self.mod_freq,
-                      #amplitude=self.mod_amp,
-                      #phase=self.mod_phase,
+        self.iq.setup(frequency=self.mod_freq,
+                      amplitude=self.mod_amp,
+                      phase=self.mod_phase,
                       input=self._input_signal_dsp_module(),
                       gain=0,
-                      #bandwidth=self.bandwidth,
+                      bandwidth=self.bandwidth,
                       acbandwidth=self.mod_freq/100.0,
-                      #quadrature_factor=self.quadrature_factor,
-                      output_signal='quadrature') #,
-                      #output_direct=self.mod_output)
+                      quadrature_factor=self.quadrature_factor,
+                      output_signal='quadrature',
+                      output_direct=self.mod_output)

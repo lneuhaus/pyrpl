@@ -27,7 +27,8 @@ from .widgets.attribute_widgets import BoolAttributeWidget, \
                                        ListFloatAttributeWidget, \
                                        BoolIgnoreAttributeWidget, \
                                        TextAttributeWidget, \
-                                       CurveAttributeWidget
+                                       CurveAttributeWidget, \
+                                       CurveSelectAttributeWidget
 from .curvedb import CurveDB
 from collections import OrderedDict
 import logging
@@ -504,6 +505,27 @@ class FloatRegister(IntRegister, FloatProperty):
                                 round(value/self.increment)*self.increment)
 
 
+class GainRegister(FloatRegister):
+    """
+    A register used mainly for gains, that replaces round-off to zero by
+    round-off to the lowest-possible value.
+    """
+    def validate_and_normalize(self, obj, value):
+        rounded_value = FloatRegister.validate_and_normalize(self, obj, value)
+        if rounded_value == 0 and value != 0:  # value was rounded off to zero
+            rounded_value = FloatRegister.validate_and_normalize(
+                self, obj, np.abs(self.increment)*np.sign(value))
+            obj._logger.warning("Avoided rounding value %.1e of the "
+                                "gain register %s to zero. Setting it to %.1e "
+                                "instead. ", value, self.name, rounded_value)
+        if value > self.max or value < self.min:
+            obj._logger.warning("Requested gain for %s.%s is outside the "
+                                "bounds allowed by the hardware. Desired "
+                                "gain of %.1e is capped to %.1e. ",
+                                obj.name, self.name, value, rounded_value)
+        return rounded_value
+
+
 class FrequencyProperty(FloatProperty):
     """
     An attribute for frequency values
@@ -655,18 +677,40 @@ class FilterRegister(BaseRegister, FilterProperty):
         return self.read_and_save(obj, "minbw")
 
     def _MAXSHIFT(self, obj):
-        return int(np.ceil(np.log2(np.floor(125000000.0/float(self._MINBW(obj))))))
+        def clog2(x):
+            """ mirrors the function clog2 in verilog code """
+            if x < 2:
+                return 1
+            elif x > 2**32:
+                return -1
+            elif x > 2**31:
+                return 32
+            else:
+                return int(np.floor(np.log2(float(x))))+1
+        return clog2(125000000.0/float(self._MINBW(obj)))
 
-    def _ALPHABITS(self, obj):
-        return int(np.ceil(np.log2(125000000.0 / self._MINBW(obj))))
+    #def _ALPHABITS(self, obj):
+    #    return int(np.ceil(np.log2(125000000.0 / self._MINBW(obj))))
 
     def valid_frequencies(self, obj):
         """ returns a list of all valid filter cutoff frequencies"""
-        valid_bits = range(0, self._MAXSHIFT(obj))
+        valid_bits = range(0, self._MAXSHIFT(obj)-1)
         pos = list([self.to_python(obj, b | 0x1 << 7) for b in valid_bits])
         pos = [int(val) if not np.iterable(val) else int(val[0]) for val in pos]
         neg = [-val for val in reversed(pos)]
         return neg + [0] + pos
+
+    # empirical correction factors for the cutoff frequencies in order to be
+    # able to accurately model implemented bandwidth with an analog
+    # butterworth filter. Works well up to 5 MHz. See unittest test_inputfilter
+    correction_factors = {0.25: 1.65,
+                           0.125: 1.17,
+                           0.0625: 1.08,
+                           0.03125: 1.04,
+                           0.015625: 1.02,
+                           0.0078125: 1.01,
+                           0.001953125: 1.0,
+                           0.00390625: 1.0}
 
     def to_python(self, obj, value):
         """
@@ -681,10 +725,16 @@ class FilterRegister(BaseRegister, FilterProperty):
             filter_on = ((v >> 7) == 0x1)
             highpass = (((v >> 6) & 0x1) == 0x1)
             if filter_on:
-                bandwidth = float(2 ** shift) / \
-                            (2 ** self._ALPHABITS(obj)) * 125e6 / 2 / np.pi
-                # warping
-                # bandwidth /= np.tan(bandwidth/2/125e6)/(bandwidth/2.0/125e6)
+                # difference equation is
+                # y[n] = (1-alpha)*y[n-1] + alpha*x[n]
+                alpha = float(2 ** shift) / (2 ** self._MAXSHIFT(obj))
+                # old formula
+                #bandwidth = alpha * 125e6 / 2 / np.pi
+                # new, more correct formula (from Oppenheim-Schafer p. 70)
+                bandwidth = -np.log(1.0-alpha)/2.0/np.pi*125e6
+                # here comes a nasty bugfix to make it work (see issue 242)
+                if alpha in self.correction_factors:
+                    bandwidth *= self.correction_factors[alpha]
                 if highpass:
                     bandwidth *= -1.0
             else:
@@ -709,10 +759,14 @@ class FilterRegister(BaseRegister, FilterProperty):
             if bandwidth == 0:
                 continue
             else:
-                # warping
-                # bandwidth *= np.abs(np.tan(bandwidth/2/125e6)/( bandwidth/2.0/125e6))
-                shift = int(np.round(
-                    np.log2(np.abs(bandwidth)*(2**self._ALPHABITS(obj))*2*np.pi/125e6)))
+                # old formula
+                #alpha = np.abs(bandwidth)*2*np.pi/125e6
+                # new formula
+                alpha = 1.0 - np.exp(-np.abs(bandwidth)*2.0*np.pi/125e6)
+                if alpha in self.correction_factors:
+                    bandwidth /= self.correction_factors[alpha]
+                    alpha = 1.0 - np.exp(-np.abs(bandwidth)*2.0*np.pi/125e6)
+                shift = int(np.round(np.log2(alpha*(2**self._MAXSHIFT(obj)))))
                 if shift < 0:
                     shift = 0
                 elif shift > (2**self._SHIFTBITS(obj) - 1):
@@ -894,11 +948,11 @@ class SelectProperty(BaseProperty):
         # self.name+'_options'.
         if instance is not None:
             try:
-                lastoptions = getattr(instance, '_' + self.name + '_options')
+                lastoptions = getattr(instance, '_' + self.name + '_lastoptions')
             except AttributeError:
                 lastoptions = None
             if options != lastoptions:
-                setattr(instance, '_' + self.name + '_options', options)
+                setattr(instance, '_' + self.name + '_lastoptions', options)
                 # save the keys for the user convenience
                 setattr(instance, self.name + '_options', list(options.keys()))
                 instance._signal_launcher.change_options.emit(self.name,
@@ -1013,7 +1067,7 @@ class ProxyProperty(BaseProperty):
         self.path_to_target_descriptor = self.path_to_target_module \
                                          + '.__class__.' \
                                          + lastpart
-        BaseAttribute.__init__(self, **kwargs)
+        BaseProperty.__init__(self, **kwargs)
 
     def _target_to_proxy(self, obj, target):
         """ override this function to implement conversion between target
@@ -1117,6 +1171,7 @@ class ProxyProperty(BaseProperty):
 
     def _create_widget(self, module, widget_name=None, **kwargs):
         target_module = recursive_getattr(module, self.path_to_target_module)
+        target_descriptor = recursive_getattr(module, self.path_to_target_descriptor)
         if widget_name is None:
             widget_name = self.name
         #return recursive_getattr(module,
@@ -1127,11 +1182,19 @@ class ProxyProperty(BaseProperty):
         self._widget_class = recursive_getattr(module,
                                  self.path_to_target_descriptor +
                                  '._widget_class')
-        return recursive_getattr(module,
+        try:  # try to make a widget for proxy
+            return recursive_getattr(module,
                                  self.path_to_target_descriptor +
                                  '.__class__._create_widget')(self, module,
                                                     #widget_name=widget_name,
                                                     **kwargs)
+        except:  # make a renamed widget for target
+            return recursive_getattr(module,
+                                     self.path_to_target_descriptor +
+                                     '.__class__._create_widget')(target_descriptor, target_module,
+                                                                  widget_name=widget_name,
+                                                                  **kwargs)
+
 
 class ModuleAttribute(BaseProperty):
     """
@@ -1149,8 +1212,14 @@ class CurveSelectProperty(SelectProperty):
     for the name of this attribute. The property can be set by either passing
     a CurveDB object, or a curve id.
     """
-    def options(self, instance):
-        return OrderedDict([(k, k) for k in (CurveDB.all()) + [-1]])
+
+    def __init__(self,
+                 **kwargs):
+        SelectProperty.__init__(self, options=self._default_options, **kwargs)
+
+    def _default_options(self):
+        return CurveDB.all() + [-1]
+        #return OrderedDict([(k, k) for k in (CurveDB.all()) + [-1]])
 
     def validate_and_normalize(self, obj, value):
         # returns none or a valid curve corresponding to the given curve or id
@@ -1169,6 +1238,11 @@ class CurveSelectProperty(SelectProperty):
             pk = val.pk
         SelectProperty.set_value(self, obj, pk)
         setattr(obj, '_' + self.name + '_object', val)
+
+
+class CurveSelectListProperty(CurveSelectProperty):
+    """ same as above, but widget is a list to select from """
+    _widget_class = CurveSelectAttributeWidget
 
 
 class CurveProperty(CurveSelectProperty):

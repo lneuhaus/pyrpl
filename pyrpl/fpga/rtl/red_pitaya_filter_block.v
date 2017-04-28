@@ -42,8 +42,8 @@ module red_pitaya_filter_block
 #(
     parameter     STAGES = 1,    //max. 4 stages
     parameter     SHIFTBITS = 4, //shift can be from 0 to 15 bits
-    parameter     SIGNALBITS   = 14, //bit width of the signals
-    parameter     MINBW        = 10
+    parameter     SIGNALBITS = 14, //bit width of the signals
+    parameter     MINBW = 10
     )
 (
     input clk_i,

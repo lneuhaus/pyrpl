@@ -1131,20 +1131,25 @@ class SelectAttributeWidget(BaseAttributeWidget):
         try:
             index = self.options.index(str(new_value))
         except IndexError:
-            self.module._logger.warning("SelectWidget %s could not find current value %s "
-                                        "in the options %s",
-                                        self.name, self.new_value, self.options)
+            self.module._logger.warning("SelectWidget %s could not find current "
+                                        "value %s in the options %s",
+                                        self.name,
+                                        self.new_value,
+                                        self.options)
             index = 0
         self.widget.setCurrentIndex(index)
 
     def change_options(self, new_options):
         """
-        The options of the combobox can be changed dynamically. new_options is a list of strings.
+        The options of the combobox can be changed dynamically. new_options is
+        a list of strings.
         """
         self.widget.blockSignals(True)
         #self.defaults = new_options
         self.widget.clear()
-        self.widget.addItems(new_options)
+        #self.widget.addItems(new_options)
+        # do not trust the new options, rather call options again
+        self.widget.addItems(self.options)
         try:
             self._update(new_value=self.module_value())
         except ValueError:
@@ -1173,7 +1178,6 @@ class BoolAttributeWidget(BaseAttributeWidget):
 
         :return:
         """
-
         self.widget = QtGui.QCheckBox()
         self.widget.stateChanged.connect(self.write)
 
@@ -1245,8 +1249,15 @@ class CurveAttributeWidget(BaseAttributeWidget):
         """
         self.widget = pg.GraphicsWindow(title="Curve")
         self.plot_item = self.widget.addPlot(title="Curve")
+        self.plot_item_phase = self.widget.addPlot(row=1, col=0,
+                                                   title="Phase (deg)")
+        self.plot_item_phase.setXLink(self.plot_item)
         self.plot_item.showGrid(y=True, alpha=1.)
-        self.curve = self.plot_item.plot(pen='r')
+        self.plot_item_phase.showGrid(y=True, alpha=1.)
+
+        self.curve = self.plot_item.plot(pen='g')
+        self.curve_phase = self.plot_item_phase.plot(pen='g')
+
         #self.setToolTip("Checked:\t    on\nUnchecked: off\nGrey:\t    ignore")
 
     def write(self):
@@ -1264,11 +1275,69 @@ class CurveAttributeWidget(BaseAttributeWidget):
             return
         try:
             data = getattr(self.module, '_' + self.name + '_object').data
+            name = getattr(self.module, '_' + self.name + '_object').params['name']
         except:
             pass
         else:
             x = data.index.values
-            y = np.abs(data.values)
-            if np.iscomplex(y[0]):
-                y = np.abs(y)
-            self.curve.setData(x, y)
+            y = data.values
+            if not np.isreal(y).all():
+                self.curve.setData(x, self._magnitude(y))
+                self.curve_phase.setData(x, self._phase(y))
+                self.plot_item_phase.show()
+                self.plot_item.setTitle(name + " - Magnitude (dB)")
+            else:
+                self.curve.setData(x, np.real(y))
+                self.plot_item_phase.hide()
+                self.plot_item.setTitle(name)
+
+
+    def _magnitude(self, data):
+        return 20. * np.log10(np.abs(data) + sys.float_info.epsilon)
+
+    def _phase(self, data):
+        return np.angle(data, deg=True)
+
+
+class CurveSelectAttributeWidget(SelectAttributeWidget):
+    """
+    Select one or many curves.
+    """
+    def set_widget(self):
+        """
+        Sets up the widget (here a QComboBox)
+
+        :return:
+        """
+        self.widget = QtGui.QListWidget()
+        self.widget.addItems(self.options)
+        self.widget.currentItemChanged.connect(self.write)
+
+    def write(self):
+        """
+        Sets the module property value from the current gui value
+        :return:
+        """
+        try:
+            setattr(self.module, self.name, int(self.widget.currentItem().text()))
+        except:
+            pass
+        else:
+            self.value_changed.emit()
+
+    def _update(self, new_value):
+        """
+        Sets the gui value from the current module value
+        """
+        if new_value is None:
+            new_value = -1
+        if hasattr(new_value, 'pk'):
+            new_value = new_value.pk
+        try:
+            index = self.options.index(str(new_value))
+        except IndexError:
+            self.module._logger.warning("SelectWidget %s could not find "
+                                        "current value %s in the options %s",
+                                        self.name, self.new_value, self.options)
+            index = 0
+        self.widget.setCurrentRow(index)

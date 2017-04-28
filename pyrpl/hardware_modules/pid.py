@@ -1,6 +1,6 @@
 import numpy as np
 from PyQt4 import QtCore
-from ..attributes import FloatProperty, BoolRegister, FloatRegister
+from ..attributes import FloatProperty, BoolRegister, FloatRegister, GainRegister
 from ..modules import SignalLauncher
 from . import FilterModule
 from ..widgets.module_widgets import PidWidget
@@ -35,11 +35,12 @@ class SignalLauncherPid(SignalLauncher):
         self.timer_ival.setSingleShot(False)
         self.timer_ival.start()
 
-    def kill_timers(self):
+    def _clear(self):
         """
         kill all timers
         """
         self.timer_ival.stop()
+        super(SignalLauncherPid, self)._clear()
 
 
 class Pid(FilterModule):
@@ -51,7 +52,9 @@ class Pid(FilterModule):
                          "p",
                          "i",
                          "d",
-                         "inputfilter"]
+                         "inputfilter",
+                         "max_voltage",
+                         "min_voltage"]
     _gui_attributes = _setup_attributes + ["ival"]
 
     # the function is here so the metaclass generates a setup(**kwds) function
@@ -82,11 +85,13 @@ class Pid(FilterModule):
     max_voltage = FloatRegister(0x128, bits=14, norm= 2 **13,
                                 doc="maximum output signal [volts]")
 
-    p = FloatRegister(0x108, bits=_GAINBITS, norm= 2 **_PSR,
+    p = GainRegister(0x108, bits=_GAINBITS, norm= 2 **_PSR,
                       doc="pid proportional gain [1]")
-    i = FloatRegister(0x10C, bits=_GAINBITS, norm= 2 **_ISR * 2.0 * np.pi * 8e-9,
+    i = GainRegister(0x10C, bits=_GAINBITS, norm= 2 **_ISR * 2.0 * np.pi *
+                                                  8e-9,
                       doc="pid integral unity-gain frequency [Hz]")
-    d = FloatRegister(0x110, bits=_GAINBITS, norm= 2 ** _DSR /( 2.0 *np. pi * 8e-9),
+    d = GainRegister(0x110, bits=_GAINBITS, norm= 2 ** _DSR /( 2.0 *np. pi *
+                                                            8e-9),
                       invert=True,
                       doc="pid derivative unity-gain frequency [Hz]. Off when 0.")
 

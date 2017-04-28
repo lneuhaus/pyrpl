@@ -164,6 +164,7 @@ class PyrplWidget(QtGui.QMainWindow):
         self.handler.show_log.connect(self.show_log)
         self.setWindowTitle(self.parent.c.pyrpl.name)
         self.timers = [self.timer_save_pos, self.timer_toolbar]
+        #self.set_background_color(self)
 
     def show_exception(self, typ_val_tb):
         """
@@ -191,12 +192,13 @@ class PyrplWidget(QtGui.QMainWindow):
         """
         self.status_bar.setStyleSheet(self._next_toolbar_style)
 
-    def kill_timers(self):
+    def _clear(self):
         for timer in self.timers:
             timer.stop()
 
     def add_dock_widget(self, create_widget, name):
-        dock_widget = MyDockWidget(create_widget, name)
+        dock_widget = MyDockWidget(create_widget,
+                                   name + ' (%s)' % self.parent.name)
         self.dock_widgets[name] = dock_widget
         self.addDockWidget(QtCore.Qt.TopDockWidgetArea,
                            dock_widget)
@@ -216,6 +218,7 @@ class PyrplWidget(QtGui.QMainWindow):
         # make sure menu and widget are in sync
         action.changed.connect(lambda: dock_widget.setVisible(action.isChecked()))
         dock_widget.visibilityChanged.connect(lambda:action.setChecked(dock_widget.isVisible()))
+        self.set_background_color(dock_widget)
 
     def remove_dock_widget(self, name):
         dock_widget = self.dock_widgets.pop(name)
@@ -250,6 +253,7 @@ class PyrplWidget(QtGui.QMainWindow):
         # save window position
         self.timer_save_pos.stop()
         self.save_window_position()
+        pyrpl.c._save_now()  # make sure positions are written
         # replace dock widget
         self.remove_dock_widget(name)
         self.add_dock_widget(module._create_widget, name)
@@ -274,9 +278,12 @@ class PyrplWidget(QtGui.QMainWindow):
 
     def set_window_position(self):
         if "dock_positions" in self.parent.c.pyrpl._keys():
-            if not self.restoreState(self.parent.c.pyrpl.dock_positions.encode("latin1")):
-                self.logger.warning("Sorry, " + \
-                    "there was a problem with the restoration of Dock positions")
+            try:
+                self.restoreState(
+                    self.parent.c.pyrpl.dock_positions.encode("latin1"))
+            except:
+                self.logger.warning("Sorry, there was a problem with the "
+                                    "restoration of Dock positions. ")
         try:
             coords = self.parent.c.pyrpl["window_position"]._data
         except KeyError:
@@ -301,3 +308,19 @@ class PyrplWidget(QtGui.QMainWindow):
     def window_position(self, coords):
         self.move(coords[0], coords[1])
         self.resize(coords[2], coords[3])
+
+    def set_background_color(self, widget):
+        try:
+            color = str(self.parent.c.pyrpl.background_color)
+        except KeyError:
+            return
+        else:
+            if color.strip() == "":
+                return
+            try:  # hex values must receive a preceeding hashtag
+                int(color, 16)
+            except ValueError:
+                pass
+            else:
+                color = "#"+color
+            widget.setStyleSheet("background-color:%s"%color)

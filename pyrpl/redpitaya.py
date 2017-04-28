@@ -45,8 +45,6 @@ defaultparameters = dict(
     autostart=True,  # autostart the client?
     reloadserver=False,  # reinstall the server at startup if not necessary?
     reloadfpga=True,  # reload the fpga bitfile at startup?
-    filename='fpga//red_pitaya.bin',  # name of the bitfile for the fpga, None is default file
-    dirname=os.path.abspath(os.path.dirname(__file__)),  # directory of the bitfile for the fpga, None is default dir
     serverbinfilename='fpga.bin',  # name of the binfile on the server
     serverdirname = "//opt//pyrpl//",  # server directory for server app and bitfile
     leds_off=True,  # turn off all GPIO lets at startup (improves analog performance)
@@ -84,7 +82,6 @@ class RedPitaya(object):
             reloadserver=False,  # reinstall the server at startup if not necessary?
             reloadfpga=True,  # reload the fpga bitfile at startup?
             filename='fpga//red_pitaya.bin',  # name of the bitfile for the fpga, None is default file
-            dirname=os.path.abspath(os.path.dirname(__file__)),  # directory of the bitfile for the fpga, None is default dir
             serverbinfilename='fpga.bin',  # name of the binfile on the server
             serverdirname = "//opt//pyrpl//",  # server directory for server app and bitfile
             leds_off=True,  # turn off all GPIO lets at startup (improves analog performance)
@@ -143,16 +140,6 @@ class RedPitaya(object):
         self._slaves = []  # slave interfaces to same redpitaya
         self.modules = OrderedDict()  # all submodules
 
-        # auto-correct wrong paths if possible
-        if not os.path.exists(self.parameters['dirname']):
-            if os.path.exists(os.path.abspath(os.path.join(self.parameters['dirname'], 'prypl'))):
-                self.parameters['dirname'] = os.path.abspath(os.path.join(self.parameters['dirname'], 'prypl'))
-            else:
-                raise IOError("Wrong dirname",
-                          "The directory of the pyrl package could not be found. Please try again calling RedPitaya"
-                          "with the additional argument dirname='c://github//pyrpl//pyrpl' adapted to your installation"
-                          " directory of pyrpl! Current dirname: "
-                           +self.parameters['dirname'])
         # provide option to simulate a RedPitaya
         if self.parameters['hostname'] in ['_FAKE_REDPITAYA_', '_FAKE_']:
             self.startdummyclient()
@@ -233,16 +220,21 @@ class RedPitaya(object):
 
     def update_fpga(self, filename=None):
         if filename is None:
-            filename = self.parameters['filename']
+            try:
+                source = self.parameters['filename']
+            except KeyError:
+                source = None
         self.end()
         sleep(self.parameters['delay'])
         self.ssh.ask('rw')
         sleep(self.parameters['delay'])
         self.ssh.ask('mkdir ' + self.parameters['serverdirname'])
         sleep(self.parameters['delay'])
-        source = os.path.join(self.parameters['dirname'], filename)
-        if not os.path.isfile(source):
-            source = os.path.join(self.parameters['dirname'], 'fpga', filename)
+        if source is None or not os.path.isfile(source):
+            if source is not None:
+                self.logger.warning('Desired bitfile "%s" does not exist. Using default file.',
+                                    source)
+            source = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'fpga', 'red_pitaya.bin')
         if not os.path.isfile(source):
             raise IOError("Wrong filename",
               "The fpga bitfile was not found at the expected location. Try passing the arguments "
@@ -311,8 +303,8 @@ class RedPitaya(object):
             sleep(self.parameters['delay'])
             try:
                 self.ssh.scp.put(
-                    os.path.join(self.parameters['dirname'], 'monitor_server', serverfile),
-                    self.parameters['serverdirname']+self.parameters['monitor_server_name'])
+                    os.path.join(os.path.abspath(os.path.dirname(__file__)), 'monitor_server', serverfile),
+                    self.parameters['serverdirname'] + self.parameters['monitor_server_name'])
             except (SCPException, SSHException):
                 self.logger.exception("Upload error. Try again after rebooting your RedPitaya..")
             sleep(self.parameters['delay'])
