@@ -172,7 +172,7 @@ class SpectrumAnalyzer(AcquisitionModule):
         return all_inputs(self).keys()
 
     # attributes
-    baseband = BoolProperty(call_setup=True)
+    baseband = BoolProperty(call_setup=True, default=True)
     span = SpanFilterProperty(doc="""
         Span can only be given by 1./sampling_time where sampling
         time is a valid scope sampling time.
@@ -497,6 +497,8 @@ class SpectrumAnalyzer(AcquisitionModule):
         autosave_backup = self._autosave_active
         # setup iq module
         if not self.baseband:
+            raise NotImplementedError("iq mode is not supported in the "
+                                      "current release of Pyrpl.")
             self.iq.setup(
                 input = self.input,
                 bandwidth=self._iq_bandwidth(),
