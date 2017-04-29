@@ -421,6 +421,9 @@ class SpectrumAnalyzer(AcquisitionModule):
         self._run_future.rbw = self.rbw
         return
 
+    def _free_up_resources(self):
+        self.scope.free()
+
     def _get_curve(self):
         """
         No transfer_function correction

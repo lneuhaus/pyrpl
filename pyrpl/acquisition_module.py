@@ -94,6 +94,8 @@ class CurveFuture(PyrplFuture):
         data = self._get_one_curve()
         if data is not None:
             self.set_result(data)
+            if self._module.running_state in ["paused", "stopped"]:
+                self._module._free_up_resources()
         else:
             self._timer.setInterval(self.min_delay_ms)
             self._timer.start()
@@ -186,6 +188,7 @@ class RunFuture(PyrplFuture):
 
     def pause(self):
         self._paused = True
+        self._module._free_up_resources()
         if self._fut is not None:
             self._fut.cancel()
 
@@ -544,6 +547,9 @@ class AcquisitionModule(Module):
         the _curve_future()
         Only non-blocking operations are allowed.
         """
+        pass
+
+    def _free_up_resources(self):
         pass
 
     # Shortcut to the RunFuture data (for plotting):
