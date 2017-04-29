@@ -17,6 +17,7 @@ if sys.version_info < (3,):
 else:
     integer_types = (int,)
 
+
 APP = QtGui.QApplication.instance()
 if APP is None:
     APP = QtGui.QApplication(["redpitaya_gui"])
@@ -34,6 +35,7 @@ class MyNumberSpinBox(QtGui.QWidget, object):
         a time given by timer_initial_latency. Only after that, is the value incremented of "increment" every
         timer_min_interval.
     """
+    MOUSE_WHEEL_ACTIVATED = False
     value_changed = QtCore.pyqtSignal()
     timer_min_interval = 20 # don't go below 20 ms
     timer_initial_latency = 500 # 100 ms before starting to update continuously.
@@ -131,11 +133,11 @@ class MyNumberSpinBox(QtGui.QWidget, object):
         :param event:
         :return:
         """
-
-        nsteps = int(event.delta()/120)
-        func = self.step_up if nsteps>0 else self.step_down
-        for i in range(abs(nsteps)):
-            func(single_increment=True)
+        if self.MOUSE_WHEEL_ACTIVATED:
+            nsteps = int(event.delta()/120)
+            func = self.step_up if nsteps>0 else self.step_down
+            for i in range(abs(nsteps)):
+                func(single_increment=True)
 
     def first_increment(self):
         """
@@ -163,7 +165,7 @@ class MyNumberSpinBox(QtGui.QWidget, object):
         The tooltip uses the values of min/max/increment...
         """
         string = "Increment is %.5f\nmin value: %.1f\nmax value: %.1f\n"%(self.increment, self.min, self.max)
-        string+="Press up/down or mouse wheel to tune."
+        string+="Press up/down to tune." #  or mouse wheel
         self.setToolTip(string)
 
     def setMaximum(self, val):
