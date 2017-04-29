@@ -360,7 +360,7 @@ class MyIntSpinBox(MyNumberSpinBox):
     @val.setter
     def val(self, new_val):
         #self._val = new_val
-        self.line.setText(("%.i")%new_val)
+        self.line.setText(("%.i")%round(new_val))
         self.value_changed.emit()
         return new_val
 
