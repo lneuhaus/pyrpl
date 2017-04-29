@@ -15,6 +15,7 @@ class ScopeWidget(ModuleWidget):
     """
     Widget for scope
     """
+    TRANSPARENCIES = [255, 100]
     def init_gui(self):
         """
         sets up all the gui for the scope.
@@ -85,8 +86,12 @@ class ScopeWidget(ModuleWidget):
         self.button_single = QtGui.QPushButton("Run single")
         self.button_continuous = QtGui.QPushButton("Run continuous")
         self.button_save = QtGui.QPushButton("Save curve")
-        self.curves = [self.plot_item.plot(pen=color[0], alpha=0.5) \
-                       for color in self.ch_col]
+        self.curves = [self.plot_item.plot(pen=(QtGui.QColor(color).red(),
+                                                QtGui.QColor(color).green(),
+                                                QtGui.QColor(color).blue(),
+                                                trans)) \
+                       for color, trans in zip(self.ch_col,
+                                               self.TRANSPARENCIES)]
         self.main_layout.addWidget(self.win, stretch=10)
         self.button_layout.addWidget(self.button_single)
         self.button_layout.addWidget(self.button_continuous)
