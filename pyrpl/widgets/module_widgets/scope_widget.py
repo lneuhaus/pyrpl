@@ -142,6 +142,7 @@ class ScopeWidget(ModuleWidget):
         super(ScopeWidget, self).update_attribute_by_name(name, new_value_list)
         if name in ['rolling_mode', 'duration']:
             self.rolling_mode = self.module.rolling_mode
+            self.update_rolling_mode_visibility()
         if name in ['running_state',]:
             self.update_running_buttons()
 
