@@ -11,6 +11,7 @@ from ..hardware_modules import all_inputs, all_output_directs, InputSelectProper
 from ..modules import SignalModule
 from ..acquisition_module import AcquisitionModule
 from ..widgets.module_widgets import NaWidget
+from ..hardware_modules.iq import Iq
 
 # timeit.default_timer() is THE precise timer to use (microsecond precise vs
 # milliseconds for time.time()).
@@ -285,8 +286,8 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
     input = InputSelectProperty(call_setup=True)
     #input = ProxyProperty('iq.input')
     output_direct = SelectProperty(all_output_directs, call_setup=True)
-    start_freq = FrequencyProperty(call_setup=True)
-    stop_freq = FrequencyProperty(call_setup=True)
+    start_freq = FrequencyProperty(call_setup=True, min=Iq.frequency.increment)
+    stop_freq = FrequencyProperty(call_setup=True, min=Iq.frequency.increment)
     rbw = RbwAttribute(default=1000, call_setup=True)
     avg_per_point = IntProperty(min=1, default=1, call_setup=True)
     amplitude = FloatProperty(min=0,
