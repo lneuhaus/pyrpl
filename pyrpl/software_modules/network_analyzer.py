@@ -11,6 +11,7 @@ from ..hardware_modules import all_inputs, all_output_directs, InputSelectProper
 from ..modules import SignalModule
 from ..acquisition_module import AcquisitionModule
 from ..widgets.module_widgets import NaWidget
+from ..hardware_modules.iq import Iq
 
 # timeit.default_timer() is THE precise timer to use (microsecond precise vs
 # milliseconds for time.time()).
@@ -119,7 +120,7 @@ class NaCurveFuture(PyrplFuture):
         self._fut = None # placeholder for next point future
         self.never_started = True
         super(NaCurveFuture, self).__init__()
-        self._module._start_acquisition()
+
         self.data_x = copy(self._module.data_x)  # In case of saving latter.
         self.data_avg = np.zeros(self.n_points,
                                  dtype=np.complex)
@@ -132,6 +133,7 @@ class NaCurveFuture(PyrplFuture):
 
     def start(self):
         # self._module.iq.output_direct = self._module.output_direct
+        self._module._start_acquisition()
         self._module.iq.amplitude = self._module.amplitude
         if self.never_started:
             self._module._emit_signal_by_name("clear_curve")
@@ -202,6 +204,7 @@ class NaCurveFuture(PyrplFuture):
 
     def _scan_finished(self):
         self.set_result(self.data_avg)
+        self.pause()
 
 
 class NaRunFuture(NaCurveFuture):
@@ -283,8 +286,8 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
     input = InputSelectProperty(call_setup=True)
     #input = ProxyProperty('iq.input')
     output_direct = SelectProperty(all_output_directs, call_setup=True)
-    start_freq = FrequencyProperty(call_setup=True)
-    stop_freq = FrequencyProperty(call_setup=True)
+    start_freq = FrequencyProperty(call_setup=True, min=Iq.frequency.increment)
+    stop_freq = FrequencyProperty(call_setup=True, min=Iq.frequency.increment)
     rbw = RbwAttribute(default=1000, call_setup=True)
     avg_per_point = IntProperty(min=1, default=1, call_setup=True)
     amplitude = FloatProperty(min=0,
@@ -322,6 +325,7 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
         #self.current_averages = 0
         self._time_last_point = 0
         self._update_data_x()
+
         super(NetworkAnalyzer, self)._init_module()
 
     @property
@@ -492,7 +496,6 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
         :return:
         """
         # super(NAAcquisitionManager, self)._start_acquisition()
-        self._update_data_x()
         x = self.data_x
         # preventive saturation
         amplitude = abs(self.amplitude)
@@ -542,6 +545,15 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
     def data_x(self):
         return self._data_x
 
+    @property
+    def frequencies(self):
+        """
+        alias for data_x
+
+        :return: frequency array
+        """
+        return self.data_x
+
     def _update_data_x(self):
         if self.logscale:
             raw_values = np.logspace(
@@ -587,3 +599,7 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
     @property
     def measured_time_per_point(self):
         return self._run_future.measured_time_per_point
+
+    def _setup(self):
+        self._update_data_x()  # precalculate frequency values
+        super(NetworkAnalyzer, self)._setup()

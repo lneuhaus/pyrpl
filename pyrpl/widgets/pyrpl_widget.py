@@ -290,6 +290,9 @@ class PyrplWidget(QtGui.QMainWindow):
             coords = [0, 0, 800, 600]
         try:
             self.window_position = coords
+            if QtGui.QApplication.desktop().screenNumber(self)==-1:
+                # window doesn't fit inside screen
+                self.window_position = (0,0)
         except Exception as e:
             self.logger.warning("Gui is not started. Cannot set window position.\n"\
                                 + str(e))

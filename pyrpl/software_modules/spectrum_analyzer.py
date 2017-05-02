@@ -102,8 +102,8 @@ class SpectrumAnalyzer(AcquisitionModule):
     """
     _widget_class = SpecAnWidget
     _gui_attributes = ["input",
-                       "baseband",
                        "center",
+                       "baseband",
                        "span",
                        "rbw",
                        #"points",
@@ -117,8 +117,11 @@ class SpectrumAnalyzer(AcquisitionModule):
                        "display_cross_amplitude",
                        "display_cross_phase"]
     _setup_attributes =["input",
-                       "baseband",
                        "center",
+                       "baseband",
+                        # better to set baseband after center,
+                        # otherwise, asking for baseband explicitly would be
+                        # overwritten by non-zero center
                        "span",
                        #"rbw",
                        #"points",
@@ -131,6 +134,7 @@ class SpectrumAnalyzer(AcquisitionModule):
                        "input2_baseband",
                        "display_cross_amplitude",
                        "display_cross_phase"]
+    PADDING_FACTOR = 16
     # numerical values
     nyquist_margin = 1.0
     if_filter_bandwidth_per_span = 1.0
@@ -168,7 +172,7 @@ class SpectrumAnalyzer(AcquisitionModule):
         return all_inputs(self).keys()
 
     # attributes
-    baseband = BoolProperty(call_setup=True)
+    baseband = BoolProperty(call_setup=True, default=True)
     span = SpanFilterProperty(doc="""
         Span can only be given by 1./sampling_time where sampling
         time is a valid scope sampling time.
@@ -215,6 +219,7 @@ class SpectrumAnalyzer(AcquisitionModule):
 
     # functions
     def _init_module(self):
+        self._transfer_function_square_cached = None
         self._last_touched = 'span'
         self.acbandwidth = 0
         self.baseband = False
@@ -270,12 +275,8 @@ class SpectrumAnalyzer(AcquisitionModule):
         """
         window = sig.get_window(self.window, self.data_length, fftbins=False)
         # empirical value for scaling flattop to sqrt(W)/V
-        filterfactor = 1/10. #np.sqrt(50)
-        # norm by datalength, by sqrt(50 Ohm), and something related to
-        # filter
-        # normfactor = 1.0 / self.data_length / np.sqrt(50.0) * filterfactor
-        normfactor = 1.0 / self.data_length / filterfactor
-        return window * normfactor
+        window/=(np.sum(window)/2)
+        return window
 
     def _get_iq_data(self):
         """
@@ -326,10 +327,11 @@ class SpectrumAnalyzer(AcquisitionModule):
         :return: frequency array
         """
         if self.baseband:
-            return np.fft.rfftfreq(self.data_length, self.sampling_time)
+            return np.fft.rfftfreq(self.data_length*self.PADDING_FACTOR,
+                                   self.sampling_time)
         else:
             return self.center + scipy.fftpack.fftshift( scipy.fftpack.fftfreq(
-                                  self.data_length,
+                                  self.data_length*self.PADDING_FACTOR,
                                   self.sampling_time)) #[self.useful_index()]
 
     def data_to_dBm(self, data): # will become obsolete
@@ -365,6 +367,47 @@ class SpectrumAnalyzer(AcquisitionModule):
             return 10 * np.log10(data / 2 / rbw)
         if self.display_unit == 'Vrms/sqrt(Hz)':
             return np.sqrt(data)/ np.sqrt(2)/rbw
+
+    def transfer_function_iq(self, frequencies):
+        # transfer function calculations
+        tf_iq = np.ones(len(frequencies), dtype=complex)
+        # iq transfer_function
+        if not self.baseband:
+            displaced_freqs = frequencies - self.center
+            for f in self._iq_bandwidth():
+                if f == 0:
+                    continue
+                elif f > 0:  # lowpass
+                    tf_iq *= 1.0 / (
+                        1.0 + 1j * displaced_freqs / f)
+                    # quadrature_delay += 2
+                elif f < 0:  # highpass
+                    tf_iq *= 1.0 / (
+                        1.0 + 1j * f / displaced_freqs)
+                    # quadrature_delay += 1  # one cycle extra delay per
+                    # highpass
+        return tf_iq
+
+    def transfer_function_scope(self, frequencies):
+        # scope transfer function
+        if not self.baseband:
+            displaced_freqs = frequencies - self.center
+        else:
+            displaced_freqs = frequencies
+        norm_freq = self._scope_decimation()*displaced_freqs/125e6
+        return np.sinc(norm_freq)
+
+    def transfer_function(self, frequencies):
+        """
+        Transfer function from the generation of quadratures to their
+        sampling, including scope decimation. At the moment, delays are not
+        taken into account (and the phase response is not guaranteed to be
+        exact.
+        """
+        return self.transfer_function_iq(frequencies) * \
+               self.transfer_function_scope(frequencies)
+
+
     # Concrete implementation of AcquisitionModule methods
     # ----------------------------------------------------
 
@@ -378,7 +421,14 @@ class SpectrumAnalyzer(AcquisitionModule):
         self._run_future.rbw = self.rbw
         return
 
+    def _free_up_resources(self):
+        self.scope.free()
+
     def _get_curve(self):
+        """
+        No transfer_function correction
+        :return:
+        """
         iq_data = self._get_filtered_iq_data() # get iq data (from scope)
         if not self.running_state in ["running_single", "running_continuous"]:
             self.pyrpl.scopes.free(self.scope) # free scope if not continuous
@@ -399,19 +449,30 @@ class SpectrumAnalyzer(AcquisitionModule):
             # --> In fact, we will use numpy.rfft insead of
             # scipy.fftpack.rfft because the output
             # format is directly a complex array, and thus, easier to handle.
-            fft1 = np.fft.fftpack.rfft(np.real(iq_data))
-            fft2 = np.fft.fftpack.rfft(np.imag(iq_data))
+            fft1 = np.fft.fftpack.rfft(np.real(iq_data),
+                                       self.data_length*self.PADDING_FACTOR)
+            fft2 = np.fft.fftpack.rfft(np.imag(iq_data),
+                                       self.data_length*self.PADDING_FACTOR)
             cross_spectrum = np.conjugate(fft1)*fft2
 
             res = np.array([abs(fft1)**2,
                             abs(fft2)**2,
                             np.real(cross_spectrum),
                             np.imag(cross_spectrum)])
-            return res#scipy.fftpack.fftshift(res)
+            # at some point, we need to cache the tf for performance
+            self._last_curve_raw = res # for debugging purpose
+            return res/abs(self.transfer_function(self.frequencies))**2
         else:
             # Realize the complex fft of iq data
-            res = scipy.fftpack.fftshift(scipy.fftpack.fft(iq_data))
-            return np.abs(res)**2 # [self.useful_index()]
+            res = scipy.fftpack.fftshift(scipy.fftpack.fft(iq_data,
+                                        self.data_length*self.PADDING_FACTOR))
+            # at some point we need to cache the tf for performance
+            self._last_curve_raw = np.abs(res)**2 # for debugging purpose
+            return self._last_curve_raw/abs(self.transfer_function(
+                self.frequencies))**2
+            #/ abs(self.transfer_function(
+                #self.frequencies))**2
+            # [self.useful_index()]
 
     def _remaining_time(self):
         """
@@ -425,13 +486,25 @@ class SpectrumAnalyzer(AcquisitionModule):
         """
         return self.scope._data_ready()
 
+    def _iq_bandwidth(self):
+        return self.iq.__class__.bandwidth.validate_and_normalize(
+            self.iq,
+            [self.span*self.if_filter_bandwidth_per_span]*4)
+
+    def _scope_decimation(self):
+        return self.scope.__class__.decimation.validate_and_normalize(
+                    self.scope,
+                    round(self.sampling_time/8e-9))
+
     def _start_acquisition(self):
         autosave_backup = self._autosave_active
         # setup iq module
         if not self.baseband:
+            raise NotImplementedError("iq mode is not supported in the "
+                                      "current release of Pyrpl.")
             self.iq.setup(
                 input = self.input,
-                bandwidth=[self.span*self.if_filter_bandwidth_per_span]*4,
+                bandwidth=self._iq_bandwidth(),
                 gain=0,
                 phase=0,
                 acbandwidth=self.acbandwidth,
@@ -453,10 +526,43 @@ class SpectrumAnalyzer(AcquisitionModule):
         self.scope.setup(input1=input1,
                          input2=input2,
                          average=True,
-                         duration=self.scope.data_length*self.sampling_time,
+                         duration=self.scope.data_length*self._scope_decimation()*8e-9,
                          trigger_source="immediately",
                          ch1_active=True,
                          ch2_active=True,
                          rolling_mode=False,
                          running_state='stopped')
+
         return self.scope._start_acquisition()
+
+    def save_curve(self):
+        """
+        Saves the curve(s) that is (are) currently displayed in the gui in
+        the db_system. Also, returns the list [curve_ch1, curve_ch2]...
+        """
+        """
+        Saves the curve(s) that is (are) currently displayed in the gui in
+        the db_system. Also, returns the list [curve_ch1, curve_ch2]...
+        """
+        if not self.baseband:
+            return super(SpectrumAnalyzer, self)._save_curve()
+        else:
+            d = self.setup_attributes
+            curves = [None, None]
+            sp1, sp2, cross_real, cross_imag = self.data_avg
+            for ch, active in [(0, self.display_input1_baseband),
+                               (1, self.display_input2_baseband)]:
+                if active:
+                    d.update({'ch': ch,
+                              'name': self.curve_name + ' ch' + str(ch + 1)})
+                    curves[ch] = self._save_curve(self._run_future.data_x,
+                                                  self._run_future.data_avg[ch],
+                                                  **d)
+            if self.display_cross_amplitude:
+                d.update({'ch': 'cross',
+                          'name': self.curve_name + ' cross'})
+                curves.append(self._save_curve(self._run_future.data_x,
+                                              self._run_future.data_avg[2] +
+                                               1j*self._run_future.data_avg[3],
+                                              **d))
+            return curves

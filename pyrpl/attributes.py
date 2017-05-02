@@ -1150,8 +1150,8 @@ class ProxyProperty(BaseProperty):
                     instance._signal_launcher.update_attribute_by_name.emit(
                         self.name, [self._target_to_proxy(instance,
                                                           value[0])])
-                if self.call_setup:
-                    instance.setup()
+                    if self.call_setup:
+                        instance.setup()
             module._signal_launcher.update_attribute_by_name.connect(
                 forward_update_attribute_by_name)
 

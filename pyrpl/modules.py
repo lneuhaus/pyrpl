@@ -143,10 +143,10 @@ class ModuleMetaClass(type):
                             "Trying to load attribute %s of module %s that "
                             "are invalid setup_attributes.",
                             sorted(kwds.keys())[0], self.name)
+                    if hasattr(self, '_setup'):
+                        self._setup()
                 finally:
                     self._setup_ongoing = False
-                if hasattr(self, '_setup'):
-                    self._setup()
             # b. place the new setup function in the module class
             self.setup = setup
         # 3. if setup has no docstring, then make one
@@ -514,8 +514,8 @@ class Module(with_metaclass(ModuleMetaClass, object)):
         settings)
         """
         curve = CurveDB.create(x_values,
-                                     y_values,
-                                     **attributes)
+                               y_values,
+                               **attributes)
         return curve
 
     def free(self):
