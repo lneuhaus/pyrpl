@@ -245,10 +245,11 @@ class RunningStateProperty(SelectProperty):
                 # it continuous
                 obj._run_future.start()
         elif val in ["paused", "stopped"]:
-            obj._run_future.cancel() #  single cannot be resumed
-            #  on the other hand, continuous can still be started again
-            #  eventhough it is cancelled. Basically, the result will never
-            #  be set, but the acquisition can still be going on indefinitely.
+            if hasattr(obj, '_run_future'):
+                obj._run_future.cancel() #  single cannot be resumed
+                #  on the other hand, continuous can still be started again
+                #  eventhough it is cancelled. Basically, the result will never
+                #  be set, but the acquisition can still be going on indefinitely.
 
 
 class SignalLauncherAcquisitionModule(SignalLauncher):
@@ -364,16 +365,18 @@ class AcquisitionModule(Module):
                        min=1)
     curve_name = StringProperty(doc="name of the curve to save.")
 
-    def _init_module(self):
-        super(AcquisitionModule, self)._init_module()
-        self.curve_name = self.name + " curve"
+    def __init__(self, parent, name=None):
         # The curve promise is initialized with a dummy Future, because
         # instantiating CurveFuture launches a curve acquisition
         self._curve_future = Future()
+
+        super(AcquisitionModule, self).__init__(parent, name=name)
+        self.curve_name = self.name + " curve"
+        self._run_future = self._run_future_cls(self,
+                                                min_delay_ms=self.MIN_DELAY_SINGLE_MS)
         # On the other hand, RunFuture has a start method and is not started
         # at instanciation.
-        self._run_future = self._run_future_cls(self,
-                                   min_delay_ms=self.MIN_DELAY_SINGLE_MS)
+
 
     def _new_curve_future(self, min_delay_ms):
         self._curve_future.cancel()
@@ -381,11 +384,7 @@ class AcquisitionModule(Module):
                                                     min_delay_ms=min_delay_ms)
 
     def _new_run_future(self):
-        #assert self.running_state in ["running_single",
-        #                              "running_continuous"], \
-        #                             "Run future cannot be created in " \
-        #                             "state %s"%self.running_state
-        if hasattr(self, "_run_future"): #  for _init_module
+        if hasattr(self, "_run_future"):
             self._run_future.cancel()
         if self.running_state == "running_continuous":
             self._run_future = self._run_future_cls(self,

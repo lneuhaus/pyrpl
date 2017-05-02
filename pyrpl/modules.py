@@ -324,9 +324,9 @@ class Module(with_metaclass(ModuleMetaClass, object)):
         self._autosave_active = True
         # Only top level modules should call _load_setup_attributes() since
         # this call propagates through all child modules
-        if not isinstance(self.parent, Module):
-            # attributes are loaded but _setup() is not called
-            self._load_setup_attributes()
+        ##if not isinstance(self.parent, Module):
+        ##    # attributes are loaded but _setup() is not called
+        ##   self._load_setup_attributes()
 
     def _init_module(self):
         """

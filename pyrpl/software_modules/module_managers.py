@@ -43,7 +43,8 @@ class ModuleManager(Module):
         return [key for key in self.pyrpl.rp.modules.keys() if key[
                                 :-1]==self.name[:-1] or key==self.name[:-1]]
 
-    def _init_module(self):
+    def __init__(self, parent, name=None):
+        super(ModuleManager, self).__init__(parent, name=name)
         self.all_modules = [getattr(self.pyrpl.rp, name) for name in
                              self.hardware_module_names]
 

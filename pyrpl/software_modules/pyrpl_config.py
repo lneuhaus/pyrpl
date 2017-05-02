@@ -12,7 +12,9 @@ class PyrplConfig(Module):
     _gui_attributes = ["configfile", "module", "refresh", "save", "text"]
 
     configfile = StringProperty()
-    def _init_module(self):
+
+    def __init__(self, parent, name=None):
+        super(PyrplConfig, self).__init__(parent, name=name)
         self.configfile = self.pyrpl.c._filename or ""
 
     text = TextProperty()

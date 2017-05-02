@@ -150,10 +150,6 @@ class IIR(FilterModule):
                                      call_setup=True,
                                      default=-1)
 
-    def _init_module(self):
-        #self._logger.setLevel(30)
-        pass
-
     @property
     def output_saturation(self):
         """ returns True if the output of the IIR filter has saturated since

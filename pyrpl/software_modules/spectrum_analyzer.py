@@ -199,36 +199,14 @@ class SpectrumAnalyzer(AcquisitionModule):
     display_cross_phase = BoolProperty(doc="should cross-spectrum amplitude"
                                               " be displayed in "
                                               "baseband-mode?")
-    rbw = RbwProperty("span")
-                      #doc="Rbw of the measurement (changing this setting "
-                      #    "will also affect the span)",
-                      #call_setup=False)
+    rbw = RbwProperty("span", doc="Residual Bandwidth, this is a readonly "
+                                  "attribute, only span can be changed.")
 
     acbandwidth = SpecAnAcBandwidth(call_setup=True)
 
-    # _signal_launcher = SignalLauncherSpectrumAnalyzer
-
-    """
-    def _setup(self):
-        super(SpectrumAnalyzer, self)._setup()
-        if self._last_touched == 'span':
-            self.rbw = self.span/self.data_length
-        else:
-            self.span = self.rbw*self.data_length
-    """
-
-    # functions
-    def _init_module(self):
+    def __init__(self, parent, name=None):
+        super(SpectrumAnalyzer, self).__init__(parent, name=name)
         self._transfer_function_square_cached = None
-        self._last_touched = 'span'
-        self.acbandwidth = 0
-        self.baseband = False
-        self.center = 0
-        self.window = "flattop"
-        self.points = Scope.data_length
-        self._is_setup = False
-        super(SpectrumAnalyzer, self)._init_module()
-        self.rp = self.pyrpl.rp
 
     @property
     def iq(self):
@@ -419,7 +397,6 @@ class SpectrumAnalyzer(AcquisitionModule):
         # Redefined because a SpecAnRun needs to know its rbw
         super(SpectrumAnalyzer, self)._new_run_future()
         self._run_future.rbw = self.rbw
-        return
 
     def _free_up_resources(self):
         self.scope.free()
