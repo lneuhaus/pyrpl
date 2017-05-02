@@ -1,6 +1,7 @@
 from __future__ import division
 from collections import OrderedDict
 from PyQt4 import QtCore
+import logging
 from ...modules import SignalLauncher
 from ...module_attributes import ModuleListProperty
 from .input import *
@@ -247,12 +248,12 @@ class Lockbox(LockboxModule):
             self._asg = self.pyrpl.asgs.pop(self.name)
         return self._asg
 
-    def calibrate_all(self):
+    def calibrate_all(self, autosave=False):
         """
         Calibrates successively all inputs
         """
         for input in self.inputs:
-            input.calibrate()
+            input.calibrate(autosave=autosave)
 
     def unlock(self, reset_offset=True):
         """
@@ -293,7 +294,6 @@ class Lockbox(LockboxModule):
                 stage.enable()
                 loop.interval = stage.duration
             else:
-
                 lockbox.final_stage.enable()
                 loop._clear()
                 lockbox._lock_loop = None
@@ -303,12 +303,10 @@ class Lockbox(LockboxModule):
     def relock(self, test_auto_lock=False, **kwargs):
         """ locks the cavity if it is_locked is false. Returns the value of
         is_locked """
-        if test_auto_lock and not self.auto_lock:
+        if test_auto_lock and (not self.auto_lock or self._setup_ongoing):
             # skip if autolock is off and call from autolock_timer
             return
-        elif (self._lock_loop is not None and  # lock acquisition in place
-              self.current_stage in self.sequence and  # locked at a stage
-              self._state_change_time + self._auto_lock_timeout > time()):
+        elif self.is_locking():
             # lock acquisition not taking too long -> do not interrupt
             return False
         if self.is_locked_and_final(loglevel=0):
@@ -353,6 +351,11 @@ class Lockbox(LockboxModule):
     def is_locked_and_final(self, loglevel=logging.INFO):
         return (self.current_state == 'final_stage' and
                 self.is_locked(loglevel=loglevel))
+
+    def is_locking(self):
+        return  (self._lock_loop is not None and  # lock acquisition in place
+                 self.current_stage in self.sequence and  # locked at a stage
+                 self._state_change_time + self._auto_lock_timeout > time())
 
     def _lockstatus(self):
         """ this function is a placeholder for periodic lockstatus

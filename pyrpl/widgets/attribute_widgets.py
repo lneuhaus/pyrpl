@@ -975,11 +975,12 @@ class ListComboBox(QtGui.QWidget):
 
     def get_list(self):
         return [float(combo.currentText()) for combo in self.combos]
-    """
-    @property
-    def options(self):
-        return  self._options
-    """
+
+    #"""
+    #@property
+    #def options(self):
+    #    return  self._options
+    #"""
 
     def set_max_cols(self, n_cols):
         """
@@ -1129,12 +1130,10 @@ class SelectAttributeWidget(BaseAttributeWidget):
         """
         try:
             index = self.options.index(str(new_value))
-        except IndexError:
-            self.module._logger.warning("SelectWidget %s could not find current "
-                                        "value %s in the options %s",
-                                        self.name,
-                                        self.new_value,
-                                        self.options)
+        except (IndexError, ValueError):
+            self.module._logger.warning("SelectWidget %s could not find current value %s "
+                                        "in the options %s",
+                                        self.name, new_value, self.options)
             index = 0
         self.widget.setCurrentIndex(index)
 

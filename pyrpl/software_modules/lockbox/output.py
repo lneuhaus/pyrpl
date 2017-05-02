@@ -221,12 +221,13 @@ class OutputSignal(Signal):
                                  self.name)
         else:
             # write values to pid module
-            self.pid.setpoint = input.expected_signal(setpoint)
+            self.pid.setpoint = input.expected_signal(setpoint) + input.calibration_data._analog_offset
             self.pid.p = self.p / external_loop_gain * gain_factor
             self.pid.i = self.i / external_loop_gain * gain_factor
             self.pid.input = input.signal()
         # offset is the last thing that is modified to guarantee the offset setting with the gains
         if offset is not None:
+            print 'reset offset'
             self.pid.ival = offset
 
     def _setup_offset(self, offset):
