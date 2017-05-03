@@ -319,7 +319,7 @@ class Module(with_metaclass(ModuleMetaClass, object)):
         for submodule in self._module_attributes:
             getattr(self, submodule)
         # custom module initialization hook
-        self._init_module()
+        # self._init_module()
         # enable autosave and load last state from config file
         self._autosave_active = True
         # Only top level modules should call _load_setup_attributes() since

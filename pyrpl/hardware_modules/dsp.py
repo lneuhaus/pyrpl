@@ -36,18 +36,19 @@ def all_inputs_keys(instance):
         except AttributeError:
             pass
         else:
-            for module in pyrpl.software_modules:
-                try:
-                    module_signals = module.signals
-                except AttributeError:
-                    pass
-                else:
-                    for name, signal in module_signals.items():
-                        signals.append(signal.name)
-                        signal = signal.parent
-                        while signal != pyrpl:
-                            signals[-1] = signal.name + '.' + signals[-1]
+            if hasattr(pyrpl, 'software_modules'):
+                for module in pyrpl.software_modules:
+                    try:
+                        module_signals = module.signals
+                    except AttributeError:
+                        pass
+                    else:
+                        for name, signal in module_signals.items():
+                            signals.append(signal.name)
                             signal = signal.parent
+                            while signal != pyrpl:
+                                signals[-1] = signal.name + '.' + signals[-1]
+                                signal = signal.parent
     return signals
 
 
