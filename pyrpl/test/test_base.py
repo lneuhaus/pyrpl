@@ -7,6 +7,9 @@ from .. import Pyrpl, user_config_dir, global_config
 from ..pyrpl_utils import time
 from ..errors import UnexpectedPyrplError, ExpectedPyrplError
 
+# I don't know why, in nosetests, the logger goes to UNSET...
+logger_quamash = logging.getLogger(name='quamash')
+logger_quamash.setLevel(logging.INFO)
 
 class TestPyrpl(object):
     """ base class for all pyrpl tests """
