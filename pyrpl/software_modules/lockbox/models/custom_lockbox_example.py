@@ -80,7 +80,8 @@ class CustomLockbox(Lockbox):
 #        self.plot.append(green=np.sin(time()), red=np.cos(time()))
 
 class ExampleLoop(LockboxPlotLoop): # or inherit from
-    def _init_module(self):
+    def __init__(self, parent, name=None):
+        super(ExampleLoop, self).__init__(parent, name=name)
         self.c.n = 0
         self.last_texcess = 0
         self.result_ready = "not ready"

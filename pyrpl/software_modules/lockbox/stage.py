@@ -76,11 +76,11 @@ class Stage(LockboxModule):
                              increment=0.1)
 
     # outputs is a dict of submodules, containing an entry of
-    # StageOutput per Lockbox output (initialized in _init_module)
+    # StageOutput per Lockbox output (initialized in __init__)
     outputs = ModuleDictProperty(module_cls=LockboxModule)
 
-    def _init_module(self):
-        super(Stage, self)._init_module()
+    def __init__(self, parent, name=None):
+        super(Stage, self).__init__(parent, name=name)
         for output in self.lockbox.outputs:
             self.outputs[output.name] = StageOutput
         self._signal_launcher.stage_created.emit([self])

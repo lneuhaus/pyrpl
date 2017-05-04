@@ -332,7 +332,9 @@ class Module(with_metaclass(ModuleMetaClass, object)):
         """
         To implement in child class if needed.
         """
-        pass
+        self._logger.warning("Function _init_module is obsolete and will be "
+                             "removed soon. Please migrate the corresponding "
+                             "code to __init__.")
 
     @property
     def _autosave_active(self):

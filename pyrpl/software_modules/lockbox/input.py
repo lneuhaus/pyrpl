@@ -235,6 +235,11 @@ class InputSignal(Signal):
                                        doc="the dsp module or lockbox "
                                             "signal used as input signal")
 
+    def __init__(self, parent, name=None):
+        # self.parameters = dict()
+        self._lasttime = -1e10
+        super(InputSignal, self).__init__(parent, name=name)
+
     def _input_signal_dsp_module(self):
         """ returns the dsp signal corresponding to input_signal"""
         signal = self.input_signal
@@ -447,13 +452,6 @@ class InputSignal(Signal):
     #                        self._variable)
     #         return None
 
-    def _init_module(self): #   This is probably obsolete, should either go
-        # to __init__ or be deleted
-        """
-        lockbox is the lockbox instance to which this input belongs.
-        """
-        self.parameters = dict()
-        self._lasttime = -1e10
 
     def _create_widget(self):
         widget = super(InputSignal, self)._create_widget()
