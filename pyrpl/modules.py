@@ -251,10 +251,6 @@ class Module(with_metaclass(ModuleMetaClass, object)):
 
     methods to implement in derived class:
     --------------------------------------
-     - _init_module(): initializes the module at startup. During this
-     initialization, attributes can be initialized without overwriting config
-     file values. Practical to use instead of __init__ to avoid calling
-     super().__init__()
      - _setup(): sets the module ready for acquisition/output with the
      current attribute's values. The metaclass of the module autogenerates a
      function like this:
