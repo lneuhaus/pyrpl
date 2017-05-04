@@ -301,32 +301,13 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
         doc="Bandwidth of the input high-pass filter of the na.",
         call_setup=True)
 
-    def _init_module(self):
-        # to remove once order is fixed
+    def __init__(self, parent, name=None):
         self._setup_attributes.remove('running_state')
         self._setup_attributes.append('running_state')
-
         self.sleeptimes = 0.5
-        self.rbw = 200
-        self.start_freq = 200
-        self.stop_freq = 50000
-        self.points = 1001
-
-        self.avg_per_point = 1
-        self.amplitude = 0.01
-        self.input = 'in1'
-        self.output_direct = 'off'
-        self.acbandwidth = 0
-        self.logscale = False
-        self.infer_open_loop_tf = False
-        self.curve_name = 'na_curve'
-        self._is_setup = False
-        self.time_per_point = self._time_per_point()
-        #self.current_averages = 0
-        self._time_last_point = 0
-        self._update_data_x()
-
-        super(NetworkAnalyzer, self)._init_module()
+        self._time_last_point = None
+        self._data_x = None
+        super(NetworkAnalyzer, self).__init__(parent, name=name)
 
     @property
     def iq(self):
@@ -454,7 +435,7 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
         return NaCurveFuture(self, min_delay_ms)
 
     def _new_point_future(self, index, min_delay_ms):
-        if hasattr(self, "_point_future"): #  for _init_module
+        if hasattr(self, "_point_future"):
             self._point_future.cancel()
         self._point_future = NaPointFuture(self, index, min_delay_ms)
         return self._point_future

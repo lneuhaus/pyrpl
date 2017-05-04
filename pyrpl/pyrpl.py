@@ -144,6 +144,7 @@ class Pyrpl(object):
                     module = getattr(cls, "_make_"+cls.__name__)(self, name)
                 else:
                     module = cls(self, name)
+                module._load_setup_attributes()
             except:
                 self.logger.error('Something went wrong when loading the software module "%s"',
                                   name)

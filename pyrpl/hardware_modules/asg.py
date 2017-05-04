@@ -101,12 +101,10 @@ def make_asg(channel=0):
         output_directs = None
         addr_base = 0x40200000
 
-        def _init_module(self):
+        def __init__(self, parent, name=None):
+            super(Asg, self).__init__(parent, name=name)
             self._counter_wrap = 0x3FFFFFFF  # correct value unless you know better
             self._writtendata = np.zeros(self.data_length)
-            self.waveform = 'sin'
-            self.output_direct = self.default_output_direct
-            self.trigger_source = 'immediately'
 
         @property
         def output_directs(self):

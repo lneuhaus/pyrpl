@@ -126,8 +126,9 @@ class TestNA(TestPyrpl):
         if self.r is None:
             return
         self.na.iq.output_signal = 'quadrature'
-        self.na.setup(start_freq=1e5, stop_freq=2e5, rbw=10000,
-                      points=100, input=self.na.iq, acbandwidth=0)
+        self.na.setup(amplitude=1., start_freq=1e5, stop_freq=2e5, rbw=10000,
+                      points=100, avg_per_points=10, input=self.na.iq,
+                      acbandwidth=0)
         y = self.na.curve()
         assert(all(abs(y-1)<0.1))  # If transfer function is taken into
         # account, that should be much closer to 1...

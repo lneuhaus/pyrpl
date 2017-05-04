@@ -447,7 +447,8 @@ class InputSignal(Signal):
     #                        self._variable)
     #         return None
 
-    def _init_module(self):
+    def _init_module(self): #   This is probably obsolete, should either go
+        # to __init__ or be deleted
         """
         lockbox is the lockbox instance to which this input belongs.
         """

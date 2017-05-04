@@ -55,6 +55,7 @@ class TestScope(TestPyrpl):
         setup when something is changed
         """
         self.r.asg1.frequency = 0
+        self.r.asg1.trigger_source = 'immediately'
         self.r.scope.setup_attributes = dict(duration=0.5,
                            trigger_source='asg1',
                            trigger_delay=0.,

@@ -324,12 +324,6 @@ class Scope(HardwareModule, AcquisitionModule):
     ch2_active = BoolProperty(default=True,
                               doc="should ch2 be displayed in the gui?")
 
-    def _init_module(self):
-        # self._trigger_source_memory = 'off'  # "immediately" #fixes bug with
-        # trigger_delay for 'immediate' at startup
-        # self._trigger_delay_memory = 0
-        super(Scope, self)._init_module()  # _init_module of AcquisitionModule
-
     def _ownership_changed(self, old, new):
         """
         If the scope was in continuous mode when slaved, it has to stop!!
