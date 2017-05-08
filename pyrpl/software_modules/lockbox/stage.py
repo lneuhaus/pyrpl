@@ -136,9 +136,9 @@ class Stage(LockboxModule):
                                      "to call!", self.function_call, self.name)
             else:
                 try:
-                    func(self)
-                except TypeError:
                     func()
+                except TypeError:
+                    func(self)
         # set lockbox state to stage name
         self.lockbox.current_state = self.name
 
