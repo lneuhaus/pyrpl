@@ -266,7 +266,7 @@ class InputSignal(Signal):
         """
         try:
             with self.pyrpl.scopes.pop(self.name) as scope:
-                self.lockbox.sweep()
+                self.lockbox._sweep()
                 if "sweep" in scope.states:
                     scope.load_state("sweep")
                 else:

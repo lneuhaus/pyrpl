@@ -177,10 +177,10 @@ class SpectrumAnalyzer(AcquisitionModule):
     center = CenterAttribute(call_setup=True)
     # points = IntProperty(default=16384, call_setup=True)
     window = SelectProperty(options=windows, call_setup=True)
-    input = InputSelectProperty(options=all_inputs, call_setup=True)
-    input1_baseband = InputSelectProperty(options=all_inputs, call_setup=True,
+    input = InputSelectProperty(options=all_inputs, call_setup=True, ignore_errors=True)
+    input1_baseband = InputSelectProperty(options=all_inputs, call_setup=True, ignore_errors=True,
                                           doc="input1 for baseband mode")
-    input2_baseband = InputSelectProperty(options=all_inputs, call_setup=True,
+    input2_baseband = InputSelectProperty(options=all_inputs, call_setup=True, ignore_errors=True,
                                           doc="input2 for baseband mode")
     display_input1_baseband = BoolProperty(doc="should input1 spectrum be "
                                                "displayed in "

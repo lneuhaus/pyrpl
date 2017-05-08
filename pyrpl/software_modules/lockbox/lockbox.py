@@ -253,7 +253,10 @@ class Lockbox(LockboxModule):
         Calibrates successively all inputs
         """
         for input in self.inputs:
-            input.calibrate(autosave=autosave)
+            try:
+                input.calibrate(autosave=autosave)
+            except:
+                pass
 
     def unlock(self, reset_offset=True):
         """
@@ -266,7 +269,7 @@ class Lockbox(LockboxModule):
             output.unlock(reset_offset=reset_offset)
         self.current_state = 'unlock'
 
-    def sweep(self):
+    def _sweep(self):
         """
         Performs a sweep of one of the output. No output default kwds to avoid
         problems when use as a slot.
@@ -274,6 +277,13 @@ class Lockbox(LockboxModule):
         self.unlock()
         self.outputs[self.default_sweep_output].sweep()
         self.current_state = "sweep"
+
+    def sweep(self):
+        """
+        Performs a sweep of one of the output. No output default kwds to avoid
+        problems when use as a slot.
+        """
+        return self._sweep()
 
     _lock_loop = None  # this variable will store the lock loop
     def lock(self, **kwds):

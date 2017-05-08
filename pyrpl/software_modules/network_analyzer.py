@@ -280,7 +280,7 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
                        "infer_open_loop_tf"]
     _setup_attributes = _gui_attributes + ['running_state']
     # _callback_attributes = _gui_attributes
-    input = InputSelectProperty(call_setup=True)
+    input = InputSelectProperty(call_setup=True, ignore_errors=True)
     #input = ProxyProperty('iq.input')
     output_direct = SelectProperty(all_output_directs, call_setup=True)
     start_freq = FrequencyProperty(call_setup=True)

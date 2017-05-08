@@ -204,7 +204,7 @@ class HighFinesseInput(InputSignal):
                 scope.save_state("autosweep_zoom")  # save state for debugging or modification
                 self._logger.debug("calibration threshold: %f", threshold)
                 curves = scope.curve_async()
-                self.lockbox.sweep()  # start sweep only after arming the scope
+                self.lockbox._sweep()  # start sweep only after arming the scope
                 # give some extra (10x) timeout time in case the trigger is missed
                 curve1, curve2 = curves.await_result(timeout=10./self.lockbox.asg.frequency+scope.duration)
                 times = scope.times
