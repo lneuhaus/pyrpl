@@ -5,18 +5,22 @@ from ..model import *
 class InterferometerPort1(InputDirect):
     name = 'port1'
 
+    #def expected_signal(self, phase):
+    #    return self.mean + .5 * (self.max - self.min) * \
+    #                       np.sin(phase)
     def expected_signal(self, phase):
-        return self.mean + .5 * (self.max - self.min) * \
-                           np.sin(phase)
-
+        return (self.max + self.min)/2 + .5 * (self.max - self.min) * \
+                               np.sin(phase)
 
 class InterferometerPort2(InputDirect):
     name = 'port2'
 
+    #def expected_signal(self, phase):
+    #    return self.mean - .5 * (self.max - self.min) * \
+    #                       np.sin(phase)
     def expected_signal(self, phase):
-        return self.mean - .5 * (self.max - self.min) * \
-                           np.sin(phase)
-
+        return (self.max + self.min)/2 - .5 * (self.max - self.min) * \
+                               np.sin(phase)
 
 class Interferometer(Model):
     name = "Interferometer"

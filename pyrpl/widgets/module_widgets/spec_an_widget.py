@@ -83,7 +83,8 @@ class SpecAnWidget(ModuleWidget):
 
     def autoscale_display(self):
         """Autoscale pyqtgraph"""
-        self.plot_item.autoRange()
+        pass
+        #self.plot_item.autoRange()
 
     def run_continuous_clicked(self):
         """

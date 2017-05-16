@@ -168,8 +168,6 @@ class NaWidget(ModuleWidget):
 
         sl = slice(max(0, self.CHUNK_SIZE * chunk_index - 1), min(self.CHUNK_SIZE * (chunk_index + 1), self.module.last_valid_point), 1) # make sure there is an overlap between slices
         data = self.module.y_averaged[sl]
-        print("Calling update_point of NA gui after %.1f ms.",
-              (time() - self.last_updated_time) * 1000.0)
         self.chunks[chunk_index].setData(self.module.x[sl],
                                          self._magnitude(data))
         self.chunks_phase[chunk_index].setData(self.module.x[sl],
