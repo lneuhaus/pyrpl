@@ -85,14 +85,13 @@ def make_asg(channel=0):
 
     class Asg(HardwareModule, SignalModule):
         _widget_class = AsgWidget
-        _setup_attributes = ["waveform",
-                             "amplitude",
-                             "offset",
-                             "frequency",
-                             "trigger_source",
-                             "output_direct"]
-        _gui_attributes = _setup_attributes
-        # _callback_attributes = ["trigger_source"]
+        _gui_attributes = ["waveform",
+                           "amplitude",
+                           "offset",
+                           "frequency",
+                           "trigger_source",
+                           "output_direct"]
+        _setup_attributes = _gui_attributes + ["cycles_per_burst"]
 
         _DATA_OFFSET = set_DATA_OFFSET
         _VALUE_OFFSET = set_VALUE_OFFSET
@@ -256,7 +255,6 @@ def make_asg(channel=0):
             """
             Sets up the function generator. (just setting attributes is ok).
             """
-
             old_trigger_source = self.trigger_source
             self.on = False
             self.sm_reset = True

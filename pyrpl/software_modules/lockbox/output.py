@@ -172,7 +172,9 @@ class OutputSignal(Signal):
         self.lockbox.asg.setup(amplitude=self.sweep_amplitude,
                                offset=self.sweep_offset,
                                frequency=self.sweep_frequency,
-                               waveform=self.sweep_waveform)
+                               waveform=self.sweep_waveform,
+                               trigger_source='immediately',
+                               cycles_per_burst=0)
         self.pid.setpoint = 0.
         self.pid.p = 1.
         self.current_state = 'sweep'
