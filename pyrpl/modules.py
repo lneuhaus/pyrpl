@@ -601,6 +601,9 @@ class Module(with_metaclass(ModuleMetaClass, object)):
             # anything but the public API of memory.py
         self._signal_launcher.change_ownership.emit()
 
+    def _ownership_changed(self, old, new):
+        pass
+
     def __enter__(self):
         """
         This function is executed in the context manager construct with
