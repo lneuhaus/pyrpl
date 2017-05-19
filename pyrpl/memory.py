@@ -94,6 +94,9 @@ except:
                     lambda dumper, data: dumper.represent_str(str(data)))
         OrderedDumper.add_representer(np.ndarray,
                     lambda dumper, data: dumper.represent_list(list(data)))
+        # I added the following two lines to make pyrpl compatible with pyinstruments. In principle they can be erased
+        if isinstance(data, dict) and not isinstance(data, OrderedDict):
+            data = OrderedDict(data)
         return yaml.dump(data,
                          stream=stream,
                          Dumper=OrderedDumper,
