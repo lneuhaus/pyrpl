@@ -37,7 +37,8 @@ class TestScope(TestPyrpl):
                        amplitude=0.4,
                        offset=0.5,
                        waveform='sin',
-                       output_direct='off')
+                       output_direct='off',
+                       trigger_source='immediately')
         assert self.t.armed == False
         # confirm that trigger outputs the right phase
         asg0phase = self.t.output_signal_to_phase(self.pyrpl.rp.sampler.trig)

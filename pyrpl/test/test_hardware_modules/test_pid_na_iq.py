@@ -56,7 +56,7 @@ class TestPidNaIq(TestPyrpl):
         tests whether the modeled transfer function of pid module with
         any possible inputfilter (firstorder) corresponds to measured tf
         """
-        error_threshold = 1.0
+        error_threshold = 0.3 # 0.15 is ok for all but -3 MHz filter
         # testing one pid is enough
         pid = self.pyrpl.rp.pid0
         na = self.pyrpl.na
@@ -64,7 +64,7 @@ class TestPidNaIq(TestPyrpl):
                  stop_freq=5e6,
                  # points 101->11, it was taking ages
                  points=11,
-                 rbw=100,
+                 rbw=1000,
                  avg=1,
                  amplitude=0.1,
                  input=pid,
@@ -89,13 +89,15 @@ class TestPidNaIq(TestPyrpl):
 
         pid.inputfilter  # make sure this has been accessed before next step
         inputfilters = pid.inputfilter_options
-        for bw in inputfilters:
+        for bw in reversed(inputfilters):
             pid.inputfilter = [bw]
             data = na.curve()
             f = na.data_x
             theory = pid.transfer_function(f, extradelay=extradelay)
             relerror = np.abs((data - theory) / theory)
-            maxerror = np.max(relerror)
+            # get max error for values > -50 dB (otherwise its just NA noise)
+            mask = np.asarray(np.abs(theory) > 3e-3, dtype=np.float)
+            maxerror = np.max(relerror*mask)
             if maxerror > error_threshold:
                 print(maxerror)
                 c = CurveDB.create(f, data, name='test_inputfilter-failed-data')

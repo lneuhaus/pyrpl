@@ -694,7 +694,8 @@ class FilterRegister(BaseRegister, FilterProperty):
 
     def valid_frequencies(self, obj):
         """ returns a list of all valid filter cutoff frequencies"""
-        valid_bits = range(0, self._MAXSHIFT(obj)-1)
+        #valid_bits = range(0, self._MAXSHIFT(obj)-1)  # this is possible
+        valid_bits = range(0, self._MAXSHIFT(obj)-2)  # this gives reasonable results (test_filter)
         pos = list([self.to_python(obj, b | 0x1 << 7) for b in valid_bits])
         pos = [int(val) if not np.iterable(val) else int(val[0]) for val in pos]
         neg = [-val for val in reversed(pos)]
