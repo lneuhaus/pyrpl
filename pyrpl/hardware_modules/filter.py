@@ -11,7 +11,7 @@ class FilterModule(DspModule):
                                      "0 = off, negative bandwidth = highpass")
 
     @property
-    def inputfilters(self):
-        return self._valid_inputfilter_frequencies()
+    def inputfilter_options(self):
+        return self.__class__.inputfilter.valid_frequencies(self)
 
-    _valid_inputfilter_frequencies = inputfilter.valid_frequencies
+    #_valid_inputfilter_frequencies = inputfilter.valid_frequencies

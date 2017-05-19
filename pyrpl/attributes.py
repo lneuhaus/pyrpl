@@ -698,19 +698,23 @@ class FilterRegister(BaseRegister, FilterProperty):
         pos = list([self.to_python(obj, b | 0x1 << 7) for b in valid_bits])
         pos = [int(val) if not np.iterable(val) else int(val[0]) for val in pos]
         neg = [-val for val in reversed(pos)]
-        return neg + [0] + pos
+        valid_frequencies = neg + [0] + pos
+        if obj is not None and not hasattr(obj, self.name+'_options') and not hasattr(obj.__class__, self.name+'_options'):
+            setattr(obj, self.name+'_options', valid_frequencies)
+        return valid_frequencies
 
     # empirical correction factors for the cutoff frequencies in order to be
     # able to accurately model implemented bandwidth with an analog
     # butterworth filter. Works well up to 5 MHz. See unittest test_inputfilter
-    correction_factors = {0.25: 1.65,
-                           0.125: 1.17,
-                           0.0625: 1.08,
-                           0.03125: 1.04,
-                           0.015625: 1.02,
-                           0.0078125: 1.01,
-                           0.001953125: 1.0,
-                           0.00390625: 1.0}
+    correction_factors = {0.5: 0.7,
+                          0.25: 1.65,
+                          0.125: 1.17,
+                          0.0625: 1.08,
+                          0.03125: 1.04,
+                          0.015625: 1.02,
+                          0.0078125: 1.01,
+                          0.001953125: 1.0,
+                          0.00390625: 1.0}
 
     def to_python(self, obj, value):
         """

@@ -50,17 +50,18 @@ class TestPidNaIq(TestPyrpl):
                                            name='test_na-failed-relerror'))
                 assert False, maxerror
 
+
     def test_inputfilter(self):
         """
         tests whether the modeled transfer function of pid module with
         any possible inputfilter (firstorder) corresponds to measured tf
         """
-        error_threshold = 0.03
+        error_threshold = 1.0
         # testing one pid is enough
-        pid = self.p.rp.pid0
-        na = self.p.network_analyzer
+        pid = self.pyrpl.rp.pid0
+        na = self.pyrpl.na
         na.setup(start_freq=10e3,
-                 stop_freq=20e6,
+                 stop_freq=5e6,
                  # points 101->11, it was taking ages
                  points=11,
                  rbw=100,
@@ -87,7 +88,7 @@ class TestPidNaIq(TestPyrpl):
         pid.ival = 0
 
         pid.inputfilter  # make sure this has been accessed before next step
-        inputfilters = pid._inputfilter_options
+        inputfilters = pid.inputfilter_options
         for bw in inputfilters:
             pid.inputfilter = [bw]
             data = na.curve()
@@ -105,6 +106,7 @@ class TestPidNaIq(TestPyrpl):
                 c.add_child(CurveDB.create(f, relerror,
                                            name='test_inputfilter-failed-relerror'))
                 assert False, (maxerror, bw)
+
 
 
     def test_pid_na1(self):

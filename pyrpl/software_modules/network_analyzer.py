@@ -25,9 +25,9 @@ APP = QtGui.QApplication.instance()
 
 class NaAcBandwidth(FilterProperty):
     def valid_frequencies(self, instance):
-        return [freq for freq
-                in instance.iq._valid_inputfilter_frequencies(instance.iq)
-                if freq >= 0]
+        return [-freq for freq
+                in instance.iq.inputfilter_options
+                if freq <= 0]
 
     def get_value(self, instance):
         if instance is None:
