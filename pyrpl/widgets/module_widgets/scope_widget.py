@@ -15,14 +15,14 @@ class ScopeWidget(ModuleWidget):
     """
     Widget for scope
     """
-    TRANSPARENCIES = [255, 100]
     def init_gui(self):
         """
         sets up all the gui for the scope.
         """
         self.datas = [None, None]
         self.times = None
-        self.ch_col = ('green', 'red')
+        self.ch_color = ('green', 'red')
+        self.ch_transparency = (255, 255)  # 0 is transparent, 255 is not  # deactivated transparency for speed reasons
         #self.module.__dict__['curve_name'] = 'scope'
         self.main_layout = QtGui.QVBoxLayout()
         self.init_attribute_layout()
@@ -41,12 +41,12 @@ class ScopeWidget(ModuleWidget):
         self.layout_ch1.addWidget(aws['ch1_active'])
         self.layout_ch1.addWidget(aws['input1'])
         self.layout_ch1.addWidget(aws['threshold_ch1'])
-        aws['ch1_active'].setStyleSheet("color: %s"%self.ch_col[0])
+        aws['ch1_active'].setStyleSheet("color: %s" % self.ch_color[0])
 
         self.attribute_layout.removeWidget(aws['ch2_active'])
         self.attribute_layout.removeWidget(aws['input2'])
         self.attribute_layout.removeWidget(aws['threshold_ch2'])
-        aws['ch2_active'].setStyleSheet("color: %s"%self.ch_col[1])
+        aws['ch2_active'].setStyleSheet("color: %s" % self.ch_color[1])
 
         self.layout_ch2.addWidget(aws['ch2_active'])
         self.layout_ch2.addWidget(aws['input2'])
@@ -88,10 +88,11 @@ class ScopeWidget(ModuleWidget):
         self.button_save = QtGui.QPushButton("Save curve")
         self.curves = [self.plot_item.plot(pen=(QtGui.QColor(color).red(),
                                                 QtGui.QColor(color).green(),
-                                                QtGui.QColor(color).blue(),
-                                                trans)) \
-                       for color, trans in zip(self.ch_col,
-                                               self.TRANSPARENCIES)]
+                                                QtGui.QColor(color).blue()
+                                                ))
+                                                #,trans)) \
+                       for color, trans in zip(self.ch_color,
+                                               self.ch_transparency)]
         self.main_layout.addWidget(self.win, stretch=10)
         self.button_layout.addWidget(self.button_single)
         self.button_layout.addWidget(self.button_continuous)
@@ -182,7 +183,7 @@ class ScopeWidget(ModuleWidget):
         try:
             self.datas[ch-1] = self.module.curve(ch)
             self.times = self.module.times
-            self.curves[ch - 1].setData(self.times,
+            self.curves[ch-1].setData(self.times,
                                         self.datas[ch-1])
         except NotReadyError:
             pass
@@ -200,8 +201,8 @@ class ScopeWidget(ModuleWidget):
         Displays all active channels on the graph.
         """
         times, (ch1, ch2) = list_of_arrays
-        for ch, (data, active) in enumerate([(ch1, self.module.ch1_active),
-                                             (ch2, self.module.ch2_active)]):
+        disp = [(ch1, self.module.ch1_active), (ch2, self.module.ch2_active)]
+        for ch, (data, active) in enumerate(disp):
             if active:
                 self.curves[ch].setData(times, data)
                 self.curves[ch].setVisible(True)
@@ -238,8 +239,7 @@ class ScopeWidget(ModuleWidget):
 
     @property
     def rolling_mode(self):
-        return ((self.checkbox_untrigged.isChecked()) and \
-                self.rolling_group.isEnabled())
+        return ((self.checkbox_untrigged.isChecked()) and self.rolling_group.isEnabled())
 
     @rolling_mode.setter
     def rolling_mode(self, val):
@@ -271,8 +271,7 @@ class ScopeWidget(ModuleWidget):
         else:
             mini = min(self.module.times)
             maxi = max(self.module.times)
-        self.plot_item.setRange(xRange=[mini,
-                                        maxi])
+        self.plot_item.setRange(xRange=[mini, maxi])
         self.plot_item.setRange(yRange=[-1,1])
         # self.plot_item.autoRange()
 
