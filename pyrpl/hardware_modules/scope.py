@@ -142,7 +142,8 @@ class Scope(HardwareModule, AcquisitionModule):
                        "threshold_ch1",
                        "threshold_ch2",
                        "ch1_active",
-                       "ch2_active"]
+                       "ch2_active",
+                       "xy_mode"]
     # running_state last for proper acquisition setup
     _setup_attributes = _gui_attributes + ["rolling_mode", "running_state"]
     # changing these resets the acquisition and autoscale (calls setup())
@@ -323,6 +324,10 @@ class Scope(HardwareModule, AcquisitionModule):
 
     ch2_active = BoolProperty(default=True,
                               doc="should ch2 be displayed in the gui?")
+
+    xy_mode = BoolProperty(default=False,
+                           doc="in xy-mode, data are plotted vs the other "
+                               "channel (instead of time)")
 
     def _ownership_changed(self, old, new):
         """

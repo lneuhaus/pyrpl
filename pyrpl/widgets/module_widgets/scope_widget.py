@@ -34,6 +34,8 @@ class ScopeWidget(ModuleWidget):
         self.layout_channels.addLayout(self.layout_ch1)
         self.layout_channels.addLayout(self.layout_ch2)
 
+        self.attribute_layout.removeWidget(aws['xy_mode'])
+
         self.attribute_layout.removeWidget(aws['ch1_active'])
         self.attribute_layout.removeWidget(aws['input1'])
         self.attribute_layout.removeWidget(aws['threshold_ch1'])
@@ -75,8 +77,10 @@ class ScopeWidget(ModuleWidget):
         aws = self.attribute_widgets
         self.attribute_layout.removeWidget(aws["avg"])
         self.attribute_layout.removeWidget(aws["curve_name"])
+        self.button_layout.addWidget(aws["xy_mode"])
         self.button_layout.addWidget(aws["avg"])
         self.button_layout.addWidget(aws["curve_name"])
+
 
         self.setLayout(self.main_layout)
         self.setWindowTitle("Scope")
@@ -202,12 +206,17 @@ class ScopeWidget(ModuleWidget):
         """
         times, (ch1, ch2) = list_of_arrays
         disp = [(ch1, self.module.ch1_active), (ch2, self.module.ch2_active)]
-        for ch, (data, active) in enumerate(disp):
-            if active:
-                self.curves[ch].setData(times, data)
-                self.curves[ch].setVisible(True)
-            else:
-                self.curves[ch].setVisible(False)
+        if self.module.xy_mode:
+            self.curves[0].setData(ch1, ch2)
+            self.curves[0].setVisible(True)
+            self.curves[1].setVisible(False)
+        else:
+            for ch, (data, active) in enumerate(disp):
+                if active:
+                    self.curves[ch].setData(times, data)
+                    self.curves[ch].setVisible(True)
+                else:
+                    self.curves[ch].setVisible(False)
         self.update_running_buttons() # to update the number of averages
 
     def set_rolling_mode(self):
@@ -265,6 +274,8 @@ class ScopeWidget(ModuleWidget):
     def autoscale_x(self):
         """Autoscale pyqtgraph. The current behavior is to autoscale x axis
         and set y axis to  [-1, +1]"""
+        if self.module.xy_mode:
+            return
         if self.module._is_rolling_mode_active():
             mini = -self.module.duration
             maxi = 0
