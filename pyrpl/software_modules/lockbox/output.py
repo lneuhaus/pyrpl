@@ -229,7 +229,6 @@ class OutputSignal(Signal):
             self.pid.input = input.signal()
         # offset is the last thing that is modified to guarantee the offset setting with the gains
         if offset is not None:
-            print 'reset offset'
             self.pid.ival = offset
 
     def _setup_offset(self, offset):

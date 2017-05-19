@@ -106,6 +106,11 @@ class Lockbox(LockboxModule):
 
     classname = ClassnameProperty(options=lambda: list(all_classnames().keys()))
 
+    def __init__(self, parent, name=None):
+        super(Lockbox, self).__init__(parent=parent, name=name)
+        # set state change time to negative value to indicate startup condition
+        self._state_change_time = -1
+
     ###################
     # unit management #
     ###################
@@ -452,3 +457,31 @@ class Lockbox(LockboxModule):
             lockbox = getattr(pyrpl, name)
             return setattr(lockbox, attribute, value)
         self.__setattr__ = setattribute_forwarder
+
+    @property
+    def _time(self):
+        """ retrieves 'local' time of the lockbox """
+        return time()
+
+    @property
+    def params(self):
+        """ returns a useful set of parameters that describe rather well if the lockbox was properly locked"""
+        d = dict()
+        for var in ['is_locked', 'is_locked_and_final', 'current_state', '_state_change_time', '_time',
+                    'final_stage.setpoint', 'final_stage.gain_factor', 'final_stage.input']:
+            val = recursive_getattr(self, var)
+            if callable(val):
+                val = val()
+            d[var] = val
+        for i in self.inputs:
+            d[i.name+ '_mean'] = i.mean
+            d[i.name + '_rms'] = i.rms
+            d[i.name + '_calibration_data_min'] = i.calibration_data.min
+            d[i.name + '_calibration_data_max'] = i.calibration_data.max
+        for i in self.outputs:
+            d[i.name+ '_mean'] = i.mean
+            d[i.name + '_rms'] = i.rms
+        dd = dict()
+        for k in d:
+            dd[self.pyrpl.name+'_'+k]=d[k]
+        return dd
