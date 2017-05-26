@@ -318,6 +318,9 @@ class Lockbox(LockboxModule):
     def relock(self, test_auto_lock=False, **kwargs):
         """ locks the cavity if it is_locked is false. Returns the value of
         is_locked """
+        # if kwargs are given, try to set these if in final stage
+        if len(kwargs)> 0:
+            self.final_stage.setup(**kwargs)
         if test_auto_lock and (not self.auto_lock or self._setup_ongoing):
             # skip if autolock is off and call from autolock_timer
             return
@@ -331,6 +334,19 @@ class Lockbox(LockboxModule):
             # either unlocked in final stage or in an unlocked state: call lock()
             self._logger.info("Attempting to re-lock...")
             return self.lock(**kwargs)
+
+    def relock_until_locked(self, **kwargs):
+        """ blocks the command line until cavity is locked with kwargs """
+        def relock_function(lockbox, loop):
+            if lockbox.relock(**kwargs):
+                loop._clear()
+        self._relock_until_locked_loop = LockboxLoop(parent=self,
+                                                     name='relock_until_locked_loop',
+                                                     interval=1.0,
+                                                     autostart=True,
+                                                     loop_function=relock_function)
+        while not self._relock_until_locked_loop._ended:  # wait for locks to terminate
+            sleep(1.0)
 
     def is_locked(self, input=None, loglevel=logging.INFO):
         """ returns True if locked, else False. Also updates an internal
@@ -474,6 +490,7 @@ class Lockbox(LockboxModule):
                 val = val()
             d[var] = val
         for i in self.inputs:
+            i.stats(t=1.0)
             d[i.name+ '_mean'] = i.mean
             d[i.name + '_rms'] = i.rms
             d[i.name + '_calibration_data_min'] = i.calibration_data.min

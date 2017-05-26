@@ -244,11 +244,21 @@ class HighFinesseInput(InputSignal):
         else:
             return None
 
-    def get_threshold(self, curve):
+    def get_threshold_empirical(self, curve):
         """ returns a reasonable scope threshold for the interesting part of this curve """
         self.calibration_data.get_stats_from_curve(curve)
         threshold = self.expected_signal(1.0*self.lockbox._unit_in_setpoint_unit('bandwidth'))
         return threshold
+
+    def get_threshold_theoretical(self, curve):
+        """ returns a reasonable scope threshold for the interesting part of this curve """
+        self.calibration_data.get_stats_from_curve(curve)
+        eta = max(0.0, min(self.lockbox.eta, 1.0))
+        self.calibration_data.min = (1.0-eta) * self.calibration_data.max
+        threshold = self.expected_signal(0.5*self.lockbox._unit_in_setpoint_unit('bandwidth'))
+        return threshold
+
+    get_threshold = get_threshold_empirical
 
 
 class HighFinesseReflection(HighFinesseInput, FPReflection):
