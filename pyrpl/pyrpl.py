@@ -109,8 +109,6 @@ class Pyrpl(object):
                                       'be able to fix this error by deleting the section '
                                       'corresponding to this module in your config file %s.',
                                       module.name, self.c._filename)
-            else:
-                print (module.name)
         # make the gui if applicable
         if self.c.pyrpl.gui:
             self.show_gui()
