@@ -405,7 +405,7 @@ asg.data = np.random.normal(loc=0.0, scale=sigma_in_volt, size=data_length)
 */
 
 reg [31-1:0] xn;
-//wire [31-1:0] xn_wire;
+wire [31-1:0] xn_wire;
 reg [31-1:0] b;
 reg [16-1:0] a;
 
@@ -414,11 +414,11 @@ if (dac_rstn_i == 1'b0) begin
    a <= 16'd48271 ;      // recommended by Park and Miller
    b <= 31'd323485697;   // whatever
    xn <= 31'd901448241 ; // whatever
-//end else begin
-//   xn <= ((&xn_wire)==1'b1) ? 31'd0 : xn_wire; // = modulo 2**31-1
+end else begin
+   xn <= ((&xn_wire)==1'b1) ? 31'd0 : xn_wire; // = modulo 2**31-1
 end
 
-//assign xn_wire = a * xn + b;
+assign xn_wire = a * xn + b;
 assign rand_pnt = xn[31-1:31-RSZ];
 //rand_pnt will carry values between 0 and 2**(RSZ)-2
 
