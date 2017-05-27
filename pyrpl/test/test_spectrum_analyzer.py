@@ -47,7 +47,7 @@ class TestClass(TestPyrpl):
                       running_state='stopped')
             asg = self.pyrpl.rp.asg0
             asg.setup(frequency=1e5,
-                      amplitude=1,
+                      amplitude=1.0,
                       trigger_source='immediately',
                       offset=0,
                       waveform='sin')
@@ -56,9 +56,10 @@ class TestClass(TestPyrpl):
             for freq in freqs:
                 asg.frequency = freq
                 curve = self.pyrpl.spectrumanalyzer.curve()[0]
-                assert(abs(sa.frequencies[np.argmax(curve)] - freq) < sa.rbw)
+                assert(abs(sa.frequencies[np.argmax(curve)] - freq) < sa.rbw), \
+                    (sa.frequencies[np.argmax(curve)], freq, sa.rbw)
                 points.append(max(curve))
-                assert abs(max(curve) - 1) < 0.01, max(curve)
+                assert abs(max(curve) - asg.amplitude**2) < 0.01, max(curve)
 
     def test_flatness_iqmode(self):
         return # to be tested in next release

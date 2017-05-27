@@ -25,6 +25,7 @@ from ..hardware_modules.dsp import all_inputs, InputSelectProperty
 from ..acquisition_module import AcquisitionModule
 from ..widgets.module_widgets import SpecAnWidget
 
+import sys
 import scipy.signal as sig
 import scipy.fftpack
 
@@ -187,10 +188,19 @@ class SpectrumAnalyzer(AcquisitionModule):
     center = CenterAttribute(call_setup=True)
     # points = IntProperty(default=16384, call_setup=True)
     window = SelectProperty(options=windows, call_setup=True)
-    input = InputSelectProperty(options=all_inputs, call_setup=True, ignore_errors=True)
-    input1_baseband = InputSelectProperty(options=all_inputs, call_setup=True, ignore_errors=True,
+    input = InputSelectProperty(options=all_inputs,
+                                default='in1',
+                                call_setup=True,
+                                ignore_errors=True)
+    input1_baseband = InputSelectProperty(options=all_inputs,
+                                          default='in1',
+                                          call_setup=True,
+                                          ignore_errors=True,
                                           doc="input1 for baseband mode")
-    input2_baseband = InputSelectProperty(options=all_inputs, call_setup=True, ignore_errors=True,
+    input2_baseband = InputSelectProperty(options=all_inputs,
+                                          default='in2',
+                                          call_setup=True,
+                                          ignore_errors=True,
                                           doc="input2 for baseband mode")
     display_input1_baseband = BoolProperty(default=True,
                                            doc="should input1 spectrum be "
@@ -337,21 +347,24 @@ class SpectrumAnalyzer(AcquisitionModule):
         if self.display_unit=='Vpk^2':
             return data
         if self.display_unit == 'dB(Vpk^2)':
-            return 10 * np.log10(data)
+            # need to add epsilon to avoid divergence of logarithm
+            return 10 * np.log10(data+sys.float_info.epsilon)
         if self.display_unit=='Vpk':
             return np.sqrt(data)
 
         if self.display_unit=='Vrms^2':
             return data/2
         if self.display_unit=='dB(Vrms^2)':
-            return 10*np.log10(data/2)
+            # need to add epsilon to avoid divergence of logarithm
+            return 10*np.log10(data/2+sys.float_info.epsilon)
         if self.display_unit == 'Vrms':
             return np.sqrt(data) / np.sqrt(2)
 
         if self.display_unit=='Vrms^2/Hz':
             return data /2 / rbw
         if self.display_unit=='dB(Vrms^2/Hz)':
-            return 10 * np.log10(data / 2 / rbw)
+            # need to add epsilon to avoid divergence of logarithm
+            return 10 * np.log10(data / 2 / rbw + sys.float_info.epsilon)
         if self.display_unit == 'Vrms/sqrt(Hz)':
             return np.sqrt(data)/ np.sqrt(2)/rbw
 

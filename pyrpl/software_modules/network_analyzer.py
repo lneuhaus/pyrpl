@@ -38,6 +38,9 @@ class NaAcBandwidth(FilterProperty):
         obj.iq.inputfilter = [-value[0]]
         return value
 
+class NaAmplitudeProperty(FloatProperty):
+    def validate_and_normalize(self, obj, value):
+        return obj.iq.__class__.amplitude.validate_and_normalize(obj.iq, abs(value))
 
 class RbwAttribute(FilterProperty):
     def get_value(self, instance):
@@ -249,7 +252,6 @@ class NaRunFuture(NaCurveFuture):
         self._run_continuous = True
         self._min_delay_ms = self._module.MIN_DELAY_CONTINUOUS_MS
 
-
 class NetworkAnalyzer(AcquisitionModule, SignalModule):
     """
     Using an IQ module, the network analyzer can measure the complex coherent
@@ -294,10 +296,10 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
     stop_freq = FrequencyProperty(default=1e6, call_setup=True, min=Iq.frequency.increment)
     rbw = RbwAttribute(default=500.0, call_setup=True)
     avg_per_point = IntProperty(min=1, default=1, call_setup=True)
-    amplitude = FloatProperty(default=0.1,
-                              min=0,
-                              max=1,
-                              call_setup=True)
+    amplitude = NaAmplitudeProperty(default=0.1,
+                                    min=0,
+                                    max=1,
+                                    call_setup=True)
     points = IntProperty(min=1, max=1e8, default=1001, call_setup=True)
     logscale = LogScaleProperty(default=True, call_setup=True)
     infer_open_loop_tf = BoolProperty(default=False)
@@ -486,23 +488,15 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
         """
         # super(NAAcquisitionManager, self)._start_acquisition()
         x = self.data_x
-        # preventive saturation
-        amplitude = abs(self.amplitude)
         self.iq.setup(frequency=x[0],
                       bandwidth=self.rbw,
                       gain=0,
                       phase=0,
                       acbandwidth=self.acbandwidth,
-                      amplitude=amplitude,
+                      amplitude=self.amplitude,
                       input=self.input,
                       output_direct=self.output_direct,
                       output_signal='output_direct')
-
-        # read back ampltidue to provide for the correct modelisation
-        self._setup_ongoing = True
-        self.amplitude = self.iq.amplitude
-        #print 'hallo', self.iq.amplitude, self.amplitude
-        self._setup_ongoing = False
 
         # setup averaging
         self.iq._na_averages = np.int(np.round(125e6 / self.rbw *
