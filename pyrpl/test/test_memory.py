@@ -3,6 +3,7 @@ logger = logging.getLogger(name=__name__)
 import os
 from ..memory import MemoryTree, MemoryBranch
 from .. import *
+from ..async_utils import sleep
 
 class TestMemory(object):
     def test_load(self):
@@ -65,3 +66,97 @@ class TestMemory(object):
         # save and delete file
         m._save_now()
         os.remove(m._filename)
+
+    def test_two_trees(self):
+        """ makes two different memorytree objects that might have conflicts w.r.t. each other.
+
+        The conflicts arise from the latency between the objects in memory and the file defined
+        by _loadsavedeadtime for speed reasons.
+        """
+        filename = 'test3'
+        T1, T2 = 0.5, 2.0
+        m1 = MemoryTree(filename, _loadsavedeadtime=T1)
+        assert m1._loadsavedeadtime == T1
+        assert m1._save_counter == 0
+        m1.a = 1
+        assert m1._save_counter == 1
+        m1.b = {'b1': 1, 'b22': 2.2, }
+        assert m1._save_counter == 4
+        m1._save_now()
+        assert m1._save_counter == 5
+        m1.a = 2
+        assert m1._save_counter == 6
+        m2 = MemoryTree(filename, _loadsavedeadtime=T2)
+        assert m1._save_counter == 6
+        assert m2._loadsavedeadtime == T2
+        assert m1._loadsavedeadtime == T1
+        assert m1.a == 2
+        assert m1._save_counter == 6
+        # changes will only be written to file once m1._loadsavedeadtime has elapsed
+        assert m2.a == 1, m2.a
+        sleep(T1+0.05)  # some extra time is needed for overhead
+        # now changes should have been written to file
+        assert not m1._savetimer.isActive(), m1._savetimer.interval()
+        assert m1._save_counter == 7, m1._save_counter
+        # but m2 will only attempt to
+        # reload once m2._loadsavedeadtime has elapsed
+        assert m2.a == 1
+        # once we wait long enough, m2 will attempt to reload the file
+        sleep(T2 - T1)
+        assert m1._save_counter == 7
+        assert m2.a == 2, m2.a
+        m2.a = 3
+        assert m2.a == 3
+        # m1 has also done nothing for a long time, so it will attempt to reload instantaneously
+        assert m1.a == 3
+        assert m1._save_counter == 7
+        # clean up
+        m1._save_now()
+        m2._save_now()
+        os.remove(m1._filename)
+
+    def test_two_trees_nodeadtime(self):
+        """ makes two different memorytree objects that might have conflicts w.r.t. each other.
+
+        When _loadsavedeadtime is set to 0, no conflicts are possible since both memorytrees are
+        always up to date with the file.
+        """
+        filename = 'test4'
+        T1, T2 = 0.0, 0.0
+        m1 = MemoryTree(filename, _loadsavedeadtime=T1)
+        assert m1._loadsavedeadtime == T1
+        assert m1._save_counter == 0
+        m1.a = 1
+        assert m1._save_counter == 1
+        m1.b = {'b1': 1, 'b22': 2.2, }
+        assert m1._save_counter == 4
+        m1._save_now()
+        assert m1._save_counter == 5
+        m1.a = 2
+        assert m1._save_counter == 6
+        m2 = MemoryTree(filename, _loadsavedeadtime=T2)
+        assert m1._save_counter == 6
+        assert m2._loadsavedeadtime == T2
+        assert m1._loadsavedeadtime == T1
+        assert m1.a == 2
+        assert m1._save_counter == 6
+        assert m2.a == 2, m2.a
+        assert not m1._savetimer.isActive(), m1._savetimer.interval()
+        assert m1._save_counter == 6, m1._save_counter
+        assert m2.a == 2
+        assert m1._save_counter == 6
+        assert m2.a == 2, m2.a
+        m2.a = 3
+        assert m2.a == 3
+        # m1 has also done nothing for a long time, so it will attempt to reload instantaneously
+        assert m1.a == 3
+        assert m1._save_counter == 6
+        # clean up
+        m1.c = 5
+        assert m2.c == 5
+        m2.c = 6
+        m1.c = 7
+        assert m2.c == 7
+        m1._save_now()
+        m2._save_now()
+        os.remove(m1._filename)

@@ -469,16 +469,15 @@ class MemoryTree(MemoryBranch):
 
     ##### internal save logic:
 
-    # never reload or save more frequently than _loadsavedeadtime because
-    # this is the principal cause of slowing down the code (typ. 30-200 ms)
-    # for immediate saving, call _save_now, for immediate loading _load_now
-    _loadsavedeadtime = 3
-
     # this structure will hold the data. Must define it here as immutable
     # to overwrite the property _data of MemoryBranch
     _data = None
 
-    def __init__(self, filename=None, source=None):
+    def __init__(self, filename=None, source=None, _loadsavedeadtime=3.0):
+        # never reload or save more frequently than _loadsavedeadtime because
+        # this is the principal cause of slowing down the code (typ. 30-200 ms)
+        # for immediate saving, call _save_now, for immediate loading _load_now
+        self._loadsavedeadtime = _loadsavedeadtime
         # first, make sure filename exists
         self._filename = get_config_file(filename, source)
         if filename is None:  # simulate a config file, only store data in memory
@@ -490,7 +489,7 @@ class MemoryTree(MemoryBranch):
             self._savetimer = QtCore.QTimer()
             self._savetimer.setInterval(self._loadsavedeadtime*1000)
             self._savetimer.setSingleShot(True)
-            self._savetimer.timeout.connect(self._save)
+            self._savetimer.timeout.connect(lambda: self._save(deadtime=0))
         self._load()
         self._save_counter = 0 # cntr for unittest and debug purposes
         # root of the tree is also a MemoryBranch with parent self and
