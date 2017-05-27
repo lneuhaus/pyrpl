@@ -195,7 +195,7 @@ class HighFinesseInput(InputSignal):
                     # zoom by finesse/20
                     scope.duration /= (self.lockbox.finesse/20.0)
                     scope.trigger_source = "ch1_negative_edge"
-                    scope.hysteresis_ch1 = 0.002
+                    scope.hysteresis = 0.002
                     scope.trigger_delay = 0.0
                 scope.setup(threshold=threshold,
                             input1=self.signal())
