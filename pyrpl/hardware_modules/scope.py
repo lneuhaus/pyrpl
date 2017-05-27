@@ -264,6 +264,7 @@ class Scope(HardwareModule, AcquisitionModule):
 
     # decimation is the basic register, sampling_time and duration are slaves of it
     decimation = DecimationRegister(0x14, doc="decimation factor",
+                                    default = 0x2000, # fpga default = 1s duration
                                     # customized to update duration and
                                     # sampling_time
                                     options=_decimations,
