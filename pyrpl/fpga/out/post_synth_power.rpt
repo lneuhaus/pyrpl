@@ -1,8 +1,8 @@
 Copyright 1986-2015 Xilinx, Inc. All Rights Reserved.
 ----------------------------------------------------------------------------------------
 | Tool Version     : Vivado v.2015.4 (win64) Build 1412921 Wed Nov 18 09:43:45 MST 2015
-| Date             : Tue Apr 04 10:40:08 2017
-| Host             : ExSqueez running 64-bit Service Pack 1  (build 7601)
+| Date             : Sat May 27 20:37:24 2017
+| Host             : OQMQmembranes running 64-bit Service Pack 1  (build 7601)
 | Command          : report_power -file out/post_synth_power.rpt
 | Design           : red_pitaya_top
 | Device           : xc7z010clg400-1
@@ -31,7 +31,7 @@ Table of Contents
 
 +--------------------------+-------+
 | Total On-Chip Power (W)  | 2.327 |
-| Dynamic (W)              | 2.174 |
+| Dynamic (W)              | 2.175 |
 | Device Static (W)        | 0.152 |
 | Effective TJA (C/W)      | 11.5  |
 | Max Ambient (C)          | 58.2  |
@@ -59,7 +59,7 @@ Table of Contents
 |   Others                 |     0.000 |      444 |       --- |             --- |
 |   BUFG                   |     0.000 |        1 |        32 |            3.13 |
 |   LUT as Distributed RAM |     0.000 |       24 |      6000 |            0.40 |
-| Signals                  |     0.136 |    30447 |       --- |             --- |
+| Signals                  |     0.137 |    30447 |       --- |             --- |
 | Block RAM                |     0.103 |       34 |        60 |           56.67 |
 | PLL                      |     0.097 |        1 |         2 |           50.00 |
 | DSPs                     |     0.040 |       46 |        80 |           57.50 |
@@ -67,7 +67,7 @@ Table of Contents
 | XADC                     |     0.004 |        1 |       --- |             --- |
 | PS7                      |     1.292 |        1 |       --- |             --- |
 | Static Power             |     0.152 |          |           |                 |
-| Total                    |     2.326 |          |           |                 |
+| Total                    |     2.327 |          |           |                 |
 +--------------------------+-----------+----------+-----------+-----------------+
 
 
@@ -77,7 +77,7 @@ Table of Contents
 +-----------+-------------+-----------+-------------+------------+
 | Source    | Voltage (V) | Total (A) | Dynamic (A) | Static (A) |
 +-----------+-------------+-----------+-------------+------------+
-| Vccint    |       1.000 |     0.502 |       0.491 |      0.011 |
+| Vccint    |       1.000 |     0.502 |       0.492 |      0.011 |
 | Vccaux    |       1.800 |     0.069 |       0.057 |      0.012 |
 | Vcco33    |       3.300 |     0.085 |       0.084 |      0.001 |
 | Vcco25    |       2.500 |     0.001 |       0.000 |      0.001 |
@@ -90,7 +90,7 @@ Table of Contents
 | MGTAVcc   |       1.000 |     0.000 |       0.000 |      0.000 |
 | MGTAVtt   |       1.200 |     0.000 |       0.000 |      0.000 |
 | MGTVccaux |       1.800 |     0.000 |       0.000 |      0.000 |
-| Vccpint   |       1.000 |     0.716 |       0.678 |      0.038 |
+| Vccpint   |       1.000 |     0.716 |       0.678 |      0.039 |
 | Vccpaux   |       1.800 |     0.038 |       0.027 |      0.010 |
 | Vccpll    |       1.800 |     0.017 |       0.014 |      0.003 |
 | Vcco_ddr  |       1.500 |     0.356 |       0.354 |      0.002 |
@@ -374,7 +374,7 @@ Table of Contents
 |             SOFT_RESET_I                                                         |    <0.001 |
 |         xlconstant                                                               |     0.000 |
 |           inst                                                                   |     0.000 |
-|   i_scope                                                                        |     0.054 |
+|   i_scope                                                                        |     0.055 |
 |   pll                                                                            |     0.097 |
 |   pwm[0]                                                                         |     0.002 |
 |   pwm[1]                                                                         |     0.002 |
