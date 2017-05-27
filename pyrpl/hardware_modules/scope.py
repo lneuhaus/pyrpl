@@ -139,8 +139,10 @@ class Scope(HardwareModule, AcquisitionModule):
                        "average",
                        "trigger_source",
                        "trigger_delay",
-                       "threshold_ch1",
-                       "threshold_ch2",
+                       "threshold",
+                       #"threshold_ch1",
+                       #"threshold_ch2",
+                       "hysteresis",
                        "ch1_active",
                        "ch2_active",
                        "xy_mode"]
@@ -215,11 +217,59 @@ class Scope(HardwareModule, AcquisitionModule):
     trigger_debounce = FloatRegister(0x90, bits=20, norm=125e6,
                                      doc="Trigger debounce time [s]")
 
-    threshold_ch1 = FloatRegister(0x8, bits=14, norm=2 ** 13,
-                                  doc="ch1 trigger threshold [volts]")
-
-    threshold_ch2 = FloatRegister(0xC, bits=14, norm=2 ** 13,
-                                  doc="ch1 trigger threshold [volts]")
+    # same theshold and hysteresis for both channels
+    threshold = FloatRegister(0x8, bits=14, norm=2 ** 13,
+                                  doc="trigger threshold [volts]")
+    hysteresis = FloatRegister(0x20, bits=14, norm=2 ** 13,
+                                    doc="hysteresis for trigger [volts]")
+    @property
+    def threshold_ch1(self):
+        self._logger.warning('The scope attribute "threshold_chx" is deprecated. '
+                             'Please use "threshold" instead!')
+        return self.threshold
+    @threshold_ch1.setter
+    def threshold_ch1(self, v):
+        self._logger.warning('The scope attribute "threshold_chx" is deprecated. '
+                             'Please use "threshold" instead!')
+        self.threshold = v
+    @property
+    def threshold_ch2(self):
+        self._logger.warning('The scope attribute "threshold_chx" is deprecated. '
+                             'Please use "threshold" instead!')
+        return self.threshold
+    @threshold_ch2.setter
+    def threshold_ch2(self, v):
+        self._logger.warning('The scope attribute "threshold_chx" is deprecated. '
+                             'Please use "threshold" instead!')
+        self.threshold = v
+    @property
+    def hysteresis_ch1(self):
+        self._logger.warning('The scope attribute "hysteresis_chx" is deprecated. '
+                             'Please use "hysteresis" instead!')
+        return self.hysteresis
+    @hysteresis_ch1.setter
+    def hysteresis_ch1(self, v):
+        self._logger.warning('The scope attribute "hysteresis_chx" is deprecated. '
+                             'Please use "hysteresis" instead!')
+        self.hysteresis = v
+    @property
+    def hysteresis_ch2(self):
+        self._logger.warning('The scope attribute "hysteresis_chx" is deprecated. '
+                             'Please use "hysteresis" instead!')
+        return self.hysteresis
+    @hysteresis_ch2.setter
+    def hysteresis_ch2(self, v):
+        self._logger.warning('The scope attribute "hysteresis_chx" is deprecated. '
+                             'Please use "hysteresis" instead!')
+        self.hysteresis = v
+    #threshold_ch1 = FloatRegister(0x8, bits=14, norm=2 ** 13,
+    #                              doc="ch1 trigger threshold [volts]")
+    #threshold_ch2 = FloatRegister(0xC, bits=14, norm=2 ** 13,
+    #                              doc="ch1 trigger threshold [volts]")
+    #hysteresis_ch1 = FloatRegister(0x20, bits=14, norm=2 ** 13,
+    #                               doc="hysteresis for ch1 trigger [volts]")
+    #hysteresis_ch2 = FloatRegister(0x24, bits=14, norm=2 ** 13,
+    #                               doc="hysteresis for ch2 trigger [volts]")
 
     _trigger_delay_register = IntRegister(0x10,
                                  doc="number of decimated data after trigger "
@@ -287,12 +337,6 @@ class Scope(HardwareModule, AcquisitionModule):
     _write_pointer_trigger = IntRegister(0x1C,
                                          doc="write pointer when trigger "
                                              "arrived [samples]")
-
-    hysteresis_ch1 = FloatRegister(0x20, bits=14, norm=2 ** 13,
-                                   doc="hysteresis for ch1 trigger [volts]")
-
-    hysteresis_ch2 = FloatRegister(0x24, bits=14, norm=2 ** 13,
-                                   doc="hysteresis for ch2 trigger [volts]")
 
     average = BoolRegister(0x28, 0,
                            doc="Enables averaging during decimation if set "

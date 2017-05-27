@@ -38,21 +38,21 @@ class ScopeWidget(ModuleWidget):
 
         self.attribute_layout.removeWidget(aws['ch1_active'])
         self.attribute_layout.removeWidget(aws['input1'])
-        self.attribute_layout.removeWidget(aws['threshold_ch1'])
+        self.attribute_layout.removeWidget(aws['threshold'])
 
         self.layout_ch1.addWidget(aws['ch1_active'])
         self.layout_ch1.addWidget(aws['input1'])
-        self.layout_ch1.addWidget(aws['threshold_ch1'])
+        self.layout_ch1.addWidget(aws['threshold'])
         aws['ch1_active'].setStyleSheet("color: %s" % self.ch_color[0])
 
         self.attribute_layout.removeWidget(aws['ch2_active'])
         self.attribute_layout.removeWidget(aws['input2'])
-        self.attribute_layout.removeWidget(aws['threshold_ch2'])
+        self.attribute_layout.removeWidget(aws['hysteresis'])
         aws['ch2_active'].setStyleSheet("color: %s" % self.ch_color[1])
 
         self.layout_ch2.addWidget(aws['ch2_active'])
         self.layout_ch2.addWidget(aws['input2'])
-        self.layout_ch2.addWidget(aws['threshold_ch2'])
+        self.layout_ch2.addWidget(aws['hysteresis'])
 
         self.attribute_layout.addLayout(self.layout_channels)
 
@@ -265,9 +265,9 @@ class ScopeWidget(ModuleWidget):
         self.rolling_group.setEnabled(self.module._rolling_mode_allowed())
         self.attribute_widgets['trigger_source'].widget.setEnabled(
             not self.rolling_mode)
-        self.attribute_widgets['threshold_ch1'].widget.setEnabled(
+        self.attribute_widgets['threshold'].widget.setEnabled(
             not self.rolling_mode)
-        self.attribute_widgets['threshold_ch2'].widget.setEnabled(
+        self.attribute_widgets['hysteresis'].widget.setEnabled(
             not self.rolling_mode)
         self.button_single.setEnabled(not self.rolling_mode)
 

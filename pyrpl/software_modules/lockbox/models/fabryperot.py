@@ -197,7 +197,7 @@ class HighFinesseInput(InputSignal):
                     scope.trigger_source = "ch1_negative_edge"
                     scope.hysteresis_ch1 = 0.002
                     scope.trigger_delay = 0.0
-                scope.setup(threshold_ch1=threshold,
+                scope.setup(threshold=threshold,
                             input1=self.signal())
                 if input2 is not None:
                     scope.input2 = input2
