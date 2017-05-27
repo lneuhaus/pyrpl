@@ -786,10 +786,10 @@ if (adc_rstn_i == 1'b0) begin
    set_a_tresh   <=  14'd0000   ;
    set_b_tresh   <=  14'd0000   ;
    set_dly       <=  2**(RSZ-1);
-   set_dec       <=  17'd1      ;
+   set_dec       <=  17'h2000; // corresponds to 1s duration, formerly at minimum: 17'd1
    set_a_hyst    <=  14'd20     ;
    set_b_hyst    <=  14'd20     ;
-   set_avg_en    <=   1'b1      ;
+   set_avg_en    <=   1'b0      ;
 /*   set_a_filt_aa <=  18'h0      ;
    set_a_filt_bb <=  25'h0      ;
    set_a_filt_kk <=  25'hFFFFFF ;
