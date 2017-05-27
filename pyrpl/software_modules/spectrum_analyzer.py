@@ -128,6 +128,7 @@ class SpectrumAnalyzer(AcquisitionModule):
                        "window",
                        "acbandwidth",
                        "display_unit",
+                       "curve_unit",
                        "display_input1_baseband",
                        "display_input2_baseband",
                        "input1_baseband",
@@ -145,7 +146,7 @@ class SpectrumAnalyzer(AcquisitionModule):
     # correct voltage amplitude of a coherent signal (linear scale)
     # more units can be added as needed, but need to guarantee that conversion
     # is done as well (see implementation in lockbox for example)
-    display_unit = DisplayUnitProperty(default="Vpk^2",
+    display_unit = DisplayUnitProperty(default="db(Vpk^2)",
                           options=["Vpk^2",
                                    "dB(Vpk^2)",
                                    "Vpk",
@@ -156,6 +157,11 @@ class SpectrumAnalyzer(AcquisitionModule):
                                    "dB(Vrms^2/Hz)",
                                    "Vrms/sqrt(Hz)"],
                           ignore_errors=True)
+
+    # curve_unit is only used to have a parameter 'curve_unit' in saved curves.
+    # If >1 options are implemented, you should ensure that _get_curve takes it
+    # into account.
+    curve_unit = SelectProperty(default="Vpk^2", options=["Vpk^2"], ignore_errors=True)
 
     # select_attributes list of options
     def spans(nyquist_margin):
@@ -186,17 +192,20 @@ class SpectrumAnalyzer(AcquisitionModule):
                                           doc="input1 for baseband mode")
     input2_baseband = InputSelectProperty(options=all_inputs, call_setup=True, ignore_errors=True,
                                           doc="input2 for baseband mode")
-    display_input1_baseband = BoolProperty(doc="should input1 spectrum be "
+    display_input1_baseband = BoolProperty(default='True',
+                                           doc="should input1 spectrum be "
                                                "displayed in "
                                                "baseband-mode?")
-    display_input2_baseband = BoolProperty(doc="should input2 spectrum be "
+    display_input2_baseband = BoolProperty(default=True,
+                                           doc="should input2 spectrum be "
                                                "displayed in "
                                                "baseband-mode?")
-    display_cross_amplitude = BoolProperty(doc="should cross-spectrum "
-                                               "amplitude"
-                                              " be displayed in "
-                                              "baseband-mode?")
-    display_cross_phase = BoolProperty(doc="should cross-spectrum amplitude"
+    display_cross_amplitude = BoolProperty(default=True,
+                                           doc="should cross-spectrum "
+                                               "amplitude be displayed "
+                                               "in baseband-mode?")
+    display_cross_phase = BoolProperty(default=False,
+                                       doc="should cross-spectrum amplitude"
                                               " be displayed in "
                                               "baseband-mode?")
     rbw = RbwProperty("span", doc="Residual Bandwidth, this is a readonly "
