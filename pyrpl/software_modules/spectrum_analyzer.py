@@ -146,7 +146,7 @@ class SpectrumAnalyzer(AcquisitionModule):
     # correct voltage amplitude of a coherent signal (linear scale)
     # more units can be added as needed, but need to guarantee that conversion
     # is done as well (see implementation in lockbox for example)
-    display_unit = DisplayUnitProperty(default="db(Vpk^2)",
+    display_unit = DisplayUnitProperty(default="dB(Vpk^2)",
                           options=["Vpk^2",
                                    "dB(Vpk^2)",
                                    "Vpk",
@@ -192,7 +192,7 @@ class SpectrumAnalyzer(AcquisitionModule):
                                           doc="input1 for baseband mode")
     input2_baseband = InputSelectProperty(options=all_inputs, call_setup=True, ignore_errors=True,
                                           doc="input2 for baseband mode")
-    display_input1_baseband = BoolProperty(default='True',
+    display_input1_baseband = BoolProperty(default=True,
                                            doc="should input1 spectrum be "
                                                "displayed in "
                                                "baseband-mode?")

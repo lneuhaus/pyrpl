@@ -41,14 +41,16 @@ def all_inputs_keys(instance):
                     try:
                         module_signals = module.signals
                     except AttributeError:
-                        pass
-                    else:
-                        for name, signal in module_signals.items():
-                            signals.append(signal.name)
+                        if isinstance(module, SignalModule):
+                            module_signals = {module.name: module}
+                        else:
+                            continue
+                    for name, signal in module_signals.items():
+                        signals.append(signal.name)
+                        signal = signal.parent
+                        while signal != pyrpl:
+                            signals[-1] = signal.name + '.' + signals[-1]
                             signal = signal.parent
-                            while signal != pyrpl:
-                                signals[-1] = signal.name + '.' + signals[-1]
-                                signal = signal.parent
     return signals
 
 

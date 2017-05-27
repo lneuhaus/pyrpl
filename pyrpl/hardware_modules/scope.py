@@ -150,7 +150,8 @@ class Scope(HardwareModule, AcquisitionModule):
 
     data_length = data_length  # to use it in a list comprehension
 
-    rolling_mode = BoolProperty(doc="In rolling mode, the curve is "
+    rolling_mode = BoolProperty(default=True,
+                                doc="In rolling mode, the curve is "
                                     "continuously acquired and "
                                     "translated from the right to the "
                                     "left of the screen while new "
@@ -200,7 +201,8 @@ class Scope(HardwareModule, AcquisitionModule):
     _trigger_source_register = SelectRegister(0x4, doc="Trigger source",
                                               options=_trigger_sources)
 
-    trigger_source = SelectProperty(options=_trigger_sources.keys(),
+    trigger_source = SelectProperty(default='immediately',
+                                    options=_trigger_sources.keys(),
                                     doc="Trigger source for the scope. Use "
                                         "'immediately' if no "
                                         "synchronisation is required. "

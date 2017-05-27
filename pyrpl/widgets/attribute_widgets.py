@@ -1199,7 +1199,6 @@ class BoolAttributeWidget(BaseAttributeWidget):
 
         :return:
         """
-
         self.widget.setCheckState(new_value * 2)
 
 
