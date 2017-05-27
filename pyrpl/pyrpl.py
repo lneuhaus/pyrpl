@@ -96,15 +96,25 @@ class Pyrpl(object):
         self.rp.parent=self
         self.widgets = [] # placeholder for widgets
         # ...initializing remaining hardware modules
-        for module in self.hardware_modules:  # setup hardware modules with config file keys
-            if module.owner is None:  # (only modules that are not slaved by software modules)
+        # for module in self.hardware_modules:  # setup hardware modules with config file keys
+        #     if module.owner is None:  # (only modules that are not slaved by software modules)
+        #         try:
+        #             module._load_setup_attributes()  # **self.c[module.name])
+        #         except BaseException as e:
+        #             self.logger.error('Something went wrong when loading attributes of hardware module "%s"',
+        #                               module.name)
+        # create software modules...
+        self.load_software_modules()
+        # load all setup_attributes for modules that do not have an owner
+        for module in self.software_modules + self.hardware_modules:
+            if module.owner is None:
                 try:
                     module._load_setup_attributes()  # **self.c[module.name])
                 except BaseException as e:
-                    self.logger.error('Something went wrong when loading attributes of hardware module "%s"',
+                    self.logger.error('Something went wrong when loading attributes of module "%s"',
                                       module.name)
-        # create software modules...
-        self.load_software_modules()
+            else:
+                print (module.name)
         # # load setup attributes
         # for m in self.modules:
         #     m._load_setup_attributes()
@@ -144,7 +154,7 @@ class Pyrpl(object):
                     module = getattr(cls, "_make_"+cls.__name__)(self, name)
                 else:
                     module = cls(self, name)
-                module._load_setup_attributes()
+                #module._load_setup_attributes()
             except:
                 self.logger.error('Something went wrong when loading the software module "%s"',
                                   name)
