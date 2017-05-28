@@ -93,8 +93,8 @@ wire [STATEBITS-1:0] xn_wire;
 reg [STATEBITS-1:0] b;
 reg [16-1:0] a;
 
-always @(posedge dac_clk_i)
-if (dac_rstn_i == 1'b0) begin
+always @(posedge clk_i)
+if (reset_i == 1'b0) begin
    a <= A;
    b <= B;   // whatever
    xn <= SEED ; // whatever
@@ -113,6 +113,7 @@ endmodule
 
 
 // simple 32-bit xorshift generator from "Numerical recipes (C++), online version, pp. 354-355", ID G1
+// the book can be found here: http://apps.nrbook.com/empanel/index.html#
 // actually, this implementation contains three independent, nested generators
 module red_pitaya_prng_xor #(
     parameter     B1 = 13,
