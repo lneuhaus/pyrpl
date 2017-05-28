@@ -71,10 +71,14 @@ class AsgAmplitudeAttribute(FloatRegister):
 
     def set_value(self, obj, val):
         if obj.waveform == 'noise':
+            # internally memorize the amplitude as it is not directly
+            # stored in the fpga (see set_value(obj, 1.0) call below)
             obj._rmsamplitude = val
+            # fill normal-distributed data into data memory
             obj.data = np.random.normal(loc=0.0,
                                         scale=obj._rmsamplitude,
                                         size=obj.data_length)
+            # multiplier set to 1.0 to benefit from full available resolution
             super(AsgAmplitudeAttribute, self).set_value(obj, 1.0)
         else:
             super(AsgAmplitudeAttribute, self).set_value(obj, val)
