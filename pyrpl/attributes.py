@@ -1217,7 +1217,6 @@ class CurveSelectProperty(SelectProperty):
     for the name of this attribute. The property can be set by either passing
     a CurveDB object, or a curve id.
     """
-
     def __init__(self,
                  **kwargs):
         SelectProperty.__init__(self, options=self._default_options, **kwargs)
@@ -1228,21 +1227,21 @@ class CurveSelectProperty(SelectProperty):
 
     def validate_and_normalize(self, obj, value):
         # returns none or a valid curve corresponding to the given curve or id
-        if not isinstance(value, CurveDB):
-            try:
-                value = int(value)
-                value = CurveDB.get(value)
-            except:
-                value = None
-        return value
-
-    def set_value(self, obj, val):
-        if val is None:
+        if isinstance(value, CurveDB):
+            value = value.pk
+        try:
+            pk = int(value)
+        except:
             pk = -1
-        else:
-            pk = val.pk
+        return pk
+
+    def set_value(self, obj, pk):
         SelectProperty.set_value(self, obj, pk)
-        setattr(obj, '_' + self.name + '_object', val)
+        try:
+            curve = CurveDB.get(pk)
+        except:
+            curve = None
+        setattr(obj, '_' + self.name + '_object', curve)
 
 
 class CurveSelectListProperty(CurveSelectProperty):
