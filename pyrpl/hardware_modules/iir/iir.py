@@ -147,6 +147,7 @@ class IIR(FilterModule):
 
     data_curve = CurveSelectProperty(doc="NA curve id to use as a basis for "
                                          "the graphical filter design",
+                                     no_curve_first=True,
                                      call_setup=True,
                                      default=-1)
 
@@ -287,8 +288,6 @@ class IIR(FilterModule):
                        realized transfer function
         """
         self._signal_launcher.update_plot.emit()
-        return
-
         try:
             # block recursive calls to _setup
             self._setup_ongoing = True

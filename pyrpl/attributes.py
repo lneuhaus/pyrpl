@@ -1218,11 +1218,16 @@ class CurveSelectProperty(SelectProperty):
     a CurveDB object, or a curve id.
     """
     def __init__(self,
+                 no_curve_first=False,
                  **kwargs):
+        self.no_curve_first = no_curve_first
         SelectProperty.__init__(self, options=self._default_options, **kwargs)
 
     def _default_options(self):
-        return CurveDB.all() + [-1]
+        if self.no_curve_first:
+            return [-1] + CurveDB.all()
+        else:
+            return CurveDB.all() + [-1]
         #return OrderedDict([(k, k) for k in (CurveDB.all()) + [-1]])
 
     def validate_and_normalize(self, obj, value):
