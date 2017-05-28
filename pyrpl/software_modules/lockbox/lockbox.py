@@ -66,7 +66,7 @@ class StateSelectProperty(SelectProperty):
         super(StateSelectProperty, self).set_value(obj, val)
         # save the last time of change of state
         obj._state_change_time = time()
-        obj._signal_launcher.state_changed.emit()
+        obj._signal_launcher.state_changed.emit([val])
 
 
 class SignalLauncherLockbox(SignalLauncher):
@@ -80,7 +80,7 @@ class SignalLauncherLockbox(SignalLauncher):
     stage_deleted = QtCore.pyqtSignal(list)
     stage_renamed = QtCore.pyqtSignal()
     delete_widget = QtCore.pyqtSignal()
-    state_changed = QtCore.pyqtSignal()
+    state_changed = QtCore.pyqtSignal(list)
     add_input = QtCore.pyqtSignal(list)
     input_calibrated = QtCore.pyqtSignal(list)
     remove_input = QtCore.pyqtSignal(list)
@@ -224,14 +224,19 @@ class Lockbox(LockboxModule):
         setup_attributes['duration'] = 0
         self.final_stage.setup(**setup_attributes)
 
-    @property
-    def current_stage(self):
-        if isinstance(self.current_state, int):
+    def _current_stage(self, state=None):
+        if state is None:
+            state = self.current_state
+        if isinstance(state, int):
             return self.sequence[self.current_state]
-        elif self.current_state == 'final_stage':
+        elif state == 'final_stage':
             return self.final_stage
         else:
-            return self.current_state
+            return state
+
+    @property
+    def current_stage(self):
+        return self._current_stage()
 
     @property
     def signals(self):
