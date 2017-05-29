@@ -179,6 +179,37 @@ class ModuleMetaClass(type):
             setup.__doc__ = doc
 
 
+class DoSetup(object):
+    """
+    A context manager that allows to nicely write Module setup functions.
+
+    Usage example in Module._setup():
+    def _setup(self):
+        # _setup_ongoing is False by default
+        assert self._setup_ongoing == False
+        with self.do_setup:
+            # now _setup_ongoing is True
+            assert self._setup_ongoing == True
+            # do stuff that might fail
+            raise BaseException()
+        # even if _setup fails, _setup_ongoing is False afterwards or in
+        # the next call to _setup()
+        assert self._setup_ongoing == False
+    """
+    def __init__(self, parent):
+        self.parent = parent
+
+    def __enter__(self):
+        self.parent._setup_ongoing = True
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.parent._setup_ongoing = False
+        if exc_type is not None:
+            self.parent._logger.warning("Exception %s was raised while "
+                                        "_setup_ongoing was True: %s, %s",
+                                        exc_type, exc_val, exc_tb)
+
+
 class Module(with_metaclass(ModuleMetaClass, object)):
     # The Syntax for defining a metaclass changed from Python 2 to 3.
     # with_metaclass is compatible with both versions and roughly does this:
@@ -302,6 +333,7 @@ class Module(with_metaclass(ModuleMetaClass, object)):
         """
         if name is not None:
             self.name = name
+        self.do_setup = DoSetup(self)  # ContextManager for _setup_ongoing
         self._flag_autosave_active = True # I would have prefered to use
         # __autosave_active, but this gets automatically name mangled:
         # see http://stackoverflow.com/questions/1301346/what-is-the-meaning-of-a-single-and-a-double-underscore-before-an-object-name

@@ -2,7 +2,7 @@ from . import iir_theory #, bodefit
 from .. import FilterModule
 from ...attributes import IntRegister, BoolRegister, ListComplexProperty, \
     FloatProperty, StringProperty, ListFloatProperty, CurveSelectProperty, \
-    GainRegister
+    GainRegister, ConstantIntRegister
 from ...widgets.module_widgets import IirWidget
 from ...modules import SignalLauncher
 
@@ -75,11 +75,11 @@ class IIR(FilterModule):
     # the fpga-implemented notation (following Oppenheim and Schaefer: DSP)
     _invert = True
 
-    _IIRBITS = IntRegister(0x200)
+    _IIRBITS = ConstantIntRegister(0x200)
 
-    _IIRSHIFT = IntRegister(0x204)
+    _IIRSHIFT = ConstantIntRegister(0x204)
 
-    _IIRSTAGES = IntRegister(0x208)
+    _IIRSTAGES = ConstantIntRegister(0x208)
 
     _widget_class = IirWidget
 
@@ -288,10 +288,8 @@ class IIR(FilterModule):
                        realized transfer function
         """
         self._signal_launcher.update_plot.emit()
-        try:
-            # block recursive calls to _setup
-            self._setup_ongoing = True
-
+        return
+        with self.do_setup:
             if self._IIRSTAGES == 0:
                 raise Exception("Error: This FPGA bitfile does not support IIR "
                                 "filters! Please use an IIR version!")
@@ -355,8 +353,6 @@ class IIR(FilterModule):
                 self._logger.info("IIR Overflow pattern: %s",
                                   bin(self.overflow_bitfield))
             self._signal_launcher.update_plot.emit()
-        finally:
-            self._setup_ongoing = False
 
 
     def setup_old(

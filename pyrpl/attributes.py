@@ -382,6 +382,20 @@ class IntRegister(BaseRegister, IntProperty):
         return int(value)
 
 
+class ConstantIntRegister(IntRegister):
+    """
+    Implements an int register that only interacts with the FPGA once and
+    subsequently returns the first read value from python memory.
+    """
+    def get_value(self, obj):
+        try:
+            return getattr(obj, '_' + self.name)
+        except AttributeError:
+            value = super(ConstantIntRegister, self).get_value(obj)
+            setattr(obj, '_' + self.name, value)
+            return value
+
+
 class LongRegister(IntRegister):
     """Interface for register of python type int/long with arbitrary length 'bits' (effectively unsigned)"""
     def get_value(self, obj):

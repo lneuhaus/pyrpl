@@ -12,9 +12,9 @@ APP = QtGui.QApplication.instance()
 
 
 class MyGraphicsWindow(pg.GraphicsWindow):
-    def __init__(self, title, parent_widget):
+    def __init__(self, title, parent):
         super(MyGraphicsWindow, self).__init__(title)
-        self.parent_widget = parent_widget
+        self.parent = parent
         self.setToolTip("IIR transfer function: \n"
                         "----------------------\n"
                         "CTRL + Left click: add one more pole. \n"
@@ -23,24 +23,63 @@ class MyGraphicsWindow(pg.GraphicsWindow):
                         "Left/Right arrows: change imaginary part (frequency) of the current pole or zero\n"
                         "Up/Down arrows; change the real part (width) of the current pole or zero. \n"
                         "Poles are represented by 'X', zeros by 'O'")
+        self.doubleclicked = False
+        #APP.setDoubleClickInterval(300)  # default value (550) is fine
+        self.mouse_clicked_timer = QtCore.QTimer()
+        self.mouse_clicked_timer.setSingleShot(True)
+        self.mouse_clicked_timer.setInterval(APP.doubleClickInterval())
+        self.mouse_clicked_timer.timeout.connect(self.mouse_clicked)
 
-    def mousePressEvent(self, *args, **kwds):
-        event = args[0]
-        modifier = int(event.modifiers())
+    # see https://wiki.python.org/moin/PyQt/Distinguishing%20between%20click%20and%20double%20click
+    # "The trick is to realise that Qt delivers MousePress, MouseRelease,
+    # MouseDoubleClick and MouseRelease events in that order to the widget."
+    def mousePressEvent(self, event):
+        self.doubleclicked = False
+        self.storeevent(event)
+        if not self.mouse_clicked_timer.isActive():
+            self.mouse_clicked_timer.start()
+        return super(MyGraphicsWindow, self).mousePressEvent(event)
+
+    def mouseDoubleClickEvent(self, event):
+        self.doubleclicked = True
+        self.storeevent(event)
+        if self.mouse_clicked_timer.isActive():
+            self.mouse_clicked_timer.stop()
+            self.mouse_clicked()
+        return super(MyGraphicsWindow, self).mouseDoubleClickEvent(event)
+
+    def storeevent(self, event):
+        self.button = event.button()
+        self.modifier = int(event.modifiers())
         it = self.getItem(0, 0)
         pos = it.mapToScene(event.pos()) #  + it.vb.pos()
         point = it.vb.mapSceneToView(pos)
-        x, y = point.x(), point.y()
-        x = 10 ** x
-        new_z = -100 - 1.j * x
-        if modifier==QtCore.Qt.CTRL:
-            self.parent_widget.module.poles += [new_z]
-            self.parent_widget.attribute_widgets['poles'].set_selected(-1)
-        if modifier == QtCore.Qt.SHIFT:
-            self.parent_widget.module.zeros += [new_z]
-            self.parent_widget.attribute_widgets['zeros'].set_selected(-1)
-        return super(MyGraphicsWindow, self).mousePressEvent(*args, **kwds)
+        self.x, self.y = point.x(), point.y()
+        self.x = 10 ** self.x  # takes logscale into account
 
+    def mouse_clicked(self):
+        print QtCore.Qt.SHIFT, \
+            QtCore.Qt.CTRL, \
+            self.doubleclicked, \
+            self.button, \
+            self.modifier, \
+            self.x
+        damping = self.x/10.0
+        if self.button == QtCore.Qt.LeftButton:
+            if self.doubleclicked:
+                if self.modifier == QtCore.Qt.CTRL:
+                    self.parent.module.complex_poles += [-damping - 1.j * self.x]
+                    self.parent.parent.attribute_widgets['complex_poles'].set_selected(-1)
+                if self.modifier == QtCore.Qt.SHIFT:
+                    self.parent.module.complex_zeros += [-damping - 1.j * self.x]
+                    self.parent.parent.attribute_widgets['complex_zeros'].set_selected(-1)
+            else:
+                if self.modifier == QtCore.Qt.CTRL:
+                    self.parent.module.real_poles += [-self.x]
+                    self.parent.parent.attribute_widgets['real_poles'].set_selected(-1)
+                if self.modifier == QtCore.Qt.SHIFT:
+                    self.parent.module.real_zeros += [-self.x]
+                    self.parent.parent.attribute_widgets['real_zeros'].set_selected(-1)
 
 class IirGraphWidget(QtGui.QGroupBox):
     def __init__(self, parent):
@@ -50,8 +89,8 @@ class IirGraphWidget(QtGui.QGroupBox):
         self.parent = parent
         self.module = self.parent.module
         self.layout = QtGui.QVBoxLayout(self)
-        self.win = MyGraphicsWindow(title="Amplitude", parent_widget=self)
-        self.win_phase = MyGraphicsWindow(title="Phase", parent_widget=self)
+        self.win = MyGraphicsWindow(title="Amplitude", parent=self)
+        self.win_phase = MyGraphicsWindow(title="Phase", parent=self)
         # self.proxy = pg.SignalProxy(self.win.scene().sigMouseClicked,
         # rateLimit=60, slot=self.mouse_clicked)
         self.mag = self.win.addPlot(title="Magnitude (dB)")
@@ -186,6 +225,9 @@ class IirWidget(ModuleWidget):
         self.bottom_widget = IirBottomWidget(self)
         self.main_layout.addWidget(self.bottom_widget)
 
+        # set colors of labels to the one of the corresponding traces
+        self.attribute_widgets['data_curve'].setStyleSheet("color: green")
+
         self.update_plot()
 
         # setup filter in its present state
@@ -227,7 +269,7 @@ class IirWidget(ModuleWidget):
         # plot underlying curve data
         try:
             plot['data'] = self.module._data_curve_object.data.values
-        except AttributeError:
+        except AttributeError:  # no curve for plotting available
             plot['data'] = []
         if False:
             # plot designed filter
@@ -248,7 +290,6 @@ class IirWidget(ModuleWidget):
             self.graph_widget.plots[k+'_phase'].setData(frequencies[:len(v)],
                                                     self._phase(v))
         return
-
         # plot poles and zeros
         freq_poles = abs(np.imag(self.module.poles))
         tf_poles = self.module.transfer_function(

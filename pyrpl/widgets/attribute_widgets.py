@@ -307,6 +307,34 @@ class MyNumberSpinBox(QtGui.QWidget, object):
         self.per_second = val
 
 
+
+class MyIntSpinBox(MyNumberSpinBox):
+    def __init__(self, label, min=-2**13, max=2**13, increment=1,
+                 log_increment=False, halflife_seconds=1.):
+        super(MyIntSpinBox, self).__init__(label,
+                                           min,
+                                           max,
+                                           increment,
+                                           log_increment,
+                                           halflife_seconds)
+
+    @property
+    def val(self):
+        return int(str(self.line.text()))
+
+    @val.setter
+    def val(self, new_val):
+        self.line.setText(("%.i")%round(new_val))
+        self.value_changed.emit()
+        return new_val
+
+    def max_num_letter(self):
+        """
+        Maximum number of letters in line
+        """
+        return int(np.log10(self.max))
+
+
 class MyDoubleSpinBox(MyNumberSpinBox):
     def __init__(self, label, min=-1, max=1, increment=2.**(-13),
                  log_increment=False, halflife_seconds=2.0, decimals=4):
@@ -325,9 +353,6 @@ class MyDoubleSpinBox(MyNumberSpinBox):
     @val.setter
     def val(self, new_val):
         self._val = new_val # in case the line is not updated immediately
-        # former non-scientific notation
-        #self.line.setText(("%."+str(self.decimals) + "f")%new_val)
-        # currently: scientific notation
         self.line.setText(('{:.'+str(self.decimals)+'e}').format(
             float(new_val)))
         self.value_changed.emit()
@@ -340,28 +365,92 @@ class MyDoubleSpinBox(MyNumberSpinBox):
         return self.decimals + int(np.log10(self.max))
 
 
+class MyComplexSpinBox(QtGui.QFrame):
+    """
+    Two spinboxes representing a complex number, with the right keyboard shortcuts
+    (up down for imag, left/right for real).
+    """
+    value_changed = QtCore.pyqtSignal()
 
-class MyIntSpinBox(MyNumberSpinBox):
     def __init__(self, label, min=-2**13, max=2**13, increment=1,
-                 log_increment=False, halflife_seconds=1.):
-        super(MyIntSpinBox, self).__init__(label,
-                                           min,
-                                           max,
-                                           increment,
-                                           log_increment,
-                                           halflife_seconds)
+                 log_increment=False, halflife_seconds=1., decimals=4):
+        super(MyComplexSpinBox, self).__init__()
+        self.max = max
+        self.min = min
+        self.decimals = decimals
+        self.increment = increment
+        self.log_increment = log_increment
+        self.halflife = halflife_seconds
+        self.label = label
+        self.lay = QtGui.QHBoxLayout()
+        self.lay.setContentsMargins(0, 0, 0, 0)
+        self.real = MyDoubleSpinBox(label=label,
+                                    min=min,
+                                    max=max,
+                                    increment=increment,
+                                    log_increment=log_increment,
+                                    halflife_seconds=halflife_seconds,
+                                    decimals=decimals)
+        self.real.value_changed.connect(self.value_changed)
+        self.lay.addWidget(self.real)
+        self.label = QtGui.QLabel(" + j")
+        self.lay.addWidget(self.label)
+        self.imag = MyDoubleSpinBox(label=label,
+                                    min=min,
+                                    max=max,
+                                    increment=increment,
+                                    log_increment=log_increment,
+                                    halflife_seconds=halflife_seconds,
+                                    decimals=decimals)
+        self.imag.value_changed.connect(self.value_changed)
+        self.lay.addWidget(self.imag)
+        self.setLayout(self.lay)
+        self.setFocusPolicy(QtCore.Qt.ClickFocus)
+        width_in_characters = 6.5 + self.decimals
+        self.real.setFixedWidth(width_in_characters*10)
+        self.imag.setFixedWidth(width_in_characters*10)
+
+    def keyPressEvent(self, event):
+        if not event.isAutoRepeat():
+            if event.key() == QtCore.Qt.Key_Up:
+                self.real._button_up_down = True
+                self.real.first_increment()
+            if event.key() == QtCore.Qt.Key_Down:
+                self.real._button_down_down = True
+                self.real.first_increment()
+            if event.key() == QtCore.Qt.Key_Right:
+                self.imag._button_up_down = True
+                self.imag.first_increment()
+            if event.key() == QtCore.Qt.Key_Left:
+                self.imag._button_down_down = True
+                self.imag.first_increment()
+        return super(MyComplexSpinBox, self).keyPressEvent(event)
+
+    def keyReleaseEvent(self, event):
+        if not event.isAutoRepeat():
+            if event.key() == QtCore.Qt.Key_Up:
+                self.real._button_up_down = False
+                self.real.timer_arrow.stop()
+            if event.key() == QtCore.Qt.Key_Down:
+                self.real._button_down_down = False
+                self.real.timer_arrow.stop()
+            if event.key() == QtCore.Qt.Key_Right:
+                self.imag._button_up_down = False
+                self.imag.first_increment()
+            if event.key() == QtCore.Qt.Key_Left:
+                self.imag._button_down_down = False
+                self.imag.first_increment()
+
+        return super(MyComplexSpinBox, self).keyReleaseEvent(event)
 
     @property
     def val(self):
-        #if self.line.text()!=("%.i")%self._val:
-            return int(str(self.line.text()))
-        #return self._val
+        return self.real.val + 1j*self.imag.val
 
     @val.setter
     def val(self, new_val):
-        #self._val = new_val
-        self.line.setText(("%.i")%round(new_val))
-        self.value_changed.emit()
+        self.real.val = np.real(new_val)
+        self.imag.val = np.imag(new_val)
         return new_val
 
     def max_num_letter(self):
@@ -369,6 +458,192 @@ class MyIntSpinBox(MyNumberSpinBox):
         Maximum number of letters in line
         """
         return int(np.log10(self.max))
+
+    def focusOutEvent(self, event):
+        self.value_changed.emit()
+        self.setStyleSheet("")
+
+    def focusInEvent(self, event):
+        self.value_changed.emit()
+        self.setStyleSheet("MyComplexSpinBox{background-color:red;}")
+
+    @property
+    def selected(self):
+        return self.hasFocus()
+
+
+class ListFloatSpinBox(QtGui.QWidget):
+    """
+    No add or remove buttons yet (mainly used to represent analog filters)
+    """
+    value_changed = QtCore.pyqtSignal()
+
+    def __init__(self, label, n_spins=4, min=-65e6, max=65e6, increment=1., log_increment=True, halflife_seconds=1.):
+        super(ListFloatSpinBox, self).__init__()
+        self.label = label
+        self.min = min
+        self.max = max
+        self.increment = increment
+        self.halflife = halflife_seconds
+        self.log_increment = log_increment
+        self.increment = increment
+        self.lay = QtGui.QVBoxLayout(self)
+        self.lay_hs = [QtGui.QHBoxLayout()]
+        self.lay.addLayout(self.lay_hs[0])
+        self.lay.setContentsMargins(0, 0, 0, 0)
+        self.spins = []
+        for index in range(n_spins):
+            spin = MyDoubleSpinBox(label=None,
+                                   min=min,
+                                   max=max,
+                                   increment=increment,
+                                   log_increment=log_increment,
+                                   halflife_seconds=halflife_seconds)
+            spin.value_changed.connect(self.value_changed)
+            self.spins.append(spin)
+            self.lay_hs[0].addWidget(spin)
+
+        if label is not None:
+            self.label = QtGui.QLabel(self.label)
+            self.lay.addWidget(self.label)
+            self.setLayout(self.lay)
+
+    def get_list(self):
+        return [spin.val for spin in self.spins]
+
+    def set_list(self, list_val):
+        for index, val in enumerate(list_val):
+            self.spins[index].val = val
+
+        for i in range(index, len(self.spins)):
+            self.spins[i].val = 0
+
+    def remove_all_spins_from_layout(self):
+        widget = 1
+        while widget is not None:
+            widget = self.lay_hs[0].takeAt(0)
+
+    def set_max_cols(self, n):
+        index_col = 0
+        self.remove_all_spins_from_layout()
+        current_layout = self.lay_hs[0]
+        for spin in self.spins:
+            current_layout.addWidget(spin)
+            index_col+=1
+            if index_col>=n:
+                index_col = 0
+                current_layout = QtGui.QHBoxLayout()
+                self.lay_hs.append(current_layout)
+                self.lay.addLayout(current_layout)
+
+
+class ListComplexSpinBox(QtGui.QFrame):
+    value_changed = QtCore.pyqtSignal()
+    def __init__(self, label, min=-65e6, max=65e6, increment=1.,
+                 log_increment=True, halflife_seconds=1.):
+        super(ListComplexSpinBox, self).__init__()
+        self.label = label
+        self.min = min
+        self.max = max
+        self.increment = increment
+        self.halflife = halflife_seconds
+        self.log_increment = log_increment
+        self.incement = increment
+        self.lay = QtGui.QVBoxLayout()
+        self.spins = []
+        self.button_removes = []
+        self.spin_lays = []
+        self.halflife = halflife_seconds
+        if label is not None:
+            self.label = QtGui.QLabel(self.name)
+            self.lay.addWidget(self.label)
+        #for i in range(number):
+        #    self.add_spin()
+        self.button_add = QtGui.QPushButton("+")
+        self.button_add.clicked.connect(self.add_spin_and_select)
+
+        self.lay.addWidget(self.button_add)
+        self.lay.addStretch(1)
+        self.lay.setContentsMargins(0,0,0,0)
+        self.setLayout(self.lay)
+        self.selected = None
+
+    def add_spin_and_select(self):
+        self.add_spin()
+        self.spins[-1].val = -1e4 -1j*1e3
+        self.set_selected(-1)
+
+    def add_spin(self):
+        index = len(self.spins)
+        spin = MyComplexSpinBox(label="",
+                                min=self.min,
+                                max=self.max,
+                                increment=self.increment,
+                                log_increment=self.log_increment,
+                                halflife_seconds=self.halflife,
+                                decimals=5)
+        self.spins.append(spin)
+        spin_lay = QtGui.QHBoxLayout()
+        self.spin_lays.append(spin_lay)
+        spin_lay.addWidget(spin)
+        button_remove = QtGui.QPushButton('-')
+        self.button_removes.append(button_remove)
+        spin_lay.addWidget(button_remove)
+        spin.value_changed.connect(self.value_changed)
+        button_remove.clicked.connect(functools.partial(self.remove_spin_and_emit, button=button_remove))
+        self.lay.insertLayout(index + 1*(self.label is not None), spin_lay) #QLabel occupies the first row
+        button_remove.setFixedWidth(3 * 10)
+
+    def remove_spin_and_emit(self, button):
+        self.remove_spin(button)
+        self.value_changed.emit()
+
+    def remove_spin(self, button):
+        index = self.button_removes.index(button)
+        button = self.button_removes.pop(index)
+        spin = self.spins.pop(index)
+        spin_lay = self.spin_lays.pop(index)
+
+        self.lay.removeItem(spin_lay)
+
+        spin.deleteLater()
+        button.deleteLater()
+        spin_lay.deleteLater()
+
+    def get_list(self):
+        return [spin.val for spin in self.spins]
+
+    def set_list(self, list_val):
+        for index, val in enumerate(list_val):
+            if index>=len(self.spins):
+                self.add_spin()
+            self.spins[index].val = val
+        to_delete = []
+        for other_index in range(len(list_val), len(self.spins)):
+            to_delete.append(self.button_removes[other_index]) # don't loop on a list that is
+                                                                                 # shrinking !
+        for button in to_delete:
+            self.remove_spin(button)
+
+    def editing(self):
+        edit = False
+        for spin in self.spins:
+            edit = edit or spin.editing()
+        return edit()
+
+    def set_selected(self, index):
+        if self.selected is not None:
+            self.spins[self.selected].setStyleSheet("")
+        self.spins[index].setFocus(True)
+        self.value_changed.emit()
+
+    def get_selected(self):
+        """
+        Returns the index of the selected value
+        """
+        for index, spin in enumerate(self.spins):
+            if spin.hasFocus():
+                return index
 
 
 class BaseAttributeWidget(QtGui.QWidget):
@@ -580,287 +855,6 @@ class FloatAttributeWidget(NumberAttributeWidget):
         :return: float
         """
         return float(getattr(self.module, self.name))
-
-
-class MyComplexSpinBox(QtGui.QFrame):
-    """
-    Two spinboxes representing a complex number, with the right keyboard shortcuts
-    (up down for imag, left/right for real).
-    """
-    value_changed = QtCore.pyqtSignal()
-
-    def __init__(self, label, min=-2**13, max=2**13, increment=1,
-                 log_increment=False, halflife_seconds=1., decimals=0):
-        super(MyComplexSpinBox, self).__init__()
-        self.max = max
-        self.min = min
-        self.decimals = decimals
-        self.increment = increment
-        self.log_increment = log_increment
-        self.halflife = halflife_seconds
-        self.label = label
-        self.lay = QtGui.QHBoxLayout()
-        self.lay.setContentsMargins(0, 0, 0, 0)
-        self.real = MyDoubleSpinBox(label=label,
-                                    min=min,
-                                    max=max,
-                                    increment=increment,
-                                    log_increment=log_increment,
-                                    halflife_seconds=halflife_seconds,
-                                    decimals=decimals)
-        self.real.value_changed.connect(self.value_changed)
-        self.lay.addWidget(self.real)
-        self.label = QtGui.QLabel(" + j")
-        self.lay.addWidget(self.label)
-        self.imag = MyDoubleSpinBox(label=label,
-                                    min=min,
-                                    max=max,
-                                    increment=increment,
-                                    log_increment=log_increment,
-                                    halflife_seconds=halflife_seconds,
-                                    decimals=decimals)
-        self.imag.value_changed.connect(self.value_changed)
-        self.lay.addWidget(self.imag)
-        self.setLayout(self.lay)
-        self.setFocusPolicy(QtCore.Qt.ClickFocus)
-
-    def keyPressEvent(self, event):
-        if not event.isAutoRepeat():
-            if event.key() == QtCore.Qt.Key_Up:
-                self.real._button_up_down = True
-                self.real.first_increment()
-            if event.key() == QtCore.Qt.Key_Down:
-                self.real._button_down_down = True
-                self.real.first_increment()
-            if event.key() == QtCore.Qt.Key_Right:
-                self.imag._button_up_down = True
-                self.imag.first_increment()
-            if event.key() == QtCore.Qt.Key_Left:
-                self.imag._button_down_down = True
-                self.imag.first_increment()
-        return super(MyComplexSpinBox, self).keyPressEvent(event)
-
-    def keyReleaseEvent(self, event):
-        if not event.isAutoRepeat():
-            if event.key() == QtCore.Qt.Key_Up:
-                self.real._button_up_down = False
-                self.real.timer_arrow.stop()
-            if event.key() == QtCore.Qt.Key_Down:
-                self.real._button_down_down = False
-                self.real.timer_arrow.stop()
-            if event.key() == QtCore.Qt.Key_Right:
-                self.imag._button_up_down = False
-                self.imag.first_increment()
-            if event.key() == QtCore.Qt.Key_Left:
-                self.imag._button_down_down = False
-                self.imag.first_increment()
-
-        return super(MyComplexSpinBox, self).keyReleaseEvent(event)
-
-    @property
-    def val(self):
-        #if self.line.text()!=("%.i")%self._val:
-            return self.real.val + 1j*self.imag.val
-        #return self._val
-
-    @val.setter
-    def val(self, new_val):
-        #self._val = new_val
-        self.real.val = np.real(new_val)
-        self.imag.val = np.imag(new_val)
-        return new_val
-
-    def max_num_letter(self):
-        """
-        Maximum number of letters in line
-        """
-        return int(np.log10(self.max))
-
-    def focusOutEvent(self, event):
-        self.value_changed.emit()
-        self.setStyleSheet("")
-
-    def focusInEvent(self, event):
-        self.value_changed.emit()
-        self.setStyleSheet("MyComplexSpinBox{background-color:red;}")
-
-    @property
-    def selected(self):
-        return self.hasFocus()
-
-
-class ListFloatSpinBox(QtGui.QWidget):
-    """
-    No add or remove buttons yet (mainly used to represent analog filters)
-    """
-    value_changed = QtCore.pyqtSignal()
-
-    def __init__(self, label, n_spins=4, min=-65e6, max=65e6, increment=1., log_increment=True, halflife_seconds=1.):
-        super(ListFloatSpinBox, self).__init__()
-        self.label = label
-        self.min = min
-        self.max = max
-        self.increment = increment
-        self.halflife = halflife_seconds
-        self.log_increment = log_increment
-        self.increment = increment
-        self.lay = QtGui.QVBoxLayout(self)
-        self.lay_hs = [QtGui.QHBoxLayout()]
-        self.lay.addLayout(self.lay_hs[0])
-        self.lay.setContentsMargins(0, 0, 0, 0)
-        self.spins = []
-        for index in range(n_spins):
-            spin = MyDoubleSpinBox(label=None,
-                                   min=min,
-                                   max=max,
-                                   increment=increment,
-                                   log_increment=log_increment,
-                                   halflife_seconds=halflife_seconds)
-            spin.value_changed.connect(self.value_changed)
-            self.spins.append(spin)
-            self.lay_hs[0].addWidget(spin)
-
-        if label is not None:
-            self.label = QtGui.QLabel(self.label)
-            self.lay.addWidget(self.label)
-            self.setLayout(self.lay)
-
-    def get_list(self):
-        return [spin.val for spin in self.spins]
-
-    def set_list(self, list_val):
-        for index, val in enumerate(list_val):
-            self.spins[index].val = val
-
-        for i in range(index, len(self.spins)):
-            self.spins[i].val = 0
-
-    def remove_all_spins_from_layout(self):
-        widget = 1
-        while widget is not None:
-            widget = self.lay_hs[0].takeAt(0)
-
-    def set_max_cols(self, n):
-        index_col = 0
-        self.remove_all_spins_from_layout()
-        current_layout = self.lay_hs[0]
-        for spin in self.spins:
-            current_layout.addWidget(spin)
-            index_col+=1
-            if index_col>=n:
-                index_col = 0
-                current_layout = QtGui.QHBoxLayout()
-                self.lay_hs.append(current_layout)
-                self.lay.addLayout(current_layout)
-
-
-class ListComplexSpinBox(QtGui.QFrame):
-    value_changed = QtCore.pyqtSignal()
-
-    def __init__(self, label, min=-65e6, max=65e6, increment=1.,
-                 log_increment=True, halflife_seconds=1.):
-        super(ListComplexSpinBox, self).__init__()
-        self.label = label
-        self.min = min
-        self.max = max
-        self.increment = increment
-        self.halflife = halflife_seconds
-        self.log_increment = log_increment
-        self.incement = increment
-        self.lay = QtGui.QVBoxLayout()
-        self.spins = []
-        self.button_removes = []
-        self.spin_lays = []
-        self.halflife = halflife_seconds
-        if label is not None:
-            self.label = QtGui.QLabel(self.name)
-            self.lay.addWidget(self.label)
-        #for i in range(number):
-        #    self.add_spin()
-        self.button_add = QtGui.QPushButton("+")
-        self.button_add.clicked.connect(self.add_spin_and_select)
-
-        self.lay.addWidget(self.button_add)
-        self.lay.addStretch(1)
-        self.lay.setContentsMargins(0,0,0,0)
-        self.setLayout(self.lay)
-        self.selected = None
-
-    def add_spin_and_select(self):
-        self.add_spin()
-        self.spins[-1].val = -1e4 -1j*1e3
-        self.set_selected(-1)
-
-    def add_spin(self):
-        index = len(self.spins)
-        spin = MyComplexSpinBox(label="",
-                                min=self.min,
-                                max=self.max,
-                                increment=self.increment,
-                                log_increment=self.log_increment,
-                                halflife_seconds=self.halflife,
-                                decimals=0)
-        self.spins.append(spin)
-        spin_lay = QtGui.QHBoxLayout()
-        self.spin_lays.append(spin_lay)
-        spin_lay.addWidget(spin)
-        button_remove = QtGui.QPushButton('-')
-        self.button_removes.append(button_remove)
-        spin_lay.addWidget(button_remove)
-        spin.value_changed.connect(self.value_changed)
-        button_remove.clicked.connect(functools.partial(self.remove_spin_and_emit, button=button_remove))
-        self.lay.insertLayout(index + 1*(self.label is not None), spin_lay) #QLabel occupies the first row
-
-    def remove_spin_and_emit(self, button):
-        self.remove_spin(button)
-        self.value_changed.emit()
-
-    def remove_spin(self, button):
-        index = self.button_removes.index(button)
-        button = self.button_removes.pop(index)
-        spin = self.spins.pop(index)
-        spin_lay = self.spin_lays.pop(index)
-
-        self.lay.removeItem(spin_lay)
-
-        spin.deleteLater()
-        button.deleteLater()
-        spin_lay.deleteLater()
-
-    def get_list(self):
-        return [spin.val for spin in self.spins]
-
-    def set_list(self, list_val):
-        for index, val in enumerate(list_val):
-            if index>=len(self.spins):
-                self.add_spin()
-            self.spins[index].val = val
-        to_delete = []
-        for other_index in range(len(list_val), len(self.spins)):
-            to_delete.append(self.button_removes[other_index]) # don't loop on a list that is
-                                                                                 # shrinking !
-        for button in to_delete:
-            self.remove_spin(button)
-
-    def editing(self):
-        edit = False
-        for spin in self.spins:
-            edit = edit or spin.editing()
-        return edit()
-
-    def set_selected(self, index):
-        if self.selected is not None:
-            self.spins[self.selected].setStyleSheet("")
-        self.spins[index].setFocus(True)
-        self.value_changed.emit()
-
-    def get_selected(self):
-        """
-        Returns the index of the selected value
-        """
-        for index, spin in enumerate(self.spins):
-            if spin.hasFocus():
-                return index
 
 
 class ListFloatAttributeWidget(BaseAttributeWidget):
