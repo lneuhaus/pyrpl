@@ -24,7 +24,7 @@ from .widgets.attribute_widgets import BoolAttributeWidget, \
                                        StringAttributeWidget, \
                                        ListComplexAttributeWidget, \
                                        FrequencyAttributeWidget, \
-                                       ListOfNFloatAttributeWidget, \
+                                       ListFloatAttributeWidget, \
                                        BoolIgnoreAttributeWidget, \
                                        TextAttributeWidget, \
                                        CurveAttributeWidget, \
@@ -797,12 +797,12 @@ class FilterRegister(BaseRegister, FilterProperty):
         return filter_shifts
 
 
-class ListFloatProperty(BaseProperty):
+class ListFloatProperty(FloatProperty):
     """
     An arbitrary length list of float numbers.
     """
-    default = [0, 0, 0, 0]
-    _widget_class = ListOfNFloatAttributeWidget
+    default = [0.]
+    _widget_class = ListFloatAttributeWidget
 
     def validate_and_normalize(self, obj, value):
         """
@@ -810,23 +810,25 @@ class ListFloatProperty(BaseProperty):
         """
         if not np.iterable(value):
             value = [value]
-        return [float(val) for val in value]
+        return [self.validate_and_normalize_element(obj, val) for val in value]
+
+    def validate_and_normalize_element(self, obj, val):
+        return super(ListFloatProperty, self).validate_and_normalize(obj, val)
 
 
-class ListComplexProperty(BaseProperty):
+class ListComplexProperty(ListFloatProperty):
     """
     An arbitrary length list of complex numbers.
     """
     _widget_class = ListComplexAttributeWidget
-    default = [0.]
 
-    def validate_and_normalize(self, obj, value):
-        """
-        Converts the value in a list of complex numbers.
-        """
-        if not np.iterable(value):
-            value = [value]
-        return [complex(val) for val in value]
+    def validate_and_normalize_element(self, obj, val):
+        val = complex(val)
+        re = super(ListComplexProperty, self).validate_and_normalize_element(
+            obj, val.real)
+        im = super(ListComplexProperty, self).validate_and_normalize_element(
+            obj, val.imag)
+        return complex(re, im)
 
 
 class PWMRegister(FloatRegister):

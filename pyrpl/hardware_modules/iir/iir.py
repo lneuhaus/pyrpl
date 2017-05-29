@@ -127,9 +127,8 @@ class IIR(FilterModule):
 
     complex_zeros = ListComplexProperty(default=[], call_setup=True)
     complex_poles = ListComplexProperty(default=[], call_setup=True)
-    real_zeros = ListComplexProperty(default=[], call_setup=True)
-    #real_zeros = ListFloatProperty(default=[], call_setup=True)
-    real_poles = ListComplexProperty(default=[], call_setup=True)
+    real_zeros = ListFloatProperty(default=[], call_setup=True)
+    real_poles = ListFloatProperty(default=[], call_setup=True)
 
     zeros = IirListProperty()
     poles = IirListProperty()
