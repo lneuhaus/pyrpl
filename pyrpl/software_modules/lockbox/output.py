@@ -111,6 +111,10 @@ class OutputSignal(Signal):
     def signal(self):
         return self.pid.name
 
+    def __init__(self, parent, name):
+        super(OutputSignal, self).__init__(parent, name=name)
+        self._setup_pid_output()
+
     @property
     def pid(self):
         if not hasattr(self, '_pid') or self._pid is None:
@@ -141,6 +145,9 @@ class OutputSignal(Signal):
         self.pid.min_voltage = self.min_voltage
         if self.output_channel.startswith('out'):
             self.pid.output_direct = self.output_channel
+            for pwm in [self.pyrpl.rp.pwm0, self.pyrpl.rp.pwm1]:
+                if pwm.input == self.pid.name:
+                    pwm.input = 'off'
         elif self.output_channel.startswith('pwm'):
             self.pid.output_direct = 'off'
             pwm = getattr(self.pyrpl.rp, self.output_channel)

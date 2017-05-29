@@ -728,8 +728,7 @@ class HardwareModule(Module):
         return int(v)
 
     def _from_pyint(self, v, bitlength=14):
-        self.int = int(v)
-        v = self.int
+        v = int(v)
         if v < 0:
             v = v + 2 ** bitlength
         v = (v & (2 ** bitlength - 1))
