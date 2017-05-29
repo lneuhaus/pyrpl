@@ -111,10 +111,6 @@ class OutputSignal(Signal):
     def signal(self):
         return self.pid.name
 
-    def __init__(self, parent, name):
-        super(OutputSignal, self).__init__(parent, name=name)
-        self._setup_pid_output()
-
     @property
     def pid(self):
         if not hasattr(self, '_pid') or self._pid is None:
@@ -171,10 +167,11 @@ class OutputSignal(Signal):
         if reset_offset:
             self.pid.ival = 0
         self.current_state = 'unlock'
+        # benefit from the occasion and do proper initialization
+        self._setup_pid_output()
 
     def sweep(self):
         self.unlock(reset_offset=True)
-        self._setup_pid_output()
         self.pid.input = self.lockbox.asg
         self.lockbox.asg.setup(amplitude=self.sweep_amplitude,
                                offset=self.sweep_offset,
@@ -217,8 +214,7 @@ class OutputSignal(Signal):
         # the input (error signal) with a setpoint-dependent slope.
         # 1) model the output: dc_gain converted into units of setpoint_unit_per_V
         output_unit = self.unit.split('/')[0]
-        external_loop_gain = self.dc_gain\
-                             * self.lockbox._unit_in_setpoint_unit(output_unit)
+        external_loop_gain = self.dc_gain * self.lockbox._unit_in_setpoint_unit(output_unit)
         # 2) model the input: slope comes in units of V_per_setpoint_unit,
         # which cancels previous unit and we end up with a dimensionless ext. gain.
         external_loop_gain *= input.expected_slope(setpoint)
