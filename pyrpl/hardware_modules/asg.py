@@ -75,9 +75,7 @@ class AsgAmplitudeAttribute(FloatRegister):
             # stored in the fpga (see set_value(obj, 1.0) call below)
             obj._rmsamplitude = val
             # fill normal-distributed data into data memory
-            obj.data = np.random.normal(loc=0.0,
-                                        scale=obj._rmsamplitude,
-                                        size=obj.data_length)
+            obj.data = obj._noise_distribution()
             # multiplier set to 1.0 to benefit from full available resolution
             super(AsgAmplitudeAttribute, self).set_value(obj, 1.0)
         else:
@@ -238,6 +236,19 @@ def make_asg(channel=0):
                                         'cycles. This is used for the generation of '
                                         'white noise. If false, asg behaves '
                                         'normally. ')
+
+        def _noise_distribution(self):
+            """
+            returns an array of data_length samples of a Gaussian
+            distribution with rms=self._rmsamplitude
+            """
+            return np.random.normal(loc=0.0,
+                                    scale=self._rmsamplitude,
+                                    size=self.data_length)
+
+        @property
+        def _noise_V2_per_Hz(self):
+            return self._rmsamplitude**2/(125e6*self._frequency_correction/2)
 
         waveforms = ['sin', 'cos', 'ramp', 'halframp', 'square', 'dc',
                      'noise']

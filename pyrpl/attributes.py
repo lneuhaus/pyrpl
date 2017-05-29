@@ -24,7 +24,7 @@ from .widgets.attribute_widgets import BoolAttributeWidget, \
                                        StringAttributeWidget, \
                                        ListComplexAttributeWidget, \
                                        FrequencyAttributeWidget, \
-                                       ListFloatAttributeWidget, \
+                                       ListOfNFloatAttributeWidget, \
                                        BoolIgnoreAttributeWidget, \
                                        TextAttributeWidget, \
                                        CurveAttributeWidget, \
@@ -802,7 +802,7 @@ class ListFloatProperty(BaseProperty):
     An arbitrary length list of float numbers.
     """
     default = [0, 0, 0, 0]
-    _widget_class = ListFloatAttributeWidget
+    _widget_class = ListOfNFloatAttributeWidget
 
     def validate_and_normalize(self, obj, value):
         """

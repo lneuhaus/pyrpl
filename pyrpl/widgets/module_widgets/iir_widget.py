@@ -58,20 +58,14 @@ class MyGraphicsWindow(pg.GraphicsWindow):
         self.x = 10 ** self.x  # takes logscale into account
 
     def mouse_clicked(self):
-        print QtCore.Qt.SHIFT, \
-            QtCore.Qt.CTRL, \
-            self.doubleclicked, \
-            self.button, \
-            self.modifier, \
-            self.x
-        damping = self.x/10.0
+        default_damping = self.x/10.0
         if self.button == QtCore.Qt.LeftButton:
             if self.doubleclicked:
                 if self.modifier == QtCore.Qt.CTRL:
-                    self.parent.module.complex_poles += [-damping - 1.j * self.x]
+                    self.parent.module.complex_poles += [-default_damping - 1.j * self.x]
                     self.parent.parent.attribute_widgets['complex_poles'].set_selected(-1)
                 if self.modifier == QtCore.Qt.SHIFT:
-                    self.parent.module.complex_zeros += [-damping - 1.j * self.x]
+                    self.parent.module.complex_zeros += [-default_damping - 1.j * self.x]
                     self.parent.parent.attribute_widgets['complex_zeros'].set_selected(-1)
             else:
                 if self.modifier == QtCore.Qt.CTRL:
