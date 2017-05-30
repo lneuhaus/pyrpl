@@ -252,7 +252,7 @@ class IirWidget(ModuleWidget):
                               + sys.float_info.epsilon)
 
     def _phase(self, data):
-        return np.angle(data, deg=True)
+        return np.angle(np.asarray(data, dtype=np.complex), deg=True)
 
     def update_plot(self):
         # first, we compile the line plot data, then we iterate over them and
@@ -283,32 +283,30 @@ class IirWidget(ModuleWidget):
                                                self._magnitude(v))
             self.graph_widget.plots[k+'_phase'].setData(frequencies[:len(v)],
                                                     self._phase(v))
-        return
+        #return
         # plot poles and zeros
-        freq_poles = abs(np.imag(self.module.poles))
-        tf_poles = self.module.transfer_function(
-            freq_poles)
-        freq_zeros = abs(np.imag(self.module.zeros))
-        tf_zeros = self.module.transfer_function(freq_zeros)
         aws = self.attribute_widgets
         for end in ['poles', 'zeros']:
             mag, phase = [], []
-            for start in ["complex", "real"]:
+            for start in ['complex', 'real']:
                 key = start+'_'+end
-                freq = abs(np.imag(getattr(self.module, key)))
+                freq = getattr(self.module, key)
+                if start == 'complex':
+                    freq = np.imag(freq)
+                freq = np.abs(freq)
                 tf = self.module.transfer_function(freq, **tfargs)
                 selected = aws[key].get_selected()
                 brush = [pg.mkBrush(color='r')
                          if (num == selected)
                          else pg.mkBrush(color='b')
                          for num in range(aws[key].number)]
-                mag += [{'pos': (freq, value), 'data': index, 'brush': brush}
-                 for (index, (freq, value, brush))
+                mag += [{'pos': (fr, val), 'data': i, 'brush': br}
+                 for (i, (fr, val, br))
                  in enumerate(zip(list(np.log10(freq)),
                                   list(self._magnitude(tf)),
                                   brush))]
-                phase += [{'pos': (freq, value), 'data': index, 'brush': brush}
-                 for (index, (freq, value, brush))
+                phase += [{'pos': (fr, val), 'data': i, 'brush': br}
+                 for (i, (fr, val, br))
                  in enumerate(zip(list(np.log10(freq)),
                                   list(self._phase(tf)),
                                   brush))]

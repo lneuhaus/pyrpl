@@ -26,7 +26,7 @@ class OverflowProperty(StringProperty):
         elif bool(value & 0b0111111):
             text = 'internal saturation'
         else:
-            text = 'unknown overflow'
+            text = 'unknown overflow %d'%value
         return text
 
     def validate_and_normalize(self, obj, value):
@@ -38,6 +38,24 @@ class OverflowProperty(StringProperty):
         self.launch_signal(obj, value)
 
 
+class IirListFloatProperty(ListFloatProperty):
+    def set_value(self, obj, value):
+        super(IirListFloatProperty, self).set_value(obj, value)
+        pole_or_zero = self.name.split('_')[1]
+        # update poles/zeros from complex_poles/.../.../real_zeros
+        getattr(obj.__class__, pole_or_zero).value_updated(obj,
+                                                    getattr(obj, pole_or_zero))
+
+
+class IirListComplexProperty(ListComplexProperty):
+    def set_value(self, obj, value):
+        super(IirListComplexProperty, self).set_value(obj, value)
+        pole_or_zero = self.name.split('_')[1]
+        # update poles/zeros from complex_poles/.../.../real_zeros
+        getattr(obj.__class__, pole_or_zero).value_updated(obj,
+                                                    getattr(obj, pole_or_zero))
+
+
 class IirListProperty(ListComplexProperty):
     def get_value(self, obj):
         return list(getattr(obj, 'complex_'+self.name) +
@@ -47,14 +65,14 @@ class IirListProperty(ListComplexProperty):
         real, complex = [], []
         for v in value:
             if np.imag(v)==0:
-                real.append(v)
+                real.append(v.real)
             else:
                 complex.append(v)
         # avoid calling setup twice
-        obj._setup_ongoing = True
-        setattr(obj, 'complex_' + self.name, real)
-        obj._setup_ongoing = False
-        setattr(obj, 'real_' + self.name, real)
+        with obj.do_setup:
+            setattr(obj, 'complex_' + self.name, complex)
+            setattr(obj, 'real_' + self.name, real)
+        #obj._setup()
 
 
 class IIR(FilterModule):
@@ -91,7 +109,8 @@ class IIR(FilterModule):
                          "inputfilter",
                          "gain",
                          "on",
-                         "bypass"]
+                         "bypass",
+                         "data_curve"]
     _gui_attributes = ["input",
                        "loops",
                        "complex_zeros",
@@ -125,13 +144,16 @@ class IIR(FilterModule):
                           doc="IIR is bypassed",
                           default=False)  # fpga register name: shortcut
 
-    complex_zeros = ListComplexProperty(default=[], call_setup=True)
-    complex_poles = ListComplexProperty(default=[], call_setup=True)
-    real_zeros = ListFloatProperty(default=[], call_setup=True)
-    real_poles = ListFloatProperty(default=[], call_setup=True)
+    # principal storage of the pole/zero data, _setup is called through
+    # zeros/poles defined just below
+    complex_zeros = IirListComplexProperty(default=[])
+    complex_poles = IirListComplexProperty(default=[])
+    real_zeros = IirListFloatProperty(default=[])
+    real_poles = IirListFloatProperty(default=[])
 
-    zeros = IirListProperty()
-    poles = IirListProperty()
+    # convenience properties to manipulate combined list
+    zeros = IirListProperty(call_setup=True)
+    poles = IirListProperty(call_setup=True)
 
     gain = FloatProperty(min=-1e20, max=1e20, default=1.0, call_setup=True)
 
