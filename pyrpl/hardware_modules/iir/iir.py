@@ -1,7 +1,7 @@
 from . import iir_theory #, bodefit
 from .. import FilterModule
-from ...attributes import IntRegister, BoolRegister, ListComplexProperty, \
-    FloatProperty, StringProperty, ListFloatProperty, CurveSelectProperty, \
+from ...attributes import IntRegister, BoolRegister, ComplexListProperty, \
+    FloatProperty, StringProperty, FloatListProperty, CurveSelectProperty, \
     GainRegister, ConstantIntRegister
 from ...widgets.module_widgets import IirWidget
 from ...modules import SignalLauncher
@@ -38,16 +38,16 @@ class OverflowProperty(StringProperty):
         self.launch_signal(obj, value)
 
 
-class IirListFloatProperty(ListFloatProperty):
+class IirFloatListProperty(FloatListProperty):
     def set_value(self, obj, value):
-        super(IirListFloatProperty, self).set_value(obj, value)
+        super(IirFloatListProperty, self).set_value(obj, value)
         pole_or_zero = self.name.split('_')[1]
         # update poles/zeros from complex_poles/.../.../real_zeros
         getattr(obj.__class__, pole_or_zero).value_updated(obj,
                                                     getattr(obj, pole_or_zero))
 
 
-class IirListComplexProperty(ListComplexProperty):
+class IirListComplexProperty(ComplexListProperty):
     def set_value(self, obj, value):
         super(IirListComplexProperty, self).set_value(obj, value)
         pole_or_zero = self.name.split('_')[1]
@@ -56,7 +56,7 @@ class IirListComplexProperty(ListComplexProperty):
                                                     getattr(obj, pole_or_zero))
 
 
-class IirListProperty(ListComplexProperty):
+class IirListProperty(ComplexListProperty):
     def get_value(self, obj):
         return list(getattr(obj, 'complex_'+self.name) +
                     getattr(obj, 'real_'+self.name))
@@ -148,8 +148,8 @@ class IIR(FilterModule):
     # zeros/poles defined just below
     complex_zeros = IirListComplexProperty(default=[])
     complex_poles = IirListComplexProperty(default=[])
-    real_zeros = IirListFloatProperty(default=[])
-    real_poles = IirListFloatProperty(default=[])
+    real_zeros = IirFloatListProperty(default=[])
+    real_poles = IirFloatListProperty(default=[])
 
     # convenience properties to manipulate combined list
     zeros = IirListProperty(call_setup=True)

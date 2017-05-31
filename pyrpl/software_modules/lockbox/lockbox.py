@@ -340,6 +340,7 @@ class Lockbox(LockboxModule):
             self._logger.info("Attempting to re-lock...")
             return self.lock(**kwargs)
 
+
     def relock_until_locked(self, **kwargs):
         """ blocks the command line until cavity is locked with kwargs """
         def relock_function(lockbox, loop):
@@ -486,23 +487,38 @@ class Lockbox(LockboxModule):
 
     @property
     def params(self):
-        """ returns a useful set of parameters that describe rather well if the lockbox was properly locked"""
-        d = dict()
-        for var in ['is_locked', 'is_locked_and_final', 'current_state', '_state_change_time', '_time',
-                    'final_stage.setpoint', 'final_stage.gain_factor', 'final_stage.input']:
+        """
+        returns a convenient dict with parameters that describe if and with
+        which settings the lockbox was properly.
+
+        params from different Pyrpl lockboxes can be merged together without
+        problems if the names of the config files differ
+        """
+        d = dict(config=self.c._root._filename)
+        for var in ['is_locked', 'is_locked_and_final', 'current_state',
+                    '_state_change_time', '_time', 'final_stage.setpoint',
+                    'setpoint_unit', 'final_stage.gain_factor',
+                    'final_stage.input']:
             val = recursive_getattr(self, var)
             if callable(val):
                 val = val()
             d[var] = val
-        for i in self.inputs:
-            i.stats(t=1.0)
-            d[i.name+ '_mean'] = i.mean
-            d[i.name + '_rms'] = i.rms
-            d[i.name + '_calibration_data_min'] = i.calibration_data.min
-            d[i.name + '_calibration_data_max'] = i.calibration_data.max
-        for i in self.outputs:
-            d[i.name+ '_mean'] = i.mean
-            d[i.name + '_rms'] = i.rms
+        for o in self.inputs:
+            o.stats(t=1.0)
+            d[o.name+ '_mean'] = o.mean
+            d[o.name + '_rms'] = o.rms
+            d[o.name + '_calibration_data_min'] = o.calibration_data.min
+            d[o.name + '_calibration_data_max'] = o.calibration_data.max
+            if hasattr(o, 'quadrature_factor'):
+                d[o.name + '_quadrature_factor'] = o.quadrature_factor
+        for o in self.outputs:
+            d[o.name+ '_mean'] = o.mean
+            d[o.name + '_rms'] = o.rms
+            d[o.name + '_pid_setpoint'] = o.pid.setpoint
+            d[o.name + '_pid_p'] = o.pid.p
+            d[o.name + '_pid_i'] = o.pid.i
+            d[o.name + '_pid_ival'] = o.pid.ival
+            d[o.name + '_pid_input'] = o.pid.input
         dd = dict()
         for k in d:
             dd[self.pyrpl.name+'_'+k]=d[k]

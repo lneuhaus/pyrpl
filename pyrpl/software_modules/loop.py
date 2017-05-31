@@ -71,13 +71,18 @@ class Loop(Module):
 
     def main_loop(self):
         try:
-            self.loop()
-        except TypeError:
-            # allows to pass instance functions of the parent module as arguments as well
             try:
-                self.loop(self.parent, self)
+                self.loop()
             except TypeError:
-                self.loop(self.parent)
+                # allows to pass instance functions of the parent module as arguments as well
+                try:
+                    self.loop(self.parent, self)
+                except TypeError:
+                    self.loop(self.parent)
+        except BaseException as e:
+            # we do not want the loop to stop launching the next cycle (code
+            # below this) if there is an exception raised by the loop function)
+            self._logger.error("Error in main_loop of %s: %s", self.name, e)
         # increment counter
         self.n += 1
         if not self._ended:

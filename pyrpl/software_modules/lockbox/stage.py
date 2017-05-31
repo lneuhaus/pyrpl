@@ -31,11 +31,12 @@ class StageOutput(LockboxModule):
         self.parent._setup()
 
 
-class StageInputSelectProperty(SelectProperty):
-    def validate_and_normalize(self, obj, value):
-        if isinstance(value, SignalModule):
-            value = SignalModule.name
-        return value
+class StageInputSelectProperty(InputSelectProperty):
+    pass
+    #def validate_and_normalize(self, obj, value):
+    #    if isinstance(value, SignalModule):
+    #        value = SignalModule.name
+    #    return value
 
 
 class Stage(LockboxModule):

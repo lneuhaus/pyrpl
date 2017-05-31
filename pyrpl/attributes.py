@@ -29,6 +29,7 @@ from .widgets.attribute_widgets import BoolAttributeWidget, \
                                        TextAttributeWidget, \
                                        CurveAttributeWidget, \
                                        CurveSelectAttributeWidget
+
 from .curvedb import CurveDB
 from collections import OrderedDict
 import logging
@@ -797,7 +798,140 @@ class FilterRegister(BaseRegister, FilterProperty):
         return filter_shifts
 
 
-class ListFloatProperty(FloatProperty):
+class AttributeList(list):
+    """
+    A list of attributes.
+
+    This class is not an attribute/property by itself, but is the object
+    returned by AttributeListProperty that correctly extends list methods to
+    communicate a change in the list throughout pyrpl. """
+    element_cls = object
+
+    # insert, __setitem__, and __delitem__ completely describe the behavior
+    def insert(self, index, new):
+        super(AttributeList, self).insert(index, new)
+
+
+    def __delitem__(self, index=-1):
+        super(AttributeList, self).pop(index)
+
+    def __setitem__(self, index, value):
+        # setting a list element sets up the corresponding module
+        self[index] = value
+
+    # other convenience functions that are based on above axioms
+    def append(self, new):
+        self.insert(self.__len__(), new)
+
+    def extend(self, iterable):
+        for i in iterable:
+            self.append(i)
+
+    def pop(self, index=-1):
+        # get attributes
+        item = self[index]
+        self.__delitem__(index)
+        return item
+
+    def remove(self, value):
+        self.__delitem__(self.index(value))
+
+    def clear(self):
+        while len(self)>0:
+            self.__delitem__()
+
+    def copy(self):
+        return list(self)
+
+    def sort(self, key=None, reverse=False):
+        sorted = self.copy().sort(key=key, reverse=reverse)
+        for i, v in enumerate(sorted):
+            self[i] = v
+
+    def reverse(self):
+        reversed = self.copy()
+        reversed.reverse()
+        for i, v in enumerate(reversed):
+            self[i] = v
+
+
+class BasePropertyListProperty(BaseProperty):
+    """
+    An arbitrary length list of items that behave like BaseProperty.
+
+    A derived class FloatPropertyListProperty(BasePropertyListProperty)
+    will behave as a list of FloatProperty-like items.
+    """
+    default = []
+
+    @property
+    def element_cls(self):
+        return super(BasePropertyListProperty, self)
+
+    def validate_and_normalize(self, obj, value):
+        """
+        Converts the value in a list of float numbers.
+        """
+        if not np.iterable(value):
+            value = [value]
+        return [self.element_cls.validate_and_normalize(self, obj, val)
+                for val in value]
+
+    def validate_and_normalize_element(self, obj, val):
+        return self.element_cls.validate_and_normalize(obj, val)
+
+    def __set__(self, obj, value):
+        """
+        This function is called for any BaseAttribute, such that all the gui
+        updating, and saving to disk is done automatically. The real work is
+        delegated to self.set_value.
+        """
+        value = self.validate_and_normalize(obj, value)
+        self.set_value(obj, value)
+        # save new value in config, lauch signal and possibly call setup()
+        self.value_updated(obj, value)
+
+
+    def validate_and_normalize(self, obj, value):
+        """
+        This function should raise an exception if the value is incorrect.
+        Normalization can be:
+           - returning value.name if attribute "name" exists
+           - rounding to nearest multiple of step for float_registers
+           - rounding elements to nearest valid_frequencies for FilterAttributes
+        """
+        return value  # by default any value is valid
+
+
+    def value_updated(self, module, value):
+        """
+        Once the value has been changed internally, this function is called to
+        perform the following actions:
+         - launch the signal module._signal_launcher.attribute_changed (this is
+         used in particular for gui update)
+         - saves the new value in the config file (if flag
+         module._autosave_active is True).
+         - calls the callback function if the attribute is in module.callback
+         Note for developers:
+         we might consider moving the 2 last points in a connection behind the
+         signal "attribute_changed".
+        """
+        self.launch_signal(module, value)
+        if module._autosave_active:  # (for module, when module is slaved,
+            # don't save attributes)
+            if self.name in module._setup_attributes:
+                self.save_attribute(module, value)
+        if self.call_setup and not module._setup_ongoing:
+            # call setup unless a bunch of attributes are being changed together.
+            module.setup()
+        return value
+
+
+class FloatAttributeListProperty(BasePropertyListProperty, FloatProperty):
+    pass
+
+
+class FloatListProperty(FloatProperty):
     """
     An arbitrary length list of float numbers.
     """
@@ -813,10 +947,10 @@ class ListFloatProperty(FloatProperty):
         return [self.validate_and_normalize_element(obj, val) for val in value]
 
     def validate_and_normalize_element(self, obj, val):
-        return super(ListFloatProperty, self).validate_and_normalize(obj, val)
+        return super(FloatListProperty, self).validate_and_normalize(obj, val)
 
 
-class ListComplexProperty(ListFloatProperty):
+class ComplexListProperty(FloatListProperty):
     """
     An arbitrary length list of complex numbers.
     """
@@ -824,9 +958,9 @@ class ListComplexProperty(ListFloatProperty):
 
     def validate_and_normalize_element(self, obj, val):
         val = complex(val)
-        re = super(ListComplexProperty, self).validate_and_normalize_element(
+        re = super(ComplexListProperty, self).validate_and_normalize_element(
             obj, val.real)
-        im = super(ListComplexProperty, self).validate_and_normalize_element(
+        im = super(ComplexListProperty, self).validate_and_normalize_element(
             obj, val.imag)
         return complex(re, im)
 

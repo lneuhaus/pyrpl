@@ -678,7 +678,8 @@ class LockboxSequenceWidget(ModuleWidget):
         self.button_add = QtGui.QPushButton('+')
         self.button_add.setSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Expanding)
         #self.button_add.setMinimumHeight(60)
-        self.button_add.clicked.connect(lambda: self.module.append(self.module[-1].setup_attributes))
+        self.button_add.clicked.connect(lambda: self.module.append(
+    self.module[-1].setup_attributes))
         self.main_layout.addWidget(self.button_add)
         for stage in self.module:
             self.stage_created([stage])

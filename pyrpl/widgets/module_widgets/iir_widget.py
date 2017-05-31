@@ -55,27 +55,47 @@ class MyGraphicsWindow(pg.GraphicsWindow):
         pos = it.mapToScene(event.pos()) #  + it.vb.pos()
         point = it.vb.mapSceneToView(pos)
         self.x, self.y = point.x(), point.y()
-        self.x = 10 ** self.x  # takes logscale into account
+        if self.parent.xlog:
+            self.x = 10 ** self.x  # takes logscale into account
 
     def mouse_clicked(self):
         default_damping = self.x/10.0
         if self.button == QtCore.Qt.LeftButton:
             if self.doubleclicked:
                 if self.modifier == QtCore.Qt.CTRL:
-                    self.parent.module.complex_poles += [-default_damping - 1.j * self.x]
+                    new = -default_damping - 1.j * self.x
+                    self.parent.module.complex_poles += [new]
                     self.parent.parent.attribute_widgets['complex_poles'].set_selected(-1)
                 if self.modifier == QtCore.Qt.SHIFT:
-                    self.parent.module.complex_zeros += [-default_damping - 1.j * self.x]
+                    self.parent.module.complex_zeros += [new]
                     self.parent.parent.attribute_widgets['complex_zeros'].set_selected(-1)
             else:
+                new = -self.x
+                if self.modifier == 0:
+                    # select nearest pole/zero with a simple click
+                    type = 'pole'
+                    pole_or_zero = 'pole'
+                    value = -1001. - 1j*34
+                    self.parent.module._logger.info("Frequency: %.2e, "
+                                                    "%s at %s selected.",
+                                                    self.x,
+                                                    pole_or_zero,
+                                                    value)
                 if self.modifier == QtCore.Qt.CTRL:
-                    self.parent.module.real_poles += [-self.x]
+                    # make a new real pole
+                    self.parent.module.real_poles += [new]
                     self.parent.parent.attribute_widgets['real_poles'].set_selected(-1)
                 if self.modifier == QtCore.Qt.SHIFT:
-                    self.parent.module.real_zeros += [-self.x]
+                    # make a new real zero
+                    self.parent.module.real_zeros += [new]
                     self.parent.parent.attribute_widgets['real_zeros'].set_selected(-1)
 
+
+
 class IirGraphWidget(QtGui.QGroupBox):
+    # whether xaxis is plotted in log-scale
+    xlog = True
+
     def __init__(self, parent):
         # graph
         self.name = "Transfer functions"
@@ -99,7 +119,6 @@ class IirGraphWidget(QtGui.QGroupBox):
         # measured filter with na - orange dots <-
         # data (measruement data) - green line
         # data x design (or data/design) - red line
-        self.xlog = False #True
         self.plots = OrderedDict()
         # make lines
         for name, style in [('data', dict(pen='g')),
@@ -245,7 +264,7 @@ class IirWidget(ModuleWidget):
         else:
             # avoid zero frequency (log plot)
             f[f<=0] = sys.float_info.epsilon
-            return f
+            return np.asarray(f, dtype=float)
 
     def _magnitude(self, data):
         return 20. * np.log10(np.abs(np.asarray(data, dtype=np.complex))
@@ -283,7 +302,6 @@ class IirWidget(ModuleWidget):
                                                self._magnitude(v))
             self.graph_widget.plots[k+'_phase'].setData(frequencies[:len(v)],
                                                     self._phase(v))
-        #return
         # plot poles and zeros
         aws = self.attribute_widgets
         for end in ['poles', 'zeros']:
