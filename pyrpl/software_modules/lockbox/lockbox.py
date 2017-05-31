@@ -400,11 +400,14 @@ class Lockbox(LockboxModule):
         # ask GUI to update the lockstatus display (pass value of
         # self.is_locked() instead of None if already available)
         self._signal_launcher.update_lockstatus.emit([None])
-        # optionally, insert logging functionality in derived classes here...
+        # optionally, call logging functionality implemented derived classes here...
+        try: self.log_lockstatus()
+        except AttributeError: pass
 
     _lockstatus_loop = ModuleProperty(LockboxLoop,
                                       interval=1.0,
                                       autostart=True,
+                                      # function is called through lambda since
                                       loop_function=_lockstatus)
 
     lockstatus_interval = LockstatusIntervalProperty(default=1.0, min=1e-3,
