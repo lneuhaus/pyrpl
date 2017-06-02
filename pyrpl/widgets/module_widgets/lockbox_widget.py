@@ -782,6 +782,16 @@ class LockboxWidget(ModuleWidget):
         self.main_layout.addWidget(self.button_hide2)
         self.main_layout.addWidget(self.all_sig_widget)
 
+        # optional
+        for name in self.module._module_attributes:
+            module = getattr(self.module, name)
+            if len(module._gui_attributes) > 0:
+                try:
+                    widget = module._create_widget()
+                    self.main_layout.addWidget(widget)
+                except:
+                    self.module._logger.warning("Problem while creating lockbux submodule widget for %s.", name)
+
         self.main_layout.addStretch(5)
         self.setLayout(self.main_layout)
 

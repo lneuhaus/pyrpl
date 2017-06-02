@@ -122,16 +122,30 @@ class PlotWindow(object):
     def __init__(self, title="plotwindow"):
         self.win = pg.GraphicsWindow(title=title)
         self.pw = self.win.addPlot()
-        self.curve_green = self.pw.plot(pen="g")
-        self.curve_red = self.pw.plot(pen="r")
+        self.curves = {}
         self.win.show()
         self.plot_start_time = time()
 
-    def append(self, green=None, red=None):
+    _defaultcolors = ['g', 'r', 'b', 'y', 'c', 'm', 'o', 'w']
+
+    def append(self, *args, **kwargs):
+        """
+        usage:
+            append(green=0.1, red=0.5, blue=0.21)
+        # former, now almost deprecated version:
+            append(0.5, 0.6)
+        """
+        i=0
+        for value in enumerate(args):
+            while self._defaultcolors[i] in kwargs:
+                i += 1
+            kwargs[self._defaultcolors[i]] = value
         t = time()-self.plot_start_time
-        for curve, value in [(self.curve_green, green),
-                             (self.curve_red, red)]:
+        for color, value in kwargs.items():
             if value is not None:
+                if not color in self.curves:
+                    self.curves[color] = self.pw.plot(pen=color)
+                curve = self.curves[color]
                 x, y = curve.getData()
                 if x is None or y is None:
                     x, y = np.array([t]), np.array([value])
@@ -155,9 +169,11 @@ class PlotLoop(Loop):
         super(PlotLoop, self).__init__(*args, **kwargs)
 
 
-    def plotappend(self, red=None, green=None):
-        self.plot.append(red=red, green=green)
+    def plotappend(self, *args, **kwargs):
+        if hasattr(self, 'plot'):
+            self.plot.append(**kwargs)
 
     def _clear(self):
-        self.plot.close()
+        if hasattr(self, 'plot'):
+            self.plot.close()
         super(PlotLoop, self)._clear()
