@@ -1,5 +1,6 @@
+from PyQt4.QtCore import QTimer
 from pyrpl.software_modules.lockbox import *
-
+from pyrpl.async_utils import sleep
 
 class GainOptimizerLoop(LockboxPlotLoop):
     amplitude = FloatProperty(default=0.1, doc='Amplitude of gain modulation for the estimation of the dependency '
@@ -89,6 +90,15 @@ class GainOptimizer(LockboxModule):
                                           )
         else:
             self._logger.error('The lockbox must be "locked" in order to start gain optimization.')
+
+    def _start_when_locked(self):
+        for i in range(100): # 100s timeout
+            sleep(1.0)
+            if self.lockbox.is_locked_and_final(loglevel=0):
+                return self.start()
+
+    def start_delayed(self):
+        QTimer.singleShot(10*1e3, self._start_when_locked)
 
     def stop(self):
         if hasattr(self, 'loop') and self.loop is not None:
