@@ -129,7 +129,7 @@ class Stage(LockboxModule):
         # optionally call a user function at the end of the stage
         if self.function_call != "":
             try:
-                func = getattr(self.lockbox, self.function_call)
+                func = recursive_getattr(self.lockbox, self.function_call)
             except AttributeError:
                 self._logger.warning("Could not find the function '%s' called "
                                      "in stage %s in the Lockbox class. "

@@ -28,7 +28,8 @@ from .widgets.attribute_widgets import BoolAttributeWidget, \
                                        BoolIgnoreAttributeWidget, \
                                        TextAttributeWidget, \
                                        CurveAttributeWidget, \
-                                       CurveSelectAttributeWidget
+                                       CurveSelectAttributeWidget, \
+                                       LedAttributeWidget
 
 from .curvedb import CurveDB
 from collections import OrderedDict
@@ -246,6 +247,34 @@ class BoolProperty(BaseProperty):
         Converts value to bool.
         """
         return bool(value)
+
+
+class LedProperty(BoolProperty):
+    _widget_class = LedAttributeWidget
+
+    def __init__(self,
+                 true_function = None,
+                 false_function = None,
+                 **kwargs):
+        """
+        default: if provided, the value is initialized to it
+        """
+        self.true_function = true_function or self.true_function
+        self.false_function = false_function or self.false_function
+        super(LedProperty, self).__init__(**kwargs)
+
+    def set_value(self, obj, val):
+        try:
+            if val:
+                self.true_function(obj)
+            else:
+                self.false_function(obj)
+        except TypeError as e:
+            obj._logger.debug('Cannot call %s of %s.%s: %s',
+                              'true_function' if val else 'false_function',
+                              obj.name, self.name, e)
+        else:
+            super(LedProperty, self).set_value(obj, val)
 
 
 class BoolRegister(BaseRegister, BoolProperty):

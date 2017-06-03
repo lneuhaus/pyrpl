@@ -632,17 +632,12 @@ class BaseAttributeWidget(QtGui.QWidget):
         self.label = QtGui.QLabel(self.widget_name)
         self.layout_v.addWidget(self.label, 0) # stretch=0
         self.layout_v.setContentsMargins(0, 0, 0, 0)
-        #self.module = self.module_widget.module
         self.set_widget()
         self.layout_v.addWidget(self.widget, 0) # stretch=0
         self.layout_v.addStretch(1)
         self.setLayout(self.layout_v)
         if self.module_value() is not None: # SelectAttributes without options might have a None value
             self.update_widget(self.module_value())
-        #self.module_widget.register_layout.addLayout(self.layout_v)
-        #self.value_changed.connect(self.emit_widget_value_changed)
-        #self.module_widget.property_watch_timer.timeout. \
-        #    connect(self.update_widget)
 
     def set_horizontal(self):
         self.layout_v.removeWidget(self.label)
@@ -658,10 +653,6 @@ class BaseAttributeWidget(QtGui.QWidget):
         :return:
         """
         return False
-
-    #def emit_widget_value_changed(self):
-    #    if self.acquisition_property:
-    #        self.module_widget.property_changed.emit()
 
     def update_widget(self, new_value):
         """
@@ -724,7 +715,6 @@ class StringAttributeWidget(BaseAttributeWidget):
         """
         if not self.widget.hasFocus():
             self.widget.setText(new_value)
-
 
 
 class TextAttributeWidget(StringAttributeWidget):
@@ -1169,6 +1159,34 @@ class FrequencyAttributeWidget(FloatAttributeWidget):
         self.set_per_second(10)
 
 
+class LedAttributeWidget(BaseAttributeWidget):
+    """ Boolean property with a button whose text and color indicates whether """
+    def set_widget(self):
+        desc = recursive_getattr(self.module, '__class__.'+self.name)
+        val = recursive_getattr(self.module, self.name)
+        self.widget = QtGui.QPushButton("setting up...")
+        self.widget.clicked.connect(self.button_clicked)
+
+    def button_clicked(self):
+        val = getattr(self.module, self.name)
+        # override module state with current button state
+        # if self.widget.text() =='start':
+        #     val = False
+        # else:
+        #     val = True
+        setattr(self.module, self.name, not val)
+
+    def _update(self, new_value):
+        if new_value == True:
+            color = 'green'
+            text = 'stop'
+        else:
+            color = 'red'
+            text = 'start'
+        self.widget.setStyleSheet("background-color:%s"%color)
+        self.widget.setText(text)
+
+
 class BoolAttributeWidget(BaseAttributeWidget):
     """
     Boolean property
@@ -1191,7 +1209,6 @@ class BoolAttributeWidget(BaseAttributeWidget):
         setattr(self.module, self.name, self.widget.checkState() == 2)
         if self.acquisition_property:
             self.value_changed.emit()
-
 
     def _update(self, new_value):
         """

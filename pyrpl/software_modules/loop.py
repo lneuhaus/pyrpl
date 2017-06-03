@@ -140,6 +140,9 @@ class PlotWindow(object):
         # former, now almost deprecated version:
             append(0.5, 0.6)
         """
+        for k in kwargs.keys():
+            v = kwargs.pop(k)
+            kwargs[k[0]] = v
         i=0
         for value in enumerate(args):
             while self._defaultcolors[i] in kwargs:
@@ -173,12 +176,14 @@ class PlotLoop(Loop):
             #self.win.setWindowTitle(self.name)
         super(PlotLoop, self).__init__(*args, **kwargs)
 
-
     def plotappend(self, *args, **kwargs):
         if hasattr(self, 'plot'):
-            self.plot.append(**kwargs)
+            try:
+                self.plot.append(**kwargs)
+            except BaseException as e:
+                self._logger.error("Error occured during plotting in Loop %s: %s", self.name, e)
 
     def _clear(self):
+        super(PlotLoop, self)._clear()
         if hasattr(self, 'plot'):
             self.plot.close()
-        super(PlotLoop, self)._clear()
