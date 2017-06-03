@@ -2,6 +2,7 @@ from PyQt4.QtCore import QTimer
 from pyrpl.software_modules.lockbox import *
 from pyrpl.async_utils import sleep
 
+
 class GainOptimizerLoop(LockboxPlotLoop):
     amplitude = FloatProperty(default=0.1, doc='Amplitude of gain modulation for the estimation of the dependency '
                                                'of lock rms')
@@ -9,6 +10,9 @@ class GainOptimizerLoop(LockboxPlotLoop):
     unity_gain_frequency = FloatProperty(default = 0.01, doc="Unity gain frequency for the gain integrator.")
 
     current_gain_factor = FloatProperty(default=1.0, doc="Current gain factor of the gain correction mechanism.")
+
+    measurement_time = FloatProperty(default=0.05, doc="Current gain factor of the gain correction mechanism.")
+
 
     #phase = PhaseProperty(default=0, doc="current phase of the gain modulation")
     @property
@@ -19,11 +23,13 @@ class GainOptimizerLoop(LockboxPlotLoop):
         pass
 
     _phase_step = np.pi
-    max_length = 100
+    max_length = 10
 
     @property
     def rms(self):
-        return self.lockbox.inputs[self.lockbox.final_stage.input].relative_rms
+        input = self.lockbox.inputs[self.lockbox.final_stage.input]
+        input.stats(self.parent.measurement_time)
+        return input.relative_rms
 
     @property
     def pdh(self):
@@ -36,8 +42,6 @@ class GainOptimizerLoop(LockboxPlotLoop):
         self._lastrms = [self.rms]
         self._lastpdh = [0]
         self._lasttime = [self.time]
-        self.unity_gain_frequency = self.kwargs['unity_gain_frequency']
-        self.amplitude = self.kwargs['amplitude']
         self.phase = 0
         self.current_gain_factor = self.lockbox.final_stage.gain_factor
 
@@ -47,7 +51,6 @@ class GainOptimizerLoop(LockboxPlotLoop):
             self._clear()
         # get the rms of the current error signal and store it
         rms, pdh, time = self.rms, self.pdh, self.time
-        self.plotappend(b=rms, g=pdh, r=self.current_gain_factor)
         dt = time - self._lasttime[-1]
         self._lastrms.append(rms)
         self._lastpdh.append(pdh)
@@ -57,9 +60,9 @@ class GainOptimizerLoop(LockboxPlotLoop):
             self._lastpdh.pop(0)
             self._lasttime.pop(0)
         # compute integral
-        self.current_gain_factor += pdh * self.unity_gain_frequency * dt * 2.0 * np.pi
+        self.current_gain_factor += pdh * self.parent.unity_gain_frequency * dt * 2.0 * np.pi
         self.phase = self.phase + self._phase_step
-        self.lockbox.final_stage.gain_factor = self.current_gain_factor * (1.0 + self.amplitude*np.cos(self.phase))
+        self.lockbox.final_stage.gain_factor = self.current_gain_factor * (1.0 + self.parent.amplitude*np.cos(self.phase))
         self.plotappend(b=rms, g=pdh, r=self.current_gain_factor, y=self.lockbox.final_stage.gain_factor)
 
     def teardown_loop(self):
@@ -70,13 +73,14 @@ class GainOptimizerLoop(LockboxPlotLoop):
 class GainOptimizer(LockboxModule):
     """ a module that is used to optimize the lockbox gain by setting the gain_factor of the lockbox to the integral of
     an error signal derived from the slope of the error signal rms value vs gain_factor """
-    _setup_attributes = ["interval", "unity_gain_frequency", "plot"]
+    _setup_attributes = ["interval", "amplitude", "unity_gain_frequency", "plot", "measurement_time"]
     _gui_attributes = _setup_attributes + ["start", "stop"]
 
     interval = FloatProperty(default=1.0, min=0)
-    amplitude = FloatProperty(default=0.1, min=0)
+    amplitude = FloatProperty(default=0.05, min=0)
     unity_gain_frequency = FloatProperty(default=0.1)
     plot = BoolProperty(default=True)
+    measurement_time = FloatProperty(default=0.05, doc="Current gain factor of the gain correction mechanism.")
 
     def start(self):
         self.stop()
@@ -98,7 +102,7 @@ class GainOptimizer(LockboxModule):
                 return self.start()
 
     def start_delayed(self):
-        QTimer.singleShot(10*1e3, self._start_when_locked)
+        QTimer.singleShot(100, self._start_when_locked)
 
     def stop(self):
         if hasattr(self, 'loop') and self.loop is not None:
