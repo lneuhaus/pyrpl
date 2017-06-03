@@ -25,6 +25,7 @@ class CalibrationData(LockboxModule):
     rms = FloatProperty(min=0, max=2, doc="rms of the signal in V over a "
                                           "lockbox sweep")
     _analog_offset = FloatProperty(default=0.0, doc="analog offset of the signal")
+    _analog_offset_rms = FloatProperty(default=0.0, doc="rms of the analog offset of the signal")
     _asg_phase = PhaseProperty(doc="Phase of the asg when error signal is centered "
                                    "in calibration. Not used by all signals. ")
 
@@ -79,17 +80,20 @@ class Signal(LockboxModule, SignalModule):
         self.lockbox.unlock()
         # sample the input with a rather long duration to get a good average
         self.stats(t=duration)
-        current_residual_offset = self.mean
+        current_residual_offset, current_rms = self.mean, self.rms
         last_offset = self.calibration_data._analog_offset
         # current_residual_offset = current_offset - last_offset
         current_offset = last_offset + current_residual_offset
         self.calibration_data._analog_offset = current_offset
+        self.calibration_data._analog_offset_rms = current_rms
         self._logger.info("Calibrated analog offset of signal %s. "
-                          "Old value: %s, new value: %s, difference: %s.",
+                          "Old value: %s, new value: %s, difference: %s. "
+                          "Rms of the measurement: %s.",
                           self.name,
                           last_offset,
                           self.calibration_data._analog_offset,
-                          current_residual_offset)
+                          current_residual_offset,
+                          current_rms)
 
     ##################################################
     # Sampler routines for diagnostics of the signal #

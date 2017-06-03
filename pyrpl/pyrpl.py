@@ -106,9 +106,11 @@ class Pyrpl(object):
                     self.logger.error('Something went wrong when loading the '
                                       'stored setup_attributes of module "%s". '
                                       'If you do not know what this means, you should'
-                                      'be able to fix this error by deleting the section '
-                                      'corresponding to this module in your config file %s.',
-                                      module.name, self.c._filename)
+                                      'be able to fix this error by deleting the '
+                                      'corresponding section "%s" in your config file %s. '
+                                      'Error message: %s',
+                                      module.name, module.name, self.c._filename, e)
+                    # raise e
         # make the gui if applicable
         if self.c.pyrpl.gui:
             self.show_gui()

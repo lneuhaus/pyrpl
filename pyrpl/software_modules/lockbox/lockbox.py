@@ -262,11 +262,30 @@ class Lockbox(LockboxModule):
         """
         Calibrates successively all inputs
         """
+        curves = []
         for input in self.inputs:
             try:
-                input.calibrate(autosave=autosave)
+                c = input.calibrate(autosave=autosave)
+                if c is not None:
+                    curves.append(c)
             except:
                 pass
+        return curves
+
+    def get_analog_offsets(self, duration=1.0):
+        """
+        Measures and saves the analog offset for all inputs.
+
+        This function is designed to measure the analog offsets of the redpitaya
+        inputs and possibly the sensors connected to these inputs. Only call this
+        function if you are sure about what you are doing and if all signal sources
+        (lasers etc.) are turned off.
+
+        The parameter duration specifies the time during which to average the
+        input offsets.
+        """
+        for input in self.inputs:
+            input.get_analog_offset(duration=duration)
 
     def unlock(self, reset_offset=True):
         """
