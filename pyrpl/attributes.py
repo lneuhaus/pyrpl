@@ -97,7 +97,7 @@ class BaseProperty(BaseAttribute):
         value = self.validate_and_normalize(obj, value)
         self.set_value(obj, value)
         # save new value in config, lauch signal and possibly call setup()
-        self.value_updated(obj, value)
+        self.value_updated(obj, value)#self.get_value(obj))
 
     def validate_and_normalize(self, obj, value):
         """
@@ -135,12 +135,6 @@ class BaseProperty(BaseAttribute):
         if instance is None:
             return self
         return self.get_value(instance)
-        # try:
-        #     return self.get_value(instance)
-        # except AttributeError:
-        #     raise NotImplementedError("The attribute %s doesn't have a method "
-        #                               "get_value. Did you use an Attribute "
-        #                               "instead of a Property?" % self.name)
 
     def launch_signal(self, module, new_value):
         """
@@ -152,8 +146,10 @@ class BaseProperty(BaseAttribute):
         try:
             module._signal_launcher.update_attribute_by_name.emit(self.name,
                                                              [new_value])
-        except AttributeError:  # occurs if nothing is connected (TODO: remove this)
-            pass
+        except AttributeError as e:  # occurs if nothing is connected (TODO:
+            # remove this)
+            module._logger.error("Erro in launch_signal of %s: %s",
+                                 module.name, e)
 
     def save_attribute(self, module, value):
         """
@@ -224,6 +220,18 @@ class BaseRegister(BaseProperty):
             act = obj._read(self.address)
             new = act & (~self.bitmask) | (int(self.from_python(obj, val)) & self.bitmask)
             obj._write(self.address, new)
+
+    def __set__(self, obj, value):
+        """
+        this is very similar to the __set__ function of the parent,
+        but here, value_updated is called with the return from
+        validate_and_normalize instead of with the new from get_value in
+        order to save one read operation.
+        """
+        value = self.validate_and_normalize(obj, value)
+        self.set_value(obj, value)
+        # save new value in config, lauch signal and possibly call setup()
+        self.value_updated(obj, value)
 
 
 class BoolProperty(BaseProperty):
@@ -804,20 +812,33 @@ class AttributeList(list):
 
     This class is not an attribute/property by itself, but is the object
     returned by AttributeListProperty that correctly extends list methods to
-    communicate a change in the list throughout pyrpl. """
-    element_cls = object
+    communicate a change in the list throughout pyrpl.
+
+    When a list-specific operation is performed that alters the values,
+    the AttributeListProperty object is informed about this and will ensure
+    the correct propagation of the signal.
+    """
+    def __init__(self, parent, module, *args, **kwargs):
+        self._parent = parent
+        self._module = module
+        super(AttributeList, self).__init__(*args, **kwargs)
 
     # insert, __setitem__, and __delitem__ completely describe the behavior
     def insert(self, index, new):
+        new = self._parent.validate_and_normalize_element(self._module, new)
         super(AttributeList, self).insert(index, new)
+        self._parent.list_changed(self._module, "insert", index, new)
 
+    def __setitem__(self, index, value):
+        # rely on parent's validate_and_normalize function
+        value = self._parent.validate_and_normalize_element(self._module, value)
+        # set value
+        self[index] = value
+        self._parent.list_changed(self._module, "setitem", index, value)
 
     def __delitem__(self, index=-1):
         super(AttributeList, self).pop(index)
-
-    def __setitem__(self, index, value):
-        # setting a list element sets up the corresponding module
-        self[index] = value
+        self._parent.list_changed(self._module, "delitem", index)
 
     # other convenience functions that are based on above axioms
     def append(self, new):
@@ -863,68 +884,78 @@ class BasePropertyListProperty(BaseProperty):
     will behave as a list of FloatProperty-like items.
     """
     default = []
+    #_widget_class = None
 
     @property
     def element_cls(self):
+        """ the class of the elements of the list """
         return super(BasePropertyListProperty, self)
 
     def validate_and_normalize(self, obj, value):
         """
-        Converts the value in a list of float numbers.
+        Converts the value into a list.
         """
-        if not np.iterable(value):
-            value = [value]
-        return [self.element_cls.validate_and_normalize(self, obj, val)
-                for val in value]
+        return list(value)
 
     def validate_and_normalize_element(self, obj, val):
         return self.element_cls.validate_and_normalize(obj, val)
 
-    def __set__(self, obj, value):
-        """
-        This function is called for any BaseAttribute, such that all the gui
-        updating, and saving to disk is done automatically. The real work is
-        delegated to self.set_value.
-        """
-        value = self.validate_and_normalize(obj, value)
-        self.set_value(obj, value)
-        # save new value in config, lauch signal and possibly call setup()
-        self.value_updated(obj, value)
+    def get_value(self, obj):
+        if not hasattr(obj, '_' + self.name):
+            # make a new AttributeList, pass to it the instance of obj
+            value = AttributeList(self, obj, self.default)
+            setattr(obj, '_' + self.name, value)
+        return getattr(obj, '_' + self.name)
 
+    def set_value(self, obj, val):
+        current = self.get_value(obj)
+        try:  # block repetitive calls to setup
+            call_setup, self.call_setup = self.call_setup, False
+            # replace the already existing list elements and append new ones
+            for i, v in enumerate(val):
+                try:
+                    current[i] = v
+                except IndexError:
+                    current.append(v)
+            # remove the trailing items
+            while len(current) > i+1:
+                current.pop()
+        finally:
+            self.call_setup = call_setup
 
-    def validate_and_normalize(self, obj, value):
-        """
-        This function should raise an exception if the value is incorrect.
-        Normalization can be:
-           - returning value.name if attribute "name" exists
-           - rounding to nearest multiple of step for float_registers
-           - rounding elements to nearest valid_frequencies for FilterAttributes
-        """
-        return value  # by default any value is valid
+    def list_changed(self, module, operation, index, value=None):
+        current_list = self.get_value(module)
+        self.value_updated(module, current_list)
+        # send another, more detailed signal on the list change
+        self.launch_signal(module, current_list,
+                           appendix=[operation, index, value])
 
+    def launch_signal(self, module, new_value, appendix=[]):
+        try:
+            module._signal_launcher.update_attribute_by_name.emit(self.name,
+                                                    [new_value]+appendix)
+        except AttributeError as e:  # occurs if nothing is connected
+            module._logger.error("Erro in launch_signal of %s: %s",
+                                        module.name, e)
 
-    def value_updated(self, module, value):
-        """
-        Once the value has been changed internally, this function is called to
-        perform the following actions:
-         - launch the signal module._signal_launcher.attribute_changed (this is
-         used in particular for gui update)
-         - saves the new value in the config file (if flag
-         module._autosave_active is True).
-         - calls the callback function if the attribute is in module.callback
-         Note for developers:
-         we might consider moving the 2 last points in a connection behind the
-         signal "attribute_changed".
-        """
-        self.launch_signal(module, value)
-        if module._autosave_active:  # (for module, when module is slaved,
-            # don't save attributes)
-            if self.name in module._setup_attributes:
-                self.save_attribute(module, value)
-        if self.call_setup and not module._setup_ongoing:
-            # call setup unless a bunch of attributes are being changed together.
-            module.setup()
-        return value
+    # def _create_widget(self, module, widget_name=None):
+    #     """
+    #     Creates a widget to graphically manipulate the attribute.
+    #     """
+    #     if self._widget_class is None:
+    #         logger.warning("Module %s of type %s is trying to create a widget "
+    #                        "for %s, but no _widget_class is defined!",
+    #                        str(module), type(module), self.name)
+    #         return None
+    #     widget = self._widget_class(self.name, module, widget_name=widget_name)
+    #     return widget
+
+    # if operation == "delitem":
+    #     pass
+    # elif operation == "setitem":
+    #     pass
+    # elif operation == "insert":
+    #     pass
 
 
 class FloatAttributeListProperty(BasePropertyListProperty, FloatProperty):
