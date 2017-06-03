@@ -262,11 +262,15 @@ class Lockbox(LockboxModule):
         """
         Calibrates successively all inputs
         """
+        curves = []
         for input in self.inputs:
             try:
-                input.calibrate(autosave=autosave)
+                c = input.calibrate(autosave=autosave)
+                if c is not None:
+                    curves.append(c)
             except:
                 pass
+        return curves
 
     def unlock(self, reset_offset=True):
         """

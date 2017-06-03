@@ -147,6 +147,12 @@ class RedPitaya(object):
                                 +self.parameters["hostname"]+"). Incomplete "
                                 "functionality possible. ")
             return
+        elif self.parameters['hostname'] in ['_NONE_']:
+            self.modules = []
+            self.logger.warning("No RedPitaya created (hostname=="
+                                + self.parameters["hostname"] + ")."
+                                " No hardware modules are available. ")
+            return
         # connect to the redpitaya board
         self.start_ssh()
         # start other stuff
