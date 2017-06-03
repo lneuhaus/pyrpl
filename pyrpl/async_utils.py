@@ -246,7 +246,6 @@ def sleep(delay):
     More details on the implementation can be found on the page:
     https://github.com/lneuhaus/pyrpl/wiki/Benchmark-asynchronous-sleep-functions
     """
-
     tic = default_timer()
     end_time = tic + delay
 
