@@ -145,22 +145,32 @@ class ReducedModuleWidget(QtGui.QGroupBox):
         Automatically creates the gui properties for the register_widgets in register_names.
         :return:
         """
-        self.attribute_layout = QtGui.QHBoxLayout()
-        self.main_layout.addLayout(self.attribute_layout)
+        if '\n' in self.module._gui_attributes:
+            self.attributes_layout = QtGui.QVBoxLayout()
+            self.main_layout.addLayout(self.attributes_layout)
+            self.attribute_layout = QtGui.QHBoxLayout()
+            self.attributes_layout.addLayout(self.attribute_layout)
+        else:
+            self.attribute_layout = QtGui.QHBoxLayout()
+            self.main_layout.addLayout(self.attribute_layout)
         for attr_name in self.module._gui_attributes:
-            attribute_value = getattr(self.module, attr_name)  # needed for
-            # passing the instance to the descriptor
-            attribute = getattr(self.module.__class__, attr_name)
-            if callable(attribute):
-                # assume that attribute is a function
-                widget = QtGui.QPushButton(attr_name)
-                widget.clicked.connect(getattr(self.module, attr_name))
+            if attr_name == '\n':
+                self.attribute_layout = QtGui.QHBoxLayout()
+                self.attributes_layout.addLayout(self.attribute_layout)
             else:
-                # standard case: make attribute widget
-                widget = attribute._create_widget(self.module)
-                if widget is None:
-                    continue
-                widget.value_changed.connect(self.attribute_changed)
+                attribute_value = getattr(self.module, attr_name)  # needed for
+                # passing the instance to the descriptor
+                attribute = getattr(self.module.__class__, attr_name)
+                if callable(attribute):
+                    # assume that attribute is a function
+                    widget = QtGui.QPushButton(attr_name)
+                    widget.clicked.connect(getattr(self.module, attr_name))
+                else:
+                    # standard case: make attribute widget
+                    widget = attribute._create_widget(self.module)
+                    if widget is None:
+                        continue
+                    widget.value_changed.connect(self.attribute_changed)
             self.attribute_widgets[attr_name] = widget
             self.attribute_layout.addWidget(widget)
 

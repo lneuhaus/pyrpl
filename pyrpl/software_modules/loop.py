@@ -139,7 +139,7 @@ class PlotWindow(object):
             v = kwargs.pop(k)
             kwargs[k[0]] = v
         i=0
-        for value in enumerate(args):
+        for value in args:
             while self._defaultcolors[i] in kwargs:
                 i += 1
             kwargs[self._defaultcolors[i]] = value
@@ -163,22 +163,29 @@ class PlotWindow(object):
 class PlotLoop(Loop):
     def __init__(self, *args, **kwargs):
         try:
-            plot = kwargs.pop("plot")
+            self.plot = kwargs.pop("plot")
         except KeyError:
-            plot = True
-        if plot:
-            self.plot = PlotWindow()
-            #self.win.setWindowTitle(self.name)
+            self.plot = True
+        try:
+            self.plotter = kwargs.pop("plotter")
+        except KeyError:
+            self.plotter = None
+        if self.plot and self.plotter is None:
+            self.plot = PlotWindow(tile=self.name)
         super(PlotLoop, self).__init__(*args, **kwargs)
 
     def plotappend(self, *args, **kwargs):
-        if hasattr(self, 'plot'):
-            try:
-                self.plot.append(**kwargs)
-            except BaseException as e:
-                self._logger.error("Error occured during plotting in Loop %s: %s", self.name, e)
+        if self.plot:
+            if hasattr(self, 'plotter'):
+                setattr(self.parent, self.plotter, (args, kwargs))
+            else:
+                try:
+                    self.plot.append(**kwargs)
+                except BaseException as e:
+                    self._logger.error("Error occured during plotting in Loop %s: %s",
+                                       self.name, e)
 
     def _clear(self):
         super(PlotLoop, self)._clear()
-        if hasattr(self, 'plot'):
+        if hasattr(self, 'plot') and hasattr(self.plot, 'close'):
             self.plot.close()

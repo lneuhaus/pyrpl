@@ -29,7 +29,9 @@ from .widgets.attribute_widgets import BoolAttributeWidget, \
                                        TextAttributeWidget, \
                                        CurveAttributeWidget, \
                                        CurveSelectAttributeWidget, \
-                                       LedAttributeWidget
+                                       LedAttributeWidget, \
+                                       PlotAttributeWidget
+
 from .curvedb import CurveDB
 from collections import OrderedDict
 import logging
@@ -1301,6 +1303,18 @@ class CurveSelectProperty(SelectProperty):
 class CurveSelectListProperty(CurveSelectProperty):
     """ same as above, but widget is a list to select from """
     _widget_class = CurveSelectAttributeWidget
+
+
+class Plotter(BaseProperty):
+    """ property for plotting in the GUI window.
+
+    passing a value, list of values, or a dict of color-value pairs
+    results in plotting the values as a function of time in the GUI
+    """
+    _widget_class = PlotAttributeWidget
+    def __init__(self, legend="value"):
+        self.legend = legend
+        super(Plotter, self).__init__()
 
 
 class CurveProperty(CurveSelectProperty):

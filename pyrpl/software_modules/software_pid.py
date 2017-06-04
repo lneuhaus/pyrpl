@@ -1,7 +1,7 @@
 from .loop import PlotLoop
 from ..attributes import *
 from ..modules import Module
-from numpy import isnan
+import numpy as np
 
 class SoftwarePidLoop(PlotLoop):
     @property
@@ -18,22 +18,35 @@ class SoftwarePidLoop(PlotLoop):
 
     def setup_loop(self):
         """ put your initialization routine here"""
-        self.ival = 0
+        if self.parent.reset_ival_on_restart:
+            self.parent._ival = 0
         self.lasttime = self.time
         self.lasterror = 0
 
     def loop(self):
         input = self.input
-        if input is None or isnan(input):
+        if input is None or np.isnan(input):
             self._logger.error("Could not retrieve the input signal for %s.%s.", self.parent, self.name)
             return
         error = input - self.parent.setpoint
         dt, self.lasttime = self.time - self.lasttime, self.time
-        self.ival += self.parent.i * dt * 2.0 * np.pi * error
-        out = self.ival + self.parent.p * error + self.parent.d * 2.0 * np.pi / dt * (error-self.lasterror)
+        self.parent._ival += self.parent.i * dt * 2.0 * np.pi * error
+        self.parent._ival = self.saturate_output(self.parent._ival)
+        out = self.parent._ival + self.parent.p * error + self.parent.d * 2.0 * np.pi / dt * (error-self.lasterror)
+        out = self.saturate_output(out)
         self.output = out
-        self.plotappend(b=error, r=self.output)
+        if self.parent.plot:
+            self.plotappend(r=error, g=self.output)
         self.lasterror = error
+        self.interval = self.parent.interval
+        self.parent._loop_hook()
+
+    def saturate_output(self, v):
+        if v > self.parent.output_max:
+            v = self.parent.output_max
+        elif v < self.parent.output_min:
+            v = self.parent.output_min
+        return v
 
     def teardown_loop(self):
         """ put your destruction routine here"""
@@ -55,7 +68,8 @@ class RunningProperty(LedProperty):
         obj.loop = SoftwarePidLoop(parent=obj,
                                    name="loop",
                                    interval=obj.interval,
-                                   plot=obj.plot)
+                                   plot=True, #obj.plot, # obj.plot is handled in loop() above
+                                   plotter="plotter")
 
     def stop(self, obj):
         """
@@ -73,14 +87,21 @@ class SoftwarePidController(Module):
     p = FloatProperty(default=-1.0)
     i = FloatProperty(default=0)
     d = FloatProperty(default=0)
+    _ival = FloatProperty(default=0)
+    reset_ival_on_restart = BoolProperty(default=True)
     setpoint = FloatProperty(default=0)
     input = StringProperty(default='pyrpl.rp.sampler.in1')
     output = StringProperty(default='pyrpl.rp.asg0.offset')
+    output_max = FloatProperty(default=np.inf)
+    output_min = FloatProperty(default=-np.inf)
+
     interval = FloatProperty(default=1.0, min=0)
     plot = BoolProperty(default=True)
+    plotter = Plotter(legend='error (red, V) and output (green, V)')  # plotting window
     running = RunningProperty(default=False)
-    _setup_attributes = ['p', 'i', 'd', 'setpoint', 'interval', "plot", "running"]
-    _gui_attributes = _setup_attributes
+    _setup_attributes = ['p', 'i', 'd', 'setpoint', '_ival', 'reset_ival_on_restart',
+                         'interval', 'plot', 'running']
+    _gui_attributes = _setup_attributes + ["plotter"]
 
     def start(self):
         if not self.running:
@@ -88,3 +109,11 @@ class SoftwarePidController(Module):
 
     def stop(self):
         self.running = False
+
+    def _loop_hook(self):
+        """
+        this function is called at the end of each loop.
+
+        May be used for additional plotting, for example
+        """
+        pass

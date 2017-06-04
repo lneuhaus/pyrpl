@@ -9,6 +9,7 @@ import time
 import functools
 import pyqtgraph as pg
 from ..pyrpl_utils import Bijection, recursive_setattr, recursive_getattr
+from .. import pyrpl_utils
 from ..curvedb import CurveDB
 
 import sys
@@ -143,7 +144,6 @@ class MyNumberSpinBox(QtGui.QWidget, object):
         """
         Once +/- pressed for timer_initial_latency ms, start to update continuously
         """
-
         if self.log_increment:
             self.last_time = time.time() # don't make a step, but store present time
             self.timer_arrow.start()
@@ -1341,7 +1341,69 @@ class BoolIgnoreAttributeWidget(BoolAttributeWidget):
         self.widget.setCheckState(self._gui_to_attribute_mapping.inverse[new_value])
 
 
-class CurveAttributeWidget(BaseAttributeWidget):
+class PlotAttributeWidget(BaseAttributeWidget):
+    _defaultcolors = ['g', 'r', 'b', 'y', 'c', 'm', 'o', 'w']
+
+    def time(self):
+        return pyrpl_utils.time()
+
+    def set_widget(self):
+        """
+        Sets the widget (here a QCheckbox)
+        :return:
+        """
+        self.widget = pg.GraphicsWindow(title="Plot")
+        legend = getattr(self.module.__class__, self.name).legend
+        self.pw = self.widget.addPlot(title="%s vs. time (s)"%legend)
+        self.plot_start_time = self.time()
+        self.curves = {}
+        setattr(self.module.__class__, '_' + self.name + '_pw', self.pw)
+
+    def write(self):
+        # nothing to write from a curve
+        pass
+
+    def _update(self, new_value):
+        try:
+            args, kwargs = new_value
+        except:
+            if isinstance(new_value, dict):
+                args, kwargs = [], new_value
+            elif isinstance(new_value, list):
+                args, kwargs = new_value, {}
+            else:
+                args, kwargs = [new_value], {}
+        for k in kwargs.keys():
+            v = kwargs.pop(k)
+            kwargs[k[0]] = v
+        i=0
+        for value in args:
+            while self._defaultcolors[i] in kwargs:
+                i += 1
+            kwargs[self._defaultcolors[i]] = value
+        t = self.time()-self.plot_start_time
+        for color, value in kwargs.items():
+            if value is not None:
+                if not color in self.curves:
+                    self.curves[color] = self.pw.plot(pen=color)
+                curve = self.curves[color]
+                x, y = curve.getData()
+                if x is None or y is None:
+                    x, y = np.array([t]), np.array([value])
+                else:
+                    x, y = np.append(x, t), np.append(y, value)
+                curve.setData(x, y)
+
+    def _magnitude(self, data):
+        """ little helpers """
+        return 20. * np.log10(np.abs(data) + sys.float_info.epsilon)
+
+    def _phase(self, data):
+        """ little helpers """
+        return np.angle(data, deg=True)
+
+
+class CurveAttributeWidget(PlotAttributeWidget):
     """
     Base property for float and int.
     """
@@ -1362,12 +1424,6 @@ class CurveAttributeWidget(BaseAttributeWidget):
         self.curve_phase = self.plot_item_phase.plot(pen='g')
 
         #self.setToolTip("Checked:\t    on\nUnchecked: off\nGrey:\t    ignore")
-
-    def write(self):
-        # nothing to write from a curve
-        pass
-        #setattr(self.module, self.name, self.widget.value())
-        #self.value_changed.emit()
 
     def _update(self, new_value):
         """
@@ -1393,13 +1449,6 @@ class CurveAttributeWidget(BaseAttributeWidget):
                 self.curve.setData(x, np.real(y))
                 self.plot_item_phase.hide()
                 self.plot_item.setTitle(name)
-
-
-    def _magnitude(self, data):
-        return 20. * np.log10(np.abs(data) + sys.float_info.epsilon)
-
-    def _phase(self, data):
-        return np.angle(data, deg=True)
 
 
 class CurveSelectAttributeWidget(SelectAttributeWidget):

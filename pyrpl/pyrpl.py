@@ -84,7 +84,12 @@ class Pyrpl(object):
         pyrplbranch = self.c._get_or_create('pyrpl')
         for k in default_pyrpl_config:
             if k not in pyrplbranch._keys():
-                pyrplbranch[k] = default_pyrpl_config[k]
+                if k =='name':
+                    # assign same name as in config file by default
+                    pyrplbranch[k] = self.c._filename_stripped
+                else:
+                    # all other (static) defaults
+                    pyrplbranch[k] = default_pyrpl_config[k]
         # set global logging level if specified in config file
         pyrpl_utils.setloglevel(level=self.c.pyrpl.loglevel,
                                 loggername='pyrpl')
@@ -147,9 +152,10 @@ class Pyrpl(object):
                     module = getattr(cls, "_make_"+cls.__name__)(self, name)
                 else:
                     module = cls(self, name)
-            except:
-                self.logger.error('Something went wrong when loading the software module "%s"',
-                                  name)
+            except BaseException as e:
+                self.logger.error('Something went wrong when loading the software module "%s": %s',
+                                  name, e)
+                raise e
             else:
                 setattr(self, module.name, module)
                 self.software_modules.append(module)
