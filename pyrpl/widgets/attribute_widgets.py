@@ -22,9 +22,18 @@ APP = QtGui.QApplication.instance()
 if APP is None:
     APP = QtGui.QApplication(["redpitaya_gui"])
 
+#rename remove My
+# move spinboxes to different file
+# rename write -> gui-to-api, _update->api-to-gui, proper nesting for write in baseclass
+# why does write emit a signal?
+# _update to baseclass?
+# avoid duplicating set_min, set_increment, and rather retrieve value from
+# descriptiors
 
 class MyNumberSpinBox(QtGui.QWidget, object):
     """
+    Base class for spinbox with numerical value.
+
     The button can be either in log_increment mode, or linear increment.
        - In log_increment: the halflife_seconds value determines how long it takes, when the user stays clicked
          on the "*"/"/" buttons to change the value by a factor 2. Since the underlying register is assumed to be
@@ -307,8 +316,10 @@ class MyNumberSpinBox(QtGui.QWidget, object):
         self.per_second = val
 
 
-
 class MyIntSpinBox(MyNumberSpinBox):
+    """
+    Number spin box for integer values
+    """
     def __init__(self, label, min=-2**13, max=2**13, increment=1,
                  log_increment=False, halflife_seconds=1.):
         super(MyIntSpinBox, self).__init__(label,
@@ -336,6 +347,9 @@ class MyIntSpinBox(MyNumberSpinBox):
 
 
 class MyFloatSpinBox(MyNumberSpinBox):
+    """
+    Number spin box for float values
+    """
     def __init__(self, label, min=-1, max=1, increment=2.**(-13),
                  log_increment=False, halflife_seconds=2.0, decimals=4):
         self.decimals = decimals
@@ -375,8 +389,8 @@ class MyFloatSpinBox(MyNumberSpinBox):
 
 class MyComplexSpinBox(QtGui.QFrame):
     """
-    Two spinboxes representing a complex number, with the right keyboard shortcuts
-    (up down for imag, left/right for real).
+    Two spinboxes representing a complex number, with the right keyboard
+    shortcuts (up down for imag, left/right for real).
     """
     value_changed = QtCore.pyqtSignal()
 
@@ -613,9 +627,21 @@ class ListComplexSpinBox(ListSpinBox):
 
 class BaseAttributeWidget(QtGui.QWidget):
     """
-    Base class for Attribute Widgets. The class usually contains a label,
-    and a widget, that is created by the function set_widget.
+    Base class for Attribute Widgets.
+
+    The widget usually contains a label and a subwidget (property 'widget'
+    of the instance),  corresponding to the associated Attribute. The widget
+    is the created by the function set_widget.
+
+    AttributeWidgets are always contained in a ModuleWidget and should be
+    fully managed by this ModuleWidget. Public methods of the
+    AttributeWidget class are therefore functions called by ModuleWidget,
+    private methods are only used internally.
+
+    A minimum widget should implmenet set_widget, _update,
+    and possibly module_value.
     """
+    # all private except
     value_changed = QtCore.pyqtSignal()
 
     def __init__(self, name, module, widget_name=None):
@@ -656,18 +682,18 @@ class BaseAttributeWidget(QtGui.QWidget):
 
     def update_widget(self, new_value):
         """
-        Block QtSignals upon update to avoid infinite recursion.
+        Display a new value in the GUI, but dont set the module value (
+        usually called when the module value is changed through the API,
+        or when a user-entered value is set after validation/normalization).
+
+        Blocks QtSignals upon update to avoid infinite recursion.
         :return:
         """
-        self.widget.blockSignals(True)
-        self._update(new_value)
-        self.widget.blockSignals(False)
-
-    def set_widget(self):
-        """
-        To overwrite in base class.
-        """
-        self.widget = None
+        try:
+            self.widget.blockSignals(True)
+            self._update(new_value)
+        finally:
+            self.widget.blockSignals(False)
 
     def _update(self, new_value):
         """
@@ -675,9 +701,17 @@ class BaseAttributeWidget(QtGui.QWidget):
         """
         pass
 
+    def set_widget(self):
+        """
+        To overwrite in base class.
+        """
+        self.widget = None
+
     def module_value(self):
         """
-        returns the module value, with the good type conversion.
+        returns the module value, with the good type conversion for proper
+        displaying. Somewhat equivalent to validate_and_normalize for
+        attributes, just that the goal is to find a type that can be displayed.
         """
         return getattr(self.module, self.name)
 
@@ -699,12 +733,12 @@ class StringAttributeWidget(BaseAttributeWidget):
     def module_value(self):
         """
         returns the module value, with the good type conversion.
-
         :return: str
         """
         return str(self.module.__getattribute__(self.name))
 
     def write(self):
+        """ """
         setattr(self.module, self.name, str(self.widget.text()))
         self.value_changed.emit()
 
