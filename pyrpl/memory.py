@@ -594,6 +594,13 @@ class MemoryTree(MemoryBranch):
         if hasattr(self, '_savetimer') and self._savetimer.isActive():
             self._savetimer.stop()
 
+    @property
+    def _filename_stripped(self):
+        try:
+            return os.path.split(self._filename)[1].split('.')[0]
+        except:
+            return 'default'
+
 if False:
     class DummyMemoryTree(object):  # obsolete now
         """

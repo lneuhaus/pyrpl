@@ -242,9 +242,12 @@ def make_asg(channel=0):
             returns an array of data_length samples of a Gaussian
             distribution with rms=self._rmsamplitude
             """
-            return np.random.normal(loc=0.0,
-                                    scale=self._rmsamplitude,
-                                    size=self.data_length)
+            if self._rmsamplitude == 0:
+                return np.zero(self.data_length)
+            else:
+                return np.random.normal(loc=0.0,
+                                        scale=self._rmsamplitude,
+                                        size=self.data_length)
 
         @property
         def _noise_V2_per_Hz(self):

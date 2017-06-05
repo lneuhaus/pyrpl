@@ -29,7 +29,8 @@ from .widgets.attribute_widgets import BoolAttributeWidget, \
                                        TextAttributeWidget, \
                                        CurveAttributeWidget, \
                                        CurveSelectAttributeWidget, \
-                                       LedAttributeWidget
+                                       LedAttributeWidget, \
+                                       PlotAttributeWidget
 
 from .curvedb import CurveDB
 from collections import OrderedDict
@@ -562,14 +563,20 @@ class GainRegister(FloatRegister):
     A register used mainly for gains, that replaces round-off to zero by
     round-off to the lowest-possible value.
     """
+    avoid_round_off_to_zero = True
+
     def validate_and_normalize(self, obj, value):
         rounded_value = FloatRegister.validate_and_normalize(self, obj, value)
         if rounded_value == 0 and value != 0:  # value was rounded off to zero
-            rounded_value = FloatRegister.validate_and_normalize(
-                self, obj, np.abs(self.increment)*np.sign(value))
-            obj._logger.warning("Avoided rounding value %.1e of the "
-                                "gain register %s to zero. Setting it to %.1e "
-                                "instead. ", value, self.name, rounded_value)
+            if self.avoid_round_off_to_zero:
+                rounded_value = FloatRegister.validate_and_normalize(
+                    self, obj, np.abs(self.increment)*np.sign(value))
+                obj._logger.warning("Avoided rounding value %.1e of the "
+                                    "gain register %s to zero. Setting it to %.1e "
+                                    "instead. ", value, self.name, rounded_value)
+            else:
+                obj._logger.warning("Rounding value %.1e of the "
+                                    "gain register %s to zero. ", value, self.name)
         if value > self.max or value < self.min:
             obj._logger.warning("Requested gain for %s.%s is outside the "
                                 "bounds allowed by the hardware. Desired "
@@ -1462,6 +1469,18 @@ class CurveSelectProperty(SelectProperty):
 class CurveSelectListProperty(CurveSelectProperty):
     """ same as above, but widget is a list to select from """
     _widget_class = CurveSelectAttributeWidget
+
+
+class Plotter(BaseProperty):
+    """ property for plotting in the GUI window.
+
+    passing a value, list of values, or a dict of color-value pairs
+    results in plotting the values as a function of time in the GUI
+    """
+    _widget_class = PlotAttributeWidget
+    def __init__(self, legend="value"):
+        self.legend = legend
+        super(Plotter, self).__init__()
 
 
 class CurveProperty(CurveSelectProperty):
