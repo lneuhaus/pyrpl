@@ -176,7 +176,7 @@ class PlotLoop(Loop):
 
     def plotappend(self, *args, **kwargs):
         if self.plot:
-            if hasattr(self, 'plotter'):
+            if self.plotter is not None:
                 setattr(self.parent, self.plotter, (args, kwargs))
             else:
                 try:

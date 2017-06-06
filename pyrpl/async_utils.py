@@ -256,7 +256,14 @@ def sleep(delay):
         timer = MainThreadTimer(new_delay * 1000)
         timer.timeout.connect(loop.quit)
         timer.start()
-        loop.exec_()
+        try:
+            loop.exec_()
+        except KeyboardInterrupt as e:
+            # try to recover from KeyboardInterrupt by finishing the current task
+            timer.setInterval(1)
+            timer.start()
+            loop.exec_()
+            raise e
     # 2. For high-precision, manually process events 1-by-1 during the last ms
     while default_timer() < end_time:
         APP.processEvents()

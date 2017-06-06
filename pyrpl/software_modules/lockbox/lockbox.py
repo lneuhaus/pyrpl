@@ -372,6 +372,20 @@ class Lockbox(LockboxModule):
         while not self._relock_until_locked_loop._ended:  # wait for locks to terminate
             sleep(1.0)
 
+    def lock_until_locked(self, **kwargs):
+        self.lock(**kwargs)
+        return self.relock_until_locked(**kwargs)
+
+    def sleep_while_locked(self, time_to_sleep):
+        t0 = time()
+        while time() < t0 + time_to_sleep:  # doesnt quit loop during time_for_measurement
+            if self.is_locked_and_final(loglevel=0):
+                sleep(0.1)
+            else:
+                self._logger.error('Error during measurement - cavity unlocked. Aborting sleep...')
+                return False
+        return True
+
     def is_locked(self, input=None, loglevel=logging.INFO):
         """ returns True if locked, else False. Also updates an internal
         dict that contains information about the current error signals. The

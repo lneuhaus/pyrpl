@@ -1,6 +1,6 @@
 from .. import *
 from .interferometer import Interferometer
-
+from ....errors import TimeoutError
 
 class Lorentz(object):
     """ base class for Lorentzian-like signals"""
@@ -206,7 +206,14 @@ class HighFinesseInput(InputSignal):
                 curves = scope.curve_async()
                 self.lockbox._sweep()  # start sweep only after arming the scope
                 # give some extra (10x) timeout time in case the trigger is missed
-                curve1, curve2 = curves.await_result(timeout=10./self.lockbox.asg.frequency+scope.duration)
+                try:
+                    curve1, curve2 = curves.await_result(timeout=100./self.lockbox.asg.frequency+scope.duration)
+                except TimeoutError:
+                    # scope is blocked
+                    self._logger.warning("Signal %s could not be calibrated because no trigger was detected while "
+                                         "sweeping the cavity before the expiration of a timeout of %.1e s!",
+                                         self.name, 100./self.lockbox.asg.frequency+scope.duration)
+                    return None, None, None
                 times = scope.times
                 self.calibration_data._asg_phase = self.lockbox.asg.scopetriggerphase
                 return curve1, curve2, times
@@ -258,7 +265,7 @@ class HighFinesseInput(InputSignal):
         self.calibration_data.get_stats_from_curve(curve)
         eta = max(0.0, min(self.lockbox.eta, 1.0))
         self.calibration_data.min = (1.0-eta) * self.calibration_data.max
-        threshold = self.expected_signal(0.5*self.lockbox._unit_in_setpoint_unit('bandwidth'))
+        threshold = self.expected_signal(1.0*self.lockbox._unit_in_setpoint_unit('bandwidth'))
         self.calibration_data.setup_attributes = calibration_params
         return threshold
 

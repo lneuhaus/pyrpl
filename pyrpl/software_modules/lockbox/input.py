@@ -285,7 +285,7 @@ class InputSignal(Signal):
                                 trigger_delay=0,
                                 duration=1./self.lockbox.asg.frequency,
                                 ch1_active=True,
-                                ch2_active=False,
+                                ch2_active=True,
                                 average=True,
                                 avg=1,  # trace_average
                                 running_state='stopped',
