@@ -171,7 +171,7 @@ class PlotLoop(Loop):
         except KeyError:
             self.plotter = None
         if self.plot and self.plotter is None:
-            self.plot = PlotWindow(tile=self.name)
+            self.plot = PlotWindow(title=self.name)
         super(PlotLoop, self).__init__(*args, **kwargs)
 
     def plotappend(self, *args, **kwargs):
