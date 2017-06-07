@@ -30,6 +30,5 @@ class PidWidget(ModuleWidget):
 
     def update_ival(self):
         widget = self.attribute_widgets['ival']
-        if self.isVisible(): # avoid unnecessary ssh traffic
-            if not widget.editing():
-                widget.update_widget(self.module.ival)
+        if self.isVisible() and not widget.editing():
+            widget.widget_value = self.module.ival

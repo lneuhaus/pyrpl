@@ -177,10 +177,11 @@ class ReducedModuleWidget(QtGui.QGroupBox):
     def update_attribute_by_name(self, name, new_value_list):
         """
         SLOT: don't change name unless you know what you are doing
-        Updates a specific attribute. New value is passed as a 1-element list to avoid typing problems in signal-slot.
+        Updates a specific attribute. New value is passed as a 1-element list
+        to avoid typing problems in signal-slot.
         """
         if name in self.module._gui_attributes:
-            self.attribute_widgets[str(name)].update_widget(new_value_list[0])
+            self.attribute_widgets[str(name)].widget_value = new_value_list[0]
 
     def change_options(self, select_attribute_name, new_options):
         """

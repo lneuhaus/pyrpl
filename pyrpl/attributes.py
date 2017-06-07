@@ -140,11 +140,8 @@ class BaseProperty(BaseAttribute):
 
     def launch_signal(self, module, new_value):
         """
-        Updates the widget with the module's value.
+        Updates the widget and other subscribers with the module's value.
         """
-        # if self.name in module._widget.attribute_widgets:
-        #   module._widget.attribute_widgets[self.name].update_widget()
-        #if self.name in module._gui_attributes:
         try:
             module._signal_launcher.update_attribute_by_name.emit(self.name,
                                                              [new_value])
@@ -168,7 +165,7 @@ class BaseProperty(BaseAttribute):
                            "for %s, but no _widget_class is defined!",
                            str(module), type(module), self.name)
             return None
-        widget = self._widget_class(self.name, module, widget_name=widget_name)
+        widget = self._widget_class(module, self.name, widget_name=widget_name)
         return widget
 
     def get_value(self, obj):
@@ -1198,13 +1195,15 @@ class SelectProperty(BaseProperty):
     def validate_and_normalize(self, obj, value):
         options = self.options(obj)
         if not (value in options):
-            msg = "Value %s is not an option for SelectAttribute %s of module %s with options %s"\
+            msg = "Value '%s' is not an option for SelectAttribute %s of " \
+                  "module %s with options %s" \
                   % (value, self.name, obj.name, options)
             if self.ignore_errors:
                 value = self.get_default(obj)
                 logger.warning(msg + ". Picking an arbitrary value %s instead."
                                % str(value))
             else:
+                print value, options, value in options, value in options.keys()
                 raise ValueError(msg)
         return value
 
