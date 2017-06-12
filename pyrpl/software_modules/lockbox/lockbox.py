@@ -359,7 +359,6 @@ class Lockbox(LockboxModule):
             self._logger.info("Attempting to re-lock...")
             return self.lock(**kwargs)
 
-
     def relock_until_locked(self, **kwargs):
         """ blocks the command line until cavity is locked with kwargs """
         def relock_function(lockbox, loop):

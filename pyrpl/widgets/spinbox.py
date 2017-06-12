@@ -287,7 +287,7 @@ class NumberSpinBox(QtGui.QWidget, object):
         return super(NumberSpinBox, self).keyReleaseEvent(event)
 
     def validate(self):
-        if self.line.isModified(): # otherwise don't trigger anything
+        if self.line.isModified():  # otherwise don't trigger anything
             if self.val>self.max:
                 self.val = self.max
             if self.val<self.min:

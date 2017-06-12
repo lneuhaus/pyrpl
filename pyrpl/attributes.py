@@ -30,7 +30,8 @@ from .widgets.attribute_widgets import BoolAttributeWidget, \
                                        CurveAttributeWidget, \
                                        CurveSelectAttributeWidget, \
                                        LedAttributeWidget, \
-                                       PlotAttributeWidget
+                                       PlotAttributeWidget, \
+                                       BasePropertyListPropertyWidget
 
 from .curvedb import CurveDB
 from collections import OrderedDict
@@ -917,7 +918,7 @@ class BasePropertyListProperty(BaseProperty):
     will behave as a list of FloatProperty-like items.
     """
     default = []
-    #_widget_class = None
+    _widget_class = BasePropertyListPropertyWidget
 
     @property
     def element_cls(self):
