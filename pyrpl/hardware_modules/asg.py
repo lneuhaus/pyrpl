@@ -243,7 +243,7 @@ def make_asg(channel=0):
             distribution with rms=self._rmsamplitude
             """
             if self._rmsamplitude == 0:
-                return np.zero(self.data_length)
+                return np.zeros(self.data_length)
             else:
                 return np.random.normal(loc=0.0,
                                         scale=self._rmsamplitude,
