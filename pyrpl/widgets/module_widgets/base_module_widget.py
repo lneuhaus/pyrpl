@@ -34,7 +34,8 @@ class MyMenuLabel(QtGui.QLabel):
 
     def contextMenuEvent(self, event):
         menu = self.get_menu()
-        menu.exec_(event.globalPos())
+        if menu is not None:
+            menu.exec_(event.globalPos())
 
 
 class LoadLabel(MyMenuLabel):
@@ -110,6 +111,22 @@ class EditLabel(MyMenuLabel):
         return menu
 
 
+class HideShowLabel(MyMenuLabel):
+    """
+    "Hide/Show" label
+    """
+    text = " .:Hide/Show:. "
+
+    def get_menu(self):
+        if hasattr(self, 'hidden') and self.hidden:
+            self.module_widget.show_widget()
+            self.hidden = False
+        else:
+            self.module_widget.hide_widget()
+            self.hidden = True
+        return None
+
+
 class ReducedModuleWidget(QtGui.QGroupBox):
     """
     Base class for a module Widget. In general, this is one of the DockWidget of the Pyrpl MainWindow.
@@ -131,13 +148,31 @@ class ReducedModuleWidget(QtGui.QGroupBox):
         self.change_ownership() # also sets the title
         self.module._signal_launcher.connect_widget(self)
 
+    def init_main_layout(self, orientation="horizontal"):
+        self.root_layout = QtGui.QHBoxLayout()
+        self.main_widget = QtGui.QWidget()
+        self.root_layout.addWidget(self.main_widget)
+        self.setLayout(self.root_layout)
+        if orientation == "vertical":
+            self.main_layout = QtGui.QVBoxLayout()
+        else:
+            self.main_layout = QtGui.QHBoxLayout()
+        self.main_widget.setLayout(self.main_layout)
+
+    def show_widget(self):
+        """ shows the widget after it has been hidden """
+        self.main_widget.show()
+
+    def hide_widget(self):
+        """ shows the widget after it has been hidden """
+        self.main_widget.hide()
+
     def init_gui(self):
         """
         To be overwritten in derived class
         :return:
         """
-        self.main_layout = QtGui.QHBoxLayout()
-        self.setLayout(self.main_layout)
+        self.init_main_layout()
         self.init_attribute_layout()
 
     def init_attribute_layout(self):
@@ -249,6 +284,9 @@ class ModuleWidget(ReducedModuleWidget):
                                  self.save_label.pos().x(), self.title_pos[1])
             self.edit_label.move(self.erase_label.width() +
                                  self.erase_label.pos().x(), self.title_pos[1])
+            self.hideshow_label.move(self.edit_label.width() +
+                                     self.edit_label.pos().x(),
+                                     self.title_pos[1])
 
     def create_title_bar(self):
         self.title_label = QtGui.QLabel("yo", parent=self)
@@ -264,6 +302,9 @@ class ModuleWidget(ReducedModuleWidget):
 
         self.edit_label = EditLabel(self)
         self.edit_label.adjustSize()
+
+        self.hideshow_label = HideShowLabel(self)
+        self.hideshow_label.adjustSize()
 
         # self.setStyleSheet("ModuleWidget{border: 1px dashed gray;color: black;}")
         self.setStyleSheet("ModuleWidget{margin: 0.1em; margin-top:0.6em; border: 1 dotted gray;border-radius:5}")

@@ -310,8 +310,9 @@ class OutputSignalWidget(ModuleWidget):
         self.main_props.change_analog_tf()
 
     def init_gui(self):
-        self.main_layout = QtGui.QVBoxLayout()
-        self.setLayout(self.main_layout)
+        #self.main_layout = QtGui.QVBoxLayout()
+        #self.setLayout(self.main_layout)
+        self.init_main_layout(orientation="vertical")
         self.init_attribute_layout()
         for widget in self.attribute_widgets.values():
             self.main_layout.removeWidget(widget)
@@ -393,7 +394,8 @@ class LockboxInputWidget(ModuleWidget):
     A widget to represent a single lockbox input
     """
     def init_gui(self):
-        self.main_layout = QtGui.QVBoxLayout(self)
+        #self.main_layout = QtGui.QVBoxLayout(self)
+        self.init_main_layout(orientation="vertical")
         self.init_attribute_layout()
 
         self.win = pg.GraphicsWindow(title="Expected signal")
@@ -613,7 +615,8 @@ class LockboxStageWidget(ReducedModuleWidget):
         pass
 
     def init_gui(self):
-        self.main_layout = QtGui.QVBoxLayout(self)
+        #self.main_layout = QtGui.QVBoxLayout(self)
+        self.init_main_layout(orientation="vertical")
         self.init_attribute_layout()
         for name, attr in self.attribute_widgets.items():
             self.attribute_layout.removeWidget(attr)
@@ -672,14 +675,14 @@ class LockboxSequenceWidget(ModuleWidget):
     A widget to represent all lockbox stages
     """
     def init_gui(self):
-        self.main_layout = QtGui.QHBoxLayout(self)
+        #self.main_layout = QtGui.QHBoxLayout(self)
+        self.init_main_layout(orientation="horizontal")
         self.init_attribute_layout()
         self.stage_widgets = []
         self.button_add = QtGui.QPushButton('+')
         self.button_add.setSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Expanding)
         #self.button_add.setMinimumHeight(60)
-        self.button_add.clicked.connect(lambda: self.module.append(
-    self.module[-1].setup_attributes))
+        self.button_add.clicked.connect(lambda: self.module.append(self.module[-1].setup_attributes))
         self.main_layout.addWidget(self.button_add)
         for stage in self.module:
             self.stage_created([stage])
@@ -715,6 +718,18 @@ class LockboxSequenceWidget(ModuleWidget):
         for widget in self.stage_widgets:
             widget.set_title(widget.name)
 
+    def show_widget(self):
+        super(LockboxSequenceWidget, self).show_widget()
+        minimumsizehint = self.minimumSizeHint().height() \
+                          + self.scrollarea.horizontalScrollBar().height()
+        self.scrollarea.setMinimumHeight(minimumsizehint)
+
+    def hide_widget(self):
+        super(LockboxSequenceWidget, self).hide_widget()
+        minimumsizehint = self.minimumSizeHint().height() \
+                          + self.scrollarea.horizontalScrollBar().height()
+        self.scrollarea.setMinimumHeight(minimumsizehint)
+
 
 class LockboxWidget(ModuleWidget):
     """
@@ -722,8 +737,7 @@ class LockboxWidget(ModuleWidget):
     """
     def init_gui(self):
         # make standard layout
-        self.main_layout = QtGui.QVBoxLayout()
-        self.setLayout(self.main_layout)  # wasnt here before
+        self.init_main_layout("vertical")
         self.init_attribute_layout()
         # move all custom attributes to the second GUI line (spares place)
         self.custom_attribute_layout = QtGui.QHBoxLayout()
@@ -757,6 +771,7 @@ class LockboxWidget(ModuleWidget):
         # Locking sequence widget + hide button
         self.sequence_widget = self.module.sequence._create_widget()
         self.scrollarea = QtGui.QScrollArea()
+        self.sequence_widget.scrollarea = self.scrollarea
         self.scrollarea.setWidget(self.sequence_widget)
         minimumsizehint = self.sequence_widget.minimumSizeHint().height() \
                          + self.scrollarea.horizontalScrollBar().height()

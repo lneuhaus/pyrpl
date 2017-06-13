@@ -227,22 +227,16 @@ class FrequencyAttributeWidget(FloatAttributeWidget):
 
 class BasePropertyListPropertyWidget(BaseAttributeWidget):
     """
-    A widget a list of
-    This class is nearly identical with ListComplexAttributeWidget
-    and the two should be merged together
+    A widget for a list of Attributes, deriving its functionality from the
+    underlying widgets
     """
-    #ListSpinBox = ListFloatSpinBox
-    #listspinboxkwargs = dict(label=None,
-    #                         min=-62.5e6,
-    #                         max=62.5e6,
-    #                         log_increment=True,
-    #                         halflife_seconds=1.)
+    value_changed = QtCore.pyqtSignal()
+
+    @property
+    def element_widget(self):
+        return self.attribute_descriptor.element_cls._widget_class
 
     def _make_widget(self):
-        """
-        Sets up the widget (here a ListFloatSpinBox)
-        :return:
-        """
         self.widget = QtGui.QFrame()
         self.widgets = []
         self.button_add = QtGui.QPushButton("+")
@@ -253,41 +247,38 @@ class BasePropertyListPropertyWidget(BaseAttributeWidget):
         self.selected = None
         self.widget.value_changed.connect(self.write)
 
-    class ListSpinBox(QtGui.QFrame):
-        value_changed = QtCore.pyqtSignal()
-        SpinBox = FloatSpinBox
-        def __init__(self,
-                     label,
-                     min=-62.5e6,
-                     max=62.5e6,
-                     increment=1.,
-                     log_increment=True,
-                     halflife_seconds=1.,
-                     spinbox=None):
-            if spinbox is not None:
-                self.SpinBox = spinbox
-            self.label = label
-            self.min = min
-            self.max = max
-            self.increment = increment
-            self.halflife = halflife_seconds
-            self.log_increment = log_increment
-            self.lay = QtGui.QVBoxLayout()
-            if label is not None:
-                self.label = QtGui.QLabel(self.name)
-                self.lay.addWidget(self.label)
-            self.spins = []
-            self.button_removes = []
-            self.spin_lays = []
-            # for i in range(number):
-            #    self.add_spin()
-            self.button_add = QtGui.QPushButton("+")
-            self.button_add.clicked.connect(self.add_spin_and_select)
-            self.lay.addWidget(self.button_add)
-            self.lay.addStretch(1)
-            self.lay.setContentsMargins(0, 0, 0, 0)
-            self.setLayout(self.lay)
-            self.selected = None
+    def __init__(self,
+                 label,
+                 min=-62.5e6,
+                 max=62.5e6,
+                 increment=1.,
+                 log_increment=True,
+                 halflife_seconds=1.,
+                 spinbox=None):
+        if spinbox is not None:
+            self.SpinBox = spinbox
+        self.label = label
+        self.min = min
+        self.max = max
+        self.increment = increment
+        self.halflife = halflife_seconds
+        self.log_increment = log_increment
+        self.lay = QtGui.QVBoxLayout()
+        if label is not None:
+            self.label = QtGui.QLabel(self.name)
+            self.lay.addWidget(self.label)
+        self.spins = []
+        self.button_removes = []
+        self.spin_lays = []
+        # for i in range(number):
+        #    self.add_spin()
+        self.button_add = QtGui.QPushButton("+")
+        self.button_add.clicked.connect(self.add_spin_and_select)
+        self.lay.addWidget(self.button_add)
+        self.lay.addStretch(1)
+        self.lay.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(self.lay)
+        self.selected = None
 
         def set_increment(self, val):
             self.increment = val
@@ -417,11 +408,6 @@ class BasePropertyListPropertyWidget(BaseAttributeWidget):
     @property
     def number(self):
         return len(self.widget.spins)
-
-
-
-
-
 
 
 class ListAttributeWidget(BaseAttributeWidget):

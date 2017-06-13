@@ -93,7 +93,8 @@ class SpecAnWidget(ModuleWidget):
         """
         self.ch_col = ('magenta', 'blue', 'green')
         self.last_data = None
-        self.main_layout = QtGui.QVBoxLayout()
+        self.init_main_layout(orientation="vertical")
+        #self.main_layout = QtGui.QVBoxLayout()
         self.module.__dict__['curve_name'] = 'pyrpl spectrum'
         self.init_attribute_layout()
 

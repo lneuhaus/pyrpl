@@ -214,8 +214,9 @@ class IirBottomWidget(QtGui.QGroupBox):
 
 class IirWidget(ModuleWidget):
     def init_gui(self):
-        self.main_layout = QtGui.QVBoxLayout()
-        self.setLayout(self.main_layout)
+        self.init_main_layout(orientation="vertical")
+        #self.main_layout = QtGui.QVBoxLayout()
+        #self.setLayout(self.main_layout)
 
         # add all attribute widgets and remove them right away
         self.init_attribute_layout()

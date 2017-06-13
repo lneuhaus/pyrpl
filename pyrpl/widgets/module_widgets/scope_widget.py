@@ -24,7 +24,8 @@ class ScopeWidget(ModuleWidget):
         self.ch_color = ('green', 'red')
         self.ch_transparency = (255, 255)  # 0 is transparent, 255 is not  # deactivated transparency for speed reasons
         #self.module.__dict__['curve_name'] = 'scope'
-        self.main_layout = QtGui.QVBoxLayout()
+        #self.main_layout = QtGui.QVBoxLayout()
+        self.init_main_layout(orientation="vertical")
         self.init_attribute_layout()
         aws = self.attribute_widgets
 

@@ -13,8 +13,9 @@ class PidWidget(ModuleWidget):
     Widget for a single PID.
     """
     def init_gui(self):
-        self.main_layout = QtGui.QVBoxLayout()
-        self.setLayout(self.main_layout)
+        self.init_main_layout(orientation="vertical")
+        #self.main_layout = QtGui.QVBoxLayout()
+        #self.setLayout(self.main_layout)
         self.init_attribute_layout()
         input_filter_widget = self.attribute_widgets["inputfilter"]
         self.attribute_layout.removeWidget(input_filter_widget)
