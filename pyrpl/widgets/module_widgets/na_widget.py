@@ -29,7 +29,7 @@ class NaWidget(ModuleWidget):
         self.init_main_layout(orientation="vertical")
         self.init_attribute_layout()
         self.button_layout = QtGui.QHBoxLayout()
-        self.setLayout(self.main_layout)
+        #self.setLayout(self.main_layout)
         self.setWindowTitle("NA")
         self.win = pg.GraphicsWindow(title="Magnitude")
 

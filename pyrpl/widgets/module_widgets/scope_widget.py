@@ -83,7 +83,7 @@ class ScopeWidget(ModuleWidget):
         self.button_layout.addWidget(aws["curve_name"])
 
 
-        self.setLayout(self.main_layout)
+        #self.setLayout(self.main_layout)
         self.setWindowTitle("Scope")
         self.win = pg.GraphicsWindow(title="Scope")
         self.plot_item = self.win.addPlot(title="Scope")

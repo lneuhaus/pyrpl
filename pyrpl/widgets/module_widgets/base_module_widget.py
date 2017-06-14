@@ -152,12 +152,12 @@ class ReducedModuleWidget(QtGui.QGroupBox):
         self.root_layout = QtGui.QHBoxLayout()
         self.main_widget = QtGui.QWidget()
         self.root_layout.addWidget(self.main_widget)
-        self.setLayout(self.root_layout)
         if orientation == "vertical":
             self.main_layout = QtGui.QVBoxLayout()
         else:
             self.main_layout = QtGui.QHBoxLayout()
         self.main_widget.setLayout(self.main_layout)
+        self.setLayout(self.root_layout)
 
     def show_widget(self):
         """ shows the widget after it has been hidden """

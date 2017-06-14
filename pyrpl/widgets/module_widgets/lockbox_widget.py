@@ -707,8 +707,8 @@ class LockboxSequenceWidget(ModuleWidget):
         stage = stage[0] # values are passes as list of length 1
         widget = stage._widget
         self.stage_widgets.remove(widget)
-        if self.parent().parent().parent().button_green == widget.button_goto:
-            self.parent().parent().parent().button_green = None
+        if self.parent().parent().parent().parent().button_green == widget.button_goto:
+            self.parent().parent().parent().parent().button_green = None
         widget.hide()
         self.main_layout.removeWidget(widget)
         widget.deleteLater()
@@ -774,7 +774,7 @@ class LockboxWidget(ModuleWidget):
         self.sequence_widget.scrollarea = self.scrollarea
         self.scrollarea.setWidget(self.sequence_widget)
         minimumsizehint = self.sequence_widget.minimumSizeHint().height() \
-                         + self.scrollarea.horizontalScrollBar().height()
+                          + self.scrollarea.horizontalScrollBar().height()
         self.scrollarea.setMinimumHeight(minimumsizehint)
         #self.scrollarea.setVerticalScrollBarPolicy(
         #    QtCore.Qt.ScrollBarAlwaysOff)
@@ -809,7 +809,7 @@ class LockboxWidget(ModuleWidget):
                     self.module._logger.warning("Problem while creating lockbux submodule widget for %s.", name)
 
         self.main_layout.addStretch(5)
-        self.setLayout(self.main_layout)
+        #self.setLayout(self.main_layout)
 
     def delete_widget(self):
         self.module = None  # allow module to be deleted
