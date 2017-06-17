@@ -15,13 +15,8 @@ from .. import pyrpl_utils
 from ..curvedb import CurveDB
 from .spinbox import *
 
-# TODO
-# why does write emit a signal?
-# avoid duplicating set_min, set_increment, and rather retrieve value from descriptiors
 
 # TODO: try to remove widget_name from here (again)
-
-
 class BaseAttributeWidget(QtGui.QWidget):
     """
     Base class for attribute widgets.
@@ -50,14 +45,15 @@ class BaseAttributeWidget(QtGui.QWidget):
             self.widget_name = widget_name
         self.setToolTip(self.attribute_descriptor.__doc__)
         self.layout_v = QtGui.QVBoxLayout()
+        self.layout = self.layout_v
         if self.widget_name != "":
             self.label = QtGui.QLabel(self.widget_name)
             self.layout_v.addWidget(self.label, 0) # stretch=0
         self.layout_v.setContentsMargins(0, 0, 0, 0)
         self._make_widget()
-        self.layout_v.addWidget(self.widget, 0) # stretch=0
-        self.layout_v.addStretch(1)
-        self.setLayout(self.layout_v)
+        self.layout.addWidget(self.widget, 0) # stretch=0
+        self.layout.addStretch(1)
+        self.setLayout(self.layout)
         current_value = self.attribute_value
         if current_value is not None: # SelectAttributes might have a None value
             self.widget_value = current_value
@@ -93,9 +89,21 @@ class BaseAttributeWidget(QtGui.QWidget):
             finally:
                 self.widget.blockSignals(False)
 
-    def write(self):
+    def write_widget_value_to_attribute(self):
         self.attribute_value = self.widget_value
-        self.value_changed.emit()  #TODO: check if needed
+        # it does not hurt to imitate the signal of the subwidget,
+        # even though most of the time nothing is connected to it
+        self.value_changed.emit()
+
+    def write_widget_value_to_attribute(self):
+        self.attribute_value = self.widget_value
+        # it does not hurt to imitate the signal of the subwidget,
+        # even though most of the time nothing is connected to it
+        self.value_changed.emit()
+
+    def write_attribute_value_to_widget(self):
+        """ trivial helper function, updates widget value from the attribute"""
+        self.widget_value = self.attribute_value
 
     def editing(self):
         """
@@ -112,6 +120,7 @@ class BaseAttributeWidget(QtGui.QWidget):
         self.layout_h.addWidget(self.label)
         self.layout_h.addWidget(self.widget)
         self.layout_v.addLayout(self.layout_h)
+        self.layout = self.layout_h
 
     def _make_widget(self):
         """
@@ -147,7 +156,7 @@ class StringAttributeWidget(BaseAttributeWidget):
     def _make_widget(self):
         self.widget = QtGui.QLineEdit()
         self.widget.setMaximumWidth(200)
-        self.widget.textChanged.connect(self.write)
+        self.widget.textChanged.connect(self.write_widget_value_to_attribute)
 
     def _get_widget_value(self):
         return str(self.widget.text())
@@ -162,7 +171,7 @@ class TextAttributeWidget(StringAttributeWidget):
     """
     def _make_widget(self):
         self.widget = QtGui.QTextEdit()
-        self.widget.textChanged.connect(self.write)
+        self.widget.textChanged.connect(self.write_widget_value_to_attribute)
 
     def _get_widget_value(self):
         return str(self.widget.toPlainText())
@@ -172,20 +181,21 @@ class NumberAttributeWidget(BaseAttributeWidget):
     """
     Base widget for float and int.
     """
+    SpinBox = NumberSpinBox
+
+    def _make_widget(self):
+        super(NumberAttributeWidget, self)._make_widget()
+        self.widget = self.SpinBox(None)
+        self.widget.value_changed.connect(self.write_widget_value_to_attribute)
+        self.widget.setSingleStep(self.attribute_descriptor.increment)
+        self.widget.setMaximum(self.attribute_descriptor.max)
+        self.widget.setMinimum(self.attribute_descriptor.min)
+
     def _get_widget_value(self):
         return self.widget.value()
 
     def editing(self):
         return self.widget.line.hasFocus()
-
-    def set_increment(self, val):
-        self.widget.setSingleStep(val)
-
-    def set_maximum(self, val):
-        self.widget.setMaximum(val)
-
-    def set_minimum(self, val):
-        self.widget.setMinimum(val)
 
     def set_per_second(self, val):
         self.widget.set_per_second(val)
@@ -196,25 +206,16 @@ class NumberAttributeWidget(BaseAttributeWidget):
 
 class IntAttributeWidget(NumberAttributeWidget):
     """
-    Property for integer values.
+    Widget for integer values.
     """
-    def _make_widget(self):
-        """
-        Sets up the widget (here a QSpinBox)
-        :return:
-        """
-        self.widget = IntSpinBox(None)#QtGui.QSpinBox()
-        # self.widget.setMaximumWidth(200)
-        self.widget.value_changed.connect(self.write)
+    SpinBox = IntSpinBox
 
 
 class FloatAttributeWidget(NumberAttributeWidget):
     """
-    Property for float values
+    Widget for float values
     """
-    def _make_widget(self):
-        self.widget = FloatSpinBox(None)
-        self.widget.value_changed.connect(self.write)
+    SpinBox = FloatSpinBox
 
 
 class FrequencyAttributeWidget(FloatAttributeWidget):
@@ -225,189 +226,157 @@ class FrequencyAttributeWidget(FloatAttributeWidget):
         self.set_per_second(10)
 
 
+
+class ListElementWidget(BaseAttributeWidget):
+    def __init__(self, parent, startindex, *args, **kwargs):
+        self.parent = parent
+        self.startindex = startindex
+        super(ListElementWidget, self).__init__(*args, **kwargs)
+        self.button_remove = QtGui.QPushButton('-')
+        self.button_remove.clicked.connect(self.remove_this_element)
+        self.button_remove.setFixedWidth(3 * 10)
+        self.layout.addWidget(self.button_remove, 0) # stretch=0
+        self.layout.addStretch(1)
+
+    def remove_this_element(self):
+        self.parent.attribute_value.__delitem__(index=self.index)
+
+    @property
+    def index(self):
+        if self in self.parent.widgets:
+            return self.parent.widgets.index(self)
+        else:
+            return self.startindex
+
+    @property
+    def attribute_value(self):
+        return getattr(self.module, self.attribute_name)[self.index]
+
+    @attribute_value.setter
+    def attribute_value(self, v):
+        getattr(self.module, self.attribute_name)[self.index] = v
+
+
 class BasePropertyListPropertyWidget(BaseAttributeWidget):
     """
     A widget for a list of Attributes, deriving its functionality from the
     underlying widgets
     """
-    value_changed = QtCore.pyqtSignal()
-
-    @property
-    def element_widget(self):
-        return self.attribute_descriptor.element_cls._widget_class
-
     def _make_widget(self):
         self.widget = QtGui.QFrame()
+        self.widget_layout = QtGui.QVBoxLayout()
+        self.widget.setLayout(self.widget_layout)
         self.widgets = []
         self.button_add = QtGui.QPushButton("+")
-        self.button_add.clicked.connect(self.add_spin_and_select)
-        self.widget.addWidget(self.button_add)
-        self.widget.addStretch(1)
-        self.widget.setContentsMargins(0, 0, 0, 0)
-        self.selected = None
-        self.widget.value_changed.connect(self.write)
-
-    def __init__(self,
-                 label,
-                 min=-62.5e6,
-                 max=62.5e6,
-                 increment=1.,
-                 log_increment=True,
-                 halflife_seconds=1.,
-                 spinbox=None):
-        if spinbox is not None:
-            self.SpinBox = spinbox
-        self.label = label
-        self.min = min
-        self.max = max
-        self.increment = increment
-        self.halflife = halflife_seconds
-        self.log_increment = log_increment
-        self.lay = QtGui.QVBoxLayout()
-        if label is not None:
-            self.label = QtGui.QLabel(self.name)
-            self.lay.addWidget(self.label)
-        self.spins = []
-        self.button_removes = []
-        self.spin_lays = []
-        # for i in range(number):
-        #    self.add_spin()
-        self.button_add = QtGui.QPushButton("+")
-        self.button_add.clicked.connect(self.add_spin_and_select)
-        self.lay.addWidget(self.button_add)
-        self.lay.addStretch(1)
-        self.lay.setContentsMargins(0, 0, 0, 0)
-        self.setLayout(self.lay)
+        self.button_add.clicked.connect(self.append_default)
+        self.widget_layout.addWidget(self.button_add)
+        self.widget_layout.addStretch(1)
+        self.widget_layout.setContentsMargins(0, 0, 0, 0)
         self.selected = None
 
-        def set_increment(self, val):
-            self.increment = val
 
-        def set_maximum(self, val):
-            self.max = val
+    @property
+    def element_widget_cls(self):
+        return type("ElementWidget",
+                    (self.attribute_descriptor.element_cls._widget_class, ),
+                    {})
 
-        def set_minimum(self, val):
-            self.min = val
+    def update_attribute_by_name(self, new_value_list):
+        current_list, operation, index, value = new_value_list
+        if operation == "insert":
+            self.insert(index, value)
+        elif operation == "setitem":
+            self.setitem(index, value)
+        elif operation == "delitem":
+            self.delitem(index)
+        else:
+            self.module._logger.error("%s.%s_widget.update_attribute_by_name "
+                                      "was called with wrong arguments: %s",
+                                      self.module.name,
+                                      self.name,
+                                      new_value_list)
 
-        def add_spin_and_select(self):
-            self.add_spin()
-            # self.spins[-1].val = -1e4 -1j*1e3
-            self.set_selected(-1)
+    def append_default(self):
+        self.attribute_value.append(self.attribute_descriptor.element_cls.default)
 
-        def add_spin(self):
-            index = len(self.spins)
-            spin = self.SpinBox(label="",
-                                min=self.min,
-                                max=self.max,
-                                increment=self.increment,
-                                log_increment=self.log_increment,
-                                halflife_seconds=self.halflife,
-                                decimals=5)
-            self.spins.append(spin)
-            spin_lay = QtGui.QHBoxLayout()
-            self.spin_lays.append(spin_lay)
-            spin_lay.addWidget(spin)
-            button_remove = QtGui.QPushButton('-')
-            self.button_removes.append(button_remove)
-            spin_lay.addWidget(button_remove)
-            spin.value_changed.connect(self.value_changed)
-            button_remove.clicked.connect(
-                functools.partial(self.remove_spin_and_emit,
-                                  button=button_remove))
-            self.lay.insertLayout(index + 1 * (self.label is not None),
-                                  spin_lay)  # QLabel occupies the first row
-            button_remove.setFixedWidth(3 * 10)
+    def insert(self, index, value):
+        """"
+        make a new element widget - this function is called by the attribute
+        """
+        self.module._logger.warning("insert %s, index %s, new %s"%(
+                                    self.attribute_value, index, value))
+        element_widget = self.element_widget_cls(self,
+                                                 index,
+                                                 self.module,
+                                                 self.name,
+                                                 widget_name='')
+        self.module._logger.warning("insert %s, index %s, new %s" % (
+            self.attribute_value, index, value))
+        self.widgets.insert(index, element_widget)
+        self.module._logger.warning("insert %s, index %s, new %s" % (
+            self.attribute_value, index, value))
 
-        def remove_spin_and_emit(self, button):
-            self.remove_spin(button)
-            self.value_changed.emit()
+        if index >= len(self.stage_widgets)-1:
+            # widget must be inserted at the end
+            insert_before = self.button_add
+        else:
+            # widget was inserted before another one
+            insert_before = self.widgets[index+1]
+        self.module._logger.warning("insert %s, index %s, new %s"%(
+            self.attribute_value, index, value))
+        self.widget_layout.insertWidget(self.widget_layout.indexOf(insert_before),
+                                        element_widget)
+        self.module._logger.warning("insert %s, index %s, new %s"%(
+            self.attribute_value, index, value))
 
-        def remove_spin(self, button):
-            index = self.button_removes.index(button)
-            button = self.button_removes.pop(index)
-            spin = self.spins.pop(index)
-            spin_lay = self.spin_lays.pop(index)
-            self.lay.removeItem(spin_lay)
-            spin.deleteLater()
-            button.deleteLater()
-            spin_lay.deleteLater()
+    def setitem(self, index, value):
+        self.widgets[index].widget_value = value
 
-        def get_list(self):
-            return [spin.val for spin in self.spins]
-
-        def set_list(self, list_val):
-            for index, val in enumerate(list_val):
-                if index >= len(self.spins):
-                    self.add_spin()
-                self.spins[index].val = val
-            to_delete = []
-            for other_index in range(len(list_val), len(self.spins)):
-                to_delete.append(self.button_removes[
-                                     other_index])  # don't loop on a list that is
-                # shrinking !
-            for button in to_delete:
-                self.remove_spin(button)
-
-        def editing(self):
-            edit = False
-            for spin in self.spins:
-                edit = edit or spin.editing()
-            return edit()
-
-        def set_selected(self, index):
-            if self.selected is not None:
-                self.spins[self.selected].setStyleSheet("")
-            self.spins[index].setFocus(True)
-            self.value_changed.emit()
-
-        def get_selected(self):
-            """
-            Returns the index of the selected value
-            """
-            for index, spin in enumerate(self.spins):
-                if spin.hasFocus():
-                    return index
+    def delitem(self, index):
+        if self.selected == index:
+            self.selected = None
+        widget = self.widgets.pop(index)
+        widget.hide()
+        self.widget.removeWidget(widget)
+        widget.deleteLater()
 
     def _get_widget_value(self):
-        #return [w.
-        pass
+        return [widget.widget_value for widget in self.widgets]
 
-    def _set_widget_value(self, new_value):
-        self.widget.set_list(new_value)
+    def _set_widget_value(self, new_values):
+        for widget, new_value in zip(self.widgets, new_values):
+            widget.widget_value = new_value
 
     def editing(self):
-        return self.widget.editing()
+        edit = False
+        for widget in self.widgets:
+            edit = edit or widget.editing()
+        return edit
 
-    def set_max_cols(self, num):
-        """
-        sets the max number of columns of the widget (after that, spin boxes are stacked under each other)
-        """
-        self.widget.set_max_cols(num)
+    #def editing(self):
+    #    return self.widget.editing()
 
-    def set_increment(self, val):
-        self.widget.set_increment(val)
+    @property
+    def selected(self):
+        return self._selected
 
-    def set_maximum(self, val):
-        self.widget.set_maximum(val)
-
-    def set_minimum(self, val):
-        self.widget.set_minimum(val)
-
-    def set_selected(self, index):
-        """
-        Selects the current active complex number.
-        """
-        self.widget.set_selected(index)
+    @selected.setter
+    def selected(self, widget):
+        self._selected = widget
+        if self.selected is not None:
+            self.selected.setStyleSheet("")
+            self.selected.setFocus(True)
+        #self.value_changed.emit()
 
     def get_selected(self):
-        """
-        Get the selected number
-        """
-        return self.widget.get_selected()
+        return 0
 
     @property
     def number(self):
-        return len(self.widget.spins)
+        return self.__len__()
+
+    def __len__(self):
+        return len(self.widgets)
 
 
 class ListAttributeWidget(BaseAttributeWidget):
@@ -429,7 +398,7 @@ class ListAttributeWidget(BaseAttributeWidget):
         :return:
         """
         self.widget = self.ListSpinBox(**self.listspinboxkwargs)
-        self.widget.value_changed.connect(self.write)
+        self.widget.value_changed.connect(self.write_widget_value_to_attribute)
 
     def _get_widget_value(self):
         return self.widget.get_list()
@@ -565,7 +534,7 @@ class FilterAttributeWidget(BaseAttributeWidget):
         :return:
         """
         self.widget = ListComboBox(self.number, "", list(map(str, self.options)))
-        self.widget.value_changed.connect(self.write)
+        self.widget.value_changed.connect(self.write_widget_value_to_attribute)
 
     def _get_widget_value(self):
         return self.widget.get_list()
@@ -588,7 +557,7 @@ class SelectAttributeWidget(BaseAttributeWidget):
     def _make_widget(self):
         self.widget = QtGui.QComboBox()
         self.widget.addItems(self.options)
-        self.widget.currentIndexChanged.connect(self.write)
+        self.widget.currentIndexChanged.connect(self.write_widget_value_to_attribute)
 
     @property
     def options(self):
@@ -669,7 +638,7 @@ class BoolAttributeWidget(BaseAttributeWidget):
     """
     def _make_widget(self):
         self.widget = QtGui.QCheckBox()
-        self.widget.stateChanged.connect(self.write)
+        self.widget.stateChanged.connect(self.write_widget_value_to_attribute)
 
     def _get_widget_value(self):
         return (self.widget.checkState() == 2)
@@ -694,7 +663,7 @@ class BoolIgnoreAttributeWidget(BoolAttributeWidget):
         """
         self.widget = QtGui.QCheckBox()
         self.widget.setTristate(True)
-        self.widget.stateChanged.connect(self.write)
+        self.widget.stateChanged.connect(self.write_widget_value_to_attribute)
         self.setToolTip("Checked:\t    on\nUnchecked: off\nGrey:\t    ignore")
 
     def _get_widget_value(self):
@@ -811,7 +780,7 @@ class CurveSelectAttributeWidget(SelectAttributeWidget):
         """
         self.widget = QtGui.QListWidget()
         self.widget.addItems(self.options)
-        self.widget.currentItemChanged.connect(self.write)
+        self.widget.currentItemChanged.connect(self.write_widget_value_to_attribute)
 
     def _get_widget_value(self):
         return int(self.widget.currentItem().text())

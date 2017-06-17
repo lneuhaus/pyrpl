@@ -2,7 +2,7 @@ from . import iir_theory #, bodefit
 from .. import FilterModule
 from ...attributes import IntRegister, BoolRegister, ComplexListProperty, \
     FloatProperty, StringProperty, FloatListProperty, CurveSelectProperty, \
-    GainRegister, ConstantIntRegister
+    GainRegister, ConstantIntRegister, FloatAttributeListProperty
 from ...widgets.module_widgets import IirWidget
 from ...modules import SignalLauncher
 
@@ -149,7 +149,9 @@ class IIR(FilterModule):
     complex_zeros = IirListComplexProperty(default=[])
     complex_poles = IirListComplexProperty(default=[])
     real_zeros = IirFloatListProperty(default=[])
-    real_poles = IirFloatListProperty(default=[])
+    #real_poles = IirFloatListProperty(default=[])
+    real_poles = FloatAttributeListProperty(default=[])
+
 
     # convenience properties to manipulate combined list
     zeros = IirListProperty(call_setup=True)

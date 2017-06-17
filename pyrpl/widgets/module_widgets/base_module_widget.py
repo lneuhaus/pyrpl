@@ -148,7 +148,7 @@ class ReducedModuleWidget(QtGui.QGroupBox):
         self.change_ownership() # also sets the title
         self.module._signal_launcher.connect_widget(self)
 
-    def init_main_layout(self, orientation="horizontal"):
+    def init_main_layout(self, orientation='horizontal'):
         self.root_layout = QtGui.QHBoxLayout()
         self.main_widget = QtGui.QWidget()
         self.root_layout.addWidget(self.main_widget)
@@ -216,7 +216,11 @@ class ReducedModuleWidget(QtGui.QGroupBox):
         to avoid typing problems in signal-slot.
         """
         if name in self.module._gui_attributes:
-            self.attribute_widgets[str(name)].widget_value = new_value_list[0]
+            widget = self.attribute_widgets[str(name)]
+            try:  # try to propagate the change of attribute to the widget
+                widget.update_attribute_by_name(new_value_list)
+            except:  # directly set the widget value otherwise
+                self.attribute_widgets[str(name)].widget_value = new_value_list[0]
 
     def change_options(self, select_attribute_name, new_options):
         """

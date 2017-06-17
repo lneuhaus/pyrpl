@@ -32,4 +32,4 @@ class PidWidget(ModuleWidget):
     def update_ival(self):
         widget = self.attribute_widgets['ival']
         if self.isVisible() and not widget.editing():
-            widget.widget_value = self.module.ival
+            widget.write_attribute_value_to_widget()

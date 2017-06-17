@@ -25,7 +25,7 @@ def sine(frequency=1000, duration=1):
                     channels=1,
                     rate=BITRATE,
                     output=True)
-    stream.write(WAVEDATA)
+    stream.write_widget_value_to_attribute(WAVEDATA)
     stream.stop_stream()
     stream.close()
     p.terminate()

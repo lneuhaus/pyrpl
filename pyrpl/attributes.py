@@ -377,9 +377,6 @@ class NumberProperty(BaseProperty):
     def _create_widget(self, module, widget_name=None):
         widget = BaseProperty._create_widget(self, module,
                                              widget_name=widget_name)
-        widget.set_increment(self.increment)
-        widget.set_maximum(self.max)
-        widget.set_minimum(self.min)
         return widget
 
     def validate_and_normalize(self, obj, value):
@@ -867,7 +864,7 @@ class AttributeList(list):
         # rely on parent's validate_and_normalize function
         value = self._parent.validate_and_normalize_element(self._module, value)
         # set value
-        self[index] = value
+        super(AttributeList, self).__setitem__(index, value)
         self._parent.list_changed(self._module, "setitem", index, value)
 
     def __delitem__(self, index=-1):
@@ -969,7 +966,7 @@ class BasePropertyListProperty(BaseProperty):
             module._signal_launcher.update_attribute_by_name.emit(self.name,
                                                     [new_value]+appendix)
         except AttributeError as e:  # occurs if nothing is connected
-            module._logger.error("Erro in launch_signal of %s: %s",
+            module._logger.error("Error in launch_signal of %s: %s",
                                         module.name, e)
 
     # def _create_widget(self, module, widget_name=None):
@@ -984,12 +981,6 @@ class BasePropertyListProperty(BaseProperty):
     #     widget = self._widget_class(self.name, module, widget_name=widget_name)
     #     return widget
 
-    # if operation == "delitem":
-    #     pass
-    # elif operation == "setitem":
-    #     pass
-    # elif operation == "insert":
-    #     pass
 
 
 class FloatAttributeListProperty(BasePropertyListProperty, FloatProperty):
@@ -1204,7 +1195,7 @@ class SelectProperty(BaseProperty):
                 logger.warning(msg + ". Picking an arbitrary value %s instead."
                                % str(value))
             else:
-                print value, options, value in options, value in options.keys()
+                logger.error(msg)
                 raise ValueError(msg)
         return value
 
