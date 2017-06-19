@@ -20,15 +20,23 @@ warnings.simplefilter("error", BadCoefficients)
 import logging
 logging.basicConfig()
 logger = logging.getLogger(name=__name__)
-logger.setLevel(logging.ERROR)  # only show errors until userdefine log level is set up
+# only show errors or warnings until userdefine log level is set up
+logger.setLevel(logging.WARNING)
+
+# enable ipython QtGui support if needed
+try:
+    from IPython import get_ipython
+    IPYTHON = get_ipython()
+    IPYTHON.magic("gui qt")
+except BaseException as e:
+    logger.warning('Could not enable IPython gui support: %s.' % e)
 
 # get QApplication instance
 from PyQt4 import QtCore, QtGui
 APP = QtGui.QApplication.instance()
-#if APP is None or True:
-logger.error('creating new QApplication instance "pyrpl"')
-print ('teststestst')
-APP = QtGui.QApplication(['pyrpl'])
+if APP is None:
+    logger.warning('creating new QApplication instance "pyrpl"')
+    APP = QtGui.QApplication(['pyrpl'])
 
 # get user directories
 import os

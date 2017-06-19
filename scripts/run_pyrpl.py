@@ -3,7 +3,7 @@ Script to launch pyrpl from the command line.
 Type python run_pyrpl [config_file_name]
 To create a Pyrpl instance with the config file "config_file_name"
 """
-
+from pyrpl import Pyrpl
 from PyQt4 import QtCore, QtGui
 import sys
 
@@ -25,14 +25,11 @@ if __name__ == '__main__':
                 kwargs["config"] = k
         else:
             kwargs[k] = v
-    # try:
-    #    APP = QtGui.QApplication(['run_pyrpl'])
-    # except RuntimeError:
-    #    APP = QtCore.QCoreApplication.instance()
     APP = QtGui.QApplication.instance()
     if APP is None:
         APP = QtGui.QApplication(sys.argv)
-    from pyrpl import Pyrpl
+
     print("Calling Pyrpl(**%s)"%str(kwargs))
     PYRPL = Pyrpl(**kwargs)
+
     APP.exec_()
