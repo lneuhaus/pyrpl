@@ -231,7 +231,7 @@ class InputSignal(Signal):
     the input.
     """
     _setup_attributes = ["input_signal"]
-    _gui_attributes = ["input_signal"]
+    _gui_attributes = ["input_signal", "s"]
     _widget_class = LockboxInputWidget
     plot_range = np.linspace(-5, 5, 200)  # range of setpoint values over which to plot signal
 
@@ -457,6 +457,11 @@ class InputSignal(Signal):
     #                        self._variable)
     #         return None
 
+    def s(self):
+        mean, rms, min, max = self.stats(1.0)
+        rmean, rrms = self.relative_mean, self.relative_rms
+        self._logger.warning("Stats for signal %s: mean: %.3e, rms: %.3e, min: %.3e, max: %.3e, rmean: %.3e, rrms: %.3e",
+                                     self.name, mean, rms, min, max, rmean, rrms)
 
     def _create_widget(self):
         widget = super(InputSignal, self)._create_widget()

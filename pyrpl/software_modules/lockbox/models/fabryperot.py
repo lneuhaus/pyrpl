@@ -184,7 +184,7 @@ class HighFinesseInput(InputSignal):
         2. Full scan with the actuator, smaller scope duration, trigged on input (level defined by previous scan).
     Scope states corresponding to 1 and 2 are "sweep" and "sweep_zoom"
     """
-    def sweep_acquire_zoom(self, threshold, input2=None):
+    def sweep_acquire_zoom(self, threshold, input2=None, zoom_factor=None):
         try:
             with self.pyrpl.scopes.pop(self.name) as scope:
                 self.lockbox.unlock()  # turn off sweep
@@ -192,8 +192,9 @@ class HighFinesseInput(InputSignal):
                 if "sweep_zoom" in scope.states:
                     scope.load_state("sweep_zoom")
                 else:
-                    # zoom by finesse/20
-                    scope.duration /= (self.lockbox.finesse/20.0)
+                    if zoom_factor is None:
+                        zoom_factor = self.lockbox.finesse/20.0
+                    scope.duration /= (zoom_factor)
                     scope.trigger_source = "ch1_negative_edge"
                     scope.hysteresis = 0.002
                     scope.trigger_delay = 0.0
@@ -222,14 +223,15 @@ class HighFinesseInput(InputSignal):
             self._logger.warning("No free scopes left for sweep_acquire_zoom. ")
             return None, None, None
 
-    def calibrate(self, autosave=False):
+    def calibrate(self, autosave=False, zoom_factor=None):
         # take a first coarse calibration for trigger threshold estimation
         curve0, _ = super(HighFinesseInput, self).sweep_acquire()
         if curve0 is None:
             self._logger.warning('Aborting calibration because no scope is available...')
             return None
         curve1, _, times = self.sweep_acquire_zoom(
-            threshold=self.get_threshold(curve0))
+            threshold=self.get_threshold(curve0),
+            zoom_factor=zoom_factor)
         curve1 -= self.calibration_data._analog_offset
         self.calibration_data.get_stats_from_curve(curve1)
         # log calibration values
@@ -284,7 +286,7 @@ class HighFinesseTransmission(HighFinesseInput, FPTransmission):
     pass
 
 class HighFinesseAnalogPdh(HighFinesseInput, FPAnalogPdh):
-    def calibrate(self, trigger_signal="reflection", autosave=False):
+    def calibrate(self, trigger_signal="reflection", autosave=False, zoom_factor=None):
         trigger_signal = self.lockbox.inputs[trigger_signal]
         # take a first coarse calibration for trigger threshold estimation
         curve0, _ = trigger_signal.sweep_acquire()
@@ -294,7 +296,8 @@ class HighFinesseAnalogPdh(HighFinesseInput, FPAnalogPdh):
         # take the zoomed trace by triggering on the trigger_signal
         curve1, curve2, times = trigger_signal.sweep_acquire_zoom(
             threshold=trigger_signal.get_threshold(curve0),
-            input2=self.signal())
+            input2=self.signal(),
+            zoom_factor=zoom_factor)
         curve1 -= trigger_signal.calibration_data._analog_offset
         curve2 -= self.calibration_data._analog_offset
         self.calibration_data.get_stats_from_curve(curve2)
