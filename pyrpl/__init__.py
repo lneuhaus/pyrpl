@@ -16,14 +16,22 @@ warnings.simplefilter("ignore", np.VisibleDeprecationWarning) # pyqtgraph is thr
 warnings.simplefilter("error", np.ComplexWarning) # pyqtgraph is throwing a warning on ScatterPlotItem
 warnings.simplefilter("error", BadCoefficients)
 
+#set up loggers
 import logging
 logging.basicConfig()
 logger = logging.getLogger(name=__name__)
 logger.setLevel(logging.ERROR)  # only show errors until userdefine log level is set up
 
-import os
+# get QApplication instance
+from PyQt4 import QtCore, QtGui
+APP = QtGui.QApplication.instance()
+#if APP is None or True:
+logger.error('creating new QApplication instance "pyrpl"')
+print ('teststestst')
+APP = QtGui.QApplication(['pyrpl'])
 
-# get user directory
+# get user directories
+import os
 try:  # first try from environment variable
     user_dir = os.environ["PYRPL_USER_DIR"]
 except KeyError:  # otherwise, try ~/pyrpl_user_dir (where ~ is the user's home dir)
@@ -39,7 +47,7 @@ for path in [user_dir, user_config_dir, user_curve_dir, user_lockbox_dir]:
     if not os.path.isdir(path):
         os.mkdir(path)
 
-# try to set log level (and automatically generate custom global_config file
+# try to set log level (and automatically generate custom global_config file)
 from .pyrpl_utils import setloglevel
 from .memory import MemoryTree
 global_config = MemoryTree('global_config', source='global_config')
@@ -48,6 +56,7 @@ try:
 except:
     pass
 
+# main imports
 from .redpitaya import RedPitaya
 from .hardware_modules import *
 from .attributes import *
