@@ -31,7 +31,8 @@ from .widgets.attribute_widgets import BoolAttributeWidget, \
                                        CurveSelectAttributeWidget, \
                                        LedAttributeWidget, \
                                        PlotAttributeWidget, \
-                                       BasePropertyListPropertyWidget
+                                       BasePropertyListPropertyWidget, \
+                                       ComplexAttributeWidget
 
 from .curvedb import CurveDB
 from collections import OrderedDict
@@ -112,7 +113,7 @@ class BaseProperty(BaseAttribute):
         """
         return value  # by default any value is valid
 
-    def value_updated(self, module, value):
+    def value_updated(self, module, value=None, appendix=[]):
         """
         Once the value has been changed internally, this function is called to perform the following actions:
          - launch the signal module._signal_launcher.attribute_changed (this is used in particular for gui update)
@@ -121,7 +122,9 @@ class BaseProperty(BaseAttribute):
          Note for developers:
          we might consider moving the 2 last points in a connection behind the signal "attribute_changed".
         """
-        self.launch_signal(module, value)
+        if value is None:
+            value = self.get_value(module)
+        self.launch_signal(module, value, appendix=appendix)
         if module._autosave_active:  # (for module, when module is slaved, don't save attributes)
             if self.name in module._setup_attributes:
                 self.save_attribute(module, value)
@@ -139,13 +142,14 @@ class BaseProperty(BaseAttribute):
             return self
         return self.get_value(instance)
 
-    def launch_signal(self, module, new_value):
+    def launch_signal(self, module, new_value, appendix=[]):
         """
         Updates the widget and other subscribers with the module's value.
         """
         try:
-            module._signal_launcher.update_attribute_by_name.emit(self.name,
-                                                             [new_value])
+            module._signal_launcher.update_attribute_by_name.emit(
+                self.name,
+                [new_value]+appendix)
         except AttributeError as e:  # occurs if nothing is connected (TODO:
             # remove this)
             module._logger.error("Erro in launch_signal of %s: %s",
@@ -368,10 +372,12 @@ class NumberProperty(BaseProperty):
                  min=-np.inf,
                  max=np.inf,
                  increment=1,
+                 log_increment=False,  # if True, the widget has log increment
                  **kwargs):
         self.min = min
         self.max = max
         self.increment = increment
+        self.log_increment = log_increment
         BaseProperty.__init__(self, **kwargs)
 
     def _create_widget(self, module, widget_name=None):
@@ -471,6 +477,15 @@ class FloatProperty(NumberProperty):
         return NumberProperty.validate_and_normalize(self,
                                                      obj,
                                                      float(value))
+
+
+class ComplexProperty(FloatProperty):
+    _widget_class = ComplexAttributeWidget
+    def validate_and_normalize(self, obj, val):
+        val = complex(val)
+        re = super(ComplexProperty, self).validate_and_normalize(obj, val.real)
+        im = super(ComplexProperty, self).validate_and_normalize(obj, val.imag)
+        return complex(re, im)
 
 
 class FloatRegister(IntRegister, FloatProperty):
@@ -855,7 +870,9 @@ class AttributeList(list):
         super(AttributeList, self).__init__(*args, **kwargs)
 
     # insert, __setitem__, and __delitem__ completely describe the behavior
-    def insert(self, index, new):
+    def insert(self, index, new=None):
+        if new is None:
+            new = self._parent.default_element or self._parent.element_cls.default
         new = self._parent.validate_and_normalize_element(self._module, new)
         super(AttributeList, self).insert(index, new)
         self._parent.list_changed(self._module, "insert", index, new)
@@ -872,10 +889,10 @@ class AttributeList(list):
         self._parent.list_changed(self._module, "delitem", index)
 
     # other convenience functions that are based on above axioms
-    def append(self, new):
+    def append(self, new=None):
         self.insert(self.__len__(), new)
 
-    def extend(self, iterable):
+    def extend(self, iterable=[]):
         for i in iterable:
             self.append(i)
 
@@ -917,6 +934,14 @@ class BasePropertyListProperty(BaseProperty):
     default = []
     _widget_class = BasePropertyListPropertyWidget
 
+    def __init__(self, *args, **kwargs):
+        """
+        default is the default list
+        default_element: default new element
+        """
+        self.default_element = kwargs.pop('default_element', None)
+        super(BasePropertyListProperty, self).__init__(*args, **kwargs)
+
     @property
     def element_cls(self):
         """ the class of the elements of the list """
@@ -949,41 +974,19 @@ class BasePropertyListProperty(BaseProperty):
                 except IndexError:
                     current.append(v)
             # remove the trailing items
-            while len(current) > i+1:
+            while len(current) > len(val):
                 current.pop()
         finally:
             self.call_setup = call_setup
 
     def list_changed(self, module, operation, index, value=None):
-        current_list = self.get_value(module)
-        self.value_updated(module, current_list)
-        # send another, more detailed signal on the list change
-        self.launch_signal(module, current_list,
-                           appendix=[operation, index, value])
-
-    def launch_signal(self, module, new_value, appendix=[]):
-        try:
-            module._signal_launcher.update_attribute_by_name.emit(self.name,
-                                                    [new_value]+appendix)
-        except AttributeError as e:  # occurs if nothing is connected
-            module._logger.error("Error in launch_signal of %s: %s",
-                                        module.name, e)
-
-    # def _create_widget(self, module, widget_name=None):
-    #     """
-    #     Creates a widget to graphically manipulate the attribute.
-    #     """
-    #     if self._widget_class is None:
-    #         logger.warning("Module %s of type %s is trying to create a widget "
-    #                        "for %s, but no _widget_class is defined!",
-    #                        str(module), type(module), self.name)
-    #         return None
-    #     widget = self._widget_class(self.name, module, widget_name=widget_name)
-    #     return widget
-
+        self.value_updated(module, appendix=[operation, index, value])
 
 
 class FloatAttributeListProperty(BasePropertyListProperty, FloatProperty):
+    pass
+
+class ComplexAttributeListProperty(BasePropertyListProperty, ComplexProperty):
     pass
 
 

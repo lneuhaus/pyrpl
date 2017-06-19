@@ -48,15 +48,14 @@ class BaseAttributeWidget(QtGui.QWidget):
         self.layout = self.layout_v
         if self.widget_name != "":
             self.label = QtGui.QLabel(self.widget_name)
-            self.layout_v.addWidget(self.label, 0) # stretch=0
+            self.layout.addWidget(self.label, 0) # stretch=0
+            self.layout.addStretch(1)
         self.layout_v.setContentsMargins(0, 0, 0, 0)
         self._make_widget()
         self.layout.addWidget(self.widget, 0) # stretch=0
         self.layout.addStretch(1)
         self.setLayout(self.layout)
-        current_value = self.attribute_value
-        if current_value is not None: # SelectAttributes might have a None value
-            self.widget_value = current_value
+        self.write_attribute_value_to_widget()
         # this is very nice for debugging, but should probably be removed later
         setattr(self.module, '_'+self.attribute_name+'_widget', self)
 
@@ -95,15 +94,18 @@ class BaseAttributeWidget(QtGui.QWidget):
         # even though most of the time nothing is connected to it
         self.value_changed.emit()
 
-    def write_widget_value_to_attribute(self):
-        self.attribute_value = self.widget_value
-        # it does not hurt to imitate the signal of the subwidget,
-        # even though most of the time nothing is connected to it
-        self.value_changed.emit()
-
     def write_attribute_value_to_widget(self):
         """ trivial helper function, updates widget value from the attribute"""
-        self.widget_value = self.attribute_value
+        current_value = self.attribute_value
+        if current_value is None:
+            self.module._logger.warning("Cannot set widget %s of attribute "
+                                        "%s.%s to the current value "
+                                        "'None'.",
+                                        self.widget_name,
+                                        self.module.name,
+                                        self.attribute_name)
+            #  SelectAttributes might have a None value
+            self.widget_value = current_value
 
     def editing(self):
         """
@@ -114,11 +116,14 @@ class BaseAttributeWidget(QtGui.QWidget):
 
     def set_horizontal(self):
         """ puts the label to the left of the widget instead of atop """
-        self.layout_v.removeWidget(self.label)
-        self.layout_v.removeWidget(self.widget)
         self.layout_h = QtGui.QHBoxLayout()
-        self.layout_h.addWidget(self.label)
+        if hasattr(self, 'label'):
+            self.layout_v.removeWidget(self.label)
+            self.layout_h.addWidget(self.label)
+            self.layout.addStretch(1)
+        self.layout_v.removeWidget(self.widget)
         self.layout_h.addWidget(self.widget)
+        self.layout.addStretch(1)
         self.layout_v.addLayout(self.layout_h)
         self.layout = self.layout_h
 
@@ -190,6 +195,8 @@ class NumberAttributeWidget(BaseAttributeWidget):
         self.widget.setSingleStep(self.attribute_descriptor.increment)
         self.widget.setMaximum(self.attribute_descriptor.max)
         self.widget.setMinimum(self.attribute_descriptor.min)
+        if self.attribute_descriptor.log_increment:
+            self.widget.set_log_increment()
 
     def _get_widget_value(self):
         return self.widget.value()
@@ -218,6 +225,13 @@ class FloatAttributeWidget(NumberAttributeWidget):
     SpinBox = FloatSpinBox
 
 
+class ComplexAttributeWidget(FloatAttributeWidget):
+    """
+    Widget for complex values
+    """
+    SpinBox = ComplexSpinBox
+
+
 class FrequencyAttributeWidget(FloatAttributeWidget):
     def __init__(self, module, attribute_name, widget_name=None):
         super(FrequencyAttributeWidget, self).__init__(module,
@@ -226,17 +240,24 @@ class FrequencyAttributeWidget(FloatAttributeWidget):
         self.set_per_second(10)
 
 
-
 class ListElementWidget(BaseAttributeWidget):
+    """
+    this is a wrapper class to embed any AttributeWidget as an element of
+    BasePropertyListPropertyWidget. Its usage is found in the property
+    element_widget_cls of BasePropertyListPropertyWidget.
+    """
     def __init__(self, parent, startindex, *args, **kwargs):
         self.parent = parent
         self.startindex = startindex
         super(ListElementWidget, self).__init__(*args, **kwargs)
+        self.set_horizontal()
         self.button_remove = QtGui.QPushButton('-')
         self.button_remove.clicked.connect(self.remove_this_element)
         self.button_remove.setFixedWidth(3 * 10)
         self.layout.addWidget(self.button_remove, 0) # stretch=0
         self.layout.addStretch(1)
+        # this is very nice for debugging, but should probably be removed later
+        setattr(self.module, '_'+self.attribute_name+'_widget', self.parent)
 
     def remove_this_element(self):
         self.parent.attribute_value.__delitem__(index=self.index)
@@ -273,12 +294,13 @@ class BasePropertyListPropertyWidget(BaseAttributeWidget):
         self.widget_layout.addStretch(1)
         self.widget_layout.setContentsMargins(0, 0, 0, 0)
         self.selected = None
-
+        self.update_widget_names()
 
     @property
     def element_widget_cls(self):
         return type("ElementWidget",
-                    (self.attribute_descriptor.element_cls._widget_class, ),
+                    (ListElementWidget,
+                     self.attribute_descriptor.element_cls._widget_class, ),
                     {})
 
     def update_attribute_by_name(self, new_value_list):
@@ -297,55 +319,62 @@ class BasePropertyListPropertyWidget(BaseAttributeWidget):
                                       new_value_list)
 
     def append_default(self):
-        self.attribute_value.append(self.attribute_descriptor.element_cls.default)
+        self.attribute_value.append()
 
     def insert(self, index, value):
         """"
         make a new element widget - this function is called by the attribute
         """
-        self.module._logger.warning("insert %s, index %s, new %s"%(
-                                    self.attribute_value, index, value))
         element_widget = self.element_widget_cls(self,
                                                  index,
                                                  self.module,
-                                                 self.name,
-                                                 widget_name='')
-        self.module._logger.warning("insert %s, index %s, new %s" % (
-            self.attribute_value, index, value))
+                                                 self.attribute_name,
+                                                 widget_name=str(index))
         self.widgets.insert(index, element_widget)
-        self.module._logger.warning("insert %s, index %s, new %s" % (
-            self.attribute_value, index, value))
-
-        if index >= len(self.stage_widgets)-1:
+        if index+1 >= len(self.widgets):
             # widget must be inserted at the end
             insert_before = self.button_add
         else:
             # widget was inserted before another one
             insert_before = self.widgets[index+1]
-        self.module._logger.warning("insert %s, index %s, new %s"%(
-            self.attribute_value, index, value))
         self.widget_layout.insertWidget(self.widget_layout.indexOf(insert_before),
                                         element_widget)
         self.module._logger.warning("insert %s, index %s, new %s"%(
             self.attribute_value, index, value))
+        self.update_widget_names()
 
     def setitem(self, index, value):
         self.widgets[index].widget_value = value
 
-    def delitem(self, index):
+    def delitem(self, index=-1):
         if self.selected == index:
             self.selected = None
         widget = self.widgets.pop(index)
         widget.hide()
-        self.widget.removeWidget(widget)
+        self.widget_layout.removeWidget(widget)
         widget.deleteLater()
+        self.update_widget_names()
+        self.module._logger.error('delitem concluded')
+
+    def update_widget_names(self):
+        for widget in self.widgets:
+            if hasattr(widget, 'label'):
+                widget.label.setText('('+str(widget.index)+')')
 
     def _get_widget_value(self):
         return [widget.widget_value for widget in self.widgets]
 
     def _set_widget_value(self, new_values):
-        for widget, new_value in zip(self.widgets, new_values):
-            widget.widget_value = new_value
+        for index, new_value in enumerate(new_values):
+            # replace or append new values
+            try:
+                self.setitem(index, new_value)
+            except IndexError:
+                self.insert(index, new_value)
+            # remove the trailing items
+            while len(self) > len(new_values):
+                self.delitem()
+        self.module._logger.warning("set_widget_value called and finished")
 
     def editing(self):
         edit = False

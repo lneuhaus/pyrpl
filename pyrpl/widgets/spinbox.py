@@ -10,11 +10,6 @@ else:
     integer_types = (int,)
 
 
-APP = QtGui.QApplication.instance()
-if APP is None:
-    APP = QtGui.QApplication(["redpitaya_gui"])
-
-
 class NumberSpinBox(QtGui.QWidget, object):
     """
     Base class for spinbox with numerical value.
@@ -38,7 +33,16 @@ class NumberSpinBox(QtGui.QWidget, object):
     timer_initial_latency = 300 # 100 ms before starting to update
     # continuously.
 
-    def __init__(self, label, min=-1, max=1, increment=2.**(-13),
+    def forward_to_subspinboxes(func):
+        """
+        a decorator that forwards function calls to subspinboxes
+        """
+        # in base class, the trivial forwarder is chosen
+        def func_wrapper(self, *args, **kwargs):
+            return func(*args, **kwargs)
+        return func_wrapper
+
+    def __init__(self, label="", min=-1, max=1, increment=2.**(-13),
                  log_increment=False, halflife_seconds=0.1, per_second=0.2):
         """
         :param label: label of the button
@@ -50,25 +54,28 @@ class NumberSpinBox(QtGui.QWidget, object):
         :param per_second: when button is in lin, how long to change the value by 1 unit.
         """
         super(NumberSpinBox, self).__init__(None)
+        self._val = 0  # internal storage for value with best-possible accuracy
         self.minimum = min  # imitates original QSpinBox API
         self.maximum = max  # imitates original QSpinBox API
         self.singleStep = increment
         self.update_tooltip()
-        self._val = 0
         self.halflife_seconds = halflife_seconds
         self.log_increment = log_increment
         self.per_second = per_second
+        self.singleStep = increment
+        self.set_min_size()
+        self.labeltext = label
+        self.make_layout()
+        self.val = 0
 
+    def make_layout(self):
         self.lay = QtGui.QHBoxLayout()
         self.lay.setContentsMargins(0,0,0,0)
         self.lay.setSpacing(0)
         self.setLayout(self.lay)
-
-        if label is not None:
-            self.label = QtGui.QLabel(label)
+        if self.labeltext is not None:
+            self.label = QtGui.QLabel(self.labeltext)
             self.lay.addWidget(self.label)
-        self.singleStep = increment
-
         if self.log_increment:
             self.up = QtGui.QPushButton('*')
             self.down = QtGui.QPushButton('/')
@@ -76,39 +83,28 @@ class NumberSpinBox(QtGui.QWidget, object):
             self.up = QtGui.QPushButton('+')
             self.down = QtGui.QPushButton('-')
         self.lay.addWidget(self.down)
-
         self.line = QtGui.QLineEdit()
         self.line.setStyleSheet("QLineEdit { qproperty-cursorPosition: 0; }") # align text on the left
         # http://stackoverflow.com/questions/18662157/qt-qlineedit-widget-to-get-long-text-left-aligned
         self.lay.addWidget(self.line)
-
         self._button_up_down = False
         self._button_down_down = False
-
         self.lay.addWidget(self.up)
         self.timer_arrow = QtCore.QTimer()
         self.timer_arrow.setSingleShot(True)
         self.timer_arrow.setInterval(self.timer_min_interval)
         self.timer_arrow.timeout.connect(self.make_step_continuous)
-
         self.timer_arrow_latency = QtCore.QTimer()
         self.timer_arrow_latency.setInterval(self.timer_initial_latency)
         self.timer_arrow_latency.setSingleShot(True)
         self.timer_arrow_latency.timeout.connect(self.make_step_continuous)
-
         self.up.pressed.connect(self.first_increment)
         self.down.pressed.connect(self.first_increment)
-
         self.up.setMaximumWidth(15)
         self.down.setMaximumWidth(15)
-
         self.up.released.connect(self.timer_arrow.stop)
         self.down.released.connect(self.timer_arrow.stop)
-
         self.line.editingFinished.connect(self.validate)
-        self.val = 0
-
-        self.set_min_size()
 
     def set_min_size(self):
         """
@@ -228,7 +224,9 @@ class NumberSpinBox(QtGui.QWidget, object):
         """
         :return:
         """
-        APP.processEvents() # Ugly, but has to be there, otherwise, it could
+        # 19/6 LN: removed this because not needed any more apparently
+        #sleep(1e-4) # Ugly, but has to be there, otherwise,
+        # it could
         # be that this function is called forever
         # because it takes the priority over released signal...
         if self.last_time is None:
@@ -308,6 +306,10 @@ class NumberSpinBox(QtGui.QWidget, object):
             for i in range(abs(nsteps)):
                 func(single_increment=True)
 
+    @property
+    def selected(self):
+        return self.hasFocus()
+
 
 class IntSpinBox(NumberSpinBox):
     """
@@ -349,15 +351,15 @@ class FloatSpinBox(NumberSpinBox):
                                            max=max,
                                            increment=increment,
                                            **kwargs)
-        width_in_characters = 6 + self.decimals
+        width_in_characters = 6.5 + self.decimals
         self.setFixedWidth(width_in_characters*10)
 
     @property
     def val(self):
         if str(self.line.text())!=("%."+str(self.decimals) + "f")%self._val:
             return float(str(self.line.text()))
-        return self._val # the value needs to be known to a precision better than the display to avoid deadlocks
-                         # in increments
+        return self._val # the value needs to be known to a precision better
+        # than the display to avoid deadlocks in increments
 
     @val.setter
     def val(self, new_val):
@@ -381,10 +383,121 @@ class FloatSpinBox(NumberSpinBox):
     def focusInEvent(self, event):
         # TODO: add docstring
         self.value_changed.emit()
-        self.setStyleSheet("FloatSpinBox{background-color:red;}")
+        self.setStyleSheet("FloatSpinBox{"
+                           "background-color:red;}"
+                           %self.__class__.__name__)
 
 
-class ComplexSpinBox(QtGui.QFrame):
+class ComplexSpinBox(FloatSpinBox):
+    """
+    Two spinboxes representing a complex number, with the right keyboard
+    shortcuts (up down for imag, left/right for real).
+    """
+    def forward_to_subspinboxes(func):
+        """
+        a decorator that forwards function calls to subspinboxes
+        """
+        # in base class, the trivial forwarder is chosen
+        def func_wrapper(self, *args, **kwargs):
+            return func(*args, **kwargs)
+        return func_wrapper
+
+    def __init__(self, *args, **kwargs):
+        super(ComplexSpinBox, self).__init__(*args, **kwargs)
+
+    def make_layout(self):
+        self.lay = QtGui.QHBoxLayout()
+        self.lay.setContentsMargins(0, 0, 0, 0)
+        self.real = FloatSpinBox(label=self.labeltext,
+                                 min=self.minimum,
+                                 max=self.maximum,
+                                 increment=self.singleStep,
+                                 log_increment=self.log_increment,
+                                 halflife_seconds=self.halflife_seconds,
+                                 decimals=self.decimals)
+        self.imag = FloatSpinBox(label=self.labeltext,
+                                 min=self.minimum,
+                                 max=self.maximum,
+                                 increment=self.singleStep,
+                                 log_increment=self.log_increment,
+                                 halflife_seconds=self.halflife_seconds,
+                                 decimals=self.decimals)
+        self.real.value_changed.connect(self.value_changed)
+        self.lay.addWidget(self.real)
+        self.label = QtGui.QLabel(" + j")
+        self.lay.addWidget(self.label)
+        self.imag.value_changed.connect(self.value_changed)
+        self.lay.addWidget(self.imag)
+        self.setLayout(self.lay)
+        self.setFocusPolicy(QtCore.Qt.ClickFocus)
+
+    @property
+    def val(self):
+        return complex(self.real.val, self.imag.val)
+
+    @val.setter
+    def val(self, new_val):
+        self.real.val = np.real(new_val)
+        self.imag.val = np.imag(new_val)
+        return new_val
+
+    def keyPressEvent(self, event):
+        if event.key() in [QtCore.Qt.Key_Right, QtCore.Qt.Key_Left]:
+            return self.imag.keyPressEvent(event)
+        else:
+            return self.real.keyPressEvent(event)
+
+    def keyReleaseEvent(self, event):
+        if event.key() in [QtCore.Qt.Key_Right, QtCore.Qt.Key_Left]:
+            return self.imag.keyReleaseEvent(event)
+        else:
+            return self.real.keyReleaseEvent(event)
+
+    def wheelEvent(self, event):
+        return self.imag.wheelEvent(event)
+
+    # forward calls to real and imaginary part
+    # for function in ['set_min_size', 'update_tooltip', 'setDecimals',
+    #                  'set_per_second', 'setMaximum', 'setMinimum',
+    #                  'setSingleStep', 'set_log_increment']:
+    def setFixedWidth(self, *args, **kwargs):
+        self.real.setFixedWidth(*args, **kwargs)
+        return self.imag.setFixedWidth(*args, **kwargs)
+
+    def set_min_size(self, *args, **kwargs):
+        self.real.set_min_size(*args, **kwargs)
+        return self.imag.set_min_size(*args, **kwargs)
+
+    def update_tooltip(self, *args, **kwargs):
+        self.real.update_tooltip(*args, **kwargs)
+        return self.imag.update_tooltip(*args, **kwargs)
+
+    def setDecimals(self, *args, **kwargs):
+        self.real.setDecimals(*args, **kwargs)
+        return self.imag.setDecimals(*args, **kwargs)
+
+    def set_per_second(self, *args, **kwargs):
+        self.real.set_per_second(*args, **kwargs)
+        return self.imag.set_per_second(*args, **kwargs)
+
+    def setMaximum(self, *args, **kwargs):
+        self.real.setMaximum(*args, **kwargs)
+        return self.imag.setMaximum(*args, **kwargs)
+
+    def setMinimum(self, *args, **kwargs):
+        self.real.setMinimum(*args, **kwargs)
+        return self.imag.setMinimum(*args, **kwargs)
+
+    def setSingleStep(self, *args, **kwargs):
+        self.real.setSingleStep(*args, **kwargs)
+        return self.imag.setSingleStep(*args, **kwargs)
+
+    def set_log_increment(self, *args, **kwargs):
+        self.real.set_log_increment(*args, **kwargs)
+        return self.imag.set_log_increment(*args, **kwargs)
+
+
+class OldComplexSpinBox(QtGui.QFrame):
     """
     Two spinboxes representing a complex number, with the right keyboard
     shortcuts (up down for imag, left/right for real).
