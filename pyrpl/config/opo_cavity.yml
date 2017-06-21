@@ -1,5 +1,5 @@
 redpitaya:
-  hostname: 10.214.1.34
+  hostname: 10.214.1.30
   password: root
   user: root
   port: 2222
@@ -31,13 +31,13 @@ model:
   modeltype: fabryperot
   # only needed parameter is wavelength
   # (to convert piezo displacement into gain)
-  wavelength: 1.064e-06
+  wavelength: 0.532e-06
   # maximum tolerated error of the internal variable
   # for interferometer, this is the phase error in radians
   # this value is uniquely needed for the function 'islocked'
   maxerror: 0.1
   finesse: 16.0
-  length: 0.035
+  length: 0.28
   # signals in order of their preferrence
   #signalpreference:
   #- reflection
@@ -72,8 +72,8 @@ model:
 
   resonant_reflection: -0.08322671800851822
   offresonant_reflection: 0.08339925855398178
-  peak_pdh: 0.19244384765625
-  resonant_transmission: 0.2739839628338814
+  peak_pdh: 0.0892333984375
+  resonant_transmission: 0.09856892377138138
 # all signals that are inputs of the lockbox. Must be signal names understood
 # by the model. The order of signals indicates their preferrence as error
 # signals.
@@ -88,10 +88,10 @@ inputs:
   #  offset: -0.01687093824148178
   transmission:
     redpitaya_input: adc2
-    max: 0.2739839628338814
-    min: -0.010195724666118622
-    mean: 0.006366744637489319
-    rms: 0.04038472872658525
+    max: 0.09856892377138138
+    min: -0.010317794978618622
+    mean: -0.0012461543083190918
+    rms: 0.019155294322915253
     offset: -0.004574783146381378
   pdh:
     setup:
@@ -110,10 +110,10 @@ inputs:
       acbandwidth: 100000.0
 
     redpitaya_input: iq0
-    max: 0.18441498279571533
-    min: -0.20047271251678467
-    mean: -0.019979454576969147
-    rms: 0.03766756420329645
+    max: 0.06771576404571533
+    min: -0.11075103282928467
+    mean: -0.021462611854076385
+    rms: 0.01821643900513137
     offset: 0.021029353141784668
 # All output signals. Names of outputs are arbitrary.
 outputs:
