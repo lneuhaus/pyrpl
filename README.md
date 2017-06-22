@@ -6,20 +6,18 @@ PyRPL (Python RedPitaya Lockbox) turns your RedPitaya into a powerful DSP device
 
 ## Installation
 Make sure you have an installation of Python (2.7 or 3.5). If you are new to Python or unexperienced with fighting installation issues, it is recommended to install the [Anaconda](https://www.continuum.io/downloads) Python distribution, which allows to install all PyRPL dependencies with the command 
-
-```conda install python=3.5 numpy scipy paramiko pandas nose pip pyqt=4```
-
+```
+conda install python=3.5 numpy scipy paramiko pandas nose pip pyqt=4
+```
 If you are not using Anaconda, you must manually install the python package [PyQt4](https://pypi.python.org/pypi/PyQt4), which requires a working C compiler installation on the system.
 
 Next, clone (if you have a [git client](https://git-scm.com/downloads) installed - recommended option) the pyrpl repository to your computer with 
-
-```git clone https://github.com/lneuhaus/pyrpl.git```
-
+```
+git clone https://github.com/lneuhaus/pyrpl.git
+```
 or [download and extract](https://github.com/lneuhaus/pyrpl/archive/master.zip) (if you do not want to install git on your computer) the repository. 
 
-
 Install PyRPL by navigating with a command line terminal into the pyrpl root directory and typing
-
 ```
 python setup.py develop
 ```
@@ -51,8 +49,16 @@ Since PyRPL is continuously improved, you should install upgrades if you expect 
 git pull
 ```
 
+## FPGA bitfile generation (only for developers)
+In case you would like to modify the logic running on the FPGA, you should make sure that you are able to generate a working bitfile on your machine. To do so, you must install Vivado 2015.4  [(64-bit windows](windows web-installer](https://www.xilinx.com/member/forms/download/xef.html?filename=Xilinx_Vivado_SDK_2015.4_1118_2_Win64.exe&akdm=1) or [Linux)](https://www.xilinx.com/member/forms/download/xef.html?filename=Xilinx_Vivado_SDK_2015.4_1118_2_Lin64.bin&akdm=1) and [together with a working license](https://github.com/lneuhaus/pyrpl/wiki/How-to-get-the-right-license-for-Vivado-2015.4). Next, with a terminal in the pyrpl root directory, type
+```
+cd pyrpl/fpga
+make
+```
+Compilation should take between 10 and 30 minutes, depending on your machine, and finish successfully. The new bitfile will be automatically used at the next restart of PyRPL. 
+
 ## Issues
-Please report any problems or wishes as a new issue on [this page](https://github.com/lneuhaus/pyrpl/issues).
+Please report all problems or wishes as new issues on [this page](https://github.com/lneuhaus/pyrpl/issues).
 
 ## License
 Please read our license file [LICENSE](https://github.com/lneuhaus/pyrpl/blob/master/LICENSE) for more information. 
