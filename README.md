@@ -55,7 +55,7 @@ In case you would like to modify the logic running on the FPGA, you should make 
 cd pyrpl/fpga
 make
 ```
-Compilation should take between 10 and 30 minutes, depending on your machine, and finish successfully. The new bitfile will be automatically used at the next restart of PyRPL. 
+Compilation should take between 10 and 30 minutes, depending on your machine, and finish successfully. The new bitfile will be automatically used at the next restart of PyRPL. The best way to getting started is to skim through the very short Makefile in the fpga directory and to continue by reading the files mentioned in the makefile and the refences therein. All verilog source code is located in the subdirectory pyrpl/fpga/rtl/. 
 
 ## Issues
 Please report all problems or wishes as new issues on [this page](https://github.com/lneuhaus/pyrpl/issues).
