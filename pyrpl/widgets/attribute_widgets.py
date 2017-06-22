@@ -492,7 +492,7 @@ class ListComboBox(QtGui.QWidget):
     # TODO: can be replaced by SelectAttributeWidget
     value_changed = QtCore.pyqtSignal()
 
-    def __init__(self, number, name, options):
+    def __init__(self, number, name, options, decimals=3):
         super(ListComboBox, self).__init__()
         self.setToolTip("First order filter frequencies \n"
                         "negative values are for high-pass \n"
@@ -501,6 +501,7 @@ class ListComboBox(QtGui.QWidget):
         self.lay.setContentsMargins(0, 0, 0, 0)
         self.combos = []
         self.options = options
+        self.decimals = decimals
         for i in range(number):
             combo = QtGui.QComboBox()
             self.combos.append(combo)
@@ -537,7 +538,8 @@ class ListComboBox(QtGui.QWidget):
         if not np.iterable(val):
             val = [val]
         for i, v in enumerate(val):
-            v = str(int(v))
+            #v = str(int(v))
+            v = ('{:.' + str(self.decimals) + 'e}').format(float(v))
             index = self.options.index(v)
             self.combos[i].setCurrentIndex(index)
 
@@ -547,6 +549,7 @@ class FilterAttributeWidget(BaseAttributeWidget):
     Property for list of floats (to be choosen in a list of valid_frequencies)
     The attribute descriptor needs to expose a function valid_frequencies(module)
     """
+    decimals = 3
     def __init__(self, module, attribute_name, widget_name=None):
         val = getattr(module, attribute_name)
         if np.iterable(val):
@@ -562,7 +565,12 @@ class FilterAttributeWidget(BaseAttributeWidget):
         Sets up the widget (here a QDoubleSpinBox)
         :return:
         """
-        self.widget = ListComboBox(self.number, "", list(map(str, self.options)))
+        self.widget = ListComboBox(self.number,
+                                   "",
+                                   [('{:.'+str(self.decimals)+'e}').format(
+            float(option)) for option in self.options],
+                                   decimals=self.decimals)#list(map(str,
+                                   # self.options)))
         self.widget.value_changed.connect(self.write_widget_value_to_attribute)
 
     def _get_widget_value(self):

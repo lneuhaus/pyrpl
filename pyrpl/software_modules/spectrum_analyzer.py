@@ -65,22 +65,20 @@ class SpecAnAcBandwidth(FilterProperty):
                 if freq >= 0]
 
 
-class RbwProperty(ProxyProperty):
-    def _target_to_proxy(self, obj, target):
-        try:
-            target = target[0]
-        except TypeError:
-            pass
-        return int(round(target / obj.data_length))
+class RbwProperty(FilterProperty):
+    def valid_frequencies(self, module):
+        durations = module.scope.durations
+        return [1./duration for duration in durations]
 
-    def _proxy_to_target(self, obj, proxy):
-        return int(proxy * obj.data_length)
+    def get_value(self, obj):
+        return 1./(8e-9*obj.decimation*obj.data_length)
 
-    def valid_frequencies(self, instance):
-        vf = recursive_getattr(instance,
-                          self.path_to_target_descriptor).valid_frequencies(
-            recursive_getattr(instance, self.path_to_target_module))
-        return [self._target_to_proxy(instance, v) for v in vf]
+    def set_value(self, obj, value):
+        if np.iterable(value):
+            value = value[0]
+        duration = 1./value
+        obj.decimation = int(round(duration/(8e-9*obj.data_length)))
+
 
 
 class SpanFilterProperty(FilterProperty):
@@ -88,13 +86,35 @@ class SpanFilterProperty(FilterProperty):
         return instance.spans
 
     def get_value(self, obj):
-        val = super(SpanFilterProperty, self).get_value(obj)
-        if np.iterable(val):
-            return val[0] # maybe this should be the default behavior for
+        #val = super(SpanFilterProperty, self).get_value(obj)
+        #if np.iterable(val):
+        #    return val[0] # maybe this should be the default behavior for
             # FilterAttributes... or make another Attribute type
-        else:
-            return val
+        #else:
+        #    return val
+        return 1./(8e-9*obj.decimation)
 
+    def set_value(self, obj, value):
+        if np.iterable(value):
+            value = value[0]
+        sampling_time = 1./value
+        obj.decimation = int(round(sampling_time/8e-9))
+
+
+class DecimationProperty(SelectProperty):
+    """
+    Since the only integer number in [rbw, span, duration, decimation] is
+    decimation, it is better to take it as the master property to avoid
+    rounding problems.
+    We don't want to use the scope property because when the scope is not
+    slaved, the value could be anything.
+    """
+
+    def set_value(self, obj, value):
+        super(DecimationProperty, self).set_value(obj, value)
+        obj.__class__.span.value_updated(obj, obj.span)
+        obj.__class__.rbw.value_updated(obj, obj.rbw)
+        
 
 class SpectrumAnalyzer(AcquisitionModule):
     """
@@ -167,7 +187,8 @@ class SpectrumAnalyzer(AcquisitionModule):
     # select_attributes list of options
     def spans(nyquist_margin):
         # see http://stackoverflow.com/questions/13905741/
-        return [int(np.ceil(1. / nyquist_margin / s_time))
+        # [int(np.ceil(1. / nyquist_margin / s_time))
+        return [1./s_time \
              for s_time in Scope.sampling_times]
     spans = spans(nyquist_margin)
 
@@ -218,8 +239,12 @@ class SpectrumAnalyzer(AcquisitionModule):
                                        doc="should cross-spectrum amplitude"
                                               " be displayed in "
                                               "baseband-mode?")
-    rbw = RbwProperty("span", doc="Residual Bandwidth, this is a readonly "
-                                  "attribute, only span can be changed.")
+    rbw = RbwProperty(doc="Residual Bandwidth, this is a readonly "
+                            "attribute, only span can be changed.")
+
+    decimation = DecimationProperty(options=Scope.decimations,
+                                    doc="Decimation setting for the "
+                                            "scope.")
 
     acbandwidth = SpecAnAcBandwidth(call_setup=True)
 
@@ -493,7 +518,10 @@ class SpectrumAnalyzer(AcquisitionModule):
     def _scope_decimation(self):
         return self.scope.__class__.decimation.validate_and_normalize(
                     self.scope,
-                    round(self.sampling_time/8e-9))
+                    int(round(self.sampling_time/8e-9)))
+
+    def _scope_duration(self):
+        return self._scope_decimation()*8e-9*self.data_length
 
     def _start_acquisition(self):
         autosave_backup = self._autosave_active
