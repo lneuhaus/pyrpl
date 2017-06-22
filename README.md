@@ -27,10 +27,9 @@ First, hook up your Red Pitaya / STEMlab to a LAN accessible from your computer 
 In an IPython console or JuPyter notebook, type
 ```
 from pyrpl import Pyrpl
-p = Pyrpl(hostname='your_redpitaya_ip_address')
+p = Pyrpl(config='your_configuration_name', hostname='your_redpitaya_ip_address')
 ```
-The GUI should open and you can start playing around with it.
-
+The GUI should open and you can start playing around with it. By calling pyrpl with different strings for 'your_configuration_name', your settings for a given configuration will be automatically remembered by PyRPL. You can drop the hostname argument after the first call of a given configuration. Different RedPitayas with different configuration names can be run simultaneously. 
 
 ## Unit test
 If you want to check whether PyRPL works correctly on your machine, navigate with a command line terminal into the pyrpl root directory and type the  following commands (by substituting the ip-address / hostname of your Red Pitaya, of course)
