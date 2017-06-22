@@ -5,11 +5,11 @@ PyRPL (Python RedPitaya Lockbox) turns your RedPitaya into a powerful DSP device
 
 
 ## Installation
-Make sure you have an installation of Python (2 or 3), preferrably
-[Anaconda](https://www.continuum.io/downloads).
-Make sure you have a working installation of the python package [PyQt4](https://pypi.python.org/pypi/PyQt4) (with ```conda install pyqt=4```).
+Make sure you have an installation of Python (2.7 or 3.5). If you are new to Python or unexperience with fighting installation issues, it is recommended to install the [Anaconda](https://www.continuum.io/downloads) Python distribution, which allows to install all PyRPL dependencies with the command 
+```conda install python=3.5 numpy scipy paramiko pandas nose pip pyqt=4```
+If you are not using Anaconda, you should manually install the python package [PyQt4](https://pypi.python.org/pypi/PyQt4).
 
-Download and extract or clone (with ```git clone https://github.com/lneuhaus/pyrpl.git```) the pyrpl repository to your computer. Install PyRPL by navigating with a command line terminal into the pyrpl root directory and typing
+Next, download and extract or clone (with ```git clone https://github.com/lneuhaus/pyrpl.git```) the pyrpl repository to your computer. Install PyRPL by navigating with a command line terminal into the pyrpl root directory and typing
 ```
 python setup.py develop
 ```
