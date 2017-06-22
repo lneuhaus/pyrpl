@@ -9,9 +9,17 @@ Make sure you have an installation of Python (2.7 or 3.5). If you are new to Pyt
 
 ```conda install python=3.5 numpy scipy paramiko pandas nose pip pyqt=4```
 
-If you are not using Anaconda, you should manually install the python package [PyQt4](https://pypi.python.org/pypi/PyQt4).
+If you are not using Anaconda, you must manually install the python package [PyQt4](https://pypi.python.org/pypi/PyQt4), which requires a working C compiler installation on the system.
 
-Next, download and extract or clone (with ```git clone https://github.com/lneuhaus/pyrpl.git```) the pyrpl repository to your computer. Install PyRPL by navigating with a command line terminal into the pyrpl root directory and typing
+Next, clone (if you have a [git client](https://git-scm.com/downloads) installed - recommended option) the pyrpl repository to your computer with 
+
+```git clone https://github.com/lneuhaus/pyrpl.git```
+
+or [download and extract](https://github.com/lneuhaus/pyrpl/archive/master.zip) (if you do not want to install git on your computer) the repository. 
+
+
+Install PyRPL by navigating with a command line terminal into the pyrpl root directory and typing
+
 ```
 python setup.py develop
 ```
