@@ -230,6 +230,15 @@ class ReducedModuleWidget(QtGui.QGroupBox):
         if select_attribute_name in self.module._gui_attributes:
             self.attribute_widgets[str(select_attribute_name)].change_options(new_options)
 
+    def refresh_filter_options(self, filter_attribute_name):
+        """
+        SLOT: don't change name unless you know what you are doing
+        New options should be displayed for some FilterProperty.
+        """
+        if filter_attribute_name in self.module._gui_attributes:
+            self.attribute_widgets[str(
+                filter_attribute_name)].refresh_options(self.module)
+
     def change_ownership(self):
         """
         SLOT: don't change name unless you know what you are doing

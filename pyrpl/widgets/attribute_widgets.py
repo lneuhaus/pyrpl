@@ -510,6 +510,14 @@ class ListComboBox(QtGui.QWidget):
             self.lay.addWidget(combo)
         self.setLayout(self.lay)
 
+    def change_options(self, new_options):
+        self.options = new_options
+        for combo in self.combos:
+            combo.blockSignals(True)
+            combo.clear()
+            combo.addItems(new_options)
+            combo.blockSignals(False)
+
     def get_list(self):
         return [float(combo.currentText()) for combo in self.combos]
 
@@ -546,7 +554,7 @@ class ListComboBox(QtGui.QWidget):
 
 class FilterAttributeWidget(BaseAttributeWidget):
     """
-    Property for list of floats (to be choosen in a list of valid_frequencies)
+    Property for list of floats (to be chosen in a list of valid_frequencies)
     The attribute descriptor needs to expose a function valid_frequencies(module)
     """
     decimals = 3
@@ -567,11 +575,19 @@ class FilterAttributeWidget(BaseAttributeWidget):
         """
         self.widget = ListComboBox(self.number,
                                    "",
-                                   [('{:.'+str(self.decimals)+'e}').format(
-            float(option)) for option in self.options],
+                                   self._format_options(),
                                    decimals=self.decimals)#list(map(str,
                                    # self.options)))
         self.widget.value_changed.connect(self.write_widget_value_to_attribute)
+
+    def _format_options(self):
+        return [('{:.'+str(self.decimals)+'e}').format(
+            float(option)) for option in self.options]
+
+    def refresh_options(self, module):
+        self.options = getattr(module.__class__,
+                               self.attribute_name).valid_frequencies(module)
+        self.widget.change_options(self._format_options())
 
     def _get_widget_value(self):
         return self.widget.get_list()

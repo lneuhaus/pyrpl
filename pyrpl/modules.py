@@ -32,6 +32,8 @@ class SignalLauncher(QtCore.QObject):
     # the new_value of the attribute
     change_options = QtCore.pyqtSignal(str, list) # name of the
     # SelectProperty,  list of new options
+    refresh_filter_options = QtCore.pyqtSignal(str) # name of the
+    # FilterProperty,  new options are contained in self.valid_frequencies()
     change_ownership = QtCore.pyqtSignal() # The owner of the module  has
     # changed
 

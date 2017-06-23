@@ -67,18 +67,18 @@ class SpecAnAcBandwidth(FilterProperty):
 
 class RbwProperty(FilterProperty):
     def valid_frequencies(self, module):
-        durations = module.scope.durations
-        return [1./duration for duration in durations]
+        sample_rates = [1./st for st in Scope.sampling_times]
+        return [module.equivalent_noise_bandwidth()*sr for sr in sample_rates]
 
     def get_value(self, obj):
-        return 1./(8e-9*obj.decimation*obj.data_length)
+        sampling_rate = 1./(8e-9*obj.decimation)
+        return obj.equivalent_noise_bandwidth()*sampling_rate
 
     def set_value(self, obj, value):
         if np.iterable(value):
             value = value[0]
-        duration = 1./value
-        obj.decimation = int(round(duration/(8e-9*obj.data_length)))
-
+        sample_rate = value/obj.equivalent_noise_bandwidth()
+        obj.decimation = int(round(1./(sample_rate*8e-9)))
 
 
 class SpanFilterProperty(FilterProperty):
@@ -114,7 +114,17 @@ class DecimationProperty(SelectProperty):
         super(DecimationProperty, self).set_value(obj, value)
         obj.__class__.span.value_updated(obj, obj.span)
         obj.__class__.rbw.value_updated(obj, obj.rbw)
-        
+
+
+class WindowProperty(SelectProperty):
+    """
+    Changing the filter window requires to recalculate the bandwidth
+    """
+    def set_value(self, obj, value):
+        super(WindowProperty, self).set_value(obj, value)
+        obj.__class__.rbw.refresh_options(obj)
+
+
 
 class SpectrumAnalyzer(AcquisitionModule):
     """
@@ -160,6 +170,7 @@ class SpectrumAnalyzer(AcquisitionModule):
     # numerical values
     nyquist_margin = 1.0
     if_filter_bandwidth_per_span = 1.0
+    _enb_cached = dict() # Equivalent noise bandwidth for filter windows
 
     quadrature_factor = 1.# 0.1*1024
 
@@ -208,7 +219,7 @@ class SpectrumAnalyzer(AcquisitionModule):
         call_setup=True)
     center = CenterAttribute(call_setup=True)
     # points = IntProperty(default=16384, call_setup=True)
-    window = SelectProperty(options=windows, call_setup=True)
+    window = WindowProperty(options=windows, call_setup=True)
     input = InputSelectProperty(options=all_inputs,
                                 default='in1',
                                 call_setup=True,
@@ -593,3 +604,15 @@ class SpectrumAnalyzer(AcquisitionModule):
                                                1j*self._run_future.data_avg[3],
                                               **d))
             return curves
+
+    def equivalent_noise_bandwidth(self):
+        """Returns the equivalent noise bandwidth of the current window. To
+        get the residual bandwidth, this number has to be multiplied by the
+        sample rate."""
+
+        if not self.window in self._enb_cached:
+            filter_window = self.filter_window()
+            self._enb_cached[self.window] = (sum(filter_window ** 2)) / \
+                                            (sum(filter_window) ** 2)
+
+        return self._enb_cached[self.window]

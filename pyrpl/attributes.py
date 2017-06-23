@@ -714,6 +714,9 @@ class FilterProperty(BaseProperty):
         raise NotImplementedError("this is a baseclass, your derived class "
                                   "must implement the following function")
 
+    def refresh_options(self, module):
+        module._signal_launcher.refresh_filter_options.emit(self.name)
+
 
 class FilterRegister(BaseRegister, FilterProperty):
     """
