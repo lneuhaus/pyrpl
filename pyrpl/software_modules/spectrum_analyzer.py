@@ -373,6 +373,38 @@ class SpectrumAnalyzer(AcquisitionModule):
         # conversion to dBm scale
         return 10.0 * np.log10(data) + 30.0
 
+    def data_to_unit(self, data, unit, rbw):
+        """
+        Converts the array 'data', assumed to be in 'Vpk^2', into the
+        specified unit. Unit can be anything in ['Vpk^2', 'dB(Vpk^2)',
+        'Vrms^2', 'dB(Vrms^2)', 'Vrms', 'Vrms^2/Hz'].
+        Since some units require a rbw for the conversion, it is an explicit
+        argument of the function.
+        """
+        if unit == 'Vpk^2':
+            return data
+        if unit == 'dB(Vpk^2)':
+            # need to add epsilon to avoid divergence of logarithm
+            return 10 * np.log10(data + sys.float_info.epsilon)
+        if unit == 'Vpk':
+            return np.sqrt(data)
+
+        if unit == 'Vrms^2':
+            return data / 2
+        if unit == 'dB(Vrms^2)':
+            # need to add epsilon to avoid divergence of logarithm
+            return 10 * np.log10(data / 2 + sys.float_info.epsilon)
+        if unit == 'Vrms':
+            return np.sqrt(data) / np.sqrt(2)
+
+        if unit == 'Vrms^2/Hz':
+            return data / 2 / rbw
+        if unit == 'dB(Vrms^2/Hz)':
+            # need to add epsilon to avoid divergence of logarithm
+            return 10 * np.log10(data / 2 / rbw + sys.float_info.epsilon)
+        if unit == 'Vrms/sqrt(Hz)':
+            return np.sqrt(data) / np.sqrt(2) / rbw
+
     def data_to_display_unit(self, data, rbw):
         """
         Converts the array 'data', assumed to be in 'Vpk^2', into display
@@ -380,29 +412,8 @@ class SpectrumAnalyzer(AcquisitionModule):
         Since some units require a rbw for the conversion, it is an explicit
         argument of the function.
         """
-        if self.display_unit=='Vpk^2':
-            return data
-        if self.display_unit == 'dB(Vpk^2)':
-            # need to add epsilon to avoid divergence of logarithm
-            return 10 * np.log10(data+sys.float_info.epsilon)
-        if self.display_unit=='Vpk':
-            return np.sqrt(data)
+        return self.data_to_unit(data, self.display_unit, rbw)
 
-        if self.display_unit=='Vrms^2':
-            return data/2
-        if self.display_unit=='dB(Vrms^2)':
-            # need to add epsilon to avoid divergence of logarithm
-            return 10*np.log10(data/2+sys.float_info.epsilon)
-        if self.display_unit == 'Vrms':
-            return np.sqrt(data) / np.sqrt(2)
-
-        if self.display_unit=='Vrms^2/Hz':
-            return data /2 / rbw
-        if self.display_unit=='dB(Vrms^2/Hz)':
-            # need to add epsilon to avoid divergence of logarithm
-            return 10 * np.log10(data / 2 / rbw + sys.float_info.epsilon)
-        if self.display_unit == 'Vrms/sqrt(Hz)':
-            return np.sqrt(data)/ np.sqrt(2)/rbw
 
     def transfer_function_iq(self, frequencies):
         # transfer function calculations

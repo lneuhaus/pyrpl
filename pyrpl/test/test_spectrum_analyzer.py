@@ -60,6 +60,10 @@ class TestClass(TestPyrpl):
                     (sa.frequencies[np.argmax(curve)], freq, sa.rbw)
                 points.append(max(curve))
                 assert abs(max(curve) - asg.amplitude**2) < 0.01, max(curve)
+                assert abs(max(sa.data_to_unit(curve,
+                                               "Vrms^2/Hz",
+                                                sa.rbw)*sa.rbw) -
+                           (asg.amplitude**2)/2)<0.01, max(curve)
 
     def test_flatness_iqmode(self):
         return # to be tested in next release
