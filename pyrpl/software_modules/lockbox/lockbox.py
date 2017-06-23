@@ -381,6 +381,9 @@ class Lockbox(LockboxModule):
         while time() < t0 + time_to_sleep:  # doesnt quit loop during time_for_measurement
             if self.is_locked_and_final(loglevel=0):
                 sleep(0.1)
+            elif self.is_locked_and_final(loglevel=0):  # confirm that it is unlocked once more
+                self._logger.warning('Cavity was once unlocked during measurement but restored itself. Continuing '
+                                     'to sleep...')
             else:
                 self._logger.error('Error during measurement - cavity unlocked. Aborting sleep...')
                 return False
