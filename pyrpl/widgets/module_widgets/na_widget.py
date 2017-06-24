@@ -90,6 +90,8 @@ class NaWidget(ModuleWidget):
         self.button_layout.setStretchFactor(self.button_continuous, 1)
         self.button_layout.setStretchFactor(self.button_stop, 1)
         self.button_layout.setStretchFactor(self.button_save, 1)
+
+        self.x_log_toggled() # Set the axis in logscale if it has to
         #self.button_layout.setStretchFactor(self.run_avg_widget, 1)
         #self.button_layout.setStretchFactor(self.curve_name_widget, 1)
 
