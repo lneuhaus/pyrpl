@@ -293,7 +293,11 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
                        "logscale",
                        "infer_open_loop_tf"]
     _setup_attributes = _gui_attributes + ['running_state']
-    # _callback_attributes = _gui_attributes
+    avg = IntProperty(doc="number of curves to average in single mode. In "
+                           "continuous mode, a moving window average is "
+                           "performed.",
+                       default=10,
+                       min=1)
     input = InputSelectProperty(default='networkanalyzer',
                                 call_setup=True,
                                 ignore_errors=True)
