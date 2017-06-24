@@ -105,7 +105,7 @@ class BaseAttributeWidget(QtGui.QWidget):
                                         self.module.name,
                                         self.attribute_name)
             #  SelectAttributes might have a None value
-            self.widget_value = current_value
+        self.widget_value = current_value
 
     def editing(self):
         """
