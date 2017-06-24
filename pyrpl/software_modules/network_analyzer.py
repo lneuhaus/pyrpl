@@ -294,7 +294,8 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
                        "infer_open_loop_tf"]
     _setup_attributes = _gui_attributes + ['running_state']
     avg = IntProperty(doc="number of curves to average in single mode. In "
-                           "continuous mode, a moving window average is "
+                           "continuous mode, a decaying average with a "
+                           "characteristic memory of 'avg' curves is "
                            "performed.",
                        default=10,
                        min=1)
@@ -328,6 +329,13 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
         self._time_last_point = None
         self._data_x = None
         super(NetworkAnalyzer, self).__init__(parent, name=name)
+
+    def _load_setup_attributes(self):
+        super(NetworkAnalyzer, self)._load_setup_attributes()
+        if self.running_state in ["running_continuous", "running_single"]:
+            self._logger.warning("Network analyzer is running in the current "
+                                 "state. Disregard this message if this is "
+                                 "the desired behavior.")
 
     @property
     def iq(self):

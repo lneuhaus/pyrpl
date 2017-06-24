@@ -595,7 +595,7 @@ class Module(with_metaclass(ModuleMetaClass, object)):
             widget = self._widget_class(self.name, self)
         finally:
             pass
-        self._widget_dbg = widget # For debugging purpose only (all
+        self._module_widget = widget # For debugging purpose only (all
         # communications to the widget should happen via signals)
         return widget
 
