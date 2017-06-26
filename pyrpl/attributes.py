@@ -28,6 +28,7 @@ from .widgets.attribute_widgets import BoolAttributeWidget, \
                                        BoolIgnoreAttributeWidget, \
                                        TextAttributeWidget, \
                                        CurveAttributeWidget, \
+                                       DataAttributeWidget, \
                                        CurveSelectAttributeWidget, \
                                        LedAttributeWidget, \
                                        PlotAttributeWidget, \
@@ -1480,6 +1481,13 @@ class Plotter(BaseProperty):
         super(Plotter, self).__init__()
 
 
+class DataProperty(BaseProperty):
+    """
+    Property for a dataset (real or complex), that can be plotted.
+    """
+    _widget_class = DataAttributeWidget
+
+
 class CurveProperty(CurveSelectProperty):
     """ property for a curve whose widget plots the corresponding curve.
 
@@ -1487,3 +1495,5 @@ class CurveProperty(CurveSelectProperty):
     i.e. selection must be implemented with another CurveSelectProperty.
     """
     _widget_class = CurveAttributeWidget
+
+
