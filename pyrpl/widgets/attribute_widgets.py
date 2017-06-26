@@ -514,7 +514,7 @@ class ListComboBox(QtGui.QWidget):
     # TODO: can be replaced by SelectAttributeWidget
     value_changed = QtCore.pyqtSignal()
 
-    def __init__(self, number, name, options):
+    def __init__(self, number, name, options, decimals=3):
         super(ListComboBox, self).__init__()
         self.setToolTip("First order filter frequencies \n"
                         "negative values are for high-pass \n"
@@ -523,6 +523,7 @@ class ListComboBox(QtGui.QWidget):
         self.lay.setContentsMargins(0, 0, 0, 0)
         self.combos = []
         self.options = options
+        self.decimals = decimals
         for i in range(number):
             combo = QtGui.QComboBox()
             self.combos.append(combo)
@@ -530,6 +531,14 @@ class ListComboBox(QtGui.QWidget):
             combo.currentIndexChanged.connect(self.value_changed)
             self.lay.addWidget(combo)
         self.setLayout(self.lay)
+
+    def change_options(self, new_options):
+        self.options = new_options
+        for combo in self.combos:
+            combo.blockSignals(True)
+            combo.clear()
+            combo.addItems(new_options)
+            combo.blockSignals(False)
 
     def get_list(self):
         return [float(combo.currentText()) for combo in self.combos]
@@ -559,16 +568,18 @@ class ListComboBox(QtGui.QWidget):
         if not np.iterable(val):
             val = [val]
         for i, v in enumerate(val):
-            v = str(int(v))
+            #v = str(int(v))
+            v = ('{:.' + str(self.decimals) + 'e}').format(float(v))
             index = self.options.index(v)
             self.combos[i].setCurrentIndex(index)
 
 
 class FilterAttributeWidget(BaseAttributeWidget):
     """
-    Property for list of floats (to be choosen in a list of valid_frequencies)
+    Property for list of floats (to be chosen in a list of valid_frequencies)
     The attribute descriptor needs to expose a function valid_frequencies(module)
     """
+    decimals = 3
     def __init__(self, module, attribute_name, widget_name=None):
         val = getattr(module, attribute_name)
         if np.iterable(val):
@@ -584,8 +595,21 @@ class FilterAttributeWidget(BaseAttributeWidget):
         Sets up the widget (here a QDoubleSpinBox)
         :return:
         """
-        self.widget = ListComboBox(self.number, "", list(map(str, self.options)))
+        self.widget = ListComboBox(self.number,
+                                   "",
+                                   self._format_options(),
+                                   decimals=self.decimals)#list(map(str,
+                                   # self.options)))
         self.widget.value_changed.connect(self.write_widget_value_to_attribute)
+
+    def _format_options(self):
+        return [('{:.'+str(self.decimals)+'e}').format(
+            float(option)) for option in self.options]
+
+    def refresh_options(self, module):
+        self.options = getattr(module.__class__,
+                               self.attribute_name).valid_frequencies(module)
+        self.widget.change_options(self._format_options())
 
     def _get_widget_value(self):
         return self.widget.get_list()

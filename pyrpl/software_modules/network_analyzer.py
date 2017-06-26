@@ -3,7 +3,7 @@ from copy import copy
 import numpy as np
 from PyQt4 import QtGui
 
-from ..async_utils import PyrplFuture, MainThreadTimer, CancelledError
+from ..async_utils import PyrplFuture, MainThreadTimer, CancelledError, sleep
 from ..attributes import FloatProperty, SelectProperty, FrequencyProperty, \
                          IntProperty, BoolProperty, FilterProperty, SelectProperty, \
                          ProxyProperty
@@ -136,6 +136,7 @@ class NaCurveFuture(PyrplFuture):
 
     def start(self):
         # self._module.iq.output_direct = self._module.output_direct
+        self._time_first_point = timeit.default_timer()
         self._module._start_acquisition()
         self._module.iq.amplitude = self._module.amplitude
         if self.never_started:
@@ -178,6 +179,14 @@ class NaCurveFuture(PyrplFuture):
             self._point_cancelled()
             return #  exit the loop (could be restarted latter for RunFuture)
         self._add_point(point)
+
+        # if zero span mode, data_x is time measured, not frequency
+        if self._module.is_zero_span():
+            if self.current_avg==1:
+                time_now = timeit.default_timer() - self._time_first_point
+                self.data_x[self.current_point] = time_now
+                self._module._data_x[self.current_point] = time_now
+
         self.current_point+=1
         if self.current_point==self.n_points:
             self._scan_finished()
@@ -284,7 +293,12 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
                        "logscale",
                        "infer_open_loop_tf"]
     _setup_attributes = _gui_attributes + ['running_state']
-    # _callback_attributes = _gui_attributes
+    avg = IntProperty(doc="number of curves to average in single mode. In "
+                           "continuous mode, a decaying average with a "
+                           "characteristic memory of 'avg' curves is "
+                           "performed.",
+                       default=10,
+                       min=1)
     input = InputSelectProperty(default='networkanalyzer',
                                 call_setup=True,
                                 ignore_errors=True)
@@ -315,6 +329,13 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
         self._time_last_point = None
         self._data_x = None
         super(NetworkAnalyzer, self).__init__(parent, name=name)
+
+    def _load_setup_attributes(self):
+        super(NetworkAnalyzer, self)._load_setup_attributes()
+        if self.running_state in ["running_continuous", "running_single"]:
+            self._logger.warning("Network analyzer is running in the current "
+                                 "state. Disregard this message if this is "
+                                 "the desired behavior.")
 
     @property
     def iq(self):
@@ -450,11 +471,18 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
         self._point_future = NaPointFuture(self, index, min_delay_ms)
         return self._point_future
 
+    def is_zero_span(self):
+        """
+        Returns true if start_freq is the same as stop_freq.
+        """
+        return self.start_freq==self.stop_freq
+
     def _start_point_acquisition(self, index):
-        #if self.current_point < self.points:
-            # writing to iq.frequency triggers the acquisition
-            # negative index means "PRETRACE_POINT"--> acquire with start_freq
-        self.iq.frequency = self.data_x[index]
+        if not self.is_zero_span(): # in zero span, data_x are time,
+            # not frequency
+            self.iq.frequency = self.data_x[index]
+        else:
+            self.iq.frequency = self.start_freq
         self._time_last_point = timeit.default_timer()
 
     def _get_point(self, index):
@@ -478,6 +506,21 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
         y /= tf
         return y, amp
 
+    def take_ringdown(self, frequency, rbw=1000, points=1000, avg=1):
+        self.start_freq = frequency
+        self.stop_freq = frequency
+        self.rbw = rbw
+        self.points = points
+        self.avg = avg
+        curve = self.single_async()
+        sleep(0.1)
+        self.iq.output_direct = "off"
+        self._time_first_point=timeit.default_timer()
+        res = curve.await_result()
+        x = self._run_future.data_x - self._time_first_point
+        return [x, res]
+
+
     def _start_acquisition(self):
         """
         For the NA, resuming (from pause to start for instance... should
@@ -487,7 +530,8 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
         :return:
         """
         # super(NAAcquisitionManager, self)._start_acquisition()
-        x = self.data_x
+        x = self.data_x if not self.is_zero_span() else  \
+                                        self.start_freq*np.ones(self.points)
         self.iq.setup(frequency=x[0],
                       bandwidth=self.rbw,
                       gain=0,
@@ -545,6 +589,11 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
         return self.data_x
 
     def _update_data_x(self):
+        if self.is_zero_span():
+            self._data_x = np.zeros(self.points)
+            # data_x will be measured during first scan...
+            return
+
         if self.logscale:
             raw_values = np.logspace(
                 np.log10(self.start_freq),

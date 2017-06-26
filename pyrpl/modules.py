@@ -32,6 +32,8 @@ class SignalLauncher(QtCore.QObject):
     # the new_value of the attribute
     change_options = QtCore.pyqtSignal(str, list) # name of the
     # SelectProperty,  list of new options
+    refresh_filter_options = QtCore.pyqtSignal(str) # name of the
+    # FilterProperty,  new options are contained in self.valid_frequencies()
     change_ownership = QtCore.pyqtSignal() # The owner of the module  has
     # changed
 
@@ -589,18 +591,12 @@ class Module(with_metaclass(ModuleMetaClass, object)):
             self._logger.warning("Module %s of type %s is trying to create a widget, but no widget_class is defined!",
                                  self.name, type(self))
             return None
-        #_setup_ongoing_bkp = self._setup_ongoing
-        #self._setup_ongoing = True # otherwise, saved values will be
-        # overwritten by default gui values
-        #autosave_bkp = self._autosave_active
-        #self._autosave_active = False  # otherwise, default gui values will
-        #  be saved
         try:
             widget = self._widget_class(self.name, self)
         finally:
             pass
-         #   self._setup_ongoing = _setup_ongoing_bkp
-         #   self._autosave_active = autosave_bkp
+        self._module_widget = widget # For debugging purpose only (all
+        # communications to the widget should happen via signals)
         return widget
 
     @property

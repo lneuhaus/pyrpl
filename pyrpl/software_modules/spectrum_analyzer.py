@@ -65,22 +65,20 @@ class SpecAnAcBandwidth(FilterProperty):
                 if freq >= 0]
 
 
-class RbwProperty(ProxyProperty):
-    def _target_to_proxy(self, obj, target):
-        try:
-            target = target[0]
-        except TypeError:
-            pass
-        return int(round(target / obj.data_length))
+class RbwProperty(FilterProperty):
+    def valid_frequencies(self, module):
+        sample_rates = [1./st for st in Scope.sampling_times]
+        return [module.equivalent_noise_bandwidth()*sr for sr in sample_rates]
 
-    def _proxy_to_target(self, obj, proxy):
-        return int(proxy * obj.data_length)
+    def get_value(self, obj):
+        sampling_rate = 1./(8e-9*obj.decimation)
+        return obj.equivalent_noise_bandwidth()*sampling_rate
 
-    def valid_frequencies(self, instance):
-        vf = recursive_getattr(instance,
-                          self.path_to_target_descriptor).valid_frequencies(
-            recursive_getattr(instance, self.path_to_target_module))
-        return [self._target_to_proxy(instance, v) for v in vf]
+    def set_value(self, obj, value):
+        if np.iterable(value):
+            value = value[0]
+        sample_rate = value/obj.equivalent_noise_bandwidth()
+        obj.decimation = int(round(1./(sample_rate*8e-9)))
 
 
 class SpanFilterProperty(FilterProperty):
@@ -88,12 +86,44 @@ class SpanFilterProperty(FilterProperty):
         return instance.spans
 
     def get_value(self, obj):
-        val = super(SpanFilterProperty, self).get_value(obj)
-        if np.iterable(val):
-            return val[0] # maybe this should be the default behavior for
+        #val = super(SpanFilterProperty, self).get_value(obj)
+        #if np.iterable(val):
+        #    return val[0] # maybe this should be the default behavior for
             # FilterAttributes... or make another Attribute type
-        else:
-            return val
+        #else:
+        #    return val
+        return 1./(8e-9*obj.decimation)
+
+    def set_value(self, obj, value):
+        if np.iterable(value):
+            value = value[0]
+        sampling_time = 1./value
+        obj.decimation = int(round(sampling_time/8e-9))
+
+
+class DecimationProperty(SelectProperty):
+    """
+    Since the only integer number in [rbw, span, duration, decimation] is
+    decimation, it is better to take it as the master property to avoid
+    rounding problems.
+    We don't want to use the scope property because when the scope is not
+    slaved, the value could be anything.
+    """
+
+    def set_value(self, obj, value):
+        super(DecimationProperty, self).set_value(obj, value)
+        obj.__class__.span.value_updated(obj, obj.span)
+        obj.__class__.rbw.value_updated(obj, obj.rbw)
+
+
+class WindowProperty(SelectProperty):
+    """
+    Changing the filter window requires to recalculate the bandwidth
+    """
+    def set_value(self, obj, value):
+        super(WindowProperty, self).set_value(obj, value)
+        obj.__class__.rbw.refresh_options(obj)
+
 
 
 class SpectrumAnalyzer(AcquisitionModule):
@@ -140,6 +170,7 @@ class SpectrumAnalyzer(AcquisitionModule):
     # numerical values
     nyquist_margin = 1.0
     if_filter_bandwidth_per_span = 1.0
+    _enb_cached = dict() # Equivalent noise bandwidth for filter windows
 
     quadrature_factor = 1.# 0.1*1024
 
@@ -167,7 +198,8 @@ class SpectrumAnalyzer(AcquisitionModule):
     # select_attributes list of options
     def spans(nyquist_margin):
         # see http://stackoverflow.com/questions/13905741/
-        return [int(np.ceil(1. / nyquist_margin / s_time))
+        # [int(np.ceil(1. / nyquist_margin / s_time))
+        return [1./s_time \
              for s_time in Scope.sampling_times]
     spans = spans(nyquist_margin)
 
@@ -187,7 +219,7 @@ class SpectrumAnalyzer(AcquisitionModule):
         call_setup=True)
     center = CenterAttribute(call_setup=True)
     # points = IntProperty(default=16384, call_setup=True)
-    window = SelectProperty(options=windows, call_setup=True)
+    window = WindowProperty(options=windows, call_setup=True)
     input = InputSelectProperty(options=all_inputs,
                                 default='in1',
                                 call_setup=True,
@@ -218,8 +250,12 @@ class SpectrumAnalyzer(AcquisitionModule):
                                        doc="should cross-spectrum amplitude"
                                               " be displayed in "
                                               "baseband-mode?")
-    rbw = RbwProperty("span", doc="Residual Bandwidth, this is a readonly "
-                                  "attribute, only span can be changed.")
+    rbw = RbwProperty(doc="Residual Bandwidth, this is a readonly "
+                            "attribute, only span can be changed.")
+
+    decimation = DecimationProperty(options=Scope.decimations,
+                                    doc="Decimation setting for the "
+                                            "scope.")
 
     acbandwidth = SpecAnAcBandwidth(call_setup=True)
 
@@ -337,6 +373,38 @@ class SpectrumAnalyzer(AcquisitionModule):
         # conversion to dBm scale
         return 10.0 * np.log10(data) + 30.0
 
+    def data_to_unit(self, data, unit, rbw):
+        """
+        Converts the array 'data', assumed to be in 'Vpk^2', into the
+        specified unit. Unit can be anything in ['Vpk^2', 'dB(Vpk^2)',
+        'Vrms^2', 'dB(Vrms^2)', 'Vrms', 'Vrms^2/Hz'].
+        Since some units require a rbw for the conversion, it is an explicit
+        argument of the function.
+        """
+        if unit == 'Vpk^2':
+            return data
+        if unit == 'dB(Vpk^2)':
+            # need to add epsilon to avoid divergence of logarithm
+            return 10 * np.log10(data + sys.float_info.epsilon)
+        if unit == 'Vpk':
+            return np.sqrt(data)
+
+        if unit == 'Vrms^2':
+            return data / 2
+        if unit == 'dB(Vrms^2)':
+            # need to add epsilon to avoid divergence of logarithm
+            return 10 * np.log10(data / 2 + sys.float_info.epsilon)
+        if unit == 'Vrms':
+            return np.sqrt(data) / np.sqrt(2)
+
+        if unit == 'Vrms^2/Hz':
+            return data / 2 / rbw
+        if unit == 'dB(Vrms^2/Hz)':
+            # need to add epsilon to avoid divergence of logarithm
+            return 10 * np.log10(data / 2 / rbw + sys.float_info.epsilon)
+        if unit == 'Vrms/sqrt(Hz)':
+            return np.sqrt(data) / np.sqrt(2) / rbw
+
     def data_to_display_unit(self, data, rbw):
         """
         Converts the array 'data', assumed to be in 'Vpk^2', into display
@@ -344,29 +412,8 @@ class SpectrumAnalyzer(AcquisitionModule):
         Since some units require a rbw for the conversion, it is an explicit
         argument of the function.
         """
-        if self.display_unit=='Vpk^2':
-            return data
-        if self.display_unit == 'dB(Vpk^2)':
-            # need to add epsilon to avoid divergence of logarithm
-            return 10 * np.log10(data+sys.float_info.epsilon)
-        if self.display_unit=='Vpk':
-            return np.sqrt(data)
+        return self.data_to_unit(data, self.display_unit, rbw)
 
-        if self.display_unit=='Vrms^2':
-            return data/2
-        if self.display_unit=='dB(Vrms^2)':
-            # need to add epsilon to avoid divergence of logarithm
-            return 10*np.log10(data/2+sys.float_info.epsilon)
-        if self.display_unit == 'Vrms':
-            return np.sqrt(data) / np.sqrt(2)
-
-        if self.display_unit=='Vrms^2/Hz':
-            return data /2 / rbw
-        if self.display_unit=='dB(Vrms^2/Hz)':
-            # need to add epsilon to avoid divergence of logarithm
-            return 10 * np.log10(data / 2 / rbw + sys.float_info.epsilon)
-        if self.display_unit == 'Vrms/sqrt(Hz)':
-            return np.sqrt(data)/ np.sqrt(2)/rbw
 
     def transfer_function_iq(self, frequencies):
         # transfer function calculations
@@ -493,7 +540,10 @@ class SpectrumAnalyzer(AcquisitionModule):
     def _scope_decimation(self):
         return self.scope.__class__.decimation.validate_and_normalize(
                     self.scope,
-                    round(self.sampling_time/8e-9))
+                    int(round(self.sampling_time/8e-9)))
+
+    def _scope_duration(self):
+        return self._scope_decimation()*8e-9*self.data_length
 
     def _start_acquisition(self):
         autosave_backup = self._autosave_active
@@ -565,3 +615,15 @@ class SpectrumAnalyzer(AcquisitionModule):
                                                1j*self._run_future.data_avg[3],
                                               **d))
             return curves
+
+    def equivalent_noise_bandwidth(self):
+        """Returns the equivalent noise bandwidth of the current window. To
+        get the residual bandwidth, this number has to be multiplied by the
+        sample rate."""
+
+        if not self.window in self._enb_cached:
+            filter_window = self.filter_window()
+            self._enb_cached[self.window] = (sum(filter_window ** 2)) / \
+                                            (sum(filter_window) ** 2)
+
+        return self._enb_cached[self.window]

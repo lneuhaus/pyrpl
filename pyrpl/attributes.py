@@ -714,6 +714,9 @@ class FilterProperty(BaseProperty):
         raise NotImplementedError("this is a baseclass, your derived class "
                                   "must implement the following function")
 
+    def refresh_options(self, module):
+        module._signal_launcher.refresh_filter_options.emit(self.name)
+
 
 class FilterRegister(BaseRegister, FilterProperty):
     """
@@ -766,7 +769,7 @@ class FilterRegister(BaseRegister, FilterProperty):
         #valid_bits = range(0, self._MAXSHIFT(obj)-1)  # this is possible
         valid_bits = range(0, self._MAXSHIFT(obj)-2)  # this gives reasonable results (test_filter)
         pos = list([self.to_python(obj, b | 0x1 << 7) for b in valid_bits])
-        pos = [int(val) if not np.iterable(val) else int(val[0]) for val in pos]
+        pos = [val if not np.iterable(val) else val[0] for val in pos]
         neg = [-val for val in reversed(pos)]
         valid_frequencies = neg + [0] + pos
         if obj is not None and not hasattr(obj, self.name+'_options') and not hasattr(obj.__class__, self.name+'_options'):
