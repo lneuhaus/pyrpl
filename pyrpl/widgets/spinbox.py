@@ -55,17 +55,16 @@ class NumberSpinBox(QtGui.QWidget, object):
         """
         super(NumberSpinBox, self).__init__(None)
         self._val = 0  # internal storage for value with best-possible accuracy
+        self.labeltext = label
+        self.log_increment = log_increment
         self.minimum = min  # imitates original QSpinBox API
         self.maximum = max  # imitates original QSpinBox API
-        self.singleStep = increment
-        self.update_tooltip()
         self.halflife_seconds = halflife_seconds
-        self.log_increment = log_increment
         self.per_second = per_second
         self.singleStep = increment
-        self.set_min_size()
-        self.labeltext = label
         self.make_layout()
+        self.update_tooltip()
+        self.set_min_size()
         self.val = 0
 
     def make_layout(self):
@@ -200,9 +199,13 @@ class NumberSpinBox(QtGui.QWidget, object):
             return
         if self.log_increment:
             val = self.val
-            res = val * self.log_factor + np.sign(val)*self.singleStep / 10. # to prevent rounding errors from
-                                                                         # blocking the increment
-            self.val = res#self.log_step**factor
+            # to prevent rounding errors from blocking the increment
+            res = val * self.log_factor
+            if res == 0:
+                res = self.singleStep / 10.
+            else:
+                res += np.sign(val)*self.singleStep / 10.
+            self.val = res  # self.log_step**factor
         else:
             res = self.val + self.lin_delta + self.singleStep / 10.
             self.val = res
@@ -213,9 +216,12 @@ class NumberSpinBox(QtGui.QWidget, object):
             return
         if self.log_increment:
             val = self.val
-            res = val / self.log_factor - np.sign(val)*self.singleStep / 10.  # to prevent rounding errors from
-                                                                         # blocking the increment
-            self.val = res #(self.log_step)**factor
+            res = val / self.log_factor
+            if res == 0:
+                res = - self.singleStep / 10.0
+            else:
+                res -= np.sign(val)*self.singleStep / 10.
+            self.val = res
         else:
             res = self.val - self.lin_delta - self.singleStep / 10.
             self.val = res
@@ -374,18 +380,6 @@ class FloatSpinBox(NumberSpinBox):
         Returns the maximum number of letters
         """
         return self.decimals + 7
-
-    def focusOutEvent(self, event):
-        # TODO: add docstring
-        self.value_changed.emit()
-        self.setStyleSheet("")
-
-    def focusInEvent(self, event):
-        # TODO: add docstring
-        self.value_changed.emit()
-        self.setStyleSheet("FloatSpinBox{"
-                           "background-color:red;}"
-                           %self.__class__.__name__)
 
 
 class ComplexSpinBox(FloatSpinBox):

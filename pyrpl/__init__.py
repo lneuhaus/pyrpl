@@ -1,19 +1,17 @@
-__version__ = "0.9.0.0"
-
-#__all__ = ["registers", "curvedb", "redpitaya", "hardware_modules", "iir",
-#           "memory", "pyrpl", "signal", "model"]
-
 from ._version import __version_info__, __version__
 
 __author__ = "Leonhard Neuhaus <neuhaus@lkb.upmc.fr>"
 __license__ = "GNU General Public License 3 (GPLv3)"
 
-# set up the logging level at the root module as configured in 'config/global_config.yml'
+# manage warnings of numpy and scipy
 import warnings
 import numpy as np
 from scipy.signal import BadCoefficients
-warnings.simplefilter("ignore", np.VisibleDeprecationWarning) # pyqtgraph is throwing a warning on ScatterPlotItem
-warnings.simplefilter("error", np.ComplexWarning) # pyqtgraph is throwing a warning on ScatterPlotItem
+# pyqtgraph is throwing a warning on ScatterPlotItem
+warnings.simplefilter("ignore", np.VisibleDeprecationWarning)
+# pyqtgraph is throwing a warning on ScatterPlotItem
+warnings.simplefilter("error", np.ComplexWarning)
+# former issue with IIR, now resolved
 warnings.simplefilter("error", BadCoefficients)
 
 #set up loggers
@@ -35,7 +33,7 @@ except BaseException as e:
 from PyQt4 import QtCore, QtGui
 APP = QtGui.QApplication.instance()
 if APP is None:
-    logger.warning('creating new QApplication instance "pyrpl"')
+    logger.warning('Creating new QApplication instance "pyrpl"')
     APP = QtGui.QApplication(['pyrpl'])
 
 # get user directories

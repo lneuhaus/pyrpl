@@ -17,7 +17,7 @@ from .spinbox import *
 
 
 # TODO: try to remove widget_name from here (again)
-class BaseAttributeWidget(QtGui.QWidget):
+class BaseAttributeWidget(QtGui.QWidget, object):
     """
     Base class for attribute widgets.
 
@@ -98,13 +98,14 @@ class BaseAttributeWidget(QtGui.QWidget):
         """ trivial helper function, updates widget value from the attribute"""
         current_value = self.attribute_value
         if current_value is None:
+            #  SelectAttributes might have a None value
             self.module._logger.warning("Cannot set widget %s of attribute "
                                         "%s.%s to the current value "
                                         "'None'.",
                                         self.widget_name,
                                         self.module.name,
                                         self.attribute_name)
-            #  SelectAttributes might have a None value
+        else:
             self.widget_value = current_value
 
     def editing(self):
@@ -258,8 +259,10 @@ class ListElementWidget(BaseAttributeWidget):
         self.layout.addStretch(1)
         # this is very nice for debugging, but should probably be removed later
         setattr(self.module, '_'+self.attribute_name+'_widget', self.parent)
+        self.select()
 
     def remove_this_element(self):
+        self.unselect()
         self.parent.attribute_value.__delitem__(index=self.index)
 
     @property
@@ -276,6 +279,25 @@ class ListElementWidget(BaseAttributeWidget):
     @attribute_value.setter
     def attribute_value(self, v):
         getattr(self.module, self.attribute_name)[self.index] = v
+
+    def select(self):
+        current = self.parent.selected
+        if current:
+            current.unselect()
+        self.parent.selected = self
+        self.setStyleSheet("%s{background-color:green;}"
+                           % self.__class__.__name__)
+
+    def unselect(self):
+        if self.parent.selected == self:
+            self.parent.selected = None
+        self.setStyleSheet("")
+
+    def mousePressEvent(self, event):
+        self.module._logger.warning('mouse pressed on %s[%d]',
+                                     self.attribute_name, self.index)
+        self.select()
+        return super(ListElementWidget, self).mousePressEvent(event)
 
 
 class BasePropertyListPropertyWidget(BaseAttributeWidget):
@@ -382,8 +404,8 @@ class BasePropertyListPropertyWidget(BaseAttributeWidget):
             edit = edit or widget.editing()
         return edit
 
-    #def editing(self):
-    #    return self.widget.editing()
+    def editing(self):
+        return self.widget.editing()
 
     @property
     def selected(self):
