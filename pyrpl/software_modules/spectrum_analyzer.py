@@ -146,7 +146,7 @@ class SpectrumAnalyzer(AcquisitionModule):
                        "input1_baseband",
                        "input2_baseband",
                        "display_cross_amplitude",
-                       "display_cross_phase"]
+                       ]#"display_cross_phase"]
     _setup_attributes =["input",
                        "center",
                        "baseband",
@@ -164,8 +164,8 @@ class SpectrumAnalyzer(AcquisitionModule):
                        "display_input2_baseband",
                        "input1_baseband",
                        "input2_baseband",
-                       "display_cross_amplitude",
-                       "display_cross_phase"]
+                       "display_cross_amplitude",]
+                       #"display_cross_phase"]
     PADDING_FACTOR = 16
     # numerical values
     nyquist_margin = 1.0
@@ -381,6 +381,7 @@ class SpectrumAnalyzer(AcquisitionModule):
         Since some units require a rbw for the conversion, it is an explicit
         argument of the function.
         """
+        data = abs(data)
         if unit == 'Vpk^2':
             return data
         if unit == 'dB(Vpk^2)':

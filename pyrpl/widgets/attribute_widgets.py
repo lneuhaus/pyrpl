@@ -749,6 +749,70 @@ class BoolIgnoreAttributeWidget(BoolAttributeWidget):
             self._gui_to_attribute_mapping.inverse[new_value])
 
 
+class DataWidget(pg.GraphicsWindow):
+    """
+    A widget to plot real or complex datasets. To plot data, use the
+    function _set_widget_value(new_value, transform_magnitude)
+
+    new_value is a a tuple (x, y), with x the x values, y, a 1D array for a
+    single curve or a 2D array for multiple curves. If at least one of the
+    curve is complex, magnitude and phases will be plotted.
+
+    transform_magnitude is the function to transform magnitude data.
+    """
+    _defaultcolors = ['m', 'b', 'g', 'r', 'y', 'c', 'o', 'w']
+    def __init__(self, title=None):
+        super(DataWidget, self).__init__(title=title)
+        self.plot_item = self.addPlot(title="Curve")
+        self.plot_item_phase = self.addPlot(row=1, col=0,
+                                                   title="Phase (deg)")
+        self.plot_item_phase.setXLink(self.plot_item)
+        self.plot_item.showGrid(y=True, alpha=1.)
+        self.plot_item_phase.showGrid(y=True, alpha=1.)
+        self.curves = []  # self.plot_item.plot(pen='g')
+        self.curves_phase = []  # self.plot_item_phase.plot(pen='g')
+        self._is_real = True
+        self._set_real(True)
+
+    def _set_widget_value(self, new_value, transform_magnitude=lambda data :
+    20. * np.log10(np.abs(data) + sys.float_info.epsilon)):
+        if new_value is None:
+            return
+        x, y = new_value
+        shape = np.shape(y)
+        if len(shape) > 2:
+            raise ValueError("Data cannot be larger than 2 "
+                             "dimensional")
+        if len(shape) == 1:
+            y = [y]
+        self._set_real(np.isreal(y).all())
+        for i, values in enumerate(y):
+            self._display_curve_index(x, values, i, transform_magnitude=transform_magnitude)
+        while (i + 1 < len(self.curves)):  # delete remaining curves
+            i += 1
+            self.curves[i].hide()
+
+    def _display_curve_index(self, x, values, i, transform_magnitude):
+        y_mag = transform_magnitude(values)
+        y_phase = np.zeros(len(values)) if self._is_real else \
+            self._phase(values)
+        if len(self.curves) <= i:
+            color = self._defaultcolors[i % len(self._defaultcolors)]
+            self.curves.append(self.plot_item.plot(pen=color))
+            self.curves_phase.append(self.plot_item_phase.plot(pen=color))
+        self.curves[i].setData(x, y_mag)
+        self.curves_phase[i].setData(x, y_phase)
+
+    def _set_real(self, bool):
+        self._is_real = bool
+        if bool:
+            self.plot_item_phase.hide()
+            self.plot_item.setTitle("")
+        else:
+            self.plot_item_phase.show()
+            self.plot_item.setTitle("Magnitude (dB)")
+
+
 class PlotAttributeWidget(BaseAttributeWidget):
     _defaultcolors = ['g', 'r', 'b', 'y', 'c', 'm', 'o', 'w']
 
@@ -807,10 +871,11 @@ class PlotAttributeWidget(BaseAttributeWidget):
         return np.angle(data, deg=True)
 
 
-class CurveAttributeWidget(PlotAttributeWidget):
+class DataAttributeWidget(PlotAttributeWidget):
     """
-    Base property for float and int.
+    Plots a curve (complex or real), with an array as input.
     """
+
     def _make_widget(self):
         self.widget = pg.GraphicsWindow(title="Curve")
         self.plot_item = self.widget.addPlot(title="Curve")
@@ -820,13 +885,67 @@ class CurveAttributeWidget(PlotAttributeWidget):
         self.plot_item_phase.showGrid(y=True, alpha=1.)
         self.curve = self.plot_item.plot(pen='g')
         self.curve_phase = self.plot_item_phase.plot(pen='g')
+        self._is_real = True
+        self._set_real(True)
+
+    #def _set_widget_value(self, new_value):
+    #   data = new_value
+    #    if data is None:
+    #        return
+    #    shape = np.shape(new_value)
+    #    if len(shape)>2:
+    #        raise ValueError("Shape of data should be (1) or (2, 1)")
+    #    if len(shape)==1:
+    #        x = np.linspace(0, len(data), len(data))
+    #        y = [data]
+    #    if len(shape)==2:
+    #        if shape[0] == 1:
+    #            x = np.linspace(0, len(data), len(data[0]))
+    #            y = [data[0]]
+    #        if shape[0] >= 2:
+    #            x = data[0]
+    #            y = data[1:]
+    #    self._set_real(np.isreal(y).all())
+    #    for i, values in enumerate(y):
+    #        self._display_curve_index(x, values, i)
+    #    while (i + 1 < len(self.curves)):  # delete remaining curves
+    #        i += 1
+    #        self.curves[i].hide()
+
+    #def _display_curve_index(self, x, values, i):
+    #    y_mag = values if self._is_real else self._magnitude(values)
+    #    y_phase = np.zeros(len(values)) if self._is_real else \
+    #        self._phase(values)
+    #    if len(self.curves)<=i:
+    #        color = self._defaultcolors[i%len(self._defaultcolors)]
+    #        self.curves.append(self.plot_item.plot(pen=color))
+    #        self.curves_phase.append(self.plot_item_phase.plot(pen=color))
+    #    self.curves[i].setData(x, y_mag)
+    #    self.curves_phase[i].setData(x, y_phase)
+
+    def _set_real(self, bool):
+        self._is_real = bool
+        if bool:
+            self.plot_item_phase.hide()
+            self.plot_item.setTitle("")
+        else:
+            self.plot_item_phase.show()
+            self.plot_item.setTitle("Magnitude (dB)")
+
+
+class CurveAttributeWidget(DataAttributeWidget):
+    """
+    Plots a curve (complex or real), with an id number as input.
+    """
 
     def _set_widget_value(self, new_value):
         if new_value is None:
             return
         try:
             data = getattr(self.module, '_' + self.attribute_name + '_object').data
-            name = getattr(self.module, '_' + self.attribute_name + '_object').params['name']
+            name = \
+            getattr(self.module, '_' + self.attribute_name + '_object').params[
+                'name']
         except:
             pass
         else:
