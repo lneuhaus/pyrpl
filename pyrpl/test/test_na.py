@@ -68,7 +68,7 @@ class TestNA(TestPyrpl):
                           stop_freq=1e4,
                           rbw=1e6,
                           points=points,
-                          avg=1)
+                          average_per_point=1)
             tic = time.time()
             self.na.curve()
             duration = (time.time() - tic)/self.na.points
@@ -83,7 +83,7 @@ class TestNA(TestPyrpl):
                           stop_freq=1e4,
                           rbw=1e6,
                           points=points//2,
-                          avg=1)
+                          average_per_point=1)
             tic = time.time()
             self.na.single()
             APP.processEvents()
@@ -129,7 +129,7 @@ class TestNA(TestPyrpl):
         with self.pyrpl.networkanalyzer as self.na:
             self.na.iq.output_signal = 'quadrature'
             self.na.setup(amplitude=1., start_freq=1e5, stop_freq=2e5, rbw=10000,
-                          points=100, avg_per_points=10, input=self.na.iq,
+                          points=100, avg_per_point=10, input=self.na.iq,
                           acbandwidth=0)
             y = self.na.curve()
             assert(all(abs(y-1)<0.1))  # If transfer function is taken into

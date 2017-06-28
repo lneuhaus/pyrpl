@@ -234,7 +234,7 @@ class RunningStateProperty(SelectProperty):
         previous_state = obj.running_state
         SelectProperty.set_value(self, obj, val)
         if val == "running_single":
-            # acquire as fast as possible avg curves
+            # acquire as fast as possible trace_average curves
             obj.setup()
         elif val == "running_continuous":
             if previous_state == 'stopped':  #  restart averaging...
@@ -283,12 +283,12 @@ class AcquisitionModule(Module):
 
     public methods (All methods return immediately)
     -----------------------------------------------
-     - single(): performs an asynchronous acquisition of avg curves.
+     - single(): performs an asynchronous acquisition of trace_average curves.
      The function returns a promise of the result:
      an object with a ready() function, and a get() function that
      blocks until data is ready.
      - continuous(): continuously acquires curves, and performs a
-     moving average over the avg last ones.
+     moving average over the trace_average last ones.
      - pause(): stops the current acquisition without restarting the
      averaging
      - stop(): stops the current acquisition and restarts the averaging.
@@ -301,8 +301,8 @@ class AcquisitionModule(Module):
      'paused', 'stopped'. Changing the flag actually performs the necessary
      actions
      - curve_name: name of the curve to create upon saving
-     - avg: number of averages in single (not to confuse with averaging per
-     point)
+     - trace_average: number of averages in single (not to confuse with
+     averaging per point)
      - data_avg: array containing the current averaged curve
      - current_avg: current number of averages
     """
@@ -327,12 +327,12 @@ class AcquisitionModule(Module):
     # set future to run_continuous (irreversible) == call setup()
     #  - running_single/running_continuous -> pause/stop: pause acquisition
 
-    _gui_attributes = ['avg', 'curve_name']
+    _gui_attributes = ['trace_average', 'curve_name']
 
     _setup_on_load = True #  acquisition_modules need to be setup() once
     # they are loaded
     _signal_launcher = SignalLauncherAcquisitionModule
-    _setup_attributes = ['running_state', 'avg', 'curve_name']
+    _setup_attributes = ['running_state', 'trace_average', 'curve_name']
     _run_future_cls = RunFuture
     _curve_future_cls = CurveFuture
 
@@ -358,11 +358,11 @@ class AcquisitionModule(Module):
       call of running_continuous.
     """)
 
-    avg = IntProperty(doc="number of curves to average in single mode. In "
+    trace_average = IntProperty(doc="number of curves to average in single mode. In "
                            "continuous mode, a moving window average is "
                            "performed.",
-                       default=1,
-                       min=1)
+                           default=1,
+                           min=1)
     curve_name = StringProperty(doc="name of the curve to save.")
 
     def __init__(self, parent, name=None):
@@ -435,7 +435,7 @@ class AcquisitionModule(Module):
 
     def single_async(self):
         """
-        - Performs an asynchronous acquisition of avg curves.
+        - Performs an asynchronous acquisition of trace_average curves.
         - If running_state is not stop, stops the current acquisition.
         - Immediately returns a future object representing the curve.
         - The curve can be retrieved by calling result(timeout) on the
@@ -459,7 +459,7 @@ class AcquisitionModule(Module):
     def continuous(self):
         """
         continuously acquires curves, and performs a moving
-        average over the avg last ones.
+        average over the trace_average last ones.
         """
         self.running_state = 'running_continuous'
         # return self._continuous_future

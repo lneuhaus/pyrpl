@@ -287,7 +287,7 @@ class InputSignal(Signal):
                                 ch1_active=True,
                                 ch2_active=True,
                                 average=True,
-                                avg=1,  # trace_average
+                                trace_average=1,
                                 running_state='stopped',
                                 rolling_mode=False)
                     scope.save_state("autosweep")
