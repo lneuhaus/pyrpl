@@ -568,7 +568,7 @@ class InputIq(InputSignal):
 
     @property
     def acbandwidth(self):
-        return self.mod_freq / 100.0
+        return self.mod_freq / 128.0
 
     # mod_freq = ProxyProperty("iq.frequency")
     # mod_amp = ProxyProperty("iq.amplitude")
