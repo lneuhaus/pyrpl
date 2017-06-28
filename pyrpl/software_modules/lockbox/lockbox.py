@@ -1,6 +1,7 @@
 from __future__ import division
 from collections import OrderedDict
 from PyQt4 import QtCore
+import logging
 from ...modules import SignalLauncher
 from ...module_attributes import ModuleListProperty
 from .input import *
@@ -65,7 +66,7 @@ class StateSelectProperty(SelectProperty):
         super(StateSelectProperty, self).set_value(obj, val)
         # save the last time of change of state
         obj._state_change_time = time()
-        obj._signal_launcher.state_changed.emit()
+        obj._signal_launcher.state_changed.emit([val])
 
 
 class SignalLauncherLockbox(SignalLauncher):
@@ -79,7 +80,7 @@ class SignalLauncherLockbox(SignalLauncher):
     stage_deleted = QtCore.pyqtSignal(list)
     stage_renamed = QtCore.pyqtSignal()
     delete_widget = QtCore.pyqtSignal()
-    state_changed = QtCore.pyqtSignal()
+    state_changed = QtCore.pyqtSignal(list)
     add_input = QtCore.pyqtSignal(list)
     input_calibrated = QtCore.pyqtSignal(list)
     remove_input = QtCore.pyqtSignal(list)
@@ -104,6 +105,11 @@ class Lockbox(LockboxModule):
                                            "_auto_lock_timeout"]
 
     classname = ClassnameProperty(options=lambda: list(all_classnames().keys()))
+
+    def __init__(self, parent, name=None):
+        super(Lockbox, self).__init__(parent=parent, name=name)
+        # set state change time to negative value to indicate startup condition
+        self._state_change_time = -1
 
     ###################
     # unit management #
@@ -218,14 +224,19 @@ class Lockbox(LockboxModule):
         setup_attributes['duration'] = 0
         self.final_stage.setup(**setup_attributes)
 
-    @property
-    def current_stage(self):
-        if isinstance(self.current_state, int):
+    def _current_stage(self, state=None):
+        if state is None:
+            state = self.current_state
+        if isinstance(state, int):
             return self.sequence[self.current_state]
-        elif self.current_state == 'final_stage':
+        elif state == 'final_stage':
             return self.final_stage
         else:
-            return self.current_state
+            return state
+
+    @property
+    def current_stage(self):
+        return self._current_stage()
 
     @property
     def signals(self):
@@ -247,12 +258,34 @@ class Lockbox(LockboxModule):
             self._asg = self.pyrpl.asgs.pop(self.name)
         return self._asg
 
-    def calibrate_all(self):
+    def calibrate_all(self, autosave=False):
         """
         Calibrates successively all inputs
         """
+        curves = []
         for input in self.inputs:
-            input.calibrate()
+            try:
+                c = input.calibrate(autosave=autosave)
+                if c is not None:
+                    curves.append(c)
+            except:
+                pass
+        return curves
+
+    def get_analog_offsets(self, duration=1.0):
+        """
+        Measures and saves the analog offset for all inputs.
+
+        This function is designed to measure the analog offsets of the redpitaya
+        inputs and possibly the sensors connected to these inputs. Only call this
+        function if you are sure about what you are doing and if all signal sources
+        (lasers etc.) are turned off.
+
+        The parameter duration specifies the time during which to average the
+        input offsets.
+        """
+        for input in self.inputs:
+            input.get_analog_offset(duration=duration)
 
     def unlock(self, reset_offset=True):
         """
@@ -265,7 +298,7 @@ class Lockbox(LockboxModule):
             output.unlock(reset_offset=reset_offset)
         self.current_state = 'unlock'
 
-    def sweep(self):
+    def _sweep(self):
         """
         Performs a sweep of one of the output. No output default kwds to avoid
         problems when use as a slot.
@@ -273,6 +306,13 @@ class Lockbox(LockboxModule):
         self.unlock()
         self.outputs[self.default_sweep_output].sweep()
         self.current_state = "sweep"
+
+    def sweep(self):
+        """
+        Performs a sweep of one of the output. No output default kwds to avoid
+        problems when use as a slot.
+        """
+        return self._sweep()
 
     _lock_loop = None  # this variable will store the lock loop
     def lock(self, **kwds):
@@ -293,7 +333,6 @@ class Lockbox(LockboxModule):
                 stage.enable()
                 loop.interval = stage.duration
             else:
-
                 lockbox.final_stage.enable()
                 loop._clear()
                 lockbox._lock_loop = None
@@ -303,12 +342,13 @@ class Lockbox(LockboxModule):
     def relock(self, test_auto_lock=False, **kwargs):
         """ locks the cavity if it is_locked is false. Returns the value of
         is_locked """
-        if test_auto_lock and not self.auto_lock:
+        # if kwargs are given, try to set these if in final stage
+        if len(kwargs)> 0:
+            self.final_stage.setup(**kwargs)
+        if test_auto_lock and (not self.auto_lock or self._setup_ongoing):
             # skip if autolock is off and call from autolock_timer
             return
-        elif (self._lock_loop is not None and  # lock acquisition in place
-              self.current_stage in self.sequence and  # locked at a stage
-              self._state_change_time + self._auto_lock_timeout > time()):
+        elif self.is_locking():
             # lock acquisition not taking too long -> do not interrupt
             return False
         if self.is_locked_and_final(loglevel=0):
@@ -318,6 +358,19 @@ class Lockbox(LockboxModule):
             # either unlocked in final stage or in an unlocked state: call lock()
             self._logger.info("Attempting to re-lock...")
             return self.lock(**kwargs)
+
+    def relock_until_locked(self, **kwargs):
+        """ blocks the command line until cavity is locked with kwargs """
+        def relock_function(lockbox, loop):
+            if lockbox.relock(**kwargs):
+                loop._clear()
+        self._relock_until_locked_loop = LockboxLoop(parent=self,
+                                                     name='relock_until_locked_loop',
+                                                     interval=1.0,
+                                                     autostart=True,
+                                                     loop_function=relock_function)
+        while not self._relock_until_locked_loop._ended:  # wait for locks to terminate
+            sleep(1.0)
 
     def is_locked(self, input=None, loglevel=logging.INFO):
         """ returns True if locked, else False. Also updates an internal
@@ -354,6 +407,11 @@ class Lockbox(LockboxModule):
         return (self.current_state == 'final_stage' and
                 self.is_locked(loglevel=loglevel))
 
+    def is_locking(self):
+        return  (self._lock_loop is not None and  # lock acquisition in place
+                 self.current_stage in self.sequence and  # locked at a stage
+                 self._state_change_time + self._auto_lock_timeout > time())
+
     def _lockstatus(self):
         """ this function is a placeholder for periodic lockstatus
         diagnostics, such as calls to is_locked, logging means and rms
@@ -361,11 +419,14 @@ class Lockbox(LockboxModule):
         # ask GUI to update the lockstatus display (pass value of
         # self.is_locked() instead of None if already available)
         self._signal_launcher.update_lockstatus.emit([None])
-        # optionally, insert logging functionality in derived classes here...
+        # optionally, call logging functionality implemented derived classes here...
+        try: self.log_lockstatus()
+        except AttributeError: pass
 
     _lockstatus_loop = ModuleProperty(LockboxLoop,
                                       interval=1.0,
                                       autostart=True,
+                                      # function is called through lambda since
                                       loop_function=_lockstatus)
 
     lockstatus_interval = LockstatusIntervalProperty(default=1.0, min=1e-3,
@@ -439,3 +500,47 @@ class Lockbox(LockboxModule):
             lockbox = getattr(pyrpl, name)
             return setattr(lockbox, attribute, value)
         self.__setattr__ = setattribute_forwarder
+
+    @property
+    def _time(self):
+        """ retrieves 'local' time of the lockbox """
+        return time()
+
+    @property
+    def params(self):
+        """
+        returns a convenient dict with parameters that describe if and with
+        which settings the lockbox was properly.
+
+        params from different Pyrpl lockboxes can be merged together without
+        problems if the names of the config files differ
+        """
+        d = dict(config=self.c._root._filename)
+        for var in ['is_locked', 'is_locked_and_final', 'current_state',
+                    '_state_change_time', '_time', 'final_stage.setpoint',
+                    'setpoint_unit', 'final_stage.gain_factor',
+                    'final_stage.input']:
+            val = recursive_getattr(self, var)
+            if callable(val):
+                val = val()
+            d[var] = val
+        for o in self.inputs:
+            o.stats(t=1.0)
+            d[o.name+ '_mean'] = o.mean
+            d[o.name + '_rms'] = o.rms
+            d[o.name + '_calibration_data_min'] = o.calibration_data.min
+            d[o.name + '_calibration_data_max'] = o.calibration_data.max
+            if hasattr(o, 'quadrature_factor'):
+                d[o.name + '_quadrature_factor'] = o.quadrature_factor
+        for o in self.outputs:
+            d[o.name+ '_mean'] = o.mean
+            d[o.name + '_rms'] = o.rms
+            d[o.name + '_pid_setpoint'] = o.pid.setpoint
+            d[o.name + '_pid_p'] = o.pid.p
+            d[o.name + '_pid_i'] = o.pid.i
+            d[o.name + '_pid_ival'] = o.pid.ival
+            d[o.name + '_pid_input'] = o.pid.input
+        dd = dict()
+        for k in d:
+            dd[self.pyrpl.name+'_'+k]=d[k]
+        return dd

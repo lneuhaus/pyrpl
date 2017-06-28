@@ -256,10 +256,13 @@ class ModuleDict(Module):
 
 class ModuleDictProperty(ModuleProperty):
     default_module_cls = Module
+
     def __init__(self, module_cls=None, default=None, doc="",
                  ignore_errors=False, **kwargs):
-        """ returns a descriptor for a module container, i.e. a class that contains submodules whose name and class are
-        specified in kwargs. module_cls is the base class for the module container (typically SoftwareModule)"""
+        """
+        returns a descriptor for a module container, i.e. a class that contains submodules whose name and class are
+        specified in kwargs. module_cls is the base class for the module container (typically SoftwareModule)
+        """
         # get default base class to inherit from
         if module_cls is None:
             module_cls = self.default_module_cls
@@ -268,7 +271,8 @@ class ModuleDictProperty(ModuleProperty):
         ModuleDictClassInstance = type(module_cls.__name__+"DictPropertyInstance",
                                        (ModuleDict, module_cls),
                     {key: ModuleProperty(value) for key, value in kwargs.items()})
-        # metaclass of Module takes care of _x_attributes and names of submodules:
+        # metaclass of Module already takes care of _setup/module_attributes
+        # and names of submodules, so no need for these two:
         # ModuleDictClassInstance._setup_attributes = kwargs.keys()
         # ModuleDictClassInstance._module_attributes = kwargs.keys()
 

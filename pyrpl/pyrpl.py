@@ -84,7 +84,12 @@ class Pyrpl(object):
         pyrplbranch = self.c._get_or_create('pyrpl')
         for k in default_pyrpl_config:
             if k not in pyrplbranch._keys():
-                pyrplbranch[k] = default_pyrpl_config[k]
+                if k =='name':
+                    # assign same name as in config file by default
+                    pyrplbranch[k] = self.c._filename_stripped
+                else:
+                    # all other (static) defaults
+                    pyrplbranch[k] = default_pyrpl_config[k]
         # set global logging level if specified in config file
         pyrpl_utils.setloglevel(level=self.c.pyrpl.loglevel,
                                 loggername='pyrpl')
@@ -95,20 +100,23 @@ class Pyrpl(object):
         self.rp = RedPitaya(config=self.c)
         self.rp.parent=self
         self.widgets = [] # placeholder for widgets
-        # ...initializing remaining hardware modules
-        for module in self.hardware_modules:  # setup hardware modules with config file keys
-            if module.owner is None:  # (only modules that are not slaved by software modules)
+        # create software modules...
+        self.load_software_modules()
+        # load all setup_attributes for modules that do not have an owner
+        for module in self.software_modules + self.hardware_modules:
+            if module.owner is None:
                 try:
                     module._load_setup_attributes()  # **self.c[module.name])
                 except BaseException as e:
-                    self.logger.error('Something went wrong when loading attributes of hardware module "%s"',
-                                      module.name)
-        # create software modules...
-        self.load_software_modules()
-        # # load setup attributes
-        # for m in self.modules:
-        #     m._load_setup_attributes()
-        # # make the gui if applicable
+                    self.logger.error('Something went wrong when loading the '
+                                      'stored setup_attributes of module "%s". '
+                                      'If you do not know what this means, you should'
+                                      'be able to fix this error by deleting the '
+                                      'corresponding section "%s" in your config file %s. '
+                                      'Error message: %s',
+                                      module.name, module.name, self.c._filename, e)
+                    # raise e
+        # make the gui if applicable
         if self.c.pyrpl.gui:
             self.show_gui()
 
@@ -144,10 +152,10 @@ class Pyrpl(object):
                     module = getattr(cls, "_make_"+cls.__name__)(self, name)
                 else:
                     module = cls(self, name)
-            except:
-                self.logger.error('Something went wrong when loading the software module "%s"',
-                                  name)
-                raise
+            except BaseException as e:
+                self.logger.error('Something went wrong when loading the software module "%s": %s',
+                                  name, e)
+                raise e
             else:
                 setattr(self, module.name, module)
                 self.software_modules.append(module)

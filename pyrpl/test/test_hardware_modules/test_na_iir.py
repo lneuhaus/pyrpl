@@ -12,6 +12,35 @@ class TestIir(TestPyrpl):
         self.pyrpl.na = self.pyrpl.networkanalyzer
         self.na = self.pyrpl.networkanalyzer
 
+    def test_pz_interface(self):
+        """ tests that poles and real/comples_poles remain sync'ed"""
+        iir = self.pyrpl.rp.iir
+        p = iir.poles = [-1000j-2032, -34343j-3424, -1221, -43254.4]
+        rp = iir.real_poles
+        cp = iir.complex_poles
+        assert iir.real_poles == [-1221, -43254.4], iir.real_poles
+        assert iir.complex_poles == [-1000j-2032, -34343j-3424], \
+            iir.complex_poles
+        iir.real_poles = []
+        assert iir.poles == iir.complex_poles, iir.poles
+        iir.complex_poles = []
+        assert iir.poles == []
+        assert iir.real_poles == []
+        assert iir.complex_poles == []
+
+        p = iir.zeros = [-1000j - 2032, -34343j - 3424, -1221, -43254.4]
+        rp = iir.real_zeros
+        cp = iir.complex_zeros
+        assert iir.real_zeros  == [-1221, -43254.4], iir.real_zeros
+        assert iir.complex_zeros  == [-1000j - 2032, -34343j - 3424], \
+            iir.complex_zeros
+        iir.real_zeros  = []
+        assert iir.zeros  == iir.complex_zeros , iir.zeros
+        iir.complex_zeros = []
+        assert iir.zeros  == []
+        assert iir.real_zeros  == []
+        assert iir.complex_zeros  == []
+
     def test_iirsimple_na_generator(self):
         # this test defines a simple transfer function that occupies 2
         # biquads in the iir filter. It then shifts the coefficients through

@@ -17,7 +17,19 @@ class WaveformAttribute(SelectProperty):
         if not waveform in instance.waveforms:
             raise ValueError("waveform shourd be one of " + instance.waveforms)
         else:
-            if not waveform == 'noise':
+            if waveform == 'noise':
+                # current amplitude becomes rms amplitude
+                rmsamplitude = instance.amplitude
+                # set alrady to noise to switch behavior of amplitude
+                instance._waveform = 'noise'
+                # amplitude now deals with the settings
+                # (fpga amplitude to max, saving of rmsamplitude,
+                # filling of correctly scaled data)
+                instance.amplitude = rmsamplitude
+                instance.random_phase = True
+                # can return already now
+                return waveform
+            else:
                 instance.random_phase = False
                 instance._rmsamplitude = 0
             if waveform == 'sin':
@@ -40,12 +52,6 @@ class WaveformAttribute(SelectProperty):
                 y[len(y)//2:] = -1.0
             elif waveform == 'dc':
                 y = np.zeros(instance.data_length)
-            elif waveform == 'noise':
-                instance._rmsamplitude = instance.amplitude
-                y = np.random.normal(loc=0.0, scale=instance._rmsamplitude,
-                                     size=instance.data_length)
-                instance.amplitude = 1.0  # this may be confusing to the user..
-                instance.random_phase = True
             else:
                 y = instance.data
                 instance._logger.error(
@@ -55,13 +61,31 @@ class WaveformAttribute(SelectProperty):
         return waveform
 
 
+class AsgAmplitudeAttribute(FloatRegister):
+    """ workaround to make rms amplitude work"""
+    def get_value(self, obj):
+        if obj.waveform == 'noise':
+            return obj._rmsamplitude
+        else:
+            return super(AsgAmplitudeAttribute, self).get_value(obj)
+
+    def set_value(self, obj, val):
+        if obj.waveform == 'noise':
+            # internally memorize the amplitude as it is not directly
+            # stored in the fpga (see set_value(obj, 1.0) call below)
+            obj._rmsamplitude = val
+            # fill normal-distributed data into data memory
+            obj.data = obj._noise_distribution()
+            # multiplier set to 1.0 to benefit from full available resolution
+            super(AsgAmplitudeAttribute, self).set_value(obj, 1.0)
+        else:
+            super(AsgAmplitudeAttribute, self).set_value(obj, val)
+
+
+
 class AsgOffsetAttribute(FloatProperty):
-    def __init__(self):
-        super(AsgOffsetAttribute, self).__init__(default=0,
-                                                 increment=1./2**13,
-                                                 min=-1.,
-                                                 max=1.,
-                                                 doc="output offset [volts]")
+    def __init__(self, **kwargs):
+        super(AsgOffsetAttribute, self).__init__(**kwargs)
 
     def set_value(self, instance, val):
         instance._offset_masked = val
@@ -85,28 +109,30 @@ def make_asg(channel=0):
 
     class Asg(HardwareModule, SignalModule):
         _widget_class = AsgWidget
-        _setup_attributes = ["waveform",
-                             "amplitude",
-                             "offset",
-                             "frequency",
-                             "trigger_source",
-                             "output_direct"]
-        _gui_attributes = _setup_attributes
-        # _callback_attributes = ["trigger_source"]
+        _gui_attributes = ["waveform",
+                           "amplitude",
+                           "offset",
+                           "frequency",
+                           "trigger_source",
+                           "output_direct"]
+        _setup_attributes = _gui_attributes + ["cycles_per_burst"]
 
         _DATA_OFFSET = set_DATA_OFFSET
         _VALUE_OFFSET = set_VALUE_OFFSET
         _BIT_OFFSET = set_BIT_OFFSET
         default_output_direct = set_default_output_direct
+
+        # previously 2 ** 16 * (2 ** 14 - 1), was too slow by 2**-16
+        # the bottom value is also the fpga default
+        _default_counter_wrap = 2 ** 16 * (2 ** 14) - 1
+
         output_directs = None
         addr_base = 0x40200000
 
-        def _init_module(self):
-            self._counter_wrap = 0x3FFFFFFF  # correct value unless you know better
+        def __init__(self, parent, name=None):
+            super(Asg, self).__init__(parent, name=name)
+            self._counter_wrap = self._default_counter_wrap
             self._writtendata = np.zeros(self.data_length)
-            self.waveform = 'sin'
-            self.output_direct = self.default_output_direct
-            self.trigger_source = 'immediately'
 
         @property
         def output_directs(self):
@@ -155,8 +181,7 @@ def make_asg(channel=0):
                                         options=_trigger_sources,
                                         doc="trigger source for triggered "
                                             "output",
-                                        call_setup=True) #  for some reason,
-        # this doesn't seem to be needed anymore...
+                                        call_setup=True)
 
         # offset is stored in bits 31:16 of the register.
         # This adaptation to FloatRegister is a little subtle but should work nonetheless
@@ -165,19 +190,20 @@ def make_asg(channel=0):
                                                                                             # behind AsgOffsetAttribute
                                                                                             # to have the correct
                                                                                             # increments and so on.
-        offset = AsgOffsetAttribute()
+        offset = AsgOffsetAttribute(default=0,
+                                    increment=1./2**13,
+                                    min=-1.,
+                                    max=1.,
+                                    doc="output offset [volts]")
 
         # formerly scale
-        amplitude = FloatRegister(0x4 + _VALUE_OFFSET, bits=14, bitmask=0x3FFF,
+        amplitude = AsgAmplitudeAttribute(0x4 + _VALUE_OFFSET, bits=14, bitmask=0x3FFF,
                                   norm=2.**13, signed=False,
                                   max=1.0,  # Internal fpga max is 2.0 V
                                   # i.e. it is possible to define waveforms
                                   # with smaller values and then boost them,
                                   #  but there is no real interest to do so.
                                   doc="amplitude of output waveform [volts]")
-        """FloatRegister(0x4 + _VALUE_OFFSET, bits=14, bitmask=0x3FFF,
-                                  norm=2 ** 13, signed=False,
-                                  doc="amplitude of output waveform [volts]")"""
 
         start_phase = PhaseRegister(0xC + _VALUE_OFFSET, bits=30,
                                     doc="Phase at which to start triggered waveforms [degrees]")
@@ -210,6 +236,22 @@ def make_asg(channel=0):
                                         'cycles. This is used for the generation of '
                                         'white noise. If false, asg behaves '
                                         'normally. ')
+
+        def _noise_distribution(self):
+            """
+            returns an array of data_length samples of a Gaussian
+            distribution with rms=self._rmsamplitude
+            """
+            if self._rmsamplitude == 0:
+                return np.zeros(self.data_length)
+            else:
+                return np.random.normal(loc=0.0,
+                                        scale=self._rmsamplitude,
+                                        size=self.data_length)
+
+        @property
+        def _noise_V2_per_Hz(self):
+            return self._rmsamplitude**2/(125e6*self._frequency_correction/2)
 
         waveforms = ['sin', 'cos', 'ramp', 'halframp', 'square', 'dc',
                      'noise']
@@ -258,123 +300,13 @@ def make_asg(channel=0):
             """
             Sets up the function generator. (just setting attributes is ok).
             """
-
-            old_trigger_source = self.trigger_source
             self.on = False
             self.sm_reset = True
-
-            #self.trigger_source = 'off'
-            self.amplitude = self.amplitude
-            self.offset = self.offset
-            self.output_direct = self.output_direct
+            self._counter_wrap = self._default_counter_wrap
+            self._sm_wrappointer = True
             self.waveform = self.waveform
-            self.start_phase = self.start_phase
-
-            self._counter_wrap = 2 ** 16 * (
-            2 ** 14) - 1  # Bug found on 2016/11/2 (Samuel) previously 2**16 * (2**14 - 1)
-            # ===> asg frequency was too fast by 1./2**16
-
-            self.frequency = self.frequency
-
-            self._sm_wrappointer = True
-
-            self.cycles_per_burst = self.cycles_per_burst
-            self.bursts = self.bursts
-            self.delay_between_bursts = self.delay_between_bursts
-
             self.sm_reset = False
             self.on = True
-            #if self.trigger_source is not None:
-            self._trigger_source = old_trigger_source # self.trigger_source
-
-        def setup_old(self,
-                  waveform=None,
-                  frequency=None,
-                  amplitude=None,
-                  offset=None,
-                  start_phase=0,
-                  trigger_source=None,
-                  output_direct=None,
-                  cycles_per_burst=None,
-                  bursts=None,
-                  delay_between_bursts=None):
-            """
-            Sets up the function generator.
-
-            Parameters
-            ----------
-            waveform: str
-                must be one of ['sin', cos', 'ramp', 'DC', 'halframp']
-            frequency: float
-                waveform frequency in Hz.
-            amplitude: float
-                amplitude of the waveform in Volts. Between 0 and 1.
-            offset: float
-            start_phase: float
-                the phase of the waveform where the function generator starts.
-            trigger_source: str
-                must be one of self.trigger_sources
-            output_direct: str
-                must be one of self.outputs_direct
-            cycles_per_burst: int
-                number of repetitions of the waveform per burst. 0 = infinite.
-                by default, only 1 burst is executed. Maximum 2**32-1.
-            bursts: int
-                number of bursts to output - 1, i.e. 0 = one burst sequence.
-                Each burst consists of cycles_per_burst full periods of the
-                waveform and a delay of delay_between_bursts. If delay=0, any
-                setting of bursts other than zero outputs infinitely many
-                cycles. That is, if you do not want a delay, leave bursts=0
-                and define the number of periods to output with
-                cycles_per_burst. Maximum 2**16-1
-            delay_between_bursts: int
-                delay between bursts in multiples of 1 microseconds. Maximum
-                2**32-1 us.
-
-            Returns
-            -------
-            None
-            """
-
-            if waveform is None:
-                waveform = self.waveform
-            if frequency is None:
-                frequency = self.frequency
-            if amplitude is None:
-                amplitude = self.amplitude
-            if offset is None:
-                offset = self.offset
-            if trigger_source is None:
-                trigger_source = self.trigger_source
-            if output_direct is None:
-                output_direct = self.output_direct
-            if cycles_per_burst is None:
-                cycles_per_burst = self.cycles_per_burst
-            if bursts is None:
-                bursts = self.bursts
-            if delay_between_bursts is None:
-                delay_between_bursts = self.delay_between_bursts
-
-            self.on = False
-            self.sm_reset = True
-            self.trigger_source = 'off'
-            self.amplitude = amplitude
-            self.offset = offset
-            self.output_direct = output_direct
-            self.waveform = waveform
-            self.start_phase = start_phase
-            self._counter_wrap = 2 ** 16 * (
-            2 ** 14) - 1  # Bug found on 2016/11/2 (Samuel) previously 2**16 * (2**14 - 1)
-            # ===> asg frequency was too fast by 1./2**16
-            self.frequency = frequency
-            self._sm_wrappointer = True
-            self.cycles_per_burst = cycles_per_burst
-            self.bursts = bursts
-            self.delay_between_bursts = delay_between_bursts
-            self.sm_reset = False
-            self.on = True
-            if trigger_source is not None:
-                self.trigger_source = trigger_source
 
         # advanced trigger - alpha version functionality
         scopetriggerphase = PhaseRegister(0x114 + _VALUE_OFFSET, bits=14,

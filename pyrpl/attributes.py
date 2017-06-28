@@ -28,7 +28,13 @@ from .widgets.attribute_widgets import BoolAttributeWidget, \
                                        BoolIgnoreAttributeWidget, \
                                        TextAttributeWidget, \
                                        CurveAttributeWidget, \
-                                       CurveSelectAttributeWidget
+                                       DataAttributeWidget, \
+                                       CurveSelectAttributeWidget, \
+                                       LedAttributeWidget, \
+                                       PlotAttributeWidget, \
+                                       BasePropertyListPropertyWidget, \
+                                       ComplexAttributeWidget
+
 from .curvedb import CurveDB
 from collections import OrderedDict
 import logging
@@ -96,7 +102,7 @@ class BaseProperty(BaseAttribute):
         value = self.validate_and_normalize(obj, value)
         self.set_value(obj, value)
         # save new value in config, lauch signal and possibly call setup()
-        self.value_updated(obj, value)
+        self.value_updated(obj, value)#self.get_value(obj))
 
     def validate_and_normalize(self, obj, value):
         """
@@ -108,7 +114,7 @@ class BaseProperty(BaseAttribute):
         """
         return value  # by default any value is valid
 
-    def value_updated(self, module, value):
+    def value_updated(self, module, value=None, appendix=[]):
         """
         Once the value has been changed internally, this function is called to perform the following actions:
          - launch the signal module._signal_launcher.attribute_changed (this is used in particular for gui update)
@@ -117,7 +123,9 @@ class BaseProperty(BaseAttribute):
          Note for developers:
          we might consider moving the 2 last points in a connection behind the signal "attribute_changed".
         """
-        self.launch_signal(module, value)
+        if value is None:
+            value = self.get_value(module)
+        self.launch_signal(module, value, appendix=appendix)
         if module._autosave_active:  # (for module, when module is slaved, don't save attributes)
             if self.name in module._setup_attributes:
                 self.save_attribute(module, value)
@@ -134,25 +142,19 @@ class BaseProperty(BaseAttribute):
         if instance is None:
             return self
         return self.get_value(instance)
-        # try:
-        #     return self.get_value(instance)
-        # except AttributeError:
-        #     raise NotImplementedError("The attribute %s doesn't have a method "
-        #                               "get_value. Did you use an Attribute "
-        #                               "instead of a Property?" % self.name)
 
-    def launch_signal(self, module, new_value):
+    def launch_signal(self, module, new_value, appendix=[]):
         """
-        Updates the widget with the module's value.
+        Updates the widget and other subscribers with the module's value.
         """
-        # if self.name in module._widget.attribute_widgets:
-        #   module._widget.attribute_widgets[self.name].update_widget()
-        #if self.name in module._gui_attributes:
         try:
-            module._signal_launcher.update_attribute_by_name.emit(self.name,
-                                                             [new_value])
-        except AttributeError:  # occurs if nothing is connected (TODO: remove this)
-            pass
+            module._signal_launcher.update_attribute_by_name.emit(
+                self.name,
+                [new_value]+appendix)
+        except AttributeError as e:  # occurs if nothing is connected (TODO:
+            # remove this)
+            module._logger.error("Erro in launch_signal of %s: %s",
+                                 module.name, e)
 
     def save_attribute(self, module, value):
         """
@@ -169,7 +171,7 @@ class BaseProperty(BaseAttribute):
                            "for %s, but no _widget_class is defined!",
                            str(module), type(module), self.name)
             return None
-        widget = self._widget_class(self.name, module, widget_name=widget_name)
+        widget = self._widget_class(module, self.name, widget_name=widget_name)
         return widget
 
     def get_value(self, obj):
@@ -224,6 +226,18 @@ class BaseRegister(BaseProperty):
             new = act & (~self.bitmask) | (int(self.from_python(obj, val)) & self.bitmask)
             obj._write(self.address, new)
 
+    def __set__(self, obj, value):
+        """
+        this is very similar to the __set__ function of the parent,
+        but here, value_updated is called with the return from
+        validate_and_normalize instead of with the new from get_value in
+        order to save one read operation.
+        """
+        value = self.validate_and_normalize(obj, value)
+        self.set_value(obj, value)
+        # save new value in config, lauch signal and possibly call setup()
+        self.value_updated(obj, value)
+
 
 class BoolProperty(BaseProperty):
     """
@@ -237,6 +251,34 @@ class BoolProperty(BaseProperty):
         Converts value to bool.
         """
         return bool(value)
+
+
+class LedProperty(BoolProperty):
+    _widget_class = LedAttributeWidget
+
+    def __init__(self,
+                 true_function = None,
+                 false_function = None,
+                 **kwargs):
+        """
+        default: if provided, the value is initialized to it
+        """
+        self.true_function = true_function or self.true_function
+        self.false_function = false_function or self.false_function
+        super(LedProperty, self).__init__(**kwargs)
+
+    def set_value(self, obj, val):
+        try:
+            if val:
+                self.true_function(obj)
+            else:
+                self.false_function(obj)
+        except TypeError as e:
+            obj._logger.debug('Cannot call %s of %s.%s: %s',
+                              'true_function' if val else 'false_function',
+                              obj.name, self.name, e)
+        else:
+            super(LedProperty, self).set_value(obj, val)
 
 
 class BoolRegister(BaseRegister, BoolProperty):
@@ -331,18 +373,17 @@ class NumberProperty(BaseProperty):
                  min=-np.inf,
                  max=np.inf,
                  increment=1,
+                 log_increment=False,  # if True, the widget has log increment
                  **kwargs):
         self.min = min
         self.max = max
         self.increment = increment
+        self.log_increment = log_increment
         BaseProperty.__init__(self, **kwargs)
 
     def _create_widget(self, module, widget_name=None):
         widget = BaseProperty._create_widget(self, module,
                                              widget_name=widget_name)
-        widget.set_increment(self.increment)
-        widget.set_maximum(self.max)
-        widget.set_minimum(self.min)
         return widget
 
     def validate_and_normalize(self, obj, value):
@@ -380,6 +421,20 @@ class IntRegister(BaseRegister, IntProperty):
 
     def from_python(self, obj, value):
         return int(value)
+
+
+class ConstantIntRegister(IntRegister):
+    """
+    Implements an int register that only interacts with the FPGA once and
+    subsequently returns the first read value from python memory.
+    """
+    def get_value(self, obj):
+        try:
+            return getattr(obj, '_' + self.name)
+        except AttributeError:
+            value = super(ConstantIntRegister, self).get_value(obj)
+            setattr(obj, '_' + self.name, value)
+            return value
 
 
 class LongRegister(IntRegister):
@@ -423,6 +478,15 @@ class FloatProperty(NumberProperty):
         return NumberProperty.validate_and_normalize(self,
                                                      obj,
                                                      float(value))
+
+
+class ComplexProperty(FloatProperty):
+    _widget_class = ComplexAttributeWidget
+    def validate_and_normalize(self, obj, val):
+        val = complex(val)
+        re = super(ComplexProperty, self).validate_and_normalize(obj, val.real)
+        im = super(ComplexProperty, self).validate_and_normalize(obj, val.imag)
+        return complex(re, im)
 
 
 class FloatRegister(IntRegister, FloatProperty):
@@ -510,14 +574,20 @@ class GainRegister(FloatRegister):
     A register used mainly for gains, that replaces round-off to zero by
     round-off to the lowest-possible value.
     """
+    avoid_round_off_to_zero = True
+
     def validate_and_normalize(self, obj, value):
         rounded_value = FloatRegister.validate_and_normalize(self, obj, value)
         if rounded_value == 0 and value != 0:  # value was rounded off to zero
-            rounded_value = FloatRegister.validate_and_normalize(
-                self, obj, np.abs(self.increment)*np.sign(value))
-            obj._logger.warning("Avoided rounding value %.1e of the "
-                                "gain register %s to zero. Setting it to %.1e "
-                                "instead. ", value, self.name, rounded_value)
+            if self.avoid_round_off_to_zero:
+                rounded_value = FloatRegister.validate_and_normalize(
+                    self, obj, np.abs(self.increment)*np.sign(value))
+                obj._logger.warning("Avoided rounding value %.1e of the "
+                                    "gain register %s to zero. Setting it to %.1e "
+                                    "instead. ", value, self.name, rounded_value)
+            else:
+                obj._logger.warning("Rounding value %.1e of the "
+                                    "gain register %s to zero. ", value, self.name)
         if value > self.max or value < self.min:
             obj._logger.warning("Requested gain for %s.%s is outside the "
                                 "bounds allowed by the hardware. Desired "
@@ -645,6 +715,9 @@ class FilterProperty(BaseProperty):
         raise NotImplementedError("this is a baseclass, your derived class "
                                   "must implement the following function")
 
+    def refresh_options(self, module):
+        module._signal_launcher.refresh_filter_options.emit(self.name)
+
 
 class FilterRegister(BaseRegister, FilterProperty):
     """
@@ -694,11 +767,28 @@ class FilterRegister(BaseRegister, FilterProperty):
 
     def valid_frequencies(self, obj):
         """ returns a list of all valid filter cutoff frequencies"""
-        valid_bits = range(0, self._MAXSHIFT(obj)-1)
+        #valid_bits = range(0, self._MAXSHIFT(obj)-1)  # this is possible
+        valid_bits = range(0, self._MAXSHIFT(obj)-2)  # this gives reasonable results (test_filter)
         pos = list([self.to_python(obj, b | 0x1 << 7) for b in valid_bits])
-        pos = [int(val) if not np.iterable(val) else int(val[0]) for val in pos]
+        pos = [val if not np.iterable(val) else val[0] for val in pos]
         neg = [-val for val in reversed(pos)]
-        return neg + [0] + pos
+        valid_frequencies = neg + [0] + pos
+        if obj is not None and not hasattr(obj, self.name+'_options') and not hasattr(obj.__class__, self.name+'_options'):
+            setattr(obj, self.name+'_options', valid_frequencies)
+        return valid_frequencies
+
+    # empirical correction factors for the cutoff frequencies in order to be
+    # able to accurately model implemented bandwidth with an analog
+    # butterworth filter. Works well up to 5 MHz. See unittest test_inputfilter
+    correction_factors = {0.5: 0.7,
+                          0.25: 1.65,
+                          0.125: 1.17,
+                          0.0625: 1.08,
+                          0.03125: 1.04,
+                          0.015625: 1.02,
+                          0.0078125: 1.01,
+                          0.001953125: 1.0,
+                          0.00390625: 1.0}
 
     def to_python(self, obj, value):
         """
@@ -720,6 +810,9 @@ class FilterRegister(BaseRegister, FilterProperty):
                 #bandwidth = alpha * 125e6 / 2 / np.pi
                 # new, more correct formula (from Oppenheim-Schafer p. 70)
                 bandwidth = -np.log(1.0-alpha)/2.0/np.pi*125e6
+                # here comes a nasty bugfix to make it work (see issue 242)
+                if alpha in self.correction_factors:
+                    bandwidth *= self.correction_factors[alpha]
                 if highpass:
                     bandwidth *= -1.0
             else:
@@ -748,6 +841,9 @@ class FilterRegister(BaseRegister, FilterProperty):
                 #alpha = np.abs(bandwidth)*2*np.pi/125e6
                 # new formula
                 alpha = 1.0 - np.exp(-np.abs(bandwidth)*2.0*np.pi/125e6)
+                if alpha in self.correction_factors:
+                    bandwidth /= self.correction_factors[alpha]
+                    alpha = 1.0 - np.exp(-np.abs(bandwidth)*2.0*np.pi/125e6)
                 shift = int(np.round(np.log2(alpha*(2**self._MAXSHIFT(obj)))))
                 if shift < 0:
                     shift = 0
@@ -760,11 +856,149 @@ class FilterRegister(BaseRegister, FilterProperty):
         return filter_shifts
 
 
-class ListFloatProperty(BaseProperty):
+class AttributeList(list):
+    """
+    A list of attributes.
+
+    This class is not an attribute/property by itself, but is the object
+    returned by AttributeListProperty that correctly extends list methods to
+    communicate a change in the list throughout pyrpl.
+
+    When a list-specific operation is performed that alters the values,
+    the AttributeListProperty object is informed about this and will ensure
+    the correct propagation of the signal.
+    """
+    def __init__(self, parent, module, *args, **kwargs):
+        self._parent = parent
+        self._module = module
+        super(AttributeList, self).__init__(*args, **kwargs)
+
+    # insert, __setitem__, and __delitem__ completely describe the behavior
+    def insert(self, index, new=None):
+        if new is None:
+            new = self._parent.default_element or self._parent.element_cls.default
+        new = self._parent.validate_and_normalize_element(self._module, new)
+        super(AttributeList, self).insert(index, new)
+        self._parent.list_changed(self._module, "insert", index, new)
+
+    def __setitem__(self, index, value):
+        # rely on parent's validate_and_normalize function
+        value = self._parent.validate_and_normalize_element(self._module, value)
+        # set value
+        super(AttributeList, self).__setitem__(index, value)
+        self._parent.list_changed(self._module, "setitem", index, value)
+
+    def __delitem__(self, index=-1):
+        super(AttributeList, self).pop(index)
+        self._parent.list_changed(self._module, "delitem", index)
+
+    # other convenience functions that are based on above axioms
+    def append(self, new=None):
+        self.insert(self.__len__(), new)
+
+    def extend(self, iterable=[]):
+        for i in iterable:
+            self.append(i)
+
+    def pop(self, index=-1):
+        # get attributes
+        item = self[index]
+        self.__delitem__(index)
+        return item
+
+    def remove(self, value):
+        self.__delitem__(self.index(value))
+
+    def clear(self):
+        while len(self)>0:
+            self.__delitem__()
+
+    def copy(self):
+        return list(self)
+
+    def sort(self, key=None, reverse=False):
+        sorted = self.copy().sort(key=key, reverse=reverse)
+        for i, v in enumerate(sorted):
+            self[i] = v
+
+    def reverse(self):
+        reversed = self.copy()
+        reversed.reverse()
+        for i, v in enumerate(reversed):
+            self[i] = v
+
+
+class BasePropertyListProperty(BaseProperty):
+    """
+    An arbitrary length list of items that behave like BaseProperty.
+
+    A derived class FloatPropertyListProperty(BasePropertyListProperty)
+    will behave as a list of FloatProperty-like items.
+    """
+    default = []
+    _widget_class = BasePropertyListPropertyWidget
+
+    def __init__(self, *args, **kwargs):
+        """
+        default is the default list
+        default_element: default new element
+        """
+        self.default_element = kwargs.pop('default_element', None)
+        super(BasePropertyListProperty, self).__init__(*args, **kwargs)
+
+    @property
+    def element_cls(self):
+        """ the class of the elements of the list """
+        return super(BasePropertyListProperty, self)
+
+    def validate_and_normalize(self, obj, value):
+        """
+        Converts the value into a list.
+        """
+        return list(value)
+
+    def validate_and_normalize_element(self, obj, val):
+        return self.element_cls.validate_and_normalize(obj, val)
+
+    def get_value(self, obj):
+        if not hasattr(obj, '_' + self.name):
+            # make a new AttributeList, pass to it the instance of obj
+            value = AttributeList(self, obj, self.default)
+            setattr(obj, '_' + self.name, value)
+        return getattr(obj, '_' + self.name)
+
+    def set_value(self, obj, val):
+        current = self.get_value(obj)
+        try:  # block repetitive calls to setup
+            call_setup, self.call_setup = self.call_setup, False
+            # replace the already existing list elements and append new ones
+            for i, v in enumerate(val):
+                try:
+                    current[i] = v
+                except IndexError:
+                    current.append(v)
+            # remove the trailing items
+            while len(current) > len(val):
+                current.pop()
+        finally:
+            self.call_setup = call_setup
+
+    def list_changed(self, module, operation, index, value=None):
+        self.value_updated(module, appendix=[operation, index, value])
+
+
+class FloatAttributeListProperty(BasePropertyListProperty, FloatProperty):
+    pass
+
+class ComplexAttributeListProperty(BasePropertyListProperty, ComplexProperty):
+    pass
+
+
+class FloatListProperty(FloatProperty):
     """
     An arbitrary length list of float numbers.
     """
-    default = [0, 0, 0, 0]
+    default = [0.]
     _widget_class = ListFloatAttributeWidget
 
     def validate_and_normalize(self, obj, value):
@@ -773,23 +1007,25 @@ class ListFloatProperty(BaseProperty):
         """
         if not np.iterable(value):
             value = [value]
-        return [float(val) for val in value]
+        return [self.validate_and_normalize_element(obj, val) for val in value]
+
+    def validate_and_normalize_element(self, obj, val):
+        return super(FloatListProperty, self).validate_and_normalize(obj, val)
 
 
-class ListComplexProperty(BaseProperty):
+class ComplexListProperty(FloatListProperty):
     """
     An arbitrary length list of complex numbers.
     """
     _widget_class = ListComplexAttributeWidget
-    default = [0.]
 
-    def validate_and_normalize(self, obj, value):
-        """
-        Converts the value in a list of complex numbers.
-        """
-        if not np.iterable(value):
-            value = [value]
-        return [complex(val) for val in value]
+    def validate_and_normalize_element(self, obj, val):
+        val = complex(val)
+        re = super(ComplexListProperty, self).validate_and_normalize_element(
+            obj, val.real)
+        im = super(ComplexListProperty, self).validate_and_normalize_element(
+            obj, val.imag)
+        return complex(re, im)
 
 
 class PWMRegister(FloatRegister):
@@ -958,13 +1194,15 @@ class SelectProperty(BaseProperty):
     def validate_and_normalize(self, obj, value):
         options = self.options(obj)
         if not (value in options):
-            msg = "Value %s is not an option for SelectAttribute %s of module %s with options %s"\
+            msg = "Value '%s' is not an option for SelectAttribute %s of " \
+                  "module %s with options %s" \
                   % (value, self.name, obj.name, options)
             if self.ignore_errors:
                 value = self.get_default(obj)
                 logger.warning(msg + ". Picking an arbitrary value %s instead."
                                % str(value))
             else:
+                logger.error(msg)
                 raise ValueError(msg)
         return value
 
@@ -1132,8 +1370,8 @@ class ProxyProperty(BaseProperty):
                     instance._signal_launcher.update_attribute_by_name.emit(
                         self.name, [self._target_to_proxy(instance,
                                                           value[0])])
-                if self.call_setup:
-                    instance.setup()
+                    if self.call_setup:
+                        instance.setup()
             module._signal_launcher.update_attribute_by_name.connect(
                 forward_update_attribute_by_name)
 
@@ -1194,31 +1432,60 @@ class CurveSelectProperty(SelectProperty):
     for the name of this attribute. The property can be set by either passing
     a CurveDB object, or a curve id.
     """
-    def options(self, instance):
-        return OrderedDict([(k, k) for k in (CurveDB.all()) + [-1]])
+    def __init__(self,
+                 no_curve_first=False,
+                 **kwargs):
+        self.no_curve_first = no_curve_first
+        SelectProperty.__init__(self, options=self._default_options, **kwargs)
+
+    def _default_options(self):
+        if self.no_curve_first:
+            return [-1] + CurveDB.all()
+        else:
+            return CurveDB.all() + [-1]
+        #return OrderedDict([(k, k) for k in (CurveDB.all()) + [-1]])
 
     def validate_and_normalize(self, obj, value):
         # returns none or a valid curve corresponding to the given curve or id
-        if not isinstance(value, CurveDB):
-            try:
-                value = int(value)
-                value = CurveDB.get(value)
-            except:
-                value = None
-        return value
-
-    def set_value(self, obj, val):
-        if val is None:
+        if isinstance(value, CurveDB):
+            value = value.pk
+        try:
+            pk = int(value)
+        except:
             pk = -1
-        else:
-            pk = val.pk
+        return pk
+
+    def set_value(self, obj, pk):
         SelectProperty.set_value(self, obj, pk)
-        setattr(obj, '_' + self.name + '_object', val)
+        try:
+            curve = CurveDB.get(pk)
+        except:
+            curve = None
+        setattr(obj, '_' + self.name + '_object', curve)
 
 
 class CurveSelectListProperty(CurveSelectProperty):
-    """ sanme as above, but widget is a list to select from """
+    """ same as above, but widget is a list to select from """
     _widget_class = CurveSelectAttributeWidget
+
+
+class Plotter(BaseProperty):
+    """ property for plotting in the GUI window.
+
+    passing a value, list of values, or a dict of color-value pairs
+    results in plotting the values as a function of time in the GUI
+    """
+    _widget_class = PlotAttributeWidget
+    def __init__(self, legend="value"):
+        self.legend = legend
+        super(Plotter, self).__init__()
+
+
+class DataProperty(BaseProperty):
+    """
+    Property for a dataset (real or complex), that can be plotted.
+    """
+    _widget_class = DataAttributeWidget
 
 
 class CurveProperty(CurveSelectProperty):
@@ -1228,3 +1495,5 @@ class CurveProperty(CurveSelectProperty):
     i.e. selection must be implemented with another CurveSelectProperty.
     """
     _widget_class = CurveAttributeWidget
+
+

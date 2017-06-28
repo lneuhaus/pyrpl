@@ -13,8 +13,9 @@ class PidWidget(ModuleWidget):
     Widget for a single PID.
     """
     def init_gui(self):
-        self.main_layout = QtGui.QVBoxLayout()
-        self.setLayout(self.main_layout)
+        self.init_main_layout(orientation="vertical")
+        #self.main_layout = QtGui.QVBoxLayout()
+        #self.setLayout(self.main_layout)
         self.init_attribute_layout()
         input_filter_widget = self.attribute_widgets["inputfilter"]
         self.attribute_layout.removeWidget(input_filter_widget)
@@ -30,6 +31,5 @@ class PidWidget(ModuleWidget):
 
     def update_ival(self):
         widget = self.attribute_widgets['ival']
-        if self.isVisible(): # avoid unnecessary ssh traffic
-            if not widget.editing():
-                widget.update_widget(self.module.ival)
+        if self.isVisible() and not widget.editing():
+            widget.write_attribute_value_to_widget()

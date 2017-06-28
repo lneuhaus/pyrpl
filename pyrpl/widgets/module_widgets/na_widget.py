@@ -25,10 +25,11 @@ class NaWidget(ModuleWidget):
         """
         Sets up the gui
         """
-        self.main_layout = QtGui.QVBoxLayout()
+        #self.main_layout = QtGui.QVBoxLayout()
+        self.init_main_layout(orientation="vertical")
         self.init_attribute_layout()
         self.button_layout = QtGui.QHBoxLayout()
-        self.setLayout(self.main_layout)
+        #self.setLayout(self.main_layout)
         self.setWindowTitle("NA")
         self.win = pg.GraphicsWindow(title="Magnitude")
 
@@ -89,6 +90,8 @@ class NaWidget(ModuleWidget):
         self.button_layout.setStretchFactor(self.button_continuous, 1)
         self.button_layout.setStretchFactor(self.button_stop, 1)
         self.button_layout.setStretchFactor(self.button_save, 1)
+
+        self.x_log_toggled() # Set the axis in logscale if it has to
         #self.button_layout.setStretchFactor(self.run_avg_widget, 1)
         #self.button_layout.setStretchFactor(self.curve_name_widget, 1)
 

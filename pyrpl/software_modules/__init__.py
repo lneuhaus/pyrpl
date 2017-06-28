@@ -6,6 +6,7 @@ from .pyrpl_config import PyrplConfig
 from .curve_viewer import CurveViewer
 from .lockbox import *
 from .loop import *
+from .software_pid import *
 
 from ..pyrpl_utils import all_subclasses
 

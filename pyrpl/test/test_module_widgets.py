@@ -34,16 +34,16 @@ class TestModuleWidgets(TestPyrpl):
                     to_set = attr.widget.findText(str(option))
                     # it would be a pain to select an element with a QTest
                     attr.widget.setCurrentIndex(to_set)
-                    assert (getattr(self.pyrpl.rp.scope, attr.name) == option)
+                    assert (getattr(self.pyrpl.rp.scope, attr.attribute_name) == option)
             elif isinstance(attr, BoolAttributeWidget):
                 for i in range(2):
                     QTest.mouseClick(attr.widget, Qt.LeftButton)
-                    assert (getattr(self.pyrpl.rp.scope, attr.name)
+                    assert (getattr(self.pyrpl.rp.scope, attr.attribute_name)
                         == (attr.widget.checkState() == 2))
             elif isinstance(attr, NumberAttributeWidget):
                 for i in range(3):
                     attr.widget.stepUp()
-                    assert(abs(getattr(self.pyrpl.rp.scope, attr.name) - \
+                    assert(abs(getattr(self.pyrpl.rp.scope, attr.attribute_name) - \
                                attr.widget.value()) < 0.0001)
 
     def test_asg_gui(self):

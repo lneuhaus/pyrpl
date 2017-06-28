@@ -94,6 +94,9 @@ except:
                     lambda dumper, data: dumper.represent_str(str(data)))
         OrderedDumper.add_representer(np.ndarray,
                     lambda dumper, data: dumper.represent_list(list(data)))
+        # I added the following two lines to make pyrpl compatible with pyinstruments. In principle they can be erased
+        if isinstance(data, dict) and not isinstance(data, OrderedDict):
+            data = OrderedDict(data)
         return yaml.dump(data,
                          stream=stream,
                          Dumper=OrderedDumper,
@@ -466,16 +469,15 @@ class MemoryTree(MemoryBranch):
 
     ##### internal save logic:
 
-    # never reload or save more frequently than _loadsavedeadtime because
-    # this is the principal cause of slowing down the code (typ. 30-200 ms)
-    # for immediate saving, call _save_now, for immediate loading _load_now
-    _loadsavedeadtime = 3
-
     # this structure will hold the data. Must define it here as immutable
     # to overwrite the property _data of MemoryBranch
     _data = None
 
-    def __init__(self, filename=None, source=None):
+    def __init__(self, filename=None, source=None, _loadsavedeadtime=3.0):
+        # never reload or save more frequently than _loadsavedeadtime because
+        # this is the principal cause of slowing down the code (typ. 30-200 ms)
+        # for immediate saving, call _save_now, for immediate loading _load_now
+        self._loadsavedeadtime = _loadsavedeadtime
         # first, make sure filename exists
         self._filename = get_config_file(filename, source)
         if filename is None:  # simulate a config file, only store data in memory
@@ -487,7 +489,7 @@ class MemoryTree(MemoryBranch):
             self._savetimer = QtCore.QTimer()
             self._savetimer.setInterval(self._loadsavedeadtime*1000)
             self._savetimer.setSingleShot(True)
-            self._savetimer.timeout.connect(self._save)
+            self._savetimer.timeout.connect(lambda: self._save(deadtime=0))
         self._load()
         self._save_counter = 0 # cntr for unittest and debug purposes
         # root of the tree is also a MemoryBranch with parent self and
@@ -591,6 +593,13 @@ class MemoryTree(MemoryBranch):
         # make sure no save timer was launched in the meantime
         if hasattr(self, '_savetimer') and self._savetimer.isActive():
             self._savetimer.stop()
+
+    @property
+    def _filename_stripped(self):
+        try:
+            return os.path.split(self._filename)[1].split('.')[0]
+        except:
+            return 'default'
 
 if False:
     class DummyMemoryTree(object):  # obsolete now

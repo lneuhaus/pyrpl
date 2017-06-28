@@ -310,8 +310,9 @@ class OutputSignalWidget(ModuleWidget):
         self.main_props.change_analog_tf()
 
     def init_gui(self):
-        self.main_layout = QtGui.QVBoxLayout()
-        self.setLayout(self.main_layout)
+        #self.main_layout = QtGui.QVBoxLayout()
+        #self.setLayout(self.main_layout)
+        self.init_main_layout(orientation="vertical")
         self.init_attribute_layout()
         for widget in self.attribute_widgets.values():
             self.main_layout.removeWidget(widget)
@@ -393,7 +394,8 @@ class LockboxInputWidget(ModuleWidget):
     A widget to represent a single lockbox input
     """
     def init_gui(self):
-        self.main_layout = QtGui.QVBoxLayout(self)
+        #self.main_layout = QtGui.QVBoxLayout(self)
+        self.init_main_layout(orientation="vertical")
         self.init_attribute_layout()
 
         self.win = pg.GraphicsWindow(title="Expected signal")
@@ -406,35 +408,35 @@ class LockboxInputWidget(ModuleWidget):
         self.button_calibrate = QtGui.QPushButton('Calibrate')
         self.main_layout.addWidget(self.button_calibrate)
         self.button_calibrate.clicked.connect(lambda: self.module.calibrate())
-        self.update_expected_signal()
+        self.input_calibrated()
 
     def hide_lock(self):
         self.curve_slope.setData([], [])
         self.symbol.setData([], [])
         self.plot_item.enableAutoRange(enable=True)
 
-    def show_lock(self, input, variable_value):
-        signal = self.module.expected_signal(variable_value)
-        slope = self.module.expected_slope(variable_value)
-        dx = 1
+    def show_lock(self, stage):
+        setpoint = stage.setpoint
+        signal = self.module.expected_signal(setpoint)
+        slope = self.module.expected_slope(setpoint)
+        dx = self.module.lockbox.is_locked_threshold
         self.plot_item.enableAutoRange(enable=False)
-        self.curve_slope.setData([variable_value - dx, variable_value + dx],
-                                 [signal - slope * dx, signal + slope*dx])
-        self.symbol.setData([variable_value], [signal])
+        self.curve_slope.setData([setpoint-dx, setpoint+dx],
+                                 [signal-slope*dx, signal+slope*dx])
+        self.symbol.setData([setpoint], [signal])
+        self.module._logger.debug("show_lock with sp %f, signal %f",
+                                  setpoint,
+                                  signal)
 
-    def show_graph(self, x, y):
-        """
-        x, y are two 1D arrays.
-        """
-        self.curve.setData(x, y)
-
-    def update_expected_signal(self, input=None):
+    def input_calibrated(self, input=None):
         # if input is None, input associated with this widget is used
         if input is None:
             input = self.module
         y = input.expected_signal(input.plot_range)
-        self.show_graph(input.plot_range, y)
-
+        self.curve.setData(input.plot_range, y)
+        input._logger.debug('Updated widget for input %s to '
+                            'show GUI display of expected signal (min at %f)!',
+                            input.name, input.expected_signal(0))
 
 class InputsWidget(QtGui.QWidget):
     """
@@ -446,36 +448,25 @@ class InputsWidget(QtGui.QWidget):
         self.lb_widget = self.all_sig_widget.lb_widget
         super(InputsWidget, self).__init__(all_sig_widget)
         self.layout = QtGui.QHBoxLayout(self)
-        self.input_widgets = []
+        self.input_widgets = dict()
         #self.layout.addStretch(1)
         for signal in self.lb_widget.module.inputs:
             self.add_input(signal)
         #self.layout.addStretch(1)
 
     def remove_input(self, input):
-        for widget in self.input_widgets:
-            if widget.name == input.name:
-                widget.hide()
-                self.input_widgets.remove(widget)
-                widget.deleteLater()
+        widget = self.input_widgets.pop(input.name)
+        widget.hide()
+        widget.deleteLater()
 
     def add_input(self, input):
         widget = input._create_widget()
-        self.input_widgets.append(widget)
+        self.input_widgets[input.name] = widget
         self.layout.addWidget(widget, stretch=3)
 
-    def update_expected_input_signal(self, input):
-        for widget in self.input_widgets:
-            if widget.name==input.name:
-                widget.update_expected_signal(input)
-
-    def show_lock(self, stage):
-        for widget in self.input_widgets:
-            try:
-                if widget.name==stage.input:
-                    widget.show_lock(stage.input, stage.setpoint)
-            except AttributeError:  # when stage is not a Stage object
-                pass
+    def input_calibrated(self, inputs):
+        for input in inputs:
+            self.input_widgets[input.name].input_calibrated()
 
 
 class PlusTab(QtGui.QWidget):
@@ -571,8 +562,8 @@ class AllSignalsWidget(QtGui.QTabWidget):
             self.get_output_widget_by_name(
                 output.name).update_transfer_function()
 
-    def update_expected_input_signal(self, input):
-        self.inputs_widget.update_expected_input_signal(input)
+    def input_calibrated(self, inputs):
+        self.inputs_widget.input_calibrated(inputs)
 
     def get_output_widget_by_name(self, name):
         for widget in self.output_widgets:
@@ -624,7 +615,8 @@ class LockboxStageWidget(ReducedModuleWidget):
         pass
 
     def init_gui(self):
-        self.main_layout = QtGui.QVBoxLayout(self)
+        #self.main_layout = QtGui.QVBoxLayout(self)
+        self.init_main_layout(orientation="vertical")
         self.init_attribute_layout()
         for name, attr in self.attribute_widgets.items():
             self.attribute_layout.removeWidget(attr)
@@ -675,7 +667,7 @@ class LockboxStageWidget(ReducedModuleWidget):
             self.module.parent.remove(self.module)
 
     def show_lock(self):
-        self.parent().parent().set_button_green(self.button_goto)
+        self.parent().parent()._set_button_green(self.button_goto)
 
 
 class LockboxSequenceWidget(ModuleWidget):
@@ -683,7 +675,8 @@ class LockboxSequenceWidget(ModuleWidget):
     A widget to represent all lockbox stages
     """
     def init_gui(self):
-        self.main_layout = QtGui.QHBoxLayout(self)
+        #self.main_layout = QtGui.QHBoxLayout(self)
+        self.init_main_layout(orientation="horizontal")
         self.init_attribute_layout()
         self.stage_widgets = []
         self.button_add = QtGui.QPushButton('+')
@@ -714,8 +707,8 @@ class LockboxSequenceWidget(ModuleWidget):
         stage = stage[0] # values are passes as list of length 1
         widget = stage._widget
         self.stage_widgets.remove(widget)
-        if self.parent().parent().parent().button_green == widget.button_goto:
-            self.parent().parent().parent().button_green = None
+        if self.parent().parent().parent().parent().button_green == widget.button_goto:
+            self.parent().parent().parent().parent().button_green = None
         widget.hide()
         self.main_layout.removeWidget(widget)
         widget.deleteLater()
@@ -725,6 +718,18 @@ class LockboxSequenceWidget(ModuleWidget):
         for widget in self.stage_widgets:
             widget.set_title(widget.name)
 
+    def show_widget(self):
+        super(LockboxSequenceWidget, self).show_widget()
+        minimumsizehint = self.minimumSizeHint().height() \
+                          + self.scrollarea.horizontalScrollBar().height()
+        self.scrollarea.setMinimumHeight(minimumsizehint)
+
+    def hide_widget(self):
+        super(LockboxSequenceWidget, self).hide_widget()
+        minimumsizehint = self.minimumSizeHint().height() \
+                          + self.scrollarea.horizontalScrollBar().height()
+        self.scrollarea.setMinimumHeight(minimumsizehint)
+
 
 class LockboxWidget(ModuleWidget):
     """
@@ -732,8 +737,7 @@ class LockboxWidget(ModuleWidget):
     """
     def init_gui(self):
         # make standard layout
-        self.main_layout = QtGui.QVBoxLayout()
-        self.setLayout(self.main_layout)  # wasnt here before
+        self.init_main_layout("vertical")
         self.init_attribute_layout()
         # move all custom attributes to the second GUI line (spares place)
         self.custom_attribute_layout = QtGui.QHBoxLayout()
@@ -751,7 +755,7 @@ class LockboxWidget(ModuleWidget):
         self.button_sweep = QtGui.QPushButton("Sweep")
         self.button_calibrate_all = QtGui.QPushButton("Calibrate all inputs")
         self.button_green = self.button_unlock
-        self.set_button_green(self.button_green)
+        self._set_button_green(self.button_green)
         self.attribute_layout.addWidget(self.button_is_locked)
         self.attribute_layout.addWidget(self.button_lock)
         self.attribute_layout.addWidget(self.button_unlock)
@@ -767,9 +771,10 @@ class LockboxWidget(ModuleWidget):
         # Locking sequence widget + hide button
         self.sequence_widget = self.module.sequence._create_widget()
         self.scrollarea = QtGui.QScrollArea()
+        self.sequence_widget.scrollarea = self.scrollarea
         self.scrollarea.setWidget(self.sequence_widget)
         minimumsizehint = self.sequence_widget.minimumSizeHint().height() \
-                         + self.scrollarea.horizontalScrollBar().height()
+                          + self.scrollarea.horizontalScrollBar().height()
         self.scrollarea.setMinimumHeight(minimumsizehint)
         #self.scrollarea.setVerticalScrollBarPolicy(
         #    QtCore.Qt.ScrollBarAlwaysOff)
@@ -793,8 +798,18 @@ class LockboxWidget(ModuleWidget):
         self.main_layout.addWidget(self.button_hide2)
         self.main_layout.addWidget(self.all_sig_widget)
 
+        # optional
+        for name in self.module._module_attributes:
+            module = getattr(self.module, name)
+            if len(module._gui_attributes) > 0:
+                try:
+                    widget = module._create_widget()
+                    self.main_layout.addWidget(widget)
+                except:
+                    self.module._logger.warning("Problem while creating lockbux submodule widget for %s.", name)
+
         self.main_layout.addStretch(5)
-        self.setLayout(self.main_layout)
+        #self.setLayout(self.main_layout)
 
     def delete_widget(self):
         self.module = None  # allow module to be deleted
@@ -833,21 +848,6 @@ class LockboxWidget(ModuleWidget):
             self.button_hide2.setText('show' + current[4:])
             self.all_sig_widget.hide()
 
-    def input_calibrated(self, inputs):
-        """
-        SLOT: don't change name unless you know what you are doing
-        updates the plot of the input expected signal for input inputs[0]
-        """
-        for input in inputs:
-            self.all_sig_widget.update_expected_input_signal(input)
-
-    def update_transfer_function(self, outputs):
-        """
-        SLOT: don't change name unless you know what you are doing
-        updates the plot of the transfer function for output outputs[0]
-        """
-        self.all_sig_widget.update_transfer_function(outputs[0])
-
     ## Input Management
     def add_input(self, inputs):
         """
@@ -885,53 +885,57 @@ class LockboxWidget(ModuleWidget):
         """
         self.all_sig_widget.remove_output(outputs[0])
 
-    def state_changed(self):
+    def input_calibrated(self, inputs):
+        """
+        SLOT: don't change name unless you know what you are doing
+        updates the plot of the input expected signal for input inputs[0]
+        """
+        self.all_sig_widget.inputs_widget.input_calibrated(inputs)
+
+    def update_transfer_function(self, outputs):
+        """
+        SLOT: don't change name unless you know what you are doing
+        updates the plot of the transfer function for output outputs[0]
+        """
+        self.all_sig_widget.update_transfer_function(outputs[0])
+
+    def state_changed(self, statelist):
         """
         SLOT: don't change name unless you know what you are doing
         Basically painting some button in green is required
         """
-        stage = self.module.current_stage
+        stage = self.module._current_stage(state=statelist[0])
         if stage=='unlock':
-            self.set_button_green(self.button_unlock)
-            self.hide_lock_points()
+            self._set_button_green(self.button_unlock)
+            self.hide_lock()
         elif stage=='sweep':
-            self.hide_lock_points()
-            self.set_button_green(self.button_sweep)
+            self.hide_lock()
+            self._set_button_green(self.button_sweep)
         else:
-            try:
-                self.set_button_green(stage._widget.button_goto)
-            except AttributeError:  # if stage has not widget (final_stage)
-                self.set_button_green(None)
-            self.show_lock(stage)
+            if stage != self.module.final_stage:
+                self._set_button_green(stage._widget.button_goto)
+            else:
+                self._set_button_green(self.module.sequence[-1]._widget.button_goto, color='darkGreen')
+            for input, widget in self.all_sig_widget.inputs_widget.input_widgets.items():
+                if input == stage.input:
+                    widget.show_lock(stage)
+                else:
+                    widget.hide_lock()
         self.update_lockstatus()
 
-    def set_button_green(self, button):
+    def hide_lock(self):
+        for input, widget in self.all_sig_widget.inputs_widget.input_widgets.items():
+            widget.hide_lock()
+
+    def _set_button_green(self, button, color='green'):
         """
         Only one colored button can exist at a time
         """
         if self.button_green is not None:
             self.button_green.setStyleSheet("")
         if button is not None:
-            button.setStyleSheet("background-color:green")
+            button.setStyleSheet("background-color:%s"%color)
         self.button_green = button
-
-    def show_lock(self, stage):
-        """
-        The button of the stage widget becomes green, the expected signal graph of input show the lock point and slope.
-        """
-        self.hide_lock_points()
-        if isinstance(stage, int):
-            stage = self.module.sequence[stage]
-        elif stage == "final_stage":
-            stage = self.module.final_stage
-        self.all_sig_widget.show_lock(stage)
-
-    def hide_lock_points(self):
-        """
-        make sure all input graphs are not displaying any setpoints and slopes
-        """
-        for input_widget in self.all_sig_widget.inputs_widget.input_widgets:
-            input_widget.hide_lock()
 
     def update_lockstatus(self, islockedlist=[None]):
         islocked = islockedlist[0]

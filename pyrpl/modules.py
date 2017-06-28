@@ -32,6 +32,8 @@ class SignalLauncher(QtCore.QObject):
     # the new_value of the attribute
     change_options = QtCore.pyqtSignal(str, list) # name of the
     # SelectProperty,  list of new options
+    refresh_filter_options = QtCore.pyqtSignal(str) # name of the
+    # FilterProperty,  new options are contained in self.valid_frequencies()
     change_ownership = QtCore.pyqtSignal() # The owner of the module  has
     # changed
 
@@ -143,10 +145,10 @@ class ModuleMetaClass(type):
                             "Trying to load attribute %s of module %s that "
                             "are invalid setup_attributes.",
                             sorted(kwds.keys())[0], self.name)
+                    if hasattr(self, '_setup'):
+                        self._setup()
                 finally:
                     self._setup_ongoing = False
-                if hasattr(self, '_setup'):
-                    self._setup()
             # b. place the new setup function in the module class
             self.setup = setup
         # 3. if setup has no docstring, then make one
@@ -177,6 +179,37 @@ class ModuleMetaClass(type):
         # ... python 3
         elif hasattr(setup, '__doc__'):
             setup.__doc__ = doc
+
+
+class DoSetup(object):
+    """
+    A context manager that allows to nicely write Module setup functions.
+
+    Usage example in Module._setup():
+    def _setup(self):
+        # _setup_ongoing is False by default
+        assert self._setup_ongoing == False
+        with self.do_setup:
+            # now _setup_ongoing is True
+            assert self._setup_ongoing == True
+            # do stuff that might fail
+            raise BaseException()
+        # even if _setup fails, _setup_ongoing is False afterwards or in
+        # the next call to _setup()
+        assert self._setup_ongoing == False
+    """
+    def __init__(self, parent):
+        self.parent = parent
+
+    def __enter__(self):
+        self.parent._setup_ongoing = True
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.parent._setup_ongoing = False
+        if exc_type is not None:
+            self.parent._logger.warning("Exception %s was raised while "
+                                        "_setup_ongoing was True: %s, %s",
+                                        exc_type, exc_val, exc_tb)
 
 
 class Module(with_metaclass(ModuleMetaClass, object)):
@@ -251,10 +284,6 @@ class Module(with_metaclass(ModuleMetaClass, object)):
 
     methods to implement in derived class:
     --------------------------------------
-     - _init_module(): initializes the module at startup. During this
-     initialization, attributes can be initialized without overwriting config
-     file values. Practical to use instead of __init__ to avoid calling
-     super().__init__()
      - _setup(): sets the module ready for acquisition/output with the
      current attribute's values. The metaclass of the module autogenerates a
      function like this:
@@ -306,6 +335,7 @@ class Module(with_metaclass(ModuleMetaClass, object)):
         """
         if name is not None:
             self.name = name
+        self.do_setup = DoSetup(self)  # ContextManager for _setup_ongoing
         self._flag_autosave_active = True # I would have prefered to use
         # __autosave_active, but this gets automatically name mangled:
         # see http://stackoverflow.com/questions/1301346/what-is-the-meaning-of-a-single-and-a-double-underscore-before-an-object-name
@@ -319,20 +349,22 @@ class Module(with_metaclass(ModuleMetaClass, object)):
         for submodule in self._module_attributes:
             getattr(self, submodule)
         # custom module initialization hook
-        self._init_module()
+        # self._init_module()
         # enable autosave and load last state from config file
         self._autosave_active = True
         # Only top level modules should call _load_setup_attributes() since
         # this call propagates through all child modules
-        if not isinstance(self.parent, Module):
-            # attributes are loaded but _setup() is not called
-            self._load_setup_attributes()
+        ##if not isinstance(self.parent, Module):
+        ##    # attributes are loaded but _setup() is not called
+        ##   self._load_setup_attributes()
 
     def _init_module(self):
         """
         To implement in child class if needed.
         """
-        pass
+        self._logger.warning("Function _init_module is obsolete and will be "
+                             "removed soon. Please migrate the corresponding "
+                             "code to __init__.")
 
     @property
     def _autosave_active(self):
@@ -514,8 +546,8 @@ class Module(with_metaclass(ModuleMetaClass, object)):
         settings)
         """
         curve = CurveDB.create(x_values,
-                                     y_values,
-                                     **attributes)
+                               y_values,
+                               **attributes)
         return curve
 
     def free(self):
@@ -559,18 +591,12 @@ class Module(with_metaclass(ModuleMetaClass, object)):
             self._logger.warning("Module %s of type %s is trying to create a widget, but no widget_class is defined!",
                                  self.name, type(self))
             return None
-        #_setup_ongoing_bkp = self._setup_ongoing
-        #self._setup_ongoing = True # otherwise, saved values will be
-        # overwritten by default gui values
-        #autosave_bkp = self._autosave_active
-        #self._autosave_active = False  # otherwise, default gui values will
-        #  be saved
         try:
             widget = self._widget_class(self.name, self)
         finally:
             pass
-         #   self._setup_ongoing = _setup_ongoing_bkp
-         #   self._autosave_active = autosave_bkp
+        self._module_widget = widget # For debugging purpose only (all
+        # communications to the widget should happen via signals)
         return widget
 
     @property
@@ -602,6 +628,9 @@ class Module(with_metaclass(ModuleMetaClass, object)):
             # memory.py, but on the other hand we are not supposed to use
             # anything but the public API of memory.py
         self._signal_launcher.change_ownership.emit()
+
+    def _ownership_changed(self, old, new):
+        pass
 
     def __enter__(self):
         """

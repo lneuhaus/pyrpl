@@ -185,34 +185,42 @@ class HighFinesseInput(InputSignal):
     Scope states corresponding to 1 and 2 are "sweep" and "sweep_zoom"
     """
     def sweep_acquire_zoom(self, threshold, input2=None):
-        self.lockbox.unlock()  # turn off sweep
-        with self.pyrpl.scopes.pop(self.name) as scope:
-            scope.load_state("autosweep")
-            if "sweep_zoom" in scope.states:
-                scope.load_state("sweep_zoom")
-            else:
-                # zoom by finesse/20
-                scope.duration /= (self.lockbox.finesse/20.0)
-                scope.trigger_source = "ch1_negative_edge"
-                scope.hysteresis_ch1 = 0.002
-                scope.trigger_delay = 0.0
-            scope.setup(threshold_ch1=threshold,
-                        input1=self.signal())
-            if input2 is not None:
-                scope.input2 = input2
-            scope.save_state("autosweep_zoom")  # save state for debugging or modification
-            self._logger.debug("calibration threshold: %f", threshold)
-            curves = scope.curve_async()
-            self.lockbox.sweep()  # start sweep only after arming the scope
-            # give some extra (10x) timeout time in case the trigger is missed
-            curve1, curve2 = curves.await_result(timeout=10./self.lockbox.asg.frequency+scope.duration)
-            times = scope.times
-            self.calibration_data._asg_phase = self.lockbox.asg.scopetriggerphase
-            return curve1, curve2, times
+        try:
+            with self.pyrpl.scopes.pop(self.name) as scope:
+                self.lockbox.unlock()  # turn off sweep
+                scope.load_state("autosweep")
+                if "sweep_zoom" in scope.states:
+                    scope.load_state("sweep_zoom")
+                else:
+                    # zoom by finesse/20
+                    scope.duration /= (self.lockbox.finesse/20.0)
+                    scope.trigger_source = "ch1_negative_edge"
+                    scope.hysteresis = 0.002
+                    scope.trigger_delay = 0.0
+                scope.setup(threshold=threshold,
+                            input1=self.signal())
+                if input2 is not None:
+                    scope.input2 = input2
+                scope.save_state("autosweep_zoom")  # save state for debugging or modification
+                self._logger.debug("calibration threshold: %f", threshold)
+                curves = scope.curve_async()
+                self.lockbox._sweep()  # start sweep only after arming the scope
+                # give some extra (10x) timeout time in case the trigger is missed
+                curve1, curve2 = curves.await_result(timeout=10./self.lockbox.asg.frequency+scope.duration)
+                times = scope.times
+                self.calibration_data._asg_phase = self.lockbox.asg.scopetriggerphase
+                return curve1, curve2, times
+        except InsufficientResourceError:
+            # scope is blocked
+            self._logger.warning("No free scopes left for sweep_acquire_zoom. ")
+            return None, None, None
 
     def calibrate(self, autosave=False):
         # take a first coarse calibration for trigger threshold estimation
         curve0, _ = super(HighFinesseInput, self).sweep_acquire()
+        if curve0 is None:
+            self._logger.warning('Aborting calibration because no scope is available...')
+            return None
         curve1, _, times = self.sweep_acquire_zoom(
             threshold=self.get_threshold(curve0))
         curve1 -= self.calibration_data._analog_offset
@@ -236,11 +244,25 @@ class HighFinesseInput(InputSignal):
         else:
             return None
 
-    def get_threshold(self, curve):
+    def get_threshold_empirical(self, curve):
         """ returns a reasonable scope threshold for the interesting part of this curve """
+        calibration_params = self.calibration_data.setup_attributes
         self.calibration_data.get_stats_from_curve(curve)
         threshold = self.expected_signal(1.0*self.lockbox._unit_in_setpoint_unit('bandwidth'))
+        self.calibration_data.setup_attributes = calibration_params
         return threshold
+
+    def get_threshold_theoretical(self, curve):
+        """ returns a reasonable scope threshold for the interesting part of this curve """
+        calibration_params = self.calibration_data.setup_attributes
+        self.calibration_data.get_stats_from_curve(curve)
+        eta = max(0.0, min(self.lockbox.eta, 1.0))
+        self.calibration_data.min = (1.0-eta) * self.calibration_data.max
+        threshold = self.expected_signal(0.5*self.lockbox._unit_in_setpoint_unit('bandwidth'))
+        self.calibration_data.setup_attributes = calibration_params
+        return threshold
+
+    get_threshold = get_threshold_empirical
 
 
 class HighFinesseReflection(HighFinesseInput, FPReflection):
@@ -259,6 +281,9 @@ class HighFinesseAnalogPdh(HighFinesseInput, FPAnalogPdh):
         trigger_signal = self.lockbox.inputs[trigger_signal]
         # take a first coarse calibration for trigger threshold estimation
         curve0, _ = trigger_signal.sweep_acquire()
+        if curve0 is None:
+            self._logger.warning('Aborting calibration because no scope is available...')
+            return None
         # take the zoomed trace by triggering on the trigger_signal
         curve1, curve2, times = trigger_signal.sweep_acquire_zoom(
             threshold=trigger_signal.get_threshold(curve0),

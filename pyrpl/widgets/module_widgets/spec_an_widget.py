@@ -8,6 +8,7 @@ import pyqtgraph as pg
 from time import time
 import numpy as np
 from .base_module_widget import ModuleWidget
+from ..attribute_widgets import DataWidget
 from ...errors import NotReadyError
 
 APP = QtGui.QApplication.instance()
@@ -36,7 +37,7 @@ class BasebandAttributesWidget(QtGui.QWidget):
 
         self.v_layout3 = QtGui.QVBoxLayout()
         self.h_layout.addLayout(self.v_layout3)
-        for name in ["display_cross_amplitude", "display_cross_phase"]:
+        for name in ["display_cross_amplitude"]:#, "display_cross_phase"]:
             widget = aws[name]
             specan_widget.attribute_layout.removeWidget(widget)
             self.v_layout3.addWidget(widget)
@@ -91,8 +92,10 @@ class SpecAnWidget(ModuleWidget):
         """
         Sets up the gui.
         """
+        self.ch_col = ('magenta', 'blue', 'green')
         self.last_data = None
-        self.main_layout = QtGui.QVBoxLayout()
+        self.init_main_layout(orientation="vertical")
+        #self.main_layout = QtGui.QVBoxLayout()
         self.module.__dict__['curve_name'] = 'pyrpl spectrum'
         self.init_attribute_layout()
 
@@ -106,19 +109,23 @@ class SpecAnWidget(ModuleWidget):
         self.attribute_layout.addWidget(self.baseband_widget)
 
 
-
         self.button_layout = QtGui.QHBoxLayout()
         self.setLayout(self.main_layout)
         # self.setWindowTitle("Spec. An.")
-        self.win = pg.GraphicsWindow(title="PSD")
-        self.main_layout.addWidget(self.win)
+        #self.win = pg.GraphicsWindow(title="PSD")
+        #self.main_layout.addWidget(self.win)
 
-        self.plot_item = self.win.addPlot(title="PSD")
-        self.curve = self.plot_item.plot(pen='m')
+        self.win2 = DataWidget(title='Spectrum')
+        self.main_layout.addWidget(self.win2)
 
-        self.curve2 = self.plot_item.plot(pen='b') # input2 spectrum in
+        #self.plot_item = self.win.addPlot(title="PSD")
+        #self.curve = self.plot_item.plot(pen=self.ch_col[0][0])
+
+        #self.curve2 = self.plot_item.plot(pen=self.ch_col[1][0]) # input2
+        # spectrum in
         # baseband
-        self.curve_cross = self.plot_item.plot(pen='g') # curve for
+        #self.curve_cross = self.plot_item.plot(pen=self.ch_col[2][0]) #
+        # curve for
 
         self.button_single = QtGui.QPushButton("Run single")
         self.button_single.clicked.connect(self.run_single_clicked)
@@ -144,6 +151,13 @@ class SpecAnWidget(ModuleWidget):
         self.button_layout.addWidget(self.button_save)
         self.main_layout.addLayout(self.button_layout)
 
+
+        aws['display_input1_baseband'].setStyleSheet("color: %s" %
+                                                   self.ch_col[0])
+        aws['display_input2_baseband'].setStyleSheet("color: %s" %
+                                                   self.ch_col[1])
+        aws['display_cross_amplitude'].setStyleSheet("color: %s" %
+                                                   self.ch_col[2])
         # Not sure why the stretch factors in button_layout are not good by
         # default...
         self.button_layout.setStretchFactor(self.button_single, 1)
@@ -231,6 +245,34 @@ class SpecAnWidget(ModuleWidget):
             self.module.single_async()
 
     def display_curve(self, datas):
+        if datas is None:
+            return
+        x, y = datas
+
+        arr = np.array((datas[0], datas[1][1]))
+        self.win2._set_widget_value(datas)
+
+        self.last_data = datas
+        freqs = datas[0]
+        to_units = lambda x:self.module.data_to_display_unit(x,
+                                                  self.module._run_future.rbw)
+        if not self.module.baseband: # iq mode, only 1 curve to display
+            self.win2._set_widget_value((freqs, to_units(datas[1])))
+        else: # baseband mode: data is (spec1, spec2, real(cross), imag(cross))
+            spec1, spec2, cross_r, cross_i = datas[1]
+            if not self.module.display_input1_baseband:
+                spec1 = np.array([np.nan]*len(x))
+            if not self.module.display_input2_baseband:
+                spec2 = np.array([np.nan]*len(x))
+            if not self.module.display_cross_amplitude:
+                cross = np.array([np.nan]*len(x))
+            else:
+                cross = cross_r + 1j*cross_i
+            data = (spec1, spec2, cross)
+            self.win2._set_widget_value((freqs, data),
+                                        transform_magnitude=to_units)
+
+    def display_curve_old(self, datas):
         """
         Displays all active channels on the graph.
         """

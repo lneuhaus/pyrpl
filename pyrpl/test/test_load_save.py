@@ -2,6 +2,7 @@ import logging
 logger = logging.getLogger(name=__name__)
 from ..attributes import *
 from ..software_modules.module_managers import ModuleManager
+from ..software_modules.spectrum_analyzer import SpectrumAnalyzer
 from .test_base import TestPyrpl
 from ..software_modules.lockbox.lockbox import Lockbox
 
@@ -22,7 +23,7 @@ class TestLoadSave(TestPyrpl):
     def scramble_values(self,
                         mod,
                         str_val='foo',
-                        num_val=12,
+                        num_val=12.0,
                         bool_val=True,
                         list_val=[1912],
                         option_index=0,
@@ -47,11 +48,16 @@ class TestLoadSave(TestPyrpl):
                 val += num_val
             if isinstance(mod, list):
                 val = list_val
+            if attr == 'center':  # iq mode not supported yet for specan
+                val = 0
+            if attr=='baseband':  # iq mode not supported yet for specan
+                val = True
             try:
                 setattr(mod, attr, val)
             except ValueError as e:
                 if not str(e)=="Nonzero center frequency not allowed in baseband mode.":
                     raise
+
             val = getattr(mod, attr)
             attr_names.append(attr)
             attr_vals.append(val)
@@ -59,10 +65,12 @@ class TestLoadSave(TestPyrpl):
 
     def assert_load_save_module(self, mod):
         if not isinstance(mod, ModuleManager):
+            if isinstance(mod, SpectrumAnalyzer):
+                mod.setup(baseband=True) # iq mod not supported yet
             attr_names, attr_vals = self.scramble_values(
-                                 mod, 'foo', 12, True, [1923], 0, 5)
+                                 mod, 'foo', 12.1, True, [1923], 0, 5)
             mod.save_state('test_save')
-            self.scramble_values(mod, 'bar', 13, False,  [15], 1, 7)
+            self.scramble_values(mod, 'bar', 13.2, False,  [15], 1, 7)
             mod.load_state('test_save')
             for attr, attr_val in zip(mod._setup_attributes, attr_vals):
                 if attr == 'default_sweep_output' or attr == 'baseband':
@@ -72,4 +80,4 @@ class TestLoadSave(TestPyrpl):
                 elif attr == 'sequence':
                     assert len(getattr(mod, attr)) == len(attr_val), "sequence"
                 else:
-                    assert getattr(mod, attr)==attr_val, (mod, attr, attr_val)
+                    assert getattr(mod, attr)==attr_val, (mod, attr, attr_val, getattr(mod, attr))

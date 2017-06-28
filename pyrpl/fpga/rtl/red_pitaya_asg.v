@@ -368,61 +368,17 @@ end else begin
    endcase
 end
 
-/*
-#58: Random noise generator
-open
-lneuhaus
-
-Original suggestion:
-x_{n+1} = (a x_n + b) modulo c
-
-    a=16807
-    b= plus ou moins n'importe quoi
-    c=2^31
-
-https://en.wikipedia.org/wiki/Lehmer_random_number_generator:
-
-In 1988, Park and Miller2 suggested a Lehmer RNG with particular parameters
-n = 231 − 1 = 2,147,483,647 (a Mersenne prime M31)
-Given the dynamic nature of the area, it is difficult for nonspecialists to
-make decisions about what generator to use. "Give me something I can understand,
-implement and port... it needn't be state-of-the-art, just make sure it's
-reasonably good and efficient." Our article and the associated minimal standard
-generator was an attempt to respond to this request. Five years later, we see
-no need to alter our response other than to suggest the use of the multiplier
-a = 48271 in place of 16807.
-
-Therefore:
-x_{n+1} = (a x_n + b) modulo c
-a=48271
-b= 2*18 1234 + 4 (or user override)
-c=2^31-1
-asg_phase_register <= 2*x_n (32 bits) in fpga
-
-asg.scale = 1.0
-http://docs.scipy.org/doc/numpy/reference/generated/numpy.random.normal.html
-asg.data = np.random.normal(loc=0.0, scale=sigma_in_volt, size=data_length)
-*/
-
-reg [31-1:0] xn;
-//wire [31-1:0] xn_wire;
-reg [31-1:0] b;
-reg [16-1:0] a;
-
-always @(posedge dac_clk_i)
-if (dac_rstn_i == 1'b0) begin
-   a <= 16'd48271 ;      // recommended by Park and Miller
-   b <= 31'd323485697;   // whatever
-   xn <= 31'd901448241 ; // whatever
-//end else begin
-//   xn <= ((&xn_wire)==1'b1) ? 31'd0 : xn_wire; // = modulo 2**31-1
-end
-
-//assign xn_wire = a * xn + b;
-assign rand_pnt = xn[31-1:31-RSZ];
-//rand_pnt will carry values between 0 and 2**(RSZ)-2
-
 // forward the current phase of asg1;
 assign asg1phase_o = buf_a_rpnt;
+
+
+
+//red_pitaya_prng_lehmer
+red_pitaya_prng_xor  #(.OUTBITS (RSZ)) prng (
+  .clk_i       (dac_clk_i  ),  // dac clock
+  .reset_i     (dac_rstn_i ),  // dac reset - active low
+  .signal_o    (rand_pnt)
+);
+
 
 endmodule

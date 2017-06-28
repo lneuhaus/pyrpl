@@ -1,8 +1,9 @@
 from . import iir_theory #, bodefit
 from .. import FilterModule
-from ...attributes import IntRegister, BoolRegister, ListComplexProperty, \
-    FloatProperty, StringProperty, ListFloatProperty, CurveSelectProperty, \
-    GainRegister
+from ...attributes import IntRegister, BoolRegister, ComplexListProperty, \
+    FloatProperty, StringProperty, FloatListProperty, CurveSelectProperty, \
+    GainRegister, ConstantIntRegister, FloatAttributeListProperty, \
+    ComplexAttributeListProperty
 from ...widgets.module_widgets import IirWidget
 from ...modules import SignalLauncher
 
@@ -26,7 +27,7 @@ class OverflowProperty(StringProperty):
         elif bool(value & 0b0111111):
             text = 'internal saturation'
         else:
-            text = 'unknown overflow'
+            text = 'unknown overflow %d'%value
         return text
 
     def validate_and_normalize(self, obj, value):
@@ -38,23 +39,61 @@ class OverflowProperty(StringProperty):
         self.launch_signal(obj, value)
 
 
-class IirListProperty(ListComplexProperty):
+# The properties zeros/poles are the master properties to store zeros or
+# poles. For user interface reasons, we divide these lists into its real and
+# complex parts (slave properties). IirListProperty is for zeros/poles,
+# IirFloatListProperty and IirComplexListProperty are for the real/complex
+# parts. These custom classes are intended to keep the master and slave in
+# synchrony.
+class IirListProperty(ComplexListProperty):
+    """
+    master property to store zeros and poles
+    """
     def get_value(self, obj):
+        """
+        the master's getter collects its value from the real and complex list
+        """
         return list(getattr(obj, 'complex_'+self.name) +
                     getattr(obj, 'real_'+self.name))
 
     def set_value(self, obj, value):
+        """
+        the master's setter writes its value to the slave lists
+        """
         real, complex = [], []
         for v in value:
-            if np.imag(v)==0:
-                real.append(v)
+            # separate real from complex values
+            if np.imag(v) == 0:
+                real.append(v.real)
             else:
                 complex.append(v)
         # avoid calling setup twice
-        obj._setup_ongoing = True
-        setattr(obj, 'complex_' + self.name, real)
-        obj._setup_ongoing = False
-        setattr(obj, 'real_' + self.name, real)
+        with obj.do_setup:
+            setattr(obj, 'complex_' + self.name, complex)
+            setattr(obj, 'real_' + self.name, real)
+        # this property should have call_setup=True, such that obj._setup()
+        # is called automatically after this function
+
+
+class IirFloatListProperty(FloatAttributeListProperty):
+    """
+    slave property to store real part of zeros and poles
+    """
+    def value_updated(self, obj, value=None, appendix=[]):
+        super(IirFloatListProperty, self).value_updated(obj,
+                                                        value=value,
+                                                        appendix=appendix)
+        pole_or_zero = self.name.split('_')[1]  # 2nd part of name is pole/zero
+        # forward value_updated to master
+        getattr(obj.__class__, pole_or_zero).value_updated(obj)
+
+
+class IirComplexListProperty(IirFloatListProperty,
+                             ComplexAttributeListProperty):
+    """
+    slave property to store complex part of zeros and poles
+    """
+    pass
 
 
 class IIR(FilterModule):
@@ -75,11 +114,11 @@ class IIR(FilterModule):
     # the fpga-implemented notation (following Oppenheim and Schaefer: DSP)
     _invert = True
 
-    _IIRBITS = IntRegister(0x200)
+    _IIRBITS = ConstantIntRegister(0x200)
 
-    _IIRSHIFT = IntRegister(0x204)
+    _IIRSHIFT = ConstantIntRegister(0x204)
 
-    _IIRSTAGES = IntRegister(0x208)
+    _IIRSTAGES = ConstantIntRegister(0x208)
 
     _widget_class = IirWidget
 
@@ -91,7 +130,8 @@ class IIR(FilterModule):
                          "inputfilter",
                          "gain",
                          "on",
-                         "bypass"]
+                         "bypass",
+                         "data_curve"]
     _gui_attributes = ["input",
                        "loops",
                        "complex_zeros",
@@ -125,13 +165,24 @@ class IIR(FilterModule):
                           doc="IIR is bypassed",
                           default=False)  # fpga register name: shortcut
 
-    complex_zeros = ListComplexProperty(default=[], call_setup=True)
-    complex_poles = ListComplexProperty(default=[], call_setup=True)
-    real_zeros = ListComplexProperty(default=[], call_setup=True)
-    real_poles = ListComplexProperty(default=[], call_setup=True)
+    # principal storage of the pole/zero data, _setup is called through
+    # zeros/poles defined just below
+    complex_poles = IirComplexListProperty(default=[],
+                                           default_element=-10000.0,
+                                           log_increment=True)
+    complex_zeros = IirComplexListProperty(default=[],
+                                           default_element=-10000.0,
+                                           log_increment=True)
+    real_poles = IirFloatListProperty(default=[],
+                                      default_element=-10000.0,
+                                      log_increment=True)
+    real_zeros = IirFloatListProperty(default=[],
+                                      default_element=-10000.0,
+                                      log_increment=True)
 
-    zeros = IirListProperty()
-    poles = IirListProperty()
+    # convenience properties to manipulate combined list
+    zeros = IirListProperty(call_setup=True)
+    poles = IirListProperty(call_setup=True)
 
     gain = FloatProperty(min=-1e20, max=1e20, default=1.0, call_setup=True)
 
@@ -147,12 +198,9 @@ class IIR(FilterModule):
 
     data_curve = CurveSelectProperty(doc="NA curve id to use as a basis for "
                                          "the graphical filter design",
+                                     no_curve_first=True,
                                      call_setup=True,
                                      default=-1)
-
-    def _init_module(self):
-        #self._logger.setLevel(30)
-        pass
 
     @property
     def output_saturation(self):
@@ -229,6 +277,10 @@ class IIR(FilterModule):
         bitlength = self._IIRBITS
         shift = self._IIRSHIFT
         stages = self._IIRSTAGES
+        if v is None:
+            v = []
+            self._logger.warning("Iir coefficient was set to None. "
+                                 "and converted to an empty list. ")
         v = np.array([vv for vv in v], dtype=np.float64)
         l = len(v)
         if l > stages:
@@ -290,10 +342,10 @@ class IIR(FilterModule):
         coefficients   data to be passed to iir.bodeplot to plot the
                        realized transfer function
         """
-        try:
-            # block recursive calls to _setup
-            self._setup_ongoing = True
-
+        #debugging here...
+        #self._signal_launcher.update_plot.emit()
+        #return
+        with self.do_setup:
             if self._IIRSTAGES == 0:
                 raise Exception("Error: This FPGA bitfile does not support IIR "
                                 "filters! Please use an IIR version!")
@@ -357,8 +409,6 @@ class IIR(FilterModule):
                 self._logger.info("IIR Overflow pattern: %s",
                                   bin(self.overflow_bitfield))
             self._signal_launcher.update_plot.emit()
-        finally:
-            self._setup_ongoing = False
 
 
     def setup_old(

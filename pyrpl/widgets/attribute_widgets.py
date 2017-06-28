@@ -1,6 +1,8 @@
 """
 AttributeWidgets' hierarchy is parallel to Attribute' hierarchy
-An instance attr of Attribute can create its AttributeWidget counterPart by calling attr.create_widget(name, parent)
+
+An instance attr of Attribute can create its AttributeWidget counterPart
+by calling attr.create_widget(name, parent).
 """
 
 from pyqtgraph.Qt import QtGui, QtCore
@@ -9,525 +11,199 @@ import time
 import functools
 import pyqtgraph as pg
 from ..pyrpl_utils import Bijection, recursive_setattr, recursive_getattr
+from .. import pyrpl_utils
 from ..curvedb import CurveDB
-
-import sys
-if sys.version_info < (3,):
-    integer_types = (int, long)
-else:
-    integer_types = (int,)
-
-APP = QtGui.QApplication.instance()
-if APP is None:
-    APP = QtGui.QApplication(["redpitaya_gui"])
+from .spinbox import *
 
 
-class MyNumberSpinBox(QtGui.QWidget, object):
+# TODO: try to remove widget_name from here (again)
+class BaseAttributeWidget(QtGui.QWidget, object):
     """
-    The button can be either in log_increment mode, or linear increment.
-       - In log_increment: the halflife_seconds value determines how long it takes, when the user stays clicked
-         on the "*"/"/" buttons to change the value by a factor 2. Since the underlying register is assumed to be
-         represented by an int, its values are separated by a minimal separation, called "increment". The time to
-         wait before refreshing the value is adjusted automatically so that the log behavior is still correct, even
-         when the value becomes comparable to the increment.
-       - In linear increment, the value is immediately incremented by the increment, then, nothing happens during
-        a time given by timer_initial_latency. Only after that, is the value incremented of "increment" every
-        timer_min_interval.
-    """
-    value_changed = QtCore.pyqtSignal()
-    timer_min_interval = 20 # don't go below 20 ms
-    timer_initial_latency = 500 # 100 ms before starting to update continuously.
+    Base class for attribute widgets.
 
-    def __init__(self, label, min=-1, max=1, increment=2.**(-13),
-                 log_increment=False, halflife_seconds=1., per_second=0.2):
-        """
-        :param label: label of the button
-        :param min: min value
-        :param max: max value
-        :param increment: increment of the underlying register
-        :param log_increment: boolean: when buttons up/down are pressed, should the value change linearly or log
-        :param halflife_seconds: when button is in log, how long to change the value by a factor 2.
-        :param per_second: when button is in lin, how long to change the value by 1 unit.
-        """
-        super(MyNumberSpinBox, self).__init__(None)
-        self.min = min
-        self.max = max
-        self.increment = increment
-        self.update_tooltip()
-        self._val = 0
-        self.halflife_seconds = halflife_seconds
-        self.log_increment = log_increment
-        self.per_second = per_second
+    The widget usually contains a label and a subwidget (property 'widget'
+    of the instance), corresponding to the associated attribute. The subwidget
+    is the created by the function make_widget.
 
-        self.lay = QtGui.QHBoxLayout()
-        self.lay.setContentsMargins(0,0,0,0)
-        self.lay.setSpacing(0)
-        self.setLayout(self.lay)
+    AttributeWidgets are always contained in a ModuleWidget and should be
+    fully managed by this ModuleWidget.
 
-        if label is not None:
-            self.label = QtGui.QLabel(label)
-            self.lay.addWidget(self.label)
-        self.increment = increment
+    If widget_name=="", then only the subwidget is shown without label.
 
-        if self.log_increment:
-            self.up = QtGui.QPushButton('*')
-            self.down = QtGui.QPushButton('/')
-        else:
-            self.up = QtGui.QPushButton('+')
-            self.down = QtGui.QPushButton('-')
-        self.lay.addWidget(self.down)
-
-        self.line = QtGui.QLineEdit()
-        self.line.setStyleSheet("QLineEdit { qproperty-cursorPosition: 0; }") # align text on the left
-        # http://stackoverflow.com/questions/18662157/qt-qlineedit-widget-to-get-long-text-left-aligned
-        self.lay.addWidget(self.line)
-
-        self._button_up_down = False
-        self._button_down_down = False
-
-
-        self.lay.addWidget(self.up)
-        self.timer_arrow = QtCore.QTimer()
-        self.timer_arrow.setSingleShot(True)
-        self.timer_arrow.setInterval(self.timer_min_interval)
-        self.timer_arrow.timeout.connect(self.make_step_continuous)
-
-        self.timer_arrow_latency = QtCore.QTimer()
-        self.timer_arrow_latency.setInterval(self.timer_initial_latency)
-        self.timer_arrow_latency.setSingleShot(True)
-        self.timer_arrow_latency.timeout.connect(self.make_step_continuous)
-
-        self.up.pressed.connect(self.first_increment)
-        self.down.pressed.connect(self.first_increment)
-
-        self.up.setMaximumWidth(15)
-        self.down.setMaximumWidth(15)
-
-        self.up.released.connect(self.timer_arrow.stop)
-        self.down.released.connect(self.timer_arrow.stop)
-
-        self.line.editingFinished.connect(self.validate)
-        self.val = 0
-
-        self.set_min_size()
-
-    def set_min_size(self):
-        """
-        sets the min size for content to fit.
-        """
-        font = QtGui.QFont("", 0)
-        font_metric = QtGui.QFontMetrics(font)
-        pixel_wide = font_metric.width("0"*self.max_num_letter())
-
-    def max_num_letter(self):
-        """
-        Returns the maximum number of letters
-        """
-        return 5
-
-    def wheelEvent(self, event):
-        """
-        Handle mouse wheel event. No distinction between linear and log.
-        :param event:
-        :return:
-        """
-
-        nsteps = int(event.delta()/120)
-        func = self.step_up if nsteps>0 else self.step_down
-        for i in range(abs(nsteps)):
-            func(single_increment=True)
-
-    def first_increment(self):
-        """
-        Once +/- pressed for timer_initial_latency ms, start to update continuously
-        """
-
-        if self.log_increment:
-            self.last_time = time.time() # don't make a step, but store present time
-            self.timer_arrow.start()
-        else:
-            self.last_time = None
-            self.make_step(single_increment=True) # start with a single_step, then make normal sweep...
-            self.timer_arrow_latency.start() # wait longer than average
-
-    def set_log_increment(self):
-        self.up.setText("*")
-        self.down.setText("/")
-        self.log_increment = True
-
-    def sizeHint(self): #doesn t do anything, probably need to change sizePolicy
-        return QtCore.QSize(200, 20)
-
-    def update_tooltip(self):
-        """
-        The tooltip uses the values of min/max/increment...
-        """
-        string = "Increment is %.5f\nmin value: %.1f\nmax value: %.1f\n"%(self.increment, self.min, self.max)
-        string+="Press up/down or mouse wheel to tune."
-        self.setToolTip(string)
-
-    def setMaximum(self, val):
-        self.max = val
-        self.update_tooltip()
-
-    def setMinimum(self, val):
-        self.min = val
-        self.update_tooltip()
-
-    def setSingleStep(self, val):
-        self.increment = val
-
-    def setValue(self, val):
-        self.val = val
-
-    def setDecimals(self, val):
-        self.decimals = val
-        self.set_min_size()
-
-    def value(self):
-        return self.val
-
-    def log_factor(self):
-        """
-        Factor by which value should be divide/multiplied (in log mode) given the wait time since last step
-        """
-        dt = time.time() - self.last_time # self.timer_arrow.interval()  # time since last step
-        return 2.**(dt/self.halflife_seconds)
-
-    def lin_delta(self):
-        """
-        Quantity to add/subtract to value (in lin mode) given the wait time since last step
-        """
-        dt = time.time() - self.last_time  # self.timer_arrow.interval()  # time since last step
-        return dt*self.per_second
-
-    def best_wait_time(self):
-        """
-        Time to wait until value should reach the next increment
-        If this time is shorter than self.timer_min_interval, then, returns timer_min_interval
-        """
-        if self.log_increment:
-            val = self.val
-            if self.is_sweeping_up():
-                next_val = val + np.sign(val)*self.increment
-                factor = next_val*1./val
-            if self.is_sweeping_down():
-                next_val = val - np.sign(val)*self.increment
-                factor = val*1.0/next_val
-            return int(np.ceil(max(self.timer_min_interval, 1000*np.log2(factor)))) # in log mode, wait long enough
-                                                                         # that next value is multiple of increment
-        else:
-            return int(np.ceil(max(self.timer_min_interval, self.increment*1000./self.per_second))) # in lin mode, idem
-
-    def is_sweeping_up(self):
-        return self.up.isDown() or self._button_up_down
-
-    def is_sweeping_down(self):
-        return self.down.isDown() or self._button_down_down
-
-    def step_up(self, single_increment=False):
-        if single_increment:
-            self.val += self.increment*1.1
-            return
-        if self.log_increment:
-            val = self.val
-            res = val * self.log_factor() + np.sign(val)*self.increment/10. # to prevent rounding errors from
-                                                                         # blocking the increment
-            self.val = res#self.log_step**factor
-        else:
-            res = self.val + self.lin_delta() + self.increment/10.
-            self.val = res
-
-    def step_down(self, single_increment=False):
-        if single_increment:
-            self.val -= self.increment*1.1
-            return
-        if self.log_increment:
-            val = self.val
-            res = val / self.log_factor() - np.sign(val)*self.increment/10.  # to prevent rounding errors from
-                                                                         # blocking the increment
-            self.val = res #(self.log_step)**factor
-        else:
-            res = self.val - self.lin_delta() - self.increment/10.
-            self.val = res
-
-    def make_step_continuous(self):
-        """
-
-        :return:
-        """
-        APP.processEvents() # Ugly, but has to be there, otherwise, it could be that this function is called forever
-        # because it takes the priority over released signal...
-        if self.last_time is None:
-            self.last_time = time.time()
-        if self.is_sweeping_down() or self.is_sweeping_up():
-            self.make_step()
-            self.last_time = time.time()
-            self.timer_arrow.setInterval(self.best_wait_time())
-            self.timer_arrow.start()
-
-    def make_step(self, single_increment=False):
-        if self.is_sweeping_up():
-            self.step_up(single_increment=single_increment)
-        if self.is_sweeping_down():
-            self.step_down(single_increment=single_increment)
-        self.validate()
-
-    def keyPressEvent(self, event):
-        if not event.isAutoRepeat():
-            if event.key()==QtCore.Qt.Key_Up:
-                self._button_up_down = True
-                self.first_increment()
-            if event.key()==QtCore.Qt.Key_Down:
-                self._button_down_down = True
-                self.first_increment()
-        return super(MyNumberSpinBox, self).keyPressEvent(event)
-
-    def keyReleaseEvent(self, event):
-        if not event.isAutoRepeat():
-            if event.key()==QtCore.Qt.Key_Up:
-                self._button_up_down = False
-                self.timer_arrow.stop()
-            if event.key()==QtCore.Qt.Key_Down:
-                self._button_down_down = False
-                self.timer_arrow.stop()
-        return super(MyNumberSpinBox, self).keyReleaseEvent(event)
-
-    def validate(self):
-        if self.val>self.max:
-            self.val = self.max
-        if self.val<self.min:
-            self.val = self.min
-        self.value_changed.emit()
-
-    def set_per_second(self, val):
-        self.per_second = val
-
-
-class MyDoubleSpinBox(MyNumberSpinBox):
-    def __init__(self, label, min=-1, max=1, increment=2.**(-13),
-                 log_increment=False, halflife_seconds=2.0, decimals=4):
-        self.decimals = decimals
-        super(MyDoubleSpinBox, self).__init__(label, min, max, increment, log_increment, halflife_seconds)
-        width_in_characters = 6 + self.decimals
-        self.setFixedWidth(width_in_characters*10)
-
-    @property
-    def val(self):
-        if str(self.line.text())!=("%."+str(self.decimals) + "f")%self._val:
-            return float(str(self.line.text()))
-        return self._val # the value needs to be known to a precision better than the display to avoid deadlocks
-                         # in increments
-
-    @val.setter
-    def val(self, new_val):
-        self._val = new_val # in case the line is not updated immediately
-        # former non-scientific notation
-        #self.line.setText(("%."+str(self.decimals) + "f")%new_val)
-        # currently: scientific notation
-        self.line.setText(('{:.'+str(self.decimals)+'e}').format(
-            float(new_val)))
-        self.value_changed.emit()
-        return new_val
-
-    def max_num_letter(self):
-        """
-        Returns the maximum number of letters
-        """
-        return self.decimals + int(np.log10(self.max))
-
-
-
-class MyIntSpinBox(MyNumberSpinBox):
-    def __init__(self, label, min=-2**13, max=2**13, increment=1,
-                 log_increment=False, halflife_seconds=1.):
-        super(MyIntSpinBox, self).__init__(label,
-                                           min,
-                                           max,
-                                           increment,
-                                           log_increment,
-                                           halflife_seconds)
-
-    @property
-    def val(self):
-        #if self.line.text()!=("%.i")%self._val:
-            return int(str(self.line.text()))
-        #return self._val
-
-    @val.setter
-    def val(self, new_val):
-        #self._val = new_val
-        self.line.setText(("%.i")%new_val)
-        self.value_changed.emit()
-        return new_val
-
-    def max_num_letter(self):
-        """
-        Maximum number of letters in line
-        """
-        return int(np.log10(self.max))
-
-
-class BaseAttributeWidget(QtGui.QWidget):
-    """
-    Base class for Attribute Widgets. The class usually contains a label,
-    and a widget, that is created by the function set_widget.
+    A minimum widget should implmenet set_widget, _update,
+    and possibly module_value.
     """
     value_changed = QtCore.pyqtSignal()
 
-    def __init__(self, name, module, widget_name=None):
+    def __init__(self, module, attribute_name, widget_name=None):
         super(BaseAttributeWidget, self).__init__()
-        self.setToolTip(getattr(module.__class__, name).__doc__)
         self.module = module
-        self.name = name
+        self.attribute_name = attribute_name
         if widget_name is None:
-            self.widget_name = self.name
+            self.widget_name = self.attribute_name
         else:
             self.widget_name = widget_name
-        self.acquisition_property = True  # property affects signal acquisition
+        self.setToolTip(self.attribute_descriptor.__doc__)
         self.layout_v = QtGui.QVBoxLayout()
-        self.label = QtGui.QLabel(self.widget_name)
-        self.layout_v.addWidget(self.label, 0) # stretch=0
+        self.layout = self.layout_v
+        if self.widget_name != "":
+            self.label = QtGui.QLabel(self.widget_name)
+            self.layout.addWidget(self.label, 0) # stretch=0
+            self.layout.addStretch(1)
         self.layout_v.setContentsMargins(0, 0, 0, 0)
-        #self.module = self.module_widget.module
-        self.set_widget()
-        self.layout_v.addWidget(self.widget, 0) # stretch=0
-        self.layout_v.addStretch(1)
-        self.setLayout(self.layout_v)
-        if self.module_value() is not None: # SelectAttributes without options might have a None value
-            self.update_widget(self.module_value())
-        #self.module_widget.register_layout.addLayout(self.layout_v)
-        #self.value_changed.connect(self.emit_widget_value_changed)
-        #self.module_widget.property_watch_timer.timeout. \
-        #    connect(self.update_widget)
+        self._make_widget()
+        self.layout.addWidget(self.widget, 0) # stretch=0
+        self.layout.addStretch(1)
+        self.setLayout(self.layout)
+        self.write_attribute_value_to_widget()
+        # this is very nice for debugging, but should probably be removed later
+        setattr(self.module, '_'+self.attribute_name+'_widget', self)
 
-    def set_horizontal(self):
-        self.layout_v.removeWidget(self.label)
-        self.layout_v.removeWidget(self.widget)
-        self.layout_h = QtGui.QHBoxLayout()
-        self.layout_h.addWidget(self.label)
-        self.layout_h.addWidget(self.widget)
-        self.layout_v.addLayout(self.layout_h)
+    @property
+    def attribute_descriptor(self):
+        return getattr(self.module.__class__, self.attribute_name)
+
+    @property
+    def attribute_value(self):
+        return getattr(self.module, self.attribute_name)
+
+    @attribute_value.setter
+    def attribute_value(self, v):
+        setattr(self.module, self.attribute_name, v)
+
+    @property
+    def widget_value(self):
+        """ Property for the current value of the widget.
+
+        The associated setter takes care of not re-emitting signals when the
+        gui value is modified through the setter. """
+        return self._get_widget_value()
+
+    @widget_value.setter
+    def widget_value(self, v):
+        if not self.widget.hasFocus():
+            try:
+                self.widget.blockSignals(True)
+                self._set_widget_value(v)
+            finally:
+                self.widget.blockSignals(False)
+
+    def write_widget_value_to_attribute(self):
+        self.attribute_value = self.widget_value
+        # it does not hurt to imitate the signal of the subwidget,
+        # even though most of the time nothing is connected to it
+        self.value_changed.emit()
+
+    def write_attribute_value_to_widget(self):
+        """ trivial helper function, updates widget value from the attribute"""
+        current_value = self.attribute_value
+        if current_value is None:
+            #  SelectAttributes might have a None value
+            self.module._logger.warning("Cannot set widget %s of attribute "
+                                        "%s.%s to the current value "
+                                        "'None'.",
+                                        self.widget_name,
+                                        self.module.name,
+                                        self.attribute_name)
+        else:
+            self.widget_value = current_value
 
     def editing(self):
         """
         User is editing the property graphically don't mess up with him
         :return:
         """
-        return False
+        return self.widget.editing()
 
-    #def emit_widget_value_changed(self):
-    #    if self.acquisition_property:
-    #        self.module_widget.property_changed.emit()
+    def set_horizontal(self):
+        """ puts the label to the left of the widget instead of atop """
+        self.layout_h = QtGui.QHBoxLayout()
+        if hasattr(self, 'label'):
+            self.layout_v.removeWidget(self.label)
+            self.layout_h.addWidget(self.label)
+            self.layout.addStretch(1)
+        self.layout_v.removeWidget(self.widget)
+        self.layout_h.addWidget(self.widget)
+        self.layout.addStretch(1)
+        self.layout_v.addLayout(self.layout_h)
+        self.layout = self.layout_h
 
-    def update_widget(self, new_value):
+    def _make_widget(self):
         """
-        Block QtSignals upon update to avoid infinite recursion.
-        :return:
-        """
-        self.widget.blockSignals(True)
-        self._update(new_value)
-        self.widget.blockSignals(False)
+        create the new widget.
 
-    def set_widget(self):
-        """
-        To overwrite in base class.
+        Overwrite in derived class.
         """
         self.widget = None
 
-    def _update(self, new_value):
+    def _get_widget_value(self):
         """
-        To overwrite in base class.
-        """
-        pass
+        returns the current value shown by the widget.
 
-    def module_value(self):
+        The type that is returned is understood by the underlying attribute.
+
+        Overwrite in derived class.
         """
-        returns the module value, with the good type conversion.
+        return self.widget.value()
+
+    def _set_widget_value(self, new_value):
         """
-        return getattr(self.module, self.name)
+        Changes the value displayed in the widget.
+
+        Overwrite in derived class.
+        """
+        self.widget.setValue(new_value)
 
 
 class StringAttributeWidget(BaseAttributeWidget):
     """
-    Property for string values.
+    Widget for string values.
     """
-    def set_widget(self):
-        """
-        Sets up the widget (here a QSpinBox)
-        :return:
-        """
-
+    def _make_widget(self):
         self.widget = QtGui.QLineEdit()
         self.widget.setMaximumWidth(200)
-        self.widget.textChanged.connect(self.write)
+        self.widget.textChanged.connect(self.write_widget_value_to_attribute)
 
-    def module_value(self):
-        """
-        returns the module value, with the good type conversion.
+    def _get_widget_value(self):
+        return str(self.widget.text())
 
-        :return: str
-        """
-        return str(self.module.__getattribute__(self.name))
-
-    def write(self):
-        setattr(self.module, self.name, str(self.widget.text()))
-        self.value_changed.emit()
-
-    def _update(self, new_value):
-        """
-        Updates the value displayed in the widget
-        :return:
-        """
-        if not self.widget.hasFocus():
-            self.widget.setText(new_value)
-
+    def _set_widget_value(self, new_value):
+        self.widget.setText(new_value)
 
 
 class TextAttributeWidget(StringAttributeWidget):
     """
     Property for multiline string values.
     """
-    def set_widget(self):
-        """
-        Sets up the widget (here a QSpinBox)
-        :return:
-        """
+    def _make_widget(self):
         self.widget = QtGui.QTextEdit()
-        self.widget.textChanged.connect(self.write)
+        self.widget.textChanged.connect(self.write_widget_value_to_attribute)
 
-    def write(self):
-        setattr(self.module, self.name, str(self.widget.toPlainText()))
-        self.value_changed.emit()
+    def _get_widget_value(self):
+        return str(self.widget.toPlainText())
 
 
 class NumberAttributeWidget(BaseAttributeWidget):
     """
-    Base property for float and int.
+    Base widget for float and int.
     """
-    def write(self):
-        setattr(self.module, self.name, self.widget.value())
-        self.value_changed.emit()
+    SpinBox = NumberSpinBox
+
+    def _make_widget(self):
+        super(NumberAttributeWidget, self)._make_widget()
+        self.widget = self.SpinBox(None)
+        self.widget.value_changed.connect(self.write_widget_value_to_attribute)
+        self.widget.setSingleStep(self.attribute_descriptor.increment)
+        self.widget.setMaximum(self.attribute_descriptor.max)
+        self.widget.setMinimum(self.attribute_descriptor.min)
+        if self.attribute_descriptor.log_increment:
+            self.widget.set_log_increment()
+
+    def _get_widget_value(self):
+        return self.widget.value()
 
     def editing(self):
         return self.widget.line.hasFocus()
-
-    def _update(self, new_value):
-        """
-        Updates the value displayed in the widget
-        :return:
-        """
-        if not self.widget.hasFocus():
-            self.widget.setValue(new_value)
-
-    def set_increment(self, val):
-        self.widget.setSingleStep(val)
-
-    def set_maximum(self, val):
-        self.widget.setMaximum(val)
-
-    def set_minimum(self, val):
-        self.widget.setMinimum(val)
 
     def set_per_second(self, val):
         self.widget.set_per_second(val)
@@ -538,356 +214,251 @@ class NumberAttributeWidget(BaseAttributeWidget):
 
 class IntAttributeWidget(NumberAttributeWidget):
     """
-    Property for integer values.
+    Widget for integer values.
     """
-    def set_widget(self):
-        """
-        Sets up the widget (here a QSpinBox)
-        :return:
-        """
-        self.widget = MyIntSpinBox(None)#QtGui.QSpinBox()
-        # self.widget.setMaximumWidth(200)
-        self.widget.value_changed.connect(self.write)
-
-    def module_value(self):
-        """
-        returns the module value, with the good type conversion.
-
-        :return: int
-        """
-        return int(getattr(self.module, self.name))
+    SpinBox = IntSpinBox
 
 
 class FloatAttributeWidget(NumberAttributeWidget):
     """
-    Property for float values
+    Widget for float values
     """
-    def set_widget(self):
-        """
-        Sets up the widget (here a QDoubleSpinBox)
-        :return:
-        """
-        self.widget = MyDoubleSpinBox(None)#QtGui.QDoubleSpinBox()
-        self.widget.value_changed.connect(self.write)
-
-    def module_value(self):
-        """
-        returns the module value, with the good type conversion.
-
-        :return: float
-        """
-        return float(getattr(self.module, self.name))
+    SpinBox = FloatSpinBox
 
 
-class MyComplexSpinBox(QtGui.QFrame):
+class ComplexAttributeWidget(FloatAttributeWidget):
     """
-    Two spinboxes representing a complex number, with the right keyboard shortcuts
-    (up down for imag, left/right for real).
+    Widget for complex values
     """
-    value_changed = QtCore.pyqtSignal()
+    SpinBox = ComplexSpinBox
 
-    def __init__(self, label, min=-2**13, max=2**13, increment=1,
-                 log_increment=False, halflife_seconds=1., decimals=0):
-        super(MyComplexSpinBox, self).__init__()
-        self.max = max
-        self.min = min
-        self.decimals = decimals
-        self.increment = increment
-        self.log_increment = log_increment
-        self.halflife = halflife_seconds
-        self.label = label
-        self.lay = QtGui.QHBoxLayout()
-        self.lay.setContentsMargins(0, 0, 0, 0)
-        self.real = MyDoubleSpinBox(label=label,
-                                    min=min,
-                                    max=max,
-                                    increment=increment,
-                                    log_increment=log_increment,
-                                    halflife_seconds=halflife_seconds,
-                                    decimals=decimals)
-        self.real.value_changed.connect(self.value_changed)
-        self.lay.addWidget(self.real)
-        self.label = QtGui.QLabel(" + j")
-        self.lay.addWidget(self.label)
-        self.imag = MyDoubleSpinBox(label=label,
-                                    min=min,
-                                    max=max,
-                                    increment=increment,
-                                    log_increment=log_increment,
-                                    halflife_seconds=halflife_seconds,
-                                    decimals=decimals)
-        self.imag.value_changed.connect(self.value_changed)
-        self.lay.addWidget(self.imag)
-        self.setLayout(self.lay)
-        self.setFocusPolicy(QtCore.Qt.ClickFocus)
 
-    def keyPressEvent(self, event):
-        if not event.isAutoRepeat():
-            if event.key() == QtCore.Qt.Key_Up:
-                self.real._button_up_down = True
-                self.real.first_increment()
-            if event.key() == QtCore.Qt.Key_Down:
-                self.real._button_down_down = True
-                self.real.first_increment()
-            if event.key() == QtCore.Qt.Key_Right:
-                self.imag._button_up_down = True
-                self.imag.first_increment()
-            if event.key() == QtCore.Qt.Key_Left:
-                self.imag._button_down_down = True
-                self.imag.first_increment()
-        return super(MyComplexSpinBox, self).keyPressEvent(event)
+class FrequencyAttributeWidget(FloatAttributeWidget):
+    def __init__(self, module, attribute_name, widget_name=None):
+        super(FrequencyAttributeWidget, self).__init__(module,
+                                                       attribute_name,
+                                                       widget_name=widget_name)
+        self.set_per_second(10)
 
-    def keyReleaseEvent(self, event):
-        if not event.isAutoRepeat():
-            if event.key() == QtCore.Qt.Key_Up:
-                self.real._button_up_down = False
-                self.real.timer_arrow.stop()
-            if event.key() == QtCore.Qt.Key_Down:
-                self.real._button_down_down = False
-                self.real.timer_arrow.stop()
-            if event.key() == QtCore.Qt.Key_Right:
-                self.imag._button_up_down = False
-                self.imag.first_increment()
-            if event.key() == QtCore.Qt.Key_Left:
-                self.imag._button_down_down = False
-                self.imag.first_increment()
 
-        return super(MyComplexSpinBox, self).keyReleaseEvent(event)
+class ListElementWidget(BaseAttributeWidget):
+    """
+    this is a wrapper class to embed any AttributeWidget as an element of
+    BasePropertyListPropertyWidget. Its usage is found in the property
+    element_widget_cls of BasePropertyListPropertyWidget.
+    """
+    def __init__(self, parent, startindex, *args, **kwargs):
+        self.parent = parent
+        self.startindex = startindex
+        super(ListElementWidget, self).__init__(*args, **kwargs)
+        self.set_horizontal()
+        self.button_remove = QtGui.QPushButton('-')
+        self.button_remove.clicked.connect(self.remove_this_element)
+        self.button_remove.setFixedWidth(3 * 10)
+        self.layout.addWidget(self.button_remove, 0) # stretch=0
+        self.layout.addStretch(1)
+        # this is very nice for debugging, but should probably be removed later
+        setattr(self.module, '_'+self.attribute_name+'_widget', self.parent)
+        self.select()
+
+    def remove_this_element(self):
+        self.unselect()
+        self.parent.attribute_value.__delitem__(index=self.index)
 
     @property
-    def val(self):
-        #if self.line.text()!=("%.i")%self._val:
-            return self.real.val + 1j*self.imag.val
-        #return self._val
+    def index(self):
+        if self in self.parent.widgets:
+            return self.parent.widgets.index(self)
+        else:
+            return self.startindex
 
-    @val.setter
-    def val(self, new_val):
-        #self._val = new_val
-        self.real.val = np.real(new_val)
-        self.imag.val = np.imag(new_val)
-        return new_val
+    @property
+    def attribute_value(self):
+        return getattr(self.module, self.attribute_name)[self.index]
 
-    def max_num_letter(self):
-        """
-        Maximum number of letters in line
-        """
-        return int(np.log10(self.max))
+    @attribute_value.setter
+    def attribute_value(self, v):
+        getattr(self.module, self.attribute_name)[self.index] = v
 
-    def focusOutEvent(self, event):
-        self.value_changed.emit()
+    def select(self):
+        current = self.parent.selected
+        if current:
+            current.unselect()
+        self.parent.selected = self
+        self.setStyleSheet("%s{background-color:green;}"
+                           % self.__class__.__name__)
+
+    def unselect(self):
+        if self.parent.selected == self:
+            self.parent.selected = None
         self.setStyleSheet("")
 
-    def focusInEvent(self, event):
-        self.value_changed.emit()
-        self.setStyleSheet("MyComplexSpinBox{background-color:red;}")
+    def mousePressEvent(self, event):
+        self.module._logger.warning('mouse pressed on %s[%d]',
+                                     self.attribute_name, self.index)
+        self.select()
+        return super(ListElementWidget, self).mousePressEvent(event)
+
+
+class BasePropertyListPropertyWidget(BaseAttributeWidget):
+    """
+    A widget for a list of Attributes, deriving its functionality from the
+    underlying widgets
+    """
+    def _make_widget(self):
+        self.widget = QtGui.QFrame()
+        self.widget_layout = QtGui.QVBoxLayout()
+        self.widget.setLayout(self.widget_layout)
+        self.widgets = []
+        self.button_add = QtGui.QPushButton("+")
+        self.button_add.clicked.connect(self.append_default)
+        self.widget_layout.addWidget(self.button_add)
+        self.widget_layout.addStretch(1)
+        self.widget_layout.setContentsMargins(0, 0, 0, 0)
+        self.selected = None
+        self.update_widget_names()
 
     @property
-    def selected(self):
-        return self.hasFocus()
+    def element_widget_cls(self):
+        return type("ElementWidget",
+                    (ListElementWidget,
+                     self.attribute_descriptor.element_cls._widget_class, ),
+                    {})
 
+    def update_attribute_by_name(self, new_value_list):
+        current_list, operation, index, value = new_value_list
+        if operation == "insert":
+            self.insert(index, value)
+        elif operation == "setitem":
+            self.setitem(index, value)
+        elif operation == "delitem":
+            self.delitem(index)
+        else:
+            self.module._logger.error("%s.%s_widget.update_attribute_by_name "
+                                      "was called with wrong arguments: %s",
+                                      self.module.name,
+                                      self.name,
+                                      new_value_list)
 
-class ListFloatSpinBox(QtGui.QWidget):
-    """
-    No add or remove buttons yet (mainly used to represent analog filters)
-    """
-    value_changed = QtCore.pyqtSignal()
+    def append_default(self):
+        self.attribute_value.append()
 
-    def __init__(self, label, n_spins=4, min=-65e6, max=65e6, increment=1., log_increment=True, halflife_seconds=1.):
-        super(ListFloatSpinBox, self).__init__()
-        self.label = label
-        self.min = min
-        self.max = max
-        self.increment = increment
-        self.halflife = halflife_seconds
-        self.log_increment = log_increment
-        self.increment = increment
-        self.lay = QtGui.QVBoxLayout(self)
-        self.lay_hs = [QtGui.QHBoxLayout()]
-        self.lay.addLayout(self.lay_hs[0])
-        self.lay.setContentsMargins(0, 0, 0, 0)
-        self.spins = []
-        for index in range(n_spins):
-            spin = MyDoubleSpinBox(label=None,
-                                   min=min,
-                                   max=max,
-                                   increment=increment,
-                                   log_increment=log_increment,
-                                   halflife_seconds=halflife_seconds)
-            spin.value_changed.connect(self.value_changed)
-            self.spins.append(spin)
-            self.lay_hs[0].addWidget(spin)
+    def insert(self, index, value):
+        """"
+        make a new element widget - this function is called by the attribute
+        """
+        element_widget = self.element_widget_cls(self,
+                                                 index,
+                                                 self.module,
+                                                 self.attribute_name,
+                                                 widget_name=str(index))
+        self.widgets.insert(index, element_widget)
+        if index+1 >= len(self.widgets):
+            # widget must be inserted at the end
+            insert_before = self.button_add
+        else:
+            # widget was inserted before another one
+            insert_before = self.widgets[index+1]
+        self.widget_layout.insertWidget(self.widget_layout.indexOf(insert_before),
+                                        element_widget)
+        self.module._logger.warning("insert %s, index %s, new %s"%(
+            self.attribute_value, index, value))
+        self.update_widget_names()
 
-        if label is not None:
-            self.label = QtGui.QLabel(self.label)
-            self.lay.addWidget(self.label)
-            self.setLayout(self.lay)
+    def setitem(self, index, value):
+        self.widgets[index].widget_value = value
 
-    def get_list(self):
-        return [spin.val for spin in self.spins]
+    def delitem(self, index=-1):
+        if self.selected == index:
+            self.selected = None
+        widget = self.widgets.pop(index)
+        widget.hide()
+        self.widget_layout.removeWidget(widget)
+        widget.deleteLater()
+        self.update_widget_names()
+        self.module._logger.error('delitem concluded')
 
-    def set_list(self, list_val):
-        for index, val in enumerate(list_val):
-            self.spins[index].val = val
+    def update_widget_names(self):
+        for widget in self.widgets:
+            if hasattr(widget, 'label'):
+                widget.label.setText('('+str(widget.index)+')')
 
-        for i in range(index, len(self.spins)):
-            self.spins[i].val = 0
+    def _get_widget_value(self):
+        return [widget.widget_value for widget in self.widgets]
 
-    def remove_all_spins_from_layout(self):
-        widget = 1
-        while widget is not None:
-            widget = self.lay_hs[0].takeAt(0)
-
-    def set_max_cols(self, n):
-        index_col = 0
-        self.remove_all_spins_from_layout()
-        current_layout = self.lay_hs[0]
-        for spin in self.spins:
-            current_layout.addWidget(spin)
-            index_col+=1
-            if index_col>=n:
-                index_col = 0
-                current_layout = QtGui.QHBoxLayout()
-                self.lay_hs.append(current_layout)
-                self.lay.addLayout(current_layout)
-
-
-class ListComplexSpinBox(QtGui.QFrame):
-    value_changed = QtCore.pyqtSignal()
-
-    def __init__(self, label, min=-65e6, max=65e6, increment=1.,
-                 log_increment=True, halflife_seconds=1.):
-        super(ListComplexSpinBox, self).__init__()
-        self.label = label
-        self.min = min
-        self.max = max
-        self.increment = increment
-        self.halflife = halflife_seconds
-        self.log_increment = log_increment
-        self.incement = increment
-        self.lay = QtGui.QVBoxLayout()
-        self.spins = []
-        self.button_removes = []
-        self.spin_lays = []
-        self.halflife = halflife_seconds
-        if label is not None:
-            self.label = QtGui.QLabel(self.name)
-            self.lay.addWidget(self.label)
-        #for i in range(number):
-        #    self.add_spin()
-        self.button_add = QtGui.QPushButton("+")
-        self.button_add.clicked.connect(self.add_spin_and_select)
-
-        self.lay.addWidget(self.button_add)
-        self.lay.addStretch(1)
-        self.lay.setContentsMargins(0,0,0,0)
-        self.setLayout(self.lay)
-        self.selected = None
-
-    def add_spin_and_select(self):
-        self.add_spin()
-        self.spins[-1].val = -1e4 -1j*1e3
-        self.set_selected(-1)
-
-    def add_spin(self):
-        index = len(self.spins)
-        spin = MyComplexSpinBox(label="",
-                                min=self.min,
-                                max=self.max,
-                                increment=self.increment,
-                                log_increment=self.log_increment,
-                                halflife_seconds=self.halflife,
-                                decimals=0)
-        self.spins.append(spin)
-        spin_lay = QtGui.QHBoxLayout()
-        self.spin_lays.append(spin_lay)
-        spin_lay.addWidget(spin)
-        button_remove = QtGui.QPushButton('-')
-        self.button_removes.append(button_remove)
-        spin_lay.addWidget(button_remove)
-        spin.value_changed.connect(self.value_changed)
-        button_remove.clicked.connect(functools.partial(self.remove_spin_and_emit, button=button_remove))
-        self.lay.insertLayout(index + 1*(self.label is not None), spin_lay) #QLabel occupies the first row
-
-    def remove_spin_and_emit(self, button):
-        self.remove_spin(button)
-        self.value_changed.emit()
-
-    def remove_spin(self, button):
-        index = self.button_removes.index(button)
-        button = self.button_removes.pop(index)
-        spin = self.spins.pop(index)
-        spin_lay = self.spin_lays.pop(index)
-
-        self.lay.removeItem(spin_lay)
-
-        spin.deleteLater()
-        button.deleteLater()
-        spin_lay.deleteLater()
-
-    def get_list(self):
-        return [spin.val for spin in self.spins]
-
-    def set_list(self, list_val):
-        for index, val in enumerate(list_val):
-            if index>=len(self.spins):
-                self.add_spin()
-            self.spins[index].val = val
-        to_delete = []
-        for other_index in range(len(list_val), len(self.spins)):
-            to_delete.append(self.button_removes[other_index]) # don't loop on a list that is
-                                                                                 # shrinking !
-        for button in to_delete:
-            self.remove_spin(button)
+    def _set_widget_value(self, new_values):
+        for index, new_value in enumerate(new_values):
+            # replace or append new values
+            try:
+                self.setitem(index, new_value)
+            except IndexError:
+                self.insert(index, new_value)
+            # remove the trailing items
+            while len(self) > len(new_values):
+                self.delitem()
+        self.module._logger.warning("set_widget_value called and finished")
 
     def editing(self):
         edit = False
-        for spin in self.spins:
-            edit = edit or spin.editing()
-        return edit()
+        for widget in self.widgets:
+            edit = edit or widget.editing()
+        return edit
 
-    def set_selected(self, index):
+    def editing(self):
+        return self.widget.editing()
+
+    @property
+    def selected(self):
+        return self._selected
+
+    @selected.setter
+    def selected(self, widget):
+        self._selected = widget
         if self.selected is not None:
-            self.spins[self.selected].setStyleSheet("")
-        self.spins[index].setFocus(True)
-        self.value_changed.emit()
+            self.selected.setStyleSheet("")
+            self.selected.setFocus(True)
+        #self.value_changed.emit()
 
     def get_selected(self):
-        """
-        Returns the index of the selected value
-        """
-        for index, spin in enumerate(self.spins):
-            if spin.hasFocus():
-                return index
+        return 0
+
+    @property
+    def number(self):
+        return self.__len__()
+
+    def __len__(self):
+        return len(self.widgets)
 
 
-class ListFloatAttributeWidget(BaseAttributeWidget):
+class ListAttributeWidget(BaseAttributeWidget):
     """
-    The number of values is fixed (to 4 for now)
+    A widget for ListAttribute
+    This class is nearly identical with ListComplexAttributeWidget
+    and the two should be merged together
     """
-    def set_widget(self):
+    ListSpinBox = ListFloatSpinBox
+    listspinboxkwargs = dict(label=None,
+                             min=-62.5e6,
+                             max=62.5e6,
+                             log_increment=True,
+                             halflife_seconds=1.)
+
+    def _make_widget(self):
         """
         Sets up the widget (here a ListFloatSpinBox)
         :return:
         """
+        self.widget = self.ListSpinBox(**self.listspinboxkwargs)
+        self.widget.value_changed.connect(self.write_widget_value_to_attribute)
 
-        self.widget = ListFloatSpinBox(label=None,
-                                         min=-65e6,
-                                         max=65e6,
-                                         log_increment=True,
-                                         halflife_seconds=1.)
-        self.widget.value_changed.connect(self.write)
+    def _get_widget_value(self):
+        return self.widget.get_list()
 
-    def write(self):
-        setattr(self.module, self.name, self.widget.get_list())
-        self.value_changed.emit()
+    def _set_widget_value(self, new_value):
+        self.widget.set_list(new_value)
 
-    def _update(self, new_value):
-        """
-        Updates the value displayed in the widget
-        :return:
-        """
-        if not self.widget.hasFocus():
-            self.widget.set_list(new_value)
+    def editing(self):
+        return self.widget.editing()
 
     def set_max_cols(self, num):
         """
@@ -895,46 +466,14 @@ class ListFloatAttributeWidget(BaseAttributeWidget):
         """
         self.widget.set_max_cols(num)
 
+    def set_increment(self, val):
+        self.widget.set_increment(val)
 
-class ListComplexAttributeWidget(BaseAttributeWidget):
-    """
-    Attribute for arbitrary number of complex. New values can be added/removed with buttons
-    """
-    def __init__(self, name, module, widget_name=None):
-        val = getattr(module, name)
-        #self.defaults = name + 's'
-        super(ListComplexAttributeWidget, self).__init__(name, module,
-                                                         widget_name=widget_name)
+    def set_maximum(self, val):
+        self.widget.set_maximum(val)
 
-    def write(self):
-        setattr(self.module, self.name, self.widget.get_list())
-        self.value_changed.emit()
-
-    def editing(self):
-        return self.widget.editing()
-
-    def _update(self, new_value):
-        """
-        Updates the value displayed in the widget
-        :return:
-        """
-        if not self.widget.hasFocus():
-            self.widget.set_list(new_value)
-
-    def set_widget(self):
-        """
-        Sets up the widget (here a ListComplexSpinBox)
-        :return:
-        """
-
-        self.widget = ListComplexSpinBox(label=None,
-                                         min=-125e6,
-                                         max=125e6,
-                                         log_increment=True,
-                                         halflife_seconds=1.)
-        #self.widget.setDecimals(4)
-        #self.widget.setSingleStep(0.01)
-        self.widget.value_changed.connect(self.write)
+    def set_minimum(self, val):
+        self.widget.set_minimum(val)
 
     def set_selected(self, index):
         """
@@ -953,10 +492,29 @@ class ListComplexAttributeWidget(BaseAttributeWidget):
         return len(self.widget.spins)
 
 
+class ListFloatAttributeWidget(ListAttributeWidget):
+    ListSpinBox = ListFloatSpinBox
+    listspinboxkwargs = dict(label=None,
+                             min=-62.5e6,
+                             max=62.5e6,
+                             log_increment=True,
+                             halflife_seconds=1.)
+
+
+class ListComplexAttributeWidget(ListAttributeWidget):
+    ListSpinBox = ListComplexSpinBox
+    listspinboxkwargs = dict(label=None,
+                             min=-62.5e6,
+                             max=62.5e6,
+                             log_increment=True,
+                             halflife_seconds=1.)
+
+
 class ListComboBox(QtGui.QWidget):
+    # TODO: can be replaced by SelectAttributeWidget
     value_changed = QtCore.pyqtSignal()
 
-    def __init__(self, number, name, options):
+    def __init__(self, number, name, options, decimals=3):
         super(ListComboBox, self).__init__()
         self.setToolTip("First order filter frequencies \n"
                         "negative values are for high-pass \n"
@@ -965,6 +523,7 @@ class ListComboBox(QtGui.QWidget):
         self.lay.setContentsMargins(0, 0, 0, 0)
         self.combos = []
         self.options = options
+        self.decimals = decimals
         for i in range(number):
             combo = QtGui.QComboBox()
             self.combos.append(combo)
@@ -973,22 +532,23 @@ class ListComboBox(QtGui.QWidget):
             self.lay.addWidget(combo)
         self.setLayout(self.lay)
 
+    def change_options(self, new_options):
+        self.options = new_options
+        for combo in self.combos:
+            combo.blockSignals(True)
+            combo.clear()
+            combo.addItems(new_options)
+            combo.blockSignals(False)
+
     def get_list(self):
         return [float(combo.currentText()) for combo in self.combos]
-    """
-    @property
-    def options(self):
-        return  self._options
-    """
 
     def set_max_cols(self, n_cols):
         """
         If more than n boxes are required, go to next line
         """
-
         if len(self.combos)<=n_cols:
             return
-
         for item in self.combos:
             self.lay.removeWidget(item)
         self.v_layouts = []
@@ -1008,60 +568,54 @@ class ListComboBox(QtGui.QWidget):
         if not np.iterable(val):
             val = [val]
         for i, v in enumerate(val):
-            v = str(int(v))
+            #v = str(int(v))
+            v = ('{:.' + str(self.decimals) + 'e}').format(float(v))
             index = self.options.index(v)
             self.combos[i].setCurrentIndex(index)
 
 
 class FilterAttributeWidget(BaseAttributeWidget):
     """
-    Property for list of floats (to be choosen in a list of valid_frequencies)
+    Property for list of floats (to be chosen in a list of valid_frequencies)
     The attribute descriptor needs to expose a function valid_frequencies(module)
     """
-
-    def __init__(self, name, module, widget_name=None):
-        val = getattr(module, name)
+    decimals = 3
+    def __init__(self, module, attribute_name, widget_name=None):
+        val = getattr(module, attribute_name)
         if np.iterable(val):
             self.number = len(val)
         else:
             self.number = 1
-        #self.defaults = name + 's'
-        self.options = getattr(module.__class__, name).valid_frequencies(module)
-        super(FilterAttributeWidget, self).__init__(name, module,
+        self.options = getattr(module.__class__, attribute_name).valid_frequencies(module)
+        super(FilterAttributeWidget, self).__init__(module, attribute_name,
                                                     widget_name=widget_name)
 
-    def set_widget(self):
+    def _make_widget(self):
         """
         Sets up the widget (here a QDoubleSpinBox)
         :return:
         """
+        self.widget = ListComboBox(self.number,
+                                   "",
+                                   self._format_options(),
+                                   decimals=self.decimals)#list(map(str,
+                                   # self.options)))
+        self.widget.value_changed.connect(self.write_widget_value_to_attribute)
 
-        self.widget = ListComboBox(self.number, "", list(map(str, self.options)))#QtGui.QDoubleSpinBox()
-        #self.widget.setDecimals(4)
-        #self.widget.setSingleStep(0.01)
-        self.widget.value_changed.connect(self.write)
+    def _format_options(self):
+        return [('{:.'+str(self.decimals)+'e}').format(
+            float(option)) for option in self.options]
 
-    def write(self):
-        """
-        Sets the module property value from the current gui value
+    def refresh_options(self, module):
+        self.options = getattr(module.__class__,
+                               self.attribute_name).valid_frequencies(module)
+        self.widget.change_options(self._format_options())
 
-        :return:
-        """
+    def _get_widget_value(self):
+        return self.widget.get_list()
 
-        setattr(self.module, self.name, self.widget.get_list())
-        if self.acquisition_property:
-            self.value_changed.emit()
-
-    def _update(self, new_value):
-        """
-        Sets the gui value from the current module value
-
-        :return:
-        """
-
-        #val = getattr(self.module, self.name)
-
-        if isinstance(new_value, str) or not np.iterable(new_value): # only 1
+    def _set_widget_value(self, new_value):
+        if isinstance(new_value, str) or not np.iterable(new_value):  # only 1
             # element in the FilterAttribute, make a list for consistency,
             # used to be basestring
             val = [new_value]
@@ -1075,202 +629,323 @@ class SelectAttributeWidget(BaseAttributeWidget):
     """
     Multiple choice property.
     """
-    def __init__(self, name, module, widget_name=None, **kwargs):
-        return super(SelectAttributeWidget, self).__init__(name, module,
-                                                           widget_name=widget_name,
-                                                           **kwargs)
-
-    def set_widget(self):
-        """
-        Sets up the widget (here a QComboBox)
-
-        :return:
-        """
+    def _make_widget(self):
         self.widget = QtGui.QComboBox()
         self.widget.addItems(self.options)
-        self.widget.currentIndexChanged.connect(self.write)
+        self.widget.currentIndexChanged.connect(self.write_widget_value_to_attribute)
 
     @property
     def options(self):
-        """
-        All possible options (as found in module.prop_name + 's')
-
-        :return:
-        """
-        # return self.defaults  # getattr(self.module, self.defaults)
-        opt = recursive_getattr(self.module, '__class__.' + self.name + '.options')(self.module)
+        opt = self.attribute_descriptor.options(self.module).keys()
         opt = [str(v) for v in opt]
         if len(opt) == 0:
             opt = [""]
         return opt
 
-    def write(self):
-        """
-        Sets the module property value from the current gui value
+    def _get_widget_value(self):
+        return str(self.widget.currentText())
+        #try:
+        #    return str(self.widget.currentText())
+        # except ValueError as e1:
+        #     # typically string - int - conversion related
+        #     options = self.options
+        #     try:
+        #         index = [str(k) for k in options].index(str(self.widget.currentText()))
+        #     except ValueError as e2:
+        #         raise e1
+        #     else:
+        #         setattr(self.module, self.attribute_name, options[index])
 
-        :return:
-        """
-        try:
-            setattr(self.module, self.name, str(self.widget.currentText()))
-        except ValueError as e1:
-            # typically string - int - conversion related
-            options = getattr(self.module.__class__, self.name).options(self.module).keys()
-            try:
-                index = [str(k) for k in options].index(str(self.widget.currentText()))
-            except ValueError as e2:
-                raise e1
-            else:
-                setattr(self.module, self.name, options[index])
-        self.value_changed.emit()
-
-    def _update(self, new_value):
-        """
-        Sets the gui value from the current module value
-        """
+    def _set_widget_value(self, new_value):
         try:
             index = self.options.index(str(new_value))
-        except IndexError:
-            self.module._logger.warning("SelectWidget %s could not find current value %s "
-                                        "in the options %s",
-                                        self.name, self.new_value, self.options)
+        except (IndexError, ValueError):
+            self.module._logger.warning("SelectWidget %s could not find "
+                                        "current value %s in the options %s",
+                                        self.attribute_name,
+                                        new_value,
+                                        self.options)
             index = 0
         self.widget.setCurrentIndex(index)
 
-    def change_options(self, new_options):
+    def change_options(self, new_options=None):
         """
-        The options of the combobox can be changed dynamically. new_options is a list of strings.
+        The options of the combobox can be changed dynamically.
+
+        new_options is an argument that is ignored, since the new options
+        are available as a property to the widget already.
         """
         self.widget.blockSignals(True)
         #self.defaults = new_options
-        self.widget._clear()
-        self.widget.addItems(new_options)
-        try:
-            self._update(new_value=self.module_value())
-        except ValueError:
-            pass
+        self.widget.clear()
+        #self.widget.addItems(new_options)
+        # do not trust the new options, rather call options again
+        self.widget.addItems(self.options)
+        self.widget_value = self.attribute_value
         self.widget.blockSignals(False)
 
 
-class PhaseAttributeWidget(FloatAttributeWidget):
-    pass
+class LedAttributeWidget(BaseAttributeWidget):
+    """ Boolean property with a button whose text and color indicates whether """
+    def _make_widget(self):
+        desc = recursive_getattr(self.module, '__class__.' + self.attribute_name)
+        val = recursive_getattr(self.module, self.attribute_name)
+        self.widget = QtGui.QPushButton("setting up...")
+        self.widget.clicked.connect(self.button_clicked)
 
+    def _set_widget_value(self, new_value):
+        if new_value == True:
+            color = 'green'
+            text = 'stop'
+        else:
+            color = 'red'
+            text = 'start'
+        self.widget.setStyleSheet("background-color:%s"%color)
+        self.widget.setText(text)
 
-class FrequencyAttributeWidget(FloatAttributeWidget):
-    def __init__(self, name, module, widget_name=None):
-        super(FrequencyAttributeWidget, self).__init__(name, module,
-                                                       widget_name=widget_name)
-        self.set_per_second(10)
+    def button_clicked(self):
+        self.attribute_value = not self.attribute_value
 
 
 class BoolAttributeWidget(BaseAttributeWidget):
     """
-    Boolean property
+    Checkbox for boolean attributes
     """
-    def set_widget(self):
-        """
-        Sets the widget (here a QCheckbox)
-
-        :return:
-        """
-
+    def _make_widget(self):
         self.widget = QtGui.QCheckBox()
-        self.widget.stateChanged.connect(self.write)
+        self.widget.stateChanged.connect(self.write_widget_value_to_attribute)
 
-    def write(self):
-        """
-        Sets the module value from the current gui value
+    def _get_widget_value(self):
+        return (self.widget.checkState() == 2)
 
-        :return:
-        """
-        setattr(self.module, self.name, self.widget.checkState() == 2)
-        if self.acquisition_property:
-            self.value_changed.emit()
-
-
-    def _update(self, new_value):
-        """
-        Sets the gui value from the current module value
-
-        :return:
-        """
-
+    def _set_widget_value(self, new_value):
         self.widget.setCheckState(new_value * 2)
 
 
 class BoolIgnoreAttributeWidget(BoolAttributeWidget):
     """
-    Boolean property with additional option 'ignore' that is shown
-    as a grey check in GUI
+    Like BoolAttributeWidget with additional option 'ignore' that is
+    shown as a grey check in GUI
     """
     _gui_to_attribute_mapping = Bijection({0: False,
                                            1: 'ignore',
                                            2: True})
 
-    def set_widget(self):
+    def _make_widget(self):
         """
         Sets the widget (here a QCheckbox)
         :return:
         """
         self.widget = QtGui.QCheckBox()
         self.widget.setTristate(True)
-        self.widget.stateChanged.connect(self.write)
+        self.widget.stateChanged.connect(self.write_widget_value_to_attribute)
         self.setToolTip("Checked:\t    on\nUnchecked: off\nGrey:\t    ignore")
 
-    def write(self):
-        """
-        Sets the module value from the current gui value
-        :return:
-        """
-        setattr(self.module, self.name, self._gui_to_attribute_mapping[self.widget.checkState()])
-        if self.acquisition_property:
-            self.value_changed.emit()
+    def _get_widget_value(self):
+        return self._gui_to_attribute_mapping[self.widget.checkState()]
 
-    def _update(self, new_value):
-        """
-        Sets the gui value from the current module value
-        :return:
-        """
-        self.widget.setCheckState(self._gui_to_attribute_mapping.inverse[new_value])
+    def _set_widget_value(self, new_value):
+        self.widget.setCheckState(
+            self._gui_to_attribute_mapping.inverse[new_value])
 
 
-class CurveAttributeWidget(BaseAttributeWidget):
+class DataWidget(pg.GraphicsWindow):
     """
-    Base property for float and int.
+    A widget to plot real or complex datasets. To plot data, use the
+    function _set_widget_value(new_value, transform_magnitude)
+
+    new_value is a a tuple (x, y), with x the x values, y, a 1D array for a
+    single curve or a 2D array for multiple curves. If at least one of the
+    curve is complex, magnitude and phases will be plotted.
+
+    transform_magnitude is the function to transform magnitude data.
     """
-    def set_widget(self):
-        """
-        Sets the widget (here a QCheckbox)
-        :return:
-        """
-        self.widget = pg.GraphicsWindow(title="Curve")
-        self.plot_item = self.widget.addPlot(title="Curve")
-        self.plot_item_phase = self.widget.addPlot(row=1, col=0,
+    _defaultcolors = ['m', 'b', 'g', 'r', 'y', 'c', 'o', 'w']
+    def __init__(self, title=None):
+        super(DataWidget, self).__init__(title=title)
+        self.plot_item = self.addPlot(title="Curve")
+        self.plot_item_phase = self.addPlot(row=1, col=0,
                                                    title="Phase (deg)")
         self.plot_item_phase.setXLink(self.plot_item)
         self.plot_item.showGrid(y=True, alpha=1.)
         self.plot_item_phase.showGrid(y=True, alpha=1.)
+        self.curves = []  # self.plot_item.plot(pen='g')
+        self.curves_phase = []  # self.plot_item_phase.plot(pen='g')
+        self._is_real = True
+        self._set_real(True)
 
-        self.curve = self.plot_item.plot(pen='g')
-        self.curve_phase = self.plot_item_phase.plot(pen='g')
+    def _set_widget_value(self, new_value, transform_magnitude=lambda data :
+    20. * np.log10(np.abs(data) + sys.float_info.epsilon)):
+        if new_value is None:
+            return
+        x, y = new_value
+        shape = np.shape(y)
+        if len(shape) > 2:
+            raise ValueError("Data cannot be larger than 2 "
+                             "dimensional")
+        if len(shape) == 1:
+            y = [y]
+        self._set_real(np.isreal(y).all())
+        for i, values in enumerate(y):
+            self._display_curve_index(x, values, i, transform_magnitude=transform_magnitude)
+        while (i + 1 < len(self.curves)):  # delete remaining curves
+            i += 1
+            self.curves[i].hide()
 
-        #self.setToolTip("Checked:\t    on\nUnchecked: off\nGrey:\t    ignore")
+    def _display_curve_index(self, x, values, i, transform_magnitude):
+        y_mag = transform_magnitude(values)
+        y_phase = np.zeros(len(values)) if self._is_real else \
+            self._phase(values)
+        if len(self.curves) <= i:
+            color = self._defaultcolors[i % len(self._defaultcolors)]
+            self.curves.append(self.plot_item.plot(pen=color))
+            self.curves_phase.append(self.plot_item_phase.plot(pen=color))
+        self.curves[i].setData(x, y_mag)
+        self.curves_phase[i].setData(x, y_phase)
 
-    def write(self):
-        # nothing to write from a curve
-        pass
-        #setattr(self.module, self.name, self.widget.value())
-        #self.value_changed.emit()
+    def _set_real(self, bool):
+        self._is_real = bool
+        if bool:
+            self.plot_item_phase.hide()
+            self.plot_item.setTitle("")
+        else:
+            self.plot_item_phase.show()
+            self.plot_item.setTitle("Magnitude (dB)")
 
-    def _update(self, new_value):
+
+class PlotAttributeWidget(BaseAttributeWidget):
+    _defaultcolors = ['g', 'r', 'b', 'y', 'c', 'm', 'o', 'w']
+
+    def time(self):
+        return pyrpl_utils.time()
+
+    def _make_widget(self):
         """
-        Updates the value displayed in the widget
+        Sets the widget (here a QCheckbox)
         :return:
         """
+        self.widget = pg.GraphicsWindow(title="Plot")
+        legend = getattr(self.module.__class__, self.attribute_name).legend
+        self.pw = self.widget.addPlot(title="%s vs. time (s)"%legend)
+        self.plot_start_time = self.time()
+        self.curves = {}
+        setattr(self.module.__class__, '_' + self.attribute_name + '_pw', self.pw)
+
+    def _set_widget_value(self, new_value):
+        try:
+            args, kwargs = new_value
+        except:
+            if isinstance(new_value, dict):
+                args, kwargs = [], new_value
+            elif isinstance(new_value, list):
+                args, kwargs = new_value, {}
+            else:
+                args, kwargs = [new_value], {}
+        for k in kwargs.keys():
+            v = kwargs.pop(k)
+            kwargs[k[0]] = v
+        i=0
+        for value in args:
+            while self._defaultcolors[i] in kwargs:
+                i += 1
+            kwargs[self._defaultcolors[i]] = value
+        t = self.time()-self.plot_start_time
+        for color, value in kwargs.items():
+            if value is not None:
+                if not color in self.curves:
+                    self.curves[color] = self.pw.plot(pen=color)
+                curve = self.curves[color]
+                x, y = curve.getData()
+                if x is None or y is None:
+                    x, y = np.array([t]), np.array([value])
+                else:
+                    x, y = np.append(x, t), np.append(y, value)
+                curve.setData(x, y)
+
+    def _magnitude(self, data):
+        """ little helpers """
+        return 20. * np.log10(np.abs(data) + sys.float_info.epsilon)
+
+    def _phase(self, data):
+        """ little helpers """
+        return np.angle(data, deg=True)
+
+
+class DataAttributeWidget(PlotAttributeWidget):
+    """
+    Plots a curve (complex or real), with an array as input.
+    """
+
+    def _make_widget(self):
+        self.widget = pg.GraphicsWindow(title="Curve")
+        self.plot_item = self.widget.addPlot(title="Curve")
+        self.plot_item_phase = self.widget.addPlot(row=1, col=0, title="Phase (deg)")
+        self.plot_item_phase.setXLink(self.plot_item)
+        self.plot_item.showGrid(y=True, alpha=1.)
+        self.plot_item_phase.showGrid(y=True, alpha=1.)
+        self.curve = self.plot_item.plot(pen='g')
+        self.curve_phase = self.plot_item_phase.plot(pen='g')
+        self._is_real = True
+        self._set_real(True)
+
+    #def _set_widget_value(self, new_value):
+    #   data = new_value
+    #    if data is None:
+    #        return
+    #    shape = np.shape(new_value)
+    #    if len(shape)>2:
+    #        raise ValueError("Shape of data should be (1) or (2, 1)")
+    #    if len(shape)==1:
+    #        x = np.linspace(0, len(data), len(data))
+    #        y = [data]
+    #    if len(shape)==2:
+    #        if shape[0] == 1:
+    #            x = np.linspace(0, len(data), len(data[0]))
+    #            y = [data[0]]
+    #        if shape[0] >= 2:
+    #            x = data[0]
+    #            y = data[1:]
+    #    self._set_real(np.isreal(y).all())
+    #    for i, values in enumerate(y):
+    #        self._display_curve_index(x, values, i)
+    #    while (i + 1 < len(self.curves)):  # delete remaining curves
+    #        i += 1
+    #        self.curves[i].hide()
+
+    #def _display_curve_index(self, x, values, i):
+    #    y_mag = values if self._is_real else self._magnitude(values)
+    #    y_phase = np.zeros(len(values)) if self._is_real else \
+    #        self._phase(values)
+    #    if len(self.curves)<=i:
+    #        color = self._defaultcolors[i%len(self._defaultcolors)]
+    #        self.curves.append(self.plot_item.plot(pen=color))
+    #        self.curves_phase.append(self.plot_item_phase.plot(pen=color))
+    #    self.curves[i].setData(x, y_mag)
+    #    self.curves_phase[i].setData(x, y_phase)
+
+    def _set_real(self, bool):
+        self._is_real = bool
+        if bool:
+            self.plot_item_phase.hide()
+            self.plot_item.setTitle("")
+        else:
+            self.plot_item_phase.show()
+            self.plot_item.setTitle("Magnitude (dB)")
+
+
+class CurveAttributeWidget(DataAttributeWidget):
+    """
+    Plots a curve (complex or real), with an id number as input.
+    """
+
+    def _set_widget_value(self, new_value):
         if new_value is None:
             return
         try:
-            data = getattr(self.module, '_' + self.name + '_object').data
-            name = getattr(self.module, '_' + self.name + '_object').params['name']
+            data = getattr(self.module, '_' + self.attribute_name + '_object').data
+            name = \
+            getattr(self.module, '_' + self.attribute_name + '_object').params[
+                'name']
         except:
             pass
         else:
@@ -1287,18 +962,11 @@ class CurveAttributeWidget(BaseAttributeWidget):
                 self.plot_item.setTitle(name)
 
 
-    def _magnitude(self, data):
-        return 20. * np.log10(np.abs(data) + sys.float_info.epsilon)
-
-    def _phase(self, data):
-        return np.angle(data, deg=True)
-
-
 class CurveSelectAttributeWidget(SelectAttributeWidget):
     """
     Select one or many curves.
     """
-    def set_widget(self):
+    def _make_widget(self):
         """
         Sets up the widget (here a QComboBox)
 
@@ -1306,20 +974,14 @@ class CurveSelectAttributeWidget(SelectAttributeWidget):
         """
         self.widget = QtGui.QListWidget()
         self.widget.addItems(self.options)
-        self.widget.currentItemChanged.connect(self.write)
+        self.widget.currentItemChanged.connect(self.write_widget_value_to_attribute)
 
-    def write(self):
-        """
-        Sets the module property value from the current gui value
-        :return:
-        """
-        setattr(self.module, self.name, int(self.widget.currentItem().text()))
-        self.value_changed.emit()
+    def _get_widget_value(self):
+        return int(self.widget.currentItem().text())
 
-    def _update(self, new_value):
-        """
-        Sets the gui value from the current module value
-        """
+    def _set_widget_value(self, new_value):
+        """ should be much simpler here. all this logic should be in the
+        attribute """
         if new_value is None:
             new_value = -1
         if hasattr(new_value, 'pk'):
@@ -1329,6 +991,6 @@ class CurveSelectAttributeWidget(SelectAttributeWidget):
         except IndexError:
             self.module._logger.warning("SelectWidget %s could not find "
                                         "current value %s in the options %s",
-                                        self.name, self.new_value, self.options)
+                                        self.attribute_name, self.new_value, self.options)
             index = 0
         self.widget.setCurrentRow(index)

@@ -8,7 +8,7 @@ from PyQt4 import QtCore, QtGui
 from collections import OrderedDict
 import functools
 import logging
-from ...widgets.yml_editor import YmlEditor
+from ..yml_editor import YmlEditor
 
 APP = QtGui.QApplication.instance()
 
@@ -34,7 +34,8 @@ class MyMenuLabel(QtGui.QLabel):
 
     def contextMenuEvent(self, event):
         menu = self.get_menu()
-        menu.exec_(event.globalPos())
+        if menu is not None:
+            menu.exec_(event.globalPos())
 
 
 class LoadLabel(MyMenuLabel):
@@ -110,6 +111,22 @@ class EditLabel(MyMenuLabel):
         return menu
 
 
+class HideShowLabel(MyMenuLabel):
+    """
+    "Hide/Show" label
+    """
+    text = " .:Hide/Show:. "
+
+    def get_menu(self):
+        if hasattr(self, 'hidden') and self.hidden:
+            self.module_widget.show_widget()
+            self.hidden = False
+        else:
+            self.module_widget.hide_widget()
+            self.hidden = True
+        return None
+
+
 class ReducedModuleWidget(QtGui.QGroupBox):
     """
     Base class for a module Widget. In general, this is one of the DockWidget of the Pyrpl MainWindow.
@@ -131,13 +148,31 @@ class ReducedModuleWidget(QtGui.QGroupBox):
         self.change_ownership() # also sets the title
         self.module._signal_launcher.connect_widget(self)
 
+    def init_main_layout(self, orientation='horizontal'):
+        self.root_layout = QtGui.QHBoxLayout()
+        self.main_widget = QtGui.QWidget()
+        self.root_layout.addWidget(self.main_widget)
+        if orientation == "vertical":
+            self.main_layout = QtGui.QVBoxLayout()
+        else:
+            self.main_layout = QtGui.QHBoxLayout()
+        self.main_widget.setLayout(self.main_layout)
+        self.setLayout(self.root_layout)
+
+    def show_widget(self):
+        """ shows the widget after it has been hidden """
+        self.main_widget.show()
+
+    def hide_widget(self):
+        """ shows the widget after it has been hidden """
+        self.main_widget.hide()
+
     def init_gui(self):
         """
         To be overwritten in derived class
         :return:
         """
-        self.main_layout = QtGui.QHBoxLayout()
-        self.setLayout(self.main_layout)
+        self.init_main_layout()
         self.init_attribute_layout()
 
     def init_attribute_layout(self):
@@ -145,32 +180,47 @@ class ReducedModuleWidget(QtGui.QGroupBox):
         Automatically creates the gui properties for the register_widgets in register_names.
         :return:
         """
-        self.attribute_layout = QtGui.QHBoxLayout()
-        self.main_layout.addLayout(self.attribute_layout)
+        if '\n' in self.module._gui_attributes:
+            self.attributes_layout = QtGui.QVBoxLayout()
+            self.main_layout.addLayout(self.attributes_layout)
+            self.attribute_layout = QtGui.QHBoxLayout()
+            self.attributes_layout.addLayout(self.attribute_layout)
+        else:
+            self.attribute_layout = QtGui.QHBoxLayout()
+            self.main_layout.addLayout(self.attribute_layout)
         for attr_name in self.module._gui_attributes:
-            attribute_value = getattr(self.module, attr_name)  # needed for
-            # passing the instance to the descriptor
-            attribute = getattr(self.module.__class__, attr_name)
-            if callable(attribute):
-                # assume that attribute is a function
-                widget = QtGui.QPushButton(attr_name)
-                widget.clicked.connect(getattr(self.module, attr_name))
+            if attr_name == '\n':
+                self.attribute_layout = QtGui.QHBoxLayout()
+                self.attributes_layout.addLayout(self.attribute_layout)
             else:
-                # standard case: make attribute widget
-                widget = attribute._create_widget(self.module)
-                if widget is None:
-                    continue
-                widget.value_changed.connect(self.attribute_changed)
+                attribute_value = getattr(self.module, attr_name)  # needed for
+                # passing the instance to the descriptor
+                attribute = getattr(self.module.__class__, attr_name)
+                if callable(attribute):
+                    # assume that attribute is a function
+                    widget = QtGui.QPushButton(attr_name)
+                    widget.clicked.connect(getattr(self.module, attr_name))
+                else:
+                    # standard case: make attribute widget
+                    widget = attribute._create_widget(self.module)
+                    if widget is None:
+                        continue
+                    widget.value_changed.connect(self.attribute_changed)
             self.attribute_widgets[attr_name] = widget
             self.attribute_layout.addWidget(widget)
 
     def update_attribute_by_name(self, name, new_value_list):
         """
         SLOT: don't change name unless you know what you are doing
-        Updates a specific attribute. New value is passed as a 1-element list to avoid typing problems in signal-slot.
+        Updates a specific attribute. New value is passed as a 1-element list
+        to avoid typing problems in signal-slot.
         """
         if name in self.module._gui_attributes:
-            self.attribute_widgets[str(name)].update_widget(new_value_list[0])
+            widget = self.attribute_widgets[str(name)]
+            try:  # try to propagate the change of attribute to the widget
+                widget.update_attribute_by_name(new_value_list)
+            except:  # directly set the widget value otherwise
+                self.attribute_widgets[str(name)].widget_value = new_value_list[0]
 
     def change_options(self, select_attribute_name, new_options):
         """
@@ -179,6 +229,15 @@ class ReducedModuleWidget(QtGui.QGroupBox):
         """
         if select_attribute_name in self.module._gui_attributes:
             self.attribute_widgets[str(select_attribute_name)].change_options(new_options)
+
+    def refresh_filter_options(self, filter_attribute_name):
+        """
+        SLOT: don't change name unless you know what you are doing
+        New options should be displayed for some FilterProperty.
+        """
+        if filter_attribute_name in self.module._gui_attributes:
+            self.attribute_widgets[str(
+                filter_attribute_name)].refresh_options(self.module)
 
     def change_ownership(self):
         """
@@ -238,6 +297,9 @@ class ModuleWidget(ReducedModuleWidget):
                                  self.save_label.pos().x(), self.title_pos[1])
             self.edit_label.move(self.erase_label.width() +
                                  self.erase_label.pos().x(), self.title_pos[1])
+            self.hideshow_label.move(self.edit_label.width() +
+                                     self.edit_label.pos().x(),
+                                     self.title_pos[1])
 
     def create_title_bar(self):
         self.title_label = QtGui.QLabel("yo", parent=self)
@@ -253,6 +315,9 @@ class ModuleWidget(ReducedModuleWidget):
 
         self.edit_label = EditLabel(self)
         self.edit_label.adjustSize()
+
+        self.hideshow_label = HideShowLabel(self)
+        self.hideshow_label.adjustSize()
 
         # self.setStyleSheet("ModuleWidget{border: 1px dashed gray;color: black;}")
         self.setStyleSheet("ModuleWidget{margin: 0.1em; margin-top:0.6em; border: 1 dotted gray;border-radius:5}")

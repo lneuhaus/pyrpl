@@ -70,7 +70,6 @@ class IqManagerWidget(ModuleManagerWidget):
         In addition to the normal ModuleManagerWidget stacking of module attributes, the IqManagerWidget
         displays a schematic of the iq  module internal logic.
         """
-
         super(IqManagerWidget, self).init_gui()
         self.button_hide = QtGui.QPushButton('^', parent=self)
         self.button_hide.setMaximumHeight(15)

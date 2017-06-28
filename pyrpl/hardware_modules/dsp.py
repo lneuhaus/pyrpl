@@ -36,12 +36,15 @@ def all_inputs_keys(instance):
         except AttributeError:
             pass
         else:
-            for module in pyrpl.software_modules:
-                try:
-                    module_signals = module.signals
-                except AttributeError:
-                    pass
-                else:
+            if hasattr(pyrpl, 'software_modules'):
+                for module in pyrpl.software_modules:
+                    try:
+                        module_signals = module.signals
+                    except AttributeError:
+                        if isinstance(module, SignalModule):
+                            module_signals = {module.name: module}
+                        else:
+                            continue
                     for name, signal in module_signals.items():
                         signals.append(signal.name)
                         signal = signal.parent
@@ -86,16 +89,34 @@ class InputSelectProperty(SelectProperty):
             # try to construct the path from the pyrpl module
             pyrpl, rp = value.pyrpl, value.pyrpl.rp
             name = value.name
+            fullname = name
             module = value.parent
             while (module != pyrpl) and (module != rp):
-                name = module.name + '.' + name
+                fullname = module.name + '.' + fullname
                 module = module.parent
             # take this path as the input signal key if allowed
-            if name in self.options(obj):
+            if fullname in self.options(obj):
+                value = fullname
+            # try to remove the preceding stuff from name (allows shortcuts)
+            elif name in self.options(obj):
                 value = name
             # otherwise take the corresponding dsp signal
             else:
                 value = value.signal()
+        else:
+            options = self.options(obj)
+            if value not in options:
+                # if not an option, try to remove preceding text from options
+                # and see if a match is possible
+                options = [o for o in self.options(obj) if o.endswith(value)]
+                if len(options) > 0:
+                    value, oldvalue = options[0], value
+                    if len(options) > 1:
+                        obj._logger.warning("%s.%s was ambiguously assigned "
+                                            "the input %s from %s. Possible "
+                                            "values were %s.",
+                                            obj.name, self.name, value,
+                                            oldvalue, options)
         return super(InputSelectProperty, self).validate_and_normalize(obj, value)
 
 

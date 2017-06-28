@@ -3,7 +3,7 @@ from copy import copy
 import numpy as np
 from PyQt4 import QtGui
 
-from ..async_utils import PyrplFuture, MainThreadTimer, CancelledError
+from ..async_utils import PyrplFuture, MainThreadTimer, CancelledError, sleep
 from ..attributes import FloatProperty, SelectProperty, FrequencyProperty, \
                          IntProperty, BoolProperty, FilterProperty, SelectProperty, \
                          ProxyProperty
@@ -11,6 +11,7 @@ from ..hardware_modules import all_inputs, all_output_directs, InputSelectProper
 from ..modules import SignalModule
 from ..acquisition_module import AcquisitionModule
 from ..widgets.module_widgets import NaWidget
+from ..hardware_modules.iq import Iq
 
 # timeit.default_timer() is THE precise timer to use (microsecond precise vs
 # milliseconds for time.time()).
@@ -23,20 +24,23 @@ APP = QtGui.QApplication.instance()
 
 
 class NaAcBandwidth(FilterProperty):
-    def valid_frequencies(self, instance):
-        return [freq for freq
-                in instance.iq._valid_inputfilter_frequencies(instance.iq)
-                if freq >= 0]
+    def valid_frequencies(self, obj):
+        return [-freq for freq
+                in obj.iq.inputfilter_options
+                if freq <= 0]
 
-    def get_value(self, instance):
-        if instance is None:
+    def get_value(self, obj):
+        if obj is None:
             return self
-        return -instance.iq.inputfilter
+        return -obj.iq.inputfilter
 
-    def set_value(self, instance, value):
-        instance.iq.inputfilter = [-value[0]]
+    def set_value(self, obj, value):
+        obj.iq.inputfilter = [-value[0]]
         return value
 
+class NaAmplitudeProperty(FloatProperty):
+    def validate_and_normalize(self, obj, value):
+        return obj.iq.__class__.amplitude.validate_and_normalize(obj.iq, abs(value))
 
 class RbwAttribute(FilterProperty):
     def get_value(self, instance):
@@ -52,8 +56,8 @@ class RbwAttribute(FilterProperty):
         instance.iq.bandwidth = val
         return val
 
-    def valid_frequencies(self, module):
-        return module.iq.__class__.bandwidth.valid_frequencies(module.iq)
+    def valid_frequencies(self, obj):
+        return [freq for freq in obj.iq.bandwidth_options if freq > 0]
 
 
 class LogScaleProperty(BoolProperty):
@@ -113,13 +117,13 @@ class NaCurveFuture(PyrplFuture):
         self._module = module
         self._min_delay_ms = min_delay_ms
         self.current_point = 0
-        self.current_avg  = 1
+        self.current_avg = 1
         self.n_points = self._module.points
         self._paused = True
         self._fut = None # placeholder for next point future
         self.never_started = True
         super(NaCurveFuture, self).__init__()
-        self._module._start_acquisition()
+
         self.data_x = copy(self._module.data_x)  # In case of saving latter.
         self.data_avg = np.zeros(self.n_points,
                                  dtype=np.complex)
@@ -132,6 +136,8 @@ class NaCurveFuture(PyrplFuture):
 
     def start(self):
         # self._module.iq.output_direct = self._module.output_direct
+        self._time_first_point = timeit.default_timer()
+        self._module._start_acquisition()
         self._module.iq.amplitude = self._module.amplitude
         if self.never_started:
             self._module._emit_signal_by_name("clear_curve")
@@ -173,6 +179,14 @@ class NaCurveFuture(PyrplFuture):
             self._point_cancelled()
             return #  exit the loop (could be restarted latter for RunFuture)
         self._add_point(point)
+
+        # if zero span mode, data_x is time measured, not frequency
+        if self._module.is_zero_span():
+            if self.current_avg==1:
+                time_now = timeit.default_timer() - self._time_first_point
+                self.data_x[self.current_point] = time_now
+                self._module._data_x[self.current_point] = time_now
+
         self.current_point+=1
         if self.current_point==self.n_points:
             self._scan_finished()
@@ -202,6 +216,7 @@ class NaCurveFuture(PyrplFuture):
 
     def _scan_finished(self):
         self.set_result(self.data_avg)
+        self.pause()
 
 
 class NaRunFuture(NaCurveFuture):
@@ -246,7 +261,6 @@ class NaRunFuture(NaCurveFuture):
         self._run_continuous = True
         self._min_delay_ms = self._module.MIN_DELAY_CONTINUOUS_MS
 
-
 class NetworkAnalyzer(AcquisitionModule, SignalModule):
     """
     Using an IQ module, the network analyzer can measure the complex coherent
@@ -268,8 +282,8 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
     """
     _widget_class = NaWidget
     _gui_attributes = ["input",
-                       "acbandwidth",
                        "output_direct",
+                       "acbandwidth",
                        "start_freq",
                        "stop_freq",
                        "rbw",
@@ -279,50 +293,49 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
                        "logscale",
                        "infer_open_loop_tf"]
     _setup_attributes = _gui_attributes + ['running_state']
-    # _callback_attributes = _gui_attributes
-    input = InputSelectProperty(call_setup=True)
+    avg = IntProperty(doc="number of curves to average in single mode. In "
+                           "continuous mode, a decaying average with a "
+                           "characteristic memory of 'avg' curves is "
+                           "performed.",
+                       default=10,
+                       min=1)
+    input = InputSelectProperty(default='networkanalyzer',
+                                call_setup=True,
+                                ignore_errors=True)
     #input = ProxyProperty('iq.input')
-    output_direct = SelectProperty(all_output_directs, call_setup=True)
-    start_freq = FrequencyProperty(call_setup=True)
-    stop_freq = FrequencyProperty(call_setup=True)
-    rbw = RbwAttribute(default=1000, call_setup=True)
+    output_direct = SelectProperty(options=all_output_directs,
+                                   default='off',
+                                   call_setup=True)
+    start_freq = FrequencyProperty(default=1e3, call_setup=True, min=Iq.frequency.increment)
+    stop_freq = FrequencyProperty(default=1e6, call_setup=True, min=Iq.frequency.increment)
+    rbw = RbwAttribute(default=500.0, call_setup=True)
     avg_per_point = IntProperty(min=1, default=1, call_setup=True)
-    amplitude = FloatProperty(min=0,
-                              max=1,
-                              increment=1. / 2 ** 14,
-                              call_setup=True)
+    amplitude = NaAmplitudeProperty(default=0.1,
+                                    min=0,
+                                    max=1,
+                                    call_setup=True)
     points = IntProperty(min=1, max=1e8, default=1001, call_setup=True)
-    logscale = LogScaleProperty(call_setup=True)
-    infer_open_loop_tf = BoolProperty()
+    logscale = LogScaleProperty(default=True, call_setup=True)
+    infer_open_loop_tf = BoolProperty(default=False)
     acbandwidth = NaAcBandwidth(
+        default=50.0,
         doc="Bandwidth of the input high-pass filter of the na.",
         call_setup=True)
 
-    def _init_module(self):
-        # to remove once order is fixed
+    def __init__(self, parent, name=None):
         self._setup_attributes.remove('running_state')
         self._setup_attributes.append('running_state')
-
         self.sleeptimes = 0.5
-        self.rbw = 200
-        self.start_freq = 200
-        self.stop_freq = 50000
-        self.points = 1001
+        self._time_last_point = None
+        self._data_x = None
+        super(NetworkAnalyzer, self).__init__(parent, name=name)
 
-        self.avg_per_point = 1
-        self.amplitude = 0.01
-        self.input = 'in1'
-        self.output_direct = 'off'
-        self.acbandwidth = 0
-        self.logscale = False
-        self.infer_open_loop_tf = False
-        self.curve_name = 'na_curve'
-        self._is_setup = False
-        self.time_per_point = self._time_per_point()
-        #self.current_averages = 0
-        self._time_last_point = 0
-        self._update_data_x()
-        super(NetworkAnalyzer, self)._init_module()
+    def _load_setup_attributes(self):
+        super(NetworkAnalyzer, self)._load_setup_attributes()
+        if self.running_state in ["running_continuous", "running_single"]:
+            self._logger.warning("Network analyzer is running in the current "
+                                 "state. Disregard this message if this is "
+                                 "the desired behavior.")
 
     @property
     def iq(self):
@@ -331,6 +344,9 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
         """
         if not hasattr(self, '_iq'):
             self._iq = self.pyrpl.iqs.pop(owner=self.name)
+            # initialize iq options
+            self.iq.bandwidth = [self.__class__.rbw.default, self.__class__.rbw.default]
+            self.iq.inputfilter = -self.__class__.acbandwidth.default
         return self._iq
 
     @property
@@ -450,16 +466,23 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
         return NaCurveFuture(self, min_delay_ms)
 
     def _new_point_future(self, index, min_delay_ms):
-        if hasattr(self, "_point_future"): #  for _init_module
+        if hasattr(self, "_point_future"):
             self._point_future.cancel()
         self._point_future = NaPointFuture(self, index, min_delay_ms)
         return self._point_future
 
+    def is_zero_span(self):
+        """
+        Returns true if start_freq is the same as stop_freq.
+        """
+        return self.start_freq==self.stop_freq
+
     def _start_point_acquisition(self, index):
-        #if self.current_point < self.points:
-            # writing to iq.frequency triggers the acquisition
-            # negative index means "PRETRACE_POINT"--> acquire with start_freq
-        self.iq.frequency = self.data_x[index]
+        if not self.is_zero_span(): # in zero span, data_x are time,
+            # not frequency
+            self.iq.frequency = self.data_x[index]
+        else:
+            self.iq.frequency = self.start_freq
         self._time_last_point = timeit.default_timer()
 
     def _get_point(self, index):
@@ -483,6 +506,21 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
         y /= tf
         return y, amp
 
+    def take_ringdown(self, frequency, rbw=1000, points=1000, avg=1):
+        self.start_freq = frequency
+        self.stop_freq = frequency
+        self.rbw = rbw
+        self.points = points
+        self.avg = avg
+        curve = self.single_async()
+        sleep(0.1)
+        self.iq.output_direct = "off"
+        self._time_first_point=timeit.default_timer()
+        res = curve.await_result()
+        x = self._run_future.data_x - self._time_first_point
+        return [x, res]
+
+
     def _start_acquisition(self):
         """
         For the NA, resuming (from pause to start for instance... should
@@ -492,19 +530,18 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
         :return:
         """
         # super(NAAcquisitionManager, self)._start_acquisition()
-        self._update_data_x()
-        x = self.data_x
-        # preventive saturation
-        amplitude = abs(self.amplitude)
+        x = self.data_x if not self.is_zero_span() else  \
+                                        self.start_freq*np.ones(self.points)
         self.iq.setup(frequency=x[0],
                       bandwidth=self.rbw,
                       gain=0,
                       phase=0,
                       acbandwidth=self.acbandwidth,
-                      amplitude=amplitude,
+                      amplitude=self.amplitude,
                       input=self.input,
                       output_direct=self.output_direct,
                       output_signal='output_direct')
+
         # setup averaging
         self.iq._na_averages = np.int(np.round(125e6 / self.rbw *
                                                self.avg_per_point))
@@ -542,7 +579,21 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
     def data_x(self):
         return self._data_x
 
+    @property
+    def frequencies(self):
+        """
+        alias for data_x
+
+        :return: frequency array
+        """
+        return self.data_x
+
     def _update_data_x(self):
+        if self.is_zero_span():
+            self._data_x = np.zeros(self.points)
+            # data_x will be measured during first scan...
+            return
+
         if self.logscale:
             raw_values = np.logspace(
                 np.log10(self.start_freq),
@@ -587,3 +638,7 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
     @property
     def measured_time_per_point(self):
         return self._run_future.measured_time_per_point
+
+    def _setup(self):
+        self._update_data_x()  # precalculate frequency values
+        super(NetworkAnalyzer, self)._setup()

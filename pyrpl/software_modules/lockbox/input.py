@@ -9,6 +9,8 @@ from ...hardware_modules.dsp import DSP_INPUTS, InputSelectProperty, all_inputs
 from ...pyrpl_utils import time, recursive_getattr
 from ...module_attributes import ModuleProperty
 from ...software_modules.lockbox import LockboxModule, LockboxModuleDictProperty
+from ...modules import SignalModule
+from ...software_modules.module_managers import InsufficientResourceError
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +25,7 @@ class CalibrationData(LockboxModule):
     rms = FloatProperty(min=0, max=2, doc="rms of the signal in V over a "
                                           "lockbox sweep")
     _analog_offset = FloatProperty(default=0.0, doc="analog offset of the signal")
+    _analog_offset_rms = FloatProperty(default=0.0, doc="rms of the analog offset of the signal")
     _asg_phase = PhaseProperty(doc="Phase of the asg when error signal is centered "
                                    "in calibration. Not used by all signals. ")
 
@@ -31,6 +34,10 @@ class CalibrationData(LockboxModule):
         """ small helper function for expected signal """
         return 0.5 * (self.max - self.min)
 
+    @property
+    def peak_to_peak(self):
+        """ small helper function for expected signal """
+        return self.max - self.min
 
     @property
     def offset(self):
@@ -42,13 +49,16 @@ class CalibrationData(LockboxModule):
         gets the mean, min, max, rms value of curve (into the corresponding
         self's attributes).
         """
-        self.mean = curve.mean()
-        self.rms = curve.std()
-        self.min = curve.min()
-        self.max = curve.max()
+        if curve is None:
+            self.logger.warning("Curve object for calibration is None. No calibration will be performed.")
+        else:
+            self.mean = curve.mean()
+            self.rms = curve.std()
+            self.min = curve.min()
+            self.max = curve.max()
 
 
-class Signal(LockboxModule):
+class Signal(LockboxModule, SignalModule):
     """
     represention of a physial signal. Can be either an imput or output signal.
     """
@@ -70,16 +80,20 @@ class Signal(LockboxModule):
         self.lockbox.unlock()
         # sample the input with a rather long duration to get a good average
         self.stats(t=duration)
-        current_residual_offset = self.mean
+        current_residual_offset, current_rms = self.mean, self.rms
         last_offset = self.calibration_data._analog_offset
         # current_residual_offset = current_offset - last_offset
         current_offset = last_offset + current_residual_offset
         self.calibration_data._analog_offset = current_offset
+        self.calibration_data._analog_offset_rms = current_rms
         self._logger.info("Calibrated analog offset of signal %s. "
-                          "Old value: %s, new value: %s, difference: %s.",
+                          "Old value: %s, new value: %s, difference: %s. "
+                          "Rms of the measurement: %s.",
+                          self.name,
                           last_offset,
                           self.calibration_data._analog_offset,
-                          current_residual_offset)
+                          current_residual_offset,
+                          current_rms)
 
     ##################################################
     # Sampler routines for diagnostics of the signal #
@@ -225,6 +239,11 @@ class InputSignal(Signal):
                                        doc="the dsp module or lockbox "
                                             "signal used as input signal")
 
+    def __init__(self, parent, name=None):
+        # self.parameters = dict()
+        self._lasttime = -1e10
+        super(InputSignal, self).__init__(parent, name=name)
+
     def _input_signal_dsp_module(self):
         """ returns the dsp signal corresponding to input_signal"""
         signal = self.input_signal
@@ -254,26 +273,32 @@ class InputSignal(Signal):
         returns an experimental curve in V obtained from a sweep of the
         lockbox.
         """
-        self.lockbox.sweep()
-        with self.pyrpl.scopes.pop(self.name) as scope:
-            if "sweep" in scope.states:
-                scope.load_state("sweep")
-            else:
-                scope.setup(input1=self.signal(),
-                            input2=self.lockbox.outputs[self.lockbox.default_sweep_output].pid.output_direct,
-                            trigger_source=self.lockbox.asg.name,
-                            duration=1./self.lockbox.asg.frequency,
-                            ch1_active=True,
-                            ch2_active=False,
-                            average=True,
-                            avg=1,  # trace_average
-                            running_state='stopped',
-                            rolling_mode=False)
-                scope.save_state("autosweep")
-            curve1, curve2 = scope.curve(timeout=1./self.lockbox.asg.frequency+scope.duration)
-            times = scope.times
-        curve1 -= self.calibration_data._analog_offset
-        return curve1, times
+        try:
+            with self.pyrpl.scopes.pop(self.name) as scope:
+                self.lockbox._sweep()
+                if "sweep" in scope.states:
+                    scope.load_state("sweep")
+                else:
+                    scope.setup(input1=self.signal(),
+                                input2=self.lockbox.outputs[self.lockbox.default_sweep_output].pid.output_direct,
+                                trigger_source=self.lockbox.asg.name,
+                                trigger_delay=0,
+                                duration=1./self.lockbox.asg.frequency,
+                                ch1_active=True,
+                                ch2_active=False,
+                                average=True,
+                                avg=1,  # trace_average
+                                running_state='stopped',
+                                rolling_mode=False)
+                    scope.save_state("autosweep")
+                curve1, curve2 = scope.curve(timeout=1./self.lockbox.asg.frequency+scope.duration)
+                times = scope.times
+                curve1 -= self.calibration_data._analog_offset
+                return curve1, times
+        except InsufficientResourceError:
+            # scope is blocked
+            self._logger.warning("No free scopes left for sweep_acquire. ")
+            return None, None
 
     def calibrate(self, autosave=False):
         """
@@ -281,6 +306,9 @@ class InputSignal(Signal):
         the curve is needed by expected_signal.
         """
         curve, times = self.sweep_acquire()
+        if curve is None:
+            self._logger.warning('Aborting calibration because no scope is available...')
+            return None
         self.calibration_data.get_stats_from_curve(curve)
         # log calibration values
         self._logger.info("%s calibration successful - Min: %.3f  Max: %.3f  Mean: %.3f  Rms: %.3f",
@@ -429,12 +457,6 @@ class InputSignal(Signal):
     #                        self._variable)
     #         return None
 
-    def _init_module(self):
-        """
-        lockbox is the lockbox instance to which this input belongs.
-        """
-        self.parameters = dict()
-        self._lasttime = -1e10
 
     def _create_widget(self):
         widget = super(InputSignal, self)._create_widget()
@@ -451,7 +473,7 @@ class InputDirect(InputSignal):
 
 
 class InputFromOutput(InputDirect):
-    def calibrate(self):
+    def calibrate(self, autosave=False):
         """ no need to calibrate this """
         pass
 
@@ -540,6 +562,10 @@ class InputIq(InputSignal):
                        'quadrature_factor']
     _setup_attributes = _gui_attributes
 
+    @property
+    def acbandwidth(self):
+        return self.mod_freq / 100.0
+
     # mod_freq = ProxyProperty("iq.frequency")
     # mod_amp = ProxyProperty("iq.amplitude")
     # mod_phase = ProxyProperty("iq.phase")
@@ -556,7 +582,6 @@ class InputIq(InputSignal):
     mod_output = SelectProperty(['out1', 'out2'], call_setup=True)
     quadrature_factor = IqQuadratureFactorProperty(call_setup=True)
     bandwidth = IqFilterProperty(call_setup=True)
-
 
     @property
     def iq(self):
@@ -582,7 +607,7 @@ class InputIq(InputSignal):
                       input=self._input_signal_dsp_module(),
                       gain=0,
                       bandwidth=self.bandwidth,
-                      acbandwidth=self.mod_freq/100.0,
+                      acbandwidth=self.acbandwidth,
                       quadrature_factor=self.quadrature_factor,
                       output_signal='quadrature',
                       output_direct=self.mod_output)

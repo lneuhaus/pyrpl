@@ -2,7 +2,6 @@ from ...modules import Module
 from ...module_attributes import ModuleProperty, ModuleDictProperty
 from ..loop import Loop, PlotLoop
 
-
 class LockboxModule(Module):
     @property
     def lockbox(self):
@@ -31,3 +30,4 @@ class LockboxPlotLoop(PlotLoop, LockboxLoop):
 from .input import *
 from .output import *
 from .lockbox import Lockbox
+from .gainoptimizer import GainOptimizer

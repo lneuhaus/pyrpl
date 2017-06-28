@@ -141,6 +141,9 @@ class OutputSignal(Signal):
         self.pid.min_voltage = self.min_voltage
         if self.output_channel.startswith('out'):
             self.pid.output_direct = self.output_channel
+            for pwm in [self.pyrpl.rp.pwm0, self.pyrpl.rp.pwm1]:
+                if pwm.input == self.pid.name:
+                    pwm.input = 'off'
         elif self.output_channel.startswith('pwm'):
             self.pid.output_direct = 'off'
             pwm = getattr(self.pyrpl.rp, self.output_channel)
@@ -164,15 +167,18 @@ class OutputSignal(Signal):
         if reset_offset:
             self.pid.ival = 0
         self.current_state = 'unlock'
+        # benefit from the occasion and do proper initialization
+        self._setup_pid_output()
 
     def sweep(self):
         self.unlock(reset_offset=True)
-        self._setup_pid_output()
         self.pid.input = self.lockbox.asg
         self.lockbox.asg.setup(amplitude=self.sweep_amplitude,
                                offset=self.sweep_offset,
                                frequency=self.sweep_frequency,
-                               waveform=self.sweep_waveform)
+                               waveform=self.sweep_waveform,
+                               trigger_source='immediately',
+                               cycles_per_burst=0)
         self.pid.setpoint = 0.
         self.pid.p = 1.
         self.current_state = 'sweep'
@@ -208,8 +214,7 @@ class OutputSignal(Signal):
         # the input (error signal) with a setpoint-dependent slope.
         # 1) model the output: dc_gain converted into units of setpoint_unit_per_V
         output_unit = self.unit.split('/')[0]
-        external_loop_gain = self.dc_gain\
-                             * self.lockbox._unit_in_setpoint_unit(output_unit)
+        external_loop_gain = self.dc_gain * self.lockbox._unit_in_setpoint_unit(output_unit)
         # 2) model the input: slope comes in units of V_per_setpoint_unit,
         # which cancels previous unit and we end up with a dimensionless ext. gain.
         external_loop_gain *= input.expected_slope(setpoint)
@@ -221,7 +226,7 @@ class OutputSignal(Signal):
                                  self.name)
         else:
             # write values to pid module
-            self.pid.setpoint = input.expected_signal(setpoint)
+            self.pid.setpoint = input.expected_signal(setpoint) + input.calibration_data._analog_offset
             self.pid.p = self.p / external_loop_gain * gain_factor
             self.pid.i = self.i / external_loop_gain * gain_factor
             self.pid.input = input.signal()

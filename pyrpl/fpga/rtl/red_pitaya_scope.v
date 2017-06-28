@@ -647,11 +647,11 @@ reg  [  2-1: 0] adc_scht_bn  ;
 reg  [ 14-1: 0] set_a_tresh  ;
 reg  [ 14-1: 0] set_a_treshp ;
 reg  [ 14-1: 0] set_a_treshm ;
-reg  [ 14-1: 0] set_b_tresh  ;
-reg  [ 14-1: 0] set_b_treshp ;
-reg  [ 14-1: 0] set_b_treshm ;
+//reg  [ 14-1: 0] set_b_tresh  ;
+//reg  [ 14-1: 0] set_b_treshp ;
+//reg  [ 14-1: 0] set_b_treshm ;
 reg  [ 14-1: 0] set_a_hyst   ;
-reg  [ 14-1: 0] set_b_hyst   ;
+//reg  [ 14-1: 0] set_b_hyst   ;
 
 always @(posedge adc_clk_i)
 if (adc_rstn_i == 1'b0) begin
@@ -666,8 +666,8 @@ if (adc_rstn_i == 1'b0) begin
 end else begin
    set_a_treshp <= set_a_tresh + set_a_hyst ; // calculate positive
    set_a_treshm <= set_a_tresh - set_a_hyst ; // and negative treshold
-   set_b_treshp <= set_b_tresh + set_b_hyst ;
-   set_b_treshm <= set_b_tresh - set_b_hyst ;
+   //set_b_treshp <= set_b_tresh + set_b_hyst ;
+   //set_b_treshm <= set_b_tresh - set_b_hyst ;
 
    if (adc_dv) begin
            if ($signed(adc_a_dat) >= $signed(set_a_tresh ))      adc_scht_ap[0] <= 1'b1 ;  // treshold reached
@@ -675,10 +675,10 @@ end else begin
            if ($signed(adc_a_dat) <= $signed(set_a_tresh ))      adc_scht_an[0] <= 1'b1 ;  // treshold reached
       else if ($signed(adc_a_dat) >  $signed(set_a_treshp))      adc_scht_an[0] <= 1'b0 ;  // wait until it goes over hysteresis
 
-           if ($signed(adc_b_dat) >= $signed(set_b_tresh ))      adc_scht_bp[0] <= 1'b1 ;
-      else if ($signed(adc_b_dat) <  $signed(set_b_treshm))      adc_scht_bp[0] <= 1'b0 ;
-           if ($signed(adc_b_dat) <= $signed(set_b_tresh ))      adc_scht_bn[0] <= 1'b1 ;
-      else if ($signed(adc_b_dat) >  $signed(set_b_treshp))      adc_scht_bn[0] <= 1'b0 ;
+           if ($signed(adc_b_dat) >= $signed(set_a_tresh ))      adc_scht_bp[0] <= 1'b1 ; //set_b_tresh
+      else if ($signed(adc_b_dat) <  $signed(set_a_treshm))      adc_scht_bp[0] <= 1'b0 ; //set_b_treshm
+           if ($signed(adc_b_dat) <= $signed(set_a_tresh ))      adc_scht_bn[0] <= 1'b1 ; //set_b_tresh
+      else if ($signed(adc_b_dat) >  $signed(set_a_treshp))      adc_scht_bn[0] <= 1'b0 ; //set_b_treshp
    end
 
    adc_scht_ap[1] <= adc_scht_ap[0] ;
@@ -784,12 +784,12 @@ always @(posedge adc_clk_i)
 if (adc_rstn_i == 1'b0) begin
    adc_we_keep   <=   1'b0      ;
    set_a_tresh   <=  14'd0000   ;
-   set_b_tresh   <=  14'd0000   ;
+   //set_b_tresh   <=  14'd0000   ;
    set_dly       <=  2**(RSZ-1);
-   set_dec       <=  17'd1      ;
+   set_dec       <=  17'h2000; // corresponds to 1s duration, formerly at minimum: 17'd1
    set_a_hyst    <=  14'd20     ;
-   set_b_hyst    <=  14'd20     ;
-   set_avg_en    <=   1'b1      ;
+   //set_b_hyst    <=  14'd20     ;
+   set_avg_en    <=   1'b0      ;
 /*   set_a_filt_aa <=  18'h0      ;
    set_a_filt_bb <=  25'h0      ;
    set_a_filt_kk <=  25'hFFFFFF ;
@@ -806,11 +806,11 @@ end else begin
       if (sys_addr[19:0]==20'h00)   adc_we_keep   <= sys_wdata[     3] ;
 
       if (sys_addr[19:0]==20'h08)   set_a_tresh   <= sys_wdata[14-1:0] ;
-      if (sys_addr[19:0]==20'h0C)   set_b_tresh   <= sys_wdata[14-1:0] ;
+      //if (sys_addr[19:0]==20'h0C)   set_b_tresh   <= sys_wdata[14-1:0] ;
       if (sys_addr[19:0]==20'h10)   set_dly       <= sys_wdata[32-1:0] ;
       if (sys_addr[19:0]==20'h14)   set_dec       <= sys_wdata[17-1:0] ;
       if (sys_addr[19:0]==20'h20)   set_a_hyst    <= sys_wdata[14-1:0] ;
-      if (sys_addr[19:0]==20'h24)   set_b_hyst    <= sys_wdata[14-1:0] ;
+      //if (sys_addr[19:0]==20'h24)   set_b_hyst    <= sys_wdata[14-1:0] ;
       if (sys_addr[19:0]==20'h28)   set_avg_en    <= sys_wdata[     0] ;
 
       /*
@@ -857,7 +857,7 @@ end else begin
      20'h00004 : begin sys_ack <= sys_en;          sys_rdata <= {{32- 4{1'b0}}, set_trig_src}       ; end 
 
      20'h00008 : begin sys_ack <= sys_en;          sys_rdata <= {{32-14{1'b0}}, set_a_tresh}        ; end
-     20'h0000C : begin sys_ack <= sys_en;          sys_rdata <= {{32-14{1'b0}}, set_b_tresh}        ; end
+     //20'h0000C : begin sys_ack <= sys_en;          sys_rdata <= {{32-14{1'b0}}, set_b_tresh}        ; end
      20'h00010 : begin sys_ack <= sys_en;          sys_rdata <= {               set_dly}            ; end
      20'h00014 : begin sys_ack <= sys_en;          sys_rdata <= {{32-17{1'b0}}, set_dec}            ; end
 
@@ -865,7 +865,7 @@ end else begin
      20'h0001C : begin sys_ack <= sys_en;          sys_rdata <= {{32-RSZ{1'b0}}, adc_wp_trig}       ; end
 
      20'h00020 : begin sys_ack <= sys_en;          sys_rdata <= {{32-14{1'b0}}, set_a_hyst}         ; end
-     20'h00024 : begin sys_ack <= sys_en;          sys_rdata <= {{32-14{1'b0}}, set_b_hyst}         ; end
+     //20'h00024 : begin sys_ack <= sys_en;          sys_rdata <= {{32-14{1'b0}}, set_b_hyst}         ; end
 
      20'h00028 : begin sys_ack <= sys_en;          sys_rdata <= {{32- 1{1'b0}}, set_avg_en}         ; end
 
