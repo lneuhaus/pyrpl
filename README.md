@@ -5,11 +5,19 @@ PyRPL (Python RedPitaya Lockbox) turns your RedPitaya into a powerful DSP device
 
 
 ## Installation
-Make sure you have an installation of Python (2 or 3), preferrably
-[Anaconda](https://www.continuum.io/downloads).
-Make sure you have a working installation of the python package [PyQt4](https://pypi.python.org/pypi/PyQt4) (with ```conda install pyqt=4```).
+Make sure you have an installation of Python (2.7 or 3.5). If you are new to Python or unexperienced with fighting installation issues, it is recommended to install the [Anaconda](https://www.continuum.io/downloads) Python distribution, which allows to install all PyRPL dependencies with the command 
+```
+conda install python=3.5 numpy scipy paramiko pandas nose pip pyqt=4
+```
+If you are not using Anaconda, you must manually install the python package [PyQt4](https://pypi.python.org/pypi/PyQt4), which requires a working C compiler installation on the system.
 
-Download and extract or clone (with ```git clone https://github.com/lneuhaus/pyrpl.git```) the pyrpl repository to your computer. Install PyRPL by navigating with a command line terminal into the pyrpl root directory and typing
+Next, clone (if you have a [git client](https://git-scm.com/downloads) installed - recommended option) the pyrpl repository to your computer with 
+```
+git clone https://github.com/lneuhaus/pyrpl.git
+```
+or [download and extract](https://github.com/lneuhaus/pyrpl/archive/master.zip) (if you do not want to install git on your computer) the repository. 
+
+Install PyRPL by navigating with a command line terminal into the pyrpl root directory and typing
 ```
 python setup.py develop
 ```
@@ -19,10 +27,9 @@ First, hook up your Red Pitaya / STEMlab to a LAN accessible from your computer 
 In an IPython console or JuPyter notebook, type
 ```
 from pyrpl import Pyrpl
-p = Pyrpl(hostname='your_redpitaya_ip_address')
+p = Pyrpl(config='your_configuration_name', hostname='your_redpitaya_ip_address')
 ```
-The GUI should open and you can start playing around with it.
-
+The GUI should open and you can start playing around with it. By calling pyrpl with different strings for 'your_configuration_name', your settings for a given configuration will be automatically remembered by PyRPL. You can drop the hostname argument after the first call of a given configuration. Different RedPitayas with different configuration names can be run simultaneously. 
 
 ## Unit test
 If you want to check whether PyRPL works correctly on your machine, navigate with a command line terminal into the pyrpl root directory and type the  following commands (by substituting the ip-address / hostname of your Red Pitaya, of course)
@@ -32,7 +39,8 @@ nosetests
 ```
 All tests should take about 3 minutes and finish without failures or errors. If there are errors, please report the console output as an issue (see the section "Issues" below for detailed explanations).
 
-## Next steps
+## Next steps / documentation
+We are still in the process of creating an up-to-date version of the documentation of the current code. If the current documentation is wrong or insufficient, please post an [issue](https://github.com/lneuhaus/pyrpl/issues) and we will prioritize documenting the part of code you need. 
 You can find all documentation in the subfolder ["doc"](https://github.com/lneuhaus/pyrpl/blob/master/doc). Get started by reading our paper on PyRPL, reading the official [html documentation](https://github.com/lneuhaus/pyrpl/blob/master/doc/sphinx/build/html/index.html), or going through the [tutorial.ipynb](https://github.com/lneuhaus/pyrpl/blob/master/doc/tutorial.ipynb) notebook. 
 
 ## Updates
@@ -41,8 +49,16 @@ Since PyRPL is continuously improved, you should install upgrades if you expect 
 git pull
 ```
 
+## FPGA bitfile generation (only for developers)
+In case you would like to modify the logic running on the FPGA, you should make sure that you are able to generate a working bitfile on your machine. To do so, you must install Vivado 2015.4  [(64-bit windows](windows web-installer](https://www.xilinx.com/member/forms/download/xef.html?filename=Xilinx_Vivado_SDK_2015.4_1118_2_Win64.exe&akdm=1) or [Linux)](https://www.xilinx.com/member/forms/download/xef.html?filename=Xilinx_Vivado_SDK_2015.4_1118_2_Lin64.bin&akdm=1) and [together with a working license](https://github.com/lneuhaus/pyrpl/wiki/How-to-get-the-right-license-for-Vivado-2015.4). Next, with a terminal in the pyrpl root directory, type
+```
+cd pyrpl/fpga
+make
+```
+Compilation should take between 10 and 30 minutes, depending on your machine. If there are no errors during compilation, the new bitfile (pyrpl/fpga/red_pitaya.bin) will be automatically used at the next restart of PyRPL. The best way to getting started is to skim through the very short Makefile in the fpga directory and to continue by reading the files mentioned in the makefile and the refences therein. All verilog source code is located in the subdirectory pyrpl/fpga/rtl/. 
+
 ## Issues
-Please report any problems or wishes as a new issue on [this page](https://github.com/lneuhaus/pyrpl/issues).
+Please report all problems or wishes as new issues on [this page](https://github.com/lneuhaus/pyrpl/issues).
 
 ## License
 Please read our license file [LICENSE](https://github.com/lneuhaus/pyrpl/blob/master/LICENSE) for more information. 
