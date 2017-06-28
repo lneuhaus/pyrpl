@@ -38,6 +38,7 @@ class TestClass(TestPyrpl):
 
     def test_flatness_baseband(self):
         for span in [5e4, 1e5, 5e5, 1e6, 2e6]:
+            print("Testing flatness for span %f..."%span)
             sa = self.pyrpl.spectrumanalyzer
             sa.setup(baseband=True,
                       center=0,
@@ -54,6 +55,8 @@ class TestClass(TestPyrpl):
             freqs = np.linspace(sa.rbw*3, sa.span/2-sa.rbw*3)
             points = []
             for freq in freqs:
+                print("Testing flatness for span %f and frequency freq "
+                      "%f..." % (span, freq))
                 asg.frequency = freq
                 curve = self.pyrpl.spectrumanalyzer.curve()[0]
                 assert(abs(sa.frequencies[np.argmax(curve)] - freq) < sa.rbw), \

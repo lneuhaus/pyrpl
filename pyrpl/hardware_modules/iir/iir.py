@@ -277,6 +277,10 @@ class IIR(FilterModule):
         bitlength = self._IIRBITS
         shift = self._IIRSHIFT
         stages = self._IIRSTAGES
+        if v is None:
+            v = []
+            self._logger.warning("Iir coefficient was set to None. "
+                                 "and converted to an empty list. ")
         v = np.array([vv for vv in v], dtype=np.float64)
         l = len(v)
         if l > stages:
@@ -338,8 +342,9 @@ class IIR(FilterModule):
         coefficients   data to be passed to iir.bodeplot to plot the
                        realized transfer function
         """
-        self._signal_launcher.update_plot.emit()
-        return
+        #debugging here...
+        #self._signal_launcher.update_plot.emit()
+        #return
         with self.do_setup:
             if self._IIRSTAGES == 0:
                 raise Exception("Error: This FPGA bitfile does not support IIR "
