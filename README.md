@@ -39,7 +39,8 @@ nosetests
 ```
 All tests should take about 3 minutes and finish without failures or errors. If there are errors, please report the console output as an issue (see the section "Issues" below for detailed explanations).
 
-## Next steps
+## Next steps / documentation
+We are still in the process of creating an up-to-date version of the documentation of the current code. If the current documentation is wrong or insufficient, please post an [issue](https://github.com/lneuhaus/pyrpl/issues) and we will prioritize documenting the part of code you need. 
 You can find all documentation in the subfolder ["doc"](https://github.com/lneuhaus/pyrpl/blob/master/doc). Get started by reading our paper on PyRPL, reading the official [html documentation](https://github.com/lneuhaus/pyrpl/blob/master/doc/sphinx/build/html/index.html), or going through the [tutorial.ipynb](https://github.com/lneuhaus/pyrpl/blob/master/doc/tutorial.ipynb) notebook. 
 
 ## Updates
