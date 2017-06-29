@@ -620,12 +620,14 @@ class StageOutputWidget(ReducedModuleWidget):
         ro.label.setText("reset")
         o.label.setText(" offset")
         self.setFixedHeight(75)
-        ro.value_changed.connect(self.update_offset_visibility)
-        self.update_offset_visibility()
 
     def update_offset_visibility(self):
-        self.attribute_widgets["offset"].widget.setEnabled(
-            self.module.reset_offset)
+        self.attribute_widgets["offset"].widget.setEnabled(self.module.reset_offset)
+
+    def update_attribute_by_name(self, name, new_value_list):
+        super(StageOutputWidget, self).update_attribute_by_name(name, new_value_list)
+        if name == 'reset_offset':
+            self.update_offset_visibility()
 
 
 class LockboxStageWidget(ReducedModuleWidget):
@@ -660,8 +662,10 @@ class LockboxStageWidget(ReducedModuleWidget):
         self.lay_v2.addWidget(aws['gain_factor'])
         self.lay_h2 = QtGui.QVBoxLayout()
         self.main_layout.addLayout(self.lay_h2)
+        self.output_widgets = []
         for output in self.module.lockbox.outputs:
-            self.lay_h2.addWidget(self.module.outputs[output.name]._create_widget())
+            self.output_widgets.append(self.module.outputs[output.name]._create_widget())
+            self.lay_h2.addWidget(self.output_widgets[-1])
         #self.lay_h3 = QtGui.QHBoxLayout()
         #self.main_layout.addLayout(self.lay_h3)
         aws['function_call'].set_horizontal()
@@ -702,7 +706,6 @@ class LockboxSequenceWidget(ModuleWidget):
     A widget to represent all lockbox stages
     """
     def init_gui(self):
-        #self.main_layout = QtGui.QHBoxLayout(self)
         self.init_main_layout(orientation="horizontal")
         self.init_attribute_layout()
         self.stage_widgets = []
@@ -716,9 +719,9 @@ class LockboxSequenceWidget(ModuleWidget):
         self.main_layout.addStretch(2)
 
     def stage_created(self, stage):
-        stage = stage[0] # values are passed as list of length 1
+        stage = stage[0]  # values are passed as list of length 1
         widget = stage._create_widget()
-        stage._widget = widget
+        stage._widget = widget  # replaced by _module_widget, TODO: refactor
         self.stage_widgets.insert(stage.name, widget)
         if stage.name >= len(self.stage_widgets)-1:
             # stage must be inserted at the end
