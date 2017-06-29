@@ -105,10 +105,15 @@ class NumberSpinBox(QtGui.QWidget, object):
         self.down.released.connect(self.timer_arrow.stop)
         self.line.editingFinished.connect(self.validate)
 
+    # def sizeHint(self): #doesn t do anything, probably need to change
+    #    # sizePolicy
+    #    return QtCore.QSize(200, 20)
+
     def set_min_size(self):
         """
         sets the min size for content to fit.
         """
+        return
         font = QtGui.QFont("", 0)
         font_metric = QtGui.QFontMetrics(font)
         pixel_wide = font_metric.width("0"*self.max_num_letter())
@@ -135,9 +140,6 @@ class NumberSpinBox(QtGui.QWidget, object):
         self.up.setText("*")
         self.down.setText("/")
         self.log_increment = True
-
-    def sizeHint(self): #doesn t do anything, probably need to change sizePolicy
-        return QtCore.QSize(200, 20)
 
     def update_tooltip(self):
         """

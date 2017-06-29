@@ -524,8 +524,6 @@ class InputFromOutput(InputDirect):
         return setpoint_in_output_unit / output.dc_gain
 
 
-
-
 class IqQuadratureFactorProperty(FloatProperty):
     """ this is a direct link to quadrature_factor because we want to
     benefit from its validate_and_normalize function"""
@@ -544,10 +542,11 @@ class IqFilterProperty(FilterProperty):
         except:
             val = [val, val]  # preferentially choose second order filter
         instance.iq.bandwidth = val
-        super(IqFilterProperty, self).set_value(instance, self.iq.bandwidth)
+        super(IqFilterProperty, self).set_value(instance,
+                                                self.get_value(instance))
         return val
 
-    def get_value(self, instance, val):
+    def get_value(self, instance):
         return instance.iq.bandwidth
 
     def valid_frequencies(self, module):

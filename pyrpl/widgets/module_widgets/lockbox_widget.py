@@ -28,7 +28,7 @@ class AnalogTfDialog(QtGui.QDialog):
         self.lay_h.addWidget(self.cancel)
         self.group = QtGui.QButtonGroup()
         self.flat = QtGui.QRadioButton("Flat response")
-        self.filter = QtGui.QRadioButton('Analog low-pass filter (as in "Pid control/assisted design/analog filter cut-off")')
+        self.filter = QtGui.QRadioButton('Analog low-pass filter (as in "Pid control/assisted design/actuator cut-off")')
         self.curve = QtGui.QRadioButton("User-defined curve")
         self.group.addButton(self.flat)
         self.group.addButton(self.filter)
@@ -206,10 +206,10 @@ class WidgetAssisted(QtGui.QWidget):
         self.layout.addLayout(self.v1)
         self.layout.addLayout(self.v2)
         self.desired = parent.parent.attribute_widgets["desired_unity_gain_frequency"]
-        self.desired.label.setText('desired unity-gain-frequency (Hz) ')
+        self.desired.label.setText('unity-gain-frequency (Hz) ')
         self.desired.set_log_increment()
         self.analog_filter = parent.parent.attribute_widgets["analog_filter_cutoff"]
-        self.analog_filter.label.setText('analog filter cut-off frequency (Hz)')
+        self.analog_filter.label.setText('actuator cut-off frequency (Hz)')
         #self.analog_filter.set_horizontal()
         # self.analog_filter.layout_v.setSpacing(0)
         # self.analog_filter.layout_v.setContentsMargins(0, 0, 0, 0)
@@ -596,10 +596,36 @@ class MyAddButton(QtGui.QPushButton):
 class StageOutputWidget(ReducedModuleWidget):
     def init_attribute_layout(self):
         super(StageOutputWidget, self).init_attribute_layout()
-        # constrain the size of the offset
-        self.attribute_widgets["offset"].resize(1, self.attribute_widgets["offset"].height())
-        self.attribute_widgets["offset"].setFixedWidth(100)
-        self.attribute_widgets["reset_offset"].setToolTip("Reset output offset value at the beginning of this stage?")
+        #self.offset_widget = QtGui.QGroupBox()
+        #self.main_layout.addWidget(self.offset_widget)
+        #self.offset_layout = QtGui.QHBoxLayout()
+        #self.offset_widget.setLayout(self.offset_layout)
+        #self.offset_widget.setTitle("offset")
+        self.offset_layout = self.main_layout
+        lo = self.attribute_widgets["lock_on"]
+        ro = self.attribute_widgets["reset_offset"]
+        o = self.attribute_widgets["offset"]
+        self.main_layout.removeWidget(lo)
+        self.main_layout.removeWidget(ro)
+        self.main_layout.removeWidget(o)
+        self.offset_layout.addWidget(lo)
+        lo.label.setText("lock on")
+        self.offset_layout.addStretch(1)
+        self.offset_layout.addWidget(ro)
+        self.offset_layout.addWidget(o)
+        ro.setToolTip("Reset output offset value at the beginning of this "
+                      "stage?")
+        o.resize(1, self.attribute_widgets["offset"].height())
+        o.setFixedWidth(110)
+        ro.label.setText("reset")
+        o.label.setText(" offset")
+        self.setFixedHeight(75)
+        ro.value_changed.connect(self.update_offset_visibility)
+        self.update_offset_visibility()
+
+    def update_offset_visibility(self):
+        self.attribute_widgets["offset"].widget.setEnabled(
+            self.module.reset_offset)
 
 
 class LockboxStageWidget(ReducedModuleWidget):
@@ -636,10 +662,11 @@ class LockboxStageWidget(ReducedModuleWidget):
         self.main_layout.addLayout(self.lay_h2)
         for output in self.module.lockbox.outputs:
             self.lay_h2.addWidget(self.module.outputs[output.name]._create_widget())
-        self.lay_h3 = QtGui.QHBoxLayout()
-        self.main_layout.addLayout(self.lay_h3)
-        self.lay_h3.addWidget(aws['function_call'])
-
+        #self.lay_h3 = QtGui.QHBoxLayout()
+        #self.main_layout.addLayout(self.lay_h3)
+        aws['function_call'].set_horizontal()
+        #self.lay_h3.addWidget(aws['function_call'])
+        self.main_layout.addWidget(aws['function_call'])
         self.button_goto = QtGui.QPushButton('Go to this stage')
         self.button_goto.clicked.connect(self.module.enable)
         self.main_layout.addWidget(self.button_goto)
