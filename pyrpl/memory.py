@@ -57,7 +57,8 @@ try:
                                 Dumper=ruamel.yaml.RoundTripDumper,
                                 default_flow_style=False)
 except:
-    logger.warning("ruamel.yaml could not be imported. Using yaml instead. Comments in config files will be lost.")
+    logger.debug("ruamel.yaml could not be imported. Using yaml instead. "
+                 "Comments in config files will be lost.")
     import yaml
 
     # see http://stackoverflow.com/questions/13518819/avoid-references-in-pyyaml

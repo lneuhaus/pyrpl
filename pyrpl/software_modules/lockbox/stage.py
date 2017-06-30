@@ -24,7 +24,9 @@ class StageOutput(LockboxModule):
     _widget_class = StageOutputWidget
     lock_on = BoolIgnoreProperty(default=False, call_setup=True)
     reset_offset = BoolProperty(default=False, call_setup=True)
-    offset = FloatProperty(default=0, min=-1., max=1., call_setup=True)
+    offset = FloatProperty(default=0, min=-1., max=1.,
+                           increment=1e-4,
+                           call_setup=True)
 
     def _setup(self):
         # forward changes to parent module

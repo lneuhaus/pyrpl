@@ -129,7 +129,9 @@ class HideShowLabel(MyMenuLabel):
 
 class ReducedModuleWidget(QtGui.QGroupBox):
     """
-    Base class for a module Widget. In general, this is one of the DockWidget of the Pyrpl MainWindow.
+    Base class for a module Widget.
+
+    In general, this is one of the DockWidget of the Pyrpl MainWindow.
     """
     attribute_changed = QtCore.pyqtSignal()
     title_pos = (12, 0)

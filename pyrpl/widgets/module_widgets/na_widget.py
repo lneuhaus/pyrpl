@@ -56,10 +56,10 @@ class NaWidget(ModuleWidget):
         self.main_layout.addWidget(self.win_phase)
 
         aws = self.attribute_widgets
-        self.attribute_layout.removeWidget(aws["avg"])
+        self.attribute_layout.removeWidget(aws["trace_average"])
         self.attribute_layout.removeWidget(aws["curve_name"])
 
-        self.button_layout.addWidget(aws["avg"])
+        self.button_layout.addWidget(aws["trace_average"])
         self.button_layout.addWidget(aws["curve_name"])
 
         self.button_layout.addWidget(self.button_single)
@@ -90,10 +90,7 @@ class NaWidget(ModuleWidget):
         self.button_layout.setStretchFactor(self.button_continuous, 1)
         self.button_layout.setStretchFactor(self.button_stop, 1)
         self.button_layout.setStretchFactor(self.button_save, 1)
-
-        self.x_log_toggled() # Set the axis in logscale if it has to
-        #self.button_layout.setStretchFactor(self.run_avg_widget, 1)
-        #self.button_layout.setStretchFactor(self.curve_name_widget, 1)
+        self.x_log_toggled() # Set the axis in logscale if it has to be
 
     def autoscale(self):
         """
