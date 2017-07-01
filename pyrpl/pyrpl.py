@@ -115,7 +115,7 @@ class Pyrpl(object):
                                       'corresponding section "%s" in your config file %s. '
                                       'Error message: %s',
                                       module.name, module.name, self.c._filename, e)
-                    # raise e
+                    raise e
         # make the gui if applicable
         if self.c.pyrpl.gui:
             self.show_gui()
