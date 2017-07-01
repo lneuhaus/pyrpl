@@ -153,7 +153,8 @@ class RunFuture(PyrplFuture):
                 self.cancel()
         if self._module.running_state in ["running_continuous",
                                           "running_single"]:
-            self.current_avg = min(self.current_avg + 1, self._module.avg)
+            self.current_avg = min(self.current_avg + 1,
+                                   self._module.trace_average)
 
             if self.data_avg is None:
                 self.data_avg = result
@@ -180,7 +181,7 @@ class RunFuture(PyrplFuture):
         if self._run_continuous:
             return False
         else:
-            return self.current_avg >= self._module.avg
+            return self.current_avg >= self._module.trace_average
 
     def cancel(self):
         self.pause()

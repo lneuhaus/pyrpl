@@ -812,6 +812,13 @@ class DataWidget(pg.GraphicsWindow):
             self.plot_item_phase.show()
             self.plot_item.setTitle("Magnitude (dB)")
 
+    def _phase(self, data):
+        """ little helpers """
+        return np.angle(data, deg=True)
+
+    def setRange(self, *args, **kwds):
+        self.plot_item.setRange(*args, **kwds)
+
 
 class PlotAttributeWidget(BaseAttributeWidget):
     _defaultcolors = ['g', 'r', 'b', 'y', 'c', 'm', 'o', 'w']

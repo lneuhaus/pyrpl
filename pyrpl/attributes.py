@@ -773,7 +773,8 @@ class FilterRegister(BaseRegister, FilterProperty):
         pos = [val if not np.iterable(val) else val[0] for val in pos]
         neg = [-val for val in reversed(pos)]
         valid_frequencies = neg + [0] + pos
-        if obj is not None and not hasattr(obj, self.name+'_options') and not hasattr(obj.__class__, self.name+'_options'):
+        if obj is not None and not hasattr(obj.__class__,
+                                           self.name+'_options') and not hasattr(obj, self.name+'_options'):
             setattr(obj, self.name+'_options', valid_frequencies)
         return valid_frequencies
 

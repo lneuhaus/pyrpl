@@ -35,7 +35,6 @@ from .software_modules.lockbox import *
 from .software_modules.lockbox.models import *  # make sure all models are loaded when we get started
 
 
-
 APP = QtGui.QApplication.instance()
 
 default_pyrpl_config = {'name': 'default_pyrpl_instance',

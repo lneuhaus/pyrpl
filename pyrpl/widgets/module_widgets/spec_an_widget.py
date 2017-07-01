@@ -187,7 +187,7 @@ class SpecAnWidget(ModuleWidget):
         else:
             number_str = ""
         if self.module.running_state == 'running_continuous':
-            if self.module.current_avg >= self.module.avg:
+            if self.module.current_avg >= self.module.trace_average:
                 # shows a plus sign when number of averages is available
                 number_str = number_str[:-1] + '+)'
             self.button_continuous.setText("Pause" + number_str)
@@ -211,8 +211,8 @@ class SpecAnWidget(ModuleWidget):
         """Autoscale pyqtgraph"""
         mini = self.module.frequencies[0]
         maxi = self.module.frequencies[-1]
-        self.plot_item.setRange(xRange=[mini,
-                                        maxi])
+        self.win2.setRange(xRange=[mini,
+                                   maxi])
         # self.plot_item.autoRange()
 
     def unit_changed(self):
