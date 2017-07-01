@@ -2,13 +2,13 @@ import logging
 logger = logging.getLogger(name=__name__)
 import time
 import copy
-from PyQt4 import QtGui, QtCore
+from qtpy import QtWidgets, QtCore
 from .test_base import TestPyrpl
 import numpy as np
 from .. import global_config
 from ..async_utils import sleep
 
-APP = QtGui.QApplication.instance()
+APP = QtWidgets.QApplication.instance()
 
 
 class TestNA(TestPyrpl):

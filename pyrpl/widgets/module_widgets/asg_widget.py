@@ -4,10 +4,10 @@ A widget for the scope module
 
 from .base_module_widget import ModuleWidget
 
-from PyQt4 import QtCore, QtGui
+from qtpy import QtCore, QtWidgets
 
 
-APP = QtGui.QApplication.instance()
+APP = QtWidgets.QApplication.instance()
 
 
 class AsgWidget(ModuleWidget):

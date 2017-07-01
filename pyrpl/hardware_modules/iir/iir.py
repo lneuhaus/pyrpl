@@ -8,11 +8,11 @@ from ...widgets.module_widgets import IirWidget
 from ...modules import SignalLauncher
 
 import numpy as np
-from PyQt4 import QtCore, QtGui
+from qtpy import QtCore
 
 
 class SignalLauncherIir(SignalLauncher):
-    update_plot = QtCore.pyqtSignal()
+    update_plot = QtCore.Signal()
 
 
 class OverflowProperty(StringProperty):

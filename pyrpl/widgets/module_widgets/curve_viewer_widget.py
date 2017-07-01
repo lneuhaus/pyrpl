@@ -1,4 +1,4 @@
-from PyQt4 import QtCore, QtGui
+from qtpy import QtCore, QtWidgets
 from .base_module_widget import ReducedModuleWidget
 
 
@@ -8,17 +8,17 @@ class CurveViewerWidget(ReducedModuleWidget):
         To be overwritten in derived class
         :return:
         """
-        self.top_level_layout = QtGui.QVBoxLayout()
+        self.top_level_layout = QtWidgets.QVBoxLayout()
         self.setLayout(self.top_level_layout)
-        self.main_layout = QtGui.QHBoxLayout()
+        self.main_layout = QtWidgets.QHBoxLayout()
         self.top_level_layout.addLayout(self.main_layout)
-        self.bottom_layout = QtGui.QHBoxLayout()
+        self.bottom_layout = QtWidgets.QHBoxLayout()
         self.top_level_layout.addLayout(self.bottom_layout)
         self.init_attribute_layout()
 
     def init_attribute_layout(self):
         super(CurveViewerWidget, self).init_attribute_layout()
-        self.textbox = QtGui.QHBoxLayout()
+        self.textbox = QtWidgets.QHBoxLayout()
         self.bottom_layout.addLayout(self.textbox)
         curve = self.attribute_widgets["curve"]
         for name in ["pk", "curve", "params"]:

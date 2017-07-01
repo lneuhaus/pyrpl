@@ -1,7 +1,7 @@
 from copy import copy
 
 import numpy as np
-from PyQt4 import QtGui
+from qtpy import QtWidgets
 
 from ..async_utils import PyrplFuture, MainThreadTimer, CancelledError, sleep
 from ..attributes import FloatProperty, SelectProperty, FrequencyProperty, \
@@ -20,7 +20,7 @@ from ..hardware_modules.iq import Iq
 # /python-time-clock-vs-time-time-accuracy
 import timeit
 
-APP = QtGui.QApplication.instance()
+APP = QtWidgets.QApplication.instance()
 
 
 class NaAcBandwidth(FilterProperty):

@@ -3,8 +3,7 @@ logger = logging.getLogger(name=__name__)
 import pyqtgraph as pg
 import numpy as np
 import time
-from PyQt4 import QtCore
-from PyQt4 import QtGui
+from qtpy import QtCore, QtWidgets
 from .test_redpitaya import TestRedpitaya
 
 
@@ -13,7 +12,7 @@ class TestPyqtgraph(TestRedpitaya):
     that continuously plots the data of both scope channels,
     and checks the obtainable frame rate.
     Frame rates down to 20 Hz are accepted """
-    APP = QtGui.QApplication.instance()
+    APP = QtWidgets.QApplication.instance()
     N = 2 ** 14
     cycles = 50  # cycles to average frame rate over
     frequency = 10.0

@@ -19,7 +19,7 @@ import logging
 import numpy as np
 from six import with_metaclass
 from collections import OrderedDict
-from PyQt4 import QtCore
+from qtpy import QtCore
 
 class SignalLauncher(QtCore.QObject):
     """
@@ -27,14 +27,14 @@ class SignalLauncher(QtCore.QObject):
     attributes of a module change. Any timers needed to implement the module
     functionality shoud be implemented here as well
     """
-    update_attribute_by_name = QtCore.pyqtSignal(str, list)
+    update_attribute_by_name = QtCore.Signal(str, list)
     # The name of the property that has changed, the list is [new_value],
     # the new_value of the attribute
-    change_options = QtCore.pyqtSignal(str, list) # name of the
+    change_options = QtCore.Signal(str, list) # name of the
     # SelectProperty,  list of new options
-    refresh_filter_options = QtCore.pyqtSignal(str) # name of the
+    refresh_filter_options = QtCore.Signal(str) # name of the
     # FilterProperty,  new options are contained in self.valid_frequencies()
-    change_ownership = QtCore.pyqtSignal() # The owner of the module  has
+    change_ownership = QtCore.Signal() # The owner of the module  has
     # changed
 
     def __init__(self, module):

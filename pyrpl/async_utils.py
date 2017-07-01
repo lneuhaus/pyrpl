@@ -2,7 +2,7 @@
 This file contains a number of methods for asynchronous operations.
 """
 import logging
-from PyQt4 import QtCore, QtGui
+from qtpy import QtCore, QtWidgets
 from timeit import default_timer
 from .errors import TimeoutError, NotReadyError
 
@@ -18,7 +18,7 @@ else:
     import quamash
     set_event_loop(quamash.QEventLoop())
 
-APP = QtGui.QApplication.instance()
+APP = QtWidgets.QApplication.instance()
 MAIN_THREAD = APP.thread()
 
 

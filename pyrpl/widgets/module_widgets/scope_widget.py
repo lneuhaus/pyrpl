@@ -2,13 +2,13 @@
 A widget for the scope module
 """
 import pyqtgraph as pg
-from PyQt4 import QtCore, QtGui
+from qtpy import QtCore, QtGui, QtWidgets
 import numpy as np
 from ...errors import NotReadyError
 from .base_module_widget import ModuleWidget
 
 
-APP = QtGui.QApplication.instance()
+APP = QtWidgets.QApplication.instance()
 
 
 class ScopeWidget(ModuleWidget):
@@ -24,14 +24,14 @@ class ScopeWidget(ModuleWidget):
         self.ch_color = ('green', 'red')
         self.ch_transparency = (255, 255)  # 0 is transparent, 255 is not  # deactivated transparency for speed reasons
         #self.module.__dict__['curve_name'] = 'scope'
-        #self.main_layout = QtGui.QVBoxLayout()
+        #self.main_layout = QtWidgets.QVBoxLayout()
         self.init_main_layout(orientation="vertical")
         self.init_attribute_layout()
         aws = self.attribute_widgets
 
-        self.layout_channels = QtGui.QVBoxLayout()
-        self.layout_ch1 = QtGui.QHBoxLayout()
-        self.layout_ch2 = QtGui.QHBoxLayout()
+        self.layout_channels = QtWidgets.QVBoxLayout()
+        self.layout_ch1 = QtWidgets.QHBoxLayout()
+        self.layout_ch2 = QtWidgets.QHBoxLayout()
         self.layout_channels.addLayout(self.layout_ch1)
         self.layout_channels.addLayout(self.layout_ch2)
 
@@ -59,21 +59,21 @@ class ScopeWidget(ModuleWidget):
 
         self.attribute_layout.removeWidget(aws['duration'])
         self.attribute_layout.removeWidget(aws['trigger_delay'])
-        self.layout_duration = QtGui.QVBoxLayout()
+        self.layout_duration = QtWidgets.QVBoxLayout()
         self.layout_duration.addWidget(aws['duration'])
         self.layout_duration.addWidget(aws['trigger_delay'])
         self.attribute_layout.addLayout(self.layout_duration)
 
         self.attribute_layout.removeWidget(aws['trigger_source'])
         self.attribute_layout.removeWidget(aws['average'])
-        self.layout_misc = QtGui.QVBoxLayout()
+        self.layout_misc = QtWidgets.QVBoxLayout()
         self.layout_misc.addWidget(aws['trigger_source'])
         self.layout_misc.addWidget(aws['average'])
         self.attribute_layout.addLayout(self.layout_misc)
 
         #self.attribute_layout.removeWidget(aws['curve_name'])
 
-        self.button_layout = QtGui.QHBoxLayout()
+        self.button_layout = QtWidgets.QHBoxLayout()
 
         aws = self.attribute_widgets
         self.attribute_layout.removeWidget(aws["trace_average"])
@@ -88,9 +88,9 @@ class ScopeWidget(ModuleWidget):
         self.win = pg.GraphicsWindow(title="Scope")
         self.plot_item = self.win.addPlot(title="Scope")
         self.plot_item.showGrid(y=True, alpha=1.)
-        self.button_single = QtGui.QPushButton("Run single")
-        self.button_continuous = QtGui.QPushButton("Run continuous")
-        self.button_save = QtGui.QPushButton("Save curve")
+        self.button_single = QtWidgets.QPushButton("Run single")
+        self.button_continuous = QtWidgets.QPushButton("Run continuous")
+        self.button_save = QtWidgets.QPushButton("Save curve")
         self.curves = [self.plot_item.plot(pen=(QtGui.QColor(color).red(),
                                                 QtGui.QColor(color).green(),
                                                 QtGui.QColor(color).blue()
@@ -110,11 +110,11 @@ class ScopeWidget(ModuleWidget):
         self.button_continuous.clicked.connect(self.run_continuous_clicked)
         self.button_save.clicked.connect(self.save_clicked)
 
-        self.rolling_group = QtGui.QGroupBox("Trigger mode")
-        self.checkbox_normal = QtGui.QRadioButton("Normal")
-        self.checkbox_untrigged = QtGui.QRadioButton("Untrigged (rolling)")
+        self.rolling_group = QtWidgets.QGroupBox("Trigger mode")
+        self.checkbox_normal = QtWidgets.QRadioButton("Normal")
+        self.checkbox_untrigged = QtWidgets.QRadioButton("Untrigged (rolling)")
         self.checkbox_normal.setChecked(True)
-        self.lay_radio = QtGui.QVBoxLayout()
+        self.lay_radio = QtWidgets.QVBoxLayout()
         self.lay_radio.addWidget(self.checkbox_normal)
         self.lay_radio.addWidget(self.checkbox_untrigged)
         self.rolling_group.setLayout(self.lay_radio)

@@ -3,7 +3,7 @@ A widget for the spectrum analyzer
 """
 import logging
 logger = logging.getLogger(name=__name__)
-from PyQt4 import QtCore, QtGui
+from qtpy import QtCore, QtWidgets
 import pyqtgraph as pg
 from time import time
 import numpy as np
@@ -11,31 +11,31 @@ from .base_module_widget import ModuleWidget
 from ..attribute_widgets import DataWidget
 from ...errors import NotReadyError
 
-APP = QtGui.QApplication.instance()
+APP = QtWidgets.QApplication.instance()
 
 
-class BasebandAttributesWidget(QtGui.QWidget):
+class BasebandAttributesWidget(QtWidgets.QWidget):
     def __init__(self, specan_widget):
         super(BasebandAttributesWidget, self).__init__()
-        self.h_layout = QtGui.QHBoxLayout()
+        self.h_layout = QtWidgets.QHBoxLayout()
         self.setLayout(self.h_layout)
         aws = specan_widget.attribute_widgets
 
-        self.v_layout1 = QtGui.QVBoxLayout()
+        self.v_layout1 = QtWidgets.QVBoxLayout()
         self.h_layout.addLayout(self.v_layout1)
         for name in ["display_input1_baseband", "display_input2_baseband"]:
             widget = aws[name]
             specan_widget.attribute_layout.removeWidget(widget)
             self.v_layout1.addWidget(widget)
 
-        self.v_layout2 = QtGui.QVBoxLayout()
+        self.v_layout2 = QtWidgets.QVBoxLayout()
         self.h_layout.addLayout(self.v_layout2)
         for name in ["input1_baseband", "input2_baseband"]:
             widget = aws[name]
             specan_widget.attribute_layout.removeWidget(widget)
             self.v_layout2.addWidget(widget)
 
-        self.v_layout3 = QtGui.QVBoxLayout()
+        self.v_layout3 = QtWidgets.QVBoxLayout()
         self.h_layout.addLayout(self.v_layout3)
         for name in ["display_cross_amplitude"]:#, "display_cross_phase"]:
             widget = aws[name]
@@ -43,14 +43,14 @@ class BasebandAttributesWidget(QtGui.QWidget):
             self.v_layout3.addWidget(widget)
 
 
-class IqModeAttributesWidget(QtGui.QWidget):
+class IqModeAttributesWidget(QtWidgets.QWidget):
     def __init__(self, specan_widget):
         super(IqModeAttributesWidget, self).__init__()
-        self.h_layout = QtGui.QHBoxLayout()
+        self.h_layout = QtWidgets.QHBoxLayout()
         self.setLayout(self.h_layout)
         aws = specan_widget.attribute_widgets
 
-        self.v_layout1 = QtGui.QVBoxLayout()
+        self.v_layout1 = QtWidgets.QVBoxLayout()
         self.h_layout.addLayout(self.v_layout1)
         for name in ["center", "input"]:
             widget = aws[name]
@@ -58,28 +58,28 @@ class IqModeAttributesWidget(QtGui.QWidget):
             self.v_layout1.addWidget(widget)
 
 
-class OtherAttributesWidget(QtGui.QWidget):
+class OtherAttributesWidget(QtWidgets.QWidget):
     def __init__(self, specan_widget):
         super(OtherAttributesWidget, self).__init__()
-        self.h_layout = QtGui.QHBoxLayout()
+        self.h_layout = QtWidgets.QHBoxLayout()
         self.setLayout(self.h_layout)
         aws = specan_widget.attribute_widgets
 
-        self.v_layout1 = QtGui.QVBoxLayout()
+        self.v_layout1 = QtWidgets.QVBoxLayout()
         self.h_layout.addLayout(self.v_layout1)
         for name in ["baseband", "acbandwidth"]:
             widget = aws[name]
             specan_widget.attribute_layout.removeWidget(widget)
             self.v_layout1.addWidget(widget)
 
-        self.v_layout2 = QtGui.QVBoxLayout()
+        self.v_layout2 = QtWidgets.QVBoxLayout()
         self.h_layout.addLayout(self.v_layout2)
         for name in ["span", "window"]:
             widget = aws[name]
             specan_widget.attribute_layout.removeWidget(widget)
             self.v_layout2.addWidget(widget)
 
-        self.v_layout3 = QtGui.QVBoxLayout()
+        self.v_layout3 = QtWidgets.QVBoxLayout()
         self.h_layout.addLayout(self.v_layout3)
         for name in ["rbw", "display_unit"]:
             widget = aws[name]
@@ -95,7 +95,7 @@ class SpecAnWidget(ModuleWidget):
         self.ch_col = ('magenta', 'blue', 'green')
         self.last_data = None
         self.init_main_layout(orientation="vertical")
-        #self.main_layout = QtGui.QVBoxLayout()
+        #self.main_layout = QtWidgets.QVBoxLayout()
         self.module.__dict__['curve_name'] = 'pyrpl spectrum'
         self.init_attribute_layout()
 
@@ -109,7 +109,7 @@ class SpecAnWidget(ModuleWidget):
         self.attribute_layout.addWidget(self.baseband_widget)
 
 
-        self.button_layout = QtGui.QHBoxLayout()
+        self.button_layout = QtWidgets.QHBoxLayout()
         self.setLayout(self.main_layout)
         # self.setWindowTitle("Spec. An.")
         #self.win = pg.GraphicsWindow(title="PSD")
@@ -127,16 +127,16 @@ class SpecAnWidget(ModuleWidget):
         #self.curve_cross = self.plot_item.plot(pen=self.ch_col[2][0]) #
         # curve for
 
-        self.button_single = QtGui.QPushButton("Run single")
+        self.button_single = QtWidgets.QPushButton("Run single")
         self.button_single.clicked.connect(self.run_single_clicked)
 
-        self.button_continuous = QtGui.QPushButton("Run continuous")
+        self.button_continuous = QtWidgets.QPushButton("Run continuous")
         self.button_continuous.clicked.connect(self.run_continuous_clicked)
 
-        self.button_restart_averaging = QtGui.QPushButton('Restart averaging')
+        self.button_restart_averaging = QtWidgets.QPushButton('Restart averaging')
         self.button_restart_averaging.clicked.connect(self.module.stop)
 
-        self.button_save = QtGui.QPushButton("Save curve")
+        self.button_save = QtWidgets.QPushButton("Save curve")
         self.button_save.clicked.connect(self.module.save_curve)
 
         aws = self.attribute_widgets

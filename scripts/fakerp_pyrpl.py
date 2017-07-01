@@ -1,9 +1,9 @@
 """ script to test the software, e.g. in PyCharm debugger, without actually having a redpitaya """
 
 from pyrpl import Pyrpl
-from PyQt4 import QtGui, QtCore
+from qtpy import QtWidgets, QtCore
 
-APP = QtGui.QApplication.instance()
+APP = QtWidgets.QApplication.instance()
 
 
 p = Pyrpl(config="localtest", hostname="_FAKE_REDPITAYA_")

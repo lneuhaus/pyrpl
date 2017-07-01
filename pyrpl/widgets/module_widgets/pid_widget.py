@@ -4,9 +4,9 @@ A widget for pid modules.
 
 from .base_module_widget import ModuleWidget
 
-from PyQt4 import QtCore, QtGui
+from qtpy import QtCore, QtWidgets
 
-APP = QtGui.QApplication.instance()
+APP = QtWidgets.QApplication.instance()
 
 class PidWidget(ModuleWidget):
     """
@@ -14,7 +14,7 @@ class PidWidget(ModuleWidget):
     """
     def init_gui(self):
         self.init_main_layout(orientation="vertical")
-        #self.main_layout = QtGui.QVBoxLayout()
+        #self.main_layout = QtWidgets.QVBoxLayout()
         #self.setLayout(self.main_layout)
         self.init_attribute_layout()
         input_filter_widget = self.attribute_widgets["inputfilter"]

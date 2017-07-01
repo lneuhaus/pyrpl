@@ -1,5 +1,5 @@
 import numpy as np
-from PyQt4 import QtCore
+from qtpy import QtCore
 from ..attributes import FloatProperty, BoolRegister, FloatRegister, GainRegister
 from ..modules import SignalLauncher
 from . import FilterModule
@@ -24,7 +24,7 @@ class IValAttribute(FloatProperty):
 
 
 class SignalLauncherPid(SignalLauncher):
-    update_ival = QtCore.pyqtSignal()
+    update_ival = QtCore.Signal()
     # the widget decides at the other hand if it has to be done or not
     # depending on the visibility
     def __init__(self, module):

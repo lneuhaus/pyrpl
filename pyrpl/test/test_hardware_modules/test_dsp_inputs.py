@@ -3,9 +3,9 @@ logger = logging.getLogger(name=__name__)
 import time
 import numpy as np
 from time import sleep
-from PyQt4 import QtCore, QtGui
+from qtpy import QtCore, QtWidgets
 from ..test_base import TestPyrpl
-APP = QtGui.QApplication.instance()
+APP = QtWidgets.QApplication.instance()
 
 
 class TestInput(TestPyrpl):

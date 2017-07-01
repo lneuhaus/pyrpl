@@ -21,7 +21,7 @@ from __future__ import print_function
 import logging
 import os
 from shutil import copyfile
-from PyQt4 import QtCore, QtGui
+from qtpy import QtCore, QtWidgets
 
 from .widgets.pyrpl_widget import PyrplWidget
 from . import software_modules
@@ -35,7 +35,7 @@ from .software_modules.lockbox import *
 from .software_modules.lockbox.models import *  # make sure all models are loaded when we get started
 
 
-APP = QtGui.QApplication.instance()
+APP = QtWidgets.QApplication.instance()
 
 default_pyrpl_config = {'name': 'default_pyrpl_instance',
                         'gui': True,

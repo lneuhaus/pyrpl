@@ -1,11 +1,11 @@
-from PyQt4 import QtCore, QtGui
+from qtpy import QtCore, QtWidgets
 import time
 
 """ what is this file for? delete it? """
 
-APP = QtGui.QApplication.instance()
+APP = QtWidgets.QApplication.instance()
 if APP is None:
-	APP = QtGui.QApplication(['DEBUG_TIMER'])
+	APP = QtWidgets.QApplication(['DEBUG_TIMER'])
 
 from .. import Pyrpl
 

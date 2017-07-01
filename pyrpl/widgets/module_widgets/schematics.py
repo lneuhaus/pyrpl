@@ -4,16 +4,16 @@ For now it is only used in IqManagerWidget.
 """
 
 import os.path as osp
-from PyQt4 import QtCore, QtGui
+from qtpy import QtCore, QtWidgets
 
 IMAGE_PATH = osp.join(osp.split(osp.dirname(__file__))[0], "images")
 
 
-class MyLabelSignal(QtGui.QLabel):
+class MyLabelSignal(QtWidgets.QLabel):
     pass
 
 
-class MyItem(QtGui.QLabel):
+class MyItem(QtWidgets.QLabel):
     def __init__(self, widget_name, y, label, parent, x_offset=0):
         super(MyItem, self).__init__(label)
         self.widget_name = widget_name
@@ -43,7 +43,7 @@ class MyLabel(MyItem):
 class MyImage(MyItem):
     def __init__(self, widget_name, y, filename, parent, x_offset=0):
         super(MyImage, self).__init__(widget_name, y, "", parent, x_offset)
-        self.pixmap = QtGui.QPixmap(osp.join(IMAGE_PATH, filename))
+        self.pixmap = QtWidgets.QPixmap(osp.join(IMAGE_PATH, filename))
         self.setPixmap(self.pixmap)
         self.setFixedSize(self.pixmap.size())
 
@@ -60,18 +60,18 @@ class Connection(object):
         self.h_first = h_first
         self.show_arrow = show_arrow
 
-        self.brush = QtGui.QBrush(QtCore.Qt.black)
-        self.arrow = QtGui.QGraphicsPolygonItem()
+        self.brush = QtWidgets.QBrush(QtCore.Qt.black)
+        self.arrow = QtWidgets.QGraphicsPolygonItem()
         self.arrow.setBrush(self.brush)
-        self.pen = QtGui.QPen(QtCore.Qt.black,
+        self.pen = QtWidgets.QPen(QtCore.Qt.black,
                               3,
                               QtCore.Qt.SolidLine,
                               QtCore.Qt.RoundCap,
                               QtCore.Qt.RoundJoin)
 
-        self.line1 = QtGui.QGraphicsLineItem()
+        self.line1 = QtWidgets.QGraphicsLineItem()
         self.line1.setPen(self.pen)
-        self.line2 = QtGui.QGraphicsLineItem()
+        self.line2 = QtWidgets.QGraphicsLineItem()
         self.line2.setPen(self.pen)
         self.line1.setZValue(1)
         self.line2.setZValue(1)
@@ -96,7 +96,7 @@ class Connection(object):
             if self.h_first:
                 x = x2 - self.widget_stop.width() / 2
                 y = y2
-                arrow = QtGui.QPolygonF(
+                arrow = QtWidgets.QPolygonF(
                     [QtCore.QPoint(x - self.margin, y - self.arrow_height / 2),
                      QtCore.QPoint(x - self.margin, y + self.arrow_height / 2),
                      QtCore.QPoint(x - self.margin + self.arrow_width, y)])
@@ -110,7 +110,7 @@ class Connection(object):
                 else:
                     margin = self.margin
                     arrow_width = self.arrow_width
-                arrow = QtGui.QPolygonF(
+                arrow = QtWidgets.QPolygonF(
                     [QtCore.QPoint(x - self.arrow_height / 2, y - margin),
                      QtCore.QPoint(x + self.arrow_height / 2, y - margin),
                      QtCore.QPoint(x, y - margin + arrow_width)])
@@ -119,7 +119,7 @@ class Connection(object):
                 self.arrow.setPolygon(arrow)
 
 
-class MyFrame(QtGui.QFrame):
+class MyFrame(QtWidgets.QFrame):
     def __init__(self, parent):
         super(MyFrame, self).__init__(parent)
         self.setStyleSheet("background-color: white;")
@@ -127,7 +127,7 @@ class MyFrame(QtGui.QFrame):
         self.lower()
 
 
-class MyFrameDrawing(QtGui.QFrame):
+class MyFrameDrawing(QtWidgets.QFrame):
     def __init__(self, parent):
         super(MyFrameDrawing, self).__init__()
         self.setStyleSheet("background-color: white;")

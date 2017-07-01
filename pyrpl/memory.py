@@ -21,7 +21,7 @@ from collections import OrderedDict
 from shutil import copyfile
 import numpy as np
 import time
-from PyQt4 import QtCore
+from qtpy import QtCore
 from . import default_config_dir, user_config_dir
 from .pyrpl_utils import time
 

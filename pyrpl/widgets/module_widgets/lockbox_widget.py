@@ -1,7 +1,7 @@
 """
 The lockbox widget is composed of all the submodules widgets
 """
-from PyQt4 import QtCore, QtGui
+from qtpy import QtCore, QtWidgets
 import pyqtgraph as pg
 import logging
 import numpy as np
@@ -10,26 +10,26 @@ from .base_module_widget import ReducedModuleWidget, ModuleWidget
 from ...pyrpl_utils import get_base_module_class
 
 
-APP = QtGui.QApplication.instance()
+APP = QtWidgets.QApplication.instance()
 
 
-class AnalogTfDialog(QtGui.QDialog):
+class AnalogTfDialog(QtWidgets.QDialog):
     def __init__(self, parent):
         super(AnalogTfDialog, self).__init__(parent)
         self.parent = parent
         self.module = self.parent.module
         self.setWindowTitle("Analog transfer function for output %s" % self.module.name)
-        self.lay_v = QtGui.QVBoxLayout(self)
-        self.lay_h = QtGui.QHBoxLayout()
-        self.ok = QtGui.QPushButton('Ok')
+        self.lay_v = QtWidgets.QVBoxLayout(self)
+        self.lay_h = QtWidgets.QHBoxLayout()
+        self.ok = QtWidgets.QPushButton('Ok')
         self.lay_h.addWidget(self.ok)
         self.ok.clicked.connect(self.validate)
-        self.cancel = QtGui.QPushButton('Cancel')
+        self.cancel = QtWidgets.QPushButton('Cancel')
         self.lay_h.addWidget(self.cancel)
-        self.group = QtGui.QButtonGroup()
-        self.flat = QtGui.QRadioButton("Flat response")
-        self.filter = QtGui.QRadioButton('Analog low-pass filter (as in "Pid control/assisted design/actuator cut-off")')
-        self.curve = QtGui.QRadioButton("User-defined curve")
+        self.group = QtWidgets.QButtonGroup()
+        self.flat = QtWidgets.QRadioButton("Flat response")
+        self.filter = QtWidgets.QRadioButton('Analog low-pass filter (as in "Pid control/assisted design/actuator cut-off")')
+        self.curve = QtWidgets.QRadioButton("User-defined curve")
         self.group.addButton(self.flat)
         self.group.addButton(self.filter)
         self.group.addButton(self.curve)
@@ -37,10 +37,10 @@ class AnalogTfDialog(QtGui.QDialog):
         self.lay_v.addWidget(self.flat)
         self.lay_v.addWidget(self.filter)
         self.lay_v.addWidget(self.curve)
-        self.label = QtGui.QLabel("Curve #")
-        self.line = QtGui.QLineEdit("coucou")
+        self.label = QtWidgets.QLabel("Curve #")
+        self.line = QtWidgets.QLineEdit("coucou")
 
-        self.lay_line = QtGui.QHBoxLayout()
+        self.lay_line = QtWidgets.QHBoxLayout()
         self.lay_v.addLayout(self.lay_line)
         self.lay_v.addWidget(self.line)
         self.lay_line.addStretch(1)
@@ -84,7 +84,7 @@ class AnalogTfDialog(QtGui.QDialog):
         return accept, self.res, self.curve_id
 
 
-class AnalogTfSpec(QtGui.QWidget):
+class AnalogTfSpec(QtWidgets.QWidget):
     """
     A button + label that allows to display and change the transfer function specification
     """
@@ -92,10 +92,10 @@ class AnalogTfSpec(QtGui.QWidget):
         super(AnalogTfSpec, self).__init__(parent)
         self.parent = parent
         self.module = self.parent.module
-        self.layout = QtGui.QVBoxLayout(self)
-        self.label = QtGui.QLabel("Analog transfer function")
+        self.layout = QtWidgets.QVBoxLayout(self)
+        self.label = QtWidgets.QLabel("Analog transfer function")
         self.layout.addWidget(self.label)
-        self.button = QtGui.QPushButton('Change...')
+        self.button = QtWidgets.QPushButton('Change...')
         self.layout.addWidget(self.button)
         self.button.clicked.connect(self.change)
         self.dialog = AnalogTfDialog(self)
@@ -121,19 +121,19 @@ class AnalogTfSpec(QtGui.QWidget):
         self.button.setText(txt)
 
 
-class MainOutputProperties(QtGui.QGroupBox):
+class MainOutputProperties(QtWidgets.QGroupBox):
     def __init__(self, parent):
         super(MainOutputProperties, self).__init__(parent)
         self.parent = parent
         self.module = self.parent.module
         aws = self.parent.attribute_widgets
-        self.layout = QtGui.QHBoxLayout(self)
-        self.leftlayout = QtGui.QVBoxLayout()
-        self.rightlayout = QtGui.QVBoxLayout()
+        self.layout = QtWidgets.QHBoxLayout(self)
+        self.leftlayout = QtWidgets.QVBoxLayout()
+        self.rightlayout = QtWidgets.QVBoxLayout()
         self.layout.addLayout(self.leftlayout)
         self.layout.addLayout(self.rightlayout)
-        self.v1 = QtGui.QHBoxLayout()
-        self.v2 = QtGui.QHBoxLayout()
+        self.v1 = QtWidgets.QHBoxLayout()
+        self.v2 = QtWidgets.QHBoxLayout()
         self.leftlayout.addLayout(self.v2)
         self.leftlayout.addLayout(self.v1)
         self.dcgain = aws['dc_gain']
@@ -156,15 +156,15 @@ class MainOutputProperties(QtGui.QGroupBox):
         self.button_tf.change_analog_tf()
 
 
-class SweepOutputProperties(QtGui.QGroupBox):
+class SweepOutputProperties(QtWidgets.QGroupBox):
     def __init__(self, parent):
         super(SweepOutputProperties, self).__init__(parent)
         self.parent = parent
         aws = self.parent.attribute_widgets
-        self.layout = QtGui.QHBoxLayout(self)
-        self.v1 = QtGui.QVBoxLayout()
+        self.layout = QtWidgets.QHBoxLayout(self)
+        self.v1 = QtWidgets.QVBoxLayout()
         self.layout.addLayout(self.v1)
-        self.v2 = QtGui.QVBoxLayout()
+        self.v2 = QtWidgets.QVBoxLayout()
         self.layout.addLayout(self.v2)
         self.v1.addWidget(aws["sweep_frequency"])
         self.v1.addWidget(aws['sweep_amplitude'])
@@ -172,13 +172,13 @@ class SweepOutputProperties(QtGui.QGroupBox):
         self.v2.addWidget(aws["sweep_waveform"])
         self.setTitle("Sweep parameters")
 
-class WidgetManual(QtGui.QWidget):
+class WidgetManual(QtWidgets.QWidget):
     def __init__(self, parent):
         super(WidgetManual, self).__init__(parent)
         self.parent = parent
-        self.layout = QtGui.QVBoxLayout(self)
-        self.pv1 = QtGui.QVBoxLayout()
-        self.pv2 = QtGui.QVBoxLayout()
+        self.layout = QtWidgets.QVBoxLayout(self)
+        self.pv1 = QtWidgets.QVBoxLayout()
+        self.pv2 = QtWidgets.QVBoxLayout()
         self.layout.addLayout(self.pv1)
         self.layout.addLayout(self.pv2)
         self.p = parent.parent.attribute_widgets["p"]
@@ -196,13 +196,13 @@ class WidgetManual(QtGui.QWidget):
         self.pv2.addWidget(self.i)
         # self.i.label.setMinimumWidth(6)
 
-class WidgetAssisted(QtGui.QWidget):
+class WidgetAssisted(QtWidgets.QWidget):
     def __init__(self, parent):
         super(WidgetAssisted, self).__init__(parent)
         self.parent = parent
-        self.layout = QtGui.QVBoxLayout(self)
-        self.v1 = QtGui.QVBoxLayout()
-        self.v2 = QtGui.QVBoxLayout()
+        self.layout = QtWidgets.QVBoxLayout(self)
+        self.v1 = QtWidgets.QVBoxLayout()
+        self.v2 = QtWidgets.QVBoxLayout()
         self.layout.addLayout(self.v1)
         self.layout.addLayout(self.v2)
         self.desired = parent.parent.attribute_widgets["desired_unity_gain_frequency"]
@@ -218,21 +218,21 @@ class WidgetAssisted(QtGui.QWidget):
         self.v2.addWidget(self.analog_filter)
 
 
-class PidProperties(QtGui.QGroupBox):
+class PidProperties(QtWidgets.QGroupBox):
     def __init__(self, parent):
         super(PidProperties, self).__init__(parent)
         self.parent = parent
         self.module = self.parent.module
         aws = self.parent.attribute_widgets
-        self.layout = QtGui.QHBoxLayout(self)
-        self.v2 = QtGui.QVBoxLayout()
+        self.layout = QtWidgets.QHBoxLayout(self)
+        self.v2 = QtWidgets.QVBoxLayout()
         self.layout.addLayout(self.v2)
-        self.v1 = QtGui.QVBoxLayout()
+        self.v1 = QtWidgets.QVBoxLayout()
         self.layout.addLayout(self.v1)
 
-        self.radio_group = QtGui.QButtonGroup()
-        self.manual = QtGui.QRadioButton('manual design')
-        self.assisted = QtGui.QRadioButton('assisted design')
+        self.radio_group = QtWidgets.QButtonGroup()
+        self.manual = QtWidgets.QRadioButton('manual design')
+        self.assisted = QtWidgets.QRadioButton('assisted design')
         self.radio_group.addButton(self.manual)
         self.radio_group.addButton(self.assisted)
         self.assisted.toggled.connect(self.toggle_mode)
@@ -277,17 +277,17 @@ class PidProperties(QtGui.QGroupBox):
             self.blockSignals(False)
 
 
-class PostFiltering(QtGui.QGroupBox):
+class PostFiltering(QtWidgets.QGroupBox):
     def __init__(self, parent):
         super(PostFiltering, self).__init__(parent)
         self.parent = parent
         aws = self.parent.attribute_widgets
-        self.layout = QtGui.QVBoxLayout(self)
+        self.layout = QtWidgets.QVBoxLayout(self)
 
         aws = self.parent.attribute_widgets
         self.layout.addWidget(aws["additional_filter"])
 
-        self.mod_layout = QtGui.QHBoxLayout()
+        self.mod_layout = QtWidgets.QHBoxLayout()
         self.mod_layout.addWidget(aws["extra_module"])
         self.mod_layout.addWidget(aws["extra_module_state"])
         self.layout.addLayout(self.mod_layout)
@@ -310,18 +310,18 @@ class OutputSignalWidget(ModuleWidget):
         self.main_props.change_analog_tf()
 
     def init_gui(self):
-        #self.main_layout = QtGui.QVBoxLayout()
+        #self.main_layout = QtWidgets.QVBoxLayout()
         #self.setLayout(self.main_layout)
         self.init_main_layout(orientation="vertical")
         self.init_attribute_layout()
         for widget in self.attribute_widgets.values():
             self.main_layout.removeWidget(widget)
-        self.upper_layout = QtGui.QHBoxLayout()
+        self.upper_layout = QtWidgets.QHBoxLayout()
         self.main_layout.addLayout(self.upper_layout)
-        self.col1 = QtGui.QVBoxLayout()
-        self.col2 = QtGui.QVBoxLayout()
-        self.col3 = QtGui.QVBoxLayout()
-        self.col4 = QtGui.QVBoxLayout()
+        self.col1 = QtWidgets.QVBoxLayout()
+        self.col2 = QtWidgets.QVBoxLayout()
+        self.col3 = QtWidgets.QVBoxLayout()
+        self.col4 = QtWidgets.QVBoxLayout()
         self.upper_layout.addStretch(1)
         self.upper_layout.addLayout(self.col1)
         self.upper_layout.addStretch(1)
@@ -369,8 +369,8 @@ class OutputSignalWidget(ModuleWidget):
         self.curve.setLogMode(xMode=True, yMode=True)
         self.curve_phase.setLogMode(xMode=True, yMode=None)
 
-        self.plotbox = QtGui.QGroupBox(self)
-        self.plotbox.layout = QtGui.QVBoxLayout(self.plotbox)
+        self.plotbox = QtWidgets.QGroupBox(self)
+        self.plotbox.layout = QtWidgets.QVBoxLayout(self.plotbox)
         self.plotbox.setTitle("Complete open-loop transfer function (V/V)")
         self.plotbox.layout.addWidget(self.win)
         self.plotbox.layout.addWidget(self.win_phase)
@@ -394,7 +394,7 @@ class LockboxInputWidget(ModuleWidget):
     A widget to represent a single lockbox input
     """
     def init_gui(self):
-        #self.main_layout = QtGui.QVBoxLayout(self)
+        #self.main_layout = QtWidgets.QVBoxLayout(self)
         self.init_main_layout(orientation="vertical")
         self.init_attribute_layout()
 
@@ -405,7 +405,7 @@ class LockboxInputWidget(ModuleWidget):
         self.curve_slope = self.plot_item.plot(pen=pg.mkPen('b', width=5))
         self.symbol = self.plot_item.plot(pen='b', symbol='o')
         self.main_layout.addWidget(self.win)
-        self.button_calibrate = QtGui.QPushButton('Calibrate')
+        self.button_calibrate = QtWidgets.QPushButton('Calibrate')
         self.main_layout.addWidget(self.button_calibrate)
         self.button_calibrate.clicked.connect(lambda: self.module.calibrate())
         self.input_calibrated()
@@ -438,7 +438,7 @@ class LockboxInputWidget(ModuleWidget):
                             'show GUI display of expected signal (min at %f)!',
                             input.name, input.expected_signal(0))
 
-class InputsWidget(QtGui.QWidget):
+class InputsWidget(QtWidgets.QWidget):
     """
     A widget to represent all input signals on the same tab
     """
@@ -447,7 +447,7 @@ class InputsWidget(QtGui.QWidget):
         self.all_sig_widget = all_sig_widget
         self.lb_widget = self.all_sig_widget.lb_widget
         super(InputsWidget, self).__init__(all_sig_widget)
-        self.layout = QtGui.QHBoxLayout(self)
+        self.layout = QtWidgets.QHBoxLayout(self)
         self.input_widgets = dict()
         #self.layout.addStretch(1)
         for signal in self.lb_widget.module.inputs:
@@ -469,11 +469,11 @@ class InputsWidget(QtGui.QWidget):
             self.input_widgets[input.name].input_calibrated()
 
 
-class PlusTab(QtGui.QWidget):
+class PlusTab(QtWidgets.QWidget):
     name = '+'
 
 
-class MyTabBar(QtGui.QTabBar):
+class MyTabBar(QtWidgets.QTabBar):
     def tabSizeHint(self, index):
         """
         Tab '+' and 'inputs' are smaller since they don't have a close button
@@ -485,7 +485,7 @@ class MyTabBar(QtGui.QTabBar):
         return size
 
 
-class AllSignalsWidget(QtGui.QTabWidget):
+class AllSignalsWidget(QtWidgets.QTabWidget):
     """
     A tab widget combining all inputs and outputs of the lockbox
     """
@@ -494,16 +494,16 @@ class AllSignalsWidget(QtGui.QTabWidget):
         self.tab_bar = MyTabBar()
         self.setTabBar(self.tab_bar)
         self.setTabsClosable(True)
-        self.tabBar().setSelectionBehaviorOnRemove(QtGui.QTabBar.SelectLeftTab) # otherwise + tab could be selected by
+        self.tabBar().setSelectionBehaviorOnRemove(QtWidgets.QTabBar.SelectLeftTab) # otherwise + tab could be selected by
         # removing previous tab
         self.output_widgets = []
         self.lb_widget = lockbox_widget
         self.inputs_widget = InputsWidget(self)
         self.addTab(self.inputs_widget, "inputs")
-        self.tabBar().tabButton(0, QtGui.QTabBar.RightSide).resize(0, 0) # hide "close" for "inputs" tab
+        self.tabBar().tabButton(0, QtWidgets.QTabBar.RightSide).resize(0, 0) # hide "close" for "inputs" tab
         self.tab_plus = PlusTab()  # dummy widget that will never be displayed
         self.addTab(self.tab_plus, "+")
-        self.tabBar().tabButton(self.count() - 1, QtGui.QTabBar.RightSide).resize(0, 0)  # hide "close" for "+" tab
+        self.tabBar().tabButton(self.count() - 1, QtWidgets.QTabBar.RightSide).resize(0, 0)  # hide "close" for "+" tab
         for signal in self.lb_widget.module.outputs:
             self.add_output(signal)
         self.currentChanged.connect(self.tab_changed)
@@ -571,22 +571,22 @@ class AllSignalsWidget(QtGui.QTabWidget):
                 return widget
 
 
-class MyCloseButton(QtGui.QPushButton):
+class MyCloseButton(QtWidgets.QPushButton):
     def __init__(self, parent=None):
         super(MyCloseButton, self).__init__(parent)
         style = APP.style()
-        close_icon = style.standardIcon(QtGui.QStyle.SP_TitleBarCloseButton)
+        close_icon = style.standardIcon(QtWidgets.QStyle.SP_TitleBarCloseButton)
         self.setIcon(close_icon)
         self.setFixedHeight(16)
         self.setFixedWidth(16)
         self.setToolTip("Delete this stage...")
 
 
-class MyAddButton(QtGui.QPushButton):
+class MyAddButton(QtWidgets.QPushButton):
     def __init__(self, parent=None):
         super(MyAddButton, self).__init__(parent)
         style = APP.style()
-        close_icon = style.standardIcon(QtGui.QStyle.SP_TitleBarNormalButton)
+        close_icon = style.standardIcon(QtWidgets.QStyle.SP_TitleBarNormalButton)
         self.setIcon(close_icon)
         self.setFixedHeight(16)
         self.setFixedWidth(16)
@@ -596,9 +596,9 @@ class MyAddButton(QtGui.QPushButton):
 class StageOutputWidget(ReducedModuleWidget):
     def init_attribute_layout(self):
         super(StageOutputWidget, self).init_attribute_layout()
-        #self.offset_widget = QtGui.QGroupBox()
+        #self.offset_widget = QtWidgets.QGroupBox()
         #self.main_layout.addWidget(self.offset_widget)
-        #self.offset_layout = QtGui.QHBoxLayout()
+        #self.offset_layout = QtWidgets.QHBoxLayout()
         #self.offset_widget.setLayout(self.offset_layout)
         #self.offset_widget.setTitle("offset")
         self.offset_layout = self.main_layout
@@ -643,16 +643,16 @@ class LockboxStageWidget(ReducedModuleWidget):
         pass
 
     def init_gui(self):
-        #self.main_layout = QtGui.QVBoxLayout(self)
+        #self.main_layout = QtWidgets.QVBoxLayout(self)
         self.init_main_layout(orientation="vertical")
         self.init_attribute_layout()
         for name, attr in self.attribute_widgets.items():
             self.attribute_layout.removeWidget(attr)
-        self.lay_h1 = QtGui.QHBoxLayout()
+        self.lay_h1 = QtWidgets.QHBoxLayout()
         self.main_layout.addLayout(self.lay_h1)
-        self.lay_v1 = QtGui.QVBoxLayout()
+        self.lay_v1 = QtWidgets.QVBoxLayout()
         self.lay_h1.addLayout(self.lay_v1)
-        self.lay_v2 = QtGui.QVBoxLayout()
+        self.lay_v2 = QtWidgets.QVBoxLayout()
         self.lay_h1.addLayout(self.lay_v2)
         aws = self.attribute_widgets
         #self.lay_v1.addWidget(aws['name'])
@@ -660,18 +660,18 @@ class LockboxStageWidget(ReducedModuleWidget):
         self.lay_v2.addWidget(aws['setpoint'])
         self.lay_v1.addWidget(aws['duration'])
         self.lay_v2.addWidget(aws['gain_factor'])
-        self.lay_h2 = QtGui.QVBoxLayout()
+        self.lay_h2 = QtWidgets.QVBoxLayout()
         self.main_layout.addLayout(self.lay_h2)
         self.output_widgets = []
         for output in self.module.lockbox.outputs:
             self.output_widgets.append(self.module.outputs[output.name]._create_widget())
             self.lay_h2.addWidget(self.output_widgets[-1])
-        #self.lay_h3 = QtGui.QHBoxLayout()
+        #self.lay_h3 = QtWidgets.QHBoxLayout()
         #self.main_layout.addLayout(self.lay_h3)
         aws['function_call'].set_horizontal()
         #self.lay_h3.addWidget(aws['function_call'])
         self.main_layout.addWidget(aws['function_call'])
-        self.button_goto = QtGui.QPushButton('Go to this stage')
+        self.button_goto = QtWidgets.QPushButton('Go to this stage')
         self.button_goto.clicked.connect(self.module.enable)
         self.main_layout.addWidget(self.button_goto)
 
@@ -709,8 +709,8 @@ class LockboxSequenceWidget(ModuleWidget):
         self.init_main_layout(orientation="horizontal")
         self.init_attribute_layout()
         self.stage_widgets = []
-        self.button_add = QtGui.QPushButton('+')
-        self.button_add.setSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Expanding)
+        self.button_add = QtWidgets.QPushButton('+')
+        self.button_add.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Expanding)
         #self.button_add.setMinimumHeight(60)
         self.button_add.clicked.connect(lambda: self.module.append(self.module[-1].setup_attributes))
         self.main_layout.addWidget(self.button_add)
@@ -770,7 +770,7 @@ class LockboxWidget(ModuleWidget):
         self.init_main_layout("vertical")
         self.init_attribute_layout()
         # move all custom attributes to the second GUI line (spares place)
-        self.custom_attribute_layout = QtGui.QHBoxLayout()
+        self.custom_attribute_layout = QtWidgets.QHBoxLayout()
         self.main_layout.addLayout(self.custom_attribute_layout)
         lockbox_base_class = get_base_module_class(self.module)
         for attr_name in self.module._gui_attributes:
@@ -779,11 +779,11 @@ class LockboxWidget(ModuleWidget):
                 self.attribute_layout.removeWidget(widget)
                 self.custom_attribute_layout.addWidget(widget)
         # add buttons to standard attribute layout
-        self.button_is_locked = QtGui.QPushButton("is_locked?")
-        self.button_lock = QtGui.QPushButton("Lock")
-        self.button_unlock = QtGui.QPushButton("Unlock")
-        self.button_sweep = QtGui.QPushButton("Sweep")
-        self.button_calibrate_all = QtGui.QPushButton("Calibrate all inputs")
+        self.button_is_locked = QtWidgets.QPushButton("is_locked?")
+        self.button_lock = QtWidgets.QPushButton("Lock")
+        self.button_unlock = QtWidgets.QPushButton("Unlock")
+        self.button_sweep = QtWidgets.QPushButton("Sweep")
+        self.button_calibrate_all = QtWidgets.QPushButton("Calibrate all inputs")
         self.button_green = self.button_unlock
         self._set_button_green(self.button_green)
         self.attribute_layout.addWidget(self.button_is_locked)
@@ -800,7 +800,7 @@ class LockboxWidget(ModuleWidget):
 
         # Locking sequence widget + hide button
         self.sequence_widget = self.module.sequence._create_widget()
-        self.scrollarea = QtGui.QScrollArea()
+        self.scrollarea = QtWidgets.QScrollArea()
         self.sequence_widget.scrollarea = self.scrollarea
         self.scrollarea.setWidget(self.sequence_widget)
         minimumsizehint = self.sequence_widget.minimumSizeHint().height() \
@@ -808,19 +808,19 @@ class LockboxWidget(ModuleWidget):
         self.scrollarea.setMinimumHeight(minimumsizehint)
         #self.scrollarea.setVerticalScrollBarPolicy(
         #    QtCore.Qt.ScrollBarAlwaysOff)
-        #self.sequence_widget.setSizePolicy(QtGui.QSizePolicy.Preferred,
-        #                                   QtGui.QSizePolicy.Preferred)
+        #self.sequence_widget.setSizePolicy(QtWidgets.QSizePolicy.Preferred,
+        #                                   QtWidgets.QSizePolicy.Preferred)
         self.scrollarea.setWidgetResizable(True)
         self.main_layout.addWidget(self.scrollarea)
         # hide button for sequence
-        # self.button_hide1 = QtGui.QPushButton("^ Lock sequence ^")
+        # self.button_hide1 = QtWidgets.QPushButton("^ Lock sequence ^")
         # self.button_hide1.setMaximumHeight(15)
         # self.button_hide1.clicked.connect(self.button_hide1_clicked)
         # self.main_layout.addWidget(self.button_hide1)
 
         # inputs/ outputs widget
         self.all_sig_widget = AllSignalsWidget(self)
-        self.button_hide2 = QtGui.QPushButton("hide inputs / outputs")
+        self.button_hide2 = QtWidgets.QPushButton("hide inputs / outputs")
         #self.button_hide_clicked() # open by default
         self.button_hide2.setMaximumHeight(15)
         #self.button_hide2.setMaximumWidth(150)

@@ -4,7 +4,7 @@ Type python run_pyrpl [config_file_name]
 To create a Pyrpl instance with the config file "config_file_name"
 """
 from pyrpl import Pyrpl
-from PyQt4 import QtCore, QtGui
+from qtpy import QtCore, QtWidgets
 import sys
 
 if __name__ == '__main__':
@@ -25,9 +25,9 @@ if __name__ == '__main__':
                 kwargs["config"] = k
         else:
             kwargs[k] = v
-    APP = QtGui.QApplication.instance()
+    APP = QtWidgets.QApplication.instance()
     if APP is None:
-        APP = QtGui.QApplication(sys.argv)
+        APP = QtWidgets.QApplication(sys.argv)
 
     print("Calling Pyrpl(**%s)"%str(kwargs))
     PYRPL = Pyrpl(**kwargs)
