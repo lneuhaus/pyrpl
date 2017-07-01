@@ -140,10 +140,10 @@ class SpecAnWidget(ModuleWidget):
         self.button_save.clicked.connect(self.module.save_curve)
 
         aws = self.attribute_widgets
-        self.attribute_layout.removeWidget(aws["avg"])
+        self.attribute_layout.removeWidget(aws["trace_average"])
         self.attribute_layout.removeWidget(aws["curve_name"])
 
-        self.button_layout.addWidget(aws["avg"])
+        self.button_layout.addWidget(aws["trace_average"])
         self.button_layout.addWidget(aws["curve_name"])
         self.button_layout.addWidget(self.button_single)
         self.button_layout.addWidget(self.button_continuous)
@@ -165,15 +165,6 @@ class SpecAnWidget(ModuleWidget):
         self.button_layout.setStretchFactor(self.button_restart_averaging, 1)
         self.button_layout.setStretchFactor(self.button_save, 1)
         self.update_baseband_visibility()
-        # self.button_layout.setStretchFactor(self.run_avg_widget, 1)
-        # self.button_layout.setStretchFactor(self.curve_name_widget, 1)
-
-        # self.running = False
-        # self.attribute_changed.connect(self.module.restart_averaging)
-
-        ##### self.attribute_widgets["rbw_auto"].value_changed.connect(
-        #####     self.update_rbw_visibility)
-        ##### self.update_rbw_visibility()
 
     def update_attribute_by_name(self, name, new_value_list):
         super(SpecAnWidget, self).update_attribute_by_name(name, new_value_list)

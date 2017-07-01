@@ -255,7 +255,7 @@ class NaRunFuture(NaCurveFuture):
             #  in case the user wants to move on with running_continuous mode
             self.current_point = 0
             self._module.running_state = "paused"
-        self.current_avg = min(self.current_avg + 1, self._module.avg)
+        self.current_avg = min(self.current_avg + 1, self._module.trace_average)
 
     def _set_run_continuous(self):
         self._run_continuous = True
@@ -293,12 +293,12 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
                        "logscale",
                        "infer_open_loop_tf"]
     _setup_attributes = _gui_attributes + ['running_state']
-    avg = IntProperty(doc="number of curves to average in single mode. In "
-                           "continuous mode, a decaying average with a "
-                           "characteristic memory of 'avg' curves is "
-                           "performed.",
-                       default=10,
-                       min=1)
+    trace_average = IntProperty(doc="number of curves to average in single mode. In "
+                                "continuous mode, a decaying average with a "
+                                "characteristic memory of 'trace_average' "
+                                "curves is performed.",
+                                default=10,
+                                min=1)
     input = InputSelectProperty(default='networkanalyzer',
                                 call_setup=True,
                                 ignore_errors=True)
@@ -506,12 +506,12 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
         y /= tf
         return y, amp
 
-    def take_ringdown(self, frequency, rbw=1000, points=1000, avg=1):
+    def take_ringdown(self, frequency, rbw=1000, points=1000, trace_average=1):
         self.start_freq = frequency
         self.stop_freq = frequency
         self.rbw = rbw
         self.points = points
-        self.avg = avg
+        self.trace_average = trace_average
         curve = self.single_async()
         sleep(0.1)
         self.iq.output_direct = "off"

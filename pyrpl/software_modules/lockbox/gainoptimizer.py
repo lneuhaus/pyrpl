@@ -45,7 +45,7 @@ class GainOptimizerLoop(LockboxPlotLoop):
         self.phase = 0
         self.current_gain_factor = self.lockbox.final_stage.gain_factor
 
-    def loop(self):
+    def loop(self, a):
         if not self.lockbox.is_locked_and_final(loglevel=0):
             setattr(self.parent, self.name, None)
             self._clear()

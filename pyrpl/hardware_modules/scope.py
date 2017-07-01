@@ -544,7 +544,6 @@ class Scope(HardwareModule, AcquisitionModule):
         self._trigger_source_register = 'off'
         self._trigger_armed = True
 
-
     def _rolling_mode_allowed(self):
         """
         Only if duration larger than 0.1 s

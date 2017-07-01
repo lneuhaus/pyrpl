@@ -285,9 +285,9 @@ class InputSignal(Signal):
                                 trigger_delay=0,
                                 duration=1./self.lockbox.asg.frequency,
                                 ch1_active=True,
-                                ch2_active=False,
+                                ch2_active=True,
                                 average=True,
-                                avg=1,  # trace_average
+                                trace_average=1,
                                 running_state='stopped',
                                 rolling_mode=False)
                     scope.save_state("autosweep")
@@ -524,11 +524,10 @@ class InputFromOutput(InputDirect):
         return setpoint_in_output_unit / output.dc_gain
 
 
-
-
 class IqQuadratureFactorProperty(FloatProperty):
+    """ this is a direct link to quadrature_factor because we want to
+    benefit from its validate_and_normalize function"""
     def set_value(self, instance, value):
-        # super(IqQuadratureFactorProperty, self).set_value(instance, value)
         instance.iq.quadrature_factor = value
         return value
 
@@ -543,8 +542,12 @@ class IqFilterProperty(FilterProperty):
         except:
             val = [val, val]  # preferentially choose second order filter
         instance.iq.bandwidth = val
-        super(IqFilterProperty, self).set_value(instance, val)
+        super(IqFilterProperty, self).set_value(instance,
+                                                self.get_value(instance))
         return val
+
+    def get_value(self, instance):
+        return instance.iq.bandwidth
 
     def valid_frequencies(self, module):
         # only allow the low-pass filter options (exclude negative high-pass options)
@@ -564,7 +567,7 @@ class InputIq(InputSignal):
 
     @property
     def acbandwidth(self):
-        return self.mod_freq / 100.0
+        return self.mod_freq / 128.0
 
     # mod_freq = ProxyProperty("iq.frequency")
     # mod_amp = ProxyProperty("iq.amplitude")
