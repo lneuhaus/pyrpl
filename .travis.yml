@@ -47,7 +47,6 @@ before_install:
 
 install:
   # avoid to get cancelled because of very long tests
-  - travis_wait 100 mvn install
   # we get issues with building numpy etc if we do not include those in the next line
   - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION numpy scipy paramiko pandas nose pip pyqt=4 qtpy
   - source activate test-environment
@@ -61,7 +60,7 @@ install:
 # Run test
 script:
   - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]] || [[ "$TRAVIS_PYTHON_VERSION" == "3.5" ]]; then
-      nosetests;
+      travis_wait 120 nosetests;
     fi
 
 # Calculate coverage - not working at the moment
