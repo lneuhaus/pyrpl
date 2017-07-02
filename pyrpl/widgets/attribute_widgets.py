@@ -155,6 +155,20 @@ class BaseAttributeWidget(QtGui.QWidget, object):
         self.widget.setValue(new_value)
 
 
+    def wheelEvent(self, event):
+        """
+        Handle mouse wheel event.
+
+        We generally disable the mouse wheel because it is a frequent source
+        of errors / undesired changes of variables
+        """
+        self.module._logger.error("Cannot use mouse wheel on AttributeWidget "
+                                  "of %s.%s.",
+                                  self.module.name,
+                                  self.attribute_name)
+        return
+
+
 class StringAttributeWidget(BaseAttributeWidget):
     """
     Widget for string values.

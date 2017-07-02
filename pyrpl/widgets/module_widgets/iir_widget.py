@@ -285,10 +285,10 @@ class IirWidget(ModuleWidget):
             plot['data'] = self.module._data_curve_object.data.values
         except AttributeError:  # no curve for plotting available
             plot['data'] = []
-        if False:
-            # plot designed filter
-            plot['filter_design'] = self.module.transfer_function(frequencies,
+        # plot designed filter
+        plot['filter_design'] = self.module.transfer_function(frequencies,
                                                                   **tfargs)
+        if False:
             # plot product
             try:
                 plot['data_x_design'] = plot['data'] / plot['filter_design']

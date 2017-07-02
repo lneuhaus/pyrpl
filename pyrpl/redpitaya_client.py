@@ -216,6 +216,8 @@ class DummyClient(object):
                     return 16
                 elif offset == 0x220:  # filterstages
                     return 1
+                elif offset == 0x108:  # overflow
+                    return 0
             elif module.startswith('iq'):
                 if offset == 0x220:  # filterstages
                     return 1
