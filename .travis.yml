@@ -48,7 +48,7 @@ before_install:
 install:
   # avoid to get cancelled because of very long tests
   # we get issues with building numpy etc if we do not include those in the next line
-  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION numpy scipy paramiko pandas nose pip pyqt qtpy scp
+  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION numpy scipy paramiko pandas nose pip pyqt qtpy
   - source activate test-environment
   - if [[ "$TRAVIS_PYTHON_VERSION" != "3.3" ]]; then
       conda install --yes -c conda-forge coveralls;
