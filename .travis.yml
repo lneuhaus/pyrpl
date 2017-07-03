@@ -60,7 +60,7 @@ install:
 # Run test
 script:
   - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]] || [[ "$TRAVIS_PYTHON_VERSION" == "3.5" ]] || [[ "$TRAVIS_PYTHON_VERSION" == "3.6" ]]; then
-      travis_wait 120 nosetests;
+      nosetests;
     fi
 
 # Calculate coverage - not working at the moment
