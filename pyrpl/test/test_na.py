@@ -6,14 +6,11 @@ from qtpy import QtWidgets, QtCore
 from .test_base import TestPyrpl
 import numpy as np
 from .. import global_config
-from ..async_utils import sleep
-
-APP = QtWidgets.QApplication.instance()
+from ..async_utils import sleep as async_sleep
 
 
 class TestNA(TestPyrpl):
     def setup(self):
-        pass
         self.na = self.pyrpl.networkanalyzer
 
     def test_na_stopped_at_startup(self):
@@ -28,13 +25,13 @@ class TestNA(TestPyrpl):
         with self.pyrpl.networkanalyzer as self.na:
             def data_changing():
                 data = copy.deepcopy(self.na.data_avg)
-                sleep(self.communication_time * 5.0)
+                async_sleep(self.communication_time * 5.0)
                 return (data != self.na.data_avg).any()
 
             self.na.setup(start_freq=1000, stop_freq=1e4, rbw=1000, points=10000)
-            sleep(2.0*self.communication_time)
+            async_sleep(2.0*self.communication_time)
             self.na.single_async()
-            sleep(self.communication_time * 5.0)
+            async_sleep(self.communication_time * 5.0)
             assert data_changing()
 
             current_point = self.na.current_point
@@ -43,7 +40,7 @@ class TestNA(TestPyrpl):
             #  restarted
 
             self.na.continuous()
-            sleep(self.communication_time * 5.0)
+            async_sleep(self.communication_time * 5.0)
             assert data_changing()
             self.na.stop()  # do not let the na running or other tests might be
             # screwed-up !!!
@@ -77,7 +74,6 @@ class TestNA(TestPyrpl):
                 "needs %.1f ms. This won't compromise functionality but it is " \
                 "recommended that establish a more direct ethernet connection" \
                 "to you Red Pitaya module" % (maxduration*1000.0, duration*1000.0)
-
             # test na speed with gui.
             self.na.setup(start_freq=1e3,
                           stop_freq=1e4,
@@ -86,10 +82,10 @@ class TestNA(TestPyrpl):
                           average_per_point=1)
             tic = time.time()
             self.na.single()
-            APP.processEvents()
+            async_sleep(0.05)
             print(self.na.running_state)
             while(self.na.running_state == 'running_single'):
-                APP.processEvents()
+                async_sleep(0.05)
             duration = (time.time() - tic)/self.na.points
             #Allow twice as long with gui
             maxduration *= 2
@@ -113,15 +109,12 @@ class TestNA(TestPyrpl):
         self.timer.setSingleShot(True)
         self.count = 0
         self.timer.timeout.connect(self.coucou)
-
-        for i in range(1000):
-            APP.processEvents()
-
+        async_sleep(0.5)
         tic = time.time()
         self.total = 1000
         self.timer.start()
         while self.count < self.total:
-            APP.processEvents()
+            async_sleep(0.05)
         duration = time.time() - tic
         assert(duration < 3.0), duration
 
@@ -146,15 +139,15 @@ class TestNA(TestPyrpl):
                           input="out1",
                           amplitude=0.01)
             self.na.continuous()
-            APP.processEvents()
+            async_sleep(0.05)
             self.na.pause()
-            APP.processEvents()
+            async_sleep(0.05)
             assert self.na.iq.amplitude==0
             self.na.continuous()
-            APP.processEvents()
+            async_sleep(0.05)
             assert self.na.iq.amplitude!=0
             self.na.stop()
-            APP.processEvents()
+            async_sleep(0.05)
             assert self.na.iq.amplitude==0
 
     def test_iq_autosave_active(self):
@@ -180,12 +173,10 @@ class TestNA(TestPyrpl):
                           amplitude=0.01,
                           running_state="running_continuous")
             for i in range(20):
-                sleep(0.01)
-                APP.processEvents()
+                async_sleep(0.01)
             old = self.pyrpl.c._save_counter
             for i in range(10):
-                sleep(0.01)
-                APP.processEvents()
+                async_sleep(0.01)
             new = self.pyrpl.c._save_counter
             self.na.stop()
             assert (old == new), (old, new)

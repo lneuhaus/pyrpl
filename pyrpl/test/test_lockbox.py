@@ -7,14 +7,12 @@ from .test_base import TestPyrpl
 
 
 class TestLockbox(TestPyrpl):
-    ###source_config_file = "nosetests_source_lockbox.yml"
+    source_config_file = "nosetests_source_lockbox.yml"
 
     def setup(self):
         self.lockbox = self.pyrpl.lockbox
 
     def test_create_stage(self):
-        return ###
-
         old_len = len(self.lockbox.sequence)
         widget = self.lockbox._create_widget()
         self.lockbox.sequence.append({'gain_factor': 2.0})
@@ -36,7 +34,6 @@ class TestLockbox(TestPyrpl):
         assert self.lockbox.sequence.pop()['gain_factor']==2.0
 
     def test_real_lock(self):
-        return ###
         delay = 0.01
         pid = self.pyrpl.rp.pid1
         pid.i = 0.1
