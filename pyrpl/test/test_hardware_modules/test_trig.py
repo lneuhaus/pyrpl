@@ -5,7 +5,6 @@ import numpy as np
 from time import sleep
 from qtpy import QtCore, QtWidgets
 from ..test_base import TestPyrpl
-APP = QtWidgets.QApplication.instance()
 
 
 class TestScope(TestPyrpl):

@@ -3,7 +3,6 @@ logger = logging.getLogger(name=__name__)
 from qtpy import QtWidgets
 from .test_base import TestPyrpl
 from ..software_modules.module_managers import ModuleManager
-APP = QtWidgets.QApplication.instance()
 
 
 class TestOwnership(TestPyrpl):

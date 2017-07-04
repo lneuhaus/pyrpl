@@ -6,7 +6,6 @@ from .base_module_widget import ModuleWidget
 
 from qtpy import QtCore, QtWidgets
 
-APP = QtWidgets.QApplication.instance()
 
 class PidWidget(ModuleWidget):
     """
@@ -20,7 +19,7 @@ class PidWidget(ModuleWidget):
         input_filter_widget = self.attribute_widgets["inputfilter"]
         self.attribute_layout.removeWidget(input_filter_widget)
         self.main_layout.addWidget(input_filter_widget)
-        for prop in 'p', 'i', 'd':
+        for prop in ['p', 'i']: #, 'd']:
             self.attribute_widgets[prop].widget.set_log_increment()
         # can't avoid timer to update ival
 

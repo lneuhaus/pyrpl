@@ -10,8 +10,6 @@ import functools
 import logging
 from ..yml_editor import YmlEditor
 
-APP = QtWidgets.QApplication.instance()
-
 
 class MyMenuLabel(QtWidgets.QLabel):
     """

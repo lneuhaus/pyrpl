@@ -5,14 +5,13 @@ import numpy as np
 import time
 from qtpy import QtCore, QtWidgets
 from .test_redpitaya import TestRedpitaya
-
+from .. import APP
 
 class TestPyqtgraph(TestRedpitaya):
     """ This test case creates a maximally simplistic scope gui
     that continuously plots the data of both scope channels,
     and checks the obtainable frame rate.
     Frame rates down to 20 Hz are accepted """
-    APP = QtWidgets.QApplication.instance()
     N = 2 ** 14
     cycles = 50  # cycles to average frame rate over
     frequency = 10.0
@@ -71,7 +70,7 @@ class TestPyqtgraph(TestRedpitaya):
         while self.cycle < self.cycles or (time.time() > self.timeout + self.starttime):
             time.sleep(0.001)
             # this is needed such that the test GUI actually plots something
-            self.APP.processEvents()
+            APP.processEvents()
 
         if self.cycle < self.cycles:
             print("Must complete %d cycles before testing for speed!"%self.cycles)

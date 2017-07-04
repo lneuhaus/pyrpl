@@ -38,11 +38,11 @@ requirements = ['scp',
                 #'matplotlib', # optional requirementm, not needed for core
                 'scipy',
                 'pyyaml',
+                #'ruamel.yaml' # temporarily disabled
                 'pandas',
                 'pyqtgraph',
                 'numpy>=1.9',
                 'paramiko>=2.0',
-                #'ruamel.yaml' # temporarily disabled
                 'nose>=1.0',
                 'qtpy']
 if sys.version_info >= (3,4):  # python version dependencies

@@ -8,10 +8,7 @@ import numpy as np
 from ..attribute_widgets import BaseAttributeWidget
 from .base_module_widget import ReducedModuleWidget, ModuleWidget
 from ...pyrpl_utils import get_base_module_class
-
-
-APP = QtWidgets.QApplication.instance()
-
+from ... import APP
 
 class AnalogTfDialog(QtWidgets.QDialog):
     def __init__(self, parent):

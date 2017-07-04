@@ -5,8 +5,10 @@ import logging
 from qtpy import QtCore, QtWidgets
 from timeit import default_timer
 from .errors import TimeoutError, NotReadyError
-
 logger = logging.getLogger(name=__name__)
+
+from . import APP  # APP is only created once at the startup of PyRPL
+MAIN_THREAD = APP.thread()
 
 try:
     from asyncio import Future, ensure_future, CancelledError, set_event_loop
@@ -18,8 +20,6 @@ else:
     import quamash
     set_event_loop(quamash.QEventLoop())
 
-APP = QtWidgets.QApplication.instance()
-MAIN_THREAD = APP.thread()
 
 
 class MainThreadTimer(QtCore.QTimer):

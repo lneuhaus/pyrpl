@@ -10,8 +10,6 @@ from time import time
 import numpy as np
 import sys
 
-APP = QtWidgets.QApplication.instance()
-
 
 class NaWidget(ModuleWidget):
     """

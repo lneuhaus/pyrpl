@@ -1,7 +1,6 @@
 """
 Defines a number of Loop modules to be used to perform periodically a task
 """
-
 import numpy as np
 import pyqtgraph as pg
 from ..modules import Module

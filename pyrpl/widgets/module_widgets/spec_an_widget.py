@@ -11,8 +11,6 @@ from .base_module_widget import ModuleWidget
 from ..attribute_widgets import DataWidget
 from ...errors import NotReadyError
 
-APP = QtWidgets.QApplication.instance()
-
 
 class BasebandAttributesWidget(QtWidgets.QWidget):
     def __init__(self, specan_widget):

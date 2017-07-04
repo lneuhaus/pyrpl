@@ -2,13 +2,9 @@ from qtpy import QtCore, QtWidgets
 import sys
 from traceback import format_exception, format_exception_only
 # from collections import OrderedDict
-
 import logging
+from .. import APP
 
-APP = QtWidgets.QApplication.instance()  # try to retrieve the app (I think when
-# Ipython is running, the app already exists)
-if APP is None: # Otherwise, create it
-    APP = QtWidgets.QApplication(["pyrpl"])
 
 
 class ExceptionLauncher(QtCore.QObject):

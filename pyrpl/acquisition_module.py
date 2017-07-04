@@ -350,7 +350,7 @@ class AcquisitionModule(Module):
                  "stopped"],
         doc="""
     The state can be either:
-      - running_single: taking a single acquisition (avg averages).
+      - running_single: taking a single acquisition (trace_average averages).
       averaging is automatically restarted.
       - running_continuous: taking a continuous acquisition
       - paused: acquisition interrupted, but no need to restart averaging

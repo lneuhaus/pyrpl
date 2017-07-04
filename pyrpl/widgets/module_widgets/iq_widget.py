@@ -5,7 +5,6 @@ from .base_module_widget import ModuleWidget
 
 from qtpy import QtCore, QtWidgets
 
-APP = QtWidgets.QApplication.instance()
 
 class IqWidget(ModuleWidget):
     """
