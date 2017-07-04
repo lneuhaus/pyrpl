@@ -248,7 +248,8 @@ class NaRunFuture(NaCurveFuture):
             # restart scan from the beginning.
             self.current_point = 0
             self.start()
-        if not self._run_continuous and self.current_avg == self._module.trace_average:
+        if not self._run_continuous and self.current_avg == \
+                self._module.trace_average:
             self.set_result(self.data_avg)
             #  in case the user wants to move on with running_continuous mode
             self.current_point = 0
