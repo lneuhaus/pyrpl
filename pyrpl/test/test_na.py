@@ -31,7 +31,8 @@ class TestNA(TestPyrpl):
                 sleep(self.communication_time * 5.0)
                 return (data != self.na.data_avg).any()
 
-            self.na.setup(start_freq=1000, stop_freq=1e4, rbw=1000, points=10000)
+            self.na.setup(start_freq=1000, stop_freq=1e4, rbw=1000,
+                          points=10000, trace_average=1)
             sleep(2.0*self.communication_time)
             self.na.single_async()
             sleep(self.communication_time * 5.0)
@@ -68,7 +69,8 @@ class TestNA(TestPyrpl):
                           stop_freq=1e4,
                           rbw=1e6,
                           points=points,
-                          average_per_point=1)
+                          average_per_point=1,
+                          trace_average=1)
             tic = time.time()
             self.na.curve()
             duration = (time.time() - tic)/self.na.points
@@ -83,7 +85,8 @@ class TestNA(TestPyrpl):
                           stop_freq=1e4,
                           rbw=1e6,
                           points=points//2,
-                          average_per_point=1)
+                          average_per_point=1,
+                          trace_average=1)
             tic = time.time()
             self.na.single()
             APP.processEvents()

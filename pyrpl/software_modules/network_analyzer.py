@@ -245,12 +245,13 @@ class NaRunFuture(NaCurveFuture):
     def _scan_finished(self):
         # launch this signal before current_point goes back to 0...
         self._module._emit_signal_by_name("scan_finished")
-        if self._run_continuous or self.current_avg<self._module.avg:
+        if self._run_continuous or self.current_avg<self._module.trace_average:
             self._module._start_acquisition()
             # restart scan from the beginning.
             self.current_point = 0
             self.start()
-        if not self._run_continuous and self.current_avg == self._module.avg:
+        if not self._run_continuous and self.current_avg == \
+                self._module.trace_average:
             self.set_result(self.data_avg)
             #  in case the user wants to move on with running_continuous mode
             self.current_point = 0
