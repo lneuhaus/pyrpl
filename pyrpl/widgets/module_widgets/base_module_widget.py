@@ -4,16 +4,14 @@ Each Module instance can have a widget created by calling create_widget.
 To use a different class of Widget than the preset (for instance subclass it), the attribute ModuleClass.WidgetClass
 can be changed before calling create_widget()
 """
-from PyQt4 import QtCore, QtGui
+from qtpy import QtCore, QtWidgets
 from collections import OrderedDict
 import functools
 import logging
 from ..yml_editor import YmlEditor
 
-APP = QtGui.QApplication.instance()
 
-
-class MyMenuLabel(QtGui.QLabel):
+class MyMenuLabel(QtWidgets.QLabel):
     """
     A label on top of the menu widget that is able to display save or load menu.
     """
@@ -23,10 +21,10 @@ class MyMenuLabel(QtGui.QLabel):
         super(MyMenuLabel, self).__init__(self.text, module_widget)
 
     def get_menu(self):
-        menu = QtGui.QMenu(self)
+        menu = QtWidgets.QMenu(self)
         self.actions = []
         for state in self.module.states:
-            action = QtGui.QAction(state, self)
+            action = QtWidgets.QAction(state, self)
             self.actions.append(action)
             action.triggered.connect(functools.partial(self.func, state))
             menu.addAction(action)
@@ -61,13 +59,13 @@ class SaveLabel(MyMenuLabel):
 
     def get_menu(self):
         menu = super(SaveLabel, self).get_menu()
-        action_new = QtGui.QAction('<New...>', self)
+        action_new = QtWidgets.QAction('<New...>', self)
         action_new.triggered.connect(self.new_state)
         menu.addAction(action_new)
         return menu
 
     def new_state(self):
-        state, accept = QtGui.QInputDialog.getText(self, "Save %s "
+        state, accept = QtWidgets.QInputDialog.getText(self, "Save %s "
                             "state"%self.module.name, "Enter new state name:")
         state = str(state)
         if accept:
@@ -100,7 +98,7 @@ class EditLabel(MyMenuLabel):
 
     def get_menu(self):
         menu = super(EditLabel, self).get_menu()
-        action_current = QtGui.QAction('<Current>', self)
+        action_current = QtWidgets.QAction('<Current>', self)
         action_current.triggered.connect(functools.partial(self.func, None))
         others = menu.actions()
         if len(others)>0:
@@ -127,13 +125,13 @@ class HideShowLabel(MyMenuLabel):
         return None
 
 
-class ReducedModuleWidget(QtGui.QGroupBox):
+class ReducedModuleWidget(QtWidgets.QGroupBox):
     """
     Base class for a module Widget.
 
     In general, this is one of the DockWidget of the Pyrpl MainWindow.
     """
-    attribute_changed = QtCore.pyqtSignal()
+    attribute_changed = QtCore.Signal()
     title_pos = (12, 0)
 
     def __init__(self, name, module, parent=None):
@@ -151,13 +149,13 @@ class ReducedModuleWidget(QtGui.QGroupBox):
         self.module._signal_launcher.connect_widget(self)
 
     def init_main_layout(self, orientation='horizontal'):
-        self.root_layout = QtGui.QHBoxLayout()
-        self.main_widget = QtGui.QWidget()
+        self.root_layout = QtWidgets.QHBoxLayout()
+        self.main_widget = QtWidgets.QWidget()
         self.root_layout.addWidget(self.main_widget)
         if orientation == "vertical":
-            self.main_layout = QtGui.QVBoxLayout()
+            self.main_layout = QtWidgets.QVBoxLayout()
         else:
-            self.main_layout = QtGui.QHBoxLayout()
+            self.main_layout = QtWidgets.QHBoxLayout()
         self.main_widget.setLayout(self.main_layout)
         self.setLayout(self.root_layout)
 
@@ -183,16 +181,16 @@ class ReducedModuleWidget(QtGui.QGroupBox):
         :return:
         """
         if '\n' in self.module._gui_attributes:
-            self.attributes_layout = QtGui.QVBoxLayout()
+            self.attributes_layout = QtWidgets.QVBoxLayout()
             self.main_layout.addLayout(self.attributes_layout)
-            self.attribute_layout = QtGui.QHBoxLayout()
+            self.attribute_layout = QtWidgets.QHBoxLayout()
             self.attributes_layout.addLayout(self.attribute_layout)
         else:
-            self.attribute_layout = QtGui.QHBoxLayout()
+            self.attribute_layout = QtWidgets.QHBoxLayout()
             self.main_layout.addLayout(self.attribute_layout)
         for attr_name in self.module._gui_attributes:
             if attr_name == '\n':
-                self.attribute_layout = QtGui.QHBoxLayout()
+                self.attribute_layout = QtWidgets.QHBoxLayout()
                 self.attributes_layout.addLayout(self.attribute_layout)
             else:
                 attribute_value = getattr(self.module, attr_name)  # needed for
@@ -200,7 +198,7 @@ class ReducedModuleWidget(QtGui.QGroupBox):
                 attribute = getattr(self.module.__class__, attr_name)
                 if callable(attribute):
                     # assume that attribute is a function
-                    widget = QtGui.QPushButton(attr_name)
+                    widget = QtWidgets.QPushButton(attr_name)
                     widget.clicked.connect(getattr(self.module, attr_name))
                 else:
                     # standard case: make attribute widget
@@ -304,7 +302,7 @@ class ModuleWidget(ReducedModuleWidget):
                                      self.title_pos[1])
 
     def create_title_bar(self):
-        self.title_label = QtGui.QLabel("yo", parent=self)
+        self.title_label = QtWidgets.QLabel("yo", parent=self)
          # title should be at the top-left corner of the widget
         self.load_label = LoadLabel(self)
         self.load_label.adjustSize()

@@ -41,8 +41,6 @@ import logging
 import sys
 import numpy as np
 import numbers
-from PyQt4 import QtCore, QtGui
-
 
 logger = logging.getLogger(name=__name__)
 

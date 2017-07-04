@@ -1,19 +1,17 @@
-from PyQt4 import QtCore, QtGui
+from qtpy import QtCore, QtWidgets
 import sys
 from traceback import format_exception, format_exception_only
 # from collections import OrderedDict
-
 import logging
+from .. import APP
 
-APP = QtGui.QApplication.instance()  # try to retrieve the app (I think when Ipython is running, the app already exists)
-if APP is None: # Otherwise, create it
-    APP = QtGui.QApplication(["pyrpl"])
 
 
 class ExceptionLauncher(QtCore.QObject):
     #  Used to display exceptions in the status bar of PyrplWidgets
-    show_exception = QtCore.pyqtSignal(list) # use a signal to make sure no thread is messing up with gui
-    show_log = QtCore.pyqtSignal(list)
+    show_exception = QtCore.Signal(list) # use a signal to make
+    # sure no thread is messing up with gui
+    show_log = QtCore.Signal(list)
 
     def __init__(self):
         super(ExceptionLauncher, self).__init__()
@@ -49,7 +47,7 @@ class LogHandler(QtCore.QObject, logging.Handler):
     """
     A handler class which sends log strings to a wx object
     """
-    show_log = QtCore.pyqtSignal(list)
+    show_log = QtCore.Signal(list)
 
     def __init__(self):
         """
@@ -74,7 +72,7 @@ class LogHandler(QtCore.QObject, logging.Handler):
             self.handleError(record)
 
 
-class MyDockWidget(QtGui.QDockWidget):
+class MyDockWidget(QtWidgets.QDockWidget):
     """
     A DockWidget where the inner widget is only created when needed (To reduce load times).
     """
@@ -87,10 +85,10 @@ class MyDockWidget(QtGui.QDockWidget):
         super(MyDockWidget, self).__init__(name)
         self.setObjectName(name)
         self.setFeatures(
-            QtGui.QDockWidget.DockWidgetFloatable |
-            QtGui.QDockWidget.DockWidgetMovable |
-            QtGui.QDockWidget.DockWidgetVerticalTitleBar|
-            QtGui.QDockWidget.DockWidgetClosable)
+            QtWidgets.QDockWidget.DockWidgetFloatable |
+            QtWidgets.QDockWidget.DockWidgetMovable |
+            QtWidgets.QDockWidget.DockWidgetVerticalTitleBar|
+            QtWidgets.QDockWidget.DockWidgetClosable)
         self.create_widget_func = create_widget_func
         self.widget = None
 
@@ -98,7 +96,7 @@ class MyDockWidget(QtGui.QDockWidget):
         if self.widget is None:
             self.widget = self.create_widget_func()
             if self.scrollable:
-                self.scrollarea = QtGui.QScrollArea()
+                self.scrollarea = QtWidgets.QScrollArea()
                 self.scrollarea.setWidget(self.widget)
                 self.scrollarea.setWidgetResizable(True)
                 self.setWidget(self.scrollarea)
@@ -126,9 +124,9 @@ class MyDockWidget(QtGui.QDockWidget):
             return True
         else:
             #return super(MyDockWidget, self).event(event)
-            return QtGui.QDockWidget.event(self, event)
+            return QtWidgets.QDockWidget.event(self, event)
 
-class PyrplWidget(QtGui.QMainWindow):
+class PyrplWidget(QtWidgets.QMainWindow):
     def __init__(self, pyrpl_instance):
         self.parent = pyrpl_instance
         self.logger = self.parent.logger
@@ -206,11 +204,11 @@ class PyrplWidget(QtGui.QMainWindow):
             self.tabifyDockWidget(self.last_docked, dock_widget)
         # put tabs on top
         self.setTabPosition(dock_widget.allowedAreas(),
-                            QtGui.QTabWidget.North)
+                            QtWidgets.QTabWidget.North)
         self.last_docked = dock_widget
         self.last_docked.hide()  # by default no widget is created...
 
-        action = QtGui.QAction(name, self.menu_modules)
+        action = QtWidgets.QAction(name, self.menu_modules)
         action.setCheckable(True)
         self.module_actions.append(action)
         self.menu_modules.addAction(action)
@@ -290,7 +288,7 @@ class PyrplWidget(QtGui.QMainWindow):
             coords = [0, 0, 800, 600]
         try:
             self.window_position = coords
-            if QtGui.QApplication.desktop().screenNumber(self)==-1:
+            if QtWidgets.QApplication.desktop().screenNumber(self)==-1:
                 # window doesn't fit inside screen
                 self.window_position = (0,0)
         except Exception as e:

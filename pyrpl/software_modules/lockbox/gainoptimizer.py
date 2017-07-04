@@ -1,4 +1,4 @@
-from PyQt4.QtCore import QTimer
+from qtpy.QtCore import QTimer
 from pyrpl.software_modules.lockbox import *
 from pyrpl.async_utils import sleep
 

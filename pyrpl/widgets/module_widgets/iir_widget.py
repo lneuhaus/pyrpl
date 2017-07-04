@@ -3,13 +3,11 @@ The Iir widget allows to dynamically select zeros and poles of the iir filter
 """
 from .base_module_widget import ModuleWidget
 from collections import OrderedDict
-from PyQt4 import QtCore, QtGui
+from qtpy import QtCore, QtWidgets
 import pyqtgraph as pg
 import numpy as np
 import sys
-
-APP = QtGui.QApplication.instance()
-
+from ... import APP
 
 class MyGraphicsWindow(pg.GraphicsWindow):
     def __init__(self, title, parent):
@@ -92,7 +90,7 @@ class MyGraphicsWindow(pg.GraphicsWindow):
 
 
 
-class IirGraphWidget(QtGui.QGroupBox):
+class IirGraphWidget(QtWidgets.QGroupBox):
     # whether xaxis is plotted in log-scale
     xlog = True
 
@@ -102,7 +100,7 @@ class IirGraphWidget(QtGui.QGroupBox):
         super(IirGraphWidget, self).__init__(parent)
         self.parent = parent
         self.module = self.parent.module
-        self.layout = QtGui.QVBoxLayout(self)
+        self.layout = QtWidgets.QVBoxLayout(self)
         self.win = MyGraphicsWindow(title="Amplitude", parent=self)
         self.win_phase = MyGraphicsWindow(title="Phase", parent=self)
         # self.proxy = pg.SignalProxy(self.win.scene().sigMouseClicked,
@@ -171,7 +169,7 @@ class IirGraphWidget(QtGui.QGroupBox):
         self.plots['zeros_phase'].sigClicked.connect(self.parent.select_zero)
 
 
-class IirButtonWidget(QtGui.QGroupBox):
+class IirButtonWidget(QtWidgets.QGroupBox):
     BUTTONWIDTH = 100
 
     def __init__(self, parent):
@@ -180,7 +178,7 @@ class IirButtonWidget(QtGui.QGroupBox):
         super(IirButtonWidget, self).__init__(parent)
         self.parent = parent
         self.module = self.parent.module
-        self.layout = QtGui.QVBoxLayout(self)
+        self.layout = QtWidgets.QVBoxLayout(self)
         #self.setLayout(self.layout)  # wasnt here before
         aws = self.parent.attribute_widgets
 
@@ -193,7 +191,7 @@ class IirButtonWidget(QtGui.QGroupBox):
         self.setFixedWidth(self.BUTTONWIDTH+50)
 
 
-class IirBottomWidget(QtGui.QGroupBox):
+class IirBottomWidget(QtWidgets.QGroupBox):
     BUTTONWIDTH = 300
 
     def __init__(self, parent):
@@ -202,7 +200,7 @@ class IirBottomWidget(QtGui.QGroupBox):
         super(IirBottomWidget, self).__init__(parent)
         self.parent = parent
         self.module = self.parent.module
-        self.layout = QtGui.QHBoxLayout(self)
+        self.layout = QtWidgets.QHBoxLayout(self)
         #self.setLayout(self.layout)  # wasnt here before
         aws = self.parent.attribute_widgets
         for attr in ['complex_poles', 'complex_zeros',
@@ -215,7 +213,7 @@ class IirBottomWidget(QtGui.QGroupBox):
 class IirWidget(ModuleWidget):
     def init_gui(self):
         self.init_main_layout(orientation="vertical")
-        #self.main_layout = QtGui.QVBoxLayout()
+        #self.main_layout = QtWidgets.QVBoxLayout()
         #self.setLayout(self.main_layout)
 
         # add all attribute widgets and remove them right away
@@ -224,7 +222,7 @@ class IirWidget(ModuleWidget):
             self.main_layout.removeWidget(widget)
 
         # divide into top and bottom layout
-        self.top_layout = QtGui.QHBoxLayout()
+        self.top_layout = QtWidgets.QHBoxLayout()
         self.main_layout.addLayout(self.top_layout)
 
         # add graph widget

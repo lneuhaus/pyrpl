@@ -1,7 +1,7 @@
 from copy import copy
 
 import numpy as np
-from PyQt4 import QtGui
+from qtpy import QtWidgets
 
 from ..async_utils import PyrplFuture, MainThreadTimer, CancelledError, sleep
 from ..attributes import FloatProperty, SelectProperty, FrequencyProperty, \
@@ -19,8 +19,6 @@ from ..hardware_modules.iq import Iq
 # http://stackoverflow.com/questions/85451
 # /python-time-clock-vs-time-time-accuracy
 import timeit
-
-APP = QtGui.QApplication.instance()
 
 
 class NaAcBandwidth(FilterProperty):
@@ -245,12 +243,13 @@ class NaRunFuture(NaCurveFuture):
     def _scan_finished(self):
         # launch this signal before current_point goes back to 0...
         self._module._emit_signal_by_name("scan_finished")
-        if self._run_continuous or self.current_avg<self._module.avg:
+        if self._run_continuous or self.current_avg<self._module.trace_average:
             self._module._start_acquisition()
             # restart scan from the beginning.
             self.current_point = 0
             self.start()
-        if not self._run_continuous and self.current_avg == self._module.avg:
+        if not self._run_continuous and self.current_avg == \
+                self._module.trace_average:
             self.set_result(self.data_avg)
             #  in case the user wants to move on with running_continuous mode
             self.current_point = 0

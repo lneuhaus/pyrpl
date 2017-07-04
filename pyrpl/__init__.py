@@ -30,11 +30,11 @@ except BaseException as e:
     logger.warning('Could not enable IPython gui support: %s.' % e)
 
 # get QApplication instance
-from PyQt4 import QtCore, QtGui
-APP = QtGui.QApplication.instance()
+from qtpy import QtCore, QtWidgets
+APP = QtWidgets.QApplication.instance()
 if APP is None:
     logger.warning('Creating new QApplication instance "pyrpl"')
-    APP = QtGui.QApplication(['pyrpl'])
+    APP = QtWidgets.QApplication(['pyrpl'])
 
 # get user directories
 import os
