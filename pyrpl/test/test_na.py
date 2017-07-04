@@ -28,11 +28,15 @@ class TestNA(TestPyrpl):
         with self.pyrpl.networkanalyzer as self.na:
             def data_changing():
                 data = copy.deepcopy(self.na.data_avg)
-                sleep(self.communication_time * 5.0)
+
+                sleep(self.communication_time * 50)
                 return (data != self.na.data_avg).any()
 
-            self.na.setup(start_freq=1000, stop_freq=1e4, rbw=1000,
-                          points=10000, trace_average=1)
+            self.na.setup(start_freq=1000,
+                          stop_freq=1e4,
+                          rbw=1000,
+                          points=10000,
+                          trace_average=1)
             sleep(2.0*self.communication_time)
             self.na.single_async()
             sleep(self.communication_time * 5.0)
