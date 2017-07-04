@@ -313,9 +313,9 @@ class MemoryBranch(object):
         #otherwise just write to the data dictionary
         else:
             self._set_data(item, value)
-        if self._root._DEBUG:
-            logger.error("Will call _save after %s.%s=%s", self._branch,
-                         item, value)
+        if self._root._SAVE_DEBUG:
+            logger.warning("Issuing call to MemoryTree._save after %s.%s=%s",
+                           self._branch, item, value)
         self._save()
         # update the __dict__ for autocompletion
         self.__dict__[item] = None
@@ -477,7 +477,7 @@ class MemoryTree(MemoryBranch):
     # to overwrite the property _data of MemoryBranch
     _data = None
 
-    _DEBUG = False
+    _SAVE_DEBUG = False  # flag that is used to debug excessive calls to save
 
     def __init__(self, filename=None, source=None, _loadsavedeadtime=3.0):
         # never reload or save more frequently than _loadsavedeadtime because
@@ -553,8 +553,9 @@ class MemoryTree(MemoryBranch):
 
     def _save(self, deadtime=None):
         self._save_counter+=1  # for unittest and debug purposes
-        if self._DEBUG:
-            logger.error("Save counter has just been increased...")
+        if self._DEBUG_SAVE:
+            logger.warning("Save counter has just been increased to %d.",
+                           self._save_counter)
         if deadtime is None:
             deadtime = self._loadsavedeadtime
         """ writes current tree structure and data to file """
