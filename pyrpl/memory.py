@@ -313,7 +313,7 @@ class MemoryBranch(object):
         #otherwise just write to the data dictionary
         else:
             self._set_data(item, value)
-        if self._root._SAVE_DEBUG:
+        if self._root._DEBUG_SAVE:
             logger.warning("Issuing call to MemoryTree._save after %s.%s=%s",
                            self._branch, item, value)
         self._save()
