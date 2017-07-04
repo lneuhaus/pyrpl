@@ -20,8 +20,6 @@ from ..hardware_modules.iq import Iq
 # /python-time-clock-vs-time-time-accuracy
 import timeit
 
-APP = QtWidgets.QApplication.instance()
-
 
 class NaAcBandwidth(FilterProperty):
     def valid_frequencies(self, obj):

@@ -9,21 +9,20 @@ env:
 # REDPITAYA variables are defined in travis account (encrypted)
 
 language: python
-# nosetests is only executed for 2.7 and 3.5, but we still test the
-# installation for other python versions
+# nosetests is only executed for 2.7, 3.5 and 3.6, but we still test the
+# installation for other python versions (3.4)
 python:
   - "2.7"
-  - "3.6" # should work now
+  - "3.6"
   - "3.5"
   - "3.4"
-  - "3.3"
 
 notifications:
   email: false
 
 before_install:
   - sudo apt-get update
-  # We do this conditionally because it saves us some downloading if the version is the same.
+  # We do this conditionally because it saves us some downloading.
   - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
       wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
     else

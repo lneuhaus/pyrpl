@@ -8,9 +8,6 @@ from ...errors import NotReadyError
 from .base_module_widget import ModuleWidget
 
 
-APP = QtWidgets.QApplication.instance()
-
-
 class ScopeWidget(ModuleWidget):
     """
     Widget for scope

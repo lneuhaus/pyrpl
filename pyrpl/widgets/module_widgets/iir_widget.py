@@ -7,9 +7,7 @@ from qtpy import QtCore, QtWidgets
 import pyqtgraph as pg
 import numpy as np
 import sys
-
-APP = QtWidgets.QApplication.instance()
-
+from ... import APP
 
 class MyGraphicsWindow(pg.GraphicsWindow):
     def __init__(self, title, parent):

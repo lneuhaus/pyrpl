@@ -4,8 +4,8 @@ import numpy as np
 from time import sleep
 from qtpy import QtCore, QtWidgets
 from .test_base import TestPyrpl
+from .. import APP
 
-APP = QtWidgets.QApplication.instance()
 
 class TestClass(TestPyrpl):
 
