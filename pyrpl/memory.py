@@ -477,7 +477,7 @@ class MemoryTree(MemoryBranch):
     # to overwrite the property _data of MemoryBranch
     _data = None
 
-    _SAVE_DEBUG = False  # flag that is used to debug excessive calls to save
+    _DEBUG_SAVE = False  # flag that is used to debug excessive calls to save
 
     def __init__(self, filename=None, source=None, _loadsavedeadtime=3.0):
         # never reload or save more frequently than _loadsavedeadtime because
