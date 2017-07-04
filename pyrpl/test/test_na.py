@@ -64,7 +64,8 @@ class TestNA(TestPyrpl):
                           stop_freq=1e4,
                           rbw=1e6,
                           points=points,
-                          average_per_point=1)
+                          average_per_point=1,
+                          trace_average=1)
             tic = time.time()
             self.na.curve()
             duration = (time.time() - tic)/self.na.points
@@ -78,7 +79,8 @@ class TestNA(TestPyrpl):
                           stop_freq=1e4,
                           rbw=1e6,
                           points=points//2,
-                          average_per_point=1)
+                          average_per_point=1,
+                          trace_average=1)
             tic = time.time()
             self.na.single()
             async_sleep(0.05)
@@ -136,6 +138,7 @@ class TestNA(TestPyrpl):
                           points=100,
                           output_direct="out1",
                           input="out1",
+                          trace_average=1,
                           amplitude=0.01)
             self.na.continuous()
             async_sleep(0.05)
@@ -170,6 +173,7 @@ class TestNA(TestPyrpl):
                           output_direct="out1",
                           input="out1",
                           amplitude=0.01,
+                          trace_average=1,
                           running_state="running_continuous")
             for i in range(20):
                 async_sleep(0.01)

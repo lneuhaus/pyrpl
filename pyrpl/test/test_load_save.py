@@ -82,5 +82,5 @@ class TestLoadSave(TestPyrpl):
                     assert len(getattr(mod, attr)) == len(attr_val), "sequence"
                 else:
                     assert getattr(mod, attr)==attr_val, (mod, attr, attr_val, getattr(mod, attr))
-                async_sleep(0.01)
-        async_sleep(0.1)
+                async_sleep(0.01)  # randomly inserted in fear of bugs
+        async_sleep(0.1)  # randomly inserted in fear of bugs
