@@ -1,6 +1,6 @@
 from __future__ import division
 from collections import OrderedDict
-from PyQt4 import QtCore
+from qtpy import QtCore
 import logging
 from ...modules import SignalLauncher
 from ...module_attributes import ModuleListProperty
@@ -73,19 +73,19 @@ class SignalLauncherLockbox(SignalLauncher):
     """
     A SignalLauncher for the lockbox
     """
-    output_created = QtCore.pyqtSignal(list)
-    output_deleted = QtCore.pyqtSignal(list)
-    output_renamed = QtCore.pyqtSignal()
-    stage_created = QtCore.pyqtSignal(list)
-    stage_deleted = QtCore.pyqtSignal(list)
-    stage_renamed = QtCore.pyqtSignal()
-    delete_widget = QtCore.pyqtSignal()
-    state_changed = QtCore.pyqtSignal(list)
-    add_input = QtCore.pyqtSignal(list)
-    input_calibrated = QtCore.pyqtSignal(list)
-    remove_input = QtCore.pyqtSignal(list)
-    update_transfer_function = QtCore.pyqtSignal(list)
-    update_lockstatus = QtCore.pyqtSignal(list)
+    output_created = QtCore.Signal(list)
+    output_deleted = QtCore.Signal(list)
+    output_renamed = QtCore.Signal()
+    stage_created = QtCore.Signal(list)
+    stage_deleted = QtCore.Signal(list)
+    stage_renamed = QtCore.Signal()
+    delete_widget = QtCore.Signal()
+    state_changed = QtCore.Signal(list)
+    add_input = QtCore.Signal(list)
+    input_calibrated = QtCore.Signal(list)
+    remove_input = QtCore.Signal(list)
+    update_transfer_function = QtCore.Signal(list)
+    update_lockstatus = QtCore.Signal(list)
 
 
 class Lockbox(LockboxModule):

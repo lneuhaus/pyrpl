@@ -21,7 +21,7 @@ from __future__ import print_function
 import logging
 import os
 from shutil import copyfile
-from PyQt4 import QtCore, QtGui
+from qtpy import QtCore, QtWidgets
 
 from .widgets.pyrpl_widget import PyrplWidget
 from . import software_modules
@@ -29,13 +29,11 @@ from .memory import MemoryTree
 from .redpitaya import RedPitaya
 from . import pyrpl_utils
 from .software_modules import get_module
+from .async_utils import sleep as async_sleep
 
 # it is important that Lockbox is loaded before the models
 from .software_modules.lockbox import *
 from .software_modules.lockbox.models import *  # make sure all models are loaded when we get started
-
-
-APP = QtGui.QApplication.instance()
 
 default_pyrpl_config = {'name': 'default_pyrpl_instance',
                         'gui': True,
@@ -195,13 +193,13 @@ class Pyrpl(object):
             w = self.widgets.pop()
             del w
         # do the job of actually destroying the widgets
-        APP.processEvents()
+        async_sleep(0.1)
         # make sure the save timer of the config file is not running and
         # all data are written to the harddisk
         self.c._save_now()
         # end redpitatya communication
         self.rp.end_all()
-        APP.processEvents()
+        async_sleep(0.1)
 
 
 """ # DEPRECATED DOCSTRING - KEEP UNTIL DOCUMENTATION IS READY

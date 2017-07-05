@@ -4,13 +4,11 @@ A widget fot the network analyzer
 
 from .base_module_widget import ModuleWidget
 
-from PyQt4 import QtCore, QtGui
+from qtpy import QtCore, QtWidgets
 import pyqtgraph as pg
 from time import time
 import numpy as np
 import sys
-
-APP = QtGui.QApplication.instance()
 
 
 class NaWidget(ModuleWidget):
@@ -25,10 +23,10 @@ class NaWidget(ModuleWidget):
         """
         Sets up the gui
         """
-        #self.main_layout = QtGui.QVBoxLayout()
+        #self.main_layout = QtWidgets.QVBoxLayout()
         self.init_main_layout(orientation="vertical")
         self.init_attribute_layout()
-        self.button_layout = QtGui.QHBoxLayout()
+        self.button_layout = QtWidgets.QHBoxLayout()
         #self.setLayout(self.main_layout)
         self.setWindowTitle("NA")
         self.win = pg.GraphicsWindow(title="Magnitude")
@@ -42,13 +40,13 @@ class NaWidget(ModuleWidget):
         self.plot_item_phase = self.win_phase.addPlot(row=1, col=0,
                                                       title="Phase (deg)")
         self.plot_item_phase.setXLink(self.plot_item)
-        self.button_single = QtGui.QPushButton("Run single")
+        self.button_single = QtWidgets.QPushButton("Run single")
         self.button_single.my_label = "Single"
-        self.button_continuous = QtGui.QPushButton("Run continuous")
+        self.button_continuous = QtWidgets.QPushButton("Run continuous")
         self.button_continuous.my_label = "Continuous"
-        self.button_stop = QtGui.QPushButton('Stop')
+        self.button_stop = QtWidgets.QPushButton('Stop')
 
-        self.button_save = QtGui.QPushButton("Save curve")
+        self.button_save = QtWidgets.QPushButton("Save curve")
 
         self.chunks = [] #self.plot_item.plot(pen='y')
         self.chunks_phase = []

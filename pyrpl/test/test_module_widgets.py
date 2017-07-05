@@ -1,7 +1,7 @@
 import logging
 logger = logging.getLogger(name=__name__)
-from PyQt4.QtTest import QTest
-from PyQt4.QtCore import Qt
+from qtpy.QtTest import QTest
+from qtpy.QtCore import Qt
 import os
 from ..widgets.attribute_widgets import SelectAttributeWidget, BoolAttributeWidget, NumberAttributeWidget
 from ..attributes import BoolProperty, NumberProperty, SelectProperty

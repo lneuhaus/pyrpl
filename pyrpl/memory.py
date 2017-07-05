@@ -21,7 +21,7 @@ from collections import OrderedDict
 from shutil import copyfile
 import numpy as np
 import time
-from PyQt4 import QtCore
+from qtpy import QtCore
 from . import default_config_dir, user_config_dir
 from .pyrpl_utils import time
 
@@ -313,6 +313,9 @@ class MemoryBranch(object):
         #otherwise just write to the data dictionary
         else:
             self._set_data(item, value)
+        if self._root._DEBUG_SAVE:
+            logger.warning("Issuing call to MemoryTree._save after %s.%s=%s",
+                           self._branch, item, value)
         self._save()
         # update the __dict__ for autocompletion
         self.__dict__[item] = None
@@ -474,6 +477,8 @@ class MemoryTree(MemoryBranch):
     # to overwrite the property _data of MemoryBranch
     _data = None
 
+    _DEBUG_SAVE = False  # flag that is used to debug excessive calls to save
+
     def __init__(self, filename=None, source=None, _loadsavedeadtime=3.0):
         # never reload or save more frequently than _loadsavedeadtime because
         # this is the principal cause of slowing down the code (typ. 30-200 ms)
@@ -548,6 +553,9 @@ class MemoryTree(MemoryBranch):
 
     def _save(self, deadtime=None):
         self._save_counter+=1  # for unittest and debug purposes
+        if self._DEBUG_SAVE:
+            logger.warning("Save counter has just been increased to %d.",
+                           self._save_counter)
         if deadtime is None:
             deadtime = self._loadsavedeadtime
         """ writes current tree structure and data to file """

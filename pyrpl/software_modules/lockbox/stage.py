@@ -6,14 +6,14 @@ from ...module_attributes import *
 from ...hardware_modules import InputSelectProperty
 from ...widgets.module_widgets import ReducedModuleWidget, \
     LockboxSequenceWidget, LockboxStageWidget, StageOutputWidget
-from PyQt4 import QtCore
+from qtpy import QtCore
 from collections import OrderedDict
 
 
 class StageSignalLauncher(SignalLauncher):
-    stage_created = QtCore.pyqtSignal(list)
-    stage_deleted = QtCore.pyqtSignal(list)
-    #stage_renamed = QtCore.pyqtSignal()
+    stage_created = QtCore.Signal(list)
+    stage_deleted = QtCore.Signal(list)
+    #stage_renamed = QtCore.Signal()
 
 
 class StageOutput(LockboxModule):

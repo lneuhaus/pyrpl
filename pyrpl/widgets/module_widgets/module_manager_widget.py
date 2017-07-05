@@ -5,7 +5,7 @@ ModuleManagerWidgets are just a frame containing several identical module widget
 from .base_module_widget import ModuleWidget
 from .schematics import MyLabel, MyImage, Connection, MyFrame, MyFrameDrawing
 
-from PyQt4 import QtCore, QtGui
+from qtpy import QtCore, QtWidgets
 
 
 class ModuleManagerWidget(ModuleWidget):
@@ -19,7 +19,7 @@ class ModuleManagerWidget(ModuleWidget):
             "ModuleManagerWidget{border:0;color:transparent;}")  # frames and title hidden for software_modules
 
     def init_gui(self):
-        self.main_layout = QtGui.QVBoxLayout()
+        self.main_layout = QtWidgets.QVBoxLayout()
         self.module_widgets = []
 
         for index, mod in enumerate(self.module.all_modules):
@@ -37,9 +37,9 @@ class ModuleManagerWidget(ModuleWidget):
         for widget in self.module_widgets:
             if widget.geometry().contains(event.pos()):
                 if widget.module.owner is not None:
-                    act = QtGui.QAction('Free %s'%widget.module.name, self)
+                    act = QtWidgets.QAction('Free %s'%widget.module.name, self)
                     act.triggered.connect(widget.module.free)
-                    menu = QtGui.QMenu()
+                    menu = QtWidgets.QMenu()
                     menu.addAction(act)
                     menu.exec_(event.globalPos())
 
@@ -71,13 +71,13 @@ class IqManagerWidget(ModuleManagerWidget):
         displays a schematic of the iq  module internal logic.
         """
         super(IqManagerWidget, self).init_gui()
-        self.button_hide = QtGui.QPushButton('^', parent=self)
+        self.button_hide = QtWidgets.QPushButton('^', parent=self)
         self.button_hide.setMaximumHeight(15)
         self.button_hide.clicked.connect(self.button_hide_clicked)
         nr = 0
         self.main_layout.setAlignment(QtCore.Qt.AlignTop)
-        self.scene = QtGui.QGraphicsScene()
-        self.view = QtGui.QGraphicsView(self.scene)
+        self.scene = QtWidgets.QGraphicsScene()
+        self.view = QtWidgets.QGraphicsView(self.scene)
         self.view.setMinimumHeight(150)
         col = self.palette().background().color().name()
         self.view.setStyleSheet("border: 0px; background-color: " + col)
@@ -145,7 +145,7 @@ class IqManagerWidget(ModuleManagerWidget):
         """
         Uses the primitives defined in schematics.py to draw the diagram.
         """
-        brush = QtGui.QBrush(QtCore.Qt.black)
+        brush = QtWidgets.QBrush(QtCore.Qt.black)
 
         row_center = 0.55
         row_up = 0.3

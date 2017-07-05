@@ -153,7 +153,8 @@ class RunFuture(PyrplFuture):
                 self.cancel()
         if self._module.running_state in ["running_continuous",
                                           "running_single"]:
-            self.current_avg = min(self.current_avg + 1, self._module.avg)
+            self.current_avg = min(self.current_avg + 1,
+                                   self._module.trace_average)
 
             if self.data_avg is None:
                 self.data_avg = result
@@ -180,7 +181,7 @@ class RunFuture(PyrplFuture):
         if self._run_continuous:
             return False
         else:
-            return self.current_avg >= self._module.avg
+            return self.current_avg >= self._module.trace_average
 
     def cancel(self):
         self.pause()
@@ -256,19 +257,19 @@ class SignalLauncherAcquisitionModule(SignalLauncher):
     """ class that takes care of emitting signals to update all possible
     displays"""
 
-    display_curve = QtCore.pyqtSignal(list)  # This signal is emitted when
+    display_curve = QtCore.Signal(list)  # This signal is emitted when
     # curves need to be displayed the argument is [array(times),
     # array(curve1), array(curve2)] or [times, None, array(curve2)]
-    autoscale_x = QtCore.pyqtSignal()
+    autoscale_x = QtCore.Signal()
 
     # For now, the following signals are only implemented with NA.
-    update_point = QtCore.pyqtSignal(int)  #  used in NA only
-    scan_finished = QtCore.pyqtSignal()  #  used in NA only
-    clear_curve = QtCore.pyqtSignal()  #  NA only
-    x_log_toggled = QtCore.pyqtSignal() #  logscale changed
+    update_point = QtCore.Signal(int)  #  used in NA only
+    scan_finished = QtCore.Signal()  #  used in NA only
+    clear_curve = QtCore.Signal()  #  NA only
+    x_log_toggled = QtCore.Signal() #  logscale changed
 
     # Following signal only implemented in spec an
-    unit_changed = QtCore.pyqtSignal()
+    unit_changed = QtCore.Signal()
 
 class AcquisitionModule(Module):
     """
@@ -349,7 +350,7 @@ class AcquisitionModule(Module):
                  "stopped"],
         doc="""
     The state can be either:
-      - running_single: taking a single acquisition (avg averages).
+      - running_single: taking a single acquisition (trace_average averages).
       averaging is automatically restarted.
       - running_continuous: taking a continuous acquisition
       - paused: acquisition interrupted, but no need to restart averaging

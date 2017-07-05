@@ -2,7 +2,7 @@ import logging
 logger = logging.getLogger(name=__name__)
 from ..widgets.module_widgets import ModuleManagerWidget, AsgManagerWidget, PidManagerWidget, IqManagerWidget, \
     ScopeManagerWidget, IirManagerWidget
-from . import Module
+from ..modules import Module
 
 
 class InsufficientResourceError(ValueError):

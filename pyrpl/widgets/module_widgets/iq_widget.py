@@ -3,9 +3,8 @@ A widget for the iq modules
 """
 from .base_module_widget import ModuleWidget
 
-from PyQt4 import QtCore, QtGui
+from qtpy import QtCore, QtWidgets
 
-APP = QtGui.QApplication.instance()
 
 class IqWidget(ModuleWidget):
     """

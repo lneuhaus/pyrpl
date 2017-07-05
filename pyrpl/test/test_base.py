@@ -5,6 +5,7 @@ logger = logging.getLogger(name=__name__)
 import os
 from .. import Pyrpl, user_config_dir, global_config
 from ..pyrpl_utils import time
+from ..async_utils import sleep as async_sleep
 from ..errors import UnexpectedPyrplError, ExpectedPyrplError
 
 # I don't know why, in nosetests, the logger goes to UNSET...
@@ -53,6 +54,8 @@ class TestPyrpl(object):
         cls.communication_time = (cls.read_time + cls.write_time)/2.0
         print("Estimated time per read / write operation: %.1f ms / %.1f ms" %
               (cls.read_time*1000.0, cls.write_time*1000.0))
+        async_sleep(0.1)  # give some time for events to get processed
+
 
     def test_read_write_time(self):
         # maximum time per read/write in seconds
@@ -77,6 +80,7 @@ class TestPyrpl(object):
         print("=======TEARING DOWN %s===========" % cls.__name__)
         # shut down Pyrpl
         cls.pyrpl._clear()
+        async_sleep(0.1)  # give some time for events to get processed
         # delete the configfile
         cls.erase_temp_file()
 
