@@ -89,7 +89,6 @@ class MyGraphicsWindow(pg.GraphicsWindow):
                     self.parent.parent.attribute_widgets['real_zeros'].set_selected(-1)
 
 
-
 class IirGraphWidget(QtWidgets.QGroupBox):
     # whether xaxis is plotted in log-scale
     xlog = True
