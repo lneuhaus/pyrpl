@@ -12,12 +12,12 @@ Make sure you have an installation of Python (2.7, 3.4, 3.5, or 3.6). If you are
 ```
 conda install numpy scipy paramiko pandas nose pip pyqt qtpy pyqtgraph pyyaml
 ```
-Alternatively, if you prefer creating a virtual environment for pyrpl, do so with the following two commands
+Check [this wiki page](https://github.com/lneuhaus/pyrpl/wiki/Installation:-Common-issues-with-anaconda) for hints if you cannot execute conda in a terminal. Alternatively, if you prefer creating a virtual environment for pyrpl, do so with the following two commands
 ```
 conda create -y -n pyrpl-env numpy scipy paramiko pandas nose pip pyqt qtpy pyqtgraph pyyaml
 activate pyrpl-env
 ```
-Check [this wiki page](https://github.com/lneuhaus/pyrpl/wiki/Installation:-Common-issues-with-anaconda) for hints if you cannot execute conda in a terminal. If you are not using Anaconda, you must manually install the python package [PyQt5](https://pypi.python.org/pypi/PyQt5) or [PyQt4](https://pypi.python.org/pypi/PyQt4), which requires a working C compiler installation on the system.
+If you are not using Anaconda, you must manually install the python package [PyQt5](https://pypi.python.org/pypi/PyQt5) or [PyQt4](https://pypi.python.org/pypi/PyQt4), which requires a working C compiler installation on the system.
 
 Next, clone (if you have a [git client](https://git-scm.com/downloads) installed - recommended option) the pyrpl repository to your computer with 
 ```
