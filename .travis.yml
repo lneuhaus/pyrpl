@@ -66,7 +66,7 @@ script:
 
 after_script:
   - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]] || [[ "$TRAVIS_PYTHON_VERSION" == "3.5" ]] || [[ "$TRAVIS_PYTHON_VERSION" == "3.6" ]]; then
-      codecov --token=6830586c-8c27-4287-99c5-65a7bc7039c6;
+      codecov;
     fi
 
 # upload autodoc to github pages
