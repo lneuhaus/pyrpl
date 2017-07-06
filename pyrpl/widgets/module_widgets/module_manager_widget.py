@@ -5,7 +5,7 @@ ModuleManagerWidgets are just a frame containing several identical module widget
 from .base_module_widget import ModuleWidget
 from .schematics import MyLabel, MyImage, Connection, MyFrame, MyFrameDrawing
 
-from qtpy import QtCore, QtWidgets
+from qtpy import QtCore, QtWidgets, QtGui
 
 
 class ModuleManagerWidget(ModuleWidget):
@@ -145,7 +145,7 @@ class IqManagerWidget(ModuleManagerWidget):
         """
         Uses the primitives defined in schematics.py to draw the diagram.
         """
-        brush = QtWidgets.QBrush(QtCore.Qt.black)
+        brush = QtGui.QBrush(QtCore.Qt.black)
 
         row_center = 0.55
         row_up = 0.3
