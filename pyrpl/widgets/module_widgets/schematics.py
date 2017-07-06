@@ -4,7 +4,7 @@ For now it is only used in IqManagerWidget.
 """
 
 import os.path as osp
-from qtpy import QtCore, QtWidgets
+from qtpy import QtCore, QtWidgets, QtGui
 
 IMAGE_PATH = osp.join(osp.split(osp.dirname(__file__))[0], "images")
 
@@ -43,7 +43,7 @@ class MyLabel(MyItem):
 class MyImage(MyItem):
     def __init__(self, widget_name, y, filename, parent, x_offset=0):
         super(MyImage, self).__init__(widget_name, y, "", parent, x_offset)
-        self.pixmap = QtWidgets.QPixmap(osp.join(IMAGE_PATH, filename))
+        self.pixmap = QtGui.QPixmap(osp.join(IMAGE_PATH, filename))
         self.setPixmap(self.pixmap)
         self.setFixedSize(self.pixmap.size())
 
@@ -60,10 +60,10 @@ class Connection(object):
         self.h_first = h_first
         self.show_arrow = show_arrow
 
-        self.brush = QtWidgets.QBrush(QtCore.Qt.black)
+        self.brush = QtGui.QBrush(QtCore.Qt.black)
         self.arrow = QtWidgets.QGraphicsPolygonItem()
         self.arrow.setBrush(self.brush)
-        self.pen = QtWidgets.QPen(QtCore.Qt.black,
+        self.pen = QtGui.QPen(QtCore.Qt.black,
                               3,
                               QtCore.Qt.SolidLine,
                               QtCore.Qt.RoundCap,
@@ -96,7 +96,7 @@ class Connection(object):
             if self.h_first:
                 x = x2 - self.widget_stop.width() / 2
                 y = y2
-                arrow = QtWidgets.QPolygonF(
+                arrow = QtGui.QPolygonF(
                     [QtCore.QPoint(x - self.margin, y - self.arrow_height / 2),
                      QtCore.QPoint(x - self.margin, y + self.arrow_height / 2),
                      QtCore.QPoint(x - self.margin + self.arrow_width, y)])
@@ -110,7 +110,7 @@ class Connection(object):
                 else:
                     margin = self.margin
                     arrow_width = self.arrow_width
-                arrow = QtWidgets.QPolygonF(
+                arrow = QtGui.QPolygonF(
                     [QtCore.QPoint(x - self.arrow_height / 2, y - margin),
                      QtCore.QPoint(x + self.arrow_height / 2, y - margin),
                      QtCore.QPoint(x, y - margin + arrow_width)])
