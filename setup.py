@@ -88,13 +88,19 @@ def compile_server(): #gcc crosscompiler must be installed for this to work
     finally:
         os.chdir(cwd)
 
+try:
+    import pypandoc
+    long_description = pypandoc.convert_file('README.md', 'rst')
+except:
+    long_description = read('README.md')
+
 setup(name='pyrpl',
       version=version,
       description='DSP servo controller for quantum optics with the RedPitaya',
-      long_description=read('README.md'),
+      long_description=long_description,
       author='Leonhard Neuhaus',
-      author_email='neuhaus@spectro.jussieu.fr',
-      url='https://www.github.com/lneuhaus/pyrpl/',
+      author_email='neuhaus@lkb.upmc.fr',
+      url='http://lneuhaus.github.io/pyrpl/',
       license='GPLv3',
       classifiers=['Programming Language :: Python :: 2.7',
                    'Programming Language :: Python :: 3.5',
