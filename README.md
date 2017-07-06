@@ -8,12 +8,16 @@ PyRPL (Python RedPitaya Lockbox) turns your RedPitaya into a powerful DSP device
 Get started by checking out the [official PyRPL website](http://lneuhaus.github.io/pyrpl/).
 
 ## Installation
-Make sure you have an installation of Python (2.7 or 3.5). If you are new to Python or unexperienced with fighting installation issues, it is recommended to install the [Anaconda](https://www.continuum.io/downloads) Python distribution, which allows to install all PyRPL dependencies in a virtual environment with the following two commands 
+Make sure you have an installation of Python (2.7, 3.4, 3.5, or 3.6). If you are new to Python or unexperienced with fighting installation issues, it is recommended to install the [Anaconda](https://www.continuum.io/downloads) Python distribution, which allows to install all PyRPL dependencies via
+```
+conda install numpy scipy paramiko pandas nose pip pyqt qtpy pyqtgraph pyyaml
+```
+Alternatively, if you prefer creating a virtual environment for pyrpl, do so with the following two commands
 ```
 conda create -y -n pyrpl-env numpy scipy paramiko pandas nose pip pyqt qtpy pyqtgraph pyyaml
 activate pyrpl-env
 ```
-Check [this wiki page](https://github.com/lneuhaus/pyrpl/wiki/Common-issues-with-anaconda) for hints if you cannot execute conda in a terminal. If you are not using Anaconda, you must manually install the python package [PyQt5](https://pypi.python.org/pypi/PyQt5) or [PyQt4](https://pypi.python.org/pypi/PyQt4), which requires a working C compiler installation on the system.
+Check [this wiki page](https://github.com/lneuhaus/pyrpl/wiki/Installation:-Common-issues-with-anaconda) for hints if you cannot execute conda in a terminal. If you are not using Anaconda, you must manually install the python package [PyQt5](https://pypi.python.org/pypi/PyQt5) or [PyQt4](https://pypi.python.org/pypi/PyQt4), which requires a working C compiler installation on the system.
 
 Next, clone (if you have a [git client](https://git-scm.com/downloads) installed - recommended option) the pyrpl repository to your computer with 
 ```
@@ -36,7 +40,7 @@ p = Pyrpl(config='your_configuration_name', hostname='your_redpitaya_ip_address'
 The GUI should open and you can start playing around with it. By calling pyrpl with different strings for 'your_configuration_name', your settings for a given configuration will be automatically remembered by PyRPL. You can drop the hostname argument after the first call of a given configuration. Different RedPitayas with different configuration names can be run simultaneously. 
 
 ## Issues
-We collect a list of common problems in a [dedicated wiki page](https://github.com/lneuhaus/pyrpl/wiki/Common-issues-with-anaconda). If you do not find your problem listed there, please report all problems or wishes as new issues on [this page](https://github.com/lneuhaus/pyrpl/issues), so we can fix it and improve the future user experience.
+We collect a list of common problems in a [dedicated wiki page](https://github.com/lneuhaus/pyrpl/wiki/Installation:-Common-issues-with-anaconda). If you do not find your problem listed there, please report all problems or wishes as new issues on [this page](https://github.com/lneuhaus/pyrpl/issues), so we can fix it and improve the future user experience.
 
 ## Unit test
 If you want to check whether PyRPL works correctly on your machine, navigate with a command line terminal into the pyrpl root directory and type the  following commands (by substituting the ip-address / hostname of your Red Pitaya, of course)
@@ -57,7 +61,7 @@ git pull
 ```
 
 ## FPGA bitfile generation (only for developers)
-In case you would like to modify the logic running on the FPGA, you should make sure that you are able to generate a working bitfile on your machine. To do so, you must install Vivado 2015.4  [(64-bit windows](windows web-installer](https://www.xilinx.com/member/forms/download/xef.html?filename=Xilinx_Vivado_SDK_2015.4_1118_2_Win64.exe&akdm=1) or [Linux)](https://www.xilinx.com/member/forms/download/xef.html?filename=Xilinx_Vivado_SDK_2015.4_1118_2_Lin64.bin&akdm=1) and [together with a working license](https://github.com/lneuhaus/pyrpl/wiki/How-to-get-the-right-license-for-Vivado-2015.4). Next, with a terminal in the pyrpl root directory, type
+In case you would like to modify the logic running on the FPGA, you should make sure that you are able to generate a working bitfile on your machine. To do so, you must install Vivado 2015.4  [(64-bit windows](windows web-installer](https://www.xilinx.com/member/forms/download/xef.html?filename=Xilinx_Vivado_SDK_2015.4_1118_2_Win64.exe&akdm=1) or [Linux)](https://www.xilinx.com/member/forms/download/xef.html?filename=Xilinx_Vivado_SDK_2015.4_1118_2_Lin64.bin&akdm=1) and [together with a working license](https://github.com/lneuhaus/pyrpl/wiki/Installation:-How-to-get-the-right-license-for-Vivado-2015.4). Next, with a terminal in the pyrpl root directory, type
 ```
 cd pyrpl/fpga
 make
