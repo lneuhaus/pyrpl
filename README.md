@@ -1,4 +1,4 @@
-# <img src="https://github.com/lneuhaus/pyrpl/blob/master/doc/logo.png"
+# <img src="https://github.com/lneuhaus/pyrpl/blob/master/logo.png"
 width="250" alt="PyRPL">
 ![travis status](https://travis-ci.com/lneuhaus/pyrpl.svg?token=Au8JgYk93p9iq2p6bSTp&branch=master "Travis status")
 
