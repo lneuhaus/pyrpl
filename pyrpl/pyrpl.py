@@ -20,6 +20,7 @@ from __future__ import print_function
 
 import logging
 import os
+import os.path as osp
 from shutil import copyfile
 from qtpy import QtCore, QtWidgets
 
@@ -30,10 +31,15 @@ from .redpitaya import RedPitaya
 from . import pyrpl_utils
 from .software_modules import get_module
 from .async_utils import sleep as async_sleep
+from .widgets.startup_widget import STARTUP_WIDGET
 
 # it is important that Lockbox is loaded before the models
-from .software_modules.lockbox import *
-from .software_modules.lockbox.models import *  # make sure all models are loaded when we get started
+#from .software_modules.lockbox import *
+from .software_modules import lockbox
+from .software_modules.lockbox import models
+#from .software_modules.lockbox.models import *  # make sure all models are
+# loaded when we get started
+from . import user_config_dir
 
 default_pyrpl_config = {'name': 'default_pyrpl_instance',
                         'gui': True,
@@ -75,6 +81,40 @@ class Pyrpl(object):
                  **kwargs):
         # logger initialisation
         self.logger = logging.getLogger(name='pyrpl') # default: __name__
+        if not 'hostname' in kwargs:
+            if config is None:
+                cmd_line = 'gui' in kwargs and not kwargs['gui']
+                if cmd_line: # command line
+                    config_file = input('Enter a config file name. Existing '
+                                        'config files are: \n' +
+                                        ', '.join([name for name in os.listdir(
+                                            user_config_dir) if
+                                         name.endswith('.yml')]))
+                else: # startup widget interaction
+                    config_file = QtWidgets.QFileDialog.getSaveFileName(
+                                    directory=user_config_dir,
+                                    caption="Pick or create a configuration file.")
+                if config_file != "":
+                    config = config_file
+                    if not osp.exists(config):
+                        if cmd_line:
+                            hostname = input('Enter hostname:')
+                            kwargs.update(dict(hostname=hostname))
+                            if not "sshport" in kwargs:
+                                sshport = input('Enter sshport [22]:')
+                                sshport = 22 if sshport=='' else int(sshport)
+                                kwargs.update(dict(sshport=sshport))
+                            if not 'user' in kwargs:
+                                user = input('Enter username [root]:')
+                                user = 'root' if user=='' else user
+                                kwargs.update(dict(user=user))
+                            if not 'password' in kwargs:
+                                password = input('Enter password [root]:')
+                                password = 'root' if password == '' else password
+                                kwargs.update(dict(password=password))
+                        else:
+                            kwargs.update(STARTUP_WIDGET.get_kwds())
+
         # configuration is retrieved from config file
         self.c = MemoryTree(filename=config, source=source)
         # make sure config file has the required sections and complete with
