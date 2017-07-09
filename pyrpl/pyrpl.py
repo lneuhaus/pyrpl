@@ -93,7 +93,9 @@ class Pyrpl(object):
                 else: # startup widget interaction
                     config_file = QtWidgets.QFileDialog.getSaveFileName(
                                     directory=user_config_dir,
-                                    caption="Pick or create a configuration file.")
+                                    caption="Pick or create a configuration "
+                                            "file.",
+                                    options=QtWidgets.QFileDialog.DontConfirmOverwrite)
                 if config_file != "":
                     config = config_file
                     if not osp.exists(config):

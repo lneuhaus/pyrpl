@@ -9,6 +9,7 @@ class HostnameSelectorWidget(QtWidgets.QDialog):
     def __init__(self):
         self.items = []
         super(HostnameSelectorWidget, self).__init__()
+        self.setWindowTitle('Find a valid hostname')
         self.layout = QtWidgets.QVBoxLayout()
         self.setLayout(self.layout)
 
@@ -141,7 +142,8 @@ class HostnameSelectorWidget(QtWidgets.QDialog):
                                    password=password,
                                    timeout=1)
                 except BaseException as e:
-                    print('Cannot log in with user=root, pw=root at', ip, e)
+                    pass
+                    #print('Cannot log in with user=root, pw=root at', ip, e)
                 else:
                     # print "root pw works"
                     macs = list()
@@ -150,7 +152,7 @@ class HostnameSelectorWidget(QtWidgets.QDialog):
                         if nextgood and len(token.split(':')):
                             if token.startswith('00:26:32:'):
                                 macs.append(token)
-                                print('RP device: ', ip, token)
+                                # print('RP device: ', ip, token)
                                 self.add_device(ip, token)
                         if token == 'HWaddr':
                             nextgood = True
@@ -174,6 +176,7 @@ class StartupWidget(QtWidgets.QDialog):
     host_selector = HostnameSelectorWidget()
     def __init__(self):
         super(StartupWidget, self).__init__()
+        self.setWindowTitle('Redpitaya connection')
         self.layout = QtWidgets.QVBoxLayout()
         self.setLayout(self.layout)
         self.hlay = QtWidgets.QHBoxLayout()
