@@ -97,7 +97,7 @@ class Pyrpl(object):
                                             "file.",
                                     options=QtWidgets.QFileDialog.DontConfirmOverwrite)
                 if config_file != "":
-                    config = config_file
+                    config = osp.join(*config_file)
                     if not osp.exists(config):
                         if cmd_line:
                             hostname = input('Enter hostname:')
