@@ -1,23 +1,33 @@
-# <img src="https://github.com/lneuhaus/pyrpl/blob/master/logo.png" width="250" alt="PyRPL">
-![travis status](https://travis-ci.com/lneuhaus/pyrpl.svg?token=Au8JgYk93p9iq2p6bSTp&branch=master "Travis status")
-![code coverage](https://codecov.io/github/lneuhaus/pyrpl/coverage.svg?branch=master "Code coverage")
+# [<img src="https://github.com/lneuhaus/pyrpl/blob/master/doc/logo.png" width="250" alt="PyRPL">](http://lneuhaus.github.io/pyrpl/)
+[![travis status](https://travis-ci.com/lneuhaus/pyrpl.svg?token=Au8JgYk93p9iq2p6bSTp&branch=master "Travis status")](https://travis-ci.com/lneuhaus/pyrpl)
+[![code coverage](https://codecov.io/github/lneuhaus/pyrpl/coverage.svg?branch=master "Code coverage")](https://codecov.io/gh/lneuhaus/pyrpl)
+[![Python versions on PyPI](https://img.shields.io/pypi/pyversions/pyrpl.svg)](https://pypi.python.org/pypi/pyrpl/)
+[![PyrRPL version on PyPI](https://img.shields.io/pypi/v/pyrpl.svg "PyRPL on PyPI")](https://pypi.python.org/pypi/pyrpl/)
+[![join chat on gitter](https://badges.gitter.im/JoinChat.svg "Join chat on gitter")](https://gitter.im/lneuhaus/pyrpl)
+[![License](https://img.shields.io/pypi/l/pyrpl.svg)](https://github.com/lneuhaus/pyrpl/blob/master/LICENSE)
+
+[![Download PyRPL](https://a.fsdn.com/con/app/sf-download-button)](https://sourceforge.net/projects/pyrpl/files/latest/download)
+[![LGPLv3](https://www.gnu.org/graphics/gplv3-88x31.png)](https://www.gnu.org/licenses/gpl.html)
+
 PyRPL (Python RedPitaya Lockbox) turns your RedPitaya into a powerful DSP device, especially suitable as a digital lockbox and measurement device in quantum optics experiments.
 
 ## Website
-To get started, please check out the official [PyRPL website](http://lneuhaus.github.io/pyrpl/).
+Get started by checking out the [official PyRPL website](http://lneuhaus.github.io/pyrpl/).
 
 ## Installation
-Make sure you have an installation of Python (2.7 or 3.5). If you are new to Python or unexperienced with fighting installation issues, it is  recommended to install the [Anaconda](https://www.continuum.io/downloads)  Python distribution, which allows to install all PyRPL dependencies with the command
+The easiest and fastest way to get PyRPL is to download and execute the [precompiled executable for windows](https://sourceforge.net/projects/pyrpl/files/latest/download). This option requires no extra programs to be installed on the computer.
+
+If instead you would like to use and/or modify the source code, make sure you have an
+installation of Python (2.7, 3.4, 3.5, or 3.6). If you are new to Python or unexperienced with fighting installation issues, it is recommended to install the [Anaconda](https://www.continuum.io/downloads) Python distribution, which allows to install all PyRPL dependencies via
 ```
 conda install numpy scipy paramiko pandas nose pip pyqt qtpy pyqtgraph pyyaml
 ```
-If you are using virtual environments in conda, you can alternatively
-create and activate a virtual environment for pyrpl with the following two commands
+Check [this wiki page](https://github.com/lneuhaus/pyrpl/wiki/Installation:-Common-issues-with-anaconda) for hints if you cannot execute conda in a terminal. Alternatively, if you prefer creating a virtual environment for pyrpl, do so with the following two commands
 ```
 conda create -y -n pyrpl-env numpy scipy paramiko pandas nose pip pyqt qtpy pyqtgraph pyyaml
 activate pyrpl-env
 ```
-Check [this wiki page](https://github.com/lneuhaus/pyrpl/wiki/Installation:-Common-issues-with-anaconda) for hints if you cannot execute conda in a terminal. If you are not using Anaconda, you must manually install the python package [PyQt5](https://pypi.python.org/pypi/PyQt5) or [PyQt4](https://pypi.python.org/pypi/PyQt4), which requires a working C compiler installation on the system.
+If you are not using Anaconda, you must manually install the python package [PyQt5](https://pypi.python.org/pypi/PyQt5) or [PyQt4](https://pypi.python.org/pypi/PyQt4), which requires a working C compiler installation on the system.
 
 Next, clone (if you have a [git client](https://git-scm.com/downloads) installed - recommended option) the pyrpl repository to your computer with 
 ```
@@ -40,9 +50,7 @@ p = Pyrpl(config='your_configuration_name', hostname='your_redpitaya_ip_address'
 The GUI should open and you can start playing around with it. By calling pyrpl with different strings for 'your_configuration_name', your settings for a given configuration will be automatically remembered by PyRPL. You can drop the hostname argument after the first call of a given configuration. Different RedPitayas with different configuration names can be run simultaneously. 
 
 ## Issues
-We collect a list of common problems in a [dedicated wiki page]
-(https://github.com/lneuhaus/pyrpl/wiki/Installation:-Common-issues-with
--anaconda). If you do not find your problem listed there, please report all problems or wishes as new issues on [this page](https://github.com/lneuhaus/pyrpl/issues), so we can fix it and improve the future user experience.
+We collect a list of common problems in a [dedicated wiki page](https://github.com/lneuhaus/pyrpl/wiki/Installation:-Common-issues-with-anaconda). If you do not find your problem listed there, please report all problems or wishes as new issues on [this page](https://github.com/lneuhaus/pyrpl/issues), so we can fix it and improve the future user experience.
 
 ## Unit test
 If you want to check whether PyRPL works correctly on your machine, navigate with a command line terminal into the pyrpl root directory and type the  following commands (by substituting the ip-address / hostname of your Red Pitaya, of course)

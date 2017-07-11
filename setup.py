@@ -88,23 +88,30 @@ def compile_server(): #gcc crosscompiler must be installed for this to work
     finally:
         os.chdir(cwd)
 
+try:
+    import pypandoc
+    long_description = pypandoc.convert_file('README.md', 'rst')
+except:
+    long_description = read('README.md')
+
 setup(name='pyrpl',
       version=version,
       description='DSP servo controller for quantum optics with the RedPitaya',
-      long_description=read('README.md'),
+      long_description=long_description,
       author='Leonhard Neuhaus',
-      author_email='neuhaus@spectro.jussieu.fr',
-      url='https://www.github.com/lneuhaus/pyrpl/',
+      author_email='neuhaus@lkb.upmc.fr',
+      url='http://lneuhaus.github.io/pyrpl/',
       license='GPLv3',
       classifiers=['Programming Language :: Python :: 2.7',
+                   'Programming Language :: Python :: 3.4',
                    'Programming Language :: Python :: 3.5',
                    'Programming Language :: Python :: 3.6',
+                   'Programming Language :: C',
                    'Natural Language :: English',
                    'Development Status :: 4 - Beta',
                    'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
                    'Topic :: Scientific/Engineering :: Human Machine Interfaces',
-                   'Topic :: Scientific/Engineering :: Physics',
-                   'Programming Language :: C'],
+                   'Topic :: Scientific/Engineering :: Physics'],
       keywords='RedPitaya DSP FPGA IIR PDH synchronous detection filter PID '
                'control lockbox servo feedback lock quantum optics',
       platforms='any',
