@@ -257,8 +257,8 @@ class RedPitaya(object):
               "The fpga bitfile was not found at the expected location. Try passing the arguments "
               "dirname=\"c://github//pyrpl//pyrpl//\" adapted to your installation directory of pyrpl "
               "and filename=\"red_pitaya.bin\"! Current dirname: "
-              +self.parameters['dirname']
-              +" current filename: "+self.parameters['filename'])
+              + self.parameters['dirname'] +
+              " current filename: "+self.parameters['filename'])
         for i in range(3):
             try:
                 self.ssh.scp.put(source,

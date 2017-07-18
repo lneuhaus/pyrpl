@@ -1,5 +1,5 @@
-pyrpl\.widgets package
-======================
+pyrpl.widgets package
+=====================
 
 Subpackages
 -----------
@@ -11,24 +11,40 @@ Subpackages
 Submodules
 ----------
 
-pyrpl\.widgets\.attribute\_widgets module
------------------------------------------
+pyrpl.widgets.attribute_widgets module
+--------------------------------------
 
 .. automodule:: pyrpl.widgets.attribute_widgets
     :members:
     :undoc-members:
     :show-inheritance:
 
-pyrpl\.widgets\.pyrpl\_widget module
-------------------------------------
+pyrpl.widgets.pyrpl_widget module
+---------------------------------
 
 .. automodule:: pyrpl.widgets.pyrpl_widget
     :members:
     :undoc-members:
     :show-inheritance:
 
-pyrpl\.widgets\.yml\_editor module
-----------------------------------
+pyrpl.widgets.spinbox module
+----------------------------
+
+.. automodule:: pyrpl.widgets.spinbox
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pyrpl.widgets.startup_widget module
+-----------------------------------
+
+.. automodule:: pyrpl.widgets.startup_widget
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pyrpl.widgets.yml_editor module
+-------------------------------
 
 .. automodule:: pyrpl.widgets.yml_editor
     :members:

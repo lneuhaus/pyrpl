@@ -1,31 +1,53 @@
-.. figure:: https://travis-ci.com/lneuhaus/pyrpl.svg?token=Au8JgYk93p9iq2p6bSTp&branch=master
-   :alt: Travis status
+` <http://lneuhaus.github.io/pyrpl/>`__
+=======================================
 
-   travis status
+|travis status| |code coverage| |Python versions on PyPI| |PyrRPL
+version on PyPI| |join chat on gitter| |License|
+
+|Download PyRPL| |LGPLv3|
 
 PyRPL (Python RedPitaya Lockbox) turns your RedPitaya into a powerful
 DSP device, especially suitable as a digital lockbox and measurement
 device in quantum optics experiments.
 
+Website
+-------
+
+Get started by checking out the `official PyRPL
+website <http://lneuhaus.github.io/pyrpl/>`__.
+
 Installation
 ------------
 
-Make sure you have an installation of Python (2.7 or 3.5). If you are
-new to Python or unexperienced with fighting installation issues, it is
-recommended to install the
+The easiest and fastest way to get PyRPL is to download and execute the
+`precompiled executable for
+windows <https://sourceforge.net/projects/pyrpl/files/latest/download>`__.
+This option requires no extra programs to be installed on the computer.
+
+If instead you would like to use and/or modify the source code, make
+sure you have an installation of Python (2.7, 3.4, 3.5, or 3.6). If you
+are new to Python or unexperienced with fighting installation issues, it
+is recommended to install the
 `Anaconda <https://www.continuum.io/downloads>`__ Python distribution,
-which allows to install all PyRPL dependencies in a virtual environment
-with the following two commands
+which allows to install all PyRPL dependencies via
 
 ::
 
-    conda create -y -n pyrpl-env python=3.5 numpy scipy paramiko pandas nose pip pyqt=4
-    activate pyrpl-env
+    conda install numpy scipy paramiko pandas nose pip pyqt qtpy pyqtgraph pyyaml
 
 Check `this wiki
-page <https://github.com/lneuhaus/pyrpl/wiki/Common-issues-with-anaconda>`__
-for hints if you cannot execute conda in a terminal. If you are not
-using Anaconda, you must manually install the python package
+page <https://github.com/lneuhaus/pyrpl/wiki/Installation:-Common-issues-with-anaconda>`__
+for hints if you cannot execute conda in a terminal. Alternatively, if
+you prefer creating a virtual environment for pyrpl, do so with the
+following two commands
+
+::
+
+    conda create -y -n pyrpl-env numpy scipy paramiko pandas nose pip pyqt qtpy pyqtgraph pyyaml
+    activate pyrpl-env
+
+If you are not using Anaconda, you must manually install the python
+package `PyQt5 <https://pypi.python.org/pypi/PyQt5>`__ or
 `PyQt4 <https://pypi.python.org/pypi/PyQt4>`__, which requires a working
 C compiler installation on the system.
 
@@ -74,7 +96,7 @@ Issues
 ------
 
 We collect a list of common problems in a `dedicated wiki
-page <https://github.com/lneuhaus/pyrpl/wiki/Common-issues-with-anaconda>`__.
+page <https://github.com/lneuhaus/pyrpl/wiki/Installation:-Common-issues-with-anaconda>`__.
 If you do not find your problem listed there, please report all problems
 or wishes as new issues on `this
 page <https://github.com/lneuhaus/pyrpl/issues>`__, so we can fix it and
@@ -132,7 +154,7 @@ should make sure that you are able to generate a working bitfile on your
 machine. To do so, you must install Vivado 2015.4 `(64-bit
 windows <windows%20web-installer%5D(https://www.xilinx.com/member/forms/download/xef.html?filename=Xilinx_Vivado_SDK_2015.4_1118_2_Win64.exe&akdm=1)%20or%20%5BLinux>`__](https://www.xilinx.com/member/forms/download/xef.html?filename=Xilinx\_Vivado\_SDK\_2015.4\_1118\_2\_Lin64.bin&akdm=1)
 and `together with a working
-license <https://github.com/lneuhaus/pyrpl/wiki/How-to-get-the-right-license-for-Vivado-2015.4>`__.
+license <https://github.com/lneuhaus/pyrpl/wiki/Installation:-How-to-get-the-right-license-for-Vivado-2015.4>`__.
 Next, with a terminal in the pyrpl root directory, type
 
 ::
@@ -154,3 +176,20 @@ License
 Please read our license file
 `LICENSE <https://github.com/lneuhaus/pyrpl/blob/master/LICENSE>`__ for
 more information.
+
+.. |travis status| image:: https://travis-ci.org/lneuhaus/pyrpl.svg?branch=master
+   :target: https://travis-ci.org/lneuhaus/pyrpl
+.. |code coverage| image:: https://codecov.io/github/lneuhaus/pyrpl/coverage.svg?branch=master
+   :target: https://codecov.io/gh/lneuhaus/pyrpl
+.. |Python versions on PyPI| image:: https://img.shields.io/pypi/pyversions/pyrpl.svg
+   :target: https://pypi.python.org/pypi/pyrpl/
+.. |PyrRPL version on PyPI| image:: https://img.shields.io/pypi/v/pyrpl.svg
+   :target: https://pypi.python.org/pypi/pyrpl/
+.. |join chat on gitter| image:: https://badges.gitter.im/JoinChat.svg
+   :target: https://gitter.im/lneuhaus/pyrpl
+.. |License| image:: https://img.shields.io/pypi/l/pyrpl.svg
+   :target: https://github.com/lneuhaus/pyrpl/blob/master/LICENSE
+.. |Download PyRPL| image:: https://a.fsdn.com/con/app/sf-download-button
+   :target: https://sourceforge.net/projects/pyrpl/files/latest/download
+.. |LGPLv3| image:: https://www.gnu.org/graphics/gplv3-88x31.png
+   :target: https://www.gnu.org/licenses/gpl.html

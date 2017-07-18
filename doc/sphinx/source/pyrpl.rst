@@ -14,112 +14,112 @@ Subpackages
 Submodules
 ----------
 
-pyrpl\.acquisition\_module module
----------------------------------
+pyrpl.acquisition_module module
+-------------------------------
 
 .. automodule:: pyrpl.acquisition_module
     :members:
     :undoc-members:
     :show-inheritance:
 
-pyrpl\.async\_utils module
---------------------------
+pyrpl.async_utils module
+------------------------
 
 .. automodule:: pyrpl.async_utils
     :members:
     :undoc-members:
     :show-inheritance:
 
-pyrpl\.attributes module
-------------------------
+pyrpl.attributes module
+-----------------------
 
 .. automodule:: pyrpl.attributes
     :members:
     :undoc-members:
     :show-inheritance:
 
-pyrpl\.curvedb module
----------------------
+pyrpl.curvedb module
+--------------------
 
 .. automodule:: pyrpl.curvedb
     :members:
     :undoc-members:
     :show-inheritance:
 
-pyrpl\.errors module
---------------------
+pyrpl.errors module
+-------------------
 
 .. automodule:: pyrpl.errors
     :members:
     :undoc-members:
     :show-inheritance:
 
-pyrpl\.memory module
---------------------
+pyrpl.memory module
+-------------------
 
 .. automodule:: pyrpl.memory
     :members:
     :undoc-members:
     :show-inheritance:
 
-pyrpl\.module\_attributes module
---------------------------------
+pyrpl.module_attributes module
+------------------------------
 
 .. automodule:: pyrpl.module_attributes
     :members:
     :undoc-members:
     :show-inheritance:
 
-pyrpl\.modules module
----------------------
+pyrpl.modules module
+--------------------
 
 .. automodule:: pyrpl.modules
     :members:
     :undoc-members:
     :show-inheritance:
 
-pyrpl\.pyrpl module
--------------------
+pyrpl.pyrpl module
+------------------
 
 .. automodule:: pyrpl.pyrpl
     :members:
     :undoc-members:
     :show-inheritance:
 
-pyrpl\.pyrpl\_utils module
---------------------------
+pyrpl.pyrpl_utils module
+------------------------
 
 .. automodule:: pyrpl.pyrpl_utils
     :members:
     :undoc-members:
     :show-inheritance:
 
-pyrpl\.redpitaya module
------------------------
+pyrpl.redpitaya module
+----------------------
 
 .. automodule:: pyrpl.redpitaya
     :members:
     :undoc-members:
     :show-inheritance:
 
-pyrpl\.redpitaya\_client module
--------------------------------
+pyrpl.redpitaya_client module
+-----------------------------
 
 .. automodule:: pyrpl.redpitaya_client
     :members:
     :undoc-members:
     :show-inheritance:
 
-pyrpl\.sound module
--------------------
+pyrpl.sound module
+------------------
 
 .. automodule:: pyrpl.sound
     :members:
     :undoc-members:
     :show-inheritance:
 
-pyrpl\.sshshell module
-----------------------
+pyrpl.sshshell module
+---------------------
 
 .. automodule:: pyrpl.sshshell
     :members:
