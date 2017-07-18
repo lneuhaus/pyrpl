@@ -1,0 +1,257 @@
+from qtpy import QtWidgets, QtGui, QtCore
+import socket
+import logging
+
+from ..sshshell import SSHshell
+from ..async_utils import APP
+
+
+class HostnameSelectorWidget(QtWidgets.QDialog):
+    _HIDE_PASSWORDS = False
+
+    def __init__(self, parent=None):
+        self.parent = parent
+        self.items = []
+        self.ips_and_macs = []
+        self._logger = logging.getLogger(__name__)
+        super(HostnameSelectorWidget, self).__init__()
+        self.setWindowTitle('Red Pitaya connection - find a valid hostname')
+        self.layout = QtWidgets.QVBoxLayout()
+        self.setLayout(self.layout)
+
+        self.hlay1 = QtWidgets.QHBoxLayout()
+        self.sshport_input = QtWidgets.QLineEdit(text="22")
+        self.sshport_label = QtWidgets.QLabel('Ssh port')
+        self.hlay1.addWidget(self.sshport_label)
+        self.hlay1.addWidget(self.sshport_input)
+
+        self.layout.addLayout(self.hlay1)
+        self.user_label = QtWidgets.QLabel('user')
+        self.hlay1.addWidget(self.user_label)
+        self.user_input = QtWidgets.QLineEdit('root')
+        self.hlay1.addWidget(self.user_input)
+
+        self.password_label = QtWidgets.QLabel('password')
+        self.password_input = QtWidgets.QLineEdit('root')
+        if self._HIDE_PASSWORDS:
+            self.password_input.setEchoMode(self.password_input.PasswordEchoOnEdit)
+        self.hlay1.addWidget(self.password_label)
+        self.hlay1.addWidget(self.password_input)
+        self.refresh = QtWidgets.QPushButton('Refresh list')
+        self.refresh.clicked.connect(self.scan)
+        self.hlay1.addWidget(self.refresh)
+
+        self.progressbar = QtGui.QProgressBar(self)
+        self.progressbar.setGeometry(200, 80, 250, 20)
+        self.hlay1.addWidget(self.progressbar)
+        self.progressbar.hide()
+
+        self.tree = QtWidgets.QTreeWidget()
+        self.tree.setHeaderLabels(['IP addr.', 'MAC addr.'])
+        self.layout.addWidget(self.tree)
+
+        self.hlay2 = QtWidgets.QHBoxLayout()
+        self.layout.addLayout(self.hlay2)
+
+        self.hostname_label = QtWidgets.QLabel("Hostname")
+        self.hostname_input = QtWidgets.QLineEdit()
+        self.hostname_input.setPlaceholderText('e.g.: 192.168.1.100')
+        self.hlay2.addWidget(self.hostname_label)
+        self.hlay2.addWidget(self.hostname_input)
+
+        self.hlay3 = QtWidgets.QHBoxLayout()
+        self.layout.addLayout(self.hlay3)
+
+        # cancel is not needed
+        #self.cancel = QtWidgets.QPushButton("Cancel")
+        #self.cancel.clicked.connect(self.hide)
+        #self.hlay2.addWidget(self.cancel)
+
+        self.ok_button = QtWidgets.QPushButton("OK")
+        self.ok_button.clicked.connect(self.ok)
+        self.ok_button.setDefault(True)
+        self.hlay2.addWidget(self.ok_button)
+        self.tree.itemSelectionChanged.connect(self.item_selected)
+        self.tree.itemDoubleClicked.connect(self.item_double_clicked)
+        self.scanning = False
+
+    def showEvent(self, QShowEvent):
+        ret = super(HostnameSelectorWidget, self).showEvent(QShowEvent)
+        if not self.ips_and_macs:
+            # launch autoscan at first startup with 10 ms delay
+            self._aux_timer = QtCore.QTimer.singleShot(10, self.scan)
+        return ret
+
+    @property
+    def hostname(self):
+        return self.hostname_input.text()
+
+    @hostname.setter
+    def hostname(self, val):
+        self.hostname_input.setText(val)
+
+    @property
+    def password(self):
+        return self.password_input.text()
+
+    @password.setter
+    def password(self, val):
+        self.password_input.setText(val)
+
+    @property
+    def user(self):
+        return self.user_input.text()
+
+    @user.setter
+    def user(self, val):
+        self.user_input.setText(val)
+
+    @property
+    def sshport(self):
+        return int(self.sshport_input.text())
+
+    @sshport.setter
+    def sshport(self, val):
+        self.sshport_input.setText(str(val))
+
+    def item_selected(self):
+        try:
+            item = self.tree.selectedItems()[0]
+        except:
+            pass
+        else:
+            self.hostname = item.text(0)
+
+    def item_double_clicked(self, item, row):
+        self.hostname = item.text(0)
+        self.ok()
+
+    def ok(self):
+        self.scanning = False
+        if self.parent is not None:
+            self.parent.hostname = self.hostname
+            self.parent.user = self.user
+            self.parent.sshport = self.sshport
+            self.parent.password = self.password
+        self.hide()
+        self.accept()
+
+    @property
+    def scanning(self):
+        return self._scanning
+
+    @scanning.setter
+    def scanning(self, v):
+        self._scanning = v
+        # make refresh button inactive if scan is running
+        self.refresh.setEnabled(not v)
+        if v:
+            self.refresh.setText("Searching LAN for Red Pitayas...")
+        else:
+            self.refresh.setText("Refresh list")
+        self.sshport_input.setEnabled(not v)
+        self.user_input.setEnabled(not v)
+        self.password_input.setEnabled(not v)
+        if v:
+            self.progressbar.show()
+        else:
+            self.progressbar.hide()
+
+    def scan(self):
+        """
+        Scan the local area network for available Red Pitayas.
+
+        In order to work, the specified username and password must be correct.
+        """
+        if self.scanning:
+            self._logger.debug("Scan is already running. Please wait for it "
+                               "to finish before starting a new one! ")
+            return
+        else:
+            self.progressbar.setValue(0)
+            self.scanning = True
+        # delete previous lists
+        self.tree.clear()
+        del self.items[:]  # self.items.clear() is not working in python < 3.3
+        del self.ips_and_macs[:]
+        # add fake device
+        self.add_device("_FAKE_", "Simulated Red Pitaya")
+        port = self.sshport
+        user = self.user
+        password = self.password
+        # first, find our own IP address to infer the LAN from it
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            # doesn't even have to be reachable, just need an open socket
+            s.connect(('10.255.255.255', 1))
+            ip = s.getsockname()[0]
+        except:
+            ip = '127.0.0.1'  # fall back to default if no network available
+        finally:
+            s.close()
+        self._logger.debug("Your own ip is: %s", ip)
+        # the LAN around an ip address 'a.b.c.d' is here defined here as all
+        # ip addresses from a.b.c.0 to a.b.c.255
+        end = ip.split('.')[-1]
+        start = ip[:-len(end)]
+        ips = [start + str(i) for i in range(256)]
+        self.progressbar.setRange(0, len(ips))
+        for i, ip in enumerate(ips):
+            if not self.scanning:  # abort if ok was clicked prematurely
+                return
+            # try SSH connection for all IP addresses
+            self.progressbar.setValue(i)
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.settimeout(0.02)  # timeout is essentially network timescale
+            err = s.connect_ex((ip, port))
+            s.close()
+            if err == 0:  # indicates that a SSH service is behind this IP
+                self._logger.debug("%s:%d is open", ip, port)
+                try:
+                    # attempt to connect with username and password
+                    ssh = SSHshell(hostname=ip,
+                                   user=user,
+                                   password=password,
+                                   timeout=1.0)  # longer timeout, RP is slow..
+                except BaseException as e:
+                    self._logger.debug('Cannot log in with user=%s, pw=%s '
+                                       'at %s: %s', user, password, ip, e)
+                else:
+                    # login has worked, see if it is a Red Pitaya
+                    macs = ssh.get_mac_addresses()
+                    del ssh
+                    for mac in macs:
+                        if mac.startswith('00:26:32:'):  # redpitaya signature
+                            self._logger.debug('RP device found: IP %s, '
+                                               'MAC %s', ip, mac)
+                            self.add_device(ip, mac)
+            APP.processEvents()
+        self.scanning = False
+
+    def add_device(self, hostname, token):
+        self.ips_and_macs.append((hostname, token))
+        item = QtWidgets.QTreeWidgetItem()
+        item.setText(0, hostname)
+        item.setText(1, token)
+        self.items.append(item)
+        self.tree.addTopLevelItem(item)
+        # if only one non-fake device is available
+        if len(self.ips_and_macs) == 2 and self.hostname == '' or \
+                self.hostname == hostname:
+            self.hostname = hostname
+            self.tree.clearSelection()
+            item.setSelected(True)
+        return item
+
+    def remove_device(self, item):
+        self.items.remove(item)
+        self.tree.removeItemWidget()
+
+    def get_kwds(self):
+        self.exec_()
+        return dict(hostname=self.hostname,
+                    password=self.password,
+                    user=self.user,
+                    sshport=self.sshport)
+
+STARTUP_WIDGET = HostnameSelectorWidget()

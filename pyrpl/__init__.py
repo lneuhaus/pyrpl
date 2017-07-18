@@ -19,7 +19,7 @@ import logging
 logging.basicConfig()
 logger = logging.getLogger(name=__name__)
 # only show errors or warnings until userdefine log level is set up
-logger.setLevel(logging.WARNING)
+logger.setLevel(logging.INFO)
 
 # enable ipython QtGui support if needed
 try:
@@ -27,13 +27,13 @@ try:
     IPYTHON = get_ipython()
     IPYTHON.magic("gui qt")
 except BaseException as e:
-    logger.warning('Could not enable IPython gui support: %s.' % e)
+    logger.debug('Could not enable IPython gui support: %s.' % e)
 
 # get QApplication instance
 from qtpy import QtCore, QtWidgets
 APP = QtWidgets.QApplication.instance()
 if APP is None:
-    logger.warning('Creating new QApplication instance "pyrpl"')
+    logger.debug('Creating new QApplication instance "pyrpl"')
     APP = QtWidgets.QApplication(['pyrpl'])
 
 # get user directories
