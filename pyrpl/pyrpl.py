@@ -99,7 +99,7 @@ class Pyrpl(object):
                                if name.endswith('.yml')]
                 configfiles = [name[:-4] if name.endswith('.yml') else name
                                for name in configfiles]
-                print("Existing config files are: ")
+                print("Existing config files are:")
                 for name in configfiles:
                     print("    %s"%name)
                 try:  # input is the wrong function in python 2
