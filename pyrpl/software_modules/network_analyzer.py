@@ -260,6 +260,7 @@ class NaRunFuture(NaCurveFuture):
         self._run_continuous = True
         self._min_delay_ms = self._module.MIN_DELAY_CONTINUOUS_MS
 
+
 class NetworkAnalyzer(AcquisitionModule, SignalModule):
     """
     Using an IQ module, the network analyzer can measure the complex coherent
@@ -332,9 +333,11 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
     def _load_setup_attributes(self):
         super(NetworkAnalyzer, self)._load_setup_attributes()
         if self.running_state in ["running_continuous", "running_single"]:
-            self._logger.warning("Network analyzer is running in the current "
-                                 "state. Disregard this message if this is "
-                                 "the desired behavior.")
+            self._logger.warning("Network analyzer is currently in the "
+                                 "'running' state, i.e. it is performing a "
+                                 "measurement. If this is not desired, "
+                                 "please call network_analyzer.stop() or "
+                                 "click the corresponding GUI button!")
 
     @property
     def iq(self):
@@ -518,7 +521,6 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
         res = curve.await_result()
         x = self._run_future.data_x - self._time_first_point
         return [x, res]
-
 
     def _start_acquisition(self):
         """

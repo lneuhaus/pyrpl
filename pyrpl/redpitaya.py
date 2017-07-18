@@ -21,6 +21,7 @@ from . import hardware_modules as rp
 from .sshshell import SSHshell
 from .pyrpl_utils import get_unique_name_list_from_class_list, update_with_typeconversion
 from .memory import MemoryTree
+from .errors import ExpectedPyrplError
 
 import logging
 import os
@@ -183,30 +184,40 @@ class RedPitaya(object):
             self.startdummyclient()
             return True
         else:  # normal mode - establish ssh connection and
-            # start ssh connection
-            self.ssh = SSHshell(hostname=self.parameters['hostname'],
+            try:
+                # start ssh connection
+                self.ssh = SSHshell(hostname=self.parameters['hostname'],
                                 sshport=self.parameters['sshport'],
                                 user=self.parameters['user'],
                                 password=self.parameters['password'],
                                 delay=self.parameters['delay'],
                                 timeout=self.parameters['timeout'])
-            try:  # test ssh connection for exceptions
+                # test ssh connection for exceptions
                 self.ssh.ask()
-            except socket.error:  # connection problem
+            except BaseException as e:  # connection problem
                 if attempt < 3:
                     # try to connect up to 3 times
                     return self.start_ssh(attempt=attempt+1)
                 else:  # even multiple attempts did not work
-                    raise SSHException("Could not establish an ssh "
-                                       "connection to hostname %s on port %s "
-                                       "with username %s and passwort ****!"
-                                       % (self.parameters["hostname"],
-                                          self.parameters["sshport"],
-                                          self.parameters["user"]))
-            # everything went well, connection is established
-            # also establish scp connection
-            self.ssh.startscp()
-            return True
+                    raise ExpectedPyrplError(
+                        "\nCould not connect to the Red Pitaya device with "
+                        "the following parameters: \n\n"
+                        "\thostname: %s\n"
+                        "\tssh port: %s\n"
+                        "\tusername: %s\n"
+                        "\tpassword: ****\n\n"
+                        "Please confirm that the device is reachable by typing "
+                        "its hostname/ip address into a web browser and "
+                        "checking that a page is displayed. \n\n"
+                        "Error message: %s" % (self.parameters["hostname"],
+                                               self.parameters["sshport"],
+                                               self.parameters["user"],
+                                               e))
+            else:
+                # everything went well, connection is established
+                # also establish scp connection
+                self.ssh.startscp()
+                return True
 
     def switch_led(self, gpiopin=0, state=False):
         self.ssh.ask("echo " + str(gpiopin) + " > /sys/class/gpio/export")
