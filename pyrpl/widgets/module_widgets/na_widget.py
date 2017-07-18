@@ -138,7 +138,8 @@ class NaWidget(ModuleWidget):
 
     def update_point(self, index, force=False):
         """
-        To speed things up, the curves are plotted by chunks of self.CHUNK_SIZE points. All points between last_updated_point and
+        To speed things up, the curves are plotted by chunks of
+        self.CHUNK_SIZE points. All points between last_updated_point and
         index will be redrawn.
         """
         # APP.processEvents()  # Give hand back to the gui since timer intervals might be very short

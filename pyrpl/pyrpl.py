@@ -84,48 +84,69 @@ class Pyrpl(object):
         if not 'hostname' in kwargs:
             if config is None:
                 cmd_line = 'gui' in kwargs and not kwargs['gui']
-                if cmd_line: # command line
+                if cmd_line:  # command line
                     config_file = input('Enter a config file name. Existing '
                                         'config files are: \n' +
                                         ', '.join([name for name in os.listdir(
                                             user_config_dir) if
                                          name.endswith('.yml')]))
                 else: # startup widget interaction
-                    config_file = QtWidgets.QFileDialog.getSaveFileName(
+                    self.logger.info("Please select or create a configuration "
+                                     "file in the file selector window!")
+                    config = QtWidgets.QFileDialog.getSaveFileName(
                                     directory=user_config_dir,
                                     caption="Pick or create a configuration "
-                                            "file.",
-                                    options=QtWidgets.QFileDialog.DontConfirmOverwrite)
-                if config_file != "":
-                    config = osp.join(*config_file)
-                    if not osp.exists(config):
-                        if cmd_line:
-                            hostname = input('Enter hostname:')
-                            kwargs.update(dict(hostname=hostname))
-                            if not "sshport" in kwargs:
-                                sshport = input('Enter sshport [22]:')
-                                sshport = 22 if sshport=='' else int(sshport)
-                                kwargs.update(dict(sshport=sshport))
-                            if not 'user' in kwargs:
-                                user = input('Enter username [root]:')
-                                user = 'root' if user=='' else user
-                                kwargs.update(dict(user=user))
-                            if not 'password' in kwargs:
-                                password = input('Enter password [root]:')
-                                password = 'root' if password == '' else password
-                                kwargs.update(dict(password=password))
-                        else:
-                            kwargs.update(STARTUP_WIDGET.get_kwds())
-
+                                            "file, or hit 'cancel' for no "
+                                            "file (all configuration will be "
+                                            "discarded after restarting)!",
+                                    options=QtWidgets.QFileDialog.DontConfirmOverwrite,
+                                    filter='*.yml')[0]
+                if config is None or config == "" or config.endswith('/.yml'):
+                    config = None
+                if config is None or not osp.exists(config):
+                    if cmd_line:
+                        hostname = input('Enter hostname:')
+                        kwargs.update(dict(hostname=hostname))
+                        if not "sshport" in kwargs:
+                            sshport = input('Enter sshport [22]:')
+                            sshport = 22 if sshport=='' else int(sshport)
+                            kwargs.update(dict(sshport=sshport))
+                        if not 'user' in kwargs:
+                            user = input('Enter username [root]:')
+                            user = 'root' if user=='' else user
+                            kwargs.update(dict(user=user))
+                        if not 'password' in kwargs:
+                            password = input('Enter password [root]:')
+                            password = 'root' if password == '' else password
+                            kwargs.update(dict(password=password))
+                    else:
+                        self.logger.info("Please choose the hostname of "
+                                         "your Red Pitaya in the hostname "
+                                         "selector window!")
+                        kwargs.update(STARTUP_WIDGET.get_kwds())
         # configuration is retrieved from config file
         self.c = MemoryTree(filename=config, source=source)
+        if self.c._filename is not None:
+            self.logger.info("All your PyRPL settings will be saved to the "
+                             "config file\n"
+                             "    %s\n"
+                             "If you would like to restart "
+                             "PyRPL with these settings, type \n"
+                             "    from pyrpl import Pyrpl\n"
+                             "    p = Pyrpl(%s)\n"
+                             "in a python terminal, or \n"
+                             "    pyrpl.exe %s\n"
+                             "in a windows terminal.",
+                             self.c._filename,
+                             self.c._filename_stripped,
+                             self.c._filename_stripped)
         # make sure config file has the required sections and complete with
         # missing entries from default
         pyrplbranch = self.c._get_or_create('pyrpl')
         for k in default_pyrpl_config:
             if k not in pyrplbranch._keys():
                 if k =='name':
-                    # assign same name as in config file by default
+                    # assign the same name as in config file by default
                     pyrplbranch[k] = self.c._filename_stripped
                 else:
                     # all other (static) defaults

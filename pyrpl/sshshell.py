@@ -34,7 +34,7 @@ class SSHshell(object):
             delay=0.05, 
             timeout=3,
             sshport=22):
-        self.logger = logging.getLogger(name=__name__)
+        self._logger = logging.getLogger(name=__name__)
         self.delay = delay
         self.apprunning = False
         self.hostname = hostname
@@ -76,7 +76,7 @@ class SSHshell(object):
             sumstring += string
             if not string:
                 break
-        self.logger.debug(sumstring)
+        self._logger.debug(sumstring)
         return sumstring
 
     def askraw(self, question=""):
@@ -107,3 +107,18 @@ class SSHshell(object):
         self.endapp()
         self.ask("shutdown now")
         self.__del__()
+
+    def get_mac_addresses(self):
+        """
+        returns all MAC addresses of the SSH device.
+        """
+        macs = list()
+        nextgood = False
+        for token in self.ask('ifconfig | grep HWaddr').split():
+            if nextgood and len(token.split(':'))==6:
+                macs.append(token)
+            if token == 'HWaddr':
+                nextgood = True
+            else:
+                nextgood = False
+        return macs
