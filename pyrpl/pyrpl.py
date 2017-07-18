@@ -106,8 +106,7 @@ class Pyrpl(object):
                     input = raw_input
                 except NameError:  # Python 3
                     pass
-                config = input('\nEnter an existing or new config file '
-                                   'name: ')
+                config = input('\nEnter an existing or new config file name: ')
             if config is None or config == "" or config.endswith('/.yml'):
                 config = None
             if config is None or not osp.exists(config):
@@ -117,18 +116,19 @@ class Pyrpl(object):
                                      "selector window!")
                     kwargs.update(STARTUP_WIDGET.get_kwds())
                 else:
-                    hostname = input('Enter hostname:')
+                    hostname = input('Enter hostname [192.168.1.100]: ')
+                    hostname = '192.168.1.100' if hostname == '' else hostname
                     kwargs.update(dict(hostname=hostname))
                     if not "sshport" in kwargs:
-                        sshport = input('Enter sshport [22]:')
+                        sshport = input('Enter sshport [22]: ')
                         sshport = 22 if sshport=='' else int(sshport)
                         kwargs.update(dict(sshport=sshport))
                     if not 'user' in kwargs:
-                        user = input('Enter username [root]:')
+                        user = input('Enter username [root]: ')
                         user = 'root' if user=='' else user
                         kwargs.update(dict(user=user))
                     if not 'password' in kwargs:
-                        password = input('Enter password [root]:')
+                        password = input('Enter password [root]: ')
                         password = 'root' if password == '' else password
                         kwargs.update(dict(password=password))
 
