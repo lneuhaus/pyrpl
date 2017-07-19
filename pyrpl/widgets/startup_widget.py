@@ -20,12 +20,8 @@ class HostnameSelectorWidget(QtWidgets.QDialog):
         self.setLayout(self.layout)
 
         self.hlay1 = QtWidgets.QHBoxLayout()
-        self.sshport_input = QtWidgets.QLineEdit(text="22")
-        self.sshport_label = QtWidgets.QLabel('Ssh port')
-        self.hlay1.addWidget(self.sshport_label)
-        self.hlay1.addWidget(self.sshport_input)
-
         self.layout.addLayout(self.hlay1)
+
         self.user_label = QtWidgets.QLabel('user')
         self.hlay1.addWidget(self.user_label)
         self.user_input = QtWidgets.QLineEdit('root')
@@ -37,17 +33,23 @@ class HostnameSelectorWidget(QtWidgets.QDialog):
             self.password_input.setEchoMode(self.password_input.PasswordEchoOnEdit)
         self.hlay1.addWidget(self.password_label)
         self.hlay1.addWidget(self.password_input)
+
+        self.sshport_input = QtWidgets.QLineEdit(text="22")
+        self.sshport_label = QtWidgets.QLabel('ssh port')
+        self.hlay1.addWidget(self.sshport_label)
+        self.hlay1.addWidget(self.sshport_input)
+
         self.refresh = QtWidgets.QPushButton('Refresh list')
         self.refresh.clicked.connect(self.scan)
         self.hlay1.addWidget(self.refresh)
 
-        self.progressbar = QtGui.QProgressBar(self)
+        self.progressbar = QtWidgets.QProgressBar(self)
         self.progressbar.setGeometry(200, 80, 250, 20)
         self.hlay1.addWidget(self.progressbar)
         self.progressbar.hide()
 
         self.tree = QtWidgets.QTreeWidget()
-        self.tree.setHeaderLabels(['IP addr.', 'MAC addr.'])
+        self.tree.setHeaderLabels(['IP address', 'MAC address'])
         self.layout.addWidget(self.tree)
 
         self.hlay2 = QtWidgets.QHBoxLayout()
@@ -235,6 +237,8 @@ class HostnameSelectorWidget(QtWidgets.QDialog):
         item.setText(1, token)
         self.items.append(item)
         self.tree.addTopLevelItem(item)
+        self.tree.resizeColumnToContents(0)
+        self.tree.resizeColumnToContents(1)
         # if only one non-fake device is available
         if len(self.ips_and_macs) == 2 and self.hostname == '' or \
                 self.hostname == hostname:
@@ -253,5 +257,3 @@ class HostnameSelectorWidget(QtWidgets.QDialog):
                     password=self.password,
                     user=self.user,
                     sshport=self.sshport)
-
-STARTUP_WIDGET = HostnameSelectorWidget()
