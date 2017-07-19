@@ -22,6 +22,7 @@ from .sshshell import SSHshell
 from .pyrpl_utils import get_unique_name_list_from_class_list, update_with_typeconversion
 from .memory import MemoryTree
 from .errors import ExpectedPyrplError
+from .widgets.startup_widget import HostnameSelectorWidget
 
 import logging
 import os
@@ -34,10 +35,15 @@ from paramiko import SSHException
 from scp import SCPClient, SCPException
 from collections import OrderedDict
 
+# input is the wrong function in python 2
+try:
+    input = raw_input
+except NameError:  # Python 3
+    pass
 
 # default parameters for redpitaya object creation
 defaultparameters = dict(
-    hostname='192.168.1.100', # the ip or hostname of the board
+    hostname='', #'192.168.1.100', # the ip or hostname of the board, '' triggers gui
     port=2222,  # port for PyRPL datacommunication
     sshport=22,  # port of ssh server - default 22
     user='root',
@@ -123,13 +129,41 @@ class RedPitaya(object):
         # settings from config file
         try:
             update_with_typeconversion(self.parameters, self.c.redpitaya._data)
-        except:
-            pass
+        except BaseException as e:
+            self.logger.warning("An error occured during the loading of your "
+                                "Red Pitaya settings from the config file: %s",
+                                e)
         # settings from class initialisation
         update_with_typeconversion(self.parameters, kwargs)
+        # get connection settings from gui/command line if missing
+        if self.parameters['hostname'] is None or self.parameters['hostname']=='':
+            gui = 'gui' not in self.c._keys() or self.c.gui
+            if gui:
+                self.logger.info("Please choose the hostname of "
+                                 "your Red Pitaya in the hostname "
+                                 "selector window!")
+                startup_widget = HostnameSelectorWidget()
+                hostname_kwds = startup_widget.get_kwds()
+            else:
+                hostname = input('Enter hostname [192.168.1.100]: ')
+                hostname = '192.168.1.100' if hostname == '' else hostname
+                hostname_kwds = dict(hostname=hostname)
+                if not "sshport" in kwargs:
+                    sshport = input('Enter sshport [22]: ')
+                    sshport = 22 if sshport == '' else int(sshport)
+                    hostname_kwds['sshport'] = sshport
+                if not 'user' in kwargs:
+                    user = input('Enter username [root]: ')
+                    user = 'root' if user == '' else user
+                    hostname_kwds['user'] = user
+                if not 'password' in kwargs:
+                    password = input('Enter password [root]: ')
+                    password = 'root' if password == '' else password
+                    hostname_kwds['password'] = password
+            self.parameters.update(hostname_kwds)
 
         # optional: write configuration back to config file
-        self.c["redpitaya"]= self.parameters
+        self.c["redpitaya"] = self.parameters
 
         # save default port definition for possible automatic port change
         self.parameters['defaultport'] = self.parameters['port']
@@ -257,8 +291,8 @@ class RedPitaya(object):
               "The fpga bitfile was not found at the expected location. Try passing the arguments "
               "dirname=\"c://github//pyrpl//pyrpl//\" adapted to your installation directory of pyrpl "
               "and filename=\"red_pitaya.bin\"! Current dirname: "
-              +self.parameters['dirname']
-              +" current filename: "+self.parameters['filename'])
+              + self.parameters['dirname'] +
+              " current filename: "+self.parameters['filename'])
         for i in range(3):
             try:
                 self.ssh.scp.put(source,

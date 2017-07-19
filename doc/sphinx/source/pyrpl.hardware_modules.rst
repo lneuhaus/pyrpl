@@ -1,5 +1,5 @@
-pyrpl\.hardware\_modules package
-================================
+pyrpl.hardware_modules package
+==============================
 
 Subpackages
 -----------
@@ -11,88 +11,88 @@ Subpackages
 Submodules
 ----------
 
-pyrpl\.hardware\_modules\.ams module
-------------------------------------
+pyrpl.hardware_modules.ams module
+---------------------------------
 
 .. automodule:: pyrpl.hardware_modules.ams
     :members:
     :undoc-members:
     :show-inheritance:
 
-pyrpl\.hardware\_modules\.asg module
-------------------------------------
+pyrpl.hardware_modules.asg module
+---------------------------------
 
 .. automodule:: pyrpl.hardware_modules.asg
     :members:
     :undoc-members:
     :show-inheritance:
 
-pyrpl\.hardware\_modules\.aux\_output module
---------------------------------------------
-
-.. automodule:: pyrpl.hardware_modules.aux_output
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-pyrpl\.hardware\_modules\.dsp module
-------------------------------------
+pyrpl.hardware_modules.dsp module
+---------------------------------
 
 .. automodule:: pyrpl.hardware_modules.dsp
     :members:
     :undoc-members:
     :show-inheritance:
 
-pyrpl\.hardware\_modules\.filter module
----------------------------------------
+pyrpl.hardware_modules.filter module
+------------------------------------
 
 .. automodule:: pyrpl.hardware_modules.filter
     :members:
     :undoc-members:
     :show-inheritance:
 
-pyrpl\.hardware\_modules\.hk module
------------------------------------
+pyrpl.hardware_modules.hk module
+--------------------------------
 
 .. automodule:: pyrpl.hardware_modules.hk
     :members:
     :undoc-members:
     :show-inheritance:
 
-pyrpl\.hardware\_modules\.iq module
------------------------------------
+pyrpl.hardware_modules.iq module
+--------------------------------
 
 .. automodule:: pyrpl.hardware_modules.iq
     :members:
     :undoc-members:
     :show-inheritance:
 
-pyrpl\.hardware\_modules\.pid module
-------------------------------------
+pyrpl.hardware_modules.pid module
+---------------------------------
 
 .. automodule:: pyrpl.hardware_modules.pid
     :members:
     :undoc-members:
     :show-inheritance:
 
-pyrpl\.hardware\_modules\.sampler module
-----------------------------------------
+pyrpl.hardware_modules.pwm module
+---------------------------------
+
+.. automodule:: pyrpl.hardware_modules.pwm
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pyrpl.hardware_modules.sampler module
+-------------------------------------
 
 .. automodule:: pyrpl.hardware_modules.sampler
     :members:
     :undoc-members:
     :show-inheritance:
 
-pyrpl\.hardware\_modules\.scope module
---------------------------------------
+pyrpl.hardware_modules.scope module
+-----------------------------------
 
 .. automodule:: pyrpl.hardware_modules.scope
     :members:
     :undoc-members:
     :show-inheritance:
 
-pyrpl\.hardware\_modules\.trig module
--------------------------------------
+pyrpl.hardware_modules.trig module
+----------------------------------
 
 .. automodule:: pyrpl.hardware_modules.trig
     :members:

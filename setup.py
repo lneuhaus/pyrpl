@@ -92,7 +92,10 @@ try:
     import pypandoc
     long_description = pypandoc.convert_file('README.md', 'rst')
 except:
-    long_description = read('README.md')
+    try:
+        long_description = read('README.rst')
+    except:
+        long_description = read('README.md')
 
 setup(name='pyrpl',
       version=version,

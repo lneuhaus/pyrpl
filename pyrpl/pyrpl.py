@@ -31,7 +31,6 @@ from .redpitaya import RedPitaya
 from . import pyrpl_utils
 from .software_modules import get_module
 from .async_utils import sleep as async_sleep
-from .widgets.startup_widget import STARTUP_WIDGET
 
 # it is important that Lockbox is loaded before the models
 #from .software_modules.lockbox import *
@@ -40,6 +39,13 @@ from .software_modules.lockbox import models
 #from .software_modules.lockbox.models import *  # make sure all models are
 # loaded when we get started
 from . import user_config_dir
+
+# input is the wrong function in python 2
+try:
+    input = raw_input
+except NameError:  # Python 3
+    pass
+
 
 default_pyrpl_config = {'name': 'default_pyrpl_instance',
                         'gui': True,
@@ -81,49 +87,34 @@ class Pyrpl(object):
                  **kwargs):
         # logger initialisation
         self.logger = logging.getLogger(name='pyrpl') # default: __name__
-        if not 'hostname' in kwargs:
-            if config is None:
-                cmd_line = 'gui' in kwargs and not kwargs['gui']
-                if cmd_line:  # command line
-                    config_file = input('Enter a config file name. Existing '
-                                        'config files are: \n' +
-                                        ', '.join([name for name in os.listdir(
-                                            user_config_dir) if
-                                         name.endswith('.yml')]))
-                else: # startup widget interaction
-                    self.logger.info("Please select or create a configuration "
-                                     "file in the file selector window!")
-                    config = QtWidgets.QFileDialog.getSaveFileName(
-                                    directory=user_config_dir,
-                                    caption="Pick or create a configuration "
-                                            "file, or hit 'cancel' for no "
-                                            "file (all configuration will be "
-                                            "discarded after restarting)!",
-                                    options=QtWidgets.QFileDialog.DontConfirmOverwrite,
-                                    filter='*.yml')[0]
-                if config is None or config == "" or config.endswith('/.yml'):
-                    config = None
-                if config is None or not osp.exists(config):
-                    if cmd_line:
-                        hostname = input('Enter hostname:')
-                        kwargs.update(dict(hostname=hostname))
-                        if not "sshport" in kwargs:
-                            sshport = input('Enter sshport [22]:')
-                            sshport = 22 if sshport=='' else int(sshport)
-                            kwargs.update(dict(sshport=sshport))
-                        if not 'user' in kwargs:
-                            user = input('Enter username [root]:')
-                            user = 'root' if user=='' else user
-                            kwargs.update(dict(user=user))
-                        if not 'password' in kwargs:
-                            password = input('Enter password [root]:')
-                            password = 'root' if password == '' else password
-                            kwargs.update(dict(password=password))
-                    else:
-                        self.logger.info("Please choose the hostname of "
-                                         "your Red Pitaya in the hostname "
-                                         "selector window!")
-                        kwargs.update(STARTUP_WIDGET.get_kwds())
+        # use gui or commandline for questions?
+        gui = 'gui' not in kwargs or kwargs['gui']
+        # get config file if None is specified
+        if config is None:
+            if gui:
+                self.logger.info("Please select or create a configuration "
+                                 "file in the file selector window!")
+                config = QtWidgets.QFileDialog.getSaveFileName(
+                                directory=user_config_dir,
+                                caption="Pick or create a configuration "
+                                        "file, or hit 'cancel' for no "
+                                        "file (all configuration will be "
+                                        "discarded after restarting)!",
+                                options=QtWidgets.QFileDialog.DontConfirmOverwrite,
+                                filter='*.yml')
+                if not isinstance(config, str):
+                    config = config[0]
+            else:  # command line
+                configfiles = [name for name in os.listdir(user_config_dir)
+                               if name.endswith('.yml')]
+                configfiles = [name[:-4] if name.endswith('.yml') else name
+                               for name in configfiles]
+                print("Existing config files are:")
+                for name in configfiles:
+                    print("    %s"%name)
+                config = input('\nEnter an existing or new config file name: ')
+        if config is None or config == "" or config.endswith('/.yml'):
+            config = None
         # configuration is retrieved from config file
         self.c = MemoryTree(filename=config, source=source)
         if self.c._filename is not None:
@@ -131,12 +122,11 @@ class Pyrpl(object):
                              "config file\n"
                              "    %s\n"
                              "If you would like to restart "
-                             "PyRPL with these settings, type \n"
+                             "PyRPL with these settings, type \"pyrpl.exe "
+                             "%s\" in a windows terminal or \n"
                              "    from pyrpl import Pyrpl\n"
-                             "    p = Pyrpl(%s)\n"
-                             "in a python terminal, or \n"
-                             "    pyrpl.exe %s\n"
-                             "in a windows terminal.",
+                             "    p = Pyrpl('%s')\n"
+                             "in a python terminal.",
                              self.c._filename,
                              self.c._filename_stripped,
                              self.c._filename_stripped)

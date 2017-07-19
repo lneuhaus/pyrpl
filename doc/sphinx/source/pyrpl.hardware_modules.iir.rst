@@ -1,27 +1,27 @@
-pyrpl\.hardware\_modules\.iir package
-=====================================
+pyrpl.hardware_modules.iir package
+==================================
 
 Submodules
 ----------
 
-pyrpl\.hardware\_modules\.iir\.bodefit module
----------------------------------------------
+pyrpl.hardware_modules.iir.bodefit module
+-----------------------------------------
 
 .. automodule:: pyrpl.hardware_modules.iir.bodefit
     :members:
     :undoc-members:
     :show-inheritance:
 
-pyrpl\.hardware\_modules\.iir\.iir module
------------------------------------------
+pyrpl.hardware_modules.iir.iir module
+-------------------------------------
 
 .. automodule:: pyrpl.hardware_modules.iir.iir
     :members:
     :undoc-members:
     :show-inheritance:
 
-pyrpl\.hardware\_modules\.iir\.iir\_theory module
--------------------------------------------------
+pyrpl.hardware_modules.iir.iir_theory module
+--------------------------------------------
 
 .. automodule:: pyrpl.hardware_modules.iir.iir_theory
     :members:

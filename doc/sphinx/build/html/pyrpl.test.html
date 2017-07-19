@@ -1,32 +1,31 @@
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>pyrpl.test package &mdash; pyrpl 0.9.3 documentation</title>
-    
+    <title>pyrpl.test package &#8212; pyrpl 0.9.3.3 documentation</title>
     <link rel="stylesheet" href="_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.9.3',
+        VERSION:     '0.9.3.3',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
       };
     </script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="pyrpl 0.9.3 documentation" href="index.html" /> 
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
   </head>
   <body>
-    <div class="related">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -35,14 +34,14 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">pyrpl 0.9.3 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">pyrpl 0.9.3.3 documentation</a> &#187;</li> 
       </ul>
     </div>  
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
-          <div class="body">
+          <div class="body" role="main">
             
   <div class="section" id="pyrpl-test-package">
 <h1>pyrpl.test package<a class="headerlink" href="#pyrpl-test-package" title="Permalink to this headline">¶</a></h1>
@@ -52,9 +51,12 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="pyrpl.test.test_hardware_modules.html">pyrpl.test.test_hardware_modules package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="pyrpl.test.test_hardware_modules.html#submodules">Submodules</a></li>
-<li class="toctree-l2"><a class="reference internal" href="pyrpl.test.test_hardware_modules.html#module-pyrpl.test.test_hardware_modules.test_pid_na_iq_iir">pyrpl.test.test_hardware_modules.test_pid_na_iq_iir module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.test.test_hardware_modules.html#module-pyrpl.test.test_hardware_modules.test_dsp_inputs">pyrpl.test.test_hardware_modules.test_dsp_inputs module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.test.test_hardware_modules.html#module-pyrpl.test.test_hardware_modules.test_na_iir">pyrpl.test.test_hardware_modules.test_na_iir module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.test.test_hardware_modules.html#module-pyrpl.test.test_hardware_modules.test_pid_na_iq">pyrpl.test.test_hardware_modules.test_pid_na_iq module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="pyrpl.test.test_hardware_modules.html#module-pyrpl.test.test_hardware_modules.test_scope">pyrpl.test.test_hardware_modules.test_scope module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="pyrpl.test.test_hardware_modules.html#module-pyrpl.test.test_hardware_modules.test_scope_asg_ams">pyrpl.test.test_hardware_modules.test_scope_asg_ams module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pyrpl.test.test_hardware_modules.html#module-pyrpl.test.test_hardware_modules.test_trig">pyrpl.test.test_hardware_modules.test_trig module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="pyrpl.test.test_hardware_modules.html#module-pyrpl.test.test_hardware_modules">Module contents</a></li>
 </ul>
 </li>
@@ -64,76 +66,147 @@
 <div class="section" id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="pyrpl-test-debug-timer-module">
-<h2>pyrpl.test.debug_timer module<a class="headerlink" href="#pyrpl-test-debug-timer-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-pyrpl.test.debug_timer">
+<span id="pyrpl-test-debug-timer-module"></span><h2>pyrpl.test.debug_timer module<a class="headerlink" href="#module-pyrpl.test.debug_timer" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="pyrpl-test-test-attribute-module">
-<h2>pyrpl.test.test_attribute module<a class="headerlink" href="#pyrpl-test-test-attribute-module" title="Permalink to this headline">¶</a></h2>
-</div>
-<div class="section" id="module-pyrpl.test.test_attribute_widgets">
-<span id="pyrpl-test-test-attribute-widgets-module"></span><h2>pyrpl.test.test_attribute_widgets module<a class="headerlink" href="#module-pyrpl.test.test_attribute_widgets" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-pyrpl.test.test_attribute">
+<span id="pyrpl-test-test-attribute-module"></span><h2>pyrpl.test.test_attribute module<a class="headerlink" href="#module-pyrpl.test.test_attribute" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
-<dt id="pyrpl.test.test_attribute_widgets.DummyModule">
-<em class="property">class </em><tt class="descclassname">pyrpl.test.test_attribute_widgets.</tt><tt class="descname">DummyModule</tt><big>(</big><em>parent</em>, <em>name=None</em><big>)</big><a class="headerlink" href="#pyrpl.test.test_attribute_widgets.DummyModule" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pyrpl.html#pyrpl.modules.Module" title="pyrpl.modules.Module"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.modules.Module</span></tt></a></p>
+<dt id="pyrpl.test.test_attribute.DummyModule">
+<em class="property">class </em><code class="descclassname">pyrpl.test.test_attribute.</code><code class="descname">DummyModule</code><span class="sig-paren">(</span><em>parent</em>, <em>name=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_attribute.DummyModule" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pyrpl.html#pyrpl.modules.Module" title="pyrpl.modules.Module"><code class="xref py py-class docutils literal"><span class="pre">pyrpl.modules.Module</span></code></a></p>
 <dl class="method">
-<dt id="pyrpl.test.test_attribute_widgets.DummyModule.setup">
-<tt class="descname">setup</tt><big>(</big><em>**kwds</em><big>)</big><a class="headerlink" href="#pyrpl.test.test_attribute_widgets.DummyModule.setup" title="Permalink to this definition">¶</a></dt>
+<dt id="pyrpl.test.test_attribute.DummyModule.setup">
+<code class="descname">setup</code><span class="sig-paren">(</span><em>**kwds</em><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_attribute.DummyModule.setup" title="Permalink to this definition">¶</a></dt>
 <dd><blockquote>
 <div>Sets the module up for acquisition with the current setup attribute
 values.</div></blockquote>
+<blockquote>
+<div>sub1: 
+sub2:</div></blockquote>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="pyrpl.test.test_attribute_widgets.DummyModule.some_filter">
-<tt class="descname">some_filter</tt><a class="headerlink" href="#pyrpl.test.test_attribute_widgets.DummyModule.some_filter" title="Permalink to this definition">¶</a></dt>
+<dt id="pyrpl.test.test_attribute.DummyModule.some_filter">
+<code class="descname">some_filter</code><a class="headerlink" href="#pyrpl.test.test_attribute.DummyModule.some_filter" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
-<dt id="pyrpl.test.test_attribute_widgets.DummyModule.some_number">
-<tt class="descname">some_number</tt><a class="headerlink" href="#pyrpl.test.test_attribute_widgets.DummyModule.some_number" title="Permalink to this definition">¶</a></dt>
+<dt id="pyrpl.test.test_attribute.DummyModule.some_number">
+<code class="descname">some_number</code><a class="headerlink" href="#pyrpl.test.test_attribute.DummyModule.some_number" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
-<dt id="pyrpl.test.test_attribute_widgets.DummyModule.some_options">
-<tt class="descname">some_options</tt><a class="headerlink" href="#pyrpl.test.test_attribute_widgets.DummyModule.some_options" title="Permalink to this definition">¶</a></dt>
+<dt id="pyrpl.test.test_attribute.DummyModule.some_options">
+<code class="descname">some_options</code><a class="headerlink" href="#pyrpl.test.test_attribute.DummyModule.some_options" title="Permalink to this definition">¶</a></dt>
+<dd><p>Options:
+[‘foo’, ‘bar’]</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pyrpl.test.test_attribute.DummyModule.sub1">
+<code class="descname">sub1</code><a class="headerlink" href="#pyrpl.test.test_attribute.DummyModule.sub1" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
-<dt id="pyrpl.test.test_attribute_widgets.DummyModule.true_or_false">
-<tt class="descname">true_or_false</tt><a class="headerlink" href="#pyrpl.test.test_attribute_widgets.DummyModule.true_or_false" title="Permalink to this definition">¶</a></dt>
+<dt id="pyrpl.test.test_attribute.DummyModule.sub2">
+<code class="descname">sub2</code><a class="headerlink" href="#pyrpl.test.test_attribute.DummyModule.sub2" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyrpl.test.test_attribute.DummyModule.true_or_false">
+<code class="descname">true_or_false</code><a class="headerlink" href="#pyrpl.test.test_attribute.DummyModule.true_or_false" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 <dl class="class">
-<dt id="pyrpl.test.test_attribute_widgets.MyFilterProperty">
-<em class="property">class </em><tt class="descclassname">pyrpl.test.test_attribute_widgets.</tt><tt class="descname">MyFilterProperty</tt><big>(</big><em>default=None</em>, <em>doc=''</em>, <em>ignore_errors=False</em>, <em>call_setup=False</em><big>)</big><a class="headerlink" href="#pyrpl.test.test_attribute_widgets.MyFilterProperty" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pyrpl.html#pyrpl.attributes.FilterProperty" title="pyrpl.attributes.FilterProperty"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.FilterProperty</span></tt></a></p>
+<dt id="pyrpl.test.test_attribute.FirstSubModule">
+<em class="property">class </em><code class="descclassname">pyrpl.test.test_attribute.</code><code class="descname">FirstSubModule</code><span class="sig-paren">(</span><em>parent</em>, <em>name=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_attribute.FirstSubModule" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pyrpl.html#pyrpl.modules.Module" title="pyrpl.modules.Module"><code class="xref py py-class docutils literal"><span class="pre">pyrpl.modules.Module</span></code></a></p>
+<dl class="attribute">
+<dt id="pyrpl.test.test_attribute.FirstSubModule.b1">
+<code class="descname">b1</code><a class="headerlink" href="#pyrpl.test.test_attribute.FirstSubModule.b1" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyrpl.test.test_attribute.FirstSubModule.b2">
+<code class="descname">b2</code><a class="headerlink" href="#pyrpl.test.test_attribute.FirstSubModule.b2" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 <dl class="method">
-<dt id="pyrpl.test.test_attribute_widgets.MyFilterProperty.valid_frequencies">
-<tt class="descname">valid_frequencies</tt><big>(</big><em>module</em><big>)</big><a class="headerlink" href="#pyrpl.test.test_attribute_widgets.MyFilterProperty.valid_frequencies" title="Permalink to this definition">¶</a></dt>
+<dt id="pyrpl.test.test_attribute.FirstSubModule.setup">
+<code class="descname">setup</code><span class="sig-paren">(</span><em>**kwds</em><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_attribute.FirstSubModule.setup" title="Permalink to this definition">¶</a></dt>
+<dd><blockquote>
+<div>Sets the module up for acquisition with the current setup attribute
+values.</div></blockquote>
+<blockquote>
+<div>b1: 
+b2:</div></blockquote>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrpl.test.test_attribute.MyFilterProperty">
+<em class="property">class </em><code class="descclassname">pyrpl.test.test_attribute.</code><code class="descname">MyFilterProperty</code><span class="sig-paren">(</span><em>default=None</em>, <em>doc=''</em>, <em>ignore_errors=False</em>, <em>call_setup=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_attribute.MyFilterProperty" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pyrpl.html#pyrpl.attributes.FilterProperty" title="pyrpl.attributes.FilterProperty"><code class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.FilterProperty</span></code></a></p>
+<dl class="method">
+<dt id="pyrpl.test.test_attribute.MyFilterProperty.valid_frequencies">
+<code class="descname">valid_frequencies</code><span class="sig-paren">(</span><em>module</em><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_attribute.MyFilterProperty.valid_frequencies" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 <dl class="class">
-<dt id="pyrpl.test.test_attribute_widgets.TestAttributeWidgets">
-<em class="property">class </em><tt class="descclassname">pyrpl.test.test_attribute_widgets.</tt><tt class="descname">TestAttributeWidgets</tt><a class="headerlink" href="#pyrpl.test.test_attribute_widgets.TestAttributeWidgets" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#pyrpl.test.test_base.TestPyrpl" title="pyrpl.test.test_base.TestPyrpl"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.test.test_base.TestPyrpl</span></tt></a></p>
+<dt id="pyrpl.test.test_attribute.SecondSubModule">
+<em class="property">class </em><code class="descclassname">pyrpl.test.test_attribute.</code><code class="descname">SecondSubModule</code><span class="sig-paren">(</span><em>parent</em>, <em>name=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_attribute.SecondSubModule" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pyrpl.html#pyrpl.modules.Module" title="pyrpl.modules.Module"><code class="xref py py-class docutils literal"><span class="pre">pyrpl.modules.Module</span></code></a></p>
 <dl class="attribute">
-<dt id="pyrpl.test.test_attribute_widgets.TestAttributeWidgets.source_config_file">
-<tt class="descname">source_config_file</tt><em class="property"> = 'tests_source_dummy_module'</em><a class="headerlink" href="#pyrpl.test.test_attribute_widgets.TestAttributeWidgets.source_config_file" title="Permalink to this definition">¶</a></dt>
+<dt id="pyrpl.test.test_attribute.SecondSubModule.b1">
+<code class="descname">b1</code><a class="headerlink" href="#pyrpl.test.test_attribute.SecondSubModule.b1" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyrpl.test.test_attribute.SecondSubModule.b2">
+<code class="descname">b2</code><a class="headerlink" href="#pyrpl.test.test_attribute.SecondSubModule.b2" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
-<dt id="pyrpl.test.test_attribute_widgets.TestAttributeWidgets.test_config_file">
-<tt class="descname">test_config_file</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.test.test_attribute_widgets.TestAttributeWidgets.test_config_file" title="Permalink to this definition">¶</a></dt>
+<dt id="pyrpl.test.test_attribute.SecondSubModule.setup">
+<code class="descname">setup</code><span class="sig-paren">(</span><em>**kwds</em><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_attribute.SecondSubModule.setup" title="Permalink to this definition">¶</a></dt>
+<dd><blockquote>
+<div>Sets the module up for acquisition with the current setup attribute
+values.</div></blockquote>
+<blockquote>
+<div>b1: 
+b2:</div></blockquote>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrpl.test.test_attribute.TestAttributeClass">
+<em class="property">class </em><code class="descclassname">pyrpl.test.test_attribute.</code><code class="descname">TestAttributeClass</code><a class="headerlink" href="#pyrpl.test.test_attribute.TestAttributeClass" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyrpl.test.test_base.TestPyrpl" title="pyrpl.test.test_base.TestPyrpl"><code class="xref py py-class docutils literal"><span class="pre">pyrpl.test.test_base.TestPyrpl</span></code></a></p>
+<dl class="attribute">
+<dt id="pyrpl.test.test_attribute.TestAttributeClass.source_config_file">
+<code class="descname">source_config_file</code><em class="property"> = 'nosetests_source_dummy_module'</em><a class="headerlink" href="#pyrpl.test.test_attribute.TestAttributeClass.source_config_file" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
-<dt id="pyrpl.test.test_attribute_widgets.TestAttributeWidgets.test_dummy_module">
-<tt class="descname">test_dummy_module</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.test.test_attribute_widgets.TestAttributeWidgets.test_dummy_module" title="Permalink to this definition">¶</a></dt>
+<dt id="pyrpl.test.test_attribute.TestAttributeClass.test_config_file">
+<code class="descname">test_config_file</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_attribute.TestAttributeClass.test_config_file" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.test.test_attribute.TestAttributeClass.test_dummy_module">
+<code class="descname">test_dummy_module</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_attribute.TestAttributeClass.test_dummy_module" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.test.test_attribute.TestAttributeClass.test_submodule">
+<code class="descname">test_submodule</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_attribute.TestAttributeClass.test_submodule" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -143,32 +216,42 @@ values.</div></blockquote>
 <span id="pyrpl-test-test-base-module"></span><h2>pyrpl.test.test_base module<a class="headerlink" href="#module-pyrpl.test.test_base" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="pyrpl.test.test_base.TestPyrpl">
-<em class="property">class </em><tt class="descclassname">pyrpl.test.test_base.</tt><tt class="descname">TestPyrpl</tt><a class="headerlink" href="#pyrpl.test.test_base.TestPyrpl" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<em class="property">class </em><code class="descclassname">pyrpl.test.test_base.</code><code class="descname">TestPyrpl</code><a class="headerlink" href="#pyrpl.test.test_base.TestPyrpl" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
 <p>base class for all pyrpl tests</p>
 <dl class="classmethod">
 <dt id="pyrpl.test.test_base.TestPyrpl.erase_temp_file">
-<em class="property">classmethod </em><tt class="descname">erase_temp_file</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.test.test_base.TestPyrpl.erase_temp_file" title="Permalink to this definition">¶</a></dt>
+<em class="property">classmethod </em><code class="descname">erase_temp_file</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_base.TestPyrpl.erase_temp_file" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="classmethod">
 <dt id="pyrpl.test.test_base.TestPyrpl.setUpAll">
-<em class="property">classmethod </em><tt class="descname">setUpAll</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.test.test_base.TestPyrpl.setUpAll" title="Permalink to this definition">¶</a></dt>
+<em class="property">classmethod </em><code class="descname">setUpAll</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_base.TestPyrpl.setUpAll" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
 <dt id="pyrpl.test.test_base.TestPyrpl.source_config_file">
-<tt class="descname">source_config_file</tt><em class="property"> = 'nosetests_source.yml'</em><a class="headerlink" href="#pyrpl.test.test_base.TestPyrpl.source_config_file" title="Permalink to this definition">¶</a></dt>
+<code class="descname">source_config_file</code><em class="property"> = 'nosetests_source.yml'</em><a class="headerlink" href="#pyrpl.test.test_base.TestPyrpl.source_config_file" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="classmethod">
 <dt id="pyrpl.test.test_base.TestPyrpl.tearDownAll">
-<em class="property">classmethod </em><tt class="descname">tearDownAll</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.test.test_base.TestPyrpl.tearDownAll" title="Permalink to this definition">¶</a></dt>
+<em class="property">classmethod </em><code class="descname">tearDownAll</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_base.TestPyrpl.tearDownAll" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.test.test_base.TestPyrpl.test_pyrpl">
+<code class="descname">test_pyrpl</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_base.TestPyrpl.test_pyrpl" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.test.test_base.TestPyrpl.test_read_write_time">
+<code class="descname">test_read_write_time</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_base.TestPyrpl.test_read_write_time" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
 <dt id="pyrpl.test.test_base.TestPyrpl.tmp_config_file">
-<tt class="descname">tmp_config_file</tt><em class="property"> = 'nosetests_config.yml'</em><a class="headerlink" href="#pyrpl.test.test_base.TestPyrpl.tmp_config_file" title="Permalink to this definition">¶</a></dt>
+<code class="descname">tmp_config_file</code><em class="property"> = 'nosetests_config.yml'</em><a class="headerlink" href="#pyrpl.test.test_base.TestPyrpl.tmp_config_file" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -178,26 +261,26 @@ values.</div></blockquote>
 <span id="pyrpl-test-test-example-module"></span><h2>pyrpl.test.test_example module<a class="headerlink" href="#module-pyrpl.test.test_example" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="pyrpl.test.test_example.TestExample">
-<em class="property">class </em><tt class="descclassname">pyrpl.test.test_example.</tt><tt class="descname">TestExample</tt><a class="headerlink" href="#pyrpl.test.test_example.TestExample" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#pyrpl.test.test_base.TestPyrpl" title="pyrpl.test.test_base.TestPyrpl"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.test.test_base.TestPyrpl</span></tt></a></p>
+<em class="property">class </em><code class="descclassname">pyrpl.test.test_example.</code><code class="descname">TestExample</code><a class="headerlink" href="#pyrpl.test.test_example.TestExample" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyrpl.test.test_base.TestPyrpl" title="pyrpl.test.test_base.TestPyrpl"><code class="xref py py-class docutils literal"><span class="pre">pyrpl.test.test_base.TestPyrpl</span></code></a></p>
 <dl class="method">
 <dt id="pyrpl.test.test_example.TestExample.setup">
-<tt class="descname">setup</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.test.test_example.TestExample.setup" title="Permalink to this definition">¶</a></dt>
+<code class="descname">setup</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_example.TestExample.setup" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="pyrpl.test.test_example.TestExample.test_example">
-<tt class="descname">test_example</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.test.test_example.TestExample.test_example" title="Permalink to this definition">¶</a></dt>
+<code class="descname">test_example</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_example.TestExample.test_example" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="pyrpl.test.test_example.TestExample.test_example2">
-<tt class="descname">test_example2</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.test.test_example.TestExample.test_example2" title="Permalink to this definition">¶</a></dt>
+<code class="descname">test_example2</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_example.TestExample.test_example2" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="pyrpl.test.test_example.TestExample.test_example3">
-<tt class="descname">test_example3</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.test.test_example.TestExample.test_example3" title="Permalink to this definition">¶</a></dt>
+<code class="descname">test_example3</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_example.TestExample.test_example3" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -207,26 +290,24 @@ values.</div></blockquote>
 <span id="pyrpl-test-test-load-save-module"></span><h2>pyrpl.test.test_load_save module<a class="headerlink" href="#module-pyrpl.test.test_load_save" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="pyrpl.test.test_load_save.TestLoadSave">
-<em class="property">class </em><tt class="descclassname">pyrpl.test.test_load_save.</tt><tt class="descname">TestLoadSave</tt><a class="headerlink" href="#pyrpl.test.test_load_save.TestLoadSave" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#pyrpl.test.test_base.TestPyrpl" title="pyrpl.test.test_base.TestPyrpl"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.test.test_base.TestPyrpl</span></tt></a></p>
+<em class="property">class </em><code class="descclassname">pyrpl.test.test_load_save.</code><code class="descname">TestLoadSave</code><a class="headerlink" href="#pyrpl.test.test_load_save.TestLoadSave" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyrpl.test.test_base.TestPyrpl" title="pyrpl.test.test_base.TestPyrpl"><code class="xref py py-class docutils literal"><span class="pre">pyrpl.test.test_base.TestPyrpl</span></code></a></p>
+<p>iterates over all modules, prepares a certain state, saves this,
+messes up the current state, loads the saved state and checks whether
+attributes are the ones that were saved</p>
 <dl class="method">
 <dt id="pyrpl.test.test_load_save.TestLoadSave.assert_load_save_module">
-<tt class="descname">assert_load_save_module</tt><big>(</big><em>mod</em><big>)</big><a class="headerlink" href="#pyrpl.test.test_load_save.TestLoadSave.assert_load_save_module" title="Permalink to this definition">¶</a></dt>
+<code class="descname">assert_load_save_module</code><span class="sig-paren">(</span><em>mod</em><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_load_save.TestLoadSave.assert_load_save_module" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="pyrpl.test.test_load_save.TestLoadSave.scramble_values">
-<tt class="descname">scramble_values</tt><big>(</big><em>mod, str_val='foo', num_val=12, bool_val=True, list_val=[19], option_index=0</em><big>)</big><a class="headerlink" href="#pyrpl.test.test_load_save.TestLoadSave.scramble_values" title="Permalink to this definition">¶</a></dt>
+<code class="descname">scramble_values</code><span class="sig-paren">(</span><em>mod, str_val='foo', num_val=12.0, bool_val=True, list_val=[1912], option_index=0, list_length=4</em><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_load_save.TestLoadSave.scramble_values" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="pyrpl.test.test_load_save.TestLoadSave.test_load_save">
-<tt class="descname">test_load_save</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.test.test_load_save.TestLoadSave.test_load_save" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="pyrpl.test.test_load_save.TestLoadSave.test_raise_error">
-<tt class="descname">test_raise_error</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.test.test_load_save.TestLoadSave.test_raise_error" title="Permalink to this definition">¶</a></dt>
+<code class="descname">test_load_save</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_load_save.TestLoadSave.test_load_save" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -236,47 +317,31 @@ values.</div></blockquote>
 <span id="pyrpl-test-test-lockbox-module"></span><h2>pyrpl.test.test_lockbox module<a class="headerlink" href="#module-pyrpl.test.test_lockbox" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="pyrpl.test.test_lockbox.TestLockbox">
-<em class="property">class </em><tt class="descclassname">pyrpl.test.test_lockbox.</tt><tt class="descname">TestLockbox</tt><a class="headerlink" href="#pyrpl.test.test_lockbox.TestLockbox" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#pyrpl.test.test_base.TestPyrpl" title="pyrpl.test.test_base.TestPyrpl"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.test.test_base.TestPyrpl</span></tt></a></p>
+<em class="property">class </em><code class="descclassname">pyrpl.test.test_lockbox.</code><code class="descname">TestLockbox</code><a class="headerlink" href="#pyrpl.test.test_lockbox.TestLockbox" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyrpl.test.test_base.TestPyrpl" title="pyrpl.test.test_base.TestPyrpl"><code class="xref py py-class docutils literal"><span class="pre">pyrpl.test.test_base.TestPyrpl</span></code></a></p>
 <dl class="method">
 <dt id="pyrpl.test.test_lockbox.TestLockbox.setup">
-<tt class="descname">setup</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.test.test_lockbox.TestLockbox.setup" title="Permalink to this definition">¶</a></dt>
+<code class="descname">setup</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_lockbox.TestLockbox.setup" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="pyrpl.test.test_lockbox.TestLockbox.test_create_output">
-<tt class="descname">test_create_output</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.test.test_lockbox.TestLockbox.test_create_output" title="Permalink to this definition">¶</a></dt>
+<dl class="attribute">
+<dt id="pyrpl.test.test_lockbox.TestLockbox.source_config_file">
+<code class="descname">source_config_file</code><em class="property"> = 'nosetests_source_lockbox.yml'</em><a class="headerlink" href="#pyrpl.test.test_lockbox.TestLockbox.source_config_file" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="pyrpl.test.test_lockbox.TestLockbox.test_create_stage">
-<tt class="descname">test_create_stage</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.test.test_lockbox.TestLockbox.test_create_stage" title="Permalink to this definition">¶</a></dt>
+<code class="descname">test_create_stage</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_lockbox.TestLockbox.test_create_stage" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
-<dt id="pyrpl.test.test_lockbox.TestLockbox.test_delete_output">
-<tt class="descname">test_delete_output</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.test.test_lockbox.TestLockbox.test_delete_output" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="pyrpl.test.test_lockbox.TestLockbox.test_delete_stage">
-<tt class="descname">test_delete_stage</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.test.test_lockbox.TestLockbox.test_delete_stage" title="Permalink to this definition">¶</a></dt>
+<dt id="pyrpl.test.test_lockbox.TestLockbox.test_lock">
+<code class="descname">test_lock</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_lockbox.TestLockbox.test_lock" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="pyrpl.test.test_lockbox.TestLockbox.test_real_lock">
-<tt class="descname">test_real_lock</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.test.test_lockbox.TestLockbox.test_real_lock" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="pyrpl.test.test_lockbox.TestLockbox.test_rename_output">
-<tt class="descname">test_rename_output</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.test.test_lockbox.TestLockbox.test_rename_output" title="Permalink to this definition">¶</a></dt>
-<dd><p>Check whether renaming an output updates everything properly</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pyrpl.test.test_lockbox.TestLockbox.test_rename_stage">
-<tt class="descname">test_rename_stage</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.test.test_lockbox.TestLockbox.test_rename_stage" title="Permalink to this definition">¶</a></dt>
+<code class="descname">test_real_lock</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_lockbox.TestLockbox.test_real_lock" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -286,16 +351,32 @@ values.</div></blockquote>
 <span id="pyrpl-test-test-memory-module"></span><h2>pyrpl.test.test_memory module<a class="headerlink" href="#module-pyrpl.test.test_memory" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="pyrpl.test.test_memory.TestMemory">
-<em class="property">class </em><tt class="descclassname">pyrpl.test.test_memory.</tt><tt class="descname">TestMemory</tt><a class="headerlink" href="#pyrpl.test.test_memory.TestMemory" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<em class="property">class </em><code class="descclassname">pyrpl.test.test_memory.</code><code class="descname">TestMemory</code><a class="headerlink" href="#pyrpl.test.test_memory.TestMemory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
 <dl class="method">
 <dt id="pyrpl.test.test_memory.TestMemory.test_load">
-<tt class="descname">test_load</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.test.test_memory.TestMemory.test_load" title="Permalink to this definition">¶</a></dt>
+<code class="descname">test_load</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_memory.TestMemory.test_load" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
+<dt id="pyrpl.test.test_memory.TestMemory.test_two_trees">
+<code class="descname">test_two_trees</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_memory.TestMemory.test_two_trees" title="Permalink to this definition">¶</a></dt>
+<dd><p>makes two different memorytree objects that might have conflicts w.r.t. each other.</p>
+<p>The conflicts arise from the latency between the objects in memory and the file defined
+by _loadsavedeadtime for speed reasons.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.test.test_memory.TestMemory.test_two_trees_nodeadtime">
+<code class="descname">test_two_trees_nodeadtime</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_memory.TestMemory.test_two_trees_nodeadtime" title="Permalink to this definition">¶</a></dt>
+<dd><p>makes two different memorytree objects that might have conflicts w.r.t. each other.</p>
+<p>When _loadsavedeadtime is set to 0, no conflicts are possible since both memorytrees are
+always up to date with the file.</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="pyrpl.test.test_memory.TestMemory.test_usage">
-<tt class="descname">test_usage</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.test.test_memory.TestMemory.test_usage" title="Permalink to this definition">¶</a></dt>
+<code class="descname">test_usage</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_memory.TestMemory.test_usage" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -305,26 +386,26 @@ values.</div></blockquote>
 <span id="pyrpl-test-test-module-widgets-module"></span><h2>pyrpl.test.test_module_widgets module<a class="headerlink" href="#module-pyrpl.test.test_module_widgets" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="pyrpl.test.test_module_widgets.TestModuleWidgets">
-<em class="property">class </em><tt class="descclassname">pyrpl.test.test_module_widgets.</tt><tt class="descname">TestModuleWidgets</tt><a class="headerlink" href="#pyrpl.test.test_module_widgets.TestModuleWidgets" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#pyrpl.test.test_base.TestPyrpl" title="pyrpl.test.test_base.TestPyrpl"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.test.test_base.TestPyrpl</span></tt></a></p>
+<em class="property">class </em><code class="descclassname">pyrpl.test.test_module_widgets.</code><code class="descname">TestModuleWidgets</code><a class="headerlink" href="#pyrpl.test.test_module_widgets.TestModuleWidgets" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyrpl.test.test_base.TestPyrpl" title="pyrpl.test.test_base.TestPyrpl"><code class="xref py py-class docutils literal"><span class="pre">pyrpl.test.test_base.TestPyrpl</span></code></a></p>
 <dl class="classmethod">
 <dt id="pyrpl.test.test_module_widgets.TestModuleWidgets.setup">
-<em class="property">classmethod </em><tt class="descname">setup</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.test.test_module_widgets.TestModuleWidgets.setup" title="Permalink to this definition">¶</a></dt>
+<em class="property">classmethod </em><code class="descname">setup</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_module_widgets.TestModuleWidgets.setup" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="pyrpl.test.test_module_widgets.TestModuleWidgets.test_asg_gui">
-<tt class="descname">test_asg_gui</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.test.test_module_widgets.TestModuleWidgets.test_asg_gui" title="Permalink to this definition">¶</a></dt>
+<code class="descname">test_asg_gui</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_module_widgets.TestModuleWidgets.test_asg_gui" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="pyrpl.test.test_module_widgets.TestModuleWidgets.test_scope_widget">
-<tt class="descname">test_scope_widget</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.test.test_module_widgets.TestModuleWidgets.test_scope_widget" title="Permalink to this definition">¶</a></dt>
+<code class="descname">test_scope_widget</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_module_widgets.TestModuleWidgets.test_scope_widget" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="pyrpl.test.test_module_widgets.TestModuleWidgets.try_gui_module">
-<tt class="descname">try_gui_module</tt><big>(</big><em>module_widget</em><big>)</big><a class="headerlink" href="#pyrpl.test.test_module_widgets.TestModuleWidgets.try_gui_module" title="Permalink to this definition">¶</a></dt>
+<code class="descname">try_gui_module</code><span class="sig-paren">(</span><em>module_widget</em><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_module_widgets.TestModuleWidgets.try_gui_module" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -334,83 +415,62 @@ values.</div></blockquote>
 <span id="pyrpl-test-test-na-module"></span><h2>pyrpl.test.test_na module<a class="headerlink" href="#module-pyrpl.test.test_na" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="pyrpl.test.test_na.TestNA">
-<em class="property">class </em><tt class="descclassname">pyrpl.test.test_na.</tt><tt class="descname">TestNA</tt><a class="headerlink" href="#pyrpl.test.test_na.TestNA" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#pyrpl.test.test_base.TestPyrpl" title="pyrpl.test.test_base.TestPyrpl"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.test.test_base.TestPyrpl</span></tt></a></p>
+<em class="property">class </em><code class="descclassname">pyrpl.test.test_na.</code><code class="descname">TestNA</code><a class="headerlink" href="#pyrpl.test.test_na.TestNA" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyrpl.test.test_base.TestPyrpl" title="pyrpl.test.test_base.TestPyrpl"><code class="xref py py-class docutils literal"><span class="pre">pyrpl.test.test_base.TestPyrpl</span></code></a></p>
 <dl class="method">
 <dt id="pyrpl.test.test_na.TestNA.coucou">
-<tt class="descname">coucou</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.test.test_na.TestNA.coucou" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="pyrpl.test.test_na.TestNA.duration_per_point">
-<tt class="descname">duration_per_point</tt><em class="property"> = 0.0017</em><a class="headerlink" href="#pyrpl.test.test_na.TestNA.duration_per_point" title="Permalink to this definition">¶</a></dt>
+<code class="descname">coucou</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_na.TestNA.coucou" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="pyrpl.test.test_na.TestNA.setup">
-<tt class="descname">setup</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.test.test_na.TestNA.setup" title="Permalink to this definition">¶</a></dt>
+<code class="descname">setup</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_na.TestNA.setup" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="pyrpl.test.test_na.TestNA.test_benchmark">
-<tt class="descname">test_benchmark</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.test.test_na.TestNA.test_benchmark" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="docutils">
-<dt>if self.r is None:</dt>
-<dd>return</dd>
-</dl>
-<p># test na speed without gui
-self.na.setup(start_freq=1e3,</p>
-<blockquote>
-<div>stop_freq=1e4,
-rbw=1e6,
-points=10000,
-avg=1)</div></blockquote>
-<p>tic = time.time()
-self.na.curve()
-duration = (time.time() - tic)/self.na.points
-assert duration &lt; self.duration_per_point, duration
-# that&#8217;s as good as we can do right now (1 read + 1 write per point)</p>
-</dd></dl>
+<code class="descname">test_benchmark</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_na.TestNA.test_benchmark" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="method">
 <dt id="pyrpl.test.test_na.TestNA.test_get_curve">
-<tt class="descname">test_get_curve</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.test.test_na.TestNA.test_get_curve" title="Permalink to this definition">¶</a></dt>
+<code class="descname">test_get_curve</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_na.TestNA.test_get_curve" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="pyrpl.test.test_na.TestNA.test_iq_autosave_active">
-<tt class="descname">test_iq_autosave_active</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.test.test_na.TestNA.test_iq_autosave_active" title="Permalink to this definition">¶</a></dt>
+<code class="descname">test_iq_autosave_active</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_na.TestNA.test_iq_autosave_active" title="Permalink to this definition">¶</a></dt>
 <dd><p>At some point, iq._autosave_active was reinitialized by iq
-create_widget...</p>
+create_widget…</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pyrpl.test.test_na.TestNA.test_iq_stopped_when_paused">
-<tt class="descname">test_iq_stopped_when_paused</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.test.test_na.TestNA.test_iq_stopped_when_paused" title="Permalink to this definition">¶</a></dt>
+<code class="descname">test_iq_stopped_when_paused</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_na.TestNA.test_iq_stopped_when_paused" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="pyrpl.test.test_na.TestNA.test_na_running_states">
-<tt class="descname">test_na_running_states</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.test.test_na.TestNA.test_na_running_states" title="Permalink to this definition">¶</a></dt>
+<code class="descname">test_na_running_states</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_na.TestNA.test_na_running_states" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="pyrpl.test.test_na.TestNA.test_na_stopped_at_startup">
-<tt class="descname">test_na_stopped_at_startup</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.test.test_na.TestNA.test_na_stopped_at_startup" title="Permalink to this definition">¶</a></dt>
+<code class="descname">test_na_stopped_at_startup</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_na.TestNA.test_na_stopped_at_startup" title="Permalink to this definition">¶</a></dt>
 <dd><p>This was so hard to detect, I am making a unit test</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pyrpl.test.test_na.TestNA.test_no_write_in_config">
-<tt class="descname">test_no_write_in_config</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.test.test_na.TestNA.test_no_write_in_config" title="Permalink to this definition">¶</a></dt>
-<dd><p>Make sure the na isn&#8217;t continuously writing to config file,
+<code class="descname">test_no_write_in_config</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_na.TestNA.test_no_write_in_config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make sure the na isn’t continuously writing to config file,
 even in running mode.
 :return:</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pyrpl.test.test_na.TestNA.test_stupid_timer">
-<tt class="descname">test_stupid_timer</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.test.test_na.TestNA.test_stupid_timer" title="Permalink to this definition">¶</a></dt>
+<code class="descname">test_stupid_timer</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_na.TestNA.test_stupid_timer" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -420,11 +480,106 @@ even in running mode.
 <span id="pyrpl-test-test-ownership-module"></span><h2>pyrpl.test.test_ownership module<a class="headerlink" href="#module-pyrpl.test.test_ownership" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="pyrpl.test.test_ownership.TestOwnership">
-<em class="property">class </em><tt class="descclassname">pyrpl.test.test_ownership.</tt><tt class="descname">TestOwnership</tt><a class="headerlink" href="#pyrpl.test.test_ownership.TestOwnership" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#pyrpl.test.test_base.TestPyrpl" title="pyrpl.test.test_base.TestPyrpl"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.test.test_base.TestPyrpl</span></tt></a></p>
+<em class="property">class </em><code class="descclassname">pyrpl.test.test_ownership.</code><code class="descname">TestOwnership</code><a class="headerlink" href="#pyrpl.test.test_ownership.TestOwnership" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyrpl.test.test_base.TestPyrpl" title="pyrpl.test.test_base.TestPyrpl"><code class="xref py py-class docutils literal"><span class="pre">pyrpl.test.test_base.TestPyrpl</span></code></a></p>
 <dl class="method">
 <dt id="pyrpl.test.test_ownership.TestOwnership.test_ownership_restored">
-<tt class="descname">test_ownership_restored</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.test.test_ownership.TestOwnership.test_ownership_restored" title="Permalink to this definition">¶</a></dt>
+<code class="descname">test_ownership_restored</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_ownership.TestOwnership.test_ownership_restored" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-pyrpl.test.test_proxyproperty">
+<span id="pyrpl-test-test-proxyproperty-module"></span><h2>pyrpl.test.test_proxyproperty module<a class="headerlink" href="#module-pyrpl.test.test_proxyproperty" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pyrpl.test.test_proxyproperty.MyModule">
+<em class="property">class </em><code class="descclassname">pyrpl.test.test_proxyproperty.</code><code class="descname">MyModule</code><span class="sig-paren">(</span><em>parent</em>, <em>name=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_proxyproperty.MyModule" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pyrpl.html#pyrpl.modules.Module" title="pyrpl.modules.Module"><code class="xref py py-class docutils literal"><span class="pre">pyrpl.modules.Module</span></code></a></p>
+<dl class="attribute">
+<dt id="pyrpl.test.test_proxyproperty.MyModule.moduleproperty">
+<code class="descname">moduleproperty</code><a class="headerlink" href="#pyrpl.test.test_proxyproperty.MyModule.moduleproperty" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyrpl.test.test_proxyproperty.MyModule.myfloat">
+<code class="descname">myfloat</code><a class="headerlink" href="#pyrpl.test.test_proxyproperty.MyModule.myfloat" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyrpl.test.test_proxyproperty.MyModule.myfloatproxy">
+<code class="descname">myfloatproxy</code><a class="headerlink" href="#pyrpl.test.test_proxyproperty.MyModule.myfloatproxy" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyrpl.test.test_proxyproperty.MyModule.myselectproxy">
+<code class="descname">myselectproxy</code><a class="headerlink" href="#pyrpl.test.test_proxyproperty.MyModule.myselectproxy" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.test.test_proxyproperty.MyModule.setup">
+<code class="descname">setup</code><span class="sig-paren">(</span><em>**kwds</em><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_proxyproperty.MyModule.setup" title="Permalink to this definition">¶</a></dt>
+<dd><blockquote>
+<div>moduleproperty:</div></blockquote>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrpl.test.test_proxyproperty.MySubModule">
+<em class="property">class </em><code class="descclassname">pyrpl.test.test_proxyproperty.</code><code class="descname">MySubModule</code><span class="sig-paren">(</span><em>parent</em>, <em>name=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_proxyproperty.MySubModule" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pyrpl.html#pyrpl.modules.Module" title="pyrpl.modules.Module"><code class="xref py py-class docutils literal"><span class="pre">pyrpl.modules.Module</span></code></a></p>
+<dl class="attribute">
+<dt id="pyrpl.test.test_proxyproperty.MySubModule.myfloat">
+<code class="descname">myfloat</code><a class="headerlink" href="#pyrpl.test.test_proxyproperty.MySubModule.myfloat" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pyrpl.test.test_proxyproperty.MySubModule.myselect">
+<code class="descname">myselect</code><a class="headerlink" href="#pyrpl.test.test_proxyproperty.MySubModule.myselect" title="Permalink to this definition">¶</a></dt>
+<dd><p>Options:
+[1, 2, 3, ‘a’, ‘b’, ‘c’]</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.test.test_proxyproperty.MySubModule.setup">
+<code class="descname">setup</code><span class="sig-paren">(</span><em>**kwds</em><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_proxyproperty.MySubModule.setup" title="Permalink to this definition">¶</a></dt>
+<dd><blockquote>
+<div>Sets the module up for acquisition with the current setup attribute
+values.</div></blockquote>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrpl.test.test_proxyproperty.SignalReceiver">
+<em class="property">class </em><code class="descclassname">pyrpl.test.test_proxyproperty.</code><code class="descname">SignalReceiver</code><a class="headerlink" href="#pyrpl.test.test_proxyproperty.SignalReceiver" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>slots for signals to ensure that signals are properly emitted</p>
+<dl class="method">
+<dt id="pyrpl.test.test_proxyproperty.SignalReceiver.change_options">
+<code class="descname">change_options</code><span class="sig-paren">(</span><em>name</em>, <em>options</em><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_proxyproperty.SignalReceiver.change_options" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.test.test_proxyproperty.SignalReceiver.change_ownership">
+<code class="descname">change_ownership</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_proxyproperty.SignalReceiver.change_ownership" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.test.test_proxyproperty.SignalReceiver.update_attribute_by_name">
+<code class="descname">update_attribute_by_name</code><span class="sig-paren">(</span><em>name</em>, <em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_proxyproperty.SignalReceiver.update_attribute_by_name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrpl.test.test_proxyproperty.TestProxyProperty">
+<em class="property">class </em><code class="descclassname">pyrpl.test.test_proxyproperty.</code><code class="descname">TestProxyProperty</code><a class="headerlink" href="#pyrpl.test.test_proxyproperty.TestProxyProperty" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="pyrpl.test.test_proxyproperty.TestProxyProperty.test_proxy">
+<code class="descname">test_proxy</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_proxyproperty.TestProxyProperty.test_proxy" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -434,70 +589,65 @@ even in running mode.
 <span id="pyrpl-test-test-pyqtgraph-benchmark-module"></span><h2>pyrpl.test.test_pyqtgraph_benchmark module<a class="headerlink" href="#module-pyrpl.test.test_pyqtgraph_benchmark" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="pyrpl.test.test_pyqtgraph_benchmark.TestPyqtgraph">
-<em class="property">class </em><tt class="descclassname">pyrpl.test.test_pyqtgraph_benchmark.</tt><tt class="descname">TestPyqtgraph</tt><a class="headerlink" href="#pyrpl.test.test_pyqtgraph_benchmark.TestPyqtgraph" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#pyrpl.test.test_redpitaya.TestRedpitaya" title="pyrpl.test.test_redpitaya.TestRedpitaya"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.test.test_redpitaya.TestRedpitaya</span></tt></a></p>
+<em class="property">class </em><code class="descclassname">pyrpl.test.test_pyqtgraph_benchmark.</code><code class="descname">TestPyqtgraph</code><a class="headerlink" href="#pyrpl.test.test_pyqtgraph_benchmark.TestPyqtgraph" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyrpl.test.test_redpitaya.TestRedpitaya" title="pyrpl.test.test_redpitaya.TestRedpitaya"><code class="xref py py-class docutils literal"><span class="pre">pyrpl.test.test_redpitaya.TestRedpitaya</span></code></a></p>
 <p>This test case creates a maximally simplistic scope gui
 that continuously plots the data of both scope channels,
 and checks the obtainable frame rate.
 Frame rates down to 20 Hz are accepted</p>
 <dl class="attribute">
-<dt id="pyrpl.test.test_pyqtgraph_benchmark.TestPyqtgraph.APP">
-<tt class="descname">APP</tt><em class="property"> = &lt;PyQt4.QtGui.QApplication object at 0x08587078&gt;</em><a class="headerlink" href="#pyrpl.test.test_pyqtgraph_benchmark.TestPyqtgraph.APP" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
 <dt id="pyrpl.test.test_pyqtgraph_benchmark.TestPyqtgraph.N">
-<tt class="descname">N</tt><em class="property"> = 16384</em><a class="headerlink" href="#pyrpl.test.test_pyqtgraph_benchmark.TestPyqtgraph.N" title="Permalink to this definition">¶</a></dt>
+<code class="descname">N</code><em class="property"> = 16384</em><a class="headerlink" href="#pyrpl.test.test_pyqtgraph_benchmark.TestPyqtgraph.N" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
 <dt id="pyrpl.test.test_pyqtgraph_benchmark.TestPyqtgraph.REDPITAYA">
-<tt class="descname">REDPITAYA</tt><em class="property"> = True</em><a class="headerlink" href="#pyrpl.test.test_pyqtgraph_benchmark.TestPyqtgraph.REDPITAYA" title="Permalink to this definition">¶</a></dt>
+<code class="descname">REDPITAYA</code><em class="property"> = True</em><a class="headerlink" href="#pyrpl.test.test_pyqtgraph_benchmark.TestPyqtgraph.REDPITAYA" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
 <dt id="pyrpl.test.test_pyqtgraph_benchmark.TestPyqtgraph.cycles">
-<tt class="descname">cycles</tt><em class="property"> = 50</em><a class="headerlink" href="#pyrpl.test.test_pyqtgraph_benchmark.TestPyqtgraph.cycles" title="Permalink to this definition">¶</a></dt>
+<code class="descname">cycles</code><em class="property"> = 50</em><a class="headerlink" href="#pyrpl.test.test_pyqtgraph_benchmark.TestPyqtgraph.cycles" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
 <dt id="pyrpl.test.test_pyqtgraph_benchmark.TestPyqtgraph.dt">
-<tt class="descname">dt</tt><em class="property"> = 0.01</em><a class="headerlink" href="#pyrpl.test.test_pyqtgraph_benchmark.TestPyqtgraph.dt" title="Permalink to this definition">¶</a></dt>
+<code class="descname">dt</code><em class="property"> = 0.01</em><a class="headerlink" href="#pyrpl.test.test_pyqtgraph_benchmark.TestPyqtgraph.dt" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
 <dt id="pyrpl.test.test_pyqtgraph_benchmark.TestPyqtgraph.duration">
-<tt class="descname">duration</tt><em class="property"> = 1.0</em><a class="headerlink" href="#pyrpl.test.test_pyqtgraph_benchmark.TestPyqtgraph.duration" title="Permalink to this definition">¶</a></dt>
+<code class="descname">duration</code><em class="property"> = 1.0</em><a class="headerlink" href="#pyrpl.test.test_pyqtgraph_benchmark.TestPyqtgraph.duration" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
 <dt id="pyrpl.test.test_pyqtgraph_benchmark.TestPyqtgraph.frequency">
-<tt class="descname">frequency</tt><em class="property"> = 10.0</em><a class="headerlink" href="#pyrpl.test.test_pyqtgraph_benchmark.TestPyqtgraph.frequency" title="Permalink to this definition">¶</a></dt>
+<code class="descname">frequency</code><em class="property"> = 10.0</em><a class="headerlink" href="#pyrpl.test.test_pyqtgraph_benchmark.TestPyqtgraph.frequency" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="pyrpl.test.test_pyqtgraph_benchmark.TestPyqtgraph.setup">
-<tt class="descname">setup</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.test.test_pyqtgraph_benchmark.TestPyqtgraph.setup" title="Permalink to this definition">¶</a></dt>
+<code class="descname">setup</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_pyqtgraph_benchmark.TestPyqtgraph.setup" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="pyrpl.test.test_pyqtgraph_benchmark.TestPyqtgraph.teardown">
-<tt class="descname">teardown</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.test.test_pyqtgraph_benchmark.TestPyqtgraph.teardown" title="Permalink to this definition">¶</a></dt>
+<code class="descname">teardown</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_pyqtgraph_benchmark.TestPyqtgraph.teardown" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="pyrpl.test.test_pyqtgraph_benchmark.TestPyqtgraph.test_speed">
-<tt class="descname">test_speed</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.test.test_pyqtgraph_benchmark.TestPyqtgraph.test_speed" title="Permalink to this definition">¶</a></dt>
+<code class="descname">test_speed</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_pyqtgraph_benchmark.TestPyqtgraph.test_speed" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
 <dt id="pyrpl.test.test_pyqtgraph_benchmark.TestPyqtgraph.timeout">
-<tt class="descname">timeout</tt><em class="property"> = 10</em><a class="headerlink" href="#pyrpl.test.test_pyqtgraph_benchmark.TestPyqtgraph.timeout" title="Permalink to this definition">¶</a></dt>
+<code class="descname">timeout</code><em class="property"> = 10</em><a class="headerlink" href="#pyrpl.test.test_pyqtgraph_benchmark.TestPyqtgraph.timeout" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="pyrpl.test.test_pyqtgraph_benchmark.TestPyqtgraph.update_plot">
-<tt class="descname">update_plot</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.test.test_pyqtgraph_benchmark.TestPyqtgraph.update_plot" title="Permalink to this definition">¶</a></dt>
+<code class="descname">update_plot</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_pyqtgraph_benchmark.TestPyqtgraph.update_plot" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -507,16 +657,26 @@ Frame rates down to 20 Hz are accepted</p>
 <span id="pyrpl-test-test-redpitaya-module"></span><h2>pyrpl.test.test_redpitaya module<a class="headerlink" href="#module-pyrpl.test.test_redpitaya" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="pyrpl.test.test_redpitaya.TestRedpitaya">
-<em class="property">class </em><tt class="descclassname">pyrpl.test.test_redpitaya.</tt><tt class="descname">TestRedpitaya</tt><a class="headerlink" href="#pyrpl.test.test_redpitaya.TestRedpitaya" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<em class="property">class </em><code class="descclassname">pyrpl.test.test_redpitaya.</code><code class="descname">TestRedpitaya</code><a class="headerlink" href="#pyrpl.test.test_redpitaya.TestRedpitaya" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
 <dl class="classmethod">
 <dt id="pyrpl.test.test_redpitaya.TestRedpitaya.setUpAll">
-<em class="property">classmethod </em><tt class="descname">setUpAll</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.test.test_redpitaya.TestRedpitaya.setUpAll" title="Permalink to this definition">¶</a></dt>
+<em class="property">classmethod </em><code class="descname">setUpAll</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_redpitaya.TestRedpitaya.setUpAll" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="classmethod">
 <dt id="pyrpl.test.test_redpitaya.TestRedpitaya.tearDownAll">
-<em class="property">classmethod </em><tt class="descname">tearDownAll</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.test.test_redpitaya.TestRedpitaya.tearDownAll" title="Permalink to this definition">¶</a></dt>
+<em class="property">classmethod </em><code class="descname">tearDownAll</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_redpitaya.TestRedpitaya.tearDownAll" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.test.test_redpitaya.TestRedpitaya.test_connect">
+<code class="descname">test_connect</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_redpitaya.TestRedpitaya.test_connect" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.test.test_redpitaya.TestRedpitaya.test_redpitaya">
+<code class="descname">test_redpitaya</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_redpitaya.TestRedpitaya.test_redpitaya" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -526,16 +686,21 @@ Frame rates down to 20 Hz are accepted</p>
 <span id="pyrpl-test-test-registers-module"></span><h2>pyrpl.test.test_registers module<a class="headerlink" href="#module-pyrpl.test.test_registers" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="pyrpl.test.test_registers.TestRegisters">
-<em class="property">class </em><tt class="descclassname">pyrpl.test.test_registers.</tt><tt class="descname">TestRegisters</tt><a class="headerlink" href="#pyrpl.test.test_registers.TestRegisters" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#pyrpl.test.test_redpitaya.TestRedpitaya" title="pyrpl.test.test_redpitaya.TestRedpitaya"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.test.test_redpitaya.TestRedpitaya</span></tt></a></p>
+<em class="property">class </em><code class="descclassname">pyrpl.test.test_registers.</code><code class="descname">TestRegisters</code><a class="headerlink" href="#pyrpl.test.test_registers.TestRegisters" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyrpl.test.test_redpitaya.TestRedpitaya" title="pyrpl.test.test_redpitaya.TestRedpitaya"><code class="xref py py-class docutils literal"><span class="pre">pyrpl.test.test_redpitaya.TestRedpitaya</span></code></a></p>
+<p>This test verifies that all registers behave as expected.</p>
+<p>The test is not only useful to test the python interface,
+but also checks that the fpga is not behaving stragely,
+i.e. loosing data or writing the wrong data. Thus, it is the
+principal test to execute on new fpga designs.</p>
 <dl class="method">
 <dt id="pyrpl.test.test_registers.TestRegisters.register_validation">
-<tt class="descname">register_validation</tt><big>(</big><em>module</em>, <em>modulekey</em>, <em>reg</em>, <em>regkey</em><big>)</big><a class="headerlink" href="#pyrpl.test.test_registers.TestRegisters.register_validation" title="Permalink to this definition">¶</a></dt>
+<code class="descname">register_validation</code><span class="sig-paren">(</span><em>module</em>, <em>modulekey</em>, <em>reg</em>, <em>regkey</em><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_registers.TestRegisters.register_validation" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="pyrpl.test.test_registers.TestRegisters.test_generator">
-<tt class="descname">test_generator</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.test.test_registers.TestRegisters.test_generator" title="Permalink to this definition">¶</a></dt>
+<code class="descname">test_generator</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_registers.TestRegisters.test_generator" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -545,24 +710,29 @@ Frame rates down to 20 Hz are accepted</p>
 <span id="pyrpl-test-test-spectrum-analyzer-module"></span><h2>pyrpl.test.test_spectrum_analyzer module<a class="headerlink" href="#module-pyrpl.test.test_spectrum_analyzer" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="pyrpl.test.test_spectrum_analyzer.TestClass">
-<em class="property">class </em><tt class="descclassname">pyrpl.test.test_spectrum_analyzer.</tt><tt class="descname">TestClass</tt><a class="headerlink" href="#pyrpl.test.test_spectrum_analyzer.TestClass" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#pyrpl.test.test_base.TestPyrpl" title="pyrpl.test.test_base.TestPyrpl"><tt class="xref py py-class docutils literal"><span class="pre">pyrpl.test.test_base.TestPyrpl</span></tt></a></p>
+<em class="property">class </em><code class="descclassname">pyrpl.test.test_spectrum_analyzer.</code><code class="descname">TestClass</code><a class="headerlink" href="#pyrpl.test.test_spectrum_analyzer.TestClass" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pyrpl.test.test_base.TestPyrpl" title="pyrpl.test.test_base.TestPyrpl"><code class="xref py py-class docutils literal"><span class="pre">pyrpl.test.test_base.TestPyrpl</span></code></a></p>
+<dl class="method">
+<dt id="pyrpl.test.test_spectrum_analyzer.TestClass.test_flatness_baseband">
+<code class="descname">test_flatness_baseband</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_spectrum_analyzer.TestClass.test_flatness_baseband" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.test.test_spectrum_analyzer.TestClass.test_flatness_iqmode">
+<code class="descname">test_flatness_iqmode</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_spectrum_analyzer.TestClass.test_flatness_iqmode" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 <dl class="method">
 <dt id="pyrpl.test.test_spectrum_analyzer.TestClass.test_no_write_in_config">
-<tt class="descname">test_no_write_in_config</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.test.test_spectrum_analyzer.TestClass.test_no_write_in_config" title="Permalink to this definition">¶</a></dt>
-<dd><p>Make sure the spec an isn&#8217;t continuously writing to config file,
+<code class="descname">test_no_write_in_config</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_spectrum_analyzer.TestClass.test_no_write_in_config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make sure the spec an isn’t continuously writing to config file,
 even in running mode.
 :return:</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pyrpl.test.test_spectrum_analyzer.TestClass.test_spec_an">
-<tt class="descname">test_spec_an</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.test.test_spectrum_analyzer.TestClass.test_spec_an" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
 <dt id="pyrpl.test.test_spectrum_analyzer.TestClass.test_specan_stopped_at_startup">
-<tt class="descname">test_specan_stopped_at_startup</tt><big>(</big><big>)</big><a class="headerlink" href="#pyrpl.test.test_spectrum_analyzer.TestClass.test_specan_stopped_at_startup" title="Permalink to this definition">¶</a></dt>
+<code class="descname">test_specan_stopped_at_startup</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.test.test_spectrum_analyzer.TestClass.test_specan_stopped_at_startup" title="Permalink to this definition">¶</a></dt>
 <dd><p>This was so hard to detect, I am making a unit test</p>
 </dd></dl>
 
@@ -578,19 +748,18 @@ even in running mode.
           </div>
         </div>
       </div>
-      <div class="sphinxsidebar">
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
             <p class="logo"><a href="index.html">
-              <img class="logo" src="_static/logo.png" alt="Logo"/>
+              <img class="logo" src="_static/.\..\..\..\logo.png" alt="Logo"/>
             </a></p>
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">pyrpl.test package</a><ul>
 <li><a class="reference internal" href="#subpackages">Subpackages</a></li>
 <li><a class="reference internal" href="#submodules">Submodules</a></li>
-<li><a class="reference internal" href="#pyrpl-test-debug-timer-module">pyrpl.test.debug_timer module</a></li>
-<li><a class="reference internal" href="#pyrpl-test-test-attribute-module">pyrpl.test.test_attribute module</a></li>
-<li><a class="reference internal" href="#module-pyrpl.test.test_attribute_widgets">pyrpl.test.test_attribute_widgets module</a></li>
+<li><a class="reference internal" href="#module-pyrpl.test.debug_timer">pyrpl.test.debug_timer module</a></li>
+<li><a class="reference internal" href="#module-pyrpl.test.test_attribute">pyrpl.test.test_attribute module</a></li>
 <li><a class="reference internal" href="#module-pyrpl.test.test_base">pyrpl.test.test_base module</a></li>
 <li><a class="reference internal" href="#module-pyrpl.test.test_example">pyrpl.test.test_example module</a></li>
 <li><a class="reference internal" href="#module-pyrpl.test.test_load_save">pyrpl.test.test_load_save module</a></li>
@@ -599,6 +768,7 @@ even in running mode.
 <li><a class="reference internal" href="#module-pyrpl.test.test_module_widgets">pyrpl.test.test_module_widgets module</a></li>
 <li><a class="reference internal" href="#module-pyrpl.test.test_na">pyrpl.test.test_na module</a></li>
 <li><a class="reference internal" href="#module-pyrpl.test.test_ownership">pyrpl.test.test_ownership module</a></li>
+<li><a class="reference internal" href="#module-pyrpl.test.test_proxyproperty">pyrpl.test.test_proxyproperty module</a></li>
 <li><a class="reference internal" href="#module-pyrpl.test.test_pyqtgraph_benchmark">pyrpl.test.test_pyqtgraph_benchmark module</a></li>
 <li><a class="reference internal" href="#module-pyrpl.test.test_redpitaya">pyrpl.test.test_redpitaya module</a></li>
 <li><a class="reference internal" href="#module-pyrpl.test.test_registers">pyrpl.test.test_registers module</a></li>
@@ -608,29 +778,28 @@ even in running mode.
 </li>
 </ul>
 
-  <h3>This Page</h3>
-  <ul class="this-page-menu">
-    <li><a href="_sources/pyrpl.test.txt"
-           rel="nofollow">Show Source</a></li>
-  </ul>
-<div id="searchbox" style="display: none">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/pyrpl.test.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
     </div>
-    <div class="related">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -639,12 +808,12 @@ even in running mode.
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">pyrpl 0.9.3 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">pyrpl 0.9.3.3 documentation</a> &#187;</li> 
       </ul>
     </div>
-    <div class="footer">
-        &copy; Copyright 2017, Leonhard Neuhaus.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, Leonhard Neuhaus.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.3.
     </div>
   </body>
 </html>
