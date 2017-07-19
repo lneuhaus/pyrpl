@@ -3,10 +3,12 @@
 block_cipher = None
 
 
-a = Analysis(['scripts/run_pyrpl.py'],
+a = Analysis(['pyrpl/__main__.py'],
              pathex=['/home/leo/github/pyrpl'],
              binaries=[],
-             datas=[],
+             datas=[('pyrpl/fpga/red_pitaya.bin', 'pyrpl/fpga'),
+                    ('pyrpl/monitor_server/monitor_server*',
+                     'pyrpl/monitor_server')],
              hiddenimports=[],
              hookspath=[],
              runtime_hooks=[],

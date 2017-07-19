@@ -6,7 +6,7 @@ a Pyrpl instance with the config file
 "config_file_name"
 """
 import sys
-from . import APP, Pyrpl
+from pyrpl import APP, Pyrpl  # no local import here because of pyinstller error
 
 if __name__ == '__main__':
     if len(sys.argv) > 3:
