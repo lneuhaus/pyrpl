@@ -204,7 +204,7 @@ class HostnameSelectorWidget(QtWidgets.QDialog):
             # try SSH connection for all IP addresses
             self.progressbar.setValue(i)
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.settimeout(0.02)  # timeout is essentially network timescale
+            s.settimeout(0.03)  # timeout is essentially network timescale
             err = s.connect_ex((ip, port))
             s.close()
             if err == 0:  # indicates that a SSH service is behind this IP
@@ -229,6 +229,21 @@ class HostnameSelectorWidget(QtWidgets.QDialog):
                             self.add_device(ip, mac)
             APP.processEvents()
         self.scanning = False
+        if len(self.ips_and_macs) == 2:
+            # exactly one device was found, therefore we can auto-proceed to
+            # connection
+            self.start_ok_countdown()
+
+    def start_ok_countdown(self, countdown_s=10.0):
+        self.countdown_remaining = countdown_s
+        if not hasattr(self, 'countdown_timer'):
+            self.countown_timer = QtCore.QTimer.singleShot()
+
+    def countdown_iteration(self):
+        self.countdown_remaining -= 1
+        self.ok_button.setText("OK (auto-clicked in %d s)"%self.countdown_remaining)
+        if self.countdown_remaining > 0:
+            QtCore.QTimer.singleShot(1000, countdown_iteration)
 
     def add_device(self, hostname, token):
         self.ips_and_macs.append((hostname, token))

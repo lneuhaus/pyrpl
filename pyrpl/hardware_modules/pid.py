@@ -75,7 +75,8 @@ class Pid(FilterModule):
 
     _GAINBITS = 24  # Register(0x20C)
 
-    ival = IValAttribute(min=-4, max=4, increment= 8. / 2**16)
+    ival = IValAttribute(min=-4, max=4, increment= 8. / 2**16, doc="Current "
+            "value of the integrator memory (i.e. pid output voltage offset)")
 
     setpoint = FloatRegister(0x104, bits=14, norm= 2 **13,
                              doc="pid setpoint [volts]")
