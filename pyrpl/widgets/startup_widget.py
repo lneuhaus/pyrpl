@@ -76,6 +76,17 @@ class HostnameSelectorWidget(QtWidgets.QDialog):
         self.tree.itemSelectionChanged.connect(self.item_selected)
         self.tree.itemDoubleClicked.connect(self.item_double_clicked)
         self.scanning = False
+        for signalname in ['cursorPositionChanged',
+                           'editingFinished',
+                           'returnPressed',
+                           'selectionChanged',
+                           'textChanged',
+                           'textEdited']:
+            for textbox in [self.user_input,
+                            self.password_input,
+                            self.sshport_input,
+                            self.hostname_input]:
+                getattr(textbox, signalname).connect(self.countdown_cancel)
 
     def showEvent(self, QShowEvent):
         ret = super(HostnameSelectorWidget, self).showEvent(QShowEvent)
@@ -117,6 +128,7 @@ class HostnameSelectorWidget(QtWidgets.QDialog):
         self.sshport_input.setText(str(val))
 
     def item_selected(self):
+        self.countdown_cancel()
         try:
             item = self.tree.selectedItems()[0]
         except:
@@ -125,10 +137,12 @@ class HostnameSelectorWidget(QtWidgets.QDialog):
             self.hostname = item.text(0)
 
     def item_double_clicked(self, item, row):
+        self.countdown_cancel()
         self.hostname = item.text(0)
         self.ok()
 
     def ok(self):
+        self.countdown_cancel()
         self.scanning = False
         if self.parent is not None:
             self.parent.hostname = self.hostname
@@ -165,6 +179,7 @@ class HostnameSelectorWidget(QtWidgets.QDialog):
 
         In order to work, the specified username and password must be correct.
         """
+        self.countdown_cancel()
         if self.scanning:
             self._logger.debug("Scan is already running. Please wait for it "
                                "to finish before starting a new one! ")
@@ -232,18 +247,28 @@ class HostnameSelectorWidget(QtWidgets.QDialog):
         if len(self.ips_and_macs) == 2:
             # exactly one device was found, therefore we can auto-proceed to
             # connection
-            self.start_ok_countdown()
+            self.countdown_start()
 
-    def start_ok_countdown(self, countdown_s=10.0):
+    def countdown_start(self, countdown_s=10.0):
+        self.countdown_cancel()
+        self.countdown_cancelled = False
         self.countdown_remaining = countdown_s
         if not hasattr(self, 'countdown_timer'):
-            self.countown_timer = QtCore.QTimer.singleShot()
+            self.countown_timer = QtCore.QTimer.singleShot(1, self.countdown_iteration)
 
     def countdown_iteration(self):
+        if self.countdown_cancelled:
+            return
         self.countdown_remaining -= 1
         self.ok_button.setText("OK (auto-clicked in %d s)"%self.countdown_remaining)
-        if self.countdown_remaining > 0:
-            QtCore.QTimer.singleShot(1000, countdown_iteration)
+        if self.countdown_remaining >= 0:
+            self.countown_timer = QtCore.QTimer.singleShot(1000, self.countdown_iteration)
+        else:
+            self.ok()
+
+    def countdown_cancel(self, *args, **kwargs):
+        self.countdown_cancelled = True
+        self.ok_button.setText("OK")
 
     def add_device(self, hostname, token):
         self.ips_and_macs.append((hostname, token))
