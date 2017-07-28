@@ -8,6 +8,7 @@ from ..async_utils import APP
 
 class HostnameSelectorWidget(QtWidgets.QDialog):
     _HIDE_PASSWORDS = False
+    _SKIP_REDPITAYA_SIGNATURE = True  # display all devices incl. non-redpitayas
 
     def __init__(self, parent=None):
         self.parent = parent
@@ -238,7 +239,8 @@ class HostnameSelectorWidget(QtWidgets.QDialog):
                     macs = ssh.get_mac_addresses()
                     del ssh
                     for mac in macs:
-                        if mac.startswith('00:26:32:'):  # redpitaya signature
+                        # test for redpitaya signature in mac
+                        if mac.startswith('00:26:32:') or self._SKIP_REDPITAYA_SIGNATURE:
                             self._logger.debug('RP device found: IP %s, '
                                                'MAC %s', ip, mac)
                             self.add_device(ip, mac)
