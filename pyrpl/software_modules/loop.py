@@ -91,6 +91,13 @@ class Loop(Module):
         """ put your initialization routine here"""
         pass
 
+    def pause_loop(self):
+        self._ended = True
+
+    def start_loop(self):
+        self._ended = False
+        self.main_loop()
+
     def loop(self):
         # insert your loop function here
         pass
