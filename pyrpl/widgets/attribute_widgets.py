@@ -410,7 +410,6 @@ class BasePropertyListPropertyWidget(BaseAttributeWidget):
             # remove the trailing items
             while len(self) > len(new_values):
                 self.delitem()
-        self.module._logger.warning("set_widget_value called and finished")
 
     def editing(self):
         edit = False
