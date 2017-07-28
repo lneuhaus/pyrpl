@@ -126,6 +126,7 @@ class MyDockWidget(QtWidgets.QDockWidget):
             #return super(MyDockWidget, self).event(event)
             return QtWidgets.QDockWidget.event(self, event)
 
+
 class PyrplWidget(QtWidgets.QMainWindow):
     def __init__(self, pyrpl_instance):
         self.parent = pyrpl_instance
@@ -146,6 +147,18 @@ class PyrplWidget(QtWidgets.QMainWindow):
         for module in self.parent.software_modules:
             self.add_dock_widget(module._create_widget, module.name)
         # self.showMaximized()  # maximized by default
+
+        self.centralwidget = QtWidgets.QFrame()
+        self.setCentralWidget(self.centralwidget)
+        self.centrallayout = QtWidgets.QVBoxLayout()
+        self.centrallayout.setAlignment(QtCore.Qt.AlignCenter)
+        self.centralwidget.setLayout(self.centrallayout)
+        self.centralbutton = QtWidgets.QPushButton('Click on "Modules" in the '
+                                             'upper left corner to load a '
+                                             'specific PyRPL module!')
+        self.centralbutton.clicked.connect(self.click_menu_modules)
+        self.centrallayout.addWidget(self.centralbutton)
+
         self.set_window_position()
         self.timer_save_pos = QtCore.QTimer()
         self.timer_save_pos.setInterval(1000)
@@ -163,6 +176,17 @@ class PyrplWidget(QtWidgets.QMainWindow):
         self.setWindowTitle(self.parent.c.pyrpl.name)
         self.timers = [self.timer_save_pos, self.timer_toolbar]
         #self.set_background_color(self)
+
+    def click_menu_modules(self):
+        self.menu_modules.popup(self.mapToGlobal(QtCore.QPoint(10,10)))
+
+    def hide_centralbutton(self):
+        for dock_widget in self.dock_widgets.values():
+            if dock_widget.isVisible():
+                self.centralwidget.hide()
+                return
+        # only if no dockwidget is shown, show central button
+        self.centralwidget.show()
 
     def show_exception(self, typ_val_tb):
         """
@@ -216,6 +240,7 @@ class PyrplWidget(QtWidgets.QMainWindow):
         # make sure menu and widget are in sync
         action.changed.connect(lambda: dock_widget.setVisible(action.isChecked()))
         dock_widget.visibilityChanged.connect(lambda:action.setChecked(dock_widget.isVisible()))
+        dock_widget.visibilityChanged.connect(self.hide_centralbutton)
         self.set_background_color(dock_widget)
 
     def remove_dock_widget(self, name):
