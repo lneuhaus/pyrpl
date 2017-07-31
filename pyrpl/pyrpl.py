@@ -47,9 +47,9 @@ except NameError:  # Python 3
     pass
 
 try:
-    basestring  # python 2
+    basestring  # in python 2
 except:
-    basestring = str  # python 3
+    from past.builtins import basetring
 
 
 default_pyrpl_config = {'name': 'default_pyrpl_instance',
