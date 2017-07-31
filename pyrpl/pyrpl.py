@@ -46,6 +46,11 @@ try:
 except NameError:  # Python 3
     pass
 
+try:
+    basestring  # python 2
+except:
+    basestring = str  # python 3
+
 
 default_pyrpl_config = {'name': 'default_pyrpl_instance',
                         'gui': True,
@@ -102,7 +107,7 @@ class Pyrpl(object):
                                         "discarded after restarting)!",
                                 options=QtWidgets.QFileDialog.DontConfirmOverwrite,
                                 filter='*.yml')
-                if not isinstance(config, str):
+                if not isinstance(config, basestring):
                     config = config[0]
             else:  # command line
                 configfiles = [name for name in os.listdir(user_config_dir)
