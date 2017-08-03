@@ -209,6 +209,7 @@ def make_asg(channel=0):
                                     doc="Phase at which to start triggered waveforms [degrees]")
 
         frequency = FrequencyRegister(0x10 + _VALUE_OFFSET, bits=30,
+                                      log_increment=True,
                                       doc="Frequency of the output waveform [Hz]")
 
         _counter_step = IntRegister(0x10 + _VALUE_OFFSET, doc="""Each clock cycle the counter_step is increases the internal counter modulo counter_wrap.

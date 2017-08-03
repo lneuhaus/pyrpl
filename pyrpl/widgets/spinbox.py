@@ -30,7 +30,7 @@ class NumberSpinBox(QtGui.QWidget, object):
     MOUSE_WHEEL_ACTIVATED = False
     value_changed = QtCore.pyqtSignal()
     timer_min_interval = 20 # don't go below 20 ms
-    timer_initial_latency = 300 # 100 ms before starting to update
+    timer_initial_latency = 100 # 100 ms before starting to update
     # continuously.
 
     def forward_to_subspinboxes(func):
@@ -97,10 +97,10 @@ class NumberSpinBox(QtGui.QWidget, object):
         self.timer_arrow_latency.setInterval(self.timer_initial_latency)
         self.timer_arrow_latency.setSingleShot(True)
         self.timer_arrow_latency.timeout.connect(self.make_step_continuous)
-        self.up.pressed.connect(self.first_increment)
-        self.down.pressed.connect(self.first_increment)
         self.up.setMaximumWidth(15)
         self.down.setMaximumWidth(15)
+        self.up.pressed.connect(self.first_increment)
+        self.down.pressed.connect(self.first_increment)
         self.up.released.connect(self.timer_arrow.stop)
         self.down.released.connect(self.timer_arrow.stop)
         self.line.editingFinished.connect(self.validate)
@@ -113,28 +113,17 @@ class NumberSpinBox(QtGui.QWidget, object):
         """
         sets the min size for content to fit.
         """
-        return
         font = QtGui.QFont("", 0)
         font_metric = QtGui.QFontMetrics(font)
-        pixel_wide = font_metric.width("0"*self.max_num_letter())
+        pixel_wide = font_metric.width("0"*self.max_num_letter)
 
+
+    @property
     def max_num_letter(self):
         """
         Returns the maximum number of letters
         """
         return 5
-
-    def first_increment(self):
-        """
-        Once +/- pressed for timer_initial_latency ms, start to update continuously
-        """
-        if self.log_increment:
-            self.last_time = time.time() # don't make a step, but store present time
-            self.timer_arrow.start()
-        else:
-            self.last_time = None
-            self.make_step(single_increment=True) # start with a single_step, then make normal sweep...
-            self.timer_arrow_latency.start() # wait longer than average
 
     def set_log_increment(self):
         self.up.setText("*")
@@ -153,6 +142,33 @@ class NumberSpinBox(QtGui.QWidget, object):
         self.decimals = val
         self.set_min_size()
 
+    def validate(self):
+        if self.line.isModified():  # otherwise don't trigger anything
+            if self.val > self.maximum:
+                self.val = self.maximum
+            if self.val < self.minimum:
+                self.val = self.minimum
+            self.value_changed.emit()
+
+    def setMaximum(self, val):  # imitates original QSpinBox API
+        self.maximum = val
+        self.update_tooltip()
+
+    def setMinimum(self, val):  # imitates original QSpinBox API
+        self.minimum = val
+        self.update_tooltip()
+
+    def setSingleStep(self, val):  # imitates original QSpinBox API
+        self.singleStep = val
+
+    def setValue(self, val):  # imitates original QSpinBox API
+        """ replace this function with something useful in derived classes """
+        self.val = val
+
+    def value(self):  # imitates original QSpinBox API
+        """ replace this function with something useful in derived classes """
+        return self.val
+
     @property
     def log_factor(self):
         """
@@ -169,6 +185,18 @@ class NumberSpinBox(QtGui.QWidget, object):
         """
         dt = time.time() - self.last_time  # self.timer_arrow.interval()  # time since last step
         return dt*self.per_second
+
+    def first_increment(self):
+        """
+        Once +/- pressed for timer_initial_latency ms, start to update continuously
+        """
+        if self.log_increment:
+            self.last_time = time.time() # don't make a step, but store present time
+            self.timer_arrow.start()
+        else:
+            self.last_time = None
+            self.make_step(single_increment=True) # start with a single_step, then make normal sweep...
+            self.timer_arrow_latency.start() # wait longer than average
 
     @property
     def best_wait_time(self):
@@ -194,6 +222,13 @@ class NumberSpinBox(QtGui.QWidget, object):
 
     def is_sweeping_down(self):
         return self.down.isDown() or self._button_down_down
+
+    def make_step(self, single_increment=False):
+        if self.is_sweeping_up():
+            self.step_up(single_increment=single_increment)
+        if self.is_sweeping_down():
+            self.step_down(single_increment=single_increment)
+        self.validate()
 
     def step_up(self, single_increment=False):
         if single_increment:
@@ -245,62 +280,28 @@ class NumberSpinBox(QtGui.QWidget, object):
             self.timer_arrow.setInterval(self.best_wait_time)
             self.timer_arrow.start()
 
-    def make_step(self, single_increment=False):
-        if self.is_sweeping_up():
-            self.step_up(single_increment=single_increment)
-        if self.is_sweeping_down():
-            self.step_down(single_increment=single_increment)
-        self.validate()
-
-    def validate(self):
-        if self.line.isModified():  # otherwise don't trigger anything
-            if self.val > self.maximum:
-                self.val = self.maximum
-            if self.val < self.minimum:
-                self.val = self.minimum
-            self.value_changed.emit()
-
     def set_per_second(self, val):
         self.per_second = val
 
-    def setMaximum(self, val):  # imitates original QSpinBox API
-        self.maximum = val
-        self.update_tooltip()
-
-    def setMinimum(self, val):  # imitates original QSpinBox API
-        self.minimum = val
-        self.update_tooltip()
-
-    def setSingleStep(self, val):  # imitates original QSpinBox API
-        self.singleStep = val
-
-    def setValue(self, val):  # imitates original QSpinBox API
-        """ replace this function with something useful in derived classes """
-        self.val = val
-
-    def value(self):  # imitates original QSpinBox API
-        """ replace this function with something useful in derived classes """
-        return self.val
-
     def keyPressEvent(self, event):
         if not event.isAutoRepeat():
-            if event.key() == QtCore.Qt.Key_Up:
+            if event.key() in [QtCore.Qt.Key_Up, QtCore.Qt.Key_Right]:
                 self._button_up_down = True
                 self.first_increment()
-            if event.key() == QtCore.Qt.Key_Down:
+            elif event.key() in [QtCore.Qt.Key_Down, QtCore.Qt.Key_Left]:
                 self._button_down_down = True
                 self.first_increment()
-        return super(NumberSpinBox, self).keyPressEvent(event)
+        #return super(NumberSpinBox, self).keyPressEvent(event)
 
     def keyReleaseEvent(self, event):
         if not event.isAutoRepeat():
-            if event.key() == QtCore.Qt.Key_Up:
+            if event.key() in [QtCore.Qt.Key_Up, QtCore.Qt.Key_Right]:
                 self._button_up_down = False
                 self.timer_arrow.stop()
-            if event.key() == QtCore.Qt.Key_Down:
+            elif event.key() in [QtCore.Qt.Key_Down, QtCore.Qt.Key_Left]:
                 self._button_down_down = False
                 self.timer_arrow.stop()
-        return super(NumberSpinBox, self).keyReleaseEvent(event)
+        #return super(NumberSpinBox, self).keyReleaseEvent(event)
 
     def wheelEvent(self, event):
         """
@@ -314,6 +315,7 @@ class NumberSpinBox(QtGui.QWidget, object):
             for i in range(abs(nsteps)):
                 func(single_increment=True)
 
+    # properties needed for lists of floats
     @property
     def selected(self):
         return self.hasFocus()
@@ -340,11 +342,12 @@ class IntSpinBox(NumberSpinBox):
         self.value_changed.emit()
         return new_val
 
+    @property
     def max_num_letter(self):
         """
         Maximum number of letters in line
         """
-        return int(np.log10(self.maximum))
+        return int(np.abs(np.log10(self.maximum)))
 
 
 class FloatSpinBox(NumberSpinBox):
@@ -377,6 +380,7 @@ class FloatSpinBox(NumberSpinBox):
         self.value_changed.emit()
         return new_val
 
+    @property
     def max_num_letter(self):
         """
         Returns the maximum number of letters
@@ -581,6 +585,7 @@ class OldComplexSpinBox(QtGui.QFrame):
         self.imag.val = np.imag(new_val)
         return new_val
 
+    @property
     def max_num_letter(self):
         """
         Maximum number of letters in line
