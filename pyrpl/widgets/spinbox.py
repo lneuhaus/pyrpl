@@ -29,9 +29,9 @@ class NumberSpinBox(QtGui.QWidget, object):
     """
     MOUSE_WHEEL_ACTIVATED = False
     value_changed = QtCore.pyqtSignal()
-    timer_min_interval = 20 # don't go below 20 ms
-    timer_initial_latency = 100 # 100 ms before starting to update
-    # continuously.
+    # timeouts for updating values when mouse button / key is pessed
+    change_interval = 0.04
+    change_initial_latency = 0.1 # 100 ms before starting to update continuously.
 
     def forward_to_subspinboxes(func):
         """
@@ -43,7 +43,7 @@ class NumberSpinBox(QtGui.QWidget, object):
         return func_wrapper
 
     def __init__(self, label="", min=-1, max=1, increment=2.**(-13),
-                 log_increment=False, halflife_seconds=0.1, per_second=0.2):
+                 log_increment=False, halflife_seconds=0.5, per_second=0.2):
         """
         :param label: label of the button
         :param min: min value
@@ -62,6 +62,10 @@ class NumberSpinBox(QtGui.QWidget, object):
         self.halflife_seconds = halflife_seconds
         self.per_second = per_second
         self.singleStep = increment
+        self.change_timer = QtCore.QTimer()
+        self.change_timer.setSingleShot(True)
+        self.change_timer.setInterval(int(np.ceil(self.change_interval*1000)))
+        self.change_timer.timeout.connect(self.continue_step)
         self.make_layout()
         self.update_tooltip()
         self.set_min_size()
@@ -81,29 +85,73 @@ class NumberSpinBox(QtGui.QWidget, object):
         else:
             self.up = QtGui.QPushButton('+')
             self.down = QtGui.QPushButton('-')
-        self.lay.addWidget(self.down)
         self.line = QtGui.QLineEdit()
         self.line.setStyleSheet("QLineEdit { qproperty-cursorPosition: 0; }") # align text on the left
         # http://stackoverflow.com/questions/18662157/qt-qlineedit-widget-to-get-long-text-left-aligned
+        self.lay.addWidget(self.down)
         self.lay.addWidget(self.line)
-        self._button_up_down = False
-        self._button_down_down = False
         self.lay.addWidget(self.up)
-        self.timer_arrow = QtCore.QTimer()
-        self.timer_arrow.setSingleShot(True)
-        self.timer_arrow.setInterval(self.timer_min_interval)
-        self.timer_arrow.timeout.connect(self.make_step_continuous)
-        self.timer_arrow_latency = QtCore.QTimer()
-        self.timer_arrow_latency.setInterval(self.timer_initial_latency)
-        self.timer_arrow_latency.setSingleShot(True)
-        self.timer_arrow_latency.timeout.connect(self.make_step_continuous)
         self.up.setMaximumWidth(15)
         self.down.setMaximumWidth(15)
-        self.up.pressed.connect(self.first_increment)
-        self.down.pressed.connect(self.first_increment)
-        self.up.released.connect(self.timer_arrow.stop)
-        self.down.released.connect(self.timer_arrow.stop)
+        self.up.pressed.connect(self.first_step)
+        self.down.pressed.connect(self.first_step)
+        self.up.released.connect(self.finish_step)
+        self.down.released.connect(self.finish_step)
         self.line.editingFinished.connect(self.validate)
+        self._button_up_down = False
+        self._button_down_down = False
+
+    # keyboard interface
+    def keyPressEvent(self, event):
+        if not event.isAutoRepeat():
+            if event.key() in [QtCore.Qt.Key_Up, QtCore.Qt.Key_Right]:
+                self._button_up_down = True
+                self.first_step()
+            elif event.key() in [QtCore.Qt.Key_Down, QtCore.Qt.Key_Left]:
+                self._button_down_down = True
+                self.first_step()
+            else:
+                return super(NumberSpinBox, self).keyPressEvent(event)
+
+    def keyReleaseEvent(self, event):
+        if not event.isAutoRepeat():
+            if event.key() in [QtCore.Qt.Key_Up, QtCore.Qt.Key_Right]:
+                self._button_up_down = False
+                self.finish_step()
+            elif event.key() in [QtCore.Qt.Key_Down, QtCore.Qt.Key_Left]:
+                self._button_down_down = False
+                self.finish_step()
+            else:
+                return super(NumberSpinBox, self).keyReleaseEvent(event)
+    @property
+    def is_increasing(self):
+        return self.up.isDown() or self._button_up_down
+
+    @property
+    def is_decreasing(self):
+        return self.down.isDown() or self._button_down_down
+
+    @property
+    def change_sign(self):
+        if self.is_increasing:
+            return 1.0
+        elif self.is_decreasing:
+            return -1.0
+        else:
+            return 0.0
+
+    def wheelEvent(self, event):
+        """
+        Handle mouse wheel event. No distinction between linear and log.
+        :param event:
+        :return:
+        """
+        if self.MOUSE_WHEEL_ACTIVATED:
+            nsteps = int(event.delta() / 120)
+            func = self.step_up if nsteps > 0 else self.step_down
+            for i in range(abs(nsteps)):
+                func(single_increment=True)
+
 
     # def sizeHint(self): #doesn t do anything, probably need to change
     #    # sizePolicy
@@ -117,7 +165,6 @@ class NumberSpinBox(QtGui.QWidget, object):
         font_metric = QtGui.QFontMetrics(font)
         pixel_wide = font_metric.width("0"*self.max_num_letter)
 
-
     @property
     def max_num_letter(self):
         """
@@ -126,16 +173,21 @@ class NumberSpinBox(QtGui.QWidget, object):
         return 5
 
     def set_log_increment(self):
-        self.up.setText("*")
-        self.down.setText("/")
+        #self.up.setText("*")
+        #self.down.setText("/")
+        self.up.setText(u'\u2191')  # up arrow unicode symbol
+        self.down.setText(u'\u2193')  # down arrow unicode symbol
+        #self.up.setStyleSheet("font-weight: italic; font-size: 8pt")
+        #self.down.setStyleSheet("font-weight: bold; font-size: 8pt")
         self.log_increment = True
 
     def update_tooltip(self):
         """
         The tooltip uses the values of min/max/increment...
         """
-        string = "Increment is %.5f\nmin value: %.1f\nmax value: %.1f\n"%(self.singleStep, self.minimum, self.maximum)
-        string+="Press up/down to tune." #  or mouse wheel
+        string = "Increment is %.5e\nmin value: %.1e\nmax value: %.1e\n"\
+                 %(self.singleStep, self.minimum, self.maximum)
+        string += "Press up/down to tune." #  or mouse wheel
         self.setToolTip(string)
 
     def setDecimals(self, val):
@@ -143,12 +195,19 @@ class NumberSpinBox(QtGui.QWidget, object):
         self.set_min_size()
 
     def validate(self):
-        if self.line.isModified():  # otherwise don't trigger anything
-            if self.val > self.maximum:
-                self.val = self.maximum
-            if self.val < self.minimum:
-                self.val = self.minimum
+        """ make sure a new value is inside the allowed bounds after a
+        manual change of the value """
+        if self.line.isModified():
+            self.setValue(self.saturate(self.val))
             self.value_changed.emit()
+
+    def saturate(self, val):
+        if val > self.maximum:
+            return self.maximum
+        elif val < self.minimum:
+            return self.minimum
+        else:
+            return val
 
     def setMaximum(self, val):  # imitates original QSpinBox API
         self.maximum = val
@@ -161,6 +220,9 @@ class NumberSpinBox(QtGui.QWidget, object):
     def setSingleStep(self, val):  # imitates original QSpinBox API
         self.singleStep = val
 
+    def set_per_second(self, val):
+        self.per_second = val
+
     def setValue(self, val):  # imitates original QSpinBox API
         """ replace this function with something useful in derived classes """
         self.val = val
@@ -169,151 +231,54 @@ class NumberSpinBox(QtGui.QWidget, object):
         """ replace this function with something useful in derived classes """
         return self.val
 
-    @property
-    def log_factor(self):
-        """
-        Factor by which value should be divide/multiplied (in log mode) given
-        the wait time since last step
-        """
-        dt = time.time() - self.last_time # self.timer_arrow.interval()  # time since last step
-        return 2.**(dt/self.halflife_seconds)
-
-    @property
-    def lin_delta(self):
-        """
-        Quantity to add/subtract to value (in lin mode) given the wait time since last step
-        """
-        dt = time.time() - self.last_time  # self.timer_arrow.interval()  # time since last step
-        return dt*self.per_second
-
-    def first_increment(self):
+    # code for managing value change with buttons or keyboard
+    def first_step(self):
         """
         Once +/- pressed for timer_initial_latency ms, start to update continuously
         """
-        if self.log_increment:
-            self.last_time = time.time() # don't make a step, but store present time
-            self.timer_arrow.start()
-        else:
-            self.last_time = None
-            self.make_step(single_increment=True) # start with a single_step, then make normal sweep...
-            self.timer_arrow_latency.start() # wait longer than average
+        self.start_time = time.time()
+        self.start_value = self.value()
+        value = self.start_value + self.singleStep * self.change_sign
+        if np.sign(value)*np.sign(self.start_value) < 0:
+            # zero passage occured, make sure to stop at exactly 0
+            value = 0
+        self.setValue(self.saturate(value))
+        if self.log_increment and self.start_value == 0:
+            # avoid zero start_value when in log mode
+            self.start_value = self.value()
+        self.change_timer.start()
 
-    @property
-    def best_wait_time(self):
-        """
-        Time to wait until value should reach the next increment
-        If this time is shorter than self.timer_min_interval, then, returns timer_min_interval
-        """
-        if self.log_increment:
-            val = self.val
-            if self.is_sweeping_up():
-                next_val = val + np.sign(val)*self.singleStep
-                factor = next_val*1./val
-            if self.is_sweeping_down():
-                next_val = val - np.sign(val)*self.singleStep
-                factor = val*1.0/next_val
-            return int(np.ceil(max(self.timer_min_interval, 1000*np.log2(factor)))) # in log mode, wait long enough
-                                                                         # that next value is multiple of increment
-        else:
-            return int(np.ceil(max(self.timer_min_interval, self.singleStep * 1000. / self.per_second))) # in lin mode, idem
-
-    def is_sweeping_up(self):
-        return self.up.isDown() or self._button_up_down
-
-    def is_sweeping_down(self):
-        return self.down.isDown() or self._button_down_down
-
-    def make_step(self, single_increment=False):
-        if self.is_sweeping_up():
-            self.step_up(single_increment=single_increment)
-        if self.is_sweeping_down():
-            self.step_down(single_increment=single_increment)
-        self.validate()
-
-    def step_up(self, single_increment=False):
-        if single_increment:
-            self.val += self.singleStep * 1.1
-            return
-        if self.log_increment:
-            val = self.val
-            # to prevent rounding errors from blocking the increment
-            res = val * self.log_factor
-            if res == 0:
-                res = self.singleStep / 10.
+    def continue_step(self):
+        dt = time.time() - self.start_time
+        if dt > self.change_initial_latency:  # only do if pressed long enough
+            if self.log_increment:
+                # ensure proper behavior for zero
+                if self.start_value == 0:
+                    return self.first_step()  # start over when zero is crossed
+                sign = self.change_sign * np.sign(self.start_value)
+                halflifes = dt / self.halflife_seconds * sign
+                value = self.start_value * 2 ** halflifes
+                # change behavior when value is effectively zero
+                if abs(value) <= self.singleStep / 2.0 and sign < 0:
+                    self.start_value = 0
+                    value = 0
+                    self.start_time = time.time()  # ensures to stay 0 some time
             else:
-                res += np.sign(val)*self.singleStep / 10.
-            self.val = res  # self.log_step**factor
-        else:
-            res = self.val + self.lin_delta + self.singleStep / 10.
-            self.val = res
+                # delta for linear sweep
+                value = self.start_value + self.per_second * dt * self.change_sign
+                if np.sign(value) * np.sign(self.start_value) < 0:
+                    # change of sign occured, make a stop at zero
+                    self.start_value = 0
+                    value = 0
+                    self.start_time = time.time()  # ensures to stay 0 some time
+            self.setValue(self.saturate(value))
+        self.change_timer.start()
 
-    def step_down(self, single_increment=False):
-        if single_increment:
-            self.val -= self.singleStep * 1.1
-            return
-        if self.log_increment:
-            val = self.val
-            res = val / self.log_factor
-            if res == 0:
-                res = - self.singleStep / 10.0
-            else:
-                res -= np.sign(val)*self.singleStep / 10.
-            self.val = res
-        else:
-            res = self.val - self.lin_delta - self.singleStep / 10.
-            self.val = res
-
-    def make_step_continuous(self):
-        """
-        :return:
-        """
-        # 19/6 LN: removed this because not needed any more apparently
-        #sleep(1e-4) # Ugly, but has to be there, otherwise,
-        # it could
-        # be that this function is called forever
-        # because it takes the priority over released signal...
-        if self.last_time is None:
-            self.last_time = time.time()
-        if self.is_sweeping_down() or self.is_sweeping_up():
-            self.make_step()
-            self.last_time = time.time()
-            self.timer_arrow.setInterval(self.best_wait_time)
-            self.timer_arrow.start()
-
-    def set_per_second(self, val):
-        self.per_second = val
-
-    def keyPressEvent(self, event):
-        if not event.isAutoRepeat():
-            if event.key() in [QtCore.Qt.Key_Up, QtCore.Qt.Key_Right]:
-                self._button_up_down = True
-                self.first_increment()
-            elif event.key() in [QtCore.Qt.Key_Down, QtCore.Qt.Key_Left]:
-                self._button_down_down = True
-                self.first_increment()
-        #return super(NumberSpinBox, self).keyPressEvent(event)
-
-    def keyReleaseEvent(self, event):
-        if not event.isAutoRepeat():
-            if event.key() in [QtCore.Qt.Key_Up, QtCore.Qt.Key_Right]:
-                self._button_up_down = False
-                self.timer_arrow.stop()
-            elif event.key() in [QtCore.Qt.Key_Down, QtCore.Qt.Key_Left]:
-                self._button_down_down = False
-                self.timer_arrow.stop()
-        #return super(NumberSpinBox, self).keyReleaseEvent(event)
-
-    def wheelEvent(self, event):
-        """
-        Handle mouse wheel event. No distinction between linear and log.
-        :param event:
-        :return:
-        """
-        if self.MOUSE_WHEEL_ACTIVATED:
-            nsteps = int(event.delta() / 120)
-            func = self.step_up if nsteps > 0 else self.step_down
-            for i in range(abs(nsteps)):
-                func(single_increment=True)
+    def finish_step(self):
+        self.change_timer.stop()
+        dt = time.time() - self.start_time
+        if dt > self.change_initial_latency:
+            self.validate()  # make sure we validate if continue_step was on
 
     # properties needed for lists of floats
     @property
