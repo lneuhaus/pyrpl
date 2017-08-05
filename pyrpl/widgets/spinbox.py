@@ -30,7 +30,7 @@ class NumberSpinBox(QtGui.QWidget, object):
     MOUSE_WHEEL_ACTIVATED = False
     value_changed = QtCore.pyqtSignal()
     # timeouts for updating values when mouse button / key is pessed
-    change_interval = 0.04
+    change_interval = 0.02
     _change_initial_latency = 0.1 # 100 ms before starting to update continuously.
     @property
     def change_initial_latency(self):
@@ -114,9 +114,11 @@ class NumberSpinBox(QtGui.QWidget, object):
         if not event.isAutoRepeat():
             if event.key() in [QtCore.Qt.Key_Up, QtCore.Qt.Key_Right]:
                 self._button_up_down = True
+                self._button_down_down = False  # avoids going left & right
                 self.first_step()
             elif event.key() in [QtCore.Qt.Key_Down, QtCore.Qt.Key_Left]:
                 self._button_down_down = True
+                self._button_up_down = False  # avoids going left & right
                 self.first_step()
             else:
                 return super(NumberSpinBox, self).keyPressEvent(event)
@@ -131,6 +133,7 @@ class NumberSpinBox(QtGui.QWidget, object):
                 self.finish_step()
             else:
                 return super(NumberSpinBox, self).keyReleaseEvent(event)
+
     @property
     def is_increasing(self):
         return self.up.isDown() or self._button_up_down

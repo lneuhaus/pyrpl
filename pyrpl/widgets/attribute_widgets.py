@@ -169,6 +169,9 @@ class BaseAttributeWidget(QtGui.QWidget, object):
         return
 
 
+
+
+
 class StringAttributeWidget(BaseAttributeWidget):
     """
     Widget for string values.
@@ -225,6 +228,14 @@ class NumberAttributeWidget(BaseAttributeWidget):
     def set_log_increment(self):
         self.widget.set_log_increment()
 
+    def keyPressEvent(self, event):
+        """ forwards all key events to spinbox """
+        return self.widget.keyPressEvent(event)
+
+    def keyReleaseEvent(self, event):
+        """ forwards all key events to spinbox """
+        return self.widget.keyReleaseEvent(event)
+
 
 class IntAttributeWidget(NumberAttributeWidget):
     """
@@ -245,14 +256,6 @@ class ComplexAttributeWidget(FloatAttributeWidget):
     Widget for complex values
     """
     SpinBox = ComplexSpinBox
-
-
-class FrequencyAttributeWidget(FloatAttributeWidget):
-    def __init__(self, module, attribute_name, widget_name=None):
-        super(FrequencyAttributeWidget, self).__init__(module,
-                                                       attribute_name,
-                                                       widget_name=widget_name)
-        self.set_per_second(10)
 
 
 class ListElementWidget(BaseAttributeWidget):
@@ -308,10 +311,28 @@ class ListElementWidget(BaseAttributeWidget):
         self.setStyleSheet("")
 
     def mousePressEvent(self, event):
-        self.module._logger.warning('mouse pressed on %s[%d]',
-                                     self.attribute_name, self.index)
         self.select()
+        self.module._logger.warning('mouse pressed on %s[%d]. Selection: %s',
+                                     self.attribute_name, self.index,
+                                    self.parent.selected)
         return super(ListElementWidget, self).mousePressEvent(event)
+
+
+    # keyboard interface
+    # def keyPressEvent(self, event):
+    #     """ forwards all key events to selected widget """
+    #     if self.parent.selected is not None:
+    #         return self.parent.selected.keyPressEvent(event)
+    #     else:
+    #         super(ListElementWidget, self).keyPressEvent(event)
+    #
+    #
+    # def keyReleaseEvent(self, event):
+    #     """ forwards all key events to selected widget """
+    #     if self.parent.selected is not None:
+    #         return self.parent.selected.keyReleaseEvent(event)
+    #     else:
+    #         super(ListElementWidget, self).keyReleaseEvent(event)
 
 
 class BasePropertyListPropertyWidget(BaseAttributeWidget):
@@ -443,87 +464,8 @@ class BasePropertyListPropertyWidget(BaseAttributeWidget):
         return len(self.widgets)
 
 
-class ListAttributeWidget(BaseAttributeWidget):
-    """
-    A widget for ListAttribute
-    This class is nearly identical with ListComplexAttributeWidget
-    and the two should be merged together
-    """
-    ListSpinBox = ListFloatSpinBox
-    listspinboxkwargs = dict(label=None,
-                             min=-62.5e6,
-                             max=62.5e6,
-                             log_increment=True,
-                             halflife_seconds=1.)
-
-    def _make_widget(self):
-        """
-        Sets up the widget (here a ListFloatSpinBox)
-        :return:
-        """
-        self.widget = self.ListSpinBox(**self.listspinboxkwargs)
-        self.widget.value_changed.connect(self.write_widget_value_to_attribute)
-
-    def _get_widget_value(self):
-        return self.widget.get_list()
-
-    def _set_widget_value(self, new_value):
-        self.widget.set_list(new_value)
-
-    def editing(self):
-        return self.widget.editing()
-
-    def set_max_cols(self, num):
-        """
-        sets the max number of columns of the widget (after that, spin boxes are stacked under each other)
-        """
-        self.widget.set_max_cols(num)
-
-    def set_increment(self, val):
-        self.widget.set_increment(val)
-
-    def set_maximum(self, val):
-        self.widget.set_maximum(val)
-
-    def set_minimum(self, val):
-        self.widget.set_minimum(val)
-
-    def set_selected(self, index):
-        """
-        Selects the current active complex number.
-        """
-        self.widget.set_selected(index)
-
-    def get_selected(self):
-        """
-        Get the selected number
-        """
-        return self.widget.get_selected()
-
-    @property
-    def number(self):
-        return len(self.widget.spins)
-
-
-class ListFloatAttributeWidget(ListAttributeWidget):
-    ListSpinBox = ListFloatSpinBox
-    listspinboxkwargs = dict(label=None,
-                             min=-62.5e6,
-                             max=62.5e6,
-                             log_increment=True,
-                             halflife_seconds=1.)
-
-
-class ListComplexAttributeWidget(ListAttributeWidget):
-    ListSpinBox = ListComplexSpinBox
-    listspinboxkwargs = dict(label=None,
-                             min=-62.5e6,
-                             max=62.5e6,
-                             log_increment=True,
-                             halflife_seconds=1.)
-
-
 class ListComboBox(QtGui.QWidget):
+    # exclusively used by FilterAttributeWidget, can be replaced by sth else
     # TODO: can be replaced by SelectAttributeWidget
     value_changed = QtCore.pyqtSignal()
 
@@ -611,8 +553,7 @@ class FilterAttributeWidget(BaseAttributeWidget):
         self.widget = ListComboBox(self.number,
                                    "",
                                    self._format_options(),
-                                   decimals=self.decimals)#list(map(str,
-                                   # self.options)))
+                                   decimals=self.decimals)
         self.widget.value_changed.connect(self.write_widget_value_to_attribute)
 
     def _format_options(self):

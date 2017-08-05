@@ -22,9 +22,6 @@ from .widgets.attribute_widgets import BoolAttributeWidget, \
                                        IntAttributeWidget, \
                                        SelectAttributeWidget, \
                                        StringAttributeWidget, \
-                                       ListComplexAttributeWidget, \
-                                       FrequencyAttributeWidget, \
-                                       ListFloatAttributeWidget, \
                                        BoolIgnoreAttributeWidget, \
                                        TextAttributeWidget, \
                                        CurveAttributeWidget, \
@@ -612,8 +609,6 @@ class FrequencyProperty(FloatProperty):
     An attribute for frequency values
     Same as FloatAttribute, except it cannot become negative.
     """
-    _widget_class = FrequencyAttributeWidget
-
     def __init__(self, **kwargs):
         if 'min' not in kwargs:
             kwargs['min'] = 0
@@ -1002,6 +997,7 @@ class BasePropertyListProperty(BaseProperty):
 class FloatAttributeListProperty(BasePropertyListProperty, FloatProperty):
     pass
 
+
 class ComplexAttributeListProperty(BasePropertyListProperty, ComplexProperty):
     pass
 
@@ -1011,7 +1007,6 @@ class FloatListProperty(FloatProperty):
     An arbitrary length list of float numbers.
     """
     default = [0.]
-    _widget_class = ListFloatAttributeWidget
 
     def validate_and_normalize(self, obj, value):
         """
@@ -1029,7 +1024,6 @@ class ComplexListProperty(FloatListProperty):
     """
     An arbitrary length list of complex numbers.
     """
-    _widget_class = ListComplexAttributeWidget
 
     def validate_and_normalize_element(self, obj, val):
         val = complex(val)
