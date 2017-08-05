@@ -370,7 +370,7 @@ class NumberProperty(BaseProperty):
     def __init__(self,
                  min=-np.inf,
                  max=np.inf,
-                 increment=1,
+                 increment=0,
                  log_increment=False,  # if True, the widget has log increment
                  **kwargs):
         self.min = min
@@ -399,6 +399,19 @@ class IntProperty(NumberProperty):
         return NumberProperty.validate_and_normalize(self,
                                                      obj,
                                                      int(round(value)))
+
+
+    def __init__(self,
+                 min=-np.inf,
+                 max=np.inf,
+                 increment=1,
+                 log_increment=False,  # if True, the widget has log increment
+                 **kwargs):
+        super(IntProperty, self).__init__(min=min,
+                                          max=max,
+                                          increment=increment,
+                                          log_increment=log_increment,
+                                          **kwargs)
 
 
 class IntRegister(BaseRegister, IntProperty):

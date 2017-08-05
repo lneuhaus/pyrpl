@@ -31,7 +31,15 @@ class NumberSpinBox(QtGui.QWidget, object):
     value_changed = QtCore.pyqtSignal()
     # timeouts for updating values when mouse button / key is pessed
     change_interval = 0.04
-    change_initial_latency = 0.1 # 100 ms before starting to update continuously.
+    _change_initial_latency = 0.1 # 100 ms before starting to update continuously.
+    @property
+    def change_initial_latency(self):
+        """ latency for continuous update when a button is pressed """
+        # if sigleStep is zero, there is no need to wait for continuous update
+        if self.singleStep != 0:
+            return self._change_initial_latency
+        else:
+            return 0
 
     def forward_to_subspinboxes(func):
         """
@@ -164,6 +172,7 @@ class NumberSpinBox(QtGui.QWidget, object):
         font = QtGui.QFont("", 0)
         font_metric = QtGui.QFontMetrics(font)
         pixel_wide = font_metric.width("0"*self.max_num_letter)
+        self.line.setFixedWidth(pixel_wide)
 
     @property
     def max_num_letter(self):
@@ -276,7 +285,10 @@ class NumberSpinBox(QtGui.QWidget, object):
 
     def finish_step(self):
         self.change_timer.stop()
-        dt = time.time() - self.start_time
+        if hasattr(self, 'start_time'):
+            dt = time.time() - self.start_time
+        else:
+            dt = 0
         if dt > self.change_initial_latency:
             self.validate()  # make sure we validate if continue_step was on
 
@@ -285,16 +297,26 @@ class NumberSpinBox(QtGui.QWidget, object):
     def selected(self):
         return self.hasFocus()
 
+    def focusOutEvent(self, event):
+        self.value_changed.emit()
+        self.setStyleSheet("")
+
+    def focusInEvent(self, event):
+        self.value_changed.emit()
+        self.setStyleSheet("background-color:red")
+
 
 class IntSpinBox(NumberSpinBox):
     """
     Number spin box for integer values
     """
-    def __init__(self, label, min=-2**13, max=2**13, increment=1, **kwargs):
+    def __init__(self, label, min=-2**13, max=2**13, increment=1,
+                 per_second=10, **kwargs):
         super(IntSpinBox, self).__init__(label=label,
                                          min=min,
                                          max=max,
                                          increment=increment,
+                                         per_second=per_second,
                                          **kwargs)
 
     @property
@@ -312,7 +334,11 @@ class IntSpinBox(NumberSpinBox):
         """
         Maximum number of letters in line
         """
-        return int(np.abs(np.log10(self.maximum)))
+        return int(np.log10(np.abs(self.maximum))+1)
+
+    def setMaximum(self, val):  # imitates original QSpinBox API
+        super(IntSpinBox, self).setMaximum(val)
+        self.set_min_size()  # changes with maximum
 
 
 class FloatSpinBox(NumberSpinBox):
@@ -327,8 +353,6 @@ class FloatSpinBox(NumberSpinBox):
                                            max=max,
                                            increment=increment,
                                            **kwargs)
-        width_in_characters = 6.5 + self.decimals
-        self.setFixedWidth(width_in_characters*10)
 
     @property
     def val(self):
@@ -350,6 +374,7 @@ class FloatSpinBox(NumberSpinBox):
         """
         Returns the maximum number of letters
         """
+        # example: -1.123e-23 has 7+decimals(3) letters
         return self.decimals + 7
 
 
@@ -459,115 +484,9 @@ class ComplexSpinBox(FloatSpinBox):
 
     def set_log_increment(self, *args, **kwargs):
         self.real.set_log_increment(*args, **kwargs)
-        return self.imag.set_log_increment(*args, **kwargs)
-
-
-class OldComplexSpinBox(QtGui.QFrame):
-    """
-    Two spinboxes representing a complex number, with the right keyboard
-    shortcuts (up down for imag, left/right for real).
-    """
-    value_changed = QtCore.pyqtSignal()
-
-    def __init__(self, label, min=-2**13, max=2**13, increment=1,
-                 log_increment=False, halflife_seconds=0.5, decimals=4):
-        super(ComplexSpinBox, self).__init__()
-        self.max = max
-        self.min = min
-        self.decimals = decimals
-        self.increment = increment
-        self.log_increment = log_increment
-        self.halflife = halflife_seconds
-        self.label = label
-        self.lay = QtGui.QHBoxLayout()
-        self.lay.setContentsMargins(0, 0, 0, 0)
-        self.real = FloatSpinBox(label=label,
-                                 min=min,
-                                 max=max,
-                                 increment=increment,
-                                 log_increment=log_increment,
-                                 halflife_seconds=halflife_seconds,
-                                 decimals=decimals)
-        self.real.value_changed.connect(self.value_changed)
-        self.lay.addWidget(self.real)
-        self.label = QtGui.QLabel(" + j")
-        self.lay.addWidget(self.label)
-        self.imag = FloatSpinBox(label=label,
-                                 min=min,
-                                 max=max,
-                                 increment=increment,
-                                 log_increment=log_increment,
-                                 halflife_seconds=halflife_seconds,
-                                 decimals=decimals)
-        self.imag.value_changed.connect(self.value_changed)
-        self.lay.addWidget(self.imag)
-        self.setLayout(self.lay)
-        self.setFocusPolicy(QtCore.Qt.ClickFocus)
-        width_in_characters = 6.5 + self.decimals
-        self.real.setFixedWidth(width_in_characters*10)
-        self.imag.setFixedWidth(width_in_characters*10)
-
-    def keyPressEvent(self, event):
-        if not event.isAutoRepeat():
-            if event.key() == QtCore.Qt.Key_Up:
-                self.real._button_up_down = True
-                self.real.first_increment()
-            if event.key() == QtCore.Qt.Key_Down:
-                self.real._button_down_down = True
-                self.real.first_increment()
-            if event.key() == QtCore.Qt.Key_Right:
-                self.imag._button_up_down = True
-                self.imag.first_increment()
-            if event.key() == QtCore.Qt.Key_Left:
-                self.imag._button_down_down = True
-                self.imag.first_increment()
-        return super(ComplexSpinBox, self).keyPressEvent(event)
-
-    def keyReleaseEvent(self, event):
-        if not event.isAutoRepeat():
-            if event.key() == QtCore.Qt.Key_Up:
-                self.real._button_up_down = False
-                self.real.timer_arrow.stop()
-            if event.key() == QtCore.Qt.Key_Down:
-                self.real._button_down_down = False
-                self.real.timer_arrow.stop()
-            if event.key() == QtCore.Qt.Key_Right:
-                self.imag._button_up_down = False
-                self.imag.first_increment()
-            if event.key() == QtCore.Qt.Key_Left:
-                self.imag._button_down_down = False
-                self.imag.first_increment()
-
-        return super(ComplexSpinBox, self).keyReleaseEvent(event)
-
-    @property
-    def val(self):
-        return complex(self.real.val, self.imag.val)
-
-    @val.setter
-    def val(self, new_val):
-        self.real.val = np.real(new_val)
-        self.imag.val = np.imag(new_val)
-        return new_val
-
-    @property
-    def max_num_letter(self):
-        """
-        Maximum number of letters in line
-        """
-        return self.decimals + 7
-
-    def focusOutEvent(self, event):
-        self.value_changed.emit()
-        self.setStyleSheet("")
-
-    def focusInEvent(self, event):
-        self.value_changed.emit()
-        self.setStyleSheet("ComplexSpinBox{background-color:red;}")
-
-    @property
-    def selected(self):
-        return self.hasFocus()
+        self.imag.set_log_increment(*args, **kwargs)
+        self.imag.up.setText(u'\u2192')  # right arrow unicode symbol
+        self.imag.down.setText(u'\u2190')  # left arrow unicode symbol
 
 
 class ListSpinBox(QtGui.QFrame):

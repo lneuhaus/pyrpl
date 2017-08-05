@@ -186,8 +186,10 @@ class IIR(FilterModule):
 
     gain = FloatProperty(min=-1e20, max=1e20,
                          default=1.0,
-                         call_setup=True,
-                         log_increment=True)
+                         increment=1e-20,
+                         log_increment=True,
+                         call_setup=True
+                         )
 
     # obsolete
     # copydata = BoolRegister(0x104, 2,
