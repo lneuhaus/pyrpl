@@ -917,7 +917,7 @@ class AttributeList(list):
         self.__delitem__(self.index(value))
 
     def clear(self):
-        while len(self)>0:
+        while len(self) > 0:
             self.__delitem__()
 
     def copy(self):

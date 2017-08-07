@@ -45,16 +45,11 @@ class OverflowProperty(StringProperty):
 # IirFloatListProperty and IirComplexListProperty are for the real/complex
 # parts. These custom classes are intended to keep the master and slave in
 # synchrony.
-class IirListProperty(ComplexListProperty):
+class IirListProperty(FloatProperty):
     """
     master property to store zeros and poles
     """
-    def get_value(self, obj):
-        """
-        the master's getter collects its value from the real and complex list
-        """
-        return list(getattr(obj, 'complex_'+self.name) +
-                    getattr(obj, 'real_'+self.name))
+    default = []
 
     def set_value(self, obj, value):
         """
@@ -73,6 +68,27 @@ class IirListProperty(ComplexListProperty):
             setattr(obj, 'real_' + self.name, real)
         # this property should have call_setup=True, such that obj._setup()
         # is called automatically after this function
+
+    def get_value(self, obj):
+        """
+        the master's getter collects its value from the real and complex list
+        """
+        return list(getattr(obj, 'complex_'+self.name) + getattr(obj, 'real_'+self.name))
+
+    def validate_and_normalize(self, obj, value):
+        """
+        Converts the value in a list of float numbers.
+        """
+        if not np.iterable(value):
+            value = [value]
+        return [self.validate_and_normalize_element(obj, val) for val in value]
+
+    def validate_and_normalize_element(self, obj, val):
+        val = complex(val)
+        return val
+        re = super(IirListProperty, self).validate_and_normalize(obj, val.real)
+        im = super(IirListProperty, self).validate_and_normalize(obj, val.imag)
+        return complex(re, im)
 
 
 class IirFloatListProperty(FloatAttributeListProperty):
@@ -168,10 +184,10 @@ class IIR(FilterModule):
     # principal storage of the pole/zero data, _setup is called through
     # zeros/poles defined just below
     complex_poles = IirComplexListProperty(default=[],
-                                           default_element=-10000.0,
+                                           default_element=10000.0j-1000.0,
                                            log_increment=True)
     complex_zeros = IirComplexListProperty(default=[],
-                                           default_element=-10000.0,
+                                           default_element=10000.0j-1000.0,
                                            log_increment=True)
     real_poles = IirFloatListProperty(default=[],
                                       default_element=-10000.0,

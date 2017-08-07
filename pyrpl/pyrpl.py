@@ -291,7 +291,7 @@ class Pyrpl(object):
                 except BaseException as e:
                     self.logger.error('Something went wrong when loading the '
                                       'stored setup_attributes of module "%s". '
-                                      'If you do not know what this means, you should'
+                                      'If you do not know what this means, you should '
                                       'be able to fix this error by deleting the '
                                       'corresponding section "%s" in your config file %s. '
                                       'Error message: %s',
