@@ -286,17 +286,18 @@ class Pyrpl(object):
         # load all setup_attributes for modules that do not have an owner
         for module in self.software_modules + self.hardware_modules:
             if module.owner is None:
-                try:
-                    module._load_setup_attributes()  # **self.c[module.name])
-                except BaseException as e:
-                    self.logger.error('Something went wrong when loading the '
-                                      'stored setup_attributes of module "%s". '
-                                      'If you do not know what this means, you should '
-                                      'be able to fix this error by deleting the '
-                                      'corresponding section "%s" in your config file %s. '
-                                      'Error message: %s',
-                                      module.name, module.name, self.c._filename, e)
-                    raise e
+                module._load_setup_attributes()
+                # try:
+                #     module._load_setup_attributes()
+                # except BaseException as e:
+                #     self.logger.error('Something went wrong when loading the '
+                #                       'stored setup_attributes of module "%s". '
+                #                       'If you do not know what this means, you should '
+                #                       'be able to fix this error by deleting the '
+                #                       'corresponding section "%s" in your config file %s. '
+                #                       'Error message: %s',
+                #                       module.name, module.name, self.c._filename, e)
+                #     raise e
         # make the gui if applicable
         if self.c.pyrpl.gui:
             self.show_gui()

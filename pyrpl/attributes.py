@@ -1002,38 +1002,6 @@ class ComplexAttributeListProperty(BasePropertyListProperty, ComplexProperty):
     pass
 
 
-class FloatListProperty(FloatProperty):
-    """
-    An arbitrary length list of float numbers.
-    """
-    default = [0.]
-
-    def validate_and_normalize(self, obj, value):
-        """
-        Converts the value in a list of float numbers.
-        """
-        if not np.iterable(value):
-            value = [value]
-        return [self.validate_and_normalize_element(obj, val) for val in value]
-
-    def validate_and_normalize_element(self, obj, val):
-        return super(FloatListProperty, self).validate_and_normalize(obj, val)
-
-
-class ComplexListProperty(FloatListProperty):
-    """
-    An arbitrary length list of complex numbers.
-    """
-
-    def validate_and_normalize_element(self, obj, val):
-        val = complex(val)
-        re = super(ComplexListProperty, self).validate_and_normalize_element(
-            obj, val.real)
-        im = super(ComplexListProperty, self).validate_and_normalize_element(
-            obj, val.imag)
-        return complex(re, im)
-
-
 class PWMRegister(FloatRegister):
     """
     FloatRegister that defines the PWM voltage similar to setting a float.

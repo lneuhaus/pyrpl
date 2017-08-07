@@ -1,7 +1,7 @@
 from . import iir_theory #, bodefit
 from .. import FilterModule
-from ...attributes import IntRegister, BoolRegister, ComplexListProperty, \
-    FloatProperty, StringProperty, FloatListProperty, CurveSelectProperty, \
+from ...attributes import IntRegister, BoolRegister, ComplexProperty, \
+    FloatProperty, StringProperty, CurveSelectProperty, \
     GainRegister, ConstantIntRegister, FloatAttributeListProperty, \
     ComplexAttributeListProperty
 from ...widgets.module_widgets import IirWidget
@@ -45,7 +45,7 @@ class OverflowProperty(StringProperty):
 # IirFloatListProperty and IirComplexListProperty are for the real/complex
 # parts. These custom classes are intended to keep the master and slave in
 # synchrony.
-class IirListProperty(FloatProperty):
+class IirListProperty(ComplexProperty):
     """
     master property to store zeros and poles
     """
@@ -84,11 +84,7 @@ class IirListProperty(FloatProperty):
         return [self.validate_and_normalize_element(obj, val) for val in value]
 
     def validate_and_normalize_element(self, obj, val):
-        val = complex(val)
-        return val
-        re = super(IirListProperty, self).validate_and_normalize(obj, val.real)
-        im = super(IirListProperty, self).validate_and_normalize(obj, val.imag)
-        return complex(re, im)
+        return super(IirListProperty, self).validate_and_normalize(obj, val)
 
 
 class IirFloatListProperty(FloatAttributeListProperty):
@@ -103,13 +99,57 @@ class IirFloatListProperty(FloatAttributeListProperty):
         # forward value_updated to master
         getattr(obj.__class__, pole_or_zero).value_updated(obj)
 
+    def validate_and_normalize_element(self, obj, val):
+        """
+        makes sure that real poles are strictly positive. val=0 is turned into val=-1.
+        """
+        val = FloatAttributeListProperty.validate_and_normalize_element(self, obj, val)
+        pole_or_zero = self.name.split('_')[1]  # 2nd part of name is pole/zero
+        if val > 0 and pole_or_zero == 'pole':
+            obj._logger.warning('Real pole %s has a positive real part. '
+                                'This will lead to unstable behavior. '
+                                'The value was changed to %s. ',
+                                val, val*-1)
+            val *= -1
+        if val == 0:
+            obj._logger.warning('Real %s %s has a real part of zero. This will lead to '
+                                'unstable behavior. The value was changed to %s. ',
+                                pole_or_zero, val, -1)
+            val = -1
+        return val
+
 
 class IirComplexListProperty(IirFloatListProperty,
                              ComplexAttributeListProperty):
     """
     slave property to store complex part of zeros and poles
     """
-    pass
+    def validate_and_normalize_element(self, obj, val):
+        """
+        real part should be strictly negative. imaginary part is in principle arbitrary,
+        but will be kept positive for simplicity.
+        """
+        val = ComplexAttributeListProperty.validate_and_normalize_element(self, obj, val)
+        re = val.real
+        im = val.imag
+        pole_or_zero = self.name.split('_')[1]  # 2nd part of name is pole/zero
+        if re > 0 and pole_or_zero == 'pole':
+            re *= -1
+            obj._logger.warning('Real pole %s has a positive real part. '
+                                'This will lead to unstable behavior. '
+                                'The value was changed to %s. ',
+                                val, )
+        if re == 0:
+            re = -1
+            obj._logger.warning('Real %s %s has a real part of zero. This will lead to '
+                                'unstable behavior. The value was changed to %s. ',
+                                pole_or_zero, val, complex(re, im))
+        if im < 0:
+            im *= -1
+            obj._logger.info('Imaginary part of complex %s %s was inverted for simplicity. '
+                             'New value is %s.',
+                             pole_or_zero, val, complex(re, im))
+        return complex(re, im)
 
 
 class IIR(FilterModule):
