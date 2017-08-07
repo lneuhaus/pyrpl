@@ -303,10 +303,12 @@ class NumberSpinBox(QtGui.QWidget, object):
     def focusOutEvent(self, event):
         self.value_changed.emit()
         self.setStyleSheet("")
+        print("FocusIn, selected="+str(self.selected))
 
     def focusInEvent(self, event):
         self.value_changed.emit()
         self.setStyleSheet("background-color:red")
+        print("FocusIn, selected="+str(self.selected))
 
 
 class IntSpinBox(NumberSpinBox):
@@ -491,134 +493,4 @@ class ComplexSpinBox(FloatSpinBox):
         self.imag.up.setText(u'\u2192')  # right arrow unicode symbol
         self.imag.down.setText(u'\u2190')  # left arrow unicode symbol
 
-
-class ListSpinBox(QtGui.QFrame):
-    value_changed = QtCore.pyqtSignal()
-    SpinBox = FloatSpinBox
-
-    def __init__(self,
-                 label,
-                 min=-62.5e6,
-                 max=62.5e6,
-                 increment=1.,
-                 log_increment=True,
-                 halflife_seconds=1.,
-                 spinbox = None):
-        super(ListSpinBox, self).__init__()
-        if spinbox is not None:
-            self.SpinBox = spinbox
-        self.label = label
-        self.min = min
-        self.max = max
-        self.increment = increment
-        self.halflife_seconds = halflife_seconds
-        self.log_increment = log_increment
-        self.lay = QtGui.QVBoxLayout()
-        if label is not None:
-            self.label = QtGui.QLabel(self.name)
-            self.lay.addWidget(self.label)
-        self.spins = []
-        self.button_removes = []
-        self.spin_lays = []
-        #for i in range(number):
-        #    self.add_spin()
-        self.button_add = QtGui.QPushButton("+")
-        self.button_add.clicked.connect(self.add_spin_and_select)
-        self.lay.addWidget(self.button_add)
-        self.lay.addStretch(1)
-        self.lay.setContentsMargins(0,0,0,0)
-        self.setLayout(self.lay)
-        self.selected = None
-
-    def set_increment(self, val):
-        self.increment = val
-
-    def set_maximum(self, val):
-        self.max = val
-
-    def set_minimum(self, val):
-        self.min = val
-
-    def add_spin_and_select(self):
-        self.add_spin()
-        #self.spins[-1].val = -1e4 -1j*1e3
-        self.set_selected(-1)
-
-    def add_spin(self):
-        index = len(self.spins)
-        spin = self.SpinBox(label="",
-                            min=self.min,
-                            max=self.max,
-                            increment=self.increment,
-                            log_increment=self.log_increment,
-                            halflife_seconds=self.halflife_seconds,
-                            decimals=5)
-        self.spins.append(spin)
-        spin_lay = QtGui.QHBoxLayout()
-        self.spin_lays.append(spin_lay)
-        spin_lay.addWidget(spin)
-        button_remove = QtGui.QPushButton('-')
-        self.button_removes.append(button_remove)
-        spin_lay.addWidget(button_remove)
-        spin.value_changed.connect(self.value_changed)
-        button_remove.clicked.connect(functools.partial(self.remove_spin_and_emit, button=button_remove))
-        self.lay.insertLayout(index + 1*(self.label is not None), spin_lay) #QLabel occupies the first row
-        button_remove.setFixedWidth(3 * 10)
-
-    def remove_spin_and_emit(self, button):
-        self.remove_spin(button)
-        self.value_changed.emit()
-
-    def remove_spin(self, button):
-        index = self.button_removes.index(button)
-        button = self.button_removes.pop(index)
-        spin = self.spins.pop(index)
-        spin_lay = self.spin_lays.pop(index)
-        self.lay.removeItem(spin_lay)
-        spin.deleteLater()
-        button.deleteLater()
-        spin_lay.deleteLater()
-
-    def get_list(self):
-        return [spin.val for spin in self.spins]
-
-    def set_list(self, list_val):
-        for index, val in enumerate(list_val):
-            if index>=len(self.spins):
-                self.add_spin()
-            self.spins[index].val = val
-        to_delete = []
-        for other_index in range(len(list_val), len(self.spins)):
-            to_delete.append(self.button_removes[other_index]) # don't loop on a list that is
-                                                                                 # shrinking !
-        for button in to_delete:
-            self.remove_spin(button)
-
-    def editing(self):
-        edit = False
-        for spin in self.spins:
-            edit = edit or spin.editing()
-        return edit()
-
-    def set_selected(self, index):
-        if self.selected is not None:
-            self.spins[self.selected].setStyleSheet("")
-        self.spins[index].setFocus(True)
-        self.value_changed.emit()
-
-    def get_selected(self):
-        """
-        Returns the index of the selected value
-        """
-        for index, spin in enumerate(self.spins):
-            if spin.hasFocus():
-                return index
-
-
-class ListFloatSpinBox(ListSpinBox):
-    SpinBox = FloatSpinBox
-
-
-class ListComplexSpinBox(ListSpinBox):
-    SpinBox = ComplexSpinBox
 
