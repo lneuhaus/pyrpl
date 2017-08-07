@@ -57,36 +57,28 @@ class MyGraphicsWindow(pg.GraphicsWindow):
             self.x = 10 ** self.x  # takes logscale into account
 
     def mouse_clicked(self):
+        print self.x
+        # select nearest pole/zero with a simple click, even if something else is to happen after
+        if self.modifier == 0:
+            self.parent.module.select_pole_or_zero(self.x)
         default_damping = self.x/10.0
         if self.button == QtCore.Qt.LeftButton:
             if self.doubleclicked:
+                new = -default_damping - 1.j * self.x
                 if self.modifier == QtCore.Qt.CTRL:
-                    new = -default_damping - 1.j * self.x
-                    self.parent.module.complex_poles += [new]
-                    self.parent.parent.attribute_widgets['complex_poles'].set_selected(-1)
+                    self.parent.module.complex_poles.append(new)
                 if self.modifier == QtCore.Qt.SHIFT:
-                    self.parent.module.complex_zeros += [new]
-                    self.parent.parent.attribute_widgets['complex_zeros'].set_selected(-1)
-            else:
+                    self.parent.module.complex_zeros.append(new)
+            else:  # single click
                 new = -self.x
                 if self.modifier == 0:
-                    # select nearest pole/zero with a simple click
-                    type = 'pole'
-                    pole_or_zero = 'pole'
-                    value = -1001. - 1j*34
-                    self.parent.module._logger.info("Frequency: %.2e, "
-                                                    "%s at %s selected.",
-                                                    self.x,
-                                                    pole_or_zero,
-                                                    value)
+                    pass # see above
                 if self.modifier == QtCore.Qt.CTRL:
                     # make a new real pole
-                    self.parent.module.real_poles += [new]
-                    self.parent.parent.attribute_widgets['real_poles'].set_selected(-1)
+                    self.parent.module.real_poles.append(new)
                 if self.modifier == QtCore.Qt.SHIFT:
                     # make a new real zero
-                    self.parent.module.real_zeros += [new]
-                    self.parent.parent.attribute_widgets['real_zeros'].set_selected(-1)
+                    self.parent.module.real_zeros.append(new)
 
 
 class IirGraphWidget(QtWidgets.QGroupBox):
@@ -162,10 +154,10 @@ class IirGraphWidget(QtWidgets.QGroupBox):
         self.layout.addWidget(self.win)
         self.layout.addWidget(self.win_phase)
         # connect signals
-        self.plots['poles'].sigClicked.connect(self.parent.select_pole)
-        self.plots['poles_phase'].sigClicked.connect(self.parent.select_pole)
-        self.plots['zeros'].sigClicked.connect(self.parent.select_zero)
-        self.plots['zeros_phase'].sigClicked.connect(self.parent.select_zero)
+        #self.plots['poles'].sigClicked.connect(self.parent.select_pole)
+        #self.plots['poles_phase'].sigClicked.connect(self.parent.select_pole)
+        #self.plots['zeros'].sigClicked.connect(self.parent.select_zero)
+        #self.plots['zeros_phase'].sigClicked.connect(self.parent.select_zero)
 
 
 class IirButtonWidget(QtWidgets.QGroupBox):
@@ -311,7 +303,7 @@ class IirWidget(ModuleWidget):
                     freq = np.imag(freq)
                 freq = np.abs(freq)
                 tf = self.module.transfer_function(freq, **tfargs)
-                selected = aws[key].get_selected()
+                selected = aws[key].attribute_value.selected
                 brush = [pg.mkBrush(color='r')
                          if (num == selected)
                          else pg.mkBrush(color='b')

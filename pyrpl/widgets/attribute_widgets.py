@@ -154,7 +154,6 @@ class BaseAttributeWidget(QtGui.QWidget, object):
         """
         self.widget.setValue(new_value)
 
-
     def wheelEvent(self, event):
         """
         Handle mouse wheel event.
@@ -276,10 +275,8 @@ class ListElementWidget(BaseAttributeWidget):
         self.layout.addStretch(1)
         # this is very nice for debugging, but should probably be removed later
         setattr(self.module, '_'+self.attribute_name+'_widget', self.parent)
-        self.select()
 
     def remove_this_element(self):
-        self.unselect()
         self.parent.attribute_value.__delitem__(index=self.index)
 
     @property
@@ -297,26 +294,12 @@ class ListElementWidget(BaseAttributeWidget):
     def attribute_value(self, v):
         getattr(self.module, self.attribute_name)[self.index] = v
 
-    def select(self):
-        current = self.parent.selected
-        if current:
-            current.unselect()
-        self.parent.selected = self
-        self.setStyleSheet("%s{background-color:green;}"
-                           % self.__class__.__name__)
-
-    def unselect(self):
-        if self.parent.selected == self:
-            self.parent.selected = None
-        self.setStyleSheet("")
-
     def mousePressEvent(self, event):
-        self.select()
-        self.module._logger.warning('mouse pressed on %s[%d]. Selection: %s',
-                                     self.attribute_name, self.index,
-                                    self.parent.selected)
+        self.parent.attribute_value.selected = self.index
         return super(ListElementWidget, self).mousePressEvent(event)
 
+    def focusInEvent(self, QFocusEvent):
+        self.parent.attribute_value.selected = self.index
 
     # keyboard interface
     # def keyPressEvent(self, event):
@@ -368,6 +351,8 @@ class BasePropertyListPropertyWidget(BaseAttributeWidget):
             self.setitem(index, value)
         elif operation == "delitem":
             self.delitem(index)
+        elif operation == "select":
+            self.select(index)
         else:
             self.module._logger.error("%s.%s_widget.update_attribute_by_name "
                                       "was called with wrong arguments: %s",
@@ -438,23 +423,13 @@ class BasePropertyListPropertyWidget(BaseAttributeWidget):
             edit = edit or widget.editing()
         return edit
 
-    def editing(self):
-        return self.widget.editing()
-
-    @property
-    def selected(self):
-        return self._selected
-
-    @selected.setter
-    def selected(self, widget):
-        self._selected = widget
-        if self.selected is not None:
-            self.selected.setStyleSheet("")
-            self.selected.setFocus(True)
-        #self.value_changed.emit()
-
-    def get_selected(self):
-        return 0
+    def select(self, index):
+        for i, widget in enumerate(self.widgets):
+            if i == index:
+                widget.setStyleSheet("background-color: yellow")
+                widget.setFocus()
+            else:
+                widget.setStyleSheet("")
 
     @property
     def number(self):

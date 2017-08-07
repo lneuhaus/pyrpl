@@ -29,6 +29,7 @@ class NumberSpinBox(QtGui.QWidget, object):
     """
     MOUSE_WHEEL_ACTIVATED = False
     value_changed = QtCore.pyqtSignal()
+    selected = QtCore.pyqtSignal(list)
     # timeouts for updating values when mouse button / key is pessed
     change_interval = 0.02
     _change_initial_latency = 0.1 # 100 ms before starting to update continuously.
@@ -294,21 +295,6 @@ class NumberSpinBox(QtGui.QWidget, object):
             dt = 0
         if dt > self.change_initial_latency:
             self.validate()  # make sure we validate if continue_step was on
-
-    # properties needed for lists of floats
-    @property
-    def selected(self):
-        return self.hasFocus()
-
-    def focusOutEvent(self, event):
-        self.value_changed.emit()
-        self.setStyleSheet("")
-        print("FocusIn, selected="+str(self.selected))
-
-    def focusInEvent(self, event):
-        self.value_changed.emit()
-        self.setStyleSheet("background-color:red")
-        print("FocusIn, selected="+str(self.selected))
 
 
 class IntSpinBox(NumberSpinBox):

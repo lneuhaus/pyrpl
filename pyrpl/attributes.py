@@ -887,6 +887,7 @@ class AttributeList(list):
         new = self._parent.validate_and_normalize_element(self._module, new)
         super(AttributeList, self).insert(index, new)
         self._parent.list_changed(self._module, "insert", index, new)
+        self.selected = index
 
     def __setitem__(self, index, value):
         # rely on parent's validate_and_normalize function
@@ -894,8 +895,13 @@ class AttributeList(list):
         # set value
         super(AttributeList, self).__setitem__(index, value)
         self._parent.list_changed(self._module, "setitem", index, value)
+        self.selected = index
 
     def __delitem__(self, index=-1):
+        # unselect if selected
+        if self.selected == self._get_unique_index(index):
+            self.selected = None
+        # remove and send message
         super(AttributeList, self).pop(index)
         self._parent.list_changed(self._module, "delitem", index)
 
@@ -933,6 +939,32 @@ class AttributeList(list):
         reversed.reverse()
         for i, v in enumerate(reversed):
             self[i] = v
+
+    @property
+    def selected(self):
+        if not hasattr(self, '_selected'):
+            self._selected = None
+        return self._selected
+
+    @selected.setter
+    def selected(self, index):
+        old = self.selected
+        self._selected = self._get_unique_index(index)
+        if self._selected != old:  # avoid too many calls to list_changed
+            self._parent.list_changed(self._module, 'select', self.selected)
+
+    def _get_unique_index(self, index):
+        try:
+            return self.index(self[index])
+        except:
+            return None
+
+    def select(self, value):
+        """ selects the element with value, or None if it does not exist """
+        try:
+            self.selected = self.index(value)
+        except IndexError:
+            self.selected = None
 
 
 class BasePropertyListProperty(BaseProperty):

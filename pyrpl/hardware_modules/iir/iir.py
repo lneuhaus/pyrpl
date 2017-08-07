@@ -118,6 +118,22 @@ class IirFloatListProperty(FloatAttributeListProperty):
             val = -1
         return val
 
+    def list_changed(self, module, operation, index, value=None):
+        """ make sure that an element from one of the four lists is selected at once"""
+        if operation == 'select':
+            # unselect all others
+            if not hasattr(module, '_selecting') or not getattr(module, '_selecting'):
+                try:
+                    setattr(module, '_selecting', True)
+                    for name in [start+'_'+end for start in ['real', 'complex'] for end in ['poles', 'zeros']]:
+                        if name != self.name:
+                            getattr(module, name).selected = None
+                    #setattr(module, '_selected_pole_or_zero', self.name)
+                    #setattr(module, '_selected_index', index)
+                finally:
+                    setattr(module, '_selecting', False)
+        return super(IirFloatListProperty, self).list_changed(module, operation, index, value=value)
+
 
 class IirComplexListProperty(IirFloatListProperty,
                              ComplexAttributeListProperty):
@@ -676,3 +692,24 @@ class IIR(FilterModule):
         # delay = module_delay * 8e-9 / self._frequency_correction + extradelay
         # tf *= np.exp(-1j*delay*frequencies*2*np.pi)
         return tf
+
+    def select_pole_or_zero(self, value, search_in=[start+'_'+end
+                                                    for start in ['real', 'complex']
+                                                    for end in ['poles', 'zeros']]):
+        mindist = None
+        for name in search_in:
+            for element in getattr(self, name):
+                if name.startswith('complex'):
+                    # complex values are ordered by their imaginary part
+                    dist = abs(abs(element.imag) - abs(value.imag))
+                else:
+                    dist = abs(abs(element) - abs(value))
+                if mindist is None or dist < mindist:
+                    mindist = dist
+                    bestmatch = element
+                    bestname = name
+        if mindist is None:
+            # nothing found, select nothing
+            self.complex_poles.selected = None
+        else:
+            getattr(self, bestname).select(bestmatch)
