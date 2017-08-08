@@ -701,13 +701,15 @@ class IIR(FilterModule):
             for element in getattr(self, name):
                 if name.startswith('complex'):
                     # complex values are ordered by their imaginary part
-                    dist = abs(abs(element.imag) - abs(value.imag))
+                    dist = abs(abs(element.imag) - abs(value))
                 else:
                     dist = abs(abs(element) - abs(value))
                 if mindist is None or dist < mindist:
                     mindist = dist
                     bestmatch = element
                     bestname = name
+                print dist, mindist, element, value, name
+        print mindist, bestmatch, bestname
         if mindist is None:
             # nothing found, select nothing
             self.complex_poles.selected = None

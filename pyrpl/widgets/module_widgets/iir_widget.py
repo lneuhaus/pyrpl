@@ -34,6 +34,8 @@ class MyGraphicsWindow(pg.GraphicsWindow):
     def mousePressEvent(self, event):
         self.doubleclicked = False
         self.storeevent(event)
+        if self.modifier == 0:  # no extra button pressed
+            self.parent.module.select_pole_or_zero(self.x)
         if not self.mouse_clicked_timer.isActive():
             self.mouse_clicked_timer.start()
         return super(MyGraphicsWindow, self).mousePressEvent(event)
@@ -59,8 +61,6 @@ class MyGraphicsWindow(pg.GraphicsWindow):
     def mouse_clicked(self):
         print self.x
         # select nearest pole/zero with a simple click, even if something else is to happen after
-        if self.modifier == 0:
-            self.parent.module.select_pole_or_zero(self.x)
         default_damping = self.x/10.0
         if self.button == QtCore.Qt.LeftButton:
             if self.doubleclicked:
@@ -72,7 +72,7 @@ class MyGraphicsWindow(pg.GraphicsWindow):
             else:  # single click
                 new = -self.x
                 if self.modifier == 0:
-                    pass # see above
+                    pass # see above in mousePressEvent()
                 if self.modifier == QtCore.Qt.CTRL:
                     # make a new real pole
                     self.parent.module.real_poles.append(new)
