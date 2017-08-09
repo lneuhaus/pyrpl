@@ -34,7 +34,7 @@ class MyGraphicsWindow(pg.GraphicsWindow):
     def mousePressEvent(self, event):
         self.doubleclicked = False
         self.storeevent(event)
-        if self.modifier == 0:  # no extra button pressed
+        if self.button == QtCore.Qt.LeftButton and self.modifier == 0:  # left button, no key
             self.parent.module.select_pole_or_zero(self.x)
         if not self.mouse_clicked_timer.isActive():
             self.mouse_clicked_timer.start()
@@ -304,9 +304,9 @@ class IirWidget(ModuleWidget):
                 freq = np.abs(freq)
                 tf = self.module.transfer_function(freq, **tfargs)
                 selected = aws[key].attribute_value.selected
-                brush = [pg.mkBrush(color='r')
+                brush = [pg.mkBrush(color='b')
                          if (num == selected)
-                         else pg.mkBrush(color='b')
+                         else pg.mkBrush(color='y')
                          for num in range(aws[key].number)]
                 mag += [{'pos': (fr, val), 'data': i, 'brush': br}
                  for (i, (fr, val, br))

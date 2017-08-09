@@ -29,9 +29,10 @@
 #
 import numpy as np
 import pandas
-import pickle
 import os
 import logging
+import pickle as file_backend
+# import json as file_backend  # currently unable to store pandas
 
 
 # optional override of CurveDB class with custom module, as defined in
@@ -89,7 +90,6 @@ except:
                 raise ValueError("first arguments should be either x or x, y")
             obj = cls()
             obj.data = ser
-
             obj.params = kwds
             if not 'name' in obj.params:
                 obj.params['name'] = 'new_curve'
@@ -111,18 +111,18 @@ except:
             elif isinstance(curve, list):
                 return [CurveDB.get(c) for c in curve]
             else:
-                with open(os.path.join(CurveDB._dirname, str(curve) + '.p'), 'rb') as f:
+                with open(os.path.join(CurveDB._dirname, str(curve) + '.dat'), 'rb') as f:
                     # rb is for compatibility with python 3
                     # see http://stackoverflow.com/questions/5512811/builtins-typeerror-must-be-str-not-bytes
                     curve = CurveDB()
-                    curve._pk, curve.data, curve.params = pickle.load(f)
+                    curve._pk, curve.params, curve.data = file_backend.load(f)
                 return curve
 
         def save(self):
-            with open(os.path.join(self._dirname, str(self.pk) + '.p'), 'wb') as f:
+            with open(os.path.join(self._dirname, str(self.pk) + '.dat'), 'wb') as f:
                 # wb is for compatibility with python 3
                 # see http://stackoverflow.com/questions/5512811/builtins-typeerror-must-be-str-not-bytes
-                pickle.dump((self.pk, self.data, self.params), f)
+                file_backend.dump([self.pk, self.params, self.data], f)
 
         def delete(self):
             # remove the file
@@ -175,8 +175,8 @@ except:
 
         @classmethod
         def all(cls):
-            pks = [int(f.split('.p')[0])
-                   for f in os.listdir(cls._dirname) if f.endswith('.p')]
+            pks = [int(f.split('.dat')[0])
+                   for f in os.listdir(cls._dirname) if f.endswith('.dat')]
             return sorted(pks, reverse=True)
 
         @property
@@ -191,7 +191,7 @@ except:
                     self._pk = max(pks) + 1
                 # create the file to make this pk choice persistent
                 with open(os.path.join(self._dirname,
-                                       str(self._pk) + ".p"), 'w') as f:
+                                       str(self._pk) + ".dat"), 'w') as f:
                     f.close()
                 return self._pk
             return -1
