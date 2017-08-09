@@ -374,8 +374,6 @@ class BasePropertyListPropertyWidget(BaseAttributeWidget):
             insert_before = self.widgets[index+1]
         self.widget_layout.insertWidget(self.widget_layout.indexOf(insert_before),
                                         element_widget)
-        self.module._logger.warning("insert %s, index %s, new %s"%(
-            self.attribute_value, index, value))
         self.update_widget_names()
 
     def setitem(self, index, value):
@@ -390,6 +388,14 @@ class BasePropertyListPropertyWidget(BaseAttributeWidget):
         widget.deleteLater()
         self.update_widget_names()
         self.module._logger.error('delitem concluded')
+
+    def select(self, index):
+        for i, widget in enumerate(self.widgets):
+            if i == index:
+                widget.setStyleSheet("background-color: yellow")
+                widget.setFocus()
+            else:
+                widget.setStyleSheet("")
 
     def update_widget_names(self):
         for widget in self.widgets:
@@ -415,14 +421,6 @@ class BasePropertyListPropertyWidget(BaseAttributeWidget):
         for widget in self.widgets:
             edit = edit or widget.editing()
         return edit
-
-    def select(self, index):
-        for i, widget in enumerate(self.widgets):
-            if i == index:
-                widget.setStyleSheet("background-color: yellow")
-                widget.setFocus()
-            else:
-                widget.setStyleSheet("")
 
     @property
     def number(self):

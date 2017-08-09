@@ -950,7 +950,6 @@ class AttributeList(list):
     def selected(self, index):
         old = self.selected
         self._selected = self._get_unique_index(index)
-        #if self._selected != old:  # avoid too many calls to list_changed
         self._parent.list_changed(self._module, 'select', self.selected)
 
     def _get_unique_index(self, index):

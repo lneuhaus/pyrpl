@@ -517,7 +517,7 @@ class IirFilter(object):
                            "Minimum of %s is needed! ", loops, actloops)
             loops = actloops
         if loops > maxloops:
-            logger.warning("Maximum loops number is %s. This value "
+            logger.info("Maximum loops number is %s. This value "
                            "will be tried instead of specified value "
                            "%s.", maxloops, loops)
             loops = maxloops
@@ -527,9 +527,9 @@ class IirFilter(object):
         extrapole = -125e6 / loops / 2
         while len(zeros) > len(poles):
             poles.append(extrapole)
-            logger.warning("Specified IIR transfer function was not "
-                           "proper. Automatically added a pole at %s Hz.",
-                           extrapole)
+            logger.debug("Specified IIR transfer function was not "
+                         "proper. Automatically added a pole at %s Hz.",
+                         extrapole)
             # if more poles must be added, make sure we have no 2 poles at the
             # same frequency
             extrapole /= 2

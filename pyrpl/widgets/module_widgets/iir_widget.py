@@ -59,7 +59,6 @@ class MyGraphicsWindow(pg.GraphicsWindow):
             self.x = 10 ** self.x  # takes logscale into account
 
     def mouse_clicked(self):
-        print self.x
         # select nearest pole/zero with a simple click, even if something else is to happen after
         default_damping = self.x/10.0
         if self.button == QtCore.Qt.LeftButton:

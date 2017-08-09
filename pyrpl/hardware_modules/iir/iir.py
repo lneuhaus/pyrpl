@@ -20,7 +20,7 @@ class OverflowProperty(StringProperty):
         value = obj.overflow_bitfield
         if value == 0:
             text = 'no overflow'
-        if bool(value & 0b1111111):
+        elif bool(value & 0b1111111):
             text = "sum and internal saturation"
         elif bool(value & 0b1000000):
             text = 'sum saturation'
@@ -128,8 +128,8 @@ class IirFloatListProperty(FloatAttributeListProperty):
                     for name in [start+'_'+end for start in ['real', 'complex'] for end in ['poles', 'zeros']]:
                         if name != self.name:
                             getattr(module, name).selected = None
-                    #setattr(module, '_selected_pole_or_zero', self.name)
-                    #setattr(module, '_selected_index', index)
+                    setattr(module, '_selected_pole_or_zero', self.name)
+                    setattr(module, '_selected_index', index)
                 finally:
                     setattr(module, '_selecting', False)
         return super(IirFloatListProperty, self).list_changed(module, operation, index, value=value)
@@ -204,6 +204,7 @@ class IIR(FilterModule):
                          "on",
                          "bypass",
                          "data_curve"]
+
     _gui_attributes = ["input",
                        "loops",
                        "complex_zeros",
@@ -218,12 +219,13 @@ class IIR(FilterModule):
                        "overflow",
                        "data_curve",
                        # for debugging
-                       "_setup_unity",
-                       "_setup_zero"]
+                       #"_setup_unity",
+                       #"_setup_zero"
+                       ]
 
     loops = IntRegister(0x100,
                         doc="Decimation factor of IIR w.r.t. 125 MHz. Must be "
-                            "at least 3-5. ",
+                            "at least %d. " % _minloops,
                         default=_minloops,
                         min=_minloops,
                         max=_maxloops,
@@ -446,7 +448,7 @@ class IIR(FilterModule):
             self.loops = self.iirfilter.loops
             # write to the coefficients register
             self.coefficients = self.iirfilter.coefficients
-            self._logger.info("Filter sampling frequency is %.3s MHz",
+            self._logger.debug("Filter sampling frequency is %.3s MHz",
                               1e-6 / self.sampling_time)
             # low-pass filter the input signal with a first order filter with
             # cutoff near the sampling rate - decreases aliasing and achieves
@@ -457,7 +459,7 @@ class IIR(FilterModule):
             #else:
             #    self.inputfilter = inputfilter
             self.iirfilter.inputfilter = self.inputfilter  # update model
-            self._logger.info("IIR anti-aliasing input filter set to: %s MHz",
+            self._logger.debug("IIR anti-aliasing input filter set to: %s MHz",
                               self.iirfilter.inputfilter * 1e-6)
             # connect the module
             #if input is not None:
@@ -466,7 +468,7 @@ class IIR(FilterModule):
             #    self.output_direct = output_direct
             # switch it on only once everything is set up
             self.on = True ### wsa turnon before...
-            self._logger.info("IIR filter ready")
+            self._logger.debug("IIR filter ready")
             # compute design error
             dev = (np.abs((self.coefficients[0:len(self.iirfilter.coefficients)] -
                            self.iirfilter.coefficients).flatten()))
@@ -477,133 +479,16 @@ class IIR(FilterModule):
                     "Maximum deviation from design coefficients: %.4g "
                     "(relative: %.4g)", maxdev, reldev)
             else:
-                self._logger.info("Maximum deviation from design coefficients: "
-                                  "%.4g (relative: %.4g)", maxdev, reldev)
+                self._logger.debug("Maximum deviation from design coefficients: "
+                                   "%.4g (relative: %.4g)", maxdev, reldev)
             if bool(self.overflow_bitfield):
                 self._logger.warning("IIR Overflow detected. Pattern: %s",
                                      bin(self.overflow_bitfield))
             else:
-                self._logger.info("IIR Overflow pattern: %s",
-                                  bin(self.overflow_bitfield))
+                self._logger.debug("IIR Overflow pattern: %s",
+                                   bin(self.overflow_bitfield))
+            print reldev
             self._signal_launcher.update_plot.emit()
-
-
-    def setup_old(
-            self,
-            zeros,
-            poles,
-            gain=1.0,
-            input=None,
-            output_direct=None,
-            loops=None,
-            plot=False,
-            designdata=False,
-            turn_on=True,
-            inputfilter=0,  # disabled by default
-            tol=1e-3,
-            prewarp=True):
-        """Setup an IIR filter
-
-        the transfer function of the filter will be (k ensures DC-gain = g):
-
-                  (s-2*pi*z[0])*(s-2*pi*z[1])...
-        H(s) = k*-------------------
-                  (s-2*pi*p[0])*(s-2*pi*p[1])...
-
-        parameters
-        --------------------------------------------------
-        zeros:         list of zeros in the complex plane, maximum 16
-        poles:         list of zeros in the complex plane, maxumum 16
-        gain:          DC-gain
-        input:         input signal
-        output_direct: send directly to an analog output?
-        loops:         clock cycles per loop of the filter. must be at least 3
-                       and at most 255. set None for autosetting loops
-        turn_on:       automatically turn on the filter after setup
-        plot:          if True, plots the theoretical and implemented transfer
-                       functions
-        designdata:    if True, returns various design transfer functions in a
-                       format that can be passed to iir.bodeplot
-        inputfilter:   the bandwidth of the input filter for anti-aliasing.
-                       If None, it is set to the sampling frequency.
-        tol:           tolerance for matching conjugate poles or zeros into
-                       pairs, 1e-3 is okay
-        prewarp:       Enables prewarping of frequencies. Strongly recommended.
-
-        returns
-        --------------------------------------------------
-        coefficients   data to be passed to iir.bodeplot to plot the
-                       realized transfer function
-        """
-        if self._IIRSTAGES == 0:
-            raise Exception("Error: This FPGA bitfile does not support IIR "
-                            "filters! Please use an IIR version!")
-        self.on = False
-        self.bypass = False
-        # design the filter
-        self.iirfilter = iir_theory.IirFilter(zeros=zeros,
-                                              poles=poles,
-                                              gain=gain,
-                                              loops=loops,
-                                              dt=8e-9 * self._frequency_correction,
-                                              minloops=self._minloops,
-                                              maxloops=self._maxloops,
-                                              iirstages=self._IIRSTAGES,
-                                              totalbits=self._IIRBITS,
-                                              shiftbits=self._IIRSHIFT,
-                                              inputfilter=0,
-                                              moduledelay=self._delay)
-        # set loops in fpga
-        self.loops = self.iirfilter.loops
-        # write to the coefficients register
-        self.coefficients = self.iirfilter.coefficients
-        self._logger.info("Filter sampling frequency is %.3s MHz",
-                          1e-6 / self.sampling_time)
-        # low-pass filter the input signal with a first order filter with
-        # cutoff near the sampling rate - decreases aliasing and achieves
-        # higher internal data precision (3 extra bits) through averaging
-        if inputfilter is None:
-            self.inputfilter = 125e6 * self._frequency_correction / self.loops
-        else:
-            self.inputfilter = inputfilter
-        self.iirfilter.inputfilter = self.inputfilter  # update model
-        self._logger.info("IIR anti-aliasing input filter set to: %s MHz",
-                          self.iirfilter.inputfilter * 1e-6)
-        # connect the module
-        if input is not None:
-            self.input = input
-        if output_direct is not None:
-            self.output_direct = output_direct
-        # switch it on only once everything is set up
-        self.on = turn_on
-        self._logger.info("IIR filter ready")
-        # compute design error
-        dev = (np.abs((self.coefficients[0:len(self.iirfilter.coefficients)] -
-                       self.iirfilter.coefficients).flatten()))
-        maxdev = max(dev)
-        reldev = maxdev / \
-                 abs(self.iirfilter.coefficients.flatten()[np.argmax(dev)])
-        if reldev > 0.05:
-            self._logger.warning(
-                "Maximum deviation from design coefficients: %.4g "
-                "(relative: %.4g)", maxdev, reldev)
-        else:
-            self._logger.info("Maximum deviation from design coefficients: "
-                              "%.4g (relative: %.4g)", maxdev, reldev)
-        if bool(self.overflow_bitfield):
-            self._logger.warning("IIR Overflow detected. Pattern: %s",
-                                 bin(self.overflow_bitfield))
-        else:
-            self._logger.info("IIR Overflow pattern: %s", bin(self.overflow_bitfield))
-        if designdata or plot:
-            maxf = 125e6 / self.loops
-            fs = np.linspace(maxf / 1000, maxf, 2001, endpoint=True)
-            designdata = self.iirfilter.designdata
-            if plot:
-                iir_theory.bodeplot(designdata, xlog=True)
-            return designdata
-        else:
-            return None
 
     @property
     def sampling_time(self):
@@ -693,23 +578,35 @@ class IIR(FilterModule):
         # tf *= np.exp(-1j*delay*frequencies*2*np.pi)
         return tf
 
-    def select_pole_or_zero(self, value, search_in=[start+'_'+end
-                                                    for start in ['real', 'complex']
-                                                    for end in ['poles', 'zeros']]):
+    def select_pole_or_zero(self, value, logdist=True,
+                            search_in=[start+'_'+end
+                                       for start in ['real', 'complex']
+                                       for end in ['poles', 'zeros']]):
+        """
+        selects the pole or zero closest to value
+
+        logdist=True computes the distance in logarithmic units
+        search_in may be used to restrict the search to certain sublists
+        """
         mindist = None
         for name in search_in:
             for element in getattr(self, name):
                 if name.startswith('complex'):
                     # complex values are ordered by their imaginary part
-                    dist = abs(abs(element.imag) - abs(value))
+                    elementvalue = element.imag
                 else:
-                    dist = abs(abs(element) - abs(value))
+                    elementvalue = element
+                if logdist:
+                    dist = abs(abs(value)/abs(elementvalue))
+                    if dist < 1.0:
+                        dist = 1.0/dist
+                else:
+                    dist = abs(abs(value)-abs(elementvalue))
+                # extract element with minimum distance
                 if mindist is None or dist < mindist:
                     mindist = dist
                     bestmatch = element
                     bestname = name
-                print dist, mindist, element, value, name
-        print mindist, bestmatch, bestname
         if mindist is None:
             # nothing found, select nothing
             self.complex_poles.selected = None
