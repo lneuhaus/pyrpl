@@ -28,9 +28,5 @@ class ExpectedPyrplError(Exception):
         self.message = message + self.pyrpl_error_message
         super(ExpectedPyrplError, self).__init__(self.message, *args)
 
-
-class TimeoutError(ValueError):
-    pass
-
 class NotReadyError(ValueError):
     pass

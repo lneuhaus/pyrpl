@@ -1,6 +1,6 @@
 from .. import *
 from .interferometer import Interferometer
-from ....errors import TimeoutError
+from ....async_utils import TimeoutError
 
 class Lorentz(object):
     """ base class for Lorentzian-like signals"""
