@@ -28,6 +28,9 @@ from .pyrpl_utils import time
 import logging
 logger = logging.getLogger(name=__name__)
 
+
+class UnexpectedSaveError(RuntimeError):
+    pass
 # the config file is read through a yaml interface. The preferred one is
 # ruamel.yaml, since it allows to preserve comments and whitespace in the
 # config file through roundtrips (the config file is rewritten every time a
@@ -313,7 +316,7 @@ class MemoryBranch(object):
         #otherwise just write to the data dictionary
         else:
             self._set_data(item, value)
-        if self._root._DEBUG_SAVE:
+        if self._root._WARNING_ON_SAVE or self._root._ERROR_ON_SAVE:
             logger.warning("Issuing call to MemoryTree._save after %s.%s=%s",
                            self._branch, item, value)
         self._save()
@@ -477,7 +480,10 @@ class MemoryTree(MemoryBranch):
     # to overwrite the property _data of MemoryBranch
     _data = None
 
-    _DEBUG_SAVE = False  # flag that is used to debug excessive calls to save
+    _WARNING_ON_SAVE = False  # flag that is used to debug excessive calls to
+    # save
+    _ERROR_ON_SAVE = False # Set this flag to true to raise
+        # Exceptions upon save
 
     def __init__(self, filename=None, source=None, _loadsavedeadtime=3.0):
         # never reload or save more frequently than _loadsavedeadtime because
@@ -495,9 +501,12 @@ class MemoryTree(MemoryBranch):
             self._savetimer = QtCore.QTimer()
             self._savetimer.setInterval(self._loadsavedeadtime*1000)
             self._savetimer.setSingleShot(True)
-            self._savetimer.timeout.connect(lambda: self._save(deadtime=0))
+            self._savetimer.timeout.connect(self._save_without_counter)
         self._load()
-        self._save_counter = 0 # cntr for unittest and debug purposes
+
+        self._save_requested_counter = 0 # cntr for unittest and debug purposes
+        self._save_to_file_counter = 0  # cntr for unittest and debug purposes
+
         # root of the tree is also a MemoryBranch with parent self and
         # branch name ""
         super(MemoryTree, self).__init__(self, "")
@@ -535,7 +544,7 @@ class MemoryTree(MemoryBranch):
         self.__dict__.update(self._data)
 
     def _reload(self):
-        """" reloads data from file if file has changed recently """
+        """reloads data from file if file has changed recently """
         # first check if a reload was not performed recently (speed up reasons)
         if self._filename is None:
             return
@@ -551,42 +560,51 @@ class MemoryTree(MemoryBranch):
             else:
                 logger.debug("... no reloading required")
 
+    def _save_without_counter(self):
+        self._lastsave = time()
+        self._save_to_file_counter += 1
+
+        if self._mtime != os.path.getmtime(self._filename):
+            logger.warning("Config file has recently been changed on your " +
+                           "harddisk. These changes might have been " +
+                           "overwritten now.")
+        logger.debug("Saving config file %s", self._filename)
+        # we must be sure that overwriting config file never destroys existing data.
+        # security 1: backup with copyfile above
+        copyfile(self._filename,
+                 self._filename + ".bak")  # maybe this line is obsolete (see below)
+        # security 2: atomic writing such as shown in
+        # http://stackoverflow.com/questions/2333872/atomic-writing-to-file-with-python:
+        try:
+            f = open(self._buffer_filename, mode='w')
+            save(self._data, stream=f)
+            f.flush()
+            os.fsync(f.fileno())
+            f.close()
+            os.unlink(self._filename)
+            os.rename(self._buffer_filename, self._filename)
+        except:
+            copyfile(self._filename + ".bak", self._filename)
+            logger.error("Error writing to file. Backup version was restored.")
+            raise
+        # save last modification time of the file
+        self._mtime = os.path.getmtime(self._filename)
+
     def _save(self, deadtime=None):
-        self._save_counter+=1  # for unittest and debug purposes
-        if self._DEBUG_SAVE:
+        if self._ERROR_ON_SAVE:
+            raise UnexpectedSaveError("Save to config file should not "
+                                      "happen now")
+        if self._WARNING_ON_SAVE:
             logger.warning("Save counter has just been increased to %d.",
                            self._save_counter)
+        self._save_requested_counter += 1  # for unittest and debug purposes
         if deadtime is None:
             deadtime = self._loadsavedeadtime
         """ writes current tree structure and data to file """
         if self._filename is None:
             return
         if self._lastsave + deadtime < time():
-            self._lastsave = time()
-            if self._mtime != os.path.getmtime(self._filename):
-                logger.warning("Config file has recently been changed on your " +
-                               "harddisk. These changes might have been " +
-                               "overwritten now.")
-            logger.debug("Saving config file %s", self._filename)
-            # we must be sure that overwriting config file never destroys existing data.
-            # security 1: backup with copyfile above
-            copyfile(self._filename, self._filename+".bak")  # maybe this line is obsolete (see below)
-            # security 2: atomic writing such as shown in
-            # http://stackoverflow.com/questions/2333872/atomic-writing-to-file-with-python:
-            try:
-                f = open(self._buffer_filename, mode='w')
-                save(self._data, stream=f)
-                f.flush()
-                os.fsync(f.fileno())
-                f.close()
-                os.unlink(self._filename)
-                os.rename(self._buffer_filename, self._filename)
-            except:
-                copyfile(self._filename+".bak", self._filename)
-                logger.error("Error writing to file. Backup version was restored.")
-                raise
-            # save last modification time of the file
-            self._mtime = os.path.getmtime(self._filename)
+            self._save_without_counter()
         else:
             # make sure saving will eventually occur by launching a timer
             if not self._savetimer.isActive():
