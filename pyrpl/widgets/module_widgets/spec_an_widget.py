@@ -10,6 +10,7 @@ import numpy as np
 from .base_module_widget import ModuleWidget
 from ..attribute_widgets import DataWidget
 from ...errors import NotReadyError
+from .acquisition_module_widget import AcquisitionModuleWidget
 
 
 class BasebandAttributesWidget(QtWidgets.QWidget):
@@ -84,7 +85,8 @@ class OtherAttributesWidget(QtWidgets.QWidget):
             specan_widget.attribute_layout.removeWidget(widget)
             self.v_layout3.addWidget(widget)
 
-class SpecAnWidget(ModuleWidget):
+
+class SpecAnWidget(AcquisitionModuleWidget):
     _display_max_frequency = 25  # max 25 Hz framerate
     def init_gui(self):
         """
@@ -125,29 +127,10 @@ class SpecAnWidget(ModuleWidget):
         #self.curve_cross = self.plot_item.plot(pen=self.ch_col[2][0]) #
         # curve for
 
-        self.button_single = QtWidgets.QPushButton("Run single")
-        self.button_single.clicked.connect(self.run_single_clicked)
 
-        self.button_continuous = QtWidgets.QPushButton("Run continuous")
-        self.button_continuous.clicked.connect(self.run_continuous_clicked)
-
-        self.button_restart_averaging = QtWidgets.QPushButton('Restart averaging')
-        self.button_restart_averaging.clicked.connect(self.module.stop)
-
-        self.button_save = QtWidgets.QPushButton("Save curve")
-        self.button_save.clicked.connect(self.module.save_curve)
+        super(SpecAnWidget, self).init_gui()
 
         aws = self.attribute_widgets
-        self.attribute_layout.removeWidget(aws["trace_average"])
-        self.attribute_layout.removeWidget(aws["curve_name"])
-
-        self.button_layout.addWidget(aws["trace_average"])
-        self.button_layout.addWidget(aws["curve_name"])
-        self.button_layout.addWidget(self.button_single)
-        self.button_layout.addWidget(self.button_continuous)
-        self.button_layout.addWidget(self.button_restart_averaging)
-        self.button_layout.addWidget(self.button_save)
-        self.main_layout.addLayout(self.button_layout)
 
 
         aws['display_input1_baseband'].setStyleSheet("color: %s" %
@@ -158,10 +141,8 @@ class SpecAnWidget(ModuleWidget):
                                                    self.ch_col[2])
         # Not sure why the stretch factors in button_layout are not good by
         # default...
-        self.button_layout.setStretchFactor(self.button_single, 1)
-        self.button_layout.setStretchFactor(self.button_continuous, 1)
-        self.button_layout.setStretchFactor(self.button_restart_averaging, 1)
-        self.button_layout.setStretchFactor(self.button_save, 1)
+
+        self.attribute_layout.addStretch(1)
         self.update_baseband_visibility()
 
     def update_attribute_by_name(self, name, new_value_list):
@@ -175,31 +156,6 @@ class SpecAnWidget(ModuleWidget):
         self.baseband_widget.setEnabled(self.module.baseband)
         self.iqmode_widget.setEnabled(not self.module.baseband)
 
-    def update_running_buttons(self):
-        """
-        Change text of Run continuous button and visibility of run single button
-        according to module.running_continuous
-        """
-        if self.module.current_avg>0:
-            number_str = ' (' + str(self.module.current_avg) + ")"
-        else:
-            number_str = ""
-        if self.module.running_state == 'running_continuous':
-            if self.module.current_avg >= self.module.trace_average:
-                # shows a plus sign when number of averages is available
-                number_str = number_str[:-1] + '+)'
-            self.button_continuous.setText("Pause" + number_str)
-            self.button_single.setText("Run single")
-            self.button_single.setEnabled(False)
-        else:
-            if self.module.running_state == "running_single":
-                self.button_continuous.setText("Run continuous")
-                self.button_single.setText("Stop" + number_str)
-                self.button_single.setEnabled(True)
-            else:
-                self.button_continuous.setText("Run continuous" + number_str)
-                self.button_single.setText("Run single")
-                self.button_single.setEnabled(True)
 
     #### def update_rbw_visibility(self):
     ####     self.attribute_widgets["rbw"].widget.setEnabled(not
@@ -260,6 +216,7 @@ class SpecAnWidget(ModuleWidget):
             data = (spec1, spec2, cross)
             self.win2._set_widget_value((freqs, data),
                                         transform_magnitude=to_units)
+        self.update_current_average()
 
     def display_curve_old(self, datas):
         """
