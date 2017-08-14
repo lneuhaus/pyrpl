@@ -128,11 +128,15 @@ class IirFloatListProperty(FloatAttributeListProperty):
                     for name in [start+'_'+end for start in ['real', 'complex'] for end in ['poles', 'zeros']]:
                         if name != self.name:
                             getattr(module, name).selected = None
+                            module._logger.info('%s.selected = None', name)
                     setattr(module, '_selected_pole_or_zero', self.name)
                     setattr(module, '_selected_index', index)
                 finally:
                     setattr(module, '_selecting', False)
-        return super(IirFloatListProperty, self).list_changed(module, operation, index, value=value)
+                super(IirFloatListProperty, self).list_changed(module, operation, index, value=value)
+                module._signal_launcher.update_plot.emit()
+        else:
+            super(IirFloatListProperty, self).list_changed(module, operation, index, value=value)
 
 
 class IirComplexListProperty(IirFloatListProperty,
@@ -487,7 +491,7 @@ class IIR(FilterModule):
             else:
                 self._logger.debug("IIR Overflow pattern: %s",
                                    bin(self.overflow_bitfield))
-            print reldev
+            print(reldev)
             self._signal_launcher.update_plot.emit()
 
     @property

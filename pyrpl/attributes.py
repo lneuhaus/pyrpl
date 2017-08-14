@@ -126,6 +126,7 @@ class BaseProperty(BaseAttribute):
                 self.save_attribute(module, value)
         if self.call_setup and not module._setup_ongoing:
             # call setup unless a bunch of attributes are being changed together.
+            module._logger.info('Calling setup() for %s.%s ...', module.name, self.name)
             module.setup()
         return value
 
@@ -905,6 +906,31 @@ class AttributeList(list):
         super(AttributeList, self).pop(index)
         self._parent.list_changed(self._module, "delitem", index)
 
+    @property
+    def selected(self):
+        if not hasattr(self, '_selected'):
+            self._selected = None
+        return self._selected
+
+    @selected.setter
+    def selected(self, index):
+        # old = self.selected
+        self._selected = self._get_unique_index(index)
+        self._parent.list_changed(self._module, 'select', self.selected)
+
+    def _get_unique_index(self, index):
+        try:
+            return self.index(self[index])
+        except:
+            return None
+
+    def select(self, value):
+        """ selects the element with value, or None if it does not exist """
+        try:
+            self.selected = self.index(value)
+        except IndexError:
+            self.selected = None
+
     # other convenience functions that are based on above axioms
     def append(self, new=None):
         self.insert(self.__len__(), new)
@@ -939,31 +965,6 @@ class AttributeList(list):
         reversed.reverse()
         for i, v in enumerate(reversed):
             self[i] = v
-
-    @property
-    def selected(self):
-        if not hasattr(self, '_selected'):
-            self._selected = None
-        return self._selected
-
-    @selected.setter
-    def selected(self, index):
-        old = self.selected
-        self._selected = self._get_unique_index(index)
-        self._parent.list_changed(self._module, 'select', self.selected)
-
-    def _get_unique_index(self, index):
-        try:
-            return self.index(self[index])
-        except:
-            return None
-
-    def select(self, value):
-        """ selects the element with value, or None if it does not exist """
-        try:
-            self.selected = self.index(value)
-        except IndexError:
-            self.selected = None
 
 
 class BasePropertyListProperty(BaseProperty):
@@ -1022,7 +1023,15 @@ class BasePropertyListProperty(BaseProperty):
             self.call_setup = call_setup
 
     def list_changed(self, module, operation, index, value=None):
-        self.value_updated(module, appendix=[operation, index, value])
+        if operation == 'selecti':
+            # only launch signal in this case, do not call setup
+            # value can be None in this case, as it is not used
+            if value is None:
+                value = self.get_value(module)
+            self.launch_signal(module, value, appendix=[operation, index, value])
+        else:
+            # launches signal and calls setup()
+            self.value_updated(module, appendix=[operation, index, value])
 
 
 class FloatAttributeListProperty(BasePropertyListProperty, FloatProperty):

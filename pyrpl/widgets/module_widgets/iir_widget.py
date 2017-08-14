@@ -79,6 +79,25 @@ class MyGraphicsWindow(pg.GraphicsWindow):
                     # make a new real zero
                     self.parent.module.real_zeros.append(new)
 
+    def keyPressEvent(self, event):
+        """ not working properly yet"""
+        try:
+            name = self.parent.module._selected_pole_or_zero
+            index = self.parent.module._selected_index
+            return self.parent.parent.attribute_widgets[name].widgets[index].keyPressEvent(event)
+        except:
+            return super(MyGraphicsWindow, self).keyPressEvent(event)
+
+    def keyReleaseEvent(self, event):
+        """ not working properly yet"""
+        def keyPressEvent(self, event):
+            try:
+                name = self.parent.module._selected_pole_or_zero
+                index = self.parent.module._selected_index
+                return self.parent.parent.attribute_widgets[name].widgets[index].keyReleaseEvent(event)
+            except:
+                return super(MyGraphicsWindow, self).keyReleaseEvent(event)
+
 
 class IirGraphWidget(QtWidgets.QGroupBox):
     # whether xaxis is plotted in log-scale
@@ -276,16 +295,15 @@ class IirWidget(ModuleWidget):
         # plot designed filter
         plot['filter_design'] = self.module.transfer_function(frequencies,
                                                                   **tfargs)
-        if False:
-            # plot product
+        # plot product
+        try:
+            plot['data_x_design'] = plot['data'] / plot['filter_design']
+        except ValueError:
             try:
-                plot['data_x_design'] = plot['data'] / plot['filter_design']
-            except ValueError:
-                try:
-                    plot['data_x_design'] = 1.0 / plot['filter_design']
-                except:
-                    plot['data_x_design'] = []
-            # plot everything (all lines) up to here
+                plot['data_x_design'] = 1.0 / plot['filter_design']
+            except:
+                plot['data_x_design'] = []
+        # plot everything (all lines) up to here
         for k, v in plot.items():
             self.graph_widget.plots[k].setData(frequencies[:len(v)],
                                                self._magnitude(v))
@@ -320,3 +338,21 @@ class IirWidget(ModuleWidget):
             self.graph_widget.plots[end].setPoints(mag)
             self.graph_widget.plots[end+'_phase'].setPoints(phase)
 
+    def keyPressEvent(self, event):
+        """ not working properly yet"""
+        try:
+            name = self.module._selected_pole_or_zero
+            index = self.module._selected_index
+            return self.attribute_widgets[name].widgets[index].keyPressEvent(event)
+        except:
+            return super(MyGraphicsWindow, self).keyPressEvent(event)
+
+    def keyReleaseEvent(self, event):
+        """ not working properly yet"""
+        def keyPressEvent(self, event):
+            try:
+                name = self.module._selected_pole_or_zero
+                index = self.module._selected_index
+                return self.attribute_widgets[name].widgets[index].keyReleaseEvent(event)
+            except:
+                return super(MyGraphicsWindow, self).keyReleaseEvent(event)
