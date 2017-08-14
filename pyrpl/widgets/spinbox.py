@@ -325,7 +325,10 @@ class IntSpinBox(NumberSpinBox):
         """
         Maximum number of letters in line
         """
-        return int(np.log10(np.abs(self.maximum))+1)
+        if np.isinf(self.maximum):
+            return super(IntSpinBox, self).max_num_letter
+        else:
+            return int(np.log10(np.abs(self.maximum))+1)
 
     def setMaximum(self, val):  # imitates original QSpinBox API
         super(IntSpinBox, self).setMaximum(val)
