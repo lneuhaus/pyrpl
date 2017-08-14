@@ -46,6 +46,8 @@ class MonitorClient(object):
         self._restartserver = restartserver
         self._hostname = hostname
         self._port = port
+        self._read_counter = 0 # For debugging and unittests
+        self._write_counter = 0 # For debugging and unittests
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         # try to connect at least 5 times
         for i in range(5):
@@ -84,9 +86,11 @@ class MonitorClient(object):
         
     # the public methods to use which will recover from connection problems
     def reads(self, addr, length):
+        self._read_counter+=1
         return self.try_n_times(self._reads, addr, length)
 
     def writes(self, addr, values):
+        self._write_counter += 1
         return self.try_n_times(self._writes, addr, values)
     
     # the actual code
