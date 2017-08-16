@@ -174,7 +174,7 @@ except NameError:  # Python 3
 try:
     basestring  # in python 2
 except:
-    basetring = (str, bytes)
+    basestring = (str, bytes)
 
 
 default_pyrpl_config = {'name': 'default_pyrpl_instance',
