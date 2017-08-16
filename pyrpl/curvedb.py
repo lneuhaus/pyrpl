@@ -110,8 +110,6 @@ except:
                 return curve
             elif isinstance(curve, list):
                 return [CurveDB.get(c) for c in curve]
-            elif curve is None:  # needed for childs
-                return []
             else:
                 with open(os.path.join(CurveDB._dirname, str(curve) + '.dat'), 'rb') as f:
                     # rb is for compatibility with python 3
@@ -131,7 +129,7 @@ except:
             delpk = self.pk
             parent = self.parent
             childs = self.childs
-            if len(childs)> 0:
+            if isinstance(childs, list) and len(childs)> 0:
                 self.logger.debug("Deleting all childs of curve %d"%delpk)
                 for child in childs:
                     child.delete()
@@ -152,7 +150,10 @@ except:
         # structure for curves
         @property
         def childs(self):
-            childs = self.params["childs"]
+            try:
+                childs = self.params["childs"]
+            except KeyError:
+                return []
             if childs is None:
                 return []
             else:
