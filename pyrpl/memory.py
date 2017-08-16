@@ -569,32 +569,34 @@ class MemoryTree(MemoryBranch):
             self._savetimer.stop()
         self._lastsave = time()
         self._write_to_file_counter += 1
-
         if self._mtime != os.path.getmtime(self._filename):
             logger.warning("Config file has recently been changed on your " +
                            "harddisk. These changes might have been " +
                            "overwritten now.")
         logger.debug("Saving config file %s", self._filename)
-        # we must be sure that overwriting config file never destroys existing data.
-        # security 1: backup with copyfile above
-        copyfile(self._filename,
-                 self._filename + ".bak")  # maybe this line is obsolete (see below)
-        # security 2: atomic writing such as shown in
-        # http://stackoverflow.com/questions/2333872/atomic-writing-to-file-with-python:
-        try:
-            f = open(self._buffer_filename, mode='w')
-            save(self._data, stream=f)
-            f.flush()
-            os.fsync(f.fileno())
-            f.close()
-            os.unlink(self._filename)
-            os.rename(self._buffer_filename, self._filename)
-        except:
-            copyfile(self._filename + ".bak", self._filename)
-            logger.error("Error writing to file. Backup version was restored.")
-            raise
-        # save last modification time of the file
-        self._mtime = os.path.getmtime(self._filename)
+        if self._filename is None:
+            return  # skip writing to file if no filename was selected
+        else:
+            # we must be sure that overwriting config file never destroys existing data.
+            # security 1: backup with copyfile above
+            copyfile(self._filename,
+                     self._filename + ".bak")  # maybe this line is obsolete (see below)
+            # security 2: atomic writing such as shown in
+            # http://stackoverflow.com/questions/2333872/atomic-writing-to-file-with-python:
+            try:
+                f = open(self._buffer_filename, mode='w')
+                save(self._data, stream=f)
+                f.flush()
+                os.fsync(f.fileno())
+                f.close()
+                os.unlink(self._filename)
+                os.rename(self._buffer_filename, self._filename)
+            except:
+                copyfile(self._filename + ".bak", self._filename)
+                logger.error("Error writing to file. Backup version was restored.")
+                raise
+            # save last modification time of the file
+            self._mtime = os.path.getmtime(self._filename)
 
     def _save(self, deadtime=None):
         """
@@ -612,9 +614,7 @@ class MemoryTree(MemoryBranch):
         self._save_counter += 1  # for unittest and debug purposes
         if deadtime is None:
             deadtime = self._loadsavedeadtime
-        """ writes current tree structure and data to file """
-        if self._filename is None:
-            return
+        # now write current tree structure and data to file
         if self._lastsave + deadtime < time():
             self._write_to_file()
         else:
