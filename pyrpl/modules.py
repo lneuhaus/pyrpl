@@ -13,13 +13,14 @@ their state load and saved in the config file...
 from .attributes import BaseAttribute, ModuleAttribute
 from .widgets.module_widgets import ModuleWidget
 from .curvedb import CurveDB
-from .pyrpl_utils import unique_list
+from .pyrpl_utils import unique_list, DuplicateFilter
 
 import logging
 import numpy as np
 from six import with_metaclass
 from collections import OrderedDict
 from qtpy import QtCore
+
 
 class SignalLauncher(QtCore.QObject):
     """
@@ -340,6 +341,7 @@ class Module(with_metaclass(ModuleMetaClass, object)):
         # __autosave_active, but this gets automatically name mangled:
         # see http://stackoverflow.com/questions/1301346/what-is-the-meaning-of-a-single-and-a-double-underscore-before-an-object-name
         self._logger = logging.getLogger(name=__name__)
+        self._logger.addFilter(DuplicateFilter())
         # create the signal launcher object from its class
         self._signal_launcher = self._signal_launcher(self)
         self.parent = parent
