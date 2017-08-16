@@ -124,3 +124,9 @@ class Iirs(ModuleManager):
     Only one iir, but it should be protected by the slave/owner mechanism.
     """
     _widget_class = IirManagerWidget
+
+
+class Trigs(ModuleManager):
+    """
+    """
+    pass #_widget_class = IirManagerWidget
