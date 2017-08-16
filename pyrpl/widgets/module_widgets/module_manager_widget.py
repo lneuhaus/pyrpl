@@ -147,59 +147,99 @@ class IqManagerWidget(ModuleManagerWidget):
         """
         brush = QtGui.QBrush(QtCore.Qt.black)
 
-        row_center = 0.55
-        row_up = 0.3
-        row_down = 0.8
-        row_top = 0.15
-        row_center_up = 0.47
-        row_center_down = 0.63
+        row_center = 0.45
+        row_up = 0.2
+        row_down = 0.7
+        row_top = 0.05
+        row_center_up = 0.35
+        row_center_down = 0.55
+        row_bottom = 0.8
         self.graphic_items = []
         self.input = MyLabel("input", row_center, "input", parent=self)
 
         self.high_pass = MyImage('acbandwidth', row_center,
-                                 "high_pass.bmp", parent=self)
-        self.low_pass1 = MyImage('bandwidth', row_up, "low_pass.bmp", parent=self, x_offset=-40)
-        self.low_pass2 = MyImage('bandwidth', row_down, "low_pass.bmp", parent=self, x_offset=-40)
+                                 "high_pass.bmp", 'acbandwidth',
+                                 parent=self, x_offset=-30)
+        self.low_pass1 = MyImage('bandwidth', row_up, "low_pass.bmp",
+                                 'bandwidth', parent=self, x_offset=-50)
+        self.low_pass2 = MyImage('bandwidth', row_down, "low_pass.bmp",
+                                 'bandwidth', parent=self, x_offset=-50)
 
-        self.x_sin1 = MyLabel("frequency", row_up, "x sin", parent=self)
-        self.x_cos1 = MyLabel("frequency", row_down, "x cos", parent=self)
-        self.x_sin2 = MyLabel("amplitude", row_up, "x sin", parent=self, x_offset=40)
-        self.x_cos2 = MyLabel("amplitude", row_down, "x cos", parent=self, x_offset=40)
+        self.x_sin1 = MyLabel("frequency", row_center_up, "sin(wt + phi)",
+                              parent=self, x_offset=-20)
+        self.x_cos1 = MyLabel("frequency", row_center_down, "cos(wt + phi)",
+                              parent=self, x_offset=-20)
 
-        self.na_real = MyLabel("bandwidth", row_center_up, "na real", parent=self, x_offset=20)
-        self.na_imag = MyLabel("bandwidth", row_center_down, "na imag", parent=self, x_offset=20)
 
-        self.x_1 = MyLabel("quadrature_factor", row_top, "X", parent=self)
-        self.x_2 = MyLabel("gain", row_up, "X", parent=self)
-        self.x_3 = MyLabel('gain', row_down, "X", parent=self)
 
-        self.plus = MyLabel("amplitude", row_up, "+", parent=self, x_offset=0)
+        self.x_demod_sin = MyLabel("frequency", row_up, 'X', parent=self, x_offset=-20)
+        self.x_demod_cos = MyLabel("frequency", row_down, 'X', parent=self, x_offset=-20)
 
-        self.cte = MyLabel("amplitude", row_center, "Cte", parent=self, x_offset=0)
+        self.x_sin2 = MyLabel("amplitude", row_center_up, "X", parent=self,
+                              x_offset=-40)
+        self.x_cos2 = MyLabel("amplitude", row_center_down, "X", parent=self,
+                              x_offset=-40)
 
-        self.plus_2 = MyLabel("amplitude", row_center, "+", parent=self, x_offset=40)
+        self.na_real = MyLabel("bandwidth", row_top, "na real", parent=self,
+                               x_offset=20)
+        self.na_imag = MyLabel("bandwidth", row_bottom, "na imag", parent=self,
+                               x_offset=20)
+
+
+        self.quad_fact = MyLabel("quadrature_factor", row_top,
+                                 "quadrature_factor",
+                                 parent=self, x_offset=-40)
+        self.x_1 = MyLabel("quadrature_factor", row_top, "X", parent=self,
+                           x_offset=40)
+
+        self.gain = MyLabel("gain", row_center, "gain", parent=self,
+                            x_offset=-20)
+        self.x_2 = MyLabel("gain", row_up, "X", parent=self, x_offset=-20)
+        self.x_3 = MyLabel('gain', row_down, "X", parent=self, x_offset=-20)
+
+        self.plus = MyLabel("amplitude", row_up, "+", parent=self,
+                            x_offset=-40)
+
+        self.cte = MyLabel("amplitude", row_up, "amplitude", parent=self,
+                           x_offset=20)
+
+        self.plus_2 = MyLabel("amplitude", row_center, "+", parent=self,
+                              x_offset=-40)
 
         self.output_direct = MyLabel("output_signal", row_center, "output\ndirect", parent=self)
         self.output_signal = MyLabel("output_signal", row_top, "output\nsignal", parent=self)
 
         self.connections = []
         self.connect(self.input, self.high_pass)
-        self.connect(self.high_pass, self.x_sin1)
-        self.connect(self.high_pass, self.x_cos1)
-        self.connect(self.x_sin1, self.low_pass1)
-        self.connect(self.x_cos1, self.low_pass2)
+        self.connect(self.high_pass, self.x_demod_sin)
+        self.connect(self.high_pass, self.x_demod_cos)
+        self.connect(self.x_sin1, self.x_demod_sin, h_first=False)
+        self.connect(self.x_cos1, self.x_demod_cos, h_first=False)
+        self.connect(self.x_demod_sin, self.low_pass1)
+        self.connect(self.x_demod_cos, self.low_pass2)
         self.connect(self.low_pass1, self.na_real, h_first=False)
         self.connect(self.low_pass2, self.na_imag, h_first=False)
         self.connect(self.low_pass1, self.x_1, h_first=False)
+
+
+        self.connect(self.gain, self.x_2, h_first=False)
+        self.connect(self.gain, self.x_3, h_first=False)
         self.connect(self.low_pass1, self.x_2)
         self.connect(self.low_pass2, self.x_3)
         self.connect(self.x_2, self.plus)
-        self.connect(self.cte, self.plus, h_first=False)
-        self.connect(self.plus, self.x_sin2)
-        self.connect(self.x_3, self.x_cos2)
+        self.connect(self.cte, self.plus)
+        self.connect(self.plus, self.x_sin2, h_first=False)
+        self.connect(self.x_3, self.x_cos2, h_first=False)
+
+        self.connect(self.quad_fact, self.x_1)
         self.connect(self.x_1, self.output_signal)
+
+        self.connect(self.x_sin1, self.x_sin2)
+        self.connect(self.x_cos1, self.x_cos2)
+
         self.connect(self.x_sin2, self.plus_2, h_first=False)
         self.connect(self.x_cos2, self.plus_2, h_first=False)
+
         self.connect(self.plus_2, self.output_direct)
         self.connect(self.output_direct, self.output_signal, h_first=False)
 
