@@ -417,7 +417,7 @@ class MemoryBranch(object):
         """
         :return: returns the yml code for this branch
         """
-        return str(save(self._data if data is None else data))
+        return save(self._data if data is None else data).decode('utf-8')
 
     def _set_yml(self, yml_content):
         """

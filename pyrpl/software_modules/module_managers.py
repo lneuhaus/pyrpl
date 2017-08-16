@@ -128,5 +128,6 @@ class Iirs(ModuleManager):
 
 class Trigs(ModuleManager):
     """
+    Only one trig, but it should be protected by the slave/owner mechanism.
     """
     pass #_widget_class = IirManagerWidget
