@@ -381,7 +381,7 @@ class Pyrpl(object):
         async_sleep(0.1)
         # make sure the save timer of the config file is not running and
         # all data are written to the harddisk
-        self.c._save_now()
+        self.c._write_to_file()
         # end redpitatya communication
         self.rp.end_all()
         async_sleep(0.1)

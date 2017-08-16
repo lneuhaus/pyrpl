@@ -186,9 +186,9 @@ class TestNA(TestPyrpl):
                           trace_average=1,
                           running_state="running_continuous")
 
-            old = self.pyrpl.c._save_requested_counter
+            old = self.pyrpl.c._save_counter
             for i in range(10):
                 async_sleep(0.01)
-            new = self.pyrpl.c._save_requested_counter
+            new = self.pyrpl.c._save_counter
             self.na.stop()
             assert (old == new), (old, new)

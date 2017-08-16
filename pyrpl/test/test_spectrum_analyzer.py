@@ -26,11 +26,11 @@ class TestClass(TestPyrpl):
                                             input="out1",
                                             running_state='running_continuous')
 
-        old = self.pyrpl.c._save_requested_counter
+        old = self.pyrpl.c._save_counter
         for i in range(10):
             sleep(0.01)
             APP.processEvents()
-        new = self.pyrpl.c._save_requested_counter
+        new = self.pyrpl.c._save_counter
         self.pyrpl.spectrumanalyzer.stop()
         assert (old == new), (old, new)
 

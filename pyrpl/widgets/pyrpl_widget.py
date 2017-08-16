@@ -276,7 +276,7 @@ class PyrplWidget(QtWidgets.QMainWindow):
         # save window position
         self.timer_save_pos.stop()
         self.save_window_position()
-        pyrpl.c._save_now()  # make sure positions are written
+        pyrpl.c._write_to_file()  # make sure positions are written
         # replace dock widget
         self.remove_dock_widget(name)
         self.add_dock_widget(module._create_widget, name)

@@ -501,11 +501,11 @@ class MemoryTree(MemoryBranch):
             self._savetimer = QtCore.QTimer()
             self._savetimer.setInterval(self._loadsavedeadtime*1000)
             self._savetimer.setSingleShot(True)
-            self._savetimer.timeout.connect(self._save_without_counter)
+            self._savetimer.timeout.connect(self._write_to_file)
         self._load()
 
-        self._save_requested_counter = 0 # cntr for unittest and debug purposes
-        self._save_to_file_counter = 0  # cntr for unittest and debug purposes
+        self._save_counter = 0 # cntr for unittest and debug purposes
+        self._write_to_file_counter = 0  # cntr for unittest and debug purposes
 
         # root of the tree is also a MemoryBranch with parent self and
         # branch name ""
@@ -560,9 +560,15 @@ class MemoryTree(MemoryBranch):
             else:
                 logger.debug("... no reloading required")
 
-    def _save_without_counter(self):
+    def _write_to_file(self):
+        """
+        Immmediately writes the content of the memory tree to file
+        """
+        # stop save timer
+        if hasattr(self, '_savetimer') and self._savetimer.isActive():
+            self._savetimer.stop()
         self._lastsave = time()
-        self._save_to_file_counter += 1
+        self._write_to_file_counter += 1
 
         if self._mtime != os.path.getmtime(self._filename):
             logger.warning("Config file has recently been changed on your " +
@@ -591,35 +597,30 @@ class MemoryTree(MemoryBranch):
         self._mtime = os.path.getmtime(self._filename)
 
     def _save(self, deadtime=None):
+        """
+        A call to this function means that the state of the tree has changed
+        and needs to be saved eventually. To reduce system load, the delay
+        between two writes will be at least deadtime (defaults to
+        self._loadsavedeadtime if None)
+        """
         if self._ERROR_ON_SAVE:
             raise UnexpectedSaveError("Save to config file should not "
                                       "happen now")
         if self._WARNING_ON_SAVE:
             logger.warning("Save counter has just been increased to %d.",
                            self._save_counter)
-        self._save_requested_counter += 1  # for unittest and debug purposes
+        self._save_counter += 1  # for unittest and debug purposes
         if deadtime is None:
             deadtime = self._loadsavedeadtime
         """ writes current tree structure and data to file """
         if self._filename is None:
             return
         if self._lastsave + deadtime < time():
-            self._save_without_counter()
+            self._write_to_file()
         else:
             # make sure saving will eventually occur by launching a timer
             if not self._savetimer.isActive():
                 self._savetimer.start()
-
-    # forces to save the config file immediately and kills the save timer
-    def _save_now(self):
-        # stop save timer
-        if hasattr(self, '_savetimer') and self._savetimer.isActive():
-            self._savetimer.stop()
-        # make sure save is done immediately by forcing negative deadtime
-        self._save(deadtime=-1)
-        # make sure no save timer was launched in the meantime
-        if hasattr(self, '_savetimer') and self._savetimer.isActive():
-            self._savetimer.stop()
 
     @property
     def _filename_stripped(self):

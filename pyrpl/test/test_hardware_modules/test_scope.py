@@ -186,11 +186,11 @@ class TestScope(TestPyrpl):
         for i in range(10):
             async_sleep(0.1)
             #APP.processEvents()
-        old = self.pyrpl.c._save_requested_counter
+        old = self.pyrpl.c._save_counter
         for i in range(10):
             async_sleep(0.1)
             #APP.processEvents()
-        new = self.pyrpl.c._save_requested_counter
+        new = self.pyrpl.c._save_counter
         assert (old == new), (old, new, "scope is not the reason")
 
         # next, check whether the scope does this
@@ -204,11 +204,11 @@ class TestScope(TestPyrpl):
                                       trace_average=1,
                                       running_state="running_continuous")
 
-            old = self.pyrpl.c._save_requested_counter
+            old = self.pyrpl.c._save_counter
             for i in range(10):
                 async_sleep(0.1)
                 # APP.processEvents()
-            new = self.pyrpl.c._save_requested_counter
+            new = self.pyrpl.c._save_counter
 
             self.pyrpl.rp.scope.stop()
             assert(old==new), (old, new, "scope is the problem", rolling_mode)
