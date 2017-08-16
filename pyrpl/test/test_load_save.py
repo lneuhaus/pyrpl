@@ -14,8 +14,9 @@ class TestLoadSave(TestPyrpl):
     attributes are the ones that were saved"""
     def test_load_save(self):
         for mod in self.pyrpl.modules:
-            for exclude in [Lockbox, Scope]: # scope has an unknown bug here (nosetests freezes at a  later time)
-            # for exclude in [Lockbox]:  # lockbox is tested elsewhere
+            #for exclude in [Lockbox, Scope]: # scope has an unknown bug
+            # here (nosetests freezes at a  later time)
+            for exclude in [Lockbox]:  # lockbox is tested elsewhere
                 if isinstance(mod, exclude):
                     break
             else:

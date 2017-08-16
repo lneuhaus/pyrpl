@@ -25,14 +25,12 @@ class TestClass(TestPyrpl):
         self.pyrpl.spectrumanalyzer.setup_attributes = dict(span=1e5,
                                             input="out1",
                                             running_state='running_continuous')
-        for i in range(25):
-            sleep(0.01)
-            APP.processEvents()
-        old = self.pyrpl.c._save_counter
+
+        old = self.pyrpl.c._save_requested_counter
         for i in range(10):
             sleep(0.01)
             APP.processEvents()
-        new = self.pyrpl.c._save_counter
+        new = self.pyrpl.c._save_requested_counter
         self.pyrpl.spectrumanalyzer.stop()
         assert (old == new), (old, new)
 

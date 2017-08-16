@@ -6,9 +6,10 @@ from qtpy import QtCore, QtGui, QtWidgets
 import numpy as np
 from ...errors import NotReadyError
 from .base_module_widget import ModuleWidget
+from .acquisition_module_widget import AcquisitionModuleWidget
 
 
-class ScopeWidget(ModuleWidget):
+class ScopeWidget(AcquisitionModuleWidget):
     """
     Widget for scope
     """
@@ -85,9 +86,12 @@ class ScopeWidget(ModuleWidget):
         self.win = pg.GraphicsWindow(title="Scope")
         self.plot_item = self.win.addPlot(title="Scope")
         self.plot_item.showGrid(y=True, alpha=1.)
-        self.button_single = QtWidgets.QPushButton("Run single")
-        self.button_continuous = QtWidgets.QPushButton("Run continuous")
-        self.button_save = QtWidgets.QPushButton("Save curve")
+
+
+        #self.button_single = QtWidgets.QPushButton("Run single")
+        #self.button_continuous = QtWidgets.QPushButton("Run continuous")
+        #self.button_save = QtWidgets.QPushButton("Save curve")
+
         self.curves = [self.plot_item.plot(pen=(QtGui.QColor(color).red(),
                                                 QtGui.QColor(color).green(),
                                                 QtGui.QColor(color).blue()
@@ -96,16 +100,18 @@ class ScopeWidget(ModuleWidget):
                        for color, trans in zip(self.ch_color,
                                                self.ch_transparency)]
         self.main_layout.addWidget(self.win, stretch=10)
-        self.button_layout.addWidget(self.button_single)
-        self.button_layout.addWidget(self.button_continuous)
-        self.button_layout.addWidget(self.button_save)
+
+
+        #self.button_layout.addWidget(self.button_single)
+        #self.button_layout.addWidget(self.button_continuous)
+        #self.button_layout.addWidget(self.button_save)
         #self.button_layout.addWidget(aws['curve_name'])
         #aws['curve_name'].setMaximumWidth(250)
         self.main_layout.addLayout(self.button_layout)
 
-        self.button_single.clicked.connect(self.run_single_clicked)
-        self.button_continuous.clicked.connect(self.run_continuous_clicked)
-        self.button_save.clicked.connect(self.save_clicked)
+        #self.button_single.clicked.connect(self.run_single_clicked)
+        #self.button_continuous.clicked.connect(self.run_continuous_clicked)
+        #self.button_save.clicked.connect(self.save_clicked)
 
         self.rolling_group = QtWidgets.QGroupBox("Trigger mode")
         self.checkbox_normal = QtWidgets.QRadioButton("Normal")
@@ -124,17 +130,21 @@ class ScopeWidget(ModuleWidget):
         self.attribute_widgets['duration'].value_changed.connect(
             self.update_rolling_mode_visibility)
 
+        super(ScopeWidget, self).init_gui()
         # since trigger_mode radiobuttons is not a regular attribute_widget,
         # it is not synced with the module at creation time.
         self.update_running_buttons()
         self.update_rolling_mode_visibility()
         self.rolling_mode = self.module.rolling_mode
+        self.attribute_layout.addStretch(1)
+
+
 
         # Not sure why the stretch factors in button_layout are not good by
         # default...
-        self.button_layout.setStretchFactor(self.button_single, 1)
-        self.button_layout.setStretchFactor(self.button_continuous, 1)
-        self.button_layout.setStretchFactor(self.button_save, 1)
+        #self.button_layout.setStretchFactor(self.button_single, 1)
+        #self.button_layout.setStretchFactor(self.button_continuous, 1)
+        #self.button_layout.setStretchFactor(self.button_save, 1)
 
     def update_attribute_by_name(self, name, new_value_list):
         """
@@ -146,34 +156,6 @@ class ScopeWidget(ModuleWidget):
             self.update_rolling_mode_visibility()
         if name in ['running_state',]:
             self.update_running_buttons()
-
-    def update_running_buttons(self):
-        """
-        Change text of Run continuous button and visibility of run single
-        button according to module.running_continuous
-        """
-        if self.module.running_state=="running_continuous":
-            self.button_continuous.setText("Stop (%i "
-                                           "avg)"%self.module.current_avg)
-            self.button_single.setEnabled(False)
-            self.button_single.setText("Run single")
-        if self.module.running_state=="running_single":
-            self.button_continuous.setText("Run continuous")
-            self.button_single.setEnabled(
-                                    not self.module._is_rolling_mode_active())
-            self.button_single.setText("Stop (%i "
-                                       "avg)"%self.module.current_avg)
-        if self.module.running_state=="paused":
-            self.button_continuous.setText("Run continuous (%i "
-                                           "avg)"%self.module.current_avg)
-            self.button_single.setEnabled(
-                                    not self.module._is_rolling_mode_active())
-            self.button_single.setText("Run single")
-        if self.module.running_state=="stopped":
-            self.button_continuous.setText("Run continuous (%i "
-                                           "avg)"%self.module.current_avg)
-            self.button_single.setEnabled(True)
-            self.button_single.setText("Run single")
 
     def display_channel(self, ch):
         """
@@ -213,7 +195,7 @@ class ScopeWidget(ModuleWidget):
                     self.curves[ch].setVisible(True)
                 else:
                     self.curves[ch].setVisible(False)
-        self.update_running_buttons() # to update the number of averages
+        self.update_current_average() # to update the number of averages
 
     def set_rolling_mode(self):
         """
@@ -221,23 +203,6 @@ class ScopeWidget(ModuleWidget):
         "rolling_mode"
         """
         self.rolling_mode = self.module.rolling_mode
-
-    def run_continuous_clicked(self):
-        """
-        Toggles the button run_continuous to stop or vice versa and starts
-        he acquisition timer
-        """
-
-        if str(self.button_continuous.text()).startswith("Run continuous"):
-            self.module.continuous()
-        else:
-            self.module.stop()
-
-    def run_single_clicked(self):
-        if str(self.button_single.text()).startswith("Run single"):
-            self.module.single_async()
-        else:
-            self.module.stop()
 
     def rolling_mode_toggled(self):
         self.module.rolling_mode = self.rolling_mode

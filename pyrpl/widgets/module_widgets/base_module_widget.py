@@ -208,6 +208,7 @@ class ReducedModuleWidget(QtWidgets.QGroupBox):
                     widget.value_changed.connect(self.attribute_changed)
             self.attribute_widgets[attr_name] = widget
             self.attribute_layout.addWidget(widget)
+        self.attribute_layout.addStretch(1)
 
     def update_attribute_by_name(self, name, new_value_list):
         """

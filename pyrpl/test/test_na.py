@@ -87,6 +87,8 @@ class TestNA(TestPyrpl):
                           average_per_point=1,
                           trace_average=1)
             tic = time.time()
+            old_read = self.pyrpl.rp.client._read_counter
+            old_write = self.pyrpl.rp.client._write_counter
             self.na.single()
             async_sleep(0.05)
             print(self.na.running_state)
@@ -95,6 +97,9 @@ class TestNA(TestPyrpl):
             duration = (time.time() - tic)/self.na.points
             #Allow twice as long with gui
             maxduration *= 2
+            assert self.pyrpl.rp.client._read_counter - old_read <= points
+            assert self.pyrpl.rp.client._write_counter - old_write <= points
+
             assert duration < maxduration, \
                 "Na gui should take at most %.1f ms per point, but actually " \
                 "needs %.1f ms. This won't compromise functionality but it is " \
@@ -180,11 +185,10 @@ class TestNA(TestPyrpl):
                           amplitude=0.01,
                           trace_average=1,
                           running_state="running_continuous")
-            for i in range(20):
-                async_sleep(0.01)
-            old = self.pyrpl.c._save_counter
+
+            old = self.pyrpl.c._save_requested_counter
             for i in range(10):
                 async_sleep(0.01)
-            new = self.pyrpl.c._save_counter
+            new = self.pyrpl.c._save_requested_counter
             self.na.stop()
             assert (old == new), (old, new)
