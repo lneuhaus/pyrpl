@@ -13,26 +13,39 @@ class MyLabelSignal(QtWidgets.QLabel):
     pass
 
 
-class MyItem(QtWidgets.QLabel):
+class MyItem(QtWidgets.QWidget):
     def __init__(self, widget_name, y, label, parent, x_offset=0):
-        super(MyItem, self).__init__(label)
+        super(MyItem, self).__init__()
+        self.lay = QtWidgets.QVBoxLayout()
+        self.setLayout(self.lay)
+        self.item = QtWidgets.QLabel(label)
+        self.setStyleSheet('background-color:transparent')
+        self.lay.addWidget(self.item)
+
         self.widget_name = widget_name
         self.y = y
         self.x_offset = x_offset
         self.parent = parent
         parent.graphic_items.append(self)
-        self.setStyleSheet(
+        self.item.setStyleSheet(
             "QLabel{border: 1px solid black; border-radius: 5px; "
             "font-size: 15px; background-color:white}")
         self.proxy = parent.scene.addWidget(self)
         self.proxy.setZValue(2)
 
+    def item_x(self):
+        return self.pos().x() + self.item.pos().x()
+
+    def item_y(self):
+        return self.pos().y() + self.item.pos().y()
+
     def move_to_right_position(self):
         widget = self.parent.module_widgets[0].attribute_widgets[
             self.widget_name]
         x = widget.pos().x() + widget.width()/2 + self.x_offset - \
-            self.width()/2
-        y = self.y*self.parent.view.height() - self.height()/2
+            self.item.width()/2 + self.item.x()
+        y = self.y*self.parent.view.height() - self.item.height()/2 + \
+            self.item.y()
         self.move(x, y)
 
 
@@ -41,11 +54,18 @@ class MyLabel(MyItem):
 
 
 class MyImage(MyItem):
-    def __init__(self, widget_name, y, filename, parent, x_offset=0):
-        super(MyImage, self).__init__(widget_name, y, "", parent, x_offset)
+    def __init__(self, widget_name, y, filename, label, parent, x_offset=0):
+        super(MyImage, self).__init__(widget_name, y, label, parent, x_offset)
         self.pixmap = QtGui.QPixmap(osp.join(IMAGE_PATH, filename))
-        self.setPixmap(self.pixmap)
-        self.setFixedSize(self.pixmap.size())
+        self.item.setPixmap(self.pixmap)
+        self.item.setFixedSize(self.pixmap.size())
+
+        self.label = QtWidgets.QLabel(label)
+        self.lay.addWidget(self.label)
+
+
+        #self.setText(self.widget_name)
+
 
 
 class Connection(object):
@@ -82,10 +102,10 @@ class Connection(object):
         self.adjust()
 
     def adjust(self):
-        x1 = self.widget_start.pos().x() + self.widget_start.width() / 2
-        x2 = self.widget_stop.pos().x() + self.widget_stop.width() / 2
-        y1 = self.widget_start.pos().y() + self.widget_start.height() / 2
-        y2 = self.widget_stop.pos().y() + self.widget_stop.height() / 2
+        x1 = self.widget_start.item_x() + self.widget_start.item.width() / 2
+        x2 = self.widget_stop.item_x() + self.widget_stop.item.width() / 2
+        y1 = self.widget_start.item_y() + self.widget_start.item.height() / 2
+        y2 = self.widget_stop.item_y() + self.widget_stop.item.height() / 2
         if self.h_first:
             self.line1.setLine(x1, y1, x1, y2)
             self.line2.setLine(x1, y2, x2, y2)
