@@ -115,14 +115,14 @@ class NaCurveFuture(PyrplFuture):
         self._module = module
         self._min_delay_ms = min_delay_ms
         self.current_point = 0
-        self.current_avg = 1
+        self.current_avg = 0
         self.n_points = self._module.points
         self._paused = True
         self._fut = None # placeholder for next point future
         self.never_started = True
         super(NaCurveFuture, self).__init__()
 
-        self.data_x = copy(self._module.data_x)  # In case of saving latter.
+        self.data_x = copy(self._module._data_x)  # In case of saving latter.
         self.data_avg = np.zeros(self.n_points,
                                  dtype=np.complex)
         self.data_amp = np.zeros(self.n_points)
@@ -230,8 +230,8 @@ class NaRunFuture(NaCurveFuture):
     def _add_point(self, point):
         y, amp = point
         index = self.current_point
-        self.data_avg[index] = (self.data_avg[index]*(self.current_avg - 1) + \
-                               y)/self.current_avg
+        self.data_avg[index] = (self.data_avg[index]*self.current_avg + y)/\
+                               (self.current_avg + 1)
         self.data_amp[index] = amp
         self._module._emit_signal_by_name("update_point", index)
 
@@ -241,6 +241,8 @@ class NaRunFuture(NaCurveFuture):
         pass
 
     def _scan_finished(self):
+        self.current_avg = min(self.current_avg + 1,
+                               self._module.trace_average)
         # launch this signal before current_point goes back to 0...
         self._module._emit_signal_by_name("scan_finished")
         if self._run_continuous or self.current_avg<self._module.trace_average:
@@ -254,7 +256,6 @@ class NaRunFuture(NaCurveFuture):
             #  in case the user wants to move on with running_continuous mode
             self.current_point = 0
             self._module.running_state = "paused"
-        self.current_avg = min(self.current_avg + 1, self._module.trace_average)
 
     def _set_run_continuous(self):
         self._run_continuous = True
@@ -482,7 +483,7 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
     def _start_point_acquisition(self, index):
         if not self.is_zero_span(): # in zero span, data_x are time,
             # not frequency
-            self.iq.frequency = self.data_x[index]
+            self.iq.frequency = self._data_x[index]
         else:
             self.iq.frequency = self.start_freq
         self._time_last_point = timeit.default_timer()
@@ -495,7 +496,7 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
         # only one read operation per point
         y = self.iq._nadata_total / self._cached_na_averages
 
-        x = self.data_x[index]
+        x = self._data_x[index]
         tf = self._tf_values[index]
 
         amp = self.amplitude  # get amplitude for normalization
@@ -531,7 +532,7 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
         :return:
         """
         # super(NAAcquisitionManager, self)._start_acquisition()
-        x = self.data_x if not self.is_zero_span() else  \
+        x = self._data_x if not self.is_zero_span() else  \
                                         self.start_freq*np.ones(self.points)
         self.iq.setup(frequency=x[0],
                       bandwidth=self.rbw,
@@ -578,7 +579,13 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
 
     @property
     def data_x(self):
-        return self._data_x
+        """
+        Returns the x-axis (frequency or time for zero-span)
+        restricted to the valid points
+
+        For the full axis, use _data_x
+        """
+        return self._data_x[:self.last_valid_point + 1]
 
     @property
     def frequencies(self):
@@ -643,3 +650,13 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
     def _setup(self):
         self._update_data_x()  # precalculate frequency values
         super(NetworkAnalyzer, self)._setup()
+
+    # overwrite default behavior to return only valid points
+    @property
+    def data_avg(self):
+        return self._run_future.data_avg[:self.last_valid_point + 1]
+
+    @property
+    def last_valid_point(self):
+        return self._run_future.current_point if \
+            self._run_future.current_avg<=1 else self.points

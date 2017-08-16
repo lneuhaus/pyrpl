@@ -106,6 +106,19 @@ def setloglevel(level='info', loggername='pyrpl'):
         logging.getLogger(name=loggername).setLevel(level)
 
 
+class DuplicateFilter(logging.Filter):
+    """
+    Prevent multiple repeated logging message from polluting the console
+    """
+    def filter(self, record):
+        # add other fields if you need more granular comparison, depends on your app
+        current_log = (record.module, record.levelno, record.msg)
+        if current_log != getattr(self, "last_log", None):
+            self.last_log = current_log
+            return True
+        return False
+
+
 def sorted_dict(dict_to_sort=None, sort_by_values=True, **kwargs):
     if dict_to_sort is None:
         dict_to_sort = kwargs
