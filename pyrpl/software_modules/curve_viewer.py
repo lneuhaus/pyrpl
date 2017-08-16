@@ -24,7 +24,7 @@ class CurveViewer(Module):
                        "delete_curve", "refresh_curve_list"]
     pk = CurveSelectListProperty(doc="the pk of the currently viewed curve",
                                  call_setup=True)
-    curve = CurveProperty(default=None)
+    curve = CurveProperty(default=None, show_childs=True)
     params = TextProperty()
     curve_name = StringProperty(doc="Name of the currently viewed curve")
                                 # read_only=True)  # TODO: implement read-only

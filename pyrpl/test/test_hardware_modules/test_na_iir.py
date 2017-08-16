@@ -19,9 +19,11 @@ class TestIir(TestPyrpl):
         rp = iir.real_poles
         cp = iir.complex_poles
         assert iir.real_poles == [-1221, -43254.4], iir.real_poles
-        assert iir.complex_poles == [-1000j-2032, -34343j-3424], \
-            iir.complex_poles
+        assert iir.complex_poles == [1000j-2032, 34343j-3424], \
+            iir.complex_poles  # attention: imaginary part is positivized
         iir.real_poles = []
+        assert iir.complex_poles == [1000j-2032, 34343j-3424], \
+            iir.complex_poles  # attention: imaginary part is positivized
         assert iir.poles == iir.complex_poles, iir.poles
         iir.complex_poles = []
         assert iir.poles == []
@@ -32,9 +34,11 @@ class TestIir(TestPyrpl):
         rp = iir.real_zeros
         cp = iir.complex_zeros
         assert iir.real_zeros  == [-1221, -43254.4], iir.real_zeros
-        assert iir.complex_zeros  == [-1000j - 2032, -34343j - 3424], \
-            iir.complex_zeros
+        assert iir.complex_zeros  == [1000j - 2032, 34343j - 3424], \
+            iir.complex_zeros  # attention: imaginary part is positivized
         iir.real_zeros  = []
+        assert iir.complex_zeros  == [1000j - 2032, 34343j - 3424], \
+            iir.complex_zeros  # attention: imaginary part is positivized
         assert iir.zeros  == iir.complex_zeros , iir.zeros
         iir.complex_zeros = []
         assert iir.zeros  == []
@@ -121,24 +125,22 @@ class TestIir(TestPyrpl):
         iir = pyrpl.rp.iir
 
         params = []
-        # setting 1
-        z, p, g, loops = (np.array([-1510.0000001 - 10101.36145285j, -1510.0000001 +
-                                    10101.36145285j,
-                                    -2100.0000001 - 21828.90817759j, -2100.0000001 + 21828.90817759j,
-                                    -1000.0000001 - 30156.73583005j, -1000.0000001 + 30156.73583005j,
-                                    -1000.0000001 - 32063.2533145j, -1000.0000001 + 32063.2533145j,
-                                    -6100.0000001 - 44654.63524562j, -6100.0000001 + 44654.63524562j]),
-                          np.array([-151.00000010 - 16271.51686739j,
-                                    -151.00000010 + 16271.51686739j, -51.00000010 - 22342.54324816j,
-                                    -51.00000010 + 22342.54324816j, -10.00000010 - 30884.30406145j,
-                                    -10.00000010 + 30884.30406145j, -41.00000010 - 32732.52445066j,
-                                    -41.00000010 + 32732.52445066j, -51.00000010 - 46953.00496993j,
+        # setting 0
+        z, p, g, loops = (np.array([-1510.0000001 + 10101.36145285j,
+                                    -2100.0000001 + 21828.90817759j,
+                                    -1000.0000001 + 30156.73583005j,
+                                    -1000.0000001 + 32063.2533145j
+                                    -6100.0000001 + 44654.63524562j]),
+                          np.array([-151.00000010 + 16271.51686739j,
+                                    -51.00000010 + 22342.54324816j,
+                                    -10.00000010 + 30884.30406145j,
+                                    -41.00000010 + 32732.52445066j,
                                     -51.00000010 + 46953.00496993j]),
                           0.03,
                           400)
         naset = dict(start_freq=3e3,
                      stop_freq=50e3,
-                     points=2001,
+                     points=501,
                      rbw=[500, 500],
                      average_per_point=1,
                      trace_average=1,
@@ -146,18 +148,18 @@ class TestIir(TestPyrpl):
                      input=iir,
                      output_direct='off',
                      logscale=True)
-        error_threshold = 0.05  # [0.01, 0.03] works if average_per_point=10 in naset
-        params.append((z, p, g, loops, naset, "low_sampling", error_threshold,
+        error_threshold = 0.08  # [0.01, 0.03] works if average_per_point=10 in naset
+        params.append((z, p, g, loops, naset, "0 - low_sampling", error_threshold,
                        ['final', 'continuous']))
 
-        # setting 2 - minimum number of loops
+        # setting 1 - minimum number of loops
         z = [1e5j - 3e3]
         p = [5e4j - 3e3]
         g = 0.5
         loops = None
         naset = dict(start_freq=3e3,
                      stop_freq=10e6,
-                     points=1001,
+                     points=301,
                      rbw=[500, 500],
                      average_per_point=1,
                      trace_average=1,
@@ -166,22 +168,20 @@ class TestIir(TestPyrpl):
                      output_direct='off',
                      logscale=True)
         error_threshold = 0.05  # large because of phase error at high freq
-        params.append((z, p, g, loops, naset, "loops_None", error_threshold,
+        params.append((z, p, g, loops, naset, "1 - loops_None", error_threshold,
                        ['final', 'continuous']))
 
-        # setting 3 - complicated with well-defined loops (similar to 1)
+        # setting 2 - complicated with well-defined loops (similar to 1)
         z, p, g = (
-            np.array([-151.0000001 - 10101.36145285j, -151.0000001 +
-                      10101.36145285j,
-                      -210.0000001 - 21828.90817759j, -210.0000001 + 21828.90817759j,
-                      -100.0000001 - 30156.73583005j, -100.0000001 + 30156.73583005j,
-                      -100.0000001 - 32063.2533145j, -100.0000001 + 32063.2533145j,
-                      -610.0000001 - 44654.63524562j, -610.0000001 + 44654.63524562j]),
-            np.array([-151.00000010 - 16271.51686739j,
-                      -151.00000010 + 16271.51686739j, -51.00000010 - 22342.54324816j,
-                      -51.00000010 + 22342.54324816j, -50.00000010 - 30884.30406145j,
-                      -50.00000010 + 30884.30406145j, -41.00000010 - 32732.52445066j,
-                      -41.00000010 + 32732.52445066j, -51.00000010 - 46953.00496993j,
+            np.array([-151.0000001 + 10101.36145285j,
+                      -210.0000001 + 21828.90817759j,
+                      -100.0000001 + 30156.73583005j,
+                      -100.0000001 + 32063.2533145j,
+                      -610.0000001 + 44654.63524562j]),
+            np.array([-151.00000010 + 16271.51686739j,
+                      -51.00000010 + 22342.54324816j,
+                      -50.00000010 + 30884.30406145j,
+                      -41.00000010 + 32732.52445066j,
                       -51.00000010 + 46953.00496993j]),
             0.5)
         loops = 80
@@ -196,13 +196,16 @@ class TestIir(TestPyrpl):
                      output_direct='off',
                      logscale=True)
         error_threshold = 0.03
-        params.append((z, p, g, loops, naset, "loops=80", error_threshold,
+        params.append((z, p, g, loops, naset, "2 - loops=80", error_threshold,
                        ['final', 'continuous']))
 
-        # setting 4, medium complex transfer function
-        z = [-4e4j - 300, +4e4j - 300, -2e5j - 3000, +2e5j - 3000]
-        p = [-5e4j - 300, +5e4j - 300, -1e5j - 3000, +1e5j - 3000, -1e6j - 30000,
-             +1e6j - 30000, -5e5]
+        # setting 3, medium complex transfer function
+        z = [+4e4j - 300,
+             +2e5j - 3000]
+        p = [+5e4j - 300,
+             +1e5j - 3000,
+             +1e6j - 30000,
+             -5e5]
         g = 1.0
         loops = None
         naset = dict(start_freq=1e4,
@@ -215,12 +218,13 @@ class TestIir(TestPyrpl):
                      input='iir',
                      output_direct='off',
                      logscale=True)
-        error_threshold = [0.03, 0.04]
-        params.append((z, p, g, loops, naset, "4 - medium", error_threshold,
+        error_threshold = [0.04, 0.04]
+        params.append((z, p, g, loops, naset, "3 - medium", error_threshold,
                        ['final', 'continuous']))
 
         # config na and iir and launch the na assertions
         for param in params[2:3]:
+            print("\nComplex Iir test with the following params: %s\n" % str(params))
             z, p, g, loops, naset, name, maxerror, kinds = param
             self.pyrpl.na.setup(**naset)
             iir.setup(zeros=z, poles=p, gain=g, loops=loops, input=na.iq, output_direct='off')

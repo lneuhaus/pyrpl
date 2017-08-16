@@ -9,6 +9,8 @@ from ..async_utils import APP
 class HostnameSelectorWidget(QtWidgets.QDialog):
     _HIDE_PASSWORDS = False
     _SKIP_REDPITAYA_SIGNATURE = True  # display all devices incl. non-redpitayas
+    _SCAN_TIMEOUT = 0.04
+    _CONNECT_TIMEOUT = 1.0
 
     def __init__(self, parent=None):
         self.parent = parent
@@ -220,7 +222,7 @@ class HostnameSelectorWidget(QtWidgets.QDialog):
             # try SSH connection for all IP addresses
             self.progressbar.setValue(i)
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.settimeout(0.03)  # timeout is essentially network timescale
+            s.settimeout(self._SCAN_TIMEOUT)  # timeout is essentially network timescale
             err = s.connect_ex((ip, port))
             s.close()
             if err == 0:  # indicates that a SSH service is behind this IP
@@ -230,7 +232,7 @@ class HostnameSelectorWidget(QtWidgets.QDialog):
                     ssh = SSHshell(hostname=ip,
                                    user=user,
                                    password=password,
-                                   timeout=1.0)  # longer timeout, RP is slow..
+                                   timeout=self._CONNECT_TIMEOUT)  # longer timeout, RP is slow..
                 except BaseException as e:
                     self._logger.debug('Cannot log in with user=%s, pw=%s '
                                        'at %s: %s', user, password, ip, e)

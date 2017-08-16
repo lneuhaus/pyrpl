@@ -386,19 +386,12 @@ class NumberProperty(BaseProperty):
         """
         Saturates value with min and max.
         """
+        if value is None:  # setting a number to None essentially calls setup()
+            value = self.get_value(obj)
         return max(min(value, self.max), self.min)
 
 
 class IntProperty(NumberProperty):
-    def validate_and_normalize(self, obj, value):
-        """
-        Accepts float, but rounds to integer
-        """
-        return NumberProperty.validate_and_normalize(self,
-                                                     obj,
-                                                     int(round(value)))
-
-
     def __init__(self,
                  min=-np.inf,
                  max=np.inf,
@@ -410,6 +403,16 @@ class IntProperty(NumberProperty):
                                           increment=increment,
                                           log_increment=log_increment,
                                           **kwargs)
+
+    def validate_and_normalize(self, obj, value):
+        """
+        Accepts float, but rounds to integer
+        """
+        if value is None:  # setting a number to None essentially calls setup()
+            value = self.get_value(obj)
+        return NumberProperty.validate_and_normalize(self,
+                                                     obj,
+                                                     int(round(value)))
 
 
 class IntRegister(BaseRegister, IntProperty):
@@ -1448,8 +1451,10 @@ class CurveSelectProperty(SelectProperty):
     """
     def __init__(self,
                  no_curve_first=False,
+                 show_childs=False,
                  **kwargs):
         self.no_curve_first = no_curve_first
+        self.show_childs = show_childs
         SelectProperty.__init__(self, options=self._default_options, **kwargs)
 
     def _default_options(self):
@@ -1478,6 +1483,15 @@ class CurveSelectProperty(SelectProperty):
         setattr(obj, '_' + self.name + '_object', curve)
 
 
+class CurveProperty(CurveSelectProperty):
+    """ property for a curve whose widget plots the corresponding curve.
+
+    Unfortunately, the widget does not allow to select the curve,
+    i.e. selection must be implemented with another CurveSelectProperty.
+    """
+    _widget_class = CurveAttributeWidget
+
+
 class CurveSelectListProperty(CurveSelectProperty):
     """ same as above, but widget is a list to select from """
     _widget_class = CurveSelectAttributeWidget
@@ -1500,14 +1514,5 @@ class DataProperty(BaseProperty):
     Property for a dataset (real or complex), that can be plotted.
     """
     _widget_class = DataAttributeWidget
-
-
-class CurveProperty(CurveSelectProperty):
-    """ property for a curve whose widget plots the corresponding curve.
-
-    Unfortunately, the widget does not allow to select the curve,
-    i.e. selection must be implemented with another CurveSelectProperty.
-    """
-    _widget_class = CurveAttributeWidget
 
 

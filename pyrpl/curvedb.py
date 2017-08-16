@@ -110,6 +110,8 @@ except:
                 return curve
             elif isinstance(curve, list):
                 return [CurveDB.get(c) for c in curve]
+            elif curve is None:  # needed for childs
+                return []
             else:
                 with open(os.path.join(CurveDB._dirname, str(curve) + '.dat'), 'rb') as f:
                     # rb is for compatibility with python 3
@@ -128,18 +130,18 @@ except:
             # remove the file
             delpk = self.pk
             parent = self.parent
+            childs = self.childs
+            if len(childs)> 0:
+                self.logger.debug("Deleting all childs of curve %d"%delpk)
+                for child in childs:
+                    child.delete()
+            self.logger.debug("Deleting curve %d" % delpk)
             try:
                 filename = os.path.join(self._dirname, str(self.pk) + '.p')
                 os.remove(filename)
             except OSError:
                 self.logger.warning("Could not find remove the file %s. ",
                                     filename)
-            # remove dependencies.. do this at last so the curve is deleted if an
-            # error occurs (i know..). The alternative would be to iterate over all
-            # curves to find dependencies which could be slow without database.
-            # Heavy users should really use pyinstruments.
-            self.logger.warning("Make sure curve %s was not parent of another " +
-                                "curve.")
             if parent:
                 parentchilds = parent.childs
                 parentchilds.remove(delpk)
@@ -150,10 +152,14 @@ except:
         # structure for curves
         @property
         def childs(self):
-            try:
-                return CurveDB.get(self.params["childs"])
-            except KeyError:
+            childs = self.params["childs"]
+            if childs is None:
                 return []
+            else:
+                try:
+                    return CurveDB.get(childs)
+                except KeyError:
+                    return []
 
         @property
         def parent(self):

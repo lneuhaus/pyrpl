@@ -864,20 +864,24 @@ class CurveAttributeWidget(DataAttributeWidget):
     """
     Plots a curve (complex or real), with an id number as input.
     """
-
-    def _set_widget_value(self, new_value):
+    def get_xy_data(self, new_value):
+        """ helper function to extract xy data from a curve object"""
         if new_value is None:
-            return
+            return None, None, None
         try:
             data = getattr(self.module, '_' + self.attribute_name + '_object').data
-            name = \
-            getattr(self.module, '_' + self.attribute_name + '_object').params[
-                'name']
+            name = getattr(
+                self.module, '_' + self.attribute_name + '_object').params['name']
         except:
-            pass
+            return None, None, None
         else:
             x = data.index.values
             y = data.values
+            return x, y, name
+
+    def _set_widget_value(self, new_value):
+        x, y, name = self.get_xy_data(new_value)
+        if x is not None:
             if not np.isreal(y).all():
                 self.curve.setData(x, self._magnitude(y))
                 self.curve_phase.setData(x, self._phase(y))

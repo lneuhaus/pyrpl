@@ -268,11 +268,13 @@ class MemoryBranch(object):
             # convert dot notation into dict notation
             return self[name]
 
-    # getitem bypasses the higher-level __getattribute__ function and provides
-    # direct low-level access to the underlying dictionary.
-    # This is much faster, as long as no changes have been made to the config
-    # file.
     def __getitem__(self, item):
+        """
+        __getitem__ bypasses the higher-level __getattribute__ function and provides
+        direct low-level access to the underlying dictionary.
+        This is much faster, as long as no changes have been made to the config
+        file.
+        """
         self._reload()
         # if a subbranch is requested, iterate through the hierarchy
         if isinstance(item, str) and '.' in item:
@@ -291,10 +293,12 @@ class MemoryBranch(object):
         else:  # implemment dot notation
             self[name] = value
 
-    # creates a new entry, overriding the protection provided by dot notation
-    # if the value of this entry is of type dict, it becomes a MemoryBranch
-    # new values can be added to the branch in the same manner
     def __setitem__(self, item, value):
+        """
+        creates a new entry, overriding the protection provided by dot notation
+        if the value of this entry is of type dict, it becomes a MemoryBranch
+        new values can be added to the branch in the same manner
+        """
         # if the subbranch is set or replaced, to this in a specific way
         if isbranch(value):
             # naive way: self._data[item] = dict(value)
@@ -324,7 +328,9 @@ class MemoryBranch(object):
         self.__dict__[item] = None
 
     def _set_data(self, item, value):
-        """ helper function to manage setting list entries that do not exist"""
+        """
+        helper function to manage setting list entries that do not exist
+        """
         if isinstance(self._data, list) and item == len(self._data):
             self._data.append(value)
         else:
@@ -333,7 +339,9 @@ class MemoryBranch(object):
             self._data[item] = value
 
     def _pop(self, name):
-        """remove an item from the branch"""
+        """
+        remove an item from the branch
+        """
         value = self._data.pop(name)
         if name in self.__dict__.keys():
             self.__dict__.pop(name)
@@ -344,22 +352,13 @@ class MemoryBranch(object):
         self._parent[name] = self._parent._pop(self._branch)
         self._save()
 
-    # will be deprecated soon (never been used)
-    def _getbranch(self, branchname, defaults=list([])):
-        """ returns a Memory branch from the same MemoryTree with
-        branchname.
-        Example: branchname = 'level1.level2.mybranch' """
-        logger.warning("MemoryBranch._getbranch() will be deprecated soon. "
-                       "Please use _get_or_create() instead. ")
-        branch = self._root
-        for subbranch in branchname.split('.'):
-            branch = branch[subbranch]
-        branch._defaults = defaults
-        return branch
-
     def _get_or_create(self, name):
-        """ creates a new subbranch with name=name if it does not exist already and returns it. If name is a branch
-        hierarchy such as "subbranch1.subbranch2.subbranch3", all three subbranch levels are created """
+        """
+        creates a new subbranch with name=name if it does not exist already
+        and returns it. If name is a branch hierarchy such as
+        "subbranch1.subbranch2.subbranch3", all three subbranch levels
+        are created
+        """
         if isinstance(name, int):
             if name == 0 and len(self) == 0:
                 # instantiate a new list - odd way because we must
@@ -383,14 +382,15 @@ class MemoryBranch(object):
     def _erase(self):
         """
         Erases the current branch
-        :return:
         """
         self._parent._pop(self._branch)
         self._save()
 
     @property
     def _root(self):
-        """ returns the parent highest in hierarchy (the MemoryTree object)"""
+        """
+        returns the parent highest in hierarchy (the MemoryTree object)
+        """
         parent = self
         while parent != parent._parent:
             parent = parent._parent
@@ -437,13 +437,18 @@ class MemoryBranch(object):
     def __repr__(self):
         return "MemoryBranch(" + str(self._keys()) + ")"
 
-    # make it possible to add list-like memory tree to a list
     def __add__(self, other):
+        """
+        makes it possible to add list-like memory tree to a list
+        """
         if not isinstance(self._data, list):
             raise NotImplementedError
         return self._data + other
 
     def __radd__(self, other):
+        """
+        makes it possible to add list-like memory tree to a list
+        """
         if not isinstance(self._data, list):
             raise NotImplementedError
         return other + self._data
@@ -492,16 +497,16 @@ class MemoryTree(MemoryBranch):
         self._loadsavedeadtime = _loadsavedeadtime
         # first, make sure filename exists
         self._filename = get_config_file(filename, source)
-        if filename is None:  # simulate a config file, only store data in memory
+        if filename is None:
+            # to simulate a config file, only store data in memory
             self._filename = filename
             self._data = OrderedDict()
-        else:  # normal mode of operation with an actual configfile on the disc
-            self._lastsave = time()
-            # create a timer to postpone to frequent savings
-            self._savetimer = QtCore.QTimer()
-            self._savetimer.setInterval(self._loadsavedeadtime*1000)
-            self._savetimer.setSingleShot(True)
-            self._savetimer.timeout.connect(self._write_to_file)
+        self._lastsave = time()
+        # create a timer to postpone to frequent savings
+        self._savetimer = QtCore.QTimer()
+        self._savetimer.setInterval(self._loadsavedeadtime*1000)
+        self._savetimer.setSingleShot(True)
+        self._savetimer.timeout.connect(self._write_to_file)
         self._load()
 
         self._save_counter = 0 # cntr for unittest and debug purposes
@@ -544,7 +549,9 @@ class MemoryTree(MemoryBranch):
         self.__dict__.update(self._data)
 
     def _reload(self):
-        """reloads data from file if file has changed recently """
+        """
+        reloads data from file if file has changed recently
+        """
         # first check if a reload was not performed recently (speed up reasons)
         if self._filename is None:
             return
@@ -569,14 +576,15 @@ class MemoryTree(MemoryBranch):
             self._savetimer.stop()
         self._lastsave = time()
         self._write_to_file_counter += 1
-        if self._mtime != os.path.getmtime(self._filename):
-            logger.warning("Config file has recently been changed on your " +
-                           "harddisk. These changes might have been " +
-                           "overwritten now.")
         logger.debug("Saving config file %s", self._filename)
         if self._filename is None:
-            return  # skip writing to file if no filename was selected
+            # skip writing to file if no filename was selected
+            return
         else:
+            if self._mtime != os.path.getmtime(self._filename):
+                logger.warning("Config file has recently been changed on your " +
+                               "harddisk. These changes might have been " +
+                               "overwritten now.")
             # we must be sure that overwriting config file never destroys existing data.
             # security 1: backup with copyfile above
             copyfile(self._filename,
@@ -628,20 +636,3 @@ class MemoryTree(MemoryBranch):
             return os.path.split(self._filename)[1].split('.')[0]
         except:
             return 'default'
-
-if False:
-    class DummyMemoryTree(object):  # obsolete now
-        """
-        This class is there to emulate a MemoryTree, for users who would use RedPitaya object without Pyrpl object. The
-        class is essentially deprecated by now.
-        """
-        @property
-        def _keys(self):
-            return self.keys
-
-        def __getattribute__(self, item):
-            try:
-                attr = super(DummyMemoryTree, self).__getattribute__(item)
-                return attr
-            except AttributeError:
-                return self[item]
