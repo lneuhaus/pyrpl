@@ -74,12 +74,13 @@ class AcquisitionModuleWidget(ModuleWidget):
         if str(self.button_continuous.text()).startswith("Run continuous"):
             self.module.continuous()
         else:
-            self.module.stop()
+            self.module.pause()
 
     def restart_clicked(self):
         old_running_state = self.module.running_state
         self.module.stop()
-        self.module.running_state = old_running_state
+        if old_running_state in ["running_single", "running_continuous"]:
+            self.module.running_state = old_running_state
         self.update_current_average()
 
     def update_current_average(self):
