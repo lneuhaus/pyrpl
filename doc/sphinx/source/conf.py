@@ -32,7 +32,8 @@ exclude_patterns = ["*.test.rst",]
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
-	'sphinx.ext.mathbase',
+    'sphinx.ext.napoleon',  # supports google- or numpy-style dosctrings
+    'sphinx.ext.imgmath',  # supports things like :math:`a^2 + b^2 = c^2`
 ]
 
 # Add any paths that contain templates here, relative to this directory.
