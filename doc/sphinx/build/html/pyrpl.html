@@ -346,6 +346,31 @@ or curve() is made on the same instrument.</p>
 <dl class="attribute">
 <dt id="pyrpl.acquisition_module.AcquisitionModule.running_state">
 <code class="descname">running_state</code><a class="headerlink" href="#pyrpl.acquisition_module.AcquisitionModule.running_state" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>The state can be either</em> –</p>
+<ul class="simple">
+<li>running_single: taking a single acquisition (trace_average averages).</li>
+</ul>
+<p>averaging is automatically restarted.
+- running_continuous: taking a continuous acquisition
+- paused: acquisition interrupted, but no need to restart averaging
+at next call of running_continous
+- stopped: acquisition interrupted, averaging will restart at next
+call of running_continuous.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.acquisition_module.AcquisitionModule.save_curve">
+<code class="descname">save_curve</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.acquisition_module.AcquisitionModule.save_curve" title="Permalink to this definition">¶</a></dt>
+<dd><p>Saves the curve(s) that is (are) currently displayed in the gui in
+the db_system. Also, returns the list [curve_ch1, curve_ch2]…</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyrpl.acquisition_module.AcquisitionModule.setup">
+<code class="descname">setup</code><span class="sig-paren">(</span><em>**kwds</em><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.acquisition_module.AcquisitionModule.setup" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="attribute">
+<dt>
+<code class="descname">running_state</code></dt>
 <dd><dl class="docutils">
 <dt>The state can be either:</dt>
 <dd><ul class="first simple">
@@ -361,37 +386,18 @@ call of running_continuous.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="pyrpl.acquisition_module.AcquisitionModule.save_curve">
-<code class="descname">save_curve</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.acquisition_module.AcquisitionModule.save_curve" title="Permalink to this definition">¶</a></dt>
-<dd><p>Saves the curve(s) that is (are) currently displayed in the gui in
-the db_system. Also, returns the list [curve_ch1, curve_ch2]…</p>
+<dl class="attribute">
+<dt id="pyrpl.acquisition_module.AcquisitionModule.trace_average">
+<code class="descname">trace_average</code><a class="headerlink" href="#pyrpl.acquisition_module.AcquisitionModule.trace_average" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>number of curves to average in single mode. In continuous mode, a moving window average is performed.</em></p>
 </dd></dl>
 
-<dl class="method">
-<dt id="pyrpl.acquisition_module.AcquisitionModule.setup">
-<code class="descname">setup</code><span class="sig-paren">(</span><em>**kwds</em><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.acquisition_module.AcquisitionModule.setup" title="Permalink to this definition">¶</a></dt>
-<dd><blockquote>
-<div><dl class="docutils">
-<dt>running_state: </dt>
-<dd><dl class="first last docutils">
-<dt>The state can be either:</dt>
-<dd><ul class="first simple">
-<li>running_single: taking a single acquisition (trace_average averages).</li>
-</ul>
-<p class="last">averaging is automatically restarted.
-- running_continuous: taking a continuous acquisition
-- paused: acquisition interrupted, but no need to restart averaging
-at next call of running_continous
-- stopped: acquisition interrupted, averaging will restart at next
-call of running_continuous.</p>
-</dd>
-</dl>
-</dd>
-</dl>
-<p>trace_average: number of curves to average in single mode. In continuous mode, a moving window average is performed.
-curve_name: name of the curve to save.</p>
-</div></blockquote>
+<dl class="attribute">
+<dt>
+<code class="descname">curve_name</code></dt>
+<dd><p><em>name of the curve to save.</em></p>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="method">
@@ -426,8 +432,8 @@ at next run.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="pyrpl.acquisition_module.AcquisitionModule.trace_average">
-<code class="descname">trace_average</code><a class="headerlink" href="#pyrpl.acquisition_module.AcquisitionModule.trace_average" title="Permalink to this definition">¶</a></dt>
+<dt>
+<code class="descname">trace_average</code></dt>
 <dd><p>number of curves to average in single mode. In continuous mode, a moving window average is performed.</p>
 </dd></dl>
 
@@ -688,22 +694,28 @@ asyncio patterns (for instance, it implements an __await__ method…)</p>
 <dt id="pyrpl.async_utils.PyrplFuture.await_exception">
 <code class="descname">await_exception</code><span class="sig-paren">(</span><em>timeout=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.async_utils.PyrplFuture.await_exception" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the exception raised by the call that the future represents.</p>
-<dl class="docutils">
-<dt>Args:</dt>
-<dd><dl class="first last docutils">
-<dt>timeout: The number of seconds to wait for the exception if the</dt>
-<dd>future isn’t done. If None, then there is no limit on the wait
-time.</dd>
-</dl>
-</dd>
-<dt>Returns:</dt>
-<dd>The exception raised by the call that the future represents or None
-if the call completed without raising.</dd>
-<dt>Raises:</dt>
-<dd>CancelledError: If the future was cancelled.
-TimeoutError: If the future didn’t finish executing before the
-given  timeout.</dd>
-</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>timeout</strong> – The number of seconds to wait for the exception if the
+future isn’t done. If None, then there is no limit on the wait
+time.</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The exception raised by the call that the future represents or None
+if the call completed without raising.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first last simple">
+<li><code class="xref py py-exc docutils literal"><span class="pre">CancelledError</span></code> – If the future was cancelled.</li>
+<li><code class="xref py py-exc docutils literal"><span class="pre">TimeoutError</span></code> – If the future didn’t finish executing before the</li>
+<li>given  timeout.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
@@ -717,23 +729,27 @@ time, this future needs to await_result from another future since
 the eventloop will be blocked.
 —&gt; To be safe, don’t use await_result() in a Qt slot. You should
 rather use result() and add_done_callback() instead.</p>
-<dl class="docutils">
-<dt>Args:</dt>
-<dd><dl class="first last docutils">
-<dt>timeout: The number of seconds to wait for the result if the future</dt>
-<dd>isn’t done. If None, then there is no limit on the wait time.</dd>
-</dl>
-</dd>
-<dt>Returns:</dt>
-<dd>The result of the call that the future represents.</dd>
-<dt>Raises:</dt>
-<dd><p class="first">CancelledError: If the future was cancelled.
-TimeoutError: If the future didn’t finish executing before the</p>
-<blockquote>
-<div>given timeout.</div></blockquote>
-<p class="last">Exception: If the call raised then that exception will be raised.</p>
-</dd>
-</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>timeout</strong> – The number of seconds to wait for the result if the future
+isn’t done. If None, then there is no limit on the wait time.</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The result of the call that the future represents.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first last simple">
+<li><code class="xref py py-exc docutils literal"><span class="pre">CancelledError</span></code> – If the future was cancelled.</li>
+<li><code class="xref py py-exc docutils literal"><span class="pre">TimeoutError</span></code> – If the future didn’t finish executing before the
+given timeout.</li>
+<li><code class="xref py py-exc docutils literal"><span class="pre">Exception</span></code> – If the call raised then that exception will be raised.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
@@ -1697,7 +1713,16 @@ kwds will be passed to self.params</p>
 <dd>Name of the child curve to be retrieved. If several childs
 have the same name, the first one is returned.</dd>
 </dl>
-<p>CurveDB: the child curve</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><strong>CurveDB</strong></td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">the child curve</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="attribute">
@@ -1798,44 +1823,44 @@ have the same name, the first one is returned.</dd>
 expansion of a memory branch only displays the available subbranches or
 leaves. A memory tree is a hierarchical structure. Nested dicts are
 interpreted as subbranches.</p>
-<dl class="docutils">
-<dt>parent: MemoryBranch</dt>
-<dd>parent is the parent MemoryBranch</dd>
-<dt>branch: str</dt>
-<dd>branch is a string with the name of the branch to create</dd>
-<dt>defaults: list</dt>
-<dd>list of default branches that are used if requested data is not
-found in the current branch</dd>
-</dl>
-<p>all properties without preceeding underscore are config file entries</p>
-<dl class="docutils">
-<dt>_data:      the raw data underlying the branch. Type depends on the</dt>
-<dd>loader and can be dict, OrderedDict or CommentedMap</dd>
-<dt>_dict:      similar to _data, but the dict contains all default</dt>
-<dd>branches</dd>
-<dt>_defaults:  list of MemoryBranch objects in order of decreasing</dt>
-<dd>priority that are used as defaults for the Branch.
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>parent</strong> (<a class="reference internal" href="#pyrpl.memory.MemoryBranch" title="pyrpl.memory.MemoryBranch"><em>MemoryBranch</em></a>) – parent is the parent MemoryBranch</li>
+<li><strong>branch</strong> (<em>str</em>) – branch is a string with the name of the branch to create</li>
+<li><strong>defaults</strong> (<em>list</em>) – list of default branches that are used if requested data is not
+found in the current branch</li>
+<li><strong>members</strong> (<em>Class</em>) – </li>
+<li><strong>-----------</strong> – </li>
+<li><strong>properties without preceeding underscore are config file entries</strong> (<a class="reference internal" href="#pyrpl.curvedb.CurveDB.all" title="pyrpl.curvedb.CurveDB.all"><em>all</em></a>) – </li>
+<li><strong>_data</strong> (<em>the raw data underlying the branch. Type depends on the</em>) – loader and can be dict, OrderedDict or CommentedMap</li>
+<li><strong>_dict</strong> (<em>similar to _data</em><em>, </em><em>but the dict contains all default</em>) – branches</li>
+<li><strong>_defaults</strong> (<em>list of MemoryBranch objects in order of decreasing</em>) – priority that are used as defaults for the Branch.
 Changing the default values from the software will replace
 the default values in the current MemoryBranch but not
 alter the underlying default branch. Changing the
 default branch when it is not overridden by the current
-MemoryBranch results in an effective change in the branch.</dd>
-</dl>
-<p>_keys:      same as _dict._keys()
-_update:    updates the branch with another dict
-_pop:       removes a value/subbranch from the branch
-_root:      the MemoryTree object (root) of the tree
-_parent:    the parent of the branch
-_branch:    the name of the branch
-_get_or_create: creates a new branch and returns it. Same as branch[newname]=dict(), but also supports nesting,</p>
-<blockquote>
-<div>e.g. newname=”lev1.lev2.level3”</div></blockquote>
-<p>_fullbranchname: returns the full path from root to the branch
-_getbranch: returns a branch by specifying its path, e.g. ‘b1.c2.d3’
-_rename:    renames the branch
-_reload:    attempts to reload the data from disc
-_save:      attempts to save the data to disc</p>
-<p>If a subbranch or a value is requested but does not exist in the current MemoryTree, a KeyError is raised.</p>
+MemoryBranch results in an effective change in the branch.</li>
+<li><strong>_keys</strong> (<em>same as _dict._keys</em><em>(</em><em>)</em>) – </li>
+<li><strong>_update</strong> (<em>updates the branch with another dict</em>) – </li>
+<li><strong>_pop</strong> (<em>removes a value/subbranch from the branch</em>) – </li>
+<li><strong>_root</strong> (<em>the MemoryTree object</em><em> (</em><em>root</em><em>) </em><em>of the tree</em>) – </li>
+<li><strong>_parent</strong> (<em>the parent of the branch</em>) – </li>
+<li><strong>_branch</strong> (<em>the name of the branch</em>) – </li>
+<li><strong>_get_or_create</strong> (<em>creates a new branch and returns it. Same as branch</em><em>[</em><em>newname</em><em>]</em><em>=dict</em><em>(</em><em>)</em><em>, </em><em>but also supports nesting</em><em>,</em>) – e.g. newname=”lev1.lev2.level3”</li>
+<li><strong>_fullbranchname</strong> (<em>returns the full path from root to the branch</em>) – </li>
+<li><strong>_getbranch</strong> (<em>returns a branch by specifying its path</em><em>, </em><em>e.g. 'b1.c2.d3'</em>) – </li>
+<li><strong>_rename</strong> (<em>renames the branch</em>) – </li>
+<li><strong>_reload</strong> (<em>attempts to reload the data from disc</em>) – </li>
+<li><strong>_save</strong> (<em>attempts to save the data to disc</em>) – </li>
+<li><strong>a subbranch</strong><strong> or </strong><strong>a value is requested but does not exist in the current MemoryTree</strong><strong>, </strong><strong>a KeyError is raised.</strong> (<em>If</em>) – </li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="class">
@@ -1845,10 +1870,14 @@ _save:      attempts to save the data to disc</p>
 <p>The highest level of a MemoryBranch construct. All attributes of this
 object that do not start with ‘_’ are other MemoryBranch objects or
 Leaves, i.e. key - value pairs.</p>
-<dl class="docutils">
-<dt>filename: str</dt>
-<dd>The filename of the .yml file defining the MemoryTree structure.</dd>
-</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>filename</strong> (<em>str</em>) – The filename of the .yml file defining the MemoryTree structure.</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="exception">
@@ -2315,15 +2344,8 @@ values.</div></blockquote>
 <dl class="attribute">
 <dt id="pyrpl.modules.Module.setup_attributes">
 <code class="descname">setup_attributes</code><a class="headerlink" href="#pyrpl.modules.Module.setup_attributes" title="Permalink to this definition">¶</a></dt>
-<dd><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">a dict with the current values of the setup attributes.</td>
-</tr>
-</tbody>
-</table>
-<p>Recursively collects setup_attributes for sub_modules.</p>
+<dd><p><em>return</em> – a dict with the current values of the setup attributes.
+Recursively collects setup_attributes for sub_modules.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -2569,19 +2591,24 @@ meters is implemented there. Another very often used model type is
 <dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
 <p>Higher level object, in charge of loading the right hardware and software
 module, depending on the configuration described in a config file.</p>
-<dl class="docutils">
-<dt>config: str</dt>
-<dd>Name of the config file. No .yml extension is needed. The file
-should be located in the config directory.</dd>
-<dt>source: str</dt>
-<dd>If None, it is ignored. Else, the file ‘source’ is taken as a
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>config</strong> (<em>str</em>) – Name of the config file. No .yml extension is needed. The file
+should be located in the config directory.</li>
+<li><strong>source</strong> (<em>str</em>) – If None, it is ignored. Else, the file ‘source’ is taken as a
 template config file and copied to ‘config’ if that file does
-not exist.</dd>
-<dt><a href="#id11"><span class="problematic" id="id12">**</span></a>kwargs: dict</dt>
-<dd>Additional arguments can be passed and will be written to the
+not exist.</li>
+<li><strong>**kwargs</strong> (<em>dict</em>) – Additional arguments can be passed and will be written to the
 redpitaya branch of the config file. See class definition of
-RedPitaya for possible keywords.</dd>
-</dl>
+RedPitaya for possible keywords.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 <dl class="attribute">
 <dt id="pyrpl.pyrpl.Pyrpl.hardware_modules">
 <code class="descname">hardware_modules</code><a class="headerlink" href="#pyrpl.pyrpl.Pyrpl.hardware_modules" title="Permalink to this definition">¶</a></dt>
