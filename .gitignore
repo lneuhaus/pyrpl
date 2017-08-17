@@ -78,8 +78,7 @@ xunit.xml
 *.log
 
 # Sphinx documentation
-!doc/sphinx/build/html
-
+#!doc/sphinx/build/html
 # Sphinx documentation
 _build
 _static
