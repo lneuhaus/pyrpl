@@ -80,6 +80,12 @@ xunit.xml
 # Sphinx documentation
 !doc/sphinx/build/html
 
+# Sphinx documentation
+_build
+_static
+_templates
+
+
 # PyBuilder
 target/
 
