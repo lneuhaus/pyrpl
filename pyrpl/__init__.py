@@ -51,7 +51,7 @@ default_config_dir = os.path.join(os.path.dirname(__file__), 'config')
 # create dirs if necessary
 for path in [user_dir, user_config_dir, user_curve_dir, user_lockbox_dir]:
     if not os.path.isdir(path):
-        os.mkdir(path)
+        os.mkdir(path)  # pragma: no cover
 
 # try to set log level (and automatically generate custom global_config file)
 from .pyrpl_utils import setloglevel
@@ -59,7 +59,7 @@ from .memory import MemoryTree
 global_config = MemoryTree('global_config', source='global_config')
 try:
     setloglevel(global_config.general.loglevel, loggername=logger.name)
-except:
+except:  # pragma: no cover
     pass
 
 # main imports

@@ -100,7 +100,7 @@ class CurveFuture(PyrplFuture):
             self._timer.setInterval(self.min_delay_ms)
             self._timer.start()
 
-    def set_exception(self, exception):
+    def set_exception(self, exception):  # pragma: no cover
         self._timer.stop()
         super(CurveFuture, self).set_exception(exception)
 
@@ -515,13 +515,13 @@ class AcquisitionModule(Module):
         this is the minimum time to wait in the "best case scenario" where
         the acquisition would have started immediately after setup().
         """
-        raise NotImplementedError("To implement in derived class")
+        raise NotImplementedError("To implement in derived class")  # pragma: no cover
 
     def _data_ready(self):
         """
         :return: True or False
         """
-        raise NotImplementedError('To implement in derived class')
+        raise NotImplementedError('To implement in derived class')  # pragma: no cover
 
     def _get_curve(self):
         """
@@ -529,7 +529,7 @@ class AcquisitionModule(Module):
           a 1D array for single channel instruments
           a 2*n array for the scope
         """
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
     @property
     def data_x(self):
@@ -537,7 +537,7 @@ class AcquisitionModule(Module):
         x-axis of the curves to plot.
         :return:
         """
-        raise NotImplementedError("To implement in derived class")
+        raise NotImplementedError("To implement in derived class")  # pragma: no cover
 
     def _start_acquisition(self):
         """
@@ -547,10 +547,10 @@ class AcquisitionModule(Module):
         the _curve_future()
         Only non-blocking operations are allowed.
         """
-        pass
+        pass  # pragma: no cover
 
     def _free_up_resources(self):
-        pass
+        pass # pragma: no cover
 
     # Shortcut to the RunFuture data (for plotting):
     # ----------------------------------------------

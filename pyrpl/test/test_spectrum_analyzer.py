@@ -86,3 +86,15 @@ class TestClass(TestPyrpl):
                 curve = self.pyrpl.spectrumanalyzer.curve()
                 points.append(max(curve))
                 assert abs(max(curve) - 1) < 0.01, max(curve)
+
+    def test_save_curve(self):
+        sa = self.pyrpl.spectrumanalyzer
+        sa.setup(baseband=True,
+                      center=0,
+                      window='flattop',
+                      span=1e6,
+                      input1_baseband="asg0",
+                      running_state='stopped')
+        sa.single()
+        curve = sa.save_curve()
+        assert (curve[0].data==sa.data_avg[0]).all()

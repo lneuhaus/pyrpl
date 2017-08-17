@@ -6,6 +6,7 @@ from ...async_utils import sleep as async_sleep
 from qtpy import QtCore, QtWidgets
 from ..test_base import TestPyrpl
 from ... import APP
+from ...curvedb import CurveDB
 
 class TestScope(TestPyrpl):
     """
@@ -212,3 +213,17 @@ class TestScope(TestPyrpl):
 
             self.pyrpl.rp.scope.stop()
             assert(old==new), (old, new, "scope is the problem", rolling_mode)
+
+    def test_save_curve(self):
+        self.pyrpl.rp.scope.stop()
+        self.pyrpl.rp.scope.setup(duration=0.005,
+                                  trigger_delay=0.,
+                                  input1='in1',
+                                  ch1_active=True,
+                                  ch2_active=True,
+                                  rolling_mode=True,
+                                  trace_average=1,
+                                  running_state="stopped")
+        self.pyrpl.rp.scope.single()
+        curve = self.pyrpl.rp.scope.save_curve()
+        assert len(curve[0].data)==self.pyrpl.rp.scope.data_length

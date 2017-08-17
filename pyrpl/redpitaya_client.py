@@ -167,7 +167,7 @@ class MonitorClient(object):
             restartserver=self._restartserver)
 
 
-class DummyClient(object):
+class DummyClient(object):  # pragma: no cover
     """Class for unitary tests without RedPitaya hardware available"""
     class fpgadict(dict):
         def __missing__(self, key):
@@ -250,7 +250,7 @@ class DummyClient(object):
             val.append(self.read_fpgamemory(addr+0x4*i))
         return np.array(val, dtype=np.uint32)
     
-    def writes(self, addr, values):
+    def writes(self, addr, values): # pragma: no-cover
         for i, v in enumerate(values):
             self.fpgamemory[str(addr+0x4*i)]=v
     

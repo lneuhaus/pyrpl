@@ -192,3 +192,17 @@ class TestNA(TestPyrpl):
             new = self.pyrpl.c._save_counter
             self.na.stop()
             assert (old == new), (old, new)
+
+    def test_save_curve(self):
+        self.na.setup(start_freq=1e5,
+                          stop_freq=2e5,
+                          rbw=100000,
+                          points=10,
+                          output_direct="out1",
+                          input="out1",
+                          amplitude=0.01,
+                          trace_average=1,
+                          running_state="running_continuous")
+        self.na.single()
+        curve = self.na.save_curve()
+        assert len(curve.data) == self.na.points

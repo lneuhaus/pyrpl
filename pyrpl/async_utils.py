@@ -157,7 +157,7 @@ class PyrplFuture(Future):
         ---> To be safe, don't use await_result() in a Qt slot...
         """
         if self.cancelled():
-            raise CancelledError("Future was cancelled")
+            raise CancelledError("Future was cancelled")  # pragma: no-cover
         if not self.done():
             self.timer_timeout = None
             if (timeout is not None) and timeout > 0:
@@ -169,7 +169,7 @@ class PyrplFuture(Future):
             self.loop.exec_()
             if self._timer_timeout is not None:
                 if not self._timer_timeout.isActive():
-                    return TimeoutError("Timeout occured")
+                    return TimeoutError("Timeout occured")  # pragma: no-cover
                 else:
                     self._timer_timeout.stop()
 
@@ -202,7 +202,7 @@ class PyrplFuture(Future):
         self._wait_for_done(timeout)
         return self.result()
 
-    def await_exception(self, timeout=None):
+    def await_exception(self, timeout=None):  # pragma: no-cover
         """
         Return the exception raised by the call that the future represents.
 
@@ -258,7 +258,7 @@ def sleep(delay):
         timer.start()
         try:
             loop.exec_()
-        except KeyboardInterrupt as e:
+        except KeyboardInterrupt as e:  # pragma: no-cover
             # try to recover from KeyboardInterrupt by finishing the current task
             timer.setInterval(1)
             timer.start()
