@@ -123,9 +123,11 @@ class NaCurveFuture(PyrplFuture):
         super(NaCurveFuture, self).__init__()
 
         self.data_x = copy(self._module._data_x)  # In case of saving latter.
-        self.data_avg = np.zeros(self.n_points,
+        self.data_avg = np.empty(self.n_points,
                                  dtype=np.complex)
-        self.data_amp = np.zeros(self.n_points)
+        self.data_avg.fill(np.nan)
+        self.data_amp = np.empty(self.n_points)
+        self.data_amp.fill(np.nan)
         # self.start()
         self._reset_benchmark()
         self.measured_time_per_point = np.nan  #  measured over last scan
@@ -230,7 +232,10 @@ class NaRunFuture(NaCurveFuture):
     def _add_point(self, point):
         y, amp = point
         index = self.current_point
-        self.data_avg[index] = (self.data_avg[index]*self.current_avg + y)/\
+        avg_value = self.data_avg[index]
+        if np.isnan(avg_value): # replace nan value by 0
+            avg_value = 0
+        self.data_avg[index] = (avg_value*self.current_avg + y)/\
                                (self.current_avg + 1)
         self.data_amp[index] = amp
         self._module._emit_signal_by_name("update_point", index)
@@ -580,12 +585,10 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
     @property
     def data_x(self):
         """
-        Returns the x-axis (frequency or time for zero-span)
-        restricted to the valid points
-
-        For the full axis, use _data_x
+        x-data for the network analyzer are computed during setup() and cached
+        in the variable _data_x.
         """
-        return self._data_x[:self.last_valid_point + 1]
+        return self._data_x
 
     @property
     def frequencies(self):
@@ -634,7 +637,7 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
 
     @property
     def last_valid_point(self):
-        if self.current_avg>1:
+        if self.current_avg>=1:
             return self.points - 1
         else:
             return self.current_point
@@ -654,7 +657,7 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
     # overwrite default behavior to return only valid points
     @property
     def data_avg(self):
-        return self._run_future.data_avg[:self.last_valid_point + 1]
+        return self._run_future.data_avg
 
     @property
     def last_valid_point(self):

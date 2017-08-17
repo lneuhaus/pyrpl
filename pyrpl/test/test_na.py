@@ -35,7 +35,7 @@ class TestNA(TestPyrpl):
                           trace_average=1)
             async_sleep(2.0*self.communication_time)
             self.na.single_async()
-            async_sleep(self.communication_time * 5.0)
+            async_sleep(self.communication_time * 5.0 + 0.1)
             assert data_changing()
 
             current_point = self.na.current_point
