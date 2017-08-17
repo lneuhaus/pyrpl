@@ -46,11 +46,14 @@ requirements = ['scp',
                 'numpy>=1.9',
                 'paramiko>=2.0',
                 'nose>=1.0',
+                #'PyQt5',  # cannot be installed with pip
                 'qtpy']
 if sys.version_info >= (3,4):  # python version dependencies
     requirements += ['quamash']
 else:  # python 2.7
     requirements += ['futures']
+if os.environ.get('READTHEDOCS') == 'True':
+    requirements += ['mock']  # mock is needed on readthedocs.io to mock PyQt5
 
 # cannot install pyQt4 with pip:
 # http://stackoverflow.com/questions/4628519/is-it-possible-to-require-pyqt-from-setuptools-setup-py
