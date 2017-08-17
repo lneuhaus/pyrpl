@@ -21,7 +21,7 @@ if os.environ.get('READTHEDOCS') == 'True':
     import mock
     MOCK_MODULES = ['PyQt4', 'PyQt4.QtGui', 'PyQt4.QtCore', 'sip',
                     'qtpy', 'qtpy.QtCore', 'qtpy.QtWidgets', 'qtpy.QtGui',
-                    'pyqtgraph', 'pyqtgraph.QtGui', 'pyqtgraph.QtCore']
+                    'pyqtgraph', 'pyqtgraph.Qt', 'pyqtgraph.Qt.QtGui', 'pyqtgraph.Qt.QtCore']
     sys.modules.update((mod_name, mock.MagicMock()) for mod_name in MOCK_MODULES)
 
 # If extensions (or modules to document with autodoc) are in another directory,
