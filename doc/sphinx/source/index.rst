@@ -4,21 +4,13 @@
    contain the root `toctree` directive.
 
 Welcome to pyrpl's documentation!
-=================================
-
-Contents:
+*********************************
 
 .. toctree::
    :maxdepth: 2
 
-   tutorial
-   project
-   code
+   user_guide/index
+   reference_guide/index
+   developer_guide/index
+   indices_and_tables/index
 
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
