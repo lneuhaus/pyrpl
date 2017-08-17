@@ -5,13 +5,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>pyrpl package &#8212; pyrpl 0.9.3.3 documentation</title>
+    <title>pyrpl package &#8212; pyrpl 0.9.3.4 documentation</title>
     <link rel="stylesheet" href="_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.9.3.3',
+        VERSION:     '0.9.3.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -34,7 +34,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pyrpl 0.9.3.3 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">pyrpl 0.9.3.4 documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -151,6 +151,7 @@
 <li class="toctree-l2"><a class="reference internal" href="pyrpl.widgets.html#subpackages">Subpackages</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="pyrpl.widgets.module_widgets.html">pyrpl.widgets.module_widgets package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="pyrpl.widgets.module_widgets.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pyrpl.widgets.module_widgets.html#module-pyrpl.widgets.module_widgets.acquisition_module_widget">pyrpl.widgets.module_widgets.acquisition_module_widget module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="pyrpl.widgets.module_widgets.html#module-pyrpl.widgets.module_widgets.asg_widget">pyrpl.widgets.module_widgets.asg_widget module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="pyrpl.widgets.module_widgets.html#module-pyrpl.widgets.module_widgets.base_module_widget">pyrpl.widgets.module_widgets.base_module_widget module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="pyrpl.widgets.module_widgets.html#module-pyrpl.widgets.module_widgets.curve_viewer_widget">pyrpl.widgets.module_widgets.curve_viewer_widget module</a></li>
@@ -576,7 +577,7 @@ displays</p>
 <dl class="class">
 <dt id="pyrpl.async_utils.MainThreadTimer">
 <em class="property">class </em><code class="descclassname">pyrpl.async_utils.</code><code class="descname">MainThreadTimer</code><span class="sig-paren">(</span><em>interval</em><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.async_utils.MainThreadTimer" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">PyQt4.QtCore.QTimer</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">PyQt5.QtCore.QTimer</span></code></p>
 <p>To be able to start a timer from any (eventually non Qt) thread,
 we have to make sure that the timer is living in the main thread (in Qt,
 each thread potentially has a distinct eventloop…).</p>
@@ -837,6 +838,17 @@ the correct propagation of the signal.</p>
 <dd></dd></dl>
 
 <dl class="method">
+<dt id="pyrpl.attributes.AttributeList.select">
+<code class="descname">select</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.attributes.AttributeList.select" title="Permalink to this definition">¶</a></dt>
+<dd><p>selects the element with value, or None if it does not exist</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pyrpl.attributes.AttributeList.selected">
+<code class="descname">selected</code><a class="headerlink" href="#pyrpl.attributes.AttributeList.selected" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
 <dt id="pyrpl.attributes.AttributeList.sort">
 <code class="descname">sort</code><span class="sig-paren">(</span><em>key=None</em>, <em>reverse=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.attributes.AttributeList.sort" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -1076,20 +1088,8 @@ invert=True inverts the mapping</p>
 </dd></dl>
 
 <dl class="class">
-<dt id="pyrpl.attributes.ComplexListProperty">
-<em class="property">class </em><code class="descclassname">pyrpl.attributes.</code><code class="descname">ComplexListProperty</code><span class="sig-paren">(</span><em>min=-inf</em>, <em>max=inf</em>, <em>increment=1</em>, <em>log_increment=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.attributes.ComplexListProperty" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#pyrpl.attributes.FloatListProperty" title="pyrpl.attributes.FloatListProperty"><code class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.FloatListProperty</span></code></a></p>
-<p>An arbitrary length list of complex numbers.</p>
-<dl class="method">
-<dt id="pyrpl.attributes.ComplexListProperty.validate_and_normalize_element">
-<code class="descname">validate_and_normalize_element</code><span class="sig-paren">(</span><em>obj</em>, <em>val</em><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.attributes.ComplexListProperty.validate_and_normalize_element" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
 <dt id="pyrpl.attributes.ComplexProperty">
-<em class="property">class </em><code class="descclassname">pyrpl.attributes.</code><code class="descname">ComplexProperty</code><span class="sig-paren">(</span><em>min=-inf</em>, <em>max=inf</em>, <em>increment=1</em>, <em>log_increment=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.attributes.ComplexProperty" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">pyrpl.attributes.</code><code class="descname">ComplexProperty</code><span class="sig-paren">(</span><em>min=-inf</em>, <em>max=inf</em>, <em>increment=0</em>, <em>log_increment=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.attributes.ComplexProperty" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#pyrpl.attributes.FloatProperty" title="pyrpl.attributes.FloatProperty"><code class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.FloatProperty</span></code></a></p>
 <dl class="method">
 <dt id="pyrpl.attributes.ComplexProperty.validate_and_normalize">
@@ -1113,7 +1113,7 @@ subsequently returns the first read value from python memory.</p>
 
 <dl class="class">
 <dt id="pyrpl.attributes.CurveProperty">
-<em class="property">class </em><code class="descclassname">pyrpl.attributes.</code><code class="descname">CurveProperty</code><span class="sig-paren">(</span><em>no_curve_first=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.attributes.CurveProperty" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">pyrpl.attributes.</code><code class="descname">CurveProperty</code><span class="sig-paren">(</span><em>no_curve_first=False</em>, <em>show_childs=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.attributes.CurveProperty" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#pyrpl.attributes.CurveSelectProperty" title="pyrpl.attributes.CurveSelectProperty"><code class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.CurveSelectProperty</span></code></a></p>
 <p>property for a curve whose widget plots the corresponding curve.</p>
 <p>Unfortunately, the widget does not allow to select the curve,
@@ -1122,14 +1122,14 @@ i.e. selection must be implemented with another CurveSelectProperty.</p>
 
 <dl class="class">
 <dt id="pyrpl.attributes.CurveSelectListProperty">
-<em class="property">class </em><code class="descclassname">pyrpl.attributes.</code><code class="descname">CurveSelectListProperty</code><span class="sig-paren">(</span><em>no_curve_first=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.attributes.CurveSelectListProperty" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">pyrpl.attributes.</code><code class="descname">CurveSelectListProperty</code><span class="sig-paren">(</span><em>no_curve_first=False</em>, <em>show_childs=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.attributes.CurveSelectListProperty" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#pyrpl.attributes.CurveSelectProperty" title="pyrpl.attributes.CurveSelectProperty"><code class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.CurveSelectProperty</span></code></a></p>
 <p>same as above, but widget is a list to select from</p>
 </dd></dl>
 
 <dl class="class">
 <dt id="pyrpl.attributes.CurveSelectProperty">
-<em class="property">class </em><code class="descclassname">pyrpl.attributes.</code><code class="descname">CurveSelectProperty</code><span class="sig-paren">(</span><em>no_curve_first=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.attributes.CurveSelectProperty" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">pyrpl.attributes.</code><code class="descname">CurveSelectProperty</code><span class="sig-paren">(</span><em>no_curve_first=False</em>, <em>show_childs=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.attributes.CurveSelectProperty" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#pyrpl.attributes.SelectProperty" title="pyrpl.attributes.SelectProperty"><code class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.SelectProperty</span></code></a></p>
 <p>An attribute to select a curve from all available ones.</p>
 <p>The curve object is loaded to instance._name_object, where ‘name’ stands
@@ -1233,31 +1233,8 @@ negative bandwidth stands for high-pass instead of lowpass, 0 bandwidth for bypa
 </dd></dl>
 
 <dl class="class">
-<dt id="pyrpl.attributes.FloatListProperty">
-<em class="property">class </em><code class="descclassname">pyrpl.attributes.</code><code class="descname">FloatListProperty</code><span class="sig-paren">(</span><em>min=-inf</em>, <em>max=inf</em>, <em>increment=1</em>, <em>log_increment=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.attributes.FloatListProperty" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#pyrpl.attributes.FloatProperty" title="pyrpl.attributes.FloatProperty"><code class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.FloatProperty</span></code></a></p>
-<p>An arbitrary length list of float numbers.</p>
-<dl class="attribute">
-<dt id="pyrpl.attributes.FloatListProperty.default">
-<code class="descname">default</code><em class="property"> = [0.0]</em><a class="headerlink" href="#pyrpl.attributes.FloatListProperty.default" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="pyrpl.attributes.FloatListProperty.validate_and_normalize">
-<code class="descname">validate_and_normalize</code><span class="sig-paren">(</span><em>obj</em>, <em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.attributes.FloatListProperty.validate_and_normalize" title="Permalink to this definition">¶</a></dt>
-<dd><p>Converts the value in a list of float numbers.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="pyrpl.attributes.FloatListProperty.validate_and_normalize_element">
-<code class="descname">validate_and_normalize_element</code><span class="sig-paren">(</span><em>obj</em>, <em>val</em><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.attributes.FloatListProperty.validate_and_normalize_element" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
 <dt id="pyrpl.attributes.FloatProperty">
-<em class="property">class </em><code class="descclassname">pyrpl.attributes.</code><code class="descname">FloatProperty</code><span class="sig-paren">(</span><em>min=-inf</em>, <em>max=inf</em>, <em>increment=1</em>, <em>log_increment=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.attributes.FloatProperty" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">pyrpl.attributes.</code><code class="descname">FloatProperty</code><span class="sig-paren">(</span><em>min=-inf</em>, <em>max=inf</em>, <em>increment=0</em>, <em>log_increment=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.attributes.FloatProperty" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#pyrpl.attributes.NumberProperty" title="pyrpl.attributes.NumberProperty"><code class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.NumberProperty</span></code></a></p>
 <p>An attribute for a float value.</p>
 <dl class="attribute">
@@ -1444,7 +1421,7 @@ This object is only used inside the Module class</p>
 
 <dl class="class">
 <dt id="pyrpl.attributes.NumberProperty">
-<em class="property">class </em><code class="descclassname">pyrpl.attributes.</code><code class="descname">NumberProperty</code><span class="sig-paren">(</span><em>min=-inf</em>, <em>max=inf</em>, <em>increment=1</em>, <em>log_increment=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.attributes.NumberProperty" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">pyrpl.attributes.</code><code class="descname">NumberProperty</code><span class="sig-paren">(</span><em>min=-inf</em>, <em>max=inf</em>, <em>increment=0</em>, <em>log_increment=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.attributes.NumberProperty" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#pyrpl.attributes.BaseProperty" title="pyrpl.attributes.BaseProperty"><code class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.BaseProperty</span></code></a></p>
 <p>Abstract class for ints and floats</p>
 <dl class="attribute">
@@ -1479,7 +1456,7 @@ This object is only used inside the Module class</p>
 
 <dl class="class">
 <dt id="pyrpl.attributes.PhaseProperty">
-<em class="property">class </em><code class="descclassname">pyrpl.attributes.</code><code class="descname">PhaseProperty</code><span class="sig-paren">(</span><em>min=-inf</em>, <em>max=inf</em>, <em>increment=1</em>, <em>log_increment=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.attributes.PhaseProperty" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">pyrpl.attributes.</code><code class="descname">PhaseProperty</code><span class="sig-paren">(</span><em>min=-inf</em>, <em>max=inf</em>, <em>increment=0</em>, <em>log_increment=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.attributes.PhaseProperty" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#pyrpl.attributes.FloatProperty" title="pyrpl.attributes.FloatProperty"><code class="xref py py-class docutils literal"><span class="pre">pyrpl.attributes.FloatProperty</span></code></a></p>
 <p>An attribute to represent a phase</p>
 <dl class="method">
@@ -1788,12 +1765,6 @@ have the same name, the first one is returned.</dd>
 </dd></dl>
 
 <dl class="exception">
-<dt id="pyrpl.errors.TimeoutError">
-<em class="property">exception </em><code class="descclassname">pyrpl.errors.</code><code class="descname">TimeoutError</code><a class="headerlink" href="#pyrpl.errors.TimeoutError" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">ValueError</span></code></p>
-</dd></dl>
-
-<dl class="exception">
 <dt id="pyrpl.errors.UnexpectedPyrplError">
 <em class="property">exception </em><code class="descclassname">pyrpl.errors.</code><code class="descname">UnexpectedPyrplError</code><span class="sig-paren">(</span><em>message=''</em>, <em>*args</em><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.errors.UnexpectedPyrplError" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">Exception</span></code></p>
@@ -1878,6 +1849,12 @@ Leaves, i.e. key - value pairs.</p>
 <dt>filename: str</dt>
 <dd>The filename of the .yml file defining the MemoryTree structure.</dd>
 </dl>
+</dd></dl>
+
+<dl class="exception">
+<dt id="pyrpl.memory.UnexpectedSaveError">
+<em class="property">exception </em><code class="descclassname">pyrpl.memory.</code><code class="descname">UnexpectedSaveError</code><a class="headerlink" href="#pyrpl.memory.UnexpectedSaveError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">RuntimeError</span></code></p>
 </dd></dl>
 
 <dl class="function">
@@ -2385,7 +2362,7 @@ instantiating submodules at module instanciation time.
 <dl class="class">
 <dt id="pyrpl.modules.SignalLauncher">
 <em class="property">class </em><code class="descclassname">pyrpl.modules.</code><code class="descname">SignalLauncher</code><span class="sig-paren">(</span><em>module</em><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.modules.SignalLauncher" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">PyQt4.QtCore.QObject</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">PyQt5.QtCore.QObject</span></code></p>
 <p>A QObject that is connected to the widgets to update their value when
 attributes of a module change. Any timers needed to implement the module
 functionality shoud be implemented here as well</p>
@@ -2446,6 +2423,146 @@ values.</div></blockquote>
 </div>
 <div class="section" id="module-pyrpl.pyrpl">
 <span id="pyrpl-pyrpl-module"></span><h2>pyrpl.pyrpl module<a class="headerlink" href="#module-pyrpl.pyrpl" title="Permalink to this headline">¶</a></h2>
+<p># DEPRECATED DOCSTRING - KEEP UNTIL DOCUMENTATION IS READY
+pyrpl.py - high-level lockbox functionality</p>
+<p>A lockbox is a device that converts a number of input signals into a number of
+output signals suitable to stabilize a physical system in a desired state. This
+task is generally divided into two steps:
+1) bring the system close the desired state where it can be linearized
+2) keep it there using linear control.</p>
+<p>The task is further divided into several subtasks:
+0a) Condition the input signals so that they are suitable for the next steps</p>
+<blockquote>
+<div><ul class="simple">
+<li>offset removal</li>
+<li>input filters</li>
+<li>demodulation / lockin</li>
+<li>inversion</li>
+</ul>
+</div></blockquote>
+<p>0b) Estimate the system state from the past and present history of input and
+output signals.
+0c) Build a filter for the output signals such that they can be conveniently
+addressed with higher-level lockbox logic.</p>
+<p>1) As above: apply reasonable action to the outputs to approach the system to
+the desired state. We generally call this the ‘search’ step.
+- provide a number of algorithms/recipes to do this</p>
+<p>2) As above: Turn on linear feedback. We call this the ‘lock’ step.
+- connect the input signals with appropriate gain to the outputs
+- the gain depends on the state of the system, so internal state representation
+will remain useful here</p>
+<p>This naturally divides the lockbox object into 3 subcomponents:
+a) inputs
+b) internal model
+c) outputs</p>
+<p>which will be interconnected by the algorithms that come with the model and
+make optimal use of the available inputs and outputs. The job of the
+configuration file is to provide a maximum of information about the inputs,
+outputs and the physical system (=internal model) so that the lockbox is
+effective and robust. The lockbox will usually require both a coarse-tuning
+and an optimization step for optimum performance, which will both adjust the
+various parameters for the best match between model and real system.</p>
+<p>Let’s make this reasoning more clear with an example:</p>
+<p>A Fabry-Perot cavity is to be locked near resonance using a PDH scheme. The
+incident laser beam goes through a phase modulator. The cavity contains a piezo
+with estimated bandwidth 10 kHz (appearance of first resonance) and
+a displacement of 350 nm/V that goes into the piezo amplifier. To limit the
+effect of amplifier noise, we have inserted an RC lowpass between amplifier and
+piezo with a cutoff frequency of 100 Hz. The laser contains another piezo with
+estimated bandwidth of 50 kHz that changes the laser frequency by 5 MHz/V. An
+RC filter provides a lowpass with 1kHz cutoff. Finally, the cavity can be tuned
+through its temperature with a bandwidth slower than 0.1 Hz. We estimate from
+thermal expansion coefficients that 1 V to the Peltier amplifier leading to 3 K
+heating of the cavity spacer should lead to 30ppm/K*20cm*3K/V = 18 micron/V
+length change. Both reflection and transmission of the cavity are available
+error signals. The finesse of the cavity is 5000, and therefore there are
+large regions of output signals where no useful error signal can be obtained.</p>
+<p>We first generate a clean list of available inputs and outputs and some
+parameters of the cavity that we know already:</p>
+<dl class="docutils">
+<dt>inputs:</dt>
+<dd><dl class="first docutils">
+<dt>in1:</dt>
+<dd>reflection</dd>
+<dt>in2:</dt>
+<dd>transmission</dd>
+</dl>
+<p class="last"># also possible
+# in2: pdh # for externally generated pdh</p>
+</dd>
+<dt>outputs:</dt>
+<dd><dl class="first last docutils">
+<dt>out1:</dt>
+<dd><p class="first"># we insert a bias-T with separation frequency around 1 MHz behind out1
+# this allows us to use the fast output for both the piezo and PDH
+modulator:</p>
+<blockquote>
+<div>amplitude: 0.1
+frequency: 50e6</div></blockquote>
+<dl class="last docutils">
+<dt>cavitypiezo:</dt>
+<dd># piezo specification: 7 micron/1000V
+# amplifier gain: 50
+# therefore effective DC gain: 350nm/V
+m_per_V: 350e-9
+bandwidth: 100.0</dd>
+</dl>
+</dd>
+<dt>out2:</dt>
+<dd><dl class="first last docutils">
+<dt>laserpiezo:</dt>
+<dd>Hz_per_V: 5e6
+bandwidth: 1e3</dd>
+</dl>
+</dd>
+<dt>pwm1:</dt>
+<dd><dl class="first last docutils">
+<dt>temperature:</dt>
+<dd>m_per_V: 18e-6
+bandwidth: 0.1</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+<dt>model:</dt>
+<dd><p class="first">type: fabryperot
+wavelength: 1064e-9
+finesse: 5000
+# round-trip length in m (= twice the length for ordinary Fabry-Perot)
+length: 0.72
+lock: # lock methods in order of preferrence</p>
+<blockquote>
+<div><dl class="docutils">
+<dt>order:</dt>
+<dd>pdh
+reflection
+transmission</dd>
+</dl>
+<p># when approaching a resonance, we can either abruptly jump or smoothly
+# ramp from one error signal to another. We specify our preferrence with
+# the order of keywords after transition
+transition: [ramp, jump]
+# target value for our lock. The API provides many ways to adjust this at
+# runtime
+target:</p>
+<blockquote>
+<div>detuning: 0</div></blockquote>
+</div></blockquote>
+<p># search algorithms to use in order of preferrence, as available in model
+search:</p>
+<blockquote class="last">
+<div>drift
+bounce</div></blockquote>
+</dd>
+</dl>
+<p>Having selected fabryperot as modeltype, the code will automatically search
+for a class named fabryperot in the file model.py to provide for the internal
+state representation and all algorithms. You can create your own model by
+adding other classes to this file, or by inheriting from existing ones and
+adding further functionality. The naming of all other configuration parameters
+is linked to the model, since all functionality that makes use of these para-
+meters is implemented there. Another very often used model type is
+“interferometer”. The only difference is here that</p>
 <dl class="class">
 <dt id="pyrpl.pyrpl.Pyrpl">
 <em class="property">class </em><code class="descclassname">pyrpl.pyrpl.</code><code class="descname">Pyrpl</code><span class="sig-paren">(</span><em>config=None</em>, <em>source=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.pyrpl.Pyrpl" title="Permalink to this definition">¶</a></dt>
@@ -2512,6 +2629,18 @@ RedPitaya for possible keywords.</dd>
 <dl class="method">
 <dt id="pyrpl.pyrpl_utils.Bijection.update">
 <code class="descname">update</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.pyrpl_utils.Bijection.update" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pyrpl.pyrpl_utils.DuplicateFilter">
+<em class="property">class </em><code class="descclassname">pyrpl.pyrpl_utils.</code><code class="descname">DuplicateFilter</code><span class="sig-paren">(</span><em>name=''</em><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.pyrpl_utils.DuplicateFilter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">logging.Filter</span></code></p>
+<p>Prevent multiple repeated logging message from polluting the console</p>
+<dl class="method">
+<dt id="pyrpl.pyrpl_utils.DuplicateFilter.filter">
+<code class="descname">filter</code><span class="sig-paren">(</span><em>record</em><span class="sig-paren">)</span><a class="headerlink" href="#pyrpl.pyrpl_utils.DuplicateFilter.filter" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -2866,7 +2995,7 @@ I provides a ssh connection with the ability to transfer files over it</p>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
             <p class="logo"><a href="index.html">
-              <img class="logo" src="_static/.\..\..\..\logo.png" alt="Logo"/>
+              <img class="logo" src="_static/logo.png" alt="Logo"/>
             </a></p>
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
@@ -2922,7 +3051,7 @@ I provides a ssh connection with the ability to transfer files over it</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">pyrpl 0.9.3.3 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">pyrpl 0.9.3.4 documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
