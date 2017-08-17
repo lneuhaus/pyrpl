@@ -170,3 +170,5 @@ class TestRegisters(TestRedpitaya):
             if value != module.__getattribute__(regkey):
                 assert False
         return
+
+    def test_validate_and_normalize(self):

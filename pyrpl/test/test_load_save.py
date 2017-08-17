@@ -8,6 +8,8 @@ from ..hardware_modules import *
 from ..modules import *
 from ..async_utils import sleep as async_sleep
 
+from qtpy import QtCore
+
 class TestLoadSave(TestPyrpl):
     """ iterates over all modules, prepares a certain state, saves this,
     messes up the current state, loads the saved state and checks whether
@@ -21,6 +23,16 @@ class TestLoadSave(TestPyrpl):
                     break
             else:
                 yield self.assert_load_save_module, mod
+
+    def test_validate_and_normalize(self):
+        for mod in self.pyrpl.modules:
+            #for exclude in [Lockbox, Scope]: # scope has an unknown bug
+            # here (nosetests freezes at a  later time)
+            for exclude in [Lockbox]:  # lockbox is tested elsewhere
+                if isinstance(mod, exclude):
+                    break
+            else:
+                yield self.assert_validate_and_normalize, mod
 
     def scramble_values(self,
                         mod,
@@ -64,6 +76,19 @@ class TestLoadSave(TestPyrpl):
             attr_vals.append(val)
         return attr_names, attr_vals
 
+    def assert_validate_and_normalize(self, mod):
+        def check_fpga_value_equals_signal_value(attr_name, list_value):
+            assert getattr(mod, attr_name)==list_value[0]
+
+        # Use a direct connection such that exception are generated in the
+        # same thread.
+
+        mod._signal_launcher.update_attribute_by_name.connect(check_fpga_value_equals_signal_value,
+                                                              QtCore.Qt.DirectConnection)
+
+        self.scramble_values(mod)
+        mod._signal_launcher.update_attribute_by_name.disconnect(check_fpga_value_equals_signal_value)
+
     def assert_load_save_module(self, mod):
         if not isinstance(mod, ModuleManager):
             mod._logger.info("Testing LoadSave of module %s", mod.name)
@@ -72,7 +97,9 @@ class TestLoadSave(TestPyrpl):
             attr_names, attr_vals = self.scramble_values(
                                  mod, 'foo', 12.1, True, [1923], 0, 5)
             mod.save_state('test_save')
+
             self.scramble_values(mod, 'bar', 13.2, False,  [15], 1, 7)
+
             mod.load_state('test_save')
             for attr, attr_val in zip(mod._setup_attributes, attr_vals):
                 if attr == 'default_sweep_output' or attr == 'baseband':
