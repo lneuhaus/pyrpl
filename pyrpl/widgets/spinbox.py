@@ -1,7 +1,6 @@
 from qtpy import QtCore, QtWidgets, QtGui
 import numpy as np
 import time
-import functools
 
 import sys
 if sys.version_info < (3,):
@@ -10,7 +9,7 @@ else:
     integer_types = (int,)
 
 
-class NumberSpinBox(QtWidgets.QWidget):#, object):
+class NumberSpinBox(QtWidgets.QWidget):#, object):  # object not needed with qtpy?
     """
     Base class for spinbox with numerical value.
 
@@ -481,5 +480,3 @@ class ComplexSpinBox(FloatSpinBox):
         self.imag.set_log_increment(*args, **kwargs)
         self.imag.up.setText(u'\u2192')  # right arrow unicode symbol
         self.imag.down.setText(u'\u2190')  # left arrow unicode symbol
-
-

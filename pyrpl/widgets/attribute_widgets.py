@@ -5,15 +5,12 @@ An instance attr of Attribute can create its AttributeWidget counterPart
 by calling attr.create_widget(name, parent).
 """
 
-from qtpy import QtWidgets, QtCore, QtGui
 import numpy as np
-import time
-import functools
+from qtpy import QtCore, QtWidgets
 import pyqtgraph as pg
-from ..pyrpl_utils import Bijection, recursive_setattr, recursive_getattr
+from .spinbox import NumberSpinBox, IntSpinBox, FloatSpinBox, ComplexSpinBox
 from .. import pyrpl_utils
 from ..curvedb import CurveDB
-from .spinbox import *
 
 
 # TODO: try to remove widget_name from here (again)
@@ -608,8 +605,8 @@ class SelectAttributeWidget(BaseAttributeWidget):
 class LedAttributeWidget(BaseAttributeWidget):
     """ Boolean property with a button whose text and color indicates whether """
     def _make_widget(self):
-        desc = recursive_getattr(self.module, '__class__.' + self.attribute_name)
-        val = recursive_getattr(self.module, self.attribute_name)
+        desc = pyrpl_utils.recursive_getattr(self.module, '__class__.' + self.attribute_name)
+        val = pyrpl_utils.recursive_getattr(self.module, self.attribute_name)
         self.widget = QtWidgets.QPushButton("setting up...")
         self.widget.clicked.connect(self.button_clicked)
 
@@ -647,9 +644,9 @@ class BoolIgnoreAttributeWidget(BoolAttributeWidget):
     Like BoolAttributeWidget with additional option 'ignore' that is
     shown as a grey check in GUI
     """
-    _gui_to_attribute_mapping = Bijection({0: False,
-                                           1: 'ignore',
-                                           2: True})
+    _gui_to_attribute_mapping = pyrpl_utils.Bijection({0: False,
+                                                       1: 'ignore',
+                                                       2: True})
 
     def _make_widget(self):
         """
