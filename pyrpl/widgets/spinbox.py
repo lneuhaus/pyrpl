@@ -10,7 +10,7 @@ else:
     integer_types = (int,)
 
 
-class NumberSpinBox(QtWidgets.QWidget, object):
+class NumberSpinBox(QtWidgets.QWidget):#, object):
     """
     Base class for spinbox with numerical value.
 
