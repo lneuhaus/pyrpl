@@ -69,7 +69,7 @@ copyright = u'2017, Leonhard Neuhaus'
 # built documents.
 #
 # The short X.Y version.
-from pyrpl import __version__
+from pyrpl._version import __version__
 version = __version__
 # The full version, including alpha/beta/rc tags.
 release = version
