@@ -34,6 +34,17 @@ class TestLoadSave(TestPyrpl):
             else:
                 yield self.assert_validate_and_normalize, mod
 
+    def assert_validate_and_normalize(self, mod):
+        def check_fpga_value_equals_signal_value(attr_name, list_value):
+            print("check_fpga_value_equals_signal_value(%s, %s)"%(attr_name, list_value))
+            assert getattr(mod, attr_name)==list_value[0]
+        # Use a direct connection such that exception are generated in the
+        # same thread.
+        mod._signal_launcher.update_attribute_by_name.connect(check_fpga_value_equals_signal_value,
+                                                              QtCore.Qt.DirectConnection)
+        self.scramble_values(mod)
+        mod._signal_launcher.update_attribute_by_name.disconnect(check_fpga_value_equals_signal_value)
+
     def scramble_values(self,
                         mod,
                         str_val='foo',
@@ -75,19 +86,6 @@ class TestLoadSave(TestPyrpl):
             attr_names.append(attr)
             attr_vals.append(val)
         return attr_names, attr_vals
-
-    def assert_validate_and_normalize(self, mod):
-        def check_fpga_value_equals_signal_value(attr_name, list_value):
-            assert getattr(mod, attr_name)==list_value[0]
-
-        # Use a direct connection such that exception are generated in the
-        # same thread.
-
-        mod._signal_launcher.update_attribute_by_name.connect(check_fpga_value_equals_signal_value,
-                                                              QtCore.Qt.DirectConnection)
-
-        self.scramble_values(mod)
-        mod._signal_launcher.update_attribute_by_name.disconnect(check_fpga_value_equals_signal_value)
 
     def assert_load_save_module(self, mod):
         if not isinstance(mod, ModuleManager):
