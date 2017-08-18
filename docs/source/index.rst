@@ -15,6 +15,7 @@ While most users probably never want to touch the FPGA design, the Verilog sourc
 .. toctree::
    :maxdepth: 2
 
+   gallery/index
    user_guide/index
    reference_guide/index
    developer_guide/index
