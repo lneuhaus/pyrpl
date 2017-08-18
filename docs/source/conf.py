@@ -16,7 +16,7 @@ import sys
 import os
 
 
-if os.environ.get('READTHEDOCS') == 'True':
+if os.environ.get('READTHEDOCS') == 'True' or True:
     try:  # python > 3.3
         from unittest.mock import MagicMock
     except:
@@ -27,8 +27,10 @@ if os.environ.get('READTHEDOCS') == 'True':
         def __getattr__(cls, name):
             return MagicMock()
 
-        def __getitem__(cls, item):
-            return MagicMock()
+        #@classmethod
+        #def __getitem__(cls, item):
+        #    return MagicMock()
+
 
     # must mock PyQt in order to get autodoc import running
     MOCK_MODULES = ['PyQt4', 'PyQt4.QtGui', 'PyQt4.QtCore', 'PyQt4.QtWidgets',
@@ -38,6 +40,8 @@ if os.environ.get('READTHEDOCS') == 'True':
                     'PyQt4.QtWidgets.QWidget', 'PyQt5.QtWidgets.QWidget', 'qtpy.QtWidgets.QWidget',
                     'sip',
                     'pygtk', 'gtk', 'gobject', 'argparse', 'pandas']
+    MOCK_MODULES = ['qtpy', 'quamash', 'asyncio']
+    MOCK_MODULES = []
     sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 

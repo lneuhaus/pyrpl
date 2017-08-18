@@ -1,7 +1,6 @@
 from qtpy import QtCore, QtWidgets
 import sys
 from traceback import format_exception, format_exception_only
-# from collections import OrderedDict
 import logging
 from .. import APP
 

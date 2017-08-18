@@ -14,7 +14,7 @@ from ..curvedb import CurveDB
 
 
 # TODO: try to remove widget_name from here (again)
-class BaseAttributeWidget(QtWidgets.QWidget, object):
+class BaseAttributeWidget(QtWidgets.QWidget):
     """
     Base class for attribute widgets.
 
