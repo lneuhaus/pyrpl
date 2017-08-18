@@ -27,14 +27,17 @@ if os.environ.get('READTHEDOCS') == 'True':
         def __getattr__(cls, name):
             return MagicMock()
 
+        def __getitem__(cls, item):
+            return MagicMock()
+
     # must mock PyQt in order to get autodoc import running
     MOCK_MODULES = ['PyQt4', 'PyQt4.QtGui', 'PyQt4.QtCore', 'PyQt4.QtWidgets',
                     'PyQt5', 'PyQt5.QtGui', 'PyQt5.QtCore', 'PyQt5.QtWidgets',
                     'qtpy', 'qtpy.QtCore', 'qtpy.QtWidgets', 'qtpy.QtGui',
                     'pyqtgraph', 'pyqtgraph.Qt', 'pyqtgraph.Qt.QtGui', 'pyqtgraph.Qt.QtCore',
                     'PyQt4.QtWidgets.QWidget', 'PyQt5.QtWidgets.QWidget', 'qtpy.QtWidgets.QWidget',
-                    'sip',]
-                    #'pygtk', 'gtk', 'gobject', 'argparse', 'numpy', 'pandas']
+                    'sip',
+                    'pygtk', 'gtk', 'gobject', 'argparse', 'numpy', 'pandas']
     sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 
