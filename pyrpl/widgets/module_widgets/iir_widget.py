@@ -221,6 +221,12 @@ class IirBottomWidget(QtWidgets.QGroupBox):
 
 class IirWidget(ModuleWidget):
     def init_gui(self):
+        # setup filter in its present state
+        self.module.setup() # moved at the beginning of the function,
+        # otherwise, values altered in setup (such as iir.loops) are
+        # not updated in the gui (gui already creted but not yet connected
+        # to the signal launcher)
+
         self.init_main_layout(orientation="vertical")
         #self.main_layout = QtWidgets.QVBoxLayout()
         #self.setLayout(self.main_layout)
@@ -250,9 +256,6 @@ class IirWidget(ModuleWidget):
         self.attribute_widgets['data_curve'].setStyleSheet("color: green")
 
         self.update_plot()
-
-        # setup filter in its present state
-        self.module.setup()
 
     def select_pole(self, plot_item, spots):
         index = spots[0].data()

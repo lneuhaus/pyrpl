@@ -206,7 +206,7 @@ except:
             if hasattr(self, "_pk"):
                 return self._pk
             else:
-                pks = self.all()
+                pks = self.all_pks()
                 if len(pks) == 0:
                     self._pk = 1
                 else:

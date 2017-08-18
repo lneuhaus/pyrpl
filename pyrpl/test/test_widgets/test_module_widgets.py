@@ -19,7 +19,6 @@ class TestModuleWidgets(TestPyrpl):
     def teardown(self):
         pass
 
-
     def test_create_widget(self):
         for mod in self.pyrpl.modules:
             widget = mod._create_widget()
