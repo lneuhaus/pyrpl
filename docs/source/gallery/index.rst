@@ -1,5 +1,5 @@
-Gallery
-****************
+Gallery of PyRPL usage examples
+********************************
 
 We should add a gallery with use cases of Pyrpl to attract potential users.
 

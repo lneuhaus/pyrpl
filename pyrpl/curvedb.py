@@ -182,16 +182,27 @@ except:
 
         @classmethod
         def all_pks(cls):
+            """
+            Returns:
+                list of int: A list of the primary keys of all CurveDB objects on the computer.
+            """
             pks = [int(f.split('.dat')[0])
                    for f in os.listdir(cls._dirname) if f.endswith('.dat')]
             return sorted(pks, reverse=True)
 
         @classmethod
         def all(cls):
+            """
+            Returns:
+                list of CurveDB: A list of all CurveDB objects on the computer.
+            """
             return [cls.get(pk) for pk in cls.all_pks()]
 
         @property
         def pk(self):
+            """
+            (int): The primary Key of the
+            """
             if hasattr(self, "_pk"):
                 return self._pk
             else:
