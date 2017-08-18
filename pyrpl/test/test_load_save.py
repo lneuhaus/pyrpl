@@ -38,8 +38,7 @@ class TestLoadSave(TestPyrpl):
         def check_fpga_value_equals_signal_value(attr_name, list_value):
             print("check_fpga_value_equals_signal_value(%s, %s)"%(attr_name, list_value))
             assert getattr(mod, attr_name)==list_value[0]
-        # Use a direct connection such that exception are generated in the
-        # same thread.
+        # Use a direct connection such that exception are generated in the same thread.
         mod._signal_launcher.update_attribute_by_name.connect(check_fpga_value_equals_signal_value,
                                                               QtCore.Qt.DirectConnection)
         self.scramble_values(mod)
