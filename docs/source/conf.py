@@ -17,15 +17,26 @@ import os
 
 
 if os.environ.get('READTHEDOCS') == 'True':
+    try:  # python > 3.3
+        from unittest.mock import MagicMock
+    except:
+        from mock import Mock as MagicMock
+
+    class Mock(MagicMock):
+        @classmethod
+        def __getattr__(cls, name):
+            return MagicMock()
+
     # must mock PyQt in order to get autodoc import running
-    import mock
     MOCK_MODULES = ['PyQt4', 'PyQt4.QtGui', 'PyQt4.QtCore', 'PyQt4.QtWidgets',
                     'PyQt5', 'PyQt5.QtGui', 'PyQt5.QtCore', 'PyQt5.QtWidgets',
                     'qtpy', 'qtpy.QtCore', 'qtpy.QtWidgets', 'qtpy.QtGui',
                     'pyqtgraph', 'pyqtgraph.Qt', 'pyqtgraph.Qt.QtGui', 'pyqtgraph.Qt.QtCore',
                     'PyQt4.QtWidgets.QWidget', 'PyQt5.QtWidgets.QWidget', 'qtpy.QtWidgets.QWidget',
-                    'sip',]
-    sys.modules.update((mod_name, mock.MagicMock()) for mod_name in MOCK_MODULES)
+                    'sip',
+                    'pygtk', 'gtk', 'gobject', 'argparse', 'numpy', 'pandas']
+    sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
+
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -69,7 +80,7 @@ copyright = u'2017, Leonhard Neuhaus'
 # built documents.
 #
 # The short X.Y version.
-from pyrpl._version import __version__
+from pyrpl import __version__
 version = __version__
 # The full version, including alpha/beta/rc tags.
 release = version
