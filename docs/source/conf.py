@@ -33,8 +33,8 @@ if os.environ.get('READTHEDOCS') == 'True':
                     'qtpy', 'qtpy.QtCore', 'qtpy.QtWidgets', 'qtpy.QtGui',
                     'pyqtgraph', 'pyqtgraph.Qt', 'pyqtgraph.Qt.QtGui', 'pyqtgraph.Qt.QtCore',
                     'PyQt4.QtWidgets.QWidget', 'PyQt5.QtWidgets.QWidget', 'qtpy.QtWidgets.QWidget',
-                    'sip',
-                    'pygtk', 'gtk', 'gobject', 'argparse', 'numpy', 'pandas']
+                    'sip',]
+                    #'pygtk', 'gtk', 'gobject', 'argparse', 'numpy', 'pandas']
     sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 
