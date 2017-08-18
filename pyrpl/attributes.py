@@ -1459,9 +1459,9 @@ class CurveSelectProperty(SelectProperty):
 
     def _default_options(self):
         if self.no_curve_first:
-            return [-1] + CurveDB.all()
+            return [-1] + [curve.pk for curve in CurveDB.all()]
         else:
-            return CurveDB.all() + [-1]
+            return [curve.pk for curve in CurveDB.all()] + [-1]
         #return OrderedDict([(k, k) for k in (CurveDB.all()) + [-1]])
 
     def validate_and_normalize(self, obj, value):
