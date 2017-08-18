@@ -12,6 +12,7 @@ from .spinbox import NumberSpinBox, IntSpinBox, FloatSpinBox, ComplexSpinBox
 from .. import pyrpl_utils
 from ..curvedb import CurveDB
 
+import sys
 
 # TODO: try to remove widget_name from here (again)
 class BaseAttributeWidget(QtWidgets.QWidget, object):

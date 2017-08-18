@@ -181,10 +181,14 @@ except:
             self.save()
 
         @classmethod
-        def all(cls):
+        def all_pks(cls):
             pks = [int(f.split('.dat')[0])
                    for f in os.listdir(cls._dirname) if f.endswith('.dat')]
             return sorted(pks, reverse=True)
+
+        @classmethod
+        def all(cls):
+            return [cls.get(pk) for pk in cls.all_pks()]
 
         @property
         def pk(self):
