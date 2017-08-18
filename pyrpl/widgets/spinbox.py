@@ -1,4 +1,4 @@
-from pyqtgraph.Qt import QtGui, QtCore
+from qtpy import QtCore, QtWidgets, QtGui
 import numpy as np
 import time
 import functools
@@ -10,7 +10,7 @@ else:
     integer_types = (int,)
 
 
-class NumberSpinBox(QtGui.QWidget, object):
+class NumberSpinBox(QtWidgets.QWidget, object):
     """
     Base class for spinbox with numerical value.
 
@@ -28,8 +28,8 @@ class NumberSpinBox(QtGui.QWidget, object):
         "increment" every timer_min_interval.
     """
     MOUSE_WHEEL_ACTIVATED = False
-    value_changed = QtCore.pyqtSignal()
-    selected = QtCore.pyqtSignal(list)
+    value_changed = QtCore.Signal()
+    selected = QtCore.Signal(list)
     # timeouts for updating values when mouse button / key is pessed
     change_interval = 0.02
     _change_initial_latency = 0.1 # 100 ms before starting to update continuously.
@@ -81,20 +81,20 @@ class NumberSpinBox(QtGui.QWidget, object):
         self.val = 0
 
     def make_layout(self):
-        self.lay = QtGui.QHBoxLayout()
+        self.lay = QtWidgets.QHBoxLayout()
         self.lay.setContentsMargins(0,0,0,0)
         self.lay.setSpacing(0)
         self.setLayout(self.lay)
         if self.labeltext is not None:
-            self.label = QtGui.QLabel(self.labeltext)
+            self.label = QtWidgets.QLabel(self.labeltext)
             self.lay.addWidget(self.label)
         if self.log_increment:
-            self.up = QtGui.QPushButton('*')
-            self.down = QtGui.QPushButton('/')
+            self.up = QtWidgets.QPushButton('*')
+            self.down = QtWidgets.QPushButton('/')
         else:
-            self.up = QtGui.QPushButton('+')
-            self.down = QtGui.QPushButton('-')
-        self.line = QtGui.QLineEdit()
+            self.up = QtWidgets.QPushButton('+')
+            self.down = QtWidgets.QPushButton('-')
+        self.line = QtWidgets.QLineEdit()
         self.line.setStyleSheet("QLineEdit { qproperty-cursorPosition: 0; }") # align text on the left
         # http://stackoverflow.com/questions/18662157/qt-qlineedit-widget-to-get-long-text-left-aligned
         self.lay.addWidget(self.down)
@@ -390,7 +390,7 @@ class ComplexSpinBox(FloatSpinBox):
         super(ComplexSpinBox, self).__init__(*args, **kwargs)
 
     def make_layout(self):
-        self.lay = QtGui.QHBoxLayout()
+        self.lay = QtWidgets.QHBoxLayout()
         self.lay.setContentsMargins(0, 0, 0, 0)
         self.real = FloatSpinBox(label=self.labeltext,
                                  min=self.minimum,
@@ -408,7 +408,7 @@ class ComplexSpinBox(FloatSpinBox):
                                  decimals=self.decimals)
         self.real.value_changed.connect(self.value_changed)
         self.lay.addWidget(self.real)
-        self.label = QtGui.QLabel(" + j")
+        self.label = QtWidgets.QLabel(" + j")
         self.lay.addWidget(self.label)
         self.imag.value_changed.connect(self.value_changed)
         self.lay.addWidget(self.imag)

@@ -5,7 +5,7 @@ An instance attr of Attribute can create its AttributeWidget counterPart
 by calling attr.create_widget(name, parent).
 """
 
-from pyqtgraph.Qt import QtGui, QtCore
+from qtpy import QtWidgets, QtCore, QtGui
 import numpy as np
 import time
 import functools
@@ -17,7 +17,7 @@ from .spinbox import *
 
 
 # TODO: try to remove widget_name from here (again)
-class BaseAttributeWidget(QtGui.QWidget, object):
+class BaseAttributeWidget(QtWidgets.QWidget, object):
     """
     Base class for attribute widgets.
 
@@ -33,7 +33,7 @@ class BaseAttributeWidget(QtGui.QWidget, object):
     A minimum widget should implmenet set_widget, _update,
     and possibly module_value.
     """
-    value_changed = QtCore.pyqtSignal()
+    value_changed = QtCore.Signal()
 
     def __init__(self, module, attribute_name, widget_name=None):
         super(BaseAttributeWidget, self).__init__()
@@ -44,10 +44,10 @@ class BaseAttributeWidget(QtGui.QWidget, object):
         else:
             self.widget_name = widget_name
         self.setToolTip(self.attribute_descriptor.__doc__)
-        self.layout_v = QtGui.QVBoxLayout()
+        self.layout_v = QtWidgets.QVBoxLayout()
         self.layout = self.layout_v
         if self.widget_name != "":
-            self.label = QtGui.QLabel(self.widget_name)
+            self.label = QtWidgets.QLabel(self.widget_name)
             self.layout.addWidget(self.label, 0) # stretch=0
             self.layout.addStretch(1)
         self.layout_v.setContentsMargins(0, 0, 0, 0)
@@ -117,7 +117,7 @@ class BaseAttributeWidget(QtGui.QWidget, object):
 
     def set_horizontal(self):
         """ puts the label to the left of the widget instead of atop """
-        self.layout_h = QtGui.QHBoxLayout()
+        self.layout_h = QtWidgets.QHBoxLayout()
         if hasattr(self, 'label'):
             self.layout_v.removeWidget(self.label)
             self.layout_h.addWidget(self.label)
@@ -169,7 +169,7 @@ class StringAttributeWidget(BaseAttributeWidget):
     Widget for string values.
     """
     def _make_widget(self):
-        self.widget = QtGui.QLineEdit()
+        self.widget = QtWidgets.QLineEdit()
         self.widget.setMaximumWidth(200)
         self.widget.textChanged.connect(self.write_widget_value_to_attribute)
 
@@ -185,7 +185,7 @@ class TextAttributeWidget(StringAttributeWidget):
     Property for multiline string values.
     """
     def _make_widget(self):
-        self.widget = QtGui.QTextEdit()
+        self.widget = QtWidgets.QTextEdit()
         self.widget.textChanged.connect(self.write_widget_value_to_attribute)
 
     def _get_widget_value(self):
@@ -261,7 +261,7 @@ class ListElementWidget(BaseAttributeWidget):
         self.startindex = startindex
         super(ListElementWidget, self).__init__(*args, **kwargs)
         self.set_horizontal()
-        self.button_remove = QtGui.QPushButton('-')
+        self.button_remove = QtWidgets.QPushButton('-')
         self.button_remove.clicked.connect(self.remove_this_element)
         self.button_remove.setFixedWidth(3 * 10)
         self.layout.addWidget(self.button_remove, 0) # stretch=0
@@ -317,11 +317,11 @@ class BasePropertyListPropertyWidget(BaseAttributeWidget):
     underlying widgets
     """
     def _make_widget(self):
-        self.widget = QtGui.QFrame()
-        self.widget_layout = QtGui.QVBoxLayout()
+        self.widget = QtWidgets.QFrame()
+        self.widget_layout = QtWidgets.QVBoxLayout()
         self.widget.setLayout(self.widget_layout)
         self.widgets = []
-        self.button_add = QtGui.QPushButton("+")
+        self.button_add = QtWidgets.QPushButton("+")
         self.button_add.clicked.connect(self.append_default)
         self.widget_layout.addWidget(self.button_add)
         self.widget_layout.addStretch(1)
@@ -430,23 +430,23 @@ class BasePropertyListPropertyWidget(BaseAttributeWidget):
         return len(self.widgets)
 
 
-class ListComboBox(QtGui.QWidget):
+class ListComboBox(QtWidgets.QWidget):
     # exclusively used by FilterAttributeWidget, can be replaced by sth else
     # TODO: can be replaced by SelectAttributeWidget
-    value_changed = QtCore.pyqtSignal()
+    value_changed = QtCore.Signal()
 
     def __init__(self, number, name, options, decimals=3):
         super(ListComboBox, self).__init__()
         self.setToolTip("First order filter frequencies \n"
                         "negative values are for high-pass \n"
                         "positive for low pass")
-        self.lay = QtGui.QHBoxLayout()
+        self.lay = QtWidgets.QHBoxLayout()
         self.lay.setContentsMargins(0, 0, 0, 0)
         self.combos = []
         self.options = options
         self.decimals = decimals
         for i in range(number):
-            combo = QtGui.QComboBox()
+            combo = QtWidgets.QComboBox()
             self.combos.append(combo)
             combo.addItems(self.options)
             combo.currentIndexChanged.connect(self.value_changed)
@@ -477,7 +477,7 @@ class ListComboBox(QtGui.QWidget):
         n_rows = int(np.ceil(n*1.0/n_cols))
         j = 0
         for i in range(n_cols):
-            layout = QtGui.QVBoxLayout()
+            layout = QtWidgets.QVBoxLayout()
             self.lay.addLayout(layout)
             for j in range(n_rows):
                 index = i*n_rows + j
@@ -550,7 +550,7 @@ class SelectAttributeWidget(BaseAttributeWidget):
     Multiple choice property.
     """
     def _make_widget(self):
-        self.widget = QtGui.QComboBox()
+        self.widget = QtWidgets.QComboBox()
         self.widget.addItems(self.options)
         self.widget.currentIndexChanged.connect(self.write_widget_value_to_attribute)
 
@@ -610,7 +610,7 @@ class LedAttributeWidget(BaseAttributeWidget):
     def _make_widget(self):
         desc = recursive_getattr(self.module, '__class__.' + self.attribute_name)
         val = recursive_getattr(self.module, self.attribute_name)
-        self.widget = QtGui.QPushButton("setting up...")
+        self.widget = QtWidgets.QPushButton("setting up...")
         self.widget.clicked.connect(self.button_clicked)
 
     def _set_widget_value(self, new_value):
@@ -632,7 +632,7 @@ class BoolAttributeWidget(BaseAttributeWidget):
     Checkbox for boolean attributes
     """
     def _make_widget(self):
-        self.widget = QtGui.QCheckBox()
+        self.widget = QtWidgets.QCheckBox()
         self.widget.stateChanged.connect(self.write_widget_value_to_attribute)
 
     def _get_widget_value(self):
@@ -656,7 +656,7 @@ class BoolIgnoreAttributeWidget(BoolAttributeWidget):
         Sets the widget (here a QCheckbox)
         :return:
         """
-        self.widget = QtGui.QCheckBox()
+        self.widget = QtWidgets.QCheckBox()
         self.widget.setTristate(True)
         self.widget.stateChanged.connect(self.write_widget_value_to_attribute)
         self.setToolTip("Checked:\t    on\nUnchecked: off\nGrey:\t    ignore")
@@ -903,7 +903,7 @@ class CurveSelectAttributeWidget(SelectAttributeWidget):
 
         :return:
         """
-        self.widget = QtGui.QListWidget()
+        self.widget = QtWidgets.QListWidget()
         self.widget.addItems(self.options)
         self.widget.currentItemChanged.connect(self.write_widget_value_to_attribute)
 
