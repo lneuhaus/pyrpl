@@ -17,20 +17,15 @@ import os
 
 
 if os.environ.get('READTHEDOCS') == 'True' or True:
-    try:  # python > 3.3
+    try:
+        from mock import MagicMock
+    except:  # python > 3.3
         from unittest.mock import MagicMock
-    except:
-        from mock import Mock as MagicMock
 
-    class Mock(MagicMock):
+    class MyMock(MagicMock):
         @classmethod
         def __getattr__(cls, name):
             return MagicMock()
-
-        #@classmethod
-        #def __getitem__(cls, item):
-        #    return MagicMock()
-
 
     # must mock PyQt in order to get autodoc import running
     MOCK_MODULES = ['PyQt4', 'PyQt4.QtGui', 'PyQt4.QtCore', 'PyQt4.QtWidgets',
@@ -41,9 +36,10 @@ if os.environ.get('READTHEDOCS') == 'True' or True:
                     'sip',
                     'pygtk', 'gtk', 'gobject', 'argparse', 'pandas']
     MOCK_MODULES = ['qtpy', 'quamash', 'asyncio']
-    MOCK_MODULES = []
-    sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
+    MOCK_MODULES = ['numpy', 'scipy', 'qtpy', 'pyqtgraph']
+    sys.modules.update((mod_name, MyMock()) for mod_name in MOCK_MODULES)
 
+sys.modules.update([('qtpy', MyMock())])
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the

@@ -6,13 +6,13 @@ __license__ = "GNU General Public License 3 (GPLv3)"
 # manage warnings of numpy and scipy
 import warnings
 import numpy as np
-from scipy.signal import BadCoefficients
 # pyqtgraph is throwing a warning on ScatterPlotItem
 warnings.simplefilter("ignore", np.VisibleDeprecationWarning)
 # pyqtgraph is throwing a warning on ScatterPlotItem
 warnings.simplefilter("error", np.ComplexWarning)
 # former issue with IIR, now resolved
-warnings.simplefilter("error", BadCoefficients)
+#from scipy.signal import BadCoefficients
+#warnings.simplefilter("error", BadCoefficients)
 
 #set up loggers
 import logging
