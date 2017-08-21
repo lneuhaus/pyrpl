@@ -17,7 +17,7 @@ import os
 
 
 # http://read-the-docs.readthedocs.org/en/latest/faq.html#i-get-import-errors-on-libraries-that-depend-on-c-modules
-if os.environ.get('READTHEDOCS') == 'True' or True:
+if os.environ.get('READTHEDOCS') == 'True':
     try:
         from mock import MagicMock, Mock
     except:  # python > 3.3
@@ -163,7 +163,7 @@ html_theme = 'nature' # haiku
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-html_logo = '.\\..\\..\\..\\logo.png'
+html_logo = '.\\logo.png'
 full_logo = True
 
 # The name of an image file (within the static path) to use as favicon of the
