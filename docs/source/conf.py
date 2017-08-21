@@ -29,7 +29,7 @@ if os.environ.get('READTHEDOCS') == 'True':
                     'paramiko', 'scp']
     sys.modules.update((mod_name, MagicMock()) for mod_name in MOCK_MODULES)
 
-    # fixes various errors with mocked objects
+    # the following code fixes various errors with mocked objects
     from qtpy import QtWidgets, QtCore
     import asyncio
     import logging
@@ -45,8 +45,6 @@ if os.environ.get('READTHEDOCS') == 'True':
         # make sure the class appears to be in the containing module
         setattr(getattr(module, cls_name), '__module__', module)
 
-
-import pyrpl
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
