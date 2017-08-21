@@ -16,30 +16,37 @@ import sys
 import os
 
 
+# http://read-the-docs.readthedocs.org/en/latest/faq.html#i-get-import-errors-on-libraries-that-depend-on-c-modules
 if os.environ.get('READTHEDOCS') == 'True' or True:
     try:
-        from mock import MagicMock
+        from mock import MagicMock, Mock
     except:  # python > 3.3
-        from unittest.mock import MagicMock
-
-    class MyMock(MagicMock):
-        @classmethod
-        def __getattr__(cls, name):
-            return MagicMock()
+        from unittest.mock import MagicMock, Mock
 
     # must mock PyQt in order to get autodoc import running
-    MOCK_MODULES = ['PyQt4', 'PyQt4.QtGui', 'PyQt4.QtCore', 'PyQt4.QtWidgets',
-                    'PyQt5', 'PyQt5.QtGui', 'PyQt5.QtCore', 'PyQt5.QtWidgets',
-                    'qtpy', 'qtpy.QtCore', 'qtpy.QtWidgets', 'qtpy.QtGui',
-                    'pyqtgraph', 'pyqtgraph.Qt', 'pyqtgraph.Qt.QtGui', 'pyqtgraph.Qt.QtCore',
-                    'PyQt4.QtWidgets.QWidget', 'PyQt5.QtWidgets.QWidget', 'qtpy.QtWidgets.QWidget',
-                    'sip',
-                    'pygtk', 'gtk', 'gobject', 'argparse', 'pandas']
-    MOCK_MODULES = ['qtpy', 'quamash', 'asyncio']
-    MOCK_MODULES = ['numpy', 'scipy', 'qtpy', 'pyqtgraph']
-    sys.modules.update((mod_name, MyMock()) for mod_name in MOCK_MODULES)
+    MOCK_MODULES = ['numpy', 'scipy', 'qtpy', 'pyqtgraph', 'pandas',
+                    'asyncio', 'quamash', 'scipy.signal', 'scipy.fftpack',
+                    'paramiko', 'scp']
+    sys.modules.update((mod_name, MagicMock()) for mod_name in MOCK_MODULES)
 
-sys.modules.update([('qtpy', MyMock())])
+    # fixes various errors with mocked objects
+    from qtpy import QtWidgets, QtCore
+    import asyncio
+    import logging
+    mod_cls_list = [(QtWidgets, 'QWidget'),
+                (QtWidgets, 'QLabel'),
+                (QtWidgets, 'QGroupBox'),
+                (QtWidgets, 'QLabel'),
+                (QtCore, 'QObject'),
+                (asyncio, 'Future')]
+    for module, cls_name in mod_cls_list:
+        # set the problematic class to a dummy class
+        setattr(module, cls_name, type(cls_name, (object,), {}))
+        # make sure the class appears to be in the containing module
+        setattr(getattr(module, cls_name), '__module__', module)
+
+
+import pyrpl
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -60,7 +67,12 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.napoleon',  # supports google- or numpy-style dosctrings
     'sphinx.ext.imgmath',  # supports things like :math:`a^2 + b^2 = c^2`
+    'sphinx.ext.todo',
+    'sphinx.ext.viewcode',
 ]
+
+# Include todo directives.
+todo_include_todos = False
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

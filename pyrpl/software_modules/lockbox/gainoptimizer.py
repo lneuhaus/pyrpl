@@ -1,4 +1,4 @@
-from qtpy.QtCore import QTimer
+from qtpy import QtCore
 from pyrpl.software_modules.lockbox import *
 from pyrpl.async_utils import sleep
 
@@ -102,7 +102,7 @@ class GainOptimizer(LockboxModule):
                 return self.start()
 
     def start_delayed(self):
-        QTimer.singleShot(100, self._start_when_locked)
+        QtCore.QTimer.singleShot(100, self._start_when_locked)
 
     def stop(self):
         if hasattr(self, 'loop') and self.loop is not None:

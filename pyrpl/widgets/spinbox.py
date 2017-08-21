@@ -9,7 +9,7 @@ else:
     integer_types = (int,)
 
 
-class NumberSpinBox(QtWidgets.QWidget):#, object):  # object not needed with qtpy?
+class NumberSpinBox(QtWidgets.QWidget):
     """
     Base class for spinbox with numerical value.
 
