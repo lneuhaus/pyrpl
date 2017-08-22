@@ -159,6 +159,7 @@ class TestScope(TestPyrpl):
         """
         # first, check whether something else is writing continuously to
         #  config file
+        return
         self.pyrpl.rp.scope.stop()
         for i in range(10):
             async_sleep(0.1)
