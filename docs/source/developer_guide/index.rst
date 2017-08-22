@@ -8,4 +8,4 @@ Developer's guide
    unittests
    codingstyle
    codingworkflow
-   asynchronous/index
+   api/index
