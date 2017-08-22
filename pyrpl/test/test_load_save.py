@@ -15,7 +15,6 @@ class TestLoadSave(TestPyrpl):
     messes up the current state, loads the saved state and checks whether
     attributes are the ones that were saved"""
     def test_load_save(self):
-        return # see if travis stagnation is due to this...
         for mod in self.pyrpl.modules:
             #for exclude in [Lockbox, Scope]: # scope has an unknown bug
             # here (nosetests freezes at a  later time)
@@ -26,7 +25,6 @@ class TestLoadSave(TestPyrpl):
                 yield self.assert_load_save_module, mod
 
     def test_validate_and_normalize(self):
-        return
         for mod in self.pyrpl.modules:
             #for exclude in [Lockbox, Scope]: # scope has an unknown bug
             # here (nosetests freezes at a  later time)
