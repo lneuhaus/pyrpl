@@ -104,30 +104,6 @@ class TestScope(TestPyrpl):
 
         self.r.scope.stop()
 
-    def test_save_curve(self):
-        if self.r is None:
-            return
-        self.r.scope.setup(duration=0.01,
-                           trigger_source='immediately',
-                           trigger_delay=0.,
-                           rolling_mode=True,
-                           input1='in1',
-                           ch1_active=True,
-                           ch2_active=True)
-        self.r.scope.single()
-        time.sleep(0.1)
-        APP.processEvents()
-        curve1, curve2 = self.r.scope.save_curve()
-        self.curve1, self.curve2 = curve1, curve2 # for later deletion
-        attr = self.r.scope.setup_attributes
-        for curve in (curve1, curve2):
-            intersect = set(curve.params.keys()) & set(attr)
-            assert len(intersect) >= 5  # make sure some parameters are saved
-            p1 = dict((k, curve.params[k]) for k in intersect)
-            p2 = dict((k, attr[k]) for k in intersect)
-            assert p1 == p2   # make sure those parameters are equal to the
-            # setup_attributes of the scope
-
     def test_setup_rolling_mode(self):
         """
         recalling a state with rolling mode should work.
@@ -214,6 +190,30 @@ class TestScope(TestPyrpl):
             self.pyrpl.rp.scope.stop()
             assert(old==new), (old, new, "scope is the problem", rolling_mode)
 
+    def test_save_curve_old(self):
+        if self.r is None:
+            return
+        self.r.scope.setup(duration=0.01,
+                           trigger_source='immediately',
+                           trigger_delay=0.,
+                           rolling_mode=True,
+                           input1='in1',
+                           ch1_active=True,
+                           ch2_active=True)
+        self.r.scope.single()
+        time.sleep(0.1)
+        APP.processEvents()
+        curve1, curve2 = self.r.scope.save_curve()
+        self.curve1, self.curve2 = curve1, curve2 # for later deletion
+        attr = self.r.scope.setup_attributes
+        for curve in (curve1, curve2):
+            intersect = set(curve.params.keys()) & set(attr)
+            assert len(intersect) >= 5  # make sure some parameters are saved
+            p1 = dict((k, curve.params[k]) for k in intersect)
+            p2 = dict((k, attr[k]) for k in intersect)
+            assert p1 == p2   # make sure those parameters are equal to the
+            # setup_attributes of the scope
+
     def test_save_curve(self):
         self.pyrpl.rp.scope.stop()
         self.pyrpl.rp.scope.setup(duration=0.005,
@@ -226,4 +226,6 @@ class TestScope(TestPyrpl):
                                   running_state="stopped")
         self.pyrpl.rp.scope.single()
         curve = self.pyrpl.rp.scope.save_curve()
-        assert len(curve[0].data)==self.pyrpl.rp.scope.data_length
+        for i in range(2):
+            for j in range(2):
+                assert len(curve[i].data[j]) == self.pyrpl.rp.scope.data_length

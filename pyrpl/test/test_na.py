@@ -205,4 +205,5 @@ class TestNA(TestPyrpl):
                           running_state="running_continuous")
         self.na.single()
         curve = self.na.save_curve()
-        assert len(curve.data) == self.na.points
+        assert len(curve.data[0]) == self.na.points
+        assert len(curve.data[1]) == self.na.points

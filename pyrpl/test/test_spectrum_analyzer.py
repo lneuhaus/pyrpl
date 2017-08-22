@@ -97,4 +97,4 @@ class TestClass(TestPyrpl):
                       running_state='stopped')
         sa.single()
         curve = sa.save_curve()
-        assert (curve[0].data==sa.data_avg[0]).all()
+        assert (curve[0].data[1]==sa.data_avg[0]).all()
