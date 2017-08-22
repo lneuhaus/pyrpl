@@ -31,27 +31,38 @@ class TestAttributeWidgets(TestPyrpl):
                 widget = mod._create_widget()
                 for name, aw in widget.attribute_widgets.items():
                     if isinstance(aw, NumberAttributeWidget):
-                        maximum = aw.widget.maximum if np.isfinite(
-                                                aw.widget.maximum) else 10000000
-                        minimum = aw.widget.minimum if np.isfinite(
-                            aw.widget.minimum) else -10000000
-                        setattr(mod, name, (maximum + minimum)/2)
-                        w_value = aw.widget_value
-                        m_value = getattr(mod, name)
-                        norm = 1 if m_value==0 else m_value
-                        assert abs(w_value - m_value)/norm < 0.001, (mod,
-                                                                     name,
-                                                                     w_value,
-                                                                     m_value)
+                        yield self.assert_spin_box, mod, widget, name, aw
 
+    _TEST_SPINBOX_BUTTON_DOWN_TIME = 0.05
 
-                        QtTest.QTest.keyPress(aw, QtCore.Qt.Key_Up)
-                        sleep(0.1)
-                        QtTest.QTest.keyRelease(aw, QtCore.Qt.Key_Up)
-                        new_val = getattr(mod, name)
-                        assert(new_val>m_value)
+    def assert_spin_box(self, mod, widget, name, aw):
+        print("Testing widget for %s.%s..." %(mod.name, name))
+        # make sure the module is not reserved by some other module
+        # (as this would disable the key press response)
+        mod.free()
 
-                        QtTest.QTest.keyPress(aw, QtCore.Qt.Key_Down)
-                        sleep(0.1)
-                        QtTest.QTest.keyRelease(aw, QtCore.Qt.Key_Down)
-                        assert (getattr(mod, name) <new_val)
+        # set between minimum and maximum
+        maximum = aw.widget.maximum if np.isfinite(
+                                aw.widget.maximum) else 10000000
+        minimum = aw.widget.minimum if np.isfinite(
+            aw.widget.minimum) else -10000000
+        setattr(mod, name, (maximum + minimum)/2)
+        w_value = aw.widget_value
+        m_value = getattr(mod, name)
+        norm = 1 if m_value==0 else m_value
+        assert abs(w_value - m_value)/norm < 0.001, \
+            (w_value, m_value, mod.name, name)
+
+        # go up
+        QtTest.QTest.keyPress(aw, QtCore.Qt.Key_Up)
+        sleep(self._TEST_SPINBOX_BUTTON_DOWN_TIME)
+        QtTest.QTest.keyRelease(aw, QtCore.Qt.Key_Up)
+        new_val = getattr(mod, name)
+        assert(new_val > m_value), (new_val, m_value, mod.name, name)
+
+        # go down
+        QtTest.QTest.keyPress(aw, QtCore.Qt.Key_Down)
+        sleep(self._TEST_SPINBOX_BUTTON_DOWN_TIME)
+        QtTest.QTest.keyRelease(aw, QtCore.Qt.Key_Down)
+        new_new_val = getattr(mod, name)
+        assert (new_new_val < new_val), (new_new_val, new_val, mod.name, name)
