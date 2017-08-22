@@ -88,6 +88,12 @@ class BaseAttributeWidget(QtWidgets.QWidget):
 
     def write_widget_value_to_attribute(self):
         self.attribute_value = self.widget_value
+        # since there is no protection there, the value will propagate
+        #    widget manipulation --> module change --> widget change
+        # However, since there is a blockSignal in the setter of widget_value,
+        # the loop stops there. However a widget manipulation (a click on the
+        # widget arrow for instance) results in 2 widgets overwrites
+
         # it does not hurt to imitate the signal of the subwidget,
         # even though most of the time nothing is connected to it
         self.value_changed.emit()

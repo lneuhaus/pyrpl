@@ -134,7 +134,7 @@ class HostnameSelectorWidget(QtWidgets.QDialog):
         self.countdown_cancel()
         try:
             item = self.tree.selectedItems()[0]
-        except:
+        except: # pragma: no cover
             pass
         else:
             self.hostname = item.text(0)
@@ -147,11 +147,6 @@ class HostnameSelectorWidget(QtWidgets.QDialog):
     def ok(self):
         self.countdown_cancel()
         self.scanning = False
-        if self.parent is not None:
-            self.parent.hostname = self.hostname
-            self.parent.user = self.user
-            self.parent.sshport = self.sshport
-            self.parent.password = self.password
         self.hide()
         self.accept()
 
@@ -183,7 +178,7 @@ class HostnameSelectorWidget(QtWidgets.QDialog):
         In order to work, the specified username and password must be correct.
         """
         self.countdown_cancel()
-        if self.scanning:
+        if self.scanning: # pragma: no cover
             self._logger.debug("Scan is already running. Please wait for it "
                                "to finish before starting a new one! ")
             return
@@ -205,7 +200,7 @@ class HostnameSelectorWidget(QtWidgets.QDialog):
             # doesn't even have to be reachable, just need an open socket
             s.connect(('10.255.255.255', 1))
             ip = s.getsockname()[0]
-        except:
+        except: # pragma: no cover
             ip = '127.0.0.1'  # fall back to default if no network available
         finally:
             s.close()
@@ -218,7 +213,7 @@ class HostnameSelectorWidget(QtWidgets.QDialog):
         self.progressbar.setRange(0, len(ips))
         for i, ip in enumerate(ips):
             if not self.scanning:  # abort if ok was clicked prematurely
-                return
+                return  # pragma: no cover
             # try SSH connection for all IP addresses
             self.progressbar.setValue(i)
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -251,7 +246,7 @@ class HostnameSelectorWidget(QtWidgets.QDialog):
         if len(self.ips_and_macs) == 2:
             # exactly one device was found, therefore we can auto-proceed to
             # connection
-            self.countdown_start()
+            self.countdown_start() # pragma: no cover
 
     def countdown_start(self, countdown_s=10.0):
         self.countdown_cancel()
@@ -293,7 +288,7 @@ class HostnameSelectorWidget(QtWidgets.QDialog):
 
     def remove_device(self, item):
         self.items.remove(item)
-        self.tree.removeItemWidget()
+        self.tree.removeItemWidget(item, 0)
 
     def get_kwds(self):
         self.exec_()

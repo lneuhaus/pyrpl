@@ -26,6 +26,9 @@ class IqWidget(ModuleWidget):
                                                                   self.attribute_widgets["phase"])
         self.attribute_layout.addWidget(self.attribute_widgets["bandwidth"])
         self.attribute_layout.addWidget(self.attribute_widgets["quadrature_factor"])
+
+        # since the singleStep is 1., the default value would be too small
+        self.attribute_widgets["quadrature_factor"].widget.per_second=10
         self.attribute_layout.addWidget(self.attribute_widgets["gain"])
         self.attribute_layout.addWidget(self.attribute_widgets["amplitude"])
         self.attribute_layout.addWidget(self.attribute_widgets["output_signal"])

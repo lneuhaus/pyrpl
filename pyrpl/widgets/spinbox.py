@@ -283,7 +283,10 @@ class NumberSpinBox(QtWidgets.QWidget):
                     self.start_value = 0
                     value = 0
                     self.start_time = time.time()  # ensures to stay 0 some time
-            self.setValue(self.saturate(value))
+
+            # don't do anything if the change is smaller than singleStep
+            if abs(self.val - value)>self.singleStep:
+                self.setValue(self.saturate(value))
         self.change_timer.start()
 
     def finish_step(self):
@@ -349,16 +352,29 @@ class FloatSpinBox(NumberSpinBox):
 
     @property
     def val(self):
-        if str(self.line.text())!=("%."+str(self.decimals) + "f")%self._val:
+        if str(self.line.text())!=("%."+str(self.decimals) + "e")%self._val:
             return float(str(self.line.text()))
         return self._val # the value needs to be known to a precision better
         # than the display to avoid deadlocks in increments
 
     @val.setter
     def val(self, new_val):
-        self._val = new_val # in case the line is not updated immediately
+        # We have a cached value _val that gives finer control over the
+        # value than what is displayed. In this way, clicking up/down can
+        # change the value without apparent changes of the display.
+        self._val = self.saturate(new_val)
+
+        # block signal otherwise validate will be called there, however,
+        # we want to use the cached value rather than the corase grained
+        # value read-out from the lineedit.
+        self.line.blockSignals(True)
         self.line.setText(('{:.'+str(self.decimals)+'e}').format(
             float(new_val)))
+        self.line.blockSignals(False)
+
+        # This will cause a write of the value to the redpitaya, and in turns
+        # another read from the fpga (this function will be called a second
+        # time here)
         self.value_changed.emit()
         return new_val
 
