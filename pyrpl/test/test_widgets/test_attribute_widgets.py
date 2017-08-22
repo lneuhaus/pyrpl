@@ -41,7 +41,7 @@ class TestAttributeWidgets(TestPyrpl):
         # (as this would disable the key press response)
         mod.free()
 
-        # set between minimum and maximum
+        # set attribute in the middle between minimum and maximum
         maximum = aw.widget.maximum if np.isfinite(
                                 aw.widget.maximum) else 10000000
         minimum = aw.widget.minimum if np.isfinite(
@@ -52,6 +52,15 @@ class TestAttributeWidgets(TestPyrpl):
         norm = 1 if m_value==0 else m_value
         assert abs(w_value - m_value)/norm < 0.001, \
             (w_value, m_value, mod.name, name)
+
+        # some widgets are disabled by default and must be skipped
+        fullname = "%s.%s" % (mod.name, name)
+        exclude = ['spectrumanalyzer.center']
+        if fullname in exclude:
+            # skip test for those
+            print("Widget %s.%s was not enabled and cannot be tested..."
+                  % (mod.name, name))
+            return
 
         # go up
         QtTest.QTest.keyPress(aw, QtCore.Qt.Key_Up)

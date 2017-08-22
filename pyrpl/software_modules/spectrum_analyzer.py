@@ -415,7 +415,6 @@ class SpectrumAnalyzer(AcquisitionModule):
         """
         return self.data_to_unit(data, self.display_unit, rbw)
 
-
     def transfer_function_iq(self, frequencies):
         # transfer function calculations
         tf_iq = np.ones(len(frequencies), dtype=complex)
@@ -582,7 +581,6 @@ class SpectrumAnalyzer(AcquisitionModule):
                          ch2_active=True,
                          rolling_mode=False,
                          running_state='stopped')
-
         return self.scope._start_acquisition()
 
     def save_curve(self):

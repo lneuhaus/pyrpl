@@ -28,7 +28,7 @@
 # otherwise you can custimize here what is to be done to your data
 #
 import numpy as np
-import pandas
+import pandas as pd
 import os
 import logging
 import pickle as file_backend
@@ -57,7 +57,8 @@ except:
             """
             self.logger = logging.getLogger(name=__name__)
             self.params = dict()
-            self.data = pandas.Series()
+            x, y = np.array([], dtype=np.float), np.array([], dtype=np.float)
+            self.data = (x, y)
             self.name = name
 
         @property
@@ -76,16 +77,20 @@ except:
             Series(y, index=x) or x, y.
             kwds will be passed to self.params
             """
+            if len(args) == 0:
+                ser = (np.array([], dtype=np.float), np.array([], dtype=np.float))
             if len(args) == 1:
-                if isinstance(args[0], pandas.Series):
+                if isinstance(args[0], pd.Series):
+                    x, y = args[0].index.values, args[0].values
+                    ser = (x, y)
+                elif isinstance(args[0], (np.array, list, tuple)):
                     ser = args[0]
                 else:
-                    y = np.array(args[0])
-                    ser = pandas.Series(y)
+                    raise ValueError("cannot recognize argument %s as numpy.array or pandas.Series.", args[0])
             elif len(args) == 2:
                 x = np.array(args[0])
                 y = np.array(args[1])
-                ser = pandas.Series(y, index=x)
+                ser = (x, y)
             else:
                 raise ValueError("first arguments should be either x or x, y")
             obj = cls()
@@ -116,6 +121,9 @@ except:
                     # see http://stackoverflow.com/questions/5512811/builtins-typeerror-must-be-str-not-bytes
                     curve = CurveDB()
                     curve._pk, curve.params, curve.data = file_backend.load(f)
+                if isinstance(curve.data, pd.Series):  # for backwards compatibility
+                    x, y = curve.data.index.values, curve.data.values
+                    curve.data = (x, y)
                 return curve
 
         def save(self):
@@ -222,10 +230,10 @@ except:
 
         def sort(self):
             """numerically sorts the data series so that indexing can be used"""
-            X, Y = self.data.index.values, self.data.values
+            X, Y = self.data
             xs = np.array([x for (x, y) in sorted(zip(X, Y))], dtype=np.float64)
             ys = np.array([y for (x, y) in sorted(zip(X, Y))], dtype=np.float64)
-            self.data = pandas.Series(ys, index=xs)
+            self.data = (xs, ys)
 
         def fit(self):
             """ prototype for fitting a curve """
