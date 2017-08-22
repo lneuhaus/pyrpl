@@ -7,8 +7,8 @@ from ..software_modules.module_managers import *
 from ..hardware_modules import *
 from ..modules import *
 from ..async_utils import sleep as async_sleep
-
 from qtpy import QtCore
+
 
 class TestLoadSave(TestPyrpl):
     """ iterates over all modules, prepares a certain state, saves this,
