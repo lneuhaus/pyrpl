@@ -2,7 +2,7 @@ User's guide to PyRPL
 *********************************
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
 
    installation/hardware_installation
    installation/pyrpl_installation

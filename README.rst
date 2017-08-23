@@ -1,42 +1,29 @@
 ` <http://lneuhaus.github.io/pyrpl/>`__
 =======================================
 
-|travis status| |code coverage| |Python versions on PyPI| |PyrRPL
-version on PyPI| |join chat on gitter| |License|
+|travis status| |code coverage| |Python versions on PyPI| |PyrRPL version on PyPI| |Documentation Status| |join chat on gitter| |License|
 
 |Download PyRPL| |LGPLv3|
 
-PyRPL (Python RedPitaya Lockbox) turns your RedPitaya into a powerful
-DSP device, especially suitable as a digital lockbox and measurement
-device in quantum optics experiments.
+PyRPL (Python RedPitaya Lockbox) turns your RedPitaya into a powerful DSP device, especially suitable as a digital lockbox and measurement device in quantum optics experiments.
 
 Website
 -------
 
-Get started by checking out the `official PyRPL
-website <http://lneuhaus.github.io/pyrpl/>`__.
+Get started by checking out the `official PyRPL website <http://lneuhaus.github.io/pyrpl/>`__.
 
 Installation
 ------------
 
-The easiest and fastest way to get PyRPL is to download and execute the
-`precompiled executable for
-windows <https://sourceforge.net/projects/pyrpl/files/latest/download>`__.
-This option requires no extra programs to be installed on the computer.
+The easiest and fastest way to get PyRPL is to download and execute the `precompiled executable for windows <https://sourceforge.net/projects/pyrpl/files/latest/download>`__. This option requires no extra programs to be installed on the computer.
 
-If instead you would like to use and/or modify the source code, make
-sure you have an installation of Python (2.7, 3.4, 3.5, or 3.6). If you
-are new to Python or unexperienced with fighting installation issues, it
-is recommended to install the
-`Anaconda <https://www.continuum.io/downloads>`__ Python distribution,
-which allows to install all PyRPL dependencies via
+If instead you would like to use and/or modify the source code, make sure you have an installation of Python (2.7, 3.4, 3.5, or 3.6). If you are new to Python or unexperienced with fighting installation issues, it is recommended to install the `Anaconda <https://www.continuum.io/downloads>`__ Python distribution, which allows to install all PyRPL dependencies via
 
 ::
 
     conda install numpy scipy paramiko pandas nose pip pyqt qtpy pyqtgraph pyyaml
 
-Check `this wiki
-page <https://github.com/lneuhaus/pyrpl/wiki/Installation:-Common-issues-with-anaconda>`__
+Check `this wiki page <https://github.com/lneuhaus/pyrpl/wiki/Installation:-Common-issues-with-anaconda>`__
 for hints if you cannot execute conda in a terminal. Alternatively, if
 you prefer creating a virtual environment for pyrpl, do so with the
 following two commands
@@ -122,6 +109,7 @@ issue (see the section "Issues" below for detailed explanations).
 Next steps / documentation
 --------------------------
 
+The full PyRPL documentation is hosted at `http://pyrpl.readthedocs/io`_.
 We are still in the process of creating an up-to-date version of the
 documentation of the current code. If the current documentation is wrong
 or insufficient, please post an
@@ -185,11 +173,13 @@ more information.
    :target: https://pypi.python.org/pypi/pyrpl/
 .. |PyrRPL version on PyPI| image:: https://img.shields.io/pypi/v/pyrpl.svg
    :target: https://pypi.python.org/pypi/pyrpl/
+.. |Documentation Status| image:: https://readthedocs.org/projects/pyrpl/badge/?version=latest
+   :target: http://pyrpl.readthedocs.io/en/latest/?badge=latest
 .. |join chat on gitter| image:: https://badges.gitter.im/JoinChat.svg
    :target: https://gitter.im/lneuhaus/pyrpl
 .. |License| image:: https://img.shields.io/pypi/l/pyrpl.svg
    :target: https://github.com/lneuhaus/pyrpl/blob/master/LICENSE
 .. |Download PyRPL| image:: https://a.fsdn.com/con/app/sf-download-button
-   :target: https://sourceforge.net/projects/pyrpl/files/latest/download
+   :target: https://sourceforge.net/projects/pyrpl/files/
 .. |LGPLv3| image:: https://www.gnu.org/graphics/gplv3-88x31.png
    :target: https://www.gnu.org/licenses/gpl.html

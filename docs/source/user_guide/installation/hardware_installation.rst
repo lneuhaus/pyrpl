@@ -41,4 +41,26 @@ The redpitaya welcome screen should show-up!
    :scale: 50 %
    :alt: Redpitaya welcome screen
 
-   This is the Redpitaya welcome screen. 
+   This is the Redpitaya welcome screen.
+
+
+Quick start
+=================
+
+First, hook up your Red Pitaya / STEMlab to a LAN accessible from your
+computer (follow the instructions for this on redpitya.com and make sure
+you can access your Red Pitaya with a web browser by typing its
+ip-address / hostname into the address bar). In an IPython console or
+JuPyter notebook, type
+
+::
+
+    from pyrpl import Pyrpl
+    p = Pyrpl(config='your_configuration_name', hostname='your_redpitaya_ip_address')
+
+The GUI should open and you can start playing around with it. By calling
+pyrpl with different strings for 'your\_configuration\_name', your
+settings for a given configuration will be automatically remembered by
+PyRPL. You can drop the hostname argument after the first call of a
+given configuration. Different RedPitayas with different configuration
+names can be run simultaneously.

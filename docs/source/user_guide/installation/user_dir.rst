@@ -1,4 +1,5 @@
 Directory for user data "PYRPL\_USER\_DIR"
+**********************************************
 
 By default, PyRPL will search the home folder ":code:`HOME`" of the user
 and create the folder ":code:`HOME`/pyrpl\_user\_dir". This folder
