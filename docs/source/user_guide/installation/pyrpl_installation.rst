@@ -41,3 +41,6 @@ If at a later point, you have the impression that updates from github are not re
 
 Should the directory not be the one of your local github installation, you might have an older version of pyrpl installed. 
 Just delete any such directories other than your principal github clone and everything should work.
+
+
+

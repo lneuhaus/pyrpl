@@ -6,3 +6,4 @@ API specifications from the moment of their development
 
    asynchronous/index
    asynchronous/benchmark
+   spectrum

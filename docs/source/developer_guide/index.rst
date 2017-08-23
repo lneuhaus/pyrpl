@@ -9,3 +9,4 @@ Developer's guide
    codingstyle
    codingworkflow
    api/index
+   dist/index
