@@ -102,30 +102,18 @@ class PyrplFuture(Future):
 
     We voluntarily use an object that is different from the native QFuture
     because we want a promise object that is compatible with the python 3.5+
-    asyncio patterns (for instance, it implements an __await__ method...)
+    asyncio patterns (for instance, it implements an __await__ method...).
 
-    public instance methods:
-    ------------------------
-     - result(): the method blocks until the result is ready, but it allows
-     the Qt event-loop to run in parallel.
+    Attributes:
+        cancelled: Returns whether the promise has been cancelled.
+        exception: Blocks until:
+                a. the result is ready --> returns None
+                b. an exception accured in the execution --> returns the exception the Qt event-loop is allowed to run in parallel.
+        done: Checks whether the result is ready or not.
+        add_done_callback (callback function): add a callback to execute when result becomes available. The callback function takes 1 argument (the result of the promise).
 
-     - exception(): the method blocks until:
-        a. the result is ready --> returns None
-        b. an exception accured in the execution --> returns the exception
-     the Qt event-loop is allowed to run in parallel.
-
-     - done(): checks whether the result is ready or not.
-
-     - add_done_callback(callback): add a callback to execute when result
-     becomes available. Callback takes 1 argument (the result of the promise)
-
-    - cancel(): ...
-
-    - cancelled(): whether the promise was cancelled.
-
-    methods to implement in derived class:
-    --------------------------------------
-    - _set_data_as_result(): set
+    Methods to implement in derived class:
+        _set_data_as_result(): set
     """
 
     def __init__(self):
@@ -134,6 +122,12 @@ class PyrplFuture(Future):
         #  result(timeout) is called with a >0 value
 
     def result(self):
+        """
+        Blocks until the result is ready while running the event-loop in the background.
+
+        Returns:
+            The result of the future.
+        """
         try: #  concurrent.futures.Future (python 2)
             return super(PyrplFuture, self).result(timeout=0)
         except TypeError: #  asyncio.Future (python 3)
@@ -224,6 +218,9 @@ class PyrplFuture(Future):
         return self.exception()
 
     def cancel(self):
+        """
+        Cancels the future.
+        """
         if self._timer_timeout is not None:
             self._timer_timeout.stop()
         super(PyrplFuture, self).cancel()
@@ -231,20 +228,14 @@ class PyrplFuture(Future):
 
 def sleep(delay):
     """
-    - This function will never return until the specified delay in seconds is
-    elapsed.
-    - During the execution of this function, the qt event loop (== asyncio
-    event-loop in pyrpl) continues to process events from the gui, or from
-    other coroutines.
-    - Contrary to time.sleep() or async.sleep(), this function will
-    try to achieve a precision much better than 1 millisecond (of course,
-    occasionally, the real delay can be longer than requested), but on
-    average, the precision is in the microsecond range.
-    - Finally, care has been taken to use low level system-functions to
-    reduce CPU-load when no events need to be processed.
+    Sleeps for :code:`delay` seconds + runs the event loop in the background.
 
-    More details on the implementation can be found on the page:
-    https://github.com/lneuhaus/pyrpl/wiki/Benchmark-asynchronous-sleep-functions
+        * This function will never return until the specified delay in seconds is elapsed.
+        * During the execution of this function, the qt event loop (== asyncio event-loop in pyrpl) continues to process events from the gui, or from other coroutines.
+        * Contrary to time.sleep() or async.sleep(), this function will try to achieve a precision much better than 1 millisecond (of course, occasionally, the real delay can be longer than requested), but on average, the precision is in the microsecond range.
+        * Finally, care has been taken to use low level system-functions to reduce CPU-load when no events need to be processed.
+
+    More details on the implementation can be found on the page: `<https://github.com/lneuhaus/pyrpl/wiki/Benchmark-asynchronous-sleep-functions>`_.
     """
     tic = default_timer()
     end_time = tic + delay

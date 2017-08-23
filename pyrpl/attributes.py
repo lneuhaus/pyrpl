@@ -1,12 +1,13 @@
 """
-The parameters of the lockbox are controlled by descriptors deriving from
-BaseAttribute.
+The parameters of any module are controlled by descriptors deriving from
+:obj:`BaseAttribute`.
 
 An attribute is a field that can be set or get by several means:
-      - programmatically: module.attribute = value
-      - graphically: attribute.create_widget(module) returns a widget to
-        manipulate the value
-      - via loading the value in a config file for permanent value preservation
+
+- programmatically: module.attribute = value
+- graphically: attribute.create_widget(module) returns a widget to
+  manipulate the value
+- via loading the value in a config file for permanent value preservation
 
 Of course, the gui/parameter file/actual values have to stay "in sync" each
 time the attribute value is changed. The necessary mechanisms are happening
@@ -56,19 +57,22 @@ class BaseProperty(BaseAttribute):
     SoftwareModules
 
     An attribute is a field that can be set or get by several means:
-      - programmatically: module.attribute = value
-      - graphically: attribute.create_widget(module) returns a widget to
-        manipulate the value
-      - via loading the value in a config file for permanence
+
+    * programmatically: module.attribute = value
+    * graphically: attribute.create_widget(module) returns a widget to
+      manipulate the value
+    * via loading the value in a config file for permanence
 
     The concrete derived class need to have certain attributes properly
     defined:
-      - widget_class: the class of the widget to use for the gui (see
-        attribute_widgets.py)
-      - a function set_value(instance, value) that effectively sets the value
-        (on redpitaya or elsewhere)
-      - a function get_value(instance) that reads the value from
-        wherever it is stored internally
+
+    * widget_class: the class of the widget to use for the gui (see
+      attribute_widgets.py)
+    * a function set_value(instance, value) that effectively sets the value
+      (on redpitaya or elsewhere)
+    * a function get_value(instance) that reads the value from
+      wherever it is stored internally
+
     """
     _widget_class = None
     widget = None
@@ -103,20 +107,24 @@ class BaseProperty(BaseAttribute):
         """
         This function should raise an exception if the value is incorrect.
         Normalization can be:
-           - returning value.name if attribute "name" exists
-           - rounding to nearest multiple of step for float_registers
-           - rounding elements to nearest valid_frequencies for FilterAttributes
+
+        - returning value.name if attribute "name" exists
+        - rounding to nearest multiple of step for float_registers
+        - rounding elements to nearest valid_frequencies for FilterAttributes
         """
         return value  # by default any value is valid
 
     def value_updated(self, module, value=None, appendix=[]):
         """
         Once the value has been changed internally, this function is called to perform the following actions:
-         - launch the signal module._signal_launcher.attribute_changed (this is used in particular for gui update)
-         - saves the new value in the config file (if flag module._autosave_active is True).
-         - calls the callback function if the attribute is in module.callback
-         Note for developers:
-         we might consider moving the 2 last points in a connection behind the signal "attribute_changed".
+
+        - launch the signal module._signal_launcher.attribute_changed (this is
+          used in particular for gui update)
+        - saves the new value in the config file (if flag
+          module._autosave_active is True).
+        - calls the callback function if the attribute is in module.callback
+
+         Note for developers: We might consider moving the 2 last points in a connection behind the signal "attribute_changed".
         """
         if value is None:
             value = self.get_value(module)
@@ -1197,11 +1205,15 @@ class SelectProperty(BaseProperty):
 
     def change_options(self, instance, new_options):
         """
-        Changes the possible options acceptable by the Attribute
-          - New validation takes effect immediately (otherwise a script involving 1. changing the options/2. selecting
-          one of the new options could not be executed at once)
-          - Update of the ComboxBox is performed behind a signal-slot mechanism to be thread-safe
-          - If the current value is not in the new_options, then value is changed to some available option
+        Changes the possible options acceptable by the Attribute:
+
+        - New validation takes effect immediately (otherwise a script
+          involving 1. changing the options / 2. selecting one of the
+          new options could not be executed at once)
+        - Update of the ComboxBox is performed behind a signal-slot
+          mechanism to be thread-safe
+        - If the current value is not in the new_options, then value
+          is changed to some available option
         """
         setattr(instance, '_' + self.name + '_' + 'options', new_options)
         # refresh default options in case options(None) is called (no instance in argument)

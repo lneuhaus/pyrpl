@@ -244,14 +244,13 @@ except:
             """
             Returns the child of the curve with name 'name'
 
-            ----------
-            name: str
-                Name of the child curve to be retrieved. If several childs
-                have the same name, the first one is returned.
+            Arguments:
+                name (str): Name of the child curve to be retrieved. If
+                    several childs have the same name, the first one is
+                    returned.
 
-            Returns
-            -------
-            CurveDB: the child curve
+            Returns:
+                CurveDB: the child curve
             """
             for c in self.childs:
                 if c.name == name:

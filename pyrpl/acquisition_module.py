@@ -25,8 +25,9 @@ Example:
 
     This example shows a typical acquisition use case where a sequence of
     n aquisitions of simultaneous oscilloscope and network analyzer traces
-    are launched.
+    are launched
     ::
+
         from asyncio import ensure_future, event_loop
 
         async def my_acquisition_routine(n):
@@ -62,11 +63,11 @@ class CurveFuture(PyrplFuture):
     That's the purpose of this future object.
 
     After its creation, it will perform the following actions:
-     1. stay inactive for a time given by instrument._remaining_time()
-     2. after that, it will check every min_refresh_delay if a new curve is
-     ready with instrument._data_ready()
-     3. when data is ready, its result will be set with the instrument data,
-     as returned by instrument._get_data()
+
+        1. stay inactive for a time given by instrument._remaining_time()
+        2. after that, it will check every min_refresh_delay if a new curve is ready with instrument._data_ready()
+        3. when data is ready, its result will be set with the instrument data, as returned by instrument._get_data()
+
     """
 
     def __init__(self, module, min_delay_ms=20):
