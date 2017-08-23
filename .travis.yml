@@ -69,11 +69,24 @@ after_script:
       codecov;
     fi
 
+# automatic release when a new tag is created needs a few preliminary steps...
+before_deploy:
+  # create a Readme.rst for PyPI
+  # make an executable for linux
+  - if [[ "$TRAVIS_PYTHON_VERSION" == "3.4" ]]; then
+      source activate test-environment
+      conda install pandoc
+      pip install pyinstaller
+      pandoc --from=markdown --to=rst --output=README.rst README.md
+      pyinstaller pyrpl.spec
+    fi
 
-# upload autodoc to github pages
-# deploy:
-#  provider: pages
-#  skip_cleanup: true
-#  github_token: $GITHUB_TOKEN # Set in travis-ci.org dashboard
-#  on:
-#    branch: master
+deploy:
+  provider: pypi
+  user: lneuhaus
+  password: $PYPI_PASSWORD
+  skip_cleanup: true
+  on:
+    tags: true
+  # distributions: "sdist bdist_wheel"
+  distributions: "sdist bdist_wheel --universal"
