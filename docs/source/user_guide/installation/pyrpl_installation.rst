@@ -29,7 +29,7 @@ If you are new to Python or unexperienced with fighting installation issues, it 
 
     conda install numpy scipy paramiko pandas nose pip pyqt qtpy pyqtgraph pyyaml
 
-Check :doc:`anaconda_problems` for hints if you cannot execute conda in a terminal. Alternatively, if you prefer creating a virtual environment for pyrpl, do so with the following two commands::
+Check :ref:`anaconda_problems` for hints if you cannot execute conda in a terminal. Alternatively, if you prefer creating a virtual environment for pyrpl, do so with the following two commands::
 
     conda create -y -n pyrpl-env numpy scipy paramiko pandas nose pip pyqt qtpy pyqtgraph pyyaml
     activate pyrpl-env

@@ -6,5 +6,5 @@ Installation
 
    hardware_installation
    pyrpl_installation
-   anaconda_problems
+   common_problems
    user_dir

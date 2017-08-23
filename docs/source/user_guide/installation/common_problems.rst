@@ -1,6 +1,11 @@
-Common issues with Anaconda
-****************************
+Common installation problems
+******************************
 
+
+.. _anaconda_problems:
+
+Common issues with Anaconda
+===============================
 
 Problem: The ``conda`` command does not work
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
