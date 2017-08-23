@@ -207,3 +207,4 @@ class TestNA(TestPyrpl):
         curve = self.na.save_curve()
         assert len(curve.data[0]) == self.na.points
         assert len(curve.data[1]) == self.na.points
+        self.curves.append(curve)  # curve will be deleted by teardownAll

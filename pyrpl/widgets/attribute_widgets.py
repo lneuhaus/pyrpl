@@ -879,8 +879,7 @@ class CurveAttributeWidget(DataAttributeWidget):
         except:
             return None, None, None
         else:
-            x = data.index.values
-            y = data.values
+            x, y = data
             return x, y, name
 
     def _set_widget_value(self, new_value):

@@ -55,7 +55,7 @@ class TestPyrpl(object):
         print("Estimated time per read / write operation: %.1f ms / %.1f ms" %
               (cls.read_time*1000.0, cls.write_time*1000.0))
         async_sleep(0.1)  # give some time for events to get processed
-
+        cls.curves = []
 
     def test_read_write_time(self):
         # maximum time per read/write in seconds
@@ -78,6 +78,10 @@ class TestPyrpl(object):
     @classmethod
     def tearDownAll(cls):
         print("=======TEARING DOWN %s===========" % cls.__name__)
+        # delete the curves fabricated in the test
+        if hasattr(cls, 'curves'):
+            for curve_to_delete in cls.curves:
+                curve_to_delete.delete()
         # shut down Pyrpl
         cls.pyrpl._clear()
         async_sleep(0.1)  # give some time for events to get processed

@@ -6,10 +6,10 @@
 Welcome to pyrpl's documentation!
 *********************************
 
-The RedPitaya is an affordable FPGA board with fast analog inputs and outputs. 
-This makes it interesting also for quantum optics experiments. 
+The `Red Pitaya (a.k.a. STEM Lab) <http://www.redpitaya.com>`_ `(see full documentation) <http://redpitaya.readthedocs.io/en/latest/>`_ is an affordable FPGA board with fast analog inputs and outputs. This makes it interesting also for quantum optics experiments.
+
 The software package PyRPL (Python RedPitaya Lockbox) is an implementation of many devices that are needed for optics experiments every day.
-The user interface and all high-level functionality is written in python, but an essential part of the software is hidden in a custom FPGA design (based on the official RedPitaya software version 0.95). 
+Its user interface and all high-level functionality is written in python, but an essential part of the software is hidden in a custom FPGA design (based on the official RedPitaya software version 0.95).
 While most users probably never want to touch the FPGA design, the Verilog source code is provided together with this package and may be modified to customize the software to your needs.
 
 .. toctree::

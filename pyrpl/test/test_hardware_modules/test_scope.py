@@ -16,14 +16,6 @@ class TestScope(TestPyrpl):
     # individual name for this test:
     # tmp_config_file = "nosetests_config_scope.yml"
 
-    def teardown(self):
-        """ delete the curves fabricated in this test"""
-        for todelete in ["curve1", "curve2"]:
-            if hasattr(self, todelete):
-                c = getattr(self, todelete)
-                if c is not None:
-                    c.delete()
-
     def test_scope_stopped_at_startup(self):
         """
         This was so hard to detect, I am making a unit test
@@ -205,7 +197,6 @@ class TestScope(TestPyrpl):
         time.sleep(0.1)
         APP.processEvents()
         curve1, curve2 = self.r.scope.save_curve()
-        self.curve1, self.curve2 = curve1, curve2 # for later deletion
         attr = self.r.scope.setup_attributes
         for curve in (curve1, curve2):
             intersect = set(curve.params.keys()) & set(attr)
@@ -214,6 +205,7 @@ class TestScope(TestPyrpl):
             p2 = dict((k, attr[k]) for k in intersect)
             assert p1 == p2   # make sure those parameters are equal to the
             # setup_attributes of the scope
+        self.curves += [curve1, curve2]  # for later deletion
 
     def test_save_curve(self):
         self.pyrpl.rp.scope.stop()
@@ -226,7 +218,8 @@ class TestScope(TestPyrpl):
                                   trace_average=1,
                                   running_state="stopped")
         self.pyrpl.rp.scope.single()
-        curve = self.pyrpl.rp.scope.save_curve()
+        curves = self.pyrpl.rp.scope.save_curve()
         for i in range(2):
             for j in range(2):
-                assert len(curve[i].data[j]) == self.pyrpl.rp.scope.data_length
+                assert len(curves[i].data[j]) == self.pyrpl.rp.scope.data_length
+        self.curves += curves  # makes sure teardown will delete the curves

@@ -96,5 +96,6 @@ class TestClass(TestPyrpl):
                       input1_baseband="asg0",
                       running_state='stopped')
         sa.single()
-        curve = sa.save_curve()
-        assert (curve[0].data[1]==sa.data_avg[0]).all()
+        curves = sa.save_curve()
+        assert (curves[0].data[1]==sa.data_avg[0]).all()
+        self.curves += curves  # curves will be deleted by teardownAll
