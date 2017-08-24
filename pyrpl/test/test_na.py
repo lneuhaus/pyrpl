@@ -13,11 +13,14 @@ class TestNA(TestPyrpl):
     def setup(self):
         self.na = self.pyrpl.networkanalyzer
 
-    def test_na_stopped_at_startup(self):
+    def test_first_na_stopped_at_startup(self):
         """
         This was so hard to detect, I am making a unit test
         """
         assert(self.na.running_state=='stopped')
+
+    def teardown(self):
+        self.na.stop()
 
     def test_na_running_states(self):
         # make sure scope rolling_mode and running states are correctly setup
