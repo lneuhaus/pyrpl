@@ -98,14 +98,14 @@ class TestNA(TestPyrpl):
             async_sleep(0.05)
             print(self.na.running_state)
             while(self.na.running_state == 'running_single'):
-                async_sleep(0.05)
+                async_sleep(0.2)
             duration = (time.time() - tic)/self.na.points
             #Allow twice as long with gui
             maxduration *= 2
             assert self.pyrpl.rp.client._read_counter - old_read <= points, \
-                (self.pyrpl.rp.client._read_counter , old_read, points)
-            assert self.pyrpl.rp.client._write_counter - old_write <= points, \
                 (self.pyrpl.rp.client._read_counter, old_read, points)
+            assert self.pyrpl.rp.client._write_counter - old_write <= points, \
+                (self.pyrpl.rp.client._write_counter, old_read, points)
 
             assert duration < maxduration, \
                 "Na gui should take at most %.1f ms per point, but actually " \
