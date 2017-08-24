@@ -152,7 +152,7 @@ except:
                 filename = os.path.join(self._dirname, str(self.pk) + '.p')
                 os.remove(filename)
             except OSError:
-                self.logger.warning("Could not find remove the file %s. ",
+                self.logger.warning("Could not find and remove the file %s. ",
                                     filename)
             if parent:
                 parentchilds = parent.childs

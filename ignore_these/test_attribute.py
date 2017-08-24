@@ -1,11 +1,11 @@
 import logging
 logger = logging.getLogger(name=__name__)
 import numbers
-from ..modules import Module
-from ..attributes import BoolProperty, FilterProperty, SelectProperty, \
+from pyrpl.modules import Module
+from pyrpl.attributes import BoolProperty, FilterProperty, SelectProperty, \
     FloatProperty
-from ..module_attributes import  ModuleProperty
-from .test_base import TestPyrpl
+from pyrpl.module_attributes import  ModuleProperty
+from pyrpl.test.test_base import TestPyrpl
 
 
 class MyFilterProperty(FilterProperty):

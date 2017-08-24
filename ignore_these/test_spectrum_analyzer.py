@@ -3,11 +3,15 @@ logger = logging.getLogger(name=__name__)
 import numpy as np
 from time import sleep
 from qtpy import QtCore, QtWidgets
-from .test_base import TestPyrpl
-from .. import APP
+from pyrpl.test.test_base import TestPyrpl
+from pyrpl import APP
 
 
 class TestClass(TestPyrpl):
+
+    def teardown(self):
+        """ make 100% sure that specan has stopped """
+        self.pyrpl.spectrumanalyzer.stop()
 
     def test_specan_stopped_at_startup(self):
         """
@@ -25,7 +29,6 @@ class TestClass(TestPyrpl):
         self.pyrpl.spectrumanalyzer.setup_attributes = dict(span=1e5,
                                             input="out1",
                                             running_state='running_continuous')
-
         old = self.pyrpl.c._save_counter
         for i in range(10):
             sleep(0.01)

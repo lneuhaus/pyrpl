@@ -1,8 +1,8 @@
 import logging
 logger = logging.getLogger(name=__name__)
 from qtpy import QtWidgets
-from .test_base import TestPyrpl
-from ..software_modules.module_managers import ModuleManager
+from pyrpl.test.test_base import TestPyrpl
+from pyrpl.software_modules.module_managers import ModuleManager
 
 
 class TestOwnership(TestPyrpl):

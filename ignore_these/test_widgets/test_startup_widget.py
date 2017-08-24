@@ -2,13 +2,13 @@ import logging
 logger = logging.getLogger(name=__name__)
 import time
 import numpy as np
-from ...async_utils import sleep as async_sleep
+from pyrpl.async_utils import sleep as async_sleep
 from qtpy import QtCore, QtWidgets
-from ..test_base import TestPyrpl
-from ... import APP
-from ...curvedb import CurveDB
-from ...widgets.startup_widget import HostnameSelectorWidget
-from ...async_utils import sleep
+from pyrpl.test.test_base import TestPyrpl
+from pyrpl import APP
+from pyrpl.curvedb import CurveDB
+from pyrpl.widgets.startup_widget import HostnameSelectorWidget
+from pyrpl.async_utils import sleep
 
 class TestStartupWidgets(TestPyrpl):
     # somehow the file seems to suffer from other nosetests, so pick an

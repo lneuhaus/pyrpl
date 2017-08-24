@@ -1,8 +1,8 @@
 import logging
 logger = logging.getLogger(name=__name__)
-from ...attributes import *
-from ... import CurveDB
-from ..test_base import TestPyrpl
+from pyrpl.attributes import *
+from pyrpl import CurveDB
+from pyrpl.test.test_base import TestPyrpl
 
 
 class TestPidNaIq(TestPyrpl):
@@ -11,6 +11,9 @@ class TestPidNaIq(TestPyrpl):
         # shortcut
         self.pyrpl.na = self.pyrpl.networkanalyzer
         self.na = self.pyrpl.networkanalyzer
+
+    def teardown(self):
+        self.na.stop()
 
     def test_na(self):
         error_threshold = 0.03  # (relative error, dominated by phase error)

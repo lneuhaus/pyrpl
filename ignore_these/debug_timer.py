@@ -1,11 +1,11 @@
 from qtpy import QtCore, QtWidgets
 import time
-from ..async_utils import sleep as async_sleep
+from pyrpl.async_utils import sleep as async_sleep
 
 """ what is this file for? delete it? """
 
 if False:
-    from .. import Pyrpl
+    from pyrpl import Pyrpl
 
     pyrpl = Pyrpl(config="nosetests_source.yml",
                   source="nosetests_config.yml")

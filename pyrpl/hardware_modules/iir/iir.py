@@ -491,7 +491,6 @@ class IIR(FilterModule):
             else:
                 self._logger.debug("IIR Overflow pattern: %s",
                                    bin(self.overflow_bitfield))
-            print(reldev)
             self._signal_launcher.update_plot.emit()
 
     @property

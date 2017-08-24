@@ -31,36 +31,6 @@
 ############################################################################### 
 */
 
-
-/*
- * GENERAL DESCRIPTION:
- *
- * Proportional-integral-derivative (PID) controller.
- *
- *
- *        /---\         /---\      /-----------\
- *   IN --| - |----+--> | P | ---> | SUM & SAT | ---> OUT
- *        \---/    |    \---/      \-----------/
- *          ^      |                   ^  ^
- *          |      |    /---\          |  |
- *   set ----      +--> | I | ---------   |
- *   point         |    \---/             |
- *                 |                      |
- *                 |    /---\             |
- *                 ---> | D | ------------
- *                      \---/
- *
- *
- * Proportional-integral-derivative (PID) controller is made from three parts. 
- *
- * Error which is difference between set point and input signal is driven into
- * propotional, integral and derivative part. Each calculates its own value which
- * is then summed and saturated before given to output.
- *
- * Integral part has also separate input to reset integrator value to 0.
- * 
- */
-
 module red_pitaya_trigger_block #(
    //parameters for input pre-filter
    parameter     FILTERSTAGES = 1,
@@ -122,10 +92,10 @@ always @(posedge clk_i) begin
       else
          rearm <= 1'b0;
       if (wen) begin
-         if (addr==16'h104)   {phase_abs, auto_rearm} <= wdata[2:0];
-         if (addr==16'h108)   trigger_source <= wdata[2:0];
-         if (addr==16'h10C)   output_select <= wdata[4:0];
-         if (addr==16'h110)   phase_offset <= wdata[14:0];
+         if (addr==16'h104)   {phase_abs, auto_rearm} <= wdata[2-1:0];
+         if (addr==16'h108)   trigger_source <= wdata[2-1:0];
+         if (addr==16'h10C)   output_select <= wdata[4-1:0];
+         if (addr==16'h110)   phase_offset <= wdata[14-1:0];
          if (addr==16'h118)   set_a_thresh <= wdata[14-1:0];
          if (addr==16'h11C)   set_a_hyst <= wdata[14-1:0];
          if (addr==16'h120)   set_filter  <= wdata;

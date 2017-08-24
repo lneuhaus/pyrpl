@@ -3,7 +3,7 @@
 import logging
 logger = logging.getLogger(name=__name__)
 import os
-from .. import Pyrpl, user_config_dir, global_config
+from .. import Pyrpl, APP, user_config_dir, global_config
 from ..pyrpl_utils import time
 from ..async_utils import sleep as async_sleep
 from ..errors import UnexpectedPyrplError, ExpectedPyrplError
@@ -17,6 +17,8 @@ class TestPyrpl(object):
     # names of the configfiles to use
     source_config_file = "nosetests_source.yml"
     tmp_config_file = "nosetests_config.yml"
+    curves = []
+    OPEN_ALL_DOCKWIDGETS = False
 
     @classmethod
     def erase_temp_file(self):
@@ -55,7 +57,14 @@ class TestPyrpl(object):
         print("Estimated time per read / write operation: %.1f ms / %.1f ms" %
               (cls.read_time*1000.0, cls.write_time*1000.0))
         async_sleep(0.1)  # give some time for events to get processed
-        cls.curves = []
+
+        # open all dockwidgets if this is enabled
+        if cls.OPEN_ALL_DOCKWIDGETS:
+            for name, dock_widget in cls.pyrpl.widgets[0].dock_widgets.items():
+                print("Showing widget %s..." % name)
+                dock_widget.setVisible(True)
+                #APP.processEvents()
+            async_sleep(3.0) # give some time for startup
 
     def test_read_write_time(self):
         # maximum time per read/write in seconds

@@ -2,15 +2,15 @@ import logging
 logger = logging.getLogger(name=__name__)
 import time
 import numpy as np
-from ...async_utils import sleep as async_sleep
+from pyrpl.async_utils import sleep as async_sleep
 from qtpy import QtCore, QtWidgets
-from ..test_base import TestPyrpl
-from ... import APP
-from ...curvedb import CurveDB
-from ...widgets.startup_widget import HostnameSelectorWidget
-from ...async_utils import sleep
-from ...widgets.yml_editor import YmlEditor
-from ...software_modules.module_managers import ModuleManager
+from pyrpl.test.test_base import TestPyrpl
+from pyrpl import APP
+from pyrpl.curvedb import CurveDB
+from pyrpl.widgets.startup_widget import HostnameSelectorWidget
+from pyrpl.async_utils import sleep
+from pyrpl.widgets.yml_editor import YmlEditor
+from pyrpl.software_modules.module_managers import ModuleManager
 
 class TestYmlEditor(TestPyrpl):
     # somehow the file seems to suffer from other nosetests, so pick an
@@ -20,13 +20,11 @@ class TestYmlEditor(TestPyrpl):
     def teardown(self):
         pass
 
-
     def test_yml_editor(self):
         for mod in self.pyrpl.modules:
             if not isinstance(mod, ModuleManager):
-                widg =  YmlEditor(mod, None) # Edit current state
+                widg = YmlEditor(mod, None) # Edit current state
                 widg.show()
                 widg.load_all()
                 widg.save()
                 widg.cancel()
-

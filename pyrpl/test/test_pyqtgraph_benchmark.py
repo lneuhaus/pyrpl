@@ -3,9 +3,11 @@ logger = logging.getLogger(name=__name__)
 import pyqtgraph as pg
 import numpy as np
 import time
-from qtpy import QtCore, QtWidgets
-from .test_redpitaya import TestRedpitaya
+from qtpy import QtCore
+from ignore_these import TestRedpitaya
 from .. import APP
+from ..async_utils import sleep as async_sleep
+
 
 class TestPyqtgraph(TestRedpitaya):
     """ This test case creates a maximally simplistic scope gui
@@ -36,6 +38,8 @@ class TestPyqtgraph(TestRedpitaya):
 
     def teardown(self):
         self.timer.stop()
+        self.plotWidget.close()
+        APP.processEvents()
 
     def update_plot(self):
         self.cycle += 1
@@ -51,7 +55,7 @@ class TestPyqtgraph(TestRedpitaya):
             y1 = self.r.scope._data_ch1_current
             y2 = self.r.scope._data_ch2_current
         else:
-            t = self.t0 - self.starttime + time.time()
+            t = self.t0 + (time.time()-self.starttime)
             phi = 2.0*np.pi*self.frequency*t
             y1 = np.sin(phi)
             y2 = np.cos(phi)
@@ -64,14 +68,11 @@ class TestPyqtgraph(TestRedpitaya):
 
     def test_speed(self):
         # for now, this test is a cause of hangup
-        return
-
+        # return
         # wait for the gui to display all required curves
         while self.cycle < self.cycles or (time.time() > self.timeout + self.starttime):
-            time.sleep(0.001)
             # this is needed such that the test GUI actually plots something
-            APP.processEvents()
-
+            async_sleep(0.01)
         if self.cycle < self.cycles:
             print("Must complete %d cycles before testing for speed!"%self.cycles)
             assert False

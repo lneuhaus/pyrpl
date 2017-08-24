@@ -1,8 +1,8 @@
 import logging
 logger = logging.getLogger(name=__name__)
-from ...attributes import *
-from ... import CurveDB
-from ..test_base import TestPyrpl
+from pyrpl.attributes import *
+from pyrpl import CurveDB
+from pyrpl.test.test_base import TestPyrpl
 
 
 class TestIir(TestPyrpl):
@@ -11,6 +11,9 @@ class TestIir(TestPyrpl):
         # shortcuts
         self.pyrpl.na = self.pyrpl.networkanalyzer
         self.na = self.pyrpl.networkanalyzer
+
+    def teardown(self):
+        self.na.stop()
 
     def test_pz_interface(self):
         """ tests that poles and real/comples_poles remain sync'ed"""
@@ -66,6 +69,7 @@ class TestIir(TestPyrpl):
                  points=301,
                  rbw=[500, 500],
                  average_per_point=1,
+                 running_state='stopped',
                  trace_average=1,
                  amplitude=0.005,
                  input=iir,
@@ -143,6 +147,7 @@ class TestIir(TestPyrpl):
                      points=501,
                      rbw=[500, 500],
                      average_per_point=1,
+                     running_state='stopped',
                      trace_average=1,
                      amplitude=0.05,
                      input=iir,
@@ -162,6 +167,7 @@ class TestIir(TestPyrpl):
                      points=301,
                      rbw=[500, 500],
                      average_per_point=1,
+                     running_state='stopped',
                      trace_average=1,
                      amplitude=0.05,
                      input=iir,
@@ -190,6 +196,7 @@ class TestIir(TestPyrpl):
                      points=2501,
                      rbw=[1000, 1000],
                      average_per_point=5,
+                     running_state='stopped',
                      trace_average=1,
                      amplitude=0.02,
                      input=iir,
@@ -213,6 +220,7 @@ class TestIir(TestPyrpl):
                      points=301,
                      rbw=1000,
                      average_per_point=1,
+                     running_state='stopped',
                      trace_average=1,
                      amplitude=0.01,
                      input='iir',

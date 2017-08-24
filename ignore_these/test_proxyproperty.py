@@ -1,10 +1,10 @@
 import logging
 logger = logging.getLogger(name=__name__)
-from ..modules import Module
-from ..attributes import FloatProperty, SelectProperty, ProxyProperty
-from ..module_attributes import *
-from ..memory import MemoryTree
-from ..async_utils import sleep
+from pyrpl.modules import Module
+from pyrpl.attributes import FloatProperty, SelectProperty, ProxyProperty
+from pyrpl.module_attributes import *
+from pyrpl.memory import MemoryTree
+from pyrpl.async_utils import sleep
 
 
 class MySubModule(Module):

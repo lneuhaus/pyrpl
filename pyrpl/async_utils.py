@@ -47,40 +47,41 @@ class MainThreadTimer(QtCore.QTimer):
     Benchmark:
     ----------
 
-     1. keep starting the same timer over and over --> 5 microsecond/call
+     1. keep starting the same timer over and over --> 5 microsecond/call::
 
-        n = [0]
-        tics = [default_timer()]
-        timers = [None]
-        N = 100000
-        timer = MainThreadTimer(0)
-        timer.timeout.connect(func)
-        def func():
-            n[0]+=1
-            if n[0] > N:
-                print('done', (default_timer() - tics[0])/N)
-                return
-            timer.start()
-            timers[0] = timer
-            return
-        func() ---> 5 microseconds per call
-
-     2. Instantiating a new timer at each call --> 15 microsecond/call
-        n = [0]
-        tics = [default_timer()]
-        timers = [None]
-        N = 100000
-        def func():
-            n[0]+=1
-            if n[0] > N:
-                print('done', (default_timer() - tics[0])/N)
-                return
+            n = [0]
+            tics = [default_timer()]
+            timers = [None]
+            N = 100000
             timer = MainThreadTimer(0)
             timer.timeout.connect(func)
-            timer.start()
-            timers[0] = timer
-            return
-        func() ---> 15 microseconds per call
+            def func():
+                n[0]+=1
+                if n[0] > N:
+                    print('done', (default_timer() - tics[0])/N)
+                    return
+                timer.start()
+                timers[0] = timer
+                return
+            func() ---> 5 microseconds per call
+
+     2. Instantiating a new timer at each call --> 15 microsecond/call::
+
+            n = [0]
+            tics = [default_timer()]
+            timers = [None]
+            N = 100000
+            def func():
+                n[0]+=1
+                if n[0] > N:
+                    print('done', (default_timer() - tics[0])/N)
+                    return
+                timer = MainThreadTimer(0)
+                timer.timeout.connect(func)
+                timer.start()
+                timers[0] = timer
+                return
+            func() ---> 15 microseconds per call
 
     Moreover, no catastrophe occurs when instantiating >10e6 timers
     successively

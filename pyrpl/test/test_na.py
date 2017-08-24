@@ -69,6 +69,7 @@ class TestNA(TestPyrpl):
                           stop_freq=1e4,
                           rbw=1e6,
                           points=points,
+                          running_state='stopped',
                           average_per_point=1,
                           trace_average=1)
             tic = time.time()
@@ -84,6 +85,7 @@ class TestNA(TestPyrpl):
                           stop_freq=1e4,
                           rbw=1e6,
                           points=points//2,
+                          running_state='stopped',
                           average_per_point=1,
                           trace_average=1)
             tic = time.time()
@@ -148,6 +150,7 @@ class TestNA(TestPyrpl):
                           points=100,
                           output_direct="out1",
                           input="out1",
+                          running_state='stopped',
                           trace_average=1,
                           amplitude=0.01)
             self.na.continuous()
@@ -205,6 +208,7 @@ class TestNA(TestPyrpl):
                           running_state="running_continuous")
         self.na.single()
         curve = self.na.save_curve()
+        self.na.stop()
         assert len(curve.data[0]) == self.na.points
         assert len(curve.data[1]) == self.na.points
         self.curves.append(curve)  # curve will be deleted by teardownAll

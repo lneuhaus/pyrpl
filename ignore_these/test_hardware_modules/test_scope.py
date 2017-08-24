@@ -2,11 +2,11 @@ import logging
 logger = logging.getLogger(name=__name__)
 import time
 import numpy as np
-from ...async_utils import sleep as async_sleep
+from pyrpl.async_utils import sleep as async_sleep
 from qtpy import QtCore, QtWidgets
-from ..test_base import TestPyrpl
-from ... import APP
-from ...curvedb import CurveDB
+from pyrpl.test.test_base import TestPyrpl
+from pyrpl import APP
+from pyrpl.curvedb import CurveDB
 
 class TestScope(TestPyrpl):
     """
@@ -151,18 +151,12 @@ class TestScope(TestPyrpl):
         """
         # first, check whether something else is writing continuously to
         #  config file
-        return
         self.pyrpl.rp.scope.stop()
-        for i in range(10):
-            async_sleep(0.1)
-            #APP.processEvents()
+        async_sleep(1.0)
         old = self.pyrpl.c._save_counter
-        for i in range(10):
-            async_sleep(0.1)
-            #APP.processEvents()
+        async_sleep(1.0)
         new = self.pyrpl.c._save_counter
         assert (old == new), (old, new, "scope is not the reason")
-
         # next, check whether the scope does this
         for rolling_mode in (True, False):
             self.pyrpl.rp.scope.setup(duration=0.005,
@@ -173,19 +167,15 @@ class TestScope(TestPyrpl):
                                       rolling_mode=True,
                                       trace_average=1,
                                       running_state="running_continuous")
-
             old = self.pyrpl.c._save_counter
             for i in range(10):
                 async_sleep(0.1)
                 # APP.processEvents()
             new = self.pyrpl.c._save_counter
-
             self.pyrpl.rp.scope.stop()
             assert(old==new), (old, new, "scope is the problem", rolling_mode)
 
     def test_save_curve_old(self):
-        if self.r is None:
-            return
         self.r.scope.setup(duration=0.01,
                            trigger_source='immediately',
                            trigger_delay=0.,

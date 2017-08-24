@@ -24,6 +24,11 @@ class TestLoadSave(TestPyrpl):
                     break
             else:
                 yield self.assert_load_save_module, mod
+                # make sure all modules are stopped at the end of this test
+                try:
+                    mod.stop()
+                except:
+                    pass
 
     def test_validate_and_normalize(self):
         for mod in self.pyrpl.modules:
@@ -34,10 +39,16 @@ class TestLoadSave(TestPyrpl):
                     break
             else:
                 yield self.assert_validate_and_normalize, mod
+                # make sure all modules are stopped at the end of this test
+                try:
+                    mod.stop()
+                except:
+                    pass
 
     def assert_validate_and_normalize(self, mod):
         def check_fpga_value_equals_signal_value(attr_name, list_value):
-            print("check_fpga_value_equals_signal_value(%s, %s)"%(attr_name, list_value))
+            print("check_fpga_value_equals_signal_value(%s.%s, %s)"
+                  % (mod.name, attr_name, list_value))
             assert getattr(mod, attr_name)==list_value[0], \
                 "%s.%s %s != %s" % \
                 (mod.name, attr_name, getattr(mod, attr_name), list_value[0])
@@ -45,7 +56,7 @@ class TestLoadSave(TestPyrpl):
         mod._signal_launcher.update_attribute_by_name.connect(check_fpga_value_equals_signal_value,
                                                               QtCore.Qt.DirectConnection)
         self.scramble_values(mod)
-        async_sleep(10.0)
+        async_sleep(1.0)
         APP.processEvents()
         mod._signal_launcher.update_attribute_by_name.disconnect(check_fpga_value_equals_signal_value)
 
@@ -99,9 +110,7 @@ class TestLoadSave(TestPyrpl):
             attr_names, attr_vals = self.scramble_values(
                                  mod, 'foo', 12.1, True, [1923], 0, 5)
             mod.save_state('test_save')
-
             self.scramble_values(mod, 'bar', 13.2, False,  [15], 1, 7)
-
             mod.load_state('test_save')
             for attr, attr_val in zip(mod._setup_attributes, attr_vals):
                 if attr == 'default_sweep_output' or attr == 'baseband':

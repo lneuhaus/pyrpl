@@ -3,7 +3,7 @@
 import logging
 logger = logging.getLogger(name=__name__)
 import os
-from .. import Pyrpl, RedPitaya, user_config_dir
+from pyrpl import Pyrpl, RedPitaya, user_config_dir
 
 
 class TestRedpitaya(object):

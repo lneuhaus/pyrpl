@@ -2,8 +2,8 @@ import logging
 logger = logging.getLogger(name=__name__)
 import time
 import numpy as np
-from ... import CurveDB
-from ..test_base import TestPyrpl
+from pyrpl import CurveDB
+from pyrpl.test.test_base import TestPyrpl
 
 
 class TestScopeAsgAms(TestPyrpl):
