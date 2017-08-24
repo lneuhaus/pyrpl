@@ -14,10 +14,8 @@ from ..widgets.module_widgets import NaWidget
 from ..hardware_modules.iq import Iq
 
 # timeit.default_timer() is THE precise timer to use (microsecond precise vs
-# milliseconds for time.time()).
-# see
-# http://stackoverflow.com/questions/85451
-# /python-time-clock-vs-time-time-accuracy
+# milliseconds for time.time()). see
+# http://stackoverflow.com/questions/85451/python-time-clock-vs-time-time-accuracy
 import timeit
 
 
@@ -33,12 +31,16 @@ class NaAcBandwidth(FilterProperty):
         return -obj.iq.inputfilter
 
     def set_value(self, obj, value):
-        obj.iq.inputfilter = [-value[0]]
+        if isinstance(value, list):
+            value = value[0]
+        obj.iq.inputfilter = -value
         return value
+
 
 class NaAmplitudeProperty(FloatProperty):
     def validate_and_normalize(self, obj, value):
         return obj.iq.__class__.amplitude.validate_and_normalize(obj.iq, abs(value))
+
 
 class RbwAttribute(FilterProperty):
     def get_value(self, instance):
@@ -272,19 +274,25 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
     Using an IQ module, the network analyzer can measure the complex coherent
     response between an output and any signal in the redpitaya.
 
-    2 ways to use the NetworkAnalyzer:
-      exemple 1:
-            r = RedPitaya("1.1.1.1")
-            na = NetworkAnalyzer(r)
-            curve = na.curve(start=100, stop=1000, rbw=10...)
-      exemple 2:
-            na.start = 100
-            na.stop = 1000
-            curve = na.curve(rbw=10)
-      exemple 3:
-            na.setup(start=100, stop=1000, ...)
-            for freq, response, amplitude in na.values():
-                print response
+    Three example ways on how to use the NetworkAnalyzer:
+
+    - Example 1::
+
+          r = RedPitaya("1.1.1.1")
+          na = NetworkAnalyzer(r)
+          curve = na.curve(start=100, stop=1000, rbw=10...)
+
+    - Example 2::
+
+          na.start = 100
+          na.stop = 1000
+          curve = na.curve(rbw=10)
+
+    - Example 3::
+
+          na.setup(start=100, stop=1000, ...)
+          for freq, response, amplitude in na.values():
+              print response
     """
     _widget_class = NaWidget
     _gui_attributes = ["input",

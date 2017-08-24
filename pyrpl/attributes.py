@@ -716,8 +716,12 @@ class FilterProperty(BaseProperty):
         """
         if not np.iterable(value):
             value = [value]
-        return [min([opt for opt in self.valid_frequencies(obj)],
-                    key=lambda x: abs(x - val)) for val in value]
+        value = [min([opt for opt in self.valid_frequencies(obj)],
+                      key=lambda x: abs(x - val)) for val in value]
+        if len(value) == 1:
+            return value[0]
+        else:
+            return value
 
     def get_value(self, obj):
         if not hasattr(obj, '_' + self.name):

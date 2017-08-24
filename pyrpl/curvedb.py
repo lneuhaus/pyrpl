@@ -44,6 +44,8 @@ except:
     from . import user_curve_dir
     class CurveDB(object):
         _dirname = user_curve_dir
+        file_extension = '.dat'
+
         if not os.path.exists(_dirname): # if _dirname doesn't exist, some unexpected errors will occur.
             os.mkdir(_dirname)
 
@@ -116,7 +118,7 @@ except:
             elif isinstance(curve, list):
                 return [CurveDB.get(c) for c in curve]
             else:
-                with open(os.path.join(CurveDB._dirname, str(curve) + '.dat'),
+                with open(os.path.join(CurveDB._dirname, str(curve) + cls.file_extension),
                           'rb' if file_backend.__name__ == 'pickle' else 'r')\
                         as f:
                     # rb is for compatibility with python 3
@@ -130,7 +132,7 @@ except:
                 return curve
 
         def save(self):
-            with open(os.path.join(self._dirname, str(self.pk) + '.dat'),
+            with open(os.path.join(self._dirname, str(self.pk) + self.file_extension),
                       'wb' if file_backend.__name__ == 'pickle' else 'w')\
                     as f:
                 # wb is for compatibility with python 3
@@ -149,7 +151,7 @@ except:
                     child.delete()
             self.logger.debug("Deleting curve %d" % delpk)
             try:
-                filename = os.path.join(self._dirname, str(self.pk) + '.p')
+                filename = os.path.join(self._dirname, str(self.pk) + self.file_extension)
                 os.remove(filename)
             except OSError:
                 self.logger.warning("Could not find and remove the file %s. ",

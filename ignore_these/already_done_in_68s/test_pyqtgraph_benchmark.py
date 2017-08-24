@@ -4,7 +4,7 @@ import pyqtgraph as pg
 import numpy as np
 import time
 from qtpy import QtCore
-from ignore_these import TestRedpitaya
+from .test_redpitaya import TestRedpitaya
 from .. import APP
 from ..async_utils import sleep as async_sleep
 
@@ -19,18 +19,16 @@ class TestPyqtgraph(TestRedpitaya):
     frequency = 10.0
     duration = 1.0
     dt = 0.01  # maximum frame rate is 100 Hz
-    REDPITAYA = True  # REDPITAYA=False tests the speed of PyQtGraph alone
-    timeout = 10  # timeout if the gui never plots anything
+    REDPITAYA = False  # REDPITAYA=True tests the speed with Red Pitaya Scope
+    timeout = 10.0  # timeout if the gui never plots anything
 
     def setup(self):
         self.t0 = np.linspace(0, self.duration, self.N)
         self.plotWidget = pg.plot(title="Realtime plotting benchmark")
         self.cycle = 0
         self.starttime = time.time()  # not yet the actual starttime, but needed for timeout
-
         if self.REDPITAYA:
             self.r.scope.setup(trigger_source='immediately', duration=self.duration)
-
         self.timer = QtCore.QTimer()
         self.timer.setInterval(1000*self.dt)
         self.timer.timeout.connect(self.update_plot)
@@ -38,6 +36,7 @@ class TestPyqtgraph(TestRedpitaya):
 
     def teardown(self):
         self.timer.stop()
+        APP.processEvents()
         self.plotWidget.close()
         APP.processEvents()
 
@@ -74,8 +73,7 @@ class TestPyqtgraph(TestRedpitaya):
             # this is needed such that the test GUI actually plots something
             async_sleep(0.01)
         if self.cycle < self.cycles:
-            print("Must complete %d cycles before testing for speed!"%self.cycles)
-            assert False
+            assert False, "Must complete %d cycles before testing for speed!"%self.cycles
         else:
             # time per frame
             dt = (self.endtime - self.starttime) / self.cycles
@@ -83,4 +81,6 @@ class TestPyqtgraph(TestRedpitaya):
             dt *= 1e3
             print("Update period: %f ms" %(dt))
             # require at least 20 fps
-            assert (dt < 50.0), "Frame update time of %f ms too slow!"%dt
+            assert (dt < 50.0), \
+                "Frame update time of %f ms with%s redpitaya scope is above specification of 50 ms!" \
+                % ('out' if self.REDPITAYA else '', dt)

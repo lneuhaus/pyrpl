@@ -505,6 +505,7 @@ class FilterAttributeWidget(BaseAttributeWidget):
     The attribute descriptor needs to expose a function valid_frequencies(module)
     """
     decimals = 3
+
     def __init__(self, module, attribute_name, widget_name=None):
         val = getattr(module, attribute_name)
         if np.iterable(val):
@@ -539,10 +540,10 @@ class FilterAttributeWidget(BaseAttributeWidget):
         return self.widget.get_list()
 
     def _set_widget_value(self, new_value):
-        if isinstance(new_value, str) or not np.iterable(new_value):  # only 1
-            # element in the FilterAttribute, make a list for consistency,
-            # used to be basestring
-            val = [new_value]
+        if isinstance(new_value, str) or not np.iterable(new_value):
+            # only 1 element in the FilterAttribute, make a list
+            # for consistency with other filters (this used to be basestring)
+            new_value = [new_value]
         self.widget.set_list(new_value)
 
     def set_max_cols(self, n_cols):

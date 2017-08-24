@@ -1,14 +1,18 @@
 import logging
 logger = logging.getLogger(name=__name__)
-from ..attributes import *
-from .test_base import TestPyrpl
-from ..software_modules import *
-from ..software_modules.module_managers import *
-from ..hardware_modules import *
-from ..modules import *
-from .. import APP
-from ..async_utils import sleep as async_sleep
+from pyrpl.attributes import *
+from pyrpl.test.test_base import TestPyrpl
+from pyrpl.software_modules import *
+from pyrpl.software_modules.module_managers import *
+from pyrpl.hardware_modules import *
+from pyrpl.modules import *
+from pyrpl import APP
+from pyrpl.async_utils import sleep as async_sleep
 from qtpy import QtCore
+
+
+
+
 
 
 class TestLoadSave(TestPyrpl):
@@ -123,3 +127,4 @@ class TestLoadSave(TestPyrpl):
                     assert getattr(mod, attr)==attr_val, (mod, attr, attr_val, getattr(mod, attr))
                 async_sleep(0.01)  # randomly inserted in fear of bugs
         async_sleep(0.1)  # randomly inserted in fear of bugs
+

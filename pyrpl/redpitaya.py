@@ -128,7 +128,7 @@ class RedPitaya(object):
                                       k, oldvalue, k.upper(), newvalue)
         # settings from config file
         try:
-            update_with_typeconversion(self.parameters, self.c.redpitaya._data)
+            update_with_typeconversion(self.parameters, self.c._get_or_create('redpitaya')._data)
         except BaseException as e:
             self.logger.warning("An error occured during the loading of your "
                                 "Red Pitaya settings from the config file: %s",
