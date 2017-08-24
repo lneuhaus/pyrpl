@@ -8,6 +8,9 @@ to prevent any compatibility issues, we provide here the version of the Redipata
 SD card preparation
 ===================
 
+Option 0:
+Download abd unzip the `Red Pitaya OS Version 0.92 image <https://sourceforge.net/projects/pyrpl/files/SD_Card_RedPitayaOS_v0.92.img.zip/download>`_. Flash this image on a >= 4 GB SD card using a tool like `Win32DiskImager <https://sourceforge.net/projects/win32diskimager/>`_, and insert the card into your Red Pitaya.
+
 Option 1: flash the full image at once
 --------------------------------------
 For the SD card to be bootable by the redpitaya, several things need to be ensured (Fat32 formatting, boot flag on the right partition...), such that simply copying all required files onto the SD card is not enough to make it bootable. 

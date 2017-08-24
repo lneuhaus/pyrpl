@@ -99,8 +99,10 @@ class TestNA(TestPyrpl):
             duration = (time.time() - tic)/self.na.points
             #Allow twice as long with gui
             maxduration *= 2
-            assert self.pyrpl.rp.client._read_counter - old_read <= points
-            assert self.pyrpl.rp.client._write_counter - old_write <= points
+            assert self.pyrpl.rp.client._read_counter - old_read <= points, \
+                (self.pyrpl.rp.client._read_counter , old_read, points)
+            assert self.pyrpl.rp.client._write_counter - old_write <= points, \
+                (self.pyrpl.rp.client._read_counter, old_read, points)
 
             assert duration < maxduration, \
                 "Na gui should take at most %.1f ms per point, but actually " \
