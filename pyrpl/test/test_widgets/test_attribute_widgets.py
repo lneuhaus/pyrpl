@@ -40,16 +40,19 @@ class TestAttributeWidgets(TestPyrpl):
         # make sure the module is not reserved by some other module
         # (as this would disable the key press response)
         mod.free()
-
+        APP.processEvents()
+        # save original value for later
+        original_m_value = getattr(mod, name)
         # set attribute in the middle between minimum and maximum
         maximum = aw.widget.maximum if np.isfinite(
                                 aw.widget.maximum) else 10000000
         minimum = aw.widget.minimum if np.isfinite(
             aw.widget.minimum) else -10000000
         setattr(mod, name, (maximum + minimum)/2)
+        APP.processEvents()
         w_value = aw.widget_value
         m_value = getattr(mod, name)
-        norm = 1 if m_value==0 else m_value
+        norm = 1 if (m_value==0 or w_value==0) else m_value
         assert abs(w_value - m_value)/norm < 0.001, \
             (w_value, m_value, mod.name, name)
 
@@ -77,3 +80,6 @@ class TestAttributeWidgets(TestPyrpl):
         async_sleep(self._TEST_SPINBOX_BUTTON_DOWN_TIME)
         new_new_val = getattr(mod, name)
         assert (new_new_val < new_val), (new_new_val, new_val, mod.name, name)
+
+        # reset original value from before test
+        setattr(mod, name, original_m_value)

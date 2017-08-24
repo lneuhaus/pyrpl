@@ -149,8 +149,7 @@ class TestScope(TestPyrpl):
         Make sure the scope isn't continuously writing to config file,
         even in running mode.
         """
-        # first, check whether something else is writing continuously to
-        #  config file
+        # check whether something else is writing continuously to config file
         self.pyrpl.rp.scope.stop()
         async_sleep(1.0)
         old = self.pyrpl.c._save_counter
@@ -168,9 +167,8 @@ class TestScope(TestPyrpl):
                                       trace_average=1,
                                       running_state="running_continuous")
             old = self.pyrpl.c._save_counter
-            for i in range(10):
-                async_sleep(0.1)
-                # APP.processEvents()
+            async_sleep(1.0)
+            APP.processEvents()
             new = self.pyrpl.c._save_counter
             self.pyrpl.rp.scope.stop()
             assert(old==new), (old, new, "scope is the problem", rolling_mode)
