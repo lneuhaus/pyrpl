@@ -49,6 +49,9 @@ help:
 clean:
 	rm -rf $(BUILDDIR)/*
 
+# Preliminaries to a real build - convert tutorial to readable format
+ipython nbconvert --to html source/user_guide/tutorial/tutorial.ipynb
+
 html:
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo

@@ -32,7 +32,7 @@ import pandas as pd
 import os
 import logging
 import pickle as file_backend
-# import json as file_backend  # currently unable to store pandas
+#import json as file_backend  # currently unable to store pandas
 
 
 # optional override of CurveDB class with custom module, as defined in
@@ -116,21 +116,27 @@ except:
             elif isinstance(curve, list):
                 return [CurveDB.get(c) for c in curve]
             else:
-                with open(os.path.join(CurveDB._dirname, str(curve) + '.dat'), 'rb') as f:
+                with open(os.path.join(CurveDB._dirname, str(curve) + '.dat'),
+                          'rb' if file_backend.__name__ == 'pickle' else 'r')\
+                        as f:
                     # rb is for compatibility with python 3
                     # see http://stackoverflow.com/questions/5512811/builtins-typeerror-must-be-str-not-bytes
                     curve = CurveDB()
-                    curve._pk, curve.params, curve.data = file_backend.load(f)
+                    curve._pk, curve.params, data = file_backend.load(f)
+                    curve.data = tuple([np.asarray(a) for a in data])
                 if isinstance(curve.data, pd.Series):  # for backwards compatibility
                     x, y = curve.data.index.values, curve.data.values
                     curve.data = (x, y)
                 return curve
 
         def save(self):
-            with open(os.path.join(self._dirname, str(self.pk) + '.dat'), 'wb') as f:
+            with open(os.path.join(self._dirname, str(self.pk) + '.dat'),
+                      'wb' if file_backend.__name__ == 'pickle' else 'w')\
+                    as f:
                 # wb is for compatibility with python 3
                 # see http://stackoverflow.com/questions/5512811/builtins-typeerror-must-be-str-not-bytes
-                file_backend.dump([self.pk, self.params, self.data], f)
+                data = [a.tolist() for a in self.data]
+                file_backend.dump([self.pk, self.params, data], f, )
 
         def delete(self):
             # remove the file

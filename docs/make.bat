@@ -59,6 +59,10 @@ if errorlevel 9009 (
 	exit /b 1
 )
 
+REM Preliminaries to a real build - convert tutorial to readable format
+ipython nbconvert --to html source/user_guide/tutorial/tutorial.ipynb
+
+
 if "%1" == "html" (
 	%SPHINXBUILD% -b html %ALLSPHINXOPTS% %BUILDDIR%/html
 	if errorlevel 1 exit /b 1

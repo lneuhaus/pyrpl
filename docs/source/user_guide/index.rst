@@ -5,5 +5,5 @@ User's guide to PyRPL
    :maxdepth: 3
 
    installation/index
-   quickstart_tutorial
+   tutorial/index
    basics/index

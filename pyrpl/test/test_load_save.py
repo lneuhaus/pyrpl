@@ -6,6 +6,7 @@ from ..software_modules import *
 from ..software_modules.module_managers import *
 from ..hardware_modules import *
 from ..modules import *
+from .. import APP
 from ..async_utils import sleep as async_sleep
 from qtpy import QtCore
 
@@ -37,11 +38,15 @@ class TestLoadSave(TestPyrpl):
     def assert_validate_and_normalize(self, mod):
         def check_fpga_value_equals_signal_value(attr_name, list_value):
             print("check_fpga_value_equals_signal_value(%s, %s)"%(attr_name, list_value))
-            assert getattr(mod, attr_name)==list_value[0]
+            assert getattr(mod, attr_name)==list_value[0], \
+                "%s.%s %s != %s" % \
+                (mod.name, attr_name, getattr(mod, attr_name), list_value[0])
         # Use a direct connection such that exception are generated in the same thread.
         mod._signal_launcher.update_attribute_by_name.connect(check_fpga_value_equals_signal_value,
                                                               QtCore.Qt.DirectConnection)
         self.scramble_values(mod)
+        async_sleep(10.0)
+        APP.processEvents()
         mod._signal_launcher.update_attribute_by_name.disconnect(check_fpga_value_equals_signal_value)
 
     def scramble_values(self,

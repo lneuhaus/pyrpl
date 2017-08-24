@@ -1,4 +1,4 @@
-#[<img src="https://github.com/lneuhaus/pyrpl/blob/master/doc/logo.png" width="250" alt="PyRPL">](http://lneuhaus.github.io/pyrpl/)
+#[<img src="http://pyrpl.readthedocs.io/en/latest/_static/logo.png" width="250" alt="PyRPL">](http://lneuhaus.github.io/pyrpl/)
 
 [![travis status](https://travis-ci.org/lneuhaus/pyrpl.svg?branch=master "Travisstatus")](https://travis-ci.org/lneuhaus/pyrpl)
 [![code coverage](https://codecov.io/github/lneuhaus/pyrpl/coverage.svg?branch=master "Code coverage")](https://codecov.io/gh/lneuhaus/pyrpl)
@@ -24,7 +24,7 @@ installation of Python (2.7, 3.4, 3.5, or 3.6). If you are new to Python or unex
 ```
 conda install numpy scipy paramiko pandas nose pip pyqt qtpy pyqtgraph pyyaml
 ```
-Check [this documentation section](file:///C:/lneuhaus/gitHub/pyrpl/docs/build/html/user_guide/installation/common_problems.html#anaconda-problems) for hints if you are unable to execute conda in a terminal. Alternatively, if you prefer creating a virtual environment for pyrpl, do so with the following two commands
+Check [this documentation section](http://pyrpl.readthedocs.io/en/latest/user_guide/installation/common_problems.html#anaconda-problems) for hints if you are unable to execute conda in a terminal. Alternatively, if you prefer creating a virtual environment for pyrpl, do so with the following two commands
 ```
 conda create -y -n pyrpl-env numpy scipy paramiko pandas nose pip pyqt qtpy pyqtgraph pyyaml
 activate pyrpl-env
