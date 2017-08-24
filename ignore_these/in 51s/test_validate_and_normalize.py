@@ -9,48 +9,7 @@ from pyrpl.modules import *
 from pyrpl import APP
 from pyrpl.async_utils import sleep as async_sleep
 from qtpy import QtCore
-
-
-def scramble_values(mod,
-                    str_val='foo',
-                    num_val=12.0,
-                    bool_val=True,
-                    list_val=[1912],
-                    option_index=0,
-                    list_length=4):
-    attr_names =[]
-    attr_vals = []
-    for attr in mod._setup_attributes:
-        if attr=='default_sweep_output':
-            val = None# anyways, this will be redesigned soon with a proper link to the output...
-        elif attr=='sequence':
-            val = [{}] * list_length
-        else:
-            val = getattr(mod, attr)
-        desc = getattr(mod.__class__, attr)
-        if isinstance(desc, SelectProperty):
-            val = list(desc.options(mod).keys())[option_index % len(desc.options(mod))]
-        elif isinstance(val, str):  # used to be basestring
-            val = str_val
-        if isinstance(val, bool):
-            val = bool_val
-        if isinstance(val, numbers.Number):
-            val += num_val
-        if isinstance(mod, list):
-            val = list_val
-        if attr == 'center':  # iq mode not supported yet for specan
-            val = 0
-        if attr=='baseband':  # iq mode not supported yet for specan
-            val = True
-        try:
-            setattr(mod, attr, val)
-        except ValueError as e:
-            if not str(e)=="Nonzero center frequency not allowed in baseband mode.":
-                raise
-        val = getattr(mod, attr)
-        attr_names.append(attr)
-        attr_vals.append(val)
-    return attr_names, attr_vals
+from .test_load_save import scramble_values
 
 
 class TestValidateAndNormalize(TestPyrpl):

@@ -1,0 +1,31 @@
+on my pc (LN)
+=========
+
+Folders
+----------
+test_hardware_modules: 72 tests in 227 s
+test_widgets: 72 tests in 80 s
+
+Files
+----------
+
+test_* in 51 s
+- load_save.py
+- test_validate_and_normalize.py
+
+test_* in 68 s
+- example
+- lockbox
+- memory
+- module_widgets
+- na
+- pyqtgraph_benchmark
+
+test_* in <70 s
+- debug_timer
+- attribute
+- ownership
+- proxyproperty
+- registers
+- spectrum_analyzer
+
