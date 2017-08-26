@@ -12,6 +12,10 @@ from ..async_utils import sleep as async_sleep
 class TestNA(TestPyrpl):
     def setup(self):
         self.na = self.pyrpl.networkanalyzer
+        # stop all other instruments since something seems to read from fpga all the time
+        self.pyrpl.hide_gui()
+        self.r.scope.stop()
+        self.pyrpl.spectrumanalyzer.stop()
 
     def test_first_na_stopped_at_startup(self):
         """
