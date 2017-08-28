@@ -13,7 +13,7 @@ class TestNA(TestPyrpl):
     def setup(self):
         self.na = self.pyrpl.networkanalyzer
         # stop all other instruments since something seems to read from fpga all the time
-        self.pyrpl.hide_gui()
+        #self.pyrpl.hide_gui()
         self.r.scope.stop()
         self.pyrpl.spectrumanalyzer.stop()
 
@@ -103,14 +103,18 @@ class TestNA(TestPyrpl):
             print(self.na.running_state)
             while(self.na.running_state == 'running_single'):
                 async_sleep(0.2)
+            from pysine import sine
+            sine(1660, 0.1)
+            async_sleep(10.0)
+            sine(1660, 0.1)
             max_rw_points = points + 2  #TODO: find the cause for these extra 2 points!
             assert self.pyrpl.rp.client._read_counter - old_read <= max_rw_points, \
                 (self.pyrpl.rp.client._read_counter, old_read, max_rw_points)
             assert self.pyrpl.rp.client._write_counter - old_write <= max_rw_points, \
                 (self.pyrpl.rp.client._write_counter, old_read, max_rw_points)
-
+            # check duration
             duration = (time.time() - tic)/self.na.points
-            #Allow twice as long with gui
+            # Allow twice as long with gui
             maxduration *= 2
             assert duration < maxduration, \
                 "Na gui should take at most %.1f ms per point, but actually " \
