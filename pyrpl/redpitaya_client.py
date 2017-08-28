@@ -20,6 +20,11 @@
 import numpy as np
 import socket
 import logging
+try:
+    from pysine import sine  # for debugging read/write calls
+except:
+    def sine(frequency, duration):
+        print("Called sine(frequency=%f, duration=%f)" % (frequency, duration))
 from .hardware_modules.dsp import dsp_addr_base, DSP_INPUTS
 from .pyrpl_utils import time
 
@@ -86,15 +91,15 @@ class MonitorClient(object):
         
     # the public methods to use which will recover from connection problems
     def reads(self, addr, length):
-        from pysine import sine
-        sine(440, 0.05)
         self._read_counter+=1
+        if hasattr(self, '_sound_debug') and self._sound_debug:
+            sine(440, 0.05)
         return self.try_n_times(self._reads, addr, length)
 
     def writes(self, addr, values):
-        from pysine import sine
-        sine(880, 0.05)
         self._write_counter += 1
+        if hasattr(self, '_sound_debug') and self._sound_debug:
+            sine(880, 0.05)
         return self.try_n_times(self._writes, addr, values)
     
     # the actual code
