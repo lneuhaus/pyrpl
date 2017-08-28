@@ -86,14 +86,14 @@ class MonitorClient(object):
         
     # the public methods to use which will recover from connection problems
     def reads(self, addr, length):
-        from pysine import sine
-        sine(440, 0.05)
+        #from pysine import sine
+        #sine(440, 0.05)
         self._read_counter+=1
         return self.try_n_times(self._reads, addr, length)
 
     def writes(self, addr, values):
-        from pysine import sine
-        sine(880, 0.05)
+        #from pysine import sine
+        #sine(880, 0.05)
         self._write_counter += 1
         return self.try_n_times(self._writes, addr, values)
     
