@@ -24,9 +24,9 @@ before_install:
   - sudo apt-get update
   # We do this conditionally because it saves us some downloading.
   - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
-      wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
+    wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
     else
-      wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+    wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
     fi
   - chmod +x miniconda.sh
   - bash miniconda.sh -b -p $HOME/miniconda
@@ -50,7 +50,7 @@ install:
   - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION numpy scipy paramiko pandas nose pip pyqt qtpy
   - source activate test-environment
   - if [[ "$TRAVIS_PYTHON_VERSION" != "3.3" ]]; then
-      conda install --yes -c conda-forge coveralls;
+    conda install --yes -c conda-forge coveralls;
     fi
   # overwrite default global config file with a custom one for travis (allows slower communication time)
   - \cp ./travis_global_config.yml ./pyrpl/config/global_config.yml
@@ -61,24 +61,24 @@ install:
 # Run test
 script:
   - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]] || [[ "$TRAVIS_PYTHON_VERSION" == "3.4" ]] || [[ "$TRAVIS_PYTHON_VERSION" == "3.6" ]]; then
-      nosetests;
+    nosetests;
     fi
 
 after_script:
   - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]] || [[ "$TRAVIS_PYTHON_VERSION" == "3.4" ]] || [[ "$TRAVIS_PYTHON_VERSION" == "3.6" ]]; then
-      codecov;
+    codecov;
     fi
 
 # automatic release when a new tag is created needs a few preliminary steps...
+# create a Readme.rst for PyPI
+# make an executable for linux
 before_deploy:
-  # create a Readme.rst for PyPI
-  # make an executable for linux
   - if [[ "$TRAVIS_PYTHON_VERSION" == "3.4" ]]; then
-      source activate test-environment
-      conda install pandoc
-      pip install pyinstaller
-      pandoc --from=markdown --to=rst --output=README.rst README.md
-      pyinstaller pyrpl.spec
+    source activate test-environment;
+    conda install pandoc;
+    pip install pyinstaller;
+    pandoc --from=markdown --to=rst --output=README.rst README.md;
+    pyinstaller pyrpl.spec;
     fi
 
 deploy:
@@ -88,5 +88,4 @@ deploy:
   skip_cleanup: true
   on:
     tags: true
-  # distributions: "sdist bdist_wheel"
   distributions: "sdist bdist_wheel --universal"
