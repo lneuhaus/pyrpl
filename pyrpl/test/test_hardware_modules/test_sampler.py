@@ -21,7 +21,7 @@ class TestInput(TestPyrpl):
                       trigger_source='immediately')
             # test sample function
             sample = getattr(self.sampler, asg.name)
-            assert sample >= asg.offset - asg.amplitude, sample
+            assert sample + 2.0**(-14) >= asg.offset - asg.amplitude, sample
             assert sample <= asg.offset + asg.amplitude, sample
             # test stats function
             mean, std, max, min = self.sampler.stats(asg.name, t=1.0)
