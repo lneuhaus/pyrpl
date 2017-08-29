@@ -68,6 +68,61 @@ class TestClass(TestPyrpl):
                                                 sa.rbw)*sa.rbw) -
                            (asg.amplitude**2)/2)<0.01, max(curve)
 
+    def test_white_noise(self):
+        """
+        Make sure a white noise results in a flat spectrum, with a PSD equal to
+        <V^2> when integrated from 0 Hz to Nyquist frequency.
+        """
+        self.asg = self.pyrpl.rp.asg0
+        for amplitude in np.linspace(0.05, 0.4, 4):
+            self.asg.setup(amplitude=0.4,
+                           waveform='noise',
+                           trigger_source='immediately')
+
+            self.sa = self.pyrpl.spectrumanalyzer
+            self.sa.setup(input1_baseband=self.asg,
+                          span=125e6,
+                          trace_average=10)
+            in1, in2, cre, cim = self.sa.single()
+            df = self.sa.frequencies[1] - self.sa.frequencies[0]
+
+            # average neighbouring points
+            in1_av = in1[:-(len(in1)%1000)].reshape(len(in1)//1000, 1000).mean(
+                axis=1)
+
+            if False: # Remove this to check flatness...
+                # Make sure curve is flat
+                assert(np.max(in1_av)-np.min(in1_av))/np.mean(in1_av) < 0.1
+
+            integral = sum(self.sa.data_to_unit(in1, 'Vrms^2/Hz', self.sa.rbw))*df/ np.sqrt(2)
+
+            assert (integral - self.asg.amplitude)/self.asg.amplitude<0.01, \
+                integral
+
+    def test_iq_filter_white_noise(self):
+        """
+        Measure the transfer function of an iq filter by measuring the
+        cross-spectrum between white-noise input and output
+        """
+
+        self.asg = self.pyrpl.rp.asg0
+        self.asg.setup(amplitude=0.4,
+                       waveform='noise',
+                       trigger_source='immediately')
+        self.iq = self.pyrpl.rp.iq0
+        self.iq.setup(input=self.asg,
+                      acbandwidth=0,
+                      gain=1.0,
+                      bandwidth=37.94,
+                      frequency=1e5,
+                      output_signal='output_direct')
+
+        self.sa = self.pyrpl.spectrumanalyzer
+        self.sa.setup(input1_baseband=self.asg,
+                      span=125e6)
+        curve = self.sa.single()
+        # still to be implemented
+
     def test_flatness_iqmode(self):
         return # to be tested in next release
         for span in [5e4, 1e5, 5e5, 1e6, 2e6]:
