@@ -3,6 +3,7 @@ A widget fot the network analyzer
 """
 
 from .base_module_widget import ModuleWidget
+from.acquisition_module_widget import AcquisitionModuleWidget
 
 from qtpy import QtCore, QtWidgets
 import pyqtgraph as pg
@@ -11,7 +12,7 @@ import numpy as np
 import sys
 
 
-class NaWidget(ModuleWidget):
+class NaWidget(AcquisitionModuleWidget):
     """
     Network Analyzer Tab.
     """
@@ -57,19 +58,20 @@ class NaWidget(ModuleWidget):
         self.attribute_layout.removeWidget(aws["trace_average"])
         self.attribute_layout.removeWidget(aws["curve_name"])
 
-        self.button_layout.addWidget(aws["trace_average"])
-        self.button_layout.addWidget(aws["curve_name"])
+        #self.button_layout.addWidget(aws["trace_average"])
+        #self.button_layout.addWidget(aws["curve_name"])
 
-        self.button_layout.addWidget(self.button_single)
-        self.button_layout.addWidget(self.button_continuous)
-        self.button_layout.addWidget(self.button_stop)
-        self.button_layout.addWidget(self.button_save)
-        self.main_layout.addLayout(self.button_layout)
+        super(NaWidget, self).init_gui()
+        #self.button_layout.addWidget(self.button_single)
+        #self.button_layout.addWidget(self.button_continuous)
+        #self.button_layout.addWidget(self.button_stop)
+        #self.button_layout.addWidget(self.button_save)
+        #self.main_layout.addLayout(self.button_layout)
 
-        self.button_single.clicked.connect(self.run_single_clicked)
-        self.button_continuous.clicked.connect(self.run_continuous_clicked)
-        self.button_stop.clicked.connect(self.button_stop_clicked)
-        self.button_save.clicked.connect(self.save_clicked)
+        #self.button_single.clicked.connect(self.run_single_clicked)
+        #self.button_continuous.clicked.connect(self.run_continuous_clicked)
+        #self.button_stop.clicked.connect(self.button_stop_clicked)
+        #self.button_save.clicked.connect(self.save_clicked)
 
         self.arrow = pg.ArrowItem()
         self.arrow.setVisible(False)
@@ -79,15 +81,16 @@ class NaWidget(ModuleWidget):
         self.plot_item_phase.addItem(self.arrow_phase)
         self.last_updated_point = 0
         self.last_updated_time = 0
-        self.display_state(self.module.running_state)
+        #self.display_state(self.module.running_state)
+        self.update_running_buttons()
         self.update_period = self.starting_update_rate # also modified in clear_curve.
 
         # Not sure why the stretch factors in button_layout are not good by
         # default...
-        self.button_layout.setStretchFactor(self.button_single, 1)
-        self.button_layout.setStretchFactor(self.button_continuous, 1)
-        self.button_layout.setStretchFactor(self.button_stop, 1)
-        self.button_layout.setStretchFactor(self.button_save, 1)
+        #self.button_layout.setStretchFactor(self.button_single, 1)
+        #self.button_layout.setStretchFactor(self.button_continuous, 1)
+        #self.button_layout.setStretchFactor(self.button_stop, 1)
+        #self.button_layout.setStretchFactor(self.button_save, 1)
         self.x_log_toggled() # Set the axis in logscale if it has to be
 
     def autoscale(self):
@@ -129,8 +132,7 @@ class NaWidget(ModuleWidget):
         """
         if in run continuous, needs to redisplay the number of averages
         """
-        self.display_state(self.module.running_state) # display correct
-        # average number
+        self.update_current_average()
         self.update_point(self.module.points-1, force=True) # make sure all points in the scan are updated
 
     def set_benchmark_text(self, text):
@@ -186,7 +188,8 @@ class NaWidget(ModuleWidget):
     def update_attribute_by_name(self, name, new_value_list):
         super(NaWidget, self).update_attribute_by_name(name, new_value_list)
         if name == "running_state":
-            self.display_state(self.module.running_state)
+            #self.display_state(self.module.running_state)
+            self.update_running_buttons()
 
     def update_chunk(self, chunk_index):
         """
@@ -211,29 +214,29 @@ class NaWidget(ModuleWidget):
         self.chunks[chunk_index].setData(x, self._magnitude(data))
         self.chunks_phase[chunk_index].setData(x, self._phase(data))
 
-    def run_continuous_clicked(self):
-        """
-        launches a continuous run
-        """
-        if str(self.button_continuous.text()).startswith("Pause"):
-            self.module.pause()
-        else:
-            self.module.continuous()
+    #def run_continuous_clicked(self):
+    #    """
+    #    launches a continuous run
+    #    """
+    #    if str(self.button_continuous.text()).startswith("Pause"):
+    #        self.module.pause()
+    #    else:
+    #        self.module.continuous()
 
-    def run_single_clicked(self):
-        """
-        launches a single acquisition
-        """
-        if str(self.button_single.text()).startswith("Pause"):
-            self.module.pause()
-        else:
-            self.module.single_async()
+    #def run_single_clicked(self):
+    #    """
+    #    launches a single acquisition
+    #    """
+    #    if str(self.button_single.text()).startswith("Pause"):
+    #        self.module.pause()
+    #    else:
+    #        self.module.single_async()
 
-    def save_clicked(self):
-        """
-        Save the current curve.
-        """
-        self.module.save_curve()
+    #def save_clicked(self):
+    #    """
+    #    Save the current curve.
+    #    """
+    #    self.module.save_curve()
 
     def display_state(self, running_state):
         """
@@ -253,8 +256,7 @@ class NaWidget(ModuleWidget):
             self.button_single.setEnabled(False)
             self.button_single.setText("Run single")
             self.button_continuous.setEnabled(True)
-            self.button_continuous.setText("Pause (%i "
-                                            "averages)"%self.module.current_avg)
+            self.button_continuous.setText("Pause")
             return
         if running_state== "running_single":
             self.button_single.setEnabled(True)
@@ -263,8 +265,7 @@ class NaWidget(ModuleWidget):
             self.button_continuous.setText("Run continuous")
             return
         if running_state == "paused":
-            self.button_continuous.setText("Resume continuous (%i "
-                                            "averages)"%self.module.current_avg)
+            self.button_continuous.setText("Resume continuous")
             self.button_single.setText("Run single")
             self.button_continuous.setEnabled(True)
             self.button_single.setEnabled(False)
@@ -276,11 +277,11 @@ class NaWidget(ModuleWidget):
             self.button_single.setEnabled(True)
             return
 
-    def button_stop_clicked(self):
-        """
-        Going to stop will impose a setup_average before next run.
-        """
-        self.module.stop()
+    #def button_stop_clicked(self):
+    #    """
+    #    Going to stop will impose a setup_average before next run.
+    #    """
+    #    self.module.stop()
 
 
 class MyGraphicsWindow(pg.GraphicsWindow):

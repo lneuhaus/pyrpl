@@ -2,12 +2,15 @@ from qtpy import QtWidgets, QtGui, QtCore
 import socket
 import logging
 
-from ..sshshell import SSHshell
+from ..sshshell import SshShell
 from ..async_utils import APP
 
 
 class HostnameSelectorWidget(QtWidgets.QDialog):
     _HIDE_PASSWORDS = False
+    _SKIP_REDPITAYA_SIGNATURE = True  # display all devices incl. non-redpitayas
+    _SCAN_TIMEOUT = 0.04
+    _CONNECT_TIMEOUT = 1.0
 
     def __init__(self, parent=None):
         self.parent = parent
@@ -76,6 +79,17 @@ class HostnameSelectorWidget(QtWidgets.QDialog):
         self.tree.itemSelectionChanged.connect(self.item_selected)
         self.tree.itemDoubleClicked.connect(self.item_double_clicked)
         self.scanning = False
+        for signalname in ['cursorPositionChanged',
+                           'editingFinished',
+                           'returnPressed',
+                           'selectionChanged',
+                           'textChanged',
+                           'textEdited']:
+            for textbox in [self.user_input,
+                            self.password_input,
+                            self.sshport_input,
+                            self.hostname_input]:
+                getattr(textbox, signalname).connect(self.countdown_cancel)
 
     def showEvent(self, QShowEvent):
         ret = super(HostnameSelectorWidget, self).showEvent(QShowEvent)
@@ -117,24 +131,22 @@ class HostnameSelectorWidget(QtWidgets.QDialog):
         self.sshport_input.setText(str(val))
 
     def item_selected(self):
+        self.countdown_cancel()
         try:
             item = self.tree.selectedItems()[0]
-        except:
+        except: # pragma: no cover
             pass
         else:
             self.hostname = item.text(0)
 
     def item_double_clicked(self, item, row):
+        self.countdown_cancel()
         self.hostname = item.text(0)
         self.ok()
 
     def ok(self):
+        self.countdown_cancel()
         self.scanning = False
-        if self.parent is not None:
-            self.parent.hostname = self.hostname
-            self.parent.user = self.user
-            self.parent.sshport = self.sshport
-            self.parent.password = self.password
         self.hide()
         self.accept()
 
@@ -165,7 +177,8 @@ class HostnameSelectorWidget(QtWidgets.QDialog):
 
         In order to work, the specified username and password must be correct.
         """
-        if self.scanning:
+        self.countdown_cancel()
+        if self.scanning: # pragma: no cover
             self._logger.debug("Scan is already running. Please wait for it "
                                "to finish before starting a new one! ")
             return
@@ -187,7 +200,7 @@ class HostnameSelectorWidget(QtWidgets.QDialog):
             # doesn't even have to be reachable, just need an open socket
             s.connect(('10.255.255.255', 1))
             ip = s.getsockname()[0]
-        except:
+        except: # pragma: no cover
             ip = '127.0.0.1'  # fall back to default if no network available
         finally:
             s.close()
@@ -200,21 +213,21 @@ class HostnameSelectorWidget(QtWidgets.QDialog):
         self.progressbar.setRange(0, len(ips))
         for i, ip in enumerate(ips):
             if not self.scanning:  # abort if ok was clicked prematurely
-                return
+                return  # pragma: no cover
             # try SSH connection for all IP addresses
             self.progressbar.setValue(i)
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.settimeout(0.02)  # timeout is essentially network timescale
+            s.settimeout(self._SCAN_TIMEOUT)  # timeout is essentially network timescale
             err = s.connect_ex((ip, port))
             s.close()
             if err == 0:  # indicates that a SSH service is behind this IP
                 self._logger.debug("%s:%d is open", ip, port)
                 try:
                     # attempt to connect with username and password
-                    ssh = SSHshell(hostname=ip,
+                    ssh = SshShell(hostname=ip,
                                    user=user,
                                    password=password,
-                                   timeout=1.0)  # longer timeout, RP is slow..
+                                   timeout=self._CONNECT_TIMEOUT)  # longer timeout, RP is slow..
                 except BaseException as e:
                     self._logger.debug('Cannot log in with user=%s, pw=%s '
                                        'at %s: %s', user, password, ip, e)
@@ -223,12 +236,38 @@ class HostnameSelectorWidget(QtWidgets.QDialog):
                     macs = ssh.get_mac_addresses()
                     del ssh
                     for mac in macs:
-                        if mac.startswith('00:26:32:'):  # redpitaya signature
+                        # test for redpitaya signature in mac
+                        if mac.startswith('00:26:32:') or self._SKIP_REDPITAYA_SIGNATURE:
                             self._logger.debug('RP device found: IP %s, '
                                                'MAC %s', ip, mac)
                             self.add_device(ip, mac)
             APP.processEvents()
         self.scanning = False
+        if len(self.ips_and_macs) == 2:
+            # exactly one device was found, therefore we can auto-proceed to
+            # connection
+            self.countdown_start() # pragma: no cover
+
+    def countdown_start(self, countdown_s=10.0):
+        self.countdown_cancel()
+        self.countdown_cancelled = False
+        self.countdown_remaining = countdown_s
+        if not hasattr(self, 'countdown_timer'):
+            self.countown_timer = QtCore.QTimer.singleShot(1, self.countdown_iteration)
+
+    def countdown_iteration(self):
+        if self.countdown_cancelled:
+            return
+        self.countdown_remaining -= 1
+        self.ok_button.setText("OK (auto-clicked in %d s)"%self.countdown_remaining)
+        if self.countdown_remaining >= 0:
+            self.countown_timer = QtCore.QTimer.singleShot(1000, self.countdown_iteration)
+        else:
+            self.ok()
+
+    def countdown_cancel(self, *args, **kwargs):
+        self.countdown_cancelled = True
+        self.ok_button.setText("OK")
 
     def add_device(self, hostname, token):
         self.ips_and_macs.append((hostname, token))
@@ -249,7 +288,7 @@ class HostnameSelectorWidget(QtWidgets.QDialog):
 
     def remove_device(self, item):
         self.items.remove(item)
-        self.tree.removeItemWidget()
+        self.tree.removeItemWidget(item, 0)
 
     def get_kwds(self):
         self.exec_()

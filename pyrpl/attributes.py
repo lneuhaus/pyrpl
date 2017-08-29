@@ -1,12 +1,13 @@
 """
-The parameters of the lockbox are controlled by descriptors deriving from
-BaseAttribute.
+The parameters of any module are controlled by descriptors deriving from
+:obj:`BaseAttribute`.
 
 An attribute is a field that can be set or get by several means:
-      - programmatically: module.attribute = value
-      - graphically: attribute.create_widget(module) returns a widget to
-        manipulate the value
-      - via loading the value in a config file for permanent value preservation
+
+- programmatically: module.attribute = value
+- graphically: attribute.create_widget(module) returns a widget to
+  manipulate the value
+- via loading the value in a config file for permanent value preservation
 
 Of course, the gui/parameter file/actual values have to stay "in sync" each
 time the attribute value is changed. The necessary mechanisms are happening
@@ -22,9 +23,6 @@ from .widgets.attribute_widgets import BoolAttributeWidget, \
                                        IntAttributeWidget, \
                                        SelectAttributeWidget, \
                                        StringAttributeWidget, \
-                                       ListComplexAttributeWidget, \
-                                       FrequencyAttributeWidget, \
-                                       ListFloatAttributeWidget, \
                                        BoolIgnoreAttributeWidget, \
                                        TextAttributeWidget, \
                                        CurveAttributeWidget, \
@@ -59,19 +57,22 @@ class BaseProperty(BaseAttribute):
     SoftwareModules
 
     An attribute is a field that can be set or get by several means:
-      - programmatically: module.attribute = value
-      - graphically: attribute.create_widget(module) returns a widget to
-        manipulate the value
-      - via loading the value in a config file for permanence
+
+    * programmatically: module.attribute = value
+    * graphically: attribute.create_widget(module) returns a widget to
+      manipulate the value
+    * via loading the value in a config file for permanence
 
     The concrete derived class need to have certain attributes properly
     defined:
-      - widget_class: the class of the widget to use for the gui (see
-        attribute_widgets.py)
-      - a function set_value(instance, value) that effectively sets the value
-        (on redpitaya or elsewhere)
-      - a function get_value(instance) that reads the value from
-        wherever it is stored internally
+
+    * widget_class: the class of the widget to use for the gui (see
+      attribute_widgets.py)
+    * a function set_value(instance, value) that effectively sets the value
+      (on redpitaya or elsewhere)
+    * a function get_value(instance) that reads the value from
+      wherever it is stored internally
+
     """
     _widget_class = None
     widget = None
@@ -106,20 +107,24 @@ class BaseProperty(BaseAttribute):
         """
         This function should raise an exception if the value is incorrect.
         Normalization can be:
-           - returning value.name if attribute "name" exists
-           - rounding to nearest multiple of step for float_registers
-           - rounding elements to nearest valid_frequencies for FilterAttributes
+
+        - returning value.name if attribute "name" exists
+        - rounding to nearest multiple of step for float_registers
+        - rounding elements to nearest valid_frequencies for FilterAttributes
         """
         return value  # by default any value is valid
 
     def value_updated(self, module, value=None, appendix=[]):
         """
         Once the value has been changed internally, this function is called to perform the following actions:
-         - launch the signal module._signal_launcher.attribute_changed (this is used in particular for gui update)
-         - saves the new value in the config file (if flag module._autosave_active is True).
-         - calls the callback function if the attribute is in module.callback
-         Note for developers:
-         we might consider moving the 2 last points in a connection behind the signal "attribute_changed".
+
+        - launch the signal module._signal_launcher.attribute_changed (this is
+          used in particular for gui update)
+        - saves the new value in the config file (if flag
+          module._autosave_active is True).
+        - calls the callback function if the attribute is in module.callback
+
+         Note for developers: We might consider moving the 2 last points in a connection behind the signal "attribute_changed".
         """
         if value is None:
             value = self.get_value(module)
@@ -129,6 +134,7 @@ class BaseProperty(BaseAttribute):
                 self.save_attribute(module, value)
         if self.call_setup and not module._setup_ongoing:
             # call setup unless a bunch of attributes are being changed together.
+            module._logger.info('Calling setup() for %s.%s ...', module.name, self.name)
             module.setup()
         return value
 
@@ -370,7 +376,7 @@ class NumberProperty(BaseProperty):
     def __init__(self,
                  min=-np.inf,
                  max=np.inf,
-                 increment=1,
+                 increment=0,
                  log_increment=False,  # if True, the widget has log increment
                  **kwargs):
         self.min = min
@@ -388,14 +394,30 @@ class NumberProperty(BaseProperty):
         """
         Saturates value with min and max.
         """
+        if value is None:  # setting a number to None essentially calls setup()
+            value = self.get_value(obj)
         return max(min(value, self.max), self.min)
 
 
 class IntProperty(NumberProperty):
+    def __init__(self,
+                 min=-np.inf,
+                 max=np.inf,
+                 increment=1,
+                 log_increment=False,  # if True, the widget has log increment
+                 **kwargs):
+        super(IntProperty, self).__init__(min=min,
+                                          max=max,
+                                          increment=increment,
+                                          log_increment=log_increment,
+                                          **kwargs)
+
     def validate_and_normalize(self, obj, value):
         """
         Accepts float, but rounds to integer
         """
+        if value is None:  # setting a number to None essentially calls setup()
+            value = self.get_value(obj)
         return NumberProperty.validate_and_normalize(self,
                                                      obj,
                                                      int(round(value)))
@@ -599,8 +621,6 @@ class FrequencyProperty(FloatProperty):
     An attribute for frequency values
     Same as FloatAttribute, except it cannot become negative.
     """
-    _widget_class = FrequencyAttributeWidget
-
     def __init__(self, **kwargs):
         if 'min' not in kwargs:
             kwargs['min'] = 0
@@ -696,8 +716,12 @@ class FilterProperty(BaseProperty):
         """
         if not np.iterable(value):
             value = [value]
-        return [min([opt for opt in self.valid_frequencies(obj)],
-                    key=lambda x: abs(x - val)) for val in value]
+        value = [min([opt for opt in self.valid_frequencies(obj)],
+                      key=lambda x: abs(x - val)) for val in value]
+        if len(value) == 1:
+            return value[0]
+        else:
+            return value
 
     def get_value(self, obj):
         if not hasattr(obj, '_' + self.name):
@@ -879,6 +903,7 @@ class AttributeList(list):
         new = self._parent.validate_and_normalize_element(self._module, new)
         super(AttributeList, self).insert(index, new)
         self._parent.list_changed(self._module, "insert", index, new)
+        self.selected = index
 
     def __setitem__(self, index, value):
         # rely on parent's validate_and_normalize function
@@ -886,10 +911,40 @@ class AttributeList(list):
         # set value
         super(AttributeList, self).__setitem__(index, value)
         self._parent.list_changed(self._module, "setitem", index, value)
+        self.selected = index
 
     def __delitem__(self, index=-1):
+        # unselect if selected
+        if self.selected == self._get_unique_index(index):
+            self.selected = None
+        # remove and send message
         super(AttributeList, self).pop(index)
         self._parent.list_changed(self._module, "delitem", index)
+
+    @property
+    def selected(self):
+        if not hasattr(self, '_selected'):
+            self._selected = None
+        return self._selected
+
+    @selected.setter
+    def selected(self, index):
+        # old = self.selected
+        self._selected = self._get_unique_index(index)
+        self._parent.list_changed(self._module, 'select', self.selected)
+
+    def _get_unique_index(self, index):
+        try:
+            return self.index(self[index])
+        except:
+            return None
+
+    def select(self, value):
+        """ selects the element with value, or None if it does not exist """
+        try:
+            self.selected = self.index(value)
+        except IndexError:
+            self.selected = None
 
     # other convenience functions that are based on above axioms
     def append(self, new=None):
@@ -909,7 +964,7 @@ class AttributeList(list):
         self.__delitem__(self.index(value))
 
     def clear(self):
-        while len(self)>0:
+        while len(self) > 0:
             self.__delitem__()
 
     def copy(self):
@@ -983,48 +1038,23 @@ class BasePropertyListProperty(BaseProperty):
             self.call_setup = call_setup
 
     def list_changed(self, module, operation, index, value=None):
-        self.value_updated(module, appendix=[operation, index, value])
+        if operation == 'selecti':
+            # only launch signal in this case, do not call setup
+            # value can be None in this case, as it is not used
+            if value is None:
+                value = self.get_value(module)
+            self.launch_signal(module, value, appendix=[operation, index, value])
+        else:
+            # launches signal and calls setup()
+            self.value_updated(module, appendix=[operation, index, value])
 
 
 class FloatAttributeListProperty(BasePropertyListProperty, FloatProperty):
     pass
 
+
 class ComplexAttributeListProperty(BasePropertyListProperty, ComplexProperty):
     pass
-
-
-class FloatListProperty(FloatProperty):
-    """
-    An arbitrary length list of float numbers.
-    """
-    default = [0.]
-    _widget_class = ListFloatAttributeWidget
-
-    def validate_and_normalize(self, obj, value):
-        """
-        Converts the value in a list of float numbers.
-        """
-        if not np.iterable(value):
-            value = [value]
-        return [self.validate_and_normalize_element(obj, val) for val in value]
-
-    def validate_and_normalize_element(self, obj, val):
-        return super(FloatListProperty, self).validate_and_normalize(obj, val)
-
-
-class ComplexListProperty(FloatListProperty):
-    """
-    An arbitrary length list of complex numbers.
-    """
-    _widget_class = ListComplexAttributeWidget
-
-    def validate_and_normalize_element(self, obj, val):
-        val = complex(val)
-        re = super(ComplexListProperty, self).validate_and_normalize_element(
-            obj, val.real)
-        im = super(ComplexListProperty, self).validate_and_normalize_element(
-            obj, val.imag)
-        return complex(re, im)
 
 
 class PWMRegister(FloatRegister):
@@ -1179,11 +1209,15 @@ class SelectProperty(BaseProperty):
 
     def change_options(self, instance, new_options):
         """
-        Changes the possible options acceptable by the Attribute
-          - New validation takes effect immediately (otherwise a script involving 1. changing the options/2. selecting
-          one of the new options could not be executed at once)
-          - Update of the ComboxBox is performed behind a signal-slot mechanism to be thread-safe
-          - If the current value is not in the new_options, then value is changed to some available option
+        Changes the possible options acceptable by the Attribute:
+
+        - New validation takes effect immediately (otherwise a script
+          involving 1. changing the options / 2. selecting one of the
+          new options could not be executed at once)
+        - Update of the ComboxBox is performed behind a signal-slot
+          mechanism to be thread-safe
+        - If the current value is not in the new_options, then value
+          is changed to some available option
         """
         setattr(instance, '_' + self.name + '_' + 'options', new_options)
         # refresh default options in case options(None) is called (no instance in argument)
@@ -1433,15 +1467,17 @@ class CurveSelectProperty(SelectProperty):
     """
     def __init__(self,
                  no_curve_first=False,
+                 show_childs=False,
                  **kwargs):
         self.no_curve_first = no_curve_first
+        self.show_childs = show_childs
         SelectProperty.__init__(self, options=self._default_options, **kwargs)
 
     def _default_options(self):
         if self.no_curve_first:
-            return [-1] + CurveDB.all()
+            return [-1] + [curve.pk for curve in CurveDB.all()]
         else:
-            return CurveDB.all() + [-1]
+            return [curve.pk for curve in CurveDB.all()] + [-1]
         #return OrderedDict([(k, k) for k in (CurveDB.all()) + [-1]])
 
     def validate_and_normalize(self, obj, value):
@@ -1461,6 +1497,15 @@ class CurveSelectProperty(SelectProperty):
         except:
             curve = None
         setattr(obj, '_' + self.name + '_object', curve)
+
+
+class CurveProperty(CurveSelectProperty):
+    """ property for a curve whose widget plots the corresponding curve.
+
+    Unfortunately, the widget does not allow to select the curve,
+    i.e. selection must be implemented with another CurveSelectProperty.
+    """
+    _widget_class = CurveAttributeWidget
 
 
 class CurveSelectListProperty(CurveSelectProperty):
@@ -1485,14 +1530,5 @@ class DataProperty(BaseProperty):
     Property for a dataset (real or complex), that can be plotted.
     """
     _widget_class = DataAttributeWidget
-
-
-class CurveProperty(CurveSelectProperty):
-    """ property for a curve whose widget plots the corresponding curve.
-
-    Unfortunately, the widget does not allow to select the curve,
-    i.e. selection must be implemented with another CurveSelectProperty.
-    """
-    _widget_class = CurveAttributeWidget
 
 

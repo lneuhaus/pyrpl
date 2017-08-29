@@ -34,6 +34,8 @@ class MyGraphicsWindow(pg.GraphicsWindow):
     def mousePressEvent(self, event):
         self.doubleclicked = False
         self.storeevent(event)
+        if self.button == QtCore.Qt.LeftButton and self.modifier == 0:  # left button, no key
+            self.parent.module.select_pole_or_zero(self.x)
         if not self.mouse_clicked_timer.isActive():
             self.mouse_clicked_timer.start()
         return super(MyGraphicsWindow, self).mousePressEvent(event)
@@ -57,36 +59,44 @@ class MyGraphicsWindow(pg.GraphicsWindow):
             self.x = 10 ** self.x  # takes logscale into account
 
     def mouse_clicked(self):
+        # select nearest pole/zero with a simple click, even if something else is to happen after
         default_damping = self.x/10.0
         if self.button == QtCore.Qt.LeftButton:
             if self.doubleclicked:
+                new = -default_damping - 1.j * self.x
                 if self.modifier == QtCore.Qt.CTRL:
-                    new = -default_damping - 1.j * self.x
-                    self.parent.module.complex_poles += [new]
-                    self.parent.parent.attribute_widgets['complex_poles'].set_selected(-1)
+                    self.parent.module.complex_poles.append(new)
                 if self.modifier == QtCore.Qt.SHIFT:
-                    self.parent.module.complex_zeros += [new]
-                    self.parent.parent.attribute_widgets['complex_zeros'].set_selected(-1)
-            else:
+                    self.parent.module.complex_zeros.append(new)
+            else:  # single click
                 new = -self.x
                 if self.modifier == 0:
-                    # select nearest pole/zero with a simple click
-                    type = 'pole'
-                    pole_or_zero = 'pole'
-                    value = -1001. - 1j*34
-                    self.parent.module._logger.info("Frequency: %.2e, "
-                                                    "%s at %s selected.",
-                                                    self.x,
-                                                    pole_or_zero,
-                                                    value)
+                    pass # see above in mousePressEvent()
                 if self.modifier == QtCore.Qt.CTRL:
                     # make a new real pole
-                    self.parent.module.real_poles += [new]
-                    self.parent.parent.attribute_widgets['real_poles'].set_selected(-1)
+                    self.parent.module.real_poles.append(new)
                 if self.modifier == QtCore.Qt.SHIFT:
                     # make a new real zero
-                    self.parent.module.real_zeros += [new]
-                    self.parent.parent.attribute_widgets['real_zeros'].set_selected(-1)
+                    self.parent.module.real_zeros.append(new)
+
+    def keyPressEvent(self, event):
+        """ not working properly yet"""
+        try:
+            name = self.parent.module._selected_pole_or_zero
+            index = self.parent.module._selected_index
+            return self.parent.parent.attribute_widgets[name].widgets[index].keyPressEvent(event)
+        except:
+            return super(MyGraphicsWindow, self).keyPressEvent(event)
+
+    def keyReleaseEvent(self, event):
+        """ not working properly yet"""
+        def keyPressEvent(self, event):
+            try:
+                name = self.parent.module._selected_pole_or_zero
+                index = self.parent.module._selected_index
+                return self.parent.parent.attribute_widgets[name].widgets[index].keyReleaseEvent(event)
+            except:
+                return super(MyGraphicsWindow, self).keyReleaseEvent(event)
 
 
 class IirGraphWidget(QtWidgets.QGroupBox):
@@ -131,9 +141,9 @@ class IirGraphWidget(QtWidgets.QGroupBox):
                                                  pen='b')),
                             ('zeros', dict(pen=pg.mkPen(None),
                                            symbol='o',
-                                           size=20,
+                                           size=10,
                                            brush=pg.mkBrush(255, 0, 255, 120))),
-                            ('poles', dict(size=20,
+                            ('poles', dict(size=15,
                                            symbol='x',
                                            pen=pg.mkPen(None),
                                            brush=pg.mkBrush(255, 0, 255,
@@ -162,10 +172,10 @@ class IirGraphWidget(QtWidgets.QGroupBox):
         self.layout.addWidget(self.win)
         self.layout.addWidget(self.win_phase)
         # connect signals
-        self.plots['poles'].sigClicked.connect(self.parent.select_pole)
-        self.plots['poles_phase'].sigClicked.connect(self.parent.select_pole)
-        self.plots['zeros'].sigClicked.connect(self.parent.select_zero)
-        self.plots['zeros_phase'].sigClicked.connect(self.parent.select_zero)
+        #self.plots['poles'].sigClicked.connect(self.parent.select_pole)
+        #self.plots['poles_phase'].sigClicked.connect(self.parent.select_pole)
+        #self.plots['zeros'].sigClicked.connect(self.parent.select_zero)
+        #self.plots['zeros_phase'].sigClicked.connect(self.parent.select_zero)
 
 
 class IirButtonWidget(QtWidgets.QGroupBox):
@@ -211,6 +221,12 @@ class IirBottomWidget(QtWidgets.QGroupBox):
 
 class IirWidget(ModuleWidget):
     def init_gui(self):
+        # setup filter in its present state
+        self.module.setup() # moved at the beginning of the function,
+        # otherwise, values altered in setup (such as iir.loops) are
+        # not updated in the gui (gui already creted but not yet connected
+        # to the signal launcher)
+
         self.init_main_layout(orientation="vertical")
         #self.main_layout = QtWidgets.QVBoxLayout()
         #self.setLayout(self.main_layout)
@@ -240,9 +256,6 @@ class IirWidget(ModuleWidget):
         self.attribute_widgets['data_curve'].setStyleSheet("color: green")
 
         self.update_plot()
-
-        # setup filter in its present state
-        self.module.setup()
 
     def select_pole(self, plot_item, spots):
         index = spots[0].data()
@@ -285,16 +298,15 @@ class IirWidget(ModuleWidget):
         # plot designed filter
         plot['filter_design'] = self.module.transfer_function(frequencies,
                                                                   **tfargs)
-        if False:
-            # plot product
+        # plot product
+        try:
+            plot['data_x_design'] = plot['data'] / plot['filter_design']
+        except ValueError:
             try:
-                plot['data_x_design'] = plot['data'] / plot['filter_design']
-            except ValueError:
-                try:
-                    plot['data_x_design'] = 1.0 / plot['filter_design']
-                except:
-                    plot['data_x_design'] = []
-            # plot everything (all lines) up to here
+                plot['data_x_design'] = 1.0 / plot['filter_design']
+            except:
+                plot['data_x_design'] = []
+        # plot everything (all lines) up to here
         for k, v in plot.items():
             self.graph_widget.plots[k].setData(frequencies[:len(v)],
                                                self._magnitude(v))
@@ -311,10 +323,10 @@ class IirWidget(ModuleWidget):
                     freq = np.imag(freq)
                 freq = np.abs(freq)
                 tf = self.module.transfer_function(freq, **tfargs)
-                selected = aws[key].get_selected()
-                brush = [pg.mkBrush(color='r')
+                selected = aws[key].attribute_value.selected
+                brush = [pg.mkBrush(color='b')
                          if (num == selected)
-                         else pg.mkBrush(color='b')
+                         else pg.mkBrush(color='y')
                          for num in range(aws[key].number)]
                 mag += [{'pos': (fr, val), 'data': i, 'brush': br}
                  for (i, (fr, val, br))
@@ -329,3 +341,21 @@ class IirWidget(ModuleWidget):
             self.graph_widget.plots[end].setPoints(mag)
             self.graph_widget.plots[end+'_phase'].setPoints(phase)
 
+    def keyPressEvent(self, event):
+        """ not working properly yet"""
+        try:
+            name = self.module._selected_pole_or_zero
+            index = self.module._selected_index
+            return self.attribute_widgets[name].widgets[index].keyPressEvent(event)
+        except:
+            return super(MyGraphicsWindow, self).keyPressEvent(event)
+
+    def keyReleaseEvent(self, event):
+        """ not working properly yet"""
+        def keyPressEvent(self, event):
+            try:
+                name = self.module._selected_pole_or_zero
+                index = self.module._selected_index
+                return self.attribute_widgets[name].widgets[index].keyReleaseEvent(event)
+            except:
+                return super(MyGraphicsWindow, self).keyReleaseEvent(event)

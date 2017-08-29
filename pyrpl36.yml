@@ -11,9 +11,9 @@ dependencies:
 - ipython
 - jupyter
 - paramiko
-- yaml
 - nose
 - pyqtgraph
 - pip:
     - scp
     - quamash
+    - pyyaml

@@ -4,7 +4,7 @@ block_cipher = None
 
 
 a = Analysis(['pyrpl/__main__.py'],
-             pathex=['/home/leo/github/pyrpl'],
+             pathex=['.'],
              binaries=[],
              datas=[('pyrpl/fpga/red_pitaya.bin', 'pyrpl/fpga'),
                     ('pyrpl/monitor_server/monitor_server*',

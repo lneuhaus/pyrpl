@@ -7,17 +7,30 @@ from .test_base import TestPyrpl
 import numpy as np
 from .. import global_config
 from ..async_utils import sleep as async_sleep
+try:
+    from pysine import sine
+    raise  # disables sound output during this test
+except:
+    def sine(frequency, duration):
+        print("Called sine(frequency=%f, duration=%f)" % (frequency, duration))
 
 
 class TestNA(TestPyrpl):
     def setup(self):
         self.na = self.pyrpl.networkanalyzer
+        # stop all other instruments since something seems to read from fpga all the time
+        #self.pyrpl.hide_gui()
+        self.r.scope.stop()
+        self.pyrpl.spectrumanalyzer.stop()
 
-    def test_na_stopped_at_startup(self):
+    def test_first_na_stopped_at_startup(self):
         """
         This was so hard to detect, I am making a unit test
         """
         assert(self.na.running_state=='stopped')
+
+    def teardown(self):
+        self.na.stop()
 
     def test_na_running_states(self):
         # make sure scope rolling_mode and running states are correctly setup
@@ -27,7 +40,6 @@ class TestNA(TestPyrpl):
                 data = copy.deepcopy(self.na.data_avg)
                 async_sleep(self.communication_time * 10 + 0.01)
                 return (data != self.na.data_avg).any()
-
             self.na.setup(start_freq=1000,
                           stop_freq=1e4,
                           rbw=1000,
@@ -35,7 +47,7 @@ class TestNA(TestPyrpl):
                           trace_average=1)
             async_sleep(2.0*self.communication_time)
             self.na.single_async()
-            async_sleep(self.communication_time * 5.0)
+            async_sleep(self.communication_time * 5.0 + 0.1)
             assert data_changing()
 
             current_point = self.na.current_point
@@ -46,15 +58,16 @@ class TestNA(TestPyrpl):
             self.na.continuous()
             async_sleep(self.communication_time * 5.0)
             assert data_changing()
-            self.na.stop()  # do not let the na running or other tests might be
-            # screwed-up !!!
+        self.na.stop()
+        # do not let the na running or other tests might be
+        # screwed-up !!!
 
-    #@unittest.skip("testing skipping")
-    def test_benchmark(self):
+    def test_benchmark_nogui(self):
+        """
+        test na speed without gui
+        """
+        # that's as good as we can do right now (1 read + 1 write per point + 0.9 error margin)
         with self.pyrpl.networkanalyzer as self.na:
-            # test na speed without gui -
-            # that's as good as we can do right now (1 read + 1 write per point
-            # + 0.9 error margin)
             try:
                 reads_per_na_cycle = global_config.test.reads_per_na_cycle
             except:
@@ -69,6 +82,7 @@ class TestNA(TestPyrpl):
                           stop_freq=1e4,
                           rbw=1e6,
                           points=points,
+                          running_state='stopped',
                           average_per_point=1,
                           trace_average=1)
             tic = time.time()
@@ -79,21 +93,55 @@ class TestNA(TestPyrpl):
                 "needs %.1f ms. This won't compromise functionality but it is " \
                 "recommended that establish a more direct ethernet connection" \
                 "to you Red Pitaya module" % (maxduration*1000.0, duration*1000.0)
-            # test na speed with gui.
+
+    def test_benchmark_gui(self):
+        """
+        test na speed with gui
+        """
+        with self.pyrpl.networkanalyzer as self.na:
+            try:
+                reads_per_na_cycle = global_config.test.reads_per_na_cycle
+            except:
+                reads_per_na_cycle = 2.9
+                logger.info("Could not find global config file entry "
+                            "'test.reads_per_na_cycle. Assuming default value "
+                            "%.1f.", reads_per_na_cycle)
+            maxduration = self.communication_time * reads_per_na_cycle
+            # maxduration factor used to be 2.9, but travis needs more time
+            points = int(round(10.0 / maxduration))
             self.na.setup(start_freq=1e3,
                           stop_freq=1e4,
                           rbw=1e6,
                           points=points//2,
+                          running_state='stopped',
                           average_per_point=1,
                           trace_average=1)
             tic = time.time()
-            self.na.single()
-            async_sleep(0.05)
-            print(self.na.running_state)
-            while(self.na.running_state == 'running_single'):
-                async_sleep(0.05)
+            # debug read/write calls with audio output
+            self.pyrpl.rp.client._sound_debug = False
+            sine(1200, 0.5)
+            result = self.na.single_async()
+            # start counting points only after acquisition setup
+            old_read = self.pyrpl.rp.client._read_counter
+            old_write = self.pyrpl.rp.client._write_counter
+            sine(1400, 0.5)
+            result.await_result()
+            sine(1500, 0.5)
+            while self.na.running_state == 'running_single':
+                async_sleep(0.1)
+            sine(1600, 0.5)
+            max_rw_points = self.na.points
+            print("Reads: %d %d %d. " % (self.pyrpl.rp.client._read_counter, old_read, max_rw_points))
+            assert self.pyrpl.rp.client._read_counter - old_read <= max_rw_points, \
+                (self.pyrpl.rp.client._read_counter, old_read, max_rw_points)
+            print("Writes: %d %d %d. " % (self.pyrpl.rp.client._write_counter, old_write, max_rw_points))
+            assert self.pyrpl.rp.client._write_counter - old_write <= max_rw_points, \
+                (self.pyrpl.rp.client._write_counter, old_write, max_rw_points)
+            sine(1700, 0.5)
+            self.pyrpl.rp.client._sound_debug = False
+            # check duration
             duration = (time.time() - tic)/self.na.points
-            #Allow twice as long with gui
+            # Allow twice as long with gui
             maxduration *= 2
             assert duration < maxduration, \
                 "Na gui should take at most %.1f ms per point, but actually " \
@@ -103,6 +151,7 @@ class TestNA(TestPyrpl):
             # 2 s for 200 points with gui display
             # This is much slower in nosetests than in real life (I get <3 s).
             # Don't know why.
+            sine(1600, 0.5)
 
     def coucou(self):
         self.count += 1
@@ -143,6 +192,7 @@ class TestNA(TestPyrpl):
                           points=100,
                           output_direct="out1",
                           input="out1",
+                          running_state='stopped',
                           trace_average=1,
                           amplitude=0.01)
             self.na.continuous()
@@ -180,11 +230,27 @@ class TestNA(TestPyrpl):
                           amplitude=0.01,
                           trace_average=1,
                           running_state="running_continuous")
-            for i in range(20):
-                async_sleep(0.01)
+
             old = self.pyrpl.c._save_counter
             for i in range(10):
                 async_sleep(0.01)
             new = self.pyrpl.c._save_counter
             self.na.stop()
             assert (old == new), (old, new)
+
+    def test_save_curve(self):
+        self.na.setup(start_freq=1e5,
+                          stop_freq=2e5,
+                          rbw=100000,
+                          points=10,
+                          output_direct="out1",
+                          input="out1",
+                          amplitude=0.01,
+                          trace_average=1,
+                          running_state="running_continuous")
+        self.na.single()
+        curve = self.na.save_curve()
+        self.na.stop()
+        assert len(curve.data[0]) == self.na.points
+        assert len(curve.data[1]) == self.na.points
+        self.curves.append(curve)  # curve will be deleted by teardownAll

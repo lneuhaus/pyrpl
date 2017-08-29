@@ -6,13 +6,13 @@ __license__ = "GNU General Public License 3 (GPLv3)"
 # manage warnings of numpy and scipy
 import warnings
 import numpy as np
-from scipy.signal import BadCoefficients
 # pyqtgraph is throwing a warning on ScatterPlotItem
 warnings.simplefilter("ignore", np.VisibleDeprecationWarning)
 # pyqtgraph is throwing a warning on ScatterPlotItem
 warnings.simplefilter("error", np.ComplexWarning)
 # former issue with IIR, now resolved
-warnings.simplefilter("error", BadCoefficients)
+#from scipy.signal import BadCoefficients
+#warnings.simplefilter("error", BadCoefficients)
 
 #set up loggers
 import logging
@@ -51,7 +51,7 @@ default_config_dir = os.path.join(os.path.dirname(__file__), 'config')
 # create dirs if necessary
 for path in [user_dir, user_config_dir, user_curve_dir, user_lockbox_dir]:
     if not os.path.isdir(path):
-        os.mkdir(path)
+        os.mkdir(path)  # pragma: no cover
 
 # try to set log level (and automatically generate custom global_config file)
 from .pyrpl_utils import setloglevel
@@ -59,7 +59,7 @@ from .memory import MemoryTree
 global_config = MemoryTree('global_config', source='global_config')
 try:
     setloglevel(global_config.general.loglevel, loggername=logger.name)
-except:
+except:  # pragma: no cover
     pass
 
 # main imports

@@ -16,245 +16,6 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###############################################################################
 
-from __future__ import print_function
-
-import logging
-import os
-import os.path as osp
-from shutil import copyfile
-from qtpy import QtCore, QtWidgets
-
-from .widgets.pyrpl_widget import PyrplWidget
-from . import software_modules
-from .memory import MemoryTree
-from .redpitaya import RedPitaya
-from . import pyrpl_utils
-from .software_modules import get_module
-from .async_utils import sleep as async_sleep
-
-# it is important that Lockbox is loaded before the models
-#from .software_modules.lockbox import *
-from .software_modules import lockbox
-from .software_modules.lockbox import models
-#from .software_modules.lockbox.models import *  # make sure all models are
-# loaded when we get started
-from . import user_config_dir
-
-# input is the wrong function in python 2
-try:
-    input = raw_input
-except NameError:  # Python 3
-    pass
-
-
-default_pyrpl_config = {'name': 'default_pyrpl_instance',
-                        'gui': True,
-                        'loglevel': 'info',
-                        'background_color': '',
-                        # reasonable options:
-                        # 'CCCCEE',  # blueish
-                        # 'EECCCC', # reddish
-                        # 'CCEECC', # greenish
-                        'modules': ['NetworkAnalyzer',
-                                    'SpectrumAnalyzer',
-                                    'CurveViewer',
-                                    'PyrplConfig',
-                                    'Lockbox'
-                                    ]}
-
-class Pyrpl(object):
-    """
-    Higher level object, in charge of loading the right hardware and software
-    module, depending on the configuration described in a config file.
-
-    Parameters
-    ----------
-    config: str
-        Name of the config file. No .yml extension is needed. The file
-        should be located in the config directory.
-    source: str
-        If None, it is ignored. Else, the file 'source' is taken as a
-        template config file and copied to 'config' if that file does
-        not exist.
-    **kwargs: dict
-        Additional arguments can be passed and will be written to the
-        redpitaya branch of the config file. See class definition of
-        RedPitaya for possible keywords.
-    """
-    def __init__(self,
-                 config=None,
-                 source=None,
-                 **kwargs):
-        # logger initialisation
-        self.logger = logging.getLogger(name='pyrpl') # default: __name__
-        # use gui or commandline for questions?
-        gui = 'gui' not in kwargs or kwargs['gui']
-        # get config file if None is specified
-        if config is None:
-            if gui:
-                self.logger.info("Please select or create a configuration "
-                                 "file in the file selector window!")
-                config = QtWidgets.QFileDialog.getSaveFileName(
-                                directory=user_config_dir,
-                                caption="Pick or create a configuration "
-                                        "file, or hit 'cancel' for no "
-                                        "file (all configuration will be "
-                                        "discarded after restarting)!",
-                                options=QtWidgets.QFileDialog.DontConfirmOverwrite,
-                                filter='*.yml')
-                if not isinstance(config, str):
-                    config = config[0]
-            else:  # command line
-                configfiles = [name for name in os.listdir(user_config_dir)
-                               if name.endswith('.yml')]
-                configfiles = [name[:-4] if name.endswith('.yml') else name
-                               for name in configfiles]
-                print("Existing config files are:")
-                for name in configfiles:
-                    print("    %s"%name)
-                config = input('\nEnter an existing or new config file name: ')
-        if config is None or config == "" or config.endswith('/.yml'):
-            config = None
-        # configuration is retrieved from config file
-        self.c = MemoryTree(filename=config, source=source)
-        if self.c._filename is not None:
-            self.logger.info("All your PyRPL settings will be saved to the "
-                             "config file\n"
-                             "    %s\n"
-                             "If you would like to restart "
-                             "PyRPL with these settings, type \"pyrpl.exe "
-                             "%s\" in a windows terminal or \n"
-                             "    from pyrpl import Pyrpl\n"
-                             "    p = Pyrpl('%s')\n"
-                             "in a python terminal.",
-                             self.c._filename,
-                             self.c._filename_stripped,
-                             self.c._filename_stripped)
-        # make sure config file has the required sections and complete with
-        # missing entries from default
-        pyrplbranch = self.c._get_or_create('pyrpl')
-        for k in default_pyrpl_config:
-            if k not in pyrplbranch._keys():
-                if k =='name':
-                    # assign the same name as in config file by default
-                    pyrplbranch[k] = self.c._filename_stripped
-                else:
-                    # all other (static) defaults
-                    pyrplbranch[k] = default_pyrpl_config[k]
-        # set global logging level if specified in config file
-        pyrpl_utils.setloglevel(level=self.c.pyrpl.loglevel,
-                                loggername='pyrpl')
-        # initialize RedPitaya object with the configured or default parameters
-        self.c._get_or_create('redpitaya')
-        self.c.redpitaya._update(kwargs)
-        self.name = pyrplbranch.name
-        self.rp = RedPitaya(config=self.c)
-        self.rp.parent=self
-        self.widgets = [] # placeholder for widgets
-        # create software modules...
-        self.load_software_modules()
-        # load all setup_attributes for modules that do not have an owner
-        for module in self.software_modules + self.hardware_modules:
-            if module.owner is None:
-                try:
-                    module._load_setup_attributes()  # **self.c[module.name])
-                except BaseException as e:
-                    self.logger.error('Something went wrong when loading the '
-                                      'stored setup_attributes of module "%s". '
-                                      'If you do not know what this means, you should'
-                                      'be able to fix this error by deleting the '
-                                      'corresponding section "%s" in your config file %s. '
-                                      'Error message: %s',
-                                      module.name, module.name, self.c._filename, e)
-                    raise e
-        # make the gui if applicable
-        if self.c.pyrpl.gui:
-            self.show_gui()
-
-    def show_gui(self):
-        if len(self.widgets) == 0:
-            widget = self._create_widget()
-            widget.show()
-        else:
-            for w in self.widgets:
-                w.show()
-
-    def hide_gui(self):
-        for w in self.widgets:
-            w.hide()
-
-    def load_software_modules(self):
-        """
-        load all software modules defined as root element of the config file.
-        """
-        self.software_modules = []
-        # software modules are Managers for various modules plus those defined in the config file
-        soft_mod_names = ['Asgs', 'Iqs', 'Pids', 'Scopes', 'Iirs'] + self.c.pyrpl.modules
-        module_classes = [get_module(cls_name)
-                          for cls_name in soft_mod_names]
-        module_names = pyrpl_utils.\
-            get_unique_name_list_from_class_list(module_classes)
-        for cls, name in zip(module_classes, module_names):
-            # some modules have generator function, e.g. Lockbox
-            # @classmethod
-            # def make_Lockbox(cls, parent, name): ...
-            try:
-                if hasattr(cls, "_make_"+cls.__name__):
-                    module = getattr(cls, "_make_"+cls.__name__)(self, name)
-                else:
-                    module = cls(self, name)
-            except BaseException as e:
-                self.logger.error('Something went wrong when loading the software module "%s": %s',
-                                  name, e)
-                raise e
-            else:
-                setattr(self, module.name, module)
-                self.software_modules.append(module)
-                self.logger.debug("Created software module %s", name)
-
-    @property
-    def hardware_modules(self):
-        """
-        List of all hardware modules loaded in this configuration.
-        """
-        if self.rp is not None:
-            return list(self.rp.modules.values())
-        else:
-            return []
-
-    @property
-    def modules(self):
-        return self.hardware_modules + self.software_modules
-
-    def _create_widget(self):
-        """
-        Creates the top-level widget
-        """
-        widget = PyrplWidget(self)
-        self.widgets.append(widget)
-        return widget
-
-    def _clear(self):
-        """
-        kill all timers and closes the connection to the redpitaya
-        """
-        for module in self.modules:
-            module._clear()
-        for widget in self.widgets:
-            widget._clear()
-        while len(self.widgets)>0:  # Close all widgets
-            w = self.widgets.pop()
-            del w
-        # do the job of actually destroying the widgets
-        async_sleep(0.1)
-        # make sure the save timer of the config file is not running and
-        # all data are written to the harddisk
-        self.c._save_now()
-        # end redpitatya communication
-        self.rp.end_all()
-        async_sleep(0.1)
-
-
 """ # DEPRECATED DOCSTRING - KEEP UNTIL DOCUMENTATION IS READY
 pyrpl.py - high-level lockbox functionality
 
@@ -379,3 +140,248 @@ meters is implemented there. Another very often used model type is
 "interferometer". The only difference is here that
 
 """
+
+from __future__ import print_function
+
+import logging
+import os
+import os.path as osp
+from shutil import copyfile
+from qtpy import QtCore, QtWidgets
+
+from .widgets.pyrpl_widget import PyrplWidget
+from . import software_modules
+from .memory import MemoryTree
+from .redpitaya import RedPitaya
+from . import pyrpl_utils
+from .software_modules import get_module
+from .async_utils import sleep as async_sleep
+
+# it is important that Lockbox is loaded before the models
+#from .software_modules.lockbox import *
+from .software_modules import lockbox
+from .software_modules.lockbox import models
+#from .software_modules.lockbox.models import *  # make sure all models are
+# loaded when we get started
+from . import user_config_dir
+
+# input is the wrong function in python 2
+try:
+    raw_input
+except NameError:  # Python 3
+    raw_input = input
+
+try:
+    basestring  # in python 2
+except:
+    basestring = (str, bytes)
+
+
+default_pyrpl_config = {'name': 'default_pyrpl_instance',
+                        'gui': True,
+                        'loglevel': 'info',
+                        'background_color': '',
+                        # reasonable options:
+                        # 'CCCCEE',  # blueish
+                        # 'EECCCC', # reddish
+                        # 'CCEECC', # greenish
+                        'modules': ['NetworkAnalyzer',
+                                    'SpectrumAnalyzer',
+                                    'CurveViewer',
+                                    'PyrplConfig',
+                                    'Lockbox'
+                                    ]}
+
+class Pyrpl(object):
+    """
+    Higher level object, in charge of loading the right hardware and software
+    module, depending on the configuration described in a config file.
+
+    Parameters
+    ----------
+    config: str
+        Name of the config file. No .yml extension is needed. The file
+        should be located in the config directory.
+    source: str
+        If None, it is ignored. Else, the file 'source' is taken as a
+        template config file and copied to 'config' if that file does
+        not exist.
+    **kwargs: dict
+        Additional arguments can be passed and will be written to the
+        redpitaya branch of the config file. See class definition of
+        RedPitaya for possible keywords.
+    """
+    def __init__(self,
+                 config=None,
+                 source=None,
+                 **kwargs):
+        # logger initialisation
+        self.logger = logging.getLogger(name='pyrpl') # default: __name__
+        # use gui or commandline for questions?
+        gui = 'gui' not in kwargs or kwargs['gui']
+        # get config file if None is specified
+        if config is None:
+            if gui:
+                self.logger.info("Please select or create a configuration "
+                                 "file in the file selector window!")
+                config = QtWidgets.QFileDialog.getSaveFileName(
+                                directory=user_config_dir,
+                                caption="Pick or create a configuration "
+                                        "file, or hit 'cancel' for no "
+                                        "file (all configuration will be "
+                                        "discarded after restarting)!",
+                                options=QtWidgets.QFileDialog.DontConfirmOverwrite,
+                                filter='*.yml')
+                if not isinstance(config, basestring):
+                    config = config[0]
+            else:  # command line
+                configfiles = [name for name in os.listdir(user_config_dir)
+                               if name.endswith('.yml')]
+                configfiles = [name[:-4] if name.endswith('.yml') else name
+                               for name in configfiles]
+                print("Existing config files are:")
+                for name in configfiles:
+                    print("    %s"%name)
+                config = raw_input('\nEnter an existing or new config file name: ')
+        if config is None or config == "" or config.endswith('/.yml'):
+            config = None
+        # configuration is retrieved from config file
+        self.c = MemoryTree(filename=config, source=source)
+        if self.c._filename is not None:
+            self.logger.info("All your PyRPL settings will be saved to the "
+                             "config file\n"
+                             "    %s\n"
+                             "If you would like to restart "
+                             "PyRPL with these settings, type \"pyrpl.exe "
+                             "%s\" in a windows terminal or \n"
+                             "    from pyrpl import Pyrpl\n"
+                             "    p = Pyrpl('%s')\n"
+                             "in a python terminal.",
+                             self.c._filename,
+                             self.c._filename_stripped,
+                             self.c._filename_stripped)
+        # make sure config file has the required sections and complete with
+        # missing entries from default
+        pyrplbranch = self.c._get_or_create('pyrpl')
+        for k in default_pyrpl_config:
+            if k not in pyrplbranch._keys():
+                if k =='name':
+                    # assign the same name as in config file by default
+                    pyrplbranch[k] = self.c._filename_stripped
+                else:
+                    # all other (static) defaults
+                    pyrplbranch[k] = default_pyrpl_config[k]
+        # set global logging level if specified in config file
+        pyrpl_utils.setloglevel(level=self.c.pyrpl.loglevel,
+                                loggername='pyrpl')
+        # initialize RedPitaya object with the configured or default parameters
+        self.c._get_or_create('redpitaya')
+        self.c.redpitaya._update(kwargs)
+        self.name = pyrplbranch.name
+        self.rp = RedPitaya(config=self.c)
+        self.rp.parent=self
+        self.widgets = [] # placeholder for widgets
+        # create software modules...
+        self.load_software_modules()
+        # load all setup_attributes for modules that do not have an owner
+        for module in self.software_modules + self.hardware_modules:
+            if module.owner is None:
+                module._load_setup_attributes()
+                # try:
+                #     module._load_setup_attributes()
+                # except BaseException as e:
+                #     self.logger.error('Something went wrong when loading the '
+                #                       'stored setup_attributes of module "%s". '
+                #                       'If you do not know what this means, you should '
+                #                       'be able to fix this error by deleting the '
+                #                       'corresponding section "%s" in your config file %s. '
+                #                       'Error message: %s',
+                #                       module.name, module.name, self.c._filename, e)
+                #     raise e
+        # make the gui if applicable
+        if self.c.pyrpl.gui:
+            self.show_gui()
+
+    def show_gui(self):
+        if len(self.widgets) == 0:
+            widget = self._create_widget()
+            widget.show()
+        else:
+            for w in self.widgets:
+                w.show()
+
+    def hide_gui(self):
+        for w in self.widgets:
+            w.hide()
+
+    def load_software_modules(self):
+        """
+        load all software modules defined as root element of the config file.
+        """
+        self.software_modules = []
+        # software modules are Managers for various modules plus those defined in the config file
+        soft_mod_names = ['Asgs', 'Iqs', 'Pids', 'Scopes', 'Iirs', 'Trigs'
+                          ] + self.c.pyrpl.modules
+        module_classes = [get_module(cls_name)
+                          for cls_name in soft_mod_names]
+        module_names = pyrpl_utils.\
+            get_unique_name_list_from_class_list(module_classes)
+        for cls, name in zip(module_classes, module_names):
+            # some modules have generator function, e.g. Lockbox
+            # @classmethod
+            # def make_Lockbox(cls, parent, name): ...
+            try:
+                if hasattr(cls, "_make_"+cls.__name__):
+                    module = getattr(cls, "_make_"+cls.__name__)(self, name)
+                else:
+                    module = cls(self, name)
+            except BaseException as e:
+                self.logger.error('Something went wrong when loading the software module "%s": %s',
+                                  name, e)
+                raise e
+            else:
+                setattr(self, module.name, module)
+                self.software_modules.append(module)
+                self.logger.debug("Created software module %s", name)
+
+    @property
+    def hardware_modules(self):
+        """
+        List of all hardware modules loaded in this configuration.
+        """
+        if self.rp is not None:
+            return list(self.rp.modules.values())
+        else:
+            return []
+
+    @property
+    def modules(self):
+        return self.hardware_modules + self.software_modules
+
+    def _create_widget(self):
+        """
+        Creates the top-level widget
+        """
+        widget = PyrplWidget(self)
+        self.widgets.append(widget)
+        return widget
+
+    def _clear(self):
+        """
+        kill all timers and closes the connection to the redpitaya
+        """
+        for module in self.modules:
+            module._clear()
+        for widget in self.widgets:
+            widget._clear()
+        while len(self.widgets)>0:  # Close all widgets
+            w = self.widgets.pop()
+            del w
+        # do the job of actually destroying the widgets
+        async_sleep(0.1)
+        # make sure the save timer of the config file is not running and
+        # all data are written to the harddisk
+        self.c._write_to_file()
+        # end redpitatya communication
+        self.rp.end_all()
+        async_sleep(0.1)

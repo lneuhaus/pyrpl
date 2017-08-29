@@ -2,10 +2,11 @@ import logging
 logger = logging.getLogger(name=__name__)
 import time
 import numpy as np
-from ...async_utils import sleep as async_sleep
+from pyrpl.async_utils import sleep as async_sleep
 from qtpy import QtCore, QtWidgets
-from ..test_base import TestPyrpl
-from ... import APP
+from pyrpl.test.test_base import TestPyrpl
+from pyrpl import APP
+from pyrpl.curvedb import CurveDB
 
 class TestScope(TestPyrpl):
     """
@@ -14,14 +15,6 @@ class TestScope(TestPyrpl):
     # somehow the file seems to suffer from other nosetests, so pick an
     # individual name for this test:
     # tmp_config_file = "nosetests_config_scope.yml"
-
-    def teardown(self):
-        """ delete the curves fabricated in this test"""
-        for todelete in ["curve1", "curve2"]:
-            if hasattr(self, todelete):
-                c = getattr(self, todelete)
-                if c is not None:
-                    c.delete()
 
     def test_scope_stopped_at_startup(self):
         """
@@ -103,30 +96,6 @@ class TestScope(TestPyrpl):
 
         self.r.scope.stop()
 
-    def test_save_curve(self):
-        if self.r is None:
-            return
-        self.r.scope.setup(duration=0.01,
-                           trigger_source='immediately',
-                           trigger_delay=0.,
-                           rolling_mode=True,
-                           input1='in1',
-                           ch1_active=True,
-                           ch2_active=True)
-        self.r.scope.single()
-        time.sleep(0.1)
-        APP.processEvents()
-        curve1, curve2 = self.r.scope.save_curve()
-        self.curve1, self.curve2 = curve1, curve2 # for later deletion
-        attr = self.r.scope.setup_attributes
-        for curve in (curve1, curve2):
-            intersect = set(curve.params.keys()) & set(attr)
-            assert len(intersect) >= 5  # make sure some parameters are saved
-            p1 = dict((k, curve.params[k]) for k in intersect)
-            p2 = dict((k, attr[k]) for k in intersect)
-            assert p1 == p2   # make sure those parameters are equal to the
-            # setup_attributes of the scope
-
     def test_setup_rolling_mode(self):
         """
         recalling a state with rolling mode should work.
@@ -180,17 +149,11 @@ class TestScope(TestPyrpl):
         Make sure the scope isn't continuously writing to config file,
         even in running mode.
         """
-        return # TODO: find bug in travis concerning this test stagnation
-        # first, check whether something else is writing continuously to
-        #  config file
+        # check whether something else is writing continuously to config file
         self.pyrpl.rp.scope.stop()
-        for i in range(10):
-            async_sleep(0.1)
-            #APP.processEvents()
+        async_sleep(1.0)
         old = self.pyrpl.c._save_counter
-        for i in range(10):
-            async_sleep(0.1)
-            #APP.processEvents()
+        async_sleep(1.0)
         new = self.pyrpl.c._save_counter
         assert (old == new), (old, new, "scope is not the reason")
         # next, check whether the scope does this
@@ -203,15 +166,48 @@ class TestScope(TestPyrpl):
                                       rolling_mode=True,
                                       trace_average=1,
                                       running_state="running_continuous")
-            for i in range(10):
-                async_sleep(0.1)
-                # APP.processEvents()
-            self.pyrpl.c._DEBUG_SAVE = True
             old = self.pyrpl.c._save_counter
-            for i in range(10):
-                async_sleep(0.1)
-                # APP.processEvents()
+            async_sleep(1.0)
+            APP.processEvents()
             new = self.pyrpl.c._save_counter
-            self.pyrpl.c._DEBUG_SAVE = False
             self.pyrpl.rp.scope.stop()
             assert(old==new), (old, new, "scope is the problem", rolling_mode)
+
+    def test_save_curve_old(self):
+        self.r.scope.setup(duration=0.01,
+                           trigger_source='immediately',
+                           trigger_delay=0.,
+                           rolling_mode=True,
+                           input1='in1',
+                           ch1_active=True,
+                           ch2_active=True)
+        self.r.scope.single()
+        time.sleep(0.1)
+        APP.processEvents()
+        curve1, curve2 = self.r.scope.save_curve()
+        attr = self.r.scope.setup_attributes
+        for curve in (curve1, curve2):
+            intersect = set(curve.params.keys()) & set(attr)
+            assert len(intersect) >= 5  # make sure some parameters are saved
+            p1 = dict((k, curve.params[k]) for k in intersect)
+            p2 = dict((k, attr[k]) for k in intersect)
+            assert p1 == p2   # make sure those parameters are equal to the
+            # setup_attributes of the scope
+        self.curves += [curve1, curve2]  # for later deletion
+
+    def test_save_curve(self):
+        self.pyrpl.rp.scope.stop()
+        self.pyrpl.rp.scope.setup(duration=0.005,
+                                  trigger_delay=0.,
+                                  input1='in1',
+                                  ch1_active=True,
+                                  ch2_active=True,
+                                  rolling_mode=True,
+                                  trace_average=1,
+                                  running_state="stopped")
+        self.pyrpl.rp.scope.single()
+        curves = self.pyrpl.rp.scope.save_curve()
+        for i in range(2):
+            for j in range(2):
+                assert len(curves[i].data[j]) == self.pyrpl.rp.scope.data_length
+        self.curves += curves  # makes sure teardown will delete the curves

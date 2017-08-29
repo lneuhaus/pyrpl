@@ -1,0 +1,21 @@
+PyRPL is open source software that allows to use FPGA boards with
+analog interfaces for measurement and control of real-world devices in
+physics and engineering, notably experiments in quantum optics. It was
+started in 2014 by Leonhard Neuhaus for controlling experiments in physics at
+the Laboratoire Kastler Brossel in Paris, France. Its was initially based on
+the open-source code for the Red Pitaya (www.redpitaya.com) and gradually
+diverged away from it. In 2016, large parts of the graphical user interface
+were added to the project by Samuel Deleglise. A number of additional people
+have since contributed to PyRPL by discussing with us, testing, bug reporting,
+or small changes to the code or documentation. Below is a partial list. If
+you've been left off, please change this file by yourself or send an email
+to the maintainer (currently neuhaus@lkb.upmc.fr).
+
+Jonas Neergard-Nielsen
+Xueshi Guo
+Jerome Degallaix
+Pierre Clade
+Matthew Winchester
+Remi Metzdorff
+Kevin Makles
+Clement Chardin

@@ -15,14 +15,16 @@ import codecs
 import os
 import sys
 
+# path to the directory that contains the setup.py script
+SETUP_PATH = os.path.dirname(os.path.abspath(__file__))
 
+def read(fname):
+    return open(os.path.join(SETUP_PATH, fname)).read()
 
 # Version info -- read without importing
 _locals = {}
-with open('pyrpl/_version.py') as fp:
-    exec(fp.read(), None, _locals)
+exec(read(os.path.join('pyrpl', '_version.py')), None, _locals)
 version = _locals['__version__']
-
 
 # # read requirements
 # # from http://stackoverflow.com/questions/14399534/how-can-i-reference-requirements-txt-for-the-install-requires-kwarg-in-setuptool
@@ -44,23 +46,42 @@ requirements = ['scp',
                 'numpy>=1.9',
                 'paramiko>=2.0',
                 'nose>=1.0',
+                #'PyQt5',  # cannot be installed with pip
                 'qtpy']
 if sys.version_info >= (3,4):  # python version dependencies
     requirements += ['quamash']
 else:  # python 2.7
     requirements += ['futures']
+if os.environ.get('READTHEDOCS') == 'True':
+    requirements += ['mock']  # mock is needed on readthedocs.io to mock PyQt5
 
 # cannot install pyQt4 with pip:
 # http://stackoverflow.com/questions/4628519/is-it-possible-to-require-pyqt-from-setuptools-setup-py
 # PyQt4
 
+try:
+    import pypandoc
+    long_description = pypandoc.convert_file('README.md', 'rst')
+except:
+    try:
+        long_description = read('README.rst')
+    except:
+        long_description = read('README.md')
 
-def read(fname):
-    return open(os.path.join(os.path.dirname(__file__), fname)).read() 
+
+def find_packages():
+    """
+    Simple function to find all modules under the current folder.
+    """
+    modules = []
+    for dirpath, _, filenames in os.walk(os.path.join(SETUP_PATH, "pyrpl")):
+        if "__init__.py" in filenames:
+            modules.append(os.path.relpath(dirpath, SETUP_PATH))
+    return [module.replace(os.sep, ".") for module in modules]
+
 
 class PyTest(TestCommand):
     # user_options = [('pytest-args=', 'a', "192.168.1.100")] #not yet working
-
     def finalize_options(self):
         TestCommand.finalize_options(self)
         self.test_args = []
@@ -71,6 +92,7 @@ class PyTest(TestCommand):
         errcode = pytest.main(self.test_args)
         sys.exit(errcode)
 
+
 def compile_fpga(): #vivado 2015.4 must be installed for this to work
     cwd = os.getcwd()
     try:
@@ -78,6 +100,7 @@ def compile_fpga(): #vivado 2015.4 must be installed for this to work
         os.system("make")
     finally:
         os.chdir(cwd)
+
 
 def compile_server(): #gcc crosscompiler must be installed for this to work
     cwd = os.getcwd()
@@ -88,14 +111,6 @@ def compile_server(): #gcc crosscompiler must be installed for this to work
     finally:
         os.chdir(cwd)
 
-try:
-    import pypandoc
-    long_description = pypandoc.convert_file('README.md', 'rst')
-except:
-    try:
-        long_description = read('README.rst')
-    except:
-        long_description = read('README.md')
 
 setup(name='pyrpl',
       version=version,
@@ -118,16 +133,15 @@ setup(name='pyrpl',
       keywords='RedPitaya DSP FPGA IIR PDH synchronous detection filter PID '
                'control lockbox servo feedback lock quantum optics',
       platforms='any',
-      packages=['pyrpl'],
-      package_data={'pyrpl': ['fpga/red_pitaya.bin',
-                              'monitor_server/monitor_server',
-                              'monitor_server/monitor_server_0.95']},
-
+      packages=find_packages(), #['pyrpl'],
+      package_data={'pyrpl': ['fpga/*',
+                              'monitor_server/*',
+                              'config/*',
+                              'widgets/images/*']},
       install_requires=requirements,
       # what were the others for? dont remember..
       #setup_requires=requirements,
       #requires=requirements,
-
       # stuff for unitary test with pytest
       tests_require=['nose>=1.0'],
       # extras_require={'testing': ['pytest']},

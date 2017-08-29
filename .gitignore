@@ -78,7 +78,12 @@ xunit.xml
 *.log
 
 # Sphinx documentation
-!doc/sphinx/build/html
+#!doc/sphinx/build/html
+# Sphinx documentation
+_build
+_static
+_templates
+
 
 # PyBuilder
 target/
@@ -110,3 +115,11 @@ test_import.py
 run.py 
 rpiq_gui.py
 rpiq.ui
+
+# distribution stuff
+README.rst
+scripts/dist/
+scripts/build/
+scripts/__init__.py
+scripts/run_pyrpl.spec
+scripts/pyrpl.spec

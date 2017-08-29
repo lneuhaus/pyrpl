@@ -287,6 +287,59 @@ def bodeplot(data, xlog=False):
 
 
 class IirFilter(object):
+    """
+    Computes coefficients and predicts transfer functions of an IIR filter.
+
+    Parameters
+    ----------
+    sys: (zeros, poles, gain)
+        zeros: list of complex zeros
+        poles: list of complex poles
+        gain:  DC-gain
+
+        zeros/poles with nonzero imaginary part should come in complex
+        conjugate pairs, otherwise the conjugate zero/pole will
+        automatically be added. After this, the number of poles should
+        exceed the number of zeros at least by one, otherwise a real pole
+        near the Nyquist frequency will automatically be added until there
+        are more poles than zeros.
+
+    loops: int or None
+        the number of FPGA cycles per filter sample. None tries to
+        automatically find the value leading to the highest possible
+        sampling frequency. If the numerical precision of the filter
+        coefficients in the FPGA is the limiting, manually setting a higher
+        value of loops may improve the filter performance.
+
+    dt: float
+        the FPGA clock frequency. Should be very close to 8e-9
+
+    minoops: int
+        minimum number of loops (constant of the FPGA design)
+
+    maxloops: int
+        maximum number of loops (constant of the FPGA design)
+
+    tol: float
+        tolerancee for matching conjugate pole/zero pairs. 1e-3 is okay.
+
+    intermediatereturn: str or None
+        if set to a valid option, the algorithm will stop at the specified
+        step and return an intermediate result for debugging. Valid options are
+
+
+    Returns
+    -------
+    coefficients
+
+    coefficients is an array of float arrays of length six, which hold the
+    filter coefficients to be passed directly to the iir module
+
+    :py:attr:`IirFilter.loops` of the :py:class:`IirFilter` instance is
+    automatically corrected to a number of loops compatible with the
+    implemented design.
+    """
+
     def __init__(self,
                  zeros,
                  poles,
@@ -347,7 +400,7 @@ class IirFilter(object):
     @property
     def coefficients(self):
         """
-        Returns the coefficients of the IIR filter
+        Computes and returns the coefficients of the IIR filter set by :py:attr:`IirFilter.sys`.
 
         Parameters
         ----------
@@ -389,12 +442,14 @@ class IirFilter(object):
 
         Returns
         -------
-        coefficients, loops
+        coefficients
 
         coefficients is an array of float arrays of length six, which hold the
         filter coefficients to be passed directly to the iir module
 
-        loops is the number of loops for the implemented design.
+        :py:attr:`IirFilter.loops` of the :py:class:`IirFilter` instance is
+        automatically corrected to a number of loops compatible with the
+        implemented design.
         """
         if hasattr(self, '_coefficients'):
             return self._coefficients
@@ -517,7 +572,7 @@ class IirFilter(object):
                            "Minimum of %s is needed! ", loops, actloops)
             loops = actloops
         if loops > maxloops:
-            logger.warning("Maximum loops number is %s. This value "
+            logger.info("Maximum loops number is %s. This value "
                            "will be tried instead of specified value "
                            "%s.", maxloops, loops)
             loops = maxloops
@@ -527,9 +582,9 @@ class IirFilter(object):
         extrapole = -125e6 / loops / 2
         while len(zeros) > len(poles):
             poles.append(extrapole)
-            logger.warning("Specified IIR transfer function was not "
-                           "proper. Automatically added a pole at %s Hz.",
-                           extrapole)
+            logger.debug("Specified IIR transfer function was not "
+                         "proper. Automatically added a pole at %s Hz.",
+                         extrapole)
             # if more poles must be added, make sure we have no 2 poles at the
             # same frequency
             extrapole /= 2

@@ -38,12 +38,12 @@ class TestModuleWidgets(TestPyrpl):
             elif isinstance(attr, BoolAttributeWidget):
                 for i in range(2):
                     QTest.mouseClick(attr.widget, Qt.LeftButton)
-                    assert (getattr(self.pyrpl.rp.scope, attr.attribute_name)
-                        == (attr.widget.checkState() == 2))
+                    assert (getattr(self.pyrpl.rp.scope, attr.attribute_name) ==
+                        (attr.widget.checkState() == 2))
             elif isinstance(attr, NumberAttributeWidget):
                 for i in range(3):
                     attr.widget.stepUp()
-                    assert(abs(getattr(self.pyrpl.rp.scope, attr.attribute_name) - \
+                    assert(abs(getattr(self.pyrpl.rp.scope, attr.attribute_name) -
                                attr.widget.value()) < 0.0001)
 
     def test_asg_gui(self):
@@ -58,14 +58,14 @@ class TestModuleWidgets(TestPyrpl):
         module = module_widget.module
         for attr in module._gui_attributes:
             if isinstance(attr, SelectProperty):
-                for option in attr.options:
+                for option in attr.options(module):
                     to_set = attr.widget.findText(str(option))
                     attr.widget.setCurrentIndex(to_set)
                     assert (getattr(module, attr.name) == option)
             elif isinstance(attr, BoolProperty):
                 for i in range(2):
                     QTest.mouseClick(attr.widget, Qt.LeftButton)
-                    assert (getattr(module, attr.name) \
+                    assert (getattr(module, attr.name)
                             == (attr.widget.checkState() == 2))
             elif isinstance(attr, NumberProperty):
                 for i in range(3):

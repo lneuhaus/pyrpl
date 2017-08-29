@@ -18,7 +18,7 @@
 
 from . import redpitaya_client
 from . import hardware_modules as rp
-from .sshshell import SSHshell
+from .sshshell import SshShell
 from .pyrpl_utils import get_unique_name_list_from_class_list, update_with_typeconversion
 from .memory import MemoryTree
 from .errors import ExpectedPyrplError
@@ -37,9 +37,9 @@ from collections import OrderedDict
 
 # input is the wrong function in python 2
 try:
-    input = raw_input
+    raw_input
 except NameError:  # Python 3
-    pass
+    raw_input = input
 
 # default parameters for redpitaya object creation
 defaultparameters = dict(
@@ -128,7 +128,7 @@ class RedPitaya(object):
                                       k, oldvalue, k.upper(), newvalue)
         # settings from config file
         try:
-            update_with_typeconversion(self.parameters, self.c.redpitaya._data)
+            update_with_typeconversion(self.parameters, self.c._get_or_create('redpitaya')._data)
         except BaseException as e:
             self.logger.warning("An error occured during the loading of your "
                                 "Red Pitaya settings from the config file: %s",
@@ -145,19 +145,19 @@ class RedPitaya(object):
                 startup_widget = HostnameSelectorWidget()
                 hostname_kwds = startup_widget.get_kwds()
             else:
-                hostname = input('Enter hostname [192.168.1.100]: ')
+                hostname = raw_input('Enter hostname [192.168.1.100]: ')
                 hostname = '192.168.1.100' if hostname == '' else hostname
                 hostname_kwds = dict(hostname=hostname)
                 if not "sshport" in kwargs:
-                    sshport = input('Enter sshport [22]: ')
+                    sshport = raw_input('Enter sshport [22]: ')
                     sshport = 22 if sshport == '' else int(sshport)
                     hostname_kwds['sshport'] = sshport
                 if not 'user' in kwargs:
-                    user = input('Enter username [root]: ')
+                    user = raw_input('Enter username [root]: ')
                     user = 'root' if user == '' else user
                     hostname_kwds['user'] = user
                 if not 'password' in kwargs:
-                    password = input('Enter password [root]: ')
+                    password = raw_input('Enter password [root]: ')
                     password = 'root' if password == '' else password
                     hostname_kwds['password'] = password
             self.parameters.update(hostname_kwds)
@@ -220,12 +220,12 @@ class RedPitaya(object):
         else:  # normal mode - establish ssh connection and
             try:
                 # start ssh connection
-                self.ssh = SSHshell(hostname=self.parameters['hostname'],
-                                sshport=self.parameters['sshport'],
-                                user=self.parameters['user'],
-                                password=self.parameters['password'],
-                                delay=self.parameters['delay'],
-                                timeout=self.parameters['timeout'])
+                self.ssh = SshShell(hostname=self.parameters['hostname'],
+                                    sshport=self.parameters['sshport'],
+                                    user=self.parameters['user'],
+                                    password=self.parameters['password'],
+                                    delay=self.parameters['delay'],
+                                    timeout=self.parameters['timeout'])
                 # test ssh connection for exceptions
                 self.ssh.ask()
             except BaseException as e:  # connection problem

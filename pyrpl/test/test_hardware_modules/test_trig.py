@@ -4,7 +4,7 @@ import time
 import numpy as np
 from time import sleep
 from qtpy import QtCore, QtWidgets
-from ..test_base import TestPyrpl
+from pyrpl.test.test_base import TestPyrpl
 
 
 class TestScope(TestPyrpl):

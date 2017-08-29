@@ -23,7 +23,7 @@ class HK(HardwareModule):
     id = SelectRegister(0x0, doc="device ID", options={"prototype0": 0,
                                                        "release1": 1})
     digital_loop = IntRegister(0x0C, doc="enables digital loop")
-    led = IntRegister(0x30, doc="LED control with bits 1:8")
+    led = IntRegister(0x30, doc="LED control with bits 1:8", min=0, max=2**8)
     # another option: access led as array of bools
     # led = [BoolRegister(0x30,bit=i,doc="LED "+str(i)) for i in range(8)]
 

@@ -5,19 +5,17 @@ An instance attr of Attribute can create its AttributeWidget counterPart
 by calling attr.create_widget(name, parent).
 """
 
-from pyqtgraph.Qt import QtGui, QtCore
 import numpy as np
-import time
-import functools
+from qtpy import QtCore, QtWidgets
 import pyqtgraph as pg
-from ..pyrpl_utils import Bijection, recursive_setattr, recursive_getattr
+from .spinbox import NumberSpinBox, IntSpinBox, FloatSpinBox, ComplexSpinBox
 from .. import pyrpl_utils
 from ..curvedb import CurveDB
-from .spinbox import *
 
+import sys
 
 # TODO: try to remove widget_name from here (again)
-class BaseAttributeWidget(QtGui.QWidget, object):
+class BaseAttributeWidget(QtWidgets.QWidget):
     """
     Base class for attribute widgets.
 
@@ -33,7 +31,7 @@ class BaseAttributeWidget(QtGui.QWidget, object):
     A minimum widget should implmenet set_widget, _update,
     and possibly module_value.
     """
-    value_changed = QtCore.pyqtSignal()
+    value_changed = QtCore.Signal()
 
     def __init__(self, module, attribute_name, widget_name=None):
         super(BaseAttributeWidget, self).__init__()
@@ -44,10 +42,10 @@ class BaseAttributeWidget(QtGui.QWidget, object):
         else:
             self.widget_name = widget_name
         self.setToolTip(self.attribute_descriptor.__doc__)
-        self.layout_v = QtGui.QVBoxLayout()
+        self.layout_v = QtWidgets.QVBoxLayout()
         self.layout = self.layout_v
         if self.widget_name != "":
-            self.label = QtGui.QLabel(self.widget_name)
+            self.label = QtWidgets.QLabel(self.widget_name)
             self.layout.addWidget(self.label, 0) # stretch=0
             self.layout.addStretch(1)
         self.layout_v.setContentsMargins(0, 0, 0, 0)
@@ -90,6 +88,12 @@ class BaseAttributeWidget(QtGui.QWidget, object):
 
     def write_widget_value_to_attribute(self):
         self.attribute_value = self.widget_value
+        # since there is no protection there, the value will propagate
+        #    widget manipulation --> module change --> widget change
+        # However, since there is a blockSignal in the setter of widget_value,
+        # the loop stops there. However a widget manipulation (a click on the
+        # widget arrow for instance) results in 2 widgets overwrites
+
         # it does not hurt to imitate the signal of the subwidget,
         # even though most of the time nothing is connected to it
         self.value_changed.emit()
@@ -117,7 +121,7 @@ class BaseAttributeWidget(QtGui.QWidget, object):
 
     def set_horizontal(self):
         """ puts the label to the left of the widget instead of atop """
-        self.layout_h = QtGui.QHBoxLayout()
+        self.layout_h = QtWidgets.QHBoxLayout()
         if hasattr(self, 'label'):
             self.layout_v.removeWidget(self.label)
             self.layout_h.addWidget(self.label)
@@ -154,19 +158,14 @@ class BaseAttributeWidget(QtGui.QWidget, object):
         """
         self.widget.setValue(new_value)
 
-
     def wheelEvent(self, event):
         """
         Handle mouse wheel event.
-
-        We generally disable the mouse wheel because it is a frequent source
-        of errors / undesired changes of variables
         """
-        self.module._logger.error("Cannot use mouse wheel on AttributeWidget "
-                                  "of %s.%s.",
-                                  self.module.name,
-                                  self.attribute_name)
-        return
+        # We generally disable the mouse wheel because it is a
+        # frequent source of errors / undesired changes of variables
+        # Here, it is simply forwarded upwards in hierarchy.
+        return super(BaseAttributeWidget, self).wheelEvent(event)
 
 
 class StringAttributeWidget(BaseAttributeWidget):
@@ -174,7 +173,7 @@ class StringAttributeWidget(BaseAttributeWidget):
     Widget for string values.
     """
     def _make_widget(self):
-        self.widget = QtGui.QLineEdit()
+        self.widget = QtWidgets.QLineEdit()
         self.widget.setMaximumWidth(200)
         self.widget.textChanged.connect(self.write_widget_value_to_attribute)
 
@@ -190,7 +189,7 @@ class TextAttributeWidget(StringAttributeWidget):
     Property for multiline string values.
     """
     def _make_widget(self):
-        self.widget = QtGui.QTextEdit()
+        self.widget = QtWidgets.QTextEdit()
         self.widget.textChanged.connect(self.write_widget_value_to_attribute)
 
     def _get_widget_value(self):
@@ -225,6 +224,14 @@ class NumberAttributeWidget(BaseAttributeWidget):
     def set_log_increment(self):
         self.widget.set_log_increment()
 
+    def keyPressEvent(self, event):
+        """ forwards all key events to spinbox """
+        return self.widget.keyPressEvent(event)
+
+    def keyReleaseEvent(self, event):
+        """ forwards all key events to spinbox """
+        return self.widget.keyReleaseEvent(event)
+
 
 class IntAttributeWidget(NumberAttributeWidget):
     """
@@ -247,14 +254,6 @@ class ComplexAttributeWidget(FloatAttributeWidget):
     SpinBox = ComplexSpinBox
 
 
-class FrequencyAttributeWidget(FloatAttributeWidget):
-    def __init__(self, module, attribute_name, widget_name=None):
-        super(FrequencyAttributeWidget, self).__init__(module,
-                                                       attribute_name,
-                                                       widget_name=widget_name)
-        self.set_per_second(10)
-
-
 class ListElementWidget(BaseAttributeWidget):
     """
     this is a wrapper class to embed any AttributeWidget as an element of
@@ -266,17 +265,15 @@ class ListElementWidget(BaseAttributeWidget):
         self.startindex = startindex
         super(ListElementWidget, self).__init__(*args, **kwargs)
         self.set_horizontal()
-        self.button_remove = QtGui.QPushButton('-')
+        self.button_remove = QtWidgets.QPushButton('-')
         self.button_remove.clicked.connect(self.remove_this_element)
         self.button_remove.setFixedWidth(3 * 10)
         self.layout.addWidget(self.button_remove, 0) # stretch=0
         self.layout.addStretch(1)
         # this is very nice for debugging, but should probably be removed later
         setattr(self.module, '_'+self.attribute_name+'_widget', self.parent)
-        self.select()
 
     def remove_this_element(self):
-        self.unselect()
         self.parent.attribute_value.__delitem__(index=self.index)
 
     @property
@@ -294,24 +291,28 @@ class ListElementWidget(BaseAttributeWidget):
     def attribute_value(self, v):
         getattr(self.module, self.attribute_name)[self.index] = v
 
-    def select(self):
-        current = self.parent.selected
-        if current:
-            current.unselect()
-        self.parent.selected = self
-        self.setStyleSheet("%s{background-color:green;}"
-                           % self.__class__.__name__)
-
-    def unselect(self):
-        if self.parent.selected == self:
-            self.parent.selected = None
-        self.setStyleSheet("")
-
     def mousePressEvent(self, event):
-        self.module._logger.warning('mouse pressed on %s[%d]',
-                                     self.attribute_name, self.index)
-        self.select()
+        self.parent.attribute_value.selected = self.index
         return super(ListElementWidget, self).mousePressEvent(event)
+
+    def focusInEvent(self, QFocusEvent):
+        self.parent.attribute_value.selected = self.index
+
+    # keyboard interface
+    # def keyPressEvent(self, event):
+    #     """ forwards all key events to selected widget """
+    #     if self.parent.selected is not None:
+    #         return self.parent.selected.keyPressEvent(event)
+    #     else:
+    #         super(ListElementWidget, self).keyPressEvent(event)
+    #
+    #
+    # def keyReleaseEvent(self, event):
+    #     """ forwards all key events to selected widget """
+    #     if self.parent.selected is not None:
+    #         return self.parent.selected.keyReleaseEvent(event)
+    #     else:
+    #         super(ListElementWidget, self).keyReleaseEvent(event)
 
 
 class BasePropertyListPropertyWidget(BaseAttributeWidget):
@@ -320,11 +321,11 @@ class BasePropertyListPropertyWidget(BaseAttributeWidget):
     underlying widgets
     """
     def _make_widget(self):
-        self.widget = QtGui.QFrame()
-        self.widget_layout = QtGui.QVBoxLayout()
+        self.widget = QtWidgets.QFrame()
+        self.widget_layout = QtWidgets.QVBoxLayout()
         self.widget.setLayout(self.widget_layout)
         self.widgets = []
-        self.button_add = QtGui.QPushButton("+")
+        self.button_add = QtWidgets.QPushButton("+")
         self.button_add.clicked.connect(self.append_default)
         self.widget_layout.addWidget(self.button_add)
         self.widget_layout.addStretch(1)
@@ -347,6 +348,8 @@ class BasePropertyListPropertyWidget(BaseAttributeWidget):
             self.setitem(index, value)
         elif operation == "delitem":
             self.delitem(index)
+        elif operation == "select":
+            self.select(index)
         else:
             self.module._logger.error("%s.%s_widget.update_attribute_by_name "
                                       "was called with wrong arguments: %s",
@@ -375,8 +378,6 @@ class BasePropertyListPropertyWidget(BaseAttributeWidget):
             insert_before = self.widgets[index+1]
         self.widget_layout.insertWidget(self.widget_layout.indexOf(insert_before),
                                         element_widget)
-        self.module._logger.warning("insert %s, index %s, new %s"%(
-            self.attribute_value, index, value))
         self.update_widget_names()
 
     def setitem(self, index, value):
@@ -391,6 +392,14 @@ class BasePropertyListPropertyWidget(BaseAttributeWidget):
         widget.deleteLater()
         self.update_widget_names()
         self.module._logger.error('delitem concluded')
+
+    def select(self, index):
+        for i, widget in enumerate(self.widgets):
+            if i == index:
+                widget.setStyleSheet("background-color: yellow")
+                widget.setFocus()
+            else:
+                widget.setStyleSheet("")
 
     def update_widget_names(self):
         for widget in self.widgets:
@@ -410,31 +419,12 @@ class BasePropertyListPropertyWidget(BaseAttributeWidget):
             # remove the trailing items
             while len(self) > len(new_values):
                 self.delitem()
-        self.module._logger.warning("set_widget_value called and finished")
 
     def editing(self):
         edit = False
         for widget in self.widgets:
             edit = edit or widget.editing()
         return edit
-
-    def editing(self):
-        return self.widget.editing()
-
-    @property
-    def selected(self):
-        return self._selected
-
-    @selected.setter
-    def selected(self, widget):
-        self._selected = widget
-        if self.selected is not None:
-            self.selected.setStyleSheet("")
-            self.selected.setFocus(True)
-        #self.value_changed.emit()
-
-    def get_selected(self):
-        return 0
 
     @property
     def number(self):
@@ -444,102 +434,23 @@ class BasePropertyListPropertyWidget(BaseAttributeWidget):
         return len(self.widgets)
 
 
-class ListAttributeWidget(BaseAttributeWidget):
-    """
-    A widget for ListAttribute
-    This class is nearly identical with ListComplexAttributeWidget
-    and the two should be merged together
-    """
-    ListSpinBox = ListFloatSpinBox
-    listspinboxkwargs = dict(label=None,
-                             min=-62.5e6,
-                             max=62.5e6,
-                             log_increment=True,
-                             halflife_seconds=1.)
-
-    def _make_widget(self):
-        """
-        Sets up the widget (here a ListFloatSpinBox)
-        :return:
-        """
-        self.widget = self.ListSpinBox(**self.listspinboxkwargs)
-        self.widget.value_changed.connect(self.write_widget_value_to_attribute)
-
-    def _get_widget_value(self):
-        return self.widget.get_list()
-
-    def _set_widget_value(self, new_value):
-        self.widget.set_list(new_value)
-
-    def editing(self):
-        return self.widget.editing()
-
-    def set_max_cols(self, num):
-        """
-        sets the max number of columns of the widget (after that, spin boxes are stacked under each other)
-        """
-        self.widget.set_max_cols(num)
-
-    def set_increment(self, val):
-        self.widget.set_increment(val)
-
-    def set_maximum(self, val):
-        self.widget.set_maximum(val)
-
-    def set_minimum(self, val):
-        self.widget.set_minimum(val)
-
-    def set_selected(self, index):
-        """
-        Selects the current active complex number.
-        """
-        self.widget.set_selected(index)
-
-    def get_selected(self):
-        """
-        Get the selected number
-        """
-        return self.widget.get_selected()
-
-    @property
-    def number(self):
-        return len(self.widget.spins)
-
-
-class ListFloatAttributeWidget(ListAttributeWidget):
-    ListSpinBox = ListFloatSpinBox
-    listspinboxkwargs = dict(label=None,
-                             min=-62.5e6,
-                             max=62.5e6,
-                             log_increment=True,
-                             halflife_seconds=1.)
-
-
-class ListComplexAttributeWidget(ListAttributeWidget):
-    ListSpinBox = ListComplexSpinBox
-    listspinboxkwargs = dict(label=None,
-                             min=-62.5e6,
-                             max=62.5e6,
-                             log_increment=True,
-                             halflife_seconds=1.)
-
-
-class ListComboBox(QtGui.QWidget):
+class ListComboBox(QtWidgets.QWidget):
+    # exclusively used by FilterAttributeWidget, can be replaced by sth else
     # TODO: can be replaced by SelectAttributeWidget
-    value_changed = QtCore.pyqtSignal()
+    value_changed = QtCore.Signal()
 
     def __init__(self, number, name, options, decimals=3):
         super(ListComboBox, self).__init__()
         self.setToolTip("First order filter frequencies \n"
                         "negative values are for high-pass \n"
                         "positive for low pass")
-        self.lay = QtGui.QHBoxLayout()
+        self.lay = QtWidgets.QHBoxLayout()
         self.lay.setContentsMargins(0, 0, 0, 0)
         self.combos = []
         self.options = options
         self.decimals = decimals
         for i in range(number):
-            combo = QtGui.QComboBox()
+            combo = QtWidgets.QComboBox()
             self.combos.append(combo)
             combo.addItems(self.options)
             combo.currentIndexChanged.connect(self.value_changed)
@@ -570,7 +481,7 @@ class ListComboBox(QtGui.QWidget):
         n_rows = int(np.ceil(n*1.0/n_cols))
         j = 0
         for i in range(n_cols):
-            layout = QtGui.QVBoxLayout()
+            layout = QtWidgets.QVBoxLayout()
             self.lay.addLayout(layout)
             for j in range(n_rows):
                 index = i*n_rows + j
@@ -594,6 +505,7 @@ class FilterAttributeWidget(BaseAttributeWidget):
     The attribute descriptor needs to expose a function valid_frequencies(module)
     """
     decimals = 3
+
     def __init__(self, module, attribute_name, widget_name=None):
         val = getattr(module, attribute_name)
         if np.iterable(val):
@@ -612,8 +524,7 @@ class FilterAttributeWidget(BaseAttributeWidget):
         self.widget = ListComboBox(self.number,
                                    "",
                                    self._format_options(),
-                                   decimals=self.decimals)#list(map(str,
-                                   # self.options)))
+                                   decimals=self.decimals)
         self.widget.value_changed.connect(self.write_widget_value_to_attribute)
 
     def _format_options(self):
@@ -629,10 +540,10 @@ class FilterAttributeWidget(BaseAttributeWidget):
         return self.widget.get_list()
 
     def _set_widget_value(self, new_value):
-        if isinstance(new_value, str) or not np.iterable(new_value):  # only 1
-            # element in the FilterAttribute, make a list for consistency,
-            # used to be basestring
-            val = [new_value]
+        if isinstance(new_value, str) or not np.iterable(new_value):
+            # only 1 element in the FilterAttribute, make a list
+            # for consistency with other filters (this used to be basestring)
+            new_value = [new_value]
         self.widget.set_list(new_value)
 
     def set_max_cols(self, n_cols):
@@ -644,7 +555,7 @@ class SelectAttributeWidget(BaseAttributeWidget):
     Multiple choice property.
     """
     def _make_widget(self):
-        self.widget = QtGui.QComboBox()
+        self.widget = QtWidgets.QComboBox()
         self.widget.addItems(self.options)
         self.widget.currentIndexChanged.connect(self.write_widget_value_to_attribute)
 
@@ -702,9 +613,9 @@ class SelectAttributeWidget(BaseAttributeWidget):
 class LedAttributeWidget(BaseAttributeWidget):
     """ Boolean property with a button whose text and color indicates whether """
     def _make_widget(self):
-        desc = recursive_getattr(self.module, '__class__.' + self.attribute_name)
-        val = recursive_getattr(self.module, self.attribute_name)
-        self.widget = QtGui.QPushButton("setting up...")
+        desc = pyrpl_utils.recursive_getattr(self.module, '__class__.' + self.attribute_name)
+        val = pyrpl_utils.recursive_getattr(self.module, self.attribute_name)
+        self.widget = QtWidgets.QPushButton("setting up...")
         self.widget.clicked.connect(self.button_clicked)
 
     def _set_widget_value(self, new_value):
@@ -726,7 +637,7 @@ class BoolAttributeWidget(BaseAttributeWidget):
     Checkbox for boolean attributes
     """
     def _make_widget(self):
-        self.widget = QtGui.QCheckBox()
+        self.widget = QtWidgets.QCheckBox()
         self.widget.stateChanged.connect(self.write_widget_value_to_attribute)
 
     def _get_widget_value(self):
@@ -741,16 +652,16 @@ class BoolIgnoreAttributeWidget(BoolAttributeWidget):
     Like BoolAttributeWidget with additional option 'ignore' that is
     shown as a grey check in GUI
     """
-    _gui_to_attribute_mapping = Bijection({0: False,
-                                           1: 'ignore',
-                                           2: True})
+    _gui_to_attribute_mapping = pyrpl_utils.Bijection({0: False,
+                                                       1: 'ignore',
+                                                       2: True})
 
     def _make_widget(self):
         """
         Sets the widget (here a QCheckbox)
         :return:
         """
-        self.widget = QtGui.QCheckBox()
+        self.widget = QtWidgets.QCheckBox()
         self.widget.setTristate(True)
         self.widget.stateChanged.connect(self.write_widget_value_to_attribute)
         self.setToolTip("Checked:\t    on\nUnchecked: off\nGrey:\t    ignore")
@@ -958,20 +869,23 @@ class CurveAttributeWidget(DataAttributeWidget):
     """
     Plots a curve (complex or real), with an id number as input.
     """
-
-    def _set_widget_value(self, new_value):
+    def get_xy_data(self, new_value):
+        """ helper function to extract xy data from a curve object"""
         if new_value is None:
-            return
+            return None, None, None
         try:
             data = getattr(self.module, '_' + self.attribute_name + '_object').data
-            name = \
-            getattr(self.module, '_' + self.attribute_name + '_object').params[
-                'name']
+            name = getattr(
+                self.module, '_' + self.attribute_name + '_object').params['name']
         except:
-            pass
+            return None, None, None
         else:
-            x = data.index.values
-            y = data.values
+            x, y = data
+            return x, y, name
+
+    def _set_widget_value(self, new_value):
+        x, y, name = self.get_xy_data(new_value)
+        if x is not None:
             if not np.isreal(y).all():
                 self.curve.setData(x, self._magnitude(y))
                 self.curve_phase.setData(x, self._phase(y))
@@ -993,7 +907,7 @@ class CurveSelectAttributeWidget(SelectAttributeWidget):
 
         :return:
         """
-        self.widget = QtGui.QListWidget()
+        self.widget = QtWidgets.QListWidget()
         self.widget.addItems(self.options)
         self.widget.currentItemChanged.connect(self.write_widget_value_to_attribute)
 

@@ -1,19 +1,24 @@
 """
-Modules are the basic building blocks of Pyrpl:
-  - The internal structure of the FPGA is made of individual modules
-  performing a well defined task. Each of these FPGA modules are represented
-  in python by a HardwareModule.
-  - Higher-level operations, for instance those that need a coordinated
-  operation of several HardwareModules is performed by SoftwareModules.
-Both HardwareModules and SoftwareModules inherit BaseModule that give them
-basic capabilities such as displaying their attributes in the GUI having
-their state load and saved in the config file...
+Modules are the basic building blocks of Pyrpl.
+
+The internal structure of the FPGA is made of individual modules, each
+performing a well defined task. Each of these FPGA modules are represented
+in python by a :obj:`HardwareModule`.
+
+Higher-level operations, for instance those that need a coordinated
+operation of several HardwareModules is performed by a SoftwareModule,
+defined in a class derived from :obj:`Module`.
+
+Thus, all modules (both :obj:`HardwareModule` and Software modules inherit
+from :obj:`Module` which gives them basic capabilities such as displaying
+their attributes in the GUI having their state load and saved in the config
+file.
 """
 
 from .attributes import BaseAttribute, ModuleAttribute
 from .widgets.module_widgets import ModuleWidget
 from .curvedb import CurveDB
-from .pyrpl_utils import unique_list
+from .pyrpl_utils import unique_list, DuplicateFilter
 
 import logging
 import numpy as np
@@ -21,11 +26,14 @@ from six import with_metaclass
 from collections import OrderedDict
 from qtpy import QtCore
 
+
 class SignalLauncher(QtCore.QObject):
     """
+    Object that is used to handle signal the emission for a :obj:`Module`.
+
     A QObject that is connected to the widgets to update their value when
     attributes of a module change. Any timers needed to implement the module
-    functionality shoud be implemented here as well
+    functionality shoud be implemented here as well.
     """
     update_attribute_by_name = QtCore.Signal(str, list)
     # The name of the property that has changed, the list is [new_value],
@@ -69,7 +77,8 @@ class SignalLauncher(QtCore.QObject):
 
 
 class ModuleMetaClass(type):
-    """ Generate Module classes with two features:
+    """
+    Generate Module classes with two features:
     - __new__ lets attributes know what name they are referred to in the
     class that contains them.
     - __new__ also lists all the submodules. This info will be used when
@@ -185,18 +194,19 @@ class DoSetup(object):
     """
     A context manager that allows to nicely write Module setup functions.
 
-    Usage example in Module._setup():
-    def _setup(self):
-        # _setup_ongoing is False by default
-        assert self._setup_ongoing == False
-        with self.do_setup:
-            # now _setup_ongoing is True
-            assert self._setup_ongoing == True
-            # do stuff that might fail
-            raise BaseException()
-        # even if _setup fails, _setup_ongoing is False afterwards or in
-        # the next call to _setup()
-        assert self._setup_ongoing == False
+    Usage example in :py:meth:`Module._setup()`::
+
+        def _setup(self):
+            # _setup_ongoing is False by default
+            assert self._setup_ongoing == False
+            with self.do_setup:
+                # now _setup_ongoing is True
+                assert self._setup_ongoing == True
+                # do stuff that might fail
+                raise BaseException()
+            # even if _setup fails, _setup_ongoing is False afterwards or in
+            # the next call to _setup()
+            assert self._setup_ongoing == False
     """
     def __init__(self, parent):
         self.parent = parent
@@ -221,81 +231,81 @@ class Module(with_metaclass(ModuleMetaClass, object)):
     # Specifically, ModuleMetaClass ensures that attributes have automatically
     # their internal name set properly upon module creation.
     """
-    A module is a component of pyrpl doing a specific task, such as e.g.
-    Scope/Lockbox/NetworkAnalyzer. The module can have a widget to interact
-    with it graphically.
+    A module is a component of pyrpl doing a specific task.
 
+    Module is the base class for instruments such as the
+    Scope/Lockbox/NetworkAnalyzer. A module can have a widget to build a
+    graphical user interface on top of it.
     It is composed of attributes (see attributes.py) whose values represent
     the current state of the module (more precisely, the state is defined
     by the value of all attributes in _setup_attributes)
-
     The module can be slaved or freed by a user or another module. When the
     module is freed, it goes back to the state immediately before being
-    slaved. To make sure the module is freed, use the syntax:
+    slaved. To make sure the module is freed, use the syntax::
 
-    with pyrpl.mod_mag.pop('owner') as mod:
+        with pyrpl.mod_mag.pop('owner') as mod:
             mod.do_something()
+            mod.do_something_else()
 
-    public methods
-    --------------
-     - get_setup_attributes(): returns a dict with the current values of
-     the setup attributes
-     - set_setup_attributes(**kwds): sets the provided setup_attributes
-     (setup is not called)
-     - save_state(name): saves the current "state" (using
-     get_setup_attribute) into the config file
-     - load_state(name): loads the state 'name' from the config file (setup
-     is not called by default)
-     - erase_state(name): erases state "name" from config file
-     - create_widget(): returns a widget according to widget_class
-     - setup(**kwds): first, performs set_setup_attributes(**kwds),
-     then calls _setup() to set the module ready for acquisition. This
-     method is automatically created by ModuleMetaClass and it combines the
-     docstring of individual setup_attributes with the docstring of _setup()
-     - free(): sets the module owner to None, and brings the module back the
-     state before it was slaved equivalent to module.owner = None)
-     - get_yml(state=None): get the yml code representing the state "state'
-     or the current state if state is None
-     - set_yml(yml_content, state=None): sets the state "state" with the
-     content of yml_content. If state is None, the state is directly loaded
-     into the module.
+    Attributes:
+        `get_setup_attributes()`: returns a dict with the current values of
+            the setup attributes
+        ``set_setup_attributes(**kwds)``: sets the provided setup_attributes
+            (setup is not called)
+        `save_state(name)`: saves the current 'state' (using
+            get_setup_attribute) into the config file
+        `load_state(name)`: loads the state 'name' from the config file (setup
+            is not called by default)
+        `erase_state(name)`: erases state 'name' from config file
+        `create_widget()`: returns a widget according to widget_class
+        ``setup(**kwds)``: first, performs :code:`set_setup_attributes(**kwds)`,
+            then calls _setup() to set the module ready for acquisition. This
+            method is automatically created by ModuleMetaClass and it combines the
+            docstring of individual setup_attributes with the docstring of _setup()
+        `free()`: sets the module owner to None, and brings the module back the
+            state before it was slaved equivalent to module.owner = None)
+        `get_yml(state=None)`: get the yml code representing the state "state'
+            or the current state if state is None
+        `set_yml(yml_content, state=None)`: sets the state "state" with the
+            content of yml_content. If state is None, the state is directly loaded
+            into the module.
+        `name`: attributed based on name at instance creation
+            (also used as a section key in the config file)
+        `states (list)`: the list of states available in the config file
+        `owner (string)`: a module can be owned (reserved) by a user or another
+            module. The module is free if and only if owner is None
+        `pyrpl` (:obj:`Pyrpl`): recursively looks through parent modules until it
+            reaches the Pyrpl instance
 
+    Class attributes to be implemented in derived class:
 
-     Public attributes:
-     ------------------
-     - name: attributed based on name at instance creation
-     (also used as a section key in the config file)
-     - states: the list of states available in the config file
-     - owner: (string) a module can be owned (reserved) by a user or another
-     module. The module is free if and only if owner is None
-     - pyrpl: recursively looks through parent modules until it reaches the
-     pyrpl instance
+    - all individual attributes (instances of BaseAttribute)
+    - _setup_attributes: attribute names that are touched by setup(**kwds)/
+      saved/restored upon module creation
+    - _gui_attributes: attribute names to be displayed by the widget
+    - _callback_attributes: attribute_names that triggers a callback when
+      their value is changed in the base class, _callback just calls setup()
+    - _widget_class: class of the widget to use to represent the module in
+      the gui(a child of ModuleWidget)
 
-    class attributes to be implemented in derived class:
-    ----------------------------------------------------
-     - individual attributes (instances of BaseAttribute)
-     - _setup_attributes: attribute names that are touched by setup(**kwds)/
-     saved/restored upon module creation
-     - _gui_attributes: attribute names to be displayed by the widget
-     - _callback_attributes: attribute_names that triggers a callback when
-     their value is changed in the base class, _callback just calls setup()
-     - _widget_class: class of the widget to use to represent the module in
-     the gui(a child of ModuleWidget)
+    Methods to implement in derived class:
 
-    methods to implement in derived class:
-    --------------------------------------
-     - _setup(): sets the module ready for acquisition/output with the
-     current attribute's values. The metaclass of the module autogenerates a
-     function like this:
-        def setup(self, **kwds):
-            *** docstring of function _setup ***
-            *** for attribute in self.setup_attributes:
-            print-attribute-docstring-here ****
+    - _setup(): sets the module ready for acquisition/output with the
+      current attribute's values. The metaclass of the module autogenerates a
+      function like this::
 
-            self.set_setup_attributes(kwds)
-            return self._setup()
-     - _ownership_changed(old, new): this function is called when the module
-     owner changes it can be used to stop the acquisition for instance.
+          def setup(self, **kwds):
+              \"\"\"
+              _ docstring is the result of the following pseudocode: _
+              print(DOCSTRING_OF_FUNCTION("_setup"))
+              for attribute in self.setup_attributes:
+                  print(DOCSTRING_OF_ATTRIBUTE(attribute))
+              \"\"\"
+              self.set_setup_attributes(kwds)
+              return self._setup()
+
+    - _ownership_changed(old, new): this function is called when the module
+      owner changes it can be used to stop the acquisition for instance.
     """
 
     # Change this to provide a custom graphical class
@@ -340,6 +350,7 @@ class Module(with_metaclass(ModuleMetaClass, object)):
         # __autosave_active, but this gets automatically name mangled:
         # see http://stackoverflow.com/questions/1301346/what-is-the-meaning-of-a-single-and-a-double-underscore-before-an-object-name
         self._logger = logging.getLogger(name=__name__)
+        self._logger.addFilter(DuplicateFilter())
         # create the signal launcher object from its class
         self._signal_launcher = self._signal_launcher(self)
         self.parent = parent
@@ -406,8 +417,13 @@ class Module(with_metaclass(ModuleMetaClass, object)):
 
     def get_setup_attributes(self):
         """
-        :return: a dict with the current values of the setup attributes.
-        Recursively calls get_setup_attributes for sub_modules.
+        Returns a dict with the current values of the setup attributes.
+
+        Recursively calls get_setup_attributes for sub_modules and assembles
+        a hierarchical dictionary.
+
+        Returns:
+            dict: contains setup_attributes and their current values.
         """
         self._logger.warning("get_setup_attributes is deprecated. Use property setup_attributes instead. ")
         return self.setup_attributes
@@ -663,10 +679,11 @@ class Module(with_metaclass(ModuleMetaClass, object)):
 
 class HardwareModule(Module):
     """
-    Module that directly maps a FPGA module. In addition to BaseModule's r
-    equirements, HardwareModule classes have to possess the following class
-    attributes
-      - addr_base: the base address of the module, such as 0x40300000
+    Module that directly maps a FPGA module. In addition to BaseModule's
+    requirements, HardwareModule classes must have the following class
+    attributes:
+
+    - addr_base (int): the base address of the module, such as 0x40300000
     """
 
     parent = None  # parent will be redpitaya instance

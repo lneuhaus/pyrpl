@@ -1,40 +1,47 @@
 """
-Everything that involves asynchronicity in acquisition instruments such as
-getting curves, ot continuously averaging curves is confined in this file.
+Everything involving asynchronicity in acquisition instruments is in this file.
+
+In particular, this includes getting curves and continuously averaging curves.
 
 Using the coroutine syntax introduced in python 3.4+ would make the code
 more elegant, but it would not be compatible with python 2.7. Hence we have
 chosen to implement all asynchronous methods such that a promise is returned (a
 Future-object in python). The promise implements the following methods:
-   - await_result(): returns the acquisition result once it is ready.
-   - add_done_callback(func): the function func(value) is used as
-   "done-callback)
+
+- await_result(): returns the acquisition result once it is ready.
+- add_done_callback(func): the function func(value) is used as "done-callback)
 
 All asynchronous methods also have a blocking equivalent that directly
 returns the result once it is ready:
-     curve_async  <---> curve
-     single_async <---> single
+
+- curve_async  <---> curve
+- single_async <---> single
 
 Finally, this implmentation using standard python Futures makes it
 possible to use transparently pyrpl asynchronous methods inside python 3.x
 coroutines.
-example:
---------
 
-from asyncio import ensure_future, event_loop
+Example:
 
-async def my_acquisition_routine(n):
-    for i in range(n):
-        print("acquiring scope")
-        fut = ensure_future(p.rp.scope.run_single())
-        print("acquiring na")
-        data2 = await p.networkanalyzer.run_single()
-        # both acquisitions are carried out simultaneously
-        data1 = await fut
-        print("loop %i"%i, data1, data2)
+    This example shows a typical acquisition use case where a sequence of
+    n aquisitions of simultaneous oscilloscope and network analyzer traces
+    are launched
+    ::
 
-ensure_future(my_acquisition_coroutine(10))
-eventloop.run_until_complete()
+        from asyncio import ensure_future, event_loop
+
+        async def my_acquisition_routine(n):
+            for i in range(n):
+                print("acquiring scope")
+                fut = ensure_future(p.rp.scope.run_single())
+                print("acquiring na")
+                data2 = await p.networkanalyzer.run_single()
+                # both acquisitions are carried out simultaneously
+                data1 = await fut
+                print("loop %i"%i, data1, data2)
+
+        ensure_future(my_acquisition_coroutine(10))
+        eventloop.run_until_complete()
 """
 from copy import copy
 from .module_attributes import *
@@ -56,11 +63,11 @@ class CurveFuture(PyrplFuture):
     That's the purpose of this future object.
 
     After its creation, it will perform the following actions:
-     1. stay inactive for a time given by instrument._remaining_time()
-     2. after that, it will check every min_refresh_delay if a new curve is
-     ready with instrument._data_ready()
-     3. when data is ready, its result will be set with the instrument data,
-     as returned by instrument._get_data()
+
+        1. stay inactive for a time given by instrument._remaining_time()
+        2. after that, it will check every min_refresh_delay if a new curve is ready with instrument._data_ready()
+        3. when data is ready, its result will be set with the instrument data, as returned by instrument._get_data()
+
     """
 
     def __init__(self, module, min_delay_ms=20):
@@ -100,7 +107,7 @@ class CurveFuture(PyrplFuture):
             self._timer.setInterval(self.min_delay_ms)
             self._timer.start()
 
-    def set_exception(self, exception):
+    def set_exception(self, exception):  # pragma: no cover
         self._timer.stop()
         super(CurveFuture, self).set_exception(exception)
 
@@ -120,15 +127,13 @@ class RunFuture(PyrplFuture):
     start(): (re-)starts the acquisition (needs to be called at the beginning)
 
     The format for curves are:
-       scope:
-       ------
-         data_x  : self.times
-         data_avg: np.array((ch1, ch2))
 
-       specan or na:
-       -------------
-         data_x  : frequencies
-         data_avg: np.array(y_complex)
+    - Scope:
+        - data_x  : self.times
+        - data_avg: np.array((ch1, ch2))
+    - Specan or NA:
+        - data_x  : frequencies
+        - data_avg: np.array(y_complex)
     """
 
     def __init__(self, module, min_delay_ms):
@@ -209,21 +214,24 @@ class RunFuture(PyrplFuture):
 
 
 class RunningStateProperty(SelectProperty):
-    """
-    The state can be either:
-      - running_single: taking a single acquisition (avg averages).
-      averaging is automatically restarted.
-      - running_continuous: taking a continuous acquisition
-      - paused: acquisition interrupted, but no need to restart averaging
-      at next call of running_continous
-      - stopped: acquisition interrupted, averaging will restart at next
-      call of running_continuous.
-    """
+    def __init__(self, options=["running_single", "running_continuous", "paused", "stopped"], **kwargs):
+        """
+        A property to indicate whether the instrument is currently running or not.
+
+        Changing the running_state performs the necessary actions to enable the
+        selected state. The state can be one of the following:
+
+        - 'running_single': takes a single acquisition (trace_average averages). Acquisitions are automatically restarted until the desired number of averages is acquired.
+        - 'running_continuous': continuously takes a acquisitions, eternally averages and restarts automatically.
+        - 'paused': acquisition interrupted, but no need to restart averaging at next call of running_continous.
+        - 'stopped': acquisition interrupted, averaging will restart at next call of running_continuous.
+        """
+        super(RunningStateProperty, self).__init__(options=options, **kwargs)
+
     #  Changing running_state is handled here instead of inside _setup()
     # (with a call_setup=True option) because the precise actions to be
     # taken depend on the previous state of running_state. Such a behavior
     # would not be straightforward to implement in _setup()
-
     def set_value(self, obj, val):
         """
         This is the master property: changing this value triggers all the logic
@@ -271,6 +279,7 @@ class SignalLauncherAcquisitionModule(SignalLauncher):
     # Following signal only implemented in spec an
     unit_changed = QtCore.Signal()
 
+
 class AcquisitionModule(Module):
     """
     The asynchronous mode is supported by a sub-object "run"
@@ -282,32 +291,27 @@ class AcquisitionModule(Module):
 
     The full API of the "run" object is the following.
 
-    public methods (All methods return immediately)
-    -----------------------------------------------
-     - single(): performs an asynchronous acquisition of trace_average curves.
-     The function returns a promise of the result:
-     an object with a ready() function, and a get() function that
-     blocks until data is ready.
-     - continuous(): continuously acquires curves, and performs a
-     moving average over the trace_average last ones.
-     - pause(): stops the current acquisition without restarting the
-     averaging
-     - stop(): stops the current acquisition and restarts the averaging.
-     - save_curve(): saves the currently averaged curve (or curves for scope)
-     - curve(): the currently averaged curve
+    Methods:
+        *(All methods return immediately)*
+        single(): performs an asynchronous acquisition of trace_average curves.
+            The function returns a promise of the result:
+            an object with a ready() function, and a get() function that
+            blocks until data is ready.
+        continuous(): continuously acquires curves, and performs a
+            moving average over the trace_average last ones.
+        pause(): stops the current acquisition without restarting the
+            averaging
+        stop(): stops the current acquisition and restarts the averaging.
+        save_curve(): saves the currently averaged curve (or curves for scope)
+        curve(): the currently averaged curve
 
-    Public attributes:
-    ------------------
-     - running_state: either 'running_continuous', 'running_single',
-     'paused', 'stopped'. Changing the flag actually performs the necessary
-     actions
-     - curve_name: name of the curve to create upon saving
-     - trace_average: number of averages in single (not to confuse with
-     averaging per point)
-     - data_avg: array containing the current averaged curve
-     - current_avg: current number of averages
+    Attributes:
+        curve_name (str): name of the curve to create upon saving
+        trace_average (int): number of averages in single (not to confuse with
+            averaging per point)
+        data_avg (array of numbers): array containing the current averaged curve
+        current_avg (int): current number of averages
     """
-
     # The averaged data are stored in a RunFuture object _run_future
     #
     # _setup() recreates from scratch _run_future by calling _new_run_future()
@@ -344,20 +348,8 @@ class AcquisitionModule(Module):
 
     running_state = RunningStateProperty(
         default='stopped',
-        options=["running_single",
-                 "running_continuous",
-                 "paused",
-                 "stopped"],
-        doc="""
-    The state can be either:
-      - running_single: taking a single acquisition (trace_average averages).
-      averaging is automatically restarted.
-      - running_continuous: taking a continuous acquisition
-      - paused: acquisition interrupted, but no need to restart averaging
-      at next call of running_continous
-      - stopped: acquisition interrupted, averaging will restart at next
-      call of running_continuous.
-    """)
+        doc="Indicates whether the instrument is running acquisitions or not. "
+            "See :class:`RunningStateProperty` for available options. ")
 
     trace_average = IntProperty(doc="number of curves to average in single mode. In "
                            "continuous mode, a moving window average is "
@@ -410,15 +402,13 @@ class AcquisitionModule(Module):
 
     def curve_async(self):
         """
-        - Launches the acquisition for one curve with the current parameters.
+        Launches the acquisition for one curve with the current parameters.
+
         - If running_state is not "stopped", stops the current acquisition.
         - If rolling_mode is True, raises an exception.
         - Immediately returns a future object representing the curve.
-        - The curve can be retrieved by calling result(timeout) on the
-        future object.
-        - The future is cancelled if the instrument's state is changed
-        before the end of the acquisition, or another call to curve_async()
-        or curve() is made on the same instrument.
+        - The curve can be retrieved by calling result(timeout) on the future object.
+        - The future is cancelled if the instrument's state is changed before the end of the acquisition, or another call to curve_async() or curve() is made on the same instrument.
         """
         if self.running_state is not "stopped":
             self.stop()
@@ -427,22 +417,20 @@ class AcquisitionModule(Module):
     def curve(self, timeout=None):
         """
         Same as curve_async, except:
-        1. the function will not return until the curve is ready or tumeout
-        occurs.
-        2. the function directly returns an array with the curve instead of
-        a future object
+
+        - the function will not return until the curve is ready or timeout occurs.
+        - the function directly returns an array with the curve instead of a future object
         """
         return self.curve_async().await_result(timeout)
 
     def single_async(self):
         """
-        - Performs an asynchronous acquisition of trace_average curves.
+        Performs an asynchronous acquisition of trace_average curves.
+
         - If running_state is not stop, stops the current acquisition.
         - Immediately returns a future object representing the curve.
-        - The curve can be retrieved by calling result(timeout) on the
-        future object.
-        - The future is cancelled if the instrument's state is changed
-        before the end of the acquisition.
+        - The curve can be retrieved by calling result(timeout) on the future object.
+        - The future is cancelled if the instrument's state is changed before the end of the acquisition.
         """
         self.running_state = 'running_single'
         return self._run_future
@@ -450,10 +438,8 @@ class AcquisitionModule(Module):
     def single(self, timeout=None):
         """
         Same as single_async, except:
-        1. the function will not return until the averaged curve is ready or
-        timeout occurs.
-        2. the function directly returns an array with the curve instead of
-        a future object.
+            - the function will not return until the averaged curve is ready or timeout occurs.
+            - the function directly returns an array with the curve instead of a future object.
         """
         return self.single_async().await_result(timeout)
 
@@ -515,13 +501,13 @@ class AcquisitionModule(Module):
         this is the minimum time to wait in the "best case scenario" where
         the acquisition would have started immediately after setup().
         """
-        raise NotImplementedError("To implement in derived class")
+        raise NotImplementedError("To implement in derived class")  # pragma: no cover
 
     def _data_ready(self):
         """
         :return: True or False
         """
-        raise NotImplementedError('To implement in derived class')
+        raise NotImplementedError('To implement in derived class')  # pragma: no cover
 
     def _get_curve(self):
         """
@@ -529,7 +515,7 @@ class AcquisitionModule(Module):
           a 1D array for single channel instruments
           a 2*n array for the scope
         """
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
     @property
     def data_x(self):
@@ -537,7 +523,7 @@ class AcquisitionModule(Module):
         x-axis of the curves to plot.
         :return:
         """
-        raise NotImplementedError("To implement in derived class")
+        raise NotImplementedError("To implement in derived class")  # pragma: no cover
 
     def _start_acquisition(self):
         """
@@ -547,10 +533,10 @@ class AcquisitionModule(Module):
         the _curve_future()
         Only non-blocking operations are allowed.
         """
-        pass
+        pass  # pragma: no cover
 
     def _free_up_resources(self):
-        pass
+        pass # pragma: no cover
 
     # Shortcut to the RunFuture data (for plotting):
     # ----------------------------------------------
