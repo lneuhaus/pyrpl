@@ -18,7 +18,7 @@
 
 from . import redpitaya_client
 from . import hardware_modules as rp
-from .sshshell import SSHshell
+from .sshshell import SshShell
 from .pyrpl_utils import get_unique_name_list_from_class_list, update_with_typeconversion
 from .memory import MemoryTree
 from .errors import ExpectedPyrplError
@@ -220,12 +220,12 @@ class RedPitaya(object):
         else:  # normal mode - establish ssh connection and
             try:
                 # start ssh connection
-                self.ssh = SSHshell(hostname=self.parameters['hostname'],
-                                sshport=self.parameters['sshport'],
-                                user=self.parameters['user'],
-                                password=self.parameters['password'],
-                                delay=self.parameters['delay'],
-                                timeout=self.parameters['timeout'])
+                self.ssh = SshShell(hostname=self.parameters['hostname'],
+                                    sshport=self.parameters['sshport'],
+                                    user=self.parameters['user'],
+                                    password=self.parameters['password'],
+                                    delay=self.parameters['delay'],
+                                    timeout=self.parameters['timeout'])
                 # test ssh connection for exceptions
                 self.ssh.ask()
             except BaseException as e:  # connection problem

@@ -14,6 +14,7 @@ except:
     def sine(frequency, duration):
         print("Called sine(frequency=%f, duration=%f)" % (frequency, duration))
 
+
 class TestNA(TestPyrpl):
     def setup(self):
         self.na = self.pyrpl.networkanalyzer

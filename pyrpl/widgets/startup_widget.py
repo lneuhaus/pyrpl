@@ -2,7 +2,7 @@ from qtpy import QtWidgets, QtGui, QtCore
 import socket
 import logging
 
-from ..sshshell import SSHshell
+from ..sshshell import SshShell
 from ..async_utils import APP
 
 
@@ -224,7 +224,7 @@ class HostnameSelectorWidget(QtWidgets.QDialog):
                 self._logger.debug("%s:%d is open", ip, port)
                 try:
                     # attempt to connect with username and password
-                    ssh = SSHshell(hostname=ip,
+                    ssh = SshShell(hostname=ip,
                                    user=user,
                                    password=password,
                                    timeout=self._CONNECT_TIMEOUT)  # longer timeout, RP is slow..
