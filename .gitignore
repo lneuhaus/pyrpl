@@ -94,6 +94,7 @@ target/
 
 #notebooks
 !docs/source/*
+!docs/source/developer_guide/dist
 
 *.pydevproject
 *.project
