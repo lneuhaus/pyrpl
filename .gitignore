@@ -93,7 +93,7 @@ target/
 
 
 #notebooks
-doc/my_notebooks/
+!docs/source/*
 
 *.pydevproject
 *.project
@@ -108,7 +108,6 @@ pyrpl/config/*.bak
 pyrpl/config/user_config/*.yml
 pyrpl/config/user_config/*.bak
 pyrpl/config/user_config
-
 
 #test files made by Xueshi
 test_import.py
