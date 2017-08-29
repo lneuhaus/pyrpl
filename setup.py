@@ -51,9 +51,11 @@ requirements = ['scp',
 if sys.version_info >= (3,4):  # python version dependencies
     requirements += ['quamash']
 else:  # python 2.7
-    requirements += ['futures']
+    requirements += ['futures', 'mock']  # mock is now a full dependency
 if os.environ.get('READTHEDOCS') == 'True':
-    requirements += ['mock']  # mock is needed on readthedocs.io to mock PyQt5
+    requirements += ['pandoc', 'sphinx_bootstrap_theme']  # mock is needed on readthedocs.io to mock PyQt5
+if os.environ.get('TRAVIS') == 'true':
+    requirements += ['pandoc']
 
 # cannot install pyQt4 with pip:
 # http://stackoverflow.com/questions/4628519/is-it-possible-to-require-pyqt-from-setuptools-setup-py

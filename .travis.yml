@@ -71,13 +71,13 @@ after_script:
 
 # automatic release when a new tag is created needs a few preliminary steps...
 # create a Readme.rst for PyPI
-# make an executable for linux and upload to sourceforge
+# make an executable for linux and upload to sourceforge in python 3.4
 before_deploy:
+  - source activate test-environment
+  - conda install pandoc
+  - pandoc --from=markdown --to=rst --output=README.rst README.md
   - if [[ "$TRAVIS_PYTHON_VERSION" == "3.4" ]]; then
-    source activate test-environment;
-    conda install pandoc;
     pip install pyinstaller;
-    pandoc --from=markdown --to=rst --output=README.rst README.md;
     pyinstaller pyrpl.spec;
     mv dist/pyrpl ./pyrpl-linux;
     python .deploy_to_sourceforge.py pyrpl-linux;
