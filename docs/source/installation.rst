@@ -1,3 +1,6 @@
+Installation
+*************
+
 Preparing the hardware
 =========================
 
