@@ -18,7 +18,7 @@ What is PyRPL?
    * and much more.
 
 
-.. admonition:: PyRPL currently runs exclusively on the `Red Pitaya.
+.. admonition:: PyRPL currently runs exclusively on the Red Pitaya.
 
    The Red Pitaya (a.k.a. STEM Lab) (http://www.redpitaya.com, `see full documentation <http://redpitaya.readthedocs.io/en/latest/>`_) is an affordable (ca. 260 Euros) FPGA board with fast (125 MHz) analog inputs and outputs.
 
@@ -33,15 +33,19 @@ What is PyRPL?
    See :ref:`high_level_example` or :ref:`low_level_example`.
 
 
+.. admonition:: PyRPL :ref:`binary executables for windows and linux <installing_pyrpl>`
+
+   can be easily :ref:`downloaded <installing_pyrpl>` and run without any installation work.
+
+
 .. admonition:: PyRPL's code is entirely public `on github <https://www.github.com/lneuhaus/pyrpl>`_ and may be customized,
 
    including the Verilog source code for the FPGA which is based on the official RedPitaya software version 0.95.
 
 
-.. admonition:: PyRPL :ref:`binary executables for windows and linux <installing_pyrpl>`
+.. admonition:: PyRPL is free software and comes with the `GNU General Public License v3.0 <> _.
 
-   can be easily :ref:`downloaded <installing_pyrpl>` and run without any installation work.
-
+    Read the `license <https://github.com/lneuhaus/pyrpl/blob/master/LICENSE>`_!
 
 
 .. _manual:
