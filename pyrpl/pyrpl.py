@@ -279,6 +279,7 @@ class Pyrpl(object):
         self.c.redpitaya._update(kwargs)
         self.name = pyrplbranch.name
         self.rp = RedPitaya(config=self.c)
+        self.redpitaya = self.rp  # alias
         self.rp.parent=self
         self.widgets = [] # placeholder for widgets
         # create software modules...

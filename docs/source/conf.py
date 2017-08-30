@@ -166,8 +166,8 @@ html_theme_options = {
         ("Home", "index"),
         ("Gallery", "gallery/index"),
         ("Installation", "installation"),
-        ("Manual", "user_guide/basics/index"),
-        ("API", "user_guide/tutorial/index"),
+        ("Manual", "manual"),
+        ("API", "api"),
         ("Developers", "developer_guide/index"),
     ],
 
