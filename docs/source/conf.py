@@ -64,7 +64,6 @@ exclude_patterns = ["*.test.rst",]
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
-    ''
     'sphinx.ext.napoleon',  # supports google- or numpy-style dosctrings
     'sphinx.ext.imgmath',  # supports things like :math:`a^2 + b^2 = c^2`
     'sphinx.ext.todo',
@@ -192,7 +191,7 @@ html_theme_options = {
 
     # HTML navbar class (Default: "navbar") to attach to <div> element.
     # For black navbar, do "navbar navbar-inverse"
-    #'navbar_class': "navbar navbar-inverse",
+    'navbar_class': "navbar navbar-inverse",
 
     # Fix navigation bar to top of page?
     # Values: "true" (default) or "false"
