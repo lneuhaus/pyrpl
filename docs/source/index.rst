@@ -25,7 +25,7 @@ What is PyRPL?
 
 .. admonition:: PyRPL comes with a graphical user interface (GUI).
 
-   See our :ref:`screenshot gallery <gallery/index>`.
+   See our :doc:`screenshot gallery <gallery/index>`.
 
 
 .. admonition:: PyRPL has a convenient Python API.
@@ -43,7 +43,7 @@ What is PyRPL?
    including the Verilog source code for the FPGA which is based on the official RedPitaya software version 0.95.
 
 
-.. admonition:: PyRPL is free software and comes with the `GNU General Public License v3.0 <> _.
+.. admonition:: PyRPL is free software and comes with the `GNU General Public License v3.0 <https://www.gnu.org/licenses/gpl.html>_.
 
     Read the `license <https://github.com/lneuhaus/pyrpl/blob/master/LICENSE>`_!
 
@@ -55,7 +55,7 @@ Manual
 
 * :doc:`gallery/index`
 * :doc:`installation`
-* :doc:`manual`
+* :doc:`gui`
 * :doc:`api`
 * :doc:`developer_guide/index`
 * :doc:`contents`
@@ -63,7 +63,7 @@ Manual
 
 .. _high_level_example:
 
-Example (high-level API)
+High-level API example
 *************************
 
 .. code-block:: python
@@ -110,7 +110,7 @@ Example (high-level API)
 
 .. _low_level_example:
 
-Example (low-level API)
+Low-level API example
 ************************
 
 .. code-block:: python

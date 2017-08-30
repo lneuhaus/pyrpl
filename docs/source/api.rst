@@ -1,2 +1,2 @@
-APIs of PyRPL
+API manual
 **************
