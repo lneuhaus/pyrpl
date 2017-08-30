@@ -11,3 +11,4 @@ Developer's guide
    api/index
    dist/index
    sdcard
+   ../contents
