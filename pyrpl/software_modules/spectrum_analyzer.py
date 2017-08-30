@@ -203,7 +203,8 @@ class SpectrumAnalyzer(AcquisitionModule):
              for s_time in Scope.sampling_times]
     spans = spans(nyquist_margin)
 
-    windows = ['blackman', 'flattop', 'boxcar', 'hamming']  # more can be
+    windows = ['blackman', 'flattop', 'boxcar', 'hamming', 'gaussian']  # more
+    # can be
     # added here (see http://docs.scipy.org/doc/scipy/reference/generated
     # /scipy.signal.get_window.html#scipy.signal.get_window)
     @property
@@ -306,7 +307,12 @@ class SpectrumAnalyzer(AcquisitionModule):
         """
         :return: filter window
         """
-        window = sig.get_window(self.window, self.data_length, fftbins=False)
+        if self.window=='gaussian':
+            #  a tuple with the std is needed for Gaussian window
+            window_name = ('gaussian', self.data_length/10)
+        else:
+            window_name = self.window
+        window = sig.get_window(window_name, self.data_length, fftbins=False)
         # empirical value for scaling flattop to sqrt(W)/V
         window/=(np.sum(window)/2)
         return window

@@ -14,7 +14,9 @@ which consists in the following steps:
 
 1. Each segment is multiplied by a symmetric window function of the same
    size.
-2. the DFT of individual segments is performed.
+2. The DFT of individual segments is performed. The segment is padded 
+   before the FFT by a number of 0s to provide more points in the estimated 
+   spectrum than in the original time segment.
 3. The square modulus of the resulting periodograms are averaged to give
    the estimate of the spectrum, with the same size as the initial
    time-segments.
@@ -45,105 +47,111 @@ In the following, we discuss the normalization of windowing functions,
 and then, the basic principle of operation of the two modes "iq" and
 "baseband".
 
-Normalization of windowing functions
-------------------------------------
 
-The Fourier transform of the series a\_n is defined by
 
-A\_m = 1/N sum(a\_k exp(-2 i pi m k/N)) [1]
+Definitions
+-----------
 
-With this convention, we need to pay attention that the DC-component is
-for m=0, and the "negative frequencies" are actually located in the
-second half of the interval [N/2, N]. Indeed, we can show that because
-of the discretization, A\_{N - m} = A\_{-m}
++----------------------------------------+----------------------------------------------------+
+|name                                    |          definition                                |
++========================================+====================================================+
+|  Original time series                  | x[k], 0<=k<N                                       |
++----------------------------------------+----------------------------------------------------+ 
+| Fourier Transform                      | X[r] = sum_k x[k] exp(-2 i pi r k/N)               |
++----------------------------------------+----------------------------------------------------+
+|Inverse Fourier Transform (equivalently)|x[k] = 1/N sum_r X[r] exp(2 i pi k r/N)             |
++----------------------------------------+----------------------------------------------------+
+|Time window                             |          w[k]                                      |
++----------------------------------------+----------------------------------------------------+
+|Fourier transformed time window         |          W[r]                                      |
++----------------------------------------+----------------------------------------------------+
+|Singly averaged spectrum (in V_pk)      | Y[r]=sum_k x[k] w[k] exp(-2 i pi r k/N)            |
++----------------------------------------+----------------------------------------------------+
+|Singly averaged spectrum (in Vrms^2/Hz) | Z(r) = \|Y(r)\|^2/ (2 rbw)                         |
++----------------------------------------+----------------------------------------------------+
 
-We can also show that the Fourier transform of the product of time
-series a\_n and windowing function f\_n, is the convolution of their
-Fourier Transform:
+We can show that the Fourier transform of the product is the convolution of the Fourier 
+Transforms, such that:
 
-FT(a\_n f\_n)\_m = A\_m \* F\_m [2]
+Y[r] = 1/N sum_r' X[r'] W[r-r']     (1)
 
-Let's first consider the case of a pure sinusoid a\_n = cos(2 pi l n/N).
-The Fourier transform is A\_m = (delta(l-m) + delta(l+m))/2. Hence, the
-Fourier transform is given by
 
-FT(a\_n f\_n) = (F\_(N-l) + F(l))/2 [3]
+To make sure the windowing function is well normalized, and to define 
+the noise equivalent bandwidth of a given windowing function, 
+we will study the 2 limiting cases where the initial time series is either 
+a sinusoid or a gaussian distributed white noise.
 
-Moreover, a reasonable windowing function will only have non-zero
-Fourier components on the few bins around DC, such that if we measure a
-pure sinusoid with a frequency far from 0, there wont be any significant
-overlap between the two terms, and we will measure 2 distinct peaks in
-the positive and negative frequency regions, each of them with the shape
-of the Fourier transform of the windowing function.
+Sinusoidal input
+----------------
 
-Normalization for coherent signals
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+To simplify the calculations, we assume the period of the sinusoid is a multiple 
+of the sampling rate:
 
-If we want the maximum value of the peaks to correspond to the amplitude
-of the sine (that is to say, a correct normalization in terms of Vpk),
-we need to make sure that the peak value of F\_m is 2. Since the maximum
-of the windowing function is the DC-component F\_0, we need to take:
+x[k] = cos[2 pi m k/N]
 
-F\_0 = 2 [4]
+= 1/2 (exp[i 2 pi m k/N] + exp[-2 pi i (N - m) k/N])
 
-or equivalently
+We obtain the Fourier transform:
 
-1/N sum(f\_n) = 2 [5]
+X[r] = N/2 (delta[r-m] + delta[r-(N-m)]).
 
-To be complete, if the sinusoid has a frequency close to 0, the two
-terms in [3] take significant values for the same values of frequency,
-and they will interfere with each other (since they are complex
-numbers). A consequence of that is that the phase of the signal, which
-reflects into the complex arguments of F\_(N-l) and F(l) starts to play
-a significant role, and thus, the spectrum is not stationary anymore,
-but oscillates in time with the frequency of the signal. The
-oscillations are most visible on the DC bin, where they oscillate
-between 0 and F(0), with the dependence:
+We deduce using (1), that the estimated spectrum is:
 
-\|FT[a\_n f\_n]\|^2 = 4 sin^2(2 pi l/N) [6]
+Y[r] = 1/2 (W[r - m] + W[r - (N-m)])
 
-but the oscillation is also present, with a reduced contrast on the
-neighboring frequency bins. There is not much we can do about it, except
-maybe to correct to make sure the average value of the oscillations is 1
-(instead of 2 in formula [6], due to the fact that negative and positive
-frequency components both contribute to the averaged spectrum in this
-regime).
+With the discrete fourier transform convention used here, we need to pay attention that 
+the DC-component is for r=0, and the “negative frequencies” are actually located in the second 
+half of the interval [N/2, N]. If we take the single sided convention where the negative frequency 
+side is simply ignored, the correct normalization in terms of V_pk (for which the maximum of the 
+spectrum corresponds to the amplitude of the sinusoid) is the one for where max(W[r]) = 2.
 
-Normalization for noise spectral density:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Moreover, a reasonable windowing function will only have non-zero Fourier components on the few bins 
+around DC, such that if we measure a pure sinusoid with a frequency far from 0, there wont be any significant 
+overlap between the two terms, and we will measure 2 distinct peaks in the positive and negative 
+frequency regions, each of them with the shape of the Fourier transform of the windowing function. 
+Since the maximum of W[r] is located in r=0, we finally have:
 
-On the other hand, let's consider a white Gaussian noise with variance
-1. From Wiener Khintchine theorem, it should correspond to a flat
-spectrum of value 2 pi. From equation [2], since the variance of A\_m
-fulfills Wiener Khintchine theorem, we deduce that the windowing
-function should fulfill:
+sum_k w[k] = 2
 
-sum(F\_m^2) = 1 [7]
 
-Using Parseval's theorem, this is equivalent to
+White noise input
+-----------------
 
-sum(f\_n^2) = 1 [8]
+Once the normalization of the filter window has been imposed by the previous condition, 
+we need to define the bandwidth of the window such that noise measurements integrated 
+over frequency give the right variances.
 
-By comparing eq [8] and eq [5], we arrive at the interesting conclusion
-that the windowing function should be normalized with a linear summation
-for coherent signal measurements in Vpk^2 and with a quadratic summation
-for power spectral densities in Vpk^2/Hz. This is the time-domain
-counterpart of the fact that coherent signals are only sensitive to a
-single value of F\_m, while noise spectra are integrated over the whole
-spectrum of the filtering window (eq [4] and [7]).
+Let's take a white noise of variance 1. 
 
-In pyrpl, we actually decided to make sure both conditions are fulfilled
-simultaneously by defining the rbw of a given filtering window to be:
+<x[k] x[k']> = delta(k-k').
 
-rbw = sum(f\_n^2)/sum(f\_n) [9]
+We would like the total spectrum in units of Vrms^2/Hz, integrated from 0 to Nyquist frequency 
+to yield the same variance of 1. This is ensured by the Equivalent noise bandwidth of the filter window. 
+To convert from V_pk^2 to V_rms^2/Hz, the spectrum is divided by the residual bandwidth of the filter window.
 
-With this choice, the correct results are retrieved if we make all
-calculations in Vpk^2, and divide the results by the rbw to convert them
-in Vpk^2/Hz.
+Let's calculate:
 
-For this reason, the rbw is not exactly the width at 3 dB of the filter
-spectrum, but actually depends on the precise shape of the window over
-the whole frequency range via eq [9].
+sum_r <|Y[r]|^2> = (...) = N sum_k w[k]^2 <|x[k]|^2>
+
+If we remind that x[k] is a white noise following <|x[k]|^2> = 1, we get:
+
+sum_r <|Y[r]|^2> = N sum_k w[k]^2
+
+So, since we want:
+
+sum_r <|Z[r]|^2> df = 2, (indeed, we want to work with single-sided spectra, such that integrating over positive frequencies is enough)
+
+with df the frequency step in the FFT, we need to choose:
+
+rbw = N sum_k w[k]^2 df /4
+
+In order to use dimensionless parameters for the filter windows, we can introduce the equivalent noise bandwidth:
+
+ENBW = sum_k w[k]^2/(sum_k w[k])^2 = 1/4 sum_k w[k]^2
+
+Finally, we get the expression of the rbw:
+
+rbw = sample_rate ENBW
 
 IQ mode
 -------
