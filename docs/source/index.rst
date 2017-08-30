@@ -12,12 +12,12 @@ The software package PyRPL (Python RedPitaya Lockbox) is an implementation of ma
 Its user interface and all high-level functionality is written in python, but an essential part of the software is hidden in a custom FPGA design (based on the official RedPitaya software version 0.95).
 While most users probably never want to touch the FPGA design, the Verilog source code is provided together with this package and may be modified to customize the software to your needs.
 
-.. toctree::
-   :maxdepth: 2
+Old documentation sections (new ones are at the top bar)
+=========================================================
 
-   gallery/index
-   user_guide/index
-   reference_guide/index
-   developer_guide/index
-   indices_and_tables/index
-
+* :doc:`gallery/index`
+* :doc:`user_guide/index`
+* :doc:`reference_guide/index`
+* :doc:`developer_guide/index`
+* :doc:`indices_and_tables/index`
+* :doc:`contents`

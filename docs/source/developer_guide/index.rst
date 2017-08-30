@@ -10,3 +10,4 @@ Developer's guide
    codingworkflow
    api/index
    dist/index
+   sdcard

@@ -163,22 +163,26 @@ html_theme_options = {
     # Note the "1" or "True" value above as the third argument to indicate
     # an arbitrary url.
     'navbar_links': [
-        #("Examples", "examples"),
-        #("Link", "http://example.com", True),
+        ("Home", "index"),
+        ("Gallery", "gallery/index"),
+        ("Installation", "installation"),
+        ("Manual", "user_guide/basics/index"),
+        ("API", "user_guide/tutorial/index"),
+        ("Developers", "developer_guide/index"),
     ],
 
     # Render the next and previous page links in navbar. (Default: true)
-    'navbar_sidebarrel': True,
+    'navbar_sidebarrel': False,
 
     # Render the current pages TOC in the navbar. (Default: true)
-    'navbar_pagenav': True,
+    'navbar_pagenav': False,
 
     # Tab name for the current pages TOC. (Default: "Page")
     'navbar_pagenav_name': "Page sections",
 
     # Global TOC depth for "site" navbar tab. (Default: 1)
     # Switching to -1 shows all levels.
-    'globaltoc_depth': 3,
+    'globaltoc_depth': 2,
 
     # Include hidden TOCs in Site navbar?
     #
@@ -187,7 +191,7 @@ html_theme_options = {
     # will break.
     #
     # Values: "true" (default) or "false"
-    'globaltoc_includehidden': "true",
+    'globaltoc_includehidden': "false",
 
     # HTML navbar class (Default: "navbar") to attach to <div> element.
     # For black navbar, do "navbar navbar-inverse"
@@ -230,7 +234,7 @@ full_logo = True
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
 # pixels large.
-#html_favicon = None
+html_favicon = 'icon.ico'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
