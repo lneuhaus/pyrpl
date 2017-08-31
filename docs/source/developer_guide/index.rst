@@ -1,4 +1,4 @@
-Developer's guide
+Notes for developers
 ************************
 
 .. toctree::
