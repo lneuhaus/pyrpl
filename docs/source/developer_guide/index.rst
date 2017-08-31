@@ -11,4 +11,5 @@ Notes for developers
    api/index
    dist/index
    sdcard
-   ../contents
+
+* :doc:`../contents`
