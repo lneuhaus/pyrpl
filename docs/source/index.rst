@@ -61,53 +61,6 @@ Manual
 * :doc:`contents`
 
 
-.. _high_level_example:
-
-High-level API example
-*************************
-
-.. code-block:: python
-
-    # import pyrpl library
-    import pyrpl
-
-    # create a Pyrpl object and store the configuration in a file 'filter-cavity.yml'
-    p = pyrpl.Pyrpl(config='filter-cavity')
-
-    # ... connect hardware (a Fabry-Perot cavity in this example) and
-    #     configure its paramters with the PyRPL GUI that shows up
-
-    # sweep the cavity length
-    p.lockbox.sweep()
-
-    # calibrate the cavity parameters
-    p.lockbox.calibrate()
-
-    # lock to the resonance with a predefined sequence
-    p.lockbox.lock()
-
-    # launch two different measurements simultaneously
-    transfer_function = p.network_analyzer.single_async(
-            input='lockbox.reflection', output='out2',
-            start=1e3, stop=1e6, points=10000, rbw=1000)
-    spectrum = p.spectrum_analyzer.single_async(
-            input='in2', span=1e5, trace_averages=10)
-
-    # wait for measurements to finish
-    while not transfer_function.done() and not spectrum.done():
-        # check whether lock was lost
-        if not p.lockbox.is_locked():
-            # re-lock the cavity
-            p.lockbox.relock()
-            # re-start measurements
-            transfer_function = p.network_analyzer.single_async()
-            spectrum = p.spectrum_analyzer.single_async()
-
-    # display a measurement result in the curve browser
-    p.curve_viewer.curve = transfer_function.result()
-
-
-
 .. _low_level_example:
 
 Low-level API example
@@ -156,6 +109,52 @@ This example samples
     # take oscilloscope traces of the demodulated and pid signal
     data = r.scope.curve(input1='iq0', input2='pid0',
                          duration=1.0, trigger_source='immediately')
+
+
+.. _high_level_example:
+
+High-level API example
+*************************
+
+.. code-block:: python
+
+    # import pyrpl library
+    import pyrpl
+
+    # create a Pyrpl object and store the configuration in a file 'filter-cavity.yml'
+    p = pyrpl.Pyrpl(config='filter-cavity')
+
+    # ... connect hardware (a Fabry-Perot cavity in this example) and
+    #     configure its paramters with the PyRPL GUI that shows up
+
+    # sweep the cavity length
+    p.lockbox.sweep()
+
+    # calibrate the cavity parameters
+    p.lockbox.calibrate()
+
+    # lock to the resonance with a predefined sequence
+    p.lockbox.lock()
+
+    # launch two different measurements simultaneously
+    transfer_function = p.network_analyzer.single_async(
+            input='lockbox.reflection', output='out2',
+            start=1e3, stop=1e6, points=10000, rbw=1000)
+    spectrum = p.spectrum_analyzer.single_async(
+            input='in2', span=1e5, trace_averages=10)
+
+    # wait for measurements to finish
+    while not transfer_function.done() and not spectrum.done():
+        # check whether lock was lost
+        if not p.lockbox.is_locked():
+            # re-lock the cavity
+            p.lockbox.relock()
+            # re-start measurements
+            transfer_function = p.network_analyzer.single_async()
+            spectrum = p.spectrum_analyzer.single_async()
+
+    # display a measurement result in the curve browser
+    p.curve_viewer.curve = transfer_function.result()
 
 
 Old documentation sections (new ones in :ref:`manual`)
