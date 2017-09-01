@@ -1,8 +1,21 @@
 """
-ModuleWidgets's hierarchy is parallel to that of Modules.
-Each Module instance can have a widget created by calling create_widget.
-To use a different class of Widget than the preset (for instance subclass it), the attribute ModuleClass.WidgetClass
-can be changed before calling create_widget()
+The basic functionalities of the module widgets are defined in
+the base class ModuleWidget.
+
+A module widget is delimited by a dashed-line (a QGroupBox). The following
+menu is available on the top part of each ModuleWidget (right click on the
+item to access the submenu):
+ - Load: Loads the state of the module from a list of previously saved states
+ - Save: Saves the state with a given name
+ - Erase: Erases one of the previously saved state
+ - Edit: Opens a text window to edit the yml code of the required state
+ - Hide/Show: Hide or show the content of the module widget
+
+Inside the module widget, the different attribute values can be manipulated using the
+provided widgets. The modifications will take effect immediately and only affect the
+<current state> untill the current state is saved for latter use.
+
+At the next startup with the same config file, the <current state> of all modules is loaded.
 """
 from qtpy import QtCore, QtWidgets
 from collections import OrderedDict

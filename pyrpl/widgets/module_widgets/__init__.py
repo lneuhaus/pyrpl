@@ -1,5 +1,9 @@
 """
 This package defines all the widgets to control the different modules of pyrpl.
+Each Module instance can have a widget created by the function create_widget().
+All module widgets inherit from the base class ModuleWidget. The class
+member ModuleClass._widget_class specifies which ModuleWidget class should
+be used for the particular ModuleClass.
 """
 
 from .base_module_widget import ReducedModuleWidget, ModuleWidget

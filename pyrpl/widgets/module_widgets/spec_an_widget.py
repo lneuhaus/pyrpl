@@ -1,6 +1,26 @@
 """
-A widget for the spectrum analyzer
+The spectrum-analyzer has 2 different working modes:
+ - iq-mode (not available in the current version): the data are first
+   demodulated by an IQ-module around a center frequency and then Fourier
+   Transformed. This mode allows to study a narrow span around the center
+   frequency
+ - baseband: The Fourier transform is directly applied on the sampled data.
+   Two inputs can be used in baseband mode, such that the complex
+   cross-spectrum between the two inputs can be computed.
+
+The following attributes can be manipulated by the module widget:
+ - acbandwidth (IQ mode only): The cut-off frequency of the high-pass filter
+   for the iq-demodulator.
+ - span: frequency range of the analysis. In baseband mode, the span has to be
+   divided by a factor 2.
+ - rbw: residual bandwidth of the analysis (span and bandwidth are linked
+   and cannot be set independently)
+ - window: type of filtering window used (see scipy.signal.get_window for a
+   list of windows available)
+ - diplay_unit: the unit in which the spectrum is represented (internally,
+   all spectra are represented in V_pk^2)
 """
+
 import logging
 logger = logging.getLogger(name=__name__)
 from qtpy import QtCore, QtWidgets

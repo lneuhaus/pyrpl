@@ -1,3 +1,18 @@
+"""
+Acquisition modules are the modules used to acquire data from the redpitaya.
+ At the moment, they include the Scope, Network Analyzer and the Spectrum Analyzer.
+All the acquisition modules have in common a plot area where the data are displayed,
+and a control panel below the plot area.
+
+The different buttons in the control panel are:
+ - trace_average: chooses the number of successive traces to average together
+ - curve_name: name of the next saved curve
+ - run_single: a single acquisition of 'trace_average' traces is started
+ - run_continuous: a running average with an average decay constant of
+   'trace_average' is started
+ - restart_averaging: resets trace averages
+"""
+
 from . import ModuleWidget
 
 from qtpy import QtCore, QtWidgets

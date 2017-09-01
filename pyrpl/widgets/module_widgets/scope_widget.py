@@ -1,5 +1,21 @@
 """
-A widget for the scope module
+The scope widget allows to manipulate the following attributes:
+ - ch1_active/ch2_active: (boolean) hide/show the trace corresponding to
+   ch1/ch2
+ - input1/input2: Choose the input among a list of possible signals.
+   Internal signals can be referenced by their symbolic name e.g.
+   'lockbox.output.output1'.
+ - threshold: The voltage threshold for scope trigger
+ - hysteresis: Hysteresis for scope trigger
+ - duration: duration of the trace to acquire
+ - trigger_delay: delay beteween trigger event and origin of the trace
+ - trigger_source: channel to use for trigger
+ - average: downsampling is done either by averaging all samples together
+   or by taking a single sample in the interval
+ - trigger_mode:
+    + Normal is used for triggered acquisition
+    + Untriggered (rolling) is used for continuous acquisition (only available for durations>0.1 s)
+      Trace averaging is not applicable in Untriggered mode.
 """
 import pyqtgraph as pg
 from qtpy import QtCore, QtGui, QtWidgets

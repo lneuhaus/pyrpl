@@ -1,5 +1,31 @@
 """
-A widget fot the network analyzer
+The network analyzer can be used to measure the coherent response at
+the port "input" to a sinusoidal excitation applied in "output_direct" (to
+measure the transfer function from an internal signal to the input, see the
+note below).
+
+ - acbandwidth is the cutoff frequency of the high-pass filter used before
+   demodulation
+ - start_freq/stop_freq: are the starting point and ending point of the
+   frequency scan (not necessarily increasing). Enter twice the same value
+   to use the network analyzer in "0-span" mode
+ - rbw: width of the demodulation filter. The averaging time per point is
+   inversly proportional to this parameter
+ - avg_per_points: each point is averaged inside the FPGA before being
+   retrieved by the computer. when communication time between the
+   redpitaya and the computer is limiting the acquisition speed,
+   this parameter should be increased
+ - points: number of frequency points in the scan
+ - amplitude: amplitude of the excitation in V
+ - logscale: use a logarithmic scale for the frequency axis
+ - infer_open_loop_tf: applies the transformation z->z/(1+z) to correct for
+   closed feedback loop correction (not implemented at the moment)
+
+.. note:: Internally, the network analyzer is implemented by an IQ-module.
+          In order to plugg the network-analyzer's output on an internal
+          signal, unlock the corresponding IQ-module, turn the output
+          multiplexer of the IQ to "output_direct" , and then plugg the
+          input of the desired module to the IQ module.
 """
 
 from .base_module_widget import ModuleWidget
