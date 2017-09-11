@@ -55,6 +55,7 @@ Manual
 
 * :doc:`gallery/index`
 * :doc:`installation`
+* :doc:`basics`
 * :doc:`gui`
 * :doc:`api`
 * :doc:`developer_guide/index`
