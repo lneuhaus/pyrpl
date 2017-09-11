@@ -27,10 +27,10 @@ task is generally divided into two steps:
 
 The task is further divided into several subtasks:
 0a) Condition the input signals so that they are suitable for the next steps
- - offset removal
- - input filters
- - demodulation / lockin
- - inversion
+- offset removal
+- input filters
+- demodulation / lockin
+- inversion
 0b) Estimate the system state from the past and present history of input and
 output signals.
 0c) Build a filter for the output signals such that they can be conveniently

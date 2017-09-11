@@ -68,6 +68,8 @@ extensions = [
     'sphinx.ext.imgmath',  # supports things like :math:`a^2 + b^2 = c^2`
     'sphinx.ext.todo',
     'sphinx.ext.viewcode',
+    'sphinx.ext.inheritance_diagram',
+    'sphinx.ext.graphviz'
 ]
 
 # Include todo directives.

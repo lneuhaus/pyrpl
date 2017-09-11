@@ -94,6 +94,7 @@ The network analyzer widget is represented in the image below
 
 .. automodule:: pyrpl.widgets.module_widgets.na_widget
 
+.. _iq-widget-label:
 
 Iq Widget
 ---------

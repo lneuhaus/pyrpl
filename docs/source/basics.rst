@@ -1,7 +1,9 @@
 Basics of PyRPL
 *****************
 
-This section presents the basic architecture of PyRPL.
+This section presents the basic architecture of PyRPL. The main goal here is to quickly give a broad overview of PyRPL's internal logic
+without distracting the reader with too many technical details. For a more detailled description of the individual components described in this page, please, refer
+to the corresponding section :doc:`developer_guide/index`.
 
 Motivation
 ===========
@@ -74,8 +76,8 @@ At the moment, the FPGA code provided with PyRPL implements various Digital Sign
 |              |            | The slowly varying quadratures can also be used to     |
 |              |            | remodulate the 2 phase-shifted internal references,    |
 |              |            | turning the module                                     |
-|              |            | into a very narrow bandpass filter. See this page      |
-|              |            | :ref:`Iq Widget` for more details                      |
+|              |            | into a very narrow bandpass filter. See the page       |
+|              |            | :ref:`iq-widget-label` for more details                |
 +--------------+------------+--------------------------------------------------------+
 | PID          |  3         | Proportional/Integrator/Differential feedback modules  |
 |              |            | (In the current version, the differential gain is      |
@@ -90,17 +92,117 @@ At the moment, the FPGA code provided with PyRPL implements various Digital Sign
 +--------------+------------+--------------------------------------------------------+
 | Trigger      | 1          | A module to detect a transition on an analog signal.   |
 +--------------+------------+--------------------------------------------------------+
+| Sampler      | 1          | A module to sample each external or external signal    |
++--------------+------------+--------------------------------------------------------+
+| Pwm          | 4          | Modules to control the pulse width modulation pins of  |
+|              |            | the redpitaya                                          |
++--------------+------------+--------------------------------------------------------+
+| Hk           | 1          | House keeping module to monitor redpitaya constants and|
+|              |            | control the LED status                                 |
++--------------+------------+--------------------------------------------------------+
 
 Modules can be connected to each other arbitrarily. For this purpose, the modules contain a generic register **input_select** (except for ASG).
-Connecting the **output_signal** of submodule i to the **input_signal** of submodule j is done by setting the register **input_select[j]** to i;
+Connecting the **output_signal** of submodule **i** to the **input_signal** of submodule **j** is done by setting the register **input_select[j]** to **i**;
 
 Similarly, a second, possibly different output is allowed for each module (except for scope and trigger): **output_direct**.
 This output is added to the analog output 1 and/or 2 depending on the value of the register **output_select**.
 
-The routing of digital signals within the different FPGA modules is handled by a DSP multiplexer coded in VHDL in the file `red_pitaya_dsp.v <../../../pyrpl/fpga/rtl/red_pitaya_dsp.v>`_.
+The routing of digital signals within the different FPGA modules is handled by a DSP multiplexer coded in VHDL in the file `red_pitaya_dsp.v <https://github.com/lneuhaus/pyrpl/blob/master/pyrpl/fpga/rtl/red_pitaya_dsp.v>`_.
 An illustration of the DSP module's principle is provided below:
 
 .. image:: DSP.jpg
    :scale: 100 %
    :alt: DSP Signal routing in PyRPL 
    :align: center
+
+Monitor Server
+---------------
+
+The monitor server is a lightweight application written in C (the source code is in the file `monitor_server.c <https://github.com/lneuhaus/pyrpl/blob/master/pyrpl/monitor_server/monitor_server.c>`_) and running on the redpitaya OS to allow remote writing and monitoring of FPGA registers.
+
+The program is launched on the redpitaya with::
+
+   ./monitor-server PORT-NUMBER, where the default port number is 2222.  
+
+We allow for bidirectional data transfer. The client (python program) connects to the server, which in return accepts the connection. 
+The client sends 8 bytes of data:
+
+- Byte 1 is interpreted as a character: 'r' for read and 'w' for write, and 'c' for close. All other messages are ignored. 
+- Byte 2 is reserved. 
+- Bytes 3+4 are interpreted as unsigned int. This number n is the amount of 4-byte-units to be read or written. Maximum is 2^16. 
+- Bytes 5-8 are the start address to be written to. 
+
+If the command is read, the server will then send the requested 4*n bytes to the client. 
+If the command is write, the server will wait for 4*n bytes of data from the server and write them to the designated FPGA address space. 
+If the command is close, or if the connection is broken, the server program will terminate. 
+
+After this, the server will wait for the next command.
+
+
+Python package PyRPL
+-----------------------
+
+The python package PyRPL defines all the necessary tools to abstract the communication layer between the client-computer and the redpitaya.
+In this way, it is possible to manipulate FPGA registers transparently, as if they were simple attributes of local python objects. 
+We give here a brief overview of the main python objects in PyRPL.
+
+
+
+The Module class
++++++++++++++++++
+
+Each FPGA module has a python counterpart: an instance of the class HardwareModule. The inheritance diagram of all HardwareModules is represented below:
+
+.. inheritance-diagram:: pyrpl.hardware_modules.scope.Scope pyrpl.hardware_modules.iq.Iq pyrpl.hardware_modules.pid.Pid pyrpl.hardware_modules.iir.IIR pyrpl.hardware_modules.trig.Trig  pyrpl.hardware_modules.sampler.Sampler pyrpl.hardware_modules.pwm.Pwm 
+   :parts: 1
+
+For more complex functionalities, such as those involving the concurrent use of several FPGA modules, 
+purely software modules can be created. Those modules only inherit from the base class Module and they don't have an FPGA counterpart. Below, the inheritance diagram of all software modules:
+
+.. inheritance-diagram:: pyrpl.software_modules.Lockbox pyrpl.software_modules.NetworkAnalyzer pyrpl.software_modules.SpectrumAnalyzer pyrpl.software_modules.SoftwarePidLoop pyrpl.software_modules.CurveViewer pyrpl.software_modules.Loop pyrpl.software_modules.PyrplConfig pyrpl.software_modules.Iqs pyrpl.software_modules.Asgs pyrpl.software_modules.Scopes pyrpl.software_modules.Iirs pyrpl.software_modules.Trigs
+   :parts: 1
+
+In addition, to prevent a hardware resource from being used twice, HardwareModules should be accessed via the ModuleManagers which takes care of reserving them for a specific user or Module. For example:
+
+.. code-block:: python
+
+    # import pyrpl library
+    from pyrpl import Pyrpl
+
+    # create an interface to the Red Pitaya
+    pyrpl = Pyrpl()
+
+   # reserve the scope for user 'username'
+    with pyrpl.scopes.pop('username') as mod:
+         curve = mod.single() # acquire a curve
+   # The scope is freed for latter use at this point
+
+
+The Proprety descriptors
++++++++++++++++++++++++++
+
+HardwareModules are essentially a list of FPGA registers that can be accessed transparently such as on the following example:
+
+.. code-block:: python
+
+    # import pyrpl library
+    import pyrpl
+
+    # create an interface to the Red Pitaya
+    r = pyrpl.Pyrpl().redpitaya
+
+    print(r.hk.led) # print the current led pattern
+
+    r.hk.led = 0b10101010  # change led pattern
+
+Changing a register's value should trigger the following actions:
+
+- communicating the new value to the monitor_server for the FPGA update via a TCP-IP socket.
+- the new value should be saved on-disk to restore the system in the same state at the next startup.
+- in case a Graphical User Interface is running, the displayed value should be updated.
+
+To make sure all these actions are triggered by the simple python affectation, we use a `descriptor <https://docs.python.org/2/howto/descriptor.html>`_ pattern. The idea is to define 
+setter and getter functions inside an auxilary "descriptor" class. The diagram below shows the inheritance diagram for the most common attribute descriptor types.
+
+.. inheritance-diagram:: pyrpl.attributes.IntRegister pyrpl.attributes.SelectRegister pyrpl.attributes.FilterRegister pyrpl.attributes.BoolRegister pyrpl.attributes.FloatRegister 
+   :parts: 1

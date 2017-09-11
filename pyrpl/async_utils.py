@@ -45,7 +45,6 @@ class MainThreadTimer(QtCore.QTimer):
     initialized with an interval as only argument.
 
     Benchmark:
-    ----------
 
      1. keep starting the same timer over and over --> 5 microsecond/call::
 
