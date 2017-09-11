@@ -17,6 +17,13 @@ to control quantum optics experiments. Running open-source software on this hard
 - Functionality beyond analog electronics
 - Modify or customize instrument functionality
 
+However, learning all the subtelties of FPGA programming, compiling and debugging FPGA code can be extremely time consumming. 
+Hence, PyRPL aims at providing a large panel of functionalities on a precompiled FPGA bitfile. These FPGA modules are highly customizable by changing 
+register values without the need to recompile the FPGA code written in Hardware Description Language. High-level functionalities are implemented by a python 
+package running remotely and controlling the FPGA registers.
+
+
+
 Hardware Platform - Red Pitaya
 ===============================
 
@@ -62,11 +69,38 @@ At the moment, the FPGA code provided with PyRPL implements various Digital Sign
 |              |            | various waveforms, and even gaussian white noise       |
 +--------------+------------+--------------------------------------------------------+
 | IQ modulator/| 3          | An internal frequency reference is used to digitally   |
-|              |            | demodulate a given input signal. The frequency         | 
+| demodulator  |            | demodulate a given input signal. The frequency         | 
 |              |            | reference can be outputed to serve as a driving signal.| 
 |              |            | The slowly varying quadratures can also be used to     |
-|              |            | remodulate the internal reference, turning the module  |
-| demodulator  |            | into a very narrow bandpass filter. For more details,  |
-|              |            | see this page :ref:`Iq Widget` for more details        |
+|              |            | remodulate the 2 phase-shifted internal references,    |
+|              |            | turning the module                                     |
+|              |            | into a very narrow bandpass filter. See this page      |
+|              |            | :ref:`Iq Widget` for more details                      |
++--------------+------------+--------------------------------------------------------+
+| PID          |  3         | Proportional/Integrator/Differential feedback modules  |
+|              |            | (In the current version, the differential gain is      |
+|              |            | disabled). The gain of each parameter can be set       |
+|              |            | independently and each module is also equiped with a   |
+|              |            | 4th order linear filter (applied before the PID        |
+|              |            | correction)                                            |
++--------------+------------+--------------------------------------------------------+  
+| IIR          | 1          | An Infinite Impulse Response filter that can be used to|
+|              |            | realize real-time filters with comlex                  |
+|              |            | transfer-functions                                     |
++--------------+------------+--------------------------------------------------------+
+| Trigger      | 1          | A module to detect a transition on an analog signal.   |
 +--------------+------------+--------------------------------------------------------+
 
+Modules can be connected to each other arbitrarily. For this purpose, the modules contain a generic register **input_select** (except for ASG).
+Connecting the **output_signal** of submodule i to the **input_signal** of submodule j is done by setting the register **input_select[j]** to i;
+
+Similarly, a second, possibly different output is allowed for each module (except for scope and trigger): **output_direct**.
+This output is added to the analog output 1 and/or 2 depending on the value of the register **output_select**.
+
+The routing of digital signals within the different FPGA modules is handled by a DSP multiplexer coded in VHDL in the file `red_pitaya_dsp.v <../../../pyrpl/fpga/rtl/red_pitaya_dsp.v>`_.
+An illustration of the DSP module's principle is provided below:
+
+.. image:: DSP.jpg
+   :scale: 100 %
+   :alt: DSP Signal routing in PyRPL 
+   :align: center
