@@ -206,3 +206,113 @@ setter and getter functions inside an auxilary "descriptor" class. The diagram b
 
 .. inheritance-diagram:: pyrpl.attributes.IntRegister pyrpl.attributes.SelectRegister pyrpl.attributes.FilterRegister pyrpl.attributes.BoolRegister pyrpl.attributes.FloatRegister 
    :parts: 1
+
+As for the distinction between software modules and hardware modules above, the properties that inherit from BaseRegister are directly mapping an FPGA register. 
+On the other hand, software modules are using properties that are not in direct correspondance with an FPGA register. However, since they inherit from BaseAttribute, 
+the load/save and GUI update mechanism is still implemented.
+
+
+Module states
+++++++++++++++
+
+An important member of the Module class is the list **_setup_attributes**. This is a list of attribute names forming a subset of all module attributes. The value of the attributes in 
+**_setup_attributes** constitutes the current state of the module. When the PyRPL instance has been created with a configuration file, the current state of each module is kept in-sync 
+with the configuration file. This is particularly useful for GUI users who would like to keep the previous settings of all modules from one session to the next.
+
+.. warning:: The config file is *not* kept in-sync with modules that are reserved by a user or another module. It is the responsibility of the user-script or owner module to keep track of the slave module state. Moreover, the slave-module is restored to the last current state whenever it becomes free.
+
+The state of a module can be saved for latter use in a separate section of the config file. The following example shows the basic use of the load/save API:
+
+.. code-block:: python
+    
+    # import pyrpl library
+    from pyrpl import Pyrpl
+
+    # create an interface to the Red Pitaya
+    scope = Pyrpl('new_config_file').redpitaya.scope
+
+    scope.duration = 1. # set curve duration to 1s
+    scope.save_state('slow_scan') # save state with label 'slow_scan'
+    scope.duration = 0.01 # set curve duration to 0.01s
+    scope.save_state('fast_scan') # save state with label 'fast_scan'
+    scope.load_state('slow_scan') # load state 'slow_scan'
+    scope.single() # acquire curve with a 1s duration
+
+
+Automatic GUI creation
++++++++++++++++++++++++++
+
+Designing Graphical User Interface can be a tedious work. However, since module attributes are defined in a uniform fashion across the project, 
+most of the GUI creation can be handled automatically. Our GUI is based on the very popular and cross platform library `PyQt <https://riverbankcomputing.com/software/pyqt/intro>`_ 
+in conjonction with the `qtpy <https://pypi.python.org/pypi/QtPy>`_ abstraction layer to make PyRPL compatible with PyQt4, PyQt5 and PySide APIs.
+
+Each PyRPL module is represented by a widget in the Main PyRPL window. The list of attributes to display in the GUI is defined in the Module class by the class member **_gui_attributes**.
+When the module widget is created, sub-widgets are automatically created to manipulate the value of each attribute listed in **_gui_attributes**.
+
+
+Example: definition of the Pid class
+++++++++++++++++++++++++++++++++++++++
+
+The following is extracted from `pid.py <https://github.com/lneuhaus/pyrpl/blob/master/pyrpl/hardware_modules/pid.py>`_
+
+.. code-block:: python
+
+    class Pid(FilterModule):
+	# Type of widget to use for this Module class
+	# should derive from ModuleWidget
+        _widget_class = PidWidget
+
+	# QObject used to communicate with the widget
+        _signal_launcher = SignalLauncherPid
+        
+	# List of attributes forming the module state
+	_setup_attributes = ["input", # defined in base class FilterModule
+                             "output_direct", # defined in base class FilterModule
+                             "setpoint",
+                             "p",
+                             "i",
+                             #"d", # Not implemented in the current version of PyRPL
+                             "inputfilter",
+                             "max_voltage",
+                             "min_voltage"]
+
+	# list of attribtue to display in the GUI
+        _gui_attributes = _setup_attributes + ["ival"]
+    
+        # Actions to perform immediately after a state has been loaded
+        def _setup(self):
+            """
+            sets up the pid (just setting the attributes is OK).
+            """
+            pass
+       
+	# Below are the different attributes of a PID module (mostly registers)
+
+        ival = IValAttribute(min=-4, max=4, increment= 8. / 2**16, doc="Current "
+                "value of the integrator memory (i.e. pid output voltage offset)")
+    
+        setpoint = FloatRegister(0x104, bits=14, norm= 2 **13,
+                                 doc="pid setpoint [volts]")
+    
+        min_voltage = FloatRegister(0x124, bits=14, norm= 2 **13,
+                                    doc="minimum output signal [volts]")
+        max_voltage = FloatRegister(0x128, bits=14, norm= 2 **13,
+                                    doc="maximum output signal [volts]")
+    
+        p = GainRegister(0x108, bits=_GAINBITS, norm= 2 **_PSR,
+                          doc="pid proportional gain [1]")
+        i = GainRegister(0x10C, bits=_GAINBITS, norm= 2 **_ISR * 2.0 * np.pi *
+                                                      8e-9,
+                          doc="pid integral unity-gain frequency [Hz]")
+ 	(...)
+
+
+The generated widget is represented below:
+
+
+.. image:: pid_example.jpg
+   :scale: 100 %
+   :alt: The PID widget 
+   :align: center
+
+
