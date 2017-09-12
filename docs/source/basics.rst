@@ -8,7 +8,7 @@ to the corresponding section :doc:`developer_guide/index`.
 Motivation
 ===========
 
-Available hardware borads featuring FPGAs, CPUs and analog in- and outputs makes it possible to use digital signal processing (DSP) 
+Available hardware boards featuring FPGAs, CPUs and analog in- and outputs makes it possible to use digital signal processing (DSP) 
 to control quantum optics experiments. Running open-source software on this hardware has many advantages:
 
 - Lab space: small size, less different devices
@@ -120,7 +120,7 @@ Monitor Server
 
 The monitor server is a lightweight application written in C (the source code is in the file `monitor_server.c <https://github.com/lneuhaus/pyrpl/blob/master/pyrpl/monitor_server/monitor_server.c>`_) and running on the redpitaya OS to allow remote writing and monitoring of FPGA registers.
 
-The program is launched on the redpitaya with::
+The program is launched on the redpitaya with (automatically done at startup)::
 
    ./monitor-server PORT-NUMBER, where the default port number is 2222.  
 

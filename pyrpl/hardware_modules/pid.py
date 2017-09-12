@@ -44,6 +44,50 @@ class SignalLauncherPid(SignalLauncher):
 
 
 class Pid(FilterModule):
+    """
+    A proportional/Integrator/Differential filter.
+
+    The PID filter consists of a 4th order filter input stage, followed by a
+    proportional and integral stage in parallel.
+
+    .. warning:: at the moment, the differential stage of PIDs is disabled.
+
+    attributes:
+
+    - inputfilter
+    - setpoint
+    - p
+    - i
+    - ival
+
+    Example:
+
+    .. code-block :: python
+
+        from pyrpl import Pyrpl
+        pid = Pyrpl().rp.pid0
+
+        # set a second order low-pass filter with 100 Hz cutoff frequency
+        pid.inputfilter = [100, 100]
+        # set asg0 as input
+        pid.input = 'asg0'
+        # setpoint at -0.1
+        pid.setpoint = -0.1
+        # integral gain at 0.1
+        pid.i = 0.1
+        # proportional gain at 0.1
+        pid.p = 0.1
+
+    .. code-block :: python
+
+        >>> print(pid.ival)
+        0.43545
+
+    .. code-block :: python
+
+        >>> print(pid.ival)
+        0.76332
+    """
     _widget_class = PidWidget
     _signal_launcher = SignalLauncherPid
     _setup_attributes = ["input",

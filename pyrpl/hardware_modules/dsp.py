@@ -137,6 +137,36 @@ def dsp_addr_base(name):
 
 
 class DspModule(HardwareModule, SignalModule):
+    """
+    A module with an input and an auxiliary output_direct signal.
+
+    DSP modules can be chained one after the other by setting the input port
+    of module *B* to module 'A'. e.g:
+
+    .. code-block:: python
+
+        from pyrpl import Pyrpl
+
+        r = Pyrpl().redpitaya
+
+        # Route the signal from analog input 'in1' to pid0 then pid1, then
+        # monitor the result on the scope:
+        r.pid0.input = 'in1'
+        r.pid1.input = 'pid0'
+        r.scope.input1 = r.pid1  # modules can also be resolved by object
+
+    An auxiliary output can be used to output a signal to the DACs. All
+    signals routed to the same DAC are summed together.
+
+    .. code-block:: python
+
+        # output the signal to analog output 1:
+        r.pid1.output_direct = 'out1'
+
+        # the modulation output of iq0 will be summed with the previous signal
+        r.iq0.output_direct = 'out1'
+    """
+
     def __init__(self, rp, name):
         self._number = DSP_INPUTS[name]
         self.addr_base = dsp_addr_base(name)
