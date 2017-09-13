@@ -1,3 +1,101 @@
+"""
+We have already seen some use of the pid module above. There are three
+PID modules available: pid0 to pid2.
+
+.. code:: python
+
+    print r.pid0.help()
+
+Proportional and integral gain
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code:: python
+
+    #make shortcut
+    pid = r.pid0
+
+    #turn off by setting gains to zero
+    pid.p,pid.i = 0,0
+    print("P/I gain when turned off:", pid.i,pid.p)
+
+.. code:: python
+
+    # small nonzero numbers set gain to minimum value - avoids rounding off to zero gain
+    pid.p = 1e-100
+    pid.i = 1e-100
+    print("Minimum proportional gain: ", pid.p)
+    print("Minimum integral unity-gain frequency [Hz]: ", pid.i)
+
+.. code:: python
+
+    # saturation at maximum values
+    pid.p = 1e100
+    pid.i = 1e100
+    print("Maximum proportional gain: ", pid.p)
+    print("Maximum integral unity-gain frequency [Hz]: ", pid.i)
+
+Control with the integral value register
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code:: python
+
+    import numpy as np
+    #make shortcut
+    pid = r.pid0
+
+    # set input to asg1
+    pid.input = "asg1"
+
+    # set asg to constant 0.1 Volts
+    r.asg1.setup(waveform="dc", offset = 0.1)
+
+    # set scope ch1 to pid0
+    r.scope.input1 = 'pid0'
+
+    #turn off the gains for now
+    pid.p,pid.i = 0, 0
+
+    #set integral value to zero
+    pid.ival = 0
+
+    #prepare data recording
+    from time import time
+    times, ivals, outputs = [], [], []
+
+    # turn on integrator to whatever negative gain
+    pid.i = -10
+
+    # set integral value above the maximum positive voltage
+    pid.ival = 1.5
+
+    #take 1000 points - jitter of the ethernet delay will add a noise here but we dont care
+    for n in range(1000):
+        times.append(time())
+        ivals.append(pid.ival)
+        outputs.append(r.scope.voltage_in1)
+
+    #plot
+    import matplotlib.pyplot as plt
+    %matplotlib inline
+    times = np.array(times)-min(times)
+    plt.plot(times,ivals,times,outputs)
+    plt.xlabel("Time [s]")
+    plt.ylabel("Voltage")
+
+Again, what do we see? We set up the pid module with a constant
+(positive) input from the ASG. We then turned on the integrator (with
+negative gain), which will inevitably lead to a slow drift of the output
+towards negative voltages (blue trace). We had set the integral value
+above the positive saturation voltage, such that it takes longer until
+it reaches the negative saturation voltage. The output of the pid module
+is bound to saturate at +- 1 Volts, which is clearly visible in the
+green trace. The value of the integral is internally represented by a 32
+bit number, so it can practically take arbitrarily large values compared
+to the 14 bit output. You can set it within the range from +4 to -4V,
+for example if you want to exloit the delay, or even if you want to
+compensate it with proportional gain.
+"""
+
 import numpy as np
 from qtpy import QtCore
 from ..attributes import FloatProperty, BoolRegister, FloatRegister, GainRegister
@@ -52,14 +150,6 @@ class Pid(FilterModule):
 
     .. warning:: at the moment, the differential stage of PIDs is disabled.
 
-    attributes:
-
-    - inputfilter
-    - setpoint
-    - p
-    - i
-    - ival
-
     Example:
 
     .. code-block :: python
@@ -86,7 +176,7 @@ class Pid(FilterModule):
     .. code-block :: python
 
         >>> print(pid.ival)
-        0.76332
+        0.763324
     """
     _widget_class = PidWidget
     _signal_launcher = SignalLauncherPid

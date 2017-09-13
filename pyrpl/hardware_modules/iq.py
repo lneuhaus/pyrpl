@@ -44,6 +44,10 @@ class IqAcbandwidth(FilterProperty):
 
 
 class Iq(FilterModule):
+    """
+    A modulator/demodulator module.
+
+    """
     _widget_class = IqWidget
     _setup_attributes = ["input",
                          "acbandwidth",
