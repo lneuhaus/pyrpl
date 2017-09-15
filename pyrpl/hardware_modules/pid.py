@@ -94,6 +94,48 @@ bit number, so it can practically take arbitrarily large values compared
 to the 14 bit output. You can set it within the range from +4 to -4V,
 for example if you want to exloit the delay, or even if you want to
 compensate it with proportional gain.
+
+Input filters
+^^^^^^^^^^^^^
+
+The pid module has one more feature: A bank of 4 input filters in
+series. These filters can be either off (bandwidth=0), lowpass
+(bandwidth positive) or highpass (bandwidth negative). The way these
+filters were implemented demands that the filter bandwidths can only
+take values that scale as the powers of 2.
+
+.. code:: python
+
+    # off by default
+    r.pid0.inputfilter
+
+.. code:: python
+
+    # minimum cutoff frequency is 1.1 Hz, maximum 3.1 MHz (for now)
+    r.pid0.inputfilter = [1,1e10,-1,-1e10]
+    print(r.pid0.inputfilter)
+
+.. code:: python
+
+    # not setting a coefficient turns that filter off
+    r.pid0.inputfilter = [0,4,8]
+    print(r.pid0.inputfilter)
+
+.. code:: python
+
+    # setting without list also works
+    r.pid0.inputfilter = -2000
+    print(r.pid0.inputfilter)
+
+.. code:: python
+
+    # turn off again
+    r.pid0.inputfilter = []
+    print(r.pid0.inputfilter)
+
+You should now go back to the Scope and ASG example above and play
+around with the setting of these filters to convince yourself that they
+do what they are supposed to.
 """
 
 import numpy as np

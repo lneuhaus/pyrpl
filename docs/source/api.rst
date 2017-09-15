@@ -185,6 +185,16 @@ PID module
 
 .. automodule:: pyrpl.hardware_modules.pid
 
+IQ module
+~~~~~~~~~~
+
+.. automodule:: pyrpl.hardware_modules.iq
+
+IIR module
+~~~~~~~~~~
+
+.. automodule:: pyrpl.hardware_modules.iir
+
 THE END
 
 .. autoclass:: pyrpl.hardware_modules.dsp.DspModule

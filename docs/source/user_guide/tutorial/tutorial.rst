@@ -1,4 +1,4 @@
-
+﻿
 Introduction to pyrpl
 =====================
 
@@ -711,7 +711,7 @@ IQ module
 
 Demodulation of a signal means convolving it with a sine and cosine at
 the 'carrier frequency'. The two resulting signals are usually low-pass
-filtered and called 'quadrature I' and and 'quadrature Q'. Based on this
+filtered and called 'quadrature I' and 'quadrature Q'. Based on this
 simple idea, the IQ module of pyrpl can implement several
 functionalities, depending on the particular setting of the various
 registers. In most cases, the configuration can be completely carried
@@ -721,11 +721,11 @@ out through the setup function of the module.
 
 Lock-in detection / PDH / synchronous detection
 
-.. code:: ipython3
+.. code:: python
 
     #reload to make sure settings are default ones
-    from pyrpl import RedPitaya
-    r = RedPitaya(hostname="192.168.1.100")
+    from pyrpl import Pyrpl
+    r = Pyrpl(hostname="192.168.1.100").rp
     
     #shortcut
     iq = r.iq0
