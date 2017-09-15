@@ -58,9 +58,9 @@ internal filter signals limits its performance.
     matplotlib.rcParams['figure.figsize'] = (10, 6)
 
     #setup a complicated transfer function
-    zeros = [ -4e4j-300, +4e4j-300,-2e5j-1000, +2e5j-1000, -2e6j-3000, +2e6j-3000]
-    poles = [ -1e6, -5e4j-300, +5e4j-300, -1e5j-3000, +1e5j-3000, -1e6j-30000, +1e6j-30000]
-    designdata = iir.setup(zeros, poles, loops=None, plot=True)
+    zeros = [ 4e4j+300, +2e5j+1000, +2e6j+3000]
+    poles = [ 1e6, +5e4j+300, 1e5j+3000, 1e6j+30000]
+    iir.setup(zeros=zeros, poles=poles, loops=None, plot=True)
     print("Filter sampling frequency: ", 125./iir.loops,"MHz")
 
 If you try changing a few coefficients, you will see that your design
@@ -84,17 +84,22 @@ Let's check if the filter is really working as it is supposed:
     iir.input = na.iq
     na.setup(iq_name='iq1', start=1e4, stop=3e6, points = 301, rbw=100, avg=1,
              amplitude=0.1, input='iir', output_direct='off', logscale=True)
-    tf = p.networkanalayzer.curve()
+    tf = na.curve()
 
     # first thing to check if the filter is not ok
     print("IIR overflows after:", bool(iir.overflow))
+
+    # retrieve designed transfer function
+    designdata = iir.transfer_function(na.frequencies)
+
 
     #plot with design data
     %matplotlib inline
     import matplotlib
     matplotlib.rcParams['figure.figsize'] = (10, 6)
     from pyrpl.hardware_modules.iir.iir_theory import bodeplot
-    bodeplot(designdata +[(na.frequencies, tf, "measured system")], xlog=True)
+    bodeplot([(na.frequencies, designdata, "designed system"),
+    (na.frequencies, tf, "measured system")], xlog=True)
 
 As you can see, the filter has trouble to realize large dynamic ranges.
 With the current standard design software, it takes some 'practice' to
@@ -114,24 +119,30 @@ default value g=1.0) does here:
 .. code:: python
 
     #rescale the filter by 20 fold reduction of DC gain
-    designdata = iir.setup(zeros,poles,g=0.1,loops=None,plot=False);
+    iir.setup(zeros=zeros, poles=poles, g=0.1, loops=None, plot=False)
 
     # first thing to check if the filter is not ok
     print("IIR overflows before:", bool(iir.overflow))
 
     # measure tf of iir filter
     iir.input = na.iq
-    f, tf, ampl = r.iq1.na_trace(start=1e4, stop=3e6, points = 301, rbw=100, avg=1,
-                           amplitude=0.1, input='iir', output_direct='off', logscale=True)
+    tf = na.curve()
 
     # first thing to check if the filter is not ok
     print("IIR overflows after:", bool(iir.overflow))
 
+    # retrieve designed transfer function
+    designdata = iir.transfer_function(na.frequencies)
+
+
     #plot with design data
     %matplotlib inline
-    pylab.rcParams['figure.figsize'] = (10, 6)
+    import matplotlib
+    matplotlib.rcParams['figure.figsize'] = (10, 6)
     from pyrpl.hardware_modules.iir.iir_theory import bodeplot
-    bodeplot(designdata+[(f,tf,"measured system")],xlog=True)
+    bodeplot([(na.frequencies, designdata, "designed system"),
+    (na.frequencies, tf, "measured system")], xlog=True)
+
 
 You see that we have improved the second peak (and avoided internal
 overflows) at the cost of increased noise in other regions. Of course

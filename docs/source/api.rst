@@ -195,18 +195,41 @@ IIR module
 
 .. automodule:: pyrpl.hardware_modules.iir
 
-THE END
 
-.. autoclass:: pyrpl.hardware_modules.dsp.DspModule
+3 Pyrpl (or Software) modules
+==================================
 
-PID
-++++
+Software modules are modules that don't have an FPGA counterpart. They are directly accessible at the root pyrpl object
+(no need to go through the redpitaya object). We have already encountered a software module above. Remember how we accessed the 
+network analyzer module:
 
-.. autoclass:: pyrpl.hardware_modules.pid.Pid
-    :members:
+.. code:: python
+    
+     HOSTNAME = "192.168.1.100"
+     from pyrpl import Pyrpl
+     p = Pyrpl(hostname=HOSTNAME)
 
-IQ
-++++
+     # hardware modules are members of the redpitaya object
+     p.rp.iq0
 
-.. autoclass:: pyrpl.hardware_modules.iq.Iq
-    :members:
+     # software modules are members of the root pyrpl object
+     p.networkanalyzer
+
+Software modules usually perform higher-level tasks than hardware modules. Moreover, accessing a hardware module without
+care could be harmful to some acquisition already running on the redpitaya. For this reason, it is advisable to access hardware modules 
+via module managers only.
+
+Using Module Managers
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: pyrpl.software_modules.module_managers
+
+Spectrum Analyzer
+~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: pyrpl.software_modules.spectrum_analyzer
+
+Lockbox
+~~~~~~~~~
+
+Coming soon
