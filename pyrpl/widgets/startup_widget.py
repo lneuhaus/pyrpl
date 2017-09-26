@@ -209,7 +209,8 @@ class HostnameSelectorWidget(QtWidgets.QDialog):
         # ip addresses from a.b.c.0 to a.b.c.255
         end = ip.split('.')[-1]
         start = ip[:-len(end)]
-        ips = [start + str(i) for i in range(256)]
+        ips = ['192.168.1.100']  # direct connection ip, not found automatically
+        ips += [start + str(i) for i in range(256)]  # all local ips
         self.progressbar.setRange(0, len(ips))
         for i, ip in enumerate(ips):
             if not self.scanning:  # abort if ok was clicked prematurely
