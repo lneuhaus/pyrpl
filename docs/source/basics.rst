@@ -1,5 +1,5 @@
-Basics of PyRPL
-*****************
+Basics of the PyRPL Architecture
+**********************************
 
 This section presents the basic architecture of PyRPL. The main goal here is to quickly give a broad overview of PyRPL's internal logic
 without distracting the reader with too many technical details. For a more detailled description of the individual components described in this page, please, refer

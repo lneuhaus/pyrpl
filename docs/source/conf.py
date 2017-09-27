@@ -166,11 +166,12 @@ html_theme_options = {
     # an arbitrary url.
     'navbar_links': [
         ("Home", "index"),
-        ("Gallery", "gallery/index"),
+        #("Gallery", "gallery/index"),
         ("Installation", "installation"),
-        ("Manual", "gui"),
+        ("Graphical user interface", "gui"),
         ("API", "api"),
-        ("Developers", "developer_guide/index"),
+        ("How PyRPL works", "basics"),
+        ("Infos for Developers", "developer_guide/index"),
     ],
 
     # Render the next and previous page links in navbar. (Default: true)

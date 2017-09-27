@@ -4,9 +4,10 @@ GUI instruments manual
 In this section, we show how to control the main modules of Pyrpl with the Graphical User Interface.
 
 You can get started by watching the video tutorial on locking a Michelson interferometer below:
+
 .. raw:: html
 
-    <iframe width="560" height="315" src="http://www.youtube.com/embed/YwwDAerzXLc?rel=0" frameborder="0" allowfullscreen></iframe>
+   <iframe width="560" height="315" src="http://www.youtube.com/embed/YwwDAerzXLc?rel=0" frameborder="0" allowfullscreen></iframe>
 
 
 Starting the GUI
