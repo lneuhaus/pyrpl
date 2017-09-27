@@ -53,11 +53,10 @@ What is PyRPL?
 Manual
 *******************
 
-* :doc:`gallery/index`
 * :doc:`installation`
-* :doc:`basics`
 * :doc:`gui`
 * :doc:`api`
+* :doc:`basics`
 * :doc:`developer_guide/index`
 * :doc:`contents`
 
