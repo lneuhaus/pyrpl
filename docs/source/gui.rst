@@ -3,30 +3,37 @@ GUI instruments manual
 
 In this section, we show how to control the main modules of Pyrpl with the Graphical User Interface.
 
-You can get started by watching the video tutorial on locking a Michelson interferometer below:
+Get started by watching the video tutorial on locking a Michelson interferometer below!
 
 .. raw:: html
 
-   <iframe width="560" height="315" src="http://www.youtube.com/embed/YwwDAerzXLc?rel=0" frameborder="0" allowfullscreen></iframe>
+   <iframe width="560" height="315" src="http://www.youtube.com/embed/WnFkz1adhgs?rel=0" frameborder="0" allowfullscreen></iframe>
 
 
 Starting the GUI
 ================
 
-To start pyrpl's GUI, simply create a Pyrpl object. 
+If you use the `windows or linux binary files  <https://sourceforge.net/projects/pyrpl/files/>`_, just launch the executable and the GUI should start. If instead you have
+:ref:`a source code installation <_installation_from_source>`, then you can either launch PyRPL from a terminal with
 
+.. code-block:: bash
+
+    python -m pyrpl example_filename
+
+
+or execute the following code block in Python:
 
 .. code-block:: python
 
     # import pyrpl library
     import pyrpl
 
-    # create a Pyrpl object and store the configuration in a file 'filter-cavity.yml'
+    # create a Pyrpl object and store the configuration in a file 'example_filename.yml'
     # by default, the parameter 'gui' is set to True
-    p = pyrpl.Pyrpl(config='filter-cavity') 
+    p = pyrpl.Pyrpl(config='example_filename')
 
 
-If you are using the file 'filter-cavity.yml' for the first time, a screen will pop-up
+If you are using the file 'example_filename.yml' for the first time, a screen will pop-up
 asking you to choose among the different RedPitayas connected to your local network. After that, 
 the main Pyrpl widget should appear:
 
