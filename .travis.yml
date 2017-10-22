@@ -52,7 +52,7 @@ before_install:
   # and https://github.com/travis-ci/travis-ci/issues/7313#issuecomment-279914149 (for MacOSX)
   - export DISPLAY=":99.0"
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-    sudo Xvfb :99 -ac -screen 0 1024x768x8;
+    sh -e sudo Xvfb :99 -ac -screen 0 1024x768x8;
     else
     sh -e /etc/init.d/xvfb start;
     fi
