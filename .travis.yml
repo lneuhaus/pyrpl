@@ -4,29 +4,39 @@
 
 # lots of stuff here comes from https://gist.github.com/dan-blanchard/7045057
 
-env:
-- AUTOCORRETPEP8=0 DISPLAY=:99.0
 # REDPITAYA variables are defined in travis account (encrypted)
 
-language: python
-# nosetests is only executed for 2.7, 3.5 and 3.6, but we still test the
-# installation for other python versions (3.4)
-python:
-  - "2.7"
-  - "3.6"
-  - "3.5"
-  - "3.4"
-
 notifications:
-  email: false
+  email:
+    recipients:
+      - pyrpl.readthedocs.io@gmail.com
+language: generic
+
+env:
+  - TRAVIS_PYTHON_VERSION=2.7
+  - TRAVIS_PYTHON_VERSION=3.6
+  - TRAVIS_PYTHON_VERSION=3.5
+  - TRAVIS_PYTHON_VERSION=3.4
+os:
+  - linux
+  - osx
 
 before_install:
   - sudo apt-get update
   # We do this conditionally because it saves us some downloading.
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
+  - if [["$TRAVIS_OS_NAME" == "linux"]]; then
+    if [[ "$TRAVIS_PYTHON_VERSION" == "2.7"]]; then
     wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
     else
     wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+    fi
+    fi
+  - if [["$TRAVIS_OS_NAME" == "osx"]]; then
+    if [[ "$TRAVIS_PYTHON_VERSION" == "2.7"]]; then
+    wget https://repo.continuum.io/miniconda/Miniconda2-latest-MacOSX-x86_64.sh -O miniconda.sh;
+    else
+    wget https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -O miniconda.sh;
+    fi
     fi
   - chmod +x miniconda.sh
   - bash miniconda.sh -b -p $HOME/miniconda
@@ -40,6 +50,7 @@ before_install:
   - sudo rm -rf /dev/shm
   - sudo ln -s /run/shm /dev/shm
   # starts gui support, see https://docs.travis-ci.com/user/gui-and-headless-browsers/
+  - export DISPLAY=":99.0"
   - sh -e /etc/init.d/xvfb start
   # give it some time to start
   - sleep 3
@@ -49,13 +60,11 @@ install:
   # we get issues with building numpy etc if we do not include those in the next line
   - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION numpy scipy paramiko pandas nose pip pyqt qtpy
   - source activate test-environment
-  - if [[ "$TRAVIS_PYTHON_VERSION" != "3.3" ]]; then
-    conda install --yes -c conda-forge coveralls;
-    fi
   # overwrite default global config file with a custom one for travis (allows slower communication time)
   - \cp ./travis_global_config.yml ./pyrpl/config/global_config.yml
   - python setup.py install
   # packages for coverage reports
+  - conda install --yes -c conda-forge coveralls
   - pip install coverage codecov
 
 # Run test
@@ -73,14 +82,21 @@ after_script:
 # create a Readme.rst for PyPI
 # make an executable for linux and upload to sourceforge in python 3.4
 before_deploy:
+  - echo Deploy
   - source activate test-environment
   - conda install pandoc
   - pandoc --from=markdown --to=rst --output=README.rst README.md
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "3.4" ]]; then
+  - if [[ "$TRAVIS_PYTHON_VERSION" == "3.4" && "$TRAVIS_OS_NAME" == "linux" && "$TRAVIS_TEST_RESULT" == 0]]; then
     pip install pyinstaller;
     pyinstaller pyrpl.spec;
     mv dist/pyrpl ./pyrpl-linux;
     python .deploy_to_sourceforge.py pyrpl-linux;
+    fi
+  - if [[ "$TRAVIS_PYTHON_VERSION" == "3.4" && "$TRAVIS_OS_NAME" == "osx" && "$TRAVIS_TEST_RESULT" == 0]]; then
+    pip install pyinstaller;
+    pyinstaller pyrpl.spec;
+    mv dist/pyrpl ./pyrpl-osx;
+    python .deploy_to_sourceforge.py pyrpl-osx;
     fi
 
 deploy:
@@ -90,4 +106,5 @@ deploy:
   skip_cleanup: true
   on:
     tags: true
+    condition: $TRAVIS_PYTHON_VERSION = 3.4
   distributions: "sdist bdist_wheel --universal"
