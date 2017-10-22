@@ -60,16 +60,14 @@ if os.environ.get('TRAVIS') == 'true':
 # cannot install pyQt4 with pip:
 # http://stackoverflow.com/questions/4628519/is-it-possible-to-require-pyqt-from-setuptools-setup-py
 # PyQt4
-
 try:
-    import pypandoc
-    long_description = pypandoc.convert_file('README.md', 'rst')
+    long_description = read('README.rst')
 except:
     try:
-        long_description = read('README.rst')
+        import pypandoc
+        long_description = pypandoc.convert_file('README.md', 'rst')
     except:
         long_description = read('README.md')
-
 
 def find_packages():
     """
