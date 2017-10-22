@@ -53,9 +53,9 @@ before_install:
   # formerly "sh -e sudo Xvfb :99 -ac -screen 0 1024x768x8";
   - export DISPLAY=":99.0"
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-    "Xvfb :99 -ac -screen 0 1024x768x8 &";
+    Xvfb :99 -ac -screen 0 1024x768x8 &;
     else
-    "sh -e /etc/init.d/xvfb start";
+    sh -e /etc/init.d/xvfb start;
     fi
   # give it some time to start
   - sleep 3
