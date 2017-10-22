@@ -54,7 +54,7 @@ before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
     Xvfb :99 -ac -screen 0 1024x768x8;
     else
-    sh -e /etc/init.d/xvfb start
+    sh -e /etc/init.d/xvfb start;
     fi
   # give it some time to start
   - sleep 3
@@ -74,7 +74,7 @@ install:
 # Run test
 script:
   - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]] || [[ "$TRAVIS_PYTHON_VERSION" == "3.4" ]] || [[ "$TRAVIS_PYTHON_VERSION" == "3.6" ]]; then
-    echo TESTS ARE DISABLED;
+    echo "TESTS ARE DISABLED";
     fi
 #nosetests;
 
