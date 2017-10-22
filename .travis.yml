@@ -49,8 +49,13 @@ before_install:
   - sudo rm -rf /dev/shm
   - sudo ln -s /run/shm /dev/shm
   # starts gui support, see https://docs.travis-ci.com/user/gui-and-headless-browsers/
+  # and https://github.com/travis-ci/travis-ci/issues/7313#issuecomment-279914149 (for MacOSX)
   - export DISPLAY=":99.0"
-  - sh -e /etc/init.d/xvfb start
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+    Xvfb :99 -ac -screen 0 1024x768x8;
+    else
+    sh -e /etc/init.d/xvfb start
+    fi
   # give it some time to start
   - sleep 3
 
