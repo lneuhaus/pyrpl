@@ -75,8 +75,8 @@ install:
 script:
   - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]] || [[ "$TRAVIS_PYTHON_VERSION" == "3.4" ]] || [[ "$TRAVIS_PYTHON_VERSION" == "3.6" ]]; then
     echo TESTS ARE DISABLED;
-    #nosetests;
     fi
+#nosetests;
 
 after_script:
   - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]] || [[ "$TRAVIS_PYTHON_VERSION" == "3.4" ]] || [[ "$TRAVIS_PYTHON_VERSION" == "3.6" ]]; then
