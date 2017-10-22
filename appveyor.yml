@@ -81,7 +81,7 @@ install:
 build: false
 
 test_script:
-  - "%CMD_IN_ENV% python setup.py install"
+  - "python setup.py install"
   - "nosetests"
 
 on_success:
