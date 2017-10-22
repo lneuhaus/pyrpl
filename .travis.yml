@@ -22,20 +22,20 @@ os:
   - osx
 
 before_install:
-  - if [["$TRAVIS_OS_NAME" == "linux"]]; then
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
     sudo apt-get update;
     fi
   # We do this conditionally because it saves us some downloading.
-  - if [["$TRAVIS_OS_NAME" == "linux" && "$TRAVIS_PYTHON_VERSION" == "2.7"]]; then
+  - if [[ "$TRAVIS_OS_NAME" == "linux" && "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
     wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
-    elif [["$TRAVIS_OS_NAME" == "linux"]]; then
+    elif [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
     wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
-    elif [["$TRAVIS_OS_NAME" == "osx" && "$TRAVIS_PYTHON_VERSION" == "2.7"]]; then
+    elif [[ "$TRAVIS_OS_NAME" == "osx" && "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
     wget https://repo.continuum.io/miniconda/Miniconda2-latest-MacOSX-x86_64.sh -O miniconda.sh;
-    elif [["$TRAVIS_OS_NAME" == "osx"]]; then
+    elif [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
     wget https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -O miniconda.sh;
     else
-    echo "No valid combination of OS and Python - $TRAVIS_OS_NAME and $TRAVIS_PYTHON_VERSION";
+    echo "Invalid combination of OS ($TRAVIS_OS_NAME) and Python version ($TRAVIS_PYTHON_VERSION)";
     fi
   - chmod +x miniconda.sh
   - bash miniconda.sh -b -p $HOME/miniconda
@@ -85,13 +85,13 @@ before_deploy:
   - source activate test-environment
   - conda install pandoc
   - pandoc --from=markdown --to=rst --output=README.rst README.md
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "3.4" && "$TRAVIS_OS_NAME" == "linux" && "$TRAVIS_TEST_RESULT" == 0]]; then
+  - if [[ "$TRAVIS_PYTHON_VERSION" == "3.4" && "$TRAVIS_OS_NAME" == "linux" && "$TRAVIS_TEST_RESULT" == 0 ]]; then
     pip install pyinstaller;
     pyinstaller pyrpl.spec;
     mv dist/pyrpl ./pyrpl-linux;
     python .deploy_to_sourceforge.py pyrpl-linux;
     fi
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "3.4" && "$TRAVIS_OS_NAME" == "osx" && "$TRAVIS_TEST_RESULT" == 0]]; then
+  - if [[ "$TRAVIS_PYTHON_VERSION" == "3.4" && "$TRAVIS_OS_NAME" == "osx" && "$TRAVIS_TEST_RESULT" == 0 ]]; then
     pip install pyinstaller;
     pyinstaller pyrpl.spec;
     mv dist/pyrpl ./pyrpl-osx;
