@@ -18,8 +18,8 @@ env:
   - TRAVIS_PYTHON_VERSION=3.5
   - TRAVIS_PYTHON_VERSION=3.4
 os:
-  - linux
   - osx
+  - linux
 
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
@@ -52,7 +52,7 @@ before_install:
   # and https://github.com/travis-ci/travis-ci/issues/7313#issuecomment-279914149 (for MacOSX)
   - export DISPLAY=":99.0"
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-    Xvfb :99 -ac -screen 0 1024x768x8;
+    sudo Xvfb :99 -ac -screen 0 1024x768x8;
     else
     sh -e /etc/init.d/xvfb start;
     fi
@@ -74,7 +74,7 @@ install:
 # Run test
 script:
   - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]] || [[ "$TRAVIS_PYTHON_VERSION" == "3.4" ]] || [[ "$TRAVIS_PYTHON_VERSION" == "3.6" ]]; then
-    echo "TESTS ARE DISABLED";
+    echo "NOSETESTS ARE DISABLED";
     fi
 #nosetests;
 
