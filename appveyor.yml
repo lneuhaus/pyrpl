@@ -18,14 +18,9 @@ environment:
     # a later point release.
     # See: http://www.appveyor.com/docs/installed-software#python
     # if not a tagged version, only test on python 3.4 (for auto-upload of binaries)
-    - PYTHON: "C:\\Miniconda3"
-      PYTHON_VERSION: "3.4"
-      PYTHON_ARCH: "32"
-
     - PYTHON: "C:\\Miniconda3-x64"
       PYTHON_VERSION: "3.4"
       PYTHON_ARCH: "64"
-      SKIP_NOTAG: "true"
 
 init:
   # If there is a newer build queued for the same PR, cancel this one.
