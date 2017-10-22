@@ -1,4 +1,4 @@
-[<img src="http://pyrpl.readthedocs.io/en/latest/_static/logo.png" width="250" alt="PyRPL">](http://lneuhaus.github.io/pyrpl/)
+[<img src="http://pyrpl.readthedocs.io/en/latest/_static/logo.png" width="250" alt="PyRPL">](http://www.pyrpl.org/)
 
 [![travis status](https://travis-ci.org/lneuhaus/pyrpl.svg?branch=master "Travisstatus")](https://travis-ci.org/lneuhaus/pyrpl)
 [![code coverage](https://codecov.io/github/lneuhaus/pyrpl/coverage.svg?branch=master "Code coverage")](https://codecov.io/gh/lneuhaus/pyrpl)

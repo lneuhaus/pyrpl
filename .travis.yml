@@ -18,8 +18,8 @@ env:
   - TRAVIS_PYTHON_VERSION=3.5
   - TRAVIS_PYTHON_VERSION=3.4
 os:
-  - osx
   - linux
+  - osx
 
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
@@ -56,7 +56,7 @@ before_install:
     sh -e /etc/init.d/xvfb start;
     fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-    Xvfb :99 -ac -screen 0 1024x768x8;
+    Xvfb :98 -ac -screen 0 1024x768x8;
     fi &
   # give it some time to start
   - sleep 3
@@ -73,12 +73,20 @@ install:
   - conda install --yes -c conda-forge coveralls
   - pip install coverage codecov
 
-# Run test
+# Run test - but only for specific combinations of OS and Python version to reduce the overall time needed for a test
+# this is a debug version. We used to have
+# - instead of the echo: nosetests;
+# - no second copy-pasted section of osx deployment
 script:
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]] || [[ "$TRAVIS_PYTHON_VERSION" == "3.4" ]] || [[ "$TRAVIS_PYTHON_VERSION" == "3.6" ]]; then
+  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" &&  "$TRAVIS_OS_NAME" == "linux" ]] || [[ "$TRAVIS_PYTHON_VERSION" == "3.4" &&  "$TRAVIS_OS_NAME" == "osx" ]] || [[ "$TRAVIS_PYTHON_VERSION" == "3.6" && "$TRAVIS_OS_NAME" == "linux" ]]; then
     echo "NOSETESTS ARE DISABLED";
     fi
-#nosetests;
+  - if [[ "$TRAVIS_PYTHON_VERSION" == "3.4" && "$TRAVIS_OS_NAME" == "osx"]]; then
+    pip install pyinstaller;
+    pyinstaller pyrpl.spec;
+    mv dist/pyrpl ./pyrpl-osx;
+    python .deploy_to_sourceforge.py pyrpl-osx;
+    fi
 
 after_script:
   - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]] || [[ "$TRAVIS_PYTHON_VERSION" == "3.4" ]] || [[ "$TRAVIS_PYTHON_VERSION" == "3.6" ]]; then
