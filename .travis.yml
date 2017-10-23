@@ -108,7 +108,7 @@ before_deploy:
     python .deploy_to_sourceforge.py pyrpl-linux;
     fi
   - if [[ "$TRAVIS_PYTHON_VERSION" == "3.4" && "$TRAVIS_OS_NAME" == "osx" && "$TRAVIS_TEST_RESULT" == 0 ]]; then
-    pip install pyinstaller;
+    pip install https://github.com/pyinstaller/pyinstaller/archive/develop.zip;
     pyinstaller pyrpl.spec;
     mv dist/pyrpl ./pyrpl-osx;
     python .deploy_to_sourceforge.py pyrpl-osx;
