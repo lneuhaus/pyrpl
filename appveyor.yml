@@ -73,10 +73,11 @@ install:
   - "conda list"
 
 # Not a .NET project, we build in the install step instead
-build: false
+build:
+  - "python setup.py develop"
 
 test_script:
-  - "python setup.py install"
+  - "SET REDPITAYA_HOSTNAME=_FAKE_"
   - "nosetests"
 
 on_success:
