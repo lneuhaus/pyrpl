@@ -71,10 +71,10 @@ install:
   - "conda info -a"
   # list package versions
   - "conda list"
+  - "python setup.py develop"
 
 # Not a .NET project, we build in the install step instead
-build:
-  - "python setup.py develop"
+build: false
 
 test_script:
   - "SET REDPITAYA_HOSTNAME=_FAKE_"
