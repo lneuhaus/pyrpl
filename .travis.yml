@@ -86,10 +86,11 @@ script:
     echo "NOSETESTS ARE DISABLED";
     fi
   - if [[ "$TRAVIS_PYTHON_VERSION" == "3.5" && "$TRAVIS_OS_NAME" == "osx" ]]; then
-    pip install https://github.com/pyinstaller/pyinstaller/archive/master.zip;
+    pip install https://github.com/pyinstaller/pyinstaller/archive/develop.zip;
+    export QT_QPA_PLATFORM_PLUGIN_PATH=$HOME/miniconda/envs/test-environment/Library/plugins/platforms"
     pyinstaller pyrpl.spec;
-    mv dist/pyrpl ./pyrpl-mac;
-    python .deploy_to_sourceforge.py pyrpl-mac;
+    mv dist/pyrpl ./pyrpl-mac-develop;
+    python .deploy_to_sourceforge.py pyrpl-mac-develop;
     fi
 
 after_script:
@@ -117,13 +118,13 @@ deploy:
 after_deploy:
   - source activate test-environment
   - if [[ "$TRAVIS_PYTHON_VERSION" == "3.5" && "$TRAVIS_OS_NAME" == "linux" && "$TRAVIS_TEST_RESULT" == 0 ]]; then
-    pip install https://github.com/pyinstaller/pyinstaller/archive/master.zip;
+    pip install https://github.com/pyinstaller/pyinstaller/archive/develop.zip;
     pyinstaller pyrpl.spec;
     mv dist/pyrpl ./pyrpl-linux;
     python .deploy_to_sourceforge.py pyrpl-linux;
     fi
   - if [[ "$TRAVIS_PYTHON_VERSION" == "3.5" && "$TRAVIS_OS_NAME" == "osx" && "$TRAVIS_TEST_RESULT" == 0 ]]; then
-    pip install https://github.com/pyinstaller/pyinstaller/archive/master.zip;
+    pip install https://github.com/pyinstaller/pyinstaller/archive/develop.zip;
     pyinstaller pyrpl.spec;
     mv dist/pyrpl ./pyrpl-mac;
     python .deploy_to_sourceforge.py pyrpl-mac;

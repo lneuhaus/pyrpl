@@ -24,7 +24,8 @@ exe = EXE(pyz,
           a.zipfiles,
           a.datas,
           name='pyrpl',
-          debug=True,
+          debug=False,
           strip=False,
-          upx=not True,
+          upx=True,
           console=True )
+

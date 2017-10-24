@@ -18,9 +18,9 @@ environment:
     # a later point release.
     # See: http://www.appveyor.com/docs/installed-software#python
     # only use python 3.5 for building .exe (for auto-upload of binaries)
-    - PYTHON: "C:\\Miniconda35"
+    - PYTHON: "C:\\Miniconda35-x64"
       PYTHON_VERSION: "3.5"
-      PYTHON_ARCH: "32"
+      PYTHON_ARCH: "64"
 
 init:
   # If there is a newer build queued for the same PR, cancel this one.
@@ -73,21 +73,36 @@ install:
   - "conda list"
   # installation
   - "python setup.py install"
+  # pyinstaller installation
+  - "pip install https://github.com/pyinstaller/pyinstaller/archive/develop.zip"
+  # set hostname to fake in case pyrpl is executed
+  - "SET REDPITAYA_HOSTNAME=_FAKE_"
+  # fix a strange bug with pyinstaller packaging
+  - "copy %PYTHON%\\envs\\test-environment\\qt.conf %PYTHON%\\envs\\test-environment\\ScriptS\\qt.conf"
+  - "SET set QT_QPA_PLATFORM_PLUGIN_PATH=%PYTHON%\\envs\\test-environment\\Library\\plugins\\platforms"
 
 # Not a .NET project, we build in the install step instead
 build: false
 
+# the actual tes is whether pyinstaller manages to install pyrpl
 test_script:
-  - "SET REDPITAYA_HOSTNAME=_FAKE_"
+  - "pyinstaller pyrpl.spec"
+  - "mv dist/pyrpl.exe ./pyrpl-windows.exe"
+
+# optional tests:
+#  - "./pyrpl-windows.exe &"
 #  - "nosetests"
 
+# deploy to sourceforge if build was successful and commit has a tag
 on_success:
   - ps: |
       If (($env:APPVEYOR_REPO_TAG -eq "true") -and ($env:PYTHON_VERSION -eq "3.5") -and ($env:PYTHON_ARCH -eq "32")) {
-          pip install https://github.com/pyinstaller/pyinstaller/archive/master.zip;
-          pyinstaller pyrpl.spec;
-          mv dist/pyrpl.exe ./pyrpl-windows.exe;
           python .deploy_to_sourceforge.py pyrpl-windows.exe;
+      }
+  - ps: |
+      If (($env:APPVEYOR_REPO_TAG -eq "true") -and ($env:PYTHON_VERSION -eq "3.5") -and ($env:PYTHON_ARCH -eq "32")) {
+          mv ./pyrpl-windows.exe ./pyrpl-windows-develop.exe;
+          python .deploy_to_sourceforge.py pyrpl-windows-develop.exe;
       }
 
 # Do not build feature branch with open Pull Requests
