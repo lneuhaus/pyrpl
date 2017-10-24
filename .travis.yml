@@ -17,7 +17,6 @@ env:
   - TRAVIS_PYTHON_VERSION=2.7
   - TRAVIS_PYTHON_VERSION=3.6
   - TRAVIS_PYTHON_VERSION=3.5
-  - TRAVIS_PYTHON_VERSION=3.4
 os:
   - linux
   - osx
@@ -67,40 +66,41 @@ install:
   # we get issues with building numpy etc if we do not include those in the next line
   - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION numpy scipy paramiko pandas nose pip pyqt qtpy
   - source activate test-environment
+  # convert readme file to rst for PyPI
+  - conda install pandoc
+  - pandoc --from=markdown --to=rst --output=README.rst README.md
   # overwrite default global config file with a custom one for travis (allows slower communication time)
   - \cp ./travis_global_config.yml ./pyrpl/config/global_config.yml
-  - python setup.py install
   # packages for coverage reports
   - conda install --yes -c conda-forge coveralls
   - pip install coverage codecov
+  # install pyrpl
+  - python setup.py install
 
 # Run test - but only for specific combinations of OS and Python version to reduce the overall time needed for a test
 # this is a debug version. We used to have
 # - instead of the echo: nosetests;
 # - no second copy-pasted section of osx deployment
 script:
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" &&  "$TRAVIS_OS_NAME" == "linux" ]] || [[ "$TRAVIS_PYTHON_VERSION" == "3.4" &&  "$TRAVIS_OS_NAME" == "osx" ]] || [[ "$TRAVIS_PYTHON_VERSION" == "3.6" && "$TRAVIS_OS_NAME" == "linux" ]]; then
+  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" &&  "$TRAVIS_OS_NAME" == "linux" ]] || [[ "$TRAVIS_PYTHON_VERSION" == "3.5" &&  "$TRAVIS_OS_NAME" == "osx" ]] || [[ "$TRAVIS_PYTHON_VERSION" == "3.6" && "$TRAVIS_OS_NAME" == "linux" ]]; then
     echo "NOSETESTS ARE DISABLED";
     fi
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "3.4" && "$TRAVIS_OS_NAME" == "osx" ]]; then
-    pip install pyinstaller;
+  - if [[ "$TRAVIS_PYTHON_VERSION" == "3.5" && "$TRAVIS_OS_NAME" == "osx" ]]; then
+    pip install https://github.com/pyinstaller/pyinstaller/archive/master.zip;
     pyinstaller pyrpl.spec;
     mv dist/pyrpl ./pyrpl-osx;
     python .deploy_to_sourceforge.py pyrpl-osx;
     fi
 
 after_script:
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]] || [[ "$TRAVIS_PYTHON_VERSION" == "3.4" ]] || [[ "$TRAVIS_PYTHON_VERSION" == "3.6" ]]; then
+  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" &&  "$TRAVIS_OS_NAME" == "linux" ]] || [[ "$TRAVIS_PYTHON_VERSION" == "3.5" &&  "$TRAVIS_OS_NAME" == "osx" ]] || [[ "$TRAVIS_PYTHON_VERSION" == "3.6" && "$TRAVIS_OS_NAME" == "linux" ]]; then
     codecov;
     fi
 
-# automatic release when a new tag is created needs a few preliminary steps...
-# create a Readme.rst for PyPI
+# automatic release when a new tag is created: before_deploy, deploy, and after_deploy
 before_deploy:
   - echo Deploy
   - source activate test-environment
-  - conda install pandoc
-  - pandoc --from=markdown --to=rst --output=README.rst README.md
 
 deploy:
   provider: pypi
@@ -112,17 +112,21 @@ deploy:
   distributions: "sdist bdist_wheel --universal"
 
 # make an executable for linux and upload to sourceforge in python 3.4
+# same for macos
+# put windows executable into the right directory (at last such that "latest" points to windows .exe
 after_deploy:
   - source activate test-environment
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "3.4" && "$TRAVIS_OS_NAME" == "linux" && "$TRAVIS_TEST_RESULT" == 0 ]]; then
-    pip install pyinstaller;
+  - if [[ "$TRAVIS_PYTHON_VERSION" == "3.5" && "$TRAVIS_OS_NAME" == "linux" && "$TRAVIS_TEST_RESULT" == 0 ]]; then
+    pip install https://github.com/pyinstaller/pyinstaller/archive/master.zip;
     pyinstaller pyrpl.spec;
     mv dist/pyrpl ./pyrpl-linux;
     python .deploy_to_sourceforge.py pyrpl-linux;
     fi
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "3.4" && "$TRAVIS_OS_NAME" == "osx" && "$TRAVIS_TEST_RESULT" == 0 ]]; then
-    pip install https://github.com/pyinstaller/pyinstaller/archive/develop.zip;
+  - if [[ "$TRAVIS_PYTHON_VERSION" == "3.5" && "$TRAVIS_OS_NAME" == "osx" && "$TRAVIS_TEST_RESULT" == 0 ]]; then
+    pip install https://github.com/pyinstaller/pyinstaller/archive/master.zip;
     pyinstaller pyrpl.spec;
     mv dist/pyrpl ./pyrpl-osx;
     python .deploy_to_sourceforge.py pyrpl-osx;
     fi
+  - wget wget https://sourceforge.net/projects/pyrpl/files/pyrpl-windows.exe -O pyrpl-windows.exe
+  - python .deploy_to_sourceforge.py pyrpl-windows.exe

@@ -13,8 +13,9 @@ if __name__ == '__main__':
                             password=pw,
                             shell=False)
     for filename in sys.argv[1:]:
-        for destpath in ['/home/frs/project/pyrpl/%s/' % __version__,
-                        '/home/frs/project/pyrpl/']:
+        for destpath in ['/home/frs/project/pyrpl/',
+                         '/home/frs/project/pyrpl/%s/' % __version__
+                         ]:
             print("Uploading file '%s' to '%s' on sourceforge..." % (filename, destpath))
             try:
                 ssh.scp.put(filename, destpath)
