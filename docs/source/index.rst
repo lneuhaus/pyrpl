@@ -40,7 +40,7 @@ What is PyRPL?
 
 .. admonition:: PyRPL's code is entirely public `on github <https://www.github.com/lneuhaus/pyrpl>`_ and can be customized,
 
-   including the Verilog source code for the FPGA which is based on the official Red Pitaya software version 0.95.
+   including the `Verilog source code for the FPGA <https://github.com/lneuhaus/pyrpl/tree/master/pyrpl/fpga>`_ which is based on the official Red Pitaya software version 0.95.
 
 
 .. admonition:: PyRPL is free software and comes with the `GNU General Public License v3.0 <https://www.gnu.org/licenses/gpl.html>`_.
