@@ -78,7 +78,7 @@ install:
   # set hostname to fake in case pyrpl is executed
   - "SET REDPITAYA_HOSTNAME=_FAKE_"
   # fix a strange bug with pyinstaller packaging
-  - "copy %PYTHON%\\envs\\test-environment\\qt.conf %PYTHON%\\envs\\test-environment\\ScriptS\\qt.conf"
+  # - "copy %PYTHON%\\envs\\test-environment\\qt.conf %PYTHON%\\envs\\test-environment\\ScriptS\\qt.conf"
   - "SET set QT_QPA_PLATFORM_PLUGIN_PATH=%PYTHON%\\envs\\test-environment\\Library\\plugins\\platforms"
 
 # Not a .NET project, we build in the install step instead
