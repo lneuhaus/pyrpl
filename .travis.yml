@@ -10,6 +10,7 @@ notifications:
   email:
     recipients:
       - pyrpl.readthedocs.io@gmail.com
+
 language: generic
 
 env:
@@ -95,12 +96,24 @@ after_script:
 
 # automatic release when a new tag is created needs a few preliminary steps...
 # create a Readme.rst for PyPI
-# make an executable for linux and upload to sourceforge in python 3.4
 before_deploy:
   - echo Deploy
   - source activate test-environment
   - conda install pandoc
   - pandoc --from=markdown --to=rst --output=README.rst README.md
+
+deploy:
+  provider: pypi
+  user: lneuhaus
+  password: $PYPI_PASSWORD
+  skip_cleanup: true
+  on:
+    tags: true
+  distributions: "sdist bdist_wheel --universal"
+
+# make an executable for linux and upload to sourceforge in python 3.4
+after_deploy:
+  - source activate test-environment
   - if [[ "$TRAVIS_PYTHON_VERSION" == "3.4" && "$TRAVIS_OS_NAME" == "linux" && "$TRAVIS_TEST_RESULT" == 0 ]]; then
     pip install pyinstaller;
     pyinstaller pyrpl.spec;
@@ -113,12 +126,3 @@ before_deploy:
     mv dist/pyrpl ./pyrpl-osx;
     python .deploy_to_sourceforge.py pyrpl-osx;
     fi
-
-deploy:
-  provider: pypi
-  user: lneuhaus
-  password: $PYPI_PASSWORD
-  skip_cleanup: true
-  on:
-    tags: true
-  distributions: "sdist bdist_wheel --universal"

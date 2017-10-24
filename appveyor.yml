@@ -18,8 +18,8 @@ environment:
     # a later point release.
     # See: http://www.appveyor.com/docs/installed-software#python
     # if not a tagged version, only test on python 3.4 (for auto-upload of binaries)
-    - PYTHON: "C:\\Miniconda3"
-      PYTHON_VERSION: "3.4"
+    - PYTHON: "C:\\Miniconda35"
+      PYTHON_VERSION: "3.5"
       PYTHON_ARCH: "32"
 
 init:
@@ -71,7 +71,9 @@ install:
   - "conda info -a"
   # list package versions
   - "conda list"
+  # installation
   - "python setup.py develop"
+  - "conda list"
 
 # Not a .NET project, we build in the install step instead
 build: false
