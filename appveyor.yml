@@ -83,7 +83,7 @@ test_script:
 
 on_success:
   - ps: |
-      If (($env:APPVEYOR_REPO_TAG -ne "true") -and ($env:PYTHON_VERSION -eq "3.5") -and ($env:PYTHON_ARCH -eq "32")) {
+      If (($env:APPVEYOR_REPO_TAG -eq "true") -and ($env:PYTHON_VERSION -eq "3.5") -and ($env:PYTHON_ARCH -eq "32")) {
           pip install https://github.com/pyinstaller/pyinstaller/archive/master.zip;
           pyinstaller pyrpl.spec;
           mv dist/pyrpl.exe ./pyrpl-windows.exe;
