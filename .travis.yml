@@ -87,7 +87,7 @@ script:
     fi
   - if [[ "$TRAVIS_PYTHON_VERSION" == "3.5" && "$TRAVIS_OS_NAME" == "osx" ]]; then
     pip install https://github.com/pyinstaller/pyinstaller/archive/develop.zip;
-    export QT_QPA_PLATFORM_PLUGIN_PATH=$HOME/miniconda/envs/test-environment/Library/plugins/platforms"
+    export QT_QPA_PLATFORM_PLUGIN_PATH=$HOME/miniconda/envs/test-environment/Library/plugins/platforms";
     pyinstaller pyrpl.spec;
     mv dist/pyrpl ./pyrpl-mac-develop;
     python .deploy_to_sourceforge.py pyrpl-mac-develop;
