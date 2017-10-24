@@ -100,7 +100,7 @@ on_success:
           python .deploy_to_sourceforge.py pyrpl-windows.exe;
       }
   - ps: |
-      If (($env:APPVEYOR_REPO_TAG -eq "true") -and ($env:PYTHON_VERSION -eq "3.5") -and ($env:PYTHON_ARCH -eq "32")) {
+      If (($env:APPVEYOR_REPO_TAG -ne "true") -and ($env:PYTHON_VERSION -eq "3.5") -and ($env:PYTHON_ARCH -eq "32")) {
           mv ./pyrpl-windows.exe ./pyrpl-windows-develop.exe;
           python .deploy_to_sourceforge.py pyrpl-windows-develop.exe;
       }
