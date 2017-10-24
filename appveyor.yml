@@ -72,8 +72,7 @@ install:
   # list package versions
   - "conda list"
   # installation
-  - "python setup.py develop"
-  - "conda list"
+  - "python setup.py install"
 
 # Not a .NET project, we build in the install step instead
 build: false
