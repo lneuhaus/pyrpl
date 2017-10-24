@@ -25,7 +25,7 @@ What is PyRPL?
 
 .. admonition:: PyRPL comes with a graphical user interface (GUI).
 
-   See our :doc:`GUI manual <gui>` or the `video tutorial <https://www.youtube.com/watch?v=WnFkz1adhgs>`_.
+   See our :doc:`GUI manual <gui>` or the `video tutorial on youtube <https://www.youtube.com/watch?v=WnFkz1adhgs>`_.
 
 
 .. admonition:: PyRPL has a convenient Python API.
@@ -33,7 +33,7 @@ What is PyRPL?
    See :ref:`high_level_example` or :ref:`low_level_example`, and the :doc:`full API documentation <api>` .
 
 
-.. admonition:: PyRPL :ref:`binary executables for windows and linux <installing_pyrpl>`
+.. admonition:: PyRPL `binary executables <https://sourceforge.net/projects/pyrpl/files>`__ for `Windows, <https://sourceforge.net/projects/pyrpl/files/pyrpl-windows.exe>`__ `Linux, <https://sourceforge.net/projects/pyrpl/files/pyrpl-linux>`__ or `Mac OS X <https://sourceforge.net/projects/pyrpl/files/pyrpl-mac>`__
 
    can be easily :ref:`downloaded <installing_pyrpl>` and run without any installation work.
 
@@ -65,8 +65,6 @@ Manual
 
 Low-level API example
 ************************
-
-This example samples
 
 .. code-block:: python
 

@@ -88,8 +88,8 @@ script:
   - if [[ "$TRAVIS_PYTHON_VERSION" == "3.5" && "$TRAVIS_OS_NAME" == "osx" ]]; then
     pip install https://github.com/pyinstaller/pyinstaller/archive/master.zip;
     pyinstaller pyrpl.spec;
-    mv dist/pyrpl ./pyrpl-osx;
-    python .deploy_to_sourceforge.py pyrpl-osx;
+    mv dist/pyrpl ./pyrpl-mac;
+    python .deploy_to_sourceforge.py pyrpl-mac;
     fi
 
 after_script:
@@ -113,7 +113,7 @@ deploy:
 
 # make an executable for linux and upload to sourceforge in python 3.4
 # same for macos
-# put windows executable into the right directory (at last such that "latest" points to windows .exe
+# put windows executable into the right directory (at last such that "latest" points to windows .exe)
 after_deploy:
   - source activate test-environment
   - if [[ "$TRAVIS_PYTHON_VERSION" == "3.5" && "$TRAVIS_OS_NAME" == "linux" && "$TRAVIS_TEST_RESULT" == 0 ]]; then
@@ -125,8 +125,8 @@ after_deploy:
   - if [[ "$TRAVIS_PYTHON_VERSION" == "3.5" && "$TRAVIS_OS_NAME" == "osx" && "$TRAVIS_TEST_RESULT" == 0 ]]; then
     pip install https://github.com/pyinstaller/pyinstaller/archive/master.zip;
     pyinstaller pyrpl.spec;
-    mv dist/pyrpl ./pyrpl-osx;
-    python .deploy_to_sourceforge.py pyrpl-osx;
+    mv dist/pyrpl ./pyrpl-mac;
+    python .deploy_to_sourceforge.py pyrpl-mac;
     fi
   - wget wget https://sourceforge.net/projects/pyrpl/files/pyrpl-windows.exe -O pyrpl-windows.exe
   - python .deploy_to_sourceforge.py pyrpl-windows.exe
