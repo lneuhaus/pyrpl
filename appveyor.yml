@@ -80,11 +80,11 @@ build: false
 
 test_script:
   - "SET REDPITAYA_HOSTNAME=_FAKE_"
-  - "nosetests"
+#  - "nosetests"
 
 on_success:
   - ps: |
-      If (($env:APPVEYOR_REPO_TAG -ne "true") -and ($env:PYTHON_VERSION -eq "3.4") -and ($env:PYTHON_ARCH -eq "64")) {
+      If (($env:APPVEYOR_REPO_TAG -ne "true") -and ($env:PYTHON_VERSION -eq "3.5") -and ($env:PYTHON_ARCH -eq "32")) {
           pip install pyinstaller
           pyinstaller pyrpl.spec;
           mv dist/pyrpl.exe ./pyrpl-windows.exe;
