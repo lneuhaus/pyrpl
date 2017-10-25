@@ -14,6 +14,7 @@ notifications:
 language: generic
 
 env:
+  - TRAVIS_PYTHON_VERSION=3.4
   - TRAVIS_PYTHON_VERSION=2.7
   - TRAVIS_PYTHON_VERSION=3.6
   - TRAVIS_PYTHON_VERSION=3.5
@@ -92,7 +93,7 @@ script:
     mv dist/pyrpl ./pyrpl-mac-develop;
     python .deploy_to_sourceforge.py pyrpl-mac-develop;
     fi
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "3.5" && "$TRAVIS_OS_NAME" == "linux" ]]; then
+  - if [[ "$TRAVIS_PYTHON_VERSION" == "3.4" && "$TRAVIS_OS_NAME" == "linux" ]]; then
     pip install https://github.com/pyinstaller/pyinstaller/archive/develop.zip;
     export QT_QPA_PLATFORM_PLUGIN_PATH=$HOME/miniconda/envs/test-environment/Library/plugins/platforms;
     pyinstaller pyrpl.spec;
@@ -125,7 +126,7 @@ deploy:
 # put windows executable into the right directory (at last such that "latest" points to windows .exe)
 after_deploy:
   - source activate test-environment
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "3.5" && "$TRAVIS_OS_NAME" == "linux" && "$TRAVIS_TEST_RESULT" == 0 ]]; then
+  - if [[ "$TRAVIS_PYTHON_VERSION" == "3.4" && "$TRAVIS_OS_NAME" == "linux" && "$TRAVIS_TEST_RESULT" == 0 ]]; then
     pip install https://github.com/pyinstaller/pyinstaller/archive/develop.zip;
     export QT_QPA_PLATFORM_PLUGIN_PATH=$HOME/miniconda/envs/test-environment/Library/plugins/platforms;
     pyinstaller pyrpl.spec;
