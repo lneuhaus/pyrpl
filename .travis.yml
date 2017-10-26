@@ -87,14 +87,14 @@ script:
     echo "NOSETESTS ARE DISABLED";
     fi
   - if [[ "$TRAVIS_PYTHON_VERSION" == "3.5" && "$TRAVIS_OS_NAME" == "osx" ]]; then
-    pip install https://github.com/pyinstaller/pyinstaller/archive/develop.zip;
+    pip install pyinstaller==3.2;
     export QT_QPA_PLATFORM_PLUGIN_PATH=$HOME/miniconda/envs/test-environment/plugins/platforms;
     pyinstaller pyrpl.spec;
     mv dist/pyrpl ./pyrpl-mac-develop;
     python .deploy_to_sourceforge.py pyrpl-mac-develop;
     fi
   - if [[ "$TRAVIS_PYTHON_VERSION" == "3.4" && "$TRAVIS_OS_NAME" == "linux" ]]; then
-    pip install https://github.com/pyinstaller/pyinstaller/archive/develop.zip;
+    pip install pyinstaller==3.2;
     export QT_QPA_PLATFORM_PLUGIN_PATH=$HOME/miniconda/envs/test-environment/plugins/platforms;
     pyinstaller pyrpl.spec;
     mv dist/pyrpl ./pyrpl-linux-develop;

@@ -23,7 +23,7 @@ if qt_plugin_path == '':
 
 a = Analysis(['pyrpl/__main__.py'],
              pathex=['.'],
-             binaries=[(os.path.join(qt_plugin_path, '*'), '.')],
+             binaries=[], # (os.path.join(qt_plugin_path, '*'), 'plugins')],
              datas=[('pyrpl/fpga/red_pitaya.bin', 'pyrpl/fpga'),
                     ('pyrpl/monitor_server/monitor_server*',
                      'pyrpl/monitor_server')],

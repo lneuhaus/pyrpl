@@ -74,7 +74,8 @@ install:
   # installation
   - "python setup.py install"
   # pyinstaller installation
-  - "pip install https://github.com/pyinstaller/pyinstaller/archive/develop.zip"
+  # - "pip install https://github.com/pyinstaller/pyinstaller/archive/develop.zip"
+  - "pip install pyinstaller==3.2"
   # set hostname to fake in case pyrpl is executed
   - "SET REDPITAYA_HOSTNAME=_FAKE_"
   # fix a strange bug with pyinstaller packaging
