@@ -44,6 +44,8 @@ if os.environ.get('READTHEDOCS') == 'True':
         setattr(module, cls_name, type(cls_name, (object,), {}))
         # make sure the class appears to be in the containing module
         setattr(getattr(module, cls_name), '__module__', module)
+    import numpy
+    numpy.pi = 3.14
 
 
 # If extensions (or modules to document with autodoc) are in another directory,
