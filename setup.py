@@ -53,7 +53,7 @@ if sys.version_info >= (3,4):  # python version dependencies
 else:  # python 2.7
     requirements += ['futures', 'mock']  # mock is now a full dependency
 if os.environ.get('READTHEDOCS') == 'True':
-    requirements += ['pandoc', 'sphinx_bootstrap_theme', 'sphinx==1.6']  # mock is needed on readthedocs.io to mock PyQt5
+    requirements += ['pandoc', 'sphinx_bootstrap_theme', 'sphinx>=1.6']  # mock is needed on readthedocs.io to mock PyQt5
 if os.environ.get('TRAVIS') == 'true':
     requirements += ['pandoc']
 
