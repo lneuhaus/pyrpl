@@ -33,13 +33,12 @@ if os.environ.get('READTHEDOCS') == 'True':
     # the following code fixes various errors with mocked objects
     from qtpy import QtWidgets, QtCore
     import asyncio
-    import logging
     mod_cls_list = [(QtWidgets, 'QWidget'),
-                (QtWidgets, 'QLabel'),
-                (QtWidgets, 'QGroupBox'),
-                (QtWidgets, 'QLabel'),
-                (QtCore, 'QObject'),
-                (asyncio, 'Future')]
+                    (QtWidgets, 'QLabel'),
+                    (QtWidgets, 'QGroupBox'),
+                    (QtWidgets, 'QLabel'),
+                    (QtCore, 'QObject'),
+                    (asyncio, 'Future')]
     for module, cls_name in mod_cls_list:
         # set the problematic class to a dummy class
         setattr(module, cls_name, type(cls_name, (object,), {}))
