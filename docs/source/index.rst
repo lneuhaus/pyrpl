@@ -48,6 +48,12 @@ What is PyRPL?
     Read the `license <https://github.com/lneuhaus/pyrpl/blob/master/LICENSE>`_ for more details!
 
 
+.. admonition:: PyRPL is already used by many research groups world-wide,
+
+   see the :doc:`<user_feedback>`.
+
+
+
 .. _manual:
 
 Manual
