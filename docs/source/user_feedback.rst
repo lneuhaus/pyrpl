@@ -27,8 +27,8 @@ Feedback by happy PyRPL users
 
    * Dr. Gordon A. Shaw, `Mass and Force Group <https://www.nist.gov/pml/quantum-measurement-division/mass-and-force>`_ at the `Quantum Metrology division <https://www.nist.gov/pml/quantum-measurement>`_ of the `National Institute of Standards and Technology (NIST) <https://www.nist.gov/>`_.
    * Team of Dr. Jonas Schou Neergaard-Nielsen at the `Quantum Physics and Information Technology division <http://www.fysik.dtu.dk/english/Research/QPIT>`_ of the `Technical University of Denmark <http://www.dtu.dk/english>`_,
-   * Team of Dr. Pierre Verlot in the `Luminescence Group <http://ilm.univ-lyon1.fr/index.php?option=com_content&view=article&id=59&catid=28>`_ at `ILM <http://ilm.univ-lyon1.fr/>`_, `University Claude Bernard Lyon 1 <https://www.univ-lyon1.fr/>`_,
    * Development team at `Sacher Lasertechnik <https://www.sacher-laser.com/>`_.
 
+..   * Team of Dr. Pierre Verlot in the `Luminescence Group <http://ilm.univ-lyon1.fr/index.php?option=com_content&view=article&id=59&catid=28>`_ at `ILM <http://ilm.univ-lyon1.fr/>`_, `University Claude Bernard Lyon 1 <https://www.univ-lyon1.fr/>`_,
 
 If you are happily using PyRPL as wll and would like to help to promote the project, please send your feedback to `pyrpl.readthedocs.io@gmail.com <mailto:pyrpl.readthedocs.io@gmail.com>`_ and we will include your voice on this page.
