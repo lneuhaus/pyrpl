@@ -171,3 +171,9 @@ Old documentation sections (new ones in :ref:`manual`)
 * :doc:`developer_guide/index`
 * :doc:`indices_and_tables/index`
 * :doc:`contents`
+
+
+About
+*********
+
+.. include:: ../../THANKS.txt
