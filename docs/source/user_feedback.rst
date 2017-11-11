@@ -25,7 +25,7 @@ Feedback by PyRPL users
 
 .. admonition:: "Thank you very much for your amazing PyRPL module! I have been using it continuously since last week, and it has saved us a lot of trouble already!"
 
-   Ivan Galinsky, `Quantum Membranes Lab, QUANTOP, Niels Bohr Institute <http://quantop.nbi.ku.dk/>`_, `University of Copenhagen <http://www.ku.dk/english/>`_.
+   Ivan Galinsky from the `Quantum Membranes Lab, QUANTOP, Niels Bohr Institute <http://quantop.nbi.ku.dk/>`_, `University of Copenhagen <http://www.ku.dk/english/>`_.
 
 
 .. admonition:: PyRPL is furthermore used by
