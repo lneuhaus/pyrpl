@@ -20,7 +20,7 @@ Feedback by PyRPL users
 
 .. admonition:: "IT WORKS! Thanks for your wonderful project :)"
 
-   Dr. Kun Huang from the `State Key Laboratory of Precesion Spectroscopy <http://www.lps.ecnu.edu.cn/>`_ at `East China Normal University <http://english.ecnu.edu.cn/>`_.
+   Dr. Kun Huang from the `State Key Laboratory of Precision Spectroscopy <http://www.lps.ecnu.edu.cn/>`_ at `East China Normal University <http://english.ecnu.edu.cn/>`_.
 
 
 .. admonition:: "Thank you very much for your amazing PyRPL module! I have been using it continuously since last week, and it has saved us a lot of trouble already!"
