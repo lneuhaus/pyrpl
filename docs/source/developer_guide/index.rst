@@ -4,6 +4,7 @@ Notes for developers
 .. toctree::
    :maxdepth: 2
 
+   contributing
    fpga_compilation
    unittests
    codingstyle
