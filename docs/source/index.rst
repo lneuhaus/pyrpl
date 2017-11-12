@@ -175,9 +175,33 @@ The old documentation is obsolete and will soon be deleted. Please refer to the 
 * :doc:`contents`
 
 
+Current build status
+***********************
+
+|travis status| |appveyor status| |code coverage| |Python versions on PyPI| |PyRPL version on PyPI| |Download pyrpl| |Documentation Status| |join chat on gitter| |License|
+
+
 .. include:: publications.rst
 
 
 .. include:: thanks.rst
 
 
+.. |travis status| image:: https://travis-ci.org/lneuhaus/pyrpl.svg?branch=master
+   :target: https://travis-ci.org/lneuhaus/pyrpl
+.. |appveyor status| image:: https://ci.appveyor.com/api/projects/status/wv2acmg869acg5yy?svg=true
+   :target: https://ci.appveyor.com/project/lneuhaus/pyrpl
+.. |code coverage| image:: https://codecov.io/github/lneuhaus/pyrpl/coverage.svg?branch=master
+   :target: https://codecov.io/gh/lneuhaus/pyrpl
+.. |Python versions on PyPI| image:: https://img.shields.io/pypi/pyversions/pyrpl.svg
+   :target: https://pypi.python.org/pypi/pyrpl/
+.. |PyRPL version on PyPI| image:: https://img.shields.io/pypi/v/pyrpl.svg
+   :target: https://pypi.python.org/pypi/pyrpl/
+.. |Download pyrpl| image:: https://img.shields.io/sourceforge/dt/pyrpl.svg
+   :target: https://sourceforge.net/projects/pyrpl/files/
+.. |Documentation Status| image:: https://readthedocs.org/projects/pyrpl/badge/?version=latest
+   :target: http://pyrpl.readthedocs.io/en/latest/
+.. |join chat on gitter| image:: https://badges.gitter.im/JoinChat.svg
+   :target: https://gitter.im/lneuhaus/pyrpl
+.. |License| image:: https://img.shields.io/pypi/l/pyrpl.svg
+   :target: https://github.com/lneuhaus/pyrpl/blob/master/LICENSE
