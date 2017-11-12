@@ -38,29 +38,30 @@ Funding and support
 Work on PyRPL was partially funded and/or supported by the following organizations:
 
 * `Optomechanics and Quantum Measurement Group <http://www.lkb.upmc.fr/optomecanics/>`_ at the `Laboratoire Kastler Brossel in Paris <http://www.lkb.upmc.fr/>`_
-   .. image:: logos/OMQ-2.png
-      :target: http://www.lkb.upmc.fr/optomecanics/
-      :height: 100px
-   .. image:: logos/LKB.png
-      :target: http://www.lkb.upmc.fr/
-      :height: 100px
 * `Agence nationale de recherche (ANR) <http://www.agence-nationale-recherche.fr/>`_
-   .. image:: logos/ANR.png
-      :target: http://www.agence-nationale-recherche.fr/
-      :height: 100px
 * `Marie Curie Initial Training Network (ITN) "Cavity Quantum OptoMechanics" (CQOM) <http://www.cqom-itn.net/>`_
-   .. image:: logos/CQOM.png
-      :target: http://www.cqom-itn.net/
-      :height: 100px
 * `Centre National de la Recherche Scientifique (CNRS) <http://www.cnrs.fr/>`_
-   .. image:: logos/CNRS.png
-      :target: http://www.cnrs.fr/
-      :height: 100px
 * `Universite Pierre et Marie Curie (UPMC) <http://www.upmc.fr/en/>`_
-   .. image:: logos/UPMC.png
-      :target: http://www.upmc.fr/en/
-      :height: 100px
 * `Ecole normale superieure <http://www.ens.fr/>`_
-   .. image:: logos/ENS.png
-      :target: http://www.ens.fr/
-      :height: 100px
+
+.. image:: logos/OMQ-2.png
+  :target: http://www.lkb.upmc.fr/optomecanics/
+  :height: 70px
+.. image:: logos/LKB.png
+  :target: http://www.lkb.upmc.fr/
+  :height: 70px
+.. image:: logos/ANR.png
+  :target: http://www.agence-nationale-recherche.fr/
+  :height: 70px
+.. image:: logos/CQOM.png
+  :target: http://www.cqom-itn.net/
+  :height: 70px
+.. image:: logos/CNRS.png
+  :target: http://www.cnrs.fr/
+  :height: 70px
+.. image:: logos/UPMC.png
+  :target: http://www.upmc.fr/en/
+  :height: 70px
+.. image:: logos/ENS.png
+  :target: http://www.ens.fr/
+  :height: 70px
