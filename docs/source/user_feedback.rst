@@ -1,3 +1,5 @@
+.. _user_feedback:
+
 Feedback by PyRPL users
 *********************************
 

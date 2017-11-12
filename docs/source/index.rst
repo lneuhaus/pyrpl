@@ -45,7 +45,7 @@ What is PyRPL?
 
 .. admonition:: PyRPL is already used in many research groups all over the world.
 
-   See for yourself the :doc:`user feedback <user_feedback>`.
+   See for yourself the :ref:`user_feedback`.
 
 
 .. admonition:: PyRPL is free software and comes with the `GNU General Public License v3.0 <https://www.gnu.org/licenses/gpl.html>`_.
