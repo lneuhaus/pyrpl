@@ -37,9 +37,24 @@ Funding and support
 
 Work on PyRPL was partially funded and/or supported by the following organizations:
 
-* `Optomechanics and Quantum Measurement Group <http://www.lkb.upmc.fr/optomecanics/>`_ .. image::logos/OMQ-2.png at the `Laboratoire Kastler Brossel in Paris <http://www.lkb.upmc.fr/>`_.. image:: logos/LKB.png
-* `Agence nationale de recherche (ANR) <http://www.agence-nationale-recherche.fr/?>`_.. image:: logos/ANR.png
-* `Marie Curie Initial Training Network (ITN) "Cavity Quantum OptoMechanics" (CQOM) <http://www.cqom-itn.net/>`_ .. image:: logos/CQOM.png
-* `Centre National de la Recherche Scientifique (CNRS) <http://www.cnrs.fr/>`_ .. image:: logos/CNRS.png
-* `Universite Pierre et Marie Curie (UPMC) <http://www.upmc.fr/en/>`_ .. image:: logos/UPMC.png
-* `Ecole normale superieure .. image:: logos/ENS.png <http://www.ens.fr/>`_
+* `Optomechanics and Quantum Measurement Group <http://www.lkb.upmc.fr/optomecanics/>`_
+   .. image:: logos/OMQ-2.png
+      :target: http://www.lkb.upmc.fr/optomecanics/
+   at the `Laboratoire Kastler Brossel in Paris <http://www.lkb.upmc.fr/>`_
+   .. image:: logos/LKB.png
+      :target: http://www.lkb.upmc.fr/
+* `Agence nationale de recherche (ANR) <http://www.agence-nationale-recherche.fr/>`_
+   .. image:: logos/ANR.png
+      :target: http://www.agence-nationale-recherche.fr/
+* `Marie Curie Initial Training Network (ITN) "Cavity Quantum OptoMechanics" (CQOM) <http://www.cqom-itn.net/>`_
+   .. image:: logos/CQOM.png
+      :target: http://www.cqom-itn.net/
+* `Centre National de la Recherche Scientifique (CNRS) <http://www.cnrs.fr/>`_
+   .. image:: logos/CNRS.png
+      :target: http://www.cnrs.fr/
+* `Universite Pierre et Marie Curie (UPMC) <http://www.upmc.fr/en/>`_
+   .. image:: logos/UPMC.png
+      :target: http://www.upmc.fr/en/
+* `Ecole normale superieure <http://www.ens.fr/>`_
+   .. image:: logos/ENS.png
+      :target: http://www.ens.fr/
