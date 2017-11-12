@@ -1,18 +1,3 @@
-About
-*********
-
-PyRPL is open source software that allows to use FPGA boards with
-analog interfaces for measurement and control of real-world devices in
-physics and engineering, notably experiments in quantum optics. It was
-started in 2014 by Leonhard Neuhaus for controlling experiments in the field
-of quantum physics at the Laboratoire Kastler Brossel in Paris, France.
-Its was initially based on the open-source code for the `Red Pitaya <www.redpitaya.com>`_
-and gradually diverged away from it. In 2016, large parts of the graphical
-user interface were added to the project by Samuel Deleglise. A number of
-additional people have since contributed to PyRPL by discussing with us, testing,
-bug reporting, or small changes to the code or documentation (see below).
-
-
 Contributors
 **************
 
@@ -61,3 +46,18 @@ Work on PyRPL was partially funded and/or supported by the following organizatio
 * `Marie Curie Initial Training Network (ITN) "Cavity Quantum OptoMechanics" (CQOM) <http://www.cqom-itn.net/>`_
 * `Centre National de la Recherche Scientifique (CNRS) <http://www.cnrs.fr/>`_
 * `Universite Pierre et Marie Curie (UPMC) <http://www.upmc.fr/en/>`_
+
+
+About
+*********
+
+PyRPL is open source software that allows to use FPGA boards with
+analog interfaces for measurement and control of real-world devices in
+physics and engineering, notably experiments in quantum optics. It was
+started in 2014 by Leonhard Neuhaus for controlling experiments in the field
+of quantum physics at the Laboratoire Kastler Brossel in Paris, France.
+Its was initially based on the open-source code for the `Red Pitaya <www.redpitaya.com>`_
+and gradually diverged away from it. In 2016, large parts of the graphical
+user interface were added to the project by Samuel Deleglise. PyRPL was finally
+published as an open-source project under the GNU General Public License, Version 3
+and has been online since July 2017.

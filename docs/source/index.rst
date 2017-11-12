@@ -162,23 +162,7 @@ High-level API example
     p.curve_viewer.curve = transfer_function.result()
 
 
-Old documentation sections
-**********************************************************
-
-The old documentation is obsolete and will soon be deleted. Please refer to the more recent documentation in the :ref:`manual` section.
-
-* :doc:`gallery/index`
-* :doc:`user_guide/index`
-* :doc:`reference_guide/index`
-* :doc:`developer_guide/index`
-* :doc:`indices_and_tables/index`
-* :doc:`contents`
-
-
-Current build status
-***********************
-
-|travis status| |appveyor status| |code coverage| |Python versions on PyPI| |PyRPL version on PyPI| |Download pyrpl| |Documentation Status| |join chat on gitter| |License|
+.. include:: user_feedback.rst
 
 
 .. include:: publications.rst
@@ -205,3 +189,25 @@ Current build status
    :target: https://gitter.im/lneuhaus/pyrpl
 .. |License| image:: https://img.shields.io/pypi/l/pyrpl.svg
    :target: https://github.com/lneuhaus/pyrpl/blob/master/LICENSE
+
+
+Old documentation sections
+**********************************************************
+
+The old documentation is obsolete and will soon be deleted. Please refer to the more recent documentation in the :ref:`manual` section.
+
+* :doc:`gallery/index`
+* :doc:`user_guide/index`
+* :doc:`reference_guide/index`
+* :doc:`developer_guide/index`
+* :doc:`indices_and_tables/index`
+* :doc:`contents`
+
+
+Current build status
+***********************
+
+|travis status| |appveyor status| |code coverage| |Python versions on PyPI| |PyRPL version on PyPI|
+
+|Download pyrpl| |Documentation Status| |join chat on gitter| |License|
+
