@@ -178,7 +178,6 @@ except:
 
 
 default_pyrpl_config = {'name': 'default_pyrpl_instance',
-                        'gui': True,
                         'loglevel': 'info',
                         'background_color': '',
                         # reasonable options:
@@ -300,7 +299,7 @@ class Pyrpl(object):
                 #                       module.name, module.name, self.c._filename, e)
                 #     raise e
         # make the gui if applicable
-        if self.c.pyrpl.gui:
+        if self.c.redpitaya.gui:
             self.show_gui()
 
     def show_gui(self):

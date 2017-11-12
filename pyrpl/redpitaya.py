@@ -58,7 +58,9 @@ defaultparameters = dict(
     frequency_correction=1.0,  # actual FPGA frequency is 125 MHz * frequency_correction
     timeout=1,  # timeout in seconds for ssh communication
     monitor_server_name='monitor_server',  # name of the server program on redpitaya
-    silence_env=False)  # suppress all environment variables that may override the configuration?
+    silence_env=False,   # suppress all environment variables that may override the configuration?
+    gui=True  # show graphical user interface or work on command-line only?
+    )
 
 
 class RedPitaya(object):
@@ -95,7 +97,8 @@ class RedPitaya(object):
             frequency_correction=1.0,  # actual FPGA frequency is 125 MHz * frequency_correction
             timeout=3,  # timeout in seconds for ssh communication
             monitor_server_name='monitor_server',  # name of the server program on redpitaya
-            silence_env=False)  # suppress all environment variables that may override the configuration?
+            silence_env=False,   # suppress all environment variables that may override the configuration?
+            gui=True  # show graphical user interface or work on command-line only?
 
         if you are experiencing problems, try to increase delay, or try
         logging.getLogger().setLevel(logging.DEBUG)"""
@@ -107,8 +110,11 @@ class RedPitaya(object):
         else:
             self.c = MemoryTree(config)
         # get the parameters right (in order of increasing priority):
-        # first defaults, then environment variables, config file, and command
-        # line arguments
+        # 1. defaults
+        # 2. environment variables
+        # 3. config file
+        # 4. command line arguments
+        # 5. (if missing information) request from GUI or command-line
         self.parameters = defaultparameters
         # get parameters from os.environment variables
         if not self.parameters['silence_env']:
@@ -133,9 +139,9 @@ class RedPitaya(object):
             self.logger.warning("An error occured during the loading of your "
                                 "Red Pitaya settings from the config file: %s",
                                 e)
-        # settings from class initialisation
+        # settings from class initialisation / command line
         update_with_typeconversion(self.parameters, kwargs)
-        # get connection settings from gui/command line if missing
+        # get missing connection settings from gui/command line
         if self.parameters['hostname'] is None or self.parameters['hostname']=='':
             gui = 'gui' not in self.c._keys() or self.c.gui
             if gui:
