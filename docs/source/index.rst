@@ -162,8 +162,10 @@ High-level API example
     p.curve_viewer.curve = transfer_function.result()
 
 
-Old documentation sections (new ones in :ref:`manual`)
+Old documentation sections
 **********************************************************
+
+The old documentation is obsolete and will soon be deleted. Please refer to the more recent documentation in in :ref:`manual`.
 
 * :doc:`gallery/index`
 * :doc:`user_guide/index`
