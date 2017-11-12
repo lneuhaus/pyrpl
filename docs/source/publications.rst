@@ -1,4 +1,4 @@
-Publications about or related to PyRPL
+Publications about PyRPL
 ***************************************
 
 1. `L. Neuhaus et al., "PyRPL (Python Red Pitaya Lockbox) — An open-source software package for FPGA-controlled quantum optics experiments", 2017 Conference on Lasers and Electro-Optics Europe & European Quantum Electronics Conference (CLEO/Europe-EQEC), Munich, Germany, 2017. <http://ieeexplore.ieee.org/document/8087380/>`_

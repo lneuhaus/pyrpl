@@ -175,9 +175,7 @@ Old documentation sections (new ones in :ref:`manual`)
 
 .. include:: publications.rst
 
-About
-*********
 
-.. include:: ../../THANKS.txt
+.. include:: thanks.rst
 
 
