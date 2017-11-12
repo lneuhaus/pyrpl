@@ -90,7 +90,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'pyrpl'
-copyright = u'2014-2017, Leonhard Neuhaus, Samuel Deleglise'
+copyright = u'2014-2017, Leonhard Neuhaus, Samuel Deléglise'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

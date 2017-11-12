@@ -165,7 +165,7 @@ High-level API example
 Old documentation sections
 **********************************************************
 
-The old documentation is obsolete and will soon be deleted. Please refer to the more recent documentation in in :ref:`manual`.
+The old documentation is obsolete and will soon be deleted. Please refer to the more recent documentation in the :ref:`manual` section.
 
 * :doc:`gallery/index`
 * :doc:`user_guide/index`

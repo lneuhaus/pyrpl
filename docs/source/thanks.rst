@@ -21,7 +21,7 @@ If you've been left off, please change this file by yourself or send an email to
 maintainer (currently neuhaus@lkb.upmc.fr).
 
 * Leonhard Neuhaus
-* Samuel Deleglise
+* Samuel Deléglise
 * Jonas Neergard-Nielsen
 * Xueshi Guo
 * Jerome Degallaix
