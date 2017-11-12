@@ -30,3 +30,16 @@ maintainer (currently neuhaus@lkb.upmc.fr).
 * Remi Metzdorff
 * Kevin Makles
 * Clement Chardin
+
+
+Funding and support
+**********************
+
+Work on PyRPL was partially funded and/or supported by the following organizations:
+
+* `Optomechanics and Quantum Measurement Group <http://www.lkb.upmc.fr/optomecanics/>`_ .. image::logos/OMQ-2.png at the `Laboratoire Kastler Brossel in Paris <http://www.lkb.upmc.fr/>`_.. image:: logos/LKB.png
+* `Agence nationale de recherche (ANR) <http://www.agence-nationale-recherche.fr/?>`_.. image:: logos/ANR.png
+* `Marie Curie Initial Training Network (ITN) "Cavity Quantum OptoMechanics" (CQOM) <http://www.cqom-itn.net/>`_ .. image:: logos/CQOM.png
+* `Centre National de la Recherche Scientifique (CNRS) <http://www.cnrs.fr/>`_ .. image:: logos/CNRS.png
+* `Universite Pierre et Marie Curie (UPMC) <http://www.upmc.fr/en/>`_ .. image:: logos/UPMC.png
+* `Ecole normale superieure .. image:: logos/ENS.png <http://www.ens.fr/>`_
