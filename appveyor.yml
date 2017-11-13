@@ -75,13 +75,14 @@ install:
   - "python setup.py install"
   # pyinstaller installation
   # - "pip install https://github.com/pyinstaller/pyinstaller/archive/develop.zip"
-  #- "pip install pyinstaller==3.2"
+  # - "pip install pyinstaller==3.2"
   - pip install pypiwin32
   - cd ..
-  - git clone https://www.github.com/pyinstaller/pyinstaller.git -b develop
+  #- git clone https://www.github.com/pyinstaller/pyinstaller.git -b develop
+  - git clone https://www.github.com/lneuhaus/pyinstaller.git -b develop
   - cd pyinstaller
-  - git fetch origin pull/2991/head:pr2991
-  - git checkout pr2991
+  #- git fetch origin pull/2991/head:pr2991
+  #- git checkout pr2991
   - git status
   - python setup.py develop
   - cd ..
