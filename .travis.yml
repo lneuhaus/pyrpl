@@ -88,10 +88,8 @@ script:
     fi
   - if [[ "$TRAVIS_PYTHON_VERSION" == "3.5" && "$TRAVIS_OS_NAME" == "osx" ]]; then
     cd ..;
-    git clone https://www.github.com/pyinstaller/pyinstaller.git -b develop;
+    git clone https://www.github.com/lneuhaus/pyinstaller.git -b develop;
     cd pyinstaller;
-    git fetch origin pull/2991/head:pr2991;
-    git checkout pr2991;
     git status;
     python setup.py develop;
     cd ..;
@@ -102,10 +100,8 @@ script:
     fi
   - if [[ "$TRAVIS_PYTHON_VERSION" == "3.4" && "$TRAVIS_OS_NAME" == "linux" ]]; then
     cd ..;
-    git clone https://www.github.com/pyinstaller/pyinstaller.git -b develop;
+    git clone https://www.github.com/lneuhaus/pyinstaller.git -b develop;
     cd pyinstaller;
-    git fetch origin pull/2991/head:pr2991;
-    git checkout pr2991;
     git status;
     python setup.py develop;
     cd ..;
