@@ -176,6 +176,9 @@ class DspModule(HardwareModule, SignalModule):
 
     @property
     def inputs(self):
+        self._logger.warning("Deprecation warning: DspModule.inputs "
+                             "will soon be removed. Use "
+                             "DspModule.input_options instead!")
         return all_inputs(self).keys()
 
     input = InputSelectRegister(0x0,
@@ -184,6 +187,9 @@ class DspModule(HardwareModule, SignalModule):
 
     @property
     def output_directs(self):
+        self._logger.warning("Deprecation warning: DspModule.output_directs"
+                             "will soon be removed. Use "
+                             "DspModule.output_direct_options instead!")
         return all_output_directs(self).keys()
 
     output_direct = SelectRegister(0x4,

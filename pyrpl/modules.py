@@ -19,6 +19,7 @@ from .attributes import BaseAttribute, ModuleAttribute
 from .widgets.module_widgets import ModuleWidget
 from .curvedb import CurveDB
 from .pyrpl_utils import unique_list, DuplicateFilter
+from .errors import ExpectedPyrplError, UnexpectedPyrplError
 
 import logging
 import numpy as np
@@ -426,7 +427,12 @@ class Module(with_metaclass(ModuleMetaClass, object)):
         from .pyrpl import Pyrpl
         parent = self.parent
         while (not isinstance(parent, Pyrpl)):
-            parent = parent.parent
+            if parent.parent == parent:
+                raise AttributeError(
+                    "Module %s.pyrpl does not have a parent of type 'Pyrpl'. "
+                    "Highest parent is %s. " % (self.name, parent))
+            else:
+                parent = parent.parent
         return parent
 
     def get_setup_attributes(self):

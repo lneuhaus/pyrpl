@@ -270,7 +270,9 @@ class Pyrpl(object):
                 else:
                     # all other (static) defaults
                     pyrplbranch[k] = default_pyrpl_config[k]
-        # set global logging level if specified in config file
+        # set global logging level if specified in kwargs or config file
+        if 'loglevel' in kwargs:
+            self.c.pyrpl.loglevel = kwargs.pop('loglevel')
         pyrpl_utils.setloglevel(level=self.c.pyrpl.loglevel,
                                 loggername='pyrpl')
         # initialize RedPitaya object with the configured or default parameters

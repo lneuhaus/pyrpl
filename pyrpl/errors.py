@@ -11,9 +11,9 @@ class UnexpectedPyrplError(Exception):
         possible that we can help you to get rid of the error. If your error
         is related to improper usage of the PyRPL API, your report will
         help us improve the documentation. Thanks! """ + ENDC
-    def __init__(self, message="", *args):
+    def __init__(self, message="", **kwargs):
         self.message = message + self.pyrpl_error_message
-        super(UnexpectedPyrplError, self).__init__(self.message, *args)
+        super(UnexpectedPyrplError, self).__init__(self.message, **kwargs)
 
 
 class ExpectedPyrplError(Exception):
@@ -24,9 +24,9 @@ class ExpectedPyrplError(Exception):
     pyrpl_error_message = STARTC + """\n\n
         An expected error occured in PyRPL. Please follow the instructions
         in this error message and retry! """ + ENDC
-    def __init__(self, message="", *args):
+    def __init__(self, message="", **kwargs):
         self.message = message + self.pyrpl_error_message
-        super(ExpectedPyrplError, self).__init__(self.message, *args)
+        super(ExpectedPyrplError, self).__init__(self.message, **kwargs)
 
 class NotReadyError(ValueError):
     pass
