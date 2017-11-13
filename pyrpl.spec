@@ -7,18 +7,18 @@ import os
 import sys
 
 # needed to pack the qt libraries along with the exe
-try:
-    qt_plugin_path = os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"]
-except:
-    qt_plugin_path = ''
-if qt_plugin_path == '':
-    try:
-        path, _ = os.path.split(sys.executable).rstrip('bin')
-        if os.path.exists(os.path.join(path, 'Library')):
-            path = os.path.join(path, 'Library')  # needed on windows systems
-        qt_plugin_path = os.path.join(path, 'plugins', 'platforms')
-    except:
-        pass
+#try:
+#    qt_plugin_path = os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"]
+#except:
+#    qt_plugin_path = ''
+#if qt_plugin_path == '':
+#    try:
+#        path, _ = os.path.split(sys.executable).rstrip('bin')
+#        if os.path.exists(os.path.join(path, 'Library')):
+#            path = os.path.join(path, 'Library')  # needed on windows systems
+#        qt_plugin_path = os.path.join(path, 'plugins', 'platforms')
+#    except:
+#        pass
 
 
 a = Analysis(['pyrpl/__main__.py'],
