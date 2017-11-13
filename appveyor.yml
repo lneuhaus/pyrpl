@@ -76,6 +76,7 @@ install:
   # pyinstaller installation
   # - "pip install https://github.com/pyinstaller/pyinstaller/archive/develop.zip"
   #- "pip install pyinstaller==3.2"
+  - pip install pypiwin32
   - cd ..
   - git clone https://www.github.com/pyinstaller/pyinstaller.git -b develop
   - cd pyinstaller
