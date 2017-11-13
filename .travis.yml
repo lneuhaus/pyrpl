@@ -84,19 +84,32 @@ install:
 # - no second copy-pasted section of osx deployment
 script:
   - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" &&  "$TRAVIS_OS_NAME" == "linux" ]] || [[ "$TRAVIS_PYTHON_VERSION" == "3.5" &&  "$TRAVIS_OS_NAME" == "osx" ]] || [[ "$TRAVIS_PYTHON_VERSION" == "3.6" && "$TRAVIS_OS_NAME" == "linux" ]]; then
-    echo "NOSETESTS ARE ENABLED";
-    nosetests;
+    echo "NOSETESTS ARE DISABLED";
     fi
   - if [[ "$TRAVIS_PYTHON_VERSION" == "3.5" && "$TRAVIS_OS_NAME" == "osx" ]]; then
-    pip install pyinstaller==3.2;
-    export QT_QPA_PLATFORM_PLUGIN_PATH=$HOME/miniconda/envs/test-environment/plugins/platforms;
+    cd ..;
+    git clone https://www.github.com/pyinstaller/pyinstaller.git -b develop;
+    cd pyinstaller;
+    git fetch origin pull/2991/head:pr2991;
+    git checkout pr2991;
+    git status;
+    python setup.py develop;
+    cd ..;
+    cd pyrpl;
     pyinstaller pyrpl.spec;
     mv dist/pyrpl ./pyrpl-mac-develop;
     python .deploy_to_sourceforge.py pyrpl-mac-develop;
     fi
   - if [[ "$TRAVIS_PYTHON_VERSION" == "3.4" && "$TRAVIS_OS_NAME" == "linux" ]]; then
-    pip install pyinstaller==3.2;
-    export QT_QPA_PLATFORM_PLUGIN_PATH=$HOME/miniconda/envs/test-environment/plugins/platforms;
+    cd ..;
+    git clone https://www.github.com/pyinstaller/pyinstaller.git -b develop;
+    cd pyinstaller;
+    git fetch origin pull/2991/head:pr2991;
+    git checkout pr2991;
+    git status;
+    python setup.py develop;
+    cd ..;
+    cd pyrpl;
     pyinstaller pyrpl.spec;
     mv dist/pyrpl ./pyrpl-linux-develop;
     python .deploy_to_sourceforge.py pyrpl-linux-develop;
