@@ -102,7 +102,7 @@ test_script:
   - "mv dist/pyrpl.exe ./pyrpl-windows.exe"
 
 # optional tests:
-  - "./pyrpl-windows.exe hostname=_FAKE_ &"
+  - "pyrpl-windows.exe config=test_windows hostname=_FAKE_ &"
 #  - "nosetests"
 
 # deploy to sourceforge if build was successful and commit has a tag

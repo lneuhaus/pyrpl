@@ -14,10 +14,9 @@ notifications:
 language: generic
 
 env:
-  - TRAVIS_PYTHON_VERSION=3.4
+  - TRAVIS_PYTHON_VERSION=3.5
   - TRAVIS_PYTHON_VERSION=2.7
   - TRAVIS_PYTHON_VERSION=3.6
-  - TRAVIS_PYTHON_VERSION=3.5
 os:
   - linux
   - osx
@@ -83,10 +82,6 @@ install:
 # - instead of the echo: nosetests;
 # - no second copy-pasted section of osx deployment
 script:
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" &&  "$TRAVIS_OS_NAME" == "linux" ]] || [[ "$TRAVIS_PYTHON_VERSION" == "3.5" &&  "$TRAVIS_OS_NAME" == "osx" ]] || [[ "$TRAVIS_PYTHON_VERSION" == "3.6" && "$TRAVIS_OS_NAME" == "linux" ]]; then
-    echo "NOSETESTS ARE ENSABLED";
-    nosetests;
-    fi
   - if [[ "$TRAVIS_PYTHON_VERSION" == "3.5" && "$TRAVIS_OS_NAME" == "osx" ]]; then
     cd ..;
     git clone https://www.github.com/lneuhaus/pyinstaller.git -b develop;
@@ -98,8 +93,10 @@ script:
     pyinstaller pyrpl.spec;
     mv dist/pyrpl ./pyrpl-mac-develop;
     python .deploy_to_sourceforge.py pyrpl-mac-develop;
+    chmod 755 pyrpl-mac-develop;
+    ./pyrpl-mac-develop config=test_osx hostname=_FAKE_ &;
     fi
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "3.4" && "$TRAVIS_OS_NAME" == "linux" ]]; then
+  - if [[ "$TRAVIS_PYTHON_VERSION" == "3.5" && "$TRAVIS_OS_NAME" == "linux" ]]; then
     cd ..;
     git clone https://www.github.com/lneuhaus/pyinstaller.git -b develop;
     cd pyinstaller;
@@ -110,8 +107,13 @@ script:
     pyinstaller pyrpl.spec;
     mv dist/pyrpl ./pyrpl-linux-develop;
     python .deploy_to_sourceforge.py pyrpl-linux-develop;
+    chmod 755 pyrpl-linux-develop;
+    ./pyrpl-linux-develop config=test_linux hostname=_FAKE_ &;
     fi
-
+  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" &&  "$TRAVIS_OS_NAME" == "linux" ]] || [[ "$TRAVIS_PYTHON_VERSION" == "3.5" &&  "$TRAVIS_OS_NAME" == "osx" ]] || [[ "$TRAVIS_PYTHON_VERSION" == "3.6" && "$TRAVIS_OS_NAME" == "linux" ]]; then
+    echo "NOSETESTS ARE ENABLED";
+    nosetests;
+    fi
 
 after_script:
   - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" &&  "$TRAVIS_OS_NAME" == "linux" ]] || [[ "$TRAVIS_PYTHON_VERSION" == "3.5" &&  "$TRAVIS_OS_NAME" == "linux" ]] || [[ "$TRAVIS_PYTHON_VERSION" == "3.6" && "$TRAVIS_OS_NAME" == "osx" ]]; then
@@ -137,7 +139,7 @@ deploy:
 # put windows executable into the right directory (at last such that "latest" points to windows .exe)
 after_deploy:
   - source activate test-environment
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "3.4" && "$TRAVIS_OS_NAME" == "linux" && "$TRAVIS_TEST_RESULT" == 0 ]]; then
+  - if [[ "$TRAVIS_PYTHON_VERSION" == "3.5" && "$TRAVIS_OS_NAME" == "linux" && "$TRAVIS_TEST_RESULT" == 0 ]]; then
     pip install https://github.com/pyinstaller/pyinstaller/archive/develop.zip;
     export QT_QPA_PLATFORM_PLUGIN_PATH=$HOME/miniconda/envs/test-environment/plugins/platforms;
     pyinstaller pyrpl.spec;
