@@ -101,9 +101,9 @@ test_script:
   - "pyinstaller pyrpl.spec"
   - "mv dist/pyrpl.exe ./pyrpl-windows.exe"
 # optional tests:
-  - "ps: $MyProcess = Start-Process pyrpl-windows.exe config=test_windows hostname=_FAKE_"
+  - ps: "$MyProcess = Start-Process pyrpl-windows.exe config=test_windows hostname=_FAKE_"
   - timeout 20
-  - "ps: Stop-Process -Id $MyProcess.Id"
+  - ps: "Stop-Process -Id $MyProcess.Id"
 #  - "nosetests"
 
 # deploy to sourceforge if build was successful and commit has a tag
