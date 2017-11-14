@@ -84,7 +84,8 @@ install:
 # - no second copy-pasted section of osx deployment
 script:
   - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" &&  "$TRAVIS_OS_NAME" == "linux" ]] || [[ "$TRAVIS_PYTHON_VERSION" == "3.5" &&  "$TRAVIS_OS_NAME" == "osx" ]] || [[ "$TRAVIS_PYTHON_VERSION" == "3.6" && "$TRAVIS_OS_NAME" == "linux" ]]; then
-    echo "NOSETESTS ARE DISABLED";
+    echo "NOSETESTS ARE ENSABLED";
+    nosetests;
     fi
   - if [[ "$TRAVIS_PYTHON_VERSION" == "3.5" && "$TRAVIS_OS_NAME" == "osx" ]]; then
     cd ..;
