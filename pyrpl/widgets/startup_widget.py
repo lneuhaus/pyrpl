@@ -9,10 +9,12 @@ from ..async_utils import APP
 class HostnameSelectorWidget(QtWidgets.QDialog):
     _HIDE_PASSWORDS = False
     _SKIP_REDPITAYA_SIGNATURE = True  # display all devices incl. non-redpitayas
-    _SCAN_TIMEOUT = 0.04
+    _SCAN_TIMEOUT = 0.05
     _CONNECT_TIMEOUT = 1.0
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, config={'user': None,
+                                            'password': None,
+                                            'sshport': None}):
         self.parent = parent
         self.items = []
         self.ips_and_macs = []
@@ -27,18 +29,18 @@ class HostnameSelectorWidget(QtWidgets.QDialog):
 
         self.user_label = QtWidgets.QLabel('user')
         self.hlay1.addWidget(self.user_label)
-        self.user_input = QtWidgets.QLineEdit('root')
+        self.user_input = QtWidgets.QLineEdit(config['user'] or 'root')
         self.hlay1.addWidget(self.user_input)
 
         self.password_label = QtWidgets.QLabel('password')
-        self.password_input = QtWidgets.QLineEdit('root')
+        self.password_input = QtWidgets.QLineEdit(config['password'] or 'root')
         if self._HIDE_PASSWORDS:
             self.password_input.setEchoMode(self.password_input.PasswordEchoOnEdit)
         self.hlay1.addWidget(self.password_label)
         self.hlay1.addWidget(self.password_input)
 
-        self.sshport_input = QtWidgets.QLineEdit(text="22")
         self.sshport_label = QtWidgets.QLabel('ssh port')
+        self.sshport_input = QtWidgets.QLineEdit(text=str(config['sshport'] or 22))
         self.hlay1.addWidget(self.sshport_label)
         self.hlay1.addWidget(self.sshport_input)
 
@@ -171,6 +173,48 @@ class HostnameSelectorWidget(QtWidgets.QDialog):
         else:
             self.progressbar.hide()
 
+    def _get_all_own_ip_addresses(self, exclude=['127.0.0.1']):
+        """
+        Returns a list of all ip addresses of the running computer
+
+        Parameters:
+            exclude (list of str): a list of ip addresses to exclude from the returned list
+
+        Returns:
+            list: list of internal ip addresses of all ipv4-able adapters of the computer
+        """
+        addr_list = []
+        try:
+            import netifaces
+        except:
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            try:
+                # doesn't even have to be reachable, just need an open socket
+                s.connect(('10.255.255.255', 1))
+                ip = s.getsockname()[0]
+            except:  # pragma: no cover
+                ip = '127.0.0.1'  # fall back to default if no network available
+            finally:
+                s.close()
+            addr_list.append(ip)
+        else:
+            for interface in netifaces.interfaces():  # go through all interfaces (wlan, lan, etc.)
+                try:
+                    entries = netifaces.ifaddresses(interface)[netifaces.AF_INET]  # only use ipv4
+                except KeyError:
+                    pass
+                else:
+                    for entry in entries:  # iterate through all
+                        try:
+                            addr = entry['addr']  # collect ip address
+                        except KeyError:
+                            pass
+                        else:
+                            if addr not in exclude:  # exclude certain addresses (see above)
+                                addr_list.append(addr)
+        self._logger.debug("Your own ips are: %s", addr_list)
+        return addr_list
+
     def scan(self):
         """
         Scan the local area network for available Red Pitayas.
@@ -194,23 +238,16 @@ class HostnameSelectorWidget(QtWidgets.QDialog):
         port = self.sshport
         user = self.user
         password = self.password
-        # first, find our own IP address to infer the LAN from it
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        try:
-            # doesn't even have to be reachable, just need an open socket
-            s.connect(('10.255.255.255', 1))
-            ip = s.getsockname()[0]
-        except: # pragma: no cover
-            ip = '127.0.0.1'  # fall back to default if no network available
-        finally:
-            s.close()
-        self._logger.debug("Your own ip is: %s", ip)
-        # the LAN around an ip address 'a.b.c.d' is here defined here as all
-        # ip addresses from a.b.c.0 to a.b.c.255
-        end = ip.split('.')[-1]
-        start = ip[:-len(end)]
+        # make a list of ips to scan for redpitayas
         ips = ['192.168.1.100']  # direct connection ip, not found automatically
-        ips += [start + str(i) for i in range(256)]  # all local ips
+        # first, find our own IP address to infer the LAN from it
+        for ip in self._get_all_own_ip_addresses():
+            # the LAN around an ip address 'a.b.c.d' is here defined here as all
+            # ip addresses from a.b.c.0 to a.b.c.255
+            end = ip.split('.')[-1]
+            start = ip[:-len(end)]
+            ips += [start + str(i) for i in range(256)]  # all local ips
+        # start scanning all ips
         self.progressbar.setRange(0, len(ips))
         for i, ip in enumerate(ips):
             if not self.scanning:  # abort if ok was clicked prematurely
@@ -242,6 +279,8 @@ class HostnameSelectorWidget(QtWidgets.QDialog):
                             self._logger.debug('RP device found: IP %s, '
                                                'MAC %s', ip, mac)
                             self.add_device(ip, mac)
+            else:
+                self._logger.debug("%s:%d is closed", ip, port)
             APP.processEvents()
         self.scanning = False
         if len(self.ips_and_macs) == 2:

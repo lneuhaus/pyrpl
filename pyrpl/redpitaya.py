@@ -148,7 +148,7 @@ class RedPitaya(object):
                 self.logger.info("Please choose the hostname of "
                                  "your Red Pitaya in the hostname "
                                  "selector window!")
-                startup_widget = HostnameSelectorWidget()
+                startup_widget = HostnameSelectorWidget(config=self.parameters)
                 hostname_kwds = startup_widget.get_kwds()
             else:
                 hostname = raw_input('Enter hostname [192.168.1.100]: ')
