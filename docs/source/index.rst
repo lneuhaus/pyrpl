@@ -204,6 +204,9 @@ The old documentation is obsolete and will soon be deleted. Please refer to the 
 * :doc:`contents`
 
 
+.. include:: changelog.rst
+
+
 Current build status
 ***********************
 
