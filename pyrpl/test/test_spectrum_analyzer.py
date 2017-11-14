@@ -161,7 +161,7 @@ class TestClass(TestPyrpl):
         exp = cross/in1
         theory = self.iq.transfer_function(self.sa.frequencies)
 
-        from pylab import plot, show
+        #from pylab import plot, show
 
         assert abs(exp - theory)[1:].max()< 0.05
 
