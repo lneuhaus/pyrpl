@@ -204,9 +204,6 @@ The old documentation is obsolete and will soon be deleted. Please refer to the 
 * :doc:`contents`
 
 
-.. include:: changelog.rst
-
-
 Current build status
 ***********************
 
@@ -214,3 +211,5 @@ Current build status
 
 |Download pyrpl| |Documentation Status| |join chat on gitter| |License|
 
+
+.. include:: changelog.rst
