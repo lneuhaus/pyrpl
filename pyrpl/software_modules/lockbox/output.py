@@ -226,8 +226,8 @@ class OutputSignal(Signal):
                                  self.name)
         else:
             # write values to pid module
-            self.pid.p = 0  # set gains to zero before switching setpoint and input..
-            self.pid.i = 0
+            self.pid.p = 0  # set gains to zero before switching setpoint ...
+            self.pid.i = 0  # ... input, to avoid huge gain while transiting
             self.pid.setpoint = input.expected_signal(setpoint) + input.calibration_data._analog_offset
             self.pid.input = input.signal()
             self.pid.p = self.p / external_loop_gain * gain_factor
