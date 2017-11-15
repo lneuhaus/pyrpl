@@ -67,6 +67,19 @@ Manual
 * :doc:`developer_guide/index`
 * :doc:`contents`
 
+.. toctree::
+   :caption: Manual
+   :numbered:
+   :hidden:
+   :titlesonly:
+
+   installation
+   gui
+   api
+   basics
+   developer_guid/index
+   contents
+
 
 .. _low_level_example:
 
