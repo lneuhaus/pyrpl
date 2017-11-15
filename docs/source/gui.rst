@@ -63,12 +63,12 @@ We explain below the operation of the most useful module widgets.
 
 
 Acquisition Module Widgets
-==========================
+=============================
 
 .. automodule:: pyrpl.widgets.module_widgets.acquisition_module_widget
 
 Scope Widget
-------------
+---------------
 
 The scope widget is represented in the image below
 
@@ -80,7 +80,7 @@ The scope widget is represented in the image below
 .. automodule:: pyrpl.widgets.module_widgets.scope_widget
 
 Spectrum Analyzer Widget
-------------------------
+---------------------------
 
 The spectrum analyzer widget is represented in the image below
 
@@ -97,7 +97,7 @@ The spectrum analyzer widget is represented in the image below
 
 
 Network Analyzer Widget
------------------------
+--------------------------
 
 The network analyzer widget is represented in the image below
 
@@ -111,7 +111,7 @@ The network analyzer widget is represented in the image below
 .. _iq-widget-label:
 
 Iq Widget
----------
+------------
 
 The iq widget is represented in the image below. A schematic of the internal connection of the IQ-module can be 
 shown or hidden with the arrow button.
@@ -124,7 +124,7 @@ shown or hidden with the arrow button.
 .. automodule:: pyrpl.widgets.module_widgets.iq_widget
 
 Lockbox Widget
----------
+-----------------
 
 The lockbox widget is represented in the image below
 

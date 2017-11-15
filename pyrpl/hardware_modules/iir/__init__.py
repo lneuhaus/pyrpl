@@ -9,22 +9,14 @@ complex values of the poles and zeros of the filter. In the current
 version of pyrpl, the IIR module can implement IIR filters with the
 following properties:
 
-- strictly proper transfer function (number of
-poles > number of zeros)
+- strictly proper transfer function (number of poles > number of zeros)
 - poles (zeros) either real or complex-conjugate pairs
 - no three or more identical real poles (zeros)
 - no two or more identical pairs of complex conjugate poles (zeros)
-- pole and zero frequencies should be larger than :math:`\frac{f_\rm{
-nyquist}}{1000}` (but you can optimize the nyquist
-frequency of your filter by tuning the 'loops' parameter)
-- the DC-gain of the filter must be 1.0. Despite the FPGA implemention being more
-flexible, we found this constraint rather practical. If you need
-different behavior, pass the IIR signal through a PID module and use its
-input filter and proportional gain. If you still need different
-behaviour, the file iir.py is a good starting point.
+- pole and zero frequencies should be larger than :math:`\frac{f_\rm{nyquist}}{1000}` (but you can optimize the nyquist frequency of your filter by tuning the 'loops' parameter)
+- the DC-gain of the filter must be 1.0. Despite the FPGA implemention being more flexible, we found this constraint rather practical. If you need different behavior, pass the IIR signal through a PID module and use its input filter and proportional gain. If you still need different behaviour, the file iir.py is a good starting point.
 - total filter order <= 16 (realizable with 8 parallel biquads)
-- a remaining bug limits the dynamic range to about 30 dB before internal
-saturation interferes with filter performance
+- a remaining bug limits the dynamic range to about 30 dB before internal saturation interferes with filter performance
 
 Filters whose poles have a positive real part are unstable by design.
 Zeros with positive real part lead to non-minimum phase lag.

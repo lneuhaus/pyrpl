@@ -5,11 +5,12 @@ the base class ModuleWidget.
 A module widget is delimited by a dashed-line (a QGroupBox). The following
 menu is available on the top part of each ModuleWidget (right click on the
 item to access the submenu):
- - Load: Loads the state of the module from a list of previously saved states
- - Save: Saves the state with a given name
- - Erase: Erases one of the previously saved state
- - Edit: Opens a text window to edit the yml code of the required state
- - Hide/Show: Hide or show the content of the module widget
+
+- Load: Loads the state of the module from a list of previously saved states
+- Save: Saves the state with a given name
+- Erase: Erases one of the previously saved state
+- Edit: Opens a text window to edit the yml code of the required state
+- Hide/Show: Hide or show the content of the module widget
 
 Inside the module widget, the different attribute values can be manipulated using the
 provided widgets. The modifications will take effect immediately and only affect the

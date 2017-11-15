@@ -24,22 +24,22 @@ Work on PyRPL was partially funded and/or supported by the following organizatio
 
 .. image:: logos/OMQ-2.png
   :target: http://www.lkb.upmc.fr/optomecanics/
-  :height: 70px
+  :width: 16%
 .. image:: logos/LKB.png
   :target: http://www.lkb.upmc.fr/
-  :height: 70px
+  :width: 16%
 .. image:: logos/ANR.png
   :target: http://www.agence-nationale-recherche.fr/
-  :height: 70px
+  :width: 16%
 .. image:: logos/CQOM.png
   :target: http://www.cqom-itn.net/
-  :height: 70px
+  :width: 16%
 .. image:: logos/CNRS.png
   :target: http://www.cnrs.fr/
-  :height: 70px
+  :width: 16%
 .. image:: logos/UPMC.png
   :target: http://www.upmc.fr/en/
-  :height: 70px
+  :width: 16%
 
 * `Optomechanics and Quantum Measurement Group <http://www.lkb.upmc.fr/optomecanics/>`_ at the `Laboratoire Kastler Brossel in Paris <http://www.lkb.upmc.fr/>`_
 * `Agence nationale de recherche (ANR) <http://www.agence-nationale-recherche.fr/>`_
