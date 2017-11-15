@@ -38,7 +38,7 @@ asking you to choose among the different RedPitayas connected to your local netw
 the main Pyrpl widget should appear:
 
 .. image:: pyrpl_widget.jpg
-   :scale: 100 %
+   :width: 100 %
    :alt: The main pyrpl widget
    :align: center
 
@@ -53,7 +53,7 @@ A typical module widget
 The image below shows the module widget for the PID modules. 
 
 .. image:: pid_widget.jpg
-   :scale: 100 %
+   :width: 100 %
    :alt: A typical module widget
    :align: center
 
@@ -73,7 +73,7 @@ Scope Widget
 The scope widget is represented in the image below
 
 .. image:: scope_widget.jpg
-   :scale: 100 %
+   :width: 100 %
    :alt: scope module widget
    :align: center
 
@@ -85,7 +85,7 @@ Spectrum Analyzer Widget
 The spectrum analyzer widget is represented in the image below
 
 .. image:: spectrum_analyzer_widget.jpg
-   :scale: 100 %
+   :width: 100 %
    :alt: scope module widget
    :align: center
 
@@ -102,7 +102,7 @@ Network Analyzer Widget
 The network analyzer widget is represented in the image below
 
 .. image:: network_analyzer_widget.jpg
-   :scale: 100 %
+   :width: 100 %
    :alt: scope module widget
    :align: center
 
@@ -117,7 +117,7 @@ The iq widget is represented in the image below. A schematic of the internal con
 shown or hidden with the arrow button.
 
 .. image:: iq_widget.gif
-   :scale: 100 %
+   :width: 100%
    :alt: scope module widget
    :align: center
 
@@ -129,7 +129,7 @@ Lockbox Widget
 The lockbox widget is represented in the image below
 
 .. image:: lockbox_widget.jpg
-   :scale: 100 %
+   :width: 100 %
    :alt: lockbox module widget
    :align: center
 

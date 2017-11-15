@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
 The Lockbox widget is used to produce a control signal to make a system's 
-output follow a specified setpoint. The system has to behave linearly around 
-the setpoint, but many of the systems do. The key parts of the widget are:
+output follow a specified setpoint. The system has to behave linearly around
+the setpoint, which is the case for many systems. The key parts of the widget are:
 
 *	General controls: "classname" selects a particular Lockbox class from the 
 	ones defined in lockbox/models folder, and will determine the overall 
@@ -21,14 +21,14 @@ the setpoint, but many of the systems do. The key parts of the widget are:
 	will be executed sequentially. 
 
 *	Stage settings: each stage has its own 
-	setpoint (whose units can be arbitrarily defined) and a gain factor (a 
-	premultiplier to account for differences in stages). In addition, based 
-	on the state of the "lock on" tri-state checkbox, a stage can enable 
-	(checkbox checked), disable (checkbox disabled) or leave unaffected 
-	(checkbox greyed out) the locking state when the stage is activated. The 
-	checkbox and field "reset offset" determine whether the lockbox should 
-	reset its output to a certain level when this stage is reached.
-
+	setpoint (whose units can be chosen in the general setting setpoint_unit)
+	and a gain factor (a premultiplier to account for desired gain differences
+	among different stages). In addition, based on the state of the "lock on"
+	tri-state checkbox, a stage can enable (checkbox checked), disable
+	(checkbox disabled) or leave unaffected  (checkbox greyed out) the
+	locking state when the stage is activated. The checkbox and field "reset
+	offset" determine whether the lockbox should reset its output to a certain
+	level when this stage is reached.
 
 *	Inputs and outputs: the PI parameters, together with limits, unit 
 	conversions and so on, are set in these tabs.
