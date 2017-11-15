@@ -122,3 +122,15 @@ shown or hidden with the arrow button.
    :align: center
 
 .. automodule:: pyrpl.widgets.module_widgets.iq_widget
+
+Lockbox Widget
+---------
+
+The lockbox widget is represented in the image below
+
+.. image:: lockbox_widget.jpg
+   :scale: 100 %
+   :alt: lockbox module widget
+   :align: center
+
+.. automodule:: pyrpl.widgets.module_widgets.lockbox_widget
