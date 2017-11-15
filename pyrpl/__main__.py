@@ -7,13 +7,13 @@ a Pyrpl instance with the config file
 """
 import sys
 try:
-    from pyrpl import Pyrpl, APP
+    from pyrpl import Pyrpl, APP, help_message
 except:
-    from . import Pyrpl, APP
+    from . import Pyrpl, APP, help_message
 
 if __name__ == '__main__':
     if len(sys.argv) > 3:
-        print("usage: python run_pyrpl.py [[config]=config_file_name] "
+        print("usage: python run_pyrpl.py [[config=]config_file_name] "
               "[source=config_file_template] [hostname=hostname/ip]")
     kwargs = dict()
     for i, arg in enumerate(sys.argv):
@@ -33,6 +33,9 @@ if __name__ == '__main__':
     #if APP is None:
     #    APP = QtWidgets.QApplication(sys.argv)
 
-    print("Calling Pyrpl(**%s)"%str(kwargs))
-    PYRPL = Pyrpl(**kwargs)
-    APP.exec_()
+    if '--help' in kwargs:
+        print(help_message)
+    else:
+        print("Calling Pyrpl(**%s)"%str(kwargs))
+        PYRPL = Pyrpl(**kwargs)
+        APP.exec_()

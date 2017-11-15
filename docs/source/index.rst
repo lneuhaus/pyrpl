@@ -60,25 +60,24 @@ What is PyRPL?
 Manual
 *******************
 
+.. toctree::
+   :maxdepth: 1
+   :titlesonly:
+   :hidden:
+
+   installation
+   gui
+   api
+   basics
+   developer_guide/index
+   contents
+
 * :doc:`installation`
 * :doc:`gui`
 * :doc:`api`
 * :doc:`basics`
 * :doc:`developer_guide/index`
 * :doc:`contents`
-
-.. toctree::
-   :caption: Manual
-   :numbered:
-   :hidden:
-   :titlesonly:
-
-   installation
-   gui
-   api
-   basics
-   developer_guid/index
-   contents
 
 
 .. _low_level_example:

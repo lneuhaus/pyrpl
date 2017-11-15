@@ -164,6 +164,7 @@ from .software_modules.lockbox import models
 #from .software_modules.lockbox.models import *  # make sure all models are
 # loaded when we get started
 from . import user_config_dir
+from ._version import __version__
 
 # input is the wrong function in python 2
 try:
@@ -190,6 +191,41 @@ default_pyrpl_config = {'name': 'default_pyrpl_instance',
                                     'PyrplConfig',
                                     'Lockbox'
                                     ]}
+
+help_message = """
+PyRPL version %s command-line help
+==================================
+
+Syntax for launching PyRPL
+------------------------------------------------------------------------------
+Rectangular brackets [] indicate optional parameters.
+
+Syntax for binary executable:
+    pyrpl [key1=value1 [key2=value2 [key3=value3 [...]]]]
+
+Syntax with python installation:
+    python -m pyrpl [key1=value1 [key2=value2 [key3=value3 [...]]]]
+
+Syntax from within Python:
+    from pyrpl import Pyrpl
+    p = Pyrpl([key1=value1, [key2=value2 [key3=value3 [...]]]])
+
+
+Keys and Values:
+------------------------------------------------------------------------------
+config   configuration name (without .yml-extension)
+source   name of the configuration to use as default
+
+hostname hostname of the redpitaya
+user     username for ssh login on the redpitaya
+password password for ssh login on the redpitaya
+sshport  port for ssh, default is 22
+port     port for redpitaya_client, default is 2222
+
+gui      one of [True, False], to en- or disable GUI
+loglevel logging level, one of [debug, info, warning, error]
+"""%(__version__)
+
 
 class Pyrpl(object):
     """
