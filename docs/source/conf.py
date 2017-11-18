@@ -66,7 +66,8 @@ exclude_patterns = ["*.test.rst",]
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.napoleon',  # supports google- or numpy-style dosctrings
-    'sphinx.ext.imgmath',  # supports things like :math:`a^2 + b^2 = c^2`
+    #'sphinx.ext.imgmath',  # imgmath is not working on my local Ubuntu (LN)
+    'sphinx.ext.mathjax',  # supports things like :math:`a^2 + b^2 = c^2`
     'sphinx.ext.todo',
     'sphinx.ext.viewcode',
     'sphinx.ext.inheritance_diagram',

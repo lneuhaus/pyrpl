@@ -1,31 +1,40 @@
 """
-The network analyzer can be used to measure the coherent response at
-the port "input" to a sinusoidal excitation applied in "output_direct" (to
-measure the transfer function from an internal signal to the input, see the
-note below).
+The network analyzer records the coherent response of the signal at the port
+:code:`input` to a sinusoidal excitation of variable frequency sent to the
+output selected in :code:`output_direct`.
 
- - acbandwidth is the cutoff frequency of the high-pass filter used before
-   demodulation
- - start_freq/stop_freq: are the starting point and ending point of the
-   frequency scan (not necessarily increasing). Enter twice the same value
-   to use the network analyzer in "0-span" mode
- - rbw: width of the demodulation filter. The averaging time per point is
-   inversly proportional to this parameter
- - avg_per_points: each point is averaged inside the FPGA before being
-   retrieved by the computer. when communication time between the
-   redpitaya and the computer is limiting the acquisition speed,
-   this parameter should be increased
- - points: number of frequency points in the scan
- - amplitude: amplitude of the excitation in V
- - logscale: use a logarithmic scale for the frequency axis
- - infer_open_loop_tf: applies the transformation z->z/(1+z) to correct for
-   closed feedback loop correction (not implemented at the moment)
+.. note:: If :code:`output_direct='off'`, another module's input can be set
+          to :code:`networkanalyzer` to test its response to a frequency sweep.
 
-.. note:: Internally, the network analyzer is implemented by an IQ-module.
-          In order to plugg the network-analyzer's output on an internal
-          signal, unlock the corresponding IQ-module, turn the output
-          multiplexer of the IQ to "output_direct" , and then plugg the
-          input of the desired module to the IQ module.
+* :attr:`~pyrpl.software_modules.network_analyzer.NetworkAnalyzer.amplitude`
+  sets the amplitude of the sinusoidal excitation in Volts.
+* :attr:`~pyrpl.software_modules.network_analyzer.NetworkAnalyzer.start_freq`/:attr:`~pyrpl.software_modules.network_analyzer.NetworkAnalyzer.stop_freq`
+  define the frequency range over which a transfer function is recorded.
+  Swapping the values of :code:`start_freq` and :code:`stop_freq` reverses the
+  direction of the frequency sweep. Setting :code:`stop_freq = start_freq`
+  enables the "zero-span" mode, where the coherent response at a constant
+  frequency is recorded as a function of time.
+* :attr:`~pyrpl.software_modules.network_analyzer.NetworkAnalyzer.points`
+  defines the number of frequency points in the recorded transfer function.
+* :attr:`~pyrpl.software_modules.network_analyzer.NetworkAnalyzer.rbw` is
+  the cutoff frequency of the low-pass filter after demodulation. Furthermore,
+  the time :math:`\\tau` spent to record each point is
+  :math:`\\tau=\\texttt{avg_per_point} / \\texttt{rbw}`.
+* :attr:`~pyrpl.software_modules.network_analyzer.NetworkAnalyzer.avg_per_point`:
+  Each point is averaged inside the FPGA before being retrieved by the
+  client computer that runs PyRPL. You should increase this parameter or
+  decrease :code:`rbw` if the communication time between the Red Pitaya and
+  the client computer limits the acquisition speed.
+* :attr:`~pyrpl.software_modules.network_analyzer.NetworkAnalyzer.acbandwidth`
+  is the cutoff frequency of a high-pass filter applied to the input before
+  demodulation. A setting of zero disables the high-pass filter.
+* :attr:`~pyrpl.software_modules.network_analyzer.NetworkAnalyzer.logscale`
+  enables the use of a logarithmic scale for the frequency axis, resulting in
+  a logarithmic distribution of the frequency points as well.
+* :attr:`~pyrpl.software_modules.network_analyzer.NetworkAnalyzer.infer_open_loop_tf`
+  applies the transformation :math:`T \\rightarrow \\frac{T}{1+T}` to the displayed
+  transfer function to correct for the effect of a closed feedback loop
+  (not implemented at the moment).
 """
 
 from .base_module_widget import ModuleWidget

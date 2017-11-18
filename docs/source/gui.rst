@@ -96,7 +96,7 @@ Acquisition Module Widgets
 Scope Widget
 ---------------
 
-The scope widget is represented in the image below
+The scope widget is represented in the image below.
 
 .. image:: scope_widget.jpg
    :width: 100 %
@@ -111,7 +111,7 @@ The scope widget is represented in the image below
 Network Analyzer Widget
 --------------------------
 
-The network analyzer widget is represented in the image below
+The network analyzer widget is represented in the image below.
 
 .. image:: network_analyzer_widget.jpg
    :width: 100 %
@@ -126,7 +126,7 @@ The network analyzer widget is represented in the image below
 Spectrum Analyzer Widget
 ---------------------------
 
-The spectrum analyzer widget is represented in the image below
+The spectrum analyzer widget is represented in the image below.
 
 .. image:: spectrum_analyzer_widget.jpg
    :width: 100 %
@@ -156,10 +156,13 @@ shown or hidden with the arrow button.
 
 .. automodule:: pyrpl.widgets.module_widgets.iq_widget
 
+
+.. _lockbox-widget-label:
+
 Lockbox Widget
 ===================
 
-The lockbox widget is represented in the image below
+The lockbox widget is represented in the image below.
 
 .. image:: lockbox_widget.jpg
    :width: 100 %

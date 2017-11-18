@@ -1,21 +1,35 @@
 """
-The scope widget allows to manipulate the following attributes:
- - ch1_active/ch2_active: (boolean) hide/show the trace corresponding to
-   ch1/ch2
- - input1/input2: Choose the input among a list of possible signals.
-   Internal signals can be referenced by their symbolic name e.g.
-   'lockbox.output.output1'.
- - threshold: The voltage threshold for scope trigger
- - hysteresis: Hysteresis for scope trigger
- - duration: duration of the trace to acquire
- - trigger_delay: delay beteween trigger event and origin of the trace
- - trigger_source: channel to use for trigger
- - average: downsampling is done either by averaging all samples together
-   or by taking a single sample in the interval
- - trigger_mode:
-    + Normal is used for triggered acquisition
-    + Untriggered (rolling) is used for continuous acquisition (only available for durations>0.1 s)
-      Trace averaging is not applicable in Untriggered mode.
+The control panel above the plotting area allows to manipulate the following
+attributes specific to the :class:`~pyrpl.hardware_modules.scope.Scope`:
+
+* :attr:`~.Scope.ch1_active`/:attr:`~.Scope.ch2_active`: Hide/show the trace
+  corresponding to ch1/ch2.
+* :attr:`~.Scope.input1`/:attr:`~.Scope.input2`: Choose the input among a
+  list of possible signals. Internal signals can be referenced by their
+  symbolic name e.g. :code:`lockbox.outputs.output1`.
+* :attr:`~.Scope.threshold`: The voltage threshold for the scope trigger.
+* :attr:`~.Scope.hysteresis`: Hysteresis for the scope trigger, i.e. the scope
+  input signal must exceed the :attr:`~.Scope.threshold` value by more than
+  the hysteresis value to generate a trigger event.
+* :attr:`~.Scope.duration`: The full duration of the scope trace to acquire,
+  in units of seconds.
+* :attr:`~.Scope.trigger_delay`: The delay beteween trigger event and the
+  center of the trace.
+* :attr:`~.Scope.trigger_source`: The channel to use as trigger input.
+* :attr:`~.Scope.average`: Enables "averaging" a.k.a. "high-resolution" mode,
+  which averages all data samples acquired at the full sampling rate between
+  two successive points of the trace. If disabled, only a sample of the
+  full-rate signal is shown as the trace. The averaging mode corresponds to a
+  moving-average filter with a cutoff frequency of
+  :attr:`~.pyrpl.hardware_modules.scope.Scope.sampling_time` :math:`^{-1} = 2^{14}/\\mathrm{duration}`
+  in units of Hz.
+* :attr:`~.Scope.trigger_mode`: Multiple options are available.
+
+  * :code:`Normal` is used for triggered acquisition.
+  * :code:`Untriggered (rolling)` is used for continuous acquisition without
+    requiring a trigger signal, where the traces "roll" through the plotting
+    area from right to left in real-time. The rolling mode does not allow for
+    trace averaging nor durations below 0.1 s.
 """
 import pyqtgraph as pg
 from qtpy import QtCore, QtGui, QtWidgets

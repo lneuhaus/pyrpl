@@ -3,20 +3,20 @@ Acquisition modules are the modules used to acquire data from the Red Pitaya.
 
 At the moment, they include the
 
-* :mod:`pyrpl.hardware_modules.scope`,
-* :mod:`pyrpl.software_modules.network_analyzer`,
-* :mod:`pyrpl.software_modules.spectrum_analyzer`.
+* :mod:`~pyrpl.hardware_modules.scope`,
+* :mod:`~pyrpl.software_modules.network_analyzer`,
+* :mod:`~pyrpl.software_modules.spectrum_analyzer`.
 
 All the acquisition modules have in common a plot area where the data is
 displayed and a control panel BELOW the plot for changing acquisition
 settings. Widgets for specialized acquisition modules
-(e.g. :class:`pyrpl.hardware_modules.scope.Scope`) have an additional control
+(e.g. :class:`~pyrpl.hardware_modules.scope.Scope`) have an additional control
 panel ABOVE the plot are for settings that are only available for that module.
 
 The different buttons in the acquisition module control panel below the plot are:
 
-- :attr:`.AcquisitionModule.trace_average` chooses the number of successive traces to average together.
-- :attr:`.AcquisitionModule.curve_name` is the name for the next curve that is saved.
+- :attr:`~.AcquisitionModule.trace_average` chooses the number of successive traces to average together.
+- :attr:`~.AcquisitionModule.curve_name` is the name for the next curve that is saved.
 - :code:`Run single` starts a single acquisition of :code:`trace_average` traces (calls :meth:`.AcquisitionModule.single`).
 - :code:`Run continuous` starts a continuous acquisition with a running
   average filter, where :code:`trace_average` is the decay constant of the
@@ -24,7 +24,8 @@ The different buttons in the acquisition module control panel below the plot are
 - :code:`Restart average` resets trace averages to zero to start a new
   measurement from scratch.
 - :code:`Save curve` saves the current measurement data to a new
-  :mod:`pyrpl.curvedb` object with name :code:`curve_name`.
+  :class:`pyrpl.curvedb.CurveDB` object under the name
+  :attr:`~.AcquisitionModule.curve_name`.
 """
 
 from . import ModuleWidget
