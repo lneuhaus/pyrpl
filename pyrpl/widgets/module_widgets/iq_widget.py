@@ -1,6 +1,9 @@
 """
-The IQ-module is a very flexible Digital Signal Processing tool. Different
-values of the internal registers can be configured to perform various tasks:
+The :mod:`~pyrpl.hardware_modules.iq`-module implements a variety of Digital
+Signal Processing (DSP) taks that require an internal reference signal
+(a so-called *local oscillator*) of arbitrary frequency. The task to perform
+is selected by the values of different internal registers. The various
+use-cases and necessary configuration is explained in the following sections.
 
 
 Pound Drever Hall signal generation
@@ -18,18 +21,19 @@ high-speed digital signal processing of the redpitaya allows us to
 perform all the modulation/demodulation steps inside the FPGA,
 with modulations frequencies up to Nyquist frequecies (62.5 MHz). The
 correct IQ-module settings for PDH generation are (refer to the IQ
-signal schematic for explanations):
+signal schematic for explanations)::
 
-- gain=0. # no link from demodulation to modulation stage
-- amplitude=1. # amplitude of the modulation
-- frequency=50e6 # Modulation frequency
-- phase=0 # adjust to compensate for cable length delays
-- output_direct='out1' # output to optical phase modulator
-- output_signal='quadrature'
-- input='in1' # input from photodiode
-- bandwidth=1e5 # trade-off between noise and error-signal bandwidth
-- quadrature_factor=256 # adjust for saturation level
-- acbandwidth=1e4 # to prevent internal saturation problems
+  gain=0. # no link from demodulation to modulation stage
+  amplitude=1. # amplitude of the modulation
+  frequency=50e6 # Modulation frequency
+  phase=0 # adjust to compensate for cable length delays
+  output_direct='out1' # output to optical phase modulator
+  output_signal='quadrature'
+  input='in1' # input from photodiode
+  bandwidth=1e5 # trade-off between noise and error-signal bandwidth
+  quadrature_factor=256 # adjust for saturation level
+  acbandwidth=1e4 # to prevent internal saturation problems
+
 
 Network analyzer
 ------------------

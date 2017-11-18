@@ -1,24 +1,45 @@
 """
-The spectrum-analyzer has 2 different working modes:
- - iq-mode (not available in the current version): the data are first
-   demodulated by an IQ-module around a center frequency and then Fourier
-   Transformed. This mode allows to study a narrow span around the center
-   frequency
- - baseband: The Fourier transform is directly applied on the sampled data.
-   Two inputs can be used in baseband mode, such that the complex
-   cross-spectrum between the two inputs can be computed.
+The :class:`~pyrpl.software_modules.spectrum_analyzer.SpectrumAnalyzer`
+allows to measure the spectrum (= the squared modulus of the
+Fourier-transformed autocorrelation function) of internal and external
+signals in PyRPL.
 
-The following attributes can be manipulated by the module widget:
- - acbandwidth (IQ mode only): The cut-off frequency of the high-pass filter
-   for the iq-demodulator.
- - span: frequency range of the analysis. In baseband mode, the span has to be
-   divided by a factor 2.
- - rbw: residual bandwidth of the analysis (span and bandwidth are linked
-   and cannot be set independently)
- - window: type of filtering window used (see scipy.signal.get_window for a
-   list of windows available)
- - diplay_unit: the unit in which the spectrum is represented (internally,
-   all spectra are represented in V_pk^2)
+The SpectrumAnalyzer has 2 different working modes:
+
+* :attr:`~pyrpl.software_modules.spectrum_analyzer.SpectrumAnalyzer.baseband` :code:`= True`
+  *(baseband mode)*: The Fourier transform is directly applied on the sampled
+  data. The frequency range of spectra always starts at zero by design in
+  baseband mode. Two inputs can be used in this mode to compute spectra of
+  two different signals. Furthermore, the complex cross-spectrum (containing
+  magnitude and phase information) between the two inputs can be computed.
+* :attr:`~pyrpl.software_modules.spectrum_analyzer.SpectrumAnalyzer.baseband` :code:`= False`
+  (*iq-mode - not available in the current version*):
+  The input signals are first frequency-shifted by an
+  :mod:`~pyrpl.hardware_modules.iq`-module and only then Fourier-transformed.
+  This mode allows to study a narrow frequency span around an arbitrary center
+  frequency.
+
+The following attributes can be manipulated by the SpectrumAnalyzer widget:
+
+* :attr:`~pyrpl.software_modules.spectrum_analyzer.SpectrumAnalyzer.span`:
+  The span of frequencies over which a spectrum is acquired.
+  In baseband mode, the actual span is half of this value
+  (because no additional information is given in half-spectrum with negative
+  frequencies).
+* :attr:`~pyrpl.software_modules.spectrum_analyzer.SpectrumAnalyzer.rbw`:
+  Resolution bandwidth of the spectrum to acquire (:code:`span` and
+  :code:`bandwidth` are linked and cannot be set independently).
+* :attr:`~pyrpl.software_modules.spectrum_analyzer.SpectrumAnalyzer.display_unit`:
+  The unit in which the spectrum is plotted on the screen. Internally, e.g.
+  in saved measurements, all spectra are represented in units of
+  :math:`\\mathrm{V}_\\mathrm{pk}^2`.
+* :attr:`~pyrpl.software_modules.spectrum_analyzer.SpectrumAnalyzer.window`:
+  The type of window used for the Fourier transform. See
+  scipy.signal.get_window for a list of available options.
+* :attr:`~pyrpl.software_modules.spectrum_analyzer.SpectrumAnalyzer.acbandwidth`
+  *(only available with* :code:`baseband=False` *)*: The cut-off frequency of
+  the high-pass filter before frequency-shifting (=demodulation) of the input
+  signal.
 """
 
 import logging
