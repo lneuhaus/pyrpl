@@ -97,7 +97,7 @@ script:
     (./pyrpl-mac-develop config=test_osx hostname=_FAKE_ &);
     PYRPL_PID=$!;
     sleep 30;
-    kill -9 $PYRPL_PID;
+    killall -9 pyrpl-mac-develop;
     fi
   - if [[ "$TRAVIS_PYTHON_VERSION" == "3.5" && "$TRAVIS_OS_NAME" == "linux" ]]; then
     cd ..;
@@ -114,7 +114,7 @@ script:
     (./pyrpl-linux-develop config=test_linux hostname=_FAKE_ &);
     PYRPL_PID=$!;
     sleep 30;
-    kill -9 $PYRPL_PID;
+    killall pyrpl-linux-develop;
     fi
   - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" &&  "$TRAVIS_OS_NAME" == "linux" ]] || [[ "$TRAVIS_PYTHON_VERSION" == "3.5" &&  "$TRAVIS_OS_NAME" == "osx" ]] || [[ "$TRAVIS_PYTHON_VERSION" == "3.6" && "$TRAVIS_OS_NAME" == "linux" ]]; then
     echo "NOSETESTS ARE ENABLED";
