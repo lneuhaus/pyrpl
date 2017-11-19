@@ -44,6 +44,6 @@ exe = EXE(pyz,
           name='pyrpl',
           debug=False,
           strip=False,
-          upx=True,
+          upx=False,
           console=True )
 
