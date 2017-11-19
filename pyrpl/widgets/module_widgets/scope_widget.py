@@ -23,7 +23,9 @@ attributes specific to the :class:`~pyrpl.hardware_modules.scope.Scope`:
   moving-average filter with a cutoff frequency of
   :attr:`~.pyrpl.hardware_modules.scope.Scope.sampling_time` :math:`^{-1} = 2^{14}/\\mathrm{duration}`
   in units of Hz.
-* :attr:`~.Scope.trigger_mode`: Multiple options are available.
+* :attr:`~.Scope.xy_mode`: If selected, channel 2 is plotted as a function of
+  channel 1 (instead of channels 1 and 2 as a function of time).
+* :code:`Trigger mode` (internally represented by :attr:`~.Scope.rolling_mode`):
 
   * :code:`Normal` is used for triggered acquisition.
   * :code:`Untriggered (rolling)` is used for continuous acquisition without
@@ -167,9 +169,6 @@ class ScopeWidget(AcquisitionModuleWidget):
         self.update_rolling_mode_visibility()
         self.rolling_mode = self.module.rolling_mode
         self.attribute_layout.addStretch(1)
-
-
-
         # Not sure why the stretch factors in button_layout are not good by
         # default...
         #self.button_layout.setStretchFactor(self.button_single, 1)
