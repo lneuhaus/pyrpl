@@ -101,7 +101,7 @@ test_script:
   - "pyinstaller pyrpl.spec"
   - "mv dist/pyrpl.exe ./pyrpl-windows.exe"
 # optional tests:
-  - ps: $MyProcess = Start-Process -NoNewWindow -FilePath pyrpl-windows.exe -ArgumentList "config=test_windows hostname=_FAKE_"
+  - ps: $MyProcess = Start-Process -NoNewWindow -FilePath "C:\projects\pyrpl\pyrpl-windows.exe" -ArgumentList "config=test_windows hostname=_FAKE_"
   - timeout 20
 #  - ps: "Stop-Process -Id $MyProcess.Id"
   - ps: Stop-Process -Name "pyrpl-windows.exe"
