@@ -99,7 +99,8 @@ class TestClass(TestPyrpl):
         self.sa = self.pyrpl.spectrumanalyzer
         self.sa.setup(input1_baseband=self.iq,
                       span=10e6,
-                      trace_average=50)
+                      trace_average=10,  # TODO: set back to 50
+                      running_state='stopped')
 
         for freq in np.linspace(self.sa.span/5, self.sa.span/4, 5):
             print("Trying frequency %f..."%freq)
@@ -111,7 +112,7 @@ class TestClass(TestPyrpl):
                 axis=1)
             var_spectrum = max(self.sa.data_to_unit(in1_av,
                                         'Vrms^2/Hz',
-                                        self.sa.rbw))*65e6
+                                        self.sa.rbw))*62.5e6
 
             assert abs(var_spectrum -
                     self.asg.amplitude**2)/self.asg.amplitude**2<0.1, \
