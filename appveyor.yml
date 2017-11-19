@@ -103,7 +103,8 @@ test_script:
 # optional tests:
   - ps: $MyProcess = Start-Process pyrpl-windows.exe -ArgumentList "config=test_windows hostname=_FAKE_"
   - timeout 20
-  - ps: "Stop-Process -Id $MyProcess.Id"
+#  - ps: "Stop-Process -Id $MyProcess.Id"
+  - ps: "Stop-Process -Name pyrpl-windows.exe"
 #  - "nosetests"
 
 # deploy to sourceforge if build was successful and commit has a tag

@@ -61,7 +61,7 @@ represented in the schematic)::
   output_signal='pfd'
 
 
-Tuanble bandpass filter
+Tuneable bandpass filter
 ---------------------------
 
 It is possible to realize very narrow bandpass filters by combining a
