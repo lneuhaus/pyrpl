@@ -19,8 +19,8 @@ output selected in :code:`output_direct`.
 * :attr:`~pyrpl.software_modules.network_analyzer.NetworkAnalyzer.rbw` is
   the cutoff frequency of the low-pass filter after demodulation. Furthermore,
   the time :math:`\\tau` spent to record each point is
-  :math:`\\tau=\\texttt{avg_per_point} / \\texttt{rbw}`.
-* :attr:`~pyrpl.software_modules.network_analyzer.NetworkAnalyzer.avg_per_point`:
+  :math:`\\tau=\\texttt{average_per_point} / \\texttt{rbw}`.
+* :attr:`~pyrpl.software_modules.network_analyzer.NetworkAnalyzer.average_per_point`:
   Each point is averaged inside the FPGA before being retrieved by the
   client computer that runs PyRPL. You should increase this parameter or
   decrease :code:`rbw` if the communication time between the Red Pitaya and
