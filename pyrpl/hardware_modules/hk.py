@@ -32,3 +32,10 @@ class HK(HardwareModule):
         Sets the HouseKeeping module of the redpitaya up. (just setting the attributes is OK)
         """
         pass
+
+    def set_expansion_direction(self, index, val):
+        """Sets the output mode of expansion index (both for P and N expansions)"""
+        if not index in range(8):
+            raise ValueError("Index from 0 to 7 expected")
+        for name in ["expansion_P", "expansion_N"]:
+            getattr(HK, name + str(index)).direction(self, val)
