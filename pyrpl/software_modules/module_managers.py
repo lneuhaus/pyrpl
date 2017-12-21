@@ -181,3 +181,10 @@ class Trigs(ModuleManager):
     Only one trig, but it should be protected by the slave/owner mechanism.
     """
     pass #_widget_class = IirManagerWidget
+
+
+class Hks(ModuleManager):
+    """
+    Only one trig, but it should be protected by the slave/owner mechanism.
+    """
+    pass #_widget_class = IirManagerWidget
