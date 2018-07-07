@@ -67,7 +67,7 @@ module red_pitaya_pid_block #(
    parameter     ISR = 32         ,//official redpitaya: 18
    parameter     DSR = 10         ,
    parameter     GAINBITS = 24    ,
-   parameter     DERIVATIVE = 0   , //disables differential gain if 0
+   parameter     DERIVATIVE = 1   , //disables differential gain if 0
    
    //parameters for input pre-filter
    parameter     FILTERSTAGES = 4 ,
@@ -269,36 +269,36 @@ assign norm_integral = $signed(int_reg[IBW-1:ISR-PSR]);
 //  Derivative - 2 cycles delay (but treat as 1 cycle because its not
 //  functional at the moment
 
-wire  [    39-1: 0] kd_mult       ;
-reg   [39-DSR-1: 0] kd_reg        ; 
-reg   [39-DSR-1: 0] kd_reg_r      ;
-reg   [39-DSR  : 0] kd_reg_s      ;
+//wire  [    39-1: 0] kd_mult       ;
+//reg   [39-DSR-1: 0] kd_reg        ; 
+//reg   [39-DSR-1: 0] kd_reg_r      ;
+//reg   [39-DSR  : 0] kd_reg_s      ;
 
-generate 
-	if (DERIVATIVE == 1) begin
-		wire  [15+GAINBITS-1: 0] kd_mult;
-		reg   [15+GAINBITS-DSR-1: 0] kd_reg;
-		reg   [15+GAINBITS-DSR-1: 0] kd_reg_r;
-		reg   [15+GAINBITS-DSR  : 0] kd_reg_s;
-		always @(posedge clk_i) begin
-		   if (rstn_i == 1'b0) begin
-		      kd_reg   <= {15+GAINBITS-DSR{1'b0}};
-		      kd_reg_r <= {15+GAINBITS-DSR{1'b0}};
-		      kd_reg_s <= {15+GAINBITS-DSR+1{1'b0}};
-		   end
-		   else begin
-		      kd_reg   <= kd_mult[15+GAINBITS-1:DSR] ;
-		      kd_reg_r <= kd_reg;
-		      kd_reg_s <= $signed(kd_reg) - $signed(kd_reg_r); //this is the end result
-		   end
-		end
-		assign kd_mult = $signed(error) * $signed(set_kd) ;
-	end
-	else begin
-		wire [15+GAINBITS-DSR:0] kd_reg_s;
-		assign kd_reg_s = {15+GAINBITS-DSR+1{1'b0}};
-	end
-endgenerate 
+//generate 
+//	if (DERIVATIVE == 1) begin
+wire  [15+GAINBITS-1: 0] kd_mult;
+reg   [15+GAINBITS-DSR-1: 0] kd_reg;
+reg   [15+GAINBITS-DSR-1: 0] kd_reg_r;
+reg   [15+GAINBITS-DSR  : 0] kd_reg_s;
+always @(posedge clk_i) begin
+   if (rstn_i == 1'b0) begin
+	  kd_reg   <= {15+GAINBITS-DSR{1'b0}};
+	  kd_reg_r <= {15+GAINBITS-DSR{1'b0}};
+	  kd_reg_s <= {15+GAINBITS-DSR+1{1'b0}};
+   end
+   else begin
+	  kd_reg   <= kd_mult[15+GAINBITS-1:DSR] ;
+	  kd_reg_r <= kd_reg;
+	  kd_reg_s <= $signed(kd_reg) - $signed(kd_reg_r); //this is the end result
+   end
+end
+assign kd_mult = $signed(error) * $signed(set_kd) ;
+//	end
+//	else begin
+//		wire [15+GAINBITS-DSR:0] kd_reg_s;
+//		assign kd_reg_s = {15+GAINBITS-DSR+1{1'b0}};
+//	end
+//endgenerate 
 
 //---------------------------------------------------------------------------------
 //  Sum together - saturate output - 1 cycle delay

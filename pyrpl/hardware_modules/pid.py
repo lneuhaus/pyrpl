@@ -1,6 +1,6 @@
 import numpy as np
 from qtpy import QtCore
-from ..attributes import FloatProperty, BoolRegister, FloatRegister, GainRegister
+from ..attributes import FloatProperty, FloatRegister, GainRegister, BoolProperty
 from ..modules import SignalLauncher
 from . import FilterModule
 from ..widgets.module_widgets import PidWidget
@@ -10,9 +10,26 @@ class IValAttribute(FloatProperty):
     """
     Attribute for integrator value
     """
+    def __init__(self,
+                 reset=False,
+                 reset_value=1,
+                 **kwargs):
+        self.reset = reset
+        self.reset_value = reset_value
+        FloatProperty.__init__(self, **kwargs)
+        
     def get_value(self, obj):
-        return float(obj._to_pyint(obj._read(0x100), bitlength=16))\
-               / 2 ** 13
+        red_value = float(obj._to_pyint(obj._read(0x100), bitlength=16)) / 2 ** 13
+        reset_ival = self.reset.get_value(obj)
+        reset_value = self.reset_value.get_value(obj)
+        maxx = 1 - self.increment
+        minn = -1
+        if reset_ival==True and red_value>maxx:
+            self.set_value(obj, -abs(reset_value))
+        elif reset_ival==True and red_value<minn:
+            self.set_value(obj, abs(reset_value))
+        return red_value
+
         # bitlength used to be 32 until 16/7/2016
         # still, FPGA has an asymmetric representation for reading and writing
         # from/to this register
@@ -30,7 +47,7 @@ class SignalLauncherPid(SignalLauncher):
     def __init__(self, module):
         super(SignalLauncherPid, self).__init__(module)
         self.timer_ival = QtCore.QTimer()
-        self.timer_ival.setInterval(1000)  # max. refresh rate: 1 Hz
+        self.timer_ival.setInterval(1)  # in ms
         self.timer_ival.timeout.connect(self.update_ival)
         self.timer_ival.setSingleShot(False)
         self.timer_ival.start()
@@ -51,11 +68,11 @@ class Pid(FilterModule):
                          "setpoint",
                          "p",
                          "i",
-                         #"d",
+                         "d",
                          "inputfilter",
                          "max_voltage",
                          "min_voltage"]
-    _gui_attributes = _setup_attributes + ["ival"]
+    _gui_attributes = _setup_attributes + ["ival", "reset_ival", "reset_value"]
 
     # the function is here so the metaclass generates a setup(**kwds) function
     def _setup(self):
@@ -64,7 +81,7 @@ class Pid(FilterModule):
         """
         pass
 
-    _delay = 3  # min delay in cycles from input to output_signal of the module
+    _delay = 4  # min delay in cycles from input to output_signal of the module
     # with integrator and derivative gain, delay is rather 4 cycles
 
     _PSR = 12  # Register(0x200)
@@ -74,9 +91,6 @@ class Pid(FilterModule):
     _DSR = 10  # Register(0x208)
 
     _GAINBITS = 24  # Register(0x20C)
-
-    ival = IValAttribute(min=-4, max=4, increment= 8. / 2**16, doc="Current "
-            "value of the integrator memory (i.e. pid output voltage offset)")
 
     setpoint = FloatRegister(0x104, bits=14, norm= 2 **13,
                              doc="pid setpoint [volts]")
@@ -88,14 +102,21 @@ class Pid(FilterModule):
 
     p = GainRegister(0x108, bits=_GAINBITS, norm= 2 **_PSR,
                       doc="pid proportional gain [1]")
-    i = GainRegister(0x10C, bits=_GAINBITS, norm= 2 **_ISR * 2.0 * np.pi *
-                                                  8e-9,
+    i = GainRegister(0x10C, bits=_GAINBITS, norm= 2 **_ISR * 2.0 * np.pi * 8e-9,
                       doc="pid integral unity-gain frequency [Hz]")
-    #d = GainRegister(0x110, bits=_GAINBITS, norm= 2 ** _DSR /( 2.0 *np. pi *
-    #                                                        8e-9),
-    #                  invert=True,
-    #                  doc="pid derivative unity-gain frequency [Hz]. Off
-    # when 0.")
+    d = GainRegister(0x110, bits=_GAINBITS, norm= 2 ** _DSR /( 2.0 *np. pi * 8e-9),
+                      invert=False,
+                      doc="pid derivative 1/unity-gain frequency [1/Hz]. Off when 0.")
+    
+    reset_ival = BoolProperty(doc="set ival to -(+)reset_val if it reaches max(min)")
+    
+    reset_value = FloatProperty(min=0, max=4, increment= 8. / 2**16,
+                             doc="reset i_val to this value (with right sign)")
+    
+    ival = IValAttribute(reset=reset_ival, reset_value=reset_value, min=-4, max=4, 
+                         increment= 8. / 2**16,
+        doc="current value of the integrator memory (i.e. pid output voltage offset)")
+
 
     @property
     def proportional(self):
@@ -179,7 +200,7 @@ class Pid(FilterModule):
         return Pid._transfer_function(frequencies,
                                       p=self.p,
                                       i=self.i,
-                                      d=0,  # d is currently not available
+                                      d=self.d,  # d is currently not available
                                       filter_values=self.inputfilter,
                                       extradelay_s=extradelay,
                                       module_delay_cycle=self._delay,
@@ -190,8 +211,8 @@ class Pid(FilterModule):
                            frequencies,
                            p,
                            i,
+                           d,
                            filter_values=list(),
-                           d=0,
                            module_delay_cycle=_delay,
                            extradelay_s=0.0,
                            frequency_correction=1.0):
@@ -210,7 +231,7 @@ class Pid(FilterModule):
 
     @classmethod
     def _pid_transfer_function(cls,
-                               frequencies, p, i, d=0,
+                               frequencies, p, i, d,
                                frequency_correction=1.):
         """
         returns the transfer function of a generic pid module
@@ -228,10 +249,10 @@ class Pid(FilterModule):
         # proportional (delay in self._delay included)
         tf += p
         # derivative action with one cycle of extra delay
-        # if self.d != 0:
-        #    tf += frequencies*1j/self.d \
-        #          * np.exp(-1j * 8e-9 * self._frequency_correction *
-        #                   frequencies * 2 * np.pi)
+        if d != 0:
+            tf += frequencies*1j/d \
+                  * np.exp(-1j * 8e-9 * frequency_correction *
+                           frequencies * 2 * np.pi)
         # add delay
         delay = 0 # module_delay * 8e-9 / self._frequency_correction
         tf *= np.exp(-1j * delay * frequencies * 2 * np.pi)

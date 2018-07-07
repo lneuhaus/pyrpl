@@ -176,6 +176,7 @@ class PyrplWidget(QtWidgets.QMainWindow):
         self.timers = [self.timer_save_pos, self.timer_toolbar]
         #self.set_background_color(self)
 
+
     def click_menu_modules(self):
         self.menu_modules.popup(self.mapToGlobal(QtCore.QPoint(10,10)))
 

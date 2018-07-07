@@ -200,6 +200,7 @@ class RedPitaya(object):
         self.logger.info('Successfully connected to Redpitaya with hostname '
                          '%s.'%self.ssh.hostname)
         self.parent = self
+        
 
     def start_ssh(self, attempt=0):
         """
@@ -430,6 +431,7 @@ class RedPitaya(object):
         self.ssh.channel.close()
 
     def end_all(self):
+        print('ooooooooo')
         self.end()
         self.end_ssh()
 
