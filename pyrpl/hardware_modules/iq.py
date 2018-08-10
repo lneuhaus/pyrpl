@@ -291,22 +291,22 @@ class Iq(FilterModule):
 
     # raw flags, not useful in most cases since sin and cos-flag must be
     # written in the same clock cycle
-    _modulation_sin_at_2f = BoolRegister(0x100, 2,
+    _modulation_sin_at_2f = BoolRegister(0x100, 2, default=False,
                                          doc="If True, this flag sets the "
                                              "frequency of the sine used "
                                              "for modulation to twice the "
                                              "fundamental frequency.")
-    _modulation_cos_at_2f = BoolRegister(0x100, 2,
+    _modulation_cos_at_2f = BoolRegister(0x100, 3, default=False,
                                          doc="If True, this flag sets the "
                                              "frequency of the cosine used "
                                              "for modulation to twice the "
                                              "fundamental frequency.")
-    _demodulation_sin_at_2f = BoolRegister(0x100, 2,
+    _demodulation_sin_at_2f = BoolRegister(0x100, 4, default=False,
                                          doc="If True, this flag sets the "
                                              "frequency of the sine used "
                                              "for demodulation to twice the "
                                              "fundamental frequency.")
-    _demodulation_cos_at_2f = BoolRegister(0x100, 2,
+    _demodulation_cos_at_2f = BoolRegister(0x100, 5, default=False,
                                          doc="If True, this flag sets the "
                                              "frequency of the cosine used "
                                              "for demodulation to twice the "

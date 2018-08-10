@@ -79,10 +79,10 @@ localparam QUADRATURE_HF = 4'd4;
 // state registers
 reg [4-1:0] output_select;
 reg         on;  //fgen is on; allows to re-synchronize the outputs
-reg sin_at2f; //flag to enable signals at twice the fundamental frequency
-reg cos_at2f; //flag to enable signals at twice the fundamental frequency
-reg sin_shifted_at2f; //flag to enable signals at twice the fundamental frequency
-reg cos_shifted_at2f; //flag to enable signals at twice the fundamental frequency
+reg sin_at_2f; //flag to enable signals at twice the fundamental frequency
+reg cos_at_2f; //flag to enable signals at twice the fundamental frequency
+reg sin_shifted_at_2f; //flag to enable signals at twice the fundamental frequency
+reg cos_shifted_at_2f; //flag to enable signals at twice the fundamental frequency
 
 // function registers
 reg [PHASEBITS-1:0] start_phase;
@@ -119,7 +119,7 @@ always @(posedge clk_i) begin
    end
    else begin
       if (wen) begin
-		 if (addr==16'h100)   {cos_shifted_at2f,sin_shifted_at2f,cos_at2f,sin_at2f,pfd_on, on}   <= wdata[6-1:0];
+		 if (addr==16'h100)   {cos_shifted_at_2f,sin_shifted_at_2f,cos_at_2f,sin_at_2f,pfd_on, on}   <= wdata[6-1:0];
          if (addr==16'h104)   start_phase   <= wdata[PHASEBITS-1:0];
          if (addr==16'h108)   shift_phase   <= wdata[PHASEBITS-1:0];
          if (addr==16'h10C)   output_select <= wdata[4-1:0];
@@ -135,7 +135,7 @@ always @(posedge clk_i) begin
       end
 
 	  casez (addr)
-	     16'h100 : begin ack <= wen|ren; rdata <= {{32-6{1'b0}},cos_shifted_at2f,sin_shifted_at2f,cos_at2f,sin_at2f,pfd_on,on}; end
+	     16'h100 : begin ack <= wen|ren; rdata <= {{32-6{1'b0}},cos_shifted_at_2f,sin_shifted_at_2f,cos_at_2f,sin_at_2f,pfd_on,on}; end
 	     16'h104 : begin ack <= wen|ren; rdata <= {{32-PHASEBITS{1'b0}},start_phase}; end
 	     16'h108 : begin ack <= wen|ren; rdata <= {{32-PHASEBITS{1'b0}},shift_phase}; end
 	     16'h10C : begin ack <= wen|ren; rdata <= {{32-4{1'b0}},output_select}; end
@@ -208,10 +208,10 @@ iq_fgen
   .clk_i               (  clk_i          ),  // clock
   .rstn_i              (  rstn_i         ),
   .on                  (  on             ),
-  .sin_at2f            (  sin_at2f       ),
-  .cos_at2f            (  cos_at2f       ),
-  .sin_shifted_at2f    (  sin_shifted_at2f ),
-  .cos_shifted_at2f    (  cos_shifted_at2f ),
+  .sin_at_2f           (  sin_at_2f      ),
+  .cos_at_2f           (  cos_at_2f      ),
+  .sin_shifted_at_2f   (  sin_shifted_at_2f ),
+  .cos_shifted_at_2f   (  cos_shifted_at_2f ),
   .start_phase         (  start_phase    ),
   .shift_phase         (  shift_phase    ),
   .sin_o               (  sin            ),
