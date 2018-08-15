@@ -313,9 +313,11 @@ class Iq(FilterModule):
                                              "fundamental frequency.")
     # helper registers for switching sin/cos flags at the same time
     modulation_at_2f = SelectRegister(0x100, bitmask=3<<2, options=dict(off=0, on=3<<2),
+                                      default='off',
                                       doc="Sets the modulation frequency to "
                                           "twice the IQ module frequency")
     demodulation_at_2f = SelectRegister(0x100, bitmask=3<<4, options=dict(off=0, on=3<<4),
+                                        default='off',
                                         doc="Sets the demodulation frequency to "
                                             "twice the IQ module frequency")
 
@@ -410,6 +412,7 @@ class Iq(FilterModule):
         sum = np.complex128(self._to_pyint(int(a) + (int(b) << 31), bitlength=62)) \
               + np.complex128(self._to_pyint(int(c) + (int(d) << 31), bitlength=62)) * 1j
         return sum
+
     # the implementation of network_analyzer is not identical to na_trace
     # there are still many bugs in it, which is why we will keep this function
     # in the gui
