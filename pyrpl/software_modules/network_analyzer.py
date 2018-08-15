@@ -494,12 +494,21 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
         return self.start_freq==self.stop_freq
 
     def _start_point_acquisition(self, index):
-        if not self.is_zero_span(): # in zero span, data_x are time,
-            # not frequency
-            self.iq.frequency = self._data_x[index]
+        if self.is_zero_span():
+            # in zero span, data_x are time, not frequency
+            frequency = self.start_freq
         else:
-            self.iq.frequency = self.start_freq
+            # normal frequency sweep, get frequency from data_x-array
+            frequency = self._data_x[index]
+        self.iq.frequency = frequency
         self._time_last_point = timeit.default_timer()
+        # regular print output for travis workaround
+        #self._logger.debug("Acquiring first NA point at frequency %.1f Hz..", frequency)
+        # replaced above command by the following two due to suppression of multiple logger warnings
+        if self._logger.getEffectiveLevel() <= 1:
+            if not hasattr(self, '_lastprinttime') or (self._time_last_point - self._lastprinttime) > 10:
+                print("Acquiring new NA point at frequency %.1f Hz.." % frequency)
+                self._lastprinttime = self._time_last_point
 
     def _get_point(self, index):
         # get the actual point's (discretized)

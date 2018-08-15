@@ -249,11 +249,17 @@ class TestIir(TestPyrpl):
         """
         na = self.pyrpl.na
         na.input = module
-        na._logger.info("Starting NA acquisition...")
-        data = na.curve()
-        na._logger.info("NA acquisition finished...")
-        f = na.data_x
-
+        # for travis, we must ensure that there is a regular output to the console
+        # to avoid termination of the test run
+        loglevel = na._logger.getEffectiveLevel()
+        try:
+            na._logger.setLevel(1)
+            na._logger.info("Starting NA acquisition...")
+            data = na.curve()
+            na._logger.info("NA acquisition finished...")
+            f = na.data_x
+        finally:
+            na._logger.setLevel(loglevel)  # restore previous log level
         extrastring = str(setting)
         if not kinds:
             kinds = [None]
