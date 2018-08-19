@@ -514,9 +514,9 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
             except:
                 delay = 999.0
                 self._lastpointnumber = 0.0
-            print("Acquiring new NA point #%d at frequency %.1f Hz after "
-                  "delay of %f" % (self._lastpointnumber, frequency, delay))
             if delay >= 10.0:
+                print("Acquiring new NA point #%d at frequency %.1f Hz after "
+                      "delay of %f" % (self._lastpointnumber, frequency, delay))
                 self._lastprinttime = self._time_last_point
 
     def _get_point(self, index):
