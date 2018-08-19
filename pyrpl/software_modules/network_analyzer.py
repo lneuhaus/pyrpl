@@ -506,11 +506,9 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
         # regular print output for travis workaround
         #self._logger.debug("Acquiring first NA point at frequency %.1f Hz..", frequency)
         # replaced above command by the following two due to suppression of multiple logger warnings
-
-        #if not hasattr(self, '_lastprinttime') or (self._time_last_point - self._lastprinttime) > 10:
-        #if self._logger.getEffectiveLevel() <= 10:
-        print("Acquiring new NA point at frequency %.1f Hz.." % frequency)
-        self._logger.debug("Acquiring new NA point at frequency %.1f Hz..", frequency)
+        if not hasattr(self, '_lastprinttime') or (self._time_last_point - self._lastprinttime) > 10:
+            if self._logger.getEffectiveLevel() <= 10:
+                print("Acquiring new NA point at frequency %.1f Hz.." % frequency)
         self._lastprinttime = self._time_last_point
 
     def _get_point(self, index):
