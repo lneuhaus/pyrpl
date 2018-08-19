@@ -11,9 +11,14 @@ class TestIir(TestPyrpl):
         # shortcuts
         self.pyrpl.na = self.pyrpl.networkanalyzer
         self.na = self.pyrpl.networkanalyzer
+        # set na loglevel to DEBUG
+        self.loglevel = self.na._logger.getEffectiveLevel()
+        self.na._logger.setLevel(10)
 
     def teardown(self):
         self.na.stop()
+        # set na loglevel to previous one
+        self.na._logger.setLevel(self.loglevel)
 
     def test_pz_interface(self):
         """ tests that poles and real/comples_poles remain sync'ed"""
@@ -249,17 +254,10 @@ class TestIir(TestPyrpl):
         """
         na = self.pyrpl.na
         na.input = module
-        # for travis, we must ensure that there is a regular output to the console
-        # to avoid termination of the test run
-        loglevel = na._logger.getEffectiveLevel()
-        try:
-            na._logger.setLevel(1)
-            na._logger.info("Starting NA acquisition...")
-            data = na.curve()
-            na._logger.info("NA acquisition finished...")
-            f = na.data_x
-        finally:
-            na._logger.setLevel(loglevel)  # restore previous log level
+        na._logger.info("Starting NA acquisition...")
+        data = na.curve()
+        na._logger.info("NA acquisition finished...")
+        f = na.data_x
         extrastring = str(setting)
         if not kinds:
             kinds = [None]

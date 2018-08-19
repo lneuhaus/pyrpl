@@ -11,9 +11,14 @@ class TestPidNaIq(TestPyrpl):
         # shortcut
         self.pyrpl.na = self.pyrpl.networkanalyzer
         self.na = self.pyrpl.networkanalyzer
+        # set na loglevel to DEBUG
+        self.loglevel = self.na._logger.getEffectiveLevel()
+        self.na._logger.setLevel(10)
 
     def teardown(self):
         self.na.stop()
+        # set na loglevel to previous one
+        self.na._logger.setLevel(self.loglevel)
 
     def test_na(self):
         error_threshold = 0.03  # (relative error, dominated by phase error)

@@ -2,6 +2,7 @@ from copy import copy
 
 import numpy as np
 from qtpy import QtWidgets
+import logging
 
 from ..async_utils import PyrplFuture, MainThreadTimer, CancelledError, sleep
 from ..attributes import FloatProperty, SelectProperty, FrequencyProperty, \
@@ -505,10 +506,11 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
         # regular print output for travis workaround
         #self._logger.debug("Acquiring first NA point at frequency %.1f Hz..", frequency)
         # replaced above command by the following two due to suppression of multiple logger warnings
-        if self._logger.getEffectiveLevel() <= 1:
-            if not hasattr(self, '_lastprinttime') or (self._time_last_point - self._lastprinttime) > 10:
+        if not hasattr(self, '_lastprinttime') or (self._time_last_point - self._lastprinttime) > 10:
+            if self._logger.getEffectiveLevel() <= 10:
                 print("Acquiring new NA point at frequency %.1f Hz.." % frequency)
-                self._lastprinttime = self._time_last_point
+            self._logger.debug("Acquiring new NA point at frequency %.1f Hz..", frequency)
+            self._lastprinttime = self._time_last_point
 
     def _get_point(self, index):
         # get the actual point's (discretized)
