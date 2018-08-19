@@ -508,12 +508,11 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
         # replaced above command by the following two due to suppression of multiple logger warnings
         if self._logger.getEffectiveLevel() <= 10:
             try:
-                if (self._time_last_point - self._lastprinttime) > 10:
-                    print("Acquiring new NA point at frequency %.1f Hz.." % frequency)
-                    self._lastprinttime = self._time_last_point
+                delay = self._time_last_point - self._lastprinttime
             except:
-                print("EAcquiring new NA point at frequency %.1f Hz.." % frequency)
-                self._lastprinttime = self._time_last_point
+                delay = -999
+            print("Acquiring new NA point at frequency %.1f Hz.. after delay of %f" % (frequency, delay))
+            self._lastprinttime = self._time_last_point
 
     def _get_point(self, index):
         # get the actual point's (discretized)
