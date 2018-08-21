@@ -506,7 +506,6 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
         # regular print output for travis workaround
         #self._logger.debug("Acquiring first NA point at frequency %.1f Hz..", frequency)
         # replaced above command by the following two due to suppression of multiple logger warnings
-
         if self._logger.getEffectiveLevel() <= 10:
             try:
                 delay = self._time_last_point - self._lastprinttime
@@ -514,7 +513,8 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
             except:
                 delay = 999.0
                 self._lastpointnumber = 0
-            if self._lastpointnumber < 100 or delay >= 10.0:
+            #if self._lastpointnumber < 100 or delay >= 10.0:
+            if True:  # above if-statement does not work correctly on travis, e.g. stops printing after laspointnumber 66
                 print("Acquiring new NA point #%d at frequency %.1f Hz after "
                       "delay of %f" % (self._lastpointnumber, frequency, delay))
                 self._lastprinttime = self._time_last_point
