@@ -11,9 +11,14 @@ class TestPidNaIq(TestPyrpl):
         # shortcut
         self.pyrpl.na = self.pyrpl.networkanalyzer
         self.na = self.pyrpl.networkanalyzer
+        # set na loglevel to DEBUG
+        self.loglevel = self.na._logger.getEffectiveLevel()
+        self.na._logger.setLevel(10)
 
     def teardown(self):
         self.na.stop()
+        # set na loglevel to previous one
+        self.na._logger.setLevel(self.loglevel)
 
     def test_na(self):
         error_threshold = 0.03  # (relative error, dominated by phase error)
@@ -33,7 +38,7 @@ class TestPidNaIq(TestPyrpl):
                      # it was taking ages ? -> no, should not take more than 1
                      # second with rbw=1000
                      rbw=1000,
-                     average_per_point=1,
+                     avg_per_point=1,
                      trace_average=1,
                      amplitude=0.1, input=na.iq, output_direct='off',
                      acbandwidth=1000, logscale=True)
@@ -69,7 +74,7 @@ class TestPidNaIq(TestPyrpl):
                  # points 101->11, it was taking ages
                  points=11,
                  rbw=1000,
-                 average_per_point=1,
+                 avg_per_point=1,
                  trace_average=1,
                  amplitude=0.1,
                  input=pid,
@@ -137,7 +142,7 @@ class TestPidNaIq(TestPyrpl):
                      # points 101->11, it was taking ages
                      points=11,
                      rbw=100,
-                     average_per_point=1,
+                     avg_per_point=1,
                      trace_average=1,
                      amplitude=0.1,
                      input=pid,
@@ -190,7 +195,7 @@ class TestPidNaIq(TestPyrpl):
                      # 101 points, 1 av->11 points, 7 av (taking ages)
                      points=11,
                      rbw=100,
-                     average_per_point=1,
+                     avg_per_point=1,
                      trace_average=1,
                      amplitude=0.1, input=pid, output_direct='off',
                      acbandwidth=0, logscale=True)
@@ -250,7 +255,7 @@ class TestPidNaIq(TestPyrpl):
                      stop_freq=1000e3,
                      points=11,
                      rbw=100,
-                     average_per_point=10,
+                     avg_per_point=10,
                      trace_average=1,
                      amplitude=0.1, input=pid, output_direct='off',
                      acbandwidth=0, logscale=True)
@@ -317,7 +322,7 @@ class TestPidNaIq(TestPyrpl):
                      stop_freq=700e3,
                      points=51,
                      rbw=1000,
-                     average_per_point=3,
+                     avg_per_point=3,
                      trace_average=1,
                      acbandwidth=0,
                      amplitude=0.2,

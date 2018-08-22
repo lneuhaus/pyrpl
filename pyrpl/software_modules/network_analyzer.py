@@ -2,6 +2,7 @@ from copy import copy
 
 import numpy as np
 from qtpy import QtWidgets
+import logging
 
 from ..async_utils import PyrplFuture, MainThreadTimer, CancelledError, sleep
 from ..attributes import FloatProperty, SelectProperty, FrequencyProperty, \
@@ -494,12 +495,29 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
         return self.start_freq==self.stop_freq
 
     def _start_point_acquisition(self, index):
-        if not self.is_zero_span(): # in zero span, data_x are time,
-            # not frequency
-            self.iq.frequency = self._data_x[index]
+        if self.is_zero_span():
+            # in zero span, data_x are time, not frequency
+            frequency = self.start_freq
         else:
-            self.iq.frequency = self.start_freq
+            # normal frequency sweep, get frequency from data_x-array
+            frequency = self._data_x[index]
+        self.iq.frequency = frequency
         self._time_last_point = timeit.default_timer()
+        # regular print output for travis workaround
+        #self._logger.debug("Acquiring first NA point at frequency %.1f Hz..", frequency)
+        # replaced above command by the following two due to suppression of multiple logger warnings
+        if self._logger.getEffectiveLevel() <= 10:
+            try:
+                delay = self._time_last_point - self._lastprinttime
+                self._lastpointnumber += 1
+            except:
+                delay = 999.0
+                self._lastpointnumber = 0
+            #if self._lastpointnumber < 100 or delay >= 10.0:
+            if True:  # above if-statement does not work correctly on travis, e.g. stops printing after laspointnumber 66
+                print("Acquiring new NA point #%d at frequency %.1f Hz after "
+                      "delay of %f" % (self._lastpointnumber, frequency, delay))
+                self._lastprinttime = self._time_last_point
 
     def _get_point(self, index):
         # get the actual point's (discretized)

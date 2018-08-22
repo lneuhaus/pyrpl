@@ -11,9 +11,14 @@ class TestIir(TestPyrpl):
         # shortcuts
         self.pyrpl.na = self.pyrpl.networkanalyzer
         self.na = self.pyrpl.networkanalyzer
+        # set na loglevel to DEBUG
+        self.loglevel = self.na._logger.getEffectiveLevel()
+        self.na._logger.setLevel(10)
 
     def teardown(self):
         self.na.stop()
+        # set na loglevel to previous one
+        self.na._logger.setLevel(self.loglevel)
 
     def test_pz_interface(self):
         """ tests that poles and real/comples_poles remain sync'ed"""
@@ -68,7 +73,7 @@ class TestIir(TestPyrpl):
                  stop_freq=1e6,
                  points=301,
                  rbw=[500, 500],
-                 average_per_point=1,
+                 avg_per_point=1,
                  running_state='stopped',
                  trace_average=1,
                  amplitude=0.005,
@@ -146,7 +151,7 @@ class TestIir(TestPyrpl):
                      stop_freq=50e3,
                      points=501,
                      rbw=[500, 500],
-                     average_per_point=1,
+                     avg_per_point=1,
                      running_state='stopped',
                      trace_average=1,
                      amplitude=0.05,
@@ -166,7 +171,7 @@ class TestIir(TestPyrpl):
                      stop_freq=10e6,
                      points=301,
                      rbw=[500, 500],
-                     average_per_point=1,
+                     avg_per_point=1,
                      running_state='stopped',
                      trace_average=1,
                      amplitude=0.05,
@@ -195,7 +200,7 @@ class TestIir(TestPyrpl):
                      stop_freq=50e3,
                      points=1001, #2501
                      rbw=[1000, 1000],
-                     average_per_point=5,
+                     avg_per_point=5,
                      running_state='stopped',
                      trace_average=1,
                      amplitude=0.02,
@@ -219,7 +224,7 @@ class TestIir(TestPyrpl):
                      stop_freq=500e3,
                      points=301,
                      rbw=1000,
-                     average_per_point=1,
+                     avg_per_point=1,
                      running_state='stopped',
                      trace_average=1,
                      amplitude=0.01,
@@ -253,7 +258,6 @@ class TestIir(TestPyrpl):
         data = na.curve()
         na._logger.info("NA acquisition finished...")
         f = na.data_x
-
         extrastring = str(setting)
         if not kinds:
             kinds = [None]
