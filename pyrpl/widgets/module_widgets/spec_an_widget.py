@@ -212,7 +212,7 @@ class SpecAnWidget(AcquisitionModuleWidget):
 
     def unit_changed(self):
         self.display_curve(self.last_data)
-        self.plot_item.autoRange()
+        self.win2.autoRange()
 
     def run_continuous_clicked(self):
         """
@@ -243,7 +243,7 @@ class SpecAnWidget(AcquisitionModuleWidget):
         to_units = lambda x:self.module.data_to_display_unit(x,
                                                   self.module._run_future.rbw)
         if not self.module.baseband: # iq mode, only 1 curve to display
-            self.win2._set_widget_value((freqs, to_units(datas[1])))
+            self.win2._set_widget_value((freqs, datas[1]), transform_magnitude=to_units)
         else: # baseband mode: data is (spec1, spec2, real(cross), imag(cross))
             spec1, spec2, cross_r, cross_i = datas[1]
             if not self.module.display_input1_baseband:

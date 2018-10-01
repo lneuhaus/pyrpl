@@ -267,6 +267,8 @@ class Scope(HardwareModule, AcquisitionModule):
                        "hysteresis",
                        "ch1_active",
                        "ch2_active",
+                       "ch_math_active",
+                       "math_formula",
                        "xy_mode"]
     # running_state last for proper acquisition setup
     _setup_attributes = _gui_attributes + ["rolling_mode", "running_state"]
@@ -493,6 +495,12 @@ class Scope(HardwareModule, AcquisitionModule):
 
     ch2_active = BoolProperty(default=True,
                               doc="should ch2 be displayed in the gui?")
+
+    ch_math_active = BoolProperty(default=False,
+                              doc="should ch_math be displayed in the gui?")
+
+    math_formula = StringProperty(default='ch1 + ch2',
+                                  doc="formula for channel math")
 
     xy_mode = BoolProperty(default=False,
                            doc="in xy-mode, data are plotted vs the other "

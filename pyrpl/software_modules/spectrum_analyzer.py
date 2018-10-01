@@ -643,8 +643,8 @@ class SpectrumAnalyzer(AcquisitionModule):
         autosave_backup = self._autosave_active
         # setup iq module
         if not self.baseband:
-            raise NotImplementedError("iq mode is not supported in the "
-                                      "current release of Pyrpl.")
+            #raise NotImplementedError("iq mode is not supported in the "
+            #                          "current release of Pyrpl.")
             self.iq.setup(
                 input = self.input,
                 bandwidth=self._iq_bandwidth(),
@@ -687,7 +687,9 @@ class SpectrumAnalyzer(AcquisitionModule):
         the db_system. Also, returns the list [curve_ch1, curve_ch2]...
         """
         if not self.baseband:
-            return super(SpectrumAnalyzer, self)._save_curve()
+            return super(SpectrumAnalyzer, self)._save_curve(self._run_future.data_x,
+                                                  self._run_future.data_avg,
+                                                  **self.setup_attributes)
         else:
             d = self.setup_attributes
             curves = [None, None]

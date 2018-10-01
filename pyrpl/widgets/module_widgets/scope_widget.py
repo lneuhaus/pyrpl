@@ -51,8 +51,8 @@ class ScopeWidget(AcquisitionModuleWidget):
         """
         self.datas = [None, None]
         self.times = None
-        self.ch_color = ('green', 'red')
-        self.ch_transparency = (255, 255)  # 0 is transparent, 255 is not  # deactivated transparency for speed reasons
+        self.ch_color = ('green', 'red', 'blue')
+        self.ch_transparency = (255, 255, 255)  # 0 is transparent, 255 is not  # deactivated transparency for speed reasons
         #self.module.__dict__['curve_name'] = 'scope'
         #self.main_layout = QtWidgets.QVBoxLayout()
         self.init_main_layout(orientation="vertical")
@@ -62,8 +62,10 @@ class ScopeWidget(AcquisitionModuleWidget):
         self.layout_channels = QtWidgets.QVBoxLayout()
         self.layout_ch1 = QtWidgets.QHBoxLayout()
         self.layout_ch2 = QtWidgets.QHBoxLayout()
+        self.layout_math = QtWidgets.QHBoxLayout()
         self.layout_channels.addLayout(self.layout_ch1)
         self.layout_channels.addLayout(self.layout_ch2)
+        self.layout_channels.addLayout(self.layout_math)
 
         self.attribute_layout.removeWidget(aws['xy_mode'])
 
@@ -84,6 +86,10 @@ class ScopeWidget(AcquisitionModuleWidget):
         self.layout_ch2.addWidget(aws['ch2_active'])
         self.layout_ch2.addWidget(aws['input2'])
         self.layout_ch2.addWidget(aws['hysteresis'])
+
+        self.layout_math.addWidget(aws['ch_math_active'])
+        aws['ch_math_active'].setStyleSheet("color: %s" % self.ch_color[2])
+        self.layout_math.addWidget(aws['math_formula'])
 
         self.attribute_layout.addLayout(self.layout_channels)
 
@@ -186,16 +192,16 @@ class ScopeWidget(AcquisitionModuleWidget):
         if name in ['running_state',]:
             self.update_running_buttons()
 
-    def display_channel(self, ch):
+    def display_channel_obsolete(self, ch):
         """
         Displays channel ch (1 or 2) on the graph
         :param ch:
         """
         try:
-            self.datas[ch-1] = self.module.curve(ch)
-            self.times = self.module.times
-            self.curves[ch-1].setData(self.times,
-                                        self.datas[ch-1])
+                self.datas[ch-1] = self.module.curve(ch)
+                self.times = self.module.times
+                self.curves[ch-1].setData(self.times,
+                                          self.datas[ch-1])
         except NotReadyError:
             pass
 
@@ -224,6 +230,22 @@ class ScopeWidget(AcquisitionModuleWidget):
                     self.curves[ch].setVisible(True)
                 else:
                     self.curves[ch].setVisible(False)
+            if self.module.ch_math_active:
+                # catch numpy warnings instead of printing them
+                # https://stackoverflow.com/questions/15933741/how-do-i-catch-a-numpy-warning-like-its-an-exception-not-just-for-testing
+                backup_np_err = np.geterr()
+                np.seterr(all='ignore')
+                try:
+                    math_data = eval(self.module.math_formula,
+                       dict(ch1=ch1, ch2=ch2, np=np, times=times))
+                except:
+                    pass
+                else:
+                    self.curves[2].setData(times, math_data)
+                np.seterr(**backup_np_err)
+                self.curves[2].setVisible(True)
+            else:
+                self.curves[2].setVisible(False)
         self.update_current_average() # to update the number of averages
 
     def set_rolling_mode(self):
