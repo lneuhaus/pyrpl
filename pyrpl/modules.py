@@ -19,6 +19,7 @@ from .attributes import BaseAttribute, ModuleAttribute
 from .widgets.module_widgets import ModuleWidget
 from .curvedb import CurveDB
 from .pyrpl_utils import unique_list, DuplicateFilter
+from .errors import ExpectedPyrplError
 
 import logging
 import numpy as np
@@ -411,8 +412,17 @@ class Module(with_metaclass(ModuleMetaClass, object)):
         """
         from .pyrpl import Pyrpl
         parent = self.parent
+        passedparents = set()
         while (not isinstance(parent, Pyrpl)):
+            # remember the parents that were tried before to avoid circles
+            passedparents.add(parent)
+            # go up in hierarchy
             parent = parent.parent
+            # check if this parent has occured before in order to avoid an infinite loop
+            if parent in passedparents:
+                raise ExpectedPyrplError("Unable to find a pyrpl instance "
+                                         "that is parent of the module %s.",
+                                         self.name)
         return parent
 
     def get_setup_attributes(self):

@@ -56,6 +56,7 @@ module red_pitaya_iq_block #(
    // data
    input                 clk_i           ,  // clock
    input                 rstn_i          ,  // reset - active low
+   input                 sync_i          ,  // synchronization input, active high
    input      [ 14-1: 0] dat_i           ,  // input data
    output     [ 14-1: 0] dat_o           ,  // output data
    output     [ 14-1: 0] signal_o        ,  // output data
@@ -78,7 +79,9 @@ localparam QUADRATURE_HF = 4'd4;
 
 // state registers
 reg [4-1:0] output_select;
-reg         on;  //fgen is on; allows to re-synchronize the outputs
+//reg         on;  //fgen is on; allows to re-synchronize the outputs
+wire on;
+assign on = sync_i;
 
 // function registers
 reg [PHASEBITS-1:0] start_phase;
@@ -95,7 +98,8 @@ reg [32-1:0] quadrature_filter;
 //  System bus connection
 always @(posedge clk_i) begin
    if (rstn_i == 1'b0) begin
-      on <= 1'b1; //on by default
+      //on <= 1'b1; //on by default
+      // on is replaced by sync_i
       input_filter <= 32'd0;
       quadrature_filter <= 32'd0;
       start_phase <= {PHASEBITS{1'b0}};
@@ -111,7 +115,8 @@ always @(posedge clk_i) begin
    end
    else begin
       if (wen) begin
-		 if (addr==16'h100)   {pfd_on,on}   <= wdata[2-1:0];
+		 //if (addr==16'h100)   {pfd_on,on}   <= wdata[2-1:0]; // on was replaced by sync_i
+		 if (addr==16'h100)   {pfd_on}   <= wdata[2-1:1];
          if (addr==16'h104)   start_phase   <= wdata[PHASEBITS-1:0];
          if (addr==16'h108)   shift_phase   <= wdata[PHASEBITS-1:0];
          if (addr==16'h10C)   output_select <= wdata[4-1:0];

@@ -341,3 +341,10 @@ class Iq(FilterModule):
         # add delay from phase (incorrect formula or missing effect...)
         tf *= np.exp(1j * self.phase / 180.0 * np.pi)
         return tf
+
+    def syncronize_iqs(self):
+        """
+        syncronizes all iq modules such that modules with commensurate
+        frequencies have zero phase offset between the outputs
+        """
+        self._synchronize(modules=['iq0', 'iq1', 'iq2'])
