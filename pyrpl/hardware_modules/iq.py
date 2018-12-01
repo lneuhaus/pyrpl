@@ -55,7 +55,7 @@ class Iq(FilterModule):
                          "amplitude",
                          "phase",
                          "output_direct"]
-    _gui_attributes = _setup_attributes
+    _gui_attributes = _setup_attributes  # + ["synchronize_iqs"]  # function calls auto-gui only works in develop-0.9.3 branch
 
     _delay = 5  # bare delay of IQ module with no filters set (cycles)
 
@@ -152,12 +152,23 @@ class Iq(FilterModule):
 
     acbandwidth = IqAcbandwidth(doc="positive corner frequency of input high pass filter")
 
+    def synchronize_iqs(self):
+        """
+        Synchronizes all iq modules.
+
+        This establishes a zero phase offset between the outputs of all iq
+        modules with commensurate frequencies. This function must be called
+        after having set the last iq frequency in order to be effective.
+        """
+        self._synchronize(modules=['iq0', 'iq1', 'iq2'])
+        self._logger.info("All IQ modules synchronized!")
+
     def _setup(self): # the function is here for its docstring to be used by the metaclass.
         """
         Sets up an iq demodulator, refer to the drawing in the GUI for an explanation of the IQ layout.
         (just setting the attributes is OK).
         """
-        pass
+        self.synchronize_iqs()
 
     _na_averages = IntRegister(0x130,
                                doc='number of cycles to perform na-averaging over')
@@ -183,6 +194,7 @@ class Iq(FilterModule):
         sum = np.complex128(self._to_pyint(int(a) + (int(b) << 31), bitlength=62)) \
               + np.complex128(self._to_pyint(int(c) + (int(d) << 31), bitlength=62)) * 1j
         return sum
+
     # the implementation of network_analyzer is not identical to na_trace
     # there are still many bugs in it, which is why we will keep this function
     # in the gui
@@ -202,7 +214,7 @@ class Iq(FilterModule):
             stabilize=None,
             # if a float, output amplitude is adjusted dynamically so that input amplitude [V]=stabilize
             maxamplitude=1.0,  # amplitude can be limited
-    ):
+            ):
         # logger.info("This function will become obsolete in the distant "
         #                 "future. Start using the module RedPitaya.na "
         #                 "instead!")
@@ -341,10 +353,3 @@ class Iq(FilterModule):
         # add delay from phase (incorrect formula or missing effect...)
         tf *= np.exp(1j * self.phase / 180.0 * np.pi)
         return tf
-
-    def syncronize_iqs(self):
-        """
-        syncronizes all iq modules such that modules with commensurate
-        frequencies have zero phase offset between the outputs
-        """
-        self._synchronize(modules=['iq0', 'iq1', 'iq2'])

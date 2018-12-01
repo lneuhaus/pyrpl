@@ -387,7 +387,7 @@ class TestPidNaIq(TestPyrpl):
         desyncdiff = (max(angles)-min(angles))
         assert desyncdiff > 0.01, "iq modules not desynchronized, desyncdiff = %f < 0.01! Angles: %s" % (desyncdiff, angles)
         # synchronize
-        rp.iq0.syncronize_iqs()
+        rp.iq0.synchronize_iqs()
         # now measure in synced mode
         for iq in iqs:
             iq.frequency = iq.frequency

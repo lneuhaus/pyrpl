@@ -21,6 +21,11 @@ class IqWidget(ModuleWidget):
         self.attribute_widgets["bandwidth"].widget.set_max_cols(2)
         self.attribute_layout.addWidget(self.attribute_widgets["input"])
         self.attribute_layout.addWidget(self.attribute_widgets["acbandwidth"])
+        self.button_synchronize_iqs = QtWidgets.QPushButton("Synchronize IQs")
+        self.attribute_widgets["acbandwidth"].layout_v.insertWidget(3,
+                                                                    self.button_synchronize_iqs)
+        self.button_synchronize_iqs.clicked.connect(lambda: self.module.synchronize_iqs())
+
         self.attribute_layout.addWidget(self.attribute_widgets["frequency"])
         self.attribute_widgets["frequency"].layout_v.insertWidget(3,
                                                                   self.attribute_widgets["phase"])
