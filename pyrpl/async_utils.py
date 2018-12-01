@@ -4,6 +4,7 @@ This file contains a number of methods for asynchronous operations.
 import logging
 from qtpy import QtCore, QtWidgets
 from timeit import default_timer
+import sys
 logger = logging.getLogger(name=__name__)
 
 from . import APP  # APP is only created once at the startup of PyRPL
@@ -117,13 +118,11 @@ class PyrplFuture(Future):
     """
 
     def __init__(self):
-        try:  # python >= 3.5
+        if sys.version.startswith('3.7'):
             loop = quamash.QEventLoop()
-        except NameError: # python 2.7
-            loop = None
-            super(PyrplFuture, self).__init__()
-        else:
             super(PyrplFuture, self).__init__(loop=loop)
+        else: # python 2.7, 3.5,3.6
+            super(PyrplFuture, self).__init__()
         self._timer_timeout = None  # timer that will be instantiated if
         #  result(timeout) is called with a >0 value
 
