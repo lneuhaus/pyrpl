@@ -4,7 +4,9 @@ import numpy as np
 from qtpy import QtWidgets
 import logging
 
-from ..async_utils import PyrplFuture, MainThreadTimer, CancelledError, sleep
+from ..async_utils import wait, ensure_future, sleep #PyrplFuture,
+# MainThreadTimer,
+# CancelledError, sleep
 from ..attributes import FloatProperty, SelectProperty, FrequencyProperty, \
                          IntProperty, BoolProperty, FilterProperty, SelectProperty, \
                          ProxyProperty
@@ -67,7 +69,7 @@ class LogScaleProperty(BoolProperty):
         module._signal_launcher.x_log_toggled.emit()
 
 
-class NaPointFuture(PyrplFuture):
+class NaPointFuture:#(PyrplFuture):
     """
     Future object for a NetworkAnalyzer point.
     """
@@ -111,7 +113,7 @@ class NaPointFuture(PyrplFuture):
         super(NaPointFuture, self).cancel()
 
 
-class NaCurveFuture(PyrplFuture):
+class NaCurveFuture:#(PyrplFuture):
     N_POINT_BENCHMARK = 100 #  update measured_time_per_point every 100 points
 
     def __init__(self, module, min_delay_ms, autostart=True):

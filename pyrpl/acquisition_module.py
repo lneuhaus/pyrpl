@@ -44,173 +44,13 @@ Example:
         eventloop.run_until_complete()
 """
 from copy import copy
+from .async_utils import ensure_future, sleep, wait
+
 from .module_attributes import *
-from .async_utils import PyrplFuture, Future, MainThreadTimer, CancelledError
 
 
 class AcquisitionError(ValueError):
     pass
-
-
-class CurveFuture(PyrplFuture):
-    """
-    The basic acquisition of instruments is an asynchronous process:
-
-    For instance, when the scope acquisition has been launched, we know
-    that the curve won't be ready before duration(), but if the scope is
-    waiting for a trigger event, this could take much longer. Of course,
-    we want the event loop to stay alive while waiting for a pending curve.
-    That's the purpose of this future object.
-
-    After its creation, it will perform the following actions:
-
-        1. stay inactive for a time given by instrument._remaining_time()
-        2. after that, it will check every min_refresh_delay if a new curve is ready with instrument._data_ready()
-        3. when data is ready, its result will be set with the instrument data, as returned by instrument._get_data()
-
-    """
-
-    def __init__(self, module, min_delay_ms=20):
-        self._module = module
-        self.min_delay_ms = min_delay_ms
-        super(CurveFuture, self).__init__()
-        self._init_timer()
-        self._module._start_acquisition()
-
-    def _init_timer(self):
-        if self.min_delay_ms == 0:
-            # make sure 1st instrument interrogation occurs before time
-            delay = self._module._remaining_time() * 1000 - 1
-        else:
-            # 1 ms loss due to timer inaccuracy is acceptable
-            delay = max(self.min_delay_ms,
-                        self._module._remaining_time() * 1000)
-
-        self._timer = MainThreadTimer(max(0, delay)) #  avoid negative times
-        # delays
-        self._timer.timeout.connect(self._set_data_as_result)
-        self._timer.start()
-
-    def _get_one_curve(self):
-        if self._module._data_ready():
-            return self._module._get_curve()
-        else:
-            return None
-
-    def _set_data_as_result(self):
-        data = self._get_one_curve()
-        if data is not None:
-            self.set_result(data)
-            if self._module.running_state in ["paused", "stopped"]:
-                self._module._free_up_resources()
-        else:
-            self._timer.setInterval(self.min_delay_ms)
-            self._timer.start()
-
-    def set_exception(self, exception):  # pragma: no cover
-        self._timer.stop()
-        super(CurveFuture, self).set_exception(exception)
-
-    def cancel(self):
-        self._timer.stop()
-        super(CurveFuture, self).cancel()
-
-
-class RunFuture(PyrplFuture):
-    """
-    Uses several CurveFuture to perform an average.
-
-    2 extra functions are provided to control the acquisition:
-
-    pause(): stalls the acquisition
-
-    start(): (re-)starts the acquisition (needs to be called at the beginning)
-
-    The format for curves are:
-
-    - Scope:
-        - data_x  : self.times
-        - data_avg: np.array((ch1, ch2))
-    - Specan or NA:
-        - data_x  : frequencies
-        - data_avg: np.array(y_complex)
-    """
-
-    def __init__(self, module, min_delay_ms):
-        self._run_continuous = False
-        self._module = module
-        self._min_delay_ms = min_delay_ms
-        super(RunFuture, self).__init__()
-        self.data_avg = None
-        self.data_x = copy(self._module.data_x) #  in case it is saved later
-        self._fut = None
-        self.current_avg = 0
-        self._paused = True
-
-    def _new_curve_arrived(self, curve):
-        try:
-            result = curve.result()
-        except (AcquisitionError, CancelledError):
-            if self._module.running_state in ["running_continuous",
-                                              "running_single"]:
-                return
-            else:
-                self.cancel()
-        if self._module.running_state in ["running_continuous",
-                                          "running_single"]:
-            self.current_avg = min(self.current_avg + 1,
-                                   self._module.trace_average)
-
-            if self.data_avg is None:
-                self.data_avg = result
-            else:
-                self.data_avg = (self.data_avg * (self.current_avg - 1) +
-                                 result) / self.current_avg
-
-            self._module._emit_signal_by_name('display_curve',
-                                              [self._module.data_x,
-                                               self.data_avg])
-
-            if self._is_run_over():
-                if not self.done():
-                    self.set_result(self.data_avg)
-                    self._module.running_state = "stopped" # should be 'paused'
-                    # if we want to average over the single run, but for
-                    # scope and specan, it is more convenient to restart
-                    # averaging (basically saves the button stop in the GUI)
-            else:
-                if not self._paused:
-                    self.start()
-
-    def _is_run_over(self):
-        if self._run_continuous:
-            return False
-        else:
-            return self.current_avg >= self._module.trace_average
-
-    def cancel(self):
-        self.pause()
-        super(RunFuture, self).cancel()
-
-    def pause(self):
-        self._paused = True
-        self._module._free_up_resources()
-        if self._fut is not None:
-            self._fut.cancel()
-
-    def start(self):
-        self._paused = False
-        if self._fut is not None:
-            self._fut.cancel()
-        self._fut = self._module._curve_async(self._min_delay_ms)
-        self._fut.add_done_callback(self._new_curve_arrived)
-
-    def _set_run_continuous(self):
-        """
-        Makes the RunFuture continuous (used when setting "running_continuous")
-        """
-        self._run_continuous = True
-        self._min_delay_ms = self._module.MIN_DELAY_CONTINUOUS_MS
 
 
 class RunningStateProperty(SelectProperty):
@@ -341,8 +181,6 @@ class AcquisitionModule(Module):
     # they are loaded
     _signal_launcher = SignalLauncherAcquisitionModule
     _setup_attributes = ['running_state', 'trace_average', 'curve_name']
-    _run_future_cls = RunFuture
-    _curve_future_cls = CurveFuture
 
     MIN_DELAY_SINGLE_MS = 0  # async acquisition should be as fast as
     # possible
@@ -364,44 +202,33 @@ class AcquisitionModule(Module):
     def __init__(self, parent, name=None):
         # The curve promise is initialized with a dummy Future, because
         # instantiating CurveFuture launches a curve acquisition
-        self._curve_future = Future()
+        #self._curve_future = Future()
 
         super(AcquisitionModule, self).__init__(parent, name=name)
         self.curve_name = self.name + " curve"
-        self._run_future = self._run_future_cls(self,
-                                                min_delay_ms=self.MIN_DELAY_SINGLE_MS)
+        #self._run_future = self._run_future_cls(self,
+        #
+        # min_delay_ms=self.MIN_DELAY_SINGLE_MS)
         # On the other hand, RunFuture has a start method and is not started
         # at instanciation.
-
-
-    def _new_curve_future(self, min_delay_ms):
-        self._curve_future.cancel()
-        self._curve_future = self._curve_future_cls(self,
-                                                    min_delay_ms=min_delay_ms)
-
-    def _new_run_future(self):
-        if hasattr(self, "_run_future"):
-            self._run_future.cancel()
-        if self.running_state == "running_continuous":
-            self._run_future = self._run_future_cls(self,
-                                    min_delay_ms=self.MIN_DELAY_CONTINUOUS_MS)
-            self._run_future._set_run_continuous()
-        else:
-            self._run_future = self._run_future_cls(self,
-                                    min_delay_ms=self.MIN_DELAY_SINGLE_MS)
 
     def _emit_signal_by_name(self, signal_name, *args, **kwds):
         """Let's the module's signal_launcher emit signal name"""
         self._signal_launcher.emit_signal_by_name(signal_name, *args, **kwds)
 
-    def _curve_async(self, min_delay_ms):
+    async def _curve_async(self, min_delay_ms):
         """
         Same as curve_async except this function can be used in any
         running_state.
         """
         self._start_acquisition()
-        self._new_curve_future(min_delay_ms=min_delay_ms)
-        return self._curve_future
+        return await self._get_curve_async(min_delay_ms)
+
+    async def _get_curve_async(self, min_delay_ms):
+        await sleep(max(self._remaining_time(), min_delay_ms))
+        while not self._data_ready():
+            await sleep(max(self._remaining_time(), min_delay_ms))
+        return self._get_curve()
 
     def curve_async(self):
         """
@@ -415,7 +242,7 @@ class AcquisitionModule(Module):
         """
         if self.running_state is not "stopped":
             self.stop()
-        return self._curve_async(0)
+        return ensure_future(self._curve_async(0))
 
     def curve(self, timeout=None):
         """
@@ -424,7 +251,8 @@ class AcquisitionModule(Module):
         - the function will not return until the curve is ready or timeout occurs.
         - the function directly returns an array with the curve instead of a future object
         """
-        return self.curve_async().await_result(timeout)
+        return wait(self._curve_async(0), timeout=timeout)
+        # return self.curve_async().await_result(timeout)
 
     def single_async(self):
         """
@@ -435,8 +263,18 @@ class AcquisitionModule(Module):
         - The curve can be retrieved by calling result(timeout) on the future object.
         - The future is cancelled if the instrument's state is changed before the end of the acquisition.
         """
-        self.running_state = 'running_single'
-        return self._run_future
+        #self.running_state = 'running_single'
+        #return self._run_future
+        return ensure_future(self._single_async())
+
+    async def _single_async(self):
+        curve = None
+        for index in range(self.trace_average):
+            if curve is None:
+                curve = await self._curve_async(0)
+            else:
+                curve+= await self._curve_async(0)
+        return curve
 
     def single(self, timeout=None):
         """
@@ -444,14 +282,21 @@ class AcquisitionModule(Module):
             - the function will not return until the averaged curve is ready or timeout occurs.
             - the function directly returns an array with the curve instead of a future object.
         """
-        return self.single_async().await_result(timeout)
+        #return self.single_async().await_result(timeout)
+        return wait(self._single_async(), timeout=timeout)
+
+    async def _continuous_async(self):
+        while(self.running_state=="running_continuous"):
+            await self._curve_async(self.MIN_DELAY_CONTINUOUS_MS)
 
     def continuous(self):
         """
         continuously acquires curves, and performs a moving
         average over the trace_average last ones.
         """
-        self.running_state = 'running_continuous'
+
+        ensure_future(self._continuous_async())
+        # self.running_state = 'running_continuous'
         # return self._continuous_future
 
     def pause(self):
@@ -489,7 +334,7 @@ class AcquisitionModule(Module):
         # rolling_mode or triggered)
         # This is how we make sure changing duration or rolling_mode won't
         # freeze the acquisition.
-        self._new_run_future()
+        #self._new_run_future()
         if self.running_state in ["running_single", "running_continuous"]:
             self._run_future.start()
             self._emit_signal_by_name("autoscale_x")

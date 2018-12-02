@@ -4,7 +4,7 @@ Defines a number of Loop modules to be used to perform periodically a task
 import numpy as np
 import pyqtgraph as pg
 from ..modules import Module
-from ..async_utils import MainThreadTimer
+from ..async_utils import sleep, wait, ensure_future #MainThreadTimer
 from ..pyrpl_utils import time
 
 
@@ -26,7 +26,7 @@ class Loop(Module):
         if teardown_function is not None:
             self.teardown_loop = teardown_function
         self._ended = False  # becomes True when loop is ended
-        self.timer = MainThreadTimer(interval=0)
+        #self.timer = MainThreadTimer(interval=0)
         # interval in seconds
         self.interval = interval
         self.timer.timeout.connect(self.main_loop)

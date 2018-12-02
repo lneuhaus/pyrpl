@@ -123,7 +123,8 @@ large an integrator gain will quickly saturate the outputs.
 import time
 from .dsp import all_inputs, dsp_addr_base, InputSelectRegister
 from ..acquisition_module import AcquisitionModule
-from ..async_utils import MainThreadTimer, PyrplFuture, sleep
+from ..async_utils import wait, ensure_future, sleep #MainThreadTimer,
+# PyrplFuture, sleep
 from ..pyrpl_utils import sorted_dict
 from ..attributes import *
 from ..modules import HardwareModule
@@ -205,7 +206,7 @@ class SamplingTimeProperty(SelectProperty):
         instance.decimation = float(value) / 8e-9
 
 
-class ContinuousRollingFuture(PyrplFuture):
+class ContinuousRollingFuture:#(PyrplFuture):
     """
     This Future object is the one controlling the acquisition in
     rolling_mode. It will never be fullfilled (done), since rolling_mode
