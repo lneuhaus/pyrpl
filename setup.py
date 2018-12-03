@@ -30,7 +30,7 @@ version = _locals['__version__']
 # # from http://stackoverflow.com/questions/14399534/how-can-i-reference-requirements-txt-for-the-install-requires-kwarg-in-setuptool
 # requirements = []
 # here = os.path.abspath(os.path.dirname(__file__))
-# with open(os.path.join(here, 'requirements.txt')) as f:
+# with open(os.path.join(here, 'readthedocs_requirements.txt')) as f:
 #     lines = f.readlines()
 #     for line in lines:
 #         line = line.strip()
@@ -51,23 +51,31 @@ requirements = ['scp',
 if sys.version_info >= (3,4):  # python version dependencies
     requirements += ['quamash']
 else:  # python 2.7
-    requirements += ['futures']
+    requirements += ['futures', 'mock']  # mock is now a full dependency
+if os.environ.get('TRAVIS') == 'true':
+    requirements += ['pandoc']
 if os.environ.get('READTHEDOCS') == 'True':
-    requirements += ['mock']  # mock is needed on readthedocs.io to mock PyQt5
+    requirements += ['pandoc', 'sphinx', 'sphinx_bootstrap_theme']  # mock is needed on readthedocs.io to mock PyQt5
+    # remove a few of the mocked modules
+    def rtd_included(r):
+        for rr in ['numpy', 'scipy', 'pandas', 'scp', 'paramiko', 'nose',
+                   'quamash', 'qtpy', 'asyncio', 'pyqtgraph']:
+            if r.startswith(rr):
+                return False
+        return True
+    requirements = [r for r in requirements if rtd_included(r)]
 
 # cannot install pyQt4 with pip:
 # http://stackoverflow.com/questions/4628519/is-it-possible-to-require-pyqt-from-setuptools-setup-py
 # PyQt4
-
 try:
-    import pypandoc
-    long_description = pypandoc.convert_file('README.md', 'rst')
+    long_description = read('README.rst')
 except:
     try:
-        long_description = read('README.rst')
+        import pypandoc
+        long_description = pypandoc.convert_file('README.md', 'rst')
     except:
         long_description = read('README.md')
-
 
 def find_packages():
     """

@@ -63,6 +63,7 @@ htmlcov/
 .tox/
 .coverage
 .coverage.*
+cover/*
 .cache
 nosetests.xml
 coverage.xml
@@ -123,3 +124,4 @@ scripts/build/
 scripts/__init__.py
 scripts/run_pyrpl.spec
 scripts/pyrpl.spec
+cover/index.html

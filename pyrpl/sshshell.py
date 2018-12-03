@@ -113,6 +113,7 @@ class SshShell(object):
         """
         returns all MAC addresses of the SSH device.
         """
+        self.ask()  # empty the shell before asking something
         macs = list()
         nextgood = False
         for token in self.ask('ifconfig | grep HWaddr').split():
@@ -122,4 +123,13 @@ class SshShell(object):
                 nextgood = True
             else:
                 nextgood = False
+        if macs == []:  # problem on more recent redpitaya os
+            nextgood = False
+            for token in self.ask('ip address').split():
+                if nextgood and len(token.split(':'))==6:
+                    macs.append(token)
+                if token == 'link/ether':
+                    nextgood = True
+                else:
+                    nextgood = False
         return macs

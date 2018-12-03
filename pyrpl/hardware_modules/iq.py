@@ -1,3 +1,194 @@
+"""
+Demodulation of a signal means convolving it with a sine and cosine at
+the 'carrier frequency'. The two resulting signals are usually low-pass
+filtered and called 'quadrature I' and 'quadrature Q'. Based on this
+simple idea, the IQ module of pyrpl can implement several
+functionalities, depending on the particular setting of the various
+registers. In most cases, the configuration can be completely carried
+out through the setup function of the module.
+
+
+
+Lock-in detection / PDH / synchronous detection
+
+.. code:: python
+
+    #reload to make sure settings are default ones
+    from pyrpl import Pyrpl
+    r = Pyrpl(hostname="192.168.1.100").rp
+
+    #shortcut
+    iq = r.iq0
+
+    # modulation/demodulation frequency 25 MHz
+    # two lowpass filters with 10 and 20 kHz bandwidth
+    # input signal is analog input 1
+    # input AC-coupled with cutoff frequency near 50 kHz
+    # modulation amplitude 0.1 V
+    # modulation goes to out1
+    # output_signal is the demodulated quadrature 1
+    # quadrature_1 is amplified by 10
+    iq.setup(frequency=25e6, bandwidth=[10e3,20e3], gain=0.0,
+             phase=0, acbandwidth=50000, amplitude=0.5,
+             input='in1', output_direct='out1',
+             output_signal='quadrature', quadrature_factor=10)
+
+After this setup, the demodulated quadrature is available as the
+output\_signal of iq0, and can serve for example as the input of a PID
+module to stabilize the frequency of a laser to a reference cavity. The
+module was tested and is in daily use in our lab. Frequencies as low as
+20 Hz and as high as 50 MHz have been used for this technique. At the
+present time, the functionality of a PDH-like detection as the one set
+up above cannot be conveniently tested internally. We plan to upgrade
+the IQ-module to VCO functionality in the near future, which will also
+enable testing the PDH functionality.
+
+
+Network analyzer
+^^^^^^^^^^^^^^^^^^
+
+When implementing complex functionality in the RedPitaya, the network
+analyzer module is by far the most useful tool for diagnostics. The
+network analyzer is able to probe the transfer function of any other
+module or external device by exciting the device with a sine of variable
+frequency and analyzing the resulting output from that device. This is
+done by demodulating the device output (=network analyzer input) with
+the same sine that was used for the excitation and a corresponding
+cosine, lowpass-filtering, and averaging the two quadratures for a
+well-defined number of cycles. From the two quadratures, one can extract
+the magnitude and phase shift of the device's transfer function at the
+probed frequencies. Let's illustrate the behaviour. For this example,
+you should connect output 1 to input 1 of your RedPitaya, such that we
+can compare the analog transfer function to a reference. Make sure you
+put a 50 Ohm terminator in parallel with input 1.
+
+.. code:: python
+
+    # shortcut for na
+    na = p.networkanalyzer
+    na.iq_name = 'iq1'
+
+    # setup network analyzer with the right parameters
+    na.setup(start=1e3,stop=62.5e6,points=1001,rbw=1000, avg=1,
+    amplitude=0.2,input='iq1',output_direct='off', acbandwidth=0)
+
+    #take transfer functions. first: iq1 -> iq1, second iq1->out1->(your cable)->adc1
+    iq1 = na.curve()
+    na.setup(input='in1', output_direct='out1')
+    in1 = na.curve()
+
+    # get x-axis for plotting
+    f = na.frequencies
+
+    #plot
+    from pyrpl.hardware_modules.iir.iir_theory import bodeplot
+    %matplotlib inline
+    bodeplot([(f, iq1, "iq1->iq1"), (f, in1, "iq1->out1->in1->iq1")], xlog=True)
+
+If your cable is properly connected, you will see that both magnitudes
+are near 0 dB over most of the frequency range. Near the Nyquist
+frequency (62.5 MHz), one can see that the internal signal remains flat
+while the analog signal is strongly attenuated, as it should be to avoid
+aliasing. One can also see that the delay (phase lag) of the internal
+signal is much less than the one through the analog signal path.
+
+.. note:: The Network Analyzer is implemented as a software module, distinct \
+from the iq module. This is the reason why networkanalyzer is accessed \
+directly at the Pyrpl-object level *p.networkanalyzer* and not at the \
+redpitaya level *p.rp.networkanalyzer*. However, an iq module is \
+reserved whenever the network analyzer is acquiring data.
+
+If you have executed the last example (PDH detection) in this python
+session, iq0 should still send a modulation to out1, which is added to
+the signal of the network analyzer, and sampled by input1. In this case,
+you should see a little peak near the PDH modulation frequency, which
+was 25 MHz in the example above.
+
+Lorentzian bandpass filter
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The iq module can also be used as a bandpass filter with continuously
+tunable phase. Let's measure the transfer function of such a bandpass
+with the network analyzer:
+
+.. code:: python
+
+    # shortcut for na and bpf (bandpass filter)
+    na = p.networkanalyzer
+    bpf = p.rp.iq2
+
+    # setup bandpass
+    bpf.setup(frequency = 2.5e6, #center frequency
+              bandwidth=1.e3, # the filter quality factor
+              acbandwidth = 10e5, # ac filter to remove pot. input offsets
+              phase=0, # nominal phase at center frequency (propagation phase lags not accounted for)
+              gain=2.0, # peak gain = +6 dB
+              output_direct='off',
+              output_signal='output_direct',
+              input='iq1')
+
+    # setup the network analyzer
+    na.setup(start=1e5, stop=4e6, points=201, rbw=100, avg=3,
+                             amplitude=0.2, input='iq2',output_direct='off')
+
+    # take transfer function
+    tf1 = na.curve()
+
+    # add a phase advance of 82.3 degrees and measure transfer function
+    bpf.phase = 82.3
+    tf2 = na.curve()
+
+    f = na.frequencies
+
+    #plot
+    from pyrpl.hardware_modules.iir.iir_theory import bodeplot
+    %matplotlib inline
+    bodeplot([(f, tf1, "phase = 0.0"), (f, tf2, "phase = %.1f"%bpf.phase)])
+
+
+.. note:: To measure the transfer function of an internal module, we cannot
+use the *output_direct* property of the network ananlyzer (only 'out1',
+'out2' or 'off' are allowed). To circumvent the problem, we set the input of
+the module to be measured to the network analyzer's iq.
+
+
+Frequency comparator module
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To lock the frequency of a VCO (Voltage controlled oscillator) to a
+frequency reference defined by the RedPitaya, the IQ module contains the
+frequency comparator block. This is how you set it up. You have to feed
+the output of this module through a PID block to send it to the analog
+output. As you will see, if your feedback is not already enabled when
+you turn on the module, its integrator will rapidly saturate (-585 is
+the maximum value here, while a value of the order of 1e-3 indicates a
+reasonable frequency lock).
+
+.. code:: python
+
+    iq = p.rp.iq0
+
+    # turn off pfd module for settings
+    iq.pfd_on = False
+
+    # local oscillator frequency
+    iq.frequency = 33.7e6
+
+    # local oscillator phase
+    iq.phase = 0
+    iq.input = 'in1'
+    iq.output_direct = 'off'
+    iq.output_signal = 'pfd'
+
+    print("Before turning on:")
+    print("Frequency difference error integral", iq.pfd_integral)
+
+    print("After turning on:")
+    iq.pfd_on = True
+    for i in range(10):
+        print("Frequency difference error integral", iq.pfd_integral)
+
+"""
 import sys
 from time import sleep
 from collections import OrderedDict
@@ -44,6 +235,10 @@ class IqAcbandwidth(FilterProperty):
 
 
 class Iq(FilterModule):
+    """
+    A modulator/demodulator module.
+
+    """
     _widget_class = IqWidget
     _setup_attributes = ["input",
                          "acbandwidth",

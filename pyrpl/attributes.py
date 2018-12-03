@@ -338,6 +338,8 @@ class IORegister(BoolRegister):
     if argument outputmode is True, output mode is set, else input mode"""
     def __init__(self, read_address, write_address, direction_address,
                  outputmode=True, **kwargs):
+        self.write_address = write_address
+        self.read_address = read_address
         if outputmode:
             address = write_address
         else:
@@ -351,6 +353,9 @@ class IORegister(BoolRegister):
         """ sets the direction (inputmode/outputmode) for the Register """
         if v is None:
             v = self.outputmode
+        else:
+            self.outputmode = v
+        self.address = self.write_address if v else self.read_address
         if v:
             v = obj._read(self.address) | (1 << self.bit)
         else:

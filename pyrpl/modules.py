@@ -19,6 +19,7 @@ from .attributes import BaseAttribute, ModuleAttribute
 from .widgets.module_widgets import ModuleWidget
 from .curvedb import CurveDB
 from .pyrpl_utils import unique_list, DuplicateFilter
+
 from .errors import ExpectedPyrplError
 
 import logging
@@ -165,6 +166,7 @@ class ModuleMetaClass(type):
         self.make_setup_docstring(classDict)
         # 4. make the new class
         #return super(ModuleMetaClass, cls).__new__(cls, classname, bases, classDict)
+        self.add_attribute_docstrings()
 
     #@classmethod
     def make_setup_docstring(self, classDict):
@@ -189,6 +191,19 @@ class ModuleMetaClass(type):
         # ... python 3
         elif hasattr(setup, '__doc__'):
             setup.__doc__ = doc
+
+    def add_attribute_docstrings(self):
+        """
+        Make a list with all attributes from _setup_attribute in the class
+        docstring
+        """
+        if self.__doc__ is None:
+            self.__doc__ = ""
+        self.__doc__+= "\nSetup Attributes:\n\n"
+        for name in self._setup_attributes:
+            if name in self.__dict__: # don't document inherited attributes
+                self.__doc__+="- " + name + ": "
+                self.__doc__+=self.__dict__[name].__doc__ + '\n'
 
 
 class DoSetup(object):
@@ -707,7 +722,7 @@ class HardwareModule(Module):
         self._addr_base = self.addr_base
         self._rp = parent
         super(HardwareModule, self).__init__(parent, name=name)
-        self.__doc__ = "Available registers: \r\n\r\n" + self.help()
+        #self.__doc__ = "Available registers: \r\n\r\n" + self.help()
 
     def _ownership_changed(self, old, new):
         """

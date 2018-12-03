@@ -8,8 +8,8 @@ import numpy as np
 from .. import global_config
 from ..async_utils import sleep as async_sleep
 try:
-    from pysine import sine
     raise  # disables sound output during this test
+    from pysine import sine
 except:
     def sine(frequency, duration):
         print("Called sine(frequency=%f, duration=%f)" % (frequency, duration))
@@ -177,7 +177,7 @@ class TestNA(TestPyrpl):
         with self.pyrpl.networkanalyzer as self.na:
             self.na.iq.output_signal = 'quadrature'
             self.na.setup(amplitude=1., start_freq=1e5, stop_freq=2e5, rbw=10000,
-                          points=100, avg_per_point=10, input=self.na.iq,
+                          points=100, average_per_point=10, input=self.na.iq,
                           acbandwidth=0)
             y = self.na.curve()
             assert(all(abs(y-1)<0.1))  # If transfer function is taken into

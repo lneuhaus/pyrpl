@@ -1,5 +1,40 @@
 """
-A widget fot the network analyzer
+The network analyzer records the coherent response of the signal at the port
+:code:`input` to a sinusoidal excitation of variable frequency sent to the
+output selected in :code:`output_direct`.
+
+.. note:: If :code:`output_direct='off'`, another module's input can be set
+          to :code:`networkanalyzer` to test its response to a frequency sweep.
+
+* :attr:`~pyrpl.software_modules.network_analyzer.NetworkAnalyzer.amplitude`
+  sets the amplitude of the sinusoidal excitation in Volts.
+* :attr:`~pyrpl.software_modules.network_analyzer.NetworkAnalyzer.start_freq`/:attr:`~pyrpl.software_modules.network_analyzer.NetworkAnalyzer.stop_freq`
+  define the frequency range over which a transfer function is recorded.
+  Swapping the values of :code:`start_freq` and :code:`stop_freq` reverses the
+  direction of the frequency sweep. Setting :code:`stop_freq = start_freq`
+  enables the "zero-span" mode, where the coherent response at a constant
+  frequency is recorded as a function of time.
+* :attr:`~pyrpl.software_modules.network_analyzer.NetworkAnalyzer.points`
+  defines the number of frequency points in the recorded transfer function.
+* :attr:`~pyrpl.software_modules.network_analyzer.NetworkAnalyzer.rbw` is
+  the cutoff frequency of the low-pass filter after demodulation. Furthermore,
+  the time :math:`\\tau` spent to record each point is
+  :math:`\\tau=\\texttt{average_per_point} / \\texttt{rbw}`.
+* :attr:`~pyrpl.software_modules.network_analyzer.NetworkAnalyzer.average_per_point`:
+  Each point is averaged inside the FPGA before being retrieved by the
+  client computer that runs PyRPL. You should increase this parameter or
+  decrease :code:`rbw` if the communication time between the Red Pitaya and
+  the client computer limits the acquisition speed.
+* :attr:`~pyrpl.software_modules.network_analyzer.NetworkAnalyzer.acbandwidth`
+  is the cutoff frequency of a high-pass filter applied to the input before
+  demodulation. A setting of zero disables the high-pass filter.
+* :attr:`~pyrpl.software_modules.network_analyzer.NetworkAnalyzer.logscale`
+  enables the use of a logarithmic scale for the frequency axis, resulting in
+  a logarithmic distribution of the frequency points as well.
+* :attr:`~pyrpl.software_modules.network_analyzer.NetworkAnalyzer.infer_open_loop_tf`
+  applies the transformation :math:`T \\rightarrow \\frac{T}{1+T}` to the displayed
+  transfer function to correct for the effect of a closed feedback loop
+  (not implemented at the moment).
 """
 
 from .base_module_widget import ModuleWidget

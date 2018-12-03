@@ -1,8 +1,43 @@
 """
-ModuleWidgets's hierarchy is parallel to that of Modules.
-Each Module instance can have a widget created by calling create_widget.
-To use a different class of Widget than the preset (for instance subclass it), the attribute ModuleClass.WidgetClass
-can be changed before calling create_widget()
+The basic functionality of all module widgets are inherited from the base
+class :class:`.ModuleWidget`.
+
+A module widget is delimited by a dashed-line (a QGroupBox). The following
+menu is available on the top part of each ModuleWidget, directly behind the
+name of the module (e.g. :code:`pid0`, :code:`pid1`, ...). Right click on
+the item (e.g. :code:`.:Load:.`, :code:`.:Save:.`, ...) to access the associated
+submenu:
+
+* :code:`.:Load:.` Loads the state of the module from a list of previously saved states.
+* :code:`.:Save:.` Saves the current state under a given state name.
+* :code:`.:Erase:.` Erases one of the previously saved states.
+* :code:`.:Edit:.` Opens a text window to edit the yml code of a state.
+* :code:`.:Hide/Show:.` Hides or shows the content of the module widget.
+
+Inside the module widget, different attribute values can be manipulated using
+the shown sub-widgets (e.g. :code:`input`, :code:`setpoint`, :code:`max_voltage`, ...). The
+modifications will take effect immediately. Only the module state
+:code:`<current state>` is affected by these changes. Saving the state under
+a different name only preserves the state at the moment of saving for later
+retrieval.
+
+At the next startup with the same config file, the :code:<current state> of
+all modules is loaded.
+
+If a module-widget is grayed out completely, it has been reserved by another,
+higher-level module whose name appears in parentheses after the name of the
+module (e.g. :code:`pid2 (output1)` means that the module :code:`pid2` is
+being used by the module :code:`output1`, which is actually a submodule of the
+:code:`lockbox` module). You can right-click anywhere on the grayed out
+widget and click on "Free" to override that reservation and use the module
+for your own purposes.
+
+.. warning:: If you override a module reservation, the module in parenthesis
+             might stop to function properly. A better practice is to identify
+             the top-level module responsible for the reservation, remove its
+             name from the list in your configuration file (located at
+             /HOME/pyrpl_user_dir/config/<string_shown_in_top_bar_of_the_gui>.yml)
+             and restart PyRPL with that configuration.
 """
 from qtpy import QtCore, QtWidgets
 from collections import OrderedDict

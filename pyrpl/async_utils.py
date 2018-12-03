@@ -4,6 +4,7 @@ This file contains a number of methods for asynchronous operations.
 import logging
 from qtpy import QtCore, QtWidgets
 from timeit import default_timer
+import sys
 logger = logging.getLogger(name=__name__)
 
 from . import APP  # APP is only created once at the startup of PyRPL
@@ -45,7 +46,6 @@ class MainThreadTimer(QtCore.QTimer):
     initialized with an interval as only argument.
 
     Benchmark:
-    ----------
 
      1. keep starting the same timer over and over --> 5 microsecond/call::
 
@@ -118,7 +118,11 @@ class PyrplFuture(Future):
     """
 
     def __init__(self):
-        super(PyrplFuture, self).__init__()
+        if sys.version.startswith('3.7'):
+            loop = quamash.QEventLoop()
+            super(PyrplFuture, self).__init__(loop=loop)
+        else: # python 2.7, 3.5,3.6
+            super(PyrplFuture, self).__init__()
         self._timer_timeout = None  # timer that will be instantiated if
         #  result(timeout) is called with a >0 value
 
@@ -140,7 +144,10 @@ class PyrplFuture(Future):
         a callback at the same time for timer_timeout.timeout (no
         argument) and for self.done (1 argument).
         """
-        self.loop.quit()
+        if not self.done():
+            self.set_exception(TimeoutError("timeout occured"))
+        if hasattr(self, 'loop'): # Python <=3.6
+            self.loop.quit()
 
     def _wait_for_done(self, timeout):
         """
@@ -159,9 +166,12 @@ class PyrplFuture(Future):
                 self._timer_timeout = MainThreadTimer(timeout*1000)
                 self._timer_timeout.timeout.connect(self._exit_loop)
                 self._timer_timeout.start()
-            self.loop = QtCore.QEventLoop()
             self.add_done_callback(self._exit_loop)
-            self.loop.exec_()
+            if hasattr(self, 'get_loop'): # Python 3.7
+                self.get_loop().run_until_complete(self)
+            else: # Python <= 3.6
+                self.loop = QtCore.QEventLoop()
+                self.loop.exec_()
             if self._timer_timeout is not None:
                 if not self._timer_timeout.isActive():
                     return TimeoutError("Timeout occured")  # pragma: no-cover

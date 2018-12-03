@@ -713,6 +713,7 @@ class DataWidget(pg.GraphicsWindow):
         self._set_real(np.isreal(y).all())
         for i, values in enumerate(y):
             self._display_curve_index(x, values, i, transform_magnitude=transform_magnitude)
+            self.curves[i].show()
         while (i + 1 < len(self.curves)):  # delete remaining curves
             i += 1
             self.curves[i].hide()
@@ -743,6 +744,10 @@ class DataWidget(pg.GraphicsWindow):
 
     def setRange(self, *args, **kwds):
         self.plot_item.setRange(*args, **kwds)
+
+    def autoRange(self):
+        self.plot_item.autoRange()
+        self.plot_item_phase.autoRange()
 
 
 class PlotAttributeWidget(BaseAttributeWidget):

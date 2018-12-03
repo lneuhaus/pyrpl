@@ -2,15 +2,17 @@ Installing PyRPL
 *********************************
 
 
-
-The Fastest way: Running from binary files
+Running from binary files (fastest)
 ====================================
 
-The easiest and fastest way to get PyRPL running is to download and execute the `precompiled executable for windows or linux <https://sourceforge.net/projects/pyrpl/files/latest/download>`__. This option requires no extra programs to be installed on the computer. If you want the Pyrpl binaries for a Mac, please let us know `by creating a new issue <https://www.github.com/lneuhaus/pyrpl/issues/new>`_ and we will prepare them for you.
+The easiest and fastest way to get PyRPL running is to download and execute the `precompiled executable for windows "pyrpl-windows.exe" <https://sourceforge.net/projects/pyrpl/files/pyrpl-windows.exe>`__ or `linux "pyrpl-linux" <https://sourceforge.net/projects/pyrpl/files/pyrpl-linux>`__. This option requires no extra programs to be installed on the computer. If you want the Pyrpl binaries for a Mac, please let us know `by creating a new issue <https://www.github.com/lneuhaus/pyrpl/issues/new>`_ and we will prepare them for you.
 
 
-The Hacker's way: Running the Python source code
-================================================
+
+.. _installation_from_source:
+
+Running the Python source code
+===================================
 
 If you would like to use and/or modify the source code, make sure you have an installation of Python (2.7, 3.4, 3.5, or 3.6).
 
@@ -54,8 +56,9 @@ Downloading and installing PyRPL from source
 
 Various channels are available to obtain the PyRPL source code.
 
+
 Option 1: Installation with pip (recommended, for standard users)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you have pip correctly installed, executing the following line in a command line should install pyrpl and all missing dependencies::
 

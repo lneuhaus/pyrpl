@@ -224,15 +224,21 @@ class OutputSignal(Signal):
             self._logger.warning("External loop gain for output %s is zero. "
                                  "Skipping pid lock for this step. ",
                                  self.name)
-        else:
-            # write values to pid module
+            if offset is not None:
+                self.pid.ival = offset
+        else:  # write values to pid module
+            # set gains to zero before switching setpoint and input,
+            # to avoid huge gains while transiting
+            self.pid.p = 0
+            self.pid.i = 0
             self.pid.setpoint = input.expected_signal(setpoint) + input.calibration_data._analog_offset
+            self.pid.input = input.signal()
+            # set offset if applicable
+            if offset is not None:
+                self.pid.ival = offset
+            # set gains
             self.pid.p = self.p / external_loop_gain * gain_factor
             self.pid.i = self.i / external_loop_gain * gain_factor
-            self.pid.input = input.signal()
-        # offset is the last thing that is modified to guarantee the offset setting with the gains
-        if offset is not None:
-            self.pid.ival = offset
 
     def _setup_offset(self, offset):
         self.pid.ival = offset

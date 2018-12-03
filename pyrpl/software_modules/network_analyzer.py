@@ -302,7 +302,7 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
                        "start_freq",
                        "stop_freq",
                        "rbw",
-                       "avg_per_point",
+                       "average_per_point",
                        "points",
                        "amplitude",
                        "logscale",
@@ -324,7 +324,7 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
     start_freq = FrequencyProperty(default=1e3, call_setup=True, min=Iq.frequency.increment)
     stop_freq = FrequencyProperty(default=1e6, call_setup=True, min=Iq.frequency.increment)
     rbw = RbwAttribute(default=500.0, call_setup=True)
-    avg_per_point = IntProperty(min=1, default=1, call_setup=True)
+    average_per_point = IntProperty(min=1, default=1, call_setup=True)
     amplitude = NaAmplitudeProperty(default=0.1,
                                     min=0,
                                     max=1,
@@ -577,7 +577,7 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
 
         # setup averaging
         self.iq._na_averages = np.int(np.round(125e6 / self.rbw *
-                                               self.avg_per_point))
+                                               self.average_per_point))
         self._cached_na_averages = self.iq._na_averages
         self.iq._na_sleepcycles = np.int(
             np.round(125e6 / self.rbw * self.sleeptimes))
@@ -596,11 +596,10 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
         # < 1 ms measurement time will make acquisition inefficient.
         if self.time_per_point < 0.001:
             self._logger.info("Time between successive points is %.1f ms."
-                              " You should increase 'avg_per_point' to at "
-                              "least %i "
-                              "for efficient acquisition.",
+                              " You should increase 'average_per_point' to "
+                              "at least %i for efficient acquisition.",
                               self.time_per_point * 1000,
-                              self.avg_per_point * 0.001 / self.time_per_point)
+                              self.average_per_point * 0.001 / self.time_per_point)
 
     def _stop_acquisition(self):
         """

@@ -21,6 +21,7 @@ import numpy as np
 import socket
 import logging
 try:
+    raise  # disable sound output for now
     from pysine import sine  # for debugging read/write calls
 except:
     def sine(frequency, duration):
