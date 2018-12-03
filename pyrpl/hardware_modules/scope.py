@@ -577,7 +577,6 @@ class Scope(HardwareModule, AcquisitionModule):
                                duration,
                                self.data_length, endpoint=False)
 
-
     def wait_for_pretrigger(self):
         """ sleeps until scope trigger is ready (buffer has enough new data)"""
         while not self.pretrig_ok:
@@ -611,6 +610,10 @@ class Scope(HardwareModule, AcquisitionModule):
     def data_x(self):
         return self.times
 
+    def _prepare_averaging(self):
+        self.data_avg = np.zeros((2, len(self.times)))
+        self.current_avg = 0
+
     def _get_curve(self):
         """
         Simply pack together channel 1 and channel 2 curves in a numpy array
@@ -622,6 +625,17 @@ class Scope(HardwareModule, AcquisitionModule):
         :returns curve duration - ellapsed duration since last setup() call.
         """
         return self.duration - (time() - self._last_time_setup)
+
+    async def _continuous_async(self):
+        if not self._is_rolling_mode_active():
+            return await super(Scope, self)._continuous_async()
+        else: # no need to prepare averaging
+            self._start_acquisition_rolling_mode()
+            self.running_state = 'running_continuous'
+            while(self.running_state=="running_continuous"):
+                await sleep(0.02)
+                times, data = self._get_rolling_curve()
+                self._emit_signal_by_name('display_curve', [times, data])
 
     def _data_ready(self):
         """
@@ -667,13 +681,18 @@ class Scope(HardwareModule, AcquisitionModule):
         self._autosave_active = autosave_backup
         self._last_time_setup = time()
 
-    # Rolling_mode related methods:
-    # -----------------------------
-
     def _start_acquisition_rolling_mode(self):
         self._start_acquisition()
         self._trigger_source_register = 'off'
         self._trigger_armed = True
+
+    # Rolling_mode related methods:
+    # -----------------------------
+
+    #def _start_acquisition_rolling_mode(self):
+    #    self._start_acquisition()
+    #    self._trigger_source_register = 'off'
+    #   self._trigger_armed = True
 
     def _rolling_mode_allowed(self):
         """
@@ -735,17 +754,8 @@ class Scope(HardwareModule, AcquisitionModule):
             if active:
                 d.update({'ch': ch,
                           'name': self.curve_name + ' ch' + str(ch + 1)})
-                curves[ch] = self._save_curve(self._run_future.data_x,
-                                              self._run_future.data_avg[ch],
+                curves[ch] = self._save_curve(self.data_x,
+                                              self.data_avg[ch],
                                               **d)
         return curves
 
-    def _new_run_future(self):
-        # acquisition is done by a custom Future in rolling_mode to avoid
-        # averaging
-        if self._is_rolling_mode_active() and self.running_state == \
-                "running_continuous":
-            self._run_future.cancel()
-            self._run_future = ContinuousRollingFuture(self)
-        else:
-            super(Scope, self)._new_run_future()

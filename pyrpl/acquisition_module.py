@@ -72,33 +72,33 @@ class RunningStateProperty(SelectProperty):
     # (with a call_setup=True option) because the precise actions to be
     # taken depend on the previous state of running_state. Such a behavior
     # would not be straightforward to implement in _setup()
-    def set_value(self, obj, val):
-        """
-        This is the master property: changing this value triggers all the logic
-        to change the acquisition mode
-        """
-        # touching the running_state cancels the pending curve_future object
-        # (no effect if future is already done)
-        obj._curve_future.cancel()
-        previous_state = obj.running_state
-        SelectProperty.set_value(self, obj, val)
-        if val == "running_single":
-            # acquire as fast as possible trace_average curves
-            obj.setup()
-        elif val == "running_continuous":
-            if previous_state == 'stopped':  #  restart averaging...
-                obj.setup()
-            else:
-                obj._run_future._set_run_continuous() # if previous run was
-                # "running_single" keep averaging in the same run, simply make
-                # it continuous
-                obj._run_future.start()
-        elif val in ["paused", "stopped"]:
-            if hasattr(obj, '_run_future'):
-                obj._run_future.cancel() #  single cannot be resumed
-                #  on the other hand, continuous can still be started again
-                #  eventhough it is cancelled. Basically, the result will never
-                #  be set, but the acquisition can still be going on indefinitely.
+    # def set_value(self, obj, val):
+    #     """
+    #     This is the master property: changing this value triggers all the logic
+    #     to change the acquisition mode
+    #     """
+    #     # touching the running_state cancels the pending curve_future object
+    #     # (no effect if future is already done)
+    #     ###obj._curve_future.cancel()
+    #     previous_state = obj.running_state
+    #     SelectProperty.set_value(self, obj, val)
+    #     if val == "running_single":
+    #         # acquire as fast as possible trace_average curves
+    #         obj.setup()
+    #     elif val == "running_continuous":
+    #         if previous_state == 'stopped':  #  restart averaging...
+    #             obj.setup()
+    #         else:
+    #             obj._run_future._set_run_continuous() # if previous run was
+    #             # "running_single" keep averaging in the same run, simply make
+    #             # it continuous
+    #             obj._run_future.start()
+    #     elif val in ["paused", "stopped"]:
+    #         if hasattr(obj, '_run_future'):
+    #             obj._run_future.cancel() #  single cannot be resumed
+    #             #  on the other hand, continuous can still be started again
+    #             #  eventhough it is cancelled. Basically, the result will never
+    #             #  be set, but the acquisition can still be going on indefinitely.
 
 
 class SignalLauncherAcquisitionModule(SignalLauncher):
@@ -205,7 +205,9 @@ class AcquisitionModule(Module):
         #self._curve_future = Future()
 
         super(AcquisitionModule, self).__init__(parent, name=name)
+        self._last_run = None
         self.curve_name = self.name + " curve"
+        self.current_avg = 0
         #self._run_future = self._run_future_cls(self,
         #
         # min_delay_ms=self.MIN_DELAY_SINGLE_MS)
@@ -222,27 +224,24 @@ class AcquisitionModule(Module):
         running_state.
         """
         self._start_acquisition()
-        return await self._get_curve_async(min_delay_ms)
-
-    async def _get_curve_async(self, min_delay_ms):
         await sleep(max(self._remaining_time(), min_delay_ms))
         while not self._data_ready():
             await sleep(max(self._remaining_time(), min_delay_ms))
         return self._get_curve()
 
-    def curve_async(self):
-        """
-        Launches the acquisition for one curve with the current parameters.
-
-        - If running_state is not "stopped", stops the current acquisition.
-        - If rolling_mode is True, raises an exception.
-        - Immediately returns a future object representing the curve.
-        - The curve can be retrieved by calling result(timeout) on the future object.
-        - The future is cancelled if the instrument's state is changed before the end of the acquisition, or another call to curve_async() or curve() is made on the same instrument.
-        """
-        if self.running_state is not "stopped":
-            self.stop()
-        return ensure_future(self._curve_async(0))
+    # def curve_async(self):
+    #     """
+    #     Launches the acquisition for one curve with the current parameters.
+    #
+    #     - If running_state is not "stopped", stops the current acquisition.
+    #     - If rolling_mode is True, raises an exception.
+    #     - Immediately returns a future object representing the curve.
+    #     - The curve can be retrieved by calling result(timeout) on the future object.
+    #     - The future is cancelled if the instrument's state is changed before the end of the acquisition, or another call to curve_async() or curve() is made on the same instrument.
+    #     """
+    #     if self.running_state is not "stopped":
+    #         self.stop()
+    #     return ensure_future(self._curve_async(0))
 
     def curve(self, timeout=None):
         """
@@ -265,16 +264,24 @@ class AcquisitionModule(Module):
         """
         #self.running_state = 'running_single'
         #return self._run_future
-        return ensure_future(self._single_async())
+        if self._last_run is not None:
+            self._last_run.cancel()
+        self._last_run = ensure_future(self._single_async())
+        return self._last_run
 
     async def _single_async(self):
-        curve = None
-        for index in range(self.trace_average):
-            if curve is None:
-                curve = await self._curve_async(0)
-            else:
-                curve+= await self._curve_async(0)
-        return curve
+        self.running_state = 'running_single'
+        self._prepare_averaging() # initializes the table self.data_avg,
+        # and self.current_avg
+        for self.current_avg in range(1, self.trace_average + 1):
+            if self.running_state!='running_single':
+                raise RuntimeError("acquisition was interrupted")
+            self.data_avg = (self.data_avg*(self.current_avg-1) + \
+                            await self._curve_async(0))/self.current_avg
+            self._emit_signal_by_name('display_curve', [self.data_x,
+                                                        self.data_avg])
+        self.running_state = 'stopped'
+        return self.data_avg
 
     def single(self, timeout=None):
         """
@@ -283,19 +290,28 @@ class AcquisitionModule(Module):
             - the function directly returns an array with the curve instead of a future object.
         """
         #return self.single_async().await_result(timeout)
+
         return wait(self._single_async(), timeout=timeout)
 
     async def _continuous_async(self):
+        self.running_state = 'running_continuous'
+        self._prepare_averaging()
         while(self.running_state=="running_continuous"):
-            await self._curve_async(self.MIN_DELAY_CONTINUOUS_MS)
+            self.current_avg = min(self.current_avg + 1, self.trace_average)
+            self.data_avg = (self.data_avg*(self.current_avg-1) + \
+               await self._curve_async(self.MIN_DELAY_CONTINUOUS_MS*0.001))/ \
+                        self.current_avg
+            self._emit_signal_by_name('display_curve', [self.data_x,
+                                                        self.data_avg])
 
     def continuous(self):
         """
         continuously acquires curves, and performs a moving
         average over the trace_average last ones.
         """
-
-        ensure_future(self._continuous_async())
+        if self._last_run is not None:
+            self._last_run.cancel()
+        self._last_run = ensure_future(self._continuous_async())
         # self.running_state = 'running_continuous'
         # return self._continuous_future
 
@@ -335,9 +351,10 @@ class AcquisitionModule(Module):
         # This is how we make sure changing duration or rolling_mode won't
         # freeze the acquisition.
         #self._new_run_future()
-        if self.running_state in ["running_single", "running_continuous"]:
-            self._run_future.start()
-            self._emit_signal_by_name("autoscale_x")
+        if self.running_state=='running_single':
+            self.single_async()
+        if self.running_state=='running_continuous':
+            self.continuous()
 
     # Methods to implement in derived class:
     # --------------------------------------
@@ -383,16 +400,23 @@ class AcquisitionModule(Module):
         """
         pass  # pragma: no cover
 
+    def _prepare_averaging(self):
+        """
+        Initializes the table self.data_avg with zeros of the right dimensions.
+        Also resets self.current_avg to 0
+        """
+        pass  # pragma: no cover
+
     def _free_up_resources(self):
         pass # pragma: no cover
 
     # Shortcut to the RunFuture data (for plotting):
     # ----------------------------------------------
 
-    @property
-    def data_avg(self):
-        return self._run_future.data_avg
+    #@property
+    #def data_avg(self):
+    #    return self._run_future.data_avg
 
-    @property
-    def current_avg(self):
-        return self._run_future.current_avg
+    #@property
+    #def current_avg(self):
+    #    return self._run_future.current_avg
