@@ -246,7 +246,7 @@ class HighFinesseInput(InputSignal):
             params = self.calibration_data.setup_attributes
             params['name'] = self.name + "_calibration"
             newcurve = self._save_curve(times, curve1, **params)
-            self.calibration_data.curve = newcurve
+            self.calibration_data.trace = newcurve
             return newcurve
         else:
             return None
@@ -319,7 +319,7 @@ class HighFinesseAnalogPdh(HighFinesseInput, FPAnalogPdh):
             params['name'] = trigger_signal.name + "_calibration"
             trigcurve = self._save_curve(times, curve1, **params)
             newcurve.add_child(trigcurve)
-            self.calibration_data.curve = newcurve
+            self.calibration_data.trace = newcurve
             return newcurve
         else:
             return None

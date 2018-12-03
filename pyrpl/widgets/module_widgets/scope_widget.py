@@ -198,7 +198,7 @@ class ScopeWidget(AcquisitionModuleWidget):
         :param ch:
         """
         try:
-                self.datas[ch-1] = self.module.curve(ch)
+                self.datas[ch-1] = self.module.trace(ch)
                 self.times = self.module.times
                 self.curves[ch-1].setData(self.times,
                                           self.datas[ch-1])

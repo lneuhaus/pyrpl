@@ -43,7 +43,7 @@ class TestScopeAsgAms(TestPyrpl):
             self.r.scope.input2 = asg.name
             # asg.trig()
             self.r.scope.setup(trigger_source=self.r.scope.input1)  # the asg trigger
-            measured, _ = self.r.scope.curve(timeout=4)
+            measured, _ = self.r.scope.trace(timeout=4)
             diff = np.max(np.abs(measured - expect))
             if diff > 0.001:
                 c = CurveDB.create(expect, measured,
@@ -57,7 +57,7 @@ class TestScopeAsgAms(TestPyrpl):
         self.r.scope.trigger_source = "immediately"
         self.r.scope.duration = 0.1
         self.r.scope.setup()
-        self.r.scope.curve()
+        self.r.scope.trace()
 
     def test_scope_pretrig_ok(self):
         """
@@ -136,7 +136,7 @@ class TestScopeAsgAms(TestPyrpl):
         self.r.scope.trigger_delay = 2 * max_read_time
         tic = time.time()
         self.r.scope.setup()
-        self.r.scope.curve()
+        self.r.scope.trace()
         read_time = time.time() - tic
         assert (read_time < max_read_time), (read_time, max_read_time)
 

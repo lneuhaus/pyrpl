@@ -58,7 +58,7 @@ class TestClass(TestPyrpl):
                 sa._logger.info("Testing flatness for span %f and frequency "
                                 "freq %f...", span, freq)
                 asg.frequency = freq
-                curve = self.pyrpl.spectrumanalyzer.curve()[0]
+                curve = self.pyrpl.spectrumanalyzer.trace()[0]
                 assert(abs(sa.frequencies[np.argmax(curve)] - freq) < sa.rbw), \
                     (sa.frequencies[np.argmax(curve)], freq, sa.rbw)
                 points.append(max(curve))
@@ -186,7 +186,7 @@ class TestClass(TestPyrpl):
             points = []
             for freq in freqs:
                 asg.frequency = freq
-                curve = self.pyrpl.spectrumanalyzer.curve()
+                curve = self.pyrpl.spectrumanalyzer.trace()
                 points.append(max(curve))
                 assert abs(max(curve) - 1) < 0.01, max(curve)
 

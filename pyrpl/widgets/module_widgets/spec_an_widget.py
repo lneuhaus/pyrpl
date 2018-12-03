@@ -241,7 +241,7 @@ class SpecAnWidget(AcquisitionModuleWidget):
         self.last_data = datas
         freqs = datas[0]
         to_units = lambda x:self.module.data_to_display_unit(x,
-                                                  self.module._run_future.rbw)
+                                                  self.module.attributes_last_run["rbw"])
         if not self.module.baseband: # iq mode, only 1 curve to display
             self.win2._set_widget_value((freqs, datas[1]), transform_magnitude=to_units)
         else: # baseband mode: data is (spec1, spec2, real(cross), imag(cross))
@@ -266,7 +266,7 @@ class SpecAnWidget(AcquisitionModuleWidget):
         self.last_data = datas
         freqs = datas[0]
         to_units = lambda x:self.module.data_to_display_unit(x,
-                                                  self.module._run_future.rbw)
+                                                  self.module.attributes_last_run["rbw"])
         if not self.module.baseband: # baseband mode, only 1 curve to display
             self.curve.setData(freqs, to_units(datas[1]))
             self.curve.setVisible(True)

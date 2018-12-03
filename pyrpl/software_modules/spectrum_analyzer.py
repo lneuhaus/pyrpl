@@ -406,7 +406,7 @@ class SpectrumAnalyzer(AcquisitionModule):
         """
         :return: complex iq time trace
         """
-        res = self.scope._get_curve()
+        res = self.scope._get_trace()
 
         if self.baseband:
             return res[0][:self.data_length] + 1j*res[1][:self.data_length]
@@ -443,7 +443,8 @@ class SpectrumAnalyzer(AcquisitionModule):
         In baseband, only half of the points are returned
         :return: the real number of points that will eventually be returned
         """
-        return self.points/2 if self.baseband else self.points
+        points = int(self.data_length * self.PADDING_FACTOR)
+        return points//2 + 1 if self.baseband else points
 
     @property
     def frequencies(self):
@@ -556,15 +557,22 @@ class SpectrumAnalyzer(AcquisitionModule):
     def data_x(self):
         return self.frequencies
 
-    def _new_run_future(self):
-        # Redefined because a SpecAnRun needs to know its rbw
-        super(SpectrumAnalyzer, self)._new_run_future()
-        self._run_future.rbw = self.rbw
+    def _get_run_attributes(self):
+        params = super(SpectrumAnalyzer, self)._get_run_attributes()
+        params['rbw'] = self.rbw
+        return params
 
     def _free_up_resources(self):
         self.scope.free()
 
-    def _get_curve(self):
+    def _prepare_averaging(self):
+        self.current_avg = 0
+        if self.baseband:
+            self.data_avg = np.zeros((4, self._real_points))
+        else:
+            self.data_avg = np.zeros(self._real_points)
+
+    def _get_trace(self):
         """
         No transfer_function correction
         :return:
@@ -639,7 +647,7 @@ class SpectrumAnalyzer(AcquisitionModule):
     def _scope_duration(self):
         return self._scope_decimation()*8e-9*self.data_length
 
-    def _start_acquisition(self):
+    def _start_trace_acquisition(self):
         autosave_backup = self._autosave_active
         # setup iq module
         if not self.baseband:
@@ -675,7 +683,7 @@ class SpectrumAnalyzer(AcquisitionModule):
                          ch2_active=True,
                          rolling_mode=False,
                          running_state='stopped')
-        return self.scope._start_acquisition()
+        return self.scope._start_trace_acquisition()
 
     def save_curve(self):
         """

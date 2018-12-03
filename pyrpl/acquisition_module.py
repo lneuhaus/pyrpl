@@ -218,16 +218,16 @@ class AcquisitionModule(Module):
         """Let's the module's signal_launcher emit signal name"""
         self._signal_launcher.emit_signal_by_name(signal_name, *args, **kwds)
 
-    async def _curve_async(self, min_delay_ms):
+    async def _trace_async(self, min_delay_ms):
         """
         Same as curve_async except this function can be used in any
         running_state.
         """
-        self._start_acquisition()
+        self._start_trace_acquisition()
         await sleep(max(self._remaining_time(), min_delay_ms))
         while not self._data_ready():
             await sleep(max(self._remaining_time(), min_delay_ms))
-        return self._get_curve()
+        return self._get_trace()
 
     # def curve_async(self):
     #     """
@@ -243,15 +243,15 @@ class AcquisitionModule(Module):
     #         self.stop()
     #     return ensure_future(self._curve_async(0))
 
-    def curve(self, timeout=None):
-        """
-        Same as curve_async, except:
-
-        - the function will not return until the curve is ready or timeout occurs.
-        - the function directly returns an array with the curve instead of a future object
-        """
-        return wait(self._curve_async(0), timeout=timeout)
-        # return self.curve_async().await_result(timeout)
+    # def trace(self, timeout=None):
+    #     """
+    #     Same as curve_async, except:
+    #
+    #     - the function will not return until the curve is ready or timeout occurs.
+    #     - the function directly returns an array with the curve instead of a future object
+    #     """
+    #     return wait(self._trace_async(0), timeout=timeout)
+    #     # return self.curve_async().await_result(timeout)
 
     def single_async(self):
         """
@@ -264,10 +264,7 @@ class AcquisitionModule(Module):
         """
         #self.running_state = 'running_single'
         #return self._run_future
-        if self._last_run is not None:
-            self._last_run.cancel()
-        self._last_run = ensure_future(self._single_async())
-        return self._last_run
+        return self._renew_run(self._single_async())
 
     async def _single_async(self):
         self.running_state = 'running_single'
@@ -276,12 +273,19 @@ class AcquisitionModule(Module):
         for self.current_avg in range(1, self.trace_average + 1):
             if self.running_state!='running_single':
                 raise RuntimeError("acquisition was interrupted")
-            self.data_avg = (self.data_avg*(self.current_avg-1) + \
-                            await self._curve_async(0))/self.current_avg
+            self.data_avg = (self.data_avg * (self.current_avg-1) + \
+                             await self._trace_async(0)) / self.current_avg
             self._emit_signal_by_name('display_curve', [self.data_x,
                                                         self.data_avg])
         self.running_state = 'stopped'
         return self.data_avg
+
+    def _renew_run(self, coro):
+        self.attributes_last_run = self._get_run_attributes()
+        if self._last_run is not None:
+            self._last_run.cancel()
+        self._last_run = ensure_future(coro)
+        return self._last_run
 
     def single(self, timeout=None):
         """
@@ -291,16 +295,16 @@ class AcquisitionModule(Module):
         """
         #return self.single_async().await_result(timeout)
 
-        return wait(self._single_async(), timeout=timeout)
+        return wait(self._renew_run(self._single_async()), timeout=timeout)
 
     async def _continuous_async(self):
         self.running_state = 'running_continuous'
         self._prepare_averaging()
         while(self.running_state=="running_continuous"):
             self.current_avg = min(self.current_avg + 1, self.trace_average)
-            self.data_avg = (self.data_avg*(self.current_avg-1) + \
-               await self._curve_async(self.MIN_DELAY_CONTINUOUS_MS*0.001))/ \
-                        self.current_avg
+            self.data_avg = (self.data_avg * (self.current_avg-1) + \
+                             await self._trace_async(self.MIN_DELAY_CONTINUOUS_MS * 0.001)) / \
+                            self.current_avg
             self._emit_signal_by_name('display_curve', [self.data_x,
                                                         self.data_avg])
 
@@ -309,9 +313,7 @@ class AcquisitionModule(Module):
         continuously acquires curves, and performs a moving
         average over the trace_average last ones.
         """
-        if self._last_run is not None:
-            self._last_run.cancel()
-        self._last_run = ensure_future(self._continuous_async())
+        self._renew_run(self._continuous_async())
         # self.running_state = 'running_continuous'
         # return self._continuous_future
 
@@ -333,8 +335,8 @@ class AcquisitionModule(Module):
         Saves the curve(s) that is (are) currently displayed in the gui in
         the db_system. Also, returns the list [curve_ch1, curve_ch2]...
         """
-        params = self.setup_attributes
-        params.update(name=self.curve_name)
+        params = self.attributes_last_run
+        self.attributes_last_run.update(name=self.curve_name)
         curve = self._save_curve(self._run_future.data_x,
                                  self._run_future.data_avg,
                                  **params)
@@ -374,7 +376,7 @@ class AcquisitionModule(Module):
         """
         raise NotImplementedError('To implement in derived class')  # pragma: no cover
 
-    def _get_curve(self):
+    def _get_trace(self):
         """
         get the curve from the instrument.
           a 1D array for single channel instruments
@@ -390,7 +392,7 @@ class AcquisitionModule(Module):
         """
         raise NotImplementedError("To implement in derived class")  # pragma: no cover
 
-    def _start_acquisition(self):
+    def _start_trace_acquisition(self):
         """
         If anything has to be communicated to the hardware (such as make
         trigger ready...) to start the acquisition, it should be done here.
@@ -399,6 +401,13 @@ class AcquisitionModule(Module):
         Only non-blocking operations are allowed.
         """
         pass  # pragma: no cover
+
+    def _get_run_attributes(self):
+        """
+        This function is called when the run starts and the result is stored
+        in self.attributes_last_run.
+        """
+        return self.setup_attributes
 
     def _prepare_averaging(self):
         """

@@ -137,7 +137,7 @@ class TestScope(TestPyrpl):
                       rolling_mode=False,
                       running_state="stopped")
             assert not self.data_changing()
-            curve = sco.curve()
+            curve = sco.trace()
         assert self.data_changing()
         async_sleep(1)
         assert self.data_changing()  # Make sure scope is not blocked

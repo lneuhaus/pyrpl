@@ -614,7 +614,7 @@ class Scope(HardwareModule, AcquisitionModule):
         self.data_avg = np.zeros((2, len(self.times)))
         self.current_avg = 0
 
-    def _get_curve(self):
+    def _get_trace(self):
         """
         Simply pack together channel 1 and channel 2 curves in a numpy array
         """
@@ -643,7 +643,7 @@ class Scope(HardwareModule, AcquisitionModule):
         """
         return self.curve_ready()
 
-    def _start_acquisition(self):
+    def _start_trace_acquisition(self):
         """
         Start acquisition of a curve in rolling_mode=False
         """
@@ -682,7 +682,7 @@ class Scope(HardwareModule, AcquisitionModule):
         self._last_time_setup = time()
 
     def _start_acquisition_rolling_mode(self):
-        self._start_acquisition()
+        self._start_trace_acquisition()
         self._trigger_source_register = 'off'
         self._trigger_armed = True
 

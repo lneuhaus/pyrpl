@@ -86,7 +86,7 @@ class TestNA(TestPyrpl):
                           average_per_point=1,
                           trace_average=1)
             tic = time.time()
-            self.na.curve()
+            self.na.trace()
             duration = (time.time() - tic)/self.na.points
             assert duration < maxduration, \
                 "Na w/o gui should take at most %.1f ms per point, but actually " \
@@ -179,7 +179,7 @@ class TestNA(TestPyrpl):
             self.na.setup(amplitude=1., start_freq=1e5, stop_freq=2e5, rbw=10000,
                           points=100, average_per_point=10, input=self.na.iq,
                           acbandwidth=0)
-            y = self.na.curve()
+            y = self.na.trace()
             assert(all(abs(y-1)<0.1))  # If transfer function is taken into
             # account, that should be much closer to 1...
             # Also, there is this magic value of 0.988 instead of 1 ??!!!

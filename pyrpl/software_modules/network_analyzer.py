@@ -142,7 +142,7 @@ class NaCurveFuture:#(PyrplFuture):
     def start(self):
         # self._module.iq.output_direct = self._module.output_direct
         self._time_first_point = timeit.default_timer()
-        self._module._start_acquisition()
+        self._module._start_trace_acquisition()
         self._module.iq.amplitude = self._module.amplitude
         if self.never_started:
             self._module._emit_signal_by_name("clear_curve")
@@ -256,7 +256,7 @@ class NaRunFuture(NaCurveFuture):
         # launch this signal before current_point goes back to 0...
         self._module._emit_signal_by_name("scan_finished")
         if self._run_continuous or self.current_avg<self._module.trace_average:
-            self._module._start_acquisition()
+            self._module._start_trace_acquisition()
             # restart scan from the beginning.
             self.current_point = 0
             self.start()
@@ -556,7 +556,7 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
         x = self._run_future.data_x - self._time_first_point
         return [x, res]
 
-    def _start_acquisition(self):
+    def _start_trace_acquisition(self):
         """
         For the NA, resuming (from pause to start for instance... should
         not setup the instrument again, otherwise, this would restart at
@@ -608,6 +608,11 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
         Stop the iq.
         """
         self.iq.output_direct = 'off'
+
+    async def _trace_async(self, min_delay_ms):
+        for freq in self.frequencies:
+            self.iq.frequency = freq
+
 
     @property
     def data_x(self):
