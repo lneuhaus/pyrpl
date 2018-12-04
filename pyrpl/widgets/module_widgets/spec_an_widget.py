@@ -188,7 +188,7 @@ class SpecAnWidget(AcquisitionModuleWidget):
 
     def update_attribute_by_name(self, name, new_value_list):
         super(SpecAnWidget, self).update_attribute_by_name(name, new_value_list)
-        if name in ['running_state']:
+        if name in ['_running_state']:
             self.update_running_buttons()
         if name in ['baseband']:
             self.update_baseband_visibility()

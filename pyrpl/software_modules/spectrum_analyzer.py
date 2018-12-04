@@ -553,10 +553,6 @@ class SpectrumAnalyzer(AcquisitionModule):
     # Concrete implementation of AcquisitionModule methods
     # ----------------------------------------------------
 
-    @property
-    def data_x(self):
-        return self.frequencies
-
     def _get_run_attributes(self):
         params = super(SpectrumAnalyzer, self)._get_run_attributes()
         params['rbw'] = self.rbw
@@ -566,11 +562,13 @@ class SpectrumAnalyzer(AcquisitionModule):
         self.scope.free()
 
     def _prepare_averaging(self):
+        super(SpectrumAnalyzer, self)._prepare_averaging()
         self.current_avg = 0
         if self.baseband:
             self.data_avg = np.zeros((4, self._real_points))
         else:
             self.data_avg = np.zeros(self._real_points)
+        self.data_x = np.copy(self.frequencies)
 
     def _get_trace(self):
         """
@@ -695,8 +693,8 @@ class SpectrumAnalyzer(AcquisitionModule):
         the db_system. Also, returns the list [curve_ch1, curve_ch2]...
         """
         if not self.baseband:
-            return super(SpectrumAnalyzer, self)._save_curve(self._run_future.data_x,
-                                                  self._run_future.data_avg,
+            return super(SpectrumAnalyzer, self)._save_curve(self.data_x,
+                                                  self.data_avg,
                                                   **self.setup_attributes)
         else:
             d = self.setup_attributes
@@ -707,15 +705,15 @@ class SpectrumAnalyzer(AcquisitionModule):
                 if active:
                     d.update({'ch': ch,
                               'name': self.curve_name + ' ch' + str(ch + 1)})
-                    curves[ch] = self._save_curve(self._run_future.data_x,
-                                                  self._run_future.data_avg[ch],
+                    curves[ch] = self._save_curve(self.data_x,
+                                                  self.data_avg[ch],
                                                   **d)
             if self.display_cross_amplitude:
                 d.update({'ch': 'cross',
                           'name': self.curve_name + ' cross'})
-                curves.append(self._save_curve(self._run_future.data_x,
-                                              self._run_future.data_avg[2] +
-                                               1j*self._run_future.data_avg[3],
+                curves.append(self._save_curve(self.data_x,
+                                              self.data_avg[2] +
+                                               1j*self.data_avg[3],
                                               **d))
             return curves
 

@@ -44,7 +44,7 @@ Example:
         eventloop.run_until_complete()
 """
 from copy import copy
-from .async_utils import ensure_future, sleep, wait
+from .async_utils import ensure_future, sleep, wait, Event
 
 from .module_attributes import *
 
@@ -180,17 +180,24 @@ class AcquisitionModule(Module):
     _setup_on_load = True #  acquisition_modules need to be setup() once
     # they are loaded
     _signal_launcher = SignalLauncherAcquisitionModule
-    _setup_attributes = ['running_state', 'trace_average', 'curve_name']
+    _setup_attributes = ['trace_average', 'curve_name']
 
     MIN_DELAY_SINGLE_MS = 0  # async acquisition should be as fast as
     # possible
     MIN_DELAY_CONTINUOUS_MS = 40  # leave time for the event loop in
     # continuous
 
-    running_state = RunningStateProperty(
+    # the real settable property is _running_state, running_state is read_only
+    # for the user
+    _running_state = SelectProperty(
         default='stopped',
+        options=["running_single", "running_continuous", "paused", "stopped"],
         doc="Indicates whether the instrument is running acquisitions or not. "
             "See :class:`RunningStateProperty` for available options. ")
+
+    @property
+    def running_state(self):
+        return self._running_state
 
     trace_average = IntProperty(doc="number of curves to average in single mode. In "
                            "continuous mode, a moving window average is "
@@ -224,9 +231,7 @@ class AcquisitionModule(Module):
         running_state.
         """
         self._start_trace_acquisition()
-        await sleep(max(self._remaining_time(), min_delay_ms))
-        while not self._data_ready():
-            await sleep(max(self._remaining_time(), min_delay_ms))
+        await self._data_ready_async(min_delay_ms)
         return self._get_trace()
 
     # def curve_async(self):
@@ -266,22 +271,32 @@ class AcquisitionModule(Module):
         #return self._run_future
         return self._renew_run(self._single_async())
 
+    async def _data_ready_async(self, min_delay_s):
+        """
+        sleeps remaining time (or min_delay_s if too short) untill
+        self._data_ready becomes eventually True.
+        """
+        await sleep(max(self._remaining_time(), min_delay_s))
+        while not self._data_ready():
+            await sleep(max(self._remaining_time(), min_delay_s))
+
     async def _single_async(self):
-        self.running_state = 'running_single'
+        self._running_state = 'running_single'
         self._prepare_averaging() # initializes the table self.data_avg,
         # and self.current_avg
         for self.current_avg in range(1, self.trace_average + 1):
-            if self.running_state!='running_single':
-                raise RuntimeError("acquisition was interrupted")
+            if self.running_state=='paused':
+                await self._resume_event.wait()
+            if self.running_state=='stopped': # likely useless but doesn't hurt
+                return
             self.data_avg = (self.data_avg * (self.current_avg-1) + \
                              await self._trace_async(0)) / self.current_avg
             self._emit_signal_by_name('display_curve', [self.data_x,
                                                         self.data_avg])
-        self.running_state = 'stopped'
+        self._running_state = 'stopped'
         return self.data_avg
 
     def _renew_run(self, coro):
-        self.attributes_last_run = self._get_run_attributes()
         if self._last_run is not None:
             self._last_run.cancel()
         self._last_run = ensure_future(coro)
@@ -298,9 +313,11 @@ class AcquisitionModule(Module):
         return wait(self._renew_run(self._single_async()), timeout=timeout)
 
     async def _continuous_async(self):
-        self.running_state = 'running_continuous'
+        self._running_state = 'running_continuous'
         self._prepare_averaging()
-        while(self.running_state=="running_continuous"):
+        while(self.running_state!='stopped'):
+            if self.running_state=='paused':
+                await self._resume_event.wait()
             self.current_avg = min(self.current_avg + 1, self.trace_average)
             self.data_avg = (self.data_avg * (self.current_avg-1) + \
                              await self._trace_async(self.MIN_DELAY_CONTINUOUS_MS * 0.001)) / \
@@ -321,14 +338,22 @@ class AcquisitionModule(Module):
         """
         Stops the current acquisition without restarting the averaging
         """
-        self.running_state = 'paused'
+        self._running_state = 'paused'
+        self._resume_event = Event()
+        self._free_up_resources()
+
+    def resume(self):
+        self._resume_event.set()
 
     def stop(self):
         """
         Stops the current acquisition and averaging will be restarted
         at next run.
         """
-        self.running_state = 'stopped'
+        if self._last_run is not None:
+            self._last_run.cancel()
+        self._running_state = 'stopped'
+        self._free_up_resources()
 
     def save_curve(self):
         """
@@ -337,26 +362,33 @@ class AcquisitionModule(Module):
         """
         params = self.attributes_last_run
         self.attributes_last_run.update(name=self.curve_name)
-        curve = self._save_curve(self._run_future.data_x,
-                                 self._run_future.data_avg,
+        curve = self._save_curve(self.data_x,
+                                 self.data_avg,
                                  **params)
         return curve
 
     def _clear(self):
         super(AcquisitionModule, self)._clear()
-        self._curve_future.cancel()
-        self._run_future.cancel()
+        if self._last_run:
+            self._last_run.cancel()
 
     def _setup(self):
+        """
+
+        :return:
+        """
+        pass
         # the _run_future is renewed to match the requested type of run (
         # rolling_mode or triggered)
         # This is how we make sure changing duration or rolling_mode won't
         # freeze the acquisition.
         #self._new_run_future()
-        if self.running_state=='running_single':
-            self.single_async()
-        if self.running_state=='running_continuous':
-            self.continuous()
+        # if self.running_state=='running_single':
+        #     self.single_async()
+        # if self.running_state=='running_continuous':
+        #     self.continuous()
+        # if self.running_state=='stopped':
+        #     self.stop()
 
     # Methods to implement in derived class:
     # --------------------------------------
@@ -384,13 +416,13 @@ class AcquisitionModule(Module):
         """
         raise NotImplementedError  # pragma: no cover
 
-    @property
-    def data_x(self):
-        """
-        x-axis of the curves to plot.
-        :return:
-        """
-        raise NotImplementedError("To implement in derived class")  # pragma: no cover
+    # @property
+    # def data_x(self):
+    #     """
+    #     x-axis of the curves to plot.
+    #     :return:
+    #     """
+    #     raise NotImplementedError("To implement in derived class")  # pragma: no cover
 
     def _start_trace_acquisition(self):
         """
@@ -412,9 +444,14 @@ class AcquisitionModule(Module):
     def _prepare_averaging(self):
         """
         Initializes the table self.data_avg with zeros of the right dimensions.
+        Also sets self.data_x to a copy of the right array (such that changing
+        the setup won't affect the saved data)
         Also resets self.current_avg to 0
+        Finally, save the attributes_last_run to make sure they are not
+        changed afterwards
         """
-        pass  # pragma: no cover
+        self.attributes_last_run = copy(self._get_run_attributes())
+        self.current_avg = 0
 
     def _free_up_resources(self):
         pass # pragma: no cover

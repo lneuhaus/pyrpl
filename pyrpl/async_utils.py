@@ -33,6 +33,13 @@ if APP is None:
 # Consequently, there is a coroutine async_utils.sleep(time_s)
 LOOP = quamash.QEventLoop()
 
+class Event(asyncio.Event):
+    """
+    Events should also be running in LOOP
+    """
+    def __init__(self):
+        super(Event, self).__init__(loop=LOOP)
+
 async def sleep(time_s):
     await asyncio.sleep(time_s, loop=LOOP)
 

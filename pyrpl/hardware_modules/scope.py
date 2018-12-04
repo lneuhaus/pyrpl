@@ -123,8 +123,7 @@ large an integrator gain will quickly saturate the outputs.
 import time
 from .dsp import all_inputs, dsp_addr_base, InputSelectRegister
 from ..acquisition_module import AcquisitionModule
-from ..async_utils import wait, ensure_future, sleep #MainThreadTimer,
-# PyrplFuture, sleep
+from ..async_utils import wait, ensure_future, sleep
 from ..pyrpl_utils import sorted_dict
 from ..attributes import *
 from ..modules import HardwareModule
@@ -206,51 +205,6 @@ class SamplingTimeProperty(SelectProperty):
         instance.decimation = float(value) / 8e-9
 
 
-class ContinuousRollingFuture:#(PyrplFuture):
-    """
-    This Future object is the one controlling the acquisition in
-    rolling_mode. It will never be fullfilled (done), since rolling_mode
-    is always continuous, but the timer/slot mechanism to control the
-    rolling_mode acquisition is encapsulated in this object.
-    """
-    DELAY_ROLLING_MODE_MS = 20 #  update the display every 20 ms
-    current_avg = 1  # no averaging in rolling mode
-
-    def __init__(self, module):
-        super(ContinuousRollingFuture, self).__init__()
-        self._module = module
-        self._timer = MainThreadTimer(self.DELAY_ROLLING_MODE_MS)
-        self._timer.timeout.connect(self._get_rolling_curve)
-
-    def _get_rolling_curve(self):
-        if not self._module._is_rolling_mode_active():
-            return
-        if not self._module.running_state == "running_continuous":
-            return
-        data_x, datas = self._module._get_rolling_curve()
-        # no setup in rolling mode
-        self._module._emit_signal_by_name('display_curve', [data_x,
-                                                            datas])
-        self.data_avg = datas
-        self.data_x = data_x
-        self._timer.start()  # restart timer in rolling_mode
-
-    def start(self):
-        self._module._start_acquisition_rolling_mode()
-        # rolling_mode requires to disable the trigger
-        self._timer.start()
-
-    def pause(self):
-        self._timer.stop()
-
-    def _set_run_continuous(self):
-        """
-        Dummy function: ContinuousRollingFuture instance is always
-        "_run_continuous"
-        """
-        pass
-
-
 class Scope(HardwareModule, AcquisitionModule):
     addr_base = 0x40100000
     name = 'scope'
@@ -272,7 +226,7 @@ class Scope(HardwareModule, AcquisitionModule):
                        "math_formula",
                        "xy_mode"]
     # running_state last for proper acquisition setup
-    _setup_attributes = _gui_attributes + ["rolling_mode", "running_state"]
+    _setup_attributes = _gui_attributes + ["rolling_mode"]
     # changing these resets the acquisition and autoscale (calls setup())
 
     data_length = data_length  # to use it in a list comprehension
@@ -606,13 +560,12 @@ class Scope(HardwareModule, AcquisitionModule):
     # Concrete implementation of AcquisitionModule methods
     # ----------------------------------------------------
 
-    @property
-    def data_x(self):
-        return self.times
-
     def _prepare_averaging(self):
+        super(Scope, self)._prepare_averaging()
+        self.data_x = np.copy(self.times)
         self.data_avg = np.zeros((2, len(self.times)))
         self.current_avg = 0
+
 
     def _get_trace(self):
         """
@@ -631,8 +584,8 @@ class Scope(HardwareModule, AcquisitionModule):
             return await super(Scope, self)._continuous_async()
         else: # no need to prepare averaging
             self._start_acquisition_rolling_mode()
-            self.running_state = 'running_continuous'
-            while(self.running_state=="running_continuous"):
+            #self.running_state = 'running_continuous'
+            while(self._running_state=="running_continuous"):
                 await sleep(0.02)
                 times, data = self._get_rolling_curve()
                 self._emit_signal_by_name('display_curve', [times, data])
@@ -747,7 +700,7 @@ class Scope(HardwareModule, AcquisitionModule):
         Saves the curve(s) that is (are) currently displayed in the gui in
         the db_system. Also, returns the list [curve_ch1, curve_ch2]...
         """
-        d = self.setup_attributes
+        d = self.attributes_last_run
         curves = [None, None]
         for ch, active in [(0, self.ch1_active),
                            (1, self.ch2_active)]:
