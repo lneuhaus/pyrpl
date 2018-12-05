@@ -2,13 +2,13 @@ import logging
 logger = logging.getLogger(name=__name__)
 import time
 import numpy as np
-from pyrpl.async_utils import sleep as async_sleep
+from pyrpl.async_utils import sleep_async as async_sleep
 from qtpy import QtCore, QtWidgets
 from pyrpl.test.test_base import TestPyrpl
 from pyrpl import APP
 from pyrpl.curvedb import CurveDB
 from pyrpl.widgets.startup_widget import HostnameSelectorWidget
-from pyrpl.async_utils import sleep as async_sleep
+from pyrpl.async_utils import sleep_async as async_sleep
 from pyrpl.widgets.spinbox import NumberSpinBox
 from pyrpl.widgets.attribute_widgets import NumberAttributeWidget
 from pyrpl.hardware_modules.iir import IIR

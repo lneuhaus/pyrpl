@@ -2,7 +2,7 @@ import logging
 logger = logging.getLogger(name=__name__)
 import time
 import numpy as np
-from ..async_utils import sleep as async_sleep
+from ..async_utils import sleep_async as async_sleep
 from .test_base import TestPyrpl
 
 

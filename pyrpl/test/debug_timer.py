@@ -1,6 +1,6 @@
 from qtpy import QtCore, QtWidgets
 import time
-from pyrpl.async_utils import sleep as async_sleep
+from pyrpl.async_utils import sleep_async as async_sleep
 
 """ what is this file for? delete it? """
 

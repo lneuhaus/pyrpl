@@ -2,13 +2,13 @@ import logging
 logger = logging.getLogger(name=__name__)
 import time
 import numpy as np
-from pyrpl.async_utils import sleep as async_sleep
+from pyrpl.async_utils import sleep_async as async_sleep
 from qtpy import QtCore, QtWidgets
 from pyrpl.test.test_base import TestPyrpl
 from pyrpl import APP
 from pyrpl.curvedb import CurveDB
 from pyrpl.widgets.startup_widget import HostnameSelectorWidget
-from pyrpl.async_utils import sleep
+from pyrpl.async_utils import sleep_async
 
 class TestStartupWidgets(TestPyrpl):
     # somehow the file seems to suffer from other nosetests, so pick an
@@ -27,12 +27,12 @@ class TestStartupWidgets(TestPyrpl):
         self.widget.user = 'dummy_user'
         self.widget.sshport = 12
 
-        sleep(0.1)
+        sleep_async(0.1)
         self.widget.item_double_clicked(self.widget.items[0], 0) # Fake redpitaya
 
         self.widget.remove_device(self.widget.items[0])
         self.widget.countdown_start(2)
-        sleep(3)
+        sleep_async(3)
         self.widget.ok()
 
 

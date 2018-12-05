@@ -679,8 +679,8 @@ class SpectrumAnalyzer(AcquisitionModule):
                          trigger_source="immediately",
                          ch1_active=True,
                          ch2_active=True,
-                         rolling_mode=False,
-                         running_state='stopped')
+                         rolling_mode=False)
+        self.scope.stop()
         return self.scope._start_trace_acquisition()
 
     def save_curve(self):

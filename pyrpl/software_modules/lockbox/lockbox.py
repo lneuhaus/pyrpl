@@ -8,7 +8,7 @@ from .input import *
 from .output import *
 from ...widgets.module_widgets import LockboxWidget
 from ...pyrpl_utils import all_subclasses
-from ...async_utils import sleep
+from ...async_utils import sleep_async
 from .stage import Stage
 from . import LockboxModule, LockboxModuleDictProperty
 from . import LockboxLoop, LockboxPlotLoop
@@ -370,7 +370,7 @@ class Lockbox(LockboxModule):
                                                      autostart=True,
                                                      loop_function=relock_function)
         while not self._relock_until_locked_loop._ended:  # wait for locks to terminate
-            sleep(1.0)
+            sleep_async(1.0)
 
     def lock_until_locked(self, **kwargs):
         self.lock(**kwargs)
@@ -380,7 +380,7 @@ class Lockbox(LockboxModule):
         t0 = time()
         while time() < t0 + time_to_sleep:  # doesnt quit loop during time_for_measurement
             if self.is_locked_and_final(loglevel=0):
-                sleep(0.1)
+                sleep_async(0.1)
             else:
                 self._logger.error('Error during measurement - cavity unlocked. Aborting sleep...')
                 return False

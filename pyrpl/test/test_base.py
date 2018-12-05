@@ -5,7 +5,7 @@ logger = logging.getLogger(name=__name__)
 import os
 from .. import Pyrpl, APP, user_config_dir, global_config
 from ..pyrpl_utils import time
-from ..async_utils import sleep as async_sleep
+from ..async_utils import sleep_async as async_sleep
 from ..errors import UnexpectedPyrplError, ExpectedPyrplError
 
 # I don't know why, in nosetests, the logger goes to UNSET...

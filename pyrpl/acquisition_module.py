@@ -44,7 +44,7 @@ Example:
         eventloop.run_until_complete()
 """
 from copy import copy
-from .async_utils import ensure_future, sleep, wait, Event
+from .async_utils import ensure_future, sleep_async, wait, Event
 
 from .module_attributes import *
 
@@ -287,9 +287,9 @@ class AcquisitionModule(Module):
         sleeps remaining time (or min_delay_s if too short) untill
         self._data_ready becomes eventually True.
         """
-        await sleep(max(self._remaining_time(), min_delay_s))
+        await sleep_async(max(self._remaining_time(), min_delay_s))
         while not self._data_ready():
-            await sleep(max(self._remaining_time(), min_delay_s))
+            await sleep_async(max(self._remaining_time(), min_delay_s))
 
     async def _single_async(self):
         # and self.current_avg
@@ -364,6 +364,10 @@ class AcquisitionModule(Module):
         """
         if not self.running_state in ['paused_single', 'paused_continuous']:
             raise ValueError("resume can only be called in 'paused' state.")
+        if self.running_state=='paused_single':
+            self._running_state = 'running_single'
+        else:
+            self._running_state = 'running_continuous'
         self._resume_event.set()
 
     def _resume_new_single(self): # mostly for gui usage

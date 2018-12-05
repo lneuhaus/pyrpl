@@ -123,7 +123,7 @@ large an integrator gain will quickly saturate the outputs.
 import time
 from .dsp import all_inputs, dsp_addr_base, InputSelectRegister
 from ..acquisition_module import AcquisitionModule
-from ..async_utils import wait, ensure_future, sleep
+from ..async_utils import wait, ensure_future, sleep_async
 from ..pyrpl_utils import sorted_dict
 from ..attributes import *
 from ..modules import HardwareModule
@@ -534,7 +534,7 @@ class Scope(HardwareModule, AcquisitionModule):
     def wait_for_pretrigger(self):
         """ sleeps until scope trigger is ready (buffer has enough new data)"""
         while not self.pretrig_ok:
-            sleep(0.001)
+            sleep_async(0.001)
 
     def curve_ready(self):
         """
@@ -585,7 +585,7 @@ class Scope(HardwareModule, AcquisitionModule):
         else: # no need to prepare averaging
             self._start_acquisition_rolling_mode()
             while(self.running_state=="running_continuous"):
-                await sleep(0.02)
+                await sleep_async(0.02)
                 self.data_x, self.data_avg = self._get_rolling_curve()
                 self._emit_signal_by_name('display_curve', [self.data_x, self.data_avg])
 

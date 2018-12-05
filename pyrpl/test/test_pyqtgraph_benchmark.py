@@ -6,7 +6,7 @@ import time
 from qtpy import QtCore
 from .test_redpitaya import TestRedpitaya
 from .. import APP
-from ..async_utils import sleep as async_sleep
+from ..async_utils import sleep_async as async_sleep
 
 
 class TestPyqtgraph(TestRedpitaya):

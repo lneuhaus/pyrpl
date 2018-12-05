@@ -2,7 +2,7 @@ import logging
 logger = logging.getLogger(name=__name__)
 import time
 import numpy as np
-from pyrpl.async_utils import sleep as async_sleep
+from pyrpl.async_utils import sleep_async as async_sleep
 from qtpy import QtCore, QtWidgets
 from pyrpl.test.test_base import TestPyrpl
 from pyrpl import APP

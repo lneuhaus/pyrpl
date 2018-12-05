@@ -155,7 +155,7 @@ from .memory import MemoryTree
 from .redpitaya import RedPitaya
 from . import pyrpl_utils
 from .software_modules import get_module
-from .async_utils import sleep as async_sleep
+from .async_utils import sleep_async as async_sleep
 
 # it is important that Lockbox is loaded before the models
 #from .software_modules.lockbox import *

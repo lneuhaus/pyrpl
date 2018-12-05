@@ -214,21 +214,21 @@ class SpecAnWidget(AcquisitionModuleWidget):
         self.display_curve(self.last_data)
         self.win2.autoRange()
 
-    def run_continuous_clicked(self):
-        """
-        Toggles the button run_continuous to stop or vice versa and starts the acquisition timer
-        """
+    # def run_continuous_clicked(self):
+    #     """
+    #     Toggles the button run_continuous to stop or vice versa and starts the acquisition timer
+    #     """
+    #
+    #     if str(self.button_continuous.text()).startswith("Run continuous"):
+    #         self.module.continuous()
+    #     else:
+    #         self.module.pause()
 
-        if str(self.button_continuous.text()).startswith("Run continuous"):
-            self.module.continuous()
-        else:
-            self.module.pause()
-
-    def run_single_clicked(self):
-        if str(self.button_single.text()).startswith('Stop'):
-            self.module.stop()
-        else:
-            self.module.single_async()
+    # def run_single_clicked(self):
+    #     if str(self.button_single.text()).startswith('Stop'):
+    #         self.module.stop()
+    #     else:
+    #         self.module.single_async()
 
     def display_curve(self, datas):
         if datas is None:

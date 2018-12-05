@@ -27,10 +27,12 @@ if APP is None:
 #    fut = ensure_future(some_coroutine(), loop=LOOP) # executes anyway in
 # the background loop
 #    LOOP.run_until_complete(fut) # only returns when fut is ready
-# BEWARE ! inside some_coroutine, calls to asyncio.sleep() have to be made
-# this way:
+# BEWARE ! inside some_coroutine, calls to asyncio.sleep_async() have to be
+# made this way:
 #    asyncio.sleep(sleep_time, loop=LOOP)
-# Consequently, there is a coroutine async_utils.sleep(time_s)
+# Consequently, there is a coroutine async_utils.async_sleep(time_s)
+# Finally this file provide a sleep() function that waits for the execution of
+# sleep_async and that should be used in place of time.sleep.
 LOOP = quamash.QEventLoop()
 
 class Event(asyncio.Event):
@@ -40,14 +42,14 @@ class Event(asyncio.Event):
     def __init__(self):
         super(Event, self).__init__(loop=LOOP)
 
-async def sleep(time_s):
+async def sleep_async(time_s):
     await asyncio.sleep(time_s, loop=LOOP)
 
 def ensure_future(coroutine):
     return asyncio.ensure_future(coroutine, loop=LOOP)
 
 
-def wait(future, timeout):
+def wait(future, timeout=None):
     """
     This function is used to turn async coroutines into blocking functions:
     Returns the result of the future only once it is ready.
@@ -56,15 +58,23 @@ def wait(future, timeout):
         curve = scope.curve_async()
         return wait(curve)
     """
-    new_future = ensure_future(asyncio.wait_for(future, timeout, loop=LOOP))
-    if sys.version.startswith('3.7'):
+    new_future = ensure_future(asyncio.wait({future},
+                                            timeout=timeout,
+                                            loop=LOOP))
+    if sys.version>='3.7':
         LOOP.run_until_complete(new_future)
+        done, pending = new_future.result()
     else:
         loop = QtCore.QEventLoop()
-
         def quit(*args):
             loop.quit()
-
         new_future.add_done_callback(quit)
         loop.exec_()
-    return new_future.result()
+        done, pending = new_future.result()
+    if future in done:
+        return future.result()
+    else:
+        raise TimeoutError("Timout exceeded")
+
+def sleep(time_s):
+    wait(ensure_future(sleep_async(time_s)))

@@ -4,7 +4,7 @@ Defines a number of Loop modules to be used to perform periodically a task
 import numpy as np
 import pyqtgraph as pg
 from ..modules import Module
-from ..async_utils import sleep, wait, ensure_future #MainThreadTimer
+from ..async_utils import sleep_async, wait, ensure_future #MainThreadTimer
 from ..pyrpl_utils import time
 from qtpy import QtCore
 

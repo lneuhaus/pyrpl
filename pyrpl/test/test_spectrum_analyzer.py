@@ -1,7 +1,7 @@
 import logging
 logger = logging.getLogger(name=__name__)
 import numpy as np
-from time import sleep
+from pyrpl.async_utils import sleep
 from qtpy import QtCore, QtWidgets
 from pyrpl.test.test_base import TestPyrpl
 from pyrpl import APP
@@ -27,8 +27,8 @@ class TestClass(TestPyrpl):
         :return:
         """
         self.pyrpl.spectrumanalyzer.setup_attributes = dict(span=1e5,
-                                            input="out1",
-                                            running_state='running_continuous')
+                                            input="out1")
+        self.pyrpl.spectrumanalyzer.continuous()
         old = self.pyrpl.c._save_counter
         for i in range(10):
             sleep(0.01)
@@ -45,7 +45,8 @@ class TestClass(TestPyrpl):
                       window='flattop',
                       span=span,
                       input1_baseband="asg0",
-                      running_state='stopped')
+                      trace_average=1)
+            sa.stop()
             asg = self.pyrpl.rp.asg0
             asg.setup(frequency=1e5,
                       amplitude=1.0,
@@ -58,7 +59,7 @@ class TestClass(TestPyrpl):
                 sa._logger.info("Testing flatness for span %f and frequency "
                                 "freq %f...", span, freq)
                 asg.frequency = freq
-                curve = self.pyrpl.spectrumanalyzer.trace()[0]
+                curve = self.pyrpl.spectrumanalyzer.single()[0]
                 assert(abs(sa.frequencies[np.argmax(curve)] - freq) < sa.rbw), \
                     (sa.frequencies[np.argmax(curve)], freq, sa.rbw)
                 points.append(max(curve))
@@ -100,7 +101,8 @@ class TestClass(TestPyrpl):
         self.sa.setup(input1_baseband=self.iq,
                       span=10e6,
                       trace_average=10,  # TODO: set back to 50
-                      running_state='stopped')
+                        )
+        self.sa.stop()
 
         for freq in np.linspace(self.sa.span/5, self.sa.span/4, 5):
             print("Trying frequency %f..."%freq)
@@ -175,7 +177,8 @@ class TestClass(TestPyrpl):
                                               center=1e5,
                                               span=span,
                                               input="asg0",
-                                              running_state='stopped')
+                                              trace_average=1)
+            self.pyrpl.spectrumanalyzer.stop()
             asg = self.pyrpl.rp.asg0
             asg.setup(frequency=1e5,
                       amplitude=1,
@@ -186,7 +189,7 @@ class TestClass(TestPyrpl):
             points = []
             for freq in freqs:
                 asg.frequency = freq
-                curve = self.pyrpl.spectrumanalyzer.trace()
+                curve = self.pyrpl.spectrumanalyzer.single()
                 points.append(max(curve))
                 assert abs(max(curve) - 1) < 0.01, max(curve)
 
@@ -196,8 +199,7 @@ class TestClass(TestPyrpl):
                       center=0,
                       window='flattop',
                       span=1e6,
-                      input1_baseband="asg0",
-                      running_state='stopped')
+                      input1_baseband="asg0")
         sa.single()
         curves = sa.save_curve()
         assert (curves[0].data[1]==sa.data_avg[0]).all()

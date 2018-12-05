@@ -4,7 +4,7 @@ import numpy as np
 from qtpy import QtWidgets
 import logging
 
-from ..async_utils import wait, ensure_future, sleep #PyrplFuture,
+from ..async_utils import wait, ensure_future, sleep_async #PyrplFuture,
 # MainThreadTimer,
 # CancelledError, sleep
 from ..attributes import FloatProperty, SelectProperty, FrequencyProperty, \
@@ -139,6 +139,7 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
     def __init__(self, parent, name=None):
         self.sleeptimes = 0.5
         self._time_last_point = None
+        self.measured_time_per_point = np.nan
         #self._data_x = None
         super(NetworkAnalyzer, self).__init__(parent, name=name)
 
@@ -314,7 +315,7 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
         self.points = points
         self.trace_average = trace_average
         curve = self.single_async()
-        sleep(0.1)
+        sleep_async(0.1)
         self.iq.output_direct = "off"
         self._time_first_point=timeit.default_timer()
         res = curve.await_result()
@@ -387,13 +388,16 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
         return self._get_point(index)
 
     async def _trace_async(self, min_delay_ms):
-        self._start_trace_acquisition()
-        for self.current_point in range(self.points):
+        if self.current_point==0:
+            self._start_trace_acquisition()
+        while(self.current_point<self.points):
             if self._last_time_benchmark is not None:
                 new_time = timeit.default_timer()
                 self.measured_time_per_point = \
                     new_time - self._last_time_benchmark
             self._last_time_benchmark = timeit.default_timer()
+            if self.running_state in ["paused_continuous", "paused_single"]:
+                await self._resume_event.wait()
             y, amp = await self._point_async(self.current_point, min_delay_ms)
             if self.is_zero_span():
                 now = timeit.default_timer()
@@ -402,25 +406,32 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
                 self.data_x[self.current_point] = now - self._time_first_point
 
             self._emit_signal_by_name("update_point", self.current_point)
-            self.data_avg[self.current_point] = (self.data_avg[self.current_point]*(self.current_avg-1) \
-                                 + y)/self.current_avg
+            self.data_avg[self.current_point] = (self.data_avg[self.current_point]*(self.current_avg) \
+                                 + y)/(self.current_avg + 1)
+            self.current_point+=1
+        self.current_avg = min(self.current_avg + 1, self.trace_average)
         self._emit_signal_by_name("scan_finished")
+        self.current_point = 0
         return self.data_avg
 
     async def _single_async(self):
-        self._running_state = 'running_single'
-        self._prepare_averaging()
-        for self.current_avg in range(1, self.trace_average + 1):
+        #self._running_state = 'running_single'
+        #self._prepare_averaging()
+        while self.current_avg < self.trace_average:
+            if self.running_state=='paused_single':
+                await self._resume_event.wait()
             await self._trace_async(0)
         self._running_state = 'stopped'
         return self.data_avg
 
     async def _continuous_async(self):
-        self._running_state = 'running_continuous'
-        self._prepare_averaging()
-        while self.running_state!='stopped':
-            self.current_avg = min(self.current_avg + 1, self.trace_average)
+        #self._running_state = 'running_continuous'
+        #self._prepare_averaging()
+        while (self.running_state != 'stopped'):
+            if self.running_state == 'paused_continuous':
+                await self._resume_event.wait()
             await self._trace_async(0)
+
 
     @property
     def frequencies(self):
@@ -487,6 +498,9 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
         super(NetworkAnalyzer, self)._setup()
 
     # overwrite default behavior to return only valid points
+
+    def _free_up_resources(self):
+        self.iq.amplitude = 0
 
     @property
     def last_valid_point(self):
