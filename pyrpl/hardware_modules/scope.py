@@ -584,11 +584,10 @@ class Scope(HardwareModule, AcquisitionModule):
             return await super(Scope, self)._continuous_async()
         else: # no need to prepare averaging
             self._start_acquisition_rolling_mode()
-            #self.running_state = 'running_continuous'
-            while(self._running_state=="running_continuous"):
+            while(self.running_state=="running_continuous"):
                 await sleep(0.02)
-                times, data = self._get_rolling_curve()
-                self._emit_signal_by_name('display_curve', [times, data])
+                self.data_x, self.data_avg = self._get_rolling_curve()
+                self._emit_signal_by_name('display_curve', [self.data_x, self.data_avg])
 
     def _data_ready(self):
         """
