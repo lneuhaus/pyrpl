@@ -184,7 +184,7 @@ class AcquisitionModule(Module):
     _setup_on_load = True #  acquisition_modules need to be setup() once
     # they are loaded
     _signal_launcher = SignalLauncherAcquisitionModule
-    _setup_attributes = ['trace_average', 'curve_name', '_running_state']
+    _setup_attributes = ['trace_average', 'curve_name', 'run_continuous']
 
     MIN_DELAY_SINGLE_MS = 0  # async acquisition should be as fast as
     # possible
@@ -213,6 +213,15 @@ class AcquisitionModule(Module):
                            default=1,
                            min=1)
     curve_name = StringProperty(doc="name of the curve to save.")
+    run_continuous = BoolProperty(default=False,
+                                  doc="Is the module in the running_state "
+                                      "'running_continuous' or not. Contrary "
+                                      "to 'running_state', this boolean "
+                                      "property can be set, and saved/"
+                                      "restored with the state of the "
+                                      "module.",
+                                  call_setup=True)
+
 
     def __init__(self, parent, name=None):
         # The curve promise is initialized with a dummy Future, because
@@ -341,6 +350,7 @@ class AcquisitionModule(Module):
         average over the trace_average last ones.
         """
         self._running_state = 'running_continuous'
+        self._run_continuous = True  # we don't want setup to be called
         self._prepare_averaging()  # initializes the table self.data_avg,
         self._renew_run(self._continuous_async())
         # self.running_state = 'running_continuous'
@@ -350,6 +360,7 @@ class AcquisitionModule(Module):
         """
         Stops the current acquisition without restarting the averaging
         """
+        self._run_continuous = False # we don't want setup to be called
         if self.running_state=='running_single':
             self._running_state = 'paused_single'
         if self.running_state=='running_continuous':
@@ -366,8 +377,10 @@ class AcquisitionModule(Module):
             raise ValueError("resume can only be called in 'paused' state.")
         if self.running_state=='paused_single':
             self._running_state = 'running_single'
+            self._run_continuous = False # we don't want setup to be called
         else:
             self._running_state = 'running_continuous'
+            self._run_continuous = True  # we don't want setup to be called
         self._resume_event.set()
 
     def _resume_new_single(self): # mostly for gui usage
@@ -379,7 +392,7 @@ class AcquisitionModule(Module):
         if not self.running_state in ['paused_single', 'paused_continuous']:
             raise ValueError("resume can only be called in 'paused' state.")
         self._running_state = 'running_single'
-        # self._prepare_averaging()  # initializes the table self.data_avg,
+        self._run_continuous = False  # we don't want setup to be called
         return self._renew_run(self._single_async())
 
     def _resume_new_continuous(self): # mostly for gui usage
@@ -391,7 +404,7 @@ class AcquisitionModule(Module):
         if not self.running_state in ['paused_single', 'paused_continuous']:
             raise ValueError("resume can only be called in 'paused' state.")
         self._running_state = 'running_continuous'
-        # self._prepare_averaging()  # initializes the table self.data_avg,
+        self._run_continuous = True  # we don't want setup to be called
         return self._renew_run(self._continuous_async())
 
     def stop(self):
@@ -402,6 +415,7 @@ class AcquisitionModule(Module):
         if self._last_run is not None:
             self._last_run.cancel()
         self._running_state = 'stopped'
+        self._run_continuous = False  # we don't want setup to be called
         self._free_up_resources()
 
     def save_curve(self):
@@ -432,13 +446,11 @@ class AcquisitionModule(Module):
         # This is how we make sure changing duration or rolling_mode won't
         # freeze the acquisition.
         #self._new_run_future()
-        if self.running_state in ['running_single',
-                                  'paused_single',
-                                  'paused_continuous',
-                                  'stopped']:
-            self.stop()
-        if self.running_state=='running_continuous':
+        if self.run_continuous:
             self.continuous()
+        else:
+            self.stop()
+
         #     self.single_async()
         # if self.running_state=='running_continuous':
         #     self.continuous()

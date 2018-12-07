@@ -13,6 +13,7 @@ from .stage import Stage
 from . import LockboxModule, LockboxModuleDictProperty
 from . import LockboxLoop, LockboxPlotLoop
 from ...widgets.module_widgets.lockbox_widget import LockboxSequenceWidget
+from pyrpl.async_utils import wait, sleep_async, sleep, ensure_future
 
 
 def all_classnames():
@@ -315,7 +316,8 @@ class Lockbox(LockboxModule):
         return self._sweep()
 
     _lock_loop = None  # this variable will store the lock loop
-    def lock(self, **kwds):
+
+    async def _lock_async(self, **kwds):
         """
         Launches the full lock sequence, stage by stage until the end.
         optional kwds are stage attributes that are set after iteration through
@@ -327,17 +329,36 @@ class Lockbox(LockboxModule):
         # prepare final stage property as a modified copy of the last stage
         self.final_stage = kwds
         # actual sequence defined by a function, called in a loop
-        def lock_loop_function(lockbox, loop):
-            if loop.n < len(lockbox.sequence):
-                stage = lockbox.sequence[loop.n]
-                stage.enable()
-                loop.interval = stage.duration
-            else:
-                lockbox.final_stage.enable()
-                loop._clear()
-                lockbox._lock_loop = None
-        self._lock_loop = LockboxLoop(self, name="lock_loop",
-                                      loop_function=lock_loop_function)
+        for stage in self.sequence:
+            stage.enable()
+            await sleep_async(stage.duration)
+        self.final_stage.enable()
+
+    def lock_async(self, **kwds):
+        """
+        Launches the full lock sequence, stage by stage until the end.
+        optional kwds are stage attributes that are set after iteration through
+        the sequence, e.g. a modified setpoint.
+        """
+        ensure_future(self._lock_async(**kwds))
+
+        # iterate through locking sequence:
+        # unlock -> sequence -> final_stage
+        # self.unlock()
+        # # prepare final stage property as a modified copy of the last stage
+        # self.final_stage = kwds
+        # # actual sequence defined by a function, called in a loop
+        # def lock_loop_function(lockbox, loop):
+        #     if loop.n < len(lockbox.sequence):
+        #         stage = lockbox.sequence[loop.n]
+        #         stage.enable()
+        #         loop.interval = stage.duration
+        #     else:
+        #         lockbox.final_stage.enable()
+        #         loop._clear()
+        #         lockbox._lock_loop = None
+        # self._lock_loop = LockboxLoop(self, name="lock_loop",
+        #                               loop_function=lock_loop_function)
 
     def relock(self, test_auto_lock=False, **kwargs):
         """ locks the cavity if it is_locked is false. Returns the value of
@@ -359,28 +380,35 @@ class Lockbox(LockboxModule):
             self._logger.info("Attempting to re-lock...")
             return self.lock(**kwargs)
 
+    async def _relock_until_locked_async(self, **kwargs):
+        while(not self.relock(**kwargs)):
+            await sleep_async(1.)
+
     def relock_until_locked(self, **kwargs):
         """ blocks the command line until cavity is locked with kwargs """
-        def relock_function(lockbox, loop):
-            if lockbox.relock(**kwargs):
-                loop._clear()
-        self._relock_until_locked_loop = LockboxLoop(parent=self,
-                                                     name='relock_until_locked_loop',
-                                                     interval=1.0,
-                                                     autostart=True,
-                                                     loop_function=relock_function)
-        while not self._relock_until_locked_loop._ended:  # wait for locks to terminate
-            sleep_async(1.0)
+        #def relock_function(lockbox, loop):
+        #    if lockbox.relock(**kwargs):
+        #        loop._clear()
+        #self._relock_until_locked_loop = LockboxLoop(parent=self,
+        # name='relock_until_locked_loop',
+        #                                           interval=1.0,
+        #                                           autostart=True,
+        #                                           loop_function=relock_function)
+        #while not self._relock_until_locked_loop._ended:  # wait for locks to terminate
+        #    sleep_async(1.0)
+        wait(self._relock_until_locked_async(**kwargs))
 
     def lock_until_locked(self, **kwargs):
-        self.lock(**kwargs)
+        """ blocks the command line until cavity is locked with kwargs """
+        self.lock_async(**kwargs)
         return self.relock_until_locked(**kwargs)
 
-    def sleep_while_locked(self, time_to_sleep):
+    def sleep_while_locked(self, time_to_sleep): # Could be implemented
+        # nicely with an asyncio.Event to signal unlock
         t0 = time()
         while time() < t0 + time_to_sleep:  # doesnt quit loop during time_for_measurement
             if self.is_locked_and_final(loglevel=0):
-                sleep_async(0.1)
+                sleep(0.1)
             else:
                 self._logger.error('Error during measurement - cavity unlocked. Aborting sleep...')
                 return False
@@ -390,7 +418,7 @@ class Lockbox(LockboxModule):
         """ returns True if locked, else False. Also updates an internal
         dict that contains information about the current error signals. The
         state of lock is logged at loglevel """
-        if not self.current_stage in (self.sequence+[self.final_stage]):
+        if not self.current_stage in (self.sequence + [self.final_stage]):
             # not locked to any defined sequence state
             self._logger.log(loglevel,
                              "Not locked: lockbox state '%s' does not "

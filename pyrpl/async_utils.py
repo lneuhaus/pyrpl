@@ -61,16 +61,17 @@ def wait(future, timeout=None):
     new_future = ensure_future(asyncio.wait({future},
                                             timeout=timeout,
                                             loop=LOOP))
-    if sys.version>='3.7':
-        LOOP.run_until_complete(new_future)
-        done, pending = new_future.result()
-    else:
-        loop = QtCore.QEventLoop()
-        def quit(*args):
-            loop.quit()
-        new_future.add_done_callback(quit)
-        loop.exec_()
-        done, pending = new_future.result()
+    #if sys.version>='3.7': # this way, it was not possible to execute wait
+                            # behind a qt slot !!!
+    #    LOOP.run_until_complete(new_future)
+    #    done, pending = new_future.result()
+    #else:
+    loop = QtCore.QEventLoop()
+    def quit(*args):
+        loop.quit()
+    new_future.add_done_callback(quit)
+    loop.exec_()
+    done, pending = new_future.result()
     if future in done:
         return future.result()
     else:
