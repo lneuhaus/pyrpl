@@ -42,7 +42,7 @@ class TestPidNaIq(TestPyrpl):
                      trace_average=1,
                      amplitude=0.1, input=na.iq, output_direct='off',
                      acbandwidth=1000, logscale=True)
-            data= na.trace()
+            data = na.single()
             f = na.data_x
             theory = np.array(f * 0 + 1.0,
                               dtype=np.complex)
@@ -101,7 +101,7 @@ class TestPidNaIq(TestPyrpl):
         inputfilters = pid.inputfilter_options
         for bw in reversed(inputfilters):
             pid.inputfilter = [bw]
-            data = na.trace()
+            data = na.single()
             f = na.data_x
             theory = pid.transfer_function(f, extradelay=extradelay)
             relerror = np.abs((data - theory) / theory)
@@ -164,7 +164,7 @@ class TestPidNaIq(TestPyrpl):
             pid.d = 0
             pid.ival = 0
             pid.inputfilter = 0
-            data= na.trace()
+            data= na.single()
             f = na.data_x
             plotdata.append((f, data, 'p=1'))
             theory = pid.transfer_function(f, extradelay=extradelay)
@@ -215,7 +215,7 @@ class TestPidNaIq(TestPyrpl):
             pid.d = 0
             pid.ival = 0
             pid.inputfilter = 0
-            data = na.trace()
+            data = na.single()
             f = na.data_x
             plotdata.append((f, data, 'p=%.1e, i=%.1e' % (pid.p, pid.i)))
             theory = pid.transfer_function(f, extradelay=extradelay)
@@ -277,7 +277,7 @@ class TestPidNaIq(TestPyrpl):
             pid.ival = 0
             pid.inputfilter = [-5e3, -10e3, 150e3, 300e3]
             print("Actual inputfilter after rounding: ", pid.inputfilter)
-            data= na.trace()
+            data = na.single()
             f = na.data_x
             plotdata.append((f, data, 'p=10 + filter'))
             theory = pid.transfer_function(f, extradelay=extradelay)
@@ -343,7 +343,7 @@ class TestPidNaIq(TestPyrpl):
             for phase in [-45, 0, 45, 90]:
                 bpf.phase = phase
                 # take transfer function
-                data = na.trace()
+                data = na.single()
                 f = na.data_x
                 theory = bpf.transfer_function(f, extradelay=extradelay)
                 abserror = np.abs(data - theory)

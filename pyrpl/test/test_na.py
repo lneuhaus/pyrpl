@@ -52,7 +52,7 @@ class TestNA(TestPyrpl):
             assert data_changing()
             current_point = self.na.current_point
             self.na.rbw = 10000  # change some setup_attribute
-
+            sleep(0.01)
             new_point = self.na.current_point
             assert new_point<current_point # make sure the
             #  run was

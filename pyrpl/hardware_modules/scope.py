@@ -579,9 +579,9 @@ class Scope(HardwareModule, AcquisitionModule):
         """
         return self.duration - (time() - self._last_time_setup)
 
-    async def _continuous_async(self):
+    async def _do_average_continuous_async(self):
         if not self._is_rolling_mode_active():
-            return await super(Scope, self)._continuous_async()
+            await super(Scope, self)._do_average_continuous_async()
         else: # no need to prepare averaging
             self._start_acquisition_rolling_mode()
             while(self.running_state=="running_continuous"):

@@ -72,6 +72,15 @@ class RunningStateProperty(SelectProperty):
         """
         super(RunningStateProperty, self).__init__(options=options, **kwargs)
 
+    def set_value(self, obj, value):
+        super(RunningStateProperty, self).set_value(obj, value)
+        new_value = (value=='running_continuous')
+        if obj.run_continuous!=new_value:
+            obj._run_continuous = new_value # we don't want to trigger setup()
+            obj.__class__.run_continuous.save_attribute(obj, value) # We need
+            #  to save this right away
+
+
     #  Changing running_state is handled here instead of inside _setup()
     # (with a call_setup=True option) because the precise actions to be
     # taken depend on the previous state of running_state. Such a behavior
@@ -184,7 +193,9 @@ class AcquisitionModule(Module):
     _setup_on_load = True #  acquisition_modules need to be setup() once
     # they are loaded
     _signal_launcher = SignalLauncherAcquisitionModule
-    _setup_attributes = ['trace_average', 'curve_name', 'run_continuous']
+    _setup_attributes = ['trace_average',
+                         'curve_name',
+                         'run_continuous']
 
     MIN_DELAY_SINGLE_MS = 0  # async acquisition should be as fast as
     # possible
@@ -193,7 +204,7 @@ class AcquisitionModule(Module):
 
     # the real settable property is _running_state, running_state is read_only
     # for the user
-    _running_state = SelectProperty(
+    _running_state = RunningStateProperty(
         default='stopped',
         options=["running_single",
                  "running_continuous",
@@ -286,9 +297,6 @@ class AcquisitionModule(Module):
         """
         #self.running_state = 'running_single'
         #return self._run_future
-
-        self._running_state = 'running_single'
-        self._prepare_averaging()  # initializes the table self.data_avg,
         return self._renew_run(self._single_async())
 
     async def _data_ready_async(self, min_delay_s):
@@ -300,8 +308,7 @@ class AcquisitionModule(Module):
         while not self._data_ready():
             await sleep_async(max(self._remaining_time(), min_delay_s))
 
-    async def _single_async(self):
-        # and self.current_avg
+    async def _do_average_single_async(self):
         while self.current_avg < self.trace_average:
             self.current_avg+=1
             if self.running_state=='paused_single':
@@ -316,6 +323,12 @@ class AcquisitionModule(Module):
         self._running_state = 'stopped'
         return self.data_avg
 
+    async def _single_async(self):
+        # and self.current_avg
+        self._running_state = 'running_single'
+        self._prepare_averaging()  # initializes the table self.data_avg,
+        return await self._do_average_single_async()
+
     def _renew_run(self, coro):
         if self._last_run is not None:
             self._last_run.cancel()
@@ -329,29 +342,30 @@ class AcquisitionModule(Module):
             - the function directly returns an array with the curve instead of a future object.
         """
         #return self.single_async().await_result(timeout)
-        self._running_state = 'running_single'
-        self._prepare_averaging()  # initializes the table self.data_avg,
         return wait(self._renew_run(self._single_async()), timeout=timeout)
 
-    async def _continuous_async(self):
-        while(self.running_state!='stopped'):
-            if self.running_state=='paused_continuous':
+    async def _do_average_continuous_async(self):
+        while (self.running_state != 'stopped'):
+            if self.running_state == 'paused_continuous':
                 await self._resume_event.wait()
             self.current_avg = min(self.current_avg + 1, self.trace_average)
-            self.data_avg = (self.data_avg * (self.current_avg-1) + \
-                             await self._trace_async(self.MIN_DELAY_CONTINUOUS_MS * 0.001)) / \
+            self.data_avg = (self.data_avg * (self.current_avg - 1) + \
+                             await self._trace_async(
+                                 self.MIN_DELAY_CONTINUOUS_MS * 0.001)) / \
                             self.current_avg
             self._emit_signal_by_name('display_curve', [self.data_x,
                                                         self.data_avg])
+
+    async def _continuous_async(self):
+        self._running_state = 'running_continuous'
+        self._prepare_averaging()  # initializes the table self.data_avg,
+        await self._do_average_continuous_async()
 
     def continuous(self):
         """
         continuously acquires curves, and performs a moving
         average over the trace_average last ones.
         """
-        self._running_state = 'running_continuous'
-        self._run_continuous = True  # we don't want setup to be called
-        self._prepare_averaging()  # initializes the table self.data_avg,
         self._renew_run(self._continuous_async())
         # self.running_state = 'running_continuous'
         # return self._continuous_future
@@ -360,7 +374,6 @@ class AcquisitionModule(Module):
         """
         Stops the current acquisition without restarting the averaging
         """
-        self._run_continuous = False # we don't want setup to be called
         if self.running_state=='running_single':
             self._running_state = 'paused_single'
         if self.running_state=='running_continuous':
@@ -377,10 +390,8 @@ class AcquisitionModule(Module):
             raise ValueError("resume can only be called in 'paused' state.")
         if self.running_state=='paused_single':
             self._running_state = 'running_single'
-            self._run_continuous = False # we don't want setup to be called
         else:
             self._running_state = 'running_continuous'
-            self._run_continuous = True  # we don't want setup to be called
         self._resume_event.set()
 
     def _resume_new_single(self): # mostly for gui usage
@@ -392,8 +403,7 @@ class AcquisitionModule(Module):
         if not self.running_state in ['paused_single', 'paused_continuous']:
             raise ValueError("resume can only be called in 'paused' state.")
         self._running_state = 'running_single'
-        self._run_continuous = False  # we don't want setup to be called
-        return self._renew_run(self._single_async())
+        return self._renew_run(self._do_average_single_async())
 
     def _resume_new_continuous(self): # mostly for gui usage
         """
@@ -404,8 +414,7 @@ class AcquisitionModule(Module):
         if not self.running_state in ['paused_single', 'paused_continuous']:
             raise ValueError("resume can only be called in 'paused' state.")
         self._running_state = 'running_continuous'
-        self._run_continuous = True  # we don't want setup to be called
-        return self._renew_run(self._continuous_async())
+        return self._renew_run(self._do_average_continuous_async())
 
     def stop(self):
         """
@@ -415,7 +424,6 @@ class AcquisitionModule(Module):
         if self._last_run is not None:
             self._last_run.cancel()
         self._running_state = 'stopped'
-        self._run_continuous = False  # we don't want setup to be called
         self._free_up_resources()
 
     def save_curve(self):

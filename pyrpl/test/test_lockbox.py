@@ -2,7 +2,7 @@ import logging
 logger = logging.getLogger(name=__name__)
 import time
 import numpy as np
-from ..async_utils import sleep_async as async_sleep
+from ..async_utils import sleep
 from .test_base import TestPyrpl
 
 
@@ -20,7 +20,7 @@ class TestLockbox(TestPyrpl):
 
         # wait for stage creation signal to impact the GUI (async sleep to
         # let the EventLoop handle the notifiction from sequence...)
-        async_sleep(0.1)
+        sleep(0.1)
         assert len(widget.sequence_widget.stage_widgets) == old_len + 1
         self.lockbox.sequence.append({'gain_factor':3.0})
 

@@ -29,6 +29,7 @@ class TestClass(TestPyrpl):
         self.pyrpl.spectrumanalyzer.setup_attributes = dict(span=1e5,
                                             input="out1")
         self.pyrpl.spectrumanalyzer.continuous()
+        sleep(0.1)
         old = self.pyrpl.c._save_counter
         for i in range(10):
             sleep(0.01)

@@ -398,6 +398,7 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
             self._last_time_benchmark = timeit.default_timer()
             if self.running_state in ["paused_continuous", "paused_single"]:
                 await self._resume_event.wait()
+                self.iq.amplitude = self.amplitude
             y, amp = await self._point_async(self.current_point, min_delay_ms)
             if self.is_zero_span():
                 now = timeit.default_timer()
@@ -415,22 +416,26 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
         return self.data_avg
 
     async def _single_async(self):
-        #self._running_state = 'running_single'
-        #self._prepare_averaging()
+        self._prepare_averaging()
+        return await self._do_average_single_async()
+
+    async def _do_average_single_async(self):
+        self._running_state = 'running_single'
+        self.iq.amplitude = self.amplitude
         while self.current_avg < self.trace_average:
-            if self.running_state=='paused_single':
-                await self._resume_event.wait()
             await self._trace_async(0)
         self._running_state = 'stopped'
         return self.data_avg
 
-    async def _continuous_async(self):
-        #self._running_state = 'running_continuous'
-        #self._prepare_averaging()
+    async def _do_average_continuous_async(self):
+        self._running_state = 'running_continuous'
+        self.iq.amplitude = self.amplitude
         while (self.running_state != 'stopped'):
-            if self.running_state == 'paused_continuous':
-                await self._resume_event.wait()
             await self._trace_async(0)
+
+    async def _continuous_async(self):
+        self._prepare_averaging()
+        await self._do_average_continuous_async()
 
 
     @property

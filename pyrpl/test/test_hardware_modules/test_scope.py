@@ -128,7 +128,10 @@ class TestScope(TestPyrpl):
                             ch1_active=True,
                             ch2_active=True,
                             rolling_mode=True)
+        #self.pyrpl.rp.scope.run_continuous = True
         self.pyrpl.rp.scope.continuous()
+        sleep(1)
+        assert self.pyrpl.rp.scope.run_continuous
         with self.pyrpl.scopes.pop("myapplication") as sco:
             sco.setup(duration=0.5,
                       trigger_delay=0.,
@@ -141,6 +144,9 @@ class TestScope(TestPyrpl):
             sco.stop()
             assert not self.data_changing()
             curve = sco.single()
+            assert not self.pyrpl.rp.scope.run_continuous
+            print('exiting')
+        assert self.pyrpl.rp.scope.run_continuous
         assert self.data_changing()
         sleep(1)
         assert self.data_changing()  # Make sure scope is not blocked
@@ -196,8 +202,6 @@ class TestScope(TestPyrpl):
             assert len(intersect) >= 5  # make sure some parameters are saved
             p1 = dict((k, curve.params[k]) for k in intersect)
             p2 = dict((k, attr[k]) for k in intersect)
-            p1.pop('_running_state')
-            p2.pop('_running_state')
             assert p1 == p2   # make sure those parameters are equal to the
             # setup_attributes of the scope
         self.curves += [curve1, curve2]  # for later deletion
