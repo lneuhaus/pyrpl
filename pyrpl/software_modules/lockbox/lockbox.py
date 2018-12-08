@@ -378,7 +378,7 @@ class Lockbox(LockboxModule):
         else:
             # either unlocked in final stage or in an unlocked state: call lock()
             self._logger.info("Attempting to re-lock...")
-            return self.lock(**kwargs)
+            return self.lock_async(**kwargs)
 
     async def _relock_until_locked_async(self, **kwargs):
         while(not self.relock(**kwargs)):
@@ -396,14 +396,19 @@ class Lockbox(LockboxModule):
         #                                           loop_function=relock_function)
         #while not self._relock_until_locked_loop._ended:  # wait for locks to terminate
         #    sleep_async(1.0)
-        wait(self._relock_until_locked_async(**kwargs))
+        wait(ensure_future(self._relock_until_locked_async(**kwargs)))
 
     def lock_until_locked(self, **kwargs):
         """ blocks the command line until cavity is locked with kwargs """
         self.lock_async(**kwargs)
         return self.relock_until_locked(**kwargs)
 
-    def sleep_while_locked(self, time_to_sleep): # Could be implemented
+    def sleep_while_locked(self, time_to_sleep):
+        """
+        wait for time_to_sleep and returns True if no unlock occured.
+        Otherwise, returns False as soon as unlock occurs.
+        """
+        # Could be implemented
         # nicely with an asyncio.Event to signal unlock
         t0 = time()
         while time() < t0 + time_to_sleep:  # doesnt quit loop during time_for_measurement

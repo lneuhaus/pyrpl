@@ -151,9 +151,6 @@ class DecimationRegister(SelectRegister):
         SelectRegister.set_value(self, obj, value)
         obj.__class__.duration.value_updated(obj, obj.duration)
         obj.__class__.sampling_time.value_updated(obj, obj.sampling_time)
-        # instance.setup()
-        # instance._decimation_changed() # acquisition_manager needs to be
-        # warned because that could have changed _is_rolling_mode_active()
 
 
 class DurationProperty(SelectProperty):
@@ -206,6 +203,7 @@ class SamplingTimeProperty(SelectProperty):
 
 
 class Scope(HardwareModule, AcquisitionModule):
+    MIN_DELAY_CONTINUOUS_ROLLING_MS = 20
     addr_base = 0x40100000
     name = 'scope'
     _widget_class = ScopeWidget
@@ -585,7 +583,7 @@ class Scope(HardwareModule, AcquisitionModule):
         else: # no need to prepare averaging
             self._start_acquisition_rolling_mode()
             while(self.running_state=="running_continuous"):
-                await sleep_async(0.02)
+                await sleep_async(self.MIN_DELAY_CONTINUOUS_ROLLING_MS*0.001)
                 self.data_x, self.data_avg = self._get_rolling_curve()
                 self._emit_signal_by_name('display_curve', [self.data_x, self.data_avg])
 

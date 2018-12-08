@@ -1,3 +1,38 @@
+"""
+This file provides the basic functions to perform asynchronous tasks.
+It provides the 3 functions:
+ * ensure_future(coroutine): schedules the task described by the coroutine and
+                             returns a Future that can be used as argument of
+                             the follo<ing functions:
+ * sleep(time_s): blocks the commandline for time_s, without blocking other
+                  tasks such as gui update...
+ * wait(future, timeout=None): blocks the commandline until future is set or
+                               timeout expires.
+
+BEWARE: sleep() and wait() can be used behind a qt slot (for instance in
+response to a QPushButton being pressed), however, they will fail if used
+inside a coroutine. In this case, one should use the builtin await (in
+place of wait) and the asynchronous sleep coroutine provided below (in
+place of sleep):
+  * async_sleep(time_s): await this coroutine to stall the execution for a
+                         time time_s within a coroutine.
+
+These functions are provided in place of the native asyncio functions in
+order to integrate properly within the IPython (Jupyter) Kernel. For this,
+Main loop of the application:
+In an Ipython (Jupyter) notebook with qt integration:
+    %gui qt
+     fut = ensure_future(some_coroutine(), loop=LOOP) # executes anyway in
+the background loop
+#    LOOP.run_until_complete(fut) # only returns when fut is ready
+# BEWARE ! inside some_coroutine, calls to asyncio.sleep_async() have to be
+# made this way:
+#    asyncio.sleep(sleep_time, loop=LOOP)
+# Consequently, there is a coroutine async_utils.async_sleep(time_s)
+# Finally this file provide a sleep() function that waits for the execution of
+# sleep_async and that should be used in place of time.sleep.
+
+"""
 import logging
 from qtpy import QtCore, QtWidgets
 import asyncio
@@ -21,42 +56,39 @@ if APP is None:
     # logger.debug('Creating new QApplication instance "pyrpl"')
     APP = QtWidgets.QApplication(['pyrpl'])
 
-# Main loop of the application:
-# In an Ipython (Jupyter) notebook with qt integration:
-#    %gui qt
-#    fut = ensure_future(some_coroutine(), loop=LOOP) # executes anyway in
-# the background loop
-#    LOOP.run_until_complete(fut) # only returns when fut is ready
-# BEWARE ! inside some_coroutine, calls to asyncio.sleep_async() have to be
-# made this way:
-#    asyncio.sleep(sleep_time, loop=LOOP)
-# Consequently, there is a coroutine async_utils.async_sleep(time_s)
-# Finally this file provide a sleep() function that waits for the execution of
-# sleep_async and that should be used in place of time.sleep.
-LOOP = quamash.QEventLoop()
 
-class Event(asyncio.Event):
-    """
-    Events should also be running in LOOP
-    """
-    def __init__(self):
-        super(Event, self).__init__(loop=LOOP)
+LOOP = quamash.QEventLoop() # Since tasks scheduled in this loop seem to
+# fall in the standard QEventLoop, and we never explicitly ask to run this
+# loop, it might seem useless to send all tasks to LOOP, however, a task
+# scheduled in the default loop seem to never get executed with IPython
+# kernel integration.
 
 async def sleep_async(time_s):
+    """
+    Replaces asyncio.sleep(time_s) inside coroutines. Deals properly with
+    IPython kernel integration.
+    """
     await asyncio.sleep(time_s, loop=LOOP)
 
 def ensure_future(coroutine):
+    """
+    Schedules the task described by the coroutine. Deals properly with
+    IPython kernel integration.
+    """
     return asyncio.ensure_future(coroutine, loop=LOOP)
 
 
 def wait(future, timeout=None):
     """
     This function is used to turn async coroutines into blocking functions:
-    Returns the result of the future only once it is ready.
+    Returns the result of the future only once it is ready. This function
+    won't block the eventloop while waiting for other events.
     ex:
     def curve(self):
         curve = scope.curve_async()
         return wait(curve)
+
+    BEWARE: never use wait in a coroutine (use builtin await instead)
     """
     new_future = ensure_future(asyncio.wait({future},
                                             timeout=timeout,
@@ -78,4 +110,32 @@ def wait(future, timeout=None):
         raise TimeoutError("Timout exceeded")
 
 def sleep(time_s):
+    """
+    Blocks the commandline for time_s. This function doesn't block the
+    eventloop while executing.
+    BEWARE: never sleep in a coroutine (use await sleep_async(time_s) instead)
+    """
     wait(ensure_future(sleep_async(time_s)))
+
+
+class Event(asyncio.Event):
+    """
+    Use this Event instead of asyncio.Event() to signal an event. This
+    version deals properly with IPython kernel integration.
+    Example: Resumng scope acquisition after a pause (acquisition_module.py)
+        def pause(self):
+            if self._running_state=='single_async':
+                self._running_state=='paused_single'
+            _resume_event = Event()
+
+        async def _single_async(self):
+            for self.current_avg in range(1, self.trace_average):
+                if self._running_state=='paused_single':
+                    await self._resume_event.wait()
+            self.data_avg = (self.data_avg * (self.current_avg-1) + \
+                             await self._trace_async(0)) / self.current_avg
+
+    """
+
+    def __init__(self):
+        super(Event, self).__init__(loop=LOOP)
