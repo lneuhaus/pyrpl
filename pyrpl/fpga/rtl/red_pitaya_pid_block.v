@@ -84,6 +84,7 @@ module red_pitaya_pid_block #(
    input                 sync_i          ,  // synchronization input, active high
    input      [ 14-1: 0] dat_i           ,  // input data
    output     [ 14-1: 0] dat_o           ,  // output data
+   input      [ 14-1: 0] diff_dat_i      ,  // input data for differential mode
 
    // communication with PS
    input      [ 16-1: 0] addr,
@@ -98,6 +99,7 @@ reg [ 14-1: 0] set_sp;   // set point
 reg [ 16-1: 0] set_ival;   // integral value to set
 reg            ival_write;
 reg [  3-1: 0] pause_pid_on_sync;  // register to specify which gains (P, I, and/or D) are paused during active sync signal
+reg enable_differential_mode;  // register to specify which gains (P, I, and/or D) are paused during active sync signal
 wire pause_i_on_sync;
 assign pause_i = pause_pid_on_sync[0] & !sync_i;
 wire pause_p_on_sync;
@@ -118,6 +120,7 @@ always @(posedge clk_i) begin
       set_sp <= 14'd0;
       set_ival <= 14'd0;
       pause_pid_on_sync <= {3{1'b1}};  // by default, all gains are paused on sync signal
+      enable_differential_mode <= 1'b0; // by default no differential mode
       set_kp <= {GAINBITS{1'b0}};
       set_ki <= {GAINBITS{1'b0}};
       set_kd <= {GAINBITS{1'b0}};
@@ -136,7 +139,7 @@ always @(posedge clk_i) begin
          if (addr==16'h120)   set_filter  <= wdata;
          if (addr==16'h124)   out_min  <= wdata;
          if (addr==16'h128)   out_max  <= wdata;
-         if (addr==16'h12C)   pause_pid_on_sync <= wdata[3-1:0];
+         if (addr==16'h12C)   {enable_differential_mode,pause_pid_on_sync} <= wdata[4-1:0];
       end
       if (addr==16'h100 && wen)
          ival_write <= 1'b1;
@@ -152,8 +155,7 @@ always @(posedge clk_i) begin
 	     16'h120 : begin ack <= wen|ren; rdata <= set_filter; end
 	     16'h124 : begin ack <= wen|ren; rdata <= {{32-14{1'b0}},out_min}; end
 	     16'h128 : begin ack <= wen|ren; rdata <= {{32-14{1'b0}},out_max}; end
-	     16'h12C : begin ack <= wen|ren; rdata <= {{32-3{1'b0}},pause_pid_on_sync}; end
-
+	     16'h12C : begin ack <= wen|ren; rdata <= {{32-4{1'b0}},enable_differential_mode,pause_pid_on_sync}; end
 	     16'h200 : begin ack <= wen|ren; rdata <= PSR; end
 	     16'h204 : begin ack <= wen|ren; rdata <= ISR; end
 	     16'h208 : begin ack <= wen|ren; rdata <= DSR; end
@@ -167,9 +169,28 @@ always @(posedge clk_i) begin
    end
 end
 
+
+//---------------------------------------------------------------------------------
+//  Set point error calculation - 1 cycle delay
+
+reg  [ 15-1: 0] error_unfiltered;
+
+always @(posedge clk_i) begin
+   if (rstn_i == 1'b0) begin
+      error_unfiltered <= 15'h0 ;
+   end
+   else begin
+      if (enable_differential_mode == 1'b1)
+         error_unfiltered <= $signed(dat_i) - $signed(diff_dat_i) ;
+      else
+         error_unfiltered <= $signed(dat_i) - $signed(set_sp) ;
+   end
+end
+
+
 //-----------------------------
 // cascaded set of FILTERSTAGES low- or high-pass filters
-wire signed [14-1:0] dat_i_filtered;
+wire signed [14-1:0] error;
 red_pitaya_filter_block #(
      .STAGES(FILTERSTAGES),
      .SHIFTBITS(FILTERSHIFTBITS),
@@ -180,24 +201,10 @@ red_pitaya_filter_block #(
   (
   .clk_i(clk_i),
   .rstn_i(rstn_i),
-  .set_filter(set_filter), 
-  .dat_i(dat_i),
-  .dat_o(dat_i_filtered)
+  .set_filter(set_filter),
+  .dat_i(error_unfiltered),
+  .dat_o(error)
   );
-
-//---------------------------------------------------------------------------------
-//  Set point error calculation - 1 cycle delay
-
-reg  [ 15-1: 0] error        ;
-
-always @(posedge clk_i) begin
-   if (rstn_i == 1'b0) begin
-      error <= 15'h0 ;
-   end
-   else begin
-      error <= $signed(dat_i_filtered) - $signed(set_sp) ;
-   end
-end
 
 
 //---------------------------------------------------------------------------------
