@@ -81,6 +81,7 @@ module red_pitaya_pid_block #(
    // data
    input                 clk_i           ,  // clock
    input                 rstn_i          ,  // reset - active low
+   input                 sync_i          ,  // synchronization input, active high
    input      [ 14-1: 0] dat_i           ,  // input data
    output     [ 14-1: 0] dat_o           ,  // output data
 
@@ -96,6 +97,13 @@ module red_pitaya_pid_block #(
 reg [ 14-1: 0] set_sp;   // set point
 reg [ 16-1: 0] set_ival;   // integral value to set
 reg            ival_write;
+reg [  3-1: 0] pause_pid_on_sync;  // register to specify which gains (P, I, and/or D) are paused during active sync signal
+wire pause_i_on_sync;
+assign pause_i = pause_pid_on_sync[0] & !sync_i;
+wire pause_p_on_sync;
+assign pause_p = pause_pid_on_sync[1] & !sync_i;
+wire pause_d_on_sync;
+assign pause_d = pause_pid_on_sync[2] & !sync_i;
 reg [ GAINBITS-1: 0] set_kp;   // Kp
 reg [ GAINBITS-1: 0] set_ki;   // Ki
 reg [ GAINBITS-1: 0] set_kd;   // Kd
@@ -109,6 +117,7 @@ always @(posedge clk_i) begin
    if (rstn_i == 1'b0) begin
       set_sp <= 14'd0;
       set_ival <= 14'd0;
+      pause_pid_on_sync <= {3{1'b1}};  // by default, all gains are paused on sync signal
       set_kp <= {GAINBITS{1'b0}};
       set_ki <= {GAINBITS{1'b0}};
       set_kd <= {GAINBITS{1'b0}};
@@ -127,6 +136,7 @@ always @(posedge clk_i) begin
          if (addr==16'h120)   set_filter  <= wdata;
          if (addr==16'h124)   out_min  <= wdata;
          if (addr==16'h128)   out_max  <= wdata;
+         if (addr==16'h12C)   pause_pid_on_sync <= wdata[3-1:0];
       end
       if (addr==16'h100 && wen)
          ival_write <= 1'b1;
@@ -142,6 +152,7 @@ always @(posedge clk_i) begin
 	     16'h120 : begin ack <= wen|ren; rdata <= set_filter; end
 	     16'h124 : begin ack <= wen|ren; rdata <= {{32-14{1'b0}},out_min}; end
 	     16'h128 : begin ack <= wen|ren; rdata <= {{32-14{1'b0}},out_max}; end
+	     16'h12C : begin ack <= wen|ren; rdata <= {{32-3{1'b0}},pause_pid_on_sync}; end
 
 	     16'h200 : begin ack <= wen|ren; rdata <= PSR; end
 	     16'h204 : begin ack <= wen|ren; rdata <= ISR; end
@@ -204,7 +215,7 @@ always @(posedge clk_i) begin
    end
 end
 
-assign kp_mult = $signed(error) * $signed(set_kp);
+assign kp_mult = (pause_p==1'b1) ? {15+GAINBITS{1'b0}} : $signed(error) * $signed(set_kp);
 
 //---------------------------------------------------------------------------------
 // Integrator - 2 cycles delay (but treat similar to proportional since it
@@ -237,7 +248,7 @@ always @(posedge clk_i) begin
    end
 end
 
-assign int_sum = $signed(ki_mult) + $signed(int_reg) ;
+assign int_sum = (pause_p==1'b1) ? $signed(int_reg) : $signed(ki_mult) + $signed(int_reg);
 assign int_shr = $signed(int_reg[IBW-1:ISR]) ;
 
 //---------------------------------------------------------------------------------
@@ -267,7 +278,7 @@ generate
 		      kd_reg_s <= $signed(kd_reg) - $signed(kd_reg_r); //this is the end result
 		   end
 		end
-		assign kd_mult = $signed(error) * $signed(set_kd) ;
+        assign kd_mult = (pause_d==1'b1) ? {15+GAINBITS-1{1'b0}} : $signed(error) * $signed(set_kd);
 	end
 	else begin
 		wire [15+GAINBITS-DSR:0] kd_reg_s;

@@ -121,7 +121,6 @@ class TestPidNaIq(TestPyrpl):
                 assert False, (maxerror, bw)
 
 
-
     def test_pid_na1(self):
         # setup a pid module with a bunch of different settings and measure
         # its transfer function, and compare it to the model.
@@ -360,6 +359,54 @@ class TestPidNaIq(TestPyrpl):
                                                name='test_iq_na-failed-relerror'))
                     # c.add_child(CurveDB.create(f,relerror,name='test_iq_na-failed-abserror'))
                     assert False, (maxerror, phase)
+
+
+    def test_pid_paused(self):
+        """
+        tests the sync feature of different iq modules
+        """
+        rp = self.pyrpl.rp
+        pids = [rp.pid0, rp.pid1, rp.pid2]
+        for pid in pids:
+            # we start with all gains off and ival reset, so the output should be 0
+            pid.setup(
+                input='off',
+                output_direct='off',
+                setpoint=-1.0,
+                p=0,
+                i=0,
+                inputfilter=0,
+                max_voltage=1.0,
+                min_voltage=-1.0,
+                pause_gains='off'
+                )
+            pid.ival = 0
+            assert pid.current_output_signal == 0.0, pid.current_output_signal
+            # test p settings
+            pid.p=1000  # large p-gain should cause saturation
+            # now pause the p-gain and assert that output is zero
+            pid.pause_gains ='p'
+            pid.paused = True
+            assert pid.current_output_signal == 0.0, pid.current_output_signal
+            # un-pause it and verify
+            pid.paused = False
+            assert pid.current_output_signal == pid.max_voltage, pid.current_output_signal
+            # test integrator part - first let integrator saturate
+            pid.i = 100000
+            pid.p = 0
+            assert pid.current_output_signal == pid.max_voltage, pid.current_output_signal
+            # now pause the i-gain and assert that output is unchanged
+            pid.pause_gains = 'i'
+            pid.paused = True
+            assert pid.current_output_signal == pid.max_voltage, pid.current_output_signal
+            # assert that ival can be set in presence of large gains
+            pid.ival = 0.1
+            assert pid.current_output_signal == pid.ival, (pid.current_output_signal, pid.ival)
+            assert (pid.ival - 0.1) <= 0.0001, (pid.current_output_signal, pid.ival)
+            pid.pause_gains = 'none'
+            assert pid.current_output_signal == pid.max_voltage, pid.current_output_signal
+            # un-pause for later
+            pid.paused = False
 
     def test_iq_sync(self):
         """
