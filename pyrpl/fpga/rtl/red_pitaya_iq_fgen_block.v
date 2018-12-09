@@ -51,6 +51,10 @@ module red_pitaya_iq_fgen_block #(
     input clk_i,
     input rstn_i,
     input on,
+    input sin_at_2f,
+    input cos_at_2f,
+    input sin_shifted_at_2f,
+    input cos_shifted_at_2f,
 
     input  [PHASEBITS-1:0] start_phase,
     input  [PHASEBITS-1:0] shift_phase,
@@ -110,10 +114,17 @@ reg [LUTBITS-1:0] phase2;
 reg [LUTBITS-1:0] phase3;
 reg [LUTBITS-1:0] phase4;
 
-assign wwphase1 = phase; // wwphase1 ready in cycle n
-assign wwphase2 = phase + QSHIFT;
-assign wwphase3 = phase + start_phase;
-assign wwphase4 = phase + start_phase + QSHIFT;
+// in clock cycle n-1, phase is incremented (see far below in the else-block
+// in clock cycle n,
+//     - we assign wwphase1-4, the phase of the 4 subgenerators (possibly doubled phase counter for generation at 2f)
+//     - we assign wphase1-4,
+//     - we assign invertphase1-4, the flag telling if we are in the rising or falling quadrant of the sine
+//     - we assign invertsignal1-4, the flag telling if we in the positive or negative sign of the sine
+
+assign wwphase1 = sin_at_2f ? {phase[PHASEBITS-1:0],1'b0} : phase; // wwphase1 ready in cycle n
+assign wwphase2 = cos_at_2f ? {phase[PHASEBITS-1:0],1'b0} + QSHIFT : phase + QSHIFT;
+assign wwphase3 = sin_shifted_at_2f ? {phase[PHASEBITS-1:0],1'b0} + start_phase : phase + start_phase;
+assign wwphase4 = cos_shifted_at_2f ? {phase[PHASEBITS-1:0],1'b0} + start_phase + QSHIFT : phase + start_phase + QSHIFT;
 assign wphase1 = wwphase1[PHASEBITS-2-1:PHASEBITS-2-LUTSZ]; //wwphase1 ready in cycle n
 assign wphase2 = wwphase2[PHASEBITS-2-1:PHASEBITS-2-LUTSZ];
 assign wphase3 = wwphase3[PHASEBITS-2-1:PHASEBITS-2-LUTSZ];
