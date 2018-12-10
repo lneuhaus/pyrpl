@@ -3,6 +3,7 @@ logger = logging.getLogger(name=__name__)
 from pyrpl.attributes import *
 from pyrpl import CurveDB
 from pyrpl.test.test_base import TestPyrpl
+from pyrpl.async_utils import sleep
 
 
 class TestPidNaIq(TestPyrpl):
@@ -359,3 +360,39 @@ class TestPidNaIq(TestPyrpl):
                                                name='test_iq_na-failed-relerror'))
                     # c.add_child(CurveDB.create(f,relerror,name='test_iq_na-failed-abserror'))
                     assert False, (maxerror, phase)
+
+    def test_iq_sync(self):
+        """
+        tests the sync feature of different iq modules
+        """
+        rp = self.pyrpl.rp
+        iqs = [rp.iq0, rp.iq1, rp.iq2]
+        for iq in iqs:
+            iq.setup(input='iq0',
+                 frequency=47e6,
+                 acbandwidth=1e5,
+                 output_signal='output_direct',
+                 gain=0,
+                 amplitude=0.5,
+                 phase=0,
+                 output_direct='off')
+            iq._na_averages=1e6
+        # first measure in desync mode
+        for iq in iqs:
+            f = iq.frequency
+            iq.frequency = 0 # this step is enough to de-sync iqs
+            iq.frequency = f
+        sleep(1e6/iq.frequency)
+        angles = [np.angle(iq._nadata, deg=True) for iq in iqs]
+        desyncdiff = (max(angles)-min(angles))
+        assert desyncdiff > 0.01, "iq modules not desynchronized, desyncdiff = %f < 0.01! Angles: %s" % (desyncdiff, angles)
+        # synchronize
+        rp.iq0.synchronize_iqs()
+        # now measure in synced mode
+        for iq in iqs:
+            iq.frequency = iq.frequency
+        sleep(1e6/iq.frequency)
+        angles = [np.angle(iq._nadata, deg=True) for iq in iqs]
+        syncdiff = (max(angles)-min(angles))
+        print(desyncdiff, syncdiff)
+        assert syncdiff < 0.01, "synchronization of iq modules not working, syncdiff = %f > 0.01! Angles: %s"%(syncdiff, angles)

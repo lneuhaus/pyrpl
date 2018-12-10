@@ -1,8 +1,8 @@
 from collections import OrderedDict
-from ..attributes import BoolRegister, SelectProperty, SelectProperty, SelectRegister
+from ..attributes import BoolRegister, SelectProperty, SelectProperty, SelectRegister, IntRegister
 from ..modules import HardwareModule, SignalModule
 from ..pyrpl_utils import sorted_dict, recursive_getattr, recursive_setattr
-
+from ..errors import ExpectedPyrplError
 
 # order here determines the order in the GUI etc.
 DSP_INPUTS = OrderedDict([
@@ -33,7 +33,7 @@ def all_inputs_keys(instance):
     if instance is not None:
         try:
             pyrpl = instance.pyrpl
-        except AttributeError:
+        except (AttributeError, ExpectedPyrplError):
             pass
         else:
             if hasattr(pyrpl, 'software_modules'):
@@ -200,3 +200,43 @@ class DspModule(HardwareModule, SignalModule):
     out1_saturated = BoolRegister(0x8, 0, doc="True if out1 is saturated")
 
     out2_saturated = BoolRegister(0x8, 1, doc="True if out2 is saturated")
+
+    _sync = IntRegister(0xC,
+                        doc="Allows to synchronize different dsp modules. "
+                            "Each DSP module is represented by the bit at "
+                            "the index module._number. Setting the bits of the "
+                            "modules to syncronize to zero and back to one "
+                            "causes these modules to syncronize. Currently "
+                            "this functionality is only implemented for iq "
+                            "modules.")
+
+    def _synchronize(self, modules=[]):
+        """
+        synchronizes the given list of modules.
+
+        If an empty list is given (default), all modules are syncronized.
+        """
+        # store current value
+        sync_stored = self._sync
+        if not modules:
+            sync_reset = 0  # sync all modules
+        else:
+            sync_reset = sync_stored  # start with current state
+            for module in modules:
+                if isinstance(module, DspModule):
+                    bit = module._number
+                elif isinstance(module, str):
+                    bit = DSP_INPUTS[module]
+                elif isinstance(module, int):
+                    bit = module
+                else:
+                    self._logger.warning("Module specified by %s has unknown "
+                                         "type. This may lead to unwanted "
+                                         "behavior!", module)
+                    bit = module
+                # disable the bit of the module
+                sync_reset = sync_reset & (~(1 << bit))
+        # write the reset register value to enable sync mode
+        self._sync = sync_reset
+        # restore the previous state of the modules
+        self._sync = sync_stored
