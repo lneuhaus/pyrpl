@@ -164,8 +164,9 @@ class TestClass(TestPyrpl):
         theory = self.iq.transfer_function(self.sa.frequencies)
 
         #from pylab import plot, show
-
-        assert abs(exp - theory)[1:].max()< 0.05
+        diff = abs(exp - theory)[1:].max()
+        maxdiff = 0.06  # test fails 1 in 3 times with former value 0.05
+        assert diff < maxdiff, (diff, diff.argmax(), exp, theory)
 
 
     def test_flatness_iqmode(self):

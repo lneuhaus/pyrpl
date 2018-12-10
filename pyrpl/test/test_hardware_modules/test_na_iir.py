@@ -198,9 +198,9 @@ class TestIir(TestPyrpl):
         loops = 80
         naset = dict(start_freq=3e3,
                      stop_freq=50e3,
-                     points=1001, #2501
-                     rbw=[1000, 1000],
-                     avg_per_point=5,
+                     points=1000, #2501
+                     rbw=[300, 300], # 1000,1000
+                     avg_per_point=3, # 5
                      running_state='stopped',
                      trace_average=1,
                      amplitude=0.02,
