@@ -170,31 +170,13 @@ always @(posedge clk_i) begin
 end
 
 
-//---------------------------------------------------------------------------------
-//  Set point error calculation - 1 cycle delay
-
-reg signed [ 15-1: 0] error_unfiltered;
-
-always @(posedge clk_i) begin
-   if (rstn_i == 1'b0) begin
-      error_unfiltered <= 15'h0 ;
-   end
-   else begin
-      if (enable_differential_mode == 1'b1)
-         error_unfiltered <= $signed(dat_i) - $signed(diff_dat_i) ;
-      else
-         error_unfiltered <= $signed(dat_i) - $signed(set_sp) ;
-   end
-end
-
-
 //-----------------------------
 // cascaded set of FILTERSTAGES low- or high-pass filters
-wire signed [15-1:0] error;
+wire signed [14-1:0] dat_i_filtered;
 red_pitaya_filter_block #(
      .STAGES(FILTERSTAGES),
      .SHIFTBITS(FILTERSHIFTBITS),
-     .SIGNALBITS(15),
+     .SIGNALBITS(14),
      .MINBW(FILTERMINBW)
   )
   pidfilter
@@ -202,9 +184,36 @@ red_pitaya_filter_block #(
   .clk_i(clk_i),
   .rstn_i(rstn_i),
   .set_filter(set_filter),
-  .dat_i(error_unfiltered),
-  .dat_o(error)
+  .dat_i(dat_i),
+  .dat_o(dat_i_filtered)
   );
+
+//---------------------------------------------------------------------------------
+//  Set point error calculation - 1 cycle delay
+
+reg  [ 15-1: 0] error        ;
+
+always @(posedge clk_i) begin
+   if (rstn_i == 1'b0) begin
+      error <= 15'h0 ;
+   end
+   else begin
+      error <= $signed(dat_i_filtered) - $signed(set_sp) ;
+   end
+end
+
+
+//always @(posedge clk_i) begin
+//   if (rstn_i == 1'b0) begin
+//      error <= 15'h0 ;
+//   end
+//   else begin
+//      if (enable_differential_mode == 1'b1)
+//         error <= $signed(dat_i_filtered) - $signed(diff_dat_i) ;
+//      else
+//      error <= $signed(dat_i_filtered) - $signed(set_sp) ;
+//   end
+//end
 
 
 //---------------------------------------------------------------------------------
