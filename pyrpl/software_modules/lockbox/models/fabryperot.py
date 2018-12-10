@@ -97,11 +97,23 @@ class FPAnalogPdh(InputSignal, Lorentz):
             return 1.0 - eta * self._lorentz_complex(x)
         # reflected intensity = abs(sum_of_reflected_fields)**2
         # components oscillating at sbfreq: cross-terms of central lorentz with either sideband
-        i_ref = np.conjugate(a_ref(x)) * 1j * a_ref(x + sbfreq) \
-                + a_ref(x) * np.conjugate(1j * a_ref(x - sbfreq))
-        # we demodulate with phase phi, i.e. multiply i_ref by e**(1j*phase), and take the real part
-        # normalization constant is very close to 1/eta
-        return np.real(i_ref * np.exp(1j * phase)) / eta
+        def pdh(x):
+            i_ref = np.conjugate(a_ref(x)) * 1j * a_ref(x + sbfreq) \
+                    + a_ref(x) * np.conjugate(1j * a_ref(x - sbfreq))
+            # we demodulate with phase phi, i.e. multiply i_ref by e**(1j*phase), and take the real part
+
+            return np.real(i_ref * np.exp(1j * phase))
+
+        # normalization constant is very close to 1/eta in resolved sideband regime, but needs to be determined numerically
+        # otherwise: we look for possible extrema of the function in intervals
+        # [-sbfreq-1, -sbfreq+1] U [-1, 1] U [sbfreq-1, sbfreq+1]
+        possible_extrema = np.zeros(300)
+        possible_extrema[:100] = pdh(np.linspace(-sbfreq-1,sbfreq+1, 100))
+        possible_extrema[100:200] = pdh(np.linspace(- 1, 1, 100))
+        possible_extrema[200:300] = pdh(np.linspace(sbfreq-1, sbfreq+1, 100))
+        min_value = np.min(possible_extrema)
+        max_value = np.max(possible_extrema)
+        return 2*pdh(x)/(max_value - min_value)
 
 
 class FPPdh(InputIq, FPAnalogPdh):
