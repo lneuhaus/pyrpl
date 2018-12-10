@@ -1,7 +1,7 @@
 Copyright 1986-2015 Xilinx, Inc. All Rights Reserved.
 ----------------------------------------------------------------------------------------
 | Tool Version     : Vivado v.2015.4 (lin64) Build 1412921 Wed Nov 18 09:44:32 MST 2015
-| Date             : Mon Dec 10 14:50:31 2018
+| Date             : Mon Dec 10 23:05:20 2018
 | Host             : LPC running 64-bit Ubuntu 16.04.4 LTS
 | Command          : report_power -file out/post_synth_power.rpt
 | Design           : red_pitaya_top
@@ -31,7 +31,7 @@ Table of Contents
 
 +--------------------------+-------+
 | Total On-Chip Power (W)  | 2.331 |
-| Dynamic (W)              | 2.178 |
+| Dynamic (W)              | 2.179 |
 | Device Static (W)        | 0.153 |
 | Effective TJA (C/W)      | 11.5  |
 | Max Ambient (C)          | 58.1  |
@@ -50,16 +50,16 @@ Table of Contents
 | On-Chip                  | Power (W) | Used     | Available | Utilization (%) |
 +--------------------------+-----------+----------+-----------+-----------------+
 | Clocks                   |     0.075 |       15 |       --- |             --- |
-| Slice Logic              |     0.141 |    36212 |       --- |             --- |
-|   LUT as Logic           |     0.120 |    17099 |     17600 |           97.15 |
+| Slice Logic              |     0.141 |    36257 |       --- |             --- |
+|   LUT as Logic           |     0.120 |    17120 |     17600 |           97.27 |
 |   CARRY4                 |     0.016 |     1449 |      4400 |           32.93 |
 |   Register               |     0.005 |    13958 |     35200 |           39.65 |
-|   F7/F8 Muxes            |    <0.001 |      529 |     17600 |            3.01 |
+|   F7/F8 Muxes            |    <0.001 |      518 |     17600 |            2.94 |
 |   LUT as Shift Register  |    <0.001 |       72 |      6000 |            1.20 |
 |   Others                 |     0.000 |      445 |       --- |             --- |
 |   BUFG                   |     0.000 |        1 |        32 |            3.13 |
 |   LUT as Distributed RAM |     0.000 |       24 |      6000 |            0.40 |
-| Signals                  |     0.138 |    30524 |       --- |             --- |
+| Signals                  |     0.138 |    30552 |       --- |             --- |
 | Block RAM                |     0.103 |       34 |        60 |           56.67 |
 | PLL                      |     0.097 |        1 |         2 |           50.00 |
 | DSPs                     |     0.040 |       46 |        80 |           57.50 |
@@ -67,7 +67,7 @@ Table of Contents
 | XADC                     |     0.004 |        1 |       --- |             --- |
 | PS7                      |     1.292 |        1 |       --- |             --- |
 | Static Power             |     0.153 |          |           |                 |
-| Total                    |     2.330 |          |           |                 |
+| Total                    |     2.331 |          |           |                 |
 +--------------------------+-----------+----------+-----------+-----------------+
 
 
@@ -173,7 +173,7 @@ Table of Contents
 |     ch[0]                                                                        |     0.025 |
 |     ch[1]                                                                        |     0.025 |
 |     prng                                                                         |     0.002 |
-|   i_dsp                                                                          |     0.332 |
+|   i_dsp                                                                          |     0.333 |
 |     dac_saturate[0]                                                              |    <0.001 |
 |     dac_saturate[1]                                                              |    <0.001 |
 |     genblk2[0].i_pid                                                             |     0.024 |

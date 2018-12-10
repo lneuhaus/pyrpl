@@ -198,22 +198,12 @@ always @(posedge clk_i) begin
       error <= 15'h0 ;
    end
    else begin
-      error <= $signed(dat_i_filtered) - $signed(set_sp) ;
+      if (enable_differential_mode == 1'b1)
+         error <= $signed(dat_i_filtered) - $signed(diff_dat_i) ;
+      else
+         error <= $signed(dat_i_filtered) - $signed(set_sp) ;
    end
 end
-
-
-//always @(posedge clk_i) begin
-//   if (rstn_i == 1'b0) begin
-//      error <= 15'h0 ;
-//   end
-//   else begin
-//      if (enable_differential_mode == 1'b1)
-//         error <= $signed(dat_i_filtered) - $signed(diff_dat_i) ;
-//      else
-//      error <= $signed(dat_i_filtered) - $signed(set_sp) ;
-//   end
-//end
 
 
 //---------------------------------------------------------------------------------
@@ -231,7 +221,7 @@ always @(posedge clk_i) begin
    end
 end
 
-assign kp_mult = (pause_p==1'b1) ? {15+GAINBITS{1'b0}} : $signed(error) * $signed(set_kp);
+assign kp_mult = (pause_p==1'b1) ? $signed({15+GAINBITS{1'b0}}) : $signed(error) * $signed(set_kp);
 
 //---------------------------------------------------------------------------------
 // Integrator - 2 cycles delay (but treat similar to proportional since it
@@ -294,7 +284,7 @@ generate
 		      kd_reg_s <= $signed(kd_reg) - $signed(kd_reg_r); //this is the end result
 		   end
 		end
-        assign kd_mult = (pause_d==1'b1) ? {15+GAINBITS-1{1'b0}} : $signed(error) * $signed(set_kd);
+        assign kd_mult = (pause_d==1'b1) ? $signed({15+GAINBITS-1{1'b0}}) : $signed(error) * $signed(set_kd);
 	end
 	else begin
 		wire [15+GAINBITS-DSR:0] kd_reg_s;

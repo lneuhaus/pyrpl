@@ -310,10 +310,8 @@ end
 //PID
 
 wire [14-1:0] diff_input_signal [3-1:0];
-//assign diff_input_signal[0] = input_signal[1]; // difference input of PID0 is PID1
-//assign diff_input_signal[1] = input_signal[0]; // difference input of PID1 is PID0
-assign diff_input_signal[0] = {14{1'b0}};      // difference input of PID2 is zero
-assign diff_input_signal[1] = {14{1'b0}};      // difference input of PID2 is zero
+assign diff_input_signal[0] = input_signal[1]; // difference input of PID0 is PID1
+assign diff_input_signal[1] = input_signal[0]; // difference input of PID1 is PID0
 assign diff_input_signal[2] = {14{1'b0}};      // difference input of PID2 is zero
 
 generate for (j = 0; j < 3; j = j+1) begin
