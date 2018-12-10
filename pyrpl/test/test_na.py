@@ -239,7 +239,8 @@ class TestNA(TestPyrpl):
             assert (old == new), (old, new)
 
     def test_save_curve(self):
-        self.na.setup(start_freq=1e5,
+        with self.pyrpl.networkanalyzer as self.na:
+            self.na.setup(start_freq=1e5,
                           stop_freq=2e5,
                           rbw=100000,
                           points=10,
@@ -248,9 +249,9 @@ class TestNA(TestPyrpl):
                           amplitude=0.01,
                           trace_average=1,
                           running_state="running_continuous")
-        self.na.single()
-        curve = self.na.save_curve()
-        self.na.stop()
-        assert len(curve.data[0]) == self.na.points
-        assert len(curve.data[1]) == self.na.points
-        self.curves.append(curve)  # curve will be deleted by teardownAll
+            self.na.single()
+            curve = self.na.save_curve()
+            self.na.stop()
+            assert len(curve.data[0]) == self.na.points
+            assert len(curve.data[1]) == self.na.points
+            self.curves.append(curve)  # curve will be deleted by teardownAll
