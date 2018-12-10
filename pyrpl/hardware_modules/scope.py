@@ -499,7 +499,7 @@ class Scope(HardwareModule, AcquisitionModule):
     ch_math_active = BoolProperty(default=False,
                               doc="should ch_math be displayed in the gui?")
 
-    math_formula = StringProperty(default='ch1 + ch2',
+    math_formula = StringProperty(default='ch1 * ch2',
                                   doc="formula for channel math")
 
     xy_mode = BoolProperty(default=False,

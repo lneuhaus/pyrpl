@@ -232,7 +232,8 @@ class Pid(FilterModule):
                          "inputfilter",
                          "max_voltage",
                          "min_voltage",
-                         "pause_gains"
+                         "pause_gains",
+                         "paused"
                          ]
     _gui_attributes = _setup_attributes + ["ival"]
 
