@@ -140,28 +140,28 @@ class PauseRegister(BoolRegister):
     """
     A bool register whose bit number is the containing module dsp number.
     """
-    def __init__(self, address=0xC, bitmask=None, invert=False):
+    def __init__(self, address=0xC, bitmask=None, invert=False, **kwargs):
             assert type(invert) == bool
             self.invert = invert
             BaseRegister.__init__(self, address=address, bitmask=bitmask)
             BoolProperty.__init__(self, **kwargs)
 
-        def to_python(self, obj, value):
-            bit = obj._number
-            value = bool((value >> bit) & 1)
-            if self.invert:
-                value = not value
-            return value
+    def to_python(self, obj, value):
+        bit = obj._number
+        value = bool((value >> bit) & 1)
+        if self.invert:
+            value = not value
+        return value
 
-        def from_python(self, obj, val):
-            bit = obj._number
-            if self.invert:
-                val = not val
-            if val:
-                towrite = obj._read(self.address) | (1 << bit)
-            else:
-                towrite = obj._read(self.address) & (~(1 << bit))
-            return towrite
+    def from_python(self, obj, val):
+        bit = obj._number
+        if self.invert:
+            val = not val
+        if val:
+            towrite = obj._read(self.address) | (1 << bit)
+        else:
+            towrite = obj._read(self.address) & (~(1 << bit))
+        return towrite
 
 
 class DspModule(HardwareModule, SignalModule):

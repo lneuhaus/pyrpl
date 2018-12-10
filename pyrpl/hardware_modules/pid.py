@@ -232,7 +232,8 @@ class Pid(FilterModule):
                          "inputfilter",
                          "max_voltage",
                          "min_voltage",
-                         "pause_gains"
+                         "pause_gains",
+                         "paused"
                          ]
     _gui_attributes = _setup_attributes + ["ival"]
 
@@ -286,8 +287,18 @@ class Pid(FilterModule):
                                        id=5,
                                        pd=6,
                                        pid=7),
+                                 bitmask=0b111,
                                  doc="Selects which gains are frozen during pausing/synchronization."
                                  )
+
+    differential_mode_enabled = BoolRegister(0x12C,
+                                             bit=3,
+                                             doc="If True, the differential mode is enabled. "
+                                                 "In this mode, the setpoint is given by the "
+                                                 "input signal of another pid module. "
+                                                 "Only pid0 and pid1 can be paired in "
+                                                 "differential mode. "
+                                             )
 
     paused = PauseRegister(0xC,
                            doc="While True, the gains selected with `pause` are "
