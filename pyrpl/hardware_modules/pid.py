@@ -233,7 +233,8 @@ class Pid(FilterModule):
                          "max_voltage",
                          "min_voltage",
                          "pause_gains",
-                         "paused"
+                         "paused",
+                         "differential_mode_enabled",
                          ]
     _gui_attributes = _setup_attributes + ["ival"]
 
@@ -301,6 +302,7 @@ class Pid(FilterModule):
                                              )
 
     paused = PauseRegister(0xC,
+                           invert=True,
                            doc="While True, the gains selected with `pause` are "
                                "temporarily set to zero ")
 

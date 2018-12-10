@@ -173,7 +173,7 @@ end
 //---------------------------------------------------------------------------------
 //  Set point error calculation - 1 cycle delay
 
-reg  [ 15-1: 0] error_unfiltered;
+reg signed [ 15-1: 0] error_unfiltered;
 
 always @(posedge clk_i) begin
    if (rstn_i == 1'b0) begin
@@ -190,11 +190,11 @@ end
 
 //-----------------------------
 // cascaded set of FILTERSTAGES low- or high-pass filters
-wire signed [14-1:0] error;
+wire signed [15-1:0] error;
 red_pitaya_filter_block #(
      .STAGES(FILTERSTAGES),
      .SHIFTBITS(FILTERSHIFTBITS),
-     .SIGNALBITS(14),
+     .SIGNALBITS(15),
      .MINBW(FILTERMINBW)
   )
   pidfilter
@@ -255,7 +255,7 @@ always @(posedge clk_i) begin
    end
 end
 
-assign int_sum = (pause_p==1'b1) ? $signed(int_reg) : $signed(ki_mult) + $signed(int_reg);
+assign int_sum = (pause_i==1'b1) ? $signed(int_reg) : $signed(ki_mult) + $signed(int_reg);
 assign int_shr = $signed(int_reg[IBW-1:ISR]) ;
 
 //---------------------------------------------------------------------------------
