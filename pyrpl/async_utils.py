@@ -19,7 +19,7 @@ except ImportError:  # this occurs in python 2.7
     from concurrent.futures import Future, CancelledError, TimeoutError
 else:
     import quamash
-    set_event_loop(quamash.QEventLoop())
+    #set_event_loop(quamash.QEventLoop())
 
 
 
@@ -97,6 +97,8 @@ class MainThreadTimer(QtCore.QTimer):
         self.setInterval(interval)
 
 
+LOOP = quamash.QEventLoop()
+
 class PyrplFuture(Future):
     """
     A promise object compatible with the Qt event loop.
@@ -119,8 +121,10 @@ class PyrplFuture(Future):
 
     def __init__(self):
         if sys.version.startswith('3.7'):
-            loop = quamash.QEventLoop()
-            super(PyrplFuture, self).__init__(loop=loop)
+
+            super(PyrplFuture, self).__init__(loop=LOOP) # Necessary
+            # otherwise
+            # The Future will never be executed...
         else: # python 2.7, 3.5,3.6
             super(PyrplFuture, self).__init__()
         self._timer_timeout = None  # timer that will be instantiated if
@@ -167,11 +171,13 @@ class PyrplFuture(Future):
                 self._timer_timeout.timeout.connect(self._exit_loop)
                 self._timer_timeout.start()
             self.add_done_callback(self._exit_loop)
-            if hasattr(self, 'get_loop'): # Python 3.7
-                self.get_loop().run_until_complete(self)
-            else: # Python <= 3.6
-                self.loop = QtCore.QEventLoop()
-                self.loop.exec_()
+            #if hasattr(self, 'get_loop'): # This works unless
+            # _wait_for_done is called behind a qt slot... -->NOT GOOD!!!
+            #
+            #    self.get_loop().run_until_complete(self)
+            #else: # Python <= 3.6
+            self.loop = QtCore.QEventLoop()
+            self.loop.exec_()
             if self._timer_timeout is not None:
                 if not self._timer_timeout.isActive():
                     return TimeoutError("Timeout occured")  # pragma: no-cover
