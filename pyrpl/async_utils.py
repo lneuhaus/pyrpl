@@ -19,7 +19,7 @@ except ImportError:  # this occurs in python 2.7
     from concurrent.futures import Future, CancelledError, TimeoutError
 else:
     import quamash
-    #set_event_loop(quamash.QEventLoop())
+    set_event_loop(quamash.QEventLoop())
 
 
 
