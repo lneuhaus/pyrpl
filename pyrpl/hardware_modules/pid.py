@@ -140,11 +140,12 @@ do what they are supposed to.
 
 import numpy as np
 from qtpy import QtCore
-from ..attributes import FloatProperty, BoolRegister, FloatRegister, GainRegister
+from ..attributes import FloatProperty, BoolRegister, FloatRegister, GainRegister, SelectRegister
+from .dsp import PauseRegister
 from ..modules import SignalLauncher
 from . import FilterModule
 from ..widgets.module_widgets import PidWidget
-
+from ..pyrpl_utils import sorted_dict
 
 class IValAttribute(FloatProperty):
     """
@@ -230,7 +231,11 @@ class Pid(FilterModule):
                          #"d",
                          "inputfilter",
                          "max_voltage",
-                         "min_voltage"]
+                         "min_voltage",
+                         "pause_gains",
+                         "paused",
+                         "differential_mode_enabled",
+                         ]
     _gui_attributes = _setup_attributes + ["ival"]
 
     # the function is here so the metaclass generates a setup(**kwds) function
@@ -272,6 +277,34 @@ class Pid(FilterModule):
     #                  invert=True,
     #                  doc="pid derivative unity-gain frequency [Hz]. Off
     # when 0.")
+
+    pause_gains = SelectRegister(0x12C,
+                                 options=sorted_dict(
+                                       off=0,
+                                       i=1,
+                                       p=2,
+                                       pi=3,
+                                       d=4,
+                                       id=5,
+                                       pd=6,
+                                       pid=7),
+                                 bitmask=0b111,
+                                 doc="Selects which gains are frozen during pausing/synchronization."
+                                 )
+
+    differential_mode_enabled = BoolRegister(0x12C,
+                                             bit=3,
+                                             doc="If True, the differential mode is enabled. "
+                                                 "In this mode, the setpoint is given by the "
+                                                 "input signal of another pid module. "
+                                                 "Only pid0 and pid1 can be paired in "
+                                                 "differential mode. "
+                                             )
+
+    paused = PauseRegister(0xC,
+                           invert=True,
+                           doc="While True, the gains selected with `pause` are "
+                               "temporarily set to zero ")
 
     @property
     def proportional(self):

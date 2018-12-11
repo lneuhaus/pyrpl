@@ -249,8 +249,11 @@ class Iq(FilterModule):
                          "gain",
                          "amplitude",
                          "phase",
-                         "output_direct"]
-    _gui_attributes = _setup_attributes
+                         "output_direct",
+                         "modulation_at_2f",
+                         "demodulation_at_2f"]
+
+    _gui_attributes = _setup_attributes  # + ["synchronize_iqs"]  # function calls auto-gui only works in develop-0.9.3 branch
 
     _delay = 5  # bare delay of IQ module with no filters set (cycles)
 
@@ -286,6 +289,38 @@ class Iq(FilterModule):
     pfd_on = BoolRegister(0x100, 1,
                           doc="If True: Turns on the PFD module,\
                         if False: turns it off and resets integral")
+
+    # raw flags, not useful in most cases since sin and cos-flag must be
+    # written in the same clock cycle
+    _modulation_sin_at_2f = BoolRegister(0x100, 2, default=False,
+                                         doc="If True, this flag sets the "
+                                             "frequency of the sine used "
+                                             "for modulation to twice the "
+                                             "fundamental frequency.")
+    _modulation_cos_at_2f = BoolRegister(0x100, 3, default=False,
+                                         doc="If True, this flag sets the "
+                                             "frequency of the cosine used "
+                                             "for modulation to twice the "
+                                             "fundamental frequency.")
+    _demodulation_sin_at_2f = BoolRegister(0x100, 4, default=False,
+                                         doc="If True, this flag sets the "
+                                             "frequency of the sine used "
+                                             "for demodulation to twice the "
+                                             "fundamental frequency.")
+    _demodulation_cos_at_2f = BoolRegister(0x100, 5, default=False,
+                                         doc="If True, this flag sets the "
+                                             "frequency of the cosine used "
+                                             "for demodulation to twice the "
+                                             "fundamental frequency.")
+    # helper registers for switching sin/cos flags at the same time
+    modulation_at_2f = SelectRegister(0x100, bitmask=3<<2, options=dict(off=0, on=3<<2),
+                                      default='off',
+                                      doc="Sets the modulation frequency to "
+                                          "twice the IQ module frequency")
+    demodulation_at_2f = SelectRegister(0x100, bitmask=3<<4, options=dict(off=0, on=3<<4),
+                                        default='off',
+                                        doc="Sets the demodulation frequency to "
+                                            "twice the IQ module frequency")
 
     _LUTSZ = IntRegister(0x200)
     _LUTBITS = IntRegister(0x204)
@@ -347,12 +382,23 @@ class Iq(FilterModule):
 
     acbandwidth = IqAcbandwidth(doc="positive corner frequency of input high pass filter")
 
+    def synchronize_iqs(self):
+        """
+        Synchronizes all iq modules.
+
+        This establishes a zero phase offset between the outputs of all iq
+        modules with commensurate frequencies. This function must be called
+        after having set the last iq frequency in order to be effective.
+        """
+        self._synchronize(modules=['iq0', 'iq1', 'iq2'])
+        self._logger.info("All IQ modules synchronized!")
+
     def _setup(self): # the function is here for its docstring to be used by the metaclass.
         """
         Sets up an iq demodulator, refer to the drawing in the GUI for an explanation of the IQ layout.
         (just setting the attributes is OK).
         """
-        pass
+        self.synchronize_iqs()
 
     _na_averages = IntRegister(0x130,
                                doc='number of cycles to perform na-averaging over')
@@ -378,6 +424,7 @@ class Iq(FilterModule):
         sum = np.complex128(self._to_pyint(int(a) + (int(b) << 31), bitlength=62)) \
               + np.complex128(self._to_pyint(int(c) + (int(d) << 31), bitlength=62)) * 1j
         return sum
+
     # the implementation of network_analyzer is not identical to na_trace
     # there are still many bugs in it, which is why we will keep this function
     # in the gui
@@ -397,7 +444,7 @@ class Iq(FilterModule):
             stabilize=None,
             # if a float, output amplitude is adjusted dynamically so that input amplitude [V]=stabilize
             maxamplitude=1.0,  # amplitude can be limited
-    ):
+            ):
         # logger.info("This function will become obsolete in the distant "
         #                 "future. Start using the module RedPitaya.na "
         #                 "instead!")

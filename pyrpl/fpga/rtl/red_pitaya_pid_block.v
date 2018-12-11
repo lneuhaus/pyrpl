@@ -81,8 +81,11 @@ module red_pitaya_pid_block #(
    // data
    input                 clk_i           ,  // clock
    input                 rstn_i          ,  // reset - active low
-   input      [ 14-1: 0] dat_i           ,  // input data
-   output     [ 14-1: 0] dat_o           ,  // output data
+   input                 sync_i          ,  // synchronization input, active high
+   input signed     [ 14-1: 0] dat_i           ,  // input data
+   output signed    [ 14-1: 0] dat_o           ,  // output data
+   input signed     [ 14-1: 0] diff_dat_i      ,  // input data for differential mode
+   output signed    [ 14-1: 0] diff_dat_o      ,  // input data for differential mode
 
    // communication with PS
    input      [ 16-1: 0] addr,
@@ -93,9 +96,17 @@ module red_pitaya_pid_block #(
    input      [ 32-1: 0] wdata
 );
 
-reg [ 14-1: 0] set_sp;   // set point
-reg [ 16-1: 0] set_ival;   // integral value to set
+reg signed [ 14-1: 0] set_sp;   // set point
+reg signed [ 16-1: 0] set_ival;   // integral value to set
 reg            ival_write;
+reg [  3-1: 0] pause_pid_on_sync;  // register to specify which gains (P, I, and/or D) are paused during active sync signal
+reg enable_differential_mode;  // register to specify which gains (P, I, and/or D) are paused during active sync signal
+wire pause_i_on_sync;
+assign pause_i = pause_pid_on_sync[0] & !sync_i;
+wire pause_p_on_sync;
+assign pause_p = pause_pid_on_sync[1] & !sync_i;
+wire pause_d_on_sync;
+assign pause_d = pause_pid_on_sync[2] & !sync_i;
 reg [ GAINBITS-1: 0] set_kp;   // Kp
 reg [ GAINBITS-1: 0] set_ki;   // Ki
 reg [ GAINBITS-1: 0] set_kd;   // Kd
@@ -109,6 +120,8 @@ always @(posedge clk_i) begin
    if (rstn_i == 1'b0) begin
       set_sp <= 14'd0;
       set_ival <= 14'd0;
+      pause_pid_on_sync <= {3{1'b1}};  // by default, all gains are paused on sync signal
+      enable_differential_mode <= 1'b0; // by default no differential mode
       set_kp <= {GAINBITS{1'b0}};
       set_ki <= {GAINBITS{1'b0}};
       set_kd <= {GAINBITS{1'b0}};
@@ -127,6 +140,7 @@ always @(posedge clk_i) begin
          if (addr==16'h120)   set_filter  <= wdata;
          if (addr==16'h124)   out_min  <= wdata;
          if (addr==16'h128)   out_max  <= wdata;
+         if (addr==16'h12C)   {enable_differential_mode,pause_pid_on_sync} <= wdata[4-1:0];
       end
       if (addr==16'h100 && wen)
          ival_write <= 1'b1;
@@ -142,7 +156,7 @@ always @(posedge clk_i) begin
 	     16'h120 : begin ack <= wen|ren; rdata <= set_filter; end
 	     16'h124 : begin ack <= wen|ren; rdata <= {{32-14{1'b0}},out_min}; end
 	     16'h128 : begin ack <= wen|ren; rdata <= {{32-14{1'b0}},out_max}; end
-
+	     16'h12C : begin ack <= wen|ren; rdata <= {{32-4{1'b0}},enable_differential_mode,pause_pid_on_sync}; end
 	     16'h200 : begin ack <= wen|ren; rdata <= PSR; end
 	     16'h204 : begin ack <= wen|ren; rdata <= ISR; end
 	     16'h208 : begin ack <= wen|ren; rdata <= DSR; end
@@ -155,6 +169,7 @@ always @(posedge clk_i) begin
 	  endcase	     
    end
 end
+
 
 //-----------------------------
 // cascaded set of FILTERSTAGES low- or high-pass filters
@@ -169,7 +184,7 @@ red_pitaya_filter_block #(
   (
   .clk_i(clk_i),
   .rstn_i(rstn_i),
-  .set_filter(set_filter), 
+  .set_filter(set_filter),
   .dat_i(dat_i),
   .dat_o(dat_i_filtered)
   );
@@ -177,23 +192,28 @@ red_pitaya_filter_block #(
 //---------------------------------------------------------------------------------
 //  Set point error calculation - 1 cycle delay
 
-reg  [ 15-1: 0] error        ;
+reg signed [ 15-1: 0] error        ;
 
 always @(posedge clk_i) begin
    if (rstn_i == 1'b0) begin
       error <= 15'h0 ;
    end
    else begin
-      error <= $signed(dat_i_filtered) - $signed(set_sp) ;
+      if (enable_differential_mode == 1'b1)
+         error <= $signed(dat_i_filtered) - $signed(diff_dat_i) ;
+      else
+         error <= $signed(dat_i_filtered) - $signed(set_sp) ;
    end
 end
 
+// send filtered signal to other pid module for differential processing
+assign diff_dat_o = dat_i_filtered;
 
 //---------------------------------------------------------------------------------
 //  Proportional part - 1 cycle delay
 
-reg   [15+GAINBITS-PSR-1: 0] kp_reg        ;
-wire  [15+GAINBITS-1: 0] kp_mult       ;
+reg signed  [15+GAINBITS-PSR-1: 0] kp_reg        ;
+wire signed [15+GAINBITS-1: 0] kp_mult       ;
 
 always @(posedge clk_i) begin
    if (rstn_i == 1'b0) begin
@@ -204,7 +224,7 @@ always @(posedge clk_i) begin
    end
 end
 
-assign kp_mult = $signed(error) * $signed(set_kp);
+assign kp_mult = (pause_p==1'b1) ? $signed({15+GAINBITS{1'b0}}) : $signed(error) * $signed(set_kp);
 
 //---------------------------------------------------------------------------------
 // Integrator - 2 cycles delay (but treat similar to proportional since it
@@ -214,10 +234,10 @@ assign kp_mult = $signed(error) * $signed(set_kp);
 //-localparam IBW = 64; //integrator bit-width. Over-represent the integral sum to record longterm drifts
 //-reg   [15+GAINBITS-1: 0] ki_mult  ;
 localparam IBW = ISR+16; //integrator bit-width. Over-represent the integral sum to record longterm drifts (overrepresented by 2 bits)
-reg   [16+GAINBITS-1: 0] ki_mult ;
-wire  [IBW  : 0] int_sum       ;
-reg   [IBW-1: 0] int_reg       ;
-wire  [IBW-ISR-1: 0] int_shr   ;
+reg signed  [16+GAINBITS-1: 0] ki_mult ;
+wire signed [IBW  : 0] int_sum       ;
+reg signed  [IBW-1: 0] int_reg       ;
+wire signed [IBW-ISR-1: 0] int_shr   ;
 
 always @(posedge clk_i) begin
    if (rstn_i == 1'b0) begin
@@ -237,17 +257,17 @@ always @(posedge clk_i) begin
    end
 end
 
-assign int_sum = $signed(ki_mult) + $signed(int_reg) ;
+assign int_sum = (pause_i==1'b1) ? $signed(int_reg) : $signed(ki_mult) + $signed(int_reg);
 assign int_shr = $signed(int_reg[IBW-1:ISR]) ;
 
 //---------------------------------------------------------------------------------
 //  Derivative - 2 cycles delay (but treat as 1 cycle because its not
 //  functional at the moment
 
-wire  [    39-1: 0] kd_mult       ;
-reg   [39-DSR-1: 0] kd_reg        ; 
-reg   [39-DSR-1: 0] kd_reg_r      ;
-reg   [39-DSR  : 0] kd_reg_s      ;
+wire signed [    39-1: 0] kd_mult       ;
+reg signed  [39-DSR-1: 0] kd_reg        ;
+reg signed  [39-DSR-1: 0] kd_reg_r      ;
+reg signed  [39-DSR  : 0] kd_reg_s      ;
 
 generate 
 	if (DERIVATIVE == 1) begin
@@ -267,7 +287,7 @@ generate
 		      kd_reg_s <= $signed(kd_reg) - $signed(kd_reg_r); //this is the end result
 		   end
 		end
-		assign kd_mult = $signed(error) * $signed(set_kd) ;
+        assign kd_mult = (pause_d==1'b1) ? $signed({15+GAINBITS-1{1'b0}}) : $signed(error) * $signed(set_kd);
 	end
 	else begin
 		wire [15+GAINBITS-DSR:0] kd_reg_s;
@@ -278,24 +298,32 @@ endgenerate
 //---------------------------------------------------------------------------------
 //  Sum together - saturate output - 1 cycle delay
 
-localparam MAXBW = 17; //maximum possible bitwidth for pid_sum
-wire        [   MAXBW-1: 0] pid_sum;
+
+//maximum possible bitwidth for pid_sum
+// = max( 15+GAINBITS(24)-PSR(12) = 27, // from kp_reg
+//        IBW(48)-ISR(32) = 16,         // from int_shr
+//        39-DSR(10) = 29 but disabled)         // from kd_reg_s
+localparam MAXBW = 28; //17
+
+wire signed [   MAXBW-1: 0] pid_sum;
 reg signed  [   14-1: 0] pid_out;
 
-		always @(posedge clk_i) begin
-		   if (rstn_i == 1'b0) begin
-		      pid_out    <= 14'b0;
-		   end
-		   else begin
-		      if ({pid_sum[MAXBW-1],|pid_sum[MAXBW-2:13]} == 2'b01) //positive overflow
-		         pid_out <= 14'h1FFF;
-		      else if ({pid_sum[MAXBW-1],&pid_sum[MAXBW-2:13]} == 2'b10) //negative overflow
-		         pid_out <= 14'h2000;
-		      else
-		         pid_out <= pid_sum[14-1:0];
-		   end
-		end
+always @(posedge clk_i) begin
+   if (rstn_i == 1'b0) begin
+      pid_out    <= 14'b0;
+   end
+   else begin
+      if ({pid_sum[MAXBW-1],|pid_sum[MAXBW-2:13]} == 2'b01) //positive overflow
+         pid_out <= 14'h1FFF;
+      else if ({pid_sum[MAXBW-1],&pid_sum[MAXBW-2:13]} == 2'b10) //negative overflow
+         pid_out <= 14'h2000;
+      else
+         pid_out <= pid_sum[14-1:0];
+   end
+end
+
 assign pid_sum = $signed(kp_reg) + $signed(int_shr) + $signed(kd_reg_s);
+
 
 generate 
 	if (ARBITRARY_SATURATION == 0)

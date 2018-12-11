@@ -99,7 +99,7 @@ class TestClass(TestPyrpl):
         self.sa = self.pyrpl.spectrumanalyzer
         self.sa.setup(input1_baseband=self.iq,
                       span=10e6,
-                      trace_average=10,  # TODO: set back to 50
+                      trace_average=20,  # TODO: set back to 50
                       running_state='stopped')
 
         for freq in np.linspace(self.sa.span/5, self.sa.span/4, 5):
