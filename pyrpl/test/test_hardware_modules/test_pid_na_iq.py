@@ -432,7 +432,7 @@ class TestPidNaIq(TestPyrpl):
             pid.ival = 0
             assert pid.current_output_signal == 0.0, pid.current_output_signal
             # test p settings
-            pid.p=1000  # large p-gain should cause saturation
+            pid.p=10000000  # large p-gain should cause saturation
             # now pause the p-gain and assert that output is zero
             pid.pause_gains ='p'
             pid.paused = True
@@ -441,7 +441,7 @@ class TestPidNaIq(TestPyrpl):
             pid.paused = False
             assert pid.current_output_signal >= pid.max_voltage, (pid.current_output_signal, pid.max_voltage, pid.current_output_signal-pid.max_voltage)
             # test integrator part - first let integrator saturate
-            pid.i = 100000
+            pid.i = 10000000
             pid.p = 0
             assert pid.current_output_signal >= pid.max_voltage, pid.current_output_signal
             # now pause the i-gain and assert that output is unchanged
