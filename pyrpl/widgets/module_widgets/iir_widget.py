@@ -13,8 +13,11 @@ class MyGraphicsWindow(pg.GraphicsWindow):
     def __init__(self, title, parent):
         super(MyGraphicsWindow, self).__init__(title)
         self.parent = parent
-        self.setToolTip("IIR transfer function: \n"
-                        "----------------------\n"
+        self.setToolTip("-----plot legend---------------\n"
+                        "yellow: theoretical IIR transfer function\n"
+                        "green: data curve\n"
+                        "red: inverse IIR transfer function /\n"
+                        "-----shortcuts-----------------\n"
                         "CTRL + Left click: add one more pole. \n"
                         "SHIFT + Left click: add one more zero\n"
                         "Left Click: select pole (other possibility: click on the '+j' labels below the graph)\n"
@@ -268,7 +271,7 @@ class IirWidget(ModuleWidget):
     @property
     def frequencies(self):
         try:
-            f = self.module._data_curve_object.data.index.values
+            f, _ = self.module._data_curve_object.data
         except AttributeError:
             # in case data_curve is None (no curve selected)
             return np.logspace(1, np.log10(5e6), 2000)
@@ -290,22 +293,23 @@ class IirWidget(ModuleWidget):
         tfargs = {}  # args to the call of iir.transfer_function
         frequencies = self.frequencies
         plot = OrderedDict()
-        # plot underlying curve data
+        # plot data curve (measurement)
         try:
-            plot['data'] = self.module._data_curve_object.data.values
+            _, plot['data'] = self.module._data_curve_object.data
         except AttributeError:  # no curve for plotting available
             plot['data'] = []
         # plot designed filter
-        plot['filter_design'] = self.module.transfer_function(frequencies,
-                                                                  **tfargs)
+        plot['filter_design'] = self.module.transfer_function(frequencies, **tfargs)
         # plot product
-        try:
-            plot['data_x_design'] = plot['data'] / plot['filter_design']
-        except ValueError:
+        plot['data_x_design'] = []
+        if self.module.plot_data_times_filter:
             try:
-                plot['data_x_design'] = 1.0 / plot['filter_design']
-            except:
-                plot['data_x_design'] = []
+                plot['data_x_design'] = plot['data'] * plot['filter_design']
+            except ValueError:
+                pass
+        # disable data plot if this is desired
+        if not self.module.plot_data:
+            plot['data'] = []
         # plot everything (all lines) up to here
         for k, v in plot.items():
             self.graph_widget.plots[k].setData(frequencies[:len(v)],
@@ -321,23 +325,30 @@ class IirWidget(ModuleWidget):
                 freq = getattr(self.module, key)
                 if start == 'complex':
                     freq = np.imag(freq)
+                    defsize = 15  # complex (double) PZ's are plotted with larger symbols
+                else:
+                    defsize = 10
                 freq = np.abs(freq)
                 tf = self.module.transfer_function(freq, **tfargs)
                 selected = aws[key].attribute_value.selected
-                brush = [pg.mkBrush(color='b')
+                brush = [pg.mkBrush(color='m')
                          if (num == selected)
                          else pg.mkBrush(color='y')
                          for num in range(aws[key].number)]
-                mag += [{'pos': (fr, val), 'data': i, 'brush': br}
-                 for (i, (fr, val, br))
+                size = [defsize*1.0 if (num == selected) else defsize
+                         for num in range(aws[key].number)]
+                mag += [{'pos': (fr, val), 'data': i, 'brush': br, 'size': si}
+                 for (i, (fr, val, br, si))
                  in enumerate(zip(list(np.log10(freq)),
                                   list(self._magnitude(tf)),
-                                  brush))]
-                phase += [{'pos': (fr, val), 'data': i, 'brush': br}
-                 for (i, (fr, val, br))
+                                  brush,
+                                  size))]
+                phase += [{'pos': (fr, val), 'data': i, 'brush': br, 'size': si}
+                 for (i, (fr, val, br, si))
                  in enumerate(zip(list(np.log10(freq)),
                                   list(self._phase(tf)),
-                                  brush))]
+                                  brush,
+                                  size))]
             self.graph_widget.plots[end].setPoints(mag)
             self.graph_widget.plots[end+'_phase'].setPoints(phase)
 

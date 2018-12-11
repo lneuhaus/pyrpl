@@ -391,12 +391,12 @@ class BasePropertyListPropertyWidget(BaseAttributeWidget):
         self.widget_layout.removeWidget(widget)
         widget.deleteLater()
         self.update_widget_names()
-        self.module._logger.error('delitem concluded')
+        self.module._logger.debug('delitem concluded')
 
     def select(self, index):
         for i, widget in enumerate(self.widgets):
             if i == index:
-                widget.setStyleSheet("background-color: yellow")
+                widget.setStyleSheet("background-color: green")
                 widget.setFocus()
             else:
                 widget.setStyleSheet("")

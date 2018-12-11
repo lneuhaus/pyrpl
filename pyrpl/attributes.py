@@ -134,7 +134,7 @@ class BaseProperty(BaseAttribute):
                 self.save_attribute(module, value)
         if self.call_setup and not module._setup_ongoing:
             # call setup unless a bunch of attributes are being changed together.
-            module._logger.info('Calling setup() for %s.%s ...', module.name, self.name)
+            module._logger.debug('Calling setup() for %s.%s ...', module.name, self.name)
             module.setup()
         return value
 
@@ -157,7 +157,7 @@ class BaseProperty(BaseAttribute):
                 [new_value]+appendix)
         except AttributeError as e:  # occurs if nothing is connected (TODO:
             # remove this)
-            module._logger.error("Erro in launch_signal of %s: %s",
+            module._logger.error("Error in launch_signal of %s: %s",
                                  module.name, e)
 
     def save_attribute(self, module, value):
@@ -1043,7 +1043,7 @@ class BasePropertyListProperty(BaseProperty):
             self.call_setup = call_setup
 
     def list_changed(self, module, operation, index, value=None):
-        if operation == 'selecti':
+        if operation == 'select':
             # only launch signal in this case, do not call setup
             # value can be None in this case, as it is not used
             if value is None:
@@ -1535,5 +1535,3 @@ class DataProperty(BaseProperty):
     Property for a dataset (real or complex), that can be plotted.
     """
     _widget_class = DataAttributeWidget
-
-

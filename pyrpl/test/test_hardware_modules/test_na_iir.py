@@ -23,9 +23,7 @@ class TestIir(TestPyrpl):
     def test_pz_interface(self):
         """ tests that poles and real/comples_poles remain sync'ed"""
         iir = self.pyrpl.rp.iir
-        p = iir.poles = [-1000j-2032, -34343j-3424, -1221, -43254.4]
-        rp = iir.real_poles
-        cp = iir.complex_poles
+        iir.poles = [-1000j-2032, -34343j-3424, -1221, -43254.4]
         assert iir.real_poles == [-1221, -43254.4], iir.real_poles
         assert iir.complex_poles == [1000j-2032, 34343j-3424], \
             iir.complex_poles  # attention: imaginary part is positivized
@@ -38,9 +36,7 @@ class TestIir(TestPyrpl):
         assert iir.real_poles == []
         assert iir.complex_poles == []
 
-        p = iir.zeros = [-1000j - 2032, -34343j - 3424, -1221, -43254.4]
-        rp = iir.real_zeros
-        cp = iir.complex_zeros
+        iir.zeros = [-1000j - 2032, -34343j - 3424, -1221, -43254.4]
         assert iir.real_zeros  == [-1221, -43254.4], iir.real_zeros
         assert iir.complex_zeros  == [1000j - 2032, 34343j - 3424], \
             iir.complex_zeros  # attention: imaginary part is positivized

@@ -3,7 +3,7 @@ from .. import FilterModule
 from ...attributes import IntRegister, BoolRegister, ComplexProperty, \
     FloatProperty, StringProperty, CurveSelectProperty, \
     GainRegister, ConstantIntRegister, FloatAttributeListProperty, \
-    ComplexAttributeListProperty
+    ComplexAttributeListProperty, BoolProperty
 from ...widgets.module_widgets import IirWidget
 from ...modules import SignalLauncher
 
@@ -119,7 +119,7 @@ class IirFloatListProperty(FloatAttributeListProperty):
         return val
 
     def list_changed(self, module, operation, index, value=None):
-        """ make sure that an element from one of the four lists is selected at once"""
+        """ make sure that only one element from one of the four lists is selected at once"""
         if operation == 'select':
             # unselect all others
             if not hasattr(module, '_selecting') or not getattr(module, '_selecting'):
@@ -128,15 +128,13 @@ class IirFloatListProperty(FloatAttributeListProperty):
                     for name in [start+'_'+end for start in ['real', 'complex'] for end in ['poles', 'zeros']]:
                         if name != self.name:
                             getattr(module, name).selected = None
-                            module._logger.info('%s.selected = None', name)
+                            module._logger.debug('%s.selected = None', name)
                     setattr(module, '_selected_pole_or_zero', self.name)
                     setattr(module, '_selected_index', index)
                 finally:
                     setattr(module, '_selecting', False)
-                super(IirFloatListProperty, self).list_changed(module, operation, index, value=value)
                 module._signal_launcher.update_plot.emit()
-        else:
-            super(IirFloatListProperty, self).list_changed(module, operation, index, value=value)
+        super(IirFloatListProperty, self).list_changed(module, operation, index, value=value)
 
 
 class IirComplexListProperty(IirFloatListProperty,
@@ -207,7 +205,9 @@ class IIR(FilterModule):
                          "gain",
                          "on",
                          "bypass",
-                         "data_curve"]
+                         "data_curve",
+                         "plot_data",
+                         "plot_data_times_filter"]
 
     _gui_attributes = ["input",
                        "loops",
@@ -223,8 +223,10 @@ class IIR(FilterModule):
                        "overflow",
                        "data_curve",
                        # for debugging
-                       #"_setup_unity",
-                       #"_setup_zero"
+                       "_setup_unity",
+                       "_setup_zero",
+                       "plot_data",
+                       "plot_data_times_filter"
                        ]
 
     loops = IntRegister(0x100,
@@ -269,10 +271,6 @@ class IIR(FilterModule):
                          call_setup=True
                          )
 
-    # obsolete
-    # copydata = BoolRegister(0x104, 2,
-    #            doc="If True: coefficients are being copied from memory")
-
     overflow_bitfield = IntRegister(0x108,
                                     doc="Bitmask for various overflow conditions")
 
@@ -284,6 +282,8 @@ class IIR(FilterModule):
                                      no_curve_first=True,
                                      call_setup=True,
                                      default=-1)
+    plot_data = BoolProperty(default=True, call_setup=True, doc="Enables plotting the selected data_curve. ")
+    plot_data_times_filter = BoolProperty(default=True, call_setup=True, doc="Enables plotting the product of selected data_curve and iir filter. ")
 
     @property
     def output_saturation(self):
@@ -453,7 +453,7 @@ class IIR(FilterModule):
             # write to the coefficients register
             self.coefficients = self.iirfilter.coefficients
             self._logger.debug("Filter sampling frequency is %.3s MHz",
-                              1e-6 / self.sampling_time)
+                              self.sampling_frequency*1e-6)
             # low-pass filter the input signal with a first order filter with
             # cutoff near the sampling rate - decreases aliasing and achieves
             # higher internal data precision (3 extra bits) through averaging
@@ -496,6 +496,48 @@ class IIR(FilterModule):
     @property
     def sampling_time(self):
         return 8e-9 / self._frequency_correction * self.loops
+
+    @property
+    def sampling_frequency(self):
+        return 1.0/self.sampling_time
+
+    def select_pole_or_zero(self,
+                            value,
+                            logdist=True,
+                            search_in=[start+'_'+end
+                                       for start in ['real', 'complex']
+                                       for end in ['poles', 'zeros']]):
+        """
+        selects the pole or zero closest to value
+
+        logdist=True computes the distance in logarithmic units
+        search_in may be used to restrict the search to certain sublists
+        """
+        mindist = None
+        for name in search_in:
+            for element in getattr(self, name):
+                if name.startswith('complex'):
+                    # complex values are ordered by their imaginary part
+                    elementvalue = element.imag
+                else:
+                    elementvalue = element
+                if logdist:
+                    dist = abs(abs(value)/abs(elementvalue))
+                    if dist < 1.0:
+                        dist = 1.0/dist
+                else:
+                    dist = abs(abs(value)-abs(elementvalue))
+                # extract element with minimum distance
+                if mindist is None or dist < mindist:
+                    mindist = dist
+                    bestmatch = element
+                    bestname = name
+        if mindist is None:
+            # nothing found, select nothing
+            self.complex_poles.selected = None
+        else:
+            getattr(self, bestname).select(bestmatch)
+
 
     ### this function is pretty much obsolete now. use self.iirfilter.tf_...
     def transfer_function(self, frequencies, extradelay=0, kind='final'):
@@ -581,37 +623,3 @@ class IIR(FilterModule):
         # tf *= np.exp(-1j*delay*frequencies*2*np.pi)
         return tf
 
-    def select_pole_or_zero(self, value, logdist=True,
-                            search_in=[start+'_'+end
-                                       for start in ['real', 'complex']
-                                       for end in ['poles', 'zeros']]):
-        """
-        selects the pole or zero closest to value
-
-        logdist=True computes the distance in logarithmic units
-        search_in may be used to restrict the search to certain sublists
-        """
-        mindist = None
-        for name in search_in:
-            for element in getattr(self, name):
-                if name.startswith('complex'):
-                    # complex values are ordered by their imaginary part
-                    elementvalue = element.imag
-                else:
-                    elementvalue = element
-                if logdist:
-                    dist = abs(abs(value)/abs(elementvalue))
-                    if dist < 1.0:
-                        dist = 1.0/dist
-                else:
-                    dist = abs(abs(value)-abs(elementvalue))
-                # extract element with minimum distance
-                if mindist is None or dist < mindist:
-                    mindist = dist
-                    bestmatch = element
-                    bestname = name
-        if mindist is None:
-            # nothing found, select nothing
-            self.complex_poles.selected = None
-        else:
-            getattr(self, bestname).select(bestmatch)
