@@ -368,12 +368,11 @@ class TestPidNaIq(TestPyrpl):
         tests the differential pid feature of pid0 and pid1
         """
         rp = self.pyrpl.rp
-        pid0, pid1 = rp.pid0, rp.pid1
-        return
+        pid0, pid1, pid2 = rp.pid0, rp.pid1, rp.pid2
         for pid in [pid0, pid1]:
             # we start with all gains off and ival reset, so the output should be 0
             pid.setup(
-                input='off',
+                input='pid2',
                 output_direct='off',
                 setpoint=-0.5,
                 p=0,
@@ -422,7 +421,7 @@ class TestPidNaIq(TestPyrpl):
             pid.setup(
                 input='off',
                 output_direct='off',
-                setpoint=-0.5,
+                setpoint=-1,
                 p=0,
                 i=0,
                 inputfilter=0,
@@ -433,7 +432,7 @@ class TestPidNaIq(TestPyrpl):
             pid.ival = 0
             assert pid.current_output_signal == 0.0, pid.current_output_signal
             # test p settings
-            pid.p=100  # large p-gain should cause saturation
+            pid.p=1000  # large p-gain should cause saturation
             # now pause the p-gain and assert that output is zero
             pid.pause_gains ='p'
             pid.paused = True

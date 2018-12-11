@@ -310,8 +310,11 @@ end
 //PID
 
 wire [14-1:0] diff_input_signal [3-1:0];
-assign diff_input_signal[0] = input_signal[1]; // difference input of PID0 is PID1
-assign diff_input_signal[1] = input_signal[0]; // difference input of PID1 is PID0
+wire [14-1:0] diff_output_signal [3-1:0];
+//assign diff_input_signal[0] = input_signal[1]; // difference input of PID0 is PID1
+//assign diff_input_signal[1] = input_signal[0]; // difference input of PID1 is PID0
+assign diff_input_signal[0] = diff_output_signal[1]; // difference input of PID0 is PID1
+assign diff_input_signal[1] = diff_output_signal[0]; // difference input of PID1 is PID0
 assign diff_input_signal[2] = {14{1'b0}};      // difference input of PID2 is zero
 
 generate for (j = 0; j < 3; j = j+1) begin
@@ -323,6 +326,7 @@ generate for (j = 0; j < 3; j = j+1) begin
      .dat_i        (  input_signal [j] ),  // input data
      .dat_o        (  output_direct[j]),  // output data
 	 .diff_dat_i   (  diff_input_signal[j] ),  // input data for differential mode
+	 .diff_dat_o   (  diff_output_signal[j] ),  // output data for differential mode
 
 	 //communincation with PS
 	 .addr ( sys_addr[16-1:0] ),

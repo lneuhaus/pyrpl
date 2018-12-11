@@ -85,6 +85,7 @@ module red_pitaya_pid_block #(
    input      [ 14-1: 0] dat_i           ,  // input data
    output     [ 14-1: 0] dat_o           ,  // output data
    input      [ 14-1: 0] diff_dat_i      ,  // input data for differential mode
+   output     [ 14-1: 0] diff_dat_o      ,  // input data for differential mode
 
    // communication with PS
    input      [ 16-1: 0] addr,
@@ -205,6 +206,8 @@ always @(posedge clk_i) begin
    end
 end
 
+// send filtered signal to other pid module for differential processing
+assign diff_dat_o = dat_i_filtered;
 
 //---------------------------------------------------------------------------------
 //  Proportional part - 1 cycle delay

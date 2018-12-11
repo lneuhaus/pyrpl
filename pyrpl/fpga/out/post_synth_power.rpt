@@ -1,7 +1,7 @@
 Copyright 1986-2015 Xilinx, Inc. All Rights Reserved.
 ----------------------------------------------------------------------------------------
 | Tool Version     : Vivado v.2015.4 (lin64) Build 1412921 Wed Nov 18 09:44:32 MST 2015
-| Date             : Mon Dec 10 23:05:20 2018
+| Date             : Tue Dec 11 02:17:54 2018
 | Host             : LPC running 64-bit Ubuntu 16.04.4 LTS
 | Command          : report_power -file out/post_synth_power.rpt
 | Design           : red_pitaya_top
@@ -173,7 +173,7 @@ Table of Contents
 |     ch[0]                                                                        |     0.025 |
 |     ch[1]                                                                        |     0.025 |
 |     prng                                                                         |     0.002 |
-|   i_dsp                                                                          |     0.333 |
+|   i_dsp                                                                          |     0.332 |
 |     dac_saturate[0]                                                              |    <0.001 |
 |     dac_saturate[1]                                                              |    <0.001 |
 |     genblk2[0].i_pid                                                             |     0.024 |
