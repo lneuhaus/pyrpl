@@ -22,7 +22,6 @@ else:
     set_event_loop(quamash.QEventLoop())
 
 
-
 class MainThreadTimer(QtCore.QTimer):
     """
     To be able to start a timer from any (eventually non Qt) thread,
@@ -120,11 +119,9 @@ class PyrplFuture(Future):
     """
 
     def __init__(self):
-        if sys.version.startswith('3.7'):
-
+        if sys.version.startswith('3.7') or sys.version.startswith('3.6'):
             super(PyrplFuture, self).__init__(loop=LOOP) # Necessary
-            # otherwise
-            # The Future will never be executed...
+            # otherwise The Future will never be executed...
         else: # python 2.7, 3.5,3.6
             super(PyrplFuture, self).__init__()
         self._timer_timeout = None  # timer that will be instantiated if
