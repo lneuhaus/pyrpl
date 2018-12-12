@@ -1,6 +1,7 @@
 from qtpy import QtCore, QtWidgets, QtGui
 import numpy as np
 import time
+import logging
 
 import sys
 if sys.version_info < (3,):
@@ -62,12 +63,19 @@ class NumberSpinBox(QtWidgets.QWidget):
         :param per_second: when button is in lin, how long to change the value by 1 unit.
         """
         super(NumberSpinBox, self).__init__(None)
+        self._logger = logging.getLogger(name=__name__)
         self._val = 0  # internal storage for value with best-possible accuracy
         self.labeltext = label
-        self.log_increment = log_increment
+        try:
+            self.log_increment = log_increment
+        except AttributeError:
+            self._log_increment = log_increment  # for ComplexSpinbox
         self.minimum = min  # imitates original QSpinBox API
         self.maximum = max  # imitates original QSpinBox API
-        self.halflife_seconds = halflife_seconds
+        try:
+            self.halflife_seconds = halflife_seconds
+        except AttributeError:
+            self._halflife_seconds = halflife_seconds  # for ComplexSpinbox
         self.per_second = per_second
         self.singleStep = increment
         self.change_timer = QtCore.QTimer()
@@ -78,6 +86,9 @@ class NumberSpinBox(QtWidgets.QWidget):
         self.update_tooltip()
         self.set_min_size()
         self.val = 0
+        self.set_halflife_seconds(self.halflife_seconds)
+        self.set_per_second(self.per_second)
+        self.setSingleStep(self.singleStep)
 
     def make_layout(self):
         self.lay = QtWidgets.QHBoxLayout()
@@ -113,13 +124,32 @@ class NumberSpinBox(QtWidgets.QWidget):
     def keyPressEvent(self, event):
         if not event.isAutoRepeat():
             if event.key() in [QtCore.Qt.Key_Up, QtCore.Qt.Key_Right]:
+                # ordinary value increment
                 self._button_up_down = True
                 self._button_down_down = False  # avoids going left & right
                 self.first_step()
             elif event.key() in [QtCore.Qt.Key_Down, QtCore.Qt.Key_Left]:
+                # ordinary value decrement
                 self._button_down_down = True
                 self._button_up_down = False  # avoids going left & right
                 self.first_step()
+            elif event.key() in [QtCore.Qt.Key_PageUp, QtCore.Qt.Key_PageDown]:
+                # PageUp increases increment by a factor of 10
+                if event.key() in [QtCore.Qt.Key_PageUp]:\
+                    factor = 2
+                elif event.key() in [QtCore.Qt.Key_PageDown]:
+                    factor = 0.5
+                else:
+                    raise Exception("Unclear KeyPressEvent")
+                if self.log_increment:
+                    self.set_halflife_seconds(self.halflife_seconds/factor)
+                    self._logger.info("Spinbox inverse halflife changed to %.2e Hz.",
+                                      1./self.halflife_seconds)
+                else:
+                    self.set_per_second(self.per_second*factor)
+                    self._logger.info("Spinbox tuning rate changed to %.2e Hz.",
+                                      self.per_second)
+                self.update_tooltip()
             else:
                 return super(NumberSpinBox, self).keyPressEvent(event)
 
@@ -133,6 +163,16 @@ class NumberSpinBox(QtWidgets.QWidget):
                 self.finish_step()
             else:
                 return super(NumberSpinBox, self).keyReleaseEvent(event)
+
+    def mousePressEvent(self, event):
+        if event.button() == QtCore.Qt.RightButton:
+            pass  # no functionality so far
+            # right button opens context menu for setting scanning speed etc.
+            #res, okPressed = QtWidgets.QInputDialog.getDouble(self.widget.parent, "Pyrpl GUI settings", "Scanning speed", 5)
+            #if okPressed:
+            #    self.module._logger.warning("Number: %d", res)
+        #else:
+        return super(NumberSpinBox, self).mousePressEvent(event)
 
     @property
     def is_increasing(self):
@@ -199,7 +239,11 @@ class NumberSpinBox(QtWidgets.QWidget):
         """
         string = "Increment is %.5e\nmin value: %.1e\nmax value: %.1e\n"\
                  %(self.singleStep, self.minimum, self.maximum)
-        string += "Press up/down to tune." #  or mouse wheel
+        if self.log_increment:
+            string += "Tuning speed (1/halflife): %.1e Hz.\n" % (1.0/self.halflife_seconds)
+        else:
+            string += "Tuning speed (linear): %.1e Hz.\n" % self.per_second
+        string += "Press up/down to tune.\nPress Page up/Page down to modify tuning speed." #  or mouse wheel
         self.setToolTip(string)
 
     def setDecimals(self, val):
@@ -234,6 +278,9 @@ class NumberSpinBox(QtWidgets.QWidget):
 
     def set_per_second(self, val):
         self.per_second = val
+
+    def set_halflife_seconds(self, val):
+        self.halflife_seconds = val
 
     def setValue(self, val):  # imitates original QSpinBox API
         """ replace this function with something useful in derived classes """
@@ -411,19 +458,19 @@ class ComplexSpinBox(FloatSpinBox):
                                  min=self.minimum,
                                  max=self.maximum,
                                  increment=self.singleStep,
-                                 log_increment=self.log_increment,
-                                 halflife_seconds=self.halflife_seconds,
+                                 log_increment=self._log_increment,
+                                 halflife_seconds=self._halflife_seconds,
                                  decimals=self.decimals)
         self.imag = FloatSpinBox(label=self.labeltext,
                                  min=self.minimum,
                                  max=self.maximum,
                                  increment=self.singleStep,
-                                 log_increment=self.log_increment,
-                                 halflife_seconds=self.halflife_seconds,
+                                 log_increment=self._log_increment,
+                                 halflife_seconds=self._halflife_seconds,
                                  decimals=self.decimals)
         self.real.value_changed.connect(self.value_changed)
         self.lay.addWidget(self.real)
-        self.label = QtWidgets.QLabel(" + j")
+        self.label = QtWidgets.QLabel("+j")
         self.lay.addWidget(self.label)
         self.imag.value_changed.connect(self.value_changed)
         self.lay.addWidget(self.imag)
@@ -443,14 +490,18 @@ class ComplexSpinBox(FloatSpinBox):
     def keyPressEvent(self, event):
         if event.key() in [QtCore.Qt.Key_Right, QtCore.Qt.Key_Left]:
             return self.imag.keyPressEvent(event)
-        else:
+        elif event.key() in [QtCore.Qt.Key_Up, QtCore.Qt.Key_Down]:
             return self.real.keyPressEvent(event)
+        else:
+            return super(ComplexSpinBox, self).keyPressEvent(event)
 
     def keyReleaseEvent(self, event):
         if event.key() in [QtCore.Qt.Key_Right, QtCore.Qt.Key_Left]:
             return self.imag.keyReleaseEvent(event)
-        else:
+        elif event.key() in [QtCore.Qt.Key_Up, QtCore.Qt.Key_Down]:
             return self.real.keyReleaseEvent(event)
+        else:
+            return super(ComplexSpinBox, self).keyReleaseEvent(event)
 
     def wheelEvent(self, event):
         return self.imag.wheelEvent(event)
@@ -479,6 +530,16 @@ class ComplexSpinBox(FloatSpinBox):
         self.real.set_per_second(*args, **kwargs)
         return self.imag.set_per_second(*args, **kwargs)
 
+    def set_halflife_seconds(self, *args, **kwargs):
+        self.real.set_halflife_seconds(*args, **kwargs)
+        #return self.imag.set_halflife_seconds(*args, **kwargs)
+        self.imag.set_halflife_seconds(*args, **kwargs)
+        self._logger.info("bla")
+
+    @property
+    def halflife_seconds(self):
+        return self.imag.halflife_seconds
+
     def setMaximum(self, *args, **kwargs):
         self.real.setMaximum(*args, **kwargs)
         return self.imag.setMaximum(*args, **kwargs)
@@ -496,3 +557,7 @@ class ComplexSpinBox(FloatSpinBox):
         self.imag.set_log_increment(*args, **kwargs)
         self.imag.up.setText(u'\u2192')  # right arrow unicode symbol
         self.imag.down.setText(u'\u2190')  # left arrow unicode symbol
+
+    @property
+    def log_increment(self):
+        return self.imag.log_increment

@@ -267,7 +267,7 @@ class ListElementWidget(BaseAttributeWidget):
         self.set_horizontal()
         self.button_remove = QtWidgets.QPushButton('-')
         self.button_remove.clicked.connect(self.remove_this_element)
-        self.button_remove.setFixedWidth(3 * 10)
+        self.button_remove.setFixedWidth(2 * 10)
         self.layout.addWidget(self.button_remove, 0) # stretch=0
         self.layout.addStretch(1)
         # this is very nice for debugging, but should probably be removed later
@@ -292,7 +292,11 @@ class ListElementWidget(BaseAttributeWidget):
         getattr(self.module, self.attribute_name)[self.index] = v
 
     def mousePressEvent(self, event):
-        self.parent.attribute_value.selected = self.index
+        if event.button() == QtCore.Qt.LeftButton:
+            # left button selects the item
+            self.parent.attribute_value.selected = self.index
+        elif event.button() == QtCore.Qt.RightButton:
+            pass  # no functionality so far
         return super(ListElementWidget, self).mousePressEvent(event)
 
     def focusInEvent(self, QFocusEvent):

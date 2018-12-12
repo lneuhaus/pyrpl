@@ -23,7 +23,7 @@ class MyGraphicsWindow(pg.GraphicsWindow):
                         "Left Click: select pole (other possibility: click on the '+j' labels below the graph)\n"
                         "Left/Right arrows: change imaginary part (frequency) of the current pole or zero\n"
                         "Up/Down arrows; change the real part (width) of the current pole or zero. \n"
-                        "Poles are represented by 'X', zeros by 'O'")
+                        "Poles are represented by 'X', zeros by 'O', complex one have larger symbols than real ones.")
         self.doubleclicked = False
         #APP.setDoubleClickInterval(300)  # default value (550) is fine
         self.mouse_clicked_timer = QtCore.QTimer()
