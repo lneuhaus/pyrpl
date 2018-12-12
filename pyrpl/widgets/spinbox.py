@@ -532,9 +532,7 @@ class ComplexSpinBox(FloatSpinBox):
 
     def set_halflife_seconds(self, *args, **kwargs):
         self.real.set_halflife_seconds(*args, **kwargs)
-        #return self.imag.set_halflife_seconds(*args, **kwargs)
-        self.imag.set_halflife_seconds(*args, **kwargs)
-        self._logger.info("bla")
+        return self.imag.set_halflife_seconds(*args, **kwargs)
 
     @property
     def halflife_seconds(self):

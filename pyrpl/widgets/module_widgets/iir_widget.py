@@ -126,7 +126,7 @@ class IirGraphWidget(QtWidgets.QGroupBox):
         # we will plot the following curves:
         # poles, zeros -> large dots and crosses
         # design (designed filter) - yellow line
-        # measured filter with na - orange dots <-
+        # measured filter with na - orange dots
         # data (measruement data) - green line
         # data x design (or data/design) - red line
         self.plots = OrderedDict()
@@ -139,18 +139,18 @@ class IirGraphWidget(QtWidgets.QGroupBox):
             self.plots[name].setLogMode(xMode=self.xlog, yMode=None)
             self.plots[name + '_phase'].setLogMode(xMode=self.xlog, yMode=None)
 
-        for name, style in [('filter_measurement', dict(symbol='o',
-                                                 size=10,
-                                                 pen='b')),
+        for name, style in [('filter_measurement', dict(pen=pg.mkPen(None),
+                                                        symbol='o',
+                                                        size=5,
+                                                        brush=pg.mkBrush(255, 165, 0, 120))),
                             ('zeros', dict(pen=pg.mkPen(None),
                                            symbol='o',
                                            size=10,
                                            brush=pg.mkBrush(255, 0, 255, 120))),
-                            ('poles', dict(size=15,
+                            ('poles', dict(pen=pg.mkPen(None),
                                            symbol='x',
-                                           pen=pg.mkPen(None),
-                                           brush=pg.mkBrush(255, 0, 255,
-                                                            120))),
+                                           size=10,
+                                           brush=pg.mkBrush(255, 0, 255, 120))),
                             # ('actpole', dict(size=30,
                             #                symbol='x',
                             #                pen='r',
@@ -182,7 +182,7 @@ class IirGraphWidget(QtWidgets.QGroupBox):
 
 
 class IirButtonWidget(QtWidgets.QGroupBox):
-    BUTTONWIDTH = 100
+    BUTTONWIDTH = 120
 
     def __init__(self, parent):
         # buttons and standard attributes
@@ -200,7 +200,7 @@ class IirButtonWidget(QtWidgets.QGroupBox):
             widget.setFixedWidth(self.BUTTONWIDTH)
             self.layout.addWidget(widget)
 
-        self.setFixedWidth(self.BUTTONWIDTH+50)
+        self.setFixedWidth(self.BUTTONWIDTH+30)
 
 
 class IirBottomWidget(QtWidgets.QGroupBox):
@@ -351,6 +351,11 @@ class IirWidget(ModuleWidget):
                                   size))]
             self.graph_widget.plots[end].setPoints(mag)
             self.graph_widget.plots[end+'_phase'].setPoints(phase)
+        # plot the measurement data if desired
+        if self.module.plot_measurement and hasattr(self.module, '_measurement_data'):
+            f, v = self.module._measurement_data
+            self.graph_widget.plots['filter_measurement'].setData(f, self._magnitude(v))
+            self.graph_widget.plots['filter_measurement_phase'].setData(f, self._phase(v))
 
     def keyPressEvent(self, event):
         """ not working properly yet"""

@@ -222,11 +222,14 @@ class IIR(FilterModule):
                        "bypass",
                        "overflow",
                        "data_curve",
-                       # for debugging
-                       "_setup_unity",
-                       "_setup_zero",
+                       "data_curve_name",
                        "plot_data",
-                       "plot_data_times_filter"
+                       "plot_data_times_filter",
+                       "plot_measurement",
+                       "measure_transfer_function",
+                       # for debugging
+                       # "_setup_unity",
+                       # "_setup_zero",
                        ]
 
     loops = IntRegister(0x100,
@@ -282,8 +285,14 @@ class IIR(FilterModule):
                                      no_curve_first=True,
                                      call_setup=True,
                                      default=-1)
+
+    data_curve_name = StringProperty(doc="Name of the selected data curve. ")
+
     plot_data = BoolProperty(default=True, call_setup=True, doc="Enables plotting the selected data_curve. ")
+
     plot_data_times_filter = BoolProperty(default=True, call_setup=True, doc="Enables plotting the product of selected data_curve and iir filter. ")
+
+    plot_measurement = BoolProperty(default=True, call_setup=True, doc="Enables plotting the measured transfer function. ")
 
     @property
     def output_saturation(self):
@@ -394,6 +403,37 @@ class IIR(FilterModule):
         data = [int(d) for d in data]
         self._writes(0x8000, data)
         self._writtendata = data
+
+    def measure_transfer_function(self):
+        self._logger.info("Starting NA acquisition. To modify measurement "
+                          "parameters, change the state \"iir_measurement\" "
+                          "of the NA. ")
+        with self.pyrpl.networkanalyzer as na:
+            try:
+                na.load_state('iir_measurement')
+            except KeyError:
+                na.setup(start_freq=1e3,
+                         stop_freq=1e6,
+                         points=101,
+                         rbw=1000,
+                         avg_per_point=1,
+                         trace_average=1,
+                         amplitude=0.1,
+                         input=self,
+                         output_direct='off',
+                         acbandwidth=100,
+                         logscale=True)
+                na.save_state("iir_measurement")
+            former_input = self.input
+            try:
+                # set input to be the NA output and take the data
+                self.input = na
+                self._measurement_data = na.single()
+            finally:
+                self.input = former_input
+        self._logger.info("NA acquisition finished.")
+        # re-plot
+        self._signal_launcher.update_plot.emit()
 
     def _setup_unity(self):
         """sets the IIR filter transfer function unity"""
