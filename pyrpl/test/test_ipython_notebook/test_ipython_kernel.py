@@ -9,6 +9,8 @@ Usage: `ipnbdoctest.py foo.ipynb [bar.ipynb [...]]`
 from glob import glob
 import os
 import sys
+from ...redpitaya import defaultparameters
+import os
 
 import nbformat
 from nbconvert.preprocessors import ExecutePreprocessor
@@ -40,6 +42,11 @@ def _notebook_run(path):
         raise e
 
   return nb, errors
+
+# If redpitaya was selected from a list, adds it as an environment variable
+# for the notebook to retieve it
+if not 'REDPITAYA_HOSTNAME' in os.environ:
+  os.environ['REDPITAYA_HOSTNAME'] = defaultparameters["hostname"]
 
 for notebook in glob(NOTEBOOK_DIR + "/*.ipynb"):
     nb, errors = _notebook_run(notebook)
