@@ -412,13 +412,15 @@ class IIR(FilterModule):
             try:
                 na.load_state('iir_measurement')
             except KeyError:
-                na.setup(start_freq=1e3,
-                         stop_freq=1e6,
-                         points=101,
-                         rbw=1000,
+                freqs = self._module_widget.frequencies
+                mi, ma = min(freqs), max(freqs)
+                na.setup(start_freq=mi,
+                         stop_freq=ma,
+                         points=501,
+                         rbw=500,
                          avg_per_point=1,
                          trace_average=1,
-                         amplitude=0.1,
+                         amplitude=0.005,
                          input=self,
                          output_direct='off',
                          acbandwidth=100,
@@ -428,7 +430,8 @@ class IIR(FilterModule):
             try:
                 # set input to be the NA output and take the data
                 self.input = na
-                self._measurement_data = na.single()
+                data = na.single()
+                self._measurement_data = na.frequencies, data
             finally:
                 self.input = former_input
         self._logger.info("NA acquisition finished.")
@@ -532,6 +535,9 @@ class IIR(FilterModule):
                 self._logger.debug("IIR Overflow pattern: %s",
                                    bin(self.overflow_bitfield))
             self._signal_launcher.update_plot.emit()
+            # update curve name
+            try: self.data_curve_name = self._data_curve_object.name
+            except AttributeError: pass
 
     @property
     def sampling_time(self):

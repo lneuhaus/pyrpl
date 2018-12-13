@@ -130,19 +130,12 @@ class IirGraphWidget(QtWidgets.QGroupBox):
         # data (measruement data) - green line
         # data x design (or data/design) - red line
         self.plots = OrderedDict()
-        # make lines
-        for name, style in [('data', dict(pen='g')),
-                            ('filter_design', dict(pen='y')),
-                            ('data_x_design', dict(pen='r'))]:
-            self.plots[name] = self.mag.plot(**style)
-            self.plots[name + "_phase"] = self.phase.plot(**style)
-            self.plots[name].setLogMode(xMode=self.xlog, yMode=None)
-            self.plots[name + '_phase'].setLogMode(xMode=self.xlog, yMode=None)
 
+        # make scatterplot items
         for name, style in [('filter_measurement', dict(pen=pg.mkPen(None),
                                                         symbol='o',
                                                         size=5,
-                                                        brush=pg.mkBrush(255, 165, 0, 120))),
+                                                        brush=pg.mkBrush(255, 100, 0, 180))),
                             ('zeros', dict(pen=pg.mkPen(None),
                                            symbol='o',
                                            size=10,
@@ -168,6 +161,16 @@ class IirGraphWidget(QtWidgets.QGroupBox):
                 item = pg.ScatterPlotItem(**style)
                 self.phase.addItem(item)
                 self.plots[name+'_phase'] = item
+
+        # make lines
+        for name, style in [('data', dict(pen='g')),
+                            ('filter_design', dict(pen='y')),
+                            ('data_x_design', dict(pen='r'))]:
+            self.plots[name] = self.mag.plot(**style)
+            self.plots[name + "_phase"] = self.phase.plot(**style)
+            self.plots[name].setLogMode(xMode=self.xlog, yMode=None)
+            self.plots[name + '_phase'].setLogMode(xMode=self.xlog, yMode=None)
+
         # also set logscale for the xaxis
         # make scatter plots
         self.mag.setLogMode(x=self.xlog, y=None)
@@ -257,6 +260,10 @@ class IirWidget(ModuleWidget):
 
         # set colors of labels to the one of the corresponding traces
         self.attribute_widgets['data_curve'].setStyleSheet("color: green")
+        self.attribute_widgets['data_curve_name'].setStyleSheet("color: green")
+
+        # make curve_name read-only
+        self.attribute_widgets['data_curve_name'].widget.setReadOnly(True)
 
         self.update_plot()
 
@@ -354,8 +361,12 @@ class IirWidget(ModuleWidget):
         # plot the measurement data if desired
         if self.module.plot_measurement and hasattr(self.module, '_measurement_data'):
             f, v = self.module._measurement_data
-            self.graph_widget.plots['filter_measurement'].setData(f, self._magnitude(v))
-            self.graph_widget.plots['filter_measurement_phase'].setData(f, self._phase(v))
+            f[f<=0] = sys.float_info.epsilon
+            f = np.asarray(np.log10(f), dtype=float)
+            self.graph_widget.plots['filter_measurement'].setData(x=f[:len(v)],
+                                                                  y=self._magnitude(v))
+            self.graph_widget.plots['filter_measurement_phase'].setData(x=f[:len(v)],
+                                                                        y=self._phase(v))
 
     def keyPressEvent(self, event):
         """ not working properly yet"""
