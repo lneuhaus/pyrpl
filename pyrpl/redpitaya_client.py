@@ -28,6 +28,7 @@ except:
         print("Called sine(frequency=%f, duration=%f)" % (frequency, duration))
 from .hardware_modules.dsp import dsp_addr_base, DSP_INPUTS
 from .pyrpl_utils import time
+from .errors import ExpectedPyrplError
 
 # global conter to assign a number to each client
 # only used for debugging purposes
@@ -35,7 +36,9 @@ CLIENT_NUMBER = 0
 
 
 class MonitorClient(object):
-    def __init__(self, hostname="192.168.1.0", port=2222, restartserver=None):
+    TIMEOUT = 1.0
+
+    def __init__(self, hostname="192.168.1.0", port=2222, token="0"*32, restartserver=None):
         """initiates a client connected to monitor_server
 
         hostname: server address, e.g. "localhost" or "192.168.1.0"
@@ -52,6 +55,7 @@ class MonitorClient(object):
         self._restartserver = restartserver
         self._hostname = hostname
         self._port = port
+        self._token = token
         self._read_counter = 0 # For debugging and unittests
         self._write_counter = 0 # For debugging and unittests
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -74,10 +78,28 @@ class MonitorClient(object):
                 self.logger.warning("Socket error during connection "
                                     "attempt %s.", i)
                 # could try a different port here by putting port=-1
-                self._port = self._restartserver()
+                if self._restartserver is not None:
+                    self._port, self._token = self._restartserver()
+                else:
+                    raise
             else:
                 break
-        self.socket.settimeout(1.0)  # 1 second timeout for socket operations
+        self.socket.settimeout(self.TIMEOUT)
+        # send authentification token
+        assert len(self._token) == 32
+        self.socket.send(bytes(self._token, encoding='ASCII'))
+        # receive a confirmation token
+        data = self.socket.recv(32)
+        while (len(data) < 32):
+            data += self.socket.recv(32 - len(data))
+        data = str(data, encoding='ASCII')
+        if data != '1'*32:
+            raise ExpectedPyrplError("Wrong authentification token: %s != %s. this may mean "
+                                     "that another client has connected to your redpitaya. "
+                                     "Please try to reconnect by restarting Pyrpl. "
+                                     %(self._token, data))
+        else:
+            self.logger.debug("Coorect authentification token: %s / %s" %(self._token, data))
 
     def close(self):
         try:
@@ -112,9 +134,15 @@ class MonitorClient(object):
                                          length & 0xFF, (length >> 8) & 0xFF,
                                          addr & 0xFF, (addr >> 8) & 0xFF, (addr >> 16) & 0xFF, (addr >> 24) & 0xFF]))
         self.socket.send(header)
+        start = time()
         data = self.socket.recv(length * 4 + 8)
         while (len(data) < length * 4 + 8):
-            data += self.socket.recv(length * 4 - len(data) + 8)
+            result = self.socket.recv(length * 4 - len(data) + 8)
+            data += result
+            if len(result) == 0 and time()-start > self.TIMEOUT:
+                self.logger.error("Read timeout - incomplete data transmission: %s", data)
+                self.emptybuffer()
+                return None
         if data[:8] == header:  # check for in-sync transmission
             return np.frombuffer(data[8:], dtype=np.uint32)
         else:  # error handling
@@ -162,18 +190,21 @@ class MonitorClient(object):
                                      function.__name__,
                                      value,
                                      self.client_number))
-                if self._restartserver is not None:
-                    self.restart()
+                self.restart()
             else:
                 if value is not None:
                     return value
 
     def restart(self):
         self.close()
-        port = self._restartserver()
+        if self._restartserver is not None:
+            port, token = self._restartserver()
+        else:
+            port, token = self._port, self._token
         self.__init__(
             hostname=self._hostname,
             port=port,
+            token=token,
             restartserver=self._restartserver)
 
 

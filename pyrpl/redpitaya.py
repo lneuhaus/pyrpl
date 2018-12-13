@@ -34,6 +34,7 @@ import numpy as np
 from paramiko import SSHException
 from scp import SCPClient, SCPException
 from collections import OrderedDict
+from uuid import uuid1 as uid
 
 # input is the wrong function in python 2
 try:
@@ -50,8 +51,9 @@ defaultparameters = dict(
     password='root',
     delay=0.05,  # delay between ssh commands - console is too slow otherwise
     autostart=True,  # autostart the client?
-    reloadserver=False,  # reinstall the server at startup if not necessary?
+    reloadserver=True,  # reinstall the server at startup if not necessary?
     reloadfpga=True,  # reload the fpga bitfile at startup?
+    recompileserver=True,  # recompile the server source on the redpitaya when the server is re-installed?
     serverbinfilename='fpga.bin',  # name of the binfile on the server
     serverdirname = "//opt//pyrpl//",  # server directory for server app and bitfile
     leds_off=True,  # turn off all GPIO lets at startup (improves analog performance)
@@ -347,6 +349,40 @@ class RedPitaya(object):
             self.logger.debug("Found recent bitfile. Age: %s", age)
             return True
 
+    def newtoken(self):
+        """ generates, stores internally and returns a new (random) token for client authentification """
+        token = str(uid().hex)
+        self.parameters['token'] = token
+        return token
+
+    def recompileserver(self, targetfile='monitor_server'):
+        self.endserver()
+        sleep(self.parameters['delay'])
+        self.ssh.ask('rw')
+        sleep(self.parameters['delay'])
+        self.ssh.ask('mkdir ' + self.parameters['serverdirname'])
+        sleep(self.parameters['delay'])
+        self.ssh.ask("cd " + self.parameters['serverdirname'])
+        sleep(self.parameters['delay'])
+        self.ssh.ask("rm monitor_server")
+        sleep(self.parameters['delay'])
+        for uploadfile in ['monitor_server.c']:
+            try:
+                self.ssh.scp.put(
+                    os.path.join(os.path.abspath(os.path.dirname(__file__)), 'monitor_server', uploadfile),
+                    self.parameters['serverdirname'] + uploadfile)
+            except (SCPException, SSHException):
+                self.logger.exception("Upload error. Try again after rebooting your RedPitaya..")
+                raise
+        sleep(self.parameters['delay'])
+        #print(self.ssh.ask('make'))
+        self.ssh.ask('gcc monitor_server.c -o '+targetfile)
+        sleep(2)  # give the RP filesystem time to locat the new file before downloading it
+        self.ssh.ask('ll')
+        sleep(self.parameters['delay'])
+        self.ssh.scp.get(self.parameters['serverdirname'] + targetfile,
+                         os.path.join(os.path.abspath(os.path.dirname(__file__)), 'monitor_server', targetfile))
+
     def installserver(self):
         self.endserver()
         sleep(self.parameters['delay'])
@@ -355,6 +391,8 @@ class RedPitaya(object):
         self.ssh.ask('mkdir ' + self.parameters['serverdirname'])
         sleep(self.parameters['delay'])
         self.ssh.ask("cd " + self.parameters['serverdirname'])
+        if self.parameters['recompileserver']:
+            self.recompileserver()
         #try both versions
         for serverfile in ['monitor_server','monitor_server_0.95']:
             sleep(self.parameters['delay'])
@@ -368,13 +406,19 @@ class RedPitaya(object):
             self.ssh.ask('chmod 755 ./'+self.parameters['monitor_server_name'])
             sleep(self.parameters['delay'])
             self.ssh.ask('ro')
-            result = self.ssh.ask("./"+self.parameters['monitor_server_name']+" "+ str(self.parameters['port']))
+            result = self.ssh.ask("./"
+                                  +self.parameters['monitor_server_name']
+                                  +" "
+                                  + str(self.parameters['port'])
+                                  + " "
+                                  + self.newtoken()
+                                  )
             sleep(self.parameters['delay'])
             result += self.ssh.ask()
             if not "sh" in result: 
                 self.logger.debug("Server application started on port %d",
                               self.parameters['port'])
-                return self.parameters['port']
+                return self.parameters['port'], self.parameters['token']
             else: # means we tried the wrong binary version. make sure server is not running and try again with next file
                 self.endserver()
         
@@ -395,12 +439,12 @@ class RedPitaya(object):
                             "seconds.")
             sleep(2.0)
         result = self.ssh.ask(self.parameters['serverdirname']+"/"+self.parameters['monitor_server_name']
-                          +" "+ str(self.parameters['port']))
+                          +" "+ str(self.parameters['port'])+" "+ self.newtoken())
         if not "sh" in result: # sh in result means we tried the wrong binary version
             self.logger.debug("Server application started on port %d",
                               self.parameters['port'])
             self._serverrunning = True
-            return self.parameters['port']
+            return self.parameters['port'], self.parameters['token']
         #something went wrong
         return self.installserver()
     
@@ -443,14 +487,17 @@ class RedPitaya(object):
         self.end()
         self.start()
 
-    def restartserver(self, port=None):
-        """restart the server. usually executed when client encounters an error"""
-        if port is not None:
-            if port < 0: #code to try a random port
-                self.parameters['port'] = random.randint(2223,50000)
-            else:
-                self.parameters['port'] = port
-        return self.startserver()
+    # disable restartserver
+    restartserver = None
+    if False:
+        def restartserver(self, port=None):
+            """restart the server. usually executed when client encounters an error"""
+            if port is not None:
+                if port < 0: #code to try a random port
+                    self.parameters['port'] = random.randint(2223,50000)
+                else:
+                    self.parameters['port'] = port
+            return self.startserver()
 
     def license(self):
         self.logger.info("""\r\n    pyrpl  Copyright (C) 2014-2017 Leonhard Neuhaus
@@ -461,7 +508,10 @@ class RedPitaya(object):
 
     def startclient(self):
         self.client = redpitaya_client.MonitorClient(
-            self.parameters['hostname'], self.parameters['port'], restartserver=self.restartserver)
+            self.parameters['hostname'],
+            self.parameters['port'],
+            self.parameters['token'],
+            restartserver=self.restartserver)
         self.makemodules()
         self.logger.debug("Client started successfully. ")
 

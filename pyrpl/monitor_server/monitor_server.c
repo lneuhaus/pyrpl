@@ -13,8 +13,8 @@
  */
 /*
 ###############################################################################
-#    pyrplockbox - DSP servo controller for quantum optics with the RedPitaya
-#    Copyright (C) 2014-2016  Leonhard Neuhaus  (neuhaus@spectro.jussieu.fr)
+#    pyrpl - DSP servo controller for quantum optics with the RedPitaya
+#    Copyright (C) 2014-2018  Leonhard Neuhaus  (neuhaus@spectro.jussieu.fr)
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -32,25 +32,38 @@
  */
 
 
-
- 
 /* 
 Communication protocol for the data server:
 
 The program is launched on the redpitaya with 
 
-./monitor-server PORT-NUMBER, where the default port number is 2222.  
+./monitor-server PORT-NUMBER AUTH-TOKEN
 
-We allow for bidirectional data transfer. The client (python program) connects to the server, which in return accepts the connection. 
+where
+- the default port number is 2222, and
+- the 32-hex-characters auth-token is by default 32 times '0'.
+
+We allow for bidirectional data transfer. The client (python program) connects
+to the server, which in return accepts the connection. The server then forks
+such that one server process waits for new incoming connections and the other
+one executes the sequence detailed below. To make sure that the
+client connects to the right server, the client must initially send the
+32-character authentification token. It the wrong token was sent, the server
+closes the connection. If the right token was sent, the following protocol is
+executed indefinitely.
+
 The client sends 8 bytes of data:
-Byte 1 is interpreted as a character: 'r' for read and 'w' for write, and 'c' for close. All other messages are ignored. 
-Byte 2 is reserved. 
-Bytes 3+4 are interpreted as unsigned int. This number n is the amount of 4-byte-units to be read or written. Maximum is 2^16. 
-Bytes 5-8 are the start address to be written to. 
+- Byte 1 is interpreted as a character: 'r' for read and 'w' for write, and 'c' for close.
+  All other messages are ignored.
+- Byte 2 is reserved.
+- Bytes 3+4 are interpreted as unsigned int. This number n is the amount of 4-byte-units
+  to be read or written. The maximum is 2^16 blocks of 4 bytes each.
+- Bytes 5-8 are the start address to be written to or read from.
 
-If the command is read, the server will then send the requested 4*n bytes to the client. 
-If the command is write, the server will wait for 4*n bytes of data from the server and write them to the designated FPGA address space. 
-If the command is close, or if the connection is broken, the server program will terminate. 
+- If the command is read, the server will then send the requested 4*n bytes to the client.
+- If the command is write, the server will wait for 4*n bytes of data from the server and
+  write them to the designated FPGA address space.
+- If the command is close, or if the connection is broken, the server program will terminate.
 
 After this, the server will wait for the next command. 
 */
@@ -156,6 +169,7 @@ void error(const char *msg)
 int main(int argc, char *argv[])
 {
      int portno;
+     int pid;  // forked child process id
 	 unsigned int data_length;
 	 unsigned long address;
      socklen_t clilen;
@@ -163,21 +177,33 @@ int main(int argc, char *argv[])
      char data_buffer[8+sizeof(unsigned long)*MAX_LENGTH];
 	 unsigned long * rw_buffer =(unsigned long*)&(data_buffer[8]);
 	 char* buffer = (char*)&(data_buffer[0]);
-     
-     struct sockaddr_in serv_addr, cli_addr;
-     int n;
+     char* token;
+
+     // get command line arguments
      if (argc < 2) {
          fprintf(stderr,"ERROR, no port provided\n");
          exit(1);
      }
+     portno = atoi(argv[1]);
+     if (argc < 3) {
+         fprintf(stderr,"ERROR, no token provided\n");
+         exit(1);
+     }
+     token = argv[2];
+     if (strlen(token) != 32) {
+         fprintf(stderr,"ERROR, token (%s) must be 32 characters long\n", token);
+         exit(1);
+     }
+
+     struct sockaddr_in serv_addr, cli_addr;
+     int n;
      sockfd = socket(AF_INET, SOCK_STREAM, 0);
      if (sockfd < 0) 
-        error("ERROR opening socket");
-	int enable = 1;
-	if (setsockopt(sockfd,SOL_SOCKET,SO_REUSEADDR,&enable,sizeof(int))<0)
-		error("setsockopt(SO_REUSEADDR) failed");
+         error("ERROR opening socket");
+	 int enable = 1;
+	 if (setsockopt(sockfd,SOL_SOCKET,SO_REUSEADDR,&enable,sizeof(int))<0)
+		 error("setsockopt(SO_REUSEADDR) failed");
      bzero((char *) &serv_addr, sizeof(serv_addr));
-     portno = atoi(argv[1]);
      serv_addr.sin_family = AF_INET;
      serv_addr.sin_addr.s_addr = INADDR_ANY;
      serv_addr.sin_port = htons(portno);
@@ -186,59 +212,96 @@ int main(int argc, char *argv[])
               error("ERROR on binding");
      listen(sockfd,5);
      clilen = sizeof(cli_addr);
-     newsockfd = accept(sockfd, 
-                 (struct sockaddr *) &cli_addr, 
-                 &clilen);
-     if (newsockfd < 0) 
-          error("ERROR on accept");
-	 else
-		 printf("Incoming client connection accepted!");
-	
-	//open_map_base();
-	 //service loop
-     while (0==0) {
-		 //read next header from client
-		 bzero(buffer,8);
-		 n = recv(newsockfd,buffer,8,MSG_WAITALL);
-		 if (n < 0) error("ERROR reading from socket");
-		 if (n != 8) error("ERROR reading from socket - incorrect header length");
-		 //confirm control sequence
-	 ////n=send(newsockfd,buffer,8,0); 
-	 ////if (n != 8) error("ERROR control sequence mirror incorreclty transmitted");
-	     //interpret the header
-    	 address = ((unsigned long*)buffer)[1]; //address to be read/written
-		 data_length = buffer[2]+(buffer[3]<<8); //number of "unsigned long" to be read/written
-		 if (data_length > MAX_LENGTH)
-			 data_length = MAX_LENGTH;
-		 if (data_length == 0)
-			continue;
-		 //test for various cases Read, Write, Close
-		 else if (buffer[0] == 'r') { //read from FPGA
-			read_values(address, rw_buffer, data_length);
-			//send the data
-			n = send(newsockfd,(void*)data_buffer,data_length*sizeof(unsigned long)+8,0);
-			if (n < 0) error("ERROR writing to socket");
-			if (n != data_length*sizeof(unsigned long)+8) error("ERROR wrote incorrect number of bytes to socket");
-		 }
-		 else if  (buffer[0] == 'w') { //write to FPGA
-			//read new data from socket
-			n = recv(newsockfd,(void*)rw_buffer,data_length*sizeof(unsigned long),MSG_WAITALL);
-			if (n < 0) error("ERROR reading from socket");
-			if (n != data_length*sizeof(unsigned long)) error("ERROR read incorrect number of bytes to socket");
-			//write FPGA memory
-			write_values(address, rw_buffer, data_length);
-			n=send(newsockfd,buffer,8,0);
-			if (n != 8) error("ERROR control sequence mirror incorreclty transmitted");
-		 }
-		 else if (buffer[0] == 'c') break; //close program
-		 else error("ERROR unknown control character - server and client out of sync"); //if an unknown control sequence is received, terminate for security reasons
-	 }
-	 //close the socket
-     close(newsockfd); 
-	 close(sockfd);
-	 //clean up the memory mapping
-	 close_map_base();
-	 return 0; 
+
+     //server service loop
+     for (;;)
+     {
+         newsockfd = accept(sockfd,
+                     (struct sockaddr *) &cli_addr,
+                     &clilen);
+
+         if ((pid = fork()) == -1)  // fork failed, go to accept new connections
+         {
+             close(newsockfd);
+             printf("fork() failed, waiting for new connections...");
+             continue;
+         }
+         else if(pid > 0)  // parent process, close new socket and go back to accept new connections
+         {
+             close(newsockfd);
+             printf("Forked successfully!");
+             continue;
+         }
+         else if(pid == 0)
+         {
+             if (newsockfd < 0)
+                  error("ERROR on accept");
+             else
+                  printf("Incoming client connection accepted!");
+             //authentification procedure
+             bzero(buffer,33);
+             n = recv(newsockfd,buffer,32,MSG_WAITALL);
+             if (n < 0) error("ERROR reading from socket");
+             if (n != 32) error("ERROR reading from socket - incorrect token length");
+             if (strcmp(buffer,token) != 0)
+             {
+                 // wrong token, but tell the client what the correct token would have looked like
+                 n = send(newsockfd,(void*)token,32,0);
+                 if (n < 0) error("ERROR writing to socket");
+                 if (n != 32) error("ERROR wrote incorrect number of bytes to socket");
+                 error("Authentification failure - wrong token. Terminating client!");
+             }
+             //confirm connection by sending a constant token back to the client
+             n = send(newsockfd,(void*)("11111111111111111111111111111111"),32,0);
+             if (n < 0) error("ERROR writing to socket");
+             if (n != 32) error("ERROR wrote incorrect number of bytes to socket");
+
+             for(;;)
+             {   //service loop
+                 //read next header from client
+                 bzero(buffer,8);
+                 n = recv(newsockfd,buffer,8,MSG_WAITALL);
+                 if (n < 0) error("ERROR reading from socket");
+                 if (n != 8) error("ERROR reading from socket - incorrect header length");
+                 //confirm control sequence
+                 ////n=send(newsockfd,buffer,8,0);
+                 ////if (n != 8) error("ERROR control sequence mirror incorreclty transmitted");
+                 //interpret the header
+                 address = ((unsigned long*)buffer)[1]; //address to be read/written
+                 data_length = buffer[2]+(buffer[3]<<8); //number of "unsigned long" to be read/written
+                 if (data_length > MAX_LENGTH)
+                     data_length = MAX_LENGTH;
+                 if (data_length == 0)
+                    continue;
+                 //test for various cases Read, Write, Close
+                 else if (buffer[0] == 'r') { //read from FPGA
+                    read_values(address, rw_buffer, data_length);
+                    //send the data
+                    n = send(newsockfd,(void*)data_buffer,data_length*sizeof(unsigned long)+8,0);
+                    if (n < 0) error("ERROR writing to socket");
+                    if (n != data_length*sizeof(unsigned long)+8) error("ERROR wrote incorrect number of bytes to socket");
+                 }
+                 else if  (buffer[0] == 'w') { //write to FPGA
+                    //read new data from socket
+                    n = recv(newsockfd,(void*)rw_buffer,data_length*sizeof(unsigned long),MSG_WAITALL);
+                    if (n < 0) error("ERROR reading from socket");
+                    if (n != data_length*sizeof(unsigned long)) error("ERROR read incorrect number of bytes to socket");
+                    //write FPGA memory
+                    write_values(address, rw_buffer, data_length);
+                    n=send(newsockfd,buffer,8,0);
+                    if (n != 8) error("ERROR control sequence mirror incorreclty transmitted");
+                 }
+                 else if (buffer[0] == 'c') break; //close program
+                 else error("ERROR unknown control character - server and client out of sync"); //if an unknown control sequence is received, terminate for security reasons
+             }
+             //close the socket
+             close(newsockfd);
+             close(sockfd);
+             //clean up the memory mapping
+             close_map_base();
+             return 0;
+         }
+     }
 }
 
 
