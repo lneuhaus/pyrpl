@@ -80,10 +80,10 @@ class MonitorClient(object):
                 # could try a different port here by putting port=-1
                 if self._restartserver is not None:
                     self._port, self._token = self._restartserver()
-                else:
-                    raise
             else:
                 break
+        else:
+            raise
         self.socket.settimeout(self.TIMEOUT)
         # send authentification token
         assert len(self._token) == 32

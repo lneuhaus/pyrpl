@@ -53,7 +53,7 @@ defaultparameters = dict(
     autostart=True,  # autostart the client?
     reloadserver=True,  # reinstall the server at startup if not necessary?
     reloadfpga=True,  # reload the fpga bitfile at startup?
-    recompileserver=True,  # recompile the server source on the redpitaya when the server is re-installed?
+    recompileserver=False,  # recompile the server source on the redpitaya when the server is re-installed?
     serverbinfilename='fpga.bin',  # name of the binfile on the server
     serverdirname = "//opt//pyrpl//",  # server directory for server app and bitfile
     leds_off=True,  # turn off all GPIO lets at startup (improves analog performance)
@@ -377,7 +377,7 @@ class RedPitaya(object):
         sleep(self.parameters['delay'])
         #print(self.ssh.ask('make'))
         self.ssh.ask('gcc monitor_server.c -o '+targetfile)
-        sleep(2)  # give the RP filesystem time to locat the new file before downloading it
+        sleep(5)  # give the RP filesystem time to locat the new file before downloading it
         self.ssh.ask('ll')
         sleep(self.parameters['delay'])
         self.ssh.scp.get(self.parameters['serverdirname'] + targetfile,
