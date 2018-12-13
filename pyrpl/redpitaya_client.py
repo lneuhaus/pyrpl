@@ -19,7 +19,7 @@
 
 import numpy as np
 import socket
-import sleep
+from time import sleep
 import logging
 try:
     raise  # disable sound output for now
