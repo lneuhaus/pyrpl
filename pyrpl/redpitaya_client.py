@@ -19,6 +19,7 @@
 
 import numpy as np
 import socket
+import sleep
 import logging
 try:
     raise  # disable sound output for now
@@ -80,10 +81,12 @@ class MonitorClient(object):
                 # could try a different port here by putting port=-1
                 if self._restartserver is not None:
                     self._port, self._token = self._restartserver()
+                else:
+                    sleep(0.5)  # wait for the socket to get freed up
             else:
                 break
         else:
-            raise
+            raise ExpectedPyrplError("Socket error - Unable to connect to server. Please attempt to restart Pyrpl.")
         self.socket.settimeout(self.TIMEOUT)
         # send authentification token
         assert len(self._token) == 32
