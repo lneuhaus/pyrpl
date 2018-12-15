@@ -254,6 +254,7 @@ class HostnameSelectorWidget(QtWidgets.QDialog):
                 return  # pragma: no cover
             # try SSH connection for all IP addresses
             self.progressbar.setValue(i)
+            self.hostname_input.setPlaceholderText(ip)
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.settimeout(self._SCAN_TIMEOUT)  # timeout is essentially network timescale
             err = s.connect_ex((ip, port))
@@ -283,6 +284,7 @@ class HostnameSelectorWidget(QtWidgets.QDialog):
                 self._logger.debug("%s:%d is closed", ip, port)
             APP.processEvents()
         self.scanning = False
+        self.hostname_input.setPlaceholderText('e.g.: 192.168.1.100')
         if len(self.ips_and_macs) == 2:
             # exactly one device was found, therefore we can auto-proceed to
             # connection
