@@ -17,6 +17,12 @@ from nbconvert.preprocessors import ExecutePreprocessor
 from nbconvert.preprocessors.execute import CellExecutionError
 
 
+try:
+    TimeoutError # builtin in python 3
+except NameError:
+    TimeoutError = RuntimeError # a RunTimeError is launched in python 2.7
+
+
 class MyExecutePreprocessor(ExecutePreprocessor):
     def preprocess_cell(self, cell, resources, cell_index):
         if cell.source.startswith("#no-test"):
