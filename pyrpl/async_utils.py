@@ -95,8 +95,8 @@ class MainThreadTimer(QtCore.QTimer):
         self.setSingleShot(True)
         self.setInterval(interval)
 
-
 LOOP = quamash.QEventLoop()
+
 
 class PyrplFuture(Future):
     """
