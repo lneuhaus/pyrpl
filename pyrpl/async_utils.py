@@ -20,6 +20,7 @@ except ImportError:  # this occurs in python 2.7
 else:
     import quamash
     set_event_loop(quamash.QEventLoop())
+    LOOP = quamash.QEventLoop()
 
 
 class MainThreadTimer(QtCore.QTimer):
@@ -96,7 +97,7 @@ class MainThreadTimer(QtCore.QTimer):
         self.setInterval(interval)
 
 
-LOOP = quamash.QEventLoop()
+
 
 class PyrplFuture(Future):
     """
