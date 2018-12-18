@@ -81,7 +81,10 @@ class TestPidNaIq(TestPyrpl):
                  input=pid,
                  output_direct='off',
                  acbandwidth=0,
-                 logscale=True)
+                 logscale=True,
+                 paused=False,
+                 differential_mode_enabled=False
+                 )
 
         # setup pid: input is the network analyzer output.
         pid.input = na.iq
@@ -119,7 +122,6 @@ class TestPidNaIq(TestPyrpl):
                 c.add_child(CurveDB.create(f, relerror,
                                            name='test_inputfilter-failed-relerror'))
                 assert False, (maxerror, bw)
-
 
 
     def test_pid_na1(self):
@@ -360,6 +362,116 @@ class TestPidNaIq(TestPyrpl):
                                                name='test_iq_na-failed-relerror'))
                     # c.add_child(CurveDB.create(f,relerror,name='test_iq_na-failed-abserror'))
                     assert False, (maxerror, phase)
+
+    def test_diff_pid(self):
+        """
+        tests the differential pid feature of pid0 and pid1
+        """
+        rp = self.pyrpl.rp
+        pid0, pid1, pid2 = rp.pid0, rp.pid1, rp.pid2
+        for pid in [pid0, pid1, pid2]:
+            # we start with all gains off and ival reset, so the output should be 0
+            pid.setup(
+                input='pid2',
+                output_direct='off',
+                setpoint=-0.25,
+                p=0,
+                i=0,
+                inputfilter=0,
+                max_voltage=1,
+                min_voltage=-1,
+                pause_gains='off',
+                paused=False,
+                differential_mode_enabled=False,
+                )
+            pid.ival = 0
+            assert pid.current_output_signal == 0.0, pid.current_output_signal
+        diff_module = dict(pid0=pid1, pid1=pid0)
+        for pid in [pid0, pid1]:
+            diffpid = diff_module[pid.name]
+            # test normal working mode
+            pid.p=30  # large p-gain should cause saturation
+            assert pid.current_output_signal >= pid.max_voltage, (pid.current_output_signal, pid.max_voltage, pid.current_output_signal-pid.max_voltage)
+            # enable differential mode, input to both pid0 and pid1 is the same, so output should be zero
+            pid.differential_mode_enabled=True
+            assert pid.current_output_signal == 0.0, pid.current_output_signal
+            # this should not change even if input signal is changed
+            pid2.ival = 1
+            assert pid.current_output_signal == 0.0, pid.current_output_signal
+            # this should not change even if input signal is changed
+            pid2.ival = -0.1
+            assert pid.current_output_signal == 0.0, pid.current_output_signal
+            # but if the input to diffpid is disabled, we should recover normal pid
+            pid.p = 3  # smaller p-gain to avoid saturation
+            diffpid.input='off'
+            assert abs(pid.current_output_signal-(-0.3))<1e-4, (pid.name, pid.current_output_signal)
+            pid.differential_mode_enabled = False
+            assert abs(pid.current_output_signal-(0.45))<5e-2, (pid.name, pid.current_output_signal)
+            # reset initial values
+            for apid in [pid0, pid1, pid2]:
+                # we start with all gains off and ival reset, so the output should be 0
+                apid.setup(
+                    input='pid2',
+                    output_direct='off',
+                    setpoint=-0.25,
+                    p=0,
+                    i=0,
+                    inputfilter=0,
+                    max_voltage=1,
+                    min_voltage=-1,
+                    pause_gains='off',
+                    paused=False,
+                    differential_mode_enabled=False,
+                )
+                apid.ival = 0
+            assert apid.current_output_signal == 0.0, apid.current_output_signal
+
+    def test_pid_paused(self):
+        """
+        tests the sync feature of different pid modules
+        """
+        rp = self.pyrpl.rp
+        pids = [rp.pid0, rp.pid1, rp.pid2]
+        for pid in pids:
+            # we start with all gains off and ival reset, so the output should be 0
+            pid.setup(
+                input='off',
+                output_direct='off',
+                setpoint=-1,
+                p=0,
+                i=0,
+                inputfilter=0,
+                max_voltage=1,
+                min_voltage=-1,
+                pause_gains='off'
+                )
+            pid.ival = 0
+            assert pid.current_output_signal == 0.0, pid.current_output_signal
+            # test p settings
+            pid.p=10000000  # large p-gain should cause saturation
+            # now pause the p-gain and assert that output is zero
+            pid.pause_gains ='p'
+            pid.paused = True
+            assert pid.current_output_signal == 0.0, pid.current_output_signal
+            # un-pause it and verify
+            pid.paused = False
+            assert pid.current_output_signal >= pid.max_voltage, (pid.current_output_signal, pid.max_voltage, pid.current_output_signal-pid.max_voltage)
+            # test integrator part - first let integrator saturate
+            pid.i = 10000000
+            pid.p = 0
+            assert pid.current_output_signal >= pid.max_voltage, pid.current_output_signal
+            # now pause the i-gain and assert that output is unchanged
+            pid.pause_gains = 'i'
+            assert pid.current_output_signal >= pid.max_voltage, pid.current_output_signal
+            # assert that ival can be set in presence of large gains
+            pid.paused = True
+            pid.ival = 0.1
+            assert (pid.ival - pid.current_output_signal) <= 0.0001, (pid.current_output_signal, pid.ival)
+            assert (pid.ival - 0.1) <= 0.0001, (pid.current_output_signal, pid.ival)
+            pid.pause_gains = 'off'
+            assert pid.current_output_signal >= pid.max_voltage, pid.current_output_signal
+            # un-pause for later
+            pid.paused = False
 
     def test_iq_sync(self):
         """

@@ -101,8 +101,8 @@ class TestClass(TestPyrpl):
         self.sa = self.pyrpl.spectrumanalyzer
         self.sa.setup(input1_baseband=self.iq,
                       span=10e6,
-                      trace_average=10,  # TODO: set back to 50
-                        )
+                      trace_average=20,  # TODO: set back to 50
+                      )
         self.sa.stop()
 
         for freq in np.linspace(self.sa.span/5, self.sa.span/4, 5):
@@ -167,8 +167,9 @@ class TestClass(TestPyrpl):
         theory = self.iq.transfer_function(self.sa.frequencies)
 
         #from pylab import plot, show
-
-        assert abs(exp - theory)[1:].max()< 0.05
+        diff = abs(exp - theory)[1:].max()
+        maxdiff = 0.06  # test fails 1 in 3 times with former value 0.05
+        assert diff < maxdiff, (diff, diff.argmax(), exp, theory)
 
 
     def test_flatness_iqmode(self):

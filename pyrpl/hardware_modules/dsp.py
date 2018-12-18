@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from ..attributes import BoolRegister, SelectProperty, SelectProperty, SelectRegister, IntRegister
+from ..attributes import BoolRegister, SelectProperty, SelectProperty, SelectRegister, IntRegister, FloatRegister, BaseRegister, BoolProperty
 from ..modules import HardwareModule, SignalModule
 from ..pyrpl_utils import sorted_dict, recursive_getattr, recursive_setattr
 from ..errors import ExpectedPyrplError
@@ -136,6 +136,34 @@ def dsp_addr_base(name):
     return 0x40300000 + number * 0x10000
 
 
+class PauseRegister(BoolRegister):
+    """
+    A bool register whose bit number is the containing module dsp number.
+    """
+    def __init__(self, address=0xC, bitmask=None, invert=False, **kwargs):
+            assert type(invert) == bool
+            self.invert = invert
+            BaseRegister.__init__(self, address=address, bitmask=bitmask)
+            BoolProperty.__init__(self, **kwargs)
+
+    def to_python(self, obj, value):
+        bit = obj._number
+        value = bool((value >> bit) & 1)
+        if self.invert:
+            value = not value
+        return value
+
+    def from_python(self, obj, val):
+        bit = obj._number
+        if self.invert:
+            val = not val
+        if val:
+            towrite = obj._read(self.address) | (1 << bit)
+        else:
+            towrite = obj._read(self.address) & (~(1 << bit))
+        return towrite
+
+
 class DspModule(HardwareModule, SignalModule):
     """
     A module with an input and an auxiliary output_direct signal.
@@ -210,6 +238,12 @@ class DspModule(HardwareModule, SignalModule):
                             "this functionality is only implemented for iq "
                             "modules.")
 
+    _paused = PauseRegister(0xC,
+                            invert=True,
+                            doc="If True, the module is paused. What this "
+                                "means in detail depends on the functionality "
+                                "of the module.")
+
     def _synchronize(self, modules=[]):
         """
         synchronizes the given list of modules.
@@ -240,3 +274,10 @@ class DspModule(HardwareModule, SignalModule):
         self._sync = sync_reset
         # restore the previous state of the modules
         self._sync = sync_stored
+
+    current_output_signal = FloatRegister(0x10,
+                                          bits=14,
+                                          norm=2 ** 13 - 1,
+                                          doc="current value of output_signal "
+                                              "as returned by the sampler "
+                                              "module")

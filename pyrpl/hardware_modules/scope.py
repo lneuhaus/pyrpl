@@ -299,6 +299,7 @@ class Scope(HardwareModule, AcquisitionModule):
                                   doc="trigger threshold [volts]")
     hysteresis = FloatRegister(0x20, bits=14, norm=2 ** 13,
                                     doc="hysteresis for trigger [volts]")
+
     @property
     def threshold_ch1(self):
         self._logger.warning('The scope attribute "threshold_chx" is deprecated. '
@@ -452,12 +453,16 @@ class Scope(HardwareModule, AcquisitionModule):
     ch_math_active = BoolProperty(default=False,
                               doc="should ch_math be displayed in the gui?")
 
-    math_formula = StringProperty(default='ch1 + ch2',
+    math_formula = StringProperty(default='ch1 * ch2',
                                   doc="formula for channel math")
 
     xy_mode = BoolProperty(default=False,
                            doc="in xy-mode, data are plotted vs the other "
                                "channel (instead of time)")
+
+    _acquisition_started = BoolProperty(default=False,
+                                        doc="whether a curve acquisition has been "
+                                            "initiated")
 
     def _ownership_changed(self, old, new):
         """
@@ -539,7 +544,7 @@ class Scope(HardwareModule, AcquisitionModule):
         Returns True if new data is ready for transfer
         """
         return (not self._trigger_armed) and \
-               (not self._trigger_delay_running) and self._setup_called
+               (not self._trigger_delay_running) and self._acquisition_started
 
     def _curve_acquiring(self):
         """
@@ -548,7 +553,7 @@ class Scope(HardwareModule, AcquisitionModule):
         trigger event.
         """
         return (self._trigger_armed or self._trigger_delay_running) \
-            and self._setup_called
+            and self._acquisition_started
 
     def _get_ch(self, ch):
         if ch not in [1, 2]:
@@ -601,7 +606,7 @@ class Scope(HardwareModule, AcquisitionModule):
         self._autosave_active = False  # Don't save anything in config file
         # during setup!! # maybe even better in
         # BaseModule ??
-        self._setup_called = True
+        self._acquisition_started = True
 
         # 0. reset state machine
         self._reset_writestate_machine = True

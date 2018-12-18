@@ -226,7 +226,7 @@ always @(posedge clk_i) begin
 end
 
 //saturation of outputs
-red_pitaya_saturate #( 
+red_pitaya_saturate #(
     .BITS_IN (14+LOG_MODULES), 
     .SHIFT(0), 
     .BITS_OUT(14)
@@ -308,14 +308,26 @@ end
  *********************************************/
 
 //PID
+
+wire [14-1:0] diff_input_signal [3-1:0];
+wire [14-1:0] diff_output_signal [3-1:0];
+//assign diff_input_signal[0] = input_signal[1]; // difference input of PID0 is PID1
+//assign diff_input_signal[1] = input_signal[0]; // difference input of PID1 is PID0
+assign diff_input_signal[0] = diff_output_signal[1]; // difference input of PID0 is PID1
+assign diff_input_signal[1] = diff_output_signal[0]; // difference input of PID1 is PID0
+assign diff_input_signal[2] = {14{1'b0}};      // difference input of PID2 is zero
+
 generate for (j = 0; j < 3; j = j+1) begin
    red_pitaya_pid_block i_pid (
      // data
      .clk_i        (  clk_i          ),  // clock
      .rstn_i       (  rstn_i         ),  // reset - active low
+     .sync_i       (  sync[j]        ),  // syncronization of different dsp modules
      .dat_i        (  input_signal [j] ),  // input data
      .dat_o        (  output_direct[j]),  // output data
-	 
+	 .diff_dat_i   (  diff_input_signal[j] ),  // input data for differential mode
+	 .diff_dat_o   (  diff_output_signal[j] ),  // output data for differential mode
+
 	 //communincation with PS
 	 .addr ( sys_addr[16-1:0] ),
 	 .wen  ( sys_wen & (sys_addr[20-1:16]==j) ),
