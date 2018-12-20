@@ -101,7 +101,7 @@ class TestClass(TestPyrpl):
         self.sa = self.pyrpl.spectrumanalyzer
         self.sa.setup(input1_baseband=self.iq,
                       span=10e6,
-                      trace_average=20,  # TODO: set back to 50
+                      trace_average=50,  # TODO: set back to 50
                       )
         self.sa.stop()
 
@@ -170,7 +170,6 @@ class TestClass(TestPyrpl):
         diff = abs(exp - theory)[1:].max()
         maxdiff = 0.06  # test fails 1 in 3 times with former value 0.05
         assert diff < maxdiff, (diff, diff.argmax(), exp, theory)
-
 
     def test_flatness_iqmode(self):
         return # to be tested in next release

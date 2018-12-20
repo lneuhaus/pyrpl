@@ -755,7 +755,7 @@ class LockboxStageWidget(ReducedModuleWidget):
         #self.lay_h3.addWidget(aws['function_call'])
         self.main_layout.addWidget(aws['function_call'])
         self.button_goto = QtWidgets.QPushButton('Go to this stage')
-        self.button_goto.clicked.connect(self.module.enable)
+        self.button_goto.clicked.connect(self.module.execute_async)
         self.main_layout.addWidget(self.button_goto)
 
     def create_title_bar(self):
@@ -1025,7 +1025,7 @@ class LockboxWidget(ModuleWidget):
             self.hide_lock()
             self._set_button_green(self.button_sweep)
         else:
-            if stage != self.module.final_stage:
+            if stage != self.module.sequence[-1]:
                 self._set_button_green(stage._widget.button_goto)
             else:
                 self._set_button_green(self.module.sequence[-1]._widget.button_goto, color='darkGreen')
@@ -1068,11 +1068,8 @@ class LockboxWidget(ModuleWidget):
         elif module.current_state == 'unlock':
             return 'darkRed'
         else:
-            # should be locked
-            if islocked is None:
-                islocked = module.is_locked(loglevel=logging.DEBUG)
             if islocked:
-                if module.current_stage == module.final_stage:
+                if module.current_stage == module.sequence[-1]:
                     # locked and in last stage
                     return 'green'
                 else:
