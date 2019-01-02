@@ -46,8 +46,9 @@ before_install:
   # Useful for debugging any issues with conda
   - conda info -a
   # The next lines fix a crash with multiprocessing on Travis and are not specific to using Miniconda
-  - sudo rm -rf /dev/shm
-  - sudo ln -s /run/shm /dev/shm
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+    sudo rm -rf /dev/shm; sudo ln -s /run/shm /dev/shm;
+    fi
   # starts gui support, see https://docs.travis-ci.com/user/gui-and-headless-browsers/
   # and https://github.com/travis-ci/travis-ci/issues/7313#issuecomment-279914149 (for MacOSX)
   # formerly "sh -e sudo Xvfb :99 -ac -screen 0 1024x768x8";
@@ -64,7 +65,7 @@ before_install:
 install:
   # avoid to get cancelled because of very long tests
   # we get issues with building numpy etc if we do not include those in the next line
-  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION numpy scipy paramiko pandas nose pip pyqt qtpy
+  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION numpy scipy paramiko pandas nose pip pyqt qtpy nbconvert
   - source activate test-environment
   # convert readme file to rst for PyPI
   - conda install pandoc
