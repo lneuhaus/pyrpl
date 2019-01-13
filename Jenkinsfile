@@ -130,13 +130,18 @@ pipeline {
                         python setup.py bdist_wheel
                         # twine upload dist/*
                     '''
-                sh  ''' git clone https://www.github.com/lneuhaus/pyinstaller.git -b develop
+                sh  ''' cd ..
+                        git clone https://www.github.com/lneuhaus/pyinstaller.git -b develop
                         cd pyinstaller
                         git status
                         python setup.py develop
                         cd ..
+                        cd pyrpl
+                        pyinstaller pyrpl.spec
+                        mv dist/pyrpl ./pyrpl-linux-develop
                     '''
-                    }
+                //sh 'python .deploy_to_sourceforge.py pyrpl-linux-develop'
+                }
             post { always { archiveArtifacts allowEmptyArchive: true, artifacts: 'dist/*whl', fingerprint: true}}}}
         post { failure {
             emailext (
