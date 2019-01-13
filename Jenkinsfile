@@ -50,10 +50,10 @@ pipeline {
                             radon mi --json pysine > mi_report.json
                             sloccount --duplicates --wide pysine > sloccount.sc
                         '''
-                    #echo "Test coverage"
-                    #sh  ''' coverage run pyrpl
-                    #        python -m coverage xml -o reports/coverage.xml
-                        '''
+                    //echo "Test coverage"
+                    //sh  ''' coverage run pyrpl
+                    //        python -m coverage xml -o reports/coverage.xml
+                    //    '''
                     echo "Style check"
                     sh  ''' pylint pysine || true
                         '''
