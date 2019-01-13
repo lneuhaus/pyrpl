@@ -48,3 +48,6 @@ RUN echo $PATH
 
 # print some python diagnostics information
 RUN python -V
+
+RUN apt-get install git --yes
+RUN apt-get install libgl1-mesa-glx --yes
