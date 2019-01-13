@@ -27,7 +27,8 @@ RUN ./Miniconda.sh -b -p $CONDA_DIR
 ENV PATH="$CONDA_DIR/bin:$PATH"
 
 # install desired python version and additional packages
-RUN conda install --yes python=$PYTHON_VERSION nose coverage numpy pyaudio twine
+RUN conda install --yes python=$PYTHON_VERSION numpy scipy paramiko pandas nose pip pyqt qtpy nbconvert coverage twine
+
 #RUN conda install --yes -c conda-forge radon
 RUN pip install radon
 
