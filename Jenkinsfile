@@ -50,15 +50,15 @@ pipeline {
                             radon mi --json pysine > mi_report.json
                             sloccount --duplicates --wide pysine > sloccount.sc
                         '''
-                    echo "Test coverage"
-                    sh  ''' coverage run pyrpl
-                            python -m coverage xml -o reports/coverage.xml
+                    #echo "Test coverage"
+                    #sh  ''' coverage run pyrpl
+                    #        python -m coverage xml -o reports/coverage.xml
                         '''
                     echo "Style check"
                     sh  ''' pylint pysine || true
                         '''
                 }
-                post{ always { step(
+                /*post{ always { step(
                     [ $class: 'CoberturaPublisher',
                                autoUpdateHealth: false,
                                autoUpdateStability: false,
@@ -70,7 +70,8 @@ pipeline {
                                onlyStable: false,
                                sourceEncoding: 'ASCII',
                                zoomCoverageChart: false])
-                }}}
+                }}*/
+                }
         }}
 
         stage('Unit tests') { stages {
