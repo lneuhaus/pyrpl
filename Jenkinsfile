@@ -45,10 +45,10 @@ pipeline {
                 }}
                 stage('Static code metrics') { steps {
                     echo "Raw metrics"
-                    sh  ''' radon raw --json pysine > raw_report.json
-                            radon cc --json pysine > cc_report.json
-                            radon mi --json pysine > mi_report.json
-                            sloccount --duplicates --wide pysine > sloccount.sc
+                    sh  ''' radon raw --json pyrpl > raw_report.json
+                            radon cc --json pyrpl > cc_report.json
+                            radon mi --json pyrpl > mi_report.json
+                            sloccount --duplicates --wide pyrpl > sloccount.sc
                         '''
                     //echo "Test coverage"
                     //sh  ''' coverage run pyrpl
