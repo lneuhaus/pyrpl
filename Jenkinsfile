@@ -17,7 +17,7 @@ pipeline {
     environment {
         REDPITAYA_HOSTNAME = "nobody.justdied.com"
         REDPITAYA_USER = "root"
-        REDPITAYA_PASSWORD = "root"
+        REDPITAYA_PASSWORD = "Kartoffelschmarn"
     }
 
     agent none
