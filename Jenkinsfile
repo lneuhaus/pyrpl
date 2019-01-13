@@ -55,7 +55,7 @@ pipeline {
                     //        python -m coverage xml -o reports/coverage.xml
                     //    '''
                     echo "Style check"
-                    sh  ''' pylint pysine || true
+                    sh  ''' pylint pyrpl || true
                         '''
                 }
                 /*post{ always { step(
