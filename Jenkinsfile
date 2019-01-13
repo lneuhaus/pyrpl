@@ -96,7 +96,7 @@ pipeline {
                             nosetests
                             '''}
                 post { always { junit allowEmptyResults: true, testResults: 'reports/unit_tests.xml' }}}
-            stage('Python 3.5') {
+            /*stage('Python 3.5') {
                 agent { dockerfile { args '-u root'
                                      additionalBuildArgs  '--build-arg PYTHON_VERSION=3.7' }}
                 steps {
@@ -106,7 +106,7 @@ pipeline {
                             python setup.py install
                             nosetests
                             '''}
-                post { always { junit allowEmptyResults: true, testResults: 'reports/unit_tests.xml' }}}
+                post { always { junit allowEmptyResults: true, testResults: 'reports/unit_tests.xml' }}}*/
             stage('Python 2.7') {
                 agent { dockerfile { args '-u root'
                                      additionalBuildArgs  '--build-arg PYTHON_VERSION=3.7' }}
