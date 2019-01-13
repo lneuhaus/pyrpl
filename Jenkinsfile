@@ -129,7 +129,14 @@ pipeline {
                 sh  ''' python setup.py install
                         python setup.py bdist_wheel
                         # twine upload dist/*
-                    ''' }
+                    '''
+                sh  ''' git clone https://www.github.com/lneuhaus/pyinstaller.git -b develop
+                        cd pyinstaller
+                        git status
+                        python setup.py develop
+                        cd ..
+                    '''
+                    }
             post { always { archiveArtifacts allowEmptyArchive: true, artifacts: 'dist/*whl', fingerprint: true}}}}
         post { failure {
             emailext (
