@@ -51,4 +51,4 @@ RUN python -V
 
 RUN apt-get install git --yes
 RUN apt-get install libgl1-mesa-glx --yes
-RUN apt-get install libx11-dev
+RUN apt-get install libx11-dev --yes
