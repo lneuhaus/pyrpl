@@ -13,7 +13,7 @@ ARG PYTHON_VERSION="3"
 # setup ubuntu
 RUN apt update --yes
 RUN apt upgrade --yes
-RUN apt-get install wget --yes
+RUN apt-get install wget libgl1-mesa-glx systemd msttcorefonts sloccount --yes
 
 # install miniconda
 RUN mkdir /tmp/miniconda
@@ -36,9 +36,6 @@ RUN pip install radon
 WORKDIR /
 RUN rm -rf /tmp/miniconda
 
-# install additional software
-RUN apt-get install --yes sloccount
-
 # auxiliary environment variable
 ENV PYTHON_VERSION=$PYTHON_VERSION
 
@@ -48,7 +45,3 @@ RUN echo $PATH
 
 # print some python diagnostics information
 RUN python -V
-
-RUN apt-get install git --yes
-RUN apt-get install libgl1-mesa-glx --yes
-RUN apt-get install libx11-dev --yes
