@@ -15,7 +15,8 @@ pipeline {
 
 
     environment {
-        REDPITAYA_HOSTNAME = "nobody.justdied.com"
+        REDPITAYA_HOSTNAME = "rp-f03f3a"
+        //REDPITAYA_HOSTNAME = "nobody.justdied.com"
         REDPITAYA_USER = "root"
         REDPITAYA_PASSWORD = "Kartoffelschmarn"
     }
