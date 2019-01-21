@@ -10,10 +10,16 @@ USER root
 ARG CONDA_DIR="/opt/conda"
 ARG PYTHON_VERSION="3"
 
-# setup ubuntu
+# setup ubuntu with gui support
 RUN apt update --yes
 RUN apt upgrade --yes
-RUN apt-get install wget libgl1-mesa-glx systemd msttcorefonts sloccount --yes
+RUN apt update --yes
+RUN apt-get install --yes systemd wget libgl1-mesa-glx sloccount
+RUN apt-get install --yes libxi6 libfontconfig1
+#RUN apt-get install --yes msttcorefonts
+# RUN apt-get install --yes qt5-default
+# sets up keyboard support in GUI
+# ENV QT_XKB_CONFIG_ROOT /usr/share/X11/xkb
 
 # install miniconda
 RUN mkdir /tmp/miniconda
