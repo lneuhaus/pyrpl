@@ -14,12 +14,10 @@ ARG PYTHON_VERSION="3"
 RUN apt update --yes
 RUN apt upgrade --yes
 RUN apt update --yes
-RUN apt-get install --yes systemd wget libgl1-mesa-glx sloccount
-RUN apt-get install --yes libxi6 libfontconfig1
-#RUN apt-get install --yes msttcorefonts
-# RUN apt-get install --yes qt5-default
+#RUN apt-get install --yes systemd wget sloccount libgl1-mesa-glx libxi6 libfontconfig1
+RUN apt-get install --yes systemd wget sloccount qt5-default
 # sets up keyboard support in GUI
-# ENV QT_XKB_CONFIG_ROOT /usr/share/X11/xkb
+ENV QT_XKB_CONFIG_ROOT /usr/share/X11/xkb
 
 # install miniconda
 RUN mkdir /tmp/miniconda
