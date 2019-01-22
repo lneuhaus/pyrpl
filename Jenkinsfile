@@ -20,6 +20,7 @@ pipeline {
         //REDPITAYA_HOSTNAME = "nobody.justdied.com"
         REDPITAYA_USER = "root"
         REDPITAYA_PASSWORD = "Kartoffelschmarn"
+        DOCKER_ARGS = '-u root -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=:0 --net=host'
     }
 
     agent none
@@ -35,7 +36,7 @@ pipeline {
 
         /*
         stage('Metrics') {
-            agent { dockerfile { args '-u root -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=:0 --net=host'
+            agent { dockerfile { args "$DOCKER_ARGS"
                                  additionalBuildArgs  '--build-arg PYTHON_VERSION=3.7' }}
             stages {
                 stage('Docker environment diagnostics') { steps {
@@ -81,7 +82,7 @@ pipeline {
 
         stage('Unit tests') { stages {
             stage('Python 3.7') {
-                agent { dockerfile { args '-u root -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=:0 --net=host'
+                agent { dockerfile { args "$DOCKER_ARGS"
                                      additionalBuildArgs  '--build-arg PYTHON_VERSION=3.7' }}
                 steps {
                     sh  ''' which python
@@ -92,7 +93,7 @@ pipeline {
                             '''}
                 post { always { junit allowEmptyResults: true, testResults: 'reports/unit_tests.xml' }}}
             stage('Python 3.6') {
-                agent { dockerfile { args '-u root -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=:0 --net=host'
+                agent { dockerfile { args "$DOCKER_ARGS"
                                      additionalBuildArgs  '--build-arg PYTHON_VERSION=3.6' }}
                 steps {
                     sh  ''' which python
@@ -103,7 +104,7 @@ pipeline {
                             '''}
                 post { always { junit allowEmptyResults: true, testResults: 'reports/unit_tests.xml' }}}
             /*stage('Python 3.5') {
-                agent { dockerfile { args '-u root -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=:0 --net=host'
+                agent { dockerfile { args "$DOCKER_ARGS"
                                      additionalBuildArgs  '--build-arg PYTHON_VERSION=3.5' }}
                 steps {
                     sh  ''' which python
@@ -114,7 +115,7 @@ pipeline {
                             '''}
                 post { always { junit allowEmptyResults: true, testResults: 'reports/unit_tests.xml' }}}*/
             stage('Python 2.7') {
-                agent { dockerfile { args '-u root -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=:0 --net=host'
+                agent { dockerfile { args "$DOCKER_ARGS"
                                      additionalBuildArgs  '--build-arg PYTHON_VERSION=2.7' }}
                 steps {
                     sh  ''' which python
