@@ -48,7 +48,8 @@ requirements = ['scp',
                 'nose>=1.0',
                 #'PyQt5',  # cannot be installed with pip
                 'qtpy',
-                'nbconvert']
+                'nbconvert',
+                'jupyter-client']
 if sys.version_info >= (3,4):  # python version dependencies
     requirements += ['quamash']
 else:  # python 2.7
