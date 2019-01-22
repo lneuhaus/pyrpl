@@ -14,7 +14,7 @@
 #
 
 ###############################################################################
-#    pyrplockbox - DSP servo controller for quantum optics with the RedPitaya
+#    pyrpl - DSP servo controller for quantum optics with the RedPitaya
 #    Copyright (C) 2014-2016  Leonhard Neuhaus  (neuhaus@spectro.jussieu.fr)
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -36,12 +36,12 @@ VERSION ?= 0.00-0000
 REVISION ?= devbuild
 
 # List of compiled object files (not yet linked to executable)
-OBJS = monitor_server.o
+OBJS = pyrpl_server.o
 # List of raw source files (all object files, renamed from .o to .c)
 SRCS = $(subst .o,.c, $(OBJS)))
 
 # Executable name
-TARGET=monitor_server
+TARGET=pyrpl_server
 
 # GCC compiling & linking flags
 CFLAGS=-g -std=gnu99 -Wall -Werror

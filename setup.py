@@ -113,7 +113,7 @@ def compile_fpga(): #vivado 2015.4 must be installed for this to work
 def compile_server(): #gcc crosscompiler must be installed for this to work
     cwd = os.getcwd()
     try:
-        os.chdir("pyrpl//monitor_server")
+        os.chdir("pyrpl//pyrpl_server")
         os.system("make clean")
         os.system("make")
     finally:
@@ -143,7 +143,7 @@ setup(name='pyrpl',
       platforms='any',
       packages=find_packages(), #['pyrpl'],
       package_data={'pyrpl': ['fpga/*',
-                              'monitor_server/*',
+                              'pyrpl_server/*',
                               'config/*',
                               'widgets/images/*']},
       install_requires=requirements,

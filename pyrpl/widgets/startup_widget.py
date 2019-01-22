@@ -1,6 +1,7 @@
 from qtpy import QtWidgets, QtGui, QtCore
 import socket
 import logging
+import os
 
 from ..sshshell import SshShell
 from ..async_utils import APP

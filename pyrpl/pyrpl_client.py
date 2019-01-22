@@ -36,11 +36,11 @@ from .errors import ExpectedPyrplError
 CLIENT_NUMBER = 0
 
 
-class MonitorClient(object):
+class PyrplClient(object):
     TIMEOUT = 1.0
 
     def __init__(self, hostname="192.168.1.0", port=2222, token="0"*32, restartserver=None):
-        """initiates a client connected to monitor_server
+        """initiates a client connected to pyrpl_server
 
         hostname: server address, e.g. "localhost" or "192.168.1.0"
         port:    the port that the server is running on. 2222 by default
