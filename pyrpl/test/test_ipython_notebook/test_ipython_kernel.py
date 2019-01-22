@@ -27,21 +27,22 @@ class MyExecutePreprocessor(ExecutePreprocessor):
     def preprocess_cell(self, cell, resources, cell_index):
         if cell.source.startswith("#no-test"):
             return cell, resources
-        if cell.source.startswith("#define-hostname"):
+        if cell.source.startswith("#define hostname"):
             # replace hostname by unittest hostname
-            if defaultparameters["hostname"] is not None:
-                cell.source = 'HOSTNAME = ' + defaultparameters["hostname"]
-            if 'REDPITAYA_HOSTNAME' in os.environ:
-                cell.source = 'HOSTNAME = "' + os.environ[
-                    "REDPITAYA_HOSTNAME"] + '"'
+            for key in ['hostname', 'user', 'password']:
+                #if defaultparameters[key] is not None:
+                #    cell.source += '\n%s = "%s"'%(key.upper(), defaultparameters[key])
+                envvarname = 'REDPITAYA_%s'%(key.upper())
+                if envvarname in os.environ:
+                    cell.source += '\n%s = "%s"'%(key.upper(), os.environ[envvarname])
         return super(MyExecutePreprocessor, self).preprocess_cell(cell,\
                 resources, cell_index)
 
 
 NOTEBOOK_DIR = os.path.dirname(__file__)
-TUTORIAL_DIR = os.path.join(os.path.dirname(
-    os.path.dirname(os.path.dirname(
-               NOTEBOOK_DIR))), "docs", "example-notebooks")
+TUTORIAL_DIR = os.path.abspath(
+    os.path.join(NOTEBOOK_DIR, os.pardir, os.pardir, os.pardir, "docs", "example-notebooks"))
+
 
 def _notebook_run(path):
   """
@@ -50,13 +51,11 @@ def _notebook_run(path):
   """
   kernel_name = 'python%d' % sys.version_info[0]
   errors = []
-
-
   with open(path) as f:
     nb = nbformat.read(f, as_version=4)
     nb.metadata.get('kernelspec', {})['name'] = kernel_name
-    ep = MyExecutePreprocessor(kernel_name=kernel_name, timeout=65) #,
-    # allow_errors=True
+    ep = MyExecutePreprocessor(kernel_name=kernel_name, timeout=65)
+    #,# allow_errors=True
     #ep.start_new_kernel()
     try:
         ep.preprocess(nb, resources={'metadata': {'path': NOTEBOOK_DIR}})
@@ -65,20 +64,29 @@ def _notebook_run(path):
             print(str(e.traceback).split("\n")[-2])
       else:
         raise e
-
   return nb, errors
 
+##### commented out stuff below because changing defaultparameters might lead
+# to unexpected behavior ####################################################
 # If redpitaya was selected from a list, adds it as an environment variable
 # for the notebook to retieve it
-if not 'REDPITAYA_HOSTNAME' in os.environ:
-  os.environ['REDPITAYA_HOSTNAME'] = defaultparameters["hostname"]
+#for key in ['hostname', 'user', 'password']:
+#    envvarname = 'REDPITAYA_%s'%(key.upper())
+#    if not envvarname in os.environ:
+#        os.environ[envvarname] = defaultparameters[key]
+##############################################################################
 
+# testing for the transferability of environment variables
 os.environ["python_sys_version"] = sys.version
-for notebook in glob(NOTEBOOK_DIR + "/*.ipynb") + glob(TUTORIAL_DIR +
-                                                         '/*.ipynb'):
-    print("testing ", notebook)
+
+# iterate through all notebooks and run tests
+for notebook in \
+        (glob(NOTEBOOK_DIR+"/*.ipynb") + glob(TUTORIAL_DIR+'/*.ipynb')):
+    print("Testing notebook: %s"%notebook)
     nb, errors = _notebook_run(notebook)
     assert errors == []
     # Make sure the kernel is running the current python version...
     #assert nb['cells'][0]['outputs'][0]['text'].rstrip('\n')==sys.version
-    
+    print("Finished testing notebook: %s"%notebook)
+
+

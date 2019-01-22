@@ -4,4 +4,4 @@ docker run -ti --rm \
        -v /home/leo/github/pyrpl:/home/pyrpl \
        -v /home/leo/github/pyrpl-copy:/home/pyrpl-copy \
        --net=host \
-       pyrpl
+       python-37
