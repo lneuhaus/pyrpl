@@ -21,6 +21,8 @@ pipeline {
         REDPITAYA_USER = "root"
         REDPITAYA_PASSWORD = "Kartoffelschmarn"
         DOCKER_ARGS = '-u root -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=:0 --net=host'
+        //NOSETESTS_COMMAND = 'nosetests pyrpl/test/test_ipython_notebook/test_ipython_kernel.py'
+        NOSETESTS_COMMAND = 'nosetests'
     }
 
     agent none
@@ -89,8 +91,8 @@ pipeline {
                             python -V
                             echo $PYTHON_VERSION
                             python setup.py install
-                            nosetests pyrpl/test/test_ipython_notebook/test_ipython_kernel.py
-                            '''}
+                            '''
+                    sh "$NOSETESTS_COMMAND"}
                 post { always { junit allowEmptyResults: true, testResults: 'reports/unit_tests.xml' }}}
             stage('Python 3.6') {
                 agent { dockerfile { args "$DOCKER_ARGS"
@@ -100,8 +102,8 @@ pipeline {
                             python -V
                             echo $PYTHON_VERSION
                             python setup.py install
-                            nosetests pyrpl/test/test_ipython_notebook/test_ipython_kernel.py
-                            '''}
+                            '''
+                    sh "$NOSETESTS_COMMAND"}
                 post { always { junit allowEmptyResults: true, testResults: 'reports/unit_tests.xml' }}}
             /*stage('Python 3.5') {
                 agent { dockerfile { args "$DOCKER_ARGS"
@@ -111,8 +113,8 @@ pipeline {
                             python -V
                             echo $PYTHON_VERSION
                             python setup.py install
-                            nosetests
-                            '''}
+                            '''
+                    sh "$NOSETESTS_COMMAND"}
                 post { always { junit allowEmptyResults: true, testResults: 'reports/unit_tests.xml' }}}*/
             stage('Python 2.7') {
                 agent { dockerfile { args "$DOCKER_ARGS"
@@ -122,8 +124,8 @@ pipeline {
                             python -V
                             echo $PYTHON_VERSION
                             python setup.py install
-                            nosetests pyrpl/test/test_ipython_notebook/test_ipython_kernel.py
-                            '''}
+                            '''
+                    sh "$NOSETESTS_COMMAND"}
                 post { always { junit allowEmptyResults: true, testResults: 'reports/unit_tests.xml' }}}
         }}
 
