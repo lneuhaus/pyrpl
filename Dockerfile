@@ -14,7 +14,6 @@ ARG PYTHON_VERSION="3"
 RUN apt update --yes
 RUN apt upgrade --yes
 RUN apt update --yes
-#RUN apt-get install --yes systemd wget sloccount libgl1-mesa-glx libxi6 libfontconfig1
 RUN apt-get install --yes systemd wget sloccount qt5-default
 # sets up keyboard support in GUI
 ENV QT_XKB_CONFIG_ROOT /usr/share/X11/xkb
@@ -22,7 +21,6 @@ ENV QT_XKB_CONFIG_ROOT /usr/share/X11/xkb
 # install miniconda
 RUN mkdir /tmp/miniconda
 WORKDIR /tmp/miniconda
-#RUN wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
 RUN if [ "$PYTHON_VERSION" = "2" ] ; then wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O Miniconda.sh; else wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O Miniconda.sh; fi
 RUN chmod +x Miniconda.sh
 RUN ./Miniconda.sh -b -p $CONDA_DIR
@@ -32,8 +30,6 @@ ENV PATH="$CONDA_DIR/bin:$PATH"
 
 # install desired python version and additional packages
 RUN conda install --yes python=$PYTHON_VERSION numpy scipy paramiko pandas nose pip pyqt qtpy nbconvert coverage twine
-
-#RUN conda install --yes -c conda-forge radon
 RUN pip install radon
 
 # Clean up miniconda installation files
