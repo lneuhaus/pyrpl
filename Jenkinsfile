@@ -32,6 +32,8 @@ pipeline {
         //      checkout scm
         //        stash 'source'
         //        }}
+
+        /*
         stage('Metrics') {
             agent { dockerfile { args '-u root -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=:0 --net=host'
                                  additionalBuildArgs  '--build-arg PYTHON_VERSION=3.7' }}
@@ -47,19 +49,20 @@ pipeline {
                 }}
                 stage('Static code metrics') { steps {
                     echo "Raw metrics"
-                    sh  ''' radon raw --json pyrpl > raw_report.json
-                            radon cc --json pyrpl > cc_report.json
-                            radon mi --json pyrpl > mi_report.json
-                            sloccount --duplicates --wide pyrpl > sloccount.sc
-                        '''
+                    //sh  ''' radon raw --json pyrpl > raw_report.json
+                    //        radon cc --json pyrpl > cc_report.json
+                    //        radon mi --json pyrpl > mi_report.json
+                    //        sloccount --duplicates --wide pyrpl > sloccount.sc
+                    //    '''
                     //echo "Test coverage"
                     //sh  ''' coverage run pyrpl
                     //        python -m coverage xml -o reports/coverage.xml
                     //    '''
-                    echo "Style check"
-                    sh  ''' pylint pyrpl || true
-                        '''
+                    //echo "Style check"
+                    //sh  ''' pylint pyrpl || true
+                    //    '''
                 }
+                */
                 /*post{ always { step(
                     [ $class: 'CoberturaPublisher',
                                autoUpdateHealth: false,
@@ -72,9 +75,9 @@ pipeline {
                                onlyStable: false,
                                sourceEncoding: 'ASCII',
                                zoomCoverageChart: false])
-                }}*/
+                }}*/ /*
                 }
-        }}
+        }} */
 
         stage('Unit tests') { stages {
             stage('Python 3.7') {
