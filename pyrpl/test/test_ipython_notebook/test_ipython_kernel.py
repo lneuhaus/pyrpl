@@ -79,14 +79,26 @@ def _notebook_run(path):
 # testing for the transferability of environment variables
 os.environ["python_sys_version"] = sys.version
 
+exceptions = ['async_acquisition.ipynb']
+
 # iterate through all notebooks and run tests
 for notebook in \
         (glob(NOTEBOOK_DIR+"/*.ipynb") + glob(TUTORIAL_DIR+'/*.ipynb')):
-    print("Testing notebook: %s"%notebook)
-    nb, errors = _notebook_run(notebook)
-    assert errors == []
-    # Make sure the kernel is running the current python version...
-    #assert nb['cells'][0]['outputs'][0]['text'].rstrip('\n')==sys.version
-    print("Finished testing notebook: %s"%notebook)
+    for exception in exceptions:
+        _, filename = os.path.split(notebook)
+        if filename in exceptions:
+            print("Skipping notebook: %s" % notebook)
+            sys.stdout.flush()
+            break
+    else:
+        print("Testing notebook: %s"%notebook)
+        sys.stdout.flush()
+        nb, errors = _notebook_run(notebook)
+        assert errors == []
+        # Make sure the kernel is running the current python version...
+        #assert nb['cells'][0]['outputs'][0]['text'].rstrip('\n')==sys.version
+        print("Finished testing notebook: %s"%notebook)
+        sys.stdout.flush()
+
 
 
