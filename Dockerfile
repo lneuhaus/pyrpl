@@ -27,6 +27,7 @@ RUN ./Miniconda.sh -b -p $CONDA_DIR
 
 # set path environment variable to refer to conda bin dir (we are working in the (base) conda environment
 ENV PATH="$CONDA_DIR/bin:$PATH"
+ENV LD_LIBRARY_PATH="$CONDA_DIR/lib:$LD_LIBRARY_PATH"
 
 # install desired python version and additional packages
 RUN conda install --yes python=$PYTHON_VERSION numpy scipy paramiko pandas jupyter nose pip pyqt qtpy nbconvert coverage twine matplotlib
