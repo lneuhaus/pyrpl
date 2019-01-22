@@ -314,7 +314,7 @@ class Lockbox(LockboxModule):
         """
         return self._sweep()
 
-    lock_loop = None  # this variable will store the lock loop
+    _lock_loop = None  # this variable will store the lock loop
 
     def lock(self, **kwds):
         """
