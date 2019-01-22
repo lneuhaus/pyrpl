@@ -137,13 +137,17 @@ pipeline {
                         python setup.py bdist_wheel
                         # twine upload dist/*
                     '''
+                /*
                 sh  ''' cd ..
-                        git clone https://www.github.com/lneuhaus/pyinstaller.git -b develop
-                        cd pyinstaller
+                        #git clone https://www.github.com/lneuhaus/pyinstaller.git -b develop
+                        #cd pyinstaller
                         git status
                         python setup.py develop
                         cd ..
                         cd pyrpl
+                    '''
+                */
+                sh  ''' pip install pyinstaller
                         pyinstaller pyrpl.spec
                         mv dist/pyrpl ./pyrpl-linux-develop
                     '''
