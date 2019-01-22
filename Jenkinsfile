@@ -153,7 +153,7 @@ pipeline {
                     '''
                 //sh 'python .deploy_to_sourceforge.py pyrpl-linux-develop'
                 }
-            post { always { archiveArtifacts allowEmptyArchive: true, artifacts: 'dist/*whl', fingerprint: true}}}}
+            post { always { archiveArtifacts allowEmptyArchive: true, artifacts: 'dist/*whl, pyrpl-linux-develop', fingerprint: true}}}}
         post { failure {
             emailext (
                 subject: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
