@@ -5,4 +5,4 @@ general:
   loglevel: info
 test:
   # maximum reasonable time for a read/write operation
-  max_communication_time: 0.003
+  max_communication_time: 0.005
