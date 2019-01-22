@@ -99,7 +99,7 @@ pipeline {
                             python -V
                             echo $PYTHON_VERSION
                             python setup.py install
-                            nosetests
+                            nosetests pyrpl/test/test_ipython_notebook/test_ipython_kernel.py
                             '''}
                 post { always { junit allowEmptyResults: true, testResults: 'reports/unit_tests.xml' }}}
             /*stage('Python 3.5') {
@@ -121,7 +121,7 @@ pipeline {
                             python -V
                             echo $PYTHON_VERSION
                             python setup.py install
-                            nosetests
+                            nosetests pyrpl/test/test_ipython_notebook/test_ipython_kernel.py
                             '''}
                 post { always { junit allowEmptyResults: true, testResults: 'reports/unit_tests.xml' }}}
         }}
