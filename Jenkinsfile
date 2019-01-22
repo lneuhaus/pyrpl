@@ -129,7 +129,7 @@ pipeline {
 
         stage('Build and deploy package') {
             agent { dockerfile { args '-u root -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=:0 --net=host'
-                         additionalBuildArgs  '--build-arg PYTHON_VERSION=3.7' }}
+                         additionalBuildArgs  '--build-arg PYTHON_VERSION=3.6' }}
             when {
                 expression { currentBuild.result == null || currentBuild.result == 'SUCCESS'}}
             steps {
