@@ -11,6 +11,7 @@ import os
 import sys
 from ...redpitaya import defaultparameters
 import os
+import io
 
 import nbformat
 from nbconvert.preprocessors import ExecutePreprocessor
@@ -51,7 +52,7 @@ def _notebook_run(path):
   """
   kernel_name = 'python%d' % sys.version_info[0]
   errors = []
-  with open(path, 'r', encoding='UTF-8') as f:
+  with io.open(path, mode='r', encoding='UTF-8') as f:
     nb = nbformat.read(f, as_version=4)
     nb.metadata.get('kernelspec', {})['name'] = kernel_name
     ep = MyExecutePreprocessor(kernel_name=kernel_name, timeout=65)
