@@ -91,7 +91,7 @@ pipeline {
                             python -V
                             echo $PYTHON_VERSION
                             python setup.py install
-                            '''
+                        '''
                     sh "$NOSETESTS_COMMAND"}
                 post { always { junit allowEmptyResults: true, testResults: 'reports/unit_tests.xml' }}}
             stage('Python 3.6') {
@@ -102,7 +102,7 @@ pipeline {
                             python -V
                             echo $PYTHON_VERSION
                             python setup.py install
-                            '''
+                        '''
                     sh "$NOSETESTS_COMMAND"}
                 post { always { junit allowEmptyResults: true, testResults: 'reports/unit_tests.xml' }}}
             /*stage('Python 3.5') {
