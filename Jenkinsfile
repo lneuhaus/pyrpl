@@ -36,6 +36,9 @@ pipeline {
         //        stash 'source'
         //        }}
 
+        stage('Notify github') {
+            githubNotify description: 'Jenkins has started...',  status: 'PENDING'
+        }
         /*
         stage('Metrics') {
             agent { dockerfile { args "$DOCKER_ARGS"
@@ -90,6 +93,8 @@ pipeline {
                     sh  ''' which python
                             python -V
                             echo $PYTHON_VERSION
+                            # use a custom global configfile adapted to the hardware for unit tests
+                            cp ./jenkins_global_config.yml ./pyrpl/config/global_config.yml
                             python setup.py install
                         '''
                     sh "$NOSETESTS_COMMAND"}
@@ -101,6 +106,8 @@ pipeline {
                     sh  ''' which python
                             python -V
                             echo $PYTHON_VERSION
+                            # use a custom global configfile adapted to the hardware for unit tests
+                            cp ./jenkins_global_config.yml ./pyrpl/config/global_config.yml
                             python setup.py install
                         '''
                     sh "$NOSETESTS_COMMAND"}
@@ -112,6 +119,8 @@ pipeline {
                     sh  ''' which python
                             python -V
                             echo $PYTHON_VERSION
+                            # use a custom global configfile adapted to the hardware for unit tests
+                            cp ./jenkins_global_config.yml ./pyrpl/config/global_config.yml
                             python setup.py install
                         '''
                     sh "$NOSETESTS_COMMAND"}
@@ -123,6 +132,8 @@ pipeline {
                     sh  ''' which python
                             python -V
                             echo $PYTHON_VERSION
+                            # use a custom global configfile adapted to the hardware for unit tests
+                            cp ./jenkins_global_config.yml ./pyrpl/config/global_config.yml
                             python setup.py install
                         '''
                     sh "$NOSETESTS_COMMAND"}
@@ -139,16 +150,6 @@ pipeline {
                         python setup.py bdist_wheel
                         # twine upload dist/*
                     '''
-                /*
-                sh  ''' cd ..
-                        #git clone https://www.github.com/lneuhaus/pyinstaller.git -b develop
-                        #cd pyinstaller
-                        git status
-                        python setup.py develop
-                        cd ..
-                        cd pyrpl
-                    '''
-                */
                 sh  ''' pip install pyinstaller
                         pyinstaller pyrpl.spec
                         mv dist/pyrpl ./pyrpl-linux-develop
@@ -156,14 +157,19 @@ pipeline {
                 //sh 'python .deploy_to_sourceforge.py pyrpl-linux-develop'
                 }
             post { always { archiveArtifacts allowEmptyArchive: true, artifacts: 'dist/*whl, pyrpl-linux-develop', fingerprint: true}}}}
-        post { failure {
-            emailext (
-                subject: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
-                body: """<p>FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]':</p>
-                         <p>Check console output at &QUOT;<a href='${env.BUILD_URL}'>${env.JOB_NAME} [${env.BUILD_NUMBER}]</a>&QUOT;</p>""",
-                recipientProviders: [[$class: 'DevelopersRecipientProvider']],
-                to: "pyrpl.readthedocs.io@gmail.com"
-                ) }
-    }
+        post {
+            failure {
+                emailext (
+                    subject: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
+                    body: """<p>FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]':</p>
+                             <p>Check console output at &QUOT;<a href='${env.BUILD_URL}'>${env.JOB_NAME} [${env.BUILD_NUMBER}]</a>&QUOT;</p>""",
+                    recipientProviders: [[$class: 'DevelopersRecipientProvider']],
+                    to: "pyrpl.readthedocs.io@gmail.com")
+                githubNotify description: 'Jenkins build has failed!',  status: 'FAILURE' }
+            success {
+                githubNotify description: 'Jenkins build was successful!',  status: 'SUCCESS' }
+            unstable {
+                githubNotify description: 'Error in jenkins build!',  status: 'ERROR' }
+        }
 }
 
