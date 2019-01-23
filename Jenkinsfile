@@ -93,7 +93,7 @@ pipeline {
                             python setup.py install
                         '''
                     sh "$NOSETESTS_COMMAND"}
-                post { always { junit allowEmptyResults: true, testResults: 'reports/unit_tests.xml' }}}
+                post { always { junit allowEmptyResults: true, testResults: 'unit_test_results.xml' }}}
             stage('Python 3.6') {
                 agent { dockerfile { args "$DOCKER_ARGS"
                                      additionalBuildArgs  '--build-arg PYTHON_VERSION=3.6' }}
@@ -104,7 +104,7 @@ pipeline {
                             python setup.py install
                         '''
                     sh "$NOSETESTS_COMMAND"}
-                post { always { junit allowEmptyResults: true, testResults: 'reports/unit_tests.xml' }}}
+                post { always { junit allowEmptyResults: true, testResults: 'unit_test_results.xml' }}}
             /*stage('Python 3.5') {
                 agent { dockerfile { args "$DOCKER_ARGS"
                                      additionalBuildArgs  '--build-arg PYTHON_VERSION=3.5' }}
@@ -115,7 +115,7 @@ pipeline {
                             python setup.py install
                         '''
                     sh "$NOSETESTS_COMMAND"}
-                post { always { junit allowEmptyResults: true, testResults: 'reports/unit_tests.xml' }}}*/
+                post { always { junit allowEmptyResults: true, testResults: 'unit_test_results.xml' }}}*/
             stage('Python 2.7') {
                 agent { dockerfile { args "$DOCKER_ARGS"
                                      additionalBuildArgs  '--build-arg PYTHON_VERSION=2.7' }}
@@ -126,7 +126,7 @@ pipeline {
                             python setup.py install
                         '''
                     sh "$NOSETESTS_COMMAND"}
-                post { always { junit allowEmptyResults: true, testResults: 'reports/unit_tests.xml' }}}
+                post { always { junit allowEmptyResults: true, testResults: 'unit_test_results.xml' }}}
         }}
 
         stage('Build and deploy package') {
