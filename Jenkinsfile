@@ -73,9 +73,9 @@ pipeline {
                 }}*/ /*
                 }
         }} */
-        //stage('Notify github') { steps {
-        //    githubNotify description: 'Jenkins has started...',  status: 'PENDING'
-        //}}
+        stage('Notify github') { steps {
+            githubNotify description: 'Jenkins has started...', status: 'PENDING'
+        }}
         stage('Unit tests') { stages {
             stage('Python 3.7') {
                 agent { dockerfile { args "$DOCKER_ARGS"
@@ -151,11 +151,14 @@ pipeline {
         post {
             failure {
                 emailext (
+                    attachLog: true,
                     subject: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
                     body: """<p>FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]':</p>
                              <p>Check console output at &QUOT;<a href='${env.BUILD_URL}'>${env.JOB_NAME} [${env.BUILD_NUMBER}]</a>&QUOT;</p>""",
-                    recipientProviders: [[$class: 'DevelopersRecipientProvider']],
-                    to: "pyrpl.readthedocs.io@gmail.com")
+                    compressLog: true,
+                    recipientProviders: [requestor(), developers(), brokenTestsSuspects(), brokenBuildSuspects(), upstreamDevelopers(), culprits()],
+                    replyTo: 'pyrpl.readthedocs.io@gmail.com',
+                    to: 'pyrpl.readthedocs.io@gmail.com')
                 githubNotify description: 'Jenkins build has failed!',  status: 'FAILURE' }
             success {
                 githubNotify description: 'Jenkins build was successful!',  status: 'SUCCESS' }
