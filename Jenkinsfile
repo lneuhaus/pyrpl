@@ -73,9 +73,9 @@ pipeline {
                 }}*/ /*
                 }
         }} */
-        stage('Notify github') { steps {
-            githubNotify description: 'Jenkins has started...',  status: 'PENDING'
-        }}
+        //stage('Notify github') { steps {
+        //    githubNotify description: 'Jenkins has started...',  status: 'PENDING'
+        //}}
         stage('Unit tests') { stages {
             stage('Python 3.7') {
                 agent { dockerfile { args "$DOCKER_ARGS"
