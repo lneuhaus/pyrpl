@@ -159,11 +159,12 @@ pipeline {
                     recipientProviders: [requestor(), developers(), brokenTestsSuspects(), brokenBuildSuspects(), upstreamDevelopers(), culprits()],
                     replyTo: 'pyrpl.readthedocs.io@gmail.com',
                     to: 'pyrpl.readthedocs.io@gmail.com')
-                githubNotify description: 'Jenkins build has failed!',  status: 'FAILURE' }
-            success {
-                githubNotify description: 'Jenkins build was successful!',  status: 'SUCCESS' }
-            unstable {
-                githubNotify description: 'Error in jenkins build!',  status: 'ERROR' }
+                //githubNotify description: 'Jenkins build has failed!',  status: 'FAILURE'
+                }
+            //success {
+            //    githubNotify description: 'Jenkins build was successful!',  status: 'SUCCESS' }
+            //unstable {
+            //    githubNotify description: 'Error in jenkins build!',  status: 'ERROR' }
         }
 }
 
