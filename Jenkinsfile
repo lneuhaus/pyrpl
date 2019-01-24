@@ -28,17 +28,6 @@ pipeline {
     agent none
 
     stages {
-        // git checkout is now done by default
-        //stage ("Code pull"){
-        //    agent any
-        //    steps{
-        //      checkout scm
-        //        stash 'source'
-        //        }}
-
-        stage('Notify github') {
-            githubNotify description: 'Jenkins has started...',  status: 'PENDING'
-        }
         /*
         stage('Metrics') {
             agent { dockerfile { args "$DOCKER_ARGS"
@@ -84,7 +73,9 @@ pipeline {
                 }}*/ /*
                 }
         }} */
-
+        stage('Notify github') { steps {
+            githubNotify description: 'Jenkins has started...',  status: 'PENDING'
+        }}
         stage('Unit tests') { stages {
             stage('Python 3.7') {
                 agent { dockerfile { args "$DOCKER_ARGS"
