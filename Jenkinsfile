@@ -74,7 +74,7 @@ pipeline {
                 }
         }} */
         stage('Notify github') { steps {
-            githubNotify description: 'Jenkins has started...', status: 'PENDING'
+            githubNotify description: 'Jenkins has started...', status: 'PENDING', account: 'lneuhaus', repo: 'pyrpl'
         }}
         stage('Unit tests') { stages {
             stage('Python 3.7') {
@@ -155,7 +155,7 @@ pipeline {
                     subject: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
                     body: """<p>FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]':</p>
                              <p>Check console output at &QUOT;<a href='${env.BUILD_URL}'>${env.JOB_NAME} [${env.BUILD_NUMBER}]</a>&QUOT;</p>""",
-                    compressLog: true,
+                    compressLog: false,
                     recipientProviders: [requestor(), developers(), brokenTestsSuspects(), brokenBuildSuspects(), upstreamDevelopers(), culprits()],
                     replyTo: 'pyrpl.readthedocs.io@gmail.com',
                     to: 'pyrpl.readthedocs.io@gmail.com')
