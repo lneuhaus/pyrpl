@@ -73,9 +73,17 @@ pipeline {
                 }}*/ /*
                 }
         }} */
-        stage('Notify github') { steps {
-            githubNotify description: 'Jenkins has started...', status: 'PENDING', account: 'lneuhaus', repo: '***', gitApiUrl: 'api.github.com'
-        }}
+        //steps {
+        //githubNotify description: 'Jenkins has started...', status: 'PENDING', account: 'lneuhaus', repo: '***', gitApiUrl: ''
+        stage('Notify github') {
+            step([
+              $class: "GitHubCommitStatusSetter",
+              reposSource: [$class: "ManuallyEnteredRepositorySource", url: "https://github.com/lneuhaus/pyrpl"],
+              contextSource: [$class: "ManuallyEnteredCommitContextSource", context: "ci/jenkins/build-status"],
+              errorHandlers: [[$class: "ChangingBuildStatusErrorHandler", result: "UNSTABLE"]],
+              statusResultSource: [ $class: "ConditionalStatusResultSource", results: [[$class: "AnyBuildResult", message: "message", state: "PENDING"]] ]
+                ])
+        }
         stage('Unit tests') { stages {
             stage('Python 3.7') {
                 agent { dockerfile { args "$DOCKER_ARGS"
