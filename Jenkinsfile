@@ -73,12 +73,12 @@ pipeline {
         stage('Notify github of build start') {
             agent any
             steps { setBuildStatus("Build started...", "PENDING") }}
-        stage('Unit tests') { stages {
+        stage('Unit tests') { parallel {
             stage('Python 3.7') {
                 agent { dockerfile { args "$DOCKER_ARGS"
                                      additionalBuildArgs  '--build-arg PYTHON_VERSION=3.7' }}
-                lock('redpitaya') {
                 steps {
+                    lock('redpitaya')
                     sh  ''' which python
                             python -V
                             echo $PYTHON_VERSION
@@ -86,8 +86,9 @@ pipeline {
                             cp ./jenkins_global_config.yml ./pyrpl/config/global_config.yml
                             python setup.py install
                         '''
-                    sh "$NOSETESTS_COMMAND"}
-                post { always { junit allowEmptyResults: true, testResults: 'unit_test_results.xml' }}}}
+                    sh "$NOSETESTS_COMMAND"
+                    unlock('redpitaya'}
+                post { always { junit allowEmptyResults: true, testResults: 'unit_test_results.xml' }}}
             stage('Python 3.6') {
                 agent { dockerfile { args "$DOCKER_ARGS"
                                      additionalBuildArgs  '--build-arg PYTHON_VERSION=3.6' }}
