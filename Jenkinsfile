@@ -87,7 +87,7 @@ pipeline {
                             python setup.py install
                         '''
                     sh "$NOSETESTS_COMMAND"
-                    unlock('redpitaya'}
+                    unlock('redpitaya')}
                 post { always { junit allowEmptyResults: true, testResults: 'unit_test_results.xml' }}}
             stage('Python 3.6') {
                 agent { dockerfile { args "$DOCKER_ARGS"
