@@ -74,7 +74,7 @@ pipeline {
                 }
         }} */
         stage('Notify github') { steps {
-            githubNotify description: 'Jenkins has started...', status: 'PENDING', account: 'lneuhaus', repo: 'pyrpl', gitApiUrl: 'https://api.github.com'
+            githubNotify credentialsId: "b95d7179-1ff9-4b26-a1e0-c5f0123e3336", description: 'Jenkins has started...', status: 'PENDING', account: 'lneuhaus', repo: 'pyrpl', gitApiUrl: 'https://api.github.com'
         }}
         stage('Unit tests') { stages {
             stage('Python 3.7') {
