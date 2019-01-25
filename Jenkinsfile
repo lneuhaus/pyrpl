@@ -67,7 +67,7 @@ pipeline {
         NOSETESTS_COMMAND = 'nosetests'
     }
 
-    agent none
+    agent any
 
     stages {
         stage('Notify github of build start') {
@@ -77,8 +77,8 @@ pipeline {
             stage('Python 3.7') {
                 agent { dockerfile { args "$DOCKER_ARGS"
                                      additionalBuildArgs  '--build-arg PYTHON_VERSION=3.7' }}
+                lock('redpitaya') {
                 steps {
-                    lock('redpitaya')
                     sh  ''' which python
                             python -V
                             echo $PYTHON_VERSION
@@ -87,7 +87,7 @@ pipeline {
                             python setup.py install
                         '''
                     sh "$NOSETESTS_COMMAND"}
-                post { always { junit allowEmptyResults: true, testResults: 'unit_test_results.xml' }}}
+                post { always { junit allowEmptyResults: true, testResults: 'unit_test_results.xml' }}}}
             stage('Python 3.6') {
                 agent { dockerfile { args "$DOCKER_ARGS"
                                      additionalBuildArgs  '--build-arg PYTHON_VERSION=3.6' }}
