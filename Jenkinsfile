@@ -91,7 +91,6 @@ pipeline {
                 agent { dockerfile { args "$DOCKER_ARGS"
                                      additionalBuildArgs  '--build-arg PYTHON_VERSION=3.6' }}
                 steps { lock('redpitaya') {
-                    lock('redpitaya') {
                     sh  ''' which python
                             python -V
                             echo $PYTHON_VERSION
