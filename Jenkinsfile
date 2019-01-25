@@ -1,6 +1,20 @@
 #!groovy
 
 
+
+
+void setBuildStatus(String message, String state) {
+  step([
+      $class: "GitHubCommitStatusSetter",
+      reposSource: [$class: "ManuallyEnteredRepositorySource", url: "https://github.com/lneuhaus/pyrpl"],
+      contextSource: [$class: "ManuallyEnteredCommitContextSource", context: "ci/jenkins/build-status"],
+      errorHandlers: [[$class: "ChangingBuildStatusErrorHandler", result: "UNSTABLE"]],
+      statusResultSource: [ $class: "ConditionalStatusResultSource", results: [[$class: "AnyBuildResult", message: message, state: state]] ]
+  ]);
+}
+
+
+
 pipeline {
     triggers { pollSCM('*/1 * * * *') }
 
@@ -31,18 +45,8 @@ pipeline {
         stage('Notify github') {
             agent any
             steps {
-            step([$class: "GitHubCommitStatusSetter",
-             reposSource: [$class: "ManuallyEnteredRepositorySource", url: "https://github.com/lneuhaus/pyrpl"],
-             contextSource: [$class: "ManuallyEnteredCommitContextSource", context: "ci/jenkins/build-status"],
-             errorHandlers: [[$class: "ChangingBuildStatusErrorHandler", result: "UNSTABLE"]],
-             statusResultSource: [ $class: "ConditionalStatusResultSource", results: [[$class: "AnyBuildResult", message: "message", state: "PENDING"]]]
-             ]);
+                setBuildStatus("Build complete", "SUCCESS");
         }}
-        stage('Notify github2') {
-            steps {
-                githubNotify description: 'Jenkins has started...', status: 'PENDING', account: 'lneuhaus', repo: '***', gitApiUrl: ''
-            }
-        }
         stage('Unit tests') { stages {
             stage('Python 3.7') {
                 agent { dockerfile { args "$DOCKER_ARGS"
