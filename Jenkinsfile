@@ -70,11 +70,9 @@ pipeline {
     agent none
 
     stages {
-        stage('Notify github') {
+        stage('Notify github of build start') {
             agent any
-            steps {
-                setBuildStatus("Build started...", "PENDING")
-        }}
+            steps { setBuildStatus("Build started...", "PENDING") }}
         stage('Unit tests') { stages {
             stage('Python 3.7') { lock('redpitaya') {
                 agent { dockerfile { args "$DOCKER_ARGS"
@@ -158,12 +156,10 @@ pipeline {
                     recipientProviders: [requestor(), developers(), brokenTestsSuspects(), brokenBuildSuspects(), upstreamDevelopers(), culprits()],
                     replyTo: 'pyrpl.readthedocs.io@gmail.com',
                     to: 'pyrpl.readthedocs.io@gmail.com')
-                //githubNotify description: 'Jenkins build has failed!',  status: 'FAILURE'
+                setBuildStatus("Build failed!", "FAILURE")
                 }
-            //success {
-            //    githubNotify description: 'Jenkins build was successful!',  status: 'SUCCESS' }
-            //unstable {
-            //    githubNotify description: 'Error in jenkins build!',  status: 'ERROR' }
+            success { setBuildStatus("Build successful!", "SUCCESS") }
+            unstable { setBuildStatus("Build erroneous!", "ERROR") }
         }
 }
 
