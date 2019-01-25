@@ -71,6 +71,11 @@ pipeline {
     agent none
 
     stages {
+        stage('Notify github') {
+            agent any
+            steps {
+                setBuildStatus("Build started...", "PENDING")
+        }}
         stage('Unit tests') { stages {
             stage('Python 3.7') {
                 agent { dockerfile { args "$DOCKER_ARGS"
