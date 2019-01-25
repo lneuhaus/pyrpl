@@ -77,8 +77,7 @@ pipeline {
             stage('Python 3.7') {
                 agent { dockerfile { args "$DOCKER_ARGS"
                                      additionalBuildArgs  '--build-arg PYTHON_VERSION=3.7' }}
-                steps {
-                    lock('redpitaya') {
+                steps { lock('redpitaya') {
                     sh  ''' which python
                             python -V
                             echo $PYTHON_VERSION
@@ -91,7 +90,8 @@ pipeline {
             stage('Python 3.6') {
                 agent { dockerfile { args "$DOCKER_ARGS"
                                      additionalBuildArgs  '--build-arg PYTHON_VERSION=3.6' }}
-                steps {
+                steps { lock('redpitaya') {
+                    lock('redpitaya') {
                     sh  ''' which python
                             python -V
                             echo $PYTHON_VERSION
@@ -99,7 +99,7 @@ pipeline {
                             cp ./jenkins_global_config.yml ./pyrpl/config/global_config.yml
                             python setup.py install
                         '''
-                    sh "$NOSETESTS_COMMAND"}
+                    sh "$NOSETESTS_COMMAND"}}
                 post { always { junit allowEmptyResults: true, testResults: 'unit_test_results.xml' }}}
             /*stage('Python 3.5') {
                 agent { dockerfile { args "$DOCKER_ARGS"
@@ -117,7 +117,7 @@ pipeline {
             stage('Python 2.7') {
                 agent { dockerfile { args "$DOCKER_ARGS"
                                      additionalBuildArgs  '--build-arg PYTHON_VERSION=2.7' }}
-                steps {
+                steps { lock('redpitaya') {
                     sh  ''' which python
                             python -V
                             echo $PYTHON_VERSION
@@ -125,7 +125,7 @@ pipeline {
                             cp ./jenkins_global_config.yml ./pyrpl/config/global_config.yml
                             python setup.py install
                         '''
-                    sh "$NOSETESTS_COMMAND"}
+                    sh "$NOSETESTS_COMMAND"}}
                 post { always { junit allowEmptyResults: true, testResults: 'unit_test_results.xml' }}}
         }}
 
