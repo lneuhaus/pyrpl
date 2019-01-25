@@ -74,7 +74,7 @@ pipeline {
         stage('Notify github') {
             agent any
             steps {
-                setBuildStatus("Build complete", "PENDING")
+                //setBuildStatus("Build started...", "PENDING");
         }}
         stage('Unit tests') { stages {
             stage('Python 3.7') {
