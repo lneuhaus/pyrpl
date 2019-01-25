@@ -75,7 +75,7 @@ pipeline {
         }} */
         stage('Notify github') { steps {
            withCredentials([string(credentialsId: 'jenkins-github-status', variable: 'myvariable')]) {
-            githubNotify credentialsId: 'myvariable', description: 'Jenkins has started...', status: 'PENDING', account: 'lneuhaus', repo: 'pyrpl', gitApiUrl: 'https://api.github.com'
+            githubNotify credentialsId: "$myvariable", description: 'Jenkins has started...', status: 'PENDING', account: 'lneuhaus', repo: 'pyrpl', gitApiUrl: 'https://api.github.com'
             }
         }}
         stage('Unit tests') { stages {
