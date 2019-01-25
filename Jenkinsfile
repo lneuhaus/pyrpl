@@ -81,7 +81,6 @@ pipeline {
              errorHandlers: [[$class: "ChangingBuildStatusErrorHandler", result: "UNSTABLE"]],
              statusResultSource: [ $class: "ConditionalStatusResultSource", results: [[$class: "AnyBuildResult", message: "message", state: "PENDING"]]]
              ]);
-             }
         }
         stage('Unit tests') { stages {
             stage('Python 3.7') {
