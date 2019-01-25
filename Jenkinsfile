@@ -29,6 +29,7 @@ pipeline {
 
     stages {
         stage('Notify github') {
+            agent any
             steps {
             step([$class: "GitHubCommitStatusSetter",
              reposSource: [$class: "ManuallyEnteredRepositorySource", url: "https://github.com/lneuhaus/pyrpl"],
