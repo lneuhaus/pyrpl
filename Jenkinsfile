@@ -28,59 +28,19 @@ pipeline {
     agent none
 
     stages {
-        /*
-        stage('Metrics') {
-            agent { dockerfile { args "$DOCKER_ARGS"
-                                 additionalBuildArgs  '--build-arg PYTHON_VERSION=3.7' }}
-            stages {
-                stage('Docker environment diagnostics') { steps {
-                    sh  ''' which python
-                            python -V
-                            echo $PYTHON_VERSION
-                            '''
-                }}
-                stage('Install') { steps {
-                    sh 'python setup.py install'
-                }}
-                stage('Static code metrics') { steps {
-                    echo "Raw metrics"
-                    //sh  ''' radon raw --json pyrpl > raw_report.json
-                    //        radon cc --json pyrpl > cc_report.json
-                    //        radon mi --json pyrpl > mi_report.json
-                    //        sloccount --duplicates --wide pyrpl > sloccount.sc
-                    //    '''
-                    //echo "Test coverage"
-                    //sh  ''' coverage run pyrpl
-                    //        python -m coverage xml -o reports/coverage.xml
-                    //    '''
-                    //echo "Style check"
-                    //sh  ''' pylint pyrpl || true
-                    //    '''
-                }
-                */
-                /*post{ always { step(
-                    [ $class: 'CoberturaPublisher',
-                               autoUpdateHealth: false,
-                               autoUpdateStability: false,
-                               coberturaReportFile: 'reports/coverage.xml',
-                               failNoReports: false,
-                               failUnhealthy: false,
-                               failUnstable: false,
-                               maxNumberOfBuilds: 10,
-                               onlyStable: false,
-                               sourceEncoding: 'ASCII',
-                               zoomCoverageChart: false])
-                }}*/ /*
-                }
-        //githubNotify description: 'Jenkins has started...', status: 'PENDING', account: 'lneuhaus', repo: '***', gitApiUrl: ''
-        }} */
         stage('Notify github') {
+            steps {
             step([$class: "GitHubCommitStatusSetter",
              reposSource: [$class: "ManuallyEnteredRepositorySource", url: "https://github.com/lneuhaus/pyrpl"],
              contextSource: [$class: "ManuallyEnteredCommitContextSource", context: "ci/jenkins/build-status"],
              errorHandlers: [[$class: "ChangingBuildStatusErrorHandler", result: "UNSTABLE"]],
              statusResultSource: [ $class: "ConditionalStatusResultSource", results: [[$class: "AnyBuildResult", message: "message", state: "PENDING"]]]
              ]);
+        }}
+        stage('Notify github2') {
+            steps {
+                githubNotify description: 'Jenkins has started...', status: 'PENDING', account: 'lneuhaus', repo: '***', gitApiUrl: ''
+            }
         }
         stage('Unit tests') { stages {
             stage('Python 3.7') {
