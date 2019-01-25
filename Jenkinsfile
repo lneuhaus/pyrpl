@@ -53,7 +53,6 @@ pipeline {
         buildDiscarder(logRotator(numToKeepStr: '10'))
         timestamps()
         // lock the redpitaya such that no two pipelines running in parallel can interfere
-        lock('redpitaya')
     }
 
 
@@ -77,7 +76,7 @@ pipeline {
                 setBuildStatus("Build started...", "PENDING")
         }}
         stage('Unit tests') { stages {
-            stage('Python 3.7') {
+            stage('Python 3.7') { lock('redpitaya') {
                 agent { dockerfile { args "$DOCKER_ARGS"
                                      additionalBuildArgs  '--build-arg PYTHON_VERSION=3.7' }}
                 steps {
@@ -89,8 +88,8 @@ pipeline {
                             python setup.py install
                         '''
                     sh "$NOSETESTS_COMMAND"}
-                post { always { junit allowEmptyResults: true, testResults: 'unit_test_results.xml' }}}
-            stage('Python 3.6') {
+                post { always { junit allowEmptyResults: true, testResults: 'unit_test_results.xml' }}}}
+            stage('Python 3.6') { lock('redpitaya') {
                 agent { dockerfile { args "$DOCKER_ARGS"
                                      additionalBuildArgs  '--build-arg PYTHON_VERSION=3.6' }}
                 steps {
@@ -102,7 +101,7 @@ pipeline {
                             python setup.py install
                         '''
                     sh "$NOSETESTS_COMMAND"}
-                post { always { junit allowEmptyResults: true, testResults: 'unit_test_results.xml' }}}
+                post { always { junit allowEmptyResults: true, testResults: 'unit_test_results.xml' }}}}
             /*stage('Python 3.5') {
                 agent { dockerfile { args "$DOCKER_ARGS"
                                      additionalBuildArgs  '--build-arg PYTHON_VERSION=3.5' }}
@@ -116,7 +115,7 @@ pipeline {
                         '''
                     sh "$NOSETESTS_COMMAND"}
                 post { always { junit allowEmptyResults: true, testResults: 'unit_test_results.xml' }}}*/
-            stage('Python 2.7') {
+            stage('Python 2.7') { lock('redpitaya') {
                 agent { dockerfile { args "$DOCKER_ARGS"
                                      additionalBuildArgs  '--build-arg PYTHON_VERSION=2.7' }}
                 steps {
@@ -128,7 +127,7 @@ pipeline {
                             python setup.py install
                         '''
                     sh "$NOSETESTS_COMMAND"}
-                post { always { junit allowEmptyResults: true, testResults: 'unit_test_results.xml' }}}
+                post { always { junit allowEmptyResults: true, testResults: 'unit_test_results.xml' }}}}
         }}
 
         stage('Build and deploy package') {
