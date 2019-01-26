@@ -32,8 +32,6 @@ ENV LD_LIBRARY_PATH="$CONDA_DIR/lib:$LD_LIBRARY_PATH"
 
 # install desired python version and additional packages
 RUN conda install --yes python=$PYTHON_VERSION numpy scipy paramiko pandas jupyter nose pip pyqt qtpy nbconvert coverage twine matplotlib nb_conda_kernels
-#RUN pip install radon
-#RUN conda install --yes  nb_conda nb_conda_kernels nb_anacondacloud
 
 # Clean up miniconda installation files
 WORKDIR /

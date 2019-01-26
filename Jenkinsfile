@@ -2,16 +2,6 @@
 
 
 
-void setBuildStatus(String message, String state) {
-  step([
-      $class: "GitHubCommitStatusSetter",
-      reposSource: [$class: "ManuallyEnteredRepositorySource", url: "https://github.com/lneuhaus/pyrpl"],
-      contextSource: [$class: "ManuallyEnteredCommitContextSource", context: "ci/jenkins/build-status"],
-      errorHandlers: [[$class: "ChangingBuildStatusErrorHandler", result: "UNSTABLE"]],
-      statusResultSource: [ $class: "ConditionalStatusResultSource", results: [[$class: "AnyBuildResult", message: message, state: state]] ]
-  ]);
-}
-
 def getRepoURL() {
   sh "git config --get remote.origin.url > .git/remote-url"
   return readFile(".git/remote-url").trim()
@@ -22,26 +12,16 @@ def getCommitSha() {
   return readFile(".git/current-commit").trim()
 }
 
-def updateGithubCommitStatus(build) {
-  // workaround https://issues.jenkins-ci.org/browse/JENKINS-38674
-  repoUrl = getRepoURL()
-  commitSha = getCommitSha()
-
+void setBuildStatus(String message, String state) {
   step([
-    $class: 'GitHubCommitStatusSetter',
-    reposSource: [$class: "ManuallyEnteredRepositorySource", url: repoUrl],
-    commitShaSource: [$class: "ManuallyEnteredShaSource", sha: commitSha],
-    errorHandlers: [[$class: 'ShallowAnyErrorHandler']],
-    statusResultSource: [
-      $class: 'ConditionalStatusResultSource',
-      results: [
-        [$class: 'BetterThanOrEqualBuildResult', result: 'SUCCESS', state: 'SUCCESS', message: build.description],
-        [$class: 'BetterThanOrEqualBuildResult', result: 'FAILURE', state: 'FAILURE', message: build.description],
-        [$class: 'AnyBuildResult', state: 'FAILURE', message: 'Loophole']
-      ]
-    ]
-  ])
+      $class: "GitHubCommitStatusSetter",
+      reposSource: [$class: "ManuallyEnteredRepositorySource", url: getRepoURL()],
+      contextSource: [$class: "ManuallyEnteredCommitContextSource", context: "ci/jenkins/build-status"],
+      errorHandlers: [[$class: "ChangingBuildStatusErrorHandler", result: "UNSTABLE"]],
+      statusResultSource: [ $class: "ConditionalStatusResultSource", results: [[$class: "AnyBuildResult", message: message, state: state]] ]
+  ]);
 }
+
 
 pipeline {
     triggers { pollSCM('*/1 * * * *') }
@@ -80,6 +60,7 @@ pipeline {
                     sh  ''' which python
                             python -V
                             echo $PYTHON_VERSION
+                            conda list
                             # use a custom global configfile adapted to the hardware for unit tests
                             cp ./jenkins_global_config.yml ./pyrpl/config/global_config.yml
                             python setup.py install
@@ -93,6 +74,7 @@ pipeline {
                     sh  ''' which python
                             python -V
                             echo $PYTHON_VERSION
+                            conda list
                             # use a custom global configfile adapted to the hardware for unit tests
                             cp ./jenkins_global_config.yml ./pyrpl/config/global_config.yml
                             python setup.py install
@@ -106,6 +88,7 @@ pipeline {
                     sh  ''' which python
                             python -V
                             echo $PYTHON_VERSION
+                            conda list
                             # use a custom global configfile adapted to the hardware for unit tests
                             cp ./jenkins_global_config.yml ./pyrpl/config/global_config.yml
                             python setup.py install
@@ -119,46 +102,59 @@ pipeline {
                     sh  ''' which python
                             python -V
                             echo $PYTHON_VERSION
+                            conda list
                             # use a custom global configfile adapted to the hardware for unit tests
                             cp ./jenkins_global_config.yml ./pyrpl/config/global_config.yml
                             python setup.py install
                         '''
                     sh "$NOSETESTS_COMMAND"}}
                 post { always { junit allowEmptyResults: true, testResults: 'unit_test_results.xml' }}}
+            stage('Linux binary') {
+                agent { dockerfile { args '-u root -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=:0 --net=host'
+                                     additionalBuildArgs  '--build-arg PYTHON_VERSION=3.7' }}
+                steps { lock('fake_redpitaya') {
+                    sh  ''' python setup.py install
+                            pip install https://github.com/pyinstaller/pyinstaller/tarball/develop
+                            pyinstaller pyrpl.spec
+                            mv dist/pyrpl ./pyrpl-linux-develop
+                        '''
+                    //sh 'python .deploy_to_sourceforge.py pyrpl-linux-develop'}}
+                post { always { archiveArtifacts allowEmptyArchive: true, artifacts: 'pyrpl-linux-develop', fingerprint: true }}}
+            stage('pip wheel') {
+                agent { dockerfile { args '-u root -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=:0 --net=host'
+                                     additionalBuildArgs  '--build-arg PYTHON_VERSION=3.7' }}
+                steps { lock('fake_redpitaya') {
+                    sh  ''' python setup.py install
+                            python setup.py bdist_wheel
+                            # twine upload dist/*
+                        '''}}
+                post { always { archiveArtifacts allowEmptyArchive: true, artifacts: 'dist/*whl', fingerprint: true }}}
         }}
-
-        stage('Build and deploy package') {
+        stage('Deploy') {
             agent { dockerfile { args '-u root -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=:0 --net=host'
-                         additionalBuildArgs  '--build-arg PYTHON_VERSION=3.6' }}
+                         additionalBuildArgs  '--build-arg PYTHON_VERSION=3.7' }}
             when {
                 expression { currentBuild.result == null || currentBuild.result == 'SUCCESS'}}
             steps {
                 sh  ''' python setup.py install
-                        python setup.py bdist_wheel
                         # twine upload dist/*
-                    '''
-                sh  ''' pip install https://github.com/pyinstaller/pyinstaller/tarball/develop
-                        pyinstaller pyrpl.spec
-                        mv dist/pyrpl ./pyrpl-linux-develop
-                    '''
-                //sh 'python .deploy_to_sourceforge.py pyrpl-linux-develop'
-                }
-            post { always { archiveArtifacts allowEmptyArchive: true, artifacts: 'dist/*whl, pyrpl-linux-develop', fingerprint: true}}}}
-        post {
-            failure {
-                emailext (
-                    attachLog: true,
-                    subject: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
-                    body: """<p>FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]':</p>
-                             <p>Check console output at <a href='${env.BUILD_URL}'>${env.JOB_NAME} [${env.BUILD_NUMBER}]</a></p>""",
-                    compressLog: false,
-                    recipientProviders: [requestor(), developers(), brokenTestsSuspects(), brokenBuildSuspects(), upstreamDevelopers(), culprits()],
-                    replyTo: 'pyrpl.readthedocs.io@gmail.com',
-                    to: 'pyrpl.readthedocs.io@gmail.com')
-                setBuildStatus("Build failed!", "FAILURE")
-                }
-            success { setBuildStatus("Build successful!", "SUCCESS") }
-            unstable { setBuildStatus("Build erroneous!", "ERROR") }
-        }
+                    '''}}
+    }
+    post {
+        failure {
+            emailext (
+                attachLog: true,
+                subject: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
+                body: """<p>FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]':</p>
+                         <p>Check console output at <a href='${env.BUILD_URL}'>${env.JOB_NAME} [${env.BUILD_NUMBER}]</a></p>""",
+                compressLog: false,
+                recipientProviders: [requestor(), developers(), brokenTestsSuspects(), brokenBuildSuspects(), upstreamDevelopers(), culprits()],
+                replyTo: 'pyrpl.readthedocs.io@gmail.com',
+                to: 'pyrpl.readthedocs.io@gmail.com')
+            setBuildStatus("Build failed!", "FAILURE")
+            }
+        success { setBuildStatus("Build successful!", "SUCCESS") }
+        unstable { setBuildStatus("Build erroneous!", "ERROR") }
+    }
 }
 
