@@ -113,7 +113,7 @@ pipeline {
                                      additionalBuildArgs  '--build-arg PYTHON_VERSION=3.7' }}
                 steps { lock('fake_redpitaya') {
                     sh  ''' python setup.py install
-                            pip install https://github.com/pyinstaller/pyinstaller/tarball/develop
+                            pip install https://github.com/lneuhaus/pyinstaller/tarball/develop
                             pyinstaller pyrpl.spec
                             mv dist/pyrpl ./pyrpl-linux-develop
                         '''

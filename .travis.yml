@@ -85,7 +85,7 @@ install:
 script:
   - if [[ "$TRAVIS_PYTHON_VERSION" == "3.5" && "$TRAVIS_OS_NAME" == "osx" ]]; then
     cd ..;
-    git clone https://www.github.com/lneuhaus/pyinstaller.git -b develop;
+    git clone https://www.github.com/lneuhaus/pyinstaller.git -b develop --depth=1;
     cd pyinstaller;
     git status;
     python setup.py develop;
