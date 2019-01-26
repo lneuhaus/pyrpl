@@ -117,7 +117,8 @@ pipeline {
                             pyinstaller pyrpl.spec
                             mv dist/pyrpl ./pyrpl-linux-develop
                         '''
-                    //sh 'python .deploy_to_sourceforge.py pyrpl-linux-develop'}}
+                    //sh 'python .deploy_to_sourceforge.py pyrpl-linux-develop'
+                    }}
                 post { always { archiveArtifacts allowEmptyArchive: true, artifacts: 'pyrpl-linux-develop', fingerprint: true }}}
             stage('pip wheel') {
                 agent { dockerfile { args '-u root -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=:0 --net=host'
