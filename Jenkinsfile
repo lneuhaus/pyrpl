@@ -137,7 +137,7 @@ pipeline {
                         python setup.py bdist_wheel
                         # twine upload dist/*
                     '''
-                sh  ''' pip install pyinstaller
+                sh  ''' pip install https://github.com/pyinstaller/pyinstaller/tarball/develop
                         pyinstaller pyrpl.spec
                         mv dist/pyrpl ./pyrpl-linux-develop
                     '''

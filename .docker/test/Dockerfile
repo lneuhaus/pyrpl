@@ -14,7 +14,7 @@ ARG PYTHON_VERSION="3"
 RUN apt update --yes
 RUN apt upgrade --yes
 RUN apt update --yes
-RUN apt-get install --yes systemd wget sloccount qt5-default binutils
+RUN apt-get install --yes systemd wget sloccount qt5-default
 # sets up keyboard support in GUI
 ENV QT_XKB_CONFIG_ROOT /usr/share/X11/xkb
 
@@ -27,13 +27,19 @@ RUN ./Miniconda.sh -b -p $CONDA_DIR
 
 # set path environment variable to refer to conda bin dir (we are working in the (base) conda environment
 ENV PATH="$CONDA_DIR/bin:$PATH"
-# set library path until pyinstaller issue is fixed
 ENV LD_LIBRARY_PATH="$CONDA_DIR/lib:$LD_LIBRARY_PATH"
 
+RUN python -V
+
 # install desired python version and additional packages
-RUN conda install --yes python=$PYTHON_VERSION numpy scipy paramiko pandas jupyter nose pip pyqt qtpy nbconvert coverage twine matplotlib nb_conda_kernels
-#RUN pip install radon
-#RUN conda install --yes  nb_conda nb_conda_kernels nb_anacondacloud
+RUN conda install --yes python=$PYTHON_VERSION numpy scipy paramiko pandas jupyter nose pip pyqt qtpy nbconvert coverage twine matplotlib
+
+RUN python -V
+
+RUN pip install radon
+RUN conda install --yes  nb_conda nb_conda_kernels nb_anacondacloud
+
+RUN python -V
 
 # Clean up miniconda installation files
 WORKDIR /
