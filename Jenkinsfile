@@ -31,7 +31,6 @@ pipeline {
         // Keep the 10 most recent builds
         buildDiscarder(logRotator(numToKeepStr: '10'))
         timestamps()
-        // lock the redpitaya such that no two pipelines running in parallel can interfere
     }
 
 
@@ -49,9 +48,9 @@ pipeline {
     agent any
 
     stages {
-        stage('Notify github of build start') {
+        stage('Notify github that a build was started') {
             agent any
-            steps { setBuildStatus("Build started...", "PENDING") }}
+            steps { setBuildStatus("Jenkins build started...", "PENDING") }}
         stage('Unit tests') { parallel {
             stage('Python 3.7') {
                 agent { dockerfile { args "$DOCKER_ARGS"
@@ -129,7 +128,7 @@ pipeline {
                             python setup.py bdist_wheel --universal
                             # twine upload dist/*
                         '''}}
-                post { always { archiveArtifacts allowEmptyArchive: true, artifacts: 'dist/*', fingerprint: true }}}
+                post { always { archiveArtifacts allowEmptyArchive: true, artifacts: 'dist/*', fingerprint: true}}}
         }}
         stage('Deploy') {
             agent { dockerfile { args '-u root -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=:0 --net=host'
@@ -156,4 +155,5 @@ pipeline {
         success { setBuildStatus("Build successful!", "SUCCESS") }
         unstable { setBuildStatus("Build erroneous!", "ERROR") }
     }
-}
+}}}
+
