@@ -125,10 +125,11 @@ pipeline {
                                      additionalBuildArgs  '--build-arg PYTHON_VERSION=3.7' }}
                 steps { lock('fake_redpitaya') {
                     sh  ''' python setup.py install
-                            python setup.py bdist_wheel
+                            python setup.py sdist
+                            python setup.py bdist_wheel --universal
                             # twine upload dist/*
                         '''}}
-                post { always { archiveArtifacts allowEmptyArchive: true, artifacts: 'dist/*whl', fingerprint: true }}}
+                post { always { archiveArtifacts allowEmptyArchive: true, artifacts: 'dist/*', fingerprint: true }}}
         }}
         stage('Deploy') {
             agent { dockerfile { args '-u root -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=:0 --net=host'
@@ -137,7 +138,6 @@ pipeline {
                 expression { currentBuild.result == null || currentBuild.result == 'SUCCESS'}}
             steps {
                 sh  ''' python setup.py install
-                        # twine upload dist/*
                     '''}}
     }
     post {
@@ -157,4 +157,3 @@ pipeline {
         unstable { setBuildStatus("Build erroneous!", "ERROR") }
     }
 }
-
