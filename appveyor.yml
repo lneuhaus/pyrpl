@@ -78,7 +78,14 @@ install:
   # - "pip install pyinstaller==3.2"
   - pip install pypiwin32
   - cd ..
-  - pip install https://github.com/pyinstaller/pyinstaller/tarball/develop
+  # - pip install https://github.com/pyinstaller/pyinstaller/tarball/develop
+  - git clone --branch develop --depth=1 https://www.github.com/pyinstaller/pyinstaller.git
+  - cd pyinstaller
+  #- git fetch origin pull/2991/head:pr2991
+  #- git checkout pr2991
+  - git status
+  - python setup.py develop
+  - cd ..
   - cd pyrpl
   # set hostname to fake in case pyrpl is executed
   - "SET REDPITAYA_HOSTNAME=_FAKE_"

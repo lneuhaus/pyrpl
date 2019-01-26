@@ -126,9 +126,9 @@ pipeline {
                     sh  ''' python setup.py install
                             python setup.py sdist
                             python setup.py bdist_wheel --universal
-                            # twine upload dist/*
+                            # twine upload dist/**/*.*
                         '''}}
-                post { always { archiveArtifacts allowEmptyArchive: true, artifacts: 'dist/*', fingerprint: true}}}
+                post { always { archiveArtifacts allowEmptyArchive: true, artifacts: 'dist/**/*.*', fingerprint: true}}}
         }}
         stage('Deploy') {
             agent { dockerfile { args '-u root -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=:0 --net=host'
@@ -155,5 +155,5 @@ pipeline {
         success { setBuildStatus("Build successful!", "SUCCESS") }
         unstable { setBuildStatus("Build erroneous!", "ERROR") }
     }
-}}}
+}
 
