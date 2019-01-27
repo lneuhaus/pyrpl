@@ -116,6 +116,12 @@ pipeline {
                             pip install https://github.com/lneuhaus/pyinstaller/tarball/develop
                             pyinstaller pyrpl.spec
                             mv dist/pyrpl ./pyrpl-linux-develop
+                            python .deploy_to_sourceforge.py pyrpl-linux-develop
+                            chmod 755 pyrpl-linux-develop
+                            (./pyrpl-linux-develop config=test_linux hostname=_FAKE_ &)
+                            PYRPL_PID=$!
+                            sleep 30
+                            killall -9 pyrpl-linux-develop
                         '''
                     //sh 'python .deploy_to_sourceforge.py pyrpl-linux-develop'
                     }}
@@ -125,8 +131,13 @@ pipeline {
                                      additionalBuildArgs  '--build-arg PYTHON_VERSION=3.7' }}
                 steps { lock('fake_redpitaya') {
                     sh  ''' python setup.py install
+                            # convert readme file to rst for PyPI
+                            conda install pandoc
+                            pandoc --from=markdown --to=rst --output=README.rst README.md
+                            # make distributions for PyPI
                             python setup.py sdist
                             python setup.py bdist_wheel --universal
+                            # upload to PyPI
                             # twine upload dist/**/*.*
                         '''}}
                 post { always { archiveArtifacts allowEmptyArchive: true, artifacts: 'dist/**/*.*', fingerprint: true}}}

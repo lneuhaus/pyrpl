@@ -67,62 +67,27 @@ install:
   # convert readme file to rst for PyPI
   - conda install pandoc
   - pandoc --from=markdown --to=rst --output=README.rst README.md
-  # overwrite default global config file with a custom one for travis (allows slower communication time)
-  - \cp ./travis_global_config.yml ./pyrpl/config/global_config.yml
-  # packages for coverage reports
-  - conda install --yes -c conda-forge coveralls
-  - pip install coverage codecov
+  # install pyinstaller
+  - cd ..
+  - git clone https://www.github.com/lneuhaus/pyinstaller.git -b develop --depth=1
+  - cd pyinstaller
+  - git status
+  - python setup.py develop
+  - cd ..
+  - cd pyrpl
   # install pyrpl
   - python setup.py install
 
-# Run test - but only for specific combinations of OS and Python version to reduce the overall time needed for a test
-# this is a debug version. We used to have
-# - instead of the echo: nosetests;
-# - no second copy-pasted section of osx deployment
+# create, test and upload binary for mac os
 script:
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "3.7" && "$TRAVIS_OS_NAME" == "osx" ]]; then
-    cd ..;
-    git clone https://www.github.com/lneuhaus/pyinstaller.git -b develop --depth=1;
-    cd pyinstaller;
-    git status;
-    python setup.py develop;
-    cd ..;
-    cd pyrpl;
-    pyinstaller pyrpl.spec;
-    mv dist/pyrpl ./pyrpl-mac-develop;
-    python .deploy_to_sourceforge.py pyrpl-mac-develop;
-    chmod 755 pyrpl-mac-develop;
-    (./pyrpl-mac-develop config=test_osx hostname=_FAKE_ &);
-    PYRPL_PID=$!;
-    sleep 30;
-    killall -9 pyrpl-mac-develop;
-    fi
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "3.4" && "$TRAVIS_OS_NAME" == "linux" ]]; then
-    cd ..;
-    git clone https://www.github.com/lneuhaus/pyinstaller.git -b develop;
-    cd pyinstaller;
-    git status;
-    python setup.py develop;
-    cd ..;
-    cd pyrpl;
-    pyinstaller pyrpl.spec;
-    mv dist/pyrpl ./pyrpl-linux-develop;
-    python .deploy_to_sourceforge.py pyrpl-linux-develop;
-    chmod 755 pyrpl-linux-develop;
-    (./pyrpl-linux-develop config=test_linux hostname=_FAKE_ &);
-    PYRPL_PID=$!;
-    sleep 30;
-    killall pyrpl-linux-develop;
-    fi
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" &&  "$TRAVIS_OS_NAME" == "linux" ]] || [[ "$TRAVIS_PYTHON_VERSION" == "3.5" &&  "$TRAVIS_OS_NAME" == "osx" ]] || [[ "$TRAVIS_PYTHON_VERSION" == "3.6" && "$TRAVIS_OS_NAME" == "linux" ]]; then
-    echo "NOSETESTS ARE ENABLED";
-    # nosetests;
-    fi
-
-#after_script:
-#  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" &&  "$TRAVIS_OS_NAME" == "linux" ]] || [[ "$TRAVIS_PYTHON_VERSION" == "3.5" &&  "$TRAVIS_OS_NAME" == "linux" ]] || [[ "$TRAVIS_PYTHON_VERSION" == "3.6" && "$TRAVIS_OS_NAME" == "osx" ]]; then
-#    codecov;
-#    fi
+  - pyinstaller pyrpl.spec
+  - mv dist/pyrpl ./pyrpl-mac-develop
+  - chmod 755 pyrpl-mac-develop
+  - (./pyrpl-mac-develop config=test_osx hostname=_FAKE_ &)
+  - PYRPL_PID=$!
+  - sleep 30
+  - killall -9 pyrpl-mac-develop
+  - python .deploy_to_sourceforge.py pyrpl-mac-develop
 
 # automatic release when a new tag is created: before_deploy, deploy, and after_deploy
 before_deploy:
@@ -137,26 +102,3 @@ deploy:
   on:
     tags: true
   distributions: "sdist bdist_wheel --universal"
-
-# make an executable for linux and upload to sourceforge in python 3.4
-# same for macos
-# put windows executable into the right directory (at last such that "latest" points to windows .exe)
-after_deploy:
-  - source activate test-environment
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "3.5" && "$TRAVIS_OS_NAME" == "linux" && "$TRAVIS_TEST_RESULT" == 0 ]]; then
-    pip install https://github.com/pyinstaller/pyinstaller/archive/develop.zip;
-    export QT_QPA_PLATFORM_PLUGIN_PATH=$HOME/miniconda/envs/test-environment/plugins/platforms;
-    pyinstaller pyrpl.spec;
-    mv dist/pyrpl ./pyrpl-linux;
-    python .deploy_to_sourceforge.py pyrpl-linux;
-    fi
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "3.7" && "$TRAVIS_OS_NAME" == "osx" && "$TRAVIS_TEST_RESULT" == 0 ]]; then
-    pip install https://github.com/pyinstaller/pyinstaller/archive/develop.zip;
-    export QT_QPA_PLATFORM_PLUGIN_PATH=$HOME/miniconda/envs/test-environment/plugins/platforms;
-    pyinstaller pyrpl.spec;
-    mv dist/pyrpl ./pyrpl-mac;
-    python .deploy_to_sourceforge.py pyrpl-mac;
-    fi
-  - wget wget https://sourceforge.net/projects/pyrpl/files/pyrpl-windows.exe -O pyrpl-windows.exe
-  - python .deploy_to_sourceforge.py pyrpl-windows.exe
-
