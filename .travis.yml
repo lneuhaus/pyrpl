@@ -14,11 +14,8 @@ notifications:
 language: generic
 
 env:
-  - TRAVIS_PYTHON_VERSION=3.5
-  - TRAVIS_PYTHON_VERSION=2.7
-  - TRAVIS_PYTHON_VERSION=3.6
+  - TRAVIS_PYTHON_VERSION=3.7
 os:
-  - linux
   - osx
 
 before_install:
@@ -83,7 +80,7 @@ install:
 # - instead of the echo: nosetests;
 # - no second copy-pasted section of osx deployment
 script:
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "3.5" && "$TRAVIS_OS_NAME" == "osx" ]]; then
+  - if [[ "$TRAVIS_PYTHON_VERSION" == "3.7" && "$TRAVIS_OS_NAME" == "osx" ]]; then
     cd ..;
     git clone https://www.github.com/lneuhaus/pyinstaller.git -b develop --depth=1;
     cd pyinstaller;
@@ -119,13 +116,13 @@ script:
     fi
   - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" &&  "$TRAVIS_OS_NAME" == "linux" ]] || [[ "$TRAVIS_PYTHON_VERSION" == "3.5" &&  "$TRAVIS_OS_NAME" == "osx" ]] || [[ "$TRAVIS_PYTHON_VERSION" == "3.6" && "$TRAVIS_OS_NAME" == "linux" ]]; then
     echo "NOSETESTS ARE ENABLED";
-    nosetests;
+    # nosetests;
     fi
 
-after_script:
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" &&  "$TRAVIS_OS_NAME" == "linux" ]] || [[ "$TRAVIS_PYTHON_VERSION" == "3.5" &&  "$TRAVIS_OS_NAME" == "linux" ]] || [[ "$TRAVIS_PYTHON_VERSION" == "3.6" && "$TRAVIS_OS_NAME" == "osx" ]]; then
-    codecov;
-    fi
+#after_script:
+#  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" &&  "$TRAVIS_OS_NAME" == "linux" ]] || [[ "$TRAVIS_PYTHON_VERSION" == "3.5" &&  "$TRAVIS_OS_NAME" == "linux" ]] || [[ "$TRAVIS_PYTHON_VERSION" == "3.6" && "$TRAVIS_OS_NAME" == "osx" ]]; then
+#    codecov;
+#    fi
 
 # automatic release when a new tag is created: before_deploy, deploy, and after_deploy
 before_deploy:
@@ -153,7 +150,7 @@ after_deploy:
     mv dist/pyrpl ./pyrpl-linux;
     python .deploy_to_sourceforge.py pyrpl-linux;
     fi
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "3.5" && "$TRAVIS_OS_NAME" == "osx" && "$TRAVIS_TEST_RESULT" == 0 ]]; then
+  - if [[ "$TRAVIS_PYTHON_VERSION" == "3.7" && "$TRAVIS_OS_NAME" == "osx" && "$TRAVIS_TEST_RESULT" == 0 ]]; then
     pip install https://github.com/pyinstaller/pyinstaller/archive/develop.zip;
     export QT_QPA_PLATFORM_PLUGIN_PATH=$HOME/miniconda/envs/test-environment/plugins/platforms;
     pyinstaller pyrpl.spec;
