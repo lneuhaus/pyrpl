@@ -38,11 +38,14 @@ pipeline {
         REDPITAYA_HOSTNAME = "192.168.178.26"
         //REDPITAYA_HOSTNAME = "rp-f03f3a"
         //REDPITAYA_HOSTNAME = "nobody.justdied.com"
-        REDPITAYA_USER = "root"
-        REDPITAYA_PASSWORD = "Kartoffelschmarn"
         DOCKER_ARGS = '-u root -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=:0 --net=host'
         //NOSETESTS_COMMAND = 'nosetests pyrpl/test/test_ipython_notebook/test_ipython_kernel.py'
         NOSETESTS_COMMAND = 'nosetests'
+        PYPI = credentials('f63335ce-493d-4caf-8ebe-d7e2629f79f3')
+        REDPITAYA = credentials('2bf38f88-833a-4624-9682-3a6f0a145d30')
+        REDPITAYA_USER = "$REDPITAYA_USR"
+        REDPITAYA_PASSWORD = "$REDPITAYA_PSW"
+
     }
 
     agent any

@@ -84,9 +84,9 @@ script:
   - mv dist/pyrpl ./pyrpl-mac-develop
   - chmod 755 pyrpl-mac-develop
   - (./pyrpl-mac-develop config=test_osx hostname=_FAKE_ &)
-  - PYRPL_PID=$!
+  # - PYRPL_PID=$!
   - sleep 30
-  - killall -9 pyrpl-mac-develop
+  - killall pyrpl-mac-develop
   - python .deploy_to_sourceforge.py pyrpl-mac-develop
 
 # automatic release when a new tag is created: before_deploy, deploy, and after_deploy
