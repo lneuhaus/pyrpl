@@ -80,11 +80,12 @@ install:
 
 # create, test and upload binary for mac os
 script:
+  - export QT_QPA_PLATFORM_PLUGIN_PATH=
   - pyinstaller pyrpl.spec
   - mv dist/pyrpl ./pyrpl-mac-develop
   - chmod 755 pyrpl-mac-develop
   - (./pyrpl-mac-develop config=test_osx hostname=_FAKE_ &)
-  # - PYRPL_PID=$!
+  - PYRPL_PID=$!
   - sleep 30
   - killall pyrpl-mac-develop
   - python .deploy_to_sourceforge.py pyrpl-mac-develop
