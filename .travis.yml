@@ -17,6 +17,7 @@ env:
   - TRAVIS_PYTHON_VERSION=3.7
 os:
   - osx
+  - linux
 
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
@@ -80,7 +81,7 @@ install:
 
 # create, test and upload binary for mac os
 script:
-  - export QT_QPA_PLATFORM_PLUGIN_PATH=
+  - export QT_QPA_PLATFORM_PLUGIN_PATH=$HOME/miniconda/bin/envs/test-environment/Library/plugins/platforms
   - pyinstaller pyrpl.spec
   - mv dist/pyrpl ./pyrpl-mac-develop
   - chmod 755 pyrpl-mac-develop
@@ -98,7 +99,7 @@ before_deploy:
 deploy:
   provider: pypi
   user: lneuhaus
-  password: $PYPI_PASSWORD
+  password: $PYPI_PSW
   skip_cleanup: true
   on:
     tags: true
