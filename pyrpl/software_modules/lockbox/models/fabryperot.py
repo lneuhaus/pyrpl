@@ -103,16 +103,19 @@ class FPAnalogPdh(InputSignal, Lorentz):
 
             return np.real(i_ref * np.exp(1j * phase))
 
-        # normalization constant is very close to 1/eta in resolved sideband regime, but needs to be determined numerically
-        # otherwise: we look for possible extrema of the function in intervals
-        # [-sbfreq-1, -sbfreq+1] U [-1, 1] U [sbfreq-1, sbfreq+1]
-        possible_extrema = np.zeros(300)
-        possible_extrema[:100] = pdh(np.linspace(-sbfreq-1,sbfreq+1, 100))
-        possible_extrema[100:200] = pdh(np.linspace(- 1, 1, 100))
-        possible_extrema[200:300] = pdh(np.linspace(sbfreq-1, sbfreq+1, 100))
-        min_value = np.min(possible_extrema)
-        max_value = np.max(possible_extrema)
-        return 2*pdh(x)/(max_value - min_value)
+
+        if sbfreq > 0.76 and sbfreq < 1.55: #unresolved sideband regime : we assume w = 1 and find an approximative x_max
+            x_max = np.sqrt(-7 / 2 + eta + 1 / 2 * np.sqrt(65 + 4 * (eta - 9) * eta))
+            return (pdh(x) / pdh(x_max))
+        elif sbfreq <= 0.76: #unresolved sideband regime : we assume x small and find an approximative x_max
+            a = (2 * eta - 3 - sbfreq ** 2) * (1 + sbfreq ** 2 + sbfreq ** 4)
+            b = 2 * eta * (37 + sbfreq ** 2 + 13 * sbfreq ** 4) - 123 - 13 * sbfreq ** 2 * (2 + sbfreq * 2) ** 2
+            x_max = 2 / (np.sqrt(b / a) - 1)
+            return(pdh(x)/pdh(x_max))
+        else: #resolved side band regime : the maximum is at 1
+            x_max = 1
+
+        return (pdh(x) / pdh(x_max))
 
 
 class FPPdh(InputIq, FPAnalogPdh):
