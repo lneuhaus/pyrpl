@@ -412,13 +412,15 @@ class IIR(FilterModule):
             try:
                 na.load_state('iir_measurement')
             except KeyError:
-                na.setup(start_freq=1e3,
-                         stop_freq=1e6,
-                         points=101,
-                         rbw=1000,
+                freqs = self._module_widget.frequencies
+                mi, ma = min(freqs), max(freqs)
+                na.setup(start_freq=mi,
+                         stop_freq=ma,
+                         points=501,
+                         rbw=500,
                          avg_per_point=1,
                          trace_average=1,
-                         amplitude=0.1,
+                         amplitude=0.005,
                          input=self,
                          output_direct='off',
                          acbandwidth=100,
@@ -428,7 +430,8 @@ class IIR(FilterModule):
             try:
                 # set input to be the NA output and take the data
                 self.input = na
-                self._measurement_data = na.single()
+                data = na.single()
+                self._measurement_data = na.frequencies, data
             finally:
                 self.input = former_input
         self._logger.info("NA acquisition finished.")
@@ -452,22 +455,14 @@ class IIR(FilterModule):
 
     def _setup(self):
         """
-        Setup an IIR filter
+        Setup an IIR filter.
 
         the transfer function of the filter will be (k ensures DC-gain = g):
 
                   (s-2*pi*z[0])*(s-2*pi*z[1])...
         H(s) = k*-------------------
                   (s-2*pi*p[0])*(s-2*pi*p[1])...
-
-        returns
-        --------------------------------------------------
-        coefficients   data to be passed to iir.bodeplot to plot the
-                       realized transfer function
         """
-        #debugging here...
-        #self._signal_launcher.update_plot.emit()
-        #return
         with self.do_setup:
             if self._IIRSTAGES == 0:
                 raise Exception("Error: This FPGA bitfile does not support IIR "
@@ -532,6 +527,9 @@ class IIR(FilterModule):
                 self._logger.debug("IIR Overflow pattern: %s",
                                    bin(self.overflow_bitfield))
             self._signal_launcher.update_plot.emit()
+            # update curve name
+            try: self.data_curve_name = self._data_curve_object.name
+            except AttributeError: pass
 
     @property
     def sampling_time(self):
@@ -643,6 +641,8 @@ class IIR(FilterModule):
         # take average delay to be half the loops since this is the
         # expectation value for the delay (plus internal propagation delay)
         # module_delay = self._delay + self.loops / 2.0
+        self._logger.warning("iir.transfer_function is obsolete and will be "
+                             "deprecated. Use another function!")
         try:
             tf = getattr(self.iirfilter, 'tf_' + kind)(frequencies)
         except AttributeError:

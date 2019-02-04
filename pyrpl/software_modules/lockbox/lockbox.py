@@ -315,6 +315,7 @@ class Lockbox(LockboxModule):
         return self._sweep()
 
     _lock_loop = None  # this variable will store the lock loop
+
     def lock(self, **kwds):
         """
         Launches the full lock sequence, stage by stage until the end.

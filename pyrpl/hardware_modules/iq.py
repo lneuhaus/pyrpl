@@ -391,7 +391,7 @@ class Iq(FilterModule):
         after having set the last iq frequency in order to be effective.
         """
         self._synchronize(modules=['iq0', 'iq1', 'iq2'])
-        self._logger.info("All IQ modules synchronized!")
+        self._logger.debug("All IQ modules synchronized!")
 
     def _setup(self): # the function is here for its docstring to be used by the metaclass.
         """

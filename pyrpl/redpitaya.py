@@ -117,7 +117,10 @@ class RedPitaya(object):
         # 3. config file
         # 4. command line arguments
         # 5. (if missing information) request from GUI or command-line
-        self.parameters = defaultparameters
+        self.parameters = defaultparameters # BEWARE: By not copying the
+        # dictionary, defaultparameters are modified in the session (which
+        # can be advantageous for instance with hostname in unit_tests)
+
         # get parameters from os.environment variables
         if not self.parameters['silence_env']:
             for k in self.parameters.keys():

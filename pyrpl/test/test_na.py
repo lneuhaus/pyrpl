@@ -91,8 +91,8 @@ class TestNA(TestPyrpl):
             assert duration < maxduration, \
                 "Na w/o gui should take at most %.1f ms per point, but actually " \
                 "needs %.1f ms. This won't compromise functionality but it is " \
-                "recommended that establish a more direct ethernet connection" \
-                "to you Red Pitaya module" % (maxduration*1000.0, duration*1000.0)
+                "recommended that you establish a better ethernet connection " \
+                "to your Red Pitaya module" % (maxduration*1000.0, duration*1000.0)
 
     def test_benchmark_gui(self):
         """
@@ -146,8 +146,8 @@ class TestNA(TestPyrpl):
             assert duration < maxduration, \
                 "Na gui should take at most %.1f ms per point, but actually " \
                 "needs %.1f ms. This won't compromise functionality but it is " \
-                "recommended that establish a more direct ethernet connection" \
-                "to you Red Pitaya module" % (maxduration*1000.0, duration*1000.0)
+                "recommended that you establish a better ethernet connection" \
+                "to your Red Pitaya module" % (maxduration*1000.0, duration*1000.0)
             # 2 s for 200 points with gui display
             # This is much slower in nosetests than in real life (I get <3 s).
             # Don't know why.
