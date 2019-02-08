@@ -17,7 +17,8 @@ env:
   - TRAVIS_PYTHON_VERSION=3.7
 os:
   - osx
-  - linux
+
+#  - linux
 
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
@@ -83,13 +84,13 @@ install:
 script:
   - export QT_QPA_PLATFORM_PLUGIN_PATH=$HOME/miniconda/bin/envs/test-environment/Library/plugins/platforms
   - pyinstaller pyrpl.spec
-  - mv dist/pyrpl ./pyrpl-mac-develop
-  - chmod 755 pyrpl-mac-develop
-  - (./pyrpl-mac-develop config=test_osx hostname=_FAKE_ &)
+  - mv dist/pyrpl ./pyrpl-$TRAVIS_OS_NAME
+  - chmod 755 pyrpl-$TRAVIS_OS_NAME
+  - (./pyrpl-$TRAVIS_OS_NAME config=test_osx hostname=_FAKE_ &)
   - PYRPL_PID=$!
   - sleep 30
-  - killall pyrpl-mac-develop
-  - python .deploy_to_sourceforge.py pyrpl-mac-develop
+  - killall pyrpl-$TRAVIS_OS_NAME
+  - python .deploy_to_sourceforge.py pyrpl-$TRAVIS_OS_NAME /home/frs/project/pyrpl/branches/$TRAVIS_BRANCH/
 
 # automatic release when a new tag is created: before_deploy, deploy, and after_deploy
 before_deploy:
@@ -98,9 +99,13 @@ before_deploy:
 
 deploy:
   provider: pypi
-  user: lneuhaus
+  user: $PYPI_USR
   password: $PYPI_PSW
   skip_cleanup: true
   on:
     tags: true
   distributions: "sdist bdist_wheel --universal"
+
+after_deploy:
+  - python .deploy_to_sourceforge.py pyrpl-$TRAVIS_OS_NAME /home/frs/project/pyrpl/$TRAVIS_TAG/
+  - python .deploy_to_sourceforge.py pyrpl-$TRAVIS_OS_NAME /home/frs/project/pyrpl/current-release/

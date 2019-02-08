@@ -42,10 +42,10 @@ pipeline {
         //NOSETESTS_COMMAND = 'nosetests pyrpl/test/test_ipython_notebook/test_ipython_kernel.py'
         NOSETESTS_COMMAND = 'nosetests'
         PYPI = credentials('f63335ce-493d-4caf-8ebe-d7e2629f79f3')
+        SOURCEFORGE = credentials('1a9396cd-6bb7-42f3-a14a-9e4a1bc82650')
         REDPITAYA = credentials('2bf38f88-833a-4624-9682-3a6f0a145d30')
         REDPITAYA_USER = "$REDPITAYA_USR"
         REDPITAYA_PASSWORD = "$REDPITAYA_PSW"
-
     }
 
     agent any
@@ -54,7 +54,7 @@ pipeline {
         stage('Notify github that a build was started') {
             agent any
             steps { setBuildStatus("Jenkins build started...", "PENDING") }}
-        stage('Unit tests') { parallel {
+        stage('Unit tests') { stages {
             stage('Python 3.7') {
                 agent { dockerfile { args "$DOCKER_ARGS"
                                      additionalBuildArgs  '--build-arg PYTHON_VERSION=3.7' }}
@@ -119,17 +119,16 @@ pipeline {
                             python setup.py install
                             pip install https://github.com/lneuhaus/pyinstaller/tarball/develop
                             pyinstaller pyrpl.spec
-                            mv dist/pyrpl ./pyrpl-linux-develop
-                            python .deploy_to_sourceforge.py pyrpl-linux-develop
-                            chmod 755 pyrpl-linux-develop
-                            (./pyrpl-linux-develop config=test_linux hostname=_FAKE_ &)
+                            mv dist/pyrpl ./pyrpl-linux
+                            chmod 755 pyrpl-linux
+                            (./pyrpl-linux config=test_linux hostname=_FAKE_ &)
                             PYRPL_PID=$!
                             sleep 30
-                            killall -9 pyrpl-linux-develop
+                            killall -9 pyrpl-linux
                         '''
-                    //sh 'python .deploy_to_sourceforge.py pyrpl-linux-develop'
+                    sh 'python .deploy_to_sourceforge.py pyrpl-linux /home/frs/project/pyrpl/branches/$GIT_BRANCH/'
                     }}
-                post { always { archiveArtifacts allowEmptyArchive: true, artifacts: 'pyrpl-linux-develop', fingerprint: true }}}
+                post { always { archiveArtifacts allowEmptyArchive: true, artifacts: 'pyrpl-linux', fingerprint: true }}}
             stage('pip wheel') {
                 agent { dockerfile { args '-u root -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=:0 --net=host'
                                      additionalBuildArgs  '--build-arg PYTHON_VERSION=3.7' }}
@@ -150,9 +149,10 @@ pipeline {
             agent { dockerfile { args '-u root -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=:0 --net=host'
                          additionalBuildArgs  '--build-arg PYTHON_VERSION=3.7' }}
             when {
-                expression { currentBuild.result == null || currentBuild.result == 'SUCCESS'}}
+                buildingTag() && expression { currentBuild.result == null || currentBuild.result == 'SUCCESS'}}
             steps {
-                sh  ''' python setup.py install
+                sh  ''' python .deploy_to_sourceforge.py pyrpl-linux /home/frs/project/pyrpl/$TAG_NAME/
+                        python .deploy_to_sourceforge.py pyrpl-linux /home/frs/project/pyrpl/current-release/
                     '''}}
     }
     post {
