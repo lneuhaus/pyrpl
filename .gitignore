@@ -130,3 +130,4 @@ scripts/__init__.py
 scripts/run_pyrpl.spec
 scripts/pyrpl.spec
 cover/index.html
+unit_tests.xml

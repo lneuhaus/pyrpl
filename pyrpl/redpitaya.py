@@ -16,7 +16,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###############################################################################
 
-from . import redpitaya_client
+from . import pyrpl_client
 from . import hardware_modules as rp
 from .sshshell import SshShell
 from .pyrpl_utils import get_unique_name_list_from_class_list, update_with_typeconversion
@@ -59,7 +59,7 @@ defaultparameters = dict(
     leds_off=True,  # turn off all GPIO lets at startup (improves analog performance)
     frequency_correction=1.0,  # actual FPGA frequency is 125 MHz * frequency_correction
     timeout=1,  # timeout in seconds for ssh communication
-    monitor_server_name='monitor_server',  # name of the server program on redpitaya
+    monitor_server_name='pyrpl_server',  # name of the server program on redpitaya
     silence_env=False,   # suppress all environment variables that may override the configuration?
     gui=True  # show graphical user interface or work on command-line only?
     )
@@ -98,7 +98,7 @@ class RedPitaya(object):
             leds_off=True,  # turn off all GPIO lets at startup (improves analog performance)
             frequency_correction=1.0,  # actual FPGA frequency is 125 MHz * frequency_correction
             timeout=3,  # timeout in seconds for ssh communication
-            monitor_server_name='monitor_server',  # name of the server program on redpitaya
+            monitor_server_name='pyrpl_server',  # name of the server program on redpitaya
             silence_env=False,   # suppress all environment variables that may override the configuration?
             gui=True  # show graphical user interface or work on command-line only?
 
@@ -117,10 +117,7 @@ class RedPitaya(object):
         # 3. config file
         # 4. command line arguments
         # 5. (if missing information) request from GUI or command-line
-        self.parameters = defaultparameters # BEWARE: By not copying the
-        # dictionary, defaultparameters are modified in the session (which
-        # can be advantageous for instance with hostname in unit_tests)
-
+        self.parameters = defaultparameters.copy()
         # get parameters from os.environment variables
         if not self.parameters['silence_env']:
             for k in self.parameters.keys():
@@ -358,7 +355,7 @@ class RedPitaya(object):
         self.parameters['token'] = token
         return token
 
-    def recompileserver(self, targetfile='monitor_server'):
+    def recompileserver(self, targetfile='pyrpl_server'):
         self.endserver()
         sleep(self.parameters['delay'])
         self.ssh.ask('rw')
@@ -367,24 +364,24 @@ class RedPitaya(object):
         sleep(self.parameters['delay'])
         self.ssh.ask("cd " + self.parameters['serverdirname'])
         sleep(self.parameters['delay'])
-        self.ssh.ask("rm monitor_server")
+        self.ssh.ask("rm pyrpl_server")
         sleep(self.parameters['delay'])
-        for uploadfile in ['monitor_server.c']:
+        for uploadfile in ['pyrpl_server.c']:
             try:
                 self.ssh.scp.put(
-                    os.path.join(os.path.abspath(os.path.dirname(__file__)), 'monitor_server', uploadfile),
+                    os.path.join(os.path.abspath(os.path.dirname(__file__)), 'pyrpl_server', uploadfile),
                     self.parameters['serverdirname'] + uploadfile)
             except (SCPException, SSHException):
                 self.logger.exception("Upload error. Try again after rebooting your RedPitaya..")
                 raise
         sleep(self.parameters['delay'])
         #print(self.ssh.ask('make'))
-        self.ssh.ask('gcc monitor_server.c -o '+targetfile)
+        self.ssh.ask('gcc pyrpl_server.c -o '+targetfile)
         sleep(5)  # give the RP filesystem time to locat the new file before downloading it
         self.ssh.ask('ll')
         sleep(self.parameters['delay'])
         self.ssh.scp.get(self.parameters['serverdirname'] + targetfile,
-                         os.path.join(os.path.abspath(os.path.dirname(__file__)), 'monitor_server', targetfile))
+                         os.path.join(os.path.abspath(os.path.dirname(__file__)), 'pyrpl_server', targetfile))
 
     def installserver(self):
         self.endserver()
@@ -397,11 +394,11 @@ class RedPitaya(object):
         if self.parameters['recompileserver']:
             self.recompileserver()
         #try both versions
-        for serverfile in ['monitor_server','monitor_server_0.95']:
+        for serverfile in ['pyrpl_server','pyrpl_server_0.95']:
             sleep(self.parameters['delay'])
             try:
                 self.ssh.scp.put(
-                    os.path.join(os.path.abspath(os.path.dirname(__file__)), 'monitor_server', serverfile),
+                    os.path.join(os.path.abspath(os.path.dirname(__file__)), 'pyrpl_server', serverfile),
                     self.parameters['serverdirname'] + self.parameters['monitor_server_name'])
             except (SCPException, SSHException):
                 self.logger.exception("Upload error. Try again after rebooting your RedPitaya..")
@@ -431,7 +428,7 @@ class RedPitaya(object):
             self.logger.warning("Problems to start the server application. Trying again with a different port number %d",self.parameters['port'])
             return self.installserver()
         
-        self.logger.error("Server application could not be started. Try to recompile monitor_server on your RedPitaya (see manual). ")
+        self.logger.error("Server application could not be started. Try to recompile pyrpl_server on your RedPitaya (see manual). ")
         return None
     
     def startserver(self):
@@ -459,7 +456,7 @@ class RedPitaya(object):
         if 'pitaya' in self.ssh.ask():
             self.logger.debug('>') # formerly 'console ready'
         sleep(self.parameters['delay'])
-        # make sure no other monitor_server blocks the port
+        # make sure no other pyrpl_server blocks the port
         self.ssh.ask('killall ' + self.parameters['monitor_server_name'])
         self._serverrunning = False
         
@@ -510,7 +507,7 @@ class RedPitaya(object):
     "LICENSE" in the source directory for details.\r\n""")
 
     def startclient(self):
-        self.client = redpitaya_client.MonitorClient(
+        self.client = pyrpl_client.PyrplClient(
             self.parameters['hostname'],
             self.parameters['port'],
             self.parameters['token'],
@@ -519,7 +516,7 @@ class RedPitaya(object):
         self.logger.debug("Client started successfully. ")
 
     def startdummyclient(self):
-        self.client = redpitaya_client.DummyClient()
+        self.client = pyrpl_client.DummyClient()
         self.makemodules()
 
     def makemodule(self, name, cls):
