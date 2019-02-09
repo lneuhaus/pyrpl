@@ -76,9 +76,9 @@ install:
   - git status
   - python setup.py develop
   - cd ..
-  - cd pyrpl
   # install pyrpl
-  - python setup.py install
+  - cd pyrpl
+  - python setup.py develop
 
 # create, test and upload binary for mac os
 script:
