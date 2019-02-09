@@ -116,7 +116,7 @@ on_success:
       If ($env:APPVEYOR_REPO_TAG -eq "true") {
           mkdir ${env:APPVEYOR_REPO_TAG_NAME};
           mv pyrpl-windows.exe ${env:APPVEYOR_REPO_TAG_NAME}/;
-          python .deploy_to_sourceforge.py ${env:APPVEYOR_REPO_TAG_NAME} /home/frs/project/pyrpl";
+          python .deploy_to_sourceforge.py ${env:APPVEYOR_REPO_TAG_NAME} /home/frs/project/pyrpl;
           python .deploy_to_sourceforge.py pyrpl-windows.exe /home/frs/project/pyrpl/current-release/pyrpl-windows.exe;
       }
   - ps: |
