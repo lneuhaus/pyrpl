@@ -17,8 +17,7 @@ env:
   - TRAVIS_PYTHON_VERSION=3.7
 os:
   - osx
-
-#  - linux
+  - linux
 
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
