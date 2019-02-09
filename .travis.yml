@@ -23,7 +23,6 @@ before_install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
     sudo apt-get update;
     fi
-  #  sudo apt-get install qt5-default binutils psmisc;
   # We do this conditionally because it saves us some downloading.
   - if [[ "$TRAVIS_OS_NAME" == "linux" && "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
     wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
@@ -39,8 +38,10 @@ before_install:
   - chmod +x miniconda.sh
   - bash miniconda.sh -b -p $HOME/miniconda
   - export PATH="$HOME/miniconda/bin:$PATH"
-    # set library path until pyinstaller issue is fixed
-  - export LD_LIBRARY_PATH="$HOME/miniconda/lib:$LD_LIBRARY_PATH"
+  # set library path until pyinstaller issue is fixed
+  - export LD_LIBRARY_PATH="$HOME/miniconda/lib"
+  # for debugging of qt applications
+  - export DYLD_PRINT_LIBRARIES=1
   - hash -r
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
@@ -68,6 +69,7 @@ install:
   # we get issues with building numpy etc if we do not include those in the next line
   - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION numpy scipy paramiko pandas jupyter nose pip pyqt qtpy nbconvert coverage twine matplotlib nb_conda_kernels
   - source activate test-environment
+  - export LD_LIBRARY_PATH="$HOME/miniconda/bin/envs/test-environment/lib:$LD_LIBRARY_PATH"
   # convert readme file to rst for PyPI
   - conda install pandoc
   - pandoc --from=markdown --to=rst --output=README.rst README.md
@@ -85,13 +87,15 @@ install:
 # create, test and upload binary for mac os
 script:
   - export QT_QPA_PLATFORM_PLUGIN_PATH=$HOME/miniconda/bin/envs/test-environment/Library/plugins/platforms
+  - export QT_PLUGIN_PATH=$HOME/miniconda/bin/envs/test-environment/Library/plugins
   - pyinstaller pyrpl.spec
   - mv dist/pyrpl ./pyrpl-$TRAVIS_OS_NAME
   - chmod 755 pyrpl-$TRAVIS_OS_NAME
   - (./pyrpl-$TRAVIS_OS_NAME config=test_osx hostname=_FAKE_ &)
   - PYRPL_PID=$!
+  - echo $PYRPL_PID
   - sleep 30
-  - killall pyrpl-$TRAVIS_OS_NAME
+  - kill $PYRPL_PID
   - mkdir $TRAVIS_BRANCH
   - cp pyrpl-$TRAVIS_OS_NAME $TRAVIS_BRANCH/
   - python .deploy_to_sourceforge.py $TRAVIS_BRANCH /home/frs/project/pyrpl/branches
