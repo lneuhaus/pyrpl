@@ -23,6 +23,7 @@ before_install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
     sudo apt-get update;
     fi
+  - sudo apt-get install qt5-default binutils psmisc
   # We do this conditionally because it saves us some downloading.
   - if [[ "$TRAVIS_OS_NAME" == "linux" && "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
     wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
@@ -63,7 +64,7 @@ before_install:
 install:
   # avoid to get cancelled because of very long tests
   # we get issues with building numpy etc if we do not include those in the next line
-  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION numpy scipy paramiko pandas nose pip pyqt qtpy nbconvert
+  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION numpy scipy paramiko pandas jupyter nose pip pyqt qtpy nbconvert coverage twine matplotlib nb_conda_kernels
   - source activate test-environment
   # convert readme file to rst for PyPI
   - conda install pandoc
