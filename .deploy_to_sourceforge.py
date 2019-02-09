@@ -13,7 +13,7 @@ if __name__ == '__main__':
     source, dest = sys.argv[1], sys.argv[2]
     print("Uploading file '%s' to '%s' on sourceforge..." % (source, dest))
     try:
-        ssh.scp.put(source, dest)
+        ssh.scp.put(source, remote_path=dest, recursive=True)
     except BaseException as e:
         print("Upload of file '%s' to '%s' to sourceforge failed: %s!" % (source, dest, e))
     else:

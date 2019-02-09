@@ -90,7 +90,9 @@ script:
   - PYRPL_PID=$!
   - sleep 30
   - killall pyrpl-$TRAVIS_OS_NAME
-  - python .deploy_to_sourceforge.py pyrpl-$TRAVIS_OS_NAME /home/frs/project/pyrpl/branches/$TRAVIS_BRANCH/
+  - mkdir $TRAVIS_BRANCH
+  - cp pyrpl-$TRAVIS_OS_NAME $TRAVIS_BRANCH/
+  - python .deploy_to_sourceforge.py $TRAVIS_BRANCH /home/frs/project/pyrpl/branches
 
 # automatic release when a new tag is created: before_deploy, deploy, and after_deploy
 before_deploy:
@@ -107,5 +109,7 @@ deploy:
   distributions: "sdist bdist_wheel --universal"
 
 after_deploy:
-  - python .deploy_to_sourceforge.py pyrpl-$TRAVIS_OS_NAME /home/frs/project/pyrpl/$TRAVIS_TAG/
+  - mkdir $TRAVIS_TAG
+  - cp pyrpl-$TRAVIS_OS_NAME $TRAVIS_TAG/
+  - python .deploy_to_sourceforge.py $TRAVIS_TAG /home/frs/project/pyrpl
   - python .deploy_to_sourceforge.py pyrpl-$TRAVIS_OS_NAME /home/frs/project/pyrpl/current-release/

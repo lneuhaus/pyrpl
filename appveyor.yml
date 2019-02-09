@@ -114,12 +114,16 @@ test_script:
 on_success:
   - ps: |
       If ($env:APPVEYOR_REPO_TAG -eq "true") {
-          python .deploy_to_sourceforge.py pyrpl-windows.exe "/home/frs/project/pyrpl/${env:APPVEYOR_REPO_TAG_NAME}/pyrpl-windows.exe";
+          mkdir ${env:APPVEYOR_REPO_TAG_NAME};
+          mv pyrpl-windows.exe ${env:APPVEYOR_REPO_TAG_NAME}/;
+          python .deploy_to_sourceforge.py ${env:APPVEYOR_REPO_TAG_NAME} /home/frs/project/pyrpl";
           python .deploy_to_sourceforge.py pyrpl-windows.exe /home/frs/project/pyrpl/current-release/pyrpl-windows.exe;
       }
   - ps: |
       If ($env:APPVEYOR_REPO_TAG -ne "true") {
-          python .deploy_to_sourceforge.py pyrpl-windows.exe "/home/frs/project/pyrpl/branches/${env:APPVEYOR_REPO_BRANCH}/pyrpl-windows.exe";
+          mkdir ${env:APPVEYOR_REPO_BRANCH};
+          mv pyrpl-windows.exe ${env:APPVEYOR_REPO_BRANCH}/;
+          python .deploy_to_sourceforge.py ${env:APPVEYOR_REPO_BRANCH} /home/frs/project/pyrpl/branches;
       }
 
 # Do not build feature branch with open Pull Requests
