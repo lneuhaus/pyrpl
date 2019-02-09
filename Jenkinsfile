@@ -27,10 +27,11 @@ pipeline {
     triggers { pollSCM('*/1 * * * *') }
 
     options {
-        // skipDefaultCheckout(true)  // rather do the checkout in all stages
-        // Keep the 10 most recent builds
-        buildDiscarder(logRotator(numToKeepStr: '10'))
+        // Keep the 30 most recent builds
+        buildDiscarder(logRotator(numToKeepStr: '30'))
         timestamps()
+        disableConcurrentBuilds()
+        // skipDefaultCheckout(true)  // rather do the checkout in all stages
     }
 
 
