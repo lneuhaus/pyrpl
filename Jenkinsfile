@@ -148,8 +148,7 @@ pipeline {
         stage('Deploy') {
             agent { dockerfile { args '-u root -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=:0 --net=host'
                          additionalBuildArgs  '--build-arg PYTHON_VERSION=3.7' }}
-            when {
-                buildingTag() && expression { currentBuild.result == null || currentBuild.result == 'SUCCESS'}}
+            when { buildingTag() }
             steps {
                 sh  ''' python .deploy_to_sourceforge.py pyrpl-linux /home/frs/project/pyrpl/$TAG_NAME/
                         python .deploy_to_sourceforge.py pyrpl-linux /home/frs/project/pyrpl/current-release/
