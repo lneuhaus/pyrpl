@@ -90,7 +90,7 @@ class PyrplClient(object):
         self.socket.settimeout(self.TIMEOUT)
         # send authentification token
         assert len(self._token) == 32
-        self.socket.send(bytes(self._token, encoding='ASCII'))
+        self.socket.send(str(self._token).encode('ascii'))
         # receive a confirmation token
         data = self.socket.recv(32)
         while (len(data) < 32):
