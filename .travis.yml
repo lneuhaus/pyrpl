@@ -23,7 +23,7 @@ before_install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
     sudo apt-get update;
     fi
-  - sudo apt-get install qt5-default binutils psmisc
+  #  sudo apt-get install qt5-default binutils psmisc;
   # We do this conditionally because it saves us some downloading.
   - if [[ "$TRAVIS_OS_NAME" == "linux" && "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
     wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
@@ -39,6 +39,8 @@ before_install:
   - chmod +x miniconda.sh
   - bash miniconda.sh -b -p $HOME/miniconda
   - export PATH="$HOME/miniconda/bin:$PATH"
+    # set library path until pyinstaller issue is fixed
+  - export LD_LIBRARY_PATH="$HOME/miniconda/lib:$LD_LIBRARY_PATH"
   - hash -r
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
