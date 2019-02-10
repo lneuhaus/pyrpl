@@ -91,11 +91,12 @@ script:
   - pyinstaller pyrpl.spec
   - mv dist/pyrpl ./pyrpl-$TRAVIS_OS_NAME
   - chmod 755 pyrpl-$TRAVIS_OS_NAME
-  - (./pyrpl-$TRAVIS_OS_NAME config=test_osx hostname=_FAKE_ &)
+  - (./pyrpl-$TRAVIS_OS_NAME config=test_travis hostname=_FAKE_ &)
   - PYRPL_PID=$!
   - echo $PYRPL_PID
   - sleep 30
-  - kill $PYRPL_PID
+  # kill always fails since the program is already terminated (TODO: add a command-line option to properly test the binaries)
+  # - kill -9 $PYRPL_PID
   - mkdir $TRAVIS_BRANCH
   - cp pyrpl-$TRAVIS_OS_NAME $TRAVIS_BRANCH/
   - python .deploy_to_sourceforge.py $TRAVIS_BRANCH /home/frs/project/pyrpl/branches

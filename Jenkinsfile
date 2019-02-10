@@ -120,12 +120,12 @@ pipeline {
                             python setup.py install
                             pip install https://github.com/lneuhaus/pyinstaller/tarball/develop
                             pyinstaller pyrpl.spec
-                            mv dist/pyrpl ./pyrpl-linux
-                            chmod 755 pyrpl-linux
-                            (./pyrpl-linux config=test_linux hostname=_FAKE_ &)
+                            mv dist/pyrpl ./pyrpl-linux-jenkins
+                            chmod 755 pyrpl-linux-jenkins
+                            (./pyrpl-linux-jenkins config=test_linux_jenkins hostname=_FAKE_ &)
                             PYRPL_PID=$!
                             sleep 30
-                            killall -9 pyrpl-linux
+                            kill -9 $PYRPL_PID
                         '''
                     sh 'python .deploy_to_sourceforge.py pyrpl-linux /home/frs/project/pyrpl/branches/$GIT_BRANCH/'
                     }}
@@ -151,8 +151,10 @@ pipeline {
                          additionalBuildArgs  '--build-arg PYTHON_VERSION=3.7' }}
             when { buildingTag() }
             steps {
-                sh  ''' python .deploy_to_sourceforge.py pyrpl-linux /home/frs/project/pyrpl/$TAG_NAME/
-                        python .deploy_to_sourceforge.py pyrpl-linux /home/frs/project/pyrpl/current-release/
+                sh  ''' mkdir $TAG_NAME
+                        cp pyrpl-linux-jenkins $TAG_NAME/
+                        python .deploy_to_sourceforge.py $TAG_NAME /home/frs/project/pyrpl
+                        python .deploy_to_sourceforge.py pyrpl-linux-jenkins /home/frs/project/pyrpl/current-release/
                     '''}}
     }
     post {
