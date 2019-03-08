@@ -36,7 +36,7 @@ the background loop
 import logging
 from qtpy import QtCore, QtWidgets
 import asyncio
-from asyncio import Future
+from asyncio import Future, iscoroutine
 import quamash
 import sys
 
@@ -89,7 +89,7 @@ def wait(future, timeout=None):
 
     BEWARE: never use wait in a coroutine (use builtin await instead)
     """
-    assert isinstance(future, Future)
+    assert isinstance(future, Future) or iscoroutine(future)
     new_future = ensure_future(asyncio.wait({future},
                                             timeout=timeout,
                                             loop=LOOP))

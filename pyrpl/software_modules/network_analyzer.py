@@ -378,7 +378,7 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
         self.iq.output_direct = 'off'
 
     def _data_ready(self):
-        return True
+        return self._remaining_time()<=0
 
     async def _point_async(self, index, min_delay_ms):
         if self.running_state == 'paused':
