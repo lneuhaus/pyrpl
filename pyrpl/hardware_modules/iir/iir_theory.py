@@ -426,7 +426,7 @@ class IirFilter(object):
         dt: float
             the FPGA clock frequency. Should be very close to 8e-9
 
-        minoops: int
+        minloops: int
             minimum number of loops (constant of the FPGA design)
 
         maxloops: int
