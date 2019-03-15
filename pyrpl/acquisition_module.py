@@ -96,7 +96,7 @@ class RunningStateProperty(SelectProperty):
         new_value = (value=='running_continuous')
         if obj.run_continuous!=new_value:
             obj._run_continuous = new_value # we don't want to trigger setup()
-            obj.__class__.run_continuous.save_attribute(obj, value) # We need
+            obj.__class__.run_continuous.save_attribute(obj, new_value) # We need
             #  to save this right away
 
 

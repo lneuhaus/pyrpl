@@ -534,10 +534,16 @@ class Scope(HardwareModule, AcquisitionModule):
                                duration,
                                self.data_length, endpoint=False)
 
-    def wait_for_pretrigger(self):
-        """ sleeps until scope trigger is ready (buffer has enough new data)"""
+    async def wait_for_pretrigger_async(self):
+        """sleeps until scope trigger is ready (buffer has enough new data)"""
         while not self.pretrig_ok:
-            sleep_async(0.001)
+            await sleep_async(0.001)
+        ### For some reason, launching the trigger at that point would be too soon...
+        await sleep_async(0.1)
+
+    def wait_for_pretrigger(self):
+        """sleeps until scope trigger is ready (buffer has enough new data)"""
+        wait(self.wait_for_pretrigger_async())
 
     def curve_ready(self):
         """

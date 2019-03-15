@@ -407,6 +407,7 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
                 self.data_x[self.current_point] = now - self._time_first_point
 
             self._emit_signal_by_name("update_point", self.current_point)
+
             self.data_avg[self.current_point] = (self.data_avg[self.current_point]*(self.current_avg) \
                                  + y)/(self.current_avg + 1)
             self.current_point+=1
@@ -487,8 +488,9 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
         self.current_point = 0
         self.data_x = self.frequencies if not self.is_zero_span() else \
             np.nan*np.ones(self.points) # Will be filled during acquisition
-        self.data_avg = np.empty(self.points,
-                                 dtype=np.complex)
+        self.data_avg = np.zeros(self.points,      # np.empty can create nan
+                                 dtype=np.complex) #and nan*current_avg = nan
+                                                   # even if current_avg = 0
 
     @property
     def last_valid_point(self):

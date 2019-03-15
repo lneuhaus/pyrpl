@@ -23,10 +23,12 @@ from .pyrpl_utils import unique_list, DuplicateFilter
 from .errors import ExpectedPyrplError
 
 import logging
+import string
 import numpy as np
 from six import with_metaclass
 from collections import OrderedDict
 from qtpy import QtCore
+
 
 
 class SignalLauncher(QtCore.QObject):
@@ -385,6 +387,13 @@ class Module(with_metaclass(ModuleMetaClass, object)):
         ##    # attributes are loaded but _setup() is not called
         ##   self._load_setup_attributes()
 
+    @property
+    def generic_name(self):
+        """
+        the name of the module without the trailing number (e.g. iq2-->iq)
+        """
+        return self.name.rstrip(string.digits)
+
     def _init_module(self):
         """
         To implement in child class if needed.
@@ -508,7 +517,7 @@ class Module(with_metaclass(ModuleMetaClass, object)):
         """
         Returns the config file branch corresponding to the saved states of the module.
         """
-        return self.c._root._get_or_create(self.name + "_states")
+        return self.c._root._get_or_create(self.generic_name + "_states")
 
     @property
     def states(self):
@@ -516,7 +525,7 @@ class Module(with_metaclass(ModuleMetaClass, object)):
         Returns the names of all saved states of the module.
         """
         # the if avoids creating an empty states section for all modules
-        if (self.name + "_states") in self.parent.c._root._data:
+        if (self.generic_name + "_states") in self.parent.c._root._data:
             return list(self._states._keys())
         else:
             return []
