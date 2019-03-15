@@ -255,3 +255,17 @@ class TestNA(TestPyrpl):
             assert len(curve.data[0]) == self.na.points
             assert len(curve.data[1]) == self.na.points
             self.curves.append(curve)  # curve will be deleted by teardownAll
+
+    def test_iq_stopped_after_run(self):
+        with self.pyrpl.networkanalyzer as self.na:
+            self.na.setup(start_freq=1e5,
+                          stop_freq=2e5,
+                          rbw=100000,
+                          points=100,
+                          output_direct="out1",
+                          input="out1",
+                          running_state='stopped',
+                          trace_average=1,
+                          amplitude=0.01)
+            self.na.single()
+            assert self.na.iq.amplitude==0
