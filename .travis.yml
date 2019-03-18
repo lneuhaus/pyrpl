@@ -86,8 +86,8 @@ install:
 
 # create, test and upload binary for mac os
 script:
-  - export QT_QPA_PLATFORM_PLUGIN_PATH=$HOME/miniconda/bin/envs/test-environment/Library/plugins/platforms
-  - export QT_PLUGIN_PATH=$HOME/miniconda/bin/envs/test-environment/Library/plugins
+#  - export QT_QPA_PLATFORM_PLUGIN_PATH=$HOME/miniconda/bin/envs/test-environment/Library/plugins/platforms
+#  - export QT_PLUGIN_PATH=$HOME/miniconda/bin/envs/test-environment/Library/plugins
   - pyinstaller pyrpl.spec
   - mv dist/pyrpl ./pyrpl-$TRAVIS_OS_NAME
   - chmod 755 pyrpl-$TRAVIS_OS_NAME
