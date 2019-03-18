@@ -9,7 +9,8 @@ if __name__ == '__main__':
     ssh = sshshell.SshShell(hostname='frs.sourceforge.net',
                             user=os.environ['SOURCEFORGE_USR'],
                             password=os.environ['SOURCEFORGE_PSW'],
-                            shell=False)
+                            shell=False,
+                            timeout=10)
     source, dest = sys.argv[1], sys.argv[2]
     print("Uploading file '%s' to '%s' on sourceforge..." % (source, dest))
     try:
