@@ -160,10 +160,10 @@ class HostnameSelectorWidget(QtWidgets.QDialog):
     @scanning.setter
     def scanning(self, v):
         self._scanning = v
-        # make refresh button inactive if scan is running
-        self.refresh.setEnabled(not v)
+        # make button inactive if scan is running
+        #self.refresh.setEnabled(not v)
         if v:
-            self.refresh.setText("Searching LAN for Red Pitayas...")
+            self.refresh.setText("Stop searching LAN for Red Pitayas...")
         else:
             self.refresh.setText("Refresh list")
         self.sshport_input.setEnabled(not v)
@@ -173,6 +173,7 @@ class HostnameSelectorWidget(QtWidgets.QDialog):
             self.progressbar.show()
         else:
             self.progressbar.hide()
+        self.hostname_input.setPlaceholderText('e.g.: 192.168.1.100')
 
     def _get_all_own_ip_addresses(self, exclude=['127.0.0.1']):
         """
@@ -193,7 +194,7 @@ class HostnameSelectorWidget(QtWidgets.QDialog):
                 # doesn't even have to be reachable, just need an open socket
                 s.connect(('10.255.255.255', 1))
                 ip = s.getsockname()[0]
-            except:  # pragma: no cover
+            except:
                 ip = '127.0.0.1'  # fall back to default if no network available
             finally:
                 s.close()
@@ -223,10 +224,9 @@ class HostnameSelectorWidget(QtWidgets.QDialog):
         In order to work, the specified username and password must be correct.
         """
         self.countdown_cancel()
-        if self.scanning: # pragma: no cover
-            self._logger.debug("Scan is already running. Please wait for it "
-                               "to finish before starting a new one! ")
-            return
+        if self.scanning:  # means
+            self._logger.debug("Scan aborted! ")
+            self.scanning = False
         else:
             self.progressbar.setValue(0)
             self.scanning = True
@@ -240,7 +240,7 @@ class HostnameSelectorWidget(QtWidgets.QDialog):
         user = self.user
         password = self.password
         # make a list of ips to scan for redpitayas
-        ips = ['192.168.1.100']  # direct connection ip, not found automatically
+        ips = []
         # first, find our own IP address to infer the LAN from it
         for ip in self._get_all_own_ip_addresses():
             # the LAN around an ip address 'a.b.c.d' is here defined here as all
@@ -248,11 +248,12 @@ class HostnameSelectorWidget(QtWidgets.QDialog):
             end = ip.split('.')[-1]
             start = ip[:-len(end)]
             ips += [start + str(i) for i in range(256)]  # all local ips
+        ips += ['192.168.1.100']  # direct connection ip, not found automatically
         # start scanning all ips
         self.progressbar.setRange(0, len(ips))
         for i, ip in enumerate(ips):
             if not self.scanning:  # abort if ok was clicked prematurely
-                return  # pragma: no cover
+                return
             # try SSH connection for all IP addresses
             self.progressbar.setValue(i)
             self.hostname_input.setPlaceholderText(ip)
@@ -285,7 +286,6 @@ class HostnameSelectorWidget(QtWidgets.QDialog):
                 self._logger.debug("%s:%d is closed", ip, port)
             APP.processEvents()
         self.scanning = False
-        self.hostname_input.setPlaceholderText('e.g.: 192.168.1.100')
         if len(self.ips_and_macs) == 2:
             # exactly one device was found, therefore we can auto-proceed to
             # connection
