@@ -1,4 +1,4 @@
-from ..attributes import BoolRegister, FloatRegister, SelectRegister, PhaseRegister, LongRegister
+from ..attributes import BoolRegister, FloatRegister, SelectRegister, PhaseRegister, LongRegister, IntRegister
 from . import FilterModule
 from ..pyrpl_utils import sorted_dict
 
@@ -24,13 +24,24 @@ class Trig(FilterModule):
                          "hysteresis",
                          "phase_offset",
                          "auto_rearm",
-                         "phase_abs"]#,
+                         "phase_abs",
+                         "auto_rearm_delay",
+                         ]#,
                          #"trigger_armed"]
     _gui_attributes = _setup_attributes
 
     armed = BoolRegister(0x100, 0, doc="Set to True to arm trigger")
 
     auto_rearm = BoolRegister(0x104, 0, doc="Automatically re-arm trigger?")
+
+    _auto_rearm_delay = IntRegister(0x124,
+                                    doc='number of clock cycles to wait after '
+                                        'a trigger even to rearm the trigger')
+    auto_rearm_delay = FloatRegister(0x124,
+                                     norm=125e6,
+                                     signed=False,
+                                     doc='time (s) to wait after '
+                                         'a trigger even to rearm the trigger')
 
     phase_abs = BoolRegister(0x104, 1, doc="Output the absolute value of the phase")
 
@@ -44,7 +55,7 @@ class Trig(FilterModule):
                                     options=_trigger_sources,
                                     default='off')
 
-    _output_signals = sorted_dict(TTL = 0, asg0_phase = 1)
+    _output_signals = sorted_dict(TTL = 0, asg0_phase = 1, max = 2, min=3)
     output_signals = _output_signals.keys()
     output_signal = SelectRegister(0x10C, options=_output_signals,
                                    doc="Signal to use as module output")
