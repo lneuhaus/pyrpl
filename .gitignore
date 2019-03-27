@@ -75,6 +75,7 @@ coverage.xml
 *,cover
 .hypothesis/
 xunit.xml
+unit_tests.xml
 
 # Translations
 *.mo
