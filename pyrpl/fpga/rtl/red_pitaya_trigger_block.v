@@ -66,15 +66,15 @@ localparam MEAN = 4'd4;
 
 
 //settings
-reg [ 32-1: 0] set_filter;   // filter setting
-reg  [  2-1: 0] trigger_source   ;
-reg  [  4-1: 0] output_select;
-reg  [ 14-1: 0] set_a_thresh  ;
-reg  [ 14-1: 0] set_a_hyst   ;
+reg [ 32-1: 0] set_filter;   // input filter setting
+reg [  2-1: 0] trigger_source;
+reg [  4-1: 0] output_select;
+reg [ 14-1: 0] set_a_thresh;
+reg [ 14-1: 0] set_a_hyst;
 reg rearm;
 reg auto_rearm;
 reg [ 32-1: 0] auto_rearm_delay;
-reg  [ 14-1: 0] phase_offset;
+reg [ 14-1: 0] phase_offset;
 reg phase_abs;
 
 //  System bus connection
@@ -270,9 +270,9 @@ end else begin
    else if (output_select==PHASE)
        output_data <= phase;
    else if (output_select==MAXHOLD)
-       output_data <= max;
+       output_data <= maxout;
    else if (output_select==MINHOLD)
-       output_data <= min;
+       output_data <= minout;
 end
 
 assign dat_o = output_data;

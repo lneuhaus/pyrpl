@@ -1,7 +1,7 @@
 Copyright 1986-2015 Xilinx, Inc. All Rights Reserved.
 ----------------------------------------------------------------------------------------
 | Tool Version     : Vivado v.2015.4 (lin64) Build 1412921 Wed Nov 18 09:44:32 MST 2015
-| Date             : Wed Mar 27 14:37:11 2019
+| Date             : Wed Mar 27 20:07:58 2019
 | Host             : LPC running 64-bit Ubuntu 18.04.2 LTS
 | Command          : report_power -file out/post_synth_power.rpt
 | Design           : red_pitaya_top
@@ -30,7 +30,7 @@ Table of Contents
 ----------
 
 +--------------------------+-------+
-| Total On-Chip Power (W)  | 2.334 |
+| Total On-Chip Power (W)  | 2.335 |
 | Dynamic (W)              | 2.182 |
 | Device Static (W)        | 0.153 |
 | Effective TJA (C/W)      | 11.5  |
@@ -50,16 +50,16 @@ Table of Contents
 | On-Chip                  | Power (W) | Used     | Available | Utilization (%) |
 +--------------------------+-----------+----------+-----------+-----------------+
 | Clocks                   |     0.075 |       15 |       --- |             --- |
-| Slice Logic              |     0.143 |    36660 |       --- |             --- |
+| Slice Logic              |     0.143 |    36688 |       --- |             --- |
 |   LUT as Logic           |     0.121 |    17285 |     17600 |           98.21 |
 |   CARRY4                 |     0.016 |     1471 |      4400 |           33.43 |
-|   Register               |     0.005 |    14052 |     35200 |           39.92 |
+|   Register               |     0.005 |    14080 |     35200 |           40.00 |
 |   F7/F8 Muxes            |    <0.001 |      566 |     17600 |            3.22 |
 |   LUT as Shift Register  |    <0.001 |       72 |      6000 |            1.20 |
 |   Others                 |     0.000 |      445 |       --- |             --- |
 |   BUFG                   |     0.000 |        1 |        32 |            3.13 |
 |   LUT as Distributed RAM |     0.000 |       24 |      6000 |            0.40 |
-| Signals                  |     0.140 |    30698 |       --- |             --- |
+| Signals                  |     0.140 |    30726 |       --- |             --- |
 | Block RAM                |     0.103 |       34 |        60 |           56.67 |
 | PLL                      |     0.097 |        1 |         2 |           50.00 |
 | DSPs                     |     0.040 |       46 |        80 |           57.50 |
@@ -194,7 +194,7 @@ Table of Contents
 |         genblk2[1].lpf                                                           |     0.003 |
 |         genblk2[2].lpf                                                           |     0.003 |
 |         genblk2[3].lpf                                                           |     0.003 |
-|     genblk3[3].i_trigger                                                         |     0.009 |
+|     genblk3[3].i_trigger                                                         |     0.010 |
 |       triggerfilter                                                              |     0.004 |
 |         genblk2[0].lpf                                                           |     0.004 |
 |     genblk4[4].iir                                                               |     0.028 |

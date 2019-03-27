@@ -215,7 +215,7 @@ class DspModule(HardwareModule, SignalModule):
 
     @property
     def output_directs(self):
-        self._logger.warning("Deprecation warning: DspModule.output_directs"
+        self._logger.warning("Deprecation warning: DspModule.output_directs "
                              "will soon be removed. Use "
                              "DspModule.output_direct_options instead!")
         return all_output_directs(self).keys()
