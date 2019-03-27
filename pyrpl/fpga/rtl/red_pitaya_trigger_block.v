@@ -60,6 +60,10 @@ module red_pitaya_trigger_block #(
 //output states
 localparam TTL = 4'd0;
 localparam PHASE = 4'd1;
+localparam MAXHOLD = 4'd2;
+localparam MINHOLD = 4'd3;
+localparam MEAN = 4'd4;
+
 
 //settings
 reg [ 32-1: 0] set_filter;   // filter setting
@@ -69,9 +73,9 @@ reg  [ 14-1: 0] set_a_thresh  ;
 reg  [ 14-1: 0] set_a_hyst   ;
 reg rearm;
 reg auto_rearm;
+reg [ 32-1: 0] auto_rearm_delay;
 reg  [ 14-1: 0] phase_offset;
 reg phase_abs;
-
 
 //  System bus connection
 always @(posedge clk_i) begin
@@ -83,6 +87,7 @@ always @(posedge clk_i) begin
       set_a_hyst <= 14'd20; // 2.5 mV by default
       rearm <= 1'b0;
       auto_rearm <= 1'b0;
+      auto_rearm_delay <= 32'd0;
       phase_offset <= 14'd0;
       phase_abs <= 1'b0;
    end
@@ -99,7 +104,7 @@ always @(posedge clk_i) begin
          if (addr==16'h118)   set_a_thresh <= wdata[14-1:0];
          if (addr==16'h11C)   set_a_hyst <= wdata[14-1:0];
          if (addr==16'h120)   set_filter  <= wdata;
-
+         if (addr==16'h124)   auto_rearm_delay <= wdata;
       end
 
 	  casez (addr)
@@ -112,6 +117,7 @@ always @(posedge clk_i) begin
 	     16'h118 : begin ack <= wen|ren; rdata <= set_a_thresh; end
 	     16'h11C : begin ack <= wen|ren; rdata <= set_a_hyst; end
 	     16'h120 : begin ack <= wen|ren; rdata <= set_filter; end
+	     16'h124 : begin ack <= wen|ren; rdata <= auto_rearm_delay; end
 
 	     16'h15C : begin ack <= wen|ren; rdata <= ctr_value[32-1:0]; end
 	     16'h160 : begin ack <= wen|ren; rdata <= ctr_value[64-1:32]; end
@@ -183,8 +189,13 @@ reg trigger_signal;
 reg armed;
 reg   [ 64 - 1:0] ctr_value        ;
 reg   [ 64 - 1:0] timestamp_trigger;
+reg   [ 32 - 1:0] time_since_trigger;
 reg   [ 14 - 1:0] phase_processed;
 reg   [ 14 - 1:0] phase;
+reg signed [ 14 - 1:0] max;
+reg signed [ 14 - 1:0] min;
+reg signed [ 14 - 1:0] maxout;
+reg signed [ 14 - 1:0] minout;
 reg   [ 14 - 1:0] output_data;
 wire  [ 14 - 1:0] phase_i;
 wire  [ 14 - 1:0] phase_sum;
@@ -194,34 +205,74 @@ assign phase_i = phase1_i;
 //account for offset
 assign phase_sum = phase_i + phase_offset;
 
+reg do_auto_rearm;
+reg post_trigger_delay_running;
+
 always @(posedge clk_i)
 if (rstn_i == 1'b0) begin
    trigger_signal <= 1'b0;
    armed <= 1'b0;
+   do_auto_rearm <= 1'b0;
    ctr_value <= 64'h0;
    timestamp_trigger <= 64'h0;
+   time_since_trigger <= 32'h0;
    phase <= 14'd0;
    output_data <= 14'd0;
    phase_processed <= 14'd0;
+   post_trigger_delay_running = 1'b0;
+   min <= 14'd0;
+   max <= 14'd0;
+   minout <= 14'd0;
+   maxout <= 14'd0;
 end else begin
    // bit 0 of trigger_source defines positive slope trigger, bit 1 negative_slope trigger
    trigger_signal <= ((adc_trig_ap && trigger_source[0]) || (adc_trig_an && trigger_source[1])) && armed;
-   // disarm after trigger event, rearm when requested or explicitely or by auto_rearm;
-   armed <= (armed && (!trigger_signal)) || rearm || auto_rearm;
+   // disarm after trigger event, rearm when requested explicitly or required for auto_rearm;
+   armed <= (armed && (!trigger_signal)) || rearm || do_auto_rearm;
+   // time counter
    ctr_value <= ctr_value + 1'b1;
+
+   // at the moment of the trigger event
+   if (trigger_signal==1'b1) begin
+       timestamp_trigger <= ctr_value;  // take a timestamp
+       post_trigger_delay_running = 1'b1;  // activate post_trigger logic
+       time_since_trigger <= 32'd1;  // start counting time after trigger
+       phase <= phase_processed;  // store the phase at trigger time
+       min <= dat_i_filtered;
+       max <= dat_i_filtered;
+   end else begin
+       time_since_trigger <= time_since_trigger + 1'b1;  // increment time counter since trigger event
+       if (time_since_trigger > auto_rearm_delay) begin
+           post_trigger_delay_running <= 1'b0;
+           // auto_rearm exactly when the post_trigger_delay is just over
+           if (post_trigger_delay_running) begin
+               do_auto_rearm <= auto_rearm;
+               minout <= min;
+               maxout <= max;
+           end
+       end else begin
+           if (post_trigger_delay_running) begin
+               max <= (dat_i_filtered > max) ? dat_i_filtered : max;
+               min <= (dat_i_filtered < min) ? dat_i_filtered : min;
+           end
+       end
+   end
+
+   // compute phase output
    if ((phase_abs == 1'b1) && (phase_sum[14-1] == 1'b1))
        phase_processed <= (~phase_sum)+14'd1;
    else
        phase_processed <= phase_sum;
-   if (trigger_signal==1'b1) begin
-       timestamp_trigger <= ctr_value;  // take a timestamp
-       phase <= phase_processed;
-   end
+
    // output_signal multiplexer
    if (output_select==TTL)
        output_data <= {1'b0,{13{trigger_signal}}};
    else if (output_select==PHASE)
        output_data <= phase;
+   else if (output_select==MAXHOLD)
+       output_data <= max;
+   else if (output_select==MINHOLD)
+       output_data <= min;
 end
 
 assign dat_o = output_data;
