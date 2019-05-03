@@ -11,6 +11,7 @@ from ..async_utils import sleep as async_sleep
 logger_quamash = logging.getLogger(name='quamash')
 logger_quamash.setLevel(logging.INFO)
 
+
 class TestPyrpl(object):
     """
     Base class for all pyrpl tests
@@ -22,9 +23,9 @@ class TestPyrpl(object):
     OPEN_ALL_DOCKWIDGETS = False
 
     @classmethod
-    def erase_temp_file(self):
+    def erase_temp_file(cls):
         tmp_conf = os.path.join(user_config_dir,
-                     self.tmp_config_file)
+                     cls.tmp_config_file)
         if os.path.isfile(tmp_conf):
             try:
                 os.remove(tmp_conf)
@@ -36,6 +37,22 @@ class TestPyrpl(object):
             pass  # make sure the file is really gone before proceeding further
 
     @classmethod
+    def estimate_read_write_time(cls):
+        """ get an estimate of the read/write time """
+        N = 10
+        t0 = time()
+        for i in range(N):
+            cls.r.hk.led
+        cls.read_time = (time() - t0) / float(N)
+        t0 = time()
+        for i in range(N):
+            cls.r.hk.led = 0
+        cls.write_time = (time() - t0) / float(N)
+        cls.communication_time = (cls.read_time + cls.write_time) / 2.0
+        print("Estimated time per read / write operation: %.1f ms / %.1f ms" %
+              (cls.read_time * 1000.0, cls.write_time * 1000.0), flush=True)
+
+    @classmethod
     def setUpAll(cls):
         print("\n=======SETTING UP %s=============" % cls.__name__, flush=True)
         # these tests will not succeed without the hardware
@@ -44,22 +61,9 @@ class TestPyrpl(object):
                           source=cls.source_config_file)
         # self.pyrpl.create_widget() # create a second widget to be sure
         cls.r = cls.pyrpl.rp
+        cls.estimate_read_write_time()
 
-        # get an estimate of the read/write time
-        N = 10
-        t0 = time()
-        for i in range(N):
-            cls.r.hk.led
-        cls.read_time = (time()-t0)/float(N)
-        t0 = time()
-        for i in range(N):
-            cls.r.hk.led = 0
-        cls.write_time = (time()-t0)/float(N)
-        cls.communication_time = (cls.read_time + cls.write_time)/2.0
-        print("Estimated time per read / write operation: %.1f ms / %.1f ms" %
-              (cls.read_time*1000.0, cls.write_time*1000.0), flush=True)
         async_sleep(0.1)  # give some time for events to get processed
-
         # open all dockwidgets if this is enabled
         if cls.OPEN_ALL_DOCKWIDGETS:
             for name, dock_widget in cls.pyrpl.widgets[0].dock_widgets.items():
