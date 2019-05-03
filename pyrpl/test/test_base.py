@@ -11,6 +11,7 @@ from ..async_utils import sleep as async_sleep
 logger_quamash = logging.getLogger(name='quamash')
 logger_quamash.setLevel(logging.INFO)
 
+
 class TestPyrpl(object):
     """
     Base class for all pyrpl tests
