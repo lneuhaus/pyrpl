@@ -18,7 +18,6 @@ class TestValidateAndNormalize(TestPyrpl):
     to the value the register actually contains for a number of random
     changes to all registers
     """
-
     def test_validate_and_normalize(self):
         for mod in self.pyrpl.modules:
             for exclude in [Lockbox]:  # lockbox is too complicated here
@@ -36,10 +35,10 @@ class TestValidateAndNormalize(TestPyrpl):
         self.results = []
 
         def check_fpga_value_equals_signal_value(attr_name, list_value):
-            print("check_fpga_value_equals_signal_value(%s.%s, %s) was called!"
-                  % (mod.name, attr_name, list_value))
             # add an entry to results
             self.results.append(("%s.%s" % (mod.name, attr_name), list_value[0], getattr(mod, attr_name)))
+            # print("check_fpga_value_equals_signal_value(%s.%s, %s) was called!"
+            #      % (mod.name, attr_name, list_value))
 
         mod._signal_launcher.update_attribute_by_name.connect(check_fpga_value_equals_signal_value)
         attr_names, attr_vals = scramble_values(mod)

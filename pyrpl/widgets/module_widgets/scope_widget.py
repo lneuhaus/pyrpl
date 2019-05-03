@@ -60,6 +60,7 @@ class ScopeWidget(AcquisitionModuleWidget):
         aws = self.attribute_widgets
 
         self.layout_channels = QtWidgets.QVBoxLayout()
+
         self.layout_ch1 = QtWidgets.QHBoxLayout()
         self.layout_ch2 = QtWidgets.QHBoxLayout()
         self.layout_math = QtWidgets.QHBoxLayout()
@@ -67,12 +68,9 @@ class ScopeWidget(AcquisitionModuleWidget):
         self.layout_channels.addLayout(self.layout_ch2)
         self.layout_channels.addLayout(self.layout_math)
 
-        self.attribute_layout.removeWidget(aws['xy_mode'])
-
         self.attribute_layout.removeWidget(aws['ch1_active'])
         self.attribute_layout.removeWidget(aws['input1'])
         self.attribute_layout.removeWidget(aws['threshold'])
-
         self.layout_ch1.addWidget(aws['ch1_active'])
         self.layout_ch1.addWidget(aws['input1'])
         self.layout_ch1.addWidget(aws['threshold'])
@@ -81,55 +79,38 @@ class ScopeWidget(AcquisitionModuleWidget):
         self.attribute_layout.removeWidget(aws['ch2_active'])
         self.attribute_layout.removeWidget(aws['input2'])
         self.attribute_layout.removeWidget(aws['hysteresis'])
-        aws['ch2_active'].setStyleSheet("color: %s" % self.ch_color[1])
-
         self.layout_ch2.addWidget(aws['ch2_active'])
         self.layout_ch2.addWidget(aws['input2'])
         self.layout_ch2.addWidget(aws['hysteresis'])
+        aws['ch2_active'].setStyleSheet("color: %s" % self.ch_color[1])
 
+        self.attribute_layout.removeWidget(aws['math_formula'])
+        self.attribute_layout.removeWidget(aws['ch_math_active'])
         self.layout_math.addWidget(aws['ch_math_active'])
-        aws['ch_math_active'].setStyleSheet("color: %s" % self.ch_color[2])
         self.layout_math.addWidget(aws['math_formula'])
+        aws['ch_math_active'].setStyleSheet("color: %s" % self.ch_color[2])
 
         self.attribute_layout.addLayout(self.layout_channels)
 
+        self.layout_duration = QtWidgets.QVBoxLayout()
         self.attribute_layout.removeWidget(aws['duration'])
         self.attribute_layout.removeWidget(aws['trigger_delay'])
-        self.layout_duration = QtWidgets.QVBoxLayout()
         self.layout_duration.addWidget(aws['duration'])
+        self.attribute_widgets['duration'].value_changed.connect(
+            self.update_rolling_mode_visibility)
         self.layout_duration.addWidget(aws['trigger_delay'])
         self.attribute_layout.addLayout(self.layout_duration)
 
+        self.layout_misc = QtWidgets.QVBoxLayout()
         self.attribute_layout.removeWidget(aws['trigger_source'])
         self.attribute_layout.removeWidget(aws['average'])
-        self.layout_misc = QtWidgets.QVBoxLayout()
         self.layout_misc.addWidget(aws['trigger_source'])
         self.layout_misc.addWidget(aws['average'])
         self.attribute_layout.addLayout(self.layout_misc)
 
-        #self.attribute_layout.removeWidget(aws['curve_name'])
-
-        self.button_layout = QtWidgets.QHBoxLayout()
-
-        aws = self.attribute_widgets
-        self.attribute_layout.removeWidget(aws["trace_average"])
-        self.attribute_layout.removeWidget(aws["curve_name"])
-        self.button_layout.addWidget(aws["xy_mode"])
-        self.button_layout.addWidget(aws["trace_average"])
-        self.button_layout.addWidget(aws["curve_name"])
-
-
-        #self.setLayout(self.main_layout)
-        self.setWindowTitle("Scope")
         self.win = pg.GraphicsWindow(title="Scope")
         self.plot_item = self.win.addPlot(title="Scope")
         self.plot_item.showGrid(y=True, alpha=1.)
-
-
-        #self.button_single = QtWidgets.QPushButton("Run single")
-        #self.button_continuous = QtWidgets.QPushButton("Run continuous")
-        #self.button_save = QtWidgets.QPushButton("Save curve")
-
         self.curves = [self.plot_item.plot(pen=(QtGui.QColor(color).red(),
                                                 QtGui.QColor(color).green(),
                                                 QtGui.QColor(color).blue()
@@ -139,47 +120,38 @@ class ScopeWidget(AcquisitionModuleWidget):
                                                self.ch_transparency)]
         self.main_layout.addWidget(self.win, stretch=10)
 
-
-        #self.button_layout.addWidget(self.button_single)
-        #self.button_layout.addWidget(self.button_continuous)
-        #self.button_layout.addWidget(self.button_save)
-        #self.button_layout.addWidget(aws['curve_name'])
-        #aws['curve_name'].setMaximumWidth(250)
-        self.main_layout.addLayout(self.button_layout)
-
-        #self.button_single.clicked.connect(self.run_single_clicked)
-        #self.button_continuous.clicked.connect(self.run_continuous_clicked)
-        #self.button_save.clicked.connect(self.save_clicked)
-
+        self.lay_radio = QtWidgets.QVBoxLayout()
         self.rolling_group = QtWidgets.QGroupBox("Trigger mode")
         self.checkbox_normal = QtWidgets.QRadioButton("Normal")
         self.checkbox_untrigged = QtWidgets.QRadioButton("Untrigged (rolling)")
         self.checkbox_normal.setChecked(True)
-        self.lay_radio = QtWidgets.QVBoxLayout()
+        self.checkbox_normal.clicked.connect(self.rolling_mode_toggled)
+        self.checkbox_untrigged.clicked.connect(self.rolling_mode_toggled)
         self.lay_radio.addWidget(self.checkbox_normal)
         self.lay_radio.addWidget(self.checkbox_untrigged)
         self.rolling_group.setLayout(self.lay_radio)
         self.attribute_layout.insertWidget(
             list(self.attribute_widgets.keys()).index("trigger_source"),
             self.rolling_group)
-        self.checkbox_normal.clicked.connect(self.rolling_mode_toggled)
-        self.checkbox_untrigged.clicked.connect(self.rolling_mode_toggled)
-        #self.update_rolling_mode_visibility()
-        self.attribute_widgets['duration'].value_changed.connect(
-            self.update_rolling_mode_visibility)
 
+        self.button_layout = QtWidgets.QHBoxLayout()
+        self.attribute_layout.removeWidget(aws['xy_mode'])
+        self.button_layout.addWidget(aws["xy_mode"])
+        # set up all the buttons for acquisition etc.
         super(ScopeWidget, self).init_gui()
+        #self.main_layout.addLayout(self.button_layout) # already the case from above call
+
+        self.setWindowTitle("Scope")
+        #self.setLayout(self.main_layout) # already the case
+
         # since trigger_mode radiobuttons is not a regular attribute_widget,
         # it is not synced with the module at creation time.
         self.update_running_buttons()
         self.update_rolling_mode_visibility()
         self.rolling_mode = self.module.rolling_mode
         self.attribute_layout.addStretch(1)
-        # Not sure why the stretch factors in button_layout are not good by
-        # default...
-        #self.button_layout.setStretchFactor(self.button_single, 1)
-        #self.button_layout.setStretchFactor(self.button_continuous, 1)
-        #self.button_layout.setStretchFactor(self.button_save, 1)
+
+
 
     def update_attribute_by_name(self, name, new_value_list):
         """

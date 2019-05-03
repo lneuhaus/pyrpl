@@ -62,51 +62,27 @@ class NaWidget(AcquisitionModuleWidget):
         #self.main_layout = QtWidgets.QVBoxLayout()
         self.init_main_layout(orientation="vertical")
         self.init_attribute_layout()
-        self.button_layout = QtWidgets.QHBoxLayout()
-        #self.setLayout(self.main_layout)
-        self.setWindowTitle("NA")
+        #self.setLayout(self.main_layout)  # already the case
+        self.setWindowTitle("NetworkAnalyzer")
+
         self.win = pg.GraphicsWindow(title="Magnitude")
 
-        self.label_benchmark = pg.LabelItem(justify='right')
-        self.win.addItem(self.label_benchmark, row=1,col=0)
-        self._last_benchmark_value = np.nan
-
         self.win_phase = pg.GraphicsWindow(title="Phase")
-        self.plot_item = self.win.addPlot(row=1, col=0, title="Magnitude (dB)")
+        self.plot_item = self.win.addPlot(row=0, col=0, title="Magnitude (dB)")
         self.plot_item_phase = self.win_phase.addPlot(row=1, col=0,
                                                       title="Phase (deg)")
         self.plot_item_phase.setXLink(self.plot_item)
-        self.button_single = QtWidgets.QPushButton("Run single")
-        self.button_single.my_label = "Single"
-        self.button_continuous = QtWidgets.QPushButton("Run continuous")
-        self.button_continuous.my_label = "Continuous"
-        self.button_stop = QtWidgets.QPushButton('Stop')
 
-        self.button_save = QtWidgets.QPushButton("Save curve")
+        self.label_benchmark = pg.LabelItem(justify='right')
+        self.win.addItem(self.label_benchmark, row=0, col=0)
+        self._last_benchmark_value = np.nan
 
         self.chunks = [] #self.plot_item.plot(pen='y')
         self.chunks_phase = []
         self.main_layout.addWidget(self.win)
         self.main_layout.addWidget(self.win_phase)
 
-        aws = self.attribute_widgets
-        self.attribute_layout.removeWidget(aws["trace_average"])
-        self.attribute_layout.removeWidget(aws["curve_name"])
-
-        #self.button_layout.addWidget(aws["trace_average"])
-        #self.button_layout.addWidget(aws["curve_name"])
-
         super(NaWidget, self).init_gui()
-        #self.button_layout.addWidget(self.button_single)
-        #self.button_layout.addWidget(self.button_continuous)
-        #self.button_layout.addWidget(self.button_stop)
-        #self.button_layout.addWidget(self.button_save)
-        #self.main_layout.addLayout(self.button_layout)
-
-        #self.button_single.clicked.connect(self.run_single_clicked)
-        #self.button_continuous.clicked.connect(self.run_continuous_clicked)
-        #self.button_stop.clicked.connect(self.button_stop_clicked)
-        #self.button_save.clicked.connect(self.save_clicked)
 
         self.arrow = pg.ArrowItem()
         self.arrow.setVisible(False)

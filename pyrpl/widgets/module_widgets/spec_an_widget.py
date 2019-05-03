@@ -142,38 +142,17 @@ class SpecAnWidget(AcquisitionModuleWidget):
 
         self.other_widget = OtherAttributesWidget(self)
         self.attribute_layout.addWidget(self.other_widget)
-
         self.iqmode_widget = IqModeAttributesWidget(self)
         self.attribute_layout.addWidget(self.iqmode_widget)
-
         self.baseband_widget = BasebandAttributesWidget(self)
         self.attribute_layout.addWidget(self.baseband_widget)
-
-
-        self.button_layout = QtWidgets.QHBoxLayout()
-        self.setLayout(self.main_layout)
-        # self.setWindowTitle("Spec. An.")
-        #self.win = pg.GraphicsWindow(title="PSD")
-        #self.main_layout.addWidget(self.win)
 
         self.win2 = DataWidget(title='Spectrum')
         self.main_layout.addWidget(self.win2)
 
-        #self.plot_item = self.win.addPlot(title="PSD")
-        #self.curve = self.plot_item.plot(pen=self.ch_col[0][0])
-
-        #self.curve2 = self.plot_item.plot(pen=self.ch_col[1][0]) # input2
-        # spectrum in
-        # baseband
-        #self.curve_cross = self.plot_item.plot(pen=self.ch_col[2][0]) #
-        # curve for
-
-
         super(SpecAnWidget, self).init_gui()
 
         aws = self.attribute_widgets
-
-
         aws['display_input1_baseband'].setStyleSheet("color: %s" %
                                                    self.ch_col[0])
         aws['display_input2_baseband'].setStyleSheet("color: %s" %
@@ -182,7 +161,6 @@ class SpecAnWidget(AcquisitionModuleWidget):
                                                    self.ch_col[2])
         # Not sure why the stretch factors in button_layout are not good by
         # default...
-
         self.attribute_layout.addStretch(1)
         self.update_baseband_visibility()
 

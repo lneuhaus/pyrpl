@@ -7,7 +7,7 @@ from pyrpl.test.test_base import TestPyrpl
 from pyrpl import APP
 
 
-class TestClass(TestPyrpl):
+class TestScpecan(TestPyrpl):
 
     def teardown(self):
         """ make 100% sure that specan has stopped """
@@ -103,7 +103,7 @@ class TestClass(TestPyrpl):
                       running_state='stopped')
 
         for freq in np.linspace(self.sa.span/5, self.sa.span/4, 5):
-            print("Trying frequency %f..."%freq)
+            print("Trying frequency %f..."%freq, flush=True)
             self.iq.frequency = freq # set the bandpass filter
             in1, in2, cre, cim = self.sa.single()
             # average neighbouring points

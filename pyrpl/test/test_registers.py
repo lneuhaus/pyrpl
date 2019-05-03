@@ -6,12 +6,14 @@ from .test_redpitaya import TestRedpitaya
 
 
 class TestRegisters(TestRedpitaya):
-    """ This test verifies that all registers behave as expected.
+    """
+    This test verifies that all registers behave as expected.
 
     The test is not only useful to test the python interface,
     but also checks that the fpga is not behaving stragely,
     i.e. loosing data or writing the wrong data. Thus, it is the
-    principal test to execute on new fpga designs. """
+    principal test to execute on new fpga designs.
+    """
     def test_generator(self):
         if self.r is None:
             assert False
@@ -114,6 +116,10 @@ class TestRegisters(TestRedpitaya):
             if value != module.__getattribute__(regkey):
                 assert False
         if type(reg) is PhaseRegister:
+            # define a metric for phase differences
+            def phasediff(p1, p2):
+                """ difference between two phases with wrapping at 360 deg """
+                return abs((p1 - p2 + 180) % 360 - 180)
             # try to read
             value = module.__getattribute__(regkey)
             # make sure Register represents a float
@@ -123,12 +129,12 @@ class TestRegisters(TestRedpitaya):
             if regkey not in ['scopetriggerphase']:
                 for phase in np.linspace(-1234, 5678, 90):
                     module.__setattr__(regkey, phase)
-                    diff = abs(module.__getattribute__(regkey) - (phase % 360))
+                    diff = phasediff(module.__getattribute__(regkey), phase)
                     bits = getattr(module.__class__, regkey).bits
                     thr = 360.0/2**bits/2  # factor 2 because rounding is used
                     if diff > thr:
                         assert False, \
-                            "at phase " + str(phase) + ": diff = " + str(diff)
+                            "at phase " + str(phase) + ": diff = " + str(diff) +", thr = " + str(thr)
             # set back original value
             module.__setattr__(regkey, value)
             if value != module.__getattribute__(regkey):

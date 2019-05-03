@@ -10,7 +10,9 @@ from pyrpl.curvedb import CurveDB
 
 class TestScope(TestPyrpl):
     """
-    Be carreful to stop the scope at the end of each test!!!
+    Tests the scope.
+
+    Be careful to stop the scope at the end of each test!!!
     """
     # somehow the file seems to suffer from other nosetests, so pick an
     # individual name for this test:
