@@ -250,6 +250,8 @@ class Pyrpl(object):
                  config=None,
                  source=None,
                  **kwargs):
+        # generate extra-verbose output for first-time users that do not specify a configfile
+        first_time_config = config is None
         # logger initialisation
         self.logger = logging.getLogger(name='pyrpl') # default: __name__
         # use gui or commandline for questions?
@@ -282,7 +284,7 @@ class Pyrpl(object):
             config = None
         # configuration is retrieved from config file
         self.c = MemoryTree(filename=config, source=source)
-        if self.c._filename is not None:
+        if first_time_config and self.c._filename is not None:
             self.logger.info("All your PyRPL settings will be saved to the "
                              "config file\n"
                              "    %s\n"

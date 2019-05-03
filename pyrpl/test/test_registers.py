@@ -114,6 +114,10 @@ class TestRegisters(TestRedpitaya):
             if value != module.__getattribute__(regkey):
                 assert False
         if type(reg) is PhaseRegister:
+            # define a metric for phase differences
+            def phasediff(p1, p2):
+                """ difference between two phases with wrapping at 360 deg """
+                return abs((p1 - p2 + 180) % 360 - 180)
             # try to read
             value = module.__getattribute__(regkey)
             # make sure Register represents a float
@@ -123,12 +127,12 @@ class TestRegisters(TestRedpitaya):
             if regkey not in ['scopetriggerphase']:
                 for phase in np.linspace(-1234, 5678, 90):
                     module.__setattr__(regkey, phase)
-                    diff = abs(module.__getattribute__(regkey) - (phase % 360))
+                    diff = phasediff(module.__getattribute__(regkey), phase)
                     bits = getattr(module.__class__, regkey).bits
                     thr = 360.0/2**bits/2  # factor 2 because rounding is used
                     if diff > thr:
                         assert False, \
-                            "at phase " + str(phase) + ": diff = " + str(diff)
+                            "at phase " + str(phase) + ": diff = " + str(diff) +", thr = " + str(thr)
             # set back original value
             module.__setattr__(regkey, value)
             if value != module.__getattribute__(regkey):

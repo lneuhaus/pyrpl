@@ -503,21 +503,7 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
             frequency = self._data_x[index]
         self.iq.frequency = frequency
         self._time_last_point = timeit.default_timer()
-        # regular print output for travis workaround
         #self._logger.debug("Acquiring first NA point at frequency %.1f Hz..", frequency)
-        # replaced above command by the following two due to suppression of multiple logger warnings
-        if self._logger.getEffectiveLevel() <= 10:
-            try:
-                delay = self._time_last_point - self._lastprinttime
-                self._lastpointnumber += 1
-            except:
-                delay = 999.0
-                self._lastpointnumber = 0
-            if self._lastpointnumber < 100 or delay >= 10.0:
-            #if True:  # above if-statement does not work correctly on travis, e.g. stops printing after laspointnumber 66
-                print("Acquiring new NA point #%d at frequency %.1f Hz after "
-                      "delay of %f" % (self._lastpointnumber, frequency, delay))
-                self._lastprinttime = self._time_last_point
 
     def _get_point(self, index):
         # get the actual point's (discretized)

@@ -36,7 +36,7 @@ class TestPyrpl(object):
 
     @classmethod
     def setUpAll(cls):
-        print("=======SETTING UP %s=============" % cls.__name__)
+        print("=======SETTING UP %s=============" % cls.__name__, flush=True)
         # these tests will not succeed without the hardware
         cls.erase_temp_file()  # also before (for instance in case of Ctrl-C)
         cls.pyrpl = Pyrpl(config=cls.tmp_config_file,
@@ -55,7 +55,7 @@ class TestPyrpl(object):
         cls.write_time = (time()-t0)/float(N)
         cls.communication_time = (cls.read_time + cls.write_time)/2.0
         print("Estimated time per read / write operation: %.1f ms / %.1f ms" %
-              (cls.read_time*1000.0, cls.write_time*1000.0))
+              (cls.read_time*1000.0, cls.write_time*1000.0), flush=True)
         async_sleep(0.1)  # give some time for events to get processed
 
         # open all dockwidgets if this is enabled
@@ -86,7 +86,7 @@ class TestPyrpl(object):
 
     @classmethod
     def tearDownAll(cls):
-        print("=======TEARING DOWN %s===========" % cls.__name__)
+        print("=======TEARING DOWN %s===========" % cls.__name__, flush=True)
         # delete the curves fabricated in the test
         if hasattr(cls, 'curves'):
             while len(cls.curves) > 0:

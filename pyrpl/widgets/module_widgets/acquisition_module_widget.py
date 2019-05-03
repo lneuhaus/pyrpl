@@ -52,6 +52,11 @@ class CurrentAvgLabel(QtWidgets.QWidget):
 
 class AcquisitionModuleWidget(ModuleWidget):
     def init_gui(self):
+        aws = self.attribute_widgets
+
+        if not hasattr(self, 'button_layout'):  # this is already created for the scope
+            self.button_layout = QtWidgets.QHBoxLayout()
+
         self.button_single = QtWidgets.QPushButton("Run single")
         self.button_single.clicked.connect(self.run_single_clicked)
 
@@ -66,14 +71,12 @@ class AcquisitionModuleWidget(ModuleWidget):
         self.button_save.clicked.connect(self.module.save_curve)
 
         self.current_avg_label = CurrentAvgLabel()
-
-        aws = self.attribute_widgets
         self.attribute_layout.removeWidget(aws["trace_average"])
         self.attribute_layout.removeWidget(aws["curve_name"])
-
         self.button_layout.addWidget(self.current_avg_label)
         self.button_layout.addWidget(aws["trace_average"])
         self.button_layout.addWidget(aws["curve_name"])
+
         self.button_layout.addWidget(self.button_single)
         self.button_layout.addWidget(self.button_continuous)
         self.button_layout.addWidget(self.button_restart_averaging)
