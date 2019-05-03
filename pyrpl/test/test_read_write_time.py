@@ -3,7 +3,8 @@ import logging
 logger = logging.getLogger(name=__name__)
 
 from .test_base import TestPyrpl
-from ..errors import UnexpectedPyrplError, ExpectedPyrplError
+from ..errors import ExpectedPyrplError
+from .. import user_config_dir, global_config
 
 
 class TestReadWriteTime(TestPyrpl):
