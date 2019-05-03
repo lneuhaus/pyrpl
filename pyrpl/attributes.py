@@ -134,7 +134,6 @@ class BaseProperty(BaseAttribute):
                 self.save_attribute(module, value)
         if self.call_setup and not module._setup_ongoing:
             # call setup unless a bunch of attributes are being changed together.
-            module._logger.debug('Calling setup() for %s.%s ...', module.name, self.name)
             module.setup()
         return value
 
