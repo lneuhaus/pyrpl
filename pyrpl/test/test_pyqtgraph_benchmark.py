@@ -10,10 +10,12 @@ from ..async_utils import sleep as async_sleep
 
 
 class TestPyqtgraph(TestRedpitaya):
-    """ This test case creates a maximally simplistic scope gui
+    """
+    This test case creates a maximally simplistic scope gui
     that continuously plots the data of both scope channels,
     and checks the obtainable frame rate.
-    Frame rates down to 20 Hz are accepted """
+    Frame rates down to 20 Hz are accepted
+    """
     N = 2 ** 14
     cycles = 50  # cycles to average frame rate over
     frequency = 10.0

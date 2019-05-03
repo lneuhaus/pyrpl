@@ -18,7 +18,6 @@ class TestValidateAndNormalize(TestPyrpl):
     to the value the register actually contains for a number of random
     changes to all registers
     """
-
     def test_validate_and_normalize(self):
         for mod in self.pyrpl.modules:
             for exclude in [Lockbox]:  # lockbox is too complicated here

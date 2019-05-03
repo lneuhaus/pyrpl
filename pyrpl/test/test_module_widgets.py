@@ -15,7 +15,7 @@ class TestModuleWidgets(TestPyrpl):
         ## our workaround is this: detect from environment variable
         ## if tests are executed on travis and refuse the gui tests
         try:
-            skip = os.environ["REDPITAYA_SKIPGUITEST"]
+            _ = os.environ["REDPITAYA_SKIPGUITEST"]
         except KeyError:
             self.do_gui_tests = True
         else:

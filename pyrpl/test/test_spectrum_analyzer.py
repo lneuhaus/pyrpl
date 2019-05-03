@@ -7,7 +7,7 @@ from pyrpl.test.test_base import TestPyrpl
 from pyrpl import APP
 
 
-class TestClass(TestPyrpl):
+class TestScpecan(TestPyrpl):
 
     def teardown(self):
         """ make 100% sure that specan has stopped """

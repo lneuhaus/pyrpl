@@ -6,12 +6,14 @@ from .test_redpitaya import TestRedpitaya
 
 
 class TestRegisters(TestRedpitaya):
-    """ This test verifies that all registers behave as expected.
+    """
+    This test verifies that all registers behave as expected.
 
     The test is not only useful to test the python interface,
     but also checks that the fpga is not behaving stragely,
     i.e. loosing data or writing the wrong data. Thus, it is the
-    principal test to execute on new fpga designs. """
+    principal test to execute on new fpga designs.
+    """
     def test_generator(self):
         if self.r is None:
             assert False

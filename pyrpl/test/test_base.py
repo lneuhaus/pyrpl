@@ -6,14 +6,15 @@ import os
 from .. import Pyrpl, APP, user_config_dir, global_config
 from ..pyrpl_utils import time
 from ..async_utils import sleep as async_sleep
-from ..errors import UnexpectedPyrplError, ExpectedPyrplError
 
 # I don't know why, in nosetests, the logger goes to UNSET...
 logger_quamash = logging.getLogger(name='quamash')
 logger_quamash.setLevel(logging.INFO)
 
 class TestPyrpl(object):
-    """ base class for all pyrpl tests """
+    """
+    Base class for all pyrpl tests
+    """
     # names of the configfiles to use
     source_config_file = "nosetests_source.yml"
     tmp_config_file = "nosetests_config.yml"
@@ -36,7 +37,7 @@ class TestPyrpl(object):
 
     @classmethod
     def setUpAll(cls):
-        print("=======SETTING UP %s=============" % cls.__name__, flush=True)
+        print("\n=======SETTING UP %s=============" % cls.__name__, flush=True)
         # these tests will not succeed without the hardware
         cls.erase_temp_file()  # also before (for instance in case of Ctrl-C)
         cls.pyrpl = Pyrpl(config=cls.tmp_config_file,
@@ -66,27 +67,9 @@ class TestPyrpl(object):
             async_sleep(3.0) # give some time for startup
         APP.processEvents()
 
-    def test_read_write_time(self):
-        # maximum time per read/write in seconds
-        try:
-            maxtime = global_config.test.max_communication_time
-        except:
-            raise ExpectedPyrplError("Error with global config file. "
-                                       "Please delete the file %s and retry!"
-                                       % os.path.join(user_config_dir,
-                                                      'global_config.yml'))
-        assert self.read_time < maxtime, \
-            "Read operation is very slow: %e s (expected < %e s). It is " \
-            "highly recommended that you improve the network connection to " \
-            "your Red Pitaya device. " % (self.read_time, maxtime)
-        assert self.write_time < maxtime, \
-            "Write operation is very slow: %e s (expected < %e s). It is " \
-            "highly recommended that you improve the network connection to " \
-            "your Red Pitaya device. " % (self.write_time, maxtime)
-
     @classmethod
     def tearDownAll(cls):
-        print("=======TEARING DOWN %s===========" % cls.__name__, flush=True)
+        print("\n=======TEARING DOWN %s===========" % cls.__name__, flush=True)
         # delete the curves fabricated in the test
         if hasattr(cls, 'curves'):
             while len(cls.curves) > 0:
@@ -96,9 +79,6 @@ class TestPyrpl(object):
         APP.processEvents()  # give some time for events to get processed
         cls.erase_temp_file()  # delete the configfile
         APP.processEvents()
-
-    def test_pyrpl(self):
-        assert (self.pyrpl is not None)
 
 
 # only one test class per file is allowed due to conflicts with

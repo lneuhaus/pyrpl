@@ -6,6 +6,14 @@ from .. import *
 from ..async_utils import sleep
 
 class TestMemory(object):
+    @classmethod
+    def setUpAll(cls):
+        print("\n=======SETTING UP %s=============" % cls.__name__, flush=True)
+
+    @classmethod
+    def tearDownAll(cls):
+        print("\n=======TEARING DOWN %s===========" % cls.__name__, flush=True)
+
     def test_load(self):
         mt = MemoryTree(filename='test', source='nosetests_source')
         assert mt is not None
