@@ -27,4 +27,3 @@ class TestReadWriteTime(TestPyrpl):
             "Write operation is very slow: %e s (expected < %e s). It is " \
             "highly recommended that you improve the network connection to " \
             "your Red Pitaya device. " % (self.write_time, maxtime)
-

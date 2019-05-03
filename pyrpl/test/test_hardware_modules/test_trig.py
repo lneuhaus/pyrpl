@@ -7,7 +7,7 @@ from qtpy import QtCore, QtWidgets
 from pyrpl.test.test_base import TestPyrpl
 
 
-class TestScope(TestPyrpl):
+class TestTrig(TestPyrpl):
     def setup(self):
         self.asg = self.pyrpl.asgs.pop("trigtest")
         self.t = self.pyrpl.rp.trig
@@ -62,3 +62,9 @@ class TestScope(TestPyrpl):
         # trigger should stay low when autorearm is off
         self.t.auto_rearm = False
         assert self.t.armed == False
+
+    def test_maxhold(self):
+        """
+        testing the maxhold mechanism
+        """
+        pass
