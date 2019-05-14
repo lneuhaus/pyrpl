@@ -216,7 +216,8 @@ class DummyClient(object):  # pragma: no cover
     class fpgadict(dict):
         def __missing__(self, key):
             return 1 # 0 (1 is needed to avoid division_by_zero errors for some registers)
-    fpgamemory = fpgadict({str(0x40100014): 1})  # scope decimation initial value
+    fpgamemory = fpgadict({str(0x40100014): 0x2000,  # scope decimation initial value
+                           })
 
     def read_fpgamemory(self, addr):
         # here we implement a fraction of the memory map to simulate the actual redpitaya

@@ -2,6 +2,7 @@ from ..attributes import BoolRegister, FloatRegister, SelectRegister, PhaseRegis
 from . import FilterModule
 from ..pyrpl_utils import sorted_dict
 
+
 class Trig(FilterModule):
     """
     The trigger module implements a full-rate trigger on a DSP signal.
