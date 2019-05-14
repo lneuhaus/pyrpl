@@ -352,7 +352,7 @@ class IORegister(BoolRegister):
         if v is None:
             v = self.outputmode
         if v:
-            v = obj._read(self.address) | (1 << self.bit)
+            v = obj._read(self.direction_address) | (1 << self.bit)
         else:
             v = obj._read(self.direction_address) & (~(1 << self.bit))
         obj._write(self.direction_address, v)
