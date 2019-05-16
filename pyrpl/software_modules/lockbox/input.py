@@ -139,28 +139,24 @@ class Signal(LockboxModule, SignalModule):
     def mean(self):
         # get fresh data
         mean, rms, max, min= self.stats()
-        # compute relative quantity
         return mean
 
     @property
     def rms(self):
         # get fresh data
         mean, rms, max, min= self.stats()
-        # compute relative quantity
         return rms
 
     @property
     def max(self):
         # get fresh data
         mean, rms, max, min= self.stats()
-        # compute relative quantity
         return max
 
     @property
     def min(self):
         # get fresh data
         mean, rms, max, min= self.stats()
-        # compute relative quantity
         return min
 
     @property
@@ -231,7 +227,7 @@ class InputSignal(Signal):
     the input.
     """
     _setup_attributes = ["input_signal"]
-    _gui_attributes = ["input_signal"]
+    _gui_attributes = ["input_signal", "get_analog_offset"]
     _widget_class = LockboxInputWidget
     plot_range = np.linspace(-5, 5, 200)  # range of setpoint values over which to plot signal
 
