@@ -215,7 +215,8 @@ class HostnameSelectorWidget(QtWidgets.QDialog):
                             if addr not in exclude:  # exclude certain addresses (see above)
                                 addr_list.append(addr)
         self._logger.debug("Your own ips are: %s", addr_list)
-        return addr_list
+        print(list(set(addr_list)))
+        return list(set(addr_list))
 
     def scan(self):
         """
