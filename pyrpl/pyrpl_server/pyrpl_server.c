@@ -289,7 +289,7 @@ int main(int argc, char *argv[])
                     //write FPGA memory
                     write_values(address, rw_buffer, data_length);
                     n=send(newsockfd,buffer,8,0);
-                    if (n != 8) error("ERROR control sequence mirror incorreclty transmitted");
+                    if (n != 8) error("ERROR control sequence mirror incorrectly transmitted");
                  }
                  else if (buffer[0] == 'c') break; //close program
                  else error("ERROR unknown control character - server and client out of sync"); //if an unknown control sequence is received, terminate for security reasons

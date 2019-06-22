@@ -242,6 +242,8 @@ class HostnameSelectorWidget(QtWidgets.QDialog):
         password = self.password
         # make a list of ips to scan for redpitayas
         ips = []
+        ips += ['127.0.0.1']  # localhost
+        ips += ['192.168.1.100']  # default direct connection ip
         # first, find our own IP address to infer the LAN from it
         for ip in self._get_all_own_ip_addresses():
             # the LAN around an ip address 'a.b.c.d' is here defined here as all
@@ -249,7 +251,7 @@ class HostnameSelectorWidget(QtWidgets.QDialog):
             end = ip.split('.')[-1]
             start = ip[:-len(end)]
             ips += [start + str(i) for i in range(256)]  # all local ips
-        ips += ['192.168.1.100']  # direct connection ip, not found automatically
+        ips = list(set(ips))
         # start scanning all ips
         self.progressbar.setRange(0, len(ips))
         for i, ip in enumerate(ips):
