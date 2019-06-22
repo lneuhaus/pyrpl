@@ -10,7 +10,7 @@ from ..async_utils import APP
 class HostnameSelectorWidget(QtWidgets.QDialog):
     _HIDE_PASSWORDS = False
     _SKIP_REDPITAYA_SIGNATURE = True  # display all devices incl. non-redpitayas
-    _SCAN_TIMEOUT = 0.05
+    _SCAN_TIMEOUT = 0.1
     _CONNECT_TIMEOUT = 1.0
 
     def __init__(self, parent=None, config={'user': None,
@@ -251,7 +251,6 @@ class HostnameSelectorWidget(QtWidgets.QDialog):
             end = ip.split('.')[-1]
             start = ip[:-len(end)]
             ips += [start + str(i) for i in range(256)]  # all local ips
-        ips = list(set(ips))
         # start scanning all ips
         self.progressbar.setRange(0, len(ips))
         for i, ip in enumerate(ips):
