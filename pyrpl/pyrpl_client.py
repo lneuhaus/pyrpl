@@ -18,6 +18,7 @@
 
 
 import numpy as np
+import threading
 import socket
 from time import sleep
 import logging
@@ -52,6 +53,8 @@ class PyrplClient(object):
         CLIENT_NUMBER += 1
         self.client_number = CLIENT_NUMBER
         self.logger.debug("Client number %s started", self.client_number)
+        # add a lock for read/write access to redpitaya to make it threadsafe
+        self.rw_lock = threading.Lock()
         # start setting up client
         self._restartserver = restartserver
         self._hostname = hostname
@@ -136,22 +139,23 @@ class PyrplClient(object):
         header = b'r' + bytes(bytearray([0,
                                          length & 0xFF, (length >> 8) & 0xFF,
                                          addr & 0xFF, (addr >> 8) & 0xFF, (addr >> 16) & 0xFF, (addr >> 24) & 0xFF]))
-        self.socket.send(header)
-        start = time()
-        data = self.socket.recv(length * 4 + 8)
-        while (len(data) < length * 4 + 8):
-            result = self.socket.recv(length * 4 - len(data) + 8)
-            data += result
-            if len(result) == 0 and time()-start > self.TIMEOUT:
-                self.logger.error("Read timeout - incomplete data transmission: %s", data)
+        with self.rw_lock:
+            self.socket.send(header)
+            start = time()
+            data = self.socket.recv(length * 4 + 8)
+            while (len(data) < length * 4 + 8):
+                result = self.socket.recv(length * 4 - len(data) + 8)
+                data += result
+                if len(result) == 0 and time()-start > self.TIMEOUT:
+                    self.logger.error("Read timeout - incomplete data transmission: %s", data)
+                    self.emptybuffer()
+                    return None
+            if data[:8] == header:  # check for in-sync transmission
+                return np.frombuffer(data[8:], dtype=np.uint32)
+            else:  # error handling
+                self.logger.error("Wrong control sequence from server: %s", data[:8])
                 self.emptybuffer()
                 return None
-        if data[:8] == header:  # check for in-sync transmission
-            return np.frombuffer(data[8:], dtype=np.uint32)
-        else:  # error handling
-            self.logger.error("Wrong control sequence from server: %s", data[:8])
-            self.emptybuffer()
-            return None
 
     def _writes(self, addr, values):
         values = values[:65535 - 2]
@@ -163,15 +167,16 @@ class PyrplClient(object):
                                          (addr >> 8) & 0xFF,
                                          (addr >> 16) & 0xFF,
                                          (addr >> 24) & 0xFF]))
-        # send header+body
-        self.socket.sendall(header +
-                            np.array(values, dtype=np.uint32).tobytes())
-        if self.socket.recv(8) == header:  # check for in-sync transmission
-            return True  # indicate successful write
-        else:  # error handling
-            self.logger.error("Error: wrong control sequence from server")
-            self.emptybuffer()
-            return None
+        with self.rw_lock:
+            # send header+body
+            self.socket.sendall(header +
+                                np.array(values, dtype=np.uint32).tobytes())
+            if self.socket.recv(8) == header:  # check for in-sync transmission
+                return True  # indicate successful write
+            else:  # error handling
+                self.logger.error("Error: wrong control sequence from server")
+                self.emptybuffer()
+                return None
 
     def emptybuffer(self):
         for i in range(100):

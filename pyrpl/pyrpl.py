@@ -155,7 +155,7 @@ from .memory import MemoryTree
 from .redpitaya import RedPitaya
 from . import pyrpl_utils
 from .software_modules import get_module
-from .async_utils import sleep as async_sleep
+from .async_utils import sleep as async_sleep, MainThreadTimer
 
 # it is important that Lockbox is loaded before the models
 #from .software_modules.lockbox import *
@@ -429,3 +429,14 @@ class Pyrpl(object):
         # end redpitatya communication
         self.rp.end_all()
         async_sleep(0.1)
+
+    def stop(self):
+        """
+        Closes the application.
+        """
+        # we have to use a zero-delay timer such that eventually running timers
+        # are stopped from the right thread
+        timer = MainThreadTimer(0)
+        timer.timeout.connect(self._clear)
+        timer.start()
+        self.logger.info("Stopping PyRPL instance!")
