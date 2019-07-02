@@ -131,8 +131,14 @@ def sorted_dict(dict_to_sort=None, sort_by_values=True, **kwargs):
 def update_with_typeconversion(dictionary, update):
     for k, v in update.items():
         if k in dictionary:
+            # get the type of the default value
+            cls = type(dictionary[k])
+            if cls == bool:
+                # special treatment for booleans
+                if v in ['FALSE', 'False', 'false']:
+                    v = False
             # perform type conversion if appropriate
-            v = type(dictionary[k])(v)
+            v = cls(v)
         dictionary[k] = v
     return dictionary
 

@@ -145,7 +145,7 @@ class RedPitaya(object):
         update_with_typeconversion(self.parameters, kwargs)
         # get missing connection settings from gui/command line
         if self.parameters['hostname'] is None or self.parameters['hostname']=='':
-            gui = 'gui' not in self.c._keys() or self.c.gui
+            gui = 'gui' not in self.c.redpitaya._keys() or self.c.redpitaya.gui
             if gui:
                 self.logger.info("Please choose the hostname of "
                                  "your Red Pitaya in the hostname "

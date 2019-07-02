@@ -250,6 +250,10 @@ class Pyrpl(object):
                  config=None,
                  source=None,
                  **kwargs):
+        # apply special treatment for boolean kwargs to allow False settings
+        for k in kwargs:
+            if kwargs[k] in ['FALSE', 'False', 'false']:
+                kwargs[k] = False
         # generate extra-verbose output for first-time users that do not specify a configfile
         first_time_config = config is None
         # logger initialisation
