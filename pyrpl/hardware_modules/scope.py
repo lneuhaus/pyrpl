@@ -120,7 +120,7 @@ large an integrator gain will quickly saturate the outputs.
     print("First point in data buffer 1 [V]:", s.ch1_firstpoint)
 """
 
-import time
+import time as time_module
 from .dsp import all_inputs, dsp_addr_base, InputSelectRegister
 from ..acquisition_module import AcquisitionModule
 from ..async_utils import MainThreadTimer, PyrplFuture, sleep
@@ -753,3 +753,19 @@ class Scope(HardwareModule, AcquisitionModule):
             self._run_future = ContinuousRollingFuture(self)
         else:
             super(Scope, self)._new_run_future()
+
+
+    def raw_curve(self, timeout=None):
+        """
+        A quick bugfix that allow to acquire single traces without overhead.
+
+        Returns None in case of a timeout, otherwise both scope traces.
+        """
+        self._start_acquisition()
+        started = time()
+        # busy loop, should be replaced
+        while timeout is None or time() - started <= timeout:
+            if self._data_ready():
+                return self._get_curve()
+            time_module.sleep(0.001)
+        return None

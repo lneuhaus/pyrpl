@@ -196,7 +196,8 @@ class Lockbox(LockboxModule):
     # lockbox.outputs.output1
     inputs = LockboxModuleDictProperty(input_from_output=InputFromOutput)
     outputs = LockboxModuleDictProperty(output1=OutputSignal,
-                                        output2=OutputSignal)
+                                        #output2=OutputSignal
+                                        )
 
     # Sequence is a list of stage modules. By default the first stage is created
     sequence = ModuleListProperty(Stage, default=[{}])
