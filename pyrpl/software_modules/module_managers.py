@@ -169,11 +169,11 @@ class Scopes(ModuleManager):
     _widget_class = ScopeManagerWidget
 
 
-class Iirs(ModuleManager):
-    """
-    Only one iir, but it should be protected by the slave/owner mechanism.
-    """
-    _widget_class = IirManagerWidget
+# class Iirs(ModuleManager):
+#     """
+#     Only one iir, but it should be protected by the slave/owner mechanism.
+#     """
+#     _widget_class = IirManagerWidget
 
 
 class Trigs(ModuleManager):
