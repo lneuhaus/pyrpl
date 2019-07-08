@@ -99,8 +99,8 @@ localparam PID0  = 'd0; //formerly PID11
 localparam PID1  = 'd1; //formerly PID12: input2->output1
 localparam PID2  = 'd2; //formerly PID21: input1->output2
 localparam PID3  = 'd3; //formerly PID22
-localparam TRIG  = 'd3; //formerly PID3
-localparam IIR   = 'd4; //IIR filter to connect in series to PID module
+localparam TRIG0  = 'd3; //formerly PID3
+localparam TRIG1  = 'd4; //formerly IIR filter to connect in series to PID module
 localparam IQ0   = 'd5; //for PDH signal generation
 localparam IQ1   = 'd6; //for NA functionality
 localparam IQ2   = 'd7; //for PFD error signal
@@ -252,12 +252,18 @@ always @(posedge clk_i) begin
       input_select [PID3] <= ADC1;
       output_select[PID3] <= OFF;
 
-      input_select [IIR] <= ADC1;
-      output_select[IIR] <= OFF;
+      //input_select [IIR] <= ADC1;
+      //output_select[IIR] <= OFF;
+
+      input_select [TRIG0] <= ADC1;
+      output_select[TRIG0] <= OFF;
+
+      input_select [TRIG1] <= ADC1;
+      output_select[TRIG1] <= OFF;
 
       input_select [IQ0] <= ADC1;
       output_select[IQ0] <= OFF;
-      
+
       input_select [IQ1] <= ADC1;
       output_select[IQ1] <= OFF;
 
@@ -340,9 +346,9 @@ generate for (j = 0; j < 3; j = j+1) begin
 end
 endgenerate
 
-wire trig_signal;
+wire trig_signal[2-1:0];
 //TRIG
-generate for (j = 3; j < 4; j = j+1) begin
+generate for (j = 3; j < 5; j = j+1) begin
    red_pitaya_trigger_block i_trigger (
      // data
      .clk_i        (  clk_i          ),  // clock
@@ -351,7 +357,7 @@ generate for (j = 3; j < 4; j = j+1) begin
      .dat_o        (  output_direct[j]),  // output data
      .signal_o     (  output_signal[j]),  // output signal
      .phase1_i     (  asg1phase_i ),  // phase input
-     .trig_o       (  trig_signal ),
+     .trig_o       (  trig_signal[j-3] ),
 
 	 //communincation with PS
 	 .addr ( sys_addr[16-1:0] ),
@@ -363,9 +369,10 @@ generate for (j = 3; j < 4; j = j+1) begin
    );
 end
 endgenerate
-assign trig_o = trig_signal;
+assign trig_o = trig_signal[0] | trig_signal[1];
 
 //IIR module 
+/*
 generate for (j = 4; j < 5; j = j+1) begin
     red_pitaya_iir_block iir (
 	     // data
@@ -384,7 +391,7 @@ generate for (j = 4; j < 5; j = j+1) begin
       );
 	  assign output_signal[j] = output_direct[j];
 end endgenerate
-
+*/
 
 //IQ modules
 generate for (j = 5; j < 7; j = j+1) begin
