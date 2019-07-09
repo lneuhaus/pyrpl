@@ -29,7 +29,7 @@ class Trig(FilterModule):
                          "auto_rearm_delay",
                          ]#,
                          #"trigger_armed"]
-    _gui_attributes = _setup_attributes
+    _gui_attributes = _setup_attributes + ['arm_trigger']
 
     armed = BoolRegister(0x100, 0, doc="Set to True to arm trigger")
 
@@ -78,6 +78,12 @@ class Trig(FilterModule):
                                      bits=64,
                                      doc="An absolute counter "
                                          + "for the trigger time [cycles]")
+
+    def arm_trigger(self):
+        """
+        Convenience function that arms the trigger.
+        """
+        self.armed = True
 
     def _setup(self):
         """ sets up the module (just setting the attributes is OK). """
