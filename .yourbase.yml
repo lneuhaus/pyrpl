@@ -1,0 +1,11 @@
+
+dependencies:
+  build:
+    - python:3.6.3
+    - anaconda:latest
+
+build_targets:
+  - name: default
+    commands:
+      - conda create -q -n test-environment numpy scipy paramiko pandas nose pip pyqt qtpy
+      - python setup.py install
