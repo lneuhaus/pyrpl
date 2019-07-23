@@ -1,8 +1,8 @@
 
 dependencies:
   build:
-    - python:3.6.3
-    - anaconda3:latest
+    - python:2.7
+    - anaconda2:latest
 
 build_targets:
   - name: default
