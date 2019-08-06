@@ -110,6 +110,9 @@ class Lockbox(LockboxModule):
         super(Lockbox, self).__init__(parent=parent, name=name)
         # set state change time to negative value to indicate startup condition
         self._state_change_time = -1
+        # start off in "unlocked" state
+        self.unlock()
+
 
     ###################
     # unit management #
