@@ -17,22 +17,6 @@ behind the scene, and they are coded in this file.
 from __future__ import division
 from functools import partial
 from .pyrpl_utils import recursive_getattr, recursive_setattr
-from .widgets.attribute_widgets import BoolAttributeWidget, \
-                                       FloatAttributeWidget, \
-                                       FilterAttributeWidget, \
-                                       IntAttributeWidget, \
-                                       SelectAttributeWidget, \
-                                       StringAttributeWidget, \
-                                       BoolIgnoreAttributeWidget, \
-                                       TextAttributeWidget, \
-                                       CurveAttributeWidget, \
-                                       DataAttributeWidget, \
-                                       CurveSelectAttributeWidget, \
-                                       LedAttributeWidget, \
-                                       PlotAttributeWidget, \
-                                       BasePropertyListPropertyWidget, \
-                                       ComplexAttributeWidget
-
 from .curvedb import CurveDB
 from collections import OrderedDict
 import logging

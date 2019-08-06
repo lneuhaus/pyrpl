@@ -16,7 +16,6 @@ file.
 """
 
 from .attributes import BaseAttribute, ModuleAttribute
-from .widgets.module_widgets import ModuleWidget
 from .curvedb import CurveDB
 from .pyrpl_utils import unique_list, DuplicateFilter
 
