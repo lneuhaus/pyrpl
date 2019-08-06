@@ -68,7 +68,7 @@ class OutputSignal(Signal):
                       'max_voltage',
                       'min_voltage']
     _setup_attributes = _gui_attributes + ['assisted_design', 'tf_curve',
-                                           'tf_type']
+                                           'tf_type', '_reset_offset_voltage']
     # main attributes
     dc_gain = FloatProperty(default=1.0, min=-1e10, max=1e10, call_setup=True)
     output_channel = SelectProperty(options=['out1', 'out2',
@@ -107,6 +107,10 @@ class OutputSignal(Signal):
                                 min=-1.0, max=1.0,
                                 call_setup=True,
                                 doc="negative saturation voltage")
+    _reset_offset_voltage = FloatProperty(default=0.0,
+                                          min=-1.0,
+                                          max=1.0,
+                                          doc="voltage to set when unlock(reset_offset=True) is called")
 
     def signal(self):
         return self.pid.name
@@ -165,7 +169,7 @@ class OutputSignal(Signal):
         self.pid.p = 0
         self.pid.i = 0
         if reset_offset:
-            self.pid.ival = 0
+            self.pid.ival = self._reset_offset_voltage
         self.current_state = 'unlock'
         # benefit from the occasion and do proper initialization
         self._setup_pid_output()
@@ -371,3 +375,8 @@ class PiezoOutput(OutputSignal):
                           options=lambda inst:
                           [u + "/V" for u in inst.lockbox._output_units],
                           call_setup=True)
+
+    _reset_offset_voltage = FloatProperty(default=-1.0,
+                                          min=-1.0,
+                                          max=1.0,
+                                          doc="voltage to set when unlock(reset_offset=True) is called")
