@@ -121,17 +121,14 @@ large an integrator gain will quickly saturate the outputs.
 """
 
 import time as time_module
+from time import sleep
 from .dsp import all_inputs, dsp_addr_base, InputSelectRegister
-from ..acquisition_module import AcquisitionModule
-from ..async_utils import MainThreadTimer, PyrplFuture, sleep
 from ..pyrpl_utils import sorted_dict
 from ..attributes import *
 from ..modules import HardwareModule
 from ..pyrpl_utils import time
-from ..widgets.module_widgets import ScopeWidget
 
 logger = logging.getLogger(name=__name__)
-
 data_length = 2**14
 
 
@@ -205,55 +202,11 @@ class SamplingTimeProperty(SelectProperty):
         instance.decimation = float(value) / 8e-9
 
 
-class ContinuousRollingFuture(PyrplFuture):
-    """
-    This Future object is the one controlling the acquisition in
-    rolling_mode. It will never be fullfilled (done), since rolling_mode
-    is always continuous, but the timer/slot mechanism to control the
-    rolling_mode acquisition is encapsulated in this object.
-    """
-    DELAY_ROLLING_MODE_MS = 20 #  update the display every 20 ms
-    current_avg = 1  # no averaging in rolling mode
-
-    def __init__(self, module):
-        super(ContinuousRollingFuture, self).__init__()
-        self._module = module
-        self._timer = MainThreadTimer(self.DELAY_ROLLING_MODE_MS)
-        self._timer.timeout.connect(self._get_rolling_curve)
-
-    def _get_rolling_curve(self):
-        if not self._module._is_rolling_mode_active():
-            return
-        if not self._module.running_state == "running_continuous":
-            return
-        data_x, datas = self._module._get_rolling_curve()
-        # no setup in rolling mode
-        self._module._emit_signal_by_name('display_curve', [data_x,
-                                                            datas])
-        self.data_avg = datas
-        self.data_x = data_x
-        self._timer.start()  # restart timer in rolling_mode
-
-    def start(self):
-        self._module._start_acquisition_rolling_mode()
-        # rolling_mode requires to disable the trigger
-        self._timer.start()
-
-    def pause(self):
-        self._timer.stop()
-
-    def _set_run_continuous(self):
-        """
-        Dummy function: ContinuousRollingFuture instance is always
-        "_run_continuous"
-        """
-        pass
 
 
-class Scope(HardwareModule, AcquisitionModule):
+class Scope(HardwareModule):
     addr_base = 0x40100000
     name = 'scope'
-    _widget_class = ScopeWidget
     # run = ModuleProperty(ScopeAcquisitionManager)
     _gui_attributes = ["input1",
                        "input2",
@@ -723,37 +676,6 @@ class Scope(HardwareModule, AcquisitionModule):
                 data = np.concatenate([[np.nan] * to_discard, data])
                 datas[index] = data
         return times, datas
-
-    # Custom behavior of AcquisitionModule methods for scope:
-    # -------------------------------------------------------
-
-    def save_curve(self):
-        """
-        Saves the curve(s) that is (are) currently displayed in the gui in
-        the db_system. Also, returns the list [curve_ch1, curve_ch2]...
-        """
-        d = self.setup_attributes
-        curves = [None, None]
-        for ch, active in [(0, self.ch1_active),
-                           (1, self.ch2_active)]:
-            if active:
-                d.update({'ch': ch,
-                          'name': self.curve_name + ' ch' + str(ch + 1)})
-                curves[ch] = self._save_curve(self._run_future.data_x,
-                                              self._run_future.data_avg[ch],
-                                              **d)
-        return curves
-
-    def _new_run_future(self):
-        # acquisition is done by a custom Future in rolling_mode to avoid
-        # averaging
-        if self._is_rolling_mode_active() and self.running_state == \
-                "running_continuous":
-            self._run_future.cancel()
-            self._run_future = ContinuousRollingFuture(self)
-        else:
-            super(Scope, self)._new_run_future()
-
 
     def raw_curve(self, timeout=None):
         """

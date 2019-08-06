@@ -74,8 +74,6 @@ class BaseProperty(BaseAttribute):
       wherever it is stored internally
 
     """
-    _widget_class = None
-    widget = None
     default = None
 
     def __init__(self,
@@ -151,9 +149,10 @@ class BaseProperty(BaseAttribute):
         Updates the widget and other subscribers with the module's value.
         """
         try:
-            module._signal_launcher.update_attribute_by_name.emit(
-                self.name,
-                [new_value]+appendix)
+            pass
+            #    module._signal_launcher.update_attribute_by_name.emit(
+            #    self.name,
+            #    [new_value]+appendix)
         except AttributeError as e:  # occurs if nothing is connected (TODO:
             # remove this)
             module._logger.error("Error in launch_signal of %s: %s",
@@ -164,18 +163,6 @@ class BaseProperty(BaseAttribute):
         Saves the module's value in the config file.
         """
         module.c[self.name] = value
-
-    def _create_widget(self, module, widget_name=None):
-        """
-        Creates a widget to graphically manipulate the attribute.
-        """
-        if self._widget_class is None:
-            logger.warning("Module %s of type %s is trying to create a widget "
-                           "for %s, but no _widget_class is defined!",
-                           str(module), type(module), self.name)
-            return None
-        widget = self._widget_class(module, self.name, widget_name=widget_name)
-        return widget
 
     def get_value(self, obj):
         if not hasattr(obj, '_' + self.name):
@@ -246,7 +233,6 @@ class BoolProperty(BaseProperty):
     """
     A property for a boolean value
     """
-    _widget_class = BoolAttributeWidget
     default = False
 
     def validate_and_normalize(self, obj, value):
@@ -257,8 +243,6 @@ class BoolProperty(BaseProperty):
 
 
 class LedProperty(BoolProperty):
-    _widget_class = LedAttributeWidget
-
     def __init__(self,
                  true_function = None,
                  false_function = None,
@@ -314,7 +298,6 @@ class BoolIgnoreProperty(BoolProperty):
     """
     An attribute for booleans
     """
-    _widget_class = BoolIgnoreAttributeWidget
     default = False
 
     def validate_and_normalize(self, obj, value):
@@ -374,7 +357,6 @@ class NumberProperty(BaseProperty):
     """
     Abstract class for ints and floats
     """
-    _widget_class = IntAttributeWidget
     default = 0
 
     def __init__(self,
@@ -388,11 +370,6 @@ class NumberProperty(BaseProperty):
         self.increment = increment
         self.log_increment = log_increment
         BaseProperty.__init__(self, **kwargs)
-
-    def _create_widget(self, module, widget_name=None):
-        widget = BaseProperty._create_widget(self, module,
-                                             widget_name=widget_name)
-        return widget
 
     def validate_and_normalize(self, obj, value):
         """
@@ -492,7 +469,6 @@ class FloatProperty(NumberProperty):
     """
     An attribute for a float value.
     """
-    _widget_class = FloatAttributeWidget
     default = 0.0
 
     def validate_and_normalize(self, obj, value):
@@ -505,7 +481,6 @@ class FloatProperty(NumberProperty):
 
 
 class ComplexProperty(FloatProperty):
-    _widget_class = ComplexAttributeWidget
     def validate_and_normalize(self, obj, val):
         val = complex(val)
         re = super(ComplexProperty, self).validate_and_normalize(obj, val.real)
@@ -712,8 +687,6 @@ class FilterProperty(BaseProperty):
     The number of elements in the list are also defined at runtime.
     A property for a list of float values to be chosen in valid_frequencies(module).
     """
-    _widget_class = FilterAttributeWidget
-
     def validate_and_normalize(self, obj, value):
         """
         Returns a list with the closest elements in module.valid_frequencies
@@ -749,8 +722,6 @@ class FilterRegister(BaseRegister, FilterProperty):
     """
     Interface for up to 4 low-/highpass filters in series (filter_block.v)
     """
-    _widget_class = FilterAttributeWidget
-
     def __init__(self, address, filterstages, shiftbits, minbw, **kwargs):
         self.filterstages = filterstages
         self.shiftbits = shiftbits
@@ -994,7 +965,6 @@ class BasePropertyListProperty(BaseProperty):
     will behave as a list of FloatProperty-like items.
     """
     default = []
-    _widget_class = BasePropertyListPropertyWidget
 
     def __init__(self, *args, **kwargs):
         """
@@ -1102,7 +1072,6 @@ class StringProperty(BaseProperty):
     """
     An attribute for string (there is no corresponding StringRegister).
     """
-    _widget_class = StringAttributeWidget
     default = ""
 
     def validate_and_normalize(self, obj, value):
@@ -1116,7 +1085,6 @@ class TextProperty(StringProperty):
     """
     Same as StringProperty, but the gui displays it as multi-line text.
     """
-    _widget_class = TextAttributeWidget
 
 
 class SelectProperty(BaseProperty):
@@ -1130,7 +1098,6 @@ class SelectProperty(BaseProperty):
     later on a per-module basis using change_options(new_options). If
     options are callable, they are evaluated every time they are needed.
     """
-    _widget_class = SelectAttributeWidget
     default = None
 
     def __init__(self,
@@ -1426,32 +1393,6 @@ class ProxyProperty(BaseProperty):
             # remember that we are now connected
             setattr(instance, '_' + self.name + '_connected', True)
 
-    def _create_widget(self, module, widget_name=None, **kwargs):
-        target_module = recursive_getattr(module, self.path_to_target_module)
-        target_descriptor = recursive_getattr(module, self.path_to_target_descriptor)
-        if widget_name is None:
-            widget_name = self.name
-        #return recursive_getattr(module,
-        #                         self.path_to_target_descriptor +
-        #                         '._create_widget')(target_module,
-        #                                            widget_name=widget_name,
-        #                                            **kwargs)
-        self._widget_class = recursive_getattr(module,
-                                 self.path_to_target_descriptor +
-                                 '._widget_class')
-        try:  # try to make a widget for proxy
-            return recursive_getattr(module,
-                                 self.path_to_target_descriptor +
-                                 '.__class__._create_widget')(self, module,
-                                                    #widget_name=widget_name,
-                                                    **kwargs)
-        except:  # make a renamed widget for target
-            return recursive_getattr(module,
-                                     self.path_to_target_descriptor +
-                                     '.__class__._create_widget')(target_descriptor, target_module,
-                                                                  widget_name=widget_name,
-                                                                  **kwargs)
-
 
 class ModuleAttribute(BaseProperty):
     """
@@ -1509,12 +1450,10 @@ class CurveProperty(CurveSelectProperty):
     Unfortunately, the widget does not allow to select the curve,
     i.e. selection must be implemented with another CurveSelectProperty.
     """
-    _widget_class = CurveAttributeWidget
 
 
 class CurveSelectListProperty(CurveSelectProperty):
     """ same as above, but widget is a list to select from """
-    _widget_class = CurveSelectAttributeWidget
 
 
 class Plotter(BaseProperty):
@@ -1523,7 +1462,6 @@ class Plotter(BaseProperty):
     passing a value, list of values, or a dict of color-value pairs
     results in plotting the values as a function of time in the GUI
     """
-    _widget_class = PlotAttributeWidget
     def __init__(self, legend="value"):
         self.legend = legend
         super(Plotter, self).__init__()
@@ -1533,4 +1471,3 @@ class DataProperty(BaseProperty):
     """
     Property for a dataset (real or complex), that can be plotted.
     """
-    _widget_class = DataAttributeWidget

@@ -4,15 +4,9 @@ from ...attributes import IntRegister, BoolRegister, ComplexProperty, \
     FloatProperty, StringProperty, CurveSelectProperty, \
     GainRegister, ConstantIntRegister, FloatAttributeListProperty, \
     ComplexAttributeListProperty, BoolProperty
-from ...widgets.module_widgets import IirWidget
-from ...modules import SignalLauncher
 
 import numpy as np
 from qtpy import QtCore
-
-
-class SignalLauncherIir(SignalLauncher):
-    update_plot = QtCore.Signal()
 
 
 class OverflowProperty(StringProperty):
@@ -171,7 +165,6 @@ class IirComplexListProperty(IirFloatListProperty,
 
 
 class IIR(FilterModule):
-    _signal_launcher = SignalLauncherIir
     iirfilter = None  # will be set by setup()
     _minloops = 5  # minimum number of loops for correct behaviour
     _maxloops = 1023
@@ -526,7 +519,6 @@ class IIR(FilterModule):
             else:
                 self._logger.debug("IIR Overflow pattern: %s",
                                    bin(self.overflow_bitfield))
-            self._signal_launcher.update_plot.emit()
             # update curve name
             try: self.data_curve_name = self._data_curve_object.name
             except AttributeError: pass

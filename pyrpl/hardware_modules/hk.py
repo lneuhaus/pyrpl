@@ -1,6 +1,5 @@
 from ..attributes import IntRegister, SelectRegister, IORegister, BoolProperty
 from ..modules import HardwareModule
-from ..widgets.module_widgets.hk_widget import HkWidget
 import numpy as np
 
 
@@ -13,7 +12,6 @@ class ExpansionDirection(BoolProperty):
 
 
 class HK(HardwareModule):
-    _widget_class = HkWidget
 
     _setup_attributes = ["led"] + \
                         ['expansion_P' + str(i) for i in range(8)] + \

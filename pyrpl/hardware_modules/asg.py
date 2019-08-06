@@ -24,7 +24,6 @@ from collections import OrderedDict
 from ..attributes import BoolRegister, FloatRegister, SelectRegister, SelectProperty, \
                              IntRegister, LongRegister, PhaseRegister, FrequencyRegister, FloatProperty
 from ..modules import HardwareModule, SignalModule
-from ..widgets.module_widgets import AsgWidget
 from . import all_output_directs, dsp_addr_base
 
 
@@ -129,7 +128,6 @@ def make_asg(channel=0):
         set_default_output_direct = 'off'
 
     class Asg(HardwareModule, SignalModule):
-        _widget_class = AsgWidget
         _gui_attributes = ["waveform",
                            "amplitude",
                            "offset",

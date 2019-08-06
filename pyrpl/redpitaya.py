@@ -22,7 +22,6 @@ from .sshshell import SshShell
 from .pyrpl_utils import get_unique_name_list_from_class_list, update_with_typeconversion
 from .memory import MemoryTree
 from .errors import ExpectedPyrplError
-from .widgets.startup_widget import HostnameSelectorWidget
 
 import logging
 import os
@@ -146,29 +145,21 @@ class RedPitaya(object):
         update_with_typeconversion(self.parameters, kwargs)
         # get missing connection settings from gui/command line
         if self.parameters['hostname'] is None or self.parameters['hostname']=='':
-            gui = 'gui' not in self.c.redpitaya._keys() or self.c.redpitaya.gui
-            if gui:
-                self.logger.info("Please choose the hostname of "
-                                 "your Red Pitaya in the hostname "
-                                 "selector window!")
-                startup_widget = HostnameSelectorWidget(config=self.parameters)
-                hostname_kwds = startup_widget.get_kwds()
-            else:
-                hostname = raw_input('Enter hostname [192.168.1.100]: ')
-                hostname = '192.168.1.100' if hostname == '' else hostname
-                hostname_kwds = dict(hostname=hostname)
-                if not "sshport" in kwargs:
-                    sshport = raw_input('Enter sshport [22]: ')
-                    sshport = 22 if sshport == '' else int(sshport)
-                    hostname_kwds['sshport'] = sshport
-                if not 'user' in kwargs:
-                    user = raw_input('Enter username [root]: ')
-                    user = 'root' if user == '' else user
-                    hostname_kwds['user'] = user
-                if not 'password' in kwargs:
-                    password = raw_input('Enter password [root]: ')
-                    password = 'root' if password == '' else password
-                    hostname_kwds['password'] = password
+            hostname = raw_input('Enter hostname [192.168.1.100]: ')
+            hostname = '192.168.1.100' if hostname == '' else hostname
+            hostname_kwds = dict(hostname=hostname)
+            if not "sshport" in kwargs:
+                sshport = raw_input('Enter sshport [22]: ')
+                sshport = 22 if sshport == '' else int(sshport)
+                hostname_kwds['sshport'] = sshport
+            if not 'user' in kwargs:
+                user = raw_input('Enter username [root]: ')
+                user = 'root' if user == '' else user
+                hostname_kwds['user'] = user
+            if not 'password' in kwargs:
+                password = raw_input('Enter password [root]: ')
+                password = 'root' if password == '' else password
+                hostname_kwds['password'] = password
             self.parameters.update(hostname_kwds)
 
         # optional: write configuration back to config file

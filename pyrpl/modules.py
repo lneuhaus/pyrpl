@@ -29,55 +29,6 @@ from collections import OrderedDict
 from qtpy import QtCore
 
 
-class SignalLauncher(QtCore.QObject):
-    """
-    Object that is used to handle signal the emission for a :obj:`Module`.
-
-    A QObject that is connected to the widgets to update their value when
-    attributes of a module change. Any timers needed to implement the module
-    functionality shoud be implemented here as well.
-    """
-    update_attribute_by_name = QtCore.Signal(str, list)
-    # The name of the property that has changed, the list is [new_value],
-    # the new_value of the attribute
-    change_options = QtCore.Signal(str, list) # name of the
-    # SelectProperty,  list of new options
-    refresh_filter_options = QtCore.Signal(str) # name of the
-    # FilterProperty,  new options are contained in self.valid_frequencies()
-    change_ownership = QtCore.Signal() # The owner of the module  has
-    # changed
-
-    def __init__(self, module):
-        super(SignalLauncher, self).__init__()
-        self.module = module
-
-    def emit_signal_by_name(self, name, *args, **kwds):
-        """Emits signal "name" with the specfified args and kwds."""
-        signal = getattr(self, name)
-        signal.emit(*args, **kwds)
-
-    def connect_widget(self, widget):
-        """
-        Establishes all connections between the module and the widget by name.
-        """
-        #self.update_attribute_by_name.connect(widget.update_attribute_by_name)
-        for key in dir(self.__class__):
-            val = getattr(self, key)
-            if isinstance(val, QtCore.pyqtBoundSignal) and hasattr(widget,
-                                                                   key):
-                val.connect(getattr(widget, key))
-
-    def _clear(self):
-        """ Destroys the object by disconnecting all signals and by killing all timers"""
-        for key in dir(self.__class__):
-            val = getattr(self, key)
-            if isinstance(val, QtCore.pyqtBoundSignal):
-                try:
-                    val.disconnect()
-                except TypeError:  # occurs if signal is not connected to anything
-                    pass
-
-
 class ModuleMetaClass(type):
     """
     Generate Module classes with two features:
@@ -323,14 +274,6 @@ class Module(with_metaclass(ModuleMetaClass, object)):
     - _ownership_changed(old, new): this function is called when the module
       owner changes it can be used to stop the acquisition for instance.
     """
-
-    # Change this to provide a custom graphical class
-    _widget_class = ModuleWidget
-
-    # the class for the SignalLauncher to be used
-    # a QOBject used to communicate with the widget
-    _signal_launcher = SignalLauncher
-
     # attributes listed here will be saved in the config file everytime they
     # are updated.
     _setup_attributes = []
@@ -366,9 +309,6 @@ class Module(with_metaclass(ModuleMetaClass, object)):
         # __autosave_active, but this gets automatically name mangled:
         # see http://stackoverflow.com/questions/1301346/what-is-the-meaning-of-a-single-and-a-double-underscore-before-an-object-name
         self._logger = logging.getLogger(name=__name__)
-        self._logger.addFilter(DuplicateFilter())
-        # create the signal launcher object from its class
-        self._signal_launcher = self._signal_launcher(self)
         self.parent = parent
         # disable autosave during initialization
         self._autosave_active = False
@@ -418,27 +358,6 @@ class Module(with_metaclass(ModuleMetaClass, object)):
     def _modules(self):
         return dict([(key, getattr(self, key)) for key in
                      self._module_attributes])
-
-    @property
-    def pyrpl(self):
-        """
-        Recursively looks through patent modules untill pyrpl instance is
-        reached.
-        """
-        from .pyrpl import Pyrpl
-        parent = self.parent
-        passedparents = set()
-        while (not isinstance(parent, Pyrpl)):
-            # remember the parents that were tried before to avoid circles
-            passedparents.add(parent)
-            # go up in hierarchy
-            parent = parent.parent
-            # check if this parent has occured before in order to avoid an infinite loop
-            if parent in passedparents:
-                raise ExpectedPyrplError("Unable to find a pyrpl instance "
-                                         "that is parent of the module %s.",
-                                         self.name)
-        return parent
 
     def get_setup_attributes(self):
         """

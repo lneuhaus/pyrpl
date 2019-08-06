@@ -42,19 +42,12 @@ requirements = ['scp',
                 'pyyaml',
                 #'ruamel.yaml' # temporarily disabled
                 'pandas',
-                'pyqtgraph',
                 'numpy>=1.9',
                 'paramiko>=2.0',
                 'nose>=1.0',
-                #'PyQt5',  # cannot be installed with pip
-                'qtpy',
                 'nbconvert',
                 'jupyter-client',
                 'netifaces']
-if sys.version_info >= (3,4):  # python version dependencies
-    requirements += ['quamash']
-else:  # python 2.7
-    requirements += ['futures', 'mock']  # mock is now a full dependency
 if os.environ.get('TRAVIS') == 'true':
     requirements += ['pandoc']
 if os.environ.get('READTHEDOCS') == 'True':
