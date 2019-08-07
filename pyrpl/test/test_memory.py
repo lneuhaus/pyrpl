@@ -3,7 +3,7 @@ logger = logging.getLogger(name=__name__)
 import os
 from ..memory import MemoryTree, MemoryBranch
 from .. import *
-from ..async_utils import sleep
+from time import sleep
 
 class TestMemory(object):
     @classmethod
@@ -108,7 +108,7 @@ class TestMemory(object):
         assert m2.a == 1, m2.a
         sleep(T1+0.05)  # some extra time is needed for overhead
         # now changes should have been written to file
-        assert not m1._savetimer.isActive(), m1._savetimer.interval()
+        assert m1._savetimer is None
         assert m1._write_to_file_counter == old_save_to_file + 1, \
             m1._save_counter
         # but m2 will only attempt to reload once m2._loadsavedeadtime has elapsed
@@ -154,7 +154,7 @@ class TestMemory(object):
         assert m1.a == 2
         assert m1._write_to_file_counter == 6
         assert m2.a == 2, m2.a
-        assert not m1._savetimer.isActive(), m1._savetimer.interval()
+        assert m1._savetimer is None
         assert m1._write_to_file_counter == 6, m1._save_counter
         assert m2.a == 2
         assert m1._write_to_file_counter == 6
