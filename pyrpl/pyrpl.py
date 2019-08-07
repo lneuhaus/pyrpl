@@ -185,11 +185,11 @@ default_pyrpl_config = {'name': 'default_pyrpl_instance',
                         # 'CCCCEE',  # blueish
                         # 'EECCCC', # reddish
                         # 'CCEECC', # greenish
-                        'modules': ['NetworkAnalyzer',
-                                    'SpectrumAnalyzer',
+                        'modules': [#'NetworkAnalyzer',
+                                    #'SpectrumAnalyzer',
                                     'CurveViewer',
                                     'PyrplConfig',
-                                    'Lockbox'
+                                    #'Lockbox'
                                     ]}
 
 help_message = """
@@ -368,7 +368,8 @@ class Pyrpl(object):
         """
         self.software_modules = []
         # software modules are Managers for various modules plus those defined in the config file
-        soft_mod_names = ['Asgs', 'Iqs', 'Pids', 'Scopes', #'Iirs',
+        soft_mod_names = ['Asgs', #'Iqs',
+                          'Pids', 'Scopes', #'Iirs',
                           'Trigs', 'Hks'] + self.c.pyrpl.modules
         module_classes = [get_module(cls_name)
                           for cls_name in soft_mod_names]

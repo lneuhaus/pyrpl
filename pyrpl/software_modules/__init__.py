@@ -1,5 +1,8 @@
 from ..modules import Module
-from .module_managers import Asgs, Iqs, Pids, Scopes  #, Iirs
+from .module_managers import Asgs, \
+    Pids, \
+    Scopes, \
+    Iqs
 from .network_analyzer import NetworkAnalyzer
 from .spectrum_analyzer import SpectrumAnalyzer
 from .pyrpl_config import PyrplConfig

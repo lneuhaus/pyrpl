@@ -3,6 +3,7 @@ from ..attributes import *
 from ..modules import Module
 import numpy as np
 
+
 class SoftwarePidLoop(PlotLoop):
     @property
     def input(self):
