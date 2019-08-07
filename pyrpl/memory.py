@@ -491,7 +491,6 @@ class MemoryTree(MemoryBranch):
         # Exceptions upon save
 
     def __init__(self, filename=None, source=None, _loadsavedeadtime=3.0):
-        self._file_lock = threading.Lock()  # threadlock to access the file
         # never reload or save more frequently than _loadsavedeadtime because
         # this is the principal cause of slowing down the code (typ. 30-200 ms)
         # for immediate saving, call _save_now, for immediate loading _load_now
@@ -502,6 +501,7 @@ class MemoryTree(MemoryBranch):
             # to simulate a config file, only store data in memory
             self._filename = filename
             self._data = OrderedDict()
+        self._file_lock = threading.Lock()  # threadlock to access the file
         self._lastsave = time()
         self._load()
         # create a timer to postpone to frequent savings
