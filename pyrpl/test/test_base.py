@@ -57,20 +57,11 @@ class TestPyrpl(object):
         print("\n=======SETTING UP %s=============" % cls.__name__, flush=True)
         # these tests will not succeed without the hardware
         cls.erase_temp_file()  # also before (for instance in case of Ctrl-C)
-        cls.pyrpl = Pyrpl(config=cls.tmp_config_file,
+        cls.r = Pyrpl(config=cls.tmp_config_file,
                           source=cls.source_config_file)
         # self.pyrpl.create_widget() # create a second widget to be sure
         cls.r = cls.pyrpl.rp
         cls.estimate_read_write_time()
-
-        async_sleep(0.1)  # give some time for events to get processed
-        # open all dockwidgets if this is enabled
-        if cls.OPEN_ALL_DOCKWIDGETS:
-            for name, dock_widget in cls.pyrpl.widgets[0].dock_widgets.items():
-                print("Showing widget %s..." % name)
-                dock_widget.setVisible(True)
-            async_sleep(3.0) # give some time for startup
-        APP.processEvents()
 
     @classmethod
     def tearDownAll(cls):
@@ -80,10 +71,7 @@ class TestPyrpl(object):
             while len(cls.curves) > 0:
                 cls.curves.pop().delete()
         # shut down Pyrpl
-        cls.pyrpl._clear()
-        APP.processEvents()  # give some time for events to get processed
         cls.erase_temp_file()  # delete the configfile
-        APP.processEvents()
 
 
 # only one test class per file is allowed due to conflicts with

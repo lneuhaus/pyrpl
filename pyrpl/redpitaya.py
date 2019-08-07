@@ -79,7 +79,8 @@ class RedPitaya(object):
                    # + [ rp.IIR]
                    )
 
-    def __init__(self, config=None,  # configfile is needed to store parameters. None simulates one
+    def __init__(self,
+                 config=None,  # configfile is needed to store parameters. None simulates one
                  **kwargs):
         """ this class provides the basic interface to the redpitaya board
 
