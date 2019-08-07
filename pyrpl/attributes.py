@@ -699,8 +699,8 @@ class FilterProperty(BaseProperty):
                                   "must implement the following function")
 
     def refresh_options(self, module):
-        module._signal_launcher.refresh_filter_options.emit(self.name)
-
+        #module._signal_launcher.refresh_filter_options.emit(self.name)
+        pass
 
 class FilterRegister(BaseRegister, FilterProperty):
     """
@@ -1157,8 +1157,8 @@ class SelectProperty(BaseProperty):
                 setattr(instance, '_' + self.name + '_lastoptions', options)
                 # save the keys for the user convenience
                 setattr(instance, self.name + '_options', list(options.keys()))
-                instance._signal_launcher.change_options.emit(self.name,
-                                                              list(options))
+                #instance._signal_launcher.change_options.emit(self.name,
+                #                                              list(options))
         # return the actual options
         return options
 

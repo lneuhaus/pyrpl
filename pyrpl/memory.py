@@ -21,7 +21,7 @@ from collections import OrderedDict
 from shutil import copyfile
 import numpy as np
 import time
-from qtpy import QtCore
+import threading
 from . import default_config_dir, user_config_dir
 from .pyrpl_utils import time
 
@@ -491,6 +491,7 @@ class MemoryTree(MemoryBranch):
         # Exceptions upon save
 
     def __init__(self, filename=None, source=None, _loadsavedeadtime=3.0):
+        self._file_lock = threading.Lock()  # threadlock to access the file
         # never reload or save more frequently than _loadsavedeadtime because
         # this is the principal cause of slowing down the code (typ. 30-200 ms)
         # for immediate saving, call _save_now, for immediate loading _load_now
@@ -502,13 +503,9 @@ class MemoryTree(MemoryBranch):
             self._filename = filename
             self._data = OrderedDict()
         self._lastsave = time()
-        # create a timer to postpone to frequent savings
-        self._savetimer = QtCore.QTimer()
-        self._savetimer.setInterval(self._loadsavedeadtime*1000)
-        self._savetimer.setSingleShot(True)
-        self._savetimer.timeout.connect(self._write_to_file)
         self._load()
-
+        # create a timer to postpone to frequent savings
+        self._savetimer = None
         self._save_counter = 0 # cntr for unittest and debug purposes
         self._write_to_file_counter = 0  # cntr for unittest and debug purposes
 
@@ -528,8 +525,9 @@ class MemoryTree(MemoryBranch):
             return
         logger.debug("Loading config file %s", self._filename)
         # read file from disc
-        with open(self._filename) as f:
-            self._data = load(f)
+        with self._file_lock:
+            with open(self._filename) as f:
+                self._data = load(f)
         # store the modification time of this file version
         self._mtime = os.path.getmtime(self._filename)
         # make sure that reload timeout starts from this moment
@@ -572,8 +570,12 @@ class MemoryTree(MemoryBranch):
         Immmediately writes the content of the memory tree to file
         """
         # stop save timer
-        if hasattr(self, '_savetimer') and self._savetimer.isActive():
-            self._savetimer.stop()
+        if self._savetimer:
+            try:
+                self._savetimer.cancel()
+            except:
+                pass
+            self._savetimer = None
         self._lastsave = time()
         self._write_to_file_counter += 1
         logger.debug("Saving config file %s", self._filename)
@@ -585,24 +587,25 @@ class MemoryTree(MemoryBranch):
                 logger.warning("Config file has recently been changed on your " +
                                "harddisk. These changes might have been " +
                                "overwritten now.")
-            # we must be sure that overwriting config file never destroys existing data.
-            # security 1: backup with copyfile above
-            copyfile(self._filename,
-                     self._filename + ".bak")  # maybe this line is obsolete (see below)
-            # security 2: atomic writing such as shown in
-            # http://stackoverflow.com/questions/2333872/atomic-writing-to-file-with-python:
-            try:
-                f = open(self._buffer_filename, mode='w')
-                save(self._data, stream=f)
-                f.flush()
-                os.fsync(f.fileno())
-                f.close()
-                os.unlink(self._filename)
-                os.rename(self._buffer_filename, self._filename)
-            except:
-                copyfile(self._filename + ".bak", self._filename)
-                logger.error("Error writing to file. Backup version was restored.")
-                raise
+            with self._file_lock:
+                # we must be sure that overwriting config file never destroys existing data.
+                # security 1: backup with copyfile above
+                copyfile(self._filename,
+                         self._filename + ".bak")  # maybe this line is obsolete (see below)
+                # security 2: atomic writing such as shown in
+                # http://stackoverflow.com/questions/2333872/atomic-writing-to-file-with-python:
+                try:
+                    f = open(self._buffer_filename, mode='w')
+                    save(self._data, stream=f)
+                    f.flush()
+                    os.fsync(f.fileno())
+                    f.close()
+                    os.unlink(self._filename)
+                    os.rename(self._buffer_filename, self._filename)
+                except:
+                    copyfile(self._filename + ".bak", self._filename)
+                    logger.error("Error writing to file. Backup version was restored.")
+                    raise
             # save last modification time of the file
             self._mtime = os.path.getmtime(self._filename)
 
@@ -627,7 +630,8 @@ class MemoryTree(MemoryBranch):
             self._write_to_file()
         else:
             # make sure saving will eventually occur by launching a timer
-            if not self._savetimer.isActive():
+            if not self._savetimer:
+                self._savetimer = threading.Timer(self._loadsavedeadtime, self._write_to_file)
                 self._savetimer.start()
 
     @property

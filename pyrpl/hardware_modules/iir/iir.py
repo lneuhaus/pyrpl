@@ -187,8 +187,6 @@ class IIR(FilterModule):
 
     _IIRSTAGES = ConstantIntRegister(0x208)
 
-    _widget_class = IirWidget
-
     _setup_attributes = ["input",
                          "loops",
                          "zeros",

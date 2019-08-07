@@ -224,18 +224,10 @@ class Scope(HardwareModule):
                        "math_formula",
                        "xy_mode"]
     # running_state last for proper acquisition setup
-    _setup_attributes = _gui_attributes + ["rolling_mode", "running_state"]
+    _setup_attributes = _gui_attributes
     # changing these resets the acquisition and autoscale (calls setup())
 
     data_length = data_length  # to use it in a list comprehension
-
-    rolling_mode = BoolProperty(default=True,
-                                doc="In rolling mode, the curve is "
-                                    "continuously acquired and "
-                                    "translated from the right to the "
-                                    "left of the screen while new "
-                                    "data arrive.",
-                                call_setup=True)
 
     @property
     def inputs(self):
@@ -340,14 +332,6 @@ class Scope(HardwareModule):
         self._logger.warning('The scope attribute "hysteresis_chx" is deprecated. '
                              'Please use "hysteresis" instead!')
         self.hysteresis = v
-    #threshold_ch1 = FloatRegister(0x8, bits=14, norm=2 ** 13,
-    #                              doc="ch1 trigger threshold [volts]")
-    #threshold_ch2 = FloatRegister(0xC, bits=14, norm=2 ** 13,
-    #                              doc="ch1 trigger threshold [volts]")
-    #hysteresis_ch1 = FloatRegister(0x20, bits=14, norm=2 ** 13,
-    #                               doc="hysteresis for ch1 trigger [volts]")
-    #hysteresis_ch2 = FloatRegister(0x24, bits=14, norm=2 ** 13,
-    #                               doc="hysteresis for ch2 trigger [volts]")
 
     _trigger_delay_register = IntRegister(0x10,
                                  doc="number of decimated data after trigger "

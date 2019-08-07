@@ -53,4 +53,3 @@ from .hardware_modules import *
 from .attributes import *
 from .modules import *
 from .curvedb import *
-from .pyrpl import *
