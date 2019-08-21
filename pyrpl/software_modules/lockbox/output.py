@@ -184,6 +184,7 @@ class OutputSignal(Signal):
                                trigger_source='immediately',
                                cycles_per_burst=0)
         self.pid.setpoint = 0.
+        self.pid.ival = 0
         self.pid.p = 1.
         self.current_state = 'sweep'
 
