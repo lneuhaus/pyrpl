@@ -24,7 +24,6 @@ class AMS(HardwareModule):
     # experimentally found there was a discrepancy of 0.5 (maybe different resistors)
     _xadc_norm *= 0.5
 
-
     vadc0 = FloatRegister(0x0, bits=12, norm=_xadc_norm, signed=True,
                           doc="slow analog in voltage 0 (V)")
     vadc1 = FloatRegister(0x4, bits=12, norm=_xadc_norm, signed=True,
@@ -42,6 +41,18 @@ class AMS(HardwareModule):
         x = np.array(self._reads(0x0, 4), dtype=np.float)
         x[x >= 2 ** 11] -= 2 ** 12
         return x * (1.0 / self._xadc_norm)
+
+    def vadcs_n(self, n):
+        """
+        Returns n arrays of all four XADC voltages.
+        """
+        return np.array([self.vadcs for i in range(n)])
+
+    def vadcs_mean(self, n):
+        """
+        Returns the mean of n arrays of all four XADC voltages.
+        """
+        return np.mean(self.vadcs_n(n), axis=0)
 
     vsupply = FloatRegister(0x10, bits=12, norm=2 ** 12 * 4.99 / 60.99, signed=False,
                           doc="USB power supply voltage (5V) monitor")
