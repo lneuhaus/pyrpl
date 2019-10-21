@@ -188,7 +188,7 @@ class PyrplClient(object):
     def try_n_times(self, function, addr, value, n=5):
         for i in range(n):
             try:
-                value = function(addr, value)
+                return_value = function(addr, value)
             except (socket.timeout, socket.error):
                 self.logger.exception("Error occured in reading attempt %s. "
                                       "Reconnecting at addr %s to %s value %s by "
@@ -200,8 +200,8 @@ class PyrplClient(object):
                                          self.client_number))
                 self.restart()
             else:
-                if value is not None:
-                    return value
+                if return_value is not None:
+                    return return_value
 
     def restart(self):
         self.close()
