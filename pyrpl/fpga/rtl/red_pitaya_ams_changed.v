@@ -68,6 +68,41 @@ module red_pitaya_ams (
 );
 
 
+// bridge between ADC and sys clock
+
+wire  [ 32-1: 0] addr         ;
+wire  [ 32-1: 0] wdata        ;
+wire             wen          ;
+wire             ren          ;
+reg   [ 32-1: 0] rdata        ;
+reg              err          ;
+reg              ack          ;
+
+bus_clk_bridge i_bridge
+(
+   .sys_clk_i     (  clk_i      ),
+   .sys_rstn_i    (  rstn_i     ),
+   .sys_addr_i    (  sys_addr     ),
+   .sys_wdata_i   (  sys_wdata    ),
+   .sys_sel_i     (  sys_sel      ),
+   .sys_wen_i     (  sys_wen      ),
+   .sys_ren_i     (  sys_ren      ),
+   .sys_rdata_o   (  sys_rdata    ),
+   .sys_err_o     (  sys_err      ),
+   .sys_ack_o     (  sys_ack      ),
+
+   .clk_i         (  clk_i          ),
+   .rstn_i        (  rstn_i         ),
+   .addr_o        (  addr           ),
+   .wdata_o       (  wdata          ),
+   .wen_o         (  wen            ),
+   .ren_o         (  ren            ),
+   .rdata_i       (  rdata          ),
+   .err_i         (  err            ),
+   .ack_i         (  ack            )
+);
+
+
 // XADC registers
 reg   [ 12-1: 0] adc_a_r      ;
 reg   [ 12-1: 0] adc_b_r      ;
@@ -89,10 +124,6 @@ reg   [ 12-1: 0] adc_ddr_r    ;
 //
 //  System bus connection
 
-wire sys_en;
-assign sys_en = sys_wen | sys_ren;
-
-
 always @(posedge clk_i)
 if (rstn_i == 1'b0) begin
    dac_a_o     <= 24'h000000 ;
@@ -102,45 +133,41 @@ if (rstn_i == 1'b0) begin
 end else begin
    dac_a_o <= cfg;
    dac_b_o <= cfg_b;
-   if (sys_wen) begin
-      // if (sys_addr[19:0]==16'h20)   dac_a_o <= sys_wdata[24-1: 0] ;
-      // if (sys_addr[19:0]==16'h24)   dac_b_o <= sys_wdata[24-1: 0] ;
-      if (sys_addr[19:0]==16'h28)   dac_c_o <= sys_wdata[24-1: 0] ;
-      if (sys_addr[19:0]==16'h2C)   dac_d_o <= sys_wdata[24-1: 0] ;
+   if (wen) begin
+      // if (addr[19:0]==16'h20)   dac_a_o <= sys_wdata[24-1: 0] ;
+      // if (addr[19:0]==16'h24)   dac_b_o <= sys_wdata[24-1: 0] ;
+      if (addr[19:0]==16'h28)   dac_c_o <= wdata[24-1: 0] ;
+      if (addr[19:0]==16'h2C)   dac_d_o <= wdata[24-1: 0] ;
    end
 end
 
 wire sys_en;
 assign sys_en = sys_wen | sys_ren;
 
-always @(posedge clk_i)
-if (rstn_i == 1'b0) begin
-   sys_err <= 1'b0 ;
-   sys_ack <= 1'b0 ;
-end else begin
-   sys_err <= 1'b0 ;
-   casez (sys_addr[19:0])
+always @(posedge clk_i) begin
+   err <= 1'b0 ;
+   casez (addr[19:0])
      // PWM ports
-     20'h00020 : begin sys_ack <= sys_en;         sys_rdata <= {{32-24{1'b0}}, dac_a_o}          ; end
-     20'h00024 : begin sys_ack <= sys_en;         sys_rdata <= {{32-24{1'b0}}, dac_b_o}          ; end
-     20'h00028 : begin sys_ack <= sys_en;         sys_rdata <= {{32-24{1'b0}}, dac_c_o}          ; end
-     20'h0002C : begin sys_ack <= sys_en;         sys_rdata <= {{32-24{1'b0}}, dac_d_o}          ; end
+     20'h00020 : begin ack <= 1'b1;         rdata <= {{32-24{1'b0}}, dac_a_o}          ; end
+     20'h00024 : begin ack <= 1'b1;         rdata <= {{32-24{1'b0}}, dac_b_o}          ; end
+     20'h00028 : begin ack <= 1'b1;         rdata <= {{32-24{1'b0}}, dac_c_o}          ; end
+     20'h0002C : begin ack <= 1'b1;         rdata <= {{32-24{1'b0}}, dac_d_o}          ; end
 
      // XADC ports
-     20'h00000 : begin sys_ack <= sys_en;         sys_rdata <= {{32-12{1'b0}}, adc_a_r}          ; end
-     20'h00004 : begin sys_ack <= sys_en;         sys_rdata <= {{32-12{1'b0}}, adc_b_r}          ; end
-     20'h00008 : begin sys_ack <= sys_en;         sys_rdata <= {{32-12{1'b0}}, adc_c_r}          ; end
-     20'h0000C : begin sys_ack <= sys_en;         sys_rdata <= {{32-12{1'b0}}, adc_d_r}          ; end
-     20'h00010 : begin sys_ack <= sys_en;         sys_rdata <= {{32-12{1'b0}}, adc_v_r}          ; end
-     20'h00030 : begin sys_ack <= sys_en;         sys_rdata <= {{32-12{1'b0}}, adc_temp_r}       ; end
-     20'h00034 : begin sys_ack <= sys_en;         sys_rdata <= {{32-12{1'b0}}, adc_pint_r}       ; end
-     20'h00038 : begin sys_ack <= sys_en;         sys_rdata <= {{32-12{1'b0}}, adc_paux_r}       ; end
-     20'h0003C : begin sys_ack <= sys_en;         sys_rdata <= {{32-12{1'b0}}, adc_bram_r}       ; end
-     20'h00040 : begin sys_ack <= sys_en;         sys_rdata <= {{32-12{1'b0}}, adc_int_r}        ; end
-     20'h00044 : begin sys_ack <= sys_en;         sys_rdata <= {{32-12{1'b0}}, adc_aux_r}        ; end
-     20'h00048 : begin sys_ack <= sys_en;         sys_rdata <= {{32-12{1'b0}}, adc_ddr_r}        ; end
+     20'h00000 : begin ack <= 1'b1;         rdata <= {{32-12{1'b0}}, adc_a_r}          ; end
+     20'h00004 : begin ack <= 1'b1;         rdata <= {{32-12{1'b0}}, adc_b_r}          ; end
+     20'h00008 : begin ack <= 1'b1;         rdata <= {{32-12{1'b0}}, adc_c_r}          ; end
+     20'h0000C : begin ack <= 1'b1;         rdata <= {{32-12{1'b0}}, adc_d_r}          ; end
+     20'h00010 : begin ack <= 1'b1;         rdata <= {{32-12{1'b0}}, adc_v_r}          ; end
+     20'h00030 : begin ack <= 1'b1;         rdata <= {{32-12{1'b0}}, adc_temp_r}       ; end
+     20'h00034 : begin ack <= 1'b1;         rdata <= {{32-12{1'b0}}, adc_pint_r}       ; end
+     20'h00038 : begin ack <= 1'b1;         rdata <= {{32-12{1'b0}}, adc_paux_r}       ; end
+     20'h0003C : begin ack <= 1'b1;         rdata <= {{32-12{1'b0}}, adc_bram_r}       ; end
+     20'h00040 : begin ack <= 1'b1;         rdata <= {{32-12{1'b0}}, adc_int_r}        ; end
+     20'h00044 : begin ack <= 1'b1;         rdata <= {{32-12{1'b0}}, adc_aux_r}        ; end
+     20'h00048 : begin ack <= 1'b1;         rdata <= {{32-12{1'b0}}, adc_ddr_r}        ; end
 
-     default : begin sys_ack <= sys_en;         sys_rdata <=   32'h0; end
+     default : begin ack <= 1'b1;         rdata <=   32'h0; end
 
    endcase
 end

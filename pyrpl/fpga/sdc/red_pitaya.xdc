@@ -120,18 +120,20 @@ set_property PACKAGE_PIN P15 [get_ports {dac_pwm_o[2]}]
 set_property PACKAGE_PIN U13 [get_ports {dac_pwm_o[3]}]
 
 ### XADC
+# set_property IOSTANDARD TDMS_33 [get_ports {vinp_i[*]}]
+# set_property IOSTANDARD TDMS_33 [get_ports {vinn_i[*]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {vinp_i[*]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {vinn_i[*]}]
 set_property LOC XADC_X0Y0 [get_cells i_ams/XADC_inst]
 #AD0
-set_property PACKAGE_PIN C20 [get_ports {vinp_i[1]}]
-set_property PACKAGE_PIN B20 [get_ports {vinn_i[1]}]
+set_property PACKAGE_PIN C20 [get_ports {vinp_i[0]}]  # 1
+set_property PACKAGE_PIN B20 [get_ports {vinn_i[0]}]  # 1
 #AD1
-set_property PACKAGE_PIN E17 [get_ports {vinp_i[2]}]
-set_property PACKAGE_PIN D18 [get_ports {vinn_i[2]}]
+#set_property PACKAGE_PIN E17 [get_ports {vinp_i[1]}]  # 2
+#set_property PACKAGE_PIN D18 [get_ports {vinn_i[1]}]  # 2
 #AD8
-set_property PACKAGE_PIN B19 [get_ports {vinp_i[0]}]
-set_property PACKAGE_PIN A20 [get_ports {vinn_i[0]}]
+set_property PACKAGE_PIN B19 [get_ports {vinp_i[2]}]  # 0
+set_property PACKAGE_PIN A20 [get_ports {vinn_i[2]}]  # 0
 #AD9
 set_property PACKAGE_PIN E18 [get_ports {vinp_i[3]}]
 set_property PACKAGE_PIN E19 [get_ports {vinn_i[3]}]

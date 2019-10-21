@@ -11,6 +11,22 @@ class Sampler(HardwareModule):
     This is a momentary workaround, will be improved later on with an upgraded FPGA version """
     addr_base = 0x40300000
 
+    @property
+    def adc0(self):
+        return self.parent.ams.vadc0
+
+    @property
+    def adc1(self):
+        return self.parent.ams.vadc1
+
+    @property
+    def adc2(self):
+        return self.parent.ams.vadc2
+
+    @property
+    def adc3(self):
+        return self.parent.ams.vadc3
+
     def stats(self, signal="in1", t=1e-2):
         """
         computes the mean, standard deviation, min and max of the chosen signal over duration t

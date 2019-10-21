@@ -194,8 +194,8 @@ red_pitaya_ps i_ps (
   .fclk_clk_o    (fclk        ),
   .fclk_rstn_o   (frstn       ),
   // ADC analog inputs
-  .vinp_i        (vinp_i      ),  // voltages p
-  .vinn_i        (vinn_i      ),  // voltages n
+//  .vinp_i        (vinp_i      ),  // voltages p
+//  .vinn_i        (vinn_i      ),  // voltages n
    // system read/write channel
   .sys_clk_o     (ps_sys_clk  ),  // system clock
   .sys_rstn_o    (ps_sys_rstn ),  // system reset - active low
@@ -562,7 +562,11 @@ red_pitaya_ams i_ams (
   .sys_ren         (  sys_ren[4]                 ),  // read enable
   .sys_rdata       (  sys_rdata[ 4*32+31: 4*32]  ),  // read data
   .sys_err         (  sys_err[4]                 ),  // error indicator
-  .sys_ack         (  sys_ack[4]                 )   // acknowledge signal
+  .sys_ack         (  sys_ack[4]                 ),  // acknowledge signal
+
+  // XADC pins
+  .vinp_i          (  vinp_i                     ),  // voltages p
+  .vinn_i          (  vinn_i                     )  // voltages n
 );
 
 
