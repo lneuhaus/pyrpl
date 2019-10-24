@@ -284,12 +284,12 @@ class Pyrpl(object):
                 for name in configfiles:
                     print("    %s"%name)
                 config = raw_input('\nEnter an existing or new config file name: ')
-        if config is None or config == "" or config.endswith('/.yml'):
-            config = None
         if isinstance(config, MemoryTree):
             # allows to pass an existing MemoryTree to the Pyrpl constructor
             self.c = config
         else:
+            if config is None or config == "" or config.endswith('/.yml'):
+                config = None
             # configuration is retrieved from config file
             self.c = MemoryTree(filename=config, source=source)
         if first_time_config and self.c._filename is not None:
