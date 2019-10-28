@@ -78,6 +78,9 @@ module red_pitaya_dsp #(
    // trigger outputs for the scope
    output                trig_o,   // output from trigger dsp module
 
+   // external hardware trigger input
+   input                 trig_i,
+
    // system bus
    input      [ 32-1: 0] sys_addr        ,  //!< bus address
    input      [ 32-1: 0] sys_wdata       ,  //!< bus write data
@@ -328,7 +331,7 @@ generate for (j = 0; j < 3; j = j+1) begin
      // data
      .clk_i        (  clk_i          ),  // clock
      .rstn_i       (  rstn_i         ),  // reset - active low
-     .sync_i       (  sync[j]        ),  // syncronization of different dsp modules
+     .sync_i       (  sync[j] & (!trig_i)  ),  // syncronization of different dsp modules - active high, low when sync[j] is low (software control) or when DIO_P0 is high
      .dat_i        (  input_signal [j] ),  // input data
      .dat_o        (  output_direct[j]),  // output data
 	 .diff_dat_i   (  diff_input_signal[j] ),  // input data for differential mode

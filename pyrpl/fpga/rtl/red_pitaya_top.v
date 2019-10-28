@@ -519,6 +519,8 @@ red_pitaya_dsp i_dsp (
 
   .trig_o          (  dsp_trigger            ),
 
+  .trig_i          (  exp_p_in[0]            ), // external DIO_P0 trigger input
+
   // System bus
   .sys_addr        (  sys_addr                   ),  // address
   .sys_wdata       (  sys_wdata                  ),  // write data

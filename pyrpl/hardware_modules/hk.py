@@ -26,13 +26,13 @@ class HK(HardwareModule):
     # see http://stackoverflow.com/questions/2265402/adding-class-attributes-using-a-for-loop-in-python
     for i in range(8):
         locals()['expansion_P' + str(i)] = IORegister(0x20, 0x18, 0x10, bit=i,
-                                                      outputmode=True,
+                                                      outputmode=False,
                                                       doc="positive digital io")
         locals()['expansion_P' + str(i) + '_output'] = ExpansionDirection(
                                                       doc="direction of the "
                                                           "port")
         locals()['expansion_N' + str(i)] = IORegister(0x24, 0x1C, 0x14, bit=i,
-                                                      outputmode=True,
+                                                      outputmode=False,
                                                       doc="positive digital io")
         locals()['expansion_N' + str(i) + '_output'] = ExpansionDirection(
                                                       doc="direction of the "
