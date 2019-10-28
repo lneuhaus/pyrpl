@@ -519,7 +519,8 @@ red_pitaya_dsp i_dsp (
 
   .trig_o          (  dsp_trigger            ),
 
-  .trig_i          (  exp_p_in[0]            ), // external DIO_P0 trigger input
+  .trig_p_i          (  exp_p_in            ), // external DIO_P0-7 trigger input
+  .trig_n_i          (  exp_n_in            ), // external DIO_N0-7 trigger input
 
   // System bus
   .sys_addr        (  sys_addr                   ),  // address
