@@ -316,6 +316,9 @@ class Pyrpl(object):
                 else:
                     # all other (static) defaults
                     pyrplbranch[k] = default_pyrpl_config[k]
+        # use name from kwargs if desired
+        if 'name' in kwargs:
+            pyrplbranch['name'] = kwargs.pop('name')
         # set global logging level if specified in kwargs or config file
         if 'loglevel' in kwargs:
             self.c.pyrpl.loglevel = kwargs.pop('loglevel')
