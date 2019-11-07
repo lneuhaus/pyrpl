@@ -168,11 +168,11 @@ class OutputSignal(Signal):
     def unlock(self, reset_offset=False):
         self.pid.p = 0
         self.pid.i = 0
-        if reset_offset:
-            if reset_offset == True:
-                self.pid.ival = self._reset_offset_voltage
-            else:
-                self.pid.ival = reset_offset
+        if reset_offset is True:
+            self.pid.ival = self._reset_offset_voltage
+        elif reset_offset is not False:
+            # a number in this case
+            self.pid.ival = reset_offset
         self.current_state = 'unlock'
         # benefit from the occasion and do proper initialization
         self._setup_pid_output()
