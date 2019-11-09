@@ -110,8 +110,6 @@ end else begin
    end
 end
 
-wire sys_en;
-assign sys_en = sys_wen | sys_ren;
 
 always @(posedge clk_i)
 if (rstn_i == 1'b0) begin

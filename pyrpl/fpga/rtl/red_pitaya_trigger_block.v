@@ -77,6 +77,8 @@ reg auto_rearm;
 reg [ 32-1: 0] auto_rearm_delay;
 reg [ 14-1: 0] phase_offset;
 reg phase_abs;
+reg [ 5-1: 0] sum_divisor;
+
 
 //  System bus connection
 always @(posedge clk_i) begin
@@ -91,6 +93,7 @@ always @(posedge clk_i) begin
       auto_rearm_delay <= 32'd0;
       phase_offset <= 14'd0;
       phase_abs <= 1'b0;
+      sum_divisor <= 1'b0;
    end
    else begin
       if (addr==16'h100 && wen)
@@ -106,6 +109,7 @@ always @(posedge clk_i) begin
          if (addr==16'h11C)   set_a_hyst <= wdata[14-1:0];
          if (addr==16'h120)   set_filter  <= wdata;
          if (addr==16'h124)   auto_rearm_delay <= wdata;
+         if (addr==16'h128)   sum_divisor <= wdata[5-1:0];;
       end
 
 	  casez (addr)
@@ -119,11 +123,13 @@ always @(posedge clk_i) begin
 	     16'h11C : begin ack <= wen|ren; rdata <= set_a_hyst; end
 	     16'h120 : begin ack <= wen|ren; rdata <= set_filter; end
 	     16'h124 : begin ack <= wen|ren; rdata <= auto_rearm_delay; end
+	     16'h128 : begin ack <= wen|ren; rdata <= sum_divisor; end
 
 	     16'h15C : begin ack <= wen|ren; rdata <= ctr_value[32-1:0]; end
 	     16'h160 : begin ack <= wen|ren; rdata <= ctr_value[64-1:32]; end
 	     16'h164 : begin ack <= wen|ren; rdata <= timestamp_trigger[32-1:0]; end
 	     16'h168 : begin ack <= wen|ren; rdata <= timestamp_trigger[64-1:32]; end
+
 
 	     16'h220 : begin ack <= wen|ren; rdata <= FILTERSTAGES; end
 	     16'h224 : begin ack <= wen|ren; rdata <= FILTERSHIFTBITS; end
@@ -201,6 +207,9 @@ reg   [ 14 - 1:0] output_data;
 wire  [ 14 - 1:0] phase_i;
 wire  [ 14 - 1:0] phase_sum;
 
+reg signed [ 46 - 1:0] sum;
+reg signed [ 14 - 1:0] sumout;
+
 
 //multiplexer for input phase (still TODO)
 assign phase_i = phase1_i;
@@ -214,6 +223,8 @@ reg [18-1:0] last_trig;
 reg [18-1:0] last_last_trig;
 reg trig_high;
 reg buffered_trigger_signal;
+
+wire [46-1:0] shifted_sum;
 
 always @(posedge clk_i)
 if (rstn_i == 1'b0) begin
@@ -235,6 +246,8 @@ if (rstn_i == 1'b0) begin
    last_last_trig <= 18'd0;
    trig_high <= 1'b0;
    buffered_trigger_signal <= 1'b0;
+   sum <= 46'd0;
+   sumout <= 14'd0;
 end else begin
    // handle external trigger with bits 0 through 15 of trigger_source
    // bit 16 of trigger_source defines positive slope trigger, bit 17 negative_slope trigger
@@ -256,6 +269,7 @@ end else begin
        phase <= phase_processed;  // store the phase at trigger time
        min <= dat_i_filtered;
        max <= dat_i_filtered;
+       sum <= {{32{dat_i_filtered[14-1]}}, dat_i_filtered};
    end else begin
        time_since_trigger <= time_since_trigger + 1'b1;  // increment time counter since trigger event
        if (time_since_trigger > auto_rearm_delay) begin
@@ -265,11 +279,13 @@ end else begin
                do_auto_rearm <= auto_rearm;
                minout <= min;
                maxout <= max;
+               sumout <= shifted_sum[14-1:0];
            end
        end else begin
            if (post_trigger_delay_running) begin
                max <= (dat_i_filtered > max) ? dat_i_filtered : max;
                min <= (dat_i_filtered < min) ? dat_i_filtered : min;
+               sum <= $signed(sum) + $signed({{32{dat_i_filtered[14-1]}}, dat_i_filtered});
            end
        end
    end
@@ -289,7 +305,12 @@ end else begin
        output_data <= maxout;
    else if (output_select==MINHOLD)
        output_data <= minout;
+   else if (output_select==MEAN)
+       output_data <= sumout;
+
 end
+
+assign shifted_sum = sum >>> sum_divisor;
 
 assign dat_o = output_data;
 assign signal_o = output_data;

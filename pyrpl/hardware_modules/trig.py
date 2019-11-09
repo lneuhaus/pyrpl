@@ -27,6 +27,8 @@ class Trig(FilterModule):
                          "auto_rearm",
                          "phase_abs",
                          "auto_rearm_delay",
+                         "sum_divisor",
+                         "inputfilter",
                          ]#,
                          #"trigger_armed"]
     _gui_attributes = _setup_attributes + ['arm_trigger']
@@ -42,7 +44,9 @@ class Trig(FilterModule):
                                      norm=125e6,
                                      signed=False,
                                      doc='time (s) to wait after '
-                                         'a trigger even to rearm the trigger')
+                                         'a trigger event to rearm the trigger')
+
+    sum_divisor = IntRegister(0x128, bits=5, doc='log_2(sum normalization factor)')
 
     phase_abs = BoolRegister(0x104, 1, doc="Output the absolute value of the phase")
 
@@ -61,7 +65,7 @@ class Trig(FilterModule):
                                     options=_trigger_sources,
                                     default='off')
 
-    _output_signals = sorted_dict(TTL = 0, asg0_phase = 1, max = 2, min=3)
+    _output_signals = sorted_dict(TTL = 0, asg0_phase = 1, max = 2, min=3, mean=4)
     output_signals = _output_signals.keys()
     output_signal = SelectRegister(0x10C, options=_output_signals,
                                    doc="Signal to use as module output")
