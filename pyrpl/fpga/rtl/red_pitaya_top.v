@@ -392,6 +392,9 @@ wire  [  8-1: 0] exp_p_in , exp_n_in ;
 wire  [  8-1: 0] exp_p_out, exp_n_out;
 wire  [  8-1: 0] exp_p_dir, exp_n_dir;
 
+wire [16-1:0] dsp_trig_out;
+
+
 red_pitaya_hk i_hk (
   // system signals
   .clk_i           (  adc_clk                    ),  // clock
@@ -407,6 +410,8 @@ red_pitaya_hk i_hk (
   .exp_n_dat_i     (  exp_n_in                   ),
   .exp_n_dat_o     (  exp_n_out                  ),
   .exp_n_dir_o     (  exp_n_dir                  ),
+   // internal trigger signals
+  .dsp_trig_i      (  dsp_trig_out               ),  // 16-bit wide DSP module trigger output
    // System bus
   .sys_addr        (  sys_addr                   ),  // address
   .sys_wdata       (  sys_wdata                  ),  // write data
@@ -497,6 +502,7 @@ red_pitaya_asg i_asg (
 //---------------------------------------------------------------------------------
 //  DSP module
 
+
 red_pitaya_dsp i_dsp (
    // signals
   .clk_i           (  adc_clk                    ),  // clock
@@ -518,6 +524,9 @@ red_pitaya_dsp i_dsp (
   .pwm3            (  pwm_signals[3]         ),
 
   .trig_o          (  dsp_trigger            ),
+
+  .ext_trig_i      (  {exp_n_in, exp_p_in}   ),
+  .ext_trig_o      (   dsp_trig_out          ),
 
   // System bus
   .sys_addr        (  sys_addr                   ),  // address

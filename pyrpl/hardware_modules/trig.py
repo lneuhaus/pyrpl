@@ -47,9 +47,14 @@ class Trig(FilterModule):
     phase_abs = BoolRegister(0x104, 1, doc="Output the absolute value of the phase")
 
     _trigger_sources = {"off": 0,
-                        "pos_edge": 1,
-                        "neg_edge": 2,
-                        "both_edge": 3}
+                        "pos_edge": 1<<16,
+                        "neg_edge": 1<<17,
+                        "both_edge": (1<<16)+1<<17,
+                        }
+    # add raw external pin as trigger source options
+    _trigger_sources.update({"P"+str(i): 1<<i for i in range(8)})
+    _trigger_sources.update({"N"+str(i): 1<<(i+8) for i in range(8)})
+
     trigger_sources = sorted(_trigger_sources.keys())  # help for the user
     trigger_source = SelectRegister(0x108,
                                     doc="Trigger source",

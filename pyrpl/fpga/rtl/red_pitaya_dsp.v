@@ -78,6 +78,9 @@ module red_pitaya_dsp #(
    // trigger outputs for the scope
    output                trig_o,   // output from trigger dsp module
 
+   input [16-1: 0] ext_trig_i  , // {8 DIO_N_PIN INPUT, 8 DIO_P_PIN INPUT}
+   output [16-1: 0] ext_trig_o  , // {8 DIO_N_PIN OUTPUT, 8 DIO_P_PIN OUTPUT}
+
    // system bus
    input      [ 32-1: 0] sys_addr        ,  //!< bus address
    input      [ 32-1: 0] sys_wdata       ,  //!< bus write data
@@ -358,6 +361,7 @@ generate for (j = 3; j < 5; j = j+1) begin
      .signal_o     (  output_signal[j]),  // output signal
      .phase1_i     (  asg1phase_i ),  // phase input
      .trig_o       (  trig_signal[j-3] ),
+     .trig_i       (  ext_trig_i ),
 
 	 //communincation with PS
 	 .addr ( sys_addr[16-1:0] ),
@@ -370,6 +374,11 @@ generate for (j = 3; j < 5; j = j+1) begin
 end
 endgenerate
 assign trig_o = trig_signal[0] | trig_signal[1];
+
+// connect output trigger signal to trigger bus
+assign ext_trig_o[3] = trig_signal[0];
+assign ext_trig_o[4] = trig_signal[1];
+
 
 //IIR module 
 /*

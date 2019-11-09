@@ -19,24 +19,35 @@ class HK(HardwareModule):
                         ['expansion_P' + str(i) for i in range(8)] + \
                         ['expansion_P' + str(i) + '_output' for i in range(8)]+ \
                         ['expansion_N' + str(i) for i in range(8)] + \
-                        ['expansion_N' + str(i) + '_output' for i in range(8)]
+                        ['expansion_N' + str(i) + '_output' for i in range(8)] + \
+                        ['expansion_P' + str(i) + '_select' for i in range(8)]
     _gui_attributes =  _setup_attributes
     addr_base = 0x40000000
     # We need all attributes to be there when the interpreter is done reading the class (for metaclass to workout)
     # see http://stackoverflow.com/questions/2265402/adding-class-attributes-using-a-for-loop-in-python
     for i in range(8):
         locals()['expansion_P' + str(i)] = IORegister(0x20, 0x18, 0x10, bit=i,
-                                                      outputmode=True,
+                                                      outputmode=False,
                                                       doc="positive digital io")
         locals()['expansion_P' + str(i) + '_output'] = ExpansionDirection(
                                                       doc="direction of the "
                                                           "port")
         locals()['expansion_N' + str(i)] = IORegister(0x24, 0x1C, 0x14, bit=i,
-                                                      outputmode=True,
+                                                      outputmode=False,
                                                       doc="positive digital io")
         locals()['expansion_N' + str(i) + '_output'] = ExpansionDirection(
                                                       doc="direction of the "
                                                           "port")
+        locals()['expansion_P' + str(i) + '_select'] = SelectRegister(
+            0x50 + 0x04*i,
+            doc='selects which trigger signals may drive the output pin',
+            bitmask=0x01FF,
+            options={'off': 0,
+                     'trig0': 1<<3,
+                     'trig1': 1<<4,
+                     'hk': 1<<16,
+                     }
+        )
 
     id = SelectRegister(0x0, doc="device ID", options={"prototype0": 0,
                                                        "release1": 1})

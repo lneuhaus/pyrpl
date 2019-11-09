@@ -46,6 +46,7 @@ module red_pitaya_trigger_block #(
    output     [ 14-1: 0] dat_o           ,  // output data
    output     [ 14-1: 0] signal_o        ,  // output data
    output                trig_o          ,  // trigger signal
+   input     [ 16-1: 0] trig_i          ,  // external trigger signal
 
    // communication with PS
    input      [ 16-1: 0] addr,
@@ -67,7 +68,7 @@ localparam MEAN = 4'd4;
 
 //settings
 reg [ 32-1: 0] set_filter;   // input filter setting
-reg [  2-1: 0] trigger_source;
+reg [ 18-1: 0] trigger_source;
 reg [  4-1: 0] output_select;
 reg [ 14-1: 0] set_a_thresh;
 reg [ 14-1: 0] set_a_hyst;
@@ -81,7 +82,7 @@ reg phase_abs;
 always @(posedge clk_i) begin
    if (rstn_i == 1'b0) begin
       set_filter <= 32'd0;
-      trigger_source <= 2'b00;
+      trigger_source <= 18'd0;
       output_select <= 4'b0000;
       set_a_thresh <= 14'd0;
       set_a_hyst <= 14'd20; // 2.5 mV by default
@@ -98,7 +99,7 @@ always @(posedge clk_i) begin
          rearm <= 1'b0;
       if (wen) begin
          if (addr==16'h104)   {phase_abs, auto_rearm} <= wdata[2-1:0];
-         if (addr==16'h108)   trigger_source <= wdata[2-1:0];
+         if (addr==16'h108)   trigger_source <= wdata[18-1:0];
          if (addr==16'h10C)   output_select <= wdata[4-1:0];
          if (addr==16'h110)   phase_offset <= wdata[14-1:0];
          if (addr==16'h118)   set_a_thresh <= wdata[14-1:0];
@@ -110,7 +111,7 @@ always @(posedge clk_i) begin
 	  casez (addr)
 	     16'h100 : begin ack <= wen|ren; rdata <= {{32-1{1'b0}},armed}; end
 	     16'h104 : begin ack <= wen|ren; rdata <= {{32-1{2'b0}},phase_abs,auto_rearm}; end
-	     16'h108 : begin ack <= wen|ren; rdata <= {{32-2{1'b0}},trigger_source}; end
+	     16'h108 : begin ack <= wen|ren; rdata <= {{32-18{1'b0}},trigger_source}; end
 	     16'h10C : begin ack <= wen|ren; rdata <= {{32-4{1'b0}},output_select}; end
 	     16'h110 : begin ack <= wen|ren; rdata <= {{32-14{1'b0}},phase_offset}; end
 
@@ -200,6 +201,7 @@ reg   [ 14 - 1:0] output_data;
 wire  [ 14 - 1:0] phase_i;
 wire  [ 14 - 1:0] phase_sum;
 
+
 //multiplexer for input phase (still TODO)
 assign phase_i = phase1_i;
 //account for offset
@@ -207,6 +209,11 @@ assign phase_sum = phase_i + phase_offset;
 
 reg do_auto_rearm;
 reg post_trigger_delay_running;
+
+reg [18-1:0] last_trig;
+reg [18-1:0] last_last_trig;
+reg trig_high;
+reg buffered_trigger_signal;
 
 always @(posedge clk_i)
 if (rstn_i == 1'b0) begin
@@ -224,9 +231,18 @@ if (rstn_i == 1'b0) begin
    max <= 14'd0;
    minout <= 14'd0;
    maxout <= 14'd0;
+   last_trig <= 18'd0;
+   last_last_trig <= 18'd0;
+   trig_high <= 1'b0;
+   buffered_trigger_signal <= 1'b0;
 end else begin
-   // bit 0 of trigger_source defines positive slope trigger, bit 1 negative_slope trigger
-   trigger_signal <= ((adc_trig_ap && trigger_source[0]) || (adc_trig_an && trigger_source[1])) && armed;
+   // handle external trigger with bits 0 through 15 of trigger_source
+   // bit 16 of trigger_source defines positive slope trigger, bit 17 negative_slope trigger
+   last_trig <= {adc_trig_an, adc_trig_ap, trig_i};
+   last_last_trig <= last_trig;
+   trig_high <= (|(last_trig & (~last_last_trig) & trigger_source));
+   buffered_trigger_signal <= trig_high && armed;
+   trigger_signal <= buffered_trigger_signal;
    // disarm after trigger event, rearm when requested explicitly or required for auto_rearm;
    armed <= (armed && (!trigger_signal)) || rearm || do_auto_rearm;
    // time counter

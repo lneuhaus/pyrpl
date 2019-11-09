@@ -336,7 +336,7 @@ class IORegister(BoolRegister):
     """Interface for digital outputs
     if argument outputmode is True, output mode is set, else input mode"""
     def __init__(self, read_address, write_address, direction_address,
-                 outputmode=True, **kwargs):
+                 outputmode=False, **kwargs):
         self.write_address = write_address
         self.read_address = read_address
         if outputmode:
