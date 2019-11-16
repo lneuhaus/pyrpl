@@ -178,16 +178,15 @@ class OutputSignal(Signal):
         self._setup_pid_output()
 
     def sweep(self):
-        self.unlock(reset_offset=True)
+        self.unlock(reset_offset=self.sweep_offset)
         self.pid.input = self.lockbox.asg
         self.lockbox.asg.setup(amplitude=self.sweep_amplitude,
-                               offset=self.sweep_offset,
+                               offset=0,
                                frequency=self.sweep_frequency,
                                waveform=self.sweep_waveform,
                                trigger_source='immediately',
                                cycles_per_burst=0)
         self.pid.setpoint = 0.
-        self.pid.ival = 0.
         self.pid.p = 1.
         self.current_state = 'sweep'
 
