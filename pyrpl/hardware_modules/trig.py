@@ -88,6 +88,13 @@ class Trig(FilterModule):
                                      doc="An absolute counter "
                                          + "for the trigger time [cycles]")
 
+    @property
+    def current_and_trigger_timestamp(self):
+        data = self._reads(0x15C, 4)
+        current = int(data[0]) + 2**32 * int(data[1])
+        trigger = int(data[2]) + 2**32 * int(data[3])
+        return current, trigger
+
     def arm_trigger(self):
         """
         Convenience function that arms the trigger.

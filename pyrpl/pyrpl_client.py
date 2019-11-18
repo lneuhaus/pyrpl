@@ -190,10 +190,13 @@ class PyrplClient(object):
             try:
                 return_value = function(addr, value)
             except (socket.timeout, socket.error):
-                self.logger.exception("Error occured in reading attempt %s. "
-                                      "Reconnecting at addr %s to %s value %s by "
-                                      "client %s"
-                                      % (i,
+                self.logger.exception("Error occurred in reading attempt %s/%s "
+                                      "from %s:%s. Reconnecting at addr %s to %s "
+                                      "(value %s) by client %s"
+                                      % (i+1,
+                                         n,
+                                         self._hostname,
+                                         self._port,
                                          hex(addr),
                                          function.__name__,
                                          value,
