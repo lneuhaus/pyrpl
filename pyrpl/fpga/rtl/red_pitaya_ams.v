@@ -50,7 +50,9 @@ module red_pitaya_ams (
    input      [ 14-1: 0] pwm0_i          ,  // 14 bit inputs for compatibility and future upgrades;
   								  	        // right now only 12 bits are used  
    input      [ 14-1: 0] pwm1_i          ,  
-   
+
+   input      [ 16-1:0] dsp_trig_i,         // dsp trigger output
+
    // system bus
    input      [ 32-1: 0] sys_addr        ,  // bus address
    input      [ 32-1: 0] sys_wdata       ,  // bus write data
@@ -238,20 +240,20 @@ assign xadc_vinp = {vinp_i[4], 6'h0, vinp_i[3:2], 6'h0, vinp_i[1:0]}; //vp, 9,8,
 
 XADC #(
   // INIT_40 - INIT_42: XADC configuration registers
-  .INIT_40(16'h0000), // config reg 0
-  .INIT_41(16'h2f0f), // config reg 1
-  .INIT_42(16'h0400), // config reg 2
+  .INIT_40(16'b0000000000000000), // config reg 0
+  .INIT_41(16'b0010111100001111), // config reg 1
+  .INIT_42(16'b0000010000000000), // config reg 2
   // INIT_48 - INIT_4F: Sequence Registers
-//.INIT_48(16'h0900), // Sequencer channel selection // VpVn & temperature
-  .INIT_48(16'h4fe0), // Sequencer channel selection // include system voltages & temperature
-  .INIT_49(16'h0303), // Sequencer channel selection
-//.INIT_4A(16'h0100), // Sequencer Average selection // average temperature
-  .INIT_4A(16'h47e0), // Sequencer Average selection // average system voltages & temperature
-  .INIT_4B(16'h0000), // Sequencer Average selection
-  .INIT_4C(16'h0800), // Sequencer Bipolar selection
-  .INIT_4D(16'h0303), // Sequencer Bipolar selection
-  .INIT_4E(16'h0000), // Sequencer Acq time selection
-  .INIT_4F(16'h0000), // Sequencer Acq time selection
+//.INIT_48(16'b0000100100000000), // Sequencer channel selection // VpVn & temperature
+  .INIT_48(16'b0100111111100000), // Sequencer channel selection // include system voltages & temperature
+  .INIT_49(16'b0000001100000011), // Sequencer channel selection
+//.INIT_4A(16'b0000000100000000), // Sequencer Average selection // average temperature
+  .INIT_4A(16'b0100011111100000), // Sequencer Average selection // average system voltages & temperature
+  .INIT_4B(16'b0000000000000000), // Sequencer Average selection
+  .INIT_4C(16'b0000100000000000), // Sequencer Bipolar selection
+  .INIT_4D(16'b0000001100000011), // Sequencer Bipolar selection
+  .INIT_4E(16'b0000000000000000), // Sequencer Acq time selection
+  .INIT_4F(16'b0000000000000000), // Sequencer Acq time selection
   // INIT_50 - INIT_58, INIT5C: Alarm Limit Registers
   .INIT_50(16'hb5ed), // Temp alarm trigger
   .INIT_51(16'h57e4), // Vccint upper alarm limit

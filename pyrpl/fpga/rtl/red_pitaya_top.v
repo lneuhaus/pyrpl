@@ -563,6 +563,10 @@ red_pitaya_ams i_ams (
   .dac_d_o         (  pwm_cfg_d                  ),
   .pwm0_i 		   (  pwm_signals[0]             ),
   .pwm1_i 		   (  pwm_signals[1]             ),
+
+   // internal trigger signals
+  .dsp_trig_i      (  dsp_trig_out               ),  // 16-bit wide DSP module trigger output
+
    // System bus
   .sys_addr        (  sys_addr                   ),  // address
   .sys_wdata       (  sys_wdata                  ),  // write data
