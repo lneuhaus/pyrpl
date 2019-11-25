@@ -40,7 +40,7 @@ class AMS(HardwareModule):
         default='auto',
         doc='selects which trigger signals can start a slow adc acquisition '
             'conversion',
-        bitmask=0x00FF,
+        bitmask=0xFFFF,
         options={'off': 0,
                  'trig0': 1<<3,
                  'trig1': 1<<4,
