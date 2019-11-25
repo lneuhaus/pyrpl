@@ -8,6 +8,8 @@ class AMS(HardwareModule):
     only here for dac2 and dac3"""
     addr_base = 0x40400000
 
+    _setup_attributes = ['trigger_source']
+
     # attention: writing to dac0 and dac1 has no effect
     # only write to dac2 and 3 to set output voltages
     # to modify dac0 and dac1, connect a r.pwm0.input='pid0'
@@ -67,37 +69,39 @@ class AMS(HardwareModule):
         """
         return np.mean(self.vadcs_n(n), axis=0)
 
-    vsupply = FloatRegister(0x10, bits=12, norm=2 ** 12 * 4.99 / 60.99, signed=False,
-                          doc="USB power supply voltage (5V) monitor")
-
-    _raw_temperature = IntRegister(0x30, bits=12, doc="FPGA temperature raw XADC value")
-    @property
-    def temperature(self):
-        return float(self._raw_temperature) / 2 ** 12 * 503.975 - 273.15
-
-    vccpint = FloatRegister(0x34, bits=12, norm=2 ** 12 / 3.0, signed=False)
-    vccpaux = FloatRegister(0x38, bits=12, norm=2 ** 12 / 3.0, signed=False)
-    vccbram = FloatRegister(0x3C, bits=12, norm=2 ** 12 / 3.0, signed=False)
-    vccint = FloatRegister(0x40, bits=12, norm=2 ** 12 / 3.0, signed=False)
-    vccaux = FloatRegister(0x44, bits=12, norm=2 ** 12 / 3.0, signed=False)
-    vccddr = FloatRegister(0x48, bits=12, norm=2 ** 12 / 3.0, signed=False)
-
-    @property
-    def info(self):
-        return {name: getattr(self, name) for name in [
-            'vadc0',
-            'vadc1',
-            'vadc2',
-            'vadc3',
-            'temperature',
-            'vsupply',
-            'vccpint',
-            'vccpaux',
-            'vccbram',
-            'vccint',
-            'vccaux',
-            'vccddr',
-        ]}
+    # all these registers have no meaning in the most recent FPGA version
+    # because the XADC is set up to only measure the external slow ADCs
+    # vsupply = FloatRegister(0x10, bits=12, norm=2 ** 12 * 4.99 / 60.99, signed=False,
+    #                       doc="USB power supply voltage (5V) monitor")
+    #
+    # _raw_temperature = IntRegister(0x30, bits=12, doc="FPGA temperature raw XADC value")
+    # @property
+    # def temperature(self):
+    #     return float(self._raw_temperature) / 2 ** 12 * 503.975 - 273.15
+    #
+    # vccpint = FloatRegister(0x34, bits=12, norm=2 ** 12 / 3.0, signed=False)
+    # vccpaux = FloatRegister(0x38, bits=12, norm=2 ** 12 / 3.0, signed=False)
+    # vccbram = FloatRegister(0x3C, bits=12, norm=2 ** 12 / 3.0, signed=False)
+    # vccint = FloatRegister(0x40, bits=12, norm=2 ** 12 / 3.0, signed=False)
+    # vccaux = FloatRegister(0x44, bits=12, norm=2 ** 12 / 3.0, signed=False)
+    # vccddr = FloatRegister(0x48, bits=12, norm=2 ** 12 / 3.0, signed=False)
+    #
+    # @property
+    # def info(self):
+    #     return {name: getattr(self, name) for name in [
+    #         'vadc0',
+    #         'vadc1',
+    #         'vadc2',
+    #         'vadc3',
+    #         'temperature',
+    #         'vsupply',
+    #         'vccpint',
+    #         'vccpaux',
+    #         'vccbram',
+    #         'vccint',
+    #         'vccaux',
+    #         'vccddr',
+    #     ]}
 
     def _setup(self): # the function is here for its docstring to be used by the metaclass.
         """
