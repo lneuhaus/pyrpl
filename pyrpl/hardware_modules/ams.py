@@ -1,6 +1,6 @@
 import numpy as np
 from ..modules import HardwareModule
-from ..attributes import PWMRegister, FloatRegister, IntRegister
+from ..attributes import PWMRegister, FloatRegister, IntRegister, SelectRegister
 
 
 class AMS(HardwareModule):
@@ -32,6 +32,19 @@ class AMS(HardwareModule):
                           doc="slow analog in voltage 2 (V)")
     vadc3 = FloatRegister(0xC, bits=12, norm=_xadc_norm, signed=True,
                           doc="slow analog in voltage 3 (V)")
+
+    trigger_source = SelectRegister(
+        0x50,
+        default='auto',
+        doc='selects which trigger signals can start a slow adc acquisition '
+            'conversion',
+        bitmask=0x00FF,
+        options={'off': 0,
+                 'trig0': 1<<3,
+                 'trig1': 1<<4,
+                 'auto': 1<<8,
+                 },
+    )
 
     @property
     def vadcs(self):

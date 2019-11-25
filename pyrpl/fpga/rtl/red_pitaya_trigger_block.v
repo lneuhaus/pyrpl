@@ -78,7 +78,7 @@ reg [ 32-1: 0] auto_rearm_delay;
 reg [ 14-1: 0] phase_offset;
 reg phase_abs;
 reg [ 5-1: 0] sum_divisor;
-
+reg [32-1:0] trigger_delay;
 
 //  System bus connection
 always @(posedge clk_i) begin
@@ -90,6 +90,7 @@ always @(posedge clk_i) begin
       set_a_hyst <= 14'd20; // 2.5 mV by default
       rearm <= 1'b0;
       auto_rearm <= 1'b0;
+      trigger_delay <= 32'd0;
       auto_rearm_delay <= 32'd0;
       phase_offset <= 14'd0;
       phase_abs <= 1'b0;
@@ -109,7 +110,8 @@ always @(posedge clk_i) begin
          if (addr==16'h11C)   set_a_hyst <= wdata[14-1:0];
          if (addr==16'h120)   set_filter  <= wdata;
          if (addr==16'h124)   auto_rearm_delay <= wdata;
-         if (addr==16'h128)   sum_divisor <= wdata[5-1:0];;
+         if (addr==16'h128)   sum_divisor <= wdata[5-1:0];
+         if (addr==16'h12C)   trigger_delay <= wdata;
       end
 
 	  casez (addr)
@@ -124,6 +126,7 @@ always @(posedge clk_i) begin
 	     16'h120 : begin ack <= wen|ren; rdata <= set_filter; end
 	     16'h124 : begin ack <= wen|ren; rdata <= auto_rearm_delay; end
 	     16'h128 : begin ack <= wen|ren; rdata <= sum_divisor; end
+	     16'h12C : begin ack <= wen|ren; rdata <= trigger_delay; end
 
 	     16'h15C : begin ack <= wen|ren; rdata <= ctr_value[32-1:0]; end
 	     16'h160 : begin ack <= wen|ren; rdata <= ctr_value[64-1:32]; end
@@ -219,6 +222,9 @@ assign phase_sum = phase_i + phase_offset;
 reg do_auto_rearm;
 reg post_trigger_delay_running;
 
+reg trigger_delay_running;
+reg [32-1:0] trigger_delay_count;
+
 reg [18-1:0] last_trig;
 reg [18-1:0] last_last_trig;
 reg trig_high;
@@ -237,7 +243,9 @@ if (rstn_i == 1'b0) begin
    phase <= 14'd0;
    output_data <= 14'd0;
    phase_processed <= 14'd0;
-   post_trigger_delay_running = 1'b0;
+   post_trigger_delay_running <= 1'b0;
+   trigger_delay_running <= 1'b0;
+   trigger_delay_count <= 32'd0;
    min <= 14'd0;
    max <= 14'd0;
    minout <= 14'd0;
@@ -254,12 +262,35 @@ end else begin
    last_trig <= {adc_trig_an, adc_trig_ap, trig_i};
    last_last_trig <= last_trig;
    trig_high <= (|(last_trig & (~last_last_trig) & trigger_source));
-   buffered_trigger_signal <= trig_high && armed;
-   trigger_signal <= buffered_trigger_signal;
-   // disarm after trigger event, rearm when requested explicitly or required for auto_rearm;
-   armed <= (armed && (!trigger_signal)) || rearm || do_auto_rearm;
+
    // time counter
    ctr_value <= ctr_value + 1'b1;
+
+   // disarm after trigger event, rearm when requested explicitly or required for auto_rearm;
+   // make sure armed stays low from initial trigger event until the end of post_trigger_delay
+   armed <= (((armed && (!trigger_signal) && (!buffered_trigger_signal)) || rearm || do_auto_rearm) && !post_trigger_delay_running && !trigger_delay_running);
+
+   // manage trigger delay counter
+   if (trigger_delay_running)
+      trigger_delay_count <= trigger_delay_count - 32'd1;
+   else
+      trigger_delay_count <= trigger_delay;
+
+   if (trig_high && armed) begin
+      // start trigger delay
+      trigger_delay_running <= 1'b1;
+      buffered_trigger_signal <= 1'b0;
+   end else if (trigger_delay_running && (trigger_delay_count == 32'd0)) begin
+      // end trigger delay: send out a trigger pulse
+      trigger_delay_running <= 1'b0;
+      buffered_trigger_signal <= 1'b1;
+   end else begin
+      // otherwise, make sure trigger is always zero
+      buffered_trigger_signal <= 1'b0;
+   end
+
+   // actual trigger is delayed version of buffered trigger
+   trigger_signal <= buffered_trigger_signal;
 
    // at the moment of the trigger event
    if (trigger_signal==1'b1) begin

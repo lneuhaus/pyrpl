@@ -85,7 +85,7 @@ reg   [ 12-1: 0] adc_int_r    ;
 reg   [ 12-1: 0] adc_aux_r    ;
 reg   [ 12-1: 0] adc_ddr_r    ;
 
-
+reg [16-1:0] trigger_source;
 
 //---------------------------------------------------------------------------------
 //
@@ -101,6 +101,7 @@ if (rstn_i == 1'b0) begin
    dac_b_o     <= 24'h000000 ;
    dac_c_o     <= 24'h000000 ;
    dac_d_o     <= 24'h000000 ;
+   trigger_source <= 16'h0100;  // by default, auto-triggering is enabled
 end else begin
    dac_a_o <= cfg;
    dac_b_o <= cfg_b;
@@ -109,6 +110,7 @@ end else begin
       // if (sys_addr[19:0]==16'h24)   dac_b_o <= sys_wdata[24-1: 0] ;
       if (sys_addr[19:0]==16'h28)   dac_c_o <= sys_wdata[24-1: 0] ;
       if (sys_addr[19:0]==16'h2C)   dac_d_o <= sys_wdata[24-1: 0] ;
+      if (sys_addr[19:0]==16'h50)   trigger_source <= sys_wdata[16-1: 0] ;
    end
 end
 
@@ -139,6 +141,8 @@ end else begin
      20'h00040 : begin sys_ack <= sys_en;         sys_rdata <= {{32-12{1'b0}}, adc_int_r}        ; end
      20'h00044 : begin sys_ack <= sys_en;         sys_rdata <= {{32-12{1'b0}}, adc_aux_r}        ; end
      20'h00048 : begin sys_ack <= sys_en;         sys_rdata <= {{32-12{1'b0}}, adc_ddr_r}        ; end
+
+     20'h00050 : begin sys_ack <= sys_en;         sys_rdata <= {{32-16{1'b0}}, trigger_source}        ; end
 
      default : begin sys_ack <= sys_en;         sys_rdata <=   32'h0; end
 
@@ -212,6 +216,22 @@ end else begin
    cfg_b  <= {~pwm1_i[13],pwm1_i[13-1:6],1'b0,bit3_b,bit2_b,bit3_b,bit1_b,bit3_b,bit2_b,bit3_b,bit0_b,bit3_b,bit2_b,bit3_b,bit1_b,bit3_b,bit2_b,bit3_b};
 end
 
+// slow ADC acquisition trigger logic
+reg trigger;
+reg xadc_convst    ;
+reg manual_trigger_clk;
+
+always @(posedge clk_i)
+if (rstn_i == 1'b0) begin
+  trigger <= 1'b0;
+  xadc_convst <= 1'b0;
+  manual_trigger_clk <= 1'b0;
+end else begin
+  trigger <= (|({manual_trigger_clk, dsp_trig_i[8-1:0]} & trigger_source[9-1:0]));
+  xadc_convst <= trigger;
+  manual_trigger_clk <= !manual_trigger_clk;
+end
+
 
 
 //---------------------------------------------------------------------------------
@@ -235,21 +255,29 @@ wire           xadc_drp_en    = xadc_eoc  ;
 wire [16-1: 0] xadc_drp_dati  = 16'h0     ;
 wire           xadc_drp_we    =  1'b0     ;
 
+
 assign xadc_vinn = {vinn_i[4], 6'h0, vinn_i[3:2], 6'h0, vinn_i[1:0]}; //vn, 9,8,1,0
 assign xadc_vinp = {vinp_i[4], 6'h0, vinp_i[3:2], 6'h0, vinp_i[1:0]}; //vp, 9,8,1,0
 
 XADC #(
-  // INIT_40 - INIT_42: XADC configuration registers
-  .INIT_40(16'b0000000000000000), // config reg 0
-  .INIT_41(16'b0010111100001111), // config reg 1
-  .INIT_42(16'b0000010000000000), // config reg 2
-  // INIT_48 - INIT_4F: Sequence Registers
+// INIT_40 - INIT_42: XADC configuration registers
+//.INIT_40(16'b0000001000000000), // config reg 0  // event-driven sampling,
+  .INIT_40(16'b0001001000000000), // config reg 0  // event-driven sampling, 16 averages
+//.INIT_40(16'b0010001000000000), // config reg 0  // event-driven sampling, 64 averages
+//.INIT_40(16'b0011001000000000), // config reg 0  // event-driven sampling, 256 averages
+//.INIT_41(16'b0100111100001111), // config reg 1  // simultaneous sampling mode, disable alarms, no calibration coefficients,
+  .INIT_41(16'b0010111100001111), // config reg 1  // continuous sampling mode, disable alarms, no calibration coefficients,
+  .INIT_42(16'b0000010000000000), // config reg 2  // 125/4 MHz ADC clock frequency, slightly above spec of 26 MHz
+// INIT_48 - INIT_4F: Sequence Registers
 //.INIT_48(16'b0000100100000000), // Sequencer channel selection // VpVn & temperature
-  .INIT_48(16'b0100111111100000), // Sequencer channel selection // include system voltages & temperature
-  .INIT_49(16'b0000001100000011), // Sequencer channel selection
+//.INIT_48(16'b0100111111100000), // Sequencer channel selection // include system voltages & temperature
+  .INIT_48(16'b0000000000000000), // Sequencer channel selection // all disabled
+  .INIT_49(16'b0000001100000011), // Sequencer channel selection // 4 slow analog in enabled
 //.INIT_4A(16'b0000000100000000), // Sequencer Average selection // average temperature
-  .INIT_4A(16'b0100011111100000), // Sequencer Average selection // average system voltages & temperature
-  .INIT_4B(16'b0000000000000000), // Sequencer Average selection
+//.INIT_4A(16'b0100011111100000), // Sequencer Average selection // average system voltages & temperature
+  .INIT_4A(16'b0000000000000000), // Sequencer Average selection // average system voltages & temperature
+//.INIT_4B(16'b0000000000000000), // Sequencer Average selection // all averages disabled
+  .INIT_4B(16'b0000001100000011), // Sequencer Average selection // enable averaging slow ADCs
   .INIT_4C(16'b0000100000000000), // Sequencer Bipolar selection
   .INIT_4D(16'b0000001100000011), // Sequencer Bipolar selection
   .INIT_4E(16'b0000000000000000), // Sequencer Acq time selection
@@ -291,7 +319,7 @@ XADC_inst
   .VN         (  xadc_vinn[16]        ),  // 1-bit input: N-side analog input
   .VP         (  xadc_vinp[16]        ),  // 1-bit input: P-side analog input
   // CONTROL and CLOCK: 1-bit (each) input: Reset, conversion start and clock inputs
-  .CONVST     (  1'b0                 ),  // 1-bit input: Convert start input
+  .CONVST     (  xadc_convst          ),  // 1-bit input: Convert start input
   .CONVSTCLK  (  1'b0                 ),  // 1-bit input: Convert start input
   .RESET      ( !xadc_reset           ),  // 1-bit input: Active-high reset
   // Dynamic Reconfiguration Port (DRP)

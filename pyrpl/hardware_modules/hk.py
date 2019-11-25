@@ -45,7 +45,7 @@ class HK(HardwareModule):
             options={'off': 0,
                      'trig0': 1<<3,
                      'trig1': 1<<4,
-                     'hk': 1<<16,
+                     'manual': 1<<16,
                      }
         )
 

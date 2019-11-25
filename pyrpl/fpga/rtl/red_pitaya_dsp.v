@@ -349,7 +349,6 @@ generate for (j = 0; j < 3; j = j+1) begin
 end
 endgenerate
 
-wire trig_signal[2-1:0];
 //TRIG
 generate for (j = 3; j < 5; j = j+1) begin
    red_pitaya_trigger_block i_trigger (
@@ -360,7 +359,7 @@ generate for (j = 3; j < 5; j = j+1) begin
      .dat_o        (  output_direct[j]),  // output data
      .signal_o     (  output_signal[j]),  // output signal
      .phase1_i     (  asg1phase_i ),  // phase input
-     .trig_o       (  trig_signal[j-3] ),
+     .trig_o       (  ext_trig_o[j] ),
      .trig_i       (  ext_trig_i ),
 
 	 //communincation with PS
@@ -373,11 +372,9 @@ generate for (j = 3; j < 5; j = j+1) begin
    );
 end
 endgenerate
-assign trig_o = trig_signal[0] | trig_signal[1];
 
-// connect output trigger signal to trigger bus
-assign ext_trig_o[3] = trig_signal[0];
-assign ext_trig_o[4] = trig_signal[1];
+// connect trigger wire to scope
+assign trig_o = ext_trig_o[3] | ext_trig_o[4];
 
 
 //IIR module 

@@ -29,6 +29,7 @@ class Trig(FilterModule):
                          "auto_rearm_delay",
                          "sum_divisor",
                          "inputfilter",
+                         "trigger_delay",
                          ]#,
                          #"trigger_armed"]
     _gui_attributes = _setup_attributes + ['arm_trigger']
@@ -45,6 +46,15 @@ class Trig(FilterModule):
                                      signed=False,
                                      doc='time (s) to wait after '
                                          'a trigger event to rearm the trigger')
+
+    _trigger_delay = IntRegister(0x12C,
+                                    doc='number of clock cycles to wait after '
+                                        'a trigger event to issue the trigger')
+    trigger_delay = FloatRegister(0x12C,
+                                     norm=125e6,
+                                     signed=False,
+                                     doc='time (s) to wait after '
+                                         'a trigger event to issue the trigger')
 
     sum_divisor = IntRegister(0x128, bits=5, doc='log_2(sum normalization factor)')
 

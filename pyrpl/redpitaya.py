@@ -395,7 +395,7 @@ class RedPitaya(object):
         if self.parameters['recompileserver']:
             self.recompileserver()
         #try both versions
-        for serverfile in ['pyrpl_server','pyrpl_server_0.95']:
+        for serverfile in ['pyrpl_server_0.92','pyrpl_server_0.95']:
             sleep(self.parameters['delay'])
             try:
                 self.ssh.scp.put(
