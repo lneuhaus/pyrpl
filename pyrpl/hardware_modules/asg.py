@@ -41,9 +41,15 @@ class WaveformAttribute(SelectProperty):
                                 endpoint=False)
                 y = np.cos(x)
             elif waveform == 'ramp':
+                """
                 y = np.linspace(-1.0, 3.0, instance.data_length,
                                 endpoint=False)
                 y[instance.data_length // 2:] = -1 * y[:instance.data_length // 2]
+                """
+                y = np.linspace(-2., 2., instance.data_length,
+                                endpoint=False)
+                y[:instance.data_length // 4] = -y[instance.data_length // 2:3 * instance.data_length // 4]
+                y[3 * instance.data_length // 4:] = -y[instance.data_length // 4:instance.data_length // 2]
             elif waveform == 'halframp':
                 y = np.linspace(-1.0, 1.0, instance.data_length,
                                 endpoint=False)

@@ -99,8 +99,8 @@ class SoftwarePidController(Module):
     plot = BoolProperty(default=True)
     plotter = Plotter(legend='error (red, V) and output (green, V)')  # plotting window
     running = RunningProperty(default=False)
-    _setup_attributes = ['input', 'output', 'p', 'i', 'd', 'setpoint', 'reset_ival_on_restart',
-                         'interval', 'plot', 'running']
+    _setup_attributes = ['input', 'p', 'i', 'd', 'setpoint', 'reset_ival_on_restart',
+                         'interval', 'plot', 'running'] #'output'
     _gui_attributes = _setup_attributes + ["plotter"]
 
     def start(self):
