@@ -264,7 +264,7 @@ class InputSignal(Signal):
         By default, this is the direct input signal. """
         return self._input_signal_dsp_module()
 
-    def sweep_acquire(self):
+    def sweep_acquire(self, return_asg_data=False):
         """
         returns an experimental curve in V obtained from a sweep of the
         lockbox.
@@ -290,7 +290,10 @@ class InputSignal(Signal):
                 curve1, curve2 = scope.curve(timeout=1./self.lockbox.asg.frequency+scope.duration)
                 times = scope.times
                 curve1 -= self.calibration_data._analog_offset
-                return curve1, times
+                if return_asg_data:
+                    return curve1, curve2
+                else:
+                    return curve1, times
         except InsufficientResourceError:
             # scope is blocked
             self._logger.warning("No free scopes left for sweep_acquire. ")
