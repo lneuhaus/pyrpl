@@ -525,6 +525,9 @@ red_pitaya_dsp i_dsp (
 
   .trig_o          (  dsp_trigger            ),
 
+  .trig_p_i          (  exp_p_in            ), // external DIO_P0-7 trigger input
+  .trig_n_i          (  exp_n_in            ), // external DIO_N0-7 trigger input
+
   .ext_trig_i      (  {exp_n_in, exp_p_in}   ),
   .ext_trig_o      (   dsp_trig_out          ),
 

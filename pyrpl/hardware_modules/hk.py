@@ -73,5 +73,4 @@ class HK(HardwareModule):
         """Sets the output mode of expansion index (both for P and N expansions)"""
         #if not index in range(8):
             #raise ValueError("Index from 0 to 7 expected")
-        return getattr(HK, name).outputmode# direction(self,
-        # val)
+        return getattr(HK, name).outputmode# direction(self, val)
