@@ -1,8 +1,8 @@
 Copyright 1986-2015 Xilinx, Inc. All Rights Reserved.
 ----------------------------------------------------------------------------------------
 | Tool Version     : Vivado v.2015.4 (lin64) Build 1412921 Wed Nov 18 09:44:32 MST 2015
-| Date             : Mon Nov 25 05:26:29 2019
-| Host             : LPC running 64-bit Ubuntu 18.04.2 LTS
+| Date             : Mon Feb  3 10:10:11 2020
+| Host             : LPC running 64-bit Ubuntu 18.04.3 LTS
 | Command          : report_power -file out/post_synth_power.rpt
 | Design           : red_pitaya_top
 | Device           : xc7z010clg400-1
@@ -50,8 +50,8 @@ Table of Contents
 | On-Chip                  | Power (W) | Used     | Available | Utilization (%) |
 +--------------------------+-----------+----------+-----------+-----------------+
 | Clocks                   |     0.070 |       15 |       --- |             --- |
-| Slice Logic              |     0.139 |    32958 |       --- |             --- |
-|   LUT as Logic           |     0.117 |    16228 |     17600 |           92.20 |
+| Slice Logic              |     0.139 |    32961 |       --- |             --- |
+|   LUT as Logic           |     0.117 |    16230 |     17600 |           92.22 |
 |   CARRY4                 |     0.016 |     1450 |      4400 |           32.95 |
 |   Register               |     0.005 |    11604 |     35200 |           32.97 |
 |   F7/F8 Muxes            |    <0.001 |      550 |     17600 |            3.13 |
@@ -59,7 +59,7 @@ Table of Contents
 |   Others                 |     0.000 |      415 |       --- |             --- |
 |   BUFG                   |     0.000 |        1 |        32 |            3.13 |
 |   LUT as Distributed RAM |     0.000 |       24 |      6000 |            0.40 |
-| Signals                  |     0.134 |    26015 |       --- |             --- |
+| Signals                  |     0.134 |    26018 |       --- |             --- |
 | Block RAM                |     0.103 |       34 |        60 |           56.67 |
 | PLL                      |     0.097 |        1 |         2 |           50.00 |
 | DSPs                     |     0.039 |       30 |        80 |           37.50 |
@@ -165,7 +165,7 @@ Table of Contents
 +--------------------------------------------------------+-----------+
 | Name                                                   | Power (W) |
 +--------------------------------------------------------+-----------+
-| red_pitaya_top                                         |     2.164 |
+| red_pitaya_top                                         |     2.165 |
 |   i_ams                                                |     0.005 |
 |   i_asg                                                |     0.060 |
 |     adv_trig_a                                         |     0.002 |
