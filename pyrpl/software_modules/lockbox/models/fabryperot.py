@@ -117,6 +117,7 @@ class FPAnalogPdh(InputSignal, Lorentz):
         # return normalized signal
         return pdh(x=x) / pdh(x=x_max)
 
+
 class FPPdh(InputIq, FPAnalogPdh):
     """ Same as analog pdh signal, but generated from IQ module """
     pass

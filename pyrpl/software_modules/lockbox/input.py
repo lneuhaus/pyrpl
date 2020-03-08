@@ -344,9 +344,9 @@ class InputSignal(Signal):
         """
         return scipy.misc.derivative(self.expected_signal,
                                      variable,
-                                     dx=1e-9,
+                                     dx=1e-6,
                                      n=1,  # first derivative
-                                     order=3)
+                                     order=5)
 
     def is_locked(self, loglevel=logging.INFO):
         """ returns whether the input is locked at the current stage """
