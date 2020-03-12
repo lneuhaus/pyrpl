@@ -287,7 +287,7 @@ class InputSignal(Signal):
                                 running_state='stopped',
                                 rolling_mode=False)
                     scope.save_state("autosweep")
-                curve1, curve2 = scope.curve(timeout=1./self.lockbox.asg.frequency+scope.duration)
+                curve1, curve2 = scope.curve(timeout=1.0 + 1./self.lockbox.asg.frequency+scope.duration)
                 times = scope.times
                 curve1 -= self.calibration_data._analog_offset
                 if return_asg_data:
