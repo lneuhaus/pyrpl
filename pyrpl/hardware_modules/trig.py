@@ -105,6 +105,14 @@ class Trig(FilterModule):
         trigger = int(data[2]) + 2**32 * int(data[3])
         return current, trigger
 
+    @property
+    def last_trigger_age(self):
+        """
+        Returns the age of the latest trigger event in seconds. 
+        """
+        current, trigger = self.current_and_trigger_timestamp
+        return float(current - trigger) * 8e-9 
+
     def arm_trigger(self):
         """
         Convenience function that arms the trigger.
