@@ -219,12 +219,13 @@ class PyrplClient(object):
             restartserver=self._restartserver)
 
 
+class fpgadict(dict):
+    def __missing__(self, key):
+        return 1 # 0 (1 is needed to avoid division_by_zero errors for some registers)
+  
+
 class DummyClient(object):  # pragma: no cover
     """Class for unitary tests without RedPitaya hardware available"""
-    class fpgadict(dict):
-        def __missing__(self, key):
-            return 1 # 0 (1 is needed to avoid division_by_zero errors for some registers)
-    
     def __init__(self):
         self.fpgamemory = fpgadict({
             str(0x40100014): 0x2000,  # scope decimation initial value
