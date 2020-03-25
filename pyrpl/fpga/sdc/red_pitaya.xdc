@@ -148,6 +148,8 @@ set_property SLEW       FAST     [get_ports {exp_p_io[*]}]
 set_property SLEW       FAST     [get_ports {exp_n_io[*]}]
 set_property DRIVE      8        [get_ports {exp_p_io[*]}]
 set_property DRIVE      8        [get_ports {exp_n_io[*]}]
+set_property PULLDOWN   TRUE     [get_ports {exp_p_io[*]}]
+set_property PULLDOWN   TRUE     [get_ports {exp_n_io[*]}]
 
 set_property PACKAGE_PIN G17 [get_ports {exp_p_io[0]}]
 set_property PACKAGE_PIN G18 [get_ports {exp_n_io[0]}]
@@ -165,11 +167,6 @@ set_property PACKAGE_PIN K16 [get_ports {exp_p_io[6]}]
 set_property PACKAGE_PIN J16 [get_ports {exp_n_io[6]}]
 set_property PACKAGE_PIN M14 [get_ports {exp_p_io[7]}]
 set_property PACKAGE_PIN M15 [get_ports {exp_n_io[7]}]
-
-#set_property PULLDOWN TRUE [get_ports {exp_p_io[0]}]
-#set_property PULLDOWN TRUE [get_ports {exp_n_io[0]}]
-#set_property PULLUP   TRUE [get_ports {exp_p_io[7]}]
-#set_property PULLUP   TRUE [get_ports {exp_n_io[7]}]
 
 ### SATA connector
 set_property IOSTANDARD LVCMOS18 [get_ports {daisy_p_o[*]}]
