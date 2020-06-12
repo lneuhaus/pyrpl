@@ -38,7 +38,7 @@ version = _locals['__version__']
 #             requirements.append(line.strip())
 requirements = ['scp',
                 #'matplotlib', # optional requirementm, not needed for core
-                'scipy',
+                'scipy>=1.2',
                 'pyyaml',
                 #'ruamel.yaml' # temporarily disabled
                 'pandas',
