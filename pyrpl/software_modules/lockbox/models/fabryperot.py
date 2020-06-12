@@ -77,13 +77,17 @@ class FitFPTransmission(FPTransmission):
         # compare against values obtained directly from curve
         a_maximum, a_minimum, atol = np.max(curve), np.min(curve), 20e-3
         if not np.allclose(a_minimum, minimum, atol=atol):
-            raise FitError(f"Voigt fit minimum is too far off the "
-                           f"curve minimum: |{minimum:.3f} - {a_minimum:.3f}| "
-                           f"= |{minimum-a_minimum:.3f}| > {atol:.3f}.")
+            raise FitError("Voigt fit minimum is too far off the curve minimum: |%.3f - %.3f| = |%.3f| > atol:%.3f.",
+                           minimum,
+                           a_minimum,
+                           minimim - a_minimum,
+                           atol)
         if not np.allclose(a_maximum, maximum, atol=atol):
-            raise FitError(f"Voigt fit maximum is too far off the "
-                           f"curve maximum: |{maximum:.3f} - {a_maximum:.3f}| "
-                           f"= |{maximum-a_maximum:.3f}| > {atol:.3f}.")
+            raise FitError("Voigt fit maximum is too far off the curve maximum: |%.3f - %.3f| = |%.3f| > atol:%.3f.",
+                           maximum,
+                           a_maximum,
+                           maximum - a_maximum,
+                           atol)
         # set calibration_data values based on fit
         self.calibration_data.min = minimum
         self.calibration_data.max = maximum
