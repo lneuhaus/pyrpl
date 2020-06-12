@@ -50,7 +50,8 @@ requirements = ['scp',
                 'qtpy',
                 'nbconvert',
                 'jupyter-client',
-                'netifaces']
+                'netifaces',
+                'lmfit']
 if sys.version_info >= (3,4):  # python version dependencies
     requirements += ['quamash']
 else:  # python 2.7
