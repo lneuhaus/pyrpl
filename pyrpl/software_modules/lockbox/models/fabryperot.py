@@ -139,7 +139,6 @@ class FitFPTransmission(FPTransmission):
 
 
 class FitFPTransmissionVsq(FitFPTransmission):
-
     def voltage_to_fit(self, voltage):
         return (voltage + 1)**2
 
