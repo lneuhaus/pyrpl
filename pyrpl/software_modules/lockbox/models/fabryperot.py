@@ -71,7 +71,7 @@ class FitFPTransmission(FPTransmission):
             self._logger.warning("Aborting calibration because no scope is available.")
             return None
         try:
-            maximum, minimum, centre_voltage, vsq_fwhm = self.fit_with_voigt(curve, voltage)
+            maximum, minimum, centre_voltage, fit_fwhm = self.fit_with_voigt(curve, voltage)
         except:
             raise FitError("Unexpected error during Voigt fit.")
         # compare against values obtained directly from curve
@@ -99,7 +99,7 @@ class FitFPTransmission(FPTransmission):
                           self.calibration_data.min,
                           self.calibration_data.max,
                           centre_voltage,
-                          vsq_fwhm)
+                          fit_fwhm)
         # update graph in lockbox
         self.lockbox._signal_launcher.input_calibrated.emit([self])
         # save data if desired
@@ -114,23 +114,37 @@ class FitFPTransmission(FPTransmission):
 
     def fit_with_voigt(self, curve, voltage):
         """ Fits curve to a Voigt profile. """
-        voltage = voltage + 1
-        vsq = voltage**2
+        x_for_fit = self.voltage_to_fit(voltage)
 
         peak = VoigtModel()
-        p_params = peak.guess(curve, x=vsq)
+        p_params = peak.guess(curve, x=x_for_fit)
         background = ConstantModel()
         b_params = background.guess(curve)
         background.set_param_hint("c", value=np.min(curve))
         mod = peak + background
         pars = p_params + b_params
-        result = mod.fit(curve, pars, x=vsq, method="least_squares")
+        result = mod.fit(curve, pars, x=x_for_fit, method="least_squares")
 
         maximum = result.values["height"] + result.values["c"]
         minimum = result.values["c"]
-        centre_voltage = np.sqrt(result.values["center"]) - 1
-        vsq_fwhm = result.values["fwhm"]
-        return maximum, minimum, centre_voltage, vsq_fwhm
+        centre_voltage = self.voltage_from_fit(result.values["center"])
+        fit_fwhm = result.values["fwhm"]
+        return maximum, minimum, centre_voltage, fit_fwhm
+
+    def voltage_to_fit(self, voltage):
+        return voltage
+
+    def voltage_from_fit(self, x_for_fit):
+        return x_for_fit
+
+
+class FitFPTransmissionVsq(FitFPTransmission):
+
+    def voltage_to_fit(self, voltage):
+        return (voltage + 1)**2
+
+    def voltage_from_fit(self, x_for_fit):
+        return np.sqrt(x_for_fit) - 1
 
 
 class FPAnalogPdh(InputSignal, Lorentz):
