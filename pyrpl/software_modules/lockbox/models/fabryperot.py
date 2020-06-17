@@ -1,6 +1,12 @@
 from .. import *
 from .interferometer import Interferometer
 from ....async_utils import TimeoutError
+from lmfit.models import ConstantModel, VoigtModel
+
+
+class FitError(RuntimeError):
+    """ A class for fitting-related errors. """
+
 
 class Lorentz(object):
     """ base class for Lorentzian-like signals"""
@@ -56,6 +62,88 @@ class FPTransmission(FPReflection):
         return self.calibration_data.min + (self.calibration_data.max -
                                             self.calibration_data.min) * \
                                             self._lorentz(detuning)
+
+
+class FitFPTransmission(FPTransmission):
+    def calibrate(self, autosave=False):
+        curve, voltage = self.sweep_acquire(return_asg_data=True)
+        if curve is None:
+            self._logger.warning("Aborting calibration because no scope is available.")
+            return None
+        try:
+            maximum, minimum, centre_voltage, fit_fwhm = self.fit_with_voigt(curve, voltage)
+        except:
+            raise FitError("Unexpected error during Voigt fit.")
+        # compare against values obtained directly from curve
+        a_maximum, a_minimum, atol = np.max(curve), np.min(curve), 20e-3
+        if not np.allclose(a_minimum, minimum, atol=atol):
+            raise FitError("Voigt fit minimum is too far off the curve minimum: |%.3f - %.3f| = |%.3f| > atol:%.3f.",
+                           minimum,
+                           a_minimum,
+                           minimim - a_minimum,
+                           atol)
+        if not np.allclose(a_maximum, maximum, atol=atol):
+            raise FitError("Voigt fit maximum is too far off the curve maximum: |%.3f - %.3f| = |%.3f| > atol:%.3f.",
+                           maximum,
+                           a_maximum,
+                           maximum - a_maximum,
+                           atol)
+        # set calibration_data values based on fit
+        self.calibration_data.min = minimum
+        self.calibration_data.max = maximum
+        self.calibration_data.mean = (maximum - minimum) * 0.5
+        self.calibration_data.rms = curve.std()
+        # log calibration values
+        self._logger.info("%s calibration successful - Min: %.3f  Max: %.3f  Centre: %.3f  FWHM: %.3f",
+                          self.name,
+                          self.calibration_data.min,
+                          self.calibration_data.max,
+                          centre_voltage,
+                          fit_fwhm)
+        # update graph in lockbox
+        self.lockbox._signal_launcher.input_calibrated.emit([self])
+        # save data if desired
+        if autosave:
+            params = self.calibration_data.setup_attributes
+            params['name'] = self.name+"_calibration"
+            newcurve = self._save_curve(voltage, curve, **params)
+            self.calibration_data.curve = newcurve
+            return newcurve
+        else:
+            return None
+
+    def fit_with_voigt(self, curve, voltage):
+        """ Fits curve to a Voigt profile. """
+        x_for_fit = self.voltage_to_fit(voltage)
+
+        peak = VoigtModel()
+        p_params = peak.guess(curve, x=x_for_fit)
+        background = ConstantModel()
+        b_params = background.guess(curve)
+        background.set_param_hint("c", value=np.min(curve))
+        mod = peak + background
+        pars = p_params + b_params
+        result = mod.fit(curve, pars, x=x_for_fit, method="least_squares")
+
+        maximum = result.values["height"] + result.values["c"]
+        minimum = result.values["c"]
+        centre_voltage = self.voltage_from_fit(result.values["center"])
+        fit_fwhm = result.values["fwhm"]
+        return maximum, minimum, centre_voltage, fit_fwhm
+
+    def voltage_to_fit(self, voltage):
+        return voltage
+
+    def voltage_from_fit(self, x_for_fit):
+        return x_for_fit
+
+
+class FitFPTransmissionVsq(FitFPTransmission):
+    def voltage_to_fit(self, voltage):
+        return (voltage + 1)**2
+
+    def voltage_from_fit(self, x_for_fit):
+        return np.sqrt(x_for_fit) - 1
 
 
 class FPAnalogPdh(InputSignal, Lorentz):

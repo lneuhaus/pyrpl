@@ -38,7 +38,7 @@ version = _locals['__version__']
 #             requirements.append(line.strip())
 requirements = ['scp',
                 #'matplotlib', # optional requirementm, not needed for core
-                'scipy',
+                'scipy>=1.2',
                 'pyyaml',
                 #'ruamel.yaml' # temporarily disabled
                 'pandas',
@@ -50,7 +50,8 @@ requirements = ['scp',
                 'qtpy',
                 'nbconvert',
                 'jupyter-client',
-                'netifaces']
+                'netifaces',
+                'lmfit']
 if sys.version_info >= (3,4):  # python version dependencies
     requirements += ['quamash']
 else:  # python 2.7
