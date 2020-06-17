@@ -65,6 +65,8 @@ class FPTransmission(FPReflection):
 
 
 class FitFPTransmission(FPTransmission):
+    atol = 0.050  # absolute tolerance between fit extrema and calibration curve min/max voltages
+
     def calibrate(self, autosave=False):
         curve, voltage = self.sweep_acquire(return_asg_data=True)
         if curve is None:
@@ -75,31 +77,21 @@ class FitFPTransmission(FPTransmission):
         except:
             raise FitError("Unexpected error during Voigt fit.")
         # compare against values obtained directly from curve
-        a_maximum, a_minimum, atol = np.max(curve), np.min(curve), 20e-3
+        a_maximum, a_minimum, atol = np.max(curve), np.min(curve), self.atol
         if not np.allclose(a_minimum, minimum, atol=atol):
-            raise FitError("Voigt fit minimum is too far off the curve minimum: |%.3f - %.3f| = |%.3f| > atol:%.3f.",
-                           minimum,
-                           a_minimum,
-                           minimim - a_minimum,
-                           atol)
+            raise FitError("Voigt fit minimum is too far off the curve minimum: |%.3f - %.3f| = |%.3f| > atol:%.3f." % 
+                           (minimum, a_minimum, minimum - a_minimum, atol))
         if not np.allclose(a_maximum, maximum, atol=atol):
-            raise FitError("Voigt fit maximum is too far off the curve maximum: |%.3f - %.3f| = |%.3f| > atol:%.3f.",
-                           maximum,
-                           a_maximum,
-                           maximum - a_maximum,
-                           atol)
+            raise FitError("Voigt fit maximum is too far off the curve maximum: |%.3f - %.3f| = |%.3f| > atol:%.3f." %
+                           (maximum, a_maximum, maximum - a_maximum, atol))
         # set calibration_data values based on fit
         self.calibration_data.min = minimum
         self.calibration_data.max = maximum
-        self.calibration_data.mean = (maximum - minimum) * 0.5
+        self.calibration_data.mean = curve.mean()
         self.calibration_data.rms = curve.std()
         # log calibration values
         self._logger.info("%s calibration successful - Min: %.3f  Max: %.3f  Centre: %.3f  FWHM: %.3f",
-                          self.name,
-                          self.calibration_data.min,
-                          self.calibration_data.max,
-                          centre_voltage,
-                          fit_fwhm)
+                          self.name, self.calibration_data.min, self.calibration_data.max, centre_voltage, fit_fwhm)
         # update graph in lockbox
         self.lockbox._signal_launcher.input_calibrated.emit([self])
         # save data if desired
@@ -286,6 +278,16 @@ class FabryPerot(Interferometer):
         # linewidth (in m) = lambda/(2*finesse)
         # bandwidth = linewidth/2
         return self._linewidth_in_m / 2.0
+
+
+class FitFabryPerot(FabryPerot):
+    inputs = LockboxModuleDictProperty(transmission=FitFPTransmission,
+                                       pdh=FPPdh)
+
+class FitVsqFabryPerot(FabryPerot):
+    inputs = LockboxModuleDictProperty(transmission=FitFPTransmissionVsq,
+                                       pdh=FPPdh)
+
 
 
 class HighFinesseInput(InputSignal):
