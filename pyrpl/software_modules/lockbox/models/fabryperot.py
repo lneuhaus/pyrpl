@@ -96,7 +96,7 @@ class FitInput(InputSignal):
         pars = p_params + b_params
         result = mod.fit(curve, pars, x=x_for_fit, method="least_squares", 
                          max_nfev=self.max_nfev)
-        if not negative:
+        if not self.negative:
             maximum = result.values["height"] + result.values["c"]
             minimum = result.values["c"]
         else:
