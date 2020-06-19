@@ -45,6 +45,7 @@ class FitInput(InputSignal):
     
     def calibrate(self, autosave=False):
         curve, voltage = self.sweep_acquire(return_asg_data=True)
+        curve -= self.calibration_data._analog_offset
         if curve is None:
             self._logger.warning("Aborting calibration because no scope is available.")
             return None
