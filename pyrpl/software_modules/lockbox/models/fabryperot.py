@@ -31,11 +31,18 @@ class Lorentz(object):
         return (-2.0 + 6.0 * x ** 2) * self._lorentz(x) ** 3
 
 
+class FitCalibrationData(CalibrationData):
+    _setup_attributes = ["center", "fwhm"]
+    center = FloatProperty(doc="center voltage of the resonance peak")
+    fwhm = FloatProperty(doc="FWHM of the resonance peak")
+
+
 class FitInput(InputSignal):
     atol = 0.050  # absolute tolerance between fit extrema and calibration curve min/max voltages
     max_nfev = 1000  # maximum number of fit function evaluations
     negative = False  # True if the peak is more negative than the offset (i.e. True for reflection dips)
-
+    calibration_data = ModuleProperty(FitCalibrationData)
+    
     def calibrate(self, autosave=False):
         curve, voltage = self.sweep_acquire(return_asg_data=True)
         if curve is None:
