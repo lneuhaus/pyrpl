@@ -31,6 +31,85 @@ class Lorentz(object):
         return (-2.0 + 6.0 * x ** 2) * self._lorentz(x) ** 3
 
 
+class FitCalibrationData(CalibrationData):
+    _setup_attributes = ["center", "fwhm"]
+    center = FloatProperty(doc="center voltage of the resonance peak")
+    fwhm = FloatProperty(doc="FWHM of the resonance peak")
+
+
+class FitInput(InputSignal):
+    atol = 0.050  # absolute tolerance between fit extrema and calibration curve min/max voltages
+    max_nfev = 1000  # maximum number of fit function evaluations
+    negative = False  # True if the peak is more negative than the offset (i.e. True for reflection dips)
+    calibration_data = ModuleProperty(FitCalibrationData)
+    
+    def calibrate(self, autosave=False):
+        curve, voltage = self.sweep_acquire(return_asg_data=True)
+        if curve is None:
+            self._logger.warning("Aborting calibration because no scope is available.")
+            return None
+        try:
+            maximum, minimum, centre_voltage, fit_fwhm = self.fit(curve, voltage)
+        except:
+            raise FitError("Unexpected error during Voigt fit.")
+        # compare against values obtained directly from curve
+        a_maximum, a_minimum, atol = np.max(curve), np.min(curve), self.atol
+        if not np.allclose(a_minimum, minimum, atol=atol):
+            raise FitError("Voigt fit minimum is too far off the curve minimum: |%.3f - %.3f| = |%.3f| > atol:%.3f." % 
+                           (minimum, a_minimum, minimum - a_minimum, atol))
+        if not np.allclose(a_maximum, maximum, atol=atol):
+            raise FitError("Voigt fit maximum is too far off the curve maximum: |%.3f - %.3f| = |%.3f| > atol:%.3f." %
+                           (maximum, a_maximum, maximum - a_maximum, atol))
+        # set calibration_data values based on fit
+        self.calibration_data.min = minimum
+        self.calibration_data.max = maximum
+        self.calibration_data.mean = curve.mean()
+        self.calibration_data.rms = curve.std()
+        self.calibration_data.center = centre_voltage
+        self.calibration_data.fwhm = fit_fwhm
+
+        # log calibration values
+        self._logger.info("%s calibration successful - Min: %.3f  Max: %.3f  Centre: %.3f  FWHM: %.3f",
+                          self.name, self.calibration_data.min, self.calibration_data.max, centre_voltage, fit_fwhm)
+        # update graph in lockbox
+        self.lockbox._signal_launcher.input_calibrated.emit([self])
+        # save data if desired
+        if autosave:
+            params = self.calibration_data.setup_attributes
+            params['name'] = self.name+"_calibration"
+            newcurve = self._save_curve(voltage, curve, **params)
+            self.calibration_data.curve = newcurve
+            return newcurve
+        else:
+            return None
+
+    def fit(self, curve, voltage):
+        """ Fits curve to a Voigt profile. """
+        x_for_fit = self.voltage_to_fit(voltage)
+
+        peak = VoigtModel()
+        p_params = peak.guess(curve, x=x_for_fit, negative=self.negative)
+        background = ConstantModel()
+        b_params = background.guess(curve)
+        background.set_param_hint("c", value=np.min(curve))
+        mod = peak + background
+        pars = p_params + b_params
+        result = mod.fit(curve, pars, x=x_for_fit, method="least_squares", 
+                         max_nfev=self.max_nfev)
+
+        maximum = result.values["height"] + result.values["c"]
+        minimum = result.values["c"]
+        centre_voltage = self.voltage_from_fit(result.values["center"])
+        fit_fwhm = result.values["fwhm"]
+        return maximum, minimum, centre_voltage, fit_fwhm
+
+    def voltage_to_fit(self, voltage):
+        return voltage
+
+    def voltage_from_fit(self, x_for_fit):
+        return x_for_fit
+
+
 class FPReflection(InputSignal, Lorentz):
     def expected_signal(self, setpoint):
         detuning = setpoint * self.lockbox._setpoint_unit_in_unit('bandwidth')
@@ -62,80 +141,6 @@ class FPTransmission(FPReflection):
         return self.calibration_data.min + (self.calibration_data.max -
                                             self.calibration_data.min) * \
                                             self._lorentz(detuning)
-
-
-class FitFPTransmission(FPTransmission):
-    atol = 0.050  # absolute tolerance between fit extrema and calibration curve min/max voltages
-
-    def calibrate(self, autosave=False):
-        curve, voltage = self.sweep_acquire(return_asg_data=True)
-        if curve is None:
-            self._logger.warning("Aborting calibration because no scope is available.")
-            return None
-        try:
-            maximum, minimum, centre_voltage, fit_fwhm = self.fit_with_voigt(curve, voltage)
-        except:
-            raise FitError("Unexpected error during Voigt fit.")
-        # compare against values obtained directly from curve
-        a_maximum, a_minimum, atol = np.max(curve), np.min(curve), self.atol
-        if not np.allclose(a_minimum, minimum, atol=atol):
-            raise FitError("Voigt fit minimum is too far off the curve minimum: |%.3f - %.3f| = |%.3f| > atol:%.3f." % 
-                           (minimum, a_minimum, minimum - a_minimum, atol))
-        if not np.allclose(a_maximum, maximum, atol=atol):
-            raise FitError("Voigt fit maximum is too far off the curve maximum: |%.3f - %.3f| = |%.3f| > atol:%.3f." %
-                           (maximum, a_maximum, maximum - a_maximum, atol))
-        # set calibration_data values based on fit
-        self.calibration_data.min = minimum
-        self.calibration_data.max = maximum
-        self.calibration_data.mean = curve.mean()
-        self.calibration_data.rms = curve.std()
-        # log calibration values
-        self._logger.info("%s calibration successful - Min: %.3f  Max: %.3f  Centre: %.3f  FWHM: %.3f",
-                          self.name, self.calibration_data.min, self.calibration_data.max, centre_voltage, fit_fwhm)
-        # update graph in lockbox
-        self.lockbox._signal_launcher.input_calibrated.emit([self])
-        # save data if desired
-        if autosave:
-            params = self.calibration_data.setup_attributes
-            params['name'] = self.name+"_calibration"
-            newcurve = self._save_curve(voltage, curve, **params)
-            self.calibration_data.curve = newcurve
-            return newcurve
-        else:
-            return None
-
-    def fit_with_voigt(self, curve, voltage):
-        """ Fits curve to a Voigt profile. """
-        x_for_fit = self.voltage_to_fit(voltage)
-
-        peak = VoigtModel()
-        p_params = peak.guess(curve, x=x_for_fit)
-        background = ConstantModel()
-        b_params = background.guess(curve)
-        background.set_param_hint("c", value=np.min(curve))
-        mod = peak + background
-        pars = p_params + b_params
-        result = mod.fit(curve, pars, x=x_for_fit, method="least_squares")
-
-        maximum = result.values["height"] + result.values["c"]
-        minimum = result.values["c"]
-        centre_voltage = self.voltage_from_fit(result.values["center"])
-        fit_fwhm = result.values["fwhm"]
-        return maximum, minimum, centre_voltage, fit_fwhm
-
-    def voltage_to_fit(self, voltage):
-        return voltage
-
-    def voltage_from_fit(self, x_for_fit):
-        return x_for_fit
-
-
-class FitFPTransmissionVsq(FitFPTransmission):
-    def voltage_to_fit(self, voltage):
-        return (voltage + 1)**2
-
-    def voltage_from_fit(self, x_for_fit):
-        return np.sqrt(x_for_fit) - 1
 
 
 class FPAnalogPdh(InputSignal, Lorentz):
@@ -280,14 +285,42 @@ class FabryPerot(Interferometer):
         return self._linewidth_in_m / 2.0
 
 
+class FitFPReflection(FitInput, FPReflection):
+    negative = True
+
+
+class FitFPTransmission(FitInput, FPTransmission):
+    pass
+
+
 class FitFabryPerot(FabryPerot):
     inputs = LockboxModuleDictProperty(transmission=FitFPTransmission,
+                                       reflection=FitFPReflection,
                                        pdh=FPPdh)
 
-class FitVsqFabryPerot(FabryPerot):
-    inputs = LockboxModuleDictProperty(transmission=FitFPTransmissionVsq,
-                                       pdh=FPPdh)
 
+class NonlinearFitInput(FitInput):
+    def voltage_to_fit(self, voltage):
+        return (voltage + self.lockbox._fit_x_offset)**self.lockbox._fit_x_exponent
+
+    def voltage_from_fit(self, x_for_fit):
+        return (x_for_fit) ** (1.0 / self.lockbox._fit_x_exponent) - self.lockbox._fit_x_offset
+
+
+class NonlinearFitFPReflection(NonlinearFitInput, FitFPReflection):
+    pass
+
+
+class NonlinearFitFPTransmission(NonlinearFitInput, FitFPTransmission):
+    pass
+
+
+class FitVsqFabryPerot(FitFabryPerot):
+    _fit_x_offset = 1.0
+    _fit_x_exponent = 2.0
+    inputs = LockboxModuleDictProperty(transmission=NonlinearFitFPTransmission,
+                                       reflection=NonlinearFitFPReflection, 
+                                       pdh=FPPdh)  # TODO: add Pdh Fit and make fit use expected_signal
 
 
 class HighFinesseInput(InputSignal):
