@@ -96,9 +96,12 @@ class FitInput(InputSignal):
         pars = p_params + b_params
         result = mod.fit(curve, pars, x=x_for_fit, method="least_squares", 
                          max_nfev=self.max_nfev)
-
-        maximum = result.values["height"] + result.values["c"]
-        minimum = result.values["c"]
+        if not negative:
+            maximum = result.values["height"] + result.values["c"]
+            minimum = result.values["c"]
+        else:
+            maximum = result.values["c"]
+            minimum = result.values["c"] + result.values["height"]
         centre_voltage = self.voltage_from_fit(result.values["center"])
         fit_fwhm = result.values["fwhm"]
         return maximum, minimum, centre_voltage, fit_fwhm
