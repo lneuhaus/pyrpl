@@ -48,7 +48,6 @@ class FitInput(InputSignal):
         points_to_use = len(curve)//2
         curve = curve[:points_to_use]
         voltage = voltage[:points_to_use]
-        curve -= self.calibration_data._analog_offset
         if curve is None:
             self._logger.warning("Aborting calibration because no scope is available.")
             return None
