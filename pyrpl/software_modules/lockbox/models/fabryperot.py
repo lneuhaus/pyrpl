@@ -45,6 +45,9 @@ class FitInput(InputSignal):
     
     def calibrate(self, autosave=False):
         curve, voltage = self.sweep_acquire(return_asg_data=True)
+        points_to_use = len(curve)//2
+        curve = curve[:points_to_use]
+        voltage = voltage[:points_to_use]
         if curve is None:
             self._logger.warning("Aborting calibration because no scope is available.")
             return None
@@ -96,9 +99,12 @@ class FitInput(InputSignal):
         pars = p_params + b_params
         result = mod.fit(curve, pars, x=x_for_fit, method="least_squares", 
                          max_nfev=self.max_nfev)
-
-        maximum = result.values["height"] + result.values["c"]
         minimum = result.values["c"]
+        maximum = minimum + result.values["height"]
+        if self.negative:
+            minimum, maximum = maximum, minimum
+        if minimum > maximum:
+            raise FitError("The fitted peak has the wrong sign.")
         centre_voltage = self.voltage_from_fit(result.values["center"])
         fit_fwhm = result.values["fwhm"]
         return maximum, minimum, centre_voltage, fit_fwhm
