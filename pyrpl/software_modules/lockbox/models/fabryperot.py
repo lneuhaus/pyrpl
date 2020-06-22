@@ -43,7 +43,7 @@ class Voigt(object):
     def _voigt(self, x):
         z = (x + 1j * 2 / 3.6013) / (2 / 3.6013 * np.sqrt(2))
         w = np.exp(-z**2) * erfc(-1j * z)
-        return np.real(w) / voigt_max
+        return np.real(w) / self.voigt_max
 
 
 class FitCalibrationData(CalibrationData):
