@@ -34,16 +34,11 @@ class Lorentz(object):
 
 class Voigt(object):
     """ base class for Voigt-like signals"""
+    voigt_max = VoigtModel().eval(x=0, amplitude=1, center=0, sigma=2 / 3.6013)
 
-    voigt_max = np.exp(0.5) * erfc(1 / np.sqrt(2))
-
-    # Definition taken from
-    # https://lmfit.github.io/lmfit-py/builtin_models.html#lmfit.models.VoigtModel
-    # with A=1, mu=0, sigma=gamma, FWHM=2 --> sigma=gamma=2/3.6013
+    # See https://lmfit.github.io/lmfit-py/builtin_models.html#lmfit.models.VoigtModel
     def _voigt(self, x):
-        z = (x + 1j * 2 / 3.6013) / (2 / 3.6013 * np.sqrt(2))
-        w = np.exp(-z**2) * erfc(-1j * z)
-        return np.real(w) / self.voigt_max
+        return VoigtModel().eval(x=x, amplitude=1, center=0, sigma=2 / 3.6013) / self.voigt_max
 
 
 class FitCalibrationData(CalibrationData):
