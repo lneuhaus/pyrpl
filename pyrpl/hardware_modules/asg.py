@@ -68,9 +68,14 @@ class WaveformAttribute(SelectProperty):
             elif waveform == 'halframp':
                 y = np.linspace(-1.0, 1.0, instance.data_length,
                                 endpoint=False)
+            elif waveform == 'sqrt_ramp':
+                y = np.sqrt(np.linspace(0.0, 8.0, instance.data_length,
+                            endpoint=False))
+                y[instance.data_length // 2 + 1:] = y[instance.data_length // 2 - 2::-1]
+                y -= 1.0
             elif waveform == 'square':
                 y = np.ones(instance.data_length)
-                y[len(y)//2:] = -1.0
+                y[len(y) // 2:] = -1.0
             elif waveform == 'dc':
                 y = np.zeros(instance.data_length)
             else:
