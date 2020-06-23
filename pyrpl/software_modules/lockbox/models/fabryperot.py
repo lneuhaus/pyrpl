@@ -38,8 +38,7 @@ class Voigt(object):
 
     # See https://lmfit.github.io/lmfit-py/builtin_models.html#lmfit.models.VoigtModel
     def _voigt(self, x):
-        return VoigtModel().eval(x=x * 2 / 3.6013, amplitude=1,
-                                 center=0, sigma=2 / 3.6013) / self.voigt_max
+        return VoigtModel().eval(x=x, amplitude=1, center=0, sigma=2 / 3.6013) / self.voigt_max
 
 
 class FitCalibrationData(CalibrationData):
