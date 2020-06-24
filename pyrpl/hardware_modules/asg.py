@@ -30,8 +30,9 @@ from . import all_output_directs, dsp_addr_base
 
 class WaveformAttribute(SelectProperty):
     default = 'sin'
-    #def get_value(self, instance):
-    #    return instance._waveform
+    default_options = [
+        'sin', 'cos', 'ramp', 'halframp', 'sqrt_ramp', 'square', 'dc', 'noise'
+    ]
 
     def set_value(self, instance, waveform):
         waveform = waveform.lower()
@@ -68,9 +69,14 @@ class WaveformAttribute(SelectProperty):
             elif waveform == 'halframp':
                 y = np.linspace(-1.0, 1.0, instance.data_length,
                                 endpoint=False)
+            elif waveform == 'sqrt_ramp':
+                y = np.sqrt(np.linspace(0.0, 8.0, instance.data_length,
+                            endpoint=False))
+                y[instance.data_length // 2 + 1:] = y[instance.data_length // 2 - 1:0:-1]
+                y -= 1.0
             elif waveform == 'square':
                 y = np.ones(instance.data_length)
-                y[len(y)//2:] = -1.0
+                y[len(y) // 2:] = -1.0
             elif waveform == 'dc':
                 y = np.zeros(instance.data_length)
             else:
@@ -275,9 +281,7 @@ def make_asg(channel=0):
         def _noise_V2_per_Hz(self):
             return self._rmsamplitude**2/(125e6*self._frequency_correction/2)
 
-        waveforms = ['sin', 'cos', 'ramp', 'halframp', 'square', 'dc',
-                     'noise']
-
+        waveforms = WaveformAttribute.default_options
         waveform = WaveformAttribute(waveforms)
 
         def trig(self):

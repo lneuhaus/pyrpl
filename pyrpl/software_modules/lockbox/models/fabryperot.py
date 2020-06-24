@@ -2,6 +2,7 @@ from .. import *
 from .interferometer import Interferometer
 from ....async_utils import TimeoutError
 from lmfit.models import ConstantModel, VoigtModel
+from scipy.special import erfc
 
 
 class FitError(RuntimeError):
@@ -29,6 +30,15 @@ class Lorentz(object):
     def _lorentz_slope_slope(self, x):
         """ second derivative of _lorentz """
         return (-2.0 + 6.0 * x ** 2) * self._lorentz(x) ** 3
+
+
+class Voigt(object):
+    """ base class for Voigt-like signals"""
+    voigt_max = VoigtModel().eval(x=0, amplitude=1, center=0, sigma=2 / 3.6013)
+
+    # See https://lmfit.github.io/lmfit-py/builtin_models.html#lmfit.models.VoigtModel
+    def _voigt(self, x):
+        return VoigtModel().eval(x=x, amplitude=1, center=0, sigma=2 / 3.6013) / self.voigt_max
 
 
 class FitCalibrationData(CalibrationData):
@@ -291,12 +301,22 @@ class FabryPerot(Interferometer):
         return self._linewidth_in_m / 2.0
 
 
-class FitFPReflection(FitInput, FPReflection):
+class FitFPReflection(FitInput, FPReflection, Voigt):
     negative = True
 
+    def expected_signal(self, setpoint):
+        detuning = setpoint * self.lockbox._setpoint_unit_in_unit('bandwidth')
+        return self.calibration_data.max - (self.calibration_data.max -
+                                            self.calibration_data.min) * \
+                                            self._voigt(detuning)
 
-class FitFPTransmission(FitInput, FPTransmission):
-    pass
+
+class FitFPTransmission(FitInput, FPTransmission, Voigt):
+    def expected_signal(self, setpoint):
+        detuning = setpoint * self.lockbox._setpoint_unit_in_unit('bandwidth')
+        return self.calibration_data.min + (self.calibration_data.max -
+                                            self.calibration_data.min) * \
+                                            self._voigt(detuning)
 
 
 class FitFabryPerot(FabryPerot):
