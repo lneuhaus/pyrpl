@@ -59,13 +59,6 @@ class FitInput(InputSignal):
         curve = curve[:points_to_use]
         voltage = voltage[:points_to_use]
 
-        # for testing
-        voltage = np.linspace(-50, 150, 3000)  # range of setpoint values over which to plot signal
-        curve = self.expected_signal(voltage)
-        curve -= min(curve)
-        curve /= max(curve)
-        voltage = 2 + voltage * 3
-
         if curve is None:
             self._logger.warning("Aborting calibration because no scope is available.")
             return None
