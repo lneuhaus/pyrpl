@@ -484,9 +484,10 @@ class LockboxInputWidget(ModuleWidget):
         self.win = pg.GraphicsWindow(title="Expected signal")
         self.plot_item = self.win.addPlot(title='Expected ' + self.module.name)
         self.plot_item.showGrid(y=True, x=True, alpha=1.)
+        self.measured_curve = self.plot_item.plot(symbol='x')
         self.curve = self.plot_item.plot(pen='y')
         self.curve_slope = self.plot_item.plot(pen=pg.mkPen('b', width=5))
-        self.symbol = self.plot_item.plot(pen='b', symbol='o')
+        self.symbol = self.plot_item.plot(pen='b', symbol='.')
         self.main_layout.addWidget(self.win)
         self.button_calibrate = QtWidgets.QPushButton('Calibrate')
         self.main_layout.addWidget(self.button_calibrate)
@@ -517,9 +518,15 @@ class LockboxInputWidget(ModuleWidget):
             input = self.module
         y = input.expected_signal(input.plot_range)
         self.curve.setData(input.plot_range, y)
+        try:
+            self.measured_curve.setData(input.calibration_data._measured_x,
+                                        input.calibration_data._measured_y)
+        except AttributeError:
+            pass
         input._logger.debug('Updated widget for input %s to '
                             'show GUI display of expected signal (min at %f)!',
                             input.name, input.expected_signal(0))
+
 
 class InputsWidget(QtWidgets.QWidget):
     """

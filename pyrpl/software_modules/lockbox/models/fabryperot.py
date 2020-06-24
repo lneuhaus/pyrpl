@@ -58,6 +58,14 @@ class FitInput(InputSignal):
         points_to_use = len(curve)//2
         curve = curve[:points_to_use]
         voltage = voltage[:points_to_use]
+
+        # for testing
+        voltage = np.linspace(-50, 150, 3000)  # range of setpoint values over which to plot signal
+        curve = self.expected_signal(voltage)
+        curve -= min(curve)
+        curve /= max(curve)
+        voltage = 2 + voltage * 3
+
         if curve is None:
             self._logger.warning("Aborting calibration because no scope is available.")
             return None
@@ -80,7 +88,6 @@ class FitInput(InputSignal):
         self.calibration_data.rms = curve.std()
         self.calibration_data.center = centre_voltage
         self.calibration_data.fwhm = fit_fwhm
-
         # log calibration values
         self._logger.info("%s calibration successful - Min: %.3f  Max: %.3f  Centre: %.3f  FWHM: %.3f",
                           self.name, self.calibration_data.min, self.calibration_data.max, centre_voltage, fit_fwhm)
@@ -117,6 +124,13 @@ class FitInput(InputSignal):
             raise FitError("The fitted peak has the wrong sign.")
         centre_voltage = self.voltage_from_fit(result.values["center"])
         fit_fwhm = result.values["fwhm"]
+        # set data for plotting in GUI
+        x_in_bandwidths = (x_for_fit - result.values["center"]) / (fit_fwhm / 2)
+        # max_bandwidths = max(self.plot_range) * self.lockbox._setpoint_unit_in_unit('bandwidth')
+        # min_bandwidths = min(self.plot_range) * self.lockbox._setpoint_unit_in_unit('bandwidth')
+        # possibly add a selection of data in range here
+        self.calibration_data._measured_x = x_in_bandwidths
+        self.calibration_data._measured_y = curve
         return maximum, minimum, centre_voltage, fit_fwhm
 
     def voltage_to_fit(self, voltage):
