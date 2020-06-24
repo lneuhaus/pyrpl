@@ -487,7 +487,7 @@ class LockboxInputWidget(ModuleWidget):
         self.measured_curve = self.plot_item.plot(symbol='x')
         self.curve = self.plot_item.plot(pen='y')
         self.curve_slope = self.plot_item.plot(pen=pg.mkPen('b', width=5))
-        self.symbol = self.plot_item.plot(pen='b', symbol='.')
+        self.symbol = self.plot_item.plot(pen='b', symbol='o')
         self.main_layout.addWidget(self.win)
         self.button_calibrate = QtWidgets.QPushButton('Calibrate')
         self.main_layout.addWidget(self.button_calibrate)
