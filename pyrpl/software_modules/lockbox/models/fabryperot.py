@@ -122,7 +122,7 @@ class FitInput(InputSignal):
         # max_bandwidths = max(self.plot_range) * self.lockbox._setpoint_unit_in_unit('bandwidth')
         # min_bandwidths = min(self.plot_range) * self.lockbox._setpoint_unit_in_unit('bandwidth')
         # possibly add a selection of data in range here
-        self.calibration_data._measured_x = x_in_bandwidths
+        self.calibration_data._measured_x = x_in_bandwidths / self.lockbox._setpoint_unit_in_unit('bandwidth')
         self.calibration_data._measured_y = curve
         return maximum, minimum, centre_voltage, fit_fwhm
 
