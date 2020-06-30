@@ -302,7 +302,7 @@ class Pid(FilterModule):
                                              )
 
     paused = PauseRegister(0xC,
-                           invert=True,
+                           invert=False,
                            doc="While True, the gains selected with `pause` are "
                                "temporarily set to zero ")
 

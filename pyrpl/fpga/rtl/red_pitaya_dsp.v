@@ -335,8 +335,8 @@ generate for (j = 0; j < 3; j = j+1) begin
      // data
      .clk_i        (  clk_i          ),  // clock
      .rstn_i       (  rstn_i         ),  // reset - active low
-     .sync_i       (  sync[j] | (!trig_p_i[j])  ),  // pause pid - unpaused when high, paused when low, 
-                                                    // i.e. when sync[j] is low (software control) or when DIO_P0 is high 
+     .sync_i       (  sync[j] | trig_p_i[j] ),  // pause pid - unpaused when low, paused when high, 
+                                                // i.e. paused when either sync (aka "paused" register) is high or DIO_P0 is high
      .dat_i        (  input_signal [j] ),  // input data
      .dat_o        (  output_direct[j]),  // output data
 	 .diff_dat_i   (  diff_input_signal[j] ),  // input data for differential mode
