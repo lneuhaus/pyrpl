@@ -301,8 +301,8 @@ class Pid(FilterModule):
                                                  "differential mode. "
                                              )
 
-    paused = PauseRegister(0xC,
-                           invert=False,
+    paused = PauseRegister(0xC,  # inverted version of the sync register
+                           invert=True,
                            doc="While True, the gains selected with `pause` are "
                                "temporarily set to zero ")
 

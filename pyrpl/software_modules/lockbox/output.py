@@ -156,6 +156,7 @@ class OutputSignal(Signal):
             raise NotImplementedError(
                 "Selected output_channel '%s' is not implemented"
                 % self.output_channel)
+        self.pid.paused = False
 
     def _clear(self):
         """
@@ -246,6 +247,7 @@ class OutputSignal(Signal):
             # set gains
             self.pid.p = self.p / external_loop_gain * gain_factor
             self.pid.i = self.i / external_loop_gain * gain_factor
+            self.pid.paused = False
 
     def _setup_offset(self, offset):
         self.pid.ival = offset
