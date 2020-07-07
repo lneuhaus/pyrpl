@@ -13,7 +13,7 @@ ARG PYTHON_VERSION="3"
 # setup ubuntu with gui support
 RUN apt update --yes \
     && apt upgrade --yes \
-    && apt update --yes
+    && apt update --yes \
     && DEBIAN_FRONTEND=noninteractive apt-get install --yes --no-install-recommends \
     systemd \
     wget \
