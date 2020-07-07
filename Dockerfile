@@ -23,6 +23,9 @@ RUN apt update --yes \
 # sets up keyboard support in GUI
 ENV QT_XKB_CONFIG_ROOT /usr/share/X11/xkb
 
+# make sure testing works without GUI
+ENV QT_QPA_PLATFORM=offscreen
+
 # install miniconda
 RUN mkdir /tmp/miniconda
 WORKDIR /tmp/miniconda
