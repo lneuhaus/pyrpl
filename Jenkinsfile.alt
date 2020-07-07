@@ -1,0 +1,132 @@
+#!groovy
+
+
+
+def getRepoURL() {
+  sh "git config --get remote.origin.url > .git/remote-url"
+  return readFile(".git/remote-url").trim()
+}
+
+def getCommitSha() {
+  sh "git rev-parse HEAD > .git/current-commit"
+  return readFile(".git/current-commit").trim()
+}
+
+void setBuildStatus(String message, String state) {
+  step([
+      $class: "GitHubCommitStatusSetter",
+      reposSource: [$class: "ManuallyEnteredRepositorySource", url: getRepoURL()],
+      contextSource: [$class: "ManuallyEnteredCommitContextSource", context: "ci/jenkins/build-status"],
+      errorHandlers: [[$class: "ChangingBuildStatusErrorHandler", result: "UNSTABLE"]],
+      statusResultSource: [ $class: "ConditionalStatusResultSource", results: [[$class: "AnyBuildResult", message: message, state: state]] ]
+  ]);
+}
+
+
+pipeline {
+    triggers { pollSCM('*/1 * * * *') }
+
+    options {
+        // Keep the 30 most recent builds
+        buildDiscarder(logRotator(numToKeepStr: '30'))
+        timestamps()
+        disableConcurrentBuilds()
+        // skipDefaultCheckout(true)  // rather do the checkout in all stages
+    }
+
+
+    environment {
+        REDPITAYA_HOSTNAME = "rp-f06b3b"
+        DOCKER_ARGS = '-u root -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=:0 --net=host'
+        NOSETESTS_COMMAND = 'nosetests'
+    }
+
+    agent any
+
+    stages {
+        stage('Unit tests') { stages {
+            stage('Python 3.7') {
+                agent { dockerfile { args "$DOCKER_ARGS"
+                                     additionalBuildArgs  '--build-arg PYTHON_VERSION=3.7' }}
+                steps { lock('rp-f06b3b') {
+                    sh  ''' which python
+                            python -V
+                            echo $PYTHON_VERSION
+                            conda list
+                            # use a custom global configfile adapted to the hardware for unit tests
+                            cp ./jenkins_global_config.yml ./pyrpl/config/global_config.yml
+                            python setup.py install
+                        '''
+                    sh "$NOSETESTS_COMMAND" }}
+                post { always { junit allowEmptyResults: true, testResults: 'unit_test_results.xml' }}}
+            stage('Python 3.6') {
+                agent { dockerfile { args "$DOCKER_ARGS"
+                                     additionalBuildArgs  '--build-arg PYTHON_VERSION=3.6' }}
+                steps { lock('rp-f06b3b') {
+                    sh  ''' which python
+                            python -V
+                            echo $PYTHON_VERSION
+                            conda list
+                            # use a custom global configfile adapted to the hardware for unit tests
+                            cp ./jenkins_global_config.yml ./pyrpl/config/global_config.yml
+                            python setup.py install
+                        '''
+                    sh "$NOSETESTS_COMMAND"}}
+                post { always { junit allowEmptyResults: true, testResults: 'unit_test_results.xml' }}}
+            stage('Python 2.7') {
+                agent { dockerfile { args "$DOCKER_ARGS"
+                                     additionalBuildArgs  '--build-arg PYTHON_VERSION=2.7' }}
+                steps { lock('rp-f06b3b') {
+                    sh  ''' which python
+                            python -V
+                            echo $PYTHON_VERSION
+                            conda list
+                            # use a custom global configfile adapted to the hardware for unit tests
+                            cp ./jenkins_global_config.yml ./pyrpl/config/global_config.yml
+                            python setup.py install
+                        '''
+                    sh "$NOSETESTS_COMMAND"}}
+                post { always { junit allowEmptyResults: true, testResults: 'unit_test_results.xml' }}}
+            stage('Linux binary') {
+                agent { dockerfile { args '-u root -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=:0 --net=host'
+                                     additionalBuildArgs  '--build-arg PYTHON_VERSION=3.7' }}
+                steps { lock('rp-f06b3b') {
+                    sh  ''' apt-get install psmisc
+                            python setup.py install
+                            pip install https://github.com/lneuhaus/pyinstaller/tarball/develop
+                            pyinstaller pyrpl.spec
+                            mv dist/pyrpl ./pyrpl-linux-jenkins
+                            chmod 755 pyrpl-linux-jenkins
+                            (./pyrpl-linux-jenkins config=test_linux_jenkins hostname=_FAKE_ &)
+                            PYRPL_PID=$!
+                            sleep 30
+                            kill -9 $PYRPL_PID
+                        '''
+                    //sh 'python .deploy_to_sourceforge.py pyrpl-linux /home/frs/project/pyrpl/branches/$GIT_BRANCH/'
+                    }}
+                post { always { archiveArtifacts allowEmptyArchive: true, artifacts: 'pyrpl-linux', fingerprint: true }}}
+            stage('pip wheel') {
+                agent { dockerfile { args '-u root -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=:0 --net=host'
+                                     additionalBuildArgs  '--build-arg PYTHON_VERSION=3.7' }}
+                steps { lock('rp-f06b3b') {
+                    sh  ''' python setup.py install
+                            # convert readme file to rst for PyPI
+                            conda install pandoc
+                            pandoc --from=markdown --to=rst --output=README.rst README.md
+                            # make distributions for PyPI
+                            python setup.py sdist
+                            python setup.py bdist_wheel --universal
+                            # upload to PyPI
+                            # twine upload dist/**/*.*
+                        '''}}
+                post { always { archiveArtifacts allowEmptyArchive: true, artifacts: 'dist/**/*.*', fingerprint: true}}}
+            }
+        }
+    }
+    post {
+        failure { setBuildStatus("Build failed!", "FAILURE") }
+        success { setBuildStatus("Build successful!", "SUCCESS") }
+        unstable { setBuildStatus("Build erroneous!", "ERROR") }
+    }
+}
+
