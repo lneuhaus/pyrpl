@@ -11,10 +11,16 @@ ARG CONDA_DIR="/opt/conda"
 ARG PYTHON_VERSION="3"
 
 # setup ubuntu with gui support
-RUN apt update --yes
-RUN apt upgrade --yes
-RUN apt update --yes
-RUN apt-get install --yes systemd wget sloccount qt5-default binutils
+RUN apt update --yes \
+    && apt upgrade --yes \
+    && apt update --yes
+    && DEBIAN_FRONTEND=noninteractive apt-get install --yes --no-install-recommends \
+    systemd \
+    wget \
+    sloccount \
+    qt5-default \
+    binutils
+
 # sets up keyboard support in GUI
 ENV QT_XKB_CONFIG_ROOT /usr/share/X11/xkb
 
