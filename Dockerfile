@@ -1,8 +1,7 @@
 # define base image
-FROM ubuntu:latest
-# FROM node:7-onbuild
+# FROM ubuntu:latest
+FROM python:3.7-buster AS base
 
-# set maintainer
 LABEL maintainer "pyrpl.readthedocs.io@gmail.com"
 
 USER root
@@ -27,7 +26,8 @@ ENV QT_XKB_CONFIG_ROOT /usr/share/X11/xkb
 # install miniconda
 RUN mkdir /tmp/miniconda
 WORKDIR /tmp/miniconda
-RUN if [ "$PYTHON_VERSION" = "2" ] ; then wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O Miniconda.sh; else wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O Miniconda.sh; fi
+RUN if [ "$PYTHON_VERSION" = "2" ] ; then wget https://repo.anaconda.com/miniconda/Miniconda2-latest-Linux-x86_64.sh -O Miniconda.sh; else wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O Miniconda.sh; fi
+
 RUN chmod +x Miniconda.sh
 RUN ./Miniconda.sh -b -p $CONDA_DIR
 
