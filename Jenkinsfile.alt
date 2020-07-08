@@ -58,7 +58,10 @@ pipeline {
                             python setup.py install
                         '''
                     sh "$NOSETESTS_COMMAND" }}
-                post { always { junit allowEmptyResults: true, testResults: 'unit_test_results.xml' }}}
+                post { always {
+                    junit allowEmptyResults: true, testResults: 'unit_test_results.xml'
+                    cobertura coberturaReportFile: "unit_test_coverage.xml", failNoReports: false
+                }}}
             stage('Python 3.6') {
                 agent { dockerfile { args "$DOCKER_ARGS"
                                      additionalBuildArgs  '--build-arg PYTHON_VERSION=3.6' }}
@@ -72,7 +75,10 @@ pipeline {
                             python setup.py install
                         '''
                     sh "$NOSETESTS_COMMAND"}}
-                post { always { junit allowEmptyResults: true, testResults: 'unit_test_results.xml' }}}
+                post { always {
+                    junit allowEmptyResults: true, testResults: 'unit_test_results.xml'
+                    cobertura coberturaReportFile: "unit_test_coverage.xml", failNoReports: false
+                }}}
             stage('Python 2.7') {
                 agent { dockerfile { args "$DOCKER_ARGS"
                                      additionalBuildArgs  '--build-arg PYTHON_VERSION=2.7' }}
@@ -86,7 +92,10 @@ pipeline {
                             python setup.py install
                         '''
                     sh "$NOSETESTS_COMMAND"}}
-                post { always { junit allowEmptyResults: true, testResults: 'unit_test_results.xml' }}}
+                post { always {
+                    junit allowEmptyResults: true, testResults: 'unit_test_results.xml'
+                    cobertura coberturaReportFile: "unit_test_coverage.xml", failNoReports: false
+                }}}
             stage('Linux binary') {
                 agent { dockerfile { args '-u root -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=:0 --net=host'
                                      additionalBuildArgs  '--build-arg PYTHON_VERSION=3.7' }}
