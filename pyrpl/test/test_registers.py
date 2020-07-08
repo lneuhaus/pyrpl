@@ -92,8 +92,8 @@ class TestRegisters(TestRedpitaya):
                           'lastpoint',
                           'vadc0',
                           'vadc1',
+                          'vadc2',
                           'vadc3',
-                          'vadc4',
                           ] or modulekey == 'sampler':
                 return
             # write something different and confirm change
