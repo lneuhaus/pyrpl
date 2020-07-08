@@ -38,7 +38,7 @@ module red_pitaya_iq_block #(
 
 	  //fgen for sin/cos creation parameters
 	  parameter LUTSZ     =  11,   //log2 of number of LUT entries
-	  parameter LUTBITS   =  17,   //LUT word size
+	  parameter LUTBITS   =  16,   //LUT word size
 	  parameter PHASEBITS =  32,   //phase accumulator bits
 
 	  //demodulation/modulation parameters
