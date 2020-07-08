@@ -37,7 +37,7 @@ pipeline {
 
     environment {
         REDPITAYA_HOSTNAME = "rp-f06b3b"
-        DOCKER_ARGS = '--net=host'
+        DOCKER_ARGS = '-u root --net=host'
         NOSETESTS_COMMAND = 'nosetests'
     }
 
