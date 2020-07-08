@@ -89,7 +89,11 @@ class TestRegisters(TestRedpitaya):
                           'voltage_in1',
                           'voltage_in2',
                           'firstpoint',
-                          'lastpoint'
+                          'lastpoint',
+                          'vadc0',
+                          'vadc1',
+                          'vadc2',
+                          'vadc3',
                           ] or modulekey == 'sampler':
                 return
             # write something different and confirm change
