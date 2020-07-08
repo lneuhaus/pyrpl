@@ -1,7 +1,7 @@
 Copyright 1986-2015 Xilinx, Inc. All Rights Reserved.
 ----------------------------------------------------------------------------------------
 | Tool Version     : Vivado v.2015.4 (lin64) Build 1412921 Wed Nov 18 09:44:32 MST 2015
-| Date             : Tue Jul  7 14:00:08 2020
+| Date             : Wed Jul  8 12:49:44 2020
 | Host             : LPC running 64-bit Ubuntu 18.04.4 LTS
 | Command          : report_power -file out/post_synth_power.rpt
 | Design           : red_pitaya_top
@@ -31,7 +31,7 @@ Table of Contents
 
 +--------------------------+-------+
 | Total On-Chip Power (W)  | 2.307 |
-| Dynamic (W)              | 2.155 |
+| Dynamic (W)              | 2.154 |
 | Device Static (W)        | 0.152 |
 | Effective TJA (C/W)      | 11.5  |
 | Max Ambient (C)          | 58.4  |
