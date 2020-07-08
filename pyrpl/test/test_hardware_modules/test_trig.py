@@ -44,7 +44,7 @@ class TestTrig(TestPyrpl):
             asg0phase = self.t.output_signal_to_phase(getattr(self.pyrpl.rp.sampler, self.t.name))
             assert abs(asg0phase-180.0)<=1.0, asg0phase
             # test auto_rearm
-            self.asg.frequency = 10e4 # do this at high frequency
+            self.asg.frequency = 10e6 # do this at high frequency
             self.t.auto_rearm_delay = 0
             self.t.auto_rearm = True
             #assert self.t.armed == False  # even auto_rearm must be switched on
