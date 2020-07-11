@@ -103,11 +103,11 @@ if (rstn_i == 1'b0) begin
    dac_d_o     <= 24'h000000 ;
    trigger_source <= 16'h0100;  // by default, auto-triggering is enabled
 end else begin
-   dac_a_o <= cfg;
-   dac_b_o <= cfg_b;
+   //dac_a_o <= cfg;
+   //dac_b_o <= cfg_b;
    if (sys_wen) begin
-      // if (sys_addr[19:0]==16'h20)   dac_a_o <= sys_wdata[24-1: 0] ;
-      // if (sys_addr[19:0]==16'h24)   dac_b_o <= sys_wdata[24-1: 0] ;
+      if (sys_addr[19:0]==16'h20)   dac_a_o <= sys_wdata[24-1: 0] ;
+      if (sys_addr[19:0]==16'h24)   dac_b_o <= sys_wdata[24-1: 0] ;
       if (sys_addr[19:0]==16'h28)   dac_c_o <= sys_wdata[24-1: 0] ;
       if (sys_addr[19:0]==16'h2C)   dac_d_o <= sys_wdata[24-1: 0] ;
       if (sys_addr[19:0]==16'h50)   trigger_source <= sys_wdata[16-1: 0] ;
@@ -188,8 +188,11 @@ end
 // its not clear at all if the timing will be right here since we work at 250 MHz in this module
 // if something doesnt work, parts of the logic must be transferred down to 125 MHz
 
-localparam CCW = 24; // configuration bitwidth for pwm module
 
+// configuration bitwidth for pwm module
+localparam CCW = 24;
+
+/*
 reg [24-1:0] cfg;
 wire bit3;
 wire bit2;
@@ -231,7 +234,7 @@ end else begin
   xadc_convst <= trigger;
   manual_trigger_clk <= !manual_trigger_clk;
 end
-
+*/
 
 
 //---------------------------------------------------------------------------------
