@@ -518,10 +518,10 @@ red_pitaya_dsp i_dsp (
   .scope2_o        (  to_scope_b             ),
   .asg1phase_i     (  asg1phase_o            ),
 
-  .pwm0            (  pwm_signals[0]         ),
-  .pwm1            (  pwm_signals[1]         ),
-  .pwm2            (  pwm_signals[2]         ),
-  .pwm3            (  pwm_signals[3]         ),
+//  .pwm0            (  pwm_signals[0]         ),
+//  .pwm1            (  pwm_signals[1]         ),
+//  .pwm2            (  pwm_signals[2]         ),
+//  .pwm3            (  pwm_signals[3]         ),
 
   .trig_o          (  dsp_trigger            ),
 
@@ -564,8 +564,8 @@ red_pitaya_ams i_ams (
   .dac_b_o         (  pwm_cfg_b                  ),
   .dac_c_o         (  pwm_cfg_c                  ),
   .dac_d_o         (  pwm_cfg_d                  ),
-  .pwm0_i 		   (  pwm_signals[0]             ),
-  .pwm1_i 		   (  pwm_signals[1]             ),
+//  .pwm0_i 		   (  pwm_signals[0]             ),
+//  .pwm1_i 		   (  pwm_signals[1]             ),
 
    // internal trigger signals
   .dsp_trig_i      (  dsp_trig_out               ),  // 16-bit wide DSP module trigger output
@@ -586,7 +586,7 @@ red_pitaya_ams i_ams (
 );
 
 
-wire  [ 14-1: 0] pwm_signals[4-1:0];
+//wire  [ 14-1: 0] pwm_signals[4-1:0];
 
 red_pitaya_pwm pwm [4-1:0] (
   // system signals
@@ -594,11 +594,11 @@ red_pitaya_pwm pwm [4-1:0] (
   .rstn  (pwm_rstn),
   // configuration
   .cfg   ({pwm_cfg_d, pwm_cfg_c, pwm_cfg_b, pwm_cfg_a}),
-  //.signal_i ({pwm_signals[3],pwm_signals[2],pwm_signals[1],pwm_signals[0]}),
   // PWM outputs
   .pwm_o (dac_pwm_o),
   .pwm_s ()
 );
+
 
 //---------------------------------------------------------------------------------
 //  Daisy chain
