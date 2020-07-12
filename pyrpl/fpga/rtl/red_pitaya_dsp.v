@@ -175,8 +175,10 @@ assign output_signal[DAC1] = dat_a_o;
 assign output_signal[DAC2] = dat_b_o;
 
 //connect only two pwm to internal signals (should be enough)
-assign pwm0 = (input_select[PWM0] == NONE) ? 14'h0 : output_signal[input_select[PWM0]];
-assign pwm1 = (input_select[PWM1] == NONE) ? 14'h0 : output_signal[input_select[PWM1]];
+//assign pwm0 = (input_select[PWM0] == NONE) ? 14'h0 : output_signal[input_select[PWM0]];
+//assign pwm1 = (input_select[PWM1] == NONE) ? 14'h0 : output_signal[input_select[PWM1]];
+assign pwm0 = 14'b0;
+assign pwm1 = 14'b0;
 assign pwm2 = 14'b0;
 assign pwm3 = 14'b0;
 

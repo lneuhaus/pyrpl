@@ -1,7 +1,7 @@
 Copyright 1986-2015 Xilinx, Inc. All Rights Reserved.
 ------------------------------------------------------------------------------------
 | Tool Version : Vivado v.2015.4 (lin64) Build 1412921 Wed Nov 18 09:44:32 MST 2015
-| Date         : Sat Jul 11 09:14:40 2020
+| Date         : Sun Jul 12 10:01:43 2020
 | Host         : LPC running 64-bit Ubuntu 18.04.4 LTS
 | Command      : report_drc
 ------------------------------------------------------------------------------------
@@ -471,82 +471,82 @@ Related violations: <none>
 
 IOSR-1#1 Warning
 IOB set reset sharing  
-IO exp_n_io[0] connects to flops which have these i_dsp/genblk3[4].i_trigger/output_data[12]_i_1_n_0, i_dsp/genblk3[3].i_trigger/output_data[12]_i_1_n_0 set/reset signals.  For optimal IOB flop packing there should be only one set/reset signal coming into the IOB.
+IO exp_n_io[0] connects to flops which have these i_dsp/genblk3[3].i_trigger/output_data[12]_i_1_n_0, i_dsp/genblk3[4].i_trigger/output_data[12]_i_1_n_0 set/reset signals.  For optimal IOB flop packing there should be only one set/reset signal coming into the IOB.
 Related violations: <none>
 
 IOSR-1#2 Warning
 IOB set reset sharing  
-IO exp_n_io[1] connects to flops which have these i_dsp/genblk3[4].i_trigger/output_data[12]_i_1_n_0, i_dsp/genblk3[3].i_trigger/output_data[12]_i_1_n_0 set/reset signals.  For optimal IOB flop packing there should be only one set/reset signal coming into the IOB.
+IO exp_n_io[1] connects to flops which have these i_dsp/genblk3[3].i_trigger/output_data[12]_i_1_n_0, i_dsp/genblk3[4].i_trigger/output_data[12]_i_1_n_0 set/reset signals.  For optimal IOB flop packing there should be only one set/reset signal coming into the IOB.
 Related violations: <none>
 
 IOSR-1#3 Warning
 IOB set reset sharing  
-IO exp_n_io[2] connects to flops which have these i_dsp/genblk3[4].i_trigger/output_data[12]_i_1_n_0, i_dsp/genblk3[3].i_trigger/output_data[12]_i_1_n_0 set/reset signals.  For optimal IOB flop packing there should be only one set/reset signal coming into the IOB.
+IO exp_n_io[2] connects to flops which have these i_dsp/genblk3[3].i_trigger/output_data[12]_i_1_n_0, i_dsp/genblk3[4].i_trigger/output_data[12]_i_1_n_0 set/reset signals.  For optimal IOB flop packing there should be only one set/reset signal coming into the IOB.
 Related violations: <none>
 
 IOSR-1#4 Warning
 IOB set reset sharing  
-IO exp_n_io[3] connects to flops which have these i_dsp/genblk3[4].i_trigger/output_data[12]_i_1_n_0, i_dsp/genblk3[3].i_trigger/output_data[12]_i_1_n_0 set/reset signals.  For optimal IOB flop packing there should be only one set/reset signal coming into the IOB.
+IO exp_n_io[3] connects to flops which have these i_dsp/genblk3[3].i_trigger/output_data[12]_i_1_n_0, i_dsp/genblk3[4].i_trigger/output_data[12]_i_1_n_0 set/reset signals.  For optimal IOB flop packing there should be only one set/reset signal coming into the IOB.
 Related violations: <none>
 
 IOSR-1#5 Warning
 IOB set reset sharing  
-IO exp_n_io[4] connects to flops which have these i_dsp/genblk3[4].i_trigger/output_data[12]_i_1_n_0, i_dsp/genblk3[3].i_trigger/output_data[12]_i_1_n_0 set/reset signals.  For optimal IOB flop packing there should be only one set/reset signal coming into the IOB.
+IO exp_n_io[4] connects to flops which have these i_dsp/genblk3[3].i_trigger/output_data[12]_i_1_n_0, i_dsp/genblk3[4].i_trigger/output_data[12]_i_1_n_0 set/reset signals.  For optimal IOB flop packing there should be only one set/reset signal coming into the IOB.
 Related violations: <none>
 
 IOSR-1#6 Warning
 IOB set reset sharing  
-IO exp_n_io[5] connects to flops which have these i_dsp/genblk3[4].i_trigger/output_data[12]_i_1_n_0, i_dsp/genblk3[3].i_trigger/output_data[12]_i_1_n_0 set/reset signals.  For optimal IOB flop packing there should be only one set/reset signal coming into the IOB.
+IO exp_n_io[5] connects to flops which have these i_dsp/genblk3[3].i_trigger/output_data[12]_i_1_n_0, i_dsp/genblk3[4].i_trigger/output_data[12]_i_1_n_0 set/reset signals.  For optimal IOB flop packing there should be only one set/reset signal coming into the IOB.
 Related violations: <none>
 
 IOSR-1#7 Warning
 IOB set reset sharing  
-IO exp_n_io[6] connects to flops which have these i_dsp/genblk3[4].i_trigger/output_data[12]_i_1_n_0, i_dsp/genblk3[3].i_trigger/output_data[12]_i_1_n_0 set/reset signals.  For optimal IOB flop packing there should be only one set/reset signal coming into the IOB.
+IO exp_n_io[6] connects to flops which have these i_dsp/genblk3[3].i_trigger/output_data[12]_i_1_n_0, i_dsp/genblk3[4].i_trigger/output_data[12]_i_1_n_0 set/reset signals.  For optimal IOB flop packing there should be only one set/reset signal coming into the IOB.
 Related violations: <none>
 
 IOSR-1#8 Warning
 IOB set reset sharing  
-IO exp_n_io[7] connects to flops which have these i_dsp/genblk3[4].i_trigger/output_data[12]_i_1_n_0, i_dsp/genblk3[3].i_trigger/output_data[12]_i_1_n_0 set/reset signals.  For optimal IOB flop packing there should be only one set/reset signal coming into the IOB.
+IO exp_n_io[7] connects to flops which have these i_dsp/genblk3[3].i_trigger/output_data[12]_i_1_n_0, i_dsp/genblk3[4].i_trigger/output_data[12]_i_1_n_0 set/reset signals.  For optimal IOB flop packing there should be only one set/reset signal coming into the IOB.
 Related violations: <none>
 
 IOSR-1#9 Warning
 IOB set reset sharing  
-IO exp_p_io[0] connects to flops which have these i_dsp/genblk3[4].i_trigger/output_data[12]_i_1_n_0, i_dsp/genblk3[3].i_trigger/output_data[12]_i_1_n_0, i_scope/clear set/reset signals.  For optimal IOB flop packing there should be only one set/reset signal coming into the IOB.
+IO exp_p_io[0] connects to flops which have these i_scope/clear, i_dsp/genblk3[3].i_trigger/output_data[12]_i_1_n_0, i_dsp/genblk3[4].i_trigger/output_data[12]_i_1_n_0 set/reset signals.  For optimal IOB flop packing there should be only one set/reset signal coming into the IOB.
 Related violations: <none>
 
 IOSR-1#10 Warning
 IOB set reset sharing  
-IO exp_p_io[1] connects to flops which have these i_dsp/genblk3[4].i_trigger/output_data[12]_i_1_n_0, i_dsp/genblk3[3].i_trigger/output_data[12]_i_1_n_0 set/reset signals.  For optimal IOB flop packing there should be only one set/reset signal coming into the IOB.
+IO exp_p_io[1] connects to flops which have these i_dsp/genblk3[3].i_trigger/output_data[12]_i_1_n_0, i_dsp/genblk3[4].i_trigger/output_data[12]_i_1_n_0 set/reset signals.  For optimal IOB flop packing there should be only one set/reset signal coming into the IOB.
 Related violations: <none>
 
 IOSR-1#11 Warning
 IOB set reset sharing  
-IO exp_p_io[2] connects to flops which have these i_dsp/genblk3[4].i_trigger/output_data[12]_i_1_n_0, i_dsp/genblk3[3].i_trigger/output_data[12]_i_1_n_0 set/reset signals.  For optimal IOB flop packing there should be only one set/reset signal coming into the IOB.
+IO exp_p_io[2] connects to flops which have these i_dsp/genblk3[3].i_trigger/output_data[12]_i_1_n_0, i_dsp/genblk3[4].i_trigger/output_data[12]_i_1_n_0 set/reset signals.  For optimal IOB flop packing there should be only one set/reset signal coming into the IOB.
 Related violations: <none>
 
 IOSR-1#12 Warning
 IOB set reset sharing  
-IO exp_p_io[3] connects to flops which have these i_dsp/genblk3[4].i_trigger/output_data[12]_i_1_n_0, i_dsp/genblk3[3].i_trigger/output_data[12]_i_1_n_0 set/reset signals.  For optimal IOB flop packing there should be only one set/reset signal coming into the IOB.
+IO exp_p_io[3] connects to flops which have these i_dsp/genblk3[3].i_trigger/output_data[12]_i_1_n_0, i_dsp/genblk3[4].i_trigger/output_data[12]_i_1_n_0 set/reset signals.  For optimal IOB flop packing there should be only one set/reset signal coming into the IOB.
 Related violations: <none>
 
 IOSR-1#13 Warning
 IOB set reset sharing  
-IO exp_p_io[4] connects to flops which have these i_dsp/genblk3[4].i_trigger/output_data[12]_i_1_n_0, i_dsp/genblk3[3].i_trigger/output_data[12]_i_1_n_0 set/reset signals.  For optimal IOB flop packing there should be only one set/reset signal coming into the IOB.
+IO exp_p_io[4] connects to flops which have these i_dsp/genblk3[3].i_trigger/output_data[12]_i_1_n_0, i_dsp/genblk3[4].i_trigger/output_data[12]_i_1_n_0 set/reset signals.  For optimal IOB flop packing there should be only one set/reset signal coming into the IOB.
 Related violations: <none>
 
 IOSR-1#14 Warning
 IOB set reset sharing  
-IO exp_p_io[5] connects to flops which have these i_dsp/genblk3[4].i_trigger/output_data[12]_i_1_n_0, i_dsp/genblk3[3].i_trigger/output_data[12]_i_1_n_0 set/reset signals.  For optimal IOB flop packing there should be only one set/reset signal coming into the IOB.
+IO exp_p_io[5] connects to flops which have these i_dsp/genblk3[3].i_trigger/output_data[12]_i_1_n_0, i_dsp/genblk3[4].i_trigger/output_data[12]_i_1_n_0 set/reset signals.  For optimal IOB flop packing there should be only one set/reset signal coming into the IOB.
 Related violations: <none>
 
 IOSR-1#15 Warning
 IOB set reset sharing  
-IO exp_p_io[6] connects to flops which have these i_dsp/genblk3[4].i_trigger/output_data[12]_i_1_n_0, i_dsp/genblk3[3].i_trigger/output_data[12]_i_1_n_0 set/reset signals.  For optimal IOB flop packing there should be only one set/reset signal coming into the IOB.
+IO exp_p_io[6] connects to flops which have these i_dsp/genblk3[3].i_trigger/output_data[12]_i_1_n_0, i_dsp/genblk3[4].i_trigger/output_data[12]_i_1_n_0 set/reset signals.  For optimal IOB flop packing there should be only one set/reset signal coming into the IOB.
 Related violations: <none>
 
 IOSR-1#16 Warning
 IOB set reset sharing  
-IO exp_p_io[7] connects to flops which have these i_dsp/genblk3[4].i_trigger/output_data[12]_i_1_n_0, i_dsp/genblk3[3].i_trigger/output_data[12]_i_1_n_0 set/reset signals.  For optimal IOB flop packing there should be only one set/reset signal coming into the IOB.
+IO exp_p_io[7] connects to flops which have these i_dsp/genblk3[3].i_trigger/output_data[12]_i_1_n_0, i_dsp/genblk3[4].i_trigger/output_data[12]_i_1_n_0 set/reset signals.  For optimal IOB flop packing there should be only one set/reset signal coming into the IOB.
 Related violations: <none>
 
 PLIO-7#1 Warning
