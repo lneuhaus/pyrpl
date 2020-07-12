@@ -218,6 +218,10 @@ if (rstn_i == 1'b0) begin
 end else begin
    cfg_b  <= {~pwm1_i[13],pwm1_i[13-1:6],1'b0,bit3_b,bit2_b,bit3_b,bit1_b,bit3_b,bit2_b,bit3_b,bit0_b,bit3_b,bit2_b,bit3_b,bit1_b,bit3_b,bit2_b,bit3_b};
 end
+*/
+
+
+//---------------------------------------------------------------------------------
 
 // slow ADC acquisition trigger logic
 reg trigger;
@@ -234,12 +238,8 @@ end else begin
   xadc_convst <= trigger;
   manual_trigger_clk <= !manual_trigger_clk;
 end
-*/
 
-
-//---------------------------------------------------------------------------------
 //  XADC
-
 
 wire [ 8-1: 0] xadc_alarm     ;
 wire           xadc_busy      ;

@@ -1,7 +1,7 @@
 Copyright 1986-2015 Xilinx, Inc. All Rights Reserved.
 ----------------------------------------------------------------------------------------
 | Tool Version     : Vivado v.2015.4 (lin64) Build 1412921 Wed Nov 18 09:44:32 MST 2015
-| Date             : Sun Jul 12 09:56:30 2020
+| Date             : Sun Jul 12 11:31:31 2020
 | Host             : LPC running 64-bit Ubuntu 18.04.4 LTS
 | Command          : report_power -file out/post_synth_power.rpt
 | Design           : red_pitaya_top
@@ -50,16 +50,16 @@ Table of Contents
 | On-Chip                  | Power (W) | Used     | Available | Utilization (%) |
 +--------------------------+-----------+----------+-----------+-----------------+
 | Clocks                   |     0.068 |       15 |       --- |             --- |
-| Slice Logic              |     0.133 |    31904 |       --- |             --- |
-|   LUT as Logic           |     0.111 |    15595 |     17600 |           88.61 |
+| Slice Logic              |     0.133 |    31908 |       --- |             --- |
+|   LUT as Logic           |     0.111 |    15597 |     17600 |           88.62 |
 |   CARRY4                 |     0.016 |     1408 |      4400 |           32.00 |
-|   Register               |     0.005 |    11331 |     35200 |           32.19 |
+|   Register               |     0.005 |    11334 |     35200 |           32.20 |
 |   F7/F8 Muxes            |    <0.001 |      478 |     17600 |            2.72 |
 |   LUT as Shift Register  |    <0.001 |       71 |      6000 |            1.18 |
-|   Others                 |     0.000 |      410 |       --- |             --- |
+|   Others                 |     0.000 |      409 |       --- |             --- |
 |   BUFG                   |     0.000 |        1 |        32 |            3.13 |
 |   LUT as Distributed RAM |     0.000 |       24 |      6000 |            0.40 |
-| Signals                  |     0.128 |    25368 |       --- |             --- |
+| Signals                  |     0.128 |    25373 |       --- |             --- |
 | Block RAM                |     0.103 |       34 |        60 |           56.67 |
 | PLL                      |     0.097 |        1 |         2 |           50.00 |
 | DSPs                     |     0.039 |       30 |        80 |           37.50 |
