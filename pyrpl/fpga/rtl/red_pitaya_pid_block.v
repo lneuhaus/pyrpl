@@ -70,7 +70,7 @@ module red_pitaya_pid_block #(
    parameter     DERIVATIVE = 0   , //disables differential gain if 0
    
    //parameters for input pre-filter
-   parameter     FILTERSTAGES = 3 ,
+   parameter     FILTERSTAGES = 4,
    parameter     FILTERSHIFTBITS = 5,
    parameter     FILTERMINBW = 10,
    
@@ -120,7 +120,7 @@ always @(posedge clk_i) begin
    if (rstn_i == 1'b0) begin
       set_sp <= 14'd0;
       set_ival <= 14'd0;
-      pause_pid_on_sync <= {3{1'b1}};  // by default, all gains are paused on sync signal
+      pause_pid_on_sync <= {3{1'b0}};  // by default, no gains are paused on sync signal
       enable_differential_mode <= 1'b0; // by default no differential mode
       set_kp <= {GAINBITS{1'b0}};
       set_ki <= {GAINBITS{1'b0}};

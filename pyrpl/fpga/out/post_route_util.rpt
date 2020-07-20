@@ -1,7 +1,7 @@
 Copyright 1986-2015 Xilinx, Inc. All Rights Reserved.
 ------------------------------------------------------------------------------------
 | Tool Version : Vivado v.2015.4 (lin64) Build 1412921 Wed Nov 18 09:44:32 MST 2015
-| Date         : Sun Jul 12 11:36:34 2020
+| Date         : Mon Jul 20 13:28:52 2020
 | Host         : LPC running 64-bit Ubuntu 18.04.4 LTS
 | Command      : report_utilization -file out/post_route_util.rpt
 | Design       : red_pitaya_top
@@ -58,8 +58,8 @@ Table of Contents
 | 0     |          Yes |           - |            - |
 | 0     |          Yes |           - |          Set |
 | 0     |          Yes |           - |        Reset |
-| 328   |          Yes |         Set |            - |
-| 10805 |          Yes |       Reset |            - |
+| 319   |          Yes |         Set |            - |
+| 10814 |          Yes |       Reset |            - |
 +-------+--------------+-------------+--------------+
 
 
@@ -187,7 +187,7 @@ Table of Contents
 +-----------+-------+----------------------+
 |  Ref Name |  Used |  Functional Category |
 +-----------+-------+----------------------+
-| FDRE      | 10805 |         Flop & Latch |
+| FDRE      | 10814 |         Flop & Latch |
 | LUT6      |  6403 |                  LUT |
 | LUT5      |  3259 |                  LUT |
 | LUT2      |  2669 |                  LUT |
@@ -196,7 +196,7 @@ Table of Contents
 | CARRY4    |  1390 |           CarryLogic |
 | LUT1      |   608 |                  LUT |
 | MUXF7     |   334 |                MuxFx |
-| FDSE      |   328 |         Flop & Latch |
+| FDSE      |   319 |         Flop & Latch |
 | MUXF8     |   144 |                MuxFx |
 | BIBUF     |   130 |                   IO |
 | IBUF      |    58 |                   IO |
