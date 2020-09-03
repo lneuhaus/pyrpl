@@ -63,6 +63,8 @@ class IirManagerWidget(ModuleManagerWidget):
 class IirManagerWidget(ModuleManagerWidget):
     pass
 
+class PwmManagerWidget(ModuleManagerWidget):
+    pass
 
 class IqManagerWidget(ModuleManagerWidget):
     def init_gui(self):
