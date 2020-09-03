@@ -52,7 +52,7 @@ class FilteredInput(PllInput, InputSignal):
         self.iq.setup(frequency=self.central_freq,
                       amplitude=0,
                       phase=0,
-                      input='in1',
+                      input=self._input_signal_dsp_module(),
                       gain=0,
                       bandwidth=self.bandwidth,
                       acbandwidth=self.acbandwidth,
@@ -107,7 +107,7 @@ class PfdErrorSignal(PllInput, InputSignal):
         self.iq.setup(frequency=self.freq,
                       amplitude=0,
                       phase=0,
-                      input='iq1',
+                      input=self._input_signal_dsp_module(),
                       gain=0,
                       bandwidth=self.bandwidth,
                       acbandwidth=self.acbandwidth,
@@ -180,7 +180,28 @@ class PfdErrorSignal(PllInput, InputSignal):
 
 
 
+class FilteredSignal(PfdErrorSignal):
 
+    _gui_attributes = ['freq',
+                       'gain']
+    _setup_attributes = _gui_attributes
+
+    gain = FloatProperty(min=0, max=1e6, default=100.0, call_setup=True)
+
+    def _setup(self):
+        """
+        setup a PDH error signal using the attribute values
+        """
+        self.iq.setup(frequency=self.freq,
+                      amplitude=0,
+                      phase=0,
+                      input=self._input_signal_dsp_module(),
+                      gain=self.gain,
+                      bandwidth=3.889e4,
+                      acbandwidth=self.acbandwidth,
+                      quadrature_factor=self.quadrature_factor,
+                      output_signal='output_direct',
+                      output_direct='off')
 
 
 
@@ -195,8 +216,9 @@ class Pll(Lockbox):
 
     # management of intput/output units
     # setpoint_variable = 'phase'
-    setpoint_unit = SelectProperty(options=['freq'],
-                                   default='freq')
+    setpoint_unit = SelectProperty(options=['deg',
+                                            'rad'],
+                                   default='deg')
 
     _output_units = ['m', 'nm']
     # must provide conversion from setpoint_unit into all other basic units
@@ -215,26 +237,14 @@ class Pll(Lockbox):
         # i. e. beam gets twice the phaseshift from the displacement
         return self._rad_in_deg * self._deg_in_m
 
-    inputs = LockboxModuleDictProperty(raw_input=InputDirect,
-                                       filtered_input=FilteredInput,
-                                       pfd_signal=PfdErrorSignal
+    inputs = LockboxModuleDictProperty(
+                                       pfd_signal1=PfdErrorSignal,
+                                       filtered_signal=FilteredSignal
                                        )
 
     outputs = LockboxModuleDictProperty(piezo=PiezoOutput)
                                         #piezo2=PiezoOutput)
 
-    def set_offset_to_first_positive_edge(self):
-
-        curve1, curve2, times = self.inputs.pfd_signal.sweep_acquire()
-        negative_edges = numpy.where(numpy.diff(numpy.sign(curve1)) < 0)[0]
-        positive_edges = numpy.where(numpy.diff(numpy.sign(curve1)) > 0)[0]
-
-        if not(len(positive_edges)):
-            self._logger.warning("no crossing found")
-            return(None)
-        offset = curve2[positive_edges[0]]
-        self.outputs.piezo._setup_offset = offset
-        return()
 
 
 

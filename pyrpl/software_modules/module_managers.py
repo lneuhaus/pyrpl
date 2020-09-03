@@ -159,7 +159,7 @@ class Pids(ModuleManager):
 
 class Iqs(ModuleManager):
     _widget_class = IqManagerWidget
-    _reserved_modules = [2] # iq2 is reserved for spectrum_analyzer
+    #_reserved_modules = [2] # iq2 is reserved for spectrum_analyzer
 
 
 class Scopes(ModuleManager):
