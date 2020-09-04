@@ -114,7 +114,8 @@ def make_asg(channel=0):
                            "offset",
                            "frequency",
                            "trigger_source",
-                           "output_direct"]
+                           "output_direct",
+                           "start_phase"]
         _setup_attributes = _gui_attributes + ["cycles_per_burst"]
 
         _DATA_OFFSET = set_DATA_OFFSET
