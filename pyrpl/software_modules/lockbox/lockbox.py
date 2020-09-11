@@ -239,8 +239,8 @@ class Lockbox(LockboxModule):
                 c = input.calibrate(autosave=autosave)
                 if c is not None:
                     curves.append(c)
-            except:
-                pass
+            except BaseException as e:
+                print(e)
         return curves
 
     def get_analog_offsets(self, duration=1.0):
