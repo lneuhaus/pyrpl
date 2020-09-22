@@ -485,9 +485,8 @@ class Lockbox(LockboxModule):
         """
         d = dict(config=self.c._root._filename)
         for var in ['is_locked', 'is_locked_and_final', 'current_state',
-                    '_state_change_time', '_time', 'final_stage.setpoint',
-                    'setpoint_unit', 'final_stage.gain_factor',
-                    'final_stage.input']:
+                    '_state_change_time', '_time',
+                    'setpoint_unit']:
             val = recursive_getattr(self, var)
             if callable(val):
                 val = val()
