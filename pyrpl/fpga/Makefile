@@ -10,7 +10,7 @@
 FPGA_BIN=out/red_pitaya.bin
 
 #logfile for stdout and stderr
-LOG=>> fpga.log 2>&1
+LOG=2>&1 | tee fpga.log
 
 # Vivado from Xilinx provides IP handling, FPGA compilation
 # hsi (hardware software interface) provides software integration
