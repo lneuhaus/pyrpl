@@ -204,6 +204,33 @@ class FilteredSignal(PfdErrorSignal):
                       output_signal='output_direct',
                       output_direct='off')
 
+class PhaseSignal(PfdErrorSignal):
+
+    _gui_attributes = ['freq',
+                       'quadrature_factor',
+                       'bandwidth']
+    _setup_attributes = _gui_attributes
+
+    gain = FloatProperty(min=0, max=1e6, default=100.0, call_setup=True)
+    quadrature_factor = IqQuadratureFactorProperty(call_setup=True)
+    bandwidth = IqFilterProperty(call_setup=True)
+
+
+    def _setup(self):
+        """
+        setup a PDH error signal using the attribute values
+        """
+        self.iq.setup(frequency=self.freq,
+                      amplitude=0,
+                      phase=0,
+                      input=self._input_signal_dsp_module(),
+                      gain=0,
+                      bandwidth=self.bandwidth,
+                      acbandwidth=self.acbandwidth,
+                      quadrature_factor=self.quadrature_factor,
+                      output_signal='quadrature',
+                      output_direct='off')
+
 class SlowOutputProperty(FloatProperty):
     def __init__(self, **kwds):
         super(SlowOutputProperty, self).__init__(**kwds)
@@ -260,15 +287,23 @@ class Pll(Lockbox):
 
     inputs = LockboxModuleDictProperty(
                                        pfd_signal1=PfdErrorSignal,
-                                       filtered_signal=FilteredSignal
+                                       filtered_signal=PhaseSignal
                                        )
 
-    outputs = LockboxModuleDictProperty(piezo=PiezoOutput)
+    outputs = LockboxModuleDictProperty(
+                                        slow_temperature=PiezoOutput,
+                                        fast_piezo=PiezoOutput
+                                        )
                                         #piezo2=PiezoOutput)
 
+    def forget_differential_mode(self):
+        self.lockbox.outputs['fast_piezo'].pid.differential_mode_enabled = False
 
+    def use_fast_piezo_as_input(self):
+        self.lockbox.outputs['slow_temperature'].pid.input = 'lockbox.outputs.fast_piezo'
 
-
+    def add_phase_signal_as_input(self):
+        self.lockbox.outputs['fast_piezo'].pid.differential_mode_enabled = True
 
 
 
