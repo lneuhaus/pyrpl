@@ -39,7 +39,7 @@
 */
 
 
-module red_pitaya_pfd_block_new
+module red_pitaya_pfd_block
 (   input rstn_i,
     input clk_i, 
        
@@ -65,7 +65,7 @@ always @(posedge clk_i) begin
 		else if ({i,q}==2'b10)
 			integral <= 2'b01;
 		else if ({i,q}==2'b01)
-			integral <= 2b'11;
+			integral <= 2'b11;
     end   
 end
 

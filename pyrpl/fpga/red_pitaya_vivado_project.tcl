@@ -84,4 +84,4 @@ update_compile_order -fileset sources_1
 # Start GUI, if necessary (disabled by default)
 ################################################################################
 
-#start_gui
+start_gui

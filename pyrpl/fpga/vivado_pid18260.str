@@ -1,0 +1,398 @@
+/*
+
+Vivado v2015.4 (64-bit)
+SW Build 1412921 on Wed Nov 18 09:43:45 MST 2015
+Process ID: 18260
+
+Current time: 	10/26/20 2:14:32 PM CET
+Time zone: 	Central European Time (Europe/Paris)
+
+OS: Windows 7
+Version: 6.1
+Architecture: amd64
+Available processors (cores): 8
+
+Screen size: 1680x1050
+Screen resolution (DPI): 96
+Available screens: 3
+Default font: family=Tahoma,name=Tahoma,style=plain,size=11
+
+Java version: 	1.8.0_45 64-bit
+Java home: 	c:/Xilinx/Vivado/2015.4/tps/win64/jre
+
+User name: 	OMQ
+User home directory: C:/Users/OMQ
+User working directory: C:/Users/OMQ/Documents/GitHub/pyrpl/pyrpl/fpga
+User country: 	US
+User language: 	en
+User locale: 	en_US
+
+Vivado preferences path: C:/Users/OMQ/AppData/Roaming/Xilinx/Vivado/2015.4/vivado.ini
+Vivado layouts directory: C:/Users/OMQ/AppData/Roaming/Xilinx/Vivado/2015.4/layouts
+
+GUI allocated memory:	150 MB
+GUI max memory:		3,052 MB
+Engine allocated memory: 754 MB
+
+*/
+
+// TclEventType: START_GUI
+// [GUI Memory]: 34 MB (+33183kb) [00:00:09]
+// [Engine Memory]: 690 MB (+572389kb) [00:00:09]
+// [GUI Memory]: 42 MB (+6680kb) [00:00:10]
+// [GUI Memory]: 49 MB (+5162kb) [00:00:10]
+// [GUI Memory]: 53 MB (+1401kb) [00:00:10]
+// [Engine Memory]: 733 MB (+8148kb) [00:00:11]
+// [GUI Memory]: 56 MB (+105kb) [00:00:11]
+// TclEventType: START_PROGRESS_DIALOG
+// Tcl Message: source red_pitaya_vivado_project.tcl 
+// Tcl Message: # set path_rtl rtl # set path_ip  ip # set path_sdc sdc # set part xc7z010clg400-1 # create_project -part $part -force pyrpl ./project 
+// Tcl Message: INFO: Currently there is no design <system> in project, so creating one... 
+// Tcl Message: Wrote  : <C:/Users/OMQ/Documents/GitHub/pyrpl/pyrpl/fpga/project/pyrpl.srcs/sources_1/bd/system/system.bd>  
+// Tcl Message: create_bd_design: Time (s): cpu = 00:00:01 ; elapsed = 00:00:07 . Memory (MB): peak = 202.930 ; gain = 13.305 
+// Tcl Message: INFO: Making design <system> as current_bd_design. 
+// Tcl Message: ## puts "INFO: Currently the variable <design_name> is equal to \"$design_name\"." 
+// Tcl Message: INFO: Currently the variable <design_name> is equal to "system". 
+// Tcl Message: create_bd_port: Time (s): cpu = 00:00:00 ; elapsed = 00:00:05 . Memory (MB): peak = 207.910 ; gain = 2.902 create_bd_cell: Time (s): cpu = 00:00:01 ; elapsed = 00:00:06 . Memory (MB): peak = 216.914 ; gain = 6.902 create_bd_cell: Time (s): cpu = 00:00:00 ; elapsed = 00:00:06 . Memory (MB): peak = 221.152 ; gain = 4.238 create_bd_cell: Time (s): cpu = 00:00:03 ; elapsed = 00:00:09 . Memory (MB): peak = 288.953 ; gain = 67.801 
+// Tcl Message: INFO: [Device 21-403] Loading part xc7z010clg400-1 
+// Tcl Message: create_bd_cell: Time (s): cpu = 00:00:04 ; elapsed = 00:00:09 . Memory (MB): peak = 436.793 ; gain = 147.840 
+// Tcl Message: Wrote  : <C:/Users/OMQ/Documents/GitHub/pyrpl/pyrpl/fpga/project/pyrpl.srcs/sources_1/bd/system/system.bd>  
+// Tcl Message: # generate_target all [get_files    system.bd] 
+// Tcl Message: Verilog Output written to : C:/Users/OMQ/Documents/GitHub/pyrpl/pyrpl/fpga/project/pyrpl.srcs/sources_1/bd/system/hdl/system.v Verilog Output written to : C:/Users/OMQ/Documents/GitHub/pyrpl/pyrpl/fpga/project/pyrpl.srcs/sources_1/bd/system/hdl/system_wrapper.v Wrote  : <C:/Users/OMQ/Documents/GitHub/pyrpl/pyrpl/fpga/project/pyrpl.srcs/sources_1/bd/system/system.bd>  
+// Tcl Message: Exporting to file C:/Users/OMQ/Documents/GitHub/pyrpl/pyrpl/fpga/project/pyrpl.srcs/sources_1/bd/system/hw_handoff/system.hwh Generated Block Design Tcl file C:/Users/OMQ/Documents/GitHub/pyrpl/pyrpl/fpga/project/pyrpl.srcs/sources_1/bd/system/hw_handoff/system_bd.tcl Generated Hardware Definition File C:/Users/OMQ/Documents/GitHub/pyrpl/pyrpl/fpga/project/pyrpl.srcs/sources_1/bd/system/hdl/system.hwdef 
+// Tcl Message: generate_target: Time (s): cpu = 00:00:28 ; elapsed = 00:01:52 . Memory (MB): peak = 501.172 ; gain = 63.367 
+// Tcl Message: INFO: [filemgmt 20-348] Importing the appropriate files for fileset: 'constrs_1' INFO: [filemgmt 20-348] Importing the appropriate files for fileset: 'sources_1' 
+// Tcl Message: # update_compile_order -fileset sources_1 # start_gui 
+// TclEventType: START_PROGRESS_DIALOG
+// TclEventType: STOP_PROGRESS_DIALOG
+// bF:g (cq:JFrame):  Sourcing Tcl script 'red_pitaya_vivado_project.tcl' : addNotify
+// TclEventType: STOP_PROGRESS_DIALOG
+dismissDialog("Sourcing Tcl script 'red_pitaya_vivado_project.tcl'"); // bF:g (cq:JFrame)
+// [GUI Memory]: 64 MB (+5619kb) [00:00:14]
+// TclEventType: DG_UPDATE_GRAPH
+// TclEventType: DG_ANALYSIS_MSG_RESET
+// TclEventType: DG_UPDATE_GRAPH
+// TclEventType: FILE_SET_CHANGE
+// TclEventType: DG_UPDATE_GRAPH
+// TclEventType: DG_ANALYSIS_MSG_RESET
+// Tcl Message: update_compile_order -fileset sources_1 
+// TclEventType: DG_UPDATE_GRAPH
+// TclEventType: FILE_SET_CHANGE
+// TclEventType: DG_GRAPH_STALE
+// Tcl Message: update_compile_order -fileset sim_1 
+// HMemoryUtils.trashcanNow. Engine heap size: 759 MB. GUI used memory: 33 MB. Current time: 10/26/20 2:14:34 PM CET
+// TclEventType: DG_UPDATE_GRAPH
+// [Engine Memory]: 787 MB (+18889kb) [00:00:18]
+// Elapsed time: 26 seconds
+selectTree(PAResourceEtoH.FileSetPanel_FILE_SET_PANEL_TREE, "[root, Design Sources, red_pitaya_top (red_pitaya_top.v)]", 1, true); // y:k (I:JPanel, cq:JFrame) - Node
+// Elapsed time: 16 seconds
+expandTree(PAResourceEtoH.FileSetPanel_FILE_SET_PANEL_TREE, "[root, Simulation Sources]", 6); // y:k (I:JPanel, cq:JFrame)
+expandTree(PAResourceEtoH.FileSetPanel_FILE_SET_PANEL_TREE, "[root, Simulation Sources, sim_1]", 7); // y:k (I:JPanel, cq:JFrame)
+selectTree(PAResourceEtoH.FileSetPanel_FILE_SET_PANEL_TREE, "[root, Simulation Sources, sim_1, red_pitaya_top (red_pitaya_top.v)]", 8, true); // y:k (I:JPanel, cq:JFrame) - Node
+expandTree(PAResourceEtoH.FileSetPanel_FILE_SET_PANEL_TREE, "[root, Simulation Sources, sim_1, red_pitaya_top (red_pitaya_top.v)]", 8); // y:k (I:JPanel, cq:JFrame)
+collapseTree(PAResourceEtoH.FileSetPanel_FILE_SET_PANEL_TREE, "[root, Simulation Sources, sim_1, red_pitaya_top (red_pitaya_top.v)]", 8); // y:k (I:JPanel, cq:JFrame)
+collapseTree(PAResourceEtoH.FileSetPanel_FILE_SET_PANEL_TREE, "[root, Simulation Sources, sim_1]", 7); // y:k (I:JPanel, cq:JFrame)
+collapseTree(PAResourceEtoH.FileSetPanel_FILE_SET_PANEL_TREE, "[root, Simulation Sources]", 6); // y:k (I:JPanel, cq:JFrame)
+selectTree(PAResourceEtoH.FileSetPanel_FILE_SET_PANEL_TREE, "[root, Design Sources, red_pitaya_top (red_pitaya_top.v)]", 1, true); // y:k (I:JPanel, cq:JFrame) - Node
+selectTree(PAResourceEtoH.FileSetPanel_FILE_SET_PANEL_TREE, "[root, Design Sources, red_pitaya_top (red_pitaya_top.v)]", 1, true); // y:k (I:JPanel, cq:JFrame) - Node
+selectTree(PAResourceEtoH.FileSetPanel_FILE_SET_PANEL_TREE, "[root, Design Sources, red_pitaya_top (red_pitaya_top.v)]", 1, true, false, false, false, false, true); // y:k (I:JPanel, cq:JFrame) - Double Click - Node
+// Elapsed time: 10 seconds
+selectButton(PAResourceCommand.PACommandNames_RUN_SYNTHESIS, "run_synthesis"); // y:JideButton (CommandBar:DockableBar, cq:JFrame)
+// Run Command: PAResourceCommand.PACommandNames_RUN_SYNTHESIS
+// bF:g (cq:JFrame):  Starting Design Runs : addNotify
+// TclEventType: DG_UPDATE_GRAPH
+// TclEventType: DG_ANALYSIS_MSG_RESET
+// TclEventType: DG_UPDATE_GRAPH
+// Tcl Message: launch_runs synth_1 
+// TclEventType: RUN_LAUNCH
+// TclEventType: RUN_MODIFY
+// Tcl Message: [Mon Oct 26 14:15:46 2020] Launched synth_1... Run output will be captured here: C:/Users/OMQ/Documents/GitHub/pyrpl/pyrpl/fpga/project/pyrpl.runs/synth_1/runme.log 
+// Tcl Message: launch_runs: Time (s): cpu = 00:00:01 ; elapsed = 00:00:07 . Memory (MB): peak = 1010.574 ; gain = 0.000 
+// 'm' command handler elapsed time: 7 seconds
+dismissDialog("Starting Design Runs"); // bF:g (cq:JFrame)
+// [GUI Memory]: 69 MB (+1567kb) [00:01:39]
+// HMemoryUtils.trashcanNow. Engine heap size: 817 MB. GUI used memory: 35 MB. Current time: 10/26/20 2:15:59 PM CET
+// [Engine Memory]: 834 MB (+8060kb) [00:02:02]
+// Elapsed time: 40 seconds
+selectTab("PlanAheadTabBaseWorkspace_JideTabbedPane", (HResource) null, "Project Summary", 0); // TdiGroup:JideTabbedPane (CodeEditorDocumentPane:DocumentPane, cq:JFrame)
+// Elapsed time: 12 seconds
+selectTab("PlanAheadTabBaseWorkspace_JideTabbedPane", (HResource) null, "red_pitaya_top.v", 1); // TdiGroup:JideTabbedPane (CodeEditorDocumentPane:DocumentPane, cq:JFrame)
+// Elapsed time: 101 seconds
+selectMenu(PAResourceItoN.MainMenuMgr_FILE, "File"); // U:JideMenu (CommandMenuBar:CommandBar, cq:JFrame)
+// [GUI Memory]: 76 MB (+3987kb) [00:04:08]
+selectMenu(PAResourceItoN.MainMenuMgr_OPEN_RECENT_PROJECT, "Open Recent Project"); // aa:JMenu (JPopupMenu:JComponent, cq:JFrame)
+dismissMenu(PAResourceItoN.MainMenuMgr_FILE, "File"); // U:JideMenu (CommandMenuBar:CommandBar, cq:JFrame)
+selectCodeEditor("red_pitaya_top.v", 263, 112); // bl:J (JPanel:JComponent, cq:JFrame)
+expandTree(PAResourceEtoH.FileSetPanel_FILE_SET_PANEL_TREE, "[root, Design Sources, red_pitaya_top (red_pitaya_top.v), i_dsp - red_pitaya_dsp (red_pitaya_dsp.v)]", 7); // y:k (I:JPanel, cq:JFrame)
+expandTree(PAResourceEtoH.FileSetPanel_FILE_SET_PANEL_TREE, "[root, Design Sources, red_pitaya_top (red_pitaya_top.v), i_dsp - red_pitaya_dsp (red_pitaya_dsp.v), iq - red_pitaya_iq_block (red_pitaya_iq_block.v)]", 12); // y:k (I:JPanel, cq:JFrame)
+selectTree(PAResourceEtoH.FileSetPanel_FILE_SET_PANEL_TREE, "[root, Design Sources, red_pitaya_top (red_pitaya_top.v), i_dsp - red_pitaya_dsp (red_pitaya_dsp.v), iq - red_pitaya_iq_block (red_pitaya_iq_block.v)]", 12, true); // y:k (I:JPanel, cq:JFrame) - Node
+// [GUI Memory]: 81 MB (+910kb) [00:04:27]
+selectTree(PAResourceEtoH.FileSetPanel_FILE_SET_PANEL_TREE, "[root, Design Sources, red_pitaya_top (red_pitaya_top.v), i_dsp - red_pitaya_dsp (red_pitaya_dsp.v), iq - red_pitaya_iq_block (red_pitaya_iq_block.v), pfd_block - red_pitaya_pfd_block (red_pitaya_pfd_block.v)]", 18, false); // y:k (I:JPanel, cq:JFrame)
+selectTree(PAResourceEtoH.FileSetPanel_FILE_SET_PANEL_TREE, "[root, Design Sources, red_pitaya_top (red_pitaya_top.v), i_dsp - red_pitaya_dsp (red_pitaya_dsp.v), iq - red_pitaya_iq_block (red_pitaya_iq_block.v), pfd_block - red_pitaya_pfd_block (red_pitaya_pfd_block.v)]", 18, false); // y:k (I:JPanel, cq:JFrame)
+selectTree(PAResourceEtoH.FileSetPanel_FILE_SET_PANEL_TREE, "[root, Design Sources, red_pitaya_top (red_pitaya_top.v), i_dsp - red_pitaya_dsp (red_pitaya_dsp.v), iq - red_pitaya_iq_block (red_pitaya_iq_block.v), pfd_block - red_pitaya_pfd_block (red_pitaya_pfd_block.v)]", 18, false); // y:k (I:JPanel, cq:JFrame)
+selectTree(PAResourceEtoH.FileSetPanel_FILE_SET_PANEL_TREE, "[root, Design Sources, red_pitaya_top (red_pitaya_top.v), i_dsp - red_pitaya_dsp (red_pitaya_dsp.v), iq - red_pitaya_iq_block (red_pitaya_iq_block.v), pfd_block - red_pitaya_pfd_block (red_pitaya_pfd_block.v)]", 18, false, false, false, false, false, true); // y:k (I:JPanel, cq:JFrame) - Double Click
+// Elapsed time: 34 seconds
+selectCodeEditor("red_pitaya_pfd_block.v", 251, 434); // bl:J (JPanel:JComponent, cq:JFrame)
+selectCodeEditor("red_pitaya_pfd_block.v", 330, 457); // bl:J (JPanel:JComponent, cq:JFrame)
+// Elapsed time: 43 seconds
+selectCodeEditor("red_pitaya_pfd_block.v", 191, 190); // bl:J (JPanel:JComponent, cq:JFrame)
+selectCodeEditor("red_pitaya_pfd_block.v", 91, 213); // bl:J (JPanel:JComponent, cq:JFrame)
+// Elapsed time: 12 seconds
+selectCodeEditor("red_pitaya_pfd_block.v", 39, 517); // bl:J (JPanel:JComponent, cq:JFrame)
+selectMenu(PAResourceItoN.MainMenuMgr_TOOLS, "Tools"); // U:JideMenu (CommandMenuBar:CommandBar, cq:JFrame)
+dismissMenu(PAResourceItoN.MainMenuMgr_TOOLS, "Tools"); // U:JideMenu (CommandMenuBar:CommandBar, cq:JFrame)
+selectMenu(PAResourceItoN.MainMenuMgr_FLOW, "Flow"); // U:JideMenu (CommandMenuBar:CommandBar, cq:JFrame)
+selectMenuItem(PAResourceCommand.PACommandNames_GOTO_IP_INTEGRATOR, "IP Integrator"); // ae:JMenuItem (JPopupMenu:JComponent, cq:JFrame)
+dismissMenu(PAResourceItoN.MainMenuMgr_FLOW, "Flow"); // U:JideMenu (CommandMenuBar:CommandBar, cq:JFrame)
+// Run Command: PAResourceCommand.PACommandNames_GOTO_IP_INTEGRATOR
+// Elapsed time: 35 seconds
+closeView(PAResourceOtoP.PAViews_SYSTEM, "System"); // eC:aO
+closeView(PAResourceOtoP.PAViews_ADDRESS_EDITOR, "Address Editor"); // a:aO
+selectMenu(PAResourceItoN.MainMenuMgr_EDIT, "Edit"); // U:JideMenu (CommandMenuBar:CommandBar, cq:JFrame)
+dismissMenu(PAResourceItoN.MainMenuMgr_EDIT, "Edit"); // U:JideMenu (CommandMenuBar:CommandBar, cq:JFrame)
+selectMenu(PAResourceItoN.MainMenuMgr_FLOW, "Flow"); // U:JideMenu (CommandMenuBar:CommandBar, cq:JFrame)
+dismissMenu(PAResourceItoN.MainMenuMgr_FLOW, "Flow"); // U:JideMenu (CommandMenuBar:CommandBar, cq:JFrame)
+selectMenu(PAResourceItoN.MainMenuMgr_TOOLS, "Tools"); // U:JideMenu (CommandMenuBar:CommandBar, cq:JFrame)
+dismissMenu(PAResourceItoN.MainMenuMgr_TOOLS, "Tools"); // U:JideMenu (CommandMenuBar:CommandBar, cq:JFrame)
+selectMenu(PAResourceItoN.MainMenuMgr_FLOW, "Flow"); // U:JideMenu (CommandMenuBar:CommandBar, cq:JFrame)
+selectMenu(PAResourceItoN.MainMenuMgr_OPEN_BLOCK_DESIGN, "Open Block Design"); // aa:JMenu (JPopupMenu:JComponent, cq:JFrame)
+selectMenu(PAResourceItoN.MainMenuMgr_OPEN_BLOCK_DESIGN, "Open Block Design"); // aa:JMenu (JPopupMenu:JComponent, cq:JFrame)
+selectMenu(PAResourceCommand.PACommandNames_SIMULATION_RUN, "Run Simulation"); // U:JideMenu (JPopupMenu:JComponent, cq:JFrame)
+selectMenu(PAResourceItoN.MainMenuMgr_OPEN_BLOCK_DESIGN, "Open Block Design"); // aa:JMenu (JPopupMenu:JComponent, cq:JFrame)
+dismissMenu(PAResourceItoN.MainMenuMgr_FLOW, "Flow"); // U:JideMenu (CommandMenuBar:CommandBar, cq:JFrame)
+selectMenu(PAResourceItoN.MainMenuMgr_TOOLS, "Tools"); // U:JideMenu (CommandMenuBar:CommandBar, cq:JFrame)
+dismissMenu(PAResourceItoN.MainMenuMgr_TOOLS, "Tools"); // U:JideMenu (CommandMenuBar:CommandBar, cq:JFrame)
+selectMenu(PAResourceItoN.MainMenuMgr_WINDOW, "Window"); // U:JideMenu (CommandMenuBar:CommandBar, cq:JFrame)
+dismissMenu(PAResourceItoN.MainMenuMgr_WINDOW, "Window"); // U:JideMenu (CommandMenuBar:CommandBar, cq:JFrame)
+selectMenu(PAResourceItoN.MainMenuMgr_TOOLS, "Tools"); // U:JideMenu (CommandMenuBar:CommandBar, cq:JFrame)
+selectMenu(PAResourceItoN.MainMenuMgr_REPORT, "Report"); // aa:JMenu (JPopupMenu:JComponent, cq:JFrame)
+selectMenu(RDIResourceCommand.RDICommands_CUSTOM_COMMANDS, "Customize Commands"); // aa:JMenu (JPopupMenu:JComponent, cq:JFrame)
+selectMenu(PAResourceItoN.MainMenuMgr_REPORT, "Report"); // aa:JMenu (JPopupMenu:JComponent, cq:JFrame)
+dismissMenu(PAResourceItoN.MainMenuMgr_TOOLS, "Tools"); // U:JideMenu (CommandMenuBar:CommandBar, cq:JFrame)
+selectMenu(PAResourceItoN.MainMenuMgr_WINDOW, "Window"); // U:JideMenu (CommandMenuBar:CommandBar, cq:JFrame)
+dismissMenu(PAResourceItoN.MainMenuMgr_WINDOW, "Window"); // U:JideMenu (CommandMenuBar:CommandBar, cq:JFrame)
+selectMenu(PAResourceItoN.MainMenuMgr_TOOLS, "Tools"); // U:JideMenu (CommandMenuBar:CommandBar, cq:JFrame)
+dismissMenu(PAResourceItoN.MainMenuMgr_TOOLS, "Tools"); // U:JideMenu (CommandMenuBar:CommandBar, cq:JFrame)
+selectMenu(PAResourceItoN.MainMenuMgr_FLOW, "Flow"); // U:JideMenu (CommandMenuBar:CommandBar, cq:JFrame)
+selectMenu(PAResourceItoN.MainMenuMgr_OPEN_BLOCK_DESIGN, "Open Block Design"); // aa:JMenu (JPopupMenu:JComponent, cq:JFrame)
+selectMenuItem(PAResourceCommand.PACommandNames_CREATE_NEW_DIAGRAM, "Create Block Design"); // ae:JMenuItem (JPopupMenu:JComponent, cq:JFrame)
+dismissMenu(PAResourceItoN.MainMenuMgr_FLOW, "Flow"); // U:JideMenu (CommandMenuBar:CommandBar, cq:JFrame)
+// Run Command: PAResourceCommand.PACommandNames_CREATE_NEW_DIAGRAM
+// aE:x (cq:JFrame): Create Block Design: addNotify
+// HMemoryUtils.trashcanNow. Engine heap size: 844 MB. GUI used memory: 43 MB. Current time: 10/26/20 2:21:59 PM CET
+selectButton(RDIResource.BaseDialog_OK, "OK"); // a:JButton (JPanel:JComponent, aE:x)
+// 'D' command handler elapsed time: 7 seconds
+dismissDialog("Create Block Design"); // aE:x (cq:JFrame)
+// TclEventType: RSB_SAVE_DIAGRAM
+// TclEventType: RSB_LOCK_CHANGE
+// TclEventType: DG_GRAPH_STALE
+// bF:g (cq:JFrame):  Create Block Design : addNotify
+// Tcl Message: create_bd_design "design_1" 
+// Tcl Message: Wrote  : <C:/Users/OMQ/Documents/GitHub/pyrpl/pyrpl/fpga/project/pyrpl.srcs/sources_1/bd/design_1/design_1.bd>  
+// TclEventType: DG_GRAPH_STALE
+// TclEventType: FILE_SET_CHANGE
+// TclEventType: RSB_LOCK_CHANGE
+// TclEventType: RSB_OPEN_DIAGRAM
+// TclEventType: DG_GRAPH_STALE
+// TclEventType: FILE_SET_CHANGE
+dismissDialog("Create Block Design"); // bF:g (cq:JFrame)
+// TclEventType: DG_GRAPH_STALE
+// TclEventType: DG_UPDATE_GRAPH
+// TclEventType: DG_ANALYSIS_MSG_RESET
+// TclEventType: DG_GRAPH_STALE
+// TclEventType: FILE_SET_CHANGE
+// TclEventType: DG_UPDATE_GRAPH
+// TclEventType: DG_GRAPH_STALE
+// TclEventType: FILE_SET_CHANGE
+// TclEventType: DG_UPDATE_GRAPH
+// TclEventType: DG_ANALYSIS_MSG_RESET
+// TclEventType: FILE_SET_CHANGE
+// Tcl Message: update_compile_order -fileset sources_1 
+// TclEventType: DG_UPDATE_GRAPH
+// TclEventType: FILE_SET_CHANGE
+// TclEventType: RUN_COMPLETED
+// X:G (cq:JFrame): Synthesis Completed: addNotify
+// Elapsed time: 10 seconds
+selectButton(RDIResource.BaseDialog_OK, "OK"); // a:JButton (JPanel:JComponent, X:G)
+// Run Command: PAResourceCommand.PACommandNames_RUN_IMPLEMENTATION
+// G:aY (cq:JFrame): Synthesis is Out-of-date: addNotify
+selectButton(RDIResource.BaseDialog_NO, "No"); // a:JButton (JPanel:JComponent, G:aY)
+// bF:g (cq:JFrame):  Starting Design Runs : addNotify
+dismissDialog("Synthesis is Out-of-date"); // G:aY (cq:JFrame)
+// Tcl Message: launch_runs impl_1 
+// TclEventType: RUN_LAUNCH
+// TclEventType: RUN_MODIFY
+// Tcl Message: [Mon Oct 26 14:22:27 2020] Launched impl_1... Run output will be captured here: C:/Users/OMQ/Documents/GitHub/pyrpl/pyrpl/fpga/project/pyrpl.runs/impl_1/runme.log 
+// Tcl Message: launch_runs: Time (s): cpu = 00:00:00 ; elapsed = 00:00:05 . Memory (MB): peak = 1045.535 ; gain = 0.000 
+// 'c' command handler elapsed time: 10 seconds
+dismissDialog("Starting Design Runs"); // bF:g (cq:JFrame)
+selectButton(PAResourceQtoS.SystemBuilderView_ADD_IP, (String) null); // y:JideButton (JPanel:JComponent, cq:JFrame)
+// Elapsed time: 17 seconds
+selectTreeTable(PAResourceAtoD.CoreTreeTablePanel_CORE_TREE_TABLE, "CORDIC", 77, "CORDIC", 0, false); // T:aw (JViewport:JComponent, ResizableWindow:JWindow)
+selectTreeTable(PAResourceAtoD.CoreTreeTablePanel_CORE_TREE_TABLE, "CORDIC", 77, "CORDIC", 0, false); // T:aw (JViewport:JComponent, ResizableWindow:JWindow)
+expandTreeTable(PAResourceAtoD.CoreTreeTablePanel_CORE_TREE_TABLE, "CORDIC", 77); // T:aw (JViewport:JComponent, ResizableWindow:JWindow)
+selectTreeTable(PAResourceAtoD.CoreTreeTablePanel_CORE_TREE_TABLE, "CORDIC", 77, "CORDIC", 0, false, false, false, false, false, true); // T:aw (JViewport:JComponent, ResizableWindow:JWindow) - Double Click
+// Tcl Message: startgroup 
+// Tcl Message: create_bd_cell -type ip -vlnv xilinx.com:ip:cordic:6.0 cordic_0 
+// bF:g (cq:JFrame):  Add IP : addNotify
+// TclEventType: REPORT_IP_STATUS_STALE
+// TclEventType: FILE_SET_CHANGE
+// TclEventType: DG_GRAPH_STALE
+// TclEventType: FILE_SET_CHANGE
+// TclEventType: STOP_PROGRESS_DIALOG
+// TclEventType: RSB_PROPERTY_CHANGE
+// TclEventType: REPORT_IP_STATUS_STALE
+// TclEventType: RSB_ADD_OBJECT
+// Tcl Message: create_bd_cell: Time (s): cpu = 00:00:01 ; elapsed = 00:00:18 . Memory (MB): peak = 1054.035 ; gain = 0.000 
+// Tcl Message: endgroup 
+// Elapsed time: 19 seconds
+dismissDialog("Add IP"); // bF:g (cq:JFrame)
+// TclEventType: DG_UPDATE_GRAPH
+// TclEventType: DG_ANALYSIS_MSG_RESET
+// TclEventType: DG_UPDATE_GRAPH
+// TclEventType: DG_ANALYSIS_MSG_RESET
+// TclEventType: DG_UPDATE_GRAPH
+// Run Command: PAResourceCommand.PACommandNames_CUSTOMIZE_RSB_BLOC
+// T:bF (cq:JFrame):  Re-customize IP : addNotify
+// t:g (cq:JFrame): Re-customize IP: addNotify
+// [GUI Memory]: 85 MB (+36kb) [00:09:14]
+// Elapsed time: 20 seconds
+dismissDialog("Re-customize IP"); // T:bF (cq:JFrame)
+// HMemoryUtils.trashcanNow. Engine heap size: 879 MB. GUI used memory: 53 MB. Current time: 10/26/20 2:23:34 PM CET
+// [Engine Memory]: 879 MB (+2897kb) [00:09:20]
+selectComboBox("Functional Selection (Functional_Selection)", "Arc Tan", 4); // bz:f (H:JPanel, t:g)
+// Elapsed time: 15 seconds
+selectComboBox("Architectural Configuration (Architectural_Configuration)", "Word Serial", 0); // bz:f (H:JPanel, t:g)
+selectComboBox("Architectural Configuration (Architectural_Configuration)", "Parallel", 1); // bz:f (H:JPanel, t:g)
+selectComboBox("Pipelining Mode (Pipelining_Mode)", "Maximum", 2); // bz:f (H:JPanel, t:g)
+// TclEventType: RUN_STEP_COMPLETED
+// ak:a (cq:JFrame): Launch Run Critical Messages: addNotify
+// HMemoryUtils.trashcanNow. Engine heap size: 901 MB. GUI used memory: 52 MB. Current time: 10/26/20 2:24:24 PM CET
+// Elapsed time: 23 seconds
+selectButton(PAResourceAtoD.CmdMsgDialog_OPEN_MESSAGES_VIEW, "Open Messages View"); // a:JButton (JPanel:JComponent, ak:a)
+// Run Command: PAResourceCommand.PACommandNames_MESSAGE_WINDOW
+dismissDialog("Launch Run Critical Messages"); // ak:a (cq:JFrame)
+// Elapsed time: 22 seconds
+selectTab(PAResourceTtoZ.XPG_TabbedPane_TABBED_PANE, (HResource) null, "AXI4 Stream Options", 1); // cH:g (H:JPanel, t:g)
+selectTab(PAResourceTtoZ.XPG_TabbedPane_TABBED_PANE, (HResource) null, "Configuration Options", 0); // cH:g (H:JPanel, t:g)
+// Elapsed time: 14 seconds
+selectCheckBox(PAResourceTtoZ.XPG_IPSymbol_SHOW_DISABLED_PORTS, "Show disabled ports", false); // h:JCheckBox (co:H, t:g): FALSE
+selectCheckBox(PAResourceTtoZ.XPG_IPSymbol_SHOW_DISABLED_PORTS, "Show disabled ports", true); // h:JCheckBox (co:H, t:g): TRUE
+setText("Iterations", "14"); // O:ao (cI:N, t:g)
+setText("Precision", "14", true); // O:ao (cI:N, t:g)
+// Elapsed time: 26 seconds
+setText("Precision", "16", true); // O:ao (cI:N, t:g)
+// Elapsed time: 52 seconds
+selectButton(PAResourceAtoD.CustomizeCoreDialog_DOCUMENTATION, "Documentation"); // y:JideButton (CommandBar:DockableBar, t:g)
+selectMenuItem(PAResourceCommand.PACommandNames_SHOW_PRODUCT_GUIDE, "Product Guide"); // ae:JMenuItem (al:JPopupMenu, t:g)
+// Run Command: PAResourceCommand.PACommandNames_SHOW_PRODUCT_GUIDE
+selectTab(PAResourceTtoZ.XPG_TabbedPane_TABBED_PANE, (HResource) null, "AXI4 Stream Options", 1); // cH:g (H:JPanel, t:g)
+selectTab(PAResourceTtoZ.XPG_TabbedPane_TABBED_PANE, (HResource) null, "Configuration Options", 0); // cH:g (H:JPanel, t:g)
+selectButton(PAResourceAtoD.CustomizeCoreDialog_DOCUMENTATION, "Documentation"); // y:JideButton (CommandBar:DockableBar, t:g)
+selectButton(PAResourceAtoD.CustomizeCoreDialog_DOCUMENTATION, "Documentation"); // y:JideButton (CommandBar:DockableBar, t:g)
+selectMenuItem(PAResourceCommand.PACommandNames_SHOW_PRODUCT_WEBPAGE, "Product Webpage"); // ae:JMenuItem (al:JPopupMenu, t:g)
+// Run Command: PAResourceCommand.PACommandNames_SHOW_PRODUCT_WEBPAGE
+// Elapsed time: 51 seconds
+selectComboBox("Functional Selection (Functional_Selection)", "Rotate", 0); // bz:f (H:JPanel, t:g)
+selectComboBox("Functional Selection (Functional_Selection)", "Translate", 1); // bz:f (H:JPanel, t:g)
+selectComboBox("Functional Selection (Functional_Selection)", "Sin and Cos", 2); // bz:f (H:JPanel, t:g)
+// [Engine Memory]: 933 MB (+10828kb) [00:13:42]
+// HMemoryUtils.trashcanNow. Engine heap size: 933 MB. GUI used memory: 53 MB. Current time: 10/26/20 2:27:59 PM CET
+// Elapsed time: 13 seconds
+selectComboBox("Functional Selection (Functional_Selection)", "Sinh and Cosh", 3); // bz:f (H:JPanel, t:g)
+selectComboBox("Functional Selection (Functional_Selection)", "Arc Tan", 4); // bz:f (H:JPanel, t:g)
+// TclEventType: RUN_COMPLETED
+// [GUI Memory]: 89 MB (+489kb) [00:15:26]
+// Elapsed time: 468 seconds
+selectTab(PAResourceTtoZ.XPG_TabbedPane_TABBED_PANE, (HResource) null, "AXI4 Stream Options", 1); // cH:g (H:JPanel, t:g)
+selectComboBox("Flow Control (flow_control)", "Blocking", 1); // bz:f (H:JPanel, t:g)
+selectComboBox("Flow Control (flow_control)", "NonBlocking", 0); // bz:f (H:JPanel, t:g)
+// [GUI Memory]: 94 MB (+271kb) [00:22:01]
+selectCheckBox((HResource) null, "Has TLAST", true); // h:JCheckBox (bo:D, t:g): TRUE
+selectCheckBox((HResource) null, "Has TLAST", false); // h:JCheckBox (bo:D, t:g): FALSE
+selectTab(PAResourceTtoZ.XPG_TabbedPane_TABBED_PANE, (HResource) null, "Configuration Options", 0); // cH:g (H:JPanel, t:g)
+// Elapsed time: 20 seconds
+dismissDialog("Re-customize IP"); // t:g (cq:JFrame)
+// X:G (cq:JFrame): Implementation Completed: addNotify
+selectRadioButton(PAResourceCommand.PACommandNames_RUN_BITGEN, "Generate Bitstream"); // a:JRadioButton (JPanel:JComponent, X:G)
+selectButton(RDIResource.BaseDialog_OK, "OK"); // a:JButton (JPanel:JComponent, X:G)
+// Run Command: PAResourceCommand.PACommandNames_RUN_BITGEN
+// aR:y (cq:JFrame): Save Project: addNotify
+selectButton(PAResourceQtoS.SaveProjectUtils_SAVE, "Save"); // a:JButton (JPanel:JComponent, aR:y)
+// bF:g (cq:JFrame):  Save Constraints : addNotify
+dismissDialog("Save Project"); // aR:y (cq:JFrame)
+// TclEventType: RSB_SAVE_DIAGRAM
+// TclEventType: DG_GRAPH_STALE
+// TclEventType: FILE_SET_CHANGE
+// TclEventType: RSB_SAVE_DIAGRAM
+// Tcl Message: save_bd_design 
+// Tcl Message: Wrote  : <C:/Users/OMQ/Documents/GitHub/pyrpl/pyrpl/fpga/project/pyrpl.srcs/sources_1/bd/design_1/design_1.bd>  
+// G:aY (cq:JFrame): Synthesis is Out-of-date: addNotify
+dismissDialog("Save Constraints"); // bF:g (cq:JFrame)
+// TclEventType: DG_UPDATE_GRAPH
+// TclEventType: DG_ANALYSIS_MSG_RESET
+// TclEventType: DG_UPDATE_GRAPH
+// TclEventType: DG_ANALYSIS_MSG_RESET
+// TclEventType: DG_UPDATE_GRAPH
+selectButton(RDIResource.BaseDialog_NO, "No"); // a:JButton (JPanel:JComponent, G:aY)
+// 'bX' command handler elapsed time: 12 seconds
+dismissDialog("Synthesis is Out-of-date"); // G:aY (cq:JFrame)
+// bF:g (cq:JFrame):  Generate Bitstream : addNotify
+// Tcl Message: launch_runs impl_1 -to_step write_bitstream 
+// TclEventType: RUN_LAUNCH
+// TclEventType: RUN_MODIFY
+// Tcl Message: [Mon Oct 26 14:37:08 2020] Launched impl_1... Run output will be captured here: C:/Users/OMQ/Documents/GitHub/pyrpl/pyrpl/fpga/project/pyrpl.runs/impl_1/runme.log 
+dismissDialog("Generate Bitstream"); // bF:g (cq:JFrame)
+// Run Command: PAResourceCommand.PACommandNames_CUSTOMIZE_RSB_BLOC
+// T:bF (cq:JFrame):  Re-customize IP : addNotify
+// t:g (cq:JFrame): Re-customize IP: addNotify
+// Elapsed time: 10 seconds
+dismissDialog("Re-customize IP"); // T:bF (cq:JFrame)
+selectComboBox("Architectural Configuration (Architectural_Configuration)", "Word Serial", 0); // bz:f (H:JPanel, t:g)
+selectComboBox("Architectural Configuration (Architectural_Configuration)", "Parallel", 1); // bz:f (H:JPanel, t:g)
+// [GUI Memory]: 100 MB (+1666kb) [00:23:35]
+// TclEventType: RUN_COMPLETED
+// HMemoryUtils.trashcanNow. Engine heap size: 937 MB. GUI used memory: 54 MB. Current time: 10/26/20 2:58:00 PM CET
+// HMemoryUtils.trashcanNow. Engine heap size: 937 MB. GUI used memory: 52 MB. Current time: 10/26/20 3:28:00 PM CET
+// HMemoryUtils.trashcanNow. Engine heap size: 937 MB. GUI used memory: 49 MB. Current time: 10/26/20 3:58:01 PM CET
+// HMemoryUtils.trashcanNow. Engine heap size: 937 MB. GUI used memory: 48 MB. Current time: 10/26/20 4:28:01 PM CET
+// HMemoryUtils.trashcanNow. Engine heap size: 937 MB. GUI used memory: 47 MB. Current time: 10/26/20 4:58:01 PM CET
+// HMemoryUtils.trashcanNow. Engine heap size: 937 MB. GUI used memory: 49 MB. Current time: 10/26/20 5:28:02 PM CET
+// HMemoryUtils.trashcanNow. Engine heap size: 937 MB. GUI used memory: 49 MB. Current time: 10/26/20 5:58:02 PM CET
+// HMemoryUtils.trashcanNow. Engine heap size: 937 MB. GUI used memory: 48 MB. Current time: 10/26/20 6:28:02 PM CET
+// HMemoryUtils.trashcanNow. Engine heap size: 937 MB. GUI used memory: 48 MB. Current time: 10/26/20 6:58:03 PM CET
+// HMemoryUtils.trashcanNow. Engine heap size: 937 MB. GUI used memory: 48 MB. Current time: 10/26/20 7:28:03 PM CET
+// HMemoryUtils.trashcanNow. Engine heap size: 937 MB. GUI used memory: 48 MB. Current time: 10/26/20 7:58:03 PM CET
+// HMemoryUtils.trashcanNow. Engine heap size: 937 MB. GUI used memory: 48 MB. Current time: 10/26/20 8:28:04 PM CET
+// HMemoryUtils.trashcanNow. Engine heap size: 937 MB. GUI used memory: 48 MB. Current time: 10/26/20 8:58:04 PM CET
+// HMemoryUtils.trashcanNow. Engine heap size: 937 MB. GUI used memory: 48 MB. Current time: 10/26/20 9:28:04 PM CET
+// HMemoryUtils.trashcanNow. Engine heap size: 937 MB. GUI used memory: 48 MB. Current time: 10/26/20 9:58:05 PM CET
+// HMemoryUtils.trashcanNow. Engine heap size: 937 MB. GUI used memory: 48 MB. Current time: 10/26/20 10:28:05 PM CET
+// HMemoryUtils.trashcanNow. Engine heap size: 937 MB. GUI used memory: 48 MB. Current time: 10/26/20 10:58:06 PM CET
+// HMemoryUtils.trashcanNow. Engine heap size: 937 MB. GUI used memory: 48 MB. Current time: 10/26/20 11:28:06 PM CET
+// HMemoryUtils.trashcanNow. Engine heap size: 937 MB. GUI used memory: 48 MB. Current time: 10/26/20 11:58:06 PM CET
+// HMemoryUtils.trashcanNow. Engine heap size: 937 MB. GUI used memory: 48 MB. Current time: 10/27/20 12:28:07 AM CET
+// HMemoryUtils.trashcanNow. Engine heap size: 937 MB. GUI used memory: 48 MB. Current time: 10/27/20 12:58:07 AM CET
+// HMemoryUtils.trashcanNow. Engine heap size: 937 MB. GUI used memory: 48 MB. Current time: 10/27/20 1:28:07 AM CET
+// HMemoryUtils.trashcanNow. Engine heap size: 937 MB. GUI used memory: 48 MB. Current time: 10/27/20 1:58:08 AM CET
+// HMemoryUtils.trashcanNow. Engine heap size: 937 MB. GUI used memory: 48 MB. Current time: 10/27/20 2:28:08 AM CET
+// HMemoryUtils.trashcanNow. Engine heap size: 937 MB. GUI used memory: 48 MB. Current time: 10/27/20 2:58:08 AM CET
+// HMemoryUtils.trashcanNow. Engine heap size: 937 MB. GUI used memory: 48 MB. Current time: 10/27/20 3:28:09 AM CET
+// HMemoryUtils.trashcanNow. Engine heap size: 937 MB. GUI used memory: 48 MB. Current time: 10/27/20 3:58:09 AM CET
+// HMemoryUtils.trashcanNow. Engine heap size: 937 MB. GUI used memory: 48 MB. Current time: 10/27/20 4:28:10 AM CET
+// HMemoryUtils.trashcanNow. Engine heap size: 937 MB. GUI used memory: 48 MB. Current time: 10/27/20 4:58:10 AM CET
+// HMemoryUtils.trashcanNow. Engine heap size: 937 MB. GUI used memory: 48 MB. Current time: 10/27/20 5:28:10 AM CET
+// HMemoryUtils.trashcanNow. Engine heap size: 937 MB. GUI used memory: 48 MB. Current time: 10/27/20 5:58:11 AM CET
+// HMemoryUtils.trashcanNow. Engine heap size: 937 MB. GUI used memory: 48 MB. Current time: 10/27/20 6:28:11 AM CET
+// HMemoryUtils.trashcanNow. Engine heap size: 937 MB. GUI used memory: 48 MB. Current time: 10/27/20 6:58:11 AM CET
+// HMemoryUtils.trashcanNow. Engine heap size: 937 MB. GUI used memory: 48 MB. Current time: 10/27/20 7:28:12 AM CET
+// HMemoryUtils.trashcanNow. Engine heap size: 937 MB. GUI used memory: 48 MB. Current time: 10/27/20 7:58:12 AM CET
+// HMemoryUtils.trashcanNow. Engine heap size: 937 MB. GUI used memory: 48 MB. Current time: 10/27/20 8:28:12 AM CET
+// HMemoryUtils.trashcanNow. Engine heap size: 937 MB. GUI used memory: 48 MB. Current time: 10/27/20 8:58:13 AM CET
+// HMemoryUtils.trashcanNow. Engine heap size: 937 MB. GUI used memory: 48 MB. Current time: 10/27/20 9:28:13 AM CET
+// HMemoryUtils.trashcanNow. Engine heap size: 937 MB. GUI used memory: 48 MB. Current time: 10/27/20 9:58:14 AM CET
+// TclEventType: FILE_SET_CHANGE
+// HMemoryUtils.trashcanNow. Engine heap size: 937 MB. GUI used memory: 48 MB. Current time: 10/27/20 10:28:14 AM CET
+// HMemoryUtils.trashcanNow. Engine heap size: 937 MB. GUI used memory: 49 MB. Current time: 10/27/20 10:58:14 AM CET
+// HMemoryUtils.trashcanNow. Engine heap size: 937 MB. GUI used memory: 48 MB. Current time: 10/27/20 11:28:15 AM CET
+// HMemoryUtils.trashcanNow. Engine heap size: 937 MB. GUI used memory: 48 MB. Current time: 10/27/20 11:58:15 AM CET
