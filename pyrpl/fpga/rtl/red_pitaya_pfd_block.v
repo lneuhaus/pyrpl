@@ -39,7 +39,39 @@
 */
 
 
-module red_pitaya_pfd_block
+module red_pitaya_pfd_block_new
+(   input rstn_i,
+    input clk_i, 
+       
+    input i, //signal 1
+    input q, //signal 2
+    
+    output [2-1:0] integral_o
+    );
+
+reg [2-1:0] integral;
+
+assign integral_o = integral[2-1:0];
+
+always @(posedge clk_i) begin
+    if (rstn_i == 1'b0) begin
+        integral <= 2'b00;
+    end
+    else begin
+        if ({i,q}==2'b00)
+            integral <= 2'b00;
+        else if ({i,q}==2'b11)  
+            integral <= 2'b10;
+		else if ({i,q}==2'b10)
+			integral <= 2'b01;
+		else if ({i,q}==2'b01)
+			integral <= 2b'11;
+    end   
+end
+
+endmodule
+
+/* module red_pitaya_pfd_block
 #(
     parameter ISR = 0
 )
@@ -88,4 +120,4 @@ always @(posedge clk_i) begin
     end   
 end
 
-endmodule
+endmodule */
