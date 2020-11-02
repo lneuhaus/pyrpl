@@ -39,7 +39,7 @@
 */
 
 
-module red_pitaya_pfd_block_new
+module red_pitaya_pfd_block
 #(
 	parameter SIGNALBITS = 14, //=output signal bitwidth
 	parameter LPFBITS = 24,
