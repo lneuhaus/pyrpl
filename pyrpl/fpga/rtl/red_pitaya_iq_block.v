@@ -339,10 +339,8 @@ reg pfd_on;
 red_pitaya_pfd_block pfd_block (
 	.rstn_i(pfd_on),
 	.clk_i (clk_i),
-	.i (quadrature1[LPFBITS-1]), //sign bit of input signal as clock source
-	.q (quadrature2[LPFBITS-1]), //sign bit of sine reference signal as clock source
-/* 	.s1 (dat_i_filtered[SIGNALBITS-1]), //sign bit of input signal as clock source
-	.s2 (sin[LUTBITS-1]), //sign bit of sine reference signal as clock source */
+	.i (quadrature1), //in phase from iq
+	.q (quadrature2), //quadrature from iq
 	.integral_o(pfd_integral)
 );
 
