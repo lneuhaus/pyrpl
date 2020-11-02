@@ -30,13 +30,13 @@ class CustomInputClass(InputSignal):
     # A customized calibration method can be used to implement custom calibrations. The calibration method of the
     # InputSignal class retrieves min, max, mean, rms of the input signal during a sweep and saves them as class
     # attributes, such that they can be used by expected_signal().
-    def calibrate(self):
+	def calibrate(self):
         """ This is a simplified calibration method. InputSignal.calibrate works better than this in most cases. """
         self.lockbox.sweep()
         # get a curve of the signal during the sweep
-        curve = self.sweep_acquire()
+        curve,_ = self.sweep_acquire()
         # fill self.mean, min, max, rms with values from acquired curve.
-        self.get_stats_from_curve(curve=curve)
+        self.calibration_data.get_stats_from_curve(curve=curve)
 
 
 class CustomLockbox(Lockbox):
