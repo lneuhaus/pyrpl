@@ -38,12 +38,62 @@
 ############################################################################### 
 */
 
+module red_pitaya_pfd_block_old
+#(
+    parameter ISR = 0
+)
+(   input rstn_i,
+    input clk_i, 
+       
+    input s1, //signal 1
+    input s2, //signal 2
+    
+    output [14-1:0] integral_o
+    );
 
-module red_pitaya_pfd_block
+reg l1; //s1 from last cycle
+reg l2; //s2 from last cycle
+
+wire e1;
+wire e2;
+
+reg [14+ISR-1:0] integral;
+
+assign e1 = ( {s1,l1} == 2'b10 ) ? 1'b1 : 1'b0;
+assign e2 = ( {s2,l2} == 2'b10 ) ? 1'b1 : 1'b0;
+
+assign integral_o = integral[14+ISR-1:ISR];
+
+always @(posedge clk_i) begin
+    if (rstn_i == 1'b0) begin
+        l1 <= 1'b0;
+        l2 <= 1'b0;
+        integral <= {(14+ISR){1'b0}};
+    end
+    else begin
+        l1 <= s1;
+        l2 <= s2;
+        if (integral == {1'b0,{14+ISR-1{1'b1}}})  //auto-reset or positive saturation
+            //integral <= {INTBITS{1'b0}};
+            integral <= integral + {14+ISR{1'b1}}; //decrement by one
+        else if (integral == {1'b1,{14+ISR-1{1'b0}}}) //auto-reset or negative saturation
+            //integral <= {INTBITS{1'b0}};
+            integral <= integral + {{14+ISR-1{1'b0}},1'b1};
+        //output signal is proportional to frequency difference of s1-s2
+        else if ({e1,e2}==2'b10)
+            integral <= integral + {{14+ISR-1{1'b0}},1'b1};
+        else if ({e1,e2}==2'b01)  
+            integral <= integral + {14+ISR{1'b1}};
+    end   
+end
+
+endmodule
+
+module red_pitaya_pfd_block_new
 #(
 	parameter SIGNALBITS = 14, //=output signal bitwidth
-	parameter INPUTWIDTH = 19,
-	parameter WORKINGWIDTH = 21, //i_val and q_val and ph bitwidth, minimal value: SIGNALBITS+2
+	parameter INPUTWIDTH = 14,
+	parameter WORKINGWIDTH = 16, //i_val and q_val and ph bitwidth, minimal value: SIGNALBITS+2
 	parameter PHASEWIDTH = 10, //number of (least significant) bits encoding the phase 
 	parameter TURNWIDTH = 4, //number of (most significant) bits encoding the number of turns around the circle
 	parameter NSTAGES = 7 //number of steps in the cordic algorithm
