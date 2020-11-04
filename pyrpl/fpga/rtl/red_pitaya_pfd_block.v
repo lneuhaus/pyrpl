@@ -151,15 +151,15 @@ always @(posedge clk_i) begin
                         i_val[0] <= -ext_i + ext_q;
                         q_val[0] <= -ext_i - ext_q;
                         ph[0] <= 10'b1110000000;
-                        if (last_quadrant==2'b11) 
+                        if ((last_quadrant==2'b11) & (turns[0]!={1'b1,{TURNWIDTH-1{1'b0}}})) 
                             turns[0] <= turns[0] - 1;
                         end
         2'b11:  begin // Rotate by -225 degrees
                         i_val[0] <= -ext_i - ext_q;
                         q_val[0] <=  ext_i - ext_q;
                         ph[0] <= 10'b0010000000;
-                        if (last_quadrant==2'b10)
-                            turns[0] <= turns[0] + 1;
+                        if ((last_quadrant==2'b10) & (turns[0] != {1'b0,{TURNWIDTH-1{1'b1}}}))
+							turns[0] <= turns[0] + 1;
                         end
         2'b00:  begin // Rotate by -45 degrees
                         i_val[0] <=  ext_i + ext_q;
