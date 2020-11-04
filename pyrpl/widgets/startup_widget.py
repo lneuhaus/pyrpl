@@ -3,7 +3,8 @@ import socket
 import logging
 
 from ..sshshell import SshShell
-from ..async_utils import APP
+from ..async_utils import APP, sleep_async, ensure_future
+
 
 
 class HostnameSelectorWidget(QtWidgets.QDialog):
@@ -97,7 +98,8 @@ class HostnameSelectorWidget(QtWidgets.QDialog):
         ret = super(HostnameSelectorWidget, self).showEvent(QShowEvent)
         if not self.ips_and_macs:
             # launch autoscan at first startup with 10 ms delay
-            self._aux_timer = QtCore.QTimer.singleShot(10, self.scan)
+            #self._aux_timer = QtCore.QTimer.singleShot(10, self.scan)
+            self.scan()
         return ret
 
     @property
@@ -221,6 +223,12 @@ class HostnameSelectorWidget(QtWidgets.QDialog):
 
         In order to work, the specified username and password must be correct.
         """
+        ensure_future(self.scan_async())
+
+    async def scan_async(self):
+        """
+        asynchronous version of scan.
+        """
         self.countdown_cancel()
         if self.scanning: # pragma: no cover
             self._logger.debug("Scan is already running. Please wait for it "
@@ -281,7 +289,8 @@ class HostnameSelectorWidget(QtWidgets.QDialog):
                             self.add_device(ip, mac)
             else:
                 self._logger.debug("%s:%d is closed", ip, port)
-            APP.processEvents()
+            await sleep_async(0.01)
+            #APP.processEvents()
         self.scanning = False
         if len(self.ips_and_macs) == 2:
             # exactly one device was found, therefore we can auto-proceed to

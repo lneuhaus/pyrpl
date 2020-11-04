@@ -59,8 +59,8 @@ class TestLockbox(TestPyrpl):
         pid = self.pyrpl.rp.pid1
         self.pyrpl.lockbox.classname = 'Interferometer'
         lockbox = self.pyrpl.lockbox
-        pid.i = -0.1
-        pid.p = -0.1
+        pid.i = -1
+        pid.p = -1
         pid.input = lockbox.outputs.piezo
         lockbox.inputs.port1.input_signal = pid
         output = lockbox.outputs.values()[0]
@@ -72,7 +72,7 @@ class TestLockbox(TestPyrpl):
 
         lockbox.calibrate_all()
 
-        lockbox.sequence.append({'gain_factor':1.0})
+        lockbox.sequence.append({'gain_factor':1.0e6})
         lockbox.sequence[-1].input = 'port1'
         output.desired_unity_gain_frequency = 1e7
         lockbox.sequence[-1].outputs.piezo.lock_on = True
@@ -110,8 +110,6 @@ class TestLockbox(TestPyrpl):
     def test_auto_relock(self):
         self.setup_fake_system()
         self.lockbox.auto_lock = True
-        self.lockbox.lock()
-        assert self.lockbox.classname == 'Interferometer'
 
         # monkey patch a function to make sure lockbox went to first stage
         # again
@@ -120,6 +118,9 @@ class TestLockbox(TestPyrpl):
 
         self.lockbox.__class__.increment = increment
         self.lockbox.first_stage_counter = 0
+
+        self.lockbox.lock_async()
+        assert self.lockbox.classname == 'Interferometer'
 
         self.lockbox.sequence[0].function_call = "increment"
         pid = self.pyrpl.rp.pid1
@@ -130,14 +131,14 @@ class TestLockbox(TestPyrpl):
             pid.p = 0
             pid.i = 0
             await sleep_async(time_s)
-            pid.p = -0.1
-            pid.i = -0.1
-
+            pid.p = -1
+            pid.i = -1
+        sleep(0.5)
         assert self.lockbox.is_locked()
         ensure_future(unlock_later(1))
         sleep(5)
         assert self.lockbox.is_locked()
-        assert self.lockbox.first_stage_counter == 1
+        assert self.lockbox.first_stage_counter == 2
 
         # make a config file for a lock including iir that locks onto itself
         # then load another state and lock a pid with existing integrator

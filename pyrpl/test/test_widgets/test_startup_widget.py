@@ -33,6 +33,3 @@ class TestStartupWidgets(TestPyrpl):
         self.widget.countdown_start(2)
         sleep(3)
         self.widget.ok()
-
-
-

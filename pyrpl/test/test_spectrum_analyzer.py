@@ -1,3 +1,6 @@
+from scipy.optimize import least_squares
+import matplotlib.pyplot as plt
+
 import logging
 logger = logging.getLogger(name=__name__)
 import numpy as np
@@ -5,6 +8,8 @@ from pyrpl.async_utils import sleep
 from qtpy import QtCore, QtWidgets
 from pyrpl.test.test_base import TestPyrpl
 from pyrpl import APP
+
+
 
 
 class TestClass(TestPyrpl):
@@ -92,34 +97,70 @@ class TestClass(TestPyrpl):
 
         self.iq = self.pyrpl.rp.iq0
         self.iq.setup(input=self.asg,
-                      acbandwidth=0,
-                      gain=1.0,
-                      bandwidth=5e5,
-                      frequency=1e5,
-                      output_signal='output_direct')
+                acbandwidth=10,
+                gain=1.0,
+                bandwidth=5e3,
+                frequency=1e5,
+                output_signal='output_direct')
 
         self.sa = self.pyrpl.spectrumanalyzer
         self.sa.setup(input1_baseband=self.iq,
                       span=10e6,
                       trace_average=50,  # TODO: set back to 50
-                      )
+                      window='gaussian')
         self.sa.stop()
 
-        for freq in np.linspace(self.sa.span/5, self.sa.span/4, 5):
+        def lorentz(amplitude, center, width):
+            delta = (self.sa.data_x - center)
+            return amplitude/(1 + delta**2/width**2)
+
+        def to_minimize(args):
+            amplitude, = args
+            center = self.iq.frequency
+            width = self.iq.bandwidth[0]
+            return np.abs(var_spectrum - lorentz(amplitude, center, width))
+
+        IS_PLOT_FIT = True
+        if IS_PLOT_FIT:
+            plt.figure('spectra')
+
+        for freq in np.linspace(10*self.iq.bandwidth[0],
+                            self.sa.span/2 - 10*self.iq.bandwidth[0], 5):
             print("Trying frequency %f..."%freq)
             self.iq.frequency = freq # set the bandpass filter
             in1, in2, cre, cim = self.sa.single()
             # average neighbouring points
-            in1_av = in1[:-(len(in1) % 1000)].reshape(len(in1) // 1000,
-                                                      1000).mean(
+            in1_av = in1[:-(len(in1) % 100)].reshape(len(in1) // 100,
+                                                      100).mean(
                 axis=1)
-            var_spectrum = max(self.sa.data_to_unit(in1_av,
+            var_spectrum = self.sa.data_to_unit(in1,
                                         'Vrms^2/Hz',
-                                        self.sa.rbw))*62.5e6
+                                        self.sa.rbw)
 
-            assert abs(var_spectrum -
+            amplitude, = least_squares(to_minimize, 1e-6).x
+
+            if IS_PLOT_FIT:
+                plt.ion()
+                plt.plot(self.sa.data_x, var_spectrum)
+                plt.plot(self.sa.data_x, lorentz(amplitude,
+                                                center=self.iq.frequency,
+                                                width=self.iq.bandwidth[0]))
+                expected = self.asg.amplitude**2/62.5e6
+                plt.hlines([expected*0.9, expected, expected*1.1],
+                                    self.sa.data_x[0],
+                                    self.sa.data_x[-1],
+                                    linestyles=[':', '-', ':'])
+                plt.ylabel(r"$V^2 (V^2/Hz)$")
+                plt.xlabel("Freq. (Hz)")
+                plt.show()
+
+            assert abs(amplitude*62.5e6 -
                     self.asg.amplitude**2)/self.asg.amplitude**2<0.1, \
-                (var_spectrum, self.asg.amplitude**2)
+                    (amplitude*62.5e6, self.asg.amplitude**2)
+
+        print('before show')
+
+        print("after show")
 
     def test_iq_filter_white_noise(self):
         """

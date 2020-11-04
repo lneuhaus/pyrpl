@@ -106,7 +106,7 @@ class TestMemory(object):
         # but m2 will only attempt to reload once m2._loadsavedeadtime has elapsed
         assert m2.a == 1
         # once we wait long enough, m2 will attempt to reload the file
-        sleep(T2 - T1)
+        sleep(T2 - T1 + 0.05)
         assert m1._write_to_file_counter == old_save_to_file + 1
         assert m2.a == 2, m2.a
         m2.a = 3

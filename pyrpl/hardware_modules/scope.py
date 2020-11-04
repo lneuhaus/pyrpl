@@ -719,4 +719,3 @@ class Scope(HardwareModule, AcquisitionModule):
                                               self.data_avg[ch],
                                               **d)
         return curves
-
