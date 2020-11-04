@@ -335,7 +335,7 @@ end
 // pfd functionality (optional)
 wire [SIGNALBITS-1:0] pfd_integral;
 reg pfd_on;
-red_pitaya_pfd_block pfd_block (
+red_pitaya_pfd_block_old (
 	.rstn_i(pfd_on),
 	.clk_i (clk_i),
 	.s1 (dat_i_filtered[SIGNALBITS-1]), //sign bit of input signal as clock source
@@ -660,7 +660,7 @@ end
 // pfd functionality (optional)
 wire [SIGNALBITS-1:0] pfd_integral;
 reg pfd_on;
-red_pitaya_pfd_block pfd_block_new (
+red_pitaya_pfd_block_new (
 	.rstn_i(pfd_on),
 	.clk_i (clk_i),
 	.i (quadrature1[LPFBITS-1:LPFBITS-14]), //in phase from iq
