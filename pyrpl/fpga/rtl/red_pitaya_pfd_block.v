@@ -89,57 +89,6 @@ end
 
 endmodule
 
-module red_pitaya_pfd_block_old
-#(
-    parameter ISR = 0
-)
-(   input rstn_i,
-    input clk_i, 
-       
-    input s1, //signal 1
-    input s2, //signal 2
-    
-    output [14-1:0] integral_o
-    );
-
-reg l1; //s1 from last cycle
-reg l2; //s2 from last cycle
-
-wire e1;
-wire e2;
-
-reg [14+ISR-1:0] integral;
-
-assign e1 = ( {s1,l1} == 2'b10 ) ? 1'b1 : 1'b0;
-assign e2 = ( {s2,l2} == 2'b10 ) ? 1'b1 : 1'b0;
-
-assign integral_o = integral[14+ISR-1:ISR];
-
-always @(posedge clk_i) begin
-    if (rstn_i == 1'b0) begin
-        l1 <= 1'b0;
-        l2 <= 1'b0;
-        integral <= {(14+ISR){1'b0}};
-    end
-    else begin
-        l1 <= s1;
-        l2 <= s2;
-        if (integral == {1'b0,{14+ISR-1{1'b1}}})  //auto-reset or positive saturation
-            //integral <= {INTBITS{1'b0}};
-            integral <= integral + {14+ISR{1'b1}}; //decrement by one
-        else if (integral == {1'b1,{14+ISR-1{1'b0}}}) //auto-reset or negative saturation
-            //integral <= {INTBITS{1'b0}};
-            integral <= integral + {{14+ISR-1{1'b0}},1'b1};
-        //output signal is proportional to frequency difference of s1-s2
-        else if ({e1,e2}==2'b10)
-            integral <= integral + {{14+ISR-1{1'b0}},1'b1};
-        else if ({e1,e2}==2'b01)  
-            integral <= integral + {14+ISR{1'b1}};
-    end   
-end
-
-endmodule
-
 module red_pitaya_pfd_block_new
 #(
 	parameter SIGNALBITS = 14, //=output signal bitwidth
@@ -171,14 +120,11 @@ reg	signed	[(WORKINGWIDTH-1):0]	i_val	[0:NSTAGES];
 reg	signed	[(WORKINGWIDTH-1):0]	q_val	[0:NSTAGES];
 reg			[(PHASEWIDTH-1):0]	    ph		[0:NSTAGES];
 reg signed  [(TURNWIDTH-1):0]       turns   [0:NSTAGES];
-reg 		[1:0]					quadrant [0:NSTAGES];
-reg			[(PHASEWIDTH-1):0]	    ph_out;
 reg         [1:0]                   last_quadrant;
 reg         [4:0]                   start; 
 
-assign integral_o = {turns[NSTAGES],ph_out};
+assign integral_o = {turns[NSTAGES],ph[NSTAGES]};
 initial turns[0] = 0;
-
 
 always @(posedge clk_i) begin
     $display("turns[0]");
@@ -188,7 +134,6 @@ always @(posedge clk_i) begin
         i_val[0] <= 0;
         q_val[0] <= 0;
 		ph[0] <= 0;
-		ph_out <= 0;
 		last_quadrant <= 2'b11;
 		turns[0] <= 0;
 		start <= 0;
@@ -196,7 +141,6 @@ always @(posedge clk_i) begin
     else begin
 		//Rotation to start in the quadrant [-45°,45°]
 		last_quadrant <= {ext_i[WORKINGWIDTH-1], ext_q[WORKINGWIDTH-1]};
-		quadrant[0] <= {ext_i[WORKINGWIDTH-1], ext_q[WORKINGWIDTH-1]};
         case({ext_i[WORKINGWIDTH-1], ext_q[WORKINGWIDTH-1]})
         2'b01:  begin // Rotate by -315 degrees
                         i_val[0] <=  ext_i - ext_q;
@@ -254,7 +198,6 @@ generate for(k=0; k<NSTAGES; k=k+1) begin
 				q_val[k+1] <= (i_val[k]>>>(k+1)) + q_val[k];
 				ph[k+1] <= ph[k] - cordic_angle[k];
 				turns[k+1] <= turns[k];
-				quadrant[k+1] <= quadrant[k];
 			end else begin
 				// On the other hand, if the vector is above the
 				// x-axis, then rotate in the other direction
@@ -262,29 +205,12 @@ generate for(k=0; k<NSTAGES; k=k+1) begin
 				q_val[k+1] <= -(i_val[k]>>>(k+1)) + q_val[k];
 				ph[k+1] <= ph[k] + cordic_angle[k];
 				turns[k+1] <= turns[k];
-				quadrant[k+1] <= quadrant[k];
 			end
 		end
 	end
 	end
 endgenerate
 
-always @(posedge clk_i) begin
-	case(quadrant[NSTAGES])
-	2'b11	: 	begin
-				if (ph[NSTAGES][PHASEWIDTH-1] == 1)
-					ph_out <= {(PHASEWIDTH-1){1'b0}};
-				else 
-					ph_out <= ph[NSTAGES];
-				end
-	2'b10	:	begin
-				if (ph[NSTAGES][PHASEWIDTH-1] == 0)
-					ph_out <= {(PHASEWIDTH-1){1'b1}};
-				else 
-					ph_out <= ph[NSTAGES];
-				end
-	default	:	ph_out <= ph[NSTAGES];
-    endcase
-end
+//To do : round the phase and feed to output port + deal with the turns counter
 
 endmodule
