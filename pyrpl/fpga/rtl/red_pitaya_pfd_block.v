@@ -119,28 +119,20 @@ assign	ext_q = { {2{q[(INPUTWIDTH-1)]}}, q, {(WORKINGWIDTH-INPUTWIDTH-2){1'b0}} 
 reg	signed	[(WORKINGWIDTH-1):0]	i_val	[0:NSTAGES];
 reg	signed	[(WORKINGWIDTH-1):0]	q_val	[0:NSTAGES];
 reg			[(PHASEWIDTH-1):0]	    ph		[0:NSTAGES];
-reg signed  [(TURNWIDTH-1):0]       turns   [0:NSTAGES];
+reg signed  [(TURNWIDTH-1):0]       turns;
 reg         [1:0]                   last_quadrant;
-reg         [4:0]                   start; 
+reg         [(PHASEWIDTH-1):0]	    ph_o; 
 
-assign integral_o = {turns[NSTAGES],ph[NSTAGES]};
-initial turns[0] = 0;
+assign integral_o = {turns,ph_o};
 
 always @(posedge clk_i) begin
-    $display("turns[0]");
-    $display(turns[0]);
-    
     if (rstn_i == 1'b0) begin
         i_val[0] <= 0;
         q_val[0] <= 0;
 		ph[0] <= 0;
-		last_quadrant <= 2'b11;
-		turns[0] <= 0;
-		start <= 0;
     end
     else begin
 		//Rotation to start in the quadrant [-45°,45°]
-		last_quadrant <= {ext_i[WORKINGWIDTH-1], ext_q[WORKINGWIDTH-1]};
         case({ext_i[WORKINGWIDTH-1], ext_q[WORKINGWIDTH-1]})
         2'b01:  begin // Rotate by -315 degrees
                         i_val[0] <=  ext_i - ext_q;
@@ -151,15 +143,11 @@ always @(posedge clk_i) begin
                         i_val[0] <= -ext_i + ext_q;
                         q_val[0] <= -ext_i - ext_q;
                         ph[0] <= 10'b1110000000;
-                        if ((last_quadrant==2'b11) & (turns[0]!={1'b1,{TURNWIDTH-1{1'b0}}})) 
-                            turns[0] <= turns[0] - 1;
                         end
         2'b11:  begin // Rotate by -225 degrees
                         i_val[0] <= -ext_i - ext_q;
                         q_val[0] <=  ext_i - ext_q;
                         ph[0] <= 10'b0010000000;
-                        if ((last_quadrant==2'b10) & (turns[0] != {1'b0,{TURNWIDTH-1{1'b1}}}))
-							turns[0] <= turns[0] + 1;
                         end
         2'b00:  begin // Rotate by -45 degrees
                         i_val[0] <=  ext_i + ext_q;
@@ -188,6 +176,8 @@ generate for(k=0; k<NSTAGES; k=k+1) begin
 			i_val[k+1] <= 0;
 			q_val[k+1] <= 0;
 			ph[k+1] <= 0;
+			last_quadrant <= 2'b11;
+			turns <= 0;
 		end
 		else begin
 			if (q_val[k][(WORKINGWIDTH-1)]) // Below the axis
@@ -197,20 +187,28 @@ generate for(k=0; k<NSTAGES; k=k+1) begin
 				i_val[k+1] <= i_val[k] - (q_val[k]>>>(k+1));
 				q_val[k+1] <= (i_val[k]>>>(k+1)) + q_val[k];
 				ph[k+1] <= ph[k] - cordic_angle[k];
-				turns[k+1] <= turns[k];
 			end else begin
 				// On the other hand, if the vector is above the
 				// x-axis, then rotate in the other direction
 				i_val[k+1] <= i_val[k] + (q_val[k]>>>(k+1));
 				q_val[k+1] <= -(i_val[k]>>>(k+1)) + q_val[k];
 				ph[k+1] <= ph[k] + cordic_angle[k];
-				turns[k+1] <= turns[k];
 			end
+		last_quadrant <= ph[NSTAGES][PHASEWIDTH-1:PHASEWIDTH-2];
+		ph_o <= ph[NSTAGES];
+		case(last_quadrant)
+		2'b00:		begin
+					if ((ph[NSTAGES][PHASEWIDTH-1:PHASEWIDTH-2] == 2'b11) & (turns != {1'b1,{TURNWIDTH-1{1'b0}}}))
+						turns <= turns - 1;
+					end
+		2'b11:		begin
+					if ((ph[NSTAGES][PHASEWIDTH-1:PHASEWIDTH-2] == 2'b00) & (turns != {1'b0,{TURNWIDTH-1{1'b1}}}))
+						turns <= turns + 1;
+					end
+		endcase
 		end
 	end
 	end
 endgenerate
-
-//To do : round the phase and feed to output port + deal with the turns counter
 
 endmodule

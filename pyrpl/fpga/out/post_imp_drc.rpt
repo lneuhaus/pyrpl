@@ -1,7 +1,7 @@
 Copyright 1986-2015 Xilinx, Inc. All Rights Reserved.
 ------------------------------------------------------------------------------------
 | Tool Version : Vivado v.2015.4 (win64) Build 1412921 Wed Nov 18 09:43:45 MST 2015
-| Date         : Wed Nov 04 18:34:46 2020
+| Date         : Mon Nov 09 14:51:02 2020
 | Host         : ExSqueez running 64-bit Service Pack 1  (build 7601)
 | Command      : report_drc
 ------------------------------------------------------------------------------------
@@ -20,7 +20,7 @@ Table of Contents
       Design limits: <entire design considered>
            Ruledeck: default
              Max violations: <unlimited>
-             Violations found: 149
+             Violations found: 151
 
 2. REPORT DETAILS
 -----------------
@@ -396,55 +396,60 @@ Related violations: <none>
 
 DPOP-1#19 Warning
 PREG Output pipelining  
-DSP i_dsp/genblk5[5].iq/modulator/firstproduct_saturation[0]/product output i_dsp/genblk5[5].iq/modulator/firstproduct_saturation[0]/product/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
+DSP i_dsp/genblk5[5].iq/demodulator/product1_reg output i_dsp/genblk5[5].iq/demodulator/product1_reg/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
 Related violations: <none>
 
 DPOP-1#20 Warning
 PREG Output pipelining  
-DSP i_dsp/genblk5[5].iq/modulator/firstproduct_saturation[1]/product output i_dsp/genblk5[5].iq/modulator/firstproduct_saturation[1]/product/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
+DSP i_dsp/genblk5[5].iq/modulator/firstproduct_saturation[0]/product output i_dsp/genblk5[5].iq/modulator/firstproduct_saturation[0]/product/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
 Related violations: <none>
 
 DPOP-1#21 Warning
 PREG Output pipelining  
-DSP i_dsp/genblk5[5].iq/modulator/i0_product_and_sat/product output i_dsp/genblk5[5].iq/modulator/i0_product_and_sat/product/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
+DSP i_dsp/genblk5[5].iq/modulator/firstproduct_saturation[1]/product output i_dsp/genblk5[5].iq/modulator/firstproduct_saturation[1]/product/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
 Related violations: <none>
 
 DPOP-1#22 Warning
 PREG Output pipelining  
-DSP i_dsp/genblk5[5].iq/modulator/secondproduct1 output i_dsp/genblk5[5].iq/modulator/secondproduct1/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
+DSP i_dsp/genblk5[5].iq/modulator/i0_product_and_sat/product output i_dsp/genblk5[5].iq/modulator/i0_product_and_sat/product/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
 Related violations: <none>
 
 DPOP-1#23 Warning
 PREG Output pipelining  
-DSP i_dsp/genblk5[5].iq/modulator/secondproduct2 output i_dsp/genblk5[5].iq/modulator/secondproduct2/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
+DSP i_dsp/genblk5[5].iq/modulator/secondproduct1 output i_dsp/genblk5[5].iq/modulator/secondproduct1/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
 Related violations: <none>
 
 DPOP-1#24 Warning
 PREG Output pipelining  
-DSP i_dsp/genblk6[6].iq/demodulator/product1_reg output i_dsp/genblk6[6].iq/demodulator/product1_reg/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
+DSP i_dsp/genblk5[5].iq/modulator/secondproduct2 output i_dsp/genblk5[5].iq/modulator/secondproduct2/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
 Related violations: <none>
 
 DPOP-1#25 Warning
 PREG Output pipelining  
-DSP i_dsp/genblk6[6].iq/modulator/firstproduct_saturation[0]/product output i_dsp/genblk6[6].iq/modulator/firstproduct_saturation[0]/product/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
+DSP i_dsp/genblk6[6].iq/demodulator/product1_reg output i_dsp/genblk6[6].iq/demodulator/product1_reg/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
 Related violations: <none>
 
 DPOP-1#26 Warning
 PREG Output pipelining  
-DSP i_dsp/genblk6[6].iq/modulator/firstproduct_saturation[1]/product output i_dsp/genblk6[6].iq/modulator/firstproduct_saturation[1]/product/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
+DSP i_dsp/genblk6[6].iq/modulator/firstproduct_saturation[0]/product output i_dsp/genblk6[6].iq/modulator/firstproduct_saturation[0]/product/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
 Related violations: <none>
 
 DPOP-1#27 Warning
 PREG Output pipelining  
-DSP i_dsp/genblk6[6].iq/modulator/i0_product_and_sat/product output i_dsp/genblk6[6].iq/modulator/i0_product_and_sat/product/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
+DSP i_dsp/genblk6[6].iq/modulator/firstproduct_saturation[1]/product output i_dsp/genblk6[6].iq/modulator/firstproduct_saturation[1]/product/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
 Related violations: <none>
 
 DPOP-1#28 Warning
 PREG Output pipelining  
-DSP i_dsp/genblk6[6].iq/modulator/secondproduct1 output i_dsp/genblk6[6].iq/modulator/secondproduct1/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
+DSP i_dsp/genblk6[6].iq/modulator/i0_product_and_sat/product output i_dsp/genblk6[6].iq/modulator/i0_product_and_sat/product/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
 Related violations: <none>
 
 DPOP-1#29 Warning
+PREG Output pipelining  
+DSP i_dsp/genblk6[6].iq/modulator/secondproduct1 output i_dsp/genblk6[6].iq/modulator/secondproduct1/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
+Related violations: <none>
+
+DPOP-1#30 Warning
 PREG Output pipelining  
 DSP i_dsp/genblk6[6].iq/modulator/secondproduct2 output i_dsp/genblk6[6].iq/modulator/secondproduct2/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
 Related violations: <none>
@@ -821,6 +826,11 @@ c:/Users/OMQ/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 211)
 Related violations: <none>
 
 REQP-31#1 Advisory
+enum_PREG_0_connects_CEP_GND  
+i_dsp/genblk5[5].iq/demodulator/product1_reg: When the DSP48E1 PREG attribute is set to 0, the CEP input pin should be tied to GND to save power.
+Related violations: <none>
+
+REQP-31#2 Advisory
 enum_PREG_0_connects_CEP_GND  
 i_dsp/genblk6[6].iq/demodulator/product1_reg: When the DSP48E1 PREG attribute is set to 0, the CEP input pin should be tied to GND to save power.
 Related violations: <none>

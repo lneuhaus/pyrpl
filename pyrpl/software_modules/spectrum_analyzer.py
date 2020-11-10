@@ -352,7 +352,7 @@ class SpectrumAnalyzer(AcquisitionModule):
     @property
     def iq(self):
         if not hasattr(self, '_iq'):
-            self._iq = self.pyrpl.rp.iq2  # can't use the normal pop
+            self._iq = self.pyrpl.rp.iq0  # can't use the normal pop
             # mechanism because we specifically want the customized iq2
             self._iq.owner = self.name
         return self._iq

@@ -1,7 +1,7 @@
 Copyright 1986-2015 Xilinx, Inc. All Rights Reserved.
 ----------------------------------------------------------------------------------------
 | Tool Version     : Vivado v.2015.4 (win64) Build 1412921 Wed Nov 18 09:43:45 MST 2015
-| Date             : Wed Nov 04 18:29:49 2020
+| Date             : Mon Nov 09 14:45:28 2020
 | Host             : ExSqueez running 64-bit Service Pack 1  (build 7601)
 | Command          : report_power -file out/post_synth_power.rpt
 | Design           : red_pitaya_top
@@ -50,16 +50,16 @@ Table of Contents
 | On-Chip                  | Power (W) | Used     | Available | Utilization (%) |
 +--------------------------+-----------+----------+-----------+-----------------+
 | Clocks                   |     0.069 |       15 |       --- |             --- |
-| Slice Logic              |     0.118 |    31669 |       --- |             --- |
-|   LUT as Logic           |     0.100 |    14659 |     17600 |           83.29 |
+| Slice Logic              |     0.118 |    31678 |       --- |             --- |
+|   LUT as Logic           |     0.100 |    14665 |     17600 |           83.32 |
 |   CARRY4                 |     0.013 |     1263 |      4400 |           28.70 |
-|   Register               |     0.005 |    12651 |     35200 |           35.94 |
-|   LUT as Shift Register  |    <0.001 |       76 |      6000 |            1.27 |
+|   Register               |     0.005 |    12657 |     35200 |           35.96 |
+|   LUT as Shift Register  |    <0.001 |       72 |      6000 |            1.20 |
 |   F7/F8 Muxes            |    <0.001 |       26 |     17600 |            0.15 |
 |   Others                 |     0.000 |      398 |       --- |             --- |
 |   BUFG                   |     0.000 |        1 |        32 |            3.13 |
 |   LUT as Distributed RAM |     0.000 |       24 |      6000 |            0.40 |
-| Signals                  |     0.117 |    27516 |       --- |             --- |
+| Signals                  |     0.117 |    27542 |       --- |             --- |
 | Block RAM                |     0.093 |       32 |        60 |           53.33 |
 | PLL                      |     0.097 |        1 |         2 |           50.00 |
 | DSPs                     |     0.030 |       38 |        80 |           47.50 |
@@ -224,7 +224,7 @@ Table of Contents
 |         i0_product_and_sat                                                       |     0.002 |
 |         sumsaturation                                                            |    <0.001 |
 |       nolabel_line338                                                            |    <0.001 |
-|     genblk6[6].iq                                                                |     0.072 |
+|     genblk6[6].iq                                                                |     0.073 |
 |       demodulator                                                                |     0.004 |
 |       inputfilter                                                                |     0.003 |
 |         genblk2[0].lpf                                                           |     0.003 |
