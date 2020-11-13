@@ -170,7 +170,7 @@ class FPAnalogPdh(InputSignal, Lorentz):
     mod_freq = FrequencyProperty()
     is_locked_signal = SelectProperty(default="reflection", 
                                       options=["reflection", "transmission", "pdh"],
-                                      doc="signal to direct calls to is_locked to")
+                                      doc="signal used by is_locked")
     _setup_attributes = InputDirect._setup_attributes + ['mod_freq', 'is_locked_signal']
     _gui_attributes = InputDirect._gui_attributes + ['mod_freq', 'is_locked_signal']
 
