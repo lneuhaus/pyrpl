@@ -375,7 +375,7 @@ class InputSignal(Signal):
         if actmean > max or actmean < min:
             self._logger.log(loglevel,
                              "Not locked at stage %s: "
-                             "input %s value of %.2f +- %.2f (setpoint %.2f)"
+                             "input %s value of %.2f +- %.2f (setpoint %.2f) "
                              "is not in error interval [%.2f, %.2f].",
                              self.lockbox.current_stage.name,
                              self.name,

@@ -168,12 +168,19 @@ class FPTransmission(FPReflection):
 
 class FPAnalogPdh(InputSignal, Lorentz):
     mod_freq = FrequencyProperty()
-    _setup_attributes = InputDirect._setup_attributes + ['mod_freq']
-    _gui_attributes = InputDirect._gui_attributes + ['mod_freq']
+    is_locked_signal = SelectProperty(default="reflection", 
+                                      options=["reflection", "transmission", "pdh"],
+                                      doc="signal used by is_locked")
+    _setup_attributes = InputDirect._setup_attributes + ['mod_freq', 'is_locked_signal']
+    _gui_attributes = InputDirect._gui_attributes + ['mod_freq', 'is_locked_signal']
 
     def is_locked(self, loglevel=logging.INFO):
         # simply perform the is_locked with the reflection error signal
-        return self.lockbox.inputs.reflection.is_locked(loglevel=loglevel)
+        is_locked_signal = getattr(self.lockbox.inputs, self.is_locked_signal)
+        if is_locked_signal == self:
+            return super().is_locked(loglevel=loglevel)
+        else:
+            return is_locked_signal.is_locked(loglevel=loglevel)
 
     def expected_signal(self, setpoint):
         # we neglect offset here because it should really be zero on resonance
@@ -462,6 +469,7 @@ class HighFinesseReflection(HighFinesseInput, FPReflection):
 
 class HighFinesseTransmission(HighFinesseInput, FPTransmission):
     pass
+
 
 class HighFinesseAnalogPdh(HighFinesseInput, FPAnalogPdh):
     def calibrate(self, trigger_signal="reflection", autosave=False):
