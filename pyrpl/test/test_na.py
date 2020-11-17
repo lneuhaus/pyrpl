@@ -71,7 +71,7 @@ class TestNA(TestPyrpl):
             try:
                 reads_per_na_cycle = global_config.test.reads_per_na_cycle
             except:
-                reads_per_na_cycle = 2.9
+                reads_per_na_cycle = 3.1
                 logger.info("Could not find global config file entry "
                             "'test.reads_per_na_cycle. Assuming default value "
                             "%.1f.", reads_per_na_cycle)
