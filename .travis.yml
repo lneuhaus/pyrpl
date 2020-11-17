@@ -4,29 +4,36 @@
 
 # lots of stuff here comes from https://gist.github.com/dan-blanchard/7045057
 
-env:
-- AUTOCORRETPEP8=0 DISPLAY=:99.0
 # REDPITAYA variables are defined in travis account (encrypted)
 
-language: python
-# nosetests is only executed for 2.7, 3.5 and 3.6, but we still test the
-# installation for other python versions (3.4)
-python:
-  - "2.7"
-  - "3.6"
-  - "3.5"
-  - "3.4"
-
 notifications:
-  email: false
+  email:
+    recipients:
+      - pyrpl.readthedocs.io@gmail.com
+
+language: generic
+
+env:
+  - TRAVIS_PYTHON_VERSION=3.7
+os:
+  - osx
+  - linux
 
 before_install:
-  - sudo apt-get update
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+    sudo apt-get update;
+    fi
   # We do this conditionally because it saves us some downloading.
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
+  - if [[ "$TRAVIS_OS_NAME" == "linux" && "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
     wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
-    else
+    elif [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
     wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+    elif [[ "$TRAVIS_OS_NAME" == "osx" && "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
+    wget https://repo.continuum.io/miniconda/Miniconda2-latest-MacOSX-x86_64.sh -O miniconda.sh;
+    elif [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+    wget https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -O miniconda.sh;
+    else
+    echo "Invalid combination of OS ($TRAVIS_OS_NAME) and Python version ($TRAVIS_PYTHON_VERSION)";
     fi
   - chmod +x miniconda.sh
   - bash miniconda.sh -b -p $HOME/miniconda
@@ -37,56 +44,62 @@ before_install:
   # Useful for debugging any issues with conda
   - conda info -a
   # The next lines fix a crash with multiprocessing on Travis and are not specific to using Miniconda
-  - sudo rm -rf /dev/shm
-  - sudo ln -s /run/shm /dev/shm
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+    sudo rm -rf /dev/shm; sudo ln -s /run/shm /dev/shm;
+    fi
   # starts gui support, see https://docs.travis-ci.com/user/gui-and-headless-browsers/
-  - sh -e /etc/init.d/xvfb start
+  # and https://github.com/travis-ci/travis-ci/issues/7313#issuecomment-279914149 (for MacOSX)
+  # formerly "sh -e sudo Xvfb :99 -ac -screen 0 1024x768x8";
+  - export DISPLAY=":99.0"
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+    sh -e /etc/init.d/xvfb start;
+    fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+    Xvfb :98 -ac -screen 0 1024x768x8;
+    fi &
   # give it some time to start
   - sleep 3
 
 install:
   # avoid to get cancelled because of very long tests
   # we get issues with building numpy etc if we do not include those in the next line
-  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION numpy scipy paramiko pandas nose pip pyqt qtpy
+  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION numpy scipy paramiko pandas nose pip pyqt qtpy nbconvert
   - source activate test-environment
-  - if [[ "$TRAVIS_PYTHON_VERSION" != "3.3" ]]; then
-    conda install --yes -c conda-forge coveralls;
-    fi
-  # overwrite default global config file with a custom one for travis (allows slower communication time)
-  - \cp ./travis_global_config.yml ./pyrpl/config/global_config.yml
+  # convert readme file to rst for PyPI
+  - conda install pandoc
+  - pandoc --from=markdown --to=rst --output=README.rst README.md
+  # install pyinstaller
+  - cd ..
+  - git clone https://www.github.com/lneuhaus/pyinstaller.git -b develop --depth=1
+  - cd pyinstaller
+  - git status
+  - python setup.py develop
+  - cd ..
+  - cd pyrpl
+  # install pyrpl
   - python setup.py install
-  # packages for coverage reports
-  - pip install coverage codecov
 
-# Run test
+# create, test and upload binary for mac os
 script:
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]] || [[ "$TRAVIS_PYTHON_VERSION" == "3.4" ]] || [[ "$TRAVIS_PYTHON_VERSION" == "3.6" ]]; then
-    nosetests;
-    fi
+  - export QT_QPA_PLATFORM_PLUGIN_PATH=$HOME/miniconda/bin/envs/test-environment/Library/plugins/platforms
+  - pyinstaller pyrpl.spec
+  - mv dist/pyrpl ./pyrpl-mac-develop
+  - chmod 755 pyrpl-mac-develop
+  - (./pyrpl-mac-develop config=test_osx hostname=_FAKE_ &)
+  - PYRPL_PID=$!
+  - sleep 30
+  - killall pyrpl-mac-develop
+  - python .deploy_to_sourceforge.py pyrpl-mac-develop
 
-after_script:
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]] || [[ "$TRAVIS_PYTHON_VERSION" == "3.4" ]] || [[ "$TRAVIS_PYTHON_VERSION" == "3.6" ]]; then
-    codecov;
-    fi
-
-# automatic release when a new tag is created needs a few preliminary steps...
-# create a Readme.rst for PyPI
-# make an executable for linux and upload to sourceforge
+# automatic release when a new tag is created: before_deploy, deploy, and after_deploy
 before_deploy:
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "3.4" ]]; then
-    source activate test-environment;
-    conda install pandoc;
-    pip install pyinstaller;
-    pandoc --from=markdown --to=rst --output=README.rst README.md;
-    pyinstaller pyrpl.spec;
-    mv dist/pyrpl ./pyrpl-linux;
-    python .deploy_to_sourceforge.py pyrpl-linux;
-    fi
+  - echo Deploy
+  - source activate test-environment
 
 deploy:
   provider: pypi
   user: lneuhaus
-  password: $PYPI_PASSWORD
+  password: $PYPI_PSW
   skip_cleanup: true
   on:
     tags: true

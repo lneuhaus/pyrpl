@@ -1,3 +1,24 @@
+"""
+There are two Arbitrary Signal Generator modules: asg1 and asg2. For
+these modules, any waveform composed of :math:`2^{14}` programmable
+points is sent to the output with arbitrary frequency and start phase
+upon a trigger event.
+
+.. code:: ipython3
+
+    asg = r.asg1 # make a shortcut
+    print "Trigger sources:", asg.trigger_sources
+    print "Output options: ", asg.output_directs
+
+Let's set up the ASG to output a sawtooth signal of amplitude 0.8 V
+(peak-to-peak 1.6 V) at 1 MHz on output 2:
+
+.. code:: python
+
+    asg.output_direct = 'out2'
+    asg.setup(waveform='halframp', frequency=20e4, amplitude=0.8, offset=0, trigger_source='immediately')
+"""
+
 import numpy as np
 from collections import OrderedDict
 from ..attributes import BoolRegister, FloatRegister, SelectRegister, SelectProperty, \

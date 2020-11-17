@@ -1,0 +1,126 @@
+# AppVeyor.com is a Continuous Integration service to build and run tests under Windows
+# see https://github.com/ogrisel/python-appveyor-demo/blob/master/appveyor.yml
+
+# this script is largely inspired by https://github.com/obspy/obspy/blob/master/appveyor.yml
+clone_depth: 50
+
+environment:
+  global:
+    # SDK v7.0 MSVC Express 2008's SetEnv.cmd script will fail if the
+    # /E:ON and /V:ON options are not enabled in the batch script intepreter
+    # See: http://stackoverflow.com/a/13751649/163740
+    CMD_IN_ENV: "cmd /E:ON /V:ON /C .\\misc\\appveyor\\run_with_env.cmd"
+    CI_URL: "--ci-url https://ci.appveyor.com/project/%APPVEYOR_REPO_NAME%/build/1.0.%APPVEYOR_BUILD_NUMBER%-%APPVEYOR_REPO_BRANCH%"
+    PR_URL: "--pr-url https://github.com/%APPVEYOR_REPO_NAME%/pull/%APPVEYOR_PULL_REQUEST_NUMBER%"
+
+  matrix:
+    # Pre-installed Python versions, which Appveyor may upgrade to
+    # a later point release.
+    # See: http://www.appveyor.com/docs/installed-software#python
+    # only use python 3.5 for building .exe (for auto-upload of binaries)
+    - PYTHON: "C:\\Miniconda35-x64"
+      PYTHON_VERSION: "3.5"
+      PYTHON_ARCH: "64"
+
+init:
+  # If there is a newer build queued for the same PR, cancel this one.
+  # The AppVeyor 'rollout builds' option is supposed to serve the same
+  # purpose but it is problematic because it tends to cancel builds pushed
+  # directly to master instead of just PR builds (or the converse).
+  # credits: JuliaLang developers.
+  - ps: if ($env:APPVEYOR_PULL_REQUEST_NUMBER -and $env:APPVEYOR_BUILD_NUMBER -ne ((Invoke-RestMethod `
+        https://ci.appveyor.com/api/projects/$env:APPVEYOR_ACCOUNT_NAME/$env:APPVEYOR_PROJECT_SLUG/history?recordsNumber=50).builds | `
+        Where-Object pullRequestId -eq $env:APPVEYOR_PULL_REQUEST_NUMBER)[0].buildNumber) { `
+          throw "There are newer queued builds for this pull request, failing early." }
+  - ps: |
+      If (($env:SKIP_NOTAG -eq "true") -and ($env:APPVEYOR_REPO_TAG -ne "true")) {
+          throw "Skipping Python version, not a tag."
+      }
+install:
+  # - ECHO "Filesystem root:"
+  # - ps: "ls \"C:/\""
+
+  # - ECHO "Installed SDKs:"
+  # - ps: "ls \"C:/Program Files/Microsoft SDKs/Windows\""
+
+  # Prepend Python to the PATH of this build (this cannot be
+  # done from inside the powershell script as it would require to restart
+  # the parent CMD process).
+  - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
+
+  # Check that we have the expected version and architecture for Python
+  - "python -c \"import sys; print(sys.version)\""
+
+  # Upgrade to the latest version of pip to avoid it displaying warnings
+  # about it being out of date.
+  - "pip install --disable-pip-version-check --user --upgrade pip"
+
+  # Install the build and runtime dependencies of the project.
+  - "conda update -q --yes conda"
+  - "conda config --add channels conda-forge"
+  # add channel twice to move it to the top of the channel priority list
+  - "conda config --add channels conda-forge"
+  - "conda config --set always_yes yes --set changeps1 no"
+  # Create a conda environment using the required packages.
+  - "conda create -q --yes -n test-environment python=%PYTHON_VERSION% numpy scipy paramiko pandas nose pip pyqt qtpy"
+  - "activate test-environment"
+  # additional dependencies
+  - "conda install --yes -c conda-forge coveralls"
+  - "pip install coverage codecov"
+  # Useful for debugging any issues with conda
+  - "conda info -a"
+  # list package versions
+  - "conda list"
+  # installation
+  - "python setup.py install"
+  # pyinstaller installation
+  # - "pip install https://github.com/lneuhaus/pyinstaller/archive/develop.zip"
+  # - "pip install pyinstaller==3.2"
+  - pip install pypiwin32
+  - cd ..
+  # - pip install https://github.com/pyinstaller/pyinstaller/tarball/develop
+  - git clone --branch develop --depth=1 https://www.github.com/lneuhaus/pyinstaller.git
+  - cd pyinstaller
+  #- git fetch origin pull/2991/head:pr2991
+  #- git checkout pr2991
+  - git status
+  - python setup.py develop
+  - cd ..
+  - cd pyrpl
+  # set hostname to fake in case pyrpl is executed
+  - "SET REDPITAYA_HOSTNAME=_FAKE_"
+  # fix a strange bug with pyinstaller packaging
+  # - "copy %PYTHON%\\envs\\test-environment\\qt.conf %PYTHON%\\envs\\test-environment\\ScriptS\\qt.conf"
+  - "SET QT_QPA_PLATFORM_PLUGIN_PATH=%PYTHON%\\envs\\test-environment\\Library\\plugins\\platforms"
+
+# Not a .NET project, we build in the install step instead
+build: false
+
+# the actual tes is whether pyinstaller manages to install pyrpl
+test_script:
+  - "pyinstaller pyrpl.spec"
+  - "mv dist/pyrpl.exe ./pyrpl-windows.exe"
+# optional tests:
+  - ps: $MyProcess = Start-Process -NoNewWindow -FilePath "C:\projects\pyrpl\pyrpl-windows.exe" -ArgumentList "config=test_windows hostname=_FAKE_" -RedirectStandardOutput out.txt -RedirectStandardError err.txt
+  - timeout 20
+# print output to screen
+  - type out.txt
+  - type err.txt
+#  - ps: "Stop-Process -Id $MyProcess.Id"
+#  - ps: Stop-Process -Name "pyrpl-windows.exe"
+#  - "nosetests"
+
+# deploy to sourceforge if build was successful and commit has a tag
+on_success:
+  - ps: |
+      If ($env:APPVEYOR_REPO_TAG -eq "true") {
+          python .deploy_to_sourceforge.py pyrpl-windows.exe;
+      }
+  - ps: |
+      If ($env:APPVEYOR_REPO_TAG -ne "true") {
+          mv ./pyrpl-windows.exe ./pyrpl-windows-develop.exe;
+          python .deploy_to_sourceforge.py pyrpl-windows-develop.exe;
+      }
+
+# Do not build feature branch with open Pull Requests
+skip_branch_with_pr: true

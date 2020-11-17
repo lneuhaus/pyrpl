@@ -112,8 +112,9 @@ class Stage(LockboxModule):
             setting = self.outputs[output.name]
             if setting.lock_on == 'ignore':
                 # this part is here to remind you that BoolIgnoreProperties
-                # should not be typecasted into bools, i.e. do not write
-                # if setting.lock_on: do_sth() because 'ignore' will bug
+                # should not be typecasted into bools, i.e. you should avoid
+                # to write "if setting.lock_on: do_sth()" because the setting
+                # 'ignore' will be interpreted identically as "True"
                 pass
             if setting.lock_on == False:
                 output.unlock()

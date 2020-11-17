@@ -108,7 +108,8 @@ except:
             return obj
 
         def plot(self):
-            self.data.plot()
+            x, y = self.data
+            pd.Series(y, index=x).plot()
 
         # Implement the following methods if you want to save curves permanently
         @classmethod

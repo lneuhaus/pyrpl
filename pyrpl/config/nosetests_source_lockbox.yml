@@ -1,9 +1,5 @@
 pyrpl:  # General configuration of the software:
-
   name: nosetests_pyrpl
-
-  gui: true  # autostart gui
-
   loglevel: info # debug
   # level of logged information.
   # 'debug' outputs everything

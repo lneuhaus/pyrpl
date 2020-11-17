@@ -8,8 +8,8 @@ import numpy as np
 from .. import global_config
 from ..async_utils import sleep as async_sleep
 try:
-    from pysine import sine
     raise  # disables sound output during this test
+    from pysine import sine
 except:
     def sine(frequency, duration):
         print("Called sine(frequency=%f, duration=%f)" % (frequency, duration))
@@ -71,7 +71,7 @@ class TestNA(TestPyrpl):
             try:
                 reads_per_na_cycle = global_config.test.reads_per_na_cycle
             except:
-                reads_per_na_cycle = 2.9
+                reads_per_na_cycle = 3.1
                 logger.info("Could not find global config file entry "
                             "'test.reads_per_na_cycle. Assuming default value "
                             "%.1f.", reads_per_na_cycle)
@@ -91,8 +91,8 @@ class TestNA(TestPyrpl):
             assert duration < maxduration, \
                 "Na w/o gui should take at most %.1f ms per point, but actually " \
                 "needs %.1f ms. This won't compromise functionality but it is " \
-                "recommended that establish a more direct ethernet connection" \
-                "to you Red Pitaya module" % (maxduration*1000.0, duration*1000.0)
+                "recommended that you establish a better ethernet connection " \
+                "to your Red Pitaya module" % (maxduration*1000.0, duration*1000.0)
 
     def test_benchmark_gui(self):
         """
@@ -146,8 +146,8 @@ class TestNA(TestPyrpl):
             assert duration < maxduration, \
                 "Na gui should take at most %.1f ms per point, but actually " \
                 "needs %.1f ms. This won't compromise functionality but it is " \
-                "recommended that establish a more direct ethernet connection" \
-                "to you Red Pitaya module" % (maxduration*1000.0, duration*1000.0)
+                "recommended that you establish a better ethernet connection" \
+                "to your Red Pitaya module" % (maxduration*1000.0, duration*1000.0)
             # 2 s for 200 points with gui display
             # This is much slower in nosetests than in real life (I get <3 s).
             # Don't know why.
@@ -177,7 +177,7 @@ class TestNA(TestPyrpl):
         with self.pyrpl.networkanalyzer as self.na:
             self.na.iq.output_signal = 'quadrature'
             self.na.setup(amplitude=1., start_freq=1e5, stop_freq=2e5, rbw=10000,
-                          points=100, avg_per_point=10, input=self.na.iq,
+                          points=100, average_per_point=10, input=self.na.iq,
                           acbandwidth=0)
             y = self.na.curve()
             assert(all(abs(y-1)<0.1))  # If transfer function is taken into
@@ -239,7 +239,8 @@ class TestNA(TestPyrpl):
             assert (old == new), (old, new)
 
     def test_save_curve(self):
-        self.na.setup(start_freq=1e5,
+        with self.pyrpl.networkanalyzer as self.na:
+            self.na.setup(start_freq=1e5,
                           stop_freq=2e5,
                           rbw=100000,
                           points=10,
@@ -248,9 +249,23 @@ class TestNA(TestPyrpl):
                           amplitude=0.01,
                           trace_average=1,
                           running_state="running_continuous")
-        self.na.single()
-        curve = self.na.save_curve()
-        self.na.stop()
-        assert len(curve.data[0]) == self.na.points
-        assert len(curve.data[1]) == self.na.points
-        self.curves.append(curve)  # curve will be deleted by teardownAll
+            self.na.single()
+            curve = self.na.save_curve()
+            self.na.stop()
+            assert len(curve.data[0]) == self.na.points
+            assert len(curve.data[1]) == self.na.points
+            self.curves.append(curve)  # curve will be deleted by teardownAll
+
+    def test_iq_stopped_after_run(self):
+        with self.pyrpl.networkanalyzer as self.na:
+            self.na.setup(start_freq=1e5,
+                          stop_freq=2e5,
+                          rbw=100000,
+                          points=100,
+                          output_direct="out1",
+                          input="out1",
+                          running_state='stopped',
+                          trace_average=1,
+                          amplitude=0.01)
+            self.na.single()
+            assert self.na.iq.amplitude==0

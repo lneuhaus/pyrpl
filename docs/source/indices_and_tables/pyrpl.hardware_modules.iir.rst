@@ -4,13 +4,6 @@ pyrpl\.hardware\_modules\.iir package
 Submodules
 ----------
 
-pyrpl\.hardware\_modules\.iir\.bodefit module
----------------------------------------------
-
-.. automodule:: pyrpl.hardware_modules.iir.bodefit
-    :members:
-    :undoc-members:
-    :show-inheritance:
 
 pyrpl\.hardware\_modules\.iir\.iir module
 -----------------------------------------

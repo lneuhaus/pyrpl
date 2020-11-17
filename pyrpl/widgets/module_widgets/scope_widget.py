@@ -1,5 +1,37 @@
 """
-A widget for the scope module
+The control panel above the plotting area allows to manipulate the following
+attributes specific to the :class:`~pyrpl.hardware_modules.scope.Scope`:
+
+* :attr:`~.Scope.ch1_active`/:attr:`~.Scope.ch2_active`: Hide/show the trace
+  corresponding to ch1/ch2.
+* :attr:`~.Scope.input1`/:attr:`~.Scope.input2`: Choose the input among a
+  list of possible signals. Internal signals can be referenced by their
+  symbolic name e.g. :code:`lockbox.outputs.output1`.
+* :attr:`~.Scope.threshold`: The voltage threshold for the scope trigger.
+* :attr:`~.Scope.hysteresis`: Hysteresis for the scope trigger, i.e. the scope
+  input signal must exceed the :attr:`~.Scope.threshold` value by more than
+  the hysteresis value to generate a trigger event.
+* :attr:`~.Scope.duration`: The full duration of the scope trace to acquire,
+  in units of seconds.
+* :attr:`~.Scope.trigger_delay`: The delay beteween trigger event and the
+  center of the trace.
+* :attr:`~.Scope.trigger_source`: The channel to use as trigger input.
+* :attr:`~.Scope.average`: Enables "averaging" a.k.a. "high-resolution" mode,
+  which averages all data samples acquired at the full sampling rate between
+  two successive points of the trace. If disabled, only a sample of the
+  full-rate signal is shown as the trace. The averaging mode corresponds to a
+  moving-average filter with a cutoff frequency of
+  :attr:`~.pyrpl.hardware_modules.scope.Scope.sampling_time` :math:`^{-1} = 2^{14}/\\mathrm{duration}`
+  in units of Hz.
+* :attr:`~.Scope.xy_mode`: If selected, channel 2 is plotted as a function of
+  channel 1 (instead of channels 1 and 2 as a function of time).
+* :code:`Trigger mode` (internally represented by :attr:`~.Scope.rolling_mode`):
+
+  * :code:`Normal` is used for triggered acquisition.
+  * :code:`Untriggered (rolling)` is used for continuous acquisition without
+    requiring a trigger signal, where the traces "roll" through the plotting
+    area from right to left in real-time. The rolling mode does not allow for
+    trace averaging nor durations below 0.1 s.
 """
 import pyqtgraph as pg
 from qtpy import QtCore, QtGui, QtWidgets
@@ -19,8 +51,8 @@ class ScopeWidget(AcquisitionModuleWidget):
         """
         self.datas = [None, None]
         self.times = None
-        self.ch_color = ('green', 'red')
-        self.ch_transparency = (255, 255)  # 0 is transparent, 255 is not  # deactivated transparency for speed reasons
+        self.ch_color = ('green', 'red', 'blue')
+        self.ch_transparency = (255, 255, 255)  # 0 is transparent, 255 is not  # deactivated transparency for speed reasons
         #self.module.__dict__['curve_name'] = 'scope'
         #self.main_layout = QtWidgets.QVBoxLayout()
         self.init_main_layout(orientation="vertical")
@@ -30,8 +62,10 @@ class ScopeWidget(AcquisitionModuleWidget):
         self.layout_channels = QtWidgets.QVBoxLayout()
         self.layout_ch1 = QtWidgets.QHBoxLayout()
         self.layout_ch2 = QtWidgets.QHBoxLayout()
+        self.layout_math = QtWidgets.QHBoxLayout()
         self.layout_channels.addLayout(self.layout_ch1)
         self.layout_channels.addLayout(self.layout_ch2)
+        self.layout_channels.addLayout(self.layout_math)
 
         self.attribute_layout.removeWidget(aws['xy_mode'])
 
@@ -52,6 +86,10 @@ class ScopeWidget(AcquisitionModuleWidget):
         self.layout_ch2.addWidget(aws['ch2_active'])
         self.layout_ch2.addWidget(aws['input2'])
         self.layout_ch2.addWidget(aws['hysteresis'])
+
+        self.layout_math.addWidget(aws['ch_math_active'])
+        aws['ch_math_active'].setStyleSheet("color: %s" % self.ch_color[2])
+        self.layout_math.addWidget(aws['math_formula'])
 
         self.attribute_layout.addLayout(self.layout_channels)
 
@@ -137,9 +175,6 @@ class ScopeWidget(AcquisitionModuleWidget):
         self.update_rolling_mode_visibility()
         self.rolling_mode = self.module.rolling_mode
         self.attribute_layout.addStretch(1)
-
-
-
         # Not sure why the stretch factors in button_layout are not good by
         # default...
         #self.button_layout.setStretchFactor(self.button_single, 1)
@@ -157,16 +192,16 @@ class ScopeWidget(AcquisitionModuleWidget):
         if name in ['running_state',]:
             self.update_running_buttons()
 
-    def display_channel(self, ch):
+    def display_channel_obsolete(self, ch):
         """
         Displays channel ch (1 or 2) on the graph
         :param ch:
         """
         try:
-            self.datas[ch-1] = self.module.curve(ch)
-            self.times = self.module.times
-            self.curves[ch-1].setData(self.times,
-                                        self.datas[ch-1])
+                self.datas[ch-1] = self.module.curve(ch)
+                self.times = self.module.times
+                self.curves[ch-1].setData(self.times,
+                                          self.datas[ch-1])
         except NotReadyError:
             pass
 
@@ -195,6 +230,22 @@ class ScopeWidget(AcquisitionModuleWidget):
                     self.curves[ch].setVisible(True)
                 else:
                     self.curves[ch].setVisible(False)
+            if self.module.ch_math_active:
+                # catch numpy warnings instead of printing them
+                # https://stackoverflow.com/questions/15933741/how-do-i-catch-a-numpy-warning-like-its-an-exception-not-just-for-testing
+                backup_np_err = np.geterr()
+                np.seterr(all='ignore')
+                try:
+                    math_data = eval(self.module.math_formula,
+                       dict(ch1=ch1, ch2=ch2, np=np, times=times))
+                except:
+                    pass
+                else:
+                    self.curves[2].setData(times, math_data)
+                np.seterr(**backup_np_err)
+                self.curves[2].setVisible(True)
+            else:
+                self.curves[2].setVisible(False)
         self.update_current_average() # to update the number of averages
 
     def set_rolling_mode(self):

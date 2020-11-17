@@ -292,6 +292,7 @@ class AcquisitionModule(Module):
     The full API of the "run" object is the following.
 
     Methods:
+
         *(All methods return immediately)*
         single(): performs an asynchronous acquisition of trace_average curves.
             The function returns a promise of the result:
@@ -306,11 +307,13 @@ class AcquisitionModule(Module):
         curve(): the currently averaged curve
 
     Attributes:
+
         curve_name (str): name of the curve to create upon saving
         trace_average (int): number of averages in single (not to confuse with
             averaging per point)
         data_avg (array of numbers): array containing the current averaged curve
         current_avg (int): current number of averages
+
     """
     # The averaged data are stored in a RunFuture object _run_future
     #

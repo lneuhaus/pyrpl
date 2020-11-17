@@ -144,6 +144,9 @@ wire [14-1:0] output_direct [MODULES+EXTRAMODULES-1:0];
 // the channel that the module's output_direct is added to (bit0: DAC1, bit 1: DAC2) 
 reg [2-1:0] output_select [MODULES+EXTRAMODULES-1:0]; 
 
+// syncronization register to trigger simultaneous action of different dsp modules
+reg [MODULES-1:0] sync;
+
 // bus read data of individual modules (only needed for 'real' modules)
 wire [ 32-1: 0] module_rdata [MODULES-1:0];  
 wire            module_ack   [MODULES-1:0];
@@ -223,7 +226,7 @@ always @(posedge clk_i) begin
 end
 
 //saturation of outputs
-red_pitaya_saturate #( 
+red_pitaya_saturate #(
     .BITS_IN (14+LOG_MODULES), 
     .SHIFT(0), 
     .BITS_OUT(14)
@@ -269,11 +272,13 @@ always @(posedge clk_i) begin
       input_select [PWM0] <= NONE;
       input_select [PWM1] <= NONE;
       
+      sync <= {MODULES{1'b1}} ;  // all modules on by default
    end
    else begin
       if (sys_wen) begin
-         if (sys_addr[16-1:0]==16'h0)     input_select[sys_addr[16+LOG_MODULES-1:16]] <= sys_wdata[ LOG_MODULES-1:0];
-         if (sys_addr[16-1:0]==16'h4)    output_select[sys_addr[16+LOG_MODULES-1:16]] <= sys_wdata[ 2-1:0];
+         if (sys_addr[16-1:0]==16'h00)     input_select[sys_addr[16+LOG_MODULES-1:16]] <= sys_wdata[ LOG_MODULES-1:0];
+         if (sys_addr[16-1:0]==16'h04)    output_select[sys_addr[16+LOG_MODULES-1:16]] <= sys_wdata[ 2-1:0];
+         if (sys_addr[16-1:0]==16'h0C)                                            sync <= sys_wdata[MODULES-1:0];
       end
    end
 end
@@ -290,7 +295,9 @@ end else begin
       20'h00 : begin sys_ack <= sys_en;          sys_rdata <= {{32- LOG_MODULES{1'b0}},input_select[sys_addr[16+LOG_MODULES-1:16]]}; end 
 	  20'h04 : begin sys_ack <= sys_en;          sys_rdata <= {{32- 2{1'b0}},output_select[sys_addr[16+LOG_MODULES-1:16]]}; end
 	  20'h08 : begin sys_ack <= sys_en;          sys_rdata <= {{32- 2{1'b0}},dat_b_saturated,dac_a_saturated}; end
-	  20'h10 : begin sys_ack <= sys_en;          sys_rdata <= {{32- 14{1'b0}},output_signal[sys_addr[16+LOG_MODULES-1:16]]} ; end
+	  20'h0C : begin sys_ack <= sys_en;          sys_rdata <= {{32-MODULES{1'b0}},sync} ; end
+      20'h10 : begin sys_ack <= sys_en;          sys_rdata <= {{32- 14{1'b0}},output_signal[sys_addr[16+LOG_MODULES-1:16]]} ; end
+
      default : begin sys_ack <= module_ack[sys_addr[16+LOG_MODULES-1:16]];    sys_rdata <=  module_rdata[sys_addr[16+LOG_MODULES-1:16]]  ; end
    endcase
 end
@@ -301,14 +308,26 @@ end
  *********************************************/
 
 //PID
+
+wire [14-1:0] diff_input_signal [3-1:0];
+wire [14-1:0] diff_output_signal [3-1:0];
+//assign diff_input_signal[0] = input_signal[1]; // difference input of PID0 is PID1
+//assign diff_input_signal[1] = input_signal[0]; // difference input of PID1 is PID0
+assign diff_input_signal[0] = diff_output_signal[1]; // difference input of PID0 is PID1
+assign diff_input_signal[1] = diff_output_signal[0]; // difference input of PID1 is PID0
+assign diff_input_signal[2] = {14{1'b0}};      // difference input of PID2 is zero
+
 generate for (j = 0; j < 3; j = j+1) begin
    red_pitaya_pid_block i_pid (
      // data
      .clk_i        (  clk_i          ),  // clock
      .rstn_i       (  rstn_i         ),  // reset - active low
+     .sync_i       (  sync[j]        ),  // syncronization of different dsp modules
      .dat_i        (  input_signal [j] ),  // input data
      .dat_o        (  output_direct[j]),  // output data
-	 
+	 .diff_dat_i   (  diff_input_signal[j] ),  // input data for differential mode
+	 .diff_dat_o   (  diff_output_signal[j] ),  // output data for differential mode
+
 	 //communincation with PS
 	 .addr ( sys_addr[16-1:0] ),
 	 .wen  ( sys_wen & (sys_addr[20-1:16]==j) ),
@@ -375,6 +394,7 @@ generate for (j = 5; j < 7; j = j+1) begin
 	     // data
 	     .clk_i        (  clk_i          ),  // clock
 	     .rstn_i       (  rstn_i         ),  // reset - active low
+         .sync_i       (  sync[j]        ),  // syncronization of different dsp modules
 	     .dat_i        (  input_signal [j] ),  // input data
 	     .dat_o        (  output_direct[j]),  // output data
 		 .signal_o     (  output_signal[j]),  // output signal
@@ -401,6 +421,7 @@ generate for (j = 7; j < 8; j = j+1) begin
          // data
          .clk_i        (  clk_i          ),  // clock
          .rstn_i       (  rstn_i         ),  // reset - active low
+         .sync_i       (  sync[j]        ),  // syncronization of different dsp modules
          .dat_i        (  input_signal [j] ),  // input data
          .dat_o        (  output_direct[j]),  // output data
          .signal_o     (  output_signal[j]),  // output signal

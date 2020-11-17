@@ -23,9 +23,7 @@ class TestIir(TestPyrpl):
     def test_pz_interface(self):
         """ tests that poles and real/comples_poles remain sync'ed"""
         iir = self.pyrpl.rp.iir
-        p = iir.poles = [-1000j-2032, -34343j-3424, -1221, -43254.4]
-        rp = iir.real_poles
-        cp = iir.complex_poles
+        iir.poles = [-1000j-2032, -34343j-3424, -1221, -43254.4]
         assert iir.real_poles == [-1221, -43254.4], iir.real_poles
         assert iir.complex_poles == [1000j-2032, 34343j-3424], \
             iir.complex_poles  # attention: imaginary part is positivized
@@ -38,9 +36,7 @@ class TestIir(TestPyrpl):
         assert iir.real_poles == []
         assert iir.complex_poles == []
 
-        p = iir.zeros = [-1000j - 2032, -34343j - 3424, -1221, -43254.4]
-        rp = iir.real_zeros
-        cp = iir.complex_zeros
+        iir.zeros = [-1000j - 2032, -34343j - 3424, -1221, -43254.4]
         assert iir.real_zeros  == [-1221, -43254.4], iir.real_zeros
         assert iir.complex_zeros  == [1000j - 2032, 34343j - 3424], \
             iir.complex_zeros  # attention: imaginary part is positivized
@@ -198,9 +194,9 @@ class TestIir(TestPyrpl):
         loops = 80
         naset = dict(start_freq=3e3,
                      stop_freq=50e3,
-                     points=2501,
-                     rbw=[1000, 1000],
-                     avg_per_point=5,
+                     points=1000, #2501
+                     rbw=[300, 300], # 1000,1000
+                     avg_per_point=3, # 5
                      running_state='stopped',
                      trace_average=1,
                      amplitude=0.02,

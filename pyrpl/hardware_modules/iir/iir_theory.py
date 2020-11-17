@@ -780,9 +780,9 @@ class IirFilter(object):
         # realr = np.asarray((realr), dtype=np.float64)
 
         # implement coefficients - order is the one from specification of poles
-        # Some kind of sorting should be implemented but not clear which one.
-        # We will do this once problems with this procedure become visible
-        # in order to optimize the performance on an actual problem.
+        # The function minimize_delay will sort the sections such that the once
+        # with highest frequency polez/zeros will be computed last, thereby
+        # minimizing delay.
         for i in range(len(realp) // 2):
             p1, p2 = realp[2 * i], realp[2 * i + 1]
             r1, r2 = realr[2 * i], realr[2 * i + 1]
@@ -810,7 +810,6 @@ class IirFilter(object):
         """
         if coefficients is None:
             coefficients = self.coefficients
-        newcoefficients = list()
         ranks = list()
         for c in list(coefficients):
             # empty sections (numerator is 0) are ranked 0
@@ -838,7 +837,7 @@ class IirFilter(object):
             totalbits = self.totalbits
         if shiftbits is None:
             shiftbits = self.shiftbits
-        res = coeff * 0 + coeff
+        res = coeff * 0 + coeff  # weird way to make a copy of coeff
         for x in np.nditer(res, op_flags=['readwrite']):
             xr = np.round(x * 2 ** shiftbits)
             xmax = 2 ** (totalbits - 1)

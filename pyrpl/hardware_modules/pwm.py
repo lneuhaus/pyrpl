@@ -1,4 +1,6 @@
 from . import DspModule
+from ..widgets.module_widgets import PwmWidget
+
 
 class Pwm(DspModule):
     """Auxiliary outputs. PWM0-3 correspond to pins 17-20 on E2 connector.
@@ -21,6 +23,12 @@ class Pwm(DspModule):
 
     Currently, only pwm1 and pwm2 are available.
     """
+
+    _widget_class = PwmWidget
+    _setup_attributes = ["input"]
+
+    _gui_attributes = _setup_attributes
+
     def __init__(self, rp, name=None):
         super(Pwm, self).__init__(rp, name=dict(pwm0='in1',
                                                 pwm1='in2')[name])

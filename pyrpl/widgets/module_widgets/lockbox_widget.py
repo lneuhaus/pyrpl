@@ -1,5 +1,91 @@
+# -*- coding: utf-8 -*-
 """
-The lockbox widget is composed of all the submodules widgets
+The Lockbox widget is used to produce a control signal to make a system's 
+output follow a specified setpoint. The system has to behave linearly around
+the setpoint, which is the case for many systems. The key parts of the widget are:
+
+*	General controls: "classname" selects a particular Lockbox class from the 
+	ones defined in lockbox/models folder, and will determine the overall 
+	behaviour of the lockbox. "Calibrate all inputs" performs a sweep and uses 
+	acquired data to calibrate parameters relevant for the selected Lockbox 
+	class. Before attempting to lock, it's recommendable, and sometimes even 
+	mandatory, to press this button.
+
+*	Stages: In many situations, it might be desirable to start locking the 
+	system with a certain set of locking parameters, and once this has been 
+	achieved, switch to a different set with possibly a different signal. 
+	For example, when locking a Fabry–Pérot interferometer, the first 
+	stage might be locking on the side of a transmission fringe, and later 
+	transferring to locking on-resonance with Pound-Drever-Hall input 
+	signal. It is possible to have as many stages as necessary, and they 
+	will be executed sequentially. 
+
+*	Stage settings: each stage has its own 
+	setpoint (whose units can be chosen in the general setting setpoint_unit)
+	and a gain factor (a premultiplier to account for desired gain differences
+	among different stages). In addition, based on the state of the "lock on"
+	tri-state checkbox, a stage can enable (checkbox checked), disable
+	(checkbox disabled) or leave unaffected  (checkbox greyed out) the
+	locking state when the stage is activated. The checkbox and field "reset
+	offset" determine whether the lockbox should reset its output to a certain
+	level when this stage is reached.
+
+*	Inputs and outputs: the PI parameters, together with limits, unit 
+	conversions and so on, are set in these tabs.
+	
+The lockbox module is completely customizable and allows to implement complex 
+locking logic by inheriting the "Lockbox" class and adding the new class into 
+lockbox/models. For example, below is an end-to-end locking scenario for a 
+Fabry–Pérot interferometer that uses the included "FabryPerot" class:
+
+You should start the lockbox module and first select the model class to 
+FabryPerot. Then continue to configure first the outputs and inputs, filling
+in the information as good as possible. Critical fields are:
+
+*	Wavelength (in SI units)
+*	Outputs: configure the piezo output in the folding menu of inputs/outputs:
+
+	* Select which output (out1 or out2) is the piezo connected to.
+	* If it is the default_sweep_output, set the sweep parameters
+	* Fill in the cutoff frequency if there is an analog low-pass filter behind 
+	  the redpitaya, and start with a unity-gain frequency of 10 Hz.
+	* Give an estimate on the displacement in meters per Volt or Hz per Volt 
+	  (the latter being the obtained resonance frequency shift per volt at the Red
+	  Pitaya output), you ensure that the specified unit-gain is the one that
+	  Red Pitaya is able to set.
+	 
+	 
+* 	Inputs:
+
+	* Set transmission input to "in1" for example.
+	* If PDH is used, set PDH input parameters to the same parameters as you 
+	  have in the IQ configuration. Lockbox takes care of the setting, and is 
+	  able to compute gains and slopes automatically
+	
+* 	Make sure to click "Sweep" and test whether a proper sweep is performed, 
+	and "Calibrate" to get the right numbers on the y-axis for the plotted 
+	input error signals
+	
+*	At last, configure the locking sequence:
+
+	* Each stage sleeps for "duration" in seconds after setting the desired gains.
+	* The first stage should be used to reset all offsets to either +1 or -1 
+	  Volts, and wait for 10 ms or so (depending on analog lowpass filters)
+	* Next stage is usually a "drift" stage, where you lock at a detuning of 
+	  +/- 1 or +/- 2 bandwidths, possibly with a gain_factor below 1. make sure 
+	  you enable the checkbox "lock enabled" for the piezo output here **by 
+	  clicking twice on it** (it is actually a 3-state checkbox, see the 
+	  information on the 1-click state when hovering over it). When you enable 
+	  the locking sequence by clicking on lock, monitor the output voltage with a
+	  running scope, and make sure that this drift state actually makes the output voltage
+	  swing upwards. Otherwise, swap the sign of the setpoint / or the initial 
+	  offset of the piezo output. Leave enough time for this stage to catch on to 
+	  the side of a resonance.
+	* Next stages can be adapted to switch to other error signals, modify 
+	  setpoints and gains and so on.
+	
+
+
 """
 from qtpy import QtCore, QtWidgets
 import pyqtgraph as pg

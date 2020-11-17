@@ -267,7 +267,7 @@ class ListElementWidget(BaseAttributeWidget):
         self.set_horizontal()
         self.button_remove = QtWidgets.QPushButton('-')
         self.button_remove.clicked.connect(self.remove_this_element)
-        self.button_remove.setFixedWidth(3 * 10)
+        self.button_remove.setFixedWidth(2 * 10)
         self.layout.addWidget(self.button_remove, 0) # stretch=0
         self.layout.addStretch(1)
         # this is very nice for debugging, but should probably be removed later
@@ -292,7 +292,11 @@ class ListElementWidget(BaseAttributeWidget):
         getattr(self.module, self.attribute_name)[self.index] = v
 
     def mousePressEvent(self, event):
-        self.parent.attribute_value.selected = self.index
+        if event.button() == QtCore.Qt.LeftButton:
+            # left button selects the item
+            self.parent.attribute_value.selected = self.index
+        elif event.button() == QtCore.Qt.RightButton:
+            pass  # no functionality so far
         return super(ListElementWidget, self).mousePressEvent(event)
 
     def focusInEvent(self, QFocusEvent):
@@ -391,12 +395,12 @@ class BasePropertyListPropertyWidget(BaseAttributeWidget):
         self.widget_layout.removeWidget(widget)
         widget.deleteLater()
         self.update_widget_names()
-        self.module._logger.error('delitem concluded')
+        self.module._logger.debug('delitem concluded')
 
     def select(self, index):
         for i, widget in enumerate(self.widgets):
             if i == index:
-                widget.setStyleSheet("background-color: yellow")
+                widget.setStyleSheet("background-color: green")
                 widget.setFocus()
             else:
                 widget.setStyleSheet("")
@@ -713,6 +717,7 @@ class DataWidget(pg.GraphicsWindow):
         self._set_real(np.isreal(y).all())
         for i, values in enumerate(y):
             self._display_curve_index(x, values, i, transform_magnitude=transform_magnitude)
+            self.curves[i].show()
         while (i + 1 < len(self.curves)):  # delete remaining curves
             i += 1
             self.curves[i].hide()
@@ -743,6 +748,10 @@ class DataWidget(pg.GraphicsWindow):
 
     def setRange(self, *args, **kwds):
         self.plot_item.setRange(*args, **kwds)
+
+    def autoRange(self):
+        self.plot_item.autoRange()
+        self.plot_item_phase.autoRange()
 
 
 class PlotAttributeWidget(BaseAttributeWidget):

@@ -27,10 +27,10 @@ task is generally divided into two steps:
 
 The task is further divided into several subtasks:
 0a) Condition the input signals so that they are suitable for the next steps
- - offset removal
- - input filters
- - demodulation / lockin
- - inversion
+- offset removal
+- input filters
+- demodulation / lockin
+- inversion
 0b) Estimate the system state from the past and present history of input and
 output signals.
 0c) Build a filter for the output signals such that they can be conveniently
@@ -164,6 +164,7 @@ from .software_modules.lockbox import models
 #from .software_modules.lockbox.models import *  # make sure all models are
 # loaded when we get started
 from . import user_config_dir
+from ._version import __version__
 
 # input is the wrong function in python 2
 try:
@@ -178,7 +179,6 @@ except:
 
 
 default_pyrpl_config = {'name': 'default_pyrpl_instance',
-                        'gui': True,
                         'loglevel': 'info',
                         'background_color': '',
                         # reasonable options:
@@ -191,6 +191,41 @@ default_pyrpl_config = {'name': 'default_pyrpl_instance',
                                     'PyrplConfig',
                                     'Lockbox'
                                     ]}
+
+help_message = """
+PyRPL version %s command-line help
+==================================
+
+Syntax for launching PyRPL
+------------------------------------------------------------------------------
+Rectangular brackets [] indicate optional parameters.
+
+Syntax for binary executable:
+    pyrpl [key1=value1 [key2=value2 [key3=value3 [...]]]]
+
+Syntax with python installation:
+    python -m pyrpl [key1=value1 [key2=value2 [key3=value3 [...]]]]
+
+Syntax from within Python:
+    from pyrpl import Pyrpl
+    p = Pyrpl([key1=value1, [key2=value2 [key3=value3 [...]]]])
+
+
+Keys and Values:
+------------------------------------------------------------------------------
+config   configuration name (without .yml-extension)
+source   name of the configuration to use as default
+
+hostname hostname of the redpitaya
+user     username for ssh login on the redpitaya
+password password for ssh login on the redpitaya
+sshport  port for ssh, default is 22
+port     port for redpitaya_client, default is 2222
+
+gui      one of [True, False], to en- or disable GUI
+loglevel logging level, one of [debug, info, warning, error]
+"""%(__version__)
+
 
 class Pyrpl(object):
     """
@@ -271,7 +306,9 @@ class Pyrpl(object):
                 else:
                     # all other (static) defaults
                     pyrplbranch[k] = default_pyrpl_config[k]
-        # set global logging level if specified in config file
+        # set global logging level if specified in kwargs or config file
+        if 'loglevel' in kwargs:
+            self.c.pyrpl.loglevel = kwargs.pop('loglevel')
         pyrpl_utils.setloglevel(level=self.c.pyrpl.loglevel,
                                 loggername='pyrpl')
         # initialize RedPitaya object with the configured or default parameters
@@ -279,6 +316,7 @@ class Pyrpl(object):
         self.c.redpitaya._update(kwargs)
         self.name = pyrplbranch.name
         self.rp = RedPitaya(config=self.c)
+        self.redpitaya = self.rp  # alias
         self.rp.parent=self
         self.widgets = [] # placeholder for widgets
         # create software modules...
@@ -299,7 +337,7 @@ class Pyrpl(object):
                 #                       module.name, module.name, self.c._filename, e)
                 #     raise e
         # make the gui if applicable
-        if self.c.pyrpl.gui:
+        if self.c.redpitaya.gui:
             self.show_gui()
 
     def show_gui(self):
@@ -320,8 +358,8 @@ class Pyrpl(object):
         """
         self.software_modules = []
         # software modules are Managers for various modules plus those defined in the config file
-        soft_mod_names = ['Asgs', 'Iqs', 'Pids', 'Scopes', 'Iirs', 'Trigs'
-                          ] + self.c.pyrpl.modules
+        soft_mod_names = ['Asgs', 'Iqs', 'Pids', 'Scopes', 'Iirs', 'Trigs','Pwms',
+                          'Hks'] + self.c.pyrpl.modules
         module_classes = [get_module(cls_name)
                           for cls_name in soft_mod_names]
         module_names = pyrpl_utils.\

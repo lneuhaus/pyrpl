@@ -1,10 +1,151 @@
+"""
+We have already seen some use of the pid module above. There are three
+PID modules available: pid0 to pid2.
+
+.. code:: python
+
+    print r.pid0.help()
+
+Proportional and integral gain
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code:: python
+
+    #make shortcut
+    pid = r.pid0
+
+    #turn off by setting gains to zero
+    pid.p,pid.i = 0,0
+    print("P/I gain when turned off:", pid.i,pid.p)
+
+.. code:: python
+
+    # small nonzero numbers set gain to minimum value - avoids rounding off to zero gain
+    pid.p = 1e-100
+    pid.i = 1e-100
+    print("Minimum proportional gain: ", pid.p)
+    print("Minimum integral unity-gain frequency [Hz]: ", pid.i)
+
+.. code:: python
+
+    # saturation at maximum values
+    pid.p = 1e100
+    pid.i = 1e100
+    print("Maximum proportional gain: ", pid.p)
+    print("Maximum integral unity-gain frequency [Hz]: ", pid.i)
+
+Control with the integral value register
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code:: python
+
+    import numpy as np
+    #make shortcut
+    pid = r.pid0
+
+    # set input to asg1
+    pid.input = "asg1"
+
+    # set asg to constant 0.1 Volts
+    r.asg1.setup(waveform="dc", offset = 0.1)
+
+    # set scope ch1 to pid0
+    r.scope.input1 = 'pid0'
+
+    #turn off the gains for now
+    pid.p,pid.i = 0, 0
+
+    #set integral value to zero
+    pid.ival = 0
+
+    #prepare data recording
+    from time import time
+    times, ivals, outputs = [], [], []
+
+    # turn on integrator to whatever negative gain
+    pid.i = -10
+
+    # set integral value above the maximum positive voltage
+    pid.ival = 1.5
+
+    #take 1000 points - jitter of the ethernet delay will add a noise here but we dont care
+    for n in range(1000):
+        times.append(time())
+        ivals.append(pid.ival)
+        outputs.append(r.scope.voltage_in1)
+
+    #plot
+    import matplotlib.pyplot as plt
+    %matplotlib inline
+    times = np.array(times)-min(times)
+    plt.plot(times,ivals,times,outputs)
+    plt.xlabel("Time [s]")
+    plt.ylabel("Voltage")
+
+Again, what do we see? We set up the pid module with a constant
+(positive) input from the ASG. We then turned on the integrator (with
+negative gain), which will inevitably lead to a slow drift of the output
+towards negative voltages (blue trace). We had set the integral value
+above the positive saturation voltage, such that it takes longer until
+it reaches the negative saturation voltage. The output of the pid module
+is bound to saturate at +- 1 Volts, which is clearly visible in the
+green trace. The value of the integral is internally represented by a 32
+bit number, so it can practically take arbitrarily large values compared
+to the 14 bit output. You can set it within the range from +4 to -4V,
+for example if you want to exloit the delay, or even if you want to
+compensate it with proportional gain.
+
+Input filters
+^^^^^^^^^^^^^
+
+The pid module has one more feature: A bank of 4 input filters in
+series. These filters can be either off (bandwidth=0), lowpass
+(bandwidth positive) or highpass (bandwidth negative). The way these
+filters were implemented demands that the filter bandwidths can only
+take values that scale as the powers of 2.
+
+.. code:: python
+
+    # off by default
+    r.pid0.inputfilter
+
+.. code:: python
+
+    # minimum cutoff frequency is 1.1 Hz, maximum 3.1 MHz (for now)
+    r.pid0.inputfilter = [1,1e10,-1,-1e10]
+    print(r.pid0.inputfilter)
+
+.. code:: python
+
+    # not setting a coefficient turns that filter off
+    r.pid0.inputfilter = [0,4,8]
+    print(r.pid0.inputfilter)
+
+.. code:: python
+
+    # setting without list also works
+    r.pid0.inputfilter = -2000
+    print(r.pid0.inputfilter)
+
+.. code:: python
+
+    # turn off again
+    r.pid0.inputfilter = []
+    print(r.pid0.inputfilter)
+
+You should now go back to the Scope and ASG example above and play
+around with the setting of these filters to convince yourself that they
+do what they are supposed to.
+"""
+
 import numpy as np
 from qtpy import QtCore
-from ..attributes import FloatProperty, BoolRegister, FloatRegister, GainRegister
+from ..attributes import FloatProperty, BoolRegister, FloatRegister, GainRegister, SelectRegister
+from .dsp import PauseRegister
 from ..modules import SignalLauncher
 from . import FilterModule
 from ..widgets.module_widgets import PidWidget
-
+from ..pyrpl_utils import sorted_dict
 
 class IValAttribute(FloatProperty):
     """
@@ -44,6 +185,42 @@ class SignalLauncherPid(SignalLauncher):
 
 
 class Pid(FilterModule):
+    """
+    A proportional/Integrator/Differential filter.
+
+    The PID filter consists of a 4th order filter input stage, followed by a
+    proportional and integral stage in parallel.
+
+    .. warning:: at the moment, the differential stage of PIDs is disabled.
+
+    Example:
+
+    .. code-block :: python
+
+        from pyrpl import Pyrpl
+        pid = Pyrpl().rp.pid0
+
+        # set a second order low-pass filter with 100 Hz cutoff frequency
+        pid.inputfilter = [100, 100]
+        # set asg0 as input
+        pid.input = 'asg0'
+        # setpoint at -0.1
+        pid.setpoint = -0.1
+        # integral gain at 0.1
+        pid.i = 0.1
+        # proportional gain at 0.1
+        pid.p = 0.1
+
+    .. code-block :: python
+
+        >>> print(pid.ival)
+        0.43545
+
+    .. code-block :: python
+
+        >>> print(pid.ival)
+        0.763324
+    """
     _widget_class = PidWidget
     _signal_launcher = SignalLauncherPid
     _setup_attributes = ["input",
@@ -54,7 +231,11 @@ class Pid(FilterModule):
                          #"d",
                          "inputfilter",
                          "max_voltage",
-                         "min_voltage"]
+                         "min_voltage",
+                         "pause_gains",
+                         "paused",
+                         "differential_mode_enabled",
+                         ]
     _gui_attributes = _setup_attributes + ["ival"]
 
     # the function is here so the metaclass generates a setup(**kwds) function
@@ -96,6 +277,34 @@ class Pid(FilterModule):
     #                  invert=True,
     #                  doc="pid derivative unity-gain frequency [Hz]. Off
     # when 0.")
+
+    pause_gains = SelectRegister(0x12C,
+                                 options=sorted_dict(
+                                       off=0,
+                                       i=1,
+                                       p=2,
+                                       pi=3,
+                                       d=4,
+                                       id=5,
+                                       pd=6,
+                                       pid=7),
+                                 bitmask=0b111,
+                                 doc="Selects which gains are frozen during pausing/synchronization."
+                                 )
+
+    differential_mode_enabled = BoolRegister(0x12C,
+                                             bit=3,
+                                             doc="If True, the differential mode is enabled. "
+                                                 "In this mode, the setpoint is given by the "
+                                                 "input signal of another pid module. "
+                                                 "Only pid0 and pid1 can be paired in "
+                                                 "differential mode. "
+                                             )
+
+    paused = PauseRegister(0xC,
+                           invert=True,
+                           doc="While True, the gains selected with `pause` are "
+                               "temporarily set to zero ")
 
     @property
     def proportional(self):

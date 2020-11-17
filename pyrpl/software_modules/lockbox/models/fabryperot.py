@@ -152,8 +152,18 @@ class FabryPerot(Interferometer):
     # management of intput/output units
     # setpoint_variable = 'detuning'
     setpoint_unit = SelectProperty(options=['bandwidth',
-                                            'linewidth'],
-                                   default='bandwidth')
+                                            'linewidth',
+                                            'rel_reflection'],
+                                   default='bandwidth',
+                                   doc="""
+                               Unit in which the setpoint of the lock is given: "
+                               - linewidth: FWHM"
+                               - bandwidth: HWHM"
+                               """)
+    # TODO: implement these nonlinear conversions, requires modified logic
+    # - rel_reflection: 0=resonance, 1=infintely far away, negative=other side of the resonance
+    #- rel_transmission: 1=resonance, 0=infinitely far away, negative=other side of the resonance
+
     _output_units = ['V', 'm', 'Hz', 'nm', 'MHz']
 
     # must provide conversion from setpoint_unit into all other basic units
