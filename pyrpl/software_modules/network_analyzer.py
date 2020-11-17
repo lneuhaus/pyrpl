@@ -58,7 +58,7 @@ class RbwAttribute(FilterProperty):
         return val
 
     def valid_frequencies(self, obj):
-        return [freq for freq in obj.iq.bandwidth_options if freq > 0]
+        return [freq for freq in obj.iq.bandwidths if freq > 0]
 
 
 class LogScaleProperty(BoolProperty):

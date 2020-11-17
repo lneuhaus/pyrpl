@@ -9,7 +9,7 @@ from pyrpl.async_utils import sleep
 class TestPidNaIq(TestPyrpl):
     def setup(self):
         self.extradelay = 0.6 * 8e-9  # no idea where this comes from
-        # shortcut
+            # shortcut
         self.pyrpl.na = self.pyrpl.networkanalyzer
         self.na = self.pyrpl.networkanalyzer
         # set na loglevel to DEBUG
@@ -318,7 +318,7 @@ class TestPidNaIq(TestPyrpl):
         # shortcut for na and bpf (bandpass filter)
         na = self.pyrpl.networkanalyzer
 
-        for bpf in [r.iq0, r.iq2]:
+        for bpf in [r.iq0, r.iq1]:
             plotdata = []
             # setup na for measurement
             na.setup(start_freq=300e3,
@@ -361,7 +361,7 @@ class TestPidNaIq(TestPyrpl):
                     c.add_child(CurveDB.create(f, abserror,
                                                name='test_iq_na-failed-relerror'))
                     # c.add_child(CurveDB.create(f,relerror,name='test_iq_na-failed-abserror'))
-                    assert False, (maxerror, phase)
+                    assert False, (maxerror, phase, bpf.name)
 
     def test_diff_pid(self):
         """
