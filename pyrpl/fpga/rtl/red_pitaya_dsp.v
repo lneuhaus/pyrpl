@@ -316,8 +316,9 @@ wire [14-1:0] diff_output_signal [3-1:0];
 assign diff_input_signal[0] = diff_output_signal[1]; // difference input of PID0 is PID1
 assign diff_input_signal[1] = diff_output_signal[0]; // difference input of PID1 is PID0
 assign diff_input_signal[2] = {14{1'b0}};      // difference input of PID2 is zero
+assign diff_input_signal[3] = {14{1'b0}};      // difference input of PID3 is zero
 
-generate for (j = 0; j < 3; j = j+1) begin
+generate for (j = 0; j < 4; j = j+1) begin
    red_pitaya_pid_block i_pid (
      // data
      .clk_i        (  clk_i          ),  // clock
@@ -342,7 +343,7 @@ endgenerate
 
 wire trig_signal;
 //TRIG
-generate for (j = 3; j < 4; j = j+1) begin
+generate for (j = 4; j < 5; j = j+1) begin
    red_pitaya_trigger_block i_trigger (
      // data
      .clk_i        (  clk_i          ),  // clock

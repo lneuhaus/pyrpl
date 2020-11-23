@@ -17,10 +17,10 @@ DSP_INPUTS = OrderedDict([
     ('pid0', 0),
     ('pid1', 1),
     ('pid2', 2),
+    ('pid3', 3),
     ('asg0', 8),
     ('asg1', 9),
-    ('trig', 3),
-    ('iir', 4),
+    ('trig', 4),
     # ('scope0', 8), #same as asg0 by design
     # ('scope1', 9), #same as asg1 by design
     ('off', 15)])
