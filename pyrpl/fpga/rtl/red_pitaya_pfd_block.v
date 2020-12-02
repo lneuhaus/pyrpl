@@ -92,11 +92,11 @@ endmodule
 module red_pitaya_pfd_block_new
 #(
 	parameter SIGNALBITS = 14, //=output signal bitwidth
-	parameter INPUTWIDTH = 14,
-	parameter WORKINGWIDTH = 16, //i_val and q_val and ph bitwidth, minimal value: SIGNALBITS+2
-	parameter PHASEWIDTH = 10, //number of (least significant) bits encoding the phase 
-	parameter TURNWIDTH = 4, //number of (most significant) bits encoding the number of turns around the circle
-	parameter NSTAGES = 7 //number of steps in the cordic algorithm
+	parameter INPUTWIDTH = 12,
+	parameter WORKINGWIDTH = 14, //i_val and q_val and ph bitwidth, minimal value: SIGNALBITS+2
+	parameter PHASEWIDTH = 12, //number of (least significant) bits encoding the phase 
+	parameter TURNWIDTH = 2, //number of (most significant) bits encoding the number of turns around the circle
+	parameter NSTAGES = 9 //number of steps in the cordic algorithm
 )
 (   input rstn_i,
     input clk_i,
@@ -137,22 +137,22 @@ always @(posedge clk_i) begin
         2'b01:  begin // Rotate by -315 degrees
                         i_val[0] <=  ext_i - ext_q;
                         q_val[0] <=  ext_i + ext_q;
-                        ph[0] <= 10'b0110000000;
+                        ph[0] <= 12'b011000000000;
                         end
         2'b10:  begin // Rotate by -135 degrees
                         i_val[0] <= -ext_i + ext_q;
                         q_val[0] <= -ext_i - ext_q;
-                        ph[0] <= 10'b1110000000;
+                        ph[0] <= 12'b111000000000;
                         end
         2'b11:  begin // Rotate by -225 degrees
                         i_val[0] <= -ext_i - ext_q;
                         q_val[0] <=  ext_i - ext_q;
-                        ph[0] <= 10'b0010000000;
+                        ph[0] <= 12'b001000000000;
                         end
         2'b00:  begin // Rotate by -45 degrees
                         i_val[0] <=  ext_i + ext_q;
                         q_val[0] <= -ext_i + ext_q;
-                        ph[0] <= 10'b1010000000;
+                        ph[0] <= 12'b101000000000;
                         end
         endcase
 	end
@@ -160,13 +160,15 @@ end
 
 wire [PHASEWIDTH-1:0] cordic_angle [0:(NSTAGES-1)];
 
-assign cordic_angle[0] = 10'b0001001011; // 26.565051177077986 deg
-assign cordic_angle[1] = 10'b0000100111; // 14.036243467926479 deg
-assign cordic_angle[2] = 10'b0000010100; // 7.125016348901799 deg
-assign cordic_angle[3] = 10'b0000001010; // 3.5763343749973515 deg
-assign cordic_angle[4] = 10'b0000000101; // 1.7899106082460694 deg
-assign cordic_angle[5] = 10'b0000000010; // 0.8951737102110744 deg
-assign cordic_angle[6] = 10'b0000000001; // 0.4476141708605531 deg
+assign cordic_angle[0] = 12'b000100101110; // 26.565051177077986 deg
+assign cordic_angle[1] = 12'b000010011111; // 14.036243467926479 deg
+assign cordic_angle[2] = 12'b000001010001; // 7.125016348901799 deg
+assign cordic_angle[3] = 12'b000000101000; // 3.5763343749973515 deg
+assign cordic_angle[4] = 12'b000000010100; // 1.7899106082460694 deg
+assign cordic_angle[5] = 12'b000000001010; // 0.8951737102110744 deg
+assign cordic_angle[6] = 12'b000000000101; // 0.4476141708605531 deg
+assign cordic_angle[7] = 12'b000000000010; // 0.22381050036853808 deg
+assign cordic_angle[8] = 12'b000000000001; // 0.1119056770662069 deg
 // Note : cordic_angle[k] = Arctan(2^-k) + renormalisation en nb de tours en binaire
 
 genvar k;

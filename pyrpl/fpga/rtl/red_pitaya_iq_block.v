@@ -663,8 +663,8 @@ reg pfd_on;
 red_pitaya_pfd_block_new (
 	.rstn_i(pfd_on),
 	.clk_i (clk_i),
-	.i (quadrature1[LPFBITS-1:LPFBITS-14]), //in phase from iq
-	.q (quadrature2[LPFBITS-1:LPFBITS-14]), //quadrature from iq
+	.i (quadrature1[LPFBITS-1:LPFBITS-12]), //in phase from iq
+	.q (quadrature2[LPFBITS-1:LPFBITS-12]), //quadrature from iq
 	.integral_o(pfd_integral)
 );
 
