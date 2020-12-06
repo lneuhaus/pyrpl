@@ -2,25 +2,31 @@
 This file contains a number of methods for asynchronous operations.
 """
 import logging
-from qtpy import QtCore, QtWidgets
-from timeit import default_timer
 import sys
+from timeit import default_timer
+
+from qtpy import QtCore, QtWidgets
+
 logger = logging.getLogger(name=__name__)
 
 from . import APP  # APP is only created once at the startup of PyRPL
+
 MAIN_THREAD = APP.thread()
 
 try:
-    from asyncio import Future, ensure_future, CancelledError, \
-        set_event_loop, TimeoutError
+    from asyncio import CancelledError, Future, TimeoutError
+    from asyncio import events as asyncio_events
+    from asyncio import set_event_loop
 except ImportError:  # this occurs in python 2.7
     logger.debug("asyncio not found, we will use concurrent.futures "
                   "instead of python 3.5 Futures.")
-    from concurrent.futures import Future, CancelledError, TimeoutError
+    from concurrent.futures import CancelledError, Future, TimeoutError
 else:
     import quamash
-    set_event_loop(quamash.QEventLoop())
     LOOP = quamash.QEventLoop()
+    set_event_loop(LOOP)
+    # set currently running event loop to support asyncio.get_event_loop()
+    asyncio_events._set_running_loop(LOOP)
 
 
 class MainThreadTimer(QtCore.QTimer):
