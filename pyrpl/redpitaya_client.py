@@ -133,8 +133,13 @@ class MonitorClient(object):
                                          (addr >> 16) & 0xFF,
                                          (addr >> 24) & 0xFF]))
         # send header+body
-        self.socket.send(header +
-                         np.array(values, dtype=np.uint32).tobytes())
+        message = header + np.array(values, dtype=np.uint32).tobytes()
+        numsent = 0
+        while numsent < len(message):
+            sent = self.socket.send(message[numsent:])
+            numsent += sent
+            if sent == 0:
+                raise RuntimeError("socket connection broken")
         if self.socket.recv(8) == header:  # check for in-sync transmission
             return True  # indicate successful write
         else:  # error handling
