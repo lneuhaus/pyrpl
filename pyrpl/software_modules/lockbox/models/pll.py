@@ -34,7 +34,7 @@ class InputFromOutput0(InputFromOutput):
         doc="lockbox signal used as input")
 
 
-class Suiveur(Interferometer):
+class Pll(Interferometer):
 
     #slow_output = PWMRegister(adress = 0)
     slow_output = SlowOutputProperty(max=1.8, min=0., default=0, increment=1e-2)
