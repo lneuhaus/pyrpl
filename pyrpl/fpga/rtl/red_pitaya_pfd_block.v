@@ -38,65 +38,25 @@
 ############################################################################### 
 */
 
-module red_pitaya_pfd_block_old
+/**
+ * GENERAL DESCRIPTION:
+ *
+ * This module computes the phase difference between the demodulated signal
+ * and the internal reference of the IQ demodulator using a CORDIC algorithm
+ *
+ * For more information about CORDIC, see
+ * https://zipcpu.com/dsp/2017/09/01/topolar.html
+ *
+ */
+
+module red_pitaya_pfd_block
 #(
-    parameter ISR = 0
-)
-(   input rstn_i,
-    input clk_i, 
-       
-    input s1, //signal 1
-    input s2, //signal 2
-    
-    output [14-1:0] integral_o
-    );
-
-reg l1; //s1 from last cycle
-reg l2; //s2 from last cycle
-
-wire e1;
-wire e2;
-
-reg [14+ISR-1:0] integral;
-
-assign e1 = ( {s1,l1} == 2'b10 ) ? 1'b1 : 1'b0;
-assign e2 = ( {s2,l2} == 2'b10 ) ? 1'b1 : 1'b0;
-
-assign integral_o = integral[14+ISR-1:ISR];
-
-always @(posedge clk_i) begin
-    if (rstn_i == 1'b0) begin
-        l1 <= 1'b0;
-        l2 <= 1'b0;
-        integral <= {(14+ISR){1'b0}};
-    end
-    else begin
-        l1 <= s1;
-        l2 <= s2;
-        if (integral == {1'b0,{14+ISR-1{1'b1}}})  //auto-reset or positive saturation
-            //integral <= {INTBITS{1'b0}};
-            integral <= integral + {14+ISR{1'b1}}; //decrement by one
-        else if (integral == {1'b1,{14+ISR-1{1'b0}}}) //auto-reset or negative saturation
-            //integral <= {INTBITS{1'b0}};
-            integral <= integral + {{14+ISR-1{1'b0}},1'b1};
-        //output signal is proportional to frequency difference of s1-s2
-        else if ({e1,e2}==2'b10)
-            integral <= integral + {{14+ISR-1{1'b0}},1'b1};
-        else if ({e1,e2}==2'b01)  
-            integral <= integral + {14+ISR{1'b1}};
-    end   
-end
-
-endmodule
-
-module red_pitaya_pfd_block_new
-#(
-	parameter SIGNALBITS = 14, //=output signal bitwidth
+	parameter SIGNALBITS = 14, //output signal bitwidth
 	parameter INPUTWIDTH = 12,
 	parameter WORKINGWIDTH = 14, //i_val and q_val and ph bitwidth, minimal value: SIGNALBITS+2
 	parameter PHASEWIDTH = 12, //number of (least significant) bits encoding the phase 
 	parameter TURNWIDTH = 2, //number of (most significant) bits encoding the number of turns around the circle
-	parameter NSTAGES = 9 //number of steps in the cordic algorithm
+	parameter NSTAGES = 9 //number of steps in the cordic algorithm (see Python script)
 )
 (   input rstn_i,
     input clk_i,
@@ -170,6 +130,66 @@ assign cordic_angle[6] = 12'b000000000101; // 0.4476141708605531 deg
 assign cordic_angle[7] = 12'b000000000010; // 0.22381050036853808 deg
 assign cordic_angle[8] = 12'b000000000001; // 0.1119056770662069 deg
 // Note : cordic_angle[k] = Arctan(2^-k) + renormalisation en nb de tours en binaire
+
+/*
+Case options and cordic angles generated thanks to the following Python script :
+import numpy as np
+
+#%% Parameters definition
+
+PHASEWIDTH = 12     #number of (least significant) bits encoding the phase 
+TURNWIDTH = 2       #number of (most significant) bits encoding the number of turns around the circle
+NSTAGESMAX = 25     #maxnumber of steps in the cordic algorithm, real number of steps is calculated in the programme
+
+#%% Computation of the initial phase due to quadrant change + code generation
+
+angles = np.array([3*np.pi/4, 7*np.pi/4, np.pi/4, 5*np.pi/4]) / (2 * np.pi) #angles en unité "tours de cercle"
+
+binary_angles = np.array([bin(int(2**PHASEWIDTH * i))[2:].zfill(PHASEWIDTH) for i in angles])
+
+print(
+  "\ncase({{ext_i[WORKINGWIDTH-1], ext_q[WORKINGWIDTH-1]}})\n\
+2'b01: 	begin // Rotate by -315 degrees\n\
+		i_val[0] <=  ext_i - ext_q;\n\
+		q_val[0] <=  ext_i + ext_q;\n\
+		ph[0] <= {}'b{};\n\
+		end\n\
+2'b10: 	begin // Rotate by -135 degrees\n\
+		i_val[0] <= -ext_i + ext_q;\n\
+		q_val[0] <= -ext_i - ext_q;\n\
+		ph[0] <= {}'b{};\n\
+		end\n\
+2'b11: 	begin // Rotate by -225 degrees\n\
+		i_val[0] <= -ext_i - ext_q;\n\
+		q_val[0] <=  ext_i - ext_q;\n\
+		ph[0] <= {}'b{};\n\
+		end\n\
+2'b00: 	begin // Rotate by -45 degrees\n\
+		i_val[0] <=  ext_i + ext_q;\n\
+		q_val[0] <= -ext_i + ext_q;\n\
+		ph[0] <= {}'b{};\n\
+		end\n\
+endcase\n".format(PHASEWIDTH, binary_angles[0], PHASEWIDTH, binary_angles[1], PHASEWIDTH, binary_angles[2], PHASEWIDTH, binary_angles[3])
+      )
+
+#%% Computation of the binary cordic angles and of the number of stages + code generation
+
+cordic_angles= np.arctan(2.**(-np.arange(1, NSTAGESMAX))) / (2*np.pi) #angles en unité "tours de cercle"
+
+binary_cordic_angles_full = np.array([bin(int(2**PHASEWIDTH * i))[2:].zfill(PHASEWIDTH) for i in cordic_angles])
+
+binary_cordic_angles = binary_cordic_angles_full[binary_cordic_angles_full != PHASEWIDTH*'0'] 
+
+
+
+NSTAGES = len(binary_cordic_angles)
+
+print("NSTAGES = {}\n".format(NSTAGES))
+
+for k in range(len(binary_cordic_angles)):
+    
+    print("assign cordic_angle[{}] = {}'b{}; // {} deg".format(k, PHASEWIDTH, binary_cordic_angles[k], 360 * cordic_angles[k]))
+*/
 
 genvar k;
 generate for(k=0; k<NSTAGES; k=k+1) begin

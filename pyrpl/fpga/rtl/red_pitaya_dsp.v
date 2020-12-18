@@ -58,6 +58,7 @@ module red_pitaya_dsp #(
    // signals
    input                 clk_i           ,  //!< processing clock
    input                 rstn_i          ,  //!< processing reset - active low
+   input                 exp_p_in0       ,  // wired to DIO_0 in top
    input      [ 14-1: 0] dat_a_i         ,  //!< input data CHA
    input      [ 14-1: 0] dat_b_i         ,  //!< input data CHB
    output     [ 14-1: 0] dat_a_o         ,  //!< output data CHA
@@ -392,13 +393,14 @@ end endgenerate
 //IQ modules
 
 generate for (j = 5; j < 7; j = j+1) begin
-    red_pitaya_iq_block_new 
+    red_pitaya_iq_block
       iq
       (
 	     // data
 	     .clk_i        (  clk_i          ),  // clock
 	     .rstn_i       (  rstn_i         ),  // reset - active low
          .sync_i       (  sync[j]        ),  // syncronization of different dsp modules
+         .trig_iq      (  exp_p_in0      ),
 	     .dat_i        (  input_signal [j] ),  // input data
 	     .dat_o        (  output_direct[j]),  // output data
 		 .signal_o     (  output_signal[j]),  // output signal
@@ -419,13 +421,14 @@ end endgenerate
 
 // IQ with two outputs
 generate for (j = 7; j < 8; j = j+1) begin
-    red_pitaya_iq_block_new   #( .QUADRATUREFILTERSTAGES(4) )
+    red_pitaya_iq_block   #( .QUADRATUREFILTERSTAGES(4) )
       iq_2_outputs
       (
          // data
          .clk_i        (  clk_i          ),  // clock
          .rstn_i       (  rstn_i         ),  // reset - active low
          .sync_i       (  sync[j]        ),  // syncronization of different dsp modules
+         .trig_iq      (  exp_p_in0      ),
          .dat_i        (  input_signal [j] ),  // input data
          .dat_o        (  output_direct[j]),  // output data
          .signal_o     (  output_signal[j]),  // output signal

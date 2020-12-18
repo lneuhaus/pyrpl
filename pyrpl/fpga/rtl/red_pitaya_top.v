@@ -502,6 +502,7 @@ red_pitaya_dsp i_dsp (
    // signals
   .clk_i           (  adc_clk                    ),  // clock
   .rstn_i          (  adc_rstn                   ),  // reset - active low
+  .exp_p_in0       (  exp_p_in[0]                ),  // new iq trigger
   .dat_a_i         (  adc_a                      ),  // in 1
   .dat_b_i         (  adc_b                      ),  // in 2
   .dat_a_o         (  dac_a                      ),  // out 1
