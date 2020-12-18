@@ -1,7 +1,7 @@
 Copyright 1986-2015 Xilinx, Inc. All Rights Reserved.
 ------------------------------------------------------------------------------------
 | Tool Version : Vivado v.2015.4 (lin64) Build 1412921 Wed Nov 18 09:44:32 MST 2015
-| Date         : Mon Jul 20 13:41:23 2020
+| Date         : Fri Dec 18 19:53:54 2020
 | Host         : LPC running 64-bit Ubuntu 18.04.4 LTS
 | Command      : report_timing_summary -file out/post_synth_timing_summary.rpt
 | Design       : red_pitaya_top
@@ -776,8 +776,8 @@ Sources:            { pll/pll/CLKOUT5 }
 Check Type        Corner  Lib Pin            Reference Pin  Required(ns)  Actual(ns)  Slack(ns)  Location  Pin
 Min Period        n/a     BUFG/I             n/a            2.155         4.000       1.845                bufg_pwm_clk/I
 Max Period        n/a     PLLE2_ADV/CLKOUT5  n/a            160.000       4.000       156.000              pll/pll/CLKOUT5
-Low Pulse Width   Slow    FDRE/C             n/a            0.500         2.000       1.500                pwm[1]/v_reg[3]/C
-High Pulse Width  Fast    FDRE/C             n/a            0.500         2.000       1.500                pwm[1]/v_reg[3]/C
+Low Pulse Width   Slow    FDRE/C             n/a            0.500         2.000       1.500                pwm[1]/v_r_reg[7]/C
+High Pulse Width  Fast    FDRE/C             n/a            0.500         2.000       1.500                pwm[1]/v_r_reg[7]/C
 
 
 

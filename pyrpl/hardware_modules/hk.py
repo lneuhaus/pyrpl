@@ -46,6 +46,8 @@ class HK(HardwareModule):
                      'trig0': 1<<3,
                      'trig1': 1<<4,
                      'manual': 1<<8,
+                     'asg0': 1<<9,
+                     'asg1': 1<<10,
                      }
         )
 

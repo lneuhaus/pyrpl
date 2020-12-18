@@ -393,6 +393,7 @@ wire  [  8-1: 0] exp_p_out, exp_n_out;
 wire  [  8-1: 0] exp_p_dir, exp_n_dir;
 
 wire [16-1:0] dsp_trig_out;
+wire    [  2-1:0] trig_asg_out;
 
 
 red_pitaya_hk i_hk (
@@ -412,6 +413,7 @@ red_pitaya_hk i_hk (
   .exp_n_dir_o     (  exp_n_dir                  ),
    // internal trigger signals
   .dsp_trig_i      (  dsp_trig_out               ),  // 16-bit wide DSP module trigger output
+  .asg_trig_i      (  trig_asg_out               ),  // 2-bit wide asg output trigger
    // System bus
   .sys_addr        (  sys_addr                   ),  // address
   .sys_wdata       (  sys_wdata                  ),  // write data
@@ -429,7 +431,6 @@ IOBUF i_iobufn [8-1:0] (.O(exp_n_in), .IO(exp_n_io), .I(exp_n_out), .T(~exp_n_di
 //---------------------------------------------------------------------------------
 //  Oscilloscope application
 
-wire    [  2-1:0] trig_asg_out;
 wire trig_scope_out;
 wire    [14-1: 0] to_scope_a;
 wire    [14-1: 0] to_scope_b;
