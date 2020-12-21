@@ -487,6 +487,7 @@ red_pitaya_asg i_asg (
   .trig_b_i        (  exp_p_in[0]                ),
   .trig_out_o      (  trig_asg_out               ),
   .trig_scope_i    (  trig_scope_out             ),
+  .trig_dsp_i      (  dsp_trig_out               ),
   .asg1phase_o     (  asg1phase_o                ),
   
   // System bus
