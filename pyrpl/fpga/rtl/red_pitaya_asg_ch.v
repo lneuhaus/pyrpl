@@ -45,6 +45,7 @@ module red_pitaya_asg_ch #(
    // trigger
    input                 trig_sw_i       ,  //!< software trigger
    input                 trig_ext_i      ,  //!< external trigger
+   input      [ 16-1: 0] trig_dsp_i      ,  //!< dsp trigger input
    input      [  3-1: 0] trig_src_i      ,  //!< trigger source selector
    output                trig_done_o     ,  //!< trigger event
    
@@ -188,6 +189,8 @@ always @(posedge dac_clk_i) begin
           3'd3 : trig_in <= ext_trig_n  ; // external negative edge
           3'd4 : trig_in <= trig_ext_i  ; // unprocessed ext trigger
           3'd5 : trig_in <= 1'b1  ;       // always high
+          3'd6 : trig_in <= trig_dsp_i[3]  ; // dsp/trig0
+          3'd7 : trig_in <= trig_dsp_i[4]  ; // dsp/trig1
 
        default : trig_in <= 1'b0        ;
       endcase

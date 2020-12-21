@@ -164,6 +164,7 @@ red_pitaya_asg_ch  #(.RSZ (RSZ)) ch [1:0] (
   // trigger
   .trig_sw_i       ({trig_b_sw        , trig_a_sw        }),  // software trigger
   .trig_ext_i      ({at_trig_a        , at_trig_b        }),  // advanced trigger as ext trigger - backwards-compatible with original version
+  .trig_dsp_i      ({trig_dsp_i       , trig_dsp_i       }),  // dsp trigger input
   .trig_src_i      ({trig_b_src       , trig_a_src       }),  // trigger source selector
   .trig_done_o     ({trig_b_done      , trig_a_done      }),  // trigger event
   // buffer ctrl

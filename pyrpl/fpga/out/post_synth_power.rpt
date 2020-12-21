@@ -1,8 +1,8 @@
 Copyright 1986-2015 Xilinx, Inc. All Rights Reserved.
 ----------------------------------------------------------------------------------------
 | Tool Version     : Vivado v.2015.4 (lin64) Build 1412921 Wed Nov 18 09:44:32 MST 2015
-| Date             : Fri Dec 18 19:54:00 2020
-| Host             : LPC running 64-bit Ubuntu 18.04.4 LTS
+| Date             : Mon Dec 21 17:58:52 2020
+| Host             : LPC2 running 64-bit Ubuntu 20.04.1 LTS
 | Command          : report_power -file out/post_synth_power.rpt
 | Design           : red_pitaya_top
 | Device           : xc7z010clg400-1
@@ -50,8 +50,8 @@ Table of Contents
 | On-Chip                  | Power (W) | Used     | Available | Utilization (%) |
 +--------------------------+-----------+----------+-----------+-----------------+
 | Clocks                   |     0.070 |       15 |       --- |             --- |
-| Slice Logic              |     0.138 |    32730 |       --- |             --- |
-|   LUT as Logic           |     0.116 |    16144 |     17600 |           91.73 |
+| Slice Logic              |     0.138 |    32732 |       --- |             --- |
+|   LUT as Logic           |     0.116 |    16152 |     17600 |           91.77 |
 |   CARRY4                 |     0.016 |     1450 |      4400 |           32.95 |
 |   Register               |     0.005 |    11562 |     35200 |           32.85 |
 |   F7/F8 Muxes            |    <0.001 |      462 |     17600 |            2.63 |
@@ -59,7 +59,7 @@ Table of Contents
 |   Others                 |     0.000 |      415 |       --- |             --- |
 |   BUFG                   |     0.000 |        1 |        32 |            3.13 |
 |   LUT as Distributed RAM |     0.000 |       24 |      6000 |            0.40 |
-| Signals                  |     0.133 |    25951 |       --- |             --- |
+| Signals                  |     0.133 |    25953 |       --- |             --- |
 | Block RAM                |     0.103 |       34 |        60 |           56.67 |
 | PLL                      |     0.097 |        1 |         2 |           50.00 |
 | DSPs                     |     0.039 |       30 |        80 |           37.50 |
@@ -67,7 +67,7 @@ Table of Contents
 | XADC                     |     0.002 |        1 |       --- |             --- |
 | PS7                      |     1.292 |        1 |       --- |             --- |
 | Static Power             |     0.152 |          |           |                 |
-| Total                    |     2.320 |          |           |                 |
+| Total                    |     2.319 |          |           |                 |
 +--------------------------+-----------+----------+-----------+-----------------+
 
 

@@ -31,7 +31,7 @@ from . import all_output_directs, dsp_addr_base
 class WaveformAttribute(SelectProperty):
     default = 'sin'
     default_options = [
-        'sin', 'cos', 'ramp', 'halframp', 'sqrt_ramp', 'square', 'dc', 'noise'
+        'sin', 'cos', 'ramp', 'halframp', 'sqrt_ramp', 'square', 'dc', 'noise', 'custom'
     ]
 
     def set_value(self, instance, waveform):
@@ -79,11 +79,14 @@ class WaveformAttribute(SelectProperty):
                 y[len(y) // 2:] = -1.0
             elif waveform == 'dc':
                 y = np.zeros(instance.data_length)
+            elif waveform == 'custom':
+                pass  # don't touch custom waveforms
             else:
                 y = instance.data
                 instance._logger.error(
                     "Waveform name %s not recognized. Specify waveform manually" % waveform)
-            instance.data = y
+            if waveform != "custom":
+                instance.data = y
             instance._waveform = waveform
         return waveform
 
@@ -199,8 +202,10 @@ def make_asg(channel=0):
             ("ext_positive_edge", 2 << _BIT_OFFSET),  # DIO0_P pin
             ("ext_negative_edge", 3 << _BIT_OFFSET),  # DIO0_P pin
             ("ext_raw", 4 << _BIT_OFFSET),  # 4- raw DIO0_P pin
-            ("high", 5 << _BIT_OFFSET)  # 5 - constant high
-            ])
+            ("high", 5 << _BIT_OFFSET),  # 5 - constant high
+            ("trig0", 6 << _BIT_OFFSET),  # 6 - trig0
+            ("trig1", 7 << _BIT_OFFSET),  # 7 - trig1
+        ])
         trigger_sources = _trigger_sources.keys()
 
         trigger_source = SelectRegister(0x0, bitmask=0x0007 << _BIT_OFFSET,
@@ -330,7 +335,6 @@ def make_asg(channel=0):
             self.sm_reset = True
             self._counter_wrap = self._default_counter_wrap
             self._sm_wrappointer = True
-            self.waveform = self.waveform
             self.sm_reset = False
             self.on = True
 
