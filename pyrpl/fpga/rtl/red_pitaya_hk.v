@@ -47,6 +47,7 @@ module red_pitaya_hk #(
   output reg [DWE-1:0] exp_n_dir_o,  //
 
   input      [ 16-1:0] dsp_trig_i,  // dsp trigger output
+  input      [  2-1:0] asg_trig_i,  // asg trigger output
   // System bus
   input      [ 32-1:0] sys_addr   ,  // bus address
   input      [ 32-1:0] sys_wdata  ,  // bus write data
@@ -184,14 +185,14 @@ if (rstn_i == 1'b0) begin
   exp_p_dat_o  <= {DWE{1'b0}};
   exp_n_dat_o  <= {DWE{1'b0}};
 end else begin
-  exp_p0_dat_o <= (|({exp_p_dat_o_manual_setting[0], dsp_trig_i[8-1:0]} & exp_p0_select[9-1:0]));
-  exp_p1_dat_o <= (|({exp_p_dat_o_manual_setting[1], dsp_trig_i[8-1:0]} & exp_p1_select[9-1:0]));
-  exp_p2_dat_o <= (|({exp_p_dat_o_manual_setting[2], dsp_trig_i[8-1:0]} & exp_p2_select[9-1:0]));
-  exp_p3_dat_o <= (|({exp_p_dat_o_manual_setting[3], dsp_trig_i[8-1:0]} & exp_p3_select[9-1:0]));
-  exp_p4_dat_o <= (|({exp_p_dat_o_manual_setting[4], dsp_trig_i[8-1:0]} & exp_p4_select[9-1:0]));
-  exp_p5_dat_o <= (|({exp_p_dat_o_manual_setting[5], dsp_trig_i[8-1:0]} & exp_p5_select[9-1:0]));
-  exp_p6_dat_o <= (|({exp_p_dat_o_manual_setting[6], dsp_trig_i[8-1:0]} & exp_p6_select[9-1:0]));
-  exp_p7_dat_o <= (|({exp_p_dat_o_manual_setting[7], dsp_trig_i[8-1:0]} & exp_p7_select[9-1:0]));
+  exp_p0_dat_o <= (|({asg_trig_i, exp_p_dat_o_manual_setting[0], dsp_trig_i[8-1:0]} & exp_p0_select[11-1:0]));
+  exp_p1_dat_o <= (|({asg_trig_i, exp_p_dat_o_manual_setting[1], dsp_trig_i[8-1:0]} & exp_p1_select[11-1:0]));
+  exp_p2_dat_o <= (|({asg_trig_i, exp_p_dat_o_manual_setting[2], dsp_trig_i[8-1:0]} & exp_p2_select[11-1:0]));
+  exp_p3_dat_o <= (|({asg_trig_i, exp_p_dat_o_manual_setting[3], dsp_trig_i[8-1:0]} & exp_p3_select[11-1:0]));
+  exp_p4_dat_o <= (|({asg_trig_i, exp_p_dat_o_manual_setting[4], dsp_trig_i[8-1:0]} & exp_p4_select[11-1:0]));
+  exp_p5_dat_o <= (|({asg_trig_i, exp_p_dat_o_manual_setting[5], dsp_trig_i[8-1:0]} & exp_p5_select[11-1:0]));
+  exp_p6_dat_o <= (|({asg_trig_i, exp_p_dat_o_manual_setting[6], dsp_trig_i[8-1:0]} & exp_p6_select[11-1:0]));
+  exp_p7_dat_o <= (|({asg_trig_i, exp_p_dat_o_manual_setting[7], dsp_trig_i[8-1:0]} & exp_p7_select[11-1:0]));
   exp_p_dat_o  <= {exp_p7_dat_o, exp_p6_dat_o, exp_p5_dat_o, exp_p4_dat_o, exp_p3_dat_o, exp_p2_dat_o, exp_p1_dat_o, exp_p0_dat_o};
   exp_n_dat_o  <= exp_n_dat_o_manual_setting;
 end

@@ -78,7 +78,7 @@ module red_pitaya_asg (
   output     [  2-1: 0] trig_out_o,  // notification trigger
  
   input                 trig_scope_i    ,  // trigger from the scope
-
+  input      [ 16-1: 0] trig_dsp_i      ,  // dsp trigger input
   output     [ 14-1: 0] asg1phase_o,
 
   // System bus
@@ -151,7 +151,7 @@ red_pitaya_adv_trigger adv_trig_b (
     .trig_o    (at_trig_b)   ,    
     .invert_i  (at_invert_b),
     .rearm_i   (at_autorearm_b),
-    .hysteresis_i (at_counts_b)//stay on for hysteresis_i cycles
+    .hysteresis_i (at_counts_b)  //stay on for hysteresis_i cycles
     );
 
 
@@ -164,6 +164,7 @@ red_pitaya_asg_ch  #(.RSZ (RSZ)) ch [1:0] (
   // trigger
   .trig_sw_i       ({trig_b_sw        , trig_a_sw        }),  // software trigger
   .trig_ext_i      ({at_trig_a        , at_trig_b        }),  // advanced trigger as ext trigger - backwards-compatible with original version
+  .trig_dsp_i      ({trig_dsp_i       , trig_dsp_i       }),  // dsp trigger input
   .trig_src_i      ({trig_b_src       , trig_a_src       }),  // trigger source selector
   .trig_done_o     ({trig_b_done      , trig_a_done      }),  // trigger event
   // buffer ctrl

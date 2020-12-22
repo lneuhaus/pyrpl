@@ -41,11 +41,13 @@ class HK(HardwareModule):
         locals()['expansion_P' + str(i) + '_select'] = SelectRegister(
             0x50 + 0x04*i,
             doc='selects which trigger signals may drive the output pin',
-            bitmask=0x01FF,
+            bitmask=0xFFFF,
             options={'off': 0,
                      'trig0': 1<<3,
                      'trig1': 1<<4,
                      'manual': 1<<8,
+                     'asg0': 1<<9,
+                     'asg1': 1<<10,
                      }
         )
 
