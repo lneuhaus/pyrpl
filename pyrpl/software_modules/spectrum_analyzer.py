@@ -589,9 +589,9 @@ class SpectrumAnalyzer(AcquisitionModule):
             # --> In fact, we will use numpy.rfft insead of
             # scipy.fftpack.rfft because the output
             # format is directly a complex array, and thus, easier to handle.
-            fft1 = np.fft.fftpack.rfft(np.real(iq_data),
+            fft1 = np.fft.rfft(np.real(iq_data),
                                        self.data_length*self.PADDING_FACTOR)
-            fft2 = np.fft.fftpack.rfft(np.imag(iq_data),
+            fft2 = np.fft.rfft(np.imag(iq_data),
                                        self.data_length*self.PADDING_FACTOR)
             cross_spectrum = np.conjugate(fft1)*fft2
 
