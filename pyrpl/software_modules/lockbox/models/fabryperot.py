@@ -523,3 +523,55 @@ class HighFinesseFabryPerot(FabryPerot):
     inputs = LockboxModuleDictProperty(transmission=HighFinesseTransmission,
                                        reflection=HighFinesseReflection,
                                        pdh=HighFinessePdh)
+
+
+class DoublyResonantFabryPerot(FabryPerot):
+    _setup_attributes = ["fsr_voltage", "resonance_voltage"]
+    _gui_attributes = _setup_attributes + ["switch_resonance"]
+    fsr_voltage = FloatProperty(default=0.9, doc="approximate piezo voltage difference between two adjacent resonances")
+    resonance_voltage = FloatProperty(default=0.0, doc="approximate piezo voltage difference between two adjacent resonances")
+
+    def is_locked(self, input=None, loglevel=logging.INFO):
+        """ returns True if locked, else False. Also updates an internal
+        dict that contains information about the current error signals. The
+        state of lock is logged at loglevel """
+        is_locked = super().is_locked(input=input, loglevel=loglevel)
+        is_locked_and_final = is_locked and self.current_state == 'final_stage'
+        if is_locked_and_final:
+            self.resonance_voltage = self.outputs.piezo.mean
+        return is_locked
+
+    def switch_resonance(self):
+        """Switches between doubly resonant and non-doubly resonant resonances and relocks."""
+        self.unlock()
+        self.resonance_voltage -= self.fsr_voltage
+        self.lock()
+
+    @property
+    def _new_lock_offset(self):
+        """Returns the new piezo offset voltage with which one has the best chances to hit the same resonance
+        as during the last successful lock."""
+        minimum_voltage = self.outputs.piezo.min_voltage
+        distance_to_minimum = self.resonance_voltage - minimum_voltage
+        # start lock between the current resonance and the one below
+        new_distance_to_minimum = (distance_to_minimum - 0.5 * self.fsr_voltage)
+        # start at the lowest such voltage in range
+        new_resonance_voltage = minimum_voltage + (new_distance_to_minimum % (2.0 * self.fsr_voltage))
+        return new_resonance_voltage
+
+    def setup_new_lock_offset(self):
+        """update the offset voltage for the resonance search step at the beginning of a lock sequence"""
+        if not self.sequence[0].outputs.piezo.reset_offset:
+            self._logger.warning("For DoublyResonantFabryPerot's lock function to function properly, the first "
+                                 "lock stage should reset the piezo offset.")
+        self.sequence[0].outputs.piezo.offset = self._new_lock_offset
+
+    def lock(self, **kwds):
+        """
+        Launches the full lock sequence, stage by stage until the end.
+        optional kwds are stage attributes that are set after iteration through
+        the sequence, e.g. a modified setpoint.
+        """
+        self.unlock()
+        self.setup_new_lock_offset()
+        return super().lock(**kwds)
