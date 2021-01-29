@@ -539,7 +539,6 @@ class DoublyResonantFabryPerot(FabryPerot):
         is_locked_and_final = is_locked and self.current_state == 'final_stage'
         if is_locked_and_final:
             self.resonance_voltage = self.outputs.piezo.mean
-            self._logger.info(f"Current resonance voltage: {self.resonance_voltage}")
         return is_locked
 
     def switch_resonance(self):
