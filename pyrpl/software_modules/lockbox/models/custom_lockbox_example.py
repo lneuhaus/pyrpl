@@ -34,9 +34,9 @@ class CustomInputClass(InputSignal):
         """ This is a simplified calibration method. InputSignal.calibrate works better than this in most cases. """
         self.lockbox.sweep()
         # get a curve of the signal during the sweep
-        curve = self.sweep_acquire()
+        curve,_ = self.sweep_acquire()
         # fill self.mean, min, max, rms with values from acquired curve.
-        self.get_stats_from_curve(curve=curve)
+        self.calibration_data.get_stats_from_curve(curve=curve)
 
 
 class CustomLockbox(Lockbox):

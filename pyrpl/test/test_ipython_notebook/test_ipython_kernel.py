@@ -11,6 +11,7 @@ import os
 import sys
 from ...redpitaya import defaultparameters
 import os
+import io
 
 import nbformat
 from nbconvert.preprocessors import ExecutePreprocessor
@@ -32,13 +33,14 @@ class MyExecutePreprocessor(ExecutePreprocessor):
     def preprocess_cell(self, cell, resources, cell_index):
         if cell.source.startswith("#no-test"):
             return cell, resources
-        if cell.source.startswith("#define-hostname"):
+        if cell.source.startswith("#define hostname"):
             # replace hostname by unittest hostname
-            if defaultparameters["hostname"] is not None:
-                cell.source = 'HOSTNAME = ' + defaultparameters["hostname"]
-            if 'REDPITAYA_HOSTNAME' in os.environ:
-                cell.source = 'HOSTNAME = "' + os.environ[
-                    "REDPITAYA_HOSTNAME"] + '"'
+            for key in ['hostname', 'user', 'password']:
+                #if defaultparameters[key] is not None:
+                #    cell.source += '\n%s = "%s"'%(key.upper(), defaultparameters[key])
+                envvarname = 'REDPITAYA_%s'%(key.upper())
+                if envvarname in os.environ:
+                    cell.source += '\n%s = "%s"'%(key.upper(), os.environ[envvarname])
         return super(MyExecutePreprocessor, self).preprocess_cell(cell,\
                 resources, cell_index)
 
@@ -67,11 +69,17 @@ def _notebook_run(path):
     return nb, errors
 
 
+##### commented out stuff below because changing defaultparameters might lead
+# to unexpected behavior ####################################################
 # If redpitaya was selected from a list, adds it as an environment variable
 # for the notebook to retieve it
-if not 'REDPITAYA_HOSTNAME' in os.environ:
-  os.environ['REDPITAYA_HOSTNAME'] = defaultparameters["hostname"]
+#for key in ['hostname', 'user', 'password']:
+#    envvarname = 'REDPITAYA_%s'%(key.upper())
+#    if not envvarname in os.environ:
+#        os.environ[envvarname] = defaultparameters[key]
+##############################################################################
 
+# testing for the transferability of environment variables
 os.environ["python_sys_version"] = sys.version
 
 # For some reason, the notebook preprocessor doesn't close
@@ -86,3 +94,5 @@ if sys.version>'3.8':
         assert errors == []
         # Make sure the kernel is running the current python version...
         #assert nb['cells'][0]['outputs'][0]['text'].rstrip('\n')==sys.version
+        print("Finished testing notebook: %s"%notebook)
+        sys.stdout.flush()

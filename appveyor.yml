@@ -74,12 +74,12 @@ install:
   # installation
   - "python setup.py install"
   # pyinstaller installation
-  # - "pip install https://github.com/pyinstaller/pyinstaller/archive/develop.zip"
+  # - "pip install https://github.com/lneuhaus/pyinstaller/archive/develop.zip"
   # - "pip install pyinstaller==3.2"
   - pip install pypiwin32
   - cd ..
-  #- git clone https://www.github.com/pyinstaller/pyinstaller.git -b develop
-  - git clone https://www.github.com/lneuhaus/pyinstaller.git -b develop
+  # - pip install https://github.com/pyinstaller/pyinstaller/tarball/develop
+  - git clone --branch develop --depth=1 https://www.github.com/lneuhaus/pyinstaller.git
   - cd pyinstaller
   #- git fetch origin pull/2991/head:pr2991
   #- git checkout pr2991
@@ -91,7 +91,7 @@ install:
   - "SET REDPITAYA_HOSTNAME=_FAKE_"
   # fix a strange bug with pyinstaller packaging
   # - "copy %PYTHON%\\envs\\test-environment\\qt.conf %PYTHON%\\envs\\test-environment\\ScriptS\\qt.conf"
-  # - "SET set QT_QPA_PLATFORM_PLUGIN_PATH=%PYTHON%\\envs\\test-environment\\Library\\plugins\\platforms"
+  - "SET QT_QPA_PLATFORM_PLUGIN_PATH=%PYTHON%\\envs\\test-environment\\Library\\plugins\\platforms"
 
 # Not a .NET project, we build in the install step instead
 build: false
