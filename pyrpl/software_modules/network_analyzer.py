@@ -375,7 +375,7 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
         """
         Stop the iq.
         """
-        self.iq.output_direct = 'off'
+        self.iq.amplitude = 0
 
     def _data_ready(self):
         return self._remaining_time()<=0
@@ -390,7 +390,7 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
     async def _trace_async(self, min_delay_ms):
         if self.current_point==0:
             self._start_trace_acquisition()
-        while(self.current_point<self.points):
+        while (self.current_point<self.points):
             if self._last_time_benchmark is not None:
                 new_time = timeit.default_timer()
                 self.measured_time_per_point = \
