@@ -273,5 +273,4 @@ class TestNA(TestPyrpl):
                           trace_average=1,
                           amplitude=0.01)
             self.na.single()
-            sleep(1)
             assert self.na.iq.amplitude==0

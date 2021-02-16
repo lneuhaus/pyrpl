@@ -158,7 +158,6 @@ class TestClass(TestPyrpl):
                     self.asg.amplitude**2)/self.asg.amplitude**2<0.1, \
                     (amplitude*62.5e6, self.asg.amplitude**2)
 
-
     def test_iq_filter_white_noise(self):
         """
         Measure the transfer function of an iq filter by measuring the
