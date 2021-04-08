@@ -60,7 +60,7 @@ def _notebook_run(path):
     #ep.start_new_kernel()
     try:
         ep.preprocess(nb, resources={'metadata': {'path': NOTEBOOK_DIR}})
-    except (CellExecutionError, TimeoutError) as e:
+    except (CellExecutionError, TimeoutError, NotImplementedError) as e:
       if hasattr(e, 'traceback') and "SKIP" in e.traceback:
             print(str(e.traceback).split("\n")[-2])
       else:
