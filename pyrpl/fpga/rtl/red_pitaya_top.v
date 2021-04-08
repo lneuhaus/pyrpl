@@ -225,27 +225,46 @@ red_pitaya_ps i_ps (
 // system bus decoder & multiplexer (it breaks memory addresses into 8 regions)
 ////////////////////////////////////////////////////////////////////////////////
 
+
 wire              sys_clk   = ps_sys_clk  ;
 wire              sys_rstn  = ps_sys_rstn ;
-wire  [  32-1: 0] sys_addr  = ps_sys_addr ;
+wire  [  32-1: 0] sys_addr  = {ps_sys_addr[32-1:2], {2'b00}};  // the last two bits are always zero due to the 32 bit nature of the bus
+reg  [  32-1: 0] sys_addr2;
 wire  [  32-1: 0] sys_wdata = ps_sys_wdata;
 wire  [   4-1: 0] sys_sel   = ps_sys_sel  ;
 wire  [8   -1: 0] sys_wen   ;
 wire  [8   -1: 0] sys_ren   ;
 wire  [8*32-1: 0] sys_rdata ;
+reg  [8*32-1: 0] sys_rdata2 ;
 wire  [8* 1-1: 0] sys_err   ;
+reg  [8* 1-1: 0] sys_err2   ;
 wire  [8* 1-1: 0] sys_ack   ;
+reg  [8* 1-1: 0] sys_ack2   ;
 wire  [8   -1: 0] sys_cs    ;
+reg  [8   -1: 0] sys_cs2    ;
+
 
 assign sys_cs = 8'h01 << sys_addr[22:20];
+
+
+always @(posedge adc_clk)
+begin
+   sys_rdata2 <= sys_rdata;
+   sys_ack2 <= sys_ack;
+   sys_err2 <= sys_err;
+   sys_cs2 <= sys_cs;
+   sys_addr2 <= sys_addr;
+end
+
 
 assign sys_wen = sys_cs & {8{ps_sys_wen}};
 assign sys_ren = sys_cs & {8{ps_sys_ren}};
 
-assign ps_sys_rdata = sys_rdata[sys_addr[22:20]*32+:32];
+assign ps_sys_rdata = sys_rdata2[sys_addr2[22:20]*32+:32];
 
-assign ps_sys_err   = |(sys_cs & sys_err);
-assign ps_sys_ack   = |(sys_cs & sys_ack);
+assign ps_sys_err   = |(sys_cs2 & sys_err2);
+assign ps_sys_ack   = |(sys_cs2 & sys_ack2);
+
 
 // unused system bus slave ports
 
