@@ -1,8 +1,8 @@
 Copyright 1986-2015 Xilinx, Inc. All Rights Reserved.
 ----------------------------------------------------------------------------------------
 | Tool Version     : Vivado v.2015.4 (lin64) Build 1412921 Wed Nov 18 09:44:32 MST 2015
-| Date             : Mon Dec 21 17:58:52 2020
-| Host             : LPC2 running 64-bit Ubuntu 20.04.1 LTS
+| Date             : Thu Apr  8 11:00:31 2021
+| Host             : LPC2 running 64-bit Ubuntu 20.04.2 LTS
 | Command          : report_power -file out/post_synth_power.rpt
 | Design           : red_pitaya_top
 | Device           : xc7z010clg400-1
@@ -30,12 +30,12 @@ Table of Contents
 ----------
 
 +--------------------------+-------+
-| Total On-Chip Power (W)  | 2.320 |
-| Dynamic (W)              | 2.168 |
+| Total On-Chip Power (W)  | 2.319 |
+| Dynamic (W)              | 2.167 |
 | Device Static (W)        | 0.152 |
 | Effective TJA (C/W)      | 11.5  |
-| Max Ambient (C)          | 58.2  |
-| Junction Temperature (C) | 51.8  |
+| Max Ambient (C)          | 58.3  |
+| Junction Temperature (C) | 51.7  |
 | Confidence Level         | Low   |
 | Setting File             | ---   |
 | Simulation Activity File | ---   |
@@ -50,16 +50,16 @@ Table of Contents
 | On-Chip                  | Power (W) | Used     | Available | Utilization (%) |
 +--------------------------+-----------+----------+-----------+-----------------+
 | Clocks                   |     0.070 |       15 |       --- |             --- |
-| Slice Logic              |     0.138 |    32732 |       --- |             --- |
-|   LUT as Logic           |     0.116 |    16152 |     17600 |           91.77 |
+| Slice Logic              |     0.138 |    32703 |       --- |             --- |
+|   LUT as Logic           |     0.116 |    16109 |     17600 |           91.53 |
 |   CARRY4                 |     0.016 |     1450 |      4400 |           32.95 |
-|   Register               |     0.005 |    11562 |     35200 |           32.85 |
-|   F7/F8 Muxes            |    <0.001 |      462 |     17600 |            2.63 |
+|   Register               |     0.005 |    11558 |     35200 |           32.84 |
+|   F7/F8 Muxes            |    <0.001 |      502 |     17600 |            2.85 |
 |   LUT as Shift Register  |    <0.001 |       71 |      6000 |            1.18 |
 |   Others                 |     0.000 |      415 |       --- |             --- |
 |   BUFG                   |     0.000 |        1 |        32 |            3.13 |
 |   LUT as Distributed RAM |     0.000 |       24 |      6000 |            0.40 |
-| Signals                  |     0.133 |    25953 |       --- |             --- |
+| Signals                  |     0.133 |    25882 |       --- |             --- |
 | Block RAM                |     0.103 |       34 |        60 |           56.67 |
 | PLL                      |     0.097 |        1 |         2 |           50.00 |
 | DSPs                     |     0.039 |       30 |        80 |           37.50 |
@@ -77,7 +77,7 @@ Table of Contents
 +-----------+-------------+-----------+-------------+------------+
 | Source    | Voltage (V) | Total (A) | Dynamic (A) | Static (A) |
 +-----------+-------------+-----------+-------------+------------+
-| Vccint    |       1.000 |     0.492 |       0.482 |      0.011 |
+| Vccint    |       1.000 |     0.492 |       0.481 |      0.011 |
 | Vccaux    |       1.800 |     0.069 |       0.057 |      0.012 |
 | Vcco33    |       3.300 |     0.086 |       0.085 |      0.001 |
 | Vcco25    |       2.500 |     0.001 |       0.000 |      0.001 |
@@ -165,9 +165,9 @@ Table of Contents
 +--------------------------------------------------------+-----------+
 | Name                                                   | Power (W) |
 +--------------------------------------------------------+-----------+
-| red_pitaya_top                                         |     2.167 |
+| red_pitaya_top                                         |     2.166 |
 |   i_ams                                                |     0.004 |
-|   i_asg                                                |     0.061 |
+|   i_asg                                                |     0.060 |
 |     adv_trig_a                                         |     0.002 |
 |     adv_trig_b                                         |     0.002 |
 |     ch[0]                                              |     0.025 |
@@ -282,7 +282,7 @@ Table of Contents
 |       axi_awfifo_reg_0_15_30_35                        |    <0.001 |
 |       axi_awfifo_reg_0_15_36_36                        |    <0.001 |
 |       axi_wfifo_reg_0_15_60_65                         |    <0.001 |
-|     axi_slave_gp0                                      |     0.001 |
+|     axi_slave_gp0                                      |     0.002 |
 |     system_i                                           |     1.305 |
 |       system_i                                         |     1.305 |
 |         axi_protocol_converter_0                       |     0.011 |

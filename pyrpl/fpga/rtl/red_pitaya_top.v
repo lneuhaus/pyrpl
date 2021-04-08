@@ -227,7 +227,7 @@ red_pitaya_ps i_ps (
 
 wire              sys_clk   = ps_sys_clk  ;
 wire              sys_rstn  = ps_sys_rstn ;
-wire  [  32-1: 0] sys_addr  = ps_sys_addr ;
+wire  [  32-1: 0] sys_addr  = {ps_sys_addr[32-1:2], {2'b00}};  // the last two bits are always zero due to the 32 bit nature of the bus
 wire  [  32-1: 0] sys_wdata = ps_sys_wdata;
 wire  [   4-1: 0] sys_sel   = ps_sys_sel  ;
 wire  [8   -1: 0] sys_wen   ;
