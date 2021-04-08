@@ -14,7 +14,7 @@ class TestScopeAsgAms(TestPyrpl):
         if self.r is None:
             return
         for asg in [self.r.asg0, self.r.asg1]:
-            asg.setup(frequency=12345.)
+            asg.setup(frequency=12345., waveform="sin")
             expect = 1. / 8191 * np.round(8191. * np.sin(
                 np.linspace(
                     0,
