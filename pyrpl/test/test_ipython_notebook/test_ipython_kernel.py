@@ -64,7 +64,10 @@ def _notebook_run(path):
       if hasattr(e, 'traceback') and "SKIP" in e.traceback:
             print(str(e.traceback).split("\n")[-2])
       else:
-        raise e
+        print(f"Failed {e} with path {path}")
+        # we get cryptic error messages here. 
+        # This test needs to be properly wrapped in a test in order
+        # to get proper tracebacks.
   return nb, errors
 
 ##### commented out stuff below because changing defaultparameters might lead
