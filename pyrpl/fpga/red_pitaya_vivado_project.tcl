@@ -82,6 +82,8 @@ import_files -force
 
 update_compile_order -fileset sources_1
 
+set_property STEPS.SYNTH_DESIGN.ARGS.BUFG 16 [get_runs synth_1]
+
 ################################################################################
 # Start GUI, if necessary (disabled by default)
 ################################################################################

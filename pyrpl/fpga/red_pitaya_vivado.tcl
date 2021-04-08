@@ -104,7 +104,7 @@ read_xdc                          $path_sdc/red_pitaya.xdc
 ################################################################################
 
 #synth_design -top red_pitaya_top
-synth_design -top red_pitaya_top -flatten_hierarchy none -bufg 16 -keep_equivalent_registers
+synth_design -top red_pitaya_top -bufg 16
 
 write_checkpoint         -force   $path_out/post_synth
 report_timing_summary    -file    $path_out/post_synth_timing_summary.rpt
@@ -117,9 +117,9 @@ report_power             -file    $path_out/post_synth_power.rpt
 ################################################################################
 
 opt_design
-power_opt_design
+#power_opt_design
 place_design
-phys_opt_design
+#phys_opt_design
 write_checkpoint         -force   $path_out/post_place
 report_timing_summary    -file    $path_out/post_place_timing_summary.rpt
 #write_hwdef              -file    $path_sdk/red_pitaya.hwdef
