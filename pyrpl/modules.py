@@ -431,7 +431,7 @@ class Module(with_metaclass(ModuleMetaClass, object)):
     @property
     def pyrpl(self):
         """
-        Recursively looks through patent modules untill pyrpl instance is
+        Recursively looks through parent modules until pyrpl instance is
         reached.
         """
         from .pyrpl import Pyrpl

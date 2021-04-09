@@ -64,7 +64,7 @@ class TestPyrpl(object):
                 print("Showing widget %s..." % name)
                 dock_widget.setVisible(True)
             sleep(3.0) # give some time for startup
-        APP.processEvents()
+        #APP.processEvents()
 
     def test_read_write_time(self):
         # maximum time per read/write in seconds
@@ -93,9 +93,11 @@ class TestPyrpl(object):
                 cls.curves.pop().delete()
         # shut down Pyrpl
         cls.pyrpl._clear()
-        APP.processEvents()  # give some time for events to get processed
+        sleep(0.1)
+        #APP.processEvents()  # give some time for events to get processed
         cls.erase_temp_file()  # delete the configfile
-        APP.processEvents()
+        sleep(0.1)
+        #APP.processEvents()
 
     def test_pyrpl(self):
         assert (self.pyrpl is not None)

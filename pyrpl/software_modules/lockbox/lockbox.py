@@ -34,6 +34,7 @@ class ClassnameProperty(SelectProperty):
             obj._logger.debug("Autosave of classname attribute of Lockbox is "
                               "inactive. This may have severe impact "
                               "on proper functionality.")
+        obj._autosave_active = False
         obj._logger.debug("Lockbox classname changed to %s", val)
         # this call results in replacing the lockbox object by a new one
         obj._classname_changed()
@@ -290,12 +291,11 @@ class Lockbox(LockboxModule):
     async def _monitor_lock_status_async(self):
         while not self.current_state in ["unlock", "sweep"]:
             new_status = self.is_locked()
-            if self.current_state=="lock_on" and not self.lock_status:
+            if self.current_state=="lock_on" and not new_status:#elf.lock_status:
                 if not self.unlock_event.is_set():
                     self.unlock_event.set()
                     self.unlock_event = Event()
                 if self.auto_lock:
-                    print("lock_async")
                     self.lock_async()
             self.lock_status = new_status
             self._signal_launcher.update_lockstatus.emit([new_status])
@@ -428,6 +428,9 @@ class Lockbox(LockboxModule):
         self._signal_launcher.delete_widget.emit()
         # delete former lockbox (free its resources)
         self._clear()
+        # Make sure that the former lockbox won't mess up with pyrpl
+        # (in case the user has kept a reference to it)
+        self.parent = None
         # make a new object
         new_lockbox = Lockbox._make_Lockbox(pyrpl, name)
         new_lockbox._classname = self.classname

@@ -96,7 +96,8 @@ class RunningStateProperty(SelectProperty):
         new_value = (value=='running_continuous')
         if obj.run_continuous!=new_value:
             obj._run_continuous = new_value # we don't want to trigger setup()
-            obj.__class__.run_continuous.save_attribute(obj, new_value) # We need
+            if obj._autosave_active:
+                obj.__class__.run_continuous.save_attribute(obj, new_value) # We need
             #  to save this right away
 
 
@@ -463,4 +464,3 @@ class AcquisitionModule(Module):
 
     def _free_up_resources(self):
         pass # pragma: no cover
-

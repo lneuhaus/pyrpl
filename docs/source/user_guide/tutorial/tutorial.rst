@@ -347,7 +347,7 @@ there is enough time to repeat the reading n times.
     f, axarr = plt.subplots(1,2, sharey=True)
     axarr[0].plot(times, data, "+");
     axarr[0].set_title("ADC voltage vs time");
-    axarr[1].hist(data, bins=10,normed=True, orientation="horizontal");
+    axarr[1].hist(data, bins=10,density=True, orientation="horizontal");
     axarr[1].set_title("ADC voltage histogram");
 
 You see that the input values are not exactly zero. This is normal with
@@ -402,21 +402,21 @@ list of modules:
 
     r.hk #"housekeeping" = LEDs and digital inputs/outputs
     r.ams #"analog mixed signals" = auxiliary ADCs and DACs.
-    
+
     r.scope #oscilloscope interface
-    
+
     r.asg1 #"arbitrary signal generator" channel 1
     r.asg2 #"arbitrary signal generator" channel 2
-    
+
     r.pid0 #first of four PID modules
     r.pid1
     r.pid2
     r.pid3
-    
+
     r.iq0 #first of three I+Q quadrature demodulation/modulation modules
     r.iq1
     r.iq2
-    
+
     r.iir #"infinite impules response" filter module that can realize complex transfer functions
 
 ASG and Scope module
@@ -471,60 +471,60 @@ the scope:
 
     from time import sleep
     from pyrpl import RedPitaya
-    
+
     #reload everything
     #r = RedPitaya(hostname="192.168.1.100")
     asg = r.asg1
     s = r.scope
-    
-    # turn off asg so the scope has a chance to measure its "off-state" as well 
+
+    # turn off asg so the scope has a chance to measure its "off-state" as well
     asg.output_direct = "off"
-    
+
     # setup scope
     s.input1 = 'asg1'
-    
+
     # pass asg signal through pid0 with a simple integrator - just for fun (detailed explanations for pid will follow)
-    r.pid0.input = 'asg1' 
+    r.pid0.input = 'asg1'
     r.pid0.ival = 0 # reset the integrator to zero
     r.pid0.i = 1000 # unity gain frequency of 1000 hz
     r.pid0.p = 1.0 # proportional gain of 1.0
     r.pid0.inputfilter = [0,0,0,0] # leave input filter disabled for now
-    
+
     # show pid output on channel2
     s.input2 = 'pid0'
-    
+
     # trig at zero volt crossing
-    s.threshold_ch1 = 0 
-    
-    # positive/negative slope is detected by waiting for input to 
-    # sweept through hysteresis around the trigger threshold in 
-    # the right direction 
+    s.threshold_ch1 = 0
+
+    # positive/negative slope is detected by waiting for input to
+    # sweept through hysteresis around the trigger threshold in
+    # the right direction
     s.hysteresis_ch1 = 0.01
-    
+
     # trigger on the input signal positive slope
     s.trigger_source = 'ch1_positive_edge'
-    
+
     # take data symetrically around the trigger event
     s.trigger_delay = 0
-    
+
     # set decimation factor to 64 -> full scope trace is 8ns * 2^14 * decimation = 8.3 ms long
     s.decimation = 64
-    
+
     # setup the scope for an acquisition
     s.setup()
-    
+
     print "\nBefore turning on asg:"
     print "Curve ready:", s.curve_ready() # trigger should still be armed
-    
+
     # turn on asg and leave enough time for the scope to record the data
     asg.setup(frequency=1e3, amplitude=0.3, start_phase=90, waveform='halframp', trigger_source='immediately')
     sleep(0.010)
-    
+
     # check that the trigger has been disarmed
     print "\nAfter turning on asg:"
     print "Curve ready:", s.curve_ready()
     print "Trigger event age [ms]:",8e-9*((s.current_timestamp&0xFFFFFFFFFFFFFFFF) - s.trigger_timestamp)*1000
-    
+
     # plot the data
     %matplotlib inline
     plt.plot(s.times*1e3,s.curve(ch=1),s.times*1e3,s.curve(ch=2));
@@ -582,7 +582,7 @@ Proportional and integral gain
 
     #make shortcut
     pid = r.pid0
-    
+
     #turn off by setting gains to zero
     pid.p,pid.i = 0,0
     print "P/I gain when turned off:", pid.i,pid.p
@@ -611,38 +611,38 @@ Control with the integral value register
     import numpy as np
     #make shortcut
     pid = r.pid0
-    
+
     # set input to asg1
     pid.input = "asg1"
-    
+
     # set asg to constant 0.1 Volts
     r.asg1.setup(waveform="DC", offset = 0.1)
-    
+
     # set scope ch1 to pid0
     r.scope.input1 = 'pid0'
-    
+
     #turn off the gains for now
     pid.p,pid.i = 0, 0
-    
+
     #set integral value to zero
     pid.ival = 0
-    
+
     #prepare data recording
     from time import time
     times, ivals, outputs = [], [], []
-    
+
     # turn on integrator to whatever negative gain
     pid.i = -10
-    
+
     # set integral value above the maximum positive voltage
-    pid.ival = 1.5 
-    
+    pid.ival = 1.5
+
     #take 1000 points - jitter of the ethernet delay will add a noise here but we dont care
     for n in range(1000):
         times.append(time())
         ivals.append(pid.ival)
         outputs.append(r.scope.voltage1)
-    
+
     #plot
     import matplotlib.pyplot as plt
     %matplotlib inline
@@ -726,10 +726,10 @@ Lock-in detection / PDH / synchronous detection
     #reload to make sure settings are default ones
     from pyrpl import Pyrpl
     r = Pyrpl(hostname="192.168.1.100").rp
-    
+
     #shortcut
     iq = r.iq0
-    
+
     # modulation/demodulation frequency 25 MHz
     # two lowpass filters with 10 and 20 kHz bandwidth
     # input signal is analog input 1
@@ -738,9 +738,9 @@ Lock-in detection / PDH / synchronous detection
     # modulation goes to out1
     # output_signal is the demodulated quadrature 1
     # quadrature_1 is amplified by 10
-    iq.setup(frequency=25e6, bandwidth=[10e3,20e3], gain=0.0, 
-             phase=0, acbandwidth=50000, amplitude=0.5, 
-             input='adc1', output_direct='out1', 
+    iq.setup(frequency=25e6, bandwidth=[10e3,20e3], gain=0.0,
+             phase=0, acbandwidth=50000, amplitude=0.5,
+             input='adc1', output_direct='out1',
              output_signal='quadrature', quadrature_factor=10)
 
 After this setup, the demodulated quadrature is available as the
@@ -776,11 +776,11 @@ put a 50 Ohm terminator in parallel with input 1.
     # shortcut for na
     na = r.na
     na.iq_name = 'iq1'
-    
+
     #take transfer functions. first: iq1 -> iq1, second iq1->out1->(your cable)->adc1
     f, iq1, amplitudes = na.curve(start=1e3,stop=62.5e6,points=1001,rbw=1000,avg=1,amplitude=0.2,input='iq1',output_direct='off', acbandwidth=0)
     f, adc1, amplitudes = na.curve(start=1e3,stop=62.5e6,points=1001,rbw=1000,avg=1,amplitude=0.2,input='adc1',output_direct='out1', acbandwidth=0)
-    
+
     #plot
     from pyrpl.iir import bodeplot
     %matplotlib inline
@@ -812,26 +812,26 @@ with the network analyzer:
     na = r.na
     na.iq_name = 'iq1'
     bpf = r.iq2
-    
+
     # setup bandpass
     bpf.setup(frequency = 2.5e6, #center frequency
               Q=10.0, # the filter quality factor
               acbandwidth = 10e5, # ac filter to remove pot. input offsets
               phase=0, # nominal phase at center frequency (propagation phase lags not accounted for)
-              gain=2.0, # peak gain = +6 dB 
-              output_direct='off', 
-              output_signal='output_direct', 
+              gain=2.0, # peak gain = +6 dB
+              output_direct='off',
+              output_signal='output_direct',
               input='iq1')
-    
+
     # take transfer function
-    f, tf1, ampl = na.curve(start=1e5, stop=4e6, points=201, rbw=100, avg=3, 
+    f, tf1, ampl = na.curve(start=1e5, stop=4e6, points=201, rbw=100, avg=3,
                          amplitude=0.2, input='iq2',output_direct='off')
-    
+
     # add a phase advance of 82.3 degrees and measure transfer function
     bpf.phase = 82.3
-    f, tf2, ampl = na.curve(start=1e5, stop=4e6, points=201, rbw=100, avg=3, 
+    f, tf2, ampl = na.curve(start=1e5, stop=4e6, points=201, rbw=100, avg=3,
                          amplitude=0.2, input='iq2',output_direct='off')
-    
+
     #plot
     from pyrpl.iir import bodeplot
     %matplotlib inline
@@ -852,22 +852,22 @@ reasonable frequency lock).
 .. code:: ipython3
 
     iq = r.iq0
-    
+
     # turn off pfd module for settings
     iq.pfd_on = False
-    
+
     # local oscillator frequency
     iq.frequency = 33.7e6
-    
+
     # local oscillator phase
     iq.phase = 0
-    iq.input = 'adc1' 
+    iq.input = 'adc1'
     iq.output_direct = 'off'
     iq.output_signal = 'pfd'
-    
+
     print "Before turning on:"
     print "Frequency difference error integral", iq.pfd_integral
-    
+
     print "After turning on:"
     iq.pfd_on = True
     for i in range(10):
@@ -917,10 +917,10 @@ internal filter signals limits its performance.
     #reload to make sure settings are default ones
     from pyrpl import RedPitaya
     r = RedPitaya(hostname="192.168.1.100")
-    
+
     #shortcut
     iir = r.iir
-    
+
     #print docstring of the setup function
     print iir.setup.__doc__
 
@@ -930,7 +930,7 @@ internal filter signals limits its performance.
     %matplotlib inline
     import matplotlib
     matplotlib.rcParams['figure.figsize'] = (10, 6)
-    
+
     #setup a complicated transfer function
     zeros = [ -4e4j-300, +4e4j-300,-2e5j-1000, +2e5j-1000, -2e6j-3000, +2e6j-3000]
     poles = [ -1e6, -5e4j-300, +5e4j-300, -1e5j-3000, +1e5j-3000, -1e6j-30000, +1e6j-30000]
@@ -952,15 +952,15 @@ Let's check if the filter is really working as it is supposed:
 
     # first thing to check if the filter is not ok
     print "IIR overflows before:", bool(iir.overflow)
-    
+
     # measure tf of iir filter
     r.iir.input = 'iq1'
-    f, tf, ampl = r.na.curve(iq_name='iq1', start=1e4, stop=3e6, points = 301, rbw=100, avg=1, 
+    f, tf, ampl = r.na.curve(iq_name='iq1', start=1e4, stop=3e6, points = 301, rbw=100, avg=1,
                            amplitude=0.1, input='iir', output_direct='off', logscale=True)
-    
+
     # first thing to check if the filter is not ok
     print "IIR overflows after:", bool(iir.overflow)
-    
+
     #plot with design data
     %matplotlib inline
     import matplotlib
@@ -987,18 +987,18 @@ default value g=1.0) does here:
 
     #rescale the filter by 20fold reduction of DC gain
     designdata = iir.setup(zeros,poles,g=0.1,loops=None,plot=False);
-    
+
     # first thing to check if the filter is not ok
     print "IIR overflows before:", bool(iir.overflow)
-    
+
     # measure tf of iir filter
     r.iir.input = 'iq1'
-    f, tf, ampl = r.iq1.na_trace(start=1e4, stop=3e6, points = 301, rbw=100, avg=1, 
+    f, tf, ampl = r.iq1.na_trace(start=1e4, stop=3e6, points = 301, rbw=100, avg=1,
                            amplitude=0.1, input='iir', output_direct='off', logscale=True)
-    
+
     # first thing to check if the filter is not ok
     print "IIR overflows after:", bool(iir.overflow)
-    
+
     #plot with design data
     %matplotlib inline
     pylab.rcParams['figure.figsize'] = (10, 6)
@@ -1020,16 +1020,16 @@ internal iir registers:
 .. code:: ipython3
 
     iir = r.iir
-    
+
     # useful diagnostic functions
     print "IIR on:", iir.on
     print "IIR bypassed:", iir.shortcut
     print "IIR copydata:", iir.copydata
     print "IIR loops:", iir.loops
     print "IIR overflows:", bin(iir.overflow)
-    print "\nCoefficients (6 per biquad):" 
+    print "\nCoefficients (6 per biquad):"
     print iir.coefficients
-    
+
     # set the unity transfer function to the filter
     iir._setup_unity()
 
@@ -1052,7 +1052,7 @@ provides an API with high-level functions such as:
     cavity.unlock()
 
     # calibrate the fringe height of an interferometer, and lock it at local oscillator phase 45 degrees
-    interferometer.lock(phase=45.0) 
+    interferometer.lock(phase=45.0)
 
 First attempts at locking
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1114,7 +1114,7 @@ The cabling discussed above translates into:
 
     pid.input = 'adc1'
     pid.output_direct = 'out1'
-    
+
     #see other available options just for curiosity:
     print pid.inputs
     print pid.output_directs
@@ -1146,20 +1146,20 @@ integrator will naturally drift into the resonance and stay there:
 
     pid.i = 0 # make sure gain is off
     pid.p = 0
-    #errorsignal = adc1 - setpoint 
-    if resonant > offresonant: # when we are away from resonance, error is negative. 
-        slopesign = 1.0 # therefore, near resonance, the slope is positive as the error crosses zero. 
+    #errorsignal = adc1 - setpoint
+    if resonant > offresonant: # when we are away from resonance, error is negative.
+        slopesign = 1.0 # therefore, near resonance, the slope is positive as the error crosses zero.
     else:
         slopesign = -1.0
     gainsign = -slopesign #the gain must be the opposite to stabilize
-    # the effectove gain will in any case slopesign*gainsign = -1. 
-    
+    # the effectove gain will in any case slopesign*gainsign = -1.
+
     #Therefore we must start at the maximum positive voltage, so the negative effective gain leads to a decreasing output
     pid.ival = 1.0 #sets the integrator value = output voltage to maximum
-    
+
     from time import sleep
     sleep(1.0) #wait for the voltage to stabilize (adjust for a few times the lowpass filter bandwidth)
-    
+
     #finally, turn on the integrator
     pid.i = gainsign * 0.1
 
@@ -1206,21 +1206,21 @@ More to come
 
     from pyrpl import RedPitaya
     r = RedPitaya(hostname="192.168.1.100")
-    
+
     #shortcut
     iq = r.iq0
-    
-    iq.setup(frequency=1000e3, bandwidth=[10e3,20e3], gain=0.0, 
-             phase=0, acbandwidth=50000, amplitude=0.4, 
-             input='adc1', output_direct='out1', 
+
+    iq.setup(frequency=1000e3, bandwidth=[10e3,20e3], gain=0.0,
+             phase=0, acbandwidth=50000, amplitude=0.4,
+             input='adc1', output_direct='out1',
              output_signal='output_direct', quadrature_factor=0)
     iq.frequency=10
     r.scope.input1='adc1'
-    
+
     # shortcut for na
     na = r.na
     na.iq_name = "iq1"
-    
+
     # pid1 will be our device under test
     pid = r.pid0
     pid.input = 'iq1'
@@ -1229,10 +1229,10 @@ More to come
     pid.p = 1.0
     pid.setpoint = 0
     pid.inputfilter = []#[-1e3, 5e3, 20e3, 80e3]
-    
+
     # take the transfer function through pid1, this will take a few seconds...
     x, y, ampl = na.curve(start=0,stop=200e3,points=101,rbw=100,avg=1,amplitude=0.5,input='iq1',output_direct='off', acbandwidth=0)
-    
+
     #plot
     import matplotlib.pyplot as plt
     %matplotlib inline
@@ -1289,7 +1289,7 @@ sure that an event loop is running.
 
 .. code:: ipython3
 
-    # Make sure the notebook was launched with the following option: 
+    # Make sure the notebook was launched with the following option:
     # ipython notebook --pylab=qt
     from pyrpl.gui import RedPitayaGui
     r = RedPitayaGui(HOSTNAME)
@@ -1324,17 +1324,17 @@ Scanning with asg1/Locking with pid1
 
     from pyrpl.gui import RedPitayaGui
     from PyQt4 import QtCore, QtGui
-    
+
     class RedPitayaGuiCustom(RedPitayaGui):
         """
         This is the derived class containing our customizations
         """
-        
+
         def customize_scope(self): #This function is called upon object instanciation
             """
             By overwritting this function in the child class, the user can perform custom initializations.
             """
-            
+
             self.scope_widget.layout_custom = QtGui.QHBoxLayout()
             #Adds an horizontal layout for our extra-buttons
             self.scope_widget.button_scan = QtGui.QPushButton("Scan")
@@ -1344,94 +1344,94 @@ Scanning with asg1/Locking with pid1
             self.scope_widget.label_setpoint = QtGui.QLabel("Setpoint")
             # creates a label for the setpoint spinbox
             self.scope_widget.spinbox_setpoint = QtGui.QDoubleSpinBox()
-            # creates a spinbox to enter the value of the setpoint 
+            # creates a spinbox to enter the value of the setpoint
             self.scope_widget.spinbox_setpoint.setDecimals(4)
             # sets the desired number of decimals for the spinbox
             self.scope_widget.spinbox_setpoint.setSingleStep(0.001)
             # Change the step by which the setpoint is incremented when using the arrows
-            
+
             self.scope_widget.layout_custom.addWidget(self.scope_widget.button_scan)
             self.scope_widget.layout_custom.addWidget(self.scope_widget.button_lock)
             self.scope_widget.layout_custom.addWidget(self.scope_widget.label_setpoint)
             self.scope_widget.layout_custom.addWidget(self.scope_widget.spinbox_setpoint)
             # Adds the buttons in the layout
-            
+
             self.scope_widget.main_layout.addLayout(self.scope_widget.layout_custom)
             # Adds the layout at the bottom of the scope layout
-            
+
             self.scope_widget.button_scan.clicked.connect(self.scan)
             self.scope_widget.button_lock.clicked.connect(self.lock)
             self.scope_widget.spinbox_setpoint.valueChanged.connect(self.change_setpoint)
             # connects the buttons to the desired functions
-            
-            
+
+
         def custom_setup(self): #This function is also called upon object instanciation
             """
             By overwritting this function in the child class, the user can perform custom initializations.
             """
-            
+
             #setup asg1 to output the desired ramp
             self.asg1.offset = .5
             self.asg1.scale = 0.5
             self.asg1.waveform = "ramp"
             self.asg1.frequency = 100
             self.asg1.trigger_source = 'immediately'
-    
+
             #setup the scope to record approximately one period
             self.scope.duration = 0.01
             self.scope.input1 = 'dac1'
             self.scope.input2 = 'dac2'
             self.scope.trigger_source = 'asg1'
-    
+
             #automatically start the scope
             self.scope_widget.run_continuous()
-            
+
         def change_setpoint(self):
             """
             Directly reflects the value of the spinbox into the pid0 setpoint
             """
-            
+
             self.pid0.setpoint = self.scope_widget.spinbox_setpoint.value()
-    
+
         def lock(self): #Called when button lock is clicked
             """
             Set up everything in "lock mode"
             """
-            
+
             # disable button lock
             self.scope_widget.button_lock.setEnabled(False)
             # enable button scan
             self.scope_widget.button_scan.setEnabled(True)
-            
-            
+
+
             # shut down the asg
             self.asg1.output_direct = 'off'
-            
+
             # set pid input/outputs
             self.pid0.input = 'adc1'
             self.pid0.output_direct = 'out2'
-            
+
             #set pid parameters
             self.pid0.setpoint = self.scope_widget.spinbox_setpoint.value()
             self.pid0.p = 0.1
             self.pid0.i = 100
             self.pid0.ival = 0
-    
+
         def scan(self): #Called when button lock is clicked
             """
             Set up everything in "scan mode"
             """
-            
+
             # enable button lock
             self.scope_widget.button_lock.setEnabled(True)
             # enable button scan
             self.scope_widget.button_scan.setEnabled(False)
             # switch asg on
             self.asg1.output_direct = 'out2'
-            
+
             #switch pid off
             self.pid0.output_direct = 'off'
-            
+
     # Instantiate the class RePitayaGuiCustom
     r = RedPitayaGuiCustom(HOSTNAME)
     # launch the gui
@@ -1485,19 +1485,19 @@ the eventloop.
     %pylab qt
     from pyrpl import Pyrpl
     p = Pyrpl('test') # we have to do something about the notebook initializations...
-    
+
     import asyncio
-    
+
     async def run_temperature_lock(setpoint=0.1):  # coroutines can receive arguments
-        with p.asgs.pop("temperature") as asg: #  use the context manager "with" to 
+        with p.asgs.pop("temperature") as asg: #  use the context manager "with" to
         # make sure the asg will be freed after the acquisition
-            asg.setup(frequency=0, amplitue=0, offset=0) #  Use the asg as a dummy 
+            asg.setup(frequency=0, amplitue=0, offset=0) #  Use the asg as a dummy
             while IS_TEMP_LOCK_ACTIVE: #  The loop will run untill this flag is manually changed to False
                     await asyncio.sleep(1) #  Give way to other coroutines for 1 s
                     measured_temp = asg.offset #  Dummy "temperature" measurment
                     asg.offset+= (setpoint - measured_temp)*0.1  #  feedback with an integral gain
                     print("measured temp: ", measured_temp) #  print the measured value to see how the execution flow works
-        
+
     async def run_n_fits(n): #  a coroutine to launch n acquisitions
         sa = p.spectrumanalyzer
         with p.asgs.pop("fit_spectra") as asg: # use contextmanager again
@@ -1512,13 +1512,13 @@ the eventloop.
                 freqs.append(freq) #  append it ti the result
                 print("measured peak frequency: ", freq) #  print to show how the execution goes
             return freqs #  Once the execution is over, the Future will be filled with the result...
-    
+
     from asyncio import ensure_future, get_event_loop
     IS_TEMP_LOCK_ACTIVE = True
-    
+
     temp_future = ensure_future(run_temperature_lock(0.5)) # send temperature control task to the eventloop
-    fits_future = ensure_future(run_n_fits(50)) # send spectrum measurement task to the eventloop 
-    
+    fits_future = ensure_future(run_n_fits(50)) # send spectrum measurement task to the eventloop
+
     ## add the following lines if you don't already have an event_loop configured in ipython
     #  LOOP = get_event_loop()
     #  LOOP.run_until_complete()
@@ -1527,7 +1527,7 @@ the eventloop.
 .. parsed-literal::
 
     Populating the interactive namespace from numpy and matplotlib
-    
+
 
 .. parsed-literal::
 
@@ -1542,7 +1542,7 @@ the eventloop.
       reldev = maxdev / abs(self.iirfilter.coefficients.flatten()[np.argmax(dev)])
     INFO:pyrpl.modules:Maximum deviation from design coefficients: 0 (relative: nan)
     INFO:pyrpl.modules:IIR Overflow pattern: 0b0
-    INFO:pyrpl.redpitaya:Client started successfully. 
+    INFO:pyrpl.redpitaya:Client started successfully.
     INFO:pyrpl.redpitaya:Successfully connected to Redpitaya with hostname 10.214.1.28.
     INFO:pyrpl.modules:Filter sampling frequency is 25. MHz
     INFO:pyrpl.modules:IIR anti-aliasing input filter set to: 0.0 MHz
@@ -1550,7 +1550,7 @@ the eventloop.
     INFO:pyrpl.modules:Maximum deviation from design coefficients: 0 (relative: nan)
     INFO:pyrpl.modules:IIR Overflow pattern: 0b0
     WARNING:pyrpl.modules:Trying to load attribute amplitue of module asg1 that are invalid setup_attributes.
-    
+
 
 .. parsed-literal::
 
@@ -1590,11 +1590,11 @@ the eventloop.
     measured peak frequency:  11002.4912066
     measured temp:  0.4503173828125
     measured temp:  0.4552001953125
-    
+
 
 .. code:: ipython3
 
-    IS_TEMP_LOCK_ACTIVE = False #  hint, you can stop the spectrum acquisition task by pressin "pause or stop in the 
+    IS_TEMP_LOCK_ACTIVE = False #  hint, you can stop the spectrum acquisition task by pressin "pause or stop in the
     print(fits_future.result())
 
 
@@ -1608,7 +1608,7 @@ the eventloop.
     <ipython-input-2-731b5bc52817> in <module>()
           1 IS_TEMP_LOCK_ACTIVE = False
     ----> 2 print(fits_future.result())
-    
+
 
     C:\Users\Samuel\Anaconda3\lib\asyncio\futures.py in result(self)
         285             raise CancelledError
@@ -1616,7 +1616,7 @@ the eventloop.
     --> 287             raise InvalidStateError('Result is not ready.')
         288         self._log_traceback = False
         289         if self._tb_logger is not None:
-    
+
 
     InvalidStateError: Result is not ready.
 
@@ -1628,5 +1628,3 @@ the eventloop.
     measured peak frequency:  13000.2335125
     measured peak frequency:  13999.1046654
     measured peak frequency:  14997.9758183
-    
-
