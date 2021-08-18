@@ -47,7 +47,7 @@ requirements = ['scp',
                 'paramiko>=2.0',
                 'nose>=1.0',
                 #'PyQt5',  # cannot be installed with pip
-                'qtpy',
+                'qtpy==1.9.0',
                 'nbconvert',
                 'jupyter-client',
                 'netifaces',
