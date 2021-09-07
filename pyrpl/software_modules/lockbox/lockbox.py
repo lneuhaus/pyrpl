@@ -104,7 +104,7 @@ class Lockbox(LockboxModule):
                                            "lockstatus_interval",
                                            "_auto_lock_timeout"]
 
-    classname = ClassnameProperty(options=lambda: list(all_classnames().keys()))
+    classname = ClassnameProperty(options=lambda: list(all_classnames().keys()), default="FabryPerot")
 
     def __init__(self, parent, name=None):
         super(Lockbox, self).__init__(parent=parent, name=name)
@@ -196,7 +196,8 @@ class Lockbox(LockboxModule):
     # lockbox.outputs.output1
     inputs = LockboxModuleDictProperty(input_from_output=InputFromOutput)
     outputs = LockboxModuleDictProperty(output1=OutputSignal,
-                                        output2=OutputSignal)
+                                        #output2=OutputSignal
+    )
 
     # Sequence is a list of stage modules. By default the first stage is created
     sequence = ModuleListProperty(Stage, default=[{}])

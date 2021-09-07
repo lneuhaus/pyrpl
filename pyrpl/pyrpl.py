@@ -185,11 +185,12 @@ default_pyrpl_config = {'name': 'default_pyrpl_instance',
                         # 'CCCCEE',  # blueish
                         # 'EECCCC', # reddish
                         # 'CCEECC', # greenish
-                        'modules': ['NetworkAnalyzer',
-                                    'SpectrumAnalyzer',
+                        'modules': [#'NetworkAnalyzer',
+                                    #'SpectrumAnalyzer',
                                     'CurveViewer',
                                     'PyrplConfig',
-                                    'Lockbox'
+                                    'Lockbox',
+                                    'Lockbox',
                                     ]}
 
 help_message = """
