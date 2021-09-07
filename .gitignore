@@ -119,7 +119,7 @@ pyrpl/config/user_config
 
 #test files made by Xueshi
 test_import.py
-run.py 
+run.py
 rpiq_gui.py
 rpiq.ui
 
@@ -131,3 +131,37 @@ scripts/__init__.py
 scripts/run_pyrpl.spec
 scripts/pyrpl.spec
 cover/index.html
+
+# Created by https://www.toptal.com/developers/gitignore/api/venv,jupyternotebooks
+# Edit at https://www.toptal.com/developers/gitignore?templates=venv,jupyternotebooks
+
+### JupyterNotebooks ###
+# gitignore template for Jupyter Notebooks
+# website: http://jupyter.org/
+
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+
+# IPython
+profile_default/
+ipython_config.py
+
+# Remove previous ipynb_checkpoints
+#   git rm -r .ipynb_checkpoints/
+
+### venv ###
+# Virtualenv
+# http://iamzed.com/2009/05/07/a-primer-on-virtualenv/
+.Python
+[Bb]in
+[Ii]nclude
+[Ll]ib
+[Ll]ib64
+[Ll]ocal
+[Ss]cripts
+pyvenv.cfg
+.venv
+pip-selfcheck.json
+venv
+
+# End of https://www.toptal.com/developers/gitignore/api/venv,jupyternotebooks
