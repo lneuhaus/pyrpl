@@ -46,7 +46,7 @@ requirements = ['scp',
                 'numpy>=1.9',
                 'paramiko>=2.0',
                 'nose>=1.0',
-                #'PyQt5',  # cannot be installed with pip
+                'PyQt5<=5.14',  # cannot be installed with pip
                 'qtpy<=1.10',  # qtpy 1.11 contains breaking API changes related to pyqtSignals
                 'nbconvert',
                 'jupyter-client']
