@@ -6,6 +6,10 @@ import numpy as np
 class SoftwarePidLoop(PlotLoop):
     @property
     def input(self):
+        print(f"{self.parent=}, {self.parent.input=}")
+        return self.hoge_input()
+
+    def hoge_input(self):
         return recursive_getattr(self.parent, self.parent.input)
 
     @property
