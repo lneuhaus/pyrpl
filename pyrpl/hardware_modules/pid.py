@@ -360,6 +360,9 @@ class Pid(FilterModule):
     #                                           norm=2 ** (13 + _DSR),
     #                                           doc="normalization inputoffset [volts]")
 
+    def autoset(self):
+        print('Autoset is working!')
+
     def transfer_function(self, frequencies, extradelay=0):
         """
         Returns a complex np.array containing the transfer function of the

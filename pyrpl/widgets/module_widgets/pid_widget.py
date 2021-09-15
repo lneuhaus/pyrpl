@@ -21,7 +21,10 @@ class PidWidget(ModuleWidget):
         self.main_layout.addWidget(input_filter_widget)
         for prop in ['p', 'i']: #, 'd']:
             self.attribute_widgets[prop].widget.set_log_increment()
-        self.attribute_widgets['autoset'] = QtWidgets.QPushButton('autoset', self)
+        self.button_autoset = QtWidgets.QPushButton('autoset')
+        self.attribute_layout.addWidget(self.button_autoset)
+        self.button_autoset.clicked.connect(lambda: self.module.autoset())
+        # self.attribute_widgets['autoset'].clicked.connect(self.autoset)
         # can't avoid timer to update ival
 
         # self.timer_ival = QtCore.QTimer()
@@ -33,3 +36,6 @@ class PidWidget(ModuleWidget):
         widget = self.attribute_widgets['ival']
         if self.isVisible() and not widget.editing():
             widget.write_attribute_value_to_widget()
+
+    # def autoset(self):
+    #     print("Autoset is working!")
