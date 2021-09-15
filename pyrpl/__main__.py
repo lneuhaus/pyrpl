@@ -17,7 +17,7 @@ if __name__ == '__main__':
               "[source=config_file_template] [hostname=hostname/ip]")
     kwargs = dict()
     for i, arg in enumerate(sys.argv):
-        print (i, arg)
+        print(i, arg)
         if i == 0:
             continue
         try:
