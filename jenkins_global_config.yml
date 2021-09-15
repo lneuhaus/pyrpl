@@ -1,0 +1,15 @@
+general:
+  # interface module for saving curves (default is pyrpl)
+  curvedb: pyrpl
+
+  # level of logging output (can be one in [debug, info, warning, error])
+  loglevel: debug
+
+test:
+  # maximum reasonable time for a read/write operation
+  max_communication_time: 0.01
+
+  # how many reads are required per na cycle (including error margin)
+  # default is 2.9 and works well, but long-distance communication time
+  # fluctuations seem to impose slower values (no idea why)
+  reads_per_na_cycle: 4.0

@@ -51,7 +51,7 @@ starting from the end of the list) is returned by the module manager:
 import logging
 logger = logging.getLogger(name=__name__)
 from ..widgets.module_widgets import ModuleManagerWidget, AsgManagerWidget, PidManagerWidget, IqManagerWidget, \
-    ScopeManagerWidget, IirManagerWidget
+    ScopeManagerWidget, IirManagerWidget, PwmManagerWidget
 from ..modules import Module
 
 
@@ -152,6 +152,8 @@ class ModuleManager(Module):
 class Asgs(ModuleManager):
     _widget_class = AsgManagerWidget
 
+class Pwms(ModuleManager):
+    _widget_class = PwmManagerWidget
 
 class Pids(ModuleManager):
     _widget_class = PidManagerWidget
@@ -159,7 +161,7 @@ class Pids(ModuleManager):
 
 class Iqs(ModuleManager):
     _widget_class = IqManagerWidget
-    _reserved_modules = [2] # iq2 is reserved for spectrum_analyzer
+    #_reserved_modules = [2] # iq2 is reserved for spectrum_analyzer
 
 
 class Scopes(ModuleManager):

@@ -74,7 +74,7 @@ class TestNA(TestPyrpl):
             try:
                 reads_per_na_cycle = global_config.test.reads_per_na_cycle
             except:
-                reads_per_na_cycle = 2.9
+                reads_per_na_cycle = 3.1
                 logger.info("Could not find global config file entry "
                             "'test.reads_per_na_cycle. Assuming default value "
                             "%.1f.", reads_per_na_cycle)
@@ -94,8 +94,8 @@ class TestNA(TestPyrpl):
             assert duration < maxduration, \
                 "Na w/o gui should take at most %.1f ms per point, but actually " \
                 "needs %.1f ms. This won't compromise functionality but it is " \
-                "recommended that establish a more direct ethernet connection" \
-                "to you Red Pitaya module" % (maxduration*1000.0, duration*1000.0)
+                "recommended that you establish a better ethernet connection " \
+                "to your Red Pitaya module" % (maxduration*1000.0, duration*1000.0)
 
     def test_benchmark_gui(self):
         """
@@ -151,8 +151,8 @@ class TestNA(TestPyrpl):
             assert duration < maxduration, \
                 "Na gui should take at most %.1f ms per point, but actually " \
                 "needs %.1f ms. This won't compromise functionality but it is " \
-                "recommended that establish a more direct ethernet connection" \
-                "to you Red Pitaya module" % (maxduration*1000.0, duration*1000.0)
+                "recommended that you establish a better ethernet connection" \
+                "to your Red Pitaya module" % (maxduration*1000.0, duration*1000.0)
             # 2 s for 200 points with gui display
             # This is much slower in nosetests than in real life (I get <3 s).
             # Don't know why.
@@ -260,3 +260,17 @@ class TestNA(TestPyrpl):
             assert len(curve.data[0]) == self.na.points
             assert len(curve.data[1]) == self.na.points
             self.curves.append(curve)  # curve will be deleted by teardownAll
+
+    def test_iq_stopped_after_run(self):
+        with self.pyrpl.networkanalyzer as self.na:
+            self.na.setup(start_freq=1e5,
+                          stop_freq=2e5,
+                          rbw=100000,
+                          points=100,
+                          output_direct="out1",
+                          input="out1",
+                          running_state='stopped',
+                          trace_average=1,
+                          amplitude=0.01)
+            self.na.single()
+            assert self.na.iq.amplitude==0

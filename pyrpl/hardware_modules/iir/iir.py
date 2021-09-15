@@ -455,22 +455,14 @@ class IIR(FilterModule):
 
     def _setup(self):
         """
-        Setup an IIR filter
+        Setup an IIR filter.
 
         the transfer function of the filter will be (k ensures DC-gain = g):
 
                   (s-2*pi*z[0])*(s-2*pi*z[1])...
         H(s) = k*-------------------
                   (s-2*pi*p[0])*(s-2*pi*p[1])...
-
-        returns
-        --------------------------------------------------
-        coefficients   data to be passed to iir.bodeplot to plot the
-                       realized transfer function
         """
-        #debugging here...
-        #self._signal_launcher.update_plot.emit()
-        #return
         with self.do_setup:
             if self._IIRSTAGES == 0:
                 raise Exception("Error: This FPGA bitfile does not support IIR "
@@ -649,6 +641,8 @@ class IIR(FilterModule):
         # take average delay to be half the loops since this is the
         # expectation value for the delay (plus internal propagation delay)
         # module_delay = self._delay + self.loops / 2.0
+        self._logger.warning("iir.transfer_function is obsolete and will be "
+                             "deprecated. Use another function!")
         try:
             tf = getattr(self.iirfilter, 'tf_' + kind)(frequencies)
         except AttributeError:

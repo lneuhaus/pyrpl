@@ -60,7 +60,7 @@ class RbwAttribute(FilterProperty):
         return val
 
     def valid_frequencies(self, obj):
-        return [freq for freq in obj.iq.bandwidth_options if freq > 0]
+        return [freq for freq in obj.iq.bandwidths if freq > 0]
 
 
 class LogScaleProperty(BoolProperty):
@@ -284,8 +284,8 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
             except:
                 delay = 999.0
                 self._lastpointnumber = 0
-            #if self._lastpointnumber < 100 or delay >= 10.0:
-            if True:  # above if-statement does not work correctly on travis, e.g. stops printing after laspointnumber 66
+            if self._lastpointnumber < 100 or delay >= 10.0:
+            #if True:  # above if-statement does not work correctly on travis, e.g. stops printing after laspointnumber 66
                 print("Acquiring new NA point #%d at frequency %.1f Hz after "
                       "delay of %f" % (self._lastpointnumber, frequency, delay))
                 self._lastprinttime = self._time_last_point
@@ -375,7 +375,7 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
         """
         Stop the iq.
         """
-        self.iq.output_direct = 'off'
+        self.iq.amplitude = 0
 
     def _data_ready(self):
         return self._remaining_time()<=0
@@ -390,7 +390,7 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
     async def _trace_async(self, min_delay_ms):
         if self.current_point==0:
             self._start_trace_acquisition()
-        while(self.current_point<self.points):
+        while (self.current_point<self.points):
             if self._last_time_benchmark is not None:
                 new_time = timeit.default_timer()
                 self.measured_time_per_point = \

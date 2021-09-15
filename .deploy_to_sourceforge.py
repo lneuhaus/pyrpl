@@ -7,7 +7,7 @@ if __name__ == '__main__':
     if len(sys.argv) < 2:
         print("Usage: python .deploy_to_sourceforge.py file1 [file2] ...")
 
-    pw = os.environ['PYPI_PASSWORD']
+    pw = os.environ['PYPI_PSW']
     ssh = sshshell.SshShell(hostname='frs.sourceforge.net',
                             user='lneuhaus',
                             password=pw,
