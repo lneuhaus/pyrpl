@@ -21,6 +21,7 @@ class PidWidget(ModuleWidget):
         self.main_layout.addWidget(input_filter_widget)
         for prop in ['p', 'i']: #, 'd']:
             self.attribute_widgets[prop].widget.set_log_increment()
+        self.attribute_widgets['autoset'] = QtWidgets.QPushButton('autoset', self)
         # can't avoid timer to update ival
 
         # self.timer_ival = QtCore.QTimer()
