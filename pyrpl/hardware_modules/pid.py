@@ -361,7 +361,10 @@ class Pid(FilterModule):
     #                                           doc="normalization inputoffset [volts]")
 
     def autoset(self):
-        print('Autoset is working!')
+        if self.input == "in1":
+            self.setpoint = self.parent.scope.voltage_in1
+        elif self.input == "in2":
+            self.setpoint = self.parent.scope.voltage_in2
 
     def transfer_function(self, frequencies, extradelay=0):
         """
