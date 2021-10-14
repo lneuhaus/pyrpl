@@ -65,15 +65,25 @@ class SignalLauncher(QtCore.QObject):
         #self.update_attribute_by_name.connect(widget.update_attribute_by_name)
         for key in dir(self.__class__):
             val = getattr(self, key)
-            if isinstance(val, QtCore.pyqtBoundSignal) and hasattr(widget,
-                                                                   key):
+
+            try: #for qtpy > 1.9.0
+                signal = QtCore.SignalInstance
+            except AttributeError: #for qtpy <= 1.9.0
+                signal = QtCore.pyqtBoundSignal
+            if isinstance(val, signal, ) and hasattr(widget,
+                                                    key):
                 val.connect(getattr(widget, key))
+
 
     def _clear(self):
         """ Destroys the object by disconnecting all signals and by killing all timers"""
         for key in dir(self.__class__):
             val = getattr(self, key)
-            if isinstance(val, QtCore.pyqtBoundSignal):
+            try: #for qtpy > 1.9.0
+                signal = QtCore.SignalInstance
+            except AttributeError: #for qtpy <= 1.9.0
+                signal = QtCore.pyqtBoundSignal
+            if isinstance(val, signal):
                 try:
                     val.disconnect()
                 except TypeError:  # occurs if signal is not connected to anything
