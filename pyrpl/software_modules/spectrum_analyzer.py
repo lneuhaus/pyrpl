@@ -112,7 +112,7 @@ from ..widgets.module_widgets import SpecAnWidget
 
 import sys
 import scipy.signal as sig
-import scipy.fft
+import scipy.fftpack
 
 # Some initial remarks about spectrum estimation:
 # Main source: Oppenheim + Schaefer, Digital Signal Processing, 1975
@@ -454,7 +454,7 @@ class SpectrumAnalyzer(AcquisitionModule):
             return np.fft.rfftfreq(self.data_length*self.PADDING_FACTOR,
                                    self.sampling_time)
         else:
-            return self.center + scipy.fft.fftshift( scipy.fft.fftfreq(
+            return self.center + scipy.fftpack.fftshift( scipy.fftpack.fftfreq(
                                   self.data_length*self.PADDING_FACTOR,
                                   self.sampling_time)) #[self.useful_index()]
 
@@ -604,7 +604,7 @@ class SpectrumAnalyzer(AcquisitionModule):
             return res/abs(self.transfer_function(self.frequencies))**2
         else:
             # Realize the complex fft of iq data
-            res = scipy.fft.fftshift(scipy.fft.fft(iq_data,
+            res = scipy.fftpack.fftshift(scipy.fftpack.fft(iq_data,
                                         self.data_length*self.PADDING_FACTOR))
             # at some point we need to cache the tf for performance
             self._last_curve_raw = np.abs(res)**2 # for debugging purpose
