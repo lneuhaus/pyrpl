@@ -286,8 +286,6 @@ class Lockbox(LockboxModule):
         """
         return self._sweep()
 
-    #_lock_loop = None  # this variable will store the lock loop
-
     async def _monitor_lock_status_async(self):
         while not self.current_state in ["unlock", "sweep"]:
             new_status = self.is_locked()

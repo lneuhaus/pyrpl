@@ -29,11 +29,11 @@ Option 1: Installation from Anaconda
 
 If you are new to Python or unexperienced with fighting installation issues, it is recommended to install the `Anaconda <https://www.continuum.io/downloads>`__ Python distribution, which allows to install all PyRPL dependencies via::
 
-    conda install numpy scipy paramiko pandas nose pip pyqt qtpy pyqtgraph pyyaml
+    conda install numpy scipy paramiko pandas nose pip pyqt qtpy pyqtgraph pyyaml nbconvert
 
 Check :ref:`anaconda_problems` for hints if you cannot execute conda in a terminal. Alternatively, if you prefer creating a virtual environment for pyrpl, do so with the following two commands::
 
-    conda create -y -n pyrpl-env numpy scipy paramiko pandas nose pip pyqt qtpy pyqtgraph pyyaml
+    conda create -y -n pyrpl-env numpy scipy paramiko pandas nose pip pyqt qtpy pyqtgraph pyyaml nbconvert
     activate pyrpl-env
 
 

@@ -45,6 +45,13 @@ class HK(HardwareModule):
     # another option: access led as array of bools
     # led = [BoolRegister(0x30,bit=i,doc="LED "+str(i)) for i in range(8)]
 
+    def set_expansion_direction(self, index, val):
+        """Sets the output mode of expansion index (both for P and N expansions)"""
+        if not index in range(8):
+            raise ValueError("Index from 0 to 7 expected")
+        for name in ["expansion_P", "expansion_N"]:
+            getattr(HK, name + str(index)).direction(self, val)
+
     def _setup(self): # the function is here for its docstring to be used by the metaclass.
         """
         Sets the HouseKeeping module of the redpitaya up. (just setting the attributes is OK)
