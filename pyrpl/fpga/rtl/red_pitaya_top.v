@@ -511,6 +511,7 @@ red_pitaya_dsp i_dsp (
   .scope1_o        (  to_scope_a             ),
   .scope2_o        (  to_scope_b             ),
   .asg1phase_i     (  asg1phase_o            ),
+  .exp_p_in        (  exp_p_in               ),
 
   .pwm0            (  pwm_signals[0]         ),
   .pwm1            (  pwm_signals[1]         ),

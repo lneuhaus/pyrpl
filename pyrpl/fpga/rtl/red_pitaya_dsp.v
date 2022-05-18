@@ -68,7 +68,7 @@ module red_pitaya_dsp #(
    input      [ 14-1: 0] asg1_i,
    input      [ 14-1: 0] asg2_i,
    input      [ 14-1: 0] asg1phase_i,
-
+   input      [  8-1: 0] exp_p_in,
    // pwm outputs
    output     [ 14-1: 0] pwm0,
    output     [ 14-1: 0] pwm1,
@@ -322,7 +322,7 @@ generate for (j = 0; j < 3; j = j+1) begin
      // data
      .clk_i        (  clk_i          ),  // clock
      .rstn_i       (  rstn_i         ),  // reset - active low
-     .sync_i       (  sync[j]        ),  // syncronization of different dsp modules
+     .sync_i       (  sync[j] & exp_p_in[j] ),  // syncronization of different dsp modules
      .dat_i        (  input_signal [j] ),  // input data
      .dat_o        (  output_direct[j]),  // output data
 	 .diff_dat_i   (  diff_input_signal[j] ),  // input data for differential mode
