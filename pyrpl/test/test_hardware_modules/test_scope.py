@@ -2,7 +2,7 @@ import logging
 logger = logging.getLogger(name=__name__)
 import time
 import numpy as np
-from pyrpl.async_utils import sleep as async_sleep
+from pyrpl.async_utils import ensure_future, wait, sleep
 from qtpy import QtCore, QtWidgets
 from pyrpl.test.test_base import TestPyrpl
 from pyrpl import APP
@@ -23,16 +23,16 @@ class TestScope(TestPyrpl):
         assert(self.r.scope.running_state=='stopped')
 
     def data_changing(self):
-        async_sleep(0.1)
+        sleep(0.1)
         APP.processEvents()
         if self.r.scope.data_avg is not None:
             data = self.r.scope.data_avg[0]
         else:
             data = None
-        async_sleep(0.75)
+        sleep(0.75)
         for i in range(1000):
             APP.processEvents()
-        async_sleep(0.1)
+        sleep(0.1)
         if self.r.scope.data_avg is not None:
             res = self.r.scope.data_avg[0]
         else:
@@ -52,7 +52,6 @@ class TestScope(TestPyrpl):
                            trigger_source='asg1',
                            trigger_delay=0.,
                            rolling_mode=True,
-                           running_state="running_continuous",
                            input1='in1',
                            ch1_active=True,
                            ch2_active=True)
@@ -64,7 +63,7 @@ class TestScope(TestPyrpl):
         # rolling mode inactive for durations < 0.1 s
         assert not self.data_changing()
 
-        async_sleep(0.5)
+        sleep(0.5)
         self.r.scope.duration = 0.5
         assert self.data_changing()
 
@@ -82,8 +81,9 @@ class TestScope(TestPyrpl):
         assert not self.data_changing()
 
         self.r.scope.load_state("running_roll")
+
         assert self.data_changing()
-        async_sleep(1)
+        sleep(1)
         # Make sure scope is not blocked after one buffer loop
         assert self.data_changing()
 
@@ -92,6 +92,7 @@ class TestScope(TestPyrpl):
         assert self.data_changing()
 
         self.r.scope.load_state("stop")
+        sleep(0.1)
         assert not self.data_changing()
 
         self.r.scope.stop()
@@ -106,10 +107,10 @@ class TestScope(TestPyrpl):
                                              input1='in1',
                                              ch1_active=True,
                                              ch2_active=True,
-                                             rolling_mode=True,
-                                             running_state='running_continuous')
+                                             rolling_mode=True)
+        self.r.scope.continuous()
         assert self.data_changing()
-        async_sleep(1)
+        sleep(1)
         assert self.data_changing()  # Make sure scope is not blocked
                                      # after one buffer loop
 
@@ -119,27 +120,35 @@ class TestScope(TestPyrpl):
         """
         Make sure the scope returns to rolling mode after being freed
         """
-        self.pyrpl.rp.scope.setup(duration=0.5,
+        self.pyrpl.rp.scope.setup(duration=0.2,
                             trigger_delay=0.,
                             trigger_source='immediately',
                             input1='in1',
+                            trace_average=1,
                             ch1_active=True,
                             ch2_active=True,
-                            rolling_mode=True,
-                            running_state="running_continuous")
+                            rolling_mode=True)
+        #self.pyrpl.rp.scope.run_continuous = True
+        self.pyrpl.rp.scope.continuous()
+        sleep(1)
+        assert self.pyrpl.rp.scope.run_continuous
         with self.pyrpl.scopes.pop("myapplication") as sco:
             sco.setup(duration=0.5,
                       trigger_delay=0.,
                       trigger_source='immediately',
                       input1='in1',
+                      trace_average=1,
                       ch1_active=True,
                       ch2_active=True,
-                      rolling_mode=False,
-                      running_state="stopped")
+                      rolling_mode=False)
+            sco.stop()
             assert not self.data_changing()
-            curve = sco.curve()
+            curve = sco.single()
+            assert not self.pyrpl.rp.scope.run_continuous
+            print('exiting')
+        assert self.pyrpl.rp.scope.run_continuous
         assert self.data_changing()
-        async_sleep(1)
+        sleep(1)
         assert self.data_changing()  # Make sure scope is not blocked
             # after one buffer loop
         self.pyrpl.rp.scope.stop()
@@ -151,9 +160,9 @@ class TestScope(TestPyrpl):
         """
         # check whether something else is writing continuously to config file
         self.pyrpl.rp.scope.stop()
-        async_sleep(1.0)
+        sleep(1.0)
         old = self.pyrpl.c._save_counter
-        async_sleep(1.0)
+        sleep(1.0)
         new = self.pyrpl.c._save_counter
         assert (old == new), (old, new, "scope is not the reason")
         # next, check whether the scope does this
@@ -164,10 +173,12 @@ class TestScope(TestPyrpl):
                                       ch1_active=True,
                                       ch2_active=True,
                                       rolling_mode=True,
-                                      trace_average=1,
-                                      running_state="running_continuous")
+                                      trace_average=1)
+            self.pyrpl.rp.scope.continuous()
+            sleep(1.0)
+            APP.processEvents()
             old = self.pyrpl.c._save_counter
-            async_sleep(1.0)
+            sleep(1.0)
             APP.processEvents()
             new = self.pyrpl.c._save_counter
             self.pyrpl.rp.scope.stop()
@@ -181,11 +192,11 @@ class TestScope(TestPyrpl):
                            input1='in1',
                            ch1_active=True,
                            ch2_active=True)
-        self.r.scope.single()
-        time.sleep(0.1)
-        APP.processEvents()
-        curve1, curve2 = self.r.scope.save_curve()
+        curve = self.r.scope.single_async()
         attr = self.r.scope.setup_attributes
+        wait(curve, 1)
+        curve1, curve2 = self.r.scope.save_curve()
+
         for curve in (curve1, curve2):
             intersect = set(curve.params.keys()) & set(attr)
             assert len(intersect) >= 5  # make sure some parameters are saved

@@ -222,7 +222,7 @@ class NaWidget(AcquisitionModuleWidget):
 
     def update_attribute_by_name(self, name, new_value_list):
         super(NaWidget, self).update_attribute_by_name(name, new_value_list)
-        if name == "running_state":
+        if name == "_running_state":
             #self.display_state(self.module.running_state)
             self.update_running_buttons()
 

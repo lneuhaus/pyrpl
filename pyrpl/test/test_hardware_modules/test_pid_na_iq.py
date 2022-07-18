@@ -9,7 +9,7 @@ from pyrpl.async_utils import sleep
 class TestPidNaIq(TestPyrpl):
     def setup(self):
         self.extradelay = 0.6 * 8e-9  # no idea where this comes from
-        # shortcut
+            # shortcut
         self.pyrpl.na = self.pyrpl.networkanalyzer
         self.na = self.pyrpl.networkanalyzer
         # set na loglevel to DEBUG
@@ -43,7 +43,7 @@ class TestPidNaIq(TestPyrpl):
                      trace_average=1,
                      amplitude=0.1, input=na.iq, output_direct='off',
                      acbandwidth=1000, logscale=True)
-            data= na.curve()
+            data = na.single()
             f = na.data_x
             theory = np.array(f * 0 + 1.0,
                               dtype=np.complex)
@@ -105,7 +105,7 @@ class TestPidNaIq(TestPyrpl):
         inputfilters = pid.inputfilter_options
         for bw in reversed(inputfilters):
             pid.inputfilter = [bw]
-            data = na.curve()
+            data = na.single()
             f = na.data_x
             theory = pid.transfer_function(f, extradelay=extradelay)
             relerror = np.abs((data - theory) / theory)
@@ -167,7 +167,7 @@ class TestPidNaIq(TestPyrpl):
             pid.d = 0
             pid.ival = 0
             pid.inputfilter = 0
-            data= na.curve()
+            data= na.single()
             f = na.data_x
             plotdata.append((f, data, 'p=1'))
             theory = pid.transfer_function(f, extradelay=extradelay)
@@ -218,7 +218,7 @@ class TestPidNaIq(TestPyrpl):
             pid.d = 0
             pid.ival = 0
             pid.inputfilter = 0
-            data = na.curve()
+            data = na.single()
             f = na.data_x
             plotdata.append((f, data, 'p=%.1e, i=%.1e' % (pid.p, pid.i)))
             theory = pid.transfer_function(f, extradelay=extradelay)
@@ -280,7 +280,7 @@ class TestPidNaIq(TestPyrpl):
             pid.ival = 0
             pid.inputfilter = [-5e3, -10e3, 150e3, 300e3]
             print("Actual inputfilter after rounding: ", pid.inputfilter)
-            data= na.curve()
+            data = na.single()
             f = na.data_x
             plotdata.append((f, data, 'p=10 + filter'))
             theory = pid.transfer_function(f, extradelay=extradelay)
@@ -318,7 +318,7 @@ class TestPidNaIq(TestPyrpl):
         # shortcut for na and bpf (bandpass filter)
         na = self.pyrpl.networkanalyzer
 
-        for bpf in [r.iq0, r.iq2]:
+        for bpf in [r.iq0, r.iq1]:
             plotdata = []
             # setup na for measurement
             na.setup(start_freq=300e3,
@@ -346,7 +346,7 @@ class TestPidNaIq(TestPyrpl):
             for phase in [-45, 0, 45, 90]:
                 bpf.phase = phase
                 # take transfer function
-                data = na.curve()
+                data = na.single()
                 f = na.data_x
                 theory = bpf.transfer_function(f, extradelay=extradelay)
                 abserror = np.abs(data - theory)
@@ -361,7 +361,7 @@ class TestPidNaIq(TestPyrpl):
                     c.add_child(CurveDB.create(f, abserror,
                                                name='test_iq_na-failed-relerror'))
                     # c.add_child(CurveDB.create(f,relerror,name='test_iq_na-failed-abserror'))
-                    assert False, (maxerror, phase)
+                    assert False, (maxerror, phase, bpf.name)
 
     def test_diff_pid(self):
         """

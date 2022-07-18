@@ -1,6 +1,6 @@
 from .. import *
 from .interferometer import Interferometer
-from ....async_utils import TimeoutError
+from pyrpl.async_utils import wait
 
 class Lorentz(object):
     """ base class for Lorentzian-like signals"""
@@ -119,7 +119,6 @@ class FPAnalogPdh(InputSignal, Lorentz):
         return (pdh(x) / pdh(x_max))
 
 
-
 class FPPdh(InputIq, FPAnalogPdh):
     """ Same as analog pdh signal, but generated from IQ module """
     pass
@@ -229,11 +228,11 @@ class HighFinesseInput(InputSignal):
                     scope.input2 = input2
                 scope.save_state("autosweep_zoom")  # save state for debugging or modification
                 self._logger.debug("calibration threshold: %f", threshold)
-                curves = scope.curve_async()
+                curves = scope.single_async()
                 self.lockbox._sweep()  # start sweep only after arming the scope
                 # give some extra (10x) timeout time in case the trigger is missed
                 try:
-                    curve1, curve2 = curves.await_result(timeout=100./self.lockbox.asg.frequency+scope.duration)
+                    curve1, curve2 = wait(curves, timeout=100./self.lockbox.asg.frequency+scope.duration)
                 except TimeoutError:
                     # scope is blocked
                     self._logger.warning("Signal %s could not be calibrated because no trigger was detected while "
@@ -272,7 +271,7 @@ class HighFinesseInput(InputSignal):
             params = self.calibration_data.setup_attributes
             params['name'] = self.name + "_calibration"
             newcurve = self._save_curve(times, curve1, **params)
-            self.calibration_data.curve = newcurve
+            self.calibration_data.trace = newcurve
             return newcurve
         else:
             return None
@@ -345,7 +344,7 @@ class HighFinesseAnalogPdh(HighFinesseInput, FPAnalogPdh):
             params['name'] = trigger_signal.name + "_calibration"
             trigcurve = self._save_curve(times, curve1, **params)
             newcurve.add_child(trigcurve)
-            self.calibration_data.curve = newcurve
+            self.calibration_data.trace = newcurve
             return newcurve
         else:
             return None

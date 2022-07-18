@@ -1,6 +1,6 @@
 from qtpy import QtCore
 from pyrpl.software_modules.lockbox import *
-from pyrpl.async_utils import sleep
+from pyrpl.async_utils import sleep_async
 
 
 class GainOptimizerLoop(LockboxPlotLoop):
@@ -97,7 +97,7 @@ class GainOptimizer(LockboxModule):
 
     def _start_when_locked(self):
         for i in range(100): # 100s timeout
-            sleep(1.0)
+            sleep_async(1.0)
             if self.lockbox.is_locked_and_final(loglevel=0):
                 return self.start()
 

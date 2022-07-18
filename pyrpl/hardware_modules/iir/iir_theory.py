@@ -282,7 +282,7 @@ def bodeplot(data, xlog=False):
     plt.tight_layout()
     if len(labels) > 0:
         leg = ax1.legend(loc='best', framealpha=0.5)
-        leg.draggable(state=True)
+        leg.set_draggable(True)
     plt.show()
 
 
@@ -426,7 +426,7 @@ class IirFilter(object):
         dt: float
             the FPGA clock frequency. Should be very close to 8e-9
 
-        minoops: int
+        minloops: int
             minimum number of loops (constant of the FPGA design)
 
         maxloops: int
