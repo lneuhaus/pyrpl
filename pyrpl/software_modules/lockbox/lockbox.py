@@ -416,6 +416,7 @@ class Lockbox(LockboxModule):
                                "now: %s.",
                               type(self).__name__,
                               self.classname)
+            self._autosave_active = True
             return
         self._logger.debug("Lockbox classname changed - formerly: %s, now: %s.",
                           type(self).__name__,
