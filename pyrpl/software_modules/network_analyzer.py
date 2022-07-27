@@ -298,7 +298,7 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
 
         tf = self._tf_values[index]
 
-        amp = self.amplitude  # get amplitude for normalization
+        amp = self.iq.amplitude  # get amplitude for normalization
         if amp == 0:  # normalize immediately
             y *= self._rescale  # avoid division by zero
         else:
@@ -333,12 +333,13 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
         # super(NAAcquisitionManager, self)._start_acquisition()
 #        x = self._data_x if not self.is_zero_span() else  \
 #                                        self.start_freq*np.ones(self.points)
+
+        self.iq.amplitude = 0 # Set the amplitude at 0 before anything else to avoid glitch
         self.iq.setup(frequency=self.frequencies[0],
                       bandwidth=self.rbw,
                       gain=0,
                       phase=0,
                       acbandwidth=self.acbandwidth,
-                      amplitude=self.amplitude,
                       input=self.input,
                       output_direct=self.output_direct,
                       output_signal='output_direct')
@@ -358,6 +359,7 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
         self._rescale = 2.0 ** (-self.iq._LPFBITS) * 4.0
         # to avoid reading it at every single point
         self.iq.frequency = self.frequencies[0]  # this triggers the NA acquisition
+        self.iq.amplitude = self.amplitude  # Set the amplitude to non-zero at the last moment to avoid glitch
         self._time_last_point = timeit.default_timer()
         # pre-calculate transfer_function values for speed
         self._tf_values = self.transfer_function(self.frequencies)
@@ -390,6 +392,8 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
     async def _trace_async(self, min_delay_ms):
         if self.current_point==0:
             self._start_trace_acquisition()
+        else:
+            self.iq.amplitude = self.amplitude # go from pause to resume
         while (self.current_point<self.points):
             if self._last_time_benchmark is not None:
                 new_time = timeit.default_timer()
@@ -422,7 +426,7 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
 
     async def _do_average_single_async(self):
         self._running_state = 'running_single'
-        self.iq.amplitude = self.amplitude
+        #self.iq.amplitude = self.amplitude  # Amplitude is already set in self._trace_async (avoid glitch)
         while self.current_avg < self.trace_average:
             await self._trace_async(0)
         self._running_state = 'stopped'
@@ -430,7 +434,7 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
 
     async def _do_average_continuous_async(self):
         self._running_state = 'running_continuous'
-        self.iq.amplitude = self.amplitude
+        # self.iq.amplitude = self.amplitude # Amplitude is already set in self._trace_async (avoid glitch)
         while (self.running_state != 'stopped'):
             await self._trace_async(0)
 
