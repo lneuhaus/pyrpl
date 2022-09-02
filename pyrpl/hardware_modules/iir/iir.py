@@ -173,7 +173,7 @@ class IirComplexListProperty(IirFloatListProperty,
 class IIR(FilterModule):
     _signal_launcher = SignalLauncherIir
     iirfilter = None  # will be set by setup()
-    _minloops = 5  # minimum number of loops for correct behaviour
+    _minloops = 3  # minimum number of loops for correct behaviour
     _maxloops = 1023
     # the first biquad (self.coefficients[0] has _delay cycles of delay
     # from input to output_signal. Biquad self.coefficients[i] has
