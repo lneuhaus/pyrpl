@@ -469,12 +469,18 @@ class IirFilter(object):
         #    z, p = prewarp(z, p, dt=loops * dt)
 
         # perform the partial fraction expansion to get first order sections
+        """
         r, c = residues(z, p, k)
 
         self.rp_continuous = r, p, c  # 'tf_partialfraction'
 
         # transform to discrete time
         rd, pd, cd = cont2discrete(r, p, c, dt=self.dt * self.loops)
+        """
+        zd = np.exp(np.asarray(z, dtype=np.complex128)*self.dt*self.loops)
+        pd = np.exp(np.asarray(p, dtype=np.complex128)*self.dt*self.loops)
+        rd, cd = residues(zd, pd, k)
+
         self.rp_discrete = rd, pd, cd  # 'tf_discrete'
 
         # convert (r, p) into biquad coefficients
