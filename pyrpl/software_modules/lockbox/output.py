@@ -233,9 +233,10 @@ class OutputSignal(Signal):
             self.pid.i = 0
             self.pid.setpoint = input.expected_signal(setpoint) + input.calibration_data._analog_offset
             if self.extra_module != 'None':
-                self.pid.input = self.extra_module
-                if self.extra_module=='iir':
-                    self.pyrpl.rp.iir.input = input.signal()
+                module = getattr(self.pyrpl.rp, self.extra_module)
+                module.input = input.signal()
+                self.pid.input = module
+                module.output_direct = "off"
             else:
                 self.pid.input = input.signal()
             # set offset if applicable

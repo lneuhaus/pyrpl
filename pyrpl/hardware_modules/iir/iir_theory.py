@@ -242,7 +242,7 @@ def discrete2cont(r, p, c, dt=8e-9):
     return r, p, c
 
 
-def bodeplot(data, xlog=False):
+def bodeplot(data, xlog=True):
     """ plots a bode plot of the data x, y
 
     parameters
@@ -1045,7 +1045,7 @@ class IirFilter(object):
             ww, hh = sig.freqz(sos[:3], sos[3:], worN=np.asarray(w,
                                                            dtype=np.float64))
             if delay:
-                hh *= delay_per_cycle ** i
+                hh *= delay_per_cycle ** (i + 1)
             h += hh
         return h
 
@@ -1123,3 +1123,5 @@ class IirFilter(object):
                                                  points, endpoint=True),
                                      dtype=np.complex128)
         return self._frequencies
+
+

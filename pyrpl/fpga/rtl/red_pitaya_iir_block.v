@@ -66,7 +66,7 @@ module red_pitaya_iir_block
 #(  parameter IIRBITS = 32, //46        // iir coefficients represented with IIRBITS bits
     parameter IIRSHIFT = 29, //30       // iir coefficients FIXED POINT at bit IIRSHIFT
     parameter IIRSTAGES = 14, //20       // maximum number of parallel biquads
-    parameter IIRSIGNALBITS= 32, //40 //32  // internally represent calculated results with IIRSIGNALBITS bits (32 is really necessary)
+    parameter IIRSIGNALBITS = 32, //32,internally represent calculated results (32 is really necessary)
     parameter SIGNALBITS = 14,      // in- and output signal bitwidth
     parameter SIGNALSHIFT = 3, //5,       // over-represent input by SIGNALSHIFT bits (e.g. once input averaging is implemented)
     parameter LOOPBITS = 10, //8
@@ -253,6 +253,7 @@ reg signed [IIRSIGNALBITS-1:0] x0;
 //reg signed [IIRSIGNALBITS-1:0] y0;
 reg signed [IIRSIGNALBITS-1:0] y1a;
 reg signed [IIRSIGNALBITS-1:0] y2a;
+reg signed [IIRSIGNALBITS-1:0] x0b;
 reg signed [IIRSIGNALBITS-1:0] x1b;
 
 reg signed [IIRSIGNALBITS-1:0] y1_i [0:IIRSTAGES-1];
@@ -293,7 +294,7 @@ wire signed [IIRSIGNALBITS-1:0] p_bx0_full;
 wire signed [IIRSIGNALBITS-1:0] p_bx1_full;
 red_pitaya_product_sat #( .BITS_IN1(IIRSIGNALBITS), .BITS_IN2(IIRBITS), .SHIFT(IIRSHIFT), .BITS_OUT(IIRSIGNALBITS))
  p_bx0_module (
-  .factor1_i(x0),
+  .factor1_i(x0b),
   .factor2_i(b0),
   .product_o(p_bx0_full),
   .overflow (overflow_i[3])
@@ -409,6 +410,7 @@ always @(posedge clk_i) begin
 
             b0 <= b0_i[stage0];
             b1 <= b1_i[stage0];
+            x0b<= x0;
             x1b<= x1_i[stage0];
 
             x0_i[stage0]<=x0;

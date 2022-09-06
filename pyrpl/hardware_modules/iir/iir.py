@@ -9,6 +9,7 @@ from ...modules import SignalLauncher
 
 import numpy as np
 from qtpy import QtCore
+from scipy.signal import freqz
 
 
 class SignalLauncherIir(SignalLauncher):
@@ -412,7 +413,10 @@ class IIR(FilterModule):
             try:
                 na.load_state('iir_measurement')
             except KeyError:
-                freqs = self._module_widget.frequencies
+                if hasattr(self, '_module_widget'):
+                    freqs = self._module_widget.frequencies
+                else:
+                    freqs = np.logspace(2, np.log10(5e6), 2000)
                 mi, ma = min(freqs), max(freqs)
                 na.setup(start_freq=mi,
                          stop_freq=ma,
@@ -420,7 +424,7 @@ class IIR(FilterModule):
                          rbw=500,
                          avg_per_point=1,
                          trace_average=1,
-                         amplitude=0.005,
+                         amplitude=1.,
                          input=self,
                          output_direct='off',
                          acbandwidth=100,
@@ -437,6 +441,7 @@ class IIR(FilterModule):
         self._logger.info("NA acquisition finished.")
         # re-plot
         self._signal_launcher.update_plot.emit()
+        return self._measurement_data
 
     def _setup_unity(self):
         """sets the IIR filter transfer function unity"""
@@ -663,3 +668,183 @@ class IIR(FilterModule):
         # tf *= np.exp(-1j*delay*frequencies*2*np.pi)
         return tf
 
+
+    def simulate_filter_float(self, xs, biquad="all"):
+        """
+        plots the response of the iir filter to a time series xs (sampling time
+        is dt*loops
+        :param freq:
+        :return:
+        """
+        if biquad=='all':
+            coefs = self.coefficients
+        else:
+            coefs = [self.coefficients[biquad]]
+
+        ys = np.zeros(len(xs))
+        ys_biquad = np.zeros((len(coefs), 2))
+        for index in range(2, len(xs)):
+            for index_biquad, (b0, b1, _, _, a1, a2) in enumerate(coefs):
+                adder = -  a1 * ys_biquad[index_biquad, 0] - a2 * ys_biquad[index_biquad, 1]
+
+                y = b0 * xs[index] + b1 * xs[index - 1] + adder
+                ys[index] += y
+                ys_biquad[index_biquad, 1] = ys_biquad[index_biquad, 0]
+                ys_biquad[index_biquad, 0] = y
+        return ys
+
+    def simulate_filter_int(self, xs, biquad="all"):
+        """
+        plots the response of the iir filter to a time series xs (sampling time
+        is dt*loops
+        :param freq:
+        :return:
+        """
+        print("yo")
+
+        if biquad == 'all':
+            coefs = self.coefficients
+        else:
+            coefs = [self.coefficients[biquad]]
+        coefs = np.array(coefs)
+
+        coefs = np.asarray(coefs*(2**self._IIRSHIFT), dtype=np.int64)
+
+
+        if xs.dtype != int:
+            raise TypeError("expected an integer input array")
+
+        if any(xs > 2**13 - 1):
+            raise ValueError("input should not exceed 2**13 - 1 = 8191")
+
+        if any(xs < -2**13):
+            raise ValueError("input should not exceed -2**13 = -8192")
+
+
+
+        xs = xs*2**3 # pre-filters change the signal from 14 to 17 bits
+        xs = xs*2**(-self._IIRBITS + 17 + self._IIRSHIFT + 1)
+
+
+        ys = np.zeros(len(xs), dtype=np.int64)
+        ys_biquad = np.zeros((len(coefs), 2), dtype=np.int64)
+
+        for index in range(2, len(xs)):
+            for index_biquad, (b0, b1, _, _, a1, a2) in enumerate(coefs):
+                p_ay1 = self._product_sat(-a1, ys_biquad[index_biquad, 0])
+                p_ay2 = self._product_sat(-a2, ys_biquad[index_biquad, 1])
+                p_bx0 = self._product_sat(b0, xs[index])
+                p_bx1 = self._product_sat(b1, xs[index - 1])
+                y = self._saturate(p_ay1 + p_ay2 + p_bx0 + p_bx1, bits=self._IIRBITS)
+                ys[index] += y
+                ys_biquad[index_biquad, 1] = ys_biquad[index_biquad, 0]
+                ys_biquad[index_biquad, 0] = y
+
+        return ys//2**(self._IIRBITS - 14)
+
+
+    def measure_time_domain_response(self, freq, biquad='all'):
+        from pyrpl.async_utils import sleep, wait
+
+        if biquad=='all':
+            coefs = self.coefficients
+        else:
+            coefs = [self.coefficients[biquad]]
+        self.coefficients = coefs
+
+        with self.pyrpl.asgs.pop("iir_measurement") as asg:
+            asg.trigger_source = "off"
+            asg.frequency = freq
+            asg.amplitude = 1
+            asg.offset=0
+            asg.output_direct = 'off'
+
+            old_input = self.input
+            self.input = asg
+
+            with self.pyrpl.scopes.pop("iir_measurement") as scope:
+                scope.input1 = asg
+                scope.input2 = self
+                scope.trigger_source = "ch1_positive_edge"
+                scope.threshold = 0.01
+                scope.duration = 100./freq
+                times = scope.times
+                scope.rolling_mode = False
+
+                res = scope.single_async()
+                sleep(0.1)
+                asg.trigger_source = 'immediately'
+                sleep(0.1)
+                ch1, ch2 = wait(res)
+                self.input = old_input
+        self._setup()
+        return times, ch2
+
+
+    def plot_biquads_tf(self, axes=None, plot_experiment=True):
+        """Plots the transfer function of each biquad. if
+        plot_experiment is True, superimpose the measured transfer functions
+        (using the networkanalyzer)"""
+        freqs = np.logspace(1, 7, 1001)
+        z_all = np.zeros(len(freqs), dtype=complex)
+        axes = None
+        tfs = []
+        freqs_all = []
+        labels = []
+        for b0, b1, _, _, a1, a2 in self.coefficients:
+            if any((b0, b1, a1, a2)):
+                f, z = freqz((b0, b1), (1, a1, a2),
+                             worN=2 * np.pi * freqs * self.iirfilter.dt *
+                                  self.loops)
+                z_all += z
+                tfs.append(z)
+                freqs_all.append(freqs)
+                labels.append(f"b0={b0:.5f}, b1={b1:.5f}, a1={a1:.5f}, " \
+                               f"a2={a2:.5f}")
+                if plot_experiment:
+                    coeffs = np.zeros((5, 6))
+                    coeffs[:, 2] = 0
+                    coeffs[:, 3] = 1
+                    coeffs[0] = (b0, b1, 0., 1., a1, a2)
+                    self.coefficients = coeffs
+                    freqs_na, z_na = self.measure_transfer_function()
+                    tfs.append(z_na)
+                    freqs_all.append(freqs_na)
+                    labels.append("measured")
+        self._setup()
+        iir_theory.bodeplot(np.transpose([freqs_all, tfs, labels]))
+        return axes
+
+    def _digitize14bits(self, val):
+        """
+        digitize with a 14 bits resolution
+        :param val:
+        :return:
+        """
+        return int(np.floor(val*2**13))
+
+    def _product_sat(self, factor1_i, factor2_i):
+        result = (factor1_i*factor2_i)//(2**self._IIRSHIFT)
+        assert(np.abs(result - np.float64(factor1_i) * np.float64(
+            factor2_i)/(2**self._IIRSHIFT)) < 1)
+        return self._saturate(result, bits=self._IIRBITS)
+
+    def _saturate(self, val, bits):
+        if val > 2**bits - 1:
+            raise OverflowError(f"Overflox in saturate with {val} > {2**bits - 1}")
+        if val < -2 ** bits:
+                raise OverflowError(f"Overflox in saturate with {val} < {-2**bits}")
+        return val
+
+    def format_coefs_verilog(self):
+        n = 0
+        for b0, b1, _, _, a1, a2 in np.asarray(
+                        self.coefficients*2**self._IIRSHIFT, dtype=int):
+            print("iir_coefficients[", 2*n, "]<=", b0, ";")
+            n+=1
+            print("iir_coefficients[", 2*n, "]<=", b1, ";")
+            n+=1
+            print("iir_coefficients[", 2*n, "]<=", -a1, ";")
+            n+=1
+            print("iir_coefficients[", 2*n, "]<=", -a2, ";")
+            n+=1
