@@ -46,6 +46,7 @@ class NaAmplitudeProperty(FloatProperty):
 
 
 class RbwAttribute(FilterProperty):
+    """"
     def get_value(self, instance):
         if instance is None:
             return self
@@ -58,7 +59,7 @@ class RbwAttribute(FilterProperty):
             val = [val, val]  # preferentially choose second order filter
         instance.iq.bandwidth = val
         return val
-
+    """
     def valid_frequencies(self, obj):
         return [freq for freq in obj.iq.bandwidths if freq > 0]
 
@@ -94,6 +95,7 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
           for freq, response, amplitude in na.values():
               print response
     """
+    AUTO_AMP_AVG = 20
     _widget_class = NaWidget
     _gui_attributes = ["input",
                        "output_direct",
@@ -105,7 +107,12 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
                        "points",
                        "amplitude",
                        "logscale",
-                       "infer_open_loop_tf"]
+                       "auto_bandwidth",
+                       "q_factor_min",
+                       "auto_amplitude",
+                       "target_dbv",
+                       "auto_amp_min",
+                       "auto_amp_max"]
     _setup_attributes = _gui_attributes
     trace_average = IntProperty(doc="number of curves to average in single mode. In "
                                 "continuous mode, a decaying average with a "
@@ -116,6 +123,26 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
     input = InputSelectProperty(default='networkanalyzer',
                                 call_setup=True,
                                 ignore_errors=True)
+    auto_bandwidth = BoolProperty(default=False,
+                                  call_setup=True,
+                                  doc="Dynamically change the bandwidth at low frequency"
+                                      "based on q_factor_min")
+    q_factor_min = FloatProperty(default=10,
+                                 call_setup=True,
+                                 doc="When auto_bandwidth is on, the bandwidth is updated"
+                                     "at low frequency to make sure it is never larger"
+                                     "than frequency/q_factor_min"
+                                 )
+    auto_amplitude = BoolProperty(default=False,
+                                 call_setup=True)
+    auto_amp_min = FloatProperty(default=0.0001,
+                                 call_setup=True)
+    auto_amp_max = FloatProperty(default=1.,
+                                 call_setup=True)
+    target_dbv = FloatProperty(default=-80,
+                               call_setup=True)
+
+
     #input = ProxyProperty('iq.input')
     output_direct = SelectProperty(options=all_output_directs,
                                    default='off',
@@ -130,7 +157,6 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
                                     call_setup=True)
     points = IntProperty(min=1, max=1e8, default=1001, call_setup=True)
     logscale = LogScaleProperty(default=True, call_setup=True)
-    infer_open_loop_tf = BoolProperty(default=False)
     acbandwidth = NaAcBandwidth(
         default=50.0,
         doc="Bandwidth of the input high-pass filter of the na.",
@@ -139,7 +165,9 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
     def __init__(self, parent, name=None):
         self.sleeptimes = 0.5
         self._time_last_point = None
+        self._current_bandwidth = -1
         self.measured_time_per_point = np.nan
+        self.amplitude_list = None
         #self._data_x = None
         super(NetworkAnalyzer, self).__init__(parent, name=name)
 
@@ -254,7 +282,6 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
 
     # Concrete implementation of AcquisitionModule methods and attributes:
     # --------------------------------------------------------------------
-
     MIN_DELAY_SINGLE_MS = 0
     MIN_DELAY_CONTINUOUS_MS = 0
     # na should be as fast as possible
@@ -265,13 +292,72 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
         """
         return self.start_freq==self.stop_freq
 
-    def _start_point_acquisition(self, index):
+    async def _ramp_iq_amp_async(self, new_val):
+        amp_start = self.iq.amplitude
+        for amp in np.linspace(amp_start, new_val, 30):
+            self.iq.amplitude = amp
+            await sleep_async(0.01)
+
+
+    async def _start_point_acquisition(self, index):
         if self.is_zero_span():
             # in zero span, data_x are time, not frequency
             frequency = self.start_freq
         else:
             # normal frequency sweep, get frequency from data_x-array
             frequency = self.frequencies[index]
+        if self.auto_bandwidth: # RBW should be updated if needed
+            if self.auto_rbw_value(frequency) > self._current_bandwidth + 0.001: # avoid rounding problems
+                self._current_bandwidth*=2
+                self.iq.bandwidth = [self._current_bandwidth, self._current_bandwidth]
+
+                new_sleep_cycles = np.int(
+                    np.round(125e6 / self._current_bandwidth * self.sleeptimes))
+                self.iq._na_sleepcycles = new_sleep_cycles
+                new_na_averages = np.int(np.round(125e6 / self._current_bandwidth *
+                                                       self.average_per_point))
+                self.iq._na_averages = new_na_averages
+                self._cached_na_averages = new_na_averages
+
+                self.time_per_point = float(new_sleep_cycles + new_na_averages) \
+                                            / (125e6 * self.iq._frequency_correction)
+        if self.auto_amplitude:
+            if self.current_avg==0: # need to determine next amp
+                if index<=self.AUTO_AMP_AVG: # use user-defined amplitude
+                    self.iq.amplitude = self.amplitude
+                    self.amplitude_list[0] = self.iq.amplitude
+                else:
+                    last_ratio = np.abs(np.mean(self.data_avg[index - self.AUTO_AMP_AVG:index]))
+                    target_v = 10**(self.target_dbv/20)
+                    next_amp = target_v/last_ratio
+                    last_amp = self.amplitude_list[index - 1]
+                    if next_amp/last_amp>2:
+                        if last_amp*2 <= self.auto_amp_max:
+                            await self._ramp_iq_amp_async(self.iq.amplitude*2)
+                            self.amplitude_list[index] = self.iq.amplitude
+                        else:
+                            self.amplitude_list[index] = last_amp
+                    elif next_amp/last_amp<0.5:
+                        if last_amp/2 >= self.auto_amp_min:
+                            await self._ramp_iq_amp_async(self.iq.amplitude/2)
+                            self.amplitude_list[index] = self.iq.amplitude
+                        else:
+                            self.amplitude_list[index] = last_amp
+                    else:
+                        self.amplitude_list[index] = last_amp  # keep the same amplitude
+            else:
+                if index == 0:
+                    last_index = -1
+                else:
+                    last_index = index -1
+                if abs(self.amplitude_list[last_index] - self.amplitude_list[index])>1e-6:
+                    await self._ramp_iq_amp_async(self.amplitude_list[index])
+
+
+
+        # last point to determine amplitude
+        #    self.amplitude_list[inde]
+
         self.iq.frequency = frequency
         self._time_last_point = timeit.default_timer()
         # regular print output for travis workaround
@@ -322,6 +408,15 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
         x = self._run_future.data_x - self._time_first_point
         return [x, res]
 
+    def auto_rbw_value(self, freq):
+        """
+        if freq/q is smaller than rbw, use it instead.
+        Also, round to the smallest non-zero rbw
+        """
+        desired_val = min(max(freq / self.q_factor_min, 1.186), self.rbw)
+        valid_bws = self.iq.bandwidth_options
+        return valid_bws[np.argmin(np.abs(np.array(valid_bws) - desired_val))]
+
     def _start_trace_acquisition(self):
         """
         For the NA, resuming (from pause to start for instance... should
@@ -335,21 +430,27 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
 #                                        self.start_freq*np.ones(self.points)
 
         self.iq.amplitude = 0 # Set the amplitude at 0 before anything else to avoid glitch
+        if self.auto_bandwidth:
+            self._current_bandwidth = self.auto_rbw_value(self.frequencies[0]) # smallest non-zero bandwidth
+        else:
+            self._current_bandwidth = self.rbw
+
         self.iq.setup(frequency=self.frequencies[0],
-                      bandwidth=self.rbw,
+                      bandwidth=[self._current_bandwidth, self._current_bandwidth],
                       gain=0,
                       phase=0,
                       acbandwidth=self.acbandwidth,
                       input=self.input,
                       output_direct=self.output_direct,
                       output_signal='output_direct')
+        self._current_bandwidth = self.iq.bandwidth[0]
 
         # setup averaging
-        self.iq._na_averages = np.int(np.round(125e6 / self.rbw *
+        self.iq._na_averages = np.int(np.round(125e6 / self._current_bandwidth *
                                                self.average_per_point))
         self._cached_na_averages = self.iq._na_averages
         self.iq._na_sleepcycles = np.int(
-            np.round(125e6 / self.rbw * self.sleeptimes))
+            np.round(125e6 / self._current_bandwidth * self.sleeptimes))
         # time_per_point is calculated at setup for speed reasons
         self.time_per_point = self._time_per_point()
         self._time_first_point = None # for 0-span mode, we need to record
@@ -360,6 +461,10 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
         # to avoid reading it at every single point
         self.iq.frequency = self.frequencies[0]  # this triggers the NA acquisition
         self.iq.amplitude = self.amplitude  # Set the amplitude to non-zero at the last moment to avoid glitch
+        if self.auto_amplitude:
+            self.amplitude_list = np.zeros(self.points)
+        else:
+            self.amplitude_list = self.iq.amplitude
         self._time_last_point = timeit.default_timer()
         # pre-calculate transfer_function values for speed
         self._tf_values = self.transfer_function(self.frequencies)
@@ -385,7 +490,7 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
     async def _point_async(self, index, min_delay_ms):
         if self.running_state == 'paused':
             await self._resume_event.wait()
-        self._start_point_acquisition(index)
+        await self._start_point_acquisition(index)
         await self._data_ready_async(min_delay_ms)
         return self._get_point(index)
 

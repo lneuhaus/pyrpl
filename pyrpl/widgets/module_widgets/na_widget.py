@@ -93,6 +93,27 @@ class NaWidget(AcquisitionModuleWidget):
         self.attribute_layout.removeWidget(aws["trace_average"])
         self.attribute_layout.removeWidget(aws["curve_name"])
 
+        ######################
+        self.groups = {}
+        self.layout_groups = {}
+        for label, wids in [('Channels', ['input', 'output_direct']),
+                            ('Frequency', ['start_freq', 'stop_freq',
+                                           'points', 'logscale']),
+                            ('Setup', ['amplitude', 'acbandwidth']),
+                            ('Averaging', ['average_per_point', 'rbw']),
+                            ('Auto-bandwidth', ['auto_bandwidth', 'q_factor_min']),
+                            ('Auto-amplitude', ['auto_amplitude', 'target_dbv',
+                                                'auto_amp_min', 'auto_amp_max'])]:
+            self.groups[label] = QtWidgets.QGroupBox(label)
+            self.layout_groups[label] = QtWidgets.QGridLayout()
+            self.groups[label].setLayout(self.layout_groups[label])
+            self.attribute_layout.addWidget(self.groups[label])
+            for index, wid in enumerate(wids):
+                self.attribute_layout.removeWidget(aws[wid])
+                self.layout_groups[label].addWidget(aws[wid], index%2 + 1, index/2 + 1)
+        #########################
+
+
         #self.button_layout.addWidget(aws["trace_average"])
         #self.button_layout.addWidget(aws["curve_name"])
 
@@ -107,6 +128,9 @@ class NaWidget(AcquisitionModuleWidget):
         #self.button_continuous.clicked.connect(self.run_continuous_clicked)
         #self.button_stop.clicked.connect(self.button_stop_clicked)
         #self.button_save.clicked.connect(self.save_clicked)
+
+
+
 
         self.arrow = pg.ArrowItem()
         self.arrow.setVisible(False)
