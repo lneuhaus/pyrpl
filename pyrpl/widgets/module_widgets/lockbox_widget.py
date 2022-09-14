@@ -449,8 +449,8 @@ class OutputSignalWidget(ModuleWidget):
 
         self.plot_item.setLogMode(x=True, y=True)
         self.plot_item_phase.setLogMode(x=True, y=None)
-        self.curve.setLogMode(xMode=True, yMode=True)
-        self.curve_phase.setLogMode(xMode=True, yMode=None)
+        self.curve.setLogMode(True, True)
+        self.curve_phase.setLogMode(True, None)
 
         self.plotbox = QtWidgets.QGroupBox(self)
         self.plotbox.layout = QtWidgets.QVBoxLayout(self.plotbox)
