@@ -433,7 +433,7 @@ class IIR(FilterModule):
             former_input = self.input
             try:
                 # set input to be the NA output and take the data
-                self.input = na
+                self.input = 'networkanalyzer'
                 data = na.single()
                 self._measurement_data = na.frequencies, data
             finally:

@@ -295,9 +295,33 @@ class OutputSignal(Signal):
         # by default
         return np.logspace(0, 6, 2000)
 
+    def transfer_function_controller(self, freqs, stage):
+        """
+        Returns the design transfer function between input and output,
+        at the specified stage.
+        """
+        input = self.lockbox.inputs[stage.input]
+
+        output_unit = self.unit.split('/')[0]
+        external_loop_gain = self.dc_gain*input.expected_slope(stage.setpoint) \
+                                    *self.lockbox._unit_in_setpoint_unit(output_unit)
+        p = self.p/external_loop_gain*stage.gain_factor
+        i = self.i/external_loop_gain*stage.gain_factor
+
+        p = Pid.p.validate_and_normalize(self.pid, p)
+        i = Pid.i.validate_and_normalize(self.pid, i)
+
+        result = Pid._transfer_function(
+            freqs, p=p, i=i,
+            frequency_correction=self.pid._frequency_correction,
+            filter_values=self.additional_filter)
+        if self.extra_module == 'iir':
+            result *= self.pyrpl.rp.iir.transfer_function(freqs)
+        return result
+
     def transfer_function(self, freqs):
         """
-        Returns the design transfer function for the output
+        Returns the design open-loop transfer function for the output (including analog plant)
         """
         analog_tf = np.ones(len(freqs), dtype=complex)
         if self.tf_type == 'filter':
@@ -317,6 +341,8 @@ class OutputSignal(Signal):
             freqs, p=self.p, i=self.i,
             frequency_correction=self.pid._frequency_correction,
             filter_values=self.additional_filter)
+        if self.extra_module=='iir':
+            result*=self.pyrpl.rp.iir.transfer_function(freqs)
         return result
 
 

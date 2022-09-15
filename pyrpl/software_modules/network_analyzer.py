@@ -325,7 +325,7 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
             if self.current_avg==0: # need to determine next amp
                 if index<=self.AUTO_AMP_AVG: # use user-defined amplitude
                     self.iq.amplitude = self.amplitude
-                    self.amplitude_list[0] = self.iq.amplitude
+                    self.amplitude_list[index] = self.iq.amplitude
                 else:
                     last_ratio = np.abs(np.mean(self.data_avg[index - self.AUTO_AMP_AVG:index]))
                     target_v = 10**(self.target_dbv/20)
