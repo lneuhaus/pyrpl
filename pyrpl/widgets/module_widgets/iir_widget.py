@@ -306,7 +306,9 @@ class IirWidget(ModuleWidget):
         except AttributeError:  # no curve for plotting available
             plot['data'] = []
         # plot designed filter
-        plot['filter_design'] = self.module.transfer_function(frequencies, **tfargs)
+        plot['filter_design'] = self.module.transfer_function_by_kind(
+                            frequencies=frequencies, kind=self.module.tf_type,
+            **tfargs)
         # plot product
         plot['data_x_design'] = []
         if self.module.plot_data_times_filter:
@@ -336,7 +338,9 @@ class IirWidget(ModuleWidget):
                 else:
                     defsize = 10
                 freq = np.abs(freq)
-                tf = self.module.transfer_function(freq, **tfargs)
+                tf = self.module.transfer_function_by_kind(frequencies=freq,
+                                                           kind=self.module.tf_type,
+                                                           **tfargs)
                 selected = aws[key].attribute_value.selected
                 brush = [pg.mkBrush(color='m')
                          if (num == selected)

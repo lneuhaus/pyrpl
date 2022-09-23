@@ -3,7 +3,7 @@ from .. import FilterModule
 from ...attributes import IntRegister, BoolRegister, ComplexProperty, \
     FloatProperty, StringProperty, CurveSelectProperty, \
     GainRegister, ConstantIntRegister, FloatAttributeListProperty, \
-    ComplexAttributeListProperty, BoolProperty
+    ComplexAttributeListProperty, BoolProperty, SelectProperty
 from ...widgets.module_widgets import IirWidget
 from ...modules import SignalLauncher
 
@@ -171,6 +171,12 @@ class IirComplexListProperty(IirFloatListProperty,
         return complex(re, im)
 
 
+class TfTypeProperty(SelectProperty):
+    def value_updated(self, module, value=None, appendix=[]):
+        super(TfTypeProperty, self).value_updated(module,
+                                                  value=value)
+        module._signal_launcher.update_plot.emit()
+
 class IIR(FilterModule):
     _signal_launcher = SignalLauncherIir
     iirfilter = None  # will be set by setup()
@@ -228,6 +234,7 @@ class IIR(FilterModule):
                        "plot_data_times_filter",
                        "plot_measurement",
                        "measure_transfer_function",
+                       "tf_type"
                        # for debugging
                        # "_setup_unity",
                        # "_setup_zero",
@@ -280,6 +287,16 @@ class IIR(FilterModule):
 
     overflow = OverflowProperty(doc="a string indicating the overflow status "
                                     "of the iir module")
+
+    tf_type = TfTypeProperty(default='final',
+                             options=['continuous',
+                                      'discrete',
+                                      'coefficients',
+                                       'rounded',
+                                       'final'],
+                                    doc="Type of transfer-function to use in "
+                                        "plot (see iir_theory for details)",
+                                    call_setup=False)
 
     data_curve = CurveSelectProperty(doc="NA curve id to use as a basis for "
                                          "the graphical filter design",
@@ -505,6 +522,10 @@ class IIR(FilterModule):
             self.iirfilter.inputfilter = self.inputfilter  # update model
             self._logger.debug("IIR anti-aliasing input filter set to: %s MHz",
                               self.iirfilter.inputfilter * 1e-6)
+            if any(np.real(self.poles)>0):
+                self._logger.warning("Pole with positive real part detected"
+                                     "filter will be unstable.")
+
             # connect the module
             #if input is not None:
             #    self.input = input
@@ -582,8 +603,7 @@ class IIR(FilterModule):
             getattr(self, bestname).select(bestmatch)
 
 
-    ### this function is pretty much obsolete now. use self.iirfilter.tf_...
-    def transfer_function(self, frequencies, extradelay=0, kind='final'):
+    def transfer_function_by_kind(self, frequencies, kind):
         """
         Returns a complex np.array containing the transfer function of the
         current IIR module setting for the given frequency array. The
@@ -596,12 +616,6 @@ class IIR(FilterModule):
         ----------
         frequencies: np.array or float
             Frequencies to compute the transfer function for
-        extradelay: float
-            External delay to add to the transfer function (in s). If zero,
-            only the delay for internal propagation from input to
-            output_signal is used. If the module is fed to analog inputs and
-            outputs, an extra delay of the order of 150 ns must be passed as
-            an argument for the correct delay modelisation.
         kind: str
             The IIR filter design is composed of a number of steps. Each
             step slightly modifies the transfer function to adapt it to
@@ -634,6 +648,37 @@ class IIR(FilterModule):
               at bit 48)
             - 'implemented': transfer function after rounding the
               coefficients to the precision of the fpga
+        :param frequencies:
+        :param kind:
+        :return:
+        """
+        try:
+            tf = getattr(self.iirfilter, 'tf_' + kind)(frequencies=frequencies)
+        except AttributeError:
+            # happens when no iir filter is created
+            tf = frequencies*0+1e-12
+        return tf
+
+    ### this function is pretty much obsolete now. use self.iirfilter.tf_...
+    def transfer_function(self, frequencies, extradelay=0):
+        """
+        Returns a complex np.array containing the transfer function of the
+        current IIR module setting for the given frequency array. The
+        best-possible estimation of delays is automatically performed for
+        all kinds of transfer function. The setting of 'bypass' is ignored
+        for this computation, i.e. the theoretical and measured transfer
+        functions can only agree if bypass is False.
+
+        Parameters
+        ----------
+        frequencies: np.array or float
+            Frequencies to compute the transfer function for
+        extradelay: float
+            External delay to add to the transfer function (in s). If zero,
+            only the delay for internal propagation from input to
+            output_signal is used. If the module is fed to analog inputs and
+            outputs, an extra delay of the order of 150 ns must be passed as
+            an argument for the correct delay modelisation.
 
         Returns
         -------
@@ -646,27 +691,8 @@ class IIR(FilterModule):
         # take average delay to be half the loops since this is the
         # expectation value for the delay (plus internal propagation delay)
         # module_delay = self._delay + self.loops / 2.0
-        self._logger.warning("iir.transfer_function is obsolete and will be "
-                             "deprecated. Use another function!")
-        try:
-            tf = getattr(self.iirfilter, 'tf_' + kind)(frequencies)
-        except AttributeError:
-            # happens when no iir filter is created
-            tf = frequencies*0+1e-12
-        # for f in [self.inputfilter]:  # only one filter at the moment
-        #    if f == 0:
-        #        continue
-        #    if f > 0:  # lowpass
-        #        tf /= (1.0 + 1j*frequencies/f)
-        #        module_delay += 2  # two cycles extra delay per lowpass
-        #    elif f < 0:  # highpass
-        #        tf /= (1.0 + 1j*f/frequencies)
-        #        # plus is correct here since f already has a minus sign
-        #        module_delay += 1  # one cycle extra delay per highpass
-        ## add delay
-        # delay = module_delay * 8e-9 / self._frequency_correction + extradelay
-        # tf *= np.exp(-1j*delay*frequencies*2*np.pi)
-        return tf
+
+        return self.iirfilter.tf_final(frequencies)
 
 
     def simulate_filter_float(self, xs, biquad="all"):
@@ -779,7 +805,6 @@ class IIR(FilterModule):
                 self.input = old_input
         self._setup()
         return times, ch2
-
 
     def plot_biquads_tf(self, axes=None, plot_experiment=True):
         """Plots the transfer function of each biquad. if

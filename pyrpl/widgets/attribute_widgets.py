@@ -400,7 +400,7 @@ class BasePropertyListPropertyWidget(BaseAttributeWidget):
     def select(self, index):
         for i, widget in enumerate(self.widgets):
             if i == index:
-                widget.setStyleSheet("background-color: green")
+                widget.setStyleSheet("background-color: #EAE1E1")
                 widget.setFocus()
             else:
                 widget.setStyleSheet("")
