@@ -29,19 +29,19 @@
 ############################################################################### 
 */
 
-module red_pitaya_pwm #(
-  int unsigned CCW = 24,  // configuration counter width (resolution)
-  bit  [8-1:0] FULL = 8'd255 // 100% value - we increase it for total 12bit resolution
+module red_pitaya_pwm
+  #(  parameter CCW = 24,  // configuration counter width (resolution)
+  parameter  [8-1:0] FULL = 8'd255 // 100% value - we increase it for total 12bit resolution
 )(
   // system signals
-  input  logic           clk ,  // clock
-  input  logic           rstn,  // reset
+  input             clk ,  // clock
+  input             rstn,  // reset
   // configuration
-  input  logic [CCW-1:0] cfg ,  // no configuration but signal_i
+  input signed  [CCW-1:0] cfg ,  // no configuration but signal_i
 
   // PWM outputs
-  output logic           pwm_o ,  // PWM output - driving RC
-  output logic           pwm_s    // PWM synchronization
+  output reg  [0:0]      pwm_o ,  // PWM output - driving RC
+  output         pwm_s    // PWM synchronization
 );
 
 
@@ -51,6 +51,7 @@ reg  [16-1: 0] b     ;
 reg  [ 8-1: 0] vcnt, vcnt_r;
 reg  [ 8-1: 0] v   ;
 reg  [ 9-1: 0] v_r ; // needs an extra bit to avoid overflow
+reg  [4-1:0]  clk_div;
 
 // short description of what is going on:
 
@@ -65,14 +66,24 @@ reg  [ 9-1: 0] v_r ; // needs an extra bit to avoid overflow
 
 // b[0] = cfg[bcnt], i.e. changes every FULL cycles
 
-// v_r is the sum of v and b[0], i.e. v_r alternates between upper 8 bits of config and that value +1  
+// v_r is the sum of v and b[0], i.e. v_r alternates between upper 8 bits of config and that value +1
+
+
 
 always @(posedge clk)
 if (~rstn) begin
    vcnt  <=  8'h0 ;
    bcnt  <=  4'h0 ;
    pwm_o <=  1'b0 ;
+   clk_div <= 4'h0;
+   v <= 0;
+  b<= 0;
+  $display("setup");
 end else begin
+  clk_div <= clk_div + 4'h1;
+end
+
+  always @(posedge clk_div[3]) begin
    vcnt   <= vcnt + 8'd1 ;
    vcnt_r <= vcnt;
    v_r    <= (v + b[0]) ; // add decimal bit to current value
@@ -83,8 +94,10 @@ end else begin
    end
    // make PWM duty cycle
    pwm_o <= ({1'b0,vcnt_r} < v_r) ;
+  //$display("loop");
 end
+
 
 assign pwm_s = (bcnt == 4'hF) && (vcnt == (FULL-1)) ; // latch one before
 
-endmodule: red_pitaya_pwm
+endmodule

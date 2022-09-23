@@ -402,7 +402,7 @@ red_pitaya_hk i_hk (
   .digital_loop    (  digital_loop               ),
   // Expansion connector
   .exp_p_dat_i     (  exp_p_in                   ),  // input data
-  .exp_p_dat_o     (  exp_p_out                  ),  // output data
+  .exp_p_dat_o     ({exp_p_out[4-1:0], dac_pwm_o}),  // exp_p_out //output data
   .exp_p_dir_o     (  exp_p_dir                  ),  // 1-output enable
   .exp_n_dat_i     (  exp_n_in                   ),
   .exp_n_dat_o     (  exp_n_out                  ),
@@ -576,7 +576,7 @@ red_pitaya_pwm pwm [4-1:0] (
   .cfg   ({pwm_cfg_d, pwm_cfg_c, pwm_cfg_b, pwm_cfg_a}),
   //.signal_i ({pwm_signals[3],pwm_signals[2],pwm_signals[1],pwm_signals[0]}),
   // PWM outputs
-  .pwm_o (dac_pwm_o),
+  .pwm_o (exp_p_out[8-1:4]), //dac_pwm_o),
   .pwm_s ()
 );
 
