@@ -168,13 +168,9 @@ class IirGraphWidget(QtWidgets.QGroupBox):
                             ('data_x_design', dict(pen='r'))]:
             self.plots[name] = self.mag.plot(**style)
             self.plots[name + "_phase"] = self.phase.plot(**style)
-            try: # old version of pyqtgraph
-                self.plots[name].setLogMode(xMode=self.xlog, yMode=None)
-                self.plots[name + '_phase'].setLogMode(xMode=self.xlog,
-                                                       yMode=None)
-            except TypeError: # new version of pyqtgraph
-                self.plots[name].setLogMode(xState=self.xlog, yState=None)
-                self.plots[name + '_phase'].setLogMode(xState=self.xlog, yState=None)
+
+            self.plots[name].setLogMode(self.xlog, None)
+            self.plots[name + '_phase'].setLogMode(self.xlog, None)
 
         # also set logscale for the xaxis
         # make scatter plots
