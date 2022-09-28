@@ -184,8 +184,8 @@ class NaWidget(AcquisitionModuleWidget):
         self.plot_item.setLogMode(x=log_mod, y=None) # this seems also needed
         self.plot_item_phase.setLogMode(x=log_mod, y=None)
         for chunk, chunk_phase in zip(self.chunks, self.chunks_phase):
-            chunk.setLogMode(xMode=log_mod, yMode=None)
-            chunk_phase.setLogMode(xMode=log_mod, yMode=None)
+            chunk.setLogMode(log_mod, None)
+            chunk_phase.setLogMode(log_mod, None)
 
     def scan_finished(self):
         """
@@ -261,8 +261,8 @@ class NaWidget(AcquisitionModuleWidget):
             self.chunks.append(chunk)
             self.chunks_phase.append(chunk_phase)
             log_mod = self.module.logscale
-            chunk.setLogMode(xMode=log_mod, yMode=None)
-            chunk_phase.setLogMode(xMode=log_mod, yMode=None)
+            chunk.setLogMode(log_mod, None)
+            chunk_phase.setLogMode(log_mod, None)
 
         sl = slice(max(0, self.CHUNK_SIZE * chunk_index - 1),
                    min(self.CHUNK_SIZE * (chunk_index + 1),
