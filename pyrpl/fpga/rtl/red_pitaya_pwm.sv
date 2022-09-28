@@ -29,7 +29,7 @@
 ############################################################################### 
 */
 
-module red_pitaya_pwm
+module red_pitaya_pwm 
   #(  parameter CCW = 24,  // configuration counter width (resolution)
   parameter  [8-1:0] FULL = 8'd255 // 100% value - we increase it for total 12bit resolution
 )(
@@ -52,7 +52,7 @@ reg  [ 8-1: 0] vcnt, vcnt_r;
 reg  [ 8-1: 0] v   ;
 reg  [ 9-1: 0] v_r ; // needs an extra bit to avoid overflow
 reg  [4-1:0]  clk_div;
-
+  
 // short description of what is going on:
 
 // vcnt counts from 0, 1, 2, 3, ..., 255, 0, 1, 2, 3
@@ -66,10 +66,10 @@ reg  [4-1:0]  clk_div;
 
 // b[0] = cfg[bcnt], i.e. changes every FULL cycles
 
-// v_r is the sum of v and b[0], i.e. v_r alternates between upper 8 bits of config and that value +1
+// v_r is the sum of v and b[0], i.e. v_r alternates between upper 8 bits of config and that value +1  
 
 
-
+  
 always @(posedge clk)
 if (~rstn) begin
    vcnt  <=  8'h0 ;
@@ -80,9 +80,9 @@ if (~rstn) begin
   b<= 0;
   $display("setup");
 end else begin
-  clk_div <= clk_div + 4'h1;
+  clk_div <= clk_div + 1'h1;
 end
-
+  
   always @(posedge clk_div[3]) begin
    vcnt   <= vcnt + 8'd1 ;
    vcnt_r <= vcnt;
