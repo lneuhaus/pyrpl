@@ -151,7 +151,7 @@ class SpecAnWidget(AcquisitionModuleWidget):
 
 
         self.button_layout = QtWidgets.QHBoxLayout()
-        self.setLayout(self.main_layout)
+        #self.setLayout(self.main_layout)
         # self.setWindowTitle("Spec. An.")
         #self.win = pg.GraphicsWindow(title="PSD")
         #self.main_layout.addWidget(self.win)
@@ -246,15 +246,13 @@ class SpecAnWidget(AcquisitionModuleWidget):
             self.win2._set_widget_value((freqs, datas[1]), transform_magnitude=to_units)
         else: # baseband mode: data is (spec1, spec2, real(cross), imag(cross))
             spec1, spec2, cross_r, cross_i = datas[1]
-            if not self.module.display_input1_baseband:
-                spec1 = np.array([np.nan]*len(x))
-            if not self.module.display_input2_baseband:
-                spec2 = np.array([np.nan]*len(x))
-            if not self.module.display_cross_amplitude:
-                cross = np.array([np.nan]*len(x))
-            else:
-                cross = cross_r + 1j*cross_i
-            data = (spec1, spec2, cross)
+            data = []
+            if self.module.display_input1_baseband:
+                data.append(spec1) #np.array([np.nan]*len(x))
+            if self.module.display_input2_baseband:
+                data.append(spec2) # = np.zeros(len(x))# np.array([np.nan]*len(x))
+            if self.module.display_cross_amplitude:
+                data.append(cross_r + 1j*cross_i) # = np.zeros(len(x)) # np.array([np.nan]*len(x))
             self.win2._set_widget_value((freqs, data),
                                         transform_magnitude=to_units)
         self.update_current_average()
