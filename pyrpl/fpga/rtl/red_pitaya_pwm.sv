@@ -72,31 +72,38 @@ reg  [4-1:0]  clk_div;
   
 always @(posedge clk)
 if (~rstn) begin
-   vcnt  <=  8'h0 ;
-   bcnt  <=  4'h0 ;
-   pwm_o <=  1'b0 ;
    clk_div <= 4'h0;
-   v <= 0;
-  b<= 0;
-  $display("setup");
-end else begin
+end
+else begin
   clk_div <= clk_div + 1'h1;
 end
-  
-  always @(posedge clk_div[3]) begin
-   vcnt   <= vcnt + 8'd1 ;
-   vcnt_r <= vcnt;
-   v_r    <= (v + b[0]) ; // add decimal bit to current value
-   if (vcnt == FULL) begin
-      bcnt <=  bcnt + 4'h1 ;
-      v    <= (bcnt == 4'hF) ? cfg[24-1:16] : v ; // new value on 16*FULL
-      b    <= (bcnt == 4'hF) ? cfg[16-1:0] : {1'b0,b[15:1]} ; // shift right
-   end
-   // make PWM duty cycle
-   pwm_o <= ({1'b0,vcnt_r} < v_r) ;
-  //$display("loop");
-end
 
+
+  
+always @(posedge clk) begin
+    if (~rstn) begin
+       vcnt  <=  8'h0 ;
+       bcnt  <=  4'h0 ;
+       pwm_o <=  1'b0 ;
+       v <= 0;
+       b <= 0;
+       $display("setup");
+    end
+    else begin
+        if (clk_div==0) begin
+           vcnt   <= vcnt + 8'd1 ;
+           vcnt_r <= vcnt;
+           v_r    <= (v + b[0]) ; // add decimal bit to current value
+           if (vcnt == FULL) begin
+              bcnt <=  bcnt + 4'h1 ;
+              v    <= (bcnt == 4'hF) ? cfg[24-1:16] : v ; // new value on 16*FULL
+              b    <= (bcnt == 4'hF) ? cfg[16-1:0] : {1'b0,b[15:1]} ; // shift right
+           end
+           // make PWM duty cycle
+           pwm_o <= ({1'b0,vcnt_r} < v_r) ;
+        end
+    end
+end
 
 assign pwm_s = (bcnt == 4'hF) && (vcnt == (FULL-1)) ; // latch one before
 
