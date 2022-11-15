@@ -264,6 +264,7 @@ class AcquisitionModule(Module):
             self._emit_signal_by_name('display_curve', [self.data_x,
                                                         self.data_avg])
         self._running_state = 'stopped'
+        self._free_up_resources()
         return self.data_avg
 
     async def _single_async(self):

@@ -144,6 +144,7 @@ class FPTilt(InputSignal, Lorentz):
 
 
 class FabryPerot(Interferometer):
+    _default_is_locked_input = "reflection"
     _gui_attributes = ["finesse", "round_trip_length", "eta"]
     _setup_attributes = _gui_attributes
 
