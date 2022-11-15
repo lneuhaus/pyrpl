@@ -74,7 +74,10 @@ class SignalLauncherLockbox(SignalLauncher):
     remove_input = QtCore.Signal(list)
     update_transfer_function = QtCore.Signal(list)
     update_lockstatus = QtCore.Signal(list)
-
+    p_gain_rounded = QtCore.Signal(list)
+    p_gain_ok = QtCore.Signal(list)
+    i_gain_rounded = QtCore.Signal(list)
+    i_gain_ok = QtCore.Signal(list)
 
 class Lockbox(LockboxModule):
     """
@@ -264,7 +267,7 @@ class Lockbox(LockboxModule):
         Unlocks all outputs.
         """
         if self._acquire_lock_task is not None:  # stop locking sequence
-            print("cancel acquire")
+            # print("cancel acquire")
             self._acquire_lock_task.cancel()
         for output in self.outputs:
             output.unlock(reset_offset=reset_offset)
@@ -378,7 +381,7 @@ class Lockbox(LockboxModule):
                 return False
         # input locked to
         if input is None:
-            if hasattr(self, '_default_is_locked_input') and self._default_is_locked_input is not None:
+            if hasattr(self, '_default_is_locked_input') and self._default_is_locked_input is not None and self._default_is_locked_input in self.inputs:
                 input = self._default_is_locked_input
             else:
                 input = self.current_stage.input

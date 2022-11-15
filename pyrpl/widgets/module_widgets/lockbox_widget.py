@@ -597,6 +597,12 @@ class AllSignalsWidget(QtWidgets.QTabWidget):
         self.tabCloseRequested.connect(self.close_tab)
         self.update_output_names()
 
+    def update_gain_color(self, output, p_or_i, color):
+        output_widget = self.get_output_widget_by_name(output.name)
+        button = getattr(output_widget.pid_props.manual_widget, p_or_i)
+        button.widget.setStyleSheet("background-color:%s" % color)
+
+
     def tab_changed(self, index):
         if index==self.count()-1: # tab "+" clicked
             self.lb_widget.module._add_output()
@@ -1015,6 +1021,34 @@ class LockboxWidget(ModuleWidget):
         updates the plot of the transfer function for output outputs[0]
         """
         self.all_sig_widget.update_transfer_function(outputs[0])
+
+    def p_gain_rounded(self, outputs):
+        """
+        SLOT: don't change name unless you know what you are doing
+        updates the color of the gain coefficients
+        """
+        self.all_sig_widget.update_gain_color(outputs[0], 'p', 'Salmon')
+
+    def i_gain_rounded(self, outputs):
+        """
+        SLOT: don't change name unless you know what you are doing
+        updates the color of the gain coefficients
+        """
+        self.all_sig_widget.update_gain_color(outputs[0], 'i', 'Salmon')
+
+    def p_gain_ok(self, outputs):
+        """
+        SLOT: don't change name unless you know what you are doing
+        updates the color of the gain coefficients
+        """
+        self.all_sig_widget.update_gain_color(outputs[0], 'p', 'lightgreen')
+
+    def i_gain_ok(self, outputs):
+        """
+        SLOT: don't change name unless you know what you are doing
+        updates the color of the gain coefficients
+        """
+        self.all_sig_widget.update_gain_color(outputs[0], 'i', 'lightgreen')
 
     def state_changed(self, statelist):
         """
