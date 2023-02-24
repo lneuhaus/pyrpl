@@ -138,4 +138,4 @@ class Event(asyncio.Event):
     """
 
     def __init__(self):
-        super(Event, self).__init__(loop=LOOP)
+        super(Event, self).__init__()
