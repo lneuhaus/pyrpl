@@ -47,7 +47,8 @@ requirements = ['scp',
                 'paramiko>=2.0',
                 'nose>=1.0',
                 'PyQt5<=5.14',  # cannot be installed with pip
-                'qtpy<=1.10',  # qtpy 1.11 contains breaking API changes related to pyqtSignals
+                'qtpy<=1.9',  # qtpy 1.11 contains breaking API changes related to pyqtSignals
+                'ipykernel>=5,<6',  # otherwise jupyter breaks
                 'nbconvert',
                 'jupyter-client']
 if sys.version_info >= (3,4):  # python version dependencies
@@ -129,7 +130,7 @@ setup(name='pyrpl',
       author='Leonhard Neuhaus',
       author_email='neuhaus@lkb.upmc.fr',
       url='http://lneuhaus.github.io/pyrpl/',
-      license='GPLv3',
+      license='MIT',
       classifiers=['Programming Language :: Python :: 2.7',
                    'Programming Language :: Python :: 3.4',
                    'Programming Language :: Python :: 3.5',
@@ -137,7 +138,7 @@ setup(name='pyrpl',
                    'Programming Language :: C',
                    'Natural Language :: English',
                    'Development Status :: 4 - Beta',
-                   'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
+                   'License :: OSI Approved :: MIT License',
                    'Topic :: Scientific/Engineering :: Human Machine Interfaces',
                    'Topic :: Scientific/Engineering :: Physics'],
       keywords='RedPitaya DSP FPGA IIR PDH synchronous detection filter PID '

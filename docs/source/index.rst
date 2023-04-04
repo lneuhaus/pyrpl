@@ -48,7 +48,7 @@ What is PyRPL?
    See for yourself the :ref:`user_feedback`.
 
 
-.. admonition:: PyRPL is free software and comes with the `GNU General Public License v3.0 <https://www.gnu.org/licenses/gpl.html>`_.
+.. admonition:: PyRPL is free software and comes with the `MIT License <https://opensource.org/licenses/MIT>`_.
 
     Read the `license <https://github.com/lneuhaus/pyrpl/blob/master/LICENSE>`_ for more details!
 
