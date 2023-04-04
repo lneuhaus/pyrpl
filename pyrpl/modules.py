@@ -23,10 +23,12 @@ from .pyrpl_utils import unique_list, DuplicateFilter
 from .errors import ExpectedPyrplError
 
 import logging
+import string
 import numpy as np
 from six import with_metaclass
 from collections import OrderedDict
 from qtpy import QtCore
+
 
 
 class SignalLauncher(QtCore.QObject):
@@ -63,15 +65,25 @@ class SignalLauncher(QtCore.QObject):
         #self.update_attribute_by_name.connect(widget.update_attribute_by_name)
         for key in dir(self.__class__):
             val = getattr(self, key)
-            if isinstance(val, QtCore.pyqtBoundSignal) and hasattr(widget,
-                                                                   key):
+
+            try: #for qtpy > 1.9.0
+                signal = QtCore.SignalInstance
+            except AttributeError: #for qtpy <= 1.9.0
+                signal = QtCore.pyqtBoundSignal
+            if isinstance(val, signal, ) and hasattr(widget,
+                                                    key):
                 val.connect(getattr(widget, key))
+
 
     def _clear(self):
         """ Destroys the object by disconnecting all signals and by killing all timers"""
         for key in dir(self.__class__):
             val = getattr(self, key)
-            if isinstance(val, QtCore.pyqtBoundSignal):
+            try: #for qtpy > 1.9.0
+                signal = QtCore.SignalInstance
+            except AttributeError: #for qtpy <= 1.9.0
+                signal = QtCore.pyqtBoundSignal
+            if isinstance(val, signal):
                 try:
                     val.disconnect()
                 except TypeError:  # occurs if signal is not connected to anything
@@ -385,6 +397,13 @@ class Module(with_metaclass(ModuleMetaClass, object)):
         ##    # attributes are loaded but _setup() is not called
         ##   self._load_setup_attributes()
 
+    @property
+    def generic_name(self):
+        """
+        the name of the module without the trailing number (e.g. iq2-->iq)
+        """
+        return self.name.rstrip(string.digits)
+
     def _init_module(self):
         """
         To implement in child class if needed.
@@ -422,7 +441,7 @@ class Module(with_metaclass(ModuleMetaClass, object)):
     @property
     def pyrpl(self):
         """
-        Recursively looks through patent modules untill pyrpl instance is
+        Recursively looks through parent modules until pyrpl instance is
         reached.
         """
         from .pyrpl import Pyrpl
@@ -508,7 +527,7 @@ class Module(with_metaclass(ModuleMetaClass, object)):
         """
         Returns the config file branch corresponding to the saved states of the module.
         """
-        return self.c._root._get_or_create(self.name + "_states")
+        return self.c._root._get_or_create(self.generic_name + "_states")
 
     @property
     def states(self):
@@ -516,7 +535,7 @@ class Module(with_metaclass(ModuleMetaClass, object)):
         Returns the names of all saved states of the module.
         """
         # the if avoids creating an empty states section for all modules
-        if (self.name + "_states") in self.parent.c._root._data:
+        if (self.generic_name + "_states") in self.parent.c._root._data:
             return list(self._states._keys())
         else:
             return []

@@ -189,7 +189,7 @@ class ScopeWidget(AcquisitionModuleWidget):
         if name in ['rolling_mode', 'duration']:
             self.rolling_mode = self.module.rolling_mode
             self.update_rolling_mode_visibility()
-        if name in ['running_state',]:
+        if name in ['_running_state',]:
             self.update_running_buttons()
 
     def display_channel_obsolete(self, ch):
@@ -198,7 +198,7 @@ class ScopeWidget(AcquisitionModuleWidget):
         :param ch:
         """
         try:
-                self.datas[ch-1] = self.module.curve(ch)
+                self.datas[ch-1] = self.module.trace(ch)
                 self.times = self.module.times
                 self.curves[ch-1].setData(self.times,
                                           self.datas[ch-1])
@@ -281,7 +281,13 @@ class ScopeWidget(AcquisitionModuleWidget):
             not self.rolling_mode)
         self.attribute_widgets['hysteresis'].widget.setEnabled(
             not self.rolling_mode)
-        self.button_single.setEnabled(not self.rolling_mode)
+        single_enabled = (not self.module._is_rolling_mode_active()) and \
+                            self.module.running_state!="running_continuous"
+        self.button_single.setEnabled(single_enabled)
+
+    def update_running_buttons(self):
+        super(ScopeWidget, self).update_running_buttons()
+        self.update_rolling_mode_visibility()
 
     def autoscale_x(self):
         """Autoscale pyqtgraph. The current behavior is to autoscale x axis

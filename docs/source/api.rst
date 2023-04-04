@@ -53,7 +53,7 @@ RedPitaya's ip address.
 
     from pyrpl import Pyrpl
     p = Pyrpl(hostname=HOSTNAME)
-   
+
 If you see at least one '>' symbol, your computer has successfully
 connected to your RedPitaya via SSH. This means that your connection
 works. The message 'Server application started on port 2222' means that
@@ -75,7 +75,7 @@ Basic communication with your RedPitaya
     print r.scope.voltage1
 
 With the last command, you have successfully retrieved a value from an
-FPGA register. This operation takes about 300 µs on my computer. So
+FPGA register. This operation takes about 300 ï¿½s on my computer. So
 there is enough time to repeat the reading n times.
 
 .. code:: python
@@ -89,12 +89,12 @@ there is enough time to repeat the reading n times.
     for i in range(n):
         times.append(time.time()-t0)
         data.append(r.scope.voltage_in1)
-    print("Rough time to read one FPGA register: ", (time.time()-t0)/n*1e6, "µs")
+    print("Rough time to read one FPGA register: ", (time.time()-t0)/n*1e6, "ï¿½s")
     %matplotlib inline
     f, axarr = plt.subplots(1,2, sharey=True)
     axarr[0].plot(times, data, "+")
     axarr[0].set_title("ADC voltage vs time")
-    axarr[1].hist(data, bins=10,normed=True, orientation="horizontal")
+    axarr[1].hist(data, bins=10,density=True, orientation="horizontal")
     axarr[1].set_title("ADC voltage histogram")
 
 You see that the input values are not exactly zero. This is normal with
@@ -149,20 +149,20 @@ list of modules:
 
     r.hk #"housekeeping" = LEDs and digital inputs/outputs
     r.ams #"analog mixed signals" = auxiliary ADCs and DACs.
-    
+
     r.scope #oscilloscope interface
-    
+
     r.asg0 #"arbitrary signal generator" channel 0
     r.asg1 #"arbitrary signal generator" channel 1
-    
+
     r.pid0 #first of three PID modules
     r.pid1
     r.pid2
-    
+
     r.iq0 #first of three I+Q quadrature demodulation/modulation modules
     r.iq1
     r.iq2
-    
+
     r.iir #"infinite impulse response" filter module that can realize complex transfer functions
 
 
@@ -200,11 +200,11 @@ IIR module
 ==================================
 
 Software modules are modules that don't have an FPGA counterpart. They are directly accessible at the root pyrpl object
-(no need to go through the redpitaya object). We have already encountered a software module above. Remember how we accessed the 
+(no need to go through the redpitaya object). We have already encountered a software module above. Remember how we accessed the
 network analyzer module:
 
 .. code:: python
-    
+
      HOSTNAME = "192.168.1.100"
      from pyrpl import Pyrpl
      p = Pyrpl(hostname=HOSTNAME)
@@ -216,7 +216,7 @@ network analyzer module:
      p.networkanalyzer
 
 Software modules usually perform higher-level tasks than hardware modules. Moreover, accessing a hardware module without
-care could be harmful to some acquisition already running on the redpitaya. For this reason, it is advisable to access hardware modules 
+care could be harmful to some acquisition already running on the redpitaya. For this reason, it is advisable to access hardware modules
 via module managers only.
 
 Using Module Managers

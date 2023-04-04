@@ -55,7 +55,8 @@ wire signed [BITS_IN1+BITS_IN2-1:0] product;
 //assign product = factor1_i*factor2_i;
 // simple saturation added:
 assign product = factor1_i*factor2_i + $signed(1 <<(SHIFT-1));
-assign {product_o,overflow} =  ( {product[BITS_IN1+BITS_IN2-1],|product[BITS_IN1+BITS_IN2-2:SHIFT+BITS_OUT-1]} ==2'b01) ? {{1'b0,{BITS_OUT-1{1'b1}}},1'b1}  : //positive overflow
+assign {product_o,overflow} =  ( {product[BITS_IN1+BITS_IN2-1],
+|product[BITS_IN1+BITS_IN2-2:SHIFT+BITS_OUT-1]} ==2'b01) ? {{1'b0,{BITS_OUT-1{1'b1}}},1'b1}  : //positive overflow
                     ( {product[BITS_IN1+BITS_IN2-1],&product[BITS_IN1+BITS_IN2-2:SHIFT+BITS_OUT-1]} ==2'b10) ? {{1'b1,{BITS_OUT-1{1'b0}}},1'b1}   : //negative overflow
                     {product[SHIFT+BITS_OUT-1:SHIFT],1'b0} ; //correct value           
 

@@ -6,7 +6,7 @@ import time
 from qtpy import QtCore
 from .test_redpitaya import TestRedpitaya
 from .. import APP
-from ..async_utils import sleep as async_sleep
+from ..async_utils import sleep
 
 
 class TestPyqtgraph(TestRedpitaya):
@@ -71,7 +71,7 @@ class TestPyqtgraph(TestRedpitaya):
         # wait for the gui to display all required curves
         while self.cycle < self.cycles or (time.time() > self.timeout + self.starttime):
             # this is needed such that the test GUI actually plots something
-            async_sleep(0.01)
+            sleep(0.01)
         if self.cycle < self.cycles:
             assert False, "Must complete %d cycles before testing for speed!"%self.cycles
         else:

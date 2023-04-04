@@ -4,7 +4,7 @@ from pyrpl.modules import Module
 from pyrpl.attributes import FloatProperty, SelectProperty, ProxyProperty
 from pyrpl.module_attributes import *
 from pyrpl.memory import MemoryTree
-from pyrpl.async_utils import sleep
+from pyrpl.async_utils import sleep_async
 
 
 class MySubModule(Module):
@@ -126,7 +126,7 @@ class TestProxyProperty(object):
         m.myselectproxy = 7
         # see whether signal arrives
         for i in range(100):
-            sleep(0.01)
+            sleep_async(0.01)
             if s.arrived_signal:
                 break
         else:
@@ -140,7 +140,7 @@ class TestProxyProperty(object):
         m.__class__.myselectproxy.change_options(m, ['foo', 'par'])
         # see whether signal arrives
         for i in range(100):
-            sleep(0.01)
+            sleep_async(0.01)
             if s.arrived_signal:
                 break
         else:

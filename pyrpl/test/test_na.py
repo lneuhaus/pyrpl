@@ -6,7 +6,8 @@ from qtpy import QtWidgets, QtCore
 from .test_base import TestPyrpl
 import numpy as np
 from .. import global_config
-from ..async_utils import sleep as async_sleep
+from ..async_utils import sleep
+from ..async_utils import wait
 try:
     raise  # disables sound output during this test
     from pysine import sine
@@ -38,25 +39,27 @@ class TestNA(TestPyrpl):
         with self.pyrpl.networkanalyzer as self.na:
             def data_changing():
                 data = copy.deepcopy(self.na.data_avg)
-                async_sleep(self.communication_time * 10 + 0.01)
+                sleep(self.communication_time * 10 + 0.01)
                 return (data != self.na.data_avg).any()
             self.na.setup(start_freq=1000,
                           stop_freq=1e4,
                           rbw=1000,
                           points=10000,
                           trace_average=1)
-            async_sleep(2.0*self.communication_time)
-            self.na.single_async()
-            async_sleep(self.communication_time * 5.0 + 0.1)
+            sleep(2.0*self.communication_time)
+            self.na.continuous()
+            sleep(self.communication_time * 5.0 + 0.1)
             assert data_changing()
-
             current_point = self.na.current_point
             self.na.rbw = 10000  # change some setup_attribute
-            assert self.na.current_point < current_point # make sure the run was
+            sleep(0.01)
+            new_point = self.na.current_point
+            assert new_point<current_point # make sure the
+            #  run was
             #  restarted
 
             self.na.continuous()
-            async_sleep(self.communication_time * 5.0)
+            sleep(self.communication_time * 5.0)
             assert data_changing()
         self.na.stop()
         # do not let the na running or other tests might be
@@ -82,11 +85,11 @@ class TestNA(TestPyrpl):
                           stop_freq=1e4,
                           rbw=1e6,
                           points=points,
-                          running_state='stopped',
                           average_per_point=1,
                           trace_average=1)
+            self.na.stop()
             tic = time.time()
-            self.na.curve()
+            self.na.single()
             duration = (time.time() - tic)/self.na.points
             assert duration < maxduration, \
                 "Na w/o gui should take at most %.1f ms per point, but actually " \
@@ -121,16 +124,18 @@ class TestNA(TestPyrpl):
             self.pyrpl.rp.client._sound_debug = False
             sine(1200, 0.5)
             result = self.na.single_async()
+            sleep(0.1)
             # start counting points only after acquisition setup
             old_read = self.pyrpl.rp.client._read_counter
             old_write = self.pyrpl.rp.client._write_counter
             sine(1400, 0.5)
-            result.await_result()
+            wait(result, 10)
             sine(1500, 0.5)
             while self.na.running_state == 'running_single':
-                async_sleep(0.1)
+                sleep(0.1)
             sine(1600, 0.5)
             max_rw_points = self.na.points
+            sleep(0.1)
             print("Reads: %d %d %d. " % (self.pyrpl.rp.client._read_counter, old_read, max_rw_points))
             assert self.pyrpl.rp.client._read_counter - old_read <= max_rw_points, \
                 (self.pyrpl.rp.client._read_counter, old_read, max_rw_points)
@@ -164,12 +169,12 @@ class TestNA(TestPyrpl):
         self.timer.setSingleShot(True)
         self.count = 0
         self.timer.timeout.connect(self.coucou)
-        async_sleep(0.5)
+        sleep(0.5)
         tic = time.time()
         self.total = 1000
         self.timer.start()
         while self.count < self.total:
-            async_sleep(0.05)
+            sleep(0.05)
         duration = time.time() - tic
         assert(duration < 3.0), duration
 
@@ -178,8 +183,8 @@ class TestNA(TestPyrpl):
             self.na.iq.output_signal = 'quadrature'
             self.na.setup(amplitude=1., start_freq=1e5, stop_freq=2e5, rbw=10000,
                           points=100, average_per_point=10, input=self.na.iq,
-                          acbandwidth=0)
-            y = self.na.curve()
+                          acbandwidth=0, trace_average=1)
+            y = self.na.single()
             assert(all(abs(y-1)<0.1))  # If transfer function is taken into
             # account, that should be much closer to 1...
             # Also, there is this magic value of 0.988 instead of 1 ??!!!
@@ -196,15 +201,15 @@ class TestNA(TestPyrpl):
                           trace_average=1,
                           amplitude=0.01)
             self.na.continuous()
-            async_sleep(0.05)
+            sleep(0.05)
             self.na.pause()
-            async_sleep(0.05)
+            sleep(0.05)
             assert self.na.iq.amplitude==0
             self.na.continuous()
-            async_sleep(0.05)
+            sleep(0.05)
             assert self.na.iq.amplitude!=0
             self.na.stop()
-            async_sleep(0.05)
+            sleep(0.05)
             assert self.na.iq.amplitude==0
 
     def test_iq_autosave_active(self):
@@ -233,7 +238,7 @@ class TestNA(TestPyrpl):
 
             old = self.pyrpl.c._save_counter
             for i in range(10):
-                async_sleep(0.01)
+                sleep(0.01)
             new = self.pyrpl.c._save_counter
             self.na.stop()
             assert (old == new), (old, new)

@@ -5,7 +5,7 @@ Usage: `ipnbdoctest.py foo.ipynb [bar.ipynb [...]]`
 """
 # License: Public Domain, but credit is nice (Min RK).
 
-    
+
 from glob import glob
 import os
 import sys
@@ -17,6 +17,11 @@ import nbformat
 from nbconvert.preprocessors import ExecutePreprocessor
 from nbconvert.preprocessors.execute import CellExecutionError
 
+
+NOTEBOOK_DIR = os.path.dirname(__file__)
+TUTORIAL_DIR = os.path.join(os.path.dirname(
+    os.path.dirname(os.path.dirname(
+               NOTEBOOK_DIR))), "docs", "example-notebooks")
 
 try:
     TimeoutError # builtin in python 3
@@ -39,33 +44,30 @@ class MyExecutePreprocessor(ExecutePreprocessor):
         return super(MyExecutePreprocessor, self).preprocess_cell(cell,\
                 resources, cell_index)
 
-
-NOTEBOOK_DIR = os.path.dirname(__file__)
-TUTORIAL_DIR = os.path.abspath(
-    os.path.join(NOTEBOOK_DIR, os.pardir, os.pardir, os.pardir, "docs", "example-notebooks"))
-
-
 def _notebook_run(path):
-  """
-  Execute a notebook via nbconvert and collect output.
-   :returns (parsed nb object, execution errors)
-  """
-  kernel_name = 'python%d' % sys.version_info[0]
-  errors = []
-  with io.open(path, mode='r', encoding='UTF-8') as f:
-    nb = nbformat.read(f, as_version=4)
-    nb.metadata.get('kernelspec', {})['name'] = kernel_name
-    ep = MyExecutePreprocessor(kernel_name=kernel_name, timeout=65)
-    #,# allow_errors=True
-    #ep.start_new_kernel()
-    try:
-        ep.preprocess(nb, resources={'metadata': {'path': NOTEBOOK_DIR}})
-    except (CellExecutionError, TimeoutError) as e:
-      if hasattr(e, 'traceback') and "SKIP" in e.traceback:
-            print(str(e.traceback).split("\n")[-2])
-      else:
-        raise e
-  return nb, errors
+    """
+    Execute a notebook via nbconvert and collect output.
+    :returns (parsed nb object, execution errors)
+    """
+    kernel_name = 'python%d' % sys.version_info[0]
+    errors = []
+
+
+    with open(path) as f:
+        nb = nbformat.read(f, as_version=4)
+        nb.metadata.get('kernelspec', {})['name'] = kernel_name
+        ep = MyExecutePreprocessor(kernel_name=kernel_name, timeout=65) #,
+        # allow_errors=True
+        #ep.start_new_kernel()
+        try:
+            ep.preprocess(nb, resources={'metadata': {'path': NOTEBOOK_DIR}})
+        except (CellExecutionError, TimeoutError) as e:
+          if hasattr(e, 'traceback') and "SKIP" in e.traceback:
+                print(str(e.traceback).split("\n")[-2])
+          else:
+            raise e
+    return nb, errors
+
 
 ##### commented out stuff below because changing defaultparameters might lead
 # to unexpected behavior ####################################################
@@ -80,28 +82,17 @@ def _notebook_run(path):
 # testing for the transferability of environment variables
 os.environ["python_sys_version"] = sys.version
 
-exceptions = ['async_acquisition.ipynb',  # fails in python-37
-              'tutorial.ipynb'  # fails in python-36
-              ]
-
-# iterate through all notebooks and run tests
-for notebook in \
-        (glob(NOTEBOOK_DIR+"/*.ipynb") + glob(TUTORIAL_DIR+'/*.ipynb')):
-    for exception in exceptions:
-        _, filename = os.path.split(notebook)
-        if filename in exceptions:
-            print("Skipping notebook: %s" % notebook)
-            sys.stdout.flush()
-            break
-    else:
-        print("Testing notebook: %s"%notebook)
-        sys.stdout.flush()
+# For some reason, the notebook preprocessor doesn't close
+# itself properly in python 3.7. I don't think it's worth the effort
+# to fix this, we just hope that unittesting notebooks in python 3.8 is
+# sufficient...
+if sys.version>'3.8':
+    for notebook in glob(NOTEBOOK_DIR + "/*.ipynb") + glob(TUTORIAL_DIR +
+                                                             '/*.ipynb'):
+        print("testing ", notebook)
         nb, errors = _notebook_run(notebook)
         assert errors == []
         # Make sure the kernel is running the current python version...
         #assert nb['cells'][0]['outputs'][0]['text'].rstrip('\n')==sys.version
         print("Finished testing notebook: %s"%notebook)
         sys.stdout.flush()
-
-
-

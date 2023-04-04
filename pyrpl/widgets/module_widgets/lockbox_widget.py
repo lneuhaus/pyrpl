@@ -1,26 +1,26 @@
 # -*- coding: utf-8 -*-
 """
-The Lockbox widget is used to produce a control signal to make a system's 
+The Lockbox widget is used to produce a control signal to make a system's
 output follow a specified setpoint. The system has to behave linearly around
 the setpoint, which is the case for many systems. The key parts of the widget are:
 
-*	General controls: "classname" selects a particular Lockbox class from the 
-	ones defined in lockbox/models folder, and will determine the overall 
-	behaviour of the lockbox. "Calibrate all inputs" performs a sweep and uses 
-	acquired data to calibrate parameters relevant for the selected Lockbox 
-	class. Before attempting to lock, it's recommendable, and sometimes even 
+*	General controls: "classname" selects a particular Lockbox class from the
+	ones defined in lockbox/models folder, and will determine the overall
+	behaviour of the lockbox. "Calibrate all inputs" performs a sweep and uses
+	acquired data to calibrate parameters relevant for the selected Lockbox
+	class. Before attempting to lock, it's recommendable, and sometimes even
 	mandatory, to press this button.
 
-*	Stages: In many situations, it might be desirable to start locking the 
-	system with a certain set of locking parameters, and once this has been 
-	achieved, switch to a different set with possibly a different signal. 
-	For example, when locking a Fabry–Pérot interferometer, the first 
-	stage might be locking on the side of a transmission fringe, and later 
-	transferring to locking on-resonance with Pound-Drever-Hall input 
-	signal. It is possible to have as many stages as necessary, and they 
-	will be executed sequentially. 
+*	Stages: In many situations, it might be desirable to start locking the
+	system with a certain set of locking parameters, and once this has been
+	achieved, switch to a different set with possibly a different signal.
+	For example, when locking a Fabry–Pérot interferometer, the first
+	stage might be locking on the side of a transmission fringe, and later
+	transferring to locking on-resonance with Pound-Drever-Hall input
+	signal. It is possible to have as many stages as necessary, and they
+	will be executed sequentially.
 
-*	Stage settings: each stage has its own 
+*	Stage settings: each stage has its own
 	setpoint (whose units can be chosen in the general setting setpoint_unit)
 	and a gain factor (a premultiplier to account for desired gain differences
 	among different stages). In addition, based on the state of the "lock on"
@@ -30,15 +30,15 @@ the setpoint, which is the case for many systems. The key parts of the widget ar
 	offset" determine whether the lockbox should reset its output to a certain
 	level when this stage is reached.
 
-*	Inputs and outputs: the PI parameters, together with limits, unit 
+*	Inputs and outputs: the PI parameters, together with limits, unit
 	conversions and so on, are set in these tabs.
-	
-The lockbox module is completely customizable and allows to implement complex 
-locking logic by inheriting the "Lockbox" class and adding the new class into 
-lockbox/models. For example, below is an end-to-end locking scenario for a 
+
+The lockbox module is completely customizable and allows to implement complex
+locking logic by inheriting the "Lockbox" class and adding the new class into
+lockbox/models. For example, below is an end-to-end locking scenario for a
 Fabry–Pérot interferometer that uses the included "FabryPerot" class:
 
-You should start the lockbox module and first select the model class to 
+You should start the lockbox module and first select the model class to
 FabryPerot. Then continue to configure first the outputs and inputs, filling
 in the information as good as possible. Critical fields are:
 
@@ -47,43 +47,43 @@ in the information as good as possible. Critical fields are:
 
 	* Select which output (out1 or out2) is the piezo connected to.
 	* If it is the default_sweep_output, set the sweep parameters
-	* Fill in the cutoff frequency if there is an analog low-pass filter behind 
+	* Fill in the cutoff frequency if there is an analog low-pass filter behind
 	  the redpitaya, and start with a unity-gain frequency of 10 Hz.
-	* Give an estimate on the displacement in meters per Volt or Hz per Volt 
+	* Give an estimate on the displacement in meters per Volt or Hz per Volt
 	  (the latter being the obtained resonance frequency shift per volt at the Red
 	  Pitaya output), you ensure that the specified unit-gain is the one that
 	  Red Pitaya is able to set.
-	 
-	 
+
+
 * 	Inputs:
 
 	* Set transmission input to "in1" for example.
-	* If PDH is used, set PDH input parameters to the same parameters as you 
-	  have in the IQ configuration. Lockbox takes care of the setting, and is 
+	* If PDH is used, set PDH input parameters to the same parameters as you
+	  have in the IQ configuration. Lockbox takes care of the setting, and is
 	  able to compute gains and slopes automatically
-	
-* 	Make sure to click "Sweep" and test whether a proper sweep is performed, 
-	and "Calibrate" to get the right numbers on the y-axis for the plotted 
+
+* 	Make sure to click "Sweep" and test whether a proper sweep is performed,
+	and "Calibrate" to get the right numbers on the y-axis for the plotted
 	input error signals
-	
+
 *	At last, configure the locking sequence:
 
 	* Each stage sleeps for "duration" in seconds after setting the desired gains.
-	* The first stage should be used to reset all offsets to either +1 or -1 
+	* The first stage should be used to reset all offsets to either +1 or -1
 	  Volts, and wait for 10 ms or so (depending on analog lowpass filters)
-	* Next stage is usually a "drift" stage, where you lock at a detuning of 
-	  +/- 1 or +/- 2 bandwidths, possibly with a gain_factor below 1. make sure 
-	  you enable the checkbox "lock enabled" for the piezo output here **by 
-	  clicking twice on it** (it is actually a 3-state checkbox, see the 
-	  information on the 1-click state when hovering over it). When you enable 
+	* Next stage is usually a "drift" stage, where you lock at a detuning of
+	  +/- 1 or +/- 2 bandwidths, possibly with a gain_factor below 1. make sure
+	  you enable the checkbox "lock enabled" for the piezo output here **by
+	  clicking twice on it** (it is actually a 3-state checkbox, see the
+	  information on the 1-click state when hovering over it). When you enable
 	  the locking sequence by clicking on lock, monitor the output voltage with a
 	  running scope, and make sure that this drift state actually makes the output voltage
-	  swing upwards. Otherwise, swap the sign of the setpoint / or the initial 
-	  offset of the piezo output. Leave enough time for this stage to catch on to 
+	  swing upwards. Otherwise, swap the sign of the setpoint / or the initial
+	  offset of the piezo output. Leave enough time for this stage to catch on to
 	  the side of a resonance.
-	* Next stages can be adapted to switch to other error signals, modify 
+	* Next stages can be adapted to switch to other error signals, modify
 	  setpoints and gains and so on.
-	
+
 
 
 """
@@ -449,8 +449,8 @@ class OutputSignalWidget(ModuleWidget):
 
         self.plot_item.setLogMode(x=True, y=True)
         self.plot_item_phase.setLogMode(x=True, y=None)
-        self.curve.setLogMode(xMode=True, yMode=True)
-        self.curve_phase.setLogMode(xMode=True, yMode=None)
+        self.curve.setLogMode(True, True)
+        self.curve_phase.setLogMode(True, None)
 
         self.plotbox = QtWidgets.QGroupBox(self)
         self.plotbox.layout = QtWidgets.QVBoxLayout(self.plotbox)
@@ -583,15 +583,25 @@ class AllSignalsWidget(QtWidgets.QTabWidget):
         self.lb_widget = lockbox_widget
         self.inputs_widget = InputsWidget(self)
         self.addTab(self.inputs_widget, "inputs")
-        self.tabBar().tabButton(0, QtWidgets.QTabBar.RightSide).resize(0, 0) # hide "close" for "inputs" tab
+        tab_button = self.tabBar().tabButton(0, QtWidgets.QTabBar.RightSide)
+        if tab_button is not None: # On MAC OS there is no tab button ?
+            tab_button.resize(0, 0) # hide "close" for "inputs" tab
         self.tab_plus = PlusTab()  # dummy widget that will never be displayed
         self.addTab(self.tab_plus, "+")
-        self.tabBar().tabButton(self.count() - 1, QtWidgets.QTabBar.RightSide).resize(0, 0)  # hide "close" for "+" tab
+        button = self.tabBar().tabButton(self.count() - 1, QtWidgets.QTabBar.RightSide)
+        if button is not None: # Problem with MAC ?
+            button.resize(0, 0)  # hide "close" for "+" tab
         for signal in self.lb_widget.module.outputs:
             self.add_output(signal)
         self.currentChanged.connect(self.tab_changed)
         self.tabCloseRequested.connect(self.close_tab)
         self.update_output_names()
+
+    def update_gain_color(self, output, p_or_i, color):
+        output_widget = self.get_output_widget_by_name(output.name)
+        button = getattr(output_widget.pid_props.manual_widget, p_or_i)
+        button.widget.setStyleSheet("background-color:%s" % color)
+
 
     def tab_changed(self, index):
         if index==self.count()-1: # tab "+" clicked
@@ -755,7 +765,7 @@ class LockboxStageWidget(ReducedModuleWidget):
         #self.lay_h3.addWidget(aws['function_call'])
         self.main_layout.addWidget(aws['function_call'])
         self.button_goto = QtWidgets.QPushButton('Go to this stage')
-        self.button_goto.clicked.connect(self.module.enable)
+        self.button_goto.clicked.connect(self.module.execute_async)
         self.main_layout.addWidget(self.button_goto)
 
     def create_title_bar(self):
@@ -876,7 +886,7 @@ class LockboxWidget(ModuleWidget):
         self.attribute_layout.addWidget(self.button_calibrate_all)
         self.button_is_locked.clicked.connect(lambda: self.module.is_locked(
             loglevel=self.module._logger.getEffectiveLevel()))
-        self.button_lock.clicked.connect(lambda: self.module.lock())
+        self.button_lock.clicked.connect(lambda: self.module.lock_async())
         self.button_unlock.clicked.connect(lambda: self.module.unlock())
         self.button_sweep.clicked.connect(lambda: self.module.sweep())
         self.button_calibrate_all.clicked.connect(lambda: self.module.calibrate_all())
@@ -1012,6 +1022,34 @@ class LockboxWidget(ModuleWidget):
         """
         self.all_sig_widget.update_transfer_function(outputs[0])
 
+    def p_gain_rounded(self, outputs):
+        """
+        SLOT: don't change name unless you know what you are doing
+        updates the color of the gain coefficients
+        """
+        self.all_sig_widget.update_gain_color(outputs[0], 'p', 'Salmon')
+
+    def i_gain_rounded(self, outputs):
+        """
+        SLOT: don't change name unless you know what you are doing
+        updates the color of the gain coefficients
+        """
+        self.all_sig_widget.update_gain_color(outputs[0], 'i', 'Salmon')
+
+    def p_gain_ok(self, outputs):
+        """
+        SLOT: don't change name unless you know what you are doing
+        updates the color of the gain coefficients
+        """
+        self.all_sig_widget.update_gain_color(outputs[0], 'p', 'lightgreen')
+
+    def i_gain_ok(self, outputs):
+        """
+        SLOT: don't change name unless you know what you are doing
+        updates the color of the gain coefficients
+        """
+        self.all_sig_widget.update_gain_color(outputs[0], 'i', 'lightgreen')
+
     def state_changed(self, statelist):
         """
         SLOT: don't change name unless you know what you are doing
@@ -1025,7 +1063,7 @@ class LockboxWidget(ModuleWidget):
             self.hide_lock()
             self._set_button_green(self.button_sweep)
         else:
-            if stage != self.module.final_stage:
+            if stage != self.module.sequence[-1]:
                 self._set_button_green(stage._widget.button_goto)
             else:
                 self._set_button_green(self.module.sequence[-1]._widget.button_goto, color='darkGreen')
@@ -1068,11 +1106,8 @@ class LockboxWidget(ModuleWidget):
         elif module.current_state == 'unlock':
             return 'darkRed'
         else:
-            # should be locked
-            if islocked is None:
-                islocked = module.is_locked(loglevel=logging.DEBUG)
             if islocked:
-                if module.current_stage == module.final_stage:
+                if module.current_stage == module.sequence[-1]:
                     # locked and in last stage
                     return 'green'
                 else:

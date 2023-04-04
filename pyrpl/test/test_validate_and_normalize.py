@@ -7,7 +7,6 @@ from pyrpl.software_modules.module_managers import *
 from pyrpl.hardware_modules import *
 from pyrpl.modules import *
 from pyrpl import APP
-from pyrpl.async_utils import sleep as async_sleep
 from qtpy import QtCore
 from .test_load_save import scramble_values
 

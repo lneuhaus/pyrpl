@@ -251,7 +251,7 @@ class TestIir(TestPyrpl):
         na = self.pyrpl.na
         na.input = module
         na._logger.info("Starting NA acquisition...")
-        data = na.curve()
+        data = na.single()
         na._logger.info("NA acquisition finished...")
         f = na.data_x
         extrastring = str(setting)

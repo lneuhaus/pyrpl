@@ -1,6 +1,6 @@
 from qtpy import QtCore, QtWidgets
 import time
-from pyrpl.async_utils import sleep as async_sleep
+from pyrpl.async_utils import sleep
 
 """ what is this file for? delete it? """
 
@@ -9,7 +9,7 @@ if False:
 
     pyrpl = Pyrpl(config="nosetests_source.yml",
                   source="nosetests_config.yml")
-    async_sleep(0.5)
+    sleep(0.5)
 
     class ToPasteInNotebook(object):
         def coucou(self):
@@ -27,7 +27,7 @@ if False:
             tic = time.time()
             self.timer.start()
             while self.count<10:
-                async_sleep(0.01)
+                sleep(0.01)
             duration = time.time() - tic
             assert(duration<1), duration  # should this not be >1 ???
 

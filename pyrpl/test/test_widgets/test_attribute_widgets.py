@@ -2,13 +2,12 @@ import logging
 logger = logging.getLogger(name=__name__)
 import time
 import numpy as np
-from pyrpl.async_utils import sleep as async_sleep
+from pyrpl.async_utils import sleep
 from qtpy import QtCore, QtWidgets
 from pyrpl.test.test_base import TestPyrpl
 from pyrpl import APP
 from pyrpl.curvedb import CurveDB
 from pyrpl.widgets.startup_widget import HostnameSelectorWidget
-from pyrpl.async_utils import sleep as async_sleep
 from pyrpl.widgets.spinbox import NumberSpinBox
 from pyrpl.widgets.attribute_widgets import NumberAttributeWidget
 from pyrpl.hardware_modules.iir import IIR
@@ -67,17 +66,17 @@ class TestAttributeWidgets(TestPyrpl):
 
         # go up
         QtTest.QTest.keyPress(aw, QtCore.Qt.Key_Up)
-        async_sleep(self._TEST_SPINBOX_BUTTON_DOWN_TIME)
+        sleep(self._TEST_SPINBOX_BUTTON_DOWN_TIME)
         QtTest.QTest.keyRelease(aw, QtCore.Qt.Key_Up)
-        async_sleep(self._TEST_SPINBOX_BUTTON_DOWN_TIME)
+        sleep(self._TEST_SPINBOX_BUTTON_DOWN_TIME)
         new_val = getattr(mod, name)
         assert(new_val > m_value), (new_val, m_value, mod.name, name)
 
         # go down
         QtTest.QTest.keyPress(aw, QtCore.Qt.Key_Down)
-        async_sleep(self._TEST_SPINBOX_BUTTON_DOWN_TIME)
+        sleep(self._TEST_SPINBOX_BUTTON_DOWN_TIME)
         QtTest.QTest.keyRelease(aw, QtCore.Qt.Key_Down)
-        async_sleep(self._TEST_SPINBOX_BUTTON_DOWN_TIME)
+        sleep(self._TEST_SPINBOX_BUTTON_DOWN_TIME)
         new_new_val = getattr(mod, name)
         assert (new_new_val < new_val), (new_new_val, new_val, mod.name, name)
 

@@ -66,7 +66,7 @@ module red_pitaya_iir_block
 #(  parameter IIRBITS = 32, //46        // iir coefficients represented with IIRBITS bits
     parameter IIRSHIFT = 29, //30       // iir coefficients FIXED POINT at bit IIRSHIFT
     parameter IIRSTAGES = 14, //20       // maximum number of parallel biquads
-    parameter IIRSIGNALBITS= 32, //40 //32  // internally represent calculated results with IIRSIGNALBITS bits (32 is really necessary)
+    parameter IIRSIGNALBITS = 32, //32,internally represent calculated results (32 is really necessary)
     parameter SIGNALBITS = 14,      // in- and output signal bitwidth
     parameter SIGNALSHIFT = 3, //5,       // over-represent input by SIGNALSHIFT bits (e.g. once input averaging is implemented)
     parameter LOOPBITS = 10, //8
@@ -217,8 +217,8 @@ always @(posedge clk_i) begin
         stage2 <= {LOOPBITS{1'b0}};
         stage3 <= {LOOPBITS{1'b0}};
         stage4 <= {LOOPBITS{1'b0}};
-        stage5 <= {LOOPBITS{1'b0}};
-        stage6 <= {LOOPBITS{1'b0}};
+        //stage5 <= {LOOPBITS{1'b0}};
+        //stage6 <= {LOOPBITS{1'b0}};
     end
     else begin
         overflow <= overflow | overflow_i;
@@ -231,8 +231,8 @@ always @(posedge clk_i) begin
     stage2 <= stage1;
     stage3 <= stage2;
     stage4 <= stage3;
-    stage5 <= stage4;
-    stage6 <= stage5;
+    //stage5 <= stage4;
+    //stage6 <= stage5;
 end
 
 //actual signal treatment
@@ -250,17 +250,24 @@ reg signed [IIRSIGNALBITS-1:0] x0;
 //reg signed [IIRSIGNALBITS-1:0] x0_sum;
 //reg signed [IIRSIGNALBITS-1:0] x0;
 
-reg signed [IIRSIGNALBITS-1:0] y0;
+//reg signed [IIRSIGNALBITS-1:0] y0;
 reg signed [IIRSIGNALBITS-1:0] y1a;
 reg signed [IIRSIGNALBITS-1:0] y2a;
-reg signed [IIRSIGNALBITS-1:0] y1b;
+reg signed [IIRSIGNALBITS-1:0] x0b;
+reg signed [IIRSIGNALBITS-1:0] x1b;
 
 reg signed [IIRSIGNALBITS-1:0] y1_i [0:IIRSTAGES-1];
 reg signed [IIRSIGNALBITS-1:0] y2_i [0:IIRSTAGES-1];
+reg signed [IIRSIGNALBITS-1:0] x1_i [0:IIRSTAGES-1];
+reg signed [IIRSIGNALBITS-1:0] x0_i [0:IIRSTAGES-1];
+//reg signed [IIRSIGNALBITS-1:0] x2_i [0:IIRSTAGES-1];
+
 //reg signed [IIRSIGNALBITS-1:0] z1_i [0:IIRSTAGES-1];
 
+//wire signed [IIRSIGNALBITS-1:0] p_ay1_over_2; // since a1 can go up to 2
 wire signed [IIRSIGNALBITS-1:0] p_ay1_full;
 wire signed [IIRSIGNALBITS-1:0] p_ay2_full;
+
 
 red_pitaya_product_sat #( .BITS_IN1(IIRSIGNALBITS), .BITS_IN2(IIRBITS), .SHIFT(IIRSHIFT), .BITS_OUT(IIRSIGNALBITS))
  p_ay1_module (
@@ -269,6 +276,9 @@ red_pitaya_product_sat #( .BITS_IN1(IIRSIGNALBITS), .BITS_IN2(IIRBITS), .SHIFT(I
   .product_o(p_ay1_full),
   .overflow (overflow_i[0])
   );
+
+//assign p_ay1_full = {p_ay1_over_2, 1'b0};
+
 red_pitaya_product_sat #( .BITS_IN1(IIRSIGNALBITS), .BITS_IN2(IIRBITS), .SHIFT(IIRSHIFT), .BITS_OUT(IIRSIGNALBITS))
    p_ay2_module (
     .factor1_i(y2a),
@@ -279,48 +289,52 @@ red_pitaya_product_sat #( .BITS_IN1(IIRSIGNALBITS), .BITS_IN2(IIRBITS), .SHIFT(I
 reg signed [IIRSIGNALBITS-1:0] p_ay1;
 reg signed [IIRSIGNALBITS-1:0] p_ay2;
 
-wire signed [IIRSIGNALBITS+2-1:0] y0_sum;
-assign y0_sum = x0 + p_ay1 + p_ay2;
-wire signed [IIRSIGNALBITS-1:0] y0_full;
-red_pitaya_saturate #( .BITS_IN (IIRSIGNALBITS+2), .SHIFT(0), .BITS_OUT(IIRSIGNALBITS))
-   s_y0_module (
-   .input_i(y0_sum),
-   .output_o(y0_full),
-   .overflow (overflow_i[2])
-    );
 
-wire signed [IIRSIGNALBITS-1:0] p_by0_full;
-wire signed [IIRSIGNALBITS-1:0] p_by1_full;
+wire signed [IIRSIGNALBITS-1:0] p_bx0_full;
+wire signed [IIRSIGNALBITS-1:0] p_bx1_full;
 red_pitaya_product_sat #( .BITS_IN1(IIRSIGNALBITS), .BITS_IN2(IIRBITS), .SHIFT(IIRSHIFT), .BITS_OUT(IIRSIGNALBITS))
- p_by0_module (
-  .factor1_i(y0),
+ p_bx0_module (
+  .factor1_i(x0b),
   .factor2_i(b0),
-  .product_o(p_by0_full),
+  .product_o(p_bx0_full),
   .overflow (overflow_i[3])
    );
 red_pitaya_product_sat #( .BITS_IN1(IIRSIGNALBITS), .BITS_IN2(IIRBITS), .SHIFT(IIRSHIFT), .BITS_OUT(IIRSIGNALBITS))
-   p_by1_module (
-    .factor1_i(y1b),
+   p_bx1_module (
+    .factor1_i(x1b),
     .factor2_i(b1),
-    .product_o(p_by1_full),
+    .product_o(p_bx1_full),
     .overflow (overflow_i[4])
      );
-reg signed [IIRSIGNALBITS-1:0] p_by0;
-reg signed [IIRSIGNALBITS-1:0] p_by1;
+reg signed [IIRSIGNALBITS-1:0] p_bx0;
+reg signed [IIRSIGNALBITS-1:0] p_bx1;
 
-wire signed [IIRSIGNALBITS+2-1:0] z0_sum;
-assign z0_sum = p_by0 + p_by1;
-wire signed [IIRSIGNALBITS-1:0] z0_full;
-red_pitaya_saturate #( 
-    .BITS_IN (IIRSIGNALBITS+2), 
-    .SHIFT(0), 
-    .BITS_OUT(IIRSIGNALBITS)
-    )
-   s_z0_module (
-   .input_i(z0_sum),
-   .output_o(z0_full),
-   .overflow (overflow_i[5])
-   );   
+
+wire signed [IIRSIGNALBITS+2-1:0] y_sum;
+assign y_sum = p_ay1 + p_ay2 + p_bx0 + p_bx1;
+wire signed [IIRSIGNALBITS-1:0] y_full;
+red_pitaya_saturate #( .BITS_IN (IIRSIGNALBITS+2), .SHIFT(0), .BITS_OUT(IIRSIGNALBITS))
+   s_y0_module (
+   .input_i(y_sum),
+   .output_o(y_full),
+   .overflow (overflow_i[2])
+    );
+
+
+//wire signed [IIRSIGNALBITS+2-1:0] z0_sum;
+//assign z0_sum = y0_full + p_bx0 + p_bx1;
+//wire signed [IIRSIGNALBITS-1:0] z0_full;
+//red_pitaya_saturate #(
+//    .BITS_IN (IIRSIGNALBITS+2),
+//    .SHIFT(0),
+//    .BITS_OUT(IIRSIGNALBITS)
+//    )
+//   s_z0_module (
+//   .input_i(z0_sum),
+//   .output_o(z0_full),
+//   .overflow (overflow_i[5])
+//   );
+
 reg signed [IIRSIGNALBITS-1:0] z0;
 //reg signed [IIRSIGNALBITS-1:0] z1;
 
@@ -342,8 +356,8 @@ red_pitaya_saturate #( .BITS_IN (IIRSIGNALBITS+4), .SHIFT(SIGNALSHIFT), .BITS_OU
 */
 // better solution - incremental adding - see below, here only saturator
 reg signed [IIRSIGNALBITS+4-1:0] dat_o_sum;
-wire [SIGNALBITS-1:0] dat_o_full;
-red_pitaya_saturate #( .BITS_IN (IIRSIGNALBITS+4), .SHIFT(SIGNALSHIFT), .BITS_OUT(SIGNALBITS))
+wire signed [SIGNALBITS-1:0] dat_o_full;
+  red_pitaya_saturate #( .BITS_IN (IIRSIGNALBITS+4), .SHIFT(SIGNALBITS + SIGNALSHIFT), .BITS_OUT(SIGNALBITS)) //.SHIFT(SIGNALSHIFT
    s_dat_o_module (
    .input_i(dat_o_sum),
    .output_o(dat_o_full),
@@ -355,77 +369,86 @@ reg signed [SIGNALBITS-1:0] signal_o;
 
 always @(posedge clk_i) begin
     // minimum delay implementation samples continuously new data
-    x0 <= dat_i_filtered;
+  x0 <= dat_i_filtered<<<(IIRSIGNALBITS - SIGNALBITS - SIGNALSHIFT - 1);//(IIRSHIFT - SIGNALBITS - SIGNALSHIFT); // probably better to shift by IIRSIGNALBITS
+    //$display("x0:%0d", x0);
     if (on==1'b0) begin
         for (i=0;i<IIRSTAGES;i=i+1) begin
             y1_i[i] <= {IIRSIGNALBITS{1'b0}};
             y2_i[i] <= {IIRSIGNALBITS{1'b0}};
+            x0_i[i] <= {IIRSIGNALBITS{1'b0}};
+            x1_i[i] <= {IIRSIGNALBITS{1'b0}};
+            //x2_i[i] <= {IIRSIGNALBITS{1'b0}};
         end
-        y0  <= {IIRSIGNALBITS{1'b0}};
+        //y0  <= {IIRSIGNALBITS{1'b0}};
         y1a <= {IIRSIGNALBITS{1'b0}};
         y2a <= {IIRSIGNALBITS{1'b0}};
-        y1b <= {IIRSIGNALBITS{1'b0}};
-        z0 <= {IIRSIGNALBITS{1'b0}};
+        x1b <= {IIRSIGNALBITS{1'b0}};
+        z0  <= {IIRSIGNALBITS{1'b0}};
 
         a1 <= {IIRBITS{1'b0}};
         a2 <= {IIRBITS{1'b0}};
         b0 <= {IIRBITS{1'b0}};
         b1 <= {IIRBITS{1'b0}};
-        
+
         p_ay1 <= {IIRSIGNALBITS{1'b0}};
         p_ay2 <= {IIRSIGNALBITS{1'b0}};
-        p_by0 <= {IIRSIGNALBITS{1'b0}};
-        p_by1 <= {IIRSIGNALBITS{1'b0}};
+        p_bx0 <= {IIRSIGNALBITS{1'b0}};
+        p_bx1 <= {IIRSIGNALBITS{1'b0}};
         signal_o <= {SIGNALBITS{1'b0}};
         //x0 <= {IIRSIGNALBITS{1'b0}};
         end
     else begin
-        // the computation will stretch over several cycles. while each computation is performed once per cycle, we will 
+        // the computation will stretch over several cycles. while each computation is performed once per cycle, we will
         // follow the signal of one particular biquad element as its signals go through the different phases of computation
         // over subsequent cycles
-
-        //cycle n 
+        //cycle n
         if (stage0<IIRSTAGES) begin
             y1a <= y1_i[stage0];
             a1 <= a1_i[stage0];
             y2a <= y2_i[stage0];
             a2 <= a2_i[stage0];
-            y2_i[stage0] <= y1_i[stage0]; //update y2 memory
+
+            b0 <= b0_i[stage0];
+            b1 <= b1_i[stage0];
+            x0b<= x0;
+            x1b<= x1_i[stage0];
+
+            x0_i[stage0]<=x0;
         end
         //cycle n+1
         if (stage1<IIRSTAGES) begin
             p_ay1 <= p_ay1_full;
             p_ay2 <= p_ay2_full;
-        end
 
-        // do this for zero-order hold
-        //if (stage1 == (loops-1) || stage1 == (IIRSTAGES-1))
-        //    x0 <= dat_i_filtered;
+            p_bx0 <= p_bx0_full;
+            p_bx1 <= p_bx1_full;
+        end
 
         //cycle n+2
         if (stage2<IIRSTAGES) begin
-            y0 <= y0_full;//no saturation here, because y0 is two bits longer than other signals
-            b0 <= b0_i[stage2];
-            y1b <= y1_i[stage2];
-            b1 <= b1_i[stage2];
-            y1_i[stage2] <= y0_full; //update y1 memory
+            //y0 <= y0_full;//no saturation here, because y0 is two bits longer than other signals
+            y1_i[stage2] <= y_full; //update y1 memory
+            y2_i[stage2] <= y1_i[stage2]; //update y2 memory
+            x1_i[stage2] <= x0_i[stage2];
+            z0 <= y_full;
         end
         //cycle n+3
-        if (stage3<IIRSTAGES) begin
-            p_by0 <= p_by0_full;
-            p_by1 <= p_by1_full;
-        end
+        //if (stage3<IIRSTAGES) begin
+          //p_by0 <= p_by0_full;
+          //p_by1 <= p_by1_full;
+          //$display("p_by1: %d", p_by1);
+        //end
         //cycle n+4
-        if (stage4<IIRSTAGES) begin
-            z0 <= z0_full;
-        end
+        //if (stage4<IIRSTAGES) begin
+            //z0 <= y_full;
+        //end
 
         // from step IIRSTAGES-1 to 0 (IIRSTAGES steps), increment the sum
 
         //cycle n+5
         // start with a reset when the highest stage corresponding to an iir
         // filter being executed
-        if (stage5 == (loops-1) || stage5 == (IIRSTAGES-1)) begin
+        if (stage3 == (loops-1) || stage3 == (IIRSTAGES-1)) begin
             dat_o_sum <= z0;
         end
         // then increment
@@ -433,11 +456,29 @@ always @(posedge clk_i) begin
             dat_o_sum <= dat_o_sum + z0;
         end
         // once cycle of 5 is complete, output the fresh sum (after saturation)
-        if (stage6 == 0) begin
+        if (stage4 == 0) begin
             signal_o <= dat_o_full;
         end
     end
     dat_o <= (shortcut==1'b1) ? dat_i_filtered[SIGNALSHIFT+SIGNALBITS-1:SIGNALSHIFT] : signal_o;
+  if(overflow_i!=0) begin
+    /*$display("%b", overflow_i);
+    $display("dat_o_sum: %d", dat_o_sum);
+    $display("y_sum: %d", y_sum);
+    $display("p_ay1_over_2: %d", p_ay1_over_2);
+    $display("p_ay1_full: %d", p_ay1_full);
+    $display("p_ay1: %d", p_ay1);
+    $display("p_ay2: %d", p_ay2);
+    $display("p_bx0: %d", p_bx0);
+    $display("p_bx1: %d", p_bx1);   */
+    $display("y1_i: %d", y1_i[1]);
+  end
+  //$display("p_ay1_over_2: %d", p_ay1_over_2);
+  //$display("p_ay1_full: %d", p_ay1_full);
+
+  $fwrite(fdebug,"%d\n", x0);
+  //$display("z0: %d", z0);
+  //$display("x0: %b", x0);
 end
 
 endmodule

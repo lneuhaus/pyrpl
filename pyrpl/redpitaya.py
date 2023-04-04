@@ -374,22 +374,22 @@ class RedPitaya(object):
             result = self.ssh.ask("./"+self.parameters['monitor_server_name']+" "+ str(self.parameters['port']))
             sleep(self.parameters['delay'])
             result += self.ssh.ask()
-            if not "sh" in result: 
+            if not "sh" in result:
                 self.logger.debug("Server application started on port %d",
                               self.parameters['port'])
                 return self.parameters['port']
             else: # means we tried the wrong binary version. make sure server is not running and try again with next file
                 self.endserver()
-        
+
         #try once more on a different port
         if self.parameters['port'] == self.parameters['defaultport']:
             self.parameters['port'] = random.randint(self.parameters['defaultport'],50000)
             self.logger.warning("Problems to start the server application. Trying again with a different port number %d",self.parameters['port'])
             return self.installserver()
-        
+
         self.logger.error("Server application could not be started. Try to recompile monitor_server on your RedPitaya (see manual). ")
         return None
-    
+
     def startserver(self):
         self.endserver()
         sleep(self.parameters['delay'])
@@ -406,7 +406,7 @@ class RedPitaya(object):
             return self.parameters['port']
         #something went wrong
         return self.installserver()
-    
+
     def endserver(self):
         try:
             self.ssh.ask('\x03') #exit running server application
@@ -418,7 +418,7 @@ class RedPitaya(object):
         # make sure no other monitor_server blocks the port
         self.ssh.ask('killall ' + self.parameters['monitor_server_name'])
         self._serverrunning = False
-        
+
     def endclient(self):
         del self.client
         self.client = None

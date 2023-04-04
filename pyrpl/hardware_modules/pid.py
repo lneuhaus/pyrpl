@@ -425,8 +425,8 @@ class Pid(FilterModule):
         returns the transfer function of a generic pid module
         delay is the module delay as found in pid._delay, p, i and d are the
         proportional, integral, and differential gains
-        frequency_correction is the module frequency_corection as
-        found in pid._frequency_corection
+        frequency_correction is the module frequency_correction as
+        found in pid._frequency_correction
         """
 
         frequencies = np.array(frequencies, dtype=np.complex)

@@ -1,8 +1,8 @@
 Copyright 1986-2015 Xilinx, Inc. All Rights Reserved.
 ------------------------------------------------------------------------------------
-| Tool Version : Vivado v.2015.4 (lin64) Build 1412921 Wed Nov 18 09:44:32 MST 2015
-| Date         : Wed Dec 12 13:16:11 2018
-| Host         : LPC running 64-bit Ubuntu 16.04.4 LTS
+| Tool Version : Vivado v.2015.4 (win64) Build 1412921 Wed Nov 18 09:43:45 MST 2015
+| Date         : Mon Sep 05 10:11:39 2022
+| Host         : SAMUEL-DESKTOP running 64-bit major release  (build 9200)
 | Command      : report_drc
 ------------------------------------------------------------------------------------
 
@@ -20,7 +20,7 @@ Table of Contents
       Design limits: <entire design considered>
            Ruledeck: default
              Max violations: <unlimited>
-             Violations found: 176
+             Violations found: 174
 
 2. REPORT DETAILS
 -----------------
@@ -126,72 +126,72 @@ Related violations: <none>
 
 DPIP-1#17 Warning
 Input pipelining  
-DSP i_dsp/genblk4[4].iir/p_by0_module/product0 input i_dsp/genblk4[4].iir/p_by0_module/product0/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk4[4].iir/p_bx0_module/product0 input i_dsp/genblk4[4].iir/p_bx0_module/product0/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#18 Warning
 Input pipelining  
-DSP i_dsp/genblk4[4].iir/p_by0_module/product0 input i_dsp/genblk4[4].iir/p_by0_module/product0/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk4[4].iir/p_bx0_module/product0 input i_dsp/genblk4[4].iir/p_bx0_module/product0/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#19 Warning
 Input pipelining  
-DSP i_dsp/genblk4[4].iir/p_by0_module/product0__0 input i_dsp/genblk4[4].iir/p_by0_module/product0__0/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk4[4].iir/p_bx0_module/product0__0 input i_dsp/genblk4[4].iir/p_bx0_module/product0__0/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#20 Warning
 Input pipelining  
-DSP i_dsp/genblk4[4].iir/p_by0_module/product0__0 input i_dsp/genblk4[4].iir/p_by0_module/product0__0/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk4[4].iir/p_bx0_module/product0__0 input i_dsp/genblk4[4].iir/p_bx0_module/product0__0/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#21 Warning
 Input pipelining  
-DSP i_dsp/genblk4[4].iir/p_by0_module/product0__1 input i_dsp/genblk4[4].iir/p_by0_module/product0__1/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk4[4].iir/p_bx0_module/product0__1 input i_dsp/genblk4[4].iir/p_bx0_module/product0__1/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#22 Warning
 Input pipelining  
-DSP i_dsp/genblk4[4].iir/p_by0_module/product0__1 input i_dsp/genblk4[4].iir/p_by0_module/product0__1/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk4[4].iir/p_bx0_module/product0__1 input i_dsp/genblk4[4].iir/p_bx0_module/product0__1/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#23 Warning
 Input pipelining  
-DSP i_dsp/genblk4[4].iir/p_by0_module/product0__2 input i_dsp/genblk4[4].iir/p_by0_module/product0__2/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk4[4].iir/p_bx0_module/product0__2 input i_dsp/genblk4[4].iir/p_bx0_module/product0__2/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#24 Warning
 Input pipelining  
-DSP i_dsp/genblk4[4].iir/p_by1_module/product0 input i_dsp/genblk4[4].iir/p_by1_module/product0/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk4[4].iir/p_bx1_module/product0 input i_dsp/genblk4[4].iir/p_bx1_module/product0/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#25 Warning
 Input pipelining  
-DSP i_dsp/genblk4[4].iir/p_by1_module/product0 input i_dsp/genblk4[4].iir/p_by1_module/product0/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk4[4].iir/p_bx1_module/product0 input i_dsp/genblk4[4].iir/p_bx1_module/product0/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#26 Warning
 Input pipelining  
-DSP i_dsp/genblk4[4].iir/p_by1_module/product0__0 input i_dsp/genblk4[4].iir/p_by1_module/product0__0/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk4[4].iir/p_bx1_module/product0__0 input i_dsp/genblk4[4].iir/p_bx1_module/product0__0/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#27 Warning
 Input pipelining  
-DSP i_dsp/genblk4[4].iir/p_by1_module/product0__0 input i_dsp/genblk4[4].iir/p_by1_module/product0__0/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk4[4].iir/p_bx1_module/product0__0 input i_dsp/genblk4[4].iir/p_bx1_module/product0__0/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#28 Warning
 Input pipelining  
-DSP i_dsp/genblk4[4].iir/p_by1_module/product0__1 input i_dsp/genblk4[4].iir/p_by1_module/product0__1/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk4[4].iir/p_bx1_module/product0__1 input i_dsp/genblk4[4].iir/p_bx1_module/product0__1/A[29:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#29 Warning
 Input pipelining  
-DSP i_dsp/genblk4[4].iir/p_by1_module/product0__1 input i_dsp/genblk4[4].iir/p_by1_module/product0__1/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk4[4].iir/p_bx1_module/product0__1 input i_dsp/genblk4[4].iir/p_bx1_module/product0__1/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#30 Warning
 Input pipelining  
-DSP i_dsp/genblk4[4].iir/p_by1_module/product0__2 input i_dsp/genblk4[4].iir/p_by1_module/product0__2/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
+DSP i_dsp/genblk4[4].iir/p_bx1_module/product0__2 input i_dsp/genblk4[4].iir/p_bx1_module/product0__2/B[17:0] is not pipelined. Pipelining DSP48 input will improve performance.
 Related violations: <none>
 
 DPIP-1#31 Warning
@@ -421,42 +421,42 @@ Related violations: <none>
 
 DPOP-1#11 Warning
 PREG Output pipelining  
-DSP i_dsp/genblk4[4].iir/p_by0_module/product0 output i_dsp/genblk4[4].iir/p_by0_module/product0/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
+DSP i_dsp/genblk4[4].iir/p_bx0_module/product0 output i_dsp/genblk4[4].iir/p_bx0_module/product0/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
 Related violations: <none>
 
 DPOP-1#12 Warning
 PREG Output pipelining  
-DSP i_dsp/genblk4[4].iir/p_by0_module/product0__0 output i_dsp/genblk4[4].iir/p_by0_module/product0__0/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
+DSP i_dsp/genblk4[4].iir/p_bx0_module/product0__0 output i_dsp/genblk4[4].iir/p_bx0_module/product0__0/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
 Related violations: <none>
 
 DPOP-1#13 Warning
 PREG Output pipelining  
-DSP i_dsp/genblk4[4].iir/p_by0_module/product0__1 output i_dsp/genblk4[4].iir/p_by0_module/product0__1/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
+DSP i_dsp/genblk4[4].iir/p_bx0_module/product0__1 output i_dsp/genblk4[4].iir/p_bx0_module/product0__1/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
 Related violations: <none>
 
 DPOP-1#14 Warning
 PREG Output pipelining  
-DSP i_dsp/genblk4[4].iir/p_by0_module/product0__2 output i_dsp/genblk4[4].iir/p_by0_module/product0__2/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
+DSP i_dsp/genblk4[4].iir/p_bx0_module/product0__2 output i_dsp/genblk4[4].iir/p_bx0_module/product0__2/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
 Related violations: <none>
 
 DPOP-1#15 Warning
 PREG Output pipelining  
-DSP i_dsp/genblk4[4].iir/p_by1_module/product0 output i_dsp/genblk4[4].iir/p_by1_module/product0/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
+DSP i_dsp/genblk4[4].iir/p_bx1_module/product0 output i_dsp/genblk4[4].iir/p_bx1_module/product0/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
 Related violations: <none>
 
 DPOP-1#16 Warning
 PREG Output pipelining  
-DSP i_dsp/genblk4[4].iir/p_by1_module/product0__0 output i_dsp/genblk4[4].iir/p_by1_module/product0__0/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
+DSP i_dsp/genblk4[4].iir/p_bx1_module/product0__0 output i_dsp/genblk4[4].iir/p_bx1_module/product0__0/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
 Related violations: <none>
 
 DPOP-1#17 Warning
 PREG Output pipelining  
-DSP i_dsp/genblk4[4].iir/p_by1_module/product0__1 output i_dsp/genblk4[4].iir/p_by1_module/product0__1/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
+DSP i_dsp/genblk4[4].iir/p_bx1_module/product0__1 output i_dsp/genblk4[4].iir/p_bx1_module/product0__1/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
 Related violations: <none>
 
 DPOP-1#18 Warning
 PREG Output pipelining  
-DSP i_dsp/genblk4[4].iir/p_by1_module/product0__2 output i_dsp/genblk4[4].iir/p_by1_module/product0__2/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
+DSP i_dsp/genblk4[4].iir/p_bx1_module/product0__2 output i_dsp/genblk4[4].iir/p_bx1_module/product0__2/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
 Related violations: <none>
 
 DPOP-1#19 Warning
@@ -511,35 +511,30 @@ Related violations: <none>
 
 DPOP-1#29 Warning
 PREG Output pipelining  
-DSP i_dsp/genblk6[7].iq_2_outputs/demodulator/product1_reg output i_dsp/genblk6[7].iq_2_outputs/demodulator/product1_reg/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
+DSP i_dsp/genblk6[7].iq_2_outputs/modulator/firstproduct_saturation[0]/product output i_dsp/genblk6[7].iq_2_outputs/modulator/firstproduct_saturation[0]/product/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
 Related violations: <none>
 
 DPOP-1#30 Warning
 PREG Output pipelining  
-DSP i_dsp/genblk6[7].iq_2_outputs/modulator/firstproduct_saturation[0]/product output i_dsp/genblk6[7].iq_2_outputs/modulator/firstproduct_saturation[0]/product/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
+DSP i_dsp/genblk6[7].iq_2_outputs/modulator/firstproduct_saturation[1]/product output i_dsp/genblk6[7].iq_2_outputs/modulator/firstproduct_saturation[1]/product/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
 Related violations: <none>
 
 DPOP-1#31 Warning
 PREG Output pipelining  
-DSP i_dsp/genblk6[7].iq_2_outputs/modulator/firstproduct_saturation[1]/product output i_dsp/genblk6[7].iq_2_outputs/modulator/firstproduct_saturation[1]/product/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
+DSP i_dsp/genblk6[7].iq_2_outputs/modulator/i0_product_and_sat/product output i_dsp/genblk6[7].iq_2_outputs/modulator/i0_product_and_sat/product/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
 Related violations: <none>
 
 DPOP-1#32 Warning
 PREG Output pipelining  
-DSP i_dsp/genblk6[7].iq_2_outputs/modulator/i0_product_and_sat/product output i_dsp/genblk6[7].iq_2_outputs/modulator/i0_product_and_sat/product/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
+DSP i_dsp/genblk6[7].iq_2_outputs/modulator/q0_product_and_sat/product output i_dsp/genblk6[7].iq_2_outputs/modulator/q0_product_and_sat/product/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
 Related violations: <none>
 
 DPOP-1#33 Warning
 PREG Output pipelining  
-DSP i_dsp/genblk6[7].iq_2_outputs/modulator/q0_product_and_sat/product output i_dsp/genblk6[7].iq_2_outputs/modulator/q0_product_and_sat/product/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
-Related violations: <none>
-
-DPOP-1#34 Warning
-PREG Output pipelining  
 DSP i_dsp/genblk6[7].iq_2_outputs/modulator/secondproduct1 output i_dsp/genblk6[7].iq_2_outputs/modulator/secondproduct1/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
 Related violations: <none>
 
-DPOP-1#35 Warning
+DPOP-1#34 Warning
 PREG Output pipelining  
 DSP i_dsp/genblk6[7].iq_2_outputs/modulator/secondproduct2 output i_dsp/genblk6[7].iq_2_outputs/modulator/secondproduct2/P[47:0] is not pipelined (PREG=0). Pipelining the DSP48 output will improve performance and often saves power so it is suggested whenever possible to fully pipeline this function.  If this DSP48 function was inferred, it is suggested to describe an additional register stage after this function.  If the DSP48 was instantiated in the design, it is suggested to set the PREG attribute to 1.
 Related violations: <none>
@@ -601,42 +596,42 @@ Related violations: <none>
 
 DPOP-2#12 Warning
 MREG Output pipelining  
-DSP i_dsp/genblk4[4].iir/p_by0_module/product0 multiplier stage i_dsp/genblk4[4].iir/p_by0_module/product0/P[47:0] is not pipelined (MREG=0). Pipelining the multiplier function will improve performance and will save significant power so it is suggested whenever possible to fully pipeline this function.  If this multiplier was inferred, it is suggested to describe an additional register stage after this function.  If there is no registered adder/accumulator following the multiply function, two pipeline stages are suggested to allow both the MREG and PREG registers to be used.  If the DSP48 was instantiated in the design, it is suggested to set both the MREG and PREG attributes to 1 when performing multiply functions.
+DSP i_dsp/genblk4[4].iir/p_bx0_module/product0 multiplier stage i_dsp/genblk4[4].iir/p_bx0_module/product0/P[47:0] is not pipelined (MREG=0). Pipelining the multiplier function will improve performance and will save significant power so it is suggested whenever possible to fully pipeline this function.  If this multiplier was inferred, it is suggested to describe an additional register stage after this function.  If there is no registered adder/accumulator following the multiply function, two pipeline stages are suggested to allow both the MREG and PREG registers to be used.  If the DSP48 was instantiated in the design, it is suggested to set both the MREG and PREG attributes to 1 when performing multiply functions.
 Related violations: <none>
 
 DPOP-2#13 Warning
 MREG Output pipelining  
-DSP i_dsp/genblk4[4].iir/p_by0_module/product0__0 multiplier stage i_dsp/genblk4[4].iir/p_by0_module/product0__0/P[47:0] is not pipelined (MREG=0). Pipelining the multiplier function will improve performance and will save significant power so it is suggested whenever possible to fully pipeline this function.  If this multiplier was inferred, it is suggested to describe an additional register stage after this function.  If there is no registered adder/accumulator following the multiply function, two pipeline stages are suggested to allow both the MREG and PREG registers to be used.  If the DSP48 was instantiated in the design, it is suggested to set both the MREG and PREG attributes to 1 when performing multiply functions.
+DSP i_dsp/genblk4[4].iir/p_bx0_module/product0__0 multiplier stage i_dsp/genblk4[4].iir/p_bx0_module/product0__0/P[47:0] is not pipelined (MREG=0). Pipelining the multiplier function will improve performance and will save significant power so it is suggested whenever possible to fully pipeline this function.  If this multiplier was inferred, it is suggested to describe an additional register stage after this function.  If there is no registered adder/accumulator following the multiply function, two pipeline stages are suggested to allow both the MREG and PREG registers to be used.  If the DSP48 was instantiated in the design, it is suggested to set both the MREG and PREG attributes to 1 when performing multiply functions.
 Related violations: <none>
 
 DPOP-2#14 Warning
 MREG Output pipelining  
-DSP i_dsp/genblk4[4].iir/p_by0_module/product0__1 multiplier stage i_dsp/genblk4[4].iir/p_by0_module/product0__1/P[47:0] is not pipelined (MREG=0). Pipelining the multiplier function will improve performance and will save significant power so it is suggested whenever possible to fully pipeline this function.  If this multiplier was inferred, it is suggested to describe an additional register stage after this function.  If there is no registered adder/accumulator following the multiply function, two pipeline stages are suggested to allow both the MREG and PREG registers to be used.  If the DSP48 was instantiated in the design, it is suggested to set both the MREG and PREG attributes to 1 when performing multiply functions.
+DSP i_dsp/genblk4[4].iir/p_bx0_module/product0__1 multiplier stage i_dsp/genblk4[4].iir/p_bx0_module/product0__1/P[47:0] is not pipelined (MREG=0). Pipelining the multiplier function will improve performance and will save significant power so it is suggested whenever possible to fully pipeline this function.  If this multiplier was inferred, it is suggested to describe an additional register stage after this function.  If there is no registered adder/accumulator following the multiply function, two pipeline stages are suggested to allow both the MREG and PREG registers to be used.  If the DSP48 was instantiated in the design, it is suggested to set both the MREG and PREG attributes to 1 when performing multiply functions.
 Related violations: <none>
 
 DPOP-2#15 Warning
 MREG Output pipelining  
-DSP i_dsp/genblk4[4].iir/p_by0_module/product0__2 multiplier stage i_dsp/genblk4[4].iir/p_by0_module/product0__2/P[47:0] is not pipelined (MREG=0). Pipelining the multiplier function will improve performance and will save significant power so it is suggested whenever possible to fully pipeline this function.  If this multiplier was inferred, it is suggested to describe an additional register stage after this function.  If there is no registered adder/accumulator following the multiply function, two pipeline stages are suggested to allow both the MREG and PREG registers to be used.  If the DSP48 was instantiated in the design, it is suggested to set both the MREG and PREG attributes to 1 when performing multiply functions.
+DSP i_dsp/genblk4[4].iir/p_bx0_module/product0__2 multiplier stage i_dsp/genblk4[4].iir/p_bx0_module/product0__2/P[47:0] is not pipelined (MREG=0). Pipelining the multiplier function will improve performance and will save significant power so it is suggested whenever possible to fully pipeline this function.  If this multiplier was inferred, it is suggested to describe an additional register stage after this function.  If there is no registered adder/accumulator following the multiply function, two pipeline stages are suggested to allow both the MREG and PREG registers to be used.  If the DSP48 was instantiated in the design, it is suggested to set both the MREG and PREG attributes to 1 when performing multiply functions.
 Related violations: <none>
 
 DPOP-2#16 Warning
 MREG Output pipelining  
-DSP i_dsp/genblk4[4].iir/p_by1_module/product0 multiplier stage i_dsp/genblk4[4].iir/p_by1_module/product0/P[47:0] is not pipelined (MREG=0). Pipelining the multiplier function will improve performance and will save significant power so it is suggested whenever possible to fully pipeline this function.  If this multiplier was inferred, it is suggested to describe an additional register stage after this function.  If there is no registered adder/accumulator following the multiply function, two pipeline stages are suggested to allow both the MREG and PREG registers to be used.  If the DSP48 was instantiated in the design, it is suggested to set both the MREG and PREG attributes to 1 when performing multiply functions.
+DSP i_dsp/genblk4[4].iir/p_bx1_module/product0 multiplier stage i_dsp/genblk4[4].iir/p_bx1_module/product0/P[47:0] is not pipelined (MREG=0). Pipelining the multiplier function will improve performance and will save significant power so it is suggested whenever possible to fully pipeline this function.  If this multiplier was inferred, it is suggested to describe an additional register stage after this function.  If there is no registered adder/accumulator following the multiply function, two pipeline stages are suggested to allow both the MREG and PREG registers to be used.  If the DSP48 was instantiated in the design, it is suggested to set both the MREG and PREG attributes to 1 when performing multiply functions.
 Related violations: <none>
 
 DPOP-2#17 Warning
 MREG Output pipelining  
-DSP i_dsp/genblk4[4].iir/p_by1_module/product0__0 multiplier stage i_dsp/genblk4[4].iir/p_by1_module/product0__0/P[47:0] is not pipelined (MREG=0). Pipelining the multiplier function will improve performance and will save significant power so it is suggested whenever possible to fully pipeline this function.  If this multiplier was inferred, it is suggested to describe an additional register stage after this function.  If there is no registered adder/accumulator following the multiply function, two pipeline stages are suggested to allow both the MREG and PREG registers to be used.  If the DSP48 was instantiated in the design, it is suggested to set both the MREG and PREG attributes to 1 when performing multiply functions.
+DSP i_dsp/genblk4[4].iir/p_bx1_module/product0__0 multiplier stage i_dsp/genblk4[4].iir/p_bx1_module/product0__0/P[47:0] is not pipelined (MREG=0). Pipelining the multiplier function will improve performance and will save significant power so it is suggested whenever possible to fully pipeline this function.  If this multiplier was inferred, it is suggested to describe an additional register stage after this function.  If there is no registered adder/accumulator following the multiply function, two pipeline stages are suggested to allow both the MREG and PREG registers to be used.  If the DSP48 was instantiated in the design, it is suggested to set both the MREG and PREG attributes to 1 when performing multiply functions.
 Related violations: <none>
 
 DPOP-2#18 Warning
 MREG Output pipelining  
-DSP i_dsp/genblk4[4].iir/p_by1_module/product0__1 multiplier stage i_dsp/genblk4[4].iir/p_by1_module/product0__1/P[47:0] is not pipelined (MREG=0). Pipelining the multiplier function will improve performance and will save significant power so it is suggested whenever possible to fully pipeline this function.  If this multiplier was inferred, it is suggested to describe an additional register stage after this function.  If there is no registered adder/accumulator following the multiply function, two pipeline stages are suggested to allow both the MREG and PREG registers to be used.  If the DSP48 was instantiated in the design, it is suggested to set both the MREG and PREG attributes to 1 when performing multiply functions.
+DSP i_dsp/genblk4[4].iir/p_bx1_module/product0__1 multiplier stage i_dsp/genblk4[4].iir/p_bx1_module/product0__1/P[47:0] is not pipelined (MREG=0). Pipelining the multiplier function will improve performance and will save significant power so it is suggested whenever possible to fully pipeline this function.  If this multiplier was inferred, it is suggested to describe an additional register stage after this function.  If there is no registered adder/accumulator following the multiply function, two pipeline stages are suggested to allow both the MREG and PREG registers to be used.  If the DSP48 was instantiated in the design, it is suggested to set both the MREG and PREG attributes to 1 when performing multiply functions.
 Related violations: <none>
 
 DPOP-2#19 Warning
 MREG Output pipelining  
-DSP i_dsp/genblk4[4].iir/p_by1_module/product0__2 multiplier stage i_dsp/genblk4[4].iir/p_by1_module/product0__2/P[47:0] is not pipelined (MREG=0). Pipelining the multiplier function will improve performance and will save significant power so it is suggested whenever possible to fully pipeline this function.  If this multiplier was inferred, it is suggested to describe an additional register stage after this function.  If there is no registered adder/accumulator following the multiply function, two pipeline stages are suggested to allow both the MREG and PREG registers to be used.  If the DSP48 was instantiated in the design, it is suggested to set both the MREG and PREG attributes to 1 when performing multiply functions.
+DSP i_dsp/genblk4[4].iir/p_bx1_module/product0__2 multiplier stage i_dsp/genblk4[4].iir/p_bx1_module/product0__2/P[47:0] is not pipelined (MREG=0). Pipelining the multiplier function will improve performance and will save significant power so it is suggested whenever possible to fully pipeline this function.  If this multiplier was inferred, it is suggested to describe an additional register stage after this function.  If there is no registered adder/accumulator following the multiply function, two pipeline stages are suggested to allow both the MREG and PREG registers to be used.  If the DSP48 was instantiated in the design, it is suggested to set both the MREG and PREG attributes to 1 when performing multiply functions.
 Related violations: <none>
 
 DPOP-2#20 Warning
@@ -751,7 +746,7 @@ Related violations: <none>
 
 PLIO-7#1 Warning
 Placement Constraints Check for IO constraints  
-An IO Bus FIXED_IO_mio[53:0] with more than one IO standard is found. Components associated with this bus are: LVCMOS25 (FIXED_IO_mio[53], FIXED_IO_mio[52], FIXED_IO_mio[51], FIXED_IO_mio[50], FIXED_IO_mio[49], FIXED_IO_mio[48], FIXED_IO_mio[47], FIXED_IO_mio[46], FIXED_IO_mio[45], FIXED_IO_mio[44], FIXED_IO_mio[43], FIXED_IO_mio[42], FIXED_IO_mio[41], FIXED_IO_mio[40], FIXED_IO_mio[39] (the first 15 of 38 listed)); LVCMOS33 (FIXED_IO_mio[15], FIXED_IO_mio[14], FIXED_IO_mio[13], FIXED_IO_mio[12], FIXED_IO_mio[11], FIXED_IO_mio[10], FIXED_IO_mio[9], FIXED_IO_mio[8], FIXED_IO_mio[7], FIXED_IO_mio[6], FIXED_IO_mio[5], FIXED_IO_mio[4], FIXED_IO_mio[3], FIXED_IO_mio[2], FIXED_IO_mio[1] (the first 15 of 16 listed)); 
+An IO Bus FIXED_IO_mio[53:0] with more than one IO standard is found. Components associated with this bus are: LVCMOS33 (FIXED_IO_mio[15], FIXED_IO_mio[14], FIXED_IO_mio[13], FIXED_IO_mio[12], FIXED_IO_mio[11], FIXED_IO_mio[10], FIXED_IO_mio[9], FIXED_IO_mio[8], FIXED_IO_mio[7], FIXED_IO_mio[6], FIXED_IO_mio[5], FIXED_IO_mio[4], FIXED_IO_mio[3], FIXED_IO_mio[2], FIXED_IO_mio[1] (the first 15 of 16 listed)); LVCMOS25 (FIXED_IO_mio[53], FIXED_IO_mio[52], FIXED_IO_mio[51], FIXED_IO_mio[50], FIXED_IO_mio[49], FIXED_IO_mio[48], FIXED_IO_mio[47], FIXED_IO_mio[46], FIXED_IO_mio[45], FIXED_IO_mio[44], FIXED_IO_mio[43], FIXED_IO_mio[42], FIXED_IO_mio[41], FIXED_IO_mio[40], FIXED_IO_mio[39] (the first 15 of 38 listed)); 
 Related violations: <none>
 
 RTSTAT-10#1 Warning
@@ -763,201 +758,196 @@ XDCH-2#1 Warning
 Same min and max delay values on IO port  
 The same input delay of 3.400 ns has been defined on port 'adc_dat_a_i[10]' relative to clock adc_clk for both max and min. Make sure this reflects the design intent.
 set_input_delay -clock adc_clk 3.400 [get_ports {adc_dat_a_i[*]}]
-/home/leo/github/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 210)
+c:/Users/Samuel/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 210)
 Related violations: <none>
 
 XDCH-2#2 Warning
 Same min and max delay values on IO port  
 The same input delay of 3.400 ns has been defined on port 'adc_dat_a_i[11]' relative to clock adc_clk for both max and min. Make sure this reflects the design intent.
 set_input_delay -clock adc_clk 3.400 [get_ports {adc_dat_a_i[*]}]
-/home/leo/github/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 210)
+c:/Users/Samuel/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 210)
 Related violations: <none>
 
 XDCH-2#3 Warning
 Same min and max delay values on IO port  
 The same input delay of 3.400 ns has been defined on port 'adc_dat_a_i[12]' relative to clock adc_clk for both max and min. Make sure this reflects the design intent.
 set_input_delay -clock adc_clk 3.400 [get_ports {adc_dat_a_i[*]}]
-/home/leo/github/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 210)
+c:/Users/Samuel/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 210)
 Related violations: <none>
 
 XDCH-2#4 Warning
 Same min and max delay values on IO port  
 The same input delay of 3.400 ns has been defined on port 'adc_dat_a_i[13]' relative to clock adc_clk for both max and min. Make sure this reflects the design intent.
 set_input_delay -clock adc_clk 3.400 [get_ports {adc_dat_a_i[*]}]
-/home/leo/github/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 210)
+c:/Users/Samuel/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 210)
 Related violations: <none>
 
 XDCH-2#5 Warning
 Same min and max delay values on IO port  
 The same input delay of 3.400 ns has been defined on port 'adc_dat_a_i[14]' relative to clock adc_clk for both max and min. Make sure this reflects the design intent.
 set_input_delay -clock adc_clk 3.400 [get_ports {adc_dat_a_i[*]}]
-/home/leo/github/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 210)
+c:/Users/Samuel/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 210)
 Related violations: <none>
 
 XDCH-2#6 Warning
 Same min and max delay values on IO port  
 The same input delay of 3.400 ns has been defined on port 'adc_dat_a_i[15]' relative to clock adc_clk for both max and min. Make sure this reflects the design intent.
 set_input_delay -clock adc_clk 3.400 [get_ports {adc_dat_a_i[*]}]
-/home/leo/github/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 210)
+c:/Users/Samuel/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 210)
 Related violations: <none>
 
 XDCH-2#7 Warning
 Same min and max delay values on IO port  
 The same input delay of 3.400 ns has been defined on port 'adc_dat_a_i[2]' relative to clock adc_clk for both max and min. Make sure this reflects the design intent.
 set_input_delay -clock adc_clk 3.400 [get_ports {adc_dat_a_i[*]}]
-/home/leo/github/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 210)
+c:/Users/Samuel/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 210)
 Related violations: <none>
 
 XDCH-2#8 Warning
 Same min and max delay values on IO port  
 The same input delay of 3.400 ns has been defined on port 'adc_dat_a_i[3]' relative to clock adc_clk for both max and min. Make sure this reflects the design intent.
 set_input_delay -clock adc_clk 3.400 [get_ports {adc_dat_a_i[*]}]
-/home/leo/github/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 210)
+c:/Users/Samuel/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 210)
 Related violations: <none>
 
 XDCH-2#9 Warning
 Same min and max delay values on IO port  
 The same input delay of 3.400 ns has been defined on port 'adc_dat_a_i[4]' relative to clock adc_clk for both max and min. Make sure this reflects the design intent.
 set_input_delay -clock adc_clk 3.400 [get_ports {adc_dat_a_i[*]}]
-/home/leo/github/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 210)
+c:/Users/Samuel/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 210)
 Related violations: <none>
 
 XDCH-2#10 Warning
 Same min and max delay values on IO port  
 The same input delay of 3.400 ns has been defined on port 'adc_dat_a_i[5]' relative to clock adc_clk for both max and min. Make sure this reflects the design intent.
 set_input_delay -clock adc_clk 3.400 [get_ports {adc_dat_a_i[*]}]
-/home/leo/github/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 210)
+c:/Users/Samuel/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 210)
 Related violations: <none>
 
 XDCH-2#11 Warning
 Same min and max delay values on IO port  
 The same input delay of 3.400 ns has been defined on port 'adc_dat_a_i[6]' relative to clock adc_clk for both max and min. Make sure this reflects the design intent.
 set_input_delay -clock adc_clk 3.400 [get_ports {adc_dat_a_i[*]}]
-/home/leo/github/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 210)
+c:/Users/Samuel/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 210)
 Related violations: <none>
 
 XDCH-2#12 Warning
 Same min and max delay values on IO port  
 The same input delay of 3.400 ns has been defined on port 'adc_dat_a_i[7]' relative to clock adc_clk for both max and min. Make sure this reflects the design intent.
 set_input_delay -clock adc_clk 3.400 [get_ports {adc_dat_a_i[*]}]
-/home/leo/github/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 210)
+c:/Users/Samuel/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 210)
 Related violations: <none>
 
 XDCH-2#13 Warning
 Same min and max delay values on IO port  
 The same input delay of 3.400 ns has been defined on port 'adc_dat_a_i[8]' relative to clock adc_clk for both max and min. Make sure this reflects the design intent.
 set_input_delay -clock adc_clk 3.400 [get_ports {adc_dat_a_i[*]}]
-/home/leo/github/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 210)
+c:/Users/Samuel/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 210)
 Related violations: <none>
 
 XDCH-2#14 Warning
 Same min and max delay values on IO port  
 The same input delay of 3.400 ns has been defined on port 'adc_dat_a_i[9]' relative to clock adc_clk for both max and min. Make sure this reflects the design intent.
 set_input_delay -clock adc_clk 3.400 [get_ports {adc_dat_a_i[*]}]
-/home/leo/github/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 210)
+c:/Users/Samuel/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 210)
 Related violations: <none>
 
 XDCH-2#15 Warning
 Same min and max delay values on IO port  
 The same input delay of 3.400 ns has been defined on port 'adc_dat_b_i[10]' relative to clock adc_clk for both max and min. Make sure this reflects the design intent.
 set_input_delay -clock adc_clk 3.400 [get_ports {adc_dat_b_i[*]}]
-/home/leo/github/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 211)
+c:/Users/Samuel/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 211)
 Related violations: <none>
 
 XDCH-2#16 Warning
 Same min and max delay values on IO port  
 The same input delay of 3.400 ns has been defined on port 'adc_dat_b_i[11]' relative to clock adc_clk for both max and min. Make sure this reflects the design intent.
 set_input_delay -clock adc_clk 3.400 [get_ports {adc_dat_b_i[*]}]
-/home/leo/github/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 211)
+c:/Users/Samuel/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 211)
 Related violations: <none>
 
 XDCH-2#17 Warning
 Same min and max delay values on IO port  
 The same input delay of 3.400 ns has been defined on port 'adc_dat_b_i[12]' relative to clock adc_clk for both max and min. Make sure this reflects the design intent.
 set_input_delay -clock adc_clk 3.400 [get_ports {adc_dat_b_i[*]}]
-/home/leo/github/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 211)
+c:/Users/Samuel/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 211)
 Related violations: <none>
 
 XDCH-2#18 Warning
 Same min and max delay values on IO port  
 The same input delay of 3.400 ns has been defined on port 'adc_dat_b_i[13]' relative to clock adc_clk for both max and min. Make sure this reflects the design intent.
 set_input_delay -clock adc_clk 3.400 [get_ports {adc_dat_b_i[*]}]
-/home/leo/github/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 211)
+c:/Users/Samuel/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 211)
 Related violations: <none>
 
 XDCH-2#19 Warning
 Same min and max delay values on IO port  
 The same input delay of 3.400 ns has been defined on port 'adc_dat_b_i[14]' relative to clock adc_clk for both max and min. Make sure this reflects the design intent.
 set_input_delay -clock adc_clk 3.400 [get_ports {adc_dat_b_i[*]}]
-/home/leo/github/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 211)
+c:/Users/Samuel/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 211)
 Related violations: <none>
 
 XDCH-2#20 Warning
 Same min and max delay values on IO port  
 The same input delay of 3.400 ns has been defined on port 'adc_dat_b_i[15]' relative to clock adc_clk for both max and min. Make sure this reflects the design intent.
 set_input_delay -clock adc_clk 3.400 [get_ports {adc_dat_b_i[*]}]
-/home/leo/github/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 211)
+c:/Users/Samuel/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 211)
 Related violations: <none>
 
 XDCH-2#21 Warning
 Same min and max delay values on IO port  
 The same input delay of 3.400 ns has been defined on port 'adc_dat_b_i[2]' relative to clock adc_clk for both max and min. Make sure this reflects the design intent.
 set_input_delay -clock adc_clk 3.400 [get_ports {adc_dat_b_i[*]}]
-/home/leo/github/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 211)
+c:/Users/Samuel/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 211)
 Related violations: <none>
 
 XDCH-2#22 Warning
 Same min and max delay values on IO port  
 The same input delay of 3.400 ns has been defined on port 'adc_dat_b_i[3]' relative to clock adc_clk for both max and min. Make sure this reflects the design intent.
 set_input_delay -clock adc_clk 3.400 [get_ports {adc_dat_b_i[*]}]
-/home/leo/github/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 211)
+c:/Users/Samuel/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 211)
 Related violations: <none>
 
 XDCH-2#23 Warning
 Same min and max delay values on IO port  
 The same input delay of 3.400 ns has been defined on port 'adc_dat_b_i[4]' relative to clock adc_clk for both max and min. Make sure this reflects the design intent.
 set_input_delay -clock adc_clk 3.400 [get_ports {adc_dat_b_i[*]}]
-/home/leo/github/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 211)
+c:/Users/Samuel/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 211)
 Related violations: <none>
 
 XDCH-2#24 Warning
 Same min and max delay values on IO port  
 The same input delay of 3.400 ns has been defined on port 'adc_dat_b_i[5]' relative to clock adc_clk for both max and min. Make sure this reflects the design intent.
 set_input_delay -clock adc_clk 3.400 [get_ports {adc_dat_b_i[*]}]
-/home/leo/github/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 211)
+c:/Users/Samuel/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 211)
 Related violations: <none>
 
 XDCH-2#25 Warning
 Same min and max delay values on IO port  
 The same input delay of 3.400 ns has been defined on port 'adc_dat_b_i[6]' relative to clock adc_clk for both max and min. Make sure this reflects the design intent.
 set_input_delay -clock adc_clk 3.400 [get_ports {adc_dat_b_i[*]}]
-/home/leo/github/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 211)
+c:/Users/Samuel/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 211)
 Related violations: <none>
 
 XDCH-2#26 Warning
 Same min and max delay values on IO port  
 The same input delay of 3.400 ns has been defined on port 'adc_dat_b_i[7]' relative to clock adc_clk for both max and min. Make sure this reflects the design intent.
 set_input_delay -clock adc_clk 3.400 [get_ports {adc_dat_b_i[*]}]
-/home/leo/github/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 211)
+c:/Users/Samuel/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 211)
 Related violations: <none>
 
 XDCH-2#27 Warning
 Same min and max delay values on IO port  
 The same input delay of 3.400 ns has been defined on port 'adc_dat_b_i[8]' relative to clock adc_clk for both max and min. Make sure this reflects the design intent.
 set_input_delay -clock adc_clk 3.400 [get_ports {adc_dat_b_i[*]}]
-/home/leo/github/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 211)
+c:/Users/Samuel/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 211)
 Related violations: <none>
 
 XDCH-2#28 Warning
 Same min and max delay values on IO port  
 The same input delay of 3.400 ns has been defined on port 'adc_dat_b_i[9]' relative to clock adc_clk for both max and min. Make sure this reflects the design intent.
 set_input_delay -clock adc_clk 3.400 [get_ports {adc_dat_b_i[*]}]
-/home/leo/github/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 211)
-Related violations: <none>
-
-REQP-31#1 Advisory
-enum_PREG_0_connects_CEP_GND  
-i_dsp/genblk6[7].iq_2_outputs/demodulator/product1_reg: When the DSP48E1 PREG attribute is set to 0, the CEP input pin should be tied to GND to save power.
+c:/Users/Samuel/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 211)
 Related violations: <none>
 
 

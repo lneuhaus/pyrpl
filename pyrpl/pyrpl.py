@@ -155,7 +155,7 @@ from .memory import MemoryTree
 from .redpitaya import RedPitaya
 from . import pyrpl_utils
 from .software_modules import get_module
-from .async_utils import sleep as async_sleep
+from .async_utils import sleep
 
 # it is important that Lockbox is loaded before the models
 #from .software_modules.lockbox import *
@@ -416,10 +416,10 @@ class Pyrpl(object):
             w = self.widgets.pop()
             del w
         # do the job of actually destroying the widgets
-        async_sleep(0.1)
+        sleep(0.1)
         # make sure the save timer of the config file is not running and
         # all data are written to the harddisk
         self.c._write_to_file()
         # end redpitatya communication
         self.rp.end_all()
-        async_sleep(0.1)
+        sleep(0.1)

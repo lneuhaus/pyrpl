@@ -112,7 +112,8 @@ from ..widgets.module_widgets import SpecAnWidget
 
 import sys
 import scipy.signal as sig
-import scipy.fft
+import scipy.fftpack as fft
+
 
 # Some initial remarks about spectrum estimation:
 # Main source: Oppenheim + Schaefer, Digital Signal Processing, 1975
@@ -406,7 +407,7 @@ class SpectrumAnalyzer(AcquisitionModule):
         """
         :return: complex iq time trace
         """
-        res = self.scope._get_curve()
+        res = self.scope._get_trace()
 
         if self.baseband:
             return res[0][:self.data_length] + 1j*res[1][:self.data_length]
@@ -443,7 +444,8 @@ class SpectrumAnalyzer(AcquisitionModule):
         In baseband, only half of the points are returned
         :return: the real number of points that will eventually be returned
         """
-        return self.points/2 if self.baseband else self.points
+        points = int(self.data_length * self.PADDING_FACTOR)
+        return points//2 + 1 if self.baseband else points
 
     @property
     def frequencies(self):
@@ -454,7 +456,7 @@ class SpectrumAnalyzer(AcquisitionModule):
             return np.fft.rfftfreq(self.data_length*self.PADDING_FACTOR,
                                    self.sampling_time)
         else:
-            return self.center + scipy.fft.fftshift( scipy.fft.fftfreq(
+            return self.center + fft.fftshift( fft.fftfreq(
                                   self.data_length*self.PADDING_FACTOR,
                                   self.sampling_time)) #[self.useful_index()]
 
@@ -552,19 +554,24 @@ class SpectrumAnalyzer(AcquisitionModule):
     # Concrete implementation of AcquisitionModule methods
     # ----------------------------------------------------
 
-    @property
-    def data_x(self):
-        return self.frequencies
-
-    def _new_run_future(self):
-        # Redefined because a SpecAnRun needs to know its rbw
-        super(SpectrumAnalyzer, self)._new_run_future()
-        self._run_future.rbw = self.rbw
+    def _get_run_attributes(self):
+        params = super(SpectrumAnalyzer, self)._get_run_attributes()
+        params['rbw'] = self.rbw
+        return params
 
     def _free_up_resources(self):
         self.scope.free()
 
-    def _get_curve(self):
+    def _prepare_averaging(self):
+        super(SpectrumAnalyzer, self)._prepare_averaging()
+        self.current_avg = 0
+        if self.baseband:
+            self.data_avg = np.zeros((4, self._real_points))
+        else:
+            self.data_avg = np.zeros(self._real_points)
+        self.data_x = np.copy(self.frequencies)
+
+    def _get_trace(self):
         """
         No transfer_function correction
         :return:
@@ -604,7 +611,7 @@ class SpectrumAnalyzer(AcquisitionModule):
             return res/abs(self.transfer_function(self.frequencies))**2
         else:
             # Realize the complex fft of iq data
-            res = scipy.fft.fftshift(scipy.fft.fft(iq_data,
+            res = fft.fftshift(fft.fft(iq_data,
                                         self.data_length*self.PADDING_FACTOR))
             # at some point we need to cache the tf for performance
             self._last_curve_raw = np.abs(res)**2 # for debugging purpose
@@ -639,7 +646,7 @@ class SpectrumAnalyzer(AcquisitionModule):
     def _scope_duration(self):
         return self._scope_decimation()*8e-9*self.data_length
 
-    def _start_acquisition(self):
+    def _start_trace_acquisition(self):
         autosave_backup = self._autosave_active
         # setup iq module
         if not self.baseband:
@@ -673,9 +680,9 @@ class SpectrumAnalyzer(AcquisitionModule):
                          trigger_source="immediately",
                          ch1_active=True,
                          ch2_active=True,
-                         rolling_mode=False,
-                         running_state='stopped')
-        return self.scope._start_acquisition()
+                         rolling_mode=False)
+        self.scope.stop()
+        return self.scope._start_trace_acquisition()
 
     def save_curve(self):
         """
@@ -687,8 +694,8 @@ class SpectrumAnalyzer(AcquisitionModule):
         the db_system. Also, returns the list [curve_ch1, curve_ch2]...
         """
         if not self.baseband:
-            return super(SpectrumAnalyzer, self)._save_curve(self._run_future.data_x,
-                                                  self._run_future.data_avg,
+            return super(SpectrumAnalyzer, self)._save_curve(self.data_x,
+                                                  self.data_avg,
                                                   **self.setup_attributes)
         else:
             d = self.setup_attributes
@@ -699,15 +706,15 @@ class SpectrumAnalyzer(AcquisitionModule):
                 if active:
                     d.update({'ch': ch,
                               'name': self.curve_name + ' ch' + str(ch + 1)})
-                    curves[ch] = self._save_curve(self._run_future.data_x,
-                                                  self._run_future.data_avg[ch],
+                    curves[ch] = self._save_curve(self.data_x,
+                                                  self.data_avg[ch],
                                                   **d)
             if self.display_cross_amplitude:
                 d.update({'ch': 'cross',
                           'name': self.curve_name + ' cross'})
-                curves.append(self._save_curve(self._run_future.data_x,
-                                              self._run_future.data_avg[2] +
-                                               1j*self._run_future.data_avg[3],
+                curves.append(self._save_curve(self.data_x,
+                                              self.data_avg[2] +
+                                               1j*self.data_avg[3],
                                               **d))
             return curves
 

@@ -7,7 +7,7 @@ from pyrpl.software_modules.module_managers import *
 from pyrpl.hardware_modules import *
 from pyrpl.modules import *
 from pyrpl import APP
-from pyrpl.async_utils import sleep as async_sleep
+from pyrpl.async_utils import sleep
 from qtpy import QtCore
 
 
@@ -111,6 +111,6 @@ class TestLoadSave(TestPyrpl):
                     assert len(getattr(mod, attr)) == len(attr_val), "sequence"
                 else:
                     assert getattr(mod, attr)==attr_val, (mod, attr, attr_val, getattr(mod, attr))
-                async_sleep(0.01)  # randomly inserted in fear of bugs
-        async_sleep(0.1)  # randomly inserted in fear of bugs
+                sleep(0.01)  # randomly inserted in fear of bugs
+        sleep(0.1)  # randomly inserted in fear of bugs
 

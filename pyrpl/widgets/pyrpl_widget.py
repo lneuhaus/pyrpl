@@ -276,12 +276,17 @@ class PyrplWidget(QtWidgets.QMainWindow):
         self.timer_save_pos.stop()
         self.save_window_position()
         pyrpl.c._write_to_file()  # make sure positions are written
+        # the widget should be redisplayed afterwards if it was visible
+        visible = self.dock_widgets[name].isVisible()
         # replace dock widget
         self.remove_dock_widget(name)
         self.add_dock_widget(module._create_widget, name)
         # restore window position and widget visibility
         self.set_window_position()  # reset the same window position as before
         self.timer_save_pos.start()
+        if visible:
+            self.dock_widgets[name].show()
+
 
     def save_window_position(self):
         # Don't try to save position if window is closed (otherwise, random position is saved)

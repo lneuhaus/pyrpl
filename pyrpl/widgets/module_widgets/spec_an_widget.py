@@ -151,7 +151,7 @@ class SpecAnWidget(AcquisitionModuleWidget):
 
 
         self.button_layout = QtWidgets.QHBoxLayout()
-        self.setLayout(self.main_layout)
+        #self.setLayout(self.main_layout)
         # self.setWindowTitle("Spec. An.")
         #self.win = pg.GraphicsWindow(title="PSD")
         #self.main_layout.addWidget(self.win)
@@ -188,7 +188,7 @@ class SpecAnWidget(AcquisitionModuleWidget):
 
     def update_attribute_by_name(self, name, new_value_list):
         super(SpecAnWidget, self).update_attribute_by_name(name, new_value_list)
-        if name in ['running_state']:
+        if name in ['_running_state']:
             self.update_running_buttons()
         if name in ['baseband']:
             self.update_baseband_visibility()
@@ -214,21 +214,21 @@ class SpecAnWidget(AcquisitionModuleWidget):
         self.display_curve(self.last_data)
         self.win2.autoRange()
 
-    def run_continuous_clicked(self):
-        """
-        Toggles the button run_continuous to stop or vice versa and starts the acquisition timer
-        """
+    # def run_continuous_clicked(self):
+    #     """
+    #     Toggles the button run_continuous to stop or vice versa and starts the acquisition timer
+    #     """
+    #
+    #     if str(self.button_continuous.text()).startswith("Run continuous"):
+    #         self.module.continuous()
+    #     else:
+    #         self.module.pause()
 
-        if str(self.button_continuous.text()).startswith("Run continuous"):
-            self.module.continuous()
-        else:
-            self.module.pause()
-
-    def run_single_clicked(self):
-        if str(self.button_single.text()).startswith('Stop'):
-            self.module.stop()
-        else:
-            self.module.single_async()
+    # def run_single_clicked(self):
+    #     if str(self.button_single.text()).startswith('Stop'):
+    #         self.module.stop()
+    #     else:
+    #         self.module.single_async()
 
     def display_curve(self, datas):
         if datas is None:
@@ -241,20 +241,18 @@ class SpecAnWidget(AcquisitionModuleWidget):
         self.last_data = datas
         freqs = datas[0]
         to_units = lambda x:self.module.data_to_display_unit(x,
-                                                  self.module._run_future.rbw)
+                                                  self.module.attributes_last_run["rbw"])
         if not self.module.baseband: # iq mode, only 1 curve to display
             self.win2._set_widget_value((freqs, datas[1]), transform_magnitude=to_units)
         else: # baseband mode: data is (spec1, spec2, real(cross), imag(cross))
             spec1, spec2, cross_r, cross_i = datas[1]
-            if not self.module.display_input1_baseband:
-                spec1 = np.array([np.nan]*len(x))
-            if not self.module.display_input2_baseband:
-                spec2 = np.array([np.nan]*len(x))
-            if not self.module.display_cross_amplitude:
-                cross = np.array([np.nan]*len(x))
-            else:
-                cross = cross_r + 1j*cross_i
-            data = (spec1, spec2, cross)
+            data = []
+            if self.module.display_input1_baseband:
+                data.append(spec1) #np.array([np.nan]*len(x))
+            if self.module.display_input2_baseband:
+                data.append(spec2) # = np.zeros(len(x))# np.array([np.nan]*len(x))
+            if self.module.display_cross_amplitude:
+                data.append(cross_r + 1j*cross_i) # = np.zeros(len(x)) # np.array([np.nan]*len(x))
             self.win2._set_widget_value((freqs, data),
                                         transform_magnitude=to_units)
         self.update_current_average()
@@ -266,7 +264,7 @@ class SpecAnWidget(AcquisitionModuleWidget):
         self.last_data = datas
         freqs = datas[0]
         to_units = lambda x:self.module.data_to_display_unit(x,
-                                                  self.module._run_future.rbw)
+                                                  self.module.attributes_last_run["rbw"])
         if not self.module.baseband: # baseband mode, only 1 curve to display
             self.curve.setData(freqs, to_units(datas[1]))
             self.curve.setVisible(True)

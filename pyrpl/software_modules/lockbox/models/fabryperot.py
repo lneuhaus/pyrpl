@@ -1,6 +1,6 @@
 from .. import *
 from .interferometer import Interferometer
-from ....async_utils import TimeoutError
+from pyrpl.async_utils import wait
 
 class Lorentz(object):
     """ base class for Lorentzian-like signals"""
@@ -97,11 +97,26 @@ class FPAnalogPdh(InputSignal, Lorentz):
             return 1.0 - eta * self._lorentz_complex(x)
         # reflected intensity = abs(sum_of_reflected_fields)**2
         # components oscillating at sbfreq: cross-terms of central lorentz with either sideband
-        i_ref = np.conjugate(a_ref(x)) * 1j * a_ref(x + sbfreq) \
-                + a_ref(x) * np.conjugate(1j * a_ref(x - sbfreq))
-        # we demodulate with phase phi, i.e. multiply i_ref by e**(1j*phase), and take the real part
-        # normalization constant is very close to 1/eta
-        return np.real(i_ref * np.exp(1j * phase)) / eta
+        def pdh(x):
+            i_ref = np.conjugate(a_ref(x)) * 1j * a_ref(x + sbfreq) \
+                    + a_ref(x) * np.conjugate(1j * a_ref(x - sbfreq))
+            # we demodulate with phase phi, i.e. multiply i_ref by e**(1j*phase), and take the real part
+
+            return np.real(i_ref * np.exp(1j * phase))
+
+
+        if sbfreq > 0.76 and sbfreq < 1.55: #unresolved sideband regime : we assume w = 1 and find an approximative x_max
+            x_max = np.sqrt(-7 / 2 + eta + 1 / 2 * np.sqrt(65 + 4 * (eta - 9) * eta))
+            return (pdh(x) / pdh(x_max))
+        elif sbfreq <= 0.76: #unresolved sideband regime : we assume x small and find an approximative x_max
+            a = (2 * eta - 3 - sbfreq ** 2) * (1 + sbfreq ** 2 + sbfreq ** 4)
+            b = 2 * eta * (37 + sbfreq ** 2 + 13 * sbfreq ** 4) - 123 - 13 * sbfreq ** 2 * (2 + sbfreq * 2) ** 2
+            x_max = 2 / (np.sqrt(b / a) - 1)
+            return(pdh(x)/pdh(x_max))
+        else: #resolved side band regime : the maximum is at 1
+            x_max = 1
+
+        return (pdh(x) / pdh(x_max))
 
 
 class FPPdh(InputIq, FPAnalogPdh):
@@ -129,6 +144,7 @@ class FPTilt(InputSignal, Lorentz):
 
 
 class FabryPerot(Interferometer):
+    _default_is_locked_input = "reflection"
     _gui_attributes = ["finesse", "round_trip_length", "eta"]
     _setup_attributes = _gui_attributes
 
@@ -213,11 +229,11 @@ class HighFinesseInput(InputSignal):
                     scope.input2 = input2
                 scope.save_state("autosweep_zoom")  # save state for debugging or modification
                 self._logger.debug("calibration threshold: %f", threshold)
-                curves = scope.curve_async()
+                curves = scope.single_async()
                 self.lockbox._sweep()  # start sweep only after arming the scope
                 # give some extra (10x) timeout time in case the trigger is missed
                 try:
-                    curve1, curve2 = curves.await_result(timeout=100./self.lockbox.asg.frequency+scope.duration)
+                    curve1, curve2 = wait(curves, timeout=100./self.lockbox.asg.frequency+scope.duration)
                 except TimeoutError:
                     # scope is blocked
                     self._logger.warning("Signal %s could not be calibrated because no trigger was detected while "
@@ -256,7 +272,7 @@ class HighFinesseInput(InputSignal):
             params = self.calibration_data.setup_attributes
             params['name'] = self.name + "_calibration"
             newcurve = self._save_curve(times, curve1, **params)
-            self.calibration_data.curve = newcurve
+            self.calibration_data.trace = newcurve
             return newcurve
         else:
             return None
@@ -329,7 +345,7 @@ class HighFinesseAnalogPdh(HighFinesseInput, FPAnalogPdh):
             params['name'] = trigger_signal.name + "_calibration"
             trigcurve = self._save_curve(times, curve1, **params)
             newcurve.add_child(trigcurve)
-            self.calibration_data.curve = newcurve
+            self.calibration_data.trace = newcurve
             return newcurve
         else:
             return None

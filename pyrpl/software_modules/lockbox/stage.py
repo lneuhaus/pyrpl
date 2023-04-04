@@ -8,7 +8,7 @@ from ...widgets.module_widgets import ReducedModuleWidget, \
     LockboxSequenceWidget, LockboxStageWidget, StageOutputWidget
 from qtpy import QtCore
 from collections import OrderedDict
-
+from pyrpl.async_utils import sleep_async, ensure_future, wait
 
 class StageSignalLauncher(SignalLauncher):
     stage_created = QtCore.Signal(list)
@@ -104,7 +104,14 @@ class Stage(LockboxModule):
         return None  # saving individual stage states is not allowed
         #return self.c._root._get_or_create("stage_" + str(self.name) + "_states")
 
-    def enable(self):
+
+    def execute_async(self):
+        return ensure_future(self._execute_async())
+
+    def execute(self):
+        return wait(self.execute_async())
+
+    def _enable(self):
         """
         Setup the lockbox parameters according to this stage
         """
@@ -146,12 +153,21 @@ class Stage(LockboxModule):
         # set lockbox state to stage name
         self.lockbox.current_state = self.name
 
+    async def _execute_async(self):
+        if self.lockbox._monitor_lock_status_task==None:
+            self.lockbox._monitor_lock_status_task = ensure_future(
+                self.lockbox._monitor_lock_status_async())
+        self._enable()
+        await sleep_async(self.duration)
+        if self.lockbox.sequence[-1]==self:
+            self.lockbox.current_state = "lock_on"
+
     def _setup(self):
         # the first test is needed to avoid startup problems
         if hasattr(self.lockbox, '_sequence'):
             if self.lockbox.current_state == self.name:
                 # enable a stage if its parameters have changed
-                self.enable()
+                self.execute_async()
             # synchronize (active) final_stage with the last stage of sequence
             elif self.lockbox.current_state == 'lock' and self == self.parent[-1]:
                 self.lockbox.final_stage = self.setup_attributes

@@ -232,13 +232,32 @@ class OutputSignal(Signal):
             self.pid.p = 0
             self.pid.i = 0
             self.pid.setpoint = input.expected_signal(setpoint) + input.calibration_data._analog_offset
-            self.pid.input = input.signal()
+            if self.extra_module != 'None':
+                module = getattr(self.pyrpl.rp, self.extra_module)
+                module.input = input.signal()
+                self.pid.input = module
+                if self.extra_module=='iir':
+                    external_loop_gain*=module.gain
+                module.output_direct = "off"
+            else:
+                self.pid.input = input.signal()
             # set offset if applicable
             if offset is not None:
                 self.pid.ival = offset
             # set gains
-            self.pid.p = self.p / external_loop_gain * gain_factor
-            self.pid.i = self.i / external_loop_gain * gain_factor
+            p_pid = self.p / external_loop_gain * gain_factor
+            i_pid = self.i / external_loop_gain * gain_factor
+            self.pid.p = p_pid
+            self.pid.i = i_pid
+            if np.abs(p_pid)<self.pid.__class__.p.increment or p_pid>self.pid.__class__.p.max or p_pid<self.pid.__class__.p.min:
+                self.lockbox._signal_launcher.p_gain_rounded.emit([self])
+            else:
+                self.lockbox._signal_launcher.p_gain_ok.emit([self])
+            if np.abs(i_pid) < self.pid.__class__.i.increment or i_pid > self.pid.__class__.i.max or i_pid < self.pid.__class__.i.min:
+                self.lockbox._signal_launcher.i_gain_rounded.emit([self])
+            else:
+                self.lockbox._signal_launcher.i_gain_ok.emit([self])
+
 
     def _setup_offset(self, offset):
         self.pid.ival = offset
@@ -289,9 +308,33 @@ class OutputSignal(Signal):
         # by default
         return np.logspace(0, 6, 2000)
 
+    def transfer_function_controller(self, freqs, stage):
+        """
+        Returns the design transfer function between input and output,
+        at the specified stage.
+        """
+        input = self.lockbox.inputs[stage.input]
+
+        output_unit = self.unit.split('/')[0]
+        external_loop_gain = self.dc_gain*input.expected_slope(stage.setpoint) \
+                                    *self.lockbox._unit_in_setpoint_unit(output_unit)
+        p = self.p/external_loop_gain*stage.gain_factor
+        i = self.i/external_loop_gain*stage.gain_factor
+
+        p = Pid.p.validate_and_normalize(self.pid, p)
+        i = Pid.i.validate_and_normalize(self.pid, i)
+
+        result = Pid._transfer_function(
+            freqs, p=p, i=i,
+            frequency_correction=self.pid._frequency_correction,
+            filter_values=self.additional_filter)
+        if self.extra_module == 'iir':
+            result *= self.pyrpl.rp.iir.transfer_function(freqs)
+        return result
+
     def transfer_function(self, freqs):
         """
-        Returns the design transfer function for the output
+        Returns the design open-loop transfer function for the output (including analog plant)
         """
         analog_tf = np.ones(len(freqs), dtype=complex)
         if self.tf_type == 'filter':
@@ -311,6 +354,8 @@ class OutputSignal(Signal):
             freqs, p=self.p, i=self.i,
             frequency_correction=self.pid._frequency_correction,
             filter_values=self.additional_filter)
+        if self.extra_module=='iir':
+            result*=self.pyrpl.rp.iir.transfer_function(freqs)/self.pyrpl.rp.iir.gain
         return result
 
 

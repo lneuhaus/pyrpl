@@ -242,7 +242,7 @@ def discrete2cont(r, p, c, dt=8e-9):
     return r, p, c
 
 
-def bodeplot(data, xlog=False):
+def bodeplot(data, xlog=True):
     """ plots a bode plot of the data x, y
 
     parameters
@@ -282,7 +282,7 @@ def bodeplot(data, xlog=False):
     plt.tight_layout()
     if len(labels) > 0:
         leg = ax1.legend(loc='best', framealpha=0.5)
-        leg.draggable(state=True)
+        leg.set_draggable(True)
     plt.show()
 
 
@@ -426,7 +426,7 @@ class IirFilter(object):
         dt: float
             the FPGA clock frequency. Should be very close to 8e-9
 
-        minoops: int
+        minloops: int
             minimum number of loops (constant of the FPGA design)
 
         maxloops: int
@@ -469,12 +469,18 @@ class IirFilter(object):
         #    z, p = prewarp(z, p, dt=loops * dt)
 
         # perform the partial fraction expansion to get first order sections
+        """
         r, c = residues(z, p, k)
 
         self.rp_continuous = r, p, c  # 'tf_partialfraction'
 
         # transform to discrete time
         rd, pd, cd = cont2discrete(r, p, c, dt=self.dt * self.loops)
+        """
+        zd = np.exp(np.asarray(z, dtype=np.complex128)*self.dt*self.loops)
+        pd = np.exp(np.asarray(p, dtype=np.complex128)*self.dt*self.loops)
+        rd, cd = residues(zd, pd, k)
+
         self.rp_discrete = rd, pd, cd  # 'tf_discrete'
 
         # convert (r, p) into biquad coefficients
@@ -1039,7 +1045,7 @@ class IirFilter(object):
             ww, hh = sig.freqz(sos[:3], sos[3:], worN=np.asarray(w,
                                                            dtype=np.float64))
             if delay:
-                hh *= delay_per_cycle ** i
+                hh *= delay_per_cycle ** (i + 1)
             h += hh
         return h
 
@@ -1117,3 +1123,5 @@ class IirFilter(object):
                                                  points, endpoint=True),
                                      dtype=np.complex128)
         return self._frequencies
+
+
