@@ -1,8 +1,8 @@
 Copyright 1986-2015 Xilinx, Inc. All Rights Reserved.
 ----------------------------------------------------------------------------------------
 | Tool Version     : Vivado v.2015.4 (win64) Build 1412921 Wed Nov 18 09:43:45 MST 2015
-| Date             : Mon Sep 05 10:06:20 2022
-| Host             : SAMUEL-DESKTOP running 64-bit major release  (build 9200)
+| Date             : Fri Mar 17 14:07:00 2023
+| Host             : fontana running 64-bit major release  (build 9200)
 | Command          : report_power -file out/post_synth_power.rpt
 | Design           : red_pitaya_top
 | Device           : xc7z010clg400-1

@@ -1,8 +1,8 @@
 Copyright 1986-2015 Xilinx, Inc. All Rights Reserved.
 ------------------------------------------------------------------------------------
 | Tool Version : Vivado v.2015.4 (win64) Build 1412921 Wed Nov 18 09:43:45 MST 2015
-| Date         : Mon Sep 05 10:11:39 2022
-| Host         : SAMUEL-DESKTOP running 64-bit major release  (build 9200)
+| Date         : Fri Mar 17 14:14:12 2023
+| Host         : fontana running 64-bit major release  (build 9200)
 | Command      : report_drc
 ------------------------------------------------------------------------------------
 
@@ -758,196 +758,196 @@ XDCH-2#1 Warning
 Same min and max delay values on IO port  
 The same input delay of 3.400 ns has been defined on port 'adc_dat_a_i[10]' relative to clock adc_clk for both max and min. Make sure this reflects the design intent.
 set_input_delay -clock adc_clk 3.400 [get_ports {adc_dat_a_i[*]}]
-c:/Users/Samuel/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 210)
+c:/Users/michael.croquette/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 210)
 Related violations: <none>
 
 XDCH-2#2 Warning
 Same min and max delay values on IO port  
 The same input delay of 3.400 ns has been defined on port 'adc_dat_a_i[11]' relative to clock adc_clk for both max and min. Make sure this reflects the design intent.
 set_input_delay -clock adc_clk 3.400 [get_ports {adc_dat_a_i[*]}]
-c:/Users/Samuel/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 210)
+c:/Users/michael.croquette/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 210)
 Related violations: <none>
 
 XDCH-2#3 Warning
 Same min and max delay values on IO port  
 The same input delay of 3.400 ns has been defined on port 'adc_dat_a_i[12]' relative to clock adc_clk for both max and min. Make sure this reflects the design intent.
 set_input_delay -clock adc_clk 3.400 [get_ports {adc_dat_a_i[*]}]
-c:/Users/Samuel/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 210)
+c:/Users/michael.croquette/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 210)
 Related violations: <none>
 
 XDCH-2#4 Warning
 Same min and max delay values on IO port  
 The same input delay of 3.400 ns has been defined on port 'adc_dat_a_i[13]' relative to clock adc_clk for both max and min. Make sure this reflects the design intent.
 set_input_delay -clock adc_clk 3.400 [get_ports {adc_dat_a_i[*]}]
-c:/Users/Samuel/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 210)
+c:/Users/michael.croquette/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 210)
 Related violations: <none>
 
 XDCH-2#5 Warning
 Same min and max delay values on IO port  
 The same input delay of 3.400 ns has been defined on port 'adc_dat_a_i[14]' relative to clock adc_clk for both max and min. Make sure this reflects the design intent.
 set_input_delay -clock adc_clk 3.400 [get_ports {adc_dat_a_i[*]}]
-c:/Users/Samuel/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 210)
+c:/Users/michael.croquette/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 210)
 Related violations: <none>
 
 XDCH-2#6 Warning
 Same min and max delay values on IO port  
 The same input delay of 3.400 ns has been defined on port 'adc_dat_a_i[15]' relative to clock adc_clk for both max and min. Make sure this reflects the design intent.
 set_input_delay -clock adc_clk 3.400 [get_ports {adc_dat_a_i[*]}]
-c:/Users/Samuel/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 210)
+c:/Users/michael.croquette/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 210)
 Related violations: <none>
 
 XDCH-2#7 Warning
 Same min and max delay values on IO port  
 The same input delay of 3.400 ns has been defined on port 'adc_dat_a_i[2]' relative to clock adc_clk for both max and min. Make sure this reflects the design intent.
 set_input_delay -clock adc_clk 3.400 [get_ports {adc_dat_a_i[*]}]
-c:/Users/Samuel/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 210)
+c:/Users/michael.croquette/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 210)
 Related violations: <none>
 
 XDCH-2#8 Warning
 Same min and max delay values on IO port  
 The same input delay of 3.400 ns has been defined on port 'adc_dat_a_i[3]' relative to clock adc_clk for both max and min. Make sure this reflects the design intent.
 set_input_delay -clock adc_clk 3.400 [get_ports {adc_dat_a_i[*]}]
-c:/Users/Samuel/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 210)
+c:/Users/michael.croquette/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 210)
 Related violations: <none>
 
 XDCH-2#9 Warning
 Same min and max delay values on IO port  
 The same input delay of 3.400 ns has been defined on port 'adc_dat_a_i[4]' relative to clock adc_clk for both max and min. Make sure this reflects the design intent.
 set_input_delay -clock adc_clk 3.400 [get_ports {adc_dat_a_i[*]}]
-c:/Users/Samuel/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 210)
+c:/Users/michael.croquette/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 210)
 Related violations: <none>
 
 XDCH-2#10 Warning
 Same min and max delay values on IO port  
 The same input delay of 3.400 ns has been defined on port 'adc_dat_a_i[5]' relative to clock adc_clk for both max and min. Make sure this reflects the design intent.
 set_input_delay -clock adc_clk 3.400 [get_ports {adc_dat_a_i[*]}]
-c:/Users/Samuel/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 210)
+c:/Users/michael.croquette/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 210)
 Related violations: <none>
 
 XDCH-2#11 Warning
 Same min and max delay values on IO port  
 The same input delay of 3.400 ns has been defined on port 'adc_dat_a_i[6]' relative to clock adc_clk for both max and min. Make sure this reflects the design intent.
 set_input_delay -clock adc_clk 3.400 [get_ports {adc_dat_a_i[*]}]
-c:/Users/Samuel/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 210)
+c:/Users/michael.croquette/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 210)
 Related violations: <none>
 
 XDCH-2#12 Warning
 Same min and max delay values on IO port  
 The same input delay of 3.400 ns has been defined on port 'adc_dat_a_i[7]' relative to clock adc_clk for both max and min. Make sure this reflects the design intent.
 set_input_delay -clock adc_clk 3.400 [get_ports {adc_dat_a_i[*]}]
-c:/Users/Samuel/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 210)
+c:/Users/michael.croquette/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 210)
 Related violations: <none>
 
 XDCH-2#13 Warning
 Same min and max delay values on IO port  
 The same input delay of 3.400 ns has been defined on port 'adc_dat_a_i[8]' relative to clock adc_clk for both max and min. Make sure this reflects the design intent.
 set_input_delay -clock adc_clk 3.400 [get_ports {adc_dat_a_i[*]}]
-c:/Users/Samuel/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 210)
+c:/Users/michael.croquette/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 210)
 Related violations: <none>
 
 XDCH-2#14 Warning
 Same min and max delay values on IO port  
 The same input delay of 3.400 ns has been defined on port 'adc_dat_a_i[9]' relative to clock adc_clk for both max and min. Make sure this reflects the design intent.
 set_input_delay -clock adc_clk 3.400 [get_ports {adc_dat_a_i[*]}]
-c:/Users/Samuel/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 210)
+c:/Users/michael.croquette/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 210)
 Related violations: <none>
 
 XDCH-2#15 Warning
 Same min and max delay values on IO port  
 The same input delay of 3.400 ns has been defined on port 'adc_dat_b_i[10]' relative to clock adc_clk for both max and min. Make sure this reflects the design intent.
 set_input_delay -clock adc_clk 3.400 [get_ports {adc_dat_b_i[*]}]
-c:/Users/Samuel/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 211)
+c:/Users/michael.croquette/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 211)
 Related violations: <none>
 
 XDCH-2#16 Warning
 Same min and max delay values on IO port  
 The same input delay of 3.400 ns has been defined on port 'adc_dat_b_i[11]' relative to clock adc_clk for both max and min. Make sure this reflects the design intent.
 set_input_delay -clock adc_clk 3.400 [get_ports {adc_dat_b_i[*]}]
-c:/Users/Samuel/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 211)
+c:/Users/michael.croquette/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 211)
 Related violations: <none>
 
 XDCH-2#17 Warning
 Same min and max delay values on IO port  
 The same input delay of 3.400 ns has been defined on port 'adc_dat_b_i[12]' relative to clock adc_clk for both max and min. Make sure this reflects the design intent.
 set_input_delay -clock adc_clk 3.400 [get_ports {adc_dat_b_i[*]}]
-c:/Users/Samuel/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 211)
+c:/Users/michael.croquette/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 211)
 Related violations: <none>
 
 XDCH-2#18 Warning
 Same min and max delay values on IO port  
 The same input delay of 3.400 ns has been defined on port 'adc_dat_b_i[13]' relative to clock adc_clk for both max and min. Make sure this reflects the design intent.
 set_input_delay -clock adc_clk 3.400 [get_ports {adc_dat_b_i[*]}]
-c:/Users/Samuel/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 211)
+c:/Users/michael.croquette/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 211)
 Related violations: <none>
 
 XDCH-2#19 Warning
 Same min and max delay values on IO port  
 The same input delay of 3.400 ns has been defined on port 'adc_dat_b_i[14]' relative to clock adc_clk for both max and min. Make sure this reflects the design intent.
 set_input_delay -clock adc_clk 3.400 [get_ports {adc_dat_b_i[*]}]
-c:/Users/Samuel/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 211)
+c:/Users/michael.croquette/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 211)
 Related violations: <none>
 
 XDCH-2#20 Warning
 Same min and max delay values on IO port  
 The same input delay of 3.400 ns has been defined on port 'adc_dat_b_i[15]' relative to clock adc_clk for both max and min. Make sure this reflects the design intent.
 set_input_delay -clock adc_clk 3.400 [get_ports {adc_dat_b_i[*]}]
-c:/Users/Samuel/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 211)
+c:/Users/michael.croquette/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 211)
 Related violations: <none>
 
 XDCH-2#21 Warning
 Same min and max delay values on IO port  
 The same input delay of 3.400 ns has been defined on port 'adc_dat_b_i[2]' relative to clock adc_clk for both max and min. Make sure this reflects the design intent.
 set_input_delay -clock adc_clk 3.400 [get_ports {adc_dat_b_i[*]}]
-c:/Users/Samuel/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 211)
+c:/Users/michael.croquette/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 211)
 Related violations: <none>
 
 XDCH-2#22 Warning
 Same min and max delay values on IO port  
 The same input delay of 3.400 ns has been defined on port 'adc_dat_b_i[3]' relative to clock adc_clk for both max and min. Make sure this reflects the design intent.
 set_input_delay -clock adc_clk 3.400 [get_ports {adc_dat_b_i[*]}]
-c:/Users/Samuel/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 211)
+c:/Users/michael.croquette/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 211)
 Related violations: <none>
 
 XDCH-2#23 Warning
 Same min and max delay values on IO port  
 The same input delay of 3.400 ns has been defined on port 'adc_dat_b_i[4]' relative to clock adc_clk for both max and min. Make sure this reflects the design intent.
 set_input_delay -clock adc_clk 3.400 [get_ports {adc_dat_b_i[*]}]
-c:/Users/Samuel/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 211)
+c:/Users/michael.croquette/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 211)
 Related violations: <none>
 
 XDCH-2#24 Warning
 Same min and max delay values on IO port  
 The same input delay of 3.400 ns has been defined on port 'adc_dat_b_i[5]' relative to clock adc_clk for both max and min. Make sure this reflects the design intent.
 set_input_delay -clock adc_clk 3.400 [get_ports {adc_dat_b_i[*]}]
-c:/Users/Samuel/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 211)
+c:/Users/michael.croquette/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 211)
 Related violations: <none>
 
 XDCH-2#25 Warning
 Same min and max delay values on IO port  
 The same input delay of 3.400 ns has been defined on port 'adc_dat_b_i[6]' relative to clock adc_clk for both max and min. Make sure this reflects the design intent.
 set_input_delay -clock adc_clk 3.400 [get_ports {adc_dat_b_i[*]}]
-c:/Users/Samuel/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 211)
+c:/Users/michael.croquette/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 211)
 Related violations: <none>
 
 XDCH-2#26 Warning
 Same min and max delay values on IO port  
 The same input delay of 3.400 ns has been defined on port 'adc_dat_b_i[7]' relative to clock adc_clk for both max and min. Make sure this reflects the design intent.
 set_input_delay -clock adc_clk 3.400 [get_ports {adc_dat_b_i[*]}]
-c:/Users/Samuel/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 211)
+c:/Users/michael.croquette/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 211)
 Related violations: <none>
 
 XDCH-2#27 Warning
 Same min and max delay values on IO port  
 The same input delay of 3.400 ns has been defined on port 'adc_dat_b_i[8]' relative to clock adc_clk for both max and min. Make sure this reflects the design intent.
 set_input_delay -clock adc_clk 3.400 [get_ports {adc_dat_b_i[*]}]
-c:/Users/Samuel/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 211)
+c:/Users/michael.croquette/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 211)
 Related violations: <none>
 
 XDCH-2#28 Warning
 Same min and max delay values on IO port  
 The same input delay of 3.400 ns has been defined on port 'adc_dat_b_i[9]' relative to clock adc_clk for both max and min. Make sure this reflects the design intent.
 set_input_delay -clock adc_clk 3.400 [get_ports {adc_dat_b_i[*]}]
-c:/Users/Samuel/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 211)
+c:/Users/michael.croquette/Documents/GitHub/pyrpl/pyrpl/fpga/sdc/red_pitaya.xdc (Line: 211)
 Related violations: <none>
 
 

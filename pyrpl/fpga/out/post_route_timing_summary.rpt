@@ -1,8 +1,8 @@
 Copyright 1986-2015 Xilinx, Inc. All Rights Reserved.
 ------------------------------------------------------------------------------------
 | Tool Version : Vivado v.2015.4 (win64) Build 1412921 Wed Nov 18 09:43:45 MST 2015
-| Date         : Mon Sep 05 10:11:26 2022
-| Host         : SAMUEL-DESKTOP running 64-bit major release  (build 9200)
+| Date         : Fri Mar 17 14:13:55 2023
+| Host         : fontana running 64-bit major release  (build 9200)
 | Command      : report_timing_summary -file out/post_route_timing_summary.rpt
 | Design       : red_pitaya_top
 | Device       : 7z010-clg400
