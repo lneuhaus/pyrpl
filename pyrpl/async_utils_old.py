@@ -2,6 +2,7 @@
 This file contains a number of methods for asynchronous operations.
 """
 import logging
+import numpy as np
 from qtpy import QtCore, QtWidgets
 from timeit import default_timer
 import sys
@@ -94,7 +95,7 @@ class MainThreadTimer(QtCore.QTimer):
         super(MainThreadTimer, self).__init__()
         self.moveToThread(MAIN_THREAD)
         self.setSingleShot(True)
-        self.setInterval(interval)
+        self.setInterval(int(np.ceil(interval)))
 
 
 class PyrplFuture(Future):

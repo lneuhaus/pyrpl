@@ -117,7 +117,7 @@ class MyDockWidget(QtWidgets.QDockWidget):
                 self.timer = QtCore.QTimer()
                 self.timer.timeout.connect(fn)
                 self.timer.setSingleShot(True)
-                self.timer.setInterval(1.0)
+                self.timer.setInterval(1)
                 self.timer.start()
             event.accept()
             return True

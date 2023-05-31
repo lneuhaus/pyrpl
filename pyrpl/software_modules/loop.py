@@ -59,7 +59,7 @@ class Loop(Module):
 
     @interval.setter
     def interval(self, val):
-        self.timer.setInterval(val*1000.0)
+        self.timer.setInterval(int(np.ceil(val * 1000.0)))
 
     def _clear(self):
         self._ended = True

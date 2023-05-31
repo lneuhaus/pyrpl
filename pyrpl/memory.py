@@ -504,7 +504,7 @@ class MemoryTree(MemoryBranch):
         self._lastsave = time()
         # create a timer to postpone to frequent savings
         self._savetimer = QtCore.QTimer()
-        self._savetimer.setInterval(self._loadsavedeadtime*1000)
+        self._savetimer.setInterval(int(np.ceil(self._loadsavedeadtime * 1000)))
         self._savetimer.setSingleShot(True)
         self._savetimer.timeout.connect(self._write_to_file)
         self._load()
