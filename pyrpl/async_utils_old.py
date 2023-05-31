@@ -19,8 +19,8 @@ except ImportError:  # this occurs in python 2.7
                   "instead of python 3.5 Futures.")
     from concurrent.futures import Future, CancelledError, TimeoutError
 else:
-    import quamash
-    set_event_loop(quamash.QEventLoop())
+    import qasync
+    set_event_loop(qasync.QEventLoop())
 
 
 
@@ -120,7 +120,7 @@ class PyrplFuture(Future):
 
     def __init__(self):
         if sys.version.startswith('3.7'):
-            loop = quamash.QEventLoop()
+            loop = qasync.QEventLoop()
             super(PyrplFuture, self).__init__(loop=loop)
         else: # python 2.7, 3.5,3.6
             super(PyrplFuture, self).__init__()

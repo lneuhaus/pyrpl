@@ -37,7 +37,7 @@ import logging
 from qtpy import QtCore, QtWidgets
 import asyncio
 from asyncio import Future, iscoroutine
-import quamash
+import qasync
 import sys
 
 
@@ -57,7 +57,7 @@ if APP is None:
     APP = QtWidgets.QApplication(['pyrpl'])
 
 
-LOOP = quamash.QEventLoop() # Since tasks scheduled in this loop seem to
+LOOP = qasync.QEventLoop() # Since tasks scheduled in this loop seem to
 # fall in the standard QEventLoop, and we never explicitly ask to run this
 # loop, it might seem useless to send all tasks to LOOP, however, a task
 # scheduled in the default loop seem to never get executed with IPython

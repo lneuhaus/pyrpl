@@ -9,8 +9,8 @@ from ..async_utils import sleep
 from ..errors import UnexpectedPyrplError, ExpectedPyrplError
 
 # I don't know why, in nosetests, the logger goes to UNSET...
-logger_quamash = logging.getLogger(name='quamash')
-logger_quamash.setLevel(logging.INFO)
+logger_qasync = logging.getLogger(name='qasync)
+logger_qasync.setLevel(logging.INFO)
 
 class TestPyrpl(object):
     """ base class for all pyrpl tests """
