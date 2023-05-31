@@ -8,7 +8,7 @@ from ...widgets.module_widgets import ReducedModuleWidget, \
     LockboxSequenceWidget, LockboxStageWidget, StageOutputWidget
 from qtpy import QtCore
 from collections import OrderedDict
-from pyrpl.async_utils import sleep_async, ensure_future, wait
+from ...async_utils import sleep_async, ensure_future, wait
 
 class StageSignalLauncher(SignalLauncher):
     stage_created = QtCore.Signal(list)

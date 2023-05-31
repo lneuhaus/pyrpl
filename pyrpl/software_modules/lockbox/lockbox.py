@@ -12,7 +12,7 @@ from .stage import Stage
 from . import LockboxModule, LockboxModuleDictProperty
 from . import LockboxLoop, LockboxPlotLoop
 from ...widgets.module_widgets.lockbox_widget import LockboxSequenceWidget
-from pyrpl.async_utils import wait, sleep_async, sleep, ensure_future, Event
+from ...async_utils import wait, sleep_async, sleep, ensure_future, Event
 
 
 def all_classnames():

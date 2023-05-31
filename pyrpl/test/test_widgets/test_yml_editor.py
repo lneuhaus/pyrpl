@@ -7,7 +7,7 @@ from pyrpl.test.test_base import TestPyrpl
 from pyrpl import APP
 from pyrpl.curvedb import CurveDB
 from pyrpl.widgets.startup_widget import HostnameSelectorWidget
-from pyrpl.async_utils import sleep_async
+from ...async_utils import sleep_async
 from pyrpl.widgets.yml_editor import YmlEditor
 from pyrpl.software_modules.module_managers import ModuleManager
 

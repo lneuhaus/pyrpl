@@ -4,7 +4,7 @@ from pyrpl.modules import Module
 from pyrpl.attributes import FloatProperty, SelectProperty, ProxyProperty
 from pyrpl.module_attributes import *
 from pyrpl.memory import MemoryTree
-from pyrpl.async_utils import sleep_async
+from ..async_utils import sleep_async
 
 
 class MySubModule(Module):
