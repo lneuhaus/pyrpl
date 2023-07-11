@@ -288,11 +288,11 @@ class IirWidget(ModuleWidget):
             return np.asarray(f, dtype=float)
 
     def _magnitude(self, data):
-        return 20. * np.log10(np.abs(np.asarray(data, dtype=np.complex))
+        return 20. * np.log10(np.abs(np.asarray(data, dtype=complex))
                               + sys.float_info.epsilon)
 
     def _phase(self, data):
-        return np.angle(np.asarray(data, dtype=np.complex), deg=True)
+        return np.angle(np.asarray(data, dtype=complex), deg=True)
 
     def update_plot(self):
         # first, we compile the line plot data, then we iterate over them and
