@@ -137,8 +137,8 @@ class TestNA(TestPyrpl):
             max_rw_points = self.na.points
             sleep(0.1)
             print("Reads: %d %d %d. " % (self.pyrpl.rp.client._read_counter, old_read, max_rw_points))
-            assert self.pyrpl.rp.client._read_counter - old_read <= max_rw_points, \
-                (self.pyrpl.rp.client._read_counter, old_read, max_rw_points)
+            assert self.pyrpl.rp.client._read_counter - old_read <= 2*max_rw_points,(self.pyrpl.rp.client._read_counter, old_read, max_rw_points)
+            # twice because now we also read the# amplitude from the iq module
             print("Writes: %d %d %d. " % (self.pyrpl.rp.client._write_counter, old_write, max_rw_points))
             assert self.pyrpl.rp.client._write_counter - old_write <= max_rw_points, \
                 (self.pyrpl.rp.client._write_counter, old_write, max_rw_points)
