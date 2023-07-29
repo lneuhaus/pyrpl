@@ -1,0 +1,580 @@
+pyrpl:
+  background_color: ''
+  dock_positions: "\0\0\0\xFF\0\0\0\0\xFD\0\0\0\x01\0\0\0\x02\0\0\x06\x90\0\0\x03\xB2\
+    \xFC\x01\0\0\0\x01\xFC\0\0\0\0\0\0\x06\x90\0\0\0y\0\xFF\xFF\xFF\xFA\0\0\0\b\x01\
+    \0\0\0\x0E\xFB\0\0\0$\0a\0s\0g\0s\0 \0(\0p\0l\0l\0_\0e\0x\0a\0m\0p\0l\0e\0)\0\0\
+    \0\0\0\xFF\xFF\xFF\xFF\0\0\0\x16\0\xFF\xFF\xFF\xFB\0\0\0(\0s\0c\0o\0p\0e\0s\0\
+    \ \0(\0p\0l\0l\0_\0e\0x\0a\0m\0p\0l\0e\0)\x03\0\0\0\0\0\0\0\x17\0\0\n\0\0\0\x05\
+    \x89\xFB\0\0\0\"\0i\0q\0s\0 \0(\0p\0l\0l\0_\0e\0x\0a\0m\0p\0l\0e\0)\0\0\0\0\0\xFF\
+    \xFF\xFF\xFF\0\0\0]\0\xFF\xFF\xFF\xFB\0\0\0$\0p\0i\0d\0s\0 \0(\0p\0l\0l\0_\0e\0\
+    x\0a\0m\0p\0l\0e\0)\0\0\0\0\0\xFF\xFF\xFF\xFF\0\0\0]\0\xFF\xFF\xFF\xFB\0\0\0$\0\
+    i\0i\0r\0s\0 \0(\0p\0l\0l\0_\0e\0x\0a\0m\0p\0l\0e\0)\0\0\0\0\0\xFF\xFF\xFF\xFF\
+    \0\0\0\x16\0\xFF\xFF\xFF\xFB\0\0\0&\0t\0r\0i\0g\0s\0 \0(\0p\0l\0l\0_\0e\0x\0a\0\
+    m\0p\0l\0e\0)\0\0\0\0\0\xFF\xFF\xFF\xFF\0\0\0\x16\0\xFF\xFF\xFF\xFB\0\0\0$\0p\0\
+    w\0m\0s\0 \0(\0p\0l\0l\0_\0e\0x\0a\0m\0p\0l\0e\0)\0\0\0\0\0\xFF\xFF\xFF\xFF\0\0\
+    \0]\0\xFF\xFF\xFF\xFB\0\0\0\"\0h\0k\0s\0 \0(\0p\0l\0l\0_\0e\0x\0a\0m\0p\0l\0e\0\
+    )\0\0\0\0\0\xFF\xFF\xFF\xFF\0\0\0]\0\xFF\xFF\xFF\xFB\0\0\0:\0n\0e\0t\0w\0o\0r\0\
+    k\0a\0n\0a\0l\0y\0z\0e\0r\0 \0(\0p\0l\0l\0_\0e\0x\0a\0m\0p\0l\0e\0)\x01\0\0\0\0\
+    \xFF\xFF\xFF\xFF\0\0\0]\0\xFF\xFF\xFF\xFB\0\0\0<\0s\0p\0e\0c\0t\0r\0u\0m\0a\0\
+    n\0a\0l\0y\0z\0e\0r\0 \0(\0p\0l\0l\0_\0e\0x\0a\0m\0p\0l\0e\0)\0\0\0\0\0\xFF\xFF\
+    \xFF\xFF\0\0\0]\0\xFF\xFF\xFF\xFB\0\0\02\0c\0u\0r\0v\0e\0v\0i\0e\0w\0e\0r\0 \0\
+    (\0p\0l\0l\0_\0e\0x\0a\0m\0p\0l\0e\0)\0\0\0\0\0\xFF\xFF\xFF\xFF\0\0\0\x16\0\xFF\
+    \xFF\xFF\xFB\0\0\02\0p\0y\0r\0p\0l\0c\0o\0n\0f\0i\0g\0 \0(\0p\0l\0l\0_\0e\0x\0\
+    a\0m\0p\0l\0e\0)\0\0\0\0\0\xFF\xFF\xFF\xFF\0\0\0\x16\0\xFF\xFF\xFF\xFB\0\0\0*\0\
+    l\0o\0c\0k\0b\0o\0x\0 \0(\0p\0l\0l\0_\0e\0x\0a\0m\0p\0l\0e\0)\x01\0\0\0\0\xFF\xFF\
+    \xFF\xFF\0\0\0]\0\xFF\xFF\xFF\xFB\0\0\0*\0l\0o\0c\0k\0b\0o\0x\0 \0(\0p\0l\0l\0\
+    _\0e\0x\0a\0m\0p\0l\0e\0)\x01\0\0\0\0\xFF\xFF\xFF\xFF\0\0\0\0\0\0\0\0\0\0\x06\x90\
+    \0\0\0\0\0\0\0\x04\0\0\0\x04\0\0\0\b\0\0\0\b\xFC\0\0\0\0"
+  loglevel: info
+  modules:
+  - NetworkAnalyzer
+  - SpectrumAnalyzer
+  - CurveViewer
+  - PyrplConfig
+  - Lockbox
+  name: pll_example
+  window_position:
+  - 2552
+  - 0
+  - 1680
+  - 987
+redpitaya:
+  autostart: true
+  defaultport: 2222
+  delay: 0.05
+  frequency_correction: 1.0
+  gui: true
+  hostname: 192.168.1.111
+  leds_off: true
+  monitor_server_name: monitor_server
+  password: root
+  port: 2222
+  reloadfpga: true
+  reloadserver: false
+  serverbinfilename: fpga.bin
+  serverdirname: //opt//pyrpl//
+  silence_env: false
+  sshport: 22
+  timeout: 1
+  user: root
+scope:
+  curve_name: scope curve
+  duration: 8.589934592
+  rolling_mode: true
+  input2: lockbox.outputs.fast_piezo
+  run_continuous: false
+  average: false
+  ch1_active: true
+  input1: lockbox.inputs.cordicerror
+pwm0:
+  input: pid3
+pwm1:
+  input: pid1
+networkanalyzer:
+  curve_name: networkanalyzer curve
+  output_direct: out1
+  input: out1
+  acbandwidth: 4.743187489051999
+  average_per_point: 1
+  logscale: true
+  trace_average: 1
+  start_freq: 50000.0
+  stop_freq: 500000.0
+  amplitude: 0.0
+  rbw: 75.89113552886508
+  points: 3000
+spectrumanalyzer:
+  curve_name: spectrumanalyzer curve
+  run_continuous: false
+  display_input2_baseband: false
+  input1_baseband: iq1
+  display_cross_amplitude: false
+  trace_average: 1
+  span: 976562.4999999999
+lockbox:
+  classname: Pll
+  final_stage:
+    duration: 0.0
+    function_call: ''
+    gain_factor: 1.0
+    input: errorslowpiezo
+    outputs:
+      fast_piezo:
+        lock_on: ignore
+        offset: -1.0
+        reset_offset: false
+      phase_piezo:
+        lock_on: false
+        offset: 0.0
+        reset_offset: false
+      slow_piezo:
+        lock_on: ignore
+        offset: 0.0
+        reset_offset: false
+      temperature:
+        lock_on: true
+        offset: 0.0
+        reset_offset: false
+    setpoint: 0.0
+  inputs:
+    cordicerror:
+      input_signal: iq1
+    errorfastpiezo:
+      calibration_data:
+        _analog_offset: 0.0
+        _asg_phase: 0.0
+        max: 0.0
+        mean: 0.0
+        min: 0.0
+        rms: 0.0
+      input_signal: lockbox.outputs.fast_piezo
+    errorsignal1:
+      calibration_data:
+        _analog_offset: 0.0
+        _asg_phase: 0.0
+        max: 0.74853515625
+        mean: 0.05156378448009491
+        min: -0.7696533203125
+        rms: 0.5982626008783319
+      input_signal: iq1
+    errorsignal2:
+      calibration_data:
+        _analog_offset: 0.0
+        _asg_phase: 0.0
+        max: 0.0
+        mean: 0.0
+        min: 0.0
+        rms: 0.0
+      input_signal: iq2
+    errorslowpiezo:
+      calibration_data:
+        _analog_offset: 0.0
+        _asg_phase: 0.0
+        max: 0.0
+        mean: 0.0
+        min: 0.0
+        rms: 0.0
+      input_signal: lockbox.outputs.slow_piezo
+  outputs:
+    fast_piezo:
+      additional_filter:
+      - 0
+      - 0
+      - 0
+      - 0
+      analog_filter_cutoff: 50248.819807897286
+      assisted_design: false
+      calibration_data:
+        _analog_offset: 0.0
+        _asg_phase: 0.0
+        max: 0.0
+        mean: 0.0
+        min: 0.0
+        rms: 0.0
+      dc_gain: 1.0e-09
+      desired_unity_gain_frequency: 150.0
+      extra_module: None
+      extra_module_state: None
+      i: 150.0
+      max_voltage: 1.0
+      min_voltage: -1.0
+      output_channel: out1
+      p: 0.0029851447371988917
+      sweep_amplitude: 1.0
+      sweep_frequency: 50.0
+      sweep_offset: 0.0
+      sweep_waveform: ramp
+      tf_curve: 0
+      tf_type: filter
+      unit: m/V
+    slow_piezo:
+      additional_filter:
+      - 0
+      - 0
+      - 0
+      - 0
+      analog_filter_cutoff: 2.9999999999999996
+      assisted_design: false
+      calibration_data:
+        _analog_offset: 0.0
+        _asg_phase: 0.0
+        max: 0.0
+        mean: 0.0
+        min: 0.0
+        rms: 0.0
+      dc_gain: -1.0e-09
+      desired_unity_gain_frequency: 0.3
+      extra_module: None
+      extra_module_state: None
+      i: 0.3
+      max_voltage: 1.0
+      min_voltage: -1.0
+      output_channel: pwm0
+      p: 0.1
+      sweep_amplitude: 1.0
+      sweep_frequency: 50.0
+      sweep_offset: 0.0
+      sweep_waveform: ramp
+      tf_curve: 0
+      tf_type: filter
+      unit: m/V
+    temperature:
+      additional_filter:
+      - 0
+      - 0
+      - 0
+      - 0
+      analog_filter_cutoff: 0.01
+      assisted_design: false
+      calibration_data:
+        _analog_offset: 0.0
+        _asg_phase: 0.0
+        max: 0.0
+        mean: 0.0
+        min: 0.0
+        rms: 0.0
+      dc_gain: 1.0e-09
+      desired_unity_gain_frequency: 0.0005
+      extra_module: None
+      extra_module_state: None
+      i: 0.0005
+      max_voltage: 1.0
+      min_voltage: -1.0
+      output_channel: pwm1
+      p: 0.05
+      sweep_amplitude: 1.0
+      sweep_frequency: 0.1
+      sweep_offset: 0.0
+      sweep_waveform: ramp
+      tf_curve: 0
+      tf_type: filter
+      unit: m/V
+  sequence:
+  - duration: 3.0
+    function_call: ''
+    gain_factor: 0.0
+    input: cordicerror
+    outputs:
+      fast_piezo:
+        lock_on: false
+        offset: 0.0
+        reset_offset: true
+      slow_piezo:
+        lock_on: false
+        offset: 0.0
+        reset_offset: true
+      temperature:
+        lock_on: false
+        offset: 0.6
+        reset_offset: true
+    setpoint: 0.0
+  - duration: 0.5
+    function_call: ''
+    gain_factor: 100.0
+    input: cordicerror
+    outputs:
+      fast_piezo:
+        lock_on: true
+        offset: 0.0
+        reset_offset: false
+      slow_piezo:
+        lock_on: false
+        offset: 0.0
+        reset_offset: false
+      temperature:
+        lock_on: false
+        offset: 0.0
+        reset_offset: false
+    setpoint: 0.0
+  - duration: 0.0
+    function_call: ''
+    gain_factor: 0.5
+    input: errorfastpiezo
+    outputs:
+      fast_piezo:
+        lock_on: ignore
+        offset: 0.0
+        reset_offset: false
+      slow_piezo:
+        lock_on: true
+        offset: 0.0
+        reset_offset: false
+      temperature:
+        lock_on: false
+        offset: 0.0
+        reset_offset: false
+    setpoint: 0.0
+  - duration: 0.0
+    function_call: ''
+    gain_factor: 10.0
+    input: errorslowpiezo
+    outputs:
+      fast_piezo:
+        lock_on: ignore
+        offset: 0.0
+        reset_offset: false
+      slow_piezo:
+        lock_on: ignore
+        offset: 0.0
+        reset_offset: false
+      temperature:
+        lock_on: true
+        offset: 0.0
+        reset_offset: false
+    setpoint: 0.0
+  default_sweep_output: temperature
+  auto_lock: false
+  is_locked_threshold: 1.0
+  setpoint_unit: deg
+  lockstatus_interval: 1.0
+  wavelength: 1.064e-06
+  slow_output: 0.9
+sequence_states: {}
+lockbox_states:
+  pll_lock:
+    auto_lock: false
+    classname: Pll
+    default_sweep_output: temperature
+    inputs:
+      errorfastpiezo:
+        calibration_data:
+          _analog_offset: 0.0
+          _asg_phase: 0.0
+          max: 0.0
+          mean: 0.0
+          min: 0.0
+          rms: 0.0
+        input_signal: lockbox.outputs.fast_piezo
+      errorsignal1:
+        calibration_data:
+          _analog_offset: 0.0
+          _asg_phase: 0.0
+          max: 0.0
+          mean: 0.0
+          min: 0.0
+          rms: 0.0
+        input_signal: iq1
+      errorsignal2:
+        calibration_data:
+          _analog_offset: 0.0
+          _asg_phase: 0.0
+          max: 0.0
+          mean: 0.0
+          min: 0.0
+          rms: 0.0
+        input_signal: iq2
+      errorslowpiezo:
+        calibration_data:
+          _analog_offset: 0.0
+          _asg_phase: 0.0
+          max: 0.0
+          mean: 0.0
+          min: 0.0
+          rms: 0.0
+        input_signal: lockbox0.outputs.slow_piezo
+    is_locked_threshold: 1.0
+    lockstatus_interval: 1.0
+    outputs:
+      fast_piezo:
+        additional_filter:
+        - 0
+        - 0
+        - 0
+        - 0
+        analog_filter_cutoff: 4885.009473201855
+        assisted_design: false
+        calibration_data:
+          _analog_offset: 0.0
+          _asg_phase: 0.0
+          max: 0.0
+          mean: 0.0
+          min: 0.0
+          rms: 0.0
+        dc_gain: 0.01
+        desired_unity_gain_frequency: 10000000000.0
+        extra_module: None
+        extra_module_state: None
+        i: 10000000000.0
+        max_voltage: 1.0
+        min_voltage: -1.0
+        output_channel: out2
+        p: 2047078.9370743122
+        sweep_amplitude: 1.0
+        sweep_frequency: 50.0
+        sweep_offset: 0.0
+        sweep_waveform: ramp
+        tf_curve: 0
+        tf_type: filter
+        unit: m/V
+      slow_piezo:
+        additional_filter:
+        - 0
+        - 0
+        - 0
+        - 0
+        analog_filter_cutoff: 2.9999999999999996
+        assisted_design: false
+        calibration_data:
+          _analog_offset: 0.0
+          _asg_phase: 0.0
+          max: 0.0
+          mean: 0.0
+          min: 0.0
+          rms: 0.0
+        dc_gain: -0.01
+        desired_unity_gain_frequency: 0.3
+        extra_module: None
+        extra_module_state: None
+        i: 0.3
+        max_voltage: 1.0
+        min_voltage: -1.0
+        output_channel: pwm0
+        p: 0.1
+        sweep_amplitude: 1.0
+        sweep_frequency: 50.0
+        sweep_offset: 0.0
+        sweep_waveform: ramp
+        tf_curve: 0
+        tf_type: filter
+        unit: m/V
+      temperature:
+        additional_filter:
+        - 0
+        - 0
+        - 0
+        - 0
+        analog_filter_cutoff: 3.4186486162214366e-07
+        assisted_design: false
+        calibration_data:
+          _analog_offset: 0.0
+          _asg_phase: 0.0
+          max: 0.0
+          mean: 0.0
+          min: 0.0
+          rms: 0.0
+        dc_gain: 1.0
+        desired_unity_gain_frequency: 2.310517439055837e-06
+        extra_module: None
+        extra_module_state: None
+        i: 2.310517439055837e-06
+        max_voltage: 1.0
+        min_voltage: -1.0
+        output_channel: pwm1
+        p: 6.758569535612599
+        sweep_amplitude: 1.0
+        sweep_frequency: 0.1
+        sweep_offset: 0.0
+        sweep_waveform: ramp
+        tf_curve: 0
+        tf_type: filter
+        unit: m/V
+    sequence:
+    - duration: 0.0
+      function_call: ''
+      gain_factor: 0.0
+      input: errorsignal1
+      outputs:
+        fast_piezo:
+          lock_on: false
+          offset: 0.0
+          reset_offset: true
+        slow_piezo:
+          lock_on: false
+          offset: 0.0
+          reset_offset: true
+        temperature:
+          lock_on: false
+          offset: -0.025
+          reset_offset: true
+      setpoint: 0.0
+    - duration: 0.0
+      function_call: ''
+      gain_factor: 100.0
+      input: errorsignal1
+      outputs:
+        fast_piezo:
+          lock_on: true
+          offset: 1.0
+          reset_offset: false
+        slow_piezo:
+          lock_on: ignore
+          offset: 0.0
+          reset_offset: false
+        temperature:
+          lock_on: false
+          offset: 0.0
+          reset_offset: false
+      setpoint: 0.0
+    - duration: 0.0
+      function_call: ''
+      gain_factor: 1.0
+      input: errorfastpiezo
+      outputs:
+        fast_piezo:
+          lock_on: ignore
+          offset: -1.0
+          reset_offset: false
+        slow_piezo:
+          lock_on: true
+          offset: 0.0
+          reset_offset: false
+        temperature:
+          lock_on: false
+          offset: 0.0
+          reset_offset: false
+      setpoint: 0.0
+    - duration: 0.0
+      function_call: ''
+      gain_factor: 1.0
+      input: errorslowpiezo
+      outputs:
+        fast_piezo:
+          lock_on: ignore
+          offset: -1.0
+          reset_offset: false
+        slow_piezo:
+          lock_on: ignore
+          offset: 0.0
+          reset_offset: false
+        temperature:
+          lock_on: true
+          offset: 0.0
+          reset_offset: false
+      setpoint: 0.0
+    setpoint_unit: deg
+    slow_output: 0.9
+    wavelength: 1.064e-06
+iq1:
+  acbandwidth: 3108131.4996426
+  amplitude: 0.0
+  bandwidth:
+  - 3108131.4996426
+  - 3108131.4996426
+  frequency: 8999999.990919605
+  gain: 0.0
+  input: in1
+  output_direct: 'off'
+  output_signal: pfd
+  phase: 0.0
+  quadrature_factor: 0.0
+scope_states:
+  autosweep:
+    average: true
+    ch1_active: true
+    ch2_active: true
+    ch_math_active: false
+    curve_name: scope curve
+    duration: 8.589934592
+    hysteresis: 0.00244140625
+    input1: iq2
+    input2: 'off'
+    math_formula: ch1 * ch2
+    rolling_mode: false
+    run_continuous: false
+    threshold: 0.0
+    trace_average: 1
+    trigger_delay: 0.0
+    trigger_source: asg1
+    xy_mode: false
+hk:
+  expansion_P0: true

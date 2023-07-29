@@ -1,0 +1,89 @@
+pyrpl:
+  background_color: ''
+  dock_positions: "\0\0\0\xFF\0\0\0\0\xFD\0\0\0\x01\0\0\0\x02\0\0\x04\x9D\0\0\x02\
+    /\xFC\x01\0\0\0\x01\xFC\0\0\0\0\0\0\x04\x9D\0\0\0y\0\xFF\xFF\xFF\xFA\0\0\0\b\x01\
+    \0\0\0\r\xFB\0\0\0.\0a\0s\0g\0s\0 \0(\0b\0a\0n\0d\0p\0a\0s\0s\0_\0e\0x\0a\0m\0\
+    p\0l\0e\0)\0\0\0\0\0\xFF\xFF\xFF\xFF\0\0\0\x16\0\xFF\xFF\xFF\xFB\0\0\0,\0i\0q\0\
+    s\0 \0(\0b\0a\0n\0d\0p\0a\0s\0s\0_\0e\0x\0a\0m\0p\0l\0e\0)\x01\0\0\0\0\xFF\xFF\
+    \xFF\xFF\0\0\0]\0\xFF\xFF\xFF\xFB\0\0\0.\0p\0i\0d\0s\0 \0(\0b\0a\0n\0d\0p\0a\0\
+    s\0s\0_\0e\0x\0a\0m\0p\0l\0e\0)\0\0\0\0\0\xFF\xFF\xFF\xFF\0\0\0\x16\0\xFF\xFF\xFF\
+    \xFB\0\0\02\0s\0c\0o\0p\0e\0s\0 \0(\0b\0a\0n\0d\0p\0a\0s\0s\0_\0e\0x\0a\0m\0p\0\
+    l\0e\0)\0\0\0\0\0\xFF\xFF\xFF\xFF\0\0\0\x16\0\xFF\xFF\xFF\xFB\0\0\0.\0i\0i\0r\0\
+    s\0 \0(\0b\0a\0n\0d\0p\0a\0s\0s\0_\0e\0x\0a\0m\0p\0l\0e\0)\0\0\0\0\0\xFF\xFF\xFF\
+    \xFF\0\0\0\x16\0\xFF\xFF\xFF\xFB\0\0\00\0t\0r\0i\0g\0s\0 \0(\0b\0a\0n\0d\0p\0\
+    a\0s\0s\0_\0e\0x\0a\0m\0p\0l\0e\0)\0\0\0\0\0\xFF\xFF\xFF\xFF\0\0\0\x16\0\xFF\xFF\
+    \xFF\xFB\0\0\0.\0p\0w\0m\0s\0 \0(\0b\0a\0n\0d\0p\0a\0s\0s\0_\0e\0x\0a\0m\0p\0\
+    l\0e\0)\0\0\0\0\0\xFF\xFF\xFF\xFF\0\0\0\x16\0\xFF\xFF\xFF\xFB\0\0\0,\0h\0k\0s\0\
+    \ \0(\0b\0a\0n\0d\0p\0a\0s\0s\0_\0e\0x\0a\0m\0p\0l\0e\0)\0\0\0\0\0\xFF\xFF\xFF\
+    \xFF\0\0\0\x16\0\xFF\xFF\xFF\xFB\0\0\0D\0n\0e\0t\0w\0o\0r\0k\0a\0n\0a\0l\0y\0\
+    z\0e\0r\0 \0(\0b\0a\0n\0d\0p\0a\0s\0s\0_\0e\0x\0a\0m\0p\0l\0e\0)\x01\0\0\0\0\xFF\
+    \xFF\xFF\xFF\0\0\0]\0\xFF\xFF\xFF\xFB\0\0\0F\0s\0p\0e\0c\0t\0r\0u\0m\0a\0n\0a\0\
+    l\0y\0z\0e\0r\0 \0(\0b\0a\0n\0d\0p\0a\0s\0s\0_\0e\0x\0a\0m\0p\0l\0e\0)\0\0\0\0\
+    \0\xFF\xFF\xFF\xFF\0\0\0\x16\0\xFF\xFF\xFF\xFB\0\0\0<\0c\0u\0r\0v\0e\0v\0i\0e\0\
+    w\0e\0r\0 \0(\0b\0a\0n\0d\0p\0a\0s\0s\0_\0e\0x\0a\0m\0p\0l\0e\0)\0\0\0\0\0\xFF\
+    \xFF\xFF\xFF\0\0\0\x16\0\xFF\xFF\xFF\xFB\0\0\0<\0p\0y\0r\0p\0l\0c\0o\0n\0f\0i\0\
+    g\0 \0(\0b\0a\0n\0d\0p\0a\0s\0s\0_\0e\0x\0a\0m\0p\0l\0e\0)\0\0\0\0\0\xFF\xFF\xFF\
+    \xFF\0\0\0\x16\0\xFF\xFF\xFF\xFB\0\0\04\0l\0o\0c\0k\0b\0o\0x\0 \0(\0b\0a\0n\0\
+    d\0p\0a\0s\0s\0_\0e\0x\0a\0m\0p\0l\0e\0)\0\0\0\0\0\xFF\xFF\xFF\xFF\0\0\0\x16\0\
+    \xFF\xFF\xFF\0\0\x04\x9D\0\0\0\0\0\0\0\x04\0\0\0\x04\0\0\0\b\0\0\0\b\xFC\0\0\0\
+    \0"
+  loglevel: info
+  modules:
+  - NetworkAnalyzer
+  - SpectrumAnalyzer
+  - CurveViewer
+  - PyrplConfig
+  - Lockbox
+  name: bandpass_example
+  window_position:
+  - 0
+  - 0
+  - 1181
+  - 600
+redpitaya:
+  autostart: true
+  delay: 0.05
+  frequency_correction: 1.0
+  gui: true
+  hostname: 10.214.1.32
+  leds_off: true
+  monitor_server_name: monitor_server
+  password: root
+  port: 2222
+  reloadfpga: true
+  reloadserver: false
+  serverbinfilename: fpga.bin
+  serverdirname: //opt//pyrpl//
+  silence_env: false
+  sshport: 22
+  timeout: 1
+  user: root
+scope:
+  curve_name: scope curve
+pwm0:
+  input: 'off'
+pwm1:
+  input: 'off'
+networkanalyzer:
+  average_per_point: 1
+  curve_name: networkanalyzer curve
+  input: iq0
+  logscale: true
+  rbw: 75.89113552886508
+  start_freq: 14900000.0
+  stop_freq: 15100000.0
+  trace_average: 1
+spectrumanalyzer:
+  curve_name: spectrumanalyzer curve
+lockbox:
+  sequence:
+  - outputs: {}
+iq0:
+  amplitude: 0.0
+  bandwidth: 2428.6599415484384
+  frequency: 15000000.013969839
+  gain: 1.0
+  input: networkanalyzer
+  output_signal: output_direct
+  quadrature_factor: 0.0
+  phase: 240.00000002793968

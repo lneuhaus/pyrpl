@@ -1,0 +1,547 @@
+pyrpl:
+  background_color: ''
+  dock_positions: "\0\0\0\xFF\0\0\0\0\xFD\0\0\0\x01\0\0\0\x02\0\0\x06\x90\0\0\x03\xB2\
+    \xFC\x01\0\0\0\x01\xFC\0\0\0\0\0\0\x06\x90\0\0\0\xBE\0\xFF\xFF\xFF\xFC\x02\0\0\
+    \0\x02\xFC\0\0\0\x15\0\0\x03\xB2\0\0\0P\0\xFF\xFF\xFF\xFC\x01\0\0\0\x03\xFC\0\0\
+    \0\0\0\0\x02\x10\0\0\0\0\0\xFF\xFF\xFF\xFA\xFF\xFF\xFF\xFF\x01\0\0\0\x03\xFB\0\
+    \0\0N\0n\0e\0t\0w\0o\0r\0k\0a\0n\0a\0l\0y\0z\0e\0r\0 \0(\0l\0o\0c\0k\0_\0s\0e\0\
+    q\0u\0e\0n\0c\0e\0_\0e\0x\0a\0m\0p\0l\0e\0)\x02\xFF\xFF\xF9p\0\0\0J\0\0\x06\x90\
+    \0\0\x03\xD0\xFB\0\0\0F\0c\0u\0r\0v\0e\0v\0i\0e\0w\0e\0r\0 \0(\0l\0o\0c\0k\0_\0\
+    s\0e\0q\0u\0e\0n\0c\0e\0_\0e\0x\0a\0m\0p\0l\0e\0)\0\0\0\0\0\xFF\xFF\xFF\xFF\0\0\
+    \0\x16\0\xFF\xFF\xFF\xFB\0\0\0P\0s\0p\0e\0c\0t\0r\0u\0m\0a\0n\0a\0l\0y\0z\0e\0\
+    r\0 \0(\0l\0o\0c\0k\0_\0s\0e\0q\0u\0e\0n\0c\0e\0_\0e\0x\0a\0m\0p\0l\0e\0)\0\0\0\
+    \0\0\xFF\xFF\xFF\xFF\0\0\0\x16\0\xFF\xFF\xFF\xFB\0\0\0>\0l\0o\0c\0k\0b\0o\0x\0\
+    \ \0(\0l\0o\0c\0k\0_\0s\0e\0q\0u\0e\0n\0c\0e\0_\0e\0x\0a\0m\0p\0l\0e\0)\x01\0\0\
+    \0\0\0\0\x03}\0\0\0]\0\xFF\xFF\xFF\xFB\0\0\0<\0s\0c\0o\0p\0e\0s\0 \0(\0l\0o\0\
+    c\0k\0_\0s\0e\0q\0u\0e\0n\0c\0e\0_\0e\0x\0a\0m\0p\0l\0e\0)\x01\0\0\x03\x81\0\0\
+    \x03\x0F\0\0\0]\0\xFF\xFF\xFF\xFC\0\0\x01\xE2\0\0\x01\xE5\0\0\0\0\0\xFF\xFF\xFF\
+    \xFA\0\0\0\b\x01\0\0\0\t\xFB\0\0\08\0i\0i\0r\0s\0 \0(\0l\0o\0c\0k\0_\0s\0e\0q\0\
+    u\0e\0n\0c\0e\0_\0e\0x\0a\0m\0p\0l\0e\0)\0\0\0\0\0\xFF\xFF\xFF\xFF\0\0\0\x16\0\
+    \xFF\xFF\xFF\xFB\0\0\06\0i\0q\0s\0 \0(\0l\0o\0c\0k\0_\0s\0e\0q\0u\0e\0n\0c\0e\0\
+    _\0e\0x\0a\0m\0p\0l\0e\0)\0\0\0\0\0\xFF\xFF\xFF\xFF\0\0\0\x16\0\xFF\xFF\xFF\xFB\
+    \0\0\08\0p\0i\0d\0s\0 \0(\0l\0o\0c\0k\0_\0s\0e\0q\0u\0e\0n\0c\0e\0_\0e\0x\0a\0\
+    m\0p\0l\0e\0)\0\0\0\0\0\xFF\xFF\xFF\xFF\0\0\0\x16\0\xFF\xFF\xFF\xFB\0\0\08\0a\0\
+    s\0g\0s\0 \0(\0l\0o\0c\0k\0_\0s\0e\0q\0u\0e\0n\0c\0e\0_\0e\0x\0a\0m\0p\0l\0e\0\
+    )\0\0\0\0\0\xFF\xFF\xFF\xFF\0\0\0\x16\0\xFF\xFF\xFF\xFB\0\0\0:\0t\0r\0i\0g\0s\0\
+    \ \0(\0l\0o\0c\0k\0_\0s\0e\0q\0u\0e\0n\0c\0e\0_\0e\0x\0a\0m\0p\0l\0e\0)\0\0\0\0\
+    \0\xFF\xFF\xFF\xFF\0\0\0\x16\0\xFF\xFF\xFF\xFB\0\0\08\0p\0w\0m\0s\0 \0(\0l\0o\0\
+    c\0k\0_\0s\0e\0q\0u\0e\0n\0c\0e\0_\0e\0x\0a\0m\0p\0l\0e\0)\0\0\0\0\0\xFF\xFF\xFF\
+    \xFF\0\0\0\x16\0\xFF\xFF\xFF\xFB\0\0\06\0h\0k\0s\0 \0(\0l\0o\0c\0k\0_\0s\0e\0\
+    q\0u\0e\0n\0c\0e\0_\0e\0x\0a\0m\0p\0l\0e\0)\0\0\0\0\0\xFF\xFF\xFF\xFF\0\0\0\x16\
+    \0\xFF\xFF\xFF\xFB\0\0\0F\0p\0y\0r\0p\0l\0c\0o\0n\0f\0i\0g\0 \0(\0l\0o\0c\0k\0\
+    _\0s\0e\0q\0u\0e\0n\0c\0e\0_\0e\0x\0a\0m\0p\0l\0e\0)\0\0\0\0\0\xFF\xFF\xFF\xFF\
+    \0\0\0\x16\0\xFF\xFF\xFF\xFB\0\0\0>\0l\0o\0c\0k\0b\0o\0x\0 \0(\0l\0o\0c\0k\0_\0\
+    s\0e\0q\0u\0e\0n\0c\0e\0_\0e\0x\0a\0m\0p\0l\0e\0)\x01\0\0\0\0\xFF\xFF\xFF\xFF\0\
+    \0\0\0\0\0\0\0\0\0\x06\x90\0\0\0\0\0\0\0\x04\0\0\0\x04\0\0\0\b\0\0\0\b\xFC\0\0\
+    \0\0"
+  loglevel: info
+  modules:
+  - NetworkAnalyzer
+  - SpectrumAnalyzer
+  - CurveViewer
+  - PyrplConfig
+  - Lockbox
+  name: lock_sequence_example
+  window_position:
+  - 2
+  - 11
+  - 1680
+  - 987
+redpitaya:
+  autostart: true
+  defaultport: 2222
+  delay: 0.05
+  frequency_correction: 1.0
+  gui: true
+  hostname: 10.214.1.32
+  leds_off: true
+  monitor_server_name: monitor_server
+  password: root
+  port: 2222
+  reloadfpga: true
+  reloadserver: false
+  serverbinfilename: fpga.bin
+  serverdirname: //opt//pyrpl//
+  silence_env: false
+  sshport: 22
+  timeout: 1
+  user: root
+scope:
+  curve_name: scope curve
+  duration: 0.008388608
+  input1: in1
+  input2: lockbox.inputs.pdh
+  rolling_mode: false
+  run_continuous: false
+  threshold: 0.800048828125
+  trigger_source: ch1_negative_edge
+  average: true
+  trace_average: 1
+  trigger_delay: 0.0
+  hysteresis: 0.001953125
+  ch1_active: true
+  ch2_active: true
+  ch_math_active: false
+  math_formula: ch1 * ch2
+  xy_mode: false
+pwm0:
+  input: 'off'
+pwm1:
+  input: 'off'
+networkanalyzer:
+  curve_name: networkanalyzer curve
+  start_freq: 10.0
+  stop_freq: 500000.0
+  amplitude: 0.0011749267578125
+  run_continuous: false
+  input: out1
+  output_direct: out1
+  rbw: 4.743187489051999
+  points: 100
+  acbandwidth: 4.743187489051999
+  average_per_point: 1
+  logscale: true
+  trace_average: 1
+  infer_open_loop_tf: false
+  auto_bandwidth: true
+  q_factor_min: 5.0
+  auto_amplitude: false
+  target_dbv: -100.0
+  auto_amp_min: 0.001
+  auto_amp_max: 0.2
+spectrumanalyzer:
+  curve_name: spectrumanalyzer curve
+  span: 244140.62499999997
+  run_continuous: false
+  display_input2_baseband: false
+  display_cross_amplitude: false
+  input1_baseband: lockbox.inputs.pdh
+  trace_average: 1
+lockbox:
+  classname: HighFinesseFabryPerot
+  eta: 0.9
+  finesse: 8000.0
+  inputs:
+    pdh:
+      bandwidth:
+      - 3108131.4996426
+      - 3108131.4996426
+      calibration_data:
+        _asg_phase: 140.2734375
+        max: 0.7979736328125
+        mean: 0.007947385311126709
+        min: -0.800537109375
+        rms: 0.2386023426551389
+      mod_amp: 1.0
+      mod_freq: 50000000.0
+      mod_output: out2
+      mod_phase: 35.0
+      quadrature_factor: 40.0
+    reflection:
+      calibration_data:
+        _analog_offset: 0.0
+        _asg_phase: 140.2734375
+        max: 0.8870849609375
+        mean: 0.8719958513975143
+        min: 0.67138671875
+        rms: 0.031203115313673778
+    transmission:
+      calibration_data:
+        _analog_offset: 0.0
+        _asg_phase: 115.15869140625
+        max: 0.86572265625
+        mean: 0.8520669788122177
+        min: 0.6519775390625
+        rms: 0.030524977316482443
+      input_signal: 'off'
+  outputs:
+    aux_output:
+      additional_filter:
+      - 0
+      - 0
+      - 0
+      - 0
+      analog_filter_cutoff: 20000.0
+      assisted_design: false
+      dc_gain: 1.8e-07
+      desired_unity_gain_frequency: 200000000.0
+      extra_module: iir
+      i: 200000000.0
+      p: 10000.0
+    output1:
+      assisted_design: true
+      i: 100.0
+      p: 0.0
+    piezo:
+      additional_filter:
+      - 0
+      - 0
+      - 0
+      - 0
+      analog_filter_cutoff: 20000.0
+      assisted_design: false
+      dc_gain: 1.8e-07
+      desired_unity_gain_frequency: 1600000.0
+      extra_module: None
+      i: 1600000.0
+      min_voltage: -1.0
+      output_channel: out1
+      p: 80.0
+      sweep_amplitude: 1.0
+      sweep_frequency: 5.0
+      sweep_offset: 0.0
+      sweep_waveform: ramp
+  round_trip_length: 0.09
+  sequence:
+  - duration: 0.0
+    function_call: ''
+    gain_factor: 1.0
+    input: transmission
+    outputs:
+      piezo:
+        lock_on: false
+        offset: 1.0
+        reset_offset: true
+    setpoint: 0.0
+  - duration: 0.6
+    function_call: ''
+    gain_factor: 0.001
+    input: reflection
+    outputs:
+      piezo:
+        lock_on: true
+        offset: 0.0
+        reset_offset: false
+    setpoint: -3.0
+  - duration: 0.0
+    function_call: ''
+    gain_factor: 1.0
+    input: pdh
+    outputs:
+      piezo:
+        lock_on: true
+        offset: 0
+        reset_offset: false
+    setpoint: 0.0
+  wavelength: 1.064e-06
+  setpoint_unit: bandwidth
+scope_states:
+  autosweep:
+    average: true
+    ch1_active: true
+    ch2_active: true
+    ch_math_active: false
+    curve_name: scope curve
+    duration: 0.268435456
+    hysteresis: 0.001953125
+    input1: in1
+    input2: out1
+    math_formula: ch1 * ch2
+    rolling_mode: false
+    run_continuous: false
+    threshold: 0.800048828125
+    trace_average: 1
+    trigger_delay: 0.0
+    trigger_source: asg1
+    xy_mode: false
+  autosweep_zoom:
+    average: true
+    ch1_active: true
+    ch2_active: true
+    ch_math_active: false
+    curve_name: scope curve
+    duration: 0.001048576
+    hysteresis: 0.001953125
+    input1: in1
+    input2: iq1
+    math_formula: ch1 * ch2
+    rolling_mode: false
+    run_continuous: false
+    threshold: 0.7855224609375
+    trace_average: 1
+    trigger_delay: 0.0
+    trigger_source: ch1_negative_edge
+    xy_mode: false
+  rolling_8s:
+    average: true
+    ch1_active: true
+    ch2_active: true
+    ch_math_active: false
+    curve_name: scope curve
+    duration: 8.589934592
+    hysteresis: 0.001953125
+    input1: in1
+    input2: out1
+    math_formula: ch1 * ch2
+    rolling_mode: true
+    run_continuous: true
+    threshold: 0.800048828125
+    trace_average: 1
+    trigger_delay: 0.0
+    trigger_source: ch1_negative_edge
+    xy_mode: false
+  autosweep_pdh:
+    average: true
+    ch1_active: true
+    ch2_active: true
+    ch_math_active: false
+    curve_name: scope curve
+    duration: 0.008388608
+    hysteresis: 0.001953125
+    input1: in1
+    input2: lockbox.inputs.pdh
+    math_formula: ch1 * ch2
+    rolling_mode: false
+    run_continuous: true
+    threshold: 0.800048828125
+    trace_average: 1
+    trigger_delay: 0.0
+    trigger_source: ch1_negative_edge
+    xy_mode: false
+lockbox_states: {}
+iir:
+  bypass: false
+  gain: 0.15
+  input: iq1
+  loops: 5
+  'on': true
+  poles:
+  - (-400+75900j)
+  - (-1000+87000j)
+  - (-190+107600j)
+  - (-90000+0j)
+  - (-85000+0j)
+  zeros:
+  - (-1800+63500j)
+  - (-1000+79300j)
+  - (-1200+91500j)
+  - (-350+108700j)
+  data_curve: 5
+  output_direct: 'off'
+  inputfilter: 0
+  plot_data: true
+  plot_data_times_filter: true
+iir_states:
+  compensation_michael:
+    bypass: false
+    data_curve: 2
+    gain: 0.15
+    input: networkanalyzer
+    inputfilter: 0
+    loops: 4
+    'on': true
+    output_direct: 'off'
+    plot_data: true
+    plot_data_times_filter: true
+    poles:
+    - (-1000+76500j)
+    - (-1000+89000j)
+    - -100000.0
+    - -110000.0
+    zeros:
+    - (-2500+63500j)
+    - (-1000+79000j)
+    - (-1200+91500j)
+  compensation_4_zeros:
+    bypass: false
+    data_curve: 3
+    gain: 0.15
+    input: iq1
+    inputfilter: 0
+    loops: 5
+    'on': true
+    output_direct: 'off'
+    plot_data: true
+    plot_data_times_filter: true
+    poles:
+    - (-200+76200j)
+    - (-700+88300j)
+    - (-60+107900j)
+    - -130000.0
+    - -120000.0
+    zeros:
+    - (-2500+63500j)
+    - (-1000+79000j)
+    - (-1200+91500j)
+    - (-300+108700j)
+  compensation_4piezo_bis:
+    bypass: false
+    data_curve: 3
+    gain: 0.15
+    input: iq1
+    inputfilter: 0
+    loops: 6
+    'on': true
+    output_direct: 'off'
+    plot_data: true
+    plot_data_times_filter: true
+    poles:
+    - (-200+76200j)
+    - (-700+88300j)
+    - (-60+107900j)
+    - -110000.0
+    - -112000.0
+    zeros:
+    - (-1600+62800j)
+    - (-1000+79000j)
+    - (-1200+91500j)
+    - (-300+108700j)
+  compensation_4piezo_final:
+    bypass: false
+    data_curve: 3
+    gain: 0.15
+    input: iq1
+    inputfilter: 0
+    loops: 5
+    'on': true
+    output_direct: 'off'
+    plot_data: true
+    plot_data_times_filter: true
+    poles:
+    - (-1000+76500j)
+    - (-1000+89000j)
+    - (-80+107900j)
+    - -100000.0
+    - -110000.0
+    zeros:
+    - (-2500+63500j)
+    - (-1000+79000j)
+    - (-1200+91500j)
+    - (-300+108700j)
+  compensation_piezo_upgraded:
+    bypass: false
+    data_curve: 4
+    gain: 0.15
+    input: iq1
+    inputfilter: 0
+    loops: 5
+    'on': true
+    output_direct: 'off'
+    plot_data: true
+    plot_data_times_filter: true
+    poles:
+    - (-400+75900j)
+    - (-1000+87000j)
+    - (-190+107600j)
+    - -100000.0
+    - -110000.0
+    zeros:
+    - (-1800+63500j)
+    - (-1000+79300j)
+    - (-1200+91500j)
+    - (-350+108700j)
+  final:
+    bypass: false
+    data_curve: 5
+    gain: 0.15
+    input: iq1
+    inputfilter: 0
+    loops: 5
+    'on': true
+    output_direct: 'off'
+    plot_data: true
+    plot_data_times_filter: true
+    poles:
+    - (-400+75900j)
+    - (-1000+87000j)
+    - (-190+107600j)
+    - -90000.0
+    - -85000.0
+    zeros:
+    - (-1800+63500j)
+    - (-1000+79300j)
+    - (-1200+91500j)
+    - (-350+108700j)
+networkanalyzer_states:
+  iir_measurement:
+    acbandwidth: 75.89113552886508
+    amplitude: 0.9999923706054688
+    average_per_point: 5
+    curve_name: networkanalyzer curve
+    infer_open_loop_tf: false
+    input: iir
+    logscale: true
+    output_direct: 'off'
+    points: 5001
+    rbw: 1214.2929101024397
+    run_continuous: false
+    start_freq: 10000.0
+    stop_freq: 4999999.999999999
+    trace_average: 1
+asg0:
+  frequency: 91499.9982342124
+  trigger_source: 'off'
+  waveform: sin
+  amplitude: 1.0
+asg1:
+  amplitude: 1.0
+  frequency: 9999.959729611874
+  offset: 0.0
+  output_direct: 'off'
+  trigger_source: immediately
+  waveform: sin
+  start_phase: 0.0
+aux_output_states:
+  final:
+    additional_filter:
+    - 0
+    - 0
+    - 0
+    - 0
+    analog_filter_cutoff: 20000.0
+    assisted_design: false
+    calibration_data:
+      _analog_offset: 0.0
+      _asg_phase: 0.0
+      max: 0.0
+      mean: 0.0
+      min: 0.0
+      rms: 0.0
+    dc_gain: 1.8e-07
+    desired_unity_gain_frequency: 200000000.0
+    extra_module: iir
+    extra_module_state: None
+    i: 200000000.0
+    max_voltage: 1.0
+    min_voltage: -1.0
+    output_channel: out1
+    p: 10000.0
+    sweep_amplitude: 1.0
+    sweep_frequency: 50.0
+    sweep_offset: 0.0
+    sweep_waveform: ramp
+    tf_curve: 0
+    tf_type: filter
+    unit: m/V
+piezo_states:
+  final_really:
+    additional_filter:
+    - 0
+    - 0
+    - 0
+    - 0
+    analog_filter_cutoff: 20000.0
+    assisted_design: false
+    calibration_data:
+      _analog_offset: 0.0
+      _asg_phase: 0.0
+      max: 0.0
+      mean: 0.0
+      min: 0.0
+      rms: 0.0
+    dc_gain: 1.8e-07
+    desired_unity_gain_frequency: 1600000.0
+    extra_module: None
+    extra_module_state: None
+    i: 1600000.0
+    max_voltage: 1.0
+    min_voltage: -1.0
+    output_channel: out1
+    p: 80.0
+    sweep_amplitude: 1.0
+    sweep_frequency: 5.0
+    sweep_offset: 0.0
+    sweep_waveform: ramp
+    tf_curve: 0
+    tf_type: filter
+    unit: m/V
