@@ -111,6 +111,7 @@ target/
 
 #config backups
 pyrpl/config/*.bak
+*.bak
 
 #user config
 pyrpl/config/user_config/*.yml
@@ -131,3 +132,6 @@ scripts/__init__.py
 scripts/run_pyrpl.spec
 scripts/pyrpl.spec
 cover/index.html
+
+#notebook checkpoints
+.ipynb_checkpoints

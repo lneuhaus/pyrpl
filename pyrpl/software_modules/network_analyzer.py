@@ -534,6 +534,7 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
         #self.iq.amplitude = self.amplitude  # Amplitude is already set in self._trace_async (avoid glitch)
         while self.current_avg < self.trace_average:
             await self._trace_async(0)
+        self._free_up_resources()
         self._running_state = 'stopped'
         return self.data_avg
 
