@@ -343,7 +343,7 @@ class NaWidget(AcquisitionModuleWidget):
     #    self.module.stop()
 
 
-class MyGraphicsWindow(pg.GraphicsWindow):
+class MyGraphicsWindow(pg.GraphicsLayoutWidget):
     def __init__(self, title, parent_widget):
         super(MyGraphicsWindow, self).__init__(title)
         self.parent_widget = parent_widget
@@ -375,4 +375,4 @@ class MyGraphicsWindow(pg.GraphicsWindow):
         except BaseException as e:
             self.parent_widget.module._logger.error(e)
         finally:
-            return super(MyGraphicsWindow, self).mousePressEvent(*args, **kwds)
+            return super(GraphicsLayoutWidget, self).mousePressEvent(*args, **kwds)

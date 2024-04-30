@@ -9,9 +9,9 @@ import numpy as np
 import sys
 from ... import APP
 
-class MyGraphicsWindow(pg.GraphicsWindow):
+class MyGraphicsWindow(pg.GraphicsLayoutWidget):
     def __init__(self, title, parent):
-        super(MyGraphicsWindow, self).__init__(title)
+        super(GraphicsLayoutWidget, self).__init__(title)
         self.parent = parent
         self.setToolTip("-----plot legend---------------\n"
                         "yellow: theoretical IIR transfer function\n"

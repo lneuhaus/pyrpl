@@ -121,7 +121,7 @@ class ScopeWidget(AcquisitionModuleWidget):
 
         #self.setLayout(self.main_layout)
         self.setWindowTitle("Scope")
-        self.win = pg.GraphicsWindow(title="Scope")
+        self.win = pg.GraphicsLayoutWidget(title="Scope")
         self.plot_item = self.win.addPlot(title="Scope")
         self.plot_item.showGrid(y=True, alpha=1.)
 
