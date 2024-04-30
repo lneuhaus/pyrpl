@@ -678,7 +678,7 @@ class BoolIgnoreAttributeWidget(BoolAttributeWidget):
             self._gui_to_attribute_mapping.inverse[new_value])
 
 
-class DataWidget(pg.GraphicsWindow):
+class DataWidget(pg.GraphicsLayoutWidget):
     """
     A widget to plot real or complex datasets. To plot data, use the
     function _set_widget_value(new_value, transform_magnitude)
