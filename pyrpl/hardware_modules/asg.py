@@ -301,7 +301,7 @@ def make_asg(channel=0):
             #    self._reads(self._DATA_OFFSET, self.data_length),
             #             dtype=np.int32)
             x[x >= 2 ** 13] -= 2 ** 14
-            return np.array(x, dtype=np.float) / 2 ** 13
+            return np.array(x, dtype=float) / 2 ** 13
 
         @data.setter
         def data(self, data):

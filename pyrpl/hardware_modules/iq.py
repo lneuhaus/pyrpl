@@ -544,15 +544,15 @@ class Iq(FilterModule):
 
         Returns
         -------
-        tf: np.array(..., dtype=np.complex)
+        tf: np.array(..., dtype=complex)
             The complex open loop transfer function of the module.
         """
         quadrature_delay = 2  # the delay experienced by the signal when it
         # is represented as a quadrature (=lower frequency, less phaseshift)
         # the remaining delay of the module
         module_delay = self._delay - quadrature_delay
-        frequencies = np.array(frequencies, dtype=np.complex)
-        tf = np.array(frequencies * 0, dtype=np.complex) + self.gain
+        frequencies = np.array(frequencies, dtype=complex)
+        tf = np.array(frequencies * 0, dtype=complex) + self.gain
         # bandpass filter
         for f in self.bandwidth:
             if f == 0:

@@ -682,7 +682,7 @@ class IIR(FilterModule):
 
         Returns
         -------
-        tf: np.array(..., dtype=np.complex)
+        tf: np.array(..., dtype=complex)
             The complex open loop transfer function of the module.
         If kind=='all', a list of plotdata tuples is returned that can be
         passed directly to iir.bodeplot().
