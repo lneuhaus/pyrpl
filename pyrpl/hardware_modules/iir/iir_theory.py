@@ -90,7 +90,7 @@ def freqs(sys, w):
 
     Returns
     -------
-    np.array(..., dtype=np.complex) with the response
+    np.array(..., dtype=complex) with the response
     """
     z, p, k = sys
     s = np.array(w, dtype=np.complex128) * 1j
@@ -135,7 +135,7 @@ def freqz_(sys, w, dt=8e-9):
 
     Returns
     -------
-    np.array(..., dtype=np.complex) with the response
+    np.array(..., dtype=complex) with the response
     """
     z, p, k = sys
     b, a = sig.zpk2tf(z, p, k)
@@ -871,7 +871,7 @@ class IirFilter(object):
             inputfilter = self.inputfilter
         if frequencies is None:
             frequencies = self.frequencies
-        frequencies = np.asarray(frequencies, dtype=np.complex)
+        frequencies = np.asarray(frequencies, dtype=complex)
         try:
             len(inputfilter)
         except:
@@ -918,7 +918,7 @@ class IirFilter(object):
             frequencies to compute the transfer function for
         Returns
         -------
-        np.array(..., dtype=np.complex)
+        np.array(..., dtype=complex)
         """
         if frequencies is None:
             frequencies = self.frequencies
@@ -942,7 +942,7 @@ class IirFilter(object):
 
         Returns
         -------
-        np.array(..., dtype=np.complex)
+        np.array(..., dtype=complex)
         """
         # this code is more or less a direct copy of get_coeff()
         if frequencies is None:
@@ -979,7 +979,7 @@ class IirFilter(object):
 
         Returns
         -------
-        np.array(..., dtype=np.complex)
+        np.array(..., dtype=complex)
         """
         if frequencies is None:
             frequencies = self.frequencies
@@ -1017,7 +1017,7 @@ class IirFilter(object):
 
         Returns
         -------
-        np.array(..., dtype=np.complex)
+        np.array(..., dtype=complex)
         """
         if frequencies is None:
             frequencies = self.frequencies
@@ -1065,7 +1065,7 @@ class IirFilter(object):
 
         Returns
         -------
-        np.array(..., dtype=np.complex)
+        np.array(..., dtype=complex)
         """
         return self.tf_coefficients(frequencies=frequencies,
                                     coefficients=self.coefficients_rounded,
@@ -1093,7 +1093,7 @@ class IirFilter(object):
 
         Returns
         -------
-        np.array(..., dtype=np.complex)
+        np.array(..., dtype=complex)
         """
         return self.tf_rounded(frequencies=frequencies, delay=True) * \
                self.tf_inputfilter(frequencies=frequencies)
