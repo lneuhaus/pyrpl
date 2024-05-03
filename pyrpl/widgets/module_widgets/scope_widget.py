@@ -122,7 +122,6 @@ class ScopeWidget(AcquisitionModuleWidget):
         #self.setLayout(self.main_layout)
         self.setWindowTitle("Scope")
         self.win = pg.GraphicsLayoutWidget(show=True,title="Scope")
-        self.win.show()
         self.plot_item = self.win.addPlot(title="Scope")
         self.plot_item.showGrid(y=True, alpha=1.)
 
@@ -248,7 +247,6 @@ class ScopeWidget(AcquisitionModuleWidget):
             else:
                 self.curves[2].setVisible(False)
         self.update_current_average() # to update the number of averages
-        self.win.show()
 
     def set_rolling_mode(self):
         """
