@@ -48,7 +48,7 @@ logger = logging.getLogger(name=__name__)
 try:
     from IPython import get_ipython
     IPYTHON = get_ipython()
-    IPYTHON.magic("gui qt")
+    IPYTHON.run_line_magic("gui qt")
 except BaseException as e:
     logger.debug('Could not enable IPython gui support: %s.' % e)
 
