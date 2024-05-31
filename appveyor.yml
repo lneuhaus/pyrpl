@@ -18,8 +18,8 @@ environment:
     # a later point release.
     # See: http://www.appveyor.com/docs/installed-software#python
     # only use python 3.5 for building .exe (for auto-upload of binaries)
-    - PYTHON: "C:\\Miniconda35-x64"
-      PYTHON_VERSION: "3.5"
+    - PYTHON: "C:\\Miniconda36-x64"
+      PYTHON_VERSION: "3.6.x"
       PYTHON_ARCH: "64"
 
 init:
