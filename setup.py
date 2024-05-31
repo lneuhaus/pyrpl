@@ -46,10 +46,11 @@ requirements = ['scp',
                 'numpy>=1.9',
                 'paramiko>=2.0',
                 'nose>=1.0',
-                'PyQt5<=5.14',  # cannot be installed with pip
+                'PyQt5<=5.14',  # cannot be installed with pip, if in conda you can use conda install pyqt<5.15
                 'qtpy<=1.10',  # qtpy 1.11 contains breaking API changes related to pyqtSignals
                 'nbconvert',
-                'jupyter-client']
+                'jupyter-client',
+	        'nest_asyncio']
 if sys.version_info >= (3,4):  # python version dependencies
     requirements += ['quamash']
 else:  # python 2.7
