@@ -65,13 +65,13 @@ class NaWidget(AcquisitionModuleWidget):
         self.button_layout = QtWidgets.QHBoxLayout()
         #self.setLayout(self.main_layout)
         self.setWindowTitle("NA")
-        self.win = pg.GraphicsWindow(title="Magnitude")
+        self.win = pg.GraphicsLayoutWidget(title="Magnitude")
 
         self.label_benchmark = pg.LabelItem(justify='right')
         self.win.addItem(self.label_benchmark, row=1,col=0)
         self._last_benchmark_value = np.nan
 
-        self.win_phase = pg.GraphicsWindow(title="Phase")
+        self.win_phase = pg.GraphicsLayoutWidget(title="Phase")
         self.plot_item = self.win.addPlot(row=1, col=0, title="Magnitude (dB)")
         self.plot_item_phase = self.win_phase.addPlot(row=1, col=0,
                                                       title="Phase (deg)")
