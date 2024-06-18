@@ -317,9 +317,15 @@ class RedPitaya(object):
         self.end()
         self.ssh.ask('killall nginx')
         self.ssh.ask('systemctl stop redpitaya_nginx') # for 0.94 and higher
-        self.ssh.ask('cat '
-                 + os.path.join(self.parameters['serverdirname'], self.parameters['serverbinfilename'])
-                 + ' > //dev//xdevcfg')
+        sleep(3) # sleep after stopping service
+        result = self.ssh.ask('cat /root/.version')
+        if result.find('2.') != -1:
+            self.ssh.ask('/opt/redpitaya/sbin/overlay.sh pyrpl')
+            sleep(1)
+        else:
+            self.ssh.ask('cat '
+                + os.path.join(self.parameters['serverdirname'], self.parameters['serverbinfilename'])
+                + ' > //dev//xdevcfg')
         sleep(self.parameters['delay'])
         self.ssh.ask('rm -f '+ os.path.join(self.parameters['serverdirname'], self.parameters['serverbinfilename']))
         self.ssh.ask("nginx -p //opt//www//")
