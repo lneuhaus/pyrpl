@@ -60,7 +60,7 @@ if APP is None:
 
 
 
-LOOP = qasync.QEventLoop() # Since tasks scheduled in this loop seem to
+LOOP = qasync.QEventLoop(already_running=True) # Since tasks scheduled in this loop seem to
 # fall in the standard QEventLoop, and we never explicitly ask to run this
 # loop, it might seem useless to send all tasks to LOOP, however, a task
 # scheduled in the default loop seem to never get executed with IPython
@@ -95,20 +95,20 @@ def wait(future, timeout=None):
 
     BEWARE: never use wait in a coroutine (use builtin await instead)
     """
-    assert isinstance(future, Future) or iscoroutine(future)
+    #assert isinstance(future, Future) or iscoroutine(future)
     new_future = ensure_future(asyncio.wait({future},
                                             timeout=timeout))
     #if sys.version>='3.7': # this way, it was not possible to execute wait
                             # behind a qt slot !!!
-    #    LOOP.run_until_complete(new_future)
-    #    done, pending = new_future.result()
-    #else:
-    loop = QtCore.QEventLoop()
-    def quit(*args):
-        loop.quit()
-    new_future.add_done_callback(quit)
-    loop.exec_()
+    LOOP.run_until_complete(new_future)
     done, pending = new_future.result()
+    #else:
+    #loop = QtCore.QEventLoop()
+    #def quit(*args):
+    #    loop.quit()
+    #new_future.add_done_callback(quit)
+    #loop.exec_()
+    #done, pending = new_future.result()
     if future in done:
         return future.result()
     else:
