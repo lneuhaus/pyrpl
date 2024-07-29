@@ -7,9 +7,13 @@ __license__ = "GNU General Public License 3 (GPLv3)"
 import warnings
 import numpy as np
 # pyqtgraph is throwing a warning on ScatterPlotItem
-warnings.simplefilter("ignore", np.VisibleDeprecationWarning)
-# pyqtgraph is throwing a warning on ScatterPlotItem
-warnings.simplefilter("error", np.ComplexWarning)
+try:
+    warnings.simplefilter("ignore", np.exceptions.VisibleDeprecationWarning)
+    warnings.simplefilter("error", np.exceptions.ComplexWarning)
+except AttributeError:
+    warnings.simplefilter("ignore", np.VisibleDeprecationWarning)
+    warnings.simplefilter("error", np.ComplexWarning)
+    
 # former issue with IIR, now resolved
 #from scipy.signal import BadCoefficients
 #warnings.simplefilter("error", BadCoefficients)
