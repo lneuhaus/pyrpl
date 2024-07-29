@@ -34,7 +34,7 @@ Lock-in detection / PDH / synchronous detection
              output_signal='quadrature', quadrature_factor=10)
 
 After this setup, the demodulated quadrature is available as the
-output\_signal of iq0, and can serve for example as the input of a PID
+output_signal of iq0, and can serve for example as the input of a PID
 module to stabilize the frequency of a laser to a reference cavity. The
 module was tested and is in daily use in our lab. Frequencies as low as
 20 Hz and as high as 50 MHz have been used for this technique. At the
