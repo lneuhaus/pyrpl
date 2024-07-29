@@ -40,6 +40,7 @@ from asyncio import Future, iscoroutine, TimeoutError, get_event_loop, wait_for
 #import quamash
 import sys
 import nest_asyncio
+import qasync
 nest_asyncio.apply()
 
 logger = logging.getLogger(name=__name__)
@@ -58,12 +59,12 @@ if APP is None:
     APP = QtWidgets.QApplication(['pyrpl'])
 
 
-#LOOP = quamash.QEventLoop() # Since tasks scheduled in this loop seem to
+LOOP = qasync.QEventLoop() # Since tasks scheduled in this loop seem to
 # fall in the standard QEventLoop, and we never explicitly ask to run this
 # loop, it might seem useless to send all tasks to LOOP, however, a task
 # scheduled in the default loop seem to never get executed with IPython
 # kernel integration.
-#asyncio.set_event_loop(LOOP)
+asyncio.set_event_loop(LOOP)
 
 async def sleep_async(time_s):
     """
@@ -77,7 +78,6 @@ def ensure_future(coroutine):
     Schedules the task described by the coroutine. Deals properly with
     IPython kernel integration.
     """
-    LOOP = get_event_loop()
     return asyncio.ensure_future(coroutine, loop=LOOP)
 
 def wait(future, timeout=None):
