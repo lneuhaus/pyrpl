@@ -40,8 +40,6 @@ from asyncio import Future, iscoroutine, TimeoutError, get_event_loop, wait_for
 
 import nest_asyncio
 import qasync
-nest_asyncio.apply()
-
 
 logger = logging.getLogger(name=__name__)
 
@@ -60,14 +58,25 @@ if APP is None:
 
 
 
-LOOP = qasync.QEventLoop(already_running=True) # Since tasks scheduled in this loop seem to
+LOOP = qasync.QEventLoop(already_running=False) # Since tasks scheduled in this loop seem to
 # fall in the standard QEventLoop, and we never explicitly ask to run this
 # loop, it might seem useless to send all tasks to LOOP, however, a task
 # scheduled in the default loop seem to never get executed with IPython
 # kernel integration.
 
-asyncio.set_event_loop(LOOP)
-
+try:
+    shell = get_ipython().__class__.__name__
+    if shell == 'ZMQInteractiveShell':
+        print('Jupyter notebook or qtconsole')
+        #nest_asyncio.apply(LOOP)
+        #asyncio.events._set_running_loop(LOOP)
+    elif shell == 'TerminalInteractiveShell':
+        print('Terminal running IPython')
+    else:
+        print('# Other type (?)')
+except NameError:
+    print('Probably standard Python interpreter')
+    asyncio.events._set_running_loop(LOOP)
 
 async def sleep_async(time_s):
     """
