@@ -36,8 +36,9 @@ the background loop
 import logging
 from qtpy import QtCore, QtWidgets
 import asyncio
-from asyncio import Future, iscoroutine, TimeoutError, get_event_loop, wait_for
-
+from asyncio import Future, iscoroutine, TimeoutError, get_event_loop, wait_for, new_event_loop, get_running_loop
+from qasync import QEventLoop
+import sys
 import nest_asyncio
 import qasync
 
@@ -77,6 +78,8 @@ try:
 except NameError:
     print('Probably standard Python interpreter')
     asyncio.events._set_running_loop(LOOP)
+
+LOOP = asyncio.get_event_loop()
 
 async def sleep_async(time_s):
     """
