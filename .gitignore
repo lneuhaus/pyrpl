@@ -135,3 +135,4 @@ cover/index.html
 
 #notebook checkpoints
 .ipynb_checkpoints
+run_pyrpl_in_notebook.ipynb
