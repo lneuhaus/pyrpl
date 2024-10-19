@@ -312,7 +312,7 @@ def make_asg(channel=0):
             data = np.array(np.round((2 ** 13 - 1) * data), dtype=np.int32)
             data[data >= 2 ** 13] = 2 ** 13 - 1
             data[data < 0] += 2 ** 14
-            # values that are still negativeare set to maximally negatuve
+            # values that are still negativeare set to maximally negative
             data[data < 0] = -2 ** 13
             data = np.array(data, dtype=np.uint32)
             self._writes(self._DATA_OFFSET, data)

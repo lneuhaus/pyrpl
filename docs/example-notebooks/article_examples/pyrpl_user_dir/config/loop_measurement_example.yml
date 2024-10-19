@@ -1,0 +1,226 @@
+pyrpl:
+  background_color: ''
+  loglevel: info
+  modules:
+  - NetworkAnalyzer
+  - SpectrumAnalyzer
+  - CurveViewer
+  - PyrplConfig
+  - Lockbox
+  name: loop_measurement_example
+  dock_positions: "\0\0\0\xFF\0\0\0\0\xFD\0\0\0\x01\0\0\0\x02\0\0\x05P\0\0\x02\x98\
+    \xFC\x01\0\0\0\x01\xFC\0\0\0\0\0\0\x05P\0\0\0y\0\xFF\xFF\xFF\xFA\0\0\0\b\x01\0\
+    \0\0\x0E\xFB\0\0\0>\0a\0s\0g\0s\0 \0(\0l\0o\0o\0p\0_\0m\0e\0a\0s\0u\0r\0e\0m\0\
+    e\0n\0t\0_\0e\0x\0a\0m\0p\0l\0e\0)\0\0\0\0\0\xFF\xFF\xFF\xFF\0\0\0\x16\0\xFF\xFF\
+    \xFF\xFB\0\0\0<\0i\0q\0s\0 \0(\0l\0o\0o\0p\0_\0m\0e\0a\0s\0u\0r\0e\0m\0e\0n\0\
+    t\0_\0e\0x\0a\0m\0p\0l\0e\0)\x01\0\0\0\0\xFF\xFF\xFF\xFF\0\0\0]\0\xFF\xFF\xFF\xFB\
+    \0\0\0>\0p\0i\0d\0s\0 \0(\0l\0o\0o\0p\0_\0m\0e\0a\0s\0u\0r\0e\0m\0e\0n\0t\0_\0\
+    e\0x\0a\0m\0p\0l\0e\0)\0\0\0\0\0\xFF\xFF\xFF\xFF\0\0\0\x16\0\xFF\xFF\xFF\xFB\0\
+    \0\0B\0s\0c\0o\0p\0e\0s\0 \0(\0l\0o\0o\0p\0_\0m\0e\0a\0s\0u\0r\0e\0m\0e\0n\0t\0\
+    _\0e\0x\0a\0m\0p\0l\0e\0)\x01\0\0\0\0\xFF\xFF\xFF\xFF\0\0\0]\0\xFF\xFF\xFF\xFB\
+    \0\0\0>\0i\0i\0r\0s\0 \0(\0l\0o\0o\0p\0_\0m\0e\0a\0s\0u\0r\0e\0m\0e\0n\0t\0_\0\
+    e\0x\0a\0m\0p\0l\0e\0)\0\0\0\0\0\xFF\xFF\xFF\xFF\0\0\0\x16\0\xFF\xFF\xFF\xFB\0\
+    \0\0@\0t\0r\0i\0g\0s\0 \0(\0l\0o\0o\0p\0_\0m\0e\0a\0s\0u\0r\0e\0m\0e\0n\0t\0_\0\
+    e\0x\0a\0m\0p\0l\0e\0)\0\0\0\0\0\xFF\xFF\xFF\xFF\0\0\0\x16\0\xFF\xFF\xFF\xFB\0\
+    \0\0>\0p\0w\0m\0s\0 \0(\0l\0o\0o\0p\0_\0m\0e\0a\0s\0u\0r\0e\0m\0e\0n\0t\0_\0e\0\
+    x\0a\0m\0p\0l\0e\0)\0\0\0\0\0\xFF\xFF\xFF\xFF\0\0\0\x16\0\xFF\xFF\xFF\xFB\0\0\0\
+    <\0h\0k\0s\0 \0(\0l\0o\0o\0p\0_\0m\0e\0a\0s\0u\0r\0e\0m\0e\0n\0t\0_\0e\0x\0a\0\
+    m\0p\0l\0e\0)\0\0\0\0\0\xFF\xFF\xFF\xFF\0\0\0\x16\0\xFF\xFF\xFF\xFB\0\0\0T\0n\0\
+    e\0t\0w\0o\0r\0k\0a\0n\0a\0l\0y\0z\0e\0r\0 \0(\0l\0o\0o\0p\0_\0m\0e\0a\0s\0u\0\
+    r\0e\0m\0e\0n\0t\0_\0e\0x\0a\0m\0p\0l\0e\0)\x01\0\0\0\0\xFF\xFF\xFF\xFF\0\0\0\
+    ]\0\xFF\xFF\xFF\xFB\0\0\0V\0s\0p\0e\0c\0t\0r\0u\0m\0a\0n\0a\0l\0y\0z\0e\0r\0 \0\
+    (\0l\0o\0o\0p\0_\0m\0e\0a\0s\0u\0r\0e\0m\0e\0n\0t\0_\0e\0x\0a\0m\0p\0l\0e\0)\0\
+    \0\0\0\0\xFF\xFF\xFF\xFF\0\0\0\x16\0\xFF\xFF\xFF\xFB\0\0\0L\0c\0u\0r\0v\0e\0v\0\
+    i\0e\0w\0e\0r\0 \0(\0l\0o\0o\0p\0_\0m\0e\0a\0s\0u\0r\0e\0m\0e\0n\0t\0_\0e\0x\0\
+    a\0m\0p\0l\0e\0)\0\0\0\0\0\xFF\xFF\xFF\xFF\0\0\0\x16\0\xFF\xFF\xFF\xFB\0\0\0L\0\
+    p\0y\0r\0p\0l\0c\0o\0n\0f\0i\0g\0 \0(\0l\0o\0o\0p\0_\0m\0e\0a\0s\0u\0r\0e\0m\0\
+    e\0n\0t\0_\0e\0x\0a\0m\0p\0l\0e\0)\0\0\0\0\0\xFF\xFF\xFF\xFF\0\0\0\x16\0\xFF\xFF\
+    \xFF\xFB\0\0\0D\0l\0o\0c\0k\0b\0o\0x\0 \0(\0l\0o\0o\0p\0_\0m\0e\0a\0s\0u\0r\0\
+    e\0m\0e\0n\0t\0_\0e\0x\0a\0m\0p\0l\0e\0)\0\0\0\0\0\xFF\xFF\xFF\xFF\0\0\0\0\0\0\
+    \0\0\xFB\0\0\0D\0l\0o\0c\0k\0b\0o\0x\0 \0(\0l\0o\0o\0p\0_\0m\0e\0a\0s\0u\0r\0\
+    e\0m\0e\0n\0t\0_\0e\0x\0a\0m\0p\0l\0e\0)\x01\0\0\0\0\xFF\xFF\xFF\xFF\0\0\0]\0\xFF\
+    \xFF\xFF\0\0\x05P\0\0\0\0\0\0\0\x04\0\0\0\x04\0\0\0\b\0\0\0\b\xFC\0\0\0\0"
+  window_position:
+  - -8
+  - -8
+  - 1360
+  - 705
+redpitaya:
+  autostart: true
+  delay: 0.05
+  frequency_correction: 1.0
+  gui: true
+  hostname: 192.168.1.117
+  leds_off: true
+  monitor_server_name: monitor_server
+  password: root
+  port: 2222
+  reloadfpga: true
+  reloadserver: false
+  serverbinfilename: fpga.bin
+  serverdirname: //opt//pyrpl//
+  silence_env: false
+  sshport: 22
+  timeout: 1
+  user: root
+scope:
+  ch2_active: true
+  curve_name: scope curve
+  duration: 0.134217728
+  input1: lockbox.inputs.transmission
+  input2: lockbox.outputs.piezo
+  rolling_mode: false
+  run_continuous: false
+  trigger_source: asg1
+pwm0:
+  input: 'off'
+pwm1:
+  input: 'off'
+networkanalyzer:
+  acbandwidth: 4.743187489051999
+  amplitude: 0.00937652587890625
+  auto_amp_max: 0.2
+  auto_amp_min: 0.001
+  auto_amplitude: false
+  auto_bandwidth: true
+  average_per_point: 1
+  curve_name: networkanalyzer curve
+  input: out2
+  logscale: true
+  output_direct: out2
+  points: 100
+  q_factor_min: 5.0
+  rbw: 4.743187489051999
+  start_freq: 10.0
+  stop_freq: 500000.0
+  target_dbv: -40.0
+  trace_average: 1
+spectrumanalyzer:
+  curve_name: spectrumanalyzer curve
+lockbox:
+  classname: FabryPerot
+  eta: 0.84
+  finesse: 9.0
+  inputs:
+    pdh:
+      bandwidth:
+      - 656885.0955548416
+      - 656885.0955548416
+      calibration_data:
+        max: 0.2587890625
+        mean: 0.008190937340259552
+        min: -0.2545166015625
+        rms: 0.08611805546656515
+      input_signal: in2
+      mod_amp: 1.0
+      mod_freq: 21000000.0
+      mod_output: out1
+      mod_phase: 180.0
+      quadrature_factor: 10.0
+    reflection:
+      calibration_data:
+        max: 0.600830078125
+        mean: 0.5814093425869942
+        min: 0.48681640625
+        rms: 0.027744289511448774
+      input_signal: in2
+    transmission:
+      calibration_data:
+        max: 0.6513671875
+        mean: 0.00355694442987442
+        min: -0.0244140625
+        rms: 0.08279135677119794
+  outputs:
+    piezo:
+      additional_filter:
+      - 0
+      - 0
+      - 0
+      - 0
+      analog_filter_cutoff: 100.0
+      assisted_design: false
+      dc_gain: 2.5e-07
+      desired_unity_gain_frequency: 1500.0
+      i: 1500.0
+      output_channel: out2
+      p: 15.0
+      sweep_amplitude: 1.0
+      sweep_frequency: 10.0
+      sweep_waveform: ramp
+      tf_type: flat
+  round_trip_length: 0.27
+  sequence:
+  - duration: 0.0
+    function_call: ''
+    gain_factor: 1.0
+    input: transmission
+    outputs:
+      output1:
+        lock_on: false
+        offset: 0.0
+        reset_offset: false
+      piezo:
+        lock_on: false
+        offset: -1.0
+        reset_offset: true
+      piezo_SHG:
+        lock_on: false
+        offset: 0.0
+        reset_offset: false
+    setpoint: 0.0
+  - duration: 0.5
+    function_call: ''
+    gain_factor: -0.01
+    input: transmission
+    outputs:
+      output1:
+        lock_on: false
+        offset: 0.0
+        reset_offset: false
+      piezo:
+        lock_on: true
+        offset: -0.7
+        reset_offset: true
+      piezo_SHG:
+        lock_on: false
+        offset: 0.0
+        reset_offset: false
+    setpoint: -0.5
+  - duration: 0.5
+    function_call: ''
+    gain_factor: 1.0
+    input: pdh
+    outputs:
+      output1:
+        lock_on: false
+        offset: 0
+        reset_offset: false
+      piezo:
+        lock_on: true
+        offset: 0
+        reset_offset: false
+      piezo_SHG:
+        lock_on: false
+        offset: 0
+        reset_offset: false
+    setpoint: 0.0
+  wavelength: 5.32e-07
+scope_states:
+  autosweep:
+    average: true
+    ch1_active: true
+    ch2_active: true
+    ch_math_active: false
+    curve_name: scope curve
+    duration: 0.134217728
+    hysteresis: 0.00244140625
+    input1: iq1
+    input2: out2
+    math_formula: ch1 * ch2
+    rolling_mode: false
+    run_continuous: false
+    threshold: 0.0
+    trace_average: 1
+    trigger_delay: 0.0
+    trigger_source: asg1
+    xy_mode: false

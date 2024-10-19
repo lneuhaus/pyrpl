@@ -1,7 +1,7 @@
 from ._version import __version_info__, __version__
 
 __author__ = "Leonhard Neuhaus <neuhaus@lkb.upmc.fr>"
-__license__ = "GNU General Public License 3 (GPLv3)"
+__license__ = "MIT License"
 
 # manage warnings of numpy and scipy
 import warnings
