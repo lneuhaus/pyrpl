@@ -52,7 +52,7 @@ requirements = ['scp',
                 'jupyter-client']
 
 if sys.version_info >= (3,4):  # python version dependencies
-    requirements += ['quamash']
+    requirements += ['qasync']
 else:  # python 2.7
     requirements += ['futures', 'mock']  # mock is now a full dependency
 if os.environ.get('TRAVIS') == 'true':
@@ -61,8 +61,8 @@ if os.environ.get('READTHEDOCS') == 'True':
     requirements += ['pandoc', 'sphinx', 'sphinx_bootstrap_theme']  # mock is needed on readthedocs.io to mock PyQt5
     # remove a few of the mocked modules
     def rtd_included(r):
-        for rr in ['numpy', 'scipy', 'pandas', 'scp', 'paramiko', 'nose',
-                   'quamash', 'qtpy', 'asyncio', 'pyqtgraph']:
+        for rr in ['numpy', 'scipy', 'pandas', 'scp', 'paramiko', 'pytest',
+                   'qasync', 'qtpy', 'asyncio', 'pyqtgraph']:
             if r.startswith(rr):
                 return False
         return True
