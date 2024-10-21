@@ -382,7 +382,7 @@ class Pid(FilterModule):
 
         Returns
         -------
-        tf: np.array(..., dtype=np.complex)
+        tf: np.array(..., dtype=complex)
             The complex open loop transfer function of the module.
         """
         return Pid._transfer_function(frequencies,

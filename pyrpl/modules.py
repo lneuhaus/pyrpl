@@ -214,8 +214,8 @@ class ModuleMetaClass(type):
         self.__doc__+= "\nSetup Attributes:\n\n"
         for name in self._setup_attributes:
             if name in self.__dict__: # don't document inherited attributes
-                self.__doc__+="- " + name + ": "
-                self.__doc__+=self.__dict__[name].__doc__ + '\n'
+                self.__doc__ += "- " + name + ": "
+                self.__doc__ += self.__dict__[name].__doc__ + '\n'
 
 
 class DoSetup(object):

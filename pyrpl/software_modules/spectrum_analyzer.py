@@ -421,7 +421,7 @@ class SpectrumAnalyzer(AcquisitionModule):
         :return: the product between the complex iq data and the filter_window
         """
         return self._get_iq_data() * np.asarray(self.filter_window(),
-                                            dtype=np.complex)
+                                            dtype=complex)
 
     def useful_index_obsolete(self):
         """

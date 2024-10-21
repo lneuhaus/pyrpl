@@ -240,13 +240,13 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
 
         Returns
         -------
-        tf: np.array(..., dtype=np.complex)
+        tf: np.array(..., dtype=complex)
             The complex open loop transfer function of the module.
         """
         module_delay = self._delay
         frequencies = np.array(np.array(frequencies, dtype=np.float),
-                               dtype=np.complex)
-        tf = np.array(frequencies*0, dtype=np.complex) + 1.0
+                               dtype=complex)
+        tf = np.array(frequencies*0, dtype=complex) + 1.0
         # input filter modelisation
         f = self.iq.inputfilter  # no for loop here because only one filter
         # stage
@@ -599,7 +599,7 @@ class NetworkAnalyzer(AcquisitionModule, SignalModule):
         self.data_x = self.frequencies if not self.is_zero_span() else \
             np.nan*np.ones(self.points) # Will be filled during acquisition
         self.data_avg = np.zeros(self.points,      # np.empty can create nan
-                                 dtype=np.complex) #and nan*current_avg = nan
+                                 dtype=complex) #and nan*current_avg = nan
                                                    # even if current_avg = 0
 
     @property

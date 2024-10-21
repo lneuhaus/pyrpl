@@ -34,7 +34,7 @@ Lock-in detection / PDH / synchronous detection
              output_signal='quadrature', quadrature_factor=10)
 
 After this setup, the demodulated quadrature is available as the
-output\_signal of iq0, and can serve for example as the input of a PID
+output_signal of iq0, and can serve for example as the input of a PID
 module to stabilize the frequency of a laser to a reference cavity. The
 module was tested and is in daily use in our lab. Frequencies as low as
 20 Hz and as high as 50 MHz have been used for this technique. At the
@@ -544,15 +544,15 @@ class Iq(FilterModule):
 
         Returns
         -------
-        tf: np.array(..., dtype=np.complex)
+        tf: np.array(..., dtype=complex)
             The complex open loop transfer function of the module.
         """
         quadrature_delay = 2  # the delay experienced by the signal when it
         # is represented as a quadrature (=lower frequency, less phaseshift)
         # the remaining delay of the module
         module_delay = self._delay - quadrature_delay
-        frequencies = np.array(frequencies, dtype=np.complex)
-        tf = np.array(frequencies * 0, dtype=np.complex) + self.gain
+        frequencies = np.array(frequencies, dtype=complex)
+        tf = np.array(frequencies * 0, dtype=complex) + self.gain
         # bandpass filter
         for f in self.bandwidth:
             if f == 0:

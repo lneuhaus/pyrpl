@@ -46,7 +46,7 @@ class TestPidNaIq(TestPyrpl):
             data = na.single()
             f = na.data_x
             theory = np.array(f * 0 + 1.0,
-                              dtype=np.complex)
+                              dtype=complex)
             # obsolete since na data now comes autocorrected:
             # theory = na.transfer_function(f, extradelay=extradelay)
             relerror = np.abs((data - theory) / theory)
@@ -110,7 +110,7 @@ class TestPidNaIq(TestPyrpl):
             theory = pid.transfer_function(f, extradelay=extradelay)
             relerror = np.abs((data - theory) / theory)
             # get max error for values > -50 dB (otherwise its just NA noise)
-            mask = np.asarray(np.abs(theory) > 3e-3, dtype=np.float)
+            mask = np.asarray(np.abs(theory) > 3e-3, dtype=float)
             maxerror = np.max(relerror*mask)
             if maxerror > error_threshold:
                 print(maxerror)

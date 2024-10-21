@@ -134,7 +134,7 @@ class PlotWindow(object):
 
     close() closes the plot"""
     def __init__(self, title="plotwindow"):
-        self.win = pg.GraphicsWindow(title=title)
+        self.win = pg.GraphicsLayoutWidget(title=title)
         self.pw = self.win.addPlot()
         self.curves = {}
         self.win.show()

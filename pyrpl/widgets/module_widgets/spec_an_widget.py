@@ -153,7 +153,7 @@ class SpecAnWidget(AcquisitionModuleWidget):
         self.button_layout = QtWidgets.QHBoxLayout()
         #self.setLayout(self.main_layout)
         # self.setWindowTitle("Spec. An.")
-        #self.win = pg.GraphicsWindow(title="PSD")
+        #self.win = pg.GraphicsLayoutWidget(title="PSD")
         #self.main_layout.addWidget(self.win)
 
         self.win2 = DataWidget(title='Spectrum')

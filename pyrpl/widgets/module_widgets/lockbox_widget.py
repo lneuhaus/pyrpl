@@ -435,8 +435,8 @@ class OutputSignalWidget(ModuleWidget):
 
         self.col4.addStretch(5)
 
-        self.win = pg.GraphicsWindow(title="Amplitude")
-        self.win_phase = pg.GraphicsWindow(title="Phase")
+        self.win = pg.GraphicsLayoutWidget(title="Amplitude")
+        self.win_phase = pg.GraphicsLayoutWidget(title="Phase")
         self.plot_item = self.win.addPlot(title="Magnitude (dB)")
         self.plot_item_phase = self.win_phase.addPlot(title="Phase (deg)")
         self.plot_item.showGrid(y=True, x=True, alpha=1.)
@@ -481,7 +481,7 @@ class LockboxInputWidget(ModuleWidget):
         self.init_main_layout(orientation="vertical")
         self.init_attribute_layout()
 
-        self.win = pg.GraphicsWindow(title="Expected signal")
+        self.win = pg.GraphicsLayoutWidget(title="Expected signal")
         self.plot_item = self.win.addPlot(title='Expected ' + self.module.name)
         self.plot_item.showGrid(y=True, x=True, alpha=1.)
         self.curve = self.plot_item.plot(pen='y')
