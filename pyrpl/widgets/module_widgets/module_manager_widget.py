@@ -103,7 +103,7 @@ class IqManagerWidget(ModuleManagerWidget):
         else:
             self.button_hide.setText('v')
             for widget in self.module_widgets:
-                self.main_layout.setStretchFactor(widget, 1.)
+                self.main_layout.setStretchFactor(widget, 1)
             self.view.hide()
             for frame in self.frames:
                 frame.hide()
@@ -131,15 +131,15 @@ class IqManagerWidget(ModuleManagerWidget):
                                       "amplitude", "output_direct"][::2]):
             widget = iq.attribute_widgets[prop]
             self.frames[index].setFixedSize(widget.width() + iq.main_layout.spacing(), self.height())
-            self.frames[index].move(widget.x() + iq.pos().x() - iq.main_layout.spacing() / 2, 0)
+            self.frames[index].move(int(widget.x() + iq.pos().x() - iq.main_layout.spacing() / 2), 0)
 
             self.frames_drawing[index].setFixedSize(widget.width() + iq.main_layout.spacing(), self.height())
-            self.frames_drawing[index].move(widget.x() + iq.pos().x() - self.view.pos().x() - iq.main_layout.spacing() / 2,
+            self.frames_drawing[index].move(int(widget.x() + iq.pos().x() - self.view.pos().x() - iq.main_layout.spacing() / 2),
                                             0)
         self.scene.setSceneRect(QtCore.QRectF(self.view.rect()))
         #x, y = self.view.pos().x(), self.view.pos().y()
         button_width = 150
-        self.button_hide.move(self.width()/2 - button_width/2, self.height() - 17)
+        self.button_hide.move(int(self.width()/2 - button_width/2), int(self.height() - 17))
         self.button_hide.setFixedWidth(button_width)
         self.button_hide.raise_()
 

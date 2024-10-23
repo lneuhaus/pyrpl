@@ -92,9 +92,9 @@ the beginning, since it did not cross the hysteresis interval. One can
 also see a 'bug': After setting up the asg, it outputs the first value
 of its data table until its waveform output is triggered. For the
 halframp signal, as it is implemented in pyrpl, this is the maximally
-negative value. However, we passed the argument start\_phase=90 to the
+negative value. However, we passed the argument start_phase=90 to the
 asg.setup function, which shifts the first point by a quarter period.
-Can you guess what happens when we set start\_phase=180? You should try
+Can you guess what happens when we set start_phase=180? You should try
 it out!
 
 In green, we see the same signal, filtered through the pid module. The
@@ -495,7 +495,7 @@ class Scope(HardwareModule, AcquisitionModule):
         return np.array(
             np.roll(self._rawdata_ch1, - (self._write_pointer_trigger +
                                           self._trigger_delay_register + 1)),
-            dtype=np.float) / 2 ** 13
+            dtype=float) / 2 ** 13
 
     @property
     def _data_ch2(self):
@@ -503,21 +503,21 @@ class Scope(HardwareModule, AcquisitionModule):
         return np.array(
             np.roll(self._rawdata_ch2, - (self._write_pointer_trigger +
                                           self._trigger_delay_register + 1)),
-            dtype=np.float) / 2 ** 13
+            dtype=float) / 2 ** 13
 
     @property
     def _data_ch1_current(self):
         """ (unnormalized) data from ch1 while acquisition is still running"""
         return np.array(
             np.roll(self._rawdata_ch1, -(self._write_pointer_current + 1)),
-            dtype=np.float) / 2 ** 13
+            dtype=float) / 2 ** 13
 
     @property
     def _data_ch2_current(self):
         """ (unnormalized) data from ch2 while acquisition is still running"""
         return np.array(
             np.roll(self._rawdata_ch2, -(self._write_pointer_current + 1)),
-            dtype=np.float) / 2 ** 13
+            dtype=float) / 2 ** 13
 
     @property
     def times(self):

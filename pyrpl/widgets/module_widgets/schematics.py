@@ -46,7 +46,7 @@ class MyItem(QtWidgets.QWidget):
             self.item.width()/2 + self.item.x()
         y = self.y*self.parent.view.height() - self.item.height()/2 + \
             self.item.y()
-        self.move(x, y)
+        self.move(int(x), int(y))
 
 
 class MyLabel(MyItem):
@@ -117,9 +117,9 @@ class Connection(object):
                 x = x2 - self.widget_stop.width() / 2
                 y = y2
                 arrow = QtGui.QPolygonF(
-                    [QtCore.QPoint(x - self.margin, y - self.arrow_height / 2),
-                     QtCore.QPoint(x - self.margin, y + self.arrow_height / 2),
-                     QtCore.QPoint(x - self.margin + self.arrow_width, y)])
+                    [QtCore.QPoint(int(x - self.margin), int(y - self.arrow_height / 2)),
+                     QtCore.QPoint(int(x - self.margin), int(y + self.arrow_height / 2)),
+                     QtCore.QPoint(int(x - self.margin + self.arrow_width), int(y))])
             else:
                 x = x2
                 y = y2 - self.widget_stop.height() / 2
@@ -131,9 +131,9 @@ class Connection(object):
                     margin = self.margin
                     arrow_width = self.arrow_width
                 arrow = QtGui.QPolygonF(
-                    [QtCore.QPoint(x - self.arrow_height / 2, y - margin),
-                     QtCore.QPoint(x + self.arrow_height / 2, y - margin),
-                     QtCore.QPoint(x, y - margin + arrow_width)])
+                    [QtCore.QPoint(int(x - self.arrow_height / 2), int(y - margin)),
+                     QtCore.QPoint(int(x + self.arrow_height / 2), int(y - margin)),
+                     QtCore.QPoint(int(x), int(y - margin + arrow_width))])
 
             if self.show_arrow:
                 self.arrow.setPolygon(arrow)

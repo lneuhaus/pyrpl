@@ -490,7 +490,7 @@ class MemoryTree(MemoryBranch):
     _ERROR_ON_SAVE = False # Set this flag to true to raise
         # Exceptions upon save
 
-    def __init__(self, filename=None, source=None, _loadsavedeadtime=3.0):
+    def __init__(self, filename=None, source=None, _loadsavedeadtime=3):
         # never reload or save more frequently than _loadsavedeadtime because
         # this is the principal cause of slowing down the code (typ. 30-200 ms)
         # for immediate saving, call _save_now, for immediate loading _load_now

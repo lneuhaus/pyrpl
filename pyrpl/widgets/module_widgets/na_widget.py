@@ -65,13 +65,13 @@ class NaWidget(AcquisitionModuleWidget):
         self.button_layout = QtWidgets.QHBoxLayout()
         #self.setLayout(self.main_layout)
         self.setWindowTitle("NA")
-        self.win = pg.GraphicsWindow(title="Magnitude")
+        self.win = pg.GraphicsLayoutWidget(title="Magnitude")
 
         self.label_benchmark = pg.LabelItem(justify='right')
         self.win.addItem(self.label_benchmark, row=1,col=0)
         self._last_benchmark_value = np.nan
 
-        self.win_phase = pg.GraphicsWindow(title="Phase")
+        self.win_phase = pg.GraphicsLayoutWidget(title="Phase")
         self.plot_item = self.win.addPlot(row=1, col=0, title="Magnitude (dB)")
         self.plot_item_phase = self.win_phase.addPlot(row=1, col=0,
                                                       title="Phase (deg)")
@@ -110,7 +110,7 @@ class NaWidget(AcquisitionModuleWidget):
             self.attribute_layout.addWidget(self.groups[label])
             for index, wid in enumerate(wids):
                 self.attribute_layout.removeWidget(aws[wid])
-                self.layout_groups[label].addWidget(aws[wid], index%2 + 1, index/2 + 1)
+                self.layout_groups[label].addWidget(aws[wid], int(index%2 + 1), int(index/2 + 1))
         #########################
 
 
@@ -343,7 +343,7 @@ class NaWidget(AcquisitionModuleWidget):
     #    self.module.stop()
 
 
-class MyGraphicsWindow(pg.GraphicsWindow):
+class MyGraphicsWindow(pg.GraphicsLayoutWidget):
     def __init__(self, title, parent_widget):
         super(MyGraphicsWindow, self).__init__(title)
         self.parent_widget = parent_widget
@@ -375,4 +375,4 @@ class MyGraphicsWindow(pg.GraphicsWindow):
         except BaseException as e:
             self.parent_widget.module._logger.error(e)
         finally:
-            return super(MyGraphicsWindow, self).mousePressEvent(*args, **kwds)
+            return super(GraphicsLayoutWidget, self).mousePressEvent(*args, **kwds)
