@@ -92,9 +92,9 @@ the beginning, since it did not cross the hysteresis interval. One can
 also see a 'bug': After setting up the asg, it outputs the first value
 of its data table until its waveform output is triggered. For the
 halframp signal, as it is implemented in pyrpl, this is the maximally
-negative value. However, we passed the argument start\_phase=90 to the
+negative value. However, we passed the argument start_phase=90 to the
 asg.setup function, which shifts the first point by a quarter period.
-Can you guess what happens when we set start\_phase=180? You should try
+Can you guess what happens when we set start_phase=180? You should try
 it out!
 
 In green, we see the same signal, filtered through the pid module. The

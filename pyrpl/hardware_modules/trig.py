@@ -80,7 +80,7 @@ class Trig(FilterModule):
         output value.
 
         The conversion is based on the following correspondence:
-        :math:`0\,\mathrm{V} = 0\deg,\, -1\,\mathrm{V} = 180\deg,\, 1\,\mathrm{V} = 180\deg - \epsilon\,.`
+        :math:`0\\,\\mathrm{V} = 0\\deg,\\, -1\\,\\mathrm{V} = 180\\deg,\\, 1\\,\\mathrm{V} = 180\\deg - \\epsilon\\,.`
 
         Args:
             v (float): The output signal value in Volts.

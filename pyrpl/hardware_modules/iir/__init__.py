@@ -3,7 +3,7 @@ Sometimes it is interesting to realize even more complicated filters.
 This is the case, for example, when a piezo resonance limits the maximum
 gain of a feedback loop. For these situations, the IIR module can
 implement filters with 'Infinite Impulse Response'
-(https://en.wikipedia.org/wiki/Infinite\_impulse\_response). It is the
+(https://en.wikipedia.org/wiki/Infinite_impulse_response). It is the
 your task to choose the filter to be implemented by specifying the
 complex values of the poles and zeros of the filter. In the current
 version of pyrpl, the IIR module can implement IIR filters with the
