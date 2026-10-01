@@ -17,6 +17,7 @@
 ###############################################################################
 
 import contextlib
+import hashlib
 import logging
 import os
 import random
@@ -32,6 +33,7 @@ from . import hardware_modules as rp
 from . import redpitaya_client
 from .errors import ExpectedPyrplError
 from .fpga_profiles import get_fpga_profile
+from .hardware_modules.dsp import DSP_INPUTS
 from .memory import MemoryTree
 from .pyrpl_utils import (
     get_unique_name_list_from_class_list,
@@ -62,6 +64,9 @@ defaultparameters = dict(
     frequency_correction=1.0,  # actual FPGA frequency is 125 MHz * frequency_correction
     timeout=1,  # timeout in seconds for ssh communication
     monitor_server_name="monitor_server",  # name of the server program on redpitaya
+    scpi_server=False,  # start the read-only SCPI server for other acquisition programs?
+    scpi_port=5000,  # port of the read-only SCPI server
+    scpi_server_name="pyrpl_scpi_server",  # name of the SCPI server program on redpitaya
     silence_env=False,  # suppress all environment variables that may override the configuration?
     gui=True,  # show graphical user interface or work on command-line only?
 )
@@ -105,6 +110,9 @@ class RedPitaya:
             frequency_correction=1.0,  # actual FPGA frequency is 125 MHz * frequency_correction
             timeout=3,  # timeout in seconds for ssh communication
             monitor_server_name='monitor_server',  # name of the server program on redpitaya
+            scpi_server=False,  # start the read-only SCPI server for other programs?
+            scpi_port=5000,  # port of the read-only SCPI server
+            scpi_server_name='pyrpl_scpi_server',  # name of the SCPI server program
             # suppress all environment variables that may override the configuration?
             silence_env=False,
             gui=True  # show graphical user interface or work on command-line only?
@@ -599,6 +607,8 @@ class RedPitaya:
 
         # kill all other servers to prevent reading while fpga is flashed
         self.end()
+        # also an SCPI server left running by a previous session
+        self.endscpiserver()
         self.ssh.ask("killall nginx")
         self.ssh.ask("systemctl stop redpitaya_nginx")  # for 0.94 and higher
         sleep(3)  # sleep after stopping service
@@ -789,6 +799,89 @@ class RedPitaya:
         self.ssh.ask("killall " + self.parameters["monitor_server_name"])
         self._serverrunning = False
 
+    def _scpi_server_path(self):
+        return self.parameters["serverdirname"] + self.parameters["scpi_server_name"]
+
+    def _scpi_server_command(self):
+        """Command line of the SCPI server for the loaded FPGA profile."""
+        available = self.fpga_profile.hardware.get("dsp_inputs", list(DSP_INPUTS))
+        signals = ",".join(
+            f"{name}={index}" for name, index in DSP_INPUTS.items() if name in available
+        )
+        return (
+            f"{self._scpi_server_path()} -p {int(self.parameters['scpi_port'])} "
+            f"-i {self.fpga_profile.id} -s {signals}"
+        )
+
+    def _scpi_server_cmdline(self):
+        """Command line of the running SCPI server, or '' if it is not running."""
+        result = self.ssh.ask(
+            "cat /proc/$(pidof -s {})/cmdline 2>/dev/null | tr '\\0' ' '; echo".format(
+                self.parameters["scpi_server_name"]
+            )
+        )
+        return result if self.parameters["scpi_server_name"] + " -p" in result else ""
+
+    def installscpiserver(self):
+        """Uploads the SCPI server binary unless the board has the same one."""
+        local = os.path.join(
+            os.path.abspath(os.path.dirname(__file__)),
+            "monitor_server",
+            self.parameters["scpi_server_name"],
+        )
+        with open(local, "rb") as binary:
+            local_md5 = hashlib.md5(binary.read()).hexdigest()
+        remote = self.ssh.ask(f"md5sum {self._scpi_server_path()} 2>/dev/null")
+        if local_md5 in remote and not self.parameters["reloadserver"]:
+            return
+        self.endscpiserver()
+        self.ssh.ask("rw")
+        sleep(self.parameters["delay"])
+        self.ssh.ask("mkdir -p " + self.parameters["serverdirname"])
+        self.put_file(local, self._scpi_server_path())
+        sleep(self.parameters["delay"])
+        self.ssh.ask("chmod 755 " + self._scpi_server_path())
+        self.ssh.ask("ro")
+        self.logger.debug("SCPI server installed at %s", self._scpi_server_path())
+
+    def startscpiserver(self):
+        """Starts the read-only SCPI server (parameter scpi_server=True).
+
+        The server runs in the background and survives the end of this PyRPL
+        session, so that other acquisition programs keep their connection. It
+        is only restarted when its settings change, and always stopped before
+        the FPGA is reprogrammed."""
+        if not self.parameters["scpi_server"] or not hasattr(self, "ssh"):
+            return
+        self.ssh.ask("\x03")  # make sure the shell is not running monitor_server
+        self.installscpiserver()
+        command = self._scpi_server_command()
+        if command in self._scpi_server_cmdline():
+            self.logger.debug("SCPI server already running: %s", command)
+            return
+        self.endscpiserver()
+        # the stock SCPI server uses the same port and writes to the FPGA
+        # registers of the stock image, which would disturb PyRPL
+        self.ssh.ask("systemctl stop redpitaya_scpi 2>/dev/null")
+        self.ssh.ask(f"nohup {command} > /tmp/{self.parameters['scpi_server_name']}.log 2>&1 &")
+        sleep(10 * self.parameters["delay"])
+        if command in self._scpi_server_cmdline():
+            self.logger.info(
+                "Read-only SCPI server listening on %s:%d",
+                self.parameters["hostname"],
+                self.parameters["scpi_port"],
+            )
+        else:
+            log = self.ssh.ask(f"cat /tmp/{self.parameters['scpi_server_name']}.log")
+            self.logger.error("The SCPI server could not be started: %s", log)
+
+    def endscpiserver(self):
+        """Stops the SCPI server and all its client connections."""
+        if not hasattr(self, "ssh"):
+            return
+        self.ssh.ask("killall " + self.parameters["scpi_server_name"] + " 2>/dev/null")
+        sleep(self.parameters["delay"])
+
     def endclient(self):
         del self.client
         self.client = None
@@ -803,6 +896,8 @@ class RedPitaya:
             else:  # for os <= 1.0x
                 self.switch_led(gpiopin=0, state=False)
                 self.switch_led(gpiopin=7, state=False)
+        # before startserver: monitor_server then occupies the ssh shell
+        self.startscpiserver()
         self.startserver()
         sleep(self.parameters["delay"])
         self.startclient()
