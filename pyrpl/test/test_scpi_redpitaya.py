@@ -21,7 +21,7 @@ class FakeSsh:
     def ask(self, question=""):
         self.commands.append(question)
         if question.startswith("cat /proc/"):
-            return question + "\r\n" + self.running_cmdline + "\r\nroot@rp:~# "
+            return self.running_cmdline
         if question.startswith("md5sum"):
             return self.remote_md5
         if question.startswith("nohup "):
@@ -38,6 +38,7 @@ def make_redpitaya(ssh, profile="no_iir", **parameters):
     rp.fpga_profile = get_fpga_profile(profile)
     rp.logger = logging.getLogger(__name__)
     rp.ssh = ssh
+    rp._ssh_exec = ssh.ask  # the SCPI server is managed on separate ssh channels
     rp.uploads = []
     rp.put_file = lambda source, destination: rp.uploads.append((source, destination))
     return rp
@@ -78,7 +79,7 @@ def test_start_installs_and_starts():
     rp = make_redpitaya(ssh, scpi_server=True)
     rp.startscpiserver()
     assert rp.uploads == [(str(BINARY), "//opt//pyrpl//pyrpl_scpi_server")]
-    assert "systemctl stop redpitaya_scpi 2>/dev/null" in ssh.commands
+    assert "systemctl stop redpitaya_scpi" in ssh.commands
     started = [c for c in ssh.commands if c.startswith("nohup ")]
     assert len(started) == 1
     assert rp._scpi_server_command() in started[0]
@@ -106,6 +107,6 @@ def test_server_with_other_settings_is_restarted(change):
         **change,
     )
     rp.startscpiserver()
-    assert rp.ssh.commands.index("killall pyrpl_scpi_server 2>/dev/null") < next(
+    assert rp.ssh.commands.index("killall pyrpl_scpi_server") < next(
         i for i, c in enumerate(rp.ssh.commands) if c.startswith("nohup ")
     )

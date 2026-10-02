@@ -813,13 +813,24 @@ class RedPitaya:
             f"-i {self.fpga_profile.id} -s {signals}"
         )
 
+    def _ssh_exec(self, command, timeout=10):
+        """Runs a command on its own ssh channel and returns stdout + stderr.
+
+        Unlike self.ssh.ask, this works while monitor_server occupies the
+        interactive shell, so the SCPI server can be managed at any time
+        without stopping the connection of PyRPL."""
+        _, stdout, stderr = self.ssh.ssh.exec_command(command, timeout=timeout)
+        return stdout.read().decode(errors="replace") + stderr.read().decode(errors="replace")
+
     def _scpi_server_cmdline(self):
         """Command line of the running SCPI server, or '' if it is not running."""
-        result = self.ssh.ask(
-            "cat /proc/$(pidof -s {})/cmdline 2>/dev/null | tr '\\0' ' '; echo".format(
+        # arguments are separated by NUL bytes; converted here rather than with
+        # tr, as a NUL byte in an ssh command makes sshd drop the connection
+        result = self._ssh_exec(
+            "cat /proc/$(pidof -s {})/cmdline 2>/dev/null".format(
                 self.parameters["scpi_server_name"]
             )
-        )
+        ).replace("\x00", " ")
         return result if self.parameters["scpi_server_name"] + " -p" in result else ""
 
     def installscpiserver(self):
@@ -831,17 +842,19 @@ class RedPitaya:
         )
         with open(local, "rb") as binary:
             local_md5 = hashlib.md5(binary.read()).hexdigest()
-        remote = self.ssh.ask(f"md5sum {self._scpi_server_path()} 2>/dev/null")
+        remote = self._ssh_exec(f"md5sum {self._scpi_server_path()}")
         if local_md5 in remote and not self.parameters["reloadserver"]:
             return
         self.endscpiserver()
-        self.ssh.ask("rw")
-        sleep(self.parameters["delay"])
-        self.ssh.ask("mkdir -p " + self.parameters["serverdirname"])
+        # rw/ro remount the file system on OS versions that mount it read-only
+        path = "PATH=$PATH:/opt/redpitaya/sbin:/opt/redpitaya/bin; "
+        self._ssh_exec(
+            path + "command -v rw >/dev/null && rw; mkdir -p " + self.parameters["serverdirname"]
+        )
         self.put_file(local, self._scpi_server_path())
-        sleep(self.parameters["delay"])
-        self.ssh.ask("chmod 755 " + self._scpi_server_path())
-        self.ssh.ask("ro")
+        self._ssh_exec(
+            path + f"chmod 755 {self._scpi_server_path()}; command -v ro >/dev/null && ro"
+        )
         self.logger.debug("SCPI server installed at %s", self._scpi_server_path())
 
     def startscpiserver(self):
@@ -853,7 +866,6 @@ class RedPitaya:
         the FPGA is reprogrammed."""
         if not self.parameters["scpi_server"] or not hasattr(self, "ssh"):
             return
-        self.ssh.ask("\x03")  # make sure the shell is not running monitor_server
         self.installscpiserver()
         command = self._scpi_server_command()
         if command in self._scpi_server_cmdline():
@@ -862,8 +874,9 @@ class RedPitaya:
         self.endscpiserver()
         # the stock SCPI server uses the same port and writes to the FPGA
         # registers of the stock image, which would disturb PyRPL
-        self.ssh.ask("systemctl stop redpitaya_scpi 2>/dev/null")
-        self.ssh.ask(f"nohup {command} > /tmp/{self.parameters['scpi_server_name']}.log 2>&1 &")
+        self._ssh_exec("systemctl stop redpitaya_scpi")
+        log = f"/tmp/{self.parameters['scpi_server_name']}.log"
+        self._ssh_exec(f"nohup {command} > {log} 2>&1 < /dev/null &")
         sleep(10 * self.parameters["delay"])
         if command in self._scpi_server_cmdline():
             self.logger.info(
@@ -872,14 +885,15 @@ class RedPitaya:
                 self.parameters["scpi_port"],
             )
         else:
-            log = self.ssh.ask(f"cat /tmp/{self.parameters['scpi_server_name']}.log")
-            self.logger.error("The SCPI server could not be started: %s", log)
+            self.logger.error(
+                "The SCPI server could not be started: %s", self._ssh_exec(f"cat {log}")
+            )
 
     def endscpiserver(self):
         """Stops the SCPI server and all its client connections."""
         if not hasattr(self, "ssh"):
             return
-        self.ssh.ask("killall " + self.parameters["scpi_server_name"] + " 2>/dev/null")
+        self._ssh_exec("killall " + self.parameters["scpi_server_name"])
         sleep(self.parameters["delay"])
 
     def endclient(self):
@@ -896,7 +910,7 @@ class RedPitaya:
             else:  # for os <= 1.0x
                 self.switch_led(gpiopin=0, state=False)
                 self.switch_led(gpiopin=7, state=False)
-        # before startserver: monitor_server then occupies the ssh shell
+        # read-only SCPI server for other acquisition programs (scpi_server=True)
         self.startscpiserver()
         self.startserver()
         sleep(self.parameters["delay"])

@@ -862,7 +862,9 @@ int main(int argc, char *argv[])
             snprintf(profile_id, sizeof(profile_id), "%s", optarg);
             break;
         case 's':
-            signal_list = optarg;
+            /* parse a copy: strtok_r would modify argv, which is what
+             * /proc/<pid>/cmdline shows and PyRPL compares */
+            signal_list = strdup(optarg);
             break;
         case 'm':
             simulation_file = optarg;
