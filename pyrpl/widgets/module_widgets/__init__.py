@@ -36,4 +36,5 @@ from .pid_widget import PidWidget
 from .pwm_widget import PwmWidget
 from .pyrpl_config_widget import PyrplConfigWidget
 from .scope_widget import ScopeWidget
+from .signal_plotter_widget import SignalPlotterWidget
 from .spec_an_widget import SpecAnWidget

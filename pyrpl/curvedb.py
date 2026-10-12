@@ -182,9 +182,10 @@ except (ImportError, AttributeError, KeyError, TypeError):
             except OSError:
                 self.logger.warning("Could not find and remove the file %s. ", filename)
             if parent:
-                parentchilds = parent.childs
-                parentchilds.remove(delpk)
-                parent.childs = parentchilds
+                # edit the pk list: loading parent.childs would read the
+                # file of this curve, which was just removed
+                childs = [pk for pk in (parent.params.get("childs") or []) if pk != delpk]
+                parent.params["childs"] = childs or None
                 parent.save()
 
         # Implement the following methods if you want to use a hierarchical

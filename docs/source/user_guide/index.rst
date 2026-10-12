@@ -8,3 +8,4 @@ User's guide to PyRPL
    tutorial/index
    basics/index
    fpga_profiles
+   scpi_server

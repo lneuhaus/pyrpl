@@ -88,6 +88,8 @@ def pytest_collection_modifyitems(session, config, items):
             "test_redpitaya.py",
             "test_pyqtgraph_benchmark.py",
             "test_registers.py",
+            "test_scpi_redpitaya.py",
+            "test_scpi_server.py",
         ]:
             found_heavy_test = True
 
