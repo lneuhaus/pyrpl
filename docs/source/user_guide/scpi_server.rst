@@ -107,6 +107,11 @@ reason is returned by ``SYSTem:ERRor?``.
        after the trigger if one is set. Returns ``n`` rows
        ``t,<sig1>,<sig2>,...`` flattened in one line, ``t`` in seconds from
        the trigger edge. At most 10\ :sup:`6` values per acquisition.
+   * - ``SIGnal:ACQuire:AVERage ON|OFF``
+     - with ``ON``, each point of ``SIGnal:ACQuire?`` is the mean of all the
+       samples taken during its interval (the board samples as fast as it
+       can), and ``t`` is the centre of the interval. The intervals follow
+       each other without gap. Needs an interval > 0 (default ``OFF``)
    * - ``TRIGger:SOURce NONE|DIO0_P...DIO7_P|DIO0_N...DIO7_N``
      - trigger of ``SIGnal:ACQuire?`` (default ``NONE``)
    * - ``TRIGger:EDGE RISing|FALLing|BOTH``
@@ -131,6 +136,36 @@ with occasional outliers of tens of µs when Linux schedules another task.
 The ``t`` column reports the measured time of each point. While waiting for a
 trigger, the server keeps one CPU core busy. For hardware-timed, gap-free
 traces use the PyRPL scope instead.
+
+Signal plotter
+==============
+
+The ``SignalPlotter`` software module (``p.signalplotter``, also a tab of the
+GUI) plots DSP signals over long periods through this server: any number of
+signals, one point every ``interval`` (100 µs to hours), each point being the
+mean over its interval (``SIGnal:ACQuire:AVERage ON``). It starts the server
+on the Red Pitaya when needed.
+
+* ``mode = "continuous"``: strip chart of the last ``duration`` seconds. The
+  data is read in blocks of about 0.25 s, leaving a gap of about one network
+  round trip (~1 ms) between blocks.
+* ``mode = "triggered"``: each edge on ``trigger_source`` starts a block of
+  ``points`` points (after ``trigger_delay``); the last block is shown and the
+  plotter re-arms for the next edge.
+
+``save_curve`` stores the data in PyRPL's curve database, one curve per
+signal (the first one is the parent of the others). From Python::
+
+    p.signalplotter.channels = ["in1", "pid0", "iq0"]
+    p.signalplotter.interval = 0.01
+    p.signalplotter.start()
+    ...
+    p.signalplotter.stop()
+    t, pid0 = p.signalplotter.times, p.signalplotter.data["pid0"]
+
+Older configuration files list the software modules to load: add
+``SignalPlotter`` to the ``modules`` list of the ``pyrpl`` section to get it.
+With a simulated Red Pitaya (hostname ``_FAKE_``) it plots simulated data.
 
 Building the server
 ===================

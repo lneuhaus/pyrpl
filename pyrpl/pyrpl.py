@@ -199,6 +199,7 @@ default_pyrpl_config = {
         "NetworkAnalyzer",
         "SpectrumAnalyzer",
         "CurveViewer",
+        "SignalPlotter",
         "PyrplConfig",
         "Lockbox",
     ],
