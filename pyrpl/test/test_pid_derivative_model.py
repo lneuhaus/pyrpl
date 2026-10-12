@@ -112,7 +112,7 @@ def test_default_profile_transfer_does_not_read_derivative_registers():
         p = 1.0
         i = 0.0
         inputfilter = 0
-        _delay = 3
+        _delay = 4
         _frequency_correction = 1.0
         _rp = SimpleNamespace(
             fpga_profile=SimpleNamespace(capabilities={"pid"}),

@@ -41,8 +41,6 @@ def setup_iir(hardware_session):
 
 
 class TestIir(TestPyrpl):
-    extradelay = 0.6 * 8e-9  # no idea where this delay comes from
-
     @property
     def iir(self):
         return self.pyrpl.rp.iir

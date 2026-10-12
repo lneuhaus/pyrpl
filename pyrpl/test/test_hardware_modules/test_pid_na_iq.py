@@ -6,7 +6,7 @@ import pytest
 
 from pyrpl import CurveDB
 from pyrpl.async_utils import sleep, wait
-from pyrpl.test.frequency_response_artifacts import save_frequency_response
+from pyrpl.test.frequency_response_artifacts import fit_residual_delay, save_frequency_response
 from pyrpl.test.test_base import TestPyrpl
 
 logger = logging.getLogger(name=__name__)
@@ -76,8 +76,6 @@ def setup_na(hardware_session):
 
 
 class TestPidNaIq(TestPyrpl):
-    extradelay = 0.6 * 8e-9  # no idea where this delay comes from
-
     @property
     def na(self):
         return self.pyrpl.networkanalyzer
@@ -115,6 +113,21 @@ class TestPidNaIq(TestPyrpl):
                 theory = np.array(f * 0 + 1.0, dtype=complex)
                 # obsolete since na data now comes autocorrected:
                 # theory = na.transfer_function(f, extradelay=extradelay)
+                delay_fit = fit_residual_delay(f, data, theory)
+                clock_period = 8e-9 / iq._frequency_correction
+                delay_fit["delay_cycles"] = delay_fit["delay_seconds"] / clock_period
+                delay_fit["delay_standard_error_cycles"] = (
+                    delay_fit["delay_standard_error_seconds"] / clock_period
+                )
+                delay_fit["modeled_network_analyzer_delay_cycles"] = na._delay
+                delay_fit["inferred_network_analyzer_delay_cycles"] = (
+                    na._delay + delay_fit["delay_cycles"]
+                )
+                delay_fit["inferred_network_analyzer_delay_nanoseconds"] = (
+                    delay_fit["inferred_network_analyzer_delay_cycles"]
+                    * clock_period
+                    * 1e9
+                )
                 relerror = np.abs((data - theory) / theory)
                 maxerror = np.max(relerror)
                 artifact = save_frequency_response(
@@ -124,11 +137,24 @@ class TestPidNaIq(TestPyrpl):
                     theory,
                     metadata={
                         "error_threshold": error_threshold,
+                        "fpga_profile": self.pyrpl.rp.fpga_profile.id,
                         "network_analyzer_delay_cycles": na._delay,
                         "iq_delay_cycles": iq._delay,
+                        "delay_fit": delay_fit,
                     },
                 )
-                logger.info("Saved Network Analyzer response artifacts to %s.*", artifact)
+                logger.info(
+                    "%s corrected NA residual delay: %.3f +/- %.3f ns "
+                    "(%.4f cycles); inferred total NA delay: %.4f cycles; "
+                    "fit R^2: %.5f; artifact: %s",
+                    iq.name,
+                    delay_fit["delay_nanoseconds"],
+                    delay_fit["delay_standard_error_nanoseconds"],
+                    delay_fit["delay_cycles"],
+                    delay_fit["inferred_network_analyzer_delay_cycles"],
+                    delay_fit["r_squared"],
+                    artifact,
+                )
                 if maxerror > error_threshold:
                     print(maxerror)
                     c = CurveDB.create(f, data, name="test_na-failed-data")
@@ -167,11 +193,6 @@ class TestPidNaIq(TestPyrpl):
         pid.input = na.iq
         pid.setpoint = 0
 
-        # specify extradelay for theory. 3.6 cycles is empirical, but not
-        # far from what expects for NA delay (2 cycles for output,
-        # 2 for input)
-        extradelay = self.extradelay
-
         # proportional gain of 1, no inputfilter
         pid.p = 1.0
         pid.i = 0
@@ -184,7 +205,7 @@ class TestPidNaIq(TestPyrpl):
             pid.inputfilter = [bw]
             data = na.single()
             f = na.data_x
-            theory = pid.transfer_function(f, extradelay=extradelay)
+            theory = pid.transfer_function(f)
             relerror = np.abs((data - theory) / theory)
             # get max error for values > -50 dB (otherwise its just NA noise)
             mask = np.asarray(np.abs(theory) > 3e-3, dtype=float)
@@ -216,9 +237,9 @@ class TestPidNaIq(TestPyrpl):
         for pid in self.pyrpl.pids.all_modules:
             na.setup(
                 start_freq=1000,
-                stop_freq=1000e3,
+                stop_freq=10e6,
                 # points 101->11, it was taking ages
-                points=11,
+                points=101,
                 rbw=100,
                 average_per_point=1,
                 trace_average=1,
@@ -233,10 +254,6 @@ class TestPidNaIq(TestPyrpl):
             pid.input = na.iq
             pid.setpoint = 0
 
-            # specify extradelay for theory. 3.6 cycles is empirical, but not
-            # far from what expects for NA delay (2 cycles for output, 2 for input)
-            extradelay = self.extradelay
-
             # proportional gain of 1, no inputfilter
             pid.p = 1.0
             pid.i = 0
@@ -246,7 +263,43 @@ class TestPidNaIq(TestPyrpl):
             data = na.single()
             f = na.data_x
             plotdata.append((f, data, "p=1"))
-            theory = pid.transfer_function(f, extradelay=extradelay)
+            theory = pid.transfer_function(f)
+            delay_fit = fit_residual_delay(f, data, theory)
+            delay_fit["delay_cycles_125mhz"] = delay_fit["delay_seconds"] / 8e-9
+            delay_fit["delay_standard_error_cycles_125mhz"] = (
+                delay_fit["delay_standard_error_seconds"] / 8e-9
+            )
+            delay_fit["modeled_pid_delay_cycles"] = pid._delay
+            delay_fit["total_delay_cycles_125mhz"] = (
+                pid._delay + delay_fit["delay_cycles_125mhz"]
+            )
+            delay_fit["total_delay_seconds"] = (
+                pid._delay * 8e-9 + delay_fit["delay_seconds"]
+            )
+            delay_fit["total_delay_nanoseconds"] = delay_fit["total_delay_seconds"] * 1e9
+            artifact = save_frequency_response(
+                f"pid_delay_fit_{pid.name}",
+                f,
+                data,
+                theory,
+                metadata={
+                    "fpga_profile": self.pyrpl.rp.fpga_profile.id,
+                    "pid_delay_cycles": pid._delay,
+                    "delay_fit": delay_fit,
+                },
+            )
+            logger.info(
+                "%s residual delay: %.3f +/- %.3f ns (%.3f cycles at 125 MHz); "
+                "total path: %.3f ns (%.3f cycles); fit R^2: %.5f; artifact: %s",
+                pid.name,
+                delay_fit["delay_nanoseconds"],
+                delay_fit["delay_standard_error_nanoseconds"],
+                delay_fit["delay_cycles_125mhz"],
+                delay_fit["total_delay_nanoseconds"],
+                delay_fit["total_delay_cycles_125mhz"],
+                delay_fit["r_squared"],
+                artifact,
+            )
             relerror = np.abs((data - theory) / theory)
             maxerror = np.max(relerror)
             if maxerror > error_threshold:
@@ -269,9 +322,9 @@ class TestPidNaIq(TestPyrpl):
         for pid in self.pyrpl.pids.all_modules:
             na.setup(
                 start_freq=1000,
-                stop_freq=1000e3,
+                stop_freq=10e6,
                 # 101 points, 1 av->11 points, 7 av (taking ages)
-                points=11,
+                points=101,
                 rbw=100,
                 average_per_point=1,
                 trace_average=1,
@@ -286,11 +339,6 @@ class TestPidNaIq(TestPyrpl):
             pid.input = na.iq
             pid.setpoint = 0
 
-            # specify extradelay for theory. 3.6 cycles is empirical, but not
-            # far from what one expects for NA delay (2 cycles for output,
-            # 2 for input)
-            extradelay = self.extradelay
-
             # proportional gain of 0.01, integral = 1 kHz
             pid.p = 0.025
             pid.i = 250
@@ -300,7 +348,7 @@ class TestPidNaIq(TestPyrpl):
             data = na.single()
             f = na.data_x
             plotdata.append((f, data, f"p={pid.p:.1e}, i={pid.i:.1e}"))
-            theory = pid.transfer_function(f, extradelay=extradelay)
+            theory = pid.transfer_function(f)
             relerror = np.abs((data - theory) / theory)
             maxerror = np.max(relerror)
             if maxerror > error_threshold:
@@ -335,7 +383,7 @@ class TestPidNaIq(TestPyrpl):
             na.setup(
                 start_freq=1000,
                 stop_freq=1000e3,
-                points=11,
+                points=101,
                 rbw=100,
                 average_per_point=10,
                 trace_average=1,
@@ -350,11 +398,6 @@ class TestPidNaIq(TestPyrpl):
             pid.input = na.iq
             pid.setpoint = 0
 
-            # specify extradelay for theory. 3.6 cycles is empirical, but not
-            # far from what one expects for NA delay (2 cycles for output,
-            # 2 for input)
-            extradelay = self.extradelay
-
             # proportional gain of 10, inputfilter: 2kHz high-pass, 10 kHz
             # Lowpass, 50kHz lowpass
             pid.p = 10
@@ -366,7 +409,7 @@ class TestPidNaIq(TestPyrpl):
             data = na.single()
             f = na.data_x
             plotdata.append((f, data, "p=10 + filter"))
-            theory = pid.transfer_function(f, extradelay=extradelay)
+            theory = pid.transfer_function(f)
             relerror = np.abs((data - theory) / theory)
             maxerror = np.max(relerror)
             if maxerror > error_threshold:
@@ -753,7 +796,7 @@ class TestPidNaIq(TestPyrpl):
 
             data = na.single()
             frequencies = na.data_x
-            theory = pid.transfer_function(frequencies, extradelay=self.extradelay)
+            theory = pid.transfer_function(frequencies)
             relative_error = np.abs((data - theory) / theory)
             artifact = save_frequency_response(
                 f"pid_derivative_{pid.name}",

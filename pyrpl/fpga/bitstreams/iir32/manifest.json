@@ -43,6 +43,9 @@
     "iir": {
       "_delay": 6.5,
       "_minloops": 4
+    },
+    "pid": {
+      "_delay": 4
     }
   },
   "hardware": {

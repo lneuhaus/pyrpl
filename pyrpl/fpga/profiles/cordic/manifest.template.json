@@ -11,7 +11,8 @@
   "timing": {
     "cordic": {"_delay": 10},
     "iq": {"_delay": 8, "_quadrature_delay": 4, "_cordic_delay": 14},
-    "networkanalyzer": {"_delay": 4.0}
+    "networkanalyzer": {"_delay": 4.0},
+    "pid": {"_delay": 4}
   },
   "hardware": {
     "dsp_inputs": [

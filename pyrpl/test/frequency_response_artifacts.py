@@ -9,6 +9,100 @@ from pathlib import Path
 import numpy as np
 
 
+def fit_residual_delay(frequencies, measured, reference, minimum_relative_magnitude=1e-3):
+    """Fit a pure delay between a measured and reference transfer function.
+
+    The phase of ``measured / reference`` is fitted to
+
+    ``phase(f) = phase_offset - 2 * pi * f * delay``.
+
+    Points close to a zero of either transfer function are excluded because
+    their phase is dominated by noise.  A free phase offset prevents a
+    frequency-independent phase error from biasing the fitted delay.
+
+    Returns
+    -------
+    dict
+        JSON-serializable fit results. ``delay_seconds`` is positive when the
+        measured response lags the reference response.
+    """
+    frequencies = np.asarray(frequencies, dtype=float)
+    measured = np.asarray(measured, dtype=complex)
+    reference = np.asarray(reference, dtype=complex)
+    if not (frequencies.shape == measured.shape == reference.shape):
+        raise ValueError("frequencies, measured and reference must have the same shape")
+    if frequencies.ndim != 1:
+        raise ValueError("frequency-response arrays must be one-dimensional")
+    if minimum_relative_magnitude < 0:
+        raise ValueError("minimum_relative_magnitude must be non-negative")
+
+    measured_magnitude = np.abs(measured)
+    reference_magnitude = np.abs(reference)
+    finite = (
+        np.isfinite(frequencies)
+        & np.isfinite(measured.real)
+        & np.isfinite(measured.imag)
+        & np.isfinite(reference.real)
+        & np.isfinite(reference.imag)
+    )
+    if np.any(finite):
+        measured_floor = minimum_relative_magnitude * np.max(measured_magnitude[finite])
+        reference_floor = minimum_relative_magnitude * np.max(reference_magnitude[finite])
+        valid = (
+            finite
+            & (measured_magnitude > measured_floor)
+            & (reference_magnitude > reference_floor)
+        )
+    else:
+        valid = finite
+
+    if np.count_nonzero(valid) < 3:
+        raise ValueError("at least three finite, non-zero response points are required")
+
+    # Sort before unwrapping: callers normally provide increasing frequency,
+    # but making that requirement explicit here avoids an incorrect phase fit.
+    order = np.argsort(frequencies[valid])
+    fit_frequencies = frequencies[valid][order]
+    phase = np.unwrap(np.angle((measured[valid] / reference[valid])[order]))
+
+    # Centre frequency for numerical conditioning, then convert the fitted
+    # intercept back to its value at f=0.
+    frequency_centre = float(np.mean(fit_frequencies))
+    centred_frequency = fit_frequencies - frequency_centre
+    design = np.column_stack((centred_frequency, np.ones(phase.size)))
+    slope, centred_intercept = np.linalg.lstsq(design, phase, rcond=None)[0]
+    fitted_phase = design @ np.array([slope, centred_intercept])
+    residual = phase - fitted_phase
+    total_variation = np.sum((phase - np.mean(phase)) ** 2)
+    residual_variation = np.sum(residual**2)
+    r_squared = 1.0 - residual_variation / total_variation if total_variation > 0 else 1.0
+    delay_seconds = -float(slope) / (2.0 * np.pi)
+    if phase.size > 2 and np.sum(centred_frequency**2) > 0:
+        slope_standard_error = np.sqrt(
+            residual_variation / (phase.size - 2) / np.sum(centred_frequency**2)
+        )
+        delay_standard_error_seconds = float(slope_standard_error / (2.0 * np.pi))
+    else:
+        delay_standard_error_seconds = float("nan")
+    phase_offset = float(centred_intercept - slope * frequency_centre)
+
+    return {
+        "points_used": int(phase.size),
+        "points_total": int(frequencies.size),
+        "frequency_min_hz": float(fit_frequencies[0]),
+        "frequency_max_hz": float(fit_frequencies[-1]),
+        "delay_seconds": delay_seconds,
+        "delay_nanoseconds": delay_seconds * 1e9,
+        "delay_standard_error_seconds": delay_standard_error_seconds,
+        "delay_standard_error_nanoseconds": delay_standard_error_seconds * 1e9,
+        "phase_offset_radians": phase_offset,
+        "phase_offset_degrees": phase_offset * 180.0 / np.pi,
+        "phase_residual_rms_radians": float(np.sqrt(np.mean(residual**2))),
+        "phase_residual_rms_degrees": float(np.sqrt(np.mean(residual**2)) * 180.0 / np.pi),
+        "r_squared": float(r_squared),
+    }
+
+
 def _safe_name(value):
     """Return a filename-safe representation of a test or bitstream name."""
     return re.sub(r"[^A-Za-z0-9_.-]+", "_", str(value)).strip("_.") or "unnamed"

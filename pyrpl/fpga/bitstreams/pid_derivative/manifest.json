@@ -42,7 +42,7 @@
       "_quadrature_delay": 4
     },
     "pid": {
-      "_delay": 4
+      "_delay": 5
     }
   },
   "hardware": {

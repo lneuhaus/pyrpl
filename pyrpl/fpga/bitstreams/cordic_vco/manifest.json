@@ -52,6 +52,9 @@
     },
     "networkanalyzer": {
       "_delay": 4.0
+    },
+    "pid": {
+      "_delay": 4
     }
   },
   "hardware": {

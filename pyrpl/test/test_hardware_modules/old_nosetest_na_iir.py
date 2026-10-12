@@ -10,7 +10,6 @@ logger = logging.getLogger(name=__name__)
 
 class TestIir(TestPyrpl):
     def setup(self):
-        self.extradelay = 0.6 * 8e-9  # no idea where this delay comes from
         # shortcuts
         self.pyrpl.na = self.pyrpl.networkanalyzer
         self.na = self.pyrpl.networkanalyzer

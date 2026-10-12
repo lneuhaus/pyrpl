@@ -2,7 +2,6 @@ import logging
 import time
 
 import numpy as np
-import pytest
 
 from pyrpl import CurveDB
 from pyrpl.test.test_base import TestPyrpl
@@ -11,10 +10,6 @@ logger = logging.getLogger(name=__name__)
 
 
 class TestScopeAsgAms(TestPyrpl):
-    @pytest.fixture(autouse=True)
-    def setup_delay(self):
-        self.extradelay = 0.6 * 8e-9  # no idea where this comes from
-
     def test_asg(self):
         if self.r is None:
             return

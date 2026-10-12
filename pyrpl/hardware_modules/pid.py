@@ -316,8 +316,10 @@ class Pid(FilterModule):
         """
         pass
 
-    _delay = 3  # min delay in cycles from input to output_signal of the module
-    # with integrator and derivative gain, delay is rather 4 cycles
+    # Effective latency from the selected DSP input to output_signal. Hardware
+    # NA measurements over 10 MHz resolve this as four complete sample cycles.
+    _delay = 4
+    # Profiles that enable the dedicated PID input register override this to 5.
 
     _PSR = 12  # Register(0x200)
 

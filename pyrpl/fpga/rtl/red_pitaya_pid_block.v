@@ -400,6 +400,12 @@ generate
 	if (ARBITRARY_SATURATION == 0)
 		assign dat_o = pid_out;
 	else begin
+		// Apply the user-configurable out_min/out_max limits after the fixed
+		// full-scale saturation above. Registering this comparison keeps the
+		// programmable limiter off the 125 MHz combinational timing path, at
+		// the cost of one additional PID latency cycle. If
+		// ARBITRARY_SATURATION is disabled, dat_o bypasses these programmable
+		// limits and uses pid_out directly.
 		reg signed [ 14-1:0] out_buffer;
 		always @(posedge clk_i) begin
 			if (rstn_i == 1'b0)

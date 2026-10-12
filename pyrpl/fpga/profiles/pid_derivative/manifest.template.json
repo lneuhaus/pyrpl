@@ -10,7 +10,7 @@
   "software_managers": ["Asgs", "Iqs", "Pids", "Scopes", "Trigs", "Pwms", "Hks"],
   "timing": {
     "iq": {"_delay": 7, "_quadrature_delay": 4},
-    "pid": {"_delay": 4}
+    "pid": {"_delay": 5}
   },
   "hardware": {
     "dsp_inputs": [
