@@ -187,6 +187,35 @@ def test_untriggered_acquisition(client):
     np.testing.assert_allclose(np.diff(t), 1e-3, atol=5e-4)
 
 
+def test_averaged_acquisition(client):
+    memory, c = client
+    assert c.ask("SIG:ACQ:AVER?") == "0"
+    with pytest.raises(ScpiError, match="interval > 0"):
+        c.set_averaging(True)
+        c.acquire(5, 0, "in1")
+    c.set_averaging(True)
+    assert c.ask("SIG:ACQ:AVER?") == "1"
+    memory.set_signal("in1", 4096)
+    memory.set_signal("in2", -2048)
+
+    def step():  # in2 changes in the middle of the second window
+        time.sleep(0.03)
+        memory.set_signal("in2", 2048)
+
+    thread = threading.Thread(target=step)
+    thread.start()
+    t, (in1, in2) = c.acquire(3, 0.02, "in1", "in2")
+    thread.join()
+    np.testing.assert_allclose(in1, 4096 / 8191)
+    # windows are centred on their mean time and follow each other
+    np.testing.assert_allclose(t, [0.01, 0.03, 0.05], atol=5e-3)
+    assert in2[0] == pytest.approx(-2048 / 8191)
+    assert -2048 / 8191 < in2[1] < 2048 / 8191  # mean across the step
+    assert in2[2] == pytest.approx(2048 / 8191)
+    c.set_averaging(False)
+    assert c.ask("SIG:ACQ:AVER?") == "0"
+
+
 def test_triggered_acquisition(client):
     memory, c = client
     memory.set_pin(3, "N", 0)

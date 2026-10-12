@@ -51,6 +51,7 @@ class ScpiClient:
         self._buffer = b""
         self._trigger_timeout = 1.0
         self._trigger_delay = 0.0
+        self._averaging = False
         self.socket = socket.create_connection((hostname, port), timeout=timeout)
         self.socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 
@@ -142,6 +143,16 @@ class ScpiClient:
         self._trigger_timeout = timeout
         self._trigger_delay = delay
 
+    def set_averaging(self, on=True):
+        """Makes each point of acquire() the mean of the signals over its interval.
+
+        The board samples as fast as it can during each interval, and the
+        intervals follow each other without gap. The time of a point is then
+        the centre of its interval. Requires an interval > 0."""
+        self.write(f"SIG:ACQ:AVER {'ON' if on else 'OFF'}")
+        self.check_error()
+        self._averaging = bool(on)
+
     def acquire(self, n, interval, *signals):
         """Acquires n points of the signals, one every interval seconds.
 
@@ -151,7 +162,7 @@ class ScpiClient:
 
         Returns (t, values): t has shape (n,) and holds the sample times in s
         relative to the trigger edge, values has shape (len(signals), n)."""
-        duration = self._trigger_delay + interval * (n - 1)
+        duration = self._trigger_delay + interval * (n if self._averaging else n - 1)
         if self._trigger_timeout == 0:
             timeout = None  # wait forever
         else:

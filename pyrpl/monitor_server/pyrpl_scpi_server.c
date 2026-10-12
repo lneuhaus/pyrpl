@@ -122,6 +122,7 @@ typedef struct {
     int trig_edge;
     double trig_timeout; /* s, 0 waits forever */
     double trig_delay;   /* s between trigger edge and first sample */
+    int acq_average;     /* SIGnal:ACQuire? points are means over their interval */
     /* SCPI error queue */
     int err_code[ERROR_QUEUE];
     char err_msg[ERROR_QUEUE][96];
@@ -466,16 +467,20 @@ static int cmd_acquire(conn_t *c, char **params, int n_params)
                    MAX_ACQ_VALUES);
         return -1;
     }
+    if (c->acq_average && interval <= 0) {
+        push_error(c, -224, "Averaging needs an interval > 0");
+        return -1;
+    }
     if (interval * (n - 1) + c->trig_delay > MAX_DURATION) {
         push_error(c, -222, "Acquisition would last more than %g s", MAX_DURATION);
         return -1;
     }
 
     double *t = malloc(n * sizeof(double));
-    int16_t *raw = malloc(n * k * sizeof(int16_t));
-    if (t == NULL || raw == NULL) {
+    double *values = malloc(n * k * sizeof(double));
+    if (t == NULL || values == NULL) {
         free(t);
-        free(raw);
+        free(values);
         push_error(c, -225, "Out of memory");
         return -1;
     }
@@ -485,7 +490,7 @@ static int cmd_acquire(conn_t *c, char **params, int n_params)
         int result = wait_trigger(c, &t0);
         if (result != 0) {
             free(t);
-            free(raw);
+            free(values);
             if (result == -1)
                 push_error(c, -200, "Trigger timeout");
             return -1;
@@ -496,25 +501,44 @@ static int cmd_acquire(conn_t *c, char **params, int n_params)
 
     double start = t0 + c->trig_delay;
     for (long i = 0; i < n; i++) {
-        if (wait_until(c, start + i * interval) < 0) {
-            free(t);
-            free(raw);
-            return -1;
+        double window_start = start + i * interval;
+        if (wait_until(c, window_start) < 0)
+            goto disconnected;
+        if (!c->acq_average) {
+            t[i] = now() - t0;
+            for (int j = 0; j < k; j++)
+                values[i * k + j] = read_raw(indices[j]) / SIGNAL_NORM;
+            continue;
         }
-        t[i] = now() - t0;
+        /* mean of all the samples of the window; consecutive windows touch,
+         * so the signal is covered without gaps */
+        double window_end = window_start + interval, sum[MAX_PARAMS] = {0};
+        long m = 0;
+        do {
+            for (int j = 0; j < k; j++)
+                sum[j] += read_raw(indices[j]);
+            if ((++m & 0xfff) == 0 && peer_closed(c))
+                goto disconnected;
+        } while (now() < window_end);
+        t[i] = 0.5 * (window_start + window_end) - t0;
         for (int j = 0; j < k; j++)
-            raw[i * k + j] = read_raw(indices[j]);
+            values[i * k + j] = sum[j] / m / SIGNAL_NORM;
     }
 
     begin_item(c);
     for (long i = 0; i < n; i++) {
         out_printf(c, i ? ",%.9g" : "%.9g", t[i]);
         for (int j = 0; j < k; j++)
-            out_printf(c, ",%.8g", raw[i * k + j] / SIGNAL_NORM);
+            out_printf(c, ",%.8g", values[i * k + j]);
     }
     free(t);
-    free(raw);
+    free(values);
     return 0;
+
+disconnected:
+    free(t);
+    free(values);
+    return -1;
 }
 
 static const char *edge_name(int edge)
@@ -541,6 +565,7 @@ static void reset_settings(conn_t *c)
     c->trig_edge = EDGE_RISING;
     c->trig_timeout = 1.0;
     c->trig_delay = 0.0;
+    c->acq_average = 0;
 }
 
 /* executes one command; returns -1 for a failed query so that the caller can answer ERR! */
@@ -631,6 +656,25 @@ static int execute(conn_t *c, char *command)
             return cmd_stats(c, params, n_params);
         if (kw_match(nodes[1], "ACQuire") && query)
             return cmd_acquire(c, params, n_params);
+    }
+
+    if (n_nodes == 3 && kw_match(nodes[0], "SIGnal") && kw_match(nodes[1], "ACQuire") &&
+        kw_match(nodes[2], "AVERage")) {
+        if (query) {
+            begin_item(c);
+            out_printf(c, "%d", c->acq_average);
+            return 0;
+        }
+        if (n_params == 1 && (strcasecmp(params[0], "ON") == 0 || strcmp(params[0], "1") == 0))
+            c->acq_average = 1;
+        else if (n_params == 1 &&
+                 (strcasecmp(params[0], "OFF") == 0 || strcmp(params[0], "0") == 0))
+            c->acq_average = 0;
+        else {
+            push_error(c, -224, "Averaging must be ON or OFF");
+            return -1;
+        }
+        return 0;
     }
 
     if (n_nodes == 2 && kw_match(nodes[0], "TRIGger")) {
