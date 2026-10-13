@@ -3,6 +3,7 @@ import os
 
 from ..async_utils import sleep
 from ..memory import MemoryBranch, MemoryTree
+from ..pyrpl_utils import time
 
 logger = logging.getLogger(name=__name__)
 
@@ -94,6 +95,7 @@ class TestMemory:
         m1.a = 2
         assert m1._save_counter == 6
         m2 = MemoryTree(filename, _loadsavedeadtime=T2)
+        m2_loaded = time()
         assert m1._save_counter == 6
         assert m2._loadsavedeadtime == T2
         assert m1._loadsavedeadtime == T1
@@ -102,14 +104,18 @@ class TestMemory:
         assert m1._write_to_file_counter == old_save_to_file
         # changes will only be written to file once m1._loadsavedeadtime has elapsed
         assert m2.a == 1, m2.a
-        sleep(T1 + 0.05)  # some extra time is needed for overhead
+        # wait for m1's save timer, but not until m2's reload deadtime: a fixed
+        # sleep(T1 + 0.05) was too short on loaded CI runners
+        sleep(T1)
+        while m1._savetimer.isActive() and time() < m2_loaded + T2 - 0.2:
+            sleep(0.01)
         # now changes should have been written to file
         assert not m1._savetimer.isActive(), m1._savetimer.interval()
         assert m1._write_to_file_counter == old_save_to_file + 1, m1._save_counter
         # but m2 will only attempt to reload once m2._loadsavedeadtime has elapsed
         assert m2.a == 1
         # once we wait long enough, m2 will attempt to reload the file
-        sleep(T2 - T1 + 0.05)
+        sleep(max(0.0, m2_loaded + T2 + 0.05 - time()))
         assert m1._write_to_file_counter == old_save_to_file + 1
         assert m2.a == 2, m2.a
         m2.a = 3

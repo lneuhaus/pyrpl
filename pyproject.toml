@@ -52,6 +52,7 @@ dev = [
     "pytest-cov",
     "pytest-notebook; python_version >= '3.10'",  # 0.8 for Python 3.9 needs pkg_resources
     "pytest-subtests",
+    "pytest-timeout",
     "matplotlib>=3.7",  # older releases have no wheels for Python >= 3.9
     "nbconvert",
     "nbformat",
@@ -72,6 +73,7 @@ test = [
     "pytest-cov",
     "pytest-notebook; python_version >= '3.10'",  # 0.8 for Python 3.9 needs pkg_resources
     "pytest-subtests",
+    "pytest-timeout",
     "matplotlib>=3.7",  # older releases have no wheels for Python >= 3.9
     "nbconvert",
     "nbformat",

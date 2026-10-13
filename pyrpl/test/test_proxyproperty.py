@@ -1,10 +1,15 @@
 import logging
 
+import pytest
+
 from pyrpl.async_utils import sleep
 from pyrpl.attributes import FloatProperty, ProxyProperty, SelectProperty
 from pyrpl.memory import MemoryTree
 from pyrpl.module_attributes import ModuleProperty
 from pyrpl.modules import Module
+
+# passes on the simulated (_FAKE_) Red Pitaya too
+pytestmark = pytest.mark.simulation
 
 logger = logging.getLogger(name=__name__)
 

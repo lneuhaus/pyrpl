@@ -1,7 +1,12 @@
 import logging
 
+import pytest
+
 from pyrpl.software_modules.module_managers import ModuleManager
 from pyrpl.test.test_base import TestPyrpl
+
+# passes on the simulated (_FAKE_) Red Pitaya too
+pytestmark = pytest.mark.simulation
 
 logger = logging.getLogger(name=__name__)
 

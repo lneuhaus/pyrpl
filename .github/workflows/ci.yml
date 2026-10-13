@@ -1,8 +1,4 @@
-name: Hardware CI
-
-concurrency:
-  group: redpitaya-hardware
-  cancel-in-progress: false
+name: CI
 
 on:
   push:
@@ -12,6 +8,63 @@ on:
   workflow_dispatch:  # Allows manual triggering from GitHub UI
 
 jobs:
+  # Tests that do not need a Red Pitaya, on every supported Python version.
+  # Tests marked "hardware" (those using the hardware_session fixture) are
+  # skipped, except those also marked "simulation", which run against the
+  # simulated _FAKE_ Red Pitaya (REDPITAYA_HOSTNAME is not set here).
+  unit:
+    name: Tests without hardware (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14']
+
+    steps:
+    - uses: actions/checkout@v6
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v6
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v10.2.0
+      with:
+        version: "0.10.11"
+        enable-cache: true
+
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y xvfb
+
+    - name: Install Python dependencies
+      run: uv sync --locked --python ${{ matrix.python-version }} --extra test --extra qt-pyqt5
+
+    - name: Register Jupyter kernel
+      run: uv run --no-sync python -m ipykernel install --sys-prefix --name python3
+
+    - name: Run tests
+      run: >
+        xvfb-run -a uv run --no-sync python -m pytest pyrpl/test/
+        -m "not hardware or simulation" --timeout=300
+        --cov=pyrpl --cov-report=xml
+      env:
+        QT_QPA_PLATFORM: offscreen
+
+    - name: Upload coverage to Codecov
+      if: matrix.python-version == '3.13'
+      uses: codecov/codecov-action@v6
+      with:
+        files: ./coverage.xml
+        flags: unit
+        use_oidc: true
+
   # The RedPitaya is not always connected. On push / pull_request, an offline
   # board skips the hardware tests instead of failing them; run the workflow
   # manually (workflow_dispatch) once the board is back. A manual run with an
@@ -57,19 +110,28 @@ jobs:
           echo "::error::$reason. Connect the board and run the workflow again."
           exit 1
         else
-          echo "::warning::$reason. Hardware tests skipped; run the 'Hardware CI' workflow manually once the board is connected."
+          echo "::warning::$reason. Hardware tests skipped; run the 'CI' workflow manually once the board is connected."
           echo "### Hardware tests skipped" >> "$GITHUB_STEP_SUMMARY"
-          echo "$reason. Run this workflow manually (Actions → Hardware CI → Run workflow) once the board is connected." >> "$GITHUB_STEP_SUMMARY"
+          echo "$reason. Run this workflow manually (Actions → CI → Run workflow) once the board is connected." >> "$GITHUB_STEP_SUMMARY"
         fi
 
   # Hardware-in-the-loop tests against the real RedPitaya, run on the
   # self-hosted Oracle runner so its IP can stay allowlisted on the Freebox
   # (GitHub-hosted runners have rotating IPs and can't be pinned like this).
-  test:
+  hardware:
     name: Hardware tests (Python ${{ matrix.python-version }})
     needs: check-board
     if: needs.check-board.outputs.available == 'true'
     runs-on: [self-hosted]
+    # only one job talks to the physical Red Pitaya at a time
+    concurrency:
+      group: redpitaya-hardware
+      cancel-in-progress: false
+    strategy:
+      matrix:
+        # The hardware tests run on a single Python version: the other
+        # versions are covered by the unit job.
+        python-version: ['3.13']
     # A degraded remote hardware connection must not monopolize the only
     # physical Red Pitaya runner indefinitely. Normal runs take about 7 min.
     timeout-minutes: 30
@@ -84,12 +146,6 @@ jobs:
       REDPITAYA_PORT: ${{ secrets.REDPITAYA_MONITOR_PORT }}
       REDPITAYA_USER: ${{ secrets.REDPITAYA_USER }}
       REDPITAYA_PASSWORD: ${{ secrets.REDPITAYA_PASSWORD }}
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14']
-      max-parallel: 1   # only one job talks to the physical RP at a time
-
     steps:
     - uses: actions/checkout@v6
 
@@ -105,10 +161,31 @@ jobs:
         # The self-hosted runner retains uv's local cache between jobs.
         enable-cache: false
 
-    - name: Set up display
+    # Qt runs with QT_QPA_PLATFORM=offscreen: no X server is needed (the
+    # former Xvfb step was never used and left a root process behind).
+    - name: Stop processes left by an interrupted job
+      shell: bash
       run: |
-        export DISPLAY=:99
-        sudo Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+        sudo pkill -x Xvfb || true
+        pkill -f "python -m pytest pyrpl/test" || true
+
+    # The runner keeps ~/pyrpl_user_dir between jobs: the curves saved by
+    # every run accumulated there and slowed the GUI tests down run after run.
+    # RUNNER_TEMP is emptied after each job.
+    - name: Use a fresh PyRPL user directory
+      shell: bash
+      run: echo "PYRPL_USER_DIR=$RUNNER_TEMP/pyrpl_user_dir" >> "$GITHUB_ENV"
+
+    # Curves saved in the default user directory by earlier runs, or by
+    # anything run on the runner outside of this workflow
+    - name: Remove curves left on the runner
+      shell: bash
+      run: |
+        dir="$HOME/pyrpl_user_dir/curve"
+        if [ -d "$dir" ]; then
+          echo "$(find "$dir" -name '*.dat' | wc -l) curves ($(du -sh "$dir" | cut -f1)) in $dir"
+          find "$dir" -name '*.dat' -delete
+        fi
 
     - name: Install system dependencies
       run: |
@@ -163,6 +240,8 @@ jobs:
 
     - name: Run tests with retries
       shell: bash
+      # below the job timeout, so that the cleanup steps still run after a hang
+      timeout-minutes: 22
       run: |
         # use a custom global configfile adapted to the hardware for unit tests
         # Connection parameters come from the test job's REDPITAYA_* variables.
@@ -170,7 +249,7 @@ jobs:
         echo "==========================================="
         echo "Running full test suite (attempt 1/3)"
         echo "==========================================="
-        if uv run --no-sync python -m pytest pyrpl/test/ --cov=pyrpl --cov-report=xml; then
+        if uv run --no-sync python -m pytest pyrpl/test/ -m hardware --timeout=600 --cov=pyrpl --cov-report=xml; then
           echo "All tests passed!"
           exit 0
         fi
@@ -179,7 +258,7 @@ jobs:
         echo "==========================================="
         echo "Re-running failed tests (attempt 2/3)"
         echo "==========================================="
-        if uv run --no-sync python -m pytest pyrpl/test/ --lf --cov=pyrpl --cov-report=xml --cov-append; then
+        if uv run --no-sync python -m pytest pyrpl/test/ -m hardware --timeout=600 --lf --cov=pyrpl --cov-report=xml --cov-append; then
           echo "All previously failed tests passed!"
           exit 0
         fi
@@ -188,35 +267,40 @@ jobs:
         echo "==========================================="
         echo "Final retry (attempt 3/3)"
         echo "==========================================="
-        uv run --no-sync python -m pytest pyrpl/test/ --lf --cov=pyrpl --cov-report=xml --cov-append
+        uv run --no-sync python -m pytest pyrpl/test/ -m hardware --timeout=600 --lf --cov=pyrpl --cov-report=xml --cov-append
 
       env:
         QT_QPA_PLATFORM: offscreen
 
     - name: Upload coverage to Codecov
-      if: matrix.python-version == '3.14'
       uses: codecov/codecov-action@v6
       with:
         files: ./coverage.xml
+        flags: hardware
         use_oidc: true
+
+    - name: Stop test processes
+      if: always()
+      shell: bash
+      run: pkill -f "python -m pytest pyrpl/test" || true
 
   # Notification job
   notify:
     runs-on: ubuntu-latest
-    needs: [check-board, test]
+    needs: [unit, check-board, hardware]
     if: always()
 
     steps:
     - name: Notify on success
-      if: ${{ needs.test.result == 'success' }}
-      run: echo "All hardware test jobs completed successfully!"
+      if: ${{ needs.unit.result == 'success' && needs.hardware.result == 'success' }}
+      run: echo "All test jobs completed successfully!"
 
     - name: Notify on skip
-      if: ${{ needs.check-board.result == 'success' && needs.test.result == 'skipped' }}
-      run: echo "RedPitaya offline, hardware tests skipped. Run this workflow manually once it is connected."
+      if: ${{ needs.unit.result == 'success' && needs.check-board.result == 'success' && needs.hardware.result == 'skipped' }}
+      run: echo "Tests without hardware passed. RedPitaya offline, hardware tests skipped. Run this workflow manually once it is connected."
 
     - name: Notify on failure
-      if: ${{ needs.test.result != 'success' && !(needs.check-board.result == 'success' && needs.test.result == 'skipped') }}
+      if: ${{ needs.unit.result != 'success' || (needs.hardware.result != 'success' && !(needs.check-board.result == 'success' && needs.hardware.result == 'skipped')) }}
       run: |
-        echo "Some hardware test jobs failed or were cancelled"
+        echo "Some test jobs failed or were cancelled"
         exit 1
