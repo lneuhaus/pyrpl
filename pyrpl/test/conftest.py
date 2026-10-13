@@ -22,12 +22,7 @@ def pytest_report_header(config):
     import qtpy
 
     return f"PyRPL runtime: Qt={qtpy.API_NAME}, NumPy={np.__version__}"
-    
 
-
-# Global state to determine what we need to build
-_source_config_file = "nosetests_source.yml"
-_require_full_pyrpl = False
 
 # A container to standardize what the fixture returns
 # rp is always present; pyrpl is None if running in light mode
@@ -45,9 +40,9 @@ def _real_board():
 
 def pytest_configure(config):
     config.addinivalue_line(
-            "markers",
-            "requires_fpga(*capabilities): skip unless the selected FPGA profile provides them",
-        )
+        "markers",
+        "requires_fpga(*capabilities): skip unless the selected FPGA profile provides them",
+    )
     config.addinivalue_line(
         "markers",
         "hardware: uses the Red Pitaya session (added automatically to every test "
@@ -100,7 +95,8 @@ def pytest_collection_modifyitems(session, config, items):
     real_board = _real_board()
     skip = pytest.mark.skip(reason="needs a real Red Pitaya: set REDPITAYA_HOSTNAME")
     for item in items:
-        if "hardware_session" not in item.fixturenames:
+        uses_board = "hardware_session" in item.fixturenames
+        if not uses_board and item.get_closest_marker("requires_fpga") is None:
             continue
         item.add_marker(pytest.mark.hardware)
         if not real_board and item.get_closest_marker("simulation") is None:
@@ -176,7 +172,7 @@ def hardware_session(request):
     tmp_file = "nosetests_config.yml"
     tmp_conf = os.path.join(user_config_dir, tmp_file)
     target_overrides = _test_target_overrides()
-    source_template = _reset_test_source_config(_source_config_file)
+    source_template = _reset_test_source_config(source_config_file)
 
     # Cleanup start
     if os.path.isfile(tmp_conf):
@@ -185,15 +181,13 @@ def hardware_session(request):
 
     if require_full_pyrpl:
         # --- HEAVY PATH ---
-        logger.info(f"Initializing Full Pyrpl with source: {_source_config_file}")
+        logger.info(f"Initializing Full Pyrpl with source: {source_config_file}")
         pyrpl_obj = Pyrpl(
             config=tmp_file,
             source=source_template,
             reloadfpga=True,
             **target_overrides,
         )
-        logger.info(f"Initializing Full Pyrpl with source: {source_config_file}")
-        pyrpl_obj = Pyrpl(config=tmp_file, source=source_config_file, reloadfpga=True)
         rp_obj = pyrpl_obj.rp
     else:
         # --- LIGHT PATH ---
@@ -244,7 +238,7 @@ def hardware_session(request):
         with contextlib.suppress(OSError):
             os.remove(tmp_conf)
     with contextlib.suppress(OSError):
-        _reset_test_source_config(_source_config_file)
+        _reset_test_source_config(source_config_file)
 
     # Wait for file to be fully deleted
     max_attempts = 10
@@ -255,11 +249,16 @@ def hardware_session(request):
 
 
 @pytest.fixture(autouse=True)
-def require_fpga_capabilities(request, hardware_session):
-    """Skip tests whose declared FPGA capabilities are unavailable."""
+def require_fpga_capabilities(request):
+    """Skip tests whose declared FPGA capabilities are unavailable.
+
+    The session is only requested for tests with a requires_fpga marker: an
+    autouse fixture depending on hardware_session would mark every test as a
+    hardware test."""
     marker = request.node.get_closest_marker("requires_fpga")
     if marker is None:
         return
+    hardware_session = request.getfixturevalue("hardware_session")
     required = set(marker.args)
     missing = required - hardware_session.rp.fpga_profile.capabilities
     if missing:
@@ -268,13 +267,6 @@ def require_fpga_capabilities(request, hardware_session):
             f"{', '.join(sorted(missing))}"
         )
 
-
-@pytest.fixture(scope="session", autouse=True)
-def pyrpl_session_sanity(hardware_session):
-    """
-    Global hardware sanity check.
-    Runs exactly once per pytest session, no matter what tests are selected.
-    """
 
 def _check_session(read_time, write_time, pyrpl, require_full_pyrpl):
     """Hardware sanity check, run once when the session is created."""

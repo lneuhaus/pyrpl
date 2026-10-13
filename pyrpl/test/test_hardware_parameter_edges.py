@@ -53,7 +53,9 @@ def _iq_model(**overrides):
         "bandwidth": [300e3],
         "frequency": 10e6,
         "inputfilter": 0,
-        "_delay": 7,
+        # the module's pipeline delays (cycles), kept in sync with Iq
+        "_delay": Iq._delay,
+        "_quadrature_delay": Iq._quadrature_delay,
         "_frequency_correction": 1.0,
         "phase": 0.0,
     }
